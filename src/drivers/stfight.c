@@ -232,6 +232,7 @@ DONE? (check on real board)
 #include "vidhrdw/generic.h"
 
 // machine
+void empcity_decode(void);
 void stfight_decode(void);
 void stfight_init_machine(void);
 int  stfight_vb_interrupt( void );
@@ -323,7 +324,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 };
 
 
-INPUT_PORTS_START( stfight_input_ports )
+INPUT_PORTS_START( stfight )
 	PORT_START	/* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -506,14 +507,13 @@ static struct MSM5205interface msm5205_interface =
 	{ 50 }
 };
 
-static struct MachineDriver stfight_machine_driver =
+static struct MachineDriver machine_driver_stfight =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			3000000,	/* 3 Mhz */
-			0,
 			readmem_cpu1, writemem_cpu1, 0, 0,
 			stfight_vb_interrupt, 1,
             stfight_interrupt_1, 30
@@ -521,7 +521,6 @@ static struct MachineDriver stfight_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz */
-			1,
 			readmem_cpu2, writemem_cpu2, 0, 0,
 			0, 0,
             stfight_interrupt_2, 120
@@ -565,12 +564,12 @@ static struct MachineDriver stfight_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( empcity_rom )
-	ROM_REGION(0x18000)	        /* 64k for the first CPU */
+ROM_START( empcity )
+	ROM_REGIONX( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "ec_01.rom",  0x00000, 0x8000, 0xfe01d9b1 )
 	ROM_LOAD( "ec_02.rom",  0x10000, 0x8000, 0xb3cf1ef7 )	/* bank switched */
 
-	ROM_REGION(0x10000)	        /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	        /* 64k for the second CPU */
 	ROM_LOAD( "ec_04.rom",  0x0000,  0x8000, 0xaa3e7d1e )
 
 	ROM_REGION(0x08000)	        /* adpcm voice data */
@@ -605,7 +604,7 @@ ROM_START( empcity_rom )
 	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
 	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
 
-	ROM_REGION(0x0800)	/* PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
 	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
 	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
@@ -616,12 +615,12 @@ ROM_START( empcity_rom )
 	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
 ROM_END
 
-ROM_START( stfight_rom )
-	ROM_REGION(0x18000)	        /* 64k for the first CPU */
+ROM_START( stfight )
+	ROM_REGIONX( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
 	ROM_LOAD( "sf02.bin",   0x10000, 0x8000, 0xe626ce9e )	/* bank switched */
 
-	ROM_REGION(0x10000)	        /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	        /* 64k for the second CPU */
 	ROM_LOAD( "sf03.bin",   0x0000,  0x8000, 0x6a8cb7a6 )
 
 	ROM_REGION(0x08000)	        /* adpcm voice data */
@@ -656,7 +655,7 @@ ROM_START( stfight_rom )
 	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
 	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
 
-	ROM_REGION(0x0800)	/* PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
 	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
 	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
@@ -668,43 +667,8 @@ ROM_START( stfight_rom )
 ROM_END
 
 
-static int stfight_hiload( void )
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* check if the hi score table has already been initialized */
-	if( memcmp( &RAM[0xE0B4], "WORST   ", 8 ) == 0 )
-	{
-		void *f;
-
-		if( ( f = osd_fopen( Machine->gamedrv->name, 0,
-                             OSD_FILETYPE_HIGHSCORE, 0 ) ) != 0 )
-		{
-			osd_fread( f, &RAM[0xe012], 0xaa );
-			osd_fclose( f );
-		}
-		return( 1 );
-	}
-	else
-        return( 0 );    /* we can't load the hi scores yet */
-}
-
-static void stfight_hisave( void )
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if( ( f = osd_fopen( Machine->gamedrv->name, 0,
-                         OSD_FILETYPE_HIGHSCORE, 1 ) ) != 0 )
-	{
-		osd_fwrite( f, &RAM[0xe012], 0xaa );
-		osd_fclose( f );
-	}
-}
-
-
-
-struct GameDriver empcity_driver =
+struct GameDriver driver_empcity =
 {
 	__FILE__,
 	0,
@@ -714,44 +678,42 @@ struct GameDriver empcity_driver =
 	"Seibu Kaihatsu",
 	"Mark McDougall (MAME Driver)\nJames Jenkins (Graphics Info)",
 	0,
-	&stfight_machine_driver,
+	&machine_driver_stfight,
+	empcity_decode,
+
+	rom_empcity,
+    0, 0,
+	0,
 	0,
 
-	empcity_rom,
-    0,stfight_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_stfight,
 
-	stfight_input_ports,
-
-	PROM_MEMORY_REGION(9), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	stfight_hiload, stfight_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver stfight_driver =
+struct GameDriver driver_stfight =
 {
 	__FILE__,
-	&empcity_driver,
+	&driver_empcity,
 	"stfight",
 	"Street Fight (Germany)",
 	"1986",
 	"Seibu Kaihatsu",
 	"Mark McDougall (MAME Driver)\nJames Jenkins (Graphics Info)",
 	0,
-	&stfight_machine_driver,
+	&machine_driver_stfight,
+	stfight_decode,
+
+	rom_stfight,
+    0, 0,
+	0,
 	0,
 
-	stfight_rom,
-    0,stfight_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_stfight,
 
-	stfight_input_ports,
-
-	PROM_MEMORY_REGION(9), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	stfight_hiload, stfight_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

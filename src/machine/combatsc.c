@@ -44,7 +44,7 @@ void combatsc_bankselect_w( int offset, int data ){
 
 	data = data & 0x1f;
 	if( data != combatsc_bank_select ){
-		unsigned char *page = &Machine->memory_region[0][0x10000];
+		unsigned char *page = &memory_region(REGION_CPU1)[0x10000];
 		combatsc_bank_select = data;
 
 		cpu_setbank (1, page + banks[data]);
@@ -62,10 +62,8 @@ void combatsc_bankselect_w( int offset, int data ){
 
 void combatsc_init_machine( void )
 {
-	unsigned char *MEM = Machine->memory_region[0];
+	unsigned char *MEM = memory_region(REGION_CPU1);
 
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_NONE;
 
 	memcpy( &MEM[0x8000], &MEM[0x18000], 0x8000 ); /* map upper half of ROM */
 

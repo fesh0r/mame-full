@@ -16,47 +16,13 @@ a000      IN0
 a080      IN1
 a100      DSW1
 
-*
- * IN0 (all bits are inverted)
- * bit 7 : ?
- * bit 6 : START 1
- * bit 5 : UP player 1
- * bit 4 : DOWN player 1
- * bit 3 : RIGHT player 1
- * bit 2 : LEFT player 1
- * bit 1 : SMOKE player 1
- * bit 0 : CREDIT
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : ?
- * bit 6 : START 2
- * bit 5 : UP player 2 (TABLE only)
- * bit 4 : DOWN player 2 (TABLE only)
- * bit 3 : RIGHT player 2 (TABLE only)
- * bit 2 : LEFT player 2 (TABLE only)
- * bit 1 : SMOKE player 2 (TABLE only)
- * bit 0 : COCKTAIL or UPRIGHT cabinet 1 = UPRIGHT
- *
-*
- * DSW1 (all bits are inverted)
- * bit 7 :\ 00 = free play      01 = 2 coins 1 play
- * bit 6 :/ 10 = 1 coin 2 play  11 = 1 coin 1 play
- * bit 5 :\ xxx = cars,rank:
- * bit 4 :| 000 = 2,A  001 = 3,A  010 = 1,B  011 = 2,B
- * bit 3 :/ 100 = 3,B  101 = 1,C  110 = 2,C  111 = 3,C
- * bit 2 :  0 = bonus at 10(1 car)/15(2 cars)/20(3 cars)  1 = bonus at 30/40/60
- * bit 1 :  1 = bonus at xxx points  0 = no bonus
- * bit 0 :  TEST
- *
-
 write:
 8014-801f sprites - 6 pairs: code (including flipping) and X position
 8814-881f sprites - 6 pairs: Y position and color
 8034-880c radar car indicators x position
 8834-883c radar car indicators y position
 a004-a00c radar car indicators color and x position MSB
-a080      watchdog reset?
+a080      watchdog reset
 a105      sound voice 1 waveform (nibble)
 a111-a113 sound voice 1 frequency (nibble)
 a115      sound voice 1 volume (nibble)
@@ -75,7 +41,8 @@ a182      ?
 a183      flip screen
 a184      1 player start lamp
 a185      2 players start lamp
-a186      ?
+a186      coin lockout
+a187	  coin counter
 
 I/O ports:
 OUT on port $0 sets the interrupt vector/instruction (the game uses both
@@ -97,6 +64,7 @@ extern int rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 void rallyx_videoram2_w(int offset,int data);
 void rallyx_colorram2_w(int offset,int data);
+void rallyx_spriteram_w(int offset,int data);
 void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
@@ -104,6 +72,11 @@ void rallyx_vh_stop(void);
 void rallyx_init(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+static void rallyx_coin_lockout_w(int offset, int data)
+{
+	coin_lockout_w(offset, data ^ 1);
+}
 
 static void rallyx_play_sound_w(int offset, int data)
 {
@@ -140,12 +113,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa100, 0xa11f, pengo_sound_w, &pengo_soundregs },
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
+	//{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, rallyx_play_sound_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa185, osd_led_w },
-	{ 0xa186, 0xa186, MWA_NOP },
+	{ 0xa186, 0xa186, rallyx_coin_lockout_w },
+	{ 0xa187, 0xa187, coin_counter_w },
 	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
 	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
@@ -161,7 +135,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( rallyx_input_ports )
+INPUT_PORTS_START( rallyx )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -208,7 +182,7 @@ INPUT_PORTS_START( rallyx_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nrallyx_input_ports )
+INPUT_PORTS_START( nrallyx )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -311,10 +285,18 @@ static struct namco_interface namco_interface =
 	3			/* memory region */
 };
 
+static const char *rallyx_sample_names[] =
+{
+	"*rallyx",
+	"bang.wav",
+	0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	80	/* volume */
+	80,	/* volume */
+	rallyx_sample_names
 };
 
 
@@ -326,7 +308,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			0,
 			readmem,writemem,0,writeport,
 			interrupt,1
 		}
@@ -369,8 +350,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rallyx_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( rallyx )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "rallyxn.1e",   0x1000, 0x1000, 0xed1eba2b )
 	ROM_LOAD( "rallyxn.1h",   0x2000, 0x1000, 0x4f98dd1c )
@@ -380,16 +361,16 @@ ROM_START( rallyx_rom )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, 0x3c16f62c )	/* dots */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 ROM_END
 
-ROM_START( rallyxm_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( rallyxm )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "1e",           0x1000, 0x1000, 0x786585ec )
 	ROM_LOAD( "1h",           0x2000, 0x1000, 0x110d7dcd )
@@ -399,16 +380,16 @@ ROM_START( rallyxm_rom )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, 0x3c16f62c )	/* dots */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 ROM_END
 
-ROM_START( nrallyx_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( nrallyx )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "nrallyx.1b",   0x0000, 0x1000, 0x9404c8d6 )
 	ROM_LOAD( "nrallyx.1e",   0x1000, 0x1000, 0xac01bf3f )
 	ROM_LOAD( "nrallyx.1h",   0x2000, 0x1000, 0xaeba29b5 )
@@ -418,64 +399,17 @@ ROM_START( nrallyx_rom )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, 0xca7a174a )
 	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, BADCRC( 0x3c16f62c ) )	/* dots */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
 	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
 ROM_END
 
 
 
-static const char *rallyx_sample_names[] =
-{
-	"*rallyx",
-	"bang.wav",
-	0	/* end of array */
-};
-
-
-
-static int hiload(void)     /* V.V */
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8060],"\x00\x00\x00\x30\x40\x40\x40\x02",8) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x08060],8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-
-}
-
-
-static void hisave(void)    /* V.V */
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x08060],8);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver rallyx_driver =
+struct GameDriver driver_rallyx =
 {
 	__FILE__,
 	0,
@@ -488,23 +422,22 @@ struct GameDriver rallyx_driver =
 	&machine_driver,
 	rallyx_init,
 
-	rallyx_rom,
+	rom_rallyx,
 	0, 0,
-	rallyx_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	rallyx_input_ports,
+	input_ports_rallyx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver rallyxm_driver =
+struct GameDriver driver_rallyxm =
 {
 	__FILE__,
-	&rallyx_driver,
+	&driver_rallyx,
 	"rallyxm",
 	"Rally X (Midway)",
 	"1980",
@@ -514,20 +447,19 @@ struct GameDriver rallyxm_driver =
 	&machine_driver,
 	rallyx_init,
 
-	rallyxm_rom,
+	rom_rallyxm,
 	0, 0,
-	rallyx_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	rallyx_input_ports,
+	input_ports_rallyx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver nrallyx_driver =
+struct GameDriver driver_nrallyx =
 {
 	__FILE__,
 	0,
@@ -540,15 +472,14 @@ struct GameDriver nrallyx_driver =
 	&machine_driver,
 	rallyx_init,
 
-	nrallyx_rom,
+	rom_nrallyx,
 	0, 0,
-	rallyx_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	nrallyx_input_ports,
+	input_ports_nrallyx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

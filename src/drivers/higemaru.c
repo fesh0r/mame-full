@@ -46,7 +46,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( higemaru )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -168,7 +168,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	2000000,	/* 2 MHz ? Main xtal is 12MHz */
+	12000000/8,	/* 1.5 MHz ? Main xtal is 12MHz */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -186,7 +186,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz ? Main xtal is 12MHz */
-			0,
 			readmem,writemem,0,0,
 			higemaru_interrupt,2
 		},
@@ -225,8 +224,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( higemaru_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
+ROM_START( higemaru )
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hg4",          0x0000, 0x2000, 0xdc67a7f9 )
 	ROM_LOAD( "hg5",          0x2000, 0x2000, 0xf65a4b68 )
 	ROM_LOAD( "hg6",          0x4000, 0x2000, 0x5f5296aa )
@@ -237,57 +236,20 @@ ROM_START( higemaru_rom )
 	ROM_LOAD( "hg1",          0x02000, 0x2000, 0xef4c2f5d )	/* tiles */
 	ROM_LOAD( "hg2",          0x04000, 0x2000, 0x9133f804 )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "hgb3",         0x0000, 0x0020, 0x629cebd8 )	/* palette */
 	ROM_LOAD( "hgb5",         0x0020, 0x0100, 0xdbaa4443 )	/* char lookup table */
 	ROM_LOAD( "hgb1",         0x0120, 0x0100, 0x07c607ce )	/* sprite lookup table */
 ROM_END
 
-static int higemaru_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
 
 
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xee00],"\x00\x20\x00",3) == 0) &&
-            (memcmp(&RAM[0xee75],"\x00\x10\x00",3) == 0))
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xee00],130);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0xee97] = RAM[0xee00];
-                        RAM[0xee98] = RAM[0xee01];
-                        RAM[0xee99] = RAM[0xee02];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void higemaru_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xee00],130);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver higemaru_driver =
+struct GameDriver driver_higemaru =
 {
 	__FILE__,
 	0,
 	"higemaru",
-	"HigeMaru",
+	"Pirate Ship HigeMaru",
 	"1984",
 	"Capcom",
 	"Mirko Buffoni\nNicola Salmoria",
@@ -295,15 +257,14 @@ struct GameDriver higemaru_driver =
 	&machine_driver,
 	0,
 
-	higemaru_rom,
+	rom_higemaru,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_higemaru,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	higemaru_hiload, higemaru_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

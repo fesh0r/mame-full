@@ -19,20 +19,21 @@ microcontroller.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int lastduel_vram_r(int offset);
-extern void lastduel_vram_w(int offset,int value);
-extern void lastduel_flip_w(int offset,int value);
-extern int lastduel_scroll2_r(int offset);
-extern int lastduel_scroll1_r(int offset);
-extern void lastduel_scroll1_w(int offset,int value);
-extern void lastduel_scroll2_w(int offset,int value);
-extern void madgear_scroll1_w(int offset,int value);
-extern void madgear_scroll2_w(int offset,int value);
-extern int lastduel_vh_start(void);
-extern int madgear_vh_start(void);
-extern void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void lastduel_scroll_w( int offset, int data );
+int lastduel_vram_r(int offset);
+void lastduel_vram_w(int offset,int value);
+void lastduel_flip_w(int offset,int value);
+int lastduel_scroll2_r(int offset);
+int lastduel_scroll1_r(int offset);
+void lastduel_scroll1_w(int offset,int value);
+void lastduel_scroll2_w(int offset,int value);
+void madgear_scroll1_w(int offset,int value);
+void madgear_scroll2_w(int offset,int value);
+int lastduel_vh_start(void);
+int madgear_vh_start(void);
+void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lastduel_eof_callback(void);
+void lastduel_scroll_w( int offset, int data );
 
 extern unsigned char *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 static unsigned char *lastduel_ram;
@@ -104,7 +105,7 @@ static struct MemoryWriteAddress lastduel_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0xfc0000, 0xfc0003, MWA_NOP }, /* Written rarely */
-	{ 0xfc0800, 0xfc0fff, MWA_BANK2, &spriteram },
+	{ 0xfc0800, 0xfc0fff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
 	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
 	{ 0xfc8000, 0xfc800f, lastduel_scroll_w },
@@ -132,7 +133,7 @@ static struct MemoryReadAddress madgear_readmem[] =
 static struct MemoryWriteAddress madgear_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xfc1800, 0xfc1fff, MWA_BANK2, &spriteram },
+	{ 0xfc1800, 0xfc1fff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
 	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
 	{ 0xfc8000, 0xfc9fff, lastduel_vram_w,    &lastduel_vram },
@@ -170,7 +171,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static void mg_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
 	cpu_setbank(3,&RAM[bankaddress]);
@@ -366,21 +367,19 @@ static int madgear_interrupt(void)
 	else return 6; /* Controls */
 }
 
-static struct MachineDriver lastduel_machine_driver =
+static struct MachineDriver machine_driver_lastduel =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000, /* Could be 8 MHz */
-			0,
 			lastduel_readmem, lastduel_writemem, 0,0,
 			lastduel_interrupt,3	/* 1 for vbl, 2 for control reads?? */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545, /* Accurate */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
 		}
@@ -396,8 +395,8 @@ static struct MachineDriver lastduel_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	lastduel_eof_callback,
 	lastduel_vh_start,
 	0,
 	lastduel_vh_screenrefresh,
@@ -412,21 +411,19 @@ static struct MachineDriver lastduel_machine_driver =
 	}
 };
 
-static struct MachineDriver madgear_machine_driver =
+static struct MachineDriver machine_driver_madgear =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000, /* Accurate */
-			0,
 			madgear_readmem, madgear_writemem, 0,0,
 			madgear_interrupt,3	/* 1 for vbl, 2 for control reads?? */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545, /* Accurate */
-			2,
 			mg_sound_readmem,mg_sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
 		}
@@ -442,8 +439,8 @@ static struct MachineDriver madgear_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	lastduel_eof_callback,
 	madgear_vh_start,
 	0,
 	ledstorm_vh_screenrefresh,
@@ -464,7 +461,7 @@ static struct MachineDriver madgear_machine_driver =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( lastduel_input_ports )
+INPUT_PORTS_START( lastduel )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
@@ -571,7 +568,7 @@ INPUT_PORTS_START( lastduel_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( madgear_input_ports )
+INPUT_PORTS_START( madgear )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -689,8 +686,8 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-ROM_START( lastduel_rom )
-	ROM_REGION(0x60000)	/* 68000 code */
+ROM_START( lastduel )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "ldu-06.rom",   0x00000, 0x20000, 0x4228a00b )
 	ROM_LOAD_ODD ( "ldu-05.rom",   0x00000, 0x20000, 0x7260434f )
 	ROM_LOAD_EVEN( "ldu-04.rom",   0x40000, 0x10000, 0x429fb964 )
@@ -719,12 +716,12 @@ ROM_START( lastduel_rom )
 	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
-ROM_START( lstduela_rom )
-	ROM_REGION(0x60000)	/* 68000 code */
+ROM_START( lstduela )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "06",   0x00000, 0x20000, 0x0e71acaf )
 	ROM_LOAD_ODD ( "05",   0x00000, 0x20000, 0x47a85bea )
 	ROM_LOAD_EVEN( "04",   0x40000, 0x10000, 0xaa4bf001 )
@@ -753,12 +750,12 @@ ROM_START( lstduela_rom )
 	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
-ROM_START( lstduelb_rom )
-	ROM_REGION(0x60000)	/* 68000 code */
+ROM_START( lstduelb )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "ld_08.bin",    0x00000, 0x10000, 0x43811a96 )
 	ROM_LOAD_ODD ( "ld_07.bin",    0x00000, 0x10000, 0x63c30946 )
 	ROM_LOAD_EVEN( "ld_04.bin",    0x20000, 0x10000, 0x46a4e0f8 )
@@ -789,12 +786,12 @@ ROM_START( lstduelb_rom )
 	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
-ROM_START( madgear_rom )
-	ROM_REGION(0x80000)	/* 256K for 68000 code */
+ROM_START( madgear )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 256K for 68000 code */
 	ROM_LOAD_EVEN( "mg_04.rom",    0x00000, 0x20000, 0xb112257d )
 	ROM_LOAD_ODD ( "mg_03.rom",    0x00000, 0x20000, 0xb2672465 )
 	ROM_LOAD_EVEN( "mg_02.rom",    0x40000, 0x20000, 0x9f5ebe16 )
@@ -813,7 +810,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
 	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
 
-	ROM_REGION( 0x18000 ) /* audio CPU */
+	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
@@ -822,8 +819,37 @@ ROM_START( madgear_rom )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
 ROM_END
 
-ROM_START( ledstorm_rom )
-	ROM_REGION(0x80000)	/* 256K for 68000 code */
+ROM_START( madgearj )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 256K for 68000 code */
+	ROM_LOAD_EVEN( "mdj_04.rom",   0x00000, 0x20000, 0x9ebbebb1 )
+	ROM_LOAD_ODD ( "mdj_03.rom",   0x00000, 0x20000, 0xa5579c2d )
+	ROM_LOAD_EVEN( "mg_02.rom",    0x40000, 0x20000, 0x9f5ebe16 )
+	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
+
+	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
+	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
+	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
+	ROM_LOAD( "mg_m08.rom",   0x070000, 0x10000, 0x59709aa3 )
+	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
+	ROM_LOAD( "mg_m09.rom",   0x090000, 0x10000, 0x40ee83eb )
+	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
+	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
+	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
+
+	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
+	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
+	ROM_CONTINUE(             0x10000,  0x08000 )
+
+	ROM_REGION( 0x40000 ) /* ADPCM */
+	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
+	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
+ROM_END
+
+ROM_START( ledstorm )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 256K for 68000 code */
 	ROM_LOAD_EVEN( "mdu.04",    0x00000, 0x20000, 0x7f7f8329 )
 	ROM_LOAD_ODD ( "mdu.03",    0x00000, 0x20000, 0x11fa542f )
 	ROM_LOAD_EVEN( "mg_02.rom", 0x40000, 0x20000, 0x9f5ebe16 )
@@ -842,7 +868,7 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
 	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
 
-	ROM_REGION( 0x18000 ) /* audio CPU */
+	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
@@ -853,134 +879,7 @@ ROM_END
 
 /******************************************************************************/
 
-/*added by hsc 1/18/98 */
-
-#ifdef LSB_FIRST
-#define ENDIAN_ALIGN(a)	(a)
-#else
-#define ENDIAN_ALIGN(a) (a^1)
-#endif
-
-static int hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&lastduel_ram[0x1c706])==0x2 &&
-		READ_WORD(&lastduel_ram[0x1c708])==0 &&
-		READ_WORD(&lastduel_ram[0x1c752])==0x434f &&
-		READ_WORD(&lastduel_ram[0x1c754])==0x4d20)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-    	  	int hi;
-			osd_fread_msbfirst(f,&lastduel_ram[0x1c706],80);
-			osd_fclose(f);
-
-			memcpy (&lastduel_ram[0x187e2],&lastduel_ram[0x1c706],4);
-
-
-			hi =(lastduel_ram[ENDIAN_ALIGN(0x187e4)] & 0x0f) +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e4)] >> 4) * 10 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e5)] & 0x0f) * 100 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e5)] >> 4) * 1000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e2)] & 0x0f) * 10000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e2)] >> 4) * 100000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e3)] & 0x0f) * 1000000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e3)] >> 4) * 10000000;
-
-			if (hi >= 0){
-			lastduel_vram[ENDIAN_ALIGN(0x0a6c)]=lastduel_ram[ENDIAN_ALIGN(0x187e4)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x0a6d)]=0x50;
-			}
-			if (hi >= 10){
-			lastduel_vram[ENDIAN_ALIGN(0x0aec)]=lastduel_ram[ENDIAN_ALIGN(0x187e4)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x0aed)]=0x50;
-			}
-			if (hi >= 100){
-			lastduel_vram[ENDIAN_ALIGN(0x096c)]=lastduel_ram[ENDIAN_ALIGN(0x187e5)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x096d)]=0x50;
-			}
-			if (hi >= 1000){
-			lastduel_vram[ENDIAN_ALIGN(0x09ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e5)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x09ed)]=0x50;
-			}
-			if (hi >= 10000){
-			lastduel_vram[ENDIAN_ALIGN(0x086c)]=lastduel_ram[ENDIAN_ALIGN(0x187e2)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x086d)]=0x50;
-			}
-			if (hi >= 100000){
-			lastduel_vram[ENDIAN_ALIGN(0x08ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e2)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x08ed)]=0x50;
-			}
-			if (hi >= 1000000){
-			lastduel_vram[ENDIAN_ALIGN(0x076c)]=lastduel_ram[ENDIAN_ALIGN(0x187e3)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x076d)]=0x50;
-			}
-			if (hi >= 10000000){
-			lastduel_vram[ENDIAN_ALIGN(0x07ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e3)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x07ed)]=0x50;
-			}
-
-
-
-		}
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		lastduel_ram[ENDIAN_ALIGN(0x187e1)]=0;
-		lastduel_ram[ENDIAN_ALIGN(0x187e6)]=0;
-		osd_fwrite_msbfirst(f,&lastduel_ram[0x1c706],80);
-
-		osd_fclose(f);
-	}
-}
-
-static int madgear_hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&lastduel_ram[0x88a4])==0x0010 &&
-		READ_WORD(&lastduel_ram[0x88a6])==0x0000 &&
-		READ_WORD(&lastduel_ram[0x88f0])==0x434f &&
-		READ_WORD(&lastduel_ram[0x88f2])==0x4d03)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-
-			osd_fread_msbfirst(f,&lastduel_ram[0x88a4],80);
-
-			osd_fclose(f);
-
-		}
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void madgear_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&lastduel_ram[0x88a4],80);
-		osd_fclose(f);
-	}
-}
-
-/************************************************************************************/
-
-struct GameDriver lastduel_driver =
+struct GameDriver driver_lastduel =
 {
 	__FILE__,
 	0,
@@ -990,66 +889,66 @@ struct GameDriver lastduel_driver =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&lastduel_machine_driver,
+	&machine_driver_lastduel,
 	0,
 
-	lastduel_rom,
+	rom_lastduel,
 	0,0,0,0,
 
-	lastduel_input_ports,
+	input_ports_lastduel,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload,hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver lstduela_driver =
+struct GameDriver driver_lstduela =
 {
 	__FILE__,
-	&lastduel_driver,
+	&driver_lastduel,
 	"lstduela",
 	"Last Duel (US set 2)",
 	"1988",
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&lastduel_machine_driver,
+	&machine_driver_lastduel,
 	0,
 
-	lstduela_rom,
+	rom_lstduela,
 	0,0,0,0,
 
-	lastduel_input_ports,
+	input_ports_lastduel,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload,hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver lstduelb_driver =
+struct GameDriver driver_lstduelb =
 {
 	__FILE__,
-	&lastduel_driver,
+	&driver_lastduel,
 	"lstduelb",
 	"Last Duel (bootleg)",
 	"1988",
 	"bootleg",
 	"Bryan McPhail",
 	0,
-	&lastduel_machine_driver,
+	&machine_driver_lastduel,
 	0,
 
-	lstduelb_rom,
+	rom_lstduelb,
 	0,0,0,0,
 
-	lastduel_input_ports,
+	input_ports_lastduel,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver madgear_driver =
+struct GameDriver driver_madgear =
 {
 	__FILE__,
 	0,
@@ -1059,38 +958,61 @@ struct GameDriver madgear_driver =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&madgear_machine_driver,
+	&machine_driver_madgear,
 	0,
 
-	madgear_rom,
+	rom_madgear,
 	0,0,0,0,
 
-	madgear_input_ports,
+	input_ports_madgear,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	madgear_hiload, madgear_hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver ledstorm_driver =
+struct GameDriver driver_madgearj =
 {
 	__FILE__,
-	&madgear_driver,
+	&driver_madgear,
+	"madgearj",
+	"Mad Gear (Japan)",
+	"1989",
+	"Capcom",
+	"Bryan McPhail",
+	0,
+	&machine_driver_madgear,
+	0,
+
+	rom_madgearj,
+	0,0,0,0,
+
+	input_ports_madgear,
+
+	0, 0, 0,
+	ROT270,
+	0,0
+};
+
+struct GameDriver driver_ledstorm =
+{
+	__FILE__,
+	&driver_madgear,
 	"ledstorm",
 	"Led Storm (US)",
 	"1988",
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&madgear_machine_driver,
+	&machine_driver_madgear,
 	0,
 
-	ledstorm_rom,
+	rom_ledstorm,
 	0,0,0,0,
 
-	madgear_input_ports,
+	input_ports_madgear,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	madgear_hiload, madgear_hisave /* Untested */
+	ROT270,
+	0,0
 };

@@ -114,7 +114,7 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void meadows_videoram_w(int offset, int data);
 void meadows_sprite_w(int offset, int data);
 
-int meadows_sh_start(void);
+int meadows_sh_start(const struct MachineSound *msound);
 void meadows_sh_stop(void);
 void meadows_sh_dac_w(int data);
 void meadows_sh_update(void);
@@ -332,7 +332,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( meadows_input_ports )
+INPUT_PORTS_START( meadows )
 	PORT_START		/* IN0 buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1  )
@@ -422,6 +422,12 @@ static unsigned short colortable[ARTWORK_COLORS] =
 	0,0,
 	0,1,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
+
 
 static struct DACinterface dac_interface =
 {
@@ -429,21 +435,28 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static struct MachineDriver deadeye_machine_driver =
+static struct CustomSound_interface custom_interface =
+{
+	meadows_sh_start,
+	meadows_sh_stop,
+	0
+};
+
+
+
+static struct MachineDriver machine_driver_deadeye =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_S2650,
 			625000, 	/* 5MHz / 8 = 625 kHz */
-			0,
 			readmem,writemem,0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
 			CPU_S2650 | CPU_AUDIO_CPU,
 			625000, 	/* 5MHz / 8 = 625 kHz */
-			2,
 			sound_readmem,sound_writemem,
 			0,0,
 			0,0,
@@ -458,7 +471,7 @@ static struct MachineDriver deadeye_machine_driver =
 	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
-    0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
     0,
@@ -467,33 +480,32 @@ static struct MachineDriver deadeye_machine_driver =
 	meadows_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	&meadows_sh_start,
-	&meadows_sh_stop,
-	0,
+	0,0,0,0,
 	{
 		{
 			SOUND_DAC,
 			&dac_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
 		}
     }
 };
 
-static struct MachineDriver gypsyjug_machine_driver =
+static struct MachineDriver machine_driver_gypsyjug =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_S2650,
 			625000, 	/* 5MHz / 8 = 625 kHz */
-			0,
 			readmem,writemem,0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
 			CPU_S2650 | CPU_AUDIO_CPU,
 			625000, 	/* 5MHz / 8 = 625 kHz */
-			2,
 			sound_readmem,sound_writemem,
 			0,0,
 			0,0,
@@ -508,7 +520,7 @@ static struct MachineDriver gypsyjug_machine_driver =
 	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
-    0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
     0,
@@ -517,14 +529,15 @@ static struct MachineDriver gypsyjug_machine_driver =
 	meadows_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	&meadows_sh_start,
-	&meadows_sh_stop,
-	0,
+	0,0,0,0,
 	{
 		{
 			SOUND_DAC,
 			&dac_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
 		}
 	}
 };
@@ -535,8 +548,8 @@ static struct MachineDriver gypsyjug_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( deadeye_rom )
-	ROM_REGION(0x08000) 	/* 32K for code */
+ROM_START( deadeye )
+	ROM_REGIONX( 0x08000, REGION_CPU1 ) 	/* 32K for code */
 	ROM_LOAD( "de1.8h",       0x0000, 0x0400, 0xbd09e4dc )
 	ROM_LOAD( "de2.9h",       0x0400, 0x0400, 0xb89edec3 )
 	ROM_LOAD( "de3.10h",      0x0800, 0x0400, 0xacf24438 )
@@ -549,12 +562,12 @@ ROM_START( deadeye_rom )
 	ROM_LOAD( "de_mov1.5a",   0x0400, 0x0400, 0xc046b4c6 )
 	ROM_LOAD( "de_mov2.13a",  0x0800, 0x0400, 0xb89c5df9 )
 
-	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
+	ROM_REGIONX( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "de_snd",       0x0000, 0x0400, 0xc10a1b1a )
 ROM_END
 
-ROM_START( gypsyjug_rom )
-	ROM_REGION(0x08000) 	/* 32K for code */
+ROM_START( gypsyjug )
+	ROM_REGIONX( 0x08000, REGION_CPU1 ) 	/* 32K for code */
 	ROM_LOAD( "gj.1b",        0x0000, 0x0400, 0xf6a71d9f )
 	ROM_LOAD( "gj.2b",        0x0400, 0x0400, 0x94c14455 )
 	ROM_LOAD( "gj.3b",        0x0800, 0x0400, 0x87ee0490 )
@@ -566,7 +579,7 @@ ROM_START( gypsyjug_rom )
 	ROM_LOAD( "gj.a",         0x0400, 0x0400, 0xd3725193 )
 	ROM_RELOAD(               0x0800, 0x0400 )
 
-	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
+	ROM_REGIONX( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "gj.a4s",       0x0000, 0x0400, 0x17a116bc )
 	ROM_LOAD( "gj.a5s",       0x0400, 0x0400, 0xfc23ae09 )
 	ROM_LOAD( "gj.a6s",       0x0800, 0x0400, 0x9e7bd71e )
@@ -583,60 +596,12 @@ static unsigned char ball[16*2] = {
 	0x01,0x80, 0x03,0xc0, 0x03,0xc0, 0x01,0x80};
 
 	for (i = 0; i < 0x800; i += 16*2)
-		memcpy(&Machine->memory_region[1][0x0c00+i], ball, sizeof(ball));
-}
-
-static int deadeye_hiload(void)
-{
-    static int resetcount =0;
-	static int firsttime =0 ;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (++resetcount < 30) return 0;
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x0e00],"\x00\x00\x00\x00\x00\x00",6) ==0)
-
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x0e00],6);
-            osd_fclose(f);
-			firsttime = 0;
-    		resetcount =0;
-	}
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void deadeye_hisave(void)
-{
-    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-
-	if (memcmp(&RAM[0x0e00],"\x00\x00\x00\x00\x00\x00",6) != 0 )
-	{
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0 )
-	    {
-        osd_fwrite(f,&RAM[0x0e00],6);
-        osd_fclose(f);
-
-	    }
-	}
+		memcpy(&memory_region(1)[0x0c00+i], ball, sizeof(ball));
 }
 
 
 
-
-
-struct GameDriver deadeye_driver =
+struct GameDriver driver_deadeye =
 {
 	__FILE__,
 	0,
@@ -646,26 +611,23 @@ struct GameDriver deadeye_driver =
 	"Meadows",
 	"Juergen Buchmueller\n",
 	0,
-	&deadeye_machine_driver,
+	&machine_driver_deadeye,
 	0,
 
-	deadeye_rom,
+	rom_deadeye,
 	0,
 	0,
 	0,
-	0,		/* sound_prom */
+	0,
 
-	meadows_input_ports,
+	input_ports_meadows,
 
-	0,		/* color_prom */
-	palette,
-	colortable,
-	ORIENTATION_DEFAULT,
-
-	deadeye_hiload,deadeye_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver gypsyjug_driver =
+struct GameDriver driver_gypsyjug =
 {
 	__FILE__,
 	0,
@@ -675,21 +637,17 @@ struct GameDriver gypsyjug_driver =
 	"Meadows",
 	"Juergen Buchmueller\n",
 	0,
-	&gypsyjug_machine_driver,
-	0,
-
-	gypsyjug_rom,
+	&machine_driver_gypsyjug,
 	gypsyjug_rom_decode,
+
+	rom_gypsyjug,
+	0, 0,
 	0,
 	0,
-	0,		/* sound_prom */
 
-	meadows_input_ports,
+	input_ports_meadows,
 
-	0,		/* color_prom */
-	palette,
-	colortable,
-	ORIENTATION_DEFAULT,
-
-	deadeye_hiload,deadeye_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

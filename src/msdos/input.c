@@ -179,6 +179,10 @@ int osd_wait_keypress(void)
 #define GET_JOYCODE_BUTTON(code) GET_JOYCODE_AXIS(code)
 #define GET_JOYCODE_DIR(code) (((code)>>14)&0x03)
 
+/* use otherwise unused joystick codes for the three mouse buttons */
+#define MOUSE_BUTTON(button) JOYCODE(1,0,button,1)
+
+
 #define MAX_JOY 256
 #define MAX_JOY_NAME_LEN 20
 
@@ -243,6 +247,18 @@ static void init_joy_list(void)
 	char buf[256];
 
 	tot = 0;
+
+	/* first of all, map mouse buttons */
+	for (j = 0;j < 3;j++)
+	{
+		sprintf(buf,"MOUSE B%d",j+1);
+		strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+		joynames[tot][MAX_JOY_NAME_LEN] = 0;
+		joylist[tot].name = joynames[tot];
+		joylist[tot].code = MOUSE_BUTTON(j+1);
+		tot++;
+	}
+
 	for (i = 0;i < num_joysticks;i++)
 	{
 		for (j = 0;j < joy[i].num_sticks;j++)
@@ -267,21 +283,6 @@ static void init_joy_list(void)
 		for (j = 0;j < joy[i].num_buttons;j++)
 		{
 			sprintf(buf,"J%d %s",i+1,joy[i].button[j].name);
-			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
-			joynames[tot][MAX_JOY_NAME_LEN] = 0;
-			joylist[tot].name = joynames[tot];
-			joylist[tot].code = JOYCODE(i+1,0,j+1,0);
-			tot++;
-		}
-	}
-
-	if (tot == 0)
-	{
-		/* if we have no joystick installed, put it button 1,2,3 for the mouse */
-		i = 0;
-		for (j = 0;j < 3;j++)
-		{
-			sprintf(buf,"J%d BUTTON %d",i+1,j+1);
 			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
 			joynames[tot][MAX_JOY_NAME_LEN] = 0;
 			joylist[tot].name = joynames[tot];
@@ -329,12 +330,12 @@ int osd_is_joy_pressed(int joycode)
 	/* special case for mouse buttons */
 	switch (joycode)
 	{
-		case JOYCODE(1,0,1,0):
-			if (mouse_b & 1) return 1; break;
-		case JOYCODE(1,0,2,0):
-			if (mouse_b & 2) return 1; break;
-		case JOYCODE(1,0,3,0):
-			if (mouse_b & 4) return 1; break;
+		case MOUSE_BUTTON(1):
+			return mouse_b & 1; break;
+		case MOUSE_BUTTON(2):
+			return mouse_b & 2; break;
+		case MOUSE_BUTTON(3):
+			return mouse_b & 4; break;
 	}
 
 	joy_num = GET_JOYCODE_JOY(joycode);
@@ -493,19 +494,23 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	{
 		while (defaults->type != IPT_END)
 		{
-			if (defaults->keyboard == KEYCODE_UP) defaults->keyboard = KEY_8_PAD;
-			if (defaults->keyboard == KEYCODE_DOWN) defaults->keyboard = KEY_2_PAD;
-			if (defaults->keyboard == KEYCODE_LEFT) defaults->keyboard = KEY_4_PAD;
-			if (defaults->keyboard == KEYCODE_RIGHT) defaults->keyboard = KEY_6_PAD;
-			if (defaults->type == IPT_UI_SELECT) defaults->keyboard = KEY_LCONTROL;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) defaults->keyboard = KEY_R;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) defaults->keyboard = KEY_F;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) defaults->keyboard = KEY_D;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) defaults->keyboard = KEY_G;
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) defaults->keyboard = KEY_8_PAD;
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) defaults->keyboard = KEY_2_PAD;
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) defaults->keyboard = KEY_4_PAD;
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) defaults->keyboard = KEY_6_PAD;
+			int j;
+			for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
+			{
+				if (defaults->keyboard[j] == KEYCODE_UP) defaults->keyboard[j] = KEY_8_PAD;
+				if (defaults->keyboard[j] == KEYCODE_DOWN) defaults->keyboard[j] = KEY_2_PAD;
+				if (defaults->keyboard[j] == KEYCODE_LEFT) defaults->keyboard[j] = KEY_4_PAD;
+				if (defaults->keyboard[j] == KEYCODE_RIGHT) defaults->keyboard[j] = KEY_6_PAD;
+			}
+			if (defaults->type == IPT_UI_SELECT) input_key_seq_set_1(&defaults->keyboard, KEY_LCONTROL);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_R);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_F);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_D);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_G);
+			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_8_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_2_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_4_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) input_key_seq_set_1(&defaults->keyboard,KEY_6_PAD);
 
 			defaults++;
 		}

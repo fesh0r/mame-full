@@ -125,7 +125,7 @@ static struct MemoryWriteAddress surpratk_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( surpratk )
 	PORT_START	/* PLAYER 1 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
@@ -247,7 +247,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,		/* 053248 */
 			3000000,		/* ? */
-			0,
 			surpratk_readmem,surpratk_writemem,0,0,
             surpratk_interrupt,1
 		}
@@ -284,8 +283,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( surpratk_rom )
-	ROM_REGION( 0x51000 ) /* code + banked roms + palette RAM */
+ROM_START( surpratk )
+	ROM_REGIONX( 0x51000, REGION_CPU1 ) /* code + banked roms + palette RAM */
 	ROM_LOAD( "911m01.bin", 0x10000, 0x20000, 0xee5b2cc8 )
 	ROM_LOAD( "911m02.bin", 0x30000, 0x18000, 0x5d4148a8 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
@@ -307,7 +306,7 @@ ROM_END
 
 static void surpratk_banking(int lines)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
 if (errorlog) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get_pc(),lines);
@@ -321,7 +320,7 @@ static void surpratk_init_machine( void )
 {
 	konami_cpu_setlines_callback = surpratk_banking;
 
-	paletteram = &Machine->memory_region[0][0x48000];
+	paletteram = &memory_region(REGION_CPU1)[0x48000];
 }
 
 static void gfx_untangle(void)
@@ -332,7 +331,7 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver surpratk_driver =
+struct GameDriver driver_surpratk =
 {
 	__FILE__,
 	0,
@@ -343,16 +342,16 @@ struct GameDriver surpratk_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	gfx_untangle,
+
+	rom_surpratk,
+	0, 0,
+	0,
 	0,
 
-	surpratk_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
+	input_ports_surpratk,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0,
 	0, 0
 };

@@ -120,13 +120,10 @@ void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void phoenix_sound_control_a_w(int offset, int data);
-void phoenix_sound_control_b_w(int offset, int data);
-int phoenix_sh_start(void);
-void phoenix_sh_update(void);
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
-int pleiads_sh_start(void);
+int pleiads_sh_start(const struct MachineSound *msound);
+
 void pleiads_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
@@ -165,6 +162,7 @@ static struct MemoryWriteAddress popflame_writemem[] =
 };
 
 
+
 /***************************************************************************
 
   Naughty Boy doesn't have VBlank interrupts.
@@ -172,6 +170,7 @@ static struct MemoryWriteAddress popflame_writemem[] =
   slots.
 
 ***************************************************************************/
+
 int naughtyb_interrupt(void)
 {
 	if (readinputport(2) & 1)
@@ -179,7 +178,7 @@ int naughtyb_interrupt(void)
 	else return ignore_interrupt();
 }
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( naughtyb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -219,7 +218,7 @@ INPUT_PORTS_START( input_ports )
 	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+        PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 
@@ -246,6 +245,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct CustomSound_interface custom_interface =
+{
+	pleiads_sh_start,
+	0,
+	pleiads_sh_update
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -253,7 +261,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			1500000,	/* 3 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			naughtyb_interrupt,1
 		}
@@ -276,21 +283,23 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	0,
-	pleiads_sh_start,
-	0,
-	pleiads_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 /* Exactly the same but for the writemem handler */
-static struct MachineDriver popflame_machine_driver =
+static struct MachineDriver machine_driver_popflame =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1500000,	/* 3 Mhz ? */
-			0,
 			readmem,popflame_writemem,0,0,
 			naughtyb_interrupt,1
 		}
@@ -313,10 +322,13 @@ static struct MachineDriver popflame_machine_driver =
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	0,
-	pleiads_sh_start,
-	0,
-	pleiads_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 
@@ -327,8 +339,8 @@ static struct MachineDriver popflame_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( naughtyb_rom )
-	ROM_REGION(0x10000)      /* 64k for code */
+ROM_START( naughtyb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "1.30",      0x0000, 0x0800, 0xf6e1178e )
 	ROM_LOAD( "2.29",      0x0800, 0x0800, 0xb803eb8c )
 	ROM_LOAD( "3.28",      0x1000, 0x0800, 0x004d0ba7 )
@@ -348,13 +360,13 @@ ROM_START( naughtyb_rom )
 	ROM_LOAD( "9.50",      0x3000, 0x0800, 0x8c8db764 )
 	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
 
-ROM_START( naughtya_rom )
-	ROM_REGION(0x10000)      /* 64k for code */
+ROM_START( naughtya )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "91",        0x0000, 0x0800, 0x42b14bc7 )
 	ROM_LOAD( "92",        0x0800, 0x0800, 0xa24674b4 )
 	ROM_LOAD( "3.28",      0x1000, 0x0800, 0x004d0ba7 )
@@ -374,13 +386,13 @@ ROM_START( naughtya_rom )
 	ROM_LOAD( "9.50",      0x3000, 0x0800, 0x8c8db764 )
 	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
 
-ROM_START( naughtyc_rom )
-	ROM_REGION(0x10000)      /* 64k for code */
+ROM_START( naughtyc )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "nb1ic30",   0x0000, 0x0800, 0x3f482fa3 )
 	ROM_LOAD( "nb2ic29",   0x0800, 0x0800, 0x7ddea141 )
 	ROM_LOAD( "nb3ic28",   0x1000, 0x0800, 0x8c72a069 )
@@ -400,13 +412,13 @@ ROM_START( naughtyc_rom )
 	ROM_LOAD( "nb9ic50",   0x3000, 0x0800, 0xd6949c27 )
 	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
 
-ROM_START( popflame_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( popflame )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic86.pop",     0x0000, 0x1000, 0x5e32bbdf )
 	ROM_LOAD( "ic80.pop",     0x1000, 0x1000, 0xb77abf3d )
 	ROM_LOAD( "ic94.pop",     0x2000, 0x1000, 0x945a3c0f )
@@ -418,13 +430,13 @@ ROM_START( popflame_rom )
 	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
 	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
 	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
-ROM_START( popflama_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( popflama )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "popflama.30",     0x0000, 0x1000, 0xa9bb0e8a )
 	ROM_LOAD( "popflama.28",     0x1000, 0x1000, 0xdebe6d03 )
 	ROM_LOAD( "popflama.26",     0x2000, 0x1000, 0x09df0d4d )
@@ -436,142 +448,14 @@ ROM_START( popflama_rom )
 	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
 	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
 	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
 
 
-static int naughtyb_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score has already been written to screen */
-	if((RAM[0x874a] == 8) && (RAM[0x8746] == 9) && (RAM[0x8742] == 7) && (RAM[0x873e] == 8) &&  /* HIGH */
-	   (RAM[0x8743] == 0x20) && (RAM[0x873f] == 0x20) && (RAM[0x873b] == 0x20) && (RAM[0x8737] == 0x20))
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			char buf[10];
-			int hi;
-
-			osd_fread(f,&RAM[0x4003],4);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			hi = (RAM[0x4006] & 0x0f) +
-			     (RAM[0x4006] >> 4) * 10 +
-			     (RAM[0x4005] & 0x0f) * 100 +
-			     (RAM[0x4005] >> 4) * 1000 +
-			     (RAM[0x4004] & 0x0f) * 10000 +
-			     (RAM[0x4004] >> 4) * 100000 +
-			     (RAM[0x4003] & 0x0f) * 1000000 +
-			     (RAM[0x4003] >> 4) * 10000000;
-			if (hi)
-			{
-				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') videoram_w(0x0743,buf[2]-'0'+0x20);
-				if (buf[3] != ' ') videoram_w(0x073f,buf[3]-'0'+0x20);
-				if (buf[4] != ' ') videoram_w(0x073b,buf[4]-'0'+0x20);
-				if (buf[5] != ' ') videoram_w(0x0737,buf[5]-'0'+0x20);
-				if (buf[6] != ' ') videoram_w(0x0733,buf[6]-'0'+0x20);
-				if (buf[7] != ' ') videoram_w(0x072f,buf[7]-'0'+0x20);
-			}
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static unsigned long get_score(unsigned char *score)
-{
-   return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
-}
-
-static void naughtyb_hisave(void)
-{
-	unsigned long score1,score2,hiscore;
-	void *f;
-
-	unsigned char *RAM = Machine->memory_region[0];
-
-	score1 = get_score(&RAM[0x4020]);
-	score2 = get_score(&RAM[0x4030]);
-	hiscore = get_score(&RAM[0x4003]);
-
-	if (score1 > hiscore) RAM += 0x4020;
-	else if (score2 > hiscore) RAM += 0x4030;
-	else RAM += 0x4003;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0],4);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int popflame_hiload (void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score has already been written to screen */
-	if ((RAM[0x874a] == 8) && (RAM[0x8746] == 9) && (RAM[0x8742] == 7) &&
-	    (RAM[0x873e] == 8) &&  /* HIGH */
-	    (RAM[0x8743] == 0x20) && (RAM[0x873f] == 0x20) && (RAM[0x873b] == 0x20) &&
-	    (RAM[0x8737] == 0x20)) /* 0000 */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread (f,&RAM[0x4004],3);
-			osd_fclose (f);
-
-			videoram_w (0x743, (RAM[0x4004] >> 4) | 0x20);
-			videoram_w (0x73f, (RAM[0x4004] & 0x0f) | 0x20);
-			videoram_w (0x73b, (RAM[0x4005] >> 4) | 0x20);
-			videoram_w (0x737, (RAM[0x4005] & 0x0f) | 0x20);
-			videoram_w (0x733, (RAM[0x4006] >> 4) | 0x20);
-			videoram_w (0x72f, (RAM[0x4006] & 0x0f) | 0x20);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void popflame_hisave (void)
-{
-	unsigned long score1,score2,hiscore;
-	void *f;
-
-	unsigned char *RAM = Machine->memory_region[0];
-
-	score1 = get_score (&RAM[0x4021]);
-	score2 = get_score (&RAM[0x4031]);
-	hiscore = get_score (&RAM[0x4004]);
-
-	if (score1 > hiscore) RAM += 0x4021;
-	else if (score2 > hiscore) RAM += 0x4031;
-	else RAM += 0x4004;
-
-	if ((f = osd_fopen (Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite (f,&RAM[0],3);
-		osd_fclose (f);
-	}
-}
-
-
-
-struct GameDriver naughtyb_driver =
+struct GameDriver driver_naughtyb =
 {
 	__FILE__,
 	0,
@@ -584,23 +468,22 @@ struct GameDriver naughtyb_driver =
 	&machine_driver,
 	0,
 
-	naughtyb_rom,
+	rom_naughtyb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	naughtyb_hiload, naughtyb_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver naughtya_driver =
+struct GameDriver driver_naughtya =
 {
 	__FILE__,
-	&naughtyb_driver,
+	&driver_naughtyb,
 	"naughtya",
 	"Naughty Boy (bootleg)",
 	"1982",
@@ -610,23 +493,22 @@ struct GameDriver naughtya_driver =
 	&machine_driver,
 	0,
 
-	naughtya_rom,
+	rom_naughtya,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	naughtyb_hiload, naughtyb_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver naughtyc_driver =
+struct GameDriver driver_naughtyc =
 {
 	__FILE__,
-	&naughtyb_driver,
+	&driver_naughtyb,
 	"naughtyc",
 	"Naughty Boy (Cinematronics)",
 	"1982",
@@ -636,20 +518,19 @@ struct GameDriver naughtyc_driver =
 	&machine_driver,
 	0,
 
-	naughtyc_rom,
+	rom_naughtyc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	naughtyb_hiload, naughtyb_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver popflame_driver =
+struct GameDriver driver_popflame =
 {
 	__FILE__,
 	0,
@@ -659,45 +540,43 @@ struct GameDriver popflame_driver =
 	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
-	&popflame_machine_driver,
+	&machine_driver_popflame,
 	0,
 
-	popflame_rom,
+	rom_popflame,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	popflame_hiload, popflame_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver popflama_driver =
+struct GameDriver driver_popflama =
 {
 	__FILE__,
-	&popflame_driver,
+	&driver_popflame,
 	"popflama",
 	"Pop Flamer (set 2)",
 	"1982",
 	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
-	&popflame_machine_driver,
+	&machine_driver_popflame,
 	0,
 
-	popflama_rom,
+	rom_popflama,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	popflame_hiload, popflame_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 

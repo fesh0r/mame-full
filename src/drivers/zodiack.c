@@ -26,7 +26,10 @@ extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
 
+int percuss_hardware;
+
 void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void galaxian_attributes_w(int offset,int data);
 void zodiac_flipscreen_w(int offset,int data);
@@ -36,6 +39,20 @@ void espial_init_machine(void);
 void zodiac_master_interrupt_enable_w(int offset, int data);
 int  zodiac_master_interrupt(void);
 void zodiac_master_soundlatch_w(int offset, int data);
+
+
+static void zodiack_init_machine(void)
+{
+	percuss_hardware = 0;
+	espial_init_machine();
+}
+
+static void percuss_init_machine(void)
+{
+	percuss_hardware = 1;
+	espial_init_machine();
+}
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -99,7 +116,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( zodiac_input_ports )
+INPUT_PORTS_START( zodiac )
 	PORT_START      /* DSW0 */  /* never read in this game */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -149,7 +166,7 @@ INPUT_PORTS_START( zodiac_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dogfight_input_ports )
+INPUT_PORTS_START( dogfight )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
@@ -222,7 +239,7 @@ INPUT_PORTS_START( dogfight_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( moguchan_input_ports )
+INPUT_PORTS_START( moguchan )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -269,6 +286,75 @@ INPUT_PORTS_START( moguchan_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)	    /* these are read, but are they */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )					/* ever used? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( percuss )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000 100000" )
+	PORT_DIPSETTING(    0x04, "20000 200000" )
+	PORT_DIPSETTING(    0x08, "40000 100000" )
+	PORT_DIPSETTING(    0x0c, "40000 200000" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x03, "7" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL)
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
@@ -322,10 +408,10 @@ static struct GfxLayout bulletlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 8 },
-	{ 1, 0x1000, &spritelayout, 0, 8 },
-	{ 1, 0x0000, &bulletlayout, 6, 1 },
-	{ 1, 0x1800, &charlayout_2, 0, 8 },
+	{ 1, 0x0000, &charlayout,   8*4    , 8 },
+	{ 1, 0x0800, &spritelayout, 0      , 8 },
+	{ 1, 0x0000, &bulletlayout, 8*4+8*2, 1 },
+	{ 1, 0x1000, &charlayout_2, 0      , 8 },
 	{ -1 } /* end of array */
 };
 
@@ -343,245 +429,141 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4.00 MHz??? */
-			0,
-			readmem,writemem,0,0,
-			zodiac_master_interrupt,2
-		},
-		{
-			CPU_Z80,
-			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			nmi_interrupt,8	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	espial_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 32,
-	zodiack_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	zodiack_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
+#define MACHINE_DRIVER(GAMENAME)							\
+static struct MachineDriver machine_driver_##GAMENAME =		\
+{															\
+	/* basic machine hardware */							\
+	{														\
+		{													\
+			CPU_Z80,										\
+			4000000,        /* 4.00 MHz??? */				\
+			readmem,writemem,0,0,							\
+			zodiac_master_interrupt,2						\
+		},													\
+		{													\
+			CPU_Z80,										\
+			14318000/8,	/* 1.78975 Mhz??? */				\
+			sound_readmem,sound_writemem,0,sound_writeport,	\
+			nmi_interrupt,8	/* IRQs are triggered by the main CPU */	\
+		}													\
+	},														\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */			\
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
+	GAMENAME##_init_machine,								\
+															\
+	/* video hardware */									\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },				\
+	gfxdecodeinfo,											\
+	49, 4*8+2*8+2*1,										\
+	zodiack_vh_convert_color_prom,							\
+															\
+	VIDEO_TYPE_RASTER,										\
+	0,														\
+	generic_vh_start,										\
+	generic_vh_stop,										\
+	zodiack_vh_screenrefresh,								\
+															\
+	/* sound hardware */									\
+	0,0,0,0,												\
+	{														\
+		{													\
+			SOUND_AY8910,									\
+			&ay8910_interface								\
+		}													\
+	}														\
 };
 
+MACHINE_DRIVER(zodiack)
+MACHINE_DRIVER(percuss)
 
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( zodiack_rom )
-	ROM_REGION(0x10000)       /* 64k for code */
+ROM_START( zodiack )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "ovg30c.2",     0x0000, 0x2000, 0xa2125e99 )
 	ROM_LOAD( "ovg30c.3",     0x2000, 0x2000, 0xaee2b77f )
 	ROM_LOAD( "ovg30c.6",     0x4000, 0x0800, 0x1debb278 )
 
-	ROM_REGION_DISPOSE(0x3000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ovg40c.7",     0x0000, 0x1000, 0xa90e72a5 )
-	ROM_LOAD( "orca40c.8",    0x1000, 0x1000, 0x88269c94 )
-	ROM_LOAD( "orca40c.9",    0x2000, 0x1000, 0xa3bd40c9 )
+	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ovg40c.7",     0x0000, 0x0800, 0xed9d3be7 )
+	ROM_LOAD( "orca40c.8",    0x0800, 0x1000, 0x88269c94 )
+	ROM_LOAD( "orca40c.9",    0x1800, 0x1000, 0xa3bd40c9 )
 
-	ROM_REGION(0x0040)	/* color prom */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "ovg40c.2a",    0x0000, 0x0020, 0x703821b8 )
-	ROM_LOAD( "ovg40c.2b",    0x0020, 0x0020, 0x21f77ec7 )  /* I don't know what this is */
+	ROM_LOAD( "ovg40c.2b",    0x0020, 0x0020, 0x21f77ec7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ovg20c.1",     0x0000, 0x1000, 0x2d3c3baf )
 ROM_END
 
-ROM_START( dogfight_rom )
-	ROM_REGION(0x10000)       /* 64k for code */
+ROM_START( dogfight )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "df-2",         0x0000, 0x2000, 0xad24b28b )
 	ROM_LOAD( "df-3",         0x2000, 0x2000, 0xcd172707 )
 	ROM_LOAD( "df-5",         0x4000, 0x1000, 0x874dc6bf )
 	ROM_LOAD( "df-4",         0xc000, 0x1000, 0xd8aa3d6d )
 
-	ROM_REGION_DISPOSE(0x3000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "df-6",         0x0000, 0x1000, 0xb216e664 )
-	ROM_LOAD( "df-7",         0x1000, 0x1000, 0xffe05fee )
-	ROM_LOAD( "df-8",         0x2000, 0x1000, 0x2cb51793 )
+	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "df-6",         0x0000, 0x0800, 0x3059b515 )
+	ROM_LOAD( "df-7",         0x0800, 0x1000, 0xffe05fee )
+	ROM_LOAD( "df-8",         0x1800, 0x1000, 0x2cb51793 )
 
-	ROM_REGION(0x0040)	/* color prom */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0x69a35aa5 )
-	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x596ae457 )  /* I don't know what this is */
+	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x596ae457 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "df-1",         0x0000, 0x1000, 0xdcbb1c5b )
 ROM_END
 
-ROM_START( moguchan_rom )
-	ROM_REGION(0x10000)       /* 64k for code */
+ROM_START( moguchan )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "2.5r",         0x0000, 0x1000, 0x85d0cb7e )
 	ROM_LOAD( "4.5m",         0x1000, 0x1000, 0x359ef951 )
 	ROM_LOAD( "3.5np",        0x2000, 0x1000, 0xc8776f77 )
 
-	ROM_REGION_DISPOSE(0x3000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5.4r",         0x0000, 0x1000, 0x7a0fd027 )
-	ROM_LOAD( "6.7p",         0x1000, 0x1000, 0xc8060ffe )
-	ROM_LOAD( "7.7m",         0x2000, 0x1000, 0xbfca00f4 )
+	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5.4r",         0x0000, 0x0800, 0x1b7febd8 )
+	ROM_LOAD( "6.7p",         0x0800, 0x1000, 0xc8060ffe )
+	ROM_LOAD( "7.7m",         0x1800, 0x1000, 0xbfca00f4 )
 
-	ROM_REGION(0x0040)	/* color prom - missing */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "moguchan.cl1", 0x0000, 0x0020, 0x00000000 )
-	ROM_LOAD( "moguchan.cl2", 0x0020, 0x0020, 0x00000000 )  /* I don't know what this is */
+	ROM_LOAD( "moguchan.cl2", 0x0020, 0x0020, 0x00000000 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1.7hj",        0x0000, 0x1000, 0x1a88d35f )
 ROM_END
 
-/****************************************************************************/
+ROM_START( percuss )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_LOAD( "percuss.1",    0x0000, 0x1000, 0xff0364f7 )
+	ROM_LOAD( "percuss.3",    0x1000, 0x1000, 0x7f646c59 )
+	ROM_LOAD( "percuss.2",    0x2000, 0x1000, 0x6bf72dd2 )
+	ROM_LOAD( "percuss.4",    0x3000, 0x1000, 0xfb1b15ba )
+	ROM_LOAD( "percuss.5",    0x4000, 0x1000, 0x8e5a9692 )
 
-/****  Zodiack high score save routine - RJF (May 17, 1999)  ****/
+	ROM_REGION_DISPOSE(0x2800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "percuss.10",   0x0000, 0x0800, 0x797598aa )
+	ROM_LOAD( "percuss.6",    0x0800, 0x1000, 0x5285a580 )
+	ROM_LOAD( "percuss.7",    0x1800, 0x1000, 0x8fc4175d )
 
-static int zodiack_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_LOAD( "percus2a.prm", 0x0000, 0x0020, 0xe2ee9637 )
+	ROM_LOAD( "percus2b.prm", 0x0020, 0x0020, 0xe561b029 )
 
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x5875],"\x14\x12\x1d",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x5857], 5*6);        /* scores */
-                        osd_fread(f,&RAM[0x5875], 5*5);        /* initials */
-
-                        RAM[0x5847] = RAM[0x5859];      /* update high score */
-                        RAM[0x5848] = RAM[0x585a];      /* on top of screen */
-                        RAM[0x5849] = RAM[0x585b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void zodiack_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x5857], 5*6);
-                osd_fwrite(f,&RAM[0x5875], 5*5);
-		osd_fclose(f);
-	}
-}
-
-/****  Dogfight high score save routine - RJF (May 19, 1999)  ****/
-
-static int dogfight_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x587e],"\x20\x35\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x587e], 10*3);        /* scores */
-                        osd_fread(f,&RAM[0x589c], 10*10);       /* initials */
-
-                        RAM[0x587b] = RAM[0x587e];      /* update high score */
-                        RAM[0x587c] = RAM[0x587f];      /* on top of screen */
-                        RAM[0x587d] = RAM[0x5880];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void dogfight_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x587e], 10*3);
-                osd_fwrite(f,&RAM[0x589c], 10*10);
-		osd_fclose(f);
-	}
-}
-
-/****  Moguchan high score save routine - RJF (May 19, 1999)  ****/
-
-static int moguchan_hiload(void)
-{
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-              memset(&RAM[0x5eda],0xff, 5);
-              firsttime = 1;
-	}
-
-        if(memcmp(&RAM[0x5eda],"\x00\x00\x00",3) == 0)
-	{
-              void *f;
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                        osd_fread(f,&RAM[0x5eda], 5);	/* top score */
-                        osd_fclose(f);
-              }
-
-              return 1;
-    		  firsttime = 0;
-	}
-      else return 0;   /* we can't load the hi scores yet */
-}
-
-static void moguchan_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x5eda], 5);
-		osd_fclose(f);
-	}
-}
-
-/***************************************************************************/
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "percuss.8",    0x0000, 0x0800, 0xd63f56f3 )
+	ROM_LOAD( "percuss.9",    0x0800, 0x0800, 0xe08fef2f )
+ROM_END
 
 
 
-struct GameDriver zodiack_driver =
+struct GameDriver driver_zodiack =
 {
 	__FILE__,
 	0,
@@ -590,25 +572,24 @@ struct GameDriver zodiack_driver =
 	"1983",
 	"Orca (Esco Trading Co, Inc)",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
-	&machine_driver,
+	0,
+	&machine_driver_zodiack,
 	0,
 
-	zodiack_rom,
+	rom_zodiack,
 	0,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	zodiac_input_ports,
+	input_ports_zodiac,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-        zodiack_hiload, zodiack_hisave
+	0, 0, 0,
+	ROT270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
+	0,0
 };
 
-struct GameDriver dogfight_driver =
+struct GameDriver driver_dogfight =
 {
 	__FILE__,
 	0,
@@ -617,25 +598,24 @@ struct GameDriver dogfight_driver =
 	"1983",
 	"[Orca] Thunderbolt",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
-	&machine_driver,
+	0,
+	&machine_driver_zodiack,
 	0,
 
-	dogfight_rom,
+	rom_dogfight,
 	0,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	dogfight_input_ports,
+	input_ports_dogfight,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-        dogfight_hiload, dogfight_hisave
+	0, 0, 0,
+	ROT270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
+	0,0
 };
 
-struct GameDriver moguchan_driver =
+struct GameDriver driver_moguchan =
 {
 	__FILE__,
 	0,
@@ -644,21 +624,46 @@ struct GameDriver moguchan_driver =
 	"1982",
 	"Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */
 	"Zsolt Vasvari",
-	GAME_WRONG_COLORS,
-	&machine_driver,
+	0,
+	&machine_driver_zodiack,
 	0,
 
-	moguchan_rom,
+	rom_moguchan,
 	0,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	moguchan_input_ports,
+	input_ports_moguchan,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	moguchan_hiload, moguchan_hisave
+	0, 0, 0,
+	ROT270 | GAME_WRONG_COLORS,
+	0,0
 };
 
+struct GameDriver driver_percuss =
+{
+	__FILE__,
+	0,
+	"percuss",
+	"The Percussor",
+	"1981",
+	"Orca",
+	"Zsolt Vasvari",
+	0,
+	&machine_driver_percuss,
+	0,
+
+	rom_percuss,
+	0,
+	0,
+	0,
+	0,
+
+	input_ports_percuss,
+
+	0, 0, 0,
+	ROT270,
+
+	0, 0
+};

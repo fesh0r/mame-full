@@ -34,15 +34,14 @@ f800      playfield 0 X scroll position
 
 
 
-extern unsigned char *mrdo_videoram2;
-extern unsigned char *mrdo_colorram2;
-extern unsigned char *mrdo_scroll_y;
-void mrdo_videoram2_w(int offset,int data);
-void mrdo_colorram2_w(int offset,int data);
+extern unsigned char *mrdo_bgvideoram,*mrdo_fgvideoram;
+void mrdo_bgvideoram_w(int offset,int data);
+void mrdo_fgvideoram_w(int offset,int data);
+void mrdo_scrollx_w(int offset,int data);
+void mrdo_scrolly_w(int offset,int data);
 void mrdo_flipscreen_w(int offset,int data);
 void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int mrdo_vh_start(void);
-void mrdo_vh_stop(void);
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -51,7 +50,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* if a read from this address doesn't return the value it expects. */
 int mrdo_SECRE_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[ cpu_get_reg(Z80_HL) ];
 }
 
@@ -59,36 +58,34 @@ int mrdo_SECRE_r(int offset)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },	/* video and color RAM */
+	{ 0x9803, 0x9803, mrdo_SECRE_r },
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa001, 0xa001, input_port_1_r },	/* IN1 */
 	{ 0xa002, 0xa002, input_port_2_r },	/* DSW1 */
 	{ 0xa003, 0xa003, input_port_3_r },	/* DSW2 */
-	{ 0x9803, 0x9803, mrdo_SECRE_r },
+	{ 0xe000, 0xefff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0x8000, 0x83ff, colorram_w, &colorram },
-	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8800, 0x8bff, mrdo_colorram2_w, &mrdo_colorram2 },
-	{ 0x8c00, 0x8fff, mrdo_videoram2_w, &mrdo_videoram2 },
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, mrdo_bgvideoram_w, &mrdo_bgvideoram },
+	{ 0x8800, 0x8fff, mrdo_fgvideoram_w, &mrdo_fgvideoram },
 	{ 0x9000, 0x90ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9800, 0x9800, mrdo_flipscreen_w },	/* screen flip + playfield priority */
 	{ 0x9801, 0x9801, SN76496_0_w },
 	{ 0x9802, 0x9802, SN76496_1_w },
-	{ 0xf800, 0xffff, MWA_RAM, &mrdo_scroll_y },
-	{ 0xf000, 0xf7ff, MWA_NOP },
-	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0xf000, 0xf7ff, mrdo_scrollx_w },
+	{ 0xf800, 0xffff, mrdo_scrolly_w },
 	{ -1 }	/* end of table */
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mrdo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -191,9 +188,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 128 },
-	{ 1, 0x2000, &charlayout,       0, 128 },
-	{ 1, 0x4000, &spritelayout, 4*128,  16 },
+	{ 1, 0x0000, &charlayout,      0, 64 },	/* colors 0-255 directly mapped */
+	{ 1, 0x2000, &charlayout,      0, 64 },
+	{ 1, 0x4000, &spritelayout, 4*64, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -203,7 +200,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	{ 4000000, 4000000 },	/* 4 MHz */
-	{ 70, 70 }
+	{ 50, 50 }
 };
 
 
@@ -215,7 +212,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -227,13 +223,13 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
-	257,4*144,
+	256,64*4+16*4,
 	mrdo_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	mrdo_vh_start,
-	mrdo_vh_stop,
+	0,
 	mrdo_vh_screenrefresh,
 
 	/* sound hardware */
@@ -254,8 +250,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mrdo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mrdo )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
 	ROM_LOAD( "c4-02.bin",    0x2000, 0x2000, 0x0ecdd39c )
 	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
@@ -269,14 +265,14 @@ ROM_START( mrdo_rom )
 	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
 	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
-	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
 	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdot_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mrdot )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
@@ -290,35 +286,35 @@ ROM_START( mrdot_rom )
 	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
 	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
-	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
 	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdofix_rom )
-    ROM_REGION(0x10000) /* 64k for code */
-    ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
-    ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
-    ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
-    ROM_LOAD( "dofix.d4",     0x6000, 0x2000, 0x32db845f )
+ROM_START( mrdofix )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
+	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
+	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
+	ROM_LOAD( "dofix.d4",     0x6000, 0x2000, 0x32db845f )
 
-    ROM_REGION_DISPOSE(0x6000)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
-    ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
-    ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-    ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-    ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
-    ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+	ROM_REGION_DISPOSE(0x6000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
+	ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
-    ROM_REGION(0x0060)  /* color PROMs */
-    ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )  /* palette (high bits) */
-    ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )  /* palette (low bits) */
-    ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )  /* sprite color lookup table */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )  /* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )  /* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )  /* sprite color lookup table */
 ROM_END
 
-ROM_START( mrlo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mrlo )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mrlo01.bin",   0x0000, 0x2000, 0x6f455e7d )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
@@ -332,14 +328,14 @@ ROM_START( mrlo_rom )
 	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
 	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
-	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
 	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdu_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mrdu )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
@@ -353,14 +349,14 @@ ROM_START( mrdu_rom )
 	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
 	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
-	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
 	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdoy_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mrdoy )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dosnow.1",     0x0000, 0x2000, 0xd3454e2c )
 	ROM_LOAD( "dosnow.2",     0x2000, 0x2000, 0x5120a6b2 )
 	ROM_LOAD( "dosnow.3",     0x4000, 0x2000, 0x96416dbe )
@@ -374,14 +370,14 @@ ROM_START( mrdoy_rom )
 	ROM_LOAD( "dosnow.5",     0x4000, 0x1000, 0x7662d828 )
 	ROM_LOAD( "dosnow.6",     0x5000, 0x1000, 0x413f88d1 )
 
-	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
 	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( yankeedo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( yankeedo )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
 	ROM_LOAD( "yd_d2.c4",     0x2000, 0x2000, 0x7c9d7ce0 )
 	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
@@ -395,7 +391,7 @@ ROM_START( yankeedo_rom )
 	ROM_LOAD( "yd_d5.h5",     0x4000, 0x1000, 0xf530b79b )
 	ROM_LOAD( "yd_d6.k5",     0x5000, 0x1000, 0x790579aa )
 
-	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
 	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
@@ -403,45 +399,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe017],"\x01\x00\x00",3) == 0 &&
-			memcmp(&RAM[0xe071],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe017],10*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe017],10*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver mrdo_driver =
+struct GameDriver driver_mrdo =
 {
 	__FILE__,
 	0,
@@ -454,23 +412,22 @@ struct GameDriver mrdo_driver =
 	&machine_driver,
 	0,
 
-	mrdo_rom,
+	rom_mrdo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mrdo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver mrdot_driver =
+struct GameDriver driver_mrdot =
 {
 	__FILE__,
-	&mrdo_driver,
+	&driver_mrdo,
 	"mrdot",
 	"Mr. Do! (Taito)",
 	"1982",
@@ -480,23 +437,22 @@ struct GameDriver mrdot_driver =
 	&machine_driver,
 	0,
 
-	mrdot_rom,
+	rom_mrdot,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mrdo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver mrdofix_driver =
+struct GameDriver driver_mrdofix =
 {
     __FILE__,
-    &mrdo_driver,
+    &driver_mrdo,
     "mrdofix",
     "Mr. Do! (bugfixed)",
     "1982",
@@ -506,23 +462,22 @@ struct GameDriver mrdofix_driver =
     &machine_driver,
     0,
 
-    mrdofix_rom,
+    rom_mrdofix,
     0, 0,
     0,
-    0,  /* sound_prom */
+    0,
 
-    input_ports,
+    input_ports_mrdo,
 
-    PROM_MEMORY_REGION(2), 0, 0,
-    ORIENTATION_ROTATE_270,
-
-    hiload, hisave
+    0, 0, 0,
+    ROT270,
+	0,0
 };
 
-struct GameDriver mrlo_driver =
+struct GameDriver driver_mrlo =
 {
 	__FILE__,
-	&mrdo_driver,
+	&driver_mrdo,
 	"mrlo",
 	"Mr. Lo!",
 	"1982",
@@ -532,23 +487,22 @@ struct GameDriver mrlo_driver =
 	&machine_driver,
 	0,
 
-	mrlo_rom,
+	rom_mrlo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mrdo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver mrdu_driver =
+struct GameDriver driver_mrdu =
 {
 	__FILE__,
-	&mrdo_driver,
+	&driver_mrdo,
 	"mrdu",
 	"Mr. Du!",
 	"1982",
@@ -558,24 +512,23 @@ struct GameDriver mrdu_driver =
 	&machine_driver,
 	0,
 
-	mrdu_rom,
+	rom_mrdu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mrdo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
 
-struct GameDriver mrdoy_driver =
+struct GameDriver driver_mrdoy =
 {
 	__FILE__,
-	&mrdo_driver,
+	&driver_mrdo,
 	"mrdoy",
 	"Mr. Do! (Yukidaruma)",
 	"1982",
@@ -585,23 +538,22 @@ struct GameDriver mrdoy_driver =
 	&machine_driver,
 	0,
 
-	mrdoy_rom,
+	rom_mrdoy,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mrdo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver yankeedo_driver =
+struct GameDriver driver_yankeedo =
 {
 	__FILE__,
-	&mrdo_driver,
+	&driver_mrdo,
 	"yankeedo",
 	"Yankee DO!",
 	"1982",
@@ -611,15 +563,14 @@ struct GameDriver yankeedo_driver =
 	&machine_driver,
 	0,
 
-	yankeedo_rom,
+	rom_yankeedo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mrdo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

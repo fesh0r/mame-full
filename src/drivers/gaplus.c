@@ -93,11 +93,11 @@ static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_r }, /* video RAM */
 	{ 0x0400, 0x07ff, colorram_r }, /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_r, &gaplus_sharedram },  /* shared RAM with CPU #2 & spriteram */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r, &gaplus_snd_sharedram },  /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, gaplus_customio_r_1, &gaplus_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, gaplus_customio_r_2, &gaplus_customio_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, gaplus_customio_r_3, &gaplus_customio_3 },	/* custom I/O chip #3 interface */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r },  /* shared RAM with CPU #2 & spriteram */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r },  /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, gaplus_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplus_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplus_customio_r_3 },	/* custom I/O chip #3 interface */
 	{ 0x7820, 0x782f, MRA_RAM },	/* ??? */
 	{ 0x7c00, 0x7c01, MRA_NOP },	/* ??? */
 	{ 0xa000, 0xffff, MRA_ROM },	/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
@@ -109,11 +109,11 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },  /* video RAM */
 	{ 0x0400, 0x07ff, colorram_w, &colorram },  /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_w }, /* shared RAM with CPU #2 */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_w }, /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, gaplus_customio_w_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, gaplus_customio_w_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, gaplus_customio_w_3 },	/* custom I/O chip #3 interface */
+	{ 0x0800, 0x1fff, gaplus_sharedram_w, &gaplus_sharedram }, /* shared RAM with CPU #2 */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_w, &gaplus_snd_sharedram }, /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, gaplus_customio_w_1, &gaplus_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplus_customio_w_2, &gaplus_customio_2 },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplus_customio_w_3, &gaplus_customio_3 },	/* custom I/O chip #3 interface */
 	{ 0x7820, 0x782f, MWA_RAM },				/* ??? */
 	{ 0x7c00, 0x7c00, MWA_NOP },				/* ??? */
 	{ 0x8400, 0x8400, MWA_NOP },				/* ??? */
@@ -175,11 +175,11 @@ static struct MemoryReadAddress gaplusa_readmem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_r },									/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },									/* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_r, &gaplus_sharedram },		/* shared RAM with CPU #2 & spriteram */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r, &gaplus_snd_sharedram },  /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, gaplusa_customio_r_1, &gaplus_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, gaplusa_customio_r_2, &gaplus_customio_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, gaplusa_customio_r_3, &gaplus_customio_3 },	/* custom I/O chip #3 interface */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r },		/* shared RAM with CPU #2 & spriteram */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r },  /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, gaplusa_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplusa_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplusa_customio_r_3 },	/* custom I/O chip #3 interface */
 	{ 0x7820, 0x782f, MRA_RAM },									/* ??? */
 	{ 0x7c00, 0x7c01, MRA_NOP },									/* ??? */
 	{ 0xa000, 0xffff, MRA_ROM },									/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
@@ -190,11 +190,11 @@ static struct MemoryReadAddress galaga3_readmem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_r }, /* video RAM */
 	{ 0x0400, 0x07ff, colorram_r }, /* color RAM */
-	{ 0x0800, 0x1fff, gaplus_sharedram_r, &gaplus_sharedram },  /* shared RAM with CPU #2 & spriteram */
-	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r, &gaplus_snd_sharedram },  /* shared RAM with CPU #3 */
-	{ 0x6800, 0x680f, galaga3_customio_r_1, &gaplus_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x6810, 0x681f, galaga3_customio_r_2, &gaplus_customio_2 },	/* custom I/O chip #2 interface */
-	{ 0x6820, 0x682f, galaga3_customio_r_3, &gaplus_customio_3 },	/* custom I/O chip #3 interface */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r },  /* shared RAM with CPU #2 & spriteram */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r },  /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, galaga3_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, galaga3_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, galaga3_customio_r_3 },	/* custom I/O chip #3 interface */
 	{ 0x7820, 0x782f, MRA_RAM },	/* ??? */
 	{ 0x7c00, 0x7c01, MRA_NOP },	/* ??? */
 	{ 0xa000, 0xffff, MRA_ROM },	/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
@@ -204,7 +204,7 @@ static struct MemoryReadAddress galaga3_readmem_cpu1[] =
 
 
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
-INPUT_PORTS_START( gaplus_input_ports )
+INPUT_PORTS_START( gaplus )
 	PORT_START  /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
@@ -276,7 +276,7 @@ INPUT_PORTS_START( gaplus_input_ports )
 	PORT_BITX(  0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( galaga3_input_ports )
+INPUT_PORTS_START( galaga3 )
 	PORT_START  /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
@@ -345,7 +345,7 @@ INPUT_PORTS_START( galaga3_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( galaga3a_input_ports )
+INPUT_PORTS_START( galaga3a )
 	PORT_START  /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
@@ -492,12 +492,6 @@ static struct namco_interface namco_interface =
 	5		/* memory region */
 };
 
-static struct Samplesinterface samples_interface =
-{
-	1,	/* one channel */
-	80	/* volume */
-};
-
 static const char *gaplus_sample_names[] =
 {
 	"*galaga",
@@ -505,28 +499,34 @@ static const char *gaplus_sample_names[] =
 	0       /* end of array */
 };
 
-static struct MachineDriver gaplus_machine_driver =
+static struct Samplesinterface samples_interface =
+{
+	1,	/* one channel */
+	80,	/* volume */
+	gaplus_sample_names
+};
+
+
+
+static struct MachineDriver machine_driver_gaplus =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,		  /* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
 			CPU_M6809,		  /* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
 		}
@@ -563,28 +563,25 @@ static struct MachineDriver gaplus_machine_driver =
 	}
 };
 
-static struct MachineDriver gaplusa_machine_driver =
+static struct MachineDriver machine_driver_gaplusa =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,		  /* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			0,
 			gaplusa_readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
 			CPU_M6809,		  /* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
 		}
@@ -621,28 +618,25 @@ static struct MachineDriver gaplusa_machine_driver =
 	}
 };
 
-static struct MachineDriver galaga3_machine_driver =
+static struct MachineDriver machine_driver_galaga3 =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,		  /* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			0,
 			galaga3_readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
 			CPU_M6809,		  /* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
 		}
@@ -679,8 +673,8 @@ static struct MachineDriver galaga3_machine_driver =
 	}
 };
 
-ROM_START( gaplus_rom )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+ROM_START( gaplus )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.64",   0xa000, 0x2000, 0x484f11e0 )
 	ROM_LOAD( "gp2-3.64",   0xc000, 0x2000, 0xa74b0266 )
 	ROM_LOAD( "gp2-2.64",   0xe000, 0x2000, 0x69fdfdb7 )
@@ -693,15 +687,15 @@ ROM_START( gaplus_rom )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.64",   0xa000, 0x2000, 0xbff601a6 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gp2-6.64",   0xe000, 0x2000, 0x14cd61ea )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION(0x800)   /* space for color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -713,8 +707,8 @@ ROM_START( gaplus_rom )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
-ROM_START( gaplusa_rom )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+ROM_START( gaplusa )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.8d",   0xa000, 0x2000, 0xe525d75d )
 	ROM_LOAD( "gp2-3b.8c",  0xc000, 0x2000, 0xd77840a4 )
 	ROM_LOAD( "gp2-2b.8b",  0xe000, 0x2000, 0xb3cb90db )
@@ -727,15 +721,15 @@ ROM_START( gaplusa_rom )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.11d",  0xa000, 0x2000, 0x42b9fd7c )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gp2-6.11b",  0xe000, 0x2000, 0x75b18652 )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION(0x800)   /* space for color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -747,8 +741,8 @@ ROM_START( gaplusa_rom )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
-ROM_START( galaga3_rom )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+ROM_START( galaga3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gal3_9e.bin",   0xa000, 0x2000, 0xf4845e7f )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
@@ -761,15 +755,15 @@ ROM_START( galaga3_rom )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION(0x800)   /* space for color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -781,8 +775,8 @@ ROM_START( galaga3_rom )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
-ROM_START( galaga3a_rom )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+ROM_START( galaga3a )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "mi.9e",         0xa000, 0x2000, 0xe392704e )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
@@ -795,15 +789,15 @@ ROM_START( galaga3a_rom )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION(0x800)   /* space for color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -816,77 +810,8 @@ ROM_START( galaga3a_rom )
 ROM_END
 
 
-	/* load the high score table */
-static int gaplus_hiload( void )
-{
-	int i;
-	void *f;
-	unsigned char temp[0xa0];
 
-	/* check if the hi score table has already been initialized */
-	for ( i = 0; i < 0x0e; i++)
-		temp[i] = gaplus_sharedram_r( 0x0190 + i );
-
-	if (memcmp( temp, "GAPLUS  24  AB",0x0e ) == 0)
-	{
-		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
-		{
-			osd_fread( f,&temp,0xa0 );
-			for ( i = 0; i < 0xa0; i++)
-				gaplus_sharedram_w( 0x100 + i, temp[i] );
-			osd_fclose( f );
-		}
-		return 1;
-	}
-	else
-		return 0;	/* we can't load the hi scores yet */
-}
-
-	/* save the high score table */
-static void gaplus_hisave( void )
-{
-	int i;
-	void *f;
-	unsigned char temp[0xa0];
-
-	if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1 )) != 0)
-	{
-		for ( i = 0; i < 0xa0; i++)
-			temp[i] = gaplus_sharedram_r( 0x100 + i);
-		osd_fwrite( f, temp, 0xa0 );
-		osd_fclose( f );
-	}
-}
-
-	/* load the high score table */
-static int galaga3_hiload( void )
-{
-	int i;
-	void *f;
-	unsigned char temp[0xa0];
-
-	/* check if the hi score table has already been initialized */
-	for ( i = 0; i < 0x0f; i++)
-		temp[i] = gaplus_sharedram_r( 0x0190 + i );
-
-	if (memcmp( temp,"  A[A      4   ",0x0f ) == 0)
-	{
-		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
-		{
-			osd_fread( f,&temp,0xa0 );
-			for ( i = 0; i < 0xa0; i++)
-				gaplus_sharedram_w( 0x100 + i, temp[i] );
-			osd_fclose( f );
-		}
-		return 1;
-	}
-	else
-		return 0;	/* we can't load the hi scores yet */
-}
-
-#define galaga3_hisave gaplus_hisave
-
-struct GameDriver gaplus_driver =
+struct GameDriver driver_gaplus =
 {
 	__FILE__,
 	0,
@@ -896,96 +821,92 @@ struct GameDriver gaplus_driver =
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&gaplus_machine_driver,
+	&machine_driver_gaplus,
 	0,
 
-	gaplus_rom,
+	rom_gaplus,
 	0, 0,
-	gaplus_sample_names,
+	0,
 	0,
 
-	gaplus_input_ports,
+	input_ports_gaplus,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_90,
-
-	gaplus_hiload, gaplus_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver gaplusa_driver =
+struct GameDriver driver_gaplusa =
 {
 	__FILE__,
-	&gaplus_driver,
+	&driver_gaplus,
 	"gaplusa",
 	"Gaplus (set 2)",
 	"1984",
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&gaplusa_machine_driver,
+	&machine_driver_gaplusa,
 	0,
 
-	gaplusa_rom,
+	rom_gaplusa,
 	0, 0,
-	gaplus_sample_names,
+	0,
 	0,
 
-	gaplus_input_ports,
+	input_ports_gaplus,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_90,
-
-	gaplus_hiload, gaplus_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galaga3_driver =
+struct GameDriver driver_galaga3 =
 {
 	__FILE__,
-	&gaplus_driver,
+	&driver_gaplus,
 	"galaga3",
 	"Galaga 3 (set 1)",
 	"1984",
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&galaga3_machine_driver,
+	&machine_driver_galaga3,
 	0,
 
-	galaga3_rom,
+	rom_galaga3,
 	0, 0,
-	gaplus_sample_names,
+	0,
 	0,
 
-	galaga3_input_ports,
+	input_ports_galaga3,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_90,
-
-	galaga3_hiload, galaga3_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galaga3a_driver =
+struct GameDriver driver_galaga3a =
 {
 	__FILE__,
-	&gaplus_driver,
+	&driver_gaplus,
 	"galaga3a",
 	"Galaga 3 (set 2)",
 	"1984",
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&galaga3_machine_driver,
+	&machine_driver_galaga3,
 	0,
 
-	galaga3a_rom,
+	rom_galaga3a,
 	0, 0,
-	gaplus_sample_names,
+	0,
 	0,
 
-	galaga3a_input_ports,
+	input_ports_galaga3a,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_90,
-
-	galaga3_hiload, galaga3_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

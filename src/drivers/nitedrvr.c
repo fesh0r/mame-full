@@ -79,7 +79,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( nitedrvr_input_ports )
+INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
 		PORT_DIPNAME( 0x30, 0x10, "Cost" )
 		PORT_DIPSETTING(	0x00, "2 plays/coin" )
@@ -156,12 +156,16 @@ static unsigned char palette[] =
 	0x55,0x55,0x55, /* DK GREY - for MAME text only */
 	0x80,0x80,0x80, /* LT GREY - for MAME text only */
 };
-
 static unsigned short colortable[] =
 {
 	0x00, 0x01,
 	0x01, 0x00,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct MachineDriver machine_driver =
@@ -171,7 +175,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1000000,	   /* 1 MHz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -183,8 +186,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -207,8 +210,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( nitedrvr_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( nitedrvr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "6569-01.d2",   0x9000, 0x0800, 0x7afa7542 )
 	ROM_LOAD( "6570-01.f2",   0x9800, 0x0800, 0xbf5d77b1 )
 	ROM_RELOAD( 			0xF800, 0x0800 )
@@ -229,7 +232,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver nitedrvr_driver =
+struct GameDriver driver_nitedrvr =
 {
 	__FILE__,
 	0,
@@ -242,14 +245,15 @@ struct GameDriver nitedrvr_driver =
 	&machine_driver,
 	0,
 
-	nitedrvr_rom,
+	rom_nitedrvr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	nitedrvr_input_ports,
+	input_ports_nitedrvr,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
+	0, 0, 0,
+	ROT0,
+
+	0, 0
 };

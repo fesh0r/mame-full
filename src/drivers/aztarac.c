@@ -13,8 +13,7 @@
 /* from machine/foodf.c */
 int foodf_nvram_r(int offset);
 void foodf_nvram_w(int offset,int data);
-int foodf_nvram_load(void);
-void foodf_nvram_save(void);
+void foodf_nvram_handler(void *file,int read_or_write);
 
 /* from vidhrdw/aztarac.c */
 void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -47,7 +46,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x027008, 0x027009, aztarac_sound_r },
 	{ 0x02700c, 0x02700d, input_port_2_r },
 	{ 0x02700e, 0x02700f, watchdog_reset_r },
-	{ 0xff8000, 0xffafff, MRA_BANK1, &aztarac_vectorram},
+	{ 0xff8000, 0xffafff, MRA_BANK1 },
 	{ 0xffe000, 0xffffff, MRA_BANK2 },
 	{ -1 }	/* end of table */
 };
@@ -57,7 +56,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x00bfff, MWA_ROM },
 	{ 0x022000, 0x022fff, foodf_nvram_w },
 	{ 0x027008, 0x027009, aztarac_sound_w },
-	{ 0xff8000, 0xffafff, MWA_BANK1 },
+	{ 0xff8000, 0xffafff, MWA_BANK1, &aztarac_vectorram },
 	{ 0xffb000, 0xffb001, aztarac_ubr_w },
 	{ 0xffe000, 0xffffff, MWA_BANK2 },
 	{ -1 }	/* end of table */
@@ -94,7 +93,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( aztarac_input_ports )
+INPUT_PORTS_START( aztarac )
 	PORT_START /* IN0 */
 	PORT_ANALOG( 0x1f, 0xf, IPT_AD_STICK_X | IPF_CENTER, 100, 1, 0, 0, 0x1e )
 
@@ -117,23 +116,6 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout fakelayout =
-{
-    1,1,
-    0,
-    1,
-    { 0 },
-    { 0 },
-    { 0 },
-    0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
 static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
@@ -146,21 +128,19 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0, 0, 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_aztarac =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			8000000, /* 8 MHz */
-			0,
 			readmem, writemem,0,0,
             aztarac_vg_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 MHz */
-			1,
 			sound_readmem,sound_writemem, 0, 0,
 			0,0,
             aztarac_snd_timed_irq, 100
@@ -172,7 +152,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1024-1, 0, 768-1 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
 	aztarac_init_colors,
 
@@ -189,7 +169,9 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		}
-    }
+    },
+
+	foodf_nvram_handler
 };
 
 /***************************************************************************
@@ -198,8 +180,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( aztarac_rom )
-	ROM_REGION(0xc000)
+ROM_START( aztarac )
+	ROM_REGIONX( 0xc000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "l8_6.bin", 0x000000, 0x001000, 0x25f8da18 )
 	ROM_LOAD_ODD ( "n8_0.bin", 0x000000, 0x001000, 0x04e20626 )
 	ROM_LOAD_EVEN( "l7_7.bin", 0x002000, 0x001000, 0x230e244c )
@@ -213,30 +195,22 @@ ROM_START( aztarac_rom )
 	ROM_LOAD_EVEN( "l3_b.bin", 0x00a000, 0x001000, 0x8cc7f7fa )
 	ROM_LOAD_ODD ( "n3_5.bin", 0x00a000, 0x001000, 0x40452376 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "j4_c.bin", 0x0000, 0x1000, 0xe897dfcd )
 	ROM_LOAD( "j3_d.bin", 0x1000, 0x1000, 0x4016de77 )
 ROM_END
 
-struct GameDriver aztarac_driver =
-{
-	__FILE__,
-	0,
-	"aztarac",
-	"Aztarac",
-	"1983",
-	"Centuri",
-	0,
-	0,
-	&machine_driver,
-	0,
-	aztarac_rom,
-	0, 0,
-	0,
-	0,
-	aztarac_input_ports,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	foodf_nvram_load, foodf_nvram_save
-};
 
+
+static void init_aztarac(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+	/* patch IRQ vector 4 to autovector location */
+	WRITE_WORD(&rom[0x70], 0);
+	WRITE_WORD(&rom[0x72], 0x0c02);
+}
+
+
+
+GAME( 1983, aztarac, , aztarac, aztarac, aztarac, ROT0, "Centuri", "Aztarac" )

@@ -109,7 +109,7 @@ static int astrof_interrupt(void)
 }
 
 
-INPUT_PORTS_START( astrof_input_ports )
+INPUT_PORTS_START( astrof )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -162,7 +162,7 @@ INPUT_PORTS_START( astrof_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tomahawk_input_ports )
+INPUT_PORTS_START( tomahawk )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -214,14 +214,13 @@ INPUT_PORTS_END
 
 
 #define MACHINE_DRIVER(GAMENAME, NUMCOLORS) 								   \
-static struct MachineDriver GAMENAME##_machine_driver =						   \
+static struct MachineDriver machine_driver_##GAMENAME =						   \
 {																			   \
 	/* basic machine hardware */											   \
 	{																		   \
 		{																	   \
 			CPU_M6502,														   \
 			10595000/16,	/* 0.66 Mhz */									   \
-			0,																   \
 			readmem,GAMENAME##_writemem,0,0,								   \
 			astrof_interrupt,1												   \
 		}																	   \
@@ -265,8 +264,8 @@ MACHINE_DRIVER(tomahawk, 32)
 
 ***************************************************************************/
 
-ROM_START( astrof_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( astrof )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "afii.6",       0xd000, 0x0800, 0xd6cd13a4 )
 	ROM_LOAD( "afii.5",       0xd800, 0x0800, 0x6fd3c4df )
 	ROM_LOAD( "afii.4",       0xe000, 0x0800, 0x9612dae3 )
@@ -274,12 +273,12 @@ ROM_START( astrof_rom )
 	ROM_LOAD( "afii.2",       0xf000, 0x0800, 0x69f8a4fc )
 	ROM_LOAD( "afii.1",       0xf800, 0x0800, 0x322c09d2 )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
-ROM_START( astrof2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( astrof2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
 	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
@@ -293,12 +292,12 @@ ROM_START( astrof2_rom )
 	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
 	ROM_LOAD( "af583.00",     0xfc00, 0x0400, 0xf699dda3 )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
-ROM_START( astrof3_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( astrof3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
 	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
@@ -312,12 +311,12 @@ ROM_START( astrof3_rom )
 	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
 	ROM_LOAD( "kei",          0xfc00, 0x0400, 0xfce4718d )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
-ROM_START( tomahawk_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( tomahawk )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "l8-1",         0xdc00, 0x0400, 0x7c911661 )
 	ROM_LOAD( "l7-1",         0xe000, 0x0400, 0xadeffb69 )
 	ROM_LOAD( "l6-1",         0xe400, 0x0400, 0x9116e59d )
@@ -328,12 +327,12 @@ ROM_START( tomahawk_rom )
 	ROM_LOAD( "l1-1",         0xf800, 0x0400, 0xf2096ba9 )
 	ROM_LOAD( "l0-1",         0xfc00, 0x0400, 0x42edbc28 )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
-ROM_START( tomahaw5_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( tomahaw5 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "thawk.l8",     0xdc00, 0x0400, 0xb01dab4b )
 	ROM_LOAD( "thawk.l7",     0xe000, 0x0400, 0x3a6549e8 )
 	ROM_LOAD( "thawk.l6",     0xe400, 0x0400, 0x863e47f7 )
@@ -344,258 +343,14 @@ ROM_START( tomahaw5_rom )
 	ROM_LOAD( "thawk.l1",     0xf800, 0x0400, 0x1d9dab9c )
 	ROM_LOAD( "thawk.l0",     0xfc00, 0x0400, 0xd21a1eba )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
 
-static int astrof_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime = 0;
 
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x0084],0xff,2);
-		firsttime = 1;
-	}
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0084],"\x00\x00",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0084],2);
-			osd_fclose(f);
-		}
-		firsttime = 0 ;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void astrof_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0084],2);
-		osd_fclose(f);
-	}
-}
-
-static int tomahawk_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime = 0;
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x000d],0xff,2);
-		firsttime = 1;
-	}
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x000d],"\x00\x00",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x000d],2);
-			osd_fclose(f);
-		}
-		firsttime = 0 ;
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void tomahawk_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x000d],2);
-		osd_fclose(f);
-	}
-}
-
-
-/* Make sure that the #define's in sndhrdw/astrof.c matches these */
-static const char *astrof_sample_names[] =
-{
-	"*astrof",
-	"fire.wav",
-	"ekilled.wav",
-	"wave1.wav",
-	"wave2.wav",
-	"wave3.wav",
-	"wave4.wav",
-	"bossfire.wav",
-	"fuel.wav",
-	"death.wav",
-	"bosshit.wav",
-	"bosskill.wav",
-	0   /* end of array */
-};
-
-static const char *tomahawk_sample_names[] =
-{
-	"*tomahawk",
-	/* We don't have these yet */
-	0   /* end of array */
-};
-
-
-#define CREDITS "Lee Taylor\ndedicated to Lucy Anne Taylor\nZsolt Vasvari"
-
-struct GameDriver astrof_driver =
-{
-	__FILE__,
-	0,
-	"astrof",
-	"Astro Fighter (set 1)",
-	"1980",
-	"Data East",
-	CREDITS,
-	0,
-	&astrof_machine_driver,
-	0,
-
-	astrof_rom,
-	0, 0,
-	astrof_sample_names,
-	0,	/* sound_prom */
-
-	astrof_input_ports,
-
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	astrof_hiload, astrof_hisave
-};
-
-struct GameDriver astrof2_driver =
-{
-	__FILE__,
-	&astrof_driver,
-	"astrof2",
-	"Astro Fighter (set 2)",
-	"1980",
-	"Data East",
-	CREDITS,
-	0,
-	&astrof_machine_driver,
-	0,
-
-	astrof2_rom,
-	0, 0,
-	astrof_sample_names,
-	0,	/* sound_prom */
-
-	astrof_input_ports,
-
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	astrof_hiload, astrof_hisave
-};
-
-struct GameDriver astrof3_driver =
-{
-	__FILE__,
-	&astrof_driver,
-	"astrof3",
-	"Astro Fighter (set 3)",
-	"1980",
-	"Data East",
-	CREDITS,
-	0,
-	&astrof_machine_driver,
-	0,
-
-	astrof3_rom,
-	0, 0,
-	astrof_sample_names,
-	0,	/* sound_prom */
-
-	astrof_input_ports,
-
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	astrof_hiload, astrof_hisave
-};
-
-struct GameDriver tomahawk_driver =
-{
-	__FILE__,
-	0,
-	"tomahawk",
-	"Tomahawk 777 (Revision 1)",
-	"1980",
-	"Data East",
-	CREDITS,
-	0,
-	&tomahawk_machine_driver,
-	0,
-
-	tomahawk_rom,
-	0, 0,
-	tomahawk_sample_names,
-	0,	/* sound_prom */
-
-	tomahawk_input_ports,
-
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	tomahawk_hiload, tomahawk_hisave
-
-};
-
-struct GameDriver tomahaw5_driver =
-{
-	__FILE__,
-	&tomahawk_driver,  				// Only the color PROM is shared
-	"tomahaw5",
-	"Tomahawk 777 (Revision 5)",
-	"1980",
-	"Data East",
-	CREDITS,
-	0,
-	&tomahawk_machine_driver,
-	0,
-
-	tomahaw5_rom,
-	0, 0,
-	tomahawk_sample_names,
-	0,	/* sound_prom */
-
-	tomahawk_input_ports,
-
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	tomahawk_hiload, tomahawk_hisave
-};
+GAME( 1980, astrof,   ,         astrof,   astrof,   , ROT90, "Data East", "Astro Fighter (set 1)" )
+GAME( 1980, astrof2,  astrof,   astrof,   astrof,   , ROT90, "Data East", "Astro Fighter (set 2)" )
+GAME( 1980, astrof3,  astrof,   astrof,   astrof,   , ROT90, "Data East", "Astro Fighter (set 3)" )
+GAME( 1980, tomahawk, ,         tomahawk, tomahawk, , ROT90, "Data East", "Tomahawk 777 (Revision 1)" )
+GAME( 1980, tomahaw5, tomahawk, tomahawk, tomahawk, , ROT90, "Data East", "Tomahawk 777 (Revision 5)" )

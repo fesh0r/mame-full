@@ -62,6 +62,7 @@ I-Robot Memory Map
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m6809/m6809.h"
 
 extern int  irobot_vh_start(void);
 extern void irobot_vh_stop(void);
@@ -69,8 +70,7 @@ extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short 
 extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void irobot_paletteram_w(int offset,int data);
 
-extern void irobot_nvram_w(int offset,int data);
-extern unsigned char *irobot_nvRAM;
+void irmb_init(void);	/* convert mathbox ROMs */
 void irobot_init_machine (void);
 
 int irobot_status_r(int offset);
@@ -83,15 +83,48 @@ int irobot_sharedmem_r(int offset);
 void irobot_sharedmem_w(int offset,int data);
 
 
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+void irobot_nvram_w(int offset,int data)
+{
+	nvram[offset] = data & 0x0f;
+}
+
+
+void irobot_clearirq(int offest,int data) {
+    cpu_set_irq_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
+}
+
+void irobot_clearfirq(int offset,int data) {
+    cpu_set_irq_line(0, M6809_FIRQ_LINE ,CLEAR_LINE);
+
+}
+
+
 static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x07ff, MRA_RAM },
     { 0x0800, 0x0fff, MRA_BANK2 },
-    { 0x1200, 0x12FF, MRA_RAM, &irobot_nvRAM },
+    { 0x1200, 0x12FF, MRA_RAM },
     { 0x1300, 0x13FF, irobot_control_r },
     { 0x1400, 0x143f, quad_pokey_r },       /* Quad Pokey read  */
     { 0x1C00, 0x1fff, MRA_RAM },
-    { 0x1000, 0x1000, input_port_0_r }, /* INRD1 */
+    { 0x1000, 0x103f, input_port_0_r }, /* INRD1 */
     { 0x1040, 0x1040, input_port_1_r }, /* INRD2 */
     { 0x1080, 0x1080, irobot_status_r }, /* STATRD */
     { 0x10C0, 0x10c0, input_port_3_r }, /* INRD3 */
@@ -105,31 +138,33 @@ static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x07ff, MWA_RAM },
     { 0x0800, 0x0fff, MWA_BANK2 },
-    { 0x1100, 0x1100, MWA_RAM },
-    { 0x1200, 0x12FF, irobot_nvram_w },
-    { 0x1400, 0x143f, quad_pokey_w },       /* Quad Pokey write  */
+    { 0x1100, 0x1100, irobot_clearirq },
     { 0x1140, 0x1140, irobot_statwr_w },
     { 0x1180, 0x1180, irobot_out0_w },
-    { 0x11C0, 0x11c0, irobot_rom_banksel },
+    { 0x11C0, 0x11C0, irobot_rom_banksel },
+    { 0x1200, 0x12FF, irobot_nvram_w, &nvram, &nvram_size },
+    { 0x1400, 0x143f, quad_pokey_w },       /* Quad Pokey write  */
     { 0x1800, 0x18FF, irobot_paletteram_w },
     { 0x1900, 0x19FF, MWA_RAM },            /* Watchdog reset */
-    { 0x1A00, 0x1A00, MWA_RAM },
+    { 0x1A00, 0x1A00, irobot_clearfirq },
     { 0x1B00, 0x1BFF, irobot_control_w },
-    { 0x1C00, 0x1FFF, videoram_w, &videoram, &videoram_size },
+    { 0x1C00, 0x1FFF, MWA_RAM, &videoram, &videoram_size },
     { 0x2000, 0x3fff, irobot_sharedmem_w},
     { 0x4000, 0xffff, MWA_ROM },
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( irobot_input_ports )
+
+
+INPUT_PORTS_START( irobot )
 	PORT_START	/* IN0 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN)
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN)
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN)
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN)
-	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3)
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1)
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
@@ -152,66 +187,58 @@ INPUT_PORTS_START( irobot_input_ports )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* EXT DONE */
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x02, "Coins Per Credit" )
-    PORT_DIPSETTING(    0x03, "4 Coins=1 Credit" )
-    PORT_DIPSETTING(    0x02, "3 Coins=1 Credit " )
-    PORT_DIPSETTING(    0x01, "2 Coins=1 Credit" )
-    PORT_DIPSETTING(    0x00, "1 Coin=1 Credit" )
+	PORT_START /* DSW1 */
+	PORT_DIPNAME(    0x03, 0x00, "Coins Per Credit" )
+	PORT_DIPSETTING( 0x00, "1 Coin 1 Credit" )
+	PORT_DIPSETTING( 0x01, "2 Coins 1 Credit" )
+	PORT_DIPSETTING( 0x02, "3 Coins 1 Credit" )
+	PORT_DIPSETTING( 0x03, "4 Coins 1 Credit" )
+	PORT_DIPNAME(    0x0c, 0x00, "Right Coin" )
+	PORT_DIPSETTING( 0x00, "1 Coin for 1 Coin Unit" )
+	PORT_DIPSETTING( 0x04, "1 Coin for 4 Coin Units" )
+	PORT_DIPSETTING( 0x08, "1 Coin for 5 Coin Units" )
+	PORT_DIPSETTING( 0x0c, "1 Coin for 6 Coin Units" )
+	PORT_DIPNAME(    0x10, 0x00, "Left Coin" )
+	PORT_DIPSETTING( 0x00, "1 Coin for 1 Coin Unit" )
+	PORT_DIPSETTING( 0x10, "1 Coin for 2 Coin Units" )
+	PORT_DIPNAME(    0xe0, 0x00, "Bonus Adder" )
+	PORT_DIPSETTING( 0x00, "None" )
+	PORT_DIPSETTING( 0x20, "1 Credit for 2 Coin Units" )
+	PORT_DIPSETTING( 0xa0, "1 Credit for 3 Coin Units" )
+	PORT_DIPSETTING( 0x40, "1 Credit for 4 Coin Units" )
+	PORT_DIPSETTING( 0x80, "1 Credit for 5 Coin Units" )
+	PORT_DIPSETTING( 0x60, "2 Credits for 4 Coin Units" )
+	PORT_DIPSETTING( 0xe0, DEF_STR( Free_Play ) )
 
-    PORT_DIPNAME( 0x0C, 0x00, "Right Coin" )
-    PORT_DIPSETTING(    0x00, "1 Coin for 1 Coin Unit" )
-    PORT_DIPSETTING(    0x04, "1 Coin for 4 Coin Units" )
-    PORT_DIPSETTING(    0x08, "1 Coin for 5 Coin Units" )
-    PORT_DIPSETTING(    0x0C, "1 Coin for 6 Coin Units" )
-
-    PORT_DIPNAME( 0x10, 0x00, "Left Coin" )
-    PORT_DIPSETTING(    0x00, "1 Coin for 1 Credit" )
-    PORT_DIPSETTING(    0x10, "1 Coin for 2 Credits" )
-
-    PORT_DIPNAME( 0xE0, 0x00, "Bonus Adder" )
-    PORT_DIPSETTING(    0x00, "No Bonus" )
-    PORT_DIPSETTING(    0x20, "2 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0xA0, "3 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0x40, "4 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0x80, "5 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0xC0, "No Bonus" )
-    PORT_DIPSETTING(    0xE0, DEF_STR( Free_Play ) )
-
-    PORT_START      /* DSW2 */
-    PORT_DIPNAME( 0x01, 0x01, "Language" )
-    PORT_DIPSETTING(    0x00, "German" )
-    PORT_DIPSETTING(    0x01, "English" )
-
-    PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x00, "Medium" )
-    PORT_DIPSETTING(    0x02, "Easy" )
-
-    PORT_DIPNAME( 0x0C, 0x00, "Bonus lives per coin" )
-    PORT_DIPSETTING(    0x00, "3" )
-    PORT_DIPSETTING(    0x40, "2" )
-    PORT_DIPSETTING(    0x80, "5" )
-    PORT_DIPSETTING(    0xC0, "4" )
-
-    PORT_DIPNAME( 0x30, 0x00, "Bonus life" )
-    PORT_DIPSETTING(    0x20, "None" )
-    PORT_DIPSETTING(    0x00, "20,000" )
-    PORT_DIPSETTING(    0x30, "30,000" )
-    PORT_DIPSETTING(    0x10, "50,000" )
-
-    PORT_DIPNAME( 0x40, 0x00, "Min Game Time" )
-    PORT_DIPSETTING(    0x40, "90 Sec" )
-    PORT_DIPSETTING(    0x00, "3 Lives" )
-
-    PORT_DIPNAME( 0x80, 0x00, "Doodle City Time" )
-    PORT_DIPSETTING(    0x80, "3 min 5 sec" )
-    PORT_DIPSETTING(    0x00, "2 min 10 sec" )
+	PORT_START /* DSW2 */
+	PORT_DIPNAME(    0x01, 0x01, "Language" )
+	PORT_DIPSETTING( 0x01, "English" )
+	PORT_DIPSETTING( 0x00, "German" )
+	PORT_DIPNAME(    0x02, 0x02, "Min Game Time" )
+	PORT_DIPSETTING( 0x00, "90 Sec" )
+	PORT_DIPSETTING( 0x02, "3 Lives" )
+	PORT_DIPNAME(    0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING( 0x08, "None" )
+	PORT_DIPSETTING( 0x0c, "20000" )
+	PORT_DIPSETTING( 0x00, "30000" )
+	PORT_DIPSETTING( 0x04, "50000" )
+	PORT_DIPNAME(    0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING( 0x20, "2" )
+	PORT_DIPSETTING( 0x30, "3" )
+	PORT_DIPSETTING( 0x00, "4" )
+	PORT_DIPSETTING( 0x10, "5" )
+	PORT_DIPNAME(    0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING( 0x00, "Easy" )
+	PORT_DIPSETTING( 0x40, "Medium" )
+	PORT_DIPNAME(    0x80, 0x80, "Demo Mode" )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_CENTER, 70, 50, 0, 95, 159 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_REVERSE|IPF_CENTER, 50, 50, 0, 95, 159 )
 
 INPUT_PORTS_END
 
@@ -229,15 +256,16 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x0000, &charlayout,     64, 16 },
+    { REGION_GFX1, 0x0000, &charlayout,     64, 16 },
 	{ -1 }
 };
-
+/*
 unsigned char irobot_color_prom[] =
 {
 	0x00, 0x00, 0x00, 0x00, 0xF3, 0x33, 0x0F, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0xF3, 0x33, 0x0F, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+*/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -267,17 +295,16 @@ static struct MachineDriver machine_driver =
 		{
             CPU_M6809,
             1500000,    /* 1.5 Mhz */
-			0,
 			readmem,writemem,0,0,
-			interrupt,4
-		},
+            ignore_interrupt,0		/* interrupt handled by scanline callbacks */
+         },
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
     1,
     irobot_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 29*8-1 },
 	gfxdecodeinfo,
     64 + 32,64 + 32, /* 64 for polygons, 32 for text */
     irobot_vh_convert_color_prom,
@@ -295,7 +322,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -306,86 +335,70 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( irobot_rom )
-    ROM_REGION(0x20000) /* 64k for code + 48K Banked ROM*/
-    ROM_LOAD( "136029.208",   0x6000, 0x2000, 0xb4d0be59 )
-    ROM_LOAD( "136029.209",   0x8000, 0x4000, 0xf6be3cd0 )
-    ROM_LOAD( "136029.210",   0xC000, 0x4000, 0xc0eb2133 )
-    ROM_LOAD( "136029.405",   0x10000, 0x4000, 0x9163efe4 )
-    ROM_LOAD( "136029.206",   0x14000, 0x4000, 0xe114a526 )
-    ROM_LOAD( "136029.207",   0x18000, 0x4000, 0xb4556cb0 )
+ROM_START( irobot )
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* 64k for code + 48K Banked ROM*/
+	ROM_LOAD( "136029.208",   0x6000, 0x2000, 0xb4d0be59 )
+	ROM_LOAD( "136029.209",   0x8000, 0x4000, 0xf6be3cd0 )
+	ROM_LOAD( "136029.210",   0xC000, 0x4000, 0xc0eb2133 )
+	ROM_LOAD( "136029.405",   0x10000, 0x4000, 0x9163efe4 )
+	ROM_LOAD( "136029.206",   0x14000, 0x4000, 0xe114a526 )
+	ROM_LOAD( "136029.207",   0x18000, 0x4000, 0xb4556cb0 )
 
-    ROM_REGION_DISPOSE(0x800)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "136029.124",   0x0000, 0x800, 0x848948b6 )
+	ROM_REGIONX( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE)
+	ROM_LOAD( "136029.124",   0x0000, 0x800, 0x848948b6 )
 
-    ROM_REGION(0x10000)  /* temoporary space for mathbox roms */
-    ROM_LOAD( "ir103.bin",    0x0000, 0x2000, 0x0c83296d )
-    ROM_LOAD( "ir104.bin",    0x2000, 0x2000, 0x0a6cdcca )
-    ROM_LOAD( "ir101.bin",    0x4000, 0x4000, 0x62a38c08 )
-    ROM_LOAD( "ir102.bin",    0x8000, 0x4000, 0x9d588f22 )
-    ROM_LOAD( "ir111.bin",    0xC000, 0x400, 0x9fbc9bf3 )
-    ROM_LOAD( "ir112.bin",    0xC400, 0x400, 0xb2713214 )
-    ROM_LOAD( "ir113.bin",    0xC800, 0x400, 0x7875930a )
-    ROM_LOAD( "ir114.bin",    0xCC00, 0x400, 0x51d29666 )
-    ROM_LOAD( "ir115.bin",    0xD000, 0x400, 0x00f9b304 )
-    ROM_LOAD( "ir116.bin",    0xD400, 0x400, 0x326aba54 )
-    ROM_LOAD( "ir117.bin",    0xD800, 0x400, 0x98efe8d0 )
-    ROM_LOAD( "ir118.bin",    0xDC00, 0x400, 0x4a6aa7f9 )
-    ROM_LOAD( "ir119.bin",    0xE000, 0x400, 0xa5a13ad8 )
-    ROM_LOAD( "ir120.bin",    0xE400, 0x400, 0x2a083465 )
-    ROM_LOAD( "ir121.bin",    0xE800, 0x400, 0xadebcb99 )
-    ROM_LOAD( "ir122.bin",    0xEC00, 0x400, 0xda7b6f79 )
-    ROM_LOAD( "ir123.bin",    0xF000, 0x400, 0x39fff18f )
+	ROM_REGION( 0x14000 )  /* mathbox region */
+	ROM_LOAD_ODD ( "ir103.bin",    0x0000, 0x2000, 0x0c83296d )	/* ROM data from 0000-BFFF */
+	ROM_LOAD_EVEN( "ir104.bin",    0x0000, 0x2000, 0x0a6cdcca )
+	ROM_LOAD_ODD ( "ir101.bin",    0x4000, 0x4000, 0x62a38c08 )
+	ROM_LOAD_EVEN( "ir102.bin",    0x4000, 0x4000, 0x9d588f22 )
+	ROM_LOAD( "ir111.bin",    0xC000, 0x400, 0x9fbc9bf3 )		/* program ROMs from C000-F3FF */
+	ROM_LOAD( "ir112.bin",    0xC400, 0x400, 0xb2713214 )
+	ROM_LOAD( "ir113.bin",    0xC800, 0x400, 0x7875930a )
+	ROM_LOAD( "ir114.bin",    0xCC00, 0x400, 0x51d29666 )
+	ROM_LOAD( "ir115.bin",    0xD000, 0x400, 0x00f9b304 )
+	ROM_LOAD( "ir116.bin",    0xD400, 0x400, 0x326aba54 )
+	ROM_LOAD( "ir117.bin",    0xD800, 0x400, 0x98efe8d0 )
+	ROM_LOAD( "ir118.bin",    0xDC00, 0x400, 0x4a6aa7f9 )
+	ROM_LOAD( "ir119.bin",    0xE000, 0x400, 0xa5a13ad8 )
+	ROM_LOAD( "ir120.bin",    0xE400, 0x400, 0x2a083465 )
+	ROM_LOAD( "ir121.bin",    0xE800, 0x400, 0xadebcb99 )
+	ROM_LOAD( "ir122.bin",    0xEC00, 0x400, 0xda7b6f79 )
+	ROM_LOAD( "ir123.bin",    0xF000, 0x400, 0x39fff18f )
+	/* RAM data from 10000-11FFF */
+	/* COMRAM from   12000-13FFF */
 
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "ir125.bin",    0x0000, 0x0020, 0x446335ba )
 ROM_END
 
-static int novram_load(void)
-{
-unsigned char *RAM = Machine->memory_region[0];
+	/*  Colorprom from John's driver. ? */
+	/*  ROM_LOAD( "136029.125",    0x0000, 0x0020, 0xc05abf82 ) */
 
-	void *f;
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-        osd_fread(f,&RAM[0x1200],256);
-		osd_fclose(f);
-	}
-	return 1;
-}
 
-static void novram_save(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f,&RAM[0x1200],256);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver irobot_driver =
+struct GameDriver driver_irobot =
 {
 	__FILE__,
 	0,
-    "irobot",
-    "I, Robot",
-	"1984?",
+	"irobot",
+	"I, Robot",
+	"1983",
 	"Atari",
-    "Dan Boris\nMike Balfour\nFrank Palazzolo\nBryan Smith (Tech info)",
-	GAME_NOT_WORKING,
-	&machine_driver,
+	"Dan Boris\nJohn Dickson\nMike Balfour\nFrank Palazzolo\nAaron Giles\nBryan Smith (Tech info)\nJohn Madfreda (Tech info)",
 	0,
+	&machine_driver,
+	irmb_init,
 
-    irobot_rom,
+	rom_irobot,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-    irobot_input_ports,
+	input_ports_irobot,
 
-    irobot_color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-	novram_load, novram_save /* Highscore load, save */
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

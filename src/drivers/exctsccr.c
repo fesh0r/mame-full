@@ -177,26 +177,26 @@ static struct MemoryWriteAddress bl_sound_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( exctsccr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT| IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT| IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -211,8 +211,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_START      /* DSW0 */
 	/* The next two overlap */
 	PORT_DIPNAME( 0x03, 0x03, "Coinage(Coin A)" )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x03, 0x03, "Coinage(Coin B)" )
@@ -230,10 +230,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x60, 0x00, "Game Time" )
-	PORT_DIPSETTING(    0x60, "3 Min." )
-	PORT_DIPSETTING(    0x40, "4 Min." )
 	PORT_DIPSETTING(    0x20, "1 Min." )
 	PORT_DIPSETTING(    0x00, "2 Min." )
+	PORT_DIPSETTING(    0x60, "3 Min." )
+	PORT_DIPSETTING(    0x40, "4 Min." )
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Has to be 0 */
 INPUT_PORTS_END
 
@@ -370,14 +370,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4123456,	/* ??? with 4 MHz, nested NMIs might happen */
-			3,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0,
 			nmi_interrupt, 4000 /* 4 khz, updates the dac */
@@ -414,21 +412,19 @@ static struct MachineDriver machine_driver =
 };
 
 /* Bootleg */
-static struct MachineDriver bl_machine_driver =
+static struct MachineDriver machine_driver_bl =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			bl_readmem,bl_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			3,
 			bl_sound_readmem,bl_sound_writemem,0,0,
 			ignore_interrupt,0
 		},
@@ -469,238 +465,206 @@ static struct MachineDriver bl_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( exctsccr_rom )
-    ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
-    ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
-    ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
+ROM_START( exctsccr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
+	ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
+	ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-    ROM_REGION(0x08000)
-    ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
-    ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
-    ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
-    ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
-    ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
+	ROM_REGION_DISPOSE( 0x08000 )
+	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
+	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
+	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
+	ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
+	ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-    ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "0_h6.bin",     0x0000, 0x2000, 0x3babbd6b )
-    ROM_LOAD( "9_f6.bin",     0x2000, 0x2000, 0x639998f5 )
-    ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
-    ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
-    ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "0_h6.bin",     0x0000, 0x2000, 0x3babbd6b )
+	ROM_LOAD( "9_f6.bin",     0x2000, 0x2000, 0x639998f5 )
+	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
+	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
+	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
 ROM_END
 
-ROM_START( exctscca_rom )
-    ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
-    ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
-    ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
+ROM_START( exctscca )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
+	ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
+	ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-    ROM_REGION(0x08000)
-    ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
-    ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
-    ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
-    ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
-    ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
+	ROM_REGION_DISPOSE( 0x08000 )
+	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
+	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
+	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
+	ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
+	ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-    ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "exctsccc.000", 0x0000, 0x2000, 0x642fc42f )
-    ROM_LOAD( "exctsccc.009", 0x2000, 0x2000, 0xd88b3236 )
-    ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
-    ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
-    ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "exctsccc.000", 0x0000, 0x2000, 0x642fc42f )
+	ROM_LOAD( "exctsccc.009", 0x2000, 0x2000, 0xd88b3236 )
+	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
+	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
+	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
 ROM_END
 
 /* Bootleg */
-ROM_START( exctsccb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( exctsccb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "es-1.e2",      0x0000, 0x2000, 0x997c6a82 )
 	ROM_LOAD( "es-2.g2",      0x2000, 0x2000, 0x5c66e792 )
 	ROM_LOAD( "es-3.h2",      0x4000, 0x2000, 0xe0d504c0 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b ) /* ES-4.E5 */
-    ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 ) /* ES-5.5G */
-    ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 ) /* ES-6.S  */
-	ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 ) /* ES-7.S - bad read on the bootleg set */
-	ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d ) /* ES-8.S - bad read on the bootleg set */
+	ROM_REGION_DISPOSE( 0x8000 )	/* temporary space for graphics (disposed after conversion) */
+	/* I'm using the ROMs from exctscc2, national flags would be wrong otherwise */
+	ROM_LOAD( "vr.5a",        0x0000, 0x2000, BADCRC( 0x4ff1783d ) )
+	ROM_LOAD( "vr.5b",        0x2000, 0x2000, BADCRC( 0x5605b60b ) )
+	ROM_LOAD( "vr.5c",        0x4000, 0x2000, BADCRC( 0x1fb84ee6 ) )
+	ROM_LOAD( "vr.5k",        0x6000, 0x1000, BADCRC( 0x1d37edfa ) )
+	ROM_LOAD( "vr.5l",        0x7000, 0x1000, BADCRC( 0xb97f396c ) )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-	ROM_REGION(0x10000)	/* sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "es-a.k2",      0x0000, 0x2000, 0x99e87b78 )
 	ROM_LOAD( "es-b.l2",      0x2000, 0x2000, 0x8b3db794 )
 	ROM_LOAD( "es-c.m2",      0x4000, 0x2000, 0x7bed2f81 )
 ROM_END
 
+ROM_START( exctscc2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "vr.3j",        0x0000, 0x2000, 0xc6115362 )
+	ROM_LOAD( "vr.3k",        0x2000, 0x2000, 0xde36ba00 )
+	ROM_LOAD( "vr.3l",        0x4000, 0x2000, 0x1ddfdf65 )
 
-static int hiload_es(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	ROM_REGION_DISPOSE( 0x8000 )	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vr.5a",        0x0000, 0x2000, 0x4ff1783d )
+	ROM_LOAD( "vr.5b",        0x2000, 0x2000, 0x5605b60b )
+	ROM_LOAD( "vr.5c",        0x4000, 0x2000, 0x1fb84ee6 )
+	ROM_LOAD( "vr.5k",        0x6000, 0x1000, 0x1d37edfa )
+	ROM_LOAD( "vr.5l",        0x7000, 0x1000, 0xb97f396c )
 
-	if (memcmp(&RAM[0x7c60],"\x02\x00\x00",3) == 0)
-	{
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-			osd_fread(f,&RAM[0x7c90],48);
-			osd_fclose(f);
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-			/* Copy the high score to the work ram as well */
-
-			RAM[0x7c60] = RAM[0x7c93];
-			RAM[0x7c61] = RAM[0x7c94];
-			RAM[0x7c62] = RAM[0x7c95];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave_es(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-		osd_fwrite(f,&RAM[0x7c90],48);
-		osd_fclose(f);
-	}
-}
-
-static int hiload_esb(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (memcmp(&RAM[0x8c60],"\x02\x00\x00",3) == 0)
-	{
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-			osd_fread(f,&RAM[0x8c90],48);
-			osd_fclose(f);
-
-			/* Copy the high score to the work ram as well */
-
-			RAM[0x8c60] = RAM[0x8c93];
-			RAM[0x8c61] = RAM[0x8c94];
-			RAM[0x8c62] = RAM[0x8c95];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave_esb(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-		osd_fwrite(f,&RAM[0x8c90],48);
-		osd_fclose(f);
-	}
-}
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "vr.7d",        0x0000, 0x2000, 0x2c675a43 )
+	ROM_LOAD( "vr.7e",        0x2000, 0x2000, 0xe571873d )
+	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )	/* vr.7f */
+	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )	/* vr.7h */
+	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )	/* vr.7k */
+ROM_END
 
 
 
-
-struct GameDriver exctsccr_driver =
+struct GameDriver driver_exctsccr =
 {
 	__FILE__,
 	0,
 	"exctsccr",
 	"Exciting Soccer",
 	"1983",
-	"Alpha Denshi Co.",
-	"Ernesto Corvi\nJarek Parchanski\nDedicated to Paolo Nicoletti",
-	0,
-	&machine_driver,
-	0,
-	exctsccr_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload_es, hisave_es
-};
-
-struct GameDriver exctscca_driver =
-{
-	__FILE__,
-	&exctsccr_driver,
-	"exctscca",
-	"Exciting Soccer (alternate music)",
-	"1983",
-	"Alpha Denshi Co.",
+	"Alpha Denshi Co",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
 	&machine_driver,
 	0,
-	exctscca_rom,
+	rom_exctsccr,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_exctsccr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_exctscca =
+{
+	__FILE__,
+	&driver_exctsccr,
+	"exctscca",
+	"Exciting Soccer (alternate music)",
+	"1983",
+	"Alpha Denshi Co",
+	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
+	0,
+	&machine_driver,
+	0,
+	rom_exctscca,
+	0, 0,
+	0,
+	0,
+
+	input_ports_exctsccr,
+
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };
 
 /* Bootleg */
-struct GameDriver exctsccb_driver =
+struct GameDriver driver_exctsccb =
 {
 	__FILE__,
-	&exctsccr_driver,
+	&driver_exctsccr,
 	"exctsccb",
 	"Exciting Soccer (bootleg)",
 	"1984",
 	"bootleg",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
-	&bl_machine_driver,
+	&machine_driver_bl,
 	0,
-	exctsccb_rom,
+	rom_exctsccb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_exctsccr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-	hiload_esb, hisave_esb
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_exctscc2 =
+{
+	__FILE__,
+	&driver_exctsccr,
+	"exctscc2",
+	"Exciting Soccer II",
+	"1983",
+	"Alpha Denshi Co",
+	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
+	0,
+	&machine_driver,
+	0,
+	rom_exctscc2,
+	0, 0,
+	0,
+	0,
+
+	input_ports_exctsccr,
+
+	0, 0, 0,
+	ROT90 | GAME_NOT_WORKING,
+	0,0
 };

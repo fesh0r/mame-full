@@ -39,7 +39,7 @@ int mnight_bankselect_r(int offset)
 
 void mnight_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1+main_cpu_num);
 	int bankaddress;
 
 	if ( data != mnight_bank_latch )
@@ -66,8 +66,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfa01, 0xfa01, MRA_RAM },
 	{ 0xfa02, 0xfa02, mnight_bankselect_r },
 	{ 0xfa03, 0xfa03, MRA_RAM },
-	{ 0xfa08, 0xfa09, MRA_RAM, &mnight_scrollx_ram },
-	{ 0xfa0a, 0xfa0b, MRA_RAM, &mnight_scrolly_ram },
+	{ 0xfa08, 0xfa09, MRA_RAM },
+	{ 0xfa0a, 0xfa0b, MRA_RAM },
 	{ 0xfa0c, 0xfa0c, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -86,7 +86,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfa01, 0xfa01, MWA_RAM },		   // unknown but used
 	{ 0xfa02, 0xfa02, mnight_bankselect_w },
 	{ 0xfa03, 0xfa03, mnight_sprite_overdraw_w, &mnight_spoverdraw_ram },
-	{ 0xfa08, 0xfa0b, MWA_RAM },
+	{ 0xfa08, 0xfa09, MWA_RAM, &mnight_scrollx_ram },
+	{ 0xfa0a, 0xfa0b, MWA_RAM, &mnight_scrolly_ram },
 	{ 0xfa0c, 0xfa0c, mnight_background_enable_w, &mnight_bgenable_ram },
 	{ -1 }  /* end of table */
 };
@@ -122,7 +123,7 @@ static struct IOWritePort snd_writeport[] =
 
 
 
-INPUT_PORTS_START( mnight_input_ports )
+INPUT_PORTS_START( mnight )
 	PORT_START /* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -203,7 +204,7 @@ INPUT_PORTS_START( mnight_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( arkarea_input_ports )
+INPUT_PORTS_START( arkarea )
 	PORT_START /* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -345,7 +346,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,	 /* 2 chips */
-	1250000, /* 5000000/4 MHz ???? */
+	12000000/8, // lax 11/03/1999  (1250000 -> 1500000 ???)
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25)},
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -355,20 +356,18 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static struct MachineDriver mnight_machine_driver =
+static struct MachineDriver machine_driver_mnight =
 {
 	{
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			mnight_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,		/* 12000000/3 ??? */
-			2,
 			snd_readmem,snd_writemem,
 			0,snd_writeport,
 			interrupt,2
@@ -399,8 +398,8 @@ static struct MachineDriver mnight_machine_driver =
 };
 
 
-ROM_START( mnight_rom )
-	ROM_REGION(0x30000)
+ROM_START( mnight )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "mn6-j19.bin",  0x00000, 0x8000, 0x56678d14 )
 	ROM_LOAD( "mn5-j17.bin",  0x10000, 0x8000, 0x2a73f88e )
 	ROM_LOAD( "mn4-j16.bin",  0x18000, 0x8000, 0xc5e42bb4 )
@@ -437,12 +436,12 @@ ROM_START( mnight_rom )
 	ROM_CONTINUE(             0x62000, 0x2000 )
 	ROM_CONTINUE(             0x66000, 0x2000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "mn1-j7.bin",   0x00000, 0x10000, 0xa0782a31 )
 ROM_END
 
-ROM_START( arkarea_rom )
-	ROM_REGION(0x30000)
+ROM_START( arkarea )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "arkarea.008",  0x00000, 0x8000, 0x1ce1b5b9 )
 	ROM_LOAD( "arkarea.009",  0x10000, 0x8000, 0xdb1c81d1 )
 	ROM_LOAD( "arkarea.010",  0x18000, 0x8000, 0x5a460dae )
@@ -479,56 +478,13 @@ ROM_START( arkarea_rom )
 	ROM_CONTINUE(             0x62000, 0x2000 )
 	ROM_CONTINUE(             0x66000, 0x2000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "arkarea.013",  0x00000, 0x8000, 0x2d409d58 )
 ROM_END
 
 
 
-/****  Mutant Night high score save routine - RJF (April 29, 1999)  ****/
-
-static int mnight_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xc099],"\x00\x50\x00",3) == 0) &&
-            (memcmp(&RAM[0xc0d4],"\x53\x48\x49",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc099], 3*5);	  /* values */
-			osd_fread(f,&RAM[0xc0a8], 10*5);  /* names */
-
-                        RAM[0xc0e6] = RAM[0xc099];	/* update the HS */
-                        RAM[0xc0e7] = RAM[0xc09a];	/* on top of screen */
-                        RAM[0xc0e8] = RAM[0xc09b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void mnight_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc099],13*5);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver mnight_driver =
+struct GameDriver driver_mnight =
 {
 	__FILE__,
 	0,
@@ -538,24 +494,22 @@ struct GameDriver mnight_driver =
 	"UPL (Kawakus license)",
 	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&mnight_machine_driver,
+	&machine_driver_mnight,
 	0,
 
-	mnight_rom,
+	rom_mnight,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	mnight_input_ports,
+	input_ports_mnight,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mnight_hiload, mnight_hisave
-
+	ROT0,
+	0,0
 };
 
-struct GameDriver arkarea_driver =
+struct GameDriver driver_arkarea =
 {
 	__FILE__,
 	0,
@@ -565,18 +519,17 @@ struct GameDriver arkarea_driver =
 	"UPL",
 	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&mnight_machine_driver,
+	&machine_driver_mnight,
 	0,
 
-	arkarea_rom,
+	rom_arkarea,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	arkarea_input_ports,
+	input_ports_arkarea,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mnight_hiload, mnight_hisave
+	ROT0,
+	0,0
 };

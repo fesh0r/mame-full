@@ -277,7 +277,7 @@ static void mcu_process_command( void ){
 
 			if( enemy_type<=4 || (enemy_type&1)==0 ) health = 0x18 + difficulty*8;
 			else health = 0x06 + difficulty*2;
-			fprintf( errorlog, "e_type:0x%02x diff:0x%02x -> 0x%02x\n", enemy_type, difficulty, health );
+			if (errorlog) fprintf( errorlog, "e_type:0x%02x diff:0x%02x -> 0x%02x\n", enemy_type, difficulty, health );
 			mcu_buffer[0] = 1;
 			mcu_buffer[1] = health;
 		}
@@ -339,7 +339,7 @@ static int bank;
 
 static void bankswitch_w( int offset, int data ){
 	if( (data&1)!=bank ){
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		bank = data&1;
 		cpu_setbank(1,&RAM[ bank?0x10000:0x4000 ]);
 	}
@@ -420,7 +420,7 @@ static struct MemoryWriteAddress sound_writemem[] = {
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( renegade )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -623,7 +623,7 @@ static void irqhandler(int linestate)
 
 static struct YM3526interface ym3526_interface = {
 	1,			/* 1 chip (no more supported) */
-	3250000,	/* 3.25 MHz ? (hand tuned) */
+	3000000,	/* 3 MHz ? (hand tuned) */
 	{ 50 },		/* volume */
 	{ irqhandler },
 };
@@ -639,20 +639,18 @@ static struct ADPCMinterface adpcm_interface =
 
 
 
-static struct MachineDriver renegade_machine_driver =
+static struct MachineDriver machine_driver_renegade =
 {
 	{
 		{
  			CPU_M6502,
 			3000000,	/* 1.5 MHz? */
-			0, /* memory region */
 			main_readmem,main_writemem,0,0,
 			renegade_interrupt,2
 		},
 		{
  			CPU_M6809 | CPU_AUDIO_CPU,
 			1200000,	/* ? */
-			2, /* memory region */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */
@@ -691,8 +689,8 @@ static struct MachineDriver renegade_machine_driver =
 
 
 
-ROM_START( renegade_rom )
-	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+ROM_START( renegade )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-5.bin",     0x8000, 0x8000, 0xba683ddf )
 	ROM_LOAD( "na-5.bin",     0x4000, 0x4000, 0xde7e7df4 )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -727,7 +725,7 @@ ROM_START( renegade_rom )
 	ROM_LOAD( "ng-5.bin",     0x88000, 0x8000, 0xa8ee3720 )
 	ROM_LOAD( "nm-5.bin",     0x90000, 0x8000, 0xc100258e )
 
-	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
@@ -736,8 +734,8 @@ ROM_START( renegade_rom )
 	ROM_LOAD( "n3-5.bin",     0x18000, 0x8000, 0x78fd6190 )
 ROM_END
 
-ROM_START( kuniokun_rom )
-	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+ROM_START( kuniokun )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-01.bin",	  0x8000, 0x8000, 0x93fcfdf5 ) // original
 	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -772,7 +770,7 @@ ROM_START( kuniokun_rom )
 	ROM_LOAD( "ta18-21.bin",  0x88000, 0x8000, 0xc95e009b )
 	ROM_LOAD( "ta18-15.bin",  0x90000, 0x8000, 0xa5d61d01 )
 
-	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
@@ -781,8 +779,8 @@ ROM_START( kuniokun_rom )
 	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )
 ROM_END
 
-ROM_START( kuniokub_rom )
-	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+ROM_START( kuniokub )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "ta18-10.bin",  0x8000, 0x8000, 0xa90cf44a ) // bootleg
 	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -817,7 +815,7 @@ ROM_START( kuniokub_rom )
 	ROM_LOAD( "ta18-21.bin",  0x88000, 0x8000, 0xc95e009b )
 	ROM_LOAD( "ta18-15.bin",  0x90000, 0x8000, 0xa5d61d01 )
 
-	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
@@ -826,36 +824,9 @@ ROM_START( kuniokub_rom )
 	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )
 ROM_END
 
-/*
-static int hiload(void){
-	if( osd_key_pressed( OSD_KEY_L ) ){
-		void *f;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1020],8*5);
-			osd_fclose(f);
-		}
-		return 1;
-	}
 
-	return 0;
-}
-
-static void hisave(void){
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1020],8*5);
-		osd_fclose(f);
-	}
-}
-*/
-
-struct GameDriver renegade_driver =
+struct GameDriver driver_renegade =
 {
 	__FILE__,
 	0,
@@ -865,70 +836,67 @@ struct GameDriver renegade_driver =
 	"Technos (Taito America license)",
 	CREDITS,
 	0,
-	&renegade_machine_driver,
+	&machine_driver_renegade,
+	renegade_init,
+
+	rom_renegade,
+	0, 0,
+	0,
 	0,
 
-	renegade_rom,
-	renegade_init, 0,
-	0,
-	0,
-
-	input_ports,
+	input_ports_renegade,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
+	ROT0,
+	0,0
 };
 
-struct GameDriver kuniokun_driver =
+struct GameDriver driver_kuniokun =
 {
 	__FILE__,
-	&renegade_driver,
+	&driver_renegade,
 	"kuniokun",
 	"Nekketsu Kouha Kunio-kun (Japan)",
 	"1986",
 	"Technos",
 	CREDITS,
 	0,
-	&renegade_machine_driver,
+	&machine_driver_renegade,
 	kuniokun_init,
 
-	kuniokun_rom,
+	rom_kuniokun,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_renegade,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
+	ROT0,
+	0,0
 };
 
-struct GameDriver kuniokub_driver =
+struct GameDriver driver_kuniokub =
 {
 	__FILE__,
-	&renegade_driver,
+	&driver_renegade,
 	"kuniokub",
 	"Nekketsu Kouha Kunio-kun (Japan bootleg)",
 	"1986",
 	"bootleg",
 	CREDITS,
 	0,
-	&renegade_machine_driver,
+	&machine_driver_renegade,
 	0,
 
-	kuniokub_rom,
+	rom_kuniokub,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_renegade,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
+	ROT0,
+	0,0
 };

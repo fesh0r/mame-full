@@ -211,7 +211,8 @@ static void karnov_control_w(int offset, int data)
 			cpu_cause_interrupt (1, M6502_INT_NMI);
 			break;
 
-		case 4: /* DM (Interrupt for DMA by graphics chips?) */
+		case 4: /* DM (DMA to buffer spriteram) */
+			buffer_spriteram_w(0,0);
 			break;
 
 		case 6: /* SECREQ (Interrupt & Data to i8751) */
@@ -274,7 +275,7 @@ static struct MemoryWriteAddress karnov_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0x060000, 0x063fff, MWA_BANK1 , &karnov_ram },
-	{ 0x080000, 0x080fff, MWA_BANK2 , &spriteram },
+	{ 0x080000, 0x080fff, MWA_BANK2 , &spriteram, &spriteram_size },
 	{ 0x0a0000, 0x0a07ff, MWA_BANK3 , &videoram, &videoram_size },
 	{ 0x0a0800, 0x0a0fff, videoram_mirror }, /* Wndrplnt only */
 	{ 0x0a1000, 0x0a1fff, karnov_foreground_w },
@@ -305,7 +306,7 @@ static struct MemoryWriteAddress karnov_s_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( karnov_input_ports )
+INPUT_PORTS_START( karnov )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -392,7 +393,7 @@ to have any effect */
 	PORT_DIPSETTING(    0x00, "Fast" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( chelnov_input_ports )
+INPUT_PORTS_START( chelnov )
 	PORT_START	/* Player controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -574,26 +575,24 @@ static void karnov_reset_init(void)
 	memset(karnov_ram,0,0x4000); /* Chelnov likes ram clear on reset.. */
 }
 
-static struct MachineDriver karnov_machine_driver =
+static struct MachineDriver machine_driver_karnov =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 Mhz */
-			0,
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,	/* Accurate */
-			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	karnov_reset_init,
 
@@ -604,7 +603,7 @@ static struct MachineDriver karnov_machine_driver =
 	1024, 1024,
 	karnov_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	karnov_vh_start,
 	karnov_vh_stop,
@@ -624,26 +623,24 @@ static struct MachineDriver karnov_machine_driver =
 	}
 };
 
-static struct MachineDriver wndrplnt_machine_driver =
+static struct MachineDriver machine_driver_wndrplnt =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 Mhz */
-			0,
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,	/* Accurate */
-			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	karnov_reset_init,
 
@@ -654,7 +651,7 @@ static struct MachineDriver wndrplnt_machine_driver =
 	1024, 1024,
 	karnov_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	karnov_vh_start,
 	karnov_vh_stop,
@@ -676,8 +673,8 @@ static struct MachineDriver wndrplnt_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( karnov_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( karnov )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "dn08-5",       0x00000, 0x10000, 0xdb92c264 )
 	ROM_LOAD_ODD ( "dn11-5",       0x00000, 0x10000, 0x05669b4b )
 	ROM_LOAD_EVEN( "dn07-",        0x20000, 0x10000, 0xfc14291b )
@@ -700,16 +697,16 @@ ROM_START( karnov_rom )
 	ROM_LOAD( "dn18-",        0xa8000, 0x10000, 0x2ad53213 )
 	ROM_LOAD( "dn19-5",       0xb8000, 0x08000, 0x8fd4fa40 )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "karnprom.21",  0x0000, 0x0400, 0xaab0bb93 )
 	ROM_LOAD( "karnprom.20",  0x0400, 0x0400, 0x02f78ffb )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "dn05-5",       0x8000, 0x8000, 0xfa1a31a8 )
 ROM_END
 
-ROM_START( karnovj_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( karnovj )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "kar8",         0x00000, 0x10000, 0x3e17e268 )
 	ROM_LOAD_ODD ( "kar11",        0x00000, 0x10000, 0x417c936d )
 	ROM_LOAD_EVEN( "dn07-",        0x20000, 0x10000, 0xfc14291b )
@@ -732,16 +729,16 @@ ROM_START( karnovj_rom )
 	ROM_LOAD( "dn18-",        0xa8000, 0x10000, 0x2ad53213 )
 	ROM_LOAD( "kar19",        0xb8000, 0x08000, 0x7bc174bb )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "karnprom.21",  0x0000, 0x0400, 0xaab0bb93 )
 	ROM_LOAD( "karnprom.20",  0x0400, 0x0400, 0x02f78ffb )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "kar5",         0x8000, 0x8000, 0x7c9158f1 )
 ROM_END
 
-ROM_START( wndrplnt_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( wndrplnt )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ea08.bin",   0x00000, 0x10000, 0xb0578a14 )
 	ROM_LOAD_ODD ( "ea11.bin",   0x00000, 0x10000, 0x271edc6c )
 	ROM_LOAD_EVEN( "ea07.bin",   0x20000, 0x10000, 0x7095a7d5 )
@@ -764,16 +761,16 @@ ROM_START( wndrplnt_rom )
 	ROM_LOAD( "ea18.bin",    0xa8000, 0x10000, 0x3fb2cec7 )
 	ROM_LOAD( "ea19.bin",    0xb8000, 0x10000, 0x87cf03b5 )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "ea21.prm",      0x0000, 0x0400, 0xc8beab49 )
 	ROM_LOAD( "ea20.prm",      0x0400, 0x0400, 0x619f9d1e )
 
-	ROM_REGION(0x10000)	/* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound CPU */
 	ROM_LOAD( "ea05.bin",     0x8000, 0x8000, 0x8dbb6231 )
 ROM_END
 
-ROM_START( chelnov_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( chelnov )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ee08-a.j15",   0x00000, 0x10000, 0x2f2fb37b )
 	ROM_LOAD_ODD ( "ee11-a.j20",   0x00000, 0x10000, 0xf306d05f )
 	ROM_LOAD_EVEN( "ee07-a.j14",   0x20000, 0x10000, 0x9c69ed56 )
@@ -792,17 +789,17 @@ ROM_START( chelnov_rom )
 	ROM_LOAD( "ee14-.f13",    0x88000, 0x10000, 0xd8f4bbde )
 	ROM_LOAD( "ee15-.f15",    0xa8000, 0x10000, 0x81e3e68b )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "ee21.k8",      0x0000, 0x0400, 0xb1db6586 )	/* different from the other set; */
 														/* might be bad */
 	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound CPU */
 	ROM_LOAD( "ee05-.f3",     0x8000, 0x8000, 0x6a8936b4 )
 ROM_END
 
-ROM_START( chelnovj_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( chelnovj )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "a-j15.bin",    0x00000, 0x10000, 0x1978cb52 )
 	ROM_LOAD_ODD ( "a-j20.bin",    0x00000, 0x10000, 0xe0ed3d99 )
 	ROM_LOAD_EVEN( "a-j14.bin",    0x20000, 0x10000, 0x51465486 )
@@ -821,142 +818,35 @@ ROM_START( chelnovj_rom )
 	ROM_LOAD( "ee14-.f13",    0x88000, 0x10000, 0xd8f4bbde )
 	ROM_LOAD( "ee15-.f15",    0xa8000, 0x10000, 0x81e3e68b )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "a-k7.bin",     0x0000, 0x0400, 0x309c49d8 )	/* different from the other set; */
 														/* might be bad */
 	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound CPU */
 	ROM_LOAD( "ee05-.f3",     0x8000, 0x8000, 0x6a8936b4 )
 ROM_END
 
 /******************************************************************************/
 
-static void wndrplnt_patch(void)
-{
-//	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-//	WRITE_WORD (&RAM[0x1106],0x4E71);
-//	WRITE_WORD (&RAM[0x110e],0x4E71);
-//	WRITE_WORD (&RAM[0xc0c],0x4E71);
-//	WRITE_WORD (&RAM[0xc0e],0x4E71);
-//	WRITE_WORD (&RAM[0xc4c],0x4E71);
-//	WRITE_WORD (&RAM[0xc0e],0x4E71);
-//WRITE_WORD (&RAM[0x5b0a],0x4E71);
-//WRITE_WORD (&RAM[0x5b0c],0x4E71);
-//WRITE_WORD (&RAM[0x5b0e],0x4E71);
-//WRITE_WORD (&RAM[0x5b1e],0x4E71);
-//WRITE_WORD (&RAM[0xd58],0x4E71);
-}
-
-static void chelnov_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
-	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
-}
-
-static void chelnovj_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
-	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
-}
-
-/******************************************************************************/
-
-/* MISH:  I doubt these functions will work on the mac.. */
-static int karnov_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&karnov_ram[0x3d00],"\x41\x0\x41\x41",4) == 0 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&karnov_ram[0x3c00],4*10);
-                        osd_fread(f,&karnov_ram[0x3d00],4*10);
-                        karnov_ram[0x0a]=karnov_ram[0x3c00];
-                        karnov_ram[0x0b]=karnov_ram[0x3c01];
-                        karnov_ram[0x0c]=karnov_ram[0x3c02];
-                        karnov_ram[0x0d]=karnov_ram[0x3c03];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void karnov_hisave(void)
-{
-	void *f;
-
-	        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	        {
-	                osd_fwrite(f,&karnov_ram[0x3c00],4*10);
-	                osd_fwrite(f,&karnov_ram[0x3d00],4*10);
-	                osd_fclose(f);
-	        }
-}
-
-static int chelnov_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&karnov_ram[0xc0],"BA",2) == 0 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&karnov_ram[0x80],4*11);
-			osd_fread(f,&karnov_ram[0xc0],4*11);
-                        karnov_ram[0x0048]=karnov_ram[0x0080];
-                        karnov_ram[0x0049]=karnov_ram[0x0081];
-                        karnov_ram[0x004a]=karnov_ram[0x0082];
-                        karnov_ram[0x004b]=karnov_ram[0x0083];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void chelnov_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&karnov_ram[0x0080],4*11);
-                osd_fwrite(f,&karnov_ram[0x00c0],4*11);
-                osd_fclose(f);
-        }
-}
-
-/******************************************************************************/
-
 static int karnov_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x8f2) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0x8f2 && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int karnovj_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x8ec) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0x8ec && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int chelnov_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0xdfe) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0xdfe && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int chelnovj_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0xe06) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0xe06 && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static void karnov_init(void)
@@ -992,9 +882,48 @@ static void karnov_init(void)
 	}
 }
 
+static void wndrplnt_patch(void)
+{
+//	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	karnov_init();
+
+//	WRITE_WORD (&RAM[0x1106],0x4E71);
+//	WRITE_WORD (&RAM[0x110e],0x4E71);
+//	WRITE_WORD (&RAM[0xc0c],0x4E71);
+//	WRITE_WORD (&RAM[0xc0e],0x4E71);
+//	WRITE_WORD (&RAM[0xc4c],0x4E71);
+//	WRITE_WORD (&RAM[0xc0e],0x4E71);
+//WRITE_WORD (&RAM[0x5b0a],0x4E71);
+//WRITE_WORD (&RAM[0x5b0c],0x4E71);
+//WRITE_WORD (&RAM[0x5b0e],0x4E71);
+//WRITE_WORD (&RAM[0x5b1e],0x4E71);
+//WRITE_WORD (&RAM[0xd58],0x4E71);
+}
+
+static void chelnov_patch(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	karnov_init();
+
+	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
+	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
+}
+
+static void chelnovj_patch(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	karnov_init();
+
+	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
+	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
+}
+
 /******************************************************************************/
 
-struct GameDriver karnov_driver =
+struct GameDriver driver_karnov =
 {
 	__FILE__,
 	0,
@@ -1004,49 +933,49 @@ struct GameDriver karnov_driver =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
+	&machine_driver_karnov,
 	karnov_init,
 
-	karnov_rom,
+	rom_karnov,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	karnov_input_ports,
+	input_ports_karnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-	karnov_hiload, karnov_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver karnovj_driver =
+struct GameDriver driver_karnovj =
 {
 	__FILE__,
-	&karnov_driver,
+	&driver_karnov,
 	"karnovj",
 	"Karnov (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
+	&machine_driver_karnov,
 	karnov_init,
 
-	karnovj_rom,
+	rom_karnovj,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	karnov_input_ports,
+	input_ports_karnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-	karnov_hiload, karnov_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver wndrplnt_driver =
+struct GameDriver driver_wndrplnt =
 {
 	__FILE__,
 	0,
@@ -1055,24 +984,24 @@ struct GameDriver wndrplnt_driver =
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&wndrplnt_machine_driver,
-	karnov_init,
-
-	wndrplnt_rom,
+	0,
+	&machine_driver_wndrplnt,
 	wndrplnt_patch,
+
+	rom_wndrplnt,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	karnov_input_ports,
+	input_ports_karnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ROT270 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver chelnov_driver =
+struct GameDriver driver_chelnov =
 {
 	__FILE__,
 	0,
@@ -1082,44 +1011,44 @@ struct GameDriver chelnov_driver =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
-	karnov_init,
-
-	chelnov_rom,
+	&machine_driver_karnov,
 	chelnov_patch,
+
+	rom_chelnov,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	chelnov_input_ports,
+	input_ports_chelnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-	chelnov_hiload, chelnov_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver chelnovj_driver =
+struct GameDriver driver_chelnovj =
 {
 	__FILE__,
-	&chelnov_driver,
+	&driver_chelnov,
 	"chelnovj",
 	"Chelnov - Atomic Runner (Japan)",
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
-	karnov_init,
-
-	chelnovj_rom,
+	&machine_driver_karnov,
 	chelnovj_patch,
+
+	rom_chelnovj,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	chelnov_input_ports,
+	input_ports_chelnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-	chelnov_hiload, chelnov_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

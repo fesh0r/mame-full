@@ -21,7 +21,7 @@ int  r_rd_a001(int offset);
 
 static void bankswitch_w ( int offset, int data ) {
 
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	int banknum = ( data - 1 ) & 3;
 
@@ -128,7 +128,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( ssi_input_ports )
+INPUT_PORTS_START( ssi )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -205,7 +205,7 @@ INPUT_PORTS_START( ssi_input_ports )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( majest12_input_ports )
+INPUT_PORTS_START( majest12 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -327,14 +327,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ? */
-			0,
 			readmem,writemem,0,0,
 			m68_level5_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		}
@@ -350,7 +348,7 @@ static struct MachineDriver machine_driver =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER| VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	ssi_vh_start,
 	ssi_vh_stop,
@@ -374,15 +372,15 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ssi_rom )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+ROM_START( ssi )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
 	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x470a483a )
 
 	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -390,8 +388,8 @@ ROM_START( ssi_rom )
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 
-ROM_START( majest12_rom )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+ROM_START( majest12 )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "c64-07.bin", 0x00000, 0x20000, 0xf29ed5c9 )
 	ROM_LOAD_EVEN( "c64-06.bin", 0x40000, 0x20000, 0x18dc71ac )
 	ROM_LOAD_ODD ( "c64-08.bin", 0x00000, 0x20000, 0xddfd33d5 )
@@ -400,7 +398,7 @@ ROM_START( majest12_rom )
 	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -410,7 +408,7 @@ ROM_END
 
 
 
-struct GameDriver ssi_driver =
+struct GameDriver driver_ssi =
 {
 	__FILE__,
 	0,
@@ -423,22 +421,22 @@ struct GameDriver ssi_driver =
 	&machine_driver,
 	0,
 
-	ssi_rom,
+	rom_ssi,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	ssi_input_ports,
+	input_ports_ssi,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };
 
-struct GameDriver majest12_driver =
+struct GameDriver driver_majest12 =
 {
 	__FILE__,
-	&ssi_driver,
+	&driver_ssi,
 	"majest12",
 	"Majestic Twelve - The Space Invaders Part IV (Japan)",
 	"1990",
@@ -448,14 +446,14 @@ struct GameDriver majest12_driver =
 	&machine_driver,
 	0,
 
-	majest12_rom,
+	rom_majest12,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	majest12_input_ports,
+	input_ports_majest12,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };

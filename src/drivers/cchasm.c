@@ -84,7 +84,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( cchasm_input_ports )
+INPUT_PORTS_START( cchasm )
 	PORT_START /* DSW */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
@@ -128,25 +128,9 @@ INPUT_PORTS_START( cchasm_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, 0, "Test 1", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED ) /* Test 2, not used in cchasm */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED ) /* Test 3, not used in cchasm */
-
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
 
 static struct AY8910interface ay8910_interface =
 {
@@ -173,21 +157,19 @@ static Z80_DaisyChain daisy_chain[] =
 	{ 0,0,0,-1} 		/* end mark */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cchasm =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			8000000, /* 8 MHz (from schematics) */
-			0,
 			readmem, writemem,0,0,
 			0,0
 		},
 		{
 			CPU_Z80,
 			3584229,	/* 3.58  MHz (from schematics) */
-			1,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			0,0,
             0,0,daisy_chain
@@ -199,7 +181,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1024-1, 0, 768-1 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
 	cchasm_init_colors,
 
@@ -231,8 +213,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cchasm_rom )
-	ROM_REGION(0x010000)
+ROM_START( cchasm )
+	ROM_REGIONX( 0x010000, REGION_CPU1 )
     ROM_LOAD_EVEN( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
     ROM_LOAD_ODD ( "chasm.u12", 0x000000, 0x001000, 0x5d702c7d )
     ROM_LOAD_EVEN( "chasm.u8",  0x002000, 0x001000, 0x56a7ce8a )
@@ -250,12 +232,12 @@ ROM_START( cchasm_rom )
     ROM_LOAD_EVEN( "chasm.u5",  0x00e000, 0x001000, 0xe4a58b7d )
     ROM_LOAD_ODD ( "chasm.u13", 0x00e000, 0x001000, 0x877e849c )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
 
-ROM_START( cchasm1_rom )
-	ROM_REGION(0x010000)
+ROM_START( cchasm1 )
+	ROM_REGIONX( 0x010000, REGION_CPU1 )
     ROM_LOAD_EVEN( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
     ROM_LOAD_ODD ( "chasm.u12", 0x000000, 0x001000, 0x5d702c7d )
     ROM_LOAD_EVEN( "chasm.u8",  0x002000, 0x001000, 0x56a7ce8a )
@@ -273,51 +255,11 @@ ROM_START( cchasm1_rom )
     ROM_LOAD_EVEN( "chasm.u5",  0x00e000, 0x001000, 0xe4a58b7d )
     ROM_LOAD_ODD ( "chasm.u13", 0x00e000, 0x001000, 0x877e849c )
 
-	ROM_REGION(0x1000)	/* 4k for the audio CPU */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* 4k for the audio CPU */
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
 
 
-struct GameDriver cchasm_driver =
-{
-	__FILE__,
-	0,
-	"cchasm",
-	"Cosmic Chasm (set 1)",
-	"1983",
-	"Cinematronics / GCE",
-	0,
-	0,
-	&machine_driver,
-	0,
-	cchasm_rom,
-	0, 0,
-	0,
-	0,
-	cchasm_input_ports,
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
 
-struct GameDriver cchasm1_driver =
-{
-	__FILE__,
-	&cchasm_driver,
-	"cchasm1",
-	"Cosmic Chasm (set 2)",
-	"1983",
-	"Cinematronics / GCE",
-	0,
-	0,
-	&machine_driver,
-	0,
-	cchasm1_rom,
-	0, 0,
-	0,
-	0,
-	cchasm_input_ports,
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
+GAME( 1983, cchasm,  ,       cchasm, cchasm, , ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 1)" )
+GAME( 1983, cchasm1, cchasm, cchasm, cchasm, , ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 2)" )

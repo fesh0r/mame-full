@@ -79,7 +79,7 @@ void speedbal_sharedram_w(int offset,int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0xdbff, MRA_ROM },
-	{ 0xdc00, 0xdfff, speedbal_sharedram_r, &speedbal_sharedram },  // shared with SOUND
+	{ 0xdc00, 0xdfff, speedbal_sharedram_r },  // shared with SOUND
 	{ 0xe000, 0xe1ff, speedbal_background_videoram_r },
 	{ 0xe800, 0xefff, speedbal_foreground_videoram_r },
 	{ 0xf000, 0xffff, MRA_RAM },
@@ -143,7 +143,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( speedbal )
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "70000 200000 1M" )
@@ -277,14 +277,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz ??? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			2660000,	/* 2.66 MHz ???  Maybe yes */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,8
 		}
@@ -323,8 +321,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( speedbal_rom )
-	ROM_REGION(0x10000)     /* 64K for code: main */
+ROM_START( speedbal )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64K for code: main */
 	ROM_LOAD( "sb1.bin",  0x0000,  0x8000, 0x1c242e34 )
 	ROM_LOAD( "sb3.bin",  0x8000,  0x8000, 0x7682326a )
 
@@ -337,7 +335,7 @@ ROM_START( speedbal_rom )
 	ROM_LOAD( "sb6.bin", 0x28000, 0x08000, 0x0e2506eb )    /* sprites */
 	ROM_LOAD( "sb7.bin", 0x30000, 0x08000, 0x9f1b33d1 )
 
-	ROM_REGION(0x10000)     /* 64K for second CPU: sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for second CPU: sound */
 	ROM_LOAD( "sb2.bin",  0x0000, 0x8000, 0xe6a6d9b7 )
 ROM_END
 
@@ -348,46 +346,12 @@ static void speedbal_decode (void)
 
 	/* invert the graphics bits on the sprites */
 	for (i = 0x28000; i < 0x38000; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+		memory_region(1)[i] ^= 0xff;
 }
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	if  (memcmp(&RAM[0xF800],"\x20\x38\x76",3) == 0 &&
-			memcmp(&RAM[0xF843],"\x56\x41\x50",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xF800],70);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xF800],70);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver speedbal_driver =
+struct GameDriver driver_speedbal =
 {
 	__FILE__,
 	0,
@@ -398,17 +362,16 @@ struct GameDriver speedbal_driver =
 	"Joseba Epalza",
 	0,
 	&machine_driver,
+	speedbal_decode,
+
+	rom_speedbal,
+	0, 0,
+	0,
 	0,
 
-	speedbal_rom,
-	speedbal_decode, 0,
-	0,
-	0,
-
-	input_ports,
+	input_ports_speedbal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

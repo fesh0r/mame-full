@@ -216,8 +216,7 @@ static void scanline_interrupt_callback(int param)
 		atarigen_eeprom_w - write handler for EEPROM data (low byte)
 		atarigen_eeprom_r - read handler for EEPROM data (low byte)
 
-		atarigen_hiload - standard hi score load routine; loads EEPROM data
-		atarigen_hisave - standard hi score save routine; saves EEPROM data
+		atarigen_nvram_handler - load/save EEPROM data
 
 --------------------------------------------------------------------------*/
 
@@ -306,56 +305,31 @@ int atarigen_eeprom_upper_r(int offset)
  *
  */
 
-int atarigen_hiload(void)
+void atarigen_nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-	/* first try to read from the file */
-	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread(f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose(f);
-	}
-
-	/* if that doesn't work, initialize it */
+	if (read_or_write)
+		osd_fwrite(file, atarigen_eeprom, atarigen_eeprom_size);
 	else
 	{
-		/* all 0xff's work for most games */
-		memset(atarigen_eeprom, 0xff, atarigen_eeprom_size);
-
-		/* anything else must be decompressed */
-		if (atarigen_eeprom_default)
+		if (file)
+			osd_fread(file, atarigen_eeprom, atarigen_eeprom_size);
+		else
 		{
-			if (atarigen_eeprom_default[0] == 0)
-				decompress_eeprom_byte(atarigen_eeprom_default + 1);
-			else
-				decompress_eeprom_word(atarigen_eeprom_default + 1);
+			/* all 0xff's work for most games */
+			memset(atarigen_eeprom, 0xff, atarigen_eeprom_size);
+
+			/* anything else must be decompressed */
+			if (atarigen_eeprom_default)
+			{
+				if (atarigen_eeprom_default[0] == 0)
+					decompress_eeprom_byte(atarigen_eeprom_default + 1);
+				else
+					decompress_eeprom_word(atarigen_eeprom_default + 1);
+			}
 		}
 	}
-
-	return 1;
 }
 
-
-/*
- *	Standard high score save
- *
- *	Saves the EEPROM data as a "high score".
- *
- */
-
-void atarigen_hisave(void)
-{
-	void *f;
-
-	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		osd_fwrite(f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose(f);
-	}
-}
 
 
 /*
@@ -636,6 +610,19 @@ void atarigen_sound_reset_w(int offset, int data)
 
 
 /*
+ *	Sound CPU reset handler
+ *
+ *	Resets the state of the sound CPU manually.
+ *
+ */
+
+void atarigen_sound_reset(void)
+{
+	timer_set(TIME_NOW, 1, delayed_sound_reset);
+}
+
+
+/*
  *	Main -> sound CPU data write handlers
  *
  *	Handles communication from the main CPU to the sound CPU. Two versions are provided,
@@ -753,8 +740,11 @@ static void sound_comm_timer(int reps_left)
 static void delayed_sound_reset(int param)
 {
 	/* unhalt and reset the sound CPU */
-	cpu_halt(sound_cpu_num, 1);
-	cpu_reset(sound_cpu_num);
+	if (param == 0)
+	{
+		cpu_set_halt_line(sound_cpu_num, CLEAR_LINE);
+		cpu_set_reset_line(sound_cpu_num, PULSE_LINE);
+	}
 
 	/* reset the sound write state */
 	atarigen_sound_to_cpu_ready = 0;
@@ -839,7 +829,7 @@ static int m6502_speedup_r(int offset);
 
 void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
 {
-	UINT8 *memory = Machine->memory_region[Machine->drv->cpu[cpunum].memory_region];
+	UINT8 *memory = memory_region(REGION_CPU1+cpunum);
 	int address_low, address_high;
 
 	/* determine the pointer to the first speed check location */
@@ -1604,12 +1594,12 @@ static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atari
 
 int atarigen_rle_init(int region, int colorbase)
 {
-	const UINT16 *base = (const UINT16 *)Machine->memory_region[region];
-	int lowest_address = Machine->memory_region_length[region];
+	const UINT16 *base = (const UINT16 *)memory_region(region);
+	int lowest_address = memory_region_length(region);
 	int i;
 
 	rle_region = region;
-	rle_colortable = &Machine->colortable[colorbase];
+	rle_colortable = &Machine->remapped_colortable[colorbase];
 
 	/* build and allocate the tables */
 	if (build_rle_tables())
@@ -1774,7 +1764,7 @@ static int build_rle_tables(void)
 
 static void prescan_rle(int which)
 {
-	UINT16 *base = (UINT16 *)&Machine->memory_region[rle_region][which * 8];
+	UINT16 *base = (UINT16 *)&memory_region(rle_region)[which * 8];
 	struct atarigen_rle_descriptor *rle_data = &atarigen_rle_info[which];
 	UINT32 usage = 0, usage_hi = 0;
 	int width = 0, height, flags, offset;
@@ -1791,10 +1781,10 @@ static void prescan_rle(int which)
 
 	/* determine the starting offset */
 	offset = ((base[2] & 0xff) << 16) | base[3];
-	rle_data->data = base = (UINT16 *)&Machine->memory_region[rle_region][offset * 2];
+	rle_data->data = base = (UINT16 *)&memory_region(rle_region)[offset * 2];
 
 	/* make sure it's valid */
-	if (offset < which * 4 || offset > Machine->memory_region_length[rle_region])
+	if (offset < which * 4 || offset > memory_region_length(rle_region))
 	{
 		memset(rle_data, 0, sizeof(*rle_data));
 		return;
@@ -2700,9 +2690,14 @@ static int compute_mask(int count);
 static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_desc *source_desc)
 {
 	/* allocate the bitmap */
-	pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
-								source_desc->tileheight * source_desc->ytiles,
-								Machine->scrbitmap->depth);
+	if (!source_desc->noscroll)
+		pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
+									source_desc->tileheight * source_desc->ytiles,
+									Machine->scrbitmap->depth);
+	else
+		pf->bitmap = osd_new_bitmap(Machine->drv->screen_width,
+									Machine->drv->screen_height,
+									Machine->scrbitmap->depth);
 	if (!pf->bitmap)
 		return 1;
 
@@ -3062,7 +3057,7 @@ void atarigen_halt_until_hblank_0_w(int offset, int data)
 	/* halt and set a timer to wake up */
 	fraction = (double)(hblank - hpos) / (double)Machine->drv->screen_width;
 	timer_set(cpu_getscanlineperiod() * fraction, 0, unhalt_cpu);
-	cpu_halt(0, 0);
+	cpu_set_halt_line(0, ASSERT_LINE);
 }
 
 
@@ -3187,7 +3182,7 @@ void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *g
 
 static void unhalt_cpu(int param)
 {
-	cpu_halt(param, 1);
+	cpu_set_halt_line(param, CLEAR_LINE);
 }
 
 

@@ -2,6 +2,7 @@
 
 	POW - Prisoners Of War (US)			A7008	SNK 1988
 	POW - Prisoners Of War (Japan)		A7008	SNK 1988
+	SAR - Search And Rescue	(World)		A8007	SNK 1989
 	SAR - Search And Rescue	(US)		A8007	SNK 1989
 	Street Smart (US version 1)			A8007	SNK 1989
 	Street Smart (US version 2)			A7008	SNK 1989
@@ -74,6 +75,22 @@ static int rotary_lsb_r(int offset)
     	 + ((( ~(1 << (readinputport(5) * 12 / 256))  )    )&0x0f00);
 }
 
+
+static int invert_controls;
+
+static int protcontrols_r(int offset)
+{
+	return readinputport(offset / 2) ^ invert_controls;
+}
+
+static void protection_w(int offset,int data)
+{
+	/* top byte is used, meaning unknown */
+	/* bottom byte is protection in ikari 3 and streetsm */
+	if ((data & 0x00ff0000) == 0)
+		invert_controls = ((data & 0xff) == 0x07) ? 0xff : 0x00;
+}
+
 static void sound_w(int offset, int data)
 {
 	soundlatch_w(0,(data>>8)&0xff);
@@ -115,8 +132,7 @@ static struct MemoryReadAddress searchar_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, MRA_BANK1 },
-	{ 0x080000, 0x080001, input_port_0_r }, /* Player 1 */
-	{ 0x080002, 0x080003, input_port_1_r }, /* Player 2 */
+	{ 0x080000, 0x080003, protcontrols_r }, /* Player 1 & 2 */
 	{ 0x080004, 0x080005, input_port_2_r }, /* Coins */
 	{ 0x0c0000, 0x0c0001, rotary_1_r }, /* Player 1 rotary */
 	{ 0x0c8000, 0x0c8001, rotary_2_r }, /* Player 2 rotary */
@@ -138,7 +154,7 @@ static struct MemoryWriteAddress searchar_writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x043fff, MWA_BANK1, &pow_ram },
 	{ 0x080000, 0x080001, sound_w },
-	{ 0x080006, 0x080007, MWA_NOP }, /* Watchdog? */
+	{ 0x080006, 0x080007, protection_w }, /* top byte unknown, bottom is protection in ikari3 and streetsm */
 	{ 0x0c0000, 0x0c0001, pow_flipscreen_w },
 	{ 0x0f0000, 0x0f0001, MWA_NOP },
 	{ 0x100000, 0x107fff, MWA_BANK3, &spriteram },
@@ -190,7 +206,7 @@ static struct IOWritePort sound_writeport[] =
 /******************************************************************************/
 
 
-INPUT_PORTS_START( pow_input_ports )
+INPUT_PORTS_START( pow )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -269,7 +285,7 @@ INPUT_PORTS_END
 
 
 /* Identical to pow, but the Language dip switch has no effect */
-INPUT_PORTS_START( powj_input_ports )
+INPUT_PORTS_START( powj )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -347,7 +363,7 @@ INPUT_PORTS_START( powj_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( searchar_input_ports )
+INPUT_PORTS_START( searchar )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -431,7 +447,7 @@ INPUT_PORTS_START( searchar_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( streetsm_input_ports )
+INPUT_PORTS_START( streetsm )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -516,7 +532,7 @@ INPUT_PORTS_END
 
 
 /* Same as streetsm, but Coinage is different */
-INPUT_PORTS_START( streetsj_input_ports )
+INPUT_PORTS_START( streetsj )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -600,7 +616,7 @@ INPUT_PORTS_START( streetsj_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ikari3_input_ports )
+INPUT_PORTS_START( ikari3 )
 	PORT_START	/* Player 1 controls, maybe all are active_high? */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -760,11 +776,17 @@ static struct GfxDecodeInfo ikari3_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	4000000,	/* 4 MHz */
-	{ 255 }
+	1,			/* 1 chip */
+	4000000,	/* 4 MHz - accurate for POW, should be accurate for others */
+	{ 50 },
+	{ irqhandler },
 };
 
 static struct UPD7759_interface upd7759_interface =
@@ -779,24 +801,22 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver ikari3_machine_driver =
+static struct MachineDriver machine_driver_ikari3 =
 {
 	/* basic machine hardware */
 	{
  		{
 			CPU_M68000,
 			10000000,	/* Accurate */
-			0,
 			searchar_readmem,searchar_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -830,24 +850,22 @@ static struct MachineDriver ikari3_machine_driver =
 	}
 };
 
-static struct MachineDriver pow_machine_driver =
+static struct MachineDriver machine_driver_pow =
 {
 	/* basic machine hardware */
 	{
  		{
 			CPU_M68000,
 			10000000,	/* Accurate */
-			0,
 			pow_readmem,pow_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -881,24 +899,22 @@ static struct MachineDriver pow_machine_driver =
 	}
 };
 
-static struct MachineDriver searchar_machine_driver =
+static struct MachineDriver machine_driver_searchar =
 {
 	/* basic machine hardware */
 	{
  		{
 			CPU_M68000,
 			12000000,
-			0,
 			searchar_readmem,searchar_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -932,24 +948,22 @@ static struct MachineDriver searchar_machine_driver =
 	}
 };
 
-static struct MachineDriver streets2_machine_driver =
+static struct MachineDriver machine_driver_streets2 =
 {
 	/* basic machine hardware */
 	{
  		{
 			CPU_M68000,
 			10000000,	/* Accurate */
-			0,
 			pow_readmem,pow_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -985,9 +999,8 @@ static struct MachineDriver streets2_machine_driver =
 
 /******************************************************************************/
 
-
-ROM_START( pow_rom )
-	ROM_REGION(0x40000)
+ROM_START( pow )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "dg1",   0x000000, 0x20000, 0x8e71a8af )
 	ROM_LOAD_ODD ( "dg2",   0x000000, 0x20000, 0x4287affc )
 
@@ -1011,16 +1024,15 @@ ROM_START( pow_rom )
 	ROM_LOAD( "snk880.25a", 0x1d0000, 0x20000, 0x055759ad )
 	ROM_LOAD( "snk880.26a", 0x1f0000, 0x20000, 0x9bc261c5 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "dg8",        0x000000, 0x10000, 0xd1d61da3 )
 
 	ROM_REGION(0x10000)	/* UPD7759 samples */
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
-
-ROM_START( powj_rom )
-	ROM_REGION(0x40000)
+ROM_START( powj )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "1-2",   0x000000, 0x20000, 0x2f17bfb0 )
 	ROM_LOAD_ODD ( "2-2",   0x000000, 0x20000, 0xbaa32354 )
 
@@ -1044,16 +1056,42 @@ ROM_START( powj_rom )
 	ROM_LOAD( "snk880.25a", 0x1d0000, 0x20000, 0x055759ad )
 	ROM_LOAD( "snk880.26a", 0x1f0000, 0x20000, 0x9bc261c5 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "dg8",        0x000000, 0x10000, 0xd1d61da3 )
 
 	ROM_REGION(0x10000)	/* UPD7759 samples */
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
+ROM_START( searchar )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "bhw.2", 0x000000, 0x20000, 0xe1430138 )
+	ROM_LOAD_ODD ( "bhw.3", 0x000000, 0x20000, 0xee1f9374 )
 
-ROM_START( searchar_rom )
-	ROM_REGION(0x40000)
+	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bh.7",       0x000000, 0x08000, 0xb0f1b049 )
+	ROM_LOAD( "bh.8",       0x008000, 0x08000, 0x174ddba7 )
+
+	ROM_LOAD( "bh.c1",      0x010000, 0x80000, 0x1fb8f0ae )
+	ROM_LOAD( "bh.c3",      0x090000, 0x80000, 0xfd8bc407 )
+	ROM_LOAD( "bh.c5",      0x110000, 0x80000, 0x1d30acc3 )
+	ROM_LOAD( "bh.c2",      0x190000, 0x80000, 0x7c803767 )
+	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
+	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "bh.v1",      0x000000, 0x20000, 0x07a6114b )
+
+	ROM_REGION(0x40000) /* Extra code bank */
+	ROM_LOAD_EVEN( "bhw.1", 0x000000, 0x20000, 0x62b60066 )
+	ROM_LOAD_ODD ( "bhw.4", 0x000000, 0x20000, 0x16d8525c )
+ROM_END
+
+ROM_START( sercharu )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
 	ROM_LOAD_ODD ( "bh.3",  0x000000, 0x20000, 0xbc04a4a1 )
 
@@ -1068,7 +1106,7 @@ ROM_START( searchar_rom )
 	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
 	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1079,9 +1117,8 @@ ROM_START( searchar_rom )
 	ROM_LOAD_ODD ( "bh.4",  0x000000, 0x20000, 0xeabc5ddf )
 ROM_END
 
-
-ROM_START( streetsm_rom )
-	ROM_REGION(0x40000)
+ROM_START( streetsm )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
 	ROM_LOAD_ODD ( "s2-2ver1.10c", 0x00000, 0x20000, 0xe448b68b )
 
@@ -1096,16 +1133,15 @@ ROM_START( streetsm_rom )
 	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
-
-ROM_START( streets2_rom )
-	ROM_REGION(0x40000)
+ROM_START( streets2 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2-1ver2.14h", 0x00000, 0x20000, 0x655f4773 )
 	ROM_LOAD_ODD ( "s2-2ver2.14k", 0x00000, 0x20000, 0xefae4823 )
 
@@ -1120,16 +1156,15 @@ ROM_START( streets2_rom )
 	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
-
-ROM_START( streetsj_rom )
-	ROM_REGION(0x40000)
+ROM_START( streetsj )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
 	ROM_LOAD_ODD ( "s2v1j_02.bin", 0x00000, 0x20000, 0xe403a40b )
 
@@ -1144,16 +1179,15 @@ ROM_START( streetsj_rom )
 	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
-
-ROM_START( ikari3_rom )
-	ROM_REGION(0x40000)
+ROM_START( ikari3 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "ik3-2.bin", 0x000000, 0x20000, 0xa7b34dcd )
 	ROM_LOAD_ODD ( "ik3-3.bin", 0x000000, 0x20000, 0x50f2b83d )
 
@@ -1185,7 +1219,7 @@ ROM_START( ikari3_rom )
 	ROM_LOAD( "ik3-27.bin", 0x250000, 0x20000, 0x16dd227e )
 	ROM_LOAD( "ik3-28.bin", 0x270000, 0x20000, 0x711715ae )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ik3-5.bin",  0x000000, 0x10000, 0xce6706fc )
 
 	ROM_REGION(0x20000)	/* UPD7759 samples */
@@ -1239,27 +1273,29 @@ static void custom_memory(void)
 
 static void searchar_memory(void)
 {
-	cpu_setbank(8, Machine->memory_region[4]);
+	cpu_setbank(8, memory_region(4));
 	custom_memory();
 }
 
 static void streetsm_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
+	custom_memory();
 	WRITE_WORD (&RAM[0x107d0],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
 static void streetsj_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
+	custom_memory();
 	WRITE_WORD (&RAM[0x10710],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
 /******************************************************************************/
 
-struct GameDriver pow_driver =
+struct GameDriver driver_pow =
 {
 	__FILE__,
 	0,
@@ -1269,72 +1305,97 @@ struct GameDriver pow_driver =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&pow_machine_driver,
+	&machine_driver_pow,
 	custom_memory,
 
-	pow_rom,
+	rom_pow,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	pow_input_ports,
+	input_ports_pow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver powj_driver =
+struct GameDriver driver_powj =
 {
 	__FILE__,
-	&pow_driver,
+	&driver_pow,
 	"powj",
 	"Datsugoku - Prisoners of War (Japan)",
 	"1988",
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&pow_machine_driver,
+	&machine_driver_pow,
 	custom_memory,
 
-	powj_rom,
+	rom_powj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	powj_input_ports,
+	input_ports_powj,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver searchar_driver =
+struct GameDriver driver_searchar =
 {
 	__FILE__,
 	0,
 	"searchar",
+	"SAR - Search And Rescue (World)",
+	"1989",
+	"SNK",
+	"Bryan McPhail",
+	0,
+	&machine_driver_searchar,
+	searchar_memory,
+
+	rom_searchar,
+	0, 0,
+	0,
+	0,
+
+	input_ports_searchar,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ROT90,
+	0, 0
+};
+
+struct GameDriver driver_sercharu =
+{
+	__FILE__,
+	&driver_searchar,
+	"sercharu",
 	"SAR - Search And Rescue (US)",
 	"1989",
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
+	&machine_driver_searchar,
 	searchar_memory,
 
-	searchar_rom,
+	rom_sercharu,
 	0, 0,
 	0,
 	0,
 
-	searchar_input_ports,
+	input_ports_searchar,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
-struct GameDriver streetsm_driver =
+struct GameDriver driver_streetsm =
 {
 	__FILE__,
 	0,
@@ -1344,73 +1405,72 @@ struct GameDriver streetsm_driver =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
-	custom_memory,
+	&machine_driver_searchar,
+	streetsm_patch,
 
-	streetsm_rom,
-	streetsm_patch, 0,
+	rom_streetsm,
+	0, 0,
 	0,
 	0,
 
-	streetsm_input_ports,
+	input_ports_streetsm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver streets2_driver =
+struct GameDriver driver_streets2 =
 {
 	__FILE__,
-	&streetsm_driver,
+	&driver_streetsm,
 	"streets2",
 	"Street Smart (US version 2)",
 	"1989",
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&streets2_machine_driver,
+	&machine_driver_streets2,
 	custom_memory,
 
-	streets2_rom,
+	rom_streets2,
 	0, 0,
 	0,
 	0,
 
-	streetsm_input_ports,
+	input_ports_streetsm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver streetsj_driver =
+struct GameDriver driver_streetsj =
 {
 	__FILE__,
-	&streetsm_driver,
+	&driver_streetsm,
 	"streetsj",
 	"Street Smart (Japan version 1)",
 	"1989",
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
-	custom_memory,
+	&machine_driver_searchar,
+	streetsj_patch,
 
-	streetsj_rom,
-	streetsj_patch, 0,
+	rom_streetsj,
+	0, 0,
 	0,
 	0,
 
-	streetsj_input_ports,
+	input_ports_streetsj,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-
-struct GameDriver ikari3_driver =
+struct GameDriver driver_ikari3 =
 {
 	__FILE__,
 	0,
@@ -1420,17 +1480,17 @@ struct GameDriver ikari3_driver =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&ikari3_machine_driver,
+	&machine_driver_ikari3,
 	searchar_memory,
 
-	ikari3_rom,
+	rom_ikari3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	ikari3_input_ports,
+	input_ports_ikari3,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

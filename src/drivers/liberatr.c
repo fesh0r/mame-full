@@ -141,6 +141,8 @@ void liberatr_led_w(int offset, int data);
 void liberatr_coin_counter_w(int offset, int data);
 
 /* in vidhrdw */
+extern unsigned char *liberatr_bitmapram;
+
 int  liberatr_vh_start(void);
 void liberatr_vh_stop(void);
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -153,7 +155,7 @@ void liberatr_bitmap_xy_w(int offset, int data);
 static struct MemoryReadAddress liberatr_readmem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
 	{ 0x4000, 0x403f, atari_vg_earom_r },
 	{ 0x5000, 0x5000, liberatr_input_port_0_r },
 	{ 0x5001, 0x5001, input_port_1_r },
@@ -167,7 +169,7 @@ static struct MemoryReadAddress liberatr_readmem[] =
 static struct MemoryReadAddress liberat2_readmem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
 	{ 0x4000, 0x4000, liberatr_input_port_0_r },
 	{ 0x4001, 0x4001, input_port_1_r },
 	{ 0x4800, 0x483f, atari_vg_earom_r },
@@ -182,7 +184,7 @@ static struct MemoryReadAddress liberat2_readmem[] =
 static struct MemoryWriteAddress liberatr_writemem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
-	{ 0x0000, 0x3fff, liberatr_bitmap_w },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
 	{ 0x6000, 0x600f, MWA_RAM, &liberatr_base_ram },
 	{ 0x6200, 0x621f, liberatr_colorram_w },
 	{ 0x6400, 0x6400, MWA_NOP },
@@ -207,7 +209,7 @@ static struct MemoryWriteAddress liberatr_writemem[] =
 static struct MemoryWriteAddress liberat2_writemem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
-	{ 0x0000, 0x3fff, liberatr_bitmap_w },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
 	{ 0x4000, 0x400f, MWA_RAM, &liberatr_base_ram },
 	{ 0x4200, 0x421f, liberatr_colorram_w },
 	{ 0x4400, 0x4400, MWA_NOP },
@@ -232,7 +234,7 @@ static struct MemoryWriteAddress liberat2_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( liberatr )
 	PORT_START			/* IN0 - $5000 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -334,14 +336,13 @@ static struct POKEYinterface pokey_interface =
 
 
 #define MACHINE_DRIVER(NAME)							\
-static struct MachineDriver NAME##_machine_driver =		\
+static struct MachineDriver machine_driver_##NAME =		\
 {														\
 	/* basic machine hardware */						\
 	{													\
 		{												\
 			CPU_M6502,									\
 			1250000,		/* 1.25 Mhz */				\
-			0,											\
 			NAME##_readmem,NAME##_writemem,0,0,			\
 			interrupt, 4								\
 		}												\
@@ -369,7 +370,9 @@ static struct MachineDriver NAME##_machine_driver =		\
 			SOUND_POKEY,								\
 			&pokey_interface							\
 		}												\
-	}													\
+	},													\
+														\
+	atari_vg_earom_handler								\
 };
 
 MACHINE_DRIVER(liberatr)
@@ -382,8 +385,8 @@ MACHINE_DRIVER(liberat2)
 
 ***************************************************************************/
 
-ROM_START( liberatr_rom )
-	ROM_REGION(0x10000)	/* 64k for code and data  */
+ROM_START( liberatr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code and data  */
 	ROM_LOAD( "136012.206",   0x8000, 0x1000, 0x1a0cb4a0 )
 	ROM_LOAD( "136012.205",   0x9000, 0x1000, 0x2f071920 )
 	ROM_LOAD( "136012.204",   0xa000, 0x1000, 0xbcc91827 )
@@ -393,15 +396,15 @@ ROM_START( liberatr_rom )
 	ROM_LOAD( "136012.200",   0xe000, 0x1000, 0x1e98d21a )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
-	ROM_REGION(0x4000)	/* 16k for planet image  */
+	ROM_REGION( 0x4000 )	/* 16k for planet image  */
 	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )
 	ROM_LOAD( "136012.109",   0x3000, 0x1000, 0xdda0c0ef )
 ROM_END
 
-ROM_START( liberat2_rom )
-	ROM_REGION(0x10000)	/* 64k for code and data  */
+ROM_START( liberat2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code and data  */
 	ROM_LOAD( "l6.bin",       0x6000, 0x1000, 0x78093d06 )
 	ROM_LOAD( "l5.bin",       0x7000, 0x1000, 0x988db636 )
 	ROM_LOAD( "l4.bin",       0x8000, 0x1000, 0xec114540 )
@@ -410,7 +413,7 @@ ROM_START( liberat2_rom )
 	ROM_LOAD( "l1.bin",       0xb000, 0x1000, 0xef6e9f9e )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
-	ROM_REGION(0x4000)	/* 16k for planet image  */
+	ROM_REGION( 0x4000 )	/* 16k for planet image  */
 	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )
@@ -419,7 +422,7 @@ ROM_END
 
 
 
-struct GameDriver liberatr_driver =
+struct GameDriver driver_liberatr =
 {
 	__FILE__,
 	0,
@@ -429,45 +432,43 @@ struct GameDriver liberatr_driver =
 	"Atari",
 	"Paul Winkler",
 	0,
-	&liberatr_machine_driver,
+	&machine_driver_liberatr,
 	0,
 
-	liberatr_rom,
+	rom_liberatr,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_liberatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load,atari_vg_earom_save
+	ROT0,
+	0,0
 };
 
-struct GameDriver liberat2_driver =
+struct GameDriver driver_liberat2 =
 {
 	__FILE__,
-	&liberatr_driver,
+	&driver_liberatr,
 	"liberat2",
 	"Liberator (set 2)",
 	"1982",
 	"Atari",
 	"Paul Winkler",
-	GAME_NOT_WORKING,
-	&liberat2_machine_driver,
+	0,
+	&machine_driver_liberat2,
 	0,
 
-	liberat2_rom,
+	rom_liberat2,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_liberatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load,atari_vg_earom_save
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 

@@ -247,10 +247,10 @@ static int ninjakd2_bank_latch = 255;
 
 
 
-int ninjakd2_init_samples(void)
+int ninjakd2_init_samples(const struct MachineSound *msound)
 {
 	int i,n;
-	unsigned char *source = Machine->memory_region[3];
+	unsigned char *source = memory_region(3);
 	struct GameSamples *samples;
 	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
 	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
@@ -291,7 +291,7 @@ int ninjakd2_bankselect_r(int offset)
 
 void ninjakd2_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	if (data != ninjakd2_bank_latch)
@@ -330,11 +330,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc201, 0xc201, MRA_RAM },		// unknown but used
 	{ 0xc202, 0xc202, ninjakd2_bankselect_r },
 	{ 0xc203, 0xc203, MRA_RAM },
-	{ 0xc208, 0xc209, MRA_RAM, &ninjakd2_scrollx_ram },
-	{ 0xc20a, 0xc20b, MRA_RAM, &ninjakd2_scrolly_ram },
+	{ 0xc208, 0xc209, MRA_RAM },
+	{ 0xc20a, 0xc20b, MRA_RAM },
 	{ 0xc20c, 0xc20c, MRA_RAM },
-	{ 0xc800, 0xf9ff, MRA_RAM },
-	{ 0xfa00, 0xffff, MRA_RAM, &ninjakd2_spriteram, &ninjakd2_spriteram_size },
+	{ 0xc800, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -346,12 +345,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc201, 0xc201, MWA_RAM },		// unknown but used
 	{ 0xc202, 0xc202, ninjakd2_bankselect_w },
 	{ 0xc203, 0xc203, ninjakd2_sprite_overdraw_w, &ninjakd2_spoverdraw_ram },
-	{ 0xc208, 0xc20b, MWA_RAM },
+	{ 0xc208, 0xc209, MWA_RAM, &ninjakd2_scrollx_ram },
+	{ 0xc20a, 0xc20b, MWA_RAM, &ninjakd2_scrolly_ram },
 	{ 0xc20c, 0xc20c, ninjakd2_background_enable_w, &ninjakd2_bgenable_ram },
 	{ 0xc800, 0xcdff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xd000, 0xd7ff, ninjakd2_fgvideoram_w, &ninjakd2_foreground_videoram, &ninjakd2_foregroundram_size },
 	{ 0xd800, 0xdfff, ninjakd2_bgvideoram_w, &ninjakd2_background_videoram, &ninjakd2_backgroundram_size },
-	{ 0xe000, 0xffff, MWA_RAM },
+	{ 0xe000, 0xf9ff, MWA_RAM },
+	{ 0xfa00, 0xffff, MWA_RAM, &ninjakd2_spriteram, &ninjakd2_spriteram_size },
 	{ -1 }	/* end of table */
 };
 
@@ -385,8 +386,9 @@ static struct IOWritePort snd_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
 
+
+INPUT_PORTS_START( ninjakd2 )
     PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -506,6 +508,13 @@ static struct Samplesinterface samples_interface =
 	25	/* volume */
 };
 
+static struct CustomSound_interface custom_interface =
+{
+	ninjakd2_init_samples,
+	0,
+	0
+};
+
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
@@ -526,13 +535,12 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static struct MachineDriver ninjakd2_machine_driver =
+static struct MachineDriver machine_driver_ninjakd2 =
 {
 	{
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			ninjakd2_interrupt,1
 		}
@@ -551,6 +559,7 @@ static struct MachineDriver ninjakd2_machine_driver =
 	ninjakd2_vh_stop,
 	ninjakd2_vh_screenrefresh,
 
+	/* sound hardware */
 	0,0,0,0,
 	{
 		{
@@ -560,20 +569,18 @@ static struct MachineDriver ninjakd2_machine_driver =
 	}
 };
 
-static struct MachineDriver ninjak2a_machine_driver =
+static struct MachineDriver machine_driver_ninjak2a =
 {
 	{
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			ninjakd2_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,		/* 12000000/3 ??? */
-			2,
 			snd_readmem,snd_writemem,0,snd_writeport,
 			ignore_interrupt,0,
 		}
@@ -592,10 +599,8 @@ static struct MachineDriver ninjak2a_machine_driver =
 	ninjakd2_vh_stop,
 	ninjakd2_vh_screenrefresh,
 
-	0,
-	ninjakd2_init_samples,
-	0,
-	0,
+	/* sound hardware */
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2203,
@@ -604,14 +609,18 @@ static struct MachineDriver ninjak2a_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface
 		}
 	}
 };
 
 
 
-ROM_START( ninjakd2_rom )
-	ROM_REGION(0x30000)
+ROM_START( ninjakd2 )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, 0x3cdbb906 )
 	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, 0xb5ce9a1a )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -640,15 +649,15 @@ ROM_START( ninjakd2_rom )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, 0xd3a18a79 )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
-ROM_START( ninjak2a_rom )
-	ROM_REGION(0x30000)
+ROM_START( ninjak2a )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
 	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -677,15 +686,16 @@ ROM_START( ninjak2a_rom )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
-	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+	ROM_REGIONX( 2*0x10000, REGION_CPU2 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
+	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
-ROM_START( ninjak2b_rom )
-	ROM_REGION(0x30000)
+ROM_START( ninjak2b )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
 	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -714,15 +724,16 @@ ROM_START( ninjak2b_rom )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
-	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+	ROM_REGIONX( 2*0x10000, REGION_CPU2 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
+	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
-ROM_START( rdaction_rom )
-	ROM_REGION(0x30000)
+ROM_START( rdaction )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
 	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -751,8 +762,9 @@ ROM_START( rdaction_rom )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
-	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+	ROM_REGIONX( 2*0x10000, REGION_CPU2 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
+	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
@@ -760,54 +772,17 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-    void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0xe0f4],"\x00\x30\x00",3) == 0 )
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0xe04e],100);
-	    osd_fread(f,&RAM[0xe0f4],3);
-            osd_fclose(f);
-        }
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0xe04e],100);
-	osd_fwrite(f,&RAM[0xe0f4],3);
-        osd_fclose(f);
-    }
-}
-
 void ninjak2a_sound_decode(void)
 {
-	int A;
-	extern int encrypted_cpu;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU2);
+	int diff = memory_region_length(REGION_CPU2) / 2;
 
-	encrypted_cpu = 1;
-
-	memcpy(ROM,RAM,0xffff);
-
-	for (A = 0x0000;A < 0x7FFF;A++)
-		RAM[A] = RAM[A+0x8000];
+	memory_set_opcode_base(1,rom+diff);
 }
 
-struct GameDriver ninjakd2_driver =
+
+
+struct GameDriver driver_ninjakd2 =
 {
 	__FILE__,
 	0,
@@ -816,97 +791,93 @@ struct GameDriver ninjakd2_driver =
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
-	GAME_NOT_WORKING,
-	&ninjakd2_machine_driver,
+	0,
+	&machine_driver_ninjakd2,
 	0,
 
-	ninjakd2_rom,
+	rom_ninjakd2,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0 | GAME_NO_SOUND,	/* sound program is encrypted */
+	0,0
 };
 
-struct GameDriver ninjak2a_driver =
+struct GameDriver driver_ninjak2a =
 {
 	__FILE__,
-	&ninjakd2_driver,
+	&driver_ninjakd2,
 	"ninjak2a",
 	"Ninja Kid II (set 2)",
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&ninjak2a_machine_driver,
-	0,
+	&machine_driver_ninjak2a,
+	ninjak2a_sound_decode,
 
-	ninjak2a_rom,
-	0,ninjak2a_sound_decode,
+	rom_ninjak2a,
+	0, 0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver ninjak2b_driver =
+struct GameDriver driver_ninjak2b =
 {
 	__FILE__,
-	&ninjakd2_driver,
+	&driver_ninjakd2,
 	"ninjak2b",
 	"Ninja Kid II (set 3)",
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&ninjak2a_machine_driver,
-	0,
+	&machine_driver_ninjak2a,
+	ninjak2a_sound_decode,
 
-	ninjak2b_rom,
-	0,ninjak2a_sound_decode,
+	rom_ninjak2b,
+	0, 0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver rdaction_driver =
+struct GameDriver driver_rdaction =
 {
 	__FILE__,
-	&ninjakd2_driver,
+	&driver_ninjakd2,
 	"rdaction",
 	"Rad Action",
 	"1987",
 	"UPL (World Games license)",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&ninjak2a_machine_driver,
-	0,
+	&machine_driver_ninjak2a,
+	ninjak2a_sound_decode,
 
-	rdaction_rom,
-	0,ninjak2a_sound_decode,
+	rom_rdaction,
+	0, 0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };

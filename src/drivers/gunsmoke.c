@@ -27,6 +27,28 @@ void gunsmoke_vh_stop(void);
 
 
 
+static int gunsmoke_unknown_r(int offset)
+{
+    static int gunsmoke_fixed_data[]={ 0xff, 0x00, 0x00 };
+    /*
+    The routine at 0x0e69 tries to read data starting at 0xc4c9.
+    If this value is zero, it interprets the next two bytes as a
+    jump address.
+
+    This was resulting in a reboot which happens at the end of level 3
+    if you go too far to the right of the screen when fighting the level boss.
+
+    A non-zero for the first byte seems to be harmless  (although it may not be
+    the correct behaviour).
+
+    This could be some devious protection or it could be a bug in the
+    arcade game.  It's hard to tell without pulling the code apart.
+    */
+    return gunsmoke_fixed_data[offset];
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -36,6 +58,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
+    { 0xc4c9, 0xc4cb, gunsmoke_unknown_r },
+    { 0xd000, 0xd3ff, videoram_r },
+    { 0xd400, 0xd7ff, colorram_r },
 	{ 0xe000, 0xffff, MRA_RAM }, /* Work + sprite RAM */
 	{ -1 }	/* end of table */
 };
@@ -79,7 +104,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( gunsmoke )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -231,14 +256,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz (?) */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -277,8 +300,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gunsmoke_rom )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+ROM_START( gunsmoke )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "09n_gs03.bin", 0x00000, 0x8000, 0x40a06cef ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
@@ -302,7 +325,7 @@ ROM_START( gunsmoke_rom )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -312,15 +335,15 @@ ROM_START( gunsmoke_rom )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb ) /* Background tile map */
 ROM_END
 
-ROM_START( gunsmrom_rom )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+ROM_START( gunsmrom )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "9n_gs03.bin",  0x00000, 0x8000, 0x592f211b ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
@@ -344,7 +367,7 @@ ROM_START( gunsmrom_rom )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -354,15 +377,15 @@ ROM_START( gunsmrom_rom )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb ) /* Background tile map */
 ROM_END
 
-ROM_START( gunsmokj_rom )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+ROM_START( gunsmokj )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "gs03_9n.rom",  0x00000, 0x8000, 0xb56b5df6 ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
@@ -386,7 +409,7 @@ ROM_START( gunsmokj_rom )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -396,15 +419,15 @@ ROM_START( gunsmokj_rom )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb ) /* Background tile map */
 ROM_END
 
-ROM_START( gunsmoka_rom )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+ROM_START( gunsmoka )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "gs03.9n",      0x00000, 0x8000, 0x51dc3f76 ) /* Code 0000-7fff */
 	ROM_LOAD( "gs04.10n",     0x10000, 0x8000, 0x5ecf31b8 ) /* Paged code */
 	ROM_LOAD( "gs05.12n",     0x18000, 0x8000, 0x1c9aca13 ) /* Paged code */
@@ -428,7 +451,7 @@ ROM_START( gunsmoka_rom )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -438,7 +461,7 @@ ROM_START( gunsmoka_rom )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
@@ -447,47 +470,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe680],"\x00\x00\x00\x01",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        osd_fread(f,&RAM[0xe680],16*5);
-
-                        memcpy(&RAM[0xe600], &RAM[0xe680], 8);
-                        osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe680],16*5);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver gunsmoke_driver =
+struct GameDriver driver_gunsmoke =
 {
 	__FILE__,
 	0,
@@ -500,23 +483,22 @@ struct GameDriver gunsmoke_driver =
 	&machine_driver,
 	0,
 
-	gunsmoke_rom,
+	rom_gunsmoke,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver gunsmrom_driver =
+struct GameDriver driver_gunsmrom =
 {
 	__FILE__,
-	&gunsmoke_driver,
+	&driver_gunsmoke,
 	"gunsmrom",
 	"Gun.Smoke (US set 1)",
 	"1985",
@@ -526,23 +508,27 @@ struct GameDriver gunsmrom_driver =
 	&machine_driver,
 	0,
 
-	gunsmrom_rom,
+	rom_gunsmrom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver gunsmoka_driver =
+/*
+  All the sets are almost identical apart from this one which is quite
+  different: the levels are in a different order, and the "Demonstration" dip
+  switch has no effect.
+ */
+struct GameDriver driver_gunsmoka =
 {
 	__FILE__,
-	&gunsmoke_driver,
+	&driver_gunsmoke,
 	"gunsmoka",
 	"Gun.Smoke (US set 2)",
 	"1986",
@@ -552,23 +538,22 @@ struct GameDriver gunsmoka_driver =
 	&machine_driver,
 	0,
 
-	gunsmoka_rom,
+	rom_gunsmoka,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload,hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver gunsmokj_driver =
+struct GameDriver driver_gunsmokj =
 {
 	__FILE__,
-	&gunsmoke_driver,
+	&driver_gunsmoke,
 	"gunsmokj",
 	"Gun.Smoke (Japan)",
 	"1985",
@@ -578,15 +563,14 @@ struct GameDriver gunsmokj_driver =
 	&machine_driver,
 	0,
 
-	gunsmokj_rom,
+	rom_gunsmokj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

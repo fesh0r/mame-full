@@ -25,25 +25,24 @@
 static struct osd_bitmap *tmpbitmap1, *tmpbitmap2;
 unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 
-void exterm_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void exterm_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	unsigned int i;
+	int i;
 
-	palette += 3*0x1000;
+	palette += 3*4096;	/* first 4096 colors are dynamic */
 
-	for (i = 0;i < 0x8000; i++)
+	/* initialize 555 RGB lookup */
+	for (i = 0;i < 32768;i++)
 	{
-		int r = (i >> 10) & 0x1f;
-		int g = (i >>  5) & 0x1f;
-		int b = (i >>  0) & 0x1f;
+		int r,g,b;
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
+		r = (i >> 10) & 0x1f;
+		g = (i >>  5) & 0x1f;
+		b = (i >>  0) & 0x1f;
 
-		*(palette++) = r;
-		*(palette++) = g;
-		*(palette++) = b;
+		(*palette++) = (r << 3) | (r >> 2);
+		(*palette++) = (g << 3) | (g >> 2);
+		(*palette++) = (b << 3) | (b >> 2);
 	}
 }
 
@@ -139,21 +138,22 @@ void exterm_paletteram_w(int offset, int data)
 	memcpy(&exterm_master_videoram[address>>3], shiftreg, 256*sizeof(unsigned short));
 
 
-static void to_shiftreg_master(unsigned int address, unsigned short* shiftreg)
+void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg)
 {
 	memcpy(shiftreg, &exterm_master_videoram[address>>3], 256*sizeof(unsigned short));
 }
 
-static void from_shiftreg_master_16(unsigned int address, unsigned short* shiftreg)
+void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg)
 {
-	FROM_SHIFTREG_MASTER(short);
+	if (Machine->scrbitmap->depth == 16)
+	{
+		FROM_SHIFTREG_MASTER(short);
+	}
+	else
+	{
+		FROM_SHIFTREG_MASTER(char);
+	}
 }
-
-static void from_shiftreg_master_8(unsigned int address, unsigned short* shiftreg)
-{
-	FROM_SHIFTREG_MASTER(char);
-}
-
 
 #define FROM_SHIFTREG_SLAVE(TYPE)										\
 	int i;																\
@@ -181,19 +181,21 @@ static void from_shiftreg_master_8(unsigned int address, unsigned short* shiftre
 	memcpy(&exterm_slave_videoram[address>>3], shiftreg, 256*2*sizeof(unsigned char));
 
 
-static void to_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
+void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
 {
 	memcpy(shiftreg, &exterm_slave_videoram[address>>3], 256*2*sizeof(unsigned char));
 }
 
-static void from_shiftreg_slave_16(unsigned int address, unsigned short* shiftreg)
+void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
 {
-	FROM_SHIFTREG_SLAVE(short);
-}
-
-static void from_shiftreg_slave_8(unsigned int address, unsigned short* shiftreg)
-{
-	FROM_SHIFTREG_SLAVE(char);
+	if (Machine->scrbitmap->depth == 16)
+	{
+		FROM_SHIFTREG_SLAVE(short);
+	}
+	else
+	{
+		FROM_SHIFTREG_SLAVE(char);
+	}
 }
 
 
@@ -218,24 +220,18 @@ int exterm_vh_start(void)
 	}
 
 	/* Install depth specific handler */
-
-
 	if (Machine->scrbitmap->depth == 16)
 	{
-		TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master_16);
-		TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave_16);
-
 		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w);
 		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w);
 	}
 	else
 	{
-		TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master_8);
-		TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave_8);
-
 		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w);
 		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w);
 	}
+
+	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
 
 	return 0;
 }
@@ -268,13 +264,17 @@ static struct rectangle foregroundvisiblearea =
 		for (x = 256; x; x--, bgsrc++)						\
 		{													\
 			int data = READ_WORD(bgsrc);					\
-															\
 			FORCOL_TO_PEN(data);							\
-															\
 			*(bg1++) = *(bg2++) = pens[data];				\
-															\
-			*(fg1++) = pens[*(fgsrc1++)];					\
-			*(fg2++) = pens[*(fgsrc2++)];					\
+		}													\
+		for (x = 128; x; x--, fgsrc1++, fgsrc2++)			\
+		{													\
+			int data1 = READ_WORD(fgsrc1);					\
+			int data2 = READ_WORD(fgsrc2);					\
+			*(fg1++) = pens[data1 & 0xff];					\
+			*(fg1++) = pens[data1 >> 8];					\
+			*(fg2++) = pens[data2 & 0xff];					\
+			*(fg2++) = pens[data2 >> 8];					\
 		}													\
 	}
 
@@ -283,7 +283,6 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (TMS34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
-
 		return;
 	}
 
@@ -292,8 +291,8 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* Redraw screen */
 		int x,y;
 		unsigned short *bgsrc  = (unsigned short *)&exterm_master_videoram[0];
-		unsigned char  *fgsrc1 = &exterm_slave_videoram [0];
-		unsigned char  *fgsrc2 = &exterm_slave_videoram [256*256];
+		unsigned short *fgsrc1 = (unsigned short *)&exterm_slave_videoram[0];
+		unsigned short *fgsrc2 = (unsigned short *)&exterm_slave_videoram[256*256];
 
 		if (tmpbitmap1->depth == 16)
 		{
@@ -318,4 +317,3 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap1,0,0,0,0,&foregroundvisiblearea,TRANSPARENCY_PEN, palette_transparent_pen);
 	}
 }
-

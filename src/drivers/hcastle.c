@@ -4,7 +4,6 @@
 
 	Notes:
 		Graphics are wrong in the end of game animation
-		Konami SCC sound is not implemented.
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -26,10 +25,12 @@ extern unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 void hcastle_pf1_video_w(int offset,int data);
 void hcastle_pf2_video_w(int offset,int data);
 void hcastle_gfxbank_w(int offset,int data);
+void hcastle_pf1_control_w(int offset,int data);
+void hcastle_pf2_control_w(int offset,int data);
 
 static void hcastle_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	bankaddress = 0x10000 + (data & 0x1f) * 0x2000;
@@ -49,11 +50,11 @@ static void hcastle_coin_w(int offset, int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int data = ( RAM[0x18dc] << 8 ) | RAM[0x18dd];
 
-	if ( data < Machine->memory_region_length[0] )
+	if ( data < memory_region_length(REGION_CPU1) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -86,9 +87,9 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0007, MWA_RAM, &hcastle_pf1_control },
+	{ 0x0000, 0x0007, hcastle_pf1_control_w, &hcastle_pf1_control },
 	{ 0x0020, 0x003f, MWA_RAM },	/* rowscroll? */
-	{ 0x0200, 0x0207, MWA_RAM, &hcastle_pf2_control },
+	{ 0x0200, 0x0207, hcastle_pf2_control_w, &hcastle_pf2_control },
 	{ 0x0220, 0x023f, MWA_RAM },	/* rowscroll? */
 	{ 0x0400, 0x0400, hcastle_bankswitch_w },
 	{ 0x0404, 0x0404, soundlatch_w },
@@ -110,7 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static void sound_bank_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[3];
+	unsigned char *RAM = memory_region(3);
 	int bank_A=0x20000 * (data&0x3);
 	int bank_B=0x20000 * ((data>>2)&0x3);
 
@@ -131,7 +132,10 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9800, 0x98ff, MWA_NOP }, /* SCC */
+	{ 0x9800, 0x987f, K051649_waveform_w },
+	{ 0x9880, 0x9889, K051649_frequency_w },
+	{ 0x988a, 0x988e, K051649_volume_w },
+	{ 0x988f, 0x988f, K051649_keyonoff_w },
 	{ 0xa000, 0xa000, YM3812_control_port_0_w },
 	{ 0xa001, 0xa001, YM3812_write_port_0_w },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
@@ -141,7 +145,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*****************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( hcastle )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -283,7 +287,7 @@ static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
 	{ 3 },	/* memory regions */
-	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */
+	{ K007232_VOL(44,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
 
@@ -295,7 +299,11 @@ static struct YM3812interface ym3812_interface =
 	{ irqhandler },
 };
 
-
+static struct k051649_interface k051649_interface =
+{
+	3579545/2,	/* Clock */
+	45,			/* Volume */
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -304,14 +312,12 @@ static struct MachineDriver machine_driver =
  		{
 			CPU_KONAMI,
 			3000000,	/* Derived from 24 MHz clock */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -344,14 +350,18 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_YM3812,
 			&ym3812_interface
+		},
+		{
+			SOUND_K051649,
+			&k051649_interface,
 		}
 	}
 };
 
 /***************************************************************************/
 
-ROM_START( hcastle_rom )
-	ROM_REGION(0x30000)
+ROM_START( hcastle )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "768.k03",      0x08000, 0x08000, 0x40ce4f38 )
 	ROM_LOAD( "768.g06",      0x10000, 0x20000, 0xcdade920 )
 
@@ -361,13 +371,13 @@ ROM_START( hcastle_rom )
 	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
 	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION(0x80000)	/* 512k for the samples */
 	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
 
-	ROM_REGION(0x0500)	/* PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
@@ -375,8 +385,8 @@ ROM_START( hcastle_rom )
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( hcastlea_rom )
-	ROM_REGION(0x30000)
+ROM_START( hcastlea )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "m03.k12",      0x08000, 0x08000, 0xd85e743d )
 	ROM_LOAD( "b06.k8",       0x10000, 0x20000, 0xabd07866 )
 
@@ -386,13 +396,13 @@ ROM_START( hcastlea_rom )
 	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
 	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION(0x80000)	/* 512k for the samples */
 	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
 
-	ROM_REGION(0x0500)	/* PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
@@ -400,8 +410,8 @@ ROM_START( hcastlea_rom )
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( hcastlej_rom )
-	ROM_REGION(0x30000)
+ROM_START( hcastlej )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "768p03.k12",0x08000, 0x08000, 0xd509e340 )
 	ROM_LOAD( "768j06.k8", 0x10000, 0x20000, 0x42283c3e )
 
@@ -411,13 +421,13 @@ ROM_START( hcastlej_rom )
 	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
 	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",   0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION(0x80000)	/* 512k for the samples */
 	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
 
-	ROM_REGION(0x0500)	/* PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
@@ -427,7 +437,7 @@ ROM_END
 
 /***************************************************************************/
 
-struct GameDriver hcastle_driver =
+struct GameDriver driver_hcastle =
 {
 	__FILE__,
 	0,
@@ -436,71 +446,71 @@ struct GameDriver hcastle_driver =
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	hcastle_rom,
+	rom_hcastle,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_hcastle,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 
 	0, 0
 };
 
-struct GameDriver hcastlea_driver =
+struct GameDriver driver_hcastlea =
 {
 	__FILE__,
-	&hcastle_driver,
+	&driver_hcastle,
 	"hcastlea",
 	"Haunted Castle (set 2)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	hcastlea_rom,
+	rom_hcastlea,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_hcastle,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 
 	0, 0
 };
 
-struct GameDriver hcastlej_driver =
+struct GameDriver driver_hcastlej =
 {
 	__FILE__,
-	&hcastle_driver,
+	&driver_hcastle,
 	"hcastlej",
 	"Akuma-Jou Dracula (Japan)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	hcastlej_rom,
+	rom_hcastlej,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_hcastle,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 
 	0, 0
 };

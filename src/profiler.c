@@ -42,7 +42,7 @@ void profiler_mark(int type)
 		return;
 	}
 
-	if (type >= PROFILER_CPU1 && type <= PROFILER_CPU4)
+	if (type >= PROFILER_CPU1 && type <= PROFILER_CPU8)
 		profile.cpu_context_switches[memory]++;
 
 	curr_cycles = osd_cycles();
@@ -95,10 +95,16 @@ void profiler_show(void)
 		"CPU 2",
 		"CPU 3",
 		"CPU 4",
+		"CPU 5",
+		"CPU 6",
+		"CPU 7",
+		"CPU 8",
 		"Video",
 		"Blit ",
 		"Sound",
 		"Cllbk",
+		"Hiscr",
+		"Input",
 		"Extra",
 		"User1",
 		"User2",

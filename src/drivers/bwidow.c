@@ -10,6 +10,12 @@ Black Widow memory map (preliminary)
 2000-27ff Vector generator RAM
 5000-7fff ROM
 
+ * Black Widow cannot use the the earom routines
+ * She writes into some locations at $2fac-$2fd7, which is clearly
+ * the vector rom. Perhaps there is some address-logic that is not yet
+ * emulated
+
+
 BLACK WIDOW SWITCH SETTINGS (Atari, 1983)
 -----------------------------------------
 
@@ -293,22 +299,23 @@ void bwidow_misc_w (int offset, int data)
 static struct MemoryReadAddress bwidow_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x9000, 0xffff, MRA_ROM },
+	{ 0x2000, 0x27ff, MRA_RAM },
 	{ 0x2800, 0x5fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x6000, 0x600f, pokey1_r },
+	{ 0x6800, 0x680f, pokey2_r },
 	{ 0x7000, 0x7000, atari_vg_earom_r },
 	{ 0x7800, 0x7800, bzone_IN0_r },	/* IN0 */
 	{ 0x8000, 0x8000, input_port_3_r },	/* IN1 */
 	{ 0x8800, 0x8800, input_port_4_r },	/* IN1 */
-	{ 0x6000, 0x600f, pokey1_r },
-	{ 0x6800, 0x680f, pokey2_r },
+	{ 0x9000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress bwidow_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x27ff, MWA_RAM },
+	{ 0x2000, 0x27ff, MWA_RAM, &vectorram, &vectorram_size },
+	{ 0x2800, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x67ff, pokey1_w },
 	{ 0x6800, 0x6fff, pokey2_w },
 	{ 0x8800, 0x8800, bwidow_misc_w }, /* coin counters, leds */
@@ -316,34 +323,30 @@ static struct MemoryWriteAddress bwidow_writemem[] =
 	{ 0x8880, 0x8880, avgdvg_reset },
 	{ 0x88c0, 0x88c0, MWA_NOP }, /* interrupt acknowledge */
 	{ 0x8900, 0x8900, atari_vg_earom_ctrl },
-	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
 	{ 0x8940, 0x897f, atari_vg_earom_w },
+	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
 	{ 0x9000, 0xffff, MWA_ROM },
-	{ 0x2800, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress spacduel_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x4000, 0x8fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0x2800, 0x3fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM, &vectorram, &vectorram_size },
-	{ 0x0a00, 0x0a00, atari_vg_earom_r },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x0900, 0x0907, spacduel_IN3_r },	/* IN1 */
+	{ 0x0a00, 0x0a00, atari_vg_earom_r },
 	{ 0x1000, 0x100f, pokey1_r },
 	{ 0x1400, 0x140f, pokey2_r },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2800, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x8fff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress spacduel_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x2000, 0x27ff, MWA_RAM, &vectorram },
-	{ 0x1000, 0x13ff, pokey1_w },
-	{ 0x1400, 0x17ff, pokey2_w },
 	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
 //	{ 0x0c00, 0x0c00, coin_counter_w }, /* coin out */
 	{ 0x0c80, 0x0c80, avgdvg_go },
@@ -352,13 +355,16 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ 0x0e00, 0x0e00, MWA_NOP }, /* interrupt acknowledge */
 	{ 0x0e80, 0x0e80, atari_vg_earom_ctrl },
 	{ 0x0f00, 0x0f3f, atari_vg_earom_w },
-	{ 0x4000, 0x8fff, MWA_ROM },
+	{ 0x1000, 0x13ff, pokey1_w },
+	{ 0x1400, 0x17ff, pokey2_w },
+	{ 0x2000, 0x27ff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x2800, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x8fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( bwidow_input_ports )
+INPUT_PORTS_START( bwidow )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
@@ -437,7 +443,7 @@ INPUT_PORTS_START( bwidow_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gravitar_input_ports )
+INPUT_PORTS_START( gravitar )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
@@ -511,7 +517,7 @@ INPUT_PORTS_START( gravitar_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( spacduel_input_ports )
+INPUT_PORTS_START( spacduel )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
@@ -591,25 +597,6 @@ INPUT_PORTS_START( spacduel_input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_COLOR };
-
 
 static struct POKEYinterface pokey_interface =
 {
@@ -633,14 +620,13 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver bwidow_machine_driver =
+static struct MachineDriver machine_driver_bwidow =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			bwidow_readmem,bwidow_writemem,0,0,
 			interrupt,4	/* 4.1ms */
 		}
@@ -651,9 +637,9 @@ static struct MachineDriver bwidow_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 480, 0, 440 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -671,14 +657,13 @@ static struct MachineDriver bwidow_machine_driver =
 	}
 };
 
-static struct MachineDriver gravitar_machine_driver =
+static struct MachineDriver machine_driver_gravitar =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			bwidow_readmem,bwidow_writemem,0,0,
 			interrupt,4 /* 4.1ms */
 		}
@@ -689,9 +674,9 @@ static struct MachineDriver gravitar_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 420, 0, 400 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -706,17 +691,18 @@ static struct MachineDriver gravitar_machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
-static struct MachineDriver spacduel_machine_driver =
+static struct MachineDriver machine_driver_spacduel =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			spacduel_readmem,spacduel_writemem,0,0,
 			interrupt,4 /* 5.4ms */
 		}
@@ -727,9 +713,9 @@ static struct MachineDriver spacduel_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 540, 0, 400 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -744,7 +730,9 @@ static struct MachineDriver spacduel_machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
 
@@ -755,51 +743,8 @@ static struct MachineDriver spacduel_machine_driver =
 
 ***************************************************************************/
 
-/* Black Widow cannot use the the earom routines
- * She writes into some locations at $2fac-$2fd7, which is clearly
- * the vector rom. Perhaps there is some address-logic that is not yet
- * emulated
- */
-
-static int bwidow_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0310],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x03a0],"\x01\x01\x11",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0310],7*21);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void bwidow_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0310],7*21);
-		osd_fclose(f);
-	}
-}
-
-
-ROM_START( bwidow_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( bwidow )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136017.107",   0x2800, 0x0800, 0x97f6000c )
 	ROM_LOAD( "136017.108",   0x3000, 0x1000, 0x3da354ed )
@@ -815,48 +760,8 @@ ROM_START( bwidow_rom )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-
-struct GameDriver bwidow_driver =
-{
-	__FILE__,
-	0,
-	"bwidow",
-	"Black Widow",
-	"1982",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&bwidow_machine_driver,
-	0,
-
-	bwidow_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	bwidow_input_ports,
-
-	color_prom, 0,0,
-	ORIENTATION_DEFAULT,
-
-	bwidow_hiload, bwidow_hisave
-};
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-/* Gravitar now uses the earom routines
- * However, we keep the highscore location, just in case
- *		osd_fwrite(f,&RAM[0x041e],3*16);
- */
-
-ROM_START( gravitar_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gravitar )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
@@ -872,8 +777,8 @@ ROM_START( gravitar_rom )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-ROM_START( gravitr2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gravitr2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
@@ -889,73 +794,8 @@ ROM_START( gravitr2_rom )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-
-struct GameDriver gravitar_driver =
-{
-	__FILE__,
-	0,
-	"gravitar",
-	"Gravitar (version 3)",
-	"1982",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&gravitar_machine_driver,
-	0,
-
-	gravitar_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	gravitar_input_ports,
-
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-struct GameDriver gravitr2_driver =
-{
-	__FILE__,
-	&gravitar_driver,
-	"gravitr2",
-	"Gravitar (version 2)",
-	"1982",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&gravitar_machine_driver,
-	0,
-
-	gravitr2_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	gravitar_input_ports,
-
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-/* Space Duel now uses the earom routines
- * However, we keep the highscore location, just in case
- *	osd_fwrite(f,&RAM[0x00dd],3*20+3*25);
- */
-
-ROM_START( spacduel_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spacduel )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136006.106",   0x2800, 0x0800, 0x691122fe )
 	ROM_LOAD( "136006.107",   0x3000, 0x1000, 0xd8dd0461 )
@@ -974,28 +814,9 @@ ROM_START( spacduel_rom )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-struct GameDriver spacduel_driver =
-{
-	__FILE__,
-	0,
-	"spacduel",
-	"Space Duel",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&spacduel_machine_driver,
-	0,
 
-	spacduel_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
 
-	spacduel_input_ports,
-
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
+GAME( 1982, bwidow,   ,         bwidow,   bwidow,   , ROT0, "Atari", "Black Widow" )
+GAME( 1982, gravitar, ,         gravitar, gravitar, , ROT0, "Atari", "Gravitar (version 3)" )
+GAME( 1982, gravitr2, gravitar, gravitar, gravitar, , ROT0, "Atari", "Gravitar (version 2)" )
+GAME( 1980, spacduel, ,         spacduel, spacduel, , ROT0, "Atari", "Space Duel" )

@@ -202,7 +202,6 @@ static void YM2203_w(int offset, int data)
 	}
 }
 
-/* Physical memory map (21 bits) */
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
@@ -220,8 +219,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, YM2203_w },
 	{ 0x110000, 0x110001, YM2151_w },
-	{ 0x120000, 0x120001, OKIM6295_data_0_w }, /* Effects  */
-	{ 0x130000, 0x130001, OKIM6295_data_1_w }, /* Music samples */
+	{ 0x120000, 0x120001, OKIM6295_data_0_w },
+	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
 	{ 0x1fec00, 0x1fec01, H6280_timer_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
@@ -230,7 +229,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( twocrude_input_ports )
+INPUT_PORTS_START( twocrude )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -366,17 +365,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	2,              	/* 2 chips */
-	{ 8055, 16110 },	/* Chips are different frequencies */
-	{ 3, 4 },			/* memory regions 3 & 4 */
-	{ 37, 17 }
+	2,              /* 2 chips */
+	{ 7757, 15514 },/* Frequency */
+	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	32220000/8,	/* Accurate */
-	{ YM2203_VOL(27,26) },
+	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
+	{ YM2203_VOL(40,40) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -385,38 +385,35 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state);
+	cpu_set_irq_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3700000, /* This sounds much better than the value below, but I don't understand where the value comes from */
-//	32220000/8, /* Accurate? */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
-static struct MachineDriver twocrude_machine_driver =
+static struct MachineDriver machine_driver_twocrude =
 {
 	/* basic machine hardware */
 	{
 	 	{
 			CPU_M68000,
 			12000000, /* Accurate */
-			0,
 			twocrude_readmem,twocrude_writemem,0,0,
 			m68_level4_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			32220000/8,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -453,8 +450,8 @@ static struct MachineDriver twocrude_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( cbuster_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( cbuster )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fx01.rom", 0x00000, 0x20000, 0xddae6d83 )
 	ROM_LOAD_ODD ( "fx00.rom", 0x00000, 0x20000, 0x5bc2c0de )
   	ROM_LOAD_EVEN( "fx03.rom", 0x40000, 0x20000, 0xc3d65bf9 )
@@ -477,7 +474,7 @@ ROM_START( cbuster_rom )
 	ROM_LOAD( "fu09-.rom",    0x280000, 0x10000, 0x526809ca )
 	ROM_LOAD( "fu10-.rom",    0x290000, 0x10000, 0x6be6d50e )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -487,8 +484,8 @@ ROM_START( cbuster_rom )
 	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
-ROM_START( cbusterw_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( cbusterw )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fu01-.rom", 0x00000, 0x20000, 0x0203e0f8 )
 	ROM_LOAD_ODD ( "fu00-.rom", 0x00000, 0x20000, 0x9c58626d )
   	ROM_LOAD_EVEN( "fu03-.rom", 0x40000, 0x20000, 0xdef46956 )
@@ -511,7 +508,7 @@ ROM_START( cbusterw_rom )
 	ROM_LOAD( "fu09-.rom",    0x280000, 0x10000, 0x526809ca )
 	ROM_LOAD( "fu10-.rom",    0x290000, 0x10000, 0x6be6d50e )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -521,8 +518,8 @@ ROM_START( cbusterw_rom )
 	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
-ROM_START( cbusterj_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( cbusterj )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fr01-1", 0x00000, 0x20000, 0xaf3c014f )
 	ROM_LOAD_ODD ( "fr00-1", 0x00000, 0x20000, 0xf666ad52 )
   	ROM_LOAD_EVEN( "fr03",   0x40000, 0x20000, 0x02c06118 )
@@ -545,7 +542,7 @@ ROM_START( cbusterj_rom )
 	ROM_LOAD( "fr09",    0x280000, 0x10000, 0xf8363424 )
 	ROM_LOAD( "fr10",    0x290000, 0x10000, 0x241d5760 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -555,8 +552,8 @@ ROM_START( cbusterj_rom )
 	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
-ROM_START( twocrude_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( twocrude )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ft01",    0x00000, 0x20000, 0x08e96489 )
 	ROM_LOAD_ODD ( "ft00",    0x00000, 0x20000, 0x6765c445 )
 	ROM_LOAD_EVEN( "ft03",    0x40000, 0x20000, 0x28002c99 )
@@ -579,7 +576,7 @@ ROM_START( twocrude_rom )
 	ROM_LOAD( "ft09",    0x280000, 0x10000, 0x6e3657b9 )
 	ROM_LOAD( "ft10",    0x290000, 0x10000, 0xcdb83560 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -591,9 +588,9 @@ ROM_END
 
 /******************************************************************************/
 
-static void twocrude_decrypt(void)
+static void init_twocrude(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	unsigned char *PTR;
 	int i,j;
 
@@ -615,8 +612,8 @@ static void twocrude_decrypt(void)
 	}
 
 	/* Rearrange the 'extra' sprite bank to be in the same format as main sprites */
-	PTR = Machine->memory_region[1] + 0x260000;
-	RAM = Machine->memory_region[1] + 0x1a0000;
+	PTR = memory_region(1) + 0x260000;
+	RAM = memory_region(1) + 0x1a0000;
 	for (i=0; i<0x20000; i+=64) {
 		for (j=0; j<16; j+=1) { /* Copy 16 lines down */
 			RAM[i+      0+j*2]=PTR[i/2+      0+j]; /* Pixels 0-7 for each plane */
@@ -636,102 +633,7 @@ static void twocrude_decrypt(void)
 
 /******************************************************************************/
 
-struct GameDriver cbuster_driver =
-{
-	__FILE__,
-	0,
-	"cbuster",
-	"Crude Buster (World FX version)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	cbuster_rom,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	twocrude_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver cbusterw_driver =
-{
-	__FILE__,
-	&cbuster_driver,
-	"cbusterw",
-	"Crude Buster (World FU version)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	cbusterw_rom,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	twocrude_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver cbusterj_driver =
-{
-	__FILE__,
-	&cbuster_driver,
-	"cbusterj",
-	"Crude Buster (Japan)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	cbusterj_rom,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	twocrude_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver twocrude_driver =
-{
-	__FILE__,
-	&cbuster_driver,
-	"twocrude",
-	"Two Crude (US)",
-	"1990",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	twocrude_rom,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	twocrude_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
+GAME( 1990, cbuster,  ,        twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FX version)" )
+GAME( 1990, cbusterw, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FU version)" )
+GAME( 1990, cbusterj, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (Japan)" )
+GAME( 1990, twocrude, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East USA", "Two Crude (US)" )

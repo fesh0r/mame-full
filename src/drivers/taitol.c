@@ -12,6 +12,69 @@
   - Fighting hawk
   - Raimais
   - Champion Wrestler
+
+Notes:
+- the system uses RAM based characters, which aren't really supported by the
+  TileMap system, so we have to tilemap_mark_all_tiles_dirty() to compensate
+
+TODO:
+- sound in the multiprocessor games
+- American horseshoes doesn't  have the trackball hooked  up.  X and Y
+  are 9bits values each splitted  in two bytes.   Probably easy to add
+  too.
+- The  puzznic protection is worked around,  but I'm not happy with it
+  (the 68705-returned values are wrong, I'm sure of that).
+- A bunch of control registers are simply ignored
+- The source of   irqs 0 and  1 is  ignored, while  2 is vblank  (0 is
+  usually   ignored  by the  program,    1   leads  to  reading    the
+  ports... maybe vbl-in, vbl-out and hblank ?).
+- Raimais is broken.  Probably something stupid, I had it working some
+  time ago.
+- There may still  be some issues of  priorities in fighting  hawk, at
+  the beginning of the first level (I didn't play the game far).
+- Wrong priority in Raimais game intro, this requires sprite/sprite and
+  sprite/tile priorities to be orthogonal
+- Cachat's title    screen  has some  problems.   The middle tile layer
+  is shifted 16 pixels to the left.
+
+
+Ok,  the pipe  is   what is   used to  communicate   between the  main
+processors and the sound  one.  It sits  on two adresses, the even one
+being the register number, the odd data, in a very ym2149 kind of way.
+
+Registers 0-3 are data,  register 4 is  flags.  They probably are only
+4bits wide.
+
+Each time  you read or   write to a   register the register  number is
+automatically increased.  I have no reason to think that this register
+number needs  to be separated for the  two processors  that access it,
+given the usage patterns.
+
+Flags of register 4 (it seems to be possible to directly write to it)
+bit 0 : set to 1 when register 1 is written, set to 0 when it is read
+bit 1 : set to 1 when register 3 is written, set to 0 when it is read
+bit 2-3 : unknown (there may be some kind of overrun detection...)
+
+Also, I think that  setting a bit in  the register 4  raises an irq on
+the sound CPU.    I tend to think  that  even setting it thru   direct
+writing does that.
+
+Here are the adresses of the pipe for the different games:
+
+game main cpu sound cpu
+fhawk 2nd, c800 e000
+raimais 1st, 8c00 e200
+champwr 2nd, e800 a000
+
+
+> Note: the multicpu games run very slow (w/ emulation speed at 100%). The
+> interleaving factor most certainly has to be increased (since there is
+> shared memory).
+
+This  may even  help raimais.   The program on  the  second CPU is the
+weirdest I've ever seen.   Feel a bit like  a  z80 rewrite of a  68705
+protection program...
+
 */
 
 
@@ -69,6 +132,7 @@ unsigned char *taitol_rambanks;
 int taitol_bg18_deltax, taitol_bg19_deltax;
 
 static unsigned char *palette_ram;
+static unsigned char *empty_ram;
 static unsigned char *shared_ram;
 
 static int (*porte0_r)(int);
@@ -89,8 +153,7 @@ static void palette_notifier(int addr)
 	//	addr &= 0x1ff;
 
 	if(addr > 0x200) {
-		if(errorlog)
-			fprintf(errorlog, "Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
+if(errorlog) fprintf(errorlog, "Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
 	} else {
 		//		r = g = b = ((addr & 0x1e) != 0)*255;
 		palette_change_color(addr/2, r, g, b);
@@ -103,6 +166,7 @@ static void machine_init(void)
 
 	taitol_rambanks = malloc(0x1000*12);
 	palette_ram = malloc(0x1000);
+	empty_ram = malloc(0x1000);
 
 	for(i=0;i<3;i++)
 		irq_adr_table[i] = 0;
@@ -116,7 +180,7 @@ static void machine_init(void)
 		cpu_setbank(2+i, current_base[i]);
 	}
 	cur_rombank = cur_rombank2 = 0;
-	cpu_setbank(1, Machine->memory_region[0] + 0x10000);
+	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000);
 
 	for(i=0;i<512;i++) {
 		decodechar(Machine->gfx[2], i, taitol_rambanks,
@@ -263,7 +327,7 @@ static void rombankswitch_w(int offset, int data)
 		if(0 && errorlog)
 			fprintf(errorlog, "robs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 		cur_rombank = data;
-		cpu_setbank(1, Machine->memory_region[0]+0x10000+0x2000*cur_rombank);
+		cpu_setbank(1, memory_region(REGION_CPU1)+0x10000+0x2000*cur_rombank);
 	}
 }
 
@@ -284,7 +348,7 @@ static void rombank2switch_w(int offset, int data)
 			fprintf(errorlog, "robs2 %02x (%04x)\n", data, cpu_get_pc());
 
 		cur_rombank2 = data;
-		cpu_setbank(6, Machine->memory_region[2]+0x10000+0x4000*cur_rombank2);
+		cpu_setbank(6, memory_region(2)+0x10000+0x4000*cur_rombank2);
 	}
 }
 
@@ -300,17 +364,25 @@ static int rombank2switch_r(int offset)
 
 static void rambankswitch_w(int offset, int data)
 {
-	if(cur_rambank[offset]!=data) {
+	if(cur_rambank[offset]!=data)
+	{
 		cur_rambank[offset]=data;
-		if(0 && errorlog)
-		  fprintf(errorlog, "rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
-		if(data>=0x14 && data<=0x1f) {
+//if(errorlog) fprintf(errorlog, "rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+		if(data>=0x14 && data<=0x1f)
+		{
 			data -= 0x14;
 			current_notifier[offset] = rambank_modify_notifiers[data];
 			current_base[offset] = taitol_rambanks+0x1000*data;
-		} else {
+		} else if (data == 0x80)
+		{
 			current_notifier[offset] = palette_notifier;
 			current_base[offset] = palette_ram;
+		}
+		else
+		{
+if(errorlog) fprintf(errorlog, "unknown rambankswitch %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+			current_notifier[offset] = 0;
+			current_base[offset] = empty_ram;
 		}
 		cpu_setbank(2+offset, current_base[offset]);
 	}
@@ -631,14 +703,15 @@ static struct MemoryWriteAddress horshoes_writemem[] = {
 
 static struct MemoryReadAddress fhawk_readmem[] = {
 	COMMON_BANKS_READ,
-	{ 0x8000, 0x9fff, MRA_RAM, &shared_ram },
+	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress fhawk_writemem[] = {
 	COMMON_BANKS_WRITE,
-	{ 0x8000, 0xbfff, MWA_RAM },
+	{ 0x8000, 0x9fff, MWA_RAM, &shared_ram },
+	{ 0xa000, 0xbfff, MWA_RAM },
 	{ -1 }
 };
 
@@ -685,7 +758,7 @@ static struct MemoryWriteAddress fhawk_3_writemem[] = {
 
 static struct MemoryReadAddress raimais_readmem[] = {
 	COMMON_BANKS_READ,
-	{ 0x8000, 0x87ff, MRA_RAM, &shared_ram },
+	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, mux_r },
 	{ 0x8801, 0x8801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
 	{ 0x8c00, 0x8c01, MRA_NOP }, // Pipe
@@ -694,7 +767,7 @@ static struct MemoryReadAddress raimais_readmem[] = {
 };
 static struct MemoryWriteAddress raimais_writemem[] = {
 	COMMON_BANKS_WRITE,
-	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8000, 0x87ff, MWA_RAM, &shared_ram },
 	{ 0x8800, 0x8800, mux_w },
 	{ 0x8801, 0x8801, mux_ctrl_w },
 	{ 0x8c00, 0x8c01, MWA_NOP }, // Pipe
@@ -736,15 +809,16 @@ static struct MemoryWriteAddress raimais_3_writemem[] = {
 
 static struct MemoryReadAddress champwr_readmem[] = {
 	COMMON_BANKS_READ,
-	{ 0x8000, 0x9fff, MRA_RAM, },
-	{ 0xa000, 0xbfff, MRA_RAM, &shared_ram },
+	{ 0x8000, 0x9fff, MRA_RAM },
+	{ 0xa000, 0xbfff, MRA_RAM },
 	{ -1 }
 };
 
 
 static struct MemoryWriteAddress champwr_writemem[] = {
 	COMMON_BANKS_WRITE,
-	{ 0x8000, 0xbfff, MWA_RAM },
+	{ 0x8000, 0x9fff, MWA_RAM },
+	{ 0xa000, 0xbfff, MWA_RAM, &shared_ram },
 	{ -1 }
 };
 
@@ -790,7 +864,7 @@ static struct MemoryWriteAddress champwr_3_writemem[] = {
 
 
 
-INPUT_PORTS_START(puzznic_input_ports) /* Plotting ports too */
+INPUT_PORTS_START( puzznic ) /* Plotting ports too */
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -873,7 +947,7 @@ INPUT_PORTS_START(puzznic_input_ports) /* Plotting ports too */
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START(palamed_input_ports)
+INPUT_PORTS_START( palamed )
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -954,7 +1028,7 @@ INPUT_PORTS_START(palamed_input_ports)
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START(horshoes_input_ports)
+INPUT_PORTS_START( horshoes )
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Bit 0" )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1130,7 +1204,7 @@ INPUT_PORTS_START(horshoes_input_ports)
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START(fhawk_input_ports)
+INPUT_PORTS_START( fhawk )
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Bit 0" )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1211,7 +1285,7 @@ INPUT_PORTS_START(fhawk_input_ports)
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START(raimais_input_ports)
+INPUT_PORTS_START( raimais )
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -1290,7 +1364,7 @@ INPUT_PORTS_START(raimais_input_ports)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START(champwr_input_ports)
+INPUT_PORTS_START( champwr )
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Bit 0" )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1493,13 +1567,12 @@ static struct YM2203interface ym2203_interface_double =
 
 
 #define MCH_SINGLE(name) \
-static struct MachineDriver name ## _machine_driver =	\
+static struct MachineDriver machine_driver_##name =	\
 {														\
 	{													\
 		{												\
 			CPU_Z80,									\
 			3332640,	/* ? xtal is 13.33056 */		\
-			0,											\
 			name ## _readmem, name ## _writemem, 0, 0,	\
 			vbl_interrupt, 1							\
 		}												\
@@ -1528,27 +1601,24 @@ static struct MachineDriver name ## _machine_driver =	\
 };
 
 #define MCH_DOUBLE(name) \
-static struct MachineDriver name ## _machine_driver =		\
+static struct MachineDriver machine_driver_##name =		\
 {															\
 	{														\
 		{													\
 			CPU_Z80,										\
 			3332640,	/* ? xtal is 13.33056 */			\
-			0,												\
 			name ## _readmem, name ## _writemem, 0, 0,		\
 			vbl_interrupt, 1								\
 		},													\
 		{													\
 			CPU_Z80,										\
 			3332640,	/* ? xtal is 13.33056 */			\
-			2,												\
 			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
 			interrupt, 1									\
 		},													\
 		{													\
 			CPU_Z80 | CPU_AUDIO_CPU,						\
 			3332640,	/* ? xtal is 13.33056 */			\
-			3,												\
 			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
 			ignore_interrupt, 0								\
 		}													\
@@ -1589,8 +1659,8 @@ MCH_SINGLE(cachat)
 
 
 
-ROM_START( fhawk_rom )
-	ROM_REGION(0xb0000)
+ROM_START( fhawk )
+	ROM_REGIONX( 0xb0000, REGION_CPU1 )
 	ROM_LOAD( "b70-07.bin", 0x00000, 0x20000, 0x939114af )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "b70-03.bin", 0x30000, 0x80000, 0x42d5a9b8 )
@@ -1599,16 +1669,16 @@ ROM_START( fhawk_rom )
 	ROM_LOAD( "b70-01.bin", 0x00000, 0x80000, 0xfcdf67e2 )
 	ROM_LOAD( "b70-02.bin", 0x80000, 0x80000, 0x35f7172e )
 
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "b70-08.bin", 0x00000, 0x20000, 0x4d795f48 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "b70-09.bin", 0x00000, 0x10000, 0x85cccaa2 )
 ROM_END
 
-ROM_START( raimais_rom )
-	ROM_REGION(0xb0000)
+ROM_START( raimais )
+	ROM_REGIONX( 0xb0000, REGION_CPU1 )
 	ROM_LOAD( "b36-08-1.bin", 0x00000, 0x20000, 0x6cc8f79f )
 	ROM_RELOAD(               0x10000, 0x20000 )
 	ROM_LOAD( "b36-03.bin",   0x30000, 0x80000, 0x96166516 )
@@ -1617,15 +1687,15 @@ ROM_START( raimais_rom )
 	ROM_LOAD( "b36-01.bin",   0x00000, 0x80000, 0x89355cb2 )
 	ROM_LOAD( "b36-02.bin",   0x80000, 0x80000, 0xe71da5db )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "b36-07.bin",   0x00000, 0x10000, 0x4f3737e6 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX(0x10000, REGION_CPU3 )
 	ROM_LOAD( "b36-06.bin",   0x00000, 0x10000, 0x29bbc4f8 )
 ROM_END
 
-ROM_START( champwr_rom )
-	ROM_REGION(0xf0000)
+ROM_START( champwr )
+	ROM_REGIONX( 0xf0000, REGION_CPU1 )
 	ROM_LOAD( "c01-13.rom", 0x00000, 0x20000, 0x7ef47525 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
@@ -1636,17 +1706,17 @@ ROM_START( champwr_rom )
 	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
 
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
 	ROM_RELOAD(             0x10000, 0x20000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
 ROM_END
 
 
-ROM_START( puzznic_rom )
-	ROM_REGION(0x30000)
+ROM_START( puzznic )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "u11.rom",  0x00000, 0x20000, 0xa4150b6c )
 	ROM_RELOAD(           0x10000, 0x20000 )
 
@@ -1654,12 +1724,12 @@ ROM_START( puzznic_rom )
 	ROM_LOAD( "u10.rom",  0x00000, 0x20000, 0x4264056c )
 	ROM_LOAD( "u09.rom",  0x40000, 0x20000, 0x3c115f8b )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 2k for the microcontroller */
 	ROM_LOAD( "mc68705p", 0x0000, 0x0800, 0x00000000 )
 ROM_END
 
-ROM_START( plotting_rom )
-	ROM_REGION(0x20000)
+ROM_START( plotting )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
 	ROM_LOAD( "plot01.bin", 0x00000, 0x10000, 0x5b30bc25 )
 	ROM_RELOAD(             0x10000, 0x10000 )
 
@@ -1668,8 +1738,8 @@ ROM_START( plotting_rom )
 	ROM_LOAD( "plot08.bin", 0x40000, 0x10000, 0xfb5f3ca4 )
 ROM_END
 
-ROM_START( palamed_rom )
-	ROM_REGION(0x30000)
+ROM_START( palamed )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c63.02", 0x00000, 0x20000, 0x55a82bb2 )
 	ROM_RELOAD(         0x10000, 0x20000 )
 
@@ -1678,8 +1748,8 @@ ROM_START( palamed_rom )
 	ROM_LOAD( "c63.03", 0x40000, 0x20000, 0xfcd86e44 )
 ROM_END
 
-ROM_START( horshoes_rom )
-	ROM_REGION(0x30000)
+ROM_START( horshoes )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c47.03", 0x00000, 0x20000, 0x37e15b20 )
 	ROM_RELOAD(         0x10000, 0x20000 )
 
@@ -1694,8 +1764,8 @@ ROM_START( horshoes_rom )
 	ROM_CONTINUE (      0x70000, 0x10000 )
 ROM_END
 
-ROM_START( cachat_rom )
-	ROM_REGION(0x30000)
+ROM_START( cachat )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "cac6",  0x00000, 0x20000, 0x8105cf5f )
 	ROM_RELOAD(        0x10000, 0x20000 )
 
@@ -1722,7 +1792,7 @@ static void plotting_decode(void)
 				v |= 1<<(7-j);
 		tab[i] = v;
 	}
-	p = Machine->memory_region[0];
+	p = memory_region(REGION_CPU1);
 	for(i=0;i<0x20000;i++) {
 		*p = tab[*p];
 		p++;
@@ -1731,7 +1801,7 @@ static void plotting_decode(void)
 
 
 
-struct GameDriver fhawk_driver =
+struct GameDriver driver_fhawk =
 {
 	__FILE__,
 	0,
@@ -1741,20 +1811,20 @@ struct GameDriver fhawk_driver =
 	"Taito Corporation",
 	"",
 	0,
-	&fhawk_machine_driver,
+	&machine_driver_fhawk,
 	0,
 
-	fhawk_rom,
+	rom_fhawk,
 	0,0, 0, 0,
 
-	fhawk_input_ports,
+	input_ports_fhawk,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0,0
 };
 
-struct GameDriver raimais_driver =
+struct GameDriver driver_raimais =
 {
 	__FILE__,
 	0,
@@ -1763,21 +1833,21 @@ struct GameDriver raimais_driver =
 	"1988",
 	"Taito Corporation",
 	"",
-	GAME_NOT_WORKING,
-	&raimais_machine_driver,
+	0,
+	&machine_driver_raimais,
 	0,
 
-	raimais_rom,
+	rom_raimais,
 	0,0, 0, 0,
 
-	raimais_input_ports,
+	input_ports_raimais,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0 | GAME_NOT_WORKING,
 	0,0
 };
 
-struct GameDriver champwr_driver =
+struct GameDriver driver_champwr =
 {
 	__FILE__,
 	0,
@@ -1787,20 +1857,20 @@ struct GameDriver champwr_driver =
 	"Taito Corporation Japan",
 	"",
 	0,
-	&champwr_machine_driver,
+	&machine_driver_champwr,
 	0,
 
-	champwr_rom,
+	rom_champwr,
 	0,0, 0, 0,
 
-	champwr_input_ports,
+	input_ports_champwr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
-struct GameDriver puzznic_driver =
+struct GameDriver driver_puzznic =
 {
 	__FILE__,
 	0,
@@ -1810,20 +1880,20 @@ struct GameDriver puzznic_driver =
 	"Taito Corporation",
 	"",
 	0,
-	&puzznic_machine_driver,
+	&machine_driver_puzznic,
 	0,
 
-	puzznic_rom,
+	rom_puzznic,
 	0, 0, 0, 0,
 
-	puzznic_input_ports,
+	input_ports_puzznic,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
-struct GameDriver plotting_driver =
+struct GameDriver driver_plotting =
 {
 	__FILE__,
 	0,
@@ -1833,22 +1903,22 @@ struct GameDriver plotting_driver =
 	"Taito Corporation Japan",
 	"",
 	0,
-	&plotting_machine_driver,
-	0,
-
-	plotting_rom,
+	&machine_driver_plotting,
 	plotting_decode,
+
+	rom_plotting,
+	0,
 	0, 0, 0,
 
-	puzznic_input_ports,
+	input_ports_puzznic,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
 
-struct GameDriver palamed_driver =
+struct GameDriver driver_palamed =
 {
 	__FILE__,
 	0,
@@ -1858,20 +1928,20 @@ struct GameDriver palamed_driver =
 	"Taito Corporation",
 	"",
 	0,
-	&palamed_machine_driver,
+	&machine_driver_palamed,
 	0,
 
-	palamed_rom,
+	rom_palamed,
 	0,0, 0, 0,
 
-	palamed_input_ports,
+	input_ports_palamed,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
-struct GameDriver horshoes_driver =
+struct GameDriver driver_horshoes =
 {
 	__FILE__,
 	0,
@@ -1881,20 +1951,20 @@ struct GameDriver horshoes_driver =
 	"Taito America Corporation",
 	"",
 	0,
-	&horshoes_machine_driver,
+	&machine_driver_horshoes,
 	0,
 
-	horshoes_rom,
+	rom_horshoes,
 	0,0, 0, 0,
 
-	horshoes_input_ports,
+	input_ports_horshoes,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270 | GAME_NOT_WORKING,
 	0,0
 };
 
-struct GameDriver cachat_driver =
+struct GameDriver driver_cachat =
 {
 	__FILE__,
 	0,
@@ -1904,15 +1974,15 @@ struct GameDriver cachat_driver =
 	"Taito Corporation",
 	"",
 	0,
-	&cachat_machine_driver,
+	&machine_driver_cachat,
 	0,
 
-	cachat_rom,
+	rom_cachat,
 	0,0, 0, 0,
 
-	palamed_input_ports,
+	input_ports_palamed,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

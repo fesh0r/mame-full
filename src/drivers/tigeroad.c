@@ -260,7 +260,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( tigeroad_input_ports )
+INPUT_PORTS_START( tigeroad )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -342,7 +342,7 @@ INPUT_PORTS_START( tigeroad_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( f1dream_input_ports )
+INPUT_PORTS_START( f1dream )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -499,7 +499,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,          /* 2 chips */
-	3500000,    /* 3.5 MHz ? */
+	3579545,    /* 3.579 MHz ? */
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -517,14 +517,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			6000000, /* ? Main clock is 24MHz */
-			0,
 			readmem,writemem,0,0,
 			tigeroad_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,    /* 4 Mhz ??? */
-			3,  /* memory region #3 */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -541,7 +539,7 @@ static struct MachineDriver machine_driver =
 	576, 576,
 	0, /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	0,
 	0,
@@ -565,8 +563,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( tigeroad_rom )
-	ROM_REGION(0x40000) /* 256K for 68000 code */
+ROM_START( tigeroad )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "tru02.bin",    0x00000, 0x20000, 0x8d283a95 )
 	ROM_LOAD_ODD( "tru04.bin",    0x00000, 0x20000, 0x72e2ef20 )
 
@@ -588,12 +586,12 @@ ROM_START( tigeroad_rom )
 	ROM_REGION( 0x08000 ) /* tilemap for background */
 	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "tru05.bin",    0x0000, 0x8000, 0xf9a7c9bf )
 ROM_END
 
-ROM_START( f1dream_rom )
-	ROM_REGION(0x40000) /* 256K for 68000 code */
+ROM_START( f1dream )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "06j_02.bin",   0x00000, 0x20000, 0x3c2ec697 )
 	ROM_LOAD_ODD( "06k_03.bin",   0x00000, 0x20000, 0x85ebad91 )
 
@@ -616,15 +614,15 @@ ROM_START( f1dream_rom )
 	/* 170000-17ffff empty */
 	ROM_LOAD( "10d_01.bin",   0x180000, 0x08000, 0x361caf00 ) /* 8x8 text */
 
-	ROM_REGION( 0x08000 ) /* tilemap for background */
+	ROM_REGION(  0x08000 ) /* tilemap for background */
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
 ROM_END
 
-ROM_START( f1dreamb_rom )
-	ROM_REGION(0x40000) /* 256K for 68000 code */
+ROM_START( f1dreamb )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "f1d_04.bin",   0x00000, 0x10000, 0x903febad )
 	ROM_LOAD_ODD( "f1d_05.bin",   0x00000, 0x10000, 0x666fa2a7 )
 	ROM_LOAD_EVEN( "f1d_02.bin",   0x20000, 0x10000, 0x98973c4c )
@@ -652,86 +650,13 @@ ROM_START( f1dreamb_rom )
 	ROM_REGION( 0x08000 ) /* tilemap for background */
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
 ROM_END
 
 
 
-static int tigeroad_hiload(void)
-{
-	void *f;
-
-
-	/* check if the hi score table has already been initialized */
-	if (READ_WORD(&ram[0x2c70])== 0x5955 && READ_WORD(&ram[0x2cbe])== 0x5000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&ram[0x2c70],100);
-			ram[0x0092]=ram[0x2cac];
-			ram[0x0093]=ram[0x2cad];
-			ram[0x0094]=ram[0x2cae];
-			ram[0x0095]=ram[0x2caf];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void tigeroad_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram[0x2c70],100);
-		osd_fclose(f);
-	}
-}
-
-
-static int f1dream_hiload(void)
-{
-	void *f;
-
-
-	/* check if the hi score table has already been initialized */
-
-	if (READ_WORD(&ram[0x312e])== 0x0030 && READ_WORD(&ram[0x3190])== 0x0101)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&ram[0x312e],100); /* high score table */
-			osd_fread_msbfirst(f,&ram[0x32e8],100); /* best times */
-
-			osd_fclose(f);
-
-		}
-	return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void f1dream_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite_msbfirst(f,&ram[0x312e],100); /* high score table */
-		osd_fwrite_msbfirst(f,&ram[0x32e8],100); /* best times */
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver tigeroad_driver =
+struct GameDriver driver_tigeroad =
 {
 	__FILE__,
 	0,
@@ -744,18 +669,18 @@ struct GameDriver tigeroad_driver =
 	&machine_driver,
 	tigeroad_driver_init,
 
-	tigeroad_rom,
+	rom_tigeroad,
 	0,0,0,0,
 
-	tigeroad_input_ports,
+	input_ports_tigeroad,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	tigeroad_hiload, tigeroad_hisave
+	ROT0,
+	0,0
 };
 
 /* F1 Dream has an Intel 8751 microcontroller for protection */
-struct GameDriver f1dream_driver =
+struct GameDriver driver_f1dream =
 {
 	__FILE__,
 	0,
@@ -768,20 +693,20 @@ struct GameDriver f1dream_driver =
 	&machine_driver,
 	f1dream_driver_init,
 
-	f1dream_rom,
+	rom_f1dream,
 	0,0,0,0,
 
-	f1dream_input_ports,
+	input_ports_f1dream,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	f1dream_hiload, f1dream_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver f1dreamb_driver =
+struct GameDriver driver_f1dreamb =
 {
 	__FILE__,
-	&f1dream_driver,
+	&driver_f1dream,
 	"f1dreamb",
 	"F-1 Dream (bootleg)",
 	"1988",
@@ -791,12 +716,12 @@ struct GameDriver f1dreamb_driver =
 	&machine_driver,
 	tigeroad_driver_init,
 
-	f1dreamb_rom,
+	rom_f1dreamb,
 	0,0,0,0,
 
-	f1dream_input_ports,
+	input_ports_f1dream,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	f1dream_hiload, f1dream_hisave
+	ROT0,
+	0,0
 };

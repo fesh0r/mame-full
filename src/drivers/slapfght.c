@@ -223,7 +223,7 @@ static struct MemoryReadAddress tigerh_readmem[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc80f, slapfight_dpram_r , &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
@@ -237,7 +237,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc80f, slapfight_dpram_r , &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
@@ -315,7 +315,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0xa081, 0xa081, AY8910_read_port_0_r },
 	{ 0xa091, 0xa091, AY8910_read_port_1_r },
-	{ 0xc800, 0xc80f, MRA_RAM, &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -328,7 +328,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xa090, 0xa090, AY8910_control_port_1_w },
 	{ 0xa092, 0xa092, AY8910_write_port_1_w },
 	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
-	{ 0xc800, 0xc80f, MWA_RAM, &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_w },
 	{ 0xc810, 0xcfff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -336,7 +336,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( tigerh_input_ports )
+INPUT_PORTS_START( tigerh )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -408,7 +408,7 @@ INPUT_PORTS_START( tigerh_input_ports )
 	PORT_DIPSETTING(    0x02, "5" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( slapfigh_input_ports )
+INPUT_PORTS_START( slapfigh )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -478,7 +478,7 @@ INPUT_PORTS_START( slapfigh_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( getstar_input_ports )
+INPUT_PORTS_START( getstar )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -642,21 +642,19 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver tigerh_machine_driver =
+static struct MachineDriver machine_driver_tigerh =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			6000000,
-			0,
 			tigerh_readmem,writemem,readport,tigerh_writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,6,    /* ??? */
 		}
@@ -689,21 +687,19 @@ static struct MachineDriver tigerh_machine_driver =
 	}
 };
 
-static struct MachineDriver slapfigh_machine_driver =
+static struct MachineDriver machine_driver_slapfigh =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			6000000,
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,
-			3,
 			sound_readmem,sound_writemem,0,0,
 				getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
 			0,0                  /* I think music is not so far from correct speed */
@@ -740,21 +736,19 @@ static struct MachineDriver slapfigh_machine_driver =
 };
 
 /* identical to slapfigh_ but writemem has different scroll registers */
-static struct MachineDriver slapbtuk_machine_driver =
+static struct MachineDriver machine_driver_slapbtuk =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			6000000,
-			0,
 			readmem,slapbtuk_writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,
-			3,
 			sound_readmem,sound_writemem,0,0,
 			getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
 			0,0                  /* I think music is not so far from correct speed */
@@ -792,8 +786,8 @@ static struct MachineDriver slapbtuk_machine_driver =
 
 
 
-ROM_START( tigerh_rom )
-	ROM_REGION(0x10000)
+ROM_START( tigerh )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "0.4",          0x00000, 0x4000, 0x4be73246 )
 	ROM_LOAD( "1.4",          0x04000, 0x4000, 0xaad04867 )
 	ROM_LOAD( "2.4",          0x08000, 0x4000, 0x4843f15c )
@@ -810,19 +804,19 @@ ROM_START( tigerh_rom )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 
 	/* The 68705 ROM is missing! */
 ROM_END
 
-ROM_START( tigerh2_rom )
-	ROM_REGION(0x10000)
+ROM_START( tigerh2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "b0.5",         0x00000, 0x4000, 0x6ae7e13c )
 	ROM_LOAD( "a-1.5",        0x04000, 0x4000, 0x65df2152 )
 	ROM_LOAD( "a-2.5",        0x08000, 0x4000, 0x633d324b )
@@ -839,19 +833,19 @@ ROM_START( tigerh2_rom )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 
 	/* Is there a 68705 ROM missing? */
 ROM_END
 
-ROM_START( tigerhb1_rom )
-	ROM_REGION(0x10000)
+ROM_START( tigerhb1 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "14",           0x00000, 0x4000, 0xca59dd73 )
 	ROM_LOAD( "13",           0x04000, 0x4000, 0x38bd54db )
 	ROM_LOAD( "a-2.5",        0x08000, 0x4000, 0x633d324b )
@@ -868,17 +862,17 @@ ROM_START( tigerhb1_rom )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 ROM_END
 
-ROM_START( tigerhb2_rom )
-	ROM_REGION(0x10000)
+ROM_START( tigerhb2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "rom00_09.bin", 0x00000, 0x4000, 0xef738c68 )
 	ROM_LOAD( "a-1.5",        0x04000, 0x4000, 0x65df2152 )
 	ROM_LOAD( "rom02_07.bin", 0x08000, 0x4000, 0x36e250b9 )
@@ -895,17 +889,17 @@ ROM_START( tigerhb2_rom )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 ROM_END
 
-ROM_START( slapfigh_rom )
-	ROM_REGION(0x18000)
+ROM_START( slapfigh )
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "sf_r19.bin",   0x00000, 0x8000, 0x674c0e0f )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
 
@@ -921,17 +915,17 @@ ROM_START( slapfigh_rom )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
-ROM_START( slapbtjp_rom )
-	ROM_REGION(0x18000)
+ROM_START( slapbtjp )
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "sf_r19jb.bin", 0x00000, 0x8000, 0x9a7ac8b3 )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
 
@@ -947,17 +941,17 @@ ROM_START( slapbtjp_rom )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
-ROM_START( slapbtuk_rom )
-	ROM_REGION(0x18000)
+ROM_START( slapbtuk )
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "sf_r19eb.bin", 0x00000, 0x4000, 0x2efe47af )
 	ROM_LOAD( "sf_r20eb.bin", 0x04000, 0x4000, 0xf42c7951 )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
@@ -974,17 +968,17 @@ ROM_START( slapbtuk_rom )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
-ROM_START( alcon_rom )
-	ROM_REGION(0x18000)
+ROM_START( alcon )
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "00",           0x00000, 0x8000, 0x2ba82d60 )
 	ROM_LOAD( "01",           0x10000, 0x8000, 0x18bb2f12 )	/* banked at 8000 */
 
@@ -1000,18 +994,18 @@ ROM_START( alcon_rom )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
 
-ROM_START( getstar_rom )
-	ROM_REGION(0x18000)		/* Region 0 - main cpu code */
+ROM_START( getstar )
+	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "gs_14.rom", 0x00000, 0x4000, 0x1a57a920 )
 	ROM_LOAD( "gs_13.rom", 0x04000, 0x4000, 0x805f8e77 )
 	ROM_LOAD( "gs_12.rom", 0x10000, 0x8000, 0x3567da17 )
@@ -1028,237 +1022,18 @@ ROM_START( getstar_rom )
 	ROM_LOAD( "gs_03.rom", 0x34000, 0x8000, 0xf24158cf )
 	ROM_LOAD( "gs_04.rom", 0x3c000, 0x8000, 0x643fb282 )
 
-	ROM_REGION(0x0300) /* Region 2 - color proms (still missing) */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
     ROM_LOAD( "prom_1.bin", 0x0000, 0x0100, 0x00000000 )
     ROM_LOAD( "prom_2.bin", 0x0100, 0x0100, 0x00000000 )
     ROM_LOAD( "prom_3.bin", 0x0200, 0x0100, 0x00000000 )
 
-	ROM_REGION(0x10000)		/* Region 3 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 3 - sound cpu code */
 	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
 ROM_END
 
 
-/* High scores are at location C060 - C0A5 ( 70 bytes )	*/
-/* 10 * 3 bytes for score				*/
-/* 10 * 3 bytes for initials				*/
-/* 10 * 1 byte for level reached ( area ) 		*/
-static int slapfigh_hiload(void)
-{
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* check to see if high scores initialised */
-	if ((memcmp(&RAM[0xc060],"\x50\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0xc0a3],"\x06\x05\x04",3) == 0))
-	 {
-	  void	*f;
-	  int	lead0;
-
-	  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	   {
-	    osd_fread(f,&RAM[0xc060],10*7);
-	    RAM[0xc05d] = RAM[0xc060];
-	    RAM[0xc05e] = RAM[0xc061];
-	    RAM[0xc05f] = RAM[0xc062];
-	// patch in high score in screen display ...
-	    lead0 = 0;
-	    if ((RAM[0xc062]>>4) == 0)
-	      RAM[0xc118] = 0x2D;
-	    else
-	     {
-	      RAM[0xc118] = RAM[0xc062]>>4;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc062]&0x0f) == 0) && (lead0 == 0))
-	      RAM[0xc119] = 0x2D;
-	    else
-	     {
-	      RAM[0xc119] = RAM[0xc062]&0x0f;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc061]>>4) == 0) && (lead0 == 0))
-	      RAM[0xc11A] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11A] = RAM[0xc061]>>4;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc061]&0x0f) == 0) && (lead0 == 0))
-	      RAM[0xc11B] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11B] = RAM[0xc061]&0x0F;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc060]>>4) == 0) && (lead0 == 0))
-	      RAM[0xc11C] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11C] = RAM[0xc060]>>4;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc060]&0x0F) == 0) && (lead0 == 0))
-	      RAM[0xc11D] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11D] = RAM[0xc060]&0x0F;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-
-	    osd_fclose(f);
-	   }
-	  return 1;	/* hi scores loaded */
-	 }
-	else
-	  return 0;	/* high scores not loaded yet */
-}
-
-static void slapfigh_hisave(void)
-{
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-void	*f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	 {
-	  osd_fwrite(f,&RAM[0xc060],10*7);
-	  osd_fclose(f);
-	 }
-
-}
-
-
-
-
-/* High scores are at location C0DB - C123 ( 70+3 bytes )               */
-/*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
-/* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
-/* 10 * 3 bytes for initials							*/
-/* 10 * 1 byte for level reached		 				*/
-static int tigerh_hiload(void)
-{
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-        if (memcmp(&RAM[0xc0db],"\x00\x20\x00\x00\x20\x00",6) == 0)
-        {
-                void  *f;
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f, &RAM[0xc0db], 73);
-                        RAM[0xc15f] = RAM[0xc0db] & 0x0f;
-                        RAM[0xc15e] = RAM[0xc0db] >> 4;
-                        RAM[0xc15d] = RAM[0xc0dc] & 0x0f;
-                        RAM[0xc15c] = RAM[0xc0dc] >> 4;
-                        RAM[0xc15b] = RAM[0xc0dd] & 0x0f;
-                        RAM[0xc15a] = RAM[0xc0dd] >> 4;
-
-                        /* The minimum hiscore is 20000 */
-                        if (RAM[0xc15a] == 0)
-                        {
-                                RAM[0xc15a] = 0x2d;
-                                if (RAM[0xc15b] == 0) RAM[0xc15b] = 0x2d;
-                        }
-                        osd_fclose(f);
-                }
-
-                return 1;       /* hi scores loaded */
-        }
-        else
-                return 0;       /* high scores not loaded yet */
-}
-
-
-
-static void tigerh_hisave(void)
-{
-        void *f;
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0xc0db],73);
-                osd_fclose(f);
-        }
-
-}
-
-
-
-/* High scores are at location C0D2 - C11A ( 70+3 bytes )		*/
-/*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
-/* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
-/* 10 * 3 bytes for initials							*/
-/* 10 * 1 byte for level reached		 				*/
-
-static int getstar_hiload(void)
-{
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-static int phase = 0;
-
-/* phase 0: dirty memory just 1 byte ahead of hi-scores */
-
-	if (phase==0)
-	{
-		RAM[0xc11b]=0xFF;
-		phase++;		/* goto phase 1 */
-		return 0;		/* can't load hi-scores yet */
-	}
-
-/* phase 1: wait for the ram check of c000-cfff to pass the hi-scores area */
-
-	if (phase==1)
-	{
-		if (RAM[0xc11b]==0xFF)	/* if still dirty */
-			return 0;		/* can't load hi-scores yet */
-		else
-		{
-			RAM[0xc11a]=0xFF;	/* dirty last byte of hi-scores */
-			phase++;		/* goto phase 2 (final) */
-		}
-	}
-
-/* phase 2: check to see if high scores have been initialised */
-
-	if (phase==2)
-	{
-
-		if ((memcmp(&RAM[0xc0d2],"\x00\x20\x00\x00\x20\x00",6) == 0) &&
-		    (RAM[0xc11a] == 0))
-		{
-		  void	*f;
-
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-				osd_fread(f, &RAM[0xc0d2], 10*7+3);
-				osd_fclose(f);
-			}
-
-			return 1;	/* hi scores loaded */
-		}
-		else
-			return 0;	/* high scores not loaded yet */
-	}
-	else return 0;
-}
-
-
-
-static void getstar_hisave(void)
-{
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-void	*f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	 {
-	  osd_fwrite(f,&RAM[0xc0d2],10*7+3);
-	  osd_fclose(f);
-	 }
-
-}
-
-
-
-
-struct GameDriver tigerh_driver =
+struct GameDriver driver_tigerh =
 {
 	__FILE__,
 	0,
@@ -1267,102 +1042,98 @@ struct GameDriver tigerh_driver =
 	"1985",
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
-	&tigerh_machine_driver,
+	0,
+	&machine_driver_tigerh,
 	0,
 
-	tigerh_rom,
+	rom_tigerh,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tigerh_hiload, tigerh_hisave
+	0, 0, 0,
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver tigerh2_driver =
+struct GameDriver driver_tigerh2 =
 {
 	__FILE__,
-	&tigerh_driver,
+	&driver_tigerh,
 	"tigerh2",
 	"Tiger Heli (set 2)",
 	"1985",
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
-	&tigerh_machine_driver,
+	0,
+	&machine_driver_tigerh,
 	0,
 
-	tigerh2_rom,
+	rom_tigerh2,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tigerh_hiload, tigerh_hisave
+	0, 0, 0,
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver tigerhb1_driver =
+struct GameDriver driver_tigerhb1 =
 {
 	__FILE__,
-	&tigerh_driver,
+	&driver_tigerh,
 	"tigerhb1",
 	"Tiger Heli (bootleg 1)",
 	"1985",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&tigerh_machine_driver,
+	&machine_driver_tigerh,
 	0,
 
-	tigerhb1_rom,
+	rom_tigerhb1,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tigerh_hiload, tigerh_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver tigerhb2_driver =
+struct GameDriver driver_tigerhb2 =
 {
 	__FILE__,
-	&tigerh_driver,
+	&driver_tigerh,
 	"tigerhb2",
 	"Tiger Heli (bootleg 2)",
 	"1985",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&tigerh_machine_driver,
+	&machine_driver_tigerh,
 	0,
 
-	tigerhb2_rom,
+	rom_tigerhb2,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tigerh_hiload, tigerh_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver slapfigh_driver =
+struct GameDriver driver_slapfigh =
 {
 	__FILE__,
 	0,
@@ -1371,102 +1142,98 @@ struct GameDriver slapfigh_driver =
 	"1986",
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
-	&slapfigh_machine_driver,
+	0,
+	&machine_driver_slapfigh,
 	0,
 
-	slapfigh_rom,
+	rom_slapfigh,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	slapfigh_hiload, slapfigh_hisave
+	0, 0, 0,
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver slapbtjp_driver =
+struct GameDriver driver_slapbtjp =
 {
 	__FILE__,
-	&slapfigh_driver,
+	&driver_slapfigh,
 	"slapbtjp",
 	"Slap Fight (Japan bootleg)",
 	"1986",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&slapfigh_machine_driver,
+	&machine_driver_slapfigh,
 	0,
 
-	slapbtjp_rom,
+	rom_slapbtjp,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	slapfigh_hiload, slapfigh_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver slapbtuk_driver =
+struct GameDriver driver_slapbtuk =
 {
 	__FILE__,
-	&slapfigh_driver,
+	&driver_slapfigh,
 	"slapbtuk",
 	"Slap Fight (English bootleg)",
 	"1986",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&slapbtuk_machine_driver,
+	&machine_driver_slapbtuk,
 	0,
 
-	slapbtuk_rom,
+	rom_slapbtuk,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	slapfigh_hiload, slapfigh_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver alcon_driver =
+struct GameDriver driver_alcon =
 {
 	__FILE__,
-	&slapfigh_driver,
+	&driver_slapfigh,
 	"alcon",
 	"Alcon",
 	"1986",
-	"?????",
+	"<unknown>",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
-	&slapfigh_machine_driver,
+	0,
+	&machine_driver_slapfigh,
 	0,
 
-	alcon_rom,
+	rom_alcon,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	slapfigh_hiload, slapfigh_hisave
+	0, 0, 0,
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver getstar_driver =
+struct GameDriver driver_getstar =
 {
 	__FILE__,
 	0,
@@ -1475,19 +1242,18 @@ struct GameDriver getstar_driver =
 	"1986",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria\nLuca Elia",
-	GAME_WRONG_COLORS,
-	&slapfigh_machine_driver,
+	0,
+	&machine_driver_slapfigh,
 	0,
 
-	getstar_rom,
+	rom_getstar,
 	0, 0,
 	0,
 	0,
 
-	getstar_input_ports,
+	input_ports_getstar,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	getstar_hiload, getstar_hisave
+	0, 0, 0,
+	ROT0 | GAME_WRONG_COLORS,
+	0,0
 };

@@ -83,13 +83,8 @@ static void io_latch_w(int offset, int data)
 	if (!(data & 0x00ff0000))
 	{
 		/* bit 4 resets the sound CPU */
-		if (data & 0x10)
-			cpu_halt(1, 1);
-		else
-		{
-			atarigen_sound_reset_w(offset, data);
-			cpu_halt(1, 0);
-		}
+		cpu_set_reset_line(1, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+		if (!(data & 0x10)) atarijsa_reset();
 	}
 
 	if (errorlog) fprintf(errorlog, "sound control = %04X\n", data);
@@ -257,8 +252,8 @@ static int unknown_verify_r(int offset)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x037fff, MRA_ROM },
-	{ 0x038000, 0x03ffff, bankrom_r, &bankrom_base },
-	{ 0x120000, 0x120fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x038000, 0x03ffff, bankrom_r },
+	{ 0x120000, 0x120fff, atarigen_eeprom_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x260010, 0x260011, special_port3_r },
@@ -267,11 +262,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x260022, 0x260023, input_port_6_r },
 	{ 0x260024, 0x260025, input_port_7_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, MRA_BANK1, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r, &atarigen_video_control_data },
-	{ 0x3f4000, 0x3f7fff, MRA_BANK3, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3e0000, 0x3e0fff, MRA_BANK1 },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
+	{ 0x3f4000, 0x3f7fff, MRA_BANK3 },
 	{ 0x3f8000, 0x3fcfff, MRA_BANK4 },
-	{ 0x3fd000, 0x3fd3ff, MRA_BANK5, &atarigen_spriteram },
+	{ 0x3fd000, 0x3fd3ff, MRA_BANK5 },
 	{ 0x3fd400, 0x3fffff, MRA_BANK6 },
 	{ -1 }  /* end of table */
 };
@@ -279,17 +274,18 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x120000, 0x120fff, atarigen_eeprom_w },
+	{ 0x000000, 0x037fff, MWA_ROM },
+	{ 0x038000, 0x03ffff, MWA_ROM, &bankrom_base },
+	{ 0x120000, 0x120fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x260040, 0x260041, atarigen_sound_w },
 	{ 0x260050, 0x260051, io_latch_w },
 	{ 0x260060, 0x260061, atarigen_eeprom_enable_w },
 	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
-	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
-	{ 0x3f4000, 0x3f7fff, offtwall_playfieldram_w },
+	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
+	{ 0x3f4000, 0x3f7fff, offtwall_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f8000, 0x3fcfff, MWA_BANK4 },
-	{ 0x3fd000, 0x3fd3ff, MWA_BANK5 },
+	{ 0x3fd000, 0x3fd3ff, MWA_BANK5, &atarigen_spriteram },
 	{ 0x3fd400, 0x3fffff, MWA_BANK6 },
 	{ -1 }  /* end of table */
 };
@@ -302,7 +298,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( offtwall_ports )
+INPUT_PORTS_START( offtwall )
 	PORT_START	/* 260000 */
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_START2 )
@@ -354,7 +350,7 @@ INPUT_PORTS_START( offtwall_ports )
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260020 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL_V | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260022 */
@@ -362,7 +358,7 @@ INPUT_PORTS_START( offtwall_ports )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260024 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER3, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL_V | IPF_PLAYER3 | IPF_REVERSE, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -407,13 +403,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_III_CPU(1)
-		}
+		JSA_III_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -432,7 +425,9 @@ static struct MachineDriver machine_driver =
 	offtwall_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_III_MONO_NO_SPEECH
+	JSA_III_MONO_NO_SPEECH,
+
+	atarigen_nvram_handler
 };
 
 
@@ -447,8 +442,8 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < Machine->memory_region_length[2]; i++)
-		Machine->memory_region[2][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(2); i++)
+		memory_region(2)[i] ^= 0xff;
 }
 
 
@@ -459,12 +454,12 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( offtwall_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( offtwall )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "otw2012.bin", 0x00000, 0x20000, 0xd08d81eb )
 	ROM_LOAD_ODD ( "otw2013.bin", 0x00000, 0x20000, 0x61c2553d )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
@@ -478,12 +473,12 @@ ROM_START( offtwall_rom )
 ROM_END
 
 
-ROM_START( offtwalc_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( offtwalc )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "090-2612.rom", 0x00000, 0x20000, 0xfc891a3f )
 	ROM_LOAD_ODD ( "090-2613.rom", 0x00000, 0x20000, 0x805d79d4 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
@@ -535,6 +530,8 @@ static void offtwall_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -554,6 +551,8 @@ static void offtwalc_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -563,7 +562,7 @@ static void offtwalc_init(void)
  *
  *************************************/
 
-struct GameDriver offtwall_driver =
+struct GameDriver driver_offtwall =
 {
 	__FILE__,
 	0,
@@ -576,24 +575,23 @@ struct GameDriver offtwall_driver =
 	&machine_driver,
 	offtwall_init,
 
-	offtwall_rom,
-	rom_decode,
+	rom_offtwall,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	offtwall_ports,
+	input_ports_offtwall,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver offtwalc_driver =
+struct GameDriver driver_offtwalc =
 {
 	__FILE__,
-	&offtwall_driver,
+	&driver_offtwall,
 	"offtwalc",
 	"Off the Wall (2-player cocktail)",
 	"1991",
@@ -603,15 +601,14 @@ struct GameDriver offtwalc_driver =
 	&machine_driver,
 	offtwalc_init,
 
-	offtwalc_rom,
-	rom_decode,
+	rom_offtwalc,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	offtwall_ports,
+	input_ports_offtwall,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

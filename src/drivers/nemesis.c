@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Nemesis (Hacked?)		GX400
-	Nemesis (UK)			GX400
+	Nemesis (World?)		GX400
 	Twin Bee				GX412
 	Gradius					GX456
 	Galactic Warriors		GX578
@@ -10,19 +10,6 @@
 	Salamander				GX587
 	Lifeforce (US)			GX587
 	Lifeforce (Japan)		GX587
-
-Sound info:
-        GX400 games have a custom sound chip "0005289" which produces
-        two additional sound channels. They are generated using one of 8
-        waveforms which consist of 32 samples (4 bit, unsigned) each. Since
-        that makes it very similar to the Namco 3-voice sound chip, we use
-        the Namco driver, mapping all writes to the 0005289 to the respective
-        Namco registers.
-
-To do:
-	Combine video functions for Salamander/other games.
-	Clean up stuff :)
-	Lifeforce (Japan) needs support for the large sprite size.
 
 ***************************************************************************/
 
@@ -294,7 +281,7 @@ void salamand_speech_start (int offset, int data)
 void gx400_speech_start (int offset, int data)
 {
         /* the voice data is not in a rom but in sound RAM at $8000 */
-        VLM5030_set_rom ((Machine->memory_region[2])+ 0x8000);
+        VLM5030_set_rom ((memory_region(2))+ 0x8000);
         VLM5030_ST (1);
         VLM5030_ST (0);
 }
@@ -304,49 +291,6 @@ static int nemesis_portA_r(int offset)
 	#define TIMER_RATE 1024
 
 	return cpu_gettotalcycles() / TIMER_RATE;
-}
-
-int waveform_A, waveform_B;
-long regtemp_A, regtemp_B;
-
-void nemesis_portA_w (int offset, int data)
-{
-        namcos1_sound_w (0, (data & 0x0f));
-        waveform_A = (data >> 5);
-        namcos1_sound_w (1, regtemp_A + (waveform_A << 4));
-}
-
-void nemesis_portB_w (int offset, int data)
-{
-        namcos1_sound_w (8, (data & 0x0f));
-        waveform_B = (data >> 5)+8;
-        namcos1_sound_w (9, regtemp_B + (waveform_B << 4));
-}
-
-void setfreq_extraA (int offset, int data)
-{       int f1, f2, f3;
-        long frequency;
-        frequency = (1789772/(0x1000 - offset));
-        f1 = (frequency & 0x0000ff);
-        f2 = (frequency & 0x00ff00) >> 8;
-        f3 = frequency >> 16;
-        regtemp_A = f3;
-        namcos1_sound_w (1, f3 + (waveform_A << 4));
-        namcos1_sound_w (2, f2);
-        namcos1_sound_w (3, f1);
-}
-
-void setfreq_extraB (int offset, int data)
-{       int f1, f2, f3;
-        long frequency;
-        frequency = (1789772/(0x1000 - offset));
-        f1 = (frequency & 0x0000ff);
-        f2 = (frequency & 0x00ff00) >> 8;
-        f3 = frequency >> 16;
-        regtemp_B = f3;
-        namcos1_sound_w (9, f3 + (waveform_B << 4));
-        namcos1_sound_w (10,f2);
-        namcos1_sound_w (11,f1);
 }
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -363,12 +307,14 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0xa000, 0xafff, setfreq_extraA, &namco_soundregs },
-	{ 0xc000, 0xcfff, setfreq_extraB },
-	{ 0xe006, 0xe006, AY8910_control_port_0_w },
-	{ 0xe106, 0xe106, AY8910_write_port_0_w },
+	{ 0xa000, 0xafff, k005289_pitch_A_w },
+	{ 0xc000, 0xcfff, k005289_pitch_B_w },
+	{ 0xe003, 0xe003, k005289_keylatch_A_w },
+	{ 0xe004, 0xe004, k005289_keylatch_B_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
 	{ 0xe405, 0xe405, AY8910_write_port_1_w },
+	{ 0xe006, 0xe006, AY8910_control_port_0_w },
+	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ -1 }  /* end of table */
 };
 
@@ -548,8 +494,10 @@ static struct MemoryWriteAddress gx400_sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x87ff, MWA_RAM, &gx400_shared_ram },
-	{ 0xa000, 0xafff, setfreq_extraA, &namco_soundregs },
-	{ 0xc000, 0xcfff, setfreq_extraB },
+	{ 0xa000, 0xafff, k005289_pitch_A_w },
+	{ 0xc000, 0xcfff, k005289_pitch_B_w },
+	{ 0xe003, 0xe003, k005289_keylatch_A_w },
+	{ 0xe004, 0xe004, k005289_keylatch_B_w },
 	{ 0xe006, 0xe006, AY8910_control_port_0_w },
 	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
@@ -626,7 +574,6 @@ static struct MemoryWriteAddress sal_sound_writemem[] =
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xd000, 0xd000, VLM5030_data_w },
 	{ 0xf000, 0xf000, salamand_speech_start },
-
 	{ -1 }  /* end of table */
 };
 
@@ -669,7 +616,7 @@ static struct MemoryWriteAddress sal_sound_writemem[] =
 	PORT_DIPSETTING(    0x00, "Disabled" )
 
 
-INPUT_PORTS_START( nemesis_input_ports )
+INPUT_PORTS_START( nemesis )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -742,7 +689,7 @@ INPUT_PORTS_START( nemesis_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nemesuk_input_ports )
+INPUT_PORTS_START( nemesuk )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -816,7 +763,7 @@ INPUT_PORTS_END
 
 
 /* This needs to be sorted */
-INPUT_PORTS_START( konamigt_input_ports )
+INPUT_PORTS_START( konamigt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -891,7 +838,7 @@ INPUT_PORTS_END
 
 
 /* This needs to be sorted */
-INPUT_PORTS_START( rf2_input_ports )
+INPUT_PORTS_START( rf2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -965,7 +912,7 @@ INPUT_PORTS_START( rf2_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gwarrior_input_ports )
+INPUT_PORTS_START( gwarrior )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1038,7 +985,7 @@ INPUT_PORTS_START( gwarrior_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( twinbee_input_ports )
+INPUT_PORTS_START( twinbee )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1112,7 +1059,7 @@ INPUT_PORTS_START( twinbee_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gradius_input_ports )
+INPUT_PORTS_START( gradius )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1185,7 +1132,7 @@ INPUT_PORTS_START( gradius_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( salamand_input_ports )
+INPUT_PORTS_START( salamand )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1277,7 +1224,7 @@ INPUT_PORTS_START( salamand_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( lifefrcj_input_ports )
+INPUT_PORTS_START( lifefrcj )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1514,22 +1461,21 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-        2,      /* 2 chip */
-        (1789772),     /* 1.78975 Mhz?? */
-        { 0xff, 0xff },
-        { 0x20, 0x20 }, /* gain */
-        { nemesis_portA_r, 0 },
-        { 0, 0 },
-        { 0, nemesis_portA_w },
-        { 0, nemesis_portB_w }
+	2,      		/* 2 chips */
+	14318180/8,     /* 1.78975 Mhz */
+	{ 0xff, 0xff },
+	{ 0x20, 0x20 }, /* gain */
+	{ nemesis_portA_r, 0 },
+	{ 0, 0 },
+	{ 0, k005289_control_A_w },
+	{ 0, k005289_control_B_w }
 };
 
-static struct namco_interface namco_interface =
+static struct k005289_interface k005289_interface =
 {
-        2074428/32,     /* sample rate */
-        2,                      /* number of voices */
-        20,            /* playback volume */
-        3                       /* memory region */
+	3579545/2,		/* clock speed */
+	22,				/* playback volume */
+	3				/* prom memory region */
 };
 
 static void sound_irq(int state)
@@ -1580,23 +1526,21 @@ static struct K007232_interface k007232_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver nemesis_machine_driver =
+static struct MachineDriver machine_driver_nemesis =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
-			6000000*2,	/* ??? */
-			0,
+			14318180/2,	/* From schematics, should be accurate */
 			readmem,writemem,0,0,
 			nemesis_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
-			2,
+			14318180/4, /* From schematics, should be accurate */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		},
 	},
 
@@ -1621,34 +1565,32 @@ static struct MachineDriver nemesis_machine_driver =
 	{
 		{
 			SOUND_AY8910,
-                        &ay8910_interface
-                },
+			&ay8910_interface
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
 
-static struct MachineDriver konamigt_machine_driver =
+static struct MachineDriver machine_driver_konamigt =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			7159090,     /* ??? */
-			0,
 			konamigt_readmem,konamigt_writemem,0,0,
 			konamigt_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
-			2,
+			14318180/4,        /* 3.579545 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
@@ -1676,29 +1618,27 @@ static struct MachineDriver konamigt_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface
+			SOUND_K005289,
+			&k005289_interface
 		}
 	}
 };
 
-static struct MachineDriver salamand_machine_driver =
+static struct MachineDriver machine_driver_salamand =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			7159090*1.5,       /* ??? */
-			0,
 			salamand_readmem,salamand_writemem,0,0,
 			salamand_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
-			2,
+			14318180/4,        /* 3.579545 MHz */
 			sal_sound_readmem,sal_sound_writemem,0,0,
 			ignore_interrupt,0
 		},
@@ -1738,21 +1678,19 @@ static struct MachineDriver salamand_machine_driver =
 	}
 };
 
-static struct MachineDriver gx400_machine_driver =
+static struct MachineDriver machine_driver_gx400 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			7159090*1.25,     /* ??? */
-			0,
 			gx400_readmem,gx400_writemem,0,0,
 			gx400_interrupt,3
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
-			2,
+			CPU_Z80,// | CPU_AUDIO_CPU,
+			14318180/4,        /* 3.579545 MHz */
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
@@ -1780,33 +1718,31 @@ static struct MachineDriver gx400_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
 
-static struct MachineDriver twinbee_gx400_machine_driver =
+static struct MachineDriver machine_driver_twinbee_gx400 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			7159090*1.25,     /* ??? */
-			0,
 			gx400_readmem,gx400_writemem,0,0,
 			gx400_interrupt,3
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
-			2,
+			CPU_Z80, // | CPU_AUDIO_CPU,
+			14318180/4,        /* 3.579545 MHz */
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
@@ -1834,33 +1770,31 @@ static struct MachineDriver twinbee_gx400_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
 
-static struct MachineDriver rf2_gx400_machine_driver =
+static struct MachineDriver machine_driver_rf2_gx400 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			7159090,     /* ??? */
-			0,
 			rf2_gx400_readmem,rf2_gx400_writemem,0,0,
 			gx400_interrupt,3
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
-			2,
+			14318180/4,        /* 3.579545 MHz */
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
@@ -1888,14 +1822,14 @@ static struct MachineDriver rf2_gx400_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
@@ -1906,8 +1840,8 @@ static struct MachineDriver rf2_gx400_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( nemesis_rom )
-	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
+ROM_START( nemesis )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "12a_01.bin",   0x00000, 0x8000, 0x35ff1aaa )
 	ROM_LOAD_ODD  ( "12c_05.bin",   0x00000, 0x8000, 0x23155faa )
 	ROM_LOAD_EVEN ( "13a_02.bin",   0x10000, 0x8000, 0xac0cf163 )
@@ -1921,7 +1855,7 @@ ROM_START( nemesis_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "09c_snd.bin",  0x0000, 0x4000, 0x26bf9636 )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -1929,8 +1863,8 @@ ROM_START( nemesis_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( nemesuk_rom )
-	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
+ROM_START( nemesuk )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "12a_01.uk",    0x00000, 0x8000, 0xe1993f91 )
 	ROM_LOAD_ODD  ( "12c_05.uk",    0x00000, 0x8000, 0xc9761c78 )
 	ROM_LOAD_EVEN ( "13a_02.uk",    0x10000, 0x8000, 0xf6169c4b )
@@ -1944,7 +1878,7 @@ ROM_START( nemesuk_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "09c_snd.bin",  0x0000, 0x4000, 0x26bf9636 )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -1952,8 +1886,8 @@ ROM_START( nemesuk_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( konamigt_rom )
-	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
+ROM_START( konamigt )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )    /* 4 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "c01.rom",      0x00000, 0x8000, 0x56245bfd )
 	ROM_LOAD_ODD  ( "c05.rom",      0x00000, 0x8000, 0x8d651f44 )
 	ROM_LOAD_EVEN ( "c02.rom",      0x10000, 0x8000, 0x3407b7cb )
@@ -1967,7 +1901,7 @@ ROM_START( konamigt_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "b09.rom",      0x00000, 0x4000, 0x539d0c49 )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -1975,8 +1909,8 @@ ROM_START( konamigt_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( rf2_rom )
-	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+ROM_START( rf2 )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
 	ROM_LOAD_EVEN ( "561-a07.17l",  0x80000, 0x20000, 0xed6e7098 )
@@ -1986,7 +1920,7 @@ ROM_START( rf2_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -1994,8 +1928,8 @@ ROM_START( rf2_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( twinbee_rom )
-	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+ROM_START( twinbee )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
 	ROM_LOAD_EVEN ( "412-a07.17l",  0x80000, 0x20000, 0xd93c5499 )
@@ -2005,7 +1939,7 @@ ROM_START( twinbee_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -2013,8 +1947,8 @@ ROM_START( twinbee_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( gradius_rom )
-	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+ROM_START( gradius )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
 	ROM_LOAD_EVEN ( "456-a07.17l",  0x80000, 0x20000, 0x92df792c )
@@ -2024,7 +1958,7 @@ ROM_START( gradius_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -2032,8 +1966,8 @@ ROM_START( gradius_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( gwarrior_rom )
-	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
+ROM_START( gwarrior )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
 	ROM_LOAD_EVEN ( "578-a07.17l",  0x80000, 0x20000, 0x0aedacb5 )
@@ -2043,7 +1977,7 @@ ROM_START( gwarrior_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
 
 	ROM_REGION(0x200)      /* 2x 256 byte for 0005289 wavetable data */
@@ -2051,8 +1985,8 @@ ROM_START( gwarrior_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( salamand_rom )
-	ROM_REGION(0x80000)    /* 64k for code */
+ROM_START( salamand )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )    /* 64k for code */
 	ROM_LOAD_EVEN ( "18b.bin",  0x00000, 0x10000, 0xa42297f9 )
 	ROM_LOAD_ODD  ( "18c.bin",  0x00000, 0x10000, 0xf9130b0a )
 	ROM_LOAD_EVEN ( "17b.bin",  0x40000, 0x20000, 0xe5caf6e6 )
@@ -2062,7 +1996,7 @@ ROM_START( salamand_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "11j.bin", 0x00000, 0x8000, 0x5020972c )
 
         ROM_REGION(0x4000)    /* VLM5030 data? */
@@ -2072,8 +2006,8 @@ ROM_START( salamand_rom )
 	ROM_LOAD  ( "10a.bin", 0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
-ROM_START( lifefrce_rom )
-	ROM_REGION(0x80000)    /* 64k for code */
+ROM_START( lifefrce )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )    /* 64k for code */
 	ROM_LOAD_EVEN ( "587-k02.bin",  0x00000, 0x10000, 0x4a44da18 )
 	ROM_LOAD_ODD  ( "587-k05.bin",  0x00000, 0x10000, 0x2f8c1cbd )
 	ROM_LOAD_EVEN ( "17b.bin",      0x40000, 0x20000, 0xe5caf6e6 )
@@ -2083,7 +2017,7 @@ ROM_START( lifefrce_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "587-k09.bin",      0x00000, 0x8000, 0x2255fe8c )
 
 	ROM_REGION(0x4000)    /* VLM5030 data? */
@@ -2093,8 +2027,8 @@ ROM_START( lifefrce_rom )
 	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
-ROM_START( lifefrcj_rom )
-	ROM_REGION(0x80000)    /* 64k for code */
+ROM_START( lifefrcj )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )    /* 64k for code */
 	ROM_LOAD_EVEN ( "587-n02.bin",  0x00000, 0x10000, 0x235dba71 )
 	ROM_LOAD_ODD  ( "587-n05.bin",  0x00000, 0x10000, 0x054e569f )
 	ROM_LOAD_EVEN ( "587-n03.bin",  0x40000, 0x20000, 0x9041f850 )
@@ -2104,7 +2038,7 @@ ROM_START( lifefrcj_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )    /* 64k for sound */
 	ROM_LOAD  ( "587-n09.bin",      0x00000, 0x8000, 0xe8496150 )
 
 	ROM_REGION(0x4000)    /* VLM5030 data? */
@@ -2114,233 +2048,9 @@ ROM_START( lifefrcj_rom )
 	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
-/******************************************************************************/
 
-static int nemesis_hiload(void)
-{
-	void *f;
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0x0098],"\x05\x00\x00\x73",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x5010],8*18);
-			ram[0x0098] = ram[0x501a];
-			ram[0x0099] = ram[0x501b];
-			ram[0x009a] = ram[0x501c];
-			ram[0x009b] = ram[0x501d];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void nemesis_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x5010],8*18);
-		osd_fclose(f);
-	}
-}
-
-static int gradius_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram2[0x10098],"\x05\x00\x00\x73",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x95f0],(4+10)*10);
-			ram2[0x10098] = ram[0x95fa];
-			ram2[0x10099] = ram[0x95fb];
-			ram2[0x1009a] = ram[0x95fc];
-			ram2[0x1009b] = ram[0x95fd];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void gradius_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x95f0],(4+10)*10);
-		osd_fclose(f);
-	}
-}
-
-static int twinbee_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0xeba0],"\x02\x00\x00\x00",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0xf580],4*10);
-			osd_fread(f,&ram[0xf5b0],4*10);
-			ram[0xeba0] = ram[0xf580];
-			ram[0xeba1] = ram[0xf581];
-			ram[0xeba2] = ram[0xf582];
-			ram[0xeba3] = ram[0xf583];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void twinbee_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0xf580],4*10);
-		osd_fwrite(f,&ram[0xf5b0],4*10);
-		osd_fclose(f);
-	}
-}
-
-static int gwarrior_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0xf72e],"\x00\x00\x85\x19",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0xa4f6],8*10);
-			ram[0xf72e] = ram[0xa4f6];
-			ram[0xf72f] = ram[0xa4f7];
-			ram[0xf730] = ram[0xa4f8];
-			ram[0xf731] = ram[0xa4f9];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void gwarrior_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0xa4f6],8*10);
-		osd_fclose(f);
-	}
-}
-
-static int konamigt_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0x106],"\x00\x10",2) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x1480],8*10);
-			ram[0x106] = ram[0x1484];
-			ram[0x107] = ram[0x1485];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void konamigt_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x1480],8*10);
-		osd_fclose(f);
-	}
-}
-
-static int rf2_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram2[0xe106],"\x00\x10",2) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram2[0xf480],8*10);
-			ram2[0xe106] = ram2[0xf484];
-			ram2[0xe107] = ram2[0xf485];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void rf2_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram2[0xf480],8*10);
-		osd_fclose(f);
-	}
-}
-
-static int salamand_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0x005a],"\x05\x00\x00\x73",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x5000],(4+2*3)*10);
-			ram[0x005a] = ram[0x5000];
-			ram[0x005b] = ram[0x5001];
-			ram[0x005c] = ram[0x5002];
-			ram[0x005d] = ram[0x5003];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void salamand_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x5000],10*10);
-		osd_fclose(f);
-	}
-}
-
-/******************************************************************************/
-
-struct GameDriver nemesis_driver =
+struct GameDriver driver_nemesis =
 {
 	__FILE__,
 	0,
@@ -2350,49 +2060,47 @@ struct GameDriver nemesis_driver =
 	"Konami",
 	"Allard van der Bas",
 	0,
-	&nemesis_machine_driver,
+	&machine_driver_nemesis,
 	0,
 
-	nemesis_rom,
+	rom_nemesis,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	nemesis_input_ports,
+	input_ports_nemesis,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	nemesis_hiload,nemesis_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver nemesuk_driver =
+struct GameDriver driver_nemesuk =
 {
 	__FILE__,
-	&nemesis_driver,
+	&driver_nemesis,
 	"nemesuk",
-	"Nemesis (UK)",
+	"Nemesis (World?)",
 	"1985",
 	"Konami",
 	"Allard van der Bas",
 	0,
-	&nemesis_machine_driver,
+	&machine_driver_nemesis,
 	0,
 
-	nemesuk_rom,
+	rom_nemesuk,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	nemesuk_input_ports,
+	input_ports_nemesuk,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	nemesis_hiload,nemesis_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver konamigt_driver =
+struct GameDriver driver_konamigt =
 {
 	__FILE__,
 	0,
@@ -2402,49 +2110,47 @@ struct GameDriver konamigt_driver =
 	"Konami",
 	"Allard van der Bas\nAndrew Prime",
 	0,
-	&konamigt_machine_driver,
+	&machine_driver_konamigt,
 	0,
 
-	konamigt_rom,
+	rom_konamigt,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	konamigt_input_ports,
+	input_ports_konamigt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	konamigt_hiload,konamigt_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver rf2_driver =
+struct GameDriver driver_rf2 =
 {
 	__FILE__,
-	&konamigt_driver,
+	&driver_konamigt,
 	"rf2",
 	"Konami RF2 - Red Fighter",
 	"1985",
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
 	0,
-	&rf2_gx400_machine_driver,
+	&machine_driver_rf2_gx400,
 	0,
 
-	rf2_rom,
+	rom_rf2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	rf2_input_ports,
+	input_ports_rf2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rf2_hiload,rf2_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver twinbee_driver =
+struct GameDriver driver_twinbee =
 {
 	__FILE__,
 	0,
@@ -2454,49 +2160,47 @@ struct GameDriver twinbee_driver =
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime\nE.Watanabe",
 	0,
-	&twinbee_gx400_machine_driver,
+	&machine_driver_twinbee_gx400,
 	0,
 
-	twinbee_rom,
+	rom_twinbee,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	twinbee_input_ports,
+	input_ports_twinbee,
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
-
-	twinbee_hiload,twinbee_hisave
+	0,0
 };
 
-struct GameDriver gradius_driver =
+struct GameDriver driver_gradius =
 {
 	__FILE__,
-	&nemesis_driver,
+	&driver_nemesis,
 	"gradius",
 	"Gradius",
 	"1985",
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
 	0,
-	&gx400_machine_driver,
+	&machine_driver_gx400,
 	0,
 
-	gradius_rom,
+	rom_gradius,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	gradius_input_ports,
+	input_ports_gradius,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gradius_hiload,gradius_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver gwarrior_driver =
+struct GameDriver driver_gwarrior =
 {
 	__FILE__,
 	0,
@@ -2506,23 +2210,22 @@ struct GameDriver gwarrior_driver =
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
 	0,
-	&gx400_machine_driver,
+	&machine_driver_gx400,
 	0,
 
-	gwarrior_rom,
+	rom_gwarrior,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	gwarrior_input_ports,
+	input_ports_gwarrior,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gwarrior_hiload,gwarrior_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver salamand_driver =
+struct GameDriver driver_salamand =
 {
 	__FILE__,
 	0,
@@ -2532,70 +2235,67 @@ struct GameDriver salamand_driver =
 	"Konami",
 	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
 	0,
-	&salamand_machine_driver,
+	&machine_driver_salamand,
 	0,
 
-	salamand_rom,
+	rom_salamand,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	salamand_input_ports,
+	input_ports_salamand,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	salamand_hiload,salamand_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver lifefrce_driver =
+struct GameDriver driver_lifefrce =
 {
 	__FILE__,
-	&salamand_driver,
+	&driver_salamand,
 	"lifefrce",
 	"Lifeforce (US)",
 	"1986",
 	"Konami",
 	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
 	0,
-	&salamand_machine_driver,
+	&machine_driver_salamand,
 	0,
 
-	lifefrce_rom,
+	rom_lifefrce,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	salamand_input_ports,
+	input_ports_salamand,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	salamand_hiload,salamand_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver lifefrcj_driver =
+struct GameDriver driver_lifefrcj =
 {
 	__FILE__,
-	&salamand_driver,
+	&driver_salamand,
 	"lifefrcj",
 	"Lifeforce (Japan)",
 	"1986",
 	"Konami",
 	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
 	0,
-	&salamand_machine_driver,
+	&machine_driver_salamand,
 	0,
 
-	lifefrcj_rom,
+	rom_lifefrcj,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-        lifefrcj_input_ports,
+        input_ports_lifefrcj,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	salamand_hiload,salamand_hisave
+	ROT0,
+	0,0
 };

@@ -89,7 +89,7 @@ void firetrap_nmi_disable_w(int offset,int data)
 void firetrap_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
@@ -128,7 +128,7 @@ static void firetrap_sound_2400_w(int offset,int data)
 void firetrap_sound_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
@@ -214,7 +214,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( firetrap )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
@@ -371,14 +371,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			6000000,	/* 6 Mhz */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			3072000/2,	/* 1.536 Mhz? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 							/* IRQs are caused by the ADPCM chip */
@@ -423,8 +421,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( firetrap_rom )
-	ROM_REGION(0x20000)	/* 64k for code + 64k for banked ROMs */
+ROM_START( firetrap )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code + 64k for banked ROMs */
 	ROM_LOAD( "di02.bin",     0x00000, 0x8000, 0x3d1e4bf7 )
 	ROM_LOAD( "di01.bin",     0x10000, 0x8000, 0x9bbae38b )
 	ROM_LOAD( "di00.bin",     0x18000, 0x8000, 0xd0dad7de )
@@ -444,19 +442,19 @@ ROM_START( firetrap_rom )
 	ROM_LOAD( "di14.bin",     0x52000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x5a000, 0x8000, 0x3e27f77d )
 
-	ROM_REGION(0x200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
 
-	ROM_REGION(0x18000)	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
 	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 
 	/* there's also a protected 8751 microcontroller with ROM onboard */
 ROM_END
 
-ROM_START( firetpbl_rom )
-	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
+ROM_START( firetpbl )
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "ft0d.bin",     0x00000, 0x8000, 0x793ef849 )
 	ROM_LOAD( "ft0c.bin",     0x10000, 0x8000, 0x5c8a0562 )
 	ROM_LOAD( "ft0b.bin",     0x18000, 0x8000, 0xf2412fe8 )
@@ -477,53 +475,18 @@ ROM_START( firetpbl_rom )
 	ROM_LOAD( "di14.bin",     0x52000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x5a000, 0x8000, 0x3e27f77d )
 
-	ROM_REGION(0x200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
 
-	ROM_REGION(0x18000)	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
 	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	if (memcmp(&RAM[0xca47],"\x02\x14\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xca47],93);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xca47],93);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver firetrap_driver =
+struct GameDriver driver_firetrap =
 {
 	__FILE__,
 	0,
@@ -532,27 +495,26 @@ struct GameDriver firetrap_driver =
 	"1986",
 	"Data East USA",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	firetrap_rom,
+	rom_firetrap,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_firetrap,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver firetpbl_driver =
+struct GameDriver driver_firetpbl =
 {
 	__FILE__,
-	&firetrap_driver,
+	&driver_firetrap,
 	"firetpbl",
 	"Fire Trap (Japan bootleg)",
 	"1986",
@@ -562,15 +524,14 @@ struct GameDriver firetpbl_driver =
 	&machine_driver,
 	0,
 
-	firetpbl_rom,
+	rom_firetpbl,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_firetrap,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

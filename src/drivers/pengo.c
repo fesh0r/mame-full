@@ -14,7 +14,6 @@ read:
 9040      DSW0
 9080      IN1
 90c0      IN0
-see the input_ports definition below for details on the input bits
 
 write:
 8ff2-8ffd 6 pairs of two bytes:
@@ -99,7 +98,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pengo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
@@ -245,7 +244,6 @@ static struct MachineDriver machine_driver =
 						/* accurate emulation speed (time for two attract mode */
 						/* cycles after power up, until the high score list appears */
 						/* for the second time: 3'39") */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -284,8 +282,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pengo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pengo )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic8",          0x0000, 0x1000, 0xf37066a8 )
 	ROM_LOAD( "ic7",          0x1000, 0x1000, 0xbaf48143 )
 	ROM_LOAD( "ic15",         0x2000, 0x1000, 0xadf0eba0 )
@@ -299,17 +297,17 @@ ROM_START( pengo_rom )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
 	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
 
-	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pengo2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pengo2 )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic8.2",        0x0000, 0x1000, 0xe4924b7b )
 	ROM_LOAD( "ic7.2",        0x1000, 0x1000, 0x72e7775d )
 	ROM_LOAD( "ic15.2",       0x2000, 0x1000, 0x7410ef1e )
@@ -323,17 +321,17 @@ ROM_START( pengo2_rom )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
 	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
 
-	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pengo2u_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pengo2u )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pengo.u8",     0x0000, 0x1000, 0x3dfeb20e )
 	ROM_LOAD( "pengo.u7",     0x1000, 0x1000, 0x1db341bd )
 	ROM_LOAD( "pengo.u15",    0x2000, 0x1000, 0x7c2842d5 )
@@ -347,17 +345,17 @@ ROM_START( pengo2u_rom )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
 	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
 
-	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( penta_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( penta )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "008_pn01.bin", 0x0000, 0x1000, 0x22f328df )
 	ROM_LOAD( "007_pn05.bin", 0x1000, 0x1000, 0x15bbc7d3 )
 	ROM_LOAD( "015_pn02.bin", 0x2000, 0x1000, 0xde82b74a )
@@ -371,11 +369,11 @@ ROM_START( penta_rom )
 	ROM_LOAD( "092_pn09.bin", 0x0000, 0x2000, 0x6afeba9d )
 	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
 
-	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -425,8 +423,11 @@ static void penta_decode(void)
 		{ 0x88,0x0a,0x82,0x00,0xa0,0x22,0xaa,0x28 }		/* ...1...1...1.... */
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -434,7 +435,7 @@ static void penta_decode(void)
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bit 0 of the address */
 		i = A & 1;
@@ -445,85 +446,18 @@ static void penta_decode(void)
 		if (src & 0x80) j = 7 - j;
 
 		/* decode the ROM data */
-		RAM[A] = src ^ data_xortable[i][j];
+		rom[A] = src ^ data_xortable[i][j];
 
 		/* now decode the opcodes */
 		/* pick the translation table from bits 4, 8 and 12 of the address */
 		i = ((A >> 4) & 1) + (((A >> 8) & 1) << 1) + (((A >> 12) & 1) << 2);
-		ROM[A] = src ^ opcode_xortable[i][j];
+		rom[A + diff] = src ^ opcode_xortable[i][j];
 	}
 }
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8840],"\xd0\x07",2) == 0 &&
-			memcmp(&RAM[0x8858],"\xd0\x07",2) == 0 &&
-			memcmp(&RAM[0x880c],"\xd0\x07",2) == 0)	/* high score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8840],6*5);
-			RAM[0x880c] = RAM[0x8858];
-			RAM[0x880d] = RAM[0x8859];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int pengo2_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8840],"\x00\x00\x01\x55\x55\x55",6) == 0 &&
-			memcmp(&RAM[0x8858],"\x00\x00",2) == 0 &&
-			memcmp(&RAM[0x880c],"\x00\x00",2) == 0)	/* hi-score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8840],6*5);
-			RAM[0x880c] = RAM[0x8858];
-			RAM[0x880d] = RAM[0x8859];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8840],6*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver pengo_driver =
+struct GameDriver driver_pengo =
 {
 	__FILE__,
 	0,
@@ -534,25 +468,24 @@ struct GameDriver pengo_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	pengo_decode,
+
+	rom_pengo,
+	0, 0,
+	0,
 	0,
 
-	pengo_rom,
-	0, pengo_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_pengo,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver pengo2_driver =
+struct GameDriver driver_pengo2 =
 {
 	__FILE__,
-	&pengo_driver,
+	&driver_pengo,
 	"pengo2",
 	"Pengo (set 2)",
 	"1982",
@@ -560,25 +493,24 @@ struct GameDriver pengo2_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	pengo_decode,
+
+	rom_pengo2,
+	0, 0,
+	0,
 	0,
 
-	pengo2_rom,
-	0, pengo_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_pengo,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pengo2_hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver pengo2u_driver =
+struct GameDriver driver_pengo2u =
 {
 	__FILE__,
-	&pengo_driver,
+	&driver_pengo,
 	"pengo2u",
 	"Pengo (set 2 not encrypted)",
 	"1982",
@@ -588,23 +520,22 @@ struct GameDriver pengo2u_driver =
 	&machine_driver,
 	0,
 
-	pengo2u_rom,
+	rom_pengo2u,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pengo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pengo2_hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver penta_driver =
+struct GameDriver driver_penta =
 {
 	__FILE__,
-	&pengo_driver,
+	&driver_pengo,
 	"penta",
 	"Penta",
 	"1982",
@@ -612,17 +543,16 @@ struct GameDriver penta_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	penta_decode,
+
+	rom_penta,
+	0, 0,
+	0,
 	0,
 
-	penta_rom,
-	0, penta_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_pengo,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

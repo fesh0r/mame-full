@@ -70,14 +70,24 @@ struct rectangle
 
 /* drawing mode case TRANSPARENCY_PEN_TABLE */
 extern UINT8 gfx_drawmode_table[256];
-#define DRAWMODE_NONE   0
-#define DRAWMODE_SOURCE 1
-#define DRAWMODE_HALF   2
-#define DRAWMODE_DOUBLE 3
-#define DRAWMODE_MIX    4
+#define DRAWMODE_NONE		0
+#define DRAWMODE_SOURCE		1
+#define DRAWMODE_SHADOW		2
+#define DRAWMODE_HIGHLIGHT	3
+
+
+typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,int pen);
+typedef int  (*read_pixel_proc)(struct osd_bitmap *bitmap,int x,int y);
+
+/* pointers to pixel functions.  They're set based on orientation, depthness and weather
+   dirty rectangle handling is enabled */
+extern plot_pixel_proc plot_pixel;
+extern read_pixel_proc read_pixel;
+
 
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);
+void set_pixel_functions(void);
 void freegfx(struct GfxElement *gfx);
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -90,6 +100,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);
+void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen);
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley );

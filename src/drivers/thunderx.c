@@ -173,7 +173,7 @@ static void thunderx_1f98_w(int offset,int data)
 
 void scontra_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
 //if (errorlog) fprintf(errorlog,"%04x: bank switch %02x\n",cpu_get_pc(),data);
@@ -216,7 +216,7 @@ static void thunderx_sh_irqtrigger_w(int offset, int data)
 
 static void scontra_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 	/* b3-b2: bank for chanel B */
 	/* b1-b0: bank for chanel A */
 
@@ -337,7 +337,7 @@ static struct MemoryWriteAddress thunderx_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( scontra_input_ports )
+INPUT_PORTS_START( scontra )
 	PORT_START	/* COINSW */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -441,7 +441,7 @@ INPUT_PORTS_START( scontra_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( thunderx_input_ports )
+INPUT_PORTS_START( thunderx )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -577,20 +577,18 @@ static struct K007232_interface k007232_interface =
 
 
 
-static struct MachineDriver scontra_machine_driver =
+static struct MachineDriver machine_driver_scontra =
 {
 	{
 		{
 			CPU_KONAMI,	/* 052001 */
 			3000000,	/* ? */
-			0,
 			scontra_readmem,scontra_writemem,0,0,
 			scontra_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			3,
 			scontra_readmem_sound,scontra_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -625,20 +623,18 @@ static struct MachineDriver scontra_machine_driver =
 	}
 };
 
-static struct MachineDriver thunderx_machine_driver =
+static struct MachineDriver machine_driver_thunderx =
 {
 	{
 		{
 			CPU_KONAMI,
 			3000000,		/* ? */
-			0,
 			thunderx_readmem,thunderx_writemem,0,0,
 			thunderx_interrupt,16	/* ???? */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			3,
 			thunderx_readmem_sound,thunderx_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -676,8 +672,8 @@ static struct MachineDriver thunderx_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( scontra_rom )
-	ROM_REGION(0x30800)	/* ROMs + banked RAM */
+ROM_START( scontra )
+	ROM_REGIONX( 0x30800, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "e02.k11",     0x10000, 0x08000, 0xa61c0ead )	/* banked ROM */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* fixed ROM */
 	ROM_LOAD( "e03.k13",     0x20000, 0x10000, 0x00b02622 )	/* banked ROM */
@@ -714,7 +710,7 @@ ROM_START( scontra_rom )
 	ROM_LOAD_GFX_EVEN( "775-f06d.bin", 0xe0000, 0x10000, 0xc8b764fa )
 	ROM_LOAD_GFX_ODD(  "775-f06h.bin", 0xe0000, 0x10000, 0xd6595f59 )
 
-	ROM_REGION( 0x10000 )	/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "775-c01.bin", 0x00000, 0x08000, 0x0ced785a )
 
 	ROM_REGION( 0x80000 )	/* k007232 data */
@@ -727,12 +723,12 @@ ROM_START( scontra_rom )
 	ROM_LOAD( "775-f04g.bin", 0x60000, 0x10000, 0xee107bbb )
 	ROM_LOAD( "775-f04h.bin", 0x70000, 0x10000, 0xfb0fab46 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( scontraj_rom )
-	ROM_REGION(0x30800)	/* ROMs + banked RAM */
+ROM_START( scontraj )
+	ROM_REGIONX( 0x30800, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "775-f02.bin", 0x10000, 0x08000, 0x8d5933a7 )	/* banked ROM */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* fixed ROM */
 	ROM_LOAD( "775-f03.bin", 0x20000, 0x10000, 0x1ef63d80 )	/* banked ROM */
@@ -769,7 +765,7 @@ ROM_START( scontraj_rom )
 	ROM_LOAD_GFX_EVEN( "775-f06d.bin", 0xe0000, 0x10000, 0xc8b764fa )
 	ROM_LOAD_GFX_ODD(  "775-f06h.bin", 0xe0000, 0x10000, 0xd6595f59 )
 
-	ROM_REGION( 0x10000 )	/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "775-c01.bin", 0x00000, 0x08000, 0x0ced785a )
 
 	ROM_REGION( 0x80000 )	/* k007232 data */
@@ -782,17 +778,17 @@ ROM_START( scontraj_rom )
 	ROM_LOAD( "775-f04g.bin", 0x60000, 0x10000, 0xee107bbb )
 	ROM_LOAD( "775-f04h.bin", 0x70000, 0x10000, 0xfb0fab46 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( thunderx_rom )
-	ROM_REGION(0x29000)	/* ROMs + banked RAM */
+ROM_START( thunderx )
+	ROM_REGIONX( 0x29000, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "873k03.k15", 0x10000, 0x10000, 0x276817ad )
 	ROM_LOAD( "873k02.k13", 0x20000, 0x08000, 0x80cc1c45 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x80000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD_GFX_EVEN( "873c06a.f6",   0x00000, 0x10000, 0x0e340b67 ) /* Chars */
 	ROM_LOAD_GFX_ODD ( "873c06c.f5",   0x00000, 0x10000, 0xef0e72cd )
 	ROM_LOAD_GFX_EVEN( "873c06b.e6",   0x20000, 0x10000, 0x97ad202e )
@@ -812,20 +808,20 @@ ROM_START( thunderx_rom )
 	ROM_LOAD_GFX_EVEN( "873c05b.e9",   0x60000, 0x10000, 0x81059b99 )
 	ROM_LOAD_GFX_ODD ( "873c05d.e8",   0x60000, 0x10000, 0x7fa3d7df )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "873h01.f8",    0x0000, 0x8000, 0x990b7a7c )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( thnderxj_rom )
-	ROM_REGION(0x29000)	/* ROMs + banked RAM */
+ROM_START( thnderxj )
+	ROM_REGIONX( 0x29000, REGION_CPU1 )	/* ROMs + banked RAM */
 	ROM_LOAD( "873-n03.k15", 0x10000, 0x10000, 0xa01e2e3e )
 	ROM_LOAD( "873-n02.k13", 0x20000, 0x08000, 0x55afa2cc )
 	ROM_CONTINUE(            0x08000, 0x08000 )
 
-	ROM_REGION(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x80000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD_GFX_EVEN( "873c06a.f6",   0x00000, 0x10000, 0x0e340b67 ) /* Chars */
 	ROM_LOAD_GFX_ODD ( "873c06c.f5",   0x00000, 0x10000, 0xef0e72cd )
 	ROM_LOAD_GFX_EVEN( "873c06b.e6",   0x20000, 0x10000, 0x97ad202e )
@@ -845,10 +841,10 @@ ROM_START( thnderxj_rom )
 	ROM_LOAD_GFX_EVEN( "873c05b.e9",   0x60000, 0x10000, 0x81059b99 )
 	ROM_LOAD_GFX_ODD ( "873c05d.e8",   0x60000, 0x10000, 0x7fa3d7df )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "873-f01.f8",   0x0000, 0x8000, 0xea35ffa3 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
@@ -856,7 +852,7 @@ ROM_END
 
 static void thunderx_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
 //	if ( errorlog )
@@ -869,14 +865,14 @@ static void thunderx_banking( int lines )
 
 static void scontra_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	paletteram = &RAM[0x30000];
 }
 
 static void thunderx_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = thunderx_banking;
 	cpu_setbank( 1, &RAM[0x10000] ); /* init the default bank */
@@ -892,7 +888,7 @@ static void gfx_untangle(void)
 }
 
 
-struct GameDriver scontra_driver =
+struct GameDriver driver_scontra =
 {
 	__FILE__,
 	0,
@@ -902,47 +898,47 @@ struct GameDriver scontra_driver =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&scontra_machine_driver,
+	&machine_driver_scontra,
+	gfx_untangle,
+
+	rom_scontra,
+	0, 0,
+	0,
 	0,
 
-	scontra_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	scontra_input_ports,
+	input_ports_scontra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-	0, 0	/* hiload,hisave */
+	ROT90,
+	0,0
 };
 
-struct GameDriver scontraj_driver =
+struct GameDriver driver_scontraj =
 {
 	__FILE__,
-	&scontra_driver,
+	&driver_scontra,
 	"scontraj",
 	"Super Contra (Japan)",
 	"1988",
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&scontra_machine_driver,
+	&machine_driver_scontra,
+	gfx_untangle,
+
+	rom_scontraj,
+	0, 0,
+	0,
 	0,
 
-	scontraj_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	scontra_input_ports,
+	input_ports_scontra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-	0, 0	/* hiload,hisave */
+	ROT90,
+	0,0
 };
 
-struct GameDriver thunderx_driver =
+struct GameDriver driver_thunderx =
 {
 	__FILE__,
 	0,
@@ -951,43 +947,43 @@ struct GameDriver thunderx_driver =
 	"1988",
 	"Konami",
 	"mish",
-	GAME_NOT_WORKING,
-	&thunderx_machine_driver,
+	0,
+	&machine_driver_thunderx,
+	gfx_untangle,
+
+	rom_thunderx,
+	0, 0,
+	0,
 	0,
 
-	thunderx_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	thunderx_input_ports,
+	input_ports_thunderx,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver thnderxj_driver =
+struct GameDriver driver_thnderxj =
 {
 	__FILE__,
-	&thunderx_driver,
+	&driver_thunderx,
 	"thnderxj",
 	"Thunder Cross (Japan)",
 	"1988",
 	"Konami",
 	"mish",
-	GAME_NOT_WORKING,
-	&thunderx_machine_driver,
+	0,
+	&machine_driver_thunderx,
+	gfx_untangle,
+
+	rom_thnderxj,
+	0, 0,
+	0,
 	0,
 
-	thnderxj_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	thunderx_input_ports,
+	input_ports_thunderx,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0 | GAME_NOT_WORKING,
 	0, 0
 };

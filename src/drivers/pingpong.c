@@ -55,7 +55,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pingpong )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -191,7 +191,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,		/* 3.072 MHz (probably) */
-			0,
 			readmem,writemem,0,0,
 			pingpong_interrupt,16	/* 1 IRQ + 8 NMI */
 		}
@@ -212,11 +211,7 @@ static struct MachineDriver machine_driver =
 	pingpong_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-
+	0,0,0,0,
 	{
 		{
 			SOUND_SN76496,
@@ -226,54 +221,6 @@ static struct MachineDriver machine_driver =
 };
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x94B1],"\x02\x00\x00",3) == 0 &&
-	    memcmp(&RAM[0x94cc],"\x00\x20\x00",3) == 0 &&
-	    memcmp(&RAM[0x949e],"\x02\x00\x00",3) == 0 &&	/* high score */
-	    memcmp(&RAM[0x846E],"\x02\x00\x00",3) == 0)	/* high score in video RAM */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x94B1],6*10);
-
-			RAM[0x949E] = RAM[0x94B1];
-			RAM[0x949F] = RAM[0x94B2];
-			RAM[0x94A0] = RAM[0x94B3];
-
-			RAM[0x846D] = (RAM[0x94B1]>>4) ? RAM[0x94B1]>>4 : 0x10;
-			RAM[0x846E] = RAM[0x94B1] & 0xF;
-			RAM[0x846F] = RAM[0x94B2] >> 4;
-			RAM[0x8470] = RAM[0x94B2] & 0xF;
-			RAM[0x8471] = RAM[0x94B3] >> 4;
-			RAM[0x8472] = RAM[0x94B3] & 0xF;
-
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x94B1],6*10);
-		osd_fclose(f);
-	}
-}
-
-
 
 /***************************************************************************
 
@@ -281,8 +228,8 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( pingpong_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pingpong )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, 0x18552f8f )
 	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, 0xae5f01e8 )
 
@@ -290,7 +237,7 @@ ROM_START( pingpong_rom )
 	ROM_LOAD( "pp_e01.rom",   0x0000, 0x2000, 0xd1d6f090 )
 	ROM_LOAD( "pp_e02.rom",   0x2000, 0x2000, 0x33c687e0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pingpong.3j",  0x0000, 0x0020, 0x3e04f06e ) /* palette (this might be bad) */
 	ROM_LOAD( "pingpong.11j", 0x0020, 0x0100, 0x09d96b08 ) /* sprites */
 	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, 0x8456046a ) /* characters */
@@ -298,7 +245,7 @@ ROM_END
 
 
 
-struct GameDriver pingpong_driver =
+struct GameDriver driver_pingpong =
 {
 	__FILE__,
 	0,
@@ -311,14 +258,13 @@ struct GameDriver pingpong_driver =
 	&machine_driver,
 	0,
 
-	pingpong_rom,
+	rom_pingpong,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-	input_ports,
+	0,
+	input_ports_pingpong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

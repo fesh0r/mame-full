@@ -57,7 +57,7 @@ int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void jungler_init(void);
-void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* defined in sndhrdw/timeplt.c */
@@ -133,7 +133,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( locomotn_input_ports )
+INPUT_PORTS_START( locomotn )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -215,7 +215,7 @@ INPUT_PORTS_START( locomotn_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( jungler_input_ports )
+INPUT_PORTS_START( jungler )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -268,7 +268,7 @@ INPUT_PORTS_START( jungler_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( commsega_input_ports )
+INPUT_PORTS_START( commsega )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -386,21 +386,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 #define MACHINE_DRIVER(GAMENAME)   \
 																	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
+static struct MachineDriver machine_driver_##GAMENAME =             \
 {                                                                   \
 	/* basic machine hardware */                                    \
 	{                                                               \
 		{                                                           \
 			CPU_Z80,                                                \
 			3072000,	/* 3.072 Mhz ? */                           \
-			0,                                                      \
 			readmem,GAMENAME##_writemem,0,0,                        \
 			nmi_interrupt,1                                         \
 		},                                                          \
 		{                                                           \
 			CPU_Z80 | CPU_AUDIO_CPU,                                \
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */                              \
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,       \
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
 		}                                                           \
@@ -433,7 +431,6 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 
 #define locomotn_writemem writemem
 #define commsega_writemem writemem
-#define jungler_vh_screenrefresh rallyx_vh_screenrefresh
 MACHINE_DRIVER(locomotn)
 MACHINE_DRIVER(jungler)
 MACHINE_DRIVER(commsega)
@@ -445,8 +442,8 @@ MACHINE_DRIVER(commsega)
 
 ***************************************************************************/
 
-ROM_START( locomotn_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( locomotn )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
 	ROM_LOAD( "2a.cpu",       0x1000, 0x1000, 0x529c823d )
 	ROM_LOAD( "3.cpu",        0x2000, 0x1000, 0xc9dbfbd1 )
@@ -454,22 +451,45 @@ ROM_START( locomotn_rom )
 	ROM_LOAD( "5.cpu",        0x4000, 0x1000, 0x64cf8dd6 )
 
 	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c1.cpu",       0x0000, 0x1000, 0x5732eda9 )
+	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
-	ROM_LOAD( "5.bpr",        0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots */
+	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
-	ROM_LOAD( "8b.cpu",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
-	ROM_LOAD( "9d.cpu",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
-	ROM_LOAD( "1.bpr",        0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "4.bpr",        0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
+	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
+	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
-ROM_START( cottong_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( gutangtn )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "3d_1.bin",     0x0000, 0x1000, 0xe9757395 )
+	ROM_LOAD( "3e_2.bin",     0x1000, 0x1000, 0x11d21d2e )
+	ROM_LOAD( "3f_3.bin",     0x2000, 0x1000, 0x4d80f895 )
+	ROM_LOAD( "3h_4.bin",     0x3000, 0x1000, 0xaa258ddf )
+	ROM_LOAD( "3j_5.bin",     0x4000, 0x1000, 0x52aec87e )
+
+	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
+	ROM_LOAD( "5m_c2.bin",    0x1000, 0x1000, 0x51c542fd )
+	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, 0x2ef89356 ) /* dots */
+
+	ROM_REGIONX( 0x0160, REGION_PROMS )
+	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
+	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
+ROM_END
+
+ROM_START( cottong )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "c1",           0x0000, 0x1000, 0x2c256fe6 )
 	ROM_LOAD( "c2",           0x1000, 0x1000, 0x1de5e6a0 )
 	ROM_LOAD( "c3",           0x2000, 0x1000, 0x01f909fe )
@@ -480,19 +500,19 @@ ROM_START( cottong_rom )
 	ROM_LOAD( "c6",           0x1000, 0x1000, 0x0149ef46 )
 	ROM_LOAD( "5.bpr",        0x2000, 0x0100, 0x21fb583f ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0x26f42e6f ) /* palette */
 	ROM_LOAD( "3.bpr",        0x0020, 0x0100, 0x4aecc0c8 ) /* loookup table */
-	ROM_LOAD( "1.bpr",        0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "4.bpr",        0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "c7",           0x0000, 0x1000, 0x3d83f6d3 )
 	ROM_LOAD( "c8",           0x1000, 0x1000, 0x323e1937 )
 ROM_END
 
-ROM_START( jungler_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( jungler )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jungr1",       0x0000, 0x1000, 0x5bd6ad15 )
 	ROM_LOAD( "jungr2",       0x1000, 0x1000, 0xdc99f1e3 )
 	ROM_LOAD( "jungr3",       0x2000, 0x1000, 0x3dcc03da )
@@ -504,18 +524,18 @@ ROM_START( jungler_rom )
 	/* 1000-1fff empty for my convenience */
 	ROM_LOAD( "82s129.10g",   0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
 	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
-ROM_START( junglers_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( junglers )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5c",           0x0000, 0x1000, 0xedd71b28 )
 	ROM_LOAD( "5a",           0x1000, 0x1000, 0x61ea4d46 )
 	ROM_LOAD( "4d",           0x2000, 0x1000, 0x557c7925 )
@@ -527,18 +547,18 @@ ROM_START( junglers_rom )
 	/* 1000-1fff empty for my convenience */
 	ROM_LOAD( "82s129.10g",   0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
 	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
-ROM_START( commsega_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( commsega )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "csega1",       0x0000, 0x1000, 0x92de3405 )
 	ROM_LOAD( "csega2",       0x1000, 0x1000, 0xf14e2f9a )
 	ROM_LOAD( "csega3",       0x2000, 0x1000, 0x941dbf48 )
@@ -550,145 +570,19 @@ ROM_START( commsega_rom )
 	ROM_LOAD( "csega6",       0x1000, 0x1000, 0xcf07fd5e )
 	ROM_LOAD( "gg3.bpr",      0x2000, 0x0100, 0xae7fd962 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "gg1.bpr",      0x0000, 0x0020, 0xf69e585a ) /* palette */
 	ROM_LOAD( "gg2.bpr",      0x0020, 0x0100, 0x0b756e30 ) /* loookup table */
 	ROM_LOAD( "gg0.bpr",      0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "tt3.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "csega8",       0x0000, 0x1000, 0x588b4210 )
 ROM_END
 
 
 
-static int locomotn_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x9f00],"\x00\x00\x01",3) == 0 &&
-	    memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9f00],12*10);
-			RAM[0x99c6] = RAM[0x9f00];
-			RAM[0x99c7] = RAM[0x9f01];
-			RAM[0x99c8] = RAM[0x9f02];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void locomotn_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9f00],12*10);
-		osd_fclose(f);
-	}
-}
-
-static int jungler_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x991c],"\x00\x00\x02",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9940],16*10);
-			RAM[0x991c] = RAM[0x9940];
-			RAM[0x991d] = RAM[0x9941];
-			RAM[0x991e] = RAM[0x9942];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void jungler_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9940],16*10);
-		osd_fclose(f);
-	}
-}
-
-static int commsega_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if (firsttime == 0)
-	{
-
-		memset(&RAM[0x9c6d],0xff,6);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x9c6d],"\x00\x00\x00\x00\x00\x00",6) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9c6d],6);
-			osd_fclose(f);
-			firsttime =0;
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void commsega_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9c6d],6);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver locomotn_driver =
+struct GameDriver driver_locomotn =
 {
 	__FILE__,
 	0,
@@ -698,49 +592,72 @@ struct GameDriver locomotn_driver =
 	"Konami (Centuri license)",
 	"Nicola Salmoria\nKevin Klopp (color info)",
 	0,
-	&locomotn_machine_driver,
+	&machine_driver_locomotn,
 	0,
 
-	locomotn_rom,
+	rom_locomotn,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	locomotn_input_ports,
+	input_ports_locomotn,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	locomotn_hiload, locomotn_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver cottong_driver =
+struct GameDriver driver_gutangtn =
 {
 	__FILE__,
-	&locomotn_driver,
+	&driver_locomotn,
+	"gutangtn",
+	"Guttong Gottong",
+	"1982",
+	"Konami (Sega license)",
+	"Nicola Salmoria\nKevin Klopp (color info)",
+	0,
+	&machine_driver_locomotn,
+	0,
+
+	rom_gutangtn,
+	0, 0,
+	0,
+	0,
+
+	input_ports_locomotn,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_cottong =
+{
+	__FILE__,
+	&driver_locomotn,
 	"cottong",
 	"Cotocoto Cottong",
 	"1982",
 	"bootleg",
 	"Nicola Salmoria\nKevin Klopp (color info)",
 	0,
-	&locomotn_machine_driver,
+	&machine_driver_locomotn,
 	0,
 
-	cottong_rom,
+	rom_cottong,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
-	locomotn_input_ports,
+	input_ports_locomotn,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	locomotn_hiload, locomotn_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver jungler_driver =
+struct GameDriver driver_jungler =
 {
 	__FILE__,
 	0,
@@ -750,49 +667,47 @@ struct GameDriver jungler_driver =
 	"Konami",
 	"Nicola Salmoria",
 	0,
-	&jungler_machine_driver,
+	&machine_driver_jungler,
 	jungler_init,
 
-	jungler_rom,
+	rom_jungler,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jungler_input_ports,
+	input_ports_jungler,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jungler_hiload, jungler_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver junglers_driver =
+struct GameDriver driver_junglers =
 {
 	__FILE__,
-	&jungler_driver,
+	&driver_jungler,
 	"junglers",
 	"Jungler (Stern)",
 	"1981",
 	"[Konami] (Stern license)",
 	"Nicola Salmoria",
 	0,
-	&jungler_machine_driver,
+	&machine_driver_jungler,
 	jungler_init,
 
-	junglers_rom,
+	rom_junglers,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jungler_input_ports,
+	input_ports_jungler,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jungler_hiload, jungler_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver commsega_driver =
+struct GameDriver driver_commsega =
 {
 	__FILE__,
 	0,
@@ -802,18 +717,17 @@ struct GameDriver commsega_driver =
 	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
 	0,
-	&commsega_machine_driver,
+	&machine_driver_commsega,
 	0,
 
-	commsega_rom,
+	rom_commsega,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
-	commsega_input_ports,
+	input_ports_commsega,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	commsega_hiload, commsega_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

@@ -1,5 +1,10 @@
 /***************************************************************************
 
+Various Video System games using the VS8803 VS8904 VS8905 video chips.
+
+Driver by Nicola Salmoria
+
+
 Notes:
 - Sprite zoom is probably not 100% accurate (check the table in vidhrdw).
   In pspikes, the zooming text during attract mode is horrible.
@@ -108,7 +113,7 @@ static void pending_command_clear_w(int offset,int data)
 
 static void aerofgt_sh_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress;
 
 
@@ -330,7 +335,7 @@ static struct IOWritePort aerofgt_sound_writeport[] =
 
 
 
-INPUT_PORTS_START( pspikes_input_ports )
+INPUT_PORTS_START( pspikes )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
@@ -405,7 +410,7 @@ INPUT_PORTS_START( pspikes_input_ports )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( turbofrc_input_ports )
+INPUT_PORTS_START( turbofrc )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -493,7 +498,7 @@ INPUT_PORTS_START( turbofrc_input_ports )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( aerofgtb_input_ports )
+INPUT_PORTS_START( aerofgtb )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -576,7 +581,7 @@ INPUT_PORTS_START( aerofgtb_input_ports )
 	/* this port is checked at 1b080 */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( aerofgt_input_ports )
+INPUT_PORTS_START( aerofgt )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -692,8 +697,8 @@ static struct GfxLayout pspikes_spritelayout =
 
 static struct GfxDecodeInfo pspikes_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &pspikes_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
-	{ 1, 0x080000, &pspikes_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
+	{ REGION_GFX1, 0, &pspikes_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
+	{ REGION_GFX2, 0, &pspikes_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
 	{ -1 } /* end of array */
 };
 
@@ -724,9 +729,9 @@ static struct GfxLayout turbofrc_spritelayout =
 
 static struct GfxDecodeInfo turbofrc_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &turbofrc_charlayout,      0, 32 },	/* I could split this one, first half is bg1 second half bg2 */
-	{ 1, 0x140000, &turbofrc_spritelayout,  512, 16 },
-	{ 1, 0x2c0000, &pspikes_spritelayout,   768, 16 },
+	{ REGION_GFX1, 0, &turbofrc_charlayout,      0, 32 },	/* I could split this one, first half is bg1 second half bg2 */
+	{ REGION_GFX2, 0, &turbofrc_spritelayout,  512, 16 },
+	{ REGION_GFX3, 0, &pspikes_spritelayout,   768, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -816,9 +821,9 @@ static struct GfxLayout aerofgt_spritelayout2 =
 
 static struct GfxDecodeInfo aerofgt_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &aerofgt_charlayout,      0, 32 },
-	{ 1, 0x100000, &aerofgt_spritelayout1, 512, 16 },
-	{ 1, 0x200000, &aerofgt_spritelayout2, 768, 16 },
+	{ REGION_GFX1, 0, &aerofgt_charlayout,      0, 32 },
+	{ REGION_GFX2, 0, &aerofgt_spritelayout1, 512, 16 },
+	{ REGION_GFX3, 0, &aerofgt_spritelayout2, 768, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -862,11 +867,11 @@ static struct GfxLayout unkvsys_spritelayout2 =
 
 static struct GfxDecodeInfo unkvsys_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &unkvsys_charlayout,      0, 32 },
-	{ 1, 0x040000, &unkvsys_charlayout,      0, 32 },
-	{ 1, 0x080000, &unkvsys_charlayout,      0, 32 },
-	{ 1, 0x0c0000, &unkvsys_spritelayout1,   0, 32 },
-	{ 1, 0x140000, &unkvsys_spritelayout2,   0, 32 },
+	{ REGION_GFX1, 0x000000, &unkvsys_charlayout,      0, 32 },
+	{ REGION_GFX1, 0x040000, &unkvsys_charlayout,      0, 32 },
+	{ REGION_GFX2, 0x000000, &unkvsys_charlayout,      0, 32 },
+	{ REGION_GFX3, 0x000000, &unkvsys_spritelayout1,   0, 32 },
+	{ REGION_GFX4, 0x000000, &unkvsys_spritelayout2,   0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -888,28 +893,26 @@ static struct YM2610interface ym2610_interface =
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
-	{ 3 },
-	{ 4 },
+	{ REGION_SOUND1 },
+	{ REGION_SOUND2 },
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
 
 
-static struct MachineDriver pspikes_machine_driver =
+static struct MachineDriver machine_driver_pspikes =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz (?) */
-			0,
 			pspikes_readmem,pspikes_writemem,0,0,
 			m68_level1_irq,1	/* all inrq vectors are the same */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -941,21 +944,19 @@ static struct MachineDriver pspikes_machine_driver =
 	}
 };
 
-static struct MachineDriver turbofrc_machine_driver =
+static struct MachineDriver machine_driver_turbofrc =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz (?) */
-			0,
 			turbofrc_readmem,turbofrc_writemem,0,0,
 			m68_level1_irq,1	/* all inrq vectors are the same */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -987,21 +988,19 @@ static struct MachineDriver turbofrc_machine_driver =
 	}
 };
 
-static struct MachineDriver aerofgtb_machine_driver =
+static struct MachineDriver machine_driver_aerofgtb =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz ??? (slows down a lot at 8MHz) */
-			0,
 			aerofgtb_readmem,aerofgtb_writemem,0,0,
 			m68_level1_irq,1	/* all irq vectors are the same */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1034,21 +1033,19 @@ static struct MachineDriver aerofgtb_machine_driver =
 	}
 };
 
-static struct MachineDriver aerofgt_machine_driver =
+static struct MachineDriver machine_driver_aerofgt =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz ??? (slows down a lot at 8MHz) */
-			0,
 			aerofgt_readmem,aerofgt_writemem,0,0,
 			m68_level1_irq,1	/* all irq vectors are the same */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1081,21 +1078,19 @@ static struct MachineDriver aerofgt_machine_driver =
 	}
 };
 
-static struct MachineDriver unkvsys_machine_driver =
+static struct MachineDriver machine_driver_unkvsys =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz (?) */
-			0,
 			aerofgt_readmem,aerofgt_writemem,0,0,
 			m68_level1_irq,1	/* all irq vectors are the same */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2610 */
@@ -1135,127 +1130,145 @@ static struct MachineDriver unkvsys_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pspikes_rom )
-	ROM_REGION(0xc0000)	/* 68000 code */
+ROM_START( pspikes )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "20",           0x00000, 0x40000, 0x75cdcee2 )
 
-	ROM_REGION_DISPOSE(0x180000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g7h",          0x000000, 0x80000, 0x74c23c3d )
-	ROM_LOAD( "g7j",          0x080000, 0x80000, 0x0b9e4739 )
-	ROM_LOAD( "g7l",          0x100000, 0x80000, 0x943139ff )
-
-	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "19",           0x00000, 0x20000, 0x7e8ed6e5 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "o5b",          0x000000, 0x100000, 0x07d6cbac )
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g7h",          0x000000, 0x80000, 0x74c23c3d )
 
-	ROM_REGION(0x40000) /* sound samples */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g7j",          0x000000, 0x80000, 0x0b9e4739 )
+	ROM_LOAD( "g7l",          0x080000, 0x80000, 0x943139ff )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "a47",          0x00000, 0x40000, 0xc6779dfa )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "o5b",          0x000000, 0x100000, 0x07d6cbac )
 ROM_END
 
-ROM_START( turbofrc_rom )
-	ROM_REGION(0xc0000)	/* 68000 code */
+ROM_START( turbofrc )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tfrc2.bin",    0x00000, 0x40000, 0x721300ee )
 	ROM_LOAD_WIDE_SWAP( "tfrc1.bin",    0x40000, 0x40000, 0x6cd5312b )
 	ROM_LOAD_WIDE_SWAP( "tfrc3.bin",    0x80000, 0x40000, 0x63f50557 )
 
-	ROM_REGION_DISPOSE(0x3c0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "tfrcu166.bin", 0x00000, 0x20000, 0x2ca14a65 )
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+	ROM_REGIONX( 0x140000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tfrcu94.bin",  0x000000, 0x080000, 0xbaa53978 )
 	ROM_LOAD( "tfrcu95.bin",  0x080000, 0x020000, 0x71a6c573 )
 	ROM_LOAD( "tfrcu105.bin", 0x0a0000, 0x080000, 0x00000000 )
 	ROM_LOAD( "tfrcu106.bin", 0x120000, 0x020000, 0xc6479eb5 )
-	ROM_LOAD( "tfrcu116.bin", 0x140000, 0x080000, 0xdf210f3b )
-	ROM_LOAD( "tfrcu118.bin", 0x1c0000, 0x040000, 0xf61d1d79 )
-	ROM_LOAD( "tfrcu117.bin", 0x200000, 0x080000, 0xf70812fd )
-	ROM_LOAD( "tfrcu119.bin", 0x280000, 0x040000, 0x474ea716 )
-	ROM_LOAD( "tfrcu134.bin", 0x2c0000, 0x080000, 0x487330a2 )
-	ROM_LOAD( "tfrcu135.bin", 0x340000, 0x080000, 0x3a7e5b6d )
 
-	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
-	ROM_LOAD( "tfrcu166.bin", 0x00000, 0x20000, 0x2ca14a65 )
-	ROM_RELOAD(               0x10000, 0x20000 )
+	ROM_REGIONX( 0x180000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tfrcu116.bin", 0x000000, 0x080000, 0xdf210f3b )
+	ROM_LOAD( "tfrcu118.bin", 0x080000, 0x040000, 0xf61d1d79 )
+	ROM_LOAD( "tfrcu117.bin", 0x0c0000, 0x080000, 0xf70812fd )
+	ROM_LOAD( "tfrcu119.bin", 0x140000, 0x040000, 0x474ea716 )
 
-	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "tfrcu179.bin", 0x000000, 0x100000, 0x60ca0333 )
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tfrcu134.bin", 0x000000, 0x080000, 0x487330a2 )
+	ROM_LOAD( "tfrcu135.bin", 0x080000, 0x080000, 0x3a7e5b6d )
 
-	ROM_REGION(0x20000) /* sound samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "tfrcu180.bin",   0x00000, 0x20000, 0x39c7c7d5 )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "tfrcu179.bin", 0x000000, 0x100000, 0x60ca0333 )
 ROM_END
 
-ROM_START( aerofgt_rom )
-	ROM_REGION(0x80000)	/* 68000 code */
+ROM_START( aerofgt )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "1.u4",         0x00000, 0x80000, 0x6fdff0a2 )
 
-	ROM_REGION_DISPOSE(0x280000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "538a54.124",   0x000000, 0x080000, 0x4d2c4df2 )
-	ROM_LOAD( "1538a54.124",  0x080000, 0x080000, 0x286d109e )
-	ROM_LOAD( "538a53.u9",    0x100000, 0x100000, 0x630d8e0b )
-	ROM_LOAD( "534g8f.u18",   0x200000, 0x080000, 0x76ce0926 )
-
-	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "2.153",        0x00000, 0x20000, 0xa1ef64ec )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "538a54.124",   0x000000, 0x080000, 0x4d2c4df2 )
+	ROM_LOAD( "1538a54.124",  0x080000, 0x080000, 0x286d109e )
 
-	ROM_REGION(0x40000) /* sound samples */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "538a53.u9",    0x000000, 0x100000, 0x630d8e0b )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "534g8f.u18",   0x000000, 0x080000, 0x76ce0926 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
-ROM_START( aerofgtb_rom )
-	ROM_REGION(0x80000)	/* 68000 code */
+ROM_START( aerofgtb )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "v2",                0x00000, 0x40000, 0x5c9de9f0 )
 	ROM_LOAD_ODD ( "v1",                0x00000, 0x40000, 0x89c1dcf4 )
 
-	ROM_REGION_DISPOSE(0x280000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
-	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
-	ROM_LOAD( "it-19-04",     0x100000, 0x080000, 0x3b329c1f )
-	ROM_LOAD( "it-19-05",     0x180000, 0x080000, 0x02b525af )
-	ROM_LOAD( "g27",          0x200000, 0x040000, 0x4d89cbc8 )
-	ROM_LOAD( "g26",          0x240000, 0x040000, 0x8072c1d2 )
-
-	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v3",           0x00000, 0x20000, 0xcbb18cf4 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
+	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
 
-	ROM_REGION(0x40000) /* sound samples */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-04",     0x000000, 0x080000, 0x3b329c1f )
+	ROM_LOAD( "it-19-05",     0x080000, 0x080000, 0x02b525af )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g27",          0x000000, 0x040000, 0x4d89cbc8 )
+	ROM_LOAD( "g26",          0x040000, 0x040000, 0x8072c1d2 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
-ROM_START( aerofgtc_rom )
-	ROM_REGION(0x80000)	/* 68000 code */
+ROM_START( aerofgtc )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "v2.149",            0x00000, 0x40000, 0xf187aec6 )
 	ROM_LOAD_ODD ( "v1.111",            0x00000, 0x40000, 0x9e684b19 )
 
-	ROM_REGION_DISPOSE(0x280000)	/* temporary space for graphics (disposed after conversion) */
-	/* gfx ROMs were missing in this set, I'm using the aerofgtb ones */
-	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
-	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
-	ROM_LOAD( "it-19-04",     0x100000, 0x080000, 0x3b329c1f )
-	ROM_LOAD( "it-19-05",     0x180000, 0x080000, 0x02b525af )
-	ROM_LOAD( "g27",          0x200000, 0x040000, 0x4d89cbc8 )
-	ROM_LOAD( "g26",          0x240000, 0x040000, 0x8072c1d2 )
-
-	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "2.153",        0x00000, 0x20000, 0xa1ef64ec )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
+	/* gfx ROMs were missing in this set, I'm using the aerofgtb ones */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
+	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
 
-	ROM_REGION(0x40000) /* sound samples */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-04",     0x000000, 0x080000, 0x3b329c1f )
+	ROM_LOAD( "it-19-05",     0x080000, 0x080000, 0x02b525af )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g27",          0x000000, 0x040000, 0x4d89cbc8 )
+	ROM_LOAD( "g26",          0x040000, 0x040000, 0x8072c1d2 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
-ROM_START( unkvsys_rom )
-	ROM_REGION(0x60000)	/* 68000 code */
+ROM_START( unkvsys )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
 	ROM_LOAD_ODD ( "v7",           0x00000, 0x10000, 0x0fb70066 )
 	ROM_LOAD_EVEN( "v5",           0x20000, 0x10000, 0xa9fe15a1 )	/* not sure */
@@ -1263,173 +1276,34 @@ ROM_START( unkvsys_rom )
 	ROM_LOAD_EVEN( "v3",           0x40000, 0x10000, 0xe2e0abad )	/* not sure */
 	ROM_LOAD_ODD ( "v6",           0x40000, 0x10000, 0x069817a7 )	/* not sure */
 
-	ROM_REGION_DISPOSE(0x1c0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a24",               0x000000, 0x80000, 0xb1e9de43 )
-	ROM_LOAD( "o1s",               0x080000, 0x40000, 0x00000000 )
-	ROM_LOAD( "oj1",               0x0c0000, 0x40000, 0x39c36b35 )
-	ROM_LOAD( "oj2",               0x100000, 0x40000, 0x77ccaea2 )
-	ROM_LOAD( "a23",               0x140000, 0x80000, 0xd851cf04 )
-
-	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v2",                0x00000, 0x08000, 0x920d8920 )
 	ROM_LOAD( "v1",                0x10000, 0x10000, 0xbf35c1a4 )	/* not sure */
 
-	ROM_REGION(0x20000) /* sound samples */
-	ROM_LOAD( "osb",               0x00000, 0x20000, 0xd49ab2f5 )
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a24",               0x000000, 0x80000, 0xb1e9de43 )
 
-	ROM_REGION(0x00001) /* sound samples */
-	/* missing */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "o1s",               0x000000, 0x40000, 0x00000000 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "oj1",               0x000000, 0x40000, 0x39c36b35 )
+	ROM_LOAD( "oj2",               0x040000, 0x40000, 0x77ccaea2 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a23",               0x000000, 0x80000, 0xd851cf04 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* sound samples */
+	ROM_LOAD( "osb",               0x00000, 0x20000, 0xd49ab2f5 )
 ROM_END
 
 
 
-struct GameDriver pspikes_driver =
-{
-	__FILE__,
-	0,
-	"pspikes",
-	"Power Spikes (Korea)",
-	"1991",
-	"Video System Co.",
-	"Nicola Salmoria",
-	0,
-	&pspikes_machine_driver,
-	0,
-
-	pspikes_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	pspikes_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver turbofrc_driver =
-{
-	__FILE__,
-	0,
-	"turbofrc",
-	"Turbo Force",
-	"1991",
-	"Video System Co.",
-	"Nicola Salmoria",
-	0,
-	&turbofrc_machine_driver,
-	0,
-
-	turbofrc_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	turbofrc_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver aerofgt_driver =
-{
-	__FILE__,
-	0,
-	"aerofgt",
-	"Aero Fighters",
-	"1992",
-	"Video System Co.",
-	"Nicola Salmoria",
-	0,
-	&aerofgt_machine_driver,
-	0,
-
-	aerofgt_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	aerofgt_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver aerofgtb_driver =
-{
-	__FILE__,
-	&aerofgt_driver,
-	"aerofgtb",
-	"Aero Fighters (Turbo Force hardware set 1)",
-	"1992",
-	"Video System Co.",
-	"Nicola Salmoria",
-	0,
-	&aerofgtb_machine_driver,
-	0,
-
-	aerofgtb_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	aerofgtb_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver aerofgtc_driver =
-{
-	__FILE__,
-	&aerofgt_driver,
-	"aerofgtc",
-	"Aero Fighters (Turbo Force hardware set 2)",
-	"1992",
-	"Video System Co.",
-	"Nicola Salmoria",
-	0,
-	&aerofgtb_machine_driver,
-	0,
-
-	aerofgtc_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	aerofgtb_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
+GAME( 1991, pspikes,  ,        pspikes,  pspikes,  , ROT0,   "Video System Co.", "Power Spikes (Korea)" )
+GAME( 1991, turbofrc, ,        turbofrc, turbofrc, , ROT270, "Video System Co.", "Turbo Force" )
+GAME( 1992, aerofgt,  ,        aerofgt,  aerofgt,  , ROT270, "Video System Co.", "Aero Fighters" )
+GAME( 1992, aerofgtb, aerofgt, aerofgtb, aerofgtb, , ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)" )
+GAME( 1992, aerofgtc, aerofgt, aerofgtb, aerofgtb, , ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)" )
 
 /* note: this one has a 2608, not a 2610 */
-struct GameDriver unkvsys_driver =
-{
-	__FILE__,
-	0,
-	"unkvsys",
-	"unknown",
-	"????",
-	"Video System Co.",
-	"Nicola Salmoria",
-	0,
-	&unkvsys_machine_driver,
-	0,
-
-	unkvsys_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	aerofgt_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-	0, 0
-};
+GAME( ????, unkvsys,  ,        unkvsys,  aerofgt,  , ROT90,  "Video System Co.", "unknown" )

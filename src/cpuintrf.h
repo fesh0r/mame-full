@@ -54,6 +54,9 @@ enum {
  * These flags can be defined in the makefile (or project) to
  * exclude (zero) or include (non zero) specific CPU cores
  */
+#ifndef HAS_GENSYNC
+#define HAS_GENSYNC		0
+#endif
 #ifndef HAS_Z80
 #define HAS_Z80 		0
 #endif
@@ -132,8 +135,8 @@ enum {
 #ifndef HAS_HD63705
 #define HAS_HD63705 	0
 #endif
-#ifndef HAS_M6309
-#define HAS_M6309		0
+#ifndef HAS_HD6309
+#define HAS_HD6309		0
 #endif
 #ifndef HAS_M6809
 #define HAS_M6809		0
@@ -162,6 +165,27 @@ enum {
 #ifndef HAS_TMS9900
 #define HAS_TMS9900 	0
 #endif
+#ifndef HAS_TMS9940
+#define HAS_TMS9940 	0
+#endif
+#ifndef HAS_TMS9980
+#define HAS_TMS9980 	0
+#endif
+#ifndef HAS_TMS9985
+#define HAS_TMS9985 	0
+#endif
+#ifndef HAS_TMS9989
+#define HAS_TMS9989 	0
+#endif
+#ifndef HAS_TMS9995
+#define HAS_TMS9995 	0
+#endif
+#ifndef HAS_TMS99105A
+#define HAS_TMS99105A 	0
+#endif
+#ifndef HAS_TMS99110A
+#define HAS_TMS99110A 	0
+#endif
 #ifndef HAS_Z8000
 #define HAS_Z8000		0
 #endif
@@ -174,6 +198,9 @@ enum {
 #ifndef HAS_PDP1
 #define HAS_PDP1		0
 #endif
+#ifndef HAS_ADSP2100
+#define HAS_ADSP2100	0
+#endif
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
@@ -182,6 +209,7 @@ struct cpu_interface
     void (*reset)(void *param);
     void (*exit)(void);
     int (*execute)(int cycles);
+    void (*burn)(int cycles);
     unsigned (*get_context)(void *reg);
     void (*set_context)(void *reg);
     unsigned (*get_pc)(void);
@@ -201,6 +229,7 @@ struct cpu_interface
 	unsigned num_irqs;
 	int default_vector;
     int *icount;
+    double overclock;
     int no_int, irq_int, nmi_int;
     int (*memory_read)(int offset);
     void (*memory_write)(int offset, int data);
@@ -221,12 +250,12 @@ int watchdog_reset_r(int offset);
 /* Use this function to reset the machine */
 void machine_reset(void);
 /* Use this function to reset a single CPU */
-void cpu_reset(int cpu);
+void cpu_set_reset_line(int cpu,int state);
+/* Use this function to halt a single CPU */
+void cpu_set_halt_line(int cpu,int state);
 
-/* Use this function to stop and restart CPUs */
-void cpu_halt(int cpunum,int running);
 /* This function returns CPUNUM current status (running or halted) */
-int  cpu_getstatus(int cpunum);
+int cpu_getstatus(int cpunum);
 int cpu_gettotalcpu(void);
 int cpu_getactivecpu(void);
 void cpu_setactivecpu(int cpunum);
@@ -340,6 +369,10 @@ void cpu_0_irq_line_vector_w(int offset, int data);
 void cpu_1_irq_line_vector_w(int offset, int data);
 void cpu_2_irq_line_vector_w(int offset, int data);
 void cpu_3_irq_line_vector_w(int offset, int data);
+void cpu_4_irq_line_vector_w(int offset, int data);
+void cpu_5_irq_line_vector_w(int offset, int data);
+void cpu_6_irq_line_vector_w(int offset, int data);
+void cpu_7_irq_line_vector_w(int offset, int data);
 
 /* Obsolete functions: avoid to use them in new drivers if possible. */
 

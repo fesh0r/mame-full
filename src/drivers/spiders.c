@@ -188,15 +188,15 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0x4000, 0x5bff, MRA_RAM },	// Video ram 1
 //	{ 0x8000, 0x9bff, MRA_RAM },	// Video ram 2
 //	{ 0x7800, 0x7fff, MRA_RAM },	// Stack space
-        { 0xc001, 0xc001, crtc6845_register_r },
+	{ 0xc001, 0xc001, crtc6845_register_r },
 	{ 0xc044, 0xc047, pia_0_r },
 	{ 0xc048, 0xc04b, pia_1_r },
 	{ 0xc050, 0xc053, pia_2_r },
 	{ 0xc060, 0xc060, input_port_2_r },
 	{ 0xc080, 0xc080, input_port_3_r },
 	{ 0xc0a0, 0xc0a0, input_port_4_r },
-        { 0xc100, 0xffff, MRA_ROM },
-        { -1 } /* end of table */
+	{ 0xc100, 0xffff, MRA_ROM },
+	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -206,13 +206,13 @@ static struct MemoryWriteAddress writemem[] =
 //	{ 0x4000, 0x5bff, MWA_RAM },
 //	{ 0x8000, 0x9bff, MWA_RAM },
 //	{ 0x7800, 0x7fff, MWA_RAM },
-        { 0xc000, 0xc000, crtc6845_address_w },
-        { 0xc001, 0xc001, crtc6845_register_w },
+	{ 0xc000, 0xc000, crtc6845_address_w },
+	{ 0xc001, 0xc001, crtc6845_register_w },
 	{ 0xc044, 0xc047, pia_0_w },
 	{ 0xc048, 0xc04b, pia_1_w },
 	{ 0xc050, 0xc053, pia_2_w },
-        { 0xc100, 0xffff, MWA_ROM },
-        { -1 } /* end of table */
+	{ 0xc100, 0xffff, MWA_ROM },
+	{ -1 } /* end of table */
 };
 
 
@@ -233,7 +233,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #endif
 
 
-INPUT_PORTS_START( spiders_input_ports )
+INPUT_PORTS_START( spiders )
     PORT_START      /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
     PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", KEYCODE_4, IP_JOY_NONE )
@@ -320,15 +320,19 @@ INPUT_PORTS_END
 /* The bitmap RAM is directly mapped to colors, no PROM. */
 static unsigned char palette[] =
 {
-        0x00,0x00,0x00,
-        0xff,0x00,0x00,
-        0x00,0xff,0x00,
-        0xff,0xff,0x00,
-        0x00,0x00,0xff,
-        0xff,0x00,0xff,
-        0x00,0xff,0xff,
-        0xff,0xff,0xff,
+	0x00,0x00,0x00,
+	0xff,0x00,0x00,
+	0x00,0xff,0x00,
+	0xff,0xff,0x00,
+	0x00,0x00,0xff,
+	0xff,0x00,0xff,
+	0x00,0xff,0xff,
+	0xff,0xff,0xff,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 
@@ -339,7 +343,6 @@ static struct MachineDriver machine_driver =
         {
             CPU_M6809,
             2800000,
-            0,
             readmem,writemem,0,0,
             0,0,                     /* Vblank Int */
             spiders_timed_irq , 25   /* Timed Int  */
@@ -352,35 +355,34 @@ static struct MachineDriver machine_driver =
 //            0,0,
 //            0,0
 //        }
-    },
-    60,
-    DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-    spiders_init_machine,
+	},
+	60,
+	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	spiders_init_machine,
 
-    /* video hardware */
-    32*8, 28*8,                         /* Width/Height         */
-    { 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
-    0, 	                                /* GfxDecodeInfo        */
-    8,                                  /* Number of colours    */
-    0,                                  /* Colour table length  */
-    0,                                  /* Convert colour prom  */
+	/* video hardware */
+	32*8, 28*8,                         /* Width/Height         */
+	{ 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
+	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
-    0,                                  /* Video initialisation */
-    spiders_vh_start,                    /* Video start          */
-    spiders_vh_stop,                     /* Video stop           */
-    spiders_vh_screenrefresh,                   /* Video update         */
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
+	0,                                  /* Video initialisation */
+	spiders_vh_start,                    /* Video start          */
+	spiders_vh_stop,                     /* Video stop           */
+	spiders_vh_screenrefresh,                   /* Video update         */
 
-    /* sound hardware */
-    0,0,0,0
-    /* Sound struct here */
+	/* sound hardware */
+	0,0,0,0
+	/* Sound struct here */
 };
 
 
 
-ROM_START( spiders_rom )
-	ROM_REGION(0x10000)
+ROM_START( spiders )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
 	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, 0xd69b2f21 )
 	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
@@ -390,7 +392,7 @@ ROM_START( spiders_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
@@ -403,8 +405,8 @@ ROM_START( spiders_rom )
 	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
 ROM_END
 
-ROM_START( spiders2_rom )
-	ROM_REGION(0x10000)
+ROM_START( spiders2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
 	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, 0xcf71d12b )
 	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
@@ -414,7 +416,7 @@ ROM_START( spiders2_rom )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
@@ -430,7 +432,7 @@ ROM_END
 
 
 /* this is a newer version with just one bug fix */
-struct GameDriver spiders_driver =
+struct GameDriver driver_spiders =
 {
 	__FILE__,
 	0,
@@ -443,23 +445,23 @@ struct GameDriver spiders_driver =
 	&machine_driver,
 	0,
 
-	spiders_rom,
+	rom_spiders,
 	0, 0,
 	0,
 	0,
 
-	spiders_input_ports,
+	input_ports_spiders,
 
-	0, palette, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ROT270 | GAME_NO_SOUND,
 
 	0,0
 };
 
-struct GameDriver spiders2_driver =
+struct GameDriver driver_spiders2 =
 {
 	__FILE__,
-	&spiders_driver,
+	&driver_spiders,
 	"spiders2",
 	"Spiders (set 2)",
 	"1981",
@@ -469,15 +471,15 @@ struct GameDriver spiders2_driver =
 	&machine_driver,
 	0,
 
-	spiders2_rom,
+	rom_spiders2,
 	0, 0,
 	0,
 	0,
 
-	spiders_input_ports,
+	input_ports_spiders,
 
-	0, palette, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ROT270 | GAME_NO_SOUND,
 
 	0,0
 };

@@ -55,13 +55,10 @@ static void sharedram1_w( int offset, int val )
 
 static void pacland_halt_mcu_w( int offset, int data )
 {
-	if ( offset == 0 ) {
-		cpu_reset( 1 );
-
-		cpu_halt( 1, 1 );
-	} else {
-		cpu_halt( 1, 0 );
-	}
+	if (offset == 0)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 
@@ -106,6 +103,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x1fff, videoram_r },
 	{ 0x2000, 0x37ff, MRA_RAM },
 	{ 0x4000, 0x5fff, MRA_BANK1 },
+	{ 0x6800, 0x68ff, namcos1_wavedata_r },		/* PSG device, shared RAM */
 	{ 0x6800, 0x6bff, sharedram1_r },
 	{ 0x7800, 0x7800, MRA_NOP },	/* ??? */
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -123,6 +121,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3a00, 0x3a01, pacland_scroll1_w },
 	{ 0x3c00, 0x3c00, pacland_bankswitch_w },
 	{ 0x4000, 0x5fff, MWA_ROM },
+	{ 0x6800, 0x68ff, namcos1_wavedata_w }, /* PSG device, shared RAM */
 	{ 0x6800, 0x6bff, sharedram1_w, &sharedram1 },
 	{ 0x7000, 0x7000, MWA_NOP },	/* ??? */
 	{ 0x7800, 0x7800, MWA_NOP },	/* ??? */
@@ -136,7 +135,8 @@ static struct MemoryReadAddress mcu_readmem[] =
 {
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x1100, 0x113f, MRA_RAM, &namco_soundregs }, /* PSG device */
+	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
+	{ 0x1100, 0x113f, MRA_RAM }, /* PSG device */
 	{ 0x1000, 0x13ff, sharedram1_r },
 	{ 0x8000, 0x9fff, MRA_ROM },
 	{ 0xc000, 0xc800, MRA_RAM },
@@ -152,7 +152,8 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device */
+	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },		/* PSG device, shared RAM */
+	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs }, /* PSG device */
 	{ 0x1000, 0x13ff, sharedram1_w },
 	{ 0x2000, 0x2000, MWA_NOP }, // ???? (w)
 	{ 0x4000, 0x4000, MWA_NOP }, // ???? (w)
@@ -178,7 +179,7 @@ static struct IOWritePort mcu_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pacland )
 	PORT_START      /* DSWA */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
@@ -301,7 +302,7 @@ static struct namco_interface namco_interface =
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
 	100,	/* playback volume */
-	4,		/* memory region */
+	-1,		/* memory region */
 	0		/* stereo */
 };
 
@@ -313,7 +314,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,	/* 1.500 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
@@ -321,7 +321,6 @@ static struct MachineDriver machine_driver =
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 //			6000000/4,		/* ??? */
 			6000000/3.9,		/* ??? */
-			3,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		},
@@ -336,7 +335,7 @@ static struct MachineDriver machine_driver =
 	256,256*4+256*4+3*64*16,
 	pacland_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	pacland_vh_start,
 	pacland_vh_stop,
@@ -359,8 +358,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pacland_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
+ROM_START( pacland )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl5_01b.bin",  0x08000, 0x4000, 0xb0ea7631 )
 	ROM_LOAD( "pl5_02.bin",   0x0C000, 0x4000, 0xd903e84e )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -377,23 +376,20 @@ ROM_START( pacland_rom )
 	ROM_LOAD( "pl1-8",        0x18000, 0x4000, 0xa2ebfa4a )
 	ROM_LOAD( "pl1-11",       0x1c000, 0x4000, 0x6621361a )
 
-	ROM_REGION(0x1400)	/* color PROMs */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
-
-	ROM_REGION(0x200)	/* sound prom */
-	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
-ROM_START( pacland2_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
+ROM_START( pacland2 )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl6_01.bin",   0x08000, 0x4000, 0x4c96e11c )
 	ROM_LOAD( "pl6_02.bin",   0x0C000, 0x4000, 0x8cf5bd8d )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -410,23 +406,20 @@ ROM_START( pacland2_rom )
 	ROM_LOAD( "pl1_08.bin",   0x18000, 0x4000, 0x2b20e46d )
 	ROM_LOAD( "pl1_11.bin",   0x1c000, 0x4000, 0xc59775d8 )
 
-	ROM_REGION(0x1400)	/* color PROMs */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
-
-	ROM_REGION(0x200)	/* sound prom */
-	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
-ROM_START( pacland3_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
+ROM_START( pacland3 )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pln1-1",       0x08000, 0x4000, 0xf729fb94 )
 	ROM_LOAD( "pln1-2",       0x0C000, 0x4000, 0x5c66eb6f )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -443,23 +436,20 @@ ROM_START( pacland3_rom )
 	ROM_LOAD( "pl1_08.bin",   0x18000, 0x4000, 0x2b20e46d )
 	ROM_LOAD( "pl1_11.bin",   0x1c000, 0x4000, 0xc59775d8 )
 
-	ROM_REGION(0x1400)	/* color PROMs */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
-
-	ROM_REGION(0x200)	/* sound prom */
-	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
-ROM_START( paclandm_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
+ROM_START( paclandm )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl1-1",        0x08000, 0x4000, 0xa938ae99 )
 	ROM_LOAD( "pl1-2",        0x0C000, 0x4000, 0x3fe43bb5 )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -476,96 +466,21 @@ ROM_START( paclandm_rom )
 	ROM_LOAD( "pl1-8",        0x18000, 0x4000, 0xa2ebfa4a )
 	ROM_LOAD( "pl1-11",       0x1c000, 0x4000, 0x6621361a )
 
-	ROM_REGION(0x1400)	/* color PROMs */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
 	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
-
-	ROM_REGION(0x200)	/* sound prom */
-	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
-ROM_END
-
-ROM_START( skykid_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "sk2-6c.bin",   0x08000, 0x4000, 0xea8a5822 )	/* ? */
-	ROM_LOAD( "sk1-6b.bin",   0x0c000, 0x4000, 0x7abe6c6c )
-	/* all the following are banked at 0x4000-0x5fff */
-	ROM_LOAD( "sk3-6d.bin",   0x10000, 0x4000, 0x314b8765 )	/* ? */
-//	ROM_LOAD( "pl1-4",        0x14000, 0x4000, 0x2b895a90 )
-//	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
-//	ROM_LOAD( "pl3_06.bin",   0x1c000, 0x4000, 0x2ffe3319 )
-
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sk6-6l.bin",   0x00000, 0x2000, 0x58b731b9 )	/* chars */
-	ROM_LOAD( "sk5-7e.bin",   0x02000, 0x2000, 0xc33a498e )
-	ROM_LOAD( "sk9-10n.bin",  0x10000, 0x4000, 0x44bb7375 )	/* sprites */
-	ROM_LOAD( "sk7-10m.bin",  0x18000, 0x4000, 0x3454671d )
-//	ROM_LOAD( "pl1-8",        0x18000, 0x4000, 0xa2ebfa4a )
-//	ROM_LOAD( "pl1-11",       0x1c000, 0x4000, 0x6621361a )
-
-	ROM_REGION(0x1400)	/* color PROMs */
-	ROM_LOAD( "sk2-2p.bin",   0x0000, 0x0100, 0xfc0d5b85 )	/* red and green component */
-	ROM_LOAD( "sk1-2n.bin",   0x0400, 0x0100, 0x0218e726 )	/* blue component */
-	ROM_LOAD( "sk3-2r.bin",   0x0800, 0x0100, 0xd06b620b )	/* sprites lookup table */
-	ROM_LOAD( "sk-6n.bin",    0x0c00, 0x0200, 0x161514a4 )	/* foreground lookup table */
-	ROM_LOAD( "sk-5n.bin",    0x1000, 0x0200, 0xc697ac72 )	/* background lookup table */
-
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sk4-3c.bin",   0x8000, 0x2000, 0xa460d0e0 ) /* sub program for the mcu */
-	ROM_LOAD( "sk1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
-
-	ROM_REGION(0x200)	/* sound prom */
-	ROM_LOAD( "skysnd.bin",   0x0000, 0x0200, 0x19e2d4b9 )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	if  (memcmp(&RAM[0x2140],"\x00\x08\x00",3) == 0 &&
-			memcmp(&RAM[0x02187],"\xE6\xE6\xE6",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2140],74);
-			RAM[0x205D] = RAM[0x2140];
-			RAM[0x205E] = RAM[0x2141];
-			RAM[0x205F] = RAM[0x2142];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2140],74);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver pacland_driver =
+struct GameDriver driver_pacland =
 {
 	__FILE__,
 	0,
@@ -578,23 +493,22 @@ struct GameDriver pacland_driver =
 	&machine_driver,
 	0,
 
-	pacland_rom,
+	rom_pacland,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pacland,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver pacland2_driver =
+struct GameDriver driver_pacland2 =
 {
 	__FILE__,
-	&pacland_driver,
+	&driver_pacland,
 	"pacland2",
 	"Pac-Land (set 2)",
 	"1984",
@@ -604,23 +518,22 @@ struct GameDriver pacland2_driver =
 	&machine_driver,
 	0,
 
-	pacland2_rom,
+	rom_pacland2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pacland,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver pacland3_driver =
+struct GameDriver driver_pacland3 =
 {
 	__FILE__,
-	&pacland_driver,
+	&driver_pacland,
 	"pacland3",
 	"Pac-Land (set 3)",
 	"1984",
@@ -630,23 +543,22 @@ struct GameDriver pacland3_driver =
 	&machine_driver,
 	0,
 
-	pacland3_rom,
+	rom_pacland3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pacland,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver paclandm_driver =
+struct GameDriver driver_paclandm =
 {
 	__FILE__,
-	&pacland_driver,
+	&driver_pacland,
 	"paclandm",
 	"Pac-Land (Midway)",
 	"1984",
@@ -656,41 +568,14 @@ struct GameDriver paclandm_driver =
 	&machine_driver,
 	0,
 
-	paclandm_rom,
+	rom_paclandm,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver skykid_driver =
-{
-	__FILE__,
-	0,
-	"skykid",
-	"Sky Kid",
-	"1985",
-	"Namco",
-	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
 	0,
 
-	skykid_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
+	input_ports_pacland,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
+	0, 0, 0,
+	ROT0,
+	0,0
 };

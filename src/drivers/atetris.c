@@ -2,6 +2,8 @@
 
 Atari Tetris Memory Map (preliminary)
 
+driver by Zsolt Vasvari
+
 0000-0fff   RAM
 1000-1fff   Video RAM
 2000-20ff   Palette RAM
@@ -36,6 +38,24 @@ int  atetris_slapstic_r(int offset);
 
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x20ff, MRA_RAM },
@@ -44,6 +64,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2810, 0x281f, pokey2_r },
 	{ 0x4000, 0x7fff, atetris_slapstic_r },
 	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -51,18 +72,19 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
-	{ 0x2400, 0x25ff, MWA_RAM },
+	{ 0x2400, 0x25ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x2800, 0x280f, pokey1_w },
 	{ 0x2810, 0x281f, pokey2_w },
 	{ 0x3000, 0x3000, watchdog_reset_w },
 	{ 0x3400, 0x3400, MWA_NOP },  // EEPROM enable
 	{ 0x3800, 0x3800, MWA_NOP },  // ???
 	{ 0x3c00, 0x3c00, MWA_NOP },  // ???
+	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
-INPUT_PORTS_START( ports )
+INPUT_PORTS_START( atetris )
 	// These ports are read via the Pokeys
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -88,7 +110,7 @@ INPUT_PORTS_END
 
 
 // Same as the regular one except they added a Flip Controls switch
-INPUT_PORTS_START( atetcktl_ports )
+INPUT_PORTS_START( atetcktl )
 	// These ports are read via the Pokeys
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -129,8 +151,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 1, 0x0000, &charlayout, 0, 16 },
-        { -1 } /* end of array */
+	{ REGION_GFX1, 0x0000, &charlayout, 0, 16 },
+	{ -1 } /* end of array */
 };
 
 
@@ -155,14 +177,13 @@ static struct POKEYinterface pokey_interface =
 	{ input_port_0_r, input_port_1_r }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_atetris =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1750000,        /* 1.75 MHz??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -190,7 +211,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -200,54 +223,56 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( atetris_rom )
-	ROM_REGION(0x14000)     /* 80k for code */
+ROM_START( atetris )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "1100.45f",     0x0000, 0x10000, 0x2acbdb09 )
 
-	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
-ROM_START( atetrisa_rom )
-	ROM_REGION(0x14000)     /* 80k for code */
+ROM_START( atetrisa )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "d1",           0x0000, 0x10000, 0x2bcab107 )
 
-	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
-ROM_START( atetrisb_rom )
-	ROM_REGION(0x14000)     /* 80k for code */
+ROM_START( atetrisb )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "tetris.01",    0x0000, 0x10000, 0x944d15f6 )
 
-	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tetris.02",    0x0000, 0x10000, 0x5c4e7258 )
 
 	/* there's an extra EEPROM, maybe used for protection crack, which */
 	/* however doesn't seem to be required to run the game in this driver. */
+	ROM_REGION(0x0800)
+	ROM_LOAD( "tetris.03",    0x0000, 0x0800, 0x26618c0b )
 ROM_END
 
-ROM_START( atetcktl_rom )
-	ROM_REGION(0x14000)     /* 80k for code */
+ROM_START( atetcktl )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "tetcktl1.rom", 0x0000, 0x10000, 0x9afd1f4a )
 
-	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
 ROM_END
 
-ROM_START( atetckt2_rom )
-	ROM_REGION(0x14000)     /* 80k for code */
+ROM_START( atetckt2 )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "1102.45f",     0x0000, 0x10000, 0x1bd28902 )
 
-	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
 ROM_END
 
 
 
-static void atetris_rom_move (void)
+static void init_atetris(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     // Move the lower 16k to 0x10000
@@ -256,170 +281,9 @@ static void atetris_rom_move (void)
 }
 
 
-static int hiload (void)
-{
-   void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-   f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-   if (f)
-   {
-        // Load EEPROM
-        osd_fread (f, &RAM[0x2400], 0x200);
-        osd_fclose (f);
-   }
-   else
-   {
-        // Initialize EEPROM so the game can reset it
-        memset(&RAM[0x2400], 0xff, 0x200);
-   }
-
-   return 1;
-}
-
-
-static void hisave (void)
-{
-   void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-   f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-   if (f)
-   {
-      osd_fwrite (f, &RAM[0x2400], 0x200);
-      osd_fclose (f);
-   }
-}
-
-
-struct GameDriver atetris_driver =
-{
-	__FILE__,
-	0,
-	"atetris",
-	"Tetris (set 1)",
-	"1988",
-	"Atari Games",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	atetris_rom,
-	atetris_rom_move,
-	0,
-	0,
-	0,      /* sound_prom */
-
-	ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver atetrisa_driver =
-{
-	__FILE__,
-	&atetris_driver,
-	"atetrisa",
-	"Tetris (set 2)",
-	"1988",
-	"Atari Games",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	atetrisa_rom,
-	atetris_rom_move,
-	0,
-	0,
-	0,      /* sound_prom */
-
-	ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver atetrisb_driver =
-{
-	__FILE__,
-	&atetris_driver,
-	"atetrisb",
-	"Tetris (bootleg)",
-	"1988",
-	"bootleg",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	atetrisb_rom,
-	atetris_rom_move,
-	0,
-	0,
-	0,      /* sound_prom */
-
-	ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver atetcktl_driver =
-{
-	__FILE__,
-	&atetris_driver,
-	"atetcktl",
-	"Tetris (Cocktail set 1)",
-	"1989",
-	"Atari Games",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	atetcktl_rom,
-	atetris_rom_move,
-	0,
-	0,
-	0,      /* sound_prom */
-
-	atetcktl_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
-};
-
-struct GameDriver atetckt2_driver =
-{
-	__FILE__,
-	&atetris_driver,
-	"atetckt2",
-	"Tetris (Cocktail set 2)",
-	"1989",
-	"Atari Games",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	atetckt2_rom,
-	atetris_rom_move,
-	0,
-	0,
-	0,      /* sound_prom */
-
-	atetcktl_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
-};
+GAME( 1988, atetris,  ,        atetris, atetris,  atetris, ROT0,   "Atari Games", "Tetris (set 1)" )
+GAME( 1988, atetrisa, atetris, atetris, atetris,  atetris, ROT0,   "Atari Games", "Tetris (set 2)" )
+GAME( 1988, atetrisb, atetris, atetris, atetris,  atetris, ROT0,   "bootleg",     "Tetris (bootleg)" )
+GAME( 1989, atetcktl, atetris, atetris, atetcktl, atetris, ROT270, "Atari Games", "Tetris (Cocktail set 1)" )
+GAME( 1989, atetckt2, atetris, atetris, atetcktl, atetris, ROT270, "Atari Games", "Tetris (Cocktail set 2)" )

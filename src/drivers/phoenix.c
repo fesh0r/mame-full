@@ -58,12 +58,12 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void phoenix_sound_control_a_w(int offset, int data);
 void phoenix_sound_control_b_w(int offset, int data);
-int  phoenix_sh_start(void);
+int phoenix_sh_start(const struct MachineSound *msound);
 void phoenix_sh_update(void);
 
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
-int  pleiads_sh_start(void);
+int pleiads_sh_start(const struct MachineSound *msound);
 void pleiads_sh_update(void);
 
 
@@ -95,7 +95,7 @@ WRITEMEM(pleiads)
 
 
 
-INPUT_PORTS_START( phoenix_input_ports )
+INPUT_PORTS_START( phoenix )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
@@ -103,7 +103,7 @@ INPUT_PORTS_START( phoenix_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START      /* DSW0 */
@@ -112,7 +112,7 @@ INPUT_PORTS_START( phoenix_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x04, "4000" )
 	PORT_DIPSETTING(    0x08, "5000" )
@@ -120,25 +120,24 @@ INPUT_PORTS_START( phoenix_input_ports )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "DSW 7 Unknown" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-
-INPUT_PORTS_START( phoenixt_input_ports )
+INPUT_PORTS_START( phoenixa )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START      /* DSW0 */
@@ -147,24 +146,26 @@ INPUT_PORTS_START( phoenixt_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x04, "4000" )
 	PORT_DIPSETTING(    0x08, "5000" )
 	PORT_DIPSETTING(    0x0c, "6000" )
-	PORT_DIPNAME( 0x10, 0x10, "DSW 5 Unknown" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown" )
+	/* Coinage is backwards from phoenix (Amstar) */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "DSW 7 Unknown" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( phoenix3_input_ports )
+
+INPUT_PORTS_START( phoenixt )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
@@ -172,7 +173,41 @@ INPUT_PORTS_START( phoenix3_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x04, "4000" )
+	PORT_DIPSETTING(    0x08, "5000" )
+	PORT_DIPSETTING(    0x0c, "6000" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( phoenix3 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -180,15 +215,15 @@ INPUT_PORTS_START( phoenix3_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x04, "4000" )
 	PORT_DIPSETTING(    0x08, "5000" )
 	PORT_DIPSETTING(    0x0c, "6000" )
-	PORT_DIPNAME( 0x10, 0x10, "DSW 5 Unknown" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
@@ -198,7 +233,7 @@ INPUT_PORTS_START( phoenix3_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( pleiads_input_ports )
+INPUT_PORTS_START( pleiads )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
@@ -206,7 +241,7 @@ INPUT_PORTS_START( pleiads_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	   /* Protection. See 0x0552 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -214,7 +249,7 @@ INPUT_PORTS_START( pleiads_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x04, "4000" )
 	PORT_DIPSETTING(    0x08, "5000" )
@@ -222,10 +257,10 @@ INPUT_PORTS_START( pleiads_input_ports )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -251,16 +286,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+static struct CustomSound_interface phoenix_custom_interface =
+{
+	phoenix_sh_start,
+	0,
+	phoenix_sh_update
+};
+
+static struct CustomSound_interface pleiads_custom_interface =
+{
+	pleiads_sh_start,
+	0,
+	pleiads_sh_update
+};
+
 #define MACHINE_DRIVER(GAMENAME)									\
 																	\
-static struct MachineDriver GAMENAME##_machine_driver =				\
+static struct MachineDriver machine_driver_##GAMENAME =				\
 {																	\
 	/* basic machine hardware */									\
 	{																\
 		{															\
 			CPU_8080,												\
 			3072000,	/* 3 Mhz ? */								\
-			0,														\
 			readmem,GAMENAME##_writemem,0,0,						\
 			ignore_interrupt,1										\
 		}															\
@@ -282,10 +331,13 @@ static struct MachineDriver GAMENAME##_machine_driver =				\
 	phoenix_vh_screenrefresh,										\
 																	\
 	/* sound hardware */											\
-	0,																\
-	GAMENAME##_sh_start,											\
-	0,																\
-	GAMENAME##_sh_update											\
+	0,0,0,0,														\
+	{																\
+		{															\
+			SOUND_CUSTOM,											\
+			&GAMENAME##_custom_interface							\
+		}															\
+	}																\
 };
 
 
@@ -294,24 +346,14 @@ MACHINE_DRIVER(pleiads)
 
 
 
-static const char *phoenix_sample_names[] =
-{
-	"*phoenix",
-	"shot8.wav",
-	"death8.wav",
-	"phoenix1.wav",
-	"phoenix2.wav",
-	0	/* end of array */
-};
-
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-ROM_START( phoenix_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( phoenix )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic45",         0x0000, 0x0800, 0x9f68086b )
 	ROM_LOAD( "ic46",         0x0800, 0x0800, 0x273a4a82 )
 	ROM_LOAD( "ic47",         0x1000, 0x0800, 0x3d4284b9 )
@@ -327,13 +369,35 @@ ROM_START( phoenix_rom )
 	ROM_LOAD( "ic39",         0x1000, 0x0800, 0x53413e8f )
 	ROM_LOAD( "ic40",         0x1800, 0x0800, 0x0be2ba91 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( phoenixt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( phoenixa )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "ic45.k1",      0x0000, 0x0800, 0xc7a9b499 )
+	ROM_LOAD( "ic46.k2",      0x0800, 0x0800, 0xd0e6ae1b )
+	ROM_LOAD( "ic47.k3",      0x1000, 0x0800, 0x64bf463a )
+	ROM_LOAD( "ic48.k4",      0x1800, 0x0800, 0x1b20fe62 )
+	ROM_LOAD( "phoenixc.49",  0x2000, 0x0800, 0x1a1ce0d0 )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
+	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "phoenixc.39",  0x1000, 0x0800, 0xbb0525ed )
+	ROM_LOAD( "phoenixc.40",  0x1800, 0x0800, 0x4178aa4f )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
+ROM_END
+
+ROM_START( phoenixt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -349,13 +413,13 @@ ROM_START( phoenixt_rom )
 	ROM_LOAD( "ic39",         0x1000, 0x0800, 0x53413e8f )
 	ROM_LOAD( "ic40",         0x1800, 0x0800, 0x0be2ba91 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( phoenix3_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( phoenix3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, 0xa362cda0 )
 	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, 0x5748f486 )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -371,13 +435,13 @@ ROM_START( phoenix3_rom )
 	ROM_LOAD( "ic39",         0x1000, 0x0800, 0x53413e8f )
 	ROM_LOAD( "ic40",         0x1800, 0x0800, 0x0be2ba91 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( phoenixc_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( phoenixc )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -393,13 +457,13 @@ ROM_START( phoenixc_rom )
 	ROM_LOAD( "phoenixc.39",  0x1000, 0x0800, 0xbb0525ed )
 	ROM_LOAD( "phoenixc.40",  0x1800, 0x0800, 0x4178aa4f )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( pleiads_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pleiads )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, 0x960212c8 )
 	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, 0xb254217c )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb ) /* IC 49 on real board */
@@ -415,13 +479,13 @@ ROM_START( pleiads_rom )
 	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 ) /* IC 27 on real board */
 	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )	/* palette high bits */
 ROM_END
 
-ROM_START( pleiadbl_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pleiadbl )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
 	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, 0xe2b5b8cd )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
@@ -437,13 +501,13 @@ ROM_START( pleiadbl_rom )
 	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 )
 	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )	/* palette high bits */
 ROM_END
 
-ROM_START( pleiadce_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pleiadce )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pleiades.47",  0x0000, 0x0800, 0x711e2ba0 )
 	ROM_LOAD( "pleiades.48",  0x0800, 0x0800, 0x93a36943 )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
@@ -459,78 +523,16 @@ ROM_START( pleiadce_rom )
 	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 )
 	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )	/* palette high bits */
 ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x438a],"\x00\x00\x0f",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4388],4);
-
-			/* copy the high score to the screen */
-			/*       // I suppose noone can do such an HISCORE!!! ;)
-			phoenix_videoram2_w(0x0221, (RAM[0x4388] >> 4)+0x20);
-			phoenix_videoram2_w(0x0201, (RAM[0x4388] & 0xf)+0x20);
-			*/
-			RAM[0x49e1] = (RAM[0x4389] >> 4) + 0x20;
-			RAM[0x49c1] = (RAM[0x4389] & 0xf) + 0x20;
-			RAM[0x49a1] = (RAM[0x438a] >> 4) + 0x20;
-			RAM[0x4981] = (RAM[0x438a] & 0xf) + 0x20;
-			RAM[0x4961] = (RAM[0x438b] >> 4) + 0x20;
-			RAM[0x4941] = (RAM[0x438b] & 0xf) + 0x20;
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-
-static unsigned long get_score(unsigned char *score)
-{
-     return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
-}
-
-static void hisave(void)
-{
-   unsigned long score1,score2,hiscore;
-   void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-   score1 = get_score(&RAM[0x4380]);
-   score2 = get_score(&RAM[0x4384]);
-   hiscore = get_score(&RAM[0x4388]);
-
-   if (score1 > hiscore) RAM += 0x4380;         /* check consistency */
-   else if (score2 > hiscore) RAM += 0x4384;
-   else RAM += 0x4388;
-
-   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-   {
-      osd_fwrite(f,&RAM[0],4);
-      osd_fclose(f);
-   }
-}
-
-
 #define CREDITS   "Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili"
 
-struct GameDriver phoenix_driver =
+struct GameDriver driver_phoenix =
 {
 	__FILE__,
 	0,
@@ -540,102 +542,123 @@ struct GameDriver phoenix_driver =
 	"Amstar",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
-	phoenix_rom,
+	rom_phoenix,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	phoenix_input_ports,
+	input_ports_phoenix,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver phoenixt_driver =
+struct GameDriver driver_phoenixa =
 {
 	__FILE__,
-	&phoenix_driver,
+	&driver_phoenix,
+	"phoenixa",
+	"Phoenix (Centuri)",
+	"1980",
+	"Amstar (Centuri license)",
+	CREDITS,
+	0,
+	&machine_driver_phoenix,
+	0,
+
+	rom_phoenixa,
+	0, 0,
+	0,
+	0,
+
+	input_ports_phoenixa,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_phoenixt =
+{
+	__FILE__,
+	&driver_phoenix,
 	"phoenixt",
 	"Phoenix (Taito)",
 	"1980",
 	"Taito",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
-	phoenixt_rom,
+	rom_phoenixt,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	phoenixt_input_ports,
+	input_ports_phoenixt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver phoenix3_driver =
+struct GameDriver driver_phoenix3 =
 {
 	__FILE__,
-	&phoenix_driver,
+	&driver_phoenix,
 	"phoenix3",
 	"Phoenix (T.P.N.)",
 	"1980",
 	"bootleg",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
-	phoenix3_rom,
+	rom_phoenix3,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	phoenix3_input_ports,
+	input_ports_phoenix3,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver phoenixc_driver =
+struct GameDriver driver_phoenixc =
 {
 	__FILE__,
-	&phoenix_driver,
+	&driver_phoenix,
 	"phoenixc",
 	"Phoenix (IRECSA, G.G.I Corp)",
 	"1981",
 	"bootleg?",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
-	phoenixc_rom,
+	rom_phoenixc,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	phoenixt_input_ports,
+	input_ports_phoenixt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
 
-struct GameDriver pleiads_driver =
+struct GameDriver driver_pleiads =
 {
 	__FILE__,
 	0,
@@ -645,70 +668,67 @@ struct GameDriver pleiads_driver =
 	"Tehkan",
 	CREDITS,
 	0,
-	&pleiads_machine_driver,
+	&machine_driver_pleiads,
 	0,
 
-	pleiads_rom,
+	rom_pleiads,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	pleiads_input_ports,
+	input_ports_pleiads,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver pleiadbl_driver =
+struct GameDriver driver_pleiadbl =
 {
 	__FILE__,
-	&pleiads_driver,
+	&driver_pleiads,
 	"pleiadbl",
 	"Pleiads (bootleg)",
 	"1981",
 	"bootleg",
 	CREDITS,
 	0,
-	&pleiads_machine_driver,
+	&machine_driver_pleiads,
 	0,
 
-	pleiadbl_rom,
+	rom_pleiadbl,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	pleiads_input_ports,
+	input_ports_pleiads,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver pleiadce_driver =
+struct GameDriver driver_pleiadce =
 {
 	__FILE__,
-	&pleiads_driver,
+	&driver_pleiads,
 	"pleiadce",
 	"Pleiads (Centuri)",
 	"1981",
 	"Tehkan (Centuri license)",
 	CREDITS,
 	0,
-	&pleiads_machine_driver,
+	&machine_driver_pleiads,
 	0,
 
-	pleiadce_rom,
+	rom_pleiadce,
 	0, 0,
-	phoenix_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	pleiads_input_ports,
+	input_ports_pleiads,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

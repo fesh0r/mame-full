@@ -136,7 +136,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( xybots_ports )
+INPUT_PORTS_START( xybots )
 	PORT_START	/* ffe100 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -233,13 +233,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_I_CPU(1)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -258,7 +255,9 @@ static struct MachineDriver machine_driver =
 	xybots_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO
+	JSA_I_STEREO,
+
+	atarigen_nvram_handler
 };
 
 
@@ -269,14 +268,14 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( xybots_rom )
-	ROM_REGION(0x90000)	/* 8*64k for 68000 code */
+ROM_START( xybots )
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "2112.c17",     0x00000, 0x10000, 0x16d64748 )
 	ROM_LOAD_ODD ( "2113.c19",     0x00000, 0x10000, 0x2677d44a )
 	ROM_LOAD_EVEN( "2114.b17",     0x20000, 0x08000, 0xd31890cb )
 	ROM_LOAD_ODD ( "2115.b19",     0x20000, 0x08000, 0x750ab1b0 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "xybots.snd",   0x10000, 0x4000, 0x3b9f155d )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -326,7 +325,7 @@ static void xybots_init(void)
  *
  *************************************/
 
-struct GameDriver xybots_driver =
+struct GameDriver driver_xybots =
 {
 	__FILE__,
 	0,
@@ -339,15 +338,15 @@ struct GameDriver xybots_driver =
 	&machine_driver,
 	xybots_init,
 
-	xybots_rom,
+	rom_xybots,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	xybots_ports,
+	input_ports_xybots,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

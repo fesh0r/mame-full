@@ -116,7 +116,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( arabian )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -251,14 +251,13 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_arabian =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,0,writeport,
 			arabian_interrupt,1
 		}
@@ -297,28 +296,28 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( arabian_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( arabian )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic1rev2.87",       0x0000, 0x2000, 0x5e1c98b8 )
 	ROM_LOAD( "ic2rev2.88",       0x2000, 0x2000, 0x092f587e )
 	ROM_LOAD( "ic3rev2.89",       0x4000, 0x2000, 0x15145f23 )
 	ROM_LOAD( "ic4rev2.90",       0x6000, 0x2000, 0x32b77b44 )
 
-	ROM_REGION(0x10000) /* graphics roms */
+	ROM_REGIONX( 0x10000, REGION_GFX1 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
 	ROM_LOAD( "ic87.94",      0x6000, 0x2000, 0x82160b9a )	/* it at runtime - which is SLOW */
 ROM_END
 
-ROM_START( arabiana_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( arabiana )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic1.87",       0x0000, 0x2000, 0x51e9a6b1 )
 	ROM_LOAD( "ic2.88",       0x2000, 0x2000, 0x1cdcc1ab )
 	ROM_LOAD( "ic3.89",       0x4000, 0x2000, 0xb7b7faa0 )
 	ROM_LOAD( "ic4.90",       0x6000, 0x2000, 0xdbded961 )
 
-	ROM_REGION(0x10000) /* graphics roms */
+	ROM_REGIONX( 0x10000, REGION_GFX1 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
@@ -327,90 +326,5 @@ ROM_END
 
 
 
-static int arabian_hiload(void)
-{
-  unsigned char *RAM = Machine->memory_region[0];
-  void *f;
-
-  /* Wait for hiscore table initialization to be done. */
-  if (memcmp(&RAM[0xd384], "\x00\x00\x00\x01\x00\x00", 6) != 0)
-    return 0;
-
-  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-    {
-      /* Load and set hiscore table. */
-      osd_fread(f,&RAM[0xd384],6*10);
-      osd_fclose(f);
-    }
-
-  return 1;
-}
-
-
-
-static void arabian_hisave(void)
-{
-  unsigned char *RAM = Machine->memory_region[0];
-  void *f;
-
-  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-      /* Write hiscore table. */
-      osd_fwrite(f,&RAM[0xd384],6*10);
-      osd_fclose(f);
-    }
-}
-
-
-
-struct GameDriver arabian_driver =
-{
-	__FILE__,
-	0,
-	"arabian",
-	"Arabian",
-	"1983",
-	"Sun Electronics",
-	"Jarek Burczynski (MAME driver)\nMarco Cassili",
-	GAME_IMPERFECT_COLORS,
-	&machine_driver,
-	0,
-
-	arabian_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	arabian_hiload, arabian_hisave
-};
-
-struct GameDriver arabiana_driver =
-{
-	__FILE__,
-	&arabian_driver,
-	"arabiana",
-	"Arabian (Atari)",
-	"1983",
-	"[Sun Electronics] (Atari license)",
-	"Jarek Burczynski (MAME driver)\nMarco Cassili",
-	GAME_IMPERFECT_COLORS,
-	&machine_driver,
-	0,
-
-	arabiana_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	arabian_hiload, arabian_hisave
-};
+GAMEX( 1983, arabian,  ,        arabian, arabian, , ROT270, "Sun Electronics", "Arabian", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, arabiana, arabian, arabian, arabian, , ROT270, "[Sun Electronics] (Atari license)", "Arabian (Atari)", GAME_IMPERFECT_COLORS )

@@ -65,8 +65,6 @@
 
 void pacman_init_machine(void);
 
-unsigned char *theglob_mem_rom;
-
 static int counter=0;
 
 
@@ -76,7 +74,7 @@ static void theglob_decrypt_rom_8(void)
 	int mem;
 	unsigned char *RAM;
 
-	RAM = Machine->memory_region[0];
+	RAM = memory_region(REGION_CPU1);
 
 
 	for (mem=0;mem<0x4000;mem++)
@@ -113,7 +111,7 @@ static void theglob_decrypt_rom_9(void)
 	int mem;
 	unsigned char *RAM;
 
-	RAM = Machine->memory_region[0];
+	RAM = memory_region(REGION_CPU1);
 
 	for (mem=0;mem<0x4000;mem++)
 	{
@@ -148,7 +146,7 @@ static void theglob_decrypt_rom_A(void)
 	int mem;
 	unsigned char *RAM;
 
-	RAM = Machine->memory_region[0];
+	RAM = memory_region(REGION_CPU1);
 
 	for (mem=0;mem<0x4000;mem++)
 	{
@@ -183,7 +181,7 @@ static void theglob_decrypt_rom_B(void)
 	int mem;
 	unsigned char *RAM;
 
-	RAM = Machine->memory_region[0];
+	RAM = memory_region(REGION_CPU1);
 
 	for (mem=0;mem<0x4000;mem++)
 	{
@@ -215,7 +213,7 @@ static void theglob_decrypt_rom_B(void)
 
 int theglob_decrypt_rom(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (offset & 0x01)
 	{
@@ -245,7 +243,7 @@ int theglob_decrypt_rom(int offset)
 
 void theglob_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* While the PAL supports up to 16 decryption methods, only four
 		are actually used in the PAL.  Therefore, we'll take a little

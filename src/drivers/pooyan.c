@@ -104,7 +104,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pooyan )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -240,14 +240,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -286,8 +284,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pooyan_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pooyan )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.4a",         0x0000, 0x2000, 0xbb319c63 )
 	ROM_LOAD( "2.5a",         0x2000, 0x2000, 0xa1463d98 )
 	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
@@ -299,18 +297,18 @@ ROM_START( pooyan_rom )
 	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
 	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
-ROM_START( pooyans_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pooyans )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000, 0x916ae7d7 )
 	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000, 0x8fe38c61 )
 	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000, 0x2660218a )
@@ -322,18 +320,18 @@ ROM_START( pooyans_rom )
 	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
 	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
-ROM_START( pootan_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pootan )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "poo_ic22.bin", 0x0000, 0x2000, 0x41b23a24 )
 	ROM_LOAD( "poo_ic23.bin", 0x2000, 0x2000, 0xc9d94661 )
 	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
@@ -345,72 +343,19 @@ ROM_START( pootan_rom )
 	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
 	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8a00],"\x00\x00\x01",3) == 0 &&
-			memcmp(&RAM[0x8a1b],"\x00\x00\x01",3) == 0)
-	{
-		void *f;
-		static int first_loop;
-
-
-		if (first_loop++ <= 1) return 0;	/* wait a little more, otherwise the times */
-											/* will be overwritten */
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x89c0],3*10);
-			osd_fread(f,&RAM[0x8a00],3*10);
-			osd_fread(f,&RAM[0x8e00],3*10);
-			RAM[0x88a8] = RAM[0x8a00];
-			RAM[0x88a9] = RAM[0x8a01];
-			RAM[0x88aa] = RAM[0x8a02];
-			osd_fclose(f);
-		}
-
-		first_loop = 0;
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x89c0],3*10);
-		osd_fwrite(f,&RAM[0x8a00],3*10);
-		osd_fwrite(f,&RAM[0x8e00],3*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver pooyan_driver =
+struct GameDriver driver_pooyan =
 {
 	__FILE__,
 	0,
@@ -423,23 +368,22 @@ struct GameDriver pooyan_driver =
 	&machine_driver,
 	0,
 
-	pooyan_rom,
+	rom_pooyan,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pooyan,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver pooyans_driver =
+struct GameDriver driver_pooyans =
 {
 	__FILE__,
-	&pooyan_driver,
+	&driver_pooyan,
 	"pooyans",
 	"Pooyan (Stern)",
 	"1982",
@@ -449,23 +393,22 @@ struct GameDriver pooyans_driver =
 	&machine_driver,
 	0,
 
-	pooyans_rom,
+	rom_pooyans,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pooyan,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver pootan_driver =
+struct GameDriver driver_pootan =
 {
 	__FILE__,
-	&pooyan_driver,
+	&driver_pooyan,
 	"pootan",
 	"Pootan",
 	"1982",
@@ -475,15 +418,14 @@ struct GameDriver pootan_driver =
 	&machine_driver,
 	0,
 
-	pootan_rom,
+	rom_pootan,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pooyan,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

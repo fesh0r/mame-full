@@ -45,20 +45,29 @@ struct osd_bitmap
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
-#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
+#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),Machine->scrbitmap->depth)		/* ASG 980209 */
 void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. Attributes are the ones defined in driver.h. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int attributes);
+struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes);
 int osd_set_display(int width,int height,int attributes);
 void osd_close_display(void);
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
-/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
-/* with pen values corresponding to a 5-5-5 15-bit palette */
-void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens);
+
+/*
+osd_allocate_colors() is called after osd_create_display(), to create and initialize
+the palette.
+palette is an array of 'totalcolors' R,G,B triplets. The function returns
+in *pens the pen values corresponding to the requested colors.
+When modifiable is not 0, the palette will be modified later via calls to
+osd_modify_pen(). Otherwise, the code can assume that the palette will not change,
+and activate special optimizations (e.g. direct copy for a 16-bit display).
+The function must also initialize Machine->uifont->colortable[] to get proper
+white-on-black and black-on-white text.
+Return 0 for success.
+*/
+int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
@@ -191,19 +200,24 @@ typedef struct {
 
 
 /* file handling routines */
-#define OSD_FILETYPE_ROM 1
-#define OSD_FILETYPE_SAMPLE 2
-#define OSD_FILETYPE_HIGHSCORE 3
-#define OSD_FILETYPE_CONFIG 4
-#define OSD_FILETYPE_INPUTLOG 5
-#define OSD_FILETYPE_STATE 6
-#define OSD_FILETYPE_ARTWORK 7
-#define OSD_FILETYPE_MEMCARD 8
-#define OSD_FILETYPE_SCREENSHOT 9
+enum
+{
+	OSD_FILETYPE_ROM = 1,
+	OSD_FILETYPE_SAMPLE,
+	OSD_FILETYPE_NVRAM,
+	OSD_FILETYPE_HIGHSCORE,
+	OSD_FILETYPE_CONFIG,
+	OSD_FILETYPE_INPUTLOG,
+	OSD_FILETYPE_STATE,
+	OSD_FILETYPE_ARTWORK,
+	OSD_FILETYPE_MEMCARD,
+	OSD_FILETYPE_SCREENSHOT
 #ifdef MESS
-  #define OSD_FILETYPE_ROM_CART 10
-  #define OSD_FILETYPE_IMAGE 11
+	,
+	OSD_FILETYPE_IMAGE_R,
+	OSD_FILETYPE_IMAGE_RW
 #endif
+};
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */

@@ -56,9 +56,9 @@ static void crimfght_sh_irqtrigger_w(int offset, int data)
 
 static void crimfght_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
-	/* b1: bank for chanel A */
-	/* b0: bank for chanel B */
+	unsigned char *RAM = memory_region(REGION_SOUND1);
+	/* b1: bank for channel A */
+	/* b0: bank for channel B */
 
 	int bank_A = 0x20000*((data >> 1) & 0x01);
 	int bank_B = 0x20000*((data) & 0x01);
@@ -71,11 +71,11 @@ static void crimfght_snd_bankswitch_w(int offset, int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int data = ( RAM[0x0414] << 8 ) | RAM[0x0415];
 
-	if ( data < Machine->memory_region_length[0] )
+	if ( data < memory_region_length(0) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -144,7 +144,7 @@ static struct MemoryWriteAddress crimfght_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( crimfght_input_ports )
+INPUT_PORTS_START( crimfght )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -270,7 +270,7 @@ INPUT_PORTS_START( crimfght_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )	/* actually service 4 */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( crimfgtj_input_ports )
+INPUT_PORTS_START( crimfgtj )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -407,28 +407,26 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 4 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_crimfght =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_KONAMI,
 			3000000,		/* ? */
-			0,
 			crimfght_readmem,crimfght_writemem,0,0,
             interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			3,
 			crimfght_readmem_sound, crimfght_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -470,50 +468,50 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( crimfght_rom )
-	ROM_REGION( 0x28000 ) /* code + banked roms */
+ROM_START( crimfght )
+	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "821l02.f24", 0x10000, 0x18000, 0x588e7da6 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
 	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
 
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
 	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
-	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x40000 )	/* data for the 007232 */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* data for the 007232 */
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
-
-	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( crimfgtj_rom )
-	ROM_REGION( 0x28000 ) /* code + banked roms */
+ROM_START( crimfgtj )
+	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "821p02.bin", 0x10000, 0x18000, 0xf33fa2e1 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
 	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
 
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
 	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
-	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x40000 )	/* data for the 007232 */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* data for the 007232 */
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
-
-	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
 ROM_END
 
 
@@ -525,7 +523,7 @@ ROM_END
 
 static void crimfght_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
 	/* bit 5 = select work RAM or palette */
@@ -540,7 +538,7 @@ static void crimfght_banking( int lines )
 
 static void crimfght_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = crimfght_banking;
 	paletteram_selected = 0;
@@ -549,60 +547,13 @@ static void crimfght_init_machine( void )
 	cpu_setbank( 1, &RAM[0x10000] );
 }
 
-static void gfx_untangle(void)
+static void init_crimfght(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver crimfght_driver =
-{
-	__FILE__,
-	0,
-	"crimfght",
-	"Crime Fighters (US)",
-	"1989",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	crimfght_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	crimfght_input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver crimfgtj_driver =
-{
-	__FILE__,
-	&crimfght_driver,
-	"crimfgtj",
-	"Crime Fighters (Japan)",
-	"1989",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	crimfgtj_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	crimfgtj_input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1989, crimfght, ,         crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US)" )
+GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan)" )

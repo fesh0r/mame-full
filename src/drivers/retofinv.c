@@ -35,19 +35,19 @@ static void retofinv_init_machine(void)
 
 static int  retofinv_shared_ram_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[0x8800+offset];
 }
 
 static void retofinv_shared_ram_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x8800+offset] = data;
 }
 
 static void retofinv_protection_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (cpu0_me800_last & 0x80)
 	{
@@ -101,21 +101,18 @@ static int retofinv_protection_r(int offset)
 static void reset_cpu2_w(int offset,int data)
 {
      if (data)
-	    cpu_reset(2);
+	    cpu_set_reset_line(2,PULSE_LINE);
 }
 
 static void reset_cpu1_w(int offset,int data)
 {
     if (data)
-	    cpu_reset(1);
+	    cpu_set_reset_line(1,PULSE_LINE);
 }
 
 static void cpu1_halt_w(int offset,int data)
 {
-	if (data)
- 	    cpu_halt(1,1);
-	else
- 	    cpu_halt(1,0);
+	cpu_set_halt_line(1, data ? CLEAR_LINE : ASSERT_LINE);
 }
 
 static int protection_2_r(int offset)
@@ -151,9 +148,6 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
 	{ 0x8800, 0x9fff, retofinv_shared_ram_r },
-	{ 0x8f00, 0x8f7f, MRA_RAM, &retofinv_sprite_ram1 },
-	{ 0x9700, 0x977f, MRA_RAM, &retofinv_sprite_ram2 },
-	{ 0x9f00, 0x9f7f, MRA_RAM, &retofinv_sprite_ram3 },
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc800, 0xc800, MRA_NOP },
@@ -177,6 +171,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_w, &retofinv_fg_videoram, &retofinv_videoram_size },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_w, &retofinv_fg_colorram },
 	{ 0x8800, 0x9fff, retofinv_shared_ram_w },
+	{ 0x8f00, 0x8f7f, MWA_RAM, &retofinv_sprite_ram1 },	/* covered by the above, */
+	{ 0x9700, 0x977f, MWA_RAM, &retofinv_sprite_ram2 },	/* here only to */
+	{ 0x9f00, 0x9f7f, MWA_RAM, &retofinv_sprite_ram3 },	/* initialize the pointers */
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_w, &retofinv_bg_videoram },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_w, &retofinv_bg_colorram },
 	{ 0xb800, 0xb800, retofinv_flip_screen_w },
@@ -240,7 +237,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( retofinv )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -272,10 +269,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x03, "30k, 80k & every 80k" )
 	PORT_DIPSETTING(    0x02, "30k, 80k" )
 	PORT_DIPSETTING(    0x01, "30k" )
-	PORT_DIPSETTING(    0x03, "30k, 80k & every 80k" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
@@ -295,8 +292,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-        PORT_START      /* DSW3 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_START      /* DSW3 modified by Shingo Suzuki 1999/11/03 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Push Start to Skip Stage", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -308,9 +305,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coin Per Play Display" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
@@ -405,7 +402,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
-	{ 18432000/8, 18432000/8 },
+	{ 3072000, 3072000 },	/* ??? */
 	{ 80, 80 }
 };
 
@@ -416,21 +413,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,
-			0,
 			readmem, writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,
-			2,
 			readmem_sub, writemem_sub,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,
-			3,
 			readmem_sound, writemem_sound,0,0,
 			nmi_interrupt,2
 		},
@@ -467,13 +461,13 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( retofinv_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( retofinv )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic70.rom", 0x0000, 0x2000, 0xeae7459d )
 	ROM_LOAD( "ic71.rom", 0x2000, 0x2000, 0x72895e37 )
 	ROM_LOAD( "ic72.rom", 0x4000, 0x2000, 0x505dd20b )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
 	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
 	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
@@ -483,26 +477,26 @@ ROM_START( retofinv_rom )
 	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
 	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
 	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
-ROM_START( retofin1_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( retofin1 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "roi.02",  0x0000, 0x2000, 0xd98fd462 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
 	ROM_LOAD( "roi.01",  0x4000, 0x2000, 0x57679062 )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
 	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
 	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
@@ -512,26 +506,26 @@ ROM_START( retofin1_rom )
 	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
 	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
 	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
-ROM_START( retofin2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( retofin2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ri-c.1e", 0x0000, 0x2000, 0xe3c31260 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
 	ROM_LOAD( "ri-a.1c", 0x4000, 0x2000, 0x3ae7c530 )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
 	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
 	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
@@ -541,13 +535,13 @@ ROM_START( retofin2_rom )
 	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
 	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
@@ -556,42 +550,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x990F],"\x00\x20\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        osd_fread(f,&RAM[0x9980], 0x23);
-                        memcpy(&RAM[0x990F], &RAM[0x999C], 3);
-                        osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-       	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                 osd_fwrite(f,&RAM[0x9980], 0x23);
-                 osd_fclose(f);
-        }
-}
-
-
-struct GameDriver retofinv_driver =
+struct GameDriver driver_retofinv =
 {
 	__FILE__,
 	0,
@@ -603,21 +562,20 @@ struct GameDriver retofinv_driver =
 	0,
 	&machine_driver,
 	0,
-	retofinv_rom,
+	rom_retofinv,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-	input_ports,
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0,
+	input_ports_retofinv,
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver retofin1_driver =
+struct GameDriver driver_retofin1 =
 {
 	__FILE__,
-	&retofinv_driver,
+	&driver_retofinv,
 	"retofin1",
 	"Return of the Invaders (bootleg set 1)",
 	"1985",
@@ -626,21 +584,20 @@ struct GameDriver retofin1_driver =
 	0,
 	&machine_driver,
 	0,
-	retofin1_rom,
+	rom_retofin1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-	input_ports,
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0,
+	input_ports_retofinv,
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver retofin2_driver =
+struct GameDriver driver_retofin2 =
 {
 	__FILE__,
-	&retofinv_driver,
+	&driver_retofinv,
 	"retofin2",
 	"Return of the Invaders (bootleg set 2)",
 	"1985",
@@ -649,13 +606,12 @@ struct GameDriver retofin2_driver =
 	0,
 	&machine_driver,
 	0,
-	retofin2_rom,
+	rom_retofin2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-	input_ports,
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0,
+	input_ports_retofinv,
+	0, 0, 0,
+	ROT270,
+	0,0
 };

@@ -30,6 +30,24 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
+void simpsons_nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 10;
+	}
+}
+
 int simpsons_eeprom_r( int offset )
 {
 	int res;
@@ -109,7 +127,7 @@ int simpsons_sound_r(int offset)
 
 int simpsons_speedup1_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int data1 = RAM[0x486a];
 
@@ -117,7 +135,7 @@ int simpsons_speedup1_r( int offs )
 	{
 		int data2 = ( RAM[0x4942] << 8 ) | RAM[0x4943];
 
-		if ( data2 < Machine->memory_region_length[0] )
+		if ( data2 < memory_region_length(0) )
 		{
 			data2 = ( RAM[data2] << 8 ) | RAM[data2 + 1];
 
@@ -138,7 +156,7 @@ int simpsons_speedup1_r( int offs )
 
 int simpsons_speedup2_r( int offs )
 {
-	int data = Machine->memory_region[0][0x4856];
+	int data = memory_region(REGION_CPU1)[0x4856];
 
 	if ( data == 1 )
 		cpu_spinuntil_int();
@@ -154,7 +172,7 @@ int simpsons_speedup2_r( int offs )
 
 static void simpsons_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
 	switch ( lines & 0xf0 )
@@ -186,7 +204,7 @@ static void simpsons_banking( int lines )
 
 void simpsons_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = simpsons_banking;
 
@@ -197,38 +215,9 @@ void simpsons_init_machine( void )
 	/* init the default banks */
 	cpu_setbank( 1, &RAM[0x10000] );
 
-	RAM = Machine->memory_region[3];
+	RAM = memory_region(3);
 
 	cpu_setbank( 2, &RAM[0x10000] );
 
 	simpsons_video_banking( 0 );
-
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
-}
-
-int simpsons_eeprom_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 10;
-
-	return 1;
-}
-
-void simpsons_eeprom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
 }

@@ -111,6 +111,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
 
 extern unsigned char *galaxian_attributesram;
@@ -187,6 +188,30 @@ static int jumpbug_protection_r(int offset)
 	}
 
 	return 0;
+}
+
+static int checkmaj_protection_r(int offset)
+{
+	switch (cpu_get_pc())
+	{
+	case 0x0f15:  return 0xf5;
+	case 0x0f8f:  return 0x7c;
+	case 0x10b3:  return 0x7c;
+	case 0x10e0:  return 0x00;
+	case 0x10f1:  return 0xaa;
+	case 0x1402:  return 0xaa;
+	default:
+		if (errorlog)  fprintf(errorlog, "Unknown protection read. PC=%04X\n",cpu_get_pc());
+	}
+
+	return 0;
+}
+
+/* Send sound data to the sound cpu and cause an nmi */
+static void checkmaj_sound_command_w (int offset, int data)
+{
+	soundlatch_w (0,data);
+	cpu_cause_interrupt (1, Z80_NMI_INT);
 }
 
 
@@ -300,10 +325,42 @@ static struct MemoryWriteAddress jumpbug_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryWriteAddress checkmaj_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
+	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7006, 0x7006, galaxian_flipx_w },
+	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7800, 0x7800, checkmaj_sound_command_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress checkmaj_sound_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x8000, 0x81ff, MRA_RAM },
+	{ 0xa002, 0xa002, AY8910_read_port_0_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress checkmaj_sound_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x8000, 0x81ff, MWA_RAM },
+	{ 0xa000, 0xa000, AY8910_control_port_0_w },
+	{ 0xa001, 0xa001, AY8910_write_port_0_w },
+	{ -1 }	/* end of table */
+};
+
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
 static void zigzag_sillyprotection_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (data)
@@ -322,15 +379,17 @@ static void zigzag_sillyprotection_w(int offset,int data)
 /* but the way the 8910 is hooked up is even sillier! */
 static int latch;
 
-void zigzag_8910_latch(int offset,int data)
+static void zigzag_8910_latch(int offset,int data)
 {
 	latch = offset;
 }
-void zigzag_8910_data_trigger(int offset,int data)
+
+static void zigzag_8910_data_trigger(int offset,int data)
 {
 	AY8910_write_port_0_w(0,latch);
 }
-void zigzag_8910_control_trigger(int offset,int data)
+
+static void zigzag_8910_control_trigger(int offset,int data)
 {
 	AY8910_control_port_0_w(0,latch);
 }
@@ -370,11 +429,11 @@ static struct MemoryWriteAddress zigzag_writemem[] =
 
 
 
-INPUT_PORTS_START( galaxian_input_ports )
+INPUT_PORTS_START( galaxian )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
@@ -386,7 +445,7 @@ INPUT_PORTS_START( galaxian_input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
@@ -411,11 +470,11 @@ INPUT_PORTS_START( galaxian_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( superg_input_ports )
+INPUT_PORTS_START( superg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
@@ -427,7 +486,7 @@ INPUT_PORTS_START( superg_input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
@@ -452,16 +511,13 @@ INPUT_PORTS_START( superg_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pisces_input_ports )
+INPUT_PORTS_START( pisces )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-/* 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) */
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -475,13 +531,12 @@ INPUT_PORTS_START( pisces_input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-/* 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	 */
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
@@ -494,8 +549,8 @@ INPUT_PORTS_START( pisces_input_ports )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x01, "20000" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "LC 2C/1C RC 1C/2C 2C/5C" )
-	PORT_DIPSETTING(    0x00, "LC 1C/1C RC 1C/5C" )
+	PORT_DIPSETTING(    0x02, "A 2C/1C  B 1C/2C 2C/5C" )
+	PORT_DIPSETTING(    0x00, "A 1C/1C  B 1C/5C" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x04, "Hard" )
@@ -505,16 +560,16 @@ INPUT_PORTS_START( pisces_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( warofbug_input_ports )
+INPUT_PORTS_START( warofbug )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   | IPF_8WAY )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -544,11 +599,11 @@ INPUT_PORTS_START( warofbug_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( redufo_input_ports )
+INPUT_PORTS_START( redufo )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
@@ -560,14 +615,14 @@ INPUT_PORTS_START( redufo_input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x40, "LC 2C/1C RC 1C/3C" )
-	PORT_DIPSETTING(    0x00, "LC 1C/1C RC 1C/6C" )
-	PORT_DIPSETTING(    0x80, "LC 1C/2C RC 1C/12C" )
+	PORT_DIPSETTING(    0x40, "A 2C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0x00, "A 1C/1C  B 1C/6C" )
+	PORT_DIPSETTING(    0x80, "A 1C/2C  B 1C/12C" )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
 
 	PORT_START      /* DSW0 */
@@ -585,11 +640,11 @@ INPUT_PORTS_START( redufo_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pacmanbl_input_ports )
+INPUT_PORTS_START( pacmanbl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -599,7 +654,7 @@ INPUT_PORTS_START( pacmanbl_input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
@@ -626,24 +681,24 @@ INPUT_PORTS_START( pacmanbl_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( devilfsg_input_ports )
+INPUT_PORTS_START( devilfsg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
@@ -667,24 +722,24 @@ INPUT_PORTS_START( devilfsg_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( zigzag_input_ports )
+INPUT_PORTS_START( zigzag )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -706,11 +761,11 @@ INPUT_PORTS_START( zigzag_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mooncrgx_input_ports )
+INPUT_PORTS_START( mooncrgx )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
@@ -718,7 +773,7 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
@@ -742,21 +797,21 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( scramblb_input_ports )
+INPUT_PORTS_START( scramblb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   | IPF_8WAY )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -790,23 +845,23 @@ INPUT_PORTS_START( scramblb_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( jumpbug_input_ports )
+INPUT_PORTS_START( jumpbug )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   | IPF_8WAY )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -840,26 +895,26 @@ INPUT_PORTS_START( jumpbug_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( levers_input_ports )
+INPUT_PORTS_START( levers )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )	/* probably unused */
@@ -888,12 +943,12 @@ INPUT_PORTS_START( levers_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( azurian_input_ports )
+INPUT_PORTS_START( azurian )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -902,10 +957,10 @@ INPUT_PORTS_START( azurian_input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )		/* used */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -926,6 +981,209 @@ INPUT_PORTS_START( azurian_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( orbitron )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 2C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0x40, "A 1C/1C  B 1C/6C" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( checkmaj )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL) /* p2 tiles right */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL) /* p2 tiles left */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6" )
+	PORT_DIPSETTING(    0x40, "A 2/1 B 1/3" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW */
+ 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "100000" )
+	PORT_DIPSETTING(    0x04, "200000" )
+	PORT_DIPNAME( 0x08, 0x00, "Difficulty Increases At Level" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* p1 tiles right */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* p1 tiles left */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( swarm )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_DIPSETTING(    0x03, "40000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( streakng )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x40, "10000" )
+	PORT_DIPSETTING(    0x80, "15000" )
+	PORT_DIPSETTING(    0xc0, "20000" )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( blkhole )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )	/* Bonus Life? */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1098,17 +1356,28 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
+static struct AY8910interface checkmaj_ay8910_interface =
+{
+	1,	/* 1 chip */
+	1620000,	/* 1.62 MHz? (Used the same as Moon Cresta) */
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
+	{ soundlatch_r },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
 
 #define MACHINE_DRIVER(NAME, INTERRUPT, MACHINEINIT, GFXDECODEINFO, VHSTART)	\
 																				\
-static struct MachineDriver NAME##_machine_driver =								\
+static struct MachineDriver machine_driver_##NAME =								\
 {																				\
 	/* basic machine hardware */												\
 	{																			\
 		{																		\
 			CPU_Z80,															\
 			18432000/6,	/* 3.072 Mhz */											\
-			0,																	\
 			readmem,writemem,0,0,												\
 			INTERRUPT##_vh_interrupt,1											\
 		}																		\
@@ -1146,18 +1415,17 @@ MACHINE_DRIVER(warofbug, galaxian,  0,                     galaxian,  galaxian)
 MACHINE_DRIVER(galapx,   galaxian,  galapx_machine_init,   galaxian,  galaxian)
 MACHINE_DRIVER(pisces,   galaxian,  0,                     pisces,    pisces)
 MACHINE_DRIVER(mooncrgx, galaxian,  0,                     pisces,    mooncrgx)
-MACHINE_DRIVER(pacmanbl, galaxian,  0,                     pacmanbl,  pisces)
-MACHINE_DRIVER(devilfsg, devilfsg,  0,                     pacmanbl,  pisces)
+MACHINE_DRIVER(pacmanbl, galaxian,  0,                     pacmanbl,  galaxian)
+MACHINE_DRIVER(devilfsg, devilfsg,  0,                     pacmanbl,  galaxian)
 MACHINE_DRIVER(azurian,  galaxian,  0,                     scramble,  galaxian)
 
-static struct MachineDriver zigzag_machine_driver =
+static struct MachineDriver machine_driver_zigzag =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			zigzag_readmem,zigzag_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -1188,14 +1456,13 @@ static struct MachineDriver zigzag_machine_driver =
 	}
 };
 
-static struct MachineDriver scramblb_machine_driver =
+static struct MachineDriver machine_driver_scramblb =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			0,
 			scramblb_readmem,scramblb_writemem,0,0,
 			scramble_vh_interrupt,1
 		}
@@ -1226,19 +1493,18 @@ static struct MachineDriver scramblb_machine_driver =
 	}
 };
 
-static struct MachineDriver jumpbug_machine_driver =
+static struct MachineDriver machine_driver_jumpbug =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
-			0,
 			jumpbug_readmem,jumpbug_writemem,0,0,
 			scramble_vh_interrupt,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -1264,14 +1530,49 @@ static struct MachineDriver jumpbug_machine_driver =
 	}
 };
 
-
-static const char *mooncrst_sample_names[] =
+static struct MachineDriver machine_driver_checkmaj =
 {
-	"*galaxian",
-	"shot.wav",
-	"death.wav",
-	0	/* end of array */
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			readmem,checkmaj_writemem,0,0,
+			galaxian_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			1620000,	/* 1.62 MHz? (used the same as Moon Cresta) */
+			checkmaj_sound_readmem,checkmaj_sound_writemem,0,0,
+			interrupt,32	/* NMIs are triggered by the main CPU */
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	galaxian_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	galaxian_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&checkmaj_ay8910_interface
+		}
+	}
 };
+
 
 /***************************************************************************
 
@@ -1279,24 +1580,24 @@ static const char *mooncrst_sample_names[] =
 
 ***************************************************************************/
 
-ROM_START( galaxian_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )  /*	\ 7f previously */
-	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )	/*  /				*/
-	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, 0xb5894925 )  /*  \ 7j previously */
-	ROM_LOAD( "galmidw.y",    0x1800, 0x0800, 0x6b3ca10b )  /*  /               */
+ROM_START( galaxian )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )
+	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )
+	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, 0xb5894925 )
+	ROM_LOAD( "galmidw.y",    0x1800, 0x0800, 0x6b3ca10b )
 	ROM_LOAD( "7l",           0x2000, 0x0800, 0x1b933207 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
 	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galmidw_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( galmidw )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )
 	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )
 	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, 0xb5894925 )
@@ -1307,12 +1608,12 @@ ROM_START( galmidw_rom )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( superg_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( superg )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
 	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
@@ -1323,12 +1624,12 @@ ROM_START( superg_rom )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galaxb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( galaxb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
 	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
@@ -1339,12 +1640,12 @@ ROM_START( galaxb_rom )
 	ROM_LOAD( "cp7e",         0x0000, 0x0800, 0xd0ba22c9 )   /* logo was removed */
 	ROM_LOAD( "cp6e",         0x0800, 0x0800, 0x977e37cf )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galapx_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( galapx )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galx.u",       0x0000, 0x0800, 0x79e4007d )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
 	ROM_LOAD( "galx.w",       0x1000, 0x0800, 0x72d2d3ee )
@@ -1355,28 +1656,28 @@ ROM_START( galapx_rom )
 	ROM_LOAD( "galx.1h",      0x0000, 0x0800, 0xe8810654 )
 	ROM_LOAD( "galx.1k",      0x0800, 0x0800, 0xcbe84a76 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galap1_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 ) /* \							*/
-	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 ) /*  \						*/
-	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 ) /*	\ galx_1.rom previously */
-	ROM_LOAD( "galx_1_4.rom", 0x1800, 0x0800, 0xe71e1d9e ) /*	/						*/
-	ROM_LOAD( "galx_1_5.rom", 0x2000, 0x0800, 0x6e65a3b2 ) /*  /						*/
+ROM_START( galap1 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
+	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
+	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
+	ROM_LOAD( "galx_1_4.rom", 0x1800, 0x0800, 0xe71e1d9e )
+	ROM_LOAD( "galx_1_5.rom", 0x2000, 0x0800, 0x6e65a3b2 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galap4_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( galap4 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galnamco.u",   0x0000, 0x0800, 0xacfde501 )
 	ROM_LOAD( "galnamco.v",   0x0800, 0x0800, 0x65cf3c77 )
 	ROM_LOAD( "galnamco.w",   0x1000, 0x0800, 0x9eef9ae6 )
@@ -1387,12 +1688,12 @@ ROM_START( galap4_rom )
 	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800, 0xd5e88ab4 )
 	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800, 0xa57b83e4 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galturbo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( galturbo )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
 	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
@@ -1403,12 +1704,28 @@ ROM_START( galturbo_rom )
 	ROM_LOAD( "galturbo.1h",  0x0000, 0x0800, 0xa713fd1a )
 	ROM_LOAD( "galturbo.1k",  0x0800, 0x0800, 0x28511790 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( pisces_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( swarm )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "swarm1.bin",    0x0000, 0x0800, 0x21eba3d0 )
+	ROM_LOAD( "swarm2.bin",    0x0800, 0x0800, 0xf3a436cd )
+	ROM_LOAD( "swarm3.bin",    0x1000, 0x0800, 0x2915e38b )
+	ROM_LOAD( "swarm4.bin",    0x1800, 0x0800, 0x8bbbf486 )
+	ROM_LOAD( "swarm5.bin",    0x2000, 0x0800, 0xf1b1987e )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "swarma.bin",    0x0000, 0x0800, 0xef8657bb )
+	ROM_LOAD( "swarmb.bin",    0x0800, 0x0800, 0x60c4bd31 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+ROM_END
+
+ROM_START( pisces )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pisces.a1",    0x0000, 0x0800, 0x856b8e1f )
 	ROM_LOAD( "pisces.a2",    0x0800, 0x0800, 0x055f9762 )
 	ROM_LOAD( "pisces.b2",    0x1000, 0x0800, 0x5540f2e4 )
@@ -1420,12 +1737,12 @@ ROM_START( pisces_rom )
 	ROM_LOAD( "pisces.1j",    0x0000, 0x1000, 0x2dba9e0e )
 	ROM_LOAD( "pisces.1k",    0x1000, 0x1000, 0xcdc5aa26 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
-ROM_START( uniwars_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( uniwars )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
 	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
@@ -1441,12 +1758,12 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "egg9",         0x1000, 0x0800, 0xfc8b58fd )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "uniwars.clr",  0x0000, 0x0020, 0x25c79518 )
 ROM_END
 
-ROM_START( gteikoku_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gteikoku )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
 	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
@@ -1462,12 +1779,12 @@ ROM_START( gteikoku_rom )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( spacbatt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spacbatt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
 	ROM_LOAD( "sb.3",         0x1000, 0x0800, 0xc25ce4c1 )
@@ -1483,12 +1800,12 @@ ROM_START( spacbatt_rom )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( warofbug_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( warofbug )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "warofbug.u",   0x0000, 0x0800, 0xb8dfb7e3 )
 	ROM_LOAD( "warofbug.v",   0x0800, 0x0800, 0xfd8854e0 )
 	ROM_LOAD( "warofbug.w",   0x1000, 0x0800, 0x4495aa14 )
@@ -1499,12 +1816,12 @@ ROM_START( warofbug_rom )
 	ROM_LOAD( "warofbug.1k",  0x0000, 0x0800, 0x8100fa85 )
 	ROM_LOAD( "warofbug.1j",  0x0800, 0x0800, 0xd1220ae9 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "warofbug.clr", 0x0000, 0x0020, 0x8688e64b )
 ROM_END
 
-ROM_START( redufo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( redufo )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ru1a",         0x0000, 0x0800, 0x5a8e4f37 )
 	ROM_LOAD( "ru2a",         0x0800, 0x0800, 0xc624f52d )
 	ROM_LOAD( "ru3a",         0x1000, 0x0800, 0xe1030d1c )
@@ -1516,12 +1833,12 @@ ROM_START( redufo_rom )
 	ROM_LOAD( "ruhja",        0x0000, 0x0800, 0x8a422b0d )
 	ROM_LOAD( "rukla",        0x0800, 0x0800, 0x1eb84cb1 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( pacmanbl_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pacmanbl )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "blpac1b",      0x0000, 0x0800, 0x6718df42 )
 	ROM_LOAD( "blpac2b",      0x0800, 0x0800, 0x33be3648 )
 	ROM_LOAD( "blpac3b",      0x1000, 0x0800, 0xf98c0ceb )
@@ -1536,12 +1853,12 @@ ROM_START( pacmanbl_rom )
 	ROM_LOAD( "blpac10b",     0x1000, 0x0800, 0x44a45b72 )
 	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
 ROM_END
 
-ROM_START( devilfsg_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( devilfsg )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "dfish1.7f",    0x2000, 0x0800, 0x2ab19698 )
 	ROM_CONTINUE(             0x0000, 0x0800 )
 	ROM_LOAD( "dfish2.7h",    0x2800, 0x0800, 0x4e77f097 )
@@ -1557,12 +1874,12 @@ ROM_START( devilfsg_rom )
 	ROM_LOAD( "dfish6.1k",    0x1800, 0x0800, 0xd7a6c4c4 )
 	ROM_CONTINUE(             0x0800, 0x0800 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
-ROM_START( zigzag_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( zigzag )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zz_d1.bin",    0x0000, 0x1000, 0x8cc08d81 )
 	ROM_LOAD( "zz_d2.bin",    0x1000, 0x1000, 0x326d8d45 )
 	ROM_LOAD( "zz_d4.bin",    0x2000, 0x1000, 0xa94ed92a )
@@ -1574,12 +1891,12 @@ ROM_START( zigzag_rom )
 	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
-ROM_START( zigzag2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( zigzag2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "z1",           0x0000, 0x1000, 0x4c28349a )
 	ROM_LOAD( "zz_d2.bin",    0x1000, 0x1000, 0x326d8d45 )
 	ROM_LOAD( "zz_d4.bin",    0x2000, 0x1000, 0xa94ed92a )
@@ -1591,12 +1908,12 @@ ROM_START( zigzag2_rom )
 	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
-ROM_START( mooncrgx_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mooncrgx )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1",            0x0000, 0x0800, 0x84cf420b )
 	ROM_LOAD( "2",            0x0800, 0x0800, 0x4c2a61a1 )
 	ROM_LOAD( "3",            0x1000, 0x0800, 0x1962523a )
@@ -1612,12 +1929,12 @@ ROM_START( mooncrgx_rom )
 	ROM_LOAD( "9.chr",        0x1000, 0x0800, 0x70df525c )
 	ROM_LOAD( "11.chr",       0x1800, 0x0800, 0xe0edccbd )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( scramblb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( scramblb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "scramble.1k",  0x0000, 0x0800, 0x9e025c4a )
 	ROM_LOAD( "scramble.2k",  0x0800, 0x0800, 0x306f783e )
 	ROM_LOAD( "scramble.3k",  0x1000, 0x0800, 0x0500b701 )
@@ -1631,12 +1948,12 @@ ROM_START( scramblb_rom )
 	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
 	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
-ROM_START( jumpbug_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( jumpbug )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 )
 	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 )
 	ROM_LOAD( "jb3",          0x2000, 0x1000, 0x97c24be2 )
@@ -1653,19 +1970,19 @@ ROM_START( jumpbug_rom )
 	ROM_LOAD( "jbj",          0x2000, 0x0800, 0x06e8d7df )
 	ROM_LOAD( "jbk",          0x2800, 0x0800, 0xb8dbddf3 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( jumpbugb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 ) /* \					  */
-	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 ) /*  \ formerly jb1.prg */
-	ROM_LOAD( "jb3b",         0x2000, 0x1000, 0xcb8b8a0f ) /*  /				  */
-	ROM_LOAD( "jb4",          0x3000, 0x1000, 0x66751d12 ) /* /					  */
-	ROM_LOAD( "jb5b",         0x8000, 0x1000, 0x7553b5e2 ) /* \					  */
-	ROM_LOAD( "jb6b",         0x9000, 0x1000, 0x47be9843 ) /*  \ formerly jb2.prg */
-	ROM_LOAD( "jb7b",         0xa000, 0x0800, 0x460aed61 ) /*  /				  */
+ROM_START( jumpbugb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 )
+	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 )
+	ROM_LOAD( "jb3b",         0x2000, 0x1000, 0xcb8b8a0f )
+	ROM_LOAD( "jb4",          0x3000, 0x1000, 0x66751d12 )
+	ROM_LOAD( "jb5b",         0x8000, 0x1000, 0x7553b5e2 )
+	ROM_LOAD( "jb6b",         0x9000, 0x1000, 0x47be9843 )
+	ROM_LOAD( "jb7b",         0xa000, 0x0800, 0x460aed61 )
 
 	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "jbl",          0x0000, 0x0800, 0x9a091b0a )
@@ -1675,12 +1992,12 @@ ROM_START( jumpbugb_rom )
 	ROM_LOAD( "jbj",          0x2000, 0x0800, 0x06e8d7df )
 	ROM_LOAD( "jbk",          0x2800, 0x0800, 0xb8dbddf3 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( levers_rom )
-	ROM_REGION(0x10000)       /* 64k for code */
+ROM_START( levers )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "g96059.a8", 	  0x0000, 0x1000, 0x9550627a )
 	ROM_LOAD( "g96060.d8", 	  0x2000, 0x1000, 0x5ac64646 )
 	ROM_LOAD( "g96061.e8", 	  0x3000, 0x1000, 0x9db8e520 )
@@ -1696,12 +2013,12 @@ ROM_START( levers_rom )
 							/*0x2000- 0x27ff empty */
 	ROM_LOAD( "g95947.m1", 	  0x2800, 0x0800, 0x72ff67e2 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "g960lev.clr",  0x0000, 0x0020, 0x01febbbe )
 ROM_END
 
-ROM_START( azurian_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( azurian )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pgm.1",        0x0000, 0x1000, 0x17a0fca7 )
 	ROM_LOAD( "pgm.2",        0x1000, 0x1000, 0x14659848 )
 	ROM_LOAD( "pgm.3",        0x2000, 0x1000, 0x8f60fb97 )
@@ -1710,384 +2027,86 @@ ROM_START( azurian_rom )
 	ROM_LOAD( "gfx.1",        0x0000, 0x0800, 0xf5afb803 )
 	ROM_LOAD( "gfx.2",        0x0800, 0x0800, 0xae96e5d1 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-
-static unsigned char wrong_color_prom[32] =
-{
-	0x00,0x07,0x38,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC0,0xA0,0x07,0x00,0x38,0xc0,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
-};
-
-
-static int galaxian_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* wait for the checkerboard pattern to be on screen */
-	if (memcmp(&RAM[0x5000],"\x30\x32",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x40a8],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void galaxian_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x40a8],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int pisces_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4021],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* wait for the screen to initialize */
-	if (memcmp(&RAM[0x4021],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4021],3);
-			osd_fclose(f);
-		}
-		firsttime= 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void pisces_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4021],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int warofbug_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4034],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* wait for memory to be set */
-	if (memcmp(&RAM[0x4034],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4034],3);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void warofbug_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4034],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int pacmanbl_hiload(void)
-{
-	static int firsttime;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4288],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* Check for score to be initialised, and wait for "HIGH" to be on screen */
-
-	if (memcmp(&RAM[0x4288],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x5180],"\x40",1) == 0 && memcmp(&RAM[0x51a0],"\x40",1) == 0 &&
-		memcmp(&RAM[0x51c0],"\x40",1) == 0 && memcmp(&RAM[0x51e0],"\x40",1) == 0 &&
-		memcmp(&RAM[0x5200],"\x40",1) == 0 && memcmp(&RAM[0x5220],"\x40",1) == 0 &&
-		memcmp(&RAM[0x5240],"\x48",1) == 0 && memcmp(&RAM[0x5260],"\x47",1) == 0 &&
-		memcmp(&RAM[0x5280],"\x49",1) == 0 && memcmp(&RAM[0x52a0],"\x48",1) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int hi;
-			osd_fread(f,&RAM[0x4288],3);
-			osd_fclose(f);
-
-			hi = 	(RAM[0x4288] & 0x0f) +
-					(RAM[0x4288] >> 4) * 10 +
-					(RAM[0x4289] & 0x0f) * 100 +
-					(RAM[0x4289] >> 4) * 1000 +
-					(RAM[0x428a] & 0x0f) * 10000 +
-					(RAM[0x428a] >> 4) * 100000;
-
-			if (hi > 0)
-				RAM[0x5180] = RAM[0x4288] & 0x0F;
-			if (hi >= 10)
-				RAM[0x51A0] = RAM[0x4288] >> 4;
-			if (hi >= 100)
-				RAM[0x51C0] = RAM[0x4289] & 0x0F;
-			if (hi >= 1000)
-				RAM[0x51E0] = RAM[0x4289] >> 4;
-			if (hi >= 10000)
-				RAM[0x5200] = RAM[0x428a] & 0x0F;
-			if (hi >= 100000)
-				RAM[0x5220] = RAM[0x428a] >> 4;
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void pacmanbl_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4288],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int zigzag_hiload(void)
-{
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-    /* wait for memory to be set */
-    if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            int hi;
-            osd_fread(f,&RAM[0x4280],3);
-            osd_fclose(f);
-
-            hi = (RAM[0x4280] & 0x0f) +
-                (RAM[0x4280] >> 4) * 10 +
-                (RAM[0x4281] & 0x0f) * 100 +
-                (RAM[0x4281] >> 4) * 1000 +
-                (RAM[0x4282] & 0x0f) * 10000 +
-                (RAM[0x4282] >> 4) * 100000;
-
-            if (hi > 0)
-                RAM[0x52d] = 0x30+(RAM[0x4280] & 0x0F);
-            if (hi >= 10)
-                RAM[0x52e] = 0x30+(RAM[0x4280] >> 4);
-            if (hi >= 100)
-                RAM[0x52f] = 0x30+(RAM[0x4281] & 0x0F);
-            if (hi >= 1000)
-                RAM[0x530] = 0x30+(RAM[0x4281] >> 4);
-            if (hi >= 10000)
-                RAM[0x531] = 0x30+(RAM[0x4282] & 0x0F);
-            if (hi >= 100000)
-                RAM[0x532] = 0x30+(RAM[0x4282] >> 4);
-        }
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void zigzag_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0x4280],3);
-        osd_fclose(f);
-    }
-}
-
-
-static int mooncrgx_hiload(void)
-{
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-    /* wait for memory to be set */
-    if (memcmp(&RAM[0x4042],"\x00\x50\x00",3) == 0)
-
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x4042],84);
-       		osd_fclose(f);
-
-
-        }
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void mooncrgx_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-	   osd_fwrite(f,&RAM[0x4042],84);
-	   osd_fclose(f);
-    }
-}
-
-
-static int scramble_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-    if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
-		(memcmp(&RAM[0x421B],"\x00\x00\x01",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4200],0x1E);
-			/* copy high score */
-			memcpy(&RAM[0x40A8],&RAM[0x4200],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void scramble_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4200],0x1E);
-		osd_fclose(f);
-	}
-
-}
-
-
-static int jumpbug_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
-		memcmp(&RAM[0x4233],"\x97\x97\x97\x97",4) ==0)
-
-	{
-
-			void *f;
-
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-					osd_fread(f,&RAM[0x4208],6);
-					osd_fread(f,&RAM[0x4222],3*7);
-					osd_fclose(f);
-			}
-			return 1;
-	}
-
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void jumpbug_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-			osd_fwrite(f,&RAM[0x4208],6);
-			osd_fwrite(f,&RAM[0x4222],3*7);
-			osd_fclose(f);
-	}
-}
+ROM_START( orbitron )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "orbitron.3",   0x0600, 0x0200, 0x419f9c9b )
+	ROM_CONTINUE(			  0x0400, 0x0200)
+	ROM_CONTINUE(			  0x0200, 0x0200)
+	ROM_CONTINUE(			  0x0000, 0x0200)
+	ROM_LOAD( "orbitron.4",   0x0e00, 0x0200, 0x44ad56ac )
+	ROM_CONTINUE(			  0x0c00, 0x0200)
+	ROM_CONTINUE(			  0x0a00, 0x0200)
+	ROM_CONTINUE(			  0x0800, 0x0200)
+	ROM_LOAD( "orbitron.1",   0x1600, 0x0200, 0xda3f5168 )
+	ROM_CONTINUE(			  0x1400, 0x0200)
+	ROM_CONTINUE(			  0x1200, 0x0200)
+	ROM_CONTINUE(			  0x1000, 0x0200)
+	ROM_LOAD( "orbitron.2",   0x1e00, 0x0200, 0xa3b813fc )
+	ROM_CONTINUE(			  0x1c00, 0x0200)
+	ROM_CONTINUE(			  0x1a00, 0x0200)
+	ROM_CONTINUE(			  0x1800, 0x0200)
+	ROM_LOAD( "orbitron.5",   0x2000, 0x0800, 0x20cd8bb8 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "orbitron.6",   0x0000, 0x0800, 0x2c91b83f )
+	ROM_LOAD( "orbitron.7",   0x0800, 0x0800, 0x46f4cca4 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( checkmaj )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "cm_1.bin",     0x0000, 0x1000, 0x456a118f )
+	ROM_LOAD( "cm_2.bin",     0x1000, 0x1000, 0x146b2c44 )
+	ROM_LOAD( "cm_3.bin",     0x2000, 0x0800, 0x73e1c945 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cm_6.bin",     0x0000, 0x0800, 0x476a7cc3 )
+	ROM_LOAD( "cm_5.bin",     0x0800, 0x0800, 0xb3df2b5f )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
+	ROM_LOAD( "cm_4.bin",     0x0000, 0x1000, 0x923cffa1 )
+ROM_END
+
+ROM_START( streakng )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "sk1",          0x0000, 0x1000, 0xc8866ccb )
+	ROM_LOAD( "sk2",          0x1000, 0x1000, 0x7caea29b )
+	ROM_LOAD( "sk3",          0x2000, 0x1000, 0x7b4bfa76 )
+	ROM_LOAD( "sk4",          0x3000, 0x1000, 0x056fc921 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sk5",          0x0000, 0x1000, 0xd27f1e0c )
+	ROM_LOAD( "sk6",          0x1000, 0x1000, 0xa7089588 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "sk.bpr",       0x0000, 0x0020, 0xbce79607 )
+ROM_END
+
+ROM_START( blkhole )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "bh1",          0x0000, 0x0800, 0x64998819 )
+	ROM_LOAD( "bh2",          0x0800, 0x0800, 0x26f26ce4 )
+	ROM_LOAD( "bh3",          0x1000, 0x0800, 0x3418bc45 )
+	ROM_LOAD( "bh4",          0x1800, 0x0800, 0x735ff481 )
+	ROM_LOAD( "bh5",          0x2000, 0x0800, 0x3f657be9 )
+	ROM_LOAD( "bh6",          0x2800, 0x0800, 0xa057ab35 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bh7",          0x0000, 0x0800, 0x975ba821 )
+	ROM_LOAD( "bh8",          0x0800, 0x0800, 0x03d11020 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+ROM_END
 
 
 static void pisces_driver_init(void)
@@ -2095,8 +2114,14 @@ static void pisces_driver_init(void)
 	install_mem_write_handler(0, 0x6002, 0x6002, pisces_gfxbank_w);
 }
 
+static void checkmaj_driver_init(void)
+{
+    /* for the title screen */
+	install_mem_read_handler(0, 0x3800, 0x3800, checkmaj_protection_r);
+}
 
-struct GameDriver galaxian_driver =
+
+struct GameDriver driver_galaxian =
 {
 	__FILE__,
 	0,
@@ -2106,205 +2131,221 @@ struct GameDriver galaxian_driver =
 	"Namco",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	galaxian_rom,
+	rom_galaxian,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	galaxian_input_ports,
+	input_ports_galaxian,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galmidw_driver =
+struct GameDriver driver_galmidw =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galmidw",
 	"Galaxian (Midway)",
 	"1979",
 	"[Namco] (Midway license)",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	galmidw_rom,
+	rom_galmidw,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	galaxian_input_ports,
+	input_ports_galaxian,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver superg_driver =
+struct GameDriver driver_superg =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"superg",
 	"Super Galaxians",
 	"1979",
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	superg_rom,
+	rom_superg,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galaxb_driver =
+struct GameDriver driver_galaxb =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galaxb",
 	"Galaxian (bootleg)",
 	"1979",
 	"bootleg",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	galaxb_rom,
+	rom_galaxb,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galapx_driver =
+struct GameDriver driver_galapx =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galapx",
 	"Galaxian Part X",
 	"1979",
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galapx_machine_driver,
+	&machine_driver_galapx,
 	0,
 
-	galapx_rom,
+	rom_galapx,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galap1_driver =
+struct GameDriver driver_galap1 =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galap1",
 	"Space Invaders Galactica",
 	"1979",
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	galap1_rom,
+	rom_galap1,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galap4_driver =
+struct GameDriver driver_galap4 =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galap4",
 	"Galaxian Part 4",
 	"1979",
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	galap4_rom,
+	rom_galap4,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver galturbo_driver =
+struct GameDriver driver_galturbo =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galturbo",
 	"Galaxian Turbo",
 	"1979",
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
-	galturbo_rom,
+	rom_galturbo,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+struct GameDriver driver_swarm =
+{
+	__FILE__,
+	&driver_galaxian,
+	"swarm",
+	"Swarm",
+	"1979",
+	"hack",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
+	&machine_driver_galaxian,
+	0,
 
-	galaxian_hiload, galaxian_hisave
+	rom_swarm,
+	0, 0,
+	0,
+	0,
+
+	input_ports_swarm,
+
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver pisces_driver =
+struct GameDriver driver_pisces =
 {
 	__FILE__,
 	0,
@@ -2314,23 +2355,22 @@ struct GameDriver pisces_driver =
 	"<unknown>",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
-	pisces_rom,
+	rom_pisces,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	pisces_input_ports,
+	input_ports_pisces,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pisces_hiload, pisces_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver uniwars_driver =
+struct GameDriver driver_uniwars =
 {
 	__FILE__,
 	0,
@@ -2340,75 +2380,72 @@ struct GameDriver uniwars_driver =
 	"Irem",
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
-	uniwars_rom,
+	rom_uniwars,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver gteikoku_driver =
+struct GameDriver driver_gteikoku =
 {
 	__FILE__,
-	&uniwars_driver,
+	&driver_uniwars,
 	"gteikoku",
 	"Gingateikoku No Gyakushu",
 	"1980",
 	"Irem",
 	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
-	gteikoku_rom,
+	rom_gteikoku,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver spacbatt_driver =
+struct GameDriver driver_spacbatt =
 {
 	__FILE__,
-	&uniwars_driver,
+	&driver_uniwars,
 	"spacbatt",
 	"Space Battle",
 	"1980",
 	"bootleg",
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
-	spacbatt_rom,
+	rom_spacbatt,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver warofbug_driver =
+struct GameDriver driver_warofbug =
 {
 	__FILE__,
 	0,
@@ -2418,23 +2455,22 @@ struct GameDriver warofbug_driver =
 	"Armenia",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&warofbug_machine_driver,
+	&machine_driver_warofbug,
 	0,
 
-	warofbug_rom,
+	rom_warofbug,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	warofbug_input_ports,
+	input_ports_warofbug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	warofbug_hiload, warofbug_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver redufo_driver =
+struct GameDriver driver_redufo =
 {
 	__FILE__,
 	0,
@@ -2444,77 +2480,75 @@ struct GameDriver redufo_driver =
 	"Hara Industries??",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&warofbug_machine_driver,
+	&machine_driver_warofbug,
 	0,
 
-	redufo_rom,
+	rom_redufo,
 	0, 0,
-	mooncrst_sample_names,
-	0,      /* sound_prom */
+	0,
+	0,
 
-	redufo_input_ports,
+	input_ports_redufo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-extern struct GameDriver pacman_driver;
-struct GameDriver pacmanbl_driver =
+extern struct GameDriver driver_pacman;
+struct GameDriver driver_pacmanbl =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"pacmanbl",
-	"Pac-Man (bootleg on Pisces hardware)",
+	"Pac-Man (bootleg on Galaxian hardware)",
 	"1981",
 	"bootleg",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&pacmanbl_machine_driver,
+	&machine_driver_pacmanbl,
 	0,
 
-	pacmanbl_rom,
+	rom_pacmanbl,
 	0, 0,
-	mooncrst_sample_names,
-	0,      /* sound_prom */
+	0,
+	0,
 
-	pacmanbl_input_ports,
+	input_ports_pacmanbl,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	pacmanbl_hiload, pacmanbl_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-extern struct GameDriver devilfsh_driver;
-struct GameDriver devilfsg_driver =
+extern struct GameDriver driver_devilfsh;
+struct GameDriver driver_devilfsg =
 {
 	__FILE__,
-	&devilfsh_driver,
+	&driver_devilfsh,
 	"devilfsg",
 	"Devil Fish (Galaxian hardware, bootleg?)",
 	"1984",
 	"Vision / Artic",
 	"Chris Hardy",
 	0,
-	&devilfsg_machine_driver,
+	&machine_driver_devilfsg,
 	0,
 
-	devilfsg_rom,
+	rom_devilfsg,
 	0, 0,
-	mooncrst_sample_names,
-	0,      /* sound_prom */
+	0,
+	0,
 
-	devilfsg_input_ports,
+	input_ports_devilfsg,
 
-	wrong_color_prom, 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ROT270,
 
-	0, 0
+        0, 0
 };
 
-struct GameDriver zigzag_driver =
+struct GameDriver driver_zigzag =
 {
 	__FILE__,
 	0,
@@ -2524,103 +2558,99 @@ struct GameDriver zigzag_driver =
 	"LAX",
 	"Nicola Salmoria",
 	0,
-	&zigzag_machine_driver,
+	&machine_driver_zigzag,
 	0,
 
-	zigzag_rom,
+	rom_zigzag,
 	0, 0,
-	mooncrst_sample_names,
-	0,      /* sound_prom */
+	0,
+	0,
 
-	zigzag_input_ports,
+	input_ports_zigzag,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zigzag_hiload, zigzag_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver zigzag2_driver =
+struct GameDriver driver_zigzag2 =
 {
 	__FILE__,
-	&zigzag_driver,
+	&driver_zigzag,
 	"zigzag2",
 	"Zig Zag (Galaxian hardware, set 2)",
 	"1982",
 	"LAX",
 	"Nicola Salmoria",
 	0,
-	&zigzag_machine_driver,
+	&machine_driver_zigzag,
 	0,
 
-	zigzag2_rom,
+	rom_zigzag2,
 	0, 0,
-	mooncrst_sample_names,
-	0,      /* sound_prom */
+	0,
+	0,
 
-	zigzag_input_ports,
+	input_ports_zigzag,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zigzag_hiload, zigzag_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-extern struct GameDriver mooncrst_driver;
-struct GameDriver mooncrgx_driver =
+extern struct GameDriver driver_mooncrst;
+struct GameDriver driver_mooncrgx =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"mooncrgx",
 	"Moon Cresta (bootleg on Galaxian hardware)",
 	"1980",
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrgx_machine_driver,
+	&machine_driver_mooncrgx,
 	0,
 
-	mooncrgx_rom,
+	rom_mooncrgx,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	mooncrgx_input_ports,
+	input_ports_mooncrgx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	mooncrgx_hiload, mooncrgx_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-extern struct GameDriver scramble_driver;
-struct GameDriver scramblb_driver =
+extern struct GameDriver driver_scramble;
+struct GameDriver driver_scramblb =
 {
 	__FILE__,
-	&scramble_driver,
+	&driver_scramble,
 	"scramblb",
 	"Scramble (bootleg on Galaxian hardware)",
 	"1981",
 	"bootleg",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&scramblb_machine_driver,
+	&machine_driver_scramblb,
 	0,
 
-	scramblb_rom,
+	rom_scramblb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	scramblb_input_ports,
+	input_ports_scramblb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scramble_hiload, scramble_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver jumpbug_driver =
+struct GameDriver driver_jumpbug =
 {
 	__FILE__,
 	0,
@@ -2630,49 +2660,47 @@ struct GameDriver jumpbug_driver =
 	"Rock-ola",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&jumpbug_machine_driver,
+	&machine_driver_jumpbug,
 	0,
 
-	jumpbug_rom,
+	rom_jumpbug,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jumpbug_input_ports,
+	input_ports_jumpbug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jumpbug_hiload, jumpbug_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver jumpbugb_driver =
+struct GameDriver driver_jumpbugb =
 {
 	__FILE__,
-	&jumpbug_driver,
+	&driver_jumpbug,
 	"jumpbugb",
 	"Jump Bug (bootleg)",
 	"1981",
 	"bootleg",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&jumpbug_machine_driver,
+	&machine_driver_jumpbug,
 	0,
 
-	jumpbugb_rom,
+	rom_jumpbugb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jumpbug_input_ports,
+	input_ports_jumpbug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jumpbug_hiload, jumpbug_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver levers_driver =
+struct GameDriver driver_levers =
 {
 	__FILE__,
 	0,
@@ -2682,24 +2710,23 @@ struct GameDriver levers_driver =
 	"Rock-ola",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili\nZsolt Vasvari",
 	0,
-	&jumpbug_machine_driver,
+	&machine_driver_jumpbug,
 	0,
 
-	levers_rom,
+	rom_levers,
 	0,
 	0,
 	0,
 	0,
 
-	levers_input_ports,
+	input_ports_levers,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	0, 0
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver azurian_driver =
+struct GameDriver driver_azurian =
 {
 	__FILE__,
 	0,
@@ -2709,19 +2736,119 @@ struct GameDriver azurian_driver =
 	"Rait Electronics Ltd",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&azurian_machine_driver,
+	&machine_driver_azurian,
 	0,
 
-	azurian_rom,
+	rom_azurian,
 	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	azurian_input_ports,
+	input_ports_azurian,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
+	0, 0, 0,
+	ROT90,
 	0,0
 };
 
+struct GameDriver driver_orbitron =
+{
+	__FILE__,
+	0,
+	"orbitron",
+	"Orbitron",
+	"????",
+	"Signatron USA",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
+	0,
+	&machine_driver_azurian,
+	0,
+
+	rom_orbitron,
+	0, 0,
+	0,
+	0,
+
+	input_ports_orbitron,
+
+	0, 0, 0,
+	ROT270,
+	0,0
+};
+
+extern struct GameDriver driver_checkman;
+struct GameDriver driver_checkmaj =
+{
+	__FILE__,
+	&driver_checkman,
+	"checkmaj",
+	"Checkman (Japan)",
+	"1982",
+	"Jaleco",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
+	0,
+	&machine_driver_checkmaj,
+	checkmaj_driver_init,
+
+	rom_checkmaj,
+	0, 0,
+	0,
+	0,
+
+	input_ports_checkmaj,
+
+	0, 0, 0,
+	ROT90,
+
+	0, 0
+};
+
+struct GameDriver driver_streakng =
+{
+	__FILE__,
+	0,
+	"streakng",
+	"Streaking",
+	"1980",
+	"Shoei",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
+	0,
+	&machine_driver_pacmanbl,
+	0,
+
+	rom_streakng,
+	0, 0,
+	0,
+	0,
+
+	input_ports_streakng,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_blkhole =
+{
+	__FILE__,
+	0,
+	"blkhole",
+	"Black Hole",
+	"????",
+	"<unknown>",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
+	&machine_driver_galaxian,
+	0,
+
+	rom_blkhole,
+	0, 0,
+	0,
+	0,
+
+	input_ports_blkhole,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};

@@ -110,7 +110,6 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *digdug_sharedram;
-int digdug_reset_r(int offset);
 int digdug_hiscore_print_r(int offset);
 int digdug_sharedram_r(int offset);
 void digdug_sharedram_w(int offset,int data);
@@ -138,17 +137,15 @@ void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;
-extern unsigned char digdug_hiscoreloaded;
 
 
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x0000, digdug_reset_r },
-	{ 0x0001, 0x3fff, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x7000, 0x700f, digdug_customio_data_r },
 	{ 0x7100, 0x7100, digdug_customio_r },
-	{ 0x8000, 0x9fff, digdug_sharedram_r, &digdug_sharedram },
+	{ 0x8000, 0x9fff, digdug_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
@@ -178,7 +175,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x6830, 0x6830, watchdog_reset_w },
 	{ 0x7000, 0x700f, digdug_customio_data_w },
 	{ 0x7100, 0x7100, digdug_customio_w },
-	{ 0x8000, 0x9fff, digdug_sharedram_w },
+	{ 0x8000, 0x9fff, digdug_sharedram_w, &digdug_sharedram },
 	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },   /* dirtybuffer[] handling is not needed because */
 	{ 0x8400, 0x87ff, MWA_RAM },	                          /* characters are redrawn every frame */
 	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size }, /* these three are here just to initialize */
@@ -209,7 +206,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 
 
 /* input from the outside world */
-INPUT_PORTS_START( digdug_input_ports )
+INPUT_PORTS_START( digdug )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
@@ -245,7 +242,7 @@ INPUT_PORTS_START( digdug_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, "Freeze" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Allow Continue" )
@@ -352,21 +349,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			digdug_interrupt_1,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			3,	/* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			digdug_interrupt_2,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			4,	/* memory region #4 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			digdug_interrupt_3,2
 		}
@@ -407,8 +401,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( digdug_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+ROM_START( digdug )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
@@ -422,16 +416,16 @@ ROM_START( digdug_rom )
 	ROM_LOAD( "136007.118",   0x4000, 0x1000, 0x458499e9 )
 	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "dd1.5b",       0x0000, 0x1000, 0x370ef9b4 )
 	ROM_LOAD( "dd1.6b",       0x1000, 0x1000, 0x361eeb71 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
@@ -441,8 +435,8 @@ ROM_START( digdug_rom )
 	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
-ROM_START( digdugb_rom )
-	ROM_REGION(0x10000) /* 64k for code for the first CPU  */
+ROM_START( digdugb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code for the first CPU  */
 	ROM_LOAD( "dd1a.1",       0x0000, 0x1000, 0xa80ec984 )
 	ROM_LOAD( "dd1a.2",       0x1000, 0x1000, 0x559f00bd )
 	ROM_LOAD( "dd1a.3",       0x2000, 0x1000, 0x8cbc6fe1 )
@@ -456,16 +450,16 @@ ROM_START( digdugb_rom )
 	ROM_LOAD( "136007.118",   0x4000, 0x1000, 0x458499e9 )
 	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
 
-	ROM_REGION(0x0220) /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000) /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the second CPU */
 	ROM_LOAD( "dd1a.5",       0x0000, 0x1000, 0x6687933b )
 	ROM_LOAD( "dd1a.6",       0x1000, 0x1000, 0x843d857f )
 
-	ROM_REGION(0x10000) /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000) /* 4k for the playfield graphics */
@@ -475,8 +469,8 @@ ROM_START( digdugb_rom )
 	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
-ROM_START( digdugat_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+ROM_START( digdugat )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
@@ -490,16 +484,16 @@ ROM_START( digdugat_rom )
 	ROM_LOAD( "136007.118",   0x4000, 0x1000, 0x458499e9 )
 	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "136007.105",   0x0000, 0x1000, 0x0a2aef4a )
 	ROM_LOAD( "136007.106",   0x1000, 0x1000, 0xa2876d6e )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
@@ -509,8 +503,8 @@ ROM_START( digdugat_rom )
 	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
-ROM_START( dzigzag_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+ROM_START( dzigzag )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
@@ -524,15 +518,15 @@ ROM_START( dzigzag_rom )
 	ROM_LOAD( "zigzag13",     0x4000, 0x1000, 0x69f6e395 )
 	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "zigzag5",      0x0000, 0x2000, 0xf803c748 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
@@ -546,44 +540,8 @@ ROM_START( dzigzag_rom )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized (works for Namco & Atari) */
-	if (RAM[0x89b1] == 0x35 && RAM[0x89b4] == 0x35)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x89a0],37);
-			osd_fclose(f);
-			digdug_hiscoreloaded = 1;
-		}
-
-		return 1;
-	}
-	else
-		return 0; /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x89a0],37);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver digdug_driver =
+struct GameDriver driver_digdug =
 {
 	__FILE__,
 	0,
@@ -596,23 +554,22 @@ struct GameDriver digdug_driver =
 	&machine_driver,
 	0,
 
-	digdug_rom,
+	rom_digdug,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	digdug_input_ports,
+	input_ports_digdug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver digdugb_driver =
+struct GameDriver driver_digdugb =
 {
 	__FILE__,
-	&digdug_driver,
+	&driver_digdug,
 	"digdugb",
 	"Dig Dug (set 2)",
 	"1982",
@@ -622,23 +579,22 @@ struct GameDriver digdugb_driver =
 	&machine_driver,
 	0,
 
-	digdugb_rom,
+	rom_digdugb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	digdug_input_ports,
+	input_ports_digdug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver digdugat_driver =
+struct GameDriver driver_digdugat =
 {
 	__FILE__,
-	&digdug_driver,
+	&driver_digdug,
 	"digdugat",
 	"Dig Dug (Atari)",
 	"1982",
@@ -648,23 +604,22 @@ struct GameDriver digdugat_driver =
 	&machine_driver,
 	0,
 
-	digdugat_rom,
+	rom_digdugat,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	digdug_input_ports,
+	input_ports_digdug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver dzigzag_driver =
+struct GameDriver driver_dzigzag =
 {
 	__FILE__,
-	&digdug_driver,
+	&driver_digdug,
 	"dzigzag",
 	"Zig Zag (Dig Dug hardware)",
 	"1982",
@@ -674,15 +629,14 @@ struct GameDriver dzigzag_driver =
 	&machine_driver,
 	0,
 
-	dzigzag_rom,
+	rom_dzigzag,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	digdug_input_ports,
+	input_ports_digdug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

@@ -20,13 +20,8 @@
 void ramtek_videoram_w(int offset,int data);
 
 int  invaders_interrupt(void);
-int  ramtek_vh_start(void);
-void ramtek_vh_stop(void);
-void ramtek_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void ramtek_sh_update(void);
 void ramtek_mask_w(int offset, int data);
-
-extern unsigned char *ramtek_videoram;
 
 /*
  * since these functions aren't used anywhere else, i've made them
@@ -70,7 +65,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-    { 0x4400, 0x5fff, ramtek_videoram_w, &ramtek_videoram },
+    { 0x4400, 0x5fff, ramtek_videoram_w, &videoram },
     { 0x6000, 0x63ff, MWA_RAM },		/* ?? */
 	{ 0x8001, 0x8001, ramtek_mask_w},
 	{ 0x8000, 0x8000, sound_w },
@@ -80,18 +75,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct IOReadPort readport[] =
-{
-	{ -1 }  /* end of table */
-};
 
-static struct IOWritePort writeport[] =
-{
-	{ -1 }  /* end of table */
-};
-
-
-INPUT_PORTS_START( m79_input_ports )
+INPUT_PORTS_START( m79 )
 	PORT_START      /* 8000 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* dip switch */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -138,46 +123,52 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 	0xff,0x20,0xff  /* PURPLE */
 };
 
-static int M79_interrupt(void)
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-                return 0x00cf;  /* RST 08h */
+	memcpy(game_palette,palette,sizeof(palette));
 }
 
-static void m79_init(void)
+static int M79_interrupt(void)
 {
-  int i;
-  /* PROM data is active low */
-  for(i=0; i<0x2000; i++)
-   ROM[i] = ~ROM[i];
+	return 0x00cf;  /* RST 08h */
+}
+
+static void m79_decode(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int i;
+
+	/* PROM data is active low */
+ 	for (i = 0;i < 0x2000;i++)
+		rom[i] = ~rom[i];
 }
 
 static struct MachineDriver machine_driver =
 {
-        /* basic machine hardware */
-        {
-                {
-                    CPU_8080,
-                    1996800,
-                    0,
-                    readmem,writemem,readport,writeport,
-                    M79_interrupt, 1
-                }
-        },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-        1,      /* single CPU, no need for interleaving */
-        0,
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			1996800,
+			readmem,writemem,0,0,
+			M79_interrupt, 1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
 
-        /* video hardware */
-        32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-        0,      /* no gfxdecodeinfo - bitmapped display */
-        sizeof(palette)/3, 0,
-        0,
+	/* video hardware */
+	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
-        VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-        0,
-        ramtek_vh_start,
-        ramtek_vh_stop,
-        ramtek_vh_screenrefresh,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_bitmapped_vh_start,
+	generic_bitmapped_vh_stop,
+	generic_bitmapped_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0
@@ -185,8 +176,8 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( m79_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( m79 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "m79.10t",      0x0000, 0x0200, 0xccf30b1e )
 	ROM_LOAD( "m79.9t",       0x0200, 0x0200, 0xdaf807dd )
 	ROM_LOAD( "m79.8t",       0x0400, 0x0200, 0x79fafa02 )
@@ -203,58 +194,11 @@ ROM_START( m79_rom )
 	ROM_LOAD( "m79.5u",       0x1a00, 0x0200, 0x251545e2 )
 	ROM_LOAD( "m79.4u",       0x1c00, 0x0200, 0xb5f55c75 )
 	ROM_LOAD( "m79.3u",       0x1e00, 0x0200, 0xe968691a )
- ROM_END
-
-
-static int hiload(void)
-{
-	static int firsttime =0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4008],0xff,1);	/* high score */
-		firsttime = 1;
-	}
+ROM_END
 
 
 
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x4008],"\x00",1) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-		osd_fread(f,&RAM[0x4008],1);
-		osd_fclose(f);
-		firsttime = 0;
-        }
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x4008],1);
-        osd_fclose(f);
-    }
-}
-
-
-
-
-
-struct GameDriver m79amb_driver =
+struct GameDriver driver_m79amb =
 {
 	__FILE__,
 	0,
@@ -265,18 +209,16 @@ struct GameDriver m79amb_driver =
 	"Space Invaders Team\n",
 	0,
 	&machine_driver,
+	m79_decode,
+
+	rom_m79,
+	0, 0,
+	0,
 	0,
 
-	m79_rom,
-	m79_init,
-	0,
-	0,
-	0,      /* sound_prom */
+	input_ports_m79,
 
-	m79_input_ports,
-
-	0, palette, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

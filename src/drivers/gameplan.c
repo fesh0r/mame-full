@@ -23,14 +23,12 @@ TO-DO: - Fix the input ports/dip switches of Kaos?
 #include "vidhrdw/generic.h"
 
 int gameplan_vh_start(void);
-void gameplan_vh_stop(void);
 int gameplan_video_r(int offset);
 void gameplan_video_w(int offset, int data);
 int gameplan_sound_r(int offset);
 void gameplan_sound_w(int offset, int data);
 int gameplan_via5_r(int offset);
 void gameplan_via5_w(int offset, int data);
-void gameplan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void gameplan_select_port(int offset, int data);
 int gameplan_read_port(int offset);
 
@@ -180,7 +178,7 @@ int gameplan_interrupt(void)
 	return 1;
 }
 
-INPUT_PORTS_START( kaos_input_ports )
+INPUT_PORTS_START( kaos )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -289,7 +287,7 @@ INPUT_PORTS_START( kaos_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( killcom_input_ports )
+INPUT_PORTS_START( killcom )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -332,7 +330,7 @@ INPUT_PORTS_START( killcom_input_ports )
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-	PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+	PORT_DIPNAME(0x03, 0x03, "Coinage P1/P2" )
 	PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
 	PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
 	PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
@@ -360,7 +358,7 @@ INPUT_PORTS_START( killcom_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( megatack_input_ports )
+INPUT_PORTS_START( megatack )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -402,7 +400,7 @@ INPUT_PORTS_START( megatack_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
-	PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+	PORT_DIPNAME(0x03, 0x03, "Coinage P1/P2" )
 	PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
 	PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
 	PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
@@ -442,7 +440,7 @@ INPUT_PORTS_START( megatack_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( challeng_input_ports )
+INPUT_PORTS_START( challeng )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -488,7 +486,7 @@ PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-	PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+	PORT_DIPNAME(0x03, 0x03, "Coinage P1/P2" )
 	PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
 	PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
 	PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
@@ -537,12 +535,10 @@ static unsigned char palette[] =
 	0xff,0x20,0x20, /* 6 RED     */
 	0x00,0x00,0x00, /* 7 BLACK   */
 };
-
-
-static unsigned short colortable[] =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	0, 0,	0, 1,	0, 2,	0, 3,	0, 4,	0, 5,	0, 6,	0, 7,
-};
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 static struct AY8910interface ay8910_interface =
@@ -565,14 +561,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			3579000 / 4,		/* 3.579 / 4 MHz */
-			0,					/* memory_region */
 			readmem, writemem, 0, 0,
 			gameplan_interrupt,1 /* 1 interrupt per frame */
 		},
 		{
             CPU_M6502 | CPU_AUDIO_CPU,
 			3579000 / 4,		/* 3.579 / 4 MHz */
-			2,					/* memory_region */
 			readmem_snd,writemem_snd,0,0,
 			gameplan_interrupt,1
 		},
@@ -585,13 +579,13 @@ static struct MachineDriver machine_driver =
     32*8, 32*8,					/* screen_width, height */
     { 0, 32*8-1, 0, 32*8-1 },		/* visible_area */
     0,
-    sizeof(palette)/3, sizeof(colortable)/sizeof(short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER, 0,
 	gameplan_vh_start,
-	gameplan_vh_stop,
-	gameplan_vh_screenrefresh,
+	generic_bitmapped_vh_stop,
+	generic_bitmapped_vh_screenrefresh,
 
 	0, 0, 0, 0,
 	{
@@ -630,32 +624,28 @@ F800 E1 top 2k
 there are three 6522 VIAs, at 2000, 2800, and 3000
 */
 
-ROM_START( kaos_rom )
-    ROM_REGION(0x10000)
+ROM_START( kaos )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )
     ROM_LOAD( "kaosab.g2",    0x9000, 0x0800, 0xb23d858f )
-    ROM_CONTINUE(		   0xd000, 0x0800			  )
+    ROM_CONTINUE(		   	  0xd000, 0x0800			 )
     ROM_LOAD( "kaosab.j2",    0x9800, 0x0800, 0x4861e5dc )
-    ROM_CONTINUE(		   0xd800, 0x0800			  )
+    ROM_CONTINUE(		   	  0xd800, 0x0800			 )
     ROM_LOAD( "kaosab.j1",    0xa000, 0x0800, 0xe055db3f )
-    ROM_CONTINUE(		   0xe000, 0x0800			  )
+    ROM_CONTINUE(		   	  0xe000, 0x0800			 )
     ROM_LOAD( "kaosab.g1",    0xa800, 0x0800, 0x35d7c467 )
-    ROM_CONTINUE(		   0xe800, 0x0800			  )
+    ROM_CONTINUE(		   	  0xe800, 0x0800			 )
     ROM_LOAD( "kaosab.f1",    0xb000, 0x0800, 0x995b9260 )
-    ROM_CONTINUE(		   0xf000, 0x0800			  )
+    ROM_CONTINUE(		   	  0xf000, 0x0800			 )
     ROM_LOAD( "kaosab.e1",    0xb800, 0x0800, 0x3da5202a )
-    ROM_CONTINUE(		   0xf800, 0x0800			  )
+    ROM_CONTINUE(		   	  0xf800, 0x0800			 )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-    ROM_REGION(0x10000)
+    ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "kaossnd.e1",   0xf800, 0x800, 0xab23d52a )
 ROM_END
 
 
-ROM_START( killcom_rom )
-    ROM_REGION(0x10000)
+ROM_START( killcom )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )
     ROM_LOAD( "killcom.e2",   0xc000, 0x800, 0xa01cbb9a )
     ROM_LOAD( "killcom.f2",   0xc800, 0x800, 0xbb3b4a93 )
     ROM_LOAD( "killcom.g2",   0xd000, 0x800, 0x86ec68b2 )
@@ -665,16 +655,12 @@ ROM_START( killcom_rom )
     ROM_LOAD( "killcom.f1",   0xf000, 0x800, 0xef652762 )
     ROM_LOAD( "killcom.e1",   0xf800, 0x800, 0xbc19dcb7 )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-    ROM_REGION(0x10000)
+    ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "killsnd.e1",   0xf800, 0x800, 0x77d4890d )
 ROM_END
 
-ROM_START( megatack_rom )
-    ROM_REGION(0x10000)
+ROM_START( megatack )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )
     ROM_LOAD( "megattac.e2",  0xc000, 0x800, 0x33fa5104 )
     ROM_LOAD( "megattac.f2",  0xc800, 0x800, 0xaf5e96b1 )
     ROM_LOAD( "megattac.g2",  0xd000, 0x800, 0x670103ea )
@@ -684,16 +670,12 @@ ROM_START( megatack_rom )
     ROM_LOAD( "megattac.f1",  0xf000, 0x800, 0xc93a8ed4 )
     ROM_LOAD( "megattac.e1",  0xf800, 0x800, 0xd9996b9f )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-    ROM_REGION(0x10000)
+    ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "megatsnd.e1",  0xf800, 0x800, 0x0c186bdb )
 ROM_END
 
-ROM_START( challeng_rom )
-    ROM_REGION(0x10000)
+ROM_START( challeng )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )
     ROM_LOAD( "chall.6",      0xa000, 0x1000, 0xb30fe7f5 )
     ROM_LOAD( "chall.5",      0xb000, 0x1000, 0x34c6a88e )
     ROM_LOAD( "chall.4",      0xc000, 0x1000, 0x0ddc18ef )
@@ -701,156 +683,13 @@ ROM_START( challeng_rom )
     ROM_LOAD( "chall.2",      0xe000, 0x1000, 0x948912ad )
     ROM_LOAD( "chall.1",      0xf000, 0x1000, 0x7c71a9dc )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-    ROM_REGION(0x10000)
+    ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "chall.snd",    0xf800, 0x800, 0x1b2bffd2 )
 ROM_END
 
 
 
-static int kaos_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x03c8], "\x84\x00\x00", 3) == 0 &&
-		memcmp(&RAM[0x03dd], "\x43\x00\x00", 3) == 0 &&
-		memcmp(&RAM[0x03e0], "\x50\x50\x43", 3) == 0 &&
-		memcmp(&RAM[0x03f5], "\x54\x4f\x44", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0x03c8], 0x30);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void kaos_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0x03c8], 0x30);
-		osd_fclose(f);
-	}
-}
-
-static int killcom_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x88], "\x47\x00", 2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-            osd_fread(f, &RAM[0x88], 0x2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void killcom_hisave(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f, &RAM[0x88], 0x2);
-		osd_fclose(f);
-	}
-}
-
-static int megatack_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0xd0], "\x1f\x20\x1a", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-            osd_fread(f, &RAM[0xc4], 0xf);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void megatack_hisave(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f, &RAM[0xc4], 0xf);
-		osd_fclose(f);
-	}
-}
-
-static int challeng_hiload(void)
-{
-	unsigned char *RAM =
-	Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xcc], "\x00\x01\x00", 3) == 0 &&
-	memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xcc], 0xf);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void challeng_hisave(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f, &RAM[0xcc], 0xf);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver kaos_driver =
+struct GameDriver driver_kaos =
 {
 	__FILE__,
 	0,
@@ -863,19 +702,18 @@ struct GameDriver kaos_driver =
 	&machine_driver,
 	0,
 
-	kaos_rom,
-	0, 0, 0, 0,					/* sound_prom */
+	rom_kaos,
+	0, 0, 0, 0,
 
-	kaos_input_ports,
+	input_ports_kaos,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	kaos_hiload, kaos_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
 
-struct GameDriver killcom_driver =
+struct GameDriver driver_killcom =
 {
 	__FILE__,
 	0,
@@ -888,19 +726,18 @@ struct GameDriver killcom_driver =
     &machine_driver,
 	0,
 
-	killcom_rom,
-	0, 0, 0, 0,					/* sound_prom */
+	rom_killcom,
+	0, 0, 0, 0,
 
-	killcom_input_ports,
+	input_ports_killcom,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-    killcom_hiload, killcom_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver megatack_driver =
+struct GameDriver driver_megatack =
 {
 	__FILE__,
 	0,
@@ -913,18 +750,17 @@ struct GameDriver megatack_driver =
 	&machine_driver,
 	0,
 
-	megatack_rom,
-	0, 0, 0, 0,					/* sound_prom */
+	rom_megatack,
+	0, 0, 0, 0,
 
-	megatack_input_ports,
+	input_ports_megatack,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-    megatack_hiload, megatack_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver challeng_driver =
+struct GameDriver driver_challeng =
 {
 	__FILE__,
 	0,
@@ -937,14 +773,13 @@ struct GameDriver challeng_driver =
     &machine_driver,
 	0,
 
-    challeng_rom,
-    0, 0, 0, 0,                 /* sound_prom */
+    rom_challeng,
+    0, 0, 0, 0,
 
-    challeng_input_ports,
+    input_ports_challeng,
 
-    0, palette, colortable,
-    ORIENTATION_DEFAULT,
-
-    challeng_hiload, challeng_hisave
+    0, 0, 0,
+    ROT0,
+	0,0
 };
 

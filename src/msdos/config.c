@@ -18,7 +18,7 @@ extern int ignorecfg;
 extern int frameskip,autoframeskip;
 extern int scanlines, use_tweaked, video_sync, wait_vsync, use_triplebuf;
 extern int stretch;
-extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
+extern int vgafreq, always_synced, skiplines, skipcolumns;
 extern float osd_gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
@@ -49,6 +49,7 @@ extern unsigned char tw368x224arc_h, tw368x224arc_v;
 extern unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
 extern unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
 extern unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
+extern unsigned char tw640x480arc_h, tw640x480arc_v;
 
 
 /* from sound.c */
@@ -66,8 +67,12 @@ extern char *history_filename,*mameinfo_filename;
 
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
-extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
+extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
+
+#ifdef MESS
+  extern char *crcdir;
+#endif
 
 /* from video.c, for centering tweaked modes */
 extern int center_x;
@@ -86,17 +91,19 @@ char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
-	{ "none",                       JOY_TYPE_NONE },
-	{ "auto",                       JOY_TYPE_AUTODETECT },
+	{ "none",               JOY_TYPE_NONE },
+	{ "auto",               JOY_TYPE_AUTODETECT },
 	{ "standard",           JOY_TYPE_STANDARD },
-	{ "dual",                       JOY_TYPE_2PADS },
+	{ "dual",               JOY_TYPE_2PADS },
 	{ "4button",            JOY_TYPE_4BUTTON },
 	{ "6button",            JOY_TYPE_6BUTTON },
 	{ "8button",            JOY_TYPE_8BUTTON },
-	{ "fspro",                      JOY_TYPE_FSPRO },
-	{ "wingex",                     JOY_TYPE_WINGEX },
+	{ "fspro",              JOY_TYPE_FSPRO },
+	{ "wingex",             JOY_TYPE_WINGEX },
 	{ "sidewinder",         JOY_TYPE_SIDEWINDER },
 	{ "gamepadpro",         JOY_TYPE_GAMEPAD_PRO },
+	{ "grip",               JOY_TYPE_GRIP },
+	{ "grip4",              JOY_TYPE_GRIP4 },
 	{ "sneslpt1",           JOY_TYPE_SNESPAD_LPT1 },
 	{ "sneslpt2",           JOY_TYPE_SNESPAD_LPT2 },
 	{ "sneslpt3",           JOY_TYPE_SNESPAD_LPT3 },
@@ -358,8 +365,11 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
-	color_depth = get_int    ("config", "depth",        NULL, 16);
-	if (color_depth != 8) color_depth = 16;
+
+	tmpstr             = get_string ("config", "depth", NULL, "auto");
+	options.color_depth = atoi(tmpstr);
+	if (options.color_depth != 8 && options.color_depth != 16) options.color_depth = 0;	/* auto */
+
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
 	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
@@ -411,23 +421,33 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
-	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
+
+ 	#ifndef MESS
+ 	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
+ 	#else
+ 	history_filename  = get_string ("config", "historyfile", NULL, "SYSINFO.DAT");
+ 	#endif
+
 	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
 
 	/* get resolution */
 	resolution  = get_string ("config", "resolution", NULL, "auto");
 
 	/* set default subdirectories */
+	nvdir      = get_string ("directory", "nvram",   NULL, "NVRAM");
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
 	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");
 	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
+ 	#ifdef MESS
+ 		crcdir = get_string ("directory", "crc", NULL, "CRC");
+ 	#endif
 
 	/* get tweaked modes info */
 	tw224x288_h			= get_int ("tweaked", "224x288_h",              NULL, 0x5f);
-	tw224x288_v     	= get_int ("tweaked", "224x288_v",              NULL, 0x53);
+	tw224x288_v     	= get_int ("tweaked", "224x288_v",              NULL, 0x54);
 	tw240x256_h     = get_int ("tweaked", "240x256_h",              NULL, 0x67);
 	tw240x256_v     = get_int ("tweaked", "240x256_v",              NULL, 0x23);
 	tw256x240_h     = get_int ("tweaked", "256x240_h",              NULL, 0x55);
@@ -482,6 +502,8 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw512x448arc_v          = get_int ("tweaked", "512x448arc_v",   NULL, 0x09);
 	tw512x512arc_h          = get_int ("tweaked", "512x512arc_h",   NULL, 0xbf);
 	tw512x512arc_v          = get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
+	tw640x480arc_h          = get_int ("tweaked", "640x480arc_h",   NULL, 0xc1);
+	tw640x480arc_v          = get_int ("tweaked", "640x480arc_v",   NULL, 0x09);
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_sample_path (argc, argv, game_index);

@@ -96,12 +96,28 @@ Targ:
 		bit 0 note
 		bit 1 upper
 
+MouseTrap Digital Sound:
+0000-3FFF ROM
+
+IO:
+	A7 = 0: R Communication from sound processor
+	A6 = 0: R CVSD Clock State
+	A5 = 0: W Busy to sound processor
+	A4 = 0: W Data to CVSD
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
+/* also in machine/exidy.c */
+#define PALETTE_LEN 8
+#define COLORTABLE_LEN 20
+
+/* These are defined in sndhrdw/exidy.c */
+void mtrap_voiceio_w(int offset,int data);
+int mtrap_voiceio_r(int offset);
 
 /* These are defined in sndhrdw/exidy.c */
 void exidy_shriot_w(int offset,int data);
@@ -115,8 +131,8 @@ int exidy_sh8253_r(int offset);
 int exidy_sh6840_r(int offset);
 void exidy_sh6840_w(int offset,int data);
 
-extern int exidy_sh_start(const struct MachineSound *msound);
-extern void exidy_sh_stop(void);
+int exidy_sh_start(const struct MachineSound *msound);
+void exidy_sh_stop(void);
 
 /* These are defined in vidhrdw/exidy.c */
 
@@ -135,33 +151,34 @@ extern unsigned char *exidy_sprite2_xpos;
 extern unsigned char *exidy_sprite2_ypos;
 extern unsigned char *exidy_color_latch;
 
-extern unsigned char *exidy_collision;
 extern int exidy_collision_counter;
 
 /* These are defined in machine/exidy.c */
 
-extern void fax_bank_select_w(int offset,int data);
-extern int exidy_input_port_2_r(int offset);
-extern void exidy_init_machine(void);
-extern int venture_interrupt(void);
-extern int venture_shinterrupt(void);
+void fax_bank_select_w(int offset,int data);
+int exidy_input_port_2_r(int offset);
+void exidy_init_machine(void);
+int venture_interrupt(void);
+int venture_shinterrupt(void);
 
-extern void targ_driver_init(void);
-extern void spectar_driver_init(void);
-extern void venture_driver_init(void);
-extern void mtrap_driver_init(void);
-extern void pepper2_driver_init(void);
-extern void fax_driver_init(void);
+void sidetrac_driver_init(void);
+void targ_driver_init(void);
+void spectar_driver_init(void);
+void venture_driver_init(void);
+void mtrap_driver_init(void);
+void pepper2_driver_init(void);
+void fax_driver_init(void);
+void exidy_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 
-extern int exidy_interrupt(void);
+int exidy_interrupt(void);
 
 extern unsigned char exidy_collision_mask;
 
 /* These are defined in sndhrdw/targ.c */
 extern unsigned char targ_spec_flag;
-extern void targ_sh_w(int offset,int data);
-extern int targ_sh_start(const struct MachineSound *msound);
-extern void targ_sh_stop(void);
+void targ_sh_w(int offset,int data);
+int targ_sh_start(const struct MachineSound *msound);
+void targ_sh_stop(void);
 
 
 
@@ -174,7 +191,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4800, 0x4fff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
-	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
+	{ 0x5103, 0x5103, exidy_input_port_2_r }, /* IN1 */
 	{ 0x5105, 0x5105, input_port_4_r }, /* IN3 - Targ, Spectar only */
 	{ 0x5200, 0x520F, pia_0_r },
 	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
@@ -246,7 +263,7 @@ static struct MemoryReadAddress fax_readmem[] =
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
-	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
+	{ 0x5103, 0x5103, exidy_input_port_2_r }, /* IN1 */
 	{ 0x5200, 0x520F, pia_0_r },
 	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM }, /* Fax, Pepper II only */
@@ -303,12 +320,36 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryWriteAddress dac_writemem[] =
+{
+        {0x0000,0x3fff, MWA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryReadAddress dac_readmem[] =
+{
+        {0x0000,0x3fff, MRA_ROM },
+        {0x4000,0xffff, MRA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct IOWritePort dac_iowrite[] =
+{
+        { 0x00, 0xFF, mtrap_voiceio_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort dac_ioread[] =
+{
+	{ 0x00, 0xFF, mtrap_voiceio_r },
+	{ -1 }
+};
 
 /***************************************************************************
 Input Ports
 ***************************************************************************/
 
-INPUT_PORTS_START( sidetrac_input_ports )
+INPUT_PORTS_START( sidetrac )
 	PORT_START              /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2")
@@ -361,7 +402,7 @@ INPUT_PORTS_START( sidetrac_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( targ_input_ports )
+INPUT_PORTS_START( targ )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
 	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
@@ -409,7 +450,7 @@ INPUT_PORTS_START( targ_input_ports )
 INPUT_PORTS_END
 
 /* identical to Targ, the only difference is the additional Language dip switch */
-INPUT_PORTS_START( spectar_input_ports )
+INPUT_PORTS_START( spectar )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
 	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
@@ -461,7 +502,7 @@ INPUT_PORTS_START( spectar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mtrap_input_ports )
+INPUT_PORTS_START( mtrap )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -527,7 +568,7 @@ INPUT_PORTS_START( mtrap_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( venture_input_ports )
+INPUT_PORTS_START( venture )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -580,7 +621,7 @@ INPUT_PORTS_START( venture_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pepper2_input_ports )
+INPUT_PORTS_START( pepper2 )
 	PORT_START              /* DSW */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -634,7 +675,7 @@ INPUT_PORTS_START( pepper2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( fax_input_ports )
+INPUT_PORTS_START( fax )
 	PORT_START              /* DSW */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Time" )
@@ -777,115 +818,6 @@ static struct GfxDecodeInfo targ_gfxdecodeinfo[] =
 
 
 
-/* Arbitrary starting colors, modified by the game */
-
-static unsigned char sidetrac_palette[] =
-{
-	0x00,0x00,0x00,   /* BACKGND */
-	0x00,0x00,0x00,   /* CSPACE0 */
-	0x00,0xff,0x00,   /* CSPACE1 */
-	0xff,0xff,0xff,   /* CSPACE2 */
-	0xff,0xff,0xff,   /* CSPACE3 */
-	0xff,0x00,0xff,   /* 5LINES (unused?) */
-	0xff,0xff,0x00,   /* 5MO2VID  */
-	0xff,0xff,0xff    /* 5MO1VID  */
-};
-
-static unsigned short sidetrac_colortable[] =
-{
-	/* one-bit characters */
-	0, 4,  /* chars 0x00-0x3F */
-	0, 3,  /* chars 0x40-0x7F */
-	0, 2,  /* chars 0x80-0xBF */
-	0, 1,  /* chars 0xC0-0xFF */
-
-	/* Motion Object 1 */
-	0, 7,
-
-	/* Motion Object 2 */
-	0, 6,
-
-};
-
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,   /* BACKGND */
-	0x00,0x00,0xff,   /* CSPACE0 */
-	0x00,0xff,0x00,   /* CSPACE1 */
-	0x00,0xff,0xff,   /* CSPACE2 */
-	0xff,0x00,0x00,   /* CSPACE3 */
-	0xff,0x00,0xff,   /* 5LINES (unused?) */
-	0xff,0xff,0x00,   /* 5MO2VID */
-	0xff,0xff,0xff    /* 5MO1VID */
-};
-
-/* Targ doesn't have a color PROM; colors are changed by the means of 8x3 */
-/* dip switches on the board. Here are the colors they map to. */
-static unsigned char targ_palette[] =
-{
-					/* color   use                            */
-	0x00,0x00,0xFF, /* blue    background             */
-	0x00,0xFF,0xFF, /* cyan    characters 192-255 */
-	0xFF,0xFF,0x00, /* yellow  characters 128-191 */
-	0xFF,0xFF,0xFF, /* white   characters  64-127 */
-	0xFF,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xFF,0xFF, /* cyan    not used               */
-	0xFF,0xFF,0xFF, /* white   bullet sprite          */
-	0x00,0xFF,0x00, /* green   wummel sprite          */
-};
-
-/* Spectar has different colors */
-static unsigned char spectar_palette[] =
-{
-					/* color   use                            */
-	0x00,0x00,0xFF, /* blue    background             */
-	0x00,0xFF,0x00, /* green   characters 192-255 */
-	0x00,0xFF,0x00, /* green   characters 128-191 */
-	0xFF,0xFF,0xFF, /* white   characters  64-127 */
-	0xFF,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xFF,0x00, /* green   not used               */
-	0xFF,0xFF,0x00, /* yellow  bullet sprite          */
-	0x00,0xFF,0x00, /* green   wummel sprite          */
-};
-
-
-static unsigned short colortable[] =
-{
-	/* one-bit characters */
-	0, 4,  /* chars 0x00-0x3F */
-	0, 3,  /* chars 0x40-0x7F */
-	0, 2,  /* chars 0x80-0xBF */
-	0, 1,  /* chars 0xC0-0xFF */
-
-	/* Motion Object 1 */
-	0, 7,
-
-	/* Motion Object 2 */
-	0, 6,
-
-};
-
-static unsigned short pepper2_colortable[] =
-{
-	/* two-bit characters */
-	/* (Because this is 2-bit color, the colorspace is only divided
-		in half instead of in quarters.  That's why 00-3F = 40-7F and
-		80-BF = C0-FF) */
-	0, 0, 4, 3,  /* chars 0x00-0x3F */
-	0, 0, 4, 3,  /* chars 0x40-0x7F */
-	0, 0, 2, 1,  /* chars 0x80-0xBF */
-	0, 0, 2, 1,  /* chars 0xC0-0xFF */
-
-	/* Motion Object 1 */
-	0, 7,
-
-	/* Motion Object 2 */
-	0, 6,
-
-};
-
-
-
 /***************************************************************************
   Game drivers
 ***************************************************************************/
@@ -901,10 +833,11 @@ static const char *targ_sample_names[] =
 	0       /* end of array */
 };
 
-static struct Samplesinterface targ_samples_interface=
+static struct Samplesinterface targ_samples_interface =
 {
-	3,       /* 3 Channels */
-	25	/* volume */
+	3,	/* 3 Channels */
+	25,	/* volume */
+	targ_sample_names
 };
 
 static struct CustomSound_interface targ_custom_interface =
@@ -922,14 +855,13 @@ static struct DACinterface targ_DAC_interface =
 
 
 
-static struct MachineDriver targ_machine_driver =
+static struct MachineDriver machine_driver_targ =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			11289000/16,    /* .705562 MHz */
-			0,
 			readmem,targ_writemem,0,0,
 			exidy_interrupt,1
 		},
@@ -941,8 +873,8 @@ static struct MachineDriver targ_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	targ_gfxdecodeinfo,
-	sizeof(targ_palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	PALETTE_LEN, COLORTABLE_LEN,
+	exidy_vh_init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -960,18 +892,24 @@ static struct MachineDriver targ_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&targ_samples_interface
-	},
-	{
-	    SOUND_DAC,
-	    &targ_DAC_interface
+		},
+		{
+			SOUND_DAC,
+			&targ_DAC_interface
+		}
 	}
-	}
+};
+
+static struct hc55516_interface cvsd_interface =
+{
+	1,          /* 1 chip */
+        { 80 }
 };
 
 static struct Samplesinterface venture_samples_interface=
 {
-	6,       /* 6 Channels */
-	25	/* volume */
+    6,       /* 6 Channels */
+    20  /* volume */
 };
 
 static struct CustomSound_interface exidy_custom_interface =
@@ -981,23 +919,27 @@ static struct CustomSound_interface exidy_custom_interface =
 	0
 };
 
-static struct MachineDriver mtrap_machine_driver =
+static struct MachineDriver machine_driver_mtrap =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			11289000/16,
-			0,
 			readmem,writemem,0,0,
 			exidy_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			3579545/4,
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 	    	ignore_interrupt,0
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545/2,
+			dac_readmem,dac_writemem,dac_ioread,dac_iowrite,
+			ignore_interrupt,0
 		}
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
@@ -1007,8 +949,8 @@ static struct MachineDriver mtrap_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	PALETTE_LEN, COLORTABLE_LEN,
+	exidy_vh_init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1020,34 +962,36 @@ static struct MachineDriver mtrap_machine_driver =
 	0,0,0,0,
 	{
 		{
+			SOUND_HC55516,
+			&cvsd_interface
+        },
+		{
 			SOUND_SAMPLES,
 			&venture_samples_interface
 		},
 		{
 			SOUND_CUSTOM,
 			&exidy_custom_interface
-		}
+        }
 	}
 
 
 };
 
 
-static struct MachineDriver venture_machine_driver =
+static struct MachineDriver machine_driver_venture =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			11289000/16,
-			0,
 			readmem,writemem,0,0,
 			venture_interrupt,32 /* Need to have multiple IRQs per frame if there's a collision */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			3579545/4,
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1059,8 +1003,8 @@ static struct MachineDriver venture_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	PALETTE_LEN, COLORTABLE_LEN,
+	exidy_vh_init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1083,21 +1027,19 @@ static struct MachineDriver venture_machine_driver =
 };
 
 
-static struct MachineDriver pepper2_machine_driver =
+static struct MachineDriver machine_driver_pepper2 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			11289000/16,
-			0,
 			readmem,pepper2_writemem,0,0,
 			exidy_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			3579545/4,
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1109,8 +1051,8 @@ static struct MachineDriver pepper2_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	pepper2_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
-	0,
+	PALETTE_LEN, COLORTABLE_LEN,
+	exidy_vh_init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1134,21 +1076,19 @@ static struct MachineDriver pepper2_machine_driver =
 };
 
 
-static struct MachineDriver fax_machine_driver =
+static struct MachineDriver machine_driver_fax =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			11289000/16,
-			0,
 			fax_readmem,fax_writemem,0,0,
 			exidy_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			3579545/4,
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1160,8 +1100,8 @@ static struct MachineDriver fax_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	pepper2_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
-	0,
+	PALETTE_LEN, COLORTABLE_LEN,
+	exidy_vh_init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1181,7 +1121,6 @@ static struct MachineDriver fax_machine_driver =
 			&exidy_custom_interface
 		}
 	}
-
 };
 
 
@@ -1189,8 +1128,8 @@ static struct MachineDriver fax_machine_driver =
   Game ROMs
 ***************************************************************************/
 
-ROM_START( sidetrac_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( sidetrac )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "stl8a-1",     0x2800, 0x0800, 0xe41750ff )
 	ROM_LOAD( "stl7a-2",     0x3000, 0x0800, 0x57fb28dc )
 	ROM_LOAD( "stl6a-2",     0x3800, 0x0800, 0x4226d469 )
@@ -1201,8 +1140,8 @@ ROM_START( sidetrac_rom )
 	ROM_LOAD( "stl11d",      0x0000, 0x0200, 0x3bd1acc1 )
 ROM_END
 
-ROM_START( targ_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( targ )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "targ10a1",    0x1800, 0x0800, 0x969744e1 )
 	ROM_LOAD( "targ09a1",    0x2000, 0x0800, 0xa177a72d )
 	ROM_LOAD( "targ08a1",    0x2800, 0x0800, 0x6e6928a5 )
@@ -1214,8 +1153,8 @@ ROM_START( targ_rom )
 	ROM_LOAD( "targ11d1",    0x0000, 0x0400, 0x9f03513e )
 ROM_END
 
-ROM_START( spectar_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( spectar )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "spl11a-3",    0x1000, 0x0800, 0x08880aff )
 	ROM_LOAD( "spl10a-2",    0x1800, 0x0800, 0xfca667c1 )
 	ROM_LOAD( "spl9a-3",     0x2000, 0x0800, 0x9d4ce8ba )
@@ -1229,8 +1168,8 @@ ROM_START( spectar_rom )
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
 
-ROM_START( spectar1_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( spectar1 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "spl12a1",     0x0800, 0x0800, 0x7002efb4 )
 	ROM_LOAD( "spl11a1",     0x1000, 0x0800, 0x8eb8526a )
 	ROM_LOAD( "spl10a1",     0x1800, 0x0800, 0x9d169b3d )
@@ -1245,8 +1184,8 @@ ROM_START( spectar1_rom )
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
 
-ROM_START( mtrap_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( mtrap )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "mtl11a.bin",  0xa000, 0x1000, 0xbd6c3eb5 )
 	ROM_LOAD( "mtl10a.bin",  0xb000, 0x1000, 0x75b0593e )
 	ROM_LOAD( "mtl9a.bin",   0xc000, 0x1000, 0x28dd20ff )
@@ -1257,15 +1196,21 @@ ROM_START( mtrap_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "mta5a.bin",   0x6800, 0x0800, 0xdbe4ec02 )
 	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",   0x7800, 0x0800, 0xf3f16ca7 )
 	ROM_RELOAD(              0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for digital sound processor */
+	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
 ROM_END
 
-ROM_START( mtrap3_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( mtrap3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "mtl-3.11a",   0xa000, 0x1000, 0x4091be6e )
 	ROM_LOAD( "mtl-3.10a",   0xb000, 0x1000, 0x38250c2f )
 	ROM_LOAD( "mtl-3.9a",    0xc000, 0x1000, 0x2eec988e )
@@ -1276,15 +1221,21 @@ ROM_START( mtrap3_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "mta5a.bin",   0x6800, 0x0800, 0xdbe4ec02 )
 	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",   0x7800, 0x0800, 0xf3f16ca7 )
 	ROM_RELOAD(              0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for digital sound processor */
+	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
 ROM_END
 
-ROM_START( mtrap4_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( mtrap4 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "mta411a.bin",  0xa000, 0x1000, 0x2879cb8d )
 	ROM_LOAD( "mta410a.bin",  0xb000, 0x1000, 0xd7378af9 )
 	ROM_LOAD( "mta49.bin",    0xc000, 0x1000, 0xbe667e64 )
@@ -1295,15 +1246,21 @@ ROM_START( mtrap4_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
 	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for digital sound processor */
+	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
 ROM_END
 
-ROM_START( venture_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( venture )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "13a-cpu",      0x8000, 0x1000, 0xf4e4d991 )
 	ROM_LOAD( "12a-cpu",      0x9000, 0x1000, 0xc6d8cb04 )
 	ROM_LOAD( "11a-cpu",      0xa000, 0x1000, 0x3bdb01f4 )
@@ -1316,7 +1273,7 @@ ROM_START( venture_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "3a-ac",        0x5800, 0x0800, 0x4ea1c3d9 )
 	ROM_LOAD( "4a-ac",        0x6000, 0x0800, 0x5154c39e )
 	ROM_LOAD( "5a-ac",        0x6800, 0x0800, 0x1e1e3916 )
@@ -1325,8 +1282,8 @@ ROM_START( venture_rom )
 	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
-ROM_START( venture2_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( venture2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "vent_a13.cpu", 0x8000, 0x1000, 0x4c833f99 )
 	ROM_LOAD( "vent_a12.cpu", 0x9000, 0x1000, 0x8163cefc )
 	ROM_LOAD( "vent_a11.cpu", 0xa000, 0x1000, 0x324a5054 )
@@ -1339,7 +1296,7 @@ ROM_START( venture2_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "3a-ac",        0x5800, 0x0800, 0x4ea1c3d9 )
 	ROM_LOAD( "4a-ac",        0x6000, 0x0800, 0x5154c39e )
 	ROM_LOAD( "5a-ac",        0x6800, 0x0800, 0x1e1e3916 )
@@ -1348,8 +1305,8 @@ ROM_START( venture2_rom )
 	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
-ROM_START( venture4_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( venture4 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "vel13a-4",     0x8000, 0x1000, 0x1c5448f9 )
 	ROM_LOAD( "vel12a-4",     0x9000, 0x1000, 0xe62491cc )
 	ROM_LOAD( "vel11a-4",     0xa000, 0x1000, 0xe91faeaf )
@@ -1362,7 +1319,7 @@ ROM_START( venture4_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "vel11d-2",     0x0000, 0x0800, 0xea6fd981 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "vea3a-2",      0x5800, 0x0800, 0x83b8836f )
 	ROM_LOAD( "4a-ac",        0x6000, 0x0800, 0x5154c39e )
 	ROM_LOAD( "5a-ac",        0x6800, 0x0800, 0x1e1e3916 )
@@ -1371,8 +1328,8 @@ ROM_START( venture4_rom )
 	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
-ROM_START( pepper2_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( pepper2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "main_12a",     0x9000, 0x1000, 0x33db4737 )
 	ROM_LOAD( "main_11a",     0xa000, 0x1000, 0xa1f43b1f )
 	ROM_LOAD( "main_10a",     0xb000, 0x1000, 0x4d7d7786 )
@@ -1384,15 +1341,15 @@ ROM_START( pepper2_rom )
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "main_11d",     0x0000, 0x0800, 0xb25160cd )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "audio_5a",     0x6800, 0x0800, 0x90e3c781 )
 	ROM_LOAD( "audio_6a",     0x7000, 0x0800, 0xdd343e34 )
 	ROM_LOAD( "audio_7a",     0x7800, 0x0800, 0xe02b4356 )
 	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
-ROM_START( hardhat_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( hardhat )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "hhl-2.11a",    0xa000, 0x1000, 0x7623deea )
 	ROM_LOAD( "hhl-2.10a",    0xb000, 0x1000, 0xe6bf2fb1 )
 	ROM_LOAD( "hhl-2.9a",     0xc000, 0x1000, 0xacc2bce5 )
@@ -1403,15 +1360,15 @@ ROM_START( hardhat_rom )
 	ROM_REGION_DISPOSE(0x0800) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "hhl-1.11d",    0x0000, 0x0800, 0xdbcdf353 )
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "hha-1.5a",     0x6800, 0x0800, 0x16a5a183 )
 	ROM_LOAD( "hha-1.6a",     0x7000, 0x0800, 0xbde64021 )
 	ROM_LOAD( "hha-1.7a",     0x7800, 0x0800, 0x505ee5d3 )
 	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
-ROM_START( fax_rom )
-	ROM_REGION(0x40000) /* 64k for code + 192k for extra memory */
+ROM_START( fax )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 64k for code + 192k for extra memory */
 	ROM_LOAD( "fxl8-13a.32",  0x8000, 0x1000, 0x8e30bf6b )
 	ROM_LOAD( "fxl8-12a.32",  0x9000, 0x1000, 0x60a41ff1 )
 	ROM_LOAD( "fxl8-11a.32",  0xA000, 0x1000, 0x2c9cee8a )
@@ -1451,7 +1408,7 @@ ROM_START( fax_rom )
 	ROM_LOAD( "fxl1-11d.32",  0x0000, 0x0800, 0x54fc873d )
 	ROM_CONTINUE(             0x0000, 0x0800 )       /* overwrite with the real one - should be a 2716? */
 
-	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, 0x7c525aec )
 	ROM_LOAD( "fxa2-6a.16",   0x7000, 0x0800, 0x2b3bfc44 )
 	ROM_LOAD( "fxa2-7a.16",   0x7800, 0x0800, 0x578c62b7 )
@@ -1459,256 +1416,8 @@ ROM_START( fax_rom )
 ROM_END
 
 
-/***************************************************************************
-  Hi Score Routines
-***************************************************************************/
 
-static int mtrap_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x0380],0xff,5+6*5);        /* high score */
-			firsttime = 1;
-		}
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
-		(memcmp(&RAM[0x03A0],"LWH",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0380],5+6*5);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void mtrap_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 5 bytes for score order, 6 bytes per score/initials */
-		osd_fwrite(f,&RAM[0x0380],5+6*5);
-		osd_fclose(f);
-	}
-
-}
-
-static int venture_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
-		(memcmp(&RAM[0x03A0],"DJS",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0380],5+6*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void venture_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 5 bytes for score order, 6 bytes per score/initials */
-		osd_fwrite(f,&RAM[0x0380],5+6*5);
-		osd_fclose(f);
-	}
-
-}
-
-static int pepper2_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x0360],0xff,5+6*5);        /* high score */
-			firsttime = 1;
-		}
-
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0365],"\x00\x07\x65",3) == 0) &&
-		(memcmp(&RAM[0x0380],"\x15\x20\x11",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0360],5+6*5);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void pepper2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 5 bytes for score order, 6 bytes per score/initials */
-		osd_fwrite(f,&RAM[0x0360],5+6*5);
-		osd_fclose(f);
-	}
-
-}
-
-static int targ_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x00AE],"\x00\x10",2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x00AE],2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void targ_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x00AE],2);
-		osd_fclose(f);
-	}
-}
-
-static int fax_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x02b4],0xff,7*50); /* high score */
-			firsttime = 1;
-		}
-
-
-
-	if (memcmp(&RAM[0x0360],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x040f],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x02B4],7*50);
-			osd_fclose(f);
-		}
-		firsttime =0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void fax_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 7 characters per hi score, 50 hi scores */
-		osd_fwrite(f,&RAM[0x02B4],7*50);
-		osd_fclose(f);
-	}
-}
-
-static int sidetrac_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x000a],0xff,8);    /* high score */
-			firsttime = 1;
-		}
-
-
-
-	/* Check for high score init. */
-	if (memcmp(&RAM[0x000f],"\x00\x00",2) == 0 && memcmp(&RAM[0x000a],"\x00\x00",2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x000f],2);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void sidetrac_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x000f],2);
-		osd_fclose(f);
-	}
-}
-
-
-/***************************************************************************
-Game Driver
-***************************************************************************/
-
-struct GameDriver sidetrac_driver =
+struct GameDriver driver_sidetrac =
 {
 	__FILE__,
 	0,
@@ -1718,24 +1427,23 @@ struct GameDriver sidetrac_driver =
 	"Exidy",
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
-	&targ_machine_driver,
-	targ_driver_init,
+	&machine_driver_targ,
+	sidetrac_driver_init,
 
-	sidetrac_rom,
+	rom_sidetrac,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	sidetrac_input_ports,
+	input_ports_sidetrac,
 
-	0, sidetrac_palette, sidetrac_colortable,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
+	ROT0,
 	0,0
 };
 
-struct GameDriver targ_driver =
+struct GameDriver driver_targ =
 {
 	__FILE__,
 	0,
@@ -1745,24 +1453,23 @@ struct GameDriver targ_driver =
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	targ_driver_init,
 
-	targ_rom,
+	rom_targ,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	targ_input_ports,
+	input_ports_targ,
 
-	0, targ_palette, colortable,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver spectar_driver =
+struct GameDriver driver_spectar =
 {
 	__FILE__,
 	0,
@@ -1772,51 +1479,49 @@ struct GameDriver spectar_driver =
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	spectar_driver_init,
 
-	spectar_rom,
+	rom_spectar,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	spectar_input_ports,
+	input_ports_spectar,
 
-	0, spectar_palette, colortable,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver spectar1_driver =
+struct GameDriver driver_spectar1 =
 {
 	__FILE__,
-	&spectar_driver,
+	&driver_spectar,
 	"spectar1",
 	"Spectar (revision 1?)",
 	"1980",
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	spectar_driver_init,
 
-	spectar1_rom,
+	rom_spectar1,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	spectar_input_ports,
+	input_ports_spectar,
 
-	0, spectar_palette, colortable,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver mtrap_driver =
+struct GameDriver driver_mtrap =
 {
 	__FILE__,
 	0,
@@ -1824,77 +1529,74 @@ struct GameDriver mtrap_driver =
 	"Mouse Trap (version 5)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
-	&mtrap_machine_driver,
+	&machine_driver_mtrap,
 	mtrap_driver_init,
 
-	mtrap_rom,
+	rom_mtrap,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	mtrap_input_ports,
+	input_ports_mtrap,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	mtrap_hiload,mtrap_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mtrap3_driver =
+struct GameDriver driver_mtrap3 =
 {
 	__FILE__,
-	&mtrap_driver,
+	&driver_mtrap,
 	"mtrap3",
 	"Mouse Trap (version 3)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
-	&mtrap_machine_driver,
+	&machine_driver_mtrap,
 	mtrap_driver_init,
 
-	mtrap3_rom,
+	rom_mtrap3,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	mtrap_input_ports,
+	input_ports_mtrap,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	mtrap_hiload,mtrap_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mtrap4_driver =
+struct GameDriver driver_mtrap4 =
 {
 	__FILE__,
-        &mtrap_driver,
+        &driver_mtrap,
 	"mtrap4",
 	"Mouse Trap (version 4)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
-	&mtrap_machine_driver,
+	&machine_driver_mtrap,
 	mtrap_driver_init,
 
-	mtrap4_rom,
+	rom_mtrap4,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	mtrap_input_ports,
+	input_ports_mtrap,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	mtrap_hiload,mtrap_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver venture_driver =
+struct GameDriver driver_venture =
 {
 	__FILE__,
 	0,
@@ -1902,77 +1604,74 @@ struct GameDriver venture_driver =
 	"Venture (version 5 set 1)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
-	&venture_machine_driver,
+	&machine_driver_venture,
 	venture_driver_init,
 
-	venture_rom,
+	rom_venture,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	venture_input_ports,
+	input_ports_venture,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	venture_hiload,venture_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver venture2_driver =
+struct GameDriver driver_venture2 =
 {
 	__FILE__,
-	&venture_driver,
+	&driver_venture,
 	"venture2",
 	"Venture (version 5 set 2)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
-	&venture_machine_driver,
+	&machine_driver_venture,
 	venture_driver_init,
 
-	venture2_rom,
+	rom_venture2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	venture_input_ports,
+	input_ports_venture,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	venture_hiload,venture_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver venture4_driver =
+struct GameDriver driver_venture4 =
 {
 	__FILE__,
-	&venture_driver,
+	&driver_venture,
 	"venture4",
 	"Venture (version 4)",
 	"1981",
 	"Exidy",
-	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
+    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
-	&venture_machine_driver,
+	&machine_driver_venture,
 	venture_driver_init,
 
-	venture4_rom,
+	rom_venture4,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	venture_input_ports,
+	input_ports_venture,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	venture_hiload,venture_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver pepper2_driver =
+struct GameDriver driver_pepper2 =
 {
 	__FILE__,
 	0,
@@ -1980,25 +1679,24 @@ struct GameDriver pepper2_driver =
 	"Pepper II",
 	"1982",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
-	&pepper2_machine_driver,
+	&machine_driver_pepper2,
 	pepper2_driver_init,
 
-	pepper2_rom,
+	rom_pepper2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	pepper2_input_ports,
+	input_ports_pepper2,
 
-	0, palette, pepper2_colortable,
-	ORIENTATION_DEFAULT,
-
-	pepper2_hiload,pepper2_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver hardhat_driver =
+struct GameDriver driver_hardhat =
 {
 	__FILE__,
 	0,
@@ -2006,25 +1704,24 @@ struct GameDriver hardhat_driver =
 	"Hard Hat",
 	"1982",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
-	&pepper2_machine_driver,
+	&machine_driver_pepper2,
 	pepper2_driver_init,
 
-	hardhat_rom,
+	rom_hardhat,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	pepper2_input_ports,
+	input_ports_pepper2,
 
-	0, palette, pepper2_colortable,
-	ORIENTATION_DEFAULT,
-
-	pepper2_hiload,pepper2_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver fax_driver =
+struct GameDriver driver_fax =
 {
 	__FILE__,
 	0,
@@ -2032,20 +1729,19 @@ struct GameDriver fax_driver =
 	"Fax",
 	"1983",
 	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
-	&fax_machine_driver,
+	&machine_driver_fax,
 	fax_driver_init,
 
-	fax_rom,
+	rom_fax,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	fax_input_ports,
+	input_ports_fax,
 
-	0, palette, pepper2_colortable,
-	ORIENTATION_DEFAULT,
-
-	fax_hiload,fax_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

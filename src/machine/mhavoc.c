@@ -24,7 +24,7 @@ int bank1;
 void mhavoc_ram_banksel_w (int offset,int data)
 {
 	static int bank[2] = { 0x20200, 0x20800 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	data&=0x01;
 	if (errorlog) fprintf (errorlog, "Alpha RAM select: %02x\n",data);
@@ -34,7 +34,7 @@ void mhavoc_ram_banksel_w (int offset,int data)
 void mhavoc_rom_banksel_w (int offset,int data)
 {
 	static int bank[4] = { 0x10000, 0x12000, 0x14000, 0x16000 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	data &= 0x03;
@@ -160,7 +160,7 @@ void mhavoc_out_0_w (int offset, int data)
 	{
 		if (errorlog)
 			fprintf (errorlog, "\t\t\t\t*** resetting gamma processor. ***\n");
-		cpu_reset(1);
+		cpu_set_reset_line(1,PULSE_LINE);
 		alpha_rcvd=0;
 		alpha_xmtd=0;
 		gamma_rcvd=0;
@@ -175,20 +175,4 @@ void mhavoc_out_1_w (int offset, int data)
 {
 	osd_led_w (1, data & 0x01);
 	osd_led_w (0, (data & 0x02)>>1);
-}
-
-int mhavoc_gammaram_r (int offset)
-{
-	extern unsigned char *RAM;
-
-
-	return RAM[offset & 0x7ff];
-}
-
-void mhavoc_gammaram_w (int offset, int data)
-{
-	extern unsigned char *RAM;
-
-
-	RAM[offset & 0x7ff] = data;
 }

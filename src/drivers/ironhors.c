@@ -41,13 +41,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void ironhors_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
-int ironhors_interrupt(void)
+static int ironhors_interrupt(void)
 {
 	if (cpu_getiloops() == 0)
 	{
@@ -60,7 +54,7 @@ int ironhors_interrupt(void)
 	return ignore_interrupt();
 }
 
-void ironhors_sh_irqtrigger_w(int offset,int data)
+static void ironhors_sh_irqtrigger_w(int offset,int data)
 {
 	cpu_cause_interrupt(1,0xff);
 }
@@ -150,7 +144,7 @@ static struct MemoryWriteAddress farwest_sound_writemem[] =
 
 
 
-INPUT_PORTS_START( ironhors_input_ports )
+INPUT_PORTS_START( ironhors )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -163,22 +157,22 @@ INPUT_PORTS_START( ironhors_input_ports )
 
 	PORT_START	/* IN1 */
 	/* note that button 3 for player 1 and 2 are exchanged */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -201,7 +195,7 @@ INPUT_PORTS_START( ironhors_input_ports )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -248,9 +242,120 @@ INPUT_PORTS_START( ironhors_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, "Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x04, 0x04, "Button Layout" )
+	PORT_DIPSETTING(    0x04, "Power Atk Squat" )
+	PORT_DIPSETTING(    0x00, "Squat Atk Power" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( dairesya )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "30000 70000" )
+	PORT_DIPSETTING(    0x10, "40000 80000" )
+	PORT_DIPSETTING(    0x08, "40000" )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+/* 	PORT_DIPSETTING(    0x00, "Invalid" ) */
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPNAME( 0x04, 0x04, "Button Layout" )
+	PORT_DIPSETTING(    0x04, "Power Atk Squat" )
+	PORT_DIPSETTING(    0x00, "Squat Atk Power" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout ironhors_charlayout =
@@ -333,8 +438,8 @@ static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ? */
-	{ YM2203_VOL(25,25) },
+	18432000/6,		/* 3.07 MHz?  mod by Shingo Suzuki 1999/10/15 */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -344,28 +449,26 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver ironhors_machine_driver =
+static struct MachineDriver machine_driver_ironhors =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			2500000,        /* 2.50 Mhz? */
-			0,
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ??  */
-			3,	/* memory region #3 */
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			ironhors_sound_readmem,ironhors_sound_writemem,ironhors_sound_readport,ironhors_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	ironhors_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
@@ -389,28 +492,26 @@ static struct MachineDriver ironhors_machine_driver =
 	}
 };
 
-static struct MachineDriver farwest_machine_driver =
+static struct MachineDriver machine_driver_farwest =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			2500000,        /* 2.50 Mhz? */
-			0,
+			2000000,        /* ? */
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ??  */
-			3,	/* memory region #3 */
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			farwest_sound_readmem,farwest_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	ironhors_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
@@ -442,8 +543,8 @@ static struct MachineDriver farwest_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ironhors_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( ironhors )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "13c_h03.bin",  0x4000, 0x8000, 0x24539af1 )
 	ROM_LOAD( "12c_h02.bin",  0xc000, 0x4000, 0xfab07f86 )
 
@@ -453,19 +554,41 @@ ROM_START( ironhors_rom )
 	ROM_LOAD( "08f_h06.bin",  0x10000, 0x8000, 0xf21d8c93 )
 	ROM_LOAD( "07f_h05.bin",  0x18000, 0x8000, 0x60107859 )
 
-	ROM_REGION(0x500)	/* color/lookup proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
 	ROM_LOAD( "04f_h09.bin",  0x0100, 0x0100, 0xe6773825 ) /* palette green */
 	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 ROM_END
 
-ROM_START( farwest_rom )
-	ROM_REGION(0x12000)	/* 64k for code + 8k for extra ROM */
+ROM_START( dairesya )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "560-k03.13c",  0x4000, 0x8000, 0x2ac6103b )
+	ROM_LOAD( "560-k02.12c",  0xc000, 0x4000, 0x07bc13a9 )
+
+	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "560-k07.9f",   0x00000, 0x8000, 0xc8a1b840 )
+	ROM_LOAD( "560-k04.6f",   0x08000, 0x8000, 0xc883d856 )
+	ROM_LOAD( "560-j06.8f",   0x10000, 0x8000, 0xa6e8248d )
+	ROM_LOAD( "560-j05.7f",   0x18000, 0x8000, 0xf75893d4 )
+
+	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
+	ROM_LOAD( "04f_h09.bin",  0x0100, 0x0100, 0xe6773825 ) /* palette green */
+	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
+	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
+	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
+ROM_END
+
+ROM_START( farwest )
+	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code + 8k for extra ROM */
 	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0xb1c8246c )
 	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xea34ecfc )
 	ROM_LOAD( "ironhors.007", 0x10000, 0x2000, 0x471182b7 )	/* don't know what this is for */
@@ -478,57 +601,20 @@ ROM_START( farwest_rom )
 	ROM_LOAD( "ironhors.003", 0x18000, 0x4000, 0x3a0bf799 )
 	ROM_LOAD( "ironhors.004", 0x1c000, 0x4000, 0x1fab18a3 )
 
-	ROM_REGION(0x500)	/* color/lookup proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "ironcol.003",  0x0000, 0x0100, 0x3e3fca11 ) /* palette red */
 	ROM_LOAD( "ironcol.001",  0x0100, 0x0100, 0xdfb13014 ) /* palette green */
 	ROM_LOAD( "ironcol.002",  0x0200, 0x0100, 0x77c88430 ) /* palette blue */
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "ironcol.005",  0x0400, 0x0100, 0x15077b9c ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xa28231a6 )
 ROM_END
 
 
-static int hiload(void) /* HSC 12/29/98 */
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x3300],"\x23\x2c\x1f",3) == 0 && memcmp(&RAM[0x333d],"\x01\x00\x00",3) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-/* oddly enough the top score displays 2 numbers less then the hiscore table does */
-			osd_fread(f,&RAM[0x32f1],3);
-			osd_fread(f,&RAM[0x3300],64);
-			osd_fclose(f);
-        }
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void) /* HSC 12/29/98 */
-{
-    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x32f1],3);
-        osd_fwrite(f,&RAM[0x3300],64);
-        osd_fclose(f);
-    }
-}
-
-
-struct GameDriver ironhors_driver =
+struct GameDriver driver_ironhors =
 {
 	__FILE__,
 	0,
@@ -538,44 +624,67 @@ struct GameDriver ironhors_driver =
 	"Konami",
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
 	0,
-	&ironhors_machine_driver,
+	&machine_driver_ironhors,
 	0,
 
-	ironhors_rom,
+	rom_ironhors,
 	0, 0,
 	0,
 	0,
 
-	ironhors_input_ports,
+	input_ports_ironhors,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver farwest_driver =
+struct GameDriver driver_dairesya =
 {
 	__FILE__,
-	&ironhors_driver,
+	&driver_ironhors,
+	"dairesya",
+	"Dai Ressya Goutou (Japan)",
+	"1986",
+	"[Konami] (Kawakusu license)",
+	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
+	0,
+	&machine_driver_ironhors,
+	0,
+
+	rom_dairesya,
+	0, 0,
+	0,
+	0,
+
+	input_ports_dairesya,
+
+	0, 0, 0,
+	ROT0,
+	0,0
+};
+
+struct GameDriver driver_farwest =
+{
+	__FILE__,
+	&driver_ironhors,
 	"farwest",
 	"Far West",
 	"1986",
 	"bootleg?",
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
-	GAME_NOT_WORKING,
-	&farwest_machine_driver,
+	0,
+	&machine_driver_farwest,
 	0,
 
-	farwest_rom,
+	rom_farwest,
 	0, 0,
 	0,
 	0,
 
-	ironhors_input_ports,
+	input_ports_ironhors,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };

@@ -103,7 +103,7 @@ void identify_rom(const char* name, int checksum, int length)
 
 		romp = drivers[i]->rom;
 
-		while (romp->name || romp->offset || romp->length)
+		while (romp && (romp->name || romp->offset || romp->length))
 		{
 			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
 			{
@@ -154,7 +154,7 @@ void identify_rom(const char* name, int checksum, int length)
 
 		romp = drivers[i]->rom;
 
-		while (romp->name || romp->offset || romp->length)
+		while (romp && (romp->name || romp->offset || romp->length))
 		{
 			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
 			{
@@ -295,24 +295,39 @@ void romident(const char* name,int enter_dirs) {
 }
 
 
+#ifndef MESS
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
-		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE };
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
+		LIST_SOURCEFILE };
+#else
+enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
+		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
+		LIST_SOURCEFILE, LIST_EXTENSIONS };
+#endif
+
+
+#define VERIFY_ROMS		0x00000001
+#define VERIFY_SAMPLES	0x00000002
+#define VERIFY_VERBOSE	0x00000004
+#define VERIFY_TERSE	0x00000008
+
+void CLIB_DECL terse_printf(char *fmt,...)
+{
+	/* no-op */
+}
+
 
 int frontend_help (int argc, char **argv)
 {
 	int i, j;
-	int list = 0;
+    int list = 0;
 	int listclones = 1;
 	int verify = 0;
 	int ident = 0;
 	int help = 1;    /* by default is TRUE */
 	char gamename[9];
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-	extern struct GameDriver neogeo_bios;
-#endif
-#endif
 
 	/* covert '/' in '-' */
 	for (i = 1;i < argc;i++) if (argv[i][0] == '/') argv[i][0] = '-';
@@ -355,16 +370,24 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
 		if (!stricmp(argv[i],"-wrongfps")) list = LIST_WRONGFPS;
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
+		#ifdef MESS
+				if (!stricmp(argv[i],"-listextensions")) list = LIST_EXTENSIONS;
+		#endif
+
 
 		/* these options REQUIRES gamename field to work */
 		if (strlen(gamename) > 0)
 		{
 			if (!stricmp(argv[i],"-listroms")) list = LIST_LISTROMS;
 			if (!stricmp(argv[i],"-listsamples")) list = LIST_LISTSAMPLES;
-			if (!stricmp(argv[i],"-verifyroms")) verify = 1;
-			if (!stricmp(argv[i],"-verifysamples")) verify = 2;
+			if (!stricmp(argv[i],"-verifyroms")) verify = VERIFY_ROMS;
+			if (!stricmp(argv[i],"-verifysets")) verify = VERIFY_ROMS|VERIFY_VERBOSE|VERIFY_TERSE;
+			if (!stricmp(argv[i],"-vset")) verify = VERIFY_ROMS|VERIFY_VERBOSE;
+			if (!stricmp(argv[i],"-verifysamples")) verify = VERIFY_SAMPLES|VERIFY_VERBOSE;
+			if (!stricmp(argv[i],"-vsam")) verify = VERIFY_SAMPLES|VERIFY_VERBOSE;
 			if (!stricmp(argv[i],"-romident")) ident = 1;
 			if (!stricmp(argv[i],"-isknown")) ident = 2;
+			if (!stricmp(argv[i],"-sourcefile")) list = LIST_SOURCEFILE;
 		}
 	}
 
@@ -395,17 +418,44 @@ int frontend_help (int argc, char **argv)
 
 	switch (list)  /* front-end utilities ;) */
 	{
+
+		#ifdef MESS
+		case LIST_EXTENSIONS: /* simple games list */
+					i = 0; j = 0;
+					printf("\nSYSTEM    IMAGE FILE EXTENSIONS SUPPORTED\n");
+					printf("--------  -------------------------------\n");
+					while (drivers[i])
+					{
+						if ((listclones || drivers[i]->clone_of == 0
+								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
+								) && !strwildcmp(gamename, drivers[i]->name))
+						{
+							printf("%-10s",drivers[i]->name);
+							j=0;
+							while(drivers[i]->file_extension[j]!=0)
+							{
+								if (drivers[i]->file_extension != 0 && drivers[i]->file_extension[0] != 0)
+								{
+									printf(".%-5s",drivers[i]->file_extension[j]);
+
+								}
+							j++;
+							}
+							printf("\n");
+						}
+						i++;
+					}
+					return 0;
+					break;
+		#endif
+
 		case LIST_LIST: /* simple games list */
 			printf("\nMAME currently supports the following games:\n\n");
 			i = 0; j = 0;
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					printf("%-8s",drivers[i]->name);
@@ -428,11 +478,7 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					char name[200];
@@ -470,21 +516,28 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
-					if (drivers[i]->samplenames != 0 && drivers[i]->samplenames[0] != 0)
+				{
+#if (HAS_SAMPLES)
+					for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
 					{
-						printf("%-10s",drivers[i]->name);
-						if (drivers[i]->samplenames[0][0] == '*')
-							printf("%s\n",drivers[i]->samplenames[0]+1);
-						else
-							printf("%s\n",drivers[i]->name);
+						const char **samplenames;
+						if( drivers[i]->drv->sound[j].sound_type != SOUND_SAMPLES )
+							continue;
+						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+						if (samplenames != 0 && samplenames[0] != 0)
+						{
+							printf("%-10s",drivers[i]->name);
+							if (samplenames[0][0] == '*')
+								printf("%s\n",samplenames[0]+1);
+							else
+								printf("%s\n",drivers[i]->name);
+						}
 					}
-				i++;
+#endif
+					i++;
+				}
 			}
 			return 0;
 			break;
@@ -504,15 +557,25 @@ int frontend_help (int argc, char **argv)
 				printromlist(gamedrv->rom,gamename);
 			else
 			{
-				if (gamedrv->samplenames != 0 && gamedrv->samplenames[0] != 0)
+#if (HAS_SAMPLES)
+				int k;
+				for( k = 0; gamedrv->drv->sound[k].sound_type && k < MAX_SOUND; k++ )
 				{
-					i = 0;
-					while (gamedrv->samplenames[i] != 0)
+					const char **samplenames;
+					if( gamedrv->drv->sound[k].sound_type != SOUND_SAMPLES )
+						continue;
+					samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
+					if (samplenames != 0 && samplenames[0] != 0)
 					{
-						printf("%s\n",gamedrv->samplenames[i]);
-						i++;
+						i = 0;
+						while (samplenames[i] != 0)
+						{
+							printf("%s\n",samplenames[i]);
+							i++;
+						}
 					}
-				}
+                }
+#endif
 			}
 			return 0;
 			break;
@@ -551,8 +614,14 @@ int frontend_help (int argc, char **argv)
 
             /* First, we shall print the header */
 
-            printf(" romname driver     cpu 1    cpu 2    cpu 3    cpu 4    sound 1     sound 2     sound 3     sound 4     name\n");
-            printf("-------- ---------- -------- -------- -------- -------- ----------- ----------- ----------- ----------- --------------------------\n");
+			printf(" romname driver     ");
+			for(j=0;j<MAX_CPU;j++) printf("cpu %d    ",j+1);
+			for(j=0;j<MAX_SOUND;j++) printf("sound %d     ",j+1);
+			printf("name\n");
+			printf("-------- ---------- ");
+			for(j=0;j<MAX_CPU;j++) printf("-------- ");
+			for(j=0;j<MAX_SOUND;j++) printf("----------- ");
+			printf("--------------------------\n");
 
             /* Let's cycle through the drivers */
 
@@ -560,7 +629,9 @@ int frontend_help (int argc, char **argv)
 
             while (drivers[i])
 			{
-				if (!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
+						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					/* Dummy structs to fetch the information from */
 
@@ -572,11 +643,15 @@ int frontend_help (int argc, char **argv)
 
 					printf("%-8s ",drivers[i]->name);
 
+					#ifndef MESS
 					/* source file (skip the leading "src/drivers/" */
+                    printf("%-10s ",&drivers[i]->source_file[12]);
+                    #else
+					/* source file (skip the leading "src/mess/systems/" */
+					printf("%-10s ",&drivers[i]->source_file[17]);
+					#endif
 
-					printf("%-10s ",&drivers[i]->source_file[12]);
-
-					/* Then, cpus */
+                    /* Then, cpus */
 
 					for(j=0;j<MAX_CPU;j++)
 					{
@@ -588,7 +663,7 @@ int frontend_help (int argc, char **argv)
 
 					/* Then, sound chips */
 
-					for(j=0;j<MAX_CPU;j++)
+					for(j=0;j<MAX_SOUND;j++)
 					{
 						if (sound_num(&x_sound[j]))
 						{
@@ -613,11 +688,7 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->description))
 				{
 					char name[200];
@@ -655,7 +726,8 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if (drivers[i]->clone_of &&
-						(!strwildcmp(gamename,drivers[i]->name) || !strwildcmp(gamename,drivers[i]->clone_of->name)))
+						((!strwildcmp(gamename,drivers[i]->name) && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+								|| !strwildcmp(gamename,drivers[i]->clone_of->name)))
 					printf("%-8s %-8s\n",drivers[i]->name,drivers[i]->clone_of->name);
 				i++;
 			}
@@ -666,7 +738,8 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
-						drivers[i]->clone_of == 0 &&
+						(drivers[i]->clone_of == 0
+								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
 						drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1 <=
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1)
 				{
@@ -733,16 +806,28 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
-						drivers[i]->clone_of == 0 &&
+						(drivers[i]->clone_of == 0
+								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
 						drivers[i]->drv->frames_per_second > 57 &&
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 > 244 &&
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 <= 256)
 				{
-					printf("%s %dx%d %dHz\n",drivers[i]->name,
+					printf("%s %dx%d %fHz\n",drivers[i]->name,
 							drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
 							drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1,
 							drivers[i]->drv->frames_per_second);
 				}
+				i++;
+			}
+			return 0;
+			break;
+
+		case LIST_SOURCEFILE:
+			i = 0;
+			while (drivers[i])
+			{
+				if (!strwildcmp(gamename,drivers[i]->name))
+					printf("%-8s %s\n",drivers[i]->name,drivers[i]->source_file);
 				i++;
 			}
 			return 0;
@@ -756,7 +841,7 @@ int frontend_help (int argc, char **argv)
 
 				romp = drivers[i]->rom;
 
-				while (romp->name || romp->offset || romp->length)
+				while (romp && (romp->name || romp->offset || romp->length))
 				{
 					if (romp->name && romp->name != (char *)-1)
 						printf("%08x %-12s %s\n",romp->crc,romp->name,drivers[i]->description);
@@ -777,7 +862,7 @@ int frontend_help (int argc, char **argv)
 
 				romp = drivers[i]->rom;
 
-				while (romp->name || romp->offset || romp->length)
+				while (romp && (romp->name || romp->offset || romp->length))
 				{
 					if (romp->name && romp->name != (char *)-1 && romp->crc)
 					{
@@ -788,7 +873,7 @@ int frontend_help (int argc, char **argv)
 
 							romp1 = drivers[j]->rom;
 
-							while (romp1->name || romp1->offset || romp1->length)
+							while (romp1 && (romp1->name || romp1->offset || romp1->length))
 							{
 								if (romp1->name && romp1->name != (char *)-1 &&
 										strcmp(romp->name,romp1->name) &&
@@ -823,7 +908,7 @@ int frontend_help (int argc, char **argv)
 
 				romp = drivers[i]->rom;
 
-				while (romp->name || romp->offset || romp->length)
+				while (romp && (romp->name || romp->offset || romp->length))
 				{
 					if (romp->name && romp->name != (char *)-1 && romp->crc)
 					{
@@ -831,12 +916,8 @@ int frontend_help (int argc, char **argv)
 						while (drivers[j])
 						{
 							if (j != i &&
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-								drivers[j]->clone_of != &neogeo_bios &&
-#endif
-#endif
 								drivers[j]->clone_of &&
+								(drivers[i]->clone_of->flags & NOT_A_DRIVER) == 0 &&
 								(drivers[j]->clone_of == drivers[i] ||
 								(i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
 							{
@@ -847,7 +928,7 @@ int frontend_help (int argc, char **argv)
 								romp1 = drivers[j]->rom;
 								match = 0;
 
-								while (romp1->name || romp1->offset || romp1->length)
+								while (romp1 && (romp1->name || romp1->offset || romp1->length))
 								{
 									if (romp1->name && romp1->name != (char *)-1 &&
 											!strcmp(romp->name,romp1->name))
@@ -863,7 +944,7 @@ int frontend_help (int argc, char **argv)
 								{
 									romp1 = drivers[j]->rom;
 
-									while (romp1->name || romp1->offset || romp1->length)
+									while (romp1 && (romp1->name || romp1->offset || romp1->length))
 									{
 										if (romp1->name && romp1->name != (char *)-1 &&
 												strcmp(romp->name,romp1->name) &&
@@ -901,10 +982,11 @@ int frontend_help (int argc, char **argv)
 		int correct = 0;
 		int incorrect = 0;
 		int res = 0;
-		int total;
+		int total = 0;
+		int checked = 0;
 		int notfound = 0;
 
-		total = 0;
+
 		for (i = 0; drivers[i]; i++)
 		{
 			if (!strwildcmp(gamename, drivers[i]->name))
@@ -919,77 +1001,85 @@ int frontend_help (int argc, char **argv)
 			/* set rom and sample path correctly */
 			get_rom_sample_path (argc, argv, i);
 
-			/* if using wildcards, ignore games we don't have romsets for. */
-			if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
+			if (verify & VERIFY_ROMS)
 			{
-				{
-					/* if the game is a clone, try loading the ROM from the main version */
-					if (drivers[i]->clone_of == 0 ||
-							!osd_faccess(drivers[i]->clone_of->name,OSD_FILETYPE_ROM))
-						if (stricmp(gamename, drivers[i]->name) != 0)
-						{
-							notfound++;
-							goto nextloop;
-						}
-				}
-			}
+				res = VerifyRomSet (i,(verify & VERIFY_TERSE) ? terse_printf : (verify_printf_proc)printf);
 
-			if (verify == 1)
-			{
-				res = VerifyRomSet (i,(verify_printf_proc)printf);
-
-				if (res == CLONE_NOTFOUND)
+				if (res == CLONE_NOTFOUND || res == NOTFOUND)
 				{
 					notfound++;
 					goto nextloop;
 				}
 
-				if (res != CORRECT)
+				if (res == INCORRECT || res == BEST_AVAILABLE || (verify & VERIFY_VERBOSE))
+				{
 					printf ("romset %s ", drivers[i]->name);
+					if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+						printf ("[%s] ", drivers[i]->clone_of->name);
+				}
 			}
-			if (verify == 2)
+			if (verify & VERIFY_SAMPLES)
 			{
+				const char **samplenames = NULL;
+#if (HAS_SAMPLES)
+				for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+					if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
+						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
 				/* ignore games that need no samples */
-				if (drivers[i]->samplenames == 0 ||
-					drivers[i]->samplenames[0] == 0)
-					continue;
+				if (samplenames == 0 || samplenames[0] == 0)
+					goto nextloop;
 
 				res = VerifySampleSet (i,(verify_printf_proc)printf);
-				if (res != CORRECT)
-					printf ("sampleset %s ", drivers[i]->name);
+				if (res == NOTFOUND)
+				{
+					notfound++;
+					goto nextloop;
+				}
+				printf ("sampleset %s ", drivers[i]->name);
 			}
 
 			if (res == NOTFOUND)
 			{
-				printf ("not found\n\n");
-				notfound++;
+				printf ("oops, should never come along here\n");
 			}
 			else if (res == INCORRECT)
 			{
-				printf ("incorrect\n\n");
+				printf ("is bad\n");
 				incorrect++;
 			}
-			else
+			else if (res == CORRECT)
+			{
+				if (verify & VERIFY_VERBOSE)
+					printf ("is good\n");
 				correct++;
+			}
+			else if (res == BEST_AVAILABLE)
+			{
+				printf ("is best available\n");
+				correct++;
+			}
 			if (res)
 				err = res;
 
 nextloop:
-			fprintf(stderr,"%d%%\r",100 * (correct+incorrect+notfound) / total);
+			checked++;
+			fprintf(stderr,"%d%%\r",100 * checked / total);
 		}
 
 		if (correct+incorrect == 0)
 		{
+			printf ("%s ", (verify & VERIFY_ROMS) ? "romset" : "sampleset" );
 			if (notfound > 0)
-				printf("Game \"%s\" not found!\n",gamename);
+				printf("\"%8s\" not found!\n",gamename);
 			else
-				printf("Game \"%s\" not supported!\n",gamename);
+				printf("\"%8s\" not supported!\n",gamename);
 			return 1;
 		}
 		else
 		{
 			printf("%d %s found, %d were OK.\n", correct+incorrect,
-					(verify == 1)? "romsets" : "samplesets", correct);
+					(verify & VERIFY_ROMS)? "romsets" : "samplesets", correct);
 			if (incorrect > 0)
 				return 2;
 			else

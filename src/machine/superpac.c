@@ -27,9 +27,6 @@ void superpac_init_machine(void)
 
 	/* Disable interrupts */
 	interrupt_enable_1 = interrupt_enable_2 = 0;
-
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
 
@@ -68,7 +65,7 @@ void superpac_sharedram_w(int offset,int data)
 
 void superpac_reset_2_w(int offset,int data)
 {
-	cpu_reset( 1 );
+	cpu_set_reset_line(1,PULSE_LINE);
 }
 
 
@@ -317,7 +314,7 @@ void pacnpal_interrupt_enable_2_w(int offset,int data)
 
 void superpac_cpu_enable_w(int offset,int data)
 {
-	cpu_halt(1, offset);
+	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
 

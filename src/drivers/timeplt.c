@@ -106,7 +106,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( timeplt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -198,7 +198,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( psurge_input_ports )
+INPUT_PORTS_START( psurge )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -321,14 +321,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -367,8 +365,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( timeplt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( timeplt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tm1",          0x0000, 0x2000, 0x1551f1b9 )
 	ROM_LOAD( "tm2",          0x2000, 0x2000, 0x58636cb5 )
 	ROM_LOAD( "tm3",          0x4000, 0x2000, 0xff4e0d83 )
@@ -378,18 +376,18 @@ ROM_START( timeplt_rom )
 	ROM_LOAD( "tm4",          0x2000, 0x2000, 0x7e437c3e )
 	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION(0x0240)	/* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
-ROM_START( timepltc_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( timepltc )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cd1y",         0x0000, 0x2000, 0x83ec72c2 )
 	ROM_LOAD( "cd2y",         0x2000, 0x2000, 0x0dcf5287 )
 	ROM_LOAD( "cd3y",         0x4000, 0x2000, 0xc789b912 )
@@ -399,18 +397,18 @@ ROM_START( timepltc_rom )
 	ROM_LOAD( "tm4",          0x2000, 0x2000, 0x7e437c3e )
 	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION(0x0240)	/* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
-ROM_START( spaceplt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spaceplt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sp1",          0x0000, 0x2000, 0xac8ca3ae )
 	ROM_LOAD( "sp2",          0x2000, 0x2000, 0x1f0308ef )
 	ROM_LOAD( "sp3",          0x4000, 0x2000, 0x90aeca50 )
@@ -420,18 +418,18 @@ ROM_START( spaceplt_rom )
 	ROM_LOAD( "sp4",          0x2000, 0x2000, 0x3781ce7a )
 	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION(0x0240)	/* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
-ROM_START( psurge_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( psurge )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "p1",           0x0000, 0x2000, 0x05f9ba12 )
 	ROM_LOAD( "p2",           0x2000, 0x2000, 0x3ff41576 )
 	ROM_LOAD( "p3",           0x4000, 0x2000, 0xe8fe120a )
@@ -441,63 +439,20 @@ ROM_START( psurge_rom )
 	ROM_LOAD( "p5",           0x2000, 0x2000, 0x6066ec8e )
 	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION(0x0240)	/* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x00000000 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x00000000 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x00000000 ) /* sprite lookup table */
 	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0x00000000 ) /* char lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "p6",           0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "p7",           0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xab09],"\x00\x00\x01",3) == 0 &&
-	    memcmp(&RAM[0xab29],"\x00\x43\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xab08],8*5);
-			RAM[0xa98b] = RAM[0xab09];
-			RAM[0xa98c] = RAM[0xab0a];
-			RAM[0xa98d] = RAM[0xab0b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xab08],8*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver timeplt_driver =
+struct GameDriver driver_timeplt =
 {
 	__FILE__,
 	0,
@@ -510,23 +465,22 @@ struct GameDriver timeplt_driver =
 	&machine_driver,
 	timeplt_init,
 
-	timeplt_rom,
+	rom_timeplt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_timeplt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver timepltc_driver =
+struct GameDriver driver_timepltc =
 {
 	__FILE__,
-	&timeplt_driver,
+	&driver_timeplt,
 	"timepltc",
 	"Time Pilot (Centuri)",
 	"1982",
@@ -536,23 +490,22 @@ struct GameDriver timepltc_driver =
 	&machine_driver,
 	timeplt_init,
 
-	timepltc_rom,
+	rom_timepltc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_timeplt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver spaceplt_driver =
+struct GameDriver driver_spaceplt =
 {
 	__FILE__,
-	&timeplt_driver,
+	&driver_timeplt,
 	"spaceplt",
 	"Space Pilot",
 	"1982",
@@ -562,41 +515,40 @@ struct GameDriver spaceplt_driver =
 	&machine_driver,
 	timeplt_init,
 
-	spaceplt_rom,
+	rom_spaceplt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_timeplt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver psurge_driver =
+struct GameDriver driver_psurge =
 {
 	__FILE__,
 	0,
 	"psurge",
 	"Power Surge",
 	"1988",
-	"?????",
+	"<unknown>",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
 	psurge_init,
 
-	psurge_rom,
+	rom_psurge,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	psurge_input_ports,
+	input_ports_psurge,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };

@@ -50,6 +50,9 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,base;
 
 
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	base = 0x200 * (background_image & 0x07);
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -70,8 +73,8 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			bgoffs = base+16*(sy/2)+sx/2;
 
-			tilecode = Machine->memory_region[2][bgoffs],
-			tileattribute = Machine->memory_region[2][bgoffs + 0x100];
+			tilecode = memory_region(REGION_GFX4)[bgoffs],
+			tileattribute = memory_region(REGION_GFX4)[bgoffs + 0x100];
 		}
 		else
 		{

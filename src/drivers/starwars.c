@@ -40,9 +40,27 @@ void starwars_control_w (int offset, int data);
 int  starwars_interrupt (void);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 void starwars_out_w (int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	switch (offset)
 	{
@@ -131,6 +149,9 @@ static int esb_setopbase (int pc)
 	{
 //		if (errorlog) fprintf (errorlog, "      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
 		bank = esb_slapstic_tweak ((pc) & 0x1fff);	/* ASG - switched to ESB version */
+		/* catching every branch during slapstic area */
+		catch_nextBranch();
+		return -1;
 	}
 	else if ((prevpc & 0xe000) == 0x8000)
  {
@@ -142,13 +163,11 @@ if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
 	return pc;
 }
 
-extern int m6809_slapstic;
 void esb_init_machine (void)
 {
 	/* Set up the slapstic */
 	slapstic_init (101);
-	m6809_slapstic = 1;
-	cpu_setOPbaseoverride (esb_setopbase);
+	cpu_setOPbaseoverride (0,esb_setopbase);
 	/* ASG - added the following: */
 	memcpy(slapstic_area, &slapstic_base[slapstic_bank() * 0x2000], 0x2000);
 
@@ -184,7 +203,7 @@ void esb_slapstic_w (int offset, int data)
 /* Star Wars READ memory map */
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },   /* vector_ram */
+	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
 	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
@@ -221,14 +240,10 @@ static struct MemoryReadAddress readmem2[] =
 /* Star Wars WRITE memory map */
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram }, /* vector_ram */
+	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
-/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
-	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
-	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
+	{ 0x4500, 0x45ff, MWA_RAM, &nvram, &nvram_size },		/* nov_ram */
 	{ 0x4600, 0x461f, avgdvg_go },
 	{ 0x4620, 0x463f, avgdvg_reset },
 	{ 0x4640, 0x465f, MWA_NOP },		/* (wdclr) Watchdog clear */
@@ -238,6 +253,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x46c0, 0x46c2, starwars_control_w },	/* Selects which a-d control port (0-3) will be read */
 	{ 0x46e0, 0x46e0, starwars_soundrst },
 	{ 0x4700, 0x4707, swmathbx },
+/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
+/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
+	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
+	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ -1 }	/* end of table */
 };
 
@@ -245,23 +264,18 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryWriteAddress writemem2[] =
 {
 	{ 0x0000, 0x07ff, starwars_sout_w },
-
 	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
 	{ 0x1080, 0x109f, starwars_m6532_w },
-
 	{ 0x1800, 0x183f, quad_pokey_w },
-
 	{ 0x2000, 0x27ff, MWA_RAM }, /* program RAM */
 	{ 0x4000, 0xbfff, MWA_ROM }, /* sound rom */
 	{ 0xc000, 0xffff, MWA_ROM }, /* sound rom again, for intvecs */
-
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress esb_readmem[] =
 {
-//	{ 0x6000, 0x1dfff, MRA_ROM },		/* vector_rom */
-	{ 0x0000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },   /* vector_ram */
+	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
 	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
@@ -274,21 +288,18 @@ static struct MemoryReadAddress esb_readmem[] =
 	{ 0x4700, 0x4700, reh },
 	{ 0x4701, 0x4701, rel },
 	{ 0x4703, 0x4703, prng },			/* pseudo random number generator */
-	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
 /*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
 /*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
+	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
-	{ 0x8000, 0x9fff, esb_slapstic_r, &slapstic_area },
+	{ 0x8000, 0x9fff, esb_slapstic_r },
 	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
-
-	/* Dummy entry to set up the slapstic */
-	{ 0x14000, 0x1bfff, MRA_NOP, &slapstic_base },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress esb_writemem[] =
 {
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram }, /* vector_ram */
+	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
 	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
@@ -304,12 +315,15 @@ static struct MemoryWriteAddress esb_writemem[] =
 /*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
 /*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
 	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x8000, 0x9fff, esb_slapstic_w },		/* slapstic write */
+	{ 0x8000, 0x9fff, esb_slapstic_w, &slapstic_area },		/* slapstic write */
 	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
+
+	/* Dummy entry to set up the slapstic */
+	{ 0x14000, 0x1bfff, MWA_NOP, &slapstic_base },
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( starwars )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -386,7 +400,7 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( esb_input_ports )
+INPUT_PORTS_START( esb )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -463,26 +477,6 @@ INPUT_PORTS_START( esb_input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_SWARS };
-
-
 
 static struct POKEYinterface pokey_interface =
 {
@@ -521,7 +515,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			0,							/* Memory region #0 */
 			readmem,writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
@@ -530,7 +523,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			2,							/* Memory region #2 */
 			readmem2,writemem2,0,0,
 			0, 0,
 			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
@@ -543,9 +535,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
-	gfxdecodeinfo,
+	0,
 	256,256, /* Number of colours, length of colour lookup table */
-	avg_init_colors,
+	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
@@ -564,10 +556,12 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver esb_machine_driver =
+static struct MachineDriver machine_driver_esb =
 {
 	/* basic machine hardware */
 	{
@@ -575,7 +569,6 @@ static struct MachineDriver esb_machine_driver =
 		{
 			CPU_M6809,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			0,							/* Memory region #0 */
 			esb_readmem, esb_writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
@@ -584,7 +577,6 @@ static struct MachineDriver esb_machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			2,							/* Memory region #2 */
 			readmem2,writemem2,0,0,
 			0, 0,
 			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
@@ -597,9 +589,9 @@ static struct MachineDriver esb_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
-	gfxdecodeinfo,
+	0,
 	256,256, /* Number of colours, length of colour lookup table */
-	avg_init_colors,
+	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
@@ -629,8 +621,8 @@ static struct MachineDriver esb_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( starwar1_rom )
-	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
+ROM_START( starwar1 )
+	ROM_REGIONX( 0x12000, REGION_CPU1 )     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
@@ -652,15 +644,15 @@ ROM_START( starwar1_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
-	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-ROM_START( starwars_rom )
-	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
+ROM_START( starwars )
+	ROM_REGIONX( 0x12000, REGION_CPU1 )     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.214",   0x6000, 0x2000, 0x04f1876e )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
@@ -682,15 +674,15 @@ ROM_START( starwars_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
-	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-ROM_START( esb_rom )
-	ROM_REGION(0x22000)     /* 64k for code and a buttload for the banked ROMs */
+ROM_START( esb )
+	ROM_REGIONX( 0x22000, REGION_CPU1 )     /* 64k for code and a buttload for the banked ROMs */
 	ROM_LOAD( "136031.111",   0x03000, 0x1000, 0xb1f9bd12 )    /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 )
 	ROM_CONTINUE(             0x10000, 0x2000 )
@@ -718,7 +710,7 @@ ROM_START( esb_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "136031.113",   0x4000, 0x2000, 0x24ae3815 ) /* Sound ROM 0 */
 	ROM_CONTINUE(             0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136031.112",   0x6000, 0x2000, 0xca72d341 ) /* Sound ROM 1 */
@@ -726,36 +718,8 @@ ROM_START( esb_rom )
 ROM_END
 
 
-/* NovRAM Load/Save.  In-game DIP switch setting, and Hi-scores */
-static int novram_load(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x4500],256);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void novram_save(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4500],256);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver starwars_driver =
+struct GameDriver driver_starwars =
 {
 	__FILE__,
 	0,
@@ -766,26 +730,24 @@ struct GameDriver starwars_driver =
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	translate_proms,
+
+	rom_starwars,
+	0, 0,
+	0,
 	0,
 
-	starwars_rom,
-	translate_proms, 0,  /* ROM decryption, Opcode decryption */
-	0,     /* Sample Array (optional) */
-	0,	/* sound_prom */
+	input_ports_starwars,
 
-	input_ports,
-	color_prom, /* Colour PROM */
-	0,          /* palette */
-	0,          /* colourtable */
-	ORIENTATION_DEFAULT,
-
-	novram_load, novram_save /* Highscore load, save */
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver starwar1_driver =
+struct GameDriver driver_starwar1 =
 {
 	__FILE__,
-	&starwars_driver,
+	&driver_starwars,
 	"starwar1",
 	"Star Wars (rev 1)",
 	"1983",
@@ -793,23 +755,21 @@ struct GameDriver starwar1_driver =
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	translate_proms,
+
+	rom_starwar1,
+	0, 0,
+	0,
 	0,
 
-	starwar1_rom,
-	translate_proms, 0,  /* ROM decryption, Opcode decryption */
-	0,     /* Sample Array (optional) */
-	0,	/* sound_prom */
+	input_ports_starwars,
 
-	input_ports,
-	color_prom, /* Colour PROM */
-	0,          /* palette */
-	0,          /* colourtable */
-	ORIENTATION_DEFAULT,
-
-	novram_load, novram_save /* Highscore load, save */
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver esb_driver =
+struct GameDriver driver_esb =
 {
 	__FILE__,
 	0,
@@ -819,20 +779,18 @@ struct GameDriver esb_driver =
 	"Atari Games",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&esb_machine_driver,
+	&machine_driver_esb,
+	translate_proms,
+
+	rom_esb,
+	0, 0,
+	0,
 	0,
 
-	esb_rom,
-	translate_proms, 0,  /* ROM decryption, Opcode decryption */
-	0,     /* Sample Array (optional) */
-	0,	/* sound_prom */
+	input_ports_esb,
 
-	esb_input_ports,
-	color_prom, /* Colour PROM */
-	0,          /* palette */
-	0,          /* colourtable */
-	ORIENTATION_DEFAULT,
-
-	0, 0 /* Highscore load, save */
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

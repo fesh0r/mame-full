@@ -46,16 +46,6 @@ void jack_flipscreen_w(int offset, int data);
 
 static int timer_rate;
 
-static void jack_driver_init(void)
-{
-	timer_rate = 128;
-}
-
-static void zzyzzyxx_driver_init(void)
-{
-	timer_rate = 16;
-}
-
 static int timer_r(int offset)
 {
 	/* wrong! there should be no need for timer_rate, the same function */
@@ -133,7 +123,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( jack_input_ports )
+INPUT_PORTS_START( jack )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 4C_3C ) )
@@ -211,7 +201,7 @@ INPUT_PORTS_START( jack_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Most likely unused
 INPUT_PORTS_END
 
-INPUT_PORTS_START( zzyzzyxx_input_ports )
+INPUT_PORTS_START( zzyzzyxx )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -250,7 +240,7 @@ INPUT_PORTS_START( zzyzzyxx_input_ports )
 	PORT_DIPNAME( 0x10, 0x00, "Difficulty of Pleasing Lola" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, "Show Intermissions" )
+	PORT_DIPNAME( 0x20, 0x00, "Show Intermissions" )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x20, "Yes" )
 	PORT_DIPNAME( 0xc0, 0x00, "Extra Lives" )
@@ -283,7 +273,7 @@ INPUT_PORTS_START( zzyzzyxx_input_ports )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Most likely unused
 INPUT_PORTS_END
 
-INPUT_PORTS_START( freeze_input_ports )
+INPUT_PORTS_START( freeze )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -392,14 +382,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18000000/6,	/* 3 MHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			18000000/12,	/* 1.5 MHz */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		}
@@ -437,8 +425,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jack_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( jack )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "j8",           0x0000, 0x1000, 0xc8e73998 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
 	ROM_LOAD( "jgk.j7",       0x2000, 0x1000, 0xb15ff3ee )
@@ -454,12 +442,12 @@ ROM_START( jack_rom )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( jack2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( jack2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jgk.j8",       0x0000, 0x1000, 0xfe229e20 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
 	ROM_LOAD( "jgk.j7",       0x2000, 0x1000, 0xb15ff3ee )
@@ -475,12 +463,12 @@ ROM_START( jack2_rom )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( jack3_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( jack3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jack8",        0x0000, 0x1000, 0x632151d2 )
 	ROM_LOAD( "jack6",        0x1000, 0x1000, 0xf94f80d9 )
 	ROM_LOAD( "jack7",        0x2000, 0x1000, 0xc830ff1e )
@@ -496,12 +484,12 @@ ROM_START( jack3_rom )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( treahunt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( treahunt )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "thunt-1.f2",   0x0000, 0x1000, 0x0b35858c )
 	ROM_LOAD( "thunt-2.f3",   0x1000, 0x1000, 0x67305a51 )
 	ROM_LOAD( "thunt-3.4f",   0x2000, 0x1000, 0xd7a969c3 )
@@ -517,12 +505,12 @@ ROM_START( treahunt_rom )
 	ROM_LOAD( "thunt-10.a1",  0x2000, 0x1000, 0x51ec7934 )
 	ROM_LOAD( "thunt-11.a2",  0x3000, 0x1000, 0xf9781143 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( zzyzzyxx_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( zzyzzyxx )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a.2f",         0x0000, 0x1000, 0xa9102e34 )
 	ROM_LOAD( "zzyzzyxx.b",   0x1000, 0x1000, 0xefa9d4c6 )
 	ROM_LOAD( "zzyzzyxx.c",   0x2000, 0x1000, 0xb0a365b1 )
@@ -538,13 +526,13 @@ ROM_START( zzyzzyxx_rom )
 	ROM_LOAD( "k.1b",         0x2000, 0x1000, 0xb8b2b8cc )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
-ROM_START( zzyzzyx2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( zzyzzyx2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a.2f",         0x0000, 0x1000, 0xa9102e34 )
 	ROM_LOAD( "b.3f",         0x1000, 0x1000, 0x4277beab )
 	ROM_LOAD( "c.4f",         0x2000, 0x1000, 0x72ac99e1 )
@@ -560,13 +548,13 @@ ROM_START( zzyzzyx2_rom )
 	ROM_LOAD( "k.1b",         0x2000, 0x1000, 0xb8b2b8cc )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
-ROM_START( brix_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( brix )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0x050e0d70 )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0x668118ae )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0xff5ed6cf )
@@ -582,13 +570,13 @@ ROM_START( brix_rom )
 	ROM_LOAD( "k",            0x2000, 0x1000, 0xc7d7e2a0 )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
-ROM_START( freeze_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( freeze )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "freeze.f2",    0x0000, 0x1000, 0x0a431665 )
 	ROM_LOAD( "freeze.f3",    0x1000, 0x1000, 0x1189b8ad )
 	ROM_LOAD( "freeze.f4",    0x2000, 0x1000, 0x10c4a5ea )
@@ -604,12 +592,12 @@ ROM_START( freeze_rom )
 	ROM_LOAD( "freeze.1a",    0x2000, 0x1000, 0x3a7f2fa9 )
 	ROM_LOAD( "freeze.2a",    0x3000, 0x1000, 0xdd70ddd6 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "freeze.a1",    0x0000, 0x1000, 0x7771f5b9 )
 ROM_END
 
-ROM_START( sucasino_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( sucasino )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1",       	  0x0000, 0x1000, 0xe116e979 )
 	ROM_LOAD( "2",      	  0x1000, 0x1000, 0x2a2635f5 )
 	ROM_LOAD( "3",       	  0x2000, 0x1000, 0x69864d90 )
@@ -625,7 +613,7 @@ ROM_START( sucasino_rom )
 	ROM_LOAD( "10",      	  0x2000, 0x1000, 0x3b0783ce )
 	/* 3000-3fff empty */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "9",       	  0x0000, 0x1000, 0x67cf8aec )
 ROM_END
 
@@ -634,18 +622,22 @@ ROM_END
 static void treahunt_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 	int data;
+
+
+	memory_set_opcode_base(0,rom+diff);
 
 	/* Thanks to Mike Balfour for helping out with the decryption */
 	for (A = 0; A < 0x4000; A++)
 	{
-		data = RAM[A];
+		data = rom[A];
 
 		if (A & 0x1000)
 		{
 			/* unencrypted = D0 D2 D5 D1 D3 D6 D4 D7 */
-			ROM[A] =
+			rom[A+diff] =
 				 ((data & 0x01) << 7) |
 				 ((data & 0x02) << 3) |
 				 ((data & 0x04) << 4) |
@@ -656,100 +648,41 @@ static void treahunt_decode(void)
 
 			if ((A & 0x04) == 0)
 			/* unencrypted = !D0 D2 D5 D1 D3 D6 D4 !D7 */
-				ROM[A] ^= 0x81;
+				rom[A+diff] ^= 0x81;
 		}
 		else
 		{
 			/* unencrypted = !D7 D2 D5 D1 D3 D6 D4 !D0 */
-			ROM[A] = (~data & 0x81) |
-					 ((data & 0x02) << 3) |
-					 ((data & 0x04) << 4) |
-					  (data & 0x28) |
-					 ((data & 0x10) >> 3) |
-					 ((data & 0x40) >> 4);
+			rom[A+diff] =
+					(~data & 0x81) |
+					((data & 0x02) << 3) |
+					((data & 0x04) << 4) |
+					 (data & 0x28) |
+					((data & 0x10) >> 3) |
+					((data & 0x40) >> 4);
 		}
 	}
 }
 
-
-
-static int jack_hiload(void)
+static void jack_driver_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4500],"\x00\x00\x05",3) == 0 &&
-		memcmp(&RAM[0x4560],"\x41\x41\x41",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4500],9*11);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+	timer_rate = 128;
 }
 
-static void jack_hisave(void)
+static void treahunt_driver_init(void)
 {
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4500],9*11);
-		osd_fclose(f);
-	}
+	timer_rate = 128;
+	treahunt_decode();
 }
 
-static int zzyzzyxx_hiload(void)
+static void zzyzzyxx_driver_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x5100],"\x00\x01\x50",3) == 0 &&
-		memcmp(&RAM[0x541b],"\x91\x9d\xa3",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x5100],4*10);
-			osd_fread(f,&RAM[0x5400],3*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void zzyzzyxx_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5100],4*10);
-		osd_fwrite(f,&RAM[0x5400],3*10);
-		osd_fclose(f);
-	}
+	timer_rate = 16;
 }
 
 
 
-struct GameDriver jack_driver =
+struct GameDriver driver_jack =
 {
 	__FILE__,
 	0,
@@ -762,23 +695,22 @@ struct GameDriver jack_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	jack_rom,
+	rom_jack,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver jack2_driver =
+struct GameDriver driver_jack2 =
 {
 	__FILE__,
-	&jack_driver,
+	&driver_jack,
 	"jack2",
 	"Jack the Giantkiller (set 2)",
 	"1982",
@@ -788,23 +720,22 @@ struct GameDriver jack2_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	jack2_rom,
+	rom_jack2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver jack3_driver =
+struct GameDriver driver_jack3 =
 {
 	__FILE__,
-	&jack_driver,
+	&driver_jack,
 	"jack3",
 	"Jack the Giantkiller (set 3)",
 	"1982",
@@ -814,23 +745,22 @@ struct GameDriver jack3_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	jack3_rom,
+	rom_jack3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver treahunt_driver =
+struct GameDriver driver_treahunt =
 {
 	__FILE__,
-	&jack_driver,
+	&driver_jack,
 	"treahunt",
 	"Treasure Hunt (Japan?)",
 	"1982",
@@ -838,22 +768,21 @@ struct GameDriver treahunt_driver =
 	"Brad Oliver\nMike Balfour",
 	0,
 	&machine_driver,
-	jack_driver_init,
+	treahunt_driver_init,
 
-	treahunt_rom,
-	0, treahunt_decode,
+	rom_treahunt,
+	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver zzyzzyxx_driver =
+struct GameDriver driver_zzyzzyxx =
 {
 	__FILE__,
 	0,
@@ -866,23 +795,22 @@ struct GameDriver zzyzzyxx_driver =
 	&machine_driver,
 	zzyzzyxx_driver_init,
 
-	zzyzzyxx_rom,
+	rom_zzyzzyxx,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	zzyzzyxx_input_ports,
+	input_ports_zzyzzyxx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zzyzzyxx_hiload, zzyzzyxx_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver zzyzzyx2_driver =
+struct GameDriver driver_zzyzzyx2 =
 {
 	__FILE__,
-	&zzyzzyxx_driver,
+	&driver_zzyzzyxx,
 	"zzyzzyx2",
 	"Zzyzzyxx (set 2)",
 	"1982",
@@ -892,23 +820,22 @@ struct GameDriver zzyzzyx2_driver =
 	&machine_driver,
 	zzyzzyxx_driver_init,
 
-	zzyzzyx2_rom,
+	rom_zzyzzyx2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	zzyzzyxx_input_ports,
+	input_ports_zzyzzyxx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zzyzzyxx_hiload, zzyzzyxx_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver brix_driver =
+struct GameDriver driver_brix =
 {
 	__FILE__,
-	&zzyzzyxx_driver,
+	&driver_zzyzzyxx,
 	"brix",
 	"Brix",
 	"1982",
@@ -918,20 +845,19 @@ struct GameDriver brix_driver =
 	&machine_driver,
 	zzyzzyxx_driver_init,
 
-	brix_rom,
+	rom_brix,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	zzyzzyxx_input_ports,
+	input_ports_zzyzzyxx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zzyzzyxx_hiload, zzyzzyxx_hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver freeze_driver =
+struct GameDriver driver_freeze =
 {
 	__FILE__,
 	0,
@@ -944,20 +870,20 @@ struct GameDriver freeze_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	freeze_rom,
+	rom_freeze,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	freeze_input_ports,
+	input_ports_freeze,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
 
-struct GameDriver sucasino_driver =
+struct GameDriver driver_sucasino =
 {
 	__FILE__,
 	0,
@@ -970,15 +896,15 @@ struct GameDriver sucasino_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	sucasino_rom,
+	rom_sucasino,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

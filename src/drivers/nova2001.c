@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-     Nova 2001 - by Universal - Licensed by UPL - 1984
+     Nova 2001 - by UPL - 1983
 
      Memory Map:
 
@@ -79,7 +79,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( nova2001 )
     PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -186,10 +186,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x4000, &charlayout,   16*16, 16 },
-	{ 1, 0x1000, &spritelayout,     0, 16 },
-	{ 1, 0x5000, &spritelayout,     0, 16 },
+	{ REGION_GFX1, 0x0000, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0x0000, &charlayout,   16*16, 16 },
+	{ REGION_GFX1, 0x1000, &spritelayout,     0, 16 },
+	{ REGION_GFX2, 0x1000, &spritelayout,     0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -198,7 +198,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	1200000,	/* 1.2 MHz */
+	6000000/3,	/* 2 MHz */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0, input_port_3_r },
@@ -214,7 +214,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3 MHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -244,87 +243,96 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( nova2001_rom )
-	ROM_REGION(0x10000)
+
+
+ROM_START( nova2001 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_LOAD( "1.6c",         0x0000, 0x2000, 0x368cffc0 )
+	ROM_LOAD( "2.6d",         0x2000, 0x2000, 0xbc4e442b )
+	ROM_LOAD( "3.6f",         0x4000, 0x2000, 0xb2849038 )
+	ROM_LOAD( "4.6g",         0x6000, 0x1000, 0x6b5bb12d )
+	ROM_RELOAD(               0x7000, 0x1000 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5.12s",        0x0000, 0x2000, 0x54198941 )
+	ROM_LOAD( "6.12p",        0x2000, 0x2000, 0xcbd90dca )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7.12n",        0x0000, 0x2000, 0x9ebd8806 )
+	ROM_LOAD( "8.12l",        0x2000, 0x2000, 0xd1b18389 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
+ROM_END
+
+ROM_START( nov2001u )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "nova2001.1",   0x0000, 0x2000, 0xb79461bd )
 	ROM_LOAD( "nova2001.2",   0x2000, 0x2000, 0xfab87144 )
-	ROM_LOAD( "nova2001.3",   0x4000, 0x2000, 0xb2849038 )
-	ROM_LOAD( "nova2001.4",   0x6000, 0x1000, 0x6b5bb12d )
-	ROM_RELOAD(             0x7000, 0x1000 )
+	ROM_LOAD( "3.6f",         0x4000, 0x2000, 0xb2849038 )
+	ROM_LOAD( "4.6g",         0x6000, 0x1000, 0x6b5bb12d )
+	ROM_RELOAD(               0x7000, 0x1000 )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nova2001.5",   0x0000, 0x2000, 0x8ea576e8 )
 	ROM_LOAD( "nova2001.6",   0x2000, 0x2000, 0x0c61656c )
-	ROM_LOAD( "nova2001.7",   0x4000, 0x2000, 0x9ebd8806 )
-	ROM_LOAD( "nova2001.8",   0x6000, 0x2000, 0xd1b18389 )
 
-	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7.12n",        0x0000, 0x2000, 0x9ebd8806 )
+	ROM_LOAD( "8.12l",        0x2000, 0x2000, 0xd1b18389 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0xe07d],"\x00\x20\x00",3) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0xe07d],55);
-            osd_fread(f,&RAM[0xe118],3);
-            osd_fclose(f);
-        }
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0xe07d],55);
-        osd_fwrite(f,&RAM[0xe118],3);
-        osd_fclose(f);
-    }
-}
-
-
-
-struct GameDriver nova2001_driver =
+struct GameDriver driver_nova2001 =
 {
 	__FILE__,
 	0,
 	"nova2001",
-	"Nova 2001",
-	"1984?",
+	"Nova 2001 (Japan)",
+	"1983",
+	"UPL",
+	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
+	0,
+	&machine_driver,
+	0,
+
+	rom_nova2001,
+	0,0,
+	0,
+	0, /* sound prom */
+
+	input_ports_nova2001,
+
+	0, 0, 0,
+	ROT0,
+	0,0
+};
+
+struct GameDriver driver_nov2001u =
+{
+	__FILE__,
+	&driver_nova2001,
+	"nov2001u",
+	"Nova 2001 (US)",
+	"1983",
 	"UPL (Universal license)",
 	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
 	0,
 	&machine_driver,
 	0,
 
-	nova2001_rom,
+	rom_nov2001u,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_nova2001,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

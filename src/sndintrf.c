@@ -193,7 +193,7 @@ int OKIM6295_clock(const struct MachineSound *msound) { return ((struct OKIM6295
 int MSM5205_num(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_HC55516)
-int HC55516_num(const struct MachineSound *msound) { return ((struct CVSDinterface*)msound->sound_interface)->num; }
+int HC55516_num(const struct MachineSound *msound) { return ((struct hc55516_interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_K007232)
 int K007232_num(const struct MachineSound *msound) { return ((struct K007232_interface*)msound->sound_interface)->num_chips; }
@@ -244,7 +244,6 @@ int YM2151_clock(const struct MachineSound *msound) { return ((struct YM2151inte
 int YM2151_num(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_NES)
-int NES_clock(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->baseclock; }
 int NES_num(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_SN76496)
@@ -261,8 +260,14 @@ int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_i
 int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
 int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_K051649)
+int K051649_clock(const struct MachineSound *msound) { return ((struct k051649_interface*)msound->sound_interface)->master_clock; }
+#endif
 #if (HAS_K053260)
 int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
+#endif
+#if (HAS_QSOUND)
+int qsound_clock(const struct MachineSound *msound) { return ((struct QSound_interface*)msound->sound_interface)->clock; }
 #endif
 
 struct snd_interface sndintf[] =
@@ -457,6 +462,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_Y8950)
+	{
+		SOUND_Y8950,
+		"Y8950",	/* (MSX-AUDIO) */
+		YM3812_num,
+		YM3812_clock,
+		Y8950_sh_start,
+		Y8950_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_SN76496)
     {
 		SOUND_SN76496,
@@ -496,9 +513,9 @@ struct snd_interface sndintf[] =
 #if (HAS_NES)
     {
 		SOUND_NES,
-		"NES",
+		"Nintendo",
 		NES_num,
-		NES_clock,
+		0,
 		NESPSG_sh_start,
 		NESPSG_sh_stop,
 		NESPSG_sh_update,
@@ -607,8 +624,20 @@ struct snd_interface sndintf[] =
 		"HC55516",
 		HC55516_num,
 		0,
-		CVSD_sh_start,
+		hc55516_sh_start,
 		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_K005289)
+    {
+		SOUND_K005289,
+		"005289",
+		0,
+		0,
+		K005289_sh_start,
+		K005289_sh_stop,
 		0,
 		0
 	},
@@ -621,6 +650,18 @@ struct snd_interface sndintf[] =
 		0,
 		K007232_sh_start,
 		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_K051649)
+    {
+		SOUND_K051649,
+		"051649",
+		0,
+		K051649_clock,
+		K051649_sh_start,
+		K051649_sh_stop,
 		0,
 		0
 	},
@@ -673,6 +714,30 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_C140)
+	{
+		SOUND_C140,
+		"C140",
+		0,
+		0,
+		C140_sh_start,
+		C140_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_QSOUND)
+	{
+		SOUND_QSOUND,
+		"QSound",
+		0,
+		qsound_clock,
+		qsound_sh_start,
+		qsound_sh_stop,
+		0,
+		0
+	},
+#endif
 };
 
 
@@ -693,6 +758,9 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 	}
 
 
+	/* samples will be read later if needed */
+	Machine->samples = 0;
+
 	if (mixer_sh_start() != 0)
 		return 1;
 
@@ -706,11 +774,6 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 
 		totalsound++;
 	}
-
-	/* call the custom initialization AFTER initializing the standard sections, */
-	/* so it can tweak the default parameters (like panning) */
-	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
-		return 1;
 
 	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
 	refresh_period_inv = 1.0 / refresh_period;
@@ -731,8 +794,6 @@ void sound_stop(void)
 	int totalsound = 0;
 
 
-	if (Machine->drv->sh_stop) (*Machine->drv->sh_stop)();
-
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{
 		if (sndintf[Machine->drv->sound[totalsound].sound_type].stop)
@@ -749,6 +810,10 @@ void sound_stop(void)
 		timer_remove(sound_update_timer);
 		sound_update_timer = 0;
 	}
+
+	/* free audio samples */
+	freesamples(Machine->samples);
+	Machine->samples = 0;
 }
 
 
@@ -759,8 +824,6 @@ void sound_update(void)
 
 
 	profiler_mark(PROFILER_SOUND);
-
-	if (Machine->drv->sh_update) (*Machine->drv->sh_update)();
 
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{

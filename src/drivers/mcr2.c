@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Midway MCR-2 system
-	
+
 	Currently implemented:
 		* Satan's Hollow
 		* Tron
@@ -21,7 +21,7 @@
 	CPU #1
 	========================================================================
 	0000-BFFF   R     xxxxxxxx    Program ROM
-	C000-C7FF   R/W   xxxxxxxx    Program RAM
+	C000-C7FF   R/W   xxxxxxxx    NVRAM
 	F000-F1FF   R/W   xxxxxxxx    Sprite RAM
 	F800-FF7F   R/W   xxxxxxxx    Background video RAM
 	FF80-FFFF     W   xxxxxxxx    Palette RAM
@@ -166,7 +166,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x00, 0x04, mcr_port_04_dispatch_r },
-	{ 0x07, 0x07, mcr_sound_status_r },
+	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, mcr_port_04_dispatch_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
@@ -179,7 +179,7 @@ static struct IOWritePort writeport[] =
 	{ 0x04, 0x07, mcr_port_47_dispatch_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
-	{ 0xe8, 0xe8, mcr_unknown_w },
+	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
 	{ -1 }	/* end of table */
 };
@@ -192,7 +192,7 @@ static struct IOWritePort writeport[] =
  *
  *************************************/
 
-INPUT_PORTS_START( shollow_input_ports )
+INPUT_PORTS_START( shollow )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -231,7 +231,7 @@ INPUT_PORTS_START( shollow_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tron_input_ports )
+INPUT_PORTS_START( tron )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -277,7 +277,7 @@ INPUT_PORTS_START( tron_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( kroozr_input_ports )
+INPUT_PORTS_START( kroozr )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -324,7 +324,7 @@ INPUT_PORTS_START( kroozr_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( domino_input_ports )
+INPUT_PORTS_START( domino )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -369,7 +369,7 @@ INPUT_PORTS_START( domino_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( wacko_input_ports )
+INPUT_PORTS_START( wacko )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -407,7 +407,7 @@ INPUT_PORTS_START( wacko_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( twotiger_input_ports )
+INPUT_PORTS_START( twotiger )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -471,12 +471,11 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2500000,	/* 2.5 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
 		},
-		SOUND_CPU_SSIO(2)
+		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -498,23 +497,24 @@ static struct MachineDriver machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver journey_machine_driver =
+static struct MachineDriver machine_driver_journey =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			7500000,	/* Looks like it runs at 7.5 Mhz rather than 5 or 2.5 */
-			0,
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
 		},
-		SOUND_CPU_SSIO(2)
+		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -536,7 +536,9 @@ static struct MachineDriver journey_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
@@ -549,71 +551,71 @@ static struct MachineDriver journey_machine_driver =
 
 static void shollow_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc600, 0x8a, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void tron_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc4f0, 0x97, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void kroozr_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc466, 0x95, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_PORT_04_READS(NULL, kroozr_dial_r, kroozr_trakball_x_r, NULL, kroozr_trakball_y_r);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, NULL, NULL);
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void domino_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0x92, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void wacko_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0x91, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 0;
 }
 
 
 static void twotiger_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0xa0, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void journey_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0x9e, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr3_sprite_code_mask = 0x07f;
 }
 
@@ -625,8 +627,8 @@ static void journey_init(void)
  *
  *************************************/
 
-ROM_START( shollow_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( shollow )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
 	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
 	ROM_LOAD( "sh-pro.02",    0x4000, 0x2000, 0x1202c7b2 )
@@ -642,15 +644,15 @@ ROM_START( shollow_rom )
 	ROM_LOAD( "sh-fg.02",     0x0c000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x10000, 0x2000, 0x37ea9d07 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sh-snd.01",    0x0000, 0x1000, 0x55a297cc )
 	ROM_LOAD( "sh-snd.02",    0x1000, 0x1000, 0x46fc31f6 )
 	ROM_LOAD( "sh-snd.03",    0x2000, 0x1000, 0xb1f4a6a8 )
 ROM_END
 
 
-ROM_START( shollow2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( shollow2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
 	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
 	ROM_LOAD( "sh-pro.02",    0x4000, 0x2000, 0x1202c7b2 )
@@ -666,15 +668,15 @@ ROM_START( shollow2_rom )
 	ROM_LOAD( "sh-fg.02",     0x0c000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x10000, 0x2000, 0x37ea9d07 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "snd-0.a7",     0x0000, 0x1000, 0x9d815bb3 )
 	ROM_LOAD( "snd-1.a8",     0x1000, 0x1000, 0x9f253412 )
 	ROM_LOAD( "snd-2.a9",     0x2000, 0x1000, 0x7783d6c6 )
 ROM_END
 
 
-ROM_START( tron_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( tron )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "scpu_pga.bin", 0x0000, 0x2000, 0x5151770b )
 	ROM_LOAD( "scpu_pgb.bin", 0x2000, 0x2000, 0x8ddf8717 )
 	ROM_LOAD( "scpu_pgc.bin", 0x4000, 0x2000, 0x4241e3a0 )
@@ -690,15 +692,15 @@ ROM_START( tron_rom )
 	ROM_LOAD( "vg_1.bin",     0x0c000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x10000, 0x2000, 0x9743f873 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, 0x765e6eba )
 	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, 0x1b90ccdd )
 	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, 0x3a4bc629 )
 ROM_END
 
 
-ROM_START( tron2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( tron2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pro0.d2",      0x0000, 0x2000, 0x0de0471a )
 	ROM_LOAD( "scpu_pgb.bin", 0x2000, 0x2000, 0x8ddf8717 )
 	ROM_LOAD( "scpu_pgc.bin", 0x4000, 0x2000, 0x4241e3a0 )
@@ -714,15 +716,15 @@ ROM_START( tron2_rom )
 	ROM_LOAD( "vg_1.bin",     0x0c000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x10000, 0x2000, 0x9743f873 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, 0x765e6eba )
 	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, 0x1b90ccdd )
 	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, 0x3a4bc629 )
 ROM_END
 
 
-ROM_START( kroozr_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( kroozr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kozmkcpu.2d",  0x0000, 0x2000, 0x61e02045 )
 	ROM_LOAD( "kozmkcpu.3d",  0x2000, 0x2000, 0xcaabed57 )
 	ROM_LOAD( "kozmkcpu.4d",  0x4000, 0x2000, 0x2bc83fc7 )
@@ -737,15 +739,15 @@ ROM_START( kroozr_rom )
 	ROM_LOAD( "kozmkvid.1b",  0x0c000, 0x2000, 0xc6041ba7 )
 	ROM_LOAD( "kozmkvid.1a",  0x10000, 0x2000, 0xb57fb0ff )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "kozmksnd.7a",  0x0000, 0x1000, 0x6736e433 )
 	ROM_LOAD( "kozmksnd.8a",  0x1000, 0x1000, 0xea9cd919 )
 	ROM_LOAD( "kozmksnd.9a",  0x2000, 0x1000, 0x9dfa7994 )
 ROM_END
 
 
-ROM_START( domino_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( domino )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dmanpg0.bin",  0x0000, 0x2000, 0x3bf3bb1c )
 	ROM_LOAD( "dmanpg1.bin",  0x2000, 0x2000, 0x85cf1d69 )
 	ROM_LOAD( "dmanpg2.bin",  0x4000, 0x2000, 0x7dd2177a )
@@ -759,7 +761,7 @@ ROM_START( domino_rom )
 	ROM_LOAD( "dmanfg2.bin",  0x0c000, 0x2000, 0x4a8e76b8 )
 	ROM_LOAD( "dmanfg3.bin",  0x10000, 0x2000, 0x1f39257e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dm-a7.snd",    0x0000, 0x1000, 0xfa982dcc )
 	ROM_LOAD( "dm-a8.snd",    0x1000, 0x1000, 0x72839019 )
 	ROM_LOAD( "dm-a9.snd",    0x2000, 0x1000, 0xad760da7 )
@@ -767,8 +769,8 @@ ROM_START( domino_rom )
 ROM_END
 
 
-ROM_START( wacko_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( wacko )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wackocpu.2d",  0x0000, 0x2000, 0xc98e29b6 )
 	ROM_LOAD( "wackocpu.3d",  0x2000, 0x2000, 0x90b89774 )
 	ROM_LOAD( "wackocpu.4d",  0x4000, 0x2000, 0x515edff7 )
@@ -782,15 +784,15 @@ ROM_START( wacko_rom )
 	ROM_LOAD( "wackovid.1b",  0x0c000, 0x2000, 0x7d899790 )
 	ROM_LOAD( "wackovid.1a",  0x10000, 0x2000, 0x080be3ad )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "wackosnd.7a",  0x0000, 0x1000, 0x1a58763f )
 	ROM_LOAD( "wackosnd.8a",  0x1000, 0x1000, 0xa4e3c771 )
 	ROM_LOAD( "wackosnd.9a",  0x2000, 0x1000, 0x155ba3dd )
 ROM_END
 
 
-ROM_START( twotiger_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( twotiger )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2tgrpg0.bin",  0x0000, 0x2000, 0xe77a924b )
 	ROM_LOAD( "2tgrpg1.bin",  0x2000, 0x2000, 0x2699ebdc )
 	ROM_LOAD( "2tgrpg2.bin",  0x4000, 0x2000, 0xb5ca3f17 )
@@ -804,15 +806,15 @@ ROM_START( twotiger_rom )
 	ROM_LOAD( "2tgrfg2.bin",  0x0c000, 0x2000, 0x08e3e1a6 )
 	ROM_LOAD( "2tgrfg3.bin",  0x10000, 0x2000, 0x9b22697b )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2tgra7.bin",   0x0000, 0x1000, 0x4620d970 )
 	ROM_LOAD( "2tgra8.bin",   0x1000, 0x1000, 0xe95d8cfe )
 	ROM_LOAD( "2tgra9.bin",   0x2000, 0x1000, 0x81e6ce0e )
 ROM_END
 
 
-ROM_START( journey_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( journey )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d2",           0x0000, 0x2000, 0xf2618913 )
 	ROM_LOAD( "d3",           0x2000, 0x2000, 0x2f290d2e )
 	ROM_LOAD( "d4",           0x4000, 0x2000, 0xcc6c0150 )
@@ -831,7 +833,7 @@ ROM_START( journey_rom )
 	ROM_LOAD( "a1",           0x10000, 0x2000, 0x4af986f8 )
 	ROM_LOAD( "a2",           0x12000, 0x2000, 0xb30cd2a7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0x2524a2aa )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0xb8e35814 )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0x09c488cf )
@@ -847,7 +849,7 @@ ROM_END
  *************************************/
 
 #define MCR2_DRIVER(name,year,rotate,fullname) 		\
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
 		0,											\
@@ -861,24 +863,23 @@ ROM_END
 		&machine_driver,							\
 		name##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		0, 0,										\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
-		name##_input_ports,							\
+		input_ports_##name,							\
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 
 #define MCR2_CLONE_DRIVER(name,year,rotate,fullname,cloneof) \
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
-		&cloneof##_driver,							\
+		&driver_##cloneof,							\
 		#name,										\
 		fullname,									\
 		#year,										\
@@ -889,30 +890,29 @@ ROM_END
 		&machine_driver,							\
 		cloneof##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		0, 0,										\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
-		cloneof##_input_ports,						\
+		input_ports_##cloneof,						\
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 
 
-MCR2_DRIVER      (shollow,  1981, ORIENTATION_ROTATE_90, "Satan's Hollow (set 1)")
-MCR2_CLONE_DRIVER(shollow2, 1981, ORIENTATION_ROTATE_90, "Satan's Hollow (set 2)", shollow)
-MCR2_DRIVER      (tron,     1982, ORIENTATION_ROTATE_90, "Tron (set 1)")
-MCR2_CLONE_DRIVER(tron2,    1982, ORIENTATION_ROTATE_90, "Tron (set 2)", tron)
-MCR2_DRIVER      (kroozr,   1982, ORIENTATION_DEFAULT,   "Kozmik Kroozr")
-MCR2_DRIVER      (domino,   1982, ORIENTATION_DEFAULT,   "Domino Man")
-MCR2_DRIVER      (wacko,    1982, ORIENTATION_DEFAULT,   "Wacko")
-MCR2_DRIVER      (twotiger, 1984, ORIENTATION_DEFAULT,   "Two Tigers")
+MCR2_DRIVER      (shollow,  1981, ROT90, "Satan's Hollow (set 1)")
+MCR2_CLONE_DRIVER(shollow2, 1981, ROT90, "Satan's Hollow (set 2)", shollow)
+MCR2_DRIVER      (tron,     1982, ROT90, "Tron (set 1)")
+MCR2_CLONE_DRIVER(tron2,    1982, ROT90, "Tron (set 2)", tron)
+MCR2_DRIVER      (kroozr,   1982, ROT0,   "Kozmik Kroozr")
+MCR2_DRIVER      (domino,   1982, ROT0,   "Domino Man")
+MCR2_DRIVER      (wacko,    1982, ROT0,   "Wacko")
+MCR2_DRIVER      (twotiger, 1984, ROT0,   "Two Tigers")
 
-struct GameDriver journey_driver =
+struct GameDriver driver_journey =
 {
 	__FILE__,
 	0,
@@ -923,18 +923,17 @@ struct GameDriver journey_driver =
 	"Christopher Kirmse\nAaron Giles\n"
 	"Nicola Salmoria\nBrad Oliver",
 	0,
-	&journey_machine_driver,
+	&machine_driver_journey,
 	journey_init,
 
-	journey_rom,
+	rom_journey,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	domino_input_ports,
+	input_ports_domino,
 
 	0,0,0,
-	ORIENTATION_ROTATE_90,
-
-	mcr_hiload,mcr_hisave
+	ROT90,
+	0,0
 };

@@ -96,7 +96,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( funkybee_input_ports )
+INPUT_PORTS_START( funkybee )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -146,7 +146,7 @@ INPUT_PORTS_START( funkybee_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( skylancr_input_ports )
+INPUT_PORTS_START( skylancr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -252,7 +252,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -290,8 +289,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( funkybee_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( funkybee )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "funkybee.1",    0x0000, 0x1000, 0x3372cb33 )
 	ROM_LOAD( "funkybee.3",    0x1000, 0x1000, 0x7bf7c62f )
 	ROM_LOAD( "funkybee.2",    0x2000, 0x1000, 0x8cc0fe8e )
@@ -301,12 +300,12 @@ ROM_START( funkybee_rom )
 	ROM_LOAD( "funkybee.5",    0x0000, 0x2000, 0x86126655 )
 	ROM_LOAD( "funkybee.6",    0x2000, 0x2000, 0x5fffd323 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "funkybee.clr",  0x0000, 0x0020, 0xe2cf5fe2 )
 ROM_END
 
-ROM_START( skylancr_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( skylancr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.5a",          0x0000, 0x2000, 0x82d55824 )
 	ROM_LOAD( "2.5c",          0x2000, 0x2000, 0xdff3a682 )
 	ROM_LOAD( "3.5d",          0x4000, 0x1000, 0x7c006ee6 )
@@ -315,12 +314,12 @@ ROM_START( skylancr_rom )
 	ROM_LOAD( "4.6a",          0x0000, 0x2000, 0x0f8ede07 )
 	ROM_LOAD( "5.6b",          0x2000, 0x2000, 0x24cec070 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "18s030.1a",     0x0000, 0x0020, 0xe645bacb )
 ROM_END
 
 
-struct GameDriver funkybee_driver =
+struct GameDriver driver_funkybee =
 {
 	__FILE__,
 	0,
@@ -333,20 +332,20 @@ struct GameDriver funkybee_driver =
 	&machine_driver,
 	0,
 
-	funkybee_rom,
+	rom_funkybee,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	funkybee_input_ports,
+	input_ports_funkybee,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };
 
-struct GameDriver skylancr_driver =
+struct GameDriver driver_skylancr =
 {
 	__FILE__,
 	0,
@@ -359,15 +358,15 @@ struct GameDriver skylancr_driver =
 	&machine_driver,
 	0,
 
-	skylancr_rom,
+	rom_skylancr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	skylancr_input_ports,
+	input_ports_skylancr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };

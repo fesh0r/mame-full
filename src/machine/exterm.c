@@ -1,9 +1,22 @@
 #include "driver.h"
+#include "cpu/tms34010/tms34010.h"
 
 extern unsigned char *exterm_code_rom;
 unsigned char *exterm_master_speedup, *exterm_slave_speedup;
 
 static int aimpos1, aimpos2;
+
+
+void exterm_host_data_w(int offset, int data)
+{
+	tms34010_host_w(1, offset / TOBYTE(0x00100000), data);
+}
+
+
+int exterm_host_data_r(int offset)
+{
+	return tms34010_host_r(1, TMS34010_HOST_DATA);
+}
 
 
 int exterm_coderom_r(int offset)
@@ -52,7 +65,7 @@ void exterm_output_port_0_w(int offset, int data)
 	/* Bit 13 = Resets the slave CPU */
 	if ((data & 0x2000) && !(last & 0x2000))
 	{
-		cpu_reset(1);
+		cpu_set_reset_line(1,PULSE_LINE);
 	}
 
 	/* Bits 14-15 = Coin counters */
@@ -89,7 +102,7 @@ void exterm_slave_speedup_w(int offset, int data)
 
 int exterm_sound_dac_speedup_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU3);
 	int value = RAM[0x0007];
 
 	/* Suspend cpu if it's waiting for an interrupt */
@@ -106,7 +119,7 @@ int exterm_sound_ym2151_speedup_r(int offset)
 	/* Doing this won't flash the LED, but we're not emulating that anyhow, so
 	   it doesn't matter */
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[3].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU4);
 	int value = RAM[0x02b6];
 
 	/* Suspend cpu if it's waiting for an interrupt */

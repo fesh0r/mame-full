@@ -80,7 +80,7 @@ static struct IOWritePort writeport[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( starcrus_input_ports )
+INPUT_PORTS_START( starcrus )
 
 		PORT_START	/* player 1 */
 		PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY ) /* ccw */
@@ -168,11 +168,16 @@ static unsigned char palette[] =
 	0x00,0x00,0x00, /* Black */
     0xff,0xff,0xff, /* White */
 };
-
 static unsigned short colortable[] =
 {
 	0x00, 0x01,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
+
 
 static struct MachineDriver machine_driver =
 {
@@ -181,7 +186,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8080,
 			9750000/9,  /* 8224 chip is a divide by 9 */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -193,8 +197,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
     32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -213,8 +217,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( starcrus_rom )
-    ROM_REGION(0x10000)  /* code */
+ROM_START( starcrus )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )  /* code */
 	ROM_LOAD( "starcrus.j1",   0x0000, 0x0200, 0x0ee60a50 )
 	ROM_LOAD( "starcrus.k1",   0x0200, 0x0200, 0xa7bc3bc4 )
 	ROM_LOAD( "starcrus.l1",   0x0400, 0x0200, 0x10d233ec )
@@ -243,7 +247,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver starcrus_driver =
+struct GameDriver driver_starcrus =
 {
 	__FILE__,
 	0,
@@ -252,18 +256,19 @@ struct GameDriver starcrus_driver =
 	"1977",
 	"Ramtek",
 	"Frank Palazzolo",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
-	starcrus_rom,
+	rom_starcrus,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	starcrus_input_ports,
+	input_ports_starcrus,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
+	0, 0, 0,
+	ROT0 | GAME_NOT_WORKING,
+
+	0, 0
 };

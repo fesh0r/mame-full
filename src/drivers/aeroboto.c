@@ -1,8 +1,8 @@
 /****************************************************************************
 
-Aeroboto (Preliminary)
+Formation Z / Aeroboto
 
-This is the Williams license of Jaleco's Formation-Z.
+Driver by Carlos A. Lozano
 
 ****************************************************************************/
 
@@ -108,7 +108,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( formatz )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -206,9 +206,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 64 },	/* chars */
-	{ 1, 0x2000, &charlayout,     0, 64 },	/* sky */
-	{ 1, 0x4000, &spritelayout,   0, 32 },
+	{ REGION_GFX1, 0, &charlayout,     0, 64 },	/* chars */
+	{ REGION_GFX2, 0, &charlayout,     0, 64 },	/* sky */
+	{ REGION_GFX3, 0, &spritelayout,   0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -226,21 +226,19 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_formatz =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
-			3,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		}
@@ -277,96 +275,59 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( formatz_rom )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+ROM_START( formatz )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "format_z.8",   0x4000, 0x4000, 0x81a2416c )
 	ROM_LOAD( "format_z.7",   0x8000, 0x4000, 0x986e6052 )
 	ROM_LOAD( "format_z.6",   0xc000, 0x4000, 0xbaa0d745 )
 
-	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
-	ROM_LOAD( "format_z.5",   0x0000, 0x2000, 0xba50be57 )	/* characters */
-	ROM_LOAD( "format_z.4",   0x2000, 0x2000, 0x910375a0 )	/* characters */
-	ROM_LOAD( "format_z.1",   0x4000, 0x1000, 0x5739afd2 )	/* sprites */
-	ROM_LOAD( "format_z.2",   0x5000, 0x1000, 0x3a821391 )	/* sprites */
-	ROM_LOAD( "format_z.3",   0x6000, 0x1000, 0x7d1aec79 )	/* sprites */
-
-	ROM_REGION(0x0300)	/* color PROMs */
-	/* 10A, 10B, 10C - missing! */
-
-	ROM_REGION(0x10000)     /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound CPU */
 	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "format_z.5",   0x0000, 0x2000, 0xba50be57 )	/* characters */
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "format_z.4",   0x0000, 0x2000, 0x910375a0 )	/* characters */
+
+	ROM_REGIONX( 0x3000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "format_z.1",   0x0000, 0x1000, 0x5739afd2 )	/* sprites */
+	ROM_LOAD( "format_z.2",   0x1000, 0x1000, 0x3a821391 )	/* sprites */
+	ROM_LOAD( "format_z.3",   0x2000, 0x1000, 0x7d1aec79 )	/* sprites */
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "10a",          0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "10b",          0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "10c",          0x0200, 0x0100, 0x00000000 )
 ROM_END
 
-ROM_START( aeroboto_rom )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+ROM_START( aeroboto )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "aeroboto.8",   0x4000, 0x4000, 0x4d3fc049 )
 	ROM_LOAD( "aeroboto.7",   0x8000, 0x4000, 0x522f51c1 )
 	ROM_LOAD( "aeroboto.6",   0xc000, 0x4000, 0x1a295ffb )
 
-	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
-	ROM_LOAD( "aeroboto.5",   0x0000, 0x2000, 0x32fc00f9 )	/* characters */
-	ROM_LOAD( "format_z.4",   0x2000, 0x2000, 0x910375a0 )	/* characters */
-	ROM_LOAD( "aeroboto.1",   0x4000, 0x1000, 0x7820eeaf )	/* sprites */
-	ROM_LOAD( "aeroboto.2",   0x5000, 0x1000, 0xc7f81a3c )	/* sprites */
-	ROM_LOAD( "aeroboto.3",   0x6000, 0x1000, 0x5203ad04 )	/* sprites */
-
-	ROM_REGION(0x0300)	/* color PROMs */
-	/* 10A, 10B, 10C - missing! */
-
-	ROM_REGION(0x10000)     /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound CPU */
 	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "aeroboto.5",   0x0000, 0x2000, 0x32fc00f9 )	/* characters */
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "format_z.4",   0x0000, 0x2000, 0x910375a0 )	/* characters */
+
+	ROM_REGIONX( 0x3000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "aeroboto.1",   0x0000, 0x1000, 0x7820eeaf )	/* sprites */
+	ROM_LOAD( "aeroboto.2",   0x1000, 0x1000, 0xc7f81a3c )	/* sprites */
+	ROM_LOAD( "aeroboto.3",   0x2000, 0x1000, 0x5203ad04 )	/* sprites */
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "10a",          0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "10b",          0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "10c",          0x0200, 0x0100, 0x00000000 )
 ROM_END
 
 
 
-struct GameDriver formatz_driver =
-{
-	__FILE__,
-	0,
-	"formatz",
-	"Formation Z",
-	"1984",
-	"Jaleco",
-	"Carlos A. Lozano",
-	GAME_NOT_WORKING,
-	&machine_driver,
-	0,
-
-	formatz_rom,
-	0, 0,
-	0,
-	0,
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver aeroboto_driver =
-{
-	__FILE__,
-	&formatz_driver,
-	"aeroboto",
-	"Aeroboto",
-	"1984",
-	"[Jaleco] (Williams license)",
-	"Carlos A. Lozano",
-	GAME_NOT_WORKING,
-	&machine_driver,
-	0,
-
-	aeroboto_rom,
-	0, 0,
-	0,
-	0,
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
+GAMEX( 1984, formatz,  ,        formatz, formatz, ,  ROT0, "Jaleco", "Formation Z", GAME_NOT_WORKING )
+GAMEX( 1984, aeroboto, formatz, formatz, formatz, ,  ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_NOT_WORKING )

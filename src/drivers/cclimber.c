@@ -217,14 +217,14 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( cclimber_input_ports )
+INPUT_PORTS_START( cclimber )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
 
@@ -234,7 +234,7 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 
@@ -252,7 +252,7 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
@@ -274,12 +274,12 @@ INPUT_PORTS_END
 
 /* several differences with cclimber: note that IN2 bits are ACTIVE_LOW, while in */
 /* cclimber they are ACTIVE_HIGH. */
-INPUT_PORTS_START( ckong_input_ports )
+INPUT_PORTS_START( ckong )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 
@@ -287,7 +287,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 
@@ -308,7 +308,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
@@ -323,7 +323,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rpatrolb_input_ports )
+INPUT_PORTS_START( rpatrolb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x3e, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -350,9 +350,9 @@ INPUT_PORTS_START( rpatrolb_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 1" )  /* Probably unused */
+	PORT_DIPNAME( 0x0020, 0x00, "Unknown 1" )  /* Probably unused */
 	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x0020, "On" )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 2" )  /* Probably unused */
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
@@ -405,26 +405,12 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 16 }, /* char set #1 */
-	{ 1, 0x2000, &charlayout,      0, 16 }, /* char set #2 */
-	{ 1, 0x4000, &bscharlayout, 16*4,  8 }, /* big sprite char set */
-	{ 1, 0x0000, &spritelayout,    0, 16 }, /* sprite set #1 */
-	{ 1, 0x2000, &spritelayout,    0, 16 }, /* sprite set #2 */
+	{ REGION_GFX1, 0x0000, &charlayout,      0, 16 }, /* char set #1 */
+	{ REGION_GFX1, 0x2000, &charlayout,      0, 16 }, /* char set #2 */
+	{ REGION_GFX2, 0x0000, &bscharlayout, 16*4,  8 }, /* big sprite char set */
+	{ REGION_GFX1, 0x0000, &spritelayout,    0, 16 }, /* sprite set #1 */
+	{ REGION_GFX1, 0x2000, &spritelayout,    0, 16 }, /* sprite set #2 */
 	{ -1 } /* end of array */
-};
-
-/* the PROMs of this bootleg are a mix of Crazy Climber and Crazy Kong */
-static unsigned char wrong_color_prom[] =
-{
-	/* char palette */
-	0x00,0x79,0x04,0x87,0x00,0xB7,0xFF,0x5F,0x00,0xC0,0xE8,0xF4,0x00,0x3F,0x04,0x38,
-	0x00,0x0D,0x7A,0xB7,0x00,0x07,0x26,0x02,0x00,0x27,0x16,0x30,0x00,0xB7,0xF4,0x0C,
-	0x00,0x4F,0xF6,0x24,0x00,0xB6,0xFF,0x5F,0x00,0x33,0x00,0xB7,0x00,0x66,0x00,0x3A,
-	0x00,0xC0,0x3F,0xB7,0x00,0x20,0xF4,0x16,0x00,0xFF,0x7F,0x87,0x00,0xB6,0xF4,0xC0,
-
-	/* bigsprite palette */
-	0x00,0xFF,0x18,0xC0,0x00,0xFF,0xC6,0x8F,0x00,0x0F,0xFF,0x1F,0x00,0xFF,0xC0,0x67,
-	0x00,0x47,0x7F,0x88,0x00,0x88,0x47,0x7F,0x00,0x7F,0x88,0x47,0x00,0x40,0x08,0xFF
 };
 
 
@@ -450,14 +436,13 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cclimber =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		}
@@ -500,15 +485,15 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cclimber_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( cclimber )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "cc11",         0x0000, 0x1000, 0x217ec4ff )
 	ROM_LOAD( "cc10",         0x1000, 0x1000, 0xb3c26cef )
 	ROM_LOAD( "cc09",         0x2000, 0x1000, 0x6db0879c )
 	ROM_LOAD( "cc08",         0x3000, 0x1000, 0xf48c5fe3 )
 	ROM_LOAD( "cc07",         0x4000, 0x1000, 0x3e873baf )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
@@ -517,20 +502,22 @@ ROM_START( cclimber_rom )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
-	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x60)      /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cc02",         0x0000, 0x0800, 0x14f3ecc9 )
+	ROM_LOAD( "cc01",         0x0800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13",         0x0000, 0x1000, 0xe0042f75 )
 	ROM_LOAD( "cc12",         0x1000, 0x1000, 0x5da13aaa )
 ROM_END
 
-static void cclimber_decode(void)
+static void init_cclimber(void)
 {
 /*
 	translation mask is layed out like this:
@@ -582,8 +569,11 @@ static void cclimber_decode(void)
 		}
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x10000;A++)
 	{
@@ -591,7 +581,7 @@ static void cclimber_decode(void)
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bit 0 of the address */
 		i = A & 1;
@@ -600,19 +590,19 @@ static void cclimber_decode(void)
 		j = (src & 0x07) + ((src & 0x10) >> 1) + ((src & 0xc0) >> 2);
 
 		/* decode the opcodes */
-		ROM[A] = src ^ xortable[i][j];
+		rom[A + diff] = src ^ xortable[i][j];
 	}
 }
 
-ROM_START( cclimbrj_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( cclimbrj )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "cc11j.bin",    0x0000, 0x1000, 0x89783959 )
 	ROM_LOAD( "cc10j.bin",    0x1000, 0x1000, 0x14eda506 )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "cc08j.bin",    0x3000, 0x1000, 0xb33c96f8 )
 	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
@@ -621,28 +611,30 @@ ROM_START( cclimbrj_rom )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
-	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x60)      /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cc02",         0x0000, 0x0800, 0x14f3ecc9 )
+	ROM_LOAD( "cc01",         0x0800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ccboot_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ccboot )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "m11.bin",      0x0000, 0x1000, 0x5efbe180 )
 	ROM_LOAD( "m10.bin",      0x1000, 0x1000, 0xbe2748c7 )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "m08.bin",      0x3000, 0x1000, 0xe3c542d6 )
 	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "m04.bin",      0x1000, 0x0800, 0x6fb80538 )
@@ -651,28 +643,30 @@ ROM_START( ccboot_rom )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "m03.bin",      0x3000, 0x0800, 0x67127253 )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "m02.bin",      0x4000, 0x0800, 0x7f4877de )
-	ROM_LOAD( "m01.bin",      0x4800, 0x0800, 0x49fab908 )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "m02.bin",      0x0000, 0x0800, 0x7f4877de )
+	ROM_LOAD( "m01.bin",      0x0800, 0x0800, 0x49fab908 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ccboot2_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ccboot2 )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "11.4k",        0x0000, 0x1000, 0xb2b17e24 )
 	ROM_LOAD( "10.4j",        0x1000, 0x1000, 0x8382bc0f )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "m08.bin",      0x3000, 0x1000, 0xe3c542d6 )
 	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc04",         0x1000, 0x0800, 0x332347cb )
@@ -681,20 +675,22 @@ ROM_START( ccboot2_rom )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "cc03",         0x3000, 0x0800, 0x4e4b3658 )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
-	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cc02",         0x0000, 0x0800, 0x14f3ecc9 )
+	ROM_LOAD( "cc01",         0x0800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-static void cclimbrj_decode(void)
+static void init_cclimbrj(void)
 {
 /*
 	translation mask is layed out like this:
@@ -745,8 +741,11 @@ static void cclimbrj_decode(void)
 		}
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x10000;A++)
 	{
@@ -754,7 +753,7 @@ static void cclimbrj_decode(void)
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bit 0 of the address */
 		i = A & 1;
@@ -763,12 +762,12 @@ static void cclimbrj_decode(void)
 		j = (src & 0x07) + ((src & 0x10) >> 1) + ((src & 0xc0) >> 2);
 
 		/* decode the opcodes */
-		ROM[A] = src ^ xortable[i][j];
+		rom[A + diff] = src ^ xortable[i][j];
 	}
 }
 
-ROM_START( ckong_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ckong )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -776,26 +775,28 @@ ROM_START( ckong_rom )
 	ROM_LOAD( "l05-11.bin",   0x4000, 0x1000, 0xae159192 )
 	ROM_LOAD( "n05-12.bin",   0x5000, 0x1000, 0x966bc9ab )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, 0x2dcedd12 )
 	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, 0x3375b3bd )
 	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, 0xfa7cbd91 )
 	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, 0x5655cc11 )
-	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
-	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
+	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckonga_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ckonga )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -803,26 +804,28 @@ ROM_START( ckonga_rom )
 	ROM_LOAD( "l05-11.bin",   0x4000, 0x1000, 0xae159192 )
 	ROM_LOAD( "n05-12.bin",   0x5000, 0x1000, 0x966bc9ab )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, 0x2dcedd12 )
 	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, 0x3375b3bd )
 	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, 0xfa7cbd91 )
 	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, 0x5655cc11 )
-	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
-	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
+	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckongjeu_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ckongjeu )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -830,26 +833,28 @@ ROM_START( ckongjeu_rom )
 	ROM_LOAD( "l05-11.bin",   0x4000, 0x1000, 0xae159192 )
 	ROM_LOAD( "ckjeu12.dat",  0x5000, 0x1000, 0x0532f270 )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n11-06.bin",   0x0000, 0x1000, 0x2dcedd12 )
 	ROM_LOAD( "k11-04.bin",   0x1000, 0x1000, 0x3375b3bd )
 	ROM_LOAD( "l11-05.bin",   0x2000, 0x1000, 0xfa7cbd91 )
 	ROM_LOAD( "h11-03.bin",   0x3000, 0x1000, 0x5655cc11 )
-	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
-	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
+	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckongo_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ckongo )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "o55a-1",       0x0000, 0x1000, 0x8bfb4623 )
 	ROM_LOAD( "o55a-2",       0x1000, 0x1000, 0x9ae8089b )
 	ROM_LOAD( "o55a-3",       0x2000, 0x1000, 0xe82b33c8 )
@@ -857,7 +862,7 @@ ROM_START( ckongo_rom )
 	ROM_LOAD( "o55a-5",       0x4000, 0x1000, 0x5182db06 )
 	/* no ROM at 5000 */
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* same as ckong but with halves switched */
 	ROM_LOAD( "o50b-1",       0x0000, 0x0800, 0xcae9e2bf )
 	ROM_CONTINUE(             0x2000, 0x0800 )
@@ -867,21 +872,23 @@ ROM_START( ckongo_rom )
 	ROM_CONTINUE(             0x3000, 0x0800 )
 	ROM_LOAD( "o50b-4",       0x1800, 0x0800, 0xb7008b57 )
 	ROM_CONTINUE(             0x3800, 0x0800 )
-	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
-	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c11-02.bin",   0x0000, 0x0800, 0xd1352c31 )
+	ROM_LOAD( "a11-01.bin",   0x0800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckongalc_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ckongalc )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
 	ROM_LOAD( "ck9.bin",      0x2000, 0x1000, 0xcff2af47 )
@@ -889,26 +896,28 @@ ROM_START( ckongalc_rom )
 	ROM_LOAD( "ck11.bin",     0x4000, 0x1000, 0x327dcadf )
 	/* no ROM at 5000 */
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ck6.bin",      0x0000, 0x1000, 0xa8916dc8 )
 	ROM_LOAD( "ck4.bin",      0x1000, 0x1000, 0xb62a0367 )
 	ROM_LOAD( "ck5.bin",      0x2000, 0x1000, 0xcd3b5dde )
 	ROM_LOAD( "ck3.bin",      0x3000, 0x1000, 0x61122c5e )
-	ROM_LOAD( "ck2.bin",      0x4000, 0x0800, 0xf67c80f1 )
-	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0xb4e827a5 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ck2.bin",      0x0000, 0x0800, 0xf67c80f1 )
+	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0xb4e827a5 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
-ROM_START( monkeyd_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( monkeyd )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
 	ROM_LOAD( "ck9.bin",      0x2000, 0x1000, 0xcff2af47 )
@@ -916,26 +925,28 @@ ROM_START( monkeyd_rom )
 	ROM_LOAD( "md5l.bin",     0x4000, 0x1000, 0xd1db1bb0 )
 	/* no ROM at 5000 */
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ck6.bin",      0x0000, 0x1000, 0xa8916dc8 )
 	ROM_LOAD( "ck4.bin",      0x1000, 0x1000, 0xb62a0367 )
 	ROM_LOAD( "ck5.bin",      0x2000, 0x1000, 0xcd3b5dde )
 	ROM_LOAD( "ck3.bin",      0x3000, 0x1000, 0x61122c5e )
-	ROM_LOAD( "ck2.bin",      0x4000, 0x0800, 0xf67c80f1 )
-	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
-	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x00000000 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0x00000000 )
-	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0x00000000 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ck2.bin",      0x0000, 0x0800, 0xf67c80f1 )
+	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x00000000 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0x00000000 )
+	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0x00000000 )
+
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
-ROM_START( rpatrolb_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( rpatrolb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rp1.4l",       0x0000, 0x1000, 0xbfd7ae7a )
 	ROM_LOAD( "rp2.4j",       0x1000, 0x1000, 0x03f53340 )
 	ROM_LOAD( "rp3.4f",       0x2000, 0x1000, 0x8fa300df )
@@ -943,8 +954,7 @@ ROM_START( rpatrolb_rom )
 	ROM_LOAD( "rp5.4c",       0x4000, 0x1000, 0xd7ef6c87 )
 	/* no ROM at 5000 */
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics
-	(disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rp6.6n",       0x0000, 0x0800, 0x19f18e9e )
 	/* 0800-0fff empty */
 	ROM_LOAD( "rp8.6k",       0x1000, 0x0800, 0x008738c7 )
@@ -953,20 +963,21 @@ ROM_START( rpatrolb_rom )
 	/* 2800-2fff empty */
 	ROM_LOAD( "rp9.6h",       0x3000, 0x0800, 0xea5aafca )
 	/* 3800-3fff empty */
-	ROM_LOAD( "rp11.6c",      0x4000, 0x0800, 0x065651a5 )
-	ROM_LOAD( "rp10.6a",      0x4800, 0x0800, 0x59747c31 )
 
-	ROM_REGION(0x0060)      /* color proms */
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rp11.6c",      0x0000, 0x0800, 0x065651a5 )
+	ROM_LOAD( "rp10.6a",      0x0800, 0x0800, 0x59747c31 )
+
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "bprom1.9n",    0x0000, 0x0020, 0xf9a2383b )
 	ROM_LOAD( "bprom2.9p",    0x0020, 0x0020, 0x1743bd26 )
 	ROM_LOAD( "bprom3.9c",    0x0040, 0x0020, 0xee03bc96 )
 
-	ROM_REGION(0x2000)      /* samples */
-	/* not used by this game */
+	/* no samples */
 ROM_END
 
-ROM_START( silvland_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( silvland )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "7.2r",         0x0000, 0x1000, 0x57e6be62 )
 	ROM_LOAD( "8.1n",         0x1000, 0x1000, 0xbbb2b287 )
 	ROM_LOAD( "rp3.4f",       0x2000, 0x1000, 0x8fa300df )
@@ -974,8 +985,7 @@ ROM_START( silvland_rom )
 	ROM_LOAD( "11.1r",        0x4000, 0x1000, 0x6f23f66f )
 	ROM_LOAD( "12.2k",        0x5000, 0x1000, 0x26f1537c )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics
-	(disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6.6n",         0x0000, 0x0800, 0xaffb804f )
 	/* 0800-0fff empty */
 	ROM_LOAD( "4.6k",         0x1000, 0x0800, 0xe487579d )
@@ -984,460 +994,33 @@ ROM_START( silvland_rom )
 	/* 2800-2fff empty */
 	ROM_LOAD( "3.6h",         0x3000, 0x0800, 0x59125a1a )
 	/* 3800-3fff empty */
-	ROM_LOAD( "2.6c",         0x4000, 0x0800, 0xc8d32b8e )
-	ROM_LOAD( "1.6a",         0x4800, 0x0800, 0xee333daf )
 
-	ROM_REGION(0x0060)      /* color proms */
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2.6c",         0x0000, 0x0800, 0xc8d32b8e )
+	ROM_LOAD( "1.6a",         0x0800, 0x0800, 0xee333daf )
+
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "mb7051.1v",    0x0000, 0x0020, 0x1d2343b1 )
 	ROM_LOAD( "mb7051.1u",    0x0020, 0x0020, 0xc174753c )
 	ROM_LOAD( "mb7051.1t",    0x0040, 0x0020, 0x04a1be01 )
 
-	ROM_REGION(0x2000)      /* samples */
-	/* not used by this game */
+	/* no samples */
 ROM_END
 
 
 
-static int cclimber_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8083],"\x02\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x808f],"\x02\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8083],17*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void cclimber_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8083],17*5);
-		osd_fclose(f);
-	}
-}
-
-
-static int ckong_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
-			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6100],34*5);
-			RAM[0x60b8] = RAM[0x611d];
-			RAM[0x60b9] = RAM[0x611e];
-			RAM[0x60ba] = RAM[0x611f];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void ckong_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6100],34*5);
-		osd_fclose(f);
-	}
-}
-
-static int rpatrolb_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x92fa],"\x1b",1) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x919b],4);
-			osd_fread(f,&RAM[0x91ba],6);
-			osd_fread(f,&RAM[0x921b],4);
-			osd_fread(f,&RAM[0x923a],6);
-			osd_fread(f,&RAM[0x929b],4);
-			osd_fread(f,&RAM[0x92ba],6);
-
-			osd_fclose(f);
-
-			/* Invalidate screen */
-			memset(dirtybuffer,1,videoram_size);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void rpatrolb_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x919b],4);
-		osd_fwrite(f,&RAM[0x91ba],6);
-		osd_fwrite(f,&RAM[0x921b],4);
-		osd_fwrite(f,&RAM[0x923a],6);
-		osd_fwrite(f,&RAM[0x929b],4);
-		osd_fwrite(f,&RAM[0x92ba],6);
-
-		osd_fclose(f);
-		RAM[0x92fa] = 0;
-	}
-}
-
-
-
-struct GameDriver cclimber_driver =
-{
-	__FILE__,
-	0,
-	"cclimber",
-	"Crazy Climber (US)",
-	"1980",
-	"Nichibutsu",
-	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	cclimber_rom,
-	0, cclimber_decode,
-	0,
-	0,      /* sound_prom */
-
-	cclimber_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	cclimber_hiload, cclimber_hisave
-};
-
-struct GameDriver cclimbrj_driver =
-{
-	__FILE__,
-	&cclimber_driver,
-	"cclimbrj",
-	"Crazy Climber (Japan)",
-	"1980",
-	"Nichibutsu",
-	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	cclimbrj_rom,
-	0, cclimbrj_decode,
-	0,
-	0,      /* sound_prom */
-
-	cclimber_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	cclimber_hiload, cclimber_hisave
-};
-
-struct GameDriver ccboot_driver =
-{
-	__FILE__,
-	&cclimber_driver,
-	"ccboot",
-	"Crazy Climber (bootleg set 1)",
-	"1980",
-	"bootleg",
-	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	ccboot_rom,
-	0, cclimbrj_decode,
-	0,
-	0,      /* sound_prom */
-
-	cclimber_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	cclimber_hiload, cclimber_hisave
-};
-
-struct GameDriver ccboot2_driver =
-{
-	__FILE__,
-	&cclimber_driver,
-	"ccboot2",
-	"Crazy Climber (bootleg set 2)",
-	"1980",
-	"bootleg",
-	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	ccboot2_rom,
-	0, cclimbrj_decode,
-	0,
-	0,      /* sound_prom */
-
-	cclimber_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	cclimber_hiload, cclimber_hisave
-};
-
-
-
-struct GameDriver ckong_driver =
-{
-	__FILE__,
-	0,
-	"ckong",
-	"Crazy Kong (set 1)",
-	"1981",
-	"Falcon",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	ckong_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ckong_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	ckong_hiload, ckong_hisave
-};
-
-struct GameDriver ckonga_driver =
-{
-	__FILE__,
-	&ckong_driver,
-	"ckonga",
-	"Crazy Kong (set 2)",
-	"1981",
-	"Falcon",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	ckonga_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ckong_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	ckong_hiload, ckong_hisave
-};
-
-struct GameDriver ckongjeu_driver =
-{
-	__FILE__,
-	&ckong_driver,
-	"ckongjeu",
-	"Crazy Kong (Jeutel bootleg)",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	ckongjeu_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ckong_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	ckong_hiload, ckong_hisave
-};
-
-struct GameDriver ckongo_driver =
-{
-	__FILE__,
-	&ckong_driver,
-	"ckongo",
-	"Crazy Kong (Orca bootleg)",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	ckongo_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ckong_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	ckong_hiload, ckong_hisave
-};
-
-struct GameDriver ckongalc_driver =
-{
-	__FILE__,
-	&ckong_driver,
-	"ckongalc",
-	"Crazy Kong (Alca bootleg)",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
-	0,
-	&machine_driver,
-	0,
-
-	ckongalc_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ckong_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	ckong_hiload, ckong_hisave
-};
-
-struct GameDriver monkeyd_driver =
-{
-	__FILE__,
-	&ckong_driver,
-	"monkeyd",
-	"Monkey Donkey",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
-	GAME_WRONG_COLORS,
-	&machine_driver,
-	0,
-
-	monkeyd_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ckong_input_ports,
-
-	wrong_color_prom, 0, 0,	/* wrong */
-	ORIENTATION_ROTATE_270,
-
-	ckong_hiload, ckong_hisave
-};
-
-struct GameDriver rpatrolb_driver =
-{
-	__FILE__,
-	0,
-	"rpatrolb",
-	"River Patrol (bootleg)",
-	"????",
-	"bootleg",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	rpatrolb_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	rpatrolb_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rpatrolb_hiload, rpatrolb_hisave
-};
-
-struct GameDriver silvland_driver =
-{
-	__FILE__,
-	&rpatrolb_driver,
-    "silvland",
-    "Silver Land",
-	"????",
-    "Falcon",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-    silvland_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	rpatrolb_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rpatrolb_hiload, rpatrolb_hisave
-};
+GAME( 1980, cclimber, ,         cclimber, cclimber, cclimber, ROT0,   "Nichibutsu", "Crazy Climber (US)" )
+GAME( 1980, cclimbrj, cclimber, cclimber, cclimber, cclimbrj, ROT0,   "Nichibutsu", "Crazy Climber (Japan)" )
+GAME( 1980, ccboot,   cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 1)" )
+GAME( 1980, ccboot2,  cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 2)" )
+GAME( 1981, ckong,    ,         cclimber, ckong,    ,         ROT270, "Falcon", "Crazy Kong (set 1)" )
+GAME( 1981, ckonga,   ckong,    cclimber, ckong,    ,         ROT270, "Falcon", "Crazy Kong (set 2)" )
+GAME( 1981, ckongjeu, ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Crazy Kong (Jeutel bootleg)" )
+GAME( 1981, ckongo,   ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Crazy Kong (Orca bootleg)" )
+GAME( 1981, ckongalc, ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Crazy Kong (Alca bootleg)" )
+GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Monkey Donkey" )
+GAME( ????, rpatrolb, ,         cclimber, rpatrolb, ,         ROT0,   "bootleg", "River Patrol (bootleg)" )
+GAME( ????, silvland, rpatrolb, cclimber, rpatrolb, ,         ROT0,   "Falcon", "Silver Land" )
 
 
 
@@ -1533,14 +1116,14 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( swimmer_input_ports )
+INPUT_PORTS_START( swimmer )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1550,7 +1133,7 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1568,7 +1151,7 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -1584,9 +1167,9 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "???" )
@@ -1599,14 +1182,14 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( guzzler_input_ports )
+INPUT_PORTS_START( guzzler )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1616,7 +1199,7 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1634,7 +1217,7 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -1647,8 +1230,8 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x00, "High Score Names" )
-	PORT_DIPSETTING(    0x20, "3 Letters" )
+	PORT_DIPNAME( 0x0020, 0x00, "High Score Names" )
+	PORT_DIPSETTING(    0x0020, "3 Letters" )
 	PORT_DIPSETTING(    0x00, "10 Letters" )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
@@ -1692,9 +1275,9 @@ static struct GfxLayout swimmer_spritelayout =
 
 static struct GfxDecodeInfo swimmer_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &swimmer_charlayout,      0, 64 }, /* characters */
-	{ 1, 0x0000, &swimmer_spritelayout,    0, 32 }, /* sprite set #1 */
-	{ 1, 0x3000, &swimmer_charlayout,   64*8, 4 },  /* big sprite set */
+	{ REGION_GFX1, 0, &swimmer_charlayout,      0, 64 }, /* characters */
+	{ REGION_GFX1, 0, &swimmer_spritelayout,    0, 32 }, /* sprite set #1 */
+	{ REGION_GFX2, 0, &swimmer_charlayout,   64*8, 4 },  /* big sprite set */
 	{ -1 } /* end of array */
 };
 
@@ -1714,21 +1297,19 @@ static struct AY8910interface swimmer_ay8910_interface =
 
 
 
-static struct MachineDriver swimmer_machine_driver =
+static struct MachineDriver machine_driver_swimmer =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz */
-			0,
 			swimmer_readmem,swimmer_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000/2,	/* 2 MHz */
-			3,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			0,0,
 			nmi_interrupt,4000000/16384 /* IRQs are triggered by the main CPU */
@@ -1741,7 +1322,7 @@ static struct MachineDriver swimmer_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	swimmer_gfxdecodeinfo,
-	96,64*8+4*8,	/* TODO: use palette shrinking */
+	256+32+2,64*8+4*8,
 	swimmer_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -1762,8 +1343,8 @@ static struct MachineDriver swimmer_machine_driver =
 
 
 
-ROM_START( swimmer_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( swimmer )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sw1",          0x0000, 0x1000, 0xf12481e7 )
 	ROM_LOAD( "sw2",          0x1000, 0x1000, 0xa0b6fdd2 )
 	ROM_LOAD( "sw3",          0x2000, 0x1000, 0xec93d7de )
@@ -1773,28 +1354,30 @@ ROM_START( swimmer_rom )
 	ROM_LOAD( "sw7",          0x6000, 0x1000, 0x37efb64e )
 	ROM_LOAD( "sw8",          0x7000, 0x1000, 0x33d6001e )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sw15",         0x0000, 0x1000, 0x4f3608cb )  /* chars */
 	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
 	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
-	ROM_LOAD( "sw23",         0x3000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
-	/* 3800-3fff empty (Guzzler has larger ROMs) */
-	ROM_LOAD( "sw22",         0x4000, 0x0800, 0x02c10992 )
-	/* 4800-4fff empty (Guzzler has larger ROMs) */
-	ROM_LOAD( "sw21",         0x5000, 0x0800, 0x7f4993c1 )
-	/* 5800-5fff empty (Guzzler has larger ROMs) */
 
-	ROM_REGION(0x220)        /* color proms */
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sw23",         0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
+	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
+	ROM_LOAD( "sw22",         0x1000, 0x0800, 0x02c10992 )
+	ROM_RELOAD(               0x1800, 0x0800 )	/* Guzzler has larger ROMs */
+	ROM_LOAD( "sw21",         0x2000, 0x0800, 0x7f4993c1 )
+	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
-
-	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 ROM_END
 
-ROM_START( swimmera_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( swimmera )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "swa1",         0x0000, 0x1000, 0x42c2b6c5 )
 	ROM_LOAD( "swa2",         0x1000, 0x1000, 0x49bac195 )
 	ROM_LOAD( "swa3",         0x2000, 0x1000, 0xa6d8cb01 )
@@ -1804,226 +1387,57 @@ ROM_START( swimmera_rom )
 	ROM_LOAD( "swa7",         0x6000, 0x1000, 0x7090e5ee )
 	ROM_LOAD( "swa8",         0x7000, 0x1000, 0xab86efa9 )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sw15",         0x0000, 0x1000, 0x4f3608cb )  /* chars */
 	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
 	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
-	ROM_LOAD( "sw23",         0x3000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
-	/* 3800-3fff empty (Guzzler has larger ROMs) */
-	ROM_LOAD( "sw22",         0x4000, 0x0800, 0x02c10992 )
-	/* 4800-4fff empty (Guzzler has larger ROMs) */
-	ROM_LOAD( "sw21",         0x5000, 0x0800, 0x7f4993c1 )
-	/* 5800-5fff empty (Guzzler has larger ROMs) */
 
-	ROM_REGION(0x220)        /* color proms */
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sw23",         0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
+	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
+	ROM_LOAD( "sw22",         0x1000, 0x0800, 0x02c10992 )
+	ROM_RELOAD(               0x1800, 0x0800 )	/* Guzzler has larger ROMs */
+	ROM_LOAD( "sw21",         0x2000, 0x0800, 0x7f4993c1 )
+	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
-
-	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 ROM_END
 
-ROM_START( guzzler_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( guzzler )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "guzz-01.bin",  0x0000, 0x2000, 0x58aaa1e9 )
 	ROM_LOAD( "guzz-02.bin",  0x2000, 0x2000, 0xf80ceb17 )
 	ROM_LOAD( "guzz-03.bin",  0x4000, 0x2000, 0xe63c65a2 )
 	ROM_LOAD( "guzz-04.bin",  0x6000, 0x2000, 0x45be42f5 )
 	ROM_LOAD( "guzz-16.bin",  0xe000, 0x2000, 0x61ee00b7 )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "guzz-12.bin",  0x0000, 0x1000, 0xf3754d9e )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "guzz-13.bin",  0x0000, 0x1000, 0xafc464e2 )   /* chars */
 	ROM_LOAD( "guzz-14.bin",  0x1000, 0x1000, 0xacbdfe1f )
 	ROM_LOAD( "guzz-15.bin",  0x2000, 0x1000, 0x66978c05 )
-	ROM_LOAD( "guzz-11.bin",  0x3000, 0x1000, 0xec2e9d86 )   /* big sprite */
-	ROM_LOAD( "guzz-10.bin",  0x4000, 0x1000, 0xbd3f0bf7 )
-	ROM_LOAD( "guzz-09.bin",  0x5000, 0x1000, 0x18927579 )
 
-	ROM_REGION(0x220)       /* color proms */
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "guzz-11.bin",  0x0000, 0x1000, 0xec2e9d86 )   /* big sprite */
+	ROM_LOAD( "guzz-10.bin",  0x1000, 0x1000, 0xbd3f0bf7 )
+	ROM_LOAD( "guzz-09.bin",  0x2000, 0x1000, 0x18927579 )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "guzzler.003",  0x0000, 0x100, 0xf86930c1 )
 	ROM_LOAD( "guzzler.002",  0x0100, 0x100, 0xb566ea9e )
 	ROM_LOAD( "guzzler.001",  0x0200, 0x020, 0x69089495 )
-
-	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "guzz-12.bin",  0x0000, 0x1000, 0xf3754d9e )
 ROM_END
 
 
 
-static int swimmer_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	/* Look for "TEK" in the 1st and 5th positions */
-	if (memcmp(&RAM[0x84e6],"\x54\x45\x48",3) == 0 &&
-			memcmp(&RAM[0x850a],"\x54\x45\x48",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x84e0],9*5);
-			osd_fclose(f);
-
-			RAM[0x8577] = RAM[0x84e0];
-			RAM[0x8578] = RAM[0x84e1];
-			RAM[0x8579] = RAM[0x84e2];
-			RAM[0x857a] = RAM[0x84e3];
-			RAM[0x857b] = RAM[0x84e4];
-			RAM[0x857c] = RAM[0x84e5];
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void swimmer_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x84e0],9*5);
-		osd_fclose(f);
-		RAM[0x84e6] = 0;
-	}
-}
-
-
-static int guzzler_hiload(void)
-{
-	unsigned char *RAM=Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x8584],0xff,16*5);
-		firsttime = 1;
-	}
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8584],"\x00\x03\x00",3) == 0 &&
-			memcmp(&RAM[0x85c4],"\x00\x03\x00",3) == 0)
-	{
-		void *f;
-		if ((f =osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8584],16*5);
-			RAM[0x8007]=RAM[0x8584];
-			RAM[0x8008]=RAM[0x8585];
-			RAM[0x8009]=RAM[0x8586];
-			RAM[0x800A]=RAM[0x8587];
-			RAM[0x800B]=RAM[0x8588];
-			RAM[0x800C]=RAM[0x8589];
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void guzzler_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8584],16*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver swimmer_driver =
-{
-	__FILE__,
-	0,
-	"swimmer",
-	"Swimmer (set 1)",
-	"1982",
-	"Tehkan",
-	"Brad Oliver",
-	0,
-	&swimmer_machine_driver,
-	0,
-
-	swimmer_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	swimmer_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	swimmer_hiload, swimmer_hisave
-};
-
-struct GameDriver swimmera_driver =
-{
-	__FILE__,
-	&swimmer_driver,
-	"swimmera",
-	"Swimmer (set 2)",
-	"1982",
-	"Tehkan",
-	"Brad Oliver",
-	0,
-	&swimmer_machine_driver,
-	0,
-
-	swimmera_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	swimmer_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	swimmer_hiload, swimmer_hisave
-};
-
-struct GameDriver guzzler_driver =
-{
-	__FILE__,
-	0,
-	"guzzler",
-	"Guzzler",
-	"1983",
-	"Tehkan",
-	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
-	0,
-	&swimmer_machine_driver,
-	0,
-
-	guzzler_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	guzzler_input_ports,
-
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	guzzler_hiload, guzzler_hisave
-};
+GAME( 1982, swimmer,  ,        swimmer, swimmer, , ROT0,  "Tehkan", "Swimmer (set 1)" )
+GAME( 1982, swimmera, swimmer, swimmer, swimmer, , ROT0,  "Tehkan", "Swimmer (set 2)" )
+GAME( 1983, guzzler,  ,        swimmer, guzzler, , ROT90, "Tehkan", "Guzzler" )

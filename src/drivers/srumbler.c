@@ -31,7 +31,7 @@ void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void srumbler_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank (1, &RAM[0x10000+(data&0x0f)*0x9000]);
 }
@@ -110,7 +110,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( srumbler )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -323,11 +323,8 @@ static void srumbler_init_machine(void)
      */
 
     int j, i;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-    unsigned char *pROM = Machine->memory_region[3];
-
-    /* Set optimization flags for M6809 */
-    m6809_Flags = M6809_FAST_NONE;
+    unsigned char *RAM = memory_region(REGION_CPU1);
+    unsigned char *pROM = memory_region(3);
 
     /* Resident ROM area e000-ffff */
     memcpy(&RAM[0xe000], pROM+0x0c000, 0x2000);
@@ -381,14 +378,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,        /* 1.5 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			srumbler_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3 Mhz ??? */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -405,7 +400,7 @@ static struct MachineDriver machine_driver =
 	384, 384,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	srumbler_vh_start,
 	srumbler_vh_stop,
@@ -429,8 +424,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( srumbler_rom )
-	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+ROM_START( srumbler )
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
@@ -452,7 +447,7 @@ ROM_START( srumbler_rom )
 	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "2f_sr05.bin",  0x0000, 0x8000, 0x0177cebe )
 
 	ROM_REGION(0x40000) /* Paged ROMs */
@@ -471,8 +466,8 @@ ROM_START( srumbler_rom )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
-ROM_START( srumblr2_rom )
-	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+ROM_START( srumblr2 )
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
@@ -494,7 +489,7 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
 
 	ROM_REGION(0x40000) /* Paged ROMs */
@@ -513,8 +508,8 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
-ROM_START( rushcrsh_rom )
-	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+ROM_START( rushcrsh )
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
@@ -536,7 +531,7 @@ ROM_START( rushcrsh_rom )
 	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
 
 	ROM_REGION(0x40000) /* Paged ROMs */
@@ -557,52 +552,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x00aa],"\x00\x03\x50\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* High score table */
-			osd_fread(f,&RAM[0x1c94],112);
-
-			/* High score */
-			RAM[0x00aa] = RAM[0x1cda];
-			RAM[0x00ab] = RAM[0x1cdb];
-			RAM[0x00ac] = RAM[0x1cdc];
-			RAM[0x00ad] = RAM[0x1cdd];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1c94],112);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver srumbler_driver =
+struct GameDriver driver_srumbler =
 {
 	__FILE__,
 	0,
@@ -615,23 +565,23 @@ struct GameDriver srumbler_driver =
 	&machine_driver,
 	0,
 
-	srumbler_rom,
+	rom_srumbler,
 	0,
 	0,0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_srumbler,
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver srumblr2_driver =
+struct GameDriver driver_srumblr2 =
 {
 	__FILE__,
-	&srumbler_driver,
+	&driver_srumbler,
 	"srumblr2",
 	"The Speed Rumbler (set 2)",
 	"1986",
@@ -641,23 +591,23 @@ struct GameDriver srumblr2_driver =
 	&machine_driver,
 	0,
 
-	srumblr2_rom,
+	rom_srumblr2,
 	0,
 	0,0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_srumbler,
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver rushcrsh_driver =
+struct GameDriver driver_rushcrsh =
 {
 	__FILE__,
-	&srumbler_driver,
+	&driver_srumbler,
 	"rushcrsh",
 	"Rush & Crash (Japan)",
 	"1986",
@@ -667,15 +617,15 @@ struct GameDriver rushcrsh_driver =
 	&machine_driver,
 	0,
 
-	rushcrsh_rom,
+	rom_rushcrsh,
 	0,
 	0,0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_srumbler,
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	ROT270,
+	0,0
 };

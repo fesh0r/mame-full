@@ -2,6 +2,9 @@
 
 Blue Print memory map (preliminary)
 
+driver by Nicola Salmoria
+
+
 CPU #1
 0000-4fff ROM
 8000-87ff RAM
@@ -138,7 +141,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( blueprnt_input_ports )
+INPUT_PORTS_START( blueprnt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
@@ -209,7 +212,7 @@ INPUT_PORTS_START( blueprnt_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( saturn_input_ports )
+INPUT_PORTS_START( saturn )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
@@ -309,8 +312,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 128 },
-	{ 1, 0x2000, &spritelayout, 128*4,   1 },
+	{ REGION_GFX1, 0, &charlayout,       0, 128 },
+	{ REGION_GFX2, 0, &spritelayout, 128*4,   1 },
 	{ -1 } /* end of array */
 };
 
@@ -330,21 +333,19 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_blueprnt =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			10000000/4,	/* 2.5 MHz (2H) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,	/* can't use CPU_AUDIO_CPU because this CPU reads the dip switches */
 			10000000/4,	/* 2.5 MHz (2H) */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4	/* IRQs connected to 32V */
 						/* NMIs are caused by the main CPU */
@@ -384,28 +385,52 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( blueprnt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( blueprnt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1m",           0x0000, 0x1000, 0xb20069a6 )
 	ROM_LOAD( "1n",           0x1000, 0x1000, 0x4a30302e )
 	ROM_LOAD( "1p",           0x2000, 0x1000, 0x6866ca07 )
 	ROM_LOAD( "1r",           0x3000, 0x1000, 0x5d3cfac3 )
 	ROM_LOAD( "1s",           0x4000, 0x1000, 0xa556cac4 )
 
-	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c3",           0x0000, 0x1000, 0xac2a61bc )
-	ROM_LOAD( "d3",           0x1000, 0x1000, 0x81fe85d7 )
-	ROM_LOAD( "d17",          0x2000, 0x1000, 0xa73b6483 )
-	ROM_LOAD( "d18",          0x3000, 0x1000, 0x7d622550 )
-	ROM_LOAD( "d20",          0x4000, 0x1000, 0x2fcb4f26 )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "3u",           0x0000, 0x1000, 0xfd38777a )
 	ROM_LOAD( "3v",           0x2000, 0x1000, 0x33d5bf5b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c3",           0x0000, 0x1000, 0xac2a61bc )
+	ROM_LOAD( "d3",           0x1000, 0x1000, 0x81fe85d7 )
+
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d17",          0x0000, 0x1000, 0xa73b6483 )
+	ROM_LOAD( "d18",          0x1000, 0x1000, 0x7d622550 )
+	ROM_LOAD( "d20",          0x2000, 0x1000, 0x2fcb4f26 )
 ROM_END
 
-ROM_START( saturn_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( blueprnj )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "bp_01.bin",    0x0000, 0x1000, 0x2e746693 )
+	ROM_LOAD( "bp_02.bin",    0x1000, 0x1000, 0xa0eb0b8e )
+	ROM_LOAD( "bp_03.bin",    0x2000, 0x1000, 0xc34981bb )
+	ROM_LOAD( "bp_04.bin",    0x3000, 0x1000, 0x525e77b5 )
+	ROM_LOAD( "bp_05.bin",    0x4000, 0x1000, 0x431a015f )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "3u",           0x0000, 0x1000, 0xfd38777a )
+	ROM_LOAD( "3v",           0x2000, 0x1000, 0x33d5bf5b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bp_09.bin",    0x0000, 0x0800, 0x43718c34 )
+	ROM_LOAD( "bp_08.bin",    0x1000, 0x0800, 0xd3ce077d )
+
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bp_10.bin",    0x0000, 0x1000, 0x83da108f )
+	ROM_LOAD( "bp_11.bin",    0x1000, 0x1000, 0xb440f32f )
+	ROM_LOAD( "bp_12.bin",    0x2000, 0x1000, 0x23026765 )
+ROM_END
+
+ROM_START( saturn )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x1000, 0x18a6d68e )
 	ROM_LOAD( "r2",           0x1000, 0x1000, 0xa7dd2665 )
 	ROM_LOAD( "r3",           0x2000, 0x1000, 0xb9cfa791 )
@@ -413,107 +438,22 @@ ROM_START( saturn_rom )
 	ROM_LOAD( "r5",           0x4000, 0x1000, 0x43444d00 )
 	ROM_LOAD( "r6",           0x5000, 0x1000, 0x4d4821f6 )
 
-	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "r10",          0x0000, 0x1000, 0x35987d61 )
-	ROM_LOAD( "r9",           0x1000, 0x1000, 0xca6a7fda )
-	ROM_LOAD( "r11",          0x2000, 0x1000, 0x6e4e6e5d )
-	ROM_LOAD( "r12",          0x3000, 0x1000, 0x46fc049e )
-	ROM_LOAD( "r13",          0x4000, 0x1000, 0x8b3e8c32 )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r7",           0x0000, 0x1000, 0xdd43e02f )
 	ROM_LOAD( "r8",           0x2000, 0x1000, 0x7f9d0877 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r10",          0x0000, 0x1000, 0x35987d61 )
+	ROM_LOAD( "r9",           0x1000, 0x1000, 0xca6a7fda )
+
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r11",          0x0000, 0x1000, 0x6e4e6e5d )
+	ROM_LOAD( "r12",          0x1000, 0x1000, 0x46fc049e )
+	ROM_LOAD( "r13",          0x2000, 0x1000, 0x8b3e8c32 )
 ROM_END
 
 
 
-static int blueprnt_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x8100],"\x00\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0x813B],"\x90\x90\x90",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8100],0x3E);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void blueprnt_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8100],0x3E);
-		osd_fclose(f);
-	}
-
-}
-
-
-
-struct GameDriver blueprnt_driver =
-{
-	__FILE__,
-	0,
-	"blueprnt",
-	"Blue Print",
-	"1982",
-	"[Zilec] Bally Midway",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	blueprnt_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	blueprnt_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	blueprnt_hiload, blueprnt_hisave
-};
-
-struct GameDriver saturn_driver =
-{
-	__FILE__,
-	0,
-	"saturn",
-	"Saturn",
-	"1983",
-	"[Zilec] Jaleco",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	saturn_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	saturn_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
+GAME( 1982, blueprnt, ,         blueprnt, blueprnt, , ROT270, "[Zilec] Bally Midway", "Blue Print (Midway)" )
+GAME( 1982, blueprnj, blueprnt, blueprnt, blueprnt, , ROT270, "[Zilec] Jaleco", "Blue Print (Jaleco)" )
+GAME( 1983, saturn,   ,         blueprnt, saturn,   , ROT270, "[Zilec] Jaleco", "Saturn" )

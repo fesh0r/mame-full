@@ -201,13 +201,10 @@ void eprom_latch_w(int offset, int data)
 	/* reset extra CPU */
 	if (!(data & 0x00ff0000))
 	{
-		if (!(data & 1))
-		{
-			cpu_halt(1, 0);
-			cpu_reset(1);
-		}
+		if (data & 1)
+			cpu_set_reset_line(1,CLEAR_LINE);
 		else
-			cpu_halt(1, 1);
+			cpu_set_reset_line(1,ASSERT_LINE);
 	}
 }
 
@@ -294,7 +291,7 @@ static struct MemoryWriteAddress main_writemem[] =
 static struct MemoryReadAddress extra_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x16cc00, 0x16cc01, sync_r, &sync_data },
+	{ 0x16cc00, 0x16cc01, sync_r },
 	{ 0x160000, 0x16ffff, MRA_BANK1 },
 	{ 0x260000, 0x26000f, input_port_0_r },
 	{ 0x260010, 0x26001f, special_port1_r },
@@ -307,7 +304,7 @@ static struct MemoryReadAddress extra_readmem[] =
 static struct MemoryWriteAddress extra_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x16cc00, 0x16cc01, sync_w },
+	{ 0x16cc00, 0x16cc01, sync_w, &sync_data },
 	{ 0x160000, 0x16ffff, MWA_BANK1 },
 	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
 	{ 0x360010, 0x360011, eprom_latch_w },
@@ -324,7 +321,7 @@ static struct MemoryWriteAddress extra_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( eprom_ports )
+INPUT_PORTS_START( eprom )
 	PORT_START		/* 26000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
@@ -421,20 +418,16 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			1,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_I_CPU(2)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
@@ -453,7 +446,9 @@ static struct MachineDriver machine_driver =
 	eprom_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO_WITH_SPEECH
+	JSA_I_STEREO_WITH_SPEECH,
+
+	atarigen_nvram_handler
 };
 
 
@@ -470,10 +465,10 @@ static void rom_decode(void)
 
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x100000; i++)
-		Machine->memory_region[3][i] ^= 0xff;
-	
+		memory_region(3)[i] ^= 0xff;
+
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
+	memcpy(&memory_region(1)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 
@@ -484,8 +479,8 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( eprom_rom )
-	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
+ROM_START( eprom )
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.50a",   0x00000, 0x10000, 0x08888dec )
 	ROM_LOAD_ODD ( "136069.40a",   0x00000, 0x10000, 0x29cb1e97 )
 	ROM_LOAD_EVEN( "136069.50b",   0x20000, 0x10000, 0x702241c9 )
@@ -495,11 +490,11 @@ ROM_START( eprom_rom )
 	ROM_LOAD_EVEN( "136069.40k",   0x60000, 0x10000, 0x130650f6 )
 	ROM_LOAD_ODD ( "136069.50k",   0x60000, 0x10000, 0x1da21ed8 )
 
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.10s",   0x00000, 0x10000, 0xdeff6469 )
 	ROM_LOAD_ODD ( "136069.10u",   0x00000, 0x10000, 0x5d7afca2 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -524,8 +519,8 @@ ROM_START( eprom_rom )
 ROM_END
 
 
-ROM_START( eprom2_rom )
-	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
+ROM_START( eprom2 )
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "1025.50a",   0x00000, 0x10000, 0xb0c9a476 )
 	ROM_LOAD_ODD ( "1024.40a",   0x00000, 0x10000, 0x4cc2c50c )
 	ROM_LOAD_EVEN( "1027.50b",   0x20000, 0x10000, 0x84f533ea )
@@ -537,11 +532,11 @@ ROM_START( eprom2_rom )
 	ROM_LOAD_EVEN( "1037.50e",   0x80000, 0x10000, 0xad39a3dd )
 	ROM_LOAD_ODD ( "1036.40e",   0x80000, 0x10000, 0x34fc8895 )
 
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1035.10s",   0x00000, 0x10000, 0xffeb5647 )
 	ROM_LOAD_ODD ( "1034.10u",   0x00000, 0x10000, 0xc68f58dd )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -583,6 +578,8 @@ static void eprom_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -593,7 +590,7 @@ static void eprom_init(void)
  *
  *************************************/
 
-struct GameDriver eprom_driver =
+struct GameDriver driver_eprom =
 {
 	__FILE__,
 	0,
@@ -606,24 +603,23 @@ struct GameDriver eprom_driver =
 	&machine_driver,
 	eprom_init,
 
-	eprom_rom,
-	rom_decode,
+	rom_eprom,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	eprom_ports,
+	input_ports_eprom,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver eprom2_driver =
+struct GameDriver driver_eprom2 =
 {
 	__FILE__,
-	&eprom_driver,
+	&driver_eprom,
 	"eprom2",
 	"Escape from the Planet of the Robot Monsters (set 2)",
 	"1989",
@@ -633,15 +629,14 @@ struct GameDriver eprom2_driver =
 	&machine_driver,
 	eprom_init,
 
-	eprom2_rom,
-	rom_decode,
+	rom_eprom2,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	eprom_ports,
+	input_ports_eprom,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

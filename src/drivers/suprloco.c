@@ -93,7 +93,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( suprloco_input_ports )
+INPUT_PORTS_START( suprloco )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -203,21 +203,19 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver suprloco_machine_driver =
+static struct MachineDriver machine_driver_suprloco =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz (?) */
-			0,		/* memory region */
 			readmem,writemem,0,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			3,		/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -257,8 +255,8 @@ static struct MachineDriver suprloco_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( suprloco_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( suprloco )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
 	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
 	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
@@ -274,10 +272,10 @@ ROM_START( suprloco_rom )
 	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, 0xf04a4b50 )
 							/*0x6000 empty */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
 
-	ROM_REGION(0x0600)
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "ic100.bin",    0x0000, 0x0080, 0x7b0c8ce5 )  /* color PROM */
 	ROM_CONTINUE(             0x0100, 0x0080 )
 	ROM_CONTINUE(             0x0080, 0x0080 )
@@ -296,9 +294,9 @@ void suprloco_unmangle(void)
 	int i, j, k, color_source, color_dest;
 	unsigned char *source, *dest, *lookup;
 
-	source = Machine->memory_region[1];
+	source = memory_region(1);
 	dest   = source + 0x6000;
-	lookup = Machine->memory_region[4] + 0x0200;
+	lookup = memory_region(4) + 0x0200;
 
 	for (i = 0; i < 0x80; i++, lookup += 8)
 	{
@@ -321,41 +319,15 @@ void suprloco_unmangle(void)
 			}
 		}
 	}
+
+
+	/* decrypt program ROMs */
+	suprloco_decode();
 }
 
-/**** Super Locomotive high score save routine - RJF (April 5, 1999) ****/
-static int suprloco_hiload(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xfd00],"\x02\x20\x00",3) == 0){
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
 
-			/* the game only show 6 of 10 entries */
-                        osd_fread(f,&RAM[0xfca0], 10*3);	/* initials */
-                        osd_fread(f,&RAM[0xfd00], 10*3);	/* values */
-			osd_fclose(f);
-
-                        /* copy the high score to ram */
-                        RAM[0xfc2c] = RAM[0xfd00];
-                        RAM[0xfc2d] = RAM[0xfd01];
-                        RAM[0xfc2e] = RAM[0xfd02];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void suprloco_hisave(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-                        osd_fwrite(f,&RAM[0xfca0],10*3);
-                        osd_fwrite(f,&RAM[0xfd00],10*3);
-			osd_fclose(f);
-}
-
-struct GameDriver suprloco_driver =
+struct GameDriver driver_suprloco =
 {
 	__FILE__,
 	0,
@@ -365,17 +337,17 @@ struct GameDriver suprloco_driver =
 	"Sega",
 	"Zsolt Vasvari",
 	0,
-	&suprloco_machine_driver,
+	&machine_driver_suprloco,
+	suprloco_unmangle,
+
+	rom_suprloco,
+	0, 0,
+	0,
 	0,
 
-	suprloco_rom,
-	suprloco_unmangle, suprloco_decode,
-	0,
-	0,
+	input_ports_suprloco,
 
-	suprloco_input_ports,
-
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
-        suprloco_hiload, suprloco_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

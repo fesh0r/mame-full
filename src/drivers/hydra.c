@@ -117,12 +117,12 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0xfc0000, 0xfc0001, special_port0_r },
 	{ 0xfc8000, 0xfc8001, a2d_data_r },
 	{ 0xfd0000, 0xfd0001, atarigen_sound_upper_r },
-	{ 0xfd8000, 0xfdffff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfd8000, 0xfdffff, atarigen_eeprom_r },
 /*	{ 0xfe0000, 0xfe7fff, from_r },*/
-	{ 0xfe8000, 0xfe89ff, MRA_BANK1, &paletteram },
-	{ 0xff0000, 0xff3fff, MRA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xff4000, 0xff5fff, MRA_BANK3, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xff6000, 0xff6fff, MRA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xfe8000, 0xfe89ff, MRA_BANK1 },
+	{ 0xff0000, 0xff3fff, MRA_BANK2 },
+	{ 0xff4000, 0xff5fff, MRA_BANK3 },
+	{ 0xff6000, 0xff6fff, MRA_BANK4 },
 	{ 0xff7000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -138,11 +138,11 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xfa0000, 0xfa0001, hydra_mo_control_w },
 	{ 0xfb0000, 0xfb0001, atarigen_video_int_ack_w },
 	{ 0xfc8000, 0xfc8007, a2d_select_w },
-	{ 0xfd8000, 0xfdffff, atarigen_eeprom_w },
-	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w },
-	{ 0xff0000, 0xff3fff, MWA_BANK2 },
-	{ 0xff4000, 0xff5fff, hydra_playfieldram_w },
-	{ 0xff6000, 0xff6fff, MWA_BANK4 },
+	{ 0xfd8000, 0xfdffff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w, &paletteram },
+	{ 0xff0000, 0xff3fff, MWA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xff4000, 0xff5fff, hydra_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xff6000, 0xff6fff, MWA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xff7000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -155,7 +155,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( hydra_ports )
+INPUT_PORTS_START( hydra )
 	PORT_START		/* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON5 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -183,7 +183,7 @@ INPUT_PORTS_START( hydra_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( pitfight_ports )
+INPUT_PORTS_START( pitfight )
 	PORT_START		/* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
@@ -290,13 +290,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160*2,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_II_CPU(1)
-		},
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -319,7 +316,9 @@ static struct MachineDriver machine_driver =
 	hydra_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_II_MONO(2)
+	JSA_II_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -404,8 +403,8 @@ static void pitfight_init(void)
  *
  *************************************/
 
-ROM_START( hydra_rom )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+ROM_START( hydra )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydr3028.bin", 0x00000, 0x10000, 0x43475f73 )
 	ROM_LOAD_ODD ( "hydr3029.bin", 0x00000, 0x10000, 0x886e1de8 )
 	ROM_LOAD_EVEN( "hydr3034.bin", 0x20000, 0x10000, 0x5115aa36 )
@@ -415,11 +414,11 @@ ROM_START( hydra_rom )
 	ROM_LOAD_EVEN( "hydr1030.bin", 0x60000, 0x10000, 0xb31fd41f )
 	ROM_LOAD_ODD ( "hydr1031.bin", 0x60000, 0x10000, 0x453d076f )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, 0x619d7319 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION(0x30000)	/* 192k for ADPCM samples */
+	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
 	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, 0xb974d3d0 )
 	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, 0xa2eda15b )
 	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, 0xeb9eaeb7 )
@@ -458,8 +457,8 @@ ROM_START( hydra_rom )
 ROM_END
 
 
-ROM_START( hydrap_rom )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+ROM_START( hydrap )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydhi0.bin", 0x00000, 0x10000, 0xdab2e8a2 )
 	ROM_LOAD_ODD ( "hydlo0.bin", 0x00000, 0x10000, 0xc18d4f16 )
 	ROM_LOAD_EVEN( "hydhi1.bin", 0x20000, 0x10000, 0x50c12bb9 )
@@ -469,11 +468,11 @@ ROM_START( hydrap_rom )
 	ROM_LOAD_EVEN( "hydhi3.bin", 0x60000, 0x10000, 0x29e9e03e )
 	ROM_LOAD_ODD ( "hydlo3.bin", 0x60000, 0x10000, 0x7b5047f0 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, BADCRC(0x619d7319) )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION(0x30000)	/* 192k for ADPCM samples */
+	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
 	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, BADCRC(0xb974d3d0) )
 	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, BADCRC(0xa2eda15b) )
 	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, BADCRC(0xeb9eaeb7) )
@@ -512,18 +511,18 @@ ROM_START( hydrap_rom )
 ROM_END
 
 
-ROM_START( pitfight_rom )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+ROM_START( pitfight )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "4028", 0x00000, 0x10000, 0xf7cb1a4b )
 	ROM_LOAD_ODD ( "4029", 0x00000, 0x10000, 0x13ae0d4f )
 	ROM_LOAD_EVEN( "3030", 0x20000, 0x10000, 0xb053e779 )
 	ROM_LOAD_ODD ( "3031", 0x20000, 0x10000, 0x2b8c4d13 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
 	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
 	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
 	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
@@ -558,18 +557,18 @@ ROM_START( pitfight_rom )
 ROM_END
 
 
-ROM_START( pitfigh3_rom )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+ROM_START( pitfigh3 )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "3028", 0x00000, 0x10000, 0x99530da4 )
 	ROM_LOAD_ODD ( "3029", 0x00000, 0x10000, 0x78c7afbf )
 	ROM_LOAD_EVEN( "3030", 0x20000, 0x10000, 0xb053e779 )
 	ROM_LOAD_ODD ( "3031", 0x20000, 0x10000, 0x2b8c4d13 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
 	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
 	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
 	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
@@ -611,7 +610,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver hydra_driver =
+struct GameDriver driver_hydra =
 {
 	__FILE__,
 	0,
@@ -624,24 +623,24 @@ struct GameDriver hydra_driver =
 	&machine_driver,
 	hydra_init,
 
-	hydra_rom,
+	rom_hydra,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hydra_ports,
+	input_ports_hydra,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver hydrap_driver =
+struct GameDriver driver_hydrap =
 {
 	__FILE__,
-	&hydra_driver,
+	&driver_hydra,
 	"hydrap",
 	"Hydra (prototype)",
 	"1990",
@@ -651,21 +650,21 @@ struct GameDriver hydrap_driver =
 	&machine_driver,
 	hydrap_init,
 
-	hydrap_rom,
+	rom_hydrap,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hydra_ports,
+	input_ports_hydra,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver pitfight_driver =
+struct GameDriver driver_pitfight =
 {
 	__FILE__,
 	0,
@@ -678,24 +677,24 @@ struct GameDriver pitfight_driver =
 	&machine_driver,
 	pitfight_init,
 
-	pitfight_rom,
+	rom_pitfight,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	pitfight_ports,
+	input_ports_pitfight,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver pitfigh3_driver =
+struct GameDriver driver_pitfigh3 =
 {
 	__FILE__,
-	&pitfight_driver,
+	&driver_pitfight,
 	"pitfigh3",
 	"Pit Fighter (version 3)",
 	"1990",
@@ -705,15 +704,15 @@ struct GameDriver pitfigh3_driver =
 	&machine_driver,
 	pitfight_init,
 
-	pitfigh3_rom,
+	rom_pitfigh3,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	pitfight_ports,
+	input_ports_pitfight,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

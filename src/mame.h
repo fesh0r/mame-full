@@ -19,6 +19,7 @@ struct RunningMachine
 {
 	unsigned char *memory_region[MAX_MEMORY_REGIONS];
 	unsigned int memory_region_length[MAX_MEMORY_REGIONS];	/* some drivers might find this useful */
+	int memory_region_type[MAX_MEMORY_REGIONS];
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */
@@ -26,9 +27,13 @@ struct RunningMachine
 							/* use this array to get the pen number. For example, */
 							/* if you want to use color #6 in the palette, use */
 							/* pens[6] instead of just 6. */
-	unsigned short *colortable;	/* lookup table used to map gfx pen numbers to palette pen numbers */
+	unsigned short *game_colortable;	/* lookup table used to map gfx pen numbers */
+										/* to color numbers */
+	unsigned short *remapped_colortable;	/* the above, already remapped through */
+											/* Machine->pens */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
+	int color_depth;	/* video color depth: 8 or 16 */
 	int sample_rate;	/* the digital audio sample rate; 0 if sound is disabled. */
 						/* This is set to a default value, or a value specified by */
 						/* the user; osd_init() is allowed to change it to the actual */
@@ -38,6 +43,7 @@ struct RunningMachine
 	struct InputPort *input_ports;	/* the input ports definition from the driver */
 								/* is copied here and modified (load settings from disk, */
 								/* remove cheat commands, and so on) */
+	struct InputPort *input_ports_default; /* original input_ports without modifications */
 	int orientation;	/* see #defines in driver.h */
 	struct GfxElement *uifont;	/* font used by DisplayText() */
 	int uifontwidth,uifontheight;
@@ -62,6 +68,7 @@ struct GameOptions {
 	int use_samples;
 	int use_emulated_ym3812;
 
+	int color_depth;	/* 8 or 16, any other value means auto */
 	int norotate;
 	int ror;
 	int rol;
@@ -75,10 +82,10 @@ struct GameOptions {
 
 	#ifdef MESS
 		/* This is ugly for now, but its temporary! */
-	  char rom_name[MAX_ROM][2048];           /* MESS */
- 	  char floppy_name[MAX_FLOPPY][2048];     /* MESS */
-	  char hard_name[MAX_HARD][2048];         /* MESS */
-	  char cassette_name[MAX_CASSETTE][2048]; /* MESS */
+	  char rom_name[MAX_ROM][MAX_PATH];           /* MESS */
+ 	  char floppy_name[MAX_FLOPPY][MAX_PATH];     /* MESS */
+	  char hard_name[MAX_HARD][MAX_PATH];         /* MESS */
+	  char cassette_name[MAX_CASSETTE][MAX_PATH]; /* MESS */
 	#endif
 };
 
@@ -89,6 +96,5 @@ int run_game (int game);
 int updatescreen(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
-
 
 #endif

@@ -16,15 +16,12 @@ int int_enable_0, int_enable_1;
 
 void ddrible_init_machine( void )
 {
-    /* Set optimization flags for M6809 */
-    m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 	int_enable_0 = int_enable_1 = 0;
-	cpu_reset( 1 );
 }
 
 void ddrible_bankswitch_w( int offset,int data )
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;

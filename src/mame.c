@@ -22,9 +22,11 @@ static int settingsloaded;
 
 int bitmap_dirty;	/* set by osd_clearbitmap() */
 
-unsigned char *ROM;
 
-
+/* Used in vh_open */
+extern unsigned char *spriteram,*spriteram_2;
+extern unsigned char *buffered_spriteram,*buffered_spriteram_2;
+extern int spriteram_size,spriteram_2_size;
 
 int init_machine(void);
 void shutdown_machine(void);
@@ -35,6 +37,20 @@ int run_machine(void);
 static int validitychecks(void)
 {
 	int i,j;
+	UINT8 a,b;
+
+	a = 0xff;
+	b = a + 1;
+	if (b > a)	{ printf("UINT8 must be 8 bits\n"); return 1; }
+
+	if (sizeof(INT8)   != 1)	{ printf("INT8 must be 8 bits\n"); return 1; }
+	if (sizeof(UINT8)  != 1)	{ printf("UINT8 must be 8 bits\n"); return 1; }
+	if (sizeof(INT16)  != 2)	{ printf("INT16 must be 16 bits\n"); return 1; }
+	if (sizeof(UINT16) != 2)	{ printf("UINT16 must be 16 bits\n"); return 1; }
+	if (sizeof(INT32)  != 4)	{ printf("INT32 must be 32 bits\n"); return 1; }
+	if (sizeof(UINT32) != 4)	{ printf("UINT32 must be 32 bits\n"); return 1; }
+	if (sizeof(INT64)  != 8)	{ printf("INT64 must be 64 bits\n"); return 1; }
+	if (sizeof(UINT64) != 8)	{ printf("UINT64 must be 64 bits\n"); return 1; }
 
 	for (i = 0;drivers[i];i++)
 	{
@@ -48,20 +64,11 @@ static int validitychecks(void)
 
 		if (drivers[i]->clone_of && drivers[i]->clone_of->clone_of)
 		{
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-extern struct GameDriver neogeo_bios;
-if (drivers[i]->clone_of->clone_of != &neogeo_bios)
-{
-#endif
-#endif
-			printf("%s is a clone of a clone\n",drivers[i]->name);
-			return 1;
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-}
-#endif
-#endif
+			if ((drivers[i]->clone_of->clone_of->flags & NOT_A_DRIVER) == 0)
+			{
+				printf("%s is a clone of a clone\n",drivers[i]->name);
+				return 1;
+			}
 		}
 
 		for (j = i+1;drivers[j];j++)
@@ -85,27 +92,54 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 
 		romp = drivers[i]->rom;
 
-if (romp)
-{ /*MESS*/
-
-		while (romp->name || romp->offset || romp->length)
+		if (romp)
 		{
-			const char *c;
-			if (romp->name && romp->name != (char *)-1)
+			int region_type_used[REGION_MAX];
+
+			for (j = 0;j < REGION_MAX;j++)
+				region_type_used[j] = 0;
+
+			while (romp->name || romp->offset || romp->length)
 			{
-				c = romp->name;
-				while (*c)
+				const char *c;
+
+				if (romp->name == 0 && romp->length == 0)	/* ROM_REGION() */
 				{
-					if (tolower(*c) != *c)
+					int type = romp->crc & ~REGIONFLAG_MASK;
+
+					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
 					{
-						printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+						printf("%s has invalid ROM_REGION type %x\n",drivers[i]->name,type);
 						return 1;
 					}
-					c++;
+
+					region_type_used[type]++;
 				}
+				if (romp->name && romp->name != (char *)-1)
+				{
+					c = romp->name;
+					while (*c)
+					{
+						if (tolower(*c) != *c)
+						{
+							printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+							return 1;
+						}
+						c++;
+					}
+				}
+
+				romp++;
 			}
 
-			romp++;
+			for (j = 1;j < REGION_MAX;j++)
+			{
+				if (region_type_used[j] > 1)
+				{
+					printf("%s has duplicated ROM_REGION type %x\n",drivers[i]->name,j);
+					return 1;
+				}
+			}
 		}
 }/*MESS*/
 	}
@@ -139,45 +173,50 @@ int run_game(int game)
 	Machine->drv = drv = gamedrv->drv;
 
 	/* copy configuration */
+	if (options.color_depth == 16 ||
+			(options.color_depth != 8 && (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)))
+		Machine->color_depth = 16;
+	else
+		Machine->color_depth = 8;
 	Machine->sample_rate = options.samplerate;
 	Machine->sample_bits = options.samplebits;
 
 	/* get orientation right */
-	Machine->orientation = gamedrv->orientation;
-	Machine->ui_orientation = ORIENTATION_DEFAULT;
+	Machine->orientation = gamedrv->flags & ORIENTATION_MASK;
+	Machine->ui_orientation = ROT0;
 	if (options.norotate)
-		Machine->orientation = ORIENTATION_DEFAULT;
+		Machine->orientation = ROT0;
 	if (options.ror)
 	{
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->orientation ^= ROT180;
 
-		Machine->orientation ^= ORIENTATION_ROTATE_90;
+		Machine->orientation ^= ROT90;
 
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ROT180;
 
-		Machine->ui_orientation ^= ORIENTATION_ROTATE_90;
+		Machine->ui_orientation ^= ROT90;
 	}
 	if (options.rol)
 	{
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->orientation ^= ROT180;
 
-		Machine->orientation ^= ORIENTATION_ROTATE_270;
+		Machine->orientation ^= ROT270;
 
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ROT180;
 
-		Machine->ui_orientation ^= ORIENTATION_ROTATE_270;
+		Machine->ui_orientation ^= ROT270;
 	}
 	if (options.flipx)
 	{
@@ -190,6 +229,7 @@ int run_game(int game)
 		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
 	}
 
+	set_pixel_functions();
 
 	/* Do the work*/
 	err = 1;
@@ -251,34 +291,28 @@ int run_game(int game)
 ***************************************************************************/
 int init_machine(void)
 {
-	if (gamedrv->input_ports)
+	int i;
+
+	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 	{
-		int total;
-		const struct InputPort *from;
-		struct InputPort *to;
-
-		from = gamedrv->input_ports;
-
-		total = 0;
-		do
-		{
-			total++;
-		} while ((from++)->type != IPT_END);
-
-		if ((Machine->input_ports = malloc(total * sizeof(struct InputPort))) == 0)
-			return 1;
-
-		from = gamedrv->input_ports;
-		to = Machine->input_ports;
-
-		do
-		{
-			memcpy(to,from,sizeof(struct InputPort));
-
-			to++;
-		} while ((from++)->type != IPT_END);
+		Machine->memory_region[i] = 0;
+		Machine->memory_region_length[i] = 0;
+		Machine->memory_region_type[i] = 0;
 	}
 
+	if (gamedrv->input_ports)
+	{
+		Machine->input_ports = input_port_allocate(gamedrv->input_ports);
+		if (!Machine->input_ports)
+			goto out;
+		Machine->input_ports_default = input_port_allocate(gamedrv->input_ports);
+		if (!Machine->input_ports_default)
+		{
+			input_port_free(Machine->input_ports);
+			Machine->input_ports = 0;
+			goto out;
+		}
+	}
 
 	#ifdef MESS
    	if (!gamedrv->rom)
@@ -286,66 +320,24 @@ int init_machine(void)
       	  if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
           goto load_next;
         }
-   #endif
+	#endif
 
 	if (readroms() != 0)
-	{
-		free(Machine->input_ports);
-		Machine->input_ports = 0;
-		return 1;
-	}
+		goto out_free;
 
-
-	{
-		extern unsigned char *RAM;
-		RAM = Machine->memory_region[drv->cpu[0].memory_region];
-		ROM = RAM;
-	}
-
-	/* decrypt the ROMs if necessary */
-	if (gamedrv->rom_decode) (*gamedrv->rom_decode)();
-
-	if (gamedrv->opcode_decode)
-	{
-		int j;
-		extern int encrypted_cpu;
-
-
-		/* find the first available memory region pointer */
-		j = 0;
-		while (Machine->memory_region[j]) j++;
-
-		/* allocate a ROM array of the same length of memory region #0 */
-		if ((ROM = malloc(Machine->memory_region_length[0])) == 0)
-		{
-			free(Machine->input_ports);
-			Machine->input_ports = 0;
-			/* TODO: should also free the allocated memory regions */
-			return 1;
-		}
-
-		Machine->memory_region[j] = ROM;
-		Machine->memory_region_length[j] = Machine->memory_region_length[0];
-
-		encrypted_cpu = 0;
-		(*gamedrv->opcode_decode)();
-	}
-
-   #ifdef MESS
+	#ifdef MESS
 	load_next:
 	/* The ROM loading routine should allocate the ROM and RAM space and */
 	/* assign them to the appropriate Machine->memory_region blocks. */
         if (gamedrv->rom_load && (*gamedrv->rom_load)() != 0)
 	{
-		free(Machine->input_ports);
 		printf("Image load failed.\n");
-		return 1;
+		goto out_free;
 	}
 	#endif
 
-	/* read audio samples if available */
-	Machine->samples = readsamples(gamedrv->samplenames,gamedrv->name);
-
+	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
+	spriteram_size=spriteram_2_size=0;
 
 	/* first of all initialize the memory handlers, which could be used by the */
 	/* other initialization routines */
@@ -354,17 +346,20 @@ int init_machine(void)
 	/* load input ports settings (keys, dip switches, and so on) */
 	settingsloaded = load_input_port_settings();
 
-	/* ASG 971007 move from mame.c */
-	if( !initmemoryhandlers() )
-	{
-		free(Machine->input_ports);
-		Machine->input_ports = 0;
-		return 1;
-	}
+	if( !memory_init() )
+		goto out_free;
 
 	if (gamedrv->driver_init) (*gamedrv->driver_init)();
 
 	return 0;
+
+out_free:
+	input_port_free(Machine->input_ports);
+	Machine->input_ports = 0;
+	input_port_free(Machine->input_ports_default);
+	Machine->input_ports_default = 0;
+out:
+	return 1;
 }
 
 
@@ -373,12 +368,9 @@ void shutdown_machine(void)
 {
 	int i;
 
-	/* free audio samples */
-	freesamples(Machine->samples);
-	Machine->samples = 0;
 
 	/* ASG 971007 free memory element map */
-	shutdownmemoryhandler();
+	memory_shutdown();
 
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
@@ -386,11 +378,14 @@ void shutdown_machine(void)
 		free(Machine->memory_region[i]);
 		Machine->memory_region[i] = 0;
 		Machine->memory_region_length[i] = 0;
+		Machine->memory_region_type[i] = 0;
 	}
 
 	/* free the memory allocated for input ports definition */
-	free(Machine->input_ports);
+	input_port_free(Machine->input_ports);
 	Machine->input_ports = 0;
+	input_port_free(Machine->input_ports_default);
+	Machine->input_ports_default = 0;
 }
 
 
@@ -409,6 +404,13 @@ static void vh_close(void)
 	Machine->uifont = 0;
 	osd_close_display();
 	palette_stop();
+
+	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
+		if (buffered_spriteram) free(buffered_spriteram);
+		if (buffered_spriteram_2) free(buffered_spriteram_2);
+		buffered_spriteram=NULL;
+		buffered_spriteram_2=NULL;
+	}
 }
 
 
@@ -446,7 +448,7 @@ static int vh_open(void)
 			start &= ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement-1);
 			len = drv->gfxdecodeinfo[i].gfxlayout->total *
 					drv->gfxdecodeinfo[i].gfxlayout->charincrement;
-			avail = Machine->memory_region_length[drv->gfxdecodeinfo[i].memory_region]
+			avail = memory_region_length(drv->gfxdecodeinfo[i].memory_region)
 					- (drv->gfxdecodeinfo[i].start & ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement/8-1));
 			if ((start + len) / 8 > avail)
 			{
@@ -456,15 +458,15 @@ static int vh_open(void)
 				return 1;
 			}
 
-			if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
+			if ((Machine->gfx[i] = decodegfx(memory_region(drv->gfxdecodeinfo[i].memory_region)
 					+ drv->gfxdecodeinfo[i].start,
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
 			{
 				vh_close();
 				return 1;
 			}
-			if (Machine->colortable)
-				Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
+			if (Machine->remapped_colortable)
+				Machine->gfx[i]->colortable = &Machine->remapped_colortable[drv->gfxdecodeinfo[i].color_codes_start];
 			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
 	}
@@ -473,10 +475,25 @@ static int vh_open(void)
 	/* create the display bitmap, and allocate the palette */
 	if ((Machine->scrbitmap = osd_create_display(
 			drv->screen_width,drv->screen_height,
+			Machine->color_depth,
 			drv->video_attributes)) == 0)
 	{
 		vh_close();
 		return 1;
+	}
+
+	/* create spriteram buffers if necessary */
+	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
+		if (spriteram_size!=0) {
+			buffered_spriteram= malloc(spriteram_size);
+			if (!buffered_spriteram) { vh_close(); return 1; }
+			if (spriteram_2_size!=0) buffered_spriteram_2 = malloc(spriteram_2_size);
+			if (spriteram_2_size && !buffered_spriteram_2) { vh_close(); return 1; }
+		} else {
+			if (errorlog) fprintf(errorlog,"vh_open():  Video buffers spriteram but spriteram_size is 0\n");
+			buffered_spriteram=NULL;
+			buffered_spriteram_2=NULL;
+		}
 	}
 
 	/* build our private user interface font */
@@ -491,7 +508,11 @@ static int vh_open(void)
 	}
 
 	/* initialize the palette - must be done after osd_create_display() */
-	palette_init();
+	if (palette_init())
+	{
+		vh_close();
+		return 1;
+	}
 
 	return 0;
 }
@@ -525,7 +546,7 @@ int updatescreen(void)
 		profiler_mark(PROFILER_END);
 	}
 
-	/* the user interface must be called between vh_update() and update_display(), */
+	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
 	/* to allow it to overlay things on the game display. We must call it even */
 	/* if the frame is skipped, to keep a consistent timing. */
 	if (handle_user_interface())
@@ -533,6 +554,8 @@ int updatescreen(void)
 		return 1;
 
 	osd_update_video_and_audio();
+
+	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
 
 	return 0;
 }
@@ -558,35 +581,23 @@ int run_machine(void)
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
-				const struct RomModule *romp = gamedrv->rom;
 				int	region;
 
-				if (romp)
+				/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
+				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
 				{
-					/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
-					for (region = 0; romp->name || romp->offset || romp->length; region++)
+					if (Machine->memory_region_type[region] & REGIONFLAG_DISPOSE)
 					{
-						if (romp->offset & ROMFLAG_DISPOSE)
-						{
-							free (Machine->memory_region[region]);
-							Machine->memory_region[region] = 0;
-						}
-						do { romp++; } while (romp->length);
+						free (Machine->memory_region[region]);
+						Machine->memory_region[region] = 0;
 					}
 				}
 
 				if (settingsloaded == 0)
 				{
 					/* if there is no saved config, it must be first time we run this game, */
-					/* so show the disclaimer and driver credits. */
-					if (!options.gui_host)
-					{
-						/* LBO - If the host port has a gui, skip this message under the assumption */
-						/* that the host will take care of printing the message once. The best */
-						/* opportunity for a gui to do this is IMHO before the front-end has */
-						/* been displayed. */
-						if (showcopyright()) goto userquit;
-					}
+					/* so show the disclaimer. */
+					if (showcopyright()) goto userquit;
 				}
 
 				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
@@ -603,9 +614,32 @@ int run_machine(void)
 
 					init_user_interface();
 
+					/* disable cheat if no roms */
+					if (!gamedrv->rom) options.cheat = 0;
+
 					if (options.cheat) InitCheat();
 
+					if (drv->nvram_handler)
+					{
+						void *f;
+
+						f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,0);
+						(*drv->nvram_handler)(f,0);
+						if (f) osd_fclose(f);
+					}
+
 					cpu_run();      /* run the emulation! */
+
+					if (drv->nvram_handler)
+					{
+						void *f;
+
+						if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,1)) != 0)
+						{
+							(*drv->nvram_handler)(f,1);
+							osd_fclose(f);
+						}
+					}
 
 					if (options.cheat) StopCheat();
 

@@ -49,6 +49,22 @@ void pontoon_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 void pontoon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -65,7 +81,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_RAM },
+	{ 0x6000, 0x67ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
 	{ 0xa001, 0xa002, MWA_NOP },  /* Probably lights and stuff */
@@ -86,7 +102,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pontoon )
 	PORT_START      /* IN0 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN3 )
@@ -212,7 +228,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4608000,	/* 18.432000 / 4 (???) */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -240,7 +255,9 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -249,8 +266,9 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( pontoon_rom )
-	ROM_REGION(0x10000)         /* 64k for code */
+
+ROM_START( pontoon )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )         /* 64k for code */
 	ROM_LOAD( "ponttekh.001",   0x0000, 0x4000, 0x1f8c1b38 )
 	ROM_LOAD( "ponttekh.002",   0x4000, 0x2000, 0xbefb4f48 )
 
@@ -260,51 +278,15 @@ ROM_START( pontoon_rom )
 	ROM_LOAD( "ponttekh.005",   0x4000, 0x2000, 0x2b8e8ca7 )
 	ROM_LOAD( "ponttekh.006",   0x6000, 0x2000, 0x6bc23965 )
 
-	ROM_REGION(0x0300)           /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pon24s10.003",   0x0000, 0x0100, 0x4623b7f3 )  /* red component */
 	ROM_LOAD( "pon24s10.002",   0x0100, 0x0100, 0x117e1b67 )  /* green component */
 	ROM_LOAD( "pon24s10.001",   0x0200, 0x0100, 0xc64ecee8 )  /* blue component */
 ROM_END
 
 
-/* Load/Save the battery backed up RAM */
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x6000],0x0800);
-		osd_fclose(f);
-	}
-	else
-	{
-		memset(&RAM[0x6000],0xff,0x0800);
-	}
-
-	return 1;
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6000],0x0800);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver pontoon_driver =
+struct GameDriver driver_pontoon =
 {
 	__FILE__,
 	0,
@@ -317,16 +299,15 @@ struct GameDriver pontoon_driver =
 	&machine_driver,
 	0,
 
-	pontoon_rom,
+	rom_pontoon,
 	0,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pontoon,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

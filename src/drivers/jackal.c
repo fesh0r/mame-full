@@ -4,6 +4,15 @@
 
   Written by Kenneth Lin (kenneth_lin@ai.vancouver.bc.ca)
 
+Notes:
+- The high score table colors are wrong, are there proms missing?
+- The sprite drawing code could use a rewrite
+- Sprite lag
+- After game over, the first main logo screen is one line out of sync after
+  the scrolling is completed.
+- One of the bootleg Top Gunner gfx ROMs seems to be bad.
+
+
 1st CPU memory map
 NB. "x", "y" refers to non rotated screen.
 ie.
@@ -119,6 +128,7 @@ void jackal_commonram1_w(int offset,int data);
 void jackal_voram_w(int offset,int data);
 void jackal_spriteram_w(int offset,int data);
 
+void jackal_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -204,7 +214,7 @@ static struct MemoryWriteAddress jackal_sound_writemem[] =
 
 
 
-INPUT_PORTS_START( jackal_input_ports )
+INPUT_PORTS_START( jackal )
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -391,21 +401,21 @@ static struct GfxLayout topgunbl_spritelayout8 =
 
 static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   256, 1 },	/* colors 256-511 */
-	{ 1, 0x10000, &spritelayout,   0, 1 },	/* colors  16- 31 */
-	{ 1, 0x30000, &spritelayout,  16, 1 },	/* colors   0- 15 */
-	{ 1, 0x10000, &spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
-	{ 1, 0x30000, &spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
+	{ 1, 0x00000, &charlayout,          256,  1 },	/* colors 256-511 */
+	{ 1, 0x10000, &spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
+	{ 1, 0x30000, &spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
+	{ 1, 0x10000, &spritelayout8,       512, 16 },  /* to handle 8x8 sprites */
+	{ 1, 0x30000, &spritelayout8, 512+16*16, 16 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo topgunbl_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &topgunbl_charlayout,   256, 1 },	/* colors 256-511 */
-	{ 1, 0x40000, &topgunbl_spritelayout,   0, 1 },	/* colors  16- 31 */
-	{ 1, 0x60000, &topgunbl_spritelayout,  16, 1 },	/* colors   0- 15 */
-	{ 1, 0x40000, &topgunbl_spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
-	{ 1, 0x60000, &topgunbl_spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
+	{ 1, 0x00000, &topgunbl_charlayout,          256,  1 },	/* colors 256-511 */
+	{ 1, 0x40000, &topgunbl_spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
+	{ 1, 0x60000, &topgunbl_spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
+	{ 1, 0x40000, &topgunbl_spritelayout8,       512, 16 },	/* to handle 8x8 sprites */
+	{ 1, 0x60000, &topgunbl_spritelayout8, 512+16*16, 16 },	/* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -427,14 +437,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			0,
 			jackal_readmem,jackal_writemem,0,0,
 			jackal_interrupt,1
 		},
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			2,		/* memory region #2 */
 			jackal_sound_readmem,jackal_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -446,8 +454,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	jackal_gfxdecodeinfo,
-	512, 512,
-	0,
+	512, 512+16*16+16*16,
+	jackal_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -466,21 +474,19 @@ static struct MachineDriver machine_driver =
 };
 
 /* identical but different gfxdecode */
-static struct MachineDriver topgunbl_machine_driver =
+static struct MachineDriver machine_driver_topgunbl =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			0,
 			jackal_readmem,jackal_writemem,0,0,
 			jackal_interrupt,1
 		},
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			2,		/* memory region #2 */
 			jackal_sound_readmem,jackal_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -493,7 +499,7 @@ static struct MachineDriver topgunbl_machine_driver =
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	topgunbl_gfxdecodeinfo,
 	512, 512,
-	0,
+	jackal_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -513,61 +519,6 @@ static struct MachineDriver topgunbl_machine_driver =
 
 
 
-static int hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x12F8],"\x00\x02\x00\x00\x1D\x0D\x1F\x00\x00\x01\x50\x00\x18\x0D\x1F\x00",16) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			// High score table.
-			osd_fread(f,&RAM[0x12F8],0x38);
-
-			// High score.
-			osd_fread(f,&RAM[0x1340],4);
-
-			// High score screen.
-			osd_fread(f,&RAM[0x00C8],0x38);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		// High score table.
-		osd_fwrite(f,&RAM[0x12F8],0x38);
-
-		// High score.
-		osd_fwrite(f,&RAM[0x1340],4);
-
-		// High score screen.
-		osd_fwrite(f,&RAM[0x00C8],0x38);
-
-		osd_fclose(f);
-	}
-}
-
-
 
 /***************************************************************************
 
@@ -575,30 +526,28 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( jackal_rom )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+ROM_START( jackal )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, 0x5c7aaaa1 )
-	ROM_LOAD( "j-t06.rom",    0x20000, 0x20000, 0x5c8f9325 )
-	ROM_LOAD( "j-t05.rom",    0x40000, 0x20000, 0x0b8350e7 )
-	ROM_LOAD( "j-t07.rom",    0x60000, 0x20000, 0xcf077092 )
+	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
+	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
+	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
+	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
-ROM_START( topgunr_rom )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+ROM_START( topgunr )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xf7e28426 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
@@ -609,18 +558,36 @@ ROM_START( topgunr_rom )
 	ROM_LOAD( "tgnr8h.bin",   0x40000, 0x20000, 0x6943b1a4 )
 	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
-ROM_START( topgunbl_rom )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+ROM_START( jackalj )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
+	ROM_LOAD( "631t02.bin",   0x04000, 0x8000, 0x14db6b1a )
+	ROM_CONTINUE(             0x14000, 0x8000 )
+	ROM_LOAD( "631t03.bin",   0x0c000, 0x4000, 0xfd5f9624 )
+
+	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
+	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
+	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
+	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
+ROM_END
+
+ROM_START( topgunbl )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "t-3.c5",       0x04000, 0x8000, 0x7826ad38 )
 	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )
 	ROM_LOAD( "t-2.c6",       0x0c000, 0x4000, 0xd53172e5 )
@@ -643,24 +610,22 @@ ROM_START( topgunbl_rom )
 	ROM_LOAD( "t-11.n6",      0x70000, 0x08000, 0x7895c22d )
 	ROM_LOAD( "t-12.n7",      0x78000, 0x08000, 0x15606dfc )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
+	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
+	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
 ROM_END
 
 
 
-struct GameDriver jackal_driver =
+struct GameDriver driver_jackal =
 {
 	__FILE__,
 	0,
 	"jackal",
-	"Jackal",
+	"Jackal (World)",
 	"1986",
 	"Konami",
 	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
@@ -668,25 +633,24 @@ struct GameDriver jackal_driver =
 	&machine_driver,
 	0,
 
-	jackal_rom,
+	rom_jackal,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver topgunr_driver =
+struct GameDriver driver_topgunr =
 {
 	__FILE__,
-	&jackal_driver,
+	&driver_jackal,
 	"topgunr",
-	"Top Gunner",
+	"Top Gunner (US)",
 	"1986",
 	"Konami",
 	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
@@ -694,41 +658,64 @@ struct GameDriver topgunr_driver =
 	&machine_driver,
 	0,
 
-	topgunr_rom,
+	rom_topgunr,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver topgunbl_driver =
+struct GameDriver driver_jackalj =
 {
 	__FILE__,
-	&jackal_driver,
+	&driver_jackal,
+	"jackalj",
+	"Tokushu Butai Jackal (Japan)",
+	"1986",
+	"Konami",
+	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
+	0,
+	&machine_driver,
+	0,
+
+	rom_jackalj,
+	0, 0,
+	0,
+	0,
+
+	input_ports_jackal,
+
+	0, 0, 0,
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
+};
+
+struct GameDriver driver_topgunbl =
+{
+	__FILE__,
+	&driver_jackal,
 	"topgunbl",
 	"Top Gunner (bootleg)",
 	"1987",
 	"bootleg",
 	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
 	0,
-	&topgunbl_machine_driver,
+	&machine_driver_topgunbl,
 	0,
 
-	topgunbl_rom,
+	rom_topgunbl,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };

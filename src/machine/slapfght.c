@@ -33,7 +33,7 @@ void slapfight_init_machine(void)
 	getstar_sh_intenabled = 0;	/* disable sound cpu interrupts */
 
 	/* SOUND CPU */
-	cpu_halt(1,0);
+	cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 /* Interrupt handlers cpu & sound */
@@ -75,17 +75,14 @@ int slapfight_dpram_r(int offset)
 /* Reset and hold sound CPU */
 void slapfight_port_00_w(int offset, int data)
 {
-//	cpu_reset(1);
-	cpu_halt(1,0);
+	cpu_set_reset_line(1,ASSERT_LINE);
 	getstar_sh_intenabled = 0;
 }
 
 /* Release reset on sound CPU */
 void slapfight_port_01_w(int offset, int data)
 {
-	cpu_halt(1,1);
-	cpu_reset(1);
-	cpu_yield();
+	cpu_set_reset_line(1,CLEAR_LINE);
 }
 
 /* Disable and clear hardware interrupt */
@@ -102,14 +99,14 @@ void slapfight_port_07_w(int offset, int data)
 
 void slapfight_port_08_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&RAM[0x10000]);
 }
 
 void slapfight_port_09_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&RAM[0x14000]);
 }

@@ -16,21 +16,19 @@ unsigned char jedi_com_stat;
 
 void jedi_rom_banksel( int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     if (data & 0x01) cpu_setbank (1, &RAM[0x10000]);
     if (data & 0x02) cpu_setbank (1, &RAM[0x14000]);
     if (data & 0x04) cpu_setbank (1, &RAM[0x18000]);
 }
 
-void jedi_sound_reset( int offset, int data) {
+void jedi_sound_reset( int offset, int data)
+{
     if (data & 1)
-        cpu_halt (1, 1);
+		cpu_set_reset_line(1,CLEAR_LINE);
     else
-        {
-            cpu_halt (1, 0);
-            cpu_reset (1);
-        }
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 int jedi_control_r (int offset) {

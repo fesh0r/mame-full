@@ -33,7 +33,7 @@ int turtship_read_ports(int offset);
 static void sidearms_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* bits 0 and 1 select the ROM bank */
@@ -180,7 +180,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sidearms )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -267,7 +267,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )     /* not sure, but likely */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( turtship_input_ports )
+INPUT_PORTS_START( turtship )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -348,7 +348,7 @@ INPUT_PORTS_START( turtship_input_ports )
 	/* 0xc0 1 Coin/1 Credit */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dyger_input_ports )
+INPUT_PORTS_START( dyger )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -539,21 +539,19 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver sidearms_machine_driver =
+static struct MachineDriver machine_driver_sidearms =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,        /* 4 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
 		},
@@ -561,7 +559,6 @@ static struct MachineDriver sidearms_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			4,      /* memory region #4 */
 			readmem2,writemem2,0,0,
 			nmi_interrupt,1
 		}
@@ -593,21 +590,19 @@ static struct MachineDriver sidearms_machine_driver =
 	}
 };
 
-static struct MachineDriver turtship_machine_driver =
+static struct MachineDriver machine_driver_turtship =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			turtship_readmem,turtship_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,        /* 4 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
 		},
@@ -639,8 +634,8 @@ static struct MachineDriver turtship_machine_driver =
 };
 
 
-ROM_START( sidearms_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+ROM_START( sidearms )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "sa03.bin",     0x00000, 0x08000, 0xe10fe6a0 )        /* CODE */
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
@@ -664,7 +659,7 @@ ROM_START( sidearms_rom )
 	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
 	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -676,8 +671,8 @@ ROM_START( sidearms_rom )
 #endif
 ROM_END
 
-ROM_START( sidearmr_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+ROM_START( sidearmr )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "03",           0x00000, 0x08000, 0x9a799c45 )        /* CODE */
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
@@ -701,7 +696,7 @@ ROM_START( sidearmr_rom )
 	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
 	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -713,8 +708,8 @@ ROM_START( sidearmr_rom )
 #endif
 ROM_END
 
-ROM_START( sidearjp_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+ROM_START( sidearjp )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "a_15e.rom",    0x00000, 0x08000, 0x61ceb0cc )        /* CODE */
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
@@ -738,7 +733,7 @@ ROM_START( sidearjp_rom )
 	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
 	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -750,8 +745,8 @@ ROM_START( sidearjp_rom )
 #endif
 ROM_END
 
-ROM_START( turtship_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+ROM_START( turtship )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "turtship.003",    0x00000, 0x08000, 0xe7a7fc2e )
 	ROM_LOAD( "turtship.002",    0x10000, 0x08000, 0xe576f482 )
 	ROM_LOAD( "turtship.001",    0x18000, 0x08000, 0xa9b64240 )
@@ -769,15 +764,15 @@ ROM_START( turtship_rom )
 	ROM_LOAD( "turtship.012",    0x88000, 0x10000, 0xfb54cd33 )
 	ROM_LOAD( "turtship.014",    0x98000, 0x10000, 0xb3ea74a3 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "turtship.004",    0x0000, 0x8000, 0x1cbe48e8 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
 	ROM_LOAD( "turtship.016",    0x0000, 0x8000, 0xaffd51dd )
 ROM_END
 
-ROM_START( dyger_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+ROM_START( dyger )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "dyger.003",    0x00000, 0x08000, 0xbae9882e )
 	ROM_LOAD( "dyger.002",    0x10000, 0x08000, 0x059ac4dc )
 	ROM_LOAD( "dyger.001",    0x18000, 0x08000, 0xd8440f66 )
@@ -796,7 +791,7 @@ ROM_START( dyger_rom )
 	ROM_LOAD( "dyger.012",    0x88000, 0x10000, 0xe345705f )
 	ROM_LOAD( "dyger.013",    0x98000, 0x10000, 0xfaf4be3a )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "dyger.004",    0x0000, 0x8000, 0x8a256c09 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -804,48 +799,8 @@ ROM_START( dyger_rom )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe680],"\x00\x00\x00\x01\x00\x00\x00\x00",8) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe680],16*5);
-
-			memcpy(&RAM[0xe600], &RAM[0xe680], 8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe680],16*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver sidearms_driver =
+struct GameDriver driver_sidearms =
 {
 	__FILE__,
 	0,
@@ -855,72 +810,72 @@ struct GameDriver sidearms_driver =
 	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&sidearms_machine_driver,
+	&machine_driver_sidearms,
 	0,
 
-	sidearms_rom,
+	rom_sidearms,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_sidearms,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver sidearmr_driver =
+struct GameDriver driver_sidearmr =
 {
 	__FILE__,
-	&sidearms_driver,
+	&driver_sidearms,
 	"sidearmr",
 	"Side Arms - Hyper Dyne (US)",
 	"1988",
 	"Capcom (Romstar license)",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&sidearms_machine_driver,
+	&machine_driver_sidearms,
 	0,
 
-	sidearmr_rom,
+	rom_sidearmr,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_sidearms,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver sidearjp_driver =
+struct GameDriver driver_sidearjp =
 {
 	__FILE__,
-	&sidearms_driver,
+	&driver_sidearms,
 	"sidearjp",
 	"Side Arms - Hyper Dyne (Japan)",
 	"1986",
 	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&sidearms_machine_driver,
+	&machine_driver_sidearms,
 	0,
 
-	sidearjp_rom,
+	rom_sidearjp,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_sidearms,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver turtship_driver =
+struct GameDriver driver_turtship =
 {
 	__FILE__,
 	0,
@@ -930,22 +885,22 @@ struct GameDriver turtship_driver =
 	"Philko",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
 	0,
-	&turtship_machine_driver,
+	&machine_driver_turtship,
 	0,
 
-	turtship_rom,
+	rom_turtship,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	turtship_input_ports,
+	input_ports_turtship,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver dyger_driver =
+struct GameDriver driver_dyger =
 {
 	__FILE__,
 	0,
@@ -955,17 +910,17 @@ struct GameDriver dyger_driver =
 	"Philko",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
 	0,
-	&turtship_machine_driver,
+	&machine_driver_turtship,
 	0,
 
-	dyger_rom,
+	rom_dyger,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	dyger_input_ports,
+	input_ports_dyger,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };

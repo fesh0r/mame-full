@@ -357,7 +357,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source
 	const struct GfxElement *gfx = Machine->gfx[circuit+2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int limit = ( circuit) ? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
 	const unsigned char *finish;
 
@@ -521,7 +521,8 @@ void cmbatscb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_set_scrolly( foreground1,0, combatsc_io_ram[0x020] );
 
 		tilemap_update( ALL_TILEMAPS );
-		palette_recalc();
+		if (palette_recalc())
+			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 		tilemap_render( ALL_TILEMAPS );
 
 		if( (combatsc_vflags & 0x20) == 0 )
@@ -586,7 +587,8 @@ void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_set_scrolly( foreground1,0, combatsc_workram1[0x02] );
 
 		tilemap_update( ALL_TILEMAPS );
-		palette_recalc();
+		if (palette_recalc())
+			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 		tilemap_render( ALL_TILEMAPS );
 
 		if( (combatsc_vflags & 0x20) == 0 )

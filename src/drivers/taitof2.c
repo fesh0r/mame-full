@@ -157,7 +157,7 @@ static unsigned char *taitof2_ram; /* used for high score save */
 
 static void bankswitch_w (int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 	int banknum = (data - 1) & 3;
 
 	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
@@ -426,7 +426,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( liquidk_input_ports )
+INPUT_PORTS_START( liquidk )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -505,7 +505,7 @@ INPUT_PORTS_START( liquidk_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( finalb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -584,7 +584,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( growl_input_ports )
+INPUT_PORTS_START( growl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -691,7 +691,7 @@ INPUT_PORTS_START( growl_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( megab_input_ports )
+INPUT_PORTS_START( megab )
 	PORT_START /* DSW A */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Unused? */
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
@@ -896,21 +896,19 @@ static struct YM2610interface ym2610_interface =
 
 
 
-static struct MachineDriver liquidk_machine_driver =
+static struct MachineDriver machine_driver_liquidk =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ? */
-			0,
 			liquidk_readmem, liquidk_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -926,7 +924,7 @@ static struct MachineDriver liquidk_machine_driver =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	taitof2_vh_start,
 	taitof2_vh_stop,
@@ -942,21 +940,19 @@ static struct MachineDriver liquidk_machine_driver =
 	}
 };
 
-static struct MachineDriver finalb_machine_driver =
+static struct MachineDriver machine_driver_finalb =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			0,
 			liquidk_readmem, liquidk_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -988,21 +984,19 @@ static struct MachineDriver finalb_machine_driver =
 	}
 };
 
-static struct MachineDriver growl_machine_driver =
+static struct MachineDriver machine_driver_growl =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			0,
 			growl_readmem, growl_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -1034,21 +1028,19 @@ static struct MachineDriver growl_machine_driver =
 	}
 };
 
-static struct MachineDriver megab_machine_driver =
+static struct MachineDriver machine_driver_megab =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			0,
 			megab_readmem, megab_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -1088,8 +1080,8 @@ static struct MachineDriver megab_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( liquidk_rom )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+ROM_START( liquidk )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
 	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
@@ -1100,7 +1092,7 @@ ROM_START( liquidk_rom )
 	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
 	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1108,8 +1100,8 @@ ROM_START( liquidk_rom )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
-ROM_START( liquidku_rom )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+ROM_START( liquidku )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
 	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
@@ -1120,7 +1112,7 @@ ROM_START( liquidku_rom )
 	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
 	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1128,8 +1120,8 @@ ROM_START( liquidku_rom )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
-ROM_START( mizubaku_rom )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+ROM_START( mizubaku )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
 	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
@@ -1140,7 +1132,7 @@ ROM_START( mizubaku_rom )
 	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
 	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1148,36 +1140,9 @@ ROM_START( mizubaku_rom )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
-static int liquidk_hiload(void)
-{
-	void *f;
 
-	/* check if the hi score table has already been initialized */
 
-	if (memcmp(&taitof2_ram[0xb102], "\x4b\x05\x4e\x41", 4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&taitof2_ram[0xb0fe],40);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void liquidk_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&taitof2_ram[0xb0fe],40);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver liquidk_driver =
+struct GameDriver driver_liquidk =
 {
 	__FILE__,
 	0,
@@ -1187,73 +1152,73 @@ struct GameDriver liquidk_driver =
 	"Taito Corporation Japan",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&liquidk_machine_driver,
+	&machine_driver_liquidk,
 	0,
 
-	liquidk_rom,
+	rom_liquidk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	liquidk_input_ports,
+	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_180,
-	liquidk_hiload, liquidk_hisave
+	ROT180,
+	0,0
 };
 
-struct GameDriver liquidku_driver =
+struct GameDriver driver_liquidku =
 {
 	__FILE__,
-	&liquidk_driver,
+	&driver_liquidk,
 	"liquidku",
 	"Liquid Kids (US)",
 	"1990",
 	"Taito America Corporation",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&liquidk_machine_driver,
+	&machine_driver_liquidk,
 	0,
 
-	liquidku_rom,
+	rom_liquidku,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	liquidk_input_ports,
+	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_180,
-	liquidk_hiload, liquidk_hisave
+	ROT180,
+	0,0
 };
 
-struct GameDriver mizubaku_driver =
+struct GameDriver driver_mizubaku =
 {
 	__FILE__,
-	&liquidk_driver,
+	&driver_liquidk,
 	"mizubaku",
 	"Mizubaku Daibouken (Japan)",
 	"1990",
 	"Taito Corporation",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&liquidk_machine_driver,
+	&machine_driver_liquidk,
 	0,
 
-	mizubaku_rom,
+	rom_mizubaku,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	liquidk_input_ports,
+	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_180,
-	liquidk_hiload, liquidk_hisave
+	ROT180,
+	0,0
 };
 
-ROM_START( finalb_rom )
-	ROM_REGION(0x40000)     /* 256k for 68000 code */
+ROM_START( finalb )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 256k for 68000 code */
 	ROM_LOAD_EVEN( "fb_09.rom",  0x00000, 0x20000, 0x632f1ecd )
 	ROM_LOAD_ODD ( "fb_17.rom",  0x00000, 0x20000, 0xe91b2ec9 )
 //	ROM_LOAD_EVEN( "fb_m01.rom", 0x40000, 0x80000, 0xb63003c4 ) /* palette? */
@@ -1266,7 +1231,7 @@ ROM_START( finalb_rom )
 	ROM_LOAD( "fb_m04.rom", 0x180000, 0x080000, 0x6346f98e ) /* sprites */
 //	ROM_LOAD( "fb_m05.rom", 0x000000, 0x080000, 0xaa90b93a ) /* palette? */
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "fb_10.rom",   0x00000, 0x04000, 0xa38aaaed )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1277,7 +1242,7 @@ ROM_END
 
 
 
-struct GameDriver finalb_driver =
+struct GameDriver driver_finalb =
 {
 	__FILE__,
 	0,
@@ -1287,23 +1252,23 @@ struct GameDriver finalb_driver =
 	"Taito",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&finalb_machine_driver,
+	&machine_driver_finalb,
 	0,
 
-	finalb_rom,
+	rom_finalb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_finalb,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-ROM_START( growl_rom )
-	ROM_REGION(0x100000)     /* 1024k for 68000 code */
+ROM_START( growl )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
 	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
@@ -1314,7 +1279,53 @@ ROM_START( growl_rom )
 	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
 	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
+	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x100000)      /* ADPCM samples */
+	ROM_LOAD( "growl_04.rom", 0x000000, 0x100000, 0x2d97edf2 )
+
+	ROM_REGION(0x080000)      /* ADPCM samples */
+	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
+ROM_END
+
+ROM_START( growlu )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 1024k for 68000 code */
+	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
+	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
+	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
+	ROM_LOAD_ODD ( "c74-14.rom",    0x80000, 0x40000, 0xc1c57e51 )
+
+	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "growl_01.rom", 0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
+	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
+
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
+	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x100000)      /* ADPCM samples */
+	ROM_LOAD( "growl_04.rom", 0x000000, 0x100000, 0x2d97edf2 )
+
+	ROM_REGION(0x080000)      /* ADPCM samples */
+	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
+ROM_END
+
+ROM_START( runark )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 1024k for 68000 code */
+	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
+	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
+	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
+	ROM_LOAD_ODD ( "c74_09.14",     0x80000, 0x40000, 0x58cc2feb )
+
+	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "growl_01.rom", 0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
+	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
+
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1326,35 +1337,7 @@ ROM_START( growl_rom )
 ROM_END
 
 
-static int growl_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&taitof2_ram[0xe344], "\x2e\x54\x00\x53", 4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&taitof2_ram[0xe33a],266);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void growl_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&taitof2_ram[0xe33a],266);
-		osd_fclose(f);
-	}
-}
-struct GameDriver growl_driver =
+struct GameDriver driver_growl =
 {
 	__FILE__,
 	0,
@@ -1364,23 +1347,74 @@ struct GameDriver growl_driver =
 	"Taito Corporation Japan",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&growl_machine_driver,
+	&machine_driver_growl,
 	0,
 
-	growl_rom,
+	rom_growl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	growl_input_ports,
+	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	growl_hiload, growl_hisave
+	ROT0,
+	0,0
 };
 
-ROM_START( megab_rom )
-	ROM_REGION(0x100000)     /* 256k for 68000 code */
+struct GameDriver driver_growlu =
+{
+	__FILE__,
+	&driver_growl,
+	"growlu",
+	"Growl (US)",
+	"1990",
+	"Taito America Corporation",
+	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
+	0,
+	&machine_driver_growl,
+	0,
+
+	rom_growlu,
+	0, 0,
+	0,
+	0,
+
+	input_ports_growl,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ROT0,
+	0,0
+};
+
+struct GameDriver driver_runark =
+{
+	__FILE__,
+	&driver_growl,
+	"runark",
+	"Runark (Japan)",
+	"1990",
+	"Taito Corporation",
+	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
+	0,
+	&machine_driver_growl,
+	0,
+
+	rom_runark,
+	0, 0,
+	0,
+	0,
+
+	input_ports_growl,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ROT0,
+	0,0
+};
+
+
+ROM_START( megab )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 256k for 68000 code */
 	ROM_LOAD_EVEN( "c11-07",  0x00000, 0x20000, 0x11d228b6 )
 	ROM_LOAD_ODD ( "c11-08",  0x00000, 0x20000, 0xa79d4dca )
 
@@ -1391,7 +1425,7 @@ ROM_START( megab_rom )
 	ROM_LOAD( "c11-04", 0x180000, 0x080000, 0x663f33cc )
 	ROM_LOAD( "c11-05", 0x200000, 0x080000, 0x733e6d8e )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "c11-12", 0x00000, 0x04000, 0xb11094f1 )
 	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1403,7 +1437,7 @@ ROM_END
 
 
 
-struct GameDriver megab_driver =
+struct GameDriver driver_megab =
 {
 	__FILE__,
 	0,
@@ -1413,17 +1447,17 @@ struct GameDriver megab_driver =
 	"Taito",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&megab_machine_driver,
+	&machine_driver_megab,
 	0,
 
-	megab_rom,
+	rom_megab,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	megab_input_ports,
+	input_ports_megab,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

@@ -145,7 +145,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 };
 
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
-INPUT_PORTS_START( phozon_input_ports )
+INPUT_PORTS_START( phozon )
 	PORT_START  /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
@@ -264,28 +264,25 @@ static struct namco_interface namco_interface =
 	5		/* memory region */
 };
 
-static struct MachineDriver phozon_machine_driver =
+static struct MachineDriver machine_driver_phozon =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,			/* MAIN CPU */
 			1536000,			/* same as Gaplus? */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,			/* SUB CPU */
 			1536000,			/* same as Gaplus? */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* same as Gaplus? */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			interrupt,1
 		},
@@ -316,8 +313,8 @@ static struct MachineDriver phozon_machine_driver =
 	}
 };
 
-ROM_START( phozon_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the MAIN CPU  */
+ROM_START( phozon )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the MAIN CPU  */
 	ROM_LOAD( "6e.rom", 0x8000, 0x2000, 0xa6686af1 )
 	ROM_LOAD( "6h.rom", 0xa000, 0x2000, 0x72a65ba0 )
 	ROM_LOAD( "6c.rom", 0xc000, 0x2000, 0xf1fda22e )
@@ -328,13 +325,13 @@ ROM_START( phozon_rom )
 	ROM_LOAD( "8j.rom", 0x1000, 0x1000, 0x15b12ef8 ) /* characters (set 2) */
 	ROM_LOAD( "5t.rom", 0x2000, 0x2000, 0xd50f08f8 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the SUB CPU */
 	ROM_LOAD( "9r.rom", 0xe000, 0x2000, 0x5d9f0a28 )
 
-	ROM_REGION(0x10000)     /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the SOUND CPU */
 	ROM_LOAD( "3b.rom", 0xe000, 0x2000, 0x5a4b3a79 )
 
-	ROM_REGION(0x0520)      /* color proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "red.prm",     0x0000, 0x0100, 0xa2880667 ) /* red palette ROM (4 bits) */
 	ROM_LOAD( "green.prm",   0x0100, 0x0100, 0xd6e08bef ) /* green palette ROM (4 bits) */
 	ROM_LOAD( "blue.prm",    0x0200, 0x0100, 0xb2d69c72 ) /* blue palette ROM (4 bits) */
@@ -346,7 +343,7 @@ ROM_START( phozon_rom )
 	ROM_LOAD( "sound.prm", 0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-struct GameDriver phozon_driver =
+struct GameDriver driver_phozon =
 {
 	__FILE__,
 	0,
@@ -356,18 +353,18 @@ struct GameDriver phozon_driver =
 	"Namco",
 	"Manuel Abadia\nLarry Bank(color info)",
 	0,
-	&phozon_machine_driver,
+	&machine_driver_phozon,
 	0,
 
-	phozon_rom,
+	rom_phozon,
 	0, 0,
 	0,
 	0,
 
-	phozon_input_ports,
+	input_ports_phozon,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };

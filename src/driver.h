@@ -27,9 +27,6 @@ struct MachineCPU
 {
 	int cpu_type;	/* see #defines below. */
 	int cpu_clock;	/* in Hertz */
-/* number of the memory region (allocated by loadroms()) */
-/* where this CPU resides */
-	int memory_region;
 	const struct MemoryReadAddress *memory_read;
 	const struct MemoryWriteAddress *memory_write;
 	const struct IOReadPort *port_read;
@@ -48,11 +45,17 @@ struct MachineCPU
 enum
 {
 	CPU_DUMMY,
+#if (HAS_GENSYNC)
+	CPU_GENSYNC,
+#endif
 #if (HAS_Z80)
 	CPU_Z80,
 #endif
 #if (HAS_Z80_VM)
 	CPU_Z80_VM,
+#endif
+#if (HAS_Z80GB)
+	CPU_Z80GB,
 #endif
 #if (HAS_8080)
 	CPU_8080,
@@ -117,6 +120,9 @@ enum
 #if (HAS_HD63701)
 	CPU_HD63701,	/* 6808 with some additional opcodes */
 #endif
+#if (HAS_NSC8105)
+	CPU_NSC8105,	/* same(?) as CPU_M6802(?) with scrambled opcodes. There is at least one new opcode. */
+#endif
 #if (HAS_M6805)
 	CPU_M6805,
 #endif
@@ -126,11 +132,14 @@ enum
 #if (HAS_HD63705)
 	CPU_HD63705,	/* M6805 family but larger address space, different stack size */
 #endif
-#if (HAS_M6309)
-	CPU_M6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
+#if (HAS_HD6309)
+	CPU_HD6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
 #endif
 #if (HAS_M6809)
 	CPU_M6809,
+#endif
+#if (HAS_KONAMI)
+	CPU_KONAMI,
 #endif
 #if (HAS_M68000)
 	CPU_M68000,
@@ -153,6 +162,27 @@ enum
 #if (HAS_TMS9900)
 	CPU_TMS9900,
 #endif
+#if (HAS_TMS9940)
+	CPU_TMS9940,
+#endif
+#if (HAS_TMS9980)
+	CPU_TMS9980,
+#endif
+#if (HAS_TMS9985)
+	CPU_TMS9985,
+#endif
+#if (HAS_TMS9989)
+	CPU_TMS9989,
+#endif
+#if (HAS_TMS9995)
+	CPU_TMS9995,
+#endif
+#if (HAS_TMS99105A)
+	CPU_TMS99105A,
+#endif
+#if (HAS_TMS99110A)
+	CPU_TMS99110A,
+#endif
 #if (HAS_Z8000)
 	CPU_Z8000,
 #endif
@@ -165,8 +195,8 @@ enum
 #if (HAS_PDP1)
 	CPU_PDP1,
 #endif
-#if (HAS_KONAMI)
-	CPU_KONAMI,
+#if (HAS_ADSP2100)
+	CPU_ADSP2100,
 #endif
 	CPU_COUNT
 };
@@ -181,12 +211,12 @@ enum
 #define CPU_FLAGS_MASK 0xff00
 
 
-#define MAX_CPU 4	/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
-					/* can run at the same time. Currently, 4 is enough. */
+#define MAX_CPU 8	/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
+					/* can run at the same time. Currently, 8 is enough. */
 
 
-#define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
-					/* which can run at the same time. Currently, 4 is enough. */
+#define MAX_SOUND 5	/* MAX_SOUND is the maximum number of sound subsystems */
+					/* which can run at the same time. Currently, 5 is enough. */
 
 
 
@@ -194,7 +224,7 @@ struct MachineDriver
 {
 	/* basic machine hardware */
 	struct MachineCPU cpu[MAX_CPU];
-	int frames_per_second;
+	float frames_per_second;
 	int vblank_duration;	/* in microseconds - see description below */
 	int cpu_slices_per_frame;	/* for multicpu games. 1 is the minimum, meaning */
 								/* that each CPU runs for the whole video frame */
@@ -214,21 +244,35 @@ struct MachineDriver
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
 	unsigned int color_table_len;	/* length in shorts of the color lookup table */
-	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+	void (*vh_init_palette)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
-	int unused;	/* obsolete */
 
+	void (*vh_eof_callback)(void);	/* called every frame after osd_update_video_and_audio() */
+									/* This is useful when there are operations that need */
+									/* to be performed every frame regardless of frameskip, */
+									/* e.g. sprite buffering or collision detection. */
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
 	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);
 
 	/* sound hardware */
 	int sound_attributes;
-	int (*sh_start)(void);
-	void (*sh_stop)(void);
-	void (*sh_update)(void);
+	int obsolete1;
+	int obsolete2;
+	int obsolete3;
 	struct MachineSound sound[MAX_SOUND];
+
+	/*
+	   use this to manage nvram/eeprom/cmos/etc.
+	   It is called before the emulation starts and after it ends. Note that it is
+	   NOT called when the game is reset, since it is not needed.
+	   file == 0, read_or_write == 0 -> first time the game is run, initialize nvram
+	   file != 0, read_or_write == 0 -> load nvram from disk
+	   file == 0, read_or_write != 0 -> not allowed
+	   file != 0, read_or_write != 0 -> save nvram to disk
+	 */
+	void (*nvram_handler)(void *file,int read_or_write);
 };
 
 
@@ -267,16 +311,11 @@ struct MachineDriver
 /* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
 #define	VIDEO_MODIFIES_PALETTE	0x0004
 
-/* ASG 980209 - added: */
-/* bit 3 of the video attributes indicates whether or not the driver wants 16-bit color */
-#define	VIDEO_SUPPORTS_16BIT		0x0008
-
 /* ASG 980417 - added: */
-/* bit 4 of the video attributes indicates that the driver wants its refresh before the VBLANK */
-/*       instead of after. You usually don't want to use this, but it might be necessary if */
-/*       you are caching data during the video frame and want to update the screen before */
-/*       the game starts calculating the next frame. */
-#define	VIDEO_UPDATE_BEFORE_VBLANK	0x0010
+/* bit 4 of the video attributes indicates that the driver wants its refresh after */
+/*       the VBLANK instead of before. */
+#define	VIDEO_UPDATE_BEFORE_VBLANK	0x0000
+#define	VIDEO_UPDATE_AFTER_VBLANK	0x0010
 
 /* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
 /* different proportions, e.g. 1:2 for Blasteroids */
@@ -286,10 +325,18 @@ struct MachineDriver
 
 #define VIDEO_DUAL_MONITOR 0x0040
 
+/* Mish 181099:  See comments in vidhrdw/generic.c for details */
+#define VIDEO_BUFFERS_SPRITERAM 0x0080
+
 /* flags for sound_attributes */
 #define	SOUND_SUPPORTS_STEREO		0x0001
 
 
+
+struct obsolete
+{
+	int fake;
+};
 
 struct GameDriver
 {
@@ -300,74 +347,117 @@ struct GameDriver
 	const char *description;
 	const char *year;
 	const char *manufacturer;
-	const char *obsolete;
-	int flags;	/* see defines below */
+	const char *obsolete1;
+	struct obsolete *obsolete2;
 	const struct MachineDriver *drv;
 	void (*driver_init)(void);	/* optional function to be called during initialization */
 								/* This is called ONCE, unlike Machine->init_machine */
 								/* which is called every time the game is reset. */
 
 	const struct RomModule *rom;
-   #ifdef MESS
-   int (*rom_load)(void); /* used to load the ROM and set up memory regions */
+#ifdef MESS
+	int (*rom_load)(void); /* used to load the ROM and set up memory regions */
 	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
+	const char **file_extension;    /* default file extensions for the system. */
 	int num_of_rom_slots;
 	int num_of_floppy_drives;
 	int num_of_hard_drives;
 	int num_of_cassette_drives;
- 	#endif
+#endif
 
-	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
-	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
-									/* if the encryption is different from the above. */
-	const char **samplenames;		/* optional array of names of samples to load. */
-									/* drivers can retrieve them in Machine->samples */
-	const unsigned char *sound_prom;
+	struct obsolete *obsolete3;
+	struct obsolete *obsolete4;
 
-	struct InputPort *input_ports;
+	struct obsolete *obsolete5;
+	struct obsolete *obsolete6;
 
-	/* if they are available, provide a dump of the color proms, or even */
-	/* better load them from disk like the other ROMs. */
-	/* If you load them from disk, you must place them in a memory region by */
-	/* itself, and use the PROM_MEMORY_REGION macro below to say in which */
-	/* region they are. */
-	const unsigned char *color_prom;
-	const unsigned char *palette;
-	const unsigned short *colortable;
-	int orientation;	/* orientation of the monitor; see defines below */
+	struct InputPortTiny *input_ports;
 
-	int (*hiscore_load)(void);	/* will be called every vblank until it */
-						/* returns nonzero */
-	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
-						/* returned nonzero, to avoid saving an invalid table */
+	struct obsolete *obsolete7;
+	struct obsolete *obsolete8;
+	struct obsolete *obsolete9;
+	UINT32 flags;	/* orientation and other flags; see defines below */
+
+	struct obsolete *obsolete10;
+	struct obsolete *obsolete11;
 };
 
 
 /* values for the flags field */
-#define GAME_NOT_WORKING		0x0001
-#define GAME_WRONG_COLORS		0x0002	/* colors are totally wrong */
-#define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
-#define GAME_NO_SOUND			0x0008	/* sound is missing */
-#define GAME_IMPERFECT_SOUND	0x0010	/* sound is known to be wrong */
 
+#define ORIENTATION_MASK        0x0007
+#define	ORIENTATION_FLIP_X		0x0001	/* mirror everything in the X direction */
+#define	ORIENTATION_FLIP_Y		0x0002	/* mirror everything in the Y direction */
+#define ORIENTATION_SWAP_XY		0x0004	/* mirror along the top-left/bottom-right diagonal */
+
+#define GAME_NOT_WORKING		0x0008
+#define GAME_WRONG_COLORS		0x0010	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS	0x0020	/* colors are not 100% accurate, but close */
+#define GAME_NO_SOUND			0x0040	/* sound is missing */
+#define GAME_IMPERFECT_SOUND	0x0080	/* sound is known to be wrong */
+#define	GAME_REQUIRES_16BIT		0x0100	/* cannot fit in 256 colors */
+#define NOT_A_DRIVER			0x4000	/* set by the fake "root" driver_ and by "containers" */
+										/* e.g. driver_neogeo. */
 #ifdef MESS
  #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
 #endif
 
-#define PROM_MEMORY_REGION(region) ((const unsigned char *)((-(region))-1))
+
+#define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	MONITOR,								\
+0,0\
+};
+
+#define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	(MONITOR)|(FLAGS),						\
+0,0\
+};
 
 
-#define	ORIENTATION_DEFAULT		0x00
-#define	ORIENTATION_FLIP_X		0x01	/* mirror everything in the X direction */
-#define	ORIENTATION_FLIP_Y		0x02	/* mirror everything in the Y direction */
-#define ORIENTATION_SWAP_XY		0x04	/* mirror along the top-left/bottom-right diagonal */
-#define	ORIENTATION_ROTATE_90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
-#define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)	/* rotate 180 degrees */
-#define	ORIENTATION_ROTATE_270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
-/* IMPORTANT: to perform more than one transformation, DO NOT USE |, use ^ instead. */
-/* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
-/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X*/
-/* Always remember that FLIP is performed *after* SWAP_XY. */
+/* monitor parameters to be used with the GAME() macro */
+#define	ROT0	0x0000
+#define	ROT90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
+#define	ROT180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
+#define	ROT270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
+#define	ROT0_16BIT		(ROT0|GAME_REQUIRES_16BIT)
+#define	ROT90_16BIT		(ROT90|GAME_REQUIRES_16BIT)
+#define	ROT180_16BIT	(ROT180|GAME_REQUIRES_16BIT)
+#define	ROT270_16BIT	(ROT270|GAME_REQUIRES_16BIT)
+
+/* this allows to leave the INIT field empty in the GAME() macro call */
+#define init_ 0
 
 
 extern const struct GameDriver *drivers[];

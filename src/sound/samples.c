@@ -95,11 +95,15 @@ int sample_playing(int channel)
 }
 
 
+
 int samples_sh_start(const struct MachineSound *msound)
 {
 	int i;
 	int vol[MIXER_MAX_CHANNELS];
 	const struct Samplesinterface *intf = msound->sound_interface;
+
+	/* read audio samples if available */
+	Machine->samples = readsamples(intf->samplenames,Machine->gamedrv->name);
 
 	numchannels = intf->channels;
 	for (i = 0;i < numchannels;i++)

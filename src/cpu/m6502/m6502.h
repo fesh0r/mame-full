@@ -26,7 +26,18 @@
 #include "osd_cpu.h"
 
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
-#define FAST_MEMORY 1
+#define FAST_MEMORY 0
+
+#define SUBTYPE_6502	0
+#if HAS_M65C02
+#define SUBTYPE_65C02	1
+#endif
+#if HAS_M6510
+#define SUBTYPE_6510	2
+#endif
+#if HAS_N2A03
+#define SUBTYPE_2A03	3
+#endif
 
 enum {
 	M6502_PC=1, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y,
@@ -195,6 +206,15 @@ extern void n2a03_state_save(void *file);
 extern void n2a03_state_load(void *file);
 extern const char *n2a03_info(void *context, int regnum);
 extern unsigned n2a03_dasm(char *buffer, unsigned pc);
+
+
+#define N2A03_DEFAULTCLOCK (21477272.724 / 12)
+
+/* The N2A03 is integrally tied to its PSG (they're on the same die).
+   Bit 7 of address $4011 (the PSG's DPCM control register), when set,
+   causes an IRQ to be generated.  This function allows the IRQ to be called
+   from the PSG core when such an occasion arises. */
+extern void n2a03_irq(void);
 #endif
 
 #ifdef MAME_DEBUG

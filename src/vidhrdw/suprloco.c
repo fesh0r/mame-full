@@ -184,34 +184,19 @@ int suprloco_control_r(int offset)
 
 INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 {
-	int adjx = x, adjy = y;
-
-	int orientation = Machine->orientation;
-
-
 	if (flipscreen)
 	{
-		orientation ^= (ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y);
+		x = bitmap->width - x - 1;
+		y = bitmap->height - y - 1;
 	}
 
-	if (orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp = adjx;
-		adjx = adjy;
-		adjy = temp;
-	}
-	if (orientation & ORIENTATION_FLIP_X)
-		adjx = bitmap->width - adjx - 1;
-	if (orientation & ORIENTATION_FLIP_Y)
-		adjy = bitmap->height - adjy - 1;
-
-	if (adjx < Machine->drv->visible_area.min_x ||
-		adjx > Machine->drv->visible_area.max_x ||
-		adjy < Machine->drv->visible_area.min_y ||
-		adjy > Machine->drv->visible_area.max_y)
+	if (x < Machine->drv->visible_area.min_x ||
+		x > Machine->drv->visible_area.max_x ||
+		y < Machine->drv->visible_area.min_y ||
+		y > Machine->drv->visible_area.max_y)
 		return;
 
-	bitmap->line[adjy][adjx] = color;
+	plot_pixel(bitmap, x, y, color);
 }
 
 
@@ -229,7 +214,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	skip = spr_reg[SPR_SKIP_LO] + (spr_reg[SPR_SKIP_HI] << 8);
 
 	height		= spr_reg[SPR_Y_BOTTOM] - spr_reg[SPR_Y_TOP];
-	spr_palette	= Machine->colortable + 0x10 * spr_reg[SPR_COL];
+	spr_palette	= Machine->remapped_colortable + 0x10 * spr_reg[SPR_COL];
 	sx = spr_reg[SPR_X];
 	sy = spr_reg[SPR_Y_TOP] + 1;
 
@@ -255,7 +240,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 		col = 0;
 
 		/* memory region #2 contains the packed sprite data */
-		gfx = &(Machine->memory_region[2][src & 0x7fff]);
+		gfx = &(memory_region(2)[src & 0x7fff]);
 		flipx = src & 0x8000;   /* flip x */
 
 		while (1)

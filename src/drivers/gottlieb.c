@@ -146,21 +146,19 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gottlieb_sh_w(int offset, int data);
 
+extern unsigned char *riot_ram;
 int riot_ram_r(int offset);
 int gottlieb_riot_r(int offset);
 void riot_ram_w(int offset, int data);
 void gottlieb_riot_w(int offset, int data);
 void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
-int gottlieb_sh_start(void);
+void gottlieb_sound_init(void);
 int stooges_sound_input_r(int offset);
 void stooges_8910_latch_w(int offset,int data);
 void stooges_sound_control_w(int offset,int data);
 void gottlieb_nmi_rate_w(int offset,int data);
 void gottlieb_cause_dac_nmi_w(int offset, int data);
-
-int gottlieb_nvram_load(void);
-void gottlieb_nvram_save(void);
 
 
 
@@ -310,6 +308,23 @@ int gottlieb_interrupt(void)
 }
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
+
 
 static struct MemoryReadAddress reactor_readmem[] =
 {
@@ -360,7 +375,7 @@ static struct MemoryReadAddress gottlieb_readmem[] =
 
 static struct MemoryWriteAddress gottlieb_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -380,7 +395,7 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 /* same as above, different video_outputs plus laser disc control outputs */
 static struct MemoryWriteAddress usvsthem_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -418,7 +433,7 @@ static struct MemoryReadAddress stooges_readmem[] =
 /* same as above, different video_outputs */
 static struct MemoryWriteAddress stooges_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -450,7 +465,7 @@ struct MemoryReadAddress gottlieb_sound_readmem[] =
 
 struct MemoryWriteAddress gottlieb_sound_writemem[] =
 {
-	{ 0x0000, 0x01ff, riot_ram_w },
+	{ 0x0000, 0x01ff, riot_ram_w, &riot_ram },
 	{ 0x0200, 0x03ff, gottlieb_riot_w },
 	{ 0x1000, 0x1000, DAC_data_w },
 	{ 0x2000, 0x2000, gottlieb_speech_w },
@@ -509,7 +524,7 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 
 
 
-INPUT_PORTS_START( reactor_input_ports )
+INPUT_PORTS_START( reactor )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x01, 0x01, "Sound with Logos" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -556,7 +571,7 @@ INPUT_PORTS_START( reactor_input_ports )
 	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mplanets_input_ports )
+INPUT_PORTS_START( mplanets )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -605,7 +620,7 @@ INPUT_PORTS_START( mplanets_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( qbert_input_ports )
+INPUT_PORTS_START( qbert )
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -661,7 +676,7 @@ INPUT_PORTS_START( qbert_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( qbertqub_input_ports )
+INPUT_PORTS_START( qbertqub )
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
@@ -720,7 +735,7 @@ INPUT_PORTS_START( qbertqub_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( krull_input_ports )
+INPUT_PORTS_START( krull )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -772,7 +787,7 @@ INPUT_PORTS_START( krull_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mach3_input_ports )
+INPUT_PORTS_START( mach3 )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
 	PORT_DIPNAME( 0x09, 0x08, DEF_STR( Coinage ) )
@@ -825,7 +840,7 @@ INPUT_PORTS_START( mach3_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( usvsthem_input_ports )
+INPUT_PORTS_START( usvsthem )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
 	PORT_DIPNAME( 0x09, 0x00, DEF_STR( Coinage ) )
@@ -879,7 +894,7 @@ INPUT_PORTS_START( usvsthem_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( stooges_input_ports )
+INPUT_PORTS_START( 3stooges )
 	PORT_START	/* DSW */
 	PORT_DIPNAME (0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING (   0x01, DEF_STR( Off ) )
@@ -944,7 +959,7 @@ INPUT_PORTS_START( stooges_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( curvebal_input_ports )
+INPUT_PORTS_START( curvebal )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x08, 0x00, "2 Players Game" )
 	PORT_DIPSETTING(    0x08, "1 Credit" )
@@ -1092,414 +1107,31 @@ static struct DACinterface dac2_interface =
 	{ 25, 25 }
 };
 
-static struct Samplesinterface samples_interface =
+static const char *reactor_sample_names[] =
 {
-	1,	/* one channel */
-	100	/* volume */
+	"*reactor",
+	"fx_53.wav", /* "8 left" */
+	"fx_54.wav", /* "16 left" */
+	"fx_55.wav", /* "24 left" */
+	"fx_56.wav", /* "32 left" */
+	"fx_57.wav", /* "40 left" */
+	"fx_58.wav", /* "warning, core unstable" */
+	"fx_59.wav", /* "bonus" */
+	"fx_31.wav", /* "chamber activated" */
+	"fx_39a.wav", /* "2000" */
+	"fx_39b.wav", /* "5000" */
+	"fx_39c.wav", /* "10000" */
+	"fx_39d.wav", /* "15000" */
+	"fx_39e.wav", /* "20000" */
+	"fx_39f.wav", /* "25000" */
+	"fx_39g.wav", /* "30000" */
+	"fx_39h.wav", /* "35000" */
+	"fx_39i.wav", /* "40000" */
+	"fx_39j.wav", /* "45000" */
+	"fx_39k.wav", /* "50000" */
+	"fx_39l.wav", /* "55000" */
+     0	/* end of array */
 };
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	2000000,	/* 2 MHz */
-	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-/********************************************************************
-*
-*  Machine Driver macro
-*  ====================
-*
-*  There are two versions of the machine driver,
-*  one for revision 1 sound board (1x6502 + DAC + Votrax),
-*  one for revision 2 (2x6502 + DAC + GI SP-0250 speech chip + 2x8910).
-*  They are identical apart form the sound CPU subsections.
-*
-********************************************************************/
-
-#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX)	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
-{                                                                   \
-	/* basic machine hardware */                                	\
-	{		                                                        \
-		{	  	                                                    \
-			CPU_I86,												\
-			5000000,        /* 5 Mhz */								\
-			0,														\
-			READMEM,WRITEMEM,0,0,									\
-			gottlieb_interrupt,1									\
-		},		                                                    \
-		{		                                                    \
-			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			3579545/4,	/* the board can be set to /2 as well */	\
-			2,	/* memory region #2 */								\
-			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,		\
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */		\
-								/* NMIs are triggered by the Votrax SC-01 */	\
-		}                                                   		\
-	},                                                          	\
-	61, 1018,	/* frames per second, vblank duration */			\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,						                                    	\
-																	\
-	/* video hardware */                                        	\
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
-	GFX,                                                        	\
-	16, 16,		                                                	\
-	0,									                           	\
-																	\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
-	0,                                                          	\
-	gottlieb_vh_start,												\
-	gottlieb_vh_stop,												\
-	gottlieb_vh_screenrefresh,										\
-																	\
-	/* sound hardware */                                        	\
-	0,0,0,0,                                                    	\
-	{                                                           	\
-		{                                                   		\
-			SOUND_DAC,												\
-			&dac1_interface											\
-		},															\
-		{															\
-			SOUND_SAMPLES,	/* only for Q*Bert */					\
-			&samples_interface										\
-		}                                                   		\
-	}                                                           	\
-}
-
-#define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX)	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
-{                                                                   \
-	/* basic machine hardware */                                	\
-	{		                                                        \
-		{	  	                                                    \
-			CPU_I86,												\
-			5000000,        /* 5 Mhz */								\
-			0,														\
-			READMEM,WRITEMEM,0,0,									\
-			gottlieb_interrupt,1									\
-		},		                                                    \
-		{		                                                    \
-			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			1000000,	/* 1 MHz */									\
-			2,	/* memory region #2 */								\
-			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
-								/* NMIs are triggered by the second sound CPU */	\
-		},                                                   		\
-		{		                                                    \
-			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			1000000,	/* 1 MHz */									\
-			3,	/* memory region #3 */								\
-			stooges_sound2_readmem,stooges_sound2_writemem,0,0,		\
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
-								/* NMIs are triggered by a programmable timer */	\
-		}                                                   		\
-	},                                                          	\
-	61, 1018,	/* frames per second, vblank duration */			\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,						                                    	\
-																	\
-	/* video hardware */                                        	\
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
-	GFX,                                                        	\
-	16, 16,		                                                	\
-	0,									                           	\
-																	\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
-	0,                                                          	\
-	gottlieb_vh_start,												\
-	gottlieb_vh_stop,												\
-	gottlieb_vh_screenrefresh,										\
-																	\
-	/* sound hardware */                                        	\
-	0,gottlieb_sh_start,0,0,                                       	\
-	{                                                           	\
-		{                                                   		\
-			SOUND_DAC,												\
-			&dac2_interface											\
-		},															\
-		{															\
-			SOUND_AY8910,											\
-			&ay8910_interface										\
-		}                                                   		\
-	}                                                           	\
-}
-
-/* games using the revision 1 sound board */
-MACHINE_DRIVER_SOUND_1(reactor,reactor_readmem,reactor_writemem,charRAM_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_1(gottlieb,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_1(qbertqub,gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_1(krull,gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo);
-/* games using the revision 2 sound board */
-MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_2(usvsthem,gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecodeinfo);
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( reactor_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "rom7",         0x8000, 0x1000, 0xa62d86fd )
-	ROM_LOAD( "rom6",         0x9000, 0x1000, 0x6ed841f3 )
-	ROM_LOAD( "rom5",         0xa000, 0x1000, 0xd90576a3 )
-	ROM_LOAD( "rom4",         0xb000, 0x1000, 0x0155daae )
-	ROM_LOAD( "rom3",         0xc000, 0x1000, 0xf8881385 )
-	ROM_LOAD( "rom2",         0xd000, 0x1000, 0x3caba35b )
-	ROM_LOAD( "rom1",         0xe000, 0x1000, 0x944e1ddf )
-	ROM_LOAD( "rom0",         0xf000, 0x1000, 0x55930aed )
-
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	/* 0000-0fff empty */
-	ROM_LOAD( "fg0",          0x1000, 0x1000, 0xd1f20e15 )	/* sprites */
-	/* 2000-2fff empty */
-	ROM_LOAD( "fg1",          0x3000, 0x1000, 0x18396c57 )
-	/* 4000-4fff empty */
-	ROM_LOAD( "fg2",          0x5000, 0x1000, 0x5489605a )
-	/* 6000-6fff empty */
-	ROM_LOAD( "fg3",          0x7000, 0x1000, 0x8416ad53 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
-	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
-	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
-ROM_END
-
-ROM_START( mplanets_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "rom4",         0x6000, 0x2000, 0x5402077f )
-	ROM_LOAD( "rom3",         0x8000, 0x2000, 0x5d18d740 )
-	ROM_LOAD( "rom2",         0xa000, 0x2000, 0x960c3bb1 )
-	ROM_LOAD( "rom1",         0xc000, 0x2000, 0xeb515f10 )
-	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x74de78aa )
-
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x709aa24c )	/* chars */
-	ROM_LOAD( "bg1",          0x1000, 0x1000, 0x4921e345 )
-	ROM_LOAD( "fg3",          0x2000, 0x2000, 0xc990b39f )	/* sprites */
-	ROM_LOAD( "fg2",          0x4000, 0x2000, 0x735e2522 )
-	ROM_LOAD( "fg1",          0x6000, 0x2000, 0x6456cc1c )
-	ROM_LOAD( "fg0",          0x8000, 0x2000, 0xa920e325 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "snd1",         0xf000, 0x800, 0x453193a1 )
-	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "snd2",         0xf800, 0x800, 0xf5ffc98f )
-	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
-ROM_END
-
-ROM_START( qbert_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0xfe434526 )
-	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0x55635447 )
-	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x8e318641 )
-
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
-	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
-	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
-	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
-ROM_END
-
-ROM_START( qbertjp_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x67bb1cb2 )
-	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xc61216e7 )
-	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0x69679d5c )
-
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
-	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
-	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
-	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
-ROM_END
-
-ROM_START( sqbert_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0x1e3d4038 )
-	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0xeaf3076c )
-	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x61260a7e )
-
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0xc3118eef )	/* chars */
-	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x4f6d8075 )
-	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xee595eda )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0x59884c78 )
-	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x2a60e3ad )
-	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0xb11ad9d8 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
-ROM_END
-
-ROM_START( qbertqub_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qq-rom3.bin",  0x8000, 0x2000, 0xc4dbdcd7 )
-	ROM_LOAD( "qq-rom2.bin",  0xa000, 0x2000, 0x21a6c6cc )
-	ROM_LOAD( "qq-rom1.bin",  0xc000, 0x2000, 0x63e6c43d )
-	ROM_LOAD( "qq-rom0.bin",  0xe000, 0x2000, 0x8ddbe438 )
-
-	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qq-bg0.bin",   0x0000, 0x1000, 0x050badde )	/* chars */
-	ROM_LOAD( "qq-bg1.bin",   0x1000, 0x1000, 0x8875902f )
-	ROM_LOAD( "qq-fg3.bin",   0x2000, 0x4000, 0x91a949cc )	/* sprites */
-	ROM_LOAD( "qq-fg2.bin",   0x6000, 0x4000, 0x782d9431 )
-	ROM_LOAD( "qq-fg1.bin",   0xa000, 0x4000, 0x71c3ac4c )
-	ROM_LOAD( "qq-fg0.bin",   0xe000, 0x4000, 0x6192853f )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
-ROM_END
-
-ROM_START( krull_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ram2.bin",     0x1000, 0x1000, 0x302feadf )
-	ROM_LOAD( "ram4.bin",     0x2000, 0x1000, 0x79355a60 )
-	ROM_LOAD( "rom4.bin",     0x6000, 0x2000, 0x2b696394 )
-	ROM_LOAD( "rom3.bin",     0x8000, 0x2000, 0x14b0ee42 )
-	ROM_LOAD( "rom2.bin",     0xa000, 0x2000, 0xb5fad94a )
-	ROM_LOAD( "rom1.bin",     0xc000, 0x2000, 0x1ad956a3 )
-	ROM_LOAD( "rom0.bin",     0xe000, 0x2000, 0xa466afae )
-
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fg3.bin",      0x0000, 0x2000, 0x82d77a45 )	/* sprites */
-	ROM_LOAD( "fg2.bin",      0x2000, 0x2000, 0x25a24317 )
-	ROM_LOAD( "fg1.bin",      0x4000, 0x2000, 0x7e3ad7b0 )
-	ROM_LOAD( "fg0.bin",      0x6000, 0x2000, 0x7402dc19 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
-	ROM_RELOAD(0x6000, 0x1000) /* A15 is not decoded */
-	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
-	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
-ROM_END
-
-ROM_START( mach3_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "m3rom4.bin",   0x6000, 0x2000, 0x8bfd5a44 )
-	ROM_LOAD( "m3rom3.bin",   0x8000, 0x2000, 0xb1b045af )
-	ROM_LOAD( "m3rom2.bin",   0xa000, 0x2000, 0xfbdfb03d )
-	ROM_LOAD( "m3rom1.bin",   0xc000, 0x2000, 0x3b0ba80b )
-	ROM_LOAD( "m3rom0.bin",   0xe000, 0x2000, 0x70c12bf4 )
-
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mach3bg0.bin", 0x0000, 0x1000, 0xea2f5257 )
-	ROM_LOAD( "mach3bg1.bin", 0x1000, 0x1000, 0xf543e4ce )
-	ROM_LOAD( "mach3fg3.bin", 0x2000, 0x2000, 0x472128b4 )
-	ROM_LOAD( "mach3fg2.bin", 0x4000, 0x2000, 0x2a59e99e )
-	ROM_LOAD( "mach3fg1.bin", 0x6000, 0x2000, 0x9b88767b )
-	ROM_LOAD( "mach3fg0.bin", 0x8000, 0x2000, 0x0bae12a5 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "m3drom1.bin",  0xf000, 0x1000, 0xa6e29212 )
-
-	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "m3yrom1.bin",  0xf000, 0x1000, 0xeddf8872 )
-ROM_END
-
-ROM_START( usvsthem_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "usvs.rm4",     0x6000, 0x2000, 0x0d7a4072 )
-	ROM_LOAD( "usvs.rm3",     0x8000, 0x2000, 0x6f32a671 )
-	ROM_LOAD( "usvs.rm2",     0xa000, 0x2000, 0x36770716 )
-	ROM_LOAD( "usvs.rm1",     0xc000, 0x2000, 0x697bc989 )
-	ROM_LOAD( "usvs.rm0",     0xe000, 0x2000, 0x30cf6bd9 )
-
-	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "usvs.bg0",     0x0000, 0x1000, 0x8a0de09f )
-	ROM_LOAD( "usvs.bg1",     0x1000, 0x1000, 0x6fb64d3c )
-	ROM_LOAD( "usvs.fg3",     0x2000, 0x4000, 0x98703015 )
-	ROM_LOAD( "usvs.fg2",     0x6000, 0x4000, 0xd3990707 )
-	ROM_LOAD( "usvs.fg1",     0xa000, 0x4000, 0xa2057430 )
-	ROM_LOAD( "usvs.fg0",     0xe000, 0x4000, 0x7734e53f )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "usvsdrom.1",   0xe000, 0x2000, 0xc0b5cab0 )
-
-	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "usvsyrom.1",   0xe000, 0x2000, 0xc3d245ca )
-ROM_END
-
-ROM_START( stooges_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "gv113ram.4",   0x2000, 0x1000, 0x533bff2a )
-	ROM_LOAD( "gv113rom.4",   0x6000, 0x2000, 0x8b6e52b8 )
-	ROM_LOAD( "gv113rom.3",   0x8000, 0x2000, 0xb816d8c4 )
-	ROM_LOAD( "gv113rom.2",   0xa000, 0x2000, 0xb45b2a79 )
-	ROM_LOAD( "gv113rom.1",   0xc000, 0x2000, 0x34ab051e )
-	ROM_LOAD( "gv113rom.0",   0xe000, 0x2000, 0xab124329 )
-
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gv113fg3",     0x0000, 0x2000, 0x28071212 )	/* sprites */
-	ROM_LOAD( "gv113fg2",     0x2000, 0x2000, 0x9fa3dfde )
-	ROM_LOAD( "gv113fg1",     0x4000, 0x2000, 0xfb223854 )
-	ROM_LOAD( "gv113fg0",     0x6000, 0x2000, 0x95762c53 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "drom1",        0xe000, 0x2000, 0x87a9fa10 )
-
-	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "yrom2",        0xc000, 0x2000, 0x90f9c940 )
-	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x55f8ab30 )
-ROM_END
-
-ROM_START( curvebal_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x72ad4d45 )
-	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xd46c3db5 )
-	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0xeb1e08bd )
-	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x401fc7e3 )
-
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cb-bg-0.chp",  0x0000, 0x1000, 0xd666a179 )
-	ROM_LOAD( "cb-bg-1.chp",  0x1000, 0x1000, 0x5e34ff4e )
-	ROM_LOAD( "cb-fg-3.chp",  0x2000, 0x2000, 0x9c9452fe )
-	ROM_LOAD( "cb-fg-2.chp",  0x4000, 0x2000, 0x065131af )
-	ROM_LOAD( "cb-fg-1.chp",  0x6000, 0x2000, 0x1b7b7f94 )
-	ROM_LOAD( "cb-fg-0.chp",  0x8000, 0x2000, 0xe3a8230e )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "yrom.sbd",     0xe000, 0x1000, 0x4c313d9b )
-	ROM_LOAD( "drom.sbd",     0xf000, 0x1000, 0xcecece88 )
-ROM_END
-
-
 
 static const char *qbert_sample_names[] =
 {
@@ -1552,111 +1184,425 @@ static const char *qbert_sample_names[] =
 	0	/* end of array */
 };
 
-static const char *reactor_sample_names[] =
+static struct Samplesinterface samples_interface =
 {
-	"*reactor",
-	"fx_53.wav", /* "8 left" */
-	"fx_54.wav", /* "16 left" */
-	"fx_55.wav", /* "24 left" */
-	"fx_56.wav", /* "32 left" */
-	"fx_57.wav", /* "40 left" */
-	"fx_58.wav", /* "warning, core unstable" */
-	"fx_59.wav", /* "bonus" */
-	"fx_31.wav", /* "chamber activated" */
-	"fx_39a.wav", /* "2000" */
-	"fx_39b.wav", /* "5000" */
-	"fx_39c.wav", /* "10000" */
-	"fx_39d.wav", /* "15000" */
-	"fx_39e.wav", /* "20000" */
-	"fx_39f.wav", /* "25000" */
-	"fx_39g.wav", /* "30000" */
-	"fx_39h.wav", /* "35000" */
-	"fx_39i.wav", /* "40000" */
-	"fx_39j.wav", /* "45000" */
-	"fx_39k.wav", /* "50000" */
-	"fx_39l.wav", /* "55000" */
-     0	/* end of array */
+	1,	/* one channel */
+	100	/* volume */
+};
+
+static void reactor_init(void)
+{
+	samples_interface.samplenames = reactor_sample_names;
+}
+
+static void qbert_init(void)
+{
+	samples_interface.samplenames = qbert_sample_names;
+}
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	2000000,	/* 2 MHz */
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
 };
 
 
 
-/* Reactor is the only game which doesn't have non volatile RAM */
-static int reactor_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+/********************************************************************
+*
+*  Machine Driver macro
+*  ====================
+*
+*  There are two versions of the machine driver,
+*  one for revision 1 sound board (1x6502 + DAC + Votrax),
+*  one for revision 2 (2x6502 + DAC + GI SP-0250 speech chip + 2x8910).
+*  They are identical apart form the sound CPU subsections.
+*
+********************************************************************/
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x04e3],"\x01\x00\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0554],"\x03\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x05c7],"\x02\x00\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0638],"\x06\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x04d8],16*8);	/* 3 lives */
-			osd_fread(f,&RAM[0x05bc],16*8);	/* 7 lives */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
+static struct MachineDriver machine_driver_##GAMENAME =             \
+{                                                                   \
+	/* basic machine hardware */                                	\
+	{		                                                        \
+		{	  	                                                    \
+			CPU_I86,												\
+			5000000,        /* 5 Mhz */								\
+			READMEM,WRITEMEM,0,0,									\
+			gottlieb_interrupt,1									\
+		},		                                                    \
+		{		                                                    \
+			CPU_M6502 | CPU_AUDIO_CPU ,								\
+			3579545/4,	/* the board can be set to /2 as well */	\
+			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,		\
+			ignore_interrupt,1	/* IRQs are triggered by the main CPU */		\
+								/* NMIs are triggered by the Votrax SC-01 */	\
+		}                                                   		\
+	},                                                          	\
+	61, 1018,	/* frames per second, vblank duration */			\
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	0,						                                    	\
+																	\
+	/* video hardware */                                        	\
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
+	GFX,                                                        	\
+	16, 16,		                                                	\
+	0,									                           	\
+																	\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
+	0,                                                          	\
+	gottlieb_vh_start,												\
+	gottlieb_vh_stop,												\
+	gottlieb_vh_screenrefresh,										\
+																	\
+	/* sound hardware */                                        	\
+	0,0,0,0,                                                    	\
+	{                                                           	\
+		{                                                   		\
+			SOUND_DAC,												\
+			&dac1_interface											\
+		},															\
+		{															\
+			SOUND_SAMPLES,	/* for Votrax simulation */				\
+			&samples_interface										\
+		}                                                   		\
+	},                                                           	\
+																	\
+	NVRAM															\
 }
 
-static void reactor_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x04d8],16*8);	/* 3 lives */
-		osd_fwrite(f,&RAM[0x05bc],16*8);	/* 7 lives */
-		osd_fclose(f);
-	}
+#define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
+static struct MachineDriver machine_driver_##GAMENAME =				\
+{																	\
+	/* basic machine hardware */									\
+	{																\
+		{															\
+			CPU_I86,												\
+			5000000,        /* 5 Mhz */								\
+			READMEM,WRITEMEM,0,0,									\
+			gottlieb_interrupt,1									\
+		},															\
+		{															\
+			CPU_M6502 | CPU_AUDIO_CPU ,								\
+			1000000,	/* 1 MHz */									\
+			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
+			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
+								/* NMIs are triggered by the second sound CPU */	\
+		},															\
+		{															\
+			CPU_M6502 | CPU_AUDIO_CPU ,								\
+			1000000,	/* 1 MHz */									\
+			stooges_sound2_readmem,stooges_sound2_writemem,0,0,		\
+			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
+								/* NMIs are triggered by a programmable timer */	\
+		}															\
+	},																\
+	61, 1018,	/* frames per second, vblank duration */			\
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	0,																\
+																	\
+	/* video hardware */											\
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
+	GFX,															\
+	16, 16,															\
+	0,																\
+																	\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
+	0,																\
+	gottlieb_vh_start,												\
+	gottlieb_vh_stop,												\
+	gottlieb_vh_screenrefresh,										\
+																	\
+	/* sound hardware */											\
+	0,0,0,0,														\
+	{																\
+		{															\
+			SOUND_DAC,												\
+			&dac2_interface											\
+		},															\
+		{															\
+			SOUND_AY8910,											\
+			&ay8910_interface										\
+		}															\
+	},																\
+																	\
+	NVRAM															\
 }
 
-
-int gottlieb_nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* just load in everything, the game will overwrite what it doesn't want */
-		osd_fread(f,&RAM[0x0000],0x1000);
-		osd_fclose(f);
-	}
-	/* Invalidate the static RAM to force reset to factory settings */
-	else memset(&RAM[0x0000],0xff,0x1000);
-
-	return 1;
-}
-
-void gottlieb_nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+/* games using the revision 1 sound board */
+MACHINE_DRIVER_SOUND_1(reactor,reactor_readmem,reactor_writemem,charRAM_gfxdecodeinfo,0);
+MACHINE_DRIVER_SOUND_1(gottlieb,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_1(qbertqub,gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_1(krull,gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo,nvram_handler);
+/* games using the revision 2 sound board */
+MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(usvsthem,gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecodeinfo,nvram_handler);
 
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0000],0x1000);
-		osd_fclose(f);
-	}
-}
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( reactor )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "rom7",         0x8000, 0x1000, 0xa62d86fd )
+	ROM_LOAD( "rom6",         0x9000, 0x1000, 0x6ed841f3 )
+	ROM_LOAD( "rom5",         0xa000, 0x1000, 0xd90576a3 )
+	ROM_LOAD( "rom4",         0xb000, 0x1000, 0x0155daae )
+	ROM_LOAD( "rom3",         0xc000, 0x1000, 0xf8881385 )
+	ROM_LOAD( "rom2",         0xd000, 0x1000, 0x3caba35b )
+	ROM_LOAD( "rom1",         0xe000, 0x1000, 0x944e1ddf )
+	ROM_LOAD( "rom0",         0xf000, 0x1000, 0x55930aed )
+
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	/* 0000-0fff empty */
+	ROM_LOAD( "fg0",          0x1000, 0x1000, 0xd1f20e15 )	/* sprites */
+	/* 2000-2fff empty */
+	ROM_LOAD( "fg1",          0x3000, 0x1000, 0x18396c57 )
+	/* 4000-4fff empty */
+	ROM_LOAD( "fg2",          0x5000, 0x1000, 0x5489605a )
+	/* 6000-6fff empty */
+	ROM_LOAD( "fg3",          0x7000, 0x1000, 0x8416ad53 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
+	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
+	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+ROM_START( mplanets )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "rom4",         0x6000, 0x2000, 0x5402077f )
+	ROM_LOAD( "rom3",         0x8000, 0x2000, 0x5d18d740 )
+	ROM_LOAD( "rom2",         0xa000, 0x2000, 0x960c3bb1 )
+	ROM_LOAD( "rom1",         0xc000, 0x2000, 0xeb515f10 )
+	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x74de78aa )
+
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x709aa24c )	/* chars */
+	ROM_LOAD( "bg1",          0x1000, 0x1000, 0x4921e345 )
+	ROM_LOAD( "fg3",          0x2000, 0x2000, 0xc990b39f )	/* sprites */
+	ROM_LOAD( "fg2",          0x4000, 0x2000, 0x735e2522 )
+	ROM_LOAD( "fg1",          0x6000, 0x2000, 0x6456cc1c )
+	ROM_LOAD( "fg0",          0x8000, 0x2000, 0xa920e325 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "snd1",         0xf000, 0x800, 0x453193a1 )
+	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "snd2",         0xf800, 0x800, 0xf5ffc98f )
+	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+ROM_START( qbert )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0xfe434526 )
+	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0x55635447 )
+	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x8e318641 )
+
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
+	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
+	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
+	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+ROM_START( qbertjp )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x67bb1cb2 )
+	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xc61216e7 )
+	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0x69679d5c )
+
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
+	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
+	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
+	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+ROM_START( sqbert )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0x1e3d4038 )
+	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0xeaf3076c )
+	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x61260a7e )
+
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0xc3118eef )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x4f6d8075 )
+	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xee595eda )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0x59884c78 )
+	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x2a60e3ad )
+	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0xb11ad9d8 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
+	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
+	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+ROM_START( qbertqub )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "qq-rom3.bin",  0x8000, 0x2000, 0xc4dbdcd7 )
+	ROM_LOAD( "qq-rom2.bin",  0xa000, 0x2000, 0x21a6c6cc )
+	ROM_LOAD( "qq-rom1.bin",  0xc000, 0x2000, 0x63e6c43d )
+	ROM_LOAD( "qq-rom0.bin",  0xe000, 0x2000, 0x8ddbe438 )
+
+	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qq-bg0.bin",   0x0000, 0x1000, 0x050badde )	/* chars */
+	ROM_LOAD( "qq-bg1.bin",   0x1000, 0x1000, 0x8875902f )
+	ROM_LOAD( "qq-fg3.bin",   0x2000, 0x4000, 0x91a949cc )	/* sprites */
+	ROM_LOAD( "qq-fg2.bin",   0x6000, 0x4000, 0x782d9431 )
+	ROM_LOAD( "qq-fg1.bin",   0xa000, 0x4000, 0x71c3ac4c )
+	ROM_LOAD( "qq-fg0.bin",   0xe000, 0x4000, 0x6192853f )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
+	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
+	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+ROM_START( krull )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "ram2.bin",     0x1000, 0x1000, 0x302feadf )
+	ROM_LOAD( "ram4.bin",     0x2000, 0x1000, 0x79355a60 )
+	ROM_LOAD( "rom4.bin",     0x6000, 0x2000, 0x2b696394 )
+	ROM_LOAD( "rom3.bin",     0x8000, 0x2000, 0x14b0ee42 )
+	ROM_LOAD( "rom2.bin",     0xa000, 0x2000, 0xb5fad94a )
+	ROM_LOAD( "rom1.bin",     0xc000, 0x2000, 0x1ad956a3 )
+	ROM_LOAD( "rom0.bin",     0xe000, 0x2000, 0xa466afae )
+
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fg3.bin",      0x0000, 0x2000, 0x82d77a45 )	/* sprites */
+	ROM_LOAD( "fg2.bin",      0x2000, 0x2000, 0x25a24317 )
+	ROM_LOAD( "fg1.bin",      0x4000, 0x2000, 0x7e3ad7b0 )
+	ROM_LOAD( "fg0.bin",      0x6000, 0x2000, 0x7402dc19 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
+	ROM_RELOAD(0x6000, 0x1000) /* A15 is not decoded */
+	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
+	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
+ROM_END
+
+ROM_START( mach3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "m3rom4.bin",   0x6000, 0x2000, 0x8bfd5a44 )
+	ROM_LOAD( "m3rom3.bin",   0x8000, 0x2000, 0xb1b045af )
+	ROM_LOAD( "m3rom2.bin",   0xa000, 0x2000, 0xfbdfb03d )
+	ROM_LOAD( "m3rom1.bin",   0xc000, 0x2000, 0x3b0ba80b )
+	ROM_LOAD( "m3rom0.bin",   0xe000, 0x2000, 0x70c12bf4 )
+
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mach3bg0.bin", 0x0000, 0x1000, 0xea2f5257 )
+	ROM_LOAD( "mach3bg1.bin", 0x1000, 0x1000, 0xf543e4ce )
+	ROM_LOAD( "mach3fg3.bin", 0x2000, 0x2000, 0x472128b4 )
+	ROM_LOAD( "mach3fg2.bin", 0x4000, 0x2000, 0x2a59e99e )
+	ROM_LOAD( "mach3fg1.bin", 0x6000, 0x2000, 0x9b88767b )
+	ROM_LOAD( "mach3fg0.bin", 0x8000, 0x2000, 0x0bae12a5 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "m3drom1.bin",  0xf000, 0x1000, 0xa6e29212 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
+	ROM_LOAD( "m3yrom1.bin",  0xf000, 0x1000, 0xeddf8872 )
+ROM_END
+
+ROM_START( usvsthem )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "usvs.rm4",     0x6000, 0x2000, 0x0d7a4072 )
+	ROM_LOAD( "usvs.rm3",     0x8000, 0x2000, 0x6f32a671 )
+	ROM_LOAD( "usvs.rm2",     0xa000, 0x2000, 0x36770716 )
+	ROM_LOAD( "usvs.rm1",     0xc000, 0x2000, 0x697bc989 )
+	ROM_LOAD( "usvs.rm0",     0xe000, 0x2000, 0x30cf6bd9 )
+
+	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "usvs.bg0",     0x0000, 0x1000, 0x8a0de09f )
+	ROM_LOAD( "usvs.bg1",     0x1000, 0x1000, 0x6fb64d3c )
+	ROM_LOAD( "usvs.fg3",     0x2000, 0x4000, 0x98703015 )
+	ROM_LOAD( "usvs.fg2",     0x6000, 0x4000, 0xd3990707 )
+	ROM_LOAD( "usvs.fg1",     0xa000, 0x4000, 0xa2057430 )
+	ROM_LOAD( "usvs.fg0",     0xe000, 0x4000, 0x7734e53f )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "usvsdrom.1",   0xe000, 0x2000, 0xc0b5cab0 )
+
+	ROM_REGIONX(0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
+	ROM_LOAD( "usvsyrom.1",   0xe000, 0x2000, 0xc3d245ca )
+ROM_END
+
+ROM_START( 3stooges )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "gv113ram.4",   0x2000, 0x1000, 0x533bff2a )
+	ROM_LOAD( "gv113rom.4",   0x6000, 0x2000, 0x8b6e52b8 )
+	ROM_LOAD( "gv113rom.3",   0x8000, 0x2000, 0xb816d8c4 )
+	ROM_LOAD( "gv113rom.2",   0xa000, 0x2000, 0xb45b2a79 )
+	ROM_LOAD( "gv113rom.1",   0xc000, 0x2000, 0x34ab051e )
+	ROM_LOAD( "gv113rom.0",   0xe000, 0x2000, 0xab124329 )
+
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gv113fg3",     0x0000, 0x2000, 0x28071212 )	/* sprites */
+	ROM_LOAD( "gv113fg2",     0x2000, 0x2000, 0x9fa3dfde )
+	ROM_LOAD( "gv113fg1",     0x4000, 0x2000, 0xfb223854 )
+	ROM_LOAD( "gv113fg0",     0x6000, 0x2000, 0x95762c53 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "drom1",        0xe000, 0x2000, 0x87a9fa10 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
+	ROM_LOAD( "yrom2",        0xc000, 0x2000, 0x90f9c940 )
+	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x55f8ab30 )
+ROM_END
+
+ROM_START( curvebal )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x72ad4d45 )
+	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xd46c3db5 )
+	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0xeb1e08bd )
+	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x401fc7e3 )
+
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cb-bg-0.chp",  0x0000, 0x1000, 0xd666a179 )
+	ROM_LOAD( "cb-bg-1.chp",  0x1000, 0x1000, 0x5e34ff4e )
+	ROM_LOAD( "cb-fg-3.chp",  0x2000, 0x2000, 0x9c9452fe )
+	ROM_LOAD( "cb-fg-2.chp",  0x4000, 0x2000, 0x065131af )
+	ROM_LOAD( "cb-fg-1.chp",  0x6000, 0x2000, 0x1b7b7f94 )
+	ROM_LOAD( "cb-fg-0.chp",  0x8000, 0x2000, 0xe3a8230e )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "yrom.sbd",     0xe000, 0x1000, 0x4c313d9b )
+	ROM_LOAD( "drom.sbd",     0xf000, 0x1000, 0xcecece88 )
+ROM_END
 
 
-struct GameDriver reactor_driver =
+
+struct GameDriver driver_reactor =
 {
 	__FILE__,
 	0,
@@ -1666,23 +1612,22 @@ struct GameDriver reactor_driver =
 	"Gottlieb",
 	"Fabrice Frances",
 	0,
-	&reactor_machine_driver,
+	&machine_driver_reactor,
+	reactor_init,
+
+	rom_reactor,
+	0, 0,
+	0,
 	0,
 
-	reactor_rom,
-	0, 0,
-	reactor_sample_names,
-	0,	/* sound_prom */
-
-	reactor_input_ports,
+	input_ports_reactor,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	reactor_hiload, reactor_hisave     /* hi-score load and save */
+	ROT0,
+	0,0
 };
 
-struct GameDriver mplanets_driver =
+struct GameDriver driver_mplanets =
 {
 	__FILE__,
 	0,
@@ -1692,23 +1637,22 @@ struct GameDriver mplanets_driver =
 	"Gottlieb",
 	"Fabrice Frances",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	0,
 
-	mplanets_rom,
+	rom_mplanets,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mplanets_input_ports,
+	input_ports_mplanets,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
-struct GameDriver qbert_driver =
+struct GameDriver driver_qbert =
 {
 	__FILE__,
 	0,
@@ -1718,49 +1662,47 @@ struct GameDriver qbert_driver =
 	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
+	qbert_init,
+
+	rom_qbert,
+	0, 0,
+	0,
 	0,
 
-	qbert_rom,
-	0, 0,
-	qbert_sample_names,
-	0,	/* sound_prom */
-
-	qbert_input_ports,
+	input_ports_qbert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
-struct GameDriver qbertjp_driver =
+struct GameDriver driver_qbertjp =
 {
 	__FILE__,
-	&qbert_driver,
+	&driver_qbert,
 	"qbertjp",
 	"Q*bert (Japan)",
 	"1982",
 	"Gottlieb (Konami license)",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
+	qbert_init,
+
+	rom_qbertjp,
+	0, 0,
+	0,
 	0,
 
-	qbertjp_rom,
-	0, 0,
-	qbert_sample_names,
-	0,	/* sound_prom */
-
-	qbert_input_ports,
+	input_ports_qbert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
-struct GameDriver sqbert_driver =
+struct GameDriver driver_sqbert =
 {
 	__FILE__,
 	0,
@@ -1770,23 +1712,22 @@ struct GameDriver sqbert_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
+	qbert_init,
+
+	rom_sqbert,
+	0, 0,
+	0,
 	0,
 
-	sqbert_rom,
-	0, 0,
-	qbert_sample_names,
-	0,	/* sound_prom */
-
-	qbert_input_ports,
+	input_ports_qbert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
-struct GameDriver qbertqub_driver =
+struct GameDriver driver_qbertqub =
 {
 	__FILE__,
 	0,
@@ -1796,23 +1737,22 @@ struct GameDriver qbertqub_driver =
 	"Mylstar",
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
 	0,
-	&qbertqub_machine_driver,
+	&machine_driver_qbertqub,
+	qbert_init,
+
+	rom_qbertqub,
+	0, 0,
+	0,
 	0,
 
-	qbertqub_rom,
-	0, 0,
-	qbert_sample_names,
-	0,	/* sound_prom */
-
-	qbertqub_input_ports,
+	input_ports_qbertqub,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
-struct GameDriver krull_driver =
+struct GameDriver driver_krull =
 {
 	__FILE__,
 	0,
@@ -1822,23 +1762,22 @@ struct GameDriver krull_driver =
 	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili",
 	0,
-	&krull_machine_driver,
+	&machine_driver_krull,
 	0,
 
-	krull_rom,
+	rom_krull,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	krull_input_ports,
+	input_ports_krull,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
-struct GameDriver mach3_driver =
+struct GameDriver driver_mach3 =
 {
 	__FILE__,
 	0,
@@ -1848,24 +1787,23 @@ struct GameDriver mach3_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
-	GAME_NOT_WORKING,
-	&mach3_machine_driver,
 	0,
+	&machine_driver_mach3,
+	gottlieb_sound_init,	/* clear nmi_timer */
 
-	mach3_rom,
+	rom_mach3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mach3_input_ports,
+	input_ports_mach3,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver usvsthem_driver =
+struct GameDriver driver_usvsthem =
 {
 	__FILE__,
 	0,
@@ -1875,24 +1813,23 @@ struct GameDriver usvsthem_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
-	GAME_NOT_WORKING,
-	&usvsthem_machine_driver,
 	0,
+	&machine_driver_usvsthem,
+	gottlieb_sound_init,	/* clear nmi_timer */
 
-	usvsthem_rom,
+	rom_usvsthem,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	usvsthem_input_ports,
+	input_ports_usvsthem,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver stooges_driver =
+struct GameDriver driver_3stooges =
 {
 	__FILE__,
 	0,
@@ -1902,23 +1839,22 @@ struct GameDriver stooges_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	0,
-	&stooges_machine_driver,
-	0,
+	&machine_driver_stooges,
+	gottlieb_sound_init,	/* clear nmi_timer */
 
-	stooges_rom,
+	rom_3stooges,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	stooges_input_ports,
+	input_ports_3stooges,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT0 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
-struct GameDriver curvebal_driver =
+struct GameDriver driver_curvebal =
 {
 	__FILE__,
 	0,
@@ -1928,18 +1864,17 @@ struct GameDriver curvebal_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	0,
 
-	curvebal_rom,
+	rom_curvebal,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	curvebal_input_ports,
+	input_ports_curvebal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };

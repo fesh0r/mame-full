@@ -85,8 +85,8 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 	test_mask = testmask;
 
 	/* predetermine the bank base */
-	bank_base = &Machine->memory_region[Machine->drv->cpu[cpunum].memory_region][0x03000];
-	bank_source_data = &Machine->memory_region[Machine->drv->cpu[cpunum].memory_region][0x10000];
+	bank_base = &memory_region(REGION_CPU1+cpunum)[0x03000];
+	bank_source_data = &memory_region(REGION_CPU1+cpunum)[0x10000];
 
 	/* determine which sound hardware is installed */
 	has_tms5220 = has_oki6295 = has_pokey = has_ym2151 = 0;
@@ -623,46 +623,10 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 };
 
 
-struct OKIM6295interface atarijsa_okim6295_interface_2 =
+struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 {
 	1,              /* 1 chip */
 	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 2 },          /* memory region 2 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_3 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 3 },          /* memory region 3 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_4 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 4 },          /* memory region 4 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_5 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 5 },          /* memory region 5 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_6 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 6 },          /* memory region 6 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 75 }
 };

@@ -157,62 +157,62 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( bsktball_input_ports )
+INPUT_PORTS_START( bsktball )
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y, 100, 10, 0, 0, 0 )
+	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y, 100, 10, 0, 0, 0 )
 
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 10, 0, 0, 0 )
+	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 10, 0, 0, 0 )
 
 	PORT_START		/* IN0 */
-		PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-		PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-		PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* SPARE */
-		PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* SPARE */
-		/* 0x10 - DR0 = PL2 H DIR */
-		/* 0x20 - DR1 = PL2 V DIR */
-		/* 0x40 - DR2 = PL1 H DIR */
-		/* 0x80 - DR3 = PL1 V DIR */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* SPARE */
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* SPARE */
+	/* 0x10 - DR0 = PL2 H DIR */
+	/* 0x20 - DR1 = PL2 V DIR */
+	/* 0x40 - DR2 = PL1 H DIR */
+	/* 0x80 - DR3 = PL1 V DIR */
 
 	PORT_START		/* IN2 */
-		PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-		PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-		PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* SPARE */
-		PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* TEST STEP */
-		PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
-		PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* COIN 0 */
-		PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) /* COIN 1 */
-		PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) /* COIN 2 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* SPARE */
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* TEST STEP */
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* COIN 0 */
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) /* COIN 1 */
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) /* COIN 2 */
 
 	PORT_START		/* DSW */
-		PORT_DIPNAME( 0x07, 0x00, "Coin Mode" )
-		PORT_DIPSETTING(	0x07, DEF_STR( Free_Play ) )
-		PORT_DIPSETTING(	0x06, "2:30/Credit" )
-		PORT_DIPSETTING(	0x05, "2:00/Credit" )
-		PORT_DIPSETTING(	0x04, "1:30/Credit" )
-		PORT_DIPSETTING(	0x03, "1:15/Credit" )
-		PORT_DIPSETTING(	0x02, "0:45/Credit" )
-		PORT_DIPSETTING(	0x01, "0:30/Credit" )
-		PORT_DIPSETTING(	0x00, "1:00/Credit" )
-		PORT_DIPNAME( 0x18, 0x00, "Dollar Coin Mode" )
-		PORT_DIPSETTING(	0x18, DEF_STR( 1C_6C ) )
-		PORT_DIPSETTING(	0x10, DEF_STR( 1C_4C ) )
-		PORT_DIPSETTING(	0x08, DEF_STR( 1C_5C ) )
-		PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
-		PORT_DIPNAME( 0x20, 0x00, "Cost" )
-		PORT_DIPSETTING(	0x20, "Two Coin Minimum" )
-		PORT_DIPSETTING(	0x00, "One Coin Minimum" )
-		PORT_DIPNAME( 0xC0, 0x00, "Language" )
-		PORT_DIPSETTING(	0xC0, "German" )
-		PORT_DIPSETTING(	0x80, "French" )
-		PORT_DIPSETTING(	0x40, "Spanish" )
-		PORT_DIPSETTING(	0x00, "English" )
+	PORT_DIPNAME( 0x07, 0x00, "Coin Mode" )
+	PORT_DIPSETTING(	0x07, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x06, "2:30/Credit" )
+	PORT_DIPSETTING(	0x05, "2:00/Credit" )
+	PORT_DIPSETTING(	0x04, "1:30/Credit" )
+	PORT_DIPSETTING(	0x03, "1:15/Credit" )
+	PORT_DIPSETTING(	0x02, "0:45/Credit" )
+	PORT_DIPSETTING(	0x01, "0:30/Credit" )
+	PORT_DIPSETTING(	0x00, "1:00/Credit" )
+	PORT_DIPNAME( 0x18, 0x00, "Dollar Coin Mode" )
+	PORT_DIPSETTING(	0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x20, 0x00, "Cost" )
+	PORT_DIPSETTING(	0x20, "Two Coin Minimum" )
+	PORT_DIPSETTING(	0x00, "One Coin Minimum" )
+	PORT_DIPNAME( 0xC0, 0x00, "Language" )
+	PORT_DIPSETTING(	0xC0, "German" )
+	PORT_DIPSETTING(	0x80, "French" )
+	PORT_DIPSETTING(	0x40, "Spanish" )
+	PORT_DIPSETTING(	0x00, "English" )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -242,10 +242,12 @@ static struct GfxLayout motionlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0600, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
-	{ 1, 0x0000, &motionlayout, 0x08, 0x40 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0x0600, &charlayout,   0x00, 0x02 },
+	{ REGION_GFX1, 0x0000, &motionlayout, 0x08, 0x40 },
 	{ -1 } /* end of array */
 };
+
+
 
 static unsigned char palette[] =
 {
@@ -254,7 +256,6 @@ static unsigned char palette[] =
 	0x50,0x50,0x50, /* DARK GREY */
 	0xff,0xff,0xff, /* WHITE */
 };
-
 static unsigned short colortable[] =
 {
 	/* Playfield */
@@ -343,6 +344,11 @@ static unsigned short colortable[] =
 	0x01, 0x03, 0x03, 0x03,
 
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct DACinterface dac_interface =
@@ -352,14 +358,13 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bsktball =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			750000, 	   /* 750 KHz */
-			0,
 			readmem,writemem,0,0,
 			bsktball_interrupt,8
 		}
@@ -371,8 +376,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -397,43 +402,19 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bsktball_rom )
-	ROM_REGION(0x10000) /* 64k for code */
-		ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
-		ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
-		ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
-		ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
-		ROM_RELOAD( 			0xF800, 0x0800 )
+ROM_START( bsktball )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
+	ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
+	ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
+	ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x1000)	   /* 2k for graphics */
-		ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
-		ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
-
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
+	ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
 ROM_END
 
 
 
-struct GameDriver bsktball_driver =
-{
-	__FILE__,
-	0,
-	"bsktball",
-	"Basketball",
-	"1979",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	bsktball_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	bsktball_input_ports,
-
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
-};
+GAME( 1979, bsktball, , bsktball, bsktball, , ROT0, "Atari", "Basketball" )

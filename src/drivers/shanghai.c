@@ -542,7 +542,7 @@ if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 		for (x = 0;x < 384;x++)
 		{
 			b &= 0x1fffff;
-			bitmap->line[y][x] = Machine->pens[HD63484_ram[b]];
+			plot_pixel(bitmap,x,y,Machine->pens[HD63484_ram[b]]);
 			b++;
 		}
 	}
@@ -556,7 +556,7 @@ if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 			{
 				b &= 0x1fffff;
 				if (HD63484_ram[b])
-					bitmap->line[y][x] = Machine->pens[HD63484_ram[b]];
+					plot_pixel(bitmap,x,y,Machine->pens[HD63484_ram[b]]);
 				b++;
 			}
 		}
@@ -614,7 +614,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( shanghai )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -716,7 +716,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_V30,
 			16000000,	/* ??? */
-			0,
 			readmem,writemem,readport,writeport,
 			shanghai_interrupt,1,
 			0,0
@@ -756,8 +755,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( shanghai_rom )
-	ROM_REGION(0x100000)
+ROM_START( shanghai )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "shg-22a.rom", 0xa0000, 0x10000, 0xe0a085be )
 	ROM_LOAD_V20_ODD ( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )
 	ROM_LOAD_V20_EVEN( "shg-28a.rom", 0xc0000, 0x10000, 0x983ec112 )
@@ -768,7 +767,7 @@ ROM_END
 
 
 
-struct GameDriver shanghai_driver =
+struct GameDriver driver_shanghai =
 {
 	__FILE__,
 	0,
@@ -777,19 +776,19 @@ struct GameDriver shanghai_driver =
 	"1988",
 	"Sun Electronics (licensed from Activision)",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	shanghai_rom,
+	rom_shanghai,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_shanghai,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };

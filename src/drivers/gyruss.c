@@ -62,6 +62,7 @@ and 1 SFX channel controlled by an 8039:
 
 /*#define EMULATE_6809*/
 
+void konami1_decode_cpu4(void);
 
 extern unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
 void gyruss_queuereg_w(int offset, int data);
@@ -71,7 +72,6 @@ void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 int gyruss_portA_r(int offset);
 void gyruss_filter0_w(int offset,int data);
@@ -231,7 +231,7 @@ static struct IOWritePort i8039_writeport[] =
 
 
 
-INPUT_PORTS_START( gyruss_input_ports )
+INPUT_PORTS_START( gyruss )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -329,7 +329,7 @@ INPUT_PORTS_END
 
 /* This is identical to gyruss except for the bonus that has different
    values */
-INPUT_PORTS_START( gyrussce_input_ports )
+INPUT_PORTS_START( gyrussce )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -464,10 +464,10 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x2000, &spritelayout1, 16*4, 16 },	/* upper half */
-	{ 1, 0x2010, &spritelayout1, 16*4, 16 },	/* lower half */
-	{ 1, 0x2000, &spritelayout2, 16*4, 16 },
+	{ REGION_GFX1, 0x0000, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0x0000, &spritelayout1, 16*4, 16 },	/* upper half */
+	{ REGION_GFX2, 0x0010, &spritelayout1, 16*4, 16 },	/* lower half */
+	{ REGION_GFX2, 0x0000, &spritelayout2, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -503,21 +503,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* 3.579545 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			8000000/15,	/* 8Mhz crystal */
-			5,	/* memory region #5 */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},
@@ -525,7 +522,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,        /* 2 Mhz ??? */
-			4,	/* memory region #4 */
 			m6809_readmem,m6809_writemem,0,0,
 			interrupt,1
 		},
@@ -578,160 +574,108 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gyruss_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gyruss )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gyrussk.1",    0x0000, 0x2000, 0xc673b43d )
 	ROM_LOAD( "gyrussk.2",    0x2000, 0x2000, 0xa4ec03e4 )
 	ROM_LOAD( "gyrussk.3",    0x4000, 0x2000, 0x27454a98 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
-	ROM_LOAD( "gyrussk.6",    0x2000, 0x2000, 0xc949db10 )
-	ROM_LOAD( "gyrussk.5",    0x4000, 0x2000, 0x4f22411a )
-	ROM_LOAD( "gyrussk.8",    0x6000, 0x2000, 0x47cd1fbc )
-	ROM_LOAD( "gyrussk.7",    0x8000, 0x2000, 0x8e8d388c )
-
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
-	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
-	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
+
+	ROM_REGIONX( 2*0x10000, REGION_CPU4 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION(0x1000)	/* 8039 */
-	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gyrussk.6",    0x0000, 0x2000, 0xc949db10 )
+	ROM_LOAD( "gyrussk.5",    0x2000, 0x2000, 0x4f22411a )
+	ROM_LOAD( "gyrussk.8",    0x4000, 0x2000, 0x47cd1fbc )
+	ROM_LOAD( "gyrussk.7",    0x6000, 0x2000, 0x8e8d388c )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 ROM_END
 
-ROM_START( gyrussce_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gyrussce )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gya-1.bin",    0x0000, 0x2000, 0x85f8b7c2 )
 	ROM_LOAD( "gya-2.bin",    0x2000, 0x2000, 0x1e1a970f )
 	ROM_LOAD( "gya-3.bin",    0x4000, 0x2000, 0xf6dbb33b )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
-	ROM_LOAD( "gyrussk.6",    0x2000, 0x2000, 0xc949db10 )
-	ROM_LOAD( "gyrussk.5",    0x4000, 0x2000, 0x4f22411a )
-	ROM_LOAD( "gyrussk.8",    0x6000, 0x2000, 0x47cd1fbc )
-	ROM_LOAD( "gyrussk.7",    0x8000, 0x2000, 0x8e8d388c )
-
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
-	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
-	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
+
+	ROM_REGIONX( 2*0x10000, REGION_CPU4 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION(0x1000)	/* 8039 */
-	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gyrussk.6",    0x0000, 0x2000, 0xc949db10 )
+	ROM_LOAD( "gyrussk.5",    0x2000, 0x2000, 0x4f22411a )
+	ROM_LOAD( "gyrussk.8",    0x4000, 0x2000, 0x47cd1fbc )
+	ROM_LOAD( "gyrussk.7",    0x6000, 0x2000, 0x8e8d388c )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 ROM_END
 
-ROM_START( venus_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( venus )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x2000, 0xd030abb1 )
 	ROM_LOAD( "r2",           0x2000, 0x2000, 0xdbf65d4d )
 	ROM_LOAD( "r3",           0x4000, 0x2000, 0xdb246fcd )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
-	ROM_LOAD( "gyrussk.6",    0x2000, 0x2000, 0xc949db10 )
-	ROM_LOAD( "gyrussk.5",    0x4000, 0x2000, 0x4f22411a )
-	ROM_LOAD( "gyrussk.8",    0x6000, 0x2000, 0x47cd1fbc )
-	ROM_LOAD( "gyrussk.7",    0x8000, 0x2000, 0x8e8d388c )
-
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
-	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
-	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
+
+	ROM_REGIONX( 2*0x10000, REGION_CPU4 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION(0x1000)	/* 8039 */
-	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gyrussk.6",    0x0000, 0x2000, 0xc949db10 )
+	ROM_LOAD( "gyrussk.5",    0x2000, 0x2000, 0x4f22411a )
+	ROM_LOAD( "gyrussk.8",    0x4000, 0x2000, 0x47cd1fbc )
+	ROM_LOAD( "gyrussk.7",    0x6000, 0x2000, 0x8e8d388c )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 ROM_END
 
 
 
-static void gyruss_decode(void)
-{
-	int A;
-	unsigned char *RAM;
-	extern int encrypted_cpu;
-
-
-	RAM = Machine->memory_region[Machine->drv->cpu[3].memory_region];
-	encrypted_cpu = 3;
-	for (A = 0xe000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x9489],"\x00\x00\x01",3) == 0 &&
-			memcmp(&RAM[0x94a9],"\x00\x43\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9488],8*5);
-			RAM[0x940b] = RAM[0x9489];
-			RAM[0x940c] = RAM[0x948a];
-			RAM[0x940d] = RAM[0x948b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9488],8*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver gyruss_driver =
+struct GameDriver driver_gyruss =
 {
 	__FILE__,
 	0,
@@ -742,25 +686,24 @@ struct GameDriver gyruss_driver =
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	konami1_decode_cpu4,
+
+	rom_gyruss,
+	0, 0,
+	0,
 	0,
 
-	gyruss_rom,
-	0, gyruss_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_gyruss,
 
-	gyruss_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver gyrussce_driver =
+struct GameDriver driver_gyrussce =
 {
 	__FILE__,
-	&gyruss_driver,
+	&driver_gyruss,
 	"gyrussce",
 	"Gyruss (Centuri)",
 	"1983",
@@ -768,25 +711,24 @@ struct GameDriver gyrussce_driver =
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	konami1_decode_cpu4,
+
+	rom_gyrussce,
+	0, 0,
+	0,
 	0,
 
-	gyrussce_rom,
-	0, gyruss_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_gyrussce,
 
-	gyrussce_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver venus_driver =
+struct GameDriver driver_venus =
 {
 	__FILE__,
-	&gyruss_driver,
+	&driver_gyruss,
 	"venus",
 	"Venus",
 	"1983",
@@ -794,17 +736,16 @@ struct GameDriver venus_driver =
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	konami1_decode_cpu4,
+
+	rom_venus,
+	0, 0,
+	0,
 	0,
 
-	venus_rom,
-	0, gyruss_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_gyrussce,
 
-	gyrussce_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

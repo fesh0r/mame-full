@@ -26,8 +26,18 @@ static int analog_player_port[MAX_INPUT_PORTS];
 #define MRU_JOYSTICK
 
 /* header identifying the version of the game.cfg file */
-#define MAMECFGSTRING "MAMECFG\5"
-#define MAMEDEFSTRING "MAMEDEF\4"
+/* mame 0.36b11 */
+#define MAMECFGSTRING_V5 "MAMECFG\5"
+#define MAMEDEFSTRING_V4 "MAMEDEF\4"
+
+/* mame 0.36b12 with multi key/joy extension */
+#define MAMECFGSTRING_V6 "MAMECFG\6"
+#define MAMEDEFSTRING_V5 "MAMEDEF\5"
+
+/* mame 0.36b13 with multi key/joy extension with and/or combination */
+#define MAMECFGSTRING_V7 "MAMECFG\7"
+#define MAMEDEFSTRING_V6 "MAMEDEF\6"
+
 
 extern void *record;
 extern void *playback;
@@ -104,162 +114,171 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 
 struct ipd inputport_defaults[] =
 {
-	{ IPT_UI_CONFIGURE,         "Config Menu",       KEYCODE_TAB,   JOYCODE_NONE },
-	{ IPT_UI_ON_SCREEN_DISPLAY, "On Screen Display", KEYCODE_TILDE, JOYCODE_NONE },
-	{ IPT_UI_PAUSE,             "Pause",             KEYCODE_P,     JOYCODE_NONE },
-	{ IPT_UI_RESET_MACHINE,     "Reset Game",        KEYCODE_F3,    JOYCODE_NONE },
-	{ IPT_UI_SHOW_GFX,          "Show Gfx",          KEYCODE_F4,    JOYCODE_NONE },
-	{ IPT_UI_FRAMESKIP_DEC,     "Frameskip Dec",     KEYCODE_F8,    JOYCODE_NONE },
-	{ IPT_UI_FRAMESKIP_INC,     "Frameskip Inc",     KEYCODE_F9,    JOYCODE_NONE },
-	{ IPT_UI_THROTTLE,          "Throttle",          KEYCODE_F10,   JOYCODE_NONE },
-	{ IPT_UI_SHOW_FPS,          "Show FPS",          KEYCODE_F11,   JOYCODE_NONE },
-	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     KEYCODE_F12,   JOYCODE_NONE },
-	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",      KEYCODE_F5,    JOYCODE_NONE },
-	{ IPT_UI_UP,                "UI Up",             KEYCODE_UP,    JOYCODE_1_UP },
-	{ IPT_UI_DOWN,              "UI Down",           KEYCODE_DOWN,  JOYCODE_1_DOWN },
-	{ IPT_UI_LEFT,              "UI Left",           KEYCODE_LEFT,  JOYCODE_1_LEFT },
-	{ IPT_UI_RIGHT,             "UI Right",          KEYCODE_RIGHT, JOYCODE_1_RIGHT },
-	{ IPT_UI_SELECT,            "UI Select",         KEYCODE_ENTER, JOYCODE_1_BUTTON1 },
-	{ IPT_UI_CANCEL,            "UI Cancel",         KEYCODE_ESC,   JOYCODE_NONE },
+	{ IPT_UI_CONFIGURE,         "Config Menu",       INPUT_KEY_SEQ_DEF_1(KEYCODE_TAB),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_ON_SCREEN_DISPLAY, "On Screen Display", INPUT_KEY_SEQ_DEF_1(KEYCODE_TILDE), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_PAUSE,             "Pause",             INPUT_KEY_SEQ_DEF_1(KEYCODE_P),     INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_RESET_MACHINE,     "Reset Game",        INPUT_KEY_SEQ_DEF_1(KEYCODE_F3),    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_SHOW_GFX,          "Show Gfx",          INPUT_KEY_SEQ_DEF_1(KEYCODE_F4),    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_FRAMESKIP_DEC,     "Frameskip Dec",     INPUT_KEY_SEQ_DEF_1(KEYCODE_F8),    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_FRAMESKIP_INC,     "Frameskip Inc",     INPUT_KEY_SEQ_DEF_1(KEYCODE_F9),    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_THROTTLE,          "Throttle",          INPUT_KEY_SEQ_DEF_1(KEYCODE_F10),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_SHOW_FPS,          "Show FPS",          INPUT_KEY_SEQ_DEF_5(KEYCODE_F11, IP_CODE_NOT, KEYCODE_LCONTROL, IP_CODE_NOT, KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_SHOW_PROFILER,     "Show Profiler",     INPUT_KEY_SEQ_DEF_2(KEYCODE_F11, KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
+#ifdef MAME_DEBUG
+	{ IPT_UI_SHOW_COLORS,       "Show Colors",	 INPUT_KEY_SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL), INPUT_JOY_SEQ_DEF_0 },
+#endif
+	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     INPUT_KEY_SEQ_DEF_1(KEYCODE_F12),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",      INPUT_KEY_SEQ_DEF_1(KEYCODE_F5),    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_UP,                "UI Up",             INPUT_KEY_SEQ_DEF_1(KEYCODE_UP),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_UP) },
+	{ IPT_UI_DOWN,              "UI Down",           INPUT_KEY_SEQ_DEF_1(KEYCODE_DOWN),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_DOWN) },
+	{ IPT_UI_LEFT,              "UI Left",           INPUT_KEY_SEQ_DEF_1(KEYCODE_LEFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT) },
+	{ IPT_UI_RIGHT,             "UI Right",          INPUT_KEY_SEQ_DEF_1(KEYCODE_RIGHT), INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT) },
+	{ IPT_UI_SELECT,            "UI Select",         INPUT_KEY_SEQ_DEF_1(KEYCODE_ENTER), INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON1) },
+	{ IPT_UI_CANCEL,            "UI Cancel",         INPUT_KEY_SEQ_DEF_1(KEYCODE_ESC),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_PAN_UP,            "Pan Up",            INPUT_KEY_SEQ_DEF_3(KEYCODE_PGUP, IP_CODE_NOT, KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_PAN_DOWN,          "Pan Down",          INPUT_KEY_SEQ_DEF_3(KEYCODE_PGDN, IP_CODE_NOT, KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_PAN_LEFT,          "Pan Left",          INPUT_KEY_SEQ_DEF_2(KEYCODE_PGUP,KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_UI_PAN_RIGHT,         "Pan Right",         INPUT_KEY_SEQ_DEF_2(KEYCODE_PGDN,KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_COIN1,  "Coin A",          INPUT_KEY_SEQ_DEF_1(KEYCODE_3), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_COIN2,  "Coin B",          INPUT_KEY_SEQ_DEF_1(KEYCODE_4), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_COIN3,  "Coin C",          INPUT_KEY_SEQ_DEF_1(KEYCODE_5), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_COIN4,  "Coin D",          INPUT_KEY_SEQ_DEF_1(KEYCODE_6), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_TILT,   "Tilt",            INPUT_KEY_SEQ_DEF_1(KEYCODE_T), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_START1, "1 Player Start",  INPUT_KEY_SEQ_DEF_1(KEYCODE_1), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_START2, "2 Players Start", INPUT_KEY_SEQ_DEF_1(KEYCODE_2), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_START3, "3 Players Start", INPUT_KEY_SEQ_DEF_1(KEYCODE_7), INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_START4, "4 Players Start", INPUT_KEY_SEQ_DEF_1(KEYCODE_8), INPUT_JOY_SEQ_DEF_0 },
 
-	{ IPT_COIN1,  "Coin A",          KEYCODE_3, JOYCODE_NONE },
-	{ IPT_COIN2,  "Coin B",          KEYCODE_4, JOYCODE_NONE },
-	{ IPT_COIN3,  "Coin C",          KEYCODE_5, JOYCODE_NONE },
-	{ IPT_COIN4,  "Coin D",          KEYCODE_6, JOYCODE_NONE },
-	{ IPT_TILT,   "Tilt",            KEYCODE_T, JOYCODE_NONE },
-	{ IPT_START1, "1 Player Start",  KEYCODE_1, JOYCODE_NONE },
-	{ IPT_START2, "2 Players Start", KEYCODE_2, JOYCODE_NONE },
-	{ IPT_START3, "3 Players Start", KEYCODE_7, JOYCODE_NONE },
-	{ IPT_START4, "4 Players Start", KEYCODE_8, JOYCODE_NONE },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          INPUT_KEY_SEQ_DEF_1(KEYCODE_UP),      INPUT_JOY_SEQ_DEF_1(JOYCODE_1_UP)    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        INPUT_KEY_SEQ_DEF_1(KEYCODE_DOWN),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_DOWN)  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        INPUT_KEY_SEQ_DEF_1(KEYCODE_LEFT),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT)  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER1, "P1 Right",       INPUT_KEY_SEQ_DEF_1(KEYCODE_RIGHT),   INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT) },
+	{ IPT_BUTTON1             | IPF_PLAYER1, "P1 Button 1",    INPUT_KEY_SEQ_DEF_1(KEYCODE_LCONTROL),INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON1) },
+	{ IPT_BUTTON2             | IPF_PLAYER1, "P1 Button 2",    INPUT_KEY_SEQ_DEF_1(KEYCODE_LALT),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON2) },
+	{ IPT_BUTTON3             | IPF_PLAYER1, "P1 Button 3",    INPUT_KEY_SEQ_DEF_1(KEYCODE_SPACE),   INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON3) },
+	{ IPT_BUTTON4             | IPF_PLAYER1, "P1 Button 4",    INPUT_KEY_SEQ_DEF_1(KEYCODE_LSHIFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON4) },
+	{ IPT_BUTTON5             | IPF_PLAYER1, "P1 Button 5",    INPUT_KEY_SEQ_DEF_1(KEYCODE_Z),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON5) },
+	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    INPUT_KEY_SEQ_DEF_1(KEYCODE_X),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON6) },
+	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    INPUT_KEY_SEQ_DEF_1(KEYCODE_C),       INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    INPUT_KEY_SEQ_DEF_1(KEYCODE_V),       INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    INPUT_KEY_SEQ_DEF_1(KEYCODE_I),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON2) },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  INPUT_KEY_SEQ_DEF_1(KEYCODE_K),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON3) },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  INPUT_KEY_SEQ_DEF_1(KEYCODE_J),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON1) },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", INPUT_KEY_SEQ_DEF_1(KEYCODE_L),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON4) },
+	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1, "P1 Left/Up",     INPUT_KEY_SEQ_DEF_1(KEYCODE_E),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_UP) },
+	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1, "P1 Left/Down",   INPUT_KEY_SEQ_DEF_1(KEYCODE_D),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_DOWN) },
+	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1, "P1 Left/Left",   INPUT_KEY_SEQ_DEF_1(KEYCODE_S),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT) },
+	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1, "P1 Left/Right",  INPUT_KEY_SEQ_DEF_1(KEYCODE_F),       INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT) },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          KEYCODE_UP,      JOYCODE_1_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        KEYCODE_DOWN,    JOYCODE_1_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        KEYCODE_LEFT,    JOYCODE_1_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER1, "P1 Right",       KEYCODE_RIGHT,   JOYCODE_1_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER1, "P1 Button 1",    KEYCODE_LCONTROL,JOYCODE_1_BUTTON1 },
-	{ IPT_BUTTON2             | IPF_PLAYER1, "P1 Button 2",    KEYCODE_LALT,    JOYCODE_1_BUTTON2 },
-	{ IPT_BUTTON3             | IPF_PLAYER1, "P1 Button 3",    KEYCODE_SPACE,   JOYCODE_1_BUTTON3 },
-	{ IPT_BUTTON4             | IPF_PLAYER1, "P1 Button 4",    KEYCODE_LSHIFT,  JOYCODE_1_BUTTON4 },
-	{ IPT_BUTTON5             | IPF_PLAYER1, "P1 Button 5",    KEYCODE_Z,       JOYCODE_1_BUTTON5 },
-	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    KEYCODE_X,       JOYCODE_1_BUTTON6 },
-	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    KEYCODE_C,       JOYCODE_NONE },
-	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    KEYCODE_V,       JOYCODE_NONE },
-	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    KEYCODE_I,       JOYCODE_1_BUTTON2 },
-	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  KEYCODE_K,       JOYCODE_1_BUTTON3 },
-	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  KEYCODE_J,       JOYCODE_1_BUTTON1 },
-	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", KEYCODE_L,       JOYCODE_1_BUTTON4 },
-	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1, "P1 Left/Up",     KEYCODE_E,       JOYCODE_1_UP },
-	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1, "P1 Left/Down",   KEYCODE_D,       JOYCODE_1_DOWN },
-	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1, "P1 Left/Left",   KEYCODE_S,       JOYCODE_1_LEFT },
-	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1, "P1 Left/Right",  KEYCODE_F,       JOYCODE_1_RIGHT },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER2, "P2 Up",          INPUT_KEY_SEQ_DEF_1(KEYCODE_R),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_UP)    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER2, "P2 Down",        INPUT_KEY_SEQ_DEF_1(KEYCODE_F),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_DOWN)  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER2, "P2 Left",        INPUT_KEY_SEQ_DEF_1(KEYCODE_D),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_LEFT)  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER2, "P2 Right",       INPUT_KEY_SEQ_DEF_1(KEYCODE_G),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_RIGHT) },
+	{ IPT_BUTTON1             | IPF_PLAYER2, "P2 Button 1",    INPUT_KEY_SEQ_DEF_1(KEYCODE_A),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON1) },
+	{ IPT_BUTTON2             | IPF_PLAYER2, "P2 Button 2",    INPUT_KEY_SEQ_DEF_1(KEYCODE_S),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON2) },
+	{ IPT_BUTTON3             | IPF_PLAYER2, "P2 Button 3",    INPUT_KEY_SEQ_DEF_1(KEYCODE_Q),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON3) },
+	{ IPT_BUTTON4             | IPF_PLAYER2, "P2 Button 4",    INPUT_KEY_SEQ_DEF_1(KEYCODE_W),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON4) },
+	{ IPT_BUTTON5             | IPF_PLAYER2, "P2 Button 5",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON5) },
+	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON6) },
+	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2, "P2 Right/Right", INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2, "P2 Left/Up",     INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2, "P2 Left/Down",   INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2, "P2 Left/Left",   INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2, "P2 Left/Right",  INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_0 },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER2, "P2 Up",          KEYCODE_R,       JOYCODE_2_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER2, "P2 Down",        KEYCODE_F,       JOYCODE_2_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER2, "P2 Left",        KEYCODE_D,       JOYCODE_2_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER2, "P2 Right",       KEYCODE_G,       JOYCODE_2_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER2, "P2 Button 1",    KEYCODE_A,       JOYCODE_2_BUTTON1 },
-	{ IPT_BUTTON2             | IPF_PLAYER2, "P2 Button 2",    KEYCODE_S,       JOYCODE_2_BUTTON2 },
-	{ IPT_BUTTON3             | IPF_PLAYER2, "P2 Button 3",    KEYCODE_Q,       JOYCODE_2_BUTTON3 },
-	{ IPT_BUTTON4             | IPF_PLAYER2, "P2 Button 4",    KEYCODE_W,       JOYCODE_2_BUTTON4 },
-	{ IPT_BUTTON5             | IPF_PLAYER2, "P2 Button 5",    KEYCODE_NONE,    JOYCODE_2_BUTTON5 },
-	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    KEYCODE_NONE,    JOYCODE_2_BUTTON6 },
-	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2, "P2 Right/Right", KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2, "P2 Left/Up",     KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2, "P2 Left/Down",   KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2, "P2 Left/Left",   KEYCODE_NONE,    JOYCODE_NONE },
-	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2, "P2 Left/Right",  KEYCODE_NONE,    JOYCODE_NONE },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER3, "P3 Up",          INPUT_KEY_SEQ_DEF_1(KEYCODE_I),       INPUT_JOY_SEQ_DEF_1(JOYCODE_3_UP)    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER3, "P3 Down",        INPUT_KEY_SEQ_DEF_1(KEYCODE_K),       INPUT_JOY_SEQ_DEF_1(JOYCODE_3_DOWN)  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER3, "P3 Left",        INPUT_KEY_SEQ_DEF_1(KEYCODE_J),       INPUT_JOY_SEQ_DEF_1(JOYCODE_3_LEFT)  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER3, "P3 Right",       INPUT_KEY_SEQ_DEF_1(KEYCODE_L),       INPUT_JOY_SEQ_DEF_1(JOYCODE_3_RIGHT) },
+	{ IPT_BUTTON1             | IPF_PLAYER3, "P3 Button 1",    INPUT_KEY_SEQ_DEF_1(KEYCODE_RCONTROL),INPUT_JOY_SEQ_DEF_1(JOYCODE_3_BUTTON1) },
+	{ IPT_BUTTON2             | IPF_PLAYER3, "P3 Button 2",    INPUT_KEY_SEQ_DEF_1(KEYCODE_RSHIFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_3_BUTTON2) },
+	{ IPT_BUTTON3             | IPF_PLAYER3, "P3 Button 3",    INPUT_KEY_SEQ_DEF_1(KEYCODE_ENTER),   INPUT_JOY_SEQ_DEF_1(JOYCODE_3_BUTTON3) },
+	{ IPT_BUTTON4             | IPF_PLAYER3, "P3 Button 4",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_3_BUTTON4) },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER3, "P3 Up",          KEYCODE_I,       JOYCODE_3_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER3, "P3 Down",        KEYCODE_K,       JOYCODE_3_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER3, "P3 Left",        KEYCODE_J,       JOYCODE_3_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER3, "P3 Right",       KEYCODE_L,       JOYCODE_3_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER3, "P3 Button 1",    KEYCODE_RCONTROL,JOYCODE_3_BUTTON1 },
-	{ IPT_BUTTON2             | IPF_PLAYER3, "P3 Button 2",    KEYCODE_RSHIFT,  JOYCODE_3_BUTTON2 },
-	{ IPT_BUTTON3             | IPF_PLAYER3, "P3 Button 3",    KEYCODE_ENTER,   JOYCODE_3_BUTTON3 },
-	{ IPT_BUTTON4             | IPF_PLAYER3, "P3 Button 4",    KEYCODE_NONE,    JOYCODE_3_BUTTON4 },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER4, "P4 Up",          INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_UP)    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER4, "P4 Down",        INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_DOWN)  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER4, "P4 Left",        INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_LEFT)  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER4, "P4 Right",       INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_RIGHT) },
+	{ IPT_BUTTON1             | IPF_PLAYER4, "P4 Button 1",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_BUTTON1) },
+	{ IPT_BUTTON2             | IPF_PLAYER4, "P4 Button 2",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_BUTTON2) },
+	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_BUTTON3) },
+	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_BUTTON4) },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER4, "P4 Up",          KEYCODE_NONE,    JOYCODE_4_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER4, "P4 Down",        KEYCODE_NONE,    JOYCODE_4_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER4, "P4 Left",        KEYCODE_NONE,    JOYCODE_4_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER4, "P4 Right",       KEYCODE_NONE,    JOYCODE_4_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER4, "P4 Button 1",    KEYCODE_NONE,    JOYCODE_4_BUTTON1 },
-	{ IPT_BUTTON2             | IPF_PLAYER4, "P4 Button 2",    KEYCODE_NONE,    JOYCODE_4_BUTTON2 },
-	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    KEYCODE_NONE,    JOYCODE_4_BUTTON3 },
-	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    KEYCODE_NONE,    JOYCODE_4_BUTTON4 },
+	{ IPT_PEDAL	                | IPF_PLAYER1, "Pedal 1",        INPUT_KEY_SEQ_DEF_1(KEYCODE_LCONTROL),INPUT_JOY_SEQ_DEF_1(JOYCODE_1_BUTTON1) },
+	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER1, "P1 Auto Release <Y/N>", INPUT_KEY_SEQ_DEF_1(KEYCODE_Y),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_PEDAL                 | IPF_PLAYER2, "Pedal 2",        INPUT_KEY_SEQ_DEF_1(KEYCODE_A),       INPUT_JOY_SEQ_DEF_1(JOYCODE_2_BUTTON1) },
+	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER2, "P2 Auto Release <Y/N>", INPUT_KEY_SEQ_DEF_1(KEYCODE_Y),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_PEDAL                 | IPF_PLAYER3, "Pedal 3",        INPUT_KEY_SEQ_DEF_1(KEYCODE_RCONTROL),INPUT_JOY_SEQ_DEF_1(JOYCODE_3_BUTTON1) },
+	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER3, "P3 Auto Release <Y/N>", INPUT_KEY_SEQ_DEF_1(KEYCODE_Y),   INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_PEDAL                 | IPF_PLAYER4, "Pedal 4",        INPUT_KEY_SEQ_DEF_0,    INPUT_JOY_SEQ_DEF_1(JOYCODE_4_BUTTON1) },
+	{ (IPT_PEDAL+IPT_EXTENSION) | IPF_PLAYER4, "P4 Auto Release <Y/N>", INPUT_KEY_SEQ_DEF_1(KEYCODE_Y),   INPUT_JOY_SEQ_DEF_0 },
 
-	{ IPT_PEDAL	                | IPF_PLAYER1, "Pedal 1",        KEYCODE_LCONTROL,JOYCODE_1_BUTTON1 },
-	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER1, "P1 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
-	{ IPT_PEDAL                 | IPF_PLAYER2, "Pedal 2",        KEYCODE_A,       JOYCODE_2_BUTTON1 },
-	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER2, "P2 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
-	{ IPT_PEDAL                 | IPF_PLAYER3, "Pedal 3",        KEYCODE_RCONTROL,JOYCODE_3_BUTTON1 },
-	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER3, "P3 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
-	{ IPT_PEDAL                 | IPF_PLAYER4, "Pedal 4",        KEYCODE_NONE,    JOYCODE_4_BUTTON1 },
-	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER4, "P4 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
+	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        INPUT_KEY_SEQ_DEF_1(KEYCODE_LEFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT) },
+	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        INPUT_KEY_SEQ_DEF_1(KEYCODE_RIGHT), INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT)  },
+	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      INPUT_KEY_SEQ_DEF_1(KEYCODE_D),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_LEFT) },
+	{ (IPT_PADDLE | IPF_PLAYER2)+IPT_EXTENSION,             "Paddle 2",      INPUT_KEY_SEQ_DEF_1(KEYCODE_G),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_RIGHT) },
+	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",      INPUT_KEY_SEQ_DEF_1(KEYCODE_J),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_LEFT) },
+	{ (IPT_PADDLE | IPF_PLAYER3)+IPT_EXTENSION,             "Paddle 3",      INPUT_KEY_SEQ_DEF_1(KEYCODE_L),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_RIGHT) },
+	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",      INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_LEFT) },
+	{ (IPT_PADDLE | IPF_PLAYER4)+IPT_EXTENSION,             "Paddle 4",      INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_RIGHT) },
+	{ IPT_DIAL | IPF_PLAYER1,    "Dial",          INPUT_KEY_SEQ_DEF_1(KEYCODE_LEFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT) },
+	{ (IPT_DIAL | IPF_PLAYER1)+IPT_EXTENSION,               "Dial",          INPUT_KEY_SEQ_DEF_1(KEYCODE_RIGHT), INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT) },
+	{ IPT_DIAL | IPF_PLAYER2,    "Dial 2",        INPUT_KEY_SEQ_DEF_1(KEYCODE_D),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_LEFT) },
+	{ (IPT_DIAL | IPF_PLAYER2)+IPT_EXTENSION,               "Dial 2",      INPUT_KEY_SEQ_DEF_1(KEYCODE_G),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_RIGHT) },
+	{ IPT_DIAL | IPF_PLAYER3,    "Dial 3",        INPUT_KEY_SEQ_DEF_1(KEYCODE_J),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_LEFT) },
+	{ (IPT_DIAL | IPF_PLAYER3)+IPT_EXTENSION,               "Dial 3",      INPUT_KEY_SEQ_DEF_1(KEYCODE_L),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_RIGHT) },
+	{ IPT_DIAL | IPF_PLAYER4,    "Dial 4",        INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_LEFT) },
+	{ (IPT_DIAL | IPF_PLAYER4)+IPT_EXTENSION,               "Dial 4",      INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_RIGHT) },
 
-	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        KEYCODE_LEFT,  JOYCODE_1_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        KEYCODE_RIGHT, JOYCODE_1_RIGHT  },
-	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      KEYCODE_D,     JOYCODE_2_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER2)+IPT_EXTENSION,             "Paddle 2",      KEYCODE_G,     JOYCODE_2_RIGHT },
-	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",      KEYCODE_J,     JOYCODE_3_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER3)+IPT_EXTENSION,             "Paddle 3",      KEYCODE_L,     JOYCODE_3_RIGHT },
-	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",      KEYCODE_NONE,  JOYCODE_4_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER4)+IPT_EXTENSION,             "Paddle 4",      KEYCODE_NONE,  JOYCODE_4_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER1,    "Dial",          KEYCODE_LEFT,  JOYCODE_1_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER1)+IPT_EXTENSION,               "Dial",          KEYCODE_RIGHT, JOYCODE_1_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER2,    "Dial 2",        KEYCODE_D,     JOYCODE_2_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER2)+IPT_EXTENSION,               "Dial 2",      KEYCODE_G,     JOYCODE_2_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER3,    "Dial 3",        KEYCODE_J,     JOYCODE_3_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER3)+IPT_EXTENSION,               "Dial 3",      KEYCODE_L,     JOYCODE_3_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER4,    "Dial 4",        KEYCODE_NONE,  JOYCODE_4_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER4)+IPT_EXTENSION,               "Dial 4",      KEYCODE_NONE,  JOYCODE_4_RIGHT },
+	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Track X",   INPUT_KEY_SEQ_DEF_1(KEYCODE_LEFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT) },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER1)+IPT_EXTENSION,                 "Track X",   INPUT_KEY_SEQ_DEF_1(KEYCODE_RIGHT), INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_D),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_LEFT) },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER2)+IPT_EXTENSION,                 "Track X 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_G),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_RIGHT) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_J),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_LEFT) },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER3)+IPT_EXTENSION,                 "Track X 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_L),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_RIGHT) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_LEFT) },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER4)+IPT_EXTENSION,                 "Track X 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_RIGHT) },
 
-	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Track X",   KEYCODE_LEFT,  JOYCODE_1_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER1)+IPT_EXTENSION,                 "Track X",   KEYCODE_RIGHT, JOYCODE_1_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", KEYCODE_D,     JOYCODE_2_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER2)+IPT_EXTENSION,                 "Track X 2", KEYCODE_G,     JOYCODE_2_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", KEYCODE_J,     JOYCODE_3_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER3)+IPT_EXTENSION,                 "Track X 3", KEYCODE_L,     JOYCODE_3_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", KEYCODE_NONE,  JOYCODE_4_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER4)+IPT_EXTENSION,                 "Track X 4", KEYCODE_NONE,  JOYCODE_4_RIGHT },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Track Y",   INPUT_KEY_SEQ_DEF_1(KEYCODE_UP),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_UP) },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER1)+IPT_EXTENSION,                 "Track Y",   INPUT_KEY_SEQ_DEF_1(KEYCODE_DOWN),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_DOWN) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_R),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_UP) },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER2)+IPT_EXTENSION,                 "Track Y 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_F),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_DOWN) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_I),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_UP) },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER3)+IPT_EXTENSION,                 "Track Y 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_K),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_DOWN) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_UP) },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER4)+IPT_EXTENSION,                 "Track Y 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_DOWN) },
 
-	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Track Y",   KEYCODE_UP,    JOYCODE_1_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER1)+IPT_EXTENSION,                 "Track Y",   KEYCODE_DOWN,  JOYCODE_1_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", KEYCODE_R,     JOYCODE_2_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER2)+IPT_EXTENSION,                 "Track Y 2", KEYCODE_F,     JOYCODE_2_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", KEYCODE_I,     JOYCODE_3_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER3)+IPT_EXTENSION,                 "Track Y 3", KEYCODE_K,     JOYCODE_3_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", KEYCODE_NONE,  JOYCODE_4_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER4)+IPT_EXTENSION,                 "Track Y 4", KEYCODE_NONE,  JOYCODE_4_DOWN },
+	{ IPT_AD_STICK_X | IPF_PLAYER1, "AD Stick X",   INPUT_KEY_SEQ_DEF_1(KEYCODE_LEFT),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_LEFT) },
+	{ (IPT_AD_STICK_X | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick X",   INPUT_KEY_SEQ_DEF_1(KEYCODE_RIGHT), INPUT_JOY_SEQ_DEF_1(JOYCODE_1_RIGHT) },
+	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_D),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_LEFT) },
+	{ (IPT_AD_STICK_X | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick X 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_G),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_RIGHT) },
+	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_J),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_LEFT) },
+	{ (IPT_AD_STICK_X | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick X 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_L),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_RIGHT) },
+	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_LEFT) },
+	{ (IPT_AD_STICK_X | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick X 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_RIGHT) },
 
-	{ IPT_AD_STICK_X | IPF_PLAYER1, "AD Stick X",   KEYCODE_LEFT,  JOYCODE_1_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick X",   KEYCODE_RIGHT, JOYCODE_1_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", KEYCODE_D,     JOYCODE_2_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick X 2", KEYCODE_G,     JOYCODE_2_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", KEYCODE_J,     JOYCODE_3_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick X 3", KEYCODE_L,     JOYCODE_3_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", KEYCODE_NONE,  JOYCODE_4_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick X 4", KEYCODE_NONE,  JOYCODE_4_RIGHT },
+	{ IPT_AD_STICK_Y | IPF_PLAYER1, "AD Stick Y",   INPUT_KEY_SEQ_DEF_1(KEYCODE_UP),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_UP) },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick Y",   INPUT_KEY_SEQ_DEF_1(KEYCODE_DOWN),  INPUT_JOY_SEQ_DEF_1(JOYCODE_1_DOWN) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_R),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_UP) },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Y 2", INPUT_KEY_SEQ_DEF_1(KEYCODE_F),     INPUT_JOY_SEQ_DEF_1(JOYCODE_2_DOWN) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_I),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_UP) },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", INPUT_KEY_SEQ_DEF_1(KEYCODE_K),     INPUT_JOY_SEQ_DEF_1(JOYCODE_3_DOWN) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_UP) },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", INPUT_KEY_SEQ_DEF_0,  INPUT_JOY_SEQ_DEF_1(JOYCODE_4_DOWN) },
 
-	{ IPT_AD_STICK_Y | IPF_PLAYER1, "AD Stick Y",   KEYCODE_UP,    JOYCODE_1_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick Y",   KEYCODE_DOWN,  JOYCODE_1_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", KEYCODE_R,     JOYCODE_2_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Y 2", KEYCODE_F,     JOYCODE_2_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", KEYCODE_I,     JOYCODE_3_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", KEYCODE_K,     JOYCODE_3_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", KEYCODE_NONE,  JOYCODE_4_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", KEYCODE_NONE,  JOYCODE_4_DOWN },
-
-	{ IPT_UNKNOWN,             "UNKNOWN",         IP_KEY_NONE,     IP_JOY_NONE },
-	{ IPT_END,                 0,                 0,     0 }	/* returned when there is no match */
+	{ IPT_UNKNOWN,             "UNKNOWN",         INPUT_KEY_SEQ_DEF_0,     INPUT_JOY_SEQ_DEF_0 },
+	{ IPT_END,                 0,                 INPUT_KEY_SEQ_DEF_0,     INPUT_JOY_SEQ_DEF_0 }	/* returned when there is no match */
 };
 
 struct ipd inputport_defaults_backup[sizeof(inputport_defaults)/sizeof(struct ipd)];
 
+/***************************************************************************/
+/* Generic IO */
 
 static int readint(void *f,UINT32 *num)
 {
@@ -334,7 +353,139 @@ static void writeword(void *f,UINT16 num)
 	}
 }
 
+/***************************************************************************/
+/* Sequences */
 
+void input_key_seq_set_1(InputKeySeq* a, InputCode code) {
+	int j;
+	(*a)[0] = code;
+	for(j=1;j<INPUT_KEY_SEQ_MAX;++j)
+		(*a)[j] = IP_KEY_NONE;
+}
+
+void input_joy_seq_set_1(InputJoySeq* a, InputCode code) {
+	int j;
+	(*a)[0] = code;
+	for(j=1;j<INPUT_JOY_SEQ_MAX;++j)
+		(*a)[j] = IP_JOY_NONE;
+}
+
+void input_key_seq_copy(InputKeySeq* a, InputKeySeq* b) {
+	int j;
+	for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
+		(*a)[j] = (*b)[j];
+}
+
+void input_joy_seq_copy(InputJoySeq* a, InputJoySeq* b) {
+	int j;
+	for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
+		(*a)[j] = (*b)[j];
+}
+
+int input_key_seq_cmp(InputKeySeq* a, InputKeySeq* b) {
+	int j;
+	for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
+		if ((*a)[j] != (*b)[j])
+			return -1;
+	return 0;
+}
+
+int input_joy_seq_cmp(InputJoySeq* a, InputJoySeq* b) {
+	int j;
+	for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
+		if ((*a)[j] != (*b)[j])
+			return -1;
+	return 0;
+}
+
+static int input_key_seq_read(void* f, InputKeySeq* code, int multikey, int andorkey)
+{
+	int j;
+	if (multikey)
+	{
+		if (andorkey)
+		{
+			for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
+				if (readword(f,&(*code)[j]) != 0)
+					return -1;
+		}
+		else
+		{
+			for(j=0;j<2;++j)
+				if (readword(f,&(*code)[j]) != 0)
+					return -1;
+			for(j=2;j<INPUT_KEY_SEQ_MAX;++j)
+				(*code)[j] = IP_KEY_NONE;
+		}
+	}
+	else
+	{
+		if (readword(f,&(*code)[0]) != 0)
+			return -1;
+		for(j=1;j<INPUT_KEY_SEQ_MAX;++j)
+			(*code)[j] = IP_KEY_NONE;
+	}
+
+	/* convert any 0 and KEYCODE_NONE to IP_KEY_NONE */
+	for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
+		if ((*code)[j]==0 || (*code)[j]==KEYCODE_NONE)
+			(*code)[j] = IP_KEY_NONE;
+
+	return 0;
+}
+
+static int input_joy_seq_read(void* f, InputJoySeq* code, int multikey, int andorkey)
+{
+	int j;
+	if (multikey)
+	{
+		if (andorkey)
+		{
+			for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
+				if (readword(f,&(*code)[j]) != 0)
+					return -1;
+		}
+		else
+		{
+			for(j=0;j<2;++j)
+				if (readword(f,&(*code)[j]) != 0)
+					return -1;
+			for(j=2;j<INPUT_JOY_SEQ_MAX;++j)
+				(*code)[j] = IP_JOY_NONE;
+		}
+	}
+	else
+	{
+		if (readword(f,&(*code)[0]) != 0)
+			return -1;
+		for(j=1;j<INPUT_JOY_SEQ_MAX;++j)
+			(*code)[j] = IP_JOY_NONE;
+	}
+
+	/* convert any 0 and JOYCODE_NONE to IP_JOY_NONE */
+	for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
+		if ((*code)[j]==0 || (*code)[j]==JOYCODE_NONE)
+			(*code)[j] = IP_JOY_NONE;
+
+	return 0;
+}
+
+static void input_key_seq_write(void* f, InputKeySeq* code)
+{
+	int j;
+	for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
+		writeword(f,(*code)[j]);
+}
+
+static void input_joy_seq_write(void* f, InputJoySeq* code)
+{
+	int j;
+	for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
+		writeword(f,(*code)[j]);
+}
+
+/***************************************************************************/
+/* Load */
 
 static void load_default_keys(void)
 {
@@ -348,30 +499,49 @@ static void load_default_keys(void)
 	{
 		char buf[8];
 
+		int multikey;
+		int andorkey;
 
 		/* read header */
 		if (osd_fread(f,buf,8) != 8)
 			goto getout;
-		if (memcmp(buf,MAMEDEFSTRING,8) != 0)
+
+		if (memcmp(buf,MAMEDEFSTRING_V4,8) == 0)
+		{
+			multikey = 0;
+			andorkey = 0;
+		}
+		else if (memcmp(buf,MAMEDEFSTRING_V5,8) == 0)
+		{
+			multikey = 1;
+			andorkey = 0;
+		}
+		else if (memcmp(buf,MAMEDEFSTRING_V6,8) == 0)
+		{
+			multikey = 1;
+			andorkey = 1;
+		} else
 			goto getout;	/* header invalid */
 
 		for (;;)
 		{
 			UINT32 type;
-			UINT16 def_keyboard,def_joystick;
-			UINT16 keyboard,joystick;
+			InputKeySeq def_keyboard;
+			InputJoySeq def_joystick;
+			InputKeySeq keyboard;
+			InputJoySeq joystick;
 			int i;
-
 
 			if (readint(f,&type) != 0)
 				goto getout;
-			if (readword(f,&def_keyboard) != 0)
+
+			if (input_key_seq_read(f,&def_keyboard,multikey,andorkey)!=0)
 				goto getout;
-			if (readword(f,&def_joystick) != 0)
+			if (input_joy_seq_read(f,&def_joystick,multikey,andorkey)!=0)
 				goto getout;
-			if (readword(f,&keyboard) != 0)
+			if (input_key_seq_read(f,&keyboard,multikey,andorkey)!=0)
 				goto getout;
-			if (readword(f,&joystick) != 0)
+			if (input_joy_seq_read(f,&joystick,multikey,andorkey)!=0)
 				goto getout;
 
 			i = 0;
@@ -380,11 +550,12 @@ static void load_default_keys(void)
 				if (inputport_defaults[i].type == type)
 				{
 					/* load stored settings only if the default hasn't changed */
-					if (inputport_defaults[i].keyboard == def_keyboard)
-						inputport_defaults[i].keyboard = keyboard;
-					if (inputport_defaults[i].joystick == def_joystick)
-						inputport_defaults[i].joystick = joystick;
+					if (input_key_seq_cmp(&inputport_defaults[i].keyboard,&def_keyboard)==0)
+						input_key_seq_copy(&inputport_defaults[i].keyboard,&keyboard);
+					if (input_joy_seq_cmp(&inputport_defaults[i].joystick,&def_joystick)==0)
+						input_joy_seq_copy(&inputport_defaults[i].joystick,&joystick);
 				}
+
 				i++;
 			}
 		}
@@ -405,16 +576,18 @@ static void save_default_keys(void)
 
 
 		/* write header */
-		osd_fwrite(f,MAMEDEFSTRING,8);
+		osd_fwrite(f,MAMEDEFSTRING_V6,8);
 
 		i = 0;
 		while (inputport_defaults[i].type != IPT_END)
 		{
 			writeint(f,inputport_defaults[i].type);
-			writeword(f,inputport_defaults_backup[i].keyboard);
-			writeword(f,inputport_defaults_backup[i].joystick);
-			writeword(f,inputport_defaults[i].keyboard);
-			writeword(f,inputport_defaults[i].joystick);
+
+			input_key_seq_write(f,&inputport_defaults_backup[i].keyboard);
+			input_joy_seq_write(f,&inputport_defaults_backup[i].joystick);
+			input_key_seq_write(f,&inputport_defaults[i].keyboard);
+			input_joy_seq_write(f,&inputport_defaults[i].joystick);
+
 			i++;
 		}
 
@@ -425,7 +598,7 @@ static void save_default_keys(void)
 
 
 
-static int readip(void *f,struct InputPort *in)
+static int readip(void *f,struct InputPort *in, int multikey, int andorkey)
 {
 	if (readint(f,&in->type) != 0)
 		return -1;
@@ -433,9 +606,9 @@ static int readip(void *f,struct InputPort *in)
 		return -1;
 	if (readword(f,&in->default_value) != 0)
 		return -1;
-	if (readword(f,&in->keyboard) != 0)
+	if (input_key_seq_read(f,&in->keyboard,multikey,andorkey) != 0)
 		return -1;
-	if (readword(f,&in->joystick) != 0)
+	if (input_joy_seq_read(f,&in->joystick,multikey,andorkey) != 0)
 		return -1;
 
 	return 0;
@@ -446,8 +619,8 @@ static void writeip(void *f,struct InputPort *in)
 	writeint(f,in->type);
 	writeword(f,in->mask);
 	writeword(f,in->default_value);
-	writeword(f,in->keyboard);
-	writeword(f,in->joystick);
+	input_key_seq_write(f,&in->keyboard);
+	input_joy_seq_write(f,&in->joystick);
 }
 
 
@@ -471,9 +644,10 @@ int load_input_port_settings(void)
 		unsigned int total,savedtotal;
 		char buf[8];
 		int i;
+		int multikey;
+		int andorkey;
 
-
-		in = Machine->gamedrv->input_ports;
+		in = Machine->input_ports_default;
 
 		/* calculate the size of the array */
 		total = 0;
@@ -486,7 +660,21 @@ int load_input_port_settings(void)
 		/* read header */
 		if (osd_fread(f,buf,8) != 8)
 			goto getout;
-		if (memcmp(buf,MAMECFGSTRING,8) != 0)
+		if (memcmp(buf,MAMECFGSTRING_V5,8) == 0)
+		{
+			multikey = 0;
+			andorkey = 0;
+		}
+		else if (memcmp(buf,MAMECFGSTRING_V6,8) == 0)
+		{
+			multikey = 1;
+			andorkey = 0;
+		}
+		else if (memcmp(buf,MAMECFGSTRING_V7,8) == 0)
+		{
+			multikey = 1;
+			andorkey = 1;
+		} else
 			goto getout;	/* header invalid */
 
 		/* read array size */
@@ -496,20 +684,19 @@ int load_input_port_settings(void)
 			goto getout;	/* different size */
 
 		/* read the original settings and compare them with the ones defined in the driver */
-		in = Machine->gamedrv->input_ports;
+		in = Machine->input_ports_default;
 		while (in->type != IPT_END)
 		{
 			struct InputPort saved;
 
-
-			if (readip(f,&saved) != 0)
+			if (readip(f,&saved,multikey,andorkey) != 0)
 				goto getout;
 
 			if (in->mask != saved.mask ||
 				in->default_value != saved.default_value ||
 				in->type != saved.type ||
-				in->keyboard != saved.keyboard ||
-				in->joystick != saved.joystick)
+				input_key_seq_cmp(&in->keyboard,&saved.keyboard) !=0 ||
+				input_joy_seq_cmp(&in->joystick,&saved.joystick) !=0 )
 			goto getout;	/* the default values are different */
 
 			in++;
@@ -519,7 +706,7 @@ int load_input_port_settings(void)
 		in = Machine->input_ports;
 		while (in->type != IPT_END)
 		{
-			if (readip(f,in) != 0)
+			if (readip(f,in,multikey,andorkey) != 0)
 				goto getout;
 			in++;
 		}
@@ -676,7 +863,8 @@ getout:
 	else return 0;
 }
 
-
+/***************************************************************************/
+/* Save */
 
 void save_input_port_settings(void)
 {
@@ -811,7 +999,7 @@ void save_input_port_settings(void)
 		int i;
 
 
-		in = Machine->gamedrv->input_ports;
+		in = Machine->input_ports_default;
 
 		/* calculate the size of the array */
 		total = 0;
@@ -822,11 +1010,11 @@ void save_input_port_settings(void)
 		}
 
 		/* write header */
-		osd_fwrite(f,MAMECFGSTRING,8);
+		osd_fwrite(f,MAMECFGSTRING_V7,8);
 		/* write array size */
 		writeint(f,total);
 		/* write the original settings as defined in the driver */
-		in = Machine->gamedrv->input_ports;
+		in = Machine->input_ports_default;
 		while (in->type != IPT_END)
 		{
 			writeip(f,in);
@@ -878,7 +1066,7 @@ const char *input_port_name(const struct InputPort *in)
 		return inputport_defaults[i].name;
 }
 
-int input_port_type_key(int type)
+InputKeySeq* input_port_type_key_multi(int type)
 {
 	int i;
 
@@ -889,10 +1077,10 @@ int input_port_type_key(int type)
 			inputport_defaults[i].type != type)
 		i++;
 
-	return inputport_defaults[i].keyboard;
+	return &inputport_defaults[i].keyboard;
 }
 
-int input_port_type_joy(int type)
+InputJoySeq* input_port_type_joy_multi(int type)
 {
 	int i;
 
@@ -903,32 +1091,34 @@ int input_port_type_joy(int type)
 			inputport_defaults[i].type != type)
 		i++;
 
-	return inputport_defaults[i].joystick;
+	return &inputport_defaults[i].joystick;
 }
 
-int input_port_key(const struct InputPort *in)
+InputKeySeq* input_port_key_multi(const struct InputPort *in)
 {
 	int i,type;
 
+	static InputKeySeq ip_key_none = INPUT_KEY_SEQ_DEF_1(IP_KEY_NONE);
 
-	while (in->keyboard == IP_KEY_PREVIOUS) in--;
+	while (input_key_seq_get_1((InputKeySeq*)&in->keyboard) == IP_KEY_PREVIOUS) in--;
 
 	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
 	{
 		type = (in-1)->type & (~IPF_MASK | IPF_PLAYERMASK);
 		/* if port is disabled, or cheat with cheats disabled, return no key */
 		if (((in-1)->type & IPF_UNUSED) || (!options.cheat && ((in-1)->type & IPF_CHEAT)))
-			return IP_KEY_NONE;
+			return &ip_key_none;
 	}
 	else
 	{
 		type = in->type & (~IPF_MASK | IPF_PLAYERMASK);
 		/* if port is disabled, or cheat with cheats disabled, return no key */
 		if ((in->type & IPF_UNUSED) || (!options.cheat && (in->type & IPF_CHEAT)))
-			return IP_KEY_NONE;
+			return &ip_key_none;
 	}
 
-	if (in->keyboard != IP_KEY_DEFAULT) return in->keyboard;
+	if (input_key_seq_get_1((InputKeySeq*)&in->keyboard) != IP_KEY_DEFAULT)
+		return (InputKeySeq*)&in->keyboard;
 
 	i = 0;
 
@@ -937,34 +1127,36 @@ int input_port_key(const struct InputPort *in)
 		i++;
 
 	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		return inputport_defaults[i+1].keyboard;
+		return &inputport_defaults[i+1].keyboard;
 	else
-		return inputport_defaults[i].keyboard;
+		return &inputport_defaults[i].keyboard;
 }
 
-int input_port_joy(const struct InputPort *in)
+InputJoySeq* input_port_joy_multi(const struct InputPort *in)
 {
 	int i,type;
 
+	static InputJoySeq ip_joy_none = INPUT_JOY_SEQ_DEF_1(IP_JOY_NONE);
 
-	while (in->joystick == IP_JOY_PREVIOUS) in--;
+	while (input_joy_seq_get_1((InputJoySeq*)&in->joystick) == IP_JOY_PREVIOUS) in--;
 
 	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
 	{
 		type = (in-1)->type & (~IPF_MASK | IPF_PLAYERMASK);
 		/* if port is disabled, or cheat with cheats disabled, return no joy */
 		if (((in-1)->type & IPF_UNUSED) || (!options.cheat && ((in-1)->type & IPF_CHEAT)))
-			return IP_JOY_NONE;
+			return &ip_joy_none;
 	}
 	else
 	{
 		type = in->type & (~IPF_MASK | IPF_PLAYERMASK);
 		/* if port is disabled, or cheat with cheats disabled, return no joy */
 		if ((in->type & IPF_UNUSED) || (!options.cheat && (in->type & IPF_CHEAT)))
-			return IP_JOY_NONE;
+			return &ip_joy_none;
 	}
 
-	if (in->joystick != IP_JOY_DEFAULT) return in->joystick;
+	if (input_joy_seq_get_1((InputJoySeq*)&in->joystick) != IP_JOY_DEFAULT)
+		return (InputJoySeq*)&in->joystick;
 
 	i = 0;
 
@@ -973,9 +1165,9 @@ int input_port_joy(const struct InputPort *in)
 		i++;
 
 	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		return inputport_defaults[i+1].joystick;
+		return &inputport_defaults[i+1].joystick;
 	else
-		return inputport_defaults[i].joystick;
+		return &inputport_defaults[i].joystick;
 }
 
 
@@ -985,7 +1177,11 @@ void update_analog_port(int port)
 	struct InputPort *in;
 	int current, delta, type, sensitivity, clip, min, max, default_value;
 	int axis, is_stick, check_bounds;
-	int inckey, deckey, keydelta, incjoy, decjoy;
+	InputKeySeq* inckey;
+	InputKeySeq* deckey;
+	InputJoySeq* incjoy;
+	InputJoySeq* decjoy;
+	int keydelta;
 	int player;
 
 	/* get input definition */
@@ -995,11 +1191,10 @@ void update_analog_port(int port)
 	if (!options.cheat && (in->type & IPF_CHEAT)) return;
 	type=(in->type & ~IPF_MASK);
 
-
-	deckey = input_port_key(in);
-	decjoy = input_port_joy(in);
-	inckey = input_port_key(in+1);
-	incjoy = input_port_joy(in+1);
+	deckey = input_port_key_multi(in);
+	decjoy = input_port_joy_multi(in);
+	inckey = input_port_key_multi(in+1);
+	incjoy = input_port_joy_multi(in+1);
 
 	keydelta = IP_GET_DELTA(in);
 
@@ -1007,8 +1202,12 @@ void update_analog_port(int port)
 	{
 		case IPT_PADDLE:
 			axis = X_AXIS; is_stick = 0; check_bounds = 1; break;
+		case IPT_PADDLE_V:
+			axis = Y_AXIS; is_stick = 0; check_bounds = 1; break;
 		case IPT_DIAL:
 			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
+		case IPT_DIAL_V:
+			axis = Y_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_TRACKBALL_X:
 			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_TRACKBALL_Y:
@@ -1066,18 +1265,18 @@ void update_analog_port(int port)
 	else
 		delta = mouse_delta_y[player];
 
-	if (keyboard_pressed(deckey)) delta -= keydelta;
-	if (joystick_pressed(decjoy)) delta -= keydelta;
+	if (keyboard_pressed_multi(deckey)) delta -= keydelta;
+	if (joystick_pressed_multi(decjoy)) delta -= keydelta;
 
 	if (type != IPT_PEDAL)
 	{
-		if (keyboard_pressed(inckey)) delta += keydelta;
-		if (joystick_pressed(incjoy)) delta += keydelta;
+		if (keyboard_pressed_multi(inckey)) delta += keydelta;
+		if (joystick_pressed_multi(incjoy)) delta += keydelta;
 	}
 	else
 	{
 		/* is this cheesy or what? */
-		if (!delta && inckey == KEYCODE_Y) delta += keydelta;
+		if (!delta && input_key_seq_get_1(inckey) == KEYCODE_Y) delta += keydelta;
 		delta = -delta;
 	}
 
@@ -1099,9 +1298,9 @@ void update_analog_port(int port)
 		if ((delta == 0) && (in->type & IPF_CENTER))
 		{
 			if (current > default_value)
-				delta = -100 / sensitivity;
+			delta = -100 / sensitivity;
 			if (current < default_value)
-				delta =  100 / sensitivity;
+			delta = 100 / sensitivity;
 		}
 
 		/* An analog joystick which is not at zero position (or has just */
@@ -1172,11 +1371,12 @@ void update_analog_port(int port)
 	input_analog_current_value[port]=current;
 }
 
-void scale_analog_port(int port)
+static void scale_analog_port(int port)
 {
 	struct InputPort *in;
 	int delta,current,sensitivity;
 
+profiler_mark(PROFILER_INPUT);
 	in = input_analog[port];
 	sensitivity = IP_GET_SENSITIVITY(in);
 
@@ -1195,6 +1395,7 @@ void scale_analog_port(int port)
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_analog_sync((unsigned char *) input_port_value, port, analog_player_port, default_player);
 #endif /* MAME_NET */
+profiler_mark(PROFILER_END);
 }
 
 
@@ -1217,6 +1418,9 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 #ifdef MAME_NET
 int player;
 #endif /* MAME_NET */
+
+
+profiler_mark(PROFILER_INPUT);
 
 	/* clear all the values before proceeding */
 	for (port = 0;port < MAX_INPUT_PORTS;port++)
@@ -1253,13 +1457,14 @@ int player;
 			if ((in->type & ~IPF_MASK) >= IPT_JOYSTICK_UP &&
 				(in->type & ~IPF_MASK) <= IPT_JOYSTICKLEFT_RIGHT)
 			{
-				int key,joy;
+				InputKeySeq* key;
+				InputJoySeq* joy;
 
-				key = input_port_key(in);
-				joy = input_port_joy(in);
+				key = input_port_key_multi(in);
+				joy = input_port_joy_multi(in);
 
-				if ((key != 0 && key != IP_KEY_NONE) ||
-					(joy != 0 && joy != IP_JOY_NONE))
+				if ((input_key_seq_get_1(key) != 0 && input_key_seq_get_1(key) != IP_KEY_NONE) ||
+					(input_joy_seq_get_1(joy) != 0 && input_joy_seq_get_1(joy) != IP_JOY_NONE))
 				{
 					int joynum,joydir,player;
 
@@ -1275,7 +1480,7 @@ int player;
 							 ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
 					joydir = ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) % 4;
 
-					if (keyboard_pressed(key) || joystick_pressed(joy))
+					if (keyboard_pressed_multi(key) || joystick_pressed_multi(joy))
 					{
 						if (joyserial[joynum][joydir] == 0)
 							joyserial[joynum][joydir] = update_serial_number;
@@ -1365,13 +1570,13 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 				}
 				else
 				{
-					int key,joy;
+					InputKeySeq* key;
+					InputJoySeq* joy;
 
+					key = input_port_key_multi(in);
+					joy = input_port_joy_multi(in);
 
-					key = input_port_key(in);
-					joy = input_port_joy(in);
-
-					if (keyboard_pressed(key) || joystick_pressed(joy))
+					if (keyboard_pressed_multi(key) || joystick_pressed_multi(joy))
 					{
 						/* skip if coin input and it's locked out */
 						if ((in->type & ~IPF_MASK) >= IPT_COIN1 &&
@@ -1383,7 +1588,7 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 
 						/* if IPF_RESET set, reset the first CPU */
 						if ((in->type & IPF_RESETCPU) && waspressed[ib] == 0)
-							cpu_reset(0);
+							cpu_set_reset_line(0,PULSE_LINE);
 
 						if (in->type & IPF_IMPULSE)
 						{
@@ -1507,6 +1712,8 @@ if (errorlog && IP_GET_IMPULSE(in) == 0)
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_input_sync((unsigned char *) input_port_value, (unsigned char *) input_port_defaults, MAX_INPUT_PORTS);
 #endif /* MAME_NET */
+
+profiler_mark(PROFILER_END);
 }
 
 
@@ -1519,6 +1726,7 @@ void inputport_vblank_end(void)
 	int i;
 
 
+profiler_mark(PROFILER_INPUT);
 	for (port = 0;port < MAX_INPUT_PORTS;port++)
 	{
 		if (input_vblank[port])
@@ -1553,6 +1761,7 @@ void inputport_vblank_end(void)
 			update_analog_port(i);
 		}
 	}
+profiler_mark(PROFILER_END);
 }
 
 
@@ -1597,4 +1806,96 @@ void set_default_player_controls(int player)
 		default_player = player - 1;
 }
 #endif /* MAME_NET */
+
+/***************************************************************************/
+/* InputPort conversion */
+
+static unsigned input_port_count(struct InputPortTiny* src) {
+	unsigned total;
+
+	total = 0;
+	while (src->type != IPT_END)
+	{
+		int type = src->type & ~IPF_MASK;
+		if (type > IPT_ANALOG_START && type < IPT_ANALOG_END)
+			total += 2;
+		else if (type != IPT_EXTENSION)
+			++total;
+		++src;
+	}
+
+	++total; /* for IPT_END */
+
+	return total;
+}
+
+struct InputPort* input_port_allocate(struct InputPortTiny* src) {
+	struct InputPort* dst;
+	struct InputPort* base;
+	unsigned total;
+
+	total = input_port_count(src);
+
+	base = (struct InputPort*)malloc(total * sizeof(struct InputPort));
+	dst = base;
+
+	while (src->type != IPT_END)
+	{
+		int type = src->type & ~IPF_MASK;
+		struct InputPortTiny* ext;
+		struct InputPortTiny* src_end;
+		InputCode key_default;
+		InputCode joy_default;
+
+		if (type > IPT_ANALOG_START && type < IPT_ANALOG_END)
+			src_end = src + 2;
+		else
+			src_end = src + 1;
+
+		switch (type) {
+			case IPT_END :
+			case IPT_PORT :
+			case IPT_DIPSWITCH_NAME :
+			case IPT_DIPSWITCH_SETTING :
+				key_default = IP_KEY_NONE;
+				joy_default = IP_JOY_NONE;
+			break;
+			default:
+				key_default = IP_KEY_DEFAULT;
+				joy_default = IP_JOY_DEFAULT;
+		}
+
+		ext = src_end;
+		while (src != src_end)
+		{
+			dst->type = src->type;
+			dst->mask = src->mask;
+			dst->default_value = src->default_value;
+			dst->name = src->name;
+
+			if (ext->type == IPT_EXTENSION)
+			{
+				input_key_seq_set_1(&dst->keyboard,IP_GET_KEY(ext));
+				input_joy_seq_set_1(&dst->joystick,IP_GET_JOY(ext));
+				++ext;
+			} else {
+				input_key_seq_set_1(&dst->keyboard,key_default);
+				input_joy_seq_set_1(&dst->joystick,joy_default);
+			}
+
+			++src;
+			++dst;
+		}
+
+		src = ext;
+	}
+
+	dst->type = IPT_END;
+
+	return base;
+}
+
+void input_port_free(struct InputPort* dst) {
+	free(dst);
+}
 

@@ -36,24 +36,20 @@ extern void contra_bg_cram_w(int offset,int data);
 extern void contra_text_vram_w(int offset,int data);
 extern void contra_text_cram_w(int offset,int data);
 
-extern void contra_sprite_buffer_select( int offset, int data );
+extern void contra_sprite_buffer_1_w( int offset, int data );
+extern void contra_sprite_buffer_2_w( int offset, int data );
 extern void contra_0007_w(int offset,int data);
 extern void contra_fg_palette_bank_w(int offset,int data);
 extern void contra_bg_palette_bank_w(int offset,int data);
 extern void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int contra_vh_start(void);
-
-void contra_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
+extern void contra_vh_stop(void);
 
 
 void contra_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;
@@ -100,7 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0000, MWA_RAM, &contra_fg_vertical_scroll },
 	{ 0x0002, 0x0002, MWA_RAM, &contra_fg_horizontal_scroll },
-	{ 0x0003, 0x0003, contra_sprite_buffer_select },
+	{ 0x0003, 0x0003, contra_sprite_buffer_1_w },
 	{ 0x0006, 0x0006, contra_fg_palette_bank_w },
 	{ 0x0007, 0x0007, contra_0007_w },
 	{ 0x0018, 0x0018, contra_coin_counter_w },
@@ -109,6 +105,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x001e, 0x001e, MWA_NOP },	/* ? */
 	{ 0x0060, 0x0060, MWA_RAM, &contra_bg_vertical_scroll },
 	{ 0x0062, 0x0062, MWA_RAM, &contra_bg_horizontal_scroll },
+	{ 0x0063, 0x0063, contra_sprite_buffer_2_w },
 	{ 0x0066, 0x0066, contra_bg_palette_bank_w },
 	{ 0x0c00, 0x0cff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x1000, 0x1fff, MWA_RAM },
@@ -148,7 +145,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( contra )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -258,16 +255,16 @@ static struct GfxLayout gfx_layout =
 	8,8,
 	0x4000,
 	4,
-	{ 0,1,2,3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28},
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
 	32*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &gfx_layout, 0, 8*16 },
-	{ 1, 0x80000, &gfx_layout, 0, 8*16 },
+	{ REGION_GFX1, 0, &gfx_layout, 0, 8*16 },
+	{ REGION_GFX2, 0, &gfx_layout, 0, 8*16 },
 	{ -1 }
 };
 
@@ -277,33 +274,31 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3582071,	/* seems to be the standard */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_RIGHT,60,MIXER_PAN_LEFT) },
 	{ 0 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_contra =
 {
 	{
 		{
  			CPU_M6809,
 			1500000,
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
  			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,
-			3,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		},
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	contra_init_machine, /* init machine */
+	0,
 
 	/* video hardware */
 
@@ -315,7 +310,7 @@ static struct MachineDriver machine_driver =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	contra_vh_start,
-	0, /* vh_stop */
+	contra_vh_stop,
 	contra_vh_screenrefresh,
 
 	/* sound hardware */
@@ -330,294 +325,150 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( contra_rom )
-	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
+#if 0
+	/* bootleg versions use smaller gfx ROMs, but the data is the same */
+	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
+	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
+	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
+	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
+	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
+	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
+	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
+	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
+	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
+	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
+	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
+	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
+	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
+#endif
+
+
+ROM_START( contra )
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "633e03.18a",   0x20000, 0x08000, 0x7fc0d8cf )
 	ROM_CONTINUE(			  0x08000, 0x08000 )
 	ROM_LOAD( "633e02.17a",   0x10000, 0x10000, 0xb2f7bd9a )
 
-	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	/* bank 0: player sprites, foreground tiles */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
-	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
-	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
-	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
-	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for SOUND code */
+	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 
-	/* bank 1: enemy sprites, background tiles */
-	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
-	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
-	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
-	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
-	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e04.7d",    0x00000, 0x40000, 0x14ddc542 )
+	ROM_LOAD_GFX_ODD ( "633e05.7f",    0x00000, 0x40000, 0x42185044 )
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e06.16d",   0x00000, 0x40000, 0x9cf6faae )
+	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
 	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
-
-	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 ROM_END
 
-ROM_START( contrab_rom )
-	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
+ROM_START( contrab )
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "contra.20",    0x20000, 0x08000, 0xd045e1da )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 	ROM_LOAD( "633e02.17a",   0x10000, 0x10000, 0xb2f7bd9a )
 
-	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	/* bank 0: player sprites, foreground tiles */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
-	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
-	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
-	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
-	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for SOUND code */
+	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 
-	/* bank 1: enemy sprites, background tiles */
-	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
-	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
-	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
-	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
-	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e04.7d",    0x00000, 0x40000, 0x14ddc542 )
+	ROM_LOAD_GFX_ODD ( "633e05.7f",    0x00000, 0x40000, 0x42185044 )
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e06.16d",   0x00000, 0x40000, 0x9cf6faae )
+	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
 	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
-
-	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 ROM_END
 
-ROM_START( contrajb_rom )
-	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
+ROM_START( contraj )
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
+	ROM_LOAD( "633n03.18a",   0x20000, 0x08000, 0xfedab568 )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+	ROM_LOAD( "633k02.17a",   0x10000, 0x10000, 0x5d5f7438 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for SOUND code */
+	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e04.7d",    0x00000, 0x40000, 0x14ddc542 )
+	ROM_LOAD_GFX_ODD ( "633e05.7f",    0x00000, 0x40000, 0x42185044 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e06.16d",   0x00000, 0x40000, 0x9cf6faae )
+	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
+ROM_END
+
+ROM_START( contrajb )
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "g-2.rom",      0x20000, 0x08000, 0xbdb9196d )
 	ROM_CONTINUE(             0x08000, 0x08000 )
-	ROM_LOAD( "g-3.rom",      0x10000, 0x10000, 0x5d5f7438 )
+	ROM_LOAD( "633k02.17a",   0x10000, 0x10000, 0x5d5f7438 )
 
-	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	/* bank 0: player sprites, foreground tiles */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
-	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
-	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
-	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
-	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for SOUND code */
+	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 
-	/* bank 1: enemy sprites, background tiles */
-	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
-	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
-	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
-	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
-	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e04.7d",    0x00000, 0x40000, 0x14ddc542 )
+	ROM_LOAD_GFX_ODD ( "633e05.7f",    0x00000, 0x40000, 0x42185044 )
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e06.16d",   0x00000, 0x40000, 0x9cf6faae )
+	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
 	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
-
-	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 ROM_END
 
-ROM_START( gryzor_rom )
-	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
+ROM_START( gryzor )
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "g2",           0x20000, 0x08000, 0x92ca77bd )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 	ROM_LOAD( "g3",           0x10000, 0x10000, 0xbbd9e95e )
 
-	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	/* bank 0: player sprites, foreground tiles */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
-	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
-	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
-	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
-	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for SOUND code */
+	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 
-	/* bank 1: enemy sprites, background tiles */
-	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
-	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
-	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
-	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
-	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e04.7d",    0x00000, 0x40000, 0x14ddc542 )
+	ROM_LOAD_GFX_ODD ( "633e05.7f",    0x00000, 0x40000, 0x42185044 )
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "633e06.16d",   0x00000, 0x40000, 0x9cf6faae )
+	ROM_LOAD_GFX_ODD ( "633e07.16f",   0x00000, 0x40000, 0xf2d06638 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
 	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
-
-	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 ROM_END
 
 
 
-static int contra_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x1125],"\x02\x58\x00",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x1120],64);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0x1118] = RAM[0x1124];
-                        RAM[0x1119] = RAM[0x1125];
-                        RAM[0x111a] = RAM[0x1126];
-                        RAM[0x111b] = RAM[0x1127];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void contra_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x1120],64);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver contra_driver =
-{
-	__FILE__,
-	0,
-	"contra",
-	"Contra (US)",
-	"1987",
-	"Konami",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	contra_rom,
-	0, 0,
-	0,
-	0,
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver contrab_driver =
-{
-	__FILE__,
-	&contra_driver,
-	"contrab",
-	"Contra (US bootleg)",
-	"1987",
-	"bootleg",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	contrab_rom,
-	0, 0,
-	0,
-	0,
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver contrajb_driver =
-{
-	__FILE__,
-	&contra_driver,
-	"contrajb",
-	"Contra (Japan bootleg)",
-	"1987",
-	"bootleg",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	contrajb_rom,
-	0, 0,
-	0,
-	0,
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver gryzor_driver =
-{
-	__FILE__,
-	&contra_driver,
-	"gryzor",
-	"Gryzor",
-	"1987",
-	"Konami",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	gryzor_rom,
-	0, 0,
-	0,
-	0,
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
+GAME( 1987, contra,   ,       contra, contra, , ROT90, "Konami", "Contra (US)" )
+GAME( 1987, contrab,  contra, contra, contra, , ROT90, "bootleg", "Contra (US bootleg)" )
+GAME( 1987, contraj,  contra, contra, contra, , ROT90, "Konami", "Contra (Japan)" )
+GAME( 1987, contrajb, contra, contra, contra, , ROT90, "bootleg", "Contra (Japan bootleg)" )
+GAME( 1987, gryzor,   contra, contra, contra, , ROT90, "Konami", "Gryzor" )

@@ -36,7 +36,7 @@ void bublbobl_sharedram2_w(int offset,int data)
 
 void bublbobl_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((data & 3) == 0) { cpu_setbank(1,&RAM[0x8000]); }
@@ -45,7 +45,7 @@ void bublbobl_bankswitch_w(int offset,int data)
 
 void tokio_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1, &RAM[0x10000 + 0x4000 * (data & 7)]);
 }
@@ -104,9 +104,9 @@ int bublbobl_m68705_interrupt(void)
 {
 	/* I don't know how to handle the interrupt line so I just toggle it every time. */
 	if (cpu_getiloops() & 1)
-		cpu_set_irq_line(3,0,ASSERT_LINE);
-	else
 		cpu_set_irq_line(3,0,CLEAR_LINE);
+	else
+		cpu_set_irq_line(3,0,ASSERT_LINE);
 
     return 0;
 }

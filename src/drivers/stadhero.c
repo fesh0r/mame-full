@@ -141,7 +141,7 @@ static struct MemoryWriteAddress stadhero_s_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( stadhero_input_ports )
+INPUT_PORTS_START( stadhero )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -299,33 +299,31 @@ static struct YM3812interface ym3812_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
+	{ 7757 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 80 }
 };
 
 /******************************************************************************/
 
-static struct MachineDriver stadhero_machine_driver =
+static struct MachineDriver machine_driver_stadhero =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			stadhero_readmem,stadhero_writemem,0,0,
 			m68_level5_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			stadhero_s_readmem,stadhero_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -336,7 +334,7 @@ static struct MachineDriver stadhero_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	stadhero_vh_start,
 	stadhero_vh_stop,
@@ -362,8 +360,8 @@ static struct MachineDriver stadhero_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( stadhero_rom )
-	ROM_REGION(0x20000)	/* 6*64k for 68000 code */
+ROM_START( stadhero )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ef15.bin",  0x00000, 0x10000, 0xbbba364e )
 	ROM_LOAD_ODD ( "ef13.bin",  0x00000, 0x10000, 0x97c6717a )
 
@@ -384,7 +382,7 @@ ROM_START( stadhero_rom )
 	ROM_LOAD( "ef06.bin",     0x0b0000, 0x10000, 0x9f47848f )
 	ROM_LOAD( "ef07.bin",     0x0c0000, 0x10000, 0x8859f655 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ef18.bin",  0x8000, 0x8000, 0x20fd9668 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -393,7 +391,7 @@ ROM_END
 
 /******************************************************************************/
 
-struct GameDriver stadhero_driver =
+struct GameDriver driver_stadhero =
 {
 	__FILE__,
 	0,
@@ -403,17 +401,17 @@ struct GameDriver stadhero_driver =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&stadhero_machine_driver,
+	&machine_driver_stadhero,
 	0,
 
-	stadhero_rom,
+	rom_stadhero,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	stadhero_input_ports,
+	input_ports_stadhero,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

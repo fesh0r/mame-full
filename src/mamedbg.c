@@ -61,7 +61,7 @@
 #if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
 #include "cpu/m6805/m6805.h"
 #endif
-#if (HAS_M6309 || HAS_M6809)
+#if (HAS_HD6309 || HAS_M6809)
 #include "cpu/m6809/m6809.h"
 #endif
 #if (HAS_M68000 || defined HAS_M68010 || HAS_M68020)
@@ -76,7 +76,8 @@
 #if (HAS_TMS34010)
 #include "cpu/tms34010/tms34010.h"
 #endif
-#if (HAS_TMS9900)
+#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
+		|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
 #include "cpu/tms9900/tms9900.h"
 #endif
 #if (HAS_Z8000)
@@ -1690,25 +1691,25 @@ static const char *name_rdmem( unsigned base )
         {
 			unsigned offset = base - mr->start;
 
-			if( mr->description )
-				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
-			else
-			if( mr->base && *mr->base == videoram )
-				sprintf(dst, "video+%04X", lshift(offset) );
-			else
-			if( mr->base && *mr->base == colorram )
-				sprintf(dst, "color+%04X", lshift(offset) );
-			else
-			if( mr->base && *mr->base == spriteram )
-				sprintf(dst, "sprite+%04X", lshift(offset) );
-			else
+//			if( mr->description )
+//				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
+//			else
+//			if( mr->base && *mr->base == videoram )
+//				sprintf(dst, "video+%04X", lshift(offset) );
+//			else
+//			if( mr->base && *mr->base == colorram )
+//				sprintf(dst, "color+%04X", lshift(offset) );
+//			else
+//			if( mr->base && *mr->base == spriteram )
+//				sprintf(dst, "sprite+%04X", lshift(offset) );
+//			else
 			switch( (FPTR)mr->handler )
             {
 			case (FPTR)MRA_RAM:
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
 				break;
 			case (FPTR)MRA_ROM:
-				name = name_rom("ROM", cpu->memory_region, &base, mr->start );
+				name = name_rom("ROM", REGION_CPU1+activecpu, &base, mr->start );
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MRA_BANK1:
@@ -1822,9 +1823,9 @@ static const char *name_wrmem( unsigned base )
     {
         if( base >= mw->start && base <= mw->end )
         {
-			if( mw->description )
-				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
-			else
+//			if( mw->description )
+//				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
+//			else
 			if( mw->base && *mw->base == videoram )
 				sprintf(dst, "video+%04X", lshift(base - mw->start) );
 			else
@@ -1840,11 +1841,11 @@ static const char *name_wrmem( unsigned base )
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_ROM:
-				name = name_rom("ROM", cpu->memory_region, &base, mw->start );
+				name = name_rom("ROM", REGION_CPU1+activecpu, &base, mw->start );
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MWA_RAMROM:
-				name = name_rom("RAMROM", cpu->memory_region, &base, mw->start);
+				name = name_rom("RAMROM", REGION_CPU1+activecpu, &base, mw->start);
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MWA_BANK1:
@@ -3523,11 +3524,16 @@ static void cmd_brk_data_set( void )
 	int length;
 
 	DBG.brk_data = get_register_or_value( &cmd, &length );
+
+	DBG.brk_data = rshift(DBG.brk_data) & AMASK; /* EHC 11/14/99: Need to shift + mask otherwise we die */
+
 	if( length )
 	{
 		data = RDMEM(DBG.brk_data);
+
 		DBG.brk_data_oldval = data;
 		data = get_register_or_value( &cmd, &length );
+
 		if( length )
 		{
 			DBG.brk_data_newval = data;
@@ -5055,7 +5061,7 @@ void MAME_Debug(void)
     if( ++debug_key_delay == 0x7fff )
     {
         debug_key_delay = 0;
-        debug_key_pressed = keyboard_pressed(input_port_type_key(IPT_UI_ON_SCREEN_DISPLAY));
+        debug_key_pressed = keyboard_pressed_multi(input_port_type_key_multi(IPT_UI_ON_SCREEN_DISPLAY));
     }
 
     if( dbg_fast )

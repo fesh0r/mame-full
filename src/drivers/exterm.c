@@ -66,13 +66,17 @@ extern unsigned char *exterm_master_speedup, *exterm_slave_speedup;
 extern unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 
 /* Functions in vidhrdw/exterm.c */
-void exterm_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void exterm_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  exterm_vh_start(void);
 void exterm_vh_stop (void);
 int  exterm_master_videoram_r(int offset);
 int  exterm_slave_videoram_r(int offset);
 void exterm_paletteram_w(int offset, int data);
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg);
+void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg);
+void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
+void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 
 /* Functions in sndhrdw/gottlieb.c */
 void gottlieb_sh_w(int offset,int data);
@@ -82,7 +86,8 @@ void exterm_sound_control_w(int offset, int data);
 void exterm_ym2151_w(int offset, int data);
 
 /* Functions in machine/exterm.c */
-void exterm_init_machine(void);
+void exterm_host_data_w(int offset, int data);
+int  exterm_host_data_r(int offset);
 int  exterm_coderom_r(int offset);
 int  exterm_input_port_0_1_r(int offset);
 int  exterm_input_port_2_3_r(int offset);
@@ -93,48 +98,83 @@ int  exterm_sound_dac_speedup_r(int offset);
 int  exterm_sound_ym2151_speedup_r(int offset);
 
 
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,eeprom,eeprom_size);
+	else
+	{
+		if (file)
+			osd_fread(file,eeprom,eeprom_size);
+		else
+			memset(eeprom,0,eeprom_size);
+	}
+}
+
+
+static struct tms34010_config master_config =
+{
+	0,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	exterm_to_shiftreg_master,	/* write to shiftreg function */
+	exterm_from_shiftreg_master	/* read from shiftreg function */
+};
+
+
 static struct MemoryReadAddress master_readmem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r, &exterm_master_videoram },
-	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r, &exterm_master_speedup },
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r },
+	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r },
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA_BANK1 },
 	{ TOBYTE(0x01000000), TOBYTE(0x0100000f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
-	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), TMS34010_HSTDATA_r },
+	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), exterm_host_data_r },
 	{ TOBYTE(0x01400000), TOBYTE(0x0140000f), exterm_input_port_0_1_r },
 	{ TOBYTE(0x01440000), TOBYTE(0x0144000f), exterm_input_port_2_3_r },
 	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_4_r },
 	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), paletteram_word_r },
 	{ TOBYTE(0x01808000), TOBYTE(0x0180800f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA_BANK2, &eeprom, &eeprom_size },
+	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA_BANK2 },
 	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), exterm_coderom_r },
 	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), exterm_coderom_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3, &exterm_code_rom, &code_rom_size },
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3 },
 	{ -1 }  /* end of table */
 };
 
+static void placeholder(int offset,int data)
+{}
+
 static struct MemoryWriteAddress master_writemem[] =
 {
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_master_videoram },
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA_BANK1 },
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), TMS34010_HSTADRL_w },
-	{ TOBYTE(0x01100000), TOBYTE(0x011fffff), TMS34010_HSTADRH_w },
-	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), TMS34010_HSTDATA_w },
-	{ TOBYTE(0x01300000), TOBYTE(0x013fffff), TMS34010_HSTCTLH_w },
+	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), placeholder, &exterm_master_speedup },
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), exterm_host_data_w },
 	{ TOBYTE(0x01500000), TOBYTE(0x0150000f), exterm_output_port_0_w },
 	{ TOBYTE(0x01580000), TOBYTE(0x0158000f), gottlieb_sh_w },
 	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset_w },
 	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), exterm_paletteram_w, &paletteram },
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2 }, /* EEPROM */
+	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2, &eeprom, &eeprom_size }, /* EEPROM */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA_BANK3, &exterm_code_rom, &code_rom_size },
 	{ -1 }  /* end of table */
+};
+
+
+static struct tms34010_config slave_config =
+{
+	1,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	exterm_to_shiftreg_slave,	/* write to shiftreg function */
+	exterm_from_shiftreg_slave	/* read from shiftreg function */
 };
 
 
 static struct MemoryReadAddress slave_readmem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r, &exterm_slave_videoram },
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK4 },
 	{ -1 }  /* end of table */
@@ -142,6 +182,7 @@ static struct MemoryReadAddress slave_readmem[] =
 
 static struct MemoryWriteAddress slave_writemem[] =
 {
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_slave_videoram },
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
@@ -189,7 +230,7 @@ static struct MemoryWriteAddress sound_ym2151_writemem[] =
 
 
 
-INPUT_PORTS_START( exterm_input_ports )
+INPUT_PORTS_START( exterm )
 
 	PORT_START      /* IN0 LO */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -273,22 +314,21 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			40000000,	/* 40 Mhz */
-			0,
+			40000000/8,	/* 40 Mhz */
             master_readmem,master_writemem,0,0,
-            ignore_interrupt,0  /* Display Interrupts caused internally */
+            ignore_interrupt,0,  /* Display Interrupts caused internally */
+            0,0,&master_config
 		},
 		{
 			CPU_TMS34010,
-			40000000,	/* 40 Mhz */
-			2,
+			40000000/8,	/* 40 Mhz */
             slave_readmem,slave_writemem,0,0,
-            ignore_interrupt,0  /* Display Interrupts caused internally */
+            ignore_interrupt,0,  /* Display Interrupts caused internally */
+            0,0,&slave_config
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
-			3,
 			sound_dac_readmem,sound_dac_writemem,0,0,
 			ignore_interrupt,0	/* IRQ caused when sound command is written */
 								/* NMIs are triggered by the YM2151 CPU */
@@ -296,9 +336,8 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
-			4,
-            sound_ym2151_readmem,sound_ym2151_writemem,0,0,
-            ignore_interrupt,0	/* IRQ caused when sound command is written */
+			sound_ym2151_readmem,sound_ym2151_writemem,0,0,
+			ignore_interrupt,0	/* IRQ caused when sound command is written */
 								/* NMIs are triggered by a programmable timer */
 		}
 	},
@@ -312,9 +351,9 @@ static struct MachineDriver machine_driver =
 
 	0,
 	4096+32768,0,
-    exterm_vh_convert_color_prom,
+    exterm_init_palette,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
+    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	exterm_vh_start,
 	exterm_vh_stop,
@@ -331,43 +370,12 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2151,
 			&ym2151_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-
-/***************************************************************************
-
-  High score save/load
-
-***************************************************************************/
-
-static int hiload (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread (f, eeprom, eeprom_size);
-		osd_fclose (f);
-	}
-
-	return 1;
-}
-
-
-static void hisave (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		osd_fwrite (f, eeprom, eeprom_size);
-		osd_fclose (f);
-	}
-}
 
 /***************************************************************************
 
@@ -375,8 +383,8 @@ static void hisave (void)
 
 ***************************************************************************/
 
-ROM_START( exterm_rom )
-	ROM_REGION(0x200000)     /* 2MB for 34010 code */
+ROM_START( exterm )
+	ROM_REGIONX( 0x200000, REGION_CPU1 )     /* 2MB for 34010 code */
 	ROM_LOAD_ODD(  "v101bg0",  0x000000, 0x10000, 0x8c8e72cf )
 	ROM_LOAD_EVEN( "v101bg1",  0x000000, 0x10000, 0xcc2da0d8 )
 	ROM_LOAD_ODD(  "v101bg2",  0x020000, 0x10000, 0x2dcb3653 )
@@ -398,28 +406,26 @@ ROM_START( exterm_rom )
 	ROM_LOAD_ODD(  "v101p0",   0x1e0000, 0x10000, 0x6c8ee79a )
 	ROM_LOAD_EVEN( "v101p1",   0x1e0000, 0x10000, 0x557bfc84 )
 
-	ROM_REGION_DISPOSE(0x1000)   /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	 /* Slave CPU memory space. There are no ROMs mapped here */
 
-	ROM_REGION(0x1000)	 /* Slave CPU memory space. There are no ROMs mapped here */
-
-	ROM_REGION(0x10000)	 /* 64k for DAC code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	 /* 64k for DAC code */
 	ROM_LOAD( "v101d1", 0x08000, 0x08000, 0x83268b7d )
 
-	ROM_REGION(0x10000)	 /* 64k for YM2151 code */
+	ROM_REGIONX( 0x10000, REGION_CPU4 )	 /* 64k for YM2151 code */
 	ROM_LOAD( "v101y1", 0x08000, 0x08000, 0xcbeaa837 )
 ROM_END
 
 
 void driver_init(void)
 {
-	memcpy (exterm_code_rom,Machine->memory_region[Machine->drv->cpu[0].memory_region],code_rom_size);
+	memcpy (exterm_code_rom,memory_region(REGION_CPU1),code_rom_size);
 
 	TMS34010_set_stack_base(0, cpu_bankbase[1], TOBYTE(0x00c00000));
 	TMS34010_set_stack_base(1, cpu_bankbase[4], TOBYTE(0xff800000));
 }
 
 
-struct GameDriver exterm_driver =
+struct GameDriver driver_exterm =
 {
 	__FILE__,
 	0,
@@ -432,15 +438,14 @@ struct GameDriver exterm_driver =
 	&machine_driver,
 	driver_init,
 
-	exterm_rom,
+	rom_exterm,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	exterm_input_ports,
+	input_ports_exterm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0 | GAME_REQUIRES_16BIT,
+	0,0
 };

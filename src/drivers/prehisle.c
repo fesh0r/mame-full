@@ -4,9 +4,6 @@
 	Prehistoric Isle in 1930 (USA)			(c) 1989 SNK
 	Genshi-Tou 1930's (Japan)				(c) 1989 SNK
 
-
-	Ikari 3 should run on hardware close to this.
-
  	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
@@ -102,7 +99,7 @@ static struct IOWritePort prehisle_sound_writeport[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( prehisle_input_ports )
+INPUT_PORTS_START( prehisle )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -229,18 +226,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
+	1,			/* 1 chip */
 	4000000,	/* 4 Mhz */
-	{ 20 }		/* (not supported) */
+	{ 50 },
+	{ irqhandler },
 };
 
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
-	{ 75 }, /* volume */
+	{ 50 }, /* volume */
 	{ 3 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
@@ -248,24 +251,22 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver prehisle_machine_driver =
+static struct MachineDriver machine_driver_prehisle =
 {
 	/* basic machine hardware */
 	{
  		{
 			CPU_M68000,
 			12000000,
-			0,
 			prehisle_readmem,prehisle_writemem,0,0,
 			m68_level4_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			2,
 			prehisle_sound_readmem,prehisle_sound_writemem,
 			prehisle_sound_readport,prehisle_sound_writeport,
-			interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -301,8 +302,8 @@ static struct MachineDriver prehisle_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( prehisle_rom )
-	ROM_REGION(0x40000)
+ROM_START( prehisle )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt.2", 0x00000, 0x20000, 0x7083245a )
 	ROM_LOAD_ODD ( "gt.3", 0x00000, 0x20000, 0x6d8cdf58 )
 
@@ -313,7 +314,7 @@ ROM_START( prehisle_rom )
 	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
 	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -323,8 +324,8 @@ ROM_START( prehisle_rom )
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
 ROM_END
 
-ROM_START( prehislu_rom )
-	ROM_REGION(0x40000)
+ROM_START( prehislu )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt-u2.2h", 0x00000, 0x20000, 0xa14f49bb )
 	ROM_LOAD_ODD ( "gt-u3.3h", 0x00000, 0x20000, 0xf165757e )
 
@@ -335,7 +336,7 @@ ROM_START( prehislu_rom )
 	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
 	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -345,8 +346,8 @@ ROM_START( prehislu_rom )
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
 ROM_END
 
-ROM_START( prehislj_rom )
-	ROM_REGION(0x40000)
+ROM_START( prehislj )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt2j.bin", 0x00000, 0x20000, 0xa2da0b6b )
 	ROM_LOAD_ODD ( "gt3j.bin", 0x00000, 0x20000, 0xc1a0ae8e )
 
@@ -357,7 +358,7 @@ ROM_START( prehislj_rom )
 	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
 	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -422,78 +423,78 @@ static void jap_memory(void)
 
 /******************************************************************************/
 
-struct GameDriver prehisle_driver =
+struct GameDriver driver_prehisle =
 {
 	__FILE__,
 	0,
 	"prehisle",
 	"Prehistoric Isle in 1930 (World)",
 	"1989",
-	"SNK Corp.",
+	"SNK",
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
-	&prehisle_machine_driver,
+	&machine_driver_prehisle,
 	world_memory,
 
-	prehisle_rom,
+	rom_prehisle,
 	0, 0,
 	0,
 	0,
 
-	prehisle_input_ports,
+	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver prehislu_driver =
+struct GameDriver driver_prehislu =
 {
 	__FILE__,
-	&prehisle_driver,
+	&driver_prehisle,
 	"prehislu",
 	"Prehistoric Isle in 1930 (US)",
 	"1989",
-	"SNK Corp. of America",
+	"SNK of America",
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
-	&prehisle_machine_driver,
+	&machine_driver_prehisle,
 	usa_memory,
 
-	prehislu_rom,
+	rom_prehislu,
 	0, 0,
 	0,
 	0,
 
-	prehisle_input_ports,
+	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver prehislj_driver =
+struct GameDriver driver_prehislj =
 {
 	__FILE__,
-	&prehisle_driver,
+	&driver_prehisle,
 	"gensitou",
 	"Genshi-Tou 1930's",
 	"1989",
-	"SNK Corp.",
+	"SNK",
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
-	&prehisle_machine_driver,
+	&machine_driver_prehisle,
 	jap_memory,
 
-	prehislj_rom,
+	rom_prehislj,
 	0, 0,
 	0,
 	0,
 
-	prehisle_input_ports,
+	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 

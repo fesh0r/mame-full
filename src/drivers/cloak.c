@@ -93,7 +93,6 @@ Playfield ROM: 136023.306,136023.305
 #include "vidhrdw/generic.h"
 
 extern unsigned char *enable_nvRAM;
-extern unsigned char *cloak_nvRAM;
 extern unsigned char *cloak_sharedram;
 extern int  cloak_sharedram_r(int offset);
 extern void cloak_sharedram_w(int offset, int data);
@@ -106,6 +105,22 @@ extern void cloak_vh_stop(void);
 extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
 
 void cloak_led_w(int offset,int data)
 {
@@ -116,17 +131,17 @@ void cloak_led_w(int offset,int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4000, 0xffff, MRA_ROM },
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0fff, cloak_sharedram_r, &cloak_sharedram },
-	{ 0x2800, 0x29ff, MRA_RAM, &cloak_nvRAM },
+	{ 0x0800, 0x0fff, cloak_sharedram_r },
+	{ 0x2800, 0x29ff, MRA_RAM },
 	{ 0x1000, 0x100f, pokey1_r },		/* DSW0 also */
 	{ 0x1800, 0x180f, pokey2_r },		/* DSW1 also */
 	{ 0x2000, 0x2000, input_port_0_r },	/* IN0 */
 	{ 0x2200, 0x2200, input_port_1_r },	/* IN1 */
 	{ 0x2400, 0x2400, input_port_2_r },	/* IN2 */
-	{ 0x3000, 0x30ff, MRA_RAM, &spriteram },
+	{ 0x3000, 0x30ff, MRA_RAM },
 	{ 0x3800, 0x3807, MRA_RAM },
+	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -134,17 +149,16 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size },
-	{ 0x0400, 0x07ff, colorram_w, &colorram },
-	{ 0x0800, 0x0fff, cloak_sharedram_w },
+	{ 0x0800, 0x0fff, cloak_sharedram_w, &cloak_sharedram },
 	{ 0x1000, 0x100f, pokey1_w },
 	{ 0x1800, 0x180f, pokey2_w },
-	{ 0x2800, 0x29ff, MWA_RAM, &cloak_nvRAM },
+	{ 0x2800, 0x29ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3200, 0x327f, cloak_paletteram_w },
 	{ 0x3800, 0x3801, coin_counter_w },
 	{ 0x3802, 0x3805, MWA_RAM },
 	{ 0x3806, 0x3807, cloak_led_w },
-	{ 0x3a00, 0x3a00, MWA_NOP },
+	{ 0x3a00, 0x3a00, watchdog_reset_w },
 	{ 0x3e00, 0x3e00, MWA_RAM, &enable_nvRAM },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -171,7 +185,7 @@ static struct MemoryWriteAddress writemem2[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( cloak_input_ports )
+INPUT_PORTS_START( cloak )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
@@ -256,8 +270,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0,  2 },
-	{ 1, 0x2000, &spritelayout,  32,  2 },
+	{ REGION_GFX1, 0, &charlayout,     0,  1 },
+	{ REGION_GFX2, 0, &spritelayout,  32,  1 },
 	{ -1 }
 };
 
@@ -285,21 +299,19 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cloak =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1000000,	/* 1 Mhz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		},
 		{
 			CPU_M6502,
-                        1250000,        /* 1 Mhz ???? */
-			2,
+            1250000,        /* 1 Mhz ???? */
 			readmem2,writemem2,0,0,
 			interrupt,2
 		}
@@ -328,7 +340,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -339,20 +353,14 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cloak_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( cloak )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "136023.501",   0x4000, 0x2000, 0xc2dbef1b )
 	ROM_LOAD( "136023.502",   0x6000, 0x2000, 0x316d0c7b )
 	ROM_LOAD( "136023.503",   0x8000, 0x4000, 0xb9c291a6 )
 	ROM_LOAD( "136023.504",   0xc000, 0x4000, 0xd014a1c0 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136023.305",   0x0000, 0x1000, 0xee443909 )
-	ROM_LOAD( "136023.306",   0x1000, 0x1000, 0xd708b132 )
-	ROM_LOAD( "136023.307",   0x2000, 0x1000, 0xc42c84a4 )
-	ROM_LOAD( "136023.308",   0x3000, 0x1000, 0x4fe13d58 )
-
-	ROM_REGION(0x10000)	/* space for the sound ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "136023.509",   0x2000, 0x2000, 0x46c021a4 )
 	ROM_LOAD( "136023.510",   0x4000, 0x2000, 0x8c9cf017 )
 	ROM_LOAD( "136023.511",   0x6000, 0x2000, 0x66fd8a34 )
@@ -360,59 +368,16 @@ ROM_START( cloak_rom )
 	ROM_LOAD( "136023.513",   0xa000, 0x2000, 0x13f1cbab )
 	ROM_LOAD( "136023.514",   0xc000, 0x2000, 0x6f8c7991 )
 	ROM_LOAD( "136023.515",   0xe000, 0x2000, 0x835438a0 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136023.305",   0x0000, 0x1000, 0xee443909 )
+	ROM_LOAD( "136023.306",   0x1000, 0x1000, 0xd708b132 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136023.307",   0x0000, 0x1000, 0xc42c84a4 )
+	ROM_LOAD( "136023.308",   0x1000, 0x1000, 0x4fe13d58 )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
 
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&cloak_nvRAM[0],512); /* load the NV RAM */
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&cloak_nvRAM[0],512); /* save the NV RAM */
-      	osd_fclose(f);
-	}
-}
-
-
-struct GameDriver cloak_driver =
-{
-	__FILE__,
-	0,
-	"cloak",
-	"Cloak & Dagger",
-	"1983",
-	"Atari",
-	"Dan Boris        (hardware info)\nMirko Buffoni      (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	cloak_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	cloak_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-
-};
-
+GAME( 1983, cloak, , cloak, cloak, , ROT0, "Atari", "Cloak & Dagger" )

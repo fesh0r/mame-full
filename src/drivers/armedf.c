@@ -6,11 +6,12 @@ Armed Formation
 Terra Force
 (c)1987 Nichibutsu
 
+Crazy Climber 2
+(c)1988 Nichibutsu
+
 68000 + Z80
 
 ***********************************************************************/
-
-#define CREDITS "Carlos A. Lozano (cpu)\nPhil Stroffolino (gfx)\nNicola Salmoria (sound)"
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -18,6 +19,7 @@ Terra Force
 #include "cpu/z80/z80.h"
 
 extern void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int terraf_vh_start(void);
 extern int armedf_vh_start(void);
 extern void armedf_vh_stop(void);
@@ -161,6 +163,38 @@ static struct MemoryWriteAddress armedf_writemem[] ={
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress cclimbr2_readmem[] =
+{
+	{ 0x000000, 0x05ffff, MRA_ROM },
+	{ 0x060000, 0x063fff, MRA_BANK1 }, /* sprites */
+	{ 0x064000, 0x064fff, paletteram_word_r },
+
+	{ 0x068000, 0x069fff, terraf_text_videoram_r },
+	{ 0x06a000, 0x06a9ff, MRA_BANK2 },
+
+	{ 0x06C000, 0x06C9ff, MRA_BANK3 },
+	{ 0x070000, 0x070fff, armedf_fg_videoram_r },
+	{ 0x074000, 0x074fff, armedf_bg_videoram_r },
+	{ 0x078000, 0x07800f, io_r },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress cclimbr2_writemem[] ={
+	{ 0x000000, 0x05ffff, MWA_ROM },
+	{ 0x060000, 0x063fff, MWA_BANK1, &spriteram },
+	{ 0x064000, 0x064fff, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
+
+	{ 0x068000, 0x069fff, terraf_text_videoram_w, &videoram },
+	{ 0x06a000, 0x06a9ff, MWA_BANK2 },
+
+	{ 0x06C000, 0x06C9ff, MWA_BANK3 },
+	{ 0x06ca00, 0x06cbff, MWA_RAM },
+	{ 0x070000, 0x070fff, armedf_fg_videoram_w, &armedf_bg_videoram },
+	{ 0x074000, 0x074fff, armedf_bg_videoram_w, &armedf_fg_videoram },
+	{ 0x07c000, 0x07c00f, io_w },
+	{ -1 }
+};
+
 static struct MemoryReadAddress soundreadmem[] ={
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_RAM },
@@ -170,6 +204,18 @@ static struct MemoryReadAddress soundreadmem[] ={
 static struct MemoryWriteAddress soundwritemem[] ={
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress cclimbr2_soundreadmem[] ={
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress cclimbr2_soundwritemem[] ={
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -193,7 +239,7 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( armedf_input_ports )
+INPUT_PORTS_START( armedf )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY)
@@ -242,7 +288,7 @@ INPUT_PORTS_START( armedf_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
@@ -276,7 +322,7 @@ INPUT_PORTS_START( armedf_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( terraf_input_ports )
+INPUT_PORTS_START( terraf )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY)
@@ -357,6 +403,96 @@ INPUT_PORTS_START( terraf_input_ports )
 	PORT_DIPSETTING(    0x00, "Unlimited" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( cclimbr2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START	/* Coin, Start */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Test Mode */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )     /* Tilt */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3")
+	PORT_DIPSETTING(    0x02, "4")
+	PORT_DIPSETTING(    0x01, "5")
+	PORT_DIPSETTING(    0x00, "6")
+	PORT_DIPNAME( 0x04, 0x04, "First Bonus" )
+	PORT_DIPSETTING(    0x04, "30k")
+	PORT_DIPSETTING(    0x00, "60k")
+	PORT_DIPNAME( 0x08, 0x08, "Second Bonus" )
+	PORT_DIPSETTING(    0x08, "70k Only")
+	PORT_DIPSETTING(    0x00, "Nothing")
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easy")
+	PORT_DIPSETTING(    0x00, "Hard")
+#if 0
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, "Continue Play" )
+	PORT_DIPSETTING(    0x10, "3")
+	PORT_DIPSETTING(    0x00, "0")
+#if 0
+	PORT_DIPNAME( 0x20, 0x20, "Flip Screen" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#if 0
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
+INPUT_PORTS_END
+
 static struct GfxLayout char_layout = {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -393,10 +529,10 @@ static struct GfxLayout sprite_layout = {
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &char_layout,		 0*16,	32 },
-	{ 1, 0x08000, &tile_layout,		64*16,	32 },
-	{ 1, 0x28000, &tile_layout,		96*16,	32 },
-	{ 1, 0x48000, &sprite_layout,	32*16,	32 },
+	{ REGION_GFX1, 0, &char_layout,		 0*16,	32 },
+	{ REGION_GFX2, 0, &tile_layout,		64*16,	32 },
+	{ REGION_GFX3, 0, &tile_layout,		96*16,	32 },
+	{ REGION_GFX4, 0, &sprite_layout,	32*16,	32 },
 	{ -1 } /* end of array */
 };
 
@@ -411,26 +547,34 @@ int armedf_interrupt(void){
 	return (1);
 }
 
+int cclimbr2_interrupt(void){
+	return (2);
+}
+
 static struct DACinterface dac_interface =
 {
 	2,	/* 2 channels */
 	{ 100,100 },
 };
 
-static struct MachineDriver terraf_machine_driver =
+static struct DACinterface cclimbr2_dac_interface =
+{
+	2,	/* 2 channels */
+	{ 40, 40 },
+};
+
+static struct MachineDriver machine_driver_terraf =
 {
 	{
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			terraf_readmem,terraf_writemem,0,0,
 			armedf_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz???? */
-			2,
 			soundreadmem,soundwritemem,readport,writeport,
 			interrupt,128
 		},
@@ -465,25 +609,23 @@ static struct MachineDriver terraf_machine_driver =
 	}
 };
 
-static struct MachineDriver armedf_machine_driver =
+static struct MachineDriver machine_driver_armedf =
 {
 	{
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			armedf_readmem,armedf_writemem,0,0,
 			armedf_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz???? */
-			2,
 			soundreadmem,soundwritemem,readport,writeport,
 			interrupt,128
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,
 	0,
 
@@ -513,8 +655,56 @@ static struct MachineDriver armedf_machine_driver =
 	}
 };
 
-ROM_START( terraf_rom )
-	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
+static struct MachineDriver machine_driver_cclimbr2 =
+{
+	{
+		{
+			CPU_M68000,
+			8000000, /* 8 Mhz?? */
+			cclimbr2_readmem,cclimbr2_writemem,0,0,
+			cclimbr2_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3072000,	/* 3.072 Mhz???? */
+			cclimbr2_soundreadmem,cclimbr2_soundwritemem,readport,writeport,
+			interrupt,128
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,						// nogi
+	0,
+
+	/* video hardware */
+	38*8, 32*8, { 1*8, 37*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	2048,2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	terraf_vh_start,
+	armedf_vh_stop,
+	cclimbr2_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+		   SOUND_YM3812,
+		   &ym3812_interface
+		},
+		{
+			SOUND_DAC,
+			&cclimbr2_dac_interface
+		}
+	}
+};
+
+
+
+ROM_START( terraf )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "terrafor.014", 0x00000, 0x10000, 0x8e5f557f )
 	ROM_LOAD_ODD(  "terrafor.011", 0x00000, 0x10000, 0x5320162a )
 	ROM_LOAD_EVEN( "terrafor.013", 0x20000, 0x10000, 0xa86951e0 )
@@ -522,21 +712,33 @@ ROM_START( terraf_rom )
 	ROM_LOAD_EVEN( "terrafor.012", 0x40000, 0x08000, 0x4f0e1d76 )
 	ROM_LOAD_ODD(  "terrafor.009", 0x40000, 0x08000, 0xd1014280 )
 
-	ROM_REGION(0x88000)
-	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
-	ROM_LOAD( "terrafor.006", 0x08000, 0x10000, 0x25d23dfd ) /* foreground tiles */
-	ROM_LOAD( "terrafor.007", 0x18000, 0x10000, 0xb9b0fe27 )
-	ROM_LOAD( "terrafor.004", 0x28000, 0x10000, 0x2144d8e0 ) /* background tiles */
-	ROM_LOAD( "terrafor.005", 0x38000, 0x10000, 0x744f5c9e )
-	ROM_LOAD( "terrafor.003", 0x48000, 0x10000, 0xd74085a1 ) /* sprites */
-	ROM_LOAD( "terrafor.002", 0x68000, 0x10000, 0x148aa0c5 )
-
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.006", 0x00000, 0x10000, 0x25d23dfd ) /* foreground tiles */
+	ROM_LOAD( "terrafor.007", 0x10000, 0x10000, 0xb9b0fe27 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.004", 0x00000, 0x10000, 0x2144d8e0 ) /* background tiles */
+	ROM_LOAD( "terrafor.005", 0x10000, 0x10000, 0x744f5c9e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.003", 0x00000, 0x10000, 0xd74085a1 ) /* sprites */
+	ROM_LOAD( "terrafor.002", 0x20000, 0x10000, 0x148aa0c5 )
+
+	ROM_REGION(0x4000)	/* unknown */
+	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
 ROM_END
 
-ROM_START( terrafu_rom )
-	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
+ROM_START( terrafu )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "tf.8",         0x00000, 0x10000, 0xfea6dd64 )
 	ROM_LOAD_ODD(  "tf.3",         0x00000, 0x10000, 0x02f9d05a )
 	ROM_LOAD_EVEN( "tf.7",         0x20000, 0x10000, 0xfde8de7e )
@@ -544,21 +746,33 @@ ROM_START( terrafu_rom )
 	ROM_LOAD_EVEN( "tf.6",         0x40000, 0x08000, 0xb91e9ba3 )
 	ROM_LOAD_ODD(  "tf.1",         0x40000, 0x08000, 0xd6e22375 )
 
-	ROM_REGION(0x88000)
-	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
-	ROM_LOAD( "terrafor.006", 0x08000, 0x10000, 0x25d23dfd ) /* foreground tiles */
-	ROM_LOAD( "terrafor.007", 0x18000, 0x10000, 0xb9b0fe27 )
-	ROM_LOAD( "terrafor.004", 0x28000, 0x10000, 0x2144d8e0 ) /* background tiles */
-	ROM_LOAD( "terrafor.005", 0x38000, 0x10000, 0x744f5c9e )
-	ROM_LOAD( "terrafor.003", 0x48000, 0x10000, 0xd74085a1 ) /* sprites */
-	ROM_LOAD( "terrafor.002", 0x68000, 0x10000, 0x148aa0c5 )
-
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.006", 0x00000, 0x10000, 0x25d23dfd ) /* foreground tiles */
+	ROM_LOAD( "terrafor.007", 0x10000, 0x10000, 0xb9b0fe27 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.004", 0x00000, 0x10000, 0x2144d8e0 ) /* background tiles */
+	ROM_LOAD( "terrafor.005", 0x10000, 0x10000, 0x744f5c9e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.003", 0x00000, 0x10000, 0xd74085a1 ) /* sprites */
+	ROM_LOAD( "terrafor.002", 0x20000, 0x10000, 0x148aa0c5 )
+
+	ROM_REGION(0x4000)	/* unknown */
+	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
 ROM_END
 
-ROM_START( armedf_rom )
-	ROM_REGION(0x80000)	/* 68000 code */
+ROM_START( armedf )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "af_06.rom", 0x00000, 0x10000, 0xc5326603 )
 	ROM_LOAD_ODD(  "af_01.rom", 0x00000, 0x10000, 0x458e9542 )
 	ROM_LOAD_EVEN( "af_07.rom", 0x20000, 0x10000, 0xcc8517f5 )
@@ -566,75 +780,62 @@ ROM_START( armedf_rom )
 	ROM_LOAD_EVEN( "af_08.rom", 0x40000, 0x10000, 0xd1d43600 )
 	ROM_LOAD_ODD(  "af_03.rom", 0x40000, 0x10000, 0xbbe1fe2d )
 
-	ROM_REGION(0x88000)
-	ROM_LOAD( "af_09.rom", 0x00000, 0x08000, 0x7025e92d ) /* characters */
-	ROM_LOAD( "af_04.rom", 0x08000, 0x10000, 0x44d3af4f ) /* foreground tiles */
-	ROM_LOAD( "af_05.rom", 0x18000, 0x10000, 0x92076cab )
-	ROM_LOAD( "af_14.rom", 0x28000, 0x10000, 0x8c5dc5a7 ) /* background tiles */
-	ROM_LOAD( "af_13.rom", 0x38000, 0x10000, 0x136a58a3 )
-	ROM_LOAD( "af_11.rom", 0x48000, 0x20000, 0xb46c473c ) /* sprites */
-	ROM_LOAD( "af_12.rom", 0x68000, 0x20000, 0x23cb6bfe )
-
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "af_10.rom", 0x00000, 0x10000, 0xc5eacb87 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_09.rom", 0x00000, 0x08000, 0x7025e92d ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_04.rom", 0x00000, 0x10000, 0x44d3af4f ) /* foreground tiles */
+	ROM_LOAD( "af_05.rom", 0x10000, 0x10000, 0x92076cab )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_14.rom", 0x00000, 0x10000, 0x8c5dc5a7 ) /* background tiles */
+	ROM_LOAD( "af_13.rom", 0x10000, 0x10000, 0x136a58a3 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_11.rom", 0x00000, 0x20000, 0xb46c473c ) /* sprites */
+	ROM_LOAD( "af_12.rom", 0x20000, 0x20000, 0x23cb6bfe )
 ROM_END
 
-struct GameDriver terraf_driver =
-{
-	__FILE__,
-	0,
-	"terraf",
-	"Terra Force",
-	"1987",
-	"Nichibutsu",
-	CREDITS,
-	0,
-	&terraf_machine_driver,
-	0,
-	terraf_rom,
-	0,0,0,0,
-	terraf_input_ports,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
+ROM_START( cclimbr2 )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
+	ROM_LOAD_EVEN( "4.bin", 0x00000, 0x10000, 0x7922ea14 )
+	ROM_LOAD_ODD(  "1.bin", 0x00000, 0x10000, 0x2ac7ed67 )
+	ROM_LOAD_EVEN( "6.bin", 0x20000, 0x10000, 0x7905c992 )
+	ROM_LOAD_ODD(  "5.bin", 0x20000, 0x10000, 0x47be6c1e )
+	ROM_LOAD_EVEN( "3.bin", 0x40000, 0x10000, 0x1fb110d6 )
+	ROM_LOAD_ODD(  "2.bin", 0x40000, 0x10000, 0x0024c15b )
 
-struct GameDriver terrafu_driver =
-{
-	__FILE__,
-	&terraf_driver,
-	"terrafu",
-	"Terra Force (US)",
-	"1987",
-	"Nichibutsu USA",
-	CREDITS,
-	0,
-	&terraf_machine_driver,
-	0,
-	terrafu_rom,
-	0,0,0,0,
-	terraf_input_ports,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
+	ROM_LOAD( "11.bin", 0x00000, 0x04000, 0xfe0175be )
+	ROM_LOAD( "12.bin", 0x04000, 0x08000, 0x5ddf18f2 )
 
-struct GameDriver armedf_driver =
-{
-	__FILE__,
-	0,
-	"armedf",
-	"Armed Formation",
-	"1988",
-	"Nichibutsu",
-	CREDITS,
-	0,
-	&armedf_machine_driver,
-	0,
-	armedf_rom,
-	0,0,0,0,
-	armedf_input_ports,
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10.bin", 0x00000, 0x08000, 0x7f475266 ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7.bin",  0x00000, 0x10000, 0xcbdd3906 ) /* foreground tiles */
+	ROM_LOAD( "8.bin",  0x10000, 0x10000, 0xb2a613c0 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "17.bin", 0x00000, 0x10000, 0xe24bb2d7 ) /* background tiles */
+	ROM_LOAD( "18.bin", 0x10000, 0x10000, 0x56834554 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15.bin", 0x00000, 0x10000, 0x4bf838be ) /* sprites */
+	ROM_LOAD( "16.bin", 0x10000, 0x10000, 0x21a265c5 )
+	ROM_LOAD( "13.bin", 0x20000, 0x10000, 0x6b6ec999 )
+	ROM_LOAD( "14.bin", 0x30000, 0x10000, 0xf426a4ad )
+
+	ROM_REGION(0x4000)	/* unknown */
+	ROM_LOAD( "9.bin",  0x0000, 0x4000, 0x740d260f )	// DATA ?
+ROM_END
+
+
+
+GAME( 1987, terraf,   ,       terraf,   terraf,   , ROT0,   "Nichibutsu", "Terra Force" )
+GAME( 1987, terrafu,  terraf, terraf,   terraf,   , ROT0,   "Nichibutsu USA", "Terra Force (US)" )
+GAME( 1988, armedf,   ,       armedf,   armedf,   , ROT270, "Nichibutsu", "Armed Formation" )
+GAME( 1988, cclimbr2, ,       cclimbr2, cclimbr2, , ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)" )

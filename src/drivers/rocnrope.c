@@ -9,12 +9,11 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "cpu/m6809/m6809.h"
 
 
+void konami1_decode(void);
 
 void rocnrope_flipscreen_w(int offset,int data);
 void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 /* defined in sndhrdw/timeplt.c */
 extern struct MemoryReadAddress timeplt_sound_readmem[];
@@ -23,16 +22,10 @@ extern struct AY8910interface timeplt_ay8910_interface;
 void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
-void rocnrope_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
 void rocnrope_interrupt_vector_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	RAM[0xFFF2+offset] = data;
@@ -75,7 +68,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( rocnrope )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -241,21 +234,19 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 2 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	rocnrope_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -285,13 +276,13 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rocnrope_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
-	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
-	ROM_LOAD( "rnr_h3.vid",   0xA000, 0x2000, 0x6d278459 )
-	ROM_LOAD( "rnr_h4.vid",   0xC000, 0x2000, 0x9b2e5f2a )
-	ROM_LOAD( "rnr_h5.vid",   0xE000, 0x2000, 0x150a6264 )
+ROM_START( rocnrope )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "rr1.1h",       0x6000, 0x2000, 0x83093134 )
+	ROM_LOAD( "rr2.2h",       0x8000, 0x2000, 0x75af8697 )
+	ROM_LOAD( "rr3.3h",       0xa000, 0x2000, 0xb21372b1 )
+	ROM_LOAD( "rr4.4h",       0xc000, 0x2000, 0x7acb2a05 )
+	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
 
 	ROM_REGION_DISPOSE(0xc000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
@@ -301,38 +292,38 @@ ROM_START( rocnrope_rom )
 	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0x9d2166b2 )
 	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xaff6e22f )
 
-	ROM_REGION(0x0220)    /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
-ROM_START( ropeman_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "j01_rm01.bin", 0x6000, 0x2000, 0x6310a1fe )
-	ROM_LOAD( "j02_rm02.bin", 0x8000, 0x2000, 0x75af8697 )
-	ROM_LOAD( "j03_rm03.bin", 0xA000, 0x2000, 0xb21372b1 )
-	ROM_LOAD( "j04_rm04.bin", 0xC000, 0x2000, 0x7acb2a05 )
-	ROM_LOAD( "rnr_h5.vid",   0xE000, 0x2000, 0x150a6264 )
+ROM_START( rocnropk )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
+	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
+	ROM_LOAD( "rnr_h3.vid",   0xa000, 0x2000, 0x6d278459 )
+	ROM_LOAD( "rnr_h4.vid",   0xc000, 0x2000, 0x9b2e5f2a )
+	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
 
 	ROM_REGION_DISPOSE(0xc000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j12_rm07.bin", 0x0000, 0x2000, 0xcd8ac4bf )
-	ROM_LOAD( "j11_rm06.bin", 0x2000, 0x2000, 0x35891835 )
+	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
+	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
 	ROM_LOAD( "rnr_a11.vid",  0x4000, 0x2000, 0xafdaba5e )
 	ROM_LOAD( "rnr_a12.vid",  0x6000, 0x2000, 0x054cafeb )
 	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0x9d2166b2 )
 	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xaff6e22f )
 
-	ROM_REGION(0x0220)    /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
@@ -341,106 +332,62 @@ ROM_END
 
 static void rocnrope_decode(void)
 {
-	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
 
-	for (A = 0x6000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
+	konami1_decode();
+	rom[0x703d + diff] = 0x98;	/* fix one instruction */
 }
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if (memcmp(&RAM[0x5160],"\x01\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x50A6],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x5160],0x40);
-			RAM[0x50A6] = RAM[0x5160];
-			RAM[0x50A7] = RAM[0x5161];
-			RAM[0x50A8] = RAM[0x5162];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5160],0x40);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver rocnrope_driver =
+struct GameDriver driver_rocnrope =
 {
 	__FILE__,
 	0,
 	"rocnrope",
 	"Roc'n Rope",
 	"1983",
+	"Konami",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
+	0,
+	&machine_driver,
+	rocnrope_decode,
+
+	rom_rocnrope,
+	0, 0,
+	0,
+	0,
+
+	input_ports_rocnrope,
+
+	0, 0, 0,
+	ROT270,
+	0,0
+};
+
+struct GameDriver driver_rocnropk =
+{
+	__FILE__,
+	&driver_rocnrope,
+	"rocnropk",
+	"Roc'n Rope (Kosuka)",
+	"1983",
 	"Konami + Kosuka",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
+	konami1_decode,
+
+	rom_rocnropk,
+	0, 0,
+	0,
 	0,
 
-	rocnrope_rom,
-	0, rocnrope_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_rocnrope,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver ropeman_driver =
-{
-	__FILE__,
-	&rocnrope_driver,
-	"ropeman",
-	"Rope Man",
-	"1983",
-	"bootleg",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	GAME_NOT_WORKING,
-	&machine_driver,
-	0,
-
-	ropeman_rom,
-	0, rocnrope_decode,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

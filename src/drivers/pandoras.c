@@ -28,7 +28,7 @@ static int irq_enable_a, irq_enable_b;
 static int firq_old_data_a, firq_old_data_b;
 static int 	i8039_irqenable;
 
-static unsigned char *pandoras_sharedram;
+unsigned char *pandoras_sharedram;
 static unsigned char *pandoras_sharedram2;
 
 /* from vidhrdw */
@@ -133,20 +133,20 @@ void pandoras_i8039_irqtrigger_w(int offset,int data)
 
 static struct MemoryReadAddress pandoras_readmem_a[] =
 {
-	{ 0x0000, 0x0fff, pandoras_sharedram_r, &pandoras_sharedram },/* Work RAM (Shared with CPU B) */
-	{ 0x1000, 0x13ff, pandoras_cram_r, &colorram },	/* Color RAM (shared with CPU B) */
-	{ 0x1400, 0x17ff, pandoras_vram_r, &videoram },	/* Video RAM (shared with CPU B) */
+	{ 0x0000, 0x0fff, pandoras_sharedram_r },/* Work RAM (Shared with CPU B) */
+	{ 0x1000, 0x13ff, pandoras_cram_r },	/* Color RAM (shared with CPU B) */
+	{ 0x1400, 0x17ff, pandoras_vram_r },	/* Video RAM (shared with CPU B) */
 	{ 0x4000, 0x5fff, MRA_ROM },					/* see notes */
-	{ 0x6000, 0x67ff, pandoras_sharedram2_r, &pandoras_sharedram2 },/* Shared RAM with CPU B */
+	{ 0x6000, 0x67ff, pandoras_sharedram2_r },/* Shared RAM with CPU B */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress pandoras_writemem_a[] =
 {
-	{ 0x0000, 0x0fff, pandoras_sharedram_w, &spriteram },/* Work RAM (Shared with CPU B) */
-	{ 0x1000, 0x13ff, pandoras_cram_w },		/* Color RAM (shared with CPU B) */
-	{ 0x1400, 0x17ff, pandoras_vram_w },		/* Video RAM (shared with CPU B) */
+	{ 0x0000, 0x0fff, pandoras_sharedram_w, &pandoras_sharedram },/* Work RAM (Shared with CPU B) */
+	{ 0x1000, 0x13ff, pandoras_cram_w, &colorram },		/* Color RAM (shared with CPU B) */
+	{ 0x1400, 0x17ff, pandoras_vram_w, &videoram },		/* Video RAM (shared with CPU B) */
 	{ 0x1800, 0x1807, pandoras_int_control_w },	/* INT control */
 	{ 0x1a00, 0x1a00, pandoras_scrolly_w },		/* bg scroll */
 	{ 0x1c00, 0x1c00, pandoras_z80_irqtrigger_w },/* cause INT on the Z80 */
@@ -154,7 +154,7 @@ static struct MemoryWriteAddress pandoras_writemem_a[] =
 	{ 0x2000, 0x2000, pandoras_cpub_irqtrigger_w },/* cause FIRQ on CPU B */
 	{ 0x2001, 0x2001, watchdog_reset_w },		/* watchdog reset */
 	{ 0x4000, 0x5fff, MWA_ROM },				/* see notes */
-	{ 0x6000, 0x67ff, pandoras_sharedram2_w },	/* Shared RAM with CPU B */
+	{ 0x6000, 0x67ff, pandoras_sharedram2_w, &pandoras_sharedram2 },	/* Shared RAM with CPU B */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
 	{ -1 }	/* end of table */
 };
@@ -240,7 +240,7 @@ static struct IOWritePort i8039_writeport[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pandoras )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -410,7 +410,7 @@ static void pandoras_portB_w(int offset,int data)
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318180/8,	/* 1.789772727 MHz (?) */
+	4000000,	/* ??????? */
 	{ 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -431,29 +431,25 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,		/* CPU A */
-			3072000,		/* ? */
-			0,
+			3000000,		/* ? */
 			pandoras_readmem_a,pandoras_writemem_a,0,0,
             pandoras_interrupt_a,1,
         },
 		{
 			CPU_M6809,		/* CPU B */
-			3072000,		/* ? */
-			3,
+			3000000,		/* ? */
 			pandoras_readmem_b,pandoras_writemem_b,0,0,
             pandoras_interrupt_b,1,
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			4,
 			pandoras_readmem_snd,pandoras_writemem_snd,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			8000000/15,		/* ? */
-			5,
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},
@@ -495,8 +491,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pandoras_rom )
-	ROM_REGION( 0x10000 ) /* 64K for the CPU A */
+ROM_START( pandoras )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64K for the CPU A */
 	ROM_LOAD( "pand_j13.cpu",	0x08000, 0x02000, 0x7a0fe9c5 )
 	ROM_LOAD( "pand_j12.cpu",	0x0a000, 0x02000, 0x7dc4bfe1 )
 	ROM_LOAD( "pand_j10.cpu",	0x0c000, 0x02000, 0xbe3af3b7 )
@@ -509,20 +505,19 @@ ROM_START( pandoras_rom )
 	ROM_LOAD( "pand_j17.cpu",	0x006000, 0x02000, 0x38a03c21 )	/* sprites */
 	ROM_LOAD( "pand_j16.cpu",	0x008000, 0x02000, 0xe0708a78 )	/* sprites */
 
-	ROM_REGION(0x220)	/* Color PROMS */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pandora.2a",		0x0000, 0x020, 0x4d56f939 ) /* palette */
 	ROM_LOAD( "pandora.17g",	0x0020, 0x100, 0xc1a90cfc ) /* sprite lookup table */
 	ROM_LOAD( "pandora.16b",	0x0120, 0x100, 0xc89af0c3 ) /* character lookup table */
 
-	ROM_REGION( 0x10000 ) /* 64K for the CPU B */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64K for the CPU B */
 	ROM_LOAD( "pand_j5.cpu",	0x0e000, 0x02000, 0x4aab190b )
 
-	ROM_REGION( 0x10000 ) /* 64K for the Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64K for the Sound CPU */
 	ROM_LOAD( "pand_6c.snd",	0x00000, 0x02000, 0x0c1f109d )
 
-	ROM_REGION( 0x1000 ) /* 4K for the Sound CPU 2 */
+	ROM_REGIONX( 0x1000, REGION_CPU4 ) /* 4K for the Sound CPU 2 */
 	ROM_LOAD( "pand_7e.snd",	0x00000, 0x01000, 0x18b0f9d0 )
-
 ROM_END
 
 /***************************************************************************
@@ -531,7 +526,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver pandoras_driver =
+struct GameDriver driver_pandoras =
 {
 	__FILE__,
 	0,
@@ -544,14 +539,14 @@ struct GameDriver pandoras_driver =
 	&machine_driver,
 	0,
 
-	pandoras_rom,
+	rom_pandoras,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_pandoras,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-    ORIENTATION_ROTATE_270,
+	0, 0, 0,
+    ROT270,
 	0, 0
 };

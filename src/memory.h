@@ -13,19 +13,14 @@ read/write the main memory area, provide a "base" pointer: it will be
 initialized by the main engine to point to the beginning of the memory block
 assigned to the handler. You may also provided a pointer to "size": it
 will be set to the length of the memory area processed by the handler.
-You are also encouraged to give (short) names to memory areas,
-if they point to a non standard memory handler. That way you can see
-how a memory region is mapped in the MAME debugger. The memory dump
-windows and the disassembler display this information in the caption.
 
 ***************************************************************************/
 struct MemoryReadAddress
 {
 	int start,end;
 	int (*handler)(int offset);   /* see special values below */
-	unsigned char **base;         /* optional (see explanation above) */
-	int *size;                    /* optional (see explanation above) */
-	const char *description;	  /* optional (see explanation above) */
+//	unsigned char **base;         /* optional (see explanation above) */
+//	int *size;                    /* optional (see explanation above) */
 };
 
 #define MRA_NOP   0	              /* don't care, return 0 */
@@ -46,17 +41,17 @@ struct MemoryWriteAddress
 	void (*handler)(int offset,int data);	/* see special values below */
 	unsigned char **base;	/* optional (see explanation above) */
 	int *size;	/* optional (see explanation above) */
-	const char *description;	  /* optional (see explanation above) */
 };
 
 #define MWA_NOP 0	                  /* do nothing */
 #define MWA_RAM ((void(*)(int,int))-1)	   /* plain RAM location (store the value) */
 #define MWA_ROM ((void(*)(int,int))-2)	   /* plain ROM location (do nothing) */
-/* RAM[] and ROM[] are usually the same, but they aren't if the CPU opcodes are */
-/* encrypted. In such a case, opcodes are fetched from ROM[], and arguments from */
-/* RAM[]. If the program dynamically creates code in RAM and executes it, it */
-/* won't work unless writes to RAM affects both RAM[] and ROM[]. */
-#define MWA_RAMROM ((void(*)(int,int))-3)	/* write to both the RAM[] and ROM[] array. */
+/*
+   If the CPU opcodes are encrypted, they are fetched from a different memory space.
+   In such a case, if the program dynamically creates code in RAM and executes it,
+   it won't work unless you use MWA_RAMROM to affect both memory spaces.
+ */
+#define MWA_RAMROM ((void(*)(int,int))-3)
 #define MWA_BANK1 ((void(*)(int,int))-10)  /* bank memory */
 #define MWA_BANK2 ((void(*)(int,int))-11)  /* bank memory */
 #define MWA_BANK3 ((void(*)(int,int))-12)  /* bank memory */
@@ -150,6 +145,11 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 #define ABITS2_16LEW    3
 #define ABITS3_16LEW    0
 #define ABITS_MIN_16LEW 1      /* minimum memory block is 2 bytes */
+/* 16 bits address (big endian word access) */
+#define ABITS1_16BEW   12
+#define ABITS2_16BEW    3
+#define ABITS3_16BEW    0
+#define ABITS_MIN_16BEW 1      /* minimum memory block is 2 bytes */
 /* mask bits */
 #define MHMASK(abits)    (0xffffffff>>(32-abits))
 
@@ -160,26 +160,38 @@ extern MHELE *cur_mrhard;
 extern MHELE *cur_mwhard;
 extern MHELE curhw;
 
-//extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
-extern unsigned char *ROM;
 extern unsigned char *OP_RAM;	/* op_code used */
 extern unsigned char *OP_ROM;	/* op_code used */
 
 /* ----- memory setting subroutine ---- */
 void cpu_setOPbase16(int pc);
+void cpu_setOPbase16bew(int pc);
 void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
 void cpu_setOPbase29(int pc);  /* AJP 980803 */
-void cpu_setOPbaseoverride (int (*f)(int));
+void cpu_setOPbaseoverride(int cpu,int (*function)(int));
 
 /* ----- memory setup function ----- */
-int initmemoryhandlers(void);
-void shutdownmemoryhandler(void);
+int memory_init(void);
+void memory_shutdown(void);
+
+/* use this to set the a different opcode base address when using a CPU with
+   opcodes and data encrypted separately */
+void memory_set_opcode_base(int cpu,unsigned char *base);
 
 void memorycontextswap(int activecpu);
-void updatememorybase(int activecpu);
+
+/*
+look up a chunk of memory and get its start/end addresses, and its base.
+Pass in the cpu number and the offset. It will find the chunk containing
+that offset and return the start and end addresses, along with a pointer to
+the base of the memory.
+This can be used (carefully!) by drivers that wish to access memory directly
+without going through the readmem/writemem accessors (e.g., blitters).
+*/
+unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend);
 
 void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
 void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int));
@@ -188,6 +200,8 @@ void *install_port_write_handler(int cpu, int start, int end, void (*handler)(in
 
 /* ----- memory read /write function ----- */
 int cpu_readmem16(int address);
+int cpu_readmem16bew(int address);
+int cpu_readmem16bew_word(int address);
 int cpu_readmem16lew(int address);
 int cpu_readmem16lew_word(int address);
 int cpu_readmem20(int address);
@@ -199,6 +213,8 @@ int cpu_readmem29(int address);        /* AJP 980803 */
 int cpu_readmem29_word(int address);   /* AJP 980803 */
 int cpu_readmem29_dword(int address);  /* AJP 980803 */
 void cpu_writemem16(int address,int data);
+void cpu_writemem16bew(int address, int data);
+void cpu_writemem16bew_word(int address, int data);
 void cpu_writemem16lew(int address,int data);
 void cpu_writemem16lew_word(int address,int data);
 void cpu_writemem20(int address,int data);
@@ -232,10 +248,14 @@ extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 
 /* ----- op-code region set function ----- */
 #define change_pc16(pc) {if(cur_mrhard[(pc)>>(ABITS2_16+ABITS_MIN_16)]!=ophw)cpu_setOPbase16(pc);}
+#define change_pc16bew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16BEW+ABITS_MIN_16BEW)]!=ophw)cpu_setOPbase16bew(pc);}
 #define change_pc16lew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16LEW+ABITS_MIN_16LEW)]!=ophw)cpu_setOPbase16lew(pc);}
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
 #define change_pc29(pc) {if(cur_mrhard[((unsigned int)pc)>>(ABITS2_29+ABITS_MIN_29+3)]!=ophw)cpu_setOPbase29(pc);}
+
+/* for use OPbaseOverride driver , request override callback to next cpu_setOPbase16 */
+#define catch_nextBranch() (ophw=0xff)
 
 #define change_pc change_pc16
 
@@ -245,8 +265,8 @@ extern MHELE ophw;
 extern unsigned char *cpu_bankbase[];
 
 #define cpu_readop(A) 		(OP_ROM[A])
-#define cpu_readop16(A)         READ_WORD(&OP_ROM[A])
+#define cpu_readop16(A)		READ_WORD(&OP_ROM[A])
 #define cpu_readop_arg(A)	(OP_RAM[A])
-#define cpu_readop_arg16(A)     READ_WORD(&OP_RAM[A])
+#define cpu_readop_arg16(A)	READ_WORD(&OP_RAM[A])
 
 #endif

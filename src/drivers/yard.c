@@ -61,7 +61,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( yard_input_ports )
+INPUT_PORTS_START( yard )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -163,7 +163,7 @@ INPUT_PORTS_END
 
 /* exactly the same as yard, only difference is the Allow Continue dip switch */
 /* Also, the Cabinet dip switch doesn't seem to work. */
-INPUT_PORTS_START( vsyard_input_ports )
+INPUT_PORTS_START( vsyard )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -319,13 +319,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -358,8 +355,8 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( yard_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( yard )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "yf-a-3p",      0x0000, 0x2000, 0x4586114f )
 	ROM_LOAD( "yf-a-3n",      0x2000, 0x2000, 0x947fa760 )
 	ROM_LOAD( "yf-a-3m",      0x4000, 0x2000, 0xd4975633 )
@@ -375,7 +372,7 @@ ROM_START( yard_rom )
 	ROM_LOAD( "yf-b-5j",      0x0e000, 0x2000, 0x713ef31f )
 	ROM_LOAD( "yf-b-5k",      0x10000, 0x2000, 0xf49651cc )
 
-	ROM_REGION(0x0520)	/* color/lookup proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
 	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
@@ -383,15 +380,15 @@ ROM_START( yard_rom )
 	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
 	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
 ROM_END
 
-ROM_START( vsyard_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( vsyard )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a-3p",         0x0000, 0x2000, 0x1edac08f )
 	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
 	ROM_LOAD( "a-3m",         0x4000, 0x2000, 0xcf783dad )
@@ -407,7 +404,7 @@ ROM_START( vsyard_rom )
 	ROM_LOAD( "yf-b-5j",      0x0e000, 0x2000, 0x713ef31f )
 	ROM_LOAD( "yf-b-5k",      0x10000, 0x2000, 0xf49651cc )
 
-	ROM_REGION(0x0520)	/* color/lookup proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
 	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
@@ -415,15 +412,15 @@ ROM_START( vsyard_rom )
 	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
 	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
 ROM_END
 
-ROM_START( vsyard2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( vsyard2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vyf-a-3n",     0x0000, 0x2000, 0x418e01fc )
 	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
 	ROM_LOAD( "vyf-a-3k",     0x4000, 0x2000, 0xa0ec15bb )
@@ -439,7 +436,7 @@ ROM_START( vsyard2_rom )
 	ROM_LOAD( "yf-b-5j",      0x0e000, 0x2000, 0x713ef31f )
 	ROM_LOAD( "yf-b-5k",      0x10000, 0x2000, 0xf49651cc )
 
-	ROM_REGION(0x0520)	/* color/lookup proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
 	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
@@ -447,7 +444,7 @@ ROM_START( vsyard2_rom )
 	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
 	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )
 	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )
 	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )
@@ -456,50 +453,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe600],"\x00\x65\x03",3) == 0 &&
-		(RAM[0xe684] | RAM[0xe685] | RAM[0xe686]) != 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe600],6*23);
-			RAM[0xe008] = RAM[0xe600];
-			RAM[0xe009] = RAM[0xe601];
-			RAM[0xe00a] = RAM[0xe602];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe600],6*23);
-		osd_fclose(f);
-	}
-	memset(&RAM[0xe600], 0, 6*23);
-}
-
-
-
-struct GameDriver yard_driver =
+struct GameDriver driver_yard =
 {
 	__FILE__,
 	0,
@@ -512,23 +466,22 @@ struct GameDriver yard_driver =
 	&machine_driver,
 	0,
 
-	yard_rom,
+	rom_yard,
 	0, 0,
 	0,
 	0,
 
-	yard_input_ports,
+	input_ports_yard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver vsyard_driver =
+struct GameDriver driver_vsyard =
 {
 	__FILE__,
-	&yard_driver,
+	&driver_yard,
 	"vsyard",
 	"10 Yard Fight (Vs. version 11/05/84)",
 	"1984",
@@ -538,23 +491,22 @@ struct GameDriver vsyard_driver =
 	&machine_driver,
 	0,
 
-	vsyard_rom,
+	rom_vsyard,
 	0, 0,
 	0,
 	0,
 
-	vsyard_input_ports,
+	input_ports_vsyard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver vsyard2_driver =
+struct GameDriver driver_vsyard2 =
 {
 	__FILE__,
-	&yard_driver,
+	&driver_yard,
 	"vsyard2",
 	"10 Yard Fight (Vs. version, set 2)",
 	"1984",
@@ -564,16 +516,15 @@ struct GameDriver vsyard2_driver =
 	&machine_driver,
 	0,
 
-	vsyard2_rom,
+	rom_vsyard2,
 	0, 0,
 	0,
 	0,
 
-	vsyard_input_ports,
+	input_ports_vsyard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

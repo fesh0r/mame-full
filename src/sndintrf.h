@@ -39,7 +39,7 @@ struct MachineSound
 #if (HAS_YM2610 || HAS_YM2610B)
 #include "sound/2610intf.h"
 #endif
-#if (HAS_YM3812 || HAS_YM3526)
+#if (HAS_YM3812 || HAS_YM3526 || HAS_Y8950)
 #include "sound/3812intf.h"
 #endif
 #if (HAS_YM2413)
@@ -55,7 +55,7 @@ struct MachineSound
 #include "sound/tiaintf.h"
 #endif
 #if (HAS_NES)
-#include "sound/nesintf.h"
+#include "sound/nes_apu.h"
 #endif
 #if (HAS_ASTROCADE)
 #include "sound/astrocde.h"
@@ -79,10 +79,16 @@ struct MachineSound
 #include "sound/upd7759.h"
 #endif
 #if (HAS_HC55516)
-#include "sound/cvsd.h"
+#include "sound/hc55516.h"
+#endif
+#if (HAS_K005289)
+#include "sound/k005289.h"
 #endif
 #if (HAS_K007232)
 #include "sound/k007232.h"
+#endif
+#if (HAS_K051649)
+#include "sound/k051649.h"
 #endif
 #if (HAS_K053260)
 #include "sound/k053260.h"
@@ -95,6 +101,12 @@ struct MachineSound
 #endif
 #if (HAS_CEM3394)
 #include "sound/cem3394.h"
+#endif
+#if (HAS_C140)
+#include "sound/c140.h"
+#endif
+#if (HAS_QSOUND)
+#include "sound/qsound.h"
 #endif
 
 
@@ -146,6 +158,9 @@ enum
 #if (HAS_YM3526)
 	SOUND_YM3526,	/* 100% YM3812 compatible, less features */
 #endif
+#if (HAS_Y8950)
+	SOUND_Y8950,	/* YM3526 compatible with delta-T ADPCM */
+#endif
 #if (HAS_SN76496)
 	SOUND_SN76496,
 #endif
@@ -185,8 +200,14 @@ enum
 #if (HAS_HC55516)
 	SOUND_HC55516,	/* Harris family of CVSD CODECs */
 #endif
+#if (HAS_K005289)
+	SOUND_K005289,	/* Konami 005289 */
+#endif
 #if (HAS_K007232)
 	SOUND_K007232,	/* Konami 007232 */
+#endif
+#if (HAS_K051649)
+	SOUND_K051649,	/* Konami 051649 */
 #endif
 #if (HAS_K053260)
 	SOUND_K053260,	/* Konami 053260 */
@@ -199,6 +220,12 @@ enum
 #endif
 #if (HAS_CEM3394)
 	SOUND_CEM3394,
+#endif
+#if (HAS_C140)
+	SOUND_C140,
+#endif
+#if (HAS_QSOUND)
+	SOUND_QSOUND,
 #endif
 	SOUND_COUNT
 };

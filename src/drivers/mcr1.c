@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Midway MCR-1 system
-	
+
 	Currently implemented:
 		* Solar Fox
 		* Kick
@@ -16,7 +16,7 @@
 	CPU #1
 	========================================================================
 	0000-6FFF   R     xxxxxxxx    Program ROM
-	7000-77FF   R/W   xxxxxxxx    Program RAM
+	7000-77FF   R/W   xxxxxxxx    NVRAM
 	F000-F1FF   R/W   xxxxxxxx    Sprite RAM
 	F400-F41F     W   xxxxxxxx    Palette RAM blue/green
 	F800-F81F     W   xxxxxxxx    Palette RAM red
@@ -115,7 +115,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x00, 0x04, mcr_port_04_dispatch_r },
-	{ 0x07, 0x07, mcr_sound_status_r },
+	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, mcr_port_04_dispatch_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
@@ -128,7 +128,7 @@ static struct IOWritePort writeport[] =
 	{ 0x04, 0x07, mcr_port_47_dispatch_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
-	{ 0xe8, 0xe8, mcr_unknown_w },
+	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
 	{ -1 }	/* end of table */
 };
@@ -141,7 +141,7 @@ static struct IOWritePort writeport[] =
  *
  *************************************/
 
-INPUT_PORTS_START( solarfox_input_ports )
+INPUT_PORTS_START( solarfox )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -173,7 +173,7 @@ INPUT_PORTS_START( solarfox_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( kick_input_ports )
+INPUT_PORTS_START( kick )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -237,12 +237,11 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2500000,	/* 2.5 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
 		},
-		SOUND_CPU_SSIO(2)
+		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -264,7 +263,9 @@ static struct MachineDriver machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
@@ -279,7 +280,7 @@ static void solarfox_init(void)
 {
 	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7,0,0,0,0,0 };
 
-	MCR_CONFIGURE_HISCORE(0x7000, 0x86, hiscore_init);
+	MCR_CONFIGURE_HISCORE(0x7000, 0x800, hiscore_init);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
 
@@ -289,7 +290,7 @@ static void solarfox_init(void)
 
 static void kick_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0x7000, 0x91, NULL);
+	MCR_CONFIGURE_HISCORE(0x7000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
 
@@ -304,8 +305,8 @@ static void kick_init(void)
  *
  *************************************/
 
-ROM_START( solarfox_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( solarfox )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sfcpu.3b",     0x0000, 0x1000, 0x8c40f6eb )
 	ROM_LOAD( "sfcpu.4b",     0x1000, 0x1000, 0x4d47bd7e )
 	ROM_LOAD( "sfcpu.5b",     0x2000, 0x1000, 0xb52c3bd5 )
@@ -322,15 +323,15 @@ ROM_START( solarfox_rom )
 	ROM_LOAD( "sfvid.1d",     0x6000, 0x2000, 0x4d8445cf )
 	ROM_LOAD( "sfvid.1e",     0x8000, 0x2000, 0x3da25495 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sfsnd.7a",     0x0000, 0x1000, 0xcdecf83a )
 	ROM_LOAD( "sfsnd.8a",     0x1000, 0x1000, 0xcb7788cb )
 	ROM_LOAD( "sfsnd.9a",     0x2000, 0x1000, 0x304896ce )
 ROM_END
 
 
-ROM_START( kick_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( kick )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1200a-v2.b3",  0x0000, 0x1000, 0x65924917 )
 	ROM_LOAD( "1300b-v2.b4",  0x1000, 0x1000, 0x27929f52 )
 	ROM_LOAD( "1400c-v2.b5",  0x2000, 0x1000, 0x69107ce6 )
@@ -346,7 +347,7 @@ ROM_START( kick_rom )
 	ROM_LOAD( "2800c-v2.1b",  0x6000, 0x2000, 0xf3be56a1 )
 	ROM_LOAD( "2900d-v2.1a",  0x8000, 0x2000, 0x77da795e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "4200-a.a7",    0x0000, 0x1000, 0x9e35c02e )
 	ROM_LOAD( "4300-b.a8",    0x1000, 0x1000, 0xca2b7c28 )
 	ROM_LOAD( "4400-c.a9",    0x2000, 0x1000, 0xd1901551 )
@@ -354,8 +355,8 @@ ROM_START( kick_rom )
 ROM_END
 
 
-ROM_START( kicka_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( kicka )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1200-a.b3",    0x0000, 0x1000, 0x22fa42ed )
 	ROM_LOAD( "1300-b.b4",    0x1000, 0x1000, 0xafaca819 )
 	ROM_LOAD( "1400-c.b5",    0x2000, 0x1000, 0x6054ee56 )
@@ -371,7 +372,7 @@ ROM_START( kicka_rom )
 	ROM_LOAD( "2800-c.1b",    0x6000, 0x2000, 0xc93e0170 )
 	ROM_LOAD( "2900-d.1a",    0x8000, 0x2000, 0x91e59383 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "4200-a.a7",    0x0000, 0x1000, 0x9e35c02e )
 	ROM_LOAD( "4300-b.a8",    0x1000, 0x1000, 0xca2b7c28 )
 	ROM_LOAD( "4400-c.a9",    0x2000, 0x1000, 0xd1901551 )
@@ -386,7 +387,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver solarfox_driver =
+struct GameDriver driver_solarfox =
 {
 	__FILE__,
 	0,
@@ -399,21 +400,20 @@ struct GameDriver solarfox_driver =
 	&machine_driver,
 	solarfox_init,
 
-	solarfox_rom,
+	rom_solarfox,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	solarfox_input_ports,
+	input_ports_solarfox,
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
-
-	mcr_hiload,mcr_hisave
+	0,0
 };
 
 
-struct GameDriver kick_driver =
+struct GameDriver driver_kick =
 {
 	__FILE__,
 	0,
@@ -426,24 +426,23 @@ struct GameDriver kick_driver =
 	&machine_driver,
 	kick_init,
 
-	kick_rom,
+	rom_kick,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	kick_input_ports,
+	input_ports_kick,
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
-
-	mcr_hiload,mcr_hisave
+	0,0
 };
 
 
-struct GameDriver kicka_driver =
+struct GameDriver driver_kicka =
 {
 	__FILE__,
-	&kick_driver,
+	&driver_kick,
 	"kicka",
 	"Kick (upright version)",
 	"1981",
@@ -453,15 +452,14 @@ struct GameDriver kicka_driver =
 	&machine_driver,
 	kick_init,
 
-	kicka_rom,
+	rom_kicka,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	kick_input_ports,
+	input_ports_kick,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mcr_hiload,mcr_hisave
+	ROT90,
+	0,0
 };

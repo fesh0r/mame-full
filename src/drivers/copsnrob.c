@@ -2,6 +2,9 @@
 
 Cops'n Robbers memory map (preliminary)
 
+driver by Zsolt Vasvari
+
+
 0000-00ff RAM
 0c00-0fff Video RAM
 1200-1fff ROM
@@ -84,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( copsnrob_input_ports )
+INPUT_PORTS_START( copsnrob )
         PORT_START      /* IN0 */
         PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_VBLANK )
 
@@ -181,61 +184,61 @@ static struct GfxLayout trucklayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 1, 0x0000, &charlayout, 0, 3 }, /* offset into colors, # of colors */
-        { 1, 0x0200, &carlayout,  0, 3 },
-        { 1, 0x0a00, &trucklayout,0, 3 },
-        { -1 } /* end of array */
+	{ REGION_GFX1, 0, &charlayout,  0, 3 },
+	{ REGION_GFX2, 0, &carlayout,   0, 3 },
+	{ REGION_GFX3, 0, &trucklayout, 0, 3 },
+	{ -1 } /* end of array */
 };
 
 static unsigned char palette[] =
 {
-        0x00,0x00,0x00, /* Black */
-        0x40,0x40,0xc0, /* Blue */
-        0xf0,0xf0,0x30, /* Yellow */
-        0xbd,0x9b,0x13, /* Amber */
-
-        0xff,0x00,0x00  /* Red for MAME's use only */
+	0x00,0x00,0x00, /* Black */
+	0x40,0x40,0xc0, /* Blue */
+	0xf0,0xf0,0x30, /* Yellow */
+	0xbd,0x9b,0x13, /* Amber */
 };
-
 static unsigned short colortable[] =
 {
-        0x00, 0x01,
-        0x00, 0x02,
-        0x00, 0x03
+	0x00, 0x01,
+	0x00, 0x02,
+	0x00, 0x03
 };
-
-
-static
-struct MachineDriver machine_driver =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-        /* basic machine hardware */
-        {
-                {
-                        CPU_M6502,
-                        14318180/16, /* 894886.25 kHz */
-                        0,
-                        readmem,writemem,0,0,
-                        ignore_interrupt,1
-                }
-        },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-        1,      /* single CPU, no need for interleaving */
-        0,
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
-        /* video hardware */
-        32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-        gfxdecodeinfo,
-        sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-        0,
 
-        VIDEO_TYPE_RASTER,
-        0,
-        generic_vh_start,
-        generic_vh_stop,
-        copsnrob_vh_screenrefresh,
+static struct MachineDriver machine_driver_copsnrob =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			14318180/16, /* 894886.25 kHz */
+			readmem,writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
 
-        /* sound hardware */
-        0,0,0,0
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	copsnrob_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0
 };
 
 
@@ -248,8 +251,8 @@ struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( copsnrob_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( copsnrob )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "5777.l7",      0x1200, 0x0200, 0x2b62d627 )
 	ROM_LOAD( "5776.k7",      0x1400, 0x0200, 0x7fb12a49 )
 	ROM_LOAD( "5775.j7",      0x1600, 0x0200, 0x627dee63 )
@@ -257,41 +260,25 @@ ROM_START( copsnrob_rom )
 	ROM_LOAD( "5773.e7",      0x1a00, 0x0200, 0xff7c95f4 )
 	ROM_LOAD( "5772.d7",      0x1c00, 0x0200, 0x8d26afdc )
 	ROM_LOAD( "5771.b7",      0x1e00, 0x0200, 0xd61758d6 )
-	ROM_RELOAD(          0xfe00, 0x0200 ) // For 6502 vectors
+	ROM_RELOAD(               0xfe00, 0x0200 ) // For 6502 vectors
 
-	ROM_REGION_DISPOSE(0x0b00)     /* 2.75k for graphics */
+	ROM_REGIONX( 0x0200, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5782.m3",      0x0000, 0x0200, 0x82b86852 )
-	ROM_LOAD( "5778.p1",      0x0200, 0x0200, 0x78bff86a )
-	ROM_LOAD( "5779.m1",      0x0400, 0x0200, 0x8b1d0d83 )
-	ROM_LOAD( "5780.l1",      0x0600, 0x0200, 0x6f4c6bab )
-	ROM_LOAD( "5781.j1",      0x0800, 0x0200, 0xc87f2f13 )
-	ROM_LOAD( "5770.m2",      0x0a00, 0x0100, 0xb00bbe77 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5778.p1",      0x0000, 0x0200, 0x78bff86a )
+	ROM_LOAD( "5779.m1",      0x0200, 0x0200, 0x8b1d0d83 )
+	ROM_LOAD( "5780.l1",      0x0400, 0x0200, 0x6f4c6bab )
+	ROM_LOAD( "5781.j1",      0x0600, 0x0200, 0xc87f2f13 )
+
+	ROM_REGIONX( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5770.m2",      0x0000, 0x0100, 0xb00bbe77 )
+
+	ROM_REGIONX( 0x0060, REGION_PROMS )	 /* misc. PROMs (timing?) */
+	ROM_LOAD( "5765.h8",      0x0000, 0x0020, 0x6cd58931 )
+	ROM_LOAD( "5766.k8",      0x0020, 0x0020, 0xe63edf4f )
+	ROM_LOAD( "5767.j8",      0x0040, 0x0020, 0x381b5ae4 )
 ROM_END
 
 
-struct GameDriver copsnrob_driver =
-{
-	__FILE__,
-	0,
-	"copsnrob",
-	"Cops'n Robbers",
-	"1976",
-	"Atari",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	copsnrob_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	copsnrob_input_ports,
-
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	// This game doesn't keep track of high scores
-	0, 0
-};
+GAME( 1976, copsnrob, , copsnrob, copsnrob, , ROT0, "Atari", "Cops'n Robbers" )

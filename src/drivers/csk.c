@@ -267,7 +267,7 @@ static struct IOWritePort csk234_writeport[] =
 
 /* MB: 05 Jun 99  Input ports and Dip switches are all verified! */
 
-INPUT_PORTS_START( csk227_input_ports )
+INPUT_PORTS_START( csk227 )
 
 	PORT_START	/* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Demo Music" )
@@ -428,7 +428,7 @@ INPUT_PORTS_START( csk227_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( csk234_input_ports )
+INPUT_PORTS_START( csk234 )
 
 	PORT_START	/* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Demo Music" )
@@ -612,13 +612,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_csk227it =
 {
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* ? */
-			0,
 			readmem,writemem,csk227_readport,csk227_writeport,
 			cska_interrupt,6
 		}
@@ -644,13 +643,12 @@ static struct MachineDriver machine_driver =
 };
 
 
-static struct MachineDriver csk234it_machine_driver =
+static struct MachineDriver machine_driver_csk234it =
 {
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* ? */
-			0,
 			readmem,writemem,csk234_readport,csk234_writeport,
 			cska_interrupt,6
 		}
@@ -680,8 +678,8 @@ static struct MachineDriver csk234it_machine_driver =
 /*	ROM Regions definition
  */
 
-ROM_START( csk227it_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( csk227it )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v227i.bin",   0x0000, 0x10000, 0xdf1ebf49 )
 
 	ROM_REGION_DISPOSE(0xc0000) /* temporary space for graphics (disposed after conversion) */
@@ -693,13 +691,13 @@ ROM_START( csk227it_rom )
 	ROM_LOAD( "2.bin",  0x70000, 0x10000, 0x848343a3 )
 	ROM_LOAD( "1.bin",  0x80000, 0x10000, 0x921ad5de )
 
-	ROM_REGION(0x10000)	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGION( 0x10000 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.227",   0x0000, 0x10000, 0xa10786ad )
 ROM_END
 
 
-ROM_START( csk234it_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( csk234it )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v234it.bin",   0x0000, 0x10000, 0x344b7059 )
 
 	ROM_REGION_DISPOSE(0xc0000) /* temporary space for graphics (disposed after conversion) */
@@ -711,7 +709,7 @@ ROM_START( csk234it_rom )
 	ROM_LOAD( "2.bin",  0x70000, 0x10000, 0x848343a3 )
 	ROM_LOAD( "1.bin",  0x80000, 0x10000, 0x921ad5de )
 
-	ROM_REGION(0x10000)	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGION( 0x10000 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.234",   0x0000, 0x10000, 0xae6dd4ad )
 ROM_END
 
@@ -721,72 +719,23 @@ ROM_END
 /*	Decode a simple PAL encryption
  */
 
-static void cska_decode(void)
+static void init_cska(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)
 	{
-		if ((A & 0x0020) == 0x0000) RAM[A] ^= 0x01;
-		if ((A & 0x0020) == 0x0020) RAM[A] ^= 0x21;
-		if ((A & 0x0282) == 0x0282) RAM[A] ^= 0x01;
-		if ((A & 0x0028) == 0x0028) RAM[A] ^= 0x20;
-		if ((A & 0x0940) == 0x0940) RAM[A] ^= 0x02;
+		if ((A & 0x0020) == 0x0000) rom[A] ^= 0x01;
+		if ((A & 0x0020) == 0x0020) rom[A] ^= 0x21;
+		if ((A & 0x0282) == 0x0282) rom[A] ^= 0x01;
+		if ((A & 0x0028) == 0x0028) rom[A] ^= 0x20;
+		if ((A & 0x0940) == 0x0940) rom[A] ^= 0x02;
 	}
 }
 
 
-struct GameDriver csk227it_driver =
-{
-	__FILE__,
-	0,
-	"csk227it",
-	"Champion Skill (with Ability)",
-	"????",
-	"IGS",
-	"Mirko Buffoni (Mame Driver)",
-	0,
-	&machine_driver,
-	0,
-
-	csk227it_rom,
-	cska_decode, 0,
-	0,
-	0,
-
-	csk227_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
-};
-
-struct GameDriver csk234it_driver =
-{
-	__FILE__,
-	&csk227it_driver,
-	"csk234it",
-	"Champion Skill (Ability, Poker & Symbols)",
-	"????",
-	"IGS",
-	"Mirko Buffoni (Mame Driver)",
-	0,
-	&csk234it_machine_driver,
-	0,
-
-	csk234it_rom,
-	cska_decode, 0,
-	0,
-	0,
-
-	csk234_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
-};
+GAME( ????, csk227it, ,         csk227it, csk227, cska, ROT0, "IGS", "Champion Skill (with Ability)" )
+GAME( ????, csk234it, csk227it, csk234it, csk234, cska, ROT0, "IGS", "Champion Skill (Ability, Poker & Symbols)" )
 

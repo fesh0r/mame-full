@@ -93,7 +93,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( qwakprot )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )			/* ??? */
@@ -216,7 +216,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/8,	/* 1.512 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -254,69 +253,24 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( qwakprot_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( qwakprot )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, 0x4d002d8a )
 	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, 0xe0c78fd7 )
 	ROM_LOAD( "qwaka000.bin", 0xa000, 0x1000, 0xe5770fc9 )
 	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, 0x90771cc0 )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x4000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, 0xbed2c067 )
 	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, 0x73a31d28 )
 	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, 0x07fd9e80 )
 	ROM_LOAD( "qwakgfx3.bin", 0x3000, 0x1000, 0xe8416f2b )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
 
-***************************************************************************/
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0045],"\x00\x50\x00",3) == 0) &&
-		(memcmp(&RAM[0x0108],"MEC",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0045],3);	/* Hi score */
-			osd_fread(f,&RAM[0x0108],3);	/* Initials */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0045],3);	/* Score */
-		osd_fwrite(f,&RAM[0x0108],3);	/* Initials */
-		osd_fclose(f);
-	}
-}
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver qwakprot_driver =
+struct GameDriver driver_qwakprot =
 {
 	__FILE__,
 	0,
@@ -329,16 +283,15 @@ struct GameDriver qwakprot_driver =
 	&machine_driver,
 	0,
 
-	qwakprot_rom,
+	rom_qwakprot,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_qwakprot,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 

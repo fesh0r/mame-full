@@ -857,9 +857,9 @@ The factors are in the range 0 (no shrinking) - 3F (half size).
 static void get_sprite_info(void)
 {
 const unsigned short *base_pal	= Machine->gfx[0]->colortable + 0;
-const unsigned char  *base_gfx	= Machine->memory_region[2];
+const unsigned char  *base_gfx	= memory_region(2);
 
-const int gfx_max = Machine->memory_region_length[2];
+const int gfx_max = memory_region_length(2);
 
 unsigned char *source		=	spriteram;
 struct sprite *sprite		=	sprite_list->sprite;
@@ -939,9 +939,9 @@ int visibility = SPRITE_VISIBLE;
 void browser(struct osd_bitmap *bitmap)
 {
 const unsigned short *base_pal	= Machine->gfx[0]->colortable + 0;
-const unsigned char  *base_gfx	= Machine->memory_region[2];
+const unsigned char  *base_gfx	= memory_region(2);
 
-const int gfx_max				= Machine->memory_region_length[2];
+const int gfx_max				= memory_region_length(2);
 
 struct sprite *sprite		=	sprite_list->sprite;
 const struct sprite *finish	=	sprite + NUM_SPRITES;
@@ -1179,7 +1179,7 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 	struct rectangle clip = {0, 512-1, 0, 256-1};
 
-		fillbitmap(temp_bitmap2,0,0);
+		fillbitmap(temp_bitmap2,Machine->pens[0],0);
 
 		hotchase_draw_road(temp_bitmap2,0,&clip);
 

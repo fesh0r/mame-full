@@ -136,7 +136,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( meteor )
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
@@ -208,8 +208,6 @@ static unsigned char palette[] =
 	0x00, 0xff, 0xff,
 	0xff, 0xff, 0xff
 };
-
-
 static unsigned short colortable[] =
 {
 	0, 1, 2, 3, 4, 5, 6, 7,
@@ -221,6 +219,11 @@ static unsigned short colortable[] =
 	0, 7, 0, 1, 2, 3, 4, 5,
 	0, 0, 1, 2, 3, 4, 5, 6,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct SN76496interface sn76496_interface =
@@ -238,14 +241,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8085A,
 			4000000,        /* 4.00 MHz??? */
-			0,
 			readmem,writemem,0,0,
 			meteor_interrupt,1
 		},
 		{
             CPU_I8035 | CPU_AUDIO_CPU,
             6144000/8,		/* divisor ??? */
-            2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
             ignore_interrupt,0  /* IRQ's are triggered by the main CPU */
         }
@@ -257,8 +258,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	8, 8*8,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -282,8 +283,8 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( meteor_rom )
-	ROM_REGION(0x10000)       /* 64k for code */
+ROM_START( meteor )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "vm1", 	      0x0000, 0x0800, 0x894fe9b1 )
 	ROM_LOAD( "vm2", 	      0x0800, 0x0800, 0x28685a68 )
 	ROM_LOAD( "vm3", 	      0x1000, 0x0800, 0xc88fb12a )
@@ -301,12 +302,12 @@ ROM_START( meteor_rom )
 	ROM_LOAD( "bm1v",         0x2000, 0x0800, 0xcc97c890 )
 	ROM_LOAD( "bm2v",         0x2800, 0x0800, 0x2858cf5c )
 
-	ROM_REGION(0x1000)		/* sound MCU */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )		/* sound MCU */
 	ROM_LOAD( "vm5", 	      0x0000, 0x0800, 0xb14ccd57 )
 ROM_END
 
 
-struct GameDriver meteor_driver =
+struct GameDriver driver_meteor =
 {
 	__FILE__,
 	0,
@@ -319,16 +320,16 @@ struct GameDriver meteor_driver =
 	&machine_driver,
 	0,
 
-	meteor_rom,
+	rom_meteor,
 	0,
 	0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_meteor,
 
-	0, palette, colortable,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ROT270,
 
 	0, 0
 };

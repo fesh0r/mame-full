@@ -137,10 +137,14 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( espial_input_ports )
+INPUT_PORTS_START( espial )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x00, "Fire Buttons" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x02, 0x02, "CounterAttack" )	/* you can shoot bullets */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -154,27 +158,44 @@ INPUT_PORTS_START( espial_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x00, "20k and every 70k" )
+	PORT_DIPSETTING(	0x20, "50k and every 100k" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )	/* ??? */
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x80, "Test" )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
 
@@ -234,14 +255,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,0,
 			zodiac_master_interrupt,2
 		},
 		{
 			CPU_Z80,
 			3072000,	/* 2 Mhz?????? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			nmi_interrupt,4
 		}
@@ -280,8 +299,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( espial_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( espial )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "espial.3",     0x0000, 0x2000, 0x10f1da30 )
 	ROM_LOAD( "espial.4",     0x2000, 0x2000, 0xd2adbe39 )
 	ROM_LOAD( "espial.6",     0x4000, 0x1000, 0xbaa60bc1 )
@@ -293,17 +312,17 @@ ROM_START( espial_rom )
 	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
 	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
 	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "espial.1",     0x0000, 0x1000, 0x1e5ec20b )
 	ROM_LOAD( "espial.2",     0x1000, 0x1000, 0x3431bb97 )
 ROM_END
 
-ROM_START( espiale_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( espiale )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2764.3",       0x0000, 0x2000, 0x0973c8a4 )
 	ROM_LOAD( "2764.4",       0x2000, 0x2000, 0x6034d7e5 )
 	ROM_LOAD( "2732.6",       0x4000, 0x1000, 0x357025b4 )
@@ -315,58 +334,18 @@ ROM_START( espiale_rom )
 	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
 	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
 	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.1",       0x0000, 0x1000, 0xfc7729e9 )
 	ROM_LOAD( "2732.2",       0x1000, 0x1000, 0xe4e256da )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x584c],"\x81\x00\x13",3) == 0 &&
-			memcmp(&RAM[0x58B7],"\x0d\x0a\x27",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x584c],5*22);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x584c],5*22);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver espial_driver =
+struct GameDriver driver_espial =
 {
 	__FILE__,
 	0,
@@ -379,23 +358,22 @@ struct GameDriver espial_driver =
 	&machine_driver,
 	0,
 
-	espial_rom,
+	rom_espial,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	espial_input_ports,
+	input_ports_espial,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver espiale_driver =
+struct GameDriver driver_espiale =
 {
 	__FILE__,
-	&espial_driver,
+	&driver_espial,
 	"espiale",
 	"Espial (Europe)",
 	"1983",
@@ -405,15 +383,14 @@ struct GameDriver espiale_driver =
 	&machine_driver,
 	0,
 
-	espiale_rom,
+	rom_espiale,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	espial_input_ports,
+	input_ports_espial,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

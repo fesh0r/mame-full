@@ -59,7 +59,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( travrusa_input_ports )
+INPUT_PORTS_START( travrusa )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -147,7 +147,7 @@ INPUT_PORTS_START( travrusa_input_ports )
 INPUT_PORTS_END
 
 /* same as travrusa, no "Title" switch */
-INPUT_PORTS_START( motorace_input_ports )
+INPUT_PORTS_START( motorace )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -274,13 +274,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -315,8 +312,8 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 
-ROM_START( travrusa_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( travrusa )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zippyrac.000", 0x0000, 0x2000, 0xbe066c0a )
 	ROM_LOAD( "zippyrac.005", 0x2000, 0x2000, 0x145d6b34 )
 	ROM_LOAD( "zippyrac.006", 0x4000, 0x2000, 0xe1b51383 )
@@ -330,17 +327,17 @@ ROM_START( travrusa_rom )
 	ROM_LOAD( "zippyrac.009", 0x08000, 0x2000, 0x13be6a14 )
 	ROM_LOAD( "zippyrac.010", 0x0a000, 0x2000, 0x6fcc9fdb )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mmi6349.ij",   0x0000, 0x0200, 0xc9724350 ) /* character palette - last $100 are unused */
 	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
-ROM_START( motorace_rom )
-	ROM_REGION(0x12000)	/* 64k for code */
+ROM_START( motorace )
+	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mr.cpu",       0x10000, 0x2000, 0x89030b0c )	/* we load the ROM at 10000-11fff, */
 														/* it will be decrypted at 0000 */
 	ROM_LOAD( "mr1.3l",       0x2000, 0x2000, 0x0904ed58 )
@@ -355,12 +352,12 @@ ROM_START( motorace_rom )
 	ROM_LOAD( "mr5.3m",       0x08000, 0x2000, 0xf75f2aad )
 	ROM_LOAD( "mr6.3k",       0x0a000, 0x2000, 0x518889a0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mmi6349.ij",   0x0000, 0x0200, 0xc9724350 ) /* character palette - last $100 are unused */
 	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
@@ -369,7 +366,7 @@ ROM_END
 void motorace_decode(void)
 {
 	int A,i,j;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* The first CPU ROM has the address and data lines scrambled */
@@ -413,48 +410,7 @@ void motorace_decode(void)
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe080],"\x49\x45\x4f",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe07c],74);
-			RAM[0xE008] = RAM[0xE07C];
-			RAM[0xE009] = RAM[0xE07D];
-			RAM[0xE00A] = RAM[0xE07E];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe07c],74);
-		osd_fclose(f);
-	}
-	memset(&RAM[0xe07c], 0, 74);	/* LT 13-11-97 */
-}
-
-
-
-struct GameDriver travrusa_driver =
+struct GameDriver driver_travrusa =
 {
 	__FILE__,
 	0,
@@ -467,23 +423,22 @@ struct GameDriver travrusa_driver =
 	&machine_driver,
 	0,
 
-	travrusa_rom,
+	rom_travrusa,
 	0, 0,
 	0,
 	0,
 
-	travrusa_input_ports,
+	input_ports_travrusa,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver motorace_driver =
+struct GameDriver driver_motorace =
 {
 	__FILE__,
-	&travrusa_driver,
+	&driver_travrusa,
 	"motorace",
 	"MotoRace USA",
 	"1983",
@@ -491,17 +446,16 @@ struct GameDriver motorace_driver =
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)\nGerald Vanderick (color info)",
 	0,
 	&machine_driver,
+	motorace_decode,
+
+	rom_motorace,
+	0, 0,
+	0,
 	0,
 
-	motorace_rom,
-	motorace_decode, 0,
-	0,
-	0,
+	input_ports_motorace,
 
-	motorace_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

@@ -258,7 +258,6 @@ void exidy440_sound_interrupt_clear(int offset, int data);
 /* video driver data & functions */
 extern UINT8 *spriteram;
 extern UINT8 *exidy440_imageram;
-extern UINT8 *exidy440_latched_x;
 extern UINT8 *exidy440_scanline;
 extern UINT8 exidy440_firq_vblank;
 extern UINT8 exidy440_firq_beam;
@@ -279,6 +278,27 @@ int exidy440_vertical_pos_r(int offset);
 int exidy440_horizontal_pos_r(int offset);
 void exidy440_interrupt_clear_w(int offset, int data);
 
+
+
+/*************************************
+ *
+ *	EEROM save/load
+ *
+ *************************************/
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		/* the EEROM lives in the uppermost 8k of the top bank */
+		osd_fwrite(file, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+	else
+	{
+		if (file)
+			osd_fread(file, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+		else
+			memset(&memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
+	}
+}
 
 
 /*************************************
@@ -318,7 +338,7 @@ static int main_interrupt(void)
 static void init_machine(void)
 {
 	exidy440_bank = 0;
-	cpu_setbank(1, &Machine->memory_region[0][0x10000]);
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
 
 	last_coins = input_port_3_r(0) & 3;
 	coin_state = 3;
@@ -363,7 +383,7 @@ static void bankram_w(int offset, int data)
 	/* EEROM lives in the upper 8k of bank 15 */
 	if (exidy440_bank == 15 && offset >= 0x2000)
 	{
-		Machine->memory_region[0][0x10000 + 15 * 0x4000 + offset] = data;
+		memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + offset] = data;
 		if (errorlog) fprintf(errorlog, "W EEROM[%04X] = %02X\n", offset - 0x2000, data);
 	}
 
@@ -448,6 +468,16 @@ static int io1_r(int offset)
  *
  *************************************/
 
+static void delayed_sound_command_w(int param)
+{
+	exidy440_sound_command = param;
+	exidy440_sound_command_ack = 0;
+
+	/* cause an FIRQ on the sound CPU */
+	cpu_set_irq_line(1, 1, ASSERT_LINE);
+}
+
+
 static void io1_w(int offset, int data)
 {
 	if (errorlog) fprintf(errorlog, "W I/O1[%02X]=%02X\n", offset, data);
@@ -456,11 +486,7 @@ static void io1_w(int offset, int data)
 	switch (offset & 0xe0)
 	{
 		case 0x00:										/* sound command */
-			exidy440_sound_command = data;
-			exidy440_sound_command_ack = 0;
-
-			/* cause an FIRQ on the sound CPU */
-			cpu_set_irq_line(1, 1, ASSERT_LINE);
+			timer_set(TIME_NOW, data, delayed_sound_command_w);
 			break;
 
 		case 0x20:										/* coin bits I/O1 */
@@ -505,7 +531,7 @@ int showdown_pld_trigger_r(int offset)
 		showdown_bank_triggered = 1;
 
 	/* just return the value from the current bank */
-	return Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000 + 0x0055 + offset];
+	return memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000 + 0x0055 + offset];
 }
 
 
@@ -523,11 +549,11 @@ int showdown_pld_select1_r(int offset)
 
 		/* clear the trigger and copy the expected 24 bytes to the RAM area */
 		showdown_bank_triggered = 0;
-		memcpy(&Machine->memory_region[0][0x10000], bankdata, 0x18);
+		memcpy(&memory_region(REGION_CPU1)[0x10000], bankdata, 0x18);
 	}
 
 	/* just return the value from the current bank */
-	return Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000 + 0x00ed + offset];
+	return memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000 + 0x00ed + offset];
 }
 
 
@@ -545,11 +571,11 @@ int showdown_pld_select2_r(int offset)
 
 		/* clear the trigger and copy the expected 24 bytes to the RAM area */
 		showdown_bank_triggered = 0;
-		memcpy(&Machine->memory_region[0][0x10000], bankdata, 0x18);
+		memcpy(&memory_region(REGION_CPU1)[0x10000], bankdata, 0x18);
 	}
 
 	/* just return the value from the current bank */
-	return Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000 + 0x1243 + offset];
+	return memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000 + 0x1243 + offset];
 }
 
 
@@ -562,13 +588,13 @@ int showdown_pld_select2_r(int offset)
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM, &exidy440_imageram },
-	{ 0x2000, 0x209f, MRA_RAM, &spriteram },
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x209f, MRA_RAM },
 	{ 0x20a0, 0x29ff, MRA_RAM },
 	{ 0x2a00, 0x2aff, exidy440_videoram_r },
 	{ 0x2b00, 0x2b00, exidy440_vertical_pos_r },
-	{ 0x2b01, 0x2b01, exidy440_horizontal_pos_r, &exidy440_latched_x },
-	{ 0x2b02, 0x2b02, MRA_RAM, &exidy440_scanline },
+	{ 0x2b01, 0x2b01, exidy440_horizontal_pos_r },
+	{ 0x2b02, 0x2b02, MRA_RAM },
 	{ 0x2b03, 0x2b03, input_r },
 	{ 0x2c00, 0x2dff, exidy440_paletteram_r },
 	{ 0x2e00, 0x2eff, io1_r },
@@ -581,8 +607,8 @@ static struct MemoryReadAddress readmem_cpu1[] =
 
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x209f, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA_RAM, &exidy440_imageram },
+	{ 0x2000, 0x209f, MWA_RAM, &spriteram },
 	{ 0x20a0, 0x29ff, MWA_RAM },
 	{ 0x2a00, 0x2aff, exidy440_videoram_w },
 	{ 0x2b01, 0x2b01, exidy440_interrupt_clear_w },
@@ -606,8 +632,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 
 static struct MemoryReadAddress readmem_cpu2[] =
 {
-	{ 0x8000, 0x8016, exidy440_m6844_r, &exidy440_m6844_data },
-	{ 0x8400, 0x8407, MRA_RAM, &exidy440_sound_volume },
+	{ 0x8000, 0x8016, exidy440_m6844_r },
+	{ 0x8400, 0x8407, MRA_RAM },
 	{ 0x8800, 0x8800, exidy440_sound_command_r },
 	{ 0x9800, 0x9800, MRA_NOP },
 	{ 0xa000, 0xbfff, MRA_RAM },
@@ -618,8 +644,8 @@ static struct MemoryReadAddress readmem_cpu2[] =
 
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-	{ 0x8000, 0x8016, exidy440_m6844_w },
-	{ 0x8400, 0x8407, exidy440_sound_volume_w },
+	{ 0x8000, 0x8016, exidy440_m6844_w, &exidy440_m6844_data },
+	{ 0x8400, 0x8407, exidy440_sound_volume_w, &exidy440_sound_volume },
 	{ 0x9400, 0x9403, MWA_RAM, &exidy440_sound_banks },
 	{ 0x9800, 0x9800, exidy440_sound_interrupt_clear },
 	{ 0xa000, 0xbfff, MWA_RAM },
@@ -655,7 +681,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 
 
-INPUT_PORTS_START( crossbow_input_ports )
+INPUT_PORTS_START( crossbow )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -695,7 +721,7 @@ INPUT_PORTS_START( crossbow_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cheyenne_input_ports )
+INPUT_PORTS_START( cheyenne )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -735,7 +761,7 @@ INPUT_PORTS_START( cheyenne_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( combat_input_ports )
+INPUT_PORTS_START( combat )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -775,7 +801,7 @@ INPUT_PORTS_START( combat_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cracksht_input_ports )
+INPUT_PORTS_START( cracksht )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -815,7 +841,7 @@ INPUT_PORTS_START( cracksht_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( claypign_input_ports )
+INPUT_PORTS_START( claypign )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -851,7 +877,7 @@ INPUT_PORTS_START( claypign_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( chiller_input_ports )
+INPUT_PORTS_START( chiller )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -888,7 +914,7 @@ INPUT_PORTS_START( chiller_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( topsecex_input_ports )
+INPUT_PORTS_START( topsecex )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -935,7 +961,7 @@ INPUT_PORTS_START( topsecex_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( hitnmiss_input_ports )
+INPUT_PORTS_START( hitnmiss )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -975,7 +1001,7 @@ INPUT_PORTS_START( hitnmiss_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( whodunit_input_ports )
+INPUT_PORTS_START( whodunit )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1012,7 +1038,7 @@ INPUT_PORTS_START( whodunit_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( showdown_input_ports )
+INPUT_PORTS_START( showdown )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1078,14 +1104,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			12979200/8,                     /* 12Mhz/8 */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			main_interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			12979200/4/4,                   /* 12MHz/4 into XTAL, which is 4x clock */
-			1,
 			readmem_cpu2,writemem_cpu2,0,0,
 			exidy440_sound_interrupt,1
 		}
@@ -1113,42 +1137,10 @@ static struct MachineDriver machine_driver =
 			SOUND_CUSTOM,
 			&custom_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
-
-
-
-/*************************************
- *
- *	High score save/load
- *
- *************************************/
-
-static int hiload(void)
-{
-	void *f = osd_fopen(Machine->gamedrv->name,0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fread(f, &Machine->memory_region[0][0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
-		osd_fclose(f);
-	}
-	else
-		memset(&Machine->memory_region[0][0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fwrite(f, &Machine->memory_region[0][0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -1200,8 +1192,8 @@ static void showdown_init(void)
  *
  *************************************/
 
-ROM_START( crossbow_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( crossbow )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "xbl-2.1a",   0x08000, 0x2000, 0xbd53ac46 )
 	ROM_LOAD( "xbl-2.3a",   0x0a000, 0x2000, 0x703e1376 )
 	ROM_LOAD( "xbl-2.4a",   0x0c000, 0x2000, 0x52c5daa1 )
@@ -1234,7 +1226,7 @@ ROM_START( crossbow_rom )
 	ROM_LOAD( "xbl-1.3b",   0x42000, 0x2000, 0x4a03c2c9 )
 	ROM_LOAD( "xbl-1.4b",   0x44000, 0x2000, 0x7e21c624 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "xba-11.1h",  0x0e000, 0x2000, 0x1b61d0c1 )
 
 	ROM_REGION(0x20000)
@@ -1257,8 +1249,8 @@ ROM_START( crossbow_rom )
 ROM_END
 
 
-ROM_START( cheyenne_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( cheyenne )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "cyl-1.1a",   0x08000, 0x2000, 0x504c3fa6 )
 	ROM_LOAD( "cyl-1.3a",   0x0a000, 0x2000, 0x09b7903b )
 	ROM_LOAD( "cyl-1.4a",   0x0c000, 0x2000, 0xb708646b )
@@ -1290,7 +1282,7 @@ ROM_START( cheyenne_rom )
 	ROM_LOAD( "cyl-1.8b",   0x4a000, 0x2000, 0xc0653d3e )
 	ROM_LOAD( "cyl-1.10b",  0x4c000, 0x2000, 0x7fc67d19 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cya-1.1h",   0x0e000, 0x2000, 0x5aed3d8c )
 
 	ROM_REGION(0x20000)
@@ -1311,8 +1303,8 @@ ROM_START( cheyenne_rom )
 ROM_END
 
 
-ROM_START( combat_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( combat )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "1a",   0x08000, 0x2000, 0x159a573b )
 	ROM_LOAD( "3a",   0x0a000, 0x2000, 0x59ae51a7 )
 	ROM_LOAD( "4a",   0x0c000, 0x2000, 0x95a1f3d0 )
@@ -1338,7 +1330,7 @@ ROM_START( combat_rom )
 	ROM_LOAD( "8b",   0x4a000, 0x2000, 0xae977f4c )
 	ROM_LOAD( "10b",  0x4c000, 0x2000, 0x502da003 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "1h",  0x0e000, 0x2000, 0x8f3dd350 )
 
 	ROM_REGION(0x20000)
@@ -1359,8 +1351,8 @@ ROM_START( combat_rom )
 ROM_END
 
 
-ROM_START( cracksht_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( cracksht )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "csl2.1a",   0x08000, 0x2000, 0x16fd0171 )
 	ROM_LOAD( "csl2.3a",   0x0a000, 0x2000, 0x906f3209 )
 	ROM_LOAD( "csl2.4a",   0x0c000, 0x2000, 0x9996d2bf )
@@ -1382,7 +1374,7 @@ ROM_START( cracksht_rom )
 	ROM_LOAD( "csl2.8b",   0x4a000, 0x2000, 0xaf1c8cb8 )
 	ROM_LOAD( "csl2.10b",  0x4c000, 0x2000, 0x8a0d6ad0 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "csa3.1h",   0x0e000, 0x2000, 0x5ba8b4ac )
 
 	ROM_REGION(0x20000)
@@ -1405,8 +1397,8 @@ ROM_START( cracksht_rom )
 ROM_END
 
 
-ROM_START( claypign_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( claypign )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "claypige.1a",   0x08000, 0x2000, 0x446d7004 )
 	ROM_LOAD( "claypige.3a",   0x0a000, 0x2000, 0xdf39701b )
 	ROM_LOAD( "claypige.4a",   0x0c000, 0x2000, 0xf205afb8 )
@@ -1420,7 +1412,7 @@ ROM_START( claypign_rom )
 	ROM_LOAD( "claypige.7b",   0x48000, 0x2000, 0x6140b026 )
 	ROM_LOAD( "claypige.8b",   0x4a000, 0x2000, 0xd0f9d170 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "claypige.h1",   0x0e000, 0x2000, 0x9eedc68d )
 
 	ROM_REGION(0x20000)
@@ -1438,8 +1430,8 @@ ROM_START( claypign_rom )
 ROM_END
 
 
-ROM_START( chiller_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( chiller )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "chl3.1a",   0x08000, 0x2000, 0x996ad02e )
 	ROM_LOAD( "chl3.3a",   0x0a000, 0x2000, 0x17e6f904 )
 	ROM_LOAD( "chl3.4a",   0x0c000, 0x2000, 0xf30d6e32 )
@@ -1468,7 +1460,7 @@ ROM_START( chiller_rom )
 	ROM_LOAD( "chl3.8b",   0x4a000, 0x2000, 0x6172b12f )
 	ROM_LOAD( "chl3.10b",  0x4c000, 0x2000, 0x5d15342a )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cha3.1h",   0x0f000, 0x1000, 0xb195cbba )
 
 	ROM_REGION(0x20000)
@@ -1491,8 +1483,8 @@ ROM_START( chiller_rom )
 ROM_END
 
 
-ROM_START( topsecex_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( topsecex )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "tsl1.a1",   0x08000, 0x2000, 0x30ff2142 )
 	ROM_LOAD( "tsl1.a3",   0x0a000, 0x2000, 0x9295e5b7 )
 	ROM_LOAD( "tsl1.a4",   0x0c000, 0x2000, 0x402abca4 )
@@ -1528,7 +1520,7 @@ ROM_START( topsecex_rom )
 	ROM_LOAD( "tsl1.b8",   0x4a000, 0x2000, 0xcc770802 )
 	ROM_LOAD( "tsl1.b10",  0x4c000, 0x2000, 0x079d0a1d )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "tsa1.1h",   0x0e000, 0x2000, 0x35a1dd40 )
 
 	ROM_REGION(0x20000)
@@ -1551,8 +1543,8 @@ ROM_START( topsecex_rom )
 ROM_END
 
 
-ROM_START( hitnmiss_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( hitnmiss )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml3.a1",   0x08000, 0x2000, 0xd79ae18e )
 	ROM_LOAD( "hml3.a3",   0x0a000, 0x2000, 0x61baf38b )
 	ROM_LOAD( "hml3.a4",   0x0c000, 0x2000, 0x60ca260b )
@@ -1578,7 +1570,7 @@ ROM_START( hitnmiss_rom )
 	ROM_LOAD( "hml3.b8",   0x4a000, 0x2000, 0xe0a5a6aa )
 	ROM_LOAD( "hml3.b10",  0x4c000, 0x2000, 0xde65dfdc )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "hma3.1h",  0x0e000, 0x2000, 0xf718da36 )
 
 	ROM_REGION(0x20000)
@@ -1598,8 +1590,8 @@ ROM_START( hitnmiss_rom )
 ROM_END
 
 
-ROM_START( hitnmis2_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( hitnmis2 )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml2.a1",   0x08000, 0x2000, 0x322f7e83 )
 	ROM_LOAD( "hml2.a3",   0x0a000, 0x2000, 0x0e12a721 )
 	ROM_LOAD( "hml2.a4",   0x0c000, 0x2000, 0x6cec8ad2 )
@@ -1626,7 +1618,7 @@ ROM_START( hitnmis2_rom )
 	ROM_LOAD( "hml2.b8",   0x4a000, 0x2000, 0x9c2db94a )
 	ROM_LOAD( "hml2.b10",  0x4c000, 0x2000, 0xf01bd7d4 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "hma2.1h",  0x0e000, 0x2000, 0x9be48f45 )
 
 	ROM_REGION(0x20000)
@@ -1646,8 +1638,8 @@ ROM_START( hitnmis2_rom )
 ROM_END
 
 
-ROM_START( whodunit_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( whodunit )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "wdl8.1a",   0x08000, 0x2000, 0x50658904 )
 	ROM_LOAD( "wdl8.3a",   0x0a000, 0x2000, 0x5d1530f8 )
 	ROM_LOAD( "wdl8.4a",   0x0c000, 0x2000, 0x0323d6b8 )
@@ -1682,7 +1674,7 @@ ROM_START( whodunit_rom )
 	ROM_LOAD( "wdl8.8b",   0x4a000, 0x2000, 0x33792758 )
 	ROM_LOAD( "wdl6.10b",  0x4c000, 0x2000, 0x2f48cfdb )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "wda8.h1",  0x0e000, 0x2000, 0x0090e5a7 )
 
 	ROM_REGION(0x20000)
@@ -1704,8 +1696,8 @@ ROM_START( whodunit_rom )
 ROM_END
 
 
-ROM_START( showdown_rom )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+ROM_START( showdown )
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "showda1.bin",   0x08000, 0x2000, 0xe4031507 )
 	ROM_LOAD( "showd3a.bin",   0x0a000, 0x2000, 0xe7de171e )
 	ROM_LOAD( "showd4a.bin",   0x0c000, 0x2000, 0x5c8683c9 )
@@ -1735,7 +1727,7 @@ ROM_START( showdown_rom )
 	ROM_LOAD( "showd8b.bin",   0x4a000, 0x2000, 0x024fe6ee )
 	ROM_LOAD( "showd10b.bin",  0x4c000, 0x2000, 0x0b318dfe )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "showd1h.bin",  0x0e000, 0x2000, 0x6a10ff47 )
 
 	ROM_REGION(0x20000)
@@ -1766,7 +1758,7 @@ ROM_END
  *************************************/
 
 #define EXIDY440_DRIVER(name,year,fullname) \
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
 		NULL,									\
@@ -1779,24 +1771,23 @@ ROM_END
 		&machine_driver,						\
 		name##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
-		name##_input_ports,						\
+		input_ports_##name,						\
 												\
 		0,0,0,									\
-		ORIENTATION_DEFAULT,					\
-												\
-		hiload,hisave							\
+		ROT0,					\
+		0,0										\
 	};
 
 #define EXIDY440_CLONE_DRIVER(name,year,fullname,cloneof) \
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
-		&cloneof##_driver,						\
+		&driver_##cloneof,						\
 		#name,									\
 		fullname,								\
 		#year,									\
@@ -1806,17 +1797,16 @@ ROM_END
 		&machine_driver,						\
 		cloneof##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
-		cloneof##_input_ports,					\
+		input_ports_##cloneof,					\
 												\
 		0,0,0,									\
-		ORIENTATION_DEFAULT,					\
-												\
-		hiload,hisave							\
+		ROT0,					\
+		0,0										\
 	};
 
 EXIDY440_DRIVER      (crossbow, 1983, "Crossbow (version 2.0)")

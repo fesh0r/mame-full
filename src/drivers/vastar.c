@@ -167,7 +167,7 @@ static struct IOWritePort cpu2_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( vastar )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -335,14 +335,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ???? */
-			0,
 			readmem,writemem,0,writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ???? */
-			3,	/* memory region #3 */
 			cpu2_readmem,cpu2_writemem,cpu2_readport,cpu2_writeport,
 			interrupt,4	/* ??? */
 		}
@@ -382,8 +380,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vastar_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( vastar )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e_f4.rom",     0x0000, 0x1000, 0x45fa5075 )
 	ROM_LOAD( "e_k4.rom",     0x1000, 0x1000, 0x84531982 )
 	ROM_LOAD( "e_h4.rom",     0x2000, 0x1000, 0x94a4f778 )
@@ -400,19 +398,19 @@ ROM_START( vastar_rom )
 	ROM_LOAD( "c_n4.rom",     0x6000, 0x2000, 0xb5f9c866 )
 	ROM_LOAD( "c_s4.rom",     0x8000, 0x2000, 0xc9fbbfc9 )
 
-	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "tbp24s10.6p",  0x0000, 0x0100, 0xa712d73a )	/* red component */
 	ROM_LOAD( "tbp24s10.6s",  0x0100, 0x0100, 0x0a7d48ec )	/* green component */
 	ROM_LOAD( "tbp24s10.6m",  0x0200, 0x0100, 0x4c3db907 )	/* blue component */
 	ROM_LOAD( "tbp24s10.8n",  0x0300, 0x0100, 0xb5297a3b )	/* ???? */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "e_f2.rom",     0x0000, 0x1000, 0x713478d8 )
 	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 ROM_END
 
-ROM_START( vastar2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( vastar2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "3.4f",         0x0000, 0x1000, 0x6741ff9c )
 	ROM_LOAD( "6.4k",         0x1000, 0x1000, 0x5027619b )
 	ROM_LOAD( "4.4h",         0x2000, 0x1000, 0xfdaa44e6 )
@@ -429,63 +427,20 @@ ROM_START( vastar2_rom )
 	ROM_LOAD( "c_n4.rom",     0x6000, 0x2000, 0xb5f9c866 )
 	ROM_LOAD( "c_s4.rom",     0x8000, 0x2000, 0xc9fbbfc9 )
 
-	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "tbp24s10.6p",  0x0000, 0x0100, 0xa712d73a )	/* red component */
 	ROM_LOAD( "tbp24s10.6s",  0x0100, 0x0100, 0x0a7d48ec )	/* green component */
 	ROM_LOAD( "tbp24s10.6m",  0x0200, 0x0100, 0x4c3db907 )	/* blue component */
 	ROM_LOAD( "tbp24s10.8n",  0x0300, 0x0100, 0xb5297a3b )	/* ???? */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "e_f2.rom",     0x0000, 0x1000, 0x713478d8 )
 	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xf128],"\x00\x20",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xf128],133);
-			osd_fclose(f);
-
-			/* let's show them on the screen!! */
-			RAM[0xce21]=(RAM[0xf129]/16);
-			RAM[0xce01]=(RAM[0xf129]%16);
-			RAM[0xcde1]=(RAM[0xf128]/16);
-			RAM[0xcdc1]=(RAM[0xf128]%16);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xf128],133);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver vastar_driver =
+struct GameDriver driver_vastar =
 {
 	__FILE__,
 	0,
@@ -498,23 +453,22 @@ struct GameDriver vastar_driver =
 	&machine_driver,
 	0,
 
-	vastar_rom,
+	rom_vastar,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_vastar,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver vastar2_driver =
+struct GameDriver driver_vastar2 =
 {
 	__FILE__,
-	&vastar_driver,
+	&driver_vastar,
 	"vastar2",
 	"Vastar (set 2)",
 	"1983",
@@ -524,15 +478,14 @@ struct GameDriver vastar2_driver =
 	&machine_driver,
 	0,
 
-	vastar2_rom,
+	rom_vastar2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_vastar,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

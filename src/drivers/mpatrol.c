@@ -108,7 +108,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( mpatrol_input_ports )
+INPUT_PORTS_START( mpatrol )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -209,7 +209,7 @@ INPUT_PORTS_START( mpatrol_input_ports )
 INPUT_PORTS_END
 
 /* Identical to mpatrol, the only difference is the number of lives */
-INPUT_PORTS_START( mpatrolw_input_ports )
+INPUT_PORTS_START( mpatrolw )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -370,13 +370,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,        /* 3.072 Mhz ? */
-			0,
 			readmem,writemem,0,writeport,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a real board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -411,8 +408,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mpatrol_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( mpatrol )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mp-a.3l",      0x1000, 0x1000, 0xf4b85974 )
 	ROM_LOAD( "mp-a.3k",      0x2000, 0x1000, 0x2e1a598c )
@@ -427,18 +424,18 @@ ROM_START( mpatrol_rom )
 	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
 	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
-	ROM_REGION(0x0240)     /* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
-ROM_START( mpatrolw_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( mpatrolw )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mpw-a.3m",     0x0000, 0x1000, 0xbaa1a1d4 )
 	ROM_LOAD( "mpw-a.3l",     0x1000, 0x1000, 0x52459e51 )
 	ROM_LOAD( "mpw-a.3k",     0x2000, 0x1000, 0x9b249fe5 )
@@ -453,18 +450,18 @@ ROM_START( mpatrolw_rom )
 	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
 	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
-	ROM_REGION(0x0240)     /* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
-ROM_START( mranger_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( mranger )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mr-a.3l",      0x1000, 0x1000, 0x217dd431 )
 	ROM_LOAD( "mr-a.3k",      0x2000, 0x1000, 0x9f0af7b2 )
@@ -479,67 +476,19 @@ ROM_START( mranger_rom )
 	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
 	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
-	ROM_REGION(0x0240)     /* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	static int loop = 0;
-
-
-	unsigned char *RAM = Machine->memory_region[0];
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (loop == 0)
-	{
-		memset(&RAM[0x0e008],0xff,44);
-		loop = 1;
-	}
-
-	if (RAM[0x0e008] == 0 && RAM[0x0e04b] == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0e008],44);
-			osd_fclose(f);
-		}
-
-		loop = 0;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	unsigned char *RAM = Machine->memory_region[0];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0e008],44);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver mpatrol_driver =
+struct GameDriver driver_mpatrol =
 {
 	__FILE__,
 	0,
@@ -552,23 +501,22 @@ struct GameDriver mpatrol_driver =
 	&machine_driver,
 	0,
 
-	mpatrol_rom,
+	rom_mpatrol,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mpatrol_input_ports,
+	input_ports_mpatrol,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mpatrolw_driver =
+struct GameDriver driver_mpatrolw =
 {
 	__FILE__,
-	&mpatrol_driver,
+	&driver_mpatrol,
 	"mpatrolw",
 	"Moon Patrol (Williams)",
 	"1982",
@@ -578,23 +526,22 @@ struct GameDriver mpatrolw_driver =
 	&machine_driver,
 	0,
 
-	mpatrolw_rom,
+	rom_mpatrolw,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mpatrolw_input_ports,
+	input_ports_mpatrolw,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mranger_driver =
+struct GameDriver driver_mranger =
 {
 	__FILE__,
-	&mpatrol_driver,
+	&driver_mpatrol,
 	"mranger",
 	"Moon Ranger",
 	"1982",
@@ -604,15 +551,14 @@ struct GameDriver mranger_driver =
 	&machine_driver,
 	0,
 
-	mranger_rom,
+	rom_mranger,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mpatrol_input_ports,
+	input_ports_mpatrol,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

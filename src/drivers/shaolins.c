@@ -71,7 +71,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( shaolins_input_ports )
+INPUT_PORTS_START( shaolins )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -229,14 +229,13 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver shaolins_machine_driver =
+static struct MachineDriver machine_driver_shaolins =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz */
-			0,
 			readmem,writemem,0,0,
 			shaolins_interrupt,16	/* 1 IRQ + 8 NMI */
 		},
@@ -274,8 +273,8 @@ static struct MachineDriver shaolins_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( kicker_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( kicker )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
@@ -286,7 +285,7 @@ ROM_START( kicker_rom )
 	ROM_LOAD( "kikrh14.bin",  0x4000, 0x4000, 0xb94e645b )
 	ROM_LOAD( "kikrh13.bin",  0x8000, 0x4000, 0x61bbf797 )
 
-	ROM_REGION(0x0500)	/* color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
 	ROM_LOAD( "kicker.a13",   0x0100, 0x0100, 0x270a2bf3 ) /* palette green component */
 	ROM_LOAD( "kicker.a14",   0x0200, 0x0100, 0x83e95ea8 ) /* palette blue component */
@@ -294,8 +293,8 @@ ROM_START( kicker_rom )
 	ROM_LOAD( "kicker.f16",   0x0400, 0x0100, 0x80009cf5 ) /* sprite lookup table */
 ROM_END
 
-ROM_START( shaolins_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( shaolins )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
@@ -306,7 +305,7 @@ ROM_START( shaolins_rom )
 	ROM_LOAD( "kikrh14.bin",  0x4000, 0x4000, 0xb94e645b )
 	ROM_LOAD( "kikrh13.bin",  0x8000, 0x4000, 0x61bbf797 )
 
-	ROM_REGION(0x0500)	/* color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
 	ROM_LOAD( "kicker.a13",   0x0100, 0x0100, 0x270a2bf3 ) /* palette green component */
 	ROM_LOAD( "kicker.a14",   0x0200, 0x0100, 0x83e95ea8 ) /* palette blue component */
@@ -316,51 +315,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2b00],"\x1d\x2c\x1f\x01\x00",5) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2b00],0x40);
-
-			/* top score display */
-			memcpy(&RAM[0x2af0], &RAM[0x2b04], 4);
-
-			/* 1p score display, which also displays the top score on startup */
-			memcpy(&RAM[0x2a81], &RAM[0x2b04], 4);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2b00],0x40);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver kicker_driver =
+struct GameDriver driver_kicker =
 {
 	__FILE__,
 	0,
@@ -370,44 +325,42 @@ struct GameDriver kicker_driver =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
 	0,
-	&shaolins_machine_driver,
+	&machine_driver_shaolins,
 	0,
 
-	kicker_rom,
+	rom_kicker,
 	0, 0,
 	0,
 	0,
 
-	shaolins_input_ports,
+	input_ports_shaolins,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver shaolins_driver =
+struct GameDriver driver_shaolins =
 {
 	__FILE__,
-	&kicker_driver,
+	&driver_kicker,
 	"shaolins",
 	"Shao-Lin's Road",
 	"1985",
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
 	0,
-	&shaolins_machine_driver,
+	&machine_driver_shaolins,
 	0,
 
-	shaolins_rom,
+	rom_shaolins,
 	0, 0,
 	0,
 	0,
 
-	shaolins_input_ports,
+	input_ports_shaolins,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

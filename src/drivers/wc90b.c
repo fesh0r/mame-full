@@ -107,7 +107,7 @@ void wc90b_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static void wc90b_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
@@ -117,7 +117,7 @@ static void wc90b_bankswitch_w(int offset,int data)
 static void wc90b_bankswitch1_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
@@ -223,7 +223,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( wc90b_input_ports )
+INPUT_PORTS_START( wc90b )
 	PORT_START	/* IN0 bit 0-5 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -388,28 +388,25 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static struct MachineDriver wc90b_machine_driver =
+static struct MachineDriver machine_driver_wc90b =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			6000000,	/* 6.0 Mhz ??? */
-			0,
 			wc90b_readmem1, wc90b_writemem1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,	/* 6.0 Mhz ??? */
-			2,
 			wc90b_readmem2, wc90b_writemem2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ???? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the YM2203 */
 								/* IRQs are triggered by the main CPU */
@@ -442,8 +439,8 @@ static struct MachineDriver wc90b_machine_driver =
 	}
 };
 
-ROM_START( wc90b_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
+ROM_START( wc90b )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "a02.bin",      0x00000, 0x10000, 0x192a03dd )	/* c000-ffff is not used */
 	ROM_LOAD( "a03.bin",      0x10000, 0x10000, 0xf54ff17a )	/* banked at f000-f7ff */
 
@@ -467,11 +464,11 @@ ROM_START( wc90b_rom )
 	ROM_LOAD( "152_a18.bin",  0x0f0000, 0x10000, 0x516b6c09 )
 	ROM_LOAD( "153_a19.bin",  0x100000, 0x10000, 0xf36390a9 )
 
-	ROM_REGION(0x20000)	/* 96k for code */  /* Second CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 96k for code */  /* Second CPU */
 	ROM_LOAD( "a04.bin",      0x00000, 0x10000, 0x3d535e2f )	/* c000-ffff is not used */
 	ROM_LOAD( "a05.bin",      0x10000, 0x10000, 0x9e421c4b )	/* banked at f000-f7ff */
 
-	ROM_REGION(0x10000)	/* 192k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 192k for the audio CPU */
 	ROM_LOAD( "a01.bin",      0x00000, 0x10000, 0x3d317622 )
 ROM_END
 
@@ -481,33 +478,33 @@ void wc90b_decode (void)
 
 	/* sprite graphics are inverted */
 	for (i = 0x90000; i < 0x110000; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+		memory_region(1)[i] ^= 0xff;
 }
 
 
-extern struct GameDriver wc90_driver;
-struct GameDriver wc90b_driver =
+extern struct GameDriver driver_wc90;
+struct GameDriver driver_wc90b =
 {
 	__FILE__,
-	&wc90_driver,
+	&driver_wc90,
 	"wc90b",
 	"Euro League",
 	"1989",
 	"bootleg",
     "Ernesto Corvi",
 	0,
-	&wc90b_machine_driver,
+	&machine_driver_wc90b,
+	wc90b_decode,
+
+	rom_wc90b,
+	0, 0,
+	0,
 	0,
 
-	wc90b_rom,
-	wc90b_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	wc90b_input_ports,
+	input_ports_wc90b,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

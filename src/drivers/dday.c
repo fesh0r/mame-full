@@ -125,7 +125,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( dday_input_ports )
+INPUT_PORTS_START( dday )
 	PORT_START      /* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -199,7 +199,7 @@ INPUT_PORTS_START( dday_input_ports )
 	PORT_ANALOG (0xff, 96, IPT_PADDLE, 20, 10, 0, 0, 191 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ddayc_input_ports )
+INPUT_PORTS_START( ddayc )
 	PORT_START      /* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -327,7 +327,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2000000,     /* 2 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			dday_interrupt,1
 		}
@@ -366,8 +365,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( dday_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( dday )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e8_63co.bin",  0x0000, 0x1000, 0x13d53793 )
 	ROM_LOAD( "e7_64co.bin",  0x1000, 0x1000, 0xe1ef2a70 )
 	ROM_LOAD( "e6_65co.bin",  0x2000, 0x1000, 0xfe414a83 )
@@ -381,12 +380,12 @@ ROM_START( dday_rom )
 	ROM_LOAD( "k6_74o.bin",   0x2000, 0x0800, 0x66719aea )
 	ROM_LOAD( "k7_75o.bin",   0x2800, 0x0800, 0x5f8772e2 )
 
-	ROM_REGION(0x0300)      /* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
 
-	ROM_REGION(0x2000)      /* search light */
+	ROM_REGION( 0x2000 )      /* search light */
 	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
 	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
 							/*0x1800 -0x1fff will be filled in dynamically */
@@ -395,8 +394,8 @@ ROM_START( dday_rom )
 	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
 ROM_END
 
-ROM_START( ddayc_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( ddayc )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e8_63-c.bin",  0x0000, 0x1000, 0xd4fa3ae3 )
 	ROM_LOAD( "e7_64-c.bin",  0x1000, 0x1000, 0x9fb8b1a7 )
 	ROM_LOAD( "e6_65-c.bin",  0x2000, 0x1000, 0x4c210686 )
@@ -410,12 +409,12 @@ ROM_START( ddayc_rom )
 	ROM_LOAD( "k6_74.bin",    0x2000, 0x0800, 0xd21a3e22 )
 	ROM_LOAD( "k7_75.bin",    0x2800, 0x0800, 0xa5e5058c )
 
-	ROM_REGION(0x0300)      /* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
 
-	ROM_REGION(0x2000)      /* search light */
+	ROM_REGION( 0x2000 )      /* search light */
 	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
 	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
 							/*0x1800 -0x1fff will be filled in dynamically */
@@ -426,56 +425,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[0];
-	static int firsttime = 0;
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x6237],0xff,0x03);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0x537d] == 0x20)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6237],0x03);
-			osd_fclose(f);
-
-			// Move it to the screen, too
-			RAM[0x5379] =  (RAM[0x6237] & 0x0f)       | 0x20;
-			RAM[0x537a] = ((RAM[0x6238] & 0xf0) >> 4) | 0x20;
-			RAM[0x537b] =  (RAM[0x6238] & 0x0f)       | 0x20;
-			RAM[0x537c] = ((RAM[0x6239] & 0xf0) >> 4) | 0x20;
-			RAM[0x537d] =  (RAM[0x6239] & 0x0f)       | 0x20;
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6237],0x03);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver dday_driver =
+struct GameDriver driver_dday =
 {
 	__FILE__,
 	0,
@@ -484,45 +434,43 @@ struct GameDriver dday_driver =
 	"1982",
 	"Olympia",
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
+	dday_decode,
+
+	rom_dday,
+	0, 0,
+	0,
 	0,
 
-	dday_rom,
-	dday_decode, 0,
-	0,
-	0,      /* sound_prom */
+	input_ports_dday,
 
-	dday_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver ddayc_driver =
+struct GameDriver driver_ddayc =
 {
 	__FILE__,
-	&dday_driver,
+	&driver_dday,
 	"ddayc",
 	"D-Day (Centuri)",
 	"1982",
 	"Olympia (Centuri license)",
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
+	dday_decode,
+
+	rom_ddayc,
+	0, 0,
+	0,
 	0,
 
-	ddayc_rom,
-	dday_decode, 0,
-	0,
-	0,      /* sound_prom */
+	input_ports_ddayc,
 
-	ddayc_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };

@@ -225,7 +225,7 @@ static struct IOWritePort writeport_sound[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mario )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -269,7 +269,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mariojp_input_ports )
+INPUT_PORTS_START( mariojp )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -359,10 +359,29 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
+static const char *mario_sample_names[] =
+{
+	"*mario",
+
+	/* 7f01 - 7f07 sounds */
+	"ice.wav",    /* 0x02 ice appears (formerly effect0.wav) */
+	"coin.wav",   /* 0x06 coin appears (formerly effect1.wav) */
+	"skid.wav",   /* 0x07 skid */
+
+	/* 7c00 */
+	"run.wav",        /* 03, 02, 01 - 0x1b */
+
+	/* 7c80 */
+	"luigirun.wav",   /* 03, 02, 01 - 0x1c */
+
+    0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	3,	/* 3 channels */
-	25	/* volume */
+	25,	/* volume */
+	mario_sample_names
 };
 
 static struct AY8910interface ay8910_interface =
@@ -402,14 +421,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,mario_writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
                         730000,         /* 730 khz */
-			3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -444,21 +461,19 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver masao_machine_driver =
+static struct MachineDriver machine_driver_masao =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			4000000,        /* 4.000 Mhz (?) */
-			0,
 			readmem,masao_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			24576000/16,	/* ???? */
-			3,
 			masao_sound_readmem,masao_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -498,28 +513,8 @@ static struct MachineDriver masao_machine_driver =
 
 ***************************************************************************/
 
-static const char *sample_names[] =
-{
-	"*mario",
-
-	/* 7f01 - 7f07 sounds */
-	"ice.wav",    /* 0x02 ice appears (formerly effect0.wav) */
-	"coin.wav",   /* 0x06 coin appears (formerly effect1.wav) */
-	"skid.wav",   /* 0x07 skid */
-
-	/* 7c00 */
-	"run.wav",        /* 03, 02, 01 - 0x1b */
-
-	/* 7c80 */
-	"luigirun.wav",   /* 03, 02, 01 - 0x1c */
-
-    0	/* end of array */
-};
-
-
-
-ROM_START( mario_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mario )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mario.7f",     0x0000, 0x2000, 0xc0c6e014 )
 	ROM_LOAD( "mario.7e",     0x2000, 0x2000, 0x116b3856 )
 	ROM_LOAD( "mario.7d",     0x4000, 0x2000, 0xdcceb6c1 )
@@ -535,15 +530,15 @@ ROM_START( mario_rom )
 	ROM_LOAD( "mario.7t",     0x6000, 0x1000, 0x641f0008 )
 	ROM_LOAD( "mario.7u",     0x7000, 0x1000, 0x7baf5309 )
 
-	ROM_REGION(0x0200)	/* color prom */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
-ROM_START( mariojp_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( mariojp )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "tma1c-a1.7f",  0x0000, 0x2000, 0xb64b6330 )
 	ROM_LOAD( "tma1c-a2.7e",  0x2000, 0x2000, 0x290c4977 )
 	ROM_LOAD( "tma1c-a1.7d",  0x4000, 0x2000, 0xf8575f31 )
@@ -559,15 +554,15 @@ ROM_START( mariojp_rom )
 	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
 	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
 
-	ROM_REGION(0x0200)	/* color prom */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
-ROM_START( masao_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( masao )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "masao-4.rom",  0x0000, 0x2000, 0x07a75745 )
 	ROM_LOAD( "masao-3.rom",  0x2000, 0x2000, 0x55c629b6 )
 	ROM_LOAD( "masao-2.rom",  0x4000, 0x2000, 0x42e85240 )
@@ -583,61 +578,16 @@ ROM_START( masao_rom )
 	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
 	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
 
-	ROM_REGION(0x0200)	/* color prom */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
-	ROM_REGION(0x10000) /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound */
 	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, 0xbd437198 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
-	    memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6b00],34*5);	/* hi scores */
-			RAM[0x6823] = RAM[0x6b1f];
-			RAM[0x6824] = RAM[0x6b1e];
-			RAM[0x6825] = RAM[0x6b1d];
-			osd_fread(f,&RAM[0x6c00],0x3c);	/* distributions */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6b00],34*5);	/* hi scores */
-		osd_fwrite(f,&RAM[0x6c00],0x3c);	/* distributions */
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver mario_driver =
+struct GameDriver driver_mario =
 {
 	__FILE__,
 	0,
@@ -650,23 +600,22 @@ struct GameDriver mario_driver =
 	&machine_driver,
 	0,
 
-	mario_rom,
+	rom_mario,
 	0, 0,
-	sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	input_ports,
+	input_ports_mario,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT180,
+	0,0
 };
 
-struct GameDriver mariojp_driver =
+struct GameDriver driver_mariojp =
 {
 	__FILE__,
-	&mario_driver,
+	&driver_mario,
 	"mariojp",
 	"Mario Bros. (Japan)",
 	"1983",
@@ -676,41 +625,39 @@ struct GameDriver mariojp_driver =
 	&machine_driver,
 	0,
 
-	mariojp_rom,
+	rom_mariojp,
 	0, 0,
-	sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	mariojp_input_ports,
+	input_ports_mariojp,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT180,
+	0,0
 };
 
-struct GameDriver masao_driver =
+struct GameDriver driver_masao =
 {
 	__FILE__,
-	&mario_driver,
+	&driver_mario,
 	"masao",
 	"Masao",
 	"1983",
 	"bootleg",
 	"Hugh McLenaghan (MAME driver)\nMirko Buffoni (sound info)",
 	0,
-	&masao_machine_driver,
+	&machine_driver_masao,
 	0,
 
-	masao_rom,
+	rom_masao,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mario,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT180,
+	0,0
 };

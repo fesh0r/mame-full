@@ -1,6 +1,7 @@
 #include <ctype.h>
 
 #include "driver.h"
+#include "sound/samples.h"
 #include "info.h"
 #include "datafile.h"
 
@@ -106,7 +107,7 @@ static void print_statement_string(FILE* out, const char* s) {
 }
 
 static void print_game_switch(FILE* out, const struct GameDriver* game) {
-	const struct InputPort* input = game->input_ports;
+	const struct InputPortTiny* input = game->input_ports;
 
 	while ((input->type & ~IPF_MASK) != IPT_END) {
 		if ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_NAME) {
@@ -143,7 +144,7 @@ static void print_game_switch(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_input(FILE* out, const struct GameDriver* game) {
-	const struct InputPort* input = game->input_ports;
+	const struct InputPortTiny* input = game->input_ports;
 	int nplayer = 0;
 	const char* control = 0;
 	int nbutton = 0;
@@ -271,7 +272,9 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 static void print_game_rom(FILE* out, const struct GameDriver* game) {
 	const struct RomModule *rom = game->rom, *p_rom = NULL;
 
-	if (game->clone_of && game->clone_of != game) {
+	if (!rom) return;
+
+	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER)) {
 		fprintf(out, L1P "romof %s" L1N, game->clone_of->name);
 	}
 
@@ -297,18 +300,19 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 			if(game->clone_of && crc)
 			{
 				p_rom = game->clone_of->rom;
-				while( !in_parent && (p_rom->name || p_rom->offset || p_rom->length) )
-				{
-					p_rom++;
-					while(!in_parent && p_rom->length) {
-						do {
-							if (p_rom->crc == crc)
-								in_parent = 1;
-							else
-								p_rom++;
-						} while (!in_parent && p_rom->length && (p_rom->name == 0 || p_rom->name == (char *)-1));
+				if (p_rom)
+					while( !in_parent && (p_rom->name || p_rom->offset || p_rom->length) )
+					{
+						p_rom++;
+						while(!in_parent && p_rom->length) {
+							do {
+								if (p_rom->crc == crc)
+									in_parent = 1;
+								else
+									p_rom++;
+							} while (!in_parent && p_rom->length && (p_rom->name == 0 || p_rom->name == (char *)-1));
+						}
 					}
-				}
 			}
 
 			fprintf(out, L1P "rom" L2B);
@@ -324,30 +328,41 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_sample(FILE* out, const struct GameDriver* game) {
-	if (game->samplenames != 0 && game->samplenames[0] != 0) {
-		int k = 0;
-		if (game->samplenames[k][0]=='*') {
-			/* output sampleof only if different from game name */
-			if (strcmp(game->samplenames[k] + 1, game->name)!=0) {
-				fprintf(out, L1P "sampleof %s" L1N, game->samplenames[k] + 1);
-			}
-			++k;
-		}
-		while (game->samplenames[k] != 0) {
-			/* Check if is not empty */
-			if (*game->samplenames[k]) {
-				/* Check if sample is duplicate */
-				int l = 0;
-				while (l<k && strcmp(game->samplenames[k],game->samplenames[l])!=0)
-					++l;
-				if (l==k) {
-					fprintf(out, L1P "sample %s" L1N, game->samplenames[k]);
+#if (HAS_SAMPLES)
+	int i;
+	for( i = 0; game->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
+	{
+		const char **samplenames = NULL;
+		if( game->drv->sound[i].sound_type != SOUND_SAMPLES )
+			continue;
+		samplenames = ((struct Samplesinterface *)game->drv->sound[i].sound_interface)->samplenames;
+		if (samplenames != 0 && samplenames[0] != 0) {
+			int k = 0;
+			if (samplenames[k][0]=='*') {
+				/* output sampleof only if different from game name */
+				if (strcmp(samplenames[k] + 1, game->name)!=0) {
+					fprintf(out, L1P "sampleof %s" L1N, samplenames[k] + 1);
 				}
+				++k;
 			}
-			++k;
+			while (samplenames[k] != 0) {
+				/* Check if is not empty */
+				if (*samplenames[k]) {
+					/* Check if sample is duplicate */
+					int l = 0;
+					while (l<k && strcmp(samplenames[k],samplenames[l])!=0)
+						++l;
+					if (l==k) {
+						fprintf(out, L1P "sample %s" L1N, samplenames[k]);
+					}
+				}
+				++k;
+			}
 		}
 	}
+#endif
 }
+
 
 static void print_game_micro(FILE* out, const struct GameDriver* game)
 {
@@ -420,7 +435,7 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 		showxy = 1;
 	}
 
-	if (game->orientation & ORIENTATION_SWAP_XY)
+	if (game->flags & ORIENTATION_SWAP_XY)
 	{
 		dx = driver->visible_area.max_y - driver->visible_area.min_y + 1;
 		dy = driver->visible_area.max_x - driver->visible_area.min_x + 1;
@@ -442,7 +457,7 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 	}
 
 	fprintf(out, L2P "colors %d" L2N, driver->total_colors);
-	fprintf(out, L2P "freq %d" L2N, driver->frames_per_second);
+	fprintf(out, L2P "freq %f" L2N, driver->frames_per_second);
 	fprintf(out, L2E L1N);
 }
 
@@ -497,8 +512,6 @@ static void print_game_history(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_driver(FILE* out, const struct GameDriver* game) {
-	const struct MachineDriver* driver = game->drv;
-
 	fprintf(out, L1P "driver" L2B);
 	if (game->flags & GAME_NOT_WORKING)
 		fprintf(out, L2P "status preliminary" L2N);
@@ -519,12 +532,7 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 	else
 		fprintf(out, L2P "sound good" L2N);
 
-	if (game->hiscore_load && game->hiscore_save)
-		fprintf(out, L2P "hiscore good" L2N);
-	else
-		fprintf(out, L2P "hiscore preliminary" L2N);
-
-	if (driver->video_attributes & VIDEO_SUPPORTS_16BIT)
+	if (game->flags & GAME_REQUIRES_16BIT)
 		fprintf(out, L2P "colordeep 16" L2N);
 	else
 		fprintf(out, L2P "colordeep 8" L2N);
@@ -535,7 +543,11 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 /* Print the MAME info record for a game */
 static void print_game_info(FILE* out, const struct GameDriver* game) {
 
+	#ifndef MESS
 	fprintf(out, "game" L1B );
+	#else
+	fprintf(out, "machine" L1B );
+	#endif
 
 	fprintf(out, L1P "name %s" L1N, game->name );
 
@@ -558,8 +570,7 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 
 	print_game_history(out,game);
 
-	/* print the cloneof only if is not a neogeo game */
-	if (game->clone_of && game->clone_of != game && strcmp(game->clone_of->name,"neogeo")!=0) {
+	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER)) {
 		fprintf(out, L1P "cloneof %s" L1N, game->clone_of->name);
 	}
 
@@ -582,6 +593,7 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	for(j=0;games[j];++j)
 		print_game_info( out, games[j] );
 
+	#ifndef MESS
 	/* addictional fixed record */
 	fprintf(out, "resource" L1B);
 	fprintf(out, L1P "name neogeo" L1N);
@@ -602,4 +614,5 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L2P "crc 354029fc" L2N);
 	fprintf(out, L2E L1N);
 	fprintf(out, L1E);
+	#endif
 }

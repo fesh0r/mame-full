@@ -5,6 +5,7 @@ struct Samplesinterface
 {
 	int channels;	/* number of discrete audio channels needed */
 	int volume;		/* global volume for all samples */
+	const char **samplenames;
 };
 
 
@@ -16,7 +17,6 @@ void sample_set_freq(int channel,int freq);
 void sample_set_volume(int channel,int volume);
 void sample_stop(int channel);
 int sample_playing(int channel);
-
 
 int samples_sh_start(const struct MachineSound *msound);
 

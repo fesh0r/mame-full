@@ -10,6 +10,8 @@ static int sram_locked;
 static int sram_protection_hack;
 
 extern int neogeo_has_trackball;
+extern int neogeo_irq2type;
+
 
 /* MARTINEZ.F 990209 Calendar */
 extern int seconds;
@@ -61,16 +63,16 @@ void neogeo_init_machine(void)
 	if (src & 0x04)	res |= 0x8000;
 
 	/* write the ID in the system BIOS ROM */
-	WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x0400],res);
+	WRITE_WORD(&memory_region(MEM_BIOS)[0x0400],res);
 
 	if (memcard_manager==1)
 	{
 		memcard_manager=0;
-		WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x11b1a], 0x500a);
+		WRITE_WORD(&memory_region(MEM_BIOS)[0x11b1a], 0x500a);
 	}
 	else
 	{
-		WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x11b1a],0x1b6a);
+		WRITE_WORD(&memory_region(MEM_BIOS)[0x11b1a],0x1b6a);
 	}
 
 	time(&ltime);
@@ -87,20 +89,20 @@ void neogeo_init_machine(void)
 
 
 /* This function is only called once per game. */
-void neogeo_onetime_init_machine(void)
+void init_neogeo(void)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	extern struct YM2610interface neogeo_ym2610_interface;
 
-	if (Machine->memory_region_length[MEM_SAMPLE1] > 1)
+	if (memory_region_length(MEM_SAMPLE1) > 1)
 	{
 		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE1);
-		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE1;
+		neogeo_ym2610_interface.pcmromb[0] = MEM_SAMPLE1;
 	}
 	else
 	{
 		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE0);
-		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE0;
+		neogeo_ym2610_interface.pcmromb[0] = MEM_SAMPLE0;
 	}
 
     /* Allocate ram banks */
@@ -108,11 +110,11 @@ void neogeo_onetime_init_machine(void)
 	cpu_setbank(1, neogeo_ram);
 
 	/* Set the biosbank */
-	cpu_setbank(3, Machine->memory_region[MEM_BIOS]);
+	cpu_setbank(3, memory_region(MEM_BIOS));
 
 	/* Set the 2nd ROM bank */
-    RAM = Machine->memory_region[MEM_CPU0];
-	if (Machine->memory_region_length[MEM_CPU0] > 0x100000)
+    RAM = memory_region(REGION_CPU1);
+	if (memory_region_length(REGION_CPU1) > 0x100000)
 	{
 		cpu_setbank(4, &RAM[0x100000]);
 	}
@@ -122,7 +124,7 @@ void neogeo_onetime_init_machine(void)
 	}
 
 	/* Set the sound CPU ROM banks */
-	RAM = Machine->memory_region[MEM_CPU1];
+	RAM = memory_region(REGION_CPU2);
 	cpu_setbank(5,&RAM[0x08000]);
 	cpu_setbank(6,&RAM[0x0c000]);
 	cpu_setbank(7,&RAM[0x0e000]);
@@ -134,7 +136,7 @@ void neogeo_onetime_init_machine(void)
 	memcard_number=0;
 
 
-	RAM = Machine->memory_region[MEM_BIOS];
+	RAM = memory_region(MEM_BIOS);
 
 	if (READ_WORD(&RAM[0x11b00]) == 0x4eba)
 	{
@@ -186,6 +188,14 @@ void neogeo_onetime_init_machine(void)
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
+
+
+	/* Flag how to handle IRQ2 raster effect */
+	/* 0=write 0,2   1=write2,0 */
+	if (!strcmp(Machine->gamedrv->name,"neocup98") ||
+		!strcmp(Machine->gamedrv->name,"ssideki3") ||
+		!strcmp(Machine->gamedrv->name,"ssideki4"))
+		neogeo_irq2type = 1;
 }
 
 /******************************************************************************/
@@ -246,7 +256,7 @@ NEO_CYCLE_R(spinmast,0x00f6,READ_WORD(&neogeo_ram[0xf0])+1,	READ_WORD(&neogeo_ra
 NEO_CYCLE_R(sonicwi2,0x1e6c8,0xffff,						READ_WORD(&neogeo_ram[0xe5b6]))
 NEO_CYCLE_R(sonicwi3,0x20bac,0xffff,						READ_WORD(&neogeo_ram[0xea2e]))
 NEO_CYCLE_R(goalx3,  0x5298,READ_WORD(&neogeo_ram[0x6])+1,	READ_WORD(&neogeo_ram[0x0006]))
-NEO_CYCLE_R(turfmast,0xd5a8,0xffff,							READ_WORD(&neogeo_ram[0x2e54]))
+//NEO_CYCLE_R(turfmast,0xd5a8,0xffff,							READ_WORD(&neogeo_ram[0x2e54]))
 NEO_CYCLE_R(kabukikl,0x10b0,0,								READ_WORD(&neogeo_ram[0x428a]))
 NEO_CYCLE_R(panicbom,0x3ee6,0xffff,							READ_WORD(&neogeo_ram[0x009c]))
 NEO_CYCLE_R(wh2,     0x2063fc,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
@@ -258,12 +268,12 @@ NEO_CYCLE_R(twinspri,0x492e,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_r
 NEO_CYCLE_R(stakwin, 0x0596,0xffff,							READ_WORD(&neogeo_ram[0x0b92]))
 NEO_CYCLE_R(shocktro,0xdd28,0,								READ_WORD(&neogeo_ram[0x8344]))
 NEO_CYCLE_R(tws96,   0x17f4,0xffff,							READ_WORD(&neogeo_ram[0x010e]))
-static int zedblade_cycle_r(int offset)
-{
-	int pc=cpu_get_pc();
-	if (pc==0xa2fa || pc==0xa2a0 || pc==0xa2ce || pc==0xa396 || pc==0xa3fa) {cpu_spinuntil_int(); return 0;}
-	return READ_WORD(&neogeo_ram[0x9004]);
-}
+//static int zedblade_cycle_r(int offset)
+//{
+//	int pc=cpu_get_pc();
+//	if (pc==0xa2fa || pc==0xa2a0 || pc==0xa2ce || pc==0xa396 || pc==0xa3fa) {cpu_spinuntil_int(); return 0;}
+//	return READ_WORD(&neogeo_ram[0x9004]);
+//}
 //NEO_CYCLE_R(doubledr,0x3574,0,								READ_WORD(&neogeo_ram[0x1c30]))
 NEO_CYCLE_R(galaxyfg,0x09ea,READ_WORD(&neogeo_ram[0x1858])+1,READ_WORD(&neogeo_ram[0x1858]))
 NEO_CYCLE_R(wakuwak7,0x1a3c,READ_WORD(&neogeo_ram[0x0bd4])+1,READ_WORD(&neogeo_ram[0x0bd4]))
@@ -292,7 +302,7 @@ NEO_CYCLE_R(fatfury3,0x9c50,0,								READ_WORD(&neogeo_ram[0x418c]))
 NEO_CYCLE_R(tophuntr,0x0ce0,0xffff,							READ_WORD(&neogeo_ram[0x008e]))
 NEO_CYCLE_R(savagere,0x056e,0,								READ_WORD(&neogeo_ram[0x8404]))
 NEO_CYCLE_R(aof2,    0x8c74,0,								READ_WORD(&neogeo_ram[0x8280]))
-NEO_CYCLE_R(ssideki2,0x7850,0xffff,							READ_WORD(&neogeo_ram[0x4292]))
+//NEO_CYCLE_R(ssideki2,0x7850,0xffff,							READ_WORD(&neogeo_ram[0x4292]))
 NEO_CYCLE_R(samsho2, 0x1432,0xffff,							READ_WORD(&neogeo_ram[0x0a30]))
 NEO_CYCLE_R(samsho3, 0x0858,0,								READ_WORD(&neogeo_ram[0x8408]))
 NEO_CYCLE_R(kof95,   0x39474,0xffff,						READ_WORD(&neogeo_ram[0xa784]))
@@ -361,7 +371,7 @@ NEO_CYCLE_R(irrmaze,    0x104e,0,       READ_WORD(&neogeo_ram[0x4b6e]))
  */
 static int cycle_v3_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0137) {
 		cpu_spinuntil_int();
@@ -375,7 +385,7 @@ static int cycle_v3_sr(int offset)
  */
 static int ssideki_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x015A) {
 		cpu_spinuntil_int();
@@ -386,7 +396,7 @@ static int ssideki_cycle_sr(int offset)
 
 static int aof_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -404,7 +414,7 @@ static int aof_cycle_sr(int offset)
 
 static int cycle_v2_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -415,7 +425,7 @@ static int cycle_v2_sr(int offset)
 
 static int vwpoint_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -433,7 +443,7 @@ static int vwpoint_cycle_sr(int offset)
 /*
 static int cycle_v15_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x013D) {
 		cpu_spinuntil_int();
@@ -450,7 +460,7 @@ static int cycle_v15_sr(int offset)
 
 static int maglord_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0xd487) {
 		cpu_spinuntil_int();
@@ -580,7 +590,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"sonicwi3")) install_mem_read_handler(0, 0x10ea2e, 0x10ea2f, sonicwi3_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"goalx3"))   install_mem_read_handler(0, 0x100006, 0x100007, goalx3_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"mslug"))    install_mem_read_handler(0, 0x106ed8, 0x106ed9, mslug_cycle_r);		// Doesn't work properly.
-	if (!strcmp(Machine->gamedrv->name,"turfmast")) install_mem_read_handler(0, 0x102e54, 0x102e55, turfmast_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"turfmast")) install_mem_read_handler(0, 0x102e54, 0x102e55, turfmast_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"kabukikl")) install_mem_read_handler(0, 0x10428a, 0x10428b, kabukikl_cycle_r);
 
 	if (!strcmp(Machine->gamedrv->name,"panicbom")) install_mem_read_handler(0, 0x10009c, 0x10009d, panicbom_cycle_r);
@@ -594,7 +604,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"stakwin"))  install_mem_read_handler(0, 0x100b92, 0x100b93, stakwin_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"shocktro")) install_mem_read_handler(0, 0x108344, 0x108345, shocktro_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"tws96"))    install_mem_read_handler(0, 0x10010e, 0x10010f, tws96_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"zedblade")) install_mem_read_handler(0, 0x109004, 0x109005, zedblade_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"zedblade")) install_mem_read_handler(0, 0x109004, 0x109005, zedblade_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"doubledr")) install_mem_read_handler(0, 0x101c30, 0x101c31, doubledr_cycle_r);
 //**	if (!strcmp(Machine->gamedrv->name,"gowcaizr")) install_mem_read_handler(0, 0x10, 0x10, gowcaizr_cycle_r);		// Can't find this one :-(
 	if (!strcmp(Machine->gamedrv->name,"galaxyfg")) install_mem_read_handler(0, 0x101858, 0x101859, galaxyfg_cycle_r);
@@ -615,7 +625,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"savagere")) install_mem_read_handler(0, 0x108404, 0x108405, savagere_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"kof94"))    install_mem_read_handler(0, 0x10, 0x10, kof94_cycle_r);				// Can't do this I think. There seems to be too much code in the idle loop.
 	if (!strcmp(Machine->gamedrv->name,"aof2"))     install_mem_read_handler(0, 0x108280, 0x108281, aof2_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(0, 0x104292, 0x104293, ssideki2_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(0, 0x104292, 0x104293, ssideki2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"samsho2"))  install_mem_read_handler(0, 0x100a30, 0x100a31, samsho2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"samsho3"))  install_mem_read_handler(0, 0x108408, 0x108409, samsho3_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"kof95"))    install_mem_read_handler(0, 0x10a784, 0x10a785, kof95_cycle_r);
@@ -652,7 +662,7 @@ static void neogeo_custom_memory(void)
 
 	/* AVDB cpu spins based on sound processor status */
 	if (!strcmp(Machine->gamedrv->name,"puzzledp")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
-	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
+//	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
 
 	if (!strcmp(Machine->gamedrv->name,"ssideki"))  install_mem_read_handler(1, 0xfef3, 0xfef3, ssideki_cycle_sr);
 	if (!strcmp(Machine->gamedrv->name,"aof"))      install_mem_read_handler(1, 0xfef3, 0xfef3, aof_cycle_sr);
@@ -676,7 +686,7 @@ static void neogeo_custom_memory(void)
 		/* Fix a really weird problem. The game clears the video RAM but goes */
 		/* beyond the tile RAM, corrupting the zoom control RAM. After that it */
 		/* initializes the control RAM, but then corrupts it again! */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0x1328],0x4e71);
 		WRITE_WORD(&RAM[0x132a],0x4e71);
 		WRITE_WORD(&RAM[0x132c],0x4e71);
@@ -701,6 +711,7 @@ static void neogeo_custom_memory(void)
 			 !strcmp(Machine->gamedrv->name,"kof96") ||
 			 !strcmp(Machine->gamedrv->name,"kof97") ||
 			 !strcmp(Machine->gamedrv->name,"kof98") ||
+			 !strcmp(Machine->gamedrv->name,"kof99") ||
 			 !strcmp(Machine->gamedrv->name,"kizuna") ||
 			 !strcmp(Machine->gamedrv->name,"lastblad") ||
 			 !strcmp(Machine->gamedrv->name,"lastbld2") ||
@@ -716,7 +727,7 @@ static void neogeo_custom_memory(void)
 		/* patch out protection check */
 		/* the protection routines are at 0x25dcc and involve reading and writing */
 		/* addresses in the 0x2xxxxx range */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0x2240],0x4e71);
 	}
 
@@ -729,7 +740,7 @@ static void neogeo_custom_memory(void)
 		/* here (or maybe the SRAM location to protect is different), so I patch out */
 		/* the routine which trashes memory. Without this, the game goes nuts after */
 		/* the first bonus stage. */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0xb820],0x4e71);
 		WRITE_WORD(&RAM[0xb822],0x4e71);
 
@@ -742,7 +753,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"fatfury3"))
 	{
 		/* patch the first word, it must be 0x0010 not 0x0000 (initial stack pointer) */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0x0000],0x0010);
 	}
 
@@ -750,7 +761,7 @@ static void neogeo_custom_memory(void)
 	{
 		/* patch out protection checks */
 		int i;
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		for (i = 0;i < 0x100000;i+=2)
 		{
@@ -810,40 +821,27 @@ if (errorlog) fprintf(errorlog,"PC %06x: warning: write %02x to SRAM %04x while 
 	}
 }
 
-int neogeo_sram_load(void)
+void neogeo_nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-
-    /* Load the SRAM settings for this game */
-	memset(neogeo_sram,0,0x10000);
-	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	if (f)
+	if (read_or_write)
 	{
-		osd_fread_msbfirst(f,neogeo_sram,0x2000);
-		osd_fclose(f);
+		/* Save the SRAM settings */
+		osd_fwrite_msbfirst(file,neogeo_sram,0x2000);
+
+		/* save the memory card */
+		neogeo_memcard_save();
 	}
-
-	/* load the memory card */
-	neogeo_memcard_load(memcard_number);
-
-	return 1;
-}
-
-void neogeo_sram_save(void)
-{
-    void *f;
-
-
-    /* Save the SRAM settings */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	else
 	{
-		osd_fwrite_msbfirst(f,neogeo_sram,0x2000);
-		osd_fclose(f);
-	}
+		/* Load the SRAM settings for this game */
+		if (file)
+			osd_fread_msbfirst(file,neogeo_sram,0x2000);
+		else
+			memset(neogeo_sram,0,0x10000);
 
-	/* save the memory card */
-	neogeo_memcard_save();
+		/* load the memory card */
+		neogeo_memcard_load(memcard_number);
+	}
 }
 
 

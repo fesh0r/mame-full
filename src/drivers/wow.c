@@ -48,29 +48,29 @@ int  seawolf2_controller2_r(int offset);
 void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int  gorf_vh_start(void);
 int  gorf_interrupt(void);
 int  gorf_timer_r(int offset);
-int  Gorf_IO_r(int offset);
+int  gorf_io_r(int offset);
 
 int  wow_vh_start(void);
 
-int  wow_sh_start(void);
-void wow_sh_stop(void);
+int  wow_sh_start(const struct MachineSound *msound);
 void wow_sh_update(void);
 
 int  wow_speech_r(int offset);
 int  wow_port_2_r(int offset);
 
-int  gorf_sh_start(void);
-void gorf_sh_stop(void);
+int  gorf_sh_start(const struct MachineSound *msound);
 void gorf_sh_update(void);
 int  gorf_speech_r(int offset);
 int  gorf_port_2_r(int offset);
 void gorf_sound_control_a_w(int offset,int data);
 
-void colour_register_w(int offset, int data);
-void colour_split_w(int offset, int data);
+void wow_colour_register_w(int offset, int data);
+void wow_colour_split_w(int offset, int data);
+
+void ebases_trackball_select_w(int offset, int data);
+int ebases_trackball_r(int offset);
 
 /*
  * Default Settings
@@ -100,17 +100,16 @@ static struct IOReadPort readport[] =
 	{ 0x0e, 0x0e, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
-  	{ 0x12, 0x12, wow_port_2_r },
+  	{ 0x12, 0x12, input_port_2_r },
 	{ 0x13, 0x13, input_port_3_r },
-	{ 0x17, 0x17, wow_speech_r },				/* Actually a Write! */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x07, colour_register_w },
+	{ 0x00, 0x07, wow_colour_register_w },
 	{ 0x08, 0x08, MWA_NOP }, /* Gorf uses this */
-	{ 0x09, 0x09, colour_split_w },
+	{ 0x09, 0x09, wow_colour_split_w },
 	{ 0x0a, 0x0b, MWA_NOP }, /* Gorf uses this */
 	{ 0x0c, 0x0c, wow_magic_control_w },
 	{ 0x0d, 0x0d, interrupt_vector_w },
@@ -128,278 +127,274 @@ static struct IOWritePort writeport[] =
 static unsigned char palette[] =
 {
      0x00,0x00,0x00,     /* 0 */
-     0x08,0x08,0x08,	/* Gorf back */
-     0x10,0x10,0x10,	/* Gorf back */
-     0x18,0x18,0x18,	/* Gorf back */
-     0x20,0x20,0x20,	/* Gorf back & Stars */
-     0x50,0x50,0x50,    /* Gorf Stars */
-     0x80,0x80,0x80,    /* Gorf Stars */
-     0xA0,0xA0,0xA0,    /* Gorf Stars */
+     0x08,0x08,0x08,	/* gorf back */
+     0x10,0x10,0x10,	/* gorf back */
+     0x18,0x18,0x18,	/* gorf back */
+     0x20,0x20,0x20,	/* gorf back & stars */
+     0x50,0x50,0x50,    /* gorf stars */
+     0x80,0x80,0x80,    /* gorf stars */
+     0xa0,0xa0,0xa0,    /* gorf stars */
      0x00,0x00,0x28,
      0x00,0x00,0x59,
-     0x00,0x00,0x8A,
-     0x00,0x00,0xBB,
-     0x00,0x00,0xEC,
-     0x00,0x00,0xFF,
-     0x00,0x00,0xFF,
-     0x00,0x00,0xFF,
+     0x00,0x00,0x8a,
+     0x00,0x00,0xbb,
+     0x00,0x00,0xec,
+     0x00,0x00,0xff,
+     0x00,0x00,0xff,
+     0x00,0x00,0xff,
      0x28,0x00,0x28,     /* 10 */
-     0x2F,0x00,0x52,
-     0x36,0x00,0x7C,
-     0x3D,0x00,0xA6,
-     0x44,0x00,0xD0,
-     0x4B,0x00,0xFA,
-     0x52,0x00,0xFF,
-     0x59,0x00,0xFF,
+     0x2f,0x00,0x52,
+     0x36,0x00,0x7c,
+     0x3d,0x00,0xa6,
+     0x44,0x00,0xd0,
+     0x4b,0x00,0xfa,
+     0x52,0x00,0xff,
+     0x59,0x00,0xff,
      0x28,0x00,0x28,
-     0x36,0x00,0x4B,
-     0x44,0x00,0x6E,
+     0x36,0x00,0x4b,
+     0x44,0x00,0x6e,
      0x52,0x00,0x91,
-     0x60,0x00,0xB4,
-     0x6E,0x00,0xD7,
-     0x7C,0x00,0xFA,
-     0x8A,0x00,0xFF,
+     0x60,0x00,0xb4,
+     0x6e,0x00,0xd7,
+     0x7c,0x00,0xfa,
+     0x8a,0x00,0xff,
      0x28,0x00,0x28,     /* 20 */
-     0x3D,0x00,0x44,
+     0x3d,0x00,0x44,
      0x52,0x00,0x60,
-     0x67,0x00,0x7C,
-     0x7C,0x00,0x98,
-     0x91,0x00,0xB4,
-     0xA6,0x00,0xD0,
-     0xBB,0x00,0xEC,
+     0x67,0x00,0x7c,
+     0x7c,0x00,0x98,
+     0x91,0x00,0xb4,
+     0xa6,0x00,0xd0,
+     0xbb,0x00,0xec,
      0x28,0x00,0x28,
-     0x4B,0x00,0x3D,
-     0x6E,0x00,0x52,
+     0x4b,0x00,0x3d,
+     0x6e,0x00,0x52,
      0x91,0x00,0x67,
-     0xB4,0x00,0x7C,
-     0xD7,0x00,0x91,
-     0xFA,0x00,0xA6,
-     0xFF,0x00,0xBB,
+     0xb4,0x00,0x7c,
+     0xd7,0x00,0x91,
+     0xfa,0x00,0xa6,
+     0xff,0x00,0xbb,
      0x28,0x00,0x28,     /* 30 */
-     0x4B,0x00,0x36,
-     0x6E,0x00,0x44,
+     0x4b,0x00,0x36,
+     0x6e,0x00,0x44,
      0x91,0x00,0x52,
-     0xB4,0x00,0x60,
-     0xD7,0x00,0x6E,
-     0xFA,0x00,0x7C,
-     0xFF,0x00,0x8A,
+     0xb4,0x00,0x60,
+     0xd7,0x00,0x6e,
+     0xfa,0x00,0x7c,
+     0xff,0x00,0x8a,
      0x28,0x00,0x28,
-     0x52,0x00,0x2F,
-     0x7C,0x00,0x36,
-     0xA6,0x00,0x3D,
-     0xD0,0x00,0x44,
-     0xFA,0x00,0x4B,
-     0xFF,0x00,0x52,
-     0xFF,0x00,0x59,
+     0x52,0x00,0x2f,
+     0x7c,0x00,0x36,
+     0xa6,0x00,0x3d,
+     0xd0,0x00,0x44,
+     0xfa,0x00,0x4b,
+     0xff,0x00,0x52,
+     0xff,0x00,0x59,
      0x28,0x00,0x00,     /* 40 */
      0x59,0x00,0x00,
-     0x8A,0x00,0x00,
-     0xBB,0x00,0x00,
-     0xEC,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
+     0x8a,0x00,0x00,
+     0xbb,0x00,0x00,
+     0xec,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
      0x28,0x00,0x00,
      0x59,0x00,0x00,
-     0xE0,0x00,0x00,	/* Gorf (8a,00,00) */
-     0xBB,0x00,0x00,
-     0xEC,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
+     0xe0,0x00,0x00,	/* gorf (8a,00,00) */
+     0xbb,0x00,0x00,
+     0xec,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
      0x28,0x00,0x00,     /* 50 */
-     0x80,0x00,0x00,	/* WOW (59,00,00) */
-     0xC0,0x00,0x00,	/* WOW (8a,00,00) */
-     0xF0,0x00,0x00,	/* WOW (bb,00,00) */
-     0xEC,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xC0,0x00,0x00,	/* Seawolf 2 */
+     0x80,0x00,0x00,	/* wow (59,00,00) */
+     0xc0,0x00,0x00,	/* wow (8a,00,00) */
+     0xf0,0x00,0x00,	/* wow (bb,00,00) */
+     0xec,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
+     0xc0,0x00,0x00,	/* seawolf 2 */
      0x59,0x00,0x00,
-     0x8A,0x00,0x00,
-     0xBB,0x00,0x00,
-     0xEC,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
-     0xFF,0x00,0x00,
+     0x8a,0x00,0x00,
+     0xbb,0x00,0x00,
+     0xec,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
+     0xff,0x00,0x00,
      0x28,0x28,0x00,     /* 60 */
-     0x59,0x2F,0x00,
-     0x8A,0x36,0x00,
-     0xBB,0x3D,0x00,
-     0xEC,0x44,0x00,
-     0xFF,0xC0,0x00,	/* Gorf (ff,4b,00) */
-     0xFF,0x52,0x00,
-     0xFF,0x59,0x00,
+     0x59,0x2f,0x00,
+     0x8a,0x36,0x00,
+     0xbb,0x3d,0x00,
+     0xec,0x44,0x00,
+     0xff,0xc0,0x00,	/* gorf (ff,4b,00) */
+     0xff,0x52,0x00,
+     0xff,0x59,0x00,
      0x28,0x28,0x00,
-     0x59,0x3D,0x00,
-     0x8A,0x52,0x00,
-     0xBB,0x67,0x00,
-     0xEC,0x7C,0x00,
-     0xFF,0x91,0x00,
-     0xFF,0xA6,0x00,
-     0xFF,0xBB,0x00,
+     0x59,0x3d,0x00,
+     0x8a,0x52,0x00,
+     0xbb,0x67,0x00,
+     0xec,0x7c,0x00,
+     0xff,0x91,0x00,
+     0xff,0xa6,0x00,
+     0xff,0xbb,0x00,
      0x28,0x28,0x00,     /* 70 */
-     0x59,0x3D,0x00,
-     0x8A,0x52,0x00,
-     0xBB,0x67,0x00,
-     0xEC,0x7C,0x00,
-     0xFF,0xE0,0x00,	/* Gorf (ff,91,00) */
-     0xFF,0xA6,0x00,
-     0xFF,0xBB,0x00,
+     0x59,0x3d,0x00,
+     0x8a,0x52,0x00,
+     0xbb,0x67,0x00,
+     0xec,0x7c,0x00,
+     0xff,0xe0,0x00,	/* gorf (ff,91,00) */
+     0xff,0xa6,0x00,
+     0xff,0xbb,0x00,
      0x28,0x28,0x00,
      0x52,0x44,0x00,
-     0x7C,0x60,0x00,
-     0xA6,0x7C,0x00,
-     0xD0,0x98,0x00,
-     0xFA,0xB4,0x00,
-     0xFF,0xD0,0x00,
-     0xFF,0xEC,0x00,
+     0x7c,0x60,0x00,
+     0xa6,0x7c,0x00,
+     0xd0,0x98,0x00,
+     0xfa,0xb4,0x00,
+     0xff,0xd0,0x00,
+     0xff,0xec,0x00,
      0x28,0x28,0x00,     /* 80 */
-     0x4B,0x52,0x00,
-     0x6E,0x7C,0x00,
-     0x91,0xA6,0x00,
-     0xB4,0xD0,0x00,
-     0xD7,0xFA,0x00,
-     0xFA,0xFF,0x00,
-     0xFF,0xFF,0x00,
+     0x4b,0x52,0x00,
+     0x6e,0x7c,0x00,
+     0x91,0xa6,0x00,
+     0xb4,0xd0,0x00,
+     0xd7,0xfa,0x00,
+     0xfa,0xff,0x00,
+     0xff,0xff,0x00,
      0x28,0x28,0x00,
-     0x4B,0x59,0x00,
-     0x6E,0x8A,0x00,
-     0x91,0xBB,0x00,
-     0xB4,0xEC,0x00,
-     0xD7,0xFF,0x00,
-     0xFA,0xFF,0x00,
-     0xFF,0xFF,0x00,
+     0x4b,0x59,0x00,
+     0x6e,0x8a,0x00,
+     0x91,0xbb,0x00,
+     0xb4,0xec,0x00,
+     0xd7,0xff,0x00,
+     0xfa,0xff,0x00,
+     0xff,0xff,0x00,
      0x28,0x28,0x00,     /* 90 */
-     0x4B,0x59,0x00,
-     0x6E,0x8A,0x00,
-     0x91,0xBB,0x00,
-     0xB4,0xEC,0x00,
-     0xD7,0xFF,0x00,
-     0xFA,0xFF,0x00,
-     0xFF,0xFF,0x00,
+     0x4b,0x59,0x00,
+     0x6e,0x8a,0x00,
+     0x91,0xbb,0x00,
+     0xb4,0xec,0x00,
+     0xd7,0xff,0x00,
+     0xfa,0xff,0x00,
+     0xff,0xff,0x00,
      0x28,0x28,0x00,
      0x52,0x59,0x00,
-     0x7C,0x8A,0x00,
-     0xA6,0xBB,0x00,
-     0xD0,0xEC,0x00,
-     0xFA,0xFF,0x00,
-     0xFF,0xFF,0x00,
-     0xFF,0xFF,0x00,
-     0x28,0x28,0x00,     /* A0 */
-     0x4B,0x59,0x00,
-     0x6E,0x8A,0x00,
-     0x91,0xBB,0x00,
-     0x00,0x00,0xFF,	/* Gorf (b4,ec,00) */
-     0xD7,0xFF,0x00,
-     0xFA,0xFF,0x00,
-     0xFF,0xFF,0x00,
+     0x7c,0x8a,0x00,
+     0xa6,0xbb,0x00,
+     0xd0,0xec,0x00,
+     0xfa,0xff,0x00,
+     0xff,0xff,0x00,
+     0xff,0xff,0x00,
+     0x28,0x28,0x00,     /* a0 */
+     0x4b,0x59,0x00,
+     0x6e,0x8a,0x00,
+     0x91,0xbb,0x00,
+     0x00,0x00,0xff,	/* gorf (b4,ec,00) */
+     0xd7,0xff,0x00,
+     0xfa,0xff,0x00,
+     0xff,0xff,0x00,
      0x00,0x28,0x28,
-     0x00,0x59,0x2F,
-     0x00,0x8A,0x36,
-     0x00,0xBB,0x3D,
-     0x00,0xEC,0x44,
-     0x00,0xFF,0x4B,
-     0x00,0xFF,0x52,
-     0x00,0xFF,0x59,
-     0x00,0x28,0x28,     /* B0 */
+     0x00,0x59,0x2f,
+     0x00,0x8a,0x36,
+     0x00,0xbb,0x3d,
+     0x00,0xec,0x44,
+     0x00,0xff,0x4b,
+     0x00,0xff,0x52,
+     0x00,0xff,0x59,
+     0x00,0x28,0x28,     /* b0 */
      0x00,0x59,0x36,
-     0x00,0x8A,0x44,
-     0x00,0xBB,0x52,
-     0x00,0xEC,0x60,
-     0x00,0xFF,0x6E,
-     0x00,0xFF,0x7C,
-     0x00,0xFF,0x8A,
+     0x00,0x8a,0x44,
+     0x00,0xbb,0x52,
+     0x00,0xec,0x60,
+     0x00,0xff,0x6e,
+     0x00,0xff,0x7c,
+     0x00,0xff,0x8a,
      0x00,0x28,0x28,
-     0x00,0x52,0x3D,
-     0x00,0x7C,0x52,
-     0x00,0xA6,0x67,
-     0x00,0xD0,0x7C,
-     0x00,0xFA,0x91,
-     0x00,0xFF,0xA6,
-     0x00,0xFF,0xBB,
-     0x00,0x28,0x28,     /* C0 */
-     0x00,0x4B,0x44,
-     0x00,0x6E,0x60,
-     0x00,0x91,0x7C,
-     0x00,0xB4,0x98,
-     0x00,0xD7,0xB4,
-     0x00,0xFA,0xD0,
-     0x00,0x00,0x00,	/* WOW Background */
+     0x00,0x52,0x3d,
+     0x00,0x7c,0x52,
+     0x00,0xa6,0x67,
+     0x00,0xd0,0x7c,
+     0x00,0xfa,0x91,
+     0x00,0xff,0xa6,
+     0x00,0xff,0xbb,
+     0x00,0x28,0x28,     /* c0 */
+     0x00,0x4b,0x44,
+     0x00,0x6e,0x60,
+     0x00,0x91,0x7c,
+     0x00,0xb4,0x98,
+     0x00,0xd7,0xb4,
+     0x00,0xfa,0xd0,
+     0x00,0x00,0x00,	/* wow background */
      0x00,0x28,0x28,
-     0x00,0x4B,0x4B,
-     0x00,0x6E,0x6E,
+     0x00,0x4b,0x4b,
+     0x00,0x6e,0x6e,
      0x00,0x91,0x91,
-     0x00,0xB4,0xB4,
-     0x00,0xD7,0xD7,
-     0x00,0xFA,0xFA,
-     0x00,0xFF,0xFF,
-     0x00,0x28,0x28,     /* D0 */
-     0x00,0x4B,0x52,
-     0x00,0x6E,0x7C,
-     0x00,0x91,0xA6,
-     0x00,0xB4,0xD0,
-     0x00,0xD7,0xFA,
-     0x00,0xFA,0xFF,
-     0x00,0xFF,0xFF,
-     0x00,0x00,0x30,	/* Gorf (00,00,28)   also   */
-     0x00,0x00,0x48,    /* Gorf (00,00,59)   used   */
-     0x00,0x00,0x60,	/* Gorf (00,00,8a)    by    */
-     0x00,0x00,0x78,	/* Gorf (00,00,bb) seawolf2 */
+     0x00,0xb4,0xb4,
+     0x00,0xd7,0xd7,
+     0x00,0xfa,0xfa,
+     0x00,0xff,0xff,
+     0x00,0x28,0x28,     /* d0 */
+     0x00,0x4b,0x52,
+     0x00,0x6e,0x7c,
+     0x00,0x91,0xa6,
+     0x00,0xb4,0xd0,
+     0x00,0xd7,0xfa,
+     0x00,0xfa,0xff,
+     0x00,0xff,0xff,
+     0x00,0x00,0x30,	/* gorf (00,00,28)   also   */
+     0x00,0x00,0x48,    /* gorf (00,00,59)   used   */
+     0x00,0x00,0x60,	/* gorf (00,00,8a)    by    */
+     0x00,0x00,0x78,	/* gorf (00,00,bb) seawolf2 */
      0x00,0x00,0x90, 	/* seawolf2 */
-     0x00,0x00,0xFF,
-     0x00,0x00,0xFF,
-     0x00,0x00,0xFF,
-     0x00,0x00,0x28,     /* E0 */
+     0x00,0x00,0xff,
+     0x00,0x00,0xff,
+     0x00,0x00,0xff,
+     0x00,0x00,0x28,     /* e0 */
      0x00,0x00,0x52,
-     0x00,0x00,0x7C,
-     0x00,0x00,0xA6,
-     0x00,0x00,0xD0,
-     0x00,0x00,0xFA,
-     0x00,0x00,0xFF,
-     0x00,0x00,0xFF,
+     0x00,0x00,0x7c,
+     0x00,0x00,0xa6,
+     0x00,0x00,0xd0,
+     0x00,0x00,0xfa,
+     0x00,0x00,0xff,
+     0x00,0x00,0xff,
      0x00,0x00,0x28,
-     0x00,0x00,0x4B,
-     0x00,0x00,0x6E,
+     0x00,0x00,0x4b,
+     0x00,0x00,0x6e,
      0x00,0x00,0x91,
-     0x00,0x00,0xB4,
-     0x00,0x00,0xD7,
-     0x00,0x00,0xFA,
-     0x00,0x00,0xFF,
-     0x00,0x00,0x28,     /* F0 */
+     0x00,0x00,0xb4,
+     0x00,0x00,0xd7,
+     0x00,0x00,0xfa,
+     0x00,0x00,0xff,
+     0x00,0x00,0x28,     /* f0 */
      0x00,0x00,0x44,
      0x00,0x00,0x60,
-     0x00,0x00,0x7C,
+     0x00,0x00,0x7c,
      0x00,0x00,0x98,
-     0x00,0x00,0xB4,
-     0x00,0x00,0xD0,
-     0x00,0x00,0xEC,
+     0x00,0x00,0xb4,
+     0x00,0x00,0xd0,
+     0x00,0x00,0xec,
      0x00,0x00,0x28,
-     0x00,0x00,0x3D,
+     0x00,0x00,0x3d,
      0x00,0x00,0x52,
      0x00,0x00,0x67,
-     0x00,0x00,0x7C,
+     0x00,0x00,0x7c,
      0x00,0x00,0x91,
-     0x00,0x00,0xA6,
-     0x00,0x00,0xBB,
+     0x00,0x00,0xa6,
+     0x00,0x00,0xbb,
 };
-
-enum { BLACK,YELLOW,BLUE,RED,WHITE };
-
-static unsigned short colortable[] =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	BLACK,YELLOW,BLUE,RED,
-	BLACK,WHITE,BLACK,RED	/* not used by the game, here only for the dip switch menu */
-};
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 /****************************************************************************
  * Wizard of Wor
  ****************************************************************************/
 
-ROM_START( wow_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( wow )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0xc1295786 )
 	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0x9be93215 )
 	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0x75e5a22e )
@@ -410,32 +405,7 @@ ROM_START( wow_rom )
 /*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
 ROM_END
 
-static const char *wow_sample_names[] =
-{
-	"*wow",
-	"a.wav", "again.wav", "ahh.wav", "am.wav", "and.wav",
-	"anew.wav", "another.wav", "any.wav", "anyone.wav", "appear.wav", "are.wav", "are.wav", "babies.wav", "back.wav",
-	"beat.wav", "become.wav", "best.wav", "better.wav", "bite.wav", "bones.wav", "breath.wav", "but.wav", "can.wav", "cant.wav",
-	"chance.wav", "chest.wav", "coin.wav", "dance.wav", "destroy.wav",
-	"develop.wav", "do.wav", "dont.wav", "doom.wav", "door.wav", "draw.wav", "dungeon.wav", "dungeons.wav",
-	"each.wav", "eaten.wav", "escape.wav", "explode.wav", "fear.wav", "find.wav", "find.wav", "fire.wav", "for.wav", "from.wav",
-	"garwor.wav", "get.wav", "get.wav", "get.wav", "getting.wav", "good.wav", "hahahaha.wav", "harder.wav",
-	"hasnt.wav", "have.wav", "heavyw.wav", "hey.wav", "hope.wav",
-	"hungry.wav", "hungry.wav", "hurry.wav", "i.wav", "i.wav", "if.wav", "if.wav", "im.wav", "i1.wav", "ill.wav", "in.wav",
-	"insert.wav", "invisibl.wav", "it.wav", "lie.wav", "magic.wav",
-	"magical.wav", "me.wav", "meet.wav", "months.wav",
-	"my.wav", "my.wav", "my.wav", "my.wav", "my.wav", "myself.wav", "near.wav", "never.wav",
-	"now.wav", "of.wav", "off.wav", "one.wav", "only.wav", "oven.wav", "pause.wav", "pets.wav", "powerful.wav", "pop.wav",
-	"radar.wav", "ready.wav",
-	"rest.wav", "say.wav", "science.wav", "see.wav", "spause.wav", "start.wav", "the.wav", "the.wav", "the.wav", "the.wav", "then.wav",
-	"through.wav", "thurwor.wav", "time.wav", "to.wav", "to.wav", "to.wav", "treasure.wav", "try.wav", "very.wav", "wait.wav",
-	"war.wav", "warrior.wav", "watch.wav", "we.wav", "welcome.wav",
-	"were.wav", "while.wav", "will.wav", "with.wav", "wizard.wav", "wont.wav",
-	"wor.wav", "world.wav", "worlings.wav", "worlock.wav",
-	"you.wav", "you.wav", "you.wav", "you.wav", "you.wav", "youl.wav", "youl.wav", "youd.wav", "your.wav",0
-};
-
-INPUT_PORTS_START( wow_input_ports )
+INPUT_PORTS_START( wow )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -494,7 +464,9 @@ INPUT_PORTS_START( wow_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct Samplesinterface wow_samples_interface =
+
+
+static struct Samplesinterface samples_interface =
 {
 	8,	/* 8 channels */
 	25	/* volume */
@@ -514,27 +486,48 @@ static struct astrocade_interface astrocade_1chip_interface =
 	{255}			/* Volume */
 };
 
-static struct MachineDriver wow_machine_driver =
+static struct CustomSound_interface gorf_custom_interface =
+{
+	gorf_sh_start,
+	0,
+	gorf_sh_update
+};
+
+static struct CustomSound_interface wow_custom_interface =
+{
+	wow_sh_start,
+	0,
+	wow_sh_update
+};
+
+
+static void wow_machine_init(void)
+{
+	install_port_read_handler(0, 0x12, 0x12, wow_port_2_r);
+	install_port_read_handler(0, 0x17, 0x17, wow_speech_r);
+}
+
+
+static struct MachineDriver machine_driver_wow =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	wow_machine_init,
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -543,63 +536,26 @@ static struct MachineDriver wow_machine_driver =
 	wow_vh_screenrefresh_stars,
 
 	/* sound hardware */
-	0,             				/* Initialise audio hardware */
-	wow_sh_start,   			/* Start audio  */
-	wow_sh_stop,     			/* Stop audio   */
-	wow_sh_update,              /* Update audio */
+	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&wow_samples_interface
-		},
 		{
 			SOUND_ASTROCADE,
 			&astrocade_2chip_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&wow_custom_interface
 		}
  	}
 };
 
-static int wow_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xD004],"\x00\x00",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	    osd_fread(f,&RAM[0xD004],20);
-			/* stored twice in memory??? */
-			memcpy(&RAM[0xD304],&RAM[0xD004],20);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void wow_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	osd_fwrite(f,&RAM[0xD004],20);
-		osd_fclose(f);
-	}
-
-}
-
-struct GameDriver wow_driver =
+struct GameDriver driver_wow =
 {
 	__FILE__,
 	0,
@@ -609,28 +565,27 @@ struct GameDriver wow_driver =
 	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nKevin Estep (samples)\nAlex Judd (sound programming)\nFrank Palazzolo",
 	0,
-	&wow_machine_driver,
+	&machine_driver_wow,
 	0,
 
-	wow_rom,
+	rom_wow,
 	0, 0,
-	wow_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	wow_input_ports,
+	input_ports_wow,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	wow_hiload, wow_hisave,
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
  * Robby Roto
  ****************************************************************************/
 
-ROM_START( robby_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( robby )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0xa431b85a )
 	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0x33cdda83 )
 	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0xdbf97491 )
@@ -645,23 +600,23 @@ ROM_END
 
 static struct MemoryReadAddress robby_readmem[] =
 {
-	{ 0xe000, 0xffff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xdfff, MRA_ROM },
+	{ 0xe000, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress robby_writemem[] =
 {
-	{ 0xe000, 0xffff, MWA_RAM },
-	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x0000, 0x3fff, wow_magicram_w },
+	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x8000, 0xdfff, MWA_ROM },
+	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( robby_input_ports )
+INPUT_PORTS_START( robby )
 
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -719,14 +674,13 @@ INPUT_PORTS_START( robby_input_ports )
 
 INPUT_PORTS_END
 
-static struct MachineDriver robby_machine_driver =
+static struct MachineDriver machine_driver_robby =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			robby_readmem,robby_writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -738,8 +692,8 @@ static struct MachineDriver robby_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -748,10 +702,7 @@ static struct MachineDriver robby_machine_driver =
 	wow_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
+	0,0,0,0,
 	{
 		{
 			SOUND_ASTROCADE,
@@ -760,48 +711,8 @@ static struct MachineDriver robby_machine_driver =
 	}
 };
 
-static int robby_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xE13B],"\x10\x27",2) == 0) &&
-		(memcmp(&RAM[0xE1E4],"COCK",4) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	    osd_fread(f,&RAM[0xE13B],0xAD);
-			/* appears twice in memory??? */
-			memcpy(&RAM[0xE33B],&RAM[0xE13B],0xAD);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void robby_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	osd_fwrite(f,&RAM[0xE13B],0xAD);
-		osd_fclose(f);
-	}
-
-}
-
-struct GameDriver robby_driver =
+struct GameDriver driver_robby =
 {
 	__FILE__,
 	0,
@@ -811,28 +722,27 @@ struct GameDriver robby_driver =
 	"Bally Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nFrank Palazzolo",
 	0,
-	&robby_machine_driver,
+	&machine_driver_robby,
 	0,
 
-	robby_rom,
+	rom_robby,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	robby_input_ports,
+	input_ports_robby,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	robby_hiload, robby_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
  * Gorf
  ****************************************************************************/
 
-ROM_START( gorf_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gorf )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x5b348321 )
 	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0x62d6de77 )
 	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0x1d3bc9c9 )
@@ -843,8 +753,8 @@ ROM_START( gorf_rom )
 	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0xfe7b863d )
 ROM_END
 
-ROM_START( gorfpgm1_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( gorfpgm1 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "873a", 0x0000, 0x1000, 0x97cb4a6a )
 	ROM_LOAD( "873b", 0x1000, 0x1000, 0x257236f8 )
 	ROM_LOAD( "873c", 0x2000, 0x1000, 0x16b0638b )
@@ -855,65 +765,7 @@ ROM_START( gorfpgm1_rom )
 	ROM_LOAD( "873h", 0xb000, 0x1000, 0x56d40c7c )
 ROM_END
 
-/* Here's the same words in English : Missing bite, dust, conquer, another, galaxy, try, again, devour, attack, power */
-
-static const char *gorf_sample_names[] =
-{
- "*gorf","a.wav","a.wav","again.wav","am.wav","am.wav","and.wav","anhilatn.wav",
- "another.wav","another.wav","are.wav","are.wav",
- "avenger.wav","bad.wav","bad.wav","be.wav",
- "been.wav","but.wav","button.wav","cadet.wav",
- "cannot.wav","captain.wav","chronicl.wav","coin.wav","coins.wav","colonel.wav",
- "consciou.wav","defender.wav","destroy.wav","destroyd.wav",
- "doom.wav","draws.wav","empire.wav","end.wav",
- "enemy.wav","escape.wav","flagship.wav","for.wav","galactic.wav",
- "general.wav","gorf.wav","gorphian.wav","gorphian.wav","gorphins.wav",
- "hahahahu.wav","hahaher.wav","harder.wav","have.wav",
- "hitting.wav","i.wav","i.wav","impossib.wav","in.wav","insert.wav",
- "is.wav","live.wav","long.wav","meet.wav","move.wav",
- "my.wav","my.wav",
- "near.wav","next.wav","nice.wav","no.wav",
- "now.wav","pause.wav","player.wav","prepare.wav","prisonrs.wav",
- "promoted.wav","push.wav","robot.wav","robots.wav","robots.wav",
- "seek.wav","ship.wav","shot.wav","some.wav","space.wav","spause.wav",
- "survival.wav","take.wav","the.wav","the.wav","the.wav","time.wav",
- "to.wav","to.wav","unbeatab.wav",
- "warrior.wav","warriors.wav","will.wav",
- "you.wav","you.wav","you.wav","you.wav","your.wav","your.wav","yourself.wav",
- "s.wav","for.wav","for.wav","will.wav","Gorph.wav",
-// Missing Samples
- "coin.wav", "attack.wav","bite.wav","conquer.wav","devour.wav","dust.wav",
- "galaxy.wav","got.wav","power.wav","try.wav","supreme.wav","all.wav",
- "hail.wav","emperor.wav",
- 0
-} ;
-
-static struct IOReadPort Gorf_readport[] =
-{
-	{ 0x08, 0x08, wow_intercept_r },
-	{ 0x0E, 0x0E, wow_video_retrace_r },
-	{ 0x10, 0x10, input_port_0_r },
-	{ 0x11, 0x11, input_port_1_r },
-	{ 0x12, 0x12, gorf_port_2_r },
-	{ 0x13, 0x13, input_port_3_r },
-	{ 0x15, 0x16, Gorf_IO_r },				/* Actually a Write! */
-	{ 0x17, 0x17, gorf_speech_r },				/* Actually a Write! */
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryReadAddress Gorf_readmem[] =
-{
-	{ 0xd000, 0xd0a4, MRA_RAM },
-	{ 0xd0a5, 0xd0a5, gorf_timer_r },
-	{ 0xd0a6, 0xdfff, MRA_RAM },
-	{ 0xd9d5, 0xdfff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_RAM },
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0xcfff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
-
-INPUT_PORTS_START( gorf_input_ports )
+INPUT_PORTS_START( gorf )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -972,27 +824,32 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct Samplesinterface gorf_samples_interface =
-{
-	8,	/* 8 channels */
-	25	/* volume */
-};
 
-static struct MachineDriver gorf_machine_driver =
+
+static void gorf_machine_init(void)
+{
+	install_mem_read_handler (0, 0xd0a5, 0xd0a5, gorf_timer_r);
+
+	install_port_read_handler(0, 0x12, 0x12, gorf_port_2_r);
+	install_port_read_handler(0, 0x15, 0x16, gorf_io_r);
+	install_port_read_handler(0, 0x17, 0x17, gorf_speech_r);
+}
+
+
+static struct MachineDriver machine_driver_gorf =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
-			Gorf_readmem,writemem,Gorf_readport,writeport,		/* ASG */
+			readmem,writemem,readport,writeport,		/* ASG */
 			gorf_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	gorf_machine_init,
 
 	/* video hardware */
 	/* it may look like the right hand side of the screen needs clipping, but */
@@ -1000,71 +857,35 @@ static struct MachineDriver gorf_machine_driver =
 
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
-	gorf_vh_start,
+	wow_vh_start,
 	generic_vh_stop,
 	gorf_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gorf_sh_start,
-	gorf_sh_stop,
-	gorf_sh_update,
+	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&gorf_samples_interface
-		},
 		{
 			SOUND_ASTROCADE,
 			&astrocade_2chip_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&gorf_custom_interface
 		}
 	}
 };
 
-static int gorf_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if ((RAM[0xD00B]==0xFF) && (RAM[0xD03D]==0x33))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	    osd_fread(f,&RAM[0xD010],0x22);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void gorf_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	osd_fwrite(f,&RAM[0xD010],0x22);
-		osd_fclose(f);
-	}
-
-}
-
-struct GameDriver gorf_driver =
+struct GameDriver driver_gorf =
 {
 	__FILE__,
 	0,
@@ -1074,63 +895,60 @@ struct GameDriver gorf_driver =
 	"Midway",
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
-	&gorf_machine_driver,
+	&machine_driver_gorf,
 	0,
 
-	gorf_rom,
+	rom_gorf,
 	0, 0,
-	gorf_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	gorf_input_ports,
+	input_ports_gorf,
 
-	0, palette, colortable,
-	ORIENTATION_ROTATE_270,
-
-	gorf_hiload, gorf_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver gorfpgm1_driver =
+struct GameDriver driver_gorfpgm1 =
 {
 	__FILE__,
-	&gorf_driver,
+	&driver_gorf,
 	"gorfpgm1",
     "Gorf (Program 1)",
 	"1981",
 	"Midway",
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
-	&gorf_machine_driver,
+	&machine_driver_gorf,
 	0,
 
-	gorfpgm1_rom,
+	rom_gorfpgm1,
 	0, 0,
-	gorf_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	gorf_input_ports,
+	input_ports_gorf,
 
-	0, palette, colortable,
-	ORIENTATION_ROTATE_270,
-
-	gorf_hiload, gorf_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
 /****************************************************************************
  * Space Zap
  ****************************************************************************/
 
-ROM_START( spacezap_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spacezap )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xa92de312 )
 	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x4836ebf1 )
 	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0xd8193a80 )
 	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0x3784228d )
 ROM_END
 
-INPUT_PORTS_START( spacezap_input_ports )
 
-
+INPUT_PORTS_START( spacezap )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1179,14 +997,13 @@ INPUT_PORTS_START( spacezap_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct MachineDriver spacezap_machine_driver =
+static struct MachineDriver machine_driver_spacezap =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -1198,8 +1015,8 @@ static struct MachineDriver spacezap_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1208,59 +1025,17 @@ static struct MachineDriver spacezap_machine_driver =
 	wow_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
+	0,0,0,0,
 	{
 		{
-				SOUND_ASTROCADE,
-				&astrocade_2chip_interface
+			SOUND_ASTROCADE,
+			&astrocade_2chip_interface
 		}
 	}
 };
 
-static int spacezap_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if memory has already been initialized */
-	    if (memcmp(&RAM[0xD024],"\x01\x01",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	        osd_fread(f,&RAM[0xD01D],6);
-			/* Appears twice in memory??? */
-			memcpy(&RAM[0xD041],&RAM[0xD01D],6);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void spacezap_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	    osd_fwrite(f,&RAM[0xD01D],6);
-		osd_fclose(f);
-	}
-
-}
-
-struct GameDriver spacezap_driver =
+struct GameDriver driver_spacezap =
 {
 	__FILE__,
 	0,
@@ -1270,28 +1045,27 @@ struct GameDriver spacezap_driver =
 	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
 	0,
-	&spacezap_machine_driver,
+	&machine_driver_spacezap,
 	0,
 
-	spacezap_rom,
+	rom_spacezap,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	spacezap_input_ports,
+	input_ports_spacezap,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	spacezap_hiload, spacezap_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
  * Seawolf II
  ****************************************************************************/
 
-ROM_START( seawolf2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( seawolf2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0xad0103f6 )
 	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0xe0430f0a )
 	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x05ad1619 )
@@ -1300,23 +1074,36 @@ ROM_END
 
 static struct MemoryReadAddress seawolf2_readmem[] =
 {
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_RAM },
+	{ 0xc000, 0xcfff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress seawolf2_writemem[] =
 {
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
 	{ 0x0000, 0x3fff, wow_magicram_w },
+	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
+	{ 0xc000, 0xcfff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort seawolf2_writeport[] =
+{
+	{ 0x00, 0x07, wow_colour_register_w },
+	{ 0x08, 0x08, MWA_NOP }, /* Gorf uses this */
+	{ 0x09, 0x09, wow_colour_split_w },
+	{ 0x0a, 0x0b, MWA_NOP }, /* Gorf uses this */
+	{ 0x0c, 0x0c, wow_magic_control_w },
+	{ 0x0d, 0x0d, interrupt_vector_w },
+	{ 0x0e, 0x0e, wow_interrupt_enable_w },
+	{ 0x0f, 0x0f, wow_interrupt_w },
+	{ 0x19, 0x19, wow_magic_expand_color_w },
 	{ -1 }	/* end of table */
 };
 
 
-
-INPUT_PORTS_START( seawolf2_input_ports )
+INPUT_PORTS_START( seawolf2 )
 	PORT_START /* IN0 */
 	/* bits 0-5 come from a dial - we fake it */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
@@ -1362,60 +1149,39 @@ INPUT_PORTS_START( seawolf2_input_ports )
 	PORT_DIPSETTING(    0x20, "6000" )
 	PORT_DIPSETTING(    0x30, "7000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Screen" )
-	PORT_DIPSETTING(    0x40, "Colour" )
-	PORT_DIPSETTING(    0x00, "Mono" )
+	PORT_DIPNAME( 0x40, 0x40, "Monitor" )
+	PORT_DIPSETTING(    0x40, "Color" )
+	PORT_DIPSETTING(    0x00, "B/W" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
-
-static struct IOReadPort seawolf2_readport[] =
+static void seawolf2_machine_init(void)
 {
-	{ 0x08, 0x08, wow_intercept_r },
-	{ 0x0E, 0x0E, wow_video_retrace_r },
-	{ 0x10, 0x10, seawolf2_controller2_r },
-	{ 0x11, 0x11, seawolf2_controller1_r },
-	{ 0x12, 0x12, input_port_2_r },
-	{ 0x13, 0x13, input_port_3_r },
-	{ -1 }	/* end of table */
-};
+	install_port_read_handler(0, 0x10, 0x10, seawolf2_controller2_r);
+	install_port_read_handler(0, 0x11, 0x11, seawolf2_controller1_r);
+}
 
-static struct IOWritePort seawolf2_writeport[] =
-{
-	{ 0x00, 0x07, colour_register_w },
-	{ 0x08, 0x08, MWA_NOP }, /* Gorf uses this */
-	{ 0x09, 0x09, colour_split_w },
-	{ 0x0a, 0x0b, MWA_NOP }, /* Gorf uses this */
-	{ 0x0c, 0x0c, wow_magic_control_w },
-	{ 0x0d, 0x0d, interrupt_vector_w },
-	{ 0x0e, 0x0e, wow_interrupt_enable_w },
-	{ 0x0f, 0x0f, wow_interrupt_w },
-	{ 0x19, 0x19, wow_magic_expand_color_w },
-
-	{ -1 }	/* end of table */
-};
-static struct MachineDriver seawolf_machine_driver =
+static struct MachineDriver machine_driver_seawolf =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
-			seawolf2_readmem,seawolf2_writemem,seawolf2_readport,seawolf2_writeport,
+			seawolf2_readmem,seawolf2_writemem,readport,seawolf2_writeport,
 			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	seawolf2_machine_init,
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1424,49 +1190,11 @@ static struct MachineDriver seawolf_machine_driver =
 	seawolf2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
+	0,0,0,0,
 };
 
-static int seawolf_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	    if (memcmp(&RAM[0xC20D],"\xD8\x19",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	        osd_fread(f,&RAM[0xC208],2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void seawolf_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	    osd_fwrite(f,&RAM[0xC208],2);
-		osd_fclose(f);
-	}
-
-}
-
-struct GameDriver seawolf2_driver =
+struct GameDriver driver_seawolf2 =
 {
 	__FILE__,
 	0,
@@ -1476,97 +1204,76 @@ struct GameDriver seawolf2_driver =
 	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)",
 	0,
-	&seawolf_machine_driver,
+	&machine_driver_seawolf,
 	0,
 
-	seawolf2_rom,
+	rom_seawolf2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	seawolf2_input_ports,
+	input_ports_seawolf2,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-
-	seawolf_hiload, seawolf_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
  * Extra Bases (Bally/Midway)
  ****************************************************************************/
 
-ROM_START( ebases_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( ebases )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x34422147 )
 	ROM_LOAD( "m761b", 0x1000, 0x1000, 0x4f28dfd6 )
 	ROM_LOAD( "m761c", 0x2000, 0x1000, 0xbff6c97e )
 	ROM_LOAD( "m761d", 0x3000, 0x1000, 0x5173781a )
 ROM_END
 
-static struct MemoryReadAddress ebases_readmem[] =
-{
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xcfff, MRA_ROM },
-	{ 0xd000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress ebases_writemem[] =
-{
-	{ 0x0000, 0x3fff, wow_magicram_w },
-	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
-	{ 0x8000, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
-
-INPUT_PORTS_START( ebases_input_ports )
+INPUT_PORTS_START( ebases )
 	PORT_START /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )	/* The colors are screwed up if selected */
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x10, 0x00, "Colour / Mono" )
-	PORT_DIPSETTING(    0x00, "Colour" )
-	PORT_DIPSETTING(    0x10, "Mono" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
 
 	PORT_START /* Dip Switch */
 	PORT_DIPNAME( 0x01, 0x00, "2 Players Game" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Credits" )
+	PORT_DIPSETTING(    0x01, "2 Credits" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -1576,69 +1283,71 @@ INPUT_PORTS_START( ebases_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START /* Dip Switch */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+
+	PORT_START
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+
+	PORT_START
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+
+	PORT_START
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
 
 INPUT_PORTS_END
 
 
-static struct IOReadPort ebases_readport[] =
+static void ebases_machine_init(void)
 {
-	{ 0x08, 0x08, wow_intercept_r },
-	{ 0x0E, 0x0E, wow_video_retrace_r },
-	{ 0x10, 0x10, input_port_0_r },
-	{ 0x11, 0x11, input_port_1_r },
-	{ 0x12, 0x12, input_port_2_r },
-	{ 0x13, 0x13, input_port_3_r },
-	{ -1 }	/* end of table */
-};
+	install_port_read_handler (0, 0x13, 0x13, ebases_trackball_r);
 
-static struct MachineDriver ebases_machine_driver =
+	install_port_write_handler(0, 0x28, 0x28, ebases_trackball_select_w);
+}
+
+
+static struct MachineDriver machine_driver_ebases =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
-			ebases_readmem,ebases_writemem,ebases_readport,writeport,
+			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	ebases_machine_init,
 
 	/* video hardware */
 	320, 210, { 0, 320-1, 0, 192-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
-	seawolf2_vh_screenrefresh,
+	wow_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
+	0,0,0,0,
 	{
 		{
-				SOUND_ASTROCADE,
-				&astrocade_1chip_interface
+			SOUND_ASTROCADE,
+			&astrocade_1chip_interface
 		}
 	}
 };
 
-struct GameDriver ebases_driver =
+struct GameDriver driver_ebases =
 {
 	__FILE__,
 	0,
@@ -1647,19 +1356,19 @@ struct GameDriver ebases_driver =
 	"1980",
 	"Midway",
 	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
-	GAME_NOT_WORKING,
-	&ebases_machine_driver,
+	0,
+	&machine_driver_ebases,
 	0,
 
-	ebases_rom,
+	rom_ebases,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	ebases_input_ports,
+	input_ports_ebases,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0 | GAME_WRONG_COLORS,
 
 	0, 0
 };
@@ -1784,7 +1493,7 @@ IN
 	    bit 3   = ?
 	    bit 4   = ?
 	    bit 5   = ?
-	    bit 6   = Colour / Mono
+	    bit 6   = Color / Mono
 	    bit 7   = Test
 
 ***************************************************************************/

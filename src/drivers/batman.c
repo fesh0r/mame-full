@@ -2,6 +2,8 @@
 
 	Batman
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -82,16 +84,10 @@ static void latch_w(int offset, int data)
 	WRITE_WORD(latch_data, newword);
 
 	/* bit 4 is connected to the /RESET pin on the 6502 */
-	if ((oldword ^ newword) & 0x0010)
-	{
-		if (newword & 0x0010)
-		{
-			cpu_halt(1, 1);
-			cpu_reset(1);
-		}
-		else
-			cpu_halt(1, 0);
-	}
+	if (newword & 0x0010)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ newword) & 0x7000)
@@ -112,7 +108,7 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x120000, 0x120fff, atarigen_eeprom_r },
 	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r, &atarigen_video_control_data },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x260010, 0x260011, special_port2_r },
@@ -135,7 +131,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x260060, 0x260061, atarigen_eeprom_enable_w },
 	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
 	{ 0x3f0000, 0x3f1fff, batman_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
 	{ 0x3f2000, 0x3f3fff, batman_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f4000, 0x3f5fff, batman_colorram_w, &atarigen_playfieldram_color },
@@ -153,7 +149,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( batman_ports )
+INPUT_PORTS_START( batman )
 	PORT_START		/* 26000 */
 	PORT_BIT( 0x01ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START1 )
@@ -212,9 +208,9 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x040000, &pfmolayout,  512, 64 },		/* sprites & playfield */
-	{ 3, 0x000000, &pfmolayout,  256, 64 },		/* sprites & playfield */
-	{ 3, 0x200000, &anlayout,      0, 64 },		/* characters 8x8 */
+	{ REGION_GFX2, 0x040000, &pfmolayout,  512, 64 },		/* sprites & playfield */
+	{ REGION_GFX2, 0x000000, &pfmolayout,  256, 64 },		/* sprites & playfield */
+	{ REGION_GFX1, 0x000000, &anlayout,      0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -226,20 +222,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_batman =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,		/* verified */
 			14318320,		/* 14.318 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_III_CPU(1)
-		}
+		JSA_III_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -258,7 +251,9 @@ static struct MachineDriver machine_driver =
 	batman_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_III_MONO(2)
+	JSA_III_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -271,12 +266,12 @@ static struct MachineDriver machine_driver =
 
 static void rom_decode(void)
 {
-	UINT8 *base = Machine->memory_region[2];
+	UINT8 *base = memory_region(REGION_SOUND1);
 	int i;
 
 	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < 0x200000; i++)
-		Machine->memory_region[3][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
@@ -299,7 +294,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-static void batman_init(void)
+static void init_batman(void)
 {
 	static const UINT16 default_eeprom[] =
 	{
@@ -325,6 +320,8 @@ static void batman_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -335,8 +332,8 @@ static void batman_init(void)
  *
  *************************************/
 
-ROM_START( batman_rom )
-	ROM_REGION(0xc0000)	/* 6*128k for 68000 code */
+ROM_START( batman )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 6*128k for 68000 code */
 	ROM_LOAD_EVEN( "085-2030.10r",  0x00000, 0x20000, 0x7cf4e5bf )
 	ROM_LOAD_ODD ( "085-2031.7r",   0x00000, 0x20000, 0x7d7f3fc4 )
 	ROM_LOAD_EVEN( "085-2032.91r",  0x40000, 0x20000, 0xd80afb20 )
@@ -344,17 +341,14 @@ ROM_START( batman_rom )
 	ROM_LOAD_EVEN( "085-2034.9r",   0x80000, 0x20000, 0x05388c62 )
 	ROM_LOAD_ODD ( "085-2035.5r",   0x80000, 0x20000, 0xe77c92dd )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "085-1040.12c",  0x10000, 0x4000, 0x080db83c )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 
-	ROM_REGION(0x100000)	/* 1MB for ADPCM */
-	ROM_LOAD( "085-1041.19e",  0x80000, 0x20000, 0xd97d5dbb )
-	ROM_LOAD( "085-1042.17e",  0xa0000, 0x20000, 0x8c496986 )
-	ROM_LOAD( "085-1043.15e",  0xc0000, 0x20000, 0x51812d3b )
-	ROM_LOAD( "085-1044.12e",  0xe0000, 0x20000, 0x5e2d7f31 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "085-2009.10m",  0x00000, 0x20000, 0xa82d4923 )	/* alphanumerics */
 
-	ROM_REGION_DISPOSE(0x220000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "085-1010.13r",  0x000000, 0x20000, 0x466e1365 )	/* graphics, plane 0 */
 	ROM_LOAD( "085-1014.14r",  0x020000, 0x20000, 0xef53475a )
 	ROM_LOAD( "085-1018.15r",  0x040000, 0x20000, 0x4c14f1e5 )
@@ -375,7 +369,11 @@ ROM_START( batman_rom )
 	ROM_LOAD( "085-1021.15c",  0x1c0000, 0x20000, 0x9c8ef9ba )
 	ROM_LOAD( "085-1025.16c",  0x1e0000, 0x20000, 0x5d30bcd1 )
 
-	ROM_LOAD( "085-2009.10m",  0x200000, 0x20000, 0xa82d4923 )	/* alphanumerics */
+	ROM_REGIONX( 0x100000, REGION_SOUND1 )	/* 1MB for ADPCM */
+	ROM_LOAD( "085-1041.19e",  0x80000, 0x20000, 0xd97d5dbb )
+	ROM_LOAD( "085-1042.17e",  0xa0000, 0x20000, 0x8c496986 )
+	ROM_LOAD( "085-1043.15e",  0xc0000, 0x20000, 0x51812d3b )
+	ROM_LOAD( "085-1044.12e",  0xe0000, 0x20000, 0x5e2d7f31 )
 ROM_END
 
 
@@ -386,28 +384,4 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver batman_driver =
-{
-	__FILE__,
-	0,
-	"batman",
-	"Batman",
-	"1991",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	batman_init,
-
-	batman_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	batman_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1991, batman, , batman, batman, batman, ROT0, "Atari Games", "Batman" )

@@ -1,11 +1,5 @@
 /***************************************************************************
 
-TODO:
-- Frisky Tom hangs when you fall. It seems that the 6808 goes havoc and
-  trashes memory.
-- the DAC is poorly supported
-
-
 Seicross memory map (preliminary)
 
 0000-77ff ROM
@@ -47,22 +41,35 @@ void seicross_colorram_w(int offset,int data);
 void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
 static unsigned char *nvram;
 static int nvram_size;
+
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+		{
+			/* fill in the default values */
+			memset(nvram,0,nvram_size);
+			nvram[0x0d] = nvram[0x0f] = nvram[0x11] = nvram[0x13] = nvram[0x15] = nvram[0x19] = 1;
+			nvram[0x17] = 3;
+		}
+	}
+}
+
 
 
 static void friskyt_init_machine(void)
 {
 	/* start with the protection mcu halted */
-	cpu_halt(1,0);
-}
-
-static void no_nvram_init(void)
-{
-	/* Radical Radial and Seicross don't have NVRAM, only dip switches */
-	install_mem_read_handler(1, 0x1003, 0x1003, input_port_3_r );	/* DSW1 */
-	install_mem_read_handler(1, 0x1005, 0x1005, input_port_4_r );	/* DSW2 */
-	install_mem_read_handler(1, 0x1006, 0x1006, input_port_5_r );	/* DSW3 */
+	cpu_set_halt_line(1, ASSERT_LINE);
 }
 
 
@@ -76,18 +83,18 @@ static int friskyt_portB_r(int offset)
 
 static void friskyt_portB_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
+//if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 
 	/* bit 1 flips screen */
 
 	/* bit 2 resets the microcontroller */
-	if (data & 4)
+	if (((portb & 4) == 0) && (data & 4))
 	{
 		/* reset and start the protection mcu */
-		cpu_reset(1);
-		cpu_halt(1,1);
+		cpu_set_reset_line(1, PULSE_LINE);
+		cpu_set_halt_line(1, CLEAR_LINE);
 	}
 
 	/* other bits unknown */
@@ -107,18 +114,12 @@ static void sharedram_w(int offset,int data)
 	sharedram[offset] = data;
 }
 
-/* This kludge makes the player move correctly in Frisky Tom */
-void ft_kludge(int offset,int data)
-{
-	sharedram_w(0x2fd+offset,data);
-}
-
-
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0x7fff, sharedram_r },
+	{ 0x8820, 0x887f, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9800, 0x981f, MRA_RAM },
 	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
@@ -157,7 +158,7 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress mcu_readmem[] =
+static struct MemoryReadAddress mcu_nvram_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x1000, 0x10ff, MRA_RAM },
@@ -166,15 +167,32 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress mcu_writemem[] =
+static struct MemoryReadAddress mcu_no_nvram_readmem[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x1003, 0x1003, input_port_3_r },	/* DSW1 */
+	{ 0x1005, 0x1005, input_port_4_r },	/* DSW2 */
+	{ 0x1006, 0x1006, input_port_5_r },	/* DSW3 */
+	{ 0x8000, 0xf7ff, MRA_ROM },
+	{ 0xf800, 0xffff, sharedram_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_nvram_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x1100, 0x1101, ft_kludge },
 	{ 0x2000, 0x2000, DAC_data_w },
-//	{ 0x8000, 0xf7ff, MWA_ROM },
-	{ 0x8000, 0xe7ff, MWA_ROM },
-	{ 0xe800, 0xefff, sharedram_w },	/* AJP 990129 seems to need a mirror here */
+	{ 0x8000, 0xf7ff, MWA_ROM },
+	{ 0xf800, 0xffff, sharedram_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_no_nvram_writemem[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x2000, 0x2000, DAC_data_w },
+	{ 0x8000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, sharedram_w },
 	{ -1 }	/* end of table */
 };
@@ -182,7 +200,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 
 
 
-INPUT_PORTS_START( friskyt_input_ports )
+INPUT_PORTS_START( friskyt )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -215,7 +233,7 @@ INPUT_PORTS_START( friskyt_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( radrad_input_ports )
+INPUT_PORTS_START( radrad )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -291,7 +309,7 @@ INPUT_PORTS_START( radrad_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( seicross_input_ports )
+INPUT_PORTS_START( seicross )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -426,56 +444,60 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz? */
-			0,
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_M6802,	/* probably a 6802 not sure */
-			6000000/4,	/* ??? */
-			3,
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	20,	/* 20 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	friskyt_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 64,
-	seicross_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	seicross_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+#define MACHINE_DRIVER(NAME,NVRAM)														\
+static struct MachineDriver machine_driver_##NAME =										\
+{																						\
+	/* basic machine hardware */														\
+	{																					\
+		{																				\
+			CPU_Z80,																	\
+			3072000,	/* 3.072 MHz? */												\
+			readmem,writemem,readport,writeport,										\
+			interrupt,1																	\
+		},																				\
+		{																				\
+			CPU_NSC8105,																\
+			6000000/4,	/* ??? */														\
+			mcu_##NAME##_readmem,mcu_##NAME##_writemem,0,0,								\
+			ignore_interrupt,0															\
+		}																				\
+	},																					\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	20,	/* 20 CPU slices per frame - an high value to ensure proper */					\
+			/* synchronization of the CPUs */											\
+	friskyt_init_machine,																\
+																						\
+	/* video hardware */																\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },											\
+	gfxdecodeinfo,																		\
+	64, 64,																				\
+	seicross_vh_convert_color_prom,														\
+																						\
+	VIDEO_TYPE_RASTER,																	\
+	0,																					\
+	generic_vh_start,																	\
+	generic_vh_stop,																	\
+	seicross_vh_screenrefresh,															\
+																						\
+	/* sound hardware */																\
+	0,0,0,0,																			\
+	{																					\
+		{																				\
+			SOUND_AY8910,																\
+			&ay8910_interface															\
+		},																				\
+		{																				\
+			SOUND_DAC,																	\
+			&dac_interface																\
+		}																				\
+	},																					\
+																						\
+	NVRAM																				\
 };
 
+
+MACHINE_DRIVER(nvram,nvram_handler)
+MACHINE_DRIVER(no_nvram,0)
 
 
 /***************************************************************************
@@ -484,8 +506,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( friskyt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( friskyt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ftom.01",      0x0000, 0x1000, 0xbce5d486 )
 	ROM_LOAD( "ftom.02",      0x1000, 0x1000, 0x63157d6e )
 	ROM_LOAD( "ftom.03",      0x2000, 0x1000, 0xc8d9ef2c )
@@ -501,16 +523,16 @@ ROM_START( friskyt_rom )
 	ROM_LOAD( "ftom.09",      0x2000, 0x1000, 0x60642f25 )
 	ROM_LOAD( "ftom.10",      0x3000, 0x1000, 0x07b9dcfc )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "ft.9c",        0x0000, 0x0020, 0x0032167e )
 	ROM_LOAD( "ft.9b",        0x0020, 0x0020, 0x6b364e69 )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
-ROM_START( radrad_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( radrad )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.3a",         0x0000, 0x1000, 0xb1e958ca )
 	ROM_LOAD( "2.3b",         0x1000, 0x1000, 0x30ba76b3 )
 	ROM_LOAD( "3.3c",         0x2000, 0x1000, 0x1c9f397b )
@@ -526,16 +548,16 @@ ROM_START( radrad_rom )
 	ROM_LOAD( "9.j7",         0x2000, 0x1000, 0x229939a3 )
 	ROM_LOAD( "10.j7",        0x3000, 0x1000, 0x79237913 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "clr.9c",       0x0000, 0x0020, 0xc9d88422 )
 	ROM_LOAD( "clr.9b",       0x0020, 0x0020, 0xee81af16 )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
-ROM_START( seicross_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( seicross )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "smc1",         0x0000, 0x1000, 0xf6c3aeca )
 	ROM_LOAD( "smc2",         0x1000, 0x1000, 0x0ec6c218 )
 	ROM_LOAD( "smc3",         0x2000, 0x1000, 0xceb3c8f4 )
@@ -551,16 +573,16 @@ ROM_START( seicross_rom )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
 	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
-ROM_START( sectrzon_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( sectrzon )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sz1.3a",       0x0000, 0x1000, 0xf0a45cb4 )
 	ROM_LOAD( "sz2.3c",       0x1000, 0x1000, 0xfea68ddb )
 	ROM_LOAD( "sz3.3d",       0x2000, 0x1000, 0xbaad4294 )
@@ -576,11 +598,11 @@ ROM_START( sectrzon_rom )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
 	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
@@ -590,101 +612,19 @@ static void friskyt_decode(void)
 {
 	int A;
 	unsigned char *src,*dest;
-	extern int encrypted_cpu;
 
+	/* the protection mcu shares the main program ROMs and RAM with the main CPU. */
 
-	/* the protection mcu is a 6808-compatible cpu with scrambled opcodes, */
-	/* and shares the main program ROMs and RAM with the main CPU. */
-
-	/* First of all, copy over the ROMs */
-	src = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	dest = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	/* copy over the ROMs */
+	src = memory_region(REGION_CPU1);
+	dest = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x8000;A++)
-		dest[A + 0x8000] = src[A];
-
-
-	/* Now decrypt the opcodes: bits 0/1 and 6/7 are swapped */
-	encrypted_cpu = 1;
-	for (A = 0x8000;A < 0x10000;A++)
-		ROM[A] = (dest[A] & 0x3c) | ((dest[A] & 0x41) << 1) | ((dest[A] & 0x82) >> 1);
+		 dest[A + 0x8000] = src[A];
 }
 
 
 
-int friskyt_nvram_load(void)
-{
-	void *f;
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,nvram,nvram_size);
-		osd_fclose(f);
-	}
-	else
-	{
-		/* fill in the default values */
-		memset(nvram,0x00,nvram_size);
-		nvram[0x0d] = nvram[0x0f] = nvram[0x11] = nvram[0x13] = nvram[0x15] = nvram[0x19] = 1;
-		nvram[0x17] = 3;
-	}
-
-	return 1;
-}
-
-void friskyt_nvram_save(void)
-{
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,nvram,nvram_size);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int seicross_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x7ad4],"\x00\x50\x02",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-				osd_fread(f,&RAM[0x7ad4],6*5);
-				osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void seicross_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x7ad4],6*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver friskyt_driver =
+struct GameDriver driver_friskyt =
 {
 	__FILE__,
 	0,
@@ -694,23 +634,22 @@ struct GameDriver friskyt_driver =
 	"Nichibutsu",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
+	&machine_driver_nvram,
+	friskyt_decode,
+
+	rom_friskyt,
+	0, 0,
+	0,
 	0,
 
-	friskyt_rom,
-	0, friskyt_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_friskyt,
 
-	friskyt_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	friskyt_nvram_load, friskyt_nvram_save
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver radrad_driver =
+struct GameDriver driver_radrad =
 {
 	__FILE__,
 	0,
@@ -720,23 +659,23 @@ struct GameDriver radrad_driver =
 	"Nichibutsu USA",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	no_nvram_init,
+	&machine_driver_no_nvram,
+	friskyt_decode,
 
-	radrad_rom,
-	0, friskyt_decode,
+	rom_radrad,
+	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	radrad_input_ports,
+	input_ports_radrad,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 
 	0, 0
 };
 
-struct GameDriver seicross_driver =
+struct GameDriver driver_seicross =
 {
 	__FILE__,
 	0,
@@ -746,44 +685,42 @@ struct GameDriver seicross_driver =
 	"Nichibutsu + Alice",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	no_nvram_init,
+	&machine_driver_no_nvram,
+	friskyt_decode,
 
-	seicross_rom,
-	0, friskyt_decode,
+	rom_seicross,
+	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	seicross_input_ports,
+	input_ports_seicross,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	seicross_hiload, seicross_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver sectrzon_driver =
+struct GameDriver driver_sectrzon =
 {
 	__FILE__,
-	&seicross_driver,
+	&driver_seicross,
 	"sectrzon",
 	"Sector Zone",
 	"1984",
 	"Nichibutsu + Alice",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	no_nvram_init,
+	&machine_driver_no_nvram,
+	friskyt_decode,
 
-	sectrzon_rom,
-	0, friskyt_decode,
+	rom_sectrzon,
+	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	seicross_input_ports,
+	input_ports_seicross,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	seicross_hiload, seicross_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

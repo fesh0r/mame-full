@@ -10,6 +10,9 @@ ernesto@imagina.com
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+
+void konami1_decode(void);
+
 /* from vidhrdw */
 extern unsigned char *jailbrek_scroll_x;
 extern int jailbrek_vh_start( void );
@@ -19,11 +22,9 @@ extern void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned shor
 
 static unsigned char *interrupt_control;
 
-static void jailbrek_machine_init( void ) {
+static void jailbrek_machine_init( void )
+{
 	interrupt_control[0] = 0;
-
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_S;
 }
 
 static int jailbrek_speech_r( int offs ) {
@@ -76,7 +77,7 @@ static struct MemoryWriteAddress writemem[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( jailbrek )
 	PORT_START	/* DSW0  - $3303 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -237,7 +238,6 @@ static struct MachineDriver machine_driver =
 		{
 		    CPU_M6809,
 		    3000000,        /* 3 Mhz ??? */
-		    0,
 		    readmem,writemem,0,0,
 		    jb_interrupt,1,
 		    jb_interrupt_nmi, 500 /* ? */
@@ -280,8 +280,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jailbrek_rom )
-    ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( jailbrek )
+    ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "jailb11d.bin", 0x8000, 0x4000, 0xa0b88dfd )
 	ROM_LOAD( "jailb9d.bin",  0xc000, 0x4000, 0x444b7d8e )
 
@@ -295,85 +295,38 @@ ROM_START( jailbrek_rom )
     ROM_LOAD( "jailb5e.bin",  0x10000, 0x4000, 0x717485cb )
     ROM_LOAD( "jailb3f.bin",  0x14000, 0x4000, 0xe933086f )
 
-	ROM_REGION(0x0240)	/* color PROMs */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "jailbbl.cl2",  0x0000, 0x0020, 0xf1909605 ) /* red & green */
 	ROM_LOAD( "jailbbl.cl1",  0x0020, 0x0020, 0xf70bb122 ) /* blue */
 	ROM_LOAD( "jailbbl.bp2",  0x0040, 0x0100, 0xd4fe5c97 ) /* char lookup */
 	ROM_LOAD( "jailbbl.bp1",  0x0140, 0x0100, 0x0266c7db ) /* sprites lookup */
 
-	ROM_REGION(0x4000) /* speech rom */
+	ROM_REGION( 0x4000 ) /* speech rom */
 	ROM_LOAD( "jailb8c.bin",  0x0000, 0x2000, 0xd91d15e3 )
 ROM_END
 
-extern unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
-
-void jailbrek_decode( void ) {
-	unsigned char *RAM = Machine->memory_region[0];
-	int i;
-
-	for ( i = 0x8000; i < 0x10000; i++ )
-		ROM[i] = KonamiDecode(RAM[i],i);
-}
 
 
-static int jailbrek_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if (memcmp(&RAM[0x1620],"\x00\x25\x30",3) == 0 &&
-			memcmp(&RAM[0x166D],"\x1F\x1B\x11",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1620],80);
-			memcpy(&RAM[0x157e],&RAM[0x1620],3); /* copy high score */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void jailbrek_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1620],80);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver jailbrek_driver =
+struct GameDriver driver_jailbrek =
 {
 	__FILE__,
 	0,
-    "jailbrek",
-    "Jail Break",
+	"jailbrek",
+	"Jail Break",
 	"1986",
 	"Konami",
-    "Ernesto Corvi\n",
+	"Ernesto Corvi\n",
 	0,
-    &machine_driver,
+	&machine_driver,
+	konami1_decode,
+	rom_jailbrek,
+	0, 0,
 	0,
-    jailbrek_rom,
-    0, jailbrek_decode,
-    0,
-    0,      /* sound_prom */
+	0,
 
-    input_ports,
+	input_ports_jailbrek,
 
-    PROM_MEMORY_REGION(2), 0, 0,
-    ORIENTATION_DEFAULT,
-
-    jailbrek_hiload, jailbrek_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

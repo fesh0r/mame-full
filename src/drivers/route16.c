@@ -50,6 +50,7 @@
 extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
+extern int route16_videoram_size;
 
 void route16_init_driver(void);
 void route16b_init_driver(void);
@@ -85,7 +86,7 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
 	{ 0x4800, 0x4800, route16_out0_w },
 	{ 0x5000, 0x5000, route16_out1_w },
-	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1 },
+	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
 	{ 0xc000, 0xc000, MWA_RAM }, // Stratvox has an off by one error
                                  // when clearing the screen
 	{ -1 }  /* end of table */
@@ -118,7 +119,7 @@ static struct MemoryWriteAddress cpu2_writemem[] =
 };
 
 
-INPUT_PORTS_START( route16_input_ports )
+INPUT_PORTS_START( route16 )
 	PORT_START      /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -167,7 +168,7 @@ INPUT_PORTS_END
 
 
 
-INPUT_PORTS_START( stratvox_input_ports )
+INPUT_PORTS_START( stratvox )
 	PORT_START      /* IN0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -233,30 +234,38 @@ static struct DACinterface dac_interface =
 };
 
 
+static const char *stratvox_sample_names[] =
+{
+	"*stratvox",
+	"explode.wav", // Sample played when player's ship is exploding
+	"bonus.wav",   // Sample played when reached 5000 pts and bonus ship
+                   // is awarded
+    0   /* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	25	/* volume */
+	25,	/* volume */
+	stratvox_sample_names
 };
 
 
 #define MACHINE_DRIVER(GAMENAME, AUDIO_INTERFACES)   		\
 															\
-static struct MachineDriver GAMENAME##_machine_driver =		\
+static struct MachineDriver machine_driver_##GAMENAME =		\
 {															\
 	/* basic machine hardware */							\
 	{														\
 		{													\
 			CPU_Z80 | CPU_16BIT_PORT,						\
 			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
-			0,												\
 			cpu1_readmem,cpu1_writemem,0,cpu1_writeport,	\
 			interrupt,1										\
 		},													\
 		{													\
 			CPU_Z80,										\
 			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
-			2,												\
 			cpu2_readmem,cpu2_writemem,0,0,					\
 			ignore_interrupt,0								\
 		}													\
@@ -313,8 +322,8 @@ MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 
 ***************************************************************************/
 
-ROM_START( route16_rom )
-	ROM_REGION(0x10000)  // 64k for the first CPU
+ROM_START( route16 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  // 64k for the first CPU
 	ROM_LOAD( "route16.a0",   0x0000, 0x0800, 0x8f9101bd )
 	ROM_LOAD( "route16.a1",   0x0800, 0x0800, 0x389bc077 )
 	ROM_LOAD( "route16.a2",   0x1000, 0x0800, 0x1065a468 )
@@ -322,20 +331,20 @@ ROM_START( route16_rom )
 	ROM_LOAD( "route16.a4",   0x2000, 0x0800, 0xf67d853a )
 	ROM_LOAD( "route16.a5",   0x2800, 0x0800, 0xd85cf758 )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)  // 64k for the second CPU
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  // 64k for the second CPU
 	ROM_LOAD( "route16.b0",   0x0000, 0x0800, 0x0f9588a7 )
 	ROM_LOAD( "route16.b1",   0x0800, 0x0800, 0x2b326cf9 )
 	ROM_LOAD( "route16.b2",   0x1000, 0x0800, 0x529cad13 )
 	ROM_LOAD( "route16.b3",   0x1800, 0x0800, 0x3bd8b899 )
 ROM_END
 
-ROM_START( route16b_rom )
-	ROM_REGION(0x10000)  // 64k for the first CPU
+ROM_START( route16b )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  // 64k for the first CPU
 	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
 	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
 	ROM_LOAD( "rt16.2",       0x1000, 0x0800, 0xa8e92871 )
@@ -343,30 +352,20 @@ ROM_START( route16b_rom )
 	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
 	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)  // 64k for the second CPU
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  // 64k for the second CPU
 	ROM_LOAD( "rt16.6",       0x0000, 0x0800, 0xfef605f3 )
 	ROM_LOAD( "rt16.7",       0x0800, 0x0800, 0xd0d6c189 )
 	ROM_LOAD( "rt16.8",       0x1000, 0x0800, 0xdefc5797 )
 	ROM_LOAD( "rt16.9",       0x1800, 0x0800, 0x88d94a66 )
 ROM_END
 
-
-static const char *stratvox_sample_names[] =
-{
-	"*stratvox",
-	"explode.wav", // Sample played when player's ship is exploding
-	"bonus.wav",   // Sample played when reached 5000 pts and bonus ship
-                   // is awarded
-    0   /* end of array */
-};
-
-ROM_START( stratvox_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( stratvox )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
 	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
@@ -374,18 +373,18 @@ ROM_START( stratvox_rom )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
-ROM_START( stratvxb_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( stratvxb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
 	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
@@ -393,18 +392,18 @@ ROM_START( stratvxb_rom )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
-ROM_START( speakres_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( speakres )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
 	ROM_LOAD( "speakres.2",   0x0800, 0x0800, 0x93f0d4da )
 	ROM_LOAD( "speakres.3",   0x1000, 0x0800, 0xa3874304 )
@@ -412,147 +411,19 @@ ROM_START( speakres_rom )
 	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
 	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
 	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
 ROM_END
 
 
 
-static int route16_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime = 0;
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4032],0xff,9);	/* high score */
-		firsttime = 1;
-	}
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4032],"\x00\x00\x00\x00\x00\x00\x00\x00\x00",9) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4032],9);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void route16_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4032],9);
-		osd_fclose(f);
-	}
-}
-
-
-static int stratvox_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime = 0;
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4010],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4010],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4010],3);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void stratvox_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4010],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int speakres_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime = 0;
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4001],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4001],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4001],3);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void speakres_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-//		osd_fwrite(f,&RAM[0x4000],0x3ff);
-		osd_fwrite(f,&RAM[0x4001],3);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver route16_driver =
+struct GameDriver driver_route16 =
 {
 	__FILE__,
 	0,
@@ -562,49 +433,47 @@ struct GameDriver route16_driver =
 	"Tehkan/Sun (Centuri license)",
 	"Zsolt Vasvari\nMike Balfour",
 	0,
-	&route16_machine_driver,
+	&machine_driver_route16,
 	route16_init_driver,
 
-	route16_rom,
+	rom_route16,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	route16_input_ports,
+	input_ports_route16,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	route16_hiload, route16_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver route16b_driver =
+struct GameDriver driver_route16b =
 {
 	__FILE__,
-	&route16_driver,
+	&driver_route16,
 	"route16b",
 	"Route 16 (bootleg)",
 	"1981",
 	"bootleg",
 	"Zsolt Vasvari\nMike Balfour",
 	0,
-	&route16_machine_driver,
+	&machine_driver_route16,
 	route16b_init_driver,
 
-	route16b_rom,
+	rom_route16b,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	route16_input_ports,
+	input_ports_route16,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	route16_hiload, route16_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver stratvox_driver =
+struct GameDriver driver_stratvox =
 {
 	__FILE__,
 	0,
@@ -614,70 +483,67 @@ struct GameDriver stratvox_driver =
 	"Taito",
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
-	&stratvox_machine_driver,
+	&machine_driver_stratvox,
 	stratvox_init_driver,
 
-	stratvox_rom,
+	rom_stratvox,
 	0, 0,
-	stratvox_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	stratvox_input_ports,
+	input_ports_stratvox,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	stratvox_hiload, stratvox_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver stratvxb_driver =
+struct GameDriver driver_stratvxb =
 {
 	__FILE__,
-	&stratvox_driver,
+	&driver_stratvox,
 	"stratvxb",
 	"Stratovox (bootleg)",
 	"1980",
 	"bootleg",
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
-	&stratvox_machine_driver,
+	&machine_driver_stratvox,
 	stratvox_init_driver,
 
-	stratvxb_rom,
+	rom_stratvxb,
 	0, 0,
-	stratvox_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	stratvox_input_ports,
+	input_ports_stratvox,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	stratvox_hiload, stratvox_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver speakres_driver =
+struct GameDriver driver_speakres =
 {
 	__FILE__,
-	&stratvox_driver,
+	&driver_stratvox,
 	"speakres",
 	"Speak & Rescue",
 	"????",
-	"?????",
+	"<unknown>",
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
-	&stratvox_machine_driver,
+	&machine_driver_stratvox,
 	stratvox_init_driver,
 
-	speakres_rom,
+	rom_speakres,
 	0, 0,
-	stratvox_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	stratvox_input_ports,
+	input_ports_stratvox,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	speakres_hiload, speakres_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

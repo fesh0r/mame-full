@@ -93,7 +93,6 @@ void jedi_hscroll_w(int offset,int data);
 extern unsigned char *jedi_PIXIRAM;
 extern unsigned char *jedi_backgroundram;
 extern int jedi_backgroundram_size;
-unsigned char *jedi_nvRAM;
 
 void jedi_soundlatch_w(int offset,int data);
 void jedi_soundacklatch_w(int offset, int data);
@@ -109,10 +108,28 @@ void jedi_rom_banksel( int offset, int data);
 
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-    { 0x0800, 0x08ff, MRA_RAM, &jedi_nvRAM },
+    { 0x0800, 0x08ff, MRA_RAM },
     { 0x0C00, 0x0C00, input_port_0_r },
     { 0x0C01, 0x0C01, jedi_mainstat_r }, /* IN1 */
     { 0x1400, 0x1400, jedi_soundacklatch_r },
@@ -129,7 +146,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x07ff, MWA_RAM },
-    { 0x0800, 0x08ff, MWA_RAM, &jedi_nvRAM },
+    { 0x0800, 0x08ff, MWA_RAM, &nvram, &nvram_size },
     { 0x1C80, 0x1C82, jedi_control_w},
     { 0x1D80, 0x1D80, watchdog_reset_w },
     { 0x1E84, 0x1E84, jedi_alpha_banksel },
@@ -174,7 +191,7 @@ static struct MemoryWriteAddress writemem2[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( jedi )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -284,14 +301,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
             2500000,    /* 2.5 Mhz */
-			0,
 			readmem,writemem,0,0,
             interrupt,4
 		},
 		{
             CPU_M6502,
             1500000,        /* 1.5 Mhz */
-            2,
 			readmem2,writemem2,0,0,
             interrupt,4
 		}
@@ -323,8 +338,9 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-    }
+    },
 
+	nvram_handler
 };
 
 
@@ -335,8 +351,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jedi_rom )
-	ROM_REGION(0x1C000)	/* 64k for code + 48k for banked ROMs */
+ROM_START( jedi )
+	ROM_REGIONX( 0x1C000, REGION_CPU1 )	/* 64k for code + 48k for banked ROMs */
 	ROM_LOAD( "14f_221.bin",  0x08000, 0x4000, 0x414d05e3 )
 	ROM_LOAD( "13f_222.bin",  0x0c000, 0x4000, 0x7b3f21be )
 	ROM_LOAD( "13d_123.bin",  0x10000, 0x4000, 0x877f554a )	/* Page 0 */
@@ -352,40 +368,14 @@ ROM_START( jedi_rom )
 	ROM_LOAD( "01m_128.bin",  0x22000, 0x8000, 0x24663184 )
 	ROM_LOAD( "01k_129.bin",  0x2a000, 0x8000, 0xac86b98c )
 
-	ROM_REGION(0x10000)	/* space for the sound ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* space for the sound ROMs */
 	ROM_LOAD( "01c_133.bin",  0x8000, 0x4000, 0x6c601c69 )
 	ROM_LOAD( "01a_134.bin",  0xC000, 0x4000, 0x5e36c564 )
 ROM_END
 
-static int novram_load(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-        osd_fread(f,&RAM[0x0800],256);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void novram_save(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f,&RAM[0x0800],256);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver jedi_driver =
+struct GameDriver driver_jedi =
 {
 	__FILE__,
 	0,
@@ -398,15 +388,14 @@ struct GameDriver jedi_driver =
 	&machine_driver,
 	0,
 
-	jedi_rom,
+	rom_jedi,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_jedi,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	novram_load, novram_save /* Highscore load, save */
+	ROT0,
+	0,0
 };

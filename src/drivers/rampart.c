@@ -92,6 +92,10 @@ static int slapstic_bank_r(int offset)
 	return result;
 }
 
+static void slapstic_bank_w(int offset,int data)
+{
+}
+
 
 static int opbase_override(int pc)
 {
@@ -107,7 +111,7 @@ static int opbase_override(int pc)
 		current_bank = bank_list[slapstic_tweak((pc - 0x140000) / 2)];
 
 		/* use a bogus ophw so that we will be called again on the next jump/ret */
-		ophw = 0x80;
+		catch_nextBranch();
 
 		/* compute the new ROM base */
 		OP_RAM = OP_ROM = &slapstic_base[current_bank] - 0x140000;
@@ -234,13 +238,13 @@ static void latch_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x140000, 0x147fff, slapstic_bank_r, &slapstic_base },
-	{ 0x200000, 0x21fffe, MRA_BANK1, &atarigen_playfieldram },
-	{ 0x3c0000, 0x3c07ff, MRA_BANK2, &paletteram },
-	{ 0x3e0000, 0x3e3fff, MRA_BANK3, &atarigen_spriteram },
+	{ 0x140000, 0x147fff, slapstic_bank_r },
+	{ 0x200000, 0x21fffe, MRA_BANK1 },
+	{ 0x3c0000, 0x3c07ff, MRA_BANK2 },
+	{ 0x3e0000, 0x3e3fff, MRA_BANK3 },
 	{ 0x460000, 0x460001, adpcm_r },
 	{ 0x480000, 0x480001, ym2413_r },
-	{ 0x500000, 0x500fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x500000, 0x500fff, atarigen_eeprom_r },
 	{ 0x640000, 0x640001, input_port_0_r },
 	{ 0x640002, 0x640003, input_port_1_r },
 	{ 0x6c0000, 0x6c0001, input_port_2_r },
@@ -256,14 +260,15 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x200000, 0x21fffe, rampart_playfieldram_w },
+	{ 0x140000, 0x147fff, slapstic_bank_w, &slapstic_base },	/* here only to initialize the pointer */
+	{ 0x200000, 0x21fffe, rampart_playfieldram_w, &atarigen_playfieldram },
 	{ 0x220000, 0x3bffff, MWA_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w },
+	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram },
 	{ 0x3c0800, 0x3dffff, MWA_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3e0000, 0x3e3fff, MWA_BANK3 },
+	{ 0x3e0000, 0x3e3fff, MWA_BANK3, &atarigen_spriteram },
 	{ 0x460000, 0x460001, adpcm_w },
 	{ 0x480000, 0x480003, ym2413_w },
-	{ 0x500000, 0x500fff, atarigen_eeprom_w },
+	{ 0x500000, 0x500fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x5a0000, 0x5affff, atarigen_eeprom_enable_w },
 	{ 0x640000, 0x640001, latch_w },
 	{ 0x720000, 0x72ffff, watchdog_reset_w },
@@ -279,7 +284,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( rampart_ports )
+INPUT_PORTS_START( rampart )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
@@ -331,7 +336,7 @@ INPUT_PORTS_START( rampart_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ramprt2p_ports )
+INPUT_PORTS_START( ramprt2p )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
@@ -454,7 +459,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -486,7 +490,9 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2413,
 			&ym2413_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -501,10 +507,10 @@ static void rom_decode(void)
 {
 	int i;
 
-	memcpy(&Machine->memory_region[0][0x140000], &Machine->memory_region[0][0x40000], 0x8000);
+	memcpy(&memory_region(REGION_CPU1)[0x140000], &memory_region(REGION_CPU1)[0x40000], 0x8000);
 
-	for (i = 0; i < Machine->memory_region_length[1]; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(1); i++)
+		memory_region(1)[i] ^= 0xff;
 }
 
 
@@ -515,8 +521,8 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( rampart_rom )
-	ROM_REGION(0x148000)
+ROM_START( rampart )
+	ROM_REGIONX( 0x148000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
 	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
 	ROM_LOAD_EVEN( "082-2031.13l", 0x00000, 0x10000, 0x07650c7e )
@@ -525,14 +531,14 @@ ROM_START( rampart_rom )
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "082-1009.2n",   0x000000, 0x20000, 0x23b95f59 )
 
-	ROM_REGION(0x40000)	/* ADPCM data */
+	ROM_REGION( 0x40000 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
 
 
-ROM_START( ramprt2p_rom )
-	ROM_REGION(0x148000)
+ROM_START( ramprt2p )
+	ROM_REGIONX( 0x148000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
 	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
 	ROM_LOAD_EVEN( "205113kl.rom", 0x00000, 0x20000, 0xd4e26d0f )
@@ -541,7 +547,7 @@ ROM_START( ramprt2p_rom )
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "10192n.rom",   0x000000, 0x20000, 0xefa38bef )
 
-	ROM_REGION(0x40000)	/* ADPCM data */
+	ROM_REGION( 0x40000 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
@@ -585,10 +591,12 @@ static void rampart_init(void)
 	slapstic_init(118);
 
 	/* set up some hacks to handle the slapstic accesses */
-	cpu_setOPbaseoverride(opbase_override);
+	cpu_setOPbaseoverride(0,opbase_override);
 
 	/* display messages */
 	atarigen_show_slapstic_message();
+
+	rom_decode();
 }
 
 
@@ -599,7 +607,7 @@ static void rampart_init(void)
  *
  *************************************/
 
-struct GameDriver rampart_driver =
+struct GameDriver driver_rampart =
 {
 	__FILE__,
 	0,
@@ -612,24 +620,23 @@ struct GameDriver rampart_driver =
 	&machine_driver,
 	rampart_init,
 
-	rampart_rom,
-	rom_decode,
+	rom_rampart,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	rampart_ports,
+	input_ports_rampart,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver ramprt2p_driver =
+struct GameDriver driver_ramprt2p =
 {
 	__FILE__,
-	&rampart_driver,
+	&driver_rampart,
 	"ramprt2p",
 	"Rampart (2-player Joystick)",
 	"1990",
@@ -639,15 +646,14 @@ struct GameDriver ramprt2p_driver =
 	&machine_driver,
 	rampart_init,
 
-	ramprt2p_rom,
-	rom_decode,
+	rom_ramprt2p,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	ramprt2p_ports,
+	input_ports_ramprt2p,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

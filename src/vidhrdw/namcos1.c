@@ -3,6 +3,9 @@
 
 #define get_gfx_pointer(gfxelement,c,line) (gfxelement->gfxdata + (c*gfxelement->height+line) * gfxelement->line_modulo)
 
+#define TOTALCOLORS 3584
+#define BACKGROUNDCOLOR (3*TOTALCOLORS)
+
 /* support non use tilemap system draw routine */
 #define NAMCOS1_DIRECT_DRAW 1
 
@@ -251,6 +254,32 @@ static void namcos1_palette_refresh(int start,int offset,int num)
 		int g = namcos1_paletteram[offset + 0x0800];
 		int b = namcos1_paletteram[offset + 0x1000];
 		palette_change_color(color,r,g,b);
+		if (color != BACKGROUNDCOLOR)
+		{
+			palette_change_color(color+TOTALCOLORS,r/2,g/2,b/2);	/* shadow */
+			r *= 2;
+			g *= 2;
+			b *= 2;
+			if (r > 255)
+			{
+				g = g * 255 / r;
+				b = b * 255 / r;
+				r = 255;
+			}
+			if (g > 255)
+			{
+				r = r * 255 / g;
+				b = b * 255 / g;
+				g = 255;
+			}
+			if (b > 255)
+			{
+				r = r * 255 / b;
+				g = g * 255 / b;
+				b = 255;
+			}
+			palette_change_color(color+2*TOTALCOLORS,r,g,b);	/* highlight */
+		}
 		offset++;
 	}
 }
@@ -258,7 +287,7 @@ static void namcos1_palette_refresh(int start,int offset,int num)
 static void namcos1_sprite_palette_refresh(int color)
 {
 	if(color!=0x7f) /* 0x7f == shadow/highright special */
-	namcos1_palette_refresh(16*color,16*color,15); /* 15 = trasnparent */
+	namcos1_palette_refresh(16*color,16*color,15); /* 15 = transparent */
 }
 
 static void namcos1_tile_palette_refresh(int color)
@@ -299,6 +328,10 @@ static void namcos1_spriteram_w( int offset, int data )
 			/* bit.0   : x draw position.8   */
 			object->color = data>>1;
 			object->transparency = object->color==0x7f ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN;
+#if 1
+			if(object->color==0x7f && !(Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
+				usrintf_showmessage("This driver requires GAME_REQUIRES_16BIT flag");
+#endif
 		case 0x07:
 			/* bit.0-7 : x draw position.0-7 */
 			resize_x=1;
@@ -618,13 +651,13 @@ int namcos1_vh_start( void )
 
 	/* set bright table for sprite color == 0x7f */
 	for(i=0;i<=7;i++)
-		gfx_drawmode_table[i] = DRAWMODE_DOUBLE; /* highlight */
+		gfx_drawmode_table[i] = DRAWMODE_HIGHLIGHT;
 	for(i=8;i<=15;i++)
-		gfx_drawmode_table[i] = DRAWMODE_HALF;   /* shadow */
+		gfx_drawmode_table[i] = DRAWMODE_SHADOW;
 
 	/* set static memory points */
-	namcos1_paletteram  = Machine->memory_region[NAMCO_S1_RAM_REGION];
-	namcos1_controllram = Machine->memory_region[NAMCO_S1_RAM_REGION] + 0x8000;
+	namcos1_paletteram  = memory_region(NAMCO_S1_RAM_REGION);
+	namcos1_controllram = memory_region(NAMCO_S1_RAM_REGION) + 0x8000;
 
 	/* allocate videoram */
 	namcos1_videoram   = malloc(0x8000);
@@ -705,38 +738,6 @@ int namcos1_vh_start( void )
 		namcos1_displaycontroll_w(i,0);
 	for(i=0;i<0xff;i++)
 		namcos1_playfield_control_w( i,0 );
-
-#if 1
-	/* build gfxmaskdata for missing ROM */
-	if (!strcmp(Machine->gamedrv->name,"blazer"))
-	{
-		const struct GfxElement *mask = Machine->gfx[0];
-		const struct GfxElement *pens = Machine->gfx[1];
-		int total  = mask->total_elements;
-		int width  = mask->width;
-		int height = mask->height;
-		int line,x,c;
-
-		for(c=0;c<total;c++)
-		{
-			/* build missing gfxmaskdata patch */
-			if( mask->pen_usage)
-				mask->pen_usage[c] = 0;
-			for(line=0;line<height;line++)
-			{
-				unsigned char  *maskbm = get_gfx_pointer(mask,c,line);
-				unsigned char  *pensbm = get_gfx_pointer(pens,c,line);
-				for (x=0;x<width;x++)
-				{
-					/* transparency color is code0 */
-					if(pensbm[x]!=0) maskbm[x] = 1;
-					if( mask->pen_usage)
-						mask->pen_usage[c] |= 1<<maskbm[x];
-				}
-			}
-		}
-	}
-#endif
 
 #if NAMCOS1_DIRECT_DRAW
 	if(namcos1_tilemap_used)
@@ -860,6 +861,12 @@ int namcos1_vh_start( void )
 	} /* namcos1_tilemap_used */
 #endif
 
+	for (i = 0;i < TOTALCOLORS;i++)
+	{
+		palette_shadow_table[Machine->pens[i]] = Machine->pens[i+TOTALCOLORS];
+		palette_highlight_table[Machine->pens[i]] = Machine->pens[i+2*TOTALCOLORS];
+	}
+
 	return 0;
 }
 
@@ -954,8 +961,8 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 	/* background color */
-	namcos1_palette_refresh(128*16+256*6,backgroundcolor,1);
-	palette_used_colors[128*16+256*6] |= PALETTE_COLOR_VISIBLE;
+	namcos1_palette_refresh(BACKGROUNDCOLOR,backgroundcolor,1);
+	palette_used_colors[BACKGROUNDCOLOR] |= PALETTE_COLOR_VISIBLE;
 
 	if ( ( remapped = palette_recalc() ) )
 	{
@@ -982,7 +989,7 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #endif
 	tilemap_render(ALL_TILEMAPS);
 	/* back color */
-	fillbitmap(bitmap,Machine->pens[128*16+256*6],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],&Machine->drv->visible_area);
 	/* draw objects , tilemap and sprite */
 	gfxobj_draw(objectlist);
 }

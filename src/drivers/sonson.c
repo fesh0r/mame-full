@@ -16,7 +16,6 @@ read:
 3004      IN2
 3005      DSW0
 3006      DSW1
-see the input_ports definition below for details on the input bits
 
 write:
 3000      horizontal scroll
@@ -53,12 +52,6 @@ void sonson_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 void sonson_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-
-void sonson_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
 void sonson_sh_irqtrigger_w(int offset,int data)
 {
@@ -124,7 +117,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sonson )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -264,21 +257,19 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz (?) */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4	/* FIRQs are triggered by the main CPU */
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	sonson_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
@@ -310,8 +301,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sonson_rom )
-	ROM_REGION(0x10000)	/* 64k for code + 3*16k for the banked ROMs images */
+ROM_START( sonson )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "ss.01e",       0x4000, 0x4000, 0xcd40cc54 )
 	ROM_LOAD( "ss.02e",       0x8000, 0x4000, 0xc3476527 )
 	ROM_LOAD( "ss.03e",       0xc000, 0x4000, 0x1fd0e729 )
@@ -323,66 +314,19 @@ ROM_START( sonson_rom )
 	ROM_LOAD( "ss8.v12",      0x08000, 0x4000, 0x9f59014e )
 	ROM_LOAD( "ss9.v12",      0x0c000, 0x4000, 0xe240345a )
 
-	ROM_REGION(0x0240)	/* color PROMs */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
 	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
 	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */
 	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0xd4f7bfb5 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0300],"\x00\x01\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0320],"\x00\x01\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x00d8],"\x00\x01\x00\x00",4) == 0 &&	/* high score */
-			memcmp(&RAM[0x0328],"\x00\x02\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0358],"\x00\x02\x00\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0300],8*5+12*5);
-			RAM[0x00d8] = RAM[0x0300];
-			RAM[0x00d9] = RAM[0x0301];
-			RAM[0x00da] = RAM[0x0302];
-			RAM[0x00db] = RAM[0x0303];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0300],8*5+12*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver sonson_driver =
+struct GameDriver driver_sonson =
 {
 	__FILE__,
 	0,
@@ -395,15 +339,14 @@ struct GameDriver sonson_driver =
 	&machine_driver,
 	0,
 
-	sonson_rom,
+	rom_sonson,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_sonson,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

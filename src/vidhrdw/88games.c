@@ -2,10 +2,6 @@
 #include "vidhrdw/konamiic.h"
 
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-#define ZOOMROM_MEM_REGION 3
-
 int k88games_priority;
 
 static int layer_colorbase[3],sprite_colorbase,zoom_colorbase;
@@ -65,16 +61,16 @@ int k88games_vh_start(void)
 	layer_colorbase[2] = 16;
 	sprite_colorbase = 32;
 	zoom_colorbase = 48;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 	{
 		return 1;
 	}
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
 	}
-	if (K051316_vh_start(ZOOMROM_MEM_REGION,4,zoom_callback))
+	if (K051316_vh_start_0(REGION_GFX3,4,zoom_callback))
 	{
 		K052109_vh_stop();
 		K051960_vh_stop();
@@ -88,7 +84,7 @@ void k88games_vh_stop(void)
 {
 	K052109_vh_stop();
 	K051960_vh_stop();
-	K051316_vh_stop();
+	K051316_vh_stop_0();
 }
 
 
@@ -105,7 +101,7 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	K052109_tilemap_update();
-	K051316_tilemap_update();
+	K051316_tilemap_update_0();
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
@@ -124,12 +120,12 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		K052109_tilemap_draw(bitmap,2,0);
 		K052109_tilemap_draw(bitmap,1,0);
 		K051960_sprites_draw(bitmap,0,0);
-		K051316_zoom_draw(bitmap);
+		K051316_zoom_draw_0(bitmap);
 	}
 	else
 	{
 		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
-		K051316_zoom_draw(bitmap);
+		K051316_zoom_draw_0(bitmap);
 		K051960_sprites_draw(bitmap,0,0);
 		K052109_tilemap_draw(bitmap,1,0);
 		K051960_sprites_draw(bitmap,1,1);

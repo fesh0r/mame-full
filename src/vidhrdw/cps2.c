@@ -12,20 +12,21 @@
 static int cps2_start;
 static int cps2_debug;
 static int cps2_width;
+const int cps2_gfx_region = 1;
 
 int cps2_gfx_start(void)
 {
 	UINT32 dwval;
-	int size=Machine->memory_region_length[cps1_gfx_region];
-	unsigned char *data = Machine->memory_region[cps1_gfx_region];
+    int size=memory_region_length(cps2_gfx_region);
+    unsigned char *data = memory_region(cps2_gfx_region);
 	int i,j,nchar,penusage,gfxsize;
 
-	gfxsize=size/4;
+    gfxsize=size/4;
 
 	/* Set up maximum values */
-	cps1_max_char  =(gfxsize/2)/8;
-	cps1_max_tile16=(gfxsize/4)/8;
-	cps1_max_tile32=(gfxsize/16)/8;
+    cps1_max_char  =(gfxsize/2)/8;
+    cps1_max_tile16=(gfxsize/4)/8;
+    cps1_max_tile32=(gfxsize/16)/8;
 
 	cps1_gfx=malloc(gfxsize*sizeof(UINT32));
 	if (!cps1_gfx)
@@ -68,6 +69,7 @@ int cps2_gfx_start(void)
 				if (*(data+size/2+size/4+1)&mask)  n|=8;
 				dwval|=n<<(28-j*4);
 				penusage=1<<n;
+                penusage=0xffff;
 				cps1_char_pen_usage[nchar]|=penusage;
 				cps1_tile16_pen_usage[nchar/2]|=penusage;
 				cps1_tile32_pen_usage[nchar/8]|=penusage;
@@ -93,10 +95,10 @@ int cps2_gfx_start(void)
            data+=4;
 		}
 
-        data = Machine->memory_region[cps1_gfx_region]+2;
+        data = memory_region(cps2_gfx_region)+2;
         for (i=0; i<gfxsize/4; i++)
 		{
-			nchar=i/8;  /* 8x8 char number */
+		   nchar=i/8+(gfxsize/4)/8;  /* 8x8 char number */
 		   dwval=0;
 		   for (j=0; j<8; j++)
 		   {
@@ -135,7 +137,8 @@ int cps2_gfx_start(void)
 		}
 
 	}
-	return 0;
+
+    return 0;
 }
 
 
@@ -168,7 +171,7 @@ void cps1_debug_tiles_f(struct osd_bitmap *bitmap, int layer, int width)
 	int n=cps2_start;
 
 	/* Blank screen */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+    fillbitmap(bitmap, palette_transparent_pen, NULL);
 
     for (y=0; y<maxy; y++)
     {
@@ -241,7 +244,33 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     static int qcode;
     int stop=0;
     int oldq=qcode;
-    cps1_vh_screenrefresh(bitmap, full_refresh);
+    int i,offset;
+
+    if (cps1_palette)
+    {
+        for (i=0; i<cps1_palette_size; i+=2)
+        {
+            int color=0x0fff+((i&0x0f)<<(8+4));
+            WRITE_WORD(&cps1_palette[i],color);
+        }
+    }
+
+	/* Get video memory base registers */
+	cps1_get_video_base();
+
+    cps1_build_palette();
+   	for (i = offset = 0; i < cps1_palette_entries; i++)
+	{
+        int j;
+        for (j = 0; j < 15; j++)
+        {
+           palette_used_colors[offset++] = PALETTE_COLOR_USED;
+        }
+        palette_used_colors[offset++] = PALETTE_COLOR_TRANSPARENT;
+	}
+
+    palette_recalc ();
+
     cps1_debug_tiles(bitmap);
     if (keyboard_pressed_memory(KEYCODE_UP))
         qcode++;
@@ -257,7 +286,6 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     if (qcode != oldq)
     {
-        char baf[40];
         int mode=0;
         cps2_qsound_sharedram_w(0x1ffa, 0x0088);
         cps2_qsound_sharedram_w(0x1ffe, 0xffff);
@@ -274,12 +302,23 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         cps2_qsound_sharedram_w(0x16, 0x0000);
         cps2_qsound_sharedram_w(0x18, 0x0000);
         cps2_qsound_sharedram_w(0x1e, 0x0000);
+    }
+    {
+    struct DisplayText dt[3];
+    char *instructions="PRESS: PGUP/PGDN=CODE  1=8x8  2=16x16  3=32x32  UP/DN=QCODE";
+    char text1[256];
+    sprintf(text1, "GFX CODE=%06x  :  QSOUND CODE=%04x", cps2_start, qcode );
+    dt[0].text = text1;
+    dt[0].color = DT_COLOR_RED;
+    dt[0].x = (Machine->uiwidth - Machine->uifontwidth * strlen(text1)) / 2;
+    dt[0].y = 8*23;
+    dt[1].text = instructions;
+    dt[1].color = DT_COLOR_WHITE;
+    dt[1].x = (Machine->uiwidth - Machine->uifontwidth * strlen(instructions)) / 2;
+    dt[1].y = dt[0].y+2*Machine->uifontheight;
 
-
-
-        sprintf(baf, "QSound %04x", qcode);
-		usrintf_showmessage(baf);
-
+    dt[2].text = 0; /* terminate array */
+	displaytext(dt,0,0);
     }
 }
 

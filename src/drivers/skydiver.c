@@ -193,7 +193,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( skydiver_input_ports )
+INPUT_PORTS_START( skydiver )
 	PORT_START /* fake port, gets mapped to Sky Diver ports */
 	PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -320,6 +320,11 @@ static unsigned short colortable[] =
 	0x00, 0x00, /* used only to draw the SKYDIVER LEDs */
 	0x00, 0x01, /* used only to draw the SKYDIVER LEDs */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct MachineDriver machine_driver =
@@ -329,7 +334,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6800,
 			3000000/4,	   /* ???? */
-			0,
 			readmem,writemem,0,0,
 			skydiver_interrupt,8
 		}
@@ -341,8 +345,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 29*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -365,8 +369,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( skydiver_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( skydiver )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "33167-02.f1", 0x2800, 0x0800, 0x25a5c976 )
 	ROM_LOAD( "33164-02.e1", 0x3000, 0x0800, 0xa348ac39 )
 	ROM_LOAD( "33165-02.d1", 0x3800, 0x0800, 0xa1fc5504 )
@@ -391,7 +395,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver skydiver_driver =
+struct GameDriver driver_skydiver =
 {
 	__FILE__,
 	0,
@@ -404,14 +408,14 @@ struct GameDriver skydiver_driver =
 	&machine_driver,
 	0,
 
-	skydiver_rom,
+	rom_skydiver,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	skydiver_input_ports,
+	input_ports_skydiver,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 	0,0
 };

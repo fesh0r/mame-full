@@ -34,13 +34,6 @@ void hyperspt_sound_w(int offset, int data);
 int  hyperspt_sh_timer_r(int offset);
 
 
-void sbasketb_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
-
 void sbasketb_sh_irqtrigger_w(int offset,int data)
 {
 	cpu_cause_interrupt(1,0xff);
@@ -102,7 +95,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sbasketb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -232,7 +225,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* filenames for sample files */
-static const char *sbasketball_sample_names[] =
+static const char *sbasketb_sample_names[] =
 {
 	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
 	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
@@ -244,6 +237,17 @@ static const char *sbasketball_sample_names[] =
 	0
 };
 
+struct VLM5030interface sbasketb_vlm5030_interface =
+{
+    3580000,    /* master clock  */
+    255,        /* volume        */
+    4,         /* memory region  */
+    0,         /* memory size    */
+    0,         /* VCU            */
+	sbasketb_sample_names
+};
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -251,21 +255,19 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1400000,        /* 1.400 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/4,	/* 3.5795 Mhz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	sbasketb_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -292,7 +294,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			SOUND_VLM5030,
-			&konami_vlm5030_interface
+			&sbasketb_vlm5030_interface
 		}
 	}
 };
@@ -305,8 +307,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sbasketb_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( sbasketb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sbb_j13.bin",  0x6000, 0x2000, 0x263ec36b )
 	ROM_LOAD( "sbb_j11.bin",  0x8000, 0x4000, 0x0a4d7a82 )
 	ROM_LOAD( "sbb_j09.bin",  0xc000, 0x4000, 0x4f9dd9a0 )
@@ -317,14 +319,14 @@ ROM_START( sbasketb_rom )
 	ROM_LOAD( "sbb_h08.bin",  0x8000, 0x4000, 0xc75901b6 )
 	ROM_LOAD( "sbb_h10.bin",  0xc000, 0x4000, 0x95bc5942 )
 
-	ROM_REGION(0x0500)    /* color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "405e17",       0x0000, 0x0100, 0xb4c36d57 ) /* palette red component */
 	ROM_LOAD( "405e16",       0x0100, 0x0100, 0x0b7b03b8 ) /* palette green component */
 	ROM_LOAD( "405e18",       0x0200, 0x0100, 0x9e533bad ) /* palette blue component */
 	ROM_LOAD( "405e20",       0x0300, 0x0100, 0x8ca6de2f ) /* character lookup table */
 	ROM_LOAD( "405e19",       0x0400, 0x0100, 0xe0bc782f ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "sbb_e13.bin",  0x0000, 0x2000, 0x1ec7458b )
 
 	ROM_REGION(0x10000)     /* 64k for speech rom */
@@ -332,44 +334,8 @@ ROM_START( sbasketb_rom )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2bb7],"\x15\x1e\x14",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2b24],0x96);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2b24],0x96);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver sbasketb_driver =
+struct GameDriver driver_sbasketb =
 {
 	__FILE__,
 	0,
@@ -382,15 +348,14 @@ struct GameDriver sbasketb_driver =
 	&machine_driver,
 	0,
 
-	sbasketb_rom,
+	rom_sbasketb,
 	0, 0,
-	sbasketball_sample_names,
-	0,	/* sound_prom */
+	0,
+	0,
 
-	input_ports,
+	input_ports_sbasketb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

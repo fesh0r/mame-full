@@ -86,20 +86,10 @@ static int read_ports(int offset)
 
 static void subcpu_reset_w(int offset,int data)
 {
-	static int reset;
-
-	data &= 1;
-	if (data && !reset)
-	{
-		cpu_reset(1);
-		cpu_halt (1,1);
-	}
-	else if (!data)
-	{
-		cpu_halt (1,0);
-	}
-
-	reset = data;
+	if (data & 1)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 
@@ -154,7 +144,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( wiping_input_ports )
+INPUT_PORTS_START( wiping )
 	PORT_START	/* 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -220,7 +210,7 @@ INPUT_PORTS_START( wiping_input_ports )
 INPUT_PORTS_END
 
 /* identical apart from bonus life */
-INPUT_PORTS_START( rugrats_input_ports )
+INPUT_PORTS_START( rugrats )
 	PORT_START	/* 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -337,14 +327,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			18432000/6,	/* 3.072 Mhz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			interrupt,140	/* periodic interrupt, don't know about the frequency */
@@ -384,8 +372,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( wiping_rom )
-	ROM_REGION(0x10000)	/* Region 0 - main cpu code */
+ROM_START( wiping )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* Region 0 - main cpu code */
 	ROM_LOAD( "1",            0x0000, 0x2000, 0xb55d0d19 )
 	ROM_LOAD( "2",            0x2000, 0x2000, 0xb1f96e47 )
 	ROM_LOAD( "3",            0x4000, 0x2000, 0xc67bab5a )
@@ -394,12 +382,12 @@ ROM_START( wiping_rom )
 	ROM_LOAD( "8",            0x0000, 0x1000, 0x601160f6 ) /* chars */
 	ROM_LOAD( "7",            0x1000, 0x2000, 0x2c2cc054 ) /* sprites */
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "wip-g13.bin",  0x0000, 0x0020, 0xb858b897 )	/* palette */
 	ROM_LOAD( "wip-f4.bin",   0x0020, 0x0100, 0x3f56c8d5 )	/* char lookup table */
 	ROM_LOAD( "wip-e11.bin",  0x0120, 0x0100, 0xe7400715 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Region 3 - sound cpu */
 	ROM_LOAD( "4",            0x0000, 0x1000, 0xa1547e18 )
 
 	ROM_REGION(0x4000)	/* samples */
@@ -411,8 +399,8 @@ ROM_START( wiping_rom )
 	ROM_LOAD( "wip-e9.bin",   0x0100, 0x0100, 0x4017a2a6 )	/* high 4 bits */
 ROM_END
 
-ROM_START( rugrats_rom )
-	ROM_REGION(0x10000)	/* Region 0 - main cpu code */
+ROM_START( rugrats )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* Region 0 - main cpu code */
 	ROM_LOAD( "rugr1d1",      0x0000, 0x2000, 0xe7e1bd6d )
 	ROM_LOAD( "rugr2d2",      0x2000, 0x2000, 0x5f47b9ad )
 	ROM_LOAD( "rugr3d3",      0x4000, 0x2000, 0x3d748d1a )
@@ -421,12 +409,12 @@ ROM_START( rugrats_rom )
 	ROM_LOAD( "rugr8d2",      0x0000, 0x1000, 0xa3dcaca5 ) /* chars */
 	ROM_LOAD( "rugr7c13",     0x1000, 0x2000, 0xfe1191dd ) /* sprites */
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom.13g",     0x0000, 0x0020, 0xf21238f0 )	/* palette */
 	ROM_LOAD( "prom.4f",      0x0020, 0x0100, 0xcfc90f3d )	/* char lookup table */
 	ROM_LOAD( "prom.11e",     0x0120, 0x0100, 0xcfc90f3d )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Region 3 - sound cpu */
 	ROM_LOAD( "rugr4c4",      0x0000, 0x2000, 0xd4a92c38 )
 
 	ROM_REGION(0x4000)	/* samples */
@@ -438,72 +426,9 @@ ROM_START( rugrats_rom )
 	ROM_LOAD( "wip-e9.bin",   0x0100, 0x0100, 0x4017a2a6 )	/* high 4 bits */
 ROM_END
 
-/**********************************************************************
-
-   Wiping & Rug Rats high score save routine - RJF (April 17, 1999)
-
-***********************************************************************/
-
-static int wiping_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x90a6],"\x53\x2e\x53",3) == 0) &&
-            (memcmp(&RAM[0x90ae],"\x54\x2e\x48",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9072], 10*4);	/* scores */
-			osd_fread(f,&RAM[0x90a6], 3);		/* initials */
-			osd_fread(f,&RAM[0x90ae], 3);
-			osd_fread(f,&RAM[0x90b6], 3);
-			osd_fread(f,&RAM[0x90be], 3);
-			osd_fread(f,&RAM[0x90c6], 3);
-			osd_fread(f,&RAM[0x90ce], 3);
-			osd_fread(f,&RAM[0x90d6], 3);
-			osd_fread(f,&RAM[0x90de], 3);
-			osd_fread(f,&RAM[0x90e6], 3);
-			osd_fread(f,&RAM[0x90ee], 3);
-
-			RAM[0x906e] = RAM[0x9072];	/* update high score */
-			RAM[0x906f] = RAM[0x9073];	/* on top of screen */
-			RAM[0x9070] = RAM[0x9074];
-			RAM[0x9071] = RAM[0x9075];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void wiping_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9072], 10*4);	/* scores */
-		osd_fwrite(f,&RAM[0x90a6], 3);		/* initials */
-		osd_fwrite(f,&RAM[0x90ae], 3);
-		osd_fwrite(f,&RAM[0x90b6], 3);
-		osd_fwrite(f,&RAM[0x90be], 3);
-		osd_fwrite(f,&RAM[0x90c6], 3);
-		osd_fwrite(f,&RAM[0x90ce], 3);
-		osd_fwrite(f,&RAM[0x90d6], 3);
-		osd_fwrite(f,&RAM[0x90de], 3);
-		osd_fwrite(f,&RAM[0x90e6], 3);
-		osd_fwrite(f,&RAM[0x90ee], 3);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver wiping_driver =
+struct GameDriver driver_wiping =
 {
 	__FILE__,
 	0,
@@ -516,23 +441,22 @@ struct GameDriver wiping_driver =
 	&machine_driver,
 	0,
 
-	wiping_rom,
+	rom_wiping,
 	0, 0,
 	0,
 	0,
 
-	wiping_input_ports,
+	input_ports_wiping,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	wiping_hiload, wiping_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver rugrats_driver =
+struct GameDriver driver_rugrats =
 {
 	__FILE__,
-	&wiping_driver,
+	&driver_wiping,
 	"rugrats",
 	"Rug Rats",
 	"1983",
@@ -542,15 +466,14 @@ struct GameDriver rugrats_driver =
 	&machine_driver,
 	0,
 
-	rugrats_rom,
+	rom_rugrats,
 	0, 0,
 	0,
 	0,
 
-	rugrats_input_ports,
+	input_ports_rugrats,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	wiping_hiload, wiping_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

@@ -156,7 +156,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mystston )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -296,7 +296,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 MHz ???? */
-			0,
 			readmem,writemem,0,0,
 			mystston_interrupt,16	/* ? controls music tempo */
 		},
@@ -337,8 +336,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mystston_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( mystston )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ms0",          0x4000, 0x2000, 0x6dacc05f )
 	ROM_LOAD( "ms1",          0x6000, 0x2000, 0xa3546df7 )
 	ROM_LOAD( "ms2",          0x8000, 0x2000, 0x43bc6182 )
@@ -360,54 +359,13 @@ ROM_START( mystston_rom )
 	ROM_LOAD( "ms16",         0x14000, 0x2000, 0x2f470b0f )
 	ROM_LOAD( "ms17",         0x16000, 0x2000, 0x38966d1b )
 
-	ROM_REGION(0x0020)	/* color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic61",         0x0000, 0x0020, 0xe802d6cf )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0308],"\x00\x00\x21",3) == 0) &&
-		(memcmp(&RAM[0x033C],"\x0C\x1D\x0C",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0308],11*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0308],11*5);
-		osd_fclose(f);
-	}
-
-}
-
-
-
-struct GameDriver mystston_driver =
+struct GameDriver driver_mystston =
 {
 	__FILE__,
 	0,
@@ -420,15 +378,14 @@ struct GameDriver mystston_driver =
 	&machine_driver,
 	0,
 
-	mystston_rom,
+	rom_mystston,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_mystston,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

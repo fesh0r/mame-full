@@ -74,7 +74,7 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 
 static void rastan_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = ( data - 1 ) & 3;
 	cpu_setbank( 5, &RAM[ 0x10000 + ( banknum * 0x4000 ) ] );
 }
@@ -124,7 +124,7 @@ static struct MemoryReadAddress rainbow_readmem[] =
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0xd00000, 0xd0ffff, MRA_BANK4, &rastan_spriteram },
+	{ 0xd00000, 0xd0ffff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
@@ -140,14 +140,14 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
 	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
+	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
 	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
 	{ 0x3a0000, 0x3a0003, MWA_NOP },
 	{ 0x3c0000, 0x3c0003, MWA_NOP },
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( rainbow_input_ports )
+INPUT_PORTS_START( rainbow )
 	PORT_START	/* DIP SWITCH A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -282,14 +282,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			rainbow_readmem,rainbow_writemem,0,0,
 			rainbow_interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			3,
 			rastan_s_readmem,rastan_s_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -321,8 +319,8 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( rainbow_rom )
-	ROM_REGION(0x80000)			 /* 8*64k for 68000 code */
+ROM_START( rainbow )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )			 /* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "b22-10",     0x00000, 0x10000, 0x3b013495 )
 	ROM_LOAD_ODD ( "b22-11",     0x00000, 0x10000, 0x80041a3d )
 	ROM_LOAD_EVEN( "b22-08",     0x20000, 0x10000, 0x962fb845 )
@@ -336,16 +334,16 @@ ROM_START( rainbow_rom )
 	ROM_LOAD( "b22-13",     	 0x100000, 0x10000, 0x2fda099f )
 	ROM_LOAD( "b22-12",     	 0x110000, 0x10000, 0x67a76dc6 )
 
-    ROM_REGION(0x10000)			 /* Dump of C-Chip */
+    ROM_REGION( 0x10000 )			 /* Dump of C-Chip */
     ROM_LOAD( "jb1_f89",    	 0x0000, 0x10000, 0x0810d327 )
 
-	ROM_REGION(0x1c000)			 /* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )			 /* 64k for the audio CPU */
 	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
 	ROM_CONTINUE(           	 0x10000, 0xc000 )
 ROM_END
 
-ROM_START( rainbowe_rom )
-	ROM_REGION(0x80000)			   /* 8*64k for 68000 code */
+ROM_START( rainbowe )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )			   /* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "ri_01.rom",    0x00000, 0x10000, 0x50690880 )
 	ROM_LOAD_ODD ( "ri_02.rom",    0x00000, 0x10000, 0x4dead71f )
 	ROM_LOAD_EVEN( "ri_03.rom",    0x20000, 0x10000, 0x4a4cb785 )
@@ -359,14 +357,14 @@ ROM_START( rainbowe_rom )
 	ROM_LOAD( "b22-13",             0x100000, 0x10000, 0x2fda099f )
 	ROM_LOAD( "b22-12",             0x110000, 0x10000, 0x67a76dc6 )
 
-    ROM_REGION(0x100)				/* C-Chip for Extra (I Wish!) */
+    ROM_REGION( 0x100 )				/* C-Chip for Extra (I Wish!) */
 
-	ROM_REGION(0x1c000)				/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )				/* 64k for the audio CPU */
 	ROM_LOAD( "b22-14",      		0x00000, 0x4000, 0x113c1a5b )
 	ROM_CONTINUE(            		0x10000, 0xc000 )
 ROM_END
 
-struct GameDriver rainbow_driver =
+struct GameDriver driver_rainbow =
 {
 	__FILE__,
 	0,
@@ -379,40 +377,40 @@ struct GameDriver rainbow_driver =
 	&machine_driver,
 	0,
 
-	rainbow_rom,
+	rom_rainbow,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	rainbow_input_ports,
+	input_ports_rainbow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
-struct GameDriver rainbowe_driver =
+struct GameDriver driver_rainbowe =
 {
 	__FILE__,
-	&rainbow_driver,
+	&driver_rainbow,
 	"rainbowe",
 	"Rainbow Islands (Extra)",
 	"1988",
 	"Taito Corporation",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	rainbowe_rom,
+	rom_rainbowe,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	rainbow_input_ports,
+	input_ports_rainbow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -436,7 +434,7 @@ static struct MemoryReadAddress jumping_readmem[] =
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0x440000, 0x4407ff, MRA_BANK4, &rastan_spriteram },
+	{ 0x440000, 0x4407ff, MRA_BANK4 },
     { 0xd00800, 0xd00fff, MRA_BANK5 }, 				/* Needed for Attract Mode */
     { 0x420000, 0x420001, MRA_NOP},					/* Read, but result not used */
 	{ -1 }  /* end of table */
@@ -453,7 +451,7 @@ static struct MemoryWriteAddress jumping_writemem[] =
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
     { 0x430000, 0x430003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
    	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
-    { 0x440000, 0x4407ff, MWA_BANK4 },
+    { 0x440000, 0x4407ff, MWA_BANK4, &rastan_spriteram },
 //	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
     { 0xd00800, 0xd00fff, MWA_BANK5 }, 				/* Needed for Attract Mode */
     { 0x3c0000, 0x3c0001, MWA_NOP },				/* Watchdog ? */
@@ -461,7 +459,7 @@ static struct MemoryWriteAddress jumping_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( jumping_input_ports )
+INPUT_PORTS_START( jumping )
 
 	PORT_START	/* DIP SWITCH A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -534,7 +532,7 @@ static void jumping_sprite_decode(void)
 
 	int Count;
 
-    for(Count=0x11ffff;Count>=0x80000;Count--) Machine->memory_region[1][Count]^=0xFF;
+    for(Count=0x11ffff;Count>=0x80000;Count--) memory_region(1)[Count]^=0xFF;
 }
 
 static struct GfxLayout jumping_tilelayout =
@@ -566,14 +564,13 @@ static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 	{ -1 } 												/* end of array */
 };
 
-static struct MachineDriver jumping_machine_driver =
+static struct MachineDriver machine_driver_jumping =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			jumping_readmem,jumping_writemem,0,0,
 			rainbow_interrupt,1
 		},
@@ -601,8 +598,8 @@ static struct MachineDriver jumping_machine_driver =
     0
 };
 
-ROM_START( jumping_rom )
-	ROM_REGION(0xA0000)		/* 8*64k for code, 64k*2 for protection chip */
+ROM_START( jumping )
+	ROM_REGIONX( 0xA0000, REGION_CPU1 )		/* 8*64k for code, 64k*2 for protection chip */
     ROM_LOAD_EVEN( "jb1_h4",       0x00000, 0x10000, 0x3fab6b31 )
     ROM_LOAD_ODD ( "jb1_h8",       0x00000, 0x10000, 0x8c878827 )
     ROM_LOAD_EVEN( "jb1_i4",       0x20000, 0x10000, 0x443492cf )
@@ -634,32 +631,31 @@ ROM_START( jumping_rom )
     ROM_LOAD( "jb2_i120",     0x108000, 0x10000, 0x7c4e893b )
     ROM_LOAD( "jb2_i119",     0x118000, 0x08000, 0x7e1d58d8 )
 
-	ROM_REGION(0x10000)		/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the audio CPU */
 	ROM_LOAD( "jb1_cd67",     0x0000, 0x10000, 0x8527c00e )
-
 ROM_END
 
-struct GameDriver jumping_driver =
+struct GameDriver driver_jumping =
 {
 	__FILE__,
-	&rainbow_driver,
+	&driver_rainbow,
 	"jumping",
 	"Jumping",
 	"1989",
 	"bootleg",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
 	0,
-	&jumping_machine_driver,
+	&machine_driver_jumping,
+	jumping_sprite_decode,
+
+	rom_jumping,
+	0, 0,
+	0,
 	0,
 
-	jumping_rom,
-	jumping_sprite_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	jumping_input_ports,
+	input_ports_jumping,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0 | GAME_NO_SOUND,
 	0, 0
 };

@@ -38,7 +38,7 @@ static struct MemoryWriteAddress troangel_writemem[] =
 
 
 
-INPUT_PORTS_START( troangel_input_ports )
+INPUT_PORTS_START( troangel )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -164,21 +164,18 @@ static struct GfxDecodeInfo troangel_gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver troangel_machine_driver =
+static struct MachineDriver machine_driver_troangel =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			3000000,	/* 3 Mhz ??? */
-			0,
 			troangel_readmem,troangel_writemem,
 			0,0,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -209,8 +206,8 @@ static struct MachineDriver troangel_machine_driver =
 
 
 
-ROM_START( troangel_rom )
-	ROM_REGION( 0x10000 )	/* main CPU */
+ROM_START( troangel )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "ta-a-3k",	0x0000, 0x2000, 0xf21f8196 )
 	ROM_LOAD( "ta-a-3m",	0x2000, 0x2000, 0x58801e55 )
 	ROM_LOAD( "ta-a-3n",	0x4000, 0x2000, 0xde3dea44 )
@@ -227,19 +224,19 @@ ROM_START( troangel_rom )
 	ROM_LOAD( "ta-b-5c",	0x0e000, 0x2000, 0xc19134c9 )
 	ROM_LOAD( "ta-b-5a",	0x10000, 0x2000, 0x0012792a )
 
-	ROM_REGION( 0x0320 )	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "ta-a-5a",	0x0000,	0x0100, 0x01de1167 ) /* chars palette low 4 bits */
 	ROM_LOAD( "ta-a-5b",	0x0100,	0x0100, 0xefd11d4b ) /* chars palette high 4 bits */
 	ROM_LOAD( "ta-b-1b",	0x0200, 0x0020, 0xf94911ea ) /* sprites palette */
 	ROM_LOAD( "ta-b-3d",	0x0220,	0x0100, 0xed3e2aa4 ) /* sprites lookup table */
 
-	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
 	ROM_LOAD( "ta-s-1a",	0xe000, 0x2000, 0x15a83210 )
 ROM_END
 
 
 
-struct GameDriver troangel_driver =
+struct GameDriver driver_troangel =
 {
 	__FILE__,
 	0,
@@ -249,18 +246,18 @@ struct GameDriver troangel_driver =
 	"Irem",
 	"Phil Stroffolino",
 	0,
-	&troangel_machine_driver,
+	&machine_driver_troangel,
 	0,
 
-	troangel_rom,
+	rom_troangel,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	troangel_input_ports,
+	input_ports_troangel,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 
 	0, 0
 };

@@ -70,9 +70,9 @@ void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },                                       /* general RAM */
-	{ 0x4040, 0x43ff, superpac_sharedram_r, &superpac_sharedram },     /* shared RAM */
-	{ 0x4800, 0x480f, superpac_customio_r_1, &superpac_customio_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, superpac_customio_r_2, &superpac_customio_2 },   /* custom I/O chip #2 interface */
+	{ 0x4040, 0x43ff, superpac_sharedram_r },     /* shared RAM */
+	{ 0x4800, 0x480f, superpac_customio_r_1 },   /* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, superpac_customio_r_2 },   /* custom I/O chip #2 interface */
 	{ 0xa000, 0xffff, MRA_ROM },						/* SPC-2.1C at 0xc000, SPC-1.1B at 0xe000 */
 	{ -1 }                                              /* end of table */
 };
@@ -90,9 +90,9 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x1800, 0x1f7f, MWA_RAM },                        /* RAM */
 	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },          /* sprite RAM, area 3 */
 	{ 0x2000, 0x2000, MWA_NOP },                        /* watchdog timer */
-	{ 0x4040, 0x43ff, MWA_RAM },                        /* shared RAM */
-	{ 0x4800, 0x480f, superpac_customio_w_1 },          /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, superpac_customio_w_2 },          /* custom I/O chip #2 interface */
+	{ 0x4040, 0x43ff, superpac_sharedram_w, &superpac_sharedram },	/* shared RAM */
+	{ 0x4800, 0x480f, superpac_customio_w_1, &superpac_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, superpac_customio_w_2, &superpac_customio_2 },	/* custom I/O chip #2 interface */
 	{ 0x5000, 0x5000, superpac_reset_2_w },				/* reset CPU #2 */
 	{ 0x5002, 0x5003, superpac_interrupt_enable_1_w },  /* interrupt enable */
 	{ 0x5008, 0x5009, mappy_sound_enable_w },           /* sound enable */
@@ -144,7 +144,7 @@ static struct MemoryWriteAddress pacnpal_writemem_cpu2[] =
 
 
 /* input from the outside world */
-INPUT_PORTS_START( superpac_input_ports )
+INPUT_PORTS_START( superpac )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Rank 0-Normal" )
@@ -234,7 +234,7 @@ INPUT_PORTS_START( superpac_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( pacnpal_input_ports )
+INPUT_PORTS_START( pacnpal )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
@@ -353,14 +353,13 @@ static struct namco_interface namco_interface =
 
 
 
-static struct MachineDriver superpac_machine_driver =
+static struct MachineDriver machine_driver_superpac =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			0,                   /* memory region */
 			readmem_cpu1,        /* MemoryReadAddress */
 			writemem_cpu1,       /* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -371,7 +370,6 @@ static struct MachineDriver superpac_machine_driver =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			3,                   /* memory region */
 			superpac_readmem_cpu2,/* MemoryReadAddress */
 			superpac_writemem_cpu2,/* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -409,14 +407,13 @@ static struct MachineDriver superpac_machine_driver =
 	}
 };
 
-static struct MachineDriver pacnpal_machine_driver =
+static struct MachineDriver machine_driver_pacnpal =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			0,                   /* memory region */
 			readmem_cpu1,        /* MemoryReadAddress */
 			writemem_cpu1,       /* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -427,7 +424,6 @@ static struct MachineDriver pacnpal_machine_driver =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			3,                   /* memory region */
 			pacnpal_readmem_cpu2,/* MemoryReadAddress */
 			pacnpal_writemem_cpu2,/* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -468,8 +464,8 @@ static struct MachineDriver pacnpal_machine_driver =
 
 
 
-ROM_START( superpac_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( superpac )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
 	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
 
@@ -477,20 +473,20 @@ ROM_START( superpac_rom )
 	ROM_LOAD( "sp1.6",        0x0000, 0x1000, 0x91c5935c )
 	ROM_LOAD( "spv-2.3f",     0x1000, 0x2000, 0x670a42f2 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, 0x9ce22c46 ) /* palette */
 	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
 	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
 
 	ROM_REGION(0x0100)	/* sound prom */
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-ROM_START( superpcm_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( superpcm )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
 	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
 
@@ -498,20 +494,20 @@ ROM_START( superpcm_rom )
 	ROM_LOAD( "spv-1.3c",     0x0000, 0x1000, 0x78337e74 )
 	ROM_LOAD( "spv-2.3f",     0x1000, 0x2000, 0x670a42f2 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, 0x9ce22c46 ) /* palette */
 	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
 	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
 
 	ROM_REGION(0x0100)	/* sound prom */
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-ROM_START( pacnpal_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pacnpal )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pap13b.cpu",   0xa000, 0x2000, 0xed64a565 )
 	ROM_LOAD( "pap12b.cpu",   0xc000, 0x2000, 0x15308bcf )
 	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
@@ -520,12 +516,34 @@ ROM_START( pacnpal_rom )
 	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, 0xa36b96cb )
 	ROM_LOAD( "pap15.vid",    0x1000, 0x2000, 0xfb6f56e3 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, 0x52634b41 ) /* palette */
 	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, 0xac46203c ) /* chars */
 	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, 0x686bde84 ) /* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
+ROM_END
+
+ROM_START( pacnchmp )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pap3.1d",      0xa000, 0x2000, 0x20a07d3d )
+	ROM_LOAD( "pap3.1c",      0xc000, 0x2000, 0x505bae56 )
+	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pap2.3c",      0x0000, 0x1000, 0x93d15c30 )
+	ROM_LOAD( "pap2.3f",      0x1000, 0x2000, 0x39f44aa4 )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, BADCRC( 0x52634b41 ) ) /* palette */
+	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, BADCRC( 0xac46203c ) ) /* chars */
+	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, BADCRC( 0x686bde84 ) ) /* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -533,127 +551,8 @@ ROM_START( pacnpal_rom )
 ROM_END
 
 
-/* load the high score table */
-static int superpac_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x113c],"N@N",3) == 0 &&        /* check for high score initials */
-	    RAM[0x1087] == 0 && RAM[0x1089] == 0 && RAM[0x1088] != 0 && /* check for main high score value */
-	    memcmp(&RAM[0x3ee],"000",3) == 0)           /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1138],40);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x1087] = RAM[0x1138];
-			RAM[0x1088] = RAM[0x1139];
-			RAM[0x1089] = RAM[0x113a];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x1087] >> 4);
-		videoram_w (0x3f4, writing ? (RAM[0x1087] >> 4) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1087] & 0x0f);
-		videoram_w (0x3f3, writing ? (RAM[0x1087] & 0x0f) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1088] >> 4);
-		videoram_w (0x3f2, writing ? (RAM[0x1088] >> 4) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1088] & 0x0f);
-		videoram_w (0x3f1, writing ? (RAM[0x1088] & 0x0f) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1089] >> 4);
-		videoram_w (0x3f0, writing ? (RAM[0x1089] >> 4) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1089] & 0x0f);
-		videoram_w (0x3ef, writing ? (RAM[0x1089] & 0x0f) + '0' : ' ');
-		videoram_w (0x3ee, 0 + '0');
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void superpac_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1138],40);
-		osd_fclose(f);
-	}
-}
-
-
-/* load the high score table */
-static int pacnpal_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x1051],"\x1a\x25\x1a",3) == 0 &&        /* check for high score initials */
-	   RAM[0x116d] == 0 && RAM[0x116f] == 0 && RAM[0x116e] != 0 && /* check for main high score value */
-	   memcmp(&RAM[0x3ed],"\x0\x0\x0",3) == 0)           /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x104c],40);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x116d] = RAM[0x104d];
-			RAM[0x116e] = RAM[0x104e];
-			RAM[0x116f] = RAM[0x104f];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x116d] >> 4);
-		videoram_w (0x3f3, writing ? (RAM[0x116d] >> 4) : 0x24);
-		if (!writing) writing = (RAM[0x116d] & 0x0f);
-		videoram_w (0x3f2, writing ? (RAM[0x116d] & 0x0f) : 0x24);
-		if (!writing) writing = (RAM[0x116e] >> 4);
-		videoram_w (0x3f1, writing ? (RAM[0x116e] >> 4) : 0x24);
-		if (!writing) writing = (RAM[0x116e] & 0x0f);
-		videoram_w (0x3f0, writing ? (RAM[0x116e] & 0x0f) : 0x24);
-		if (!writing) writing = (RAM[0x116f] >> 4);
-		videoram_w (0x3ef, writing ? (RAM[0x116f] >> 4) : 0x24);
-		if (!writing) writing = (RAM[0x116f] & 0x0f);
-		videoram_w (0x3ee, writing ? (RAM[0x116f] & 0x0f) : 0x24);
-		videoram_w (0x3ed, 0);
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void pacnpal_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x104c],40);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver superpac_driver =
+struct GameDriver driver_superpac =
 {
 	__FILE__,
 	0,
@@ -663,53 +562,47 @@ struct GameDriver superpac_driver =
 	"Namco",
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
 	0,
-	&superpac_machine_driver, /* MachineDriver */
+	&machine_driver_superpac, /* MachineDriver */
 	0,
 
-	superpac_rom,             /* RomModule */
+	rom_superpac,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
-	0,                        /* sound_prom */
+	0,
 
-	superpac_input_ports,
+	input_ports_superpac,
 
-	PROM_MEMORY_REGION(2),	  /* color prom */
-	0,                        /* palette */
-	0,                        /* color table */
-	ORIENTATION_ROTATE_90,
-
-	superpac_hiload, superpac_hisave /* hi score save/load */
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver superpcm_driver =
+struct GameDriver driver_superpcm =
 {
 	__FILE__,
-	&superpac_driver,
+	&driver_superpac,
 	"superpcm",
 	"Super Pac-Man (Midway)",
 	"1982",
 	"[Namco] (Bally Midway license)",
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
 	0,
-	&superpac_machine_driver, /* MachineDriver */
+	&machine_driver_superpac, /* MachineDriver */
 	0,
 
-	superpcm_rom,             /* RomModule */
+	rom_superpcm,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
-	0,                        /* sound_prom */
+	0,
 
-	superpac_input_ports,
+	input_ports_superpac,
 
-	PROM_MEMORY_REGION(2),    /* color prom */
-	0,                        /* palette */
-	0,                        /* color table */
-	ORIENTATION_ROTATE_90,
-
-	superpac_hiload, superpac_hisave /* hi score save/load */
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver pacnpal_driver =
+struct GameDriver driver_pacnpal =
 {
 	__FILE__,
 	0,
@@ -719,20 +612,42 @@ struct GameDriver pacnpal_driver =
 	"Namco",
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	0,
-	&pacnpal_machine_driver,  /* MachineDriver */
+	&machine_driver_pacnpal,  /* MachineDriver */
 	0,
 
-	pacnpal_rom,              /* RomModule */
+	rom_pacnpal,              /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
-	0,                        /* sound_prom */
+	0,
 
-	pacnpal_input_ports,
+	input_ports_pacnpal,
 
-	PROM_MEMORY_REGION(2),    /* color prom */
-	0,                        /* palette */
-	0,                        /* color table */
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
+	0,0
+};
 
-	pacnpal_hiload, pacnpal_hisave /* hi score save/load */
+struct GameDriver driver_pacnchmp =
+{
+	__FILE__,
+	&driver_pacnpal,
+	"pacnchmp",
+	"Pac-Man & Chomp Chomp",
+	"1983",
+	"Namco",
+	"Aaron Giles\nKevin Brisley\nLawnmower Man",
+	0,
+	&machine_driver_pacnpal,  /* MachineDriver */
+	0,
+
+	rom_pacnchmp,              /* RomModule */
+	0, 0,                     /* ROM decrypt routines */
+	0,                        /* samplenames */
+	0,
+
+	input_ports_pacnpal,
+
+	0, 0, 0,
+	ROT90,
+	0,0
 };

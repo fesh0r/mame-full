@@ -129,7 +129,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( kopunch )
 	PORT_START	/* IN0 */
 INPUT_PORTS_END
 
@@ -173,7 +173,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			0,
 			readmem,writemem,readport,writeport,
 			kopunch_interrupt,1
 		}
@@ -206,8 +205,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( kopunch_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( kopunch )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, 0x34ef5e79 )
 	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, 0x25a5c68b )
 
@@ -222,7 +221,7 @@ ROM_START( kopunch_rom )
 	ROM_LOAD( "epr1112",      0x5800, 0x1000, 0xef6994df )
 	ROM_LOAD( "epr1111",      0x6800, 0x1000, 0x28530ec9 )
 
-	ROM_REGION(0x0060)	/* PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "epr1099",      0x0000, 0x0020, 0xfc58c456 )
 	ROM_LOAD( "epr1100",      0x0020, 0x0020, 0xbedb66b1 )
 	ROM_LOAD( "epr1101",      0x0040, 0x0020, 0x15600f5d )
@@ -231,14 +230,14 @@ ROM_END
 
 static void patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* patch out bad instruction, either the ROM is bad, or there is */
 	/* a security chip */
 	RAM[0x119] = 0;
 }
 
-struct GameDriver kopunch_driver =
+struct GameDriver driver_kopunch =
 {
 	__FILE__,
 	0,
@@ -249,17 +248,17 @@ struct GameDriver kopunch_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	patch,
+
+	rom_kopunch,
+	0, 0,
+	0,
 	0,
 
-	kopunch_rom,
-	patch, 0,
-	0,
-	0,	/* sound_prom */
+	input_ports_kopunch,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ROT270,
 
 	0, 0
 };

@@ -142,14 +142,14 @@ static void init_machine(void)
 	atarigen_sound_io_reset(1);
 
 	/* reset the sound system */
-	bank_base = &Machine->memory_region[Machine->drv->cpu[1].memory_region][0x10000];
+	bank_base = &memory_region(REGION_CPU2)[0x10000];
 	cpu_setbank(8, &bank_base[0x0000]);
 	fast_68k_int = io_68k_int = 0;
 	sound_data_from_68k = sound_data_from_6502 = 0;
 	sound_data_from_68k_ready = sound_data_from_6502_ready = 0;
 
 	/* CPU 2 doesn't run until reset */
-	cpu_halt(2, 0);
+	cpu_set_reset_line(2,ASSERT_LINE);
 
 	/* make sure we're pointing to the right screen by default */
 	cyberbal_set_screen(0);
@@ -228,8 +228,7 @@ static void p2_reset_w(int offset, int data)
 {
 	(void)offset;
 	(void)data;
-	cpu_reset(2);
-	cpu_halt(2, 1);
+	cpu_set_reset_line(2,CLEAR_LINE);
 }
 
 
@@ -617,8 +616,8 @@ static void handle_68k_sound_command(int command)
 
 		default:
 			/* bail if we're not enabled or if we get a bogus voice */
-			offset = READ_WORD(&Machine->memory_region[2][0x1e2a + 2 * command]);
-			sound = (struct sound_descriptor *)&Machine->memory_region[2][offset];
+			offset = READ_WORD(&memory_region(REGION_CPU4)[0x1e2a + 2 * command]);
+			sound = (struct sound_descriptor *)&memory_region(REGION_CPU4)[offset];
 
 			/* check the voice */
 			temp = sound->voice_priority >> 8;
@@ -654,9 +653,9 @@ static void handle_68k_sound_command(int command)
 
 			/* fill in the voice; we're taking over */
 			voice->playing = 1;
-			voice->start = &Machine->memory_region[2][(sound->start_address_h << 16) | sound->start_address_l];
+			voice->start = &memory_region(REGION_CPU4)[(sound->start_address_h << 16) | sound->start_address_l];
 			voice->current = voice->start;
-			voice->end = &Machine->memory_region[2][(sound->end_address_h << 16) | sound->end_address_l];
+			voice->end = &memory_region(REGION_CPU4)[(sound->end_address_h << 16) | sound->end_address_l];
 			voice->reps = sound->reps;
 			voice->volume = actual_volume;
 			voice->delta_volume = actual_delta;
@@ -681,12 +680,12 @@ static void handle_68k_sound_command(int command)
 static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_r },
 	{ 0xfc8000, 0xfcffff, atarigen_sound_upper_r },
 	{ 0xfe0000, 0xfe0fff, special_port0_r },
 	{ 0xfe1000, 0xfe1fff, input_port_1_r },
-	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_r, &paletteram_2 },
-	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_r, &paletteram },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_r },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_r },
 	{ 0xff0000, 0xff1fff, MRA_BANK1 },
 	{ 0xff2000, 0xff3fff, MRA_BANK2 },
 	{ 0xff4000, 0xff5fff, MRA_BANK3 },
@@ -700,14 +699,14 @@ static struct MemoryReadAddress main_readmem[] =
 static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_w },
+	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_enable_w },
 	{ 0xfd2000, 0xfd3fff, atarigen_sound_reset_w },
 	{ 0xfd4000, 0xfd5fff, watchdog_reset_w },
 	{ 0xfd6000, 0xfd7fff, p2_reset_w },
 	{ 0xfd8000, 0xfd9fff, atarigen_sound_upper_w },
-	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_w },
-	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_w, &paletteram_2 },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w, &paletteram },
 	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_2_w },
 	{ 0xff2000, 0xff3fff, MWA_BANK2 },
 	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w },
@@ -751,7 +750,7 @@ static struct MemoryWriteAddress extra_writemem[] =
 	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w },			/* player 2 palette RAM */
 	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_2_w, &cyberbal_playfieldram_2 },
 	{ 0xff2000, 0xff3fff, MWA_BANK2 },
-	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1 },
+	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1, &atarigen_playfieldram_size },
 	{ 0xff6000, 0xff7fff, MWA_BANK4 },
 	{ 0xff8000, 0xff9fff, MWA_BANK5 },
 	{ 0xffa000, 0xffbfff, MWA_BANK6 },
@@ -844,12 +843,12 @@ static struct MemoryReadAddress cyberb2p_readmem[] =
 	{ 0xfc2000, 0xfc2003, input_port_1_r },
 	{ 0xfc4000, 0xfc4003, special_port2_r },
 	{ 0xfc6000, 0xfc6003, atarigen_sound_upper_r },
-	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xfca000, 0xfcafff, MRA_BANK1, &paletteram },
+	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_r },
+	{ 0xfca000, 0xfcafff, MRA_BANK1 },
 	{ 0xfe0000, 0xfe0003, sound_state_r },
-	{ 0xff0000, 0xff1fff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xff2000, 0xff2fff, MRA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xff3000, 0xff3fff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xff0000, 0xff1fff, MRA_BANK2 },
+	{ 0xff2000, 0xff2fff, MRA_BANK3 },
+	{ 0xff3000, 0xff3fff, MRA_BANK4 },
 	{ 0xff4000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -857,16 +856,16 @@ static struct MemoryReadAddress cyberb2p_readmem[] =
 static struct MemoryWriteAddress cyberb2p_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_w },
-	{ 0xfca000, 0xfcafff, atarigen_666_paletteram_w },
+	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfca000, 0xfcafff, atarigen_666_paletteram_w, &paletteram },
 	{ 0xfd0000, 0xfd0003, atarigen_eeprom_enable_w },
 	{ 0xfd2000, 0xfd2003, atarigen_sound_reset_w },
 	{ 0xfd4000, 0xfd4003, watchdog_reset_w },
 	{ 0xfd6000, 0xfd6003, atarigen_video_int_ack_w },
 	{ 0xfd8000, 0xfd8003, atarigen_sound_upper_w },
-	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1 },
-	{ 0xff2000, 0xff2fff, MWA_BANK3 },
-	{ 0xff3000, 0xff3fff, MWA_BANK4 },
+	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1, &atarigen_playfieldram_size },
+	{ 0xff2000, 0xff2fff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xff3000, 0xff3fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xff4000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -879,7 +878,7 @@ static struct MemoryWriteAddress cyberb2p_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( cyberbal_ports )
+INPUT_PORTS_START( cyberbal )
 	PORT_START      /* fe0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER4 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER4 )
@@ -931,7 +930,7 @@ INPUT_PORTS_START( cyberbal_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cyberb2p_ports )
+INPUT_PORTS_START( cyberb2p )
 	PORT_START      /* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
@@ -1025,17 +1024,17 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x140000, &pflayout,     0, 128 },
-	{ 3, 0x000000, &molayout, 0x600, 16 },
-	{ 3, 0x180000, &anlayout, 0x780, 8 },
+	{ REGION_GFX2, 0, &pflayout,     0, 128 },
+	{ REGION_GFX1, 0, &molayout, 0x600, 16 },
+	{ REGION_GFX3, 0, &anlayout, 0x780, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_interleaved[] =
 {
-	{ 3, 0x140000, &pflayout_interleaved,     0, 128 },
-	{ 3, 0x000000, &molayout,             0x600, 16 },
-	{ 3, 0x180000, &anlayout_interleaved, 0x780, 8 },
+	{ REGION_GFX2, 0, &pflayout_interleaved,     0, 128 },
+	{ REGION_GFX1, 0, &molayout,             0x600, 16 },
+	{ REGION_GFX3, 0, &anlayout_interleaved, 0x780, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -1081,21 +1080,19 @@ static struct CustomSound_interface samples_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cyberbal =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			atarigen_6502_irq_gen,250
@@ -1103,7 +1100,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			4,
 			extra_readmem,extra_writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -1111,7 +1107,6 @@ static struct MachineDriver machine_driver =
 		,{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			2,
 			sound_68k_readmem,sound_68k_writemem,0,0,
 			0,0,
 			sound_68k_irq_gen,10000
@@ -1129,7 +1124,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_SUPPORTS_16BIT,
+			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
 	cyberbal_vh_stop,
@@ -1153,24 +1148,23 @@ static struct MachineDriver machine_driver =
 			&samples_interface
 		}
 #endif
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
-static struct MachineDriver cyberb2p_machine_driver =
+static struct MachineDriver machine_driver_cyberb2p =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			cyberb2p_readmem,cyberb2p_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_II_CPU(1)
-		}
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1183,14 +1177,16 @@ static struct MachineDriver cyberb2p_machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_SUPPORTS_16BIT,
+			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
 	cyberbal_vh_stop,
 	cyberbal_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_II_MONO(2)
+	JSA_II_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -1201,22 +1197,28 @@ static struct MachineDriver cyberb2p_machine_driver =
  *
  *************************************/
 
-ROM_START( cyberbal_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( cyberbal )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "4123.1m", 0x00000, 0x10000, 0xfb872740 )
 	ROM_LOAD_ODD ( "4124.1k", 0x00000, 0x10000, 0x87babad9 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "2131-snd.2f",  0x10000, 0x4000, 0xbd7e3d84 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for 68000 sound code */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "2127.3c", 0x00000, 0x10000, 0x3e5feb1f )
+	ROM_LOAD_ODD ( "2128.1b", 0x00000, 0x10000, 0x4e642cc3 )
+	ROM_LOAD_EVEN( "2129.1c", 0x20000, 0x10000, 0xdb11d2f0 )
+	ROM_LOAD_ODD ( "2130.3b", 0x20000, 0x10000, 0xfd86b8aa )
+
+	ROM_REGIONX( 0x40000, REGION_CPU4 )	/* 256k for 68000 sound code */
 	ROM_LOAD_EVEN( "1132-snd.5c",  0x00000, 0x10000, 0xca5ce8d8 )
 	ROM_LOAD_ODD ( "1133-snd.7c",  0x00000, 0x10000, 0xffeb8746 )
 	ROM_LOAD_EVEN( "1134-snd.5a",  0x20000, 0x10000, 0xbcbd4c00 )
 	ROM_LOAD_ODD ( "1135-snd.7a",  0x20000, 0x10000, 0xd520f560 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x140000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1150.15a",  0x000000, 0x10000, 0xe770eb3e ) /* MO */
 	ROM_LOAD( "1154.16a",  0x010000, 0x10000, 0x40db00da ) /* MO */
 	ROM_LOAD( "2158.17a",  0x020000, 0x10000, 0x52bb08fb ) /* MO */
@@ -1237,40 +1239,42 @@ ROM_START( cyberbal_rom )
 	ROM_LOAD( "2161.13c",  0x110000, 0x10000, 0x6cf79a67 ) /* MO */
 	ROM_LOAD( "1165.14c",  0x120000, 0x10000, 0x40bdf767 ) /* MO */
 
-	ROM_LOAD( "1146.9l",   0x140000, 0x10000, 0xa64b4da8 ) /* playfield */
-	ROM_LOAD( "1147.8l",   0x150000, 0x10000, 0xca91ec1b ) /* playfield */
-	ROM_LOAD( "1148.11l",  0x160000, 0x10000, 0xee29d1d1 ) /* playfield */
-	ROM_LOAD( "1149.10l",  0x170000, 0x10000, 0x882649f8 ) /* playfield */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1146.9l",   0x000000, 0x10000, 0xa64b4da8 ) /* playfield */
+	ROM_LOAD( "1147.8l",   0x010000, 0x10000, 0xca91ec1b ) /* playfield */
+	ROM_LOAD( "1148.11l",  0x020000, 0x10000, 0xee29d1d1 ) /* playfield */
+	ROM_LOAD( "1149.10l",  0x030000, 0x10000, 0x882649f8 ) /* playfield */
 
-	ROM_LOAD( "1166.14n",  0x180000, 0x10000, 0x0ca1e3b3 ) /* alphanumerics */
-	ROM_LOAD( "1167.16n",  0x190000, 0x10000, 0x882f4e1c ) /* alphanumerics */
-
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
-	ROM_LOAD_EVEN( "2127.3c", 0x00000, 0x10000, 0x3e5feb1f )
-	ROM_LOAD_ODD ( "2128.1b", 0x00000, 0x10000, 0x4e642cc3 )
-	ROM_LOAD_EVEN( "2129.1c", 0x20000, 0x10000, 0xdb11d2f0 )
-	ROM_LOAD_ODD ( "2130.3b", 0x20000, 0x10000, 0xfd86b8aa )
+	ROM_REGIONX( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1166.14n",  0x000000, 0x10000, 0x0ca1e3b3 ) /* alphanumerics */
+	ROM_LOAD( "1167.16n",  0x010000, 0x10000, 0x882f4e1c ) /* alphanumerics */
 ROM_END
 
 
-ROM_START( cyberbt_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( cyberbt )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "cyb1007.bin", 0x00000, 0x10000, 0xd434b2d7 )
 	ROM_LOAD_ODD ( "cyb1008.bin", 0x00000, 0x10000, 0x7d6c4163 )
 	ROM_LOAD_EVEN( "cyb1009.bin", 0x20000, 0x10000, 0x3933e089 )
 	ROM_LOAD_ODD ( "cyb1010.bin", 0x20000, 0x10000, 0xe7a7cae8 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "cyb1029.bin",  0x10000, 0x4000, 0xafee87e1 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for 68000 sound code */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )
+	ROM_LOAD_EVEN( "cyb1011.bin", 0x00000, 0x10000, 0x22d3e09c )
+	ROM_LOAD_ODD ( "cyb1012.bin", 0x00000, 0x10000, 0xa8eeed8c )
+	ROM_LOAD_EVEN( "cyb1013.bin", 0x20000, 0x10000, 0x11d287c9 )
+	ROM_LOAD_ODD ( "cyb1014.bin", 0x20000, 0x10000, 0xbe15db42 )
+
+	ROM_REGIONX( 0x40000, REGION_CPU4 )	/* 256k for 68000 sound code */
 	ROM_LOAD_EVEN( "1132-snd.5c",  0x00000, 0x10000, 0xca5ce8d8 )
 	ROM_LOAD_ODD ( "1133-snd.7c",  0x00000, 0x10000, 0xffeb8746 )
 	ROM_LOAD_EVEN( "1134-snd.5a",  0x20000, 0x10000, 0xbcbd4c00 )
 	ROM_LOAD_ODD ( "1135-snd.7a",  0x20000, 0x10000, 0xd520f560 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x140000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1001.bin",  0x000000, 0x20000, 0x586ba107 ) /* MO */
 	ROM_LOAD( "1005.bin",  0x020000, 0x20000, 0xa53e6248 ) /* MO */
 	ROM_LOAD( "1032.bin",  0x040000, 0x10000, 0x131f52a0 ) /* MO */
@@ -1287,24 +1291,20 @@ ROM_START( cyberbt_rom )
 	ROM_LOAD( "1008.bin",  0x110000, 0x20000, 0x78525bbb ) /* MO */
 	ROM_LOAD( "1035.bin",  0x130000, 0x10000, 0x1be3e5c8 ) /* MO */
 
-	ROM_LOAD( "cyb1015.bin",  0x140000, 0x10000, 0xdbbad153 ) /* playfield */
-	ROM_LOAD( "cyb1016.bin",  0x150000, 0x10000, 0x76e0d008 ) /* playfield */
-	ROM_LOAD( "cyb1017.bin",  0x160000, 0x10000, 0xddca9ca2 ) /* playfield */
-	ROM_LOAD( "cyb1018.bin",  0x170000, 0x10000, 0xaa495b6f ) /* playfield */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cyb1015.bin",  0x000000, 0x10000, 0xdbbad153 ) /* playfield */
+	ROM_LOAD( "cyb1016.bin",  0x010000, 0x10000, 0x76e0d008 ) /* playfield */
+	ROM_LOAD( "cyb1017.bin",  0x020000, 0x10000, 0xddca9ca2 ) /* playfield */
+	ROM_LOAD( "cyb1018.bin",  0x030000, 0x10000, 0xaa495b6f ) /* playfield */
 
-	ROM_LOAD( "cyb1019.bin",  0x180000, 0x10000, 0x833b4768 ) /* alphanumerics */
-	ROM_LOAD( "cyb1020.bin",  0x190000, 0x10000, 0x4976cffd ) /* alphanumerics */
-
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
-	ROM_LOAD_EVEN( "cyb1011.bin", 0x00000, 0x10000, 0x22d3e09c )
-	ROM_LOAD_ODD ( "cyb1012.bin", 0x00000, 0x10000, 0xa8eeed8c )
-	ROM_LOAD_EVEN( "cyb1013.bin", 0x20000, 0x10000, 0x11d287c9 )
-	ROM_LOAD_ODD ( "cyb1014.bin", 0x20000, 0x10000, 0xbe15db42 )
+	ROM_REGIONX( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cyb1019.bin",  0x000000, 0x10000, 0x833b4768 ) /* alphanumerics */
+	ROM_LOAD( "cyb1020.bin",  0x010000, 0x10000, 0x4976cffd ) /* alphanumerics */
 ROM_END
 
 
-ROM_START( cyberb2p_rom )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+ROM_START( cyberb2p )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "3019.bin", 0x00000, 0x10000, 0x029f8cb6 )
 	ROM_LOAD_ODD ( "3020.bin", 0x00000, 0x10000, 0x1871b344 )
 	ROM_LOAD_EVEN( "3021.bin", 0x20000, 0x10000, 0xfd7ebead )
@@ -1314,17 +1314,11 @@ ROM_START( cyberb2p_rom )
 	ROM_LOAD_EVEN( "1025.bin", 0x60000, 0x10000, 0x95ff68c6 )
 	ROM_LOAD_ODD ( "1026.bin", 0x60000, 0x10000, 0xf61c4898 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1042.bin",  0x10000, 0x4000, 0xe63cf125 )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
-	ROM_LOAD( "1049.bin",  0x00000, 0x10000, 0x94f24575 )
-	ROM_LOAD( "1050.bin",  0x10000, 0x10000, 0x87208e1e )
-	ROM_LOAD( "1051.bin",  0x20000, 0x10000, 0xf82558b9 )
-	ROM_LOAD( "1052.bin",  0x30000, 0x10000, 0xd96437ad )
-
-	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x140000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1001.bin",  0x000000, 0x20000, 0x586ba107 ) /* MO */
 	ROM_LOAD( "1005.bin",  0x020000, 0x20000, 0xa53e6248 ) /* MO */
 	ROM_LOAD( "1032.bin",  0x040000, 0x10000, 0x131f52a0 ) /* MO */
@@ -1341,13 +1335,21 @@ ROM_START( cyberb2p_rom )
 	ROM_LOAD( "1008.bin",  0x110000, 0x20000, 0x78525bbb ) /* MO */
 	ROM_LOAD( "1035.bin",  0x130000, 0x10000, 0x1be3e5c8 ) /* MO */
 
-	ROM_LOAD( "1036.bin",  0x140000, 0x10000, 0xcdf6e3d6 ) /* playfield */
-	ROM_LOAD( "1037.bin",  0x150000, 0x10000, 0xec2fef3e ) /* playfield */
-	ROM_LOAD( "1038.bin",  0x160000, 0x10000, 0xe866848f ) /* playfield */
-	ROM_LOAD( "1039.bin",  0x170000, 0x10000, 0x9b9a393c ) /* playfield */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1036.bin",  0x000000, 0x10000, 0xcdf6e3d6 ) /* playfield */
+	ROM_LOAD( "1037.bin",  0x010000, 0x10000, 0xec2fef3e ) /* playfield */
+	ROM_LOAD( "1038.bin",  0x020000, 0x10000, 0xe866848f ) /* playfield */
+	ROM_LOAD( "1039.bin",  0x030000, 0x10000, 0x9b9a393c ) /* playfield */
 
-	ROM_LOAD( "1040.bin",  0x180000, 0x10000, 0xa4c116f9 ) /* alphanumerics */
-	ROM_LOAD( "1041.bin",  0x190000, 0x10000, 0xe25d7847 ) /* alphanumerics */
+	ROM_REGIONX( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1040.bin",  0x000000, 0x10000, 0xa4c116f9 ) /* alphanumerics */
+	ROM_LOAD( "1041.bin",  0x010000, 0x10000, 0xe25d7847 ) /* alphanumerics */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
+	ROM_LOAD( "1049.bin",  0x00000, 0x10000, 0x94f24575 )
+	ROM_LOAD( "1050.bin",  0x10000, 0x10000, 0x87208e1e )
+	ROM_LOAD( "1051.bin",  0x20000, 0x10000, 0xf82558b9 )
+	ROM_LOAD( "1052.bin",  0x30000, 0x10000, 0xd96437ad )
 ROM_END
 
 
@@ -1371,7 +1373,7 @@ static const UINT16 default_eeprom[] =
 	0x0E00,0x01FF,0x0E00,0x0000
 };
 
-static void cyberbal_init(void)
+static void init_cyberbal(void)
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 0);
@@ -1386,10 +1388,12 @@ static void cyberbal_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
+
+	atarigen_playfieldram = cyberbal_playfieldram_1;
 }
 
 
-static void cyberbt_init(void)
+static void init_cyberbt(void)
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 116);
@@ -1404,10 +1408,12 @@ static void cyberbt_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
+
+	atarigen_playfieldram = cyberbal_playfieldram_1;
 }
 
 
-static void cyberb2p_init(void)
+static void init_cyberb2p(void)
 {
 	atarigen_eeprom_default = default_eeprom;
 
@@ -1419,6 +1425,8 @@ static void cyberb2p_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarigen_playfieldram = cyberbal_playfieldram_1;
 }
 
 
@@ -1429,82 +1437,6 @@ static void cyberb2p_init(void)
  *
  *************************************/
 
-struct GameDriver cyberbal_driver =
-{
-	__FILE__,
-	0,
-	"cyberbal",
-	"Cyberball",
-	"1988",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	0,
-	&machine_driver,
-	cyberbal_init,
-
-	cyberbal_rom,
-	0,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	cyberbal_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver cyberbt_driver =
-{
-	__FILE__,
-	&cyberbal_driver,
-	"cyberbt",
-	"Tournament Cyberball 2072",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	0,
-	&machine_driver,
-	cyberbt_init,
-
-	cyberbt_rom,
-	0,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	cyberbal_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver cyberb2p_driver =
-{
-	__FILE__,
-	&cyberbal_driver,
-	"cyberb2p",
-	"Cyberball 2072 (2 player)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	0,
-	&cyberb2p_machine_driver,
-	cyberb2p_init,
-
-	cyberb2p_rom,
-	0,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	cyberb2p_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1988, cyberbal, ,         cyberbal, cyberbal, cyberbal, ROT0_16BIT, "Atari Games", "Cyberball" )
+GAME( 1989, cyberbt,  cyberbal, cyberbal, cyberbal, cyberbt,  ROT0_16BIT, "Atari Games", "Tournament Cyberball 2072" )
+GAME( 1989, cyberb2p, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0_16BIT, "Atari Games", "Cyberball 2072 (2 player)" )

@@ -81,7 +81,7 @@ void aliens_sh_irqtrigger_w(int offset, int data)
 
 static void aliens_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 	/* b1: bank for chanel A */
 	/* b0: bank for chanel B */
 
@@ -146,7 +146,7 @@ static struct MemoryWriteAddress aliens_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( aliens )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -260,7 +260,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 4 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
@@ -274,21 +274,19 @@ static struct YM2151interface ym2151_interface =
 	{ aliens_snd_bankswitch_w }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_aliens =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_KONAMI,
 			3000000,		/* ? */
-			0,
 			aliens_readmem,aliens_writemem,0,0,
             aliens_interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			3,
 			aliens_readmem_sound, aliens_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -330,13 +328,16 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( aliens_rom )
-	ROM_REGION( 0x38000 ) /* code + banked roms */
+ROM_START( aliens )
+	ROM_REGIONX( 0x38000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "e24_j02.bin", 0x10000, 0x08000, 0x56c20971 )
 	ROM_CONTINUE(            0x08000, 0x08000 )
 	ROM_LOAD( "c24_j01.bin", 0x18000, 0x20000, 0x6a529cd6 )
 
-	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "g04_b03.bin", 0x00000, 0x08000, 0x1ac4d283 )
+
+	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics */
 	ROM_LOAD( "k13_b11.bin", 0x000000, 0x80000, 0x89c5c885 )	/* characters (set 1) */
 	ROM_LOAD( "j13_b07.bin", 0x080000, 0x40000, 0xe9c56d66 )	/* characters (set 2) */
 	/* second half empty */
@@ -344,7 +345,7 @@ ROM_START( aliens_rom )
 	ROM_LOAD( "j19_b08.bin", 0x180000, 0x40000, 0xf9387966 )	/* characters (set 2) */
 	/* second half empty */
 
-	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_REGIONX( 0x200000, REGION_GFX2 ) /* graphics */
 	ROM_LOAD( "k08_b10.bin", 0x000000, 0x80000, 0x0b1035b1 )	/* sprites (set 1) */
 	ROM_LOAD( "j08_b06.bin", 0x080000, 0x40000, 0x081a0566 )	/* sprites (set 2) */
 	/* second half empty */
@@ -352,23 +353,23 @@ ROM_START( aliens_rom )
 	ROM_LOAD( "j02_b05.bin", 0x180000, 0x40000, 0x19a261f2 )	/* sprites (set 2) */
 	/* second half empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
-	ROM_LOAD( "g04_b03.bin", 0x00000, 0x08000, 0x1ac4d283 )
-
-	ROM_REGION( 0x40000 ) /* samples for 007232 */
-	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
-
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 ROM_END
 
-ROM_START( aliens2_rom )
-	ROM_REGION( 0x38000 ) /* code + banked roms */
+ROM_START( aliens2 )
+	ROM_REGIONX( 0x38000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "e24_p02.bin", 0x10000, 0x08000, 0x4edd707d )
 	ROM_CONTINUE(            0x08000, 0x08000 )
 	ROM_LOAD( "c24_n01.bin", 0x18000, 0x20000, 0x106cf59c )
 
-	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "g04_b03.bin", 0x00000, 0x08000, 0x1ac4d283 )
+
+	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics */
 	ROM_LOAD( "k13_b11.bin", 0x000000, 0x80000, 0x89c5c885 )	/* characters (set 1) */
 	ROM_LOAD( "j13_b07.bin", 0x080000, 0x40000, 0xe9c56d66 )	/* characters (set 2) */
 	/* second half empty */
@@ -376,7 +377,7 @@ ROM_START( aliens2_rom )
 	ROM_LOAD( "j19_b08.bin", 0x180000, 0x40000, 0xf9387966 )	/* characters (set 2) */
 	/* second half empty */
 
-	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_REGIONX( 0x200000, REGION_GFX2 ) /* graphics */
 	ROM_LOAD( "k08_b10.bin", 0x000000, 0x80000, 0x0b1035b1 )	/* sprites (set 1) */
 	ROM_LOAD( "j08_b06.bin", 0x080000, 0x40000, 0x081a0566 )	/* sprites (set 2) */
 	/* second half empty */
@@ -384,23 +385,55 @@ ROM_START( aliens2_rom )
 	ROM_LOAD( "j02_b05.bin", 0x180000, 0x40000, 0x19a261f2 )	/* sprites (set 2) */
 	/* second half empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
-	ROM_LOAD( "g04_b03.bin", 0x00000, 0x08000, 0x1ac4d283 )
-
-	ROM_REGION( 0x40000 ) /* samples for 007232 */
-	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
-
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 ROM_END
 
-ROM_START( aliensj_rom )
-	ROM_REGION( 0x38000 ) /* code + banked roms */
+ROM_START( aliensu )
+	ROM_REGIONX( 0x38000, REGION_CPU1 ) /* code + banked roms */
+	ROM_LOAD( "e24_n02.bin", 0x10000, 0x08000, 0x24dd612e )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "c24_n01.bin", 0x18000, 0x20000, 0x106cf59c )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "g04_b03.bin", 0x00000, 0x08000, 0x1ac4d283 )
+
+	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics */
+	ROM_LOAD( "k13_b11.bin", 0x000000, 0x80000, 0x89c5c885 )	/* characters (set 1) */
+	ROM_LOAD( "j13_b07.bin", 0x080000, 0x40000, 0xe9c56d66 )	/* characters (set 2) */
+	/* second half empty */
+	ROM_LOAD( "k19_b12.bin", 0x100000, 0x80000, 0xea6bdc17 )	/* characters (set 1) */
+	ROM_LOAD( "j19_b08.bin", 0x180000, 0x40000, 0xf9387966 )	/* characters (set 2) */
+	/* second half empty */
+
+	ROM_REGIONX( 0x200000, REGION_GFX2 ) /* graphics */
+	ROM_LOAD( "k08_b10.bin", 0x000000, 0x80000, 0x0b1035b1 )	/* sprites (set 1) */
+	ROM_LOAD( "j08_b06.bin", 0x080000, 0x40000, 0x081a0566 )	/* sprites (set 2) */
+	/* second half empty */
+	ROM_LOAD( "k02_b09.bin", 0x100000, 0x80000, 0xe76b3c19 )	/* sprites (set 1) */
+	ROM_LOAD( "j02_b05.bin", 0x180000, 0x40000, 0x19a261f2 )	/* sprites (set 2) */
+	/* second half empty */
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
+ROM_END
+
+ROM_START( aliensj )
+	ROM_REGIONX( 0x38000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "875m02.e24",  0x10000, 0x08000, 0x54a774e5 )
 	ROM_CONTINUE(            0x08000, 0x08000 )
 	ROM_LOAD( "875m01.c24",  0x18000, 0x20000, 0x1663d3dc )
 
-	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "875k03.g4",   0x00000, 0x08000, 0xbd86264d )
+
+	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics */
 	ROM_LOAD( "k13_b11.bin", 0x000000, 0x80000, 0x89c5c885 )	/* characters (set 1) */
 	ROM_LOAD( "j13_b07.bin", 0x080000, 0x40000, 0xe9c56d66 )	/* characters (set 2) */
 	/* second half empty */
@@ -408,7 +441,7 @@ ROM_START( aliensj_rom )
 	ROM_LOAD( "j19_b08.bin", 0x180000, 0x40000, 0xf9387966 )	/* characters (set 2) */
 	/* second half empty */
 
-	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_REGIONX( 0x200000, REGION_GFX2 ) /* graphics */
 	ROM_LOAD( "k08_b10.bin", 0x000000, 0x80000, 0x0b1035b1 )	/* sprites (set 1) */
 	ROM_LOAD( "j08_b06.bin", 0x080000, 0x40000, 0x081a0566 )	/* sprites (set 2) */
 	/* second half empty */
@@ -416,14 +449,11 @@ ROM_START( aliensj_rom )
 	ROM_LOAD( "j02_b05.bin", 0x180000, 0x40000, 0x19a261f2 )	/* sprites (set 2) */
 	/* second half empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
-	ROM_LOAD( "875k03.g4",   0x00000, 0x08000, 0xbd86264d )
-
-	ROM_REGION( 0x40000 ) /* samples for 007232 */
-	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
-
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 ROM_END
 
 
@@ -435,7 +465,7 @@ ROM_END
 
 static void aliens_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0x18000;
 
 
@@ -447,7 +477,7 @@ static void aliens_banking( int lines )
 
 static void aliens_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = aliens_banking;
 
@@ -457,85 +487,15 @@ static void aliens_init_machine( void )
 
 
 
-static void gfx_untangle(void)
+static void init_aliens(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver aliens_driver =
-{
-	__FILE__,
-	0,
-	"aliens",
-	"Aliens (set 1)",
-	"1990",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	aliens_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver aliens2_driver =
-{
-	__FILE__,
-	&aliens_driver,
-	"aliens2",
-	"Aliens (set 2)",
-	"1990",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	aliens2_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver aliensj_driver =
-{
-	__FILE__,
-	&aliens_driver,
-	"aliensj",
-	"Aliens (Japan)",
-	"1990",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	aliensj_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1990, aliens,  ,       aliens, aliens, aliens, ROT0, "Konami", "Aliens (World set 1)" )
+GAME( 1990, aliens2, aliens, aliens, aliens, aliens, ROT0, "Konami", "Aliens (World set 2)" )
+GAME( 1990, aliensu, aliens, aliens, aliens, aliens, ROT0, "Konami", "Aliens (US)" )
+GAME( 1990, aliensj, aliens, aliens, aliens, aliens, ROT0, "Konami", "Aliens (Japan)" )

@@ -8,7 +8,6 @@ Emulation by Bryan McPhail, mish@tendril.force9.net
 Notes:
 * Schematics show a palette/work RAM bank selector, but this doesn't seem
   to be used?
-* Devastators not playable...  Protected (custom CPU 051733)
 * Sprite priorities are not correct (ropes appear behind fighters).
   Sprite/sprite priorities have to be orthogonal to sprite/tile priorities
   for this to work correctly.
@@ -59,7 +58,7 @@ static int zero_ret(int offset)
 
 void mainevt_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	/* bit 0-1 ROM bank select */
@@ -107,10 +106,15 @@ void mainevt_sh_irqcontrol_w(int offset,int data)
 	interrupt_enable_w(0,data & 4);
 }
 
+void devstor_sh_irqcontrol_w(int offset,int data)
+{
+interrupt_enable_w(0,data & 4);
+}
+
 void mainevt_sh_bankswitch_w(int offset,int data)
 {
 	unsigned char *src,*dest;
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 	int bank_A,bank_B;
 
 //if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
@@ -121,14 +125,14 @@ void mainevt_sh_bankswitch_w(int offset,int data)
 	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 
 	/* bits 4-5 select the UPD7759 bank */
-	src = &Machine->memory_region[5][0x20000];
-	dest = Machine->memory_region[5];
+	src = &memory_region(5)[0x20000];
+	dest = memory_region(5);
 	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
 }
 
 void dv_sh_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 	int bank_A,bank_B;
 
 //if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
@@ -173,6 +177,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+
 static struct MemoryReadAddress dv_readmem[] =
 {
 	{ 0x1f94, 0x1f94, input_port_0_r }, /* Coins */
@@ -181,6 +186,7 @@ static struct MemoryReadAddress dv_readmem[] =
 	{ 0x1f97, 0x1f97, input_port_5_r }, /* Dip 1 */
 	{ 0x1f98, 0x1f98, input_port_7_r }, /* Dip 3 */
 	{ 0x1f9b, 0x1f9b, input_port_6_r }, /* Dip 2 */
+	{ 0x1fa0, 0x1fbf, K051733_r },
 
 	{ 0x0000, 0x3fff, K052109_051960_r },
 	{ 0x4000, 0x5fff, MRA_RAM },
@@ -196,6 +202,7 @@ static struct MemoryWriteAddress dv_writemem[] =
 	{ 0x1f88, 0x1f88, mainevt_sh_irqtrigger_w },	/* probably */
 	{ 0x1f90, 0x1f90, mainevt_coin_w },	/* coin counters + lamps */
 	{ 0x1fb2, 0x1fb2, dv_nmienable_w },
+	{ 0x1fa0, 0x1fbf, K051733_w },
 
 	{ 0x0000, 0x3fff, K052109_051960_w },
 	{ 0x4000, 0x5dff, MWA_RAM },
@@ -243,7 +250,7 @@ static struct MemoryWriteAddress dv_sound_writemem[] =
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
-	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
+	{ 0xe000, 0xe000, devstor_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, dv_sh_bankswitch_w },
 	{ -1 }	/* end of table */
 };
@@ -252,7 +259,7 @@ static struct MemoryWriteAddress dv_sound_writemem[] =
 
 /*****************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mainevt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -344,12 +351,12 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x18, 0x18, "Bonus Energy" )
+	PORT_DIPNAME( 0x18, 0x10, "Bonus Energy" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x08, "70" )
 	PORT_DIPSETTING(    0x10, "80" )
 	PORT_DIPSETTING(    0x18, "90" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
@@ -372,7 +379,118 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dv_input_ports )
+INPUT_PORTS_START( ringohja )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "4 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "4 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+
+ 	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x10, "Bonus Energy" )
+	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPSETTING(    0x08, "70" )
+	PORT_DIPSETTING(    0x10, "80" )
+	PORT_DIPSETTING(    0x18, "90" )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dv )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -455,10 +573,10 @@ INPUT_PORTS_START( dv_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "150000 and every 200000" )
-	PORT_DIPSETTING(    0x10, "150000 and every 250000" )
-	PORT_DIPSETTING(    0x08, "150000" )
-	PORT_DIPSETTING(    0x00, "200000" )
+	PORT_DIPSETTING(    0x18, "150 and every 200" )
+	PORT_DIPSETTING(    0x10, "150 and every 250" )
+	PORT_DIPSETTING(    0x08, "150" )
+	PORT_DIPSETTING(    0x00, "200" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
@@ -521,16 +639,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
  		{
-			CPU_M6309,
+			CPU_HD6309,
 			3000000,	/* ?? */
-			0,
 			readmem,writemem,0,0,
 			mainevt_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* 3.579545 MHz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,8	/* ??? */
 		}
@@ -565,21 +681,19 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver dv_machine_driver =
+static struct MachineDriver machine_driver_dv =
 {
 	/* basic machine hardware */
 	{
  		{
-			CPU_M6309,
+			CPU_HD6309,
 			3000000,	/* ?? */
-			0,
 			dv_readmem,dv_writemem,0,0,
 			dv_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* 3.579545 MHz */
-			3,
 			dv_sound_readmem,dv_sound_writemem,0,0,
 			interrupt,4
 		}
@@ -622,8 +736,8 @@ static struct MachineDriver dv_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mainevt_rom )
-	ROM_REGION(0x40000)
+ROM_START( mainevt )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "799c02.k11",   0x10000, 0x08000, 0xe2e7dbd5 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -637,7 +751,7 @@ ROM_START( mainevt_rom )
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
@@ -647,12 +761,12 @@ ROM_START( mainevt_rom )
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( mainevt2_rom )
-	ROM_REGION(0x40000)
+ROM_START( mainevt2 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "02",           0x10000, 0x08000, 0xc143596b )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -666,7 +780,7 @@ ROM_START( mainevt2_rom )
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
@@ -676,12 +790,41 @@ ROM_START( mainevt2_rom )
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( devstors_rom )
-	ROM_REGION(0x40000)
+ROM_START( ringohja )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_LOAD( "799n02.k11",   0x10000, 0x08000, 0xf9305dd0 )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+    ROM_REGION(0x20000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_LOAD_GFX_ODD ( "799c07.h22",   0x00000, 0x08000, 0x176df538 )
+	ROM_LOAD_GFX_EVEN( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
+	ROM_LOAD_GFX_ODD ( "799c09.k22",   0x10000, 0x08000, 0x9baec75e )
+
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
+	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
+
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
+	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
+
+	ROM_REGION(0xa0000)	/* 128+512k for the UPD7759C samples */
+	/* 00000-1ffff space where the following ROM is bank switched */
+	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
+ROM_END
+
+ROM_START( devstors )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "890-z02.k11",  0x10000, 0x08000, 0xebeb306f )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -695,18 +838,18 @@ ROM_START( devstors_rom )
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( devstor2_rom )
-	ROM_REGION(0x40000)
+ROM_START( devstor2 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "dev-x02.rom",  0x10000, 0x08000, 0xe58ebb35 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -720,18 +863,43 @@ ROM_START( devstor2_rom )
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( garuka_rom )
-	ROM_REGION(0x40000)
+ROM_START( devstor3 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
+	ROM_LOAD( "890k02.k11",   0x10000, 0x08000, 0x52f4ccdd )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+    ROM_REGION(0x40000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
+	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
+	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
+
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
+ 	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
+ROM_END
+
+ROM_START( garuka )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "890w02.bin",   0x10000, 0x08000, 0xb2f6f538 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -745,51 +913,15 @@ ROM_START( garuka_rom )
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
-
-
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if  (memcmp(&RAM[0x415C],"\xFF\xAE\xCA",3) == 0 &&
-			memcmp(&RAM[0x419F],"\x00\x05\x77",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x415C],70);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x415C],70);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -801,7 +933,7 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver mainevt_driver =
+struct GameDriver driver_mainevt =
 {
 	__FILE__,
 	0,
@@ -812,25 +944,24 @@ struct GameDriver mainevt_driver =
 	"Bryan McPhail",
 	0,
 	&machine_driver,
+	gfx_untangle,
+
+	rom_mainevt,
+	0, 0,
+	0,
 	0,
 
-	mainevt_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
+	input_ports_mainevt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver mainevt2_driver =
+struct GameDriver driver_mainevt2 =
 {
 	__FILE__,
-	&mainevt_driver,
+	&driver_mainevt,
 	"mainevt2",
 	"The Main Event (version F)",
 	"1988",
@@ -838,22 +969,46 @@ struct GameDriver mainevt2_driver =
 	"Bryan McPhail",
 	0,
 	&machine_driver,
+	gfx_untangle,
+
+	rom_mainevt2,
+	0, 0,
+	0,
 	0,
 
-	mainevt2_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
+	input_ports_mainevt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver devstors_driver =
+struct GameDriver driver_ringohja =
+{
+	__FILE__,
+	&driver_mainevt,
+	"ringohja",
+	"Ring no Ohja (Japan)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	0,
+	&machine_driver,
+	gfx_untangle,
+
+	rom_ringohja,
+	0, 0,
+	0,
+	0,
+
+	input_ports_ringohja,
+
+	0, 0, 0,
+	ROT0,
+	0,0
+};
+
+struct GameDriver driver_devstors =
 {
 	__FILE__,
 	0,
@@ -862,71 +1017,98 @@ struct GameDriver devstors_driver =
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&dv_machine_driver,
+	0,
+	&machine_driver_dv,
+	gfx_untangle,
+
+	rom_devstors,
+	0, 0,
+	0,
 	0,
 
-	devstors_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	dv_input_ports,
+	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };
 
-struct GameDriver devstor2_driver =
+struct GameDriver driver_devstor2 =
 {
 	__FILE__,
-	&devstors_driver,
+	&driver_devstors,
  	"devstor2",
 	"Devastators (version X)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&dv_machine_driver,
+	0,
+	&machine_driver_dv,
+	gfx_untangle,
+
+	rom_devstor2,
+	0, 0,
+	0,
 	0,
 
-	devstor2_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	dv_input_ports,
+	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };
 
-struct GameDriver garuka_driver =
+struct GameDriver driver_devstor3 =
 {
 	__FILE__,
-	&devstors_driver,
+	&driver_devstors,
+ 	"devstor3",
+	"Devastators (version V)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	0,
+	&machine_driver_dv,
+	gfx_untangle,
+
+	rom_devstor3,
+	0, 0,
+	0,
+	0,
+
+	input_ports_dv,
+
+	0, 0, 0,
+	ROT90,
+
+	0,0
+};
+
+
+struct GameDriver driver_garuka =
+{
+	__FILE__,
+	&driver_devstors,
  	"garuka",
 	"Garuka (Japan)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&dv_machine_driver,
+	0,
+	&machine_driver_dv,
+	gfx_untangle,
+
+	rom_garuka,
+	0, 0,
+	0,
 	0,
 
-	garuka_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	dv_input_ports,
+	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };

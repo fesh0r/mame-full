@@ -44,7 +44,7 @@ extern UINT8 mcr_sound_config;
 #define MCR_SOUNDS_GOOD			0x04
 #define MCR_TURBO_CHIP_SQUEAK	0x08
 #define MCR_SQUAWK_N_TALK		0x10
-#define MCR_ADVANCED_AUDIO		0x20
+#define MCR_WILLIAMS_SOUND		0x20
 
 #define MCR_CONFIGURE_SOUND(x) \
 	mcr_sound_config = x
@@ -58,11 +58,10 @@ extern struct MemoryWriteAddress ssio_writemem[];
 
 extern struct AY8910interface ssio_ay8910_interface;
 
-#define SOUND_CPU_SSIO(mem)							\
+#define SOUND_CPU_SSIO								\
 	{												\
 		CPU_Z80 | CPU_AUDIO_CPU,					\
 		2000000,	/* 2 Mhz */						\
-		mem,										\
 		ssio_readmem,ssio_writemem,0,0,				\
 		interrupt,26								\
 	}
@@ -80,14 +79,13 @@ extern struct AY8910interface ssio_ay8910_interface;
 extern struct MemoryReadAddress csdeluxe_readmem[];
 extern struct MemoryWriteAddress csdeluxe_writemem[];
 
-extern struct DACinterface csdeluxe_dac_interface;
-extern struct DACinterface turbocs_plus_csdeluxe_dac_interface;
+extern struct DACinterface mcr_dac_interface;
+extern struct DACinterface mcr_dual_dac_interface;
 
-#define SOUND_CPU_CHIP_SQUEAK_DELUXE(mem)			\
+#define SOUND_CPU_CHIP_SQUEAK_DELUXE				\
 	{												\
 		CPU_M68000 | CPU_AUDIO_CPU,					\
-		7500000,	/* 7.5 Mhz */					\
-		mem,										\
+		15000000/2,	/* 7.5 Mhz */					\
 		csdeluxe_readmem,csdeluxe_writemem,0,0,		\
 		ignore_interrupt,1							\
 	}
@@ -95,13 +93,13 @@ extern struct DACinterface turbocs_plus_csdeluxe_dac_interface;
 #define SOUND_CHIP_SQUEAK_DELUXE					\
 	{												\
 		SOUND_DAC,									\
-		&csdeluxe_dac_interface						\
+		&mcr_dac_interface							\
 	}
 
-#define SOUND_TURBO_CHIP_SQUEAK_PLUS_CSDELUXE		\
+#define SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDSGOOD		\
 	{												\
 		SOUND_DAC,									\
-		&turbocs_plus_csdeluxe_dac_interface		\
+		&mcr_dual_dac_interface						\
 	}
 
 
@@ -111,11 +109,10 @@ extern struct DACinterface turbocs_plus_csdeluxe_dac_interface;
 extern struct MemoryReadAddress soundsgood_readmem[];
 extern struct MemoryWriteAddress soundsgood_writemem[];
 
-#define SOUND_CPU_SOUNDS_GOOD(mem)					\
+#define SOUND_CPU_SOUNDS_GOOD						\
 	{												\
 		CPU_M68000 | CPU_AUDIO_CPU,					\
-		7500000,	/* 7.5 Mhz */					\
-		mem,										\
+		16000000/2,	/* 8.0 Mhz */					\
 		soundsgood_readmem,soundsgood_writemem,0,0,	\
 		ignore_interrupt,1							\
 	}
@@ -129,11 +126,10 @@ extern struct MemoryWriteAddress soundsgood_writemem[];
 extern struct MemoryReadAddress turbocs_readmem[];
 extern struct MemoryWriteAddress turbocs_writemem[];
 
-#define SOUND_CPU_TURBO_CHIP_SQUEAK(mem)			\
+#define SOUND_CPU_TURBO_CHIP_SQUEAK					\
 	{												\
 		CPU_M6809 | CPU_AUDIO_CPU,					\
-		2250000,	/* 2.25 Mhz??? */				\
-		mem,										\
+		9000000/4,	/* 2.25 Mhz */					\
 		turbocs_readmem,turbocs_writemem,0,0,		\
 		ignore_interrupt,1							\
 	}
@@ -149,11 +145,10 @@ extern struct MemoryWriteAddress squawkntalk_writemem[];
 
 extern struct TMS5220interface squawkntalk_tms5220_interface;
 
-#define SOUND_CPU_SQUAWK_N_TALK(mem)				\
+#define SOUND_CPU_SQUAWK_N_TALK						\
 	{												\
 		CPU_M6802 | CPU_AUDIO_CPU,					\
 		3580000/4,	/* .8 Mhz */					\
-		mem,										\
 		squawkntalk_readmem,squawkntalk_writemem,0,0,\
 		ignore_interrupt,1							\
 	}
@@ -162,38 +157,4 @@ extern struct TMS5220interface squawkntalk_tms5220_interface;
 	{												\
 		SOUND_TMS5220,								\
 		&squawkntalk_tms5220_interface				\
-	}
-
-
-
-/************ Advanced Audio CPU and sound definitions ***************/
-
-extern struct MemoryReadAddress advaudio_readmem[];
-extern struct MemoryWriteAddress advaudio_writemem[];
-
-extern struct YM2151interface advaudio_ym2151_interface;
-extern struct DACinterface advaudio_dac_interface;
-extern struct CVSDinterface advaudio_cvsd_interface;
-
-#define SOUND_CPU_ADVANCED_AUDIO(mem)				\
-	{												\
-		CPU_M6809 | CPU_AUDIO_CPU,					\
-		8000000/2,	/* 4 Mhz */						\
-		mem,										\
-		advaudio_readmem,advaudio_writemem,0,0,		\
-		ignore_interrupt,1							\
-	}
-
-#define SOUND_ADVANCED_AUDIO						\
-	{												\
-		SOUND_YM2151,								\
-		&advaudio_ym2151_interface					\
-	},												\
-	{												\
-		SOUND_DAC,									\
-		&advaudio_dac_interface						\
-	},												\
-	{												\
-		SOUND_HC55516,								\
-		&advaudio_cvsd_interface					\
 	}

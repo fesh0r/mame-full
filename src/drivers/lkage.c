@@ -20,11 +20,8 @@ MCU (used by original version): not hooked up
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
 
-#define MEM_CPU_MAIN	0
 #define MEM_DATA		1
-#define MEM_CPU_SOUND	2
 #define MEM_GFX			3
-#define MEM_MCU			4
 
 #define CREDITS "Phil Stroffolino"
 
@@ -86,7 +83,7 @@ static struct MemoryReadAddress readmem[] = {
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xefff, paletteram_r },
-	{ 0xf000, 0xf003, MRA_RAM, &lkage_vreg },
+	{ 0xf000, 0xf003, MRA_RAM },
 	{ 0xf062, 0xf062, unknown0_r }, /* unknown */
 	{ 0xf080, 0xf080, input_port_0_r }, /* DSW1 */
 	{ 0xf081, 0xf081, input_port_1_r }, /* DSW2 (coinage) */
@@ -96,9 +93,9 @@ static struct MemoryReadAddress readmem[] = {
 	{ 0xf084, 0xf084, input_port_5_r },	/* P2 controls */
 	{ 0xf087, 0xf087, status_r }, /* MCU? */
 	{ 0xf0a3, 0xf0a3, unknown0_r }, /* unknown */
-	{ 0xf0c0, 0xf0c5, MRA_RAM, &lkage_scroll },
-	{ 0xf100, 0xf15f, MRA_RAM, &spriteram },
-	{ 0xf400, 0xffff, MRA_RAM, &videoram },
+	{ 0xf0c0, 0xf0c5, MRA_RAM },
+	{ 0xf100, 0xf15f, MRA_RAM },
+	{ 0xf400, 0xffff, MRA_RAM },
 	{ -1 }
 };
 
@@ -107,20 +104,20 @@ static struct MemoryWriteAddress writemem[] = {
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, MWA_RAM, &paletteram },
 //	paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
-	{ 0xf000, 0xf003, MWA_RAM }, /* video registers */
+	{ 0xf000, 0xf003, MWA_RAM, &lkage_vreg }, /* video registers */
 	{ 0xf060, 0xf060, lkage_sound_command_w },
 	{ 0xf061, 0xf063, MWA_NOP }, /* unknown */
 	{ 0xf0a2, 0xf0a3, MWA_NOP }, /* unknown */
-	{ 0xf0c0, 0xf0c5, MWA_RAM }, /* scrolling */
+	{ 0xf0c0, 0xf0c5, MWA_RAM, &lkage_scroll }, /* scrolling */
 	{ 0xf0e1, 0xf0e1, MWA_NOP }, /* unknown */
-	{ 0xf100, 0xf15f, MWA_RAM }, /* spriteram */
-	{ 0xf400, 0xffff, lkage_videoram_w }, /* videoram */
+	{ 0xf100, 0xf15f, MWA_RAM, &spriteram }, /* spriteram */
+	{ 0xf400, 0xffff, lkage_videoram_w, &videoram }, /* videoram */
 	{ -1 }
 };
 
 static int port_fetch_r( int offset )
 {
-	return Machine->memory_region[MEM_DATA][offset];
+	return memory_region(MEM_DATA)[offset];
 }
 
 static struct IOReadPort readport[] = {
@@ -175,7 +172,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 /***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( lkage )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x03, "10000" ) /* unconfirmed */
@@ -326,19 +323,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct MachineDriver machine_driver = {
+static struct MachineDriver machine_driver =
+{
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			6000000,	/* ??? */
-			MEM_CPU_MAIN,
 			readmem,writemem,readport,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			6000000,	/* ??? */
-			MEM_CPU_SOUND,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -346,7 +342,6 @@ static struct MachineDriver machine_driver = {
 //		{
 //			CPU_M68705,
 //			4000000/2,	/* ??? */
-//			MEM_MCU,
 //			m68705_readmem,m68705_writemem,0,0,
 //			ignore_interrupt,1
 //		},
@@ -380,15 +375,15 @@ static struct MachineDriver machine_driver = {
 	}
 };
 
-ROM_START( lkage_rom )
-	ROM_REGION( 0x14000 ) /* Z80 code (main CPU) */
+ROM_START( lkage )
+	ROM_REGIONX( 0x14000, REGION_CPU1 ) /* Z80 code (main CPU) */
 	ROM_LOAD( "a54-01-1.37", 0x00000, 0x8000, 0x973da9c5 )
 	ROM_LOAD( "a54-02-1.38", 0x08000, 0x8000, 0x27b509da )
 
 	ROM_REGION( 0x4000 ) /* data */
 	ROM_LOAD( "a54-03.51",   0x00000, 0x4000, 0x493e76d8 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "a54-04.54",   0x00000, 0x8000, 0x541faf9a )
 
 	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
@@ -401,15 +396,15 @@ ROM_START( lkage_rom )
 	ROM_LOAD( "a54-09.53",   0x00000, 0x0800, 0x0e8b8846 )
 ROM_END
 
-ROM_START( lkageb_rom )
-	ROM_REGION( 0x10000 ) /* Z80 code (main CPU) */
+ROM_START( lkageb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (main CPU) */
 	ROM_LOAD( "lok.a",     0x0000, 0x8000, 0x866df793 )
 	ROM_LOAD( "lok.b",     0x8000, 0x8000, 0xfba9400f )
 
 	ROM_REGION( 0x4000 ) /* data */
 	ROM_LOAD( "a54-03.51", 0x0000, 0x4000, 0x493e76d8 ) // LOK.C
 
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "a54-04.54", 0x0000, 0x8000, 0x541faf9a ) // LOK.D
 
 	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
@@ -421,76 +416,9 @@ ROM_START( lkageb_rom )
 	ROM_REGION( 0x100 ) /* fake */
 ROM_END
 
-/****  Legend of Kage high score save routine - RJF (July 29, 1999)  ****/
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe25f], 10*4);        /* HS values */
-                        osd_fread(f,&RAM[0xe287], 10*10);       /* HS initials */
-
-                        RAM[0xe188] = RAM[0xe260];      /* update high score */
-                        RAM[0xe189] = RAM[0xe261];      /* on top of screen */
-                        RAM[0xe18a] = RAM[0xe262];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe25f], 10*14);       /* HS whole table */
-		osd_fclose(f);
-	}
-}
-
-/** Legend of Kage (bootleg) high score save routine - RJF (July 30, 1999) **/
-static int lkageb_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe25f], 10*4);        /* HS values */
-                        osd_fread(f,&RAM[0xe287], 10*10);       /* HS initials */
-
-                        /* update high score on top of screen */
-
-                        RAM[0xe188] = RAM[0xe260] << 4;
-                        RAM[0xe189] = (RAM[0xe261] << 4) + (RAM[0xe260] >> 4);
-                        RAM[0xe18a] = (RAM[0xe262] << 4) + (RAM[0xe261] >> 4);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
 
 
-struct GameDriver lkage_driver = {
+struct GameDriver driver_lkage = {
 	__FILE__,
 	0,
 	"lkage",
@@ -502,23 +430,22 @@ struct GameDriver lkage_driver = {
 	&machine_driver,
 	0,
 
-	lkage_rom,
+	rom_lkage,
 	0,
 	0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_lkage,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver lkageb_driver = {
+struct GameDriver driver_lkageb = {
 	__FILE__,
-	&lkage_driver,
+	&driver_lkage,
 	"lkageb",
 	"The Legend of Kage (bootleg)",
 	"1984",
@@ -528,16 +455,15 @@ struct GameDriver lkageb_driver = {
 	&machine_driver,
 	0,
 
-	lkageb_rom,
+	rom_lkageb,
 	0,
 	0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_lkage,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	lkageb_hiload, hisave
+	ROT0,
+	0,0
 };

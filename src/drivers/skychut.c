@@ -29,10 +29,15 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 	0xff,0x20,0xff,  /* PURPLE */
 	0xff,0xff,0xff /* WHITE */
 };
-
 static unsigned short colortable[] =
-{      0,1,0,2,0,3,0,4,0,5,0,6
+{
+	0,1,0,2,0,3,0,4,0,5,0,6
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 
@@ -74,7 +79,7 @@ int skychut_interrupt(void)
 }
 
 
-INPUT_PORTS_START( skychut_input_ports )
+INPUT_PORTS_START( skychut )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
@@ -113,14 +118,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct MachineDriver skychut_machine_driver =
+static struct MachineDriver machine_driver_skychut =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			20000000/8,
-			0,
 			skychut_readmem,skychut_writemem,0,0,
 			skychut_interrupt,1
 		}
@@ -132,8 +136,8 @@ static struct MachineDriver skychut_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3, sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -154,8 +158,8 @@ static struct MachineDriver skychut_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( skychut_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( skychut )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1d", 0x1000, 0x0400, 0x30b5ded1 )
 	ROM_LOAD( "sc2d", 0x1400, 0x0400, 0xfd1f4b9e )
 	ROM_LOAD( "sc3d", 0x1800, 0x0400, 0x67ed201e )
@@ -175,7 +179,7 @@ ROM_END
 
 
 
-struct GameDriver skychut_driver =
+struct GameDriver driver_skychut =
 {
 	__FILE__,
 	0,
@@ -184,19 +188,19 @@ struct GameDriver skychut_driver =
 	"1980",
 	"Irem",
 	"Lee Taylor",
-	GAME_WRONG_COLORS,
-	&skychut_machine_driver,
+	0,
+	&machine_driver_skychut,
 	0,
 
-	skychut_rom,
+	rom_skychut,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	skychut_input_ports,
+	input_ports_skychut,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0 | GAME_WRONG_COLORS,
 
 	0, 0
 };

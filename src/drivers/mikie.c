@@ -26,12 +26,6 @@ void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void mikie_init_machine(void)
-{
-        /* Set optimization flags for M6809 */
-        m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
-
 int mikie_sh_timer_r(int offset)
 {
 	int clock;
@@ -117,7 +111,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mikie )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -263,28 +257,26 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver mikie_machine_driver =
+static struct MachineDriver machine_driver_mikie =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* ? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	mikie_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -317,8 +309,8 @@ static struct MachineDriver mikie_machine_driver =
 ***************************************************************************/
 
 
-ROM_START( mikie_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( mikie )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11c_n14.bin",  0x6000, 0x2000, 0xf698e6dd )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
 	ROM_LOAD( "12d_o17.bin",  0xc000, 0x4000, 0x161c25c8 )
@@ -330,19 +322,19 @@ ROM_START( mikie_rom )
 	ROM_LOAD( "005",          0x0c000, 0x4000, 0xba44aeef )
 	ROM_LOAD( "007",          0x10000, 0x4000, 0x31afc153 )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
 	ROM_LOAD( "03i_d21.bin",  0x0100, 0x0100, 0x3556304a )	/* green component */
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
-ROM_START( mikiej_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( mikiej )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11c_n14.bin",  0x6000, 0x2000, 0xf698e6dd )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
 	ROM_LOAD( "12d_o17.bin",  0xc000, 0x4000, 0x161c25c8 )
@@ -354,19 +346,19 @@ ROM_START( mikiej_rom )
 	ROM_LOAD( "h01_q05.bin",  0x0c000, 0x4000, 0xf9e1ebb1 )
 	ROM_LOAD( "h03_q07.bin",  0x10000, 0x4000, 0x15dc093b )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
 	ROM_LOAD( "03i_d21.bin",  0x0100, 0x0100, 0x3556304a )	/* green component */
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
-ROM_START( mikiehs_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( mikiehs )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11c_l14.bin",  0x6000, 0x2000, 0x633f3a6d )
 	ROM_LOAD( "12a_m13.bin",  0x8000, 0x4000, 0x9c42d715 )
 	ROM_LOAD( "12d_m17.bin",  0xc000, 0x4000, 0xcb5c03c9 )
@@ -378,67 +370,20 @@ ROM_START( mikiehs_rom )
 	ROM_LOAD( "h01_i05.bin",  0x0c000, 0x4000, 0x00e357e1 )
 	ROM_LOAD( "h03_i07.bin",  0x10000, 0x4000, 0xceeba6ac )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
 	ROM_LOAD( "03i_d21.bin",  0x0100, 0x0100, 0x3556304a )	/* green component */
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "06e_h10.bin",  0x0000, 0x2000, 0x4ed887d2 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x2a00],"\x1d\x2c\x1f\x00\x01",5) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        osd_fread(f,&RAM[0x2a00],9*5);
-
-				/* top score display */
-                        memcpy(&RAM[0x29f0], &RAM[0x2a05], 4);
-
-				/* 1p score display, which also displays the top score on startup */
-				memcpy(&RAM[0x297c], &RAM[0x2a05], 4);
-
-                        osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x2a00],9*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver mikie_driver =
+struct GameDriver driver_mikie =
 {
 	__FILE__,
 	0,
@@ -448,70 +393,67 @@ struct GameDriver mikie_driver =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
-	&mikie_machine_driver,
+	&machine_driver_mikie,
 	0,
 
-	mikie_rom,
+	rom_mikie,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mikie,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver mikiej_driver =
+struct GameDriver driver_mikiej =
 {
 	__FILE__,
-	&mikie_driver,
+	&driver_mikie,
 	"mikiej",
 	"Shinnyuushain Tooru-kun",
 	"1984",
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
-	&mikie_machine_driver,
+	&machine_driver_mikie,
 	0,
 
-	mikiej_rom,
+	rom_mikiej,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mikie,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver mikiehs_driver =
+struct GameDriver driver_mikiehs =
 {
 	__FILE__,
-	&mikie_driver,
+	&driver_mikie,
 	"mikiehs",
 	"Mikie (High School Graffiti)",
 	"1984",
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
-	&mikie_machine_driver,
+	&machine_driver_mikie,
 	0,
 
-	mikiehs_rom,
+	rom_mikiehs,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mikie,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

@@ -208,6 +208,24 @@ Sound Commands:
 #include "vidhrdw/avgdvg.h"
 
 
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
 static void omegrace_init_machine(void)
 {
 	/* Omega Race expects the vector processor to be ready. */
@@ -288,7 +306,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
 	{ 0x5c00, 0x5cff, MRA_RAM }, /* NVRAM */
-	{ 0x8000, 0x8fff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
 
@@ -299,8 +317,8 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
 	{ 0x4000, 0x4bff, MWA_RAM },
-	{ 0x5c00, 0x5cff, MWA_RAM }, /* NVRAM */
-	{ 0x8000, 0x8fff, MWA_RAM }, /* vector ram */
+	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size }, /* NVRAM */
+	{ 0x8000, 0x8fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector ram */
 	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
 };
@@ -358,7 +376,7 @@ static struct IOWritePort sound_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( omegrace )
 	PORT_START /* SW0 */
 	PORT_DIPNAME( 0x03, 0x03, "1st Bonus Life" )
 	PORT_DIPSETTING (   0x00, "40k" )
@@ -437,27 +455,6 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_BW };
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -479,7 +476,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3.0 MHz */
-			0,
 			readmem,writemem,readport,writeport,
 			0,0, /* no vblank interrupt */
 			interrupt, 250 /* 250 Hz */
@@ -487,7 +483,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 MHz */
-			2, 		/* memory region 1*/
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			0, 0, /* no vblank interrupt */
 			nmi_interrupt, 250 /* 250 Hz */
@@ -500,9 +495,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1020, -10, 1010 },
-	gfxdecodeinfo,
+	0,
 	256,256,
-	avg_init_colors,
+	avg_init_palette_white,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -517,7 +512,9 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -527,8 +524,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( omegrace_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( omegrace )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "omega.m7",     0x0000, 0x1000, 0x0424d46e )
 	ROM_LOAD( "omega.l7",     0x1000, 0x1000, 0xedcd7a7d )
 	ROM_LOAD( "omega.k7",     0x2000, 0x1000, 0x6d10f197 )
@@ -537,40 +534,13 @@ ROM_START( omegrace_rom )
 	ROM_LOAD( "omega.f1",     0x9800, 0x0800, 0xd44c0814 )
 
 	ROM_REGION_DISPOSE(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_REGION(0x10000)	/* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio cpu */
 	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
 ROM_END
 
-static int hiload(void)
-{
-	/* no reason to check hiscore table. It's an NV_RAM! */
-	/* However, it does not work yet. Don't know why. BW */
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x5c00],0x100);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5c00],0x100);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver omegrace_driver =
+struct GameDriver driver_omegrace =
 {
 	__FILE__,
 	0,
@@ -583,17 +553,16 @@ struct GameDriver omegrace_driver =
 	&machine_driver,
 	0,
 
-	omegrace_rom,
+	rom_omegrace,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_omegrace,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
 

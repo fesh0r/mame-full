@@ -74,6 +74,7 @@ void blitscreen_dirty1_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_2x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_3xs_8bpp(void);
+void blitscreen_dirty1_vesa_3x_1x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_3x_3x_8bpp(void);
@@ -84,10 +85,29 @@ void blitscreen_dirty1_vesa_4x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3xs_8bpp(void);
 
 void blitscreen_dirty1_vesa_1x_1x_16bpp(void);
-void blitscreen_dirty1_vesa_2x_2x_16bpp(void);
-void blitscreen_dirty1_vesa_2x_2xs_16bpp(void);
 void blitscreen_dirty1_vesa_1x_2x_16bpp(void);
 void blitscreen_dirty1_vesa_1x_2xs_16bpp(void);
+void blitscreen_dirty1_vesa_2x_1x_16bpp(void);
+void blitscreen_dirty1_vesa_2x_2x_16bpp(void);
+void blitscreen_dirty1_vesa_2x_2xs_16bpp(void);
+void blitscreen_dirty1_vesa_3x_1x_16bpp(void);
+void blitscreen_dirty1_vesa_3x_2x_16bpp(void);
+void blitscreen_dirty1_vesa_3x_2xs_16bpp(void);
+void blitscreen_dirty1_vesa_4x_2x_16bpp(void);
+void blitscreen_dirty1_vesa_4x_2xs_16bpp(void);
+
+void blitscreen_dirty1_vesa_1x_1x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_1x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_2x_1x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_2x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_3x_1x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_3x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_4x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(void);
+
 
 /* dirty mode 0 (no osd_mark_dirty calls) */
 void blitscreen_dirty0_vga(void);
@@ -100,6 +120,7 @@ void blitscreen_dirty0_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_2x_3x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_3xs_8bpp(void);
+void blitscreen_dirty0_vesa_3x_1x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_3x_3x_8bpp(void);
@@ -112,88 +133,158 @@ void blitscreen_dirty0_vesa_4x_3xs_8bpp(void);
 void blitscreen_dirty0_vesa_1x_1x_16bpp(void);
 void blitscreen_dirty0_vesa_1x_2x_16bpp(void);
 void blitscreen_dirty0_vesa_1x_2xs_16bpp(void);
+void blitscreen_dirty0_vesa_2x_1x_16bpp(void);
 void blitscreen_dirty0_vesa_2x_2x_16bpp(void);
 void blitscreen_dirty0_vesa_2x_2xs_16bpp(void);
+void blitscreen_dirty0_vesa_3x_1x_16bpp(void);
+void blitscreen_dirty0_vesa_3x_2x_16bpp(void);
+void blitscreen_dirty0_vesa_3x_2xs_16bpp(void);
+void blitscreen_dirty0_vesa_4x_2x_16bpp(void);
+void blitscreen_dirty0_vesa_4x_2xs_16bpp(void);
+
+void blitscreen_dirty0_vesa_1x_1x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_1x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_2x_1x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_2x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_3x_1x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_3x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(void);
+
+
 
 static void update_screen_dummy(void);
 void (*update_screen)(void) = update_screen_dummy;
 
 #define MAX_X_MULTIPLY 4
 #define MAX_Y_MULTIPLY 3
-#define MAX_X_MULTIPLY16 2
+#define MAX_X_MULTIPLY16 4
 #define MAX_Y_MULTIPLY16 2
 
 static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
-{                       /* 1 x 1 */
-	{       {       { blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp },
+{			/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp }
-		},      /* 1 x 2 */
-		{       { blitscreen_dirty0_vesa_1x_2x_8bpp,  blitscreen_dirty1_vesa_1x_2x_8bpp },
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_8bpp,  blitscreen_dirty1_vesa_1x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_1x_2xs_8bpp, blitscreen_dirty1_vesa_1x_2xs_8bpp }
-		},      /* 1 x 3 */
-		{       { update_screen_dummy, update_screen_dummy },
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
 			{ update_screen_dummy, update_screen_dummy },
 		}
-	},              /* 2 x 1 */
-	{       {       { blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp },
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp },
 			{ blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp }
-		},      /* 2 x 2 */
-		{       { blitscreen_dirty0_vesa_2x_2x_8bpp,  blitscreen_dirty1_vesa_2x_2x_8bpp },
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_8bpp,  blitscreen_dirty1_vesa_2x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_2x_2xs_8bpp, blitscreen_dirty1_vesa_2x_2xs_8bpp }
-		},      /* 2 x 3 */
-		{       { blitscreen_dirty0_vesa_2x_3x_8bpp,  blitscreen_dirty1_vesa_2x_3x_8bpp },
+		},	/* 2 x 3 */
+		{	{ blitscreen_dirty0_vesa_2x_3x_8bpp,  blitscreen_dirty1_vesa_2x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_2x_3xs_8bpp, blitscreen_dirty1_vesa_2x_3xs_8bpp }
 		}
-	},              /* 3 x 1 */
-	{       {       { update_screen_dummy, update_screen_dummy },
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_8bpp,  blitscreen_dirty1_vesa_3x_1x_8bpp },
 			{ update_screen_dummy, update_screen_dummy }
-		},      /* 3 x 2 */
-		{       { blitscreen_dirty0_vesa_3x_2x_8bpp,  blitscreen_dirty1_vesa_3x_2x_8bpp },
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_8bpp,  blitscreen_dirty1_vesa_3x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_3x_2xs_8bpp, blitscreen_dirty1_vesa_3x_2xs_8bpp }
-		},      /* 3 x 3 */
-		{       { blitscreen_dirty0_vesa_3x_3x_8bpp,  blitscreen_dirty1_vesa_3x_3x_8bpp },
+		},	/* 3 x 3 */
+		{	{ blitscreen_dirty0_vesa_3x_3x_8bpp,  blitscreen_dirty1_vesa_3x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_3x_3xs_8bpp, blitscreen_dirty1_vesa_3x_3xs_8bpp }
 		}
-	},              /* 4 x 1 */
-	{       {       { update_screen_dummy, update_screen_dummy },
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
 			{ update_screen_dummy, update_screen_dummy }
-		},      /* 4 x 2 */
-		{       { blitscreen_dirty0_vesa_4x_2x_8bpp,  blitscreen_dirty1_vesa_4x_2x_8bpp },
+		},	/* 4 x 2 */
+		{	{ blitscreen_dirty0_vesa_4x_2x_8bpp,  blitscreen_dirty1_vesa_4x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_4x_2xs_8bpp, blitscreen_dirty1_vesa_4x_2xs_8bpp }
-		},      /* 4 x 3 */
-		{       { blitscreen_dirty0_vesa_4x_3x_8bpp,  blitscreen_dirty1_vesa_4x_3x_8bpp },
+		},	/* 4 x 3 */
+		{	{ blitscreen_dirty0_vesa_4x_3x_8bpp,  blitscreen_dirty1_vesa_4x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_4x_3xs_8bpp, blitscreen_dirty1_vesa_4x_3xs_8bpp }
 		}
 	}
 };
 
 static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(void) =
-{                       /* 1 x 1 */
-	{       {       { blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
+{				/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp }
-		},      /* 1 x 2 */
-		{       { blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_2xs_16bpp, blitscreen_dirty1_vesa_1x_2xs_16bpp }
 		}
-	},              /* 2 x 1 */
-	{       {       { update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
-		},      /* 2 x 2 */
-		{       { blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_16bpp,  blitscreen_dirty1_vesa_2x_1x_16bpp },
+			{ blitscreen_dirty0_vesa_2x_1x_16bpp,  blitscreen_dirty1_vesa_2x_1x_16bpp }
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_2x_2xs_16bpp, blitscreen_dirty1_vesa_2x_2xs_16bpp }
 		}
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_16bpp, blitscreen_dirty1_vesa_3x_1x_16bpp },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_16bpp, blitscreen_dirty1_vesa_3x_2x_16bpp },
+			{ blitscreen_dirty0_vesa_3x_2xs_16bpp, blitscreen_dirty1_vesa_3x_2xs_16bpp }
+		}
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 2 */
+		{	{ blitscreen_dirty0_vesa_4x_2x_16bpp,  blitscreen_dirty1_vesa_4x_2x_16bpp },
+			{ blitscreen_dirty0_vesa_4x_2xs_16bpp, blitscreen_dirty1_vesa_4x_2xs_16bpp }
+		}
 	}
+
 };
 
+static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(void) =
+{				/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp_palettized, blitscreen_dirty1_vesa_1x_1x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_1x_1x_16bpp_palettized, blitscreen_dirty1_vesa_1x_1x_16bpp_palettized }
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_1x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized }
+		}
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_1x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_2x_1x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_1x_16bpp_palettized }
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized }
+		}
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_16bpp_palettized, blitscreen_dirty1_vesa_3x_1x_16bpp_palettized },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_16bpp_palettized, blitscreen_dirty1_vesa_3x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized }
+		}
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 2 */
+		{	{ blitscreen_dirty0_vesa_4x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_4x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized }
+		}
+	}
 
+};
 
 struct osd_bitmap *scrbitmap;
-static unsigned char current_palette[256][3];
-static PALETTE adjusted_palette;
-static unsigned char dirtycolor[256];
+static int modifiable_palette;
+static int total_colors;
+static unsigned char *current_palette;
+static unsigned int *dirtycolor;
 static int dirtypalette;
+static int dirty_bright;
+static int bright_lookup[256];
 extern unsigned int doublepixel[256];
 extern unsigned int quadpixel[256]; /* for quadring pixels */
+extern UINT32 *palette_16bit_lookup;
 
 int frameskip,autoframeskip;
 #define FRAMESKIP_LEVELS 12
@@ -209,7 +300,6 @@ int wait_vsync;
 int use_triplebuf;
 int triplebuf_pos,triplebuf_page_width;
 int vsync_frame_rate;
-int color_depth;
 int skiplines;
 int skipcolumns;
 int scanlines;
@@ -320,6 +410,7 @@ unsigned char tw368x224arc_h, tw368x224arc_v;
 unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
 unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
 unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
+unsigned char tw640x480arc_h, tw640x480arc_v;
 
 /* 15.75KHz Modes */
 struct vga_15KHz_tweak { int x, y; Register *reg; int reglen;
@@ -375,6 +466,8 @@ struct mode_adjust  arcade_adjust[] = {
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 
+const int safety = 16;
+
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 980209 */
 {
 	struct osd_bitmap *bitmap;
@@ -393,11 +486,7 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 	{
 		int i,rowlen,rdwidth;
 		unsigned char *bm;
-		int safety;
 
-
-		if (width > 64) safety = 16;
-		else safety = 0;        /* don't create the safety area for GfxElement bitmaps */
 
 		if (depth != 8 && depth != 16) depth = 8;
 
@@ -417,15 +506,25 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 			return 0;
 		}
 
-		if ((bitmap->line = malloc(height * sizeof(unsigned char *))) == 0)
+		/* clear ALL bitmap, including safety area, to avoid garbage on right */
+		/* side of screen is width is not a multiple of 4 */
+		memset(bm,0,(height + 2 * safety) * rowlen);
+
+		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)
 		{
 			free(bm);
 			free(bitmap);
 			return 0;
 		}
 
-		for (i = 0;i < height;i++)
-			bitmap->line[i] = &bm[(i + safety) * rowlen + safety];
+		for (i = 0;i < height + 2 * safety;i++)
+		{
+			if (depth == 16)
+				bitmap->line[i] = &bm[i * rowlen + 2*safety];
+			else
+				bitmap->line[i] = &bm[i * rowlen + safety];
+		}
+		bitmap->line += safety;
 
 		bitmap->_private = bm;
 
@@ -467,6 +566,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 {
 	if (bitmap)
 	{
+		bitmap->line -= safety;
 		free(bitmap->line);
 		free(bitmap->_private);
 		free(bitmap);
@@ -516,7 +616,7 @@ INLINE void swap_dirty(void)
 /*
  * This function tries to find the best display mode.
  */
-static void select_display_mode(void)
+static void select_display_mode(int depth)
 {
 	int width,height, i;
 
@@ -565,7 +665,7 @@ static void select_display_mode(void)
 	use_vesa = -1;
 
 	/* 16 bit color is supported only by VESA modes */
-	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	if (depth == 16)
 	{
 		if (errorlog)
 			fprintf (errorlog, "Game needs 16-bit colors. Using VESA\n");
@@ -642,7 +742,6 @@ static void select_display_mode(void)
 				}
 
 				use_vesa = 0;
-				color_depth = 8;
 			}
 			else
 				use_vesa = arcade_tweaked[i].vesa;
@@ -800,10 +899,18 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 
 
 /* center image inside the display based on the visual area */
-static void adjust_display(int xmin, int ymin, int xmax, int ymax)
+static void adjust_display(int xmin, int ymin, int xmax, int ymax, int depth)
 {
 	int temp;
 	int w,h;
+	int act_width;
+
+/* if it's a SVGA arcade monitor mode, get the memory width of the mode */
+/* this could be double the width of the actual mode set */
+	if (scanrate15KHz && SVGA15KHzdriver && use_vesa == 1)
+		act_width = SVGA15KHzdriver->getlogicalwidth (gfx_width);
+	else
+		act_width = gfx_width;
 
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
@@ -839,7 +946,8 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 	visheight = ymax - ymin + 1;
 
 
-	xmultiply = 1;
+	/* setup xmultiply to handle SVGA driver's (possible) double width */
+	xmultiply = act_width / gfx_width;
 	ymultiply = 1;
 
 	if (use_vesa && !vector_game)
@@ -850,7 +958,7 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 					!(Machine->drv->video_attributes & VIDEO_DUAL_MONITOR))
 			{
 				/* horizontal, non dual monitor games may be stretched at will */
-				while ((xmultiply+1) * viswidth <= gfx_width)
+				while ((xmultiply+1) * viswidth <= act_width)
 					xmultiply++;
 				while ((ymultiply+1) * visheight <= gfx_height)
 					ymultiply++;
@@ -859,7 +967,7 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 			{
 				int tw,th;
 
-				tw = gfx_width;
+				tw = act_width;
 				th = gfx_height;
 
 				if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
@@ -914,7 +1022,7 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 		}
 	}
 
-	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	if (depth == 16)
 	{
 		if (xmultiply > MAX_X_MULTIPLY16) xmultiply = MAX_X_MULTIPLY16;
 		if (ymultiply > MAX_Y_MULTIPLY16) ymultiply = MAX_Y_MULTIPLY16;
@@ -928,9 +1036,9 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 	gfx_display_lines = visheight;
 	gfx_display_columns = viswidth;
 
-	gfx_xoffset = (gfx_width - viswidth * xmultiply) / 2;
-	if (gfx_display_columns > gfx_width / xmultiply)
-		gfx_display_columns = gfx_width / xmultiply;
+	gfx_xoffset = (act_width - viswidth * xmultiply) / 2;
+	if (gfx_display_columns > act_width / xmultiply)
+		gfx_display_columns = act_width / xmultiply;
 
 	gfx_yoffset = (gfx_height - visheight * ymultiply) / 2;
 		if (gfx_display_lines > gfx_height / ymultiply)
@@ -984,6 +1092,9 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 				xmin, ymin, xmax, ymax, skiplines, skipcolumns,gfx_display_lines,gfx_display_columns,xmultiply,ymultiply);
 
 	set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
+
+	/* round to a multiple of 4 to avoid missing pixels on the right side */
+	gfx_display_columns  = (gfx_display_columns + 3) & ~3;
 }
 
 
@@ -995,13 +1106,14 @@ int game_attributes;
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. Attributes are the ones defined in driver.h. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int attributes)
+struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes)
 {
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
 	brightness = 100;
 	brightness_paused_adjust = 1.0;
+	dirty_bright = 1;
 
 	if (frameskip < 0) frameskip = 0;
 	if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
@@ -1023,7 +1135,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	else
 		use_dirty = 0;
 
-	select_display_mode();
+	select_display_mode(depth);
 
 	if (vector_game)
 	{
@@ -1034,23 +1146,30 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	game_height = height;
 	game_attributes = attributes;
 
-	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	if (depth == 16)
 		scrbitmap = osd_new_bitmap(width,height,16);
 	else
 		scrbitmap = osd_new_bitmap(width,height,8);
 
 	if (!scrbitmap) return 0;
 
+/* find a VESA driver for 15KHz modes just in case we need it later on */
+	if (scanrate15KHz)
+		getSVGA15KHzdriver (&SVGA15KHzdriver);
+	else
+		SVGA15KHzdriver = 0;
+
+
 	if (!osd_set_display(width, height, attributes))
 		return 0;
 
 	/* center display based on visible area */
 	if (vector_game)
-		adjust_display(0, 0, width-1, height-1);
+		adjust_display(0, 0, width-1, height-1, depth);
 	else
 	{
 		struct rectangle vis = Machine->drv->visible_area;
-		adjust_display(vis.min_x, vis.min_y, vis.max_x, vis.max_y);
+		adjust_display(vis.min_x, vis.min_y, vis.max_x, vis.max_y, depth);
 	}
 
    /*Check for SVGA 15.75KHz mode (req. for 15.75KHz Arcade Monitor Modes)
@@ -1059,12 +1178,10 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	{
 		int dbl;
 		dbl = (ymultiply >= 2);
-		/* find a driver */
-		if (!getSVGA15KHzdriver (&SVGA15KHzdriver))
+		/* check that we found a driver */
+		if (!SVGA15KHzdriver)
 		{
 			printf ("\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height);
-			if (use_triplebuf)
-				printf ("\nTriple buffering is on - turn it off to use Generic 15.75KHz SVGA driver\n");
 			return 0;
 		}
 		if(errorlog)
@@ -1080,48 +1197,6 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 			so we can avoid drawing them and save some time */
 		if(dbl)
 			scanlines=1;
-	}
-
-	if (use_vesa == 0)
-	{
-		if (use_dirty) /* supports dirty ? */
-		{
-			if (unchained)
-			{
-				update_screen = blitscreen_dirty1_unchained_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_unchained_vga\n");
-			}
-			else
-			{
-				update_screen = blitscreen_dirty1_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
-			}
-		}
-		else
-		{
-			/* check for unchained modes */
-			if (unchained)
-			{
-				update_screen = blitscreen_dirty0_unchained_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_unchained_vga\n");
-			}
-			else
-			{
-				update_screen = blitscreen_dirty0_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
-			}
-		}
-	}
-	else
-	{
-		if (scrbitmap->depth == 16)
-		{
-			update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
-		}
-		else
-		{
-			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
-		}
 	}
 
     return scrbitmap;
@@ -1162,11 +1237,12 @@ int osd_set_display(int width,int height, int attributes)
 		swap_dirty();
 		init_dirty(1);
 	}
-	for (i = 0;i < 256;i++)
+	if (dirtycolor)
 	{
-		dirtycolor[i] = 1;
+		for (i = 0;i < total_colors;i++)
+			dirtycolor[i] = 1;
+		dirtypalette = 1;
 	}
-	dirtypalette = 1;
 	/* handle special 15.75KHz modes, these now include SVGA modes */
 	found = 0;
 	/*move video freq set to here, as we need to set it explicitly for the 15.75KHz modes */
@@ -1268,7 +1344,7 @@ int osd_set_display(int width,int height, int attributes)
 					if(unchained)
 					{
 						/* for unchained modes, turn off dirty updates */
-						/* as any speed gain is lost in the complex mulit-page update needed */
+						/* as any speed gain is lost in the complex multi-page update needed */
 						/* plus - non-dirty updates remove unchained 'shearing' */
 						use_dirty = 0;
 					}
@@ -1309,27 +1385,25 @@ int osd_set_display(int width,int height, int attributes)
 
 			/* allocate a wide enough virtual screen if possible */
 			/* we round the width (in dwords) to be an even multiple 256 - that */
-			/* way, during page flipping page only one byte of the video RAM */
+			/* way, during page flipping only one byte of the video RAM */
 			/* address changes, therefore preventing flickering. */
 			if (bits == 8)
 				triplebuf_page_width = (gfx_width + 0x3ff) & ~0x3ff;
 			else
 				triplebuf_page_width = (gfx_width + 0x1ff) & ~0x1ff;
 
-			/* don't force triple buffer for 15.75Khz modes */
-			/* the virtual screen width created won't fit into to the 8bit register used */
-			/* by the generic driver*/
-			if (scanrate15KHz && !use_triplebuf)
-				err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
-			else
+			/* don't ask for a larger screen if triplebuffer not requested - could */
+			/* cause problems in some cases. */
+			err = 1;
+			if (use_triplebuf)
+				err = set_gfx_mode(mode,gfx_width,gfx_height,3*triplebuf_page_width,0);
+			if (err)
 			{
-				/* don't ask for a larger screen if triplebuffer not requested - could */
-				/* cause problems in some cases. */
-				err = 1;
-				if (use_triplebuf)
-					err = set_gfx_mode(mode,gfx_width,gfx_height,3*triplebuf_page_width,0);
-				if (err)
-  					err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
+				/* if we're using a SVGA 15KHz driver - tell Allegro the virtual screen width */
+				if(SVGA15KHzdriver)
+					err = set_gfx_mode(mode,gfx_width,gfx_height,SVGA15KHzdriver->getlogicalwidth(gfx_width),0);
+				else
+					err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
 			}
 
 			if (errorlog)
@@ -1603,7 +1677,7 @@ int osd_set_display(int width,int height, int attributes)
 		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
 
 		if (errorlog)
-			fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
+			fprintf(errorlog,"target frame rate = %ffps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
 
 		/* don't allow more than 8% difference between target and actual frame rate */
 		while (rate > Machine->drv->frames_per_second * 108 / 100)
@@ -1613,7 +1687,7 @@ int osd_set_display(int width,int height, int attributes)
 		{
 			osd_close_display();
 			if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
-						"video refresh frequency = %dHz, target frame rate = %dfps\n",
+						"video refresh frequency = %dHz, target frame rate = %ffps\n",
 						(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
 		}
@@ -1653,6 +1727,12 @@ void osd_close_display(void)
 			printf("Average FPS: %f\n",(double)UCLOCKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
 	}
 
+	free(dirtycolor);
+	dirtycolor = 0;
+	free(current_palette);
+	current_palette = 0;
+	free(palette_16bit_lookup);
+	palette_16bit_lookup = 0;
 	if (scrbitmap)
 	{
 		osd_free_bitmap(scrbitmap);
@@ -1662,31 +1742,39 @@ void osd_close_display(void)
 
 
 
-
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
-/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
-/* with pen values corresponding to a 5-5-5 15-bit palette */
-void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens)
+int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable)
 {
-	if (totalcolors == 32768)
+	int i;
+
+	modifiable_palette = modifiable;
+	total_colors = totalcolors;
+	if (scrbitmap->depth != 8)
+		total_colors += 2;
+	else total_colors = 256;
+
+	dirtycolor = malloc(total_colors * sizeof(int));
+	current_palette = malloc(3 * total_colors * sizeof(unsigned char));
+	palette_16bit_lookup = malloc(total_colors * sizeof(UINT32));
+	if (dirtycolor == 0 || current_palette == 0 || palette_16bit_lookup == 0)
+		return 1;
+
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	for (i = 0;i < total_colors;i++)
+		current_palette[3*i+0] = current_palette[3*i+1] = current_palette[3*i+2] = 0;
+
+	if (scrbitmap->depth != 8 && modifiable == 0)
 	{
-		int r1,g1,b1;
 		int r,g,b;
 
 
-		for (r1 = 0; r1 < 32; r1++)
+		for (i = 0;i < totalcolors;i++)
 		{
-			for (g1 = 0; g1 < 32; g1++)
-			{
-				for (b1 = 0; b1 < 32; b1++)
-				{
-					r = 255 * brightness * brightness_paused_adjust * pow(r1 / 31.0, 1 / osd_gamma_correction) / 100;
-					g = 255 * brightness * brightness_paused_adjust * pow(g1 / 31.0, 1 / osd_gamma_correction) / 100;
-					b = 255 * brightness * brightness_paused_adjust * pow(b1 / 31.0, 1 / osd_gamma_correction) / 100;
-					*pens++ = makecol(r,g,b);
-				}
-			}
+			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
+			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
+			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
+			*pens++ = makecol(r,g,b);
 		}
 
 		Machine->uifont->colortable[0] = makecol(0x00,0x00,0x00);
@@ -1696,14 +1784,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 	}
 	else
 	{
-		int i;
-
-
-		/* initialize the palette */
-		for (i = 0;i < 256;i++)
-			current_palette[i][0] = current_palette[i][1] = current_palette[i][2] = 0;
-
-		if (totalcolors >= 255)
+		if (scrbitmap->depth == 8 && totalcolors >= 255)
 		{
 			int bestblack,bestwhite;
 			int bestblackscore,bestwhitescore;
@@ -1716,7 +1797,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			{
 				int r,g,b,score;
 
-				r = palette[3*i];
+				r = palette[3*i+0];
 				g = palette[3*i+1];
 				b = palette[3*i+2];
 				score = r*r + g*g + b*b;
@@ -1748,7 +1829,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 		else
 		{
 			/* reserve color 1 for the user interface text */
-			current_palette[1][0] = current_palette[1][1] = current_palette[1][2] = 0xff;
+			current_palette[3*1+0] = current_palette[3*1+1] = current_palette[3*1+2] = 0xff;
 			Machine->uifont->colortable[0] = 0;
 			Machine->uifont->colortable[1] = 1;
 			Machine->uifont->colortable[2] = 1;
@@ -1757,35 +1838,82 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			/* fill the palette starting from the end, so we mess up badly written */
 			/* drivers which don't go through Machine->pens[] */
 			for (i = 0;i < totalcolors;i++)
-				pens[i] = 255-i;
+				pens[i] = (total_colors-1)-i;
 		}
 
 		for (i = 0;i < totalcolors;i++)
 		{
-			current_palette[pens[i]][0] = palette[3*i];
-			current_palette[pens[i]][1] = palette[3*i+1];
-			current_palette[pens[i]][2] = palette[3*i+2];
+			current_palette[3*pens[i]+0] = palette[3*i];
+			current_palette[3*pens[i]+1] = palette[3*i+1];
+			current_palette[3*pens[i]+2] = palette[3*i+2];
 		}
 	}
+
+	if (use_vesa == 0)
+	{
+		if (use_dirty) /* supports dirty ? */
+		{
+			if (unchained)
+			{
+				update_screen = blitscreen_dirty1_unchained_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_unchained_vga\n");
+			}
+			else
+			{
+				update_screen = blitscreen_dirty1_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
+			}
+		}
+		else
+		{
+			/* check for unchained modes */
+			if (unchained)
+			{
+				update_screen = blitscreen_dirty0_unchained_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_unchained_vga\n");
+			}
+			else
+			{
+				update_screen = blitscreen_dirty0_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
+			}
+		}
+	}
+	else
+	{
+		if (scrbitmap->depth == 16)
+		{
+			if (modifiable_palette)
+				update_screen = updaters16_palettized[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+			else
+				update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		}
+		else
+		{
+			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		}
+	}
+
+	return 0;
 }
 
 
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
 {
-	if (scrbitmap->depth != 8)
+	if (modifiable_palette == 0)
 	{
-		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() doesn't work with %d bit video modes.\n",scrbitmap->depth);
+		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() called with modifiable_palette == 0\n");
 		return;
 	}
 
 
-	if (current_palette[pen][0] != red ||
-			current_palette[pen][1] != green ||
-			current_palette[pen][2] != blue)
+	if (	current_palette[3*pen+0] != red ||
+			current_palette[3*pen+1] != green ||
+			current_palette[3*pen+2] != blue)
 	{
-		current_palette[pen][0] = red;
-		current_palette[pen][1] = green;
-		current_palette[pen][2] = blue;
+		current_palette[3*pen+0] = red;
+		current_palette[3*pen+1] = green;
+		current_palette[3*pen+2] = blue;
 
 		dirtycolor[pen] = 1;
 		dirtypalette = 1;
@@ -1796,17 +1924,17 @@ void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned cha
 
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
 {
-	if (scrbitmap->depth == 16)
+	if (scrbitmap->depth != 8 && modifiable_palette == 0)
 	{
-		*red = getr(pen);
+		*red =   getr(pen);
 		*green = getg(pen);
-		*blue = getb(pen);
+		*blue =  getb(pen);
 	}
 	else
 	{
-		*red = current_palette[pen][0];
-		*green = current_palette[pen][1];
-		*blue = current_palette[pen][2];
+		*red =   current_palette[3*pen+0];
+		*green = current_palette[3*pen+1];
+		*blue =  current_palette[3*pen+2];
 	}
 }
 
@@ -1821,44 +1949,30 @@ void update_screen_dummy(void)
 INLINE void pan_display(void)
 {
 	/* horizontal panning */
-	if (keyboard_pressed(KEYCODE_LSHIFT))
-	{
-		if (keyboard_pressed(KEYCODE_PGUP))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_LEFT,1))
+		if (skipcolumns < skipcolumnsmax)
 		{
-			if (skipcolumns < skipcolumnsmax)
-			{
-				skipcolumns++;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skipcolumns++;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-		if (keyboard_pressed(KEYCODE_PGDN))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_RIGHT,1))
+		if (skipcolumns > skipcolumnsmin)
 		{
-			if (skipcolumns > skipcolumnsmin)
-			{
-				skipcolumns--;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skipcolumns--;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-	}
-	else /*  vertical panning */
-	{
-		if (keyboard_pressed(KEYCODE_PGDN))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN,1))
+		if (skiplines < skiplinesmax)
 		{
-			if (skiplines < skiplinesmax)
-			{
-				skiplines++;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skiplines++;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-		if (keyboard_pressed(KEYCODE_PGUP))
+	if (input_ui_pressed_repeat(IPT_UI_PAN_UP,1))
+		if (skiplines > skiplinesmin)
 		{
-			if (skiplines > skiplinesmin)
-			{
-				skiplines--;
-				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
-			}
+			skiplines--;
+			osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 		}
-	}
 
 	if (use_dirty) init_dirty(1);
 
@@ -1946,9 +2060,8 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
-		if (!keyboard_pressed(KEYCODE_LSHIFT) && !keyboard_pressed(KEYCODE_RSHIFT)
-				&& !keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL)
-				&& input_ui_pressed(IPT_UI_SHOW_FPS))
+
+		if (input_ui_pressed(IPT_UI_SHOW_FPS))
 		{
 			if (showfpstemp)
 			{
@@ -2064,7 +2177,7 @@ void osd_update_video_and_audio(void)
 
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
-			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,Machine->drv->frames_per_second);
+			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,(int)Machine->drv->frames_per_second);
 			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{
@@ -2073,36 +2186,78 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
-
 		if (scrbitmap->depth == 8)
 		{
+			if (dirty_bright)
+			{
+				dirty_bright = 0;
+				for (i = 0;i < 256;i++)
+				{
+					float rate = brightness * brightness_paused_adjust * pow(i / 255.0, 1 / osd_gamma_correction) / 100;
+					bright_lookup[i] = 63 * rate + 0.5;
+				}
+			}
 			if (dirtypalette)
 			{
 				dirtypalette = 0;
+				for (i = 0;i < total_colors;i++)
+				{
+					if (dirtycolor[i])
+					{
+						RGB adjusted_palette;
 
+						dirtycolor[i] = 0;
+
+						adjusted_palette.r = current_palette[3*i+0];
+						adjusted_palette.g = current_palette[3*i+1];
+						adjusted_palette.b = current_palette[3*i+2];
+						if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
+						{
+							adjusted_palette.r = bright_lookup[adjusted_palette.r];
+							adjusted_palette.g = bright_lookup[adjusted_palette.g];
+							adjusted_palette.b = bright_lookup[adjusted_palette.b];
+						}
+						set_color(i,&adjusted_palette);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (dirty_bright)
+			{
+				dirty_bright = 0;
 				for (i = 0;i < 256;i++)
+				{
+					float rate = brightness * brightness_paused_adjust * pow(i / 255.0, 1 / osd_gamma_correction) / 100;
+					bright_lookup[i] = 255 * rate + 0.5;
+				}
+			}
+			if (dirtypalette)
+			{
+				dirtypalette = 0;
+				for (i = 0;i < total_colors;i++)
 				{
 					if (dirtycolor[i])
 					{
 						int r,g,b;
 
-
 						dirtycolor[i] = 0;
 
-						r = 255 * brightness * brightness_paused_adjust * pow(current_palette[i][0] / 255.0, 1 / osd_gamma_correction) / 100;
-						g = 255 * brightness * brightness_paused_adjust * pow(current_palette[i][1] / 255.0, 1 / osd_gamma_correction) / 100;
-						b = 255 * brightness * brightness_paused_adjust * pow(current_palette[i][2] / 255.0, 1 / osd_gamma_correction) / 100;
-
-						adjusted_palette[i].r = r >> 2;
-						adjusted_palette[i].g = g >> 2;
-						adjusted_palette[i].b = b >> 2;
-
-						set_color(i,&adjusted_palette[i]);
+						r = current_palette[3*i+0];
+						g = current_palette[3*i+1];
+						b = current_palette[3*i+2];
+						if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
+						{
+							r = bright_lookup[r];
+							g = bright_lookup[g];
+							b = bright_lookup[b];
+						}
+						palette_16bit_lookup[i] = makecol(r,g,b) * 0x10001;
 					}
 				}
 			}
 		}
-
 
 		/* copy the bitmap to screen memory */
 		profiler_mark(PROFILER_BLIT);
@@ -2136,27 +2291,8 @@ void osd_update_video_and_audio(void)
 			/* adjust speed to video refresh rate if vsync is on */
 			adjspeed = speed * Machine->drv->frames_per_second / vsync_frame_rate;
 
-			if (adjspeed < 60)
+			if (adjspeed >= 100)
 			{
-				frameskipadjust = 0;
-				frameskip += 3;
-				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
-			}
-			else if (adjspeed < 80)
-			{
-				frameskipadjust = 0;
-				frameskip += 2;
-				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
-			}
-			else if (adjspeed < 99) /* allow 99% speed */
-			{
-				frameskipadjust = 0;
-				/* don't push frameskip too far if we are close to 100% speed */
-				if (frameskip < 8) frameskip++;
-			}
-			else if (adjspeed >= 100)
-			{
-				/* increase frameskip quickly, decrease it slowly */
 				frameskipadjust++;
 				if (frameskipadjust >= 3)
 				{
@@ -2164,12 +2300,28 @@ void osd_update_video_and_audio(void)
 					if (frameskip > 0) frameskip--;
 				}
 			}
+			else
+			{
+				if (adjspeed < 80)
+					frameskipadjust -= (90 - adjspeed) / 5;
+				else
+				{
+					/* don't push frameskip too far if we are close to 100% speed */
+					if (frameskip < 8)
+						frameskipadjust--;
+				}
+
+				while (frameskipadjust <= -2)
+				{
+					frameskipadjust += 2;
+					if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
+				}
+			}
 		}
 	}
 
 	/* Check for PGUP, PGDN and pan screen */
-	if (keyboard_pressed(KEYCODE_PGDN) || keyboard_pressed(KEYCODE_PGUP))
-		pan_display();
+	pan_display();
 
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{
@@ -2237,20 +2389,14 @@ void osd_update_video_and_audio(void)
 
 void osd_set_gamma(float _gamma)
 {
-	if (scrbitmap->depth == 8)
-	{
-		int i;
+	int i;
 
+	osd_gamma_correction = _gamma;
 
-		osd_gamma_correction = _gamma;
-
-		for (i = 0;i < 256;i++)
-		{
-			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
-				dirtycolor[i] = 1;
-		}
-		dirtypalette = 1;
-	}
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	dirty_bright = 1;
 }
 
 float osd_get_gamma(void)
@@ -2261,20 +2407,14 @@ float osd_get_gamma(void)
 /* brightess = percentage 0-100% */
 void osd_set_brightness(int _brightness)
 {
-	if (scrbitmap->depth == 8)
-	{
-		int i;
+	int i;
 
+	brightness = _brightness;
 
-		brightness = _brightness;
-
-		for (i = 0;i < 256;i++)
-		{
-			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
-				dirtycolor[i] = 1;
-		}
-		dirtypalette = 1;
-	}
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	dirty_bright = 1;
 }
 
 int osd_get_brightness(void)
@@ -2290,20 +2430,15 @@ void osd_save_snapshot(void)
 
 void osd_pause(int paused)
 {
-	if (scrbitmap->depth == 8)
-	{
-		int i;
+	int i;
 
-		if (paused) brightness_paused_adjust = 0.65;
-		else brightness_paused_adjust = 1.0;
+	if (paused) brightness_paused_adjust = 0.65;
+	else brightness_paused_adjust = 1.0;
 
-		for (i = 0;i < 256;i++)
-		{
-			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
-				dirtycolor[i] = 1;
-		}
-		dirtypalette = 1;
-	}
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	dirty_bright = 1;
 }
 
 Register *make_scanline_mode(Register *inreg,int entries)

@@ -64,13 +64,6 @@ void konami_SN76496_0_w(int offset,int data);
 
 
 
-void yiear_init_machine(void)
-{
-	/* set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S;
-}
-
-
 static int yiear_speech_r(int offset)
 {
 	return rand();
@@ -120,7 +113,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( yiear )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -297,7 +290,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 Mhz */
-			0,			/* memory region */
 			readmem, writemem, 0, 0,
 			interrupt,1,	/* vblank */
 			yiear_nmi_interrupt,500	/* music tempo (correct frequency unknown) */
@@ -340,8 +332,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( yiear_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( yiear )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "i08.10d",      0x08000, 0x4000, 0xe2d7458b )
 	ROM_LOAD( "i07.8d",       0x0c000, 0x4000, 0x7db7442e )
 
@@ -353,15 +345,15 @@ ROM_START( yiear_rom )
 	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
 	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
-	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
+	ROM_REGION( 0x2000 )	/* 8k for the VLM5030 data */
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
-ROM_START( yiear2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( yiear2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d12_8.bin",    0x08000, 0x4000, 0x49ecd9dd )
 	ROM_LOAD( "d14_7.bin",    0x0c000, 0x4000, 0xbc2e1208 )
 
@@ -373,56 +365,16 @@ ROM_START( yiear2_rom )
 	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
 	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
-	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
+	ROM_REGION( 0x2000 )	/* 8k for the VLM5030 data */
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
-		(memcmp(&RAM[0x55A9],"\x10\x10\x10",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* Read the scores */
-			osd_fread(f,&RAM[0x5520],14*10);
-			/* reset score at top */
-			memcpy(&RAM[0x521C],&RAM[0x5520],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Save the scores */
-		osd_fwrite(f,&RAM[0x5520],14*10);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver yiear_driver =
+struct GameDriver driver_yiear =
 {
 	__FILE__,
 	0,
@@ -435,23 +387,22 @@ struct GameDriver yiear_driver =
 	&machine_driver,
 	0,
 
-	yiear_rom,
+	rom_yiear,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_yiear,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver yiear2_driver =
+struct GameDriver driver_yiear2 =
 {
 	__FILE__,
-	&yiear_driver,
+	&driver_yiear,
 	"yiear2",
 	"Yie Ar Kung-Fu (set 2)",
 	"1985",
@@ -461,16 +412,15 @@ struct GameDriver yiear2_driver =
 	&machine_driver,
 	0,
 
-	yiear2_rom,
+	rom_yiear2,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_yiear,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

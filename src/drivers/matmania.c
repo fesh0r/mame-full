@@ -205,7 +205,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 
 
 
-INPUT_PORTS_START( matmania_input_ports )
+INPUT_PORTS_START( matmania )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -373,21 +373,19 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver matmania_machine_driver =
+static struct MachineDriver machine_driver_matmania =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz ???? */
-			0,
 			matmania_readmem,matmania_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1200000,	/* 1.2 Mhz ???? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,15	/* ???? */
 								/* IRQs are caused by the main CPU */
@@ -441,21 +439,19 @@ static struct YM3526interface ym3526_interface =
 };
 
 
-static struct MachineDriver maniach_machine_driver =
+static struct MachineDriver machine_driver_maniach =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz ???? */
-			0,
 			maniach_readmem,maniach_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1200000,	/* 1.2 Mhz ???? */
-			3,
 			maniach_sound_readmem,maniach_sound_writemem,0,0,
 			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */
@@ -463,7 +459,6 @@ static struct MachineDriver maniach_machine_driver =
 		{
 			CPU_M68705,
 			500000,	/* .5 Mhz (don't know really how fast, but it doesn't need to even be this fast) */
-			4,
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -504,8 +499,8 @@ static struct MachineDriver maniach_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( matmania_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( matmania )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "k0-03",        0x4000, 0x4000, 0x314ab8a4 )
 	ROM_LOAD( "k1-03",        0x8000, 0x4000, 0x3b3c3f08 )
 	ROM_LOAD( "k2-03",        0xc000, 0x4000, 0x286c0917 )
@@ -539,20 +534,20 @@ ROM_START( matmania_rom )
 	ROM_LOAD( "kp-00",        0x5e000, 0x4000, 0x9c84a969 )
 	ROM_LOAD( "kq-00",        0x62000, 0x4000, 0xfa2f0003 )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "matmania.1",   0x0000, 0x0020, 0x1b58f01f ) /* char palette red and green components */
 	ROM_LOAD( "matmania.5",   0x0020, 0x0020, 0x2029f85f ) /* tile palette red and green components */
 	ROM_LOAD( "matmania.2",   0x0040, 0x0020, 0xb6ac1fd5 ) /* char palette blue component */
 	ROM_LOAD( "matmania.16",  0x0060, 0x0020, 0x09325dc2 ) /* tile palette blue component */
 
-	ROM_REGION(0x10000)	/* 64k for audio code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "k4-0",         0x8000, 0x4000, 0x86dab489 )
 	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
 ROM_END
 
 
-ROM_START( excthour_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( excthour )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e29",          0x04000, 0x4000, 0xc453e855 )
 	ROM_LOAD( "e28",          0x08000, 0x4000, 0x17b63708 )
 	ROM_LOAD( "e27",          0x0c000, 0x4000, 0x269ab3bc )
@@ -586,19 +581,19 @@ ROM_START( excthour_rom )
 	ROM_LOAD( "kp-00",        0x5e000, 0x4000, 0x9c84a969 )
 	ROM_LOAD( "kq-00",        0x62000, 0x4000, 0xfa2f0003 )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "matmania.1",   0x0000, 0x0020, 0x1b58f01f ) /* char palette red and green components */
 	ROM_LOAD( "matmania.5",   0x0020, 0x0020, 0x2029f85f ) /* tile palette red and green components */
 	ROM_LOAD( "matmania.2",   0x0040, 0x0020, 0xb6ac1fd5 ) /* char palette blue component */
 	ROM_LOAD( "matmania.16",  0x0060, 0x0020, 0x09325dc2 ) /* tile palette blue component */
 
-	ROM_REGION(0x10000)	/* 64k for audio code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "k4-0",         0x8000, 0x4000, 0x86dab489 )
 	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
 ROM_END
 
-ROM_START( maniach_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( maniach )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mc-mb2.bin",   0x04000, 0x4000, 0xa6da1ba8 )
 	ROM_LOAD( "mc-ma2.bin",   0x08000, 0x4000, 0x84583323 )
 	ROM_LOAD( "mc-m92.bin",   0x0c000, 0x4000, 0xe209a500 )
@@ -635,23 +630,23 @@ ROM_START( maniach_rom )
 	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
 	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
 	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
 	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
 	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
 
-	ROM_REGION(0x10000)	/* 64k for audio code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
 	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 )
 
-	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 8k for the microcontroller */
 	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
 ROM_END
 
-ROM_START( maniach2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( maniach2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic40-mb1",     0x04000, 0x4000, 0xb337a867 )
 	ROM_LOAD( "ic41-ma1",     0x08000, 0x4000, 0x85ec8279 )
 	ROM_LOAD( "ic42-m91",     0x0c000, 0x4000, 0xa14b86dd )
@@ -688,128 +683,24 @@ ROM_START( maniach2_rom )
 	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
 	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
 	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
 	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
 	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
 
-	ROM_REGION(0x10000)	/* 64k for audio code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
 	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 )
 
-	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 8k for the microcontroller */
 	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
 ROM_END
 
 
 
-static int matmania_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0x074d],"\xb0\xb0\xb0",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0700],16*5);
-			RAM[0x0028] = RAM[0x0700];
-			RAM[0x0029] = RAM[0x0701];
-			RAM[0x002a] = RAM[0x0702];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int excthour_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0x074d],"\xc9\xcd\xb0",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0700],16*5);
-			RAM[0x0028] = RAM[0x0700];
-			RAM[0x0029] = RAM[0x0701];
-			RAM[0x002a] = RAM[0x0702];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void matmania_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0700],16*5);
-		osd_fclose(f);
-	}
-}
-
-static int maniach_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x052b],"\x00\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0x0564],"\xc4\xd0\xc6",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x052b],60);
-			RAM[0x0028] = RAM[0x052b];
-			RAM[0x0029] = RAM[0x052c];
-			RAM[0x002a] = RAM[0x052d];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void maniach_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite(f,&RAM[0x052b],60);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver matmania_driver =
+struct GameDriver driver_matmania =
 {
 	__FILE__,
 	0,
@@ -819,50 +710,48 @@ struct GameDriver matmania_driver =
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&matmania_machine_driver,
+	&machine_driver_matmania,
 	0,
 
-	matmania_rom,
+	rom_matmania,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	matmania_hiload, matmania_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
 
-struct GameDriver excthour_driver =
+struct GameDriver driver_excthour =
 {
 	__FILE__,
-	&matmania_driver,
+	&driver_matmania,
 	"excthour",
 	"Exciting Hour",
 	"1985",
 	"Technos (Taito license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&matmania_machine_driver,
+	&machine_driver_matmania,
 	0,
 
-	excthour_rom,
+	rom_excthour,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	excthour_hiload, matmania_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver maniach_driver =
+struct GameDriver driver_maniach =
 {
 	__FILE__,
 	0,
@@ -872,44 +761,42 @@ struct GameDriver maniach_driver =
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&maniach_machine_driver,
+	&machine_driver_maniach,
 	0,
 
-	maniach_rom,
+	rom_maniach,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	maniach_hiload,maniach_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver maniach2_driver =
+struct GameDriver driver_maniach2 =
 {
 	__FILE__,
-	&maniach_driver,
+	&driver_maniach,
 	"maniach2",
 	"Mania Challenge (set 2)",	/* earlier version? */
 	"1986",
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&maniach_machine_driver,
+	&machine_driver_maniach,
 	0,
 
-	maniach2_rom,
+	rom_maniach2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	maniach_hiload,maniach_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

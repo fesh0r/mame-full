@@ -9,6 +9,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "cpu/m6809/m6809.h"
 
 
+void konami1_decode(void);
 
 extern unsigned char *hyperspt_scroll;
 
@@ -30,14 +31,6 @@ extern struct DACinterface konami_dac_interface;
 void konami_SN76496_latch_w(int offset,int data);
 void konami_SN76496_0_w(int offset,int data);
 
-/* in machine/konami.c */
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
-
-void hyperspt_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
 /* handle fake button for speed cheat */
 static int konami_IN1_r(int offset)
@@ -55,6 +48,80 @@ static int konami_IN1_r(int offset)
 		cheat = (++cheat)%4;
 	}
 	return res;
+}
+
+
+
+/*
+ Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
+*/
+static unsigned char *nvram;
+static int nvram_size;
+static int we_flipped_the_switch;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+	{
+		osd_fwrite(file,nvram,nvram_size);
+
+		if (we_flipped_the_switch)
+		{
+			struct InputPort *in;
+
+
+			/* find the dip switch which resets the high score table, and set it */
+			/* back to off. */
+			in = Machine->input_ports;
+
+			while (in->type != IPT_END)
+			{
+				if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+						strcmp(in->name,"World Records") == 0)
+				{
+					if (in->default_value == 0)
+						in->default_value = in->mask;
+					break;
+				}
+
+				in++;
+			}
+
+			we_flipped_the_switch = 0;
+		}
+	}
+	else
+	{
+		if (file)
+		{
+			osd_fread(file,nvram,nvram_size);
+			we_flipped_the_switch = 0;
+		}
+		else
+		{
+			struct InputPort *in;
+
+
+			/* find the dip switch which resets the high score table, and set it on */
+			in = Machine->input_ports;
+
+			while (in->type != IPT_END)
+			{
+				if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+						strcmp(in->name,"World Records") == 0)
+				{
+					if (in->default_value == in->mask)
+					{
+						in->default_value = 0;
+						we_flipped_the_switch = 1;
+					}
+					break;
+				}
+
+				in++;
+			}
+		}
+	}
 }
 
 
@@ -98,7 +165,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1500, 0x1500, soundlatch_w },
 	{ 0x2000, 0x27ff, videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, colorram_w, &colorram },
-	{ 0x3000, 0x3fff, MWA_RAM },
+	{ 0x3000, 0x37ff, MWA_RAM },
+	{ 0x3800, 0x3fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -126,7 +194,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( hyperspt_input_ports )
+INPUT_PORTS_START( hyperspt )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -229,7 +297,7 @@ INPUT_PORTS_START( hyperspt_input_ports )
 	PORT_DIPSETTING(    0x00, "Difficult 4" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( roadf_input_ports )
+INPUT_PORTS_START( roadf )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -393,6 +461,7 @@ static struct GfxDecodeInfo roadf_gfxdecodeinfo[] =
 /* filename for hyper sports sample files */
 static const char *hyperspt_sample_names[] =
 {
+	"*hyperspt",
 	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
 	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
 	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
@@ -406,28 +475,37 @@ static const char *hyperspt_sample_names[] =
 	0
 };
 
-static struct MachineDriver hyperspt_machine_driver =
+struct VLM5030interface hyperspt_vlm5030_interface =
+{
+    3580000,    /* master clock  */
+    255,        /* volume        */
+    4,         /* memory region  */
+    0,         /* memory size    */
+    0,         /* VCU            */
+	hyperspt_sample_names
+};
+
+
+static struct MachineDriver machine_driver_hyperspt =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			2048000,        /* 1.400 Mhz ??? */
-			0,
 			hyperspt_readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	hyperspt_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -454,33 +532,33 @@ static struct MachineDriver hyperspt_machine_driver =
 		},
 		{
 			SOUND_VLM5030,
-			&konami_vlm5030_interface
+			&hyperspt_vlm5030_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver roadf_machine_driver =
+static struct MachineDriver machine_driver_roadf =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			2048000,        /* 1.400 Mhz ??? */
-			0,
 			roadf_readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	hyperspt_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -519,14 +597,14 @@ static struct MachineDriver roadf_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( hyperspt_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( hyperspt )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
-	ROM_LOAD( "c04",          0xA000, 0x2000, 0x10d7e9a2 )
-	ROM_LOAD( "c05",          0xC000, 0x2000, 0xb105a8cd )
-	ROM_LOAD( "c06",          0xE000, 0x2000, 0x1a34a849 )
+	ROM_LOAD( "c04",          0xa000, 0x2000, 0x10d7e9a2 )
+	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
+	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
 
 	ROM_REGION_DISPOSE(0x18000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
@@ -542,12 +620,12 @@ ROM_START( hyperspt_rom )
 	ROM_LOAD( "c16",          0x14000, 0x2000, 0xd7ff9f2b )
 	ROM_LOAD( "c15",          0x16000, 0x2000, 0xf3d454e6 )
 
-	ROM_REGION(0x220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
 	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
 
@@ -555,8 +633,44 @@ ROM_START( hyperspt_rom )
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
-ROM_START( roadf_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( hpolym84 )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
+	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
+	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
+	ROM_LOAD( "330e04.bin",   0xa000, 0x2000, 0x9c5e2934 )
+	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
+	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
+
+	ROM_REGION_DISPOSE(0x18000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
+	ROM_LOAD( "330e24.bin",   0x02000, 0x2000, 0xf9bbfe1d )
+	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
+	ROM_LOAD( "330e20.bin",   0x06000, 0x2000, 0x29969b92 )
+	ROM_LOAD( "c14",          0x08000, 0x2000, 0xc72d63be )
+	ROM_LOAD( "c13",          0x0a000, 0x2000, 0x76565608 )
+	ROM_LOAD( "c12",          0x0c000, 0x2000, 0x74d2cc69 )
+	ROM_LOAD( "c11",          0x0e000, 0x2000, 0x66cbcb4d )
+	ROM_LOAD( "c18",          0x10000, 0x2000, 0xed25e669 )
+	ROM_LOAD( "c17",          0x12000, 0x2000, 0xb145b39f )
+	ROM_LOAD( "c16",          0x14000, 0x2000, 0xd7ff9f2b )
+	ROM_LOAD( "c15",          0x16000, 0x2000, 0xf3d454e6 )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
+	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
+	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
+	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
+
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
+ROM_END
+
+ROM_START( roadf )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "g05_g01.bin",  0x4000, 0x2000, 0xe2492a06 )
 	ROM_LOAD( "g07_f02.bin",  0x6000, 0x2000, 0x0bf75165 )
 	ROM_LOAD( "g09_g03.bin",  0x8000, 0x2000, 0xdde401f8 )
@@ -572,17 +686,17 @@ ROM_START( roadf_rom )
 	ROM_LOAD( "j19_e14.bin",  0x0c000, 0x4000, 0x16d2bcff )
 	ROM_LOAD( "g19_e18.bin",  0x10000, 0x4000, 0x490685ff )
 
-	ROM_REGION(0x220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
-ROM_START( roadf2_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( roadf2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "5g",           0x4000, 0x2000, 0xd8070d30 )
 	ROM_LOAD( "6g",           0x6000, 0x2000, 0x8b661672 )
 	ROM_LOAD( "8g",           0x8000, 0x2000, 0x714929e8 )
@@ -598,187 +712,68 @@ ROM_START( roadf2_rom )
 	ROM_LOAD( "j19_e14.bin",  0x0c000, 0x4000, 0x16d2bcff )
 	ROM_LOAD( "g19_e18.bin",  0x10000, 0x4000, 0x490685ff )
 
-	ROM_REGION(0x220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
 
 
-static void hyperspt_decode(void)
-{
-	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	for (A = 0x4000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-
-
-/*
- HyperSports has 2k of battery backed RAM which can be erased by setting a dipswitch
- All we need to do is load it in. If the Dipswitch is set it will be erased
-*/
-
-static int we_flipped_the_switch;
-
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x3800],0x4000-0x3800);
-		osd_fclose(f);
-
-		we_flipped_the_switch = 0;
-	}
-	else
-	{
-		struct InputPort *in;
-
-
-		/* find the dip switch which resets the high score table, and set it on */
-		in = Machine->input_ports;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
-					strcmp(in->name,"World Records") == 0)
-			{
-				if (in->default_value == in->mask)
-				{
-					in->default_value = 0;
-					we_flipped_the_switch = 1;
-				}
-				break;
-			}
-
-			in++;
-		}
-	}
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x3800],0x800);
-		osd_fclose(f);
-	}
-
-	if (we_flipped_the_switch)
-	{
-		struct InputPort *in;
-
-
-		/* find the dip switch which resets the high score table, and set it */
-		/* back to off. */
-		in = Machine->input_ports;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
-					strcmp(in->name,"World Records") == 0)
-			{
-				if (in->default_value == 0)
-					in->default_value = in->mask;
-				break;
-			}
-
-			in++;
-		}
-
-		we_flipped_the_switch = 0;
-	}
-}
-
-
-
-static int roadf_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x3bd0],"\x01\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x3c7d],"\x43\x3f\x20",3) == 0)
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x3bd0],176);
-            osd_fclose(f);
-        	memcpy(&RAM[0x3066],&RAM[0x3bd0],3);	/* copy high score */
-		}
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void roadf_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite(f,&RAM[0x3bd0],176);
-		osd_fclose(f);
-	}
-
-}
-
-
-
-struct GameDriver hyperspt_driver =
+struct GameDriver driver_hyperspt =
 {
 	__FILE__,
 	0,
 	"hyperspt",
-	"HyperSports",
+	"Hyper Sports",
 	"1984",
 	"Konami (Centuri license)",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&hyperspt_machine_driver,
+	&machine_driver_hyperspt,
+	konami1_decode,
+
+	rom_hyperspt,
+	0, 0,
+	0,
 	0,
 
-	hyperspt_rom,
-	0, hyperspt_decode,
-	hyperspt_sample_names,
-	0,	/* sound_prom */
+	input_ports_hyperspt,
 
-	hyperspt_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver roadf_driver =
+struct GameDriver driver_hpolym84 =
+{
+	__FILE__,
+	&driver_hyperspt,
+	"hpolym84",
+	"Hyper Olympics '84",
+	"1984",
+	"Konami",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
+	&machine_driver_hyperspt,
+	konami1_decode,
+
+	rom_hpolym84,
+	0, 0,
+	0,
+	0,
+
+	input_ports_hyperspt,
+
+	0, 0, 0,
+	ROT0,
+	0,0
+};
+
+struct GameDriver driver_roadf =
 {
 	__FILE__,
 	0,
@@ -788,44 +783,42 @@ struct GameDriver roadf_driver =
 	"Konami",
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
 	0,
-	&roadf_machine_driver,
+	&machine_driver_roadf,
+	konami1_decode,
+
+	rom_roadf,
+	0, 0,
+	0,
 	0,
 
-	roadf_rom,
-	0, hyperspt_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_roadf,
 
-	roadf_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	roadf_hiload, roadf_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver roadf2_driver =
+struct GameDriver driver_roadf2 =
 {
 	__FILE__,
-	&roadf_driver,
+	&driver_roadf,
 	"roadf2",
 	"Road Fighter (set 2)",
 	"1984",
 	"Konami",
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
 	0,
-	&roadf_machine_driver,
+	&machine_driver_roadf,
+	konami1_decode,
+
+	rom_roadf2,
+	0, 0,
+	0,
 	0,
 
-	roadf2_rom,
-	0, hyperspt_decode,
-	0,
-	0,	/* sound_prom */
+	input_ports_roadf,
 
-	roadf_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	roadf_hiload, roadf_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

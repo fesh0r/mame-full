@@ -1,11 +1,6 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
-#include "cpu/m68000/m68000.h"
 
-
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
 
 static int layer_colorbase[3],sprite_colorbase,bg_colorbase;
 static int priorityflag;
@@ -46,25 +41,10 @@ static int detatwin_rombank;
 
 static void detatwin_tile_callback(int layer,int bank,int *code,int *color)
 {
-	/* flip Y? I sure hope this goes to some inverters on the ROM address lines, */
-	/* otherwise it would throw away all my understanding of the 051960 ;-) */
-	tile_info.flags = (*color & 0x02) ? TILE_FLIPY : 0;
-
+	/* (color & 0x02) is flip y handled internally by the 052109 */
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x10) << 5) | ((*color & 0x0c) << 8)
 			| (bank << 12) | detatwin_rombank << 14;
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
-}
-
-static void xmen_tile_callback(int layer,int bank,int *code,int *color)
-{
-	/* flip Y? I sure hope this goes to some inverters on the ROM address lines, */
-	/* otherwise it would throw away all my understanding of the 051960 ;-) */
-	tile_info.flags = (*color & 0x02) ? TILE_FLIPY : 0;
-
-	if (layer == 0)
-		*color = layer_colorbase[layer] + ((*color & 0xf0) >> 4);
-	else
-		*color = layer_colorbase[layer] + ((*color & 0x7c) >> 2);
 }
 
 
@@ -93,6 +73,13 @@ static void punkshot_sprite_callback(int *code,int *color,int *priority)
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
+static void thndrx2_sprite_callback(int *code,int *color,int *priority)
+{
+	*priority = 0x20 | ((*color & 0x60) >> 2);
+	*color = sprite_colorbase + (*color & 0x0f);
+}
+
+
 /***************************************************************************
 
   Callbacks for the K053245
@@ -116,18 +103,6 @@ if (keyboard_pressed(KEYCODE_E) && (*color & 0x80)) *color = rand();
 	*color = sprite_colorbase + (*color & 0x1f);
 }
 
-/***************************************************************************
-
-  Callbacks for the K053247
-
-***************************************************************************/
-
-static void xmen_sprite_callback(int *code,int *color,int *priority)
-{
-	*priority = (*color & 0x00e0) >> 4;	/* ??????? */
-	*color = sprite_colorbase + (*color & 0x001f);
-}
-
 
 
 /***************************************************************************
@@ -142,9 +117,9 @@ int mia_vh_start(void)
 	layer_colorbase[1] = 32;
 	layer_colorbase[2] = 40;
 	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,mia_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,mia_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,REVERSE_PLANE_ORDER,mia_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,mia_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -158,9 +133,9 @@ int tmnt_vh_start(void)
 	layer_colorbase[1] = 32;
 	layer_colorbase[2] = 40;
 	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,REVERSE_PLANE_ORDER,tmnt_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,tmnt_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -170,9 +145,9 @@ int tmnt_vh_start(void)
 
 int punkshot_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,punkshot_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,punkshot_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -182,9 +157,9 @@ int punkshot_vh_start(void)
 
 int lgtnfght_vh_start(void)	/* also tmnt2, ssriders */
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -194,9 +169,9 @@ int lgtnfght_vh_start(void)	/* also tmnt2, ssriders */
 
 int detatwin_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,detatwin_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,detatwin_tile_callback))
 		return 1;
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,detatwin_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,detatwin_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -206,9 +181,9 @@ int detatwin_vh_start(void)
 
 int glfgreat_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -216,11 +191,11 @@ int glfgreat_vh_start(void)
 	return 0;
 }
 
-int xmen_vh_start(void)
+int thndrx2_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,xmen_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053247_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,xmen_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,thndrx2_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -252,13 +227,19 @@ void glfgreat_vh_stop(void)
 	K053245_vh_stop();
 }
 
-void xmen_vh_stop(void)
+void thndrx2_vh_stop(void)
 {
 	K052109_vh_stop();
-	K053247_vh_stop();
+	K051960_vh_stop();
 }
 
 
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
 
 void tmnt_paletteram_w(int offset,int data)
 {
@@ -624,43 +605,42 @@ void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int pri[3],layer[3];
 
 
-	bg_colorbase       = K053251_get_palette_index(K053251_CI4);
+	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
-	layer_colorbase[0] = K053251_get_palette_index(K053251_CI3);
-	layer_colorbase[1] = K053251_get_palette_index(K053251_CI0);
-	layer_colorbase[2] = K053251_get_palette_index(K053251_CI2);
+	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
+	layer_colorbase[1] = K053251_get_palette_index(K053251_CI4);
+	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
 
 	K052109_tilemap_update();
 
 	palette_init_used_colors();
-	K053247_mark_sprites_colors();
-	palette_used_colors[16 * bg_colorbase+1] |= PALETTE_COLOR_VISIBLE;
+	K051960_mark_sprites_colors();
+	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
 	tilemap_render(ALL_TILEMAPS);
 
 	layer[0] = 0;
-	pri[0] = K053251_get_priority(K053251_CI3);
+	pri[0] = K053251_get_priority(K053251_CI2);
 	layer[1] = 1;
-	pri[1] = K053251_get_priority(K053251_CI0);
+	pri[1] = K053251_get_priority(K053251_CI4);
 	layer[2] = 2;
-	pri[2] = K053251_get_priority(K053251_CI2);
+	pri[2] = K053251_get_priority(K053251_CI3);
 
 	sortlayers(layer,pri);
 
-	/* note the '+1' in the background color!!! */
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase+1],&Machine->drv->visible_area);
-	K053247_sprites_draw(bitmap,pri[0]+1,0x3f);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->drv->visible_area);
+	K051960_sprites_draw(bitmap,pri[0]+1,0x3f);
 	K052109_tilemap_draw(bitmap,layer[0],0);
-	K053247_sprites_draw(bitmap,pri[1]+1,pri[0]);
+	K051960_sprites_draw(bitmap,pri[1]+1,pri[0]);
 	K052109_tilemap_draw(bitmap,layer[1],0);
-	K053247_sprites_draw(bitmap,pri[2]+1,pri[1]);
+	K051960_sprites_draw(bitmap,pri[2]+1,pri[1]);
 	K052109_tilemap_draw(bitmap,layer[2],0);
-	K053247_sprites_draw(bitmap,0,pri[2]);
+	K051960_sprites_draw(bitmap,0,pri[2]);
 }

@@ -1,13 +1,15 @@
 /* helper function to join two 16-bit ROMs and form a 32-bit data stream */
-void konami_rom_deinterleave_2(int memory_region);
+void konami_rom_deinterleave_2(int mem_region);
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
-void konami_rom_deinterleave_4(int memory_region);
+void konami_rom_deinterleave_4(int mem_region);
 
 
 int K007342_vh_start(int gfx_index, void (*callback)(int layer,int bank,int *code,int *color));
 void K007342_vh_stop(void);
 int K007342_r(int offset);
 void K007342_w(int offset,int data);
+int K007342_scroll_r(int offset);
+void K007342_scroll_w(int offset,int data);
 void K007342_tilemap_update(void);
 void K007342_vreg_w(int offset,int data);
 void K007342_tilemap_set_enable(int layer, int enable);
@@ -46,7 +48,8 @@ The callback must put:
 - in code the resulting tile number
 - in color the resulting color index
 - if necessary, put flags and/or priority for the TileMap code in the tile_info
-  structure (e.g. TILE_FLIPX)
+  structure (e.g. TILE_FLIPX). Note that TILE_FLIPY is handled internally by the
+  chip so it must not be set by the callback.
 */
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int layer,int bank,int *code,int *color));
@@ -84,6 +87,7 @@ void K051937_word_w(int offset,int data);
 void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
 void K051960_mark_sprites_colors(void);
 int K051960_is_IRQ_enabled(void);
+int K051960_is_NMI_enabled(void);
 
 /* special handling for the chips sharing address space */
 int K052109_051960_r(int offset);
@@ -132,15 +136,30 @@ The callback must put:
 - if necessary, put flags for the TileMap code in the tile_info
   structure (e.g. TILE_FLIPX)
 */
-int K051316_vh_start(int gfx_memory_region,int bpp,
+int K051316_vh_start_0(int gfx_memory_region,int bpp,
 		void (*callback)(int *code,int *color));
-void K051316_vh_stop(void);
-int K051316_r(int offset);
-void K051316_w(int offset,int data);
-int K051316_rom_r(int offset);
-void K051316_ctrl_w(int offset,int data);
-void K051316_tilemap_update(void);
-void K051316_zoom_draw(struct osd_bitmap *bitmap);
+int K051316_vh_start_1(int gfx_memory_region,int bpp,
+		void (*callback)(int *code,int *color));
+void K051316_vh_stop_0(void);
+void K051316_vh_stop_1(void);
+int K051316_0_r(int offset);
+int K051316_1_r(int offset);
+int K051316_2_r(int offset);
+void K051316_0_w(int offset,int data);
+void K051316_1_w(int offset,int data);
+void K051316_2_w(int offset,int data);
+int K051316_rom_0_r(int offset);
+int K051316_rom_1_r(int offset);
+int K051316_rom_2_r(int offset);
+void K051316_ctrl_0_w(int offset,int data);
+void K051316_ctrl_1_w(int offset,int data);
+void K051316_ctrl_2_w(int offset,int data);
+void K051316_tilemap_update_0(void);
+void K051316_tilemap_update_1(void);
+void K051316_tilemap_update_2(void);
+void K051316_zoom_draw_0(struct osd_bitmap *bitmap);
+void K051316_zoom_draw_1(struct osd_bitmap *bitmap);
+void K051316_zoom_draw_2(struct osd_bitmap *bitmap);
 
 
 void K053251_w(int offset,int data);
@@ -151,3 +170,7 @@ int K053251_get_palette_index(int ci);
 
 void K054000_w(int offset,int data);
 int K054000_r(int offset);
+
+void K051733_w(int offset,int data);
+int K051733_r(int offset);
+

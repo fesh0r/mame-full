@@ -76,12 +76,12 @@ static void grobda_DAC_w(int offset, int data)
 	/* CPU 1 (MAIN CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_r, &videoram, &videoram_size },			/* video RAM */
+	{ 0x0000, 0x03ff, videoram_r },			/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },										/* color RAM */
-	{ 0x0800, 0x1fff, grobda_spriteram_r, &grobda_spriteram },			/* RAM & sprite RAM */
-	{ 0x4040, 0x43ff, grobda_snd_sharedram_r, &grobda_snd_sharedram },  /* shared RAM with CPU #2 */
-	{ 0x4800, 0x480f, grobda_customio_r_1, &grobda_customio_1 },		/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, grobda_customio_r_2, &grobda_customio_2 },		/* custom I/O chip #2 interface */
+	{ 0x0800, 0x1fff, grobda_spriteram_r },			/* RAM & sprite RAM */
+	{ 0x4040, 0x43ff, grobda_snd_sharedram_r },  /* shared RAM with CPU #2 */
+	{ 0x4800, 0x480f, grobda_customio_r_1 },		/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, grobda_customio_r_2 },		/* custom I/O chip #2 interface */
 	{ 0xa000, 0xffff, MRA_ROM },										/* ROM */
 	{ -1 }																/* end of table */
 };
@@ -89,13 +89,13 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	/* CPU 1 (MAIN CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_w },				/* video RAM */
+	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_w, &colorram },  /* color RAM */
-	{ 0x0800, 0x1fff, grobda_spriteram_w },		/* RAM & sprite RAM */
+	{ 0x0800, 0x1fff, grobda_spriteram_w, &grobda_spriteram },		/* RAM & sprite RAM */
 //	{ 0x2000, 0x2000, MWA_NOP },				/* ??? */
-	{ 0x4040, 0x43ff, grobda_snd_sharedram_w }, /* shared RAM with CPU #2 */
-	{ 0x4800, 0x480f, grobda_customio_w_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, grobda_customio_w_2 },	/* custom I/O chip #2 interface */
+	{ 0x4040, 0x43ff, grobda_snd_sharedram_w, &grobda_snd_sharedram }, /* shared RAM with CPU #2 */
+	{ 0x4800, 0x480f, grobda_customio_w_1, &grobda_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, grobda_customio_w_2, &grobda_customio_2 },	/* custom I/O chip #2 interface */
 	{ 0x5002, 0x5003, grobda_interrupt_ctrl_1_w },
 //	{ 0x5008, 0x5009, MWA_NOP },				/* ??? */
 	{ 0x500a, 0x500b, grobda_cpu2_enable_w },	/* sound CPU enable? */
@@ -125,7 +125,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 };
 
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
-INPUT_PORTS_START( grobda_input_ports )
+INPUT_PORTS_START( grobda )
 	PORT_START  /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )
@@ -243,21 +243,19 @@ static struct DACinterface dac_interface =
 	{ 55 }
 };
 
-static struct MachineDriver grobda_machine_driver =
+static struct MachineDriver machine_driver_grobda =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,			/* MAIN CPU */
 			1500000,			/* 1.5 MHz? */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			grobda_interrupt_1,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
 			1500000,			/* 1.5 MHz? */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			grobda_interrupt_2,1
 		},
@@ -292,8 +290,8 @@ static struct MachineDriver grobda_machine_driver =
 	}
 };
 
-ROM_START( grobda_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( grobda )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr1-2.c1",  0xc000, 0x2000, 0x7dcc6e8e )
 	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
@@ -303,10 +301,10 @@ ROM_START( grobda_rom )
 	ROM_LOAD( "gr1-5.f3",  0x1000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x3000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "82s123.4c", 0x0000, 0x0020, 0xc65efa77 )	/* palette */
 	ROM_LOAD( "mb7052.4e", 0x0020, 0x0100, 0xa0f66911 )	/* characters */
 	ROM_LOAD( "mb7052.3l", 0x0120, 0x0100, 0xf1f2c234 )	/* sprites */
@@ -315,8 +313,8 @@ ROM_START( grobda_rom )
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 
-ROM_START( grobda2_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( grobda2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr2-2.a",   0xc000, 0x2000, 0xf93e82ae )
 	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
@@ -326,10 +324,10 @@ ROM_START( grobda2_rom )
 	ROM_LOAD( "gr1-5.f3",  0x1000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x3000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "82s123.4c", 0x0000, 0x0020, 0xc65efa77 )	/* palette */
 	ROM_LOAD( "mb7052.4e", 0x0020, 0x0100, 0xa0f66911 )	/* characters */
 	ROM_LOAD( "mb7052.3l", 0x0120, 0x0100, 0xf1f2c234 )	/* sprites */
@@ -338,8 +336,8 @@ ROM_START( grobda2_rom )
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 
-ROM_START( grobda3_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( grobda3 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr2-3",     0xa000, 0x2000, 0x8e3a23be )
 	ROM_LOAD( "gr2-2",     0xc000, 0x2000, 0x19ffa83d )
 	ROM_LOAD( "gr2-1",     0xe000, 0x2000, 0x0089b13a )
@@ -349,10 +347,10 @@ ROM_START( grobda3_rom )
 	ROM_LOAD( "gr1-5.f3",  0x1000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x3000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "82s123.4c", 0x0000, 0x0020, 0xc65efa77 )	/* palette */
 	ROM_LOAD( "mb7052.4e", 0x0020, 0x0100, 0xa0f66911 )	/* characters */
 	ROM_LOAD( "mb7052.3l", 0x0120, 0x0100, 0xf1f2c234 )	/* sprites */
@@ -362,7 +360,7 @@ ROM_START( grobda3_rom )
 ROM_END
 
 
-struct GameDriver grobda_driver =
+struct GameDriver driver_grobda =
 {
 	__FILE__,
 	0,
@@ -372,70 +370,70 @@ struct GameDriver grobda_driver =
 	"Namco",
 	"Manuel Abadia\n",
 	0,
-	&grobda_machine_driver,
+	&machine_driver_grobda,
 	0,
 
-	grobda_rom,
+	rom_grobda,
 	0, 0,
 	0,
 	0,
 
-	grobda_input_ports,
+	input_ports_grobda,
 
-	PROM_MEMORY_REGION(3),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };
 
-struct GameDriver grobda2_driver =
+struct GameDriver driver_grobda2 =
 {
 	__FILE__,
-	&grobda_driver,
+	&driver_grobda,
 	"grobda2",
 	"Grobda (set 2)",
 	"1984",
 	"Namco",
 	"Manuel Abadia\n",
 	0,
-	&grobda_machine_driver,
+	&machine_driver_grobda,
 	0,
 
-	grobda2_rom,
+	rom_grobda2,
 	0, 0,
 	0,
 	0,
 
-	grobda_input_ports,
+	input_ports_grobda,
 
-	PROM_MEMORY_REGION(3),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };
 
-struct GameDriver grobda3_driver =
+struct GameDriver driver_grobda3 =
 {
 	__FILE__,
-	&grobda_driver,
+	&driver_grobda,
 	"grobda3",
 	"Grobda (set 3)",
 	"1984",
 	"Namco",
 	"Manuel Abadia\n",
 	0,
-	&grobda_machine_driver,
+	&machine_driver_grobda,
 	0,
 
-	grobda3_rom,
+	rom_grobda3,
 	0, 0,
 	0,
 	0,
 
-	grobda_input_ports,
+	input_ports_grobda,
 
-	PROM_MEMORY_REGION(3),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90,
 
 	0, 0
 };

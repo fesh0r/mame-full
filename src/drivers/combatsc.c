@@ -137,7 +137,7 @@ void combatsc_portA_w(int offset,int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x04ff, MRA_RAM },
-	{ 0x0600, 0x06ff, MRA_RAM, &paletteram },	/* palette */
+	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM/RAM area */
@@ -149,7 +149,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x04ff, MWA_RAM },
 	{ 0x0500, 0x0500, combatsc_bankselect_w },
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w },
+	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_w },
 	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },/* banked ROM/RAM area */
@@ -220,10 +220,10 @@ static struct MemoryReadAddress combatsc_readmem[] =
 	{ 0x0405, 0x0405, input_port_5_r },			/* 1P trackball H */
 	{ 0x0406, 0x0406, input_port_6_r },			/* 2P trackball V */
 	{ 0x0407, 0x0407, input_port_7_r },			/* 2P trackball H */
-	{ 0x0600, 0x06ff, MRA_RAM, &paletteram },	/* palette */
+	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_r },
-	{ 0x4000, 0x7fff, MRA_BANK1, &banked_area },/* banked ROM area */
+	{ 0x4000, 0x7fff, MRA_BANK1 },/* banked ROM area */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }
 };
@@ -240,10 +240,10 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	{ 0x0414, 0x0414, combatsc_sh_irqtrigger_w },
 	{ 0x0418, 0x0418, MWA_NOP },					/* ??? */
 	{ 0x041c, 0x041c, watchdog_reset_w },			/* watchdog reset? */
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w },
+	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },					/* RAM */
 	{ 0x2000, 0x3fff, combatsc_video_w },
-	{ 0x4000, 0x7fff, MWA_BANK1 },					/* banked ROM area */
+	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },					/* banked ROM area */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
 	{ -1 }
 };
@@ -284,7 +284,7 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) ) \
 	PORT_DIPSETTING(    0x00, "coin 2 invalidity" )
 
-INPUT_PORTS_START( cmbatscb_input_ports )
+INPUT_PORTS_START( cmbatscb )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -335,7 +335,7 @@ INPUT_PORTS_START( cmbatscb_input_ports )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( combatsc_input_ports )
+INPUT_PORTS_START( combatsc )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -434,7 +434,7 @@ INPUT_PORTS_START( combatsc_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( combatsct_input_ports )
+INPUT_PORTS_START( combatsct )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -583,20 +583,18 @@ static struct UPD7759_interface upd7759_interface =
 };
 
 /* combat school (bootleg on different hardware) */
-static struct MachineDriver cmbatscb_machine_driver =
+static struct MachineDriver machine_driver_cmbatscb =
 {
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			5000000,	/* 5 MHz? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,
-			1,
 			combatsc_readmem_sound,combatsc_writemem_sound,0,0, /* FAKE */
 			ignore_interrupt,0 	/* IRQs are caused by the main CPU */
 		},
@@ -630,20 +628,18 @@ static struct MachineDriver cmbatscb_machine_driver =
 };
 
 /* combat school (original) */
-static struct MachineDriver combatsc_machine_driver =
+static struct MachineDriver machine_driver_combatsc =
 {
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			5000000,	/* 5 MHz? */
-			0,
 			combatsc_readmem,combatsc_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 MHz? */
-			1,
 			combatsc_readmem_sound,combatsc_writemem_sound,0,0,
 			ignore_interrupt,1 	/* IRQs are caused by the main CPU */
 		}
@@ -678,14 +674,115 @@ static struct MachineDriver combatsc_machine_driver =
 
 
 
-ROM_START( combatscb_rom )
-	ROM_REGION( 0x48000 ) /* 6809 code */
+ROM_START( combasc )
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "611g01.rom",	0x10000, 0x10000, 0x857ffffe )
+	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+ROM_END
+
+ROM_START( combasct )
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "g01.rom",	0x10000, 0x10000, 0x489c132f )
+	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+
+ROM_END
+
+ROM_START( combascj )
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "611p01.a14",	0x10000, 0x10000, 0xd748268e )
+	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+ROM_END
+
+ROM_START( bootcamp )
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
+	ROM_LOAD( "xxx-v01.12a", 0x10000, 0x10000, 0xc10dca64 )
+	ROM_LOAD( "611g02.rom",  0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+ROM_END
+
+ROM_START( combascb )
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "combat.002",	0x10000, 0x10000, 0x0996755d )
 	ROM_LOAD( "combat.003",	0x20000, 0x10000, 0x229c93b2 )
 	ROM_LOAD( "combat.004",	0x30000, 0x10000, 0xa069cb84 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "combat.001", 0x00000, 0x10000, 0x61456b3b )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 ) /* FAKE - from Konami set! */
 
@@ -710,7 +807,7 @@ ROM_START( combatscb_rom )
 	ROM_LOAD( "combat.018",	0xe0000, 0x10000, 0x575db729 )
 	ROM_LOAD( "combat.020",	0xf0000, 0x10000, 0x8d748a1a )
 
-	ROM_REGION( 0x400 ) /* color lookup table WRONG, the bootleg uses different PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )	/* TODO: WRONG, the bootleg uses different PROMs */
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
@@ -720,272 +817,21 @@ ROM_START( combatscb_rom )
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )	/* FAKE - from Konami set! */
 ROM_END
 
-ROM_START( combatsc_rom )
-	ROM_REGION( 0x48000 ) /* 6309 code */
-	ROM_LOAD( "611g01.rom",	0x10000, 0x10000, 0x857ffffe )
-	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
-	/* extra 0x8000 for banked RAM */
-
-	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
-
-	ROM_REGION_DISPOSE( 0x100000 )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
-	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
-
-	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
-
-    ROM_REGION(0x20000)	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
-ROM_END
-
-ROM_START( combatsct_rom )
-	ROM_REGION( 0x48000 ) /* 6309 code */
-	ROM_LOAD( "g01.rom",	0x10000, 0x10000, 0x489c132f )
-	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
-	/* extra 0x8000 for banked RAM */
-
-	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
-
-	ROM_REGION_DISPOSE( 0x100000 )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
-	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
-
-	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
-
-    ROM_REGION(0x20000)	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
-
-ROM_END
-
-ROM_START( combatscj_rom )
-	ROM_REGION( 0x48000 ) /* 6309 code */
-	ROM_LOAD( "611p01.a14",	0x10000, 0x10000, 0xd748268e )
-	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
-	/* extra 0x8000 for banked RAM */
-
-	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
-
-	ROM_REGION_DISPOSE( 0x100000 )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
-	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
-
-	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
-
-    ROM_REGION(0x20000)	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
-ROM_END
-
-ROM_START( bootcamp_rom )
-	ROM_REGION( 0x48000 ) /* 6309 code */
-	ROM_LOAD( "xxx-v01.12a", 0x10000, 0x10000, 0xc10dca64 )
-	ROM_LOAD( "611g02.rom",  0x20000, 0x20000, 0x9ba05327 )
-	/* extra 0x8000 for banked RAM */
-
-	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
-
-	ROM_REGION_DISPOSE( 0x100000 )
-	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
-	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
-
-	ROM_REGION( 0x400 ) /* color lookup table */
-	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
-
-    ROM_REGION(0x20000)	/* uPD7759 data */
-	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
-ROM_END
 
 
-
-static void gfx_untangle( void ){
-	unsigned char *gfx = Machine->memory_region[2];
+static void init_combascb( void )
+{
+	unsigned char *gfx = memory_region(2);
 	int i;
 	for( i=0; i<0x80000; i++ ){
 		gfx[i] = ~gfx[i];
 	}
 }
 
-	/* load the high score table */
-static int combatsc_hiload( void )
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-	unsigned char temp []={ 0x4b, 0x3d, 0x41, 0x07 };
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp( &RAM[0x1362], temp, 0x04 ) == 0)
-	{
-		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
-		{
-			osd_fread( f, &RAM[0x1320], 0x46 );
-			osd_fclose( f );
-		}
-		return 1;
-	}
-	else
-		return 0;	/* we can't load the hi scores yet */
-}
 
-	/* save the high score table */
-static void combatsc_hisave( void )
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-	if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1 )) != 0)
-	{
-		osd_fwrite( f, &RAM[0x1320], 0x46 );
-		osd_fclose( f );
-	}
-}
-
-struct GameDriver combasc_driver =
-{
-	__FILE__,
-	0,
-	"combasc",
-	"Combat School (joystick)",
-	"1988",
-	"Konami",
-	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
-	&combatsc_machine_driver,
-	0,
-
-	combatsc_rom,
-	0, 0,
-	0,
-	0, /* sound_prom */
-
-	combatsc_input_ports,
-
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
-	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
-};
-
-struct GameDriver combasct_driver =
-{
-	__FILE__,
-	&combasc_driver,
-	"combasct",
-	"Combat School (trackball)",
-	"1987",
-	"Konami",
-	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
-	&combatsc_machine_driver,
-	0,
-
-	combatsct_rom,
-	0, 0,
-	0,
-	0, /* sound_prom */
-
-	combatsct_input_ports,
-
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
-	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
-};
-
-struct GameDriver combascj_driver =
-{
-	__FILE__,
-	&combasc_driver,
-	"combascj",
-	"Combat School (Japan trackball)",
-	"1987",
-	"Konami",
-	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
-	&combatsc_machine_driver,
-	0,
-
-	combatscj_rom,
-	0, 0,
-	0,
-	0, /* sound_prom */
-
-	combatsct_input_ports,
-
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
-	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
-};
-
-struct GameDriver combascb_driver =
-{
-	__FILE__,
-	&combasc_driver,
-	"combascb",
-	"Combat School (bootleg)",
-	"1988",
-	"bootleg",
-	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_IMPERFECT_COLORS,
-	&cmbatscb_machine_driver,
-	0,
-
-	combatscb_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	cmbatscb_input_ports,
-
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
-	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
-};
-
-struct GameDriver bootcamp_driver =
-{
-	__FILE__,
-	&combasc_driver,
-	"bootcamp",
-	"Boot Camp",
-	"1987",
-	"Konami",
-	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
-	&combatsc_machine_driver,
-	0,
-
-	bootcamp_rom,
-	0, 0,
-	0,
-	0, /* sound_prom */
-
-	combatsct_input_ports,
-
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
-	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
-};
+GAMEX( 1988, combasc,  ,        combatsc, combatsc,  ,         ROT0, "Konami", "Combat School (joystick)", GAME_NOT_WORKING )
+GAMEX( 1987, combasct, combasc, combatsc, combatsct, ,         ROT0, "Konami", "Combat School (trackball)", GAME_NOT_WORKING )
+GAMEX( 1987, combascj, combasc, combatsc, combatsct, ,         ROT0, "Konami", "Combat School (Japan trackball)", GAME_NOT_WORKING )
+GAMEX( 1987, bootcamp, combasc, combatsc, combatsct, ,         ROT0, "Konami", "Boot Camp", GAME_NOT_WORKING )
+GAMEX( 1988, combascb, combasc, cmbatscb, cmbatscb,  combascb, ROT0, "bootleg", "Combat School (bootleg)", GAME_IMPERFECT_COLORS )

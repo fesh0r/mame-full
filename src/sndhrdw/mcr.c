@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "machine/mcr.h"
 #include "sndhrdw/mcr.h"
+#include "sndhrdw/williams.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 
@@ -46,10 +47,12 @@ extern struct pia6821_interface csdeluxe_pia_intf;
 
 /* Turbo Chip Squeak-specific globals */
 static UINT8 turbocs_sound_cpu;
+static UINT8 turbocs_dac_index;
 extern struct pia6821_interface turbocs_pia_intf;
 
 /* Sounds Good-specific globals */
 static UINT8 soundsgood_sound_cpu;
+static UINT8 soundsgood_dac_index;
 extern struct pia6821_interface soundsgood_pia_intf;
 
 /* Squawk n' Talk-specific globals */
@@ -58,10 +61,6 @@ static UINT8 squawkntalk_tms_command;
 static UINT8 squawkntalk_tms_strobes;
 extern struct pia6821_interface squawkntalk_pia0_intf;
 extern struct pia6821_interface squawkntalk_pia1_intf;
-
-/* Advanced Audio-specific globals */
-static UINT8 advaudio_sound_cpu;
-extern struct pia6821_interface advaudio_pia_intf;
 
 
 
@@ -75,7 +74,7 @@ void mcr_sound_init(void)
 {
 	int sound_cpu = 1;
 	int dac_index = 0;
-	
+
 	/* SSIO */
 	if (mcr_sound_config & MCR_SSIO)
 	{
@@ -83,38 +82,38 @@ void mcr_sound_init(void)
 		ssio_reset_w(1);
 		ssio_reset_w(0);
 	}
-	
+
 	/* Turbo Chip Squeak */
 	if (mcr_sound_config & MCR_TURBO_CHIP_SQUEAK)
 	{
 		pia_config(0, PIA_ALTERNATE_ORDERING, &turbocs_pia_intf);
-		dac_index++;
+		turbocs_dac_index = dac_index++;
 		turbocs_sound_cpu = sound_cpu++;
 		turbocs_reset_w(1);
 		turbocs_reset_w(0);
 	}
-		
+
 	/* Chip Squeak Deluxe */
 	if (mcr_sound_config & MCR_CHIP_SQUEAK_DELUXE)
 	{
-		/* special case: Spy Hunter 2 has both Turbo CS and CS Deluxe, so we use PIA slot 1 */
-		pia_config(1, PIA_ALTERNATE_ORDERING | PIA_16BIT_AUTO, &csdeluxe_pia_intf);
+		pia_config(0, PIA_ALTERNATE_ORDERING | PIA_16BIT_AUTO, &csdeluxe_pia_intf);
 		csdeluxe_dac_index = dac_index++;
 		csdeluxe_sound_cpu = sound_cpu++;
 		csdeluxe_reset_w(1);
 		csdeluxe_reset_w(0);
 	}
-	
+
 	/* Sounds Good */
 	if (mcr_sound_config & MCR_SOUNDS_GOOD)
 	{
-		pia_config(0, PIA_ALTERNATE_ORDERING | PIA_16BIT_UPPER, &soundsgood_pia_intf);
-		dac_index++;
+		/* special case: Spy Hunter 2 has both Turbo CS and Sounds Good, so we use PIA slot 1 */
+		pia_config(1, PIA_ALTERNATE_ORDERING | PIA_16BIT_UPPER, &soundsgood_pia_intf);
+		soundsgood_dac_index = dac_index++;
 		soundsgood_sound_cpu = sound_cpu++;
 		soundsgood_reset_w(1);
 		soundsgood_reset_w(0);
 	}
-		
+
 	/* Squawk n Talk */
 	if (mcr_sound_config & MCR_SQUAWK_N_TALK)
 	{
@@ -124,17 +123,16 @@ void mcr_sound_init(void)
 		squawkntalk_reset_w(1);
 		squawkntalk_reset_w(0);
 	}
-		
+
 	/* Advanced Audio */
-	if (mcr_sound_config & MCR_ADVANCED_AUDIO)
+	if (mcr_sound_config & MCR_WILLIAMS_SOUND)
 	{
-		pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &advaudio_pia_intf);
+		williams_cvsd_init(sound_cpu++, 0);
 		dac_index++;
-		advaudio_sound_cpu = sound_cpu++;
-		advaudio_reset_w(1);
-		advaudio_reset_w(0);
+		williams_cvsd_reset_w(1);
+		williams_cvsd_reset_w(0);
 	}
-	
+
 	/* reset any PIAs */
 	pia_reset();
 }
@@ -180,22 +178,20 @@ int ssio_status_r(int offset)
 void ssio_reset_w(int state)
 {
 	/* going high halts the CPU */
-	if (state && cpu_getstatus(ssio_sound_cpu))
-		cpu_halt(ssio_sound_cpu, 0);
-	
-	/* going low resets and reactivates the CPU */
-	else if (!state && !cpu_getstatus(ssio_sound_cpu))
+	if (state)
 	{
 		int i;
 
-		cpu_reset(ssio_sound_cpu);
-		cpu_halt(ssio_sound_cpu, 1);
-		
+		cpu_set_reset_line(ssio_sound_cpu,ASSERT_LINE);
+
 		/* latches also get reset */
 		for (i = 0; i < 4; i++)
 			ssio_data[i] = 0;
 		ssio_status = 0;
 	}
+	/* going low resets and reactivates the CPU */
+	else
+		cpu_set_reset_line(ssio_sound_cpu,CLEAR_LINE);
 }
 
 
@@ -253,13 +249,13 @@ struct MemoryWriteAddress ssio_writemem[] =
 static void csdeluxe_porta_w(int offset, int data)
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
-	DAC_signed_data_w(csdeluxe_dac_index, dacval >> 2);
+	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
 }
 
 static void csdeluxe_portb_w(int offset, int data)
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
-	/* only update when the MSB's are changed */
+	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
 }
 
 static void csdeluxe_irq(int state)
@@ -269,8 +265,8 @@ static void csdeluxe_irq(int state)
 
 static void csdeluxe_delayed_data_w(int param)
 {
-	pia_1_portb_w(0, param & 0x0f);
-	pia_1_ca1_w(0, ~param & 0x10);
+	pia_0_portb_w(0, param & 0x0f);
+	pia_0_ca1_w(0, ~param & 0x10);
 }
 
 
@@ -283,29 +279,25 @@ void csdeluxe_data_w(int offset, int data)
 void csdeluxe_reset_w(int state)
 {
 	/* going high halts the CPU */
-	if (state && cpu_getstatus(csdeluxe_sound_cpu))
-		cpu_halt(csdeluxe_sound_cpu, 0);
-	
+	if (state)
+		cpu_set_reset_line(csdeluxe_sound_cpu,ASSERT_LINE);
 	/* going low resets and reactivates the CPU */
-	else if (!state && !cpu_getstatus(csdeluxe_sound_cpu))
-	{
-		cpu_reset(csdeluxe_sound_cpu);
-		cpu_halt(csdeluxe_sound_cpu, 1);
-	}
+	else
+		cpu_set_reset_line(csdeluxe_sound_cpu,CLEAR_LINE);
 }
 
 
 /********* sound interfaces ***********/
-struct DACinterface csdeluxe_dac_interface =
+struct DACinterface mcr_dac_interface =
 {
 	1,
-	{ 80 }
+	{ 100 }
 };
 
-struct DACinterface turbocs_plus_csdeluxe_dac_interface =
+struct DACinterface mcr_dual_dac_interface =
 {
 	2,
-	{ 80, 80 }
+	{ 100, 100 }
 };
 
 
@@ -313,7 +305,7 @@ struct DACinterface turbocs_plus_csdeluxe_dac_interface =
 struct MemoryReadAddress csdeluxe_readmem[] =
 {
 	{ 0x000000, 0x007fff, MRA_ROM },
-	{ 0x018000, 0x018007, pia_1_r },
+	{ 0x018000, 0x018007, pia_0_r },
 	{ 0x01c000, 0x01cfff, MRA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -321,7 +313,7 @@ struct MemoryReadAddress csdeluxe_readmem[] =
 struct MemoryWriteAddress csdeluxe_writemem[] =
 {
 	{ 0x000000, 0x007fff, MWA_ROM },
-	{ 0x018000, 0x018007, pia_1_w },
+	{ 0x018000, 0x018007, pia_0_w },
 	{ 0x01c000, 0x01cfff, MWA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -353,13 +345,13 @@ struct pia6821_interface csdeluxe_pia_intf =
 static void soundsgood_porta_w(int offset, int data)
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
-	DAC_signed_data_w(0, dacval >> 2);
+	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
 }
 
 static void soundsgood_portb_w(int offset, int data)
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
-	/* only update when the MSB's are changed */
+	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
 }
 
 static void soundsgood_irq(int state)
@@ -369,8 +361,8 @@ static void soundsgood_irq(int state)
 
 static void soundsgood_delayed_data_w(int param)
 {
-	pia_0_portb_w(0, (param >> 1) & 0x0f);
-	pia_0_ca1_w(0, ~param & 0x01);
+	pia_1_portb_w(0, (param >> 1) & 0x0f);
+	pia_1_ca1_w(0, ~param & 0x01);
 }
 
 
@@ -383,23 +375,27 @@ void soundsgood_data_w(int offset, int data)
 void soundsgood_reset_w(int state)
 {
 	/* going high halts the CPU */
-	if (state && cpu_getstatus(soundsgood_sound_cpu))
-		cpu_halt(soundsgood_sound_cpu, 0);
-	
+	if (state)
+		cpu_set_reset_line(soundsgood_sound_cpu,ASSERT_LINE);
 	/* going low resets and reactivates the CPU */
-	else if (!state && !cpu_getstatus(soundsgood_sound_cpu))
-	{
-		cpu_reset(soundsgood_sound_cpu);
-		cpu_halt(soundsgood_sound_cpu, 1);
-	}
+	else
+		cpu_set_reset_line(soundsgood_sound_cpu,CLEAR_LINE);
 }
+
+
+/********* sound interfaces ***********/
+struct DACinterface turbocs_plus_soundsgood_dac_interface =
+{
+	2,
+	{ 80, 80 }
+};
 
 
 /********* memory interfaces ***********/
 struct MemoryReadAddress soundsgood_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x060000, 0x060007, pia_0_r },
+	{ 0x060000, 0x060007, pia_1_r },
 	{ 0x070000, 0x070fff, MRA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -407,7 +403,7 @@ struct MemoryReadAddress soundsgood_readmem[] =
 struct MemoryWriteAddress soundsgood_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x060000, 0x060007, pia_0_w },
+	{ 0x060000, 0x060007, pia_1_w },
 	{ 0x070000, 0x070fff, MWA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -432,6 +428,18 @@ struct pia6821_interface soundsgood_pia_intf =
  *************************************/
 
 /********* internal interfaces ***********/
+static void turbocs_porta_w(int offset, int data)
+{
+	dacval = (dacval & ~0x3fc) | (data << 2);
+	DAC_signed_data_16_w(turbocs_dac_index, dacval << 6);
+}
+
+static void turbocs_portb_w(int offset, int data)
+{
+	dacval = (dacval & ~0x003) | (data >> 6);
+	DAC_signed_data_16_w(turbocs_dac_index, dacval << 6);
+}
+
 static void turbocs_irq(int state)
 {
 	cpu_set_irq_line(turbocs_sound_cpu, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
@@ -453,15 +461,11 @@ void turbocs_data_w(int offset, int data)
 void turbocs_reset_w(int state)
 {
 	/* going high halts the CPU */
-	if (state && cpu_getstatus(turbocs_sound_cpu))
-		cpu_halt(turbocs_sound_cpu, 0);
-	
+	if (state)
+		cpu_set_reset_line(turbocs_sound_cpu,ASSERT_LINE);
 	/* going low resets and reactivates the CPU */
-	else if (!state && !cpu_getstatus(turbocs_sound_cpu))
-	{
-		cpu_reset(turbocs_sound_cpu);
-		cpu_halt(turbocs_sound_cpu, 1);
-	}
+	else
+		cpu_set_reset_line(turbocs_sound_cpu,CLEAR_LINE);
 }
 
 
@@ -469,6 +473,7 @@ void turbocs_reset_w(int state)
 struct MemoryReadAddress turbocs_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x4000, 0x4003, pia_0_r },	/* Max RPM accesses the PIA here */
 	{ 0x6000, 0x6003, pia_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -477,6 +482,7 @@ struct MemoryReadAddress turbocs_readmem[] =
 struct MemoryWriteAddress turbocs_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x4000, 0x4003, pia_0_w },	/* Max RPM accesses the PIA here */
 	{ 0x6000, 0x6003, pia_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -487,7 +493,7 @@ struct MemoryWriteAddress turbocs_writemem[] =
 struct pia6821_interface turbocs_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ turbocs_porta_w, turbocs_portb_w, 0, 0,
 	/*irqs   : A/B             */ turbocs_irq, turbocs_irq
 };
 
@@ -516,7 +522,7 @@ static void squawkntalk_portb2_w(int offset, int data)
 {
 	/* bits 0-1 select read/write strobes on the TMS5220 */
 	data &= 0x03;
-	
+
 	/* write strobe -- pass the current command to the TMS5220 */
 	if (((data ^ squawkntalk_tms_strobes) & 0x02) && !(data & 0x02))
 	{
@@ -536,7 +542,7 @@ static void squawkntalk_portb2_w(int offset, int data)
 		pia_1_ca2_w(0, 1);
 		pia_1_ca2_w(0, 0);
 	}
-	
+
 	/* remember the state */
 	squawkntalk_tms_strobes = data;
 }
@@ -562,15 +568,11 @@ void squawkntalk_data_w(int offset, int data)
 void squawkntalk_reset_w(int state)
 {
 	/* going high halts the CPU */
-	if (state && cpu_getstatus(squawkntalk_sound_cpu))
-		cpu_halt(squawkntalk_sound_cpu, 0);
-	
+	if (state)
+		cpu_set_reset_line(squawkntalk_sound_cpu,ASSERT_LINE);
 	/* going low resets and reactivates the CPU */
-	else if (!state && !cpu_getstatus(squawkntalk_sound_cpu))
-	{
-		cpu_reset(squawkntalk_sound_cpu);
-		cpu_halt(squawkntalk_sound_cpu, 1);
-	}
+	else
+		cpu_set_reset_line(squawkntalk_sound_cpu,CLEAR_LINE);
 }
 
 
@@ -616,124 +618,4 @@ struct pia6821_interface squawkntalk_pia1_intf =
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ squawkntalk_porta2_w, squawkntalk_portb2_w, 0, 0,
 	/*irqs   : A/B             */ squawkntalk_irq, squawkntalk_irq
-};
-
-
-
-/*************************************
- *
- *	MCR Advanced Audio communications
- *
- *	MC6809, 1 PIA, YM2151, HC55536 CVSD
- *
- *************************************/
-
-/********* internal interfaces ***********/
-static void advaudio_ym2151_irq(int state)
-{
-	pia_0_ca1_w(0, !state);
-}
-
-static void advaudio_irqa(int state)
-{
-	cpu_set_irq_line(advaudio_sound_cpu, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static void advaudio_irqb(int state)
-{
-	cpu_set_nmi_line(advaudio_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static void advaudio_bank_select_w(int offset, int data)
-{
-	UINT8 *RAM = Machine->memory_region[Machine->drv->cpu[advaudio_sound_cpu].memory_region];
-	int bank = data & 3;
-	int half = (data >> 2) & 1;
-	cpu_setbank(1, &RAM[0x10000 + (bank * 0x10000) + (half * 0x8000)]);
-}
-
-static void advaudio_delayed_data_w(int param)
-{
-	pia_0_portb_w(0, param & 0xff);
-	pia_0_cb1_w(0, param & 0x100);
-	pia_0_cb2_w(0, param & 0x200);
-}
-
-
-/********* external interfaces ***********/
-void advaudio_data_w(int offset, int data)
-{
-	timer_set(TIME_NOW, data, advaudio_delayed_data_w);
-}
-
-void advaudio_reset_w(int state)
-{
-	/* going high halts the CPU */
-	if (state && cpu_getstatus(advaudio_sound_cpu))
-		cpu_halt(advaudio_sound_cpu, 0);
-	
-	/* going low resets and reactivates the CPU */
-	else if (!state && !cpu_getstatus(advaudio_sound_cpu))
-	{
-		cpu_reset(advaudio_sound_cpu);
-		cpu_halt(advaudio_sound_cpu, 1);
-
-		/* IMPORTANT: the bank must be reset here! */
-		advaudio_bank_select_w(0, 0);
-	}
-}
-
-
-/********* sound interfaces ***********/
-struct YM2151interface advaudio_ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,
-	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
-	{ advaudio_ym2151_irq }
-};
-
-struct DACinterface advaudio_dac_interface =
-{
-	1,
-	{ 50 }
-};
-
-struct CVSDinterface advaudio_cvsd_interface =
-{
-	1,			/* 1 chip */
-	{ 40 }
-};
-
-
-/********* memory interfaces ***********/
-struct MemoryReadAddress advaudio_readmem[] =
-{
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x4000, 0x4003, pia_0_r },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
-
-struct MemoryWriteAddress advaudio_writemem[] =
-{
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x4003, pia_0_w },
-	{ 0x6000, 0x6000, MWA_NOP /*CVSD_dig_and_clk_w*/},
-	{ 0x6800, 0x6800, MWA_NOP /*CVSD_clock_w*/},
-	{ 0x7800, 0x7800, advaudio_bank_select_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
-
-
-/********* PIA interfaces ***********/
-struct pia6821_interface advaudio_pia_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
-	/*irqs   : A/B             */ advaudio_irqa, advaudio_irqb
 };

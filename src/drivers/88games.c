@@ -23,6 +23,22 @@ void k88games_vh_stop(void);
 void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
 
 static int k88games_interrupt(void)
 {
@@ -38,16 +54,16 @@ static int bankedram_r(int offset)
 	else
 	{
 		if (zoomreadroms)
-			return K051316_rom_r(offset);
+			return K051316_rom_0_r(offset);
 		else
-			return K051316_r(offset);
+			return K051316_0_r(offset);
 	}
 }
 
 static void bankedram_w(int offset,int data)
 {
 	if (videobank) ram[offset] = data;
-	else K051316_w(offset,data);
+	else K051316_0_w(offset,data);
 }
 
 static void k88games_5f84_w(int offset,int data)
@@ -134,13 +150,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },	/* banked ROM */
 	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },	/* banked ROM + palette RAM */
-	{ 0x2000, 0x37ff, MWA_RAM },
+	{ 0x2000, 0x2fff, MWA_RAM },
+	{ 0x3000, 0x37ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x3800, 0x3fff, bankedram_w, &ram },
 	{ 0x5f84, 0x5f84, k88games_5f84_w },
 	{ 0x5f88, 0x5f88, watchdog_reset_w },
 	{ 0x5f8c, 0x5f8c, soundlatch_w },
 	{ 0x5f90, 0x5f90, k88games_sh_irqtrigger_w },
-	{ 0x5fc0, 0x5fcf, K051316_ctrl_w },
+	{ 0x5fc0, 0x5fcf, K051316_ctrl_0_w },
 	{ 0x4000, 0x7fff, K052109_051960_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -174,7 +191,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( 88games )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -290,27 +307,25 @@ static struct UPD7759_interface upd7759_interface =
 	2,							/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 30, 30 },					/* volume */
-	{ 5, 6 },					/* memory region */
+	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
 	UPD7759_STANDALONE_MODE,	/* chip mode */
 	{0}
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_88games =
 {
 	{
 		{
 			CPU_KONAMI,
 			3000000, /* ? */
-			0,
 			readmem,writemem,0,0,
 			k88games_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			4,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -342,7 +357,9 @@ static struct MachineDriver machine_driver =
 			SOUND_UPD7759,
 			&upd7759_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -353,12 +370,15 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( k88games_rom )
-	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
+ROM_START( 88games )
+	ROM_REGIONX( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
     ROM_LOAD( "861m01.k18", 0x08000, 0x08000, 0x4a4e2959 )
 	ROM_LOAD( "861m02.k16", 0x10000, 0x10000, 0xe19f15f6 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
 	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
@@ -368,7 +388,7 @@ ROM_START( k88games_rom )
 	ROM_LOAD_GFX_EVEN( "861a09.b", 0x060000, 0x10000, 0x4917158d )
 	ROM_LOAD_GFX_ODD ( "861a09.d", 0x060000, 0x10000, 0x2bb3282c )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a05.a", 0x000000, 0x10000, 0xcedc19d0 )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "861a05.e", 0x000000, 0x10000, 0x725af3fc )
 	ROM_LOAD_GFX_EVEN( "861a05.b", 0x020000, 0x10000, 0xdb2a8808 )
@@ -386,33 +406,33 @@ ROM_START( k88games_rom )
 	ROM_LOAD_GFX_EVEN( "861a06.d", 0x0e0000, 0x10000, 0xbc70ab39 )
 	ROM_LOAD_GFX_ODD ( "861a06.h", 0x0e0000, 0x10000, 0xd906b79b )
 
-	ROM_REGION( 0x040000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x040000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "861a04.a", 0x000000, 0x10000, 0x092a8b15 )	/* zoom/rotate */
 	ROM_LOAD( "861a04.b", 0x010000, 0x10000, 0x75744b56 )
 	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
 	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
 
-	ROM_REGION( 0x10000 ) /* Z80 code */
-	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x20000 ) /* samples for UPD7759 #0 */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* samples for UPD7759 #0 */
 	ROM_LOAD( "861a07.a", 0x000000, 0x10000, 0x5d035d69 )
 	ROM_LOAD( "861a07.b", 0x010000, 0x10000, 0x6337dd91 )
 
-	ROM_REGION( 0x20000 ) /* samples for UPD7759 #1 */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 ) /* samples for UPD7759 #1 */
 	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
 	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
-
-	ROM_REGION(0x0200)	/* PROMs */
-	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( konami88_rom )
-	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
+ROM_START( konami88 )
+	ROM_REGIONX( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "861.e03", 0x08000, 0x08000, 0x55979bd9 )
 	ROM_LOAD( "861.e02", 0x10000, 0x10000, 0x5b7e98a6 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
+
+	ROM_REGIONX(  0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
 	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
@@ -422,7 +442,7 @@ ROM_START( konami88_rom )
 	ROM_LOAD_GFX_EVEN( "861a09.b", 0x060000, 0x10000, 0x4917158d )
 	ROM_LOAD_GFX_ODD ( "861a09.d", 0x060000, 0x10000, 0x2bb3282c )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a05.a", 0x000000, 0x10000, 0xcedc19d0 )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "861a05.e", 0x000000, 0x10000, 0x725af3fc )
 	ROM_LOAD_GFX_EVEN( "861a05.b", 0x020000, 0x10000, 0xdb2a8808 )
@@ -440,36 +460,29 @@ ROM_START( konami88_rom )
 	ROM_LOAD_GFX_EVEN( "861a06.d", 0x0e0000, 0x10000, 0xbc70ab39 )
 	ROM_LOAD_GFX_ODD ( "861a06.h", 0x0e0000, 0x10000, 0xd906b79b )
 
-	ROM_REGION( 0x040000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x040000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "861a04.a", 0x000000, 0x10000, 0x092a8b15 )	/* zoom/rotate */
 	ROM_LOAD( "861a04.b", 0x010000, 0x10000, 0x75744b56 )
 	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
 	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
 
-	ROM_REGION( 0x10000 ) /* Z80 code */
-	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x20000 ) /* samples for UPD7759 #0 */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* samples for UPD7759 #0 */
 	ROM_LOAD( "861a07.a", 0x000000, 0x10000, 0x5d035d69 )
 	ROM_LOAD( "861a07.b", 0x010000, 0x10000, 0x6337dd91 )
 
-	ROM_REGION( 0x20000 ) /* samples for UPD7759 #1 */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 ) /* samples for UPD7759 #1 */
 	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
 	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
-
-	ROM_REGION(0x0200)	/* PROMs */
-	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 ROM_END
 
-/***************************************************************************
 
-  Game driver(s)
-
-***************************************************************************/
 
 static void k88games_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
 if (errorlog) fprintf(errorlog,"%04x: bank select %02x\n",cpu_get_pc(),lines);
@@ -510,98 +523,18 @@ if (errorlog) fprintf(errorlog,"%04x: bank select %02x\n",cpu_get_pc(),lines);
 static void k88games_init_machine( void )
 {
 	konami_cpu_setlines_callback = k88games_banking;
-	paletteram = &Machine->memory_region[0][0x20000];
+	paletteram = &memory_region(REGION_CPU1)[0x20000];
 }
 
 
 
-static void gfx_untangle(void)
+static void init_88games(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-static int nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x3370],0x3800-0x3370);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x3370],0x3800-0x3370);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver k88games_driver =
-{
-	__FILE__,
-	0,
-	"88games",
-	"'88 Games",
-	"1988",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	k88games_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-	nvram_load, nvram_save
-};
-
-
-struct GameDriver konami88_driver =
-{
-	__FILE__,
-	&k88games_driver,
-	"konami88",
-	"Konami '88",
-	"1988",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	konami88_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-	nvram_load, nvram_save
-};
+GAME( 1988, 88games,  ,        88games, 88games, 88games, ROT0, "Konami", "'88 Games" )
+GAME( 1988, konami88, 88games, 88games, 88games, 88games, ROT0, "Konami", "Konami '88" )

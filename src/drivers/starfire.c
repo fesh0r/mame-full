@@ -87,7 +87,7 @@ unsigned char *starfire_ram;
 static struct MemoryReadAddress starfire_readmem[] =
 {
 	{ 0x0000, 0x57ff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x8400, 0x97ff, starfire_shadow_r },
 	{ 0x9800, 0x9fff, starfire_input_r },
 	{ 0xa000, 0xbfff, starfire_colorram_r },
@@ -97,7 +97,7 @@ static struct MemoryReadAddress starfire_readmem[] =
 
 static struct MemoryWriteAddress starfire_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8000, 0x83ff, MWA_RAM, &starfire_ram },
 	{ 0x8400, 0x8fff, starfire_shadow_w },
 	{ 0x9000, 0x9fff, starfire_output_w },
 	{ 0xa000, 0xbfff, starfire_colorram_w },
@@ -108,7 +108,7 @@ static struct MemoryWriteAddress starfire_writemem[] =
 static struct MemoryReadAddress fireone_readmem[] =
 {
 	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x8400, 0x97ff, starfire_shadow_r },
 	{ 0x9800, 0x9fff, fireone_input_r },
 	{ 0xa000, 0xbfff, starfire_colorram_r },
@@ -118,7 +118,7 @@ static struct MemoryReadAddress fireone_readmem[] =
 
 static struct MemoryWriteAddress fireone_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8000, 0x83ff, MWA_RAM, &starfire_ram },
 	{ 0x8400, 0x8fff, starfire_shadow_w },
 	{ 0x9000, 0x9fff, fireone_output_w },
 	{ 0xa000, 0xbfff, starfire_colorram_w },
@@ -127,7 +127,7 @@ static struct MemoryWriteAddress fireone_writemem[] =
 };
 
 
-INPUT_PORTS_START( starfire_input_ports )
+INPUT_PORTS_START( starfire )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, "Time" )
 	PORT_DIPSETTING(    0x00, "90 Sec" )
@@ -170,7 +170,7 @@ INPUT_PORTS_START( starfire_input_ports )
 	PORT_BITX( 0xFF, 0x00, IP_ACTIVE_HIGH | IPF_TOGGLE, "Throttle", KEYCODE_Z, IP_JOY_NONE )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( fireone_input_ports )
+INPUT_PORTS_START( fireone )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Player" )
@@ -213,14 +213,13 @@ INPUT_PORTS_START( fireone_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3)
 INPUT_PORTS_END
 
-static struct MachineDriver starfire_machine_driver =
+static struct MachineDriver machine_driver_starfire =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
             2500000,    /* 2.5 Mhz */
-			0,
 			starfire_readmem, starfire_writemem,0,0,
             starfire_interrupt,2
 		}
@@ -248,14 +247,13 @@ static struct MachineDriver starfire_machine_driver =
     0
 };
 
-static struct MachineDriver fireone_machine_driver =
+static struct MachineDriver machine_driver_fireone =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
             2500000,    /* 2.5 Mhz */
-			0,
 			fireone_readmem, fireone_writemem,0,0,
             starfire_interrupt,2
 		}
@@ -290,8 +288,8 @@ static struct MachineDriver fireone_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( starfire_rom )
-        ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( starfire )
+        ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
         ROM_LOAD( "sfire.1a",     0x0000, 0x0800, 0x9990af64 )
         ROM_LOAD( "sfire.2a",     0x0800, 0x0800, 0x6e17ba33 )
         ROM_LOAD( "sfire.1b",     0x1000, 0x0800, 0x946175d0 )
@@ -305,8 +303,8 @@ ROM_START( starfire_rom )
         ROM_LOAD( "sfire.1f",     0x5000, 0x0800, 0xaf31dc39 )
 ROM_END
 
-ROM_START( fireone_rom )
-        ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( fireone )
+        ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
         ROM_LOAD( "fo-ic13.7b",     0x0000, 0x0800, 0xf927f086 )
         ROM_LOAD( "fo-ic24.7c",     0x0800, 0x0800, 0x0d2d8723 )
         ROM_LOAD( "fo-ic12.6b",     0x1000, 0x0800, 0xac7783d9 )
@@ -323,7 +321,7 @@ ROM_START( fireone_rom )
         ROM_LOAD( "fo-ic18.1c",     0x6800, 0x0800, 0x771ee5ba )
 ROM_END
 
-struct GameDriver starfire_driver =
+struct GameDriver driver_starfire =
 {
 	__FILE__,
 	0,
@@ -333,22 +331,22 @@ struct GameDriver starfire_driver =
 	"Exidy",
 	"Daniel Boris\nOlivier Galibert",
 	0,
-	&starfire_machine_driver,
+	&machine_driver_starfire,
 	0,
 
-	starfire_rom,
+	rom_starfire,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	starfire_input_ports,
+	input_ports_starfire,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
-struct GameDriver fireone_driver =
+struct GameDriver driver_fireone =
 {
 	__FILE__,
 	0,
@@ -358,18 +356,18 @@ struct GameDriver fireone_driver =
 	"Exidy",
 	"Daniel Boris\nOlivier Galibert",
 	0,
-	&fireone_machine_driver,
+	&machine_driver_fireone,
 	0,
 
-	fireone_rom,
+	rom_fireone,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	fireone_input_ports,
+	input_ports_fireone,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 

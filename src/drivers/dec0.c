@@ -498,7 +498,7 @@ static struct MemoryWriteAddress midres_s_writemem[] =
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) ) \
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) ) \
 
-INPUT_PORTS_START( hbarrel_input_ports )
+INPUT_PORTS_START( hbarrel )
 	DEC0_PLAYER1_CONTROL
 	DEC0_PLAYER2_CONTROL
 	DEC0_MACHINE_CONTROL
@@ -548,7 +548,7 @@ INPUT_PORTS_START( hbarrel_input_ports )
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( baddudes_input_ports )
+INPUT_PORTS_START( baddudes )
 	DEC0_PLAYER1_CONTROL
 	DEC0_PLAYER2_CONTROL
 	DEC0_MACHINE_CONTROL
@@ -599,7 +599,7 @@ INPUT_PORTS_START( baddudes_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( robocop_input_ports )
+INPUT_PORTS_START( robocop )
 	DEC0_PLAYER1_CONTROL
 	DEC0_PLAYER2_CONTROL
 	DEC0_MACHINE_CONTROL
@@ -644,7 +644,7 @@ INPUT_PORTS_START( robocop_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hippodrm_input_ports )
+INPUT_PORTS_START( hippodrm )
 	DEC0_PLAYER1_CONTROL
 	DEC0_PLAYER2_CONTROL
 	DEC0_MACHINE_CONTROL
@@ -714,7 +714,7 @@ INPUT_PORTS_END
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 
-INPUT_PORTS_START( slyspy_input_ports )
+INPUT_PORTS_START( slyspy )
 	DEC1_PLAYER1_CONTROL
 	DEC1_PLAYER2_CONTROL
 
@@ -768,7 +768,7 @@ INPUT_PORTS_START( slyspy_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( midres_input_ports )
+INPUT_PORTS_START( midres )
 	DEC1_PLAYER1_CONTROL
 	DEC1_PLAYER2_CONTROL
 
@@ -828,7 +828,7 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( bouldash_input_ports )
+INPUT_PORTS_START( bouldash )
 	DEC1_PLAYER1_CONTROL
 	DEC1_PLAYER2_CONTROL
 
@@ -969,33 +969,31 @@ static struct YM3812interface ym3812b_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
+	{ 7757 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 80 }
 };
 
 /******************************************************************************/
 
-static struct MachineDriver hbarrel_machine_driver =
+static struct MachineDriver machine_driver_hbarrel =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1030,26 +1028,24 @@ static struct MachineDriver hbarrel_machine_driver =
 	}
 };
 
-static struct MachineDriver baddudes_machine_driver =
+static struct MachineDriver machine_driver_baddudes =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1084,26 +1080,24 @@ static struct MachineDriver baddudes_machine_driver =
 	}
 };
 
-static struct MachineDriver birdtry_machine_driver =
+static struct MachineDriver machine_driver_birdtry =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1138,33 +1132,30 @@ static struct MachineDriver birdtry_machine_driver =
 	}
 };
 
-static struct MachineDriver robocop_machine_driver =
+static struct MachineDriver machine_driver_robocop =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_H6280,
 			21477200/16, /* 21.4772MHz clock */
-			4,
 			robocop_sub_readmem,robocop_sub_writemem,0,0,
 			ignore_interrupt,0
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1199,33 +1190,82 @@ static struct MachineDriver robocop_machine_driver =
 	}
 };
 
-static struct MachineDriver hippodrm_machine_driver =
+static struct MachineDriver machine_driver_robocopb =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
+			dec0_s_readmem,dec0_s_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+
+	gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	dec0_vh_start,
+	dec0_vh_stop,
+	robocop_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_hippodrm =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,
+			dec0_readmem,dec0_writemem,0,0,
+			m68_level6_irq,1 /* VBL */
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_H6280,
 			21477200/16, /* 21.4772MHz clock */
-			4,
 			hippodrm_sub_readmem,hippodrm_sub_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	5,	/* Interleave between H6280 & 68000 */
 	0,
 
@@ -1260,26 +1300,24 @@ static struct MachineDriver hippodrm_machine_driver =
 	}
 };
 
-static struct MachineDriver slyspy_machine_driver =
+static struct MachineDriver machine_driver_slyspy =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			slyspy_readmem,slyspy_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			3000000,
-			2,
 			slyspy_s_readmem,slyspy_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1314,26 +1352,24 @@ static struct MachineDriver slyspy_machine_driver =
 	}
 };
 
-static struct MachineDriver midres_machine_driver =
+static struct MachineDriver machine_driver_midres =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			midres_readmem,midres_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			3000000,
-			2,
 			midres_s_readmem,midres_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1370,8 +1406,8 @@ static struct MachineDriver midres_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( hbarrel_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( hbarrel )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
 	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
 	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
@@ -1407,15 +1443,15 @@ ROM_START( hbarrel_rom )
 	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
 	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "hb_ec07.rom",  0x8000, 0x8000, 0x16a5a1aa )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "hb_ec08.rom",  0x0000, 0x10000, 0x2159a609 )
 ROM_END
 
-ROM_START( hbarrelu_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( hbarrelu )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
 	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
 	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
@@ -1451,15 +1487,15 @@ ROM_START( hbarrelu_rom )
 	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
 	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "hb07.bin",     0x8000, 0x8000, 0xa127f0f7 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "hb08.bin",     0x0000, 0x10000, 0x645c5b68 )
 ROM_END
 
-ROM_START( baddudes_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
+ROM_START( baddudes )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code, middle 0x20000 unused */
 	ROM_LOAD_EVEN( "baddudes.4",   0x00000, 0x10000, 0x4bf158a7 )
 	ROM_LOAD_ODD ( "baddudes.1",   0x00000, 0x10000, 0x74f5110c )
 	ROM_LOAD_EVEN( "baddudes.6",   0x40000, 0x10000, 0x3ff8da57 )
@@ -1503,15 +1539,15 @@ ROM_START( baddudes_rom )
 	ROM_LOAD( "baddudes.10",  0x190000, 0x08000, 0xeeee8a1a )
 	/* 198000-19ffff empty */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "baddudes.7",   0x8000, 0x8000, 0x9fb1ef4b )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
-ROM_START( drgninja_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
+ROM_START( drgninja )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code, middle 0x20000 unused */
 	ROM_LOAD_EVEN( "drgninja.04",  0x00000, 0x10000, 0x41b8b3f8 )
 	ROM_LOAD_ODD ( "drgninja.01",  0x00000, 0x10000, 0xe08e6885 )
 	ROM_LOAD_EVEN( "drgninja.06",  0x40000, 0x10000, 0x2b81faf7 )
@@ -1555,15 +1591,15 @@ ROM_START( drgninja_rom )
 	ROM_LOAD( "baddudes.10",  0x190000, 0x08000, 0xeeee8a1a )
 	/* 198000-19ffff empty */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "drgninja.07",  0x8000, 0x8000, 0x001d2f51 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
-ROM_START( birdtry_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( birdtry )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ek-04.bin",     0x00000, 0x10000, 0x5f0f4686 )
 	ROM_LOAD_ODD ( "ek-01.bin",     0x00000, 0x10000, 0x47f470db )
 	ROM_LOAD_EVEN( "ek-05.bin",     0x20000, 0x10000, 0xb508cffd )
@@ -1595,15 +1631,15 @@ ROM_START( birdtry_rom )
 	ROM_LOAD( "ek-09.bin",     0x180000, 0x10000, 0x6d2d488a )
 	ROM_LOAD( "ek-10.bin",     0x190000, 0x08000, 0x580ba206 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0x236549bc )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ek-08.bin",     0x0000, 0x10000, 0xbe3db6cb )
 ROM_END
 
-ROM_START( robocop_rom )
-	ROM_REGION(0x40000) /* 68000 code */
+ROM_START( robocop )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05-3", 0x00000, 0x10000, 0xba69bf84 )
 	ROM_LOAD_ODD ( "ep01-3", 0x00000, 0x10000, 0x2a9f6e2c )
 	ROM_LOAD_EVEN( "ep04-3", 0x20000, 0x10000, 0x39181778 )
@@ -1633,18 +1669,18 @@ ROM_START( robocop_rom )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
-	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
 	/* Filled in later */
 ROM_END
 
-ROM_START( robocopu_rom )
-	ROM_REGION(0x40000) /* 68000 code */
+ROM_START( robocopu )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05-1", 0x00000, 0x10000, 0x8de5cb3d )
 	ROM_LOAD_ODD ( "ep01-1", 0x00000, 0x10000, 0xb3c6bc02 )
 	ROM_LOAD_EVEN( "ep04", 0x20000, 0x10000, 0xc38b9d18 )
@@ -1674,18 +1710,18 @@ ROM_START( robocopu_rom )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
-	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
 	/* Filled in later */
 ROM_END
 
-ROM_START( robocpu0_rom )
-	ROM_REGION(0x40000) /* 68000 code */
+ROM_START( robocpu0 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05", 0x00000, 0x10000, 0xc465bdd8 )
 	ROM_LOAD_ODD ( "ep01", 0x00000, 0x10000, 0x1352d36e )
 	ROM_LOAD_EVEN( "ep04", 0x20000, 0x10000, 0xc38b9d18 )
@@ -1715,18 +1751,18 @@ ROM_START( robocpu0_rom )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
-	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
 	/* Filled in later */
 ROM_END
 
-ROM_START( robocopb_rom )
-	ROM_REGION(0x40000) /* 68000 code */
+ROM_START( robocopb )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xbcef3e9b )
 	ROM_LOAD_ODD ( "robop_01.rom", 0x00000, 0x10000, 0xc9803685 )
 	ROM_LOAD_EVEN( "robop_04.rom", 0x20000, 0x10000, 0x9d7b79e0 )
@@ -1756,15 +1792,15 @@ ROM_START( robocopb_rom )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 ROM_END
 
-ROM_START( hippodrm_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( hippodrm )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "ew02",         0x00000, 0x10000, 0xdf0d7dc6 )
 	ROM_LOAD_ODD ( "ew01",         0x00000, 0x10000, 0xd5670aa7 )
 	ROM_LOAD_EVEN( "ew05",         0x20000, 0x10000, 0xc76d65ec )
@@ -1790,18 +1826,18 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew17",         0x180000, 0x10000, 0x8c97c757 )
 	ROM_LOAD( "ew12",         0x190000, 0x10000, 0xa2d244bc )
 
-	ROM_REGION(0x10000)	/* 6502 sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
 	ROM_REGION(0x10000)	/* ADPCM sounds */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
-	ROM_REGION(0x10000) /* Encrypted code bank */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
-ROM_START( ffantasy_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( ffantasy )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "ev02",         0x00000, 0x10000, 0x797a7860 )
 	ROM_LOAD_ODD ( "ev01",         0x00000, 0x10000, 0x0f17184d )
 	ROM_LOAD_EVEN( "ew05",         0x20000, 0x10000, 0xc76d65ec )
@@ -1827,18 +1863,18 @@ ROM_START( ffantasy_rom )
 	ROM_LOAD( "ev17",         0x180000, 0x10000, 0x045509d4 )
 	ROM_LOAD( "ew12",         0x190000, 0x10000, 0xa2d244bc )
 
-	ROM_REGION(0x10000)	/* 6502 sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
 	ROM_REGION(0x10000)	/* ADPCM sounds */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
-	ROM_REGION(0x10000) /* Encrypted code bank */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
-ROM_START( slyspy_rom )
-	ROM_REGION(0x60000) /* 68000 code */
+ROM_START( slyspy )
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-3.17l",   0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
@@ -1863,15 +1899,15 @@ ROM_START( slyspy_rom )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
-ROM_START( slyspy2_rom )
-	ROM_REGION(0x60000) /* 68000 code */
+ROM_START( slyspy2 )
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
@@ -1907,15 +1943,15 @@ ROM_START( slyspy2_rom )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
-ROM_START( secretag_rom )
-	ROM_REGION(0x60000) /* 68000 code */
+ROM_START( secretag )
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fb14.bin",   0x00000, 0x10000, 0x9be6ac90 )
 	ROM_LOAD_ODD ( "fb12.bin",   0x00000, 0x10000, 0x28904b6b )
 	ROM_LOAD_EVEN( "fb15.bin",   0x20000, 0x10000, 0x106bb26c )
@@ -1951,16 +1987,16 @@ ROM_START( secretag_rom )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 #if 0
-ROM_START( secretab_rom )
-	ROM_REGION(0x60000) /* 68000 code */
+ROM_START( secretab )
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "sa_03.bin",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "sa_06.bin",    0x20000, 0x10000, 0x04a79266 )
@@ -1993,8 +2029,8 @@ ROM_START( secretab_rom )
 ROM_END
 #endif
 
-ROM_START( midres_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( midres )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fk_14.rom",    0x00000, 0x20000, 0xde7522df )
 	ROM_LOAD_ODD ( "fk_12.rom",    0x00000, 0x20000, 0x3494b8c9 )
 	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
@@ -2022,15 +2058,15 @@ ROM_START( midres_rom )
 	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
-ROM_START( midresu_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( midresu )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
 	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
 	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
@@ -2058,15 +2094,15 @@ ROM_START( midresu_rom )
 	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
-ROM_START( midresj_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( midresj )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fh14",         0x00000, 0x20000, 0x6d632a51 )
 	ROM_LOAD_ODD ( "fh12",         0x00000, 0x20000, 0x45143384 )
 	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
@@ -2094,15 +2130,15 @@ ROM_START( midresj_rom )
 	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fh16",              0x00000, 0x10000, 0x00736f32 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fh17",              0x00000, 0x20000, 0xc7b0a24e )
 ROM_END
 
-ROM_START( bouldash_rom )
-	ROM_REGION(0x60000) /* 68000 code */
+ROM_START( bouldash )
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fn-15",   0x00000, 0x10000, 0xca19a967 )
 	ROM_LOAD_ODD ( "fn-12",   0x00000, 0x10000, 0x242bdc2a )
 	ROM_LOAD_EVEN( "fn-16",   0x20000, 0x10000, 0xb7217265 )
@@ -2128,10 +2164,10 @@ ROM_START( bouldash_rom )
 	ROM_LOAD( "fn-00",      0x160000, 0x10000, 0xec18d098 )
 	ROM_LOAD( "fn-02",      0x180000, 0x10000, 0x4f060cba )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fn-10",      0x00000, 0x10000, 0xc74106e7 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
 ROM_END
 
@@ -2140,7 +2176,7 @@ ROM_END
 static void h6280_decrypt(int memory_area)
 {
 	int i;
-	unsigned char *RAM = Machine->memory_region[memory_area];
+	unsigned char *RAM = memory_region(memory_area);
 
 	/* Read each byte, decrypt it */
 	for (i=0x00000; i<0x10000; i++)
@@ -2149,7 +2185,9 @@ static void h6280_decrypt(int memory_area)
 
 static void hippodrm_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
+
+	dec0_custom_memory();
 
 	h6280_decrypt(4);
 
@@ -2162,7 +2200,9 @@ static void hippodrm_patch(void)
 
 static void slyspy_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
+
+	dec0_custom_memory();
 
 	h6280_decrypt(2);
 
@@ -2173,273 +2213,7 @@ static void slyspy_patch(void)
 
 /******************************************************************************/
 
-static int robocopp_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (READ_WORD(&dec0_ram[0x0ed8]) == 0x4d55 && READ_WORD(&dec0_ram[0x0eda]) == 0x5250 &&
-		READ_WORD(&dec0_ram[0x0f68]) == 0x504f && READ_WORD(&dec0_ram[0x0f6a]) == 0x4c49 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&dec0_ram[0x0ed8],16*10);
-
-/* MISH :  The following lines DO NOT look endian friendly... */
-
-			dec0_ram[0x3522]=dec0_ram[0x0ee0];
-			dec0_ram[0x3523]=dec0_ram[0x0ee1];
-			dec0_ram[0x3524]=dec0_ram[0x0ee2];
-			dec0_ram[0x3525]=dec0_ram[0x0ee3];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void robocopp_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x0ed8],16*10);
-                osd_fclose(f);
-				dec0_ram[0x0ed8]=0;
-        }
-}
-
-static int hbarrel_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x3e9c]) == 0x10 && READ_WORD(&dec0_ram[0x3ea0]) == 0x09 &&
-			READ_WORD(&dec0_ram[0x3ef0]) == 0x55 && READ_WORD(&dec0_ram[0x3ef2]) == 0x4d26)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x3e9c],4*10);
-                        osd_fread_msbfirst(f,&dec0_ram[0x3ecc],4*10);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hbarrel_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3e9c],4*10);
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3ecc],4*10);
-                osd_fclose(f);
-        }
-}
-
-static int hbarrelj_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x3e78]) == 0x10 && READ_WORD(&dec0_ram[0x3e7c]) == 0x09 &&
-			READ_WORD(&dec0_ram[0x3ecc]) == 0x55 && READ_WORD(&dec0_ram[0x3ece]) == 0x4d26 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x3e78],4*10);
-                        osd_fread_msbfirst(f,&dec0_ram[0x3ea8],4*10);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hbarrelj_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3e78],4*10);
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3ea8],4*10);
-                osd_fclose(f);
-        }
-}
-
-static int baddudes_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x28fe]) == 0x4d49 && READ_WORD(&dec0_ram[0x2900]) == 0x4e00 &&
-			READ_WORD(&dec0_ram[0x299E]) == 0x444d && READ_WORD(&dec0_ram[0x29a0]) == 0x5900 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x28fe],8*20);
-                        dec0_ram[0x01d4]=dec0_ram[0x2903];
-                        dec0_ram[0x01d7]=dec0_ram[0x2902];
-                        dec0_ram[0x01d6]=dec0_ram[0x2905];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void baddudes_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x28fe],8*20);
-                osd_fclose(f);
-        }
-}
-
-static int drgninja_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x28f8]) == 0x4d49 && READ_WORD(&dec0_ram[0x28fa]) == 0x4e00 &&
-			READ_WORD(&dec0_ram[0x2998]) == 0x444d && READ_WORD(&dec0_ram[0x299a]) == 0x5900)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x28f8],8*20);
-                        dec0_ram[0x01d4]=dec0_ram[0x28fd];
-                        dec0_ram[0x01d7]=dec0_ram[0x28fc];
-                        dec0_ram[0x01d6]=dec0_ram[0x28ff];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void drgninja_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x28f8],8*20);
-                osd_fclose(f);
-        }
-}
-
-static int hippodrm_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x3e00]) == 0x0800 && READ_WORD(&dec0_ram[0x3e04]) == 0x0700  &&
-			READ_WORD(&dec0_ram[0x3e4c]) == 0x4352 && READ_WORD(&dec0_ram[0x3e4e]) == 0x5801  )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x3e00],80);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hippodrm_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3e00],80);
-                osd_fclose(f);
-        }
-}
-
-static int slyspy_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x0000]) == 0x30 && READ_WORD(&dec0_ram[0x0004]) == 0x28 &&
-			READ_WORD(&dec0_ram[0x0098]) == 0x3030 && READ_WORD(&dec0_ram[0x009c]) == 0x3030)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0],160);
-                        dec0_ram[0x2adc]=dec0_ram[0];
-                        dec0_ram[0x2add]=dec0_ram[1];
-                        dec0_ram[0x2ade]=dec0_ram[2];
-                        dec0_ram[0x2adf]=dec0_ram[3];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void slyspy_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0],160);
-                osd_fclose(f);
-				dec0_ram[0x0098] = 0;
-        }
-}
-
-static int midres_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x26ea]) == 0x10 && READ_WORD(&dec0_ram[0x26ee]) == 0x09 &&
-			READ_WORD(&dec0_ram[0x2736]) == 0x55 && READ_WORD(&dec0_ram[0x2738]) == 0x4d26)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x26ea],80);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void midres_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x26ea],80);
-                osd_fclose(f);
-        }
-}
-
-/******************************************************************************/
-
-struct GameDriver hbarrel_driver =
+struct GameDriver driver_hbarrel =
 {
 	__FILE__,
 	0,
@@ -2449,47 +2223,47 @@ struct GameDriver hbarrel_driver =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hbarrel_machine_driver,
+	&machine_driver_hbarrel,
 	dec0_custom_memory,
 
-	hbarrelu_rom,
+	rom_hbarrelu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hbarrel_input_ports,
+	input_ports_hbarrel,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hbarrel_hiload, hbarrel_hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver hbarrelw_driver =
+struct GameDriver driver_hbarrelw =
 {
 	__FILE__,
-	&hbarrel_driver,
+	&driver_hbarrel,
 	"hbarrelw",
 	"Heavy Barrel (World)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hbarrel_machine_driver,
+	&machine_driver_hbarrel,
 	dec0_custom_memory,
 
-	hbarrel_rom,
+	rom_hbarrel,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hbarrel_input_ports,
+	input_ports_hbarrel,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hbarrelj_hiload, hbarrelj_hisave
+	ROT270,
+	0,0
 };
 
-struct GameDriver baddudes_driver =
+struct GameDriver driver_baddudes =
 {
 	__FILE__,
 	0,
@@ -2499,47 +2273,47 @@ struct GameDriver baddudes_driver =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&baddudes_machine_driver,
+	&machine_driver_baddudes,
 	dec0_custom_memory,
 
-	baddudes_rom,
+	rom_baddudes,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	baddudes_input_ports,
+	input_ports_baddudes,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	baddudes_hiload, baddudes_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver drgninja_driver =
+struct GameDriver driver_drgninja =
 {
 	__FILE__,
-	&baddudes_driver,
+	&driver_baddudes,
 	"drgninja",
 	"Dragonninja (Japan)",
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&baddudes_machine_driver,
+	&machine_driver_baddudes,
 	dec0_custom_memory,
 
-	drgninja_rom,
+	rom_drgninja,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	baddudes_input_ports,
+	input_ports_baddudes,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	drgninja_hiload, drgninja_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver birdtry_driver =
+struct GameDriver driver_birdtry =
 {
 	__FILE__,
 	0,
@@ -2548,23 +2322,23 @@ struct GameDriver birdtry_driver =
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	GAME_NOT_WORKING,
-	&birdtry_machine_driver,
+	0,
+	&machine_driver_birdtry,
 	dec0_custom_memory,
 
-	birdtry_rom,
+	rom_birdtry,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hbarrel_input_ports, /* For now */
+	input_ports_hbarrel, /* For now */
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ROT270 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver robocop_driver =
+struct GameDriver driver_robocop =
 {
 	__FILE__,
 	0,
@@ -2573,98 +2347,98 @@ struct GameDriver robocop_driver =
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	GAME_NOT_WORKING,
-	&robocop_machine_driver,
+	0,
+	&machine_driver_robocop,
 	dec0_custom_memory,
 
-	robocop_rom,
+	rom_robocop,
 	0, 0,
 	0,
 	0,
 
-	robocop_input_ports,
+	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	robocopp_hiload, robocopp_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver robocopu_driver =
+struct GameDriver driver_robocopu =
 {
 	__FILE__,
-	&robocop_driver,
+	&driver_robocop,
 	"robocopu",
 	"Robocop (US revision 1)",
 	"1988",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	GAME_NOT_WORKING,
-	&robocop_machine_driver,
+	0,
+	&machine_driver_robocop,
 	dec0_custom_memory,
 
-	robocopu_rom,
+	rom_robocopu,
 	0, 0,
 	0,
 	0,
 
-	robocop_input_ports,
+	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	robocopp_hiload, robocopp_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver robocpu0_driver =
+struct GameDriver driver_robocpu0 =
 {
 	__FILE__,
-	&robocop_driver,
+	&driver_robocop,
 	"robocpu0",
 	"Robocop (US revision 0)",
 	"1988",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	GAME_NOT_WORKING,
-	&robocop_machine_driver,
+	0,
+	&machine_driver_robocop,
 	dec0_custom_memory,
 
-	robocpu0_rom,
+	rom_robocpu0,
 	0, 0,
 	0,
 	0,
 
-	robocop_input_ports,
+	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	robocopp_hiload,robocopp_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
-struct GameDriver robocopb_driver =
+struct GameDriver driver_robocopb =
 {
 	__FILE__,
-	&robocop_driver,
+	&driver_robocop,
 	"robocopb",
 	"Robocop (World bootleg)",
 	"1988",
 	"bootleg",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&robocop_machine_driver,
+	&machine_driver_robocopb,
 	dec0_custom_memory,
 
-	robocopb_rom,
+	rom_robocopb,
 	0, 0,
 	0,
 	0,
 
-	robocop_input_ports,
+	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	robocopp_hiload, robocopp_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver hippodrm_driver =
+struct GameDriver driver_hippodrm =
 {
 	__FILE__,
 	0,
@@ -2674,47 +2448,47 @@ struct GameDriver hippodrm_driver =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hippodrm_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_hippodrm,
+	hippodrm_patch,
 
-	hippodrm_rom,
-	hippodrm_patch, 0,
+	rom_hippodrm,
+	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hippodrm_input_ports,
+	input_ports_hippodrm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hippodrm_hiload,hippodrm_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver ffantasy_driver =
+struct GameDriver driver_ffantasy =
 {
 	__FILE__,
-	&hippodrm_driver,
+	&driver_hippodrm,
 	"ffantasy",
 	"Fighting Fantasy (Japan)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hippodrm_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_hippodrm,
+	hippodrm_patch,
 
-	ffantasy_rom,
-	hippodrm_patch, 0,
+	rom_ffantasy,
+	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	hippodrm_input_ports,
+	input_ports_hippodrm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hippodrm_hiload,hippodrm_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver slyspy_driver =
+struct GameDriver driver_slyspy =
 {
 	__FILE__,
 	0,
@@ -2724,99 +2498,99 @@ struct GameDriver slyspy_driver =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
-	slyspy_rom,
-	slyspy_patch,0,
+	rom_slyspy,
+	0,0,
 	0,
 	0,
 
-	slyspy_input_ports,
+	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver slyspy2_driver =
+struct GameDriver driver_slyspy2 =
 {
 	__FILE__,
-	&slyspy_driver,
+	&driver_slyspy,
 	"slyspy2",
 	"Sly Spy (US revision 2)",
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
-	slyspy2_rom,
-	slyspy_patch,0,
+	rom_slyspy2,
+	0,0,
 	0,
 	0,
 
-	slyspy_input_ports,
+	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver secretag_driver =
+struct GameDriver driver_secretag =
 {
 	__FILE__,
-	&slyspy_driver,
+	&driver_slyspy,
 	"secretag",
 	"Secret Agent (World)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
-	secretag_rom,
-	slyspy_patch,0,
+	rom_secretag,
+	0,0,
 	0,
 	0,
 
-	slyspy_input_ports,
+	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 
 #if 0
-struct GameDriver secretab_driver =
+struct GameDriver driver_secretab =
 {
 	__FILE__,
-	&slyspy_driver,
+	&driver_slyspy,
 	"secretab",
 	"Sly Spy (revision 2)",
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
+	&machine_driver_slyspy,
 	dec0_custom_memory,
 
-	secretab_rom,
+	rom_secretab,
 	0,0,
 	0,
 	0,
 
-	slyspy_input_ports,
+	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 #endif
 
-struct GameDriver midres_driver =
+struct GameDriver driver_midres =
 {
 	__FILE__,
 	0,
@@ -2826,72 +2600,72 @@ struct GameDriver midres_driver =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&midres_machine_driver,
+	&machine_driver_midres,
 	dec0_custom_memory,
 
-	midres_rom,
+	rom_midres,
 	0, 0,
 	0,
 	0,
 
-	midres_input_ports,
+	input_ports_midres,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	midres_hiload, midres_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver midresu_driver =
+struct GameDriver driver_midresu =
 {
 	__FILE__,
-	&midres_driver,
+	&driver_midres,
 	"midresu",
 	"Midnight Resistance (US)",
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&midres_machine_driver,
+	&machine_driver_midres,
 	dec0_custom_memory,
 
-	midresu_rom,
+	rom_midresu,
 	0, 0,
 	0,
 	0,
 
-	midres_input_ports,
+	input_ports_midres,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	midres_hiload, midres_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver midresj_driver =
+struct GameDriver driver_midresj =
 {
 	__FILE__,
-	&midres_driver,
+	&driver_midres,
 	"midresj",
 	"Midnight Resistance (Japan)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&midres_machine_driver,
+	&machine_driver_midres,
 	dec0_custom_memory,
 
-	midresj_rom,
+	rom_midresj,
 	0, 0,
 	0,
 	0,
 
-	midres_input_ports,
+	input_ports_midres,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	midres_hiload, midres_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver bouldash_driver =
+struct GameDriver driver_bouldash =
 {
 	__FILE__,
 	0,
@@ -2901,17 +2675,17 @@ struct GameDriver bouldash_driver =
 	"Data East Corporation (licensed from First Star)",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
-	bouldash_rom,
-	slyspy_patch, 0,
+	rom_bouldash,
+	0, 0,
 	0,
 	0,
 
-	bouldash_input_ports,
+	input_ports_bouldash,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

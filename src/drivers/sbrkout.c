@@ -74,8 +74,6 @@ static void sbrkout_tones_4V(int foo)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0010, 0x0014, MRA_RAM, &sbrkout_horiz_ram }, /* Horizontal Ball Position */
-	{ 0x0018, 0x001d, MRA_RAM, &sbrkout_vert_ram }, /* Vertical Ball Position / ball picture */
 	{ 0x001f, 0x001f, input_port_6_r }, /* paddle value */
 	{ 0x0000, 0x00ff, MRA_RAM }, /* Zero Page RAM */
 	{ 0x0100, 0x01ff, MRA_RAM }, /* ??? */
@@ -96,6 +94,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0011, 0x0011, sbrkout_dac_w, &sbrkout_sound }, /* Noise Generation Bits */
+	{ 0x0010, 0x0014, MWA_RAM, &sbrkout_horiz_ram }, /* Horizontal Ball Position */
+	{ 0x0018, 0x001d, MWA_RAM, &sbrkout_vert_ram }, /* Vertical Ball Position / ball picture */
 	{ 0x0000, 0x00ff, MWA_RAM }, /* WRAM */
 	{ 0x0100, 0x01ff, MWA_RAM }, /* ??? */
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
@@ -111,7 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( sbrkout_input_ports )
+INPUT_PORTS_START( sbrkout )
 	PORT_START		/* DSW - fake port, gets mapped to Super Breakout ports */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
 	PORT_DIPSETTING(	0x00, "English" )
@@ -207,6 +207,11 @@ static unsigned short colortable[ARTWORK_COLORS] =
 	0, 1,  /* Draw */
 };
 
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct DACinterface dac_interface =
@@ -224,7 +229,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			375000, 	   /* 375 KHz? Should be 750KHz? */
-			0,
 			readmem,writemem,0,0,
 			sbrkout_interrupt,1
 		}
@@ -236,11 +240,9 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-//	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
-	0,
+	init_palette,
 
-//	VIDEO_TYPE_RASTER,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	sbrkout_vh_start,
@@ -267,8 +269,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sbrkout_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( sbrkout )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "033453.c1",    0x2800, 0x0800, 0xa35d00e3 )
 	ROM_LOAD( "033454.d1",    0x3000, 0x0800, 0xd42ea79a )
 	ROM_LOAD( "033455.e1",    0x3800, 0x0800, 0xe0a6871c )
@@ -282,51 +284,7 @@ ROM_END
 
 
 
-/***************************************************************************
-  Hi Score Routines
-***************************************************************************/
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0012],"\x3C\xAA\x3C\xAA",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0022],0x3);
-			osd_fread(f,&RAM[0x0027],0x3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0022],0x3);
-		osd_fwrite(f,&RAM[0x0027],0x3);
-		osd_fclose(f);
-	}
-
-}
-
-
-
-struct GameDriver sbrkout_driver =
+struct GameDriver driver_sbrkout =
 {
 	__FILE__,
 	0,
@@ -339,14 +297,14 @@ struct GameDriver sbrkout_driver =
 	&machine_driver,
 	0,
 
-	sbrkout_rom,
+	rom_sbrkout,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	sbrkout_input_ports,
+	input_ports_sbrkout,
 
-	0, palette, colortable,
-	ORIENTATION_ROTATE_270,
-	hiload,hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

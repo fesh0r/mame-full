@@ -122,7 +122,7 @@ int ADPCM_sh_start (const struct MachineSound *msound)
 	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
-	sample_list = (struct ADPCMsample *)Machine->gamedrv->sound_prom;
+	sample_list = 0;
 
 	/* if there's an init function, call it now to generate the table */
 	if (adpcm_intf->init)
@@ -182,9 +182,11 @@ void ADPCM_sh_stop (void)
 	int i;
 
 	/* free the temporary table if we created it */
-	if (sample_list && sample_list != (struct ADPCMsample *)Machine->gamedrv->sound_prom)
+	if (sample_list)
+	{
 		free (sample_list);
-	sample_list = 0;
+		sample_list = 0;
+	}
 
 	/* free any output and streaming buffers */
 	for (i = 0; i < adpcm_intf->num; i++)
@@ -407,7 +409,7 @@ void ADPCM_trigger (int num, int which)
 
 			/* set up the voice to play this sample */
 			voice->playing = 1;
-			voice->base = &Machine->memory_region[adpcm_intf->region][sample->offset];
+			voice->base = &memory_region(adpcm_intf->region)[sample->offset];
 			voice->sample = 0;
 			voice->count = sample->length;
 
@@ -445,7 +447,7 @@ void ADPCM_play (int num, int offset, int length)
 
 	/* set up the voice to play this sample */
 	voice->playing = 1;
-	voice->base = &Machine->memory_region[adpcm_intf->region][offset];
+	voice->base = &memory_region(adpcm_intf->region)[offset];
 	voice->sample = 0;
 	voice->count = length;
 
@@ -581,7 +583,7 @@ static int OKIM6295_sub_start (const struct MachineSound *msound)
 	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
-	sample_list = (struct ADPCMsample *)Machine->gamedrv->sound_prom;
+	sample_list = 0;
 
 	/* if there's an init function, call it now to generate the table */
 	if (adpcm_intf->init)
@@ -769,7 +771,7 @@ static void OKIM6295_data_w (int num, int data)
 		unsigned char *base;
 
 		/* determine the start/stop positions */
-//		base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num] + okim6295_command[num] * 8];
+//		base = &memory_region(okim6295_interface->region[num)][okim6295_base[num] + okim6295_command[num] * 8];
 //		start = (base[0] << 16) + (base[1] << 8) + base[2];
 //		stop = (base[3] << 16) + (base[4] << 8) + base[5];
 
@@ -787,7 +789,7 @@ static void OKIM6295_data_w (int num, int data)
 				buffer_end = cpu_scalebyfcount (voice->buffer_len);
 
 				/* determine the start/stop positions */
-				base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num][i] + okim6295_command[num] * 8];
+				base = &memory_region(okim6295_interface->region[num])[okim6295_base[num][i] + okim6295_command[num] * 8];
 				start = (base[0] << 16) + (base[1] << 8) + base[2];
 				stop = (base[3] << 16) + (base[4] << 8) + base[5];
 
@@ -803,7 +805,7 @@ if (errorlog) fprintf(errorlog,"OKIM6295: requested to play invalid sample %02x\
 				else
 				{
 					voice->playing = 1;
-					voice->base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num][i] + start];
+					voice->base = &memory_region(okim6295_interface->region[num])[okim6295_base[num][i] + start];
 					voice->sample = 0;
 					voice->count = 2 * (stop - start + 1);
 
@@ -871,22 +873,22 @@ if (errorlog) fprintf(errorlog,"oki%d(2 byte) %02x %02x (Voice %01x - %01x)\n",n
 	}
 }
 
-int OKIM6295_status_0_r (int num)
+int OKIM6295_status_0_r (int offset)
 {
 	return OKIM6295_status_r(0);
 }
 
-int OKIM6295_status_1_r (int num)
+int OKIM6295_status_1_r (int offset)
 {
 	return OKIM6295_status_r(1);
 }
 
-void OKIM6295_data_0_w (int num, int data)
+void OKIM6295_data_0_w (int offset, int data)
 {
 	OKIM6295_data_w(0,data);
 }
 
-void OKIM6295_data_1_w (int num, int data)
+void OKIM6295_data_1_w (int offset, int data)
 {
 	OKIM6295_data_w(1,data);
 }

@@ -63,22 +63,18 @@ void mappy_io_chips_enable_w(int offset,int data);
 void mappy_flipscreen_w(int offset,int data);
 
 int mappy_sharedram_r2(int offset);
-int mappy_cpu1ram_r(int offset);
 int mappy_customio_r_1(int offset);
 int mappy_customio_r_2(int offset);
 
 int digdug2_sharedram_r2(int offset);
-int digdug2_cpu1ram_r(int offset);
 int digdug2_customio_r_1(int offset);
 int digdug2_customio_r_2(int offset);
 
 int motos_sharedram_r2(int offset);
-int motos_cpu1ram_r(int offset);
 int motos_customio_r_1(int offset);
 int motos_customio_r_2(int offset);
 
 int todruaga_sharedram_r2(int offset);
-int todruaga_cpu1ram_r(int offset);
 int todruaga_customio_r_1(int offset);
 int todruaga_customio_r_2(int offset);
 
@@ -102,46 +98,42 @@ void mappy_sound_enable_w(int offset,int data);
 /* CPU 1 read addresses */
 static struct MemoryReadAddress mappy_readmem_cpu1[] =
 {
-	{ 0xa000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, mappy_customio_r_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, mappy_customio_r_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
-	{ 0x0000, 0x9fff, mappy_cpu1ram_r },                         /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, mappy_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, mappy_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x0000, 0x9fff, MRA_RAM },			/* RAM everywhere else */
+	{ 0xa000, 0xffff, MRA_ROM },			/* ROM code */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress digdug2_readmem_cpu1[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, digdug2_customio_r_1, &mappy_customio_1 }, /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, digdug2_customio_r_2, &mappy_customio_2 }, /* custom I/O chip #2 interface */
-	{ 0x4820, 0x4bff, MRA_RAM },                                 /* extra RAM for Dig Dug 2 */
-	{ 0x0000, 0x7fff, digdug2_cpu1ram_r },                       /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, digdug2_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, digdug2_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x4820, 0x4bff, MRA_RAM },				/* extra RAM for Dig Dug 2 */
+	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress motos_readmem_cpu1[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, motos_customio_r_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, motos_customio_r_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
-	{ 0x0000, 0x7fff, motos_cpu1ram_r },						 /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, motos_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, motos_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x0000, 0x7fff, MRA_RAM },			/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },			/* ROM code */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress todruaga_readmem_cpu1[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, todruaga_customio_r_1, &mappy_customio_1 },/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, todruaga_customio_r_2, &mappy_customio_2 },/* custom I/O chip #2 interface */
-	{ 0x0000, 0x7fff, todruaga_cpu1ram_r },                      /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, todruaga_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, todruaga_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
 	{ -1 }  /* end of table */
 };
 
@@ -152,7 +144,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x1000, 0x177f, MWA_RAM },                                 /* general RAM, area 1 */
 	{ 0x1800, 0x1f7f, MWA_RAM },                                 /* general RAM, area 2 */
 	{ 0x2000, 0x277f, MWA_RAM },                                 /* general RAM, area 3 */
-	{ 0x4040, 0x43ff, MWA_RAM },                                 /* shared RAM with the sound CPU */
+	{ 0x4040, 0x43ff, MWA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
 	{ 0x4820, 0x4bff, MWA_RAM },                                 /* extra RAM for Dig Dug 2 */
 	{ 0x0000, 0x07ff, mappy_videoram_w, &videoram, &videoram_size },/* video RAM */
 	{ 0x0800, 0x0fff, mappy_colorram_w, &colorram },             /* color RAM */
@@ -160,8 +152,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_2 },                   /* sprite RAM, area 2 */
 	{ 0x2780, 0x27ff, MWA_RAM, &spriteram_3 },                   /* sprite RAM, area 3 */
 	{ 0x3800, 0x3fff, mappy_scroll_w },                          /* scroll registers */
-	{ 0x4800, 0x480f, mappy_customio_w_1 },                      /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, mappy_customio_w_2 },                      /* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, mappy_customio_w_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, mappy_customio_w_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
 	{ 0x5002, 0x5003, mappy_interrupt_enable_1_w },              /* interrupt enable */
 	{ 0x5004, 0x5005, mappy_flipscreen_w },				 /* cocktail flipscreen */
 	{ 0x5008, 0x5008, mappy_reset_2_w },			       /* reset CPU #2 & disable I/O chips */
@@ -222,7 +214,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 
 
 /* input from the outside world */
-INPUT_PORTS_START( mappy_input_ports )
+INPUT_PORTS_START( mappy )
 	PORT_START      /* DSW0 */
 /* According to the manual, 0x04, 0x08 and 0x10 should always be off,
 but... */
@@ -323,7 +315,7 @@ but... */
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( digdug2_input_ports )
+INPUT_PORTS_START( digdug2 )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -410,7 +402,7 @@ INPUT_PORTS_START( digdug2_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( motos_input_ports )
+INPUT_PORTS_START( motos )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, "Reset" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -476,7 +468,7 @@ INPUT_PORTS_START( motos_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( todruaga_input_ports )
+INPUT_PORTS_START( todruaga )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -631,21 +623,19 @@ static struct namco_interface namco_interface =
 
 
 /* the machine driver: 2 6809s running at 1MHz */
-static struct MachineDriver mappy_machine_driver =
+static struct MachineDriver machine_driver_mappy =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1100000,                        /* 1.1 Mhz */
-			0,
 			mappy_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1100000,                        /* 1.1 Mhz */
-			3,      /* memory region #3 */
 			mappy_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -677,21 +667,19 @@ static struct MachineDriver mappy_machine_driver =
 	}
 };
 
-static struct MachineDriver digdug2_machine_driver =
+static struct MachineDriver machine_driver_digdug2 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			0,
 			digdug2_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			3,      /* memory region #3 */
 			digdug2_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -723,21 +711,19 @@ static struct MachineDriver digdug2_machine_driver =
 	}
 };
 
-static struct MachineDriver motos_machine_driver =
+static struct MachineDriver machine_driver_motos =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			0,
 			motos_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			3,      /* memory region #3 */
 			motos_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -769,21 +755,19 @@ static struct MachineDriver motos_machine_driver =
 	}
 };
 
-static struct MachineDriver todruaga_machine_driver =
+static struct MachineDriver machine_driver_todruaga =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			0,
 			todruaga_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			3,      /* memory region #3 */
 			todruaga_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -818,8 +802,8 @@ static struct MachineDriver todruaga_machine_driver =
 
 
 /* ROM loader description */
-ROM_START( mappy_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( mappy )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy1d.64",   0xa000, 0x2000, 0x52e6c708 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
 	ROM_LOAD( "mappy1b.64",   0xe000, 0x2000, 0x203766d4 )
@@ -829,20 +813,20 @@ ROM_START( mappy_rom )
 	ROM_LOAD( "mappy3m.64",   0x1000, 0x2000, 0xf2d9647a )
 	ROM_LOAD( "mappy3n.64",   0x3000, 0x2000, 0x757cf2b6 )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
 	ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
 
 	ROM_REGION(0x0100)      /* sound prom */
 	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
-ROM_START( mappyjp_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( mappyjp )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy3.bin",   0xa000, 0x2000, 0xdb9d5ab5 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
 	ROM_LOAD( "mappy1.bin",   0xe000, 0x2000, 0x77c0b492 )
@@ -852,21 +836,21 @@ ROM_START( mappyjp_rom )
 	ROM_LOAD( "mappy3m.64",   0x1000, 0x2000, 0xf2d9647a )
 	ROM_LOAD( "mappy3n.64",   0x3000, 0x2000, 0x757cf2b6 )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
 
 ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
 
 	ROM_REGION(0x0100)      /* sound prom */
 	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
-ROM_START( digdug2_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( digdug2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "ddug2-3.bin",  0x8000, 0x4000, 0xbe7ec80b )
 	ROM_LOAD( "ddug2-1.bin",  0xc000, 0x4000, 0x5c77c0d4 )
 
@@ -875,20 +859,20 @@ ROM_START( digdug2_rom )
 	ROM_LOAD( "ddug2-3m.bin", 0x1000, 0x4000, 0xdf1f4ad8 )
 	ROM_LOAD( "ddug2-3n.bin", 0x5000, 0x4000, 0xccadb3ea )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
 	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
 	ROM_LOAD( "ddclr-5k.bin", 0x0120, 0x0100, 0x1525a4d1 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
 
 	ROM_REGION(0x0100)      /* sound prom */
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
-ROM_START( digdug2a_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( digdug2a )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "ddug2a_3.bin",  0x8000, 0x4000, 0xcc155338 )
 	ROM_LOAD( "ddug2a_1.bin",  0xc000, 0x4000, 0x40e46af8 )
 
@@ -897,21 +881,21 @@ ROM_START( digdug2a_rom )
 	ROM_LOAD( "ddug2-3m.bin", 0x1000, 0x4000, 0xdf1f4ad8 )
 	ROM_LOAD( "ddug2-3n.bin", 0x5000, 0x4000, 0xccadb3ea )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
 	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
 	ROM_LOAD( "ddclr_5k.bin", 0x0120, 0x0100, 0x9c55feda ) /* sprites */
 	/* Can't see the difference on screen, but CRC differs. */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
 
 	ROM_REGION(0x0100)      /* sound prom */
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
-ROM_START( motos_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( motos )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
 	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0x57b157e2 )
 
@@ -920,20 +904,20 @@ ROM_START( motos_rom )
 	ROM_LOAD( "mts_3m.bin",   0x1000, 0x4000, 0x2f0e396e )
 	ROM_LOAD( "mts_3n.bin",   0x5000, 0x4000, 0xcf8a3b86 )
 
-	ROM_REGION(0x0220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "motos.pr1",    0x0000, 0x0020, 0x71972383 ) /* palette */
 	ROM_LOAD( "motos.pr2",    0x0020, 0x0100, 0x730ba7fb ) /* characters */
 	ROM_LOAD( "motos.pr3",    0x0120, 0x0100, 0x7721275d ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mts_1k.bin",   0xe000, 0x2000, 0x55e45d21 )
 
 	ROM_REGION(0x0100)      /* sound prom */
 	ROM_LOAD( "motos.spr",    0x0000, 0x0100, 0x2accdfb4 )
 ROM_END
 
-ROM_START( todruaga_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( todruaga )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3.bin",  0x8000, 0x4000, 0x7ab4f5b2 )
 	ROM_LOAD( "druaga1.bin",  0xc000, 0x4000, 0x8c20ef10 )
 
@@ -942,7 +926,7 @@ ROM_START( todruaga_rom )
 	ROM_LOAD( "druaga3m.bin", 0x1000, 0x2000, 0xe827e787 )
 	ROM_LOAD( "druaga3n.bin", 0x3000, 0x2000, 0x962bd060 )
 
-	ROM_REGION(0x0520)      /* color proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
 	ROM_LOAD( "todruaga.pr2", 0x0020, 0x0100, 0x8c661d6a ) /* characters */
 	ROM_LOAD( "todruaga.pr3", 0x0120, 0x0100, 0x5bcec186 ) /* sprites */
@@ -950,15 +934,15 @@ ROM_START( todruaga_rom )
 	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
 	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
 
 	ROM_REGION(0x0100)      /* sound prom */
 	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
 ROM_END
 
-ROM_START( todruagb_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+ROM_START( todruagb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3a.bin", 0x8000, 0x4000, 0xfbf16299 )
 	ROM_LOAD( "druaga1a.bin", 0xc000, 0x4000, 0xb238d723 )
 
@@ -967,7 +951,7 @@ ROM_START( todruagb_rom )
 	ROM_LOAD( "druaga3m.bin", 0x1000, 0x2000, 0xe827e787 )
 	ROM_LOAD( "druaga3n.bin", 0x3000, 0x2000, 0x962bd060 )
 
-	ROM_REGION(0x0520)      /* color proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
 	ROM_LOAD( "todruaga.pr2", 0x0020, 0x0100, 0x8c661d6a ) /* characters */
 	ROM_LOAD( "todruaga.pr3", 0x0120, 0x0100, 0x5bcec186 ) /* sprites */
@@ -975,7 +959,7 @@ ROM_START( todruagb_rom )
 	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
 	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -984,217 +968,7 @@ ROM_END
 
 
 
-/* load the high score table */
-static int mappy_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x1465],"BEH",3) == 0 &&          /* check for high score initials */
-	    memcmp(&RAM[0x1385],"\0\x20\0",3) == 0 &&     /* check for main high score value */
-	    memcmp(&RAM[0x7ed],"\0\0\0",3) == 0)          /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1460],40);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x1385] = RAM[0x1460];
-			RAM[0x1386] = RAM[0x1461];
-			RAM[0x1387] = RAM[0x1462];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x1385] >> 4);
-		mappy_videoram_w (0x7f3, writing ? (RAM[0x1385] >> 4) : ' ');
-		if (!writing) writing = (RAM[0x1385] & 0x0f);
-		mappy_videoram_w (0x7f2, writing ? (RAM[0x1385] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x1386] >> 4);
-		mappy_videoram_w (0x7f1, writing ? (RAM[0x1386] >> 4) : ' ');
-		if (!writing) writing = (RAM[0x1386] & 0x0f);
-		mappy_videoram_w (0x7f0, writing ? (RAM[0x1386] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x1387] >> 4);
-		mappy_videoram_w (0x7ef, writing ? (RAM[0x1387] >> 4) : ' ');
-		if (!writing) writing = (RAM[0x1387] & 0x0f);
-		mappy_videoram_w (0x7ee, writing ? (RAM[0x1387] & 0x0f) : ' ');
-		mappy_videoram_w (0x7ed, 0);
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void mappy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1460],40);
-		osd_fclose(f);
-	}
-}
-
-
-/* load the high score table */
-static int digdug2_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x11b6]," KAZU ",6) == 0 &&         /* check for high score initials */
-	    memcmp(&RAM[0x100b],"\x00\x20\x00",3) == 0 &&   /* check for main high score value */
-	    memcmp(&RAM[0x7ed],"\x30\0\0",3) == 0)          /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x11b0],80);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x100b] = (RAM[0x11b0] << 4) | RAM[0x11b1];
-			RAM[0x100c] = (RAM[0x11b2] << 4) | RAM[0x11b3];
-			RAM[0x100d] = (RAM[0x11b4] << 4) | RAM[0x11b5];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x11b0] & 0x0f);
-		mappy_videoram_w (0x7f3, writing ? (RAM[0x11b0] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b1] & 0x0f);
-		mappy_videoram_w (0x7f2, writing ? (RAM[0x11b1] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b2] & 0x0f);
-		mappy_videoram_w (0x7f1, writing ? (RAM[0x11b2] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b3] & 0x0f);
-		mappy_videoram_w (0x7f0, writing ? (RAM[0x11b3] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b4] & 0x0f);
-		mappy_videoram_w (0x7ef, writing ? (RAM[0x11b4] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b5] & 0x0f);
-		mappy_videoram_w (0x7ee, writing ? (RAM[0x11b5] & 0x0f) : ' ');
-		mappy_videoram_w (0x7ed, 0x30);
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void digdug2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x11b0],80);
-		osd_fclose(f);
-	}
-}
-
-
-/* load the high score table */
-static int motos_hiload(void)
-{
-
-
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2400],"\x20\x20\x20",3) == 0 &&
-		memcmp(&RAM[0x2499],"\x4f\x20\x20",3) == 0 &&
-		memcmp(&RAM[0x1830],"\x00\x00\x01",3) == 0 )
-
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2400],0xA0);
-			osd_fclose(f);
-			/* also copy over the high score */
-
-			RAM[0x1831] = ((RAM[0x2404]& 0x0f) << 4) | (RAM[0x2405]& 0x0f);
-			RAM[0x1832] = ((RAM[0x2406]& 0x0f) << 4) | (RAM[0x2407]& 0x0f);
-			RAM[0x1833] = ((RAM[0x2408]& 0x0f) << 4) | (RAM[0x2409]& 0x0f);
-			RAM[0x1834] = ((RAM[0x240a]& 0x0f) << 4) | (RAM[0x240b]& 0x0f);
-
-
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void motos_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2400],0xA0);
-		osd_fclose(f);
-	}
-}
-
-static int todruaga_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x1031],"END",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x102A],50);
-			osd_fclose(f);
-		}
-
-		RAM[0x100b] = RAM[0x102A];
-		RAM[0x100c] = RAM[0x102B];
-		RAM[0x100d] = RAM[0x102C];
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void todruaga_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x102A],50);
-		osd_fclose(f);
-	}
-}
-
-
-/* the core game driver */
-struct GameDriver mappy_driver =
+struct GameDriver driver_mappy =
 {
 	__FILE__,
 	0,
@@ -1204,50 +978,48 @@ struct GameDriver mappy_driver =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&mappy_machine_driver,
+	&machine_driver_mappy,
 	0,
 
-	mappy_rom,
+	rom_mappy,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mappy_input_ports,
+	input_ports_mappy,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	mappy_hiload, mappy_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
 
-struct GameDriver mappyjp_driver =
+struct GameDriver driver_mappyjp =
 {
 	__FILE__,
-	&mappy_driver,
+	&driver_mappy,
 	"mappyjp",
 	"Mappy (Japan)",
 	"1983",
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&mappy_machine_driver,
+	&machine_driver_mappy,
 	0,
 
-	mappyjp_rom,
+	rom_mappyjp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	mappy_input_ports,
+	input_ports_mappy,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	mappy_hiload, mappy_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver digdug2_driver =
+struct GameDriver driver_digdug2 =
 {
 	__FILE__,
 	0,
@@ -1257,49 +1029,47 @@ struct GameDriver digdug2_driver =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&digdug2_machine_driver,
+	&machine_driver_digdug2,
 	0,
 
-	digdug2_rom,
+	rom_digdug2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	digdug2_input_ports,
+	input_ports_digdug2,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	digdug2_hiload, digdug2_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver digdug2a_driver =
+struct GameDriver driver_digdug2a =
 {
 	__FILE__,
-	&digdug2_driver,
+	&driver_digdug2,
 	"digdug2a",
 	"Dig Dug II (set 2)",
 	"1985",
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&digdug2_machine_driver,
+	&machine_driver_digdug2,
 	0,
 
-	digdug2a_rom,
+	rom_digdug2a,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	digdug2_input_ports,
+	input_ports_digdug2,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	digdug2_hiload, digdug2_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver motos_driver =
+struct GameDriver driver_motos =
 {
 	__FILE__,
 	0,
@@ -1309,23 +1079,22 @@ struct GameDriver motos_driver =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
 	0,
-	&motos_machine_driver,
+	&machine_driver_motos,
 	0,
 
-	motos_rom,
+	rom_motos,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	motos_input_ports,
+	input_ports_motos,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	motos_hiload, motos_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver todruaga_driver =
+struct GameDriver driver_todruaga =
 {
 	__FILE__,
 	0,
@@ -1335,44 +1104,42 @@ struct GameDriver todruaga_driver =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
 	0,
-	&todruaga_machine_driver,
+	&machine_driver_todruaga,
 	0,
 
-	todruaga_rom,
+	rom_todruaga,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	todruaga_input_ports,
+	input_ports_todruaga,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	todruaga_hiload, todruaga_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver todruagb_driver =
+struct GameDriver driver_todruagb =
 {
 	__FILE__,
-	&todruaga_driver,
+	&driver_todruaga,
 	"todruagb",
 	"Tower of Druaga (set 2)",
 	"1984",
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
 	0,
-	&todruaga_machine_driver,
+	&machine_driver_todruaga,
 	0,
 
-	todruagb_rom,
+	rom_todruagb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	todruaga_input_ports,
+	input_ports_todruaga,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
-
-	todruaga_hiload, todruaga_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

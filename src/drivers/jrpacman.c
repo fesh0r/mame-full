@@ -157,7 +157,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( jrpacman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -265,7 +265,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,writeport,
 			jrpacman_interrupt,1
 		}
@@ -304,8 +303,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jrpacman_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( jrpacman )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jrp8d.bin",    0x0000, 0x2000, 0xe3fa972e )
 	ROM_LOAD( "jrp8e.bin",    0x2000, 0x2000, 0xec889e94 )
 	ROM_LOAD( "jrp8h.bin",    0x8000, 0x2000, 0x35f1fc6e )
@@ -316,14 +315,14 @@ ROM_START( jrpacman_rom )
 	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, 0x0527ff9b )
 	ROM_LOAD( "jrp2e.bin",    0x2000, 0x2000, 0x73477193 )
 
-	ROM_REGION(0x0140)	/* color proms */
+	ROM_REGIONX( 0x0140, REGION_PROMS )
 	ROM_LOAD( "jrpacman.9e",  0x0000, 0x0020, 0x90012b3f ) /* palette low bits */
 	ROM_LOAD( "jrpacman.9f",  0x0020, 0x0020, 0x8300178e ) /* palette high bits */
 	ROM_LOAD( "jrpacman.9p",  0x0040, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	/* I don't know if this is correct. I'm using the Pac Man one. */
-	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, BADCRC( 0xa9cc86bf ) )
 ROM_END
 
 
@@ -365,7 +364,7 @@ static void jrpacman_decode(void)
 	    { 0,0 }
 	};
 	int i,j,A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	A = 0;
@@ -382,77 +381,7 @@ static void jrpacman_decode(void)
 }
 
 
-static int hiload(void)
-{
-	static int resetcount;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 60) return 0;
-
-	/* wait for "HIGH SCORE" to be on screen */
-	if ((memcmp(&RAM[0x476d],"\x40\x40\x40\x40",4) == 0) &&
-            (memcmp(&RAM[0x4751],"\x48\x47\x49\x48",4) == 0))
-	{
-		void *f;
-
-
-		resetcount = 0;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			char buf[10];
-			int hi;
-
-
-			osd_fread(f,&RAM[0x4e88],4);
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			hi = (RAM[0x4e88] & 0x0f) +
-			     (RAM[0x4e88] >> 4) * 10 +
-			     (RAM[0x4e89] & 0x0f) * 100 +
-			     (RAM[0x4e89] >> 4) * 1000 +
-			     (RAM[0x4e8a] & 0x0f) * 10000 +
-			     (RAM[0x4e8a] >> 4) * 100000 +
-			     (RAM[0x4e8b] & 0x0f) * 1000000 +
-			     (RAM[0x4e8b] >> 4) * 10000000;
-			if (hi)
-			{
-				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') jrpacman_videoram_w(0x0772,buf[2]-'0');
-				if (buf[3] != ' ') jrpacman_videoram_w(0x0771,buf[3]-'0');
-				if (buf[4] != ' ') jrpacman_videoram_w(0x0770,buf[4]-'0');
-				if (buf[5] != ' ') jrpacman_videoram_w(0x076f,buf[5]-'0');
-				if (buf[6] != ' ') jrpacman_videoram_w(0x076e,buf[6]-'0');
-				jrpacman_videoram_w(0x076d,buf[7]-'0');
-			}
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4e88],4);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver jrpacman_driver =
+struct GameDriver driver_jrpacman =
 {
 	__FILE__,
 	0,
@@ -463,17 +392,16 @@ struct GameDriver jrpacman_driver =
 	"David Caldwell\nNicola Salmoria\nMarco Cassili",
 	0,
 	&machine_driver,
+	jrpacman_decode,
+
+	rom_jrpacman,
+	0, 0,
+	0,
 	0,
 
-	jrpacman_rom,
-	jrpacman_decode, 0,
-	0,
-	0,	/* sound_prom */
+	input_ports_jrpacman,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

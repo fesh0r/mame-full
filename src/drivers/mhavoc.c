@@ -181,10 +181,38 @@ int mhavoc_port_0_r(int offset);
 int mhavoc_port_1_r(int offset);
 void mhavoc_out_0_w(int offset, int data);
 void mhavoc_out_1_w(int offset, int data);
-int mhavoc_gammaram_r(int offset);
-void mhavoc_gammaram_w(int offset, int data);
 void tempest_colorram_w(int offset, int data);
 
+
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
+
+static unsigned char *gammaram;
+
+static int mhavoc_gammaram_r (int offset)
+{
+	return gammaram[offset & 0x7ff];
+}
+
+static void mhavoc_gammaram_w (int offset, int data)
+{
+	gammaram[offset & 0x7ff] = data;
+}
 
 
 /* Main board Readmem */
@@ -197,7 +225,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1200, 0x1200, mhavoc_port_0_r },	/* Alpha Input Port 0 */
 	{ 0x1800, 0x1FFF, MRA_RAM},				/* Shared Beta Ram */
 	{ 0x2000, 0x3fff, MRA_BANK2 },			/* Paged Program ROM (32K) */
-	{ 0x4000, 0x4fff, MRA_RAM, &vectorram, &vectorram_size }, /* Vector RAM	(4K) */
+	{ 0x4000, 0x4fff, MRA_RAM }, /* Vector RAM	(4K) */
 	{ 0x5000, 0x5fff, MRA_ROM },			/* Vector ROM (4K) */
 	{ 0x6000, 0x7fff, MRA_BANK3 },			/* Paged Vector ROM (32K) */
 	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (32K) */
@@ -223,7 +251,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x17c0, 0x17c0, mhavoc_gamma_w },		/* Gamma Communication Write Port */
 	{ 0x1800, 0x1fff, MWA_RAM },			/* Shared Beta Ram */
 	{ 0x2000, 0x3fff, MWA_ROM },			/* Major Havoc writes here.*/
-	{ 0x4000, 0x4fff, MWA_RAM, &vectorram },/* Vector Generator RAM	*/
+	{ 0x4000, 0x4fff, MWA_RAM, &vectorram, &vectorram_size },/* Vector Generator RAM	*/
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -247,16 +275,16 @@ static struct MemoryReadAddress gamma_readmem[] =
 static struct MemoryWriteAddress gamma_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },			/* Program RAM (2K)	*/
-	{ 0x0800, 0x1fff, mhavoc_gammaram_w },	/* wraps to 0x000-0x7ff */
+	{ 0x0800, 0x1fff, mhavoc_gammaram_w, &gammaram },	/* wraps to 0x000-0x7ff */
 	{ 0x2000, 0x203f, quad_pokey_w },		/* Quad Pokey write	*/
 	{ 0x4000, 0x4000, MWA_NOP },			/* IRQ Acknowledge	*/
 	{ 0x4800, 0x4800, mhavoc_out_1_w },		/* Coin Counters 	*/
 	{ 0x5000, 0x5000, mhavoc_alpha_w },		/* Alpha Comm. Write Port */
-	{ 0x6000, 0x61ff, MWA_RAM },			/* EEROM		*/
+	{ 0x6000, 0x61ff, MWA_RAM, &nvram, &nvram_size },	/* EEROM		*/
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mhavoc )
 	PORT_START	/* IN0 - alpha (player_1 = 0) */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step", KEYCODE_T, IP_JOY_NONE ) */
@@ -327,7 +355,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mhavocp_input_ports )
+INPUT_PORTS_START( mhavocp )
 	PORT_START	/* IN0 - alpha (player_1 = 0) */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step", KEYCODE_T, IP_JOY_NONE ) */
@@ -397,25 +425,6 @@ INPUT_PORTS_START( mhavocp_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_COLOR };
-
 
 
 static struct POKEYinterface pokey_interface =
@@ -447,14 +456,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			2500000,	/* 2.5 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,8 /* 2.4576 ms period */
 		},
 		{
 			CPU_M6502,
 			1250000,	/* 1.25 Mhz */
-			2,		/* CPU #2 */
 			gamma_readmem,gamma_writemem,0,0,
 			0, 0, /* no vblank interrupt */
 			interrupt, 305 /* 3.2768 ms period */
@@ -467,9 +474,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 300, 0, 260 },
-	gfxdecodeinfo,
+	0,
 	256,256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -484,7 +491,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -497,9 +506,9 @@ static struct MachineDriver machine_driver =
  * Prototype is supported as "mhavocp"
  */
 
-ROM_START( mhavoc_rom )
+ROM_START( mhavoc )
 	/* Alpha Processor ROMs */
-	ROM_REGION(0x21000)	/* 152KB for ROMs */
+	ROM_REGIONX( 0x21000, REGION_CPU1 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
@@ -518,14 +527,14 @@ ROM_START( mhavoc_rom )
 	ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000) /* 16k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavoc2_rom )
+ROM_START( mhavoc2 )
 	/* Alpha Processor ROMs */
-	ROM_REGION(0x21000)
+	ROM_REGIONX( 0x21000, REGION_CPU1 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.110",   0x05000, 0x2000, 0x16eef583 )
 
@@ -545,14 +554,14 @@ ROM_START( mhavoc2_rom )
 	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000)	/* 16k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavocrv_rom )
+ROM_START( mhavocrv )
 	/* Alpha Processor ROMs */
-	ROM_REGION(0x21000)	/* 152KB for ROMs */
+	ROM_REGIONX( 0x21000, REGION_CPU1 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
@@ -571,14 +580,14 @@ ROM_START( mhavocrv_rom )
 	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000) /* 16k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
 	ROM_LOAD( "136025.908",   0x08000, 0x4000, 0xc52ec664 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavocp_rom )
+ROM_START( mhavocp )
  /* Alpha Processor ROMs */
- ROM_REGION(0x21000)
+ ROM_REGIONX( 0x21000, REGION_CPU1 )
  /* Vector Generator ROM */
  ROM_LOAD( "136025.010",   0x05000, 0x2000, 0x3050c0e6 )
 
@@ -598,39 +607,11 @@ ROM_START( mhavocp_rom )
  ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
 
  /* Gamma Processor ROM */
- ROM_REGION(0x10000) /* 16k for code */
+ ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
  ROM_LOAD( "136025.008",   0x8000, 0x4000, 0x22ea7399 )
  ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
 ROM_END
 
-
-static int hiload(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU) */
-	unsigned char *RAM = Machine->memory_region[2];
-
-	/* no reason to check hiscore table. It's an NV_RAM! */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-	        osd_fread(f,&RAM[0x6000],0x200);
-	        osd_fclose(f);
-	}
-	return 1;
-}
-
-void hisave(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU) */
-	unsigned char *RAM = Machine->memory_region[2];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	        osd_fwrite(f,&RAM[0x6000],0x200);
-	        osd_fclose(f);
-	}
-}
 
 
 #define CREDITS \
@@ -643,7 +624,7 @@ void hisave(void)
 	"Owen Rubin (technical info)\n" \
 	VECTOR_TEAM
 
-struct GameDriver mhavoc_driver =
+struct GameDriver driver_mhavoc =
 {
 	__FILE__,
 	0,
@@ -656,23 +637,22 @@ struct GameDriver mhavoc_driver =
 	&machine_driver,
 	0,
 
-	mhavoc_rom,
+	rom_mhavoc,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mhavoc,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mhavoc2_driver =
+struct GameDriver driver_mhavoc2 =
 {
 	__FILE__,
-	&mhavoc_driver,
+	&driver_mhavoc,
 	"mhavoc2",
 	"Major Havoc (rev 2)",
 	"1983",
@@ -682,23 +662,22 @@ struct GameDriver mhavoc2_driver =
 	&machine_driver,
 	0,
 
-	mhavoc2_rom,
+	rom_mhavoc2,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mhavoc,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mhavocrv_driver =
+struct GameDriver driver_mhavocrv =
 {
 	__FILE__,
-	&mhavoc_driver,
+	&driver_mhavoc,
 	"mhavocrv",
 	"Major Havoc (Return to Vax)",
 	"1983",
@@ -708,42 +687,40 @@ struct GameDriver mhavocrv_driver =
 	&machine_driver,
 	0,
 
-	mhavocrv_rom,
+	rom_mhavocrv,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mhavoc,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver mhavocp_driver =
+struct GameDriver driver_mhavocp =
 {
- __FILE__,
- &mhavoc_driver,
- "mhavocp",
- "Major Havoc (prototype)",
- "1983",
- "Atari",
- CREDITS,
- 0,
- &machine_driver,
- 0,
+	__FILE__,
+	&driver_mhavoc,
+	"mhavocp",
+	"Major Havoc (prototype)",
+	"1983",
+	"Atari",
+	CREDITS,
+	0,
+	&machine_driver,
+	0,
 
- mhavocp_rom,
- 0, 0,
- 0,
- 0,
+	rom_mhavocp,
+	0, 0,
+	0,
+	0,
 
- mhavocp_input_ports,
+	input_ports_mhavocp,
 
- color_prom, 0, 0,
- ORIENTATION_DEFAULT,
-
- hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

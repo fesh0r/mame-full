@@ -12,6 +12,8 @@ extern unsigned char* berzerk_magicram;
 
 void berzerk_init_machine(void);
 
+void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
 int  berzerk_interrupt(void);
 void berzerk_irq_enable_w(int offset,int data);
 void berzerk_nmi_enable_w(int offset,int data);
@@ -29,24 +31,40 @@ void berzerk_magicram_control_w(int offset,int data);
 int  berzerk_collision_r(int offset);
 
 void berzerk_sound_control_a_w(int offset, int data);
-int  berzerk_sh_start(void);
+int  berzerk_sh_start(const struct MachineSound *msound);
 void berzerk_sh_update(void);
+
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void berzerk_nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+	}
+}
+
 
 
 static struct MemoryReadAddress berzerk_readmem[] =
 {
-	{ 0x0000, 0x07ff, MRA_ROM},
-	{ 0x0800, 0x09ff, MRA_RAM},
-	{ 0x1000, 0x3fff, MRA_ROM},
-	{ 0x4000, 0x87ff, MRA_RAM},
+	{ 0x0000, 0x07ff, MRA_ROM },
+	{ 0x0800, 0x09ff, MRA_RAM },
+	{ 0x1000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x87ff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress berzerk_writemem[] =
 {
-	{ 0x0000, 0x07ff, MWA_ROM},
-	{ 0x0800, 0x09ff, MWA_RAM},
-	{ 0x1000, 0x3fff, MWA_ROM},
+	{ 0x0000, 0x07ff, MWA_ROM },
+	{ 0x0800, 0x09ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x1000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
 	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
 	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
@@ -129,7 +147,7 @@ static struct IOWritePort writeport[] =
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 
-INPUT_PORTS_START( berzerk_input_ports )
+INPUT_PORTS_START( berzerk )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -199,7 +217,7 @@ INPUT_PORTS_START( berzerk_input_ports )
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", KEYCODE_F1, IP_JOY_NONE )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( frenzy_input_ports )
+INPUT_PORTS_START( frenzy )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -332,119 +350,31 @@ INPUT_PORTS_END
 
 
 /* Simple 1-bit RGBI palette */
-unsigned char berzerk_palette[16 * 3] =
+static unsigned char palette[16 * 3] =
 {
-        0x00, 0x00, 0x00,
-        0xff, 0x00, 0x00,
-        0x00, 0xff, 0x00,
-        0xff, 0xff, 0x00,
-        0x00, 0x00, 0xff,
-        0xff, 0x00, 0xff,
-        0x00, 0xff, 0xff,
-        0xff, 0xff, 0xff,
-        0x40, 0x40, 0x40,
-        0xff, 0x40, 0x40,
-        0x40, 0xff, 0x40,
-        0xff, 0xff, 0x40,
-        0x40, 0x40, 0xff,
-        0xff, 0x40, 0xff,
-        0x40, 0xff, 0xff,
-        0xff, 0xff, 0xff
+	0x00, 0x00, 0x00,
+	0xff, 0x00, 0x00,
+	0x00, 0xff, 0x00,
+	0xff, 0xff, 0x00,
+	0x00, 0x00, 0xff,
+	0xff, 0x00, 0xff,
+	0x00, 0xff, 0xff,
+	0xff, 0xff, 0xff,
+	0x40, 0x40, 0x40,
+	0xff, 0x40, 0x40,
+	0x40, 0xff, 0x40,
+	0xff, 0xff, 0x40,
+	0x40, 0x40, 0xff,
+	0xff, 0x40, 0xff,
+	0x40, 0xff, 0xff,
+	0xff, 0xff, 0xff
 };
-
-static struct Samplesinterface berzerk_samples_interface =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	8,	/* 8 channels */
-	25	/* volume */
-};
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
-#define  frenzy_init_machine  0
-
-#define DRIVER(GAMENAME)												\
-																		\
-static struct MachineDriver GAMENAME##_machine_driver =					\
-{																		\
-	/* basic machine hardware */										\
-	{																	\
-		{																\
-			CPU_Z80,													\
-			2500000,        /* 2.5 MHz */								\
-			0,															\
-			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
-			berzerk_interrupt,8											\
-		},																\
-	},																	\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */						\
-	GAMENAME##_init_machine,											\
-																		\
-	/* video hardware */												\
-	256, 256, { 0, 256-1, 32, 256-1 },									\
-	0,																	\
-	sizeof(berzerk_palette)/3, 0,										\
-	0,																	\
-																		\
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
-	0,																	\
-	generic_bitmapped_vh_start,											\
-	generic_bitmapped_vh_stop,											\
-	generic_bitmapped_vh_screenrefresh,									\
-																		\
-	/* sound hardware */												\
-	0,																	\
-	berzerk_sh_start,													\
-	0,																	\
-	berzerk_sh_update,													\
-	{																	\
-		{																\
-			SOUND_SAMPLES,												\
-			&berzerk_samples_interface									\
-		}																\
-	}																	\
-};
-
-
-DRIVER(berzerk)
-DRIVER(frenzy)
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( berzerk_rom )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
-        ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
-        ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
-        ROM_LOAD( "5d-3",         0x2000, 0x0800, 0xfcaefa95 )
-        ROM_LOAD( "6d-4",         0x2800, 0x0800, 0x1e35b9a0 )
-        ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
-ROM_END
-
-ROM_START( berzerk1_rom )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
-        ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
-        ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
-        ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
-        ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
-        ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
-ROM_END
-
-ROM_START( frenzy_rom )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
-        ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
-        ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )
-        ROM_LOAD( "5d-3",         0x3000, 0x1000, 0xe1d3133c )
-        ROM_LOAD( "6d-4",         0xc000, 0x1000, 0x5581a7b1 )
-        /* 1c & 2c are the voice ROMs */
-ROM_END
 
 static const char *berzerk_sample_names[] =
 {
@@ -487,164 +417,113 @@ static const char *berzerk_sample_names[] =
 	0	/* end of array */
 };
 
-
-
-static int berzerk_hiload(void)
+static struct Samplesinterface berzerk_samples_interface =
 {
-	unsigned char *RAM = Machine->memory_region[0];
-	void *f;
+	8,	/* 8 channels */
+	25,	/* volume */
+	berzerk_sample_names
+};
 
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x0800],0x0800);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void berzerk_hisave(void)
+static struct CustomSound_interface custom_interface =
 {
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0800],0x800);
-		osd_fclose(f);
-	}
-}
-
-static int frenzy_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x406f],0xff,59);
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0x406f],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x40a7],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x5c81],"\x04\x10\x80",3)==0 )
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x406e],60);
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void frenzy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x406e],60);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver berzerk_driver =
-{
-	__FILE__,
+	berzerk_sh_start,
 	0,
-	"berzerk",
-	"Berzerk (set 1)",
-	"1980",
-	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (sound)",
-	0,
-	&berzerk_machine_driver,
-	0,
-
-	berzerk_rom,
-	0, 0,
-	berzerk_sample_names,
-	0,	/* sound_prom */
-
-	berzerk_input_ports,
-
-	0, berzerk_palette, 0,
-
-	ORIENTATION_DEFAULT,
-
-	berzerk_hiload, berzerk_hisave
+	berzerk_sh_update
 };
 
 
-struct GameDriver berzerk1_driver =
-{
-	__FILE__,
-	&berzerk_driver,
-	"berzerk1",
-	"Berzerk (set 2)",
-	"1980",
-	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (sound)",
-	0,
-	&berzerk_machine_driver,
-	0,
 
-	berzerk1_rom,
-	0, 0,
-	berzerk_sample_names,
-	0,	/* sound_prom */
+#define  frenzy_init_machine  0
 
-	berzerk_input_ports,
-
-	0, berzerk_palette, 0,
-
-	ORIENTATION_DEFAULT,
-
-	berzerk_hiload, berzerk_hisave
+#define DRIVER(GAMENAME,NVRAM)											\
+																		\
+static struct MachineDriver machine_driver_##GAMENAME =					\
+{																		\
+	/* basic machine hardware */										\
+	{																	\
+		{																\
+			CPU_Z80,													\
+			2500000,        /* 2.5 MHz */								\
+			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
+			berzerk_interrupt,8											\
+		},																\
+	},																	\
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* single CPU, no need for interleaving */						\
+	GAMENAME##_init_machine,											\
+																		\
+	/* video hardware */												\
+	256, 256, { 0, 256-1, 32, 256-1 },									\
+	0,																	\
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,						\
+	init_palette,														\
+																		\
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
+	0,																	\
+	0,																	\
+	0,																	\
+	berzerk_vh_screenrefresh,											\
+																		\
+	/* sound hardware */												\
+	0,0,0,0,															\
+	{																	\
+		{																\
+			SOUND_SAMPLES,												\
+			&berzerk_samples_interface									\
+		},																\
+		{																\
+			SOUND_CUSTOM,	/* actually plays the samples */			\
+			&custom_interface											\
+		}																\
+	},																	\
+																		\
+	NVRAM																\
 };
 
 
-struct GameDriver frenzy_driver =
-{
-	__FILE__,
-	0,
-	"frenzy",
-	"Frenzy",
-	"1982",
-	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nKeith Gerdes\nMike Cuddy\nBrad Oliver",
-	0,
-	&frenzy_machine_driver,
-	0,
+DRIVER(berzerk,berzerk_nvram_handler)
+DRIVER(frenzy,0)
 
-	frenzy_rom,
-	0, 0,
-	berzerk_sample_names,
-	0,	/* sound_prom */
 
-	frenzy_input_ports,
 
-	0, berzerk_palette, 0,
+/***************************************************************************
 
-	ORIENTATION_DEFAULT,
+  Game driver(s)
 
-	frenzy_hiload, frenzy_hisave
-};
+***************************************************************************/
+
+ROM_START( berzerk )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
+	ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
+	ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
+	ROM_LOAD( "5d-3",         0x2000, 0x0800, 0xfcaefa95 )
+	ROM_LOAD( "6d-4",         0x2800, 0x0800, 0x1e35b9a0 )
+	ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
+ROM_END
+
+ROM_START( berzerk1 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
+	ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
+	ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
+	ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
+	ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
+	ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
+ROM_END
+
+ROM_START( frenzy )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
+	ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
+	ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )
+	ROM_LOAD( "5d-3",         0x3000, 0x1000, 0xe1d3133c )
+	ROM_LOAD( "6d-4",         0xc000, 0x1000, 0x5581a7b1 )
+	/* 1c & 2c are the voice ROMs */
+ROM_END
+
+
+
+GAME( 1980, berzerk,  ,        berzerk, berzerk, , ROT0, "Stern", "Berzerk (set 1)" )
+GAME( 1980, berzerk1, berzerk, berzerk, berzerk, , ROT0, "Stern", "Berzerk (set 2)" )
+GAME( 1982, frenzy,   ,        frenzy,  frenzy,  , ROT0, "Stern", "Frenzy" )

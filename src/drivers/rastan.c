@@ -81,10 +81,10 @@ static int rastan_cycle_r(int offset)
 
 static int rastan_sound_spin(int offset)
 {
-	if ( (cpu_get_pc()==0x1c5) && !(Machine->memory_region[2][ 0x8f27 ] & 0x01) )
+	if ( (cpu_get_pc()==0x1c5) && !(memory_region(2)[ 0x8f27 ] & 0x01) )
 		cpu_spin();
 
-	return Machine->memory_region[2][ 0x8f27 ];
+	return memory_region(2)[ 0x8f27 ];
 }
 
 
@@ -130,7 +130,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 static void rastan_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + ((data^1) & 0x01) * 0x4000;
 	cpu_setbank(5,&RAM[bankaddress]);
@@ -164,7 +164,7 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 
 
 
-INPUT_PORTS_START( rastan_input_ports )
+INPUT_PORTS_START( rastan )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -242,7 +242,7 @@ INPUT_PORTS_START( rastan_input_ports )
 INPUT_PORTS_END
 
 /* same as rastan, coinage is different */
-INPUT_PORTS_START( rastsaga_input_ports )
+INPUT_PORTS_START( rastsaga )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -367,12 +367,28 @@ static struct YM2151interface ym2151_interface =
 	{ rastan_bankswitch_w }
 };
 
+
+struct ADPCMsample rastan_samples[] =
+{
+	{ 0x00, 0x0000, 0x0200*2 },
+	{ 0x02, 0x0200, 0x0500*2 },
+	{ 0x07, 0x0700, 0x2100*2 },
+	{ 0x28, 0x2800, 0x3b00*2 },
+	{ 0x63, 0x6300, 0x4e00*2 },
+	{ 0xb1, 0xb100, 0x1600*2 }
+};
+
+static void adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
+{
+	memcpy(sample_list,rastan_samples,sizeof(rastan_samples));
+}
+
 static struct ADPCMinterface adpcm_interface =
 {
 	1,			/* 1 chip */
 	8000,       /* 8000Hz playback */
 	3,			/* memory region 3 */
-	0,			/* init function */
+	adpcm_init,	/* init function */
 	{ 60 }
 };
 
@@ -385,14 +401,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			rastan_readmem,rastan_writemem,0,0,
 			rastan_interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			2,
 			rastan_s_readmem,rastan_s_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -436,8 +450,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rastan_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( rastan )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ic19_38.bin", 0x00000, 0x10000, 0x1c91dbb1 )
 	ROM_LOAD_ODD ( "ic07_37.bin", 0x00000, 0x10000, 0xecf20bdd )
 	ROM_LOAD_EVEN( "ic20_40.bin", 0x20000, 0x10000, 0x0930d4b3 )
@@ -455,7 +469,7 @@ ROM_START( rastan_rom )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -463,8 +477,8 @@ ROM_START( rastan_rom )
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
-ROM_START( rastanu_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( rastanu )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ic19_38.bin", 0x00000, 0x10000, 0x1c91dbb1 )
 	ROM_LOAD_ODD ( "ic07_37.bin", 0x00000, 0x10000, 0xecf20bdd )
 	ROM_LOAD_EVEN( "b04-45.20",   0x20000, 0x10000, 0x362812dd )
@@ -482,7 +496,7 @@ ROM_START( rastanu_rom )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -490,8 +504,8 @@ ROM_START( rastanu_rom )
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
-ROM_START( rastanu2_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( rastanu2 )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "rs19_38.bin", 0x00000, 0x10000, 0xa38ac909 )
 	ROM_LOAD_ODD ( "b04-21.7",    0x00000, 0x10000, 0x7c8dde9a )
 	ROM_LOAD_EVEN( "b04-23.20",   0x20000, 0x10000, 0x254b3dce )
@@ -509,7 +523,7 @@ ROM_START( rastanu2_rom )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -517,8 +531,8 @@ ROM_START( rastanu2_rom )
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
-ROM_START( rastsaga_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+ROM_START( rastsaga )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "rs19_38.bin", 0x00000, 0x10000, 0xa38ac909 )
 	ROM_LOAD_ODD ( "rs07_37.bin", 0x00000, 0x10000, 0xbad60872 )
 	ROM_LOAD_EVEN( "rs20_40.bin", 0x20000, 0x10000, 0x6bcf70dc )
@@ -536,7 +550,7 @@ ROM_START( rastsaga_rom )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -545,63 +559,8 @@ ROM_START( rastsaga_rom )
 ROM_END
 
 
-ADPCM_SAMPLES_START(rastan_samples)
-	ADPCM_SAMPLE(0x00, 0x0000, 0x0200*2)
-	ADPCM_SAMPLE(0x02, 0x0200, 0x0500*2)
-	ADPCM_SAMPLE(0x07, 0x0700, 0x2100*2)
-	ADPCM_SAMPLE(0x28, 0x2800, 0x3b00*2)
-	ADPCM_SAMPLE(0x63, 0x6300, 0x4e00*2)
-	ADPCM_SAMPLE(0xb1, 0xb100, 0x1600*2)
-ADPCM_SAMPLES_END
 
-
-
-static int rastan_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-        if ((memcmp(&rastan_ram[0x140], "\x27\x31\x31\x00", 4) == 0) &&
-            (memcmp(&rastan_ram[0x162], "\x59\x47\x4e\x54", 4) == 0))
-        {
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&rastan_ram[0x140],38);
-                        WRITE_WORD(&rastan_spriteram[0xb4], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x142]) & 0x000f)));
-                        WRITE_WORD(&rastan_spriteram[0xbc], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x142]) & 0x00f0) >> 4));
-                        WRITE_WORD(&rastan_spriteram[0xc4], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0x0f00) >> 8));
-                        WRITE_WORD(&rastan_spriteram[0xcc], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0xf000) >> 12));
-                        WRITE_WORD(&rastan_spriteram[0xd4], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0x000f)));
-                        WRITE_WORD(&rastan_spriteram[0xdc], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0x00f0) >> 4));
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void rastan_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&rastan_ram[0x140],38);
-                osd_fclose(f);
-        }
-}
-
-
-
-struct GameDriver rastan_driver =
+struct GameDriver driver_rastan =
 {
 	__FILE__,
 	0,
@@ -614,23 +573,23 @@ struct GameDriver rastan_driver =
 	&machine_driver,
 	0,
 
-	rastan_rom,
+	rom_rastan,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	0,
 
-	rastan_input_ports,
+	input_ports_rastan,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
 /* IDENTICAL to rastan, only differennce is copyright notice and Coin B coinage */
-struct GameDriver rastanu_driver =
+struct GameDriver driver_rastanu =
 {
 	__FILE__,
-	&rastan_driver,
+	&driver_rastan,
 	"rastanu",
 	"Rastan (US set 1)",
 	"1987",
@@ -640,22 +599,22 @@ struct GameDriver rastanu_driver =
 	&machine_driver,
 	0,
 
-	rastanu_rom,
+	rom_rastanu,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	0,
 
-	rastsaga_input_ports,
+	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver rastanu2_driver =
+struct GameDriver driver_rastanu2 =
 {
 	__FILE__,
-	&rastan_driver,
+	&driver_rastan,
 	"rastanu2",
 	"Rastan (US set 2)",
 	"1987",
@@ -665,22 +624,22 @@ struct GameDriver rastanu2_driver =
 	&machine_driver,
 	0,
 
-	rastanu2_rom,
+	rom_rastanu2,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	0,
 
-	rastsaga_input_ports,
+	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
-struct GameDriver rastsaga_driver =
+struct GameDriver driver_rastsaga =
 {
 	__FILE__,
-	&rastan_driver,
+	&driver_rastan,
 	"rastsaga",
 	"Rastan Saga (Japan)",
 	"1987",
@@ -690,149 +649,17 @@ struct GameDriver rastsaga_driver =
 	&machine_driver,
 	0,
 
-	rastsaga_rom,
+	rom_rastsaga,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	0,
 
-	rastsaga_input_ports,
+	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-/* ---------------------------  CUT HERE  ----------------------------- */
-/**************** This can be deleted somewhere in the future ***********/
-/*                This is here just to test YM2151 emulator             */
-
-
-int rastan_smus_interrupt(void);
-void r_wr_a000mus(int offset,int data);
-int r_rd_a001mus(int offset);
-void r_wr_a001mus(int offset,int data);
-void rastan_irq_mus_handler (void);
-void rastan_vhmus_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-}
-
-static struct MemoryReadAddress rastan_smus_readmem[] =
-{
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, r_rd_a001mus },
-	{ -1 }  /* end of table */
-};
-static struct MemoryWriteAddress rastan_smus_writemem[] =
-{
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, r_wr_a000mus },
-	{ 0xa001, 0xa001, r_wr_a001mus },
-	{ 0xb000, 0xb000, ADPCM_trigger },
-	{ 0xc000, 0xc000, r_wr_c000 },
-	{ 0xd000, 0xd000, r_wr_d000 },
-	{ 0xe000, 0xefff, videoram00_word_w, &videoram00, &videoram_size },/*this is the fake*/
-	{ -1 }  /* end of table */
-};
-
-
-static struct YM2151interface ym2151_interface_mus =
-{
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ rastan_irq_mus_handler }
-};
-
-static struct MachineDriver rastmu_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 Mhz */
-			2,
-			rastan_smus_readmem,rastan_smus_writemem,0,0,
-			rastan_smus_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,
-	2048, 2048,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	rastan_vhmus_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-//			SOUND_YM2151_ALT,
-			SOUND_YM2151,
-			&ym2151_interface_mus
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
-
-struct GameDriver rastmus_driver =
-{
-	__FILE__,
-	0,
-	"rastmus",
-	"Rastan music player (YM2151)",
-	" ",
-	" ",
-	"Jarek Burczynski",
-	0,
-	&rastmu_driver,
-
-	rastan_rom,
-	0, 0,
-	0,
-	(void *)rastan_samples,	/* sound_prom */
-
-	rastan_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-#endif
-
-
-
-
-
 
 
 
@@ -847,14 +674,12 @@ struct GameDriver rastmus_driver =
 ** directory of mame.exe
 */
 
-ROM_START( ymcym_rom )
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-/*ROM_LOAD( "IC49_19.bin", 0x0000, 0x10000, 0x73fbbecf ) */ /*Rastan sound CPU rom*/
-
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+ROM_START( ymcym )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_REGIONX( 0x1000, REGION_CPU2 )
 ROM_END
 
-INPUT_PORTS_START( ymcym_input_ports )
+INPUT_PORTS_START( ymcym )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
@@ -893,7 +718,7 @@ static struct MemoryWriteAddress ymcym_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-void ymcym_2151_irq_handler(void)
+void ymcym_2151_irq_handler(int irq)
 {
 }
 
@@ -902,7 +727,8 @@ static struct YM2151interface ymcym_2151_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ ymcym_2151_irq_handler }
+	{ ymcym_2151_irq_handler },
+	{ 0 }
 };
 
 int ymcym_interrupt(void)
@@ -927,20 +753,19 @@ int i;
 	return 0;
 }
 
-static struct MachineDriver ymcym_driver =
+static struct MachineDriver ymcym_machine =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			1000000,	/* 1 Mhz */
-			0, /*rom region*/
 			ymcym_readmem, ymcym_writemem,0,0,
 			ymcym_interrupt, 1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
 	0,
 
 	/* video hardware */
@@ -966,7 +791,7 @@ static struct MachineDriver ymcym_driver =
 	}
 };
 
-struct GameDriver cymplay_driver =
+struct GameDriver driver_cymplay =
 {
 	__FILE__,
 	0,
@@ -976,17 +801,190 @@ struct GameDriver cymplay_driver =
 	" ",
 	"Jarek Burczynski",
 	0,
-	&ymcym_driver,
+	&ymcym_machine,
+	0,
 
-	ymcym_rom,
+	rom_ymcym,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	ymcym_input_ports,
+	input_ports_ymcym,
 
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ROT0,
 	0, 0
 };
+
+
+
+/*
+** YM2151 register test
+**
+** driver is called ymtest (extern it in driver.c)
+**
+** For this to run you only need a file "2151.reg" in the same
+** directory of mame.exe
+*/
+
+
+static FILE * ymfile =NULL;
+
+int ymtest_vh_start(void)
+{
+	ymfile=fopen("2151.reg","rb");
+	if (!ymfile){
+		if (errorlog) fprintf(errorlog,"Could not find 2151.reg file !\n");
+		return 1;
+	}
+	return 0;
+}
+
+void ymtest_vh_stop(void)
+{
+	if (ymfile) fclose(ymfile);
+}
+
+void ymtest_2151_irq_handler(int irq)
+{
+}
+
+static struct YM2151interface ymtest_2151_interface =
+{
+	1,		/* 1 chip */
+	4000000,	/* 4 MHz clock [X68000] */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ ymtest_2151_irq_handler },
+	{ 0 }
+};
+
+
+int fget_reg(FILE *f)
+{
+int tab[256];
+int i,wyn;
+int mode=0;
+int val=-1;
+
+	for (i=0; i<256; i++)
+		tab[i] = 0;
+	for (i='0'; i<='9'; i++)
+		tab[i] = i-'0';
+	for (i='a'; i<='f'; i++)
+		tab[i] = i-'a'+10;
+	for (i='A'; i<='F'; i++)
+		tab[i] = i-'A'+10;
+
+	while ( ( (wyn=fgetc(f)) != EOF)  && (mode>=0) )
+	{
+		if (wyn=='$')
+		{
+			mode=1;
+		}
+		else
+		{
+			switch(mode)
+			{
+			case 1:	val = tab[wyn];
+				mode=2;
+				break;
+			case 2:	val = val*16 + tab[wyn];
+				mode = -1;
+				break;
+			}
+		}
+	}
+
+	if (wyn!=EOF)
+		return val;
+	else
+		return -1;
+}
+
+int ymtest_interrupt(void)
+{
+static int finished=0;
+int i,j;
+	while (!finished)
+	{
+		i = fget_reg(ymfile); //get reg from 2151.reg file
+		j = fget_reg(ymfile); //get data from 2151.reg file
+
+		if ( (i < 0) || (j < 0) ){
+			if (errorlog) fprintf(errorlog,"2151.reg EOF reached... \n");
+			finished=1;
+		}
+		else{
+			if (errorlog) fprintf(errorlog,"2151 write to reg %02x value %02x \n",i,j);
+			YM2151_register_port_0_w(0,i);
+			YM2151_data_port_0_w(0,j);
+		}
+	};
+
+	return 0;
+}
+
+static struct MachineDriver ymtest_machine =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			1000000,	/* 1 Mhz */
+			ymcym_readmem, ymcym_writemem,0,0,
+			ymtest_interrupt, 1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	0,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	ymtest_vh_start,
+	ymtest_vh_stop,
+	ymcym_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151_ALT,
+//			SOUND_YM2151,
+			&ymtest_2151_interface
+		}
+	}
+};
+
+struct GameDriver driver_ymtest =
+{
+	__FILE__,
+	0,
+	"ymtest",
+	"YM2151 register test",
+	" ",
+	" ",
+	"Jarek Burczynski",
+	0,
+	&ymtest_machine,
+	0,
+
+	rom_ymcym,
+	0, 0,
+	0,
+	0,
+
+	input_ports_ymcym,
+
+	0, 0, 0,
+	ROT0,
+	0, 0
+};
+
 #endif

@@ -124,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( warlord )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_DIPNAME(0x10, 0x00, "Diag Step" )  /* Not referenced */
@@ -248,7 +248,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/16, /* 756 kHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -287,8 +286,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( warlord_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( warlord )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "037154.1m",    0x5000, 0x0800, 0x18006c87 )
 	ROM_LOAD( "037153.1k",    0x5800, 0x0800, 0x67758f4c )
 	ROM_LOAD( "037158.1j",    0x6000, 0x0800, 0x1f043a86 )
@@ -300,7 +299,7 @@ ROM_START( warlord_rom )
 	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "037159.6e",    0x0000, 0x0800, 0xff979a08 )
 
-	ROM_REGION(0x0100)	/* color prom */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
 	/* Bytes 0x00-0x3f are used fore the color cocktail version. */
 	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
@@ -310,44 +309,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0127],"\x75",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x00f3],9);
-			osd_fread(f,&RAM[0x011f],0x10);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x00f3],9);
-		osd_fwrite(f,&RAM[0x011f],0x10);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver warlord_driver =
+struct GameDriver driver_warlord =
 {
 	__FILE__,
 	0,
@@ -360,15 +322,14 @@ struct GameDriver warlord_driver =
 	&machine_driver,
 	0,
 
-	warlord_rom,
+	rom_warlord,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_warlord,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

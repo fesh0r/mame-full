@@ -110,7 +110,7 @@ static struct IOWritePort writeport[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( sharkatt_input_ports )
+INPUT_PORTS_START( sharkatt )
 
 	PORT_START      /* IN0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -177,7 +177,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz? */
-			0,
 			readmem,writemem,readport,writeport,
 			sharkatt_interrupt,1
 		}
@@ -216,8 +215,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sharkatt_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( sharkatt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sharkatt.0",   0x0000, 0x0800, 0xc71505e9 )
 	ROM_LOAD( "sharkatt.1",   0x0800, 0x0800, 0x3e3abf70 )
 	ROM_LOAD( "sharkatt.2",   0x1000, 0x0800, 0x96ded944 )
@@ -231,53 +230,11 @@ ROM_START( sharkatt_rom )
 	ROM_LOAD( "sharkatt.10",  0x5000, 0x0800, 0x9d07cb68 )
 	ROM_LOAD( "sharkatt.11",  0x5800, 0x0800, 0x21edc962 )
 	ROM_LOAD( "sharkatt.12a", 0x6000, 0x0800, 0x5dd8785a )
-
 ROM_END
 
-/***************************************************************************
-
-  Hi Score Routines
-
-***************************************************************************/
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x806E],"05000",5) == 0) &&
-		(memcmp(&RAM[0x80BB],"PL ",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x806E],0x50);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
 
 
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x806E],0x50);
-		osd_fclose(f);
-	}
-
-}
-
-
-struct GameDriver sharkatt_driver =
+struct GameDriver driver_sharkatt =
 {
 	__FILE__,
 	0,
@@ -290,15 +247,14 @@ struct GameDriver sharkatt_driver =
 	&machine_driver,
 	0,
 
-	sharkatt_rom,
+	rom_sharkatt,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	sharkatt_input_ports,
+	input_ports_sharkatt,
 
 	0, 0, 0,    /* colors, palette, colortable */
 	ORIENTATION_SWAP_XY,
-
-	hiload, hisave
+	0,0
 };

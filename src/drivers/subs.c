@@ -61,7 +61,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( subs_input_ports )
+INPUT_PORTS_START( subs )
 	PORT_START /* OPTIONS */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -117,17 +117,20 @@ static unsigned char palette[] =
 {
 	0x00,0x00,0x00, /* BLACK - modified on video invert */
 	0xff,0xff,0xff, /* WHITE - modified on video invert */
-	0x80,0x80,0x80, /* LT GREY - unused except for MAME text */
-	0x55,0x55,0x55, /* DK GREY - unused except for MAME text */
 	0x00,0x00,0x00, /* BLACK - modified on video invert */
 	0xff,0xff,0xff, /* WHITE - modified on video invert*/
 };
-
 static unsigned short colortable[] =
 {
 	0x00, 0x01,		/* Right screen */
-	0x04, 0x05		/* Left screen */
+	0x02, 0x03		/* Left screen */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
+
 
 static struct GfxLayout playfield_layout =
 {
@@ -169,7 +172,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/16, 	   /* clock input is the "4H" signal */
-			0,
 			readmem,writemem,0,0,
 			subs_interrupt,4	/* NMI interrupt on the 32V signal if not in self-TEST */
 		}
@@ -181,8 +183,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR,
 	0,
@@ -203,6 +205,7 @@ static struct MachineDriver machine_driver =
 
 static void subs_rom_init(void)
 {
+	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
 
 	/* Merge nibble-wide roms together,
@@ -210,12 +213,12 @@ static void subs_rom_init(void)
 
 	for(i=0;i<0x100;i++)
 	{
-		ROM[0x2000+i] = (ROM[0x8000+i]<<4)+ROM[0x9000+i];
+		rom[0x2000+i] = (rom[0x8000+i]<<4)+rom[0x9000+i];
 	}
 }
 
-ROM_START( subs_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( subs )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "34190.p1",     0x2800, 0x0800, 0xa88aef21 )
 	ROM_LOAD( "34191.p2",     0x3000, 0x0800, 0x2c652e72 )
 	ROM_LOAD( "34192.n2",     0x3800, 0x0800, 0x3ce63d33 )
@@ -242,7 +245,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver subs_driver =
+struct GameDriver driver_subs =
 {
 	__FILE__,
 	0,
@@ -253,16 +256,17 @@ struct GameDriver subs_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	subs_rom_init,
+
+	rom_subs,
+	0, 0,
+	0,
 	0,
 
-	subs_rom,
-	subs_rom_init, 0,
-	0,
-	0,	/* sound_prom */
+	input_ports_subs,
 
-	subs_input_ports,
+	0, 0, 0,
+	ROT0,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };

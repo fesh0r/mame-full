@@ -64,7 +64,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( dominos_input_ports )
+INPUT_PORTS_START( dominos )
 		PORT_START		/* DSW - fake port, gets mapped to Dominos ports */
 		PORT_DIPNAME( 0x03, 0x01, "Points To Win" )
 		PORT_DIPSETTING(	0x03, "6" )
@@ -131,12 +131,16 @@ static unsigned char palette[] =
 	0xff,0xff,0xff, /* WHITE */
 	0x55,0x55,0x55, /* DK GREY */
 };
-
 static unsigned short colortable[] =
 {
 	0x00, 0x01,
 	0x00, 0x02
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct MachineDriver machine_driver =
@@ -146,7 +150,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			750000, 	   /* 750 Khz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -158,8 +161,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -182,8 +185,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( dominos_rom )
-	ROM_REGION(0x10000) /* 64k for code */
+ROM_START( dominos )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 		ROM_LOAD( "7352-02.d1",   0x3000, 0x0800, 0x738b4413 )
 		ROM_LOAD( "7438-02.e1",   0x3800, 0x0800, 0xc84e54e2 )
 		ROM_RELOAD( 			0xF800, 0x0800 )
@@ -206,7 +209,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver dominos_driver =
+struct GameDriver driver_dominos =
 {
 	__FILE__,
 	0,
@@ -219,14 +222,15 @@ struct GameDriver dominos_driver =
 	&machine_driver,
 	0,
 
-	dominos_rom,
+	rom_dominos,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	dominos_input_ports,
+	input_ports_dominos,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
+	0, 0, 0,
+	ROT0,
+
+	0, 0
 };

@@ -3,7 +3,7 @@
   Vapor Trail (USA version)    (c) 1989 Data East USA
   Kuhga (Japanese version)     (c) 1989 Data East Corporation
 
-  A 'World' version of Vapor Trail also exists.
+  A 'World' version of Vapor Trail also exists but isn't yet dumped.
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -130,7 +130,6 @@ static void YM2203_w(int offset, int data)
 	}
 }
 
-/* Physical memory map (21 bits) */
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
@@ -158,7 +157,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( vaportra_input_ports )
+INPUT_PORTS_START( vaportra )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -305,16 +304,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	{ 8055, 16110 },/* Chips are different frequencies */
-	{ 4, 3 },
-	{ 48, 24 }
+	{ 7757, 15514 },/* Frequency */
+	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	32220000/8,	/* Audio section crystal is 32.220 MHz */
-	{ YM2203_VOL(25,40) },
+	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -324,38 +323,35 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state); /* H6280_INT_IRQ2 */
+	cpu_set_irq_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3700000,
-//	32220000/8, /* Audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
-static struct MachineDriver vaportra_machine_driver =
+static struct MachineDriver machine_driver_vaportra =
 {
 	/* basic machine hardware */
 	{
 	 	{
 			CPU_M68000, /* Custom chip 59 */
 			12000000,
-			0,
 			vaportra_readmem,vaportra_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -392,8 +388,8 @@ static struct MachineDriver vaportra_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( vaportra_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( vaportra )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fj02",   0x00000, 0x20000, 0xa2affb73 )
   	ROM_LOAD_ODD ( "fj00",   0x00000, 0x20000, 0xef05e07b )
 	ROM_LOAD_EVEN( "fj03",   0x40000, 0x20000, 0x44893379 )
@@ -406,18 +402,18 @@ ROM_START( vaportra_rom )
   	ROM_LOAD( "vtmaa03.bin",   0x180000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x200000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
+	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
+	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 
-ROM_START( kuhga_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( kuhga )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fp02-3.bin", 0x00000, 0x20000, 0xd0705ef4 )
   	ROM_LOAD_ODD ( "fp00-3.bin", 0x00000, 0x20000, 0x1da92e48 )
 	ROM_LOAD_EVEN( "fp03.bin",   0x40000, 0x20000, 0xea0da0f1 )
@@ -430,21 +426,21 @@ ROM_START( kuhga_rom )
   	ROM_LOAD( "vtmaa03.bin",   0x180000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x200000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
+	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
+	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 
 /******************************************************************************/
 
 static void vaportra_decrypt(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++)
@@ -466,11 +462,12 @@ static int cycle_r(int offset)
 static void custom_memory(void)
 {
 	install_mem_read_handler(0, 0xffc006, 0xffc007, cycle_r);
+	vaportra_decrypt();
 }
 
 /******************************************************************************/
 
-struct GameDriver vaportra_driver =
+struct GameDriver driver_vaportra =
 {
 	__FILE__,
 	0,
@@ -480,42 +477,42 @@ struct GameDriver vaportra_driver =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&vaportra_machine_driver,
+	&machine_driver_vaportra,
 	custom_memory,
 
-	vaportra_rom,
-	vaportra_decrypt, 0,
+	rom_vaportra,
+	0, 0,
 	0,
 	0,
 
-	vaportra_input_ports,
+	input_ports_vaportra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0 , 0
 };
 
-struct GameDriver kuhga_driver =
+struct GameDriver driver_kuhga =
 {
 	__FILE__,
-	&vaportra_driver,
+	&driver_vaportra,
 	"kuhga",
 	"Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&vaportra_machine_driver,
+	&machine_driver_vaportra,
 	custom_memory,
 
-	kuhga_rom,
-	vaportra_decrypt, 0,
+	rom_kuhga,
+	0, 0,
 	0,
 	0,
 
-	vaportra_input_ports,
+	input_ports_vaportra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0 , 0
 };

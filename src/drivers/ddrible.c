@@ -108,7 +108,7 @@ static int ddrible_vlm5030_busy_r(int offset)
 
 static void ddrible_vlm5030_ctrl_w(int offset,int data)
 {
-	unsigned char *SPEECH_ROM = Machine->memory_region[5];
+	unsigned char *SPEECH_ROM = memory_region(5);
 	/* b7 : vlm data bus OE   */
 	/* b6 : VLM5030-RST       */
 	/* b5 : VLM5030-ST        */
@@ -209,7 +209,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( ddrible_input_ports )
+INPUT_PORTS_START( ddrible )
 	PORT_START	/* PLAYER 1 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -396,28 +396,25 @@ static struct VLM5030interface vlm5030_interface =
 	0           /* VCU pin level (default) */
 };
 
-static struct MachineDriver ddrible_machine_driver =
+static struct MachineDriver machine_driver_ddrible =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,			/* CPU #0 */
 			1536000,			/* 18432000/12 MHz? */
-			0,
 			readmem_cpu0,writemem_cpu0,0,0,
 			ddrible_interrupt_0,1
 		},
 		{
 			CPU_M6809,			/* CPU #1 */
 			1536000,			/* 18432000/12 MHz? */
-			3,
 			readmem_cpu1,writemem_cpu1,0,0,
 			ddrible_interrupt_1,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* 18432000/12 MHz? */
-			4,
 			readmem_cpu2,writemem_cpu2,0,0,
 			ignore_interrupt,1
 		},
@@ -453,8 +450,8 @@ static struct MachineDriver ddrible_machine_driver =
 };
 
 
-ROM_START( ddrible_rom )
-	ROM_REGION(0x1a000) /* 64K CPU #0 + 40K for Banked ROMS */
+ROM_START( ddrible )
+	ROM_REGIONX( 0x1a000, REGION_CPU1 ) /* 64K CPU #0 + 40K for Banked ROMS */
 	ROM_LOAD( "690c03.bin",	0x10000, 0x0a000, 0x07975a58 )
 	ROM_CONTINUE(			0x0a000, 0x06000 )
 
@@ -466,13 +463,13 @@ ROM_START( ddrible_rom )
 	ROM_LOAD( "690a10.bin", 0x80000, 0x20000, 0x61efa222 )	/* characters (set 2) */
 	ROM_LOAD( "690a09.bin", 0xa0000, 0x20000, 0xab682186 )	/* characters (set 2) */
 
-	ROM_REGION(0x0100) /* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */
 
-	ROM_REGION(0x10000) /* 64 for the CPU #1 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64 for the CPU #1 */
 	ROM_LOAD( "690c02.bin", 0x08000, 0x08000, 0xf07c030a )
 
-	ROM_REGION(0x10000)	/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "690b01.bin", 0x08000, 0x08000, 0x806b8453 )
 
 	ROM_REGION(0x20000)	/* 128k for the VLM5030 data */
@@ -480,54 +477,8 @@ ROM_START( ddrible_rom )
 ROM_END
 
 
-/****************************************************************
 
-  Double Dribble high score save routine - RJF (April 17, 1999)
-
-*****************************************************************/
-
-static int ddribble_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x4800],"\x1d\x0a\x19",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        /*  4800-4817 (initials)
-                            4818-4827 (birthday)
-                            4828-4837 (pts)
-                            4838-4847 (fgx)
-                            4848-4857 (ftx)
-                            4858-485f (reb)
-                            4860-4867 (assist)
-                            4868-486f (pf)      */
-
-			osd_fread(f,&RAM[0x4800], 112);   /* whole HS table */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void ddribble_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4800], 112);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver ddrible_driver =
+struct GameDriver driver_ddrible =
 {
 	__FILE__,
 	0,
@@ -537,18 +488,17 @@ struct GameDriver ddrible_driver =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&ddrible_machine_driver,
+	&machine_driver_ddrible,
 	0,
 
-	ddrible_rom,
+	rom_ddrible,
 	0, 0,
 	0,
 	0,
 
-	ddrible_input_ports,
+	input_ports_ddrible,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ddribble_hiload, ddribble_hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };

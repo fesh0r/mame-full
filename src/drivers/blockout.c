@@ -1,5 +1,8 @@
 /***************************************************************************
 
+Block Out
+
+driver by Nicola Salmoria
 
 ***************************************************************************/
 
@@ -74,7 +77,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x10000b, blockout_input_r },
 	{ 0x180000, 0x1bffff, blockout_videoram_r },
-	{ 0x1d4000, 0x1dffff, MRA_BANK1, &ram_blockout },	/* work RAM */
+	{ 0x1d4000, 0x1dffff, MRA_BANK1 },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MRA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_r },
 	{ 0x208000, 0x21ffff, MRA_BANK3 },	/* ??? */
@@ -87,7 +90,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100014, 0x100017, blockout_sound_command_w },
 	{ 0x180000, 0x1bffff, blockout_videoram_w, &blockout_videoram },
-	{ 0x1d4000, 0x1dffff, MWA_BANK1 },	/* work RAM */
+	{ 0x1d4000, 0x1dffff, MWA_BANK1, &ram_blockout },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MWA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_w, &blockout_frontvideoram },
 	{ 0x208000, 0x21ffff, MWA_BANK3 },	/* ??? */
@@ -117,7 +120,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( blockout )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -149,13 +152,15 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	/* the following two are supposed to control Coin 2, but they don't work. */
+	/* This happens on the original board too. */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )	/* unused? */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )	/* unused? */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "1 Coin to Continue" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -169,12 +174,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x04, 0x04, "Rotate Buttons" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
@@ -213,27 +217,25 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
 	{ 8000 },           /* 8000Hz frequency */
-	{ 3 },              /* memory region 3 */
+	{ REGION_SOUND1 },              /* memory region 3 */
 	{ 50 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_blockout =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			8760000,       /* MRH - 8.76 makes gfx/adpcm samples sync better */
-			0,
 			readmem,writemem,0,0,
 			blockout_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* 3.579545 Mhz (?) */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* NMIs are triggered by the main CPU, IRQs by the YM2151 */
 		}
@@ -276,124 +278,37 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( blockout_rom )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+ROM_START( blockout )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
 	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x5984d5a2 )
 
-	ROM_REGION_DISPOSE(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
-	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
-ROM_START( blckout2_rom )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+ROM_START( blckout2 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "29a0",         0x00000, 0x20000, 0x605f931e )
 	ROM_LOAD_ODD ( "29a1",         0x00000, 0x20000, 0x38f07000 )
 
-	ROM_REGION_DISPOSE(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
-	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
 
-/* hi load / save added 12/01/98 HSC */
 
-static int hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&ram_blockout[0x1fa4])==0x322d && READ_WORD(&ram_blockout[0x1fa6])==0x2b00 && READ_WORD(&ram_blockout[0x2012])==0x15 && READ_WORD(&ram_blockout[0x2016])==0x10)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			osd_fread_msbfirst(f,&ram_blockout[0x1fa4],120);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram_blockout[0x1fa4],120);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver blockout_driver =
-{
-	__FILE__,
-	0,
-	"blockout",
-	"Block Out (set 1)",
-	"1989",
-	"Technos + California Dreams",
-	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
-	0,
-	&machine_driver,
-	0,
-
-	blockout_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave /* hsc 12/1/98 */
-};
-
-struct GameDriver blckout2_driver =
-{
-	__FILE__,
-	&blockout_driver,
-	"blckout2",
-	"Block Out (set 2)",
-	"1989",
-	"Technos + California Dreams",
-	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
-	0,
-	&machine_driver,
-	0,
-
-	blckout2_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave /* hsc 12/1/98 */
-};
+GAME( 1989, blockout, ,         blockout, blockout, , ROT0, "Technos + California Dreams", "Block Out (set 1)" )
+GAME( 1989, blckout2, blockout, blockout, blockout, , ROT0, "Technos + California Dreams", "Block Out (set 2)" )

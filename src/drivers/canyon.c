@@ -102,7 +102,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( canyon_input_ports )
+INPUT_PORTS_START( canyon )
 	PORT_START      /* DSW - fake port, gets mapped to Canyon Bomber ports */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
@@ -181,11 +181,12 @@ static struct GfxLayout bomb_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x0000, &charlayout,   0x00, 0x02 }, /* offset into colors, # of colors */
-    { 1, 0x0400, &motionlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
-    { 1, 0x0000, &bomb_layout,  0x00, 0x02 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout,   0, 2 },
+	{ REGION_GFX2, 0, &motionlayout, 0, 2 },
+	{ REGION_GFX1, 0, &bomb_layout,  0, 2 },
 	{ -1 } /* end of array */
 };
+
 
 static unsigned char palette[] =
 {
@@ -193,22 +194,25 @@ static unsigned char palette[] =
 	0x80,0x80,0x80, /* LT GREY */
 	0xff,0xff,0xff, /* WHITE */
 };
-
 static unsigned short colortable[] =
 {
 	0x01, 0x00,
 	0x01, 0x02,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_canyon =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
             750000,        /* 0.3 Mhz ???? */
-			0,
 			readmem,writemem,0,0,
             nmi_interrupt,1
 		}
@@ -220,8 +224,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
     32*8, 30*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
     VIDEO_TYPE_RASTER,
 	0,
@@ -241,20 +245,22 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( canyon_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( canyon )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, 0x8be15080 )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
-	ROM_REGION(0x600)     /* 1.5k for graphics */
+	ROM_REGIONX( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
-	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
+
+	ROM_REGIONX( 0x200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, 0x0d63396a )
 ROM_END
 
 
-ROM_START( canbprot_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( canbprot )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, 0x49cf29a0 )
 	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, 0xb4385c23 )
 	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, 0xc7ee4431 )
@@ -262,119 +268,15 @@ ROM_START( canbprot_rom )
 	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, 0x94246a9a )
 	ROM_RELOAD_NIB_HIGH (             0xf800, 0x0800 ) /* for 6502 vectors */
 
-	ROM_REGION(0x600)     /* 1.5k for graphics */
+	ROM_REGIONX( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
-	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
+
+	ROM_REGIONX( 0x200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, 0x0d63396a )
 ROM_END
 
 
-/***************************************************************************
 
-  Hi Score Routines
-
-***************************************************************************/
-
-static int hiload(void)
-{
-
-      unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	static int firsttime;
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x0037],0xff,4);
-		firsttime = 1;
-	}
-
-
-          if(memcmp(&RAM[0x0037],"\x00\x00\x00\x00",4) == 0)
-	{
-              void *f;
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                      osd_fread(f,&RAM[0x0037],4);
-                      osd_fclose(f);
-              }
-
-              return 1;
-    		  firsttime = 0;
-	}
-      else return 0;   /* we can't load the hi scores yet */
- }
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x0037],2*2);
-		osd_fclose(f);
-	}
-}
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver canyon_driver =
-{
-	__FILE__,
-	0,
-    "canyon",
-    "Canyon Bomber",
-	"1977",
-	"Atari",
-    "Mike Balfour",
-	0,
-    &machine_driver,
-	0,
-
-    canyon_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-    canyon_input_ports,
-
-    0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver canbprot_driver =
-{
-	__FILE__,
-	&canyon_driver,
-    "canbprot",
-    "Canyon Bomber (prototype)",
-	"1977",
-	"Atari",
-    "Mike Balfour",
-	0,
-    &machine_driver,
-	0,
-
-    canbprot_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-    canyon_input_ports,
-
-    0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
+GAME( 1977, canyon,   ,       canyon, canyon, , ROT0, "Atari", "Canyon Bomber" )
+GAME( 1977, canbprot, canyon, canyon, canyon, , ROT0, "Atari", "Canyon Bomber (prototype)" )

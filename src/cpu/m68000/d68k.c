@@ -441,7 +441,7 @@ static char* get_ea_mode_str(uint instruction, uint size)
       /* program counter with displacement */
          temp_value = read_imm_16();
          sprintf(mode, "(%s,PC)", make_signed_hex_str_16(temp_value));
-         sprintf(g_helper_str, "; ($%x)", (make_int_16(temp_value) + g_cpu_pc) & 0xffffffff);
+         sprintf(g_helper_str, "; ($%x)", (make_int_16(temp_value) + g_cpu_pc-2) & 0xffffffff);
          break;
       case 0x3b:
       /* program counter with index */
@@ -1467,17 +1467,17 @@ static void d68000_eori_to_sr(void)
 
 static void d68000_exg_dd(void)
 {
-   sprintf(g_dasm_str, "exg     D%d, D%d", ((g_cpu_ir>>9)&7)+1, g_cpu_ir&7);
+   sprintf(g_dasm_str, "exg     D%d, D%d", ((g_cpu_ir>>9)&7), g_cpu_ir&7);
 }
 
 static void d68000_exg_aa(void)
 {
-   sprintf(g_dasm_str, "exg     A%d, A%d", ((g_cpu_ir>>9)&7)+1, g_cpu_ir&7);
+   sprintf(g_dasm_str, "exg     A%d, A%d", ((g_cpu_ir>>9)&7), g_cpu_ir&7);
 }
 
 static void d68000_exg_da(void)
 {
-   sprintf(g_dasm_str, "exg     D%d, A%d", ((g_cpu_ir>>9)&7)+1, g_cpu_ir&7);
+   sprintf(g_dasm_str, "exg     D%d, A%d", ((g_cpu_ir>>9)&7), g_cpu_ir&7);
 }
 
 static void d68000_ext_16(void)

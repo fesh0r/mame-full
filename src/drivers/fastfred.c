@@ -71,14 +71,9 @@ void fastfred_flipx_w(int offset,int data);
 void fastfred_flipy_w(int offset,int data);
 void jumpcoas_init_machine(void);
 
-static int use_custom_io;
-
 static int jumpcoas_custom_io_r(int offset)
 {
-	if (offset == 0x100)
-	{
-		return 0x63;
-	}
+	if (offset == 0x100)  return 0x63;
 
 	return 0x00;
 }
@@ -90,82 +85,36 @@ static int jumpcoas_custom_io_r(int offset)
 // to change if a different ROM set ever surfaces.
 static int fastfred_custom_io_r(int offset)
 {
-	if (!use_custom_io) return 0x00; // Flyboy bootleg
-
     switch (cpu_get_pc())
     {
-    case 0x03c0:
-        return 0x9d;
-
-    case 0x03e6:
-        return 0x9f;
-
-    case 0x0407:
-        return 0x00;
-
-    case 0x0446:
-        return 0x94;
-
-    case 0x049f:
-        return 0x01;
-    case 0x04b1:
-        return 0x00;
-
-    case 0x0dd2:
-        return 0x00;
-    case 0x0de4:
-        return 0x20;
-
-    case 0x122b:
-        return 0x10;
-    case 0x123d:
-        return 0x00;
-
-    case 0x1a83:
-        return 0x10;
-    case 0x1a93:
-        return 0x00;
-
-    case 0x1b26:
-        return 0x00;
-    case 0x1b37:
-        return 0x80;
-
-    case 0x2491:
-        return 0x10;
-    case 0x24a2:
-        return 0x00;
-
-    case 0x46ce:
-        return 0x20;
-    case 0x46df:
-        return 0x00;
-
-    case 0x7b18:
-        return 0x01;
-    case 0x7b29:
-        return 0x00;
-
-    case 0x7b47:
-        return 0x00;
-    case 0x7b58:
-        return 0x20;
-
+    case 0x03c0: return 0x9d;
+    case 0x03e6: return 0x9f;
+    case 0x0407: return 0x00;
+    case 0x0446: return 0x94;
+    case 0x049f: return 0x01;
+    case 0x04b1: return 0x00;
+    case 0x0dd2: return 0x00;
+    case 0x0de4: return 0x20;
+    case 0x122b: return 0x10;
+    case 0x123d: return 0x00;
+    case 0x1a83: return 0x10;
+    case 0x1a93: return 0x00;
+    case 0x1b26: return 0x00;
+    case 0x1b37: return 0x80;
+    case 0x2491: return 0x10;
+    case 0x24a2: return 0x00;
+    case 0x46ce: return 0x20;
+    case 0x46df: return 0x00;
+    case 0x7b18: return 0x01;
+    case 0x7b29: return 0x00;
+    case 0x7b47: return 0x00;
+    case 0x7b58: return 0x20;
     }
 
     if (errorlog) fprintf(errorlog, "Uncaught custom I/O read %04X at %04X\n", 0xc800+offset, cpu_get_pc());
     return 0x00;
 }
 
-static void flyboy_init(void)
-{
-	use_custom_io = 0;
-}
-
-static void fastfred_init(void)
-{
-	use_custom_io = 1;
-}
 
 static struct MemoryReadAddress fastfred_readmem[] =
 {
@@ -175,7 +124,6 @@ static struct MemoryReadAddress fastfred_readmem[] =
 								 // One of the instructions should be ld de,
 								 // instead of ld hl,
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, fastfred_custom_io_r },  // Flyboy is hacked not to use this
 	{ 0xd000, 0xd3ff, MRA_RAM },
 	{ 0xd800, 0xd8ff, MRA_RAM },
 	{ 0xe000, 0xe000, input_port_0_r },
@@ -187,6 +135,7 @@ static struct MemoryReadAddress fastfred_readmem[] =
 
 static struct MemoryWriteAddress fastfred_writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, MWA_NOP },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
@@ -212,7 +161,6 @@ static struct MemoryReadAddress jumpcoas_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xcfff, jumpcoas_custom_io_r },
 	{ 0xd000, 0xd3ff, MRA_RAM },
 	{ 0xd800, 0xdbff, MRA_RAM },
 	{ 0xe800, 0xe800, input_port_0_r },
@@ -226,6 +174,7 @@ static struct MemoryReadAddress jumpcoas_readmem[] =
 
 static struct MemoryWriteAddress jumpcoas_writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, MWA_NOP },
 	{ 0xd000, 0xd03f, galaxian_attributes_w, &galaxian_attributesram },
@@ -270,7 +219,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( fastfred_input_ports )
+INPUT_PORTS_START( fastfred )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -322,7 +271,7 @@ INPUT_PORTS_START( fastfred_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( flyboy_input_ports )
+INPUT_PORTS_START( flyboy )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -367,7 +316,7 @@ INPUT_PORTS_START( flyboy_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( jumpcoas_input_ports )
+INPUT_PORTS_START( jumpcoas )
 	PORT_START      /* DSW 0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 6C_1C ) )
@@ -481,7 +430,7 @@ static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
 static struct AY8910interface fastfred_ay8910_interface =
 {
 	2,             /* 2 chips */
-	CLOCK/6,       /* 3.072 Mhz */
+	CLOCK/12,       /* ? */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -493,7 +442,7 @@ static struct AY8910interface fastfred_ay8910_interface =
 static struct AY8910interface jumpcoas_ay8910_interface =
 {
 	1,             /* 1 chip */
-	CLOCK/6,       /* 3.072 Mhz */
+	CLOCK/12,       /* ? */
 	{ 50 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -503,21 +452,19 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 };
 
 
-static struct MachineDriver fastfred_machine_driver =
+static struct MachineDriver machine_driver_fastfred =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			CLOCK/6,     /* 3.072 Mhz */
-			0,
 			fastfred_readmem,fastfred_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			CLOCK/12,    /* 1.536 Mhz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,4
 		}
@@ -548,14 +495,13 @@ static struct MachineDriver fastfred_machine_driver =
 	}
 };
 
-static struct MachineDriver jumpcoas_machine_driver =
+static struct MachineDriver machine_driver_jumpcoas =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			CLOCK/6,     /* 3.072 Mhz */
-			0,
 			jumpcoas_readmem,jumpcoas_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -594,8 +540,8 @@ static struct MachineDriver jumpcoas_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( fastfred_rom )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+ROM_START( fastfred )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "ffr.01",       0x0000, 0x1000, 0x15032c13 )
 	ROM_LOAD( "ffr.02",       0x1000, 0x1000, 0xf9642744 )
 	ROM_LOAD( "ffr.03",       0x2000, 0x1000, 0xf0919727 )
@@ -616,18 +562,50 @@ ROM_START( fastfred_rom )
 	ROM_LOAD( "ffr.12",       0x7000, 0x1000, 0x94c06686 )
 	ROM_LOAD( "ffr.13",       0x8000, 0x1000, 0x3fcfaa8e )
 
-	ROM_REGION(0x300)       /* color proms */
-	ROM_LOAD( "flyboy.red",   0x0000, 0x100, 0xcbff2caa )
-	ROM_LOAD( "flyboy.grn",   0x0100, 0x100, 0x7da063d0 )
-	ROM_LOAD( "flyboy.blu",   0x0200, 0x100, 0x448f9399 )
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "ffr.09",       0x0000, 0x1000, 0xa1ec8d7e )
 	ROM_LOAD( "ffr.10",       0x1000, 0x1000, 0x460ca837 )
 ROM_END
 
-ROM_START( flyboy_rom )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+ROM_START( flyboy )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_LOAD( "flyboy01.cpu", 0x0000, 0x1000, 0xb05aa900 )
+	ROM_LOAD( "flyboy02.cpu", 0x1000, 0x1000, 0x474867f5 )
+	ROM_LOAD( "rom3.cpu",     0x2000, 0x1000, 0xd2f8f085 )
+	ROM_LOAD( "rom4.cpu",     0x3000, 0x1000, 0x19e5e15c )
+	ROM_LOAD( "flyboy05.cpu", 0x4000, 0x1000, 0x207551f7 )
+	ROM_LOAD( "rom6.cpu",     0x5000, 0x1000, 0xf5464c72 )
+	ROM_LOAD( "rom7.cpu",     0x6000, 0x1000, 0x50a1baff )
+	ROM_LOAD( "rom8.cpu",     0x7000, 0x1000, 0xfe2ae95d )
+
+	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "rom14.rom",    0x0000, 0x1000, 0xaeb07260 )
+	ROM_LOAD( "rom17.rom",    0x1000, 0x1000, 0xa834325b )
+	ROM_LOAD( "rom15.rom",    0x2000, 0x1000, 0xc10c7ce2 )
+	ROM_LOAD( "rom18.rom",    0x3000, 0x1000, 0x2f196c80 )
+	ROM_LOAD( "rom16.rom",    0x4000, 0x1000, 0x719246b1 )
+	ROM_LOAD( "rom19.rom",    0x5000, 0x1000, 0x00c1c5d2 )
+	ROM_LOAD( "rom11.rom",    0x6000, 0x1000, 0xee7ec342 )
+	ROM_LOAD( "rom12.rom",    0x7000, 0x1000, 0x84d03124 )
+	ROM_LOAD( "rom13.rom",    0x8000, 0x1000, 0xfcb33ff4 )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
+	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
+ROM_END
+
+ROM_START( flyboyb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "rom1.cpu",     0x0000, 0x1000, 0xe9e1f527 )
 	ROM_LOAD( "rom2.cpu",     0x1000, 0x1000, 0x07fbe78c )
 	ROM_LOAD( "rom3.cpu",     0x2000, 0x1000, 0xd2f8f085 )
@@ -648,18 +626,18 @@ ROM_START( flyboy_rom )
 	ROM_LOAD( "rom12.rom",    0x7000, 0x1000, 0x84d03124 )
 	ROM_LOAD( "rom13.rom",    0x8000, 0x1000, 0xfcb33ff4 )
 
-	ROM_REGION(0x300)       /* color proms */
-	ROM_LOAD( "flyboy.red",   0x0000, 0x100, 0xcbff2caa )
-	ROM_LOAD( "flyboy.grn",   0x0100, 0x100, 0x7da063d0 )
-	ROM_LOAD( "flyboy.blu",   0x0200, 0x100, 0x448f9399 )
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
+	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
+	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
 	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
-ROM_START( jumpcoas_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( jumpcoas )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "jumpcoas.001", 0x0000, 0x2000, 0x0778c953 )
 	ROM_LOAD( "jumpcoas.002", 0x2000, 0x2000, 0x57f59ce1 )
 	ROM_LOAD( "jumpcoas.003", 0x4000, 0x2000, 0xd9fc93be )
@@ -670,179 +648,101 @@ ROM_START( jumpcoas_rom )
 	ROM_LOAD( "jumpcoas.006", 0x1000, 0x1000, 0x0d24aa1b )
 	ROM_LOAD( "jumpcoas.007", 0x2000, 0x1000, 0x14c21e67 )
 
-	ROM_REGION(0x300)       /* color proms */
-	ROM_LOAD( "jumpcoas.red", 0x0000, 0x100, 0x13714880 )
-	ROM_LOAD( "jumpcoas.gre", 0x0100, 0x100, 0x05354848 )
-	ROM_LOAD( "jumpcoas.blu", 0x0200, 0x100, 0xf4662db7 )
-
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "jumpcoas.red", 0x0000, 0x0100, 0x13714880 )
+	ROM_LOAD( "jumpcoas.gre", 0x0100, 0x0100, 0x05354848 )
+	ROM_LOAD( "jumpcoas.blu", 0x0200, 0x0100, 0xf4662db7 )
 ROM_END
 
-static int fastfred_hiload(void)
+
+static void fastfred_driver_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	install_mem_read_handler(0, 0xc800, 0xcfff, fastfred_custom_io_r);
+}
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc41c],"\x10",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc400],0x45);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
+static void jumpcoas_driver_init(void)
+{
+	install_mem_read_handler(0, 0xc800, 0xcfff, jumpcoas_custom_io_r);
 }
 
 
 
-static void fastfred_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc400],0x45);
-		osd_fclose(f);
-	}
-}
-
-static int flyboy_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc41c],"\x50",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc400],0x94);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void flyboy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc400],0x94);
-		osd_fclose(f);
-	}
-}
-
-static int jumpcoas_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* Note: the game doesn't seem to initialize the high score display
-	   at the top of the screen. Even without high score loading, the
-	   screen says that the high score is 0, even though the high score
-	   table shows all 5000's */
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0xc421] == 0x11)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc400],0x45);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void jumpcoas_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc400],0x45);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver flyboy_driver =
+struct GameDriver driver_flyboy =
 {
 	__FILE__,
 	0,
 	"flyboy",
-	"Fly-Boy (bootleg?)",
+	"Fly-Boy",
 	"1982",
 	"Kaneko",
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
 	0,
-	&fastfred_machine_driver,
-	flyboy_init,
+	&machine_driver_fastfred,
+	0,
 
-	flyboy_rom,
+	rom_flyboy,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	flyboy_input_ports,
+	input_ports_flyboy,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	flyboy_hiload, flyboy_hisave
+	0, 0, 0,
+	ROT90 | GAME_NOT_WORKING,	/* protection */
+	0,0
 };
 
-struct GameDriver fastfred_driver =
+struct GameDriver driver_flyboyb =
 {
 	__FILE__,
-	&flyboy_driver,
+	&driver_flyboy,
+	"flyboyb",
+	"Fly-Boy (bootleg)",
+	"1982",
+	"Kaneko",
+	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
+	0,
+	&machine_driver_fastfred,
+	0,
+
+	rom_flyboyb,
+	0, 0,
+	0,
+	0,
+
+	input_ports_flyboy,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_fastfred =
+{
+	__FILE__,
+	&driver_flyboy,
 	"fastfred",
 	"Fast Freddie",
 	"1982",
 	"Atari",
 	"Zsolt Vasvari",
 	0,
-	&fastfred_machine_driver,
-	fastfred_init,
+	&machine_driver_fastfred,
+	fastfred_driver_init,
 
-	fastfred_rom,
+	rom_fastfred,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	fastfred_input_ports,
+	input_ports_fastfred,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	fastfred_hiload, fastfred_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver jumpcoas_driver =
+struct GameDriver driver_jumpcoas =
 {
 	__FILE__,
 	0,
@@ -852,19 +752,18 @@ struct GameDriver jumpcoas_driver =
 	"Kaneko",
 	"Zsolt Vasvari",
 	0,
-	&jumpcoas_machine_driver,
-	0,
+	&machine_driver_jumpcoas,
+	jumpcoas_driver_init,
 
-	jumpcoas_rom,
+	rom_jumpcoas,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	jumpcoas_input_ports,
+	input_ports_jumpcoas,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jumpcoas_hiload, jumpcoas_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 

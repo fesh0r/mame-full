@@ -194,16 +194,10 @@ extern struct AY8910interface timeplt_ay8910_interface;
 void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
-void tutankhm_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S;
-}
-
 void tutankhm_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
@@ -244,7 +238,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( tutankhm )
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
@@ -346,21 +340,19 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,			/* 1.5 Mhz ??? */
-			0,				/* memory region # 0 */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			1,	/* memory region #1 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	tutankhm_init_machine,				/* init machine routine */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* not sure about the visible area */
@@ -385,8 +377,8 @@ static struct MachineDriver machine_driver =
 };
 
 
-ROM_START( tutankhm_rom )
-	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+ROM_START( tutankhm )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
 	ROM_LOAD( "h3.bin",       0x0c000, 0x1000, 0xea03a1ab )
@@ -404,14 +396,14 @@ ROM_START( tutankhm_rom )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
-ROM_START( tutankst_rom )
-	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+ROM_START( tutankst )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
 	ROM_LOAD( "ra1_3h.cpu",   0x0c000, 0x1000, 0x2d62d7b1 )
@@ -429,52 +421,14 @@ ROM_START( tutankst_rom )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x88a9],"\x03\x58\x40",3) == 0 &&
-			memcmp(&RAM[0x88cd],"\x01\x20\x60",3) == 0 &&
-			memcmp(&RAM[0x88a6],"\x03\x58\x40",3) == 0)	/* high score */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x88a9],6*7+7);
-			RAM[0x88a6] = RAM[0x88a9];
-			RAM[0x88a7] = RAM[0x88aa];
-			RAM[0x88a8] = RAM[0x88ab];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x88a9],6*7+7);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver tutankhm_driver =
+struct GameDriver driver_tutankhm =
 {
 	__FILE__,
 	0,
@@ -487,23 +441,22 @@ struct GameDriver tutankhm_driver =
 	&machine_driver,
 	0,
 
-	tutankhm_rom,
+	rom_tutankhm,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_tutankhm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave		        /* High score load and save */
+	ROT90,
+	0,0
 };
 
-struct GameDriver tutankst_driver =
+struct GameDriver driver_tutankst =
 {
 	__FILE__,
-	&tutankhm_driver,
+	&driver_tutankhm,
 	"tutankst",
 	"Tutankham (Stern)",
 	"1982",
@@ -513,15 +466,14 @@ struct GameDriver tutankst_driver =
 	&machine_driver,
 	0,
 
-	tutankst_rom,
+	rom_tutankst,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_tutankhm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave		        /* High score load and save */
+	ROT90,
+	0,0
 };

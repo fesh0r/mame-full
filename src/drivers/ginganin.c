@@ -69,7 +69,7 @@ void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static void ginganin_init_machine (void)
 {
 	/* The background tilemap resides in ROM */
-	ginganin_bgram = Machine->memory_region[2];
+	ginganin_bgram = memory_region(2);
 }
 
 
@@ -83,12 +83,12 @@ static void ginganin_init_machine (void)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x020000, 0x023fff, MRA_BANK1, 0, 0,    "ram"         },
-	{ 0x030000, 0x0307ff, MRA_BANK2, 0, 0,    "txt ram"     },
-	{ 0x040000, 0x0407ff, MRA_BANK3, 0, 0,    "sprites ram" },
-	{ 0x050000, 0x0507ff, MRA_BANK4, 0, 0,    "palette"     },
-	{ 0x060000, 0x06000f, MRA_BANK5, 0, 0,    "vregs"       },
-	{ 0x068000, 0x06bfff, MRA_BANK6, 0, 0,    "fg ram"      },	// bg lives in ROM
+	{ 0x020000, 0x023fff, MRA_BANK1 },
+	{ 0x030000, 0x0307ff, MRA_BANK2 },
+	{ 0x040000, 0x0407ff, MRA_BANK3 },
+	{ 0x050000, 0x0507ff, MRA_BANK4 },
+	{ 0x060000, 0x06000f, MRA_BANK5 },
+	{ 0x068000, 0x06bfff, MRA_BANK6 },	// bg lives in ROM
 	{ 0x070000, 0x070001, input_port_0_r },	// controls
 	{ 0x070002, 0x070003, input_port_1_r },	// DSWs
 	{ -1 }
@@ -114,10 +114,6 @@ static struct MemoryWriteAddress writemem[] =
 */
 
 /* based on snk.c: */
-/* following emulates most of the adpcm portion of the YM8950 chip */
-
-static unsigned char YM8950_register_index;
-static unsigned char YM8950_register[256];
 
 /* Added by Takahiro Nogi. 1999/09/27 */
 static unsigned char MC6840_index0;
@@ -176,42 +172,6 @@ static void MC6840_write_port_1_w(int offset, int data)
 	MC6840_register1 = data;
 }
 
-
-static void YM8950_control_port_0_w( int offset, int data )
-{
-	YM8950_register_index = data;
-	YM3526_control_port_0_w(offset,data);
-}
-
-static void YM8950_write_port_0_w( int offset, int data )
-{
-//	if( errorlog ) fprintf( errorlog, "sound write:(%02x)%02x\n", YM8950_register_index, data);
-
-	YM8950_register[YM8950_register_index] = data;
-	YM3526_write_port_0_w(offset,data);
-
-	if (YM8950_register_index == 0x0c )
-	{
-		int chan	=	YM8950_register[0x08];
-		int start	=	(YM8950_register[0x09] + YM8950_register[0x0a] * 256) * 0x20;
-		int finish	=	(YM8950_register[0x0b] + YM8950_register[0x0c] * 256) * 0x20;
-//		int vol		=	YM8950_register[0x12];
-
-		int len		=	((finish-start) * 2);	// Takahiro Nogi. 1999/09/27 (finish-start -> ((finish-start) * 2))
-
-		if ( (start >= 0) && (finish <= 0x20000) && (len > 0) )
-		{
-//			ADPCM_setvol( chan & 3, vol );
-			ADPCM_play( chan & 3, start, len );
-		}
-		else
-		{
-			if( errorlog ) fprintf( errorlog, "sound write: Sample outside mem region!");
-		}
-	}
-}
-
-
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -228,8 +188,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0801, 0x0801, MC6840_control_port_1_w },	// Takahiro Nogi. 1999/09/27
 	{ 0x0802, 0x0802, MC6840_write_port_0_w },	// Takahiro Nogi. 1999/09/27
 	{ 0x0803, 0x0803, MC6840_write_port_1_w },	// Takahiro Nogi. 1999/09/27
-	{ 0x2000, 0x2000, YM8950_control_port_0_w },
-	{ 0x2001, 0x2001, YM8950_write_port_0_w },
+	{ 0x2000, 0x2000, Y8950_control_port_0_w },
+	{ 0x2001, 0x2001, Y8950_write_port_0_w },
 	{ 0x2800, 0x2800, AY8910_control_port_0_w },
 	{ 0x2801, 0x2801, AY8910_write_port_0_w },
 	{ -1 }
@@ -240,7 +200,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*	Input Ports:	[0] Controls	[1] DSWs */
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( ginganin )
 
 	PORT_START	// IN0 - Controls - Read from 70000.w
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -401,7 +361,7 @@ static struct AY8910interface AY8910_interface =
 {
 	1,
 	3579545 / 2 ,	/* ? */
-	{ 10 },					// Takahiro Nogi. 1999/09/27 (30 -> 10)
+	{ 10 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -410,40 +370,31 @@ static struct AY8910interface AY8910_interface =
 
 
 /* The Y8950 is basically a YM3526 with ADPCM built in */
-static struct YM3526interface ym3526_interface =
+static struct Y8950interface y8950_interface =
 {
 	1,
 	3579545,	/* ? */
-	{ 63 },					// Takahiro Nogi. 1999/09/27 (50 -> 63)
-	{ 0 }
+	{ 63 },
+	{ 0 },
+	{ 4 },  // ROM region
+	{ 0 },  /* keyboarc read  */
+	{ 0 },  /* keyboard write */
+	{ 0 },  /* I/O read  */
+	{ 0 }   /* I/O write */
 };
 
-
-/* ADPCM portion of the Y8950 */
-static struct ADPCMinterface adpcm_interface =
-{
-	4,			/* ? channels */
-	16000/2,		/* ? Hz */	// Takahiro Nogi. 1999/09/27 (6000 -> 8000)
-	4,			/* memory region */
-	0,			/* init function */
-	{ 10, 10, 10 , 10 }	/* volume(s) */	// Takahiro Nogi. 1999/09/27 (30 -> 10)
-};
-
-
-static struct MachineDriver ginganin_machine_driver =
+static struct MachineDriver machine_driver_ginganin =
 {
 	{
 		{
 			CPU_M68000,
 			6000000,	/* ? */
-			0,
 			readmem,writemem,0,0,
 			ginganin_interrupt, 1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1000000,	/* ? */		// Takahiro Nogi. 1999/09/27 (3579545 -> 1000000)
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ginganin_sound_interrupt, 60	// Takahiro Nogi. 1999/09/27 (1 -> 60)
 		},
@@ -470,13 +421,9 @@ static struct MachineDriver ginganin_machine_driver =
 			SOUND_AY8910,
 			&AY8910_interface
 		},
-		{							// 3526+ADPCM ~= YM8950
-			SOUND_YM3526,
-			&ym3526_interface
-		},
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_Y8950,
+			&y8950_interface
 		}
 	}
 };
@@ -489,9 +436,9 @@ static struct MachineDriver ginganin_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ginganin_rom )
+ROM_START( ginganin )
 
-	ROM_REGION(0x20000)				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD_EVEN( "gn_02.bin", 0x00000, 0x10000, 0x4a4e012f )
 	ROM_LOAD_ODD(  "gn_01.bin", 0x00000, 0x10000, 0x30256fcb )
 
@@ -507,10 +454,10 @@ ROM_START( ginganin_rom )
 	ROM_LOAD( "gn_08.bin", 0x064000, 0x10000, 0xf7c73c18 )
 	ROM_LOAD( "gn_09.bin", 0x074000, 0x10000, 0xa5e07c3b )
 
-	ROM_REGION(0x08000)				/* Region 2 - bg tilemap */
+	ROM_REGION( 0x08000 )				/* Region 2 - bg tilemap */
 	ROM_LOAD( "gn_11.bin", 0x00000, 0x08000, 0xf0d0e605 )
 
-	ROM_REGION(0x10000)				/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )				/* Region 3 - sound cpu */
 	ROM_LOAD( "gn_05.bin", 0x00000, 0x10000, 0xe76e10e7 )
 
 	ROM_REGION(0x20000)				/* Region 4 - samples */
@@ -526,12 +473,12 @@ void ginganin_rom_decode(void)
 unsigned char *RAM;
 
 /* main cpu patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(REGION_CPU1);
 	WRITE_WORD(&RAM[0x408],0x6000);	WRITE_WORD(&RAM[0x40a],0x001c);	// avoid writes to rom getting to the log
 
 
 /* sound cpu patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(REGION_CPU2);
 
 	/* let's clear the RAM: ROM starts at 0x4000 */
 	memset (&RAM[0],0,0x800);
@@ -539,7 +486,7 @@ unsigned char *RAM;
 }
 
 
-struct GameDriver ginganin_driver =
+struct GameDriver driver_ginganin =
 {
 	__FILE__,
 	0,
@@ -548,20 +495,19 @@ struct GameDriver ginganin_driver =
 	"1987",
 	"Jaleco",
 	"Luca Elia\n",
-	GAME_IMPERFECT_SOUND,
-	&ginganin_machine_driver,
+	0,
+	&machine_driver_ginganin,
+	ginganin_rom_decode,
+
+	rom_ginganin,
+	0, 0,
+	0,
 	0,
 
-	ginganin_rom,
-	ginganin_rom_decode, 0,
-	0,
-	0,
-
-	input_ports,
+	input_ports_ginganin,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0 | GAME_IMPERFECT_SOUND,
 
 	0,0
 };
-

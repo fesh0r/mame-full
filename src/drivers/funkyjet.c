@@ -174,7 +174,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( funkyjet_input_ports )
+INPUT_PORTS_START( funkyjet )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -312,7 +312,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
-	{ 8055 },	/* Frequency */
+	{ 7757 },	/* Frequency */
 	{ 3 },      /* memory region 3 */
 	{ 50 }
 };
@@ -325,31 +325,29 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	32220000/8,
+	32220000/9,
 	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
-static struct MachineDriver funkyjet_machine_driver =
+static struct MachineDriver machine_driver_funkyjet =
 {
 	/* basic machine hardware */
 	{
 	 	{
 			CPU_M68000,
 			14000000, /* 28 MHz crystal */
-			0,
 			funkyjet_readmem,funkyjet_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	0,
 
@@ -382,8 +380,8 @@ static struct MachineDriver funkyjet_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( funkyjet_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( funkyjet )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "jk00.12f", 0x00000, 0x40000, 0x712089c1 )
 	ROM_LOAD_ODD ( "jk01.13f", 0x00000, 0x40000, 0xbe3920d7 )
 
@@ -392,7 +390,7 @@ ROM_START( funkyjet_rom )
 	ROM_LOAD( "mat01", 0x080000, 0x80000, 0x24093a8d )
 	ROM_LOAD( "mat02", 0x100000, 0x80000, 0xe4b94c7e ) /* chars */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, 0x748c0bd8 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -401,7 +399,7 @@ ROM_END
 
 /******************************************************************************/
 
-struct GameDriver funkyjet_driver =
+struct GameDriver driver_funkyjet =
 {
 	__FILE__,
 	0,
@@ -410,18 +408,18 @@ struct GameDriver funkyjet_driver =
 	"1992",
 	"[Data East] (Mitchell license)",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&funkyjet_machine_driver,
+	0,
+	&machine_driver_funkyjet,
 	0,
 
-	funkyjet_rom,
+	rom_funkyjet,
 	0, 0,
 	0,
 	0,
 
-	funkyjet_input_ports,
+	input_ports_funkyjet,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };

@@ -168,7 +168,7 @@ static struct IOWritePort sound_writeport_2203[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( terracre )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -330,20 +330,18 @@ int terracre_interrupt(void)
 }
 
 
-static struct MachineDriver ym3526_machine_driver =
+static struct MachineDriver machine_driver_ym3526 =
 {
 	{
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			terracre_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz???? */
-			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport_3526,
 			interrupt,128	/* ??? */
 		},
@@ -378,20 +376,18 @@ static struct MachineDriver ym3526_machine_driver =
 	}
 };
 
-static struct MachineDriver ym2203_machine_driver =
+static struct MachineDriver machine_driver_ym2203 =
 {
 	{
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			terracre_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz???? */
-			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport_2203,
 			interrupt,128	/* ??? */
 		},
@@ -428,8 +424,8 @@ static struct MachineDriver ym2203_machine_driver =
 
 
 
-ROM_START( terracre_rom )
-	ROM_REGION(0x20000)	/* 128K for 68000 code */
+ROM_START( terracre )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -448,14 +444,14 @@ ROM_START( terracre_rom )
 	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
 	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
 	ROM_LOAD( "2a_17b.rom",   0x4000, 0x4000, 0xaffc898d )
 	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
@@ -465,8 +461,8 @@ ROM_END
 /* Notes: All the roms are the same except the SOUND ROMs */
 /**********************************************************/
 
-ROM_START( terracrb_rom )
-	ROM_REGION(0x20000)	/* 128K for 68000 code */
+ROM_START( terracrb )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -485,14 +481,14 @@ ROM_START( terracrb_rom )
 	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
 	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
 	ROM_LOAD( "dg.12",        0x4000, 0x4000, 0x9e9b3808 )
 	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
@@ -502,8 +498,8 @@ ROM_END
 /* Notes: All the roms are the same except the SOUND ROMs */
 /**********************************************************/
 
-ROM_START( terracra_rom )
-	ROM_REGION(0x20000)	/* 128K for 68000 code */
+ROM_START( terracra )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -522,56 +518,21 @@ ROM_START( terracra_rom )
 	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
 	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k to sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k to sound cpu */
 	ROM_LOAD( "tc2a_15b.bin", 0x0000, 0x4000, 0x790ddfa9 )
 	ROM_LOAD( "tc2a_17b.bin", 0x4000, 0x4000, 0xd4531113 )
 ROM_END
 
 
 
-static int terracre_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-		if (READ_WORD(&terrac_ram[0x004a]) == 0x330e && READ_WORD(&terrac_ram[0x004c]) == 0x2635 &&
-			READ_WORD(&terrac_ram[0x0082]) == 0x320e && READ_WORD(&terrac_ram[0x0084]) == 0x3921)
-        {
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&terrac_ram[0x46],14*5);
-                        memcpy(&terrac_ram[0x8c], &terrac_ram[0x46], 4);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void terracre_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&terrac_ram[0x46],14*5);
-                osd_fclose(f);
-        }
-}
-
-
-
-struct GameDriver terracre_driver =
+struct GameDriver driver_terracre =
 {
 	__FILE__,
 	0,
@@ -581,74 +542,71 @@ struct GameDriver terracre_driver =
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
-	&ym3526_machine_driver,
+	&machine_driver_ym3526,
 	0,
 
-	terracre_rom,
+	rom_terracre,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_terracre,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	terracre_hiload, terracre_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver terracrb_driver =
+struct GameDriver driver_terracrb =
 {
 	__FILE__,
-	&terracre_driver,
+	&driver_terracre,
 	"terracrb",
 	"Terra Cresta (YM3526 set 2)",
 	"1985",
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
-	&ym3526_machine_driver,
+	&machine_driver_ym3526,
 	0,
 
-	terracrb_rom,
+	rom_terracrb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_terracre,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	terracre_hiload, terracre_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
 /**********************************************************/
 /* Notes: All the roms are the same except the SOUND ROMs */
 /**********************************************************/
 
-struct GameDriver terracra_driver =
+struct GameDriver driver_terracra =
 {
 	__FILE__,
-	&terracre_driver,
+	&driver_terracre,
 	"terracra",
 	"Terra Cresta (YM2203)",
 	"1985",
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
-	&ym2203_machine_driver,
+	&machine_driver_ym2203,
 	0,
 
-	terracra_rom,
+	rom_terracra,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_terracre,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	terracre_hiload, terracre_hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

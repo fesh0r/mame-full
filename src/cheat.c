@@ -624,6 +624,9 @@
 |*|
 |*|	MSH 990310:	Use of the #ifdef WIN32 to fix the keyboard under Windows
 |*|
+|*|
+|*|	MLR 991114:	Support for gzipped cheat files
+|*|
 \*|*/
 
 /*\
@@ -638,16 +641,9 @@
 \*|*/
 
 #include "driver.h"
+#include <zlib.h>
 #include <stdarg.h>
 #include <ctype.h>  /* for toupper() and tolower() */
-
-/* MSH 990310 BEGIN */
-#ifdef WIN32
-#define CreateMenu xCreateMenu
-#include <windows.h>
-#undef CreateMenu
-#endif
-/* MSH 990310 END */
 
 /*
  The CHEAT.DAT file:
@@ -726,7 +722,7 @@ extern int showprofile;
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-extern struct GameDriver neogeo_bios;
+extern struct GameDriver driver_neogeo;
 #endif
 #endif
 
@@ -1061,7 +1057,7 @@ void ClearArea(int addskip, int ystart, int yend)
 /* Print a string at the position x y
  * if x = 0 then center the string in the screen
  * if ForEdit = 0 then adds a cursor at the end of the text */
-void xprintf(int ForEdit,int x,int y,char *fmt,...)
+static void CLIB_DECL xprintf(int ForEdit,int x,int y,char *fmt,...)
 {
   struct DisplayText dt[2];
   char s[80];
@@ -1329,7 +1325,7 @@ int CreateHelp (char **paDisplayText, struct TextLine *table)
 }
 
 /* Function to create menus (returns the number of lines) */
-int CreateMenu (char **paDisplayText, struct DisplayText *dt, int yPos)
+int create_menu (char **paDisplayText, struct DisplayText *dt, int yPos)
 {
   int i = 0;
 
@@ -1873,7 +1869,7 @@ static int build_tables (void)
 	/* const struct MemoryReadAddress *mra = Machine->drv->cpu[SearchCpuNo].memory_read; */
 	const struct MemoryWriteAddress *mwa = Machine->drv->cpu[SearchCpuNo].memory_write;
 
-	int region = Machine->drv->cpu[SearchCpuNo].memory_region;
+	int region = REGION_CPU1+SearchCpuNo;
 
 	struct ExtMemory *ext_sr = StartRam;
 	struct ExtMemory *ext_br = BackupRam;
@@ -1915,7 +1911,7 @@ static int build_tables (void)
 #endif
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-	if (Machine->gamedrv->clone_of == &neogeo_bios)
+	if (Machine->gamedrv->clone_of == &driver_neogeo)
 	{
 		/* games based on NEOGEO driver */
 		CpuToScan = 0;
@@ -2114,12 +2110,33 @@ int RenameCheatFile(int merge, int DisplayFileName, char *filename)
 /* Function who loads the cheats for a game */
 int SaveCheat(int NoCheat)
 {
+	gzFile *gz;
 	FILE *f;
-      char fmt[32];
-      int i;
+	char fmt[32];
+	int i, c;
 	int count = 0;
+	int gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
+	int uncompressed = 0;
 
-	if ((f = fopen(database,"a")) != 0)
+	if ((f = fopen(database,"rb")) != 0)
+	{
+		for (i = 0; i < 2; i++)
+		{
+			c = getc(f);
+			if (c != gz_magic[i])
+				uncompressed = 1;
+		}
+		fclose (f);
+	}
+
+	f = 0; gz = 0;
+
+	if (uncompressed)
+		f = fopen(database, "a");
+	else
+		gz = gzopen(database,"a");
+
+	if (f || gz)
 	{
 		for (i = 0; i < LoadedCheatTotal; i++)
 		{
@@ -2133,50 +2150,80 @@ int SaveCheat(int NoCheat)
 	                              (addmore ? ":%s" : ""));
 
 				#ifdef macintosh
-				fprintf(f, "\r");     /* force DOS-style line enders */
+				if (uncompressed)
+					fprintf(f, "\r");     /* force DOS-style line enders */
+				else
+					gzprintf(gz, "\r");     /* force DOS-style line enders */
 				#endif
 
 				/* JCK 990717 BEGIN */
 				if (	(LoadedCheatTable[LoadedCheatTotal].Special>=60)	&&
 					(LoadedCheatTable[LoadedCheatTotal].Special<=75)	)
 				{
-					if (fprintf(f, fmt, Machine->gamedrv->name,
-							LoadedCheatTable[i].CpuNo,
-							LoadedCheatTable[i].Address,
-							LoadedCheatTable[i].Maximum,
-							LoadedCheatTable[i].Special,
-							LoadedCheatTable[i].Name,
-	                              	(addmore ? LoadedCheatTable[i].More : "")))
+					if (uncompressed)
 					{
-						count ++;
+						if (fprintf(f, fmt, Machine->gamedrv->name,
+									LoadedCheatTable[i].CpuNo,
+									LoadedCheatTable[i].Address,
+									LoadedCheatTable[i].Maximum,
+									LoadedCheatTable[i].Special,
+									LoadedCheatTable[i].Name,
+									(addmore ? LoadedCheatTable[i].More : "")))
+							count ++;
+					}
+					else
+					{
+						if (gzprintf(gz, fmt, Machine->gamedrv->name,
+									 LoadedCheatTable[i].CpuNo,
+									 LoadedCheatTable[i].Address,
+									 LoadedCheatTable[i].Maximum,
+									 LoadedCheatTable[i].Special,
+									 LoadedCheatTable[i].Name,
+									 (addmore ? LoadedCheatTable[i].More : "")))
+							count ++;
 					}
 				}
 				else
 				{
-					if (fprintf(f, fmt, Machine->gamedrv->name,
-							LoadedCheatTable[i].CpuNo,
-							LoadedCheatTable[i].Address,
-							LoadedCheatTable[i].Data,
-							LoadedCheatTable[i].Special,
-							LoadedCheatTable[i].Name,
-	                              	(addmore ? LoadedCheatTable[i].More : "")))
+					if (uncompressed)
 					{
-						count ++;
+						if (fprintf(f, fmt, Machine->gamedrv->name,
+									LoadedCheatTable[i].CpuNo,
+									LoadedCheatTable[i].Address,
+									LoadedCheatTable[i].Data,
+									LoadedCheatTable[i].Special,
+									LoadedCheatTable[i].Name,
+									(addmore ? LoadedCheatTable[i].More : "")))
+							count ++;
+					}
+					else
+					{
+						if (gzprintf(gz, fmt, Machine->gamedrv->name,
+									 LoadedCheatTable[i].CpuNo,
+									 LoadedCheatTable[i].Address,
+									 LoadedCheatTable[i].Data,
+									 LoadedCheatTable[i].Special,
+									 LoadedCheatTable[i].Name,
+									 (addmore ? LoadedCheatTable[i].More : "")))
+							count ++;
 					}
 				}
 				/* JCK 990717 END */
 
 			}
 		}
-		fclose (f);
+		if (uncompressed)
+			fclose (f);
+		else
+			gzclose (gz);
 	}
-      return(count);
+	return(count);
 }
 
 /* Function who loads the cheats for a game from a single database */
 void LoadCheat(int merge, char *filename)
 {
-  FILE *f;
+  gzFile *f;
   char *ptr;
   char str[90];    /* To support the add. description */
 
@@ -2190,7 +2237,7 @@ void LoadCheat(int merge, char *filename)
 
   /* Load the cheats for that game */
   /* Ex.: pacman:0:4E14:06:000:1UP Unlimited lives:Coded on 1 byte */
-  if ((f = fopen(filename,"r")) != 0)
+  if ((f = gzopen(filename,"r")) != 0)
   {
 	yPos = (MachHeight - FontHeight) / 2 - FontHeight;
 /*	xprintf(0, 0, yPos, "Loading cheats from file"); */
@@ -2199,7 +2246,7 @@ void LoadCheat(int merge, char *filename)
 
 	for(;;)
 	{
-	      if (fgets(str,90,f) == NULL)
+	      if (gzgets(f,str,90) == NULL)
       		break;
 
 		#ifdef macintosh  /* JB 971004 */
@@ -2301,7 +2348,7 @@ void LoadCheat(int merge, char *filename)
 
 		LoadedCheatTotal++;
 	}
-	fclose(f);
+	gzclose(f);
 
 	ClearArea (1, yPos - FontHeight, yPos + FontHeight);
   }
@@ -2356,7 +2403,7 @@ void LoadDatabases(int InCheat)
 
 int LoadHelp(char *filename, struct TextLine *table)
 {
-  FILE *f;
+  gzFile *f;
   char str[32];
 
   int yPos;
@@ -2368,12 +2415,12 @@ int LoadHelp(char *filename, struct TextLine *table)
   yPos = (MachHeight - FontHeight) / 2;
   xprintf(0, 0, yPos, "Loading help...");
 
-  if ((f = fopen(filename,"r")) != 0)
+  if ((f = gzopen(filename,"r")) != 0)
   {
 	txt = table;
 	for(;;)
 	{
-	      if (fgets(str,32,f) == NULL)
+	      if (gzgets(f,str,32) == NULL)
       		break;
 
 		#ifdef macintosh  /* JB 971004 */
@@ -2398,7 +2445,7 @@ int LoadHelp(char *filename, struct TextLine *table)
 
 		txt++;
 	}
-	fclose(f);
+	gzclose(f);
   }
 
   ClearTextLine (1, yPos);
@@ -4397,7 +4444,7 @@ void SelectFastSearch(void)
 
   y = SelectFastSearchHeader();
 
-  total = CreateMenu(paDisplayText, dt, y);
+  total = create_menu(paDisplayText, dt, y);
 
   oldkey = 0;
 
@@ -4480,7 +4527,7 @@ int SelectSearchValue(void)
   };
 
   y = SelectSearchValueHeader();
-  total = CreateMenu(paDisplayText, dt, y);
+  total = create_menu(paDisplayText, dt, y);
   y = dt[total-1].y + ( 3 * FontHeight );
 
   oldkey = 0;
@@ -4546,7 +4593,7 @@ void StartSearch(void)
 
   y = StartSearchHeader();
 
-  total = CreateMenu(paDisplayText, dt, y);
+  total = create_menu(paDisplayText, dt, y);
   y = dt[total-1].y + ( 3 * FontHeight );
 
   count = 1;
@@ -4962,7 +5009,7 @@ void ContinueSearch(int selected, int ViewLast)
 			0
 	      };
 
-		total = CreateMenu(paDisplayText, dt, y);
+		total = create_menu(paDisplayText, dt, y);
 		y = dt[total-1].y + ( 3 * FontHeight );
 
 		s = SaveContinueSearch;
@@ -5023,7 +5070,7 @@ void ContinueSearch(int selected, int ViewLast)
 			0
 	      };
 
-		total = CreateMenu(paDisplayText, dt, y);
+		total = create_menu(paDisplayText, dt, y);
 		y = dt[total-1].y + ( 3 * FontHeight );
 
 		s = SaveContinueSearch;
@@ -5084,7 +5131,7 @@ void ContinueSearch(int selected, int ViewLast)
 			0
 	      };
 
-		total = CreateMenu(paDisplayText, dt, y);
+		total = create_menu(paDisplayText, dt, y);
 		y = dt[total-1].y + ( 3 * FontHeight );
 
 		s = SaveContinueSearch;
@@ -6247,7 +6294,7 @@ int cheat_menu(void)
 
   cheat_save_frameskips();
 
-  total = CreateMenu(paDisplayText, dt, FIRSTPOS);
+  total = create_menu(paDisplayText, dt, FIRSTPOS);
   x = dt[total-1].x;
   y = dt[total-1].y + 2 * FontHeight;
 

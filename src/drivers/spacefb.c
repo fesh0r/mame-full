@@ -205,7 +205,7 @@ static struct IOWritePort writeport_sound[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( spacefb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -258,7 +258,7 @@ INPUT_PORTS_END
 
 
 /* Same as Space Firebird, except for the difficulty switch */
-INPUT_PORTS_START( spacedem_input_ports )
+INPUT_PORTS_START( spacedem )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -359,14 +359,12 @@ static struct MachineDriver machine_driver =
         {
             CPU_Z80,
             4000000,    /* 4 Mhz? */
-            0,
             readmem,writemem,readport,writeport,
             spacefb_interrupt,2 /* two int's per frame */
         },
 		{
             CPU_I8035 | CPU_AUDIO_CPU,
             6000000/15,
-            3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
             ignore_interrupt,0
         }
@@ -401,8 +399,8 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( spacefb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spacefb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5e.cpu",       0x0000, 0x0800, 0x2d406678 )         /* Code */
 	ROM_LOAD( "5f.cpu",       0x0800, 0x0800, 0x89f0c34a )
 	ROM_LOAD( "5h.cpu",       0x1000, 0x0800, 0xc4bcac3e )
@@ -417,15 +415,15 @@ ROM_START( spacefb_rom )
 	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spacefbg_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spacefbg )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tst-c.5e",     0x0000, 0x0800, 0x07949110 )         /* Code */
 	ROM_LOAD( "tst-c.5f",     0x0800, 0x0800, 0xce591929 )
 	ROM_LOAD( "tst-c.5h",     0x1000, 0x0800, 0x55d34ea5 )
@@ -440,15 +438,15 @@ ROM_START( spacefbg_rom )
 	ROM_LOAD( "tst-v.6k",     0x0800, 0x0800, 0x1645ff26 )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spcbird_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spcbird )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sb5e.cpu",     0x0000, 0x0800, 0x232d66b8 )         /* Code */
 	ROM_LOAD( "sb5f.cpu",     0x0800, 0x0800, 0x99504327 )
 	ROM_LOAD( "sb5h.cpu",     0x1000, 0x0800, 0x49a26fe5 )
@@ -463,15 +461,15 @@ ROM_START( spcbird_rom )
 	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "spcbird.clr",  0x0000, 0x0020, 0x25c79518 )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spacedem_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spacedem )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sd5e.cpu",     0x0000, 0x0800, 0xbe4b9cbb )         /* Code */
 	ROM_LOAD( "sd5f.cpu",     0x0800, 0x0800, 0x0814f964 )
 	ROM_LOAD( "sd5h.cpu",     0x1000, 0x0800, 0xebfff682 )
@@ -486,99 +484,16 @@ ROM_START( spacedem_rom )
 	ROM_LOAD( "sd6k.vid",     0x0800, 0x0800, 0x3fcbb20c )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 ROM_END
 
 
-/* This only works for the basic Space Firebird. The rest of the games allow names to be entered */
-static int hiload(void)
-{
-	unsigned char *from, *to;
-	int i, j, digit, started;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0xc0db] == 0xc1 &&	/* check that the scores have been zeroed */
-		videoram[0x299] == 0x0f && /* and that the videoram has been 'cleared' */
-		videoram[0x29a] == 0x0f &&
-		videoram[0x29b] == 0x0f &&
-		videoram[0x299 + 47] == 0x0f &&	/* all the way down */
-		videoram[0x299 + 48] == 0x0f &&
-		videoram[0x299 + 49] == 0x0f &&
-		videoram[0x299 + 50] == 0x05 &&
-		videoram[0x299 + 59] == 0x05)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name, 0,
-						   OSD_FILETYPE_HIGHSCORE, 0)) != 0)
-		{
-			osd_fread(f, &RAM[0xc0a0], 3 * 10);
-			osd_fseek(f, 0, SEEK_SET);
-			osd_fread(f, &RAM[0xc0e0], 3);
-			osd_fclose(f);
-
-			from = &RAM[0xc0a0];
-			j = 0x299;
-
-			for (i = 0; i < 10; i++)
-			{
-				started = 0;
-
-				if (!(digit = ((*from   & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ( *from++ & 0x0f))       && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ((*from   & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ( *from++ & 0x0f))       && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ((*from++ & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-			}
-
-			from = &RAM[0xc0a0];
-			to = &RAM[0xc773];
-			j = 0x251;
-
-			videoram[j++] = *to++ = (((*from   & 0xf0) >> 4) + 5);
-			videoram[j++] = *to++ = (( *from++ & 0x0f)       + 5);
-			videoram[j++] = *to++ = (((*from   & 0xf0) >> 4) + 5);
-			videoram[j++] = *to++ = (( *from++ & 0x0f)       + 5);
-			videoram[j++] = *to++ = (((*from++ & 0xf0) >> 4) + 5);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name, 0,
-					   OSD_FILETYPE_HIGHSCORE, 1)) != 0)
-    {
-		osd_fwrite(f, &RAM[0xc0a0], 3 * 10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver spacefb_driver =
+struct GameDriver driver_spacefb =
 {
 	__FILE__,
 	0,
@@ -587,97 +502,96 @@ struct GameDriver spacefb_driver =
 	"1980",
 	"Nintendo",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spacefb_rom,
+	rom_spacefb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_spacefb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver spacefbg_driver =
+struct GameDriver driver_spacefbg =
 {
 	__FILE__,
-	&spacefb_driver,
+	&driver_spacefb,
 	"spacefbg",
 	"Space Firebird (Gremlin)",
 	"1980",
 	"Gremlin",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spacefbg_rom,
+	rom_spacefbg,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_spacefb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
 
-struct GameDriver spacebrd_driver =
+struct GameDriver driver_spacebrd =
 {
 	__FILE__,
-	&spacefb_driver,
+	&driver_spacefb,
 	"spacebrd",
 	"Space Bird (bootleg)",
 	"1980",
 	"bootleg",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spcbird_rom,
+	rom_spcbird,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_spacefb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
 
-struct GameDriver spacedem_driver =
+struct GameDriver driver_spacedem =
 {
 	__FILE__,
-	&spacefb_driver,
+	&driver_spacefb,
 	"spacedem",
 	"Space Demon",
 	"1980",
 	"Nintendo / Fortrek",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spacedem_rom,
+	rom_spacedem,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	spacedem_input_ports,
+	input_ports_spacedem,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };

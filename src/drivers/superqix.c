@@ -69,7 +69,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( superqix )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -222,7 +222,6 @@ static struct MachineDriver machine_driver =
 			CPU_Z80 | CPU_16BIT_PORT,
 //			10000000,	/* 10 Mhz ? */
 			6000000,	/* 6 Mhz ? */
-			0,
 			readmem,writemem,readport,writeport,
 //			nmi_interrupt,3	/* ??? */
 			sqix_interrupt,6	/* ??? */
@@ -262,8 +261,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( superqix_rom )
-	ROM_REGION(0x20000)	/* 64k for code */
+ROM_START( superqix )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sq01.97",      0x00000, 0x08000, 0x0888b7de )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
@@ -273,12 +272,12 @@ ROM_START( superqix_rom )
 	ROM_LOAD( "sq06.14",      0x18000, 0x10000, 0x38154517 )
 	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 
-	ROM_REGION(0x1000)	/* Unknown (protection related?) */
+	ROM_REGION( 0x1000 )	/* Unknown (protection related?) */
 	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )
 ROM_END
 
-ROM_START( sqixbl_rom )
-	ROM_REGION(0x20000)	/* 64k for code */
+ROM_START( sqixbl )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu.2",        0x00000, 0x08000, 0x682e28e3 )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
@@ -289,46 +288,9 @@ ROM_START( sqixbl_rom )
 	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 ROM_END
 
-static int superqix_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
 
 
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xf4c0],"\x00\x00\x32",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xf4c0],40);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0xf8f4] = RAM[0xf4c0];
-                        RAM[0xf8f3] = RAM[0xf4c1];
-                        RAM[0xf8f2] = RAM[0xf4c2];
-                        RAM[0xf8f1] = RAM[0xf4c3];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void superqix_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xf4c0],40);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver superqix_driver =
+struct GameDriver driver_superqix =
 {
 	__FILE__,
 	0,
@@ -337,27 +299,27 @@ struct GameDriver superqix_driver =
 	"1987",
 	"Taito",
 	"Mirko Buffoni\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	superqix_rom,
+	rom_superqix,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_superqix,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90 | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver sqixbl_driver =
+struct GameDriver driver_sqixbl =
 {
 	__FILE__,
-	&superqix_driver,
+	&driver_superqix,
 	"sqixbl",
 	"Super Qix (bootleg)",
 	"1987",
@@ -367,15 +329,14 @@ struct GameDriver sqixbl_driver =
 	&machine_driver,
 	0,
 
-	sqixbl_rom,
+	rom_sqixbl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_superqix,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	superqix_hiload, superqix_hisave
+	ROT90,
+	0,0
 };

@@ -90,7 +90,7 @@ int superman_input_r (int offset)
 
 static void taito68k_sound_bankswitch_w ( int offset, int data )
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	int banknum = ( data - 1 ) & 3;
 
@@ -107,7 +107,7 @@ static struct MemoryReadAddress superman_readmem[] =
 	{ 0xb00000, 0xb00fff, paletteram_word_r },
 	{ 0xd00000, 0xd007ff, supes_attribram_r },
 	{ 0xe00000, 0xe03fff, supes_videoram_r },
-	{ 0xf00000, 0xf03fff, MRA_BANK1, &ram },	/* Main RAM */
+	{ 0xf00000, 0xf03fff, MRA_BANK1 },	/* Main RAM */
 	{ -1 }  /* end of table */
 };
 
@@ -119,7 +119,7 @@ static struct MemoryWriteAddress superman_writemem[] =
 	{ 0xb00000, 0xb00fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
 	{ 0xd00000, 0xd007ff, supes_attribram_w, &supes_attribram, &supes_attribram_size },
 	{ 0xe00000, 0xe03fff, supes_videoram_w, &supes_videoram, &supes_videoram_size },
-	{ 0xf00000, 0xf03fff, MWA_BANK1 },			/* Main RAM */
+	{ 0xf00000, 0xf03fff, MWA_BANK1, &ram },			/* Main RAM */
 	{ -1 }  /* end of table */
 };
 
@@ -154,7 +154,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( superman_input_ports )
+INPUT_PORTS_START( superman )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
@@ -303,15 +303,13 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 Mhz */
-			0,
+			8000000,	/* 8 MHz? */
 			superman_readmem,superman_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		}
@@ -347,47 +345,12 @@ static struct MachineDriver machine_driver =
 
 /***************************************************************************
 
-  High score save/load
-
-***************************************************************************/
-
-static int hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&ram[0x2954]) == 0x1388)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x2954],0x39);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x2954],0x39);
-		osd_fclose(f);
-	}
-}
-
-/***************************************************************************
-
   Game driver(s)
 
 ***************************************************************************/
 
-ROM_START( superman_rom )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+ROM_START( superman )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "a10_09.bin", 0x00000, 0x20000, 0x640f1d58 )
 	ROM_LOAD_ODD ( "a05_07.bin", 0x00000, 0x20000, 0xfddb9953 )
 	ROM_LOAD_EVEN( "a08_08.bin", 0x40000, 0x20000, 0x79fc028e )
@@ -399,7 +362,7 @@ ROM_START( superman_rom )
 	ROM_LOAD( "j01_16.bin", 0x100000, 0x80000, 0x3622ed2f ) /* Plane 2, 3 */
 	ROM_LOAD( "k01_17.bin", 0x180000, 0x80000, 0xc34f27e0 )
 
-	ROM_REGION(0x1c000)     /* 64k for Z80 code */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "d18_10.bin", 0x00000, 0x4000, 0x6efe79e8 )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
@@ -409,7 +372,7 @@ ROM_END
 
 
 
-struct GameDriver superman_driver =
+struct GameDriver driver_superman =
 {
 	__FILE__,
 	0,
@@ -422,16 +385,16 @@ struct GameDriver superman_driver =
 	&machine_driver,
 	0,
 
-	superman_rom,
+	rom_superman,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	superman_input_ports,
+	input_ports_superman,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 

@@ -212,7 +212,7 @@ static struct TAITO8741interface gsword_8741interface=
 
 void machine_init(void)
 {
-	unsigned char *ROM2 = Machine->memory_region[3];
+	unsigned char *ROM2 = memory_region(REGION_CPU2);
 
 	ROM2[0x1da] = 0xc3; /* patch for rom self check */
 	ROM2[0x726] = 0;    /* patch for sound protection or time out function */
@@ -386,7 +386,7 @@ static struct IOWritePort writeport_cpu2[] =
 	{ -1 }
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( gsword )
 	PORT_START	/* IN0 (8741-2 port1?) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
@@ -578,7 +578,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,
-			0,
 			gsword_readmem,gsword_writemem,
 			readport,writeport,
 			interrupt,1
@@ -586,7 +585,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,
-			3,
 			readmem_cpu2,writemem_cpu2,
 			readport_cpu2,writeport_cpu2,
 			gsword_snd_interrupt,4
@@ -594,7 +592,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,
-			4,
 			readmem_cpu3,writemem_cpu3,
 			0,0,
 			ignore_interrupt,0
@@ -637,8 +634,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gsword_rom )
-	ROM_REGION(0x10000)	/* 64K for main CPU */
+ROM_START( gsword )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64K for main CPU */
 	ROM_LOAD( "gs1",          0x0000, 0x2000, 0x565c4d9e )
 	ROM_LOAD( "gs2",          0x2000, 0x2000, 0xd772accf )
 	ROM_LOAD( "gs3",          0x4000, 0x2000, 0x2cee1871 )
@@ -652,7 +649,7 @@ ROM_START( gsword_rom )
 	ROM_LOAD( "gs7",          0x6000, 0x2000, 0xef5f28c6 )
 	ROM_LOAD( "gs8",          0x8000, 0x2000, 0x46824b30 )
 
-	ROM_REGION(0x0360)	/* color PROMs */
+	ROM_REGIONX( 0x0360, REGION_PROMS )
 	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette low bits */
 	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette high bits */
 	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */
@@ -660,57 +657,19 @@ ROM_START( gsword_rom )
 	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
 	ROM_LOAD( "005",          0x0340, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */
 
-	ROM_REGION(0x10000)	/* 64K for 2nd CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for 2nd CPU */
 	ROM_LOAD( "gs15",         0x0000, 0x2000, 0x1aa4690e )
 	ROM_LOAD( "gs16",         0x2000, 0x2000, 0x10accc10 )
 
-	ROM_REGION(0x10000)	/* 64K for 3nd z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for 3nd z80 */
 	ROM_LOAD( "gs12",         0x0000, 0x2000, 0xa6589068 )
 	ROM_LOAD( "gs13",         0x2000, 0x2000, 0x4ee79796 )
 	ROM_LOAD( "gs14",         0x4000, 0x2000, 0x455364b6 )
 ROM_END
 
 
-static int gsword_hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
-        /* Work RAM - 9c00 (3*10 for scores), 9c78(6*10 for names)*/
-        /* check if the hi score table has already been initialized */
-
-        if( memcmp(&RAM[0x9c00],"\x00\x00\x01",3) == 0)
-	{
-                void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-                        osd_fread(f,&RAM[0x9c00],3*10);
-                        osd_fread(f,&RAM[0x9c78],6*10);
-			osd_fclose(f);
-                }
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void gsword_hisave(void)
-{
-    	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = Machine->memory_region[0];
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-                osd_fwrite(f,&RAM[0x9c00],3*10);
-                osd_fwrite(f,&RAM[0x9c78],6*10);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver gsword_driver =
+struct GameDriver driver_gsword =
 {
 	__FILE__,
 	0,
@@ -719,20 +678,19 @@ struct GameDriver gsword_driver =
 	"1984",
 	"Taito Corporation",
 	"Steve Ellenoff\nJarek Parchanski\nTatsuyuki Satoh\nCharlie Miltenberger (hardware info)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	gsword_reset,
 
-	gsword_rom,
+	rom_gsword,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_gsword,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gsword_hiload, gsword_hisave
+	0, 0, 0,
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 

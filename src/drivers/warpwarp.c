@@ -112,7 +112,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( warpwarp_input_ports )
+INPUT_PORTS_START( warpwarp )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -158,7 +158,7 @@ INPUT_PORTS_START( warpwarp_input_ports )
 INPUT_PORTS_END
 
 /* has High Score Initials dip switch instead of rack test */
-INPUT_PORTS_START( warpwarr_input_ports )
+INPUT_PORTS_START( warpwarr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -247,7 +247,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8080,
 			2048000,	/* 3 Mhz? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -284,8 +283,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( warpwarp_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( warpwarp )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-n9601n.2r",  0x0000, 0x1000, 0xf5262f38 )
 	ROM_LOAD( "g-09602n.2m",  0x1000, 0x1000, 0xde8355dd )
 	ROM_LOAD( "g-09603n.1p",  0x2000, 0x1000, 0xbdd1dec5 )
@@ -293,8 +292,8 @@ ROM_START( warpwarp_rom )
 	ROM_LOAD( "g-9611n.4c",   0x4800, 0x0800, 0x380994c8 )
 ROM_END
 
-ROM_START( warpwarr_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( warpwarr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
 	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
@@ -302,8 +301,8 @@ ROM_START( warpwarr_rom )
 	ROM_LOAD( "g-9611.4c",    0x4800, 0x0800, 0x00e6a326 )
 ROM_END
 
-ROM_START( warpwar2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( warpwar2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
 	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
@@ -313,44 +312,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
-			memcmp(&RAM[0x8373],"\x18\x18\x18",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8358],3*10);
-			RAM[0x831d] = RAM[0x8364];
-			RAM[0x831e] = RAM[0x8365];
-			RAM[0x831f] = RAM[0x8366];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8358],3*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver warpwarp_driver =
+struct GameDriver driver_warpwarp =
 {
 	__FILE__,
 	0,
@@ -363,23 +325,22 @@ struct GameDriver warpwarp_driver =
 	&machine_driver,
 	0,
 
-	warpwarp_rom,
+	rom_warpwarp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	warpwarp_input_ports,
+	input_ports_warpwarp,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver warpwarr_driver =
+struct GameDriver driver_warpwarr =
 {
 	__FILE__,
-	&warpwarp_driver,
+	&driver_warpwarp,
 	"warpwarr",
 	"Warp Warp (Rock-ola set 1)",
 	"1981",
@@ -389,23 +350,22 @@ struct GameDriver warpwarr_driver =
 	&machine_driver,
 	0,
 
-	warpwarr_rom,
+	rom_warpwarr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	warpwarr_input_ports,
+	input_ports_warpwarr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver warpwar2_driver =
+struct GameDriver driver_warpwar2 =
 {
 	__FILE__,
-	&warpwarp_driver,
+	&driver_warpwarp,
 	"warpwar2",
 	"Warp Warp (Rock-ola set 2)",
 	"1981",
@@ -415,15 +375,14 @@ struct GameDriver warpwar2_driver =
 	&machine_driver,
 	0,
 
-	warpwar2_rom,
+	rom_warpwar2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	warpwarr_input_ports,
+	input_ports_warpwarr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

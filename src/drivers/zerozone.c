@@ -61,7 +61,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x088000, 0x0881ff, paletteram_word_r },
 //	{ 0x098000, 0x098001, MRA_RAM }, /* watchdog? */
 	{ 0x09ce00, 0x09d9ff, zerozone_videoram_r },
-	{ 0x0c0000, 0x0cffff, MRA_BANK1, &ram },
+	{ 0x0c0000, 0x0cffff, MRA_BANK1 },
 	{ 0x0f8000, 0x0f87ff, MRA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -72,7 +72,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x084000, 0x084001, zerozone_sound_w },
 	{ 0x088000, 0x0881ff, paletteram_BBBBGGGGRRRRxxxx_word_w, &paletteram },
 	{ 0x09ce00, 0x09d9ff, zerozone_videoram_w, &zerozone_videoram, &videoram_size },
-	{ 0x0c0000, 0x0cffff, MWA_BANK1 }, /* RAM */
+	{ 0x0c0000, 0x0cffff, MWA_BANK1, &ram }, /* RAM */
 	{ 0x0f8000, 0x0f87ff, MWA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -95,7 +95,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( zerozone )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -209,14 +209,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz */
-			0,
 			readmem,writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1000000,	/* 1 MHz ??? */
-			2,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the main cpu */
 		}
@@ -248,41 +246,6 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-/***************************************************************************
-
-  High score save/load
-
-***************************************************************************/
-
-static int hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&ram[0x17cc]) == 0x0053 && READ_WORD(&ram[0x1840]) == 0x0700 && READ_WORD(&ram[0x23da]) == 0x03 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&ram[0x17cc],0x78);
-			osd_fclose(f);
-			memcpy(&ram[0x23da],&ram[0x17d2],6);	/* copy high score */
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram[0x17cc],0x78);
-		osd_fclose(f);
-	}
-}
 
 
 /***************************************************************************
@@ -291,15 +254,15 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( zerozone_rom )
-	ROM_REGION(0x20000)     /* 128k for 68000 code */
+ROM_START( zerozone )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 128k for 68000 code */
 	ROM_LOAD_EVEN( "zz-4.rom", 0x0000, 0x10000, 0x83718b9b )
 	ROM_LOAD_ODD ( "zz-5.rom", 0x0000, 0x10000, 0x18557f41 )
 
 	ROM_REGION_DISPOSE(0x080000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "zz-6.rom", 0x00000, 0x80000, 0xc8b906b9 )
 
-	ROM_REGION(0x10000)      /* sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "zz-1.rom", 0x00000, 0x08000, 0x223ccce5 )
 
 	ROM_REGION(0x40000)      /* ADPCM samples */
@@ -309,7 +272,7 @@ ROM_END
 
 
 
-struct GameDriver zerozone_driver =
+struct GameDriver driver_zerozone =
 {
 	__FILE__,
 	0,
@@ -322,14 +285,14 @@ struct GameDriver zerozone_driver =
 	&machine_driver,
 	0,
 
-	zerozone_rom,
+	rom_zerozone,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_zerozone,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };

@@ -57,7 +57,7 @@ static struct MemoryWriteAddress eggs_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( scregg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -178,7 +178,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1500000,
-			0,
 			eggs_readmem,eggs_writemem,0,0,
 			interrupt,1
 		}
@@ -211,8 +210,8 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( scregg_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( scregg )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
 	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, 0xeb143880 )
 	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, 0x4455f262 )
@@ -228,13 +227,13 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, 0xff3c2894 )
 	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, 0x9c20214a )
 
-	ROM_REGION(0x0040)	/* PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )	/* palette */
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
 
-ROM_START( eggs_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( eggs )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
 	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
 	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
@@ -250,53 +249,14 @@ ROM_START( eggs_rom )
 	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
 	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
 
-	ROM_REGION(0x0040)	/* PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, 0xe8408c81 )	/* palette */
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0400],"\x17\x25\x19",3) == 0) &&
-		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0400],0x1E);
-			/* Fix hi score at top */
-			memcpy(&RAM[0x0015],&RAM[0x0403],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0400],0x1E);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver scregg_driver =
+struct GameDriver driver_scregg =
 {
 	__FILE__,
 	0,
@@ -309,23 +269,22 @@ struct GameDriver scregg_driver =
 	&machine_driver,
 	0,
 
-	scregg_rom,
+	rom_scregg,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_scregg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver eggs_driver =
+struct GameDriver driver_eggs =
 {
 	__FILE__,
-	&scregg_driver,
+	&driver_scregg,
 	"eggs",
 	"Eggs",
 	"1983",
@@ -335,15 +294,14 @@ struct GameDriver eggs_driver =
 	&machine_driver,
 	0,
 
-	eggs_rom,
+	rom_eggs,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_scregg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

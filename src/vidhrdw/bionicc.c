@@ -5,12 +5,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 unsigned char *bionicc_fgvideoram;
 unsigned char *bionicc_bgvideoram;
 unsigned char *bionicc_txvideoram;
-extern unsigned char *spriteram;
-extern int spriteram_size;
 
 static struct tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
 static int flipscreen;
@@ -33,7 +32,7 @@ static void get_bg_tile_info(int col,int row)
 {
 	int offset = 2*(row*64+col);
 	int attr = videoram1[offset+1];
-	SET_TILE_INFO(0,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	SET_TILE_INFO(1,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
 	tile_info.flags = TILE_FLIPXY((attr & 0xc0) >> 6);
 }
 
@@ -46,7 +45,7 @@ static void get_fg_tile_info( int col, int row )
 {
 	int offset = 2*(row*64 + col);
 	int attr = videoram1[offset+1];
-	SET_TILE_INFO(1,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	SET_TILE_INFO(2,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
 	if ((attr & 0xc0) == 0xc0)
 	{
 		tile_info.priority = 2;
@@ -69,7 +68,7 @@ static void get_tx_tile_info( int col, int row )
 {
 	int offset = row*32+col;
 	int attr = videoram2[offset];
-	SET_TILE_INFO(3,(videoram1[offset] & 0xff) + ((attr & 0x00c0) << 2),attr & 0x3f);
+	SET_TILE_INFO(0,(videoram1[offset] & 0xff) + ((attr & 0x00c0) << 2),attr & 0x3f);
 }
 
 
@@ -224,19 +223,19 @@ void bionicc_gfxctrl_w(int offset,int data)
 static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 {
 	int offs;
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const struct GfxElement *gfx = Machine->gfx[3];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
 	for (offs = spriteram_size-8;offs >= 0;offs -= 8)
 	{
-		int tile_number = READ_WORD(&spriteram[offs])&0x7ff;
+		int tile_number = READ_WORD(&buffered_spriteram[offs])&0x7ff;
 		if( tile_number!=0x7FF ){
-			int attr = READ_WORD(&spriteram[offs+2]);
+			int attr = READ_WORD(&buffered_spriteram[offs+2]);
 			int color = (attr&0x3C)>>2;
 			int flipx = attr&0x02;
 			int flipy = 0;
-			int sx= (signed short)READ_WORD(&spriteram[offs+6]);
-			int sy= (signed short)READ_WORD(&spriteram[offs+4]);
+			int sx= (signed short)READ_WORD(&buffered_spriteram[offs+6]);
+			int sy= (signed short)READ_WORD(&buffered_spriteram[offs+4]);
 			if(sy>512-16) sy-=512;
 			if (flipscreen)
 			{
@@ -261,16 +260,16 @@ void mark_sprite_colors( void )
 	int offs, code, color, i, pal_base;
 	int colmask[16];
 
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for(i=0;i<16;i++) colmask[i] = 0;
 
 	for (offs = 0; offs < 0x500;offs += 8)
 	{
 
-		code = READ_WORD(&spriteram[offs]) & 0x7ff;
+		code = READ_WORD(&buffered_spriteram[offs]) & 0x7ff;
 		if( code != 0x7FF ) {
-			color = (READ_WORD(&spriteram[offs+2]) & 0x3c) >> 2;
-			colmask[color] |= Machine->gfx[2]->pen_usage[code];
+			color = (READ_WORD(&buffered_spriteram[offs+2]) & 0x3c) >> 2;
+			colmask[color] |= Machine->gfx[3]->pen_usage[code];
 		}
 	}
 
@@ -292,6 +291,7 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	mark_sprite_colors();
+	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
@@ -305,4 +305,12 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	bionicc_draw_sprites(bitmap);
 	tilemap_draw(bitmap,fg_tilemap,1);
 	tilemap_draw(bitmap,tx_tilemap,0);
+}
+
+void bionicc_eof_callback(void)
+{
+	/* Mish: Spriteram is always 1 frame ahead, suggesting buffering.  I can't
+		find a register to control this so I assume it happens automatically
+		every frame at the end of vblank */
+	buffer_spriteram_w(0,0);
 }

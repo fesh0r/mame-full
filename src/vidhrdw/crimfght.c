@@ -27,22 +27,19 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 static void sprite_callback(int *code,int *color,int *priority)
 {
 	/* Weird priority scheme. Why use three bits when two would suffice? */
+	/* The PROM allows for mixed priorities, where sprites would have */
+	/* priority over text but not on one or both of the other two planes. */
+	/* Luckily, this isn't used by the game. */
 	switch (*color & 0x70)
 	{
 		case 0x10: *priority = 0; break;
 		case 0x00: *priority = 1; break;
 		case 0x40: *priority = 2; break;
-#if 0
-		default:
-		{
-			char buf[40];
-			sprintf(buf,"sprite priority %02x",(*color&0x70)>>4);
-			usrintf_showmessage(buf);
-			*color = rand();
-			*priority = 0;
-			break;
-		}
-#endif
+		case 0x20: *priority = 3; break;
+		/*   0x60 == 0x20 */
+		/*   0x50 priority over F and A, but not over B */
+		/*   0x30 priority over F, but not over A and B */
+		/*   0x70 == 0x30 */
 	}
 	/* bit 7 is on in the "Game Over" sprites, meaning unknown */
 	/* in Aliens it is the top bit of the code, but that's not needed here */
@@ -63,9 +60,6 @@ void crimfght_vh_stop( void )
 	K051960_vh_stop();
 }
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-
 int crimfght_vh_start( void )
 {
 	paletteram = malloc(0x400);
@@ -75,12 +69,12 @@ int crimfght_vh_start( void )
 	layer_colorbase[1] = 4;
 	layer_colorbase[2] = 8;
 	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 	{
 		free(paletteram);
 		return 1;
 	}
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		free(paletteram);
 		K052109_vh_stop();

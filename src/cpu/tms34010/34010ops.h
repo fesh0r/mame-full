@@ -23,7 +23,7 @@
 #endif
 
 /* Size of the memory buffer allocated for the shiftr register */
-#define SHIFTREG_SIZE		 (2*512*sizeof(UINT16))
+#define SHIFTREG_SIZE		 (8*512*sizeof(UINT16))
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
@@ -81,7 +81,7 @@
 
 /* IO registers accessor */
 #define IOREG(reg)	     (state.IOregs[reg])
-#define SLAVE_IOREG(reg) (slavecontext->IOregs[reg])
+#define CONTEXT_IOREG(c,reg) ((c)->IOregs[reg])
 #define PBH (IOREG(REG_CONTROL) & 0x0100)
 #define PBV (IOREG(REG_CONTROL) & 0x0200)
 

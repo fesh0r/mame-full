@@ -180,7 +180,7 @@ void qix_sharedram_w(int offset,int data)
 
 void zoo_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 	if (data & 0x04) cpu_setbank (1, &RAM[0x10000])
@@ -215,9 +215,7 @@ void withmcu_init_machine(void)
 {
 	suspended = 0;
 
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
-
+	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_2_intf);
@@ -233,9 +231,7 @@ void qix_init_machine(void)
 {
 	suspended = 0;
 
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
-
+	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_2_intf);
@@ -250,9 +246,6 @@ void qix_init_machine(void)
 void zoo_init_machine(void)
 {
 	withmcu_init_machine();
-
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-	m6809_Flags = M6809_FAST_NONE;
 }
 
 
@@ -288,17 +281,17 @@ static void qix_pia_sint (int state)
 {
 	/* generate a sound interrupt */
 /*	cpu_set_irq_line (2, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);*/
-	
+
 	if (state)
 	{
 		/* ideally we should use the cpu_set_irq_line call above, but it breaks */
 		/* sound in Qix */
 		cpu_cause_interrupt (2, M6809_INT_IRQ);
-	
+
 		/* wait for the sound CPU to read the command */
 		cpu_yielduntil_trigger (500);
 		suspended = 1;
-	
+
 		/* but add a watchdog so that we're not hosed if interrupts are disabled */
 		cpu_triggertime (TIME_IN_USEC (100), 500);
 	}

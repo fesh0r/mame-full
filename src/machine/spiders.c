@@ -76,9 +76,7 @@ static struct pia6821_interface pia_3_intf =
 
 void spiders_init_machine(void)
 {
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
-//	m6809_Flags = M6809_FAST_NONE;
-
+	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_0_intf);
 	pia_config(1, PIA_ALTERNATE_ORDERING | PIA_8BIT, &pia_1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_2_intf);
@@ -152,7 +150,7 @@ void spiders_vrif_w(int address,int data)
 int spiders_vrom_r(int address)
 {
 	int retval;
-	unsigned char *RAM = Machine->memory_region[3];
+	unsigned char *RAM = memory_region(3);
 
 	if(vrom_ctrl_mode)
 	{

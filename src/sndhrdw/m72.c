@@ -19,7 +19,8 @@ Shisensho                     1989  Rev 2.21
 R-Type II                     1989  Rev 2.21
 Major Title                   1990  Rev 2.21
 Daiku no Gensan               1990  Rev 3.14 M81
-Hammerin' Harry	              1990  Rev 3.15 M81
+Hammerin' Harry               1990  Rev 3.15 M81
+Ken-Go	                      1991  Rev 3.15 M81
 Gallop - Armed Police Unit    1991  Rev 3.15 M72
 Pound for Pound               ????  Rev 3.15 M83
 Bomber Man World              1992  Rev 3.31 M81
@@ -118,6 +119,11 @@ void m72_sound_irq_ack_w(int offset,int data)
 
 static int sample_addr;
 
+void m72_set_sample_start(int start)
+{
+	sample_addr = start;
+}
+
 void vigilant_sample_addr_w(int offset,int data)
 {
 	if (offset == 1)
@@ -138,7 +144,7 @@ void shisen_sample_addr_w(int offset,int data)
 	sample_addr <<= 2;
 }
 
-void m72_sample_addr_w(int offset,int data)
+void rtype2_sample_addr_w(int offset,int data)
 {
 	sample_addr >>= 5;
 
@@ -152,11 +158,11 @@ void m72_sample_addr_w(int offset,int data)
 
 int m72_sample_r(int offset)
 {
-	return Machine->memory_region[3][sample_addr];
+	return memory_region(3)[sample_addr];
 }
 
 void m72_sample_w(int offset,int data)
 {
 	DAC_signed_data_w(0,data);
-	sample_addr = (sample_addr + 1) & (Machine->memory_region_length[3] - 1);
+	sample_addr = (sample_addr + 1) & (memory_region_length(3) - 1);
 }

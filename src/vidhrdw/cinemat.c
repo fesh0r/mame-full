@@ -17,16 +17,54 @@
 #define BLUE  0x01
 #define WHITE RED|GREEN|BLUE
 
+static int cinemat_monitor_type;
+static int cinemat_overlay_req;
+static int cinemat_backdrop_req;
+static int cinemat_screenh;
+static struct artwork_element *cinemat_simple_overlay;
+
 static int color_display;
 static struct artwork *backdrop;
 static struct artwork *overlay;
 static struct artwork *spacewar_panel;
 static struct artwork *spacewar_pressed_panel;
 
+struct artwork_element starcas_overlay[]=
+{
+	{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
+	{{ 200, 49, 150, -1},33, 0, 16, 64},
+	{{ 200, 38, 150, -1},32, 15, 0, 64},
+	{{ 200, 29, 150, -1},30, 33, 0, 64},
+	{{-1,-1,-1,-1},0,0,0,0}
+};
+
+struct artwork_element tailg_overlay[]=
+{
+	{{0, 400-1, 0, 300-1}, 0, 64, 64, 32},
+	{{-1,-1,-1,-1},0,0,0,0}
+};
+
+struct artwork_element sundance_overlay[]=
+{
+	{{0, 400-1, 0, 300-1}, 32, 32, 0, 32},
+	{{-1,-1,-1,-1},0,0,0,0}
+};
+
+struct artwork_element solarq_overlay[]=
+{
+	{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
+	{{ 0,  399, 0,    19},31, 0, 12, 64},
+	{{ 200, 12, 150,  -1},31, 31, 0, 64},
+	{{-1,-1,-1,-1},0,0,0,0}
+};
+
 
 void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 {
     static int lastx, lasty;
+
+	fromy = cinemat_screenh - fromy;
+	toy = cinemat_screenh - toy;
 
 	if (fromx != lastx || fromx != lasty)
 		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
@@ -38,6 +76,16 @@ void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 
 	lastx = tox;
 	lasty = toy;
+}
+
+/* This is called by the game specific init function and sets the local
+ * parameters for the generic function cinemat_init_colors() */
+void cinemat_select_artwork (int monitor_type, int overlay_req, int backdrop_req, struct artwork_element *simple_overlay)
+{
+	cinemat_monitor_type = monitor_type;
+	cinemat_overlay_req = overlay_req;
+	cinemat_backdrop_req = backdrop_req;
+	cinemat_simple_overlay = simple_overlay;
 }
 
 static void shade_fill (unsigned char *palette, int rgb, int start_index, int end_index, int start_inten, int end_inten)
@@ -55,6 +103,7 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 	}
 }
 
+
 void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,j,k, nextcol;
@@ -63,45 +112,6 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 	int trcl1[] = { 0,0,2,2,1,1 };
 	int trcl2[] = { 1,2,0,1,0,2 };
 	int trcl3[] = { 2,1,1,0,2,0 };
-
-	struct artwork_element no_overlay[]=
-	{
-		{{0, 400-1, 0, 300-1}, 255, 255, 255, 0},
-		{{-1,-1,-1,-1},0,0,0,0}
-	};
-	struct artwork_element starcas_overlay[]=
-	{
-		{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
-		{{ 200, 49, 150, -1},33, 0, 16, 64},
-		{{ 200, 38, 150, -1},32, 15, 0, 64},
-		{{ 200, 29, 150, -1},30, 33, 0, 64},
-		{{-1,-1,-1,-1},0,0,0,0}
-	};
-	struct artwork_element sundance_overlay[]=
-	{
-		{{0, 400-1, 0, 300-1}, 32, 32, 0, 32},
-		{{-1,-1,-1,-1},0,0,0,0}
-	};
-	struct artwork_element tailg_overlay[]=
-	{
-		{{0, 400-1, 0, 300-1}, 0, 64, 64, 32},
-		{{-1,-1,-1,-1},0,0,0,0}
-	};
-	struct artwork_element solarq_overlay[]=
-	{
-		{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
-		{{ 0,  399, 279, 299},31, 0, 12, 64},
-		{{ 200, 12, 150,  -1},31, 31, 0, 64},
-		{{-1,-1,-1,-1},0,0,0,0}
-	};
-
-	struct artwork_element *simple_overlays[5];
-
-	simple_overlays[0] = no_overlay;
-	simple_overlays[1] = starcas_overlay;
-	simple_overlays[2] = sundance_overlay;
-	simple_overlays[3] = tailg_overlay;
-	simple_overlays[4] = solarq_overlay;
 
 	overlay = NULL;
 	backdrop = NULL;
@@ -118,13 +128,13 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
     nextcol = 24;
 
 	/* fill the rest of the 256 color entries depending on the game */
-	switch (color_prom[0] & 0x0f)
+	switch (cinemat_monitor_type)
 	{
 		case  CCPU_MONITOR_BILEV:
 		case  CCPU_MONITOR_16LEV:
             color_display = FALSE;
 			/* Attempt to load backdrop if requested */
-			if (color_prom[0] & 0x40)
+			if (cinemat_backdrop_req)
 			{
                 sprintf (filename, "%sb.png", Machine->gamedrv->name );
 				if ((backdrop=artwork_load(filename, nextcol, Machine->drv->total_colors-nextcol))!=NULL)
@@ -134,21 +144,20 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
                 }
 			}
 			/* Attempt to load overlay if requested */
-			if (color_prom[0] & 0x80)
+			if (cinemat_overlay_req)
 			{
                 sprintf (filename, "%so.png", Machine->gamedrv->name );
 				/* Attempt to load artwork from file */
 				overlay=artwork_load(filename, nextcol, Machine->drv->total_colors-nextcol);
 
-				if ((overlay==NULL) && (color_prom[0] & 0x20))
+				if ((overlay==NULL) && (cinemat_simple_overlay != NULL))
 				{
 					/* no overlay file found - use simple artwork */
-					artwork_elements_scale(simple_overlays[color_prom[1]],
+					artwork_elements_scale(cinemat_simple_overlay,
 										   Machine->scrbitmap->width,
 										   Machine->scrbitmap->height);
-					overlay=artwork_create(simple_overlays[color_prom[1]], nextcol,
+					overlay=artwork_create(cinemat_simple_overlay, nextcol,
 										   Machine->drv->total_colors-nextcol);
-                    printf ("overlay created\n");
 				}
 
 				if (overlay != NULL)
@@ -240,6 +249,7 @@ int cinemat_vh_start (void)
 	vector_set_shift (VEC_SHIFT);
 	if (backdrop) backdrop_refresh (backdrop);
 	if (overlay) overlay_remap (overlay);
+	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
 	return vector_vh_start();
 }
 
@@ -248,6 +258,7 @@ int spacewar_vh_start (void)
 	vector_set_shift (VEC_SHIFT);
 	if (spacewar_panel) backdrop_refresh(spacewar_panel);
 	if (spacewar_pressed_panel) backdrop_refresh(spacewar_pressed_panel);
+	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
 	return vector_vh_start();
 }
 
@@ -286,7 +297,7 @@ void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-    int tk[10] = {3, 8, 4, 9, 1, 6, 2, 7, 5, 0};
+    int tk[] = {3, 8, 4, 9, 1, 6, 2, 7, 5, 0};
 	int i, pwidth, pheight, key, row, col, sw_option;
 	float scale;
 	struct osd_bitmap vector_bitmap;
@@ -313,15 +324,8 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     vector_clear_list ();
 
 	if (full_refresh)
-	{
-		rect.min_x = 0;
-		rect.max_x = pwidth-1;
-		rect.min_y = 0;
-		rect.max_y = pheight;
-
 		copybitmap(bitmap,spacewar_panel->artwork,0,0,
-				   0,0,&rect,TRANSPARENCY_NONE,0);
-	}
+				   0,bitmap->height - pheight, 0,TRANSPARENCY_NONE,0);
 
 	scale = pwidth/1024.0;
 
@@ -335,25 +339,24 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
             key = tk[i];
             col = key % 5;
             row = key / 5;
-			rect.min_x = scale * (466 + 20 * col);
-			rect.max_x = scale * (466 + 20 * col + 18);
-			rect.min_y = scale * (106  - 20 * row);
-			rect.max_y = scale * (106  - 20 * row + 18);
+			rect.min_x = scale * (465 + 20 * col);
+			rect.max_x = scale * (465 + 20 * col + 18);
+			rect.min_y = scale * (39  + 20 * row) + vector_bitmap.height;
+			rect.max_y = scale * (39  + 20 * row + 18) + vector_bitmap.height;
 
 			if (sw_option & (1 << i))
             {
 				copybitmap(bitmap,spacewar_panel->artwork,0,0,
-						   0, 0,&rect,TRANSPARENCY_NONE,0);
+						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
             }
 			else
             {
 				copybitmap(bitmap,spacewar_pressed_panel->artwork,0,0,
-						   0, 0,&rect,TRANSPARENCY_NONE,0);
+						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
             }
 
-			osd_mark_dirty (rect.min_x, bitmap->height - rect.max_y,
-                            rect.max_x, bitmap->height - rect.min_y, 0);
-
+			osd_mark_dirty (rect.min_x, rect.min_y,
+                            rect.max_x, rect.max_y, 0);
 		}
 	}
     sw_option_change = sw_option;

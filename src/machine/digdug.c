@@ -14,7 +14,6 @@
 
 unsigned char *digdug_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-unsigned char digdug_hiscoreloaded;
 
 static int credits;
 
@@ -29,17 +28,6 @@ void digdig_init_machine(void)
 	nmi_timer = 0;
 	interrupt_enable_1 = interrupt_enable_2 = interrupt_enable_3 = 0;
 	digdug_halt_w (0, 0);
-}
-
-
-int digdug_reset_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	digdug_hiscoreloaded = 0;
-
-	return RAM[offset];
 }
 
 
@@ -268,23 +256,16 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 
 void digdug_halt_w(int offset,int data)
 {
-	static int reset23;
-
-	data &= 1;
-	if (data && !reset23)
+	if (data & 1)
 	{
-		cpu_reset (1);
-		cpu_reset (2);
-		cpu_halt (1,1);
-		cpu_halt (2,1);
+		cpu_set_reset_line(1,CLEAR_LINE);
+		cpu_set_reset_line(2,CLEAR_LINE);
 	}
-	else if (!data)
+	else
 	{
-		cpu_halt (1,0);
-		cpu_halt (2,0);
+		cpu_set_reset_line(1,ASSERT_LINE);
+		cpu_set_reset_line(2,ASSERT_LINE);
 	}
-
-	reset23 = data;
 }
 
 

@@ -4,8 +4,9 @@
 
   But it's really a Data East game..  Bad Dudes era graphics hardware with
   Dark Seal era sound hardware.  Maybe a license for a specific territory?
-This game is developed by
-Mitchell, but they entrusted PCB design and some routines to Data East.
+
+  "This game is developed by Mitchell, but they entrusted PCB design and some
+  routines to Data East."
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -151,7 +152,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( madmotor_input_ports )
+INPUT_PORTS_START( madmotor )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -211,8 +212,8 @@ INPUT_PORTS_START( madmotor_input_ports )
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x03, "4" )
-	PORT_DIPSETTING(    0x02, "4" ) /* One of these might be infinite lifes? */
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy" )
@@ -286,16 +287,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	{ 8055, 16110 },/* Frequency, not confirmed */
+	{ 7757, 15514 },/* ?? Frequency */
 	{ 3, 4 },       /* memory regions 3 & 4 */
-	{ 50, 22 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	21470000/8,	/* Audio section crystal is 21.470 MHz */
-	{ YM2203_VOL(24,40) },
+	21470000/6,	/* ?? Audio section crystal is 21.470 MHz */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -311,31 +312,29 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	21470000/8, /* Audio section crystal is 21.470 MHz */
-	{ YM3012_VOL(37,MIXER_PAN_LEFT,37,MIXER_PAN_RIGHT) },
+	21470000/6, /* ?? Audio section crystal is 21.470 MHz */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
-static struct MachineDriver madmotor_machine_driver =
+static struct MachineDriver machine_driver_madmotor =
 {
 	/* basic machine hardware */
 	{
 	 	{
 			CPU_M68000, /* Custom chip 59 */
 			12000000, /* 24 MHz crystal */
-			0,
 			madmotor_readmem,madmotor_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			8053000/2, /* Crystal near CPU is 8.053 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -372,8 +371,8 @@ static struct MachineDriver madmotor_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( madmotor_rom )
-	ROM_REGION(0x80000) /* 68000 code */
+ROM_START( madmotor )
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "02", 0x00000, 0x20000, 0x50b554e0 )
 	ROM_LOAD_ODD ( "00", 0x00000, 0x20000, 0x2d6a1b3f )
 	ROM_LOAD_EVEN( "03", 0x40000, 0x20000, 0x442a0a52 )
@@ -402,7 +401,7 @@ ROM_START( madmotor_rom )
 	ROM_LOAD( "21",    0x1e0000, 0x20000, 0x9c72d364 )
 	ROM_LOAD( "22",    0x200000, 0x20000, 0x1e78aa60 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "14",    0x00000, 0x10000, 0x1c28a7e5 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -416,7 +415,7 @@ ROM_END
 
 static void madmotor_decrypt(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++) {
@@ -440,11 +439,12 @@ static int cycle_r(int offset)
 static void memory_handler(void)
 {
 	install_mem_read_handler(0, 0x3e0000, 0x3e0001, cycle_r);
+	madmotor_decrypt();
 }
 
 /******************************************************************************/
 
-struct GameDriver madmotor_driver =
+struct GameDriver driver_madmotor =
 {
 	__FILE__,
 	0,
@@ -454,17 +454,17 @@ struct GameDriver madmotor_driver =
 	"Mitchell",
 	"Bryan McPhail",
 	0,
-	&madmotor_machine_driver,
+	&machine_driver_madmotor,
 	memory_handler,
 
-	madmotor_rom,
-	madmotor_decrypt, 0,
+	rom_madmotor,
+	0, 0,
 	0,
 	0,
 
-	madmotor_input_ports,
+	input_ports_madmotor,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

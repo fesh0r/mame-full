@@ -169,7 +169,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( wiz_input_ports )
+INPUT_PORTS_START( wiz )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -237,7 +237,7 @@ INPUT_PORTS_START( wiz_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( stinger_input_ports )
+INPUT_PORTS_START( stinger )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -310,7 +310,7 @@ INPUT_PORTS_START( stinger_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( scion_input_ports )
+INPUT_PORTS_START( scion )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -463,20 +463,18 @@ static struct AY8910interface stinger_ay8910_interface =
 
 
 #define MACHINE_DRIVER(NAME)									\
-static struct MachineDriver NAME##_machine_driver =				\
+static struct MachineDriver machine_driver_##NAME =				\
 {																\
 	{															\
 		{														\
 			CPU_Z80,											\
 			18432000/6,     /* 3.072 Mhz ??? */					\
-			0,													\
 			readmem,writemem,0,0,								\
 			nmi_interrupt,1										\
 		},														\
 		{														\
 			CPU_Z80 | CPU_AUDIO_CPU,							\
 			14318000/8,     /* ? */								\
-			3,													\
 			sound_readmem,sound_writemem,0,0,					\
 			nmi_interrupt,3 /* ??? */							\
 		}														\
@@ -517,8 +515,8 @@ MACHINE_DRIVER(stinger);
 
 ***************************************************************************/
 
-ROM_START( wiz_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( wiz )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ic07_01.bin",  0x0000, 0x4000, 0xc05f2c78 )
 	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
 	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
@@ -534,22 +532,22 @@ ROM_START( wiz_rom )
 	ROM_LOAD( "ic01_09.bin",  0x0a000, 0x2000, 0x4d86b041 )
 	ROM_CONTINUE(		      0x10000, 0x2000  )
 
-	ROM_REGION(0x0400)      /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0100, 0x2dd52fb2 ) /* palette red component */
 	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
 	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
 ROM_END
 
-ROM_START( stinger_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )
-	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )
-	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )
-	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )
-	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )
+ROM_START( stinger )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )	/* encrypted */
+	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )	/* encrypted */
+	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )	/* encrypted */
+	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )	/* encrypted */
+	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )	/* encrypted */
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "7.bin",        0x0000, 0x2000, 0x775489be )
@@ -559,17 +557,17 @@ ROM_START( stinger_rom )
 	ROM_LOAD( "11.bin",       0x8000, 0x2000, 0xa4404e63 )
 	ROM_LOAD( "12.bin",       0xa000, 0x2000, 0xb60fa88c )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x52c06fc2 )	/* red component */
 	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0x9985e575 )	/* green component */
 	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 ROM_END
 
-ROM_START( scion_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( scion )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1",          0x0000, 0x2000, 0x8dcad575 )
 	ROM_LOAD( "sc2",          0x2000, 0x2000, 0xf608e0ba )
 	ROM_LOAD( "sc3",          0x4000, 0x2000, 0x915289b9 )
@@ -584,17 +582,17 @@ ROM_START( scion_rom )
 	ROM_LOAD( "11.12h",       0x8000, 0x2000, 0xdc6ef8ab )
 	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
 ROM_END
 
-ROM_START( scionc_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( scionc )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.5j",         0x0000, 0x2000, 0x5aaf571e )
 	ROM_LOAD( "2.6j",         0x2000, 0x2000, 0xd5a66ac9 )
 	ROM_LOAD( "3.8j",         0x4000, 0x2000, 0x6e616f28 )
@@ -609,12 +607,12 @@ ROM_START( scionc_rom )
 	ROM_LOAD( "11.12h",       0x8000, 0x2000, 0xdc6ef8ab )
 	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
 ROM_END
 
@@ -628,11 +626,14 @@ static void stinger_decode(void)
 		{ 0x80,0xa8,0x20,0x08 },	/* .........01.0... */
 		{ 0x28,0x28,0x88,0x88 }		/* .........01.1... */
 	};
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	for (A = 0x0000;A < 0xc000;A++)
+	memory_set_opcode_base(0,rom+diff);
+
+	for (A = 0x0000;A < 0x10000;A++)
 	{
 		int row,col;
 		unsigned char src;
@@ -641,11 +642,11 @@ static void stinger_decode(void)
 		if (A & 0x2040)
 		{
 			/* not encrypted */
-			ROM[A] = RAM[A];
+			rom[A+diff] = rom[A];
 		}
 		else
 		{
-			src = RAM[A];
+			src = rom[A];
 
 			/* pick the translation table from bits 3 and 5 */
 			row = ((A >> 3) & 1) + (((A >> 5) & 1) << 1);
@@ -656,124 +657,14 @@ static void stinger_decode(void)
 			if (src & 0x80) col = 3 - col;
 
 			/* decode the opcodes */
-			ROM[A] = src ^ xortable[row][col];
+			rom[A+diff] = src ^ xortable[row][col];
 		}
 	}
 }
 
 
 
-static int wiz_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc04e],"\x4d\x43",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc01e],0x32);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void wiz_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc01e],0x32);
-		osd_fclose(f);
-	}
-}
-
-static int stinger_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc211],"\x11\x23\x10",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc031],0x2a);
-			osd_fread(f,&RAM[0xc200],0x14);
-			osd_fclose(f);
-
-			memcpy(&RAM[0xc079], &RAM[0xc031], 6);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void stinger_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc031],0x2a);
-		osd_fwrite(f,&RAM[0xc200],0x14);
-		osd_fclose(f);
-	}
-}
-
-static int scion_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc0bd],"\x18\x11\x1e",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc070],0x50);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void scion_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc070],0x50);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver wiz_driver =
+struct GameDriver driver_wiz =
 {
 	__FILE__,
 	0,
@@ -782,24 +673,23 @@ struct GameDriver wiz_driver =
 	"1985",
 	"Seibu Kaihatsu",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
-	&wiz_machine_driver,
+	0,
+	&machine_driver_wiz,
 	0,
 
-	wiz_rom,
+	rom_wiz,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	wiz_input_ports,
+	input_ports_wiz,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	wiz_hiload, wiz_hisave
+	0, 0, 0,
+	ROT270 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver stinger_driver =
+struct GameDriver driver_stinger =
 {
 	__FILE__,
 	0,
@@ -808,24 +698,23 @@ struct GameDriver stinger_driver =
 	"1983",
 	"Seibu Denshi",
 	"Nicola Salmoria",
-	GAME_IMPERFECT_COLORS,
-	&stinger_machine_driver,
+	0,
+	&machine_driver_stinger,
+	stinger_decode,
+
+	rom_stinger,
+	0, 0,
+	0,
 	0,
 
-	stinger_rom,
-	0, stinger_decode,
-	0,
-	0,
+	input_ports_stinger,
 
-	stinger_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	stinger_hiload, stinger_hisave
+	0, 0, 0,
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver scion_driver =
+struct GameDriver driver_scion =
 {
 	__FILE__,
 	0,
@@ -834,46 +723,44 @@ struct GameDriver scion_driver =
 	"1984",
 	"Seibu Denshi",
 	"Nicola Salmoria",
-	GAME_IMPERFECT_COLORS,
-	&stinger_machine_driver,
+	0,
+	&machine_driver_stinger,
 	0,
 
-	scion_rom,
+	rom_scion,
 	0, 0,
 	0,
 	0,
 
-	scion_input_ports,
+	input_ports_scion,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	scion_hiload, scion_hisave
+	0, 0, 0,
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
-struct GameDriver scionc_driver =
+struct GameDriver driver_scionc =
 {
 	__FILE__,
-	&scion_driver,
+	&driver_scion,
 	"scionc",
 	"Scion (Cinematronics)",
 	"1984",
 	"Seibu Denshi [Cinematronics license]",
 	"Nicola Salmoria",
-	GAME_IMPERFECT_COLORS,
-	&stinger_machine_driver,
+	0,
+	&machine_driver_stinger,
 	0,
 
-	scionc_rom,
+	rom_scionc,
 	0, 0,
 	0,
 	0,
 
-	scion_input_ports,
+	input_ports_scion,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
-
-	scion_hiload, scion_hisave
+	0, 0, 0,
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 

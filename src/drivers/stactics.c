@@ -99,20 +99,20 @@ static struct MemoryReadAddress readmem[] =
     { 0x9000, 0x9fff, stactics_vert_pos_r },
     { 0xa000, 0xafff, stactics_horiz_pos_r },
 
-    { 0xb000, 0xb3ff, MRA_RAM, &stactics_videoram_b, &videoram_size },
-    { 0xb800, 0xbfff, MRA_RAM, &stactics_chardata_b },
+    { 0xb000, 0xb3ff, MRA_RAM },
+    { 0xb800, 0xbfff, MRA_RAM },
 
-    { 0xd000, 0xd3ff, MRA_RAM, &stactics_videoram_d },
+    { 0xd000, 0xd3ff, MRA_RAM },
     { 0xd600, 0xd7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xd800, 0xdfff, MRA_RAM, &stactics_chardata_d },
+    { 0xd800, 0xdfff, MRA_RAM },
 
-    { 0xe000, 0xe3ff, MRA_RAM, &stactics_videoram_e },
+    { 0xe000, 0xe3ff, MRA_RAM },
     { 0xe600, 0xe7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xe800, 0xefff, MRA_RAM, &stactics_chardata_e },
+    { 0xe800, 0xefff, MRA_RAM },
 
-    { 0xf000, 0xf3ff, MRA_RAM, &stactics_videoram_f },
+    { 0xf000, 0xf3ff, MRA_RAM },
     { 0xf600, 0xf7ff, MRA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xf800, 0xffff, MRA_RAM, &stactics_chardata_f },
+    { 0xf800, 0xffff, MRA_RAM },
 
 	{ -1 }	/* end of table */
 };
@@ -133,29 +133,29 @@ static struct MemoryWriteAddress writemem[] =
 
     { 0x8000, 0x8fff, stactics_scroll_ram_w, &stactics_scroll_ram },
 
-    { 0xb000, 0xb3ff, stactics_videoram_b_w },
+    { 0xb000, 0xb3ff, stactics_videoram_b_w, &stactics_videoram_b, &videoram_size },
     { 0xb400, 0xb7ff, MWA_RAM },   /* Unused, but initialized */
-    { 0xb800, 0xbfff, stactics_chardata_b_w },
+    { 0xb800, 0xbfff, stactics_chardata_b_w, &stactics_chardata_b },
 
     { 0xc000, 0xcfff, MWA_NOP }, /* according to the schematics, nothing is mapped here */
                                  /* but, the game still tries to clear this out         */
 
-    { 0xd000, 0xd3ff, stactics_videoram_d_w },
+    { 0xd000, 0xd3ff, stactics_videoram_d_w, &stactics_videoram_d },
     { 0xd400, 0xd7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xd800, 0xdfff, stactics_chardata_d_w },
+    { 0xd800, 0xdfff, stactics_chardata_d_w, &stactics_chardata_d },
 
-    { 0xe000, 0xe3ff, stactics_videoram_e_w },
+    { 0xe000, 0xe3ff, stactics_videoram_e_w, &stactics_videoram_e },
     { 0xe400, 0xe7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xe800, 0xefff, stactics_chardata_e_w },
+    { 0xe800, 0xefff, stactics_chardata_e_w, &stactics_chardata_e },
 
-    { 0xf000, 0xf3ff, stactics_videoram_f_w },
+    { 0xf000, 0xf3ff, stactics_videoram_f_w, &stactics_videoram_f },
     { 0xf400, 0xf7ff, MWA_RAM },   /* Used as scratch RAM, high scores, etc. */
-    { 0xf800, 0xffff, stactics_chardata_f_w },
+    { 0xf800, 0xffff, stactics_chardata_f_w, &stactics_chardata_f },
 
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( stactics )
 
     PORT_START  /* 	IN0 */
     /*PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) Motor status. see stactics_port_0_r */
@@ -269,7 +269,6 @@ static struct MachineDriver machine_driver =
 		{
             CPU_8080,
             1933560,
-			0,
 			readmem,writemem,0,0,
             stactics_interrupt,1
 		},
@@ -306,103 +305,52 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( stactics_rom )
-    ROM_REGION(0x10000) /* 64k for code */
-    ROM_LOAD( "epr-218x",     0x0000, 0x0800, 0xb1186ad2 )
-    ROM_LOAD( "epr-219x",     0x0800, 0x0800, 0x3b86036d )
-    ROM_LOAD( "epr-220x",     0x1000, 0x0800, 0xc58702da )
-    ROM_LOAD( "epr-221x",     0x1800, 0x0800, 0xe327639e )
-    ROM_LOAD( "epr-222y",     0x2000, 0x0800, 0x24dd2bcc )
-    ROM_LOAD( "epr-223x",     0x2800, 0x0800, 0x7fef0940 )
+ROM_START( stactics )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "epr-218x",     0x0000, 0x0800, 0xb1186ad2 )
+	ROM_LOAD( "epr-219x",     0x0800, 0x0800, 0x3b86036d )
+	ROM_LOAD( "epr-220x",     0x1000, 0x0800, 0xc58702da )
+	ROM_LOAD( "epr-221x",     0x1800, 0x0800, 0xe327639e )
+	ROM_LOAD( "epr-222y",     0x2000, 0x0800, 0x24dd2bcc )
+	ROM_LOAD( "epr-223x",     0x2800, 0x0800, 0x7fef0940 )
 
-    ROM_REGION_DISPOSE(0x1060)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "epr-217",      0x0000, 0x0800, 0x38259f5f )      /* LED fire beam data      */
-    ROM_LOAD( "pr55",         0x0800, 0x0800, 0xf162673b )      /* timing PROM (unused)    */
-    ROM_LOAD( "pr65",         0x1000, 0x0020, 0xa1506b9d )      /* timing PROM (unused)    */
-    ROM_LOAD( "pr66",         0x1020, 0x0020, 0x78dcf300 )      /* timing PROM (unused)    */
-    ROM_LOAD( "pr67",         0x1040, 0x0020, 0xb27874e7 )      /* LED timing ROM (unused) */
+	ROM_REGION_DISPOSE(0x1060)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr-217",      0x0000, 0x0800, 0x38259f5f )      /* LED fire beam data      */
+	ROM_LOAD( "pr55",         0x0800, 0x0800, 0xf162673b )      /* timing PROM (unused)    */
+	ROM_LOAD( "pr65",         0x1000, 0x0020, 0xa1506b9d )      /* timing PROM (unused)    */
+	ROM_LOAD( "pr66",         0x1020, 0x0020, 0x78dcf300 )      /* timing PROM (unused)    */
+	ROM_LOAD( "pr67",         0x1040, 0x0020, 0xb27874e7 )      /* LED timing ROM (unused) */
 
-    ROM_REGION(0x0800)  /* color prom */
-    ROM_LOAD( "pr54",         0x0000, 0x0800, 0x9640bd6e )         /* color/priority prom */
-
+	ROM_REGIONX( 0x0800, REGION_PROMS )
+	ROM_LOAD( "pr54",         0x0000, 0x0800, 0x9640bd6e )         /* color/priority prom */
 ROM_END
 
 
-static int hiload(void)
+
+struct GameDriver driver_stactics =
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	static int first_pass = 1;
-
-	if (first_pass)
-	{
-		RAM[0x4030] = 0x00;
-		first_pass = 0;
-		return 0;
-	}
-
-	if (RAM[0x4030] == 0x01)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xd700],0x0a);
-			osd_fread(f,&RAM[0xe700],0x0a);
-			osd_fread(f,&RAM[0xf700],0x0a);
-			osd_fclose(f);
-		}
-
-		first_pass = 1;
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xd700],0x0a);
-		osd_fwrite(f,&RAM[0xe700],0x0a);
-		osd_fwrite(f,&RAM[0xf700],0x0a);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver stactics_driver =
-{
-    __FILE__,
-    0,
-    "stactics",
-    "Space Tactics",
-    "1981",
-    "Sega",
-    "Frank Palazzolo",
-    0,
+	__FILE__,
+	0,
+	"stactics",
+	"Space Tactics",
+	"1981",
+	"Sega",
+	"Frank Palazzolo",
+	0,
 	&machine_driver,
 	0,
 
-    stactics_rom,
+	rom_stactics,
 	0, 0,
 
 	0,
 
-	0,	/* sound_prom */
+	0,
 
-    input_ports,
+	input_ports_stactics,
 
-    PROM_MEMORY_REGION(2), 0, 0,
-    ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

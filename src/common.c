@@ -52,6 +52,9 @@ int readroms(void)
 
 	total_roms = current_rom = 0;
 	romp = Machine->gamedrv->rom;
+
+	if (!romp) return 0;
+
 	while (romp->name || romp->offset || romp->length)
 	{
 		if (romp->name && romp->name != (char *)-1)
@@ -74,8 +77,9 @@ int readroms(void)
 		const char *name;
 
 		/* Mish:  An 'optional' rom region, only loaded if sound emulation is turned on */
-		if (Machine->sample_rate==0 && (romp->offset & ROMFLAG_IGNORE)) {
+		if (Machine->sample_rate==0 && (romp->crc & REGIONFLAG_SOUNDONLY)) {
 			if (errorlog) fprintf(errorlog,"readroms():  Ignoring rom region %d\n",region);
+			Machine->memory_region_type[region] = romp->crc;
 			region++;
 
 			romp++;
@@ -91,13 +95,14 @@ int readroms(void)
 			goto getout;
 		}
 
-		region_size = romp->offset & ~ROMFLAG_MASK;
+		region_size = romp->offset;
 		if ((Machine->memory_region[region] = malloc(region_size)) == 0)
 		{
 			printf("readroms():  Unable to allocate %d bytes of RAM\n",region_size);
 			goto getout;
 		}
 		Machine->memory_region_length[region] = region_size;
+		Machine->memory_region_type[region] = romp->crc;
 
 		/* some games (i.e. Pleiades) want the memory clear on startup */
 		if (region_size <= 0x400000)	/* don't clear large regions which will be filled anyway */
@@ -129,35 +134,28 @@ int readroms(void)
 			if (osd_display_loading_rom_message(name,++current_rom,total_roms) != 0)
                goto getout;
 
-			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
-			if (f == 0 && Machine->gamedrv->clone_of)
 			{
-				/* if the game is a clone, try loading the ROM from the main version */
-				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+				const struct GameDriver *drv;
 
-				if (f == 0 && Machine->gamedrv->clone_of->clone_of)
+				drv = Machine->gamedrv;
+				do
 				{
-					/* clone of a clone (for NeoGeo clones) */
-					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,OSD_FILETYPE_ROM,0);
-				}
-			}
-			if (f == 0)
-			{
-				/* NS981003: support for "load by CRC" */
-				char crc[9];
+					f = osd_fopen(drv->name,name,OSD_FILETYPE_ROM,0);
+					drv = drv->clone_of;
+				} while (f == 0 && drv);
 
-				sprintf(crc,"%08x",romp->crc);
-				f = osd_fopen(Machine->gamedrv->name,crc,OSD_FILETYPE_ROM,0);
-				if (f == 0 && Machine->gamedrv->clone_of)
+				if (f == 0)
 				{
-					/* if the game is a clone, try loading the ROM from the main version */
-					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+					/* NS981003: support for "load by CRC" */
+					char crc[9];
 
-					if (f == 0 && Machine->gamedrv->clone_of->clone_of)
+					sprintf(crc,"%08x",romp->crc);
+					drv = Machine->gamedrv;
+					do
 					{
-						/* clone of a clone (for NeoGeo clones) */
-						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,OSD_FILETYPE_ROM,0);
-					}
+						f = osd_fopen(drv->name,crc,OSD_FILETYPE_ROM,0);
+						drv = drv->clone_of;
+					} while (f == 0 && drv);
 				}
 			}
 
@@ -176,7 +174,8 @@ int readroms(void)
 						explength += length;
 
 					if (romp->offset + length > region_size ||
-						((romp->length & ROMFLAG_ALTERNATE) && (romp->offset&~1) + 2*length > region_size))
+						(!(romp->length & ROMFLAG_NIBBLE) && (romp->length & ROMFLAG_ALTERNATE)
+								&& (romp->offset&~1) + 2*length > region_size))
 					{
 						printf("Error in RomModule definition: %s out of memory region space\n",name);
 						osd_fclose(f);
@@ -275,11 +274,13 @@ int readroms(void)
 				if (expchecksum != osd_fcrc (f))
 				{
 					warning = 1;
-					if (expchecksum && expchecksum != BADCRC(osd_fcrc(f)))
+					if (expchecksum == 0)
+						sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP KNOWN\n",name);
+					else if (expchecksum == BADCRC(osd_fcrc(f)))
+						sprintf(&buf[strlen(buf)],"%-12s ROM NEEDS REDUMP\n",name);
+					else
 						sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
 								name,expchecksum,osd_fcrc(f));
-					else
-						sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP KNOWN\n",name);
 				}
 
 				osd_fclose(f);
@@ -378,8 +379,10 @@ getout:
 
 void printromlist(const struct RomModule *romp,const char *basename)
 {
+	if (!romp) return;
+
 #ifdef MESS
-	if (romp == NULL) return;
+	if (!strcmp(basename,"nes")) return;
 #endif
 
 	printf("This is the list of the ROMs required for driver \"%s\".\n"
@@ -418,6 +421,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 		}
 	}
 }
+
 
 
 /***************************************************************************
@@ -548,7 +552,6 @@ static struct GameSample *read_wav_sample(void *f)
 	return result;
 }
 
-
 struct GameSamples *readsamples(const char **samplenames,const char *basename)
 /* V.V - avoids samples duplication */
 /* if first samplename is *dir, looks for samples into "basename" first, then "dir" */
@@ -608,6 +611,71 @@ void freesamples(struct GameSamples *samples)
 
 	free(samples);
 }
+
+
+
+unsigned char *memory_region(int num)
+{
+	int i;
+
+	if (num < MAX_MEMORY_REGIONS)
+		return Machine->memory_region[num];
+	else
+	{
+		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+		{
+			if ((Machine->memory_region_type[i] & ~REGIONFLAG_MASK) == num)
+				return Machine->memory_region[i];
+		}
+	}
+
+	return 0;
+}
+
+int memory_region_length(int num)
+{
+	int i;
+
+	if (num < MAX_MEMORY_REGIONS)
+		return Machine->memory_region_length[num];
+	else
+	{
+		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+		{
+			if ((Machine->memory_region_type[i] & ~REGIONFLAG_MASK) == num)
+				return Machine->memory_region_length[i];
+		}
+	}
+
+	return 0;
+}
+
+int new_memory_region(int num, int length)
+{
+    int i;
+
+    if (num < MAX_MEMORY_REGIONS)
+    {
+        Machine->memory_region_length[num] = length;
+        Machine->memory_region[num] = malloc(length);
+        return (Machine->memory_region[num] == NULL) ? 1 : 0;
+    }
+    else
+    {
+        for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+        {
+            if( Machine->memory_region[i] == NULL )
+            {
+                Machine->memory_region_length[i] = length;
+                Machine->memory_region_type[i] = num;
+                Machine->memory_region[i] = malloc(length);
+                return (Machine->memory_region[i] == NULL) ? 1 : 0;
+            }
+        }
+    }
+	return 1;
+}
+
 
 
 /* LBO 042898 - added coin counters */

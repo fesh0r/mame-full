@@ -122,7 +122,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( vulgus )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -278,14 +278,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			c1942_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz ??? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,8
 		}
@@ -324,8 +322,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vulgus_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
+ROM_START( vulgus )
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
 	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
 	ROM_LOAD( "v4",           0x4000, 0x2000, 0x5b26355c )
@@ -345,7 +343,7 @@ ROM_START( vulgus_rom )
 	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
@@ -353,12 +351,12 @@ ROM_START( vulgus_rom )
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
-ROM_START( vulgus2_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
+ROM_START( vulgus2 )
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vulgus.002",   0x0000, 0x2000, 0xe49d6c5d )
 	ROM_LOAD( "vulgus.003",   0x2000, 0x2000, 0x51acef76 )
 	ROM_LOAD( "vulgus.004",   0x4000, 0x2000, 0x489e7f60 )
@@ -378,7 +376,7 @@ ROM_START( vulgus2_rom )
 	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
@@ -386,12 +384,12 @@ ROM_START( vulgus2_rom )
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
-ROM_START( vulgusj_rom )
-	ROM_REGION(0x1c000)	/* 64k for code */
+ROM_START( vulgusj )
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1-4n.bin",     0x0000, 0x2000, 0xfe5a5ca5 )
 	ROM_LOAD( "1-5n.bin",     0x2000, 0x2000, 0x847e437f )
 	ROM_LOAD( "1-6n.bin",     0x4000, 0x2000, 0x4666c436 )
@@ -411,7 +409,7 @@ ROM_START( vulgusj_rom )
 	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
@@ -419,56 +417,13 @@ ROM_START( vulgusj_rom )
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xee00],"\x00\x50\x00",3) == 0 &&
-		memcmp(&RAM[0xee34],"\x00\x32\x50",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xee00],13*5);
-			RAM[0xee47] = RAM[0xee00];
-			RAM[0xee48] = RAM[0xee01];
-			RAM[0xee49] = RAM[0xee02];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xee00],13*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver vulgus_driver =
+struct GameDriver driver_vulgus =
 {
 	__FILE__,
 	0,
@@ -481,23 +436,22 @@ struct GameDriver vulgus_driver =
 	&machine_driver,
 	0,
 
-	vulgus_rom,
+	rom_vulgus,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_vulgus,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver vulgus2_driver =
+struct GameDriver driver_vulgus2 =
 {
 	__FILE__,
-	&vulgus_driver,
+	&driver_vulgus,
 	"vulgus2",
 	"Vulgus (set 2)",
 	"1984",
@@ -507,23 +461,22 @@ struct GameDriver vulgus2_driver =
 	&machine_driver,
 	0,
 
-	vulgus2_rom,
+	rom_vulgus2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_vulgus,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };
 
-struct GameDriver vulgusj_driver =
+struct GameDriver driver_vulgusj =
 {
 	__FILE__,
-	&vulgus_driver,
+	&driver_vulgus,
 	"vulgusj",
 	"Vulgus (Japan?)",
 	"1984",
@@ -533,15 +486,14 @@ struct GameDriver vulgusj_driver =
 	&machine_driver,
 	0,
 
-	vulgusj_rom,
+	rom_vulgusj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_vulgus,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	0, 0, 0,
+	ROT270,
+	0,0
 };

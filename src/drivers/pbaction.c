@@ -110,7 +110,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pbaction )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -278,14 +278,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz? */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz (?????) */
-			2,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			pbaction_interrupt,2	/* ??? */
 									/* IRQs are caused by the main CPU */
@@ -325,8 +323,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pbaction_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pbaction )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
 	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
 	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
@@ -345,13 +343,13 @@ ROM_START( pbaction_rom )
 	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
 	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
 
-	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
 ROM_END
 
 
-ROM_START( pbactio2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( pbactio2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, 0x4a239ebd )
 	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )
 	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, 0xc0a98c8a )
@@ -370,7 +368,7 @@ ROM_START( pbactio2_rom )
 	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
 	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
 
-	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
 
 	ROM_REGION(0x10000)	/* 64k for a third Z80 (not emulated) */
@@ -379,46 +377,7 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc093],"\x07\x02\x05",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc093],8*10);
-			osd_fread(f,&RAM[0xc12f],4*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc093],8*10);
-		osd_fwrite(f,&RAM[0xc12f],4*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver pbaction_driver =
+struct GameDriver driver_pbaction =
 {
 	__FILE__,
 	0,
@@ -431,23 +390,22 @@ struct GameDriver pbaction_driver =
 	&machine_driver,
 	0,
 
-	pbaction_rom,
+	rom_pbaction,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pbaction,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
-struct GameDriver pbactio2_driver =
+struct GameDriver driver_pbactio2 =
 {
 	__FILE__,
-	&pbaction_driver,
+	&driver_pbaction,
 	"pbactio2",
 	"Pinball Action (set 2)",
 	"1985",
@@ -457,15 +415,14 @@ struct GameDriver pbactio2_driver =
 	&machine_driver,
 	0,
 
-	pbactio2_rom,
+	rom_pbactio2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	input_ports,
+	input_ports_pbaction,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

@@ -89,13 +89,10 @@ static void latch_w(int offset, int data)
 	if (!(data & 0x00ff0000))
 	{
 		/* 0 means hold CPU 2's reset low */
-		if (!(data & 1))
-		{
-			cpu_halt(1, 0);
-			cpu_reset(1);
-		}
+		if (data & 1)
+			cpu_set_reset_line(1,CLEAR_LINE);
 		else
-			cpu_halt(1, 1);
+			cpu_set_reset_line(1,ASSERT_LINE);
 
 		/* bits 2-5 are the alpha bank */
 		thunderj_set_alpha_bank((data >> 2) & 7);
@@ -151,12 +148,12 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x260012, 0x260013, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
 	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3effc0, 0x3effff, thunderj_video_control_r, &atarigen_video_control_data },
+	{ 0x3effc0, 0x3effff, thunderj_video_control_r },
 	{ 0x3f0000, 0x3f5fff, MRA_BANK3 },
 	{ 0x3f6000, 0x3f7fff, MRA_BANK4 },
 	{ 0x3f8000, 0x3f8fff, MRA_BANK5 },
 	{ 0x3f9000, 0x3fffff, MRA_BANK6 },
-	{ 0x800000, 0x800001, MRA_BANK7, &rts_address },
+	{ 0x800000, 0x800001, MRA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
@@ -172,13 +169,14 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
 	{ 0x3f0000, 0x3f1fff, thunderj_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
 	{ 0x3f2000, 0x3f3fff, thunderj_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f4000, 0x3f5fff, thunderj_colorram_w, &atarigen_playfieldram_color },
 	{ 0x3f6000, 0x3f7fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f8000, 0x3f8fff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0x3f9000, 0x3fffff, MWA_BANK6 },
+	{ 0x800000, 0x800001, MWA_BANK7, &rts_address },
 	{ -1 }  /* end of table */
 };
 
@@ -223,7 +221,7 @@ static struct MemoryWriteAddress extra_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( thunderj_ports )
+INPUT_PORTS_START( thunderj )
 	PORT_START		/* 260000 */
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -312,20 +310,16 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			1,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_II_CPU(2)
-		}
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,
@@ -344,7 +338,9 @@ static struct MachineDriver machine_driver =
 	thunderj_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_II_MONO(3)
+	JSA_II_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -361,10 +357,10 @@ static void rom_decode(void)
 
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x200000; i++)
-		Machine->memory_region[4][i] ^= 0xff;
-	
+		memory_region(4)[i] ^= 0xff;
+
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 
@@ -390,6 +386,8 @@ static void thunderj_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -400,8 +398,8 @@ static void thunderj_init(void)
  *
  *************************************/
 
-ROM_START( thunderj_rom )
-	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
+ROM_START( thunderj )
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "2001.14e",   0x00000, 0x10000, 0xf6a71532 )
 	ROM_LOAD_ODD ( "2002.14c",   0x00000, 0x10000, 0x173ec10d )
 	ROM_LOAD_EVEN( "2003.15e",   0x20000, 0x10000, 0x6e155469 )
@@ -413,15 +411,15 @@ ROM_START( thunderj_rom )
 	ROM_LOAD_EVEN( "1007.17e",   0x80000, 0x10000, 0x9c2a8aba )
 	ROM_LOAD_ODD ( "1008.17c",   0x80000, 0x10000, 0x22109d16 )
 
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1011.17l",   0x00000, 0x10000, 0xbbbbca45 )
 	ROM_LOAD_ODD ( "1012.17n",   0x00000, 0x10000, 0x53e5e638 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "tjw65snd.bin",  0x10000, 0x4000, 0xd8feb7fb )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM */
 	ROM_LOAD( "tj1016.bin",  0x00000, 0x10000, 0xc10bdf73 )
 	ROM_LOAD( "tj1017.bin",  0x10000, 0x10000, 0x4e5e25e8 )
 	ROM_LOAD( "tj1018.bin",  0x20000, 0x10000, 0xec81895d )
@@ -475,7 +473,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver thunderj_driver =
+struct GameDriver driver_thunderj =
 {
 	__FILE__,
 	0,
@@ -488,15 +486,14 @@ struct GameDriver thunderj_driver =
 	&machine_driver,
 	thunderj_init,
 
-	thunderj_rom,
-	rom_decode,
+	rom_thunderj,
+	0, 0,
 	0,
 	0,
-	0,	/* sound_prom */
 
-	thunderj_ports,
+	input_ports_thunderj,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

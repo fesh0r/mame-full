@@ -48,6 +48,24 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 1000;
+	}
+}
+
 static int vendetta_eeprom_r( int offset )
 {
 	int res;
@@ -138,11 +156,11 @@ static void vendetta_5fe0_w(int offset,int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int data = ( RAM[0x28d2] << 8 ) | RAM[0x28d3];
 
-	if ( data < Machine->memory_region_length[0] )
+	if ( data < memory_region_length(0) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -258,7 +276,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( vendetta )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -336,14 +354,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,
 			3000000,		/* ? */
-			0,
 			readmem,writemem,0,0,
 			vendetta_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			3,
 			readmem_sound, writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -375,7 +391,9 @@ static struct MachineDriver machine_driver =
 			SOUND_K053260,
 			&k053260_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 /***************************************************************************
@@ -384,8 +402,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vendetta_rom )
-	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
+ROM_START( vendetta )
+	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -399,15 +417,15 @@ ROM_START( vendetta_rom )
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
 	ROM_REGION( 0x100000 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendett2_rom )
-	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
+ROM_START( vendett2 )
+	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -421,15 +439,15 @@ ROM_START( vendett2_rom )
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
 	ROM_REGION( 0x100000 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendettj_rom )
-	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
+ROM_START( vendettj )
+	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081p01", 0x10000, 0x38000, 0x5fe30242 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -443,7 +461,7 @@ ROM_START( vendettj_rom )
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
 	ROM_REGION( 0x100000 ) /* 053260 samples */
@@ -459,7 +477,7 @@ ROM_END
 
 static void vendetta_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ( lines >= 0x1c )
 	{
@@ -474,15 +492,12 @@ static void vendetta_init_machine( void )
 {
 	konami_cpu_setlines_callback = vendetta_banking;
 
-	paletteram = &Machine->memory_region[0][0x48000];
+	paletteram = &memory_region(REGION_CPU1)[0x48000];
 	irq_enabled = 0;
 
 	/* init banks */
-	cpu_setbank( 1, &Machine->memory_region[0][0x10000] );
+	cpu_setbank( 1, &memory_region(REGION_CPU1)[0x10000] );
 	vendetta_video_banking( 0 );
-
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
 }
 
 static void gfx_untangle(void)
@@ -491,35 +506,9 @@ static void gfx_untangle(void)
 	konami_rom_deinterleave_4(2);
 }
 
-static int eeprom_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 1000;
-
-	return 1;
-}
-
-static void eeprom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
-}
 
 
-
-struct GameDriver vendetta_driver =
+struct GameDriver driver_vendetta =
 {
 	__FILE__,
 	0,
@@ -530,24 +519,24 @@ struct GameDriver vendetta_driver =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
+	gfx_untangle,
+
+	rom_vendetta,
+	0, 0,
+	0,
 	0,
 
-	vendetta_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
+	input_ports_vendetta,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
+	ROT0,
+	0,0
 };
 
-struct GameDriver vendett2_driver =
+struct GameDriver driver_vendett2 =
 {
 	__FILE__,
-	&vendetta_driver,
+	&driver_vendetta,
 	"vendett2",
 	"Vendetta (Asia set 2)",
 	"1991",
@@ -555,24 +544,24 @@ struct GameDriver vendett2_driver =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
+	gfx_untangle,
+
+	rom_vendett2,
+	0, 0,
+	0,
 	0,
 
-	vendett2_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
+	input_ports_vendetta,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
+	ROT0,
+	0,0
 };
 
-struct GameDriver vendettj_driver =
+struct GameDriver driver_vendettj =
 {
 	__FILE__,
-	&vendetta_driver,
+	&driver_vendetta,
 	"vendettj",
 	"Crime Fighters 2 (Japan)",
 	"1991",
@@ -580,16 +569,16 @@ struct GameDriver vendettj_driver =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
+	gfx_untangle,
+
+	rom_vendettj,
+	0, 0,
+	0,
 	0,
 
-	vendettj_rom,
-	gfx_untangle, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
+	input_ports_vendetta,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
+	ROT0,
+	0,0
 };

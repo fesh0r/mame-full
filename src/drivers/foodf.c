@@ -78,8 +78,7 @@ void foodf_pokey1_w (int offset, int data);
 void foodf_pokey2_w (int offset, int data);
 void foodf_pokey3_w (int offset, int data);
 
-int foodf_nvram_load(void);
-void foodf_nvram_save(void);
+void foodf_nvram_handler(void *file,int read_or_write);
 
 int foodf_interrupt(void);
 
@@ -105,8 +104,8 @@ static struct MemoryReadAddress foodf_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x014000, 0x01bfff, MRA_BANK1 },
-	{ 0x01c000, 0x01cfff, MRA_BANK2, &foodf_spriteram, &foodf_spriteram_size },
-	{ 0x800000, 0x8007ff, foodf_playfieldram_r, &foodf_playfieldram, &foodf_playfieldram_size },
+	{ 0x01c000, 0x01cfff, MRA_BANK2 },
+	{ 0x800000, 0x8007ff, foodf_playfieldram_r },
 	{ 0x900000, 0x9001ff, foodf_nvram_r },
 	{ 0x940000, 0x940007, foodf_analog_r },
 	{ 0x948000, 0x948003, foodf_digital_r },
@@ -122,8 +121,8 @@ static struct MemoryWriteAddress foodf_writemem[] =
 {
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x014000, 0x01bfff, MWA_BANK1 },
-	{ 0x01c000, 0x01cfff, MWA_BANK2 },
-	{ 0x800000, 0x8007ff, foodf_playfieldram_w },
+	{ 0x01c000, 0x01cfff, MWA_BANK2, &foodf_spriteram, &foodf_spriteram_size },
+	{ 0x800000, 0x8007ff, foodf_playfieldram_w, &foodf_playfieldram, &foodf_playfieldram_size },
 	{ 0x900000, 0x9001ff, foodf_nvram_w },
 	{ 0x944000, 0x944007, foodf_analog_w },
 	{ 0x948000, 0x948003, foodf_digital_w },
@@ -137,7 +136,7 @@ static struct MemoryWriteAddress foodf_writemem[] =
 };
 
 
-INPUT_PORTS_START( foodf_input_ports )
+INPUT_PORTS_START( foodf )
 	PORT_START	/* IN0 */
 	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X | IPF_PLAYER1 | IPF_REVERSE, 100, 10, 0, 0, 255 )
 
@@ -225,7 +224,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			6000000,	/* 6 Mhz */
-			0,
 			foodf_readmem,foodf_writemem,0,0,
 			foodf_interrupt,4
 		},
@@ -253,7 +251,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	foodf_nvram_handler
 };
 
 
@@ -264,8 +264,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( foodf_rom )
-	ROM_REGION(0x10000)	/* 64k for 68000 code */
+ROM_START( foodf )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for 68000 code */
 	ROM_LOAD_EVEN( "foodf.9c",     0x00000, 0x02000, 0xef92dc5c )
 	ROM_LOAD_ODD ( "foodf.8c",     0x00000, 0x02000, 0xdfc3d5a8 )
 	ROM_LOAD_EVEN( "foodf.9d",     0x04000, 0x02000, 0xea596480 )
@@ -283,7 +283,7 @@ ROM_END
 
 
 
-struct GameDriver foodf_driver =
+struct GameDriver driver_foodf =
 {
 	__FILE__,
 	0,
@@ -296,14 +296,14 @@ struct GameDriver foodf_driver =
 	&machine_driver,
 	0,
 
-	foodf_rom,
+	rom_foodf,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	foodf_input_ports,
+	input_ports_foodf,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	foodf_nvram_load,foodf_nvram_save
+	ROT0,
+	0,0
 };

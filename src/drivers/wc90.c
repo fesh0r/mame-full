@@ -84,7 +84,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static void wc90_bankswitch_w( int offset,int data )
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
@@ -94,7 +94,7 @@ static void wc90_bankswitch_w( int offset,int data )
 static void wc90_bankswitch1_w( int offset,int data )
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
@@ -211,7 +211,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( wc90_input_ports )
+INPUT_PORTS_START( wc90 )
 	PORT_START	/* IN0 bit 0-5 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -382,28 +382,25 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static struct MachineDriver wc90_machine_driver =
+static struct MachineDriver machine_driver_wc90 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			6000000,	/* 6.0 Mhz ??? */
-			0,
 			wc90_readmem1, wc90_writemem1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,	/* 6.0 Mhz ??? */
-			2,
 			wc90_readmem2, wc90_writemem2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ???? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
 								/* NMIs are triggered by the main CPU */
@@ -435,50 +432,10 @@ static struct MachineDriver wc90_machine_driver =
 	}
 };
 
-static int wc90_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* the color RAM is initialized when the startup reset is finished */
-        if (RAM[0xc200] == 0x69)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x800F],6*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-
-        else
-                return 0;  /* we can't load the hi scores yet */
-}
-
-static void wc90_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-        /* for avoiding problems when we reset the game by pressing the F3 key */
-        RAM[0xc200] = 0x00;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x800F],6*5);
-		osd_fclose(f);
-	}
-
-}
-
-
-ROM_START( wc90_rom )
-	ROM_REGION(0x20000)	/* 128k for code */
+ROM_START( wc90 )
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "ic87_01.bin",  0x00000, 0x08000, 0x4a1affbc )	/* c000-ffff is not used */
 	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */
 
@@ -493,18 +450,18 @@ ROM_START( wc90_rom )
 	ROM_LOAD( "ic60_14v.bin", 0xd0000, 0x20000, 0x499dfb1b )	/* sprites  */
 	ROM_LOAD( "ic65_15v.bin", 0xf0000, 0x20000, 0xd8ea5c81 )	/* sprites  */
 
-	ROM_REGION(0x20000)	/* 96k for code */  /* Second CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 96k for code */  /* Second CPU */
 	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
 	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, 0x1ac02b3b )	/* banked at f000-f7ff */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
 
 	ROM_REGION(0x20000)	/* 64k for ADPCM samples */
 	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
 ROM_END
 
-struct GameDriver wc90_driver =
+struct GameDriver driver_wc90 =
 {
 	__FILE__,
 	0,
@@ -514,18 +471,17 @@ struct GameDriver wc90_driver =
 	"Tecmo",
 	"Ernesto Corvi",
 	0,
-	&wc90_machine_driver,
+	&machine_driver_wc90,
 	0,
 
-	wc90_rom,
+	rom_wc90,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	wc90_input_ports,
+	input_ports_wc90,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	wc90_hiload, wc90_hisave
+	ROT0,
+	0,0
 };

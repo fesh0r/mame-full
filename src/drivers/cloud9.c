@@ -56,7 +56,6 @@ extern void cloud9_bitmap_regs_w(int offset, int data);
 extern void cloud9_bitmap_w(int offset, int data);
 extern void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *cloud9_vram;
 extern unsigned char *cloud9_vram2;
 extern unsigned char *cloud9_bitmap_regs;
 extern unsigned char *cloud9_auto_inc_x;
@@ -65,10 +64,30 @@ extern unsigned char *cloud9_both_banks;
 extern unsigned char *cloud9_vram_bank;
 extern unsigned char *cloud9_color_bank;
 
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
 static void cloud9_led_w(int offset,int data)
 {
 //	osd_led_w(offset,~data >> 7);
 }
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -91,7 +110,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0002, cloud9_bitmap_regs_w, &cloud9_bitmap_regs },
 	{ 0x0003, 0x05ff, MWA_RAM },
-	{ 0x0600, 0x3fff, cloud9_bitmap_w, &cloud9_vram },
+	{ 0x0600, 0x3fff, cloud9_bitmap_w, &videoram, &videoram_size },
 	{ 0x5000, 0x50ff, MWA_RAM, &spriteram },
 	{ 0x5400, 0x5400, watchdog_reset_w },
 	{ 0x5480, 0x5480, MWA_NOP },	/* IRQ Ack */
@@ -105,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5602, 0x5603, cloud9_led_w },
 	{ 0x5a00, 0x5a0f, pokey1_w },
 	{ 0x5b00, 0x5b0f, pokey2_w },
-	{ 0x5c00, 0x5cff, MWA_RAM },	/* EAROM */
+	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ 0x10600,0x13fff, MWA_RAM, &cloud9_vram2 },
 	{ -1 }	/* end of table */
@@ -113,7 +132,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( cloud9 )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
@@ -186,9 +205,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0800, &charlayout,   0, 4 },
-	{ 1, 0x0808, &charlayout,   0, 4 },
-	{ 1, 0x0000, &spritelayout, 0, 4 },
+	{ REGION_GFX1, 0x0800, &charlayout,   0, 4 },
+	{ REGION_GFX1, 0x0808, &charlayout,   0, 4 },
+	{ REGION_GFX1, 0x0000, &spritelayout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -215,14 +234,13 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cloud9 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
 			12096000/8,	/* 1.512 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -250,7 +268,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -260,84 +280,21 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cloud9_rom )
-	ROM_REGION(0x14000)	/* 64k for code + extra VRAM space */
+ROM_START( cloud9 )
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + extra VRAM space */
 	ROM_LOAD( "c9_6000.bin", 0x6000, 0x2000, 0xb5d95d98 )
 	ROM_LOAD( "c9_8000.bin", 0x8000, 0x2000, 0x49af8f22 )
-	ROM_LOAD( "c9_a000.bin", 0xA000, 0x2000, 0x7cf404a6 )
-	ROM_LOAD( "c9_c000.bin", 0xC000, 0x2000, 0x26a4d7df )
-	ROM_LOAD( "c9_e000.bin", 0xE000, 0x2000, 0x6e663bce )
+	ROM_LOAD( "c9_a000.bin", 0xa000, 0x2000, 0x7cf404a6 )
+	ROM_LOAD( "c9_c000.bin", 0xc000, 0x2000, 0x26a4d7df )
+	ROM_LOAD( "c9_e000.bin", 0xe000, 0x2000, 0x6e663bce )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c9_gfx0.bin", 0x0000, 0x1000, 0xd01a8019 )
 	ROM_LOAD( "c9_gfx1.bin", 0x1000, 0x1000, 0x514ac009 )
 	ROM_LOAD( "c9_gfx2.bin", 0x2000, 0x1000, 0x930c1ade )
 	ROM_LOAD( "c9_gfx3.bin", 0x3000, 0x1000, 0x27e9b88d )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
 
-***************************************************************************/
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	void *f;
-
-	/* It's EAROM, so no need to look for initialization */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x5c00],0x100);	/* Hi score */
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5C00],0x100);
-		osd_fclose(f);
-	}
-}
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver cloud9_driver =
-{
-	__FILE__,
-	0,
-	"cloud9",
-	"Cloud 9 (prototype)",
-	"1983",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	cloud9_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
+GAME( 1983, cloud9, , cloud9, cloud9, , ROT0, "Atari", "Cloud 9 (prototype)" )

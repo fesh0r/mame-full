@@ -54,8 +54,7 @@ int quantum_input_2_r(int offset);
 
 int foodf_nvram_r(int offset);
 void foodf_nvram_w(int offset,int data);
-int foodf_nvram_load(void);
-void foodf_nvram_save(void);
+void foodf_nvram_handler(void *file,int read_or_write);
 
 
 
@@ -92,7 +91,7 @@ struct MemoryWriteAddress quantum_write[] =
 
 
 
-INPUT_PORTS_START( quantum_input_ports )
+INPUT_PORTS_START( quantum )
 	PORT_START	/* IN0 */
 	/* YHALT here MUST BE ALWAYS 0  */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )	/* vg YHALT */
@@ -138,27 +137,6 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_COLOR };
-
-
-
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
@@ -188,7 +166,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			6000000,		/* 6MHz */
-			0,
 			quantum_read,quantum_write,0,0,
 			quantum_interrupt,3	/* IRQ rate = 750kHz/4096 */
 		}
@@ -199,9 +176,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	300, 400, { 0, 600, 0, 900 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -216,7 +193,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	foodf_nvram_handler
 };
 
 
@@ -227,8 +206,8 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( quantum_rom )
-	ROM_REGION(0x014000)
+ROM_START( quantum )
+	ROM_REGIONX( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "136016.201",   0x000000, 0x002000, 0x7e7be63a )
     ROM_LOAD_ODD ( "136016.206",   0x000000, 0x002000, 0x2d8f5759 )
     ROM_LOAD_EVEN( "136016.102",   0x004000, 0x002000, 0x408d34f4 )
@@ -241,8 +220,8 @@ ROM_START( quantum_rom )
     ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
 ROM_END
 
-ROM_START( quantum1_rom )
-	ROM_REGION(0x014000)
+ROM_START( quantum1 )
+	ROM_REGIONX( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "136016.101",   0x000000, 0x002000, 0x5af0bd5b )
     ROM_LOAD_ODD ( "136016.106",   0x000000, 0x002000, 0xf9724666 )
     ROM_LOAD_EVEN( "136016.102",   0x004000, 0x002000, 0x408d34f4 )
@@ -255,8 +234,8 @@ ROM_START( quantum1_rom )
     ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
 ROM_END
 
-ROM_START( quantump_rom )
-	ROM_REGION(0x014000)
+ROM_START( quantump )
+	ROM_REGIONX( 0x014000, REGION_CPU1 )
     ROM_LOAD_EVEN( "quantump.2e",  0x000000, 0x002000, 0x176d73d3 )
     ROM_LOAD_ODD ( "quantump.3e",  0x000000, 0x002000, 0x12fc631f )
     ROM_LOAD_EVEN( "quantump.2f",  0x004000, 0x002000, 0xb64fab48 )
@@ -271,7 +250,7 @@ ROM_END
 
 
 
-struct GameDriver quantum_driver =
+struct GameDriver driver_quantum =
 {
 	__FILE__,
 	0,
@@ -284,24 +263,23 @@ struct GameDriver quantum_driver =
 	&machine_driver,
 	0,
 
-	quantum_rom,
+	rom_quantum,
 	0, 0,
 
 	0,
 	0,
 
-	quantum_input_ports,
+	input_ports_quantum,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	foodf_nvram_load, foodf_nvram_save
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver quantum1_driver =
+struct GameDriver driver_quantum1 =
 {
 	__FILE__,
-	&quantum_driver,
+	&driver_quantum,
 	"quantum1",
 	"Quantum (rev 1)",
 	"1982",
@@ -311,24 +289,23 @@ struct GameDriver quantum1_driver =
 	&machine_driver,
 	0,
 
-	quantum1_rom,
+	rom_quantum1,
 	0, 0,
 
 	0,
 	0,
 
-	quantum_input_ports,
+	input_ports_quantum,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	foodf_nvram_load, foodf_nvram_save
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 
-struct GameDriver quantump_driver =
+struct GameDriver driver_quantump =
 {
 	__FILE__,
-	&quantum_driver,
+	&driver_quantum,
 	"quantump",
 	"Quantum (prototype)",
 	"1982",
@@ -338,17 +315,16 @@ struct GameDriver quantump_driver =
 	&machine_driver,
 	0,
 
-	quantump_rom,
+	rom_quantump,
 	0, 0,
 
 	0,
 	0,
 
-	quantum_input_ports,
+	input_ports_quantum,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	foodf_nvram_load, foodf_nvram_save
+	0, 0, 0,
+	ROT0,
+	0,0
 };
 

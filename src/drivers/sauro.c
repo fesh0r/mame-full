@@ -154,7 +154,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( ports )
+INPUT_PORTS_START( sauro )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -278,14 +278,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 MHz??? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,        /* 4 MHz??? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			sauron_interrupt,8 /* ?? */
 		}
@@ -322,8 +320,8 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( sauro_rom )
-	ROM_REGION(0x10000)          /* 64k for code */
+ROM_START( sauro )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )          /* 64k for code */
 	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, 0x19f8de25 )
 	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, 0x0f8b876f )
 
@@ -337,52 +335,14 @@ ROM_START( sauro_rom )
 	ROM_LOAD( "sauro-10.bin",    0x30000, 0x8000, 0xc93380d1 )
 	ROM_LOAD( "sauro-11.bin",    0x38000, 0x8000, 0xf47982a8 )
 
-	ROM_REGION(0x3000)           /* 3k for color PROMs */
-	ROM_LOAD( "82s137-3.bin",    0x00000, 0x0400, 0xd52c4cd0 )  /* Red component */
-	ROM_LOAD( "82s137-2.bin",    0x00400, 0x0400, 0xc3e96d5d )  /* Green component */
-	ROM_LOAD( "82s137-1.bin",    0x00800, 0x0400, 0xbdfcf00c )  /* Blue component */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
+	ROM_LOAD( "82s137-3.bin",    0x0000, 0x0400, 0xd52c4cd0 )  /* Red component */
+	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, 0xc3e96d5d )  /* Green component */
+	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, 0xbdfcf00c )  /* Blue component */
 
-	ROM_REGION(0x10000)          /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )          /* 64k for sound CPU */
 	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
 ROM_END
-
-
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe0b1],"\x41\x47\x4f",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe000],0xb4);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe000],0xb4);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -391,14 +351,14 @@ static void driver_init(void)
 	/* This game doesn't like all memory to be initialized to zero, it won't
 	   initialize the high scores */
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memset(&RAM[0xe000], 0, 0x100);
 	RAM[0xe000] = 1;
 }
 
 
-struct GameDriver sauro_driver =
+struct GameDriver driver_sauro =
 {
 	__FILE__,
 	0,
@@ -407,19 +367,19 @@ struct GameDriver sauro_driver =
 	"1987",
 	"Tecfri",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	driver_init,
 
-	sauro_rom,
+	rom_sauro,
 	0,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
-	ports,
+	input_ports_sauro,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	0, 0, 0,
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };

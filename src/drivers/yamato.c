@@ -216,7 +216,7 @@ static struct IOWritePort yamato_sound_writeport[] =
 
 
 
-INPUT_PORTS_START( yamato_input_ports )
+INPUT_PORTS_START( yamato )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -344,21 +344,19 @@ static struct AY8910interface yamato_ay8910_interface =
 
 
 
-static struct MachineDriver yamato_machine_driver =
+static struct MachineDriver machine_driver_yamato =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz ? */
-			0,
 			yamato_readmem,yamato_writemem,yamato_readport,yamato_writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz ? */
-			3,	/* memory region #3 */
 			yamato_sound_readmem,yamato_sound_writemem,yamato_sound_readport,yamato_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -391,8 +389,8 @@ static struct MachineDriver yamato_machine_driver =
 
 
 
-ROM_START( yamato_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( yamato )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "2.5de",        0x0000, 0x2000, 0x20895096 )
 	ROM_LOAD( "3.5f",         0x2000, 0x2000, 0x57a696f9 )
 	ROM_LOAD( "4.5jh",        0x4000, 0x2000, 0x59a468e8 )
@@ -415,19 +413,19 @@ ROM_START( yamato_rom )
 	ROM_LOAD( "7.11a",        0x5800, 0x0800, 0x4a179790 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 
-	ROM_REGION(0x00a0)        /* color proms */
+	ROM_REGIONX( 0x00a0, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0xef2053ab )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x2281d39f )
 	ROM_LOAD( "3.bpr",        0x0040, 0x0020, 0x9e6341e3 )
 	ROM_LOAD( "4.bpr",        0x0060, 0x0020, 0x1c97dc0b )
 	ROM_LOAD( "5.bpr",        0x0080, 0x0020, 0xedd6c05f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
 ROM_END
 
-ROM_START( yamato2_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( yamato2 )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "2-2.5de",      0x0000, 0x2000, 0x93da1d52 )
 	ROM_LOAD( "3-2.5f",       0x2000, 0x2000, 0x31e73821 )
 	ROM_LOAD( "4-2.5jh",      0x4000, 0x2000, 0xfd7bcfc3 )
@@ -450,52 +448,20 @@ ROM_START( yamato2_rom )
 	ROM_LOAD( "7.11a",        0x5800, 0x0800, 0x4a179790 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 
-	ROM_REGION(0x00a0)        /* color proms */
+	ROM_REGIONX( 0x00a0, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0xef2053ab )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x2281d39f )
 	ROM_LOAD( "3.bpr",        0x0040, 0x0020, 0x9e6341e3 )
 	ROM_LOAD( "4.bpr",        0x0060, 0x0020, 0x1c97dc0b )
 	ROM_LOAD( "5.bpr",        0x0080, 0x0020, 0xedd6c05f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
 ROM_END
 
-/**** Yamato high score save routine - RJF (Apr 1, 1999) ****/
-static int yamato_hiload(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0x6106],"\x11\x11\x11",3) == 0){
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
-                        osd_fread(f,&RAM[0x6038], 3);
-                        osd_fread(f,&RAM[0x6100], 9);
-                        osd_fread(f,&RAM[0x6110], 9);
-                        osd_fread(f,&RAM[0x6120], 9);
-                        osd_fread(f,&RAM[0x6130], 9);
-                        osd_fread(f,&RAM[0x6140], 9);
-			osd_fclose(f);
 
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void yamato_hisave(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-                        osd_fwrite(f,&RAM[0x6038], 3);
-                        osd_fwrite(f,&RAM[0x6100], 9);
-                        osd_fwrite(f,&RAM[0x6110], 9);
-                        osd_fwrite(f,&RAM[0x6120], 9);
-                        osd_fwrite(f,&RAM[0x6130], 9);
-                        osd_fwrite(f,&RAM[0x6140], 9);
-			osd_fclose(f);
-}
-
-struct GameDriver yamato_driver =
+struct GameDriver driver_yamato =
 {
 	__FILE__,
 	0,
@@ -505,42 +471,42 @@ struct GameDriver yamato_driver =
 	"Sega",
 	"Nicola Salmoria",
 	0,
-	&yamato_machine_driver,
+	&machine_driver_yamato,
+	yamato_decode,
+
+	rom_yamato,
+	0, 0,
+	0,
 	0,
 
-	yamato_rom,
-	0, yamato_decode,
-	0,
-	0,
+	input_ports_yamato,
 
-	yamato_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-        yamato_hiload, yamato_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
-struct GameDriver yamato2_driver =
+struct GameDriver driver_yamato2 =
 {
 	__FILE__,
-	&yamato_driver,
+	&driver_yamato,
 	"yamato2",
 	"Yamato (set 2)",
 	"1983",
 	"Sega",
 	"Nicola Salmoria",
 	0,
-	&yamato_machine_driver,
+	&machine_driver_yamato,
+	yamato_decode,
+
+	rom_yamato2,
+	0, 0,
+	0,
 	0,
 
-	yamato2_rom,
-	0, yamato_decode,
-	0,
-	0,
+	input_ports_yamato,
 
-	yamato_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-        yamato_hiload, yamato_hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

@@ -152,13 +152,13 @@ static void adpcm_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x270000, 0x270001, adpcm_r },
-	{ 0x3e0000, 0x3e07ff, MRA_BANK1, &paletteram },
-	{ 0x3f0000, 0x3f1fff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f2000, 0x3f27ff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0x3e0000, 0x3e07ff, MRA_BANK1 },
+	{ 0x3f0000, 0x3f1fff, MRA_BANK2 },
+	{ 0x3f2000, 0x3f27ff, MRA_BANK3 },
 	{ 0x3f2800, 0x3f3fff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -167,15 +167,15 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w },
+	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 	{ 0x260000, 0x260001, klax_latch_w },
 	{ 0x270000, 0x270001, adpcm_w },
 	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
 	{ 0x360000, 0x360001, interrupt_ack_w },
-	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w },
-	{ 0x3f0000, 0x3f1fff, klax_playfieldram_w },
-	{ 0x3f2000, 0x3f27ff, MWA_BANK3 },
+	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w, &paletteram },
+	{ 0x3f0000, 0x3f1fff, klax_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3f2000, 0x3f27ff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f2800, 0x3f3fff, MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -188,7 +188,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( klax_ports )
+INPUT_PORTS_START( klax )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -282,7 +282,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -310,7 +309,9 @@ static struct MachineDriver machine_driver =
 			SOUND_OKIM6295,
 			&okim6295_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -321,8 +322,8 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( klax_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( klax )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075-6.006", 0x00000, 0x10000, 0xe8991709 )
 	ROM_LOAD_ODD ( "136075-6.005", 0x00000, 0x10000, 0x72b8c510 )
 	ROM_LOAD_EVEN( "136075-6.008", 0x20000, 0x10000, 0xc7c91a9d )
@@ -336,14 +337,14 @@ ROM_START( klax_rom )
 	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
 	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
 
-	ROM_REGION(0x20000)	/* ADPCM data */
+	ROM_REGION( 0x20000 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
 
-ROM_START( klax2_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( klax2 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075.006",   0x00000, 0x10000, 0x05c98fc0 )
 	ROM_LOAD_ODD ( "136075.005",   0x00000, 0x10000, 0xd461e1ee )
 	ROM_LOAD_EVEN( "136075.008",   0x20000, 0x10000, 0xf1b8e588 )
@@ -357,14 +358,14 @@ ROM_START( klax2_rom )
 	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
 	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
 
-	ROM_REGION(0x20000)	/* ADPCM data */
+	ROM_REGION( 0x20000 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
 
-ROM_START( klax3_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( klax3 )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "5006",         0x00000, 0x10000, 0x65eb9a31 )
 	ROM_LOAD_ODD ( "5005",         0x00000, 0x10000, 0x7be27349 )
 	ROM_LOAD_EVEN( "4008",         0x20000, 0x10000, 0xf3c79106 )
@@ -378,14 +379,14 @@ ROM_START( klax3_rom )
 	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
 	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
 
-	ROM_REGION(0x20000)	/* ADPCM data */
+	ROM_REGION( 0x20000 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
 
-ROM_START( klaxj_rom )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+ROM_START( klaxj )
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075-3.406", 0x00000, 0x10000, 0xab2aa50b )
 	ROM_LOAD_ODD ( "136075-3.405", 0x00000, 0x10000, 0x9dc9a590 )
 	ROM_LOAD_EVEN( "136075-2.408", 0x20000, 0x10000, 0x89d515ce )
@@ -399,7 +400,7 @@ ROM_START( klaxj_rom )
 	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
 	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
 
-	ROM_REGION(0x20000)	/* ADPCM data */
+	ROM_REGION( 0x20000 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
@@ -425,7 +426,7 @@ static void klax_init(void)
  *
  *************************************/
 
-struct GameDriver klax_driver =
+struct GameDriver driver_klax =
 {
 	__FILE__,
 	0,
@@ -438,24 +439,24 @@ struct GameDriver klax_driver =
 	&machine_driver,
 	klax_init,
 
-	klax_rom,
+	rom_klax,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver klax2_driver =
+struct GameDriver driver_klax2 =
 {
 	__FILE__,
-	&klax_driver,
+	&driver_klax,
 	"klax2",
 	"Klax (set 2)",
 	"1989",
@@ -465,24 +466,24 @@ struct GameDriver klax2_driver =
 	&machine_driver,
 	klax_init,
 
-	klax2_rom,
+	rom_klax2,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver klax3_driver =
+struct GameDriver driver_klax3 =
 {
 	__FILE__,
-	&klax_driver,
+	&driver_klax,
 	"klax3",
 	"Klax (set 3)",
 	"1989",
@@ -492,24 +493,24 @@ struct GameDriver klax3_driver =
 	&machine_driver,
 	klax_init,
 
-	klax3_rom,
+	rom_klax3,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
-struct GameDriver klaxj_driver =
+struct GameDriver driver_klaxj =
 {
 	__FILE__,
-	&klax_driver,
+	&driver_klax,
 	"klaxj",
 	"Klax (Japan)",
 	"1989",
@@ -519,15 +520,15 @@ struct GameDriver klaxj_driver =
 	&machine_driver,
 	klax_init,
 
-	klaxj_rom,
+	rom_klaxj,
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

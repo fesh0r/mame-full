@@ -10,6 +10,9 @@ Based on drivers from Juno First emulator by Chris Hardy (chris@junofirst.freese
 #include "cpu/i8039/i8039.h"
 #include "cpu/z80/z80.h"
 
+
+void konami1_decode(void);
+
 extern unsigned char *megazone_scrollx;
 extern unsigned char *megazone_scrolly;
 
@@ -30,13 +33,7 @@ void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void megazone_sprite_bank_select_w(int offset, int data);
 void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
-void megazone_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
 int megazone_portA_r(int offset)
 {
@@ -208,7 +205,7 @@ static struct IOWritePort i8039_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( megazone )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -364,28 +361,25 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 2 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			18432000/6,     /* Z80 Clock is derived from the H1 signal */
-			3,      /* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			14318000/2/15,	/* 1/2 14MHz crystal */
-			4,	/* memory region #4 */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	15,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	megazone_init_machine,
+	0,
 
 	/* video hardware */
 	36*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },
@@ -421,8 +415,38 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( megazone_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( megazone )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "319i07.bin",    0x6000, 0x2000, 0x94b22ea8 )
+	ROM_LOAD( "319i06.bin",    0x8000, 0x2000, 0x0468b619 )
+	ROM_LOAD( "319i05.bin",    0xa000, 0x2000, 0xac59000c )
+	ROM_LOAD( "319i04.bin",    0xc000, 0x2000, 0x1e968603 )
+	ROM_LOAD( "319i03.bin",    0xe000, 0x2000, 0x0888b803 )
+
+	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "319e12.bin",    0x0000, 0x2000, 0xe0fb7835 )
+	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
+	ROM_LOAD( "319e11.bin",    0x4000, 0x2000, 0xf36f19c5 )
+	ROM_LOAD( "319e09.bin",    0x6000, 0x2000, 0x5eaa7f3e )
+	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
+	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
+
+	ROM_REGIONX( 0x0260, REGION_PROMS )
+	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
+	ROM_LOAD( "319b16.c6",   0x0020, 0x100, 0x5748e933 ) /* sprite lookup table */
+	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
+	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
+	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
+
+	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
+ROM_END
+
+ROM_START( megaznik )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic59_cpu.bin",  0x6000, 0x2000, 0xf41922a0 )
 	ROM_LOAD( "ic58_cpu.bin",  0x8000, 0x2000, 0x7fd7277b )
 	ROM_LOAD( "ic57_cpu.bin",  0xa000, 0x2000, 0xa4b33b51 )
@@ -431,106 +455,74 @@ ROM_START( megazone_rom )
 
 	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic40_vid.bin",  0x0000, 0x2000, 0x07b8b24b )
-	ROM_LOAD( "ic58_vid.bin",  0x2000, 0x2000, 0x3d8f3743 )
+	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
 	ROM_LOAD( "ic15_vid.bin",  0x4000, 0x2000, 0x965a7ff6 )
-	ROM_LOAD( "ic05_vid.bin",  0x6000, 0x2000, 0x5eaa7f3e )
-	ROM_LOAD( "ic14_vid.bin",  0x8000, 0x2000, 0x7bb1aeee )
-	ROM_LOAD( "ic04_vid.bin",  0xa000, 0x2000, 0x6add71b1 )
+	ROM_LOAD( "319e09.bin",    0x6000, 0x2000, 0x5eaa7f3e )
+	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
+	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
 
-	ROM_REGION(0x260)      /* PROMs */
+	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
 	ROM_LOAD( "319b16.c6",   0x0020, 0x100, 0x5748e933 ) /* sprite lookup table */
 	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
 	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "ic25_cpu.bin", 0x0000, 0x2000, 0xd5d45edb )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
 
-	ROM_REGION(0x1000)     /* 4k for the 8039 DAC CPU */
-	ROM_LOAD( "ic02_cpu.bin", 0x0000, 0x1000, 0xed5725a0 )
+	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
 ROM_END
 
-/****  Mega Zone high score save routine - RJF (July 24, 1999)  ****/
-static int hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x244a],"\x4b\x4f\x5a",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x2446], 9);   /* 1st value & name */
-                        osd_fread(f,&RAM[0x2466], 9);   /* 2nd value & name */
-                        osd_fread(f,&RAM[0x2486], 9);   /* 3rd value & name */
-                        osd_fread(f,&RAM[0x24a6], 9);   /* 4th value & name */
-                        osd_fread(f,&RAM[0x24c6], 9);   /* 5th value & name */
-
-                        RAM[0x3b08] = RAM[0x2446];      /* update high score */
-                        RAM[0x3b09] = RAM[0x2447];      /* on top of screen */
-                        RAM[0x3b0a] = RAM[0x2448];
-                        RAM[0x3b0b] = RAM[0x2449];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x2446], 9);   /* 1st value & name */
-                osd_fwrite(f,&RAM[0x2466], 9);   /* 2nd value & name */
-                osd_fwrite(f,&RAM[0x2486], 9);   /* 3rd value & name */
-                osd_fwrite(f,&RAM[0x24a6], 9);   /* 4th value & name */
-                osd_fwrite(f,&RAM[0x24c6], 9);   /* 5th value & name */
-		osd_fclose(f);
-	}
-}
-
-static void megazone_decode(void)
-{
-	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	for (A = 0x6000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-struct GameDriver megazone_driver =
+struct GameDriver driver_megazone =
 {
 	__FILE__,
 	0,
 	"megazone",
 	"Mega Zone",
 	"1983",
+	"Konami",
+	"Chris Hardy",
+	0,
+	&machine_driver,
+	konami1_decode,
+
+	rom_megazone,
+	0, 0,
+	0,
+	0,
+
+	input_ports_megazone,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_megaznik =
+{
+	__FILE__,
+	&driver_megazone,
+	"megaznik",
+	"Mega Zone (Kosuka)",
+	"1983",
 	"Konami / Interlogic + Kosuka",
 	"Chris Hardy",
 	0,
 	&machine_driver,
+	konami1_decode,
+
+	rom_megaznik,
+	0, 0,
+	0,
 	0,
 
-	megazone_rom,
-	0, megazone_decode,
-	0,
-	0,      /* sound_prom */
+	input_ports_megazone,
 
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-        hiload, hisave
+	0, 0, 0,
+	ROT90,
+	0,0
 };

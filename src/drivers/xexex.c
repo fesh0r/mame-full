@@ -34,10 +34,22 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void eeprom_init(void)
+static void nvram_handler(void *file,int read_or_write)
 {
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 10;
+	}
 }
 
 static void gfx_init(void)
@@ -50,7 +62,6 @@ static void machine_init(void)
 {
 	cur_rombank = 0;
 
-	eeprom_init();
 	gfx_init();
 }
 
@@ -151,7 +162,7 @@ static int sound_status_r(int offset)
 
 static void sound_bankswitch_w(int offset, int data)
 {
-	cpu_setbank(3, Machine->memory_region[2] + 0x10000 + (data&7)*0x2000);
+	cpu_setbank(3, memory_region(2) + 0x10000 + (data&7)*0x2000);
 }
 
 static int back_ctrla_r(int offset)
@@ -188,34 +199,10 @@ static int backrom_r(int offset)
 {
 	if(errorlog && !(cur_back_ctrla & 1))
 		fprintf(errorlog, "Back: Reading rom memory with enable=0\n");
-	return *(Machine->memory_region[3] + 2048*cur_back_select + (offset>>2));
+	return *(memory_region(3) + 2048*cur_back_select + (offset>>2));
 }
 
-static int nvram_load(void)
-{
-	void *f;
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 10;
-
-	return 1;
-}
-
-static void nvram_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
-}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -236,7 +223,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x180000, 0x181fff, MRA_BANK2 },			// Graphic planes
 	{ 0x190000, 0x191fff, MRA_BANK6 }, 			// Passthrough to tile roms
 	{ 0x1a0000, 0x1a1fff, backrom_r },
-	{ 0x1b0000, 0x1b1fff, MRA_BANK5, &xexex_palette_ram },
+	{ 0x1b0000, 0x1b1fff, MRA_BANK5 },
 	{ -1 }
 };
 
@@ -253,7 +240,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA_ROM },
 	{ 0x180000, 0x181fff, K053157_ram_w },
-	{ 0x1b0000, 0x1b1fff, xexex_palette_w },
+	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &xexex_palette_ram },
 	{ -1 }
 };
 
@@ -283,7 +270,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #endif
 
 
-INPUT_PORTS_START(xexex_input_ports)
+INPUT_PORTS_START( xexex )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -342,7 +329,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			16000000,	/* 16 MHz ? (xtal is 32MHz) */
-			0,
 			readmem, writemem, 0, 0,
 			xexex_interrupt, 3	/* ??? */
 		},
@@ -350,7 +336,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432Mhz) */
-			4,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 1
 		},
@@ -375,17 +360,22 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{0}
+	},
+
+	nvram_handler
 };
 
 
-ROM_START( xexex_rom )
-	ROM_REGION(0x180000)
+ROM_START( xexex )
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_EVEN("xex_a01.rom", 0x000000,  0x40000, 0x3ebcb066 )
 	ROM_LOAD_ODD ("xex_a02.rom", 0x000000,  0x40000, 0x36ea7a48 )
 	ROM_LOAD_EVEN("xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
 	ROM_LOAD_ODD ("xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD     ("xex_b14.rom", 0x000000, 0x100000, 0x02a44bfa )
 	ROM_LOAD     ("xex_b13.rom", 0x100000, 0x100000, 0x633c8eb5 )
 
@@ -404,7 +394,7 @@ ROM_START( xexex_rom )
 
 ROM_END
 
-struct GameDriver xexex_driver =
+struct GameDriver driver_xexex =
 {
 	__FILE__,
 	0,
@@ -417,12 +407,12 @@ struct GameDriver xexex_driver =
 	&machine_driver,
 	machine_init,
 
-	xexex_rom,
+	rom_xexex,
 	0,0,0,0,
 
-	xexex_input_ports,
+	input_ports_xexex,
 
 	0,0,0,
 	ORIENTATION_FLIP_Y,
-	nvram_load, nvram_save
+	0,0
 };

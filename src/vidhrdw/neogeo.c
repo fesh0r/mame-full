@@ -149,7 +149,7 @@ static void decodetile(int tileno)
 	unsigned int pen;
 
 
-	gfxdata = (UINT32 *)&Machine->memory_region[MEM_GFX][128 * tileno];
+	gfxdata = (UINT32 *)&memory_region(MEM_GFX)[128 * tileno];
 
 	memcpy(swap,gfxdata,128);
 
@@ -185,7 +185,7 @@ static void decodetile(int tileno)
 
 int neogeo_mvs_vh_start(void)
 {
-	no_of_tiles=Machine->memory_region_length[MEM_GFX]/128;
+	no_of_tiles=memory_region_length(MEM_GFX)/128;
 	if (no_of_tiles>0x10000) high_tile=1; else high_tile=0;
 	if (no_of_tiles>0x20000) vhigh_tile=1; else vhigh_tile=0;
 	if (no_of_tiles>0x40000) vvhigh_tile=1; else vvhigh_tile=0;
@@ -345,19 +345,23 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (sy > 0x110) sy -= 0x200;
-			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+			if (clip->max_y - clip->min_y > 8 ||	/* kludge to improve the ssideki games */
+					clip->min_y == Machine->drv->visible_area.min_y)
 			{
-				while (sy < 0) sy += 2 * (rzy + 1);
+				if (sy > 0x110) sy -= 0x200;
+				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+				{
+					while (sy < 0) sy += 2 * (rzy + 1);
+				}
 			}
 			oy = sy;
 
-		  	if(my==0x21) my=0x20;
-			else if(rzy!=0xff && my!=0)
-			/* TODO: this is most likely wrong */
-				my=((my*16*256)/(rzy+1) + 15)/16;
-
-			if(my>0x20) my=0x20;
+			if (rzy < 0xff && my < 0x10 && my)
+			{
+				my = (my*256)/(rzy+1);
+				if (my > 0x10) my = 0x10;
+			}
+			if (my > 0x20) my=0x20;
 
 			ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
@@ -423,9 +427,7 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 				}
 			}
 
-			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
-									// it breaks OverTop radar so it can't be right
-			if (sy+15 >= clip->min_y && sy <= clip->max_y)
+			if (sy+yskip-1 >= clip->min_y && sy <= clip->max_y)
 			{
 				tileatr=tileatr>>8;
 				tileno %= no_of_tiles;
@@ -519,7 +521,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 
 	int mydword;
 
-	UINT32 *fspr = (UINT32 *)Machine->memory_region[MEM_GFX];
+	UINT32 *fspr = (UINT32 *)memory_region(MEM_GFX);
 
 	char *l_y_skip;
 
@@ -704,7 +706,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 
 	int mydword;
 
-	UINT32 *fspr = (UINT32 *)Machine->memory_region[MEM_GFX];
+	UINT32 *fspr = (UINT32 *)memory_region(MEM_GFX);
 
 	char *l_y_skip;
 
@@ -928,11 +930,16 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	}
 	#endif
 
-	/* Palette swap occured after last frame but before this one */
-	if (palette_swap_pending) swap_palettes();
+	if (clip->max_y - clip->min_y > 8 ||	/* kludge to speed up raster effects */
+			clip->min_y == Machine->drv->visible_area.min_y)
+    {
+		/* Palette swap occured after last frame but before this one */
+		if (palette_swap_pending) swap_palettes();
 
-	/* Do compressed palette stuff */
-	neogeo_palette(clip);
+		/* Do compressed palette stuff */
+		neogeo_palette(clip);
+		/* no need to check the return code since we redraw everything each frame */
+	}
 
 	fillbitmap(bitmap,Machine->pens[4095],clip);
 
@@ -972,19 +979,23 @@ if (!dotiles) { 					/* debug */
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (sy > 0x110) sy -= 0x200;
-			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+			if (clip->max_y - clip->min_y > 8 ||	/* kludge to improve the ssideki games */
+					clip->min_y == Machine->drv->visible_area.min_y)
 			{
-				while (sy < 0) sy += 2 * (rzy + 1);
+				if (sy > 0x110) sy -= 0x200;
+				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
+				{
+					while (sy < 0) sy += 2 * (rzy + 1);
+				}
 			}
 			oy = sy;
 
-		  	if(my==0x21) my=0x20;
-			else if(rzy!=0xff && my!=0)
-			/* TODO: this is most likely wrong */
-				my=((my*16*256)/(rzy+1) + 15)/16;
-
-			if(my>0x20) my=0x20;
+			if (rzy < 0xff && my < 0x10 && my)
+			{
+				my = (my*256)/(rzy+1);
+				if (my > 0x10) my = 0x10;
+			}
+			if (my > 0x20) my=0x20;
 
 			ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
@@ -1059,8 +1070,6 @@ if (!dotiles) { 					/* debug */
 				}
 			}
 
-			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
-									// it breaks OverTop radar so it can't be right
 			if (sy+15 >= clip->min_y && sy <= clip->max_y)
 			{
 				if (Machine->scrbitmap->depth == 16)
@@ -1094,8 +1103,8 @@ if (!dotiles) { 					/* debug */
 	pen_usage=gfx->pen_usage;
 
 	/* Character foreground */
- 	for (y=0;y<32;y++) {
- 		for (x=0;x<40;x++) {
+	for (y=clip->min_y/8; y<=clip->max_y/8; y++) {
+		for (x=0; x<40; x++) {
 
   			int byte1 = (READ_WORD(&vidram[0xE000 + 2*(y + 32*x)]));
   			int byte2 = byte1 >> 12;
@@ -1169,11 +1178,8 @@ if (keyboard_pressed(KEYCODE_D))
 
 	int j;
 	char mybuf[20];
-	int trueorientation;
 	struct osd_bitmap *mybitmap = Machine->scrbitmap;
 
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
 
 
 for (i = 0;i < 8;i+=2)
@@ -1240,7 +1246,7 @@ void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line
 
 	if (clip.max_y >= clip.min_y)
 	{
-if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
+//if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
 		screenrefresh(bitmap,&clip);
 	}
 
@@ -1249,4 +1255,8 @@ if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
 
 void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+    /* Palette swap occured after last frame but before this one */
+    if (palette_swap_pending) swap_palettes();
+    palette_recalc();
+	/* no need to check the return code since we redraw everything each frame */
 }
