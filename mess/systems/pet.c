@@ -1065,7 +1065,7 @@ static struct MachineDriver machine_driver_pet80pal =
 	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORT_DIRTY,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #else
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif

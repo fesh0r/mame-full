@@ -1375,8 +1375,8 @@ void c64_state(void)
 	state_display_text (text);
 #endif
 
-	vdc8563_status(text, sizeof(text));
-	state_display_text (text);
+	vdc8563_state();
+//	state_display_text (text);
 #endif
 
 	vc20_tape_status (text, sizeof (text));
