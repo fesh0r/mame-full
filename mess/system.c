@@ -191,6 +191,7 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
     /* ACORN */
 #ifndef MESS_EXCLUDE_ACORN
     DRIVER( atom )      /* 1979 Acorn Atom                                */
+    DRIVER( atomeb )      /* 1979 Acorn Atom                                */
     DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
     DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
     DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
@@ -463,7 +464,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
 	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
-TESTDRIVER( avigo ) 	/*												  */
+    DRIVER( avigo )     /*                                                */
 #endif
 
 #ifndef MESS_EXCLUDE_MISC_COMPUTERS
@@ -527,7 +528,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
 	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
-TESTDRIVER( telestrat ) /* ??? Oric Telestrat/Stratos                       */
+    DRIVER( telestrat ) /* ??? Oric Telestrat/Stratos                       */
 
 	/* PHILIPS */
 	DRIVER( p2000t )	/* 1980 P2000T									  */
