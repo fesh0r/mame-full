@@ -10,14 +10,14 @@
 #include "cpu/m6502/m6502.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/sid6581.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vic6567.h"
+#include "includes/sid6581.h"
 
-#include "mess/includes/c65.h"
+#include "includes/c65.h"
 
 unsigned char c65_keyline = { 0xff };
 int c65=0;

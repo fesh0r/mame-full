@@ -6,7 +6,7 @@
 	Not (currently) used, since an XT does not have IDE support in BIOS :(
 
 ***************************************************************************/
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
 static int drv = 0; 					/* 0 master, 1 slave drive */
 static int lba[2] = {0,0};				/* 0 CHS mode, 1 LBA mode */

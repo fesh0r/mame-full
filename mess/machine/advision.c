@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/advision.h"
+#include "includes/advision.h"
 
 unsigned char *advision_ram;
 int advision_rambank;

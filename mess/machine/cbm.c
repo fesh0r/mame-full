@@ -3,7 +3,7 @@
 
 #include "driver.h"
 
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
 /* safer replacement str[0]=0; */
 int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...)

@@ -3,9 +3,9 @@
 /* */
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/sid6581.h"
+#include "includes/sid6581.h"
 #include "samples.h"
 
 
@@ -159,11 +159,11 @@ INLINE void channelTryInit(sampleChannel* ch, const uword regBase)
 		ch->Mode = FM_NONE;
 	}
 	else
-	{ 	  
-		if ( tempPeriod != ch->Period ) 
+	{
+		if ( tempPeriod != ch->Period )
 		{
 			ch->Period = tempPeriod;
-#if defined(DIRECT_FIXPOINT) 
+#if defined(DIRECT_FIXPOINT)
 			ch->Pos_stp.l = sampleClock / ch->Period;
 #elif defined(PORTABLE_FIXPOINT)
 			udword tempDiv = sampleClock / ch->Period;
@@ -173,7 +173,7 @@ INLINE void channelTryInit(sampleChannel* ch, const uword regBase)
 			ch->Pos_stp = sampleClock / ch->Period;
 #endif
 		}
-#if defined(DIRECT_FIXPOINT) 
+#if defined(DIRECT_FIXPOINT)
 		ch->PosAdd_stp.l = 0;
 #elif defined(PORTABLE_FIXPOINT)
 		ch->PosAdd_stp = (ch->PosAdd_pnt = 0);
@@ -199,8 +199,8 @@ INLINE ubyte channelProcess(sampleChannel* ch, const uword regBase)
     if ( sampleIndex >= ch->EndAddr )
 	{
 		if ( ch->Repeat != 0xFF )
-		{ 
-			if ( ch->Repeat != 0 )  
+		{
+			if ( ch->Repeat != 0 )
 				ch->Repeat--;
 			else
 			{
@@ -209,7 +209,7 @@ INLINE ubyte channelProcess(sampleChannel* ch, const uword regBase)
 			}
 		}
 		sampleIndex = ( ch->Address = ch->RepAddr );
-#if defined(DIRECT_FIXPOINT) 
+#if defined(DIRECT_FIXPOINT)
 		ch->PosAdd_stp.l = 0;
 #elif defined(PORTABLE_FIXPOINT)
 		ch->PosAdd_stp = (ch->PosAdd_pnt = 0);
@@ -221,14 +221,14 @@ INLINE ubyte channelProcess(sampleChannel* ch, const uword regBase)
 			channelFree(ch,regBase);
 			return 8;
 		}
-	}  
+	}
 
 	tempSample = 0;/*c64mem1[sampleIndex]; */
 	if (ch->SampleOrder == SO_LOWHIGH)
 	{
 		if (ch->Scale == 0)
 		{
-#if defined(DIRECT_FIXPOINT) 
+#if defined(DIRECT_FIXPOINT)
 			if (ch->PosAdd_stp.w[LO] >= 0x8000)
 #elif defined(PORTABLE_FIXPOINT)
 			if ( ch->PosAdd_pnt >= 0x8000 )
@@ -245,7 +245,7 @@ INLINE ubyte channelProcess(sampleChannel* ch, const uword regBase)
 	{
 		if (ch->Scale == 0)
 		{
-#if defined(DIRECT_FIXPOINT) 
+#if defined(DIRECT_FIXPOINT)
 			if ( ch->PosAdd_stp.w[LO] < 0x8000 )
 #elif defined(PORTABLE_FIXPOINT)
 		    if ( ch->PosAdd_pnt < 0x8000 )
@@ -262,8 +262,8 @@ INLINE ubyte channelProcess(sampleChannel* ch, const uword regBase)
 			tempSample >>= 4;
 		}
 	}
-	
-#if defined(DIRECT_FIXPOINT) 
+
+#if defined(DIRECT_FIXPOINT)
 	ch->PosAdd_stp.l += ch->Pos_stp.l;
 #elif defined(PORTABLE_FIXPOINT)
 	udword temp = (udword)ch->PosAdd_pnt + (udword)ch->Pos_pnt;
@@ -272,7 +272,7 @@ INLINE ubyte channelProcess(sampleChannel* ch, const uword regBase)
 #else
 	ch->PosAdd_stp += ch->Pos_stp;
 #endif
-	
+
 	return (tempSample&0x0F);
 }
 /* --- */
@@ -339,16 +339,16 @@ void sampleEmuCheckForInit(void)
 		GalwayInit();
 		break;
 	}
-	
+
 	if (ch4.Mode == FM_HUELSON)
 	{
 		sampleEmuRout = &sampleEmu;
 	}
-	
+
 
 #if 0
 	/* Try second sample channel. */
-	switch ( sid6581[1].reg[0x1d] ) 
+	switch ( sid6581[1].reg[0x1d] )
 	{
 	 case 0xFF:
 	 case 0xFE:
@@ -430,30 +430,30 @@ static void GalwayInit(void)
 
 #if 0
 	sampleEmuRout = &sampleEmuSilence;
-  
-	ch4.Counter = sid6581->reg[0x1d];  
-	sid6581->reg[0x1d] = 0; 
-  
+
+	ch4.Counter = sid6581->reg[0x1d];
+	sid6581->reg[0x1d] = 0;
+
 	if ((ch4.Address=sid6581_read_word(0x1e)) == 0)
 		return;
-  
+
 	if ((ch4.LoopWait=c64mem2[0xd43f]) == 0)
 		return;
-  
+
 	if ((ch4.NullWait=c64mem2[0xd45d]) == 0)
 		return;
-  
+
 	if (c64mem2[0xd43e] == 0)
 		return;
 	ch4.SamAddr = ((uword)c64mem2[0xd43e]&15) << 6;
-  
+
 	if ( c64mem2[0xd43d] == 0 )
 		return;
 	ch4.SamLen = (uword)c64mem2[0xd43d];
-  
+
 	ch4.Active = true;
 	ch4.Mode = FM_GALWAYON;
-  
+
 #if defined(DIRECT_FIXPOINT)
 	ch4.Pos_stp.l = 0;
 #elif defined(PORTABLE_FIXPOINT)
@@ -463,7 +463,7 @@ static void GalwayInit(void)
 	ch4.Pos_stp = 0;
 #endif
 	GetNextFour();
-  
+
 	sampleEmuRout = &GalwayReturnSample;
 #endif
 }
@@ -514,7 +514,7 @@ static sbyte GalwayReturnSample(void)
             ch4.Mode = FM_GALWAYOFF;
             sampleEmuRout = &sampleEmuSilence;
         }
-        else  
+        else
         {
             GetNextFour();
         }

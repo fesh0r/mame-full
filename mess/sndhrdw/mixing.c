@@ -3,7 +3,7 @@
 /* */
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
 
 #include "mytypes.h"
@@ -39,17 +39,17 @@ void MixerInit(bool threeVoiceAmplify, ubyte zero8, uword zero16)
 	long si;
 	uword ui;
 	long ampDiv = maxLogicalVoices;
-	
+
 	zero8bit = zero8;
 	zero16bit = zero16;
-	
+
 	if (threeVoiceAmplify)
 	{
 		ampDiv = (maxLogicalVoices-1);
 	}
 
 	/* Mixing formulas are optimized by sample input value. */
-	
+
 	si = (-128*maxLogicalVoices);
 	for (ui = 0; ui < sizeof(mix8mono); ui++ )
 	{

@@ -10,9 +10,9 @@
 #include "vidhrdw/generic.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/praster.h"
+#include "includes/praster.h"
 
 /* todo update praster_raster_monotext, praster_raster_graphic */
 

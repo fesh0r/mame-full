@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "cpu/sc61860/sc61860.h"
 
-#include "mess/includes/pocketc.h"
+#include "includes/pocketc.h"
 
 /* C-CE while reset, program will not be destroyed! */
 
@@ -164,10 +164,10 @@ int pc1401_reset(void)
 static void pc1401_load(void)
 {
 	FILE *file;
-	UINT8 *ram=memory_region(REGION_CPU1)+0x2000, 
+	UINT8 *ram=memory_region(REGION_CPU1)+0x2000,
 		*cpu=sc61860_internal_ram();
-	
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL) {
 		power=0;
 		return;
@@ -184,7 +184,7 @@ static void pc1401_save(void)
 	UINT8 *ram=memory_region(REGION_CPU1)+0x2000,
 		*cpu=sc61860_internal_ram();
 
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 
@@ -206,7 +206,7 @@ void init_pc1401(void)
 	char sucker[]={
 		/* this routine dump the memory (start 0)
 		   in an endless loop,
-		   the pc side must be started before this 
+		   the pc side must be started before this
 		   its here to allow verification of the decimal data
 		   in mame disassembler
 		*/

@@ -1,6 +1,6 @@
 #include "driver.h"
-#include "mess/includes/uart8250.h"
-#include "mess/includes/pc_mouse.h"
+#include "includes/uart8250.h"
+#include "includes/pc_mouse.h"
 
 /* KT - 14-Jun-2000 - Improved Interrupt setting/clearing */
 /* KT - moved into seperate file so it can be used in Super I/O emulation and any other
@@ -10,7 +10,7 @@ PCW16 doesn't requre the PC input port definitions which are not required by the
 hardware */
 
 #define LOG(LEVEL,N,M,A)  \
-if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; 
+if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A;
 
 
 #define VERBOSE_COM
@@ -61,7 +61,7 @@ UART8250 uart[4]={ { { 0 } } };
 #if 0
 static double uart_byte_time(int n)
 {
-	double bit=16.0/uart[n].interface.clockin;	
+	double bit=16.0/uart[n].interface.clockin;
 	return bit*8; // start+data+parity+stop
 }
 #endif
@@ -91,7 +91,7 @@ static void uart8250_setup_iir(int n)
 
 	/* modem status has both bits clear */
 }
-		
+
 
 /* ints will continue to be set for as long as there are ints pending */
 static void uart8250_update_interrupt(int n)
@@ -111,7 +111,7 @@ static void uart8250_update_interrupt(int n)
 		state = 1;
 
 		uart8250_setup_iir(n);
-		
+
 		/* int pending */
 		uart[n].iir |= 0x01;
 
@@ -127,7 +127,7 @@ static void uart8250_update_interrupt(int n)
 		uart[n].iir &=~(0x04|0x02);
 	}
 
-	
+
 	/* set or clear the int */
 	if (uart[n].interface.interrupt)
 		uart[n].interface.interrupt(n, state);
@@ -195,7 +195,7 @@ void uart8250_w(int n, int idx, int data)
 			{
 				uart[n].thr = data;
 				COM_LOG(2,"COM_thr_w",("COM%d $%02x\n", n+1, data));
-            
+
 #if 0
 				uart[n].send.activ=1;
 				uart[n].lsr&=~0x40;
@@ -280,7 +280,7 @@ int uart8250_r(int n, int idx)
 					uart[n].lsr &= ~0x01;		/* clear data ready status */
 					COM_LOG(2,"COM_rbr_r",("COM%d $%02x\n", n+1, data));
 				}
-        
+
 				uart8250_clear_int(n, COM_INT_PENDING_RECEIVED_DATA_AVAILABLE);
 			}
 			break;

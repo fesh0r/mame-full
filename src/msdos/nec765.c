@@ -13,7 +13,7 @@
 #include <dpmi.h>
 #include <time.h>
 #include "driver.h"
-#include "mess/machine/wd179x.h"
+#include "machine/wd179x.h"
 
 #define RE_INTERLEAVE	0
 #define VERBOSE 		1

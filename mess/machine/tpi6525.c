@@ -75,9 +75,9 @@
 #include "driver.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/tpi6525.h"
+#include "includes/tpi6525.h"
 
 TPI6525 tpi6525[4]={
 	{ 0 },

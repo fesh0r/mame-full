@@ -12,7 +12,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/pdp1.h"
+#include "vidhrdw/pdp1.h"
 #include "cpu/pdp1/pdp1.h"
 
 int fio_dec=0;

@@ -8,8 +8,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/amstrad.h"
-#include "mess/vidhrdw/hd6845s.h"
+#include "vidhrdw/amstrad.h"
+#include "vidhrdw/hd6845s.h"
 
 /***************************************************************************
   Start the video hardware emulation.

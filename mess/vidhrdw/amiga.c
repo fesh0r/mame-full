@@ -10,7 +10,7 @@ ernesto@imagina.com
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/systems/amiga.h"
+#include "systems/amiga.h"
 
 extern custom_regs_def custom_regs;
 

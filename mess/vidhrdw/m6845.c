@@ -9,7 +9,7 @@
 
  ************************************************************************/
 
-#include "mess/vidhrdw/m6845.h"
+#include "vidhrdw/m6845.h"
 
 #define True 1
 #define False 0

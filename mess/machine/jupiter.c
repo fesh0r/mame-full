@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "mess/includes/jupiter.h"
+#include "includes/jupiter.h"
 
 #define	JUPITER_NONE	0
 #define	JUPITER_ACE	1

@@ -61,8 +61,8 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
-#include "mess/machine/wd179x.h"
-#include "mess/vidhrdw/m6847.h"
+#include "machine/wd179x.h"
+#include "vidhrdw/m6847.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
@@ -1443,7 +1443,7 @@ static int coco3_mmu_lookup(int block, int forceram)
 		};
 		result = rommap[coco3_gimereg[0] & 3][result - 0x3c];
 	}
-	
+
 	return result;
 }
 

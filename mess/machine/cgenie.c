@@ -12,8 +12,8 @@
 #include "timer.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/cgenie.h"
-#include "mess/machine/wd179x.h"
+#include "vidhrdw/cgenie.h"
+#include "machine/wd179x.h"
 
 
 #define AYWriteReg(chip,port,value) \

@@ -63,7 +63,7 @@
  *
  *****************************************************************************/
 
-#include "mess/includes/mz700.h"
+#include "includes/mz700.h"
 
 #ifndef VERBOSE
 #define VERBOSE 1

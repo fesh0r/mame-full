@@ -109,8 +109,8 @@ memory map :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/tms9901.h"
-#include "mess/vidhrdw/tms9928a.h"
+#include "machine/tms9901.h"
+#include "vidhrdw/tms9928a.h"
 #include "cpu/tms9900/tms9900.h"
 
 static int ROM_paged;

@@ -14,7 +14,7 @@
 
 ***************************************************************************/
 #include "driver.h"
-#include "mess/includes/nec765.h"
+#include "includes/nec765.h"
 
 typedef enum
 {

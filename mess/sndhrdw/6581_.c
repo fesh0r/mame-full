@@ -40,8 +40,8 @@
 /* -------------------------------------------------------------------------- */
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/sndhrdw/samples.h"
+#include "includes/cbm.h"
+#include "sndhrdw/samples.h"
 #include <math.h>
 
 #include "mytypes.h"
@@ -57,7 +57,7 @@
 #include "wave6581.h"
 #include "wave8580.h"
 
-#include "mess/includes/sid6581.h"
+#include "includes/sid6581.h"
 
 extern ubyte masterVolume;
 extern uword masterVolumeAmplIndex;

@@ -1,14 +1,14 @@
 #include "driver.h"
-#include "mess/mess.h"
+#include "mess.h"
 #include "cpu/i86/i286.h"
 
-#include "mess/includes/pic8259.h"
-#include "mess/includes/mc146818.h"
-#include "mess/includes/vga.h"
-#include "mess/includes/pc_cga.h"
-#include "mess/includes/pc.h"
-#include "mess/includes/at.h"
-#include "mess/includes/pckeybrd.h"
+#include "includes/pic8259.h"
+#include "includes/mc146818.h"
+#include "includes/vga.h"
+#include "includes/pc_cga.h"
+#include "includes/pc.h"
+#include "includes/at.h"
+#include "includes/pckeybrd.h"
 
 #define PS2_MOUSE_ON 1
 #define KEYBOARD_ON 1
@@ -19,9 +19,9 @@
 		if (level>0) { \
 				logerror("%s\t", text); \
 				logerror print; \
-		} 
+		}
 #else
-#define DBG_LOG(level, text, print) 
+#define DBG_LOG(level, text, print)
 #endif
 
 #define true TRUE
@@ -42,7 +42,7 @@ void init_at(void)
 void init_at_vga(void)
 {
 #if 0
-        int i; 
+        int i;
         UINT8 *memory=memory_region(REGION_CPU1)+0xc0000;
         UINT8 chksum;
 
@@ -136,7 +136,7 @@ void at_8042_time(void)
 }
 
 /* 0x60 in- and output buffer ( keyboard mouse data)
- 0x64 read status register 
+ 0x64 read status register
  write operation for controller
 
  output port controller
@@ -195,7 +195,7 @@ READ_HANDLER(at_8042_r)
 		case 1:
 			data|=at_8042.inport&0xf;
 			break;
-		case 2: 
+		case 2:
 			data|=at_8042.inport<<4;
 			break;
 		}
@@ -255,16 +255,16 @@ WRITE_HANDLER(at_8042_w)
 		case 0xa9: /* test mouse */
 			if (PS2_MOUSE_ON)
 				at_8042_receive(0);
-			else 
+			else
 				at_8042_receive(0xff);
 			break;
 		case 0xaa: /* selftest */
 			at_8042_receive(0x55);
 			break;
 		case 0xab: /* test keyboard */
-			if (KEYBOARD_ON) 
+			if (KEYBOARD_ON)
 				at_8042_receive(0);
-			else 
+			else
 				at_8042_receive(0xff);
 			break;
 		case 0xad: at_8042.keyboard.on=false;break;
@@ -352,7 +352,7 @@ int at_cga_frame_interrupt (void)
 	if (turboswitch !=(input_port_3_r(0)&2)) {
 		if (input_port_3_r(0)&2)
 			timer_set_overclock(0, 1);
-		else 
+		else
 			timer_set_overclock(0, 4.77/12);
 		turboswitch=input_port_3_r(0)&2;
 	}
@@ -374,7 +374,7 @@ int at_vga_frame_interrupt (void)
 	if (turboswitch !=(input_port_3_r(0)&2)) {
 		if (input_port_3_r(0)&2)
 			timer_set_overclock(0, 1);
-		else 
+		else
 			timer_set_overclock(0, 4.77/12);
 		turboswitch=input_port_3_r(0)&2;
 	}

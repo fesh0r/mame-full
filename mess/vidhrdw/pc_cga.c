@@ -5,9 +5,9 @@
 ***************************************************************************/
 #include "driver.h"
 //#include "vidhrdw/generic.h"
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
-#include "mess/includes/pc_cga.h"
+#include "includes/pc_cga.h"
 
 #define CGA_HTOTAL  CGA_crtc[HTOTAL]
 #define CGA_HDISP   CGA_crtc[HDISP]

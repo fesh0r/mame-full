@@ -23,7 +23,7 @@ T1	Mirror sync pulse
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/advision.h"
+#include "includes/advision.h"
 
 static struct MemoryReadAddress readmem[] =
 {

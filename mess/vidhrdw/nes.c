@@ -11,8 +11,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "mess/machine/nes.h"
-#include "mess/machine/nes_mmc.h"
+#include "machine/nes.h"
+#include "machine/nes_mmc.h"
 
 //#define BACKGROUND_OFF
 //#define LOG_VIDEO
@@ -104,15 +104,15 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 		{ 0.29, 0.45, 0.73, 0.9 },
 		{ 0, 0.24, 0.47, 0.77 }
 	};
-	  
-	double angle[16] = {0,240,210,180,150,120,90,60,30,0,330,300,270,0,0,0}; 
+
+	double angle[16] = {0,240,210,180,150,120,90,60,30,0,330,300,270,0,0,0};
 
 #ifdef COLOR_INTENSITY
 	/* Loop through the emphasis modes (8 total) */
 	for (x = 0; x < 8; x ++)
 	{
 		double r_mod, g_mod, b_mod;
-		
+
 		switch (x)
 		{
 			case 0: r_mod = 1.0; g_mod = 1.0; b_mod = 1.0; break;
@@ -124,8 +124,8 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 			case 6: r_mod = 1.02; g_mod = .98; b_mod = .653; break;
 			case 7: r_mod = .75; g_mod = .75; b_mod = .75; break;
 		}
-#endif		
-			
+#endif
+
 		/* loop through the 4 intensities */
 		for (i = 0; i < 4; i++)
 		{
@@ -135,7 +135,7 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 				double sat;
 				double y;
 				double rad;
-			
+
 				switch (j)
 				{
 					case 0:
@@ -151,11 +151,11 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 						sat = 0; y = 0;
 						break;
 					default:
-						sat = tint; 
+						sat = tint;
 						y = brightness[1][i];
 						break;
 				}
-			
+
 				rad = M_PI * ((angle[j] + hue) / 180.0);
 
 				y *= bright_adjust;
@@ -289,7 +289,7 @@ void nes_vh_stop(void)
 	free (dirtybuffer4);
 #endif
 	osd_free_bitmap (tmpbitmap);
-	
+
 #ifdef LOG_VIDEO
 	if (videolog) fclose (videolog);
 #endif
@@ -359,7 +359,7 @@ void nes_vh_renderscanline (int scanline)
 	{
 		goto draw_sprites;
 	}
-	
+
 	/* Determine where in the nametable to start drawing from, based on the current scanline and scroll regs */
 	scroll_x_coarse = PPU_refresh_data & 0x1f;
 	scroll_y_coarse = (PPU_refresh_data & 0x3e0) >> 5;
@@ -380,7 +380,7 @@ if (colorlog) fprintf (colorlog, "%03d: ", scanline);
 #endif
 
 	total_elements = Machine->gfx[gfx_bank]->total_elements;
-	
+
 //	sd_1 = Machine->gfx[gfx_bank]->gfxdata;
 	if (PPU_Control1 & 0x01)
 		paldata_1 = colortable_mono;
@@ -512,14 +512,14 @@ draw_sprites:
 		for (i = 0; i < 0x100; i ++)
 			((UINT16 *) Machine->scrbitmap->line[scanline])[i] = Machine->pens[0x3f & color_mask];
 #else
-		memset (Machine->scrbitmap->line[scanline], Machine->pens[0x3f & color_mask], 0x100);		
+		memset (Machine->scrbitmap->line[scanline], Machine->pens[0x3f & color_mask], 0x100);
 #endif
 	}
 
 draw_nothing:
 	/* Increment the fine y-scroll */
 	PPU_refresh_data += 0x1000;
-	
+
 	/* If it's rolled, increment the coarse y-scroll */
 	if (PPU_refresh_data & 0x8000)
 	{
@@ -552,7 +552,7 @@ static void render_sprites (int scanline)
 
 	/* Determine if the sprites are 8x8 or 8x16 */
 	size = (PPU_Control0 & PPU_c0_sprite_size) ? 16 : 8;
-	
+
 	spriteCount = 0;
 
 	for (i = 0; i < 0x100; i += 4)
@@ -644,7 +644,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 							}
 							/* Indicate that a sprite was drawn at this location, even if it's not seen */
 							line_priority [x+j] |= 0x01;
-							
+
 							/* Set the "sprite 0 hit" flag if appropriate */
 							if (i == 0) PPU_Status |= PPU_status_sprite0_hit;
 						}
@@ -665,7 +665,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 							}
 							/* Indicate that a sprite was drawn at this location, even if it's not seen */
 							line_priority [x+j] |= 0x01;
-							
+
 							/* Set the "sprite 0 hit" flag if appropriate */
 							if (i == 0) PPU_Status |= PPU_status_sprite0_hit;
 						}
@@ -692,7 +692,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 								line_priority [x+j] |= 0x01;
 								drawn = 1;
 							}
-							
+
 							/* Set the "sprite 0 hit" flag if appropriate */
 							if ((i == 0) && (line_priority[x+j] & 0x02))
 								PPU_Status |= PPU_status_sprite0_hit;
@@ -714,7 +714,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 								line_priority [x+j] |= 0x01;
 								drawn = 1;
 							}
-							
+
 							/* Set the "sprite 0 hit" flag if appropriate */
 							if ((i == 0) && (line_priority[x+j] & 0x02))
 								PPU_Status |= PPU_status_sprite0_hit;
@@ -722,7 +722,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 					}
 				}
 			}
-			
+
 			if (drawn)
 			{
 				/* If there are more than 8 sprites on this line, set the flag */
@@ -757,7 +757,7 @@ void draw_sight(int playerNum, int x_center, int y_center)
 {
 	int x,y;
 	UINT16 color;
-	
+
 	if (playerNum == 2)
 		color = Machine->pens[0]; /* grey */
 	else
@@ -809,11 +809,11 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if (readinputport (11) & 0x01)
 		{
 			while (readinputport (11) & 0x01) { update_input_ports (); };
-			
+
 			nes_fds.current_side ++;
 			if (nes_fds.current_side > nes_fds.sides)
 				nes_fds.current_side = 0;
-			
+
 			if (nes_fds.current_side == 0)
 			{
 				usrintf_showmessage ("No disk inserted.");

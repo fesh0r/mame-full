@@ -160,17 +160,17 @@ when problems start with -log and look into error.log file
 #include "cpu/m6502/m6509.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/tpi6525.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/crtc6845.h"
-#include "mess/includes/sid6581.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/tpi6525.h"
+#include "includes/vic6567.h"
+#include "includes/crtc6845.h"
+#include "includes/sid6581.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
 
-#include "mess/includes/cbmb.h"
+#include "includes/cbmb.h"
 
 static struct MemoryReadAddress cbmb_readmem[] =
 {
@@ -1041,7 +1041,7 @@ static const struct IODevice io_cbmb[] =
 	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0", NULL),
 	/* monitor OR tape routine in kernal */
 #ifdef PET_TEST_CODE
-	IODEVICE_CBM_DRIVE,	
+	IODEVICE_CBM_DRIVE,
 #endif
 	{IO_END}
 };
@@ -1051,7 +1051,7 @@ static const struct IODevice io_cbm500[] =
 	IODEVICE_CBM500_QUICK,
 	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0", NULL),
 #ifdef PET_TEST_CODE
-	IODEVICE_CBM_DRIVE,	
+	IODEVICE_CBM_DRIVE,
 #endif
 	/* monitor OR tape routine in kernal */
 	{IO_END}

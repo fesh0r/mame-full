@@ -80,7 +80,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/kaypro.h"
+#include "includes/kaypro.h"
 
 
 enum state {

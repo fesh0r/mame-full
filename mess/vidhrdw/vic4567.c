@@ -117,32 +117,32 @@ void vic3_interlace_draw_block(int x, int y, int offset)
 	switch (VIC3_BITPLANES_MASK) {
 	case 5:
 #define VIC3_MASK 5
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 7:
 #undef VIC3_MASK
 #define VIC3_MASK 7
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0xf:
 #undef VIC3_MASK
 #define VIC3_MASK 0xf
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0x1f:
 #undef VIC3_MASK
 #define VIC3_MASK 0x1f
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0x7f:
 #undef VIC3_MASK
 #define VIC3_MASK 0x7f
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0xff:
 #undef VIC3_MASK
 #define VIC3_MASK 0xff
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	default:
 		if (VIC3_BITPLANES_MASK&1) {
@@ -183,7 +183,7 @@ void vic3_interlace_draw_block(int x, int y, int offset)
 			colors[5]>>=1;
 			colors[6]>>=1;
 			colors[7]>>=1;
-		}	
+		}
 	}
 }
 
@@ -198,32 +198,32 @@ void vic3_draw_block(int x, int y, int offset)
 	switch (VIC3_BITPLANES_MASK) {
 	case 5:
 #define VIC3_MASK 5
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 7:
 #undef VIC3_MASK
 #define VIC3_MASK 7
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0xf:
 #undef VIC3_MASK
 #define VIC3_MASK 0xf
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0x1f:
 #undef VIC3_MASK
 #define VIC3_MASK 0x1f
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0x7f:
 #undef VIC3_MASK
 #define VIC3_MASK 0x7f
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	case 0xff:
 #undef VIC3_MASK
 #define VIC3_MASK 0xff
-#include "mess/includes/vic4567.h"
+#include "includes/vic4567.h"
 		break;
 	default:
 		if (VIC3_BITPLANES_MASK&1) {
@@ -264,7 +264,7 @@ void vic3_draw_block(int x, int y, int offset)
 			colors[5]>>=1;
 			colors[6]>>=1;
 			colors[7]>>=1;
-		}	
+		}
 	}
 }
 #endif
@@ -293,7 +293,7 @@ void vic3_draw_bitplanes(void)
 #else
 					if (interlace)
 						vic3_draw_block(x,y,offset);
-					else 
+					else
 						vic3_interlace_draw_block(x,y+1,offset);
 #endif
 				}

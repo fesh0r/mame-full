@@ -3,7 +3,7 @@
 DAVE SOUND CHIP FOUND IN ENTERPRISE
 *********************************/
 #include "driver.h"
-#include "mess/sndhrdw/dave.h"
+#include "sndhrdw/dave.h"
 
 static DAVE dave;
 static DAVE_INTERFACE *dave_iface;

@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/p2000t.h"
+#include "includes/p2000t.h"
 
 static	INT8	frame_count;
 

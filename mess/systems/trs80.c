@@ -22,7 +22,7 @@ Interrupts:
 IRQ mode 1
 NMI
 ***************************************************************************/
-#include "mess/includes/trs80.h"
+#include "includes/trs80.h"
 
 #define FW	TRS80_FONT_W
 #define FH  TRS80_FONT_H

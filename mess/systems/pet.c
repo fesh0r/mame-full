@@ -11,25 +11,25 @@
 
 /*
 PET 2000 Series:Renamed to CBM 20XX, XX = RAM, when Philips forbid PET use.
-                Most CBM renamed units powered up in lowercase and had a 
+                Most CBM renamed units powered up in lowercase and had a
                 different keyboard config, while the PET machines booted in
                 uppercase. B and N notation alternately put after RAM amount
-                in name (PET 2001B-32 = PET 2001-32B)                   
+                in name (PET 2001B-32 = PET 2001-32B)
                 Black (B) or Blue (N) Trim, 9" (9) or 12" (2) screen,
                 Built-In Cassette with Chiclet Keys (C),
                 Business Style Keyboard with No Graphics on Keys (K), or
                 Home Computer with Number Keys and Graphics on Keys (H),
-                Green/White screen (G) or Black/White screen (W)     
+                Green/White screen (G) or Black/White screen (W)
 * PET 2001-4K   4kB, CB                                                     GP
 * PET 2001-8K   8kB, CN9                                                    GP
 * PET 2001-8C   8kB, CN9W, SN#0620733, No "WAIT 6502,X"                     GL
 * PET 2001-8C   8kB, CB9G, SN#0629836, No "WAIT 6502,X"                     GL
-  PET 2001-16K  16kB, CN9                                                   
+  PET 2001-16K  16kB, CN9
   PET 2001-32K  32kB, CN9
   PET 2001B-8   8kB, K2
   PET 2001B-16  16kB, K2
   PET 2001B-32  32kB, BK9W, boots in lowercase                              RB
-  PET 2001B-32  32kB, K2                                                    
+  PET 2001B-32  32kB, K2
   PET 2001N-8   8kB, H2
 * PET 2001N-16  16kB, H9                                                    CH
   PET 2001N-16  16kB, H2
@@ -40,12 +40,12 @@ PET 2000 Series:Renamed to CBM 20XX, XX = RAM, when Philips forbid PET use.
 CBM 3000 Series: 40 Col. Screen, BASIC 2.0-2.3, Same Board as Thin 4000
                  3001 series in Germany were just 2001's with big Keyboard.
 * CBM 3008      8kB, 9" Screen.                                             EG
-* CBM 3016      16kB 
+* CBM 3016      16kB
 * CBM 3032      32kB.                                                       SL
 
 CBM 4000 Thin Series: 9" Screen, 40 Column Only, Basic 4.0.
 CBM 4000 Fat Series:  12" Screen, Upgradeable to 80 Column, When upgraded
-                      to 80 Columns, the systems were 8000's. 
+                      to 80 Columns, the systems were 8000's.
   CBM 4004      4kB, One Piece.
 * CBM 4008      8kB, One Piece.                                             SF
 * CBM 4016      16kB, One Piece.                                            KK
@@ -65,12 +65,12 @@ CBM 8000 Series:12" Screen, 80 Column, BASIC 4.0
 * CBM 8296      128kB, Detached Keyboard, Brown like 64, LOS-96 OS          TL
 * CBM 8296d     8296 + 8250LP                                               SL
 * "CASSIE"      Synergistics Inc. rebadged 8032                             AH
-  
+
 SuperPet Series:Sold in Germany as MMF (MicroMainFrame) 9000
                 Machines sold in Italy had 134kB of RAM.
 * CBM SP9000    Dual uP 6502/6809, 96kB RAM, business keyboard.             GP
 
-CBM 200 Series                                           
+CBM 200 Series
 * CBM 200       CBM 8032 SK                                                 VM
   CBM 210       ???
 * CBM 220       CBM 8096 SK
@@ -114,14 +114,14 @@ when problems start with -log and look into error.log file
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 #include "machine/6821pia.h"
-#include "mess/machine/6522via.h"
-#include "mess/includes/pet.h"
-#include "mess/includes/crtc6845.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/cbmieeeb.h"
-/*#include "mess/includes/vc1541.h" */
+#include "machine/6522via.h"
+#include "includes/pet.h"
+#include "includes/crtc6845.h"
+#include "includes/c1551.h"
+#include "includes/cbmieeeb.h"
+/*#include "includes/vc1541.h" */
 
 static struct MemoryReadAddress pet_readmem[] =
 {
@@ -464,7 +464,7 @@ static struct MemoryWriteAddress superpet_m6809_writemem[] =
 
 INPUT_PORTS_START (pet)
 	PET_KEYBOARD
-    PORT_START 
+    PORT_START
     DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 #ifdef PET_TEST_CODE
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
@@ -495,7 +495,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START (petb)
 	PET_B_KEYBOARD
-    PORT_START 
+    PORT_START
     DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 #ifdef PET_TEST_CODE
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
@@ -526,7 +526,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START (cbm8096)
 	PET_B_KEYBOARD
-    PORT_START 
+    PORT_START
     DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 #ifdef PET_TEST_CODE
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
@@ -555,7 +555,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START (superpet)
 	PET_B_KEYBOARD
-    PORT_START 
+    PORT_START
     DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 #ifdef PET_TEST_CODE
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
@@ -573,7 +573,7 @@ INPUT_PORTS_START (superpet)
 	PORT_BIT (8, 0, IPT_UNUSED) /* no 8096 hardware */
 	PORT_DIPNAME   ( 4, 4, "CPU Select")
 	PORT_DIPSETTING( 0, "M6502" )
-	PORT_DIPSETTING( 4, "M6809" )	
+	PORT_DIPSETTING( 4, "M6809" )
 	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
 	PORT_DIPSETTING(  0, DEF_STR( No ) )
 	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
@@ -596,30 +596,30 @@ static unsigned short pet_colortable[] = {
 
 static struct GfxLayout pet_charlayout =
 {
-        8,8,                                   
+        8,8,
         512,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 0,1,2,3,4,5,6,7 },  
+        { 0,1,2,3,4,5,6,7 },
         /* y offsets */
         { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
         },
-        8*8                                     
+        8*8
 };
 
 static struct GfxLayout superpet_charlayout =
 {
-        8,8,                                   
+        8,8,
         1024,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 0,1,2,3,4,5,6,7 },  
+        { 0,1,2,3,4,5,6,7 },
         /* y offsets */
         { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
         },
-        8*8                                     
+        8*8
 };
 
 static struct GfxDecodeInfo pet_gfxdecodeinfo[] = {
@@ -1148,7 +1148,7 @@ static const struct IODevice io_pet[] =
 {
 	IODEVICE_CBM_PET1_QUICK,
 	IODEVICE_CBM_ROM("crt\0a0\0b0\0", NULL),
-	IODEVICE_CBM_DRIVE,	
+	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
 
@@ -1156,7 +1156,7 @@ static const struct IODevice io_pet2[] =
 {
 	IODEVICE_CBM_PET_QUICK,
 	IODEVICE_CBM_ROM("crt\0a0\0b0\0", NULL),
-	IODEVICE_CBM_DRIVE,	
+	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
 
@@ -1164,7 +1164,7 @@ static const struct IODevice io_pet4[] =
 {
 	IODEVICE_CBM_PET_QUICK,
 	IODEVICE_CBM_ROM("crt\0a0\0", NULL),
-	IODEVICE_CBM_DRIVE,	
+	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
 

@@ -20,12 +20,12 @@ rom/ram selection
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-//#include "mess/vidhrdw/m6845.h"
-#include "mess/machine/amstrad.h"
-//#include "mess/systems/i8255.h"
+//#include "vidhrdw/m6845.h"
+#include "machine/amstrad.h"
+//#include "systems/i8255.h"
 #include "machine/8255ppi.h"
-#include "mess/includes/nec765.h"
-#include "mess/includes/dsk.h"
+#include "includes/nec765.h"
+#include "includes/dsk.h"
 
 void AmstradCPC_GA_Write(int);
 void AmstradCPC_SetUpperRom(int);

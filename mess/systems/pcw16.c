@@ -15,7 +15,7 @@
 			(he's written a CP/M implementation for the PCW16)
 			(www.seasip.deomon.co.uk)
 	- and others who offered their help (Richard Fairhurst, Richard Wildey)
-	
+
 	Hardware:
 		- 2mb dram max,
 		- 2mb flash-file memory max (in 2 1mb chips),
@@ -43,9 +43,9 @@
 		- extract hard-drive code from PC driver and use in this driver
 		- implement printer
 		- .. anything else that requires implementing
-	
+
 	 Info:
-	   - to use this driver you need a OS rescue disc. 
+	   - to use this driver you need a OS rescue disc.
 	   (HINT: This also contains the boot-rom)
 	  - the OS will be installed from the OS rescue disc into the Flash-ROM
 
@@ -75,27 +75,27 @@
   processor (to 16MHz) etc. which meant that it could not be kept
   compatible with the previous models (though documents ARE compatible)"
 
-  
+
 
 
  ******************************************************************************/
 #include "driver.h"
-#include "mess/includes/pcw16.h"
+#include "includes/pcw16.h"
 
 // PC-Parallel Port
-#include "mess/includes/pclpt.h"
+#include "includes/pclpt.h"
 // PC-AT keyboard
-#include "mess/includes/pckeybrd.h"
+#include "includes/pckeybrd.h"
 // change to superio later
-#include "mess/includes/pc_fdc_h.h"
+#include "includes/pc_fdc_h.h"
 // for pc disk images
-#include "mess/includes/pc_flopp.h"
+#include "includes/pc_flopp.h"
 // for pc com port
-#include "mess/includes/uart8250.h"
+#include "includes/uart8250.h"
 // for pc serial mouse
-#include "mess/includes/pc_mouse.h"
+#include "includes/pc_mouse.h"
 // pcw/pcw16 beeper
-#include "mess/includes/beep.h"
+#include "includes/beep.h"
 
 //#define PCW16_DUMP_RAM
 //#define PCW16_DUMP_CPU_RAM
@@ -148,7 +148,7 @@ void pcw16_dump_ram(void)
 			{
 				osd_fwrite(file, &pcw16_ram[i], 1);
 			}
-		
+
 //			osd_fwrite(file, pcw16_ram, 2048*1024);
 			osd_fclose(file);
 		}
@@ -232,7 +232,7 @@ WRITE_HANDLER(pcw16_palette_w)
 
 static char *pcw16_mem_ptr[4];
 
-const mem_write_handler pcw16_write_handler_dram[4] = 
+const mem_write_handler pcw16_write_handler_dram[4] =
 {
 	MWA_BANK5,
 	MWA_BANK6,
@@ -240,7 +240,7 @@ const mem_write_handler pcw16_write_handler_dram[4] =
 	MWA_BANK8
 };
 
-const mem_read_handler pcw16_read_handler_dram[4] = 
+const mem_read_handler pcw16_read_handler_dram[4] =
 {
 	MRA_BANK1,
 	MRA_BANK2,
@@ -382,7 +382,7 @@ static void flash_suspend_erase(int index1)
 	/* suspend */
 	flash[index1].flash_status = FLASH_STATUS_ERASE_SUSPEND_STATUS_SUSPENDED |
 						FLASH_STATUS_WRITE_STATE_MACHINE_STATUS_READY;
-	
+
 
 	if (flash[index1].flash_timer!=0)
 	{
@@ -479,7 +479,7 @@ void	flash_store(int index1, char *flash_name)
 		if (file)
 		{
 			osd_fwrite(file, flash[index1].base, (1024*1024));
-	
+
 			osd_fclose(file);
 		}
 	}
@@ -498,7 +498,7 @@ void	flash_restore(int index1, char *flash_name)
 		if (file)
 		{
 			osd_fread(file, flash[index1].base, (1024*1024));
-	
+
 			osd_fclose(file);
 		}
 	}
@@ -512,7 +512,7 @@ void	flash_reset(int index1)
 	flash[index1].flash_erase_status = FLASH_ERASE_STATUS_NONE;
 	flash_remove_timer(index1);
 }
-	
+
 
 /* flash read - offset is offset within flash-file (offset within 1mb)*/
 int flash_bank_handler_r(int index1, int offset)
@@ -565,7 +565,7 @@ void flash_bank_handler_w(int index1, int offset, int data)
 				flash[index1].flash_status &= FLASH_STATUS_ERASE_SUSPEND_STATUS_SUSPENDED;
 				flash[index1].flash_status |= FLASH_STATUS_WRITE_STATE_MACHINE_STATUS_READY;
 				flash[index1].base[offset] = data;
-			
+
 				/* no parameters required */
 				flash[index1].flash_command_parameters_required = 0;
 			}
@@ -577,7 +577,7 @@ void flash_bank_handler_w(int index1, int offset, int data)
 
 	}
 
-	
+
 	flash[index1].flash_command_parameters_required = 0;
 	/* set command */
 	flash[index1].flash_command = data;
@@ -1065,7 +1065,7 @@ static void pcw16_keyboard_init(void)
 		pcw16_keyboard_parity_table[i] = sum & 0x01;
 	}
 
-	
+
 	/* clear int */
 	pcw16_keyboard_int(0);
 	/* reset state */
@@ -1125,7 +1125,7 @@ READ_HANDLER(pcw16_keyboard_data_shift_r)
 	pcw16_keyboard_int(0);
 	/* reset for reception */
 	pcw16_keyboard_reset();
-	
+
 	/* read byte */
 	return pcw16_keyboard_data_shift;
 }
@@ -1159,9 +1159,9 @@ void	pcw16_keyboard_signal_byte_received(int data)
 	/* initialise start, stop and parity bits */
 	pcw16_keyboard_state &= ~PCW16_KEYBOARD_START_BIT_MASK;
 	pcw16_keyboard_state |=PCW16_KEYBOARD_STOP_BIT_MASK;
-		
-	/* "Keyboard data has odd parity, so the parity bit in the 
-	status register should only be set when the shift register 
+
+	/* "Keyboard data has odd parity, so the parity bit in the
+	status register should only be set when the shift register
 	data itself has even parity. */
 
 	pcw16_keyboard_state &= ~PCW16_KEYBOARD_PARITY_MASK;
@@ -1169,7 +1169,7 @@ void	pcw16_keyboard_signal_byte_received(int data)
 	/* if data has even parity, set parity bit */
 	if ((pcw16_keyboard_parity_table[data])==0)
 		pcw16_keyboard_state |= PCW16_KEYBOARD_PARITY_MASK;
-	
+
 	pcw16_keyboard_int(1);
 }
 
@@ -1193,7 +1193,7 @@ WRITE_HANDLER(pcw16_keyboard_data_shift_w)
 READ_HANDLER(pcw16_keyboard_status_r)
 {
 	/* bit 2,3 are bits 8 and 9 of vdu pointer */
-	return (pcw16_keyboard_state & 
+	return (pcw16_keyboard_state &
 		(PCW16_KEYBOARD_PARITY_MASK |
 		 PCW16_KEYBOARD_STOP_BIT_MASK |
 		 PCW16_KEYBOARD_START_BIT_MASK |
@@ -1215,7 +1215,7 @@ WRITE_HANDLER(pcw16_keyboard_control_w)
 	}
 
 	/* clear read/write bits */
-	pcw16_keyboard_state &= 
+	pcw16_keyboard_state &=
 		~(PCW16_KEYBOARD_FORCE_KEYBOARD_CLOCK |
 			PCW16_KEYBOARD_TRANSMIT_MODE);
 	/* set read/write bits from data */
@@ -1631,8 +1631,8 @@ WRITE_HANDLER(pcw16_system_control_w)
 			/* bit 4 - monitor on/off (1==on) */
 
 			pcw16_4_bit_port = data>>4;
-			
-			
+
+
 		}
 		break;
 	}
@@ -1731,7 +1731,7 @@ static void pcw16_com_refresh_connected(int serial_port_id)
 			{
 				new_inputs = UART8250_INPUTS_RING_INDICATOR;
 			}
-			
+
 			uart8250_handshake_in(1, new_inputs);
 		}
 		break;
@@ -1750,7 +1750,7 @@ static uart8250_interface pcw16_com_interface[2]=
 	},
 	{
 		TYPE16550,
-		1843200,        
+		1843200,
 		pcw16_com_interrupt,
 		NULL,
 		NULL,
@@ -1870,18 +1870,18 @@ void pcw16_init_machine(void)
 	pcw16_system_status = 0;
 	pcw16_interrupt_counter = 0;
 
-	/* video ints */	
+	/* video ints */
 	pcw16_timer = timer_pulse(TIME_IN_MSEC(5.83), 0,pcw16_timer_callback);
 	/* rtc timer */
 	pcw16_rtc_timer = timer_pulse(TIME_IN_SEC(1.0f/256.0f), 0, rtc_timer_callback);
 
 	pcw16_keyboard_timer = timer_pulse(TIME_IN_HZ(50), 0, pcw16_keyboard_timer_callback);
-	
+
 
 	pc_fdc_init(&pcw16_fdc_interface);
 	uart8250_init(0, pcw16_com_interface);
 	uart8250_init(1, pcw16_com_interface+1);
-	
+
 	/* initialise mouse */
 	pc_mouse_set_protocol(TYPE_MOUSE_SYSTEMS);
 	pc_mouse_set_input_base(1);
@@ -1893,7 +1893,7 @@ void pcw16_init_machine(void)
 	at_keyboard_set_scan_code_set(3);
 	at_keyboard_set_input_port_base(4);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
-	
+
 	pcw16_reset();
 
 	beep_set_state(0);
@@ -1944,7 +1944,7 @@ INPUT_PORTS_START(pcw16)
 	PORT_BITX(0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Power Switch/Suspend", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
 	PORT_DIPSETTING(0x40, DEF_STR( On) )
-	
+
 	INPUT_MOUSE_SYSTEMS
 
 	AT_KEYBOARD

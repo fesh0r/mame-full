@@ -18,8 +18,8 @@
 #include "vidhrdw/generic.h"
 #include "osdepend.h"
 #include "driver.h"
-#include "mess/machine/nes.h"
-#include "mess/machine/nes_mmc.h"
+#include "machine/nes.h"
+#include "machine/nes_mmc.h"
 
 //#define LOG_MMC
 #define LOG_FDS
@@ -221,7 +221,7 @@ static void chr8 (int bank)
 static void chr4_0 (int bank)
 {
 	int i;
-	
+
 	bank &= ((nes.chr_chunks << 1) - 1);
 	for (i = 0; i < 4; i ++)
 		nes_vram[i] = bank * 256 + 64*i;
@@ -230,7 +230,7 @@ static void chr4_0 (int bank)
 static void chr4_4 (int bank)
 {
 	int i;
-	
+
 	bank &= ((nes.chr_chunks << 1) - 1);
 	for (i = 4; i < 8; i ++)
 		nes_vram[i] = bank * 256 + 64*(i-4);
@@ -239,7 +239,7 @@ static void chr4_4 (int bank)
 static void chr2_0 (int bank)
 {
 	int i;
-	
+
 	bank &= ((nes.chr_chunks << 2) - 1);
 	for (i = 0; i < 2; i ++)
 		nes_vram[i] = bank * 128 + 64*i;
@@ -248,7 +248,7 @@ static void chr2_0 (int bank)
 static void chr2_2 (int bank)
 {
 	int i;
-	
+
 	bank &= ((nes.chr_chunks << 2) - 1);
 	for (i = 2; i < 4; i ++)
 		nes_vram[i] = bank * 128 + 64*(i-2);
@@ -257,7 +257,7 @@ static void chr2_2 (int bank)
 static void chr2_4 (int bank)
 {
 	int i;
-	
+
 	bank &= ((nes.chr_chunks << 2) - 1);
 	for (i = 4; i < 6; i ++)
 		nes_vram[i] = bank * 128 + 64*(i-4);
@@ -266,7 +266,7 @@ static void chr2_4 (int bank)
 static void chr2_6 (int bank)
 {
 	int i;
-	
+
 	bank &= ((nes.chr_chunks << 2) - 1);
 	for (i = 6; i < 8; i ++)
 		nes_vram[i] = bank * 128 + 64*(i-6);
@@ -543,7 +543,7 @@ static void mapper4_set_prg (void)
 {
 	MMC3_prg0 &= prg_mask;
 	MMC3_prg1 &= prg_mask;
-	
+
 	if (MMC3_cmd & 0x40)
 	{
 		cpu_setbank (1, &nes.rom[(nes.prg_chunks-1) * 0x4000 + 0x10000]);
@@ -574,7 +574,7 @@ static void mapper4_set_chr (void)
 int mapper4_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	if (scanline <= BOTTOM_VISIBLE_SCANLINE)
 	{
 /* Uncommenting this breaks Gauntlet 2 */
@@ -584,7 +584,7 @@ int mapper4_irq (int scanline)
 		{
 			/* Decrement & check the IRQ scanline counter */
 			if ((IRQ_enable) && (PPU_Control1 & 0x18))
-			{	
+			{
 				if (IRQ_count == 0)
 				{
 					IRQ_count = IRQ_count_latch;
@@ -620,7 +620,7 @@ static void mapper4_w (int offset, int data)
 			break;
 
 		case 0x0001: /* $8001 */
-		{	
+		{
 			UINT8 cmd = MMC3_cmd & 0x07;
 			switch (cmd)
 			{
@@ -639,7 +639,7 @@ static void mapper4_w (int offset, int data)
 					MMC3_prg0 = data;
 					mapper4_set_prg ();
 					break;
-					
+
 				case 7:
 					MMC3_prg1 = data;
 					mapper4_set_prg ();
@@ -711,7 +711,7 @@ int mapper5_irq (int scanline)
 	else if (scanline > BOTTOM_VISIBLE_SCANLINE)
 		IRQ_status &= ~0x40;
 #endif
-	
+
 	if (scanline == IRQ_count)
 	{
 		if (IRQ_enable)
@@ -734,7 +734,7 @@ int mapper5_l_r (int offset)
 		return MMC5_vram[offset - 0x1b00];
 	}
 #endif
-	
+
 	switch (offset)
 	{
 		case 0x1104: /* $5204 */
@@ -765,7 +765,7 @@ int mapper5_l_r (int offset)
 static void mapper5_sync_vrom (int mode)
 {
 	int i;
-	
+
 	for (i = 0; i < 8; i ++)
 		nes_vram[i] = vrom_bank[0 + (mode * 8)] * 64;
 }
@@ -775,7 +775,7 @@ void mapper5_l_w (int offset, int data)
 //	static int vrom_next[4];
 	static int vrom_page_a;
 	static int vrom_page_b;
-	
+
 //	logerror("Mapper 5 write, offset: %04x, data: %02x\n", offset + 0x4100, data);
 	/* Send $5000-$5015 to the sound chip */
 	if ((offset >= 0xf00) && (offset <= 0xf15))
@@ -783,7 +783,7 @@ void mapper5_l_w (int offset, int data)
 		NESPSG_0_w (offset & 0x1f, data);
 		return;
 	}
-	
+
 #ifdef MMC5_VRAM
 	/* $5c00 - $5fff: extended videoram attributes */
 	if ((offset >= 0x1b00) && (offset <= 0x1eff))
@@ -793,7 +793,7 @@ void mapper5_l_w (int offset, int data)
 		return;
 	}
 #endif
-	
+
 	switch (offset)
 	{
 		case 0x1000: /* $5100 */
@@ -805,7 +805,7 @@ void mapper5_l_w (int offset, int data)
 			MMC5_vrom_bank_mode = data & 0x03;
 			logerror ("MMC5 vrom bank mode: %02x\n", data);
 			break;
-			
+
 		case 0x1002: /* $5102 */
 			if (data == 0x02)
 				MMC5_vram_protect |= 1;
@@ -842,7 +842,7 @@ void mapper5_l_w (int offset, int data)
 			/* The & 4 is a hack that'll tide us over for now */
 			battery_ram = &nes.wram[(data & 4) * 0x2000];
 			break;
-			
+
 		case 0x1014: /* $5114 */
 			logerror ("MMC5 $5114 bank select: %02x (mode: %d)\n", data, MMC5_rom_bank_mode);
 			switch (MMC5_rom_bank_mode)
@@ -1201,7 +1201,7 @@ void mapper5_l_w (int offset, int data)
 					break;
 			}
 			break;
-			
+
 		case 0x1103: /* $5203 */
 			IRQ_count = data;
 			MMC5_scanline = data;
@@ -1217,7 +1217,7 @@ void mapper5_l_w (int offset, int data)
 		case 0x1106: /* $5206 */
 			mult2 = data;
 			break;
-			
+
 		default:
 			logerror("** MMC5 uncaught write, offset: %04x, data: %02x\n", offset + 0x4100, data);
 			break;
@@ -1436,10 +1436,10 @@ static void mapper15_w (int offset, int data)
 int bandai_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	/* 114 is the number of cycles per scanline */
 	/* TODO: change to reflect the actual number of cycles spent */
-	
+
 	if (IRQ_enable)
 	{
 		if (IRQ_count <= 114)
@@ -1455,7 +1455,7 @@ int bandai_irq (int scanline)
 static void mapper16_w (int offset, int data)
 {
 	logerror ("mapper16 (mid and high) w, offset: %04x, data: %02x\n", offset, data);
-	
+
 	switch (offset & 0x000f)
 	{
 		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
@@ -1485,7 +1485,7 @@ static void mapper16_w (int offset, int data)
 		case 0x0c:
 			IRQ_count &= 0x00ff;
 			IRQ_count |= (data << 8);
-			break;			
+			break;
 		default:
 			logerror("** uncaught mapper 16 write, offset: %04x, data: %02x\n", offset, data);
 			break;
@@ -1546,7 +1546,7 @@ static void mapper17_l_w (int offset, int data)
 int jaleco_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	if (scanline <= BOTTOM_VISIBLE_SCANLINE)
 	{
 		/* Increment & check the IRQ scanline counter */
@@ -1582,8 +1582,8 @@ int jaleco_irq (int scanline)
 	{
 		IRQ_count = IRQ_count_latch;
 	}
-	
-	
+
+
 	return ret;
 }
 
@@ -1636,7 +1636,7 @@ static void mapper18_w (int offset, int data)
 
 		/* $9002, 3 (1002, 3) uncaught = Jaleco Baseball writes 0 */
 		/* believe it's related to battery-backed ram enable/disable */
-		
+
 		case 0x2000:
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
@@ -1793,14 +1793,14 @@ static void mapper18_w (int offset, int data)
 int namcot_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	IRQ_count ++;
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable && (IRQ_count == 0x7fff))
 	{
 		ret = M6502_INT_IRQ;
 	}
-	
+
 	return ret;
 }
 
@@ -1877,10 +1877,10 @@ static void mapper19_w (int offset, int data)
 int fds_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	if (IRQ_enable_latch)
 		ret = M6502_INT_IRQ;
-	
+
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable)
 	{
@@ -1893,7 +1893,7 @@ int fds_irq (int scanline)
 		else
 			IRQ_count -= 114;
 	}
-	
+
 	return ret;
 }
 
@@ -1978,9 +1978,9 @@ WRITE_HANDLER ( fds_w )
 			else
 				ppu_mirror_v ();
 			if ((!(data & 0x40)) && (nes_fds.write_reg & 0x40))
-				nes_fds.head_position -= 2; // ??? 
+				nes_fds.head_position -= 2; // ???
 			IRQ_enable_latch = data & 0x80;
-				
+
 			nes_fds.write_reg = data;
 			break;
 	}
@@ -1994,7 +1994,7 @@ WRITE_HANDLER ( fds_w )
 int konami_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable && (++IRQ_count == 0x100))
 	{
@@ -2002,7 +2002,7 @@ int konami_irq (int scanline)
 		IRQ_enable = IRQ_enable_latch;
 		ret = M6502_INT_IRQ;
 	}
-	
+
 	return ret;
 }
 
@@ -2111,7 +2111,7 @@ static void konami_vrc2a_w (int offset, int data)
 static void konami_vrc2b_w (int offset, int data)
 {
 	UINT16 select;
-	
+
 //	logerror("konami_vrc2b_w offset: %04x value: %02x\n", offset, data);
 
 	if (offset < 0x3000)
@@ -2149,7 +2149,7 @@ static void konami_vrc2b_w (int offset, int data)
 	select = (offset & 0x7000) |
 		(offset & 0x03) |
 		((offset & 0x0c) >> 2);
-		
+
 	switch (select)
 	{
 		case 0x3000:
@@ -2286,7 +2286,7 @@ static void konami_vrc4_w (int offset, int data)
 			break;
 
 		/* $1001 is uncaught */
-		
+
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= ((nes.prg_chunks << 1) - 1);
@@ -2501,7 +2501,7 @@ static void konami_vrc6a_w (int offset, int data)
 			break;
 		case 0x7002:
 			IRQ_enable = IRQ_enable_latch;
-			break;		
+			break;
 
 		default:
 			logerror("konami_vrc6_w uncaught addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -2575,7 +2575,7 @@ static void konami_vrc6b_w (int offset, int data)
 			break;
 		case 0x7001:
 			IRQ_enable = IRQ_enable_latch;
-			break;		
+			break;
 		case 0x7002:
 			IRQ_count = IRQ_count_latch;
 			IRQ_enable = data & 0x02;
@@ -2591,7 +2591,7 @@ static void konami_vrc6b_w (int offset, int data)
 static void mapper32_w (int offset, int data)
 {
 	static int bankSel;
-	
+
 //	logerror("mapper32_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
 	switch (offset & 0x7000)
@@ -2700,17 +2700,17 @@ static void mapper34_w (int offset, int data)
 	/* This portion of the mapper is nearly identical to Mapper 7, except no one-screen mirroring */
 	/* Deadly Towers is really a Mapper 34 game - the demo screens look wrong using mapper 7. */
 	logerror("Mapper 34 w, offset: %04x, data: %02x\n", offset, data);
-	
+
 	prg32 (data);
 }
 
 int mapper40_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	/* Decrement & check the IRQ scanline counter */
 	if (IRQ_enable)
-	{	
+	{
 		if (--IRQ_count == 0)
 		{
 			ret = M6502_INT_IRQ;
@@ -2723,7 +2723,7 @@ int mapper40_irq (int scanline)
 static void mapper40_w (int offset, int data)
 {
 	logerror("mapper40_w, offset: %04x, data: %02x\n", offset, data);
-	
+
 	switch (offset & 0x6000)
 	{
 		case 0x0000:
@@ -2904,14 +2904,14 @@ static void mapper64_w (int offset, int data)
 int irem_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable)
 	{
 		if (--IRQ_count == 0)
 			ret = M6502_INT_IRQ;
 	}
-	
+
 	return ret;
 }
 
@@ -2941,7 +2941,7 @@ static void mapper65_w (int offset, int data)
 		case 0x1006:
 			IRQ_enable = IRQ_count;
 			break;
-			
+
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= prg_mask;
@@ -3011,10 +3011,10 @@ static void mapper66_w (int offset, int data)
 int sunsoft_irq (int scanline)
 {
 	int ret = M6502_INT_NONE;
-	
+
 	/* 114 is the number of cycles per scanline */
 	/* TODO: change to reflect the actual number of cycles spent */
-	
+
 	if (IRQ_enable)
 	{
 		if (IRQ_count <= 114)
@@ -3079,7 +3079,7 @@ static void mapper68_mirror (int m68_mirror, int m0, int m1)
 {
 	/* The 0x20000 (128k) offset is a magic number */
 	#define M68_OFFSET 0x20000
-	
+
 	switch (m68_mirror)
 	{
 		case 0x00: ppu_mirror_h (); break;
@@ -3117,7 +3117,7 @@ static void mapper68_w (int offset, int data)
 {
 	static int m68_mirror;
 	static int m0, m1;
-	
+
 	switch (offset & 0x7000)
 	{
 		case 0x0000:
@@ -3176,7 +3176,7 @@ static void mapper69_w (int offset, int data)
 				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
 					nes_vram [cmd] = data * 64;
 					break;
-				
+
 				/* TODO: deal with bankswitching/write-protecting the mid-mapper area */
 				case 8:
 					if (!(data & 0x40))
@@ -3186,7 +3186,7 @@ static void mapper69_w (int offset, int data)
 					else
 						logerror ("mapper69_w, cmd 8, data: %02x\n", data);
 					break;
-				
+
 				case 9:
 					prg8_89 (data);
 					break;
@@ -3216,7 +3216,7 @@ static void mapper69_w (int offset, int data)
 					break;
 			}
 			break;
-			
+
 		default:
 			logerror("mapper69_w uncaught %04x value: %02x\n", offset + 0x8000, data);
 			break;
@@ -3246,7 +3246,7 @@ static void mapper70_w (int offset, int data)
 static void mapper71_m_w (int offset, int data)
 {
 	logerror("mapper71_m_w offset: %04x, data: %02x\n", offset, data);
-	
+
 	prg16_89ab (data);
 }
 
@@ -3262,7 +3262,7 @@ static void mapper72_w (int offset, int data)
 {
 	logerror("mapper72_w, offset %04x, data: %02x\n", offset, data);
 	/* This routine is busted */
-	
+
 //	prg32 ((data & 0xf0) >> 4);
 //	prg16_89ab (data & 0x0f);
 //	prg16_89ab ((data & 0xf0) >> 4);
@@ -3369,7 +3369,7 @@ static void mapper79_l_w (int offset, int data)
 	{
 		/* Select 8k VROM bank */
 		chr8 (data & 0x07);
-		
+
 		/* Select 32k ROM bank */
 		prg32 ((data & 0x08) >> 3);
 	}
@@ -3383,7 +3383,7 @@ static void mapper79_w (int offset, int data)
 static void mapper80_m_w (int offset, int data)
 {
 	logerror("mapper80_m_w, offset: %04x, data: %02x\n", offset, data);
-	
+
 	switch (offset)
 	{
 		case 0x1ef0:
@@ -3455,11 +3455,11 @@ static void mapper80_m_w (int offset, int data)
 static void mapper82_m_w (int offset, int data)
 {
 	static int vrom_switch;
-	
+
 	/* This mapper has problems */
-	
+
 	logerror("mapper82_m_w, offset: %04x, data: %02x\n", offset, data);
-	
+
 	switch (offset)
 	{
 		case 0x1ef0:
@@ -3495,7 +3495,7 @@ static void mapper82_m_w (int offset, int data)
 		case 0x1ef6:
 			vrom_switch = !((data & 0x02) << 1);
 			break;
-			
+
 		case 0x1efa:
 			/* Switch 8k ROM at $8000 */
 			prg8_89 (data >> 2);
@@ -3588,7 +3588,7 @@ static void konami_vrc7_w (int offset, int data)
 			break;
 		case 0x7008: case 0x7010: case 0x7018:
 			IRQ_enable = IRQ_enable_latch;
-			break;		
+			break;
 
 		default:
 			logerror("konami_vrc7_w uncaught addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -3623,7 +3623,7 @@ static void mapper87_m_w (int offset, int data)
 static void mapper91_m_w (int offset, int data)
 {
 	logerror ("mapper91_m_w, offset: %04x, data: %02x\n", offset, data);
-	
+
 	switch (offset & 0x7000)
 	{
 		case 0x0000:
@@ -3661,7 +3661,7 @@ static void mapper228_w (int offset, int data)
 
 	/* Determine low 4 bits of program bank */
 	bank = (offset & 0x780) >> 7;
-	
+
 #if 0
 	/* Determine high 2 bits of program bank */
 	switch (offset & 0x1800)
@@ -3727,10 +3727,10 @@ int mapper_reset (int mapperNum)
 	prg_mask = ((nes.prg_chunks << 1) - 1);
 
 	MMC5_vram_control = 0;
-	
+
 	/* Point the WRAM/battery area to the first RAM bank */
 	cpu_setbank (5, &nes.wram[0x0000]);
-	
+
 	switch (mapperNum)
 	{
 		case 0:

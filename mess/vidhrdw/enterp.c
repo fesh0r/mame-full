@@ -5,9 +5,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "mess/vidhrdw/nick.h"
-#include "mess/vidhrdw/epnick.h"
-#include "mess/vidhrdw/enterp.h"
+#include "vidhrdw/nick.h"
+#include "vidhrdw/epnick.h"
+#include "vidhrdw/enterp.h"
 
 /***************************************************************************
   Start the video hardware emulation.

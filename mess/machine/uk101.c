@@ -10,8 +10,8 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "mess/machine/mc6850.h"
-#include "mess/includes/uk101.h"
+#include "machine/mc6850.h"
+#include "includes/uk101.h"
 
 static	int		uk101_tape_size = 0;
 static	UINT8	*uk101_tape_image = 0;

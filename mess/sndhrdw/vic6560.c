@@ -11,8 +11,8 @@
 #include "mame.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/vic6560.h"
+#include "includes/cbm.h"
+#include "includes/vic6560.h"
 
 /*#define NEW_MODELL */
 /*
@@ -25,12 +25,12 @@
 /*
  * noise channel
  * based on a document by diku0748@diku.dk (Asger Alstrup Nielsen)
- * 
+ *
  * 23 bit shift register
  * initial value (0x7ffff8)
  * after shift bit 0 is set to bit 22 xor bit 17
  * dac sample bit22 bit20 bit16 bit13 bit11 bit7 bit4 bit2(lsb)
- * 
+ *
  * emulation:
  * allocate buffer for 5 sec sampledata (fastest played frequency)
  * and fill this buffer in init with the required sample
@@ -59,7 +59,7 @@
 static int channel, tone1pos = 0, tone2pos = 0, tone3pos = 0,
 #ifdef NEW_MODELL
 	ticks_per_sample,
-	tone1count = 0, tone2count = 0, tone3count = 0, 
+	tone1count = 0, tone2count = 0, tone3count = 0,
 	tone1latch = 1, tone2latch = 1, tone3latch = 1,
 #else
 	tonesize, tone1samples = 1, tone2samples = 1, tone3samples = 1,

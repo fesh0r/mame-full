@@ -17,11 +17,11 @@
  ******************************************************************************/
 
 #include "driver.h"
-#include "mess/sndhrdw/dave.h"
-#include "mess/machine/enterp.h"
-#include "mess/vidhrdw/enterp.h"
-#include "mess/vidhrdw/epnick.h"
-#include "mess/machine/wd179x.h"
+#include "sndhrdw/dave.h"
+#include "machine/enterp.h"
+#include "vidhrdw/enterp.h"
+#include "vidhrdw/epnick.h"
+#include "machine/wd179x.h"
 #include "cpuintrf.h"
 
 extern const char *ep128_floppy_name[4];

@@ -103,7 +103,7 @@
 #include "sound/tiaintf.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
-#include "mess/machine/riot.h"
+#include "machine/riot.h"
 
 /* vidhrdw/a2600.c */
 extern int a2600_vh_start(void);

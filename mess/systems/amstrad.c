@@ -8,12 +8,12 @@
  ******************************************************************************/
 #include "driver.h"
 #include "machine/8255ppi.h"
-/*#include "mess/systems/i8255.h" */
-#include "mess/vidhrdw/hd6845s.h"
-#include "mess/machine/amstrad.h"
-#include "mess/vidhrdw/amstrad.h"
-#include "mess/includes/nec765.h"
-#include "mess/includes/dsk.h"
+/*#include "systems/i8255.h" */
+#include "vidhrdw/hd6845s.h"
+#include "machine/amstrad.h"
+#include "vidhrdw/amstrad.h"
+#include "includes/nec765.h"
+#include "includes/dsk.h"
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
 hardware (GA and CRTC - the CRTC specifies the memory address to access,

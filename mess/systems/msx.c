@@ -9,9 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
-#include "mess/vidhrdw/tms9928a.h"
-#include "mess/machine/msx.h"
-#include "mess/sndhrdw/scc.h"
+#include "vidhrdw/tms9928a.h"
+#include "machine/msx.h"
+#include "sndhrdw/scc.h"
 
 extern MSX msx1;
 

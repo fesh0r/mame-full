@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 #include "driver.h"
-#include "mess/includes/kaypro.h"
+#include "includes/kaypro.h"
 
 static struct MemoryReadAddress readmem[] =
 {

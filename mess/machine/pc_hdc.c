@@ -15,10 +15,10 @@
 	read from the MBR (master boot record) at offset 1AD to 1BD is wrong.
 
 ***************************************************************************/
-#include "mess/includes/pic8259.h"
-#include "mess/includes/dma8237.h"
+#include "includes/pic8259.h"
+#include "includes/dma8237.h"
 
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
 #define MAX_BOARD	2				/* two boards supported */
 #define MAX_HARD	4				/* up to four had disks */

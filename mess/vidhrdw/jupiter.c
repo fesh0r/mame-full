@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/jupiter.h"
+#include "includes/jupiter.h"
 
 unsigned char *jupiter_charram;
 size_t jupiter_charram_size;

@@ -10,7 +10,7 @@
 #include "cpuintrf.h"
 #include "machine/z80fmly.h"
 #include "cpu\z80\z80.h"
-#include "mess/vidhrdw/kc.h"
+#include "vidhrdw/kc.h"
 
 #define KC85_4_SCREEN_WIDTH 320
 #define KC85_4_SCREEN_HEIGHT (32*8)

@@ -8,7 +8,7 @@
 #define __MACHINE_GB_C
 
 #include "driver.h"
-#include "mess/machine/gb.h"
+#include "machine/gb.h"
 #include "cpu/z80gb/z80gb.h"
 
 static UINT8 MBCType;				   /* MBC type: 1 for MBC2, 0 for MBC1            */

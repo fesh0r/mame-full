@@ -9,10 +9,10 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "mess/machine/bbc.h"
-#include "mess/vidhrdw/bbc.h"
-#include "mess/vidhrdw/m6845.h"
-#include "mess/vidhrdw/ttchar.h"
+#include "machine/bbc.h"
+#include "vidhrdw/bbc.h"
+#include "vidhrdw/m6845.h"
+#include "vidhrdw/ttchar.h"
 
 /************************************************************************
  * video_refresh flag is used in optimising the screen redrawing

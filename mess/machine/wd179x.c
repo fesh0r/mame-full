@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "mess/machine/wd179x.h"
+#include "machine/wd179x.h"
 
 #define VERBOSE 1
 

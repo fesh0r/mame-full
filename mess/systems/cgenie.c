@@ -28,7 +28,7 @@ NMI
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/cgenie.h"
+#include "vidhrdw/cgenie.h"
 
 extern UINT8 *cgenie_fontram;
 

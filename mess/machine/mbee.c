@@ -9,8 +9,8 @@
 #include "driver.h"
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/wd179x.h"
-#include "mess/machine/mbee.h"
+#include "machine/wd179x.h"
+#include "machine/mbee.h"
 
 static const char *floppy_name[4] = {NULL,NULL,NULL,NULL};
 static void *fdc_file[4] = {NULL,NULL};

@@ -9,7 +9,7 @@
 #include "cpuintrf.h"
 #include "vidhrdw/generic.h"
 #include "machine/z80fmly.h"
-#include "mess/vidhrdw/tms9928a.h"
+#include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "cpu/z80/z80.h"
 #include "osdepend.h"

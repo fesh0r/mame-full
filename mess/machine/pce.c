@@ -1,6 +1,6 @@
 
 #include "driver.h"
-#include "mess/vidhrdw/vdc.h"
+#include "vidhrdw/vdc.h"
 #include "cpu/h6280/h6280.h"
 
 /* the largest possible cartridge image, excluding special games */

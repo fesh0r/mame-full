@@ -18,11 +18,11 @@
 #include "mame.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
 #include "6581_.h"
 #include "mixing.h"
-#include "mess/includes/sid6581.h"
+#include "includes/sid6581.h"
 
 SID6581 sid6581[2]= {{0}};
 

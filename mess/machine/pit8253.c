@@ -17,7 +17,7 @@
  */
 
 #include "driver.h"
-#include "mess/includes/pit8253.h"
+#include "includes/pit8253.h"
 
 #define VERBOSE 2
 

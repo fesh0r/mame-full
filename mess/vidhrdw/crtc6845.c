@@ -15,10 +15,10 @@
 #include "vidhrdw/generic.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/praster.h"
-#include "mess/includes/crtc6845.h"
+#include "includes/praster.h"
+#include "includes/crtc6845.h"
 
 static struct {
 	UINT8 reg[18];

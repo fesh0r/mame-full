@@ -14,7 +14,7 @@
 #include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
 #include "inptport.h"
-#include "mess/includes/apple1.h"
+#include "includes/apple1.h"
 
 struct pia6821_interface apple1_pia0 =
 {

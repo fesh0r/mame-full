@@ -3,9 +3,9 @@
   Tandy 1000 Graphics Adapter (T1T) section
 
 ***************************************************************************/
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
-#include "mess/includes/pc_t1t.h"
+#include "includes/pc_t1t.h"
 
 /* I think pc junior and the first tandy series
  have a graphics adapter with 4 digital lines to the

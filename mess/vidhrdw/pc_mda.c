@@ -3,9 +3,9 @@
   Monochrom Display Adapter (MDA) section
 
 ***************************************************************************/
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
-#include "mess/includes/pc_mda.h"
+#include "includes/pc_mda.h"
 
 #define MDA_HTOTAL  MDA_crtc[HTOTAL]
 #define MDA_HDISP   MDA_crtc[HDISP]

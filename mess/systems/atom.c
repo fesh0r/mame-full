@@ -47,8 +47,8 @@ Hardware:	PPIA 8255
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
-#include "mess/vidhrdw/m6847.h"
-#include "mess/includes/atom.h"
+#include "vidhrdw/m6847.h"
+#include "includes/atom.h"
 
 /* functions */
 

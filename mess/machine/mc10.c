@@ -8,7 +8,7 @@
  *****************************************************************************/
 
 #include "driver.h"
-#include "mess/vidhrdw/m6847.h"
+#include "vidhrdw/m6847.h"
 
 static int mc10_keyboard_strobe;
 

@@ -15,8 +15,8 @@
 #include "msx.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
-#include "mess/vidhrdw/tms9928a.h"
-#include "mess/sndhrdw/scc.h"
+#include "vidhrdw/tms9928a.h"
+#include "sndhrdw/scc.h"
 
 MSX msx1;
 static void msx_set_all_mem_banks (void);

@@ -6,7 +6,7 @@
   I/O ports)
 
 ***************************************************************************/
-#include "mess/includes/trs80.h"
+#include "includes/trs80.h"
 
 #define VERBOSE 1
 

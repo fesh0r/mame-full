@@ -10,7 +10,7 @@ Bruce Tomlin (hardware info)
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
-#include "mess/machine/6522via.h"
+#include "machine/6522via.h"
 
 /* From machine/vectrex.c */
 extern unsigned char *vectrex_ram;

@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/aquarius.h"
+#include "includes/aquarius.h"
 
 int	aquarius_vh_start (void)
 {

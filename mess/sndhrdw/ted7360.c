@@ -10,9 +10,9 @@
 #include "mame.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/c16.h"
-#include "mess/includes/ted7360.h"
+#include "includes/cbm.h"
+#include "includes/c16.h"
+#include "includes/ted7360.h"
 
 /*
  * assumed model:
@@ -26,11 +26,11 @@
  * implemented model:
  * each write resets generator, amount of samples to give out for one
  * period.
- * 
+ *
  * the appropriate value is fetched from the sample
  * fast turning off of channel
  * changing note, when previous note finished
- * 
+ *
  * i hope streambuffer value are sign integer and the
  * DAC behaves like this
  */

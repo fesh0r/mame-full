@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/apple1.h"
+#include "includes/apple1.h"
 
 static	int	dsp_pntr;
 

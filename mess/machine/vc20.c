@@ -19,15 +19,15 @@
 #include "vidhrdw/generic.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/vc20.h"
-#include "mess/includes/vc1541.h"
-#include "mess/machine/6522via.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/cbmieeeb.h"
-#include "mess/includes/vic6560.h"
+#include "includes/vc20.h"
+#include "includes/vc1541.h"
+#include "machine/6522via.h"
+#include "includes/vc20tape.h"
+#include "includes/c1551.h"
+#include "includes/cbmieeeb.h"
+#include "includes/vic6560.h"
 
 static UINT8 keyboard[8] =
 {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -276,7 +276,7 @@ static struct via6522_interface via0 =
 	vc20_via1_write_ca2,
 	vc20_via1_write_cb2,
 	vc20_via1_irq
-}, 
+},
 /* via2,3 used by vc1541 and 2031 disk drives */
 via4 =
 {
@@ -345,7 +345,7 @@ static void vc20_memory_init(void)
 	memset (memory + 0x400, 0xff, 0x1000 - 0x400);
 	memset (memory + 0x2000, 0xff, 0x6000);
 	memset (memory + 0xa000, 0xff, 0x1000);
-	
+
 	/* clears ieee cartrige rom */
 	/* memset (memory + 0xa000, 0xff, 0x2000); */
 

@@ -27,7 +27,7 @@ Aquarius Memory map
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/aquarius.h"
+#include "includes/aquarius.h"
 
 /* structures */
 

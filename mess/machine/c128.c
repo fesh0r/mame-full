@@ -11,17 +11,17 @@
 #include "cpu/m6502/m6502.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/vdc8563.h"
-#include "mess/includes/sid6581.h"
-#include "mess/includes/praster.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
+#include "includes/vic6567.h"
+#include "includes/vdc8563.h"
+#include "includes/sid6581.h"
+#include "includes/praster.h"
 
-#include "mess/includes/c128.h"
+#include "includes/c128.h"
 
 
 /*

@@ -9,7 +9,7 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "mess/includes/p2000t.h"
+#include "includes/p2000t.h"
 
 void p2000t_init_machine(void)
 {

@@ -61,13 +61,13 @@
 
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
 /* lightpen values */
-#include "mess/includes/c64.h"
+#include "includes/c64.h"
 
-#include "mess/includes/vic4567.h"
-#include "mess/includes/vic6567.h"
+#include "includes/vic4567.h"
+#include "includes/vic6567.h"
 
 /*#define GFX */
 
@@ -1829,7 +1829,7 @@ int vic2_raster_irq (void)
 				raws=new_raws;
 				columns=new_columns;
 				osd_set_visible_area(0,columns+16-1,0, raws+16-1);
-			}	 
+			}
 		}
 		if (vic2.vic3&&VIC3_BITPLANES) {
 			if (!osd_skip_this_frame ()) vic3_draw_bitplanes();

@@ -51,7 +51,7 @@ Nascom Memory map
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/nascom1.h"
+#include "includes/nascom1.h"
 
 /* port i/o functions */
 

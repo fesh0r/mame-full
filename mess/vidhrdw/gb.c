@@ -10,7 +10,7 @@
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/gb.h"
+#include "machine/gb.h"
 
 static UINT8 bg_zbuf[160];
 

@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
-#include "mess/machine/6522via.h"
+#include "machine/6522via.h"
 #include "cpu/m6809/m6809.h"
 
 #define BLACK 0x00

@@ -10,7 +10,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/vdc.h"
+#include "vidhrdw/vdc.h"
 #include "cpu/h6280/h6280.h"
 
 /* from machine\pce.c */

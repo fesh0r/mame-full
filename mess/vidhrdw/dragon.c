@@ -37,7 +37,7 @@
  */
 #include "driver.h"
 #include "machine/6821pia.h"
-#include "mess/vidhrdw/m6847.h"
+#include "vidhrdw/m6847.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 

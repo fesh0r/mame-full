@@ -1,6 +1,6 @@
 #include "driver.h"
-#include "mess/includes/uart8250.h"
-#include "mess/includes/pc_mouse.h"
+#include "includes/uart8250.h"
+#include "includes/pc_mouse.h"
 
 static struct {
 
@@ -69,7 +69,7 @@ static void pc_mouse_scan(int n)
 	ny = readinputport((pc_mouse.input_base+2));
 	if (ny>=0x800) ny-=0x1000;
 	else if (ny<=-0x800) ny+=0x1000;
-	
+
 	dy = ny - oy;
 	oy = ny;
 
@@ -87,7 +87,7 @@ static void pc_mouse_scan(int n)
 	{
 		switch (pc_mouse.protocol)
 		{
-			
+
 		default:
 		case TYPE_MICROSOFT_MOUSE:
 			{
@@ -111,10 +111,10 @@ static void pc_mouse_scan(int n)
 			}
 			break;
 
-			/* mouse systems mouse 
-			from "PC Mouse information" by Tomi Engdahl */ 
+			/* mouse systems mouse
+			from "PC Mouse information" by Tomi Engdahl */
 
-			/*			
+			/*
 			The data is sent in 5 byte packets in following format:
 					D7      D6      D5      D4      D3      D2      D1      D0
 
@@ -127,13 +127,13 @@ static void pc_mouse_scan(int n)
 			LB is left button state (0=pressed, 1=released)
 			CB is center button state (0=pressed, 1=released)
 			RB is right button state (0=pressed, 1=released)
-			X7-X0 movement in X direction since last packet in signed byte 
+			X7-X0 movement in X direction since last packet in signed byte
 				  format (-128..+127), positive direction right
-			Y7-Y0 movement in Y direction since last packet in signed byte 
+			Y7-Y0 movement in Y direction since last packet in signed byte
 				  format (-128..+127), positive direction up
-			X7'-X0' movement in X direction since sending of X7-X0 packet in signed byte 
+			X7'-X0' movement in X direction since sending of X7-X0 packet in signed byte
 				  format (-128..+127), positive direction right
-			Y7'-Y0' movement in Y direction since sending of Y7-Y0 in signed byte 
+			Y7'-Y0' movement in Y direction since sending of Y7-Y0 in signed byte
 				  format (-128..+127), positive direction up
 
 			The last two bytes in the packet (bytes 4 and 5) contains information about movement data changes which have occured after data butes 2 and 3 have been sent. */
@@ -207,7 +207,7 @@ void pc_mouse_handshake_in(int n, int outputs)
 			pc_mouse.queue[pc_mouse.head] = 'M';  /* put 'M' into the buffer.. hmm */
 			pc_mouse.head = ++pc_mouse.head % 256;
 			/* start a timer to scan the mouse input */
-			pc_mouse.timer = timer_pulse(TIME_IN_HZ(240), 
+			pc_mouse.timer = timer_pulse(TIME_IN_HZ(240),
 									  pc_mouse.serial_port, pc_mouse_scan);
 		}
 		else

@@ -13,7 +13,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
-#include "mess/includes/pit8253.h"
+#include "includes/pit8253.h"
 
 /* from src/mess/machine/mz700.c */
 extern void init_mz700(void);

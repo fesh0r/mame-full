@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/hd6845s.h"
+#include "vidhrdw/hd6845s.h"
 
 
 
@@ -146,7 +146,7 @@ int     hd6845s_index_r()
 {
 	return 0x0ff;
 }
-                
+
 void    hd6845s_update_line(void)
 {
         crt.Registers[HD6845S_RA]++;

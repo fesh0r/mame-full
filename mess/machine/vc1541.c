@@ -103,11 +103,11 @@ FF00-FFFF       Jump table, vectors
 #include "6522via.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
-#include "mess/includes/cbmdrive.h"
-#include "mess/includes/tpi6525.h"
+#include "includes/cbm.h"
+#include "includes/cbmdrive.h"
+#include "includes/tpi6525.h"
 
-#include "mess/includes/vc1541.h"
+#include "includes/vc1541.h"
 
 /*
  * only for testing at the moment

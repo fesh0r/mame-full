@@ -83,7 +83,7 @@ binary form plus a makro assembler for PDP1 programs.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/pdp1.h"
+#include "vidhrdw/pdp1.h"
 /*
  * PRECISION CRT DISPLAY (TYPE 30)
  * is the only display - hardware emulated, this is needed for SPACEWAR!

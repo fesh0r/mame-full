@@ -52,7 +52,7 @@ New (000531) :
 #include "driver.h"
 #include "wd179x.h"
 #include "tms9901.h"
-#include "mess/vidhrdw/tms9928a.h"
+#include "vidhrdw/tms9928a.h"
 #include <math.h>
 
 #include "ti99_4x.h"

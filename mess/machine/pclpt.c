@@ -1,8 +1,8 @@
 #include "driver.h"
-#include "mess/includes/pclpt.h"
+#include "includes/pclpt.h"
 
 #define LOG(LEVEL,N,M,A)  \
-if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; 
+if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A;
 
 
 //#define VERBOSE_LPT
@@ -60,7 +60,7 @@ static int pc_LPT_r(int n, int offset)
 		case 1:
 			/* set status 'out of paper', '*no* error', 'IRQ has *not* occured' */
 			LPT_status[n] = 0x09c;	//0x2c;
-			
+
 			LPT_status[n] &= ~(1<<4);
 			if (LPT_control[n] & (1<<3))
 			{

@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "cpu/sc61860/sc61860.h"
 
-#include "mess/includes/pocketc.h"
+#include "includes/pocketc.h"
 
 
 /* pc1430 no peek poke operations! */
@@ -15,7 +15,7 @@
 /* pc1280?? */
 
 /* pc126x
-   port 
+   port
    1 ?
    2 +6v
    3 gnd
@@ -28,9 +28,9 @@
   10 ib5
   11 ib4 */
 
-/* pc1350 other keyboard, 
-   f2 instead f0 at port 
-   port 
+/* pc1350 other keyboard,
+   f2 instead f0 at port
+   port
    1 ?
    2 +6v
    3 gnd
@@ -59,7 +59,7 @@
    c5 beeper on
    c6 beeper steuerung
 
-   port 
+   port
    1 ?
    2 +6v
    3 gnd
@@ -137,7 +137,7 @@ static struct MemoryWriteAddress pc1260_writemem[] =
 	{ 0x4000, 0x57ff, MWA_RAM }, /* 1261 */
 	{ 0x5800, 0x67ff, MWA_RAM },
 	{ 0x6000, 0x6fff, MWA_RAM },
-	
+
 	{ 0x8000, 0xffff, MWA_ROM },
     {-1}
 };
@@ -157,7 +157,7 @@ static struct MemoryWriteAddress pc1350_writemem[] =
 	{ 0x2000, 0x3fff, MWA_RAM }, /*ram card 16k */
 	{ 0x4000, 0x5fff, MWA_RAM }, /*ram card 16k oder 8k */
 	{ 0x6000, 0x6fff, MWA_RAM },
-	
+
 	{ 0x8000, 0xffff, MWA_ROM },
     {-1}
 };
@@ -293,7 +293,7 @@ static unsigned short pc1401_colortable[] = {
 
 static struct GfxLayout pc1401_charlayout =
 {
-        2,14,                                   
+        2,14,
         128,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0,0 },                  /* no bitplanes; 1 bit per pixel */
@@ -333,7 +333,7 @@ static int pocketc_frame_int(void)
 }
 
 static SC61860_CONFIG config={
-	pc1401_reset, pc1401_brk, 
+	pc1401_reset, pc1401_brk,
 	pc1401_ina, pc1401_outa,
 	pc1401_inb, pc1401_outb,
 	pc1401_outc
@@ -358,11 +358,11 @@ static struct MachineDriver machine_driver_pc1401 =
 	pc1401_machine_init,
 	pc1401_machine_stop,
 
-	/* 
+	/*
 	   aim: show sharp with keyboard
 	   resolution depends on the dots of the lcd
 	   (lcd dot displayed as 2x2 pixel) */
-	   
+
 	592, 252, { 0, 592 - 1, 0, 252 - 1},
 	pc1401_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) / 3,

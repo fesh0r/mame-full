@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "mess/includes/nascom1.h"
+#include "includes/nascom1.h"
 
 static	int		nascom1_tape_size = 0;
 static	UINT8	*nascom1_tape_image = NULL;
@@ -198,7 +198,7 @@ int	nascom1_init_cartridge(int id)
 			    /* printf ("%04X: %02X %02X %02X %02X %02X %02X %02X %02X\n",
 							  addr, filebyt1, filebyt2, filebyt3, filebyt4,
 									filebyt5, filebyt6, filebyt7, filebyt8); */
-								
+
 			}
 		}
 	}

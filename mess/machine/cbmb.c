@@ -8,18 +8,18 @@
 #include "cpu/m6502/m6509.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/tpi6525.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/cbmieeeb.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/crtc6845.h"
-#include "mess/includes/sid6581.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/tpi6525.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
+#include "includes/cbmieeeb.h"
+#include "includes/vic6567.h"
+#include "includes/crtc6845.h"
+#include "includes/sid6581.h"
 
-#include "mess/includes/cbmb.h"
+#include "includes/cbmb.h"
 
 /* keyboard lines */
 static UINT8 cbmb_keyline[12] = { 0 };
@@ -174,7 +174,7 @@ static void cbmb_irq (int level)
   pa1 ?
   pa0 ?
   pb7 .. 4 gameport 2
-  pb3 .. 0 gameport 1   
+  pb3 .. 0 gameport 1
  */
 static int cbmb_cia_port_a_r(int offset)
 {
@@ -244,10 +244,10 @@ static void cbmb_common_driver_init (void)
 	cbmb_clock=timer_pulse(0.01, 0, cbmb_frame_interrupt);
 
 	cbm_drive_open ();
-	
+
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
-	
+
 	cbm_ieee_open();
 }
 

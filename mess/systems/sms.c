@@ -26,8 +26,8 @@
 #include "sound/sn76496.h"
 #include "sound/2413intf.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/smsvdp.h"
-#include "mess/machine/sms.h"
+#include "vidhrdw/smsvdp.h"
+#include "machine/sms.h"
 
 
 static struct MemoryReadAddress readmem[] =

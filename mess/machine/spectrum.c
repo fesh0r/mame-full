@@ -26,9 +26,9 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "mess/includes/spectrum.h"
-#include "mess/eventlst.h"
-#include "mess/vidhrdw/border.h"
+#include "includes/spectrum.h"
+#include "eventlst.h"
+#include "vidhrdw/border.h"
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))

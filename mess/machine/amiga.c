@@ -9,7 +9,7 @@ ernesto@imagina.com
 ***************************************************************************/
 
 #include "driver.h"
-#include "mess/systems/amiga.h"
+#include "systems/amiga.h"
 
 #define LOG_CUSTOM				0
 #define LOG_CIA					0

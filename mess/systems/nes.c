@@ -12,7 +12,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/nes.h"
+#include "machine/nes.h"
 #include "cpu/m6502/m6502.h"
 
 /* machine/nes.c */
@@ -247,7 +247,7 @@ INPUT_PORTS_START( famicom )
 
 	PORT_START	/* IN10 - arkanoid paddle */
 	PORT_ANALOG( 0xff, 0x7f, IPT_PADDLE, 25, 3, 0x62, 0xf2 )
-	
+
 	PORT_START /* IN11 - fake keys */
 //	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BITX ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3, "Change Disk Side", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -294,7 +294,7 @@ static struct NESinterface nes_interface =
 	{ 100 },
 	N2A03_DEFAULTCLOCK,
 	{ nes_vh_sprite_dma_w },
-	{ NULL }	
+	{ NULL }
 };
 
 static struct NESinterface nespal_interface =
@@ -304,7 +304,7 @@ static struct NESinterface nespal_interface =
 	{ 100 },
 	26601712/15,
 	{ nes_vh_sprite_dma_w },
-	{ NULL }	
+	{ NULL }
 };
 
 ROM_START( nes )

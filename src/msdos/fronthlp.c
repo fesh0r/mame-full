@@ -11,7 +11,8 @@
 #include <unzip.h>
 
 #ifdef MESS
-#include "mess/msdos.h"
+/* HJB: choosing a different name would make sense to avoid ../mess/ */
+#include "../mess/msdos.h"
 #endif
 
 int silentident,knownstatus;

@@ -20,9 +20,9 @@
 #include "assert.h"
 
 #define VERBOSE_DBG 1				   /* general debug messages */
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/cia6526.h"
+#include "includes/cia6526.h"
 
 /* todin pin 50 or 60 hertz frequency */
 #define TODIN_50HZ (this->cra&0x80)  /* else 60 Hz */

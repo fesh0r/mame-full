@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 #include "driver.h"
-#include "mess/includes/kaypro.h"
+#include "includes/kaypro.h"
 #include "cpu/z80/z80.h"
 
 static const char *disk_ids[4] = {"KAY2","KAY2","KAY2","KAY2"};

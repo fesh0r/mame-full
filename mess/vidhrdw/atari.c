@@ -7,8 +7,8 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "mess/machine/atari.h"
-#include "mess/vidhrdw/atari.h"
+#include "machine/atari.h"
+#include "vidhrdw/atari.h"
 
 #ifdef	LSB_FIRST
 #define BYTE_XOR(n) (n)

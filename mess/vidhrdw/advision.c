@@ -3,15 +3,15 @@
   vidhrdw/advision.c
 
   Routines to control the Adventurevision video hardware
-  
+
   Video hardware is composed of a vertical array of 40 LEDs which is
-  reflected off a spinning mirror. 
+  reflected off a spinning mirror.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/advision.h"
+#include "includes/advision.h"
 
 static UINT8 advision_led_latch[8];
 static UINT8 *advision_display;
@@ -33,7 +33,7 @@ int advision_vh_start(void)
 	memset(advision_display, 0, 8 * 8 * 256);
     return 0;
 }
-            
+
 /***************************************************************************
 
   Stop the video hardware emulation.

@@ -35,7 +35,7 @@
 	run on it!!!!!!!!!!!!!!
 
     Later systems had:
-		- black/white monitor, 
+		- black/white monitor,
 		- dedicated printer was removed, and support for any printer was added
 		- 3" internal drive replaced by a 3.5" drive
 
@@ -86,7 +86,7 @@
   compatible with the previous models (though documents ARE compatible)"
 
 
-  TODO: 
+  TODO:
   - Printer hardware emulation (8256 etc)
   - Parallel port emulation (9512, 9512+, 10)
   - emulation of serial hardware
@@ -95,12 +95,12 @@
 #include "driver.h"
 #include "cpuintrf.h"
 // nec765 interface
-#include "mess/includes/nec765.h"
-#include "mess/includes/dsk.h"
+#include "includes/nec765.h"
+#include "includes/dsk.h"
 // pcw video hardware
-#include "mess/includes/pcw.h"
+#include "includes/pcw.h"
 // pcw/pcw16 beeper
-#include "mess/includes/beep.h"
+#include "includes/beep.h"
 
 // uncomment for debug log output
 //#define VERBOSE
@@ -895,7 +895,7 @@ void pcw_init_memory(int size)
 			pcw_ram = malloc(256*1024);
 		}
 		break;
-	
+
 		case 512:
 		{
 			pcw_ram_size = 2;
@@ -1255,7 +1255,7 @@ static struct MachineDriver machine_driver_pcw9512 =
 
 ***************************************************************************/
 
-/* I am loading the boot-program outside of the Z80 memory area, because it 
+/* I am loading the boot-program outside of the Z80 memory area, because it
 is banked. */
 
 // for now all models use the same rom

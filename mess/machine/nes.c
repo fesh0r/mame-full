@@ -1,8 +1,8 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/nes.h"
-#include "mess/machine/nes_mmc.h"
+#include "machine/nes.h"
+#include "machine/nes_mmc.h"
 
 /* Uncomment this to dump reams of ppu state info to the errorlog */
 //#define LOG_PPU

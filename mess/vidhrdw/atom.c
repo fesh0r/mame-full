@@ -5,8 +5,8 @@ atom.c
 ******************************************************************************/
 
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/m6847.h"
-#include "mess/includes/atom.h"
+#include "vidhrdw/m6847.h"
+#include "includes/atom.h"
 
 int atom_vh_start(void)
 {

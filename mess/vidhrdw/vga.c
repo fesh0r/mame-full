@@ -1,4 +1,4 @@
-/* 
+/*
    IBM PC, PC/XT, PC/AT, PS2 25/30
    Video Graphics Adapter
 
@@ -8,9 +8,9 @@
 #include "driver.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/vga.h"
+#include "includes/vga.h"
 
 /* vga
  standard compatible to mda, cga, hercules?, ega
@@ -107,7 +107,7 @@ static struct {
 	struct { UINT8 index, data[0x19]; } crtc;
 	struct { UINT8 index, data[9]; UINT8 latch[4]; } gc;
 	struct { UINT8 index, data[0x15]; bool state; } attribute;
-	struct { 
+	struct {
 		UINT8 read_index, write_index, mask;
 		bool read;
 		int state;
@@ -242,7 +242,7 @@ static int vga_get_crtc_lines(void)
 	int lines=(vga.crtc.data[6]
 			   |((vga.crtc.data[7]&1)<<8)
 			   |((vga.crtc.data[7]&0x20)<<(8-4)))+2;
-	
+
 	return lines;
 }
 
@@ -351,11 +351,11 @@ INLINE UINT8 vga_latch_write(int offs, UINT8 data)
 
 static WRITE_HANDLER(vga_ega_w)
 {
-	if (vga.sequencer.data[2]&1) 
+	if (vga.sequencer.data[2]&1)
 		vga.memory[offset<<2]=vga_latch_write(0,data);
-	if (vga.sequencer.data[2]&2) 
+	if (vga.sequencer.data[2]&2)
 		vga.memory[(offset<<2)+1]=vga_latch_write(1,data);
-	if (vga.sequencer.data[2]&4) 
+	if (vga.sequencer.data[2]&4)
 		vga.memory[(offset<<2)+2]=vga_latch_write(2,data);
 	if (vga.sequencer.data[2]&8)
 		vga.memory[(offset<<2)+3]=vga_latch_write(3,data);
@@ -448,8 +448,8 @@ static READ_HANDLER(vga_crtc_r)
 
 	switch (offset) {
 	case 4: data=vga.crtc.index;break;
-	case 5: 
-		if (vga.crtc.index<sizeof(vga.crtc.data)) 
+	case 5:
+		if (vga.crtc.index<sizeof(vga.crtc.data))
 			data=vga.crtc.data[vga.crtc.index];
 		DBG_LOG(1,"vga crtc read",("%.2x %.2x\n",vga.crtc.index,data));
 		break;
@@ -520,7 +520,7 @@ static WRITE_HANDLER(vga_crtc_w)
 		vga.feature_control=data;
 		break;
 	case 4: vga.crtc.index=data;break;
-	case 5: 
+	case 5:
 		DBG_LOG(1,"vga crtc write",("%.2x %.2x\n",vga.crtc.index,data));
 		if (vga.crtc.index<sizeof(vga.crtc.data))
 			vga.crtc.data[vga.crtc.index]=data;
@@ -582,40 +582,40 @@ READ_HANDLER( vga_port_03c0_r )
 		DBG_LOG(1,"vga dipswitch read",("%.2x %.2x\n",offset,data));
 		break;
 	case 3: data=vga.oak.reg;break;
-	case 4: 
+	case 4:
 		data=vga.sequencer.index;
 		DBG_LOG(2,"vga sequencer index read",("%.2x %.2x\n",offset,data));
 		break;
-	case 5: 
+	case 5:
 		if (vga.sequencer.index<sizeof(vga.sequencer.data))
 			data=vga.sequencer.data[vga.sequencer.index];
 		DBG_LOG(1,"vga sequencer read",("%.2x %.2x\n",vga.sequencer.index,data));
 		break;
-	case 6: 
+	case 6:
 		data=vga.dac.mask;
 		DBG_LOG(3,"vga dac mask read",("%.2x %.2x\n",offset,data));
 		break;
-	case 7: 
+	case 7:
 		if (vga.dac.read) data=0;
 		else data=3;
 		DBG_LOG(3,"vga dac status read",("%.2x %.2x\n",offset,data));
 		break;
-	case 8: 
+	case 8:
 		data=vga.dac.write_index;
 		DBG_LOG(3,"vga dac writeindex read",("%.2x %.2x\n",offset,data));
 		break;
 	case 9:
 		if (vga.dac.read) {
 			switch (vga.dac.state++) {
-			case 0: 
+			case 0:
 				data=vga.dac.color[vga.dac.read_index].red;
 				DBG_LOG(3,"vga dac red read",("%.2x %.2x\n",offset,data));
 				break;
-			case 1: 
+			case 1:
 				data=vga.dac.color[vga.dac.read_index].green;
 				DBG_LOG(3,"vga dac green read",("%.2x %.2x\n",offset,data));
 				break;
-			case 2: 
+			case 2:
 				data=vga.dac.color[vga.dac.read_index].blue;
 				DBG_LOG(3,"vga dac blue read",("%.2x %.2x\n",offset,data));
 				break;
@@ -627,19 +627,19 @@ READ_HANDLER( vga_port_03c0_r )
 			DBG_LOG(1,"vga dac color read",("%.2x %.2x\n",offset,data));
 		}
 		break;
-	case 0xa: 
+	case 0xa:
 		data=vga.feature_control;
 		DBG_LOG(1,"vga feature control read",("%.2x %.2x\n",offset,data));
 		break;
-	case 0xc: 
+	case 0xc:
 		data=vga.miscellaneous_output;
 		DBG_LOG(1,"vga miscellaneous read",("%.2x %.2x\n",offset,data));
 		break;
-	case 0xe: 
+	case 0xe:
 		data=vga.gc.index;
 		DBG_LOG(2,"vga gc index read",("%.2x %.2x\n",offset,data));
 		break;
-	case 0xf: 
+	case 0xf:
 		if (vga.gc.index<sizeof(vga.gc.data)) {
 			data=vga.gc.data[vga.gc.index];
 		}
@@ -682,14 +682,14 @@ WRITE_HANDLER(vga_port_03c0_w)
 		}
 		vga.attribute.state=!vga.attribute.state;
 		break;
-	case 2: 
+	case 2:
 		vga.miscellaneous_output=data;
 		DBG_LOG(1,"vga miscellaneous write",("%.2x %.2x\n",offset,data));
 		break;
-	case 3: 
+	case 3:
 		vga.oak.reg=data;
 		break;
-	case 4: 
+	case 4:
 		vga.sequencer.index=data;
 		DBG_LOG(2,"vga sequencer index write",("%.2x %.2x\n",offset,data));
 		break;
@@ -700,17 +700,17 @@ WRITE_HANDLER(vga_port_03c0_w)
 		if (vga.sequencer.index==0) vga.monitor.start_time=timer_get_time();
 		DBG_LOG(1,"vga sequencer write",("%.2x %.2x\n",vga.sequencer.index,data));
 		break;
-	case 6: 
+	case 6:
 		vga.dac.mask=data;
 		DBG_LOG(3,"vga dac mask write",("%.2x %.2x\n",offset,data));
 		break;
-	case 7: 
+	case 7:
 		vga.dac.read_index=data;
 		vga.dac.state=0;
 		vga.dac.read=1;
 		DBG_LOG(3,"vga dac readindex write",("%.2x %.2x\n",offset,data));
 		break;
-	case 8: 
+	case 8:
 		vga.dac.write_index=data;
 		vga.dac.state=0;
 		vga.dac.read=0;
@@ -719,7 +719,7 @@ WRITE_HANDLER(vga_port_03c0_w)
 	case 9:
 		if (!vga.dac.read) {
 			switch (vga.dac.state++) {
-			case 0: 
+			case 0:
 				vga.dac.color[vga.dac.write_index].red=data;
 				DBG_LOG(3,"vga dac red write",("%.2x %.2x\n",offset,data));
 				break;
@@ -727,7 +727,7 @@ WRITE_HANDLER(vga_port_03c0_w)
 				vga.dac.color[vga.dac.write_index].green=data;
 				DBG_LOG(3,"vga dac green write",("%.2x %.2x\n",offset,data));
 				break;
-			case 2: 
+			case 2:
 				vga.dac.color[vga.dac.write_index].blue=data;
 				DBG_LOG(3,"vga dac blue write",("%.2x %.2x\n",offset,data));
 				break;
@@ -752,12 +752,12 @@ WRITE_HANDLER(vga_port_03c0_w)
 			DBG_LOG(1,"vga dac color write",("%.2x %.2x\n",offset,data));
 		}
 		break;
-	case 0xe: 
+	case 0xe:
 		vga.gc.index=data;
 		DBG_LOG(2,"vga gc index write",("%.2x %.2x\n",offset,data));
 		break;
 	case 0xf:
-		if (vga.gc.index<sizeof(vga.gc.data)) 
+		if (vga.gc.index<sizeof(vga.gc.data))
 			vga.gc.data[vga.gc.index]=data;
 		vga_cpu_interface();
 		DBG_LOG(1,"vga gc data write",("%.2x %.2x\n",vga.gc.index,data));
@@ -782,7 +782,7 @@ READ_HANDLER( paradise_ega_03c0_r )
 			data=(data&~0x60)|((vga.read_dipswitch(0)&0xc0)>>1);
 		} else if ((vga.feature_control&3)==1 ) {
 			data=(data&~0x60)|((vga.read_dipswitch(0)&0x30)<<1);
-		}					   
+		}
 	}
 	return data;
 }
@@ -869,10 +869,10 @@ void vga_vh_text(struct osd_bitmap *bitmap, int full_refresh)
 		if (++vga.cursor.time>=0x10) {
 			vga.cursor.visible^=1;
 			vga.cursor.time=0;
-		}		
+		}
 	}
 
-	for (addr=TEXT_START_ADDRESS, line=0; line<TEXT_LINES; 
+	for (addr=TEXT_START_ADDRESS, line=0; line<TEXT_LINES;
 		 line+=height, addr+=TEXT_LINE_LENGTH) {
 		for (pos=addr, column=0; column<TEXT_COLUMNS; column++, pos++) {
 			UINT8 ch=vga.memory[pos<<2], attr=vga.memory[(pos<<2)+1];
@@ -903,7 +903,7 @@ void vga_vh_text(struct osd_bitmap *bitmap, int full_refresh)
 						Machine->scrbitmap->line[line+h][column*width+w]=
 							vga.pens[attr&0xf];
 				}
-			}			
+			}
 		}
 	}
 }
@@ -912,7 +912,7 @@ void vga_vh_ega(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int pos, line, column, c, addr;
 
-	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES; 
+	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES;
 		 line++, addr+=EGA_LINE_LENGTH) {
 		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos+=4) {
 #if 0

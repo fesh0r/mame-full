@@ -3,7 +3,7 @@
 #include "osdepend.h"
 #include "imgtool.h"
 #include "osd_cpu.h"
-#include "mess/config.h"
+#include "config.h"
 
 
 /* ----------------------------------------------------------------------- */

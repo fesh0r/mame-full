@@ -12,7 +12,7 @@
  *
  *****************************************************************************/
 
-#include "mess/includes/microtan.h"
+#include "includes/microtan.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0

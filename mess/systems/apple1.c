@@ -26,7 +26,7 @@ Hardware:	PIA6820 DSP for keyboard and screen interface
 #include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/apple1.h"
+#include "includes/apple1.h"
 
 /* port i/o functions */
 

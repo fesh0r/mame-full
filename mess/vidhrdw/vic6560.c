@@ -9,13 +9,13 @@
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/vc20.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
+#include "includes/cbm.h"
+#include "includes/vc20.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
 
-#include "mess/includes/vic6560.h"
+#include "includes/vic6560.h"
 
 /* usage of GFX system for lightpenpointer drawing,
  * needs little more testing with working dipswitches */

@@ -36,10 +36,10 @@ Historical notes : TI made several last minute design changes.
 */
 
 #include "driver.h"
-#include "mess/vidhrdw/tms9928a.h"
+#include "vidhrdw/tms9928a.h"
 
-#include "mess/machine/ti99_4x.h"
-#include "mess/machine/tms9901.h"
+#include "machine/ti99_4x.h"
+#include "machine/tms9901.h"
 
 /*
 	memory map

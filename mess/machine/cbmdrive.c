@@ -6,11 +6,11 @@
 /*#include "usrintrf.h" */
 
 #define VERBOSE_DBG 1				   /* general debug messages */
-#include "mess/includes/cbm.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/cbmieeeb.h"
+#include "includes/cbm.h"
+#include "includes/c1551.h"
+#include "includes/cbmieeeb.h"
 
-#include "mess/includes/cbmdrive.h"
+#include "includes/cbmdrive.h"
 
 /* tracks 1 to 35
  * sectors number from 0
@@ -1499,7 +1499,7 @@ void c2031_state(CBM_Drive *drive)
 			cbm_command(drive);
 			if (drive->state==READING)
 				drive->i.ieee.state++;
-			else 
+			else
 				drive->i.ieee.state=10;
 			cbm_ieee_ndac_w(1,1);
 		}

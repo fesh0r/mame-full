@@ -18,10 +18,10 @@
 #include "vidhrdw/generic.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/praster.h"
-#include "mess/includes/vdc8563.h"
+#include "includes/praster.h"
+#include "includes/vdc8563.h"
 
 /* uses raster2, to allow vic6567 use raster1 */
 

@@ -37,7 +37,7 @@ Priority:  Todo:                                                  Done:
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/gb.h"
+#include "machine/gb.h"
 
 static struct MemoryReadAddress readmem[] =
 {

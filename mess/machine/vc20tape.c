@@ -11,8 +11,8 @@
 #include "unzip.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/vc20tape.h"
+#include "includes/cbm.h"
+#include "includes/vc20tape.h"
 
 struct DACinterface vc20tape_sound_interface =
 {

@@ -5,7 +5,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/wd179x.h"
+#include "machine/wd179x.h"
 
 #define TRS80_FONT_W 6
 #define TRS80_FONT_H 12

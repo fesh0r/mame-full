@@ -1,10 +1,10 @@
 #include "driver.h"
 
-#include "mess/includes/pckeybrd.h"
+#include "includes/pckeybrd.h"
 
-#include "mess/includes/pc.h"
-#include "mess/includes/tandy1t.h"
-#include "mess/includes/pc_t1t.h"
+#include "includes/pc.h"
+#include "includes/tandy1t.h"
+#include "includes/pc_t1t.h"
 
 extern void init_t1000hx(void)
 {
@@ -22,7 +22,7 @@ void pc_t1t_init_machine(void)
   clock, and data out lines at 0x37c
   data in at 0x62 bit 4 (0x10)
 
-  8x read 16 bit word at x 
+  8x read 16 bit word at x
   30 cx 30 4x 16bit 00 write 16bit at x
 */
 static struct {
@@ -38,19 +38,19 @@ static struct {
 void tandy1000_init(void)
 {
 	FILE *file;
-	
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL)
 		return;
 	osd_fread(file, eeprom.ee, sizeof(eeprom.ee));
 
-	osd_fclose(file); 	
+	osd_fclose(file);
 }
 
 void tandy1000_close(void)
 {
 	FILE *file;
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 	osd_fwrite(file, eeprom.ee, sizeof(eeprom.ee));
@@ -65,7 +65,7 @@ static int tandy1000_read_eeprom(void)
 }
 
 WRITE_HANDLER ( pc_t1t_p37x_w )
-{	
+{
 //	DBG_LOG(2,"T1T_p37x_w",("%.5x #%d $%02x\n", cpu_get_pc(),offset, data));
 	if (offset!=4)
 		logerror("T1T_p37x_w %.5x #%d $%02x\n", cpu_get_pc(),offset, data);
@@ -75,7 +75,7 @@ WRITE_HANDLER ( pc_t1t_p37x_w )
 		case 1: pc_port[0x379] = data; break;
 		case 2: pc_port[0x37a] = data; break;
 		case 3: pc_port[0x37b] = data; break;
-		case 4: 
+		case 4:
 			pc_port[0x37c] = data;
 			if (!eeprom.clock && (data&4) ) {
 //				logerror("!!!tandy1000 eeprom %.2x %.2x\n",eeprom.state, data);
@@ -140,8 +140,8 @@ WRITE_HANDLER ( pc_t1t_p37x_w )
 				case 116:
 					eeprom.data<<=1;
 					eeprom.state=0;
-					break;					
-					
+					break;
+
 					/* write 16 bit */
 				case 200:
 				case 201:
@@ -200,7 +200,7 @@ READ_HANDLER ( pc_t1t_p37x_r )
 /* this is for tandy1000hx
    hopefully this works for all x models
    must not be a ppi8255 chip
-   (think custom chip) 
+   (think custom chip)
    port c:
    bit 4 input eeprom data in
    bit 3 output turbo mode
@@ -231,7 +231,7 @@ WRITE_HANDLER ( tandy1000_pio_w )
 			else timer_set_overclock(0, 4.77/8);
 //		}
 		break;
-	}		
+	}
 }
 
 READ_HANDLER(tandy1000_pio_r)
@@ -262,7 +262,7 @@ int tandy1000_frame_interrupt (void)
 	if (turboswitch !=(input_port_3_r(0)&2)) {
 		if (input_port_3_r(0)&2)
 			timer_set_overclock(0, 1);
-		else 
+		else
 			timer_set_overclock(0, 4.77/12);
 		turboswitch=input_port_3_r(0)&2;
 	}

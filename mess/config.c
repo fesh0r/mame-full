@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include "driver.h"
-#include "mess/config.h"
+#include "config.h"
 
 #define VERBOSE 0
 

@@ -5,7 +5,7 @@
 */
 
 #include "driver.h"
-#include "mess/vidhrdw/smsvdp.h"
+#include "vidhrdw/smsvdp.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 

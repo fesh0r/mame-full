@@ -18,7 +18,7 @@ if the game runs to fast with the ntsc version, try the pal version!
 flickering affects in one video version, try the other video version
 
 c128
- hardware emulation mode for c64 
+ hardware emulation mode for c64
   displayed over din/tv connector only
   c64 cartridges
   c64 userport
@@ -163,7 +163,7 @@ most games rely on starting own programs in the floppy drive
 
 Roms
 ----
-.prg 
+.prg
 .crt
 .80 .90 .a0 .b0 .e0 .f0
 files with boot-sign in it
@@ -295,16 +295,16 @@ U102 23256 (read compatible 27256?) 32kB 1571 system rom
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/vdc8563.h"
-#include "mess/includes/sid6581.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/vic6567.h"
+#include "includes/vdc8563.h"
+#include "includes/sid6581.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
 
-#include "mess/includes/c128.h"
+#include "includes/c128.h"
 
 /* shares ram with m8502
  * how to bankswitch ?

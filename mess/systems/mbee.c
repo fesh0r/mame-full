@@ -28,8 +28,8 @@
 #include "driver.h"
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/wd179x.h"
-#include "mess/machine/mbee.h"
+#include "machine/wd179x.h"
+#include "machine/mbee.h"
 
 #define VERBOSE 1
 

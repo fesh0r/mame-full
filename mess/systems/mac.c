@@ -37,8 +37,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/6522via.h"
-#include "mess/systems/mac.h"
+#include "machine/6522via.h"
+#include "systems/mac.h"
 
 
 static struct MemoryReadAddress mac512ke_readmem[] =

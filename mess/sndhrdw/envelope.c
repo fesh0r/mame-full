@@ -36,7 +36,7 @@
 #include <math.h>
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
 /*#include "compconf.h" */
 #include "mytypes.h"
@@ -189,7 +189,7 @@ void enveEmuResetOperator(sidOperator* pVoice)
 	/* mute, end of R-phase */
 	pVoice->ADSRctrl = ENVE_MUTE;
 	pVoice->gateOnCtrl = (pVoice->gateOffCtrl = false);
-	
+
 #ifdef SID_FPUENVE
 	pVoice->fenveStep = (pVoice->fenveStepAdd = 0);
 	pVoice->enveStep = 0;
@@ -232,15 +232,15 @@ ptr2sidUwordFunc enveModeTable[] =
 	&enveEmuSustainDecay, &enveEmuMute,
 	/* 16 */
 	&enveEmuStartShortAttack,
-	&enveEmuMute, &enveEmuMute, &enveEmuMute, 
+	&enveEmuMute, &enveEmuMute, &enveEmuMute,
 	&enveEmuMute, &enveEmuMute, &enveEmuMute, &enveEmuMute,
     /* 32		 */
 	&enveEmuStartAttack, &enveEmuStartRelease,
 	&enveEmuAlterAttack, &enveEmuAlterDecay, &enveEmuAlterSustain, &enveEmuAlterRelease,
 	&enveEmuAlterSustainDecay, &enveEmuMute,
     /* 48		 */
-	&enveEmuStartShortAttack, 
-	&enveEmuMute, &enveEmuMute, &enveEmuMute, 
+	&enveEmuStartShortAttack,
+	&enveEmuMute, &enveEmuMute, &enveEmuMute,
 	&enveEmuMute, &enveEmuMute, &enveEmuMute, &enveEmuMute
 };
 
@@ -289,7 +289,7 @@ INLINE uword enveEmuRelease(sidOperator* pVoice)
 	{
 		pVoice->enveVol = releaseTab[releaseTabLen -1];
 		return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
-	}	
+	}
 	else
 	{
 #if defined(DIRECT_FIXPOINT) && !defined(SID_FPUENVE)

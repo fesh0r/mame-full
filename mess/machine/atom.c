@@ -10,8 +10,8 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
-#include "mess/vidhrdw/m6847.h"
-#include "mess/includes/atom.h"
+#include "vidhrdw/m6847.h"
+#include "includes/atom.h"
 
 static	ppi8255_interface	atom_8255_int =
 {

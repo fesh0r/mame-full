@@ -6,7 +6,7 @@
  * - unify the kim1 and a2600 drivers
  **********************************************************************/
 #include "driver.h"
-#include "mess/machine/riot.h"
+#include "machine/riot.h"
 
 #define VERBOSE 1
 

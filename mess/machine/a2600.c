@@ -7,11 +7,11 @@
 
 
 #include "driver.h"
-#include "mess/machine/riot.h"
+#include "machine/riot.h"
 #include "sound/tiaintf.h"
 #include "sound/tiasound.h"
 #include "cpuintrf.h"
-#include "mess/machine/tia.h"
+#include "machine/tia.h"
 #include "drawgfx.h"
 
 static union {

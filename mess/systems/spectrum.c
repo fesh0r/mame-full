@@ -70,13 +70,13 @@ thus is not emulated.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/spectrum.h"
-#include "mess/eventlst.h"
+#include "includes/spectrum.h"
+#include "eventlst.h"
 
 /* +3 hardware */
-#include "mess/includes/nec765.h"
+#include "includes/nec765.h"
 #include "cpuintrf.h"
-#include "mess/includes/dsk.h"
+#include "includes/dsk.h"
 
 /*-----------------27/02/00 10:42-------------------
  bit 7-5: not used

@@ -14,8 +14,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "mess/machine/genesis.h"
-#include "mess/vidhrdw/genesis.h"
+#include "machine/genesis.h"
+#include "vidhrdw/genesis.h"
 
 extern int z80running;
 

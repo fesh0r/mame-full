@@ -5,10 +5,10 @@
 #include "driver.h"
 
 #define VERBOSE_DBG 0				   /* general debug messages */
-#include "mess/includes/cbm.h"
-#include "mess/includes/cbmdrive.h"
+#include "includes/cbm.h"
+#include "includes/cbmdrive.h"
 
-#include "mess/includes/c1551.h"
+#include "includes/c1551.h"
 
 static void vc1541_reset_write (CBM_Drive * vc1541, int level);
 
@@ -433,7 +433,7 @@ static void cbm_drive_status (CBM_Drive * c1551, char *text, int size)
 		case WRITING:
 			snprintf (text, size, "Image %s File %s saving %d",
 					  c1551->d.d64.imagename,
-					  c1551->d.d64.filename, c1551->pos);			
+					  c1551->d.d64.filename, c1551->pos);
 			break;
 		}
 	}

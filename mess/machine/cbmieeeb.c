@@ -5,11 +5,11 @@
 /*
 
                                  IEEE-488
-                                     
+
                             by Ruud Baltissen
-                                     
-                                     
-DISCLAIMER 
+
+
+DISCLAIMER
 -    All names with a copyright are acknowledged.
 -    If the reader uses information from these documents to write software
      or build hardware, then it is on his own account. I cannot be held
@@ -69,7 +69,7 @@ one CBM is allowed on the bus according to IEEE-488. In fact you can connect
 more CBMs to the same bus without any problem as long as you take care that
 only one is performing a command at the time. In IEEE-488 terms: you, the
 user, acts as the System Controller, allowing one of the connected CBMs to be
-a temporary Active Controller for the time being. 
+a temporary Active Controller for the time being.
 
 
 Interface Signals
@@ -124,7 +124,7 @@ and 5 interface management lines.
      The speed of the data transfer is controlled by the response of the
      slowest device on the bus, for this reason it is difficult to estimate
      data transfer rates on the IEEE-488 bus as they are always device
-     dependent. 
+     dependent.
 
      Interface Management Lines
      The five interface management lines (ATN, EOI, IFC, REN, SRQ) manage
@@ -164,10 +164,10 @@ Listener   |    X |    X | X    | X    | X    | X    | X    |    X |
 Talker     | X    | X    |    X | X    |    X | X    | X    |    X |
 Controller | X  X | X  X | X  X | X  X | X  X |    X |    G | X    |
 
-X marks line used as "I = Input" or "O = Output" 
+X marks line used as "I = Input" or "O = Output"
 
 The block Controller/REN is marked G because a CBM doesn't use this line. In
-this case it is hardware-wired to GROUND. 
+this case it is hardware-wired to GROUND.
 
 
 Service Request and Serial Polling
@@ -176,7 +176,7 @@ If a device encounters a problem or a pre-programmed condition, it can
 activate the SQR-line by setting it (L). If the Controller detects this
 request, it can initiate a 'Serial Poll' by transmitting the command SPE ($18)
 on the bus. It then places an address von the bus, activates ATN (which makes
-the addressed device a talker) an de-activates it. 
+the addressed device a talker) an de-activates it.
 If the device requested service, it will respond by setting DIO7 (L). It may
 indicate the nature of the request by setting other lines low as well. The
 Controller can now take appropriate actions.  When all devices have been
@@ -198,16 +198,16 @@ Looking at the circuitdiagrams of a PET, like the 3008, then you can see that
 the MC3446 is used as the driver for all the signals. According to "The PET
 revealed" by Nick Hampshire, these ICs have 'Open Collector'-outputs which
 means you can interconnect them without any fear of 'blowing up' a computer
-or device.  
+or device.
 Other models are equipped with the SN75160 and the SN75161  from Texas
-Instruments. These ICs are drivers especially developed for IEEE-488. 
+Instruments. These ICs are drivers especially developed for IEEE-488.
 The major difference between the two types is that you need one separate in-
 and outputline for every IEEE-line, together 32 lines. This means you need at
 least two 6522s or 6520s. For the SN-drivers you only need 19 lines or one
 6525.
 The 720 is equipped with the SN-drivers. The Pet 3008, CBM 8032SK, 3040 and
 4040 are equipped with four MC3446s. The CBM 8296 uses one 7417 and three
-MC3446s. 
+MC3446s.
 
 
 The SN75160
@@ -226,7 +226,7 @@ There is some internal logic to steer the output as follows:
                                 |  NRFD  |  REN
   ATN  |  TE   |  DC   ||  EOI  |  DAVV  |  SQR
 -------------------------------------------------
-   L   |   L   |   L   ||   O   |   O    |   O        
+   L   |   L   |   L   ||   O   |   O    |   O
    L   |   L   |   H   ||   I   |   O    |   I
    L   |   H   |   L   ||   O   |   I    |   O
    L   |   H   |   H   ||   I   |   I    |   I
@@ -237,7 +237,7 @@ There is some internal logic to steer the output as follows:
 
 In words: ATN, IFC, REN and SQR are outputs if DC = (L), else inputs.
 DAVV,NDAC and NRFD are outputs if TE = (L), else inputs. EOI behaves like DAVV
-when ATN = (H), else like SQR. 
+when ATN = (H), else like SQR.
 
 
 Physical Characteristics
@@ -265,7 +265,7 @@ Pin  Signal              Abbreviation  Source
  9   Interface Clear     IFC           Controller
 10   Service Request     SRQ           Talker
 11   Attention           ATN           Controller
-12   Shield 
+12   Shield
 13   Data Bit 5          DIO5          Talker
 14   Data Bit 6          DIO6          Talker
 15   Data Bit 7          DIO7          Talker
@@ -283,7 +283,7 @@ Pin  Signal              Abbreviation  Source
 
 
                                  Credits:
-                                     
+
 -    Gary Pfeiffer, Hewlett-Packard
 -    Nick Hampshire
 -    Marko Makela
@@ -291,24 +291,24 @@ Pin  Signal              Abbreviation  Source
 
 
                            You can reach me at:
-                                     
-                         rbaltiss@worldaccess.nl 
-                                     
-                                     
+
+                         rbaltiss@worldaccess.nl
+
+
       My Commodore Site: http://www.worldaccess.nl/~rbaltiss/cbm.htm
  */
 
 #include "driver.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/cbmdrive.h"
-#include "mess/includes/c1551.h"
+#include "includes/cbmdrive.h"
+#include "includes/c1551.h"
 
-#include "mess/includes/cbmieeeb.h"
+#include "includes/cbmieeeb.h"
 
-/* 
+/*
  data 8 bit input/output
 
  all handshake lines low active
@@ -353,7 +353,7 @@ void cbm_ieee_open(void)
 void cbm_ieee_dav_w(int device, int data)
 {
 	DBG_LOG(1,"cbm ieee dav",("%.4x dev:%d %d\n", cpu_get_pc(), device, data));
-	cbmieee.bus[device].dav=data;	
+	cbmieee.bus[device].dav=data;
 	if (device==0) c2031_state(cbm_drive);
 }
 
@@ -381,14 +381,14 @@ void cbm_ieee_atn_w(int device, int data)
 void cbm_ieee_eoi_w(int device, int data)
 {
 	DBG_LOG(1,"cbm ieee eoi",("%.4x dev:%d %d\n", cpu_get_pc(), device, data));
-	cbmieee.bus[device].eoi=data;	
+	cbmieee.bus[device].eoi=data;
 	if (device==0) c2031_state(cbm_drive);
 }
 
 void cbm_ieee_data_w(int device, int data)
 {
 	DBG_LOG(1,"cbm ieee data",("%.4x dev:%d %.2x\n", cpu_get_pc(), device, data));
-	cbmieee.bus[device].data=data;	
+	cbmieee.bus[device].data=data;
 	if (device==0) c2031_state(cbm_drive);
 }
 

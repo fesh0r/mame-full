@@ -39,7 +39,7 @@ c65 prototype
  rs232 connector (round din)
  no tape connector
  new expansion slot
- 
+
 state
 -----
 only booting
@@ -69,7 +69,7 @@ gameport b
 serial bus
  simple disk drives
  no printer or other devices
-expansion modules 
+expansion modules
  none (did there any exist)
 expansion modules c64 (adapter needed)
  ultimax rom cartridges
@@ -117,7 +117,7 @@ most games rely on starting own programs in the floppy drive
 
 Roms
 ----
-.prg 
+.prg
 .crt
 .80 .90 .a0 .b0 .e0 .f0
 files with boot-sign in it
@@ -141,14 +141,14 @@ when problems start with -log and look into error.log file
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/sid6581.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/vic6567.h"
+#include "includes/sid6581.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
 
-#include "mess/includes/c65.h"
+#include "includes/c65.h"
 
 static struct MemoryReadAddress c65_readmem[] =
 {

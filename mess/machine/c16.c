@@ -13,15 +13,15 @@
 #include "cpu/m6502/m6502.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
-#include "mess/includes/tpi6525.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/ted7360.h"
-#include "mess/includes/sid6581.h"
+#include "includes/cbm.h"
+#include "includes/tpi6525.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
+#include "includes/ted7360.h"
+#include "includes/sid6581.h"
 
-#include "mess/includes/c16.h"
+#include "includes/c16.h"
 
 static UINT8 keyline[10] =
 {

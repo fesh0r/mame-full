@@ -13,7 +13,7 @@
 #include "memory.h"
 #include "cpu/z80/z80.h"
 #include "cpm_bios.h"
-#include "mess/machine/wd179x.h"
+#include "machine/wd179x.h"
 
 #define VERBOSE 		1
 #define VERBOSE_FDD 	1

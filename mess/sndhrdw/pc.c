@@ -11,9 +11,9 @@
 ****************************************************************************/
 #include "osd_cpu.h"
 #include "sound/streams.h"
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
-#include "mess/includes/pit8253.h"
+#include "includes/pit8253.h"
 
 #define BASECLOCK	1193180
 

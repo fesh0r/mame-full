@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "cpu/pdp1/pdp1.h"
-#include "mess/vidhrdw/pdp1.h"
+#include "vidhrdw/pdp1.h"
 #include "driver.h"
 
 /*

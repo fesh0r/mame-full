@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/uk101.h"
+#include "includes/uk101.h"
 
 int	uk101_vh_start (void)
 {

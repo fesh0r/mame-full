@@ -1,8 +1,8 @@
 /* PC floppy disc image handling code */
 #include "driver.h"
-#include "mess/includes/pc_flopp.h"
+#include "includes/pc_flopp.h"
 // temp to include floppy stuff
-#include "mess/includes/nec765.h"
+#include "includes/nec765.h"
 
 void *pc_fdc_file[2];			   /* up to two floppy disk images */
 UINT8 pc_fdc_heads[2] = {2,2};	   /* 2 heads */
@@ -107,7 +107,7 @@ static void pc_fdc_seek_callback(int drv, int track)
 
 	offset[drv] = (pc_fdd_track[drv] * pc_fdc_heads[drv] + pc_fdd_head[drv]) * pc_fdc_spt[drv] * pc_fdc_scl[drv] * 256;
 //	FDC_LOG(1,"FDC_seek_execute",(errorlog, "T:%02d H:%d $%08x\n", pc_fdd_track[drv], pc_fdd_head[drv], offset[drv]));
-	if (f) 
+	if (f)
 	{
 		osd_fseek(f, offset[drv], SEEK_SET);
 	}
@@ -166,7 +166,7 @@ static void pc_fdc_get_sector_data_callback(int drv, int id, int side, char **pt
 	cached_id = id;
 	cached_side = side;
 
-	if (f) 
+	if (f)
 	{
 		osd_fseek(f, offset[drv], SEEK_SET);
         osd_fread(f, sector_buffer, 512 /* temp */);

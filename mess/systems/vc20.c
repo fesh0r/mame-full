@@ -17,7 +17,7 @@ vc20  commodore vc20  (pal version)
 ------------------------------------
 
 vic20 ntsc-version
- when screen is two wide right or low, 
+ when screen is two wide right or low,
   or screen doesn't fitt in visible area
   or gameplay is too fast
  try the pal version
@@ -109,16 +109,16 @@ use LOAD"",1,1 for loading programs to their special address
 
 several programs rely on more features
 (loading other file types, writing, ...)
- 
-Discs 
------ 
-only file load from drive 8 and 9 implemented 
+
+Discs
+-----
+only file load from drive 8 and 9 implemented
  loads file from rom directory (*.prg,*.p00)(must NOT be specified on commandline)
  or file from d64 image (here also directory command LOAD"$",8 supported)
-LOAD"filename",8 
-or LOAD"filename",8,1 (for loading machine language programs at their address) 
-for loading 
-type RUN or the appropriate SYS call to start them 
+LOAD"filename",8
+or LOAD"filename",8,1 (for loading machine language programs at their address)
+for loading
+type RUN or the appropriate SYS call to start them
 
 several programs rely on more features
 (loading other file types, writing, ...)
@@ -155,13 +155,13 @@ when problems start with -log and look into error.log file
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/vc20.h"
-#include "mess/machine/6522via.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/vic6560.h"
+#include "includes/cbm.h"
+#include "includes/vc20.h"
+#include "machine/6522via.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
+#include "includes/vic6560.h"
 
 static struct MemoryReadAddress vc20_readmem[] =
 {
@@ -451,7 +451,7 @@ INPUT_PORTS_START (vic20i)
 	PORT_DIPNAME   ( 0x80, 0, " Ram at 0xa000")
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
 	PORT_DIPSETTING( 0x80, DEF_STR( Yes ) )
-	PORT_START 
+	PORT_START
 	PORT_DIPNAME   ( 0x80, 0x80, "Joystick")
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
 	PORT_DIPSETTING( 0x80, DEF_STR( Yes ) )
@@ -481,7 +481,7 @@ INPUT_PORTS_START (vic20i)
 	PORT_DIPSETTING(  0, DEF_STR( No ) )
 	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
 #endif
-	PORT_START 
+	PORT_START
 	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2, "Lightpen Signal", KEYCODE_LALT, 0)
 	PORT_START							   /* in 16 lightpen X */
 	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
@@ -521,7 +521,7 @@ static void vc20_init_palette (unsigned char *sys_palette,
 #if 0
 	/* chargen */
 	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
-	/* basic */ 
+	/* basic */
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
 	/* kernel ntsc */
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
@@ -531,10 +531,10 @@ static void vc20_init_palette (unsigned char *sys_palette,
 	/* patched pal system for swedish/finish keyboard and chars */
     /* but in rom? (maybe patched means in this case nec version) */
 	ROM_LOAD ("nec22101.207", 0x8000, 0x1000, 0xd808551d)
-	ROM_LOAD ("nec22081.206", 0xe000, 0x2000, 0xb2a60662)	 
+	ROM_LOAD ("nec22081.206", 0xe000, 0x2000, 0xb2a60662)
 
 	/* ieee488 cartridge */
-	ROM_LOAD ("325329-04.bin", 0xb000, 0x800, 0xd37b6335)	 
+	ROM_LOAD ("325329-04.bin", 0xb000, 0x800, 0xd37b6335)
 #endif
 
 ROM_START (vic20)
@@ -548,7 +548,7 @@ ROM_START (vic20swe)
 	ROM_REGION (0x10000, REGION_CPU1)
 	ROM_LOAD ("nec22101.207", 0x8000, 0x1000, 0xd808551d)
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
-	ROM_LOAD ("nec22081.206", 0xe000, 0x2000, 0xb2a60662)	 
+	ROM_LOAD ("nec22081.206", 0xe000, 0x2000, 0xb2a60662)
 ROM_END
 
 ROM_START (vic20v)
@@ -562,7 +562,7 @@ ROM_END
 ROM_START (vic20i)
 	ROM_REGION (0x10000, REGION_CPU1)
 	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
-	ROM_LOAD ("325329.04", 0xb000, 0x800, 0xd37b6335)	 
+	ROM_LOAD ("325329.04", 0xb000, 0x800, 0xd37b6335)
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
 /*	C2031_ROM (REGION_CPU2) */
@@ -882,7 +882,7 @@ static const struct IODevice io_vc20i[] =
 	{IO_END}
 };
 #endif
- 
+
 #define init_vc20		vc20_driver_init
 #define init_vic20		vic20_driver_init
 #define init_vic20i     vic20ieee_driver_init

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "osdepend.h"
-#include "mess/mess.h"
+#include "mess.h"
 
 #if !defined(MAX)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

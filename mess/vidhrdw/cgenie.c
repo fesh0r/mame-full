@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/cgenie.h"
+#include "vidhrdw/cgenie.h"
 
 /* from src/mame.c */
 extern int bitmap_dirty;

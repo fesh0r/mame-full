@@ -9,8 +9,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/tms9928a.h"
-#include "mess/includes/coleco.h"
+#include "vidhrdw/tms9928a.h"
+#include "includes/coleco.h"
 
 /***************************************************************************
 

@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "mess/includes/aquarius.h"
+#include "includes/aquarius.h"
 
 static	int	aquarius_ramsize = 0;
 

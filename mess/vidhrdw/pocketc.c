@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "mess/includes/pocketc.h"
+#include "includes/pocketc.h"
 
 /* pc140x
    16 5x7 with space between char
@@ -16,7 +16,7 @@
   603c: 3 RUN
   603d: 0 BUSY, 1 DEF, 2 SHIFT, 3 BGN, 4 STAT, 5 FIN, 6 PRINT
   607c: 0 E, 1 M, 2 BAL, 3 INT, 4 PRN, 5 Sum-Sign, 6 PRO */
- 
+
 /* PC126x
    24x2 5x7 space between char
    2000 .. 203b, 2800 .. 283b
@@ -128,7 +128,7 @@ static void pc1401_draw_special(struct osd_bitmap *bitmap,
 	for (i=0;fig[i];i++,y++) {
 		for (j=0;fig[i][j]!=0;j++) {
 			switch(fig[i][j]) {
-			case '1': 
+			case '1':
 				bitmap->line[y][x+j]=color;
 				break;
 			case 'e': return;

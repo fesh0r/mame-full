@@ -5,7 +5,7 @@ This file is a set of function calls and defs required for MESS.
 #include <ctype.h>
 #include <stdarg.h>
 #include "driver.h"
-#include "mess/config.h"
+#include "config.h"
 
 extern struct GameOptions options;
 

@@ -9,7 +9,7 @@
 	Sound handler
 ****************************************************************************/
 #include "driver.h"
-#include "mess/includes/beep.h"
+#include "includes/beep.h"
 
 
 static int beep_stream;
@@ -26,7 +26,7 @@ static INT16 beep_signal = 0x7fff;
 /************************************/
 /* Stream updater                   */
 /************************************/
-static void beep_sound_update( int num, INT16 *sample, int length ) 
+static void beep_sound_update( int num, INT16 *sample, int length )
 {
 	INT16 signal = beep_signal;
 	int baseclock, rate = Machine->sample_rate/2;
@@ -41,7 +41,7 @@ static void beep_sound_update( int num, INT16 *sample, int length )
 		memset( sample, 0, length * sizeof( INT16 ) );
 		return;
 	}
-	
+
 	/* fill in the sample */
 	while( length-- > 0 )
 	{
@@ -63,9 +63,9 @@ static void beep_sound_update( int num, INT16 *sample, int length )
 /* Sound handler start              */
 /************************************/
 int beep_sh_start( const struct MachineSound *msound ) {
-	
+
 	beep_stream = stream_init( "Generic Beep", 100, BEEP_SAMPLE_RATE, 0, beep_sound_update );
-	
+
 	return 0;
 }
 
@@ -81,7 +81,7 @@ void beep_sh_stop( void ) {
 void beep_sh_update( void ) {
 }
 
-void beep_set_state( int on ) 
+void beep_set_state( int on )
 {
 	/* only update if new state is not the same as old state */
 	if (beep_enable!=on)
@@ -103,8 +103,8 @@ void beep_set_frequency(int frequency)
 void	beep_set_volume(int volume)
 {
 	stream_update( beep_stream, 0 );
-	
+
 	volume = ( 100 / 7 ) * volume;
-		
+
 	mixer_set_volume( beep_stream, volume );
 }

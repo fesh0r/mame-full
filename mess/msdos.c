@@ -6,7 +6,7 @@ needs it ;-)
 
 #include "mamalleg.h"
 #include "driver.h"
-#include "mess/msdos.h"
+#include "../mess/msdos.h"
 #include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>

@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/systems/apple2.h"
+#include "systems/apple2.h"
 
 unsigned char *apple2_lores_text1_ram;
 unsigned char *apple2_lores_text2_ram;

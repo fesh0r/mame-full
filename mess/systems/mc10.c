@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "cpu/m6800/m6800.h"
-#include "mess/vidhrdw/m6847.h"
+#include "vidhrdw/m6847.h"
 
 extern void mc10_init_machine(void);
 extern void mc10_stop_machine(void);

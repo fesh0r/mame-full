@@ -3,7 +3,7 @@
 
 	peter.trauner@jk.uni-linz.ac.at
     documentation
- 	 www.funet.fi     
+ 	 www.funet.fi
 
 ***************************************************************************/
 
@@ -21,8 +21,8 @@ flickering affects in one video version, try the other video version
 c16(pal version, ntsc version?):
  design like the vc20/c64
  sequel to c64
- other keyboardlayout, 
- worse soundchip, 
+ other keyboardlayout,
+ worse soundchip,
  more colors, but no sprites,
  other tape and gameports plugs
  16 kbyte ram
@@ -155,28 +155,28 @@ when problems start with -log and look into error.log file
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/c16.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/ted7360.h"
-#include "mess/includes/sid6581.h"
+#include "includes/cbm.h"
+#include "includes/c16.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
+#include "includes/ted7360.h"
+#include "includes/sid6581.h"
 
 /*
  * commodore c16/c116/plus 4
  * 16 KByte (C16/C116) or 32 KByte or 64 KByte (plus4) RAM
  * 32 KByte Rom (C16/C116) 64 KByte Rom (plus4)
  * availability to append additional 64 KByte Rom
- * 
+ *
  * ports 0xfd00 till 0xff3f are always read/writeable for the cpu
  * for the video interface chip it seams to read from
  * ram or from rom in this  area
- * 
+ *
  * writes go always to ram
  * only 16 KByte Ram mapped to 0x4000,0x8000,0xc000
  * only 32 KByte Ram mapped to 0x8000
- * 
+ *
  * rom bank at 0x8000: 16K Byte(low bank)
  * first: basic
  * second(plus 4 only): plus4 rom low
@@ -190,10 +190,10 @@ when problems start with -log and look into error.log file
  * writes to 0xfddx select rom banks:
  * address line 0 and 1: rom bank low
  * address line 2 and 3: rom bank high
- * 
+ *
  * writes to 0xff3e switches to roms (0x8000 till 0xfd00, 0xff40 till 0xffff)
  * writes to 0xff3f switches to rams
- * 
+ *
  * at 0xfc00 till 0xfcff is ram or rom kernal readable
  */
 

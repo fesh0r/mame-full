@@ -4,10 +4,10 @@
 
 	PC-DMA glue to link with pc fdc hardware
 ***************************************************************************/
-#include "mess/includes/pic8259.h"
-#include "mess/includes/dma8237.h"
-#include "mess/includes/pc.h"
-#include "mess/includes/pc_fdc_h.h"
+#include "includes/pic8259.h"
+#include "includes/dma8237.h"
+#include "includes/pc.h"
+#include "includes/pc_fdc_h.h"
 
 #define FDC_DMA 	2			   /* DMA channel number for the FDC */
 static int pc_dma_started = 0;
@@ -39,7 +39,7 @@ static void pc_fdc_interrupt(int state)
 //			pc_DMA_status &= ~(0x010<<FDC_DMA);
 //			pc_DMA_status |= 0x01 << FDC_DMA;		/* set DMA terminal count flag */
 //		}
-		
+
 		/* issue IRQ */
 		FDC_irq(6);
 	}
@@ -52,13 +52,13 @@ static void pc_fdc_dma_read(void)
 {
 	int data;
 
-	
+
 	/* dma acknowledge - and get byte from fdc */
 
 	data = pc_fdc_dack_r();
 
 	/* write byte to pc mem and update mem address */
-	if (pc_DMA_operation[FDC_DMA] == 1) 
+	if (pc_DMA_operation[FDC_DMA] == 1)
 	{
 		cpu_writemem20(pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA], data);
 	}
@@ -85,7 +85,7 @@ static void pc_fdc_dma_write(void)
 	int data;
 
 	/* read byte from pc mem and update address */
-	if (pc_DMA_operation[FDC_DMA] == 2) 
+	if (pc_DMA_operation[FDC_DMA] == 2)
 	{
 		data = cpu_readmem20(pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA]);
 	}
@@ -109,7 +109,7 @@ static void pc_fdc_dma_write(void)
 	}
 
 }
-	
+
 
 void	pc_fdc_dma_drq(int state, int read)
 {

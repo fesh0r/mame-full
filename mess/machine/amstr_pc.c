@@ -1,10 +1,10 @@
 #include "driver.h"
 
-#include "mess/includes/pit8253.h"
-#include "mess/includes/pc.h"
-#include "mess/includes/amstr_pc.h"
-#include "mess/includes/pclpt.h"
-#include "mess/includes/vga.h"
+#include "includes/pit8253.h"
+#include "includes/pc.h"
+#include "includes/amstr_pc.h"
+#include "includes/pclpt.h"
+#include "includes/vga.h"
 
 /* bios power up self test
    important addresses
@@ -56,10 +56,10 @@ static struct {
 /* test sequence in bios
  write 00 to 65
  write 30 to 61
- read 62 and (0x10) 
+ read 62 and (0x10)
  write 34 to 61
  read 62 and (0x0f)
- return or of the 2 62 reads 
+ return or of the 2 62 reads
 
  allows set of the original ibm pc "dipswitches"!!!!
 
@@ -83,7 +83,7 @@ WRITE_HANDLER( pc1640_port60_w )
 	case 5: pc1640.port65=data;
 		break;
 	}
-	
+
 	logerror("pc1640 write %.2x %.2x\n",offset,data);
 }
 
@@ -92,7 +92,7 @@ READ_HANDLER( pc1640_port60_r )
 	int data=0;
 	switch (offset) {
 	case 0: data=pc_port[0x60];break;
-	case 2: 
+	case 2:
 		data=pc1640.port62;
 		if (pit8253_get_output(0,2)) data|=0x20;
 		break;

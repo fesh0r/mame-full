@@ -3,16 +3,16 @@
 
 #include "driver.h"
 
-#include "mess/includes/dma8237.h"
+#include "includes/dma8237.h"
 
 #if 0
 #define DMA_LOG(level, text, print) \
 		if (level>0) { \
 				logerror("%s\t", text); \
 				logerror print; \
-		} 
+		}
 #else
-#define DMA_LOG(level, text, print) 
+#define DMA_LOG(level, text, print)
 #endif
 
 DMA8237 dma8237[2]= { {0} };
@@ -160,7 +160,7 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 	return data;
 }
 
-/* in an at SN74LS612N, full 16 register memory mapper, 
+/* in an at SN74LS612N, full 16 register memory mapper,
    so 0x80-0x8f read and writeable */
 static void dma8237_page_w(DMA8237 *this, offs_t offset, data_t data)
 {

@@ -10,9 +10,9 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "mess/machine/bbc.h"
-#include "mess/vidhrdw/bbc.h"
-#include "mess/machine/6522via.h"
+#include "machine/bbc.h"
+#include "vidhrdw/bbc.h"
+#include "machine/6522via.h"
 
 
 /******************************************************************************

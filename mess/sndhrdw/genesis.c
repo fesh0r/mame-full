@@ -15,7 +15,7 @@
 //#include "sndintrf.h"
 #include "driver.h"
 #include "sound/2612intf.h"
-#include "mess/machine/genesis.h"
+#include "machine/genesis.h"
 //#include "sound/psgintf.h"
 
 int genesis_s_interrupt(void)

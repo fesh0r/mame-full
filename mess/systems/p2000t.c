@@ -29,8 +29,8 @@ Philips P2000 1 Memory map
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/saa5050.h"
-#include "mess/includes/p2000t.h"
+#include "includes/saa5050.h"
+#include "includes/p2000t.h"
 
 /* port i/o functions */
 

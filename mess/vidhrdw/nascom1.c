@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/nascom1.h"
+#include "includes/nascom1.h"
 
 int	nascom1_vh_start (void)
 {

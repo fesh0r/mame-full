@@ -25,27 +25,27 @@
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
 
-#include "mess/includes/uart8250.h"
-#include "mess/includes/pic8259.h"
-#include "mess/includes/dma8237.h"
-#include "mess/includes/pit8253.h"
-#include "mess/includes/mc146818.h"
-#include "mess/includes/vga.h"
-#include "mess/includes/pc_cga.h"
-#include "mess/includes/pc_mda.h"
-#include "mess/includes/pc_t1t.h"
+#include "includes/uart8250.h"
+#include "includes/pic8259.h"
+#include "includes/dma8237.h"
+#include "includes/pit8253.h"
+#include "includes/mc146818.h"
+#include "includes/vga.h"
+#include "includes/pc_cga.h"
+#include "includes/pc_mda.h"
+#include "includes/pc_t1t.h"
 
-#include "mess/includes/pc_fdc_h.h"
-#include "mess/includes/pc_flopp.h"
-#include "mess/includes/pckeybrd.h"
-#include "mess/includes/pclpt.h"
-#include "mess/includes/pc_mouse.h"
+#include "includes/pc_fdc_h.h"
+#include "includes/pc_flopp.h"
+#include "includes/pckeybrd.h"
+#include "includes/pclpt.h"
+#include "includes/pc_mouse.h"
 
-#include "mess/includes/tandy1t.h"
-#include "mess/includes/amstr_pc.h"
-#include "mess/includes/at.h"
+#include "includes/tandy1t.h"
+#include "includes/amstr_pc.h"
+#include "includes/at.h"
 
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
 #define ym3812_StdClock 3579545
 
@@ -1293,7 +1293,7 @@ INPUT_PORTS_START( pc1512 )
 	PORT_BITX( 0x07, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "PC 512k" )
 	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
+	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
 	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
@@ -1380,26 +1380,26 @@ INPUT_PORTS_START( pc1640 )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 5", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 6", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 7", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 8", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
 	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, IP_JOY_NONE )
 //	PORT_DIPSETTING(	0x00, "PC 512k" ) machine crashes with ega bios at 0xc0000
 	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
+	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
 	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
@@ -1501,7 +1501,7 @@ INPUT_PORTS_START( xtvga )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
@@ -1701,7 +1701,7 @@ INPUT_PORTS_START( atvga )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
@@ -2490,7 +2490,7 @@ static struct MachineDriver machine_driver_atvga =
 
 #if 0
 	//pcjr roms?
-	// basic c1.20 
+	// basic c1.20
     ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
 	// ???
     ROM_LOAD("bios.rom", 0x??000, 0x2000, 0x98463f95)

@@ -18,7 +18,7 @@ sx64    commodore sx64 (pal version)
 
 if the game runs to fast with the ntsc version, try the pal version!
 
-c64 
+c64
  design like the vic20
  better videochip with sprites
  famous sid6581 sound chip
@@ -58,7 +58,7 @@ c64gs
  no keyboard connector
  no tapeport
 cbm4064/pet64/educator64-2
- build in green monitor 
+ build in green monitor
  other case
  differences, versions???
 (sx100 sx64 like prototype with build in black/white monitor)
@@ -69,7 +69,7 @@ sx64
  no tape connector
 dx64 prototype
  two build in vc1541 (or 2 drives driven by one vc1541 circuit)
- 
+
 state
 -----
 rasterline based video system
@@ -166,7 +166,7 @@ most games rely on starting own programs in the floppy drive
 
 Roms
 ----
-.prg 
+.prg
 .crt
 .80 .90 .a0 .b0 .e0 .f0
 files with boot-sign in it
@@ -190,15 +190,15 @@ when problems start with -log and look into error.log file
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/cia6526.h"
-#include "mess/includes/vic6567.h"
-#include "mess/includes/sid6581.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
-#include "mess/includes/vc20tape.h"
+#include "includes/cbm.h"
+#include "includes/cia6526.h"
+#include "includes/vic6567.h"
+#include "includes/sid6581.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
+#include "includes/vc20tape.h"
 
-#include "mess/includes/c64.h"
+#include "includes/c64.h"
 
 static struct MemoryReadAddress ultimax_readmem[] =
 {
@@ -623,7 +623,7 @@ static void pet64_init_palette (unsigned char *sys_palette, unsigned short *sys_
 {
 	int i;
 	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
-	for (i=0; i<16; i++) 
+	for (i=0; i<16; i++)
 		*(sys_palette+i*3)=*(sys_palette+i*3+2)=0;
 }
 
@@ -641,14 +641,14 @@ ROM_END
 ROM_START (c64)
 	ROM_REGION (0x19400, REGION_CPU1)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
-	ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )   
+	ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 ROM_END
 
 ROM_START (c64pal)
 	ROM_REGION (0x19400, REGION_CPU1)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
-	ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )   
+	ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 ROM_END
 
@@ -662,7 +662,7 @@ ROM_END
 ROM_START (sx64)
 	ROM_REGION (0x19400, REGION_CPU1)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
-	ROM_LOAD( "251104.04",     0x12000, 0x2000, 0x2c5965d4 )   
+	ROM_LOAD( "251104.04",     0x12000, 0x2000, 0x2c5965d4 )
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 	VC1541_ROM (REGION_CPU2)
 ROM_END
@@ -698,20 +698,20 @@ ROM_END
      /* modified for alec 64, not booting */
 	 ROM_LOAD( "alec64.e0",   0x12000, 0x2000, 0x2b1b7381 )
      /* unique copyright, else speeddos? */
-	 ROM_LOAD( "a.e0", 0x12000, 0x2000, 0xb8f49365 )   
+	 ROM_LOAD( "a.e0", 0x12000, 0x2000, 0xb8f49365 )
 	 /* ? */
-	 ROM_LOAD( "kernelx.e0",  0x12000, 0x2000, 0xbeed6d49 )   
-	 ROM_LOAD( "kernelx2.e0",  0x12000, 0x2000, 0xcfb58230 )   	 
+	 ROM_LOAD( "kernelx.e0",  0x12000, 0x2000, 0xbeed6d49 )
+	 ROM_LOAD( "kernelx2.e0",  0x12000, 0x2000, 0xcfb58230 )
 	 /* basic x 2 */
-	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000, 0x6ec94629 )   
+	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000, 0x6ec94629 )
 
      /* commodore versions */
 	 /* 901227-01 */
-	 ROM_LOAD( "901227.01",  0x12000, 0x2000, 0xdce782fa )   
+	 ROM_LOAD( "901227.01",  0x12000, 0x2000, 0xdce782fa )
      /* 901227-02 */
 	 ROM_LOAD( "901227.02", 0x12000, 0x2000, 0xa5c687b3 )
      /* 901227-03 */
-	 ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )   
+	 ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )
 	 /* 901227-03? swedish  */
 	 ROM_LOAD( "kernel.swe",   0x12000, 0x2000, 0xf10c2c25 )
 	 /* c64c 901225-01 + 901227-03 */
@@ -719,40 +719,40 @@ ROM_END
      /* c64gs 901225-01 with other fillbyte, modified kernel */
 	 ROM_LOAD ("390852.01", 0x10000, 0x4000, 0xb0a9c2da)
 	 /* sx64 */
-	 ROM_LOAD( "251104.04",     0x12000, 0x2000, 0x2c5965d4 )   
+	 ROM_LOAD( "251104.04",     0x12000, 0x2000, 0x2c5965d4 )
      /* 251104.04? swedish */
 	 ROM_LOAD( "kernel.swe",   0x12000, 0x2000, 0x7858d3d7 )
 	 /* 4064, Pet64, Educator 64 */
-	 ROM_LOAD( "901246.01",     0x12000, 0x2000, 0x789c8cc5 )   
-	 
-	 /* few differences to above versions */
-	 ROM_LOAD( "901227.02b",  0x12000, 0x2000, 0xf80eb87b )   
-	 ROM_LOAD( "901227.03b",  0x12000, 0x2000, 0x8e5c500d )
-	 ROM_LOAD( "901227.03c",  0x12000, 0x2000, 0xc13310c2 )   
+	 ROM_LOAD( "901246.01",     0x12000, 0x2000, 0x789c8cc5 )
 
-     /* 64er system v1 
+	 /* few differences to above versions */
+	 ROM_LOAD( "901227.02b",  0x12000, 0x2000, 0xf80eb87b )
+	 ROM_LOAD( "901227.03b",  0x12000, 0x2000, 0x8e5c500d )
+	 ROM_LOAD( "901227.03c",  0x12000, 0x2000, 0xc13310c2 )
+
+     /* 64er system v1
         ieee interface extension for c64 and vc1541!? */
      ROM_LOAD( "64ersys1.e0", 0x12000, 0x2000, 0x97d9a4df )
 	 /* 64er system v3 */
-	 ROM_LOAD( "64ersys3.e0", 0x12000, 0x2000, 0x5096b3bd )   
+	 ROM_LOAD( "64ersys3.e0", 0x12000, 0x2000, 0x5096b3bd )
 
 	 /* exos v3 */
-	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x4e54d020 )   
+	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x4e54d020 )
      /* 2 bytes different */
 	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x26f3339e )
 
 	 /* jiffydos v6.01 by cmd */
-	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000, 0x2f79984c )   
+	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000, 0x2f79984c )
 
 	 /* dolphin with dolphin vc1541 */
-	 ROM_LOAD( "mager.e0",    0x12000, 0x2000, 0xc9bb21bc )   
-	 ROM_LOAD( "dos20.e0",    0x12000, 0x2000, 0xffaeb9bc )   
+	 ROM_LOAD( "mager.e0",    0x12000, 0x2000, 0xc9bb21bc )
+	 ROM_LOAD( "dos20.e0",    0x12000, 0x2000, 0xffaeb9bc )
 
 	 /* speeddos plus
 		parallel interface on userport to modified vc1541 !? */
 	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, 0x8438e77b )
 	 /* speeddos plus + */
-	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, 0x10aee0ae )   
+	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, 0x10aee0ae )
 	 /* speeddos plus and 80 column text */
 	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000, 0xe801dadc )
 #endif

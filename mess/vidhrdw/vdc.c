@@ -1,7 +1,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/vdc.h"
+#include "vidhrdw/vdc.h"
 
 /* Our VDP context */
 

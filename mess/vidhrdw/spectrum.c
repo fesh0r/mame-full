@@ -15,9 +15,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/spectrum.h"
-#include "mess/eventlst.h"
-#include "mess/vidhrdw/border.h"
+#include "includes/spectrum.h"
+#include "eventlst.h"
+#include "vidhrdw/border.h"
 
 unsigned char *spectrum_characterram;
 unsigned char *spectrum_colorram;

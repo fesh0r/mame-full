@@ -14,7 +14,7 @@ Changes:
 
 #include "driver.h"
 #include "border.h"
-#include "mess/eventlst.h"
+#include "eventlst.h"
 
 /* Last border colour output in the previous frame */
 static int CurrBorderColor = 0;

@@ -23,11 +23,11 @@
 
 
 #include "driver.h"
-#include "mess/machine/6522via.h"
+#include "machine/6522via.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
-#include "mess/machine/iwm.h"
-#include "mess/systems/mac.h"
+#include "machine/iwm.h"
+#include "systems/mac.h"
 
 #include <time.h>
 

@@ -126,10 +126,10 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "mess/machine/6522via.h"
-#include "mess/machine/wd179x.h"
-#include "mess/machine/bbc.h"
-#include "mess/vidhrdw/bbc.h"
+#include "machine/6522via.h"
+#include "machine/wd179x.h"
+#include "machine/bbc.h"
+#include "vidhrdw/bbc.h"
 #include "i8271.h"
 
 const char *bbc_floppy_name[4] = {NULL,NULL,NULL,NULL};

@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
-#include "mess/machine/6522via.h"
+#include "machine/6522via.h"
 
 #define RAMP_DELAY 6.333e-6
 #define BLANK_DELAY 0

@@ -6,7 +6,7 @@
  ******************************************************************************/
 #include "driver.h"
 #include "machine/6821pia.h"
-#include "mess/vidhrdw/m6847.h"
+#include "vidhrdw/m6847.h"
 
 /* from machine/dragon.c */
 extern void dragon32_init_machine(void);

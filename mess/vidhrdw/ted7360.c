@@ -357,13 +357,13 @@ Video part
 #include "driver.h"
 
 #define VERBOSE_DBG 0
-#include "mess/includes/cbm.h"
-#include "mess/includes/c16.h"
-#include "mess/includes/vc20tape.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/vc1541.h"
+#include "includes/cbm.h"
+#include "includes/c16.h"
+#include "includes/vc20tape.h"
+#include "includes/c1551.h"
+#include "includes/vc1541.h"
 
-#include "mess/includes/ted7360.h"
+#include "includes/ted7360.h"
 
 /*#define GFX */
 

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "mess/includes/pcw16.h"
+#include "includes/pcw16.h"
 #include "vidhrdw/generic.h"
 
 int pcw16_colour_palette[16];

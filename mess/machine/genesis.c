@@ -4,8 +4,8 @@
   I/O ports)
 ***************************************************************************/
 #include "driver.h"
-#include "mess/machine/genesis.h"
-#include "mess/vidhrdw/genesis.h"
+#include "machine/genesis.h"
+#include "vidhrdw/genesis.h"
 #include "cpu/z80/z80.h"
 
 

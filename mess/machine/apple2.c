@@ -16,7 +16,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
-#include "mess/systems/apple2.h"
+#include "systems/apple2.h"
 
 /* machine/ay3600.c */
 extern void AY3600_init(void);

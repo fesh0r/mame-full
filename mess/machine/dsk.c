@@ -12,8 +12,8 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "mess/includes/nec765.h"
-#include "mess/includes/dsk.h"
+#include "includes/nec765.h"
+#include "includes/dsk.h"
 /* disk image and extended disk image support code */
 /* supports up to 84 tracks and 2 sides */
 

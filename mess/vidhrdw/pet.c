@@ -13,10 +13,10 @@
 #include "vidhrdw/generic.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
+#include "includes/cbm.h"
 
-#include "mess/includes/praster.h"
-#include "mess/includes/pet.h"
+#include "includes/praster.h"
+#include "includes/pet.h"
 
 void pet_init (UINT8 *memory)
 {

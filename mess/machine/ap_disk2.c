@@ -19,7 +19,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "mess/systems/apple2.h"
+#include "systems/apple2.h"
 
 #define TOTAL_TRACKS		35 /* total number of tracks we support, can be 40 */
 #define NIBBLE_SIZE			374

@@ -27,8 +27,8 @@ Hardware:	MC6850
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
-#include "mess/machine/mc6850.h"
-#include "mess/includes/uk101.h"
+#include "machine/mc6850.h"
+#include "includes/uk101.h"
 
 /* memory w/r functions */
 

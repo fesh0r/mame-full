@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "mess/machine/sms.h"
+#include "machine/sms.h"
 
 unsigned char sms_page_count;
 unsigned char sms_fm_detect;

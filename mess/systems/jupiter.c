@@ -31,7 +31,7 @@ Ports:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/includes/jupiter.h"
+#include "includes/jupiter.h"
 
 /* port i/o functions */
 

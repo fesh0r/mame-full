@@ -49,8 +49,8 @@ In Memory Of Haruki Ikeda
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "mess/machine/genesis.h"
-#include "mess/vidhrdw/genesis.h"
+#include "machine/genesis.h"
+#include "vidhrdw/genesis.h"
 #include "sound/2612intf.h"
 
 #define ARMLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))

@@ -9,8 +9,8 @@
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "mess/machine/atari.h"
-#include "mess/vidhrdw/atari.h"
+#include "machine/atari.h"
+#include "vidhrdw/atari.h"
 
 #define VERBOSE_POKEY	0
 #define VERBOSE_SERIAL	0

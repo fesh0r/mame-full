@@ -22,20 +22,20 @@
 #include "driver.h"
 #include "machine/8255ppi.h"
 
-#include "mess/includes/pic8259.h"
-#include "mess/includes/pit8253.h"
-#include "mess/includes/mc146818.h"
-#include "mess/includes/dma8237.h"
-#include "mess/includes/uart8250.h"
-#include "mess/includes/vga.h"
-#include "mess/includes/pc_cga.h"
-#include "mess/includes/pc_mda.h"
+#include "includes/pic8259.h"
+#include "includes/pit8253.h"
+#include "includes/mc146818.h"
+#include "includes/dma8237.h"
+#include "includes/uart8250.h"
+#include "includes/vga.h"
+#include "includes/pc_cga.h"
+#include "includes/pc_mda.h"
 
-#include "mess/includes/pc_flopp.h"
-#include "mess/includes/pc_mouse.h"
-#include "mess/includes/pckeybrd.h"
+#include "includes/pc_flopp.h"
+#include "includes/pc_mouse.h"
+#include "includes/pckeybrd.h"
 
-#include "mess/includes/pc.h"
+#include "includes/pc.h"
 
 UINT8 pc_port[0x400];
 

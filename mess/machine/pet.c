@@ -9,13 +9,13 @@
 #include "cpu/m6809/m6809.h"
 
 #define VERBOSE_DBG 1
-#include "mess/includes/cbm.h"
-#include "mess/includes/vc20tape.h"
+#include "includes/cbm.h"
+#include "includes/vc20tape.h"
 #include "machine/6821pia.h"
-#include "mess/machine/6522via.h"
-#include "mess/includes/pet.h"
-#include "mess/includes/c1551.h"
-#include "mess/includes/cbmieeeb.h"
+#include "machine/6522via.h"
+#include "includes/pet.h"
+#include "includes/c1551.h"
+#include "includes/cbmieeeb.h"
 
 /* keyboard lines */
 static UINT8 pet_keyline[10] = { 0 };

@@ -6,8 +6,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-//#include "mess/machine/6522via.h"
-#include "mess/machine/lisa.h"
+//#include "machine/6522via.h"
+#include "machine/lisa.h"
 
 
 static struct MemoryReadAddress lisa_readmem[] =
@@ -232,7 +232,7 @@ ROM_START( lisa2 )
 	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
 
 	ROM_REGION(0x040000, REGION_USER1)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
-	
+
 ROM_END
 
 
