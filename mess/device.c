@@ -264,7 +264,7 @@ const char *device_typename_id(int type, int id)
 		}
 		if (!newname)
 		{
-			name = ui_getstring(UI_filespecification + type);
+			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + type);
 			if (dev->count > 1)
 			{
 				/* for the average user counting starts at #1 ;-) */
