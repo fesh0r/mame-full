@@ -30,6 +30,7 @@ LIBS.aix           = -lUMSobj
 LIBS.next	   = -framework SoundKit
 LIBS.macosx	   = -framework CoreAudio
 #LIBS.openbsd       = -lossaudio
+LIBS.nto	   = -lsocket
 
 ##############################################################################
 # **** Display dependent settings.
@@ -50,12 +51,14 @@ LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide2x
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
 LIBS.openstep	= -framework AppKit
 LIBS.SDL	= -ldl -lSDL -lpthread -D_REENTRANT
+LIBS.photon2	= -L/usr/lib -lph -lphrender
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS)
 CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(GLDRIVER)
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
 CFLAGS.svgafx   = -I/usr/include/glide
 CFLAGS.SDL      = -D_REENTRANT
+CFLAGS.photon2	=
 
 INST.x11        = doinstall
 INST.ggi        = doinstall
@@ -64,6 +67,7 @@ INST.xgl        = doinstallsuid copycab
 INST.xfx        = doinstallsuid
 INST.svgafx     = doinstallsuid
 INST.SDL	= doinstall
+INST.photon2	= doinstall
 
 # handle X11 display method additonal settings
 ifdef X11_MITSHM
