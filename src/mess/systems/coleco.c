@@ -39,8 +39,8 @@ extern void coleco_VDP_w(int offset, int data);
 
 static struct MemoryReadAddress readmem[] =
 {
-    { 0x0000, 0x1fff, MRA_ROM }, /* COLECO.ROM */
-    { 0x6000, 0x63ff, coleco_ram_r, &coleco_ram },
+    { 0x0000, 0x1fff, MRA_ROM },  /* COLECO.ROM */
+    { 0x6000, 0x63ff, coleco_ram_r },
     { 0x6400, 0x67ff, coleco_ram_r },
     { 0x6800, 0x6bff, coleco_ram_r },
     { 0x6c00, 0x6fff, coleco_ram_r },
@@ -48,14 +48,15 @@ static struct MemoryReadAddress readmem[] =
     { 0x7400, 0x77ff, coleco_ram_r },
     { 0x7800, 0x7bff, coleco_ram_r },
     { 0x7c00, 0x7fff, coleco_ram_r },
-    { 0x8000, 0xffff, MRA_ROM, &coleco_cartridge_rom }, /* Cartridge */
-	{ -1 }	/* end of table */
+    { 0x8000, 0xffff, MRA_ROM },  /* Cartridge */
+	{ -1 }	 /* end of table */
 };
+
 
 static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x1fff, MWA_ROM }, /* COLECO.ROM */
-    { 0x6000, 0x63ff, coleco_ram_w },
+    { 0x6000, 0x63ff, coleco_ram_w, &coleco_ram },
     { 0x6400, 0x67ff, coleco_ram_w },
     { 0x6800, 0x6bff, coleco_ram_w },
     { 0x6c00, 0x6fff, coleco_ram_w },
@@ -63,7 +64,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x7400, 0x77ff, coleco_ram_w },
     { 0x7800, 0x7bff, coleco_ram_w },
     { 0x7c00, 0x7fff, coleco_ram_w },
-    { 0x8000, 0xffff, MWA_ROM }, /* Cartridge */
+    { 0x8000, 0xffff, MWA_ROM, &coleco_cartridge_rom }, /* Cartridge */
 	{ -1 }	/* end of table */
 };
 
@@ -87,7 +88,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( coleco )
 	PORT_START	/* IN0 */
     PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "0", KEYCODE_0, IP_JOY_DEFAULT)
     PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "1", KEYCODE_1, IP_JOY_DEFAULT)
@@ -169,7 +170,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3579545,	/* 3.579545 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			coleco_interrupt,1
 		}
@@ -182,8 +182,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
 	gfxdecodeinfo,
-	TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE/sizeof(unsigned short),
-	0,
+	TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
+	tms9928A_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -209,21 +209,33 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START (coleco_rom)
-	ROM_REGION (0x10000)
-//	ROM_LOAD ("coleco.rom", 0x0000, 0x2000, 0x6e6bc567)  CANNOT FIND THIS!
+ROM_START (coleco)
+	ROM_REGIONX(0x10000,REGION_CPU1)
 	ROM_LOAD ("coleco.rom", 0x0000, 0x2000, 0x3aa93ef3)
 ROM_END
 
-ROM_START (colecofb_rom)
-	ROM_REGION (0x10000)
-	ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, 0x640cf85b) /* fast screen */
-ROM_END
+//ROM_START (colecofb_rom)
+//	ROM_REGIONX(0x10000,REGION_CPU1)
+//	ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, 0x640cf85b) /* fast screen */
+//ROM_END
 
-ROM_START (coleconb_rom)
-	ROM_REGION (0x10000)
-	ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, 0x66cda476) /* no screen */
-ROM_END
+//ROM_START (coleconb_rom)
+//	ROM_REGIONX(0x10000,REGION_CPU1)
+//	ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, 0x66cda476) /* no screen */
+//ROM_END
+
+
+
+
+
+
+/* list of file extensions */
+static const char *coleco_file_extensions[] =
+{
+	"rom",
+	0       /* end of array */
+};
+
 
 struct GameDriver coleco_driver =
 {
@@ -237,9 +249,10 @@ struct GameDriver coleco_driver =
 	0,
 	&machine_driver,
 	0,
-   coleco_rom,
+    rom_coleco,
 	coleco_load_rom,
 	coleco_id_rom,
+	coleco_file_extensions,  /* Default file extension */
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -248,17 +261,17 @@ struct GameDriver coleco_driver =
    0,
 	0,
 	0,	/* sound_prom */
-   input_ports,
+   input_ports_coleco,
    0,
-   TMS9928A_palette,
-   TMS9928A_colortable,
+   /*TMS9928A_palette*/0,
+   /*TMS9928A_colortable*/0,
 	ORIENTATION_DEFAULT,
    0,
    0,
 };
 
 
-
+#ifdef COLECO_HACKS
 struct GameDriver colecofb_driver =
 {
 	__FILE__,
@@ -274,6 +287,7 @@ struct GameDriver colecofb_driver =
    colecofb_rom,
 	coleco_load_rom,
 	coleco_id_rom,
+	coleco_file_extensions,  /* Default file extension */
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -307,6 +321,7 @@ struct GameDriver coleconb_driver =
    coleconb_rom,
 	coleco_load_rom,
 	coleco_id_rom,
+	coleco_file_extensions,  /* Default file extension */
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -324,3 +339,4 @@ struct GameDriver coleconb_driver =
    0,
 };
 
+#endif

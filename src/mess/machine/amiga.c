@@ -234,7 +234,7 @@ static int (*blit_func_line[8])( unsigned short dataA, unsigned short dataB, uns
 
 static void blitter_proc( int param ) {
 	/* Now we do the real blitting */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int	blt_total = 0;
 
 	custom_regs.DMACON |= 0x2000; /* Blit Zero, we modify it later */
@@ -616,7 +616,7 @@ static void fdc_init( void ) {
 
 		fdc_status[i].disk_changed = 1;
 		if ( floppy_name[i] && floppy_name[i][0] ) {
-			fdc_status[i].f = osd_fopen(Machine->gamedrv->name,floppy_name[i],OSD_FILETYPE_IMAGE,0);
+			fdc_status[i].f = osd_fopen(Machine->gamedrv->name,floppy_name[i],OSD_FILETYPE_IMAGE_RW,0);
 			if ( fdc_status[i].f == NULL ) {
 				if ( errorlog )
 					fprintf( errorlog, "Could not open image %s\n", floppy_name[i] );
@@ -701,7 +701,7 @@ static void fdc_dma_proc( int drive ) {
 		if ( errorlog )
 			fprintf( errorlog, "Write to disk unsupported yet\n" );
 	} else {
-		unsigned char *RAM = &Machine->memory_region[0][( custom_regs.DSKPTH << 16 ) | custom_regs.DSKPTL];
+		unsigned char *RAM = &memory_region(REGION_CPU1)[( custom_regs.DSKPTH << 16 ) | custom_regs.DSKPTL];
 		int cur_pos = fdc_status[drive].pos;
 		int len = custom_regs.DSKLEN & 0x3fff;
 
@@ -1885,7 +1885,7 @@ void amiga_init_machine( void ) {
 	/* Fake our reset pointer */
 	/* This is done with a hardware overlay from the 8520 CIA A in the real hardware */
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy( &RAM[0x000004], &RAM[0xf80004], 4 );
 

@@ -1,0 +1,72 @@
+# Vectrex Cartridge and Demo CRC List
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+
+[vectrex]
+b2313487 = 3D Mine Storm
+e98ab5a2 = All Good Things
+b7510971 = Armor Attack
+a2fa649b = Bedlam
+eafe2455 = Berzerk
+ f11ce0c = Blitz!
+f1b1de78 = Clean Sweep
+6c1afa52 = Cosmic Chasm
+61bae868 = Demo (Non Playable)
+13a35c8a = Fortress Of Narzod
+9c5410be = Frogger
+e61a7de3 = Heads Up
+4bb13472 = Hyper Chase
+67ed5845 = Lunar Lander
+8617c304 = Moon Lander
+55a79111 = Moon Lander [Beta Version]
+f5b3b374 = Mine Storm 2
+ 50bd949 = Narrow Escape
+1ae8e788 = Omega Chase
+f0073328 = Patriots
+a7471784 = Polar Rescue
+c10f37d8 = Pole Position
+c999f9c5 = Pop (Demo)
+34a98132 = Rip Off
+d1e0268f = Rockaroids Remix
+707c8ffe = Scramble
+d17ddc97 = Spike Goes Skiing
+5c4611c8 = Solar Quest
+a3be5aff = Space Wars
+62a61843 = Spike
+1c6b030e = Spike Hoppin'
+ 2f41733 = Spin Ball
+c9039623 = Star Castle
+4de1f06b = Star Hawk
+3768d8c3 = Star Trek - The Game
+ ccca430 = The Star Wars Clone Demo
+ eeb4805 = Vecmania, Part 1 (John Dondzilla, 1999)
+8c915c4d = Vecmania, Part 2 (John Dondzilla, 1999)
+8bd103c1 = Vector Vaders
+ a5ff28d = Vectrex Pong
+2ee20103 = Web Wars
+
+
+#[not_working]
+9f62e167 = Animaction
+c8e2f247 = Art Master
+92709b11 = Crazy Coaster
+9dcfd5b7 = Dark Tower (NOT WORKING, CRASHES)
+afefa29c = Melody Master
+
+
+
+
+#[known_bad_dumps]
+
+
+
+
+
+
+
+
+
+
+
+

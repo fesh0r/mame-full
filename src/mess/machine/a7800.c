@@ -18,15 +18,17 @@ unsigned char *a7800_bios_f000;
 int a7800_ctrl_lock;
 int a7800_ctrl_reg;
 
+
 int maria_flag;
 
 /* local */
 unsigned char *a7800_ram;
 unsigned char *a7800_cartridge_rom;
 unsigned char a7800_cart_type;
+UINT8 *ROM;
 
 void a7800_init_machine(void) {
-    a7800_ctrl_lock = 0;
+	a7800_ctrl_lock = 0;
     a7800_ctrl_reg = 0;
     maria_flag=0;
 	if (a7800_cart_type & 0x01){
@@ -68,11 +70,11 @@ int a7800_id_rom (const char *name, const char *gamename)
 	/* If no file was specified, don't bother */
     if (strlen(gamename)==0) return 1;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_ROM_CART, 0))) return 0;
+	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
     osd_fread(romfile,header,128);
 	osd_fclose (romfile);
 
-    if (memcmp(&tag[0],&header[1],9) == -1) return 0;    
+    if (memcmp(&tag[0],&header[1],9) == -1) return 0;
     return 1;
 }
 
@@ -80,9 +82,10 @@ int a7800_id_rom (const char *name, const char *gamename)
 int a7800_load_rom (void)
 {
     FILE *cartfile;
-    long len,start;
+	long len,start;
     unsigned char header[128];
 
+	ROM = memory_region(REGION_CPU1);
     a7800_bios_f000 = malloc(0x1000);
     a7800_cart_f000 = malloc(0x1000);
 
@@ -92,10 +95,10 @@ int a7800_load_rom (void)
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
 	if (strlen(rom_name[0])==0)
-    {      
+    {
         if (errorlog) fprintf(errorlog,"A7800 - warning: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0)))
+	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
 	{
         if (errorlog) fprintf(errorlog,"A7800 - Unable to locate cartridge: %s\n",rom_name[0]);
 		return 1;
@@ -161,7 +164,7 @@ int a7800_TIA_r(int offset) {
                 return 0x80;
         default:
             if (errorlog) fprintf(errorlog,"undefined TIA read %x\n",offset);
-            
+
     }
     return 0xFF;
 }
@@ -178,7 +181,7 @@ void a7800_TIA_w(int offset, int data) {
                 if (data & 0x04)
                     memcpy(&(ROM[0xF000]),a7800_cart_f000,0x1000);
                 else
-                    memcpy(&(ROM[0xF000]),a7800_bios_f000,0x1000);                                        
+                    memcpy(&(ROM[0xF000]),a7800_bios_f000,0x1000);
             }
         break;
     }
@@ -207,28 +210,28 @@ void a7800_RIOT_w(int offset, int data) {
 /****** RAM Mirroring ******************************/
 
 int a7800_MAINRAM_r(int offset) {
-    return ROM[0x2000 + offset];
+	return ROM[0x2000 + offset];
 }
 
 void a7800_MAINRAM_w(int offset, int data) {
-    ROM[0x2000 + offset] = data;
+	ROM[0x2000 + offset] = data;
 }
 
 int a7800_RAM0_r(int offset) {
-    return ROM[0x2040 + offset];
+	return ROM[0x2040 + offset];
 }
 
 void a7800_RAM0_w(int offset, int data) {
-    ROM[0x2040 + offset] = data;
+	ROM[0x2040 + offset] = data;
 }
 
 int a7800_RAM1_r(int offset) {
-    return ROM[0x2140 + offset];
+	return ROM[0x2140 + offset];
 }
 
 void a7800_RAM1_w(int offset, int data) {
-    ROM[0x2140 + offset] = data;
+	ROM[0x2140 + offset] = data;
 }
 
 
-      
+

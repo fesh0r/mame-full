@@ -1,0 +1,1341 @@
+# MESS System Information Data File
+# Maintained by Chris Henry
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+# Thanks to Ben Bruscella, Jeuergen Buchmueller, JoJo Priore, and everyone on MESSDEV.
+
+
+$info=a5200
+$bio
+Atari 5200 SuperSystem (a5200)
+
+
+Required System ROM:
+
+5200.bin (2,048 bytes; CRC 4248d3e3)
+
+
+Known Issues:
+
+See Compatibility Below.
+
+
+Compatibility:
+
+This driver is preliminary. Though many games will load, most, if not all, have input problems.
+
+
+History and Trivia:
+
+The Atari 5200 was introduced in 1982, and was actually designed to be a competitor to the Intellivision, before ColecoVision entered the market. Developed under the name of "Pam" (Atari, at the time, typically named projects after well-endowed female employees), Atari considered releasing it with that moniker; PAM in this case an acronym for "Personal Arcade Machine".
+
+
+The 5200 shared much of the architecture of the Atari 400/800 computers, but featured a different cartridge connector and completely different controllers. Non-centering analogue joysticks which offered a full 360 degrees of mobility, were both innovative and unreliable. Other controller features included a keypad, and a ahead-of-it's-time pause button.
+
+
+The Atari 5200 suffered from it's initial incompatability with the VCS/2600 (an adapter was later released) and fierce competition from Coleco. When Warner Communications sold Atari Corp. to the Tramiels in 1984, they quickly removed it from the market.
+
+
+$end
+
+$info=a7800
+$bio
+Atari 7800 ProSystem (a7800)
+
+
+Required System ROM:
+
+7800.rom (4096 bytes; 649913e5)
+
+
+Known Issues:
+
+None currently.
+
+
+Default Usage:
+
+"R"  = Reset
+
+"S"  = Select
+
+Ctrl = Button 1
+
+Alt  = Button 2
+
+
+Compatibility:
+
+Runs most games well.
+
+
+History and Trivia:
+
+Originally developed in 1984 as the Atari 3600, the Atari 7800 Prosystem was released to the US market in 1986, in an attempt to compete in a revitalised home videogame market. The 7800 was actually designed by Gencomp as part of a lawsuit settlement (Gencomp had been sued for releasing a speedup chipset for Atari Coinop Missile Command).
+
+
+The 7800 was compatible with pre-existing Atari 2600 game program cartridges, without the need for expansion modules or turning switches, but was also designed to use enhanced 7800-only cartridges such as thepack-in "Pole Position 2". (n.b., only the 7800-specific cartridges are currently supported in MESS.) Many peripherals, including a computer/keyboard and high score saving cartridge were planned but never released.
+
+
+Unfortunately for Atari, the system did poorly in the late 1980's market dominated by Nintendo.
+
+
+www.atari-history.com has this interesting anecdote: "In the summer of 1984 the first 5,000 Atari 7800's had just been built in the new El Paso assembly plant. The production line manager, Brad Saville was eager to meet with Jack Tramiel to show him the new flagship Atari video game console. The meeting ended abruptly as Jack Tramiel was quoted "Get your pollution out of here! We make computers now and we don't want your garbage." The line manager was fired 2 days later. About 8-9 months later the line manager received a phone call from Atari asking him as to the whereabouts of the die molds for the Atari 7800. The ex-line manager responded that he did in fact know where they were and for $50/hour for about 200 to 300 hours of his time he would remember where they were and find them. The Atari Corp. representative who called was infuriated and informed the former production line manager that Atari's lawyers would be in contact with him. He never heard from Atari again."
+
+
+$end
+
+$info=a800
+$bio
+Atari 800 Home Computer (a800)
+
+
+Required System ROM:
+ 
+atariosb.rom (1024 bytes; CRC 3e28a1fe)  
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default. Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.
+
+
+The Atari800 driver now has two ROM slots. It really had two slots, so the code was modified to optionally read the second part of a 16K ROM from the second cartridge filename provided (right slot). The previous version had a800_cartridge_32k flag which was wrong.  Cartridges are either 8K or 16K, so that was renamed to ..._16k too ;)
+
+
+Compatibility:
+
+It should run just about any ATR image you throw at it. There are some unresolved issues with cartridge emulation at present.
+
+
+$end
+
+$info=amiga
+$bio
+Amiga (amiga)
+
+
+Required System ROM: 
+
+kick13.rom (524,288 bytes; CRC f6290043)
+
+
+Known Issues: 
+
+NOT WORKING. Problems introduced during the conversion to the new MAME core. System begins to boot, but eventually hangs.
+
+
+$end
+
+$info=cpc6128
+$bio
+Amstrad/Schneider CPC 6128
+
+
+Required System ROMs:
+
+cpc6128.rom (32768 bytes; CRC 9e827fel)
+
+cpcados.rom (16384 bytes; CRC 1fe22ecd)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Compatibility:
+
+This driver is considered preliminary. The system ROM is loaded, and the Amstrad screen is shown. Image loading is not supported yet.
+
+$end
+
+$info=apple2c
+$bio
+Apple //c Microcomputer (apple2c)
+
+
+Required System ROMS:
+
+a2c.128 (16,384 bytes; CRC f0edaa1b)
+
+a2c.vid (4,096 bytes; CRC 2651014d)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Keyboard problems with the conversion to the MAME core. These systems work ok, but not much happens due to the keyboard problems.
+
+$end
+
+
+$info=apple2c0
+$bio
+Apple //c Microcomputer with 3.5 Disk Rom (apple2c0)
+
+
+Required System ROMS:
+
+a2c.256 (32,768 bytes; CRC c8b979b3)
+
+a2c.vid (4,096 bytes; CRC 2651014d)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Keyboard problems with the conversion to the MAME core. These systems work ok, but not much happens due to the keyboard problems.
+
+$end
+
+
+$info=apple2cp
+$bio
+Apple //c Plus Microcomputer (apple2cp)
+
+
+Required System ROMS:
+
+a2cplus.mon (32,768 bytes; CRC 0b996420)
+
+a2cplus.vid (4,096 bytes; CRC 2651014d)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Keyboard problems with the conversion to the MAME core. These systems work ok, but not much happens due to the keyboard problems.
+
+$end
+
+
+$info=apple2e
+$bio
+Apple ][e Microcomputer (apple2e)
+
+
+Required System ROMS:
+
+a2e.cd (8,192 bytes; CRC e248835e)
+
+a2e.ef (8,192 bytes; CRC fc3d59d8)
+
+a2e.vid (4,096 bytes; CRC 816a86f1)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Keyboard problems with the conversion to the MAME core. These systems work ok, but not much happens due to the keyboard problems.
+
+$end
+
+
+$info=apple2ee
+$bio
+Apple ][e (Enhanced) Microcomputer (apple2ee)
+
+
+Required System ROMS:
+
+a2ee.cd (8,192 bytes; CRC 443aa7ca)
+
+a2ee.ef (8,192 bytes; CRC 95e1003a)
+
+a2ee.vid (4,096 bytes; CRC 2651014d)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Keyboard problems with the conversion to the MAME core. These systems work ok, but not much happens due to the keyboard problems.
+
+$end
+
+$info=apple2ep
+$bio
+Apple ][e (Platinum) Microcomputer (apple2ep)
+
+
+Required System ROMS:
+
+a2ept.cf (16,384 bytes; CRC 02b648c8)
+
+a2ept.vid (4,096 bytes; CRC 2651014d)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Keyboard problems with the conversion to the MAME core. These systems work ok, but not much happens due to the keyboard problems.
+
+$end
+
+
+$info=astrocde
+$bio
+Bally Professional Arcade/Astrocade (astrocde)
+
+
+Required System ROM:
+
+astro.bin (8,192 bytes; CRC ebc77f3a)
+
+
+Known Issues:
+
+None currently.
+
+
+Compatibility:
+
+It should run just about anything you throw at it.
+
+
+History and Trivia:
+
+The game console commonly known as the "Bally Astrocade" was never officially sold by that name, having originally been released by Bally Manufacturing in 1978 as the Bally Professional Arcade. It was withdrawn rather quickly though, due to the success of the competing Atari VCS. A group of Pro Arcade enthusiasts under the name Astrovision Inc., bought the rights to the Pro Arcade and reintroduced it as the Bally Computer System, including the Basic casettrige as a pack-in. In 1982, the system and company was renamed Astrocade, once again trying to market it as a video game system. The system didn't last much longer, though; it was a product with a limited interest base even before the video game slump of the next few years.
+
+$end
+
+$info=c16
+$bio
+Commodore C16 and Plus 4 (c16) (plus4)
+(beta version)
+
+if the game runs to fast with the ntsc version, try the pal version!
+
+state
+-----
+rasterline based video system
+ imperfect scrolling support (when 40 columns or 25 lines)
+ lightpen support missing?
+ imperfect colors
+ should be enough for 95% of the games and programs
+imperfect sound (noise channel complete wrong)
+keyboard, joystick 1 and 2
+simple tape support
+serial bus
+ simple disk drives
+ no printer or other devices
+expansion modules
+ rom cartridges
+ simple ieee488 floppy support (c1551 floppy disk drive)
+ no other expansion modules
+no userport (plus4)
+ no rs232/v.24 interface
+quickloader
+
+some unsolved problems
+ memory check by c16 kernel will not recognize more memory without
+restart of mess
+ cpu clock switching/changing
+
+Keys
+----
+Some PC-Keyboards does not behave well when special two or more keys are pressed at the same time (with my keyboard printscreen clears the pressed pause key!)
+
+shift-cbm switches between upper-only and normal character set
+(when wrong characters on screen this can help)
+run (shift-stop) loads first program from device 8 (dload"*) and starts
+it
+
+Tape
+----
+loading of wav, prg and prg files in zip archiv
+commandline -cassette image
+wav:
+ 8 or 16(not tested) bit, mono, 5000 Hz minimum
+ has the same problems like an original tape drive (tone head must
+ be adjusted to get working(no load error,...) wav-files)
+zip:
+ must be placed in current directory
+ prg's are played in the order of the files in zip file
+
+use LOAD or LOAD"" or LOAD"",1 for loading of normal programs
+use LOAD"",1,1 for loading programs to their special address
+
+several programs relies on more features
+(loading other file types, writing, ...)
+
+Discs
+-----
+only file load from drive 8 and 9 implemented
+ loads file from rom directory (*.prg) (must NOT be specified on
+commandline)
+ or file from d64 image (here also directory LOAD"$",8 supported)
+use DLOAD"filename"
+or LOAD"filename",8
+or LOAD"filename",8,1 (for loading machine language programs at their
+address)
+for loading
+type RUN or the appropriate sys call to start them
+
+several programs rely on more features
+(loading other file types, writing, ...)
+
+most games rely on starting own programs in the floppy drive
+(and therefor cpu level emulation is needed)
+
+Roms
+----
+.bin .rom .lo .hi .prg
+files with boot-sign in it
+  recogniced as roms
+
+.prg files loaded at address in its first two bytes
+.bin, .rom, .lo , .hi roms loaded to cs1 low, cs1 high, cs2 low, cs2
+high
+ address accordingly to order in command line
+
+Quickloader
+-----------
+loads program into memory and sets program end pointer
+(works with most programs)
+program ready to get started with RUN
+loads first rom when you press quickload key (f8)
+
+when problems start with -log and look into error.log file
+
+
+$end
+
+$info=cgenie
+$bio
+EACA Colour Genie 2000 (cgenie)
+
+
+Required System ROMS:
+
+cgenie.rom (16,384 bytes; CRC d359ead7)
+
+cgdos.rom (8,192 bytes; CRC 2a96cf74)
+
+cgenie1.fnt (2,048 bytes; CRC 4fed774a)
+
+
+And as an add-on "DOS Interface" you can use:
+
+newe000.rom (2,772 bytes; CRC 953491a7)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Usage:
+
+Keyboard - relatively close to the original layout.
+
+
+Joystick - emulation of dual Colour Genie joysticks with keypads.
+
+
+Cassette - emulation of virtual tapes supported.
+
+Use SYSTEM or CLOAD commands to read images.
+
+SYSTEM supports 6 character filenames.
+ 
+CLOAD loads a file named BASIC(N).CAS, where (N) is the character you supplied (e.g. CLOAD"M" loads BASICM.CAS)
+
+
+Floppies - emulation of virtual floppy discs supported.
+
+Use CMD"I0" to "CMDI3" to get an inventory of drive 0 to 3.
+
+Use CMD"S FILENAME/CMD" to start a binary executable or use LOAD"FILENAME/BAS" to load a basic program.
+
+
+Additional Usage Notes:
+
+Specify the disk image on the mess commandline.
+
+mess cgenie games1.dsk
+
+
+The newe000.rom is loaded if the corresponding "dip switch" is set from the driver itself. No need to specify any roms on the commandline.
+	
+
+Inside the emulation type:
+
+cmd"i to list the contents of the floppy disk image.
+
+
+To start a game, eg. paint/cmd, type
+
+cmd"s paint/cmd
+	
+You can omit the blank between cmd"s and the filename.
+
+
+This is how it also works:
+
+mess cgenie games1.dsk games2.dsk games3.dsk games4.dsk
+
+
+CLOAD is for BASIC type tapes only.  It should work if you have a BASIC *.cas file. File "names" in that case are _one_ character in length (inside the emulation).  In your roms/cgenie folder the names will be basicA.cas, basicB.cas and so on.  If you CSAVE"A you'll see a file basicA.cas laterand you can CLOAD"A it again. 
+
+
+To load a binary image there was a different command: SYSTEM
+
+You'll see a prompt looking like this:
+
+*?
+
+and there you can enter a name of up to six (wow!) characters.
+
+*?chop16<ENTER>
+
+will start loading a file named chop16.cas if it is in your rompath. If you don't have it... well, wait and see (nothing ;)  If you have it, you'll see two stars (**) in the upper right corner.  The right one will twinkle after every couple of bytes loaded, every 254 I think.
+	
+After several minutes you'll see the prompt again
+
+*?
+
+now type / (slash) and ENTER and the program will be started at it's defined run address. If a program does not have a run address, you could also specify /<decimal value> to run from a specific value...
+
+
+Also,.....
+
+Tap <ENTER> and also confirm the following 
+	
+MEM SIZE?
+
+with <ENTER>.
+
+After that you're in BASIC (DISK BASIC, to be exact, unless you disable cgdos.rom via the dip switches).
+
+
+Now you can use the DISK BASIC extensions to issue commands.  Most important
+
+CMD"I<disk#>	display inventory, disk# is optional and can be from 0 to 3
+
+CMD"Sname/cmd	start a binary file name/cmd from any disk
+
+CMD"Limage/bin:3	load image/bin from disk 3
+
+
+To ease things you could also enbale my DOS lookalike frontend ;) It's contained in newE000.rom but not enabled by default. If you enable it you can type HELP (hehe ;) and DIR and simply give a name to execute a binary file.
+
+
+Options:
+
+Under the "Options" menu, accessible by hitting TAB, there are three settings:
+
+"Floppy Disc Drives"  - enable or disable floppy disc controller.
+
+"DOS ROM C000-DFFF"   - enable 8K DOS ROM or make it RAM.
+
+"EXT ROM E000-EFFF"   - enable 4K Extension ROM or make it RAM.
+
+
+Compatibility:
+
+The Colour Genie driver should run most of the known programs out there. It supports the Motorola 6845 CRT controller with text and graphics modes (LGR and FGR), the AY-3-8910 sound chip with three audio channels and noise and the WD 179x floppy disc controller with up to four virtual floppy disc drives contained in image files.
+
+
+Known issues:
+
+Startup with CAS or CMD images does not always work. Use the BASIC SYSTEM or CLOAD commands to read cassette image files, or use the Colour Genie DOS ROM with floppy disc images to run programs. The driver does not yet emulate the printer port mode for AY-3-8910. Right now it always uses the AY-3-8910 ports for joystick emulation.
+
+
+$end
+
+$info=coco
+$bio
+Tandy/Radio Shack Color Computer
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default. Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.
+
+$end
+
+$info=coleco
+$bio
+Coleco Industries ColecoVision (coleco)
+
+
+Required System ROM:
+
+coleco.rom (8,192 bytes; CRC 3aa93ef3)
+
+
+Default Usage:
+
+arrow keys - 1p move
+
+ctrl, alt - 1p fire
+
+1-0 - number keys on the Colecovision controller
+
+minus - '#' key on the Colecovision controller
+
+equals - '.' key on the Colecovision controller
+
+
+Compatibility:
+
+This emulation runs most cartridges accurately. Games requiring analogue controls (Steering Wheel, Roller Controller) are not playable. See coleco.crc for further compatibility notes.
+
+
+History:
+
+The ColecoVision video game system was released in August of 1982 for a suggested retail price of $175 US. Similar at it's core to the MSX computers, ColecoVision had both superior graphics and more expansion capabilities compared to it's chief rivals: the Atari 2600 and Intellivision. Among the expansion module options were a hardware Atari 2600 emulator, and a Steering Wheel for driving games, both unheard of at the time.
+
+
+The competitive price, technical superiority, and perhaps more importantly, the inclusion of Donkey Kong as the pack-in cartridge, led to Coleco becoming an industry leader. With the emergence of the popularity of home computers, however, the console market seemed in jeopardy of losing it's share to the likes of Commodore and Apple. Coleco responded by releasing the Adam Family Computer as both a standalone unit and as an expansion to the ColecoVision itself. 
+
+
+The Adam was a phenomenal market failure though, and Coleco pulled itself from both the console and computer markets just before the game market crash in late 1984.
+
+
+Telegames purchased the rights to the system, and many of the manufactured games, and released a clone, The Personal Arcade, in 1988. It was later re-released by them, as the DINA, which is still sold today.
+
+
+$end
+
+$info=dragon32
+$bio
+Dragon 32 (dragon32)
+
+
+Required System ROM:
+
+d32.rom (16,384 bytes; CRC e3879310)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+$end
+
+
+$info=ep128
+$bio
+Enterprise 128 (ep128)
+
+
+Required System ROMs:
+
+exos.rom (32,768 bytes; CRC d421795f)
+
+exbas.rom (16,384 bytes; CRC 683cf455)
+
+exdos.rom (32,768 bytes; CRC d1d7e157)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Compatibility:
+This driver is considered preliminary. 
+The system ROM is loaded, and the 
+Enterprise screen is shown. Image 
+loading is not supported yet.
+
+$end
+
+$info=genesis
+$bio
+Sega Megadrive/Genesis/Nomad (Genesis)
+
+
+Default Usage:
+
+arrow keys - 1p move
+
+control, alt - 1p fire
+
+1,2 - 1, 2 player select
+
+return - 1p start
+
+
+Options:
+
+Under the "Options" menu, accessible by hitting TAB, you will find the following option:
+
+
+"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese or American. Many cartridges compare their country codes with that of the Genesis itself and may behave differently, or lock up if the two types do not match.
+
+
+'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear to be checking for. This may not be 100% accurate, however.
+
+
+Compatibility:
+
+Most games tend to run fairly well. Some have slight graphic glitches, incorrect colours part way down the screen or other bizarre effects. See genesis.crc for a partial list.
+
+
+Cartridges up to 32MBit (4MByte) are supported.
+
+
+The controller may not work well with some games. This will be resolved when more information is obtained. Similarly, 6-button joypads aren't emulated yet.
+
+
+Split screen effects and interlacing are not yet supported.
+
+
+Sprite/layer priority should be perfect.
+
+
+Sound is emulated at Z80 and PSG76489 level. 
+
+
+Notes from the driver author:
+
+I still consider the Genesis driver extremely preliminary. I have a lot of further work to do before I consider it anywhere near complete. My initial goal is to make it as compatible as possible. Currently there is scope within the driver to handlesplit screen colour changes/any VDP effect, interlacing, without rewriting. The graphics renderer emulates VDP at scanline level, and does not use tile-based methods.
+
+	
+Wanted:
+
+Any Sega Megadrive information! Information is extremely sparse; typically the same three-four documents, with parts incomplete, conflicting, and corrupted. Specifically, some of the finer points of DMA transfer, and access of the 68K memory map by the Z80. Generally, points which conflict with themselves in the documentation available on the net...
+
+$end
+
+$info=kaypro
+$bio
+Kaypro IIx (kaypro)
+
+
+Required System ROMS:
+
+kaypro2x.fnt (4,096 bytes; CRC 5f72da5b)
+
+cpm62k.sys (5,632 bytes; CRC d10cd036)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Problems with the conversion to the MAME core....  Emulation OK....  
+
+
+$end
+
+$info=kccomp
+$bio
+KC Compact (kccomp)
+
+
+Required System ROMS:
+
+kccos.rom (16,384 bytes; CRC 7f9ab3f7)
+
+kccbas.rom (16,384 bytes; CRC ca6af63d)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Compatibility:
+
+This driver is considered preliminary. The system ROM is loaded, and the KC compact screen is shown. Image loading is not supported yet.
+
+$end
+
+$info=kim1
+$bio
+Commodore/MOS Kim-1
+
+
+Required System ROM:
+
+6530-003.bin (1,024 bytes; a2a56502)
+
+6530-002.bin (1,024 bytes; 2b08e923)
+
+
+Compatibility:
+
+This driver supports the backdrop image of the KIM-1, and code images in .kim format.
+
+
+Default Usage:
+
+key   name  description
+
+-----------------------
+
+F1     AD    address mode
+
+F2     DA    data mode
+
+F3     RS    reset
+
+F5     GO    execute from address
+
+F6     PC    program counter (hmm.. whatever)
+
+F7	 ST    step (note: NMI handling for K7 missing)
+
+ENTER  +     increase address
+
+0-F    hex   hex digits
+
+$end
+
+$info=nes
+$bio
+Nintendo Entertainment System/Famicom
+
+
+Default Usage:
+
+arrow keys - 1p move
+
+control, alt - 1p fire
+
+3 - Select
+
+1 - 1p start
+
+	
+Options:
+
+Under the "Options" menu, accessible by hitting TAB, are two settings.
+
+
+"Renderer" - can be set to Scanline or Experimental. 
+
+
+The Scanline renderer gives the most accurate display, but can be slow. 
+
+
+The Experimental option is much faster, but still needs quite a bit of work before it displays properly in all cases. It's best used for games with no scrolling playfields, like Donkey Kong, etc.
+
+
+"Split-Screen fix" - defaults to off. Turn it on to see proper split screens in games like Kirby's Adventure and Airwolf. This will most likely go away in the future as we figure out how these split screens really work.
+
+
+Compatibility:
+
+The NES driver should run 99% of the images currently out there with very little problem. See nes.crc forsome more notes. It doesn't yet support a lot of the obscure mappers used in fwNES, but this is being worked on. For the record, it supports mappers 1, 2, 3, 4, 5 (incomplete), 7, 8, 9 & 10 (incomplete), 11, 15, 16, 18 (vrom probs), 25 (vrom probs), 33, 34, 64, 65, 66, 68 (incomplete), 69 (incomplete), 71, 78, 79. Some of the mappers > 63 haven't been fully tested yet. See nes.crc for a partial compatibility.
+
+
+Driver author notes:
+
+The main focus up until this point has been in getting the NES driver as accurate as possible. Unfortunately, the scanline rendering method is quite slow, so future efforts will be focusing on bringing up the speed. Also, the sound code is still a bit shaky. However, the NES driver does have quite accurate sample playback. For example, you can hear speech samples in Bayou Billy, Gauntlet, Dirty Harry, and Skate or Die that are not present in a few other NES emulators.
+
+
+Wanted:
+
+I'd appreciate any info on some of the more obscure mappers. If you have any of this, please drop me a line at bradman@pobox.com
+
+$end
+
+
+$info=pccga
+$bio
+IBM Personal Computer XT with Colour Graphics Array (PCCGA)
+
+
+Required System ROMS:
+
+wdbios.rom (8,192 bytes; CRC 839e2bda)
+
+pcxt.rom (8,192 bytes; CRC 031aafad)
+
+cga.chr (4,096 bytes; CRC 42009069)
+
+
+$end
+
+
+$info=pce
+$bio
+NEC PC Engine/TurboGrafx-16 (pce)
+
+
+Compatibility/Driver Status:
+
+Preliminary...  Xevious and Raiden8x work OK.
+
+$end
+
+
+$info=pcmda
+$bio
+IBM Personal Computer XT with Monochrome Display Adapter (PCMDA)
+
+
+Required System ROMS:
+
+wdbios.rom (8,192 bytes; CRC 839e2bda)
+
+pcxt.rom (8,192 bytes; CRC 031aafad)
+
+mda.chr (4,096 bytes; CRC ac1686f3)
+
+
+$end
+
+
+$info=pdp1
+$bio
+DEC PDP-1 (pdp1)
+
+Compatibility/Driver Status:
+
+Currently emulates one image - SPACEWAR!
+
+$end
+
+
+$info=raaspec
+$bio
+RA+A Spectrum I+ (raaspec)
+
+
+Required System ROMs:
+
+spectrum.bin (32,768 bytes; CRC 20af7f3f)
+
+system.img (8,192 bytes; CRC ba13fb57)
+
+
+Techincal Data:
+
+The Spectrum I+ was a modified Vectrex. It had a 32K ROM cart and 2K additional battery backed RAM (0x8000 - 0x87ff). PB6 was used to signal inserted coins to the VIA. The unit was controlled by 8 buttons (2x4 buttons of controller 1 and 2).  Each button had a LED which were mapped to 0xa000.  The service mode can be accessed by pressing button 8 during startup.  As soon as all LEDs light up, press 2 and 3 without releasing 8. Then release 8 and after that 2 and 3. You can leave the screen where you enter ads by pressing 8 several times.
+
+
+Usage:
+
+For the 8-button key mappings, see the user menu under "Keys (This Machine)".
+
+
+Compatibility:
+
+This driver supports the LED backdrop images:
+
+spec_bt.png
+
+led.png
+
+$end
+
+$info=sms
+$bio
+Sega Master System
+
+
+Default Usage:
+
+arrow keys - 1p move
+
+control, alt - 1p fire
+
+3,4 - 1, 2 player select
+
+1 - 1p start (Games usually start with buttons a or b (ctrl, alt) however)
+
+
+Compatibility:
+
+See sms.crc for compatibility notes.
+
+$end
+
+$info=gamegear
+$bio
+
+Default Usage:
+
+arrow keys - 1p move
+
+control, alt - 1p fire
+
+3,4 - 1, 2 player select
+
+1 - 1p start
+
+	
+Compatibility:
+
+See gamegear.crc for compatibility notes.
+
+$end
+
+$info=spectrum
+$bio
+Sinclair Spectrum
+
+
+Required System ROM:
+
+spectrum.rom (16,384 bytes; ddee531f)
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Compatibility:
+
+This driver is considered preliminary.  The system ROM is loaded, and the Spectrum screen is shown.
+
+
+$end
+
+
+$info=tandy1t
+$bio
+Tandy 1000 TX (TANDY1T)
+
+
+Required System ROMS:
+
+wdbios.rom (8,192 bytes; CRC 839e2bda)
+
+tandy1t.rom (65,536 bytes; CRC d37a1d5f)
+
+cga.chr (4,096 bytes; CRC 42009069)
+
+
+$end
+
+
+$info=ti99_4a
+$bio
+Texas Instruments TI-99/4a (ti99_4a)
+
+
+Features:
+
+Compatibility: 
+
+TI99/4A console, except tape input, and some TMS9901 tricks. 
+
+Cartidges with ROM (paged or not) and GROM (no GRAM or additionnal GPL ports). 
+
+Speech synthesis. Speech ROM emulation is not currently available. 
+
+Floppy disk controller emulation (incomplete, but seems to work OK). 
+
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default.  Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.   
+
+
+Version 0.36b13 does not present critical bugs. Versions before 0.36b9 were seriously buggy (except on PowerPC where the emulator could still be used). Version 0.36b11 did not work on most targets. 
+
+Some users report problems with palette. I don't think there is a bug, but I agree that color are not accurate. A fix will be implemented in some future version. 
+
+A user reported some problems with Capslock. I hope next beta will fix that. A user reports that disk 3 does not work. I'll try to investigate this. 
+
+In Addition&Substraction 2, a sprite does not want to disappear. I don't understand, I suspect a bug in tms9900. 
+
+Cannot make TI-Basic with Terminal Emulator II cartidge speak. I have understood why, but the fix is non-trivial. 
+
+
+
+Work in progress:
+
+At some time, you will have a TI99/4 emulator and a TI99/2 emulator, too. Speech ROMs should be eventually emulated, too. 
+
+
+
+Usage:
+
+You will need the system ROM images, located in a "ti99_4a" directory in your roms folder (generally named "ROMs", but, on most platforms, you can edit its name in your config file). One file with the system CPU ROMs must be named "994AROM.BIN" (8kb) ; another with the system GROMs "994AGROM.BIN" (24kb). 
+
+You may want to add a "DISK.BIN" for floppy disk support, and a "SPCHROM.BIN" for complete speech support [not functionnal yet]. 
+
+Note that the "ti99_4a" folder can replaced by a "ti99_4a.zip" zip archive. 
+
+Once your TI99 works, you may want to use cartidges and disks. 
+
+The driver accepts one cartidge image (split into three files), and three disk images. 
+
+The first ROM file contains the GROM, the second CPU ROM, the third a second page of CPU ROM. None of these is mandatory in a true TI99/4A cartidge. 
+
+Here are some examples with a CLI (GUI should be more straightforward). 
+
+
+Addition & Substraction 2 (GROM only)
+
+"mess AddSub2G.Bin", assuming AddSub2G.Bin is the GROM dump. 
+
+
+TI Invaders (GROM and CPU ROM)
+
+"mess TI-InvaG.Bin TI-InvaC.Bin", assuming TI-InvaG.Bin is the GROM dump, and TI-InvaC.Bin the CPU ROM dump. 
+
+
+TI Extended Basic (GROM and paged CPU ROM)
+
+"mess TI-ExtBG.Bin TI-ExtBC.Bin TI-ExtBD.Bin". 
+
+
+Rabbit Trail (CPU ROM only)
+
+This one is trickier. "mess RabbitTC.Bin" won't work, because the emulator will think RabbitTC.Bin is a GROM file. We need a place holder. On UNIX, try "mess /dev/null RabbitTC.Bin". On other systems, you can use "mess dummy RabbitTC.Bin", where "dummy" is an empty or all-0 file. 
+
+
+Tunnels of Doom (GROM and disk image)
+
+OK, we just extra place holders, just like above. You can use something like "mess TunDoomG.Bin dummy dummy Tunnels.dsk", or "mess TunDoomG.Bin /dev/null /dev/null Tunnels.dsk". 
+
+
+$end
+
+
+$info=trs80
+$bio
+Tandy/Radio Shack TRS-80 Model I (trs80)
+
+
+Required System ROMs:
+
+trs80.rom (12,228 bytes; CRC d6fd9041)
+
+trs80m1.chr (1,024 bytes; CRC 0033f2b9)
+
+
+Usage:
+
+keyboard - relatively close to the original layout.
+
+Take a look into the "Options" menu, accessible by hitting TAB, and choose "Keyboard Setup" to find out more about the key mapping - changing is not yet supported.
+
+
+cassette - emulation of virtual tapes supported.
+
+Use SYSTEM or CLOAD commands to read images.
+
+SYSTEM supports 6 character filenames and loads the corresponding FILENM.CAS image.
+
+CLOAD loads a file named BASIC(N).CAS, where (N) is the character you supplied (e.g. CLOAD"M" loads BASICM.CAS)
+
+
+floppies - emulation of virtual floppy discs supported. 
+
+Use a NEWDOS/80 boot disk for drive 0 and set up correct PDRIVE parameters for the other drives. If only drives 0 to 2 are used they can be double sided by interpreting drive select 3 as head select bit.
+
+
+Options:
+
+Under the "Options" menu, accessible by hitting TAB, there are three settings.
+
+"Floppy Disc Drives"  - enable or disable floppy disc controller.
+
+"Video RAM"           - enable upper case only or upper/lower font.
+
+"Virtual E000-EFFF"   - enable 4K Extension ROM or make it RAM.
+
+
+Compatibility:
+
+The TRS-80 driver should run most of the known programs out there. It supports a WD 179x floppy disc controller with up to four virtual floppy disc drives contained in image files.
+
+
+$end
+
+$info=vectrex
+$bio
+GCE Vectrex (vectrex)
+
+
+Required System ROM:
+
+system.img (8,192 bytes; CRC ba13fb57)
+
+
+Compatibility:
+
+Runs almost every cartridge, except those requiring the light pen. See vectrex.crc for a current compatibility list. Overlays are supported in .png format, using the same name as the cartridge image being loaded. Place overlays in the artwork directory.
+
+
+History and Trivia:
+
+The Vectrex was released in the US late in 1982 by General Consumer Electric (GCE) at a suggested retail price of $199. The Vectrex differed from other consoles in that it had it's own built in nine inch by eleven inch vector monitor, and thus didn't require (or even allow) the use of a television set. The system even contained a built in game, the Asteroids-like "Minestorm". 
+
+
+The monochrome Vectrex used screen overlays to give the illusion of colour, and also to reduce the severity of the inherent flickering caused by the vector monitor.
+
+
+In 1983, GCE was merged into Milton Bradley, who expanded the Vectrex's market to include Europe. As the video game market declined and then crashed, the Vectrex exited the market in early 1984. The rights to the system reverted to it's developers, Smith Engineering. 
+
+
+Smith Engineering briefly considered designing a handheld version of the device in 1988, though the success of the Nintendo Gameboy made such a project too risky. In the mid-1990s, Smith Engineering condoned the duplication of the Vectrex system image and cartridges for non-commercial uses.
+
+
+$end
+
+
+$info=vic20
+$bio
+Commodore VIC-20; Commodore VC-20
+
+
+vic20 ntsc-version
+ when screen is two wide right or low, 
+  or screen doesn't fitt in visible
+ area
+  or gameplay is too fast
+
+ try the pal version
+
+vc20  pal-version
+
+a normal or good written program does not rely on the video system
+
+State
+-----
+
+rasterline based video system
+ should be enough for all vic20 games and programs
+imperfect sound (noise channel complete wrong)
+timer system only 98% accurate
+simple tape support
+serial bus
+ simple disk support
+ no printer or other devices
+no userport
+ no rs232/v.24 interface
+keyboard
+gameport
+ joystick
+ paddles
+ lightpen
+expansion slot
+ ram and rom cartridges
+ no special expansion modules like ieee488 interface
+Quickloader
+
+for a more complete vic20 emulation take a look at the very good
+vice emulator
+
+Video
+-----
+NTSC:
+Screen Size (normal TV (horizontal),4/3 ratio)
+pixel ratio: about 7/5 !
+so no standard Vesa Resolution is good
+tweaked mode 256x256 acceptable
+best define own display mode (when graphic driver supports this)
+PAL:
+pixel ratio about 13/10 !
+good (but only part of screen filled) 1024x768
+acceptable 800x600
+better define own display mode (when graphic driver supports this)
+
+XMESS:
+use -scalewidth 3 -scaleheight 2 for acceptable display
+better define own display mode
+
+Keys
+----
+Some PC-Keyboards does not behave well when special two or more keys are
+pressed at the same time
+(with my keyboard printscreen clears the pressed pause key!)
+
+stop-restore in much cases prompt will appear
+shift-cbm switches between upper-only and normal character set
+(when wrong characters on screen this can help)
+run (shift-stop) load and start program from tape
+
+Lightpen
+--------
+Paddle 3 x-axe
+Paddle 4 y-axe
+
+Tape
+----
+loading of wav, prg and prg files in zip archiv
+commandline -cassette image
+wav:
+ 8 or 16(not tested) bit, mono, 12500 Hz minimum
+ has the same problems like an original tape drive (tone head must
+ be adjusted to get working (no load error,...) wav-files)
+zip:
+ must be placed in current directory
+ prg's are played in the order of the files in zip file
+
+use LOAD or LOAD"" or LOAD"",1 for loading of normal programs
+use LOAD"",1,1 for loading programs to their special address
+
+several programs rely on more features
+(loading other file types, writing, ...)
+ 
+Discs 
+----- 
+only file load from drive 8 and 9 implemented 
+ loads file from rom directory (*.prg)(must NOT be specified on
+commandline)
+ or file from d64 image (here also directory command LOAD"$",8
+supported)
+LOAD"filename",8 
+or LOAD"filename",8,1 (for loading machine language programs at their
+address) 
+for loading 
+type RUN or the appropriate SYS call to start them 
+
+several programs rely on more features
+(loading other file types, writing, ...)
+
+some games rely on starting own programs in the floppy drive
+(and therefor cpu level emulation is needed)
+
+Roms
+----
+.bin .rom .a0 .20 .40 .60 .prg
+files with boot-sign in it
+  recogniced as roms
+
+.20 files loaded at 0x2000
+.40 files loaded at 0x4000
+.60 files loaded at 0x6000
+.a0 files loaded at 0xa000
+.prg files loaded at address in its first two bytes
+.bin .rom files loaded at 0x4000 when 0x4000 bytes long
+else loaded at 0xa000
+
+Quickloader
+-----------
+loads program into memory and sets program end pointer
+(works with most programs)
+program ready to get started with RUN
+currently loads first rom when you press quickload key (f8)
+
+when problems start with -log and look into error.log file
+
+$end
+
+$info=vz200
+$bio
+VZ200
+
+Usage Notes:
+If a game doesn't start after a second, it's most probably a BASIC game and you have to type "RUN<ENTER>" ;) If it still doesn't run, there's a bug (in the image or the driver).
+
+$end
+

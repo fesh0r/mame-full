@@ -28,71 +28,73 @@ NMI
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mess/vidhrdw/m6845.h"
+#include "mess/vidhrdw/cgenie.h"
 
 extern  UINT8    *fontram;
 
-extern int      cgenie_rom_load(void);
-extern int      cgenie_rom_id(const char *name, const char * gamename);
+extern int cgenie_rom_load(void);
+extern int cgenie_rom_id(const char *name, const char * gamename);
 
-extern int      cgenie_vh_start(void);
-extern void     cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern int cgenie_vh_start(void);
+extern void cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-extern void     cgenie_sh_sound_init(const char * gamename);
-extern void     cgenie_sh_control_port_w(int offset, int data);
-extern void     cgenie_sh_data_port_w(int offset, int data);
-extern int      cgenie_sh_control_port_r(int offset);
-extern int      cgenie_sh_data_port_r(int offset);
+extern void cgenie_sh_sound_init(const char * gamename);
+extern void cgenie_sh_control_port_w(int offset, int data);
+extern void cgenie_sh_data_port_w(int offset, int data);
+extern int cgenie_sh_control_port_r(int offset);
+extern int cgenie_sh_data_port_r(int offset);
 
-extern int      cgenie_psg_port_a_r(int port);
-extern int      cgenie_psg_port_b_r(int port);
-extern void     cgenie_psg_port_a_w(int port, int val);
-extern void     cgenie_psg_port_b_w(int port, int val);
+extern int cgenie_psg_port_a_r(int port);
+extern int cgenie_psg_port_b_r(int port);
+extern void cgenie_psg_port_a_w(int port, int val);
+extern void cgenie_psg_port_b_w(int port, int val);
 
-extern void     cgenie_init_machine(void);
-extern void 	cgenie_stop_machine(void);
+extern void cgenie_init_driver(void);
+extern void cgenie_init_machine(void);
+extern void cgenie_stop_machine(void);
 
-extern int      cgenie_colorram_r(int offset);
-extern int      cgenie_fontram_r(int offset);
+extern int cgenie_colorram_r(int offset);
+extern int cgenie_fontram_r(int offset);
 
-extern void     cgenie_dos_rom_w(int offset, int data);
-extern void     cgenie_ext_rom_w(int offset, int data);
-extern void     cgenie_colorram_w(int offset, int data);
-extern void     cgenie_fontram_w(int offset, int data);
+extern void cgenie_dos_rom_w(int offset, int data);
+extern void cgenie_ext_rom_w(int offset, int data);
+extern void cgenie_colorram_w(int offset, int data);
+extern void cgenie_fontram_w(int offset, int data);
 
-extern void     cgenie_port_ff_w(int offset, int data);
-extern int      cgenie_port_ff_r(int offset);
-extern int      cgenie_port_xx_r(int offset);
+extern void cgenie_port_ff_w(int offset, int data);
+extern int cgenie_port_ff_r(int offset);
+extern int cgenie_port_xx_r(int offset);
 
-extern int      cgenie_timer_interrupt(void);
-extern int      cgenie_frame_interrupt(void);
+extern int cgenie_timer_interrupt(void);
+extern int cgenie_frame_interrupt(void);
 
-extern  int     cgenie_status_r(int offset);
-extern  int     cgenie_track_r(int offset);
-extern  int     cgenie_sector_r(int offset);
-extern  int     cgenie_data_r(int offset);
+extern int cgenie_status_r(int offset);
+extern int cgenie_track_r(int offset);
+extern int cgenie_sector_r(int offset);
+extern int cgenie_data_r(int offset);
 
-extern  void    cgenie_command_w(int offset, int data);
-extern  void    cgenie_track_w(int offset, int data);
-extern  void    cgenie_sector_w(int offset, int data);
-extern  void    cgenie_data_w(int offset, int data);
+extern void cgenie_command_w(int offset, int data);
+extern void cgenie_track_w(int offset, int data);
+extern void cgenie_sector_w(int offset, int data);
+extern void cgenie_data_w(int offset, int data);
 
-extern int      cgenie_irq_status_r(int offset);
+extern int cgenie_irq_status_r(int offset);
 
-extern void     cgenie_motor_w(int offset, int data);
+extern void cgenie_motor_w(int offset, int data);
 
-extern int      cgenie_keyboard_r(int offset);
-extern int      cgenie_videoram_r(int offset);
-extern void     cgenie_videoram_w(int offset, int data);
+extern int cgenie_keyboard_r(int offset);
+extern int cgenie_videoram_r(int offset);
+extern void cgenie_videoram_w(int offset, int data);
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xf3ff, cgenie_colorram_r, &colorram },
-	{ 0xf400, 0xf7ff, cgenie_fontram_r, &fontram },
+	{ 0x4000, 0x7fff, MRA_RAM },
+//	{ 0x8000, 0xbfff, MRA_RAM },	// only if 32K RAM is enabled
+//	{ 0xc000, 0xdfff, MRA_ROM },	// installed in cgenie_init_machine
+//	{ 0xe000, 0xefff, MRA_ROM },	// installed in cgenie_init_machine
+	{ 0xf000, 0xf3ff, cgenie_colorram_r },
+	{ 0xf400, 0xf7ff, cgenie_fontram_r  },
 	{ 0xf800, 0xf8ff, cgenie_keyboard_r },
 	{ 0xf900, 0xffdf, MRA_NOP },
 	{ 0xffe0, 0xffe3, cgenie_irq_status_r },
@@ -110,9 +112,9 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x7fff, cgenie_videoram_w, &videoram },
-	{ 0x8000, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xdfff, cgenie_dos_rom_w },
-	{ 0xe000, 0xefff, cgenie_ext_rom_w },
+//	{ 0x8000, 0xbfff, MWA_RAM },	// only if 32K RAM is enabled
+//	{ 0xc000, 0xdfff, MWA_ROM },	// installed in cgenie_init_machine
+//	{ 0xe000, 0xefff, MWA_ROM },	// installed in cgenie_init_machine
 	{ 0xf000, 0xf3ff, cgenie_colorram_w, &colorram },
 	{ 0xf400, 0xf7ff, cgenie_fontram_w, &fontram },
 	{ 0xf800, 0xf8ff, MWA_NOP },
@@ -131,8 +133,8 @@ static struct IOReadPort readport[] =
 {
 	{ 0xf8, 0xf8, cgenie_sh_control_port_r },
 	{ 0xf9, 0xf9, cgenie_sh_data_port_r },
-	{ 0xfa, 0xfa, m6845_index_r },
-	{ 0xfb, 0xfb, m6845_register_r },
+	{ 0xfa, 0xfa, cgenie_index_r },
+	{ 0xfb, 0xfb, cgenie_register_r },
 	{ 0xff, 0xff, cgenie_port_ff_r },
 	{ -1 }
 };
@@ -141,27 +143,33 @@ static struct IOWritePort writeport[] =
 {
 	{ 0xf8, 0xf8, cgenie_sh_control_port_w },
 	{ 0xf9, 0xf9, cgenie_sh_data_port_w },
-	{ 0xfa, 0xfa, m6845_index_w },
-	{ 0xfb, 0xfb, m6845_register_w },
+	{ 0xfa, 0xfa, cgenie_index_w },
+	{ 0xfb, 0xfb, cgenie_register_w },
 	{ 0xff, 0xff, cgenie_port_ff_w },
 	{ -1 }
 };
 
-INPUT_PORTS_START( cgenie_input_ports )
+INPUT_PORTS_START( cgenie )
 	PORT_START /* IN0 */
-	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives", 0, IP_JOY_NONE )
+	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, "On" )
 	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "CG-DOS ROM C000-DFFF", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "ROM Enabled" )
-	PORT_DIPSETTING(    0x00, "RAM" )
-	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Extension  E000-EFFF", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "ROM Enabled" )
-	PORT_DIPSETTING(    0x00, "RAM" )
-	PORT_BITX(	  0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video Display accuracy", KEYCODE_F6, IP_JOY_NONE )
+	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "CG-DOS ROM C000-DFFF", IP_KEY_NONE, IP_JOY_NONE )
+    PORT_DIPSETTING(    0x40, "On" )
+    PORT_DIPSETTING(    0x00, "Off" )
+	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Extension  E000-EFFF", IP_KEY_NONE, IP_JOY_NONE )
+    PORT_DIPSETTING(    0x20, "On" )
+    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video Display accuracy", KEYCODE_F5, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x10, "TV set" )
 	PORT_DIPSETTING(	0x00, "RGB monitor" )
-	PORT_BIT(0x0f, 0x0f, IPT_UNUSED)
+	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Virtual tape support", KEYCODE_F6, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x08, "On" )
+	PORT_DIPSETTING(	0x00, "Off" )
+	PORT_BITX(	  0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Memory Size", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x04, "32K" )
+	PORT_DIPSETTING(	0x00, "16K" )
+    PORT_BIT(0x07, 0x07, IPT_UNUSED)
 
 /**************************************************************************
    +-------------------------------+     +-------------------------------+
@@ -349,8 +357,8 @@ static struct GfxLayout cgenie_gfxlayout =
 
 static struct GfxDecodeInfo cgenie_gfxdecodeinfo[] =
 {
-	{ 1, 0, &cgenie_charlayout, 	0, 3*16},
-	{ 2, 0, &cgenie_gfxlayout, 3*16*2, 3*4},
+	{ REGION_GFX1, 0, &cgenie_charlayout,	  0, 3*16},
+	{ REGION_GFX2, 0, &cgenie_gfxlayout, 3*16*2, 3*4},
 	{ -1 } /* end of array */
 };
 
@@ -435,11 +443,19 @@ static unsigned short colortable[] =
 	0,	  41,	39,   38,	/* TV set graphics colors: a bit brighter */
 };
 
+/* Initialise the palette */
+static void cgenie_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
+
 static struct AY8910interface ay8910_interface =
 {
 	1,						/* 1 chip */
 	2000000,				/* 2 MHz */
-	{ 25, 25 }, 			/* mixing level */
+	{ 75 }, 				/* mixing level */
 	AY8910_DEFAULT_GAIN,	/* gain */
 	{ cgenie_psg_port_a_r },
 	{ cgenie_psg_port_b_r },
@@ -450,7 +466,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface DAC_interface =
 {
 	1, 			/* number of DACs */
-	{ 160 }		/* volume */
+	{ 25 }		/* volume */
 };
 
 static struct MachineDriver machine_driver =
@@ -459,8 +475,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			2216800*4/5,	/* 2.2168 Mhz, but 1/5 cycles is a wait state */
-			0,
+			2216800,		/* 2,2168 Mhz */
 			readmem,writemem,
 			readport,writeport,
 			cgenie_frame_interrupt,1,
@@ -479,13 +494,13 @@ static struct MachineDriver machine_driver =
 	cgenie_gfxdecodeinfo,						/* graphics decode info */
 	sizeof(palette) / sizeof(palette[0]) / 3,	/* palette */
 	sizeof(colortable) / sizeof(colortable[0]), /* colortable */
-	0,											/* convert color prom */
+	cgenie_init_palette,						/* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
-	m6845_vh_start,
-	m6845_vh_stop,
-	m6845_vh_screenrefresh,
+	cgenie_vh_start,
+	cgenie_vh_stop,
+	cgenie_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -507,16 +522,16 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START (cgenie_rom)
-	ROM_REGION (0x13000)
+ROM_START (cgenie)
+	ROM_REGIONX(0x13000,REGION_CPU1)
 	ROM_LOAD ("cgenie.rom",  0x00000, 0x4000, 0xd359ead7)
 	ROM_LOAD ("cgdos.rom",   0x10000, 0x2000, 0x2a96cf74)
 
-	ROM_REGION (0x0c00)
+	ROM_REGIONX(0x0c00,REGION_GFX1)
 	ROM_LOAD ("cgenie1.fnt", 0x0000, 0x0800, 0x4fed774a)
 
 	/* Empty memory region for the character generator */
-	ROM_REGION (0x0800)
+	ROM_REGIONX(0x0800,REGION_GFX2)
 
 ROM_END
 
@@ -525,17 +540,18 @@ struct GameDriver cgenie_driver =
 	__FILE__,
 	0,
 	"cgenie",
-	"EACA Colour Genie 2000",
-	"19??",
-	"??????",
+	"EACA Colour Genie EG 2000",
+	"1982",
+	"EACA Computers Ltd. Hong-Kong",
 	"Juergen Buchmueller",
-	GAME_COMPUTER,
-	&machine_driver,
 	0,
+	&machine_driver,
+	cgenie_init_driver,
 
-	cgenie_rom,
+	rom_cgenie,
 	cgenie_rom_load,        /* load rom_file images */
 	cgenie_rom_id,          /* identify rom images */
+	0,						/* default file extensions */
 	1,                      /* number of ROM slots - in this case, a CMD binary */
 	4,                      /* number of floppy drives supported */
 	0,                      /* number of hard drives supported */
@@ -545,13 +561,13 @@ struct GameDriver cgenie_driver =
 	0,                      /* pointer to sample names */
 	0,                      /* sound_prom */
 
-	cgenie_input_ports,
+	input_ports_cgenie,
 
-	0,                      /* color_prom */
-	palette,				/* color palette */
-	colortable, 			/* color lookup table */
+	0,
+	0,
+	0,
 
-	ORIENTATION_DEFAULT,    /* orientation */
+	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
 
 	0,                      /* hiscore load */
 	0,                      /* hiscore save */

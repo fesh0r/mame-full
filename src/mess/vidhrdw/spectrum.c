@@ -29,7 +29,7 @@ int spectrum_vh_start(void) {
 		return 1;
 	}
 
-	charsdirty = malloc(0x300);
+	charsdirty = malloc(0xc00);
 	if (!charsdirty) {
 		free(spectrum_colorram);
 		free(spectrum_characterram);

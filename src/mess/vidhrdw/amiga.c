@@ -333,7 +333,7 @@ void amiga_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 	update_regs.old_DIWSTRT = -1;
 	update_regs.old_DIWSTOP = -1;
 	update_regs.old_DDFSTRT = -1;
-	update_regs.RAM = Machine->memory_region[0];
+	update_regs.RAM = memory_region(REGION_CPU1);
 
 	for ( y = 0; y < Machine->drv->screen_height; y++ ) {
 		int bitplane_dma_disabled;

@@ -128,7 +128,8 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_UI_CANCEL,
 	IPT_UI_PAN_UP, IPT_UI_PAN_DOWN, IPT_UI_PAN_LEFT, IPT_UI_PAN_RIGHT,
 	IPT_UI_SHOW_PROFILER,
-	IPT_UI_SHOW_COLORS
+	IPT_UI_SHOW_COLORS,
+	IPT_UI_TOGGLE_UI
 };
 
 #define IPT_UNUSED     IPF_UNUSED
@@ -313,8 +314,12 @@ enum {
 
 #define DEF_STR(str_num) (ipdn_defaultstrings[STR_##str_num])
 
-
+#ifndef MESS
 #define MAX_INPUT_PORTS 16
+#else
+#define MAX_INPUT_PORTS 18
+#endif
+
 
 int load_input_port_settings(void);
 void save_input_port_settings(void);

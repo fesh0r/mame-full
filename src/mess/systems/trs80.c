@@ -39,6 +39,7 @@ extern void trs80_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 extern void trs80_sh_sound_init(const char * gamename);
 
+extern void trs80_init_driver(void);
 extern void trs80_init_machine(void);
 extern void trs80_shutdown_machine(void);
 
@@ -187,29 +188,25 @@ NB: row 7 contains some originally unused bits
     only the shift bit was there in the TRS80
 ***************************************************************************/
 
-INPUT_PORTS_START( trs80_input_ports )
+INPUT_PORTS_START( trs80 )
 	PORT_START /* IN0 */
 	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives",   IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, "On" )
 	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video RAM",            IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video RAM",            KEYCODE_F1,  IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, "7 bit" )
 	PORT_DIPSETTING(    0x00, "8 bit" )
 	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Virtual Tape",         KEYCODE_F2,  IP_JOY_NONE )
 	PORT_DIPSETTING(    0x20, "On" )
 	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Scanlines",            KEYCODE_F3,  IP_JOY_NONE )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_BITX(	  0x07, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Colors",               KEYCODE_F4,  IP_JOY_NONE )
+	PORT_BITX(	  0x10, 0x00, IPT_KEYBOARD | IPF_RESETCPU,	   "Reset",                KEYCODE_F3,  IP_JOY_NONE )
+	PORT_BITX(	  0x08, 0x00, IPT_KEYBOARD, 				   "NMI",                  KEYCODE_F4,  IP_JOY_NONE )
+	PORT_BITX(	  0x04, 0x00, IPT_KEYBOARD, 				   "unused",               KEYCODE_F5,  IP_JOY_NONE )
+	PORT_BITX(	  0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Colors",               KEYCODE_F6,  IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, "green/black" )
 	PORT_DIPSETTING(    0x01, "black/green" )
 	PORT_DIPSETTING(    0x02, "white/black" )
 	PORT_DIPSETTING(    0x03, "black/white" )
-	PORT_DIPSETTING(    0x04, "yellow/blue" )
-	PORT_DIPSETTING(    0x05, "white/blue"  )
-	PORT_DIPSETTING(    0x06, "white/gray"  )
-	PORT_DIPSETTING(    0x07, "gray/white"  )
 
 	PORT_START /* KEY ROW 0 */
 	PORT_BITX(0x01, 0x00, IPT_UNKNOWN, "0.0: @   ",   KEYCODE_ASTERISK,    IP_JOY_NONE )
@@ -297,85 +294,63 @@ INPUT_PORTS_END
 
 static struct GfxLayout trs80_charlayout_normal_width =
 {
-	FW*2,FH*3,				/* FW*2 x FH*3 characters */
+	FW,FH,					/* 6 x 12 characters */
 	256,                    /* 256 characters */
 	1,                      /* 1 bits per pixel */
 	{ 0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets double width: reuse each bit once */
-	{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 },
-	/* y offsets triple height: use each line three times */
-	{  0*8,  0*8,  0*8,
-	   1*8,  1*8,  1*8,
-	   2*8,  2*8,  2*8,
-	   3*8,  3*8,  3*8,
-	   4*8,  4*8,  4*8,
-	   5*8,  5*8,  5*8,
-	   6*8,  6*8,  6*8,
-	   7*8,  7*8,  7*8,
-	   8*8,  8*8,  8*8,
-	   9*8,  9*8,  9*8,
-	  10*8, 10*8, 10*8,
-	  11*8, 11*8, 11*8 },
+	/* x offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	/* y offsets */
+	{  0*8, 1*8, 2*8, 3*8, 4*8, 5*8,
+	   6*8, 7*8, 8*8, 9*8,10*8,11*8 },
 	8*FH           /* every char takes FH bytes */
 };
 
 static struct GfxLayout trs80_charlayout_double_width =
 {
-	FW*4,FH*3,	   /* FW*2 x FH*3 characters */
+	FW*2,FH,	   /* FW*2 x FH*3 characters */
 	256,           /* 256 characters */
 	1,             /* 1 bits per pixel */
 	{ 0 },         /* no bitplanes; 1 bit per pixel */
-	/* x offsets quad width: use each bit four times */
-	{ 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
-	  4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7},
-	/* y offsets triple height: use each line three times */
-	{  0*8,  0*8,  0*8,
-	   1*8,  1*8,  1*8,
-	   2*8,  2*8,  2*8,
-	   3*8,  3*8,  3*8,
-	   4*8,  4*8,  4*8,
-	   5*8,  5*8,  5*8,
-	   6*8,  6*8,  6*8,
-	   7*8,  7*8,  7*8,
-	   8*8,  8*8,  8*8,
-	   9*8,  9*8,  9*8,
-	  10*8, 10*8, 10*8,
-	  11*8, 11*8, 11*8 },
-	8*FH           /* every char takes FH bytes */
+	/* x offsets double width: use each bit twice */
+	{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7},
+	/* y offsets */
+	{  0*8, 1*8, 2*8, 3*8, 4*8, 5*8,
+       6*8, 7*8, 8*8, 9*8,10*8,11*8 },
+    8*FH           /* every char takes FH bytes */
 };
 
 static struct GfxDecodeInfo trs80_gfxdecodeinfo[] =
 {
-	{ 1, 0, &trs80_charlayout_normal_width, 0, 8 },
-	{ 1, 0, &trs80_charlayout_double_width, 0, 8 },
+	{ REGION_GFX1, 0, &trs80_charlayout_normal_width, 0, 4 },
+	{ REGION_GFX1, 0, &trs80_charlayout_double_width, 0, 4 },
 	{ -1 } /* end of array */
 };
 
-/* some colors for the DOS frontend and selectable fore-/background */
-static unsigned char trs80_palette[9*3] =
+static unsigned char palette[] =
 {
-	  0,  0,  0,
-	255,  0,  0,
-	  0,255,  0,
-	255,255,  0,
-	  0,  0,255,
-	255,  0,255,
-	  0,255,255,
-	255,255,255,
-	 63, 63, 63,
+   0x00,0x00,0x00,
+   0x00,0xff,0x00,
+   0xff,0xff,0xff
 };
 
-static unsigned short trs80_colortable[8*2] =
+static unsigned short colortable[] =
 {
-	0,2,    /* green on black */
-	2,0,    /* black on green */
-	0,7,    /* white on black */
-	7,0,    /* black on white */
-	4,3,    /* yellow on blue */
-	4,7,    /* white on blue */
-	8,7,    /* white on gray */
-	7,8,    /* gray on white */
+	0,1,	/* green on black */
+	1,0,	/* black on green */
+	0,2,	/* white on black */
+	2,0 	/* black on white */
 };
+
+
+
+/* Initialise the palette */
+static void trs80_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
 
 static struct DACinterface trs80_DAC_interface =
 {
@@ -390,7 +365,6 @@ static struct MachineDriver machine_driver_model1 =
 		{
 			CPU_Z80,
 			1796000,	/* 1.796 Mhz */
-			0,
 			readmem_model1,writemem_model1,
 			readport_model1,writeport_model1,
 			trs80_frame_interrupt,1,
@@ -403,15 +377,16 @@ static struct MachineDriver machine_driver_model1 =
 	trs80_shutdown_machine,
 
 	/* video hardware */
-	64*FW*2,                                /* screen width */
-	16*FH*3,                                /* screen height */
-	{ 0*FW*2,64*FW*2-1,0*FH*3,16*FH*3-1},   /* visible_area */
+	64*FW,									/* screen width */
+	16*FH,									/* screen height */
+	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
 	trs80_gfxdecodeinfo,                    /* graphics decode info */
-	9, 16,                                  /* colors used for the characters */
-	0,                                      /* convert color prom */
+	sizeof(palette)/sizeof(palette[0])/3,
+	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
+	trs80_init_palette,                     /* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+    0,
 	trs80_vh_start,
 	trs80_vh_stop,
 	trs80_vh_screenrefresh,
@@ -433,7 +408,6 @@ static struct MachineDriver machine_driver_model3 =
 		{
 			CPU_Z80,
 			1796000,        /* 1.796 Mhz */
-			0,
 			readmem_model3,writemem_model3,
 			readport_model3,writeport_model3,
 			trs80_frame_interrupt,2,
@@ -446,14 +420,15 @@ static struct MachineDriver machine_driver_model3 =
 	trs80_shutdown_machine,
 
 	/* video hardware */
-	64*FW*2,                                /* screen width */
-	16*FH*3,                                /* screen height */
-	{ 0*FW*2,64*FW*2-1,0*FH*3,16*FH*3-1},   /* visible_area */
-	trs80_gfxdecodeinfo,                    /* graphics decode info */
-	9, 16,                                  /* colors used for the characters */
-	0,                                      /* convert color prom */
+	64*FW,									/* screen width */
+	16*FH,									/* screen height */
+    { 0*FW,64*FW-1,0*FH,16*FH-1},           /* visible_area */
+    trs80_gfxdecodeinfo,                    /* graphics decode info */
+	sizeof(palette)/sizeof(palette[0])/3,
+	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
+    trs80_init_palette,                     /* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
 	trs80_vh_start,
 	trs80_vh_stop,
@@ -475,84 +450,58 @@ static struct MachineDriver machine_driver_model3 =
 
 ***************************************************************************/
 
-ROM_START(trs80_rom)
-	ROM_REGION(0x10000)
+ROM_START(trs80)
+	ROM_REGIONX(0x10000, REGION_CPU1)
 	ROM_LOAD("trs80.rom",   0x0000, 0x3000, 0xd6fd9041)
 
-	ROM_REGION(0x0c00)
+	ROM_REGIONX(0x0c00, REGION_GFX1)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
 
-ROM_START(trs80_m3_rom)
-	ROM_REGION(0x10000)
+ROM_START(trs80_m3)
+	ROM_REGIONX(0x10000, REGION_CPU1)
 	ROM_LOAD("trs80.rom",   0x0000, 0x3000, 0xd6fd9041)
 
-	ROM_REGION(0x0c00)
+	ROM_REGIONX(0x0c00, REGION_GFX1)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
 
-
-static void trs80_rom_decode(void)
-{
-UINT8 *FNT = Machine->memory_region[1];
-int i, y;
-	for (i = 0x000; i < 0x080; i++)
-	{
-		for (y = 0; y < 8; y++)
-			FNT[i*12+y] = FNT[0x0800+i*8+y] << 3;
-		for (y = 8; y < 12; y++)
-			FNT[i*12+y] = 0;
-	}
-	for (i = 0x080; i < 0x100; i++)
-	{
-	UINT8 b0, b1, b2, b3, b4, b5;
-		b0 = (i & 0x01) ? 0xe0 : 0x00;
-		b1 = (i & 0x02) ? 0x1c : 0x00;
-		b2 = (i & 0x04) ? 0xe0 : 0x00;
-		b3 = (i & 0x08) ? 0x1c : 0x00;
-		b4 = (i & 0x10) ? 0xe0 : 0x00;
-		b5 = (i & 0x20) ? 0x1c : 0x00;
-
-        FNT[i*12+ 0] = FNT[i*12+ 1] = FNT[i*12+ 2] = FNT[i*12+ 3] = b0 | b1;
-		FNT[i*12+ 4] = FNT[i*12+ 5] = FNT[i*12+ 6] = FNT[i*12+ 7] = b2 | b3;
-		FNT[i*12+ 8] = FNT[i*12+ 9] = FNT[i*12+10] = FNT[i*12+11] = b4 | b5;
-	}
-}
 
 struct GameDriver trs80_driver =
 {
 	__FILE__,
 	0,
 	"trs80",
-	"TRS-80 Model I",
-	"19??",
-	"Tandy",
-	"Juergen Buchmueller [MESS driver]",
-	GAME_COMPUTER,
-	&machine_driver_model1,
+	"TRS-80 Model I (Level II Basic)",
+	"1978",
+	"Tandy Radio Shack",
+	NULL,
 	0,
+	&machine_driver_model1,
+	trs80_init_driver,
 
-	trs80_rom,
+	rom_trs80,
 	trs80_rom_load,         /* load rom_file images */
 	trs80_rom_id,           /* identify rom images */
-	1,                      /* number of ROM slots - in this case, a CMD binary */
+	0,						/* file extensions */
+	1,						/* number of ROM slots - in this case a CMD binary */
 	4,                      /* number of floppy drives supported */
 	0,                      /* number of hard drives supported */
 	1,                      /* number of cassette drives supported */
-	trs80_rom_decode,		   /* rom decoder */
+	0,						/* rom decoder */
 	0,                      /* opcode decoder */
 	0,                      /* pointer to sample names */
 	0,                      /* sound_prom */
 
-	trs80_input_ports,
+	input_ports_trs80,
 
 	0,                      /* color_prom */
-	trs80_palette,          /* color palette */
-	trs80_colortable,       /* color lookup table */
+	0,						/* color palette */
+	0,						/* color lookup table */
 
-	ORIENTATION_DEFAULT,    /* orientation */
+	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
 
 	0,                      /* hiscore load */
 	0,                      /* hiscore save */
@@ -565,16 +514,17 @@ struct GameDriver trs80m3_driver =
 	"trs80m3",
 	"TRS-80 Model III",
 	"19??",
-	"Tandy",
-	"Juergen Buchmueller [MESS driver]",
-	GAME_NOT_WORKING,
-	&machine_driver_model3,
+	"Tandy Radio Shack",
+	NULL,
 	0,
+	&machine_driver_model3,
+	trs80_init_driver,
 
-	trs80_m3_rom,
+	rom_trs80_m3,
 	trs80_rom_load,         /* load rom_file images */
 	trs80_rom_id,           /* identify rom images */
-	1,                      /* number of ROM slots - in this case, a CMD binary */
+	0,						/* file extensions */
+	1,						/* number of ROM slots - in this case a CMD binary */
 	4,                      /* number of floppy drives supported */
 	0,                      /* number of hard drives supported */
 	1,                      /* number of cassette drives supported */
@@ -583,13 +533,13 @@ struct GameDriver trs80m3_driver =
 	0,                      /* pointer to sample names */
 	0,                      /* sound_prom */
 
-	trs80_input_ports,
+	input_ports_trs80,
 
 	0,                      /* color_prom */
-	trs80_palette,          /* color palette */
-	trs80_colortable,       /* color lookup table */
+	0,						/* color palette */
+	0,						/* color lookup table */
 
-	ORIENTATION_DEFAULT,    /* orientation */
+	GAME_NOT_WORKING | ORIENTATION_DEFAULT,    /* orientation */
 
 	0,                      /* hiscore load */
 	0,                      /* hiscore save */

@@ -1,0 +1,141 @@
+# Sega Mark III/Master System Cartridge CRC List
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+
+[sms]
+3658f3e0 = Action Fighter
+d8c4165b = Aleste (Mark III)
+514e7abe = Aleste (Master System)
+ 13c0a9a = Alex Kidd: High Tech World
+f8144914 = Alex Kidd in Miracle World
+c13896d5 = Alex Kidd: The Lost Stars
+d2417ed7 = Alex Kidd in Shinobi World
+82038ad4 = Alf
+147e02fa = Asterix
+fe8e978b = Astro Warrior
+b4dfb825 = Bank Panic
+8550541e = Barcelona '92
+d1cc08ee = The Simpsons: Bart Vs. The Space Mutants
+3084cf11 = Bomber Raid
+1b10a951 = Bram Stoker's Dracula
+b0fc4577 = Buggy Run
+ac6009a7 = California Games
+3cff6e80 = Casino Games
+8c02d693 = Choplifter (GRAPHICS GLITCHES)
+e7f62e6d = Cloudmaster: Chuka Taisen
+13ac9023 = Cool Spot
+665fda92 = Columns
+b4584dde = Crash Test Dummies
+1350e4f8 = Cyber Shinobi (GRAPHIC GLITCHES)
+908e7524 = Cyborg Hunter
+f6fab48d = Dick Tracy
+42fc3a6e = Deep Duck Trouble
+a55d89f3 = Double Dragon
+ 7306947 = Dynamite Duke
+ e1cc1e0 = Dynamite Dux
+  e73541 = Enduro Racer
+c4bb1676 = E-SWAT: City Under Siege
+ec788661 = F1
+82a38ef8 = Fantasy Zone
+483394f9 = Fantasy Zone 3: The Maze
+ca5c78a5 = Flintstones
+6c827520 = Galaxy Force
+1ddc3059 = Ghostbusters
+eedd93fa = Ghost House
+8dae576e = Mick and Mack as the Global Gladiators
+c08132fb = Golden Axe
+c7ded988 = Golden Axe Warrior
+a51376fe = Golvellius (GRAPHIC GLITCHES)
+b2801b0c = Great Volleyball
+fdab876a = Heavyweight Champ
+cde13ffb = Heroes of the Lance
+656d1a3e = Hokutono
+9ced34a7 = Hook
+8aeb574b = Indiana Jones and the Last Crusade
+102d5fea = James Pond 2: Robocod
+695a9a15 = Jungle Book (GRAPHIC GLITCHES)
+516ed32e = Kenseiden
+f8d33bc4 = Kings Quest
+2b435fd6 = Klax
+24e97200 = Land of Illusion Starring Mickey Mouse
+f369b2d8 = Lemmings
+e8511b08 = Lord of the Sword
+1a9b396f = Mahjong Sengoku Jidai
+bf6f3e5f = Marble Madness
+96fb4d4b = Master of Darkness
+ e333b6e = Miracle Warriors: Seal of the Dark Lord
+82fda895 = Montezuma's Revenge
+56cc906b = Michael Jackson's Moonwalker
+3cd816c6 = Ms. Pac-Man
+93097cb7 = My Hero
+c660ff34 = New Zealand Story
+82ef2a7d = The Ottifants
+f037ec00 = Outrun Europa
+327a0b4c = Paperboy
+7abc70e9 = Party Games
+f97e9875 = Penguin Land
+  bef1d7 = Phantasy Star
+ 9489195 = Pro Wrestling
+97993479 = Psycho Fox
+5c0b1f0f = Psychic World
+  1db6d7 = Quartet
+c172a22c = Rainbow Islands
+42fc47ee = Rampage
+c547eb1b = Rastan
+bb54b6b0 = R-Type
+a8061aef = Sega Chess
+3e63768a = Smurfs
+96b3f29e = Sonic Blast
+aedf38df = Sonic Chaos
+11c1bc8a = Sonic Spinball
+b519e833 = Sonic The Hedgehog
+5b3b922c = Sonic The Hedgehog 2
+78d7faab = Spy Vs. Spy
+d4b8f66d = Star Wars
+6f9ac98f = Superman
+7cc3e837 = Tazmania
+e5374022 = Trivial Pursuit
+b52d60c8 = Ultima 4: Quest of the Avatar
+20f40cae = Vampire
+a6bf8f9e = World Cup '94
+b1b230df = WWF Steel Cage
+
+
+#[not_working]
+978c2927 = Afterburner (NOT WORKING)
+f9dbb533 = Alex Kidd BMX Trial (NOT WORKING; INPUT PROBLEMS)
+bff6e8fe = Alien Storm (NOT WORKING)
+e558a867 = Alien Syndrome (NOT WORKING)
+f327d0a5 = Altered Beast (NOT WORKING)
+e4163163 = Arcade Smash Hits (NOT WORKING; CRASHES)
+f922d39a = Astro Warrior & Pit Pot (NOT WORKING)
+9efc7a9f = Aztec Adventure (NOT WORKING)
+8d39b5e7 = Black Belt (NOT WORKING)
+ 7f73eed = Bonanza Brothers (NOT WORKING)
+3ebb7457 = Final Bubble Bobble (NOT WORKING; CRASHES)
+a4852757 = Captain Silver (NOT WORKING; CRASHES)
+9942b69b = Castle of Illusion Starring Mickey Mouse (Japan) (NOT WORKING; INPUT PROBLEMS)
+7e5839a0 = Championship Hockey (NOT WORKING; CRASHES)
+18086b70 = Taito Chase HQ (NOT WORKING; INPUT PROBLEMS)
+46340c41 = Cheese Cat-astrophe Starring Speedy Gonzales (SPRITE COLLISION PROBLEMS)
+6c1433f9 = Desert Strike (NOT WORKING)
+b8b141f9 = Fantasy Zone 2: The Tears of OPA-OPA (NOT WORKING)
+5fc74d2a = Gangster Town (LIGHT GUN GAME; NOT WORKING)
+d9190956 = Gauntlet (NOT WORKING; CRASHES)
+6700985a = Ghouls & Ghosts (NOT WORKING)
+1533b4ed = Great Football (NOT WORKING)
+  b31658 = Great Golf (NOT WORKING)
+ 71b045e = Hang-On (NOT WORKING; CRASHES)
+64d6af3b = Impossible Mission (NOT WORKING; CRASHES)
+302dc686 = Mortal Kombat (NOT WORKING)
+2663bf18 = Mortal Kombat 2 (NOT WORKING)
+dc0860e7 = Out Run (NOT WORKING)
+2c8f5b9f = Prince of Persia (NOT WORKING)
+e5f789b9 = Predator 2 (NOT WORKING; INPUT PROBLEMS)
+a109a6fe = Power Strike 2 (NOT WORKING)
+55bf81a0 = Super Monaco GP (NOT WORKING; CRASHES)
+
+#[known_bad_dumps]
+
+

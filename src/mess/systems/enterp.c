@@ -18,6 +18,7 @@
 #include "mess/vidhrdw/enterp.h"
 //#include "vidhrdw/nick.h"
 #include "mess/vidhrdw/epnick.h"
+#include "mess/machine/wd179x.h"
 
 /* there are 64us per line, although in reality
    about 50 are visible. */
@@ -50,8 +51,8 @@
 unsigned char *Enterprise_RAM;
 
 /* current ram pages for 16k page 0..3 */
-static unsigned char *Enterprise_CPU_ReadPages[4];
-static unsigned char *Enterprise_CPU_WritePages[4];
+//static unsigned char *Enterprise_CPU_ReadPages[4];
+//static unsigned char *Enterprise_CPU_WritePages[4];
 
 static unsigned char KeyboardState_Previous[16]={0x0ff};
 
@@ -95,12 +96,13 @@ static int Enterprise_KeyboardLine = 0;
 /* set read/write pointers for CPU page */
 void	Enterprise_SetMemoryPage(int CPU_Page, int EP_Page)
 {
-	Enterprise_CPU_ReadPages[CPU_Page] =
-				Enterprise_Pages_Read[EP_Page & 0x0ff];
-	Enterprise_CPU_WritePages[CPU_Page] =
-				Enterprise_Pages_Write[EP_Page & 0x0ff];
+        //Enterprise_CPU_ReadPages[CPU_Page] =
+        //                        Enterprise_Pages_Read[EP_Page & 0x0ff];
+        //Enterprise_CPU_WritePages[CPU_Page] =
+        //                        Enterprise_Pages_Write[EP_Page & 0x0ff];
 
         cpu_setbank((CPU_Page+1), Enterprise_Pages_Read[EP_Page & 0x0ff]);
+        cpu_setbank((CPU_Page+5), Enterprise_Pages_Write[EP_Page & 0x0ff]);
 }
 
 /* EP specific handling of dave register write */
@@ -177,24 +179,6 @@ DAVE_INTERFACE	enterprise_dave_interface=
 
 };
 
-/* Enterprise has 256 colours, all may be on the screen at once!
-the NICK_GET_RED8, NICK_GET_GREEN8, NICK_GET_BLUE8 macros
-return a 8-bit colour value for the index specified.  */
-static unsigned char enterprise_colour_palette[256*3];
-
-
-void    Enterprise_SetupPalette(void)
-{
-        int i;
-
-	for (i=0; i<256; i++)
-	{
-		enterprise_colour_palette[(i*3)] = NICK_GET_RED8(i);
-		enterprise_colour_palette[(i*3)+1] = NICK_GET_GREEN8(i);
-		enterprise_colour_palette[(i*3)+2] = NICK_GET_BLUE8(i);
-	}
-}
-
 
 void	Enterprise_Initialise()
 {
@@ -213,13 +197,10 @@ void	Enterprise_Initialise()
 
 	/* set read pointers */
         /* exos */
-        Enterprise_Pages_Read[MEM_EXOS_0] = &Machine->memory_region[0][0x010000];
-        Enterprise_Pages_Read[MEM_EXOS_1] = &Machine->memory_region[0][0x014000];
+        Enterprise_Pages_Read[MEM_EXOS_0] = &memory_region(REGION_CPU1)[0x010000];
+        Enterprise_Pages_Read[MEM_EXOS_1] = &memory_region(REGION_CPU1)[0x014000];
         /* basic */
-        Enterprise_Pages_Read[MEM_CART_0] = &Machine->memory_region[0][0x018000];
-        Enterprise_Pages_Read[MEM_CART_1] = Enterprise_Pages_Read[MEM_CART_0];
-        Enterprise_Pages_Read[MEM_CART_2] = Enterprise_Pages_Read[MEM_CART_1];
-        Enterprise_Pages_Read[MEM_CART_3] = Enterprise_Pages_Read[MEM_CART_2];
+        Enterprise_Pages_Read[MEM_CART_0] = &memory_region(REGION_CPU1)[0x018000];
         /* ram */
         Enterprise_Pages_Read[MEM_RAM_0] = Enterprise_RAM;
 	Enterprise_Pages_Read[MEM_RAM_1] = Enterprise_RAM + 0x04000;
@@ -230,8 +211,8 @@ void	Enterprise_Initialise()
 	Enterprise_Pages_Read[MEM_RAM_6] = Enterprise_RAM + 0x018000;
 	Enterprise_Pages_Read[MEM_RAM_7] = Enterprise_RAM + 0x01c000;
         /* exdos */
-     // Enterprise_Pages_Read[MEM_EXDOS_0] = &Machine->memory_region[0][0x01c000];
-      //Enterprise_Pages_Read[MEM_EXDOS_1] = &Machine->memory_region[0][0x020000];
+//        Enterprise_Pages_Read[MEM_EXDOS_0] = &memory_region(REGION_CPU1)[0x01c000];
+  //      Enterprise_Pages_Read[MEM_EXDOS_1] = &memory_region(REGION_CPU1)[0x020000];
 
 	/* set write pointers */
 	Enterprise_Pages_Write[MEM_RAM_0] = Enterprise_RAM;
@@ -245,32 +226,23 @@ void	Enterprise_Initialise()
 
 	Dave_SetIFace(&enterprise_dave_interface);
 
+        cpu_setbankhandler_r(1, MRA_BANK1);
+        cpu_setbankhandler_r(2, MRA_BANK2);
+        cpu_setbankhandler_r(3, MRA_BANK3);
+        cpu_setbankhandler_r(4, MRA_BANK4);
+
+        cpu_setbankhandler_w(5, MWA_BANK5);
+        cpu_setbankhandler_w(6, MWA_BANK6);
+        cpu_setbankhandler_w(7, MWA_BANK7);
+        cpu_setbankhandler_w(8, MWA_BANK8);
+
 
 	Dave_reg_w(0x010,0);
 	Dave_reg_w(0x011,0);
 	Dave_reg_w(0x012,0);
 	Dave_reg_w(0x013,0);
-}
 
-/* write Ram functions */
-void	Enterprise_WriteMem0(int Offset, int Data)
-{
-     Enterprise_CPU_WritePages[0][Offset & 0x03fff] = Data;
-}
-
-void	Enterprise_WriteMem1(int Offset, int Data)
-{
-     Enterprise_CPU_WritePages[1][Offset & 0x03fff] = Data;
-}
-
-void	Enterprise_WriteMem2(int Offset, int Data)
-{
-     Enterprise_CPU_WritePages[2][Offset & 0x03fff] = Data;
-}
-
-void	Enterprise_WriteMem3(int Offset, int Data)
-{
-     Enterprise_CPU_WritePages[3][Offset & 0x03fff] = Data;
+        wd179x_init(1);
 }
 
 int enterprise_timer_interrupt(void)
@@ -293,91 +265,44 @@ int enterprise_frame_interrupt(void)
 	return 0;
 }
 
-static int	wd177x_status_r(int Offset)
-{
-        //printf("WD177X Read Status\r\n");
-
-	return 0;
-}
-
-static int	wd177x_track_r(int Offset)
-{
-        //printf("WD177X Read Track\r\n");
-	return 1;
-}
-
-static int	wd177x_sector_r(int Offset)
-{
-        //printf("WD177X Read Sector\r\n");
-	return 0;
-}
-
-static int	wd177x_data_r(int Offset)
-{
-        //printf("WD177X Read Data\r\n");
-
-	return 0x0ff;
-}
-
-static void	wd177x_command_w(int Offset, int Data)
-{
-        //printf("WD177X Write Command: DATA: %02x\r\n",Data);
-}
-
-static void	wd177x_track_w(int Offset, int Data)
-{
-        //printf("WD177X Write Track: DATA: %02x\r\n",Data);
-}
-
-static void	wd177x_sector_w(int Offset, int Data)
-{
-        //printf("WD177X Write Sector: DATA: %02x\r\n",Data);
-}
-
-static void	wd177x_data_w(int Offset, int Data)
-{
-        //printf("WD177X Write Data: DATA: %02x\r\n",Data);
-}
 
 static int	enterprise_wd177x_read(int Offset)
 {
-        //printf("WD177X Read\r\n");
-
-	switch (Offset)
+        switch (Offset & 0x03)
 	{
 		case 0:
-			return wd177x_status_r(Offset);
+                        return wd179x_status_r(Offset);
 		case 1:
-			return wd177x_track_r(Offset);
+                        return wd179x_track_r(Offset);
 		case 2:
-			return wd177x_sector_r(Offset);
+                        return wd179x_sector_r(Offset);
 		case 3:
-			return wd177x_data_r(Offset);
+                        return wd179x_data_r(Offset);
+                default:
+                        break;
 	}
 
-	/* default value added for DJGPP as this:*/
-	return wd177x_data_r(Offset);
+        return 0x0ff;
 }
 
 static void	enterprise_wd177x_write(int Offset, int Data)
 {
-        //printf("WD177X Write\r\n");
-
-	switch (Offset)
+        switch (Offset & 0x03)
 	{
 		case 0:
-			wd177x_command_w(Offset, Data);
-			break;
-
+                        wd179x_command_w(Offset, Data);
+                        return;
 		case 1:
-			wd177x_track_w(Offset, Data);
-			break;
+                        wd179x_track_w(Offset, Data);
+                        return;
 		case 2:
-			wd177x_sector_w(Offset, Data);
-			break;
+                        wd179x_sector_w(Offset, Data);
+                        return;
 		case 3:
-			wd177x_data_w(Offset, Data);
-			break;
+                        wd179x_data_w(Offset, Data);
+                        return;
+                default:
+                        break;
 	}
 }
 
@@ -400,77 +325,122 @@ static struct MemoryReadAddress readmem_enterprise[] =
 
 static struct MemoryWriteAddress writemem_enterprise[] =
 {
-       { 0x0000, 0x3fff, Enterprise_WriteMem0 },
-	{ 0x4000, 0x7fff, Enterprise_WriteMem1 },
-	   {0x08000,0x0bfff, Enterprise_WriteMem2 },
-	   {0x0c000,0x0ffff, Enterprise_WriteMem3 },
+       { 0x0000, 0x3fff, MWA_BANK5 },
+        { 0x4000, 0x7fff, MWA_BANK6 },
+           {0x08000,0x0bfff, MWA_BANK7 },
+           {0x0c000,0x0ffff, MWA_BANK8 },
         { -1 }  /* end of table */
 };
 
+/* bit 0 - select drive 0,
+   bit 1 - select drive 1,
+   bit 2 - select drive 2,
+   bit 3 - select drive 3
+   bit 4 - side
+   bit 5 - mfm/fm select
+   bit 6 - disk change reset
+   bit 7 - in use
+*/
 
-static struct IOReadPort readport_enterprise[] =
+int EXDOS_GetDriveSelection(int Data)
 {
-	{0x010, 0x013, enterprise_wd177x_read},
-	{0x0a0, 0x0bf, Dave_reg_r},
-	{ -1 } /* end of table */
-};
+     if (Data & 0x01)
+     {
+        return 0;
+     }
+
+     if (Data & 0x02)
+     {
+        return 1;
+     }
+
+     if (Data & 0x04)
+     {
+        return 2;
+     }
+
+     if (Data & 0x08)
+     {
+        return 3;
+     }
+
+     return 0;
+}
+
+static char EXDOS_CARD_R = 0;
+
+static void     wd177x_callback(int State)
+{
+   if (State==WD179X_IRQ_CLR)
+   {
+        EXDOS_CARD_R &= ~0x02;
+   }
+
+   if (State==WD179X_IRQ_SET)
+   {
+        EXDOS_CARD_R |= 0x02;
+   }
+
+   if (State==WD179X_DRQ_CLR)
+   {
+        EXDOS_CARD_R &= ~0x080;
+   }
+
+   if (State==WD179X_DRQ_SET)
+   {
+        EXDOS_CARD_R |= 0x080;
+   }
+}
+
+
 
 static void	exdos_card_w(int Offset, int Data)
 {
-        //printf("exdos card w: %02x\r\n",Data);
+        /* drive side */
+        int head = (Data>>4) & 0x01;
 
+        int drive = EXDOS_GetDriveSelection(Data);
+
+        fprintf(errorlog,"exdos card w: %02x\r\n",Data);
+
+        wd179x_select_drive(drive, head, wd177x_callback,"fd0.dsk");
 }
 
-static struct IOWritePort writeport_enterprise[] =
+/* bit 0 - ??
+   bit 1 - IRQ from WD1772
+   bit 2 - ??
+   bit 3 - ??
+   bit 4 - ??
+   bit 5 - ??
+   bit 6 - Disk change signal from disk drive
+   bit 7 - DRQ from WD1772
+*/
+
+
+static int exdos_card_r(int Offset)
 {
-	{0x010, 0x013, enterprise_wd177x_write},
-	{0x018, 0x018, exdos_card_w},
-	{0x080, 0x08f, Nick_reg_w},
-	{0x0a0, 0x0bf, Dave_reg_w},
+        fprintf(errorlog,"EXDOS CARD R\r\n");
+        return EXDOS_CARD_R;
+}
+
+static struct IOReadPort readport_enterprise[] =
+{
+        {0x010, 0x017, enterprise_wd177x_read},
+        {0x018, 0x018, exdos_card_r},
+        {0x01c, 0x01c, exdos_card_r},
+        {0x0a0, 0x0bf, Dave_reg_r},
 	{ -1 } /* end of table */
 };
 
 
-/* the mapping doesn't change - EP uses 0..256 index's for
-colour specification - don't know if I require this for the
-driver or not. */
-static unsigned short enterprise_colour_table[256]=
+static struct IOWritePort writeport_enterprise[] =
 {
-	0,1,2,3,4,5,6,7,8,
-	9,10,11,12,13,14,15,16,
-	17,18,19,20,21,22,23,24,
-	25,26,27,28,29,30,31,32,
-	33,34,35,36,37,38,39,40,
-	41,42,43,44,45,46,47,48,
-	49,50,51,52,53,54,55,56,
-	57,58,59,60,61,62,63,64,
-	65,66,67,68,69,70,71,72,
-	73,74,75,76,77,78,79,80,
-	81,82,83,84,85,86,87,88,
-	89,90,91,92,93,94,95,96,
-	97,98,99,100,101,102,103,104,
-	105,106,107,108,109,110,111,
-	112,113,114,115,116,117,118,
-	119,120,121,122,123,124,125,
-	126,127,128,129,130,131,132,
-	133,134,135,136,137,138,139,
-	140,141,142,143,144,145,146,
-	147,148,149,150,151,152,153,
-	154,155,156,157,158,159,160,
-	161,162,163,164,165,166,167,
-	168,169,170,171,172,173,174,
-	175,176,177,178,179,180,181,
-	182,183,184,185,186,187,188,
-	189,190,191,192,193,194,195,
-	196,197,198,199,200,201,202,
-	203,204,205,206,207,208,209,
-	210,211,212,213,214,215,216,
-	217,218,219,220,221,222,223,
-	224,225,226,227,228,229,230,
-	231,232,233,234,235,236,237,
-	238,239,240,241,242,243,244,
-	245,246,247,248,249,250,251,
-	252,253,254,255
+        {0x010, 0x017, enterprise_wd177x_write},
+	{0x018, 0x018, exdos_card_w},
+        {0x01c, 0x01c, exdos_card_w},
+        {0x080, 0x08f, Nick_reg_w},
+	{0x0a0, 0x0bf, Dave_reg_w},
+	{ -1 } /* end of table */
 };
 
 /*
@@ -493,7 +463,7 @@ N/C - Not connected or just dont know!
 */
 
 
-INPUT_PORTS_START(enterprise_input_ports)
+INPUT_PORTS_START(enterprise)
 	/* keyboard line 0 */
      PORT_START
      PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "n", KEYCODE_N,IP_JOY_NONE)
@@ -638,61 +608,52 @@ static struct CustomSound_interface enterprise_custom_sound=
 
 static struct MachineDriver enterprise_machine_driver =
 {
-        /* basic machine hardware */
-        {
-			/* MachineCPU */
-                {
-                        CPU_Z80,	/* type */
-                        4000000,    /* clock: See Note Above */
-                        0,		/* memory region */
-                        readmem_enterprise,	/* MemoryReadAddress */
-			writemem_enterprise, /* MemoryWriteAddress */
-                        readport_enterprise, /* IOReadPort */
-			writeport_enterprise, /* IOWritePort */
-                        enterprise_frame_interrupt, /* VBlank
-Interrupt */
-				1,				/* vblanks per frame */
-                        enterprise_timer_interrupt, /* timer interrupt
-*/
-				1000				/* timers
-per second */
-                },
-        },
-        50,						/* frames per second */
-	  DEFAULT_60HZ_VBLANK_DURATION,       /* vblank duration */
-        1,						/* cpu slices per frame */
-        enterprise_init_machine,			/* init machine */
+	/* basic machine hardware */
+	{
+		/* MachineCPU */
+		{
+			CPU_Z80,							/* type */
+			4000000,							/* clock: See Note Above */
+			readmem_enterprise, 				/* MemoryReadAddress */
+			writemem_enterprise,				/* MemoryWriteAddress */
+			readport_enterprise,				/* IOReadPort */
+			writeport_enterprise,				/* IOWritePort */
+			enterprise_frame_interrupt, 		/* VBlank Interrupt */
+			1,									/* vblanks per frame */
+			enterprise_timer_interrupt, 		/* timer interrupt */
+			1000								/* timers per second */
+		},
+	},
+	50, 										/* frames per second */
+	DEFAULT_60HZ_VBLANK_DURATION,				/* vblank duration */
+	1,											/* cpu slices per frame */
+	enterprise_init_machine,					/* init machine */
 	NULL,
 	/* video hardware */
-        ENTERPRISE_SCREEN_WIDTH,             /* screen width */
-        ENTERPRISE_SCREEN_HEIGHT,            /* screen height */
-        { 0,(ENTERPRISE_SCREEN_WIDTH-1),0,(ENTERPRISE_SCREEN_HEIGHT-1)},
-/* rectangle: visible_area */
-        0, /*enterprise_gfxdecodeinfo,*/                    /* graphics
-decode
-info */
-        256, 						/* total colours
-*/
-	  256,                                  	/* color table len
-*/
-        0,                                      /* convert color prom */
+	ENTERPRISE_SCREEN_WIDTH,					/* screen width */
+	ENTERPRISE_SCREEN_HEIGHT,					/* screen height */
+	{ 0,(ENTERPRISE_SCREEN_WIDTH-1),0,(ENTERPRISE_SCREEN_HEIGHT-1)}, /* rectangle: visible_area */
+	0, /*enterprise_gfxdecodeinfo,*/			/* graphics decode info */
+	NICK_PALETTE_SIZE,							/* total colours */
+	NICK_COLOURTABLE_SIZE,						/* color table len */
+	nick_init_palette,							/* convert color prom */
 
-        VIDEO_TYPE_RASTER,				/* video attributes */
-        0,							/* MachineLayer */
-        enterprise_vh_start,
-        enterprise_vh_stop,
-        enterprise_vh_screenrefresh,
+	VIDEO_TYPE_RASTER,							/* video attributes */
+	0,											/* MachineLayer */
+	enterprise_vh_start,
+	enterprise_vh_stop,
+	enterprise_vh_screenrefresh,
 
-        /* sound hardware */
-        0,0,0,0,
-        {
-			/* MachineSound */
-                {
+	/* sound hardware */
+	0,0,0,0,
+	{
+		/* MachineSound */
+		{
 			/* change to dave eventually */
-                        0,/*SOUND_CUSTOM,*/
-                        0,/*&enterprise_custom_sound*/
-                }
-        }
+			0,/* SOUND_CUSTOM, */
+			0,/* &enterprise_custom_sound */
+		}
+	}
 };
 
 
@@ -703,9 +664,9 @@ info */
 
 ***************************************************************************/
 
-ROM_START(enterprise_rom)
+ROM_START(enterprise)
         /* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
-        ROM_REGION(0x24000)
+        ROM_REGIONX(0x24000,REGION_CPU1)
         ROM_LOAD("exos.rom",0x10000,0x8000,  0xd421795f)
         ROM_LOAD("exbas.rom",0x18000,0x4000, 0x683cf455)
         ROM_LOAD("exdos.rom",0x1c000,0x8000, 0xd1d7e157)
@@ -723,29 +684,30 @@ struct GameDriver ep128_driver =
 	"Kevin Thacker [MESS driver]\n \
 	James Boulton [EP help]\n \
 	Jean-Pierre Malisse [EP help]", /*credits */
-	GAME_COMPUTER,
+	0,
     &enterprise_machine_driver,		/* MachineDriver */
 	0,
-    enterprise_rom,
+    rom_enterprise,
 	enterprise_rom_load,
 	enterprise_rom_id,         /* load rom_file images */
+    0,                                              /* default file extensions */
 	0,                      /* number of ROM slots */
 	4,                      /* number of floppy drives supported */
 	0,                      /* number of hard drives supported */
 	0,                      /* number of cassette drives supported */
-        0,                      /* rom decoder */
-        0,                      /* opcode decoder */
-        0,                      /* pointer to sample names */
-        0,                      /* sound_prom */
+	0,                      /* rom decoder */
+	0,                      /* opcode decoder */
+	0,                      /* pointer to sample names */
+	0,                      /* sound_prom */
 
-        enterprise_input_ports,
+	input_ports_enterprise,
 
-        0,                      /* color_prom */
-        enterprise_colour_palette,          /* color palette */
-        enterprise_colour_table,       /* color lookup table */
+	0,                      /* color_prom */
+	/*enterprise_colour_palette*/0,          /* color palette */
+	/*enterprise_colour_table*/0,       /* color lookup table */
 
-        ORIENTATION_DEFAULT,    /* orientation */
+	GAME_COMPUTER|ORIENTATION_DEFAULT,    /* orientation */
 
-        0,                      /* hiscore load */
-        0                       /* hiscore save */
+	0,                      /* hiscore load */
+	0                       /* hiscore save */
 };

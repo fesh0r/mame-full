@@ -36,7 +36,7 @@ static unsigned char any_dirty_hires[2];
 int apple2_vh_start(void)
 {
 	int i;
-	
+
 	apple2_text[0] = apple2_text[1] = 0;
 	apple2_lores[0] = apple2_lores[1] = 0;
 	apple2_hires[0] = apple2_hires[1] = 0;
@@ -52,7 +52,7 @@ int apple2_vh_start(void)
 			apple2_vh_stop();
 			return 1;
 		}
-	
+
 		if ((apple2_lores[i] = osd_create_bitmap(280*2,192*2)) == 0)
 		{
 			apple2_vh_stop();
@@ -70,19 +70,19 @@ int apple2_vh_start(void)
 			apple2_vh_stop();
 			return 1;
 		}
-	
+
 		if ((dirty_lores[i] = malloc(0x400)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
 		}
-	
+
 		if ((dirty_hires[i] = malloc(0x2000)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
 		}
-	
+
 		memset(dirty_text[i],1,0x400);
 		memset(dirty_lores[i],1,0x400);
 		memset(dirty_hires[i],1,0x2000);
@@ -141,7 +141,7 @@ static void apple2_text_draw(int page)
 		text_ram = apple2_lores_text2_ram;
 #else
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int auxram = a2.RAMRD ? 0x10000 : 0x0000;
 
 	if (page==0)
@@ -196,7 +196,7 @@ static void apple2_lores_draw(int page)
 		lores_ram = apple2_lores_text2_ram;
 #else
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int auxram = a2.RAMRD ? 0x10000 : 0x0000;
 
 	if (page==0)
@@ -250,7 +250,7 @@ static void apple2_hires_draw(int page)
 	else
 		hires_ram = apple2_hires2_ram;
 #else
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int auxram = a2.RAMRD ? 0x10000 : 0x0000;
 
 	if (page==0)
@@ -273,7 +273,7 @@ static void apple2_hires_draw(int page)
 			else if (x >= 0x28)
 				y += 8;
 			x = x % 40;
-		
+
 			y = y * 8;
 			y += ((offset & 0x1C00) >> 10);
 

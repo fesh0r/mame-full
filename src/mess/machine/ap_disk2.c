@@ -4,7 +4,7 @@
 
   Machine file to handle emulation of the Apple Disk II controller.
 
-  TODO:  
+  TODO:
     Allow # of drives and slot to be selectable.
 	Redo the code to make it understandable.
 	Allow disks to be writeable.
@@ -36,7 +36,7 @@ static int sector6[2];		/* current sector #? */
 static int read_state;			/* 1 = read, 0 = write */
 static int a2_drives_num;
 
-static unsigned char translate6[0x40] = 
+static unsigned char translate6[0x40] =
 {
 	0x96, 0x97, 0x9a, 0x9b, 0x9d, 0x9e, 0x9f, 0xa6,
 	0xa7, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb2, 0xb3,
@@ -48,7 +48,7 @@ static unsigned char translate6[0x40] =
 	0xf7, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 };
 
-static unsigned char r_skewing6[0x10] = 
+static unsigned char r_skewing6[0x10] =
 {
 	0x00, 0x07, 0x0E, 0x06, 0x0D, 0x05, 0x0C, 0x04,
 	0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
@@ -76,7 +76,7 @@ void apple2_slot6_init(void)
 	/* Allocate memory for the nibbilized images */
 	prepare_disk (0);
 	prepare_disk (1);
-	
+
 	return;
 }
 
@@ -97,7 +97,7 @@ static void prepare_disk (int drive)
 	a2_drives[drive].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
 	/* Default everything to sync byte 0xFF */
 	memset(a2_drives[drive].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
-	
+
 	/* TODO: support .nib and .po images */
 	a2_drives[drive].image_type = A2_DISK_DO;
 	a2_drives[drive].write_protect = 1;
@@ -105,8 +105,8 @@ static void prepare_disk (int drive)
 	a2_drives[drive].volume = volume = 254;
 	a2_drives[drive].bytepos = 0;
 	a2_drives[drive].trackpos = 0;
-	
-	f = osd_fopen(Machine->gamedrv->name,floppy_name[drive],OSD_FILETYPE_IMAGE,0);
+
+	f = osd_fopen(Machine->gamedrv->name,floppy_name[drive],OSD_FILETYPE_IMAGE_RW,0);
 	if (f==NULL)
 	{
 		if (errorlog) fprintf(errorlog,"Couldn't open image.\n");
@@ -128,7 +128,7 @@ static void prepare_disk (int drive)
 			int checksum;
 			int xorvalue;
 			int oldvalue;
-			
+
 			sec_pos = 256*r_skewing6[s] + t*256*16;
 			if (osd_fseek(f,sec_pos,SEEK_SET)!=0)
 			{
@@ -141,10 +141,10 @@ static void prepare_disk (int drive)
 				if (errorlog) fprintf(errorlog,"Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos);
 				return;
 			}
-		
-			
+
+
 			pos = NIBBLE_SIZE*s + (t*NIBBLE_SIZE*16);
-			
+
 			/* Setup header values */
 			checksum = volume ^ t ^ s;
 
@@ -200,17 +200,17 @@ static void prepare_disk (int drive)
 			a2_drives[drive].data[pos+27+343] = translate6[xorvalue & 0x3F];
 		}
 	}
-	
+
 	osd_fclose(f);
 
-#if 0	
+#if 0
 	{
 		FILE *dump;
-	
+
 		dump = fopen ("a2_disk.dmp", "w");
-		
+
 		fwrite (a2_drives[drive].data, 1, NIBBLE_SIZE*16*35, dump);
-		fclose (dump);	
+		fclose (dump);
 	}
 #endif
 }
@@ -230,7 +230,7 @@ static int ReadByte(int drive)
 		return 0xFF;
 
 	/* Our drives are always turned on baby, yeah!
-	
+
 	   The reason is that a real drive takes around a second to turn off, so
 	   consecutive reads are done by DOS with enough haste that the drive is
 	   never really off between them. For a perfect emulation, we should turn it off
@@ -243,7 +243,7 @@ static int ReadByte(int drive)
 #endif
 
 	value = a2_drives[drive].data[a2_drives[drive].trackpos + a2_drives[drive].bytepos];
-	
+
 	a2_drives[drive].bytepos ++;
 	if (a2_drives[drive].bytepos >= NIBBLE_SIZE*16)
 	{
@@ -271,7 +271,7 @@ int apple2_c0xx_slot6_r(int offset)
 		case 0x04:		/* PHASE2OFF */
 		case 0x06:		/* PHASE3OFF */
 			phase = (offset >> 1);
-			a2_drives[cur_drive].phase[phase] = SWITCH_OFF;		
+			a2_drives[cur_drive].phase[phase] = SWITCH_OFF;
 			break;
 		case 0x01:		/* PHASE0ON */
 		case 0x03:		/* PHASE1ON */
@@ -310,8 +310,8 @@ int apple2_c0xx_slot6_r(int offset)
 			}
 			break;
 		/* DRIVE2 */
-		case 0x0B:		
-			a2_drives_num = 1;			
+		case 0x0B:
+			a2_drives_num = 1;
 			/* Only one drive can be "on" at a time */
 			if (a2_drives[cur_drive].motor == SWITCH_ON)
 			{
@@ -320,7 +320,7 @@ int apple2_c0xx_slot6_r(int offset)
 			}
 			break;
 		/* Q6L - set transistor Q6 low */
-		case 0x0C:		
+		case 0x0C:
 			a2_drives[cur_drive].Q6 = SWITCH_OFF;
 			/* TODO: remove following ugly hacked-in code */
 			if (read_state)
@@ -333,7 +333,7 @@ int apple2_c0xx_slot6_r(int offset)
 			}
 			break;
 		/* Q6H - set transistor Q6 high */
-		case 0x0D:		
+		case 0x0D:
 			a2_drives[cur_drive].Q6 = SWITCH_ON;
 			/* TODO: remove following ugly hacked-in code */
 			if (a2_drives[cur_drive].write_protect)

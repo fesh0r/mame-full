@@ -1,3 +1,599 @@
+0.36b14
+
+Note: .inp record/playback does still not work currently.
+
+     
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+GameBoy (preliminary)  [Carsten Sorensen, Marat Fayzullin,
+                       Pascal Felber, Hans de Goede, 
+                       Juergen Buchmueller]
+TI99_4 (not working)           [Raphael Nabet]
+CP400                          [Nate Woods]
+
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- Support added for CoCo 3 hires graphics [Nate Woods]
+
+- Fixes to the cgenie vidhrdw code. [Juergen Buchmueller]
+
+- Trs80, removed video x*2/y*3 hacks. The character layout is now 
+  6x12.  [Juergen Buchmueller]
+
+- VZ fixes [Juergen Buchmueller]
+
+- Fixed the color graphics modes for Dragon/CoCo2. 
+  [Nate Woods, Mathis Rosenhauer]
+
+- Minor improvements to the graphics display in the amstrad driver. 
+  A border is shown and the screen is centralised in the horizontal. 
+  Vertical centering not done properly done yet.  Graphics routines 
+  use plot_pixel so work in 8-bit and 16-bit colour. [Kev Thacker]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- n/a
+
+
+Other drivers changes:
+----------------------
+- amstrad disk image support!  thanks to nec765 floppy disc controller 
+  emulation.  This provides loading of disk images in the CPCEMU 
+  standard and extended disk image formats (the most common format 
+  available on the net)  [Kev Thacker]
+
+- Changed the cgenie driver to use the opbaseoverride() to load a 
+  .cas file from the command line. This works for unprotected, binary
+  *.cas files only, though.  From inside the emulation you can still 
+  load binary images with the SYSTEM command and BASIC files with 
+  CLOAD"<letter>.  [Juergen Buchmueller]
+
+- Fixed some minor cgenie problems, like loading *.cas files from 
+  inside the emulation with names shorter than 6 characters.
+  [Juergen Buchmueller]
+
+- KIM-1 driver works without backdrop now [Juergen Buchmueller]
+
+- Kaypro 2x works again [Juergen Buchmueller]
+
+- TRS80, fixed .cas/.cmd loader using opbaseoverride(). The image is 
+  loaded as soon as the BASIC prompt is show (">" in line 4) and 
+  floppy controller is disabled in trs80_init() when no floppy disk
+  image is specified.  [Juergen Buchmueller]
+
+- Jupiter Ace now includes support for .ace and .tap files.
+  [Paul Daniels]
+
+- Tapes are loaded again in the Dragon32 [Mathis Rosenhauer]
+
+- Number of PC and clone fixes [Juergen Buchmueller]
+
+
+Changes to the main program:
+----------------------------
+- n/a
+
+
+Source:
+-------
+- The core is based on MAME 0.36b14. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+- MAME's audit.c (line 131) was slightly modified to fix rom verify
+  [Bernd Wiebelt]
+
+
+Other:
+------
+- NEC, MSX crc and sysinfo updates [Chris Henry, Joshua Mallory].  
+  Please send all CRC/history file contributions to Chris. 
+  (battlepriest@hotmail.com)
+
+
+
+
+--------------------------------------------------------------------
+0.36b13
+
+Note: .inp record/playback does still not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+- MSX [Sean Young]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- Jupiter - modified the vidhrdw code to use drawgfx() instead of 
+  modifying the bitmap's single pixels, corrected the GfxLayout for 
+  jupiter_charlayout and used it with decodechar() whenever the 
+  character set is changed in jupiter_charram_w(), and changed to the 
+  generic videoram/videoram_size/videoram_w and dirtybuffer variables 
+  and functions (note how they are initialized in the writememory 
+  definition).  You can now see the current character set with UI and 
+  F4.  [Juergen Buchmueller]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- n/a
+
+
+Other drivers changes:
+----------------------
+- Corrected wd179x to use the new fileio semantics. This fixes the 
+  trs80, cgenie and ti99 drivers.  [Juergen Buchmueller]
+
+- Atari Floppy disk control fixed [Juergen Buchmueller]
+
+- VIC20 fixed random number generation (via6522 timer enhancements), 
+  VIC20, C16 added simlation of serial bus floppy (real vc1541 or 
+  c1551 emulation may take a while), C16 several fixes to ieee488 
+  floppy simulation, video and interrupt system, enhanced status 
+  output and Quickloader  [Peter Trauner]
+
+
+Changes to the main program:
+----------------------------
+- n/a
+
+
+Source:
+-------
+- The core is based on MAME 0.36b13. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+
+
+Other:
+------
+- NEC crc and sysinfo updates [Chris Henry].  
+  Please send all CRC/history file contributions to Chris. 
+  (battlepriest@hotmail.com)
+
+- System documentation is now contained in sysinfo.dat and 
+  sysinfo.htm [Chris Henry, Juergen Buchmueller, Ben Bruscella]
+
+- CBM series CRC updates [Peter Trauner]
+
+
+
+--------------------------------------------------------------------
+0.36b12
+
+Note: .inp record/playback does still not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+- Jupiter Ace [Paul Daniels]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- Overscan area added to VZ 200/300 display, because in the graphics 
+  mode there has to be a green (unwriteable) border around the screen, 
+  while in text mode it is black.  Thanks goto Guy Thomason
+  [Juergen Buchmueller]
+
+- Tandy1000T palette fix [Juergen Buchmueller]
+
+- PC driver uses generic drawgfx() instead of specialized blitting 
+  functions.  [Juergen Buchmueller]
+
+- Rasterline driven video system with 16 bpp support in CBM driver
+  [Peter Trauner]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- Reworked speaker sound generation in the PC driver 
+  [Juergen Buchmueller]
+
+
+Other drivers changes:
+----------------------
+- Floppy emulation (still not 100%) for the VZ200/300.
+  [Juergen Buchmueller]
+
+- Tape support in the CGENIE driver [Juergen Buchmueller]
+
+- Memory allocation fix in the NES driver [Juergen Buchmueller]
+
+- PC drivers have hard disk controllers disabled if there's no image 
+  specified for them [Juergen Buchmueller]
+
+- PC driver - created a keyboard map in the input ports - slightly 
+  better but still not perfect handling of the keyboard.
+  [Juergen Buchmueller]
+
+- Enabled the Disk Basic ROM (disk.rom) for the CoCo and CoCo 3
+  [Nathan]
+
+- Memory manager modifications in the dragon32 drivers that allow the 
+  use of a true CoCo 3 ROM and modifications to the ROM table that 
+  use a true CoCo 3 ROM. [Nathan]
+
+- Simple tape support in the CBM driver (press play on tape with f5 
+  key) [Peter Trauner]
+
+- ti99/4a accessors for the RAM extension fixed, and fixed endianness 
+  issues. [Raphael Nabet]
+
+
+Changes to the main program:
+----------------------------
+- You can now specify switches on the commandline in which case every 
+  image name following them goes to that respective slot, regardless 
+  of it's extension.  See mess.txt for some examples
+  [Peter Trauner, Juergen Buchmueller]
+
+
+Source:
+-------
+- The core is based on MAME 0.36b12. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+- [DOS] slight change to usrintrf.c to show brief message for systems 
+  that use the GAME_COMPUTER flag. [Juergen Buchmueller]
+
+- [DOS] New options for IMAGES to be opened, namely OSD_FOPEN_READ, 
+  OSD_FOPEN_WRITE, OSD_FOPEN_RW, and OSD_FOPEN_RW_CREATE.  Check 
+  mess.h for a description of what they are used for.  Be sure to use 
+  these semantics when handling read/write files.
+  [Juergen Buchmueller]
+
+
+Other:
+------
+- Gamegear, Genesis and NES CRC updates [Chris Henry & Gerardo].  
+  Please send all CRC/history file contributions to Chris. 
+  (battlepriest@hotmail.com)
+
+- c16, plus4, vc20 and vic20 CRC updates [Peter Trauner]
+
+
+--------------------------------------------------------------------
+
+
+0.36b11
+
+Note: .inp record/playback does still not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+- Coco 3 (preliminary) [Nate Woods] 
+- ORIC 1               [Paul Cook]
+- ORIC Atmos           [Paul Cook]
+- Vic20 (NTSC)         [Peter Trauner]
+- Vc20 (Vic20 Pal)     [Peter Trauner]
+- Commodore 16         [Peter Trauner]
+- Commodore Plus4 NTSC [Peter Trauner]
+- VZ 200               [Juergen Buchmueller]
+- VZ 300               [Juergen Buchmueller]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- spectrum palette fixes [Victor Trucco]
+
+- PC (CGA, MDA) palette fixes [Juergen Buchmueller]
+
+- KayPro palette fix [Juergen Buchmueller]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- n/a
+
+
+Other drivers changes:
+----------------------
+- a5200 fixes include mirroring of 16K images into upper 16K of the 
+  cartridge memory, keypad codes fixed (still not 100%), and ANTIC 
+  memory range is d400-d5ff (was d400-d4ff before).  Alot more images
+  start now.   [Juergen Buchmueller]
+
+- Removed the fixed 6502 program code from the KIM1 driver and added
+  the functions to load an external file instead.
+  For the header, the following format is used:
+  magic start size id data...
+  KIM1  llhh  llhh xx xx xx xx
+  [Juergen Buchmueller]
+
+- ti99 renamed to ti994a.
+
+
+Changes to the main program:
+----------------------------
+- n/a
+
+
+Source:
+-------
+- The core is based on MAME 0.36b11. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+- [DOS] slight changes to fileio.c. [Ben Bruscella]
+
+- [DOS] new command -listextensions.  use this to see the default image
+  extensions recognised by each system (not all fields filled as yet). 
+  [Ben Bruscella]
+
+
+Other:
+------
+- Substantial CRC and history file updates [Chris Henry].  
+  Please send all CRC/history file contributions to him. 
+  (battlepriest@hotmail.com)
+
+--------------------------------------------------------------------
+
+
+0.36b10
+
+Important: due to changes in the MAME palette system, there might be  
+           systems that had correct colors before, and wrong now. 
+           Please let us know if you find any. ;-)
+
+Also note: .inp record/playback does still not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+- n/a
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- palette fixed in TI99 [Ben Bruscella]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- n/a
+
+Other drivers changes:
+----------------------
+- n/a
+
+Changes to the main program:
+----------------------------
+- n/a
+
+
+Source:
+-------
+- The core is based on MAME 0.36b10. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+
+Other:
+------
+- n/a
+
+--------------------------------------------------------------------
+
+0.36b91
+
+Important: due to changes in the MAME palette system, there might be  
+           systems that had correct colors before, and wrong now. 
+           Please let us know if you find any. ;-)
+
+Also note: .inp record/playback does still not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+- n/a
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- n/a
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- PCSpeaker changed into custom sound driver and activated Adlib 
+  soundcard (YM3812 chip) implemented in PC driver. [Peter]
+
+
+Other drivers changes:
+----------------------
+- slight changes to the PDP1 driver.
+
+- [DOS] TI99 keyboard fix! [Raphael Nabet]
+
+- Various fixes to the amstrad, enterprise and spectrum 
+  drivers [Kev Thacker]
+
+- Corrected and extended recognition of sectors/track, heads,
+  bytes/sector parameters in PC driver. Common formats in images 
+  are now detected without looking at DOS boot sector 
+  structures. [Peter]
+
+
+Changes to the main program:
+----------------------------
+- n/a
+
+
+Source:
+-------
+- [DOS] Now compiled with Allegro 3.9.27 WIP. 
+
+- The core is based on MAME 0.36b9. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+- New field in the MachineDriver struct:
+  const char **default_extension.  
+  Use this to specify the default file extension for images which 
+  can be used with the system (examples are coleco = "rom", 
+  genesis = "bin" or "smd", etc.). 
+
+- Filetype definitions for files used in MESS is now IMAGE_R or  
+  IMAGE_RW.   Note that IMAGE_R replaces ROM_CART, and IMAGE_RW 
+  replaces IMAGE.
+
+
+Other:
+------
+- Updated CRC database files for a7800, coleco and nes.  Added SMS and 
+  Gamegear database files.  Added System History file (sysinfo.dat).  
+  The official maintainer is Chris Henry (battlepriest@hotmail.com). 
+  Please send all CRC/History contributions to him.
+
+
+--------------------------------------------------------------------
+
+
+0.36b8
+
+PLEASE NOTE:  .inp record/playback does not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+- n/a
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+
+- TI99 now use the standard tms9918 palette since the tms9918 emulator
+  actually does not support custom palettes. [Raphael Nabet]
+
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+
+- Vectrex clipping fixed. [Mathis Rosenhauer]
+
+
+
+Other drivers changes:
+----------------------
+- Several TI99 keyboard fixes [Raphael Nabet]
+
+- Atari 800 and Atari 5200 fixes [Juergen Buchmueller]
+
+
+
+
+Changes to the main program:
+----------------------------
+- ALIAS crash fixed. [Ben Bruscella]
+
+- System ROM (Image) name matched from CRC database file on startup.  
+  (file stored in CRC directory)
+
+- New option in the user interface to view the Loaded image Info.  
+  (See under Image Information for name, CRC and size info).  
+  (Only visible for one read-only image, otherwise disabled)
+  [Ben Bruscella] 
+
+
+Source:
+-------
+- The core is based on MAME 0.36b8. This incorporates all features 
+  of the update to this core.  [MAME team]
+
+
+
+
+
+
+===================================================================
+
+0.36b7
+
+PLEASE NOTE:  .inp record/playback does not work currently.
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+KIM 1                        [Juergen Buchmueller]
+Tandy 1000TX (PC clone)      [Juergen Buchmueller]
+
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- Sound now works in the Dragon32.  [Mathis Rosenhauer] 
+
+
+
+Other drivers changes:
+----------------------
+
+- amstrad driver (renamed to cpc6128) plays snapshots now!
+  This now plays game snapshots created with the CPCEMU emulator, 
+  or other CPC emulators.  [Kev Thacker]
+
+- merged all apple2e, and apple2c drivers (parents).
+
+- Fewer IO errors when loading tape images (dragon driver) 
+  [Mathis Rosenhauer]
+
+
+
+Changes to the main program:
+----------------------------
+
+  [thanx go to JOJO for excellent bug reports]
+- Fixed the -listinfo crash
+
+- Corrected the -listdetails output
+
+- listroms now produces correct output for all drivers 
+
+- All GUI instances of "GAME" replaced with "MACHINE"
+
+
+
+Source:
+-------
+- The core is based on MAME 0.36b7. This incorporates all features 
+  of the update to this core (such as sidewinder fixes).  [MAME team]
+
+- Aliases now supported again!  Just to remind everyone, it allows 
+  you to specify a set of ROMs or disk images with a short name in 
+  the mess.cfg file.
+  eg.:
+  [trs80]
+  arcade = boot.dsk,arcade1.dsk,arcade2.dsk,arcade3.dsk
+
+  You can then call 'mess trs80 arcade' and have all four disks 
+  inserted instead of typing the full command line.
+
+- You can now specify in MESS.CFG the *exact* directory a rom is 
+  which you want to run.  no longer necessray to have a directory with 
+  the same name as the system [Juergen Buchmueller] 
+  
+- 'clone' systems now supported.  The system BIOS is loaded from 
+  either the parent set (zipped) or the clone set (same as MAME).  
+  Roms/Images can reside in either the parent or clone subdirectory. 
+  [Ben Bruscella]
+
+
+
+
+
+===================================================================
+
 0.36b6
 
 PLEASE NOTE: MESS is now developed and distributed as a MAME source 
@@ -56,7 +652,9 @@ These drivers have new or improved SOUND:
 
 - Genesis sound improvements. [Gareth Long]
 
-Other drivers changes:
+
+
+Other driver changes:
 ----------------------
 
 - Several drivers have had compatibility improved (eg. NES, Genesis and Coleco)

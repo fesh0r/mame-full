@@ -22,6 +22,12 @@
 
 ***************************************************************************/
 #include "mess/machine/pc.h"
+#include "driver.h"
+#include "sound/3812intf.h"
+
+#define ym3812_StdClock 3579545
+
+#define ADLIB	/* YM3812/OPL2 Chip */
 
 static struct MemoryReadAddress mda_readmem[] =
 {
@@ -60,6 +66,9 @@ static struct IOReadPort mda_readport[] =
 	{ 0x0213, 0x0213, pc_EXP_r },
 	{ 0x0278, 0x027b, pc_LPT3_r },
 	{ 0x0378, 0x037b, pc_LPT2_r },
+#ifdef ADLIB
+	{ 0x0388, 0x0388, YM3812_status_port_0_r },
+#endif
 	{ 0x03bc, 0x03bd, pc_LPT1_r },
 	{ 0x03f8, 0x03ff, pc_COM1_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -83,6 +92,10 @@ static struct IOWritePort mda_writeport[] =
     { 0x0213, 0x0213, pc_EXP_w },
 	{ 0x0278, 0x027b, pc_LPT3_w },
 	{ 0x0378, 0x037b, pc_LPT2_w },
+#ifdef ADLIB
+	{ 0x0388, 0x0388, YM3812_control_port_0_w },
+	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+#endif
 	{ 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -134,6 +147,9 @@ static struct IOReadPort cga_readport[] =
     { 0x0213, 0x0213, pc_EXP_r },
 	{ 0x0278, 0x027b, pc_LPT3_r },
 	{ 0x0378, 0x037b, pc_LPT2_r },
+#ifdef ADLIB
+	{ 0x0388, 0x0388, YM3812_status_port_0_r },
+#endif
 	{ 0x03bc, 0x03bd, pc_LPT1_r },
 	{ 0x03f8, 0x03ff, pc_COM1_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -160,6 +176,10 @@ static struct IOWritePort cga_writeport[] =
 	{ 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
+#ifdef ADLIB
+	{ 0x0388, 0x0388, YM3812_control_port_0_w },
+	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+#endif
 	{ 0x03e8, 0x03ef, pc_COM3_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x03f0, 0x03f7, pc_FDC_w },
@@ -209,6 +229,9 @@ static struct IOReadPort t1t_readport[] =
 	{ 0x0200, 0x0207, pc_JOY_r },
     { 0x0213, 0x0213, pc_EXP_r },
 	{ 0x0378, 0x037f, pc_t1t_p37x_r },
+#ifdef ADLIB
+	{ 0x0388, 0x0388, YM3812_status_port_0_r },
+#endif
     { 0x03bc, 0x03bd, pc_LPT1_r },
 	{ 0x03f8, 0x03ff, pc_COM1_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -230,6 +253,10 @@ static struct IOWritePort t1t_writeport[] =
 	{ 0x0200, 0x0207, pc_JOY_w },
     { 0x0213, 0x0213, pc_EXP_w },
 	{ 0x0378, 0x037f, pc_t1t_p37x_w },
+#ifdef ADLIB
+	{ 0x0388, 0x0388, YM3812_control_port_0_w },
+	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+#endif
     { 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -251,7 +278,7 @@ static unsigned char palette[] = {
     0x00,0x00,0x00
 };
 
-INPUT_PORTS_START( pc_mda_input_ports )
+INPUT_PORTS_START( pc_mda )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0x80, 0x80,	 IPT_VBLANK )
 	PORT_BIT ( 0x7f, 0x7f,	 IPT_UNUSED )
@@ -319,14 +346,118 @@ INPUT_PORTS_START( pc_mda_input_ports )
 	PORT_DIPSETTING(	0x04, "yes" )
 	PORT_DIPSETTING(	0x00, "no" )
 	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
+
+    PORT_START  /* IN4 */
+	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Esc",          KEYCODE_ESC,        IP_JOY_NONE ) /* Esc                         01  81 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"1 !",          KEYCODE_1,          IP_JOY_NONE ) /* 1                           02  82 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"2 @",          KEYCODE_2,          IP_JOY_NONE ) /* 2                           03  83 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"3 #",          KEYCODE_3,          IP_JOY_NONE ) /* 3                           04  84 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"4 $",          KEYCODE_4,          IP_JOY_NONE ) /* 4                           05  85 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"5 %",          KEYCODE_5,          IP_JOY_NONE ) /* 5                           06  86 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"6 ^",          KEYCODE_6,          IP_JOY_NONE ) /* 6                           07  87 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"7 &",          KEYCODE_7,          IP_JOY_NONE ) /* 7                           08  88 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"8 *",          KEYCODE_8,          IP_JOY_NONE ) /* 8                           09  89 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"9 (",          KEYCODE_9,          IP_JOY_NONE ) /* 9                           0A  8A */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"0 )",          KEYCODE_0,          IP_JOY_NONE ) /* 0                           0B  8B */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"- _",          KEYCODE_MINUS,      IP_JOY_NONE ) /* -                           0C  8C */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"= +",          KEYCODE_EQUALS,     IP_JOY_NONE ) /* =                           0D  8D */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"<--",          KEYCODE_BACKSPACE,  IP_JOY_NONE ) /* Backspace                   0E  8E */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Tab",          KEYCODE_TAB,        IP_JOY_NONE ) /* Tab                         0F  8F */
+
+	PORT_START	/* IN5 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Q",            KEYCODE_Q,          IP_JOY_NONE ) /* Q                           10  90 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"W",            KEYCODE_W,          IP_JOY_NONE ) /* W                           11  91 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"E",            KEYCODE_E,          IP_JOY_NONE ) /* E                           12  92 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"R",            KEYCODE_R,          IP_JOY_NONE ) /* R                           13  93 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"T",            KEYCODE_T,          IP_JOY_NONE ) /* T                           14  94 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"Y",            KEYCODE_Y,          IP_JOY_NONE ) /* Y                           15  95 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"U",            KEYCODE_U,          IP_JOY_NONE ) /* U                           16  96 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"I",            KEYCODE_I,          IP_JOY_NONE ) /* I                           17  97 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"O",            KEYCODE_O,          IP_JOY_NONE ) /* O                           18  98 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"P",            KEYCODE_P,          IP_JOY_NONE ) /* P                           19  99 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"[ {",          KEYCODE_OPENBRACE,  IP_JOY_NONE ) /* [                           1A  9A */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"] }",          KEYCODE_CLOSEBRACE, IP_JOY_NONE ) /* ]                           1B  9B */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Enter",        KEYCODE_ENTER,      IP_JOY_NONE ) /* Enter                       1C  9C */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"L-Ctrl",       KEYCODE_LCONTROL,   IP_JOY_NONE ) /* Left Ctrl                   1D  9D */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"A",            KEYCODE_A,          IP_JOY_NONE ) /* A                           1E  9E */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"S",            KEYCODE_S,          IP_JOY_NONE ) /* S                           1F  9F */
+
+	PORT_START	/* IN6 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"D",            KEYCODE_D,          IP_JOY_NONE ) /* D                           20  A0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F",            KEYCODE_F,          IP_JOY_NONE ) /* F                           21  A1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"G",            KEYCODE_G,          IP_JOY_NONE ) /* G                           22  A2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"H",            KEYCODE_H,          IP_JOY_NONE ) /* H                           23  A3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"J",            KEYCODE_J,          IP_JOY_NONE ) /* J                           24  A4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"K",            KEYCODE_K,          IP_JOY_NONE ) /* K                           25  A5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"` ~",          KEYCODE_TILDE,      IP_JOY_NONE ) /* `                           29  A9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"\\ |",         KEYCODE_BACKSLASH,  IP_JOY_NONE ) /* \                           2B  AB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"V",            KEYCODE_V,          IP_JOY_NONE ) /* V                           2F  AF */
+
+	PORT_START	/* IN7 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"B",            KEYCODE_B,          IP_JOY_NONE ) /* B                           30  B0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"N",            KEYCODE_N,          IP_JOY_NONE ) /* N                           31  B1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"M",            KEYCODE_M,          IP_JOY_NONE ) /* M                           32  B2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	", <",          KEYCODE_COMMA,      IP_JOY_NONE ) /* ,                           33  B3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP * (PrtScr)",KEYCODE_ASTERISK,   IP_JOY_NONE ) /* Keypad *  (PrtSc)           37  B7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"F1",           KEYCODE_F1,         IP_JOY_NONE ) /* F1                          3B  BB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"F2",           KEYCODE_F2,         IP_JOY_NONE ) /* F2                          3C  BC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"F3",           KEYCODE_F3,         IP_JOY_NONE ) /* F3                          3D  BD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"F4",           KEYCODE_F4,         IP_JOY_NONE ) /* F4                          3E  BE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"F5",           KEYCODE_F5,         IP_JOY_NONE ) /* F5                          3F  BF */
+
+	PORT_START	/* IN8 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"F6",           KEYCODE_F6,         IP_JOY_NONE ) /* F6                          40  C0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F7",           KEYCODE_F7,         IP_JOY_NONE ) /* F7                          41  C1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"F8",           KEYCODE_F8,         IP_JOY_NONE ) /* F8                          42  C2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_HOME,       IP_JOY_NONE ) /* Keypad 7  (Home)            47  C7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_UP,         IP_JOY_NONE ) /* Keypad 8  (Up arrow)        48  C8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_PGUP,       IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Keypad 4  (Left arrow)      4B  CB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Keypad 6  (Right arrow)     4D  CD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_END,        IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
+
+	PORT_START	/* IN9 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_PGDN,       IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_INSERT,     IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
+
+	PORT_START /* IN10 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN11 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pc_cga_input_ports )
+INPUT_PORTS_START( pc_cga )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
-	PORT_START /* IN1 */
+
+    PORT_START /* IN1 */
 	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", 0, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
@@ -391,14 +522,118 @@ INPUT_PORTS_START( pc_cga_input_ports )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Fill odd scanlines", 0, IP_JOY_NONE )
     PORT_DIPSETTING(    0x00, "no" )
 	PORT_DIPSETTING(	0x01, "yes" )
+
+	PORT_START	/* IN4 */
+	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Esc",          KEYCODE_ESC,        IP_JOY_NONE ) /* Esc                         01  81 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"1 !",          KEYCODE_1,          IP_JOY_NONE ) /* 1                           02  82 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"2 @",          KEYCODE_2,          IP_JOY_NONE ) /* 2                           03  83 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"3 #",          KEYCODE_3,          IP_JOY_NONE ) /* 3                           04  84 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"4 $",          KEYCODE_4,          IP_JOY_NONE ) /* 4                           05  85 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"5 %",          KEYCODE_5,          IP_JOY_NONE ) /* 5                           06  86 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"6 ^",          KEYCODE_6,          IP_JOY_NONE ) /* 6                           07  87 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"7 &",          KEYCODE_7,          IP_JOY_NONE ) /* 7                           08  88 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"8 *",          KEYCODE_8,          IP_JOY_NONE ) /* 8                           09  89 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"9 (",          KEYCODE_9,          IP_JOY_NONE ) /* 9                           0A  8A */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"0 )",          KEYCODE_0,          IP_JOY_NONE ) /* 0                           0B  8B */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"- _",          KEYCODE_MINUS,      IP_JOY_NONE ) /* -                           0C  8C */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"= +",          KEYCODE_EQUALS,     IP_JOY_NONE ) /* =                           0D  8D */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"<--",          KEYCODE_BACKSPACE,  IP_JOY_NONE ) /* Backspace                   0E  8E */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Tab",          KEYCODE_TAB,        IP_JOY_NONE ) /* Tab                         0F  8F */
+
+	PORT_START	/* IN5 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Q",            KEYCODE_Q,          IP_JOY_NONE ) /* Q                           10  90 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"W",            KEYCODE_W,          IP_JOY_NONE ) /* W                           11  91 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"E",            KEYCODE_E,          IP_JOY_NONE ) /* E                           12  92 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"R",            KEYCODE_R,          IP_JOY_NONE ) /* R                           13  93 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"T",            KEYCODE_T,          IP_JOY_NONE ) /* T                           14  94 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"Y",            KEYCODE_Y,          IP_JOY_NONE ) /* Y                           15  95 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"U",            KEYCODE_U,          IP_JOY_NONE ) /* U                           16  96 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"I",            KEYCODE_I,          IP_JOY_NONE ) /* I                           17  97 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"O",            KEYCODE_O,          IP_JOY_NONE ) /* O                           18  98 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"P",            KEYCODE_P,          IP_JOY_NONE ) /* P                           19  99 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"[ {",          KEYCODE_OPENBRACE,  IP_JOY_NONE ) /* [                           1A  9A */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"] }",          KEYCODE_CLOSEBRACE, IP_JOY_NONE ) /* ]                           1B  9B */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Enter",        KEYCODE_ENTER,      IP_JOY_NONE ) /* Enter                       1C  9C */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"L-Ctrl",       KEYCODE_LCONTROL,   IP_JOY_NONE ) /* Left Ctrl                   1D  9D */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"A",            KEYCODE_A,          IP_JOY_NONE ) /* A                           1E  9E */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"S",            KEYCODE_S,          IP_JOY_NONE ) /* S                           1F  9F */
+
+	PORT_START	/* IN6 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"D",            KEYCODE_D,          IP_JOY_NONE ) /* D                           20  A0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F",            KEYCODE_F,          IP_JOY_NONE ) /* F                           21  A1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"G",            KEYCODE_G,          IP_JOY_NONE ) /* G                           22  A2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"H",            KEYCODE_H,          IP_JOY_NONE ) /* H                           23  A3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"J",            KEYCODE_J,          IP_JOY_NONE ) /* J                           24  A4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"K",            KEYCODE_K,          IP_JOY_NONE ) /* K                           25  A5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"` ~",          KEYCODE_TILDE,      IP_JOY_NONE ) /* `                           29  A9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"\\ |",         KEYCODE_BACKSLASH,  IP_JOY_NONE ) /* \                           2B  AB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"V",            KEYCODE_V,          IP_JOY_NONE ) /* V                           2F  AF */
+
+	PORT_START	/* IN7 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"B",            KEYCODE_B,          IP_JOY_NONE ) /* B                           30  B0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"N",            KEYCODE_N,          IP_JOY_NONE ) /* N                           31  B1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"M",            KEYCODE_M,          IP_JOY_NONE ) /* M                           32  B2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	", <",          KEYCODE_COMMA,      IP_JOY_NONE ) /* ,                           33  B3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP * (PrtScr)",KEYCODE_ASTERISK,   IP_JOY_NONE ) /* Keypad *  (PrtSc)           37  B7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"F1",           KEYCODE_F1,         IP_JOY_NONE ) /* F1                          3B  BB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"F2",           KEYCODE_F2,         IP_JOY_NONE ) /* F2                          3C  BC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"F3",           KEYCODE_F3,         IP_JOY_NONE ) /* F3                          3D  BD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"F4",           KEYCODE_F4,         IP_JOY_NONE ) /* F4                          3E  BE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"F5",           KEYCODE_F5,         IP_JOY_NONE ) /* F5                          3F  BF */
+
+	PORT_START	/* IN8 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"F6",           KEYCODE_F6,         IP_JOY_NONE ) /* F6                          40  C0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F7",           KEYCODE_F7,         IP_JOY_NONE ) /* F7                          41  C1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"F8",           KEYCODE_F8,         IP_JOY_NONE ) /* F8                          42  C2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_HOME,       IP_JOY_NONE ) /* Keypad 7  (Home)            47  C7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_UP,         IP_JOY_NONE ) /* Keypad 8  (Up arrow)        48  C8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_PGUP,       IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Keypad 4  (Left arrow)      4B  CB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Keypad 6  (Right arrow)     4D  CD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_END,        IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
+
+	PORT_START	/* IN9 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_PGDN,       IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_INSERT,     IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
+
+	PORT_START /* IN10 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN11 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pc_t1t_input_ports )
+INPUT_PORTS_START( pc_t1t )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
-	PORT_START /* IN1 */
+
+    PORT_START /* IN1 */
 	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", 0, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
@@ -454,9 +689,131 @@ INPUT_PORTS_START( pc_t1t_input_ports )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Fill odd scanlines", 0, IP_JOY_NONE )
     PORT_DIPSETTING(    0x00, "no" )
     PORT_DIPSETTING(    0x01, "yes" )
+
+	PORT_START	/* IN4 */
+	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Esc",          KEYCODE_ESC,        IP_JOY_NONE ) /* Esc                         01  81 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"1 !",          KEYCODE_1,          IP_JOY_NONE ) /* 1                           02  82 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"2 @",          KEYCODE_2,          IP_JOY_NONE ) /* 2                           03  83 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"3 #",          KEYCODE_3,          IP_JOY_NONE ) /* 3                           04  84 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"4 $",          KEYCODE_4,          IP_JOY_NONE ) /* 4                           05  85 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"5 %",          KEYCODE_5,          IP_JOY_NONE ) /* 5                           06  86 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"6 ^",          KEYCODE_6,          IP_JOY_NONE ) /* 6                           07  87 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"7 &",          KEYCODE_7,          IP_JOY_NONE ) /* 7                           08  88 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"8 *",          KEYCODE_8,          IP_JOY_NONE ) /* 8                           09  89 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"9 (",          KEYCODE_9,          IP_JOY_NONE ) /* 9                           0A  8A */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"0 )",          KEYCODE_0,          IP_JOY_NONE ) /* 0                           0B  8B */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"- _",          KEYCODE_MINUS,      IP_JOY_NONE ) /* -                           0C  8C */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"= +",          KEYCODE_EQUALS,     IP_JOY_NONE ) /* =                           0D  8D */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"<--",          KEYCODE_BACKSPACE,  IP_JOY_NONE ) /* Backspace                   0E  8E */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Tab",          KEYCODE_TAB,        IP_JOY_NONE ) /* Tab                         0F  8F */
+
+	PORT_START	/* IN5 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Q",            KEYCODE_Q,          IP_JOY_NONE ) /* Q                           10  90 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"W",            KEYCODE_W,          IP_JOY_NONE ) /* W                           11  91 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"E",            KEYCODE_E,          IP_JOY_NONE ) /* E                           12  92 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"R",            KEYCODE_R,          IP_JOY_NONE ) /* R                           13  93 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"T",            KEYCODE_T,          IP_JOY_NONE ) /* T                           14  94 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"Y",            KEYCODE_Y,          IP_JOY_NONE ) /* Y                           15  95 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"U",            KEYCODE_U,          IP_JOY_NONE ) /* U                           16  96 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"I",            KEYCODE_I,          IP_JOY_NONE ) /* I                           17  97 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"O",            KEYCODE_O,          IP_JOY_NONE ) /* O                           18  98 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"P",            KEYCODE_P,          IP_JOY_NONE ) /* P                           19  99 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"[ {",          KEYCODE_OPENBRACE,  IP_JOY_NONE ) /* [                           1A  9A */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"] }",          KEYCODE_CLOSEBRACE, IP_JOY_NONE ) /* ]                           1B  9B */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Enter",        KEYCODE_ENTER,      IP_JOY_NONE ) /* Enter                       1C  9C */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"L-Ctrl",       KEYCODE_LCONTROL,   IP_JOY_NONE ) /* Left Ctrl                   1D  9D */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"A",            KEYCODE_A,          IP_JOY_NONE ) /* A                           1E  9E */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"S",            KEYCODE_S,          IP_JOY_NONE ) /* S                           1F  9F */
+
+	PORT_START	/* IN6 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"D",            KEYCODE_D,          IP_JOY_NONE ) /* D                           20  A0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F",            KEYCODE_F,          IP_JOY_NONE ) /* F                           21  A1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"G",            KEYCODE_G,          IP_JOY_NONE ) /* G                           22  A2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"H",            KEYCODE_H,          IP_JOY_NONE ) /* H                           23  A3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"J",            KEYCODE_J,          IP_JOY_NONE ) /* J                           24  A4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"K",            KEYCODE_K,          IP_JOY_NONE ) /* K                           25  A5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"` ~",          KEYCODE_TILDE,      IP_JOY_NONE ) /* `                           29  A9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"\\ |",         KEYCODE_BACKSLASH,  IP_JOY_NONE ) /* \                           2B  AB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"V",            KEYCODE_V,          IP_JOY_NONE ) /* V                           2F  AF */
+
+	PORT_START	/* IN7 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"B",            KEYCODE_B,          IP_JOY_NONE ) /* B                           30  B0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"N",            KEYCODE_N,          IP_JOY_NONE ) /* N                           31  B1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"M",            KEYCODE_M,          IP_JOY_NONE ) /* M                           32  B2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	", <",          KEYCODE_COMMA,      IP_JOY_NONE ) /* ,                           33  B3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP * (PrtScr)",KEYCODE_ASTERISK,   IP_JOY_NONE ) /* Keypad *  (PrtSc)           37  B7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"F1",           KEYCODE_F1,         IP_JOY_NONE ) /* F1                          3B  BB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"F2",           KEYCODE_F2,         IP_JOY_NONE ) /* F2                          3C  BC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"F3",           KEYCODE_F3,         IP_JOY_NONE ) /* F3                          3D  BD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"F4",           KEYCODE_F4,         IP_JOY_NONE ) /* F4                          3E  BE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"F5",           KEYCODE_F5,         IP_JOY_NONE ) /* F5                          3F  BF */
+
+	PORT_START	/* IN8 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"F6",           KEYCODE_F6,         IP_JOY_NONE ) /* F6                          40  C0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F7",           KEYCODE_F7,         IP_JOY_NONE ) /* F7                          41  C1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"F8",           KEYCODE_F8,         IP_JOY_NONE ) /* F8                          42  C2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_HOME,       IP_JOY_NONE ) /* Keypad 7  (Home)            47  C7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_UP,         IP_JOY_NONE ) /* Keypad 8  (Up arrow)        48  C8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_PGUP,       IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Keypad 4  (Left arrow)      4B  CB */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Keypad 6  (Right arrow)     4D  CD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_END,        IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
+
+	PORT_START	/* IN9 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_PGDN,       IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_INSERT,     IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
+
+	PORT_START /* IN10 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN11 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+
 INPUT_PORTS_END
 
 static unsigned i86_address_mask = 0x000fffff;
+
+
+static struct CustomSound_interface pc_sound_interface = {
+	pc_sh_custom_start,
+	pc_sh_stop,
+	pc_sh_custom_update
+};
+
+#if defined(ADLIB)
+// irq line not connected to pc on adlib cards (and compatibles)
+static void irqhandler(int linestate) {}
+
+static struct YM3812interface ym3812_interface = {
+	1,
+	ym3812_StdClock, // I hope this is the clock used on the original Adlib Sound card
+	{255}, // volume adjustment in relation to speaker and tandy1000 sound neccessary
+	{irqhandler}
+};
+#endif
 
 static struct SN76496interface t1t_sound_interface = {
 	1,
@@ -478,7 +835,7 @@ static struct GfxLayout pc_mda_charlayout =
 	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8,
 	  0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  16384+0*8, 16384+1*8, 16384+2*8, 16384+3*8,
-	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8, },
+	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8 },
 	8*8 					/* every char takes 8 bytes (upper half) */
 };
 
@@ -525,6 +882,15 @@ static unsigned short mda_colortable[] = {
      0,10,
 };
 
+
+/* Initialise the mda palette */
+static void mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,mda_colortable,sizeof(mda_colortable));
+}
+
+
 static struct MachineDriver mda_machine_driver =
 {
 	/* basic machine hardware */
@@ -532,10 +898,9 @@ static struct MachineDriver mda_machine_driver =
 		{
 			CPU_I86,
 			4772720,	/* 4,77 Mhz */
-			0,
 			mda_readmem,mda_writemem,
 			mda_readport,mda_writeport,
-			pc_frame_interrupt,1,
+			pc_frame_interrupt,4,
 			0,0,
 			&i86_address_mask
         },
@@ -552,7 +917,7 @@ static struct MachineDriver mda_machine_driver =
 	pc_mda_gfxdecodeinfo,						/* graphics decode info */
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(mda_colortable) / sizeof(mda_colortable[0]),
-	0,											/* convert color prom */
+	mda_init_palette,							/* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -561,10 +926,13 @@ static struct MachineDriver mda_machine_driver =
 	pc_mda_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	pc_sh_start,
-	pc_sh_stop,
-	0
+	0,0,0,0,
+	{
+		{ SOUND_CUSTOM, &pc_sound_interface },
+#if defined(ADLIB)
+		{ SOUND_YM3812, &ym3812_interface },
+#endif
+	}
 };
 
 static struct GfxLayout CGA_charlayout =
@@ -576,10 +944,10 @@ static struct GfxLayout CGA_charlayout =
     /* x offsets */
     { 0,1,2,3,4,5,6,7 },
     /* y offsets */
-	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-	  0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-	  0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-	  0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
+	{ 0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
+	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8,
+	  0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
+	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8 },
     8*8                     /* every char takes 8 bytes */
 };
 
@@ -591,11 +959,11 @@ static struct GfxLayout CGA_charlayout_dw =
     { 0 },                  /* no bitplanes; 1 bit per pixel */
     /* x offsets */
     { 0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7 },
-    /* y offsets */
-	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-	  0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-	  0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-      0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
+	/* y offsets */
+	{ 0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
+	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8,
+	  0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
+      4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8 },
     8*8                     /* every char takes 8 bytes */
 };
 
@@ -742,6 +1110,24 @@ static struct GfxDecodeInfo t1t_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
+
+
+
+
+/* Initialise the cga palette */
+static void cga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
+}
+/* Initialise the t1t palette */
+static void t1t_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,t1t_colortable,sizeof(t1t_colortable));
+}
+
+
 static struct MachineDriver cga_machine_driver =
 {
     /* basic machine hardware */
@@ -749,10 +1135,9 @@ static struct MachineDriver cga_machine_driver =
         {
             CPU_I86,
 			4772720,	/* 4,77 Mhz */
-			0,
 			cga_readmem,cga_writemem,
 			cga_readport,cga_writeport,
-            pc_frame_interrupt,1,
+			pc_frame_interrupt,4,
 			0,0,
 			&i86_address_mask
         },
@@ -769,7 +1154,7 @@ static struct MachineDriver cga_machine_driver =
 	CGA_gfxdecodeinfo,							/* graphics decode info */
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
-	0,											/* convert color prom */
+	cga_init_palette,							/* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -778,10 +1163,13 @@ static struct MachineDriver cga_machine_driver =
 	pc_cga_vh_screenrefresh,
 
     /* sound hardware */
-	0,
-	pc_sh_start,
-	pc_sh_stop,
-	0
+	0,0,0,0,
+	{
+		{ SOUND_CUSTOM, &pc_sound_interface },
+#if defined(ADLIB)
+		{ SOUND_YM3812, &ym3812_interface },
+#endif
+	}
 };
 
 static struct MachineDriver t1t_machine_driver =
@@ -791,10 +1179,9 @@ static struct MachineDriver t1t_machine_driver =
         {
             CPU_I86,
 			4772720,	/* 4,77 Mhz */
-			0,
 			t1t_readmem,t1t_writemem,
 			t1t_readport,t1t_writeport,
-            pc_frame_interrupt,1,
+			pc_frame_interrupt,4,
 			0,0,
 			&i86_address_mask
         },
@@ -811,7 +1198,7 @@ static struct MachineDriver t1t_machine_driver =
 	t1t_gfxdecodeinfo,							/* graphics decode info */
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(t1t_colortable) / sizeof(t1t_colortable[0]),
-	0,											/* convert color prom */
+	t1t_init_palette,							/* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -819,16 +1206,14 @@ static struct MachineDriver t1t_machine_driver =
 	pc_t1t_vh_stop,
 	pc_t1t_vh_screenrefresh,
 
-    /* sound hardware */
-	0,
-	pc_sh_start,
-	pc_sh_stop,
-	0,
+	/* sound hardware */
+	0,0,0,0,
 	{
-        {
-			SOUND_SN76496,
-			&t1t_sound_interface
-		}
+		{ SOUND_CUSTOM, &pc_sound_interface }, // is this available on a Tandy ?
+        	{ SOUND_SN76496, &t1t_sound_interface },
+#if defined(ADLIB)
+		{ SOUND_YM3812, &ym3812_interface },
+#endif
 	}
 };
 
@@ -846,16 +1231,17 @@ struct GameDriver pc_driver =
     0,
     "pc",
     "IBM PC/XT - parent driver",
-    "198?",
+	"1983",
     "IBM",
     "Juergen Buchmueller",
-	GAME_COMPUTER,
+	0,
     &mda_machine_driver,
 	0,
 
 	NULL,						/* rom module */
 	NULL,						/* load rom_file images */
 	NULL,						/* identify rom images */
+	0,						/* default file extensions */
     1,                          /* number of ROM slots */
     4,                          /* number of floppy drives supported */
     0,                          /* number of hard drives supported */
@@ -871,27 +1257,18 @@ struct GameDriver pc_driver =
     0,                          /* color palette */
     0,                          /* color lookup table */
 
-    ORIENTATION_DEFAULT,        /* orientation */
+    GAME_COMPUTER|ORIENTATION_DEFAULT,        /* orientation */
 
     0,                          /* hiscore load */
     0,                          /* hiscore save */
 };
 
-static void pc_mda_rom_decode(void)
-{
-    int i;
-
-    /* just a plain bit pattern for graphics data generation */
-    for (i = 0; i < 256; i++)
-        Machine->memory_region[1][0x1000+i] = i;
-}
-
-ROM_START(pc_mda_rom)
-	ROM_REGION(0x100000)
+ROM_START(pc_mda)
+	ROM_REGIONX(0x100000,REGION_CPU1)
 	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
 	ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
 
-	ROM_REGION(0x1100)
+	ROM_REGIONX(0x1100,REGION_GFX1)
 	ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
 ROM_END
 
@@ -901,52 +1278,45 @@ struct GameDriver pcmda_driver =
 	&pc_driver,
 	"pcmda",
 	"IBM PC/XT - MDA",
-	"198?",
+	"1983",
 	"IBM",
-	"Juergen Buchmueller",
-	GAME_COMPUTER,
-	&mda_machine_driver,
 	0,
+	0,
+	&mda_machine_driver,
+	pc_init_driver,
 
-	pc_mda_rom, 			/* rom module */
+	rom_pc_mda, 			/* rom module */
 	pc_rom_load,			/* load rom_file images */
 	pc_rom_id,				/* identify rom images */
+	0,						/* default file extensions */
 	1,						/* number of ROM slots */
 	4,						/* number of floppy drives supported */
 	2,						/* number of hard drives supported */
 	0,						/* number of cassette drives supported */
-	&pc_mda_rom_decode, 	/* rom decoder */
+	0,						/* rom decoder */
 	0,						/* opcode decoder */
 	0,						/* pointer to sample names */
 	0,						/* sound_prom */
 
-	pc_mda_input_ports, 	/* input ports */
+	input_ports_pc_mda, 	/* input ports */
 
 	0,						/* color_prom */
-	palette,				/* color palette */
-	mda_colortable, 		/* color lookup table */
+	0,				/* color palette */
+	0, 		/* color lookup table */
 
-	ORIENTATION_DEFAULT,	/* orientation */
+	GAME_COMPUTER|ORIENTATION_DEFAULT,	/* orientation */
 
 	0,						/* hiscore load */
 	0,						/* hiscore save */
 };
 
-static void CGA_rom_decode(void)
-{
-	int i;
 
-	/* just a plain bit pattern for graphics data generation */
-    for (i = 0; i < 256; i++)
-		Machine->memory_region[1][0x1000+i] = i;
-}
-
-ROM_START(CGA_rom)
-	ROM_REGION(0x100000)
+ROM_START(CGA)
+	ROM_REGIONX(0x100000,REGION_CPU1)
 	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
 	ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
 
-	ROM_REGION(0x1100)
+	ROM_REGIONX(0x1100,REGION_GFX1)
 	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
@@ -956,44 +1326,45 @@ struct GameDriver pccga_driver =
 	&pc_driver,
 	"pccga",
 	"IBM PC/XT - CGA",
-	"198?",
+	"1983",
 	"IBM",
-	"Juergen Buchmueller",
-	GAME_COMPUTER,
-    &cga_machine_driver,
 	0,
+	0,
+    &cga_machine_driver,
+	pc_init_driver,
 
-	CGA_rom,				/* rom module */
+	rom_CGA,				/* rom module */
 	pc_rom_load,			/* load rom_file images */
 	pc_rom_id,				/* identify rom images */
+	0,						/* default file extensions */
 	1,						/* number of ROM slots */
 	4,						/* number of floppy drives supported */
 	2,						/* number of hard drives supported */
 	0,						/* number of cassette drives supported */
-	&CGA_rom_decode,		/* fill the gfx320 / gfx640 map */
+	0,						/* rom decoder */
 	0,						/* opcode decoder */
 	0,						/* pointer to sample names */
 	0,						/* sound_prom */
 
-	pc_cga_input_ports,
+	input_ports_pc_cga,
 
 	0,						/* color_prom */
-	palette,				/* color palette */
-	cga_colortable, 		/* color lookup table */
+	0,				/* color palette */
+	0, 		/* color lookup table */
 
-	ORIENTATION_DEFAULT,	/* orientation */
+	GAME_COMPUTER|ORIENTATION_DEFAULT,	/* orientation */
 
 	0,						/* hiscore load */
 	0,						/* hiscore save */
 };
 
-ROM_START(t1t_rom)
-	ROM_REGION(0x100000)
+ROM_START(t1t)
+	ROM_REGIONX(0x100000,REGION_CPU1)
 	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xab3ded01)
+    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
 
-	ROM_REGION(0x1100)
-	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0xb2bdcad3)
+	ROM_REGIONX(0x1100,REGION_GFX1)
+	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 struct GameDriver tandy1t_driver =
@@ -1003,34 +1374,36 @@ struct GameDriver tandy1t_driver =
 	"tandy1t",
 	"Tandy 1000TX",
 	"1987",
-	"Tandy",
-	"Juergen Buchmueller\nCharles Mac Donald (technical info)",
-	GAME_COMPUTER|GAME_IMPERFECT_COLORS,
-	&t1t_machine_driver,
+	"Tandy Radio Shack",
 	0,
+	0,
+	&t1t_machine_driver,
+	pc_init_driver,
 
-	t1t_rom,				/* rom module */
+	rom_t1t,				/* rom module */
 	pc_rom_load,			/* load rom_file images */
 	pc_rom_id,				/* identify rom images */
+	0,						/* default file extensions */
 	1,						/* number of ROM slots */
 	4,						/* number of floppy drives supported */
 	2,						/* number of hard drives supported */
 	0,						/* number of cassette drives supported */
-	&CGA_rom_decode,		/* fill the gfx320 / gfx640 map */
-	0,						/* opcode decoder */
+	0,						/* rom decoder */
+    0,                      /* opcode decoder */
 	0,						/* pointer to sample names */
 	0,						/* sound_prom */
 
-	pc_t1t_input_ports,
+	input_ports_pc_t1t,
 
 	0,						/* color_prom */
-	palette,				/* color palette */
-	t1t_colortable, 		/* color lookup table */
+	0,				/* color palette */
+	0, 		/* color lookup table */
 
-	ORIENTATION_DEFAULT,	/* orientation */
+	GAME_COMPUTER|GAME_NOT_WORKING|GAME_IMPERFECT_COLORS|ORIENTATION_DEFAULT,	 /* orientation */
 
 	0,						/* hiscore load */
 	0,						/* hiscore save */
 };
+
 
 

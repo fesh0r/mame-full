@@ -24,42 +24,101 @@
 static void (*pc_blink_textcolors)(int on);
 
 int pc_framecnt = 0;
+int pc_blink = 0;
 
 UINT8 pc_port[0x400];
+
+/* keyboard */
+static UINT8 kb_queue[256];
+static UINT8 kb_head = 0;
+static UINT8 kb_tail = 0;
+static UINT8 make[128] = {0, };
+static UINT8 kb_delay = 60;   /* 240/60 -> 0,25s */
+static UINT8 kb_repeat = 8;   /* 240/ 8 -> 30/s */
+
+/* mouse */
+static UINT8 m_queue[256];
+static UINT8 m_head = 0, m_tail = 0, mb = 0;
+static void *mouse_timer = NULL;
 
 static void pc_mouse_scan(int n);
 static void pc_mouse_poll(int n);
 
+void pc_init_driver(void)
+{
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
+	int i;
+    /* just a plain bit pattern for graphics data generation */
+    for (i = 0; i < 256; i++)
+		gfx[i] = i;
+}
+
 static void pc_common_init_machine(void)
 {
-    int i;
+	static int common_length_spt_heads[][3] = {
+	{ 8*1*40*512,  8, 1},	/* 5 1/4 inch double density single sided */
+    { 8*2*40*512,  8, 2},   /* 5 1/4 inch double density */
+    { 9*1*40*512,  9, 1},   /* 5 1/4 inch double density single sided */
+    { 9*2*40*512,  9, 2},   /* 5 1/4 inch double density */
+    { 9*2*80*512,  9, 2},   /* 80 tracks 5 1/4 inch drives rare in PCs */
+    { 9*2*80*512,  9, 2},   /* 3 1/2 inch double density */
+    {15*2*80*512, 15, 2},   /* 5 1/4 inch high density (or japanese 3 1/2 inch high density) */
+    {18*2*80*512, 18, 2},   /* 3 1/2 inch high density */
+	{36*2*80*512, 36, 2}};	/* 3 1/2 inch enhanced density */
 
-	for (i = 0; i < Machine->gamedrv->num_of_floppy_drives; i++)
+	int i, j;
+
+	for( i = 0; i < Machine->gamedrv->num_of_floppy_drives; i++ )
 	{
 		/* no floppy name given for that drive ? */
-		if (!floppy_name[i]) continue;
-		if (!floppy_name[i][0]) continue;
-		pc_fdc_file[i] = osd_fopen(Machine->gamedrv->name, floppy_name[i], OSD_FILETYPE_IMAGE, 1);
+		if( !floppy_name[i][0] )
+			continue;
+		pc_fdc_file[i] = osd_fopen(Machine->gamedrv->name, floppy_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 		/* find the sectors/track and bytes/sector values in the boot sector */
-		if (!pc_fdc_file[i] && Machine->gamedrv->clone_of)
-			pc_fdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, floppy_name[i], OSD_FILETYPE_IMAGE, 1);
-		if (pc_fdc_file[i])
+		if( !pc_fdc_file[i] && Machine->gamedrv->clone_of )
+			pc_fdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, floppy_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+		if( pc_fdc_file[i] )
 		{
-			osd_fseek(pc_fdc_file[i], 0x018, SEEK_SET);
-			osd_fread(pc_fdc_file[i], &pc_fdc_spt[i], 1);
-			osd_fseek(pc_fdc_file[i], 0x01a, SEEK_SET);
-			osd_fread(pc_fdc_file[i], &pc_fdc_scl[i], 1);
+			int length;
+
+			/* tracks pre sector recognition with image size
+			   works only 512 byte sectors! and 40 or 80 tracks*/
+			pc_fdc_scl[i]=2;
+			pc_fdc_heads[i]=2;
+			length=osd_fsize(pc_fdc_file[i]);
+			for( j = sizeof(common_length_spt_heads)/sizeof(common_length_spt_heads[0]); j >= 0; --j )
+			{
+				if( length == common_length_spt_heads[j][0] )
+                {
+					pc_fdc_spt[i] = common_length_spt_heads[j][1];
+					pc_fdc_heads[i] = common_length_spt_heads[j][2];
+					break;
+				}
+			}
+			if( j < 0 )
+			{
+				/*
+				 * get info from boot sector.
+				 * not correct on all disks
+				 */
+				osd_fseek(pc_fdc_file[i], 0x0c, SEEK_SET);
+				osd_fread(pc_fdc_file[i], &pc_fdc_scl[i], 1);
+				osd_fseek(pc_fdc_file[i], 0x018, SEEK_SET);
+				osd_fread(pc_fdc_file[i], &pc_fdc_spt[i], 1);
+				osd_fseek(pc_fdc_file[i], 0x01a, SEEK_SET);
+				osd_fread(pc_fdc_file[i], &pc_fdc_heads[i], 1);
+			}
 		}
     }
 
-	for (i = 0; i < Machine->gamedrv->num_of_hard_drives; i++)
+	for( i = 0; i < Machine->gamedrv->num_of_hard_drives; i++ )
 	{
 		/* no hard disk name given for that drive ? */
-		if (!hard_name[i]) continue;
-		if (!hard_name[i][0]) continue;
-		pc_hdc_file[i] = osd_fopen(Machine->gamedrv->name, hard_name[i], OSD_FILETYPE_IMAGE, 1);
-		if (!pc_hdc_file[i] && Machine->gamedrv->clone_of)
-			pc_hdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, hard_name[i], OSD_FILETYPE_IMAGE, 1);
+		if( !hard_name[i][0] )
+			continue;
+		pc_hdc_file[i] = osd_fopen(Machine->gamedrv->name, hard_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+		if( !pc_hdc_file[i] && Machine->gamedrv->clone_of )
+			pc_hdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, hard_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
     }
 
 }
@@ -72,12 +131,12 @@ void pc_mda_init_machine(void)
 	pc_blink_textcolors = pc_cga_blink_textcolors;
 
     /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
-	for (i = 0; i < 256; i++)
+	for( i = 0; i < 256; i++)
 	{
-		if (i < 176 || i > 223)
+		if( i < 176 || i > 223 )
 		{
 			int y;
-			for (y = 0; y < Machine->gfx[0]->height; y++)
+			for( y = 0; y < Machine->gfx[0]->height; y++ )
 				Machine->gfx[0]->gfxdata[(i * Machine->gfx[0]->height + y) * Machine->gfx[0]->width + 8] = 0;
 		}
 	}
@@ -434,6 +493,12 @@ void pc_PIC_issue_irq(int irq)
 	cpu_set_irq_line(0,0,HOLD_LINE);
 }
 
+int pc_PIC_irq_pending(int irq)
+{
+	UINT8 mask = 1 << irq;
+	return (PIC_pending & mask) ? 1 : 0;
+}
+
 void pc_PIC_w(int offset, int data)
 {
 	switch( offset )
@@ -667,7 +732,7 @@ void pc_PIT_w(int offset, int data)
 		{
             case 0: /* counter latch command */
 				PIT_LOG(1,0,(errorlog, "*latch command* "));
-                PIT_msb ^= 1;
+				PIT_msb ^= 1;
 				if( !PIT_msb )
                     PIT_access = 3;
                 break;
@@ -831,9 +896,9 @@ int pc_PIO_r(int offset)
 	switch( offset )
 	{
 		case 0: /* KB port A */
-			data = pc_port[0x60];
+            data = pc_port[0x60];
             PIO_LOG(1,"PIO_A_r",(errorlog, "$%02x\n", data));
-			break;
+            break;
 		case 1: /* KB port B */
 			data = pc_port[0x61];
 			PIO_LOG(1,"PIO_B_r",(errorlog, "$%02x\n", data));
@@ -1121,8 +1186,8 @@ int pc_JOY_r(int offset)
 {
 	int data = 0xff, x, y, delta;
 	double new_time = timer_get_time();
-	if (joystick_pressed(JOYCODE_1_BUTTON1)) data &= ~0x10;
-	if (joystick_pressed(JOYCODE_1_BUTTON2)) data &= ~0x20;
+	if (osd_is_joy_pressed(JOYCODE_1_BUTTON1)) data &= ~0x10;
+	if (osd_is_joy_pressed(JOYCODE_1_BUTTON2)) data &= ~0x20;
     /* timer overflow? */
 	if (new_time - JOY_time > 0.01)
 	{
@@ -1226,7 +1291,9 @@ int pc_FDC_r(int offset)
  *************************************************************************/
 void pc_HDC_w(int chip, int offset, int data)
 {
-	if (!(input_port_3_r(0) & (0x08>>chip))) return;
+	if( !(input_port_3_r(0) & (0x08>>chip)) ||
+		!hard_name[chip][0] )
+		return;
 	switch( offset )
 	{
 		case 0: pc_hdc_data_w(chip,data);	 break;
@@ -1241,7 +1308,9 @@ void pc_HDC2_w(int offset, int data) { pc_HDC_w(1, offset, data); }
 int pc_HDC_r(int chip, int offset)
 {
 	int data = 0xff;
-	if (!(input_port_3_r(0) & (0x08>>chip))) return data;
+	if( !(input_port_3_r(0) & (0x08>>chip)) ||
+		!hard_name[chip][0] )
+		return data;
 	switch( offset )
 	{
 		case 0: data = pc_hdc_data_r(chip); 	 break;
@@ -1253,7 +1322,7 @@ int pc_HDC_r(int chip, int offset)
 }
 int pc_HDC1_r(int offset) { return pc_HDC_r(0, offset); }
 int pc_HDC2_r(int offset) { return pc_HDC_r(1, offset); }
-	
+
 /*************************************************************************
  *
  *		MDA
@@ -1513,116 +1582,6 @@ int pc_T1T_r(int offset)
  *
  **************************************************************************/
 
-static int kb_queue[256], kb_head = 0, kb_tail = 0;
-static int make[256] = {0, };
-static int kbd_delay = 15, kbd_repeat = 3;
-
-static UINT16 pc_keycode_to_scancode[][2] = {
-	{KEYCODE_A, 		 0x1e},
-	{KEYCODE_B, 		 0x30},
-	{KEYCODE_C, 		 0x2E},
-	{KEYCODE_D, 		 0x20},
-	{KEYCODE_E, 		 0x12},
-	{KEYCODE_F, 		 0x21},
-	{KEYCODE_G, 		 0x22},
-	{KEYCODE_H, 		 0x23},
-	{KEYCODE_I, 		 0x17},
-	{KEYCODE_J, 		 0x24},
-	{KEYCODE_K, 		 0x25},
-	{KEYCODE_L, 		 0x26},
-	{KEYCODE_M, 		 0x32},
-	{KEYCODE_N, 		 0x31},
-	{KEYCODE_O, 		 0x18},
-	{KEYCODE_P, 		 0x19},
-	{KEYCODE_Q, 		 0x10},
-	{KEYCODE_R, 		 0x13},
-	{KEYCODE_S, 		 0x1F},
-	{KEYCODE_T, 		 0x14},
-	{KEYCODE_U, 		 0x16},
-	{KEYCODE_V, 		 0x2F},
-	{KEYCODE_W, 		 0x11},
-	{KEYCODE_X, 		 0x2D},
-	{KEYCODE_Y, 		 0x15},
-	{KEYCODE_Z, 		 0x2C},
-	{KEYCODE_0, 		 0x0b},
-	{KEYCODE_1, 		 0x02},
-	{KEYCODE_2, 		 0x03},
-	{KEYCODE_3, 		 0x04},
-	{KEYCODE_4, 		 0x05},
-	{KEYCODE_5, 		 0x06},
-	{KEYCODE_6, 		 0x07},
-	{KEYCODE_7, 		 0x08},
-	{KEYCODE_8, 		 0x09},
-	{KEYCODE_9, 		 0x0A},
-	{KEYCODE_0_PAD, 	 0x52},
-	{KEYCODE_1_PAD, 	 0x4f},
-	{KEYCODE_2_PAD, 	 0x50},
-	{KEYCODE_3_PAD, 	 0x51},
-	{KEYCODE_4_PAD, 	 0x4b},
-	{KEYCODE_5_PAD, 	 0x4c},
-	{KEYCODE_6_PAD, 	 0x4d},
-	{KEYCODE_7_PAD, 	 0x47},
-	{KEYCODE_8_PAD, 	 0x48},
-	{KEYCODE_9_PAD, 	 0x49},
-	{KEYCODE_F1,		 0x3b},
-	{KEYCODE_F2,		 0x3c},
-	{KEYCODE_F3,		 0x3d},
-	{KEYCODE_F4,		 0x3e},
-	{KEYCODE_F5,		 0x3f},
-	{KEYCODE_F6,		 0x40},
-	{KEYCODE_F7,		 0x41},
-	{KEYCODE_F8,		 0x42},
-	{KEYCODE_F9,		 0x43},
-	{KEYCODE_F10,		 0x44},
-	{KEYCODE_F11,		 0x57},
-	{KEYCODE_F12,		 0x58},
-	{KEYCODE_ESC,		 0x01},
-	{KEYCODE_TILDE, 	 0x32},
-	{KEYCODE_MINUS, 	 0x0c},
-	{KEYCODE_EQUALS,	 0x0d},
-	{KEYCODE_BACKSPACE,  0x0e},
-	{KEYCODE_TAB,		 0x0f},
-	{KEYCODE_OPENBRACE,  0x1a},
-	{KEYCODE_CLOSEBRACE, 0x1b},
-	{KEYCODE_ENTER, 	 0x1c},
-	{KEYCODE_COLON, 	 0x27},
-	{KEYCODE_QUOTE, 	 0x28},
-	{KEYCODE_BACKSLASH,  0x2b},
-	{KEYCODE_BACKSLASH2, 0x36},
-	{KEYCODE_COMMA, 	 0x33},
-	{KEYCODE_STOP,		 0x34},
-	{KEYCODE_SLASH, 	 0x35},
-	{KEYCODE_SPACE, 	 0x39},
-	{KEYCODE_INSERT,	 0x52},
-	{KEYCODE_DEL,		 0x53},
-	{KEYCODE_HOME,		 0x47},
-	{KEYCODE_END,		 0x4f},
-	{KEYCODE_PGUP,		 0x49},
-	{KEYCODE_PGDN,		 0x51},
-	{KEYCODE_LEFT,		 0x4b},
-	{KEYCODE_RIGHT, 	 0x4d},
-	{KEYCODE_UP,		 0x48},
-	{KEYCODE_DOWN,		 0x50},
-	{KEYCODE_SLASH_PAD,  0x35},
-	{KEYCODE_ASTERISK,	 0x2b},
-	{KEYCODE_MINUS_PAD,  0x4a},
-	{KEYCODE_PLUS_PAD,	 0x4e},
-	{KEYCODE_DEL_PAD,	 0x53},
-	{KEYCODE_ENTER_PAD,  0x1c},
-	{KEYCODE_PRTSCR,	 0x37},
-	{KEYCODE_PAUSE, 	 0x46},
-	{KEYCODE_LSHIFT,	 0x2a},
-	{KEYCODE_RSHIFT,	 0x36},
-	{KEYCODE_LCONTROL,	 0x1d},
-	{KEYCODE_RCONTROL,	 0x1d},
-	{KEYCODE_LALT,		 0x38},
-	{KEYCODE_RALT,		 0x38},
-	{KEYCODE_SCRLOCK,	 0x46},
-	{KEYCODE_NUMLOCK,	 0x45},
-	{KEYCODE_CAPSLOCK,	 0x3a},
-};
-
-
 /**************************************************************************
  *	scan keys and stuff make/break codes
  **************************************************************************/
@@ -1630,49 +1589,53 @@ static void pc_keyboard(void)
 {
 	int i;
 
-	for( i = 0; i < sizeof(pc_keycode_to_scancode) / sizeof(pc_keycode_to_scancode[0]); i++ )
+	update_input_ports();
+    for( i = 0x01; i < 0x54; i++  )
 	{
-		if( keyboard_pressed(pc_keycode_to_scancode[i][0]) )
+		if( readinputport(i/16 + 4) & (1 << (i & 15)) )
 		{
 			if( make[i] == 0 )
 			{
 				make[i] = 1;
-				kb_queue[kb_head] = pc_keycode_to_scancode[i][1];
-				kb_head = ++kb_head & 255;
+				kb_queue[kb_head] = i;
+				kb_head = ++kb_head % 256;
 			}
 			else
 			{
 				make[i] += 1;
-				if( make[i] == kbd_delay )
+				if( make[i] == kb_delay )
 				{
-					kb_queue[kb_head] = pc_keycode_to_scancode[i][1];
-					kb_head = ++kb_head & 255;
+					kb_queue[kb_head] = i;
+					kb_head = ++kb_head % 256;
 				}
 				else
-				if( make[i] == kbd_delay + kbd_repeat )
+				if( make[i] == kb_delay + kb_repeat )
 				{
-					make[i] = kbd_delay;
-					kb_queue[kb_head] = pc_keycode_to_scancode[i][1];
-					kb_head = ++kb_head & 255;
+					make[i] = kb_delay;
+					kb_queue[kb_head] = i;
+					kb_head = ++kb_head % 256;
 				}
 			}
 		}
 		else
-		if( make[i] != 0 )
+		if( make[i] )
 		{
 			make[i] = 0;
-			kb_queue[kb_head] = pc_keycode_to_scancode[i][1] | 0x80;
-			kb_head = ++kb_head & 255;
+			kb_queue[kb_head] = i | 0x80;
+			kb_head = ++kb_head % 256;
 		}
     }
 
-	if( kb_tail != kb_head )
+	if( !pc_PIC_irq_pending(1) )
 	{
-        pc_port[0x60] = kb_queue[kb_tail];
-        DBG_LOG(1,"KB_scancode",(errorlog, "$%02x\n", pc_port[0x60]));
-        kb_tail = ++kb_tail & 255;
-		pc_PIC_issue_irq(1);
-    }
+		if( kb_tail != kb_head )
+		{
+			pc_port[0x60] = kb_queue[kb_tail];
+			DBG_LOG(1,"KB_scancode",(errorlog, "$%02x\n", pc_port[0x60]));
+			kb_tail = ++kb_tail % 256;
+			pc_PIC_issue_irq(1);
+		}
+	}
 }
 
 /**************************************************************************
@@ -1680,25 +1643,23 @@ static void pc_keyboard(void)
  *  'MS' serial mouse support
  *
  **************************************************************************/
-static UINT8 m_queue[256];
-static int m_head = 0, m_tail = 0, mb = 0;
-static void *mouse_timer = 0;
-
 /**************************************************************************
  *	change the modem status register
  **************************************************************************/
 static void change_msr(int n, int new_msr)
 {
 	/* no change in modem status bits? */
-    if (((COM_msr[n] ^ new_msr) & 0xf0) == 0) return;
+	if( ((COM_msr[n] ^ new_msr) & 0xf0) == 0 )
+		return;
 
 	/* set delta status bits 0..3 and new modem status bits 4..7 */
     COM_msr[n] = (((COM_msr[n] ^ new_msr) >> 4) & 0x0f) | (new_msr & 0xf0);
 
 	/* set up interrupt information register */
     COM_iir[n] &= ~(0x06 | 0x01);
+
     /* OUT2 + modem status interrupt enabled? */
-	if ((COM_mcr[n] & 0x08) && (COM_ier[n] & 0x08))
+	if( (COM_mcr[n] & 0x08) && (COM_ier[n] & 0x08) )
 		/* issue COM1/3 IRQ4, COM2/4 IRQ3 */
 		pc_PIC_issue_irq(4-(n&1));
 }
@@ -1708,44 +1669,48 @@ static void change_msr(int n, int new_msr)
  **************************************************************************/
 static void pc_mouse_scan(int n)
 {
-	int dx, dy, nb;
+	static int ox = 0, oy = 0;
+    int dx, dy, nb;
 
-	osd_trak_read(0,&dx, &dy);
-	nb = joystick_pressed(JOYCODE_1_BUTTON1) | (joystick_pressed(JOYCODE_2_BUTTON2) << 1);
+	dx = readinputport(10) - ox;
+	dy = readinputport(11) - oy;
+	nb = readinputport(6);
 
 	/* check if there is any delta or mouse buttons changed */
-	if (dx || dy || nb != mb)
+	if( dx || dy || nb != mb )
 	{
+		ox += dx;
+		oy += dy;
 		mb = nb;
 		/* split deltas into packtes of -128..+127 max */
 		do
 		{
 			UINT8 m0, m1, m2;
-            int ddx = (dx < -128) ? -128 : (dx > 127) ? 127 : dx;
+			int ddx = (dx < -128) ? -128 : (dx > 127) ? 127 : dx;
 			int ddy = (dy < -128) ? -128 : (dy > 127) ? 127 : dy;
 			m0 = 0x40 | ((nb << 4) & 0x30) | ((ddx >> 6) & 0x03) | ((ddy >> 4) & 0x0c);
 			m1 = ddx & 0x3f;
 			m2 = ddy & 0x3f;
 			m_queue[m_head] = m0 | 0x40;
-			m_head = ++m_head & 255;
+			m_head = ++m_head % 256;
 			m_queue[m_head] = m1 & 0x3f;
-			m_head = ++m_head & 255;
+			m_head = ++m_head % 256;
 			m_queue[m_head] = m2 & 0x3f;
-			m_head = ++m_head & 255;
+			m_head = ++m_head % 256;
 			DBG_LOG(1,"mouse_packet",(errorlog, "dx:%d, dy:%d, $%02x $%02x $%02x\n", dx, dy, m0, m1, m2));
 			dx -= ddx;
 			dy -= ddy;
-		} while (dx < 0 || dx > 0 || dy < 0 || dy >0);
+		} while( dx || dy );
     }
 
 	if( m_tail != m_head )
 	{
         /* check if data rate 1200 baud is set */
-		if (COM_dlm[n] != 0x00 || COM_dll[n] != 0x60)
+		if( COM_dlm[n] != 0x00 || COM_dll[n] != 0x60 )
             COM_lsr[n] |= 0x08; /* set framing error */
 
         /* if data not yet serviced */
-		if (COM_lsr[n] & 0x01)
+		if( COM_lsr[n] & 0x01 )
 			COM_lsr[n] |= 0x02; /* set overrun error */
 
         /* put data into receiver buffer register */
@@ -1758,7 +1723,7 @@ static void pc_mouse_scan(int n)
 		/* set up the interrupt information register */
 		COM_iir[n] &= ~(0x06 | 0x01) | 0x04;
         /* OUT2 + received line data avail interrupt enabled? */
-		if ((COM_mcr[n] & 0x08) && (COM_ier[n] & 0x01))
+		if( (COM_mcr[n] & 0x08) && (COM_ier[n] & 0x01) )
             /* issue COM1/3 IRQ4, COM2/4 IRQ3 */
 			pc_PIC_issue_irq(4-(n&1));
 
@@ -1787,7 +1752,7 @@ static void pc_mouse_poll(int n)
 		/* reset mouse */
 		m_head = m_tail = mb = 0;
 		m_queue[m_head] = 'M';  /* put 'M' into the buffer.. hmm */
-		m_head = ++m_head & 255;
+		m_head = ++m_head % 256;
 		/* start a timer to scan the mouse input */
 		mouse_timer = timer_pulse(TIME_IN_HZ(240), n, pc_mouse_scan);
     }
@@ -1795,7 +1760,8 @@ static void pc_mouse_poll(int n)
     /* CTS just went to 0? */
 	if( (COM_msr[n] & 0x10) && !(new_msr & 0x10) )
 	{
-		if (mouse_timer) timer_remove(mouse_timer);
+		if( mouse_timer )
+			timer_remove(mouse_timer);
 		mouse_timer = NULL;
 		m_head = m_tail = 0;
 	}
@@ -1805,10 +1771,10 @@ static void pc_mouse_poll(int n)
 
 int pc_frame_interrupt (void)
 {
-	if ((++pc_framecnt & 15) == 15)
-		(*pc_blink_textcolors)(pc_framecnt & 16);
+	if( (++pc_framecnt & 63) == 63 )
+		(*pc_blink_textcolors)(pc_framecnt & 64 );
 
-	if( !onscrd_active() && !setup_active() )
+    if( !onscrd_active() && !setup_active() )
 		pc_keyboard();
 
     return ignore_interrupt ();

@@ -59,6 +59,14 @@ int spectrum_port_7ffe_r (int offset) {
 	return(readinputport(7));
 }
 
+void spectrum_port_fe_w (int offset,int data)
+{
+	if (data & 0x40)
+	{
+	  // play sound
+	}
+}
+
 
 static struct MemoryReadAddress spectrum_readmem[] = {
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -88,6 +96,13 @@ static struct IOReadPort spectrum_readport[] = {
 	{ -1 }
 };
 
+static struct IOWritePort spectrum_writeport[] = {
+	{ 0xfe, 0xfe, spectrum_port_fe_w },
+
+	{ -1 }
+};
+
+
 static struct GfxLayout spectrum_charlayout = {
 	8,8,
 	256,
@@ -108,7 +123,7 @@ static struct GfxDecodeInfo spectrum_gfxdecodeinfo[] = {
 	{ -1 } /* end of array */
 };
 
-INPUT_PORTS_START( spectrum_input_ports )
+INPUT_PORTS_START( spectrum )
 	PORT_START /* 0xFEFE */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "SHIFT", KEYCODE_RSHIFT,      IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "Z",     KEYCODE_Z,           IP_JOY_NONE )
@@ -166,11 +181,12 @@ INPUT_PORTS_START( spectrum_input_ports )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "B",         KEYCODE_B,        IP_JOY_NONE )
 INPUT_PORTS_END
 
+
 static unsigned char spectrum_palette[16*3] = {
-	0x00, 0x00, 0x00, 0x00, 0x00, 0xcf,
-	0xcf, 0x00, 0x00, 0xcf, 0x00, 0xcf,
-	0x00, 0xcf, 0x00, 0x00, 0xcf, 0xcf,
-	0xcf, 0xcf, 0x00, 0xcf, 0xcf, 0xcf,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0xbf,
+	0xbf, 0x00, 0x00, 0xbf, 0x00, 0xbf,
+	0x00, 0xbf, 0x00, 0x00, 0xbf, 0xbf,
+	0xbf, 0xbf, 0x00, 0xbf, 0xbf, 0xbf,
 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
 	0xff, 0x00, 0x00, 0xff, 0x00, 0xff,
@@ -179,24 +195,31 @@ static unsigned char spectrum_palette[16*3] = {
 };
 
 static unsigned short spectrum_colortable[128*2] = {
-	0,0 , 0,1, 0,2, 0,3, 0,4, 0,5, 0,6, 0,7,
-	1,0 , 1,1, 1,2, 1,3, 1,4, 1,5, 1,6, 1,7,
-	2,0 , 2,1, 2,2, 1,3, 1,4, 1,5, 1,6, 1,7,
-	3,0 , 3,1, 3,2, 1,3, 1,4, 1,5, 1,6, 1,7,
-	4,0 , 4,1, 4,2, 1,3, 1,4, 1,5, 1,6, 1,7,
-	5,0 , 5,1, 5,2, 1,3, 1,4, 1,5, 1,6, 1,7,
-	6,0 , 6,1, 6,2, 1,3, 1,4, 1,5, 1,6, 1,7,
-	7,0 , 7,1, 7,2, 1,3, 1,4, 1,5, 1,6, 1,7,
+	0,0, 0,1, 0,2, 0,3, 0,4, 0,5, 0,6, 0,7,
+	1,0, 1,1, 1,2, 1,3, 1,4, 1,5, 1,6, 1,7,
+	2,0, 2,1, 2,2, 2,3, 2,4, 2,5, 2,6, 2,7,
+	3,0, 3,1, 3,2, 3,3, 3,4, 3,5, 3,6, 3,7,
+	4,0, 4,1, 4,2, 4,3, 4,4, 4,5, 4,6, 4,7,
+	5,0, 5,1, 5,2, 5,3, 5,4, 5,5, 5,6, 5,7,
+	6,0, 6,1, 6,2, 6,3, 6,4, 6,5, 6,6, 6,7,
+	7,0, 7,1, 7,2, 7,3, 7,4, 7,5, 7,6, 7,7,
 
-	8,8  , 8,9,  8,10,  8 ,11, 8,12,  8,13, 8,14, 8,15,
-	9,8  , 9,9,  9,10,  9 ,11, 9,12,  9,13, 9,14, 9,15,
-	10,8 , 10,9, 10,10, 10,11, 10,12, 10,13, 10,14, 10,15,
-	11,8 , 11,9, 11,10, 11,11, 11,12, 11,13, 11,14, 11,15,
-	12,8 , 12,9, 12,10, 12,11, 12,12, 12,13, 12,14, 12,15,
-	13,8 , 13,9, 13,10, 13,11, 13,12, 13,13, 13,14, 13,15,
-	14,8 , 14,9, 14,10, 14,11, 14,12, 14,13, 14,14, 14,15,
-	15,8 , 15,9, 15,10, 15,11, 15,12, 15,13, 15,14, 15,15
+	 8,8,  8,9,  8,10,  8,11,  8,12,  8,13,  8,14,  8,15,
+	 9,8,  9,9,  9,10,  9,11,  9,12,  9,13,  9,14,  9,15,
+	10,8, 10,9, 10,10, 10,11, 10,12, 10,13, 10,14, 10,15,
+	11,8, 11,9, 11,10, 11,11, 11,12, 11,13, 11,14, 11,15,
+	12,8, 12,9, 12,10, 12,11, 12,12, 12,13, 12,14, 12,15,
+	13,8, 13,9, 13,10, 13,11, 13,12, 13,13, 13,14, 13,15,
+	14,8, 14,9, 14,10, 14,11, 14,12, 14,13, 14,14, 14,15,
+	15,8, 15,9, 15,10, 15,11, 15,12, 15,13, 15,14, 15,15
 };
+/* Initialise the palette */
+static void spectrum_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,spectrum_palette,sizeof(spectrum_palette));
+	memcpy(sys_colortable,spectrum_colortable,sizeof(spectrum_colortable));
+}
+
 
 static struct MachineDriver spectrum_machine_driver =
 {
@@ -204,10 +227,9 @@ static struct MachineDriver spectrum_machine_driver =
 	{
 		{
 			CPU_Z80|CPU_16BIT_PORT,
-			3500000,        /* 3.5 Mhz ? */
-			0,
-			spectrum_readmem,spectrum_writemem,
-			spectrum_readport,0,
+			3500000,        /* 3.5 Mhz */
+            spectrum_readmem,spectrum_writemem,
+			spectrum_readport,spectrum_writeport,
 			interrupt,1,
 		},
 	},
@@ -219,10 +241,10 @@ static struct MachineDriver spectrum_machine_driver =
 	/* video hardware */
 	32*8,                                /* screen width */
 	24*8,                                /* screen height */
-	{ 0, 32*8-1, 0, 24*8-1},             /* visible_area */
+	{ 0, 32*8-1, 0, 24*8-1 },             /* visible_area */
 	spectrum_gfxdecodeinfo,	             /* graphics decode info */
-	16, 128,                             /* colors used for the characters */
-	0,                                   /* convert color prom */
+	16, 256,                             /* colors used for the characters */
+	spectrum_init_palette,               /* initialise palette */
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -240,8 +262,8 @@ static struct MachineDriver spectrum_machine_driver =
 
 ***************************************************************************/
 
-ROM_START(spectrum_rom)
-	ROM_REGION(0x10000)
+ROM_START(spectrum)
+	ROM_REGIONX(0x10000,REGION_CPU1)
 	//ROM_LOAD("spectrum.rom", 0x0000, 0x4000, 0x6561e6a7)
 	ROM_LOAD("spectrum.rom", 0x0000, 0x4000, 0xddee531f)
 ROM_END
@@ -254,15 +276,16 @@ struct GameDriver spectrum_driver =
 	"ZX-Spectrum 48k",
 	"1982",
 	"Sinclair Research",
-	"Allard van der Bas [MESS driver]",
-	GAME_COMPUTER,
+	"Allard van der Bas [MESS driver]\nVictor Trucco",
+	0,
 	&spectrum_machine_driver,
 	0,
 
-	spectrum_rom,
-	0,	/* spectrum_rom_load, */
-	0,	/* spectrum_rom_id, */
-	0,	/* 1, */		/* number of ROM slots */
+	rom_spectrum,
+    spectrum_rom_load,
+    spectrum_rom_id,
+	0,					    /* default file extensions */
+    1,                      /* number of ROM slots */
 	0,                      /* number of floppy drives supported */
 	0,                      /* number of hard drives supported */
 	0,                      /* number of cassette drives supported */
@@ -270,13 +293,13 @@ struct GameDriver spectrum_driver =
 	0,                      /* pointer to sample names */
 	0,                      /* sound_prom */
 
-	spectrum_input_ports,
+	input_ports_spectrum,
 
 	0,                         /* color_prom */
-	spectrum_palette,          /* color palette */
-	spectrum_colortable,       /* color lookup table */
+	/*spectrum_palette*/0,          /* color palette */
+	/*spectrum_colortable*/0,       /* color lookup table */
 
-	ORIENTATION_DEFAULT,    /* orientation */
+	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
 
 	0, 0,
 };

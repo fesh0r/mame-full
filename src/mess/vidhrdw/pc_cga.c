@@ -3,7 +3,6 @@
   Color Graphics Adapter (CGA) section
 
 ***************************************************************************/
-
 #include "mess/machine/pc.h"
 #include "mess/vidhrdw/pc.h"
 
@@ -94,7 +93,8 @@ int pc_cga_index_r(void)
  */
 void pc_cga_port_w(int data)
 {
-	switch (CGA_reg) {
+	switch (CGA_reg)
+	{
 		case HTOTAL:
 			CGA_LOG(1,"CGA_horz_total_w",(errorlog,"$%02x\n",data));
 			if (CGA_crtc[CGA_reg] == data) return;
@@ -209,7 +209,8 @@ void pc_cga_port_w(int data)
 int pc_cga_port_r(void)
 {
 	int data = 0xff;
-	switch (CGA_reg) {
+	switch (CGA_reg)
+	{
 		case HTOTAL:
 			CGA_LOG(1,"CGA_horz_total_r",(errorlog,"$%02x\n",data));
             break;
@@ -308,15 +309,19 @@ void pc_cga_color_select_w(int data)
 {
 	UINT8 r, g, b;
 	CGA_LOG(1,"CGA_color_select_w",(errorlog, "$%02x\n", data));
-	if (pc_port[0x3d9] == data) return;
+	if( pc_port[0x3d9] == data )
+		return;
 	pc_port[0x3d9] = data;
-	CGA_2bpp_attr = (data & 0x30) >> 4;
-	if ((CGA_border ^ data) & 0x0f) {
+	memset(dirtybuffer, 1, videoram_size);
+    CGA_2bpp_attr = (data & 0x30) >> 4;
+	if( (CGA_border ^ data) & 0x0f )
+	{
 		CGA_border = data & 0x0f;
 		b = (CGA_border & 0x01) ? 0x7f : 0;
 		g = (CGA_border & 0x02) ? 0x7f : 0;
 		r = (CGA_border & 0x04) ? 0x7f : 0;
-		if (CGA_border & 0x08) {
+		if (CGA_border & 0x08)
+		{
 			r <<= 1;
 			g <<= 1;
 			b <<= 1;
@@ -374,6 +379,20 @@ int pc_cga_status_r(void)
 	return data;
 }
 
+INLINE int DOCLIP(struct rectangle *r1)
+{
+    const struct rectangle *r2 = &Machine->drv->visible_area;
+    if (r1->min_x > r2->max_x) return 0;
+    if (r1->max_x < r2->min_x) return 0;
+    if (r1->min_y > r2->max_y) return 0;
+    if (r1->max_y < r2->min_y) return 0;
+    if (r1->min_x < r2->min_x) r1->min_x = r2->min_x; 
+    if (r1->max_x > r2->max_x) r1->max_x = r2->max_x;
+    if (r1->min_y < r2->min_y) r1->min_y = r2->min_y;
+    if (r1->max_y > r2->max_y) r1->max_y = r2->max_y;
+    return 1;
+}
+
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
  ***************************************************************************/
@@ -387,7 +406,8 @@ void pc_cga_blink_textcolors(int on)
 	offs = (CGA_base * 2) % videoram_size;
 	size = CGA_size;
 
-	for (i = 0; i < size; i++) {
+	for (i = 0; i < size; i++)
+	{
 		if (videoram[offs+1] & 0x80) dirtybuffer[offs+1] = 1;
 		if ((offs += 2) == videoram_size) offs = 0;
     }
@@ -399,14 +419,16 @@ void pc_cga_blink_textcolors(int on)
 ***************************************************************************/
 static void cga_text_40_inten(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = CGA_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = CGA_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
        accordingly. */
 	offs = (CGA_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = videoram[offs], attr = videoram[offs+1];
 
@@ -417,21 +439,33 @@ static void cga_text_40_inten(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 16 - 1;
 			r.max_y = sy + CGA_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[1], code, attr, sx,sy, &r);
-				if (offs == CGA_cursor && CGA_curmode != 0x20)	{
-					attr = Machine->pens[7];
-					if ((CGA_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = CGA_curminy; y <= CGA_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 16);
-					}
-					dirtybuffer[offs] = 1;
-				}
+				drawgfx(bitmap, Machine->gfx[1], code, attr, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				if( offs == CGA_cursor && CGA_curmode != 0x20 )
+				{
+					if( CGA_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + CGA_curminy < r.max_y )
+							r.min_y = sy + CGA_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + CGA_curmaxy < r.max_y )
+							r.max_y = sy + CGA_curmaxy;
+						drawgfx(bitmap,Machine->gfx[1],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
+                    }
+                    dirtybuffer[offs] = 1;
+                }
 			}
 		}
-		if ((sx += 16) == (CGA_HDISP * 16)) { sx = 0; sy += CGA_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 16) == (CGA_HDISP * 16) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -441,14 +475,16 @@ static void cga_text_40_inten(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void cga_text_80_inten(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = CGA_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = CGA_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
 	   accordingly. */
 	offs = (CGA_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = videoram[offs], attr = videoram[offs+1];
 
@@ -459,21 +495,33 @@ static void cga_text_80_inten(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + CGA_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[0], code, attr, sx,sy, &r);
-				if (offs == CGA_cursor && CGA_curmode != 0x20)	{
-					attr = Machine->pens[attr & 7];
-					if ((CGA_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = CGA_curminy; y <= CGA_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 8);
-					}
+				drawgfx(bitmap, Machine->gfx[0], code, attr, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				if( offs == CGA_cursor && CGA_curmode != 0x20 )
+				{
+					if( CGA_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + CGA_curminy < r.max_y )
+							r.min_y = sy + CGA_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + CGA_curmaxy < r.max_y )
+							r.max_y = sy + CGA_curmaxy;
+						drawgfx(bitmap,Machine->gfx[0],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
+                    }
 					dirtybuffer[offs] = 1;
 				}
 			}
 		}
-		if ((sx += 8) == (CGA_HDISP * 8)) { sx = 0; sy += CGA_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if ((sx += 8) == (CGA_HDISP * 8))
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -483,21 +531,24 @@ static void cga_text_80_inten(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void cga_text_40_blink(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = CGA_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = CGA_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
        accordingly. */
 	offs = (CGA_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = videoram[offs], attr = videoram[offs+1];
 
             dirtybuffer[offs] = 0;
             dirtybuffer[offs+1] = 0;
 
-			if (attr & 0x80) {	/* blinking ? */
+			if (attr & 0x80)	/* blinking ? */
+			{
 				if (pc_blink)
 					attr = (attr & 0x70) | ((attr & 0x70) >> 4);
 				else
@@ -508,21 +559,33 @@ static void cga_text_40_blink(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 16 - 1;
 			r.max_y = sy + CGA_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[1], code, attr, sx,sy, &r);
-				if (offs == CGA_cursor && CGA_curmode != 0x20)	{
-					attr = Machine->pens[7];
-					if ((CGA_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = CGA_curminy; y <= CGA_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 16);
-					}
-					dirtybuffer[offs] = 1;
+				drawgfx(bitmap, Machine->gfx[1], code, attr, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				if (offs == CGA_cursor && CGA_curmode != 0x20)
+				{
+					if( CGA_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + CGA_curminy < r.max_y )
+							r.min_y = sy + CGA_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + CGA_curmaxy < r.max_y )
+							r.max_y = sy + CGA_curmaxy;
+						drawgfx(bitmap,Machine->gfx[1],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
+                    }
+                    dirtybuffer[offs] = 1;
 				}
 			}
 		}
-		if ((sx += 16) == (CGA_HDISP * 16)) { sx = 0; sy += CGA_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 16) == (CGA_HDISP * 16) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -532,21 +595,24 @@ static void cga_text_40_blink(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void cga_text_80_blink(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = CGA_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = CGA_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
        accordingly. */
 	offs = (CGA_base * 2) % videoram_size;
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = videoram[offs], attr = videoram[offs+1];
 
             dirtybuffer[offs] = 0;
             dirtybuffer[offs+1] = 0;
 
-			if (attr & 0x80) {	/* blinking ? */
+			if (attr & 0x80)	/* blinking ? */
+			{
 				if (pc_blink)
 					attr = (attr & 0x70) | ((attr & 0x70) >> 4);
 				else
@@ -557,21 +623,33 @@ static void cga_text_80_blink(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + CGA_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[0], code, attr, sx,sy, &r);
-				if (offs == CGA_cursor && CGA_curmode != 0x20)	{
-					attr = Machine->pens[attr & 7];
-					if ((CGA_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = CGA_curminy; y <= CGA_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 8);
-					}
-					dirtybuffer[offs] = 1;
-				}
+				drawgfx(bitmap, Machine->gfx[0], code, attr, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				if( offs == CGA_cursor && CGA_curmode != 0x20 )
+				{
+					if( CGA_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + CGA_curminy < r.max_y )
+							r.min_y = sy + CGA_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + CGA_curmaxy < r.max_y )
+							r.max_y = sy + CGA_curmaxy;
+						drawgfx(bitmap,Machine->gfx[0],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
+                    }
+                    dirtybuffer[offs] = 1;
+                }
 			}
 		}
-		if ((sx += 8) == (CGA_HDISP * 8)) { sx = 0; sy += CGA_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 8) == (CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( (offs += 2) == videoram_size)
+			offs = 0;
     }
 }
 
@@ -589,8 +667,10 @@ static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
 	   since last time and update it accordingly. */
 
 	/* first draw the even scanlines */
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -600,17 +680,24 @@ static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + CGA_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[3], code, CGA_2bpp_attr, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[3], code, CGA_2bpp_attr, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
 		}
-		if ((sx += 8) == (2 * CGA_HDISP * 8)) { sx = 0; sy += CGA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	/* now draw the odd scanlines */
 	offs = (CGA_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = CGA_maxscan / 2; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for( i = 0, sx = 0, sy = CGA_maxscan / 2; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -620,11 +707,16 @@ static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + CGA_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[3], code, CGA_2bpp_attr, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[3], code, CGA_2bpp_attr, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
 		}
-		if ((sx += 8) == (2 * CGA_HDISP * 8)) { sx = 0; sy += CGA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -640,8 +732,10 @@ static void cga_gfx_1bpp(struct osd_bitmap *bitmap)
 	/* for every code in the Video RAM, check if it been modified
        since last time and update it accordingly. */
 	/* first draw the even scanlines */
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -651,17 +745,24 @@ static void cga_gfx_1bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + CGA_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[2], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[2], code, 0, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
 		}
-		if ((sx += 8) == (2 * CGA_HDISP * 8)) { sx = 0; sy += CGA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	/* now draw the odd scanlines */
 	offs = (CGA_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = CGA_maxscan / 2; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for( i = 0, sx = 0, sy = CGA_maxscan / 2; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -671,11 +772,16 @@ static void cga_gfx_1bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + CGA_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[2], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[2], code, 0, 0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
 		}
-		if ((sx += 8) == (2 * CGA_HDISP * 8)) { sx = 0; sy += CGA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -688,16 +794,20 @@ void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int video_active = 0;
 
+	if( palette_recalc() )
+        full_refresh = 1;
+
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if (full_refresh || ((input_port_3_r(0) & 1) != pc_fill_odd_scanlines) ) {
+	if( full_refresh )
+	{
 		memset(dirtybuffer, 1, videoram_size);
 		fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
 		video_active = 0;
-		pc_fill_odd_scanlines = input_port_3_r(0) & 1;
     }
 
-    switch (pc_port[0x03d8] & 0x3b) {   /* text and gfx modes */
+	switch( pc_port[0x03d8] & 0x3b )	/* text and gfx modes */
+	{
 		case 0x08:
 			video_active = 10;
 			cga_text_40_inten(bitmap);

@@ -28,19 +28,19 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ BIOS_CONST,  BIOS_CONST,	kaypro_const_r },
-    { BIOS_CONIN,  BIOS_CONIN,  kaypro_conin_r },
-    { BIOS_CONOUT, BIOS_CONOUT, kaypro_conout_r },
-    { BIOS_CMD,    BIOS_CMD,    cpm_bios_command_r },
+	{ BIOS_CONIN,  BIOS_CONIN,  kaypro_conin_r },
+	{ BIOS_CONOUT, BIOS_CONOUT, kaypro_conout_r },
+	{ BIOS_CMD,    BIOS_CMD,    cpm_bios_command_r },
 	{ -1 }
 };
 
 static struct IOWritePort writeport[] =
 {
 	{ BIOS_CONST,  BIOS_CONST,	kaypro_const_w },
-    { BIOS_CONIN,  BIOS_CONIN,  kaypro_conin_w },
-    { BIOS_CONOUT, BIOS_CONOUT, kaypro_conout_w },
-    { BIOS_CMD,    BIOS_CMD,    cpm_bios_command_w },
-    { -1 }
+	{ BIOS_CONIN,  BIOS_CONIN,  kaypro_conin_w },
+	{ BIOS_CONOUT, BIOS_CONOUT, kaypro_conout_w },
+	{ BIOS_CMD,    BIOS_CMD,    cpm_bios_command_w },
+	{ -1 }
 };
 
 /*
@@ -82,7 +82,7 @@ static struct IOWritePort writeport[] =
  * terminal to alert the user in case of a BEL.
  */
 
-INPUT_PORTS_START( kaypro_input_ports )
+INPUT_PORTS_START( kaypro )
 	PORT_START /* IN0 */
 	PORT_BIT(0xff, 0xff, IPT_UNUSED)
 
@@ -237,6 +237,14 @@ static unsigned short colortable[] =
 	0,	4,		/* flashing dim green on black */
 };
 
+
+/* Initialise the palette */
+static void kaypro_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -244,7 +252,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,
 			readport,writeport,
 			kaypro_interrupt,1, 	/* one interrupt per frame */
@@ -263,7 +270,7 @@ static struct MachineDriver machine_driver =
 	gfxdecodeinfo,						/* graphics decode info */
 	sizeof(palette) / sizeof(palette[0]) / 3,	/* palette */
 	sizeof(colortable) / sizeof(colortable[0]), /* colortable */
-	0,											/* convert color prom */
+	kaypro_init_palette,						/* initialise palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -275,31 +282,17 @@ static struct MachineDriver machine_driver =
 	0,0,0,0,
 };
 
-ROM_START (kaypro_rom)
-	ROM_REGION (0x11600)	/* 64K for the Z80 */
+ROM_START (kaypro)
+	ROM_REGIONX(0x11600,REGION_CPU1)	/* 64K for the Z80 + 5,5K for CP/M */
 	/* totally empty :) */
-	
-	ROM_REGION (0x4000) 	/* 4 * 4K font ram */
+
+	ROM_REGIONX(0x4000,REGION_GFX1) 	/* 4 * 4K font ram */
 	ROM_LOAD ("kaypro2x.fnt", 0x0000, 0x1000, 0x5f72da5b)
 
-	ROM_REGION (0x1600) 	/* 5,5K for CCP and BDOS buffer */
+	ROM_REGIONX(0x1600,REGION_CPU2) 	/* 5,5K for CCP and BDOS buffer */
 	ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, 0xd10cd036)
 ROM_END
 
-static void kaypro_rom_decode(void)
-{
-  UINT8 * FONT = Machine->memory_region[1];
-  int i;
-  
-  /* copy font, but add underline in last line */
-  for (i = 0; i < 0x1000; i++)
-    FONT[0x1000 + i] = ((i % KAYPRO_FONT_H) == (KAYPRO_FONT_H - 1)) ?
-	FONT[i] ^ 0xff : FONT[i];
-
-  /* copy font inverted */
-  for (i = 0; i < 0x2000; i++)
-    FONT[0x2000 + i] = FONT[i] ^ 0xff;
-}
 
 struct GameDriver kaypro_driver =
 {
@@ -308,31 +301,32 @@ struct GameDriver kaypro_driver =
 	"kaypro",
 	"Kaypro 2x",
 	"19??",
-	"Kaypro",
-	"Juergen Buchmueller (MESS driver)\nBenjamin C. W. Sittler (terminal)\nChi-Yuan Lin (CP/M info)",
-	GAME_COMPUTER,
-	&machine_driver,
+	"Non Linear Systems Kaypro",
 	0,
+	0,
+	&machine_driver,
+	kaypro_init_driver,
 
-	kaypro_rom,
+	rom_kaypro,
 	kaypro_rom_load,		/* load rom_file images */
 	kaypro_rom_id,			/* identify rom images */
+	0,						/* default file extensions */
 	1,                      /* number of ROM slots - in this case, a CMD binary */
 	4,                      /* number of floppy drives supported */
 	0,                      /* number of hard drives supported */
 	0,						/* number of cassette drives supported */
-	kaypro_rom_decode,		/* rom decoder */
+	0,						/* rom decoder */
 	0,                      /* opcode decoder */
 	0,                      /* pointer to sample names */
 	0,                      /* sound_prom */
 
-	kaypro_input_ports, 	/* input ports */
+	input_ports_kaypro, 	/* input ports */
 
 	0,                      /* color_prom */
-	palette,				/* color palette */
-	colortable, 			/* color lookup table */
+	0,						/* color palette */
+	0,						/* color lookup table */
 
-	ORIENTATION_DEFAULT,    /* orientation */
+	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
 
 	0,                      /* hiscore load */
 	0,                      /* hiscore save */

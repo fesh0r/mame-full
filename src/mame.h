@@ -82,10 +82,10 @@ struct GameOptions {
 
 	#ifdef MESS
 		/* This is ugly for now, but its temporary! */
-	  char rom_name[MAX_ROM][MAX_PATH];           /* MESS */
- 	  char floppy_name[MAX_FLOPPY][MAX_PATH];     /* MESS */
-	  char hard_name[MAX_HARD][MAX_PATH];         /* MESS */
-	  char cassette_name[MAX_CASSETTE][MAX_PATH]; /* MESS */
+	  char rom_name[MAX_ROM][MAX_PATHLEN];           /* MESS */
+ 	  char floppy_name[MAX_FLOPPY][MAX_PATHLEN];     /* MESS */
+	  char hard_name[MAX_HARD][MAX_PATHLEN];         /* MESS */
+	  char cassette_name[MAX_CASSETTE][MAX_PATHLEN]; /* MESS */
 	#endif
 };
 

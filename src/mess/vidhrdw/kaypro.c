@@ -144,37 +144,37 @@ int kaypro_vh_start(void)
 
 	scroll_lines = KAYPRO_SCREEN_H;
 	videoram_size = KAYPRO_SCREEN_W * KAYPRO_SCREEN_H;
-  
+
 	if (generic_vh_start())
 		return 1;
-  
+
 	video_buffer = malloc(videoram_size * sizeof(short));
 	if (!video_buffer)
 		return 1;
-  
+
 	bell = malloc(BELL_SIZE);
 	if (!bell)
 		return 1;
-  
+
 	click = malloc(CLICK_SIZE);
 	if (!click)
 		return 1;
-  
+
 	for (i = 0; i < videoram_size; i++)
 		video_buffer[i] = 0x20;
-  
+
 	for (i = 0; i < BELL_SIZE; i++)
     {
 		bell[i] = (BELL_SIZE - 1 - i) >> 3;
 		if (i & 4)
 			bell[i] *= -1;
     }
-  
+
 	for (i = 0; i < CLICK_SIZE; i++)
 		click[i] = (i & 4) ? -120 : +120;
-  
+
 //	channel = get_play_channels(1);
-  
+
 	kaypro_putstr(
 	/* a test of GB1/GB2 video mode graphics */ \
         "\033B5" /* start video mode */ \
@@ -239,50 +239,56 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 	static int blink_count = 0;
 	static int cursor_count = 0;
 	int i, j = -1;
-  
-	blink_count++;
+
+    blink_count++;
 	if (!(blink_count & 15))
     {
 		if (blink_count & 16)
         {
-			osd_modify_pen(Machine->pens[3], 0,240,  0);
-			osd_modify_pen(Machine->pens[4], 0,120,  0);
+			palette_change_color(3, 0,240,	0);
+			palette_change_color(4, 0,120,	0);
         }
 		else
         {
-			osd_modify_pen(Machine->pens[3], 0,  0,  0);
-			osd_modify_pen(Machine->pens[4], 0,  0,  0);
+			palette_change_color(3, 0,	0,	0);
+			palette_change_color(4, 0,	0,	0);
         }
     }
-  
-	cursor_count++;
+
+	palette_init_used_colors();
+    memset(palette_used_colors, PALETTE_COLOR_USED, 4);
+
+    if( palette_recalc() )
+        full_refresh = 1;
+
+    cursor_count++;
 	if (cursor)
 		j = cur_y * KAYPRO_SCREEN_W + cur_x;
-  
+
 	if (full_refresh)
     {
 		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
     }
-  
+
 	for (i = 0; i < videoram_size; i++)
     {
 		if (dirtybuffer[i] || i == j)
 		{
 			int x, y, code, color;
 			struct rectangle r;
-	  
+
 			dirtybuffer[i] = 0;
-	  
+
 			y = i / KAYPRO_SCREEN_W;
 			x = i % KAYPRO_SCREEN_W;
 			r.min_x = x * KAYPRO_FONT_W;
 			r.max_x = r.min_x + KAYPRO_FONT_W - 1;
 			r.min_y = y * KAYPRO_FONT_H;
 			r.max_y = r.min_y + KAYPRO_FONT_H - 1;
-	  
+
 			code = video_buffer[i] & 0x3ff;
 			color = video_buffer[i] >> 10;
-	  
+
 			drawgfx(tmpbitmap,
 				Machine->gfx[0], code, color,
 				0, 0, r.min_x, r.min_y,
@@ -291,7 +297,7 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 				Machine->gfx[0], code, color,
 				0, 0, r.min_x, r.min_y,
 				&r, TRANSPARENCY_NONE, 0);
-	  
+
 			if ( i == j && (cursor_count & 16) )
             {
 				/* toggle reverse */
@@ -306,7 +312,7 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 					&r, TRANSPARENCY_NONE, 0);
 				dirtybuffer[i] = 1;
             }
-	  
+
 			osd_mark_dirty(r.min_x, r.min_y, r.max_x, r.max_y, 1);
         }
     }
@@ -377,10 +383,10 @@ void kaypro_const_w(int offset, int data)
     if (data & 1)
     {
         kbd_head = kbd_tail = 0;
-        if (timer_iscpususpended(0))
+		if (timer_iscpususpended(0,SUSPEND_REASON_HALT))
         {
 			cpu_set_reg( Z80_AF, cpu_get_reg( Z80_AF ) & 0x00ff );
-            timer_suspendcpu(0, 0);
+			timer_suspendcpu(0, 0,SUSPEND_REASON_HALT);
             return;
         }
     }
@@ -402,7 +408,7 @@ int  kaypro_conin_r(int offset)
     }
     else
     {
-        timer_suspendcpu(0, 1);
+		timer_suspendcpu(0, 1,SUSPEND_REASON_HALT);
     }
     return data;
 }
@@ -417,10 +423,10 @@ void kaypro_conin_w(int offset, int data)
 {
 int kbd_head_old;
     kaypro_click();
-	if( timer_iscpususpended(0) )
+	if( timer_iscpususpended(0,SUSPEND_REASON_HALT) )
     {
 		cpu_set_reg( Z80_AF, data << 8 );
-        timer_suspendcpu(0, 0);
+		timer_suspendcpu(0, 0,SUSPEND_REASON_HALT);
         return;
     }
     kbd_head_old = kbd_head;
@@ -555,7 +561,7 @@ static void kaypro_reverse_line_feed(int count)
 
 static void kaypro_advance(void)
 {
-	
+
 	kaypro_cursor_right(1);
 	if (cur_x >= KAYPRO_SCREEN_W)
     {
@@ -621,38 +627,38 @@ static void kaypro_pixel(int x, int y, int set)
 	};
 	int cx, cy, offs, bits;
 	short attr;
-  
+
 	/* The Kaypro 2x font has a 2x4 pattern block graphics */
 	cx = x / 2;
 	cy = y / 4;
 	offs = cy * KAYPRO_SCREEN_W + cx;
 	attr = video_buffer[offs];
-  
+
 	/* if it is a space, we change it to a graphic space */
 	if ((attr & 0xff) == ' ')
 		attr = (attr & 0xff00) | 0x80;
-  
+
 	/* if it is non graphics, we do nothing */
 	if (! (attr & 0x80))
 		return;
-  
+
 	/* reverse video (lower-left pixel) inverts all the other pixels */
 	if (attr & AT_REVERSE)
 		attr ^= 0x7f;
-  
+
 	/* get the bit mask for the pixel */
 	bits = attr_bits[y % 4][x % 2];
-  
+
 	/* set it ? */
 	if (set)
 		attr |= bits;
 	else
 		attr &= ~ bits;
-  
+
 	/* reverse video (lower-left pixel) inverts all the other pixels */
 	if (attr & AT_REVERSE)
 		attr ^= 0x7f;
-  
+
 	/* attributed character changed ? */
 	if( attr != video_buffer[offs] )
 	{
@@ -802,7 +808,7 @@ void kaypro_conout_w(int offset, int data)
 			}
 		}
 		break;
-      
+
     case ST_ESCAPE:
 		state = ST_NORMAL;
 		switch (data)
@@ -857,7 +863,7 @@ void kaypro_conout_w(int offset, int data)
 			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>%c    unknown\n", data);
 		}
 		break;
-      
+
     case ST_CURPOS_ROW:
 		cur_y = data - ' ';
 		if (errorlog) fprintf(errorlog, "KAYPRO cursor y  %d\n", cur_y);
@@ -867,7 +873,7 @@ void kaypro_conout_w(int offset, int data)
 			cur_y = KAYPRO_SCREEN_H - 1;
 		state = ST_CURPOS_COL;
 		break;
-      
+
     case ST_CURPOS_COL:
 		cur_x = data - ' ';
 		if (errorlog) fprintf(errorlog, "KAYPRO cursor x  %d\n", cur_x);
@@ -877,7 +883,7 @@ void kaypro_conout_w(int offset, int data)
 			cur_x = KAYPRO_SCREEN_W - 1;
 		state = ST_NORMAL;
 		break;
-      
+
     case ST_SET_ATTRIB:
 		state = ST_NORMAL;
 		switch (data)
@@ -921,7 +927,7 @@ void kaypro_conout_w(int offset, int data)
 			break;
 		}
 		break;
-      
+
     case ST_CLR_ATTRIB:
 		state = ST_NORMAL;
 		switch (data)
@@ -964,7 +970,7 @@ void kaypro_conout_w(int offset, int data)
 			break;
 		}
 		break;
-      
+
     case ST_SET_LINE:
 		if( argcnt > 0 )
 		{
@@ -983,7 +989,7 @@ void kaypro_conout_w(int offset, int data)
 			}
 		}
 		break;
-      
+
     case ST_CLR_LINE:
 		if( argcnt > 0 )
 		{
@@ -1002,7 +1008,7 @@ void kaypro_conout_w(int offset, int data)
 			}
 		}
 		break;
-      
+
     case ST_SET_PIXEL:
 		if( argcnt > 0 )
 		{
@@ -1019,7 +1025,7 @@ void kaypro_conout_w(int offset, int data)
 			}
 		}
 		break;
-      
+
     case ST_CLR_PIXEL:
 		if( argcnt > 0 )
 		{

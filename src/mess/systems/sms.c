@@ -28,7 +28,7 @@ static struct MemoryReadAddress readmem[] =
     { 0x0000, 0x3FFF, MRA_BANK1 },
     { 0x4000, 0x7FFF, MRA_BANK2 },
     { 0x8000, 0xBFFF, MRA_BANK3 },
-    { 0xC000, 0xDFFF, sms_ram_r, &sms_user_ram },
+    { 0xC000, 0xDFFF, sms_ram_r },
     { 0xE000, 0xFFFF, sms_ram_r },
     { -1 }
 };
@@ -66,7 +66,7 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sms )
 	PORT_START	/* IN0 */
     PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
     PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
@@ -101,6 +101,25 @@ static struct SN76496interface sn76496_interface =
 };
 
 
+
+/* list of file extensions */
+static const char *sms_file_extensions[] =
+{
+	"sms",
+	0       /* end of array */
+};
+
+
+/* list of file extensions */
+static const char *gamegear_file_extensions[] =
+{
+	"gg",
+	0       /* end of array */
+};
+
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -108,7 +127,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
             3579545,
-			0,
 			readmem,writemem,readport,writeport,
             sms_vdp_interrupt, 262,
 			0, 0
@@ -149,7 +167,6 @@ static struct MachineDriver gamegear_machine_driver =
 		{
 			CPU_Z80,
             3597545,
-			0,
 			readmem,writemem,readport,writeport,
             sms_vdp_interrupt, 262,
 			0, 0
@@ -188,7 +205,7 @@ struct GameDriver sms_driver =
 	0,
 	"sms",
 	"Sega Master System",
-	"19??",
+	"1983",
 	"Sega",
     "Marat Fayzullin (MG source)\nCharles Mac Donald\nMathis Rosenhauer\nBrad Oliver",
     0,
@@ -198,6 +215,7 @@ struct GameDriver sms_driver =
 	0,
 	sms_load_rom,
 	sms_id_rom,
+	sms_file_extensions,
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -206,7 +224,7 @@ struct GameDriver sms_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_sms,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -230,6 +248,7 @@ struct GameDriver gamegear_driver =
 	0,
 	sms_load_rom,
 	gamegear_id_rom,
+	gamegear_file_extensions,
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -238,7 +257,7 @@ struct GameDriver gamegear_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_sms,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

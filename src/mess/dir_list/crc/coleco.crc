@@ -1,0 +1,177 @@
+# ColecoVision Cartridge CRC List  
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+
+[coleco]
+c575a831 = 2010: The Graphic Action Game (Coleco, 1984)
+9cc3fabc = Alcazar: The Forgotten Fortress (Activision, 1985)
+4ffb4e8c = Alphabet Zoo (Spinnaker, 1984)
+78a738af = Amazing Bumpman (Telegames, 1984)
+275c800e = Antarctic Adventure (Coleco, 1984)
+a66e5ed1 = Antarctic Adventure (Konami, 1984)
+adfa09e2 = Artillery Duel
+2e8e9d42 = Beam Rider (Activision, 1983)
+1f5f8571 = Ken Uston BlackJack/Poker (Coleco, 1982)
+da29c284 = BlockAde Runner (Interphase, 1984)
+1796de5e = Boulder Dash (Micro Labs, 1984)
+829c967d = Brain Strainers (Coleco, 1984)
+91346341 = BurgerTime (Coleco, 1984)
+e5c5ea20 = BurgerTime (Mattel Electronics, 1983)
+f9d56307 = Cabbage Patch Kids: Adventures In The Park (Konami, 1983)
+beacbff5 = Cabbage Patch Kids: Adventures In The Park (Coleco, 1984)
+ c25ad84 = Cabbage Patch Kids Picture Show (Coleco, 1984)
+72aceac7 = Campaign '84 (Sunrise, 1983)
+d568c4c5 = Carnival (Coleco, 1982)
+14d6ced6 = Cosmic Avenger (Coleco, 1982)
+e7a1ff9f = Choplifter (Coleco, 1984)
+73e96e53 = Chuck Norris (Xonox, 1983)
+ddafb16f = Congo Bongo (Coleco, 1984)
+3a581cae = Cosmic Crisis (BIT, 1983)
+d93a7dc2 = Cosmo Fighter 2 (Red Bullet Software, 1997)
+c75fad5a = Dam Busters (Sydney Development, 1984)
+614bb621 = Decathlon (Activision, 1984)
+3c77198c = Donkey Kong [16k] (Coleco, 1982)
+94c4cd4a = Donkey Kong [24k] (Coleco, 1982)
+fd11508d = Donkey Kong Junior (Coleco, 1983)
+109699e2 = Dr Seuss: Fixup the MixUp Puzzler (Coleco, 1984)
+dcb8f9e8 = Dragon Fire (Imagic, 1984)
+3678ab6f = Escape From Mindmaster (Epyx, 1983)
+dff01cf7 = Evolution (Sydney, 1983)
+48ff87cf = Final Test Cartridge
+bff86a98 = Fisher Price Dance Fantasy (SSC, 1984)
+918f12c0 = Fisher Price Linking Logic (SSC, 1984)
+c28d7062 = Fisher Price Logic Levels (SSC, 1984)
+bab520ea = Fisher Price Memory Manor (SSC, 1984)
+7e97a22e = Flipper Slipper (Spectravideo, 1983)
+65bbbcb4 = Fortune Builder (Coleco, 1984)
+964db3bc = Fraction Fever (Spinnaker Software, 1983)
+8615c6e8 = Frantic Freddy (Spectravideo, 1983)
+960616af = Frenzy (Coleco, 1983)
+32b95be0 = Frogger (Parker Brothers, 1983)
+ 4405423 = Frogger 2: Three-Deep (Parker Brothers, 1984)
+9c551386 = Front Line (Coleco, 1983)
+3f18ba6c = Galaxian (Atari, 1983)
+ 726b64d = Gateway To Apshai (Epyx, 1984)
+ff46becc = Gorf (Coleco, 1983)
+ 74ea085 = Gorf [Version 2] (Coleco, 1983)
+f2cac67c = Gust Buster (Sunrise Software, 1983)
+b4ef0f1f = Gyruss (Parker Brothers, 1984)
+6f2e2d84 = The Heist (Microfun, 1983)
+685ab9b5 = Hero (Activision, 1984)
+c9893041 = Illusions (Coleco, 1984)
+3004a253 = James Bond (Parker Brothers, 1984)
+a5511418 = Juke Box (Spinnaker Software, 1984)
+9528949a = Jumpman Junior (Epyx, 1984)
+e8858484 = Jungle Hunt (Atari, 1983)
+819a06e5 = Kevtris (Kevin H., 1996)
+fad8d414 = Keystone Kapers (Activision, 1984)
+2c3097b8 = Lady Bug (Coleco, 1982)
+1641044f = Learning with Leeper (Sierra On-Line, 1983)
+472f8cf6 = Looping (Coleco, 1983)
+3beffc06 = Meteoric Shower (Coleco, 1983)
+71d1bd4d = Miner 2049er (Microfun, 1983)
+71ae16ed = Monitor Test
+f06592bf = Monkey Academy (Coleco, 1984)
+d1e8df85 = Monkey Academy (Konami, 1984)
+c521bcad = Moon Sweeper (Coleco/Imagic, 1983)
+935ebe62 = Motocross Racer (Xonox, 1984)
+c173bbec = Mountain King (Sunrise Software, 1984)
+fd8b79b3 = Mouse Trap (Coleco, 1982)
+d53e4bdf = Mr. Do! (Coleco, 1983)
+ef7e9562 = Mr. Do's Castle
+164c8c26 = Music Box Demo
+95051633 = Noise Generator
+ea06f585 = Nova Blast (Coleco/Imagic, 1983)
+d2256b6c = Oil's Well (Sierra On-Line, 1984)
+9921ecb5 = Omega Race (Coleco, 1983)
+17c77c3a = One On One (Micro Lab, 1984)
+137d6c4c = Purple Dinosaur Massacre (John Dondzilla, 1996)
+53b85e20 = Pepper 2 (Coleco, 1983)
+312ae55a = Pitfall (Activision, 1983)
+851a455f = Pitfall 2 The Lost Caverns (Activision, 1984)
+3ef1d0ee = Popeye (Parker Brothers, 198?)
+13f06adc = Q*Bert (Parker Brothers, 198?)
+e45496d3 = Q*Bert 2: Q*Bert's Qubes (Parker Brothers, 1984) 
+4359a3e5 = Quest For Tyres: BC's Quest (Sierra On-Line, 1983)
+9ebe5d98 = Quest for Tyres 2: Grogs Revenge (Sydney, 1984)
+eec81c42 = Quest for Quintana Roo (Sunrise Software, 1983)
+fe897f9c = River Raid
+ eb45d6e = Robin Hood
+ 46f4b70 = Rocky Super Action Boxing
+3caca004 = Rock n Rope
+e4585c0a = RollOverTure
+c5f69a1b = Sammy Lightfoot
+8a46e5fa = Sector Alpha version 1
+fe5f4602 = Sector Alpha version 2
+74057241 = Sewer Sam
+62619dc0 = Super Action Football
+dd76775d = Sir Lancelot
+27f5c0ad = Slurpy
+97c0382d = Smurf Paint n Play Workshop
+d1a1fe0b = Smurf Rescue (Coleco, 1982)
+5bdf2997 = Space Panic
+3564e134 = Spectron
+ b8db61e = Spy Hunter
+6c82e0cc = Squish Em Sam
+f7f18e6f = Star Fortress
+b8ea7b19 = Star Trek
+ e75b3bf = Star Wars (Parker Brothers, 1984)
+1d9082fb = Strike It!
+509267f8 = SubRoc
+c2e7f0e0 = Super Donkey Kong Junior
+7f0baa89 = Tank Wars
+6eab5d44 = Tapper
+eff35a70 = Tarzan
+c8bc1950 = Telly Turtle
+c1d5a702 = Tournament Tennis
+1593f7df = Thresh Hold
+969d77c8 = Tic Tac Toe
+b3a1eacb = Time Pilot
+1e14397e = Tomarc The Barbarian
+4defcdfa = Tunnels and Trolls [Nonplayable Demo] (Coleco, 1984)
+fdd52ca0 = Up N Down 
+1d7eb7d1 = Venture (Coleco, 1982)
+5f20bf49 = Victory (Coleco, 1983)
+a9177b20 = Video Hustler (Coleco, 1984)
+6e0150c1 = War Games (Coleco, 1983)
+308a949b = WarRoom 2000 (NAP Consumer Electronics, 1983)
+ 4eeef44 = Wing War (Coleco/Imagic, 1983)
+1f947468 = Zaxxon (Coleco, 1982)
+
+
+
+#[not_working]
+275a7013 = Aquattack (Interphase, 1984) (NOT WORKING)
+1baf661e = Buck Rogers - Planet Of Zoom (NOT WORKING)
+  2b22d4 = Bump 'n' Jump (Coleco, 1984) (NOT WORKING)
+eb498f97 = Bump N' Jump (Mattel Electronics, 1983)(NOT WORKING)
+17edbfd4 = Centipede (NOT WORKING)
+ffd16997 = Defender (Atari, 1983)(NOT WORKING)
+56c358a6 = Destructor (NOT WORKING)
+4025ac94 = Dukes of Hazzard (Coleco, 1984) (NOT WORKING, INPUT PROBLEMS)
+448fed54 = Face Maker (NOT WORKING)
+1bed9c5b = Fall Guy (NOT WORKING)
+9eb58823 = Fathom (NOT WORKING)
+cc43ebf7 = Its Only Rock n Roll (K-Tel International UK, 1984) (NOT WORKING)
+fc95b302 = Mash (NOT WORKING)
+ bd9d073 = Montezumas Revenge (NOT WORKING)
+1e455299 = Pitstop (NOT WORKING - CRASHES)
+97217677 = Super Action Baseball
+8093b672 = Super Cross Force (NOT WORKING)
+f84622d2 = Super Cobra (INPUT PROBLEMS)  
+eb6cb4d8 = Super Controller Tester (GRAPHICS PROBLEMS) 
+ef25af90 = Super Donkey Kong (NOT WORKING - CRASHES)
+53d2651c = Slither (INPUT PROBLEMS)  
+567be2b0 = Space Fury (NOT WORKING)
+6ca80b63 = Turbo (Coleco, 1982) (NOT WORKING)
+10cc33a3 = Tutankham (Parker Brothers, 198?) (NOT WORKING)
+6e523e50 = Zenji (NOT WORKING)
+
+
+#[known_bad_dumps]
+
+
+

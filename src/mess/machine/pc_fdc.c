@@ -20,7 +20,7 @@
 #define FDC_DMA 	2						/* DMA channel number for the FDC */
 
 void *pc_fdc_file[MAX_FLOPPY];				/* up to four floppy disk images */
-UINT8 pc_heads[MAX_FLOPPY] = {2,2,2,2}; 	/* 2 heads */
+UINT8 pc_fdc_heads[MAX_FLOPPY] = {2,2,2,2}; 	/* 2 heads */
 UINT8 pc_fdc_spt[MAX_FLOPPY] = {9,9,9,9};	/* 9 sectors per track */
 UINT8 pc_gpl[MAX_FLOPPY] = {42,42,42,42};	/* gap III length */
 UINT8 pc_fill[MAX_FLOPPY] = {0xf6,0xf6,0xf6,0xf6}; /* filler byte */
@@ -121,7 +121,7 @@ char *dump_FDC_sta(int n)
 static void FDC_seek_execute(void)
 {
 	void *f = pc_fdc_file[drv];
-	offset[drv] = (track[drv] * pc_heads[drv] + head[drv]) * pc_fdc_spt[drv] * pc_fdc_scl[drv] * 256;
+	offset[drv] = (track[drv] * pc_fdc_heads[drv] + head[drv]) * pc_fdc_spt[drv] * pc_fdc_scl[drv] * 256;
 	FDC_LOG(1,"FDC_seek_execute",(errorlog, "T:%02d H:%d $%08x\n", track[drv], head[drv], offset[drv]));
 	if (f) {
 		osd_fseek(f, offset[drv], SEEK_SET);
@@ -156,7 +156,7 @@ static void FDC_DMA_format(void)
 		FDC_LOG(1,"FDC_DMA_format",(errorlog, "N:%d SC:%d GPL:%02d D:$%02x $%08x <- $%06x, $%04x\n", FDC_FMT_N, FDC_FMT_SC, FDC_FMT_GPL, FDC_FMT_D, offset[drv], pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA], pc_DMA_count[FDC_DMA]+1));
 		s = 0;
         do {
-			offset[drv] = ((track[drv] * pc_heads[drv] + head[drv]) * pc_fdc_spt[drv] + s) * pc_fdc_scl[drv] * 256;
+			offset[drv] = ((track[drv] * pc_fdc_heads[drv] + head[drv]) * pc_fdc_spt[drv] + s) * pc_fdc_scl[drv] * 256;
 
             FDC_STA_C = cpu_readmem20(pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA]);
 			pc_DMA_address[FDC_DMA]++;
@@ -207,7 +207,7 @@ static void FDC_DMA_write(int deleted_dam)
 		FDC_LOG(1,"FDC_DMA_write",(errorlog, "DMA %d is masked\n", FDC_DMA));
 		return;
 	}
-	offset[drv] = ((track[drv] * pc_heads[drv] + head[drv]) * pc_fdc_spt[drv] + (sector[drv] - 1)) * pc_fdc_scl[drv] * 256;
+	offset[drv] = ((track[drv] * pc_fdc_heads[drv] + head[drv]) * pc_fdc_spt[drv] + (sector[drv] - 1)) * pc_fdc_scl[drv] * 256;
 	if (f) {
 		FDC_LOG(1,"FDC_DMA_write",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x <- $%06x, $%04x\n", track[drv], head[drv], sector[drv], FDC_CMD_N, offset[drv], pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA], pc_DMA_count[FDC_DMA]+1));
 		do {
@@ -269,9 +269,10 @@ static void FDC_DMA_read(int deleted_dam)
 		FDC_LOG(1,"FDC_DMA_read",(errorlog, "DMA %d is masked\n", FDC_DMA));
 		return;
 	}
-	offset[drv] = ((track[drv] * pc_heads[drv] + head[drv]) * pc_fdc_spt[drv] + (sector[drv] - 1)) * pc_fdc_scl[drv] * 256;
+	offset[drv] = ((track[drv] * pc_fdc_heads[drv] + head[drv]) * pc_fdc_spt[drv] + (sector[drv] - 1)) * pc_fdc_scl[drv] * 256;
 	if (f) {
-		FDC_LOG(1,"FDC_DMA_read",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n", track[drv], head[drv], sector[drv], FDC_CMD_N, offset[drv], pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA], pc_DMA_count[FDC_DMA]+1));
+		FDC_LOG(1,"FDC_DMA_read",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n", 
+			track[drv], head[drv], sector[drv], FDC_CMD_N, offset[drv], pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA], pc_DMA_count[FDC_DMA]+1));
 		do {
 			if (read == 0) {
 				osd_fseek(f, offset[drv], SEEK_SET);

@@ -62,8 +62,10 @@ void pc_t1t_vh_stop(void)
 
 void pc_t1t_videoram_w(int offset, int data)
 {
-	if (!videoram) return;
-    if (videoram[offset] == data) return;
+	if( !videoram )
+		return;
+	if( videoram[offset] == data )
+		return;
 	videoram[offset] = data;
 	dirtybuffer[offset] = 1;
 }
@@ -71,7 +73,8 @@ void pc_t1t_videoram_w(int offset, int data)
 int pc_t1t_videoram_r(int offset)
 {
 	int data = 0xff;
-	if (videoram) data = videoram[offset];
+	if( videoram )
+		data = videoram[offset];
 	return data;
 }
 
@@ -106,7 +109,8 @@ int pc_t1t_index_r(void)
  */
 void pc_t1t_port_w(int data)
 {
-	switch (T1T_reg) {
+	switch( T1T_reg )
+	{
 		case HTOTAL:
 			T1T_LOG(1,"T1T_horz_total_w",(errorlog,"$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
@@ -223,7 +227,8 @@ void pc_t1t_port_w(int data)
 int pc_t1t_port_r(void)
 {
 	int data = 0xff;
-	switch (T1T_reg) {
+	switch( T1T_reg )
+	{
 		case HTOTAL:
 			T1T_LOG(1,"T1T_horz_total_r",(errorlog,"$%02x\n",data));
             break;
@@ -302,7 +307,7 @@ void pc_t1t_mode_control_w(int data)
 {
 	T1T_LOG(1,"T1T_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, hires %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>4)&1, (data>>5)&1));
-	if ((pc_port[0x3d8] ^ data) & 0x3b)    /* text/gfx/width change */
+	if( (pc_port[0x3d8] ^ data) & 0x3b )   /* text/gfx/width change */
 		memset(dirtybuffer, 1, videoram_size);
 	pc_port[0x3d8] = data;
 }
@@ -320,15 +325,19 @@ void pc_t1t_color_select_w(int data)
 {
 	UINT8 r, g, b;
 	T1T_LOG(1,"T1T_color_select_w",(errorlog, "$%02x\n", data));
-	if (pc_port[0x3d9] == data) return;
+	if (pc_port[0x3d9] == data)
+		return;
 	pc_port[0x3d9] = data;
-	T1T_2bpp_attr = (data & 0x30) >> 4;
-	if ((T1T_border ^ data) & 0x0f) {
+	memset(dirtybuffer, 1, videoram_size);
+    T1T_2bpp_attr = (data & 0x30) >> 4;
+	if( (T1T_border ^ data) & 0x0f )
+	{
 		T1T_border = data & 0x0f;
 		b = (T1T_border & 0x01) ? 0x7f : 0;
 		g = (T1T_border & 0x02) ? 0x7f : 0;
 		r = (T1T_border & 0x04) ? 0x7f : 0;
-		if (T1T_border & 0x08) {
+		if( T1T_border & 0x08 )
+		{
 			r <<= 1;
 			g <<= 1;
 			b <<= 1;
@@ -393,7 +402,8 @@ void pc_t1t_vga_data_w(int data)
 
     T1T_vga[T1T_vga_index] = data;
 
-    switch (T1T_vga_index) {
+	switch (T1T_vga_index)
+	{
         case 0x00: /* mode control 1 */
             T1T_LOG(1,"T1T_vga_mode_ctrl_1_w",(errorlog, "$%02x\n", data));
             break;
@@ -418,7 +428,8 @@ void pc_t1t_vga_data_w(int data)
 			r = (data & 4) ? 0x7f : 0;
 			g = (data & 2) ? 0x7f : 0;
 			b = (data & 1) ? 0x7f : 0;
-			if (data & 8) {
+			if (data & 32)
+			{
 				r <<= 1;
 				g <<= 1;
 				b <<= 1;
@@ -432,7 +443,8 @@ int pc_t1t_vga_data_r(void)
 {
 	int data = T1T_vga[T1T_vga_index];
 
-	switch (T1T_vga_index) {
+	switch (T1T_vga_index)
+	{
         case 0x00: /* mode control 1 */
 			T1T_LOG(1,"T1T_vga_mode_ctrl_1_r",(errorlog, "$%02x\n", data));
             break;
@@ -472,19 +484,20 @@ int pc_t1t_vga_data_r(void)
  */
 void pc_t1t_bank_w(int data)
 {
-	if (pc_port[0x3df] != data) {
+	if (pc_port[0x3df] != data)
+	{
 		int dram, vram;
 		pc_port[0x3df] = data;
 	/* it seems the video ram is mapped to the last 128K of main memory */
 #if 1
-        dram = 0x80000+((data & 0x07) << 14);
-		vram = 0x80000+((data & 0x38) << (14-3));
+		dram = 0x80000 + ((data & 0x07) << 14);
+		vram = 0x80000 + ((data & 0x38) << (14-3));
 #else
 		dram = (data & 0x07) << 14;
 		vram = (data & 0x38) << (14-3);
 #endif
-        videoram = &Machine->memory_region[0][vram];
-		displayram = &Machine->memory_region[0][dram];
+        videoram = &memory_region(REGION_CPU1)[vram];
+		displayram = &memory_region(REGION_CPU1)[dram];
         memset(dirtybuffer, 1, sizeof(dirtybuffer));
 		DBG_LOG(1,"t1t_bank_w",(errorlog, "$%02x: display ram $%05x, video ram $%05x\n", data, dram, vram));
 	}
@@ -496,6 +509,21 @@ int pc_t1t_bank_r(void)
     DBG_LOG(1,"t1t_bank_r",(errorlog, "$%02x\n", data));
     return data;
 }
+
+INLINE int DOCLIP(struct rectangle *r1)
+{
+    const struct rectangle *r2 = &Machine->drv->visible_area;
+    if (r1->min_x > r2->max_x) return 0;
+    if (r1->max_x < r2->min_x) return 0;
+    if (r1->min_y > r2->max_y) return 0;
+    if (r1->max_y < r2->min_y) return 0;
+    if (r1->min_x < r2->min_x) r1->min_x = r2->min_x; 
+    if (r1->max_x > r2->max_x) r1->max_x = r2->max_x;
+    if (r1->min_y < r2->min_y) r1->min_y = r2->min_y;
+    if (r1->max_y > r2->max_y) r1->max_y = r2->max_y;
+    return 1;
+}
+
 
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
@@ -510,9 +538,12 @@ void pc_t1t_blink_textcolors(int on)
 	offs = (T1T_base * 2) % videoram_size;
 	size = T1T_size;
 
-	for (i = 0; i < size; i++) {
-		if (videoram[offs+1] & 0x80) dirtybuffer[offs+1] = 1;
-		if ((offs += 2) == videoram_size) offs = 0;
+	for (i = 0; i < size; i++)
+	{
+		if (videoram[offs+1] & 0x80)
+			dirtybuffer[offs+1] = 1;
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -522,14 +553,16 @@ void pc_t1t_blink_textcolors(int on)
 ***************************************************************************/
 static void t1t_text_40_inten(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = T1T_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = T1T_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
        accordingly. */
 	offs = (T1T_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = displayram[offs], attr = displayram[offs+1];
 
@@ -540,21 +573,33 @@ static void t1t_text_40_inten(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 16 - 1;
 			r.max_y = sy + T1T_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[1], code, attr, sx,sy, &r);
-				if (offs == T1T_cursor && T1T_curmode != 0x20)	{
-					attr = Machine->pens[7];
-					if ((T1T_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = T1T_curminy; y <= T1T_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 16);
-					}
-					dirtybuffer[offs] = 1;
-				}
+				drawgfx(bitmap, Machine->gfx[1], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+				if( offs == T1T_cursor && T1T_curmode != 0x20 )
+				{
+					if( T1T_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + T1T_curminy < r.max_y )
+							r.min_y = sy + T1T_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + T1T_curmaxy < r.max_y )
+							r.max_y = sy + T1T_curmaxy;
+						drawgfx(bitmap,Machine->gfx[1],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
+                    }
+                    dirtybuffer[offs] = 1;
+                }
 			}
 		}
-		if ((sx += 16) == (T1T_HDISP * 16)) { sx = 0; sy += T1T_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 16) == (T1T_HDISP * 16) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -564,14 +609,16 @@ static void t1t_text_40_inten(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void t1t_text_80_inten(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = T1T_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = T1T_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
 	   accordingly. */
 	offs = (T1T_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = displayram[offs], attr = displayram[offs+1];
 
@@ -582,21 +629,33 @@ static void t1t_text_80_inten(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[0], code, attr, sx,sy, &r);
-				if (offs == T1T_cursor && T1T_curmode != 0x20)	{
-					attr = Machine->pens[attr & 7];
-					if ((T1T_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = T1T_curminy; y <= T1T_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 8);
-					}
-					dirtybuffer[offs] = 1;
+				drawgfx(bitmap, Machine->gfx[0], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+                if( offs == T1T_cursor && T1T_curmode != 0x20 )
+				{
+					if( T1T_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + T1T_curminy < r.max_y )
+							r.min_y = sy + T1T_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + T1T_curmaxy < r.max_y )
+							r.max_y = sy + T1T_curmaxy;
+						drawgfx(bitmap,Machine->gfx[0],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE, 0);
+                    }
+                    dirtybuffer[offs] = 1;
 				}
 			}
 		}
-		if ((sx += 8) == (T1T_HDISP * 8)) { sx = 0; sy += T1T_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 8) == (T1T_HDISP * 8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -606,22 +665,25 @@ static void t1t_text_80_inten(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void t1t_text_40_blink(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = T1T_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = T1T_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
        accordingly. */
 	offs = (T1T_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = displayram[offs], attr = displayram[offs+1];
 
             dirtybuffer[offs] = 0;
             dirtybuffer[offs+1] = 0;
 
-			if (attr & 0x80) {	/* blinking ? */
-				if (pc_blink)
+			if( attr & 0x80 )	/* blinking ? */
+			{
+				if( pc_blink )
 					attr = (attr & 0x70) | ((attr & 0x70) >> 4);
 				else
 					attr = attr & 0x7f;
@@ -631,21 +693,33 @@ static void t1t_text_40_blink(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 16 - 1;
 			r.max_y = sy + T1T_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[1], code, attr, sx,sy, &r);
-				if (offs == T1T_cursor && T1T_curmode != 0x20)	{
-					attr = Machine->pens[7];
-					if ((T1T_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = T1T_curminy; y <= T1T_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 16);
-					}
-					dirtybuffer[offs] = 1;
-				}
+				drawgfx(bitmap, Machine->gfx[1], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+				if( offs == T1T_cursor && T1T_curmode != 0x20 )
+				{
+					if( T1T_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + T1T_curminy < r.max_y )
+							r.min_y = sy + T1T_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + T1T_curmaxy < r.max_y )
+							r.max_y = sy + T1T_curmaxy;
+						drawgfx(bitmap,Machine->gfx[1],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE, 0);
+                    }
+                    dirtybuffer[offs] = 1;
+                }
 			}
 		}
-		if ((sx += 16) == (T1T_HDISP * 16)) { sx = 0; sy += T1T_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 16) == (T1T_HDISP * 16) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -655,22 +729,25 @@ static void t1t_text_40_blink(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void t1t_text_80_blink(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs, size = T1T_size, step = (pc_fill_odd_scanlines) ? 1 : 2;
+	int i, sx, sy, offs, size = T1T_size;
 
 	/* for every character in the Video RAM, check if it or its
 	   attribute has been modified since last time and update it
        accordingly. */
 	offs = (T1T_base * 2) % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = displayram[offs], attr = displayram[offs+1];
 
             dirtybuffer[offs] = 0;
             dirtybuffer[offs+1] = 0;
 
-			if (attr & 0x80) {	/* blinking ? */
-				if (pc_blink)
+			if( attr & 0x80 )	/* blinking ? */
+			{
+				if( pc_blink )
 					attr = (attr & 0x70) | ((attr & 0x70) >> 4);
 				else
 					attr = attr & 0x7f;
@@ -680,21 +757,33 @@ static void t1t_text_80_blink(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
 				/* draw the character */
-				pc_scanblit(bitmap, Machine->gfx[0], code, attr, sx,sy, &r);
-				if (offs == T1T_cursor && T1T_curmode != 0x20)	{
-					attr = Machine->pens[attr & 7];
-					if ((T1T_curmode == 0x60) || (pc_framecnt & 8)) {
-						for (y = T1T_curminy; y <= T1T_curmaxy && r.min_y + y <= r.max_y; y += step)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 8);
-					}
-					dirtybuffer[offs] = 1;
-				}
+				drawgfx(bitmap, Machine->gfx[0], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+                if( offs == T1T_cursor && T1T_curmode != 0x20 )
+				{
+					if( T1T_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + T1T_curminy < r.max_y )
+							r.min_y = sy + T1T_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + T1T_curmaxy < r.max_y )
+							r.max_y = sy + T1T_curmaxy;
+						drawgfx(bitmap,Machine->gfx[0],219,7,0,0,sx,sy,&r,TRANSPARENCY_NONE, 0);
+                    }
+                    dirtybuffer[offs] = 1;
+                }
 			}
 		}
-		if ((sx += 8) == (T1T_HDISP * 8)) { sx = 0; sy += T1T_maxscan; }
-        if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 8) == (T1T_HDISP * 8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -713,8 +802,10 @@ static void t1t_gfx_2bpp(struct osd_bitmap *bitmap)
 
 	/* first draw the even scanlines */
 	offs = T1T_base % videoram_size;
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -724,17 +815,24 @@ static void t1t_gfx_2bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[3], code, T1T_2bpp_attr, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[3], code, T1T_2bpp_attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
 		}
-		if ((sx += 8) == (2 * T1T_HDISP * 8)) { sx = 0; sy += T1T_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * T1T_HDISP * 8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	/* now draw the odd scanlines */
 	offs = (T1T_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = T1T_maxscan / 2; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = T1T_maxscan / 2; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -744,11 +842,16 @@ static void t1t_gfx_2bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[3], code, T1T_2bpp_attr, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[3], code, T1T_2bpp_attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
 		}
-		if ((sx += 8) == (2 * T1T_HDISP * 8)) { sx = 0; sy += T1T_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * T1T_HDISP * 8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -765,8 +868,10 @@ static void t1t_gfx_1bpp(struct osd_bitmap *bitmap)
        since last time and update it accordingly. */
 	/* first draw the even scanlines */
 	offs = T1T_base % videoram_size;
-    for (i = 0, sx = 0, sy = 0; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 0; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -776,17 +881,24 @@ static void t1t_gfx_1bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[2], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[2], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
 		}
-		if ((sx += 8) == (2 * T1T_HDISP * 8)) { sx = 0; sy += T1T_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * T1T_HDISP * 8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	/* now draw the odd scanlines */
 	offs = (T1T_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = T1T_maxscan / 2; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = T1T_maxscan / 2; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -796,11 +908,16 @@ static void t1t_gfx_1bpp(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan / 2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[2], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[2], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+        }
+		if( (sx += 8) == (2 * T1T_HDISP * 8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
 		}
-		if ((sx += 8) == (2 * T1T_HDISP * 8)) { sx = 0; sy += T1T_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -819,8 +936,10 @@ static void t1t_gfx_4bpp_160(struct osd_bitmap *bitmap)
        since last time and update it accordingly. */
 
 	offs = T1T_base % videoram_size;
-	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/2; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/2; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -830,16 +949,22 @@ static void t1t_gfx_4bpp_160(struct osd_bitmap *bitmap)
             r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + T1T_maxscan/2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[5], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[5], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 8) == (T1T_HDISP*8)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (T1T_HDISP*8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size ) offs = 0;
     }
 
 	offs = (T1T_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/2; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/2; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -849,11 +974,16 @@ static void t1t_gfx_4bpp_160(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/2 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[5], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[5], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 8) == (T1T_HDISP*8)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (T1T_HDISP*8) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -872,8 +1002,10 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
        since last time and update it accordingly. */
 
 	offs = T1T_base % videoram_size;
-	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -883,16 +1015,22 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[5], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[5], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (2 * T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (2 * T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size ) offs = 0;
     }
 
 	offs = (T1T_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -902,16 +1040,23 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[5], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[5], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (2 * T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (2 * T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	offs = (T1T_base + 0x4000) % videoram_size;
-	for (i = 0, sx = 0, sy = 2 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 2 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -921,16 +1066,23 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[5], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[5], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (2 * T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (2 * T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	offs = (T1T_base + 0x6000) % videoram_size;
-	for (i = 0, sx = 0, sy = 3 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 3 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -940,11 +1092,16 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[5], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[5], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (2 * T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (2 * T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -963,8 +1120,10 @@ static void t1t_gfx_2bpp_640(struct osd_bitmap *bitmap)
        since last time and update it accordingly. */
 
 	offs = T1T_base % videoram_size;
-	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -974,16 +1133,23 @@ static void t1t_gfx_2bpp_640(struct osd_bitmap *bitmap)
             r.min_y = sy;
 			r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[6], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[6], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	offs = (T1T_base + 0x2000) % videoram_size;
-	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -993,16 +1159,23 @@ static void t1t_gfx_2bpp_640(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[6], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[6], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	offs = (T1T_base + 0x4000) % videoram_size;
-	for (i = 0, sx = 0, sy = 2 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 2 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -1012,16 +1185,23 @@ static void t1t_gfx_2bpp_640(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[6], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[6], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-        if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	offs = (T1T_base + 0x6000) % videoram_size;
-	for (i = 0, sx = 0, sy = 3 * T1T_maxscan/4; i < size; i++) {
-        if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 3 * T1T_maxscan/4; i < size; i++)
+	{
+		if (dirtybuffer[offs])
+		{
             struct rectangle r;
 			int code = displayram[offs];
 
@@ -1031,11 +1211,16 @@ static void t1t_gfx_2bpp_640(struct osd_bitmap *bitmap)
             r.min_y = sy;
             r.max_x = sx + 4 - 1;
 			r.max_y = sy + T1T_maxscan/4 - 1;
-			if (DOCLIP(&r,&Machine->drv->visible_area))
-				pc_scanblit(bitmap, Machine->gfx[6], code, 0, sx,sy, &r);
+			if( DOCLIP(&r) )
+				drawgfx(bitmap, Machine->gfx[6], code, 0, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
         }
-		if ((sx += 4) == (T1T_HDISP*4)) { sx = 0; sy += T1T_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 4) == (T1T_HDISP*4) )
+		{
+			sx = 0;
+			sy += T1T_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -1050,16 +1235,20 @@ void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if (!displayram) return;
 
+	if( palette_recalc() )
+		full_refresh = 1;
+
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if (full_refresh || ((input_port_3_r(0) & 1) != pc_fill_odd_scanlines) ) {
+	if( full_refresh )
+	{
 		memset(dirtybuffer, 1, videoram_size);
 		fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
 		video_active = 0;
-		pc_fill_odd_scanlines = input_port_3_r(0) & 1;
     }
 
-	switch (pc_port[0x03d8] & 0x3b) {	/* text and gfx modes */
+	switch( pc_port[0x03d8] & 0x3b )	/* text and gfx modes */
+	{
 		case 0x08:
 			video_active = 10;
 			t1t_text_40_inten(bitmap);
@@ -1078,7 +1267,8 @@ void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			break;
         case 0x0a: case 0x0b: case 0x2a: case 0x2b:
 			video_active = 10;
-			switch (pc_port[0x3df] & 0xc0) {
+			switch (pc_port[0x3df] & 0xc0)
+			{
 				case 0x00:	/* hmm.. text in graphics? */
 				case 0x40: t1t_gfx_2bpp(bitmap); break;
 				case 0x80: t1t_gfx_4bpp_160(bitmap); break;
@@ -1088,7 +1278,8 @@ void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		case 0x18: case 0x19: case 0x1a: case 0x1b:
 		case 0x38: case 0x39: case 0x3a: case 0x3b:
 			video_active = 10;
-			switch (pc_port[0x3df] & 0xc0) {
+			switch (pc_port[0x3df] & 0xc0)
+			{
 				case 0x00:	/* hmm.. text in graphics? */
 				case 0x40: t1t_gfx_1bpp(bitmap); break;
 				case 0x80:
@@ -1097,7 +1288,7 @@ void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			break;
 
         default:
-			if (video_active && --video_active == 0)
+			if( video_active && --video_active == 0 )
 				fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
     }
 }

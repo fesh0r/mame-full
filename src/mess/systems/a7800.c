@@ -82,7 +82,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( a7800 )
 	PORT_START      /* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
@@ -97,7 +97,7 @@ INPUT_PORTS_START( input_ports )
     PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
     PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
     PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-    PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )        
+    PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT ( 0xF0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN2 */
@@ -169,6 +169,13 @@ static unsigned short colortable[] =
 	0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff
 };
 
+/* Initialise the palette */
+static void a7800_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -182,13 +189,25 @@ static struct TIAinterface tia_interface =
     TIA_DEFAULT_GAIN,
 };
 
+
 static struct POKEYinterface pokey_interface = {
 	1,
-    1790000,  
+    1790000,
     { 255 },
 	POKEY_DEFAULT_GAIN / 2,
     USE_CLIP
 };
+
+
+/* list of file extensions */
+static const char *a7800_file_extensions[] =
+{
+	"a78",
+	0       /* end of array */
+};
+
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -198,7 +217,6 @@ static struct MachineDriver machine_driver =
 			CPU_M6502,
             1790000,        /* 1.79Mhz (note: The clock switches to 1.19Mhz */
                             /* when the TIA or RIOT are accessed) */
-			0,
 			readmem,writemem,0,0,
 			a7800_interrupt,262
 		}
@@ -213,7 +231,7 @@ static struct MachineDriver machine_driver =
 	gfxdecodeinfo,
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(colortable) / sizeof(colortable[0]),
-	0,
+	a7800_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -231,7 +249,7 @@ static struct MachineDriver machine_driver =
 		{
 		    SOUND_POKEY,
 		    &pokey_interface
-        }                   
+        }
     }
 
 };
@@ -243,15 +261,15 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START (a7800_rom)
-	ROM_REGION (0x10000)
-	ROM_LOAD ("7800.rom", 0xf000, 0x1000, 0x649913e5)       
+ROM_START (a7800)
+	ROM_REGIONX(0x10000,REGION_CPU1)
+	ROM_LOAD ("7800.rom", 0xf000, 0x1000, 0x649913e5)
 ROM_END
 
 struct GameDriver a7800_driver =
 {
 	__FILE__,
-	0,      
+	0,
 	"a7800",
 	"Atari 7800",
 	"1986",
@@ -261,9 +279,10 @@ struct GameDriver a7800_driver =
 	&machine_driver,
 	0,
 
-    a7800_rom,
+    rom_a7800,
     a7800_load_rom,
     a7800_id_rom,
+	a7800_file_extensions,
 	1,      /* number of ROM slots */
 	0,      /* number of floppy drives supported */
 	0,      /* number of hard drives supported */
@@ -272,9 +291,9 @@ struct GameDriver a7800_driver =
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_a7800,
 
-    0, palette, colortable,
+    0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0,

@@ -1,43 +1,27 @@
 #ifndef MESS_H
 #define MESS_H
 
-#include "driver.h"
+//#include "driver.h"
 
 
 //extern char messversion[];
 
+#define ORIENTATION_DEFAULT ROT0 /* hack till we change to the driver macro */
+
 void showmessinfo(void);
 
 
-
 /* common.h - begin */
-#define MAX_ROM 3        /* MAX_ROM is the maximum number of cartridge slots a driver supports */
-#define MAX_FLOPPY 4     /* MAX_FLOPPY is the maximum number of floppy drives a driver supports */
-#define MAX_HARD 2       /* MAX_HARD is the maximum number of hard drives a driver supports */
-#define MAX_CASSETTE 2   /* MAX_CASSETTE is the maximum number of cassette drives a driver supports */
+#define MAX_ROM 3         /* MAX_ROM is the maximum number of cartridge slots a driver supports */
+#define MAX_FLOPPY 4      /* MAX_FLOPPY is the maximum number of floppy drives a driver supports */
+#define MAX_HARD 2        /* MAX_HARD is the maximum number of hard drives a driver supports */
+#define MAX_CASSETTE 2    /* MAX_CASSETTE is the maximum number of cassette drives a driver supports */
+#define MAX_PATHLEN 2048  /* Maximum Number of char for the path length */
 
-
-extern char rom_name[MAX_ROM][2048];
-extern char floppy_name[MAX_FLOPPY][2048];
-extern char hard_name[MAX_HARD][2048];
-extern char cassette_name[MAX_CASSETTE][2048];
-
-/*
-void drawgfx_line(struct osd_bitmap *dest,
-						struct GfxElement *gfx,
-                  unsigned int code,
-                  unsigned int color,
-                  int flipx,
-                  int start,
-                  int sx,
-                  int sy,
-                  struct rectangle *clip,
-                  int transparency,
-                  int transparent_color);
-*/
-/* common.h - end */
-
-
+extern char rom_name[MAX_ROM][MAX_PATHLEN];
+extern char floppy_name[MAX_FLOPPY][MAX_PATHLEN];
+extern char hard_name[MAX_HARD][MAX_PATHLEN];
+extern char cassette_name[MAX_CASSETTE][MAX_PATHLEN];
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1
@@ -47,6 +31,40 @@ void drawgfx_line(struct osd_bitmap *dest,
 #define IPT_KEYBOARD	IPT_TILT
 /* driver.h - end */
 
+
+/* fileio.c */
+typedef struct
+{
+	int crc;
+	int length;
+	char * name;
+
+} image_details;
+
+/* possible values for osd_fopen() last argument
+ * OSD_FOPEN_READ
+ *	open existing file in read only mode.
+ *	ZIP images can be opened only in this mode, unless
+ *	we add support for writing into ZIP files.
+ * OSD_FOPEN_WRITE
+ *	open new file in write only mode (truncate existing file).
+ *	used for output images (eg. a cassette being written).
+ * OSD_FOPEN_RW
+ *	open existing(!) file in read/write mode.
+ *	used for floppy/harddisk images. if it fails, a driver
+ *	might try to open the image with OSD_FOPEN_READ and set
+ *	an internal 'write protect' flag for the FDC/HDC emulation.
+ * OSD_FOPEN_RW_CREATE
+ *	open existing file or create new file in read/write mode.
+ *	used for floppy/harddisk images. if a file doesn't exist,
+ *	it shall be created. Used to 'format' new floppy or harddisk
+ *	images from within the emulation. a driver might use this
+ *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ, failed.
+ */
+enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE };
+
+char * get_alias(char *driver_name, char *argv);
+int check_crc(int crc, int length, char * driver);
 
 /* mess.c functions [for external use] */
 int parse_image_types(char *arg);

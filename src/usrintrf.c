@@ -2563,15 +2563,6 @@ int showgamewarnings(void)
 		}
 #endif
 
-
-#ifdef MESS
-		if (Machine->gamedrv->flags & GAME_COMPUTER)
-		{
-			strcpy(buf, "The emulated system is a computer: \n\n");
-			strcat(buf, "The keyboard emulation may not be 100% accurate.\n");
-		}
-#endif
-
 		if (Machine->gamedrv->flags & GAME_IMPERFECT_COLORS)
 		{
 			strcat(buf, "The colors aren't 100% accurate.\n");
@@ -2839,7 +2830,11 @@ static void display_scroll_message (int *scroll, int width, int height, char *bu
 /* Display text entry for current driver from history.dat and mameinfo.dat. */
 static int displayhistory (int selected)
 {
+	#ifndef MESS
 	char *msg = "\tHistory not available\n\n\t\x1a Return to Main Menu \x1b";
+	#else
+	char *msg = "\tSysInfo.dat Missing\n\n\t\x1a Return to Main Menu \x1b";
+	#endif
 	static int scroll = 0;
 	static char *buf = 0;
 	int	maxcols,maxrows;
@@ -3105,7 +3100,7 @@ static void setup_menu_init(void)
 	#else
 	menu_item[menu_total] = "Machine Information"; menu_action[menu_total++] = UI_GAMEINFO;
 	menu_item[menu_total] = "Image Information"; menu_action[menu_total++] = UI_IMAGEINFO;
-	menu_item[menu_total] = "Machine History"; menu_action[menu_total++] = UI_HISTORY;
+	menu_item[menu_total] = "Machine Usage & History"; menu_action[menu_total++] = UI_HISTORY;
 	#endif
 
 	if (options.cheat)
@@ -3746,7 +3741,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	static int ui_active = 0, ui_toggle_key = 0;
  	static int ui_display_count = 4 * 60;
 
-	if( keyboard_pressed(KEYCODE_SCRLOCK) )
+	if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
  	{
 		if( !ui_toggle_key )
  		{
@@ -3765,8 +3760,8 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
  	{
  		if( ui_display_count > 0 )
  		{
- 			char text[] = "Keyboard: user interface - ScrLock to toggle";
- 			int x, x0 = (Machine->uiwidth - (sizeof(text) - 1) * Machine->uifont->width) / 2;
+ 			char text[] = "KBD: UI  (ScrLock)";
+  			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
  			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
  			for( x = 0; text[x]; x++ )
  			{
@@ -3783,8 +3778,8 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		if( ui_display_count > 0 )
 		{
-			char text[] = "Keyboard: emulation - ScrLock to toggle";
-			int x, x0 = (Machine->uiwidth - (sizeof(text) - 1) * Machine->uifont->width) / 2;
+			char text[] = "KBD: EMU (ScrLock)";
+ 			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
 			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
 			for( x = 0; text[x]; x++ )
 			{

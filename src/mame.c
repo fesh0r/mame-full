@@ -141,7 +141,6 @@ static int validitychecks(void)
 				}
 			}
 		}
-}/*MESS*/
 	}
 
 	return 0;

@@ -4,23 +4,23 @@ It doesnt do much at the moment, but its here in case anyone
 needs it ;-)
 */
 
-//#include "msdos/mamalleg.h"
+#include <ctype.h>
 #include "driver.h"
 #include "mame.h"
 #include "mess/mess.h"
 
-#ifdef MESS
-char rom_name[MAX_ROM][2048]; /* MESS */
-char floppy_name[MAX_FLOPPY][2048]; /* MESS */
-char hard_name[MAX_HARD][2048]; /* MESS */
-char cassette_name[MAX_CASSETTE][2048]; /* MESS */
-//unsigned int dispensed_tickets = 0; /* MESS */ in common.c
-#endif
+
+char rom_name[MAX_ROM][MAX_PATHLEN]; /* MESS */
+char floppy_name[MAX_FLOPPY][MAX_PATHLEN]; /* MESS */
+char hard_name[MAX_HARD][MAX_PATHLEN]; /* MESS */
+char cassette_name[MAX_CASSETTE][MAX_PATHLEN]; /* MESS */
+
 
 extern struct GameOptions options;
 static int num_roms = 0;
 static int num_floppies = 0;
 static int num_harddisks = 0;
+static int num_cassettes = 0;
 
 static char *mess_alpha = "";
 
@@ -55,43 +55,108 @@ void showmessinfo(void)
 
 }
 
+
+
 /**********************************************************/
 /* Functions called from MSDOS.C by MAME for running MESS */
 /**********************************************************/
 
+/* HJB 12/11/99
+ * this will go away, once we have a cleaner definition of the extensions
+ * in the proposed PERIPHERAL struct.
+ */
+
+static int slot = -1;
+
 int parse_image_types(char *arg)
 {
-	/* Is it a floppy or a rom? */
+    char e1 = 0, e2 = 0, e3 = 0;
 	char *ext = strrchr(arg, '.');
-	if (ext && (!stricmp(ext,".DSK") || !stricmp(ext,".ATR") || !stricmp(ext,".XFD"))) {
-		if (num_floppies >= MAX_FLOPPY) {
-			printf("Too many floppy names specified!\n");
+
+    if( ext )
+	{
+		e1 = toupper(ext[1]);
+		e2 = toupper(ext[2]);
+		e3 = toupper(ext[3]);
+    }
+
+    /* cassette images */
+	if( slot == 3 ||
+		( slot < 0 &&
+			(
+				(e1=='C' && e2=='A' && e3=='S') ||
+				(e1=='C' && e2=='M' && e3=='D') ||
+				(e1=='T' && e2=='A' && e3=='P') ||
+				(e1=='T' && e2=='6' && e3=='4') ||
+				(e1=='V' && e2=='Z' && e3==  0)
+			)
+		  )
+	  )
+	{
+		if( num_cassettes >= MAX_CASSETTE )
+		{
+			printf("Too many cassette image names specified!\n");
+			return 1;
+		}
+		strcpy(options.cassette_name[num_cassettes++], arg);
+		printf("Using cassette image #%d %s\n", num_cassettes, arg);
+		return 0;
+	}
+	else
+	/* harddisk images */
+	if( slot == 2 ||
+		( slot < 0 &&
+			(
+				(e1=='I' && e2=='M' && e3=='G')
+			)
+		)
+	)
+    {
+        if( num_harddisks >= MAX_HARD )
+        {
+            printf("Too many hard disk image names specified!\n");
+            return 1;
+        }
+        strcpy(options.hard_name[num_harddisks++], arg);
+		printf("Using hard disk image #%d %s\n", num_harddisks, arg);
+        return 0;
+    }
+    else
+	/* are floppy disk images */
+	if( slot == 1 ||
+		( slot < 0 &&
+			(
+				(e1=='D' && e2=='6' && e3=='4') ||
+				(e1=='D' && e2=='S' && e3=='K') ||
+				(e1=='A' && e2=='D' && e3=='F') ||
+				(e1=='A' && e2=='T' && e3=='R') ||
+				(e1=='X' && e2=='F' && e3=='D') ||
+				(e1=='V' && e2=='Z' && e3=='D')
+			)
+		)
+	)
+	{
+		if (num_floppies >= MAX_FLOPPY)
+		{
+			printf("Too many floppy image names specified!\n");
 			return 1;
 		}
 		strcpy(options.floppy_name[num_floppies++], arg);
-		if (errorlog) fprintf(errorlog,"Using floppy image #%d %s\n", num_floppies, arg);
+		printf("Using floppy image #%d %s\n", num_floppies, arg);
 		return 0;
 	}
-	if (ext && !stricmp(ext,".IMG")) {
-		if (num_harddisks >= MAX_HARD) {
-			printf("Too many hard disk image names specified!\n");
+	else
+	{
+		if( num_roms >= MAX_ROM )
+		{
+			printf("Too many ROM image names specified!\n");
 			return 1;
 		}
-		strcpy(options.hard_name[num_harddisks++], arg);
-		if (errorlog) fprintf(errorlog,"Using hard disk image #%d %s\n", num_harddisks, arg);
-		return 0;
+		strcpy(options.rom_name[num_roms++], arg);
+		printf("Using ROM image #%d %s\n", num_roms, arg);
 	}
-	if (num_roms >= MAX_ROM) {
-		printf("Too many ROM image names specified!\n");
-		return 1;
-	}
-	strcpy(options.rom_name[num_roms++], arg);
-	if (errorlog) fprintf(errorlog,"Using ROM image #%d %s\n", num_roms, arg);
 	return 0;
 }
-
-
-
 
 
 
@@ -101,67 +166,85 @@ int parse_image_types(char *arg)
 int load_image(int argc, char **argv, char *driver, int j)
 {
 
- 		/*
-	 	* Take all additional commandline arguments without "-" as image
-	 	* names. This is an ugly hack that will hopefully eventually be
-	 	* replaced with an online version that lets you "hot-swap" images.
-	 	* HJB 08/13/98 for now the hack is extended even more :-/
-	 	* Skip arguments to options starting with "-" too and accept
-	 	* aliases for a set of ROMs/images.
-      */
-      int i;
-      int res=0;
-		for (i = j+1; i < argc; i++)
-      {
-			//char * alias;
+	/*
+	* Take all additional commandline arguments without "-" as image
+	* names. This is an ugly hack that will hopefully eventually be
+	* replaced with an online version that lets you "hot-swap" images.
+	* HJB 08/13/98 for now the hack is extended even more :-/
+	* Skip arguments to options starting with "-" too and accept
+	* aliases for a set of ROMs/images.
+    */
+    int i;
+    int res=0;
+	char *alias;
 
-			/* skip options and their additional arguments */
-			if (argv[i][0] == '-')
-         {
-         /*
-            if (	!stricmp(argv[i],"-vgafreq") ||
-                	!stricmp(argv[i],"-depth") ||
-                	!stricmp(argv[i],"-skiplines") ||
-                	!stricmp(argv[i],"-skipcolumns") ||
-                	!stricmp(argv[i],"-beam") ||
-                	!stricmp(argv[i],"-flicker") ||
-                	!stricmp(argv[i],"-gamma") ||
-                	!stricmp(argv[i],"-frameskip") ||
-                	!stricmp(argv[i],"-soundcard") ||
-                	!stricmp(argv[i],"-samplerate") ||
-                	!stricmp(argv[i],"-sr") ||
-                	!stricmp(argv[i],"-samplebits") ||
-                	!stricmp(argv[i],"-sb") ||
-                	!stricmp(argv[i],"-joystick") ||
-						!stricmp(argv[i],"-joy") ||
-            		!stricmp(argv[i],"-resolution")) i++;
-			*/
+	/* unknown image type specified */
+    slot = -1;
 
-         }
-         else
-         {
-				/* check if this is an alias for a set of images */
+    for (i = j+1; i < argc; i++)
+    {
+        /* skip options and their additional arguments */
+		if (argv[i][0] == '-')
+        {
+         	/* Need to skip all options which are not followed by a "-" */
+			if( !stricmp(argv[i],"-vgafreq")     ||
+				!stricmp(argv[i],"-depth")       ||
+				!stricmp(argv[i],"-skiplines")   ||
+				!stricmp(argv[i],"-skipcolumns") ||
+				!stricmp(argv[i],"-beam")        ||
+				!stricmp(argv[i],"-flicker")     ||
+				!stricmp(argv[i],"-gamma")       ||
+				!stricmp(argv[i],"-frameskip")   ||
+				!stricmp(argv[i],"-soundcard")   ||
+				!stricmp(argv[i],"-samplerate")  ||
+				!stricmp(argv[i],"-sr")          ||
+				!stricmp(argv[i],"-samplebits")  ||
+				!stricmp(argv[i],"-sb")          ||
+				!stricmp(argv[i],"-joystick")    ||
+				!stricmp(argv[i],"-joy")         ||
+				!stricmp(argv[i],"-resolution") ) i++;
+			/* check for explicit slots for the image names following */
+			if( !stricmp(argv[i], "-rom") )
+                slot = 0;
+            else
+			if( !stricmp(argv[i], "-floppy") )
+				slot = 1;
+			else
+			if( !stricmp(argv[i], "-harddisk") )
+				slot = 2;
+            else
+			if( !stricmp(argv[i], "-cassette") )
+				slot = 3;
+        }
+        else
+        {
+			/* check if this is an alias for a set of images */
 
-				//alias = get_config_string(driver, argv[i], "");
-				//if (alias && strlen(alias))
-            //{
-				//	char *arg;
-				//	if (errorlog) fprintf(errorlog,"Using alias %s for driver %s\n", argv[i], driver);
-				//	arg = strtok (alias, ",");
-				//	while (arg)
-            //   {
-				//		res = parse_image_types(arg);
-				//		arg = strtok(0, ",");
-				//	}
-				//}
-            //else
-            //{
-					res = parse_image_types(argv[i]);
-				//}
+			alias = get_alias(driver,argv[i]);
+
+			if( alias && strlen(alias) )
+            {
+				char *arg;
+				if( errorlog )
+					fprintf(errorlog,"Using alias %s (%s) for driver %s\n", argv[i],alias, driver);
+				arg = strtok (alias, ",");
+				while (arg)
+            	{
+					res = parse_image_types(arg);
+					arg = strtok(0, ",");
+				}
 			}
-			/* If we had an error leave now */
-			if (res)
-				return res;
+            else
+            {
+				if (errorlog)
+					fprintf(errorlog,"NOTE: No alias found\n");
+				res = parse_image_types(argv[i]);
+			}
 		}
-    		return res;
+		/* If we had an error leave now */
+		if (res)
+			return res;
+	}
+    return res;
 }
+

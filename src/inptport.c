@@ -127,6 +127,9 @@ struct ipd inputport_defaults[] =
 #ifdef MAME_DEBUG
 	{ IPT_UI_SHOW_COLORS,       "Show Colors",	 INPUT_KEY_SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL), INPUT_JOY_SEQ_DEF_0 },
 #endif
+#ifdef MESS
+	{ IPT_UI_TOGGLE_UI,         "UI Toggle",         INPUT_KEY_SEQ_DEF_1(KEYCODE_SCRLOCK),INPUT_JOY_SEQ_DEF_0 },
+#endif
 	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     INPUT_KEY_SEQ_DEF_1(KEYCODE_F12),   INPUT_JOY_SEQ_DEF_0 },
 	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",      INPUT_KEY_SEQ_DEF_1(KEYCODE_F5),    INPUT_JOY_SEQ_DEF_0 },
 	{ IPT_UI_UP,                "UI Up",             INPUT_KEY_SEQ_DEF_1(KEYCODE_UP),    INPUT_JOY_SEQ_DEF_1(JOYCODE_1_UP) },

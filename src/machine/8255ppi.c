@@ -150,7 +150,8 @@ void ppi8255_w( int which, int offset, int data ) {
 		case 3: /* Control word */
 			chip->control = data;
 
-			if ( data & 0x80 ) { /* mode set */
+			if ( data & 0x80 )
+                        { /* mode set */
 				chip->groupA_mode = ( data >> 5 ) & 3;
 				chip->groupB_mode = ( data >> 2 ) & 1;
 
@@ -158,9 +159,8 @@ void ppi8255_w( int which, int offset, int data ) {
 					if ( errorlog )
 						fprintf( errorlog, "8255 chip %d: Setting an unsupported mode!\n", which );
 				}
-			}
 
-			/* Port A direction */
+                        /* Port A direction */
 			if ( data & 0x10 )
 				chip->io[0] = 0xff;
 			else
@@ -184,7 +184,42 @@ void ppi8255_w( int which, int offset, int data ) {
 			else
 				chip->io[2] &= 0xf0;
 
-			return;
+                                /* KT: 25-Dec-99 - 8255 resets latches when mode set */ 
+                                chip->latch[0] = chip->latch[1] = chip->latch[2] = 0;
+                        }
+                        else
+                        {
+                                /* KT: 25-Dec-99 - Added port C bit set/reset feature */
+                                /* bit set/reset */
+                                int bit;
+
+                                bit = (data>>1) & 0x07;
+
+                                if (data & 1)
+                                {
+                                        /* set bit */
+                                        chip->latch[2] |= (1<<bit);
+                                }
+                                else
+                                {
+                                        /* bit reset */
+                                        chip->latch[2] &= ~(1<<bit);
+                                }
+
+                                if ( chip->io[2] != 0xff ) {
+                                        if ( chip->io[2] != 0 ) {
+                                                chip->latch[2] = ( chip->latch[2] & chip->io[2] ) | ( chip->latch[2] & ~chip->io[2] );
+                                                if ( intf->portC_w )
+                                                        (*intf->portC_w)( which, chip->latch[2] & ~chip->io[2] );
+                                        } else {
+                                                if ( intf->portC_w )
+                                                        (*intf->portC_w)( which, chip->latch[2] );
+                                        }
+			}
+
+
+                        }
+                        return;
 		break;
 	}
 

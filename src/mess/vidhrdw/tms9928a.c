@@ -105,6 +105,18 @@ static void (*ModeHandlers[])(struct osd_bitmap*) = {
 
 static TMS9928A tms;
 
+
+
+
+/* initial the palette */
+void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+    memcpy(palette, & TMS9928A_palette, sizeof(TMS9928A_palette));
+	memcpy(colortable, & TMS9928A_colortable, sizeof(TMS9928A_colortable));
+	color_prom=malloc(0*sizeof(char));
+}
+
+
 /*
 ** The init, reset and shutdown functions
 */
@@ -184,7 +196,7 @@ int TMS9928A_start (unsigned int vram) {
 }
 
 void TMS9928A_stop () {
-    free (tms.vMem); tms.vMem = NULL;
+	free (tms.vMem); tms.vMem = NULL;
     free (tms.dBackMem); tms.dBackMem = NULL;
     free (tms.DirtyColour); tms.DirtyColour = NULL;
     free (tms.DirtyName); tms.DirtyName = NULL;
@@ -413,7 +425,7 @@ void TMS9928A_refresh (struct osd_bitmap *bmp, int full_refresh) {
        if there are no changes (sprite collision bit is lost) */
     tms.oldStatusReg = tms.StatusReg;
     tms.Change = 0;
-
+	palette_recalc();
     return;
 }
 

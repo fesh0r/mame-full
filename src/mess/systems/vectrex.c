@@ -46,7 +46,7 @@ static struct MemoryWriteAddress vectrex_writemem[] =
 	{ -1 }
 };
 
-INPUT_PORTS_START( vectrex_input_ports )
+INPUT_PORTS_START( vectrex )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -68,19 +68,23 @@ INPUT_PORTS_START( vectrex_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH,  IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "3D Imager", IP_KEY_NONE )
+	//PORT_DIPNAME( 0x01, 0x00, "3D Imager", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "3D Imager")
 	PORT_DIPSETTING(0x01, DEF_STR ( On ))
 	PORT_DIPSETTING(0x00, DEF_STR ( Off ))
-	PORT_DIPNAME( 0x02, 0x00, "Separate images", IP_KEY_NONE )
+	//PORT_DIPNAME( 0x02, 0x00, "Separate images", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Separate images")
 	PORT_DIPSETTING(0x02, DEF_STR ( Yes ))
 	PORT_DIPSETTING(0x00, DEF_STR ( No ))
-	PORT_DIPNAME( 0x1c, 0x10, "Left eye", IP_KEY_NONE )
+	//PORT_DIPNAME( 0x1c, 0x10, "Left eye", IP_KEY_NONE )
+	PORT_DIPNAME( 0x1c, 0x10, "Left eye")
 	PORT_DIPSETTING(0x00, "Black")
 	PORT_DIPSETTING(0x04, "Red")
 	PORT_DIPSETTING(0x08, "Green")
 	PORT_DIPSETTING(0x0c, "Blue")
 	PORT_DIPSETTING(0x10, "Color")
-	PORT_DIPNAME( 0xe0, 0x80, "Right eye", IP_KEY_NONE )
+	//PORT_DIPNAME( 0xe0, 0x80, "Right eye", IP_KEY_NONE )
+	PORT_DIPNAME( 0xe0, 0x80, "Right eye")
 	PORT_DIPSETTING(0x00, "Black")
 	PORT_DIPSETTING(0x20, "Red")
 	PORT_DIPSETTING(0x40, "Green")
@@ -88,7 +92,8 @@ INPUT_PORTS_START( vectrex_input_ports )
 	PORT_DIPSETTING(0x80, "Color")
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh", IP_KEY_NONE )
+	//PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh")
 	PORT_DIPSETTING(0x01, DEF_STR ( Yes ))
 	PORT_DIPSETTING(0x00, DEF_STR ( No ))
 INPUT_PORTS_END
@@ -120,13 +125,22 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz */
-	{ 50 },
+	{ 20 },
     AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },
 	{ 0 },
 	{ 0 },
 	{ 0 }
 };
+
+
+/* list of file extensions */
+static const char *vectrex_file_extensions[] =
+{
+	"bin",
+	0       /* end of array */
+};
+
 
 static struct MachineDriver vectrex_machine_driver =
 {
@@ -135,7 +149,6 @@ static struct MachineDriver vectrex_machine_driver =
 		{
 			CPU_M6809,
 			1500000,	/* 1.5 Mhz */
-			0,
 			vectrex_readmem, vectrex_writemem,0,0,
 			0, 0, /* no vblank interrupt */
 			0, 0 /* no interrupts */
@@ -173,8 +186,8 @@ static struct MachineDriver vectrex_machine_driver =
 
 };
 
-ROM_START(vectrex_rom)
-	ROM_REGION(0x10000)
+ROM_START(vectrex)
+	ROM_REGIONX(0x10000,REGION_CPU1)
 	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END
 
@@ -186,16 +199,17 @@ struct GameDriver vectrex_driver =
 	"vectrex",
 	"GCE Vectrex",
 	"1982",
-	"GCE",
+	"General Consumer Electronics",
 	"Mathis Rosenhauer\n"
 	"Christopher Salomon (technical advice)\n"
 	VECTOR_TEAM,
 	0,
 	&vectrex_machine_driver,
 	0,
-	vectrex_rom,
+	rom_vectrex,
 	vectrex_load_rom,
 	vectrex_id_rom,
+	vectrex_file_extensions,
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -204,7 +218,7 @@ struct GameDriver vectrex_driver =
 	0,
 	0,	/* sound_prom */
 
-	vectrex_input_ports,
+	input_ports_vectrex,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -252,7 +266,7 @@ static struct MemoryWriteAddress spectrum1_writemem[] =
 	{ -1 }
 };
 
-INPUT_PORTS_START( spectrum1_input_ports )
+INPUT_PORTS_START( spectrum1 )
 	PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -275,7 +289,6 @@ static struct MachineDriver raaspec_machine_driver =
 		{
 			CPU_M6809,
 			1500000,	/* 1.5 Mhz */
-			0,
 			spectrum1_readmem, spectrum1_writemem,0,0,
 			0, 0, /* no vblank interrupt */
 			0, 0 /* no interrupts */
@@ -313,8 +326,8 @@ static struct MachineDriver raaspec_machine_driver =
 
 };
 
-ROM_START(spectrum1_rom)
-	ROM_REGION(0x10000)
+ROM_START(spectrum1)
+	ROM_REGIONX(0x10000,REGION_CPU1)
 	ROM_LOAD("spectrum.bin", 0x0000, 0x8000, 0x20af7f3f)
 	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END
@@ -335,9 +348,10 @@ struct GameDriver raaspec_driver =
 	&raaspec_machine_driver,
 	0,
 
-	spectrum1_rom,
+	rom_spectrum1,
 	0,
 	0,
+	0,	/* file extensions */
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -346,7 +360,7 @@ struct GameDriver raaspec_driver =
 	0,
 	0,	/* sound_prom */
 
-	spectrum1_input_ports,
+	input_ports_spectrum1,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

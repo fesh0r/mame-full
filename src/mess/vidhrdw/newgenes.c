@@ -1,4 +1,4 @@
-/*************************************************************************** 
+/***************************************************************************
 
   vidhrdw.c
 
@@ -32,13 +32,13 @@ int debug_a_y;
 #define DMA_FREE 0
 #define MODE_VRAM_WRITE			1
 #define MODE_CRAM_WRITE			3
-#define MODE_VSRAM_WRITE		5	
+#define MODE_VSRAM_WRITE		5
 #define MODE_VRAM_READ			0
 #define MODE_CRAM_READ			8
 #define MODE_VSRAM_READ			4
 #define MODE_VRAM_WRITE_DMA		0x21
 #define MODE_CRAM_WRITE_DMA		0x23
-#define MODE_VSRAM_WRITE_DMA	0x25	
+#define MODE_VSRAM_WRITE_DMA	0x25
 #define MODE_VRAM_READ_DMA		0x20
 #define MODE_CRAM_READ_DMA		0x28
 #define MODE_VSRAM_READ_DMA		0x24
@@ -155,7 +155,7 @@ typedef struct
 	int width;
 	int height;
 	int x_end;
-	int y_end; 
+	int y_end;
 } GENESIS_SPRITE;
 
 
@@ -165,7 +165,7 @@ typedef struct
 void genesis_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
-	
+
 	/* the palette will be initialized by the game. We just set it to some */
 	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -220,7 +220,7 @@ unsigned int generate_priority_entry(int a, int b, int priority_number, int spri
 
 	return value;
 
-}		
+}
 
 int genesis_vh_start (void)
 {
@@ -247,9 +247,9 @@ int genesis_vh_start (void)
 			table[entry+5]=	generate_priority_entry(a, b, 1, 1);
 			table[entry+6]=	generate_priority_entry(a, b, 2, 1);
 			if (errorlog) fprintf(errorlog, "%x %x %x\t%x %x %x\n",
-			table[entry], table[entry+1], table[entry+2], table[entry+4], table[entry+5], table[entry+6]);			   
+			table[entry], table[entry+1], table[entry+2], table[entry+4], table[entry+5], table[entry+6]);
 		}
-	} 
+	}
 
 	/* create scrollA and scrollB playfields */
 
@@ -273,7 +273,7 @@ int genesis_vh_start (void)
 		return 1;
 	}
 
-   
+
 
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
@@ -326,7 +326,7 @@ int genesis_vh_start (void)
 	memset(dirty_attribute_a, -1, (128*128)*sizeof(short));
 	memset(dirty_attribute_b, -1, (128*128)*sizeof(short));
 
-   
+
 	memset(tile_changed_1, 1, 0x800);
 	memset(tile_changed_2, 1, 0x800);
 
@@ -385,7 +385,7 @@ int genesis_vh_start (void)
 	return 0;
 }
 
-								   
+
 void genesis_vh_stop (void)
 {
 	/* Free everything */
@@ -396,7 +396,7 @@ void genesis_vh_stop (void)
  //	osd_free_bitmap(bitmap_sprite);
 	free(tile_changed_1);
 	free(tile_changed_2);
-	
+
 	generic_vh_stop ();
 }
 
@@ -457,19 +457,19 @@ void genesis_vdp_data_w (int offset, int data)
   	int tempsource = 0;
   	int temp_vdp_address = vdp_address;
 	/*if (errorlog) fprintf(errorlog, "vdp data w offset = %x\n", offset);*/
-	
+
 	/* need a special case for byte writes...? */
-	
+
 	if (vdp_dma_enable && (vdp_id & 0x20))
 	{
 		if (offset == 0 || offset == 2)
 		{
-			  
+
 		 vdp_vram_fill = COMBINE_WORD(vdp_vram_fill, data);
 			temp_vdp_address = vdp_address;
 //			if (errorlog) fprintf(errorlog,"DMA VRAM FILL, dest %x, fill %x, length %x, real dest %x, id %x, inc %x\n", vdp_address, vdp_vram_fill, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 			/* now do the rest of the DMA fill */
-			 						
+
 			for (tempsource = 0; tempsource < (vdp_dma_length*2); tempsource++)
 			{
 				if ( ((tempsource & 1) == 0)  )
@@ -485,11 +485,11 @@ void genesis_vdp_data_w (int offset, int data)
 
 			if (vdp_id == MODE_CRAM_WRITE_DMA)
 			{
-				 if (errorlog) fprintf(errorlog, "*** %x-%x\n", temp_vdp_address, vdp_dma_length*2); 
+				 if (errorlog) fprintf(errorlog, "*** %x-%x\n", temp_vdp_address, vdp_dma_length*2);
 				memset(dirty_colour + (temp_vdp_address), 1, (vdp_dma_length*2));
 			}
 
-		  
+
 			/* now do the VRAM-converted version */
 			if (vdp_id == MODE_VRAM_WRITE_DMA)
 			{
@@ -513,20 +513,20 @@ void genesis_vdp_data_w (int offset, int data)
 						//bitmap_vram->line[sy][sx + 1] = (vdp_vram_fill     ) & 0x0f;
 					  	tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
 
-				  
+
 						temp_vdp_address = (temp_vdp_address+vdp_auto_increment) & 0xffff;
 					}
 				}
  			}
- 										
+
 		}
 		return;
 	}
 	  /*	if (errorlog) fprintf(errorlog,"%x",vdp_vram_fill);*/
- 	  
+
 	/*  if (first_access && (offset == 1 || offset == 3))
 		if (errorlog) fprintf(errorlog, "misaligned\n"); */
-		 /*  	if (errorlog) fprintf(errorlog,"would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/ 
+		 /*  	if (errorlog) fprintf(errorlog,"would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/
 	if ((vdp_address & 1) && errorlog) fprintf(errorlog, "!");
 
 	switch (vdp_id)
@@ -538,7 +538,7 @@ void genesis_vdp_data_w (int offset, int data)
 			sy = ((vdp_address+(offset & 1))<<1) >> 3;
 			sx = ((vdp_address+(offset & 1))<<1) & 7;
 		  	COMBINE_WORD_MEM(vdp_address+(int)vdp_vram, data);
-	   		   
+
 	 		//bitmap_vram->line[sy][sx]     = (data >> 12) & 0x0f;
 	 		//bitmap_vram->line[sy][sx + 1] = (data >>  8) & 0x0f;
 			//bitmap_vram->line[sy][sx + 2] = (data >>  4) & 0x0f;
@@ -563,7 +563,7 @@ void genesis_vdp_data_w (int offset, int data)
 
    //	if ((offset == 1 || offset == 3) /*|| (data_width == 1)*/)
 		vdp_address += vdp_auto_increment;
-	
+
 	if (vdp_auto_increment == 1 && errorlog) fprintf(errorlog, "1");
 /*		first_access=0;*/
 }
@@ -583,7 +583,7 @@ fake_dma_mode ^=8;
 
 				   //	cpu_halt(0,0);
 				//	if (errorlog) fprintf(errorlog, "vdp ctrl status offset = %x\n", offset);
-	return vdp_ctrl_status;			
+	return vdp_ctrl_status;
 }
 
 void genesis_vdp_ctrl_w (int offset, int data)
@@ -595,10 +595,10 @@ void genesis_vdp_ctrl_w (int offset, int data)
 	switch (offset)
 	{
 		case 0:
-	  	case 2: 
+	  	case 2:
 	  	  	 /* if (errorlog) fprintf(errorlog, "genesis_vdp_ctrl_w %x, %x, %x, %x\n", offset, data, vdp_data, data >>16);*/
 
- 
+
 
 			if ((vdp_data & 0xe000) == 0x8000) /* general register write	*/
 			{
@@ -618,18 +618,18 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						vdp_dma_enable		= (vdp_data & 0x10);
 						vdp_30cell_enable	= (vdp_data & 0x08);
 						vdp_display_height  = vdp_30cell_enable ? 240 : 224;
-						
+
 						break;
 					case 2:	/* pattern name table address, scroll A */
 						vdp_pattern_scroll_a= (char *)(&vdp_vram[0]+(vdp_data << 10));
 //						if (errorlog) fprintf(errorlog, "scrolla = %x\n", vdp_pattern_scroll_a-(int)&vdp_vram[0]);
 //						if (errorlog) fprintf(errorlog, "VRAM is %x\n", &vdp_vram[0]);
-					   //	memset(dirty_attribute_a, -1, (128*128)*sizeof(short)); 
+					   //	memset(dirty_attribute_a, -1, (128*128)*sizeof(short));
 						break;
 					case 3:	/* pattern name table address, window */
 						vdp_pattern_window	= (char *)(&vdp_vram[0]+(vdp_data <<10));
-//						if (errorlog) fprintf(errorlog, "window = %x\n", vdp_pattern_window-(int)&vdp_vram[0]); 
-	
+//						if (errorlog) fprintf(errorlog, "window = %x\n", vdp_pattern_window-(int)&vdp_vram[0]);
+
 						break;
 					case 4:	/* pattern name table address, scroll B */
 						vdp_pattern_scroll_b= (char *)(&vdp_vram[0]+(vdp_data <<13));
@@ -662,7 +662,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						vdp_screenmode		= vdp_data;
 						vdp_h_width = ((vdp_data & 1) ? 320 : 256);
 						vdp_interlace = (vdp_data >> 1) & 3;
-						if (errorlog) fprintf(errorlog, "screen width, interlace flag = %d, %d\n", vdp_h_width, vdp_interlace);					
+						if (errorlog) fprintf(errorlog, "screen width, interlace flag = %d, %d\n", vdp_h_width, vdp_interlace);
 						break;
 					case 13: /* H scroll data address */
 						vdp_h_scroll_addr	= (char *)(&vdp_vram[0]+(vdp_data<<10));
@@ -683,7 +683,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 							case 2: break;
 							case 3: vdp_h_scrollsize = 128/*64*/; break;/* should be 128??? */
 						}
-									
+
 						switch (vdp_v_scrollsize)
 						{
 							case 0: vdp_v_scrollsize = 32; break;
@@ -706,11 +706,11 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						break;
 					case 19: /* DMA length counter low */
 						vdp_dma_length		= (vdp_dma_length & 0xff00) | vdp_data;
-						if (errorlog) fprintf(errorlog,"DMA length low.. length is %x\n", vdp_dma_length); 
+						if (errorlog) fprintf(errorlog,"DMA length low.. length is %x\n", vdp_dma_length);
 						break;
 					case 20: /* DMA length counter high */
 						vdp_dma_length		= (vdp_dma_length & 0xff) | (vdp_data << 8);
-						if (errorlog) fprintf(errorlog,"DMA length high.. length is %x\n", vdp_dma_length); 
+						if (errorlog) fprintf(errorlog,"DMA length high.. length is %x\n", vdp_dma_length);
 						break;
 					case 21: /* DMA source low  (total is SA1-SA22, thus the extra shift */
 						vdp_dma_source		= (vdp_dma_source & 0x7ffe00) | (vdp_data << 1);
@@ -720,7 +720,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						break;
 					case 23: /* DMA source high */
 						vdp_dma_source		= (vdp_dma_source & 0x01fffe) | ((vdp_data & 0x7f) << 17) ;
-					
+
 						vdp_dma_mode		= (vdp_data >> 6) & 0x03;
 						if (errorlog) fprintf(errorlog,"23:%x, %x\n",vdp_dma_mode, vdp_dma_source);
 						break;
@@ -737,35 +737,35 @@ void genesis_vdp_ctrl_w (int offset, int data)
 				}
 				else
 				{
-				   /*	 if (errorlog) fprintf(errorlog,"vdp data on second read is %x\n", vdp_data); */ 
+				   /*	 if (errorlog) fprintf(errorlog,"vdp data on second read is %x\n", vdp_data); */
 					vdp_address |= ((vdp_data & 0x03) << 14);
 					vdp_id |= ( (vdp_data & 0xf0) >> 2);
 					first_read	= 1;
 					if (errorlog) fprintf(errorlog,"vdp id is %x\n", vdp_id);
-					  								  
+
 					if (errorlog) fprintf(errorlog,"address set, %x\n", vdp_address);
 
 					if (vdp_dma_enable && (vdp_id & 0x20))
 					{
-							  
+
 						/* DMA! */
 						switch (vdp_dma_mode)
 						{
 /*#if 0*/
 							case DMA_ROM_VRAM:
 //								if (errorlog) fprintf(errorlog,"DMA ROM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
-								
-							  	genesis_initialise_dma(&Machine->memory_region[0][vdp_dma_source & 0x3fffff], vdp_address,	vdp_dma_length * 2, vdp_id, vdp_auto_increment); 
-																				
-/*#endif*/	
+
+							  	genesis_initialise_dma(&memory_region(REGION_CPU1)[vdp_dma_source & 0x3fffff], vdp_address,	vdp_dma_length * 2, vdp_id, vdp_auto_increment);
+
+/*#endif*/
 								break;
 							case DMA_RAM_VRAM:
 //								if (errorlog) fprintf(errorlog,"DMA RAM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 
 								/*	if (vdp_address+(vdp_dma_length*vdp_auto_increment) > 0xffff) printf("error! sdil: %x %x %x %x\n", vdp_dma_source, vdp_address, vdp_auto_increment, vdp_dma_length);*/
-											
-							  	genesis_initialise_dma(&genesis_sharedram[vdp_dma_source & 0xffff], vdp_address,	vdp_dma_length * 2, vdp_id, vdp_auto_increment); 
-							   
+
+							  	genesis_initialise_dma(&genesis_sharedram[vdp_dma_source & 0xffff], vdp_address,	vdp_dma_length * 2, vdp_id, vdp_auto_increment);
+
 								break;
 							case DMA_VRAM_FILL: /* handled at other port :-) */
 								if (errorlog) fprintf(errorlog, "VRAM FILL pending, awaiting fill data set\n");
@@ -777,7 +777,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 								{
 									 *tempdest = *(char *)(vdp_vram+(vdp_dma_source)+tempsource);
 									 tempdest += vdp_auto_increment;
-								} 
+								}
 								*/
 								break;
 							default:
@@ -808,7 +808,7 @@ void genesis_dma_poll (int amount)
 	{
 	//cpu_yield();
 		if (errorlog) fprintf(errorlog, "poll: src %p, end %p, id %x, vram dest %x, inc %x\n", current_dma_src, current_dma_end, current_dma_id, current_dma_vram_dest, current_dma_increment);
-		  
+
 		while (indx < amount && current_dma_src < current_dma_end)
 		{
 			#ifdef PLSB_FIRST
@@ -818,9 +818,9 @@ void genesis_dma_poll (int amount)
 			*(current_dma_dest)		= *(current_dma_src++);
 			*(current_dma_dest+1)	= *(current_dma_src++);
 			#endif
-			
+
 			current_dma_dest += current_dma_increment;
-			
+
 		   	counter++;
 			indx +=2;
 		}
@@ -831,22 +831,22 @@ void genesis_dma_poll (int amount)
 
 		if (vdp_id == MODE_CRAM_WRITE_DMA)
 			{
-				if (errorlog) fprintf(errorlog, "%x-%x\n", current_dma_vram_dest, counter); 
+				if (errorlog) fprintf(errorlog, "%x-%x\n", current_dma_vram_dest, counter);
 				memset(dirty_colour + (current_dma_vram_dest), 1, counter);
 			}
 
 
 		/* Now generate a modified video image of the VRAM data */
-		 
+
 	  //	#if 0
 	  	if (current_dma_id == MODE_VRAM_WRITE_DMA)
 		{
 		  	int offset = 0;
-		  	
+
 			while (counter--)
 			{
 				int sx, sy;
-				
+
 				sy = ((current_dma_vram_dest + offset)) >> 3;
 				sx = ((current_dma_vram_dest + offset)) & 7;
 
@@ -861,7 +861,7 @@ void genesis_dma_poll (int amount)
 				//bitmap_vram->line[sy][sx + 6] = ((*old_current_dma_dest) >> 4) & 0x0f;
 	 	  		//bitmap_vram->line[sy][sx + 7] = (*old_current_dma_dest++) & 0x0f;
 	 	  		//bitmap_vram->line[sy][sx + 4] = ((*old_current_dma_dest) >> 4) & 0x0f;
-	 	  		//bitmap_vram->line[sy][sx + 5] = (*old_current_dma_dest++) & 0x0f; 
+	 	  		//bitmap_vram->line[sy][sx + 5] = (*old_current_dma_dest++) & 0x0f;
 
 				#else
 
@@ -872,28 +872,28 @@ void genesis_dma_poll (int amount)
 				//bitmap_vram->line[sy][sx + 4] = ((*old_current_dma_dest) >> 4) & 0x0f;
 	 	  		//bitmap_vram->line[sy][sx + 5] = (*old_current_dma_dest++) & 0x0f;
 	 	  		//bitmap_vram->line[sy][sx + 6] = ((*old_current_dma_dest) >> 4) & 0x0f;
-	 	  		//bitmap_vram->line[sy][sx + 7] = (*old_current_dma_dest++) & 0x0f; 
+	 	  		//bitmap_vram->line[sy][sx + 7] = (*old_current_dma_dest++) & 0x0f;
 
 				#endif
 
 			 	if ((sy >> 3) < 0x7ff) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
 				//if (errorlog && (sy >> 3) > 0x800) fprintf(errorlog,2 "ERK! %x\n", (sy >> 3));
-		
-			
+
+
 				offset += 4;
 #if 0
 				*ptr++		= ((*old_current_dma_src) >> 4) & 0x0f;
 				*ptr++		= (*old_current_dma_src++) & 0x0f;
-				
+
 				*ptr++		= ((*old_current_dma_src) >> 4) & 0x0f;
 				*ptr++		= (*old_current_dma_src++) & 0x0f;
 #endif
 				current_dma_vram_dest += (current_dma_increment << 1);
-				
+
 			}
 		}
 	//	#endif
-			 
+
 	}
 }
 
@@ -908,11 +908,11 @@ void genesis_initialise_dma (unsigned char *src, int dest, int length, int id, i
 	vdp_dma_busy = 1;
 	current_dma_vram_dest = dest << 1;
 	genesis_dma_poll(165535);
-	
+
 }
 
 /* defines for compares to the numbers used in the priority table */
-#define SPRITE			0x3													
+#define SPRITE			0x3
 #define SCROLL_A		0x2
 #define SCROLL_B		0x1
 #define BACKGROUND		0x4
@@ -940,7 +940,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 	unsigned char *bm;
 	unsigned char *c;
 	int tilenum;
-	int line; 
+	int line;
 	//int position = ((sy>>3)<<7)+ (sx>>3);
 	int flips = (attribute & 0x1800);
 	unsigned int firsthalf, secondhalf;
@@ -964,7 +964,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
  //	if (dest == scroll_a)
  //	{
  //		attribute = attribute_a;
- //		
+ //
  //	}
  //	else
  //	{
@@ -1007,13 +1007,13 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		for (line = 0; line < 8; line++)
 		{
 			//	c  = &bitmap_vram->line[(tilenum<<3)+line][0];
-		  	 /*   bm[0]=(c[OF0]>>4)  | code; 
-			    bm[1]=(c[OF0]&0xf) | code; 
-			    bm[2]=(c[OF1]>>4)  | code; 
-			    bm[3]=(c[OF1]&0xf) | code; 
-			    bm[4]=(c[OF2]>>4)  | code; 
-			    bm[5]=(c[OF2]&0xf) | code; 
-			    bm[6]=(c[OF3]>>4)  | code; 
+		  	 /*   bm[0]=(c[OF0]>>4)  | code;
+			    bm[1]=(c[OF0]&0xf) | code;
+			    bm[2]=(c[OF1]>>4)  | code;
+			    bm[3]=(c[OF1]&0xf) | code;
+			    bm[4]=(c[OF2]>>4)  | code;
+			    bm[5]=(c[OF2]&0xf) | code;
+			    bm[6]=(c[OF3]>>4)  | code;
 			    bm[7]=(c[OF3]&0xf) | code; 	*/
 				firsthalf  = ((c[OF0]>>4) | ((c[OF0]&0xf)<<8) | ((c[OF1]>>4)<<16) | ((c[OF1]&0xf)<<24))	| code;
 				secondhalf = ((c[OF2]>>4) | ((c[OF2]&0xf)<<8) | ((c[OF3]>>4)<<16) | ((c[OF3]&0xf)<<24))	| code;
@@ -1023,7 +1023,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 				bm+=1024;
 			  //	position += vdp_v_scrollsize;
 			  //	mask[position]=code;
-			  			 				
+
 		}
 		break;
 	   #if 0
@@ -1033,7 +1033,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		{
 			bm = dest+((sy+line)<<10)+sx;
 		//	c  = &bitmap_vram->line[(tilenum<<3)+line][0];
-		   
+
 		   if !(		bm[1]=(c[OF3]>>4)  ;
 		   if !(		bm[0]=(c[OF3]&0xf) ;
 		   if !(		bm[3]=(c[OF2]>>4)  ;
@@ -1042,9 +1042,9 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		   if !(		bm[4]=(c[OF1]&0xf) ;
 		   if !(		bm[7]=(c[OF0]>>4)  ;
 		   if !(		bm[6]=(c[OF0]&0xf) ;
-				
+
 				c+=4;
-			 			 				
+
 		}
 		break;
 
@@ -1054,7 +1054,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		{
 			bm = dest+((sy+line)<<10)+sx;
 		//	c  = &bitmap_vram->line[(tilenum<<3)+(7-line)][0];
-			
+
 		   if !(		bm[0]=(c[OF0]>>4)  ;
 		   if !(		bm[1]=(c[OF0]&0xf) ;
 		   if !(		bm[2]=(c[OF1]>>4)  ;
@@ -1064,9 +1064,9 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		   if !(		bm[6]=(c[OF3]>>4)  ;
 		   if !(		bm[7]=(c[OF3]&0xf) ;
 				c-=4;
-		   
-		   			 	
-			
+
+
+
 		}
 		break;
 
@@ -1076,7 +1076,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		{
 			bm = dest+((sy+line)<<10)+sx;
 		//	c  = &bitmap_vram->line[(tilenum<<3)+(7-line)][0];
-		   
+
 		   if !(	bm[1]=(c[OF3]>>4)  ;
 		   if !(	bm[0]=(c[OF3]&0xf) ;
 		   if !(	bm[3]=(c[OF2]>>4)  ;
@@ -1085,9 +1085,9 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 		   if !(	bm[4]=(c[OF1]&0xf) ;
 		   if !(	bm[7]=(c[OF0]>>4)  ;
 		   if !(	bm[6]=(c[OF0]&0xf) ;
-				
+
 				c-=4;
-		  			 				
+
 		}
 		break;
 		#endif
@@ -1126,21 +1126,21 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 	int offs;
    //	int old_a_attribute=0, old_b_attribute=0;
 	//unsigned int oldpriority = 0;
-	
+
 	int  sx = 0;
     int sy = 0;
 	int pom;
 	int num_a, num_b;
-    
+
     debug_a_y=0;
 
    //	if (errorlog)
    //		for (offs = 0; offs < (1024*128); offs++)
    //			fprintf(errorlog, "%x %x\n", zbuffera[offs], zbufferb[offs]);
-   
+
  	for (pom = 0x0;pom < (vdp_h_scrollsize*vdp_v_scrollsize)<<1; pom+=2)
 	{
-		
+
 		int attribute_a = *(unsigned short *)(vdp_pattern_scroll_a+pom);
  		int attribute_b = *(unsigned short *)(vdp_pattern_scroll_b+pom);
 		offs=pom >> 1;
@@ -1154,32 +1154,32 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 
 		if ((dirty_attribute_a[offs] !=attribute_a) || tile_changed_1[num_a])
 		{
-		debug_a_y++;	
+		debug_a_y++;
 	   		genesis_plot_layer_tile(scroll_a, attribute_a, sx, sy);
-		 
+
 			dirty_attribute_a[offs] = attribute_a;
 		//	tile_changed_2[num_a] = 0;
 		//  	tile_changed_1[num_a] = 0;
-			
+
 		}
 
 		if ((dirty_attribute_b[offs] !=attribute_b) || tile_changed_1[num_b])
 		{
-	   
+
 	   	  	debug_a_y++;
 		  	genesis_plot_layer_tile(scroll_b, attribute_b, sx, sy);
-	   				
+
 			dirty_attribute_b[offs] = attribute_b;
 		//	tile_changed_2[num_b] = 0;
 		//  	tile_changed_1[num_b] = 0;
-			
+
 		}
 
 	 sx+=8;
 	}
-	if (errorlog) fprintf(errorlog, "tiles redrawn = %d\n", debug_a_y);	
+	if (errorlog) fprintf(errorlog, "tiles redrawn = %d\n", debug_a_y);
 	/* swap the tile changed buffers around */
-					 
+
  // 	temp_ptr = tile_changed_1;
  // 	tile_changed_1 = tile_changed_2; /* tile_changed_1 will now be zeroed */
  // 	tile_changed_2 = temp_ptr;
@@ -1189,7 +1189,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 	/* the 'sram' scroll RAM areas contain interleaved scroll offset values for layers A & B */
 
 	/* initial Y scroll values */
- 
+
 	scroll_a_y =  (vdp_vsram[0] ) & v_mask;
 	scroll_b_y =  (vdp_vsram[1] ) & v_mask;
 
@@ -1206,7 +1206,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
   	for (y = startline; y < endline-1; y++)
 	{
 	 	/*our 'chunks' of the rendered scanline, either 1 *whole* scanline or multiple chunks of 16 bytes */
-	 		
+
 		for (x = 0; x < vdp_h_width; x+=increment)
 		{
 
@@ -1214,7 +1214,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 			position of the display raster position.
 			These are the positions of the source pixels */
 
-		   	
+
 		   	/* y values will only change when (x & 0x0f) == 0, IE each iteration of this loop	*/
 
 				switch (vdp_v_scrollmode)
@@ -1232,7 +1232,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 
 				scroll_a_y = (scroll_a_y+y) & v_mask;
 				scroll_b_y = (scroll_b_y+y) & v_mask;
-	 
+
 				switch (vdp_h_scrollmode)
 				{
 					case 0: /* horizontally scroll as a whole */
@@ -1259,9 +1259,9 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 
    		   	sprite_ptr = spritelayer +(y<<9)+x;
 			output_ptr = &dest->line[y][x];
-		  
+
 		  	scroll_a_pixel = scroll_a+(scroll_a_y<<10);
-		  	scroll_b_pixel = scroll_b+(scroll_b_y<<10);	
+		  	scroll_b_pixel = scroll_b+(scroll_b_y<<10);
 
 			for (indx = 0; indx < increment; indx+=8)
 			{
@@ -1272,7 +1272,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 			unsigned int table_offset;
 			unsigned char sprite_priority;
 			unsigned char output_pixel;
- 
+
 				table_offset = (((((zbuffera[(scroll_a_y<<7)+(( scroll_a_x    )>>3)] << 8)
 							 |     (zbuffera[(scroll_a_y<<7)+(((scroll_a_x+8)&h_mask )>>3)])    )
 								 >>  (8-(scroll_a_x & 3 ))) & 0xff) << 8);
@@ -1285,7 +1285,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 			  		fprintf(errorlog, "ax,bx,ay,by,table offset %d, %d, %d, %d, %x, %x\n", scroll_a_x, scroll_b_x,
 			  																			   scroll_a_y, scroll_b_y,
 			  																			   table_offset,0
-			  																						  							   
+
 			  																			   );
 			  		fflush(errorlog);
 			  	} */
@@ -1295,7 +1295,7 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 	   //			zza= priority_table[0];
 	   //			zzb= priority_table[1];
 	   //			zzs= priority_table[2];
-				
+
 			  	for (priority_loop = 0; priority_loop < 16; priority_loop+=2)
 				{
 					sprite_priority = (sprite_ptr[0] & 0x80) ? 4 : 0;
@@ -1331,8 +1331,8 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 							output_pixel = (sprite_ptr[0]&0x7f);
 							z = zzs;
 						}
-					
-					if (z == 0) output_pixel = vdp_background_colour; 
+
+					if (z == 0) output_pixel = vdp_background_colour;
 
 					*(output_ptr++) = Pen[output_pixel];
 					scroll_a_x = (++scroll_a_x) & h_mask;
@@ -1343,23 +1343,23 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 				  //	zzs >>=2;
 				}
 
-			 
+
 				/* here, the priority information in the table is used as a shift register to calculate
 				which layer should have it's pixel read and decoded to see if it's opaque - if it is, this
 				is the pixel that will end up on the screen, otherwise we drop through to the layer behind it */
-				
+
 				/* note that the address indirections only occur when it's necessary to indirect, all
 				calculations act on an address which will be indirected only when it's absolutely necessary
 				to obtain the pixel's value */
-						  
+
 				/**(int *)output_ptr=(Pen[output1]      )+
 								   (Pen[output2] <<  8)+
 								   (Pen[output3] << 16)+
 								   (Pen[output4] << 24); */
 
-				
-				
-				//output_ptr+=8;	
+
+
+				//output_ptr+=8;
 				//if (*output_ptr != output) *output_ptr = output;
 
 				/* increment our X position within the layers accounting for wraparound */
@@ -1368,14 +1368,14 @@ void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
 			}
 
 		}
-	
-	} 
-	
+
+	}
+
 }
 
 
 
-			
+
 
 
 /* fonky tile plotter - ASMable fairly easily */
@@ -1389,7 +1389,7 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 	int line;
 	unsigned char *bm;
 	unsigned char *c;
-	 
+
 
 	int flips = (attribute & 0x1800);
 	#ifdef LSB_FIRST
@@ -1425,7 +1425,7 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 				if (!(bm[7]&0x0f)) bm[7]=(c[OF3]&0xf) | code;
 				c+=4;
 				bm += 512;
-			   			 				
+
 		}
 		break;
 
@@ -1435,9 +1435,9 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 
 		for (line = 0; line < 8; line++)
 		{
-			
+
 		//	c  = &bitmap_vram->line[(tilenum<<3)+line][0];
-		   
+
 		   		if (!(bm[1]&0x0f)) bm[1]=(c[OF3]>>4) | code;
 				if (!(bm[0]&0x0f)) bm[0]=(c[OF3]&0xf) | code;
 				if (!(bm[3]&0x0f)) bm[3]=(c[OF2]>>4) | code;
@@ -1446,10 +1446,10 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 				if (!(bm[4]&0x0f)) bm[4]=(c[OF1]&0xf) | code;
 				if (!(bm[7]&0x0f)) bm[7]=(c[OF0]>>4) | code;
 				if (!(bm[6]&0x0f)) bm[6]=(c[OF0]&0xf) | code;
-				
+
 				c+=4;
 				bm += 512;
-			 			 				
+
 		}
 		break;
 
@@ -1459,9 +1459,9 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 
 		for (line = 0; line < 8; line++)
 		{
-			
+
 		//	c  = &bitmap_vram->line[(tilenum<<3)+(7-line)][0];
-			
+
 				if (!(bm[0]&0x0f)) bm[0]=(c[OF0]>>4) | code;
 				if (!(bm[1]&0x0f)) bm[1]=(c[OF0]&0xf) | code;
 				if (!(bm[2]&0x0f)) bm[2]=(c[OF1]>>4) | code;
@@ -1472,8 +1472,8 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 				if (!(bm[7]&0x0f)) bm[7]=(c[OF3]&0xf) | code;
 				c-=4;
 		   		bm -= 512;
-		   			 	
-			
+
+
 		}
 		break;
 
@@ -1483,7 +1483,7 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 		for (line = 0; line < 8; line++)
 		{
 			//	c  = &bitmap_vram->line[(tilenum<<3)+(7-line)][0];
-		   
+
 		   		if (!(bm[1]&0x0f)) bm[1]=(c[OF3]>>4) | code;
 				if (!(bm[0]&0x0f)) bm[0]=(c[OF3]&0xf) | code;
 				if (!(bm[3]&0x0f)) bm[3]=(c[OF2]>>4) | code;
@@ -1492,10 +1492,10 @@ void genesis_plot_sprite_tile(int tilenum, int attribute, int sx, int sy)
 				if (!(bm[4]&0x0f)) bm[4]=(c[OF1]&0xf) | code;
 				if (!(bm[7]&0x0f)) bm[7]=(c[OF0]>>4) | code;
 				if (!(bm[6]&0x0f)) bm[6]=(c[OF0]&0xf) | code;
-				
+
 				c-=4;
 				bm -= 512;
-		   			 				
+
 		}
 		break;
 
@@ -1518,14 +1518,14 @@ void plot_sprites(int priority)
 	while(1)
 	{
 		int indx, x, y, code, attribute, size, blocks_x, blocks_y;
-	   
+
 		attribute = *(unsigned short *)(current_sprite+4);
-		
+
 
 		/* plot from top to bottom, starting with highest priority */
 
-		
-	  
+
+
 		if ((attribute & 0x8000) == priority)
 		{
 			code = attribute & 0x7ff;
@@ -1550,7 +1550,7 @@ void plot_sprites(int priority)
 								x+(( indx / blocks_y)<<3),y+((indx % blocks_y)<<3));
 					}
 				break;
-				
+
 				case 0x800: /* X flips */
 				for (indx = 0; indx < (blocks_x * blocks_y); indx ++)
 					{
@@ -1559,9 +1559,9 @@ void plot_sprites(int priority)
 								x+((blocks_x-1)<<3)-(( indx / blocks_y)<<3),y+((indx % blocks_y)<<3));
 					}
 
-				
+
 				break;
-				
+
 				case 0x1000: /* Y flips */
 				for (indx = 0; indx < (blocks_x * blocks_y); indx ++)
 					{
@@ -1572,7 +1572,7 @@ void plot_sprites(int priority)
 
 
 				break;
-				
+
 				case 0x1800: /* X & Y flips */
 				for (indx = 0; indx < (blocks_x * blocks_y); indx ++)
 					{
@@ -1581,15 +1581,15 @@ void plot_sprites(int priority)
 								x+((blocks_x-1)<<3)-(( indx / blocks_y)<<3),y+((blocks_y-1)<<3)-((indx % blocks_y)<<3));
 					}
 
-				
+
 				break;
-			} 
+			}
 
-		 	   
+
 		}
-		
 
-	
+
+
 
 	   /*	if (errorlog) fprintf(errorlog, "addr = %x, sprcount %x\n", current_sprite, numberofsprites);  */
 		if (*(current_sprite + NEXT) == 0) break;
@@ -1617,19 +1617,19 @@ void plot_sprites(int priority)
 void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 //void genesis_modify_display(int inter)
 {
-  
+
    	int offs;
    	int pom;
 	int sx,sy;
-  
+
 	void *temp_ptr;
 
-	
+
 	/* as we're dealing with VRAM memory, which was copied over using *(short *) accsses, the bytes
 	will be mangled on littleendian systems to allow this. As a result, we need to take these into
 	account when accessing this area byte-wise */
-  	
-      
+
+
 	struct rectangle visiblearea =
 	{
 		0, 0,
@@ -1642,7 +1642,7 @@ void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
   //		0, 0
   //	};
 
-	
+
 //	char vdp_h_mask = vdp_h_scrollsize-1;
    //cpu_halt(1,0);
    if (!vdp_v_interrupt || !vdp_display_enable) return;
@@ -1652,7 +1652,7 @@ void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
  //  		cpu_cause_interrupt(1,Z80_NMI_INT);
  //		if (errorlog) fprintf(errorlog, "Allowing Z80 interrupt\n");
  //  }
-    
+
 	/* Setup the non-constant fields */
 	//scroll_element.gfxdata = bitmap_vram;
 	visiblearea.max_x = (vdp_h_scrollsize<<3)-1;
@@ -1660,21 +1660,21 @@ void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
   //	spritelayer->width = visiblearea.max_x + 256;
   //	spritelayer->height = visiblearea.max_y + 256;
 	//scroll_element.colortable = &colours[0];
-	
+
       /*	genesis_dma_poll(200); */
 /*	if (!vdp_display_enable) return;*/
-  
+
 
 /* organise sprites by priority, into the sprite layer  */
 
   // 	fillbitmap(spritelayer, colours[0], 0);
    //if (inter == 0)
-   
+
  // 	plot_sprites(0x8000);
  // 	plot_sprites(0);
 
 /* translate palette */
- 
+
 	if (dirty_colour[0])
 	{
 		int colour = vdp_cram[vdp_background_colour];
@@ -1701,22 +1701,22 @@ void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 			dirty_colour[pom] = 0;
 		}
 	}
-	
-  
+
+
 	//fillbitmap(spritelayer, 0, 0); /* note this is the value 0, not pen 0 */
 	memset(spritelayer, 0, 512*256);
   	plot_sprites(0x8000);
   	plot_sprites(0);
 
 
-     
-   					  
+
+
 	/* combine all the layers adding scroll, wraparound and distortion, into the output bitmap */
-             
+
    //	combinelayers(bitmap,0,vdp_display_height);
 	// combinelayers(bitmap2,inter,inter+2);
 	combinelayers3(bitmap,0,vdp_display_height);
 
-    
+
 }
 

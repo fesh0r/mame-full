@@ -18,6 +18,8 @@
 
 static struct osd_bitmap *maria_bitmap;
 
+unsigned char *ROM;
+
 /********** Maria ***********/
 
 #define DPPH 0x2c
@@ -95,14 +97,14 @@ int ind_bytes;
     while (ROM[dl + 1] != 0) {
 
 	/* Extended header */
-	if ((ROM[dl+1] & 0x5F) == 0x40) {                
+	if ((ROM[dl+1] & 0x5F) == 0x40) {
 	    graph_adr = (ROM[dl+2] << 8) | ROM[dl];
 	    width = ((ROM[dl+3] ^ 0xff) & 0x1F) + 1;
 	    hpos = ROM[dl+4]*2;
 	    pal = ROM[dl+3] >> 5;
 	    maria_write_mode = (ROM[dl+1] & 0x80) >> 5;
 	    ind = ROM[dl+1] & 0x20;
-	    dl+=5;    
+	    dl+=5;
 	}
 	/* Normal header */
 	else {
@@ -115,12 +117,12 @@ int ind_bytes;
 	 }
 	 mode = (ROM[CTRL] & 0x03) | maria_write_mode;
 //       if (errorlog) fprintf(errorlog,"%x DL: ADR=%x  width=%x  hpos=%x  pal=%x  mode=%x  ind=%x\n",maria_scanline,graph_adr,width,hpos,pal,mode,ind);
-	   
-	 switch (mode) {                                   
+
+	 switch (mode) {
 	    case 0x00:  /* 160A (160x2) */
 	       for (x=0; x<width; x++) {
 		  ind_bytes = 1;
-		    
+
 		  /* Do direct mode */
 		  if (!ind) {
 		     data_addr = graph_adr + x + (maria_offset  << 8);
@@ -137,7 +139,7 @@ int ind_bytes;
 
 		  while (ind_bytes > 0) {
 		  ind_bytes--;
-		  d = ROM[data_addr++];                                    
+		  d = ROM[data_addr++];
 		  c = (d & 0xC0) >> 6;
 		  if (c) {
 		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
@@ -187,9 +189,9 @@ int ind_bytes;
 		  if (hpos > 510) hpos=0;
 	       }
 	       }
-	       break;              
+	       break;
 	    case 0x03:  /* MODE 320A */
-	       for (x=0; x<width; x++) {          
+	       for (x=0; x<width; x++) {
 		  /* Do direct mode */
 		  if (!ind) {
 		     data_addr = graph_adr + x + (maria_offset  << 8);
@@ -266,7 +268,7 @@ int ind_bytes;
 	       break;
 
 	    case 0x07: /* (320C mode) */
-	      for (x=0; x<width; x++) {          
+	      for (x=0; x<width; x++) {
 		  /* Do direct mode */
 		  if (!ind) {
 		     data_addr = graph_adr + x + (maria_offset  << 8);
@@ -323,7 +325,7 @@ int ind_bytes;
 	      break;
 	    default:
 	      if (errorlog) fprintf(errorlog,"Undefined mode: %x\n",mode);
-	 }       
+	 }
     }
 }
 
@@ -334,12 +336,12 @@ int a7800_interrupt(void)
 
     maria_scanline++;
     frame_scanline = maria_scanline % 263;
-    
+
     if (maria_wsync) {
       cpu_trigger(TRIGGER_HSYNC);
       maria_wsync=0;
     }
-    
+
     if (frame_scanline == 16) {
       maria_vblank=0;
       if (maria_dmaon_pending || maria_dmaon) {
@@ -367,7 +369,7 @@ int a7800_interrupt(void)
 	  }
 	  else {
 	     maria_offset--;
-	  } 
+	  }
        }
     if (frame_scanline == 258) {
        maria_vblank = 1;
@@ -388,7 +390,8 @@ int a7800_interrupt(void)
 
 ***************************************************************************/
 /* This routine is called at the start of vblank to refresh the screen */
-void a7800_vh_screenrefresh(struct osd_bitmap *bitmap)
+void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+//void a7800_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
     maria_scanline=0;
     copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -399,7 +402,7 @@ void a7800_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 int a7800_MARIA_r(int offset) {
     switch (offset) {
-	
+
 	case 0x08:
           return input_port_2_r(0x00);
 	default:
@@ -410,7 +413,7 @@ int a7800_MARIA_r(int offset) {
 
 void a7800_MARIA_w(int offset, int data) {
     switch (offset) {
-	
+
 	case 0x00:
 	    maria_backcolor = Machine->pens[data];
 	    break;
@@ -426,7 +429,7 @@ void a7800_MARIA_w(int offset, int data) {
 	case 0x04:
 	    timer_holdcpu_trigger(0,TRIGGER_HSYNC);
 	    maria_wsync=1;
-	    break;            
+	    break;
 
 	case 0x05:
 	    maria_palette[1][1] = Machine->pens[data];
@@ -447,7 +450,7 @@ void a7800_MARIA_w(int offset, int data) {
 	case 0x0B:
 	    maria_palette[2][3] = Machine->pens[data];
 	    break;
-	    
+
 	case 0x0D:
 	    maria_palette[3][1] = Machine->pens[data];
 	    break;
@@ -506,7 +509,7 @@ void a7800_MARIA_w(int offset, int data) {
 	case 0x1F:
 	    maria_palette[7][3] = Machine->pens[data];
 	    break;
-	    
+
     }
     ROM[0x20 + offset] = data;
 }

@@ -3,7 +3,7 @@
 /* this is a display list graphics chip, with bitmap,
 character and attribute graphics modes. Each entry in the
 display list defines a char line, with variable number of
-scanlines. Colour modes are 2,4, 16 and 256 colour. 
+scanlines. Colour modes are 2,4, 16 and 256 colour.
 Nick has 256 colours, 3 bits for R and G, with 2 bits for Blue.
 It's a nice and flexible graphics processor..........
  */
@@ -33,6 +33,75 @@ static char Nick_FetchByte(unsigned long Addr)
 /*****************************************************/
 
 
+/* Enterprise has 256 colours, all may be on the screen at once!
+the NICK_GET_RED8, NICK_GET_GREEN8, NICK_GET_BLUE8 macros
+return a 8-bit colour value for the index specified.  */
+static unsigned char nick_colour_palette[256*3];
+
+/* the mapping doesn't change - EP uses 0..256 index's for
+colour specification - don't know if I require this for the
+driver or not. */
+static unsigned short nick_colour_table[256]=
+{
+	0,1,2,3,4,5,6,7,8,
+	9,10,11,12,13,14,15,16,
+	17,18,19,20,21,22,23,24,
+	25,26,27,28,29,30,31,32,
+	33,34,35,36,37,38,39,40,
+	41,42,43,44,45,46,47,48,
+	49,50,51,52,53,54,55,56,
+	57,58,59,60,61,62,63,64,
+	65,66,67,68,69,70,71,72,
+	73,74,75,76,77,78,79,80,
+	81,82,83,84,85,86,87,88,
+	89,90,91,92,93,94,95,96,
+	97,98,99,100,101,102,103,104,
+	105,106,107,108,109,110,111,
+	112,113,114,115,116,117,118,
+	119,120,121,122,123,124,125,
+	126,127,128,129,130,131,132,
+	133,134,135,136,137,138,139,
+	140,141,142,143,144,145,146,
+	147,148,149,150,151,152,153,
+	154,155,156,157,158,159,160,
+	161,162,163,164,165,166,167,
+	168,169,170,171,172,173,174,
+	175,176,177,178,179,180,181,
+	182,183,184,185,186,187,188,
+	189,190,191,192,193,194,195,
+	196,197,198,199,200,201,202,
+	203,204,205,206,207,208,209,
+	210,211,212,213,214,215,216,
+	217,218,219,220,221,222,223,
+	224,225,226,227,228,229,230,
+	231,232,233,234,235,236,237,
+	238,239,240,241,242,243,244,
+	245,246,247,248,249,250,251,
+	252,253,254,255
+};
+
+
+/* initial the palette */
+void nick_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+      int i;
+
+	for (i=0; i<256; i++)
+	{
+		nick_colour_palette[(i*3)] = NICK_GET_RED8(i);
+		nick_colour_palette[(i*3)+1] = NICK_GET_GREEN8(i);
+		nick_colour_palette[(i*3)+2] = NICK_GET_BLUE8(i);
+	}
+
+
+    memcpy(palette, nick_colour_palette , sizeof(nick_colour_palette));
+        memcpy(colortable, nick_colour_table, sizeof(nick_colour_table));
+	color_prom=malloc(0*sizeof(char));
+
+	palette_recalc();
+
+}
+
 /* first clock visible on left hand side */
 static unsigned char Nick_FirstVisibleClock;
 /* first clock visible on right hand side */
@@ -49,8 +118,8 @@ static void Nick_CalcVisibleClocks(int Width)
 {
 	/* number of clocks we can see */
 	int NoOfVisibleClocks = Width/NICK_PIXELS_PER_CLOCK;
-	
-	Nick_FirstVisibleClock = 
+
+	Nick_FirstVisibleClock =
 		(NICK_TOTAL_CLOCKS_PER_LINE - NoOfVisibleClocks)>>1;
 
 	Nick_LastVisibleClock = Nick_FirstVisibleClock + NoOfVisibleClocks;
@@ -73,26 +142,26 @@ void	Nick_Init(void)
 		int PenIndex;
 
 		PenIndex = (
-				((i & 0x080)>>(7-1)) | 
-				((i & 0x08)>>(3-0))
+                                (((i & 0x080)>>7)<<0) |
+                                (((i & 0x08)>>3)<<1)
 				);
-		
-		Nick_PenIndexLookup_4Colour[i] = 
+
+                Nick_PenIndexLookup_4Colour[i] = PenIndex;
 
 		PenIndex = (
-				((i & 0x080)>>(7-3)) | 
-				((i & 0x08)>>(3-2)) |
-				((i & 0x020)>>(5-1)) |
-				((i & 0x02)>>(1-0))
+                                ((((i & 0x080)>>7))<<0) |
+                                ((((i & 0x08)>>3))<<1)  |
+                                ((((i & 0x020)>>5))<<2) |
+                                ((((i & 0x02)>>1))<<3)
 				);
-				
+
 		Nick_PenIndexLookup_16Colour[i] = PenIndex;
 	}
 
-	Nick_CalcVisibleClocks(50*16);	
+	Nick_CalcVisibleClocks(50*16);
 
 //	Nick.BORDER = 0;
-//	Nick.FIXBIAS = 0;	
+//	Nick.FIXBIAS = 0;
 }
 
 /* write border colour */
@@ -113,7 +182,7 @@ static void Nick_DoLeftMargin(LPT_ENTRY *pLPT)
 		unsigned char LeftMargin;
 
 		LeftMargin = NICK_GET_LEFT_MARGIN(pLPT->LM);
-	
+
 		if (LeftMargin>Nick_FirstVisibleClock)
 		{
 			unsigned char LeftMarginVisible;
@@ -167,7 +236,7 @@ static void Nick_WritePixels2Colour(unsigned char Pen0, unsigned char Pen1, unsi
 		ColIndex = Nick.LPT.COL[PenIndex];
 
 		NICK_WRITE_PIXEL(ColIndex, Nick.dest);
-		
+
 		Data = Data<<1;
 	}
 }
@@ -225,12 +294,12 @@ static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 //			{
 //				if (Data & 0x040)
 //				{
-//					PenOffset|=0x04;		
+//					PenOffset|=0x04;
 //				}
 //			}
 
 
-			
+
 			Nick_WritePixels2Colour(PenOffset,
 				(PenOffset|0x01), Data);
 		}
@@ -331,7 +400,7 @@ static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 
 
 		}
-		break; 
+		break;
 	}
 }
 
@@ -344,7 +413,7 @@ static void Nick_DoPixel(int ClocksVisible)
 	{
 		Buf1 =  Nick_FetchByte(Nick.LD1);
 		Nick.LD1++;
-		
+
 		Buf2 = Nick_FetchByte(Nick.LD1);
 		Nick.LD1++;
 
@@ -381,7 +450,7 @@ static void Nick_DoAttr(int ClocksVisible)
 		Nick.LD1++;
 
 		Buf2 = Nick_FetchByte(Nick.LD2);
-		Nick.LD2++;		
+		Nick.LD2++;
 
 		{
 			unsigned char BackgroundColour = ((Buf1>>4) & 0x0f);
@@ -417,7 +486,7 @@ static void Nick_DoCh128(int ClocksVisible)
 		Buf1 = Nick_FetchByte(Nick.LD1);
 		Nick.LD1++;
 		Buf2 = Nick_FetchByte(ADDR_CH128(Nick.LD2, Buf1));
-	
+
 		Nick_WritePixels(Buf2,Buf1);
 	}
 }
@@ -451,18 +520,18 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 	if (ClocksVisible!=0)
 	{
 		unsigned char DisplayMode;
-	
+
 		/* get display mode */
 		DisplayMode = NICK_GET_DISPLAY_MODE(pLPT->MB);
-	
-		if ((Nick.ScanLineCount == 0))	// || 
+
+		if ((Nick.ScanLineCount == 0))	// ||
 			//((pLPT->MB & NICK_MB_VRES)==0))
 		{
 			/* doing first line */
 			/* reload LD1, and LD2 (if necessary) regardless of display mode */
 			Nick.LD1 = 	(pLPT->LD1L & 0x0ff) |
 					((pLPT->LD1H & 0x0ff)<<8);
-			
+
 			if ((DisplayMode != NICK_LPIXEL_MODE) && (DisplayMode != NICK_PIXEL_MODE))
 			{
 				/* lpixel and pixel modes don't use LD2 */
@@ -489,7 +558,7 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 				case NICK_CH64_MODE:
 				{
 					/* reload LD1 */
-					Nick.LD1 = (pLPT->LD1L & 0x0ff) | 
+					Nick.LD1 = (pLPT->LD1L & 0x0ff) |
 						((pLPT->LD1H & 0x0ff)<<8);
 					Nick.LD2++;
 				}
@@ -523,7 +592,7 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 			break;
 
 			case NICK_CH128_MODE:
-			{	
+			{
 				Nick_DoCh128(ClocksVisible);
 			}
 			break;
@@ -554,14 +623,14 @@ void	Nick_UpdateLPT(void)
 	CurLPT = (Nick.LPL & 0x0ff) | ((Nick.LPH & 0x0f)<<8);
 	CurLPT++;
 	Nick.LPL = CurLPT & 0x0ff;
-	Nick.LPH = (Nick.LPH & 0x0f0) | ((CurLPT>>8) & 0x0f);		
+	Nick.LPH = (Nick.LPH & 0x0f0) | ((CurLPT>>8) & 0x0f);
 }
 
 
 void	Nick_ReloadLPT(void)
 {
 	unsigned long LPT_Addr;
-		
+
 		/* get addr of LPT */
 		LPT_Addr = ((Nick.LPL & 0x0ff)<<4) | ((Nick.LPH & 0x0f)<<(8+4));
 
@@ -598,7 +667,7 @@ void	Nick_DoLine(void)
 
 		Nick_ReloadLPT();
 	}
-		
+
 		/* left border */
 		Nick_DoLeftMargin(&Nick.LPT);
 
@@ -608,7 +677,7 @@ void	Nick_DoLine(void)
 		/* right border */
 		Nick_DoRightMargin(&Nick.LPT);
 
-	// 0x0f7 is first!	
+	// 0x0f7 is first!
 	/* scan line count for this LPT */
 	ScanLineCount = ((~Nick.LPT.SC)+1) & 0x0ff;
 
@@ -616,8 +685,8 @@ void	Nick_DoLine(void)
 
 	/* update count of scanlines done so far */
 	Nick.ScanLineCount++;
-	
-	if (((unsigned char)Nick.ScanLineCount) == 
+
+	if (((unsigned char)Nick.ScanLineCount) ==
 		((unsigned char)ScanLineCount))
 	{
 		/* done all scanlines of this Line Parameter Table, get next */
@@ -674,7 +743,7 @@ void	Nick_reg_w(int RegIndex, int Data)
 
   if (RegIndex == 0x01)
   {
-	Nick.BORDER = Data; 
+	Nick.BORDER = Data;
   }
 
   if (RegIndex == 0x00)
@@ -689,10 +758,10 @@ void    Nick_DoScreen(struct osd_bitmap *bm)
 
   do
   {
-  
+
     /* set write address for line */
     Nick.dest = bm->line[line];
-    
+
     /* write line */
     Nick_DoLine();
 

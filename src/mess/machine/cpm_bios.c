@@ -287,7 +287,7 @@ static int fdd_access_sector(int * record_offset)
  *****************************************************************************/
 static int fdd_read_sector(void)
 {
-	UINT8 *DMA = &Machine->memory_region[0][dma];
+	UINT8 *DMA = memory_region(REGION_CPU1) + dma;
 	int recofs, n = fdd_access_sector(&recofs);
 
     /* copy a record from the sector buffer to the DMA area */
@@ -302,7 +302,7 @@ static int fdd_read_sector(void)
  *****************************************************************************/
 static int fdd_write_sector(void)
 {
-	UINT8 *DMA = &Machine->memory_region[0][dma];
+	UINT8 *DMA = memory_region(REGION_CPU1) + dma;
 	int recofs, n = fdd_access_sector(&recofs);
 
     /* did the record really change ? */
@@ -324,7 +324,7 @@ static int fdd_write_sector(void)
  *****************************************************************************/
 void cpm_jumptable(void)
 {
-	UINT8 * RAM = Machine->memory_region[0];
+	UINT8 * RAM = memory_region(REGION_CPU1);
 	int i;
 	int jmp_addr, fun_addr;
 
@@ -362,7 +362,7 @@ void cpm_jumptable(void)
  *****************************************************************************/
 int cpm_init(int n, const char *ids[])
 {
-	UINT8 * RAM = Machine->memory_region[0];
+	UINT8 * RAM = memory_region(REGION_CPU1);
 	dsk_fmt *f;
 	int i, d;
 
@@ -502,17 +502,17 @@ int cpm_init(int n, const char *ids[])
 		RAM[DPH0 + d * DPHL + 15] = dph[d].alv >> 8;
 
 		/* now try to open the image if a floppy_name is given */
-		if (strlen(floppy_name[d]))
+		if( strlen(floppy_name[d]) )
 		{
 			/* fake name to access the real floppy disk drive A: */
-			if (!stricmp(floppy_name[d], "fd0.dsk"))
+			if( !stricmp(floppy_name[d], "fd0.dsk") )
 			{
 				fp[d] = REAL_FDD;
 				dsk[d].unit = 0;
 			}
 			else
 			/* fake name to access the real floppy disk drive B: */
-			if (!stricmp(floppy_name[d], "fd1.dsk"))
+			if( !stricmp(floppy_name[d], "fd1.dsk") )
 			{
 				fp[d] = REAL_FDD;
 				dsk[d].unit = 1;
@@ -520,22 +520,27 @@ int cpm_init(int n, const char *ids[])
 			else
 			{
 				mode[d] = 1;
-				fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE, 1);
-				if (!fp[d])
+				fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+				if( !fp[d] )
 				{
 					mode[d] = 0;
-					fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE, 0);
-					if (!fp[d])
-					{
-						floppy_name[d][0] = '\0';
-					}
+					fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+				}
+				if( !fp[d] )
+				{
+					mode[d] = 1;
+					fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+				}
+				if( !fp[d] )
+				{
+					floppy_name[d][0] = '\0';
 				}
 			}
 		}
     }
 
 	/* create a file to receive list output (ie. PIP LST:=FILE.EXT) */
-	lp = osd_fopen(Machine->gamedrv->name, "cpm.lst", OSD_FILETYPE_IMAGE, 1);
+	lp = osd_fopen(Machine->gamedrv->name, "cpm.lst", OSD_FILETYPE_IMAGE_RW, 1);
 
     cpm_jumptable();
 
@@ -802,7 +807,7 @@ void cpm_disk_set_dma(int d)
 
 static void dump_sector(void)
 {
-	UINT8 *DMA = &Machine->memory_region[0][dma];
+	UINT8 *DMA = memory_region(REGION_CPU1) + dma;
     if (errorlog)
     {
 		int i;
@@ -827,7 +832,7 @@ int cpm_disk_read_sector(void)
 	int result = -1;
 
     /* TODO: remove this */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     if (curdisk >= 0 &&
 		curdisk < num_disks &&
@@ -864,7 +869,7 @@ int cpm_disk_write_sector(void)
 	int result = -1;
 
     /* TODO: remove this */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     if (curdisk >= 0 &&
 		curdisk < num_disks &&
@@ -901,7 +906,7 @@ void cpm_bios_command_w(int offset, int data)
 {
 	dsk_fmt *f;
 	char buff[256];
-	UINT8 * RAM = Machine->memory_region[0];
+	UINT8 * RAM = memory_region(REGION_CPU1);
 	UINT16 tmp, af, bc, de, hl;
 	int i;
 
@@ -955,7 +960,7 @@ void cpm_bios_command_w(int offset, int data)
 
 		/* copy the CP/M 2.2 image to Z80 memory space */
 		for (i = 0; i < 0x1600; i++)
-			RAM[CCP + i] = Machine->memory_region[2][i];
+			RAM[CCP + i] = memory_region(2)[i];
 
 		/* build the bios jump table */
 		cpm_jumptable();
@@ -978,7 +983,7 @@ void cpm_bios_command_w(int offset, int data)
 		tmp = cpu_readport(BIOS_CONIN) & 0xff;
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_CONIO
-		if( timer_iscpususpended(0) )
+		if( timer_iscpususpended(0,SUSPEND_REASON_HALT) )
 		{
 			if (errorlog)
 				fprintf(errorlog, "BIOS 03 console input       CPU suspended\n");

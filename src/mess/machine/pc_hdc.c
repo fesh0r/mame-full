@@ -124,13 +124,18 @@ static void execute_read(void)
 	int read = 0, first = 1;
 	int no_dma = pc_DMA_mask & (0x10 << HDC_DMA);
 
-    if (f) {
-        if (no_dma) {
+	if (f)
+	{
+		if (no_dma)
+		{
 			HDC_LOG(1,"hdc_PIO_read",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx], size));
-			do {
-				if (read == 0) {
+			do
+			{
+				if( read == 0 )
+				{
 					osd_fseek(f, offset[idx], SEEK_SET);
-					if (!first) {
+					if( !first )
+					{
 						HDC_LOG(2,"hdc_PIO_read next",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x, $%04x\n",
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx], size));
 					}
@@ -143,23 +148,31 @@ static void execute_read(void)
 				}
 				/* copy data into the result buffer */
 				buffer[data_cnt++] = *src++;
-				if (--read == 0) {
+				if( --read == 0 )
+				{
 					/* end of cylinder ? */
-					if (sector[idx] >= spt[idx]) {
+					if( sector[idx] >= spt[idx] )
+					{
 						sector[idx] = 0;
-						if (++head[idx] >= heads[idx]) {	/* beyond heads? */
+						if (++head[idx] >= heads[idx])		/* beyond heads? */
+						{
 							head[idx] = 0;					/* reset head */
 							cylinder[idx]++;				/* next cylinder */
 						}
 					}
 				}
 			} while (read || size);
-        } else {
+		}
+		else
+		{
 			HDC_LOG(1,"hdc_DMA_read",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx], pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
-			do {
-				if (read == 0) {
+			do
+			{
+				if (read == 0)
+				{
 					osd_fseek(f, offset[idx], SEEK_SET);
-					if (!first) {
+					if (!first)
+					{
 						HDC_LOG(2,"hdc_DMA_read next",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n",
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx],
 							pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
@@ -171,22 +184,28 @@ static void execute_read(void)
 					first = 0;
 					sector[idx]++;
 				}
-				if (pc_DMA_operation[HDC_DMA] == 1) {
+				if( pc_DMA_operation[HDC_DMA] == 1 )
+				{
 					/* now copy the buffer into PCs memory */
 					cpu_writemem20(pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], *src++);
-				} else src++;
+				}
+				else
+					src++;
 				pc_DMA_address[HDC_DMA] += pc_DMA_direction[HDC_DMA];
-				if (--read == 0) {
+				if( --read == 0 )
+				{
 					/* end of cylinder ? */
-					if (sector[idx] >= spt[idx]) {
+					if (sector[idx] >= spt[idx])
+					{
 						sector[idx] = 0;
-						if (++head[idx] >= heads[idx]) {	/* beyond heads? */
+						if (++head[idx] >= heads[idx])		/* beyond heads? */
+						{
 							head[idx] = 0;					/* reset head */
 							cylinder[idx]++;				/* next cylinder */
                         }
                     }
 				}
-			} while (pc_DMA_count[HDC_DMA]--);
+			} while( pc_DMA_count[HDC_DMA]-- );
 			pc_DMA_status &= ~(0x10 << HDC_DMA);	/* reset DMA running flag */
 			pc_DMA_status |= 0x01 << HDC_DMA;		/* set DMA terminal count flag */
 		}
@@ -201,13 +220,17 @@ static void execute_write(void)
 	int write = 512, first = 1;
 	int no_dma = pc_DMA_mask & (0x10 << HDC_DMA);
 
-    if (f) {
-        if (no_dma) {
+	if (f)
+	{
+		if (no_dma)
+		{
 			HDC_LOG(1,"hdc_PIO_write",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx], size));
-			do {
+			do
+			{
 				/* copy data into the result buffer */
 				*dst++ = buffer[data_cnt++];
-				if (--write == 0) {
+				if( --write == 0 )
+				{
 					osd_fseek(f, offset[idx], SEEK_SET);
 					write = osd_fwrite(f, data, 512);
                     offset[idx] += write;
@@ -215,37 +238,47 @@ static void execute_write(void)
 					if (size <= 0) write = 0;
 					dst = data;
                     /* end of cylinder ? */
-					if (++sector[idx] >= spt[idx]) {
+					if( ++sector[idx] >= spt[idx] )
+					{
 						sector[idx] = 0;
-						if (++head[idx] >= heads[idx]) {	/* beyond heads? */
+						if( ++head[idx] >= heads[idx] ) 	/* beyond heads? */
+						{
 							head[idx] = 0;					/* reset head */
 							cylinder[idx]++;				/* next cylinder */
                         }
                     }
 				}
 			} while (write || size);
-        } else {
+		}
+		else
+		{
 			HDC_LOG(1,"hdc_DMA_write",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx], pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
-			do {
-				if (pc_DMA_operation[HDC_DMA] == 2) {
+			do
+			{
+				if( pc_DMA_operation[HDC_DMA] == 2 )
+				{
 					/* now copy the buffer into PCs memory */
 					*dst++ = cpu_readmem20(pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA]);
 				};
 				pc_DMA_address[HDC_DMA] += pc_DMA_direction[HDC_DMA];
-				if (--write == 0) {
+				if( --write == 0 )
+				{
 					osd_fseek(f, offset[idx], SEEK_SET);
 					write = osd_fwrite(f, data, 512);
                     size -= 512;
 					offset[idx] += write;
                     /* end of cylinder ? */
-					if (++sector[idx] >= spt[idx]) {
+					if( ++sector[idx] >= spt[idx] )
+					{
 						sector[idx] = 0;
-						if (++head[idx] >= heads[idx]) {	/* beyond heads? */
+						if (++head[idx] >= heads[idx])		/* beyond heads? */
+						{
 							head[idx] = 0;					/* reset head */
 							cylinder[idx]++;				/* next cylinder */
                         }
                     }
-					if (!first) {
+					if( !first )
+					{
 						HDC_LOG(2,"hdc_DMA_write next",(errorlog, "C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n",
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset[idx],
 							pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
@@ -253,7 +286,7 @@ static void execute_write(void)
                     dst = data;
                     first = 0;
                 }
-			} while (pc_DMA_count[HDC_DMA]--);
+			} while( pc_DMA_count[HDC_DMA]-- );
 			pc_DMA_status &= ~(0x10 << HDC_DMA);	/* reset DMA running flag */
 			pc_DMA_status |= 0x01 << HDC_DMA;		/* set DMA terminal count flag */
 		}
@@ -281,7 +314,8 @@ static void get_chsn(int n)
 
 static int test_ready(int n)
 {
-	if (!pc_hdc_file[idx]) {
+	if( !pc_hdc_file[idx] )
+	{
 		csb[n] |= CSB_ERROR;
 		error[n] |= 0x04;	/* drive not ready */
 		return 0;
@@ -300,7 +334,8 @@ static void pc_hdc_command(int n)
     ptr = buffer;
     cmd = buffer[0];
 
-    switch (cmd) {
+	switch (cmd)
+	{
 		case CMD_TESTREADY:
 			get_drive(n);
 			HDC_LOG(1,"hdc test ready",(errorlog,"INDEX #%d D:%d\n", idx, drv));
@@ -380,7 +415,8 @@ static void pc_hdc_command(int n)
 			HDC_LOG(1,"hdc set param",(errorlog,"INDEX #%d D:%d C:%d H:%d RW:%d WP:%d ECC:%d\n",
 				idx, drv, cylinders[idx], heads[idx], rwc[idx], wp[idx], ecc[idx]));
 #if NEVERDEF
-			if (pc_hdc_file[idx]) {
+			if (pc_hdc_file[idx])
+			{
                 /* write the drive geometry to the image */
 				buffer[ 0] = cylinders[idx]&0xff;		/* cylinders lsb */
 				buffer[ 1] = (cylinders[idx]>>8)&3; 	/* cylinders msb */
@@ -470,13 +506,15 @@ static void pc_hdc_command(int n)
  */
 void pc_hdc_data_w(int n, int data)
 {
-	if (data_cnt == 0) {
+	if( data_cnt == 0 )
+	{
 		HDC_LOG(2,"hdc_data_w",(errorlog,"BOARD #%d $%02x: ", n, data));
         ptr = buffer;
 		data_cnt = 6;	/* expect 6 bytes including this one */
 		status[n] &= ~STA_READY;
 		status[n] &= ~STA_INPUT;
-        switch (data) {
+		switch (data)
+		{
 			case CMD_TESTREADY:
 				HDC_LOG(2,0,(errorlog,"test ready\n"));
 				break;
@@ -542,20 +580,25 @@ void pc_hdc_data_w(int n, int data)
 				csb[n] |= CSB_ERROR | 0x20; /* unknown command */
 				pc_hdc_result(n);
 		}
-		if (data_cnt)
+		if( data_cnt )
 			status[n] |= STA_REQUEST;
 	}
 
-    if (data_cnt) {
+	if (data_cnt)
+	{
 		HDC_LOG(3,"hdc_data_w",(errorlog,"BOARD #%d $%02x\n", n, data));
         *ptr++ = data;
 		status[n] |= STA_READY;
-		if (--data_cnt == 0) {
-			if (buffer[0] == CMD_SETPARAM) {
+		if( --data_cnt == 0 )
+		{
+			if( buffer[0] == CMD_SETPARAM )
+			{
 				HDC_LOG(2,"hdc_command",(errorlog,"[%02x %02x %02x %02x %02x %02x] [%02x %02x %02x %02x %02x %02x %02x %02x]\n",
 					buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5],
 					buffer[6],buffer[7],buffer[8],buffer[9],buffer[10],buffer[11],buffer[12],buffer[13]));
-            } else {
+			}
+			else
+			{
 				HDC_LOG(2,"hdc_command",(errorlog,"[%02x %02x %02x %02x %02x %02x]\n",
 					buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5]));
 			}
@@ -563,7 +606,8 @@ void pc_hdc_data_w(int n, int data)
 			status[n] &= ~STA_REQUEST;
 			status[n] &= ~STA_READY;
 			status[n] |= STA_INPUT;
-			if (timer[n]) timer_remove(timer[n]);
+			if( timer[n] )
+				timer_remove(timer[n]);
 			timer[n] = timer_set(0.001, n, pc_hdc_command);
         }
 	}
@@ -597,10 +641,12 @@ void pc_hdc_control_w(int n, int data)
 int  pc_hdc_data_r(int n)
 {
 	int data = 0xff;
-	if (data_cnt) {
+	if( data_cnt )
+	{
 		data = *ptr++;
 		status[n] &= ~STA_INTERRUPT;
-		if (--data_cnt == 0) {
+		if( --data_cnt == 0 )
+		{
 			status[n] &= ~STA_INPUT;
 			status[n] &= ~STA_REQUEST;
 			status[n] &= ~STA_SELECT;
@@ -615,7 +661,8 @@ int  pc_hdc_status_r(int n)
 {
 	static int old_stat = 0;
 	int data = status[n];
-	if (old_stat != data) {
+	if( old_stat != data )
+	{
 		old_stat = data;
 		HDC_LOG(4,"hdc_status_r",(errorlog,"BOARD #%d $%02x: RDY:%d INP:%d CMD:%d SEL:%d REQ:%d INT:%d\n",
 			n, data, data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1, (data>>4)&1, (data>>5)&1));

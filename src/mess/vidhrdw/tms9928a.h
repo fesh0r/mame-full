@@ -3,12 +3,15 @@
 **
 ** By Sean Young 1999 (sean@msxnet.org).
 */
- 
+
 extern unsigned char TMS9928A_palette[];
 extern unsigned short TMS9928A_colortable[];
+/* initialise palette function */
+void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 #define TMS9928A_PALETTE_SIZE           16
 #define TMS9928A_COLORTABLE_SIZE        32
+
 
 typedef struct {
     // TMS9928A internal settings
@@ -28,6 +31,7 @@ typedef struct {
     char *DirtyColour, *DirtyName, *DirtyPattern;
 } TMS9928A;
 
+
 /*
 ** The init, reset and shutdown functions
 */
@@ -44,7 +48,7 @@ UINT8 TMS9928A_register_r (void);
 void TMS9928A_register_w (UINT8 val);
 
 /*
-** Call this function to render the screen. 
+** Call this function to render the screen.
 */
 void TMS9928A_refresh (struct osd_bitmap *, int full_refresh);
 
@@ -56,7 +60,7 @@ int TMS9928A_interrupt (void);
 
 /*
 ** The parameter is a function pointer. This function is called whenever
-** the state of the INT output of the TMS9918A changes. 
+** the state of the INT output of the TMS9918A changes.
 */
 void TMS9928A_int_callback (void (*callback)(int));
 

@@ -98,7 +98,8 @@ int pc_mda_index_r(void)
  */
 void pc_mda_port_w(int data)
 {
-	switch (MDA_reg) {
+	switch (MDA_reg)
+	{
 		case HTOTAL:
 			MDA_LOG(1,"MDA_horz_total_w",(errorlog,"$%02x\n",data));
 			if (MDA_crtc[MDA_reg] == data) break;
@@ -213,7 +214,8 @@ void pc_mda_port_w(int data)
 int pc_mda_port_r(void)
 {
 	int data = 0xff;
-	switch (MDA_reg) {
+	switch (MDA_reg)
+	{
 		case HTOTAL:
 			MDA_LOG(1,"MDA_horz_total_r",(errorlog,"$%02x\n",data));
             break;
@@ -368,6 +370,20 @@ int pc_hgc_config_r(void)
     return data;
 }
 
+INLINE int DOCLIP(struct rectangle *r1)
+{
+    const struct rectangle *r2 = &Machine->drv->visible_area;
+    if (r1->min_x > r2->max_x) return 0;
+    if (r1->max_x < r2->min_x) return 0;
+    if (r1->min_y > r2->max_y) return 0;
+    if (r1->max_y < r2->min_y) return 0;
+    if (r1->min_x < r2->min_x) r1->min_x = r2->min_x; 
+    if (r1->max_x > r2->max_x) r1->max_x = r2->max_x;
+    if (r1->min_y < r2->min_y) r1->min_y = r2->min_y;
+    if (r1->max_y > r2->max_y) r1->max_y = r2->max_y;
+    return 1;
+}
+
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
  ***************************************************************************/
@@ -381,9 +397,12 @@ void pc_mda_blink_textcolors(int on)
 	offs = (MDA_base * 2) % videoram_size;
 	size = MDA_size;
 
-	for (i = 0; i < size; i++) {
-		if (videoram[offs+1] & 0x80) dirtybuffer[offs+1] = 1;
-		if ((offs += 2) == videoram_size) offs = 0;
+	for (i = 0; i < size; i++)
+	{
+		if( videoram[offs+1] & 0x80 )
+			dirtybuffer[offs+1] = 1;
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -394,12 +413,14 @@ void pc_mda_blink_textcolors(int on)
 ***************************************************************************/
 static void MDA_text_80_inten(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs = (MDA_base * 2) % videoram_size, size = MDA_size;
+	int i, sx, sy, offs = (MDA_base * 2) % videoram_size, size = MDA_size;
 
     /* for every second character in the Video RAM, check if it has
        been modified since last time and update it accordingly. */
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if( dirtybuffer[offs] || dirtybuffer[offs+1] )
+		{
             struct rectangle r;
 			int code = videoram[offs], attr = videoram[offs+1];
 
@@ -410,21 +431,33 @@ static void MDA_text_80_inten(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 9 - 1;
 			r.max_y = sy + MDA_maxscan - 1;
-            if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
                 /* draw the character */
-				pc_fullblit(bitmap, Machine->gfx[0], code, attr, sx,sy, &r);
-                if (offs == MDA_cursor && MDA_curmode != 0x20)  {
-					attr = Machine->pens[(attr & 8) | 2];
-					if ((MDA_curmode == 0x60) || (pc_framecnt & 8)) {
-                        for (y = MDA_curminy; y <= MDA_curmaxy && r.min_y+y <= r.max_y; y++)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 9);
+				drawgfx(bitmap, Machine->gfx[0], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+				if( offs == MDA_cursor && MDA_curmode != 0x20 )
+				{
+					if( MDA_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + MDA_curminy < r.max_y )
+                            r.min_y = sy + MDA_curminy;
+						else
+                            r.min_y = r.max_y;
+                        if( sy + MDA_curmaxy < r.max_y )
+							r.max_y = sy + MDA_curmaxy;
+						drawgfx(bitmap,Machine->gfx[0],219,(attr&8)|2,0,0,sx,sy,&r,TRANSPARENCY_NONE, 0);
                     }
                     dirtybuffer[offs] = 1;
                 }
             }
         }
-		if ((sx += 9) == (MDA_HDISP * 9)) { sx = 0; sy += MDA_maxscan; }
-		if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 9) == (MDA_HDISP * 9) )
+		{
+			sx = 0;
+			sy += MDA_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -435,19 +468,22 @@ static void MDA_text_80_inten(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void MDA_text_80_blink(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, y, offs = (MDA_base * 2) % videoram_size, size = MDA_size;
+	int i, sx, sy, offs = (MDA_base * 2) % videoram_size, size = MDA_size;
 
     /* for every second character in the Video RAM, check if it has
        been modified since last time and update it accordingly. */
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-        if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
             struct rectangle r;
 			int code = videoram[offs], attr = videoram[offs+1];
 
             dirtybuffer[offs] = 0;
             dirtybuffer[offs+1] = 0;
 
-			if (attr & 0x80) {	/* blinking ? */
+			if (attr & 0x80)	/* blinking ? */
+			{
 				if (pc_blink)
 					attr = (attr & 0x70) | ((attr & 0x70) >> 4);
 				else
@@ -458,21 +494,33 @@ static void MDA_text_80_blink(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 9 - 1;
 			r.max_y = sy + MDA_maxscan - 1;
-            if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
                 /* draw the character */
-				pc_fullblit(bitmap, Machine->gfx[0], code, attr, sx,sy, &r);
-                if (offs == MDA_cursor && MDA_curmode != 0x20)  {
-					attr = Machine->pens[(attr & 8) | 2];
-					if ((MDA_curmode == 0x60) || (pc_framecnt & 8)) {
-                        for (y = MDA_curminy; y <= MDA_curmaxy && r.min_y+y <= r.max_y; y++)
-							memset(&bitmap->line[r.min_y+y][r.min_x], attr, 9);
+				drawgfx(bitmap, Machine->gfx[0], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
+				if( offs == MDA_cursor && MDA_curmode != 0x20 )
+                {
+					if( MDA_curmode == 0x60 || (pc_framecnt & 32) )
+                    {
+						if( sy + MDA_curminy < r.max_y )
+                            r.min_y = sy + MDA_curminy;
+						else
+							r.min_y = r.max_y;
+                        if( sy + MDA_curmaxy < r.max_y )
+							r.max_y = sy + MDA_curmaxy;
+						drawgfx(bitmap,Machine->gfx[0],219,(attr&8)|2,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
                     }
                     dirtybuffer[offs] = 1;
                 }
             }
         }
-		if ((sx += 9) == (MDA_HDISP * 9)) { sx = 0; sy += MDA_maxscan; }
-		if ((offs += 2) == videoram_size) offs = 0;
+		if( (sx += 9) == (MDA_HDISP * 9) )
+		{
+			sx = 0;
+			sy += MDA_maxscan;
+		}
+		if( (offs += 2) == videoram_size )
+			offs = 0;
     }
 }
 
@@ -491,8 +539,10 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
     /* for every code in the Video RAM, check if it has been
 	   modified since last time and update it accordingly. */
 	offs = (MDA_base + page) % videoram_size;
-	for (i = 0, sx = 0, sy = 0; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -502,20 +552,28 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + MDA_maxscan / 4 - 1;
-            if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,1);
+				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
-		if ((sx += 8) == (2 * MDA_HDISP * 8)) { sx = 0; sy += MDA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * MDA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += MDA_maxscan;
+		}
+		if(++offs == videoram_size)
+			offs = 0;
     }
 
 	offs = ((MDA_base + page) % videoram_size) | 0x2000;
-	for (i = 0, sx = 0, sy = MDA_maxscan / 4; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for( i = 0, sx = 0, sy = MDA_maxscan / 4; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -525,20 +583,28 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + MDA_maxscan / 4 - 1;
-            if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,1);
+				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
-		if ((sx += 8) == (2 * MDA_HDISP * 8)) { sx = 0; sy += MDA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * MDA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += MDA_maxscan;
+		}
+		if(++offs == videoram_size)
+			offs = 0;
     }
 
 	offs = ((MDA_base + page) % videoram_size) | 0x4000;
-	for (i = 0, sx = 0, sy = 2 * MDA_maxscan / 4; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 2 * MDA_maxscan / 4; i < size; i++)
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -548,20 +614,28 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + MDA_maxscan / 4 - 1;
-            if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,1);
+				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
-		if ((sx += 8) == (2 * MDA_HDISP * 8)) { sx = 0; sy += MDA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * MDA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += MDA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 
 	offs = ((MDA_base + page) % videoram_size) | 0x6000;
-    for (i = 0, sx = 0, sy = 3 * MDA_maxscan / 4; i < size; i++) {
-		if (dirtybuffer[offs]) {
+	for (i = 0, sx = 0, sy = 3 * MDA_maxscan / 4; i < size; i++)
+	{
+		if( dirtybuffer[offs] )
+		{
             struct rectangle r;
 			int code = videoram[offs];
 
@@ -571,15 +645,21 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
 			r.min_y = sy;
 			r.max_x = sx + 8 - 1;
 			r.max_y = sy + MDA_maxscan / 4 - 1;
-            if (DOCLIP(&r,&Machine->drv->visible_area)) {
+			if( DOCLIP(&r) )
+			{
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,1);
+				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
-		if ((sx += 8) == (2 * MDA_HDISP * 8)) { sx = 0; sy += MDA_maxscan; }
-		if (++offs == videoram_size) offs = 0;
+		if( (sx += 8) == (2 * MDA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += MDA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
     }
 }
 
@@ -592,16 +672,20 @@ void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int video_active = 0;
 
+	if( palette_recalc() )
+		full_refresh = 1;
+
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if (full_refresh || ((input_port_3_r(0) & 1) != pc_fill_odd_scanlines) ) {
+	if( full_refresh )
+	{
 		memset(dirtybuffer, 1, videoram_size);
 		fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
 		video_active = 0;
-		pc_fill_odd_scanlines = input_port_3_r(0) & 1;
     }
 
-    switch (pc_port[0x03b8] & 0x2a) {   /* text and gfx modes */
+	switch (pc_port[0x03b8] & 0x2a) /* text and gfx modes */
+	{
 		case 0x08: video_active = 10; MDA_text_80_inten(bitmap); break;
 		case 0x28: video_active = 10; MDA_text_80_blink(bitmap); break;
 		case 0x0a: video_active = 10; HGC_gfx_720(bitmap);		 break;

@@ -18,6 +18,8 @@
  *
  */
 
+unsigned char *ROM;
+
 int pdp1_iot(int *io, int md);
 int pdp1_load_rom (void);
 int pdp1_id_rom (const char *name, const char *gamename);
@@ -28,11 +30,10 @@ int *pdp1_memory;
 int pdp1_load_rom (void)
 {
 	FILE *romfile;
-	int region;
 	int i;
 
 	/* The spacewar! is mandatory for now. */
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, "spacewar.bin",OSD_FILETYPE_ROM_CART, 0)))
+	if (!(romfile = osd_fopen (Machine->gamedrv->name, "spacewar.bin",OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog) fprintf(errorlog,"PDP1: can't find SPACEWAR.BIN\n");
 		return 1;
@@ -51,20 +52,17 @@ int pdp1_load_rom (void)
 	}
 
 	/* Allocate memory and set up memory regions */
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-		Machine->memory_region[region] = 0;
-
-	ROM = (unsigned char *) malloc(0x10000*sizeof(int));
- /* only 4096 are used for now, but pdp1 can address 65336 18 bit words when
-  * extended.
-  */
-	if (ROM == NULL)
+	if( new_memory_region(REGION_CPU1, 0x10000 * sizeof(int)) )
 	{
-		if (errorlog)
 		fprintf(errorlog,"PDP1: Memory allocation failed!\n");
 		return 1;
-	}
-	Machine->memory_region[0] = ROM;
+    }
+
+ /*
+  * only 4096 are used for now, but pdp1 can address 65336 18 bit words when
+  * extended.
+  */
+    ROM = memory_region(REGION_CPU1);
 
 	/* endianness!!! */
 	osd_fread (romfile, ROM, 16384);
@@ -104,7 +102,7 @@ void pdp1_init_machine(void)
 {
 	/* init pdp1 cpu */
 	extern_iot=pdp1_iot;
-	cpu_setOPbaseoverride(setOPbasefunc);
+	cpu_setOPbaseoverride(0,setOPbasefunc);
 }
 
 int pdp1_read_mem(int offset)

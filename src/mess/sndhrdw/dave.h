@@ -5,6 +5,7 @@
 DAVE SOUND CHIP
 *******************************/
 
+#define DAVE_INT_SELECTABLE     0
 #define DAVE_INT_1KHZ_50HZ_TG	1
 #define DAVE_INT_1HZ 2
 #define DAVE_INT_INT1 3

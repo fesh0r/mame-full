@@ -22,6 +22,7 @@ int current_drawline;
 int dirty_char;
 char use_vram[512];
 
+unsigned char *ROM;
 unsigned char *VROM;
 unsigned char *VRAM;
 unsigned char CHR_Rom;
@@ -67,7 +68,7 @@ void nes_init_machine (void)
 	current_scanline = 0;
 	current_drawline = 0;
 	hblank_occurred = 0;
-	
+
 	/* Reset PPU variables */
 	PPU_Control0 = PPU_Control1 = PPU_Status = PPU_Scroll_X = PPU_Scroll_Y = 0;
 	PPU_Addr = PPU_Sprite_Addr = 0;
@@ -87,7 +88,7 @@ void nes_init_machine (void)
 
 	/* Reset the mapper variables. Will also mark the char-gen ram as dirty */
 	Reset_Mapper (Mapper);
-	
+
 	/* Reset the joypads */
 	Joypad_Read_1 = 0;
 	Joypad_Read_2 = 0;
@@ -99,7 +100,7 @@ void nes_init_machine (void)
 int nes_IN0_r (int offset)
 {
 	int Joypad_1;
-	
+
 	Joypad_1 = readinputport (0);
 	*nes_io_0 = (Joypad_1 >> (Joypad_Read_1 & 0x07)) & 0x01;
 	Joypad_Read_1 ++;
@@ -112,7 +113,7 @@ int nes_IN0_r (int offset)
 int nes_IN1_r (int offset)
 {
 	int Joypad_2;
-	
+
 	Joypad_2 = readinputport (1);
 	*nes_io_1 = (Joypad_2 >> (Joypad_Read_2 & 0x07)) & 0x01;
 	Joypad_Read_2 ++;
@@ -127,7 +128,7 @@ void nes_IN0_w (int offset, int data)
 	/* Toggling bit 0 high then low resets the controller */
 	if (((*nes_io_0 & 0x01) == 1) && (data == 0))
 		Joypad_Read_1 = 0;
-	*nes_io_0 = data;    
+	*nes_io_0 = data;
 }
 
 void nes_IN1_w (int offset, int data)
@@ -135,16 +136,16 @@ void nes_IN1_w (int offset, int data)
 	/* Toggling bit 0 high then low resets the controller */
 	if (((*nes_io_1 & 0x01) == 1) && (data == 0))
 		Joypad_Read_2 = 0;
-	*nes_io_1 = data;    
+	*nes_io_1 = data;
 }
 
 int nes_interrupt (void)
 {
 	static int first_time_in_vblank = 0;
-	int ret; 
-    
+	int ret;
+
 	ret = M6502_INT_NONE;
-    
+
 	if (current_scanline <= BOTTOM_VISIBLE_SCANLINE)
 	{
 		/* If this mapper supports irqs, check if they are enabled */
@@ -156,22 +157,22 @@ int nes_interrupt (void)
 				ret = M6502_INT_IRQ;
 			}
 		}
-	
+
 		/* Set the sprite hit flag */
 		if (current_scanline == spriteram[0] + 7)
 			PPU_Status |= 0x40;
-		
+
 		/* Render this scanline if appropriate */
 		if (PPU_scanline_effects)
 		{
 			if ((current_scanline >= TOP_VISIBLE_SCANLINE) &&
 				(!osd_skip_this_frame()) &&
 				(PPU_Control1 & 0x08))
-			
+
 				nes_vh_renderscanline (current_scanline, current_drawline);
 		}
 	}
-	
+
 	/* Has the vblank started? */
 	else if ((current_scanline >= VBLANK_START_SCANLINE) && (first_time_in_vblank == 0))
 	{
@@ -179,16 +180,16 @@ int nes_interrupt (void)
 
 		/* VBlank in progress, set flag */
 		PPU_Status |= 0x80;
-		
+
 		*nes_io_0 &= 0xfd;
 		*nes_io_1 &= 0xfd;
-			
+
 //		if (current_scanline == BOTTOM_VISIBLE_SCANLINE + 8)
 		{
 			/* Check if NMIs are enabled on vblank */
 			if (PPU_Control0 & 0x80) ret = M6502_INT_NMI;
 		}
-		
+
 		/* This code only needs to be executed once per frame */
 		if (first_time_in_vblank == 0)
 		{
@@ -197,15 +198,15 @@ int nes_interrupt (void)
 			/* Reset writes to the scroll register */
 			PPU_scroll_toggle = 0;
 		}
-			
+
 	}
-	
+
 	/* Increment the scanline pointer & check to see if it's rolled */
 	++ current_drawline;
 	if ( ++ current_scanline >= SCANLINES_PER_FRAME)
 	{
 		int i;
-		
+
 		/* vblank is over, start at top of screen again */
 		current_scanline = 0;
 		current_drawline = 0;
@@ -246,7 +247,7 @@ int nes_interrupt (void)
 int nes_ppu_r (int offset)
 {
 	int retVal;
-	
+
 //if (errorlog) fprintf (errorlog, "PPU read, offset: %04x\n", offset);
 
 	switch (offset & 0x07)
@@ -309,7 +310,7 @@ int nes_ppu_r (int offset)
 			/* TODO - this can't be right */
 			return 0x00;
 //			return (RAM [0x2005]);
-					
+
 		case 6: /* PPU Memory Address */
 			/* TODO - this can't be right */
 			return (PPU_Addr);
@@ -334,7 +335,7 @@ int nes_ppu_r (int offset)
 			if (CHR_Rom && PPU_Addr < 0x2000)
 			{
 				int vrom_loc;
-				
+
 				vrom_loc = (nes_vram[PPU_Addr >> 10] * 16) + (PPU_Addr & 0x3ff);
 				retVal = VROM [vrom_loc];
 			}
@@ -343,9 +344,9 @@ int nes_ppu_r (int offset)
 #else
 			PPU_Addr &= 0x3fff;
 			if (PPU_Addr >= 0x3f00) PPU_Addr &= 0x3f1f;
-			
+
 			retVal = PPU_latch;
-			
+
 #ifdef VERBOSE_ERRORS
 			if (errorlog) fprintf (errorlog, "PPU read from vram - %04x!\n", PPU_Addr);
 #endif
@@ -356,7 +357,7 @@ int nes_ppu_r (int offset)
 			if (CHR_Rom && PPU_Addr < 0x2000)
 			{
 				int vrom_loc;
-				
+
 				vrom_loc = (nes_vram[PPU_Addr >> 10] * 16) + (PPU_Addr & 0x3ff);
 				PPU_latch = VROM [vrom_loc];
 			}
@@ -414,7 +415,7 @@ void nes_ppu_w (int offset, int data)
 			/* The char ram bank points either 0x0000 or 0x1000 (page 0 or page 4) */
 			PPU_tile_page = (PPU_Control0 & 0x10) >> 2;
 			PPU_sprite_page = (PPU_Control0 & 0x08) >> 1;
-			
+
 			if (PPU_Control0 & 0x04)
 				PPU_add = 32;
 			else
@@ -462,7 +463,7 @@ void nes_ppu_w (int offset, int data)
 			}
 			PPU_Control1 = data;
 //			if (errorlog) fprintf (errorlog, "W PPU_Control1: %02x\n", PPU_Control1);
-			break;        
+			break;
 		case 2: /* PPU Status */
 			if (current_scanline < BOTTOM_VISIBLE_SCANLINE)
 			{
@@ -548,7 +549,7 @@ void nes_ppu_w (int offset, int data)
 					Data for the following scanlines is then reset such that it's pulled from scanline 0 and on.
  					Thanks to Marat Fayzullin and Arthur Langereis for this info.
 					*/
-				
+
 					PPU_Scroll_X = (PPU_Addr & 0x1f) * 8;
 					PPU_Scroll_Y = ((PPU_Addr >> 5) & 0x1f) * 8 + ((PPU_Addr >> 12) & 0x03);
 					PPU_name_table = (PPU_Addr & 0x0c00) | 0x2000;
@@ -607,14 +608,14 @@ static void new_videoram_w (int offset, int data)
 			if (videoram[PPU_Addr] != data)
 			{
 				int x, y, i;
-				
+
 				/* dirty a 4x4 grid */
 				i = ((PPU_Addr & 0x07) << 2) + ((PPU_Addr & 0x38) << 4);
 				for (y = 0; y < 4; y ++)
 					for (x = 0; x < 4; x ++)
 					{
 						int tile;
-						
+
 						tile = i + (y * 0x20) + x;
 						if (tile < 0x3c0) dirtybuffer[tile] = 1;
 					}
@@ -631,14 +632,14 @@ static void new_videoram_w (int offset, int data)
 			if (videoram[PPU_Addr] != data)
 			{
 				int x, y, i;
-				
+
 				/* dirty a 4x4 grid */
 				i = ((PPU_Addr & 0x07) << 2) + ((PPU_Addr & 0x38) << 4);
 				for (y = 0; y < 4; y ++)
 					for (x = 0; x < 4; x ++)
 					{
 						int tile;
-						
+
 						tile = i + (y * 0x20) + x;
 						if (tile < 0x3c0) dirtybuffer2[tile] = 1;
 					}
@@ -655,14 +656,14 @@ static void new_videoram_w (int offset, int data)
 			if (videoram[PPU_Addr] != data)
 			{
 				int x, y, i;
-				
+
 				/* dirty a 4x4 grid */
 				i = ((PPU_Addr & 0x07) << 2) + ((PPU_Addr & 0x38) << 4);
 				for (y = 0; y < 4; y ++)
 					for (x = 0; x < 4; x ++)
 					{
 						int tile;
-						
+
 						tile = i + (y * 0x20) + x;
 						if (tile < 0x3c0) dirtybuffer3[tile] = 1;
 					}
@@ -679,14 +680,14 @@ static void new_videoram_w (int offset, int data)
 			if (videoram[PPU_Addr] != data)
 			{
 				int x, y, i;
-				
+
 				/* dirty a 4x4 grid */
 				i = ((PPU_Addr & 0x07) << 2) + ((PPU_Addr & 0x38) << 4);
 				for (y = 0; y < 4; y ++)
 					for (x = 0; x < 4; x ++)
 					{
 						int tile;
-						
+
 						tile = i + (y * 0x20) + x;
 						if (tile < 0x3c0) dirtybuffer4[tile] = 1;
 					}
@@ -699,7 +700,7 @@ static void new_videoram_w (int offset, int data)
 static void Write_PPU (int data)
 {
 	PPU_Addr &= 0x3fff;
-	
+
 	if (PPU_Addr < 0x2000)
 	{
 		/* This ROM writes to the character gen portion of VRAM */
@@ -726,7 +727,7 @@ static void Write_PPU (int data)
 			if (PPU_Addr >= 0x1fe0 && PPU_Addr <= 0x1fef)
 				MMC2_bank1 = 0xfe;
 		}
-#endif			
+#endif
 		if ((errorlog) && (CHR_Rom != 0))
 			fprintf (errorlog, "****** PPU write to vram with CHR_ROM - %04x:%02x!\n", PPU_Addr, data);
 	}
@@ -748,7 +749,7 @@ static void Write_PPU (int data)
 				nes_vram[i] = MMC2_hibank2_val * 256 + 64*(i-4);
 		}
 	}
-	
+
 	/* We're using the funky-fresh experimental renderer */
 	if (readinputport (2))
 	{
@@ -761,7 +762,7 @@ static void Write_PPU (int data)
 				new_videoram_w (PPU_Addr ^ 0x400, data);
 		}
 	}
-	
+
 	/* Non-funky-fresh vram handling */
 	else
 	{
@@ -786,7 +787,7 @@ static void Write_PPU (int data)
 	{
 		videoram[PPU_Addr] = data;
 		data &= 0x3f; /* TODO: should this be 0x3f or 0x7f? */
-		
+
 		if (PPU_Addr & 0x03)
 			Machine->gfx[0]->colortable[PPU_Addr & 0x1f] = Machine->pens[data];
 
@@ -813,25 +814,24 @@ int nes_load_rom (void)
 	char skank[8];
 	int local_options;
 	char m;
-	int region;
 	int Cart_Size;
 	int trainer;
 	int battery;
 	int i;
 
-   if(errorlog) fprintf (errorlog,"Beginning nes_load_rom\n");
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0)))
+	if(errorlog) fprintf (errorlog,"Beginning nes_load_rom\n");
+	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
 	{
 
 		if(errorlog) fprintf (errorlog,"osd_fopen failed in nes_load_rom.\n");
       return 1;
 	}
-   if(errorlog) fprintf (errorlog,"Finished osd_Fopen for ROM\n");
+	if(errorlog) fprintf (errorlog,"Finished osd_Fopen for ROM\n");
 
 	/* Verify the file is in iNES format */
 	osd_fread (romfile, magic, 4);
-   if(errorlog) fprintf (errorlog,"Cart is in NES format?\n");
-   
+	if(errorlog) fprintf (errorlog,"Cart is in NES format?\n");
+
 	if ((magic[0] != 'N') ||
 		(magic[1] != 'E') ||
 		(magic[2] != 'S'))
@@ -841,11 +841,11 @@ int nes_load_rom (void)
 	osd_fread (romfile, &CHR_Rom, 1);
 
 	Cart_Size = (PRG_Rom << 4) + CHR_Rom * 8;
-   if(errorlog) fprintf (errorlog,"Cart file length is %d \n",Cart_Size);
+	if(errorlog) fprintf (errorlog,"Cart file length is %d \n",Cart_Size);
 
 	/* Read the first ROM option byte (offset 6) */
 	osd_fread (romfile, &m, 1);
-   if(errorlog) fprintf (errorlog,"Read first ROM option BYTE.\n");
+	if(errorlog) fprintf (errorlog,"Read first ROM option BYTE.\n");
 
 	/* Interpret the iNES header flags */
 	Mapper = (m & 0xf0) >> 4;
@@ -853,11 +853,11 @@ int nes_load_rom (void)
 
 	/* Read the second ROM option byte (offset 7) */
 	osd_fread (romfile, &m, 1);
-   if(errorlog) fprintf (errorlog,"Read second ROM option BYTE.\n");
+	if(errorlog) fprintf (errorlog,"Read second ROM option BYTE.\n");
 
 	/* Check for skanky headers */
 	osd_fread (romfile, &skank, 8);
-   if(errorlog) fprintf (errorlog,"Checked for skanky headers.\n");
+	if(errorlog) fprintf (errorlog,"Checked for skanky headers.\n");
 
 	/* If the header has junk in the unused bytes, assume the extra mapper byte is also invalid */
 	/* We only check the first 4 unused bytes for now */
@@ -910,23 +910,17 @@ int nes_load_rom (void)
 	MMC1_extended = 0;
 	if (Mapper == 1) MMC1_extended = Cart_Size >> 9;
 
-	/* Allocate memory and set up memory regions */
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-		Machine->memory_region[region] = 0;
-
-	ROM = calloc (0x10000 + (PRG_Rom+1) * 0x4000, 1);
-	VROM = calloc ((CHR_Rom+1) * 0x2000, 1);
-	VRAM = calloc (0x2000, 1);
-
-	if ((ROM == NULL) || (VROM == NULL) || (VRAM == NULL))
-	{
-		printf ("Memory allocation failed reading roms!\n");
-		goto bad;
-	}
-
-	Machine->memory_region[0] = ROM;
-	Machine->memory_region[1] = VROM;
-	Machine->memory_region[2] = VRAM;
+    /* Allocate memory and set up memory regions */
+    if( new_memory_region(REGION_CPU1, 0x10000 + (PRG_Rom+1) * 0x4000) ||
+        new_memory_region(REGION_GFX1, (CHR_Rom+1) * 0x2000) ||
+        new_memory_region(REGION_GFX2, 0x2000) )
+    {
+        printf ("Memory allocation failed reading roms!\n");
+        goto bad;
+    }
+	ROM = memory_region(REGION_CPU1);
+	VROM = memory_region(REGION_GFX1);
+	VRAM = memory_region(REGION_GFX2);
 
 	/* Position past the header */
 	osd_fseek (romfile, 16, SEEK_SET);
@@ -984,7 +978,7 @@ int nes_load_rom (void)
 	if (errorlog) fprintf (errorlog, "**\n");
 
 	/* TODO: load a battery file here */
-   	
+
 /*This bit is dumping to DOS! */
 	osd_fclose (romfile);
 	return 0;
@@ -1001,7 +995,7 @@ int nes_id_rom (const char *name, const char *gamename)
 	unsigned char magic[4];
 	int retval;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_ROM_CART, 0))) return 0;
+	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 1;
 	/* Verify the file is in iNES format */

@@ -10,6 +10,7 @@
 
 #include "mess/machine/cpm_bios.h"
 
+extern void kaypro_init_driver(void);
 extern void kaypro_init_machine(void);
 extern void kaypro_stop_machine(void);
 extern int	kaypro_rom_load(void);

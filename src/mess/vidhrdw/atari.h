@@ -103,18 +103,21 @@
 /* total number of lines per frame (incl. vblank) */
 #define TOTAL_LINES 	260
 
-/* frame rate: above timing is for european 60Hz display */
+/* frame rate: above timing is for NTSC 60Hz display */
 #define FRAME_RATE		60
+
 /* The real CPU clock */
 #define CPU_EXACT		1789790
+
 /* calculate our CPU clock */
 #define CPU_APPROX		FRAME_RATE * TOTAL_LINES * CYCLES_PER_LINE
-/* caclulate vertical blank duration; this also catches up minor */
+
+/* caclulate vertical blank duration; this also catches minor */
 /* deviations from the real CYCLES_PER_LINE and TOTAL_LINES values */
 #define VBL_DURATION	(TOTAL_LINES - VBL_START + VBL_END) * CYCLES_PER_LINE
 
-#define HWIDTH          48      /* total characters per line                */
-#define HCHARS			44		/* visible characters per line				*/
+#define HWIDTH			48		/* total characters per line */
+#define HCHARS			44		/* visible characters per line */
 #define VHEIGHT 		32
 #define VCHARS			(VDATA_END-VDATA_START+7)/8
 #define BUF_OFFS0		(HWIDTH-HCHARS)/2

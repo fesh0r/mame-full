@@ -17,11 +17,7 @@
 extern int PIT_clock[3];
 
 static int channel = 0;
-static int baseclock = BASECLOCK/440;
-static signed char waveform0[8] = {  0,  0,  0,  0,  0,  0,  0,  0};
-static signed char waveform1[8] = {127,127,127,127,127,127,127,127};
-static signed char waveform2[8] = { 64, 90,127, 90, 64, 38,  0, 38};
-static signed char *waveform = waveform0;
+static int speaker_gate = 0;
 
 /************************************/
 /* Sound handler start				*/
@@ -29,8 +25,13 @@ static signed char *waveform = waveform0;
 int pc_sh_start(void)
 {
 	if (errorlog) fprintf(errorlog, "pc_sh_start\n");
-	channel = stream_init("PC speaker", 50, baseclock, 8, 0, pc_sh_update);
+	channel = stream_init("PC speaker", 50, Machine->sample_rate, 8, 0, pc_sh_update);
     return 0;
+}
+
+int pc_sh_custom_start(const struct MachineSound* driver)
+{ 
+	return pc_sh_start();
 }
 
 /************************************/
@@ -43,47 +44,65 @@ void pc_sh_stop(void)
 
 void pc_sh_speaker(int mode)
 {
-	static int old_mode = 0;
-
-	if (mode == old_mode)
+	if( mode == speaker_gate )
 		return;
 
     stream_update(channel,0);
-    switch (mode) {
+
+    switch( mode )
+	{
 		case 0: /* completely off */
 			SND_LOG(1,"PC_speaker",(errorlog,"off\n"));
-			waveform = waveform0;
+			speaker_gate = 0;
             break;
 		case 1: /* completely on */
 			SND_LOG(1,"PC_speaker",(errorlog,"on\n"));
-			waveform = waveform1;
+			speaker_gate = 1;
             break;
 		case 2: /* play the tone */
 			SND_LOG(1,"PC_speaker",(errorlog,"tone\n"));
-			waveform = waveform2;
+			speaker_gate = 2;
             break;
     }
-    old_mode = mode;
 }
+
+void pc_sh_custom_update(void) {}
 
 /************************************/
 /* Sound handler update 			*/
 /************************************/
 void pc_sh_update(int param, void *buffer, int length)
 {
-	static int cntr = 0, incr = 0;
-	signed char *sample = buffer;
-	int i;
+	static INT8 signal = 127;
+    static int incr = 0;
+    INT8 *sample = buffer;
+	int baseclock, rate = Machine->sample_rate / 2;
 
-    baseclock = PIT_clock[2];
+	if( PIT_clock[2] )
+		baseclock = BASECLOCK / PIT_clock[2];
+	else
+		baseclock = BASECLOCK / 65536;
 
-    for( i = 0; i < length; i++ )
+	switch( speaker_gate )
 	{
-		sample[i] = waveform[cntr];
-		if( incr -= Machine->sample_rate < 0 )
+	case 0: /* speaker off */
+		while( length-- > 0 )
+			*sample++ = 0;
+		break;
+	case 1: /* speaker on */
+		while( length-- > 0 )
+			*sample++ = 127;
+        break;
+	case 2: /* speaker gate tone from PIT channel #2 */
+		while( length-- > 0 )
 		{
-			incr += baseclock;
-			cntr = ++cntr % sizeof(waveform0);
+			*sample++ = signal;
+			incr -= baseclock;
+			while( incr < 0 )
+			{
+				incr += rate;
+				signal = -signal;
+			}
 		}
 	}
 }

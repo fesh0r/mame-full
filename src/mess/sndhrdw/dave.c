@@ -61,9 +61,9 @@ int	Dave_reg_r(int RegIndex)
 
 	if (RegIndex==0x14)
 	{
-//		dave.Regs[RegIndex & 0x01f] ^=0x055;
+              dave.int_input ^=0x055;
 
-		dave.Regs[RegIndex & 0x01f] = Dave_IntRegRead();
+               dave.Regs[RegIndex & 0x01f] = Dave_IntRegRead();
 	}
 
 	return dave.Regs[RegIndex & 0x01f];
@@ -110,31 +110,9 @@ b0 = 1: Enable 1khz/50Hz/TG latch
 
 static void	Dave_IntRegWrite(unsigned char Data)
 {
-	/* reset INT2 latch? */
-	if (Data & 0x080)
-	{
-		dave.int_latch &= ~0x080;
-	}
-
-	/* reset INT1 latch? */
-	if (Data & 0x020)
-	{
-		dave.int_latch &= ~0x020;
-	}
-
-	/* reset 1hz latch? */
-	if (Data & 0x08)
-	{
-		dave.int_latch &= ~0x08;
-	}
-
-	/* reset 1khz/50hz/TG latch */
-	if (Data & 0x02)
-	{
-		dave.int_latch &= ~0x02;
-	}
-
-	/* int enables */
+        /* reset latch */
+        dave.int_latch &= ~(Data & (0x080|0x020|0x08|0x02));
+        /* int enables */
 	dave.int_enable = Data & 0x055;
 }
 
@@ -149,37 +127,63 @@ static void	Dave_SetInterruptWanted(void)
 	}
 }
 
+/* change int state*/
+
+/* interrupt inputs are negative edge triggered.
+If new state is 0, then previous state is 1, and a negative edge
+has occured. */
 void	Dave_SetInt(int IntID)
 {
 	switch (IntID)
 	{
+                case DAVE_INT_SELECTABLE:
+                {
+                        /* change state */
+                        dave.int_input ^=0x01;
+
+                        if ((dave.int_input & 0x01)==0)
+                        {
+                                dave.int_latch |= 0x02;
+                        }
+                }
+                break;
+
 		case DAVE_INT_1HZ:
 		{
-			if (dave.int_input & 0x04)
-			{
-				/* negative edge - set int latch */
-				dave.int_latch |= 0x08;
-			}
+                        /* change state */
+                        dave.int_input^=0x04;
 
-			dave.int_input^=0x04;
+                        if ((dave.int_input & 0x04)==0)
+                        {
+                          /* negative edge - set int latch */
+                          dave.int_latch |= 0x08;
+                        }
 		}
 		break;
 
 		case DAVE_INT_INT1:
 		{
-			if (dave.int_input & 0x010)
-			{
-				dave.int_latch |= 0x020;
-			}
+                        /* change state */
+                        dave.int_input^=0x010;
 
-			dave.int_input^=0x010;
+                        /* negative edge? */
+                        if ((dave.int_input & 0x010)==0)
+                        {
+                                /* set latch */
+                                dave.int_latch |= 0x020;
+                        }
 		}
 		break;
 
 		case DAVE_INT_INT2:
 		{
-			if (dave.int_input & 0x040)
+                        /* change state */
+                        dave.int_input^=0x040;
+
+                        /* negative edge? */
+                        if ((dave.int_input & 0x040)==0)
 			{
+                                /* set latch */
 				dave.int_latch |= 0x80;
 			}
 

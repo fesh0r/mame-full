@@ -7,41 +7,34 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "palette.h"
 #include "mess/systems/trs80.h"
 
 #define FW  TRS80_FONT_W
 #define FH  TRS80_FONT_H
 
-extern  UINT8 port_ff;
-extern  void trs80_shutdown_machine(void);
+extern UINT8 port_ff;
+extern void trs80_shutdown_machine(void);
 
 /***************************************************************************
   Statics for this module
 ***************************************************************************/
-static  int color = 0;
-static  int scanlines = 0;
+static int color = 0;
 
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
 int trs80_vh_start(void)
 {
-        videoram_size = 16 * 64;
-
-        if (generic_vh_start() != 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
-        memset(dirtybuffer, 0, videoram_size);
-
-        return 0;
+	return 0;
 }
 
-void    trs80_vh_stop(void)
+void trs80_vh_stop(void)
 {
-        generic_vh_stop();
-
-        /* kludge to have the trs80 shutdown called */
-        trs80_shutdown_machine();
+	generic_vh_stop();
 }
 
 /***************************************************************************
@@ -51,24 +44,10 @@ void    trs80_vh_stop(void)
 ***************************************************************************/
 void trs80_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-/* some tables to reduce calculating odd multiplications */
-static  int mx[64] = {
-	 0*FW*2, 1*FW*2, 2*FW*2, 3*FW*2, 4*FW*2, 5*FW*2, 6*FW*2, 7*FW*2,
-	 8*FW*2, 9*FW*2,10*FW*2,11*FW*2,12*FW*2,13*FW*2,14*FW*2,15*FW*2,
-	16*FW*2,17*FW*2,18*FW*2,19*FW*2,20*FW*2,21*FW*2,22*FW*2,23*FW*2,
-	24*FW*2,25*FW*2,26*FW*2,27*FW*2,28*FW*2,29*FW*2,30*FW*2,31*FW*2,
-	32*FW*2,33*FW*2,34*FW*2,35*FW*2,36*FW*2,37*FW*2,38*FW*2,39*FW*2,
-	40*FW*2,41*FW*2,42*FW*2,43*FW*2,44*FW*2,45*FW*2,46*FW*2,47*FW*2,
-	48*FW*2,49*FW*2,50*FW*2,51*FW*2,52*FW*2,53*FW*2,54*FW*2,55*FW*2,
-	56*FW*2,57*FW*2,58*FW*2,59*FW*2,60*FW*2,61*FW*2,62*FW*2,63*FW*2};
-
-static  int my[16] = {
-	0*FH*3, 1*FH*3, 2*FH*3, 3*FH*3, 4*FH*3, 5*FH*3, 6*FH*3, 7*FH*3,
-	8*FH*3, 9*FH*3,10*FH*3,11*FH*3,12*FH*3,13*FH*3,14*FH*3,15*FH*3};
-
 /* Special translation if video RAM with only 7 bits is present
-   I don't know if it's entirely correct, but it's close ;-)    */
-static	UINT8 translate_videoram[2][256] = {
+ * I don't know if it's entirely correct, but it's close ;-)
+ */
+static UINT8 translate_videoram[2][256] = {
 	{
 		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
 		0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
@@ -109,63 +88,24 @@ static	UINT8 translate_videoram[2][256] = {
 	int offs = 0;
 	int translate = (input_port_0_r(0) & 0x40) ? 1 : 0;
 
-	/* check for changed color settings */
-	if (color != (input_port_0_r(0) & 7))
-	{
-			color = input_port_0_r(0) & 7;
-			fillbitmap(tmpbitmap,Machine->pens[0],&Machine->drv->visible_area);
-			full_refresh = 1;
-	}
+	if( readinputport(0) & 0x08 )
+        cpu_set_nmi_line(0, PULSE_LINE);
 
-	/* check for changed scanlines mode setting */
-	if (scanlines != (input_port_0_r(0) & 8))
-	{
-		int chr, scanline;
-
-        scanlines = input_port_0_r(0) & 8;
-		if (scanlines)
-		{
-			/* wipe out every third scan line in our 2x3 or 4x3 scaled characters */
-			for (chr = 0; chr < 256; chr++)
-			{
-				for (scanline = 0; scanline < FH * 3; scanline += 3)
-				{
-					memset(&Machine->gfx[0]->gfxdata[(chr * Machine->gfx[0]->height + scanline+2) * Machine->gfx[0]->width], 0, FW * 2);
-					memset(&Machine->gfx[1]->gfxdata[(chr * Machine->gfx[1]->height + scanline+2) * Machine->gfx[0]->width], 0, FW * 4);
-				}
-			}
-		}
-		else
-		{
-			/* duplicate every third scan line in our 2x3 or 4x3 scaled characters */
-			for (chr = 0; chr < 256; chr++)
-			{
-				for (scanline = 0; scanline < FH * 3; scanline += 3)
-				{
-					memcpy(
-						&Machine->gfx[0]->gfxdata[(chr * Machine->gfx[0]->height + scanline+2) * Machine->gfx[0]->width],
-						&Machine->gfx[0]->gfxdata[(chr * Machine->gfx[0]->height + scanline+1) * Machine->gfx[0]->width],
-						FW * 2);
-					memcpy(
-						&Machine->gfx[1]->gfxdata[(chr * Machine->gfx[1]->height + scanline+2) * Machine->gfx[0]->width],
-						&Machine->gfx[1]->gfxdata[(chr * Machine->gfx[1]->height + scanline+1) * Machine->gfx[0]->width],
-						FW * 4);
-				}
-			}
-		}
+    /* check for changed color settings */
+	if( color != (readinputport(0) & 3) )
+    {
+		color = readinputport(0) & 3;
 		full_refresh = 1;
-	}
+    }
 
-	/* draw entire scrbitmap because of usrintrf functions
-	   called osd_clearbitmap or color change / scanline change */
-	if (full_refresh)
-	{
-		full_refresh = 0;
+    /* draw entire scrbitmap because of usrintrf functions
+	 * called osd_clearbitmap or color change / scanline change
+	 */
+	if( palette_recalc() || full_refresh )
 		memset(dirtybuffer, 1, videoram_size);
-	}
 
 	/* do we have double width characters enabled ? */
-	if (port_ff & 8)
+	if( port_ff & 0x08 )
 	{
 		/* for every second character in the Video RAM, check if it has
 		   been modified since last time and update it accordingly. */
@@ -173,24 +113,14 @@ static	UINT8 translate_videoram[2][256] = {
 		{
 			if (dirtybuffer[offs])
 			{
-				struct rectangle r;
+				int sx, sy;
 
 				dirtybuffer[offs] = 0;
-
-				r.min_x = mx[offs % 64];
-				r.min_y = my[offs / 64];
-				r.max_x = r.min_x + FW * 4 - 1;
-				r.max_y = r.min_y + FH * 3 - 1;
-
-				/* draw the upper half */
-				drawgfx(bitmap,
-						Machine->gfx[1],
-						translate_videoram[translate][videoram[offs]],
-						color,0,0,
-						r.min_x,r.min_y,
-						&r,
-						TRANSPARENCY_NONE,0);
-				osd_mark_dirty(r.min_x,r.min_y,r.max_x,r.max_y,1);
+				sx = (offs % 64) * FW * 2;
+				sy = (offs / 64) * FH;
+				drawgfx(bitmap, Machine->gfx[1], translate_videoram[translate][videoram[offs]],
+					color,0,0, sx,sy, &Machine->drv->visible_area, TRANSPARENCY_NONE,0);
+				osd_mark_dirty(sx,sy,sx+FW*2-1,sy+FH-1,1);
 			}
 		}
 	}
@@ -203,24 +133,15 @@ static	UINT8 translate_videoram[2][256] = {
 		{
 			if (dirtybuffer[offs])
 			{
-				struct rectangle r;
+				int sx, sy;
 
                 dirtybuffer[offs] = 0;
-
-				r.min_x = mx[offs % 64];
-				r.min_y = my[offs / 64];
-				r.max_x = r.min_x + FW * 2 - 1;
-				r.max_y = r.min_y + FH * 3 - 1;
-
-				drawgfx(bitmap,
-					Machine->gfx[0],
-					translate_videoram[translate][videoram[offs]],
-					color,0,0,
-					r.min_x,r.min_y,
-					&r,
-					TRANSPARENCY_NONE,0);
-				osd_mark_dirty(r.min_x,r.min_y,r.max_x,r.max_y,1);
-			}
+				sx = (offs % 64) * FW;
+				sy = (offs / 64) * FH;
+				drawgfx(bitmap, Machine->gfx[0], translate_videoram[translate][videoram[offs]],
+					color,0,0, sx,sy, &Machine->drv->visible_area, TRANSPARENCY_NONE,0);
+                osd_mark_dirty(sx,sy,sx+FW-1,sy+FH-1,1);
+            }
 		}
 	}
 }

@@ -1,3 +1,73 @@
+/*
+
+Driver for a PDP1 emulator.
+
+Preliminary, this is a conversion of a JAVA emulator.
+I have tried contacting the author, but heard as yet nothing of him,
+so I don't know if it all right with him, but after all -> he did
+release the source, so hopefully everything will be fine (no his
+name is not Marat).
+
+Note: naturally I have no PDP1, I have never seen one, nor have I any
+programs for it.
+
+The only program I found (in binary form) is
+
+SPACEWAR!
+
+The first Videogame EVER!
+
+When I saw the java emulator, running that game I was quite intrigued to
+include a driver for MESS.
+I think the historical value of SPACEWAR! is enormous.
+
+SPACEWAR! is public domain, so I include it with the driver.
+So far only emulated is stuff needed to run SPACEWAR!
+
+Not even the keyboard is fully emulated.
+For more documentation look at the source for the driver,
+and the pdp1/pdp1.c file (information about the whereabouts of information
+and the java source).
+
+In SPACEWAR!, meaning of the sense switches
+
+Sense switch 1 On = low momentum            Off = high momentum (guess)
+Sense switch 2 On = low gravity             Off = high gravity
+Sense switch 3            something with torpedos?
+Sense switch 4 On = background stars off    Off = background stars on
+Sense switch 5 On = star kills              Off = star teleports
+Sense switch 6 On = big star                Off = no big star
+
+LISP interpreter is coming...
+Sometime I'll implement typewriter and/or puncher...
+Keys are allready in the machine...
+
+Bug fixes...
+
+Some fixes, but I can't get to grips with the LISP... something is
+very wrong somewhere...
+
+(to load LISP for now rename it to SPACEWAR.BIN,
+though output is not done, and input via keyboard produces an
+'error' of some kind (massive indirection))
+
+Added Debugging and Disassembler...
+
+Another PDP1 emulator (or simulator)
+is at:
+ftp://minnie.cs.adfa.oz.au/pub/PDP-11/Sims/Supnik_2.3
+
+including source code.
+Sometime I'll rip some devices of that one and include them in this emulation.
+
+Also
+ftp://minnie.cs.adfa.oz.au/pub/PDP-11/Sims/Supnik_2.3/software/lispswre.tar.gz
+Is a packet which includes the original LISP as source and
+binary form plus a makro assembler for PDP1 programs.
+
+*/
+
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "mess/vidhrdw/pdp1.h"
@@ -42,7 +112,7 @@ static struct MemoryWriteAddress pdp1_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pdp1 )
 
     PORT_START      /* IN0 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Spin Left Player 1", KEYCODE_A, IP_JOY_DEFAULT )
@@ -95,6 +165,14 @@ static unsigned short colortable[] =
 	0x01, 0x00,
 };
 
+/* Initialise the palette */
+static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
+
 /* note I don't know about the speed of the machine, I only know
  * how long each instruction takes in micro seconds
  * below speed should therefore also be read in something like
@@ -107,7 +185,6 @@ static struct MachineDriver pdp1_machine_driver =
 		{
 			CPU_PDP1,
 			2000000,
-			0,
 			pdp1_readmem, pdp1_writemem,0,0,
 			0, 0 /* no vblank interrupt */
 		}
@@ -124,7 +201,7 @@ static struct MachineDriver pdp1_machine_driver =
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(colortable) / sizeof(colortable[0]),
 
-	0,
+	pdp1_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -150,7 +227,7 @@ struct GameDriver pdp1_driver =
 	"pdp1",
 	"pdp1 SPACEWAR!",
 	"1962",
-	"?????",
+	"Digital Equipment Corporation",
 	"Spacewar! was conceived in 1961 by Martin Graetz,\n"
 	"Stephen Russell, and Wayne Wiitanen. It was first\n"
 	"realized on the PDP-1 in 1962 by Stephen Russell,\n"
@@ -170,6 +247,7 @@ struct GameDriver pdp1_driver =
 	0,
 	pdp1_load_rom,
 	pdp1_id_rom,
+	0,		/* defualt file extensions */
 	0,      /* number of ROM slots */
 	0,      /* number of floppy drives supported */
 	0,      /* number of hard drives supported */
@@ -178,9 +256,9 @@ struct GameDriver pdp1_driver =
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_pdp1,
 
-	0, palette, colortable,
+	0, /*palette*/0, /*colortable*/0,
 	ORIENTATION_DEFAULT,
 
 	0, 0,

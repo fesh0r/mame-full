@@ -20,15 +20,17 @@ static int joystick_data_select;        /* which nibble of joystick data we want
 
 int pce_load_rom(void)
 {
-    int i, size;
+	int size;
     FILE *fp = NULL;
+	unsigned char *ROM;
     if(errorlog) fprintf(errorlog, "*** pce_load_rom : %s\n", rom_name[0]);
 
     /* open file to get size */
-    fp = osd_fopen(Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0);
+    fp = osd_fopen(Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0);
     if(!fp) return 1;
-    ROM = malloc(PCE_ROM_MAXSIZE);
-    if(!ROM) return 1;
+	if( new_memory_region(REGION_CPU1,PCE_ROM_MAXSIZE) )
+		return 1;
+	ROM = memory_region(REGION_CPU1);
     size = osd_fread(fp, ROM, PCE_ROM_MAXSIZE);
 
     /* position back at start of file */
@@ -43,14 +45,6 @@ int pce_load_rom(void)
     }
     size = osd_fread(fp, ROM, size);
     osd_fclose(fp);
-
-    for(i=0;i<MAX_MEMORY_REGIONS;i++)
-    {
-        Machine->memory_region[i] = 0;
-    }
-
-    /* apparently this works */
-    Machine->memory_region[0] = ROM;
 
     return 0;
 }

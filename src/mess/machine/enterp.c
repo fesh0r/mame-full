@@ -41,8 +41,6 @@ void    enterprise_shutdown_machine(void)
 
 int	enterprise_rom_load()
 {
-        Enterprise_SetupPalette();
-        
 	return 0;
 }
 

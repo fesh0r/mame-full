@@ -137,7 +137,7 @@ if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 read!\n");
 	if (errorlog) fprintf (errorlog, "z80 read from address %x\n", address);
 
 	/* Read the data out of the 68k ROM */
-	if (address < 0x400000) return Machine->memory_region[0][BYTE_XOR(address)];
+	if (address < 0x400000) return memory_region(REGION_CPU1)[BYTE_XOR(address)];
 	/* else read the data out of the 68k RAM */
  	else if (address > 0xff0000) return genesis_sharedram[BYTE_XOR(offset)];
 
@@ -257,19 +257,19 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( genesis_input_ports )
+INPUT_PORTS_START( genesis )
 	PORT_START	/* IN0 player 1 controller */
 	PORT_BIT(	0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT(	0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT(	0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT(	0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2,	"Player 1 B",       KEYCODE_X,      IP_JOY_NONE )
-	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_BUTTON3,	"Player 1 C",       KEYCODE_C,      IP_JOY_NONE )
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2,	"Player 1 B",       KEYCODE_X,      JOYCODE_1_BUTTON3 )
+	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_BUTTON3,	"Player 1 C",       KEYCODE_C,      JOYCODE_1_BUTTON2 )
 
 	PORT_START	/* IN1 playter 1 controller, part 2 */
-	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1,	"Player 1 A",       KEYCODE_Z,      IP_JOY_NONE )
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1,	"Player 1 A",       KEYCODE_Z,      JOYCODE_1_BUTTON4 )
 
-	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1,	"Player 1 Start",   KEYCODE_LSHIFT, IP_JOY_NONE )
+	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1,	"Player 1 Start",   KEYCODE_LSHIFT, JOYCODE_1_BUTTON1 )
 
 	PORT_START	/* IN2 player 2 controller */
 
@@ -277,20 +277,20 @@ INPUT_PORTS_START( genesis_input_ports )
 	PORT_BIT(	0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	| IPF_PLAYER2 )
 	PORT_BIT(	0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	| IPF_PLAYER2 )
 	PORT_BIT(	0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	| IPF_PLAYER2 )
-	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2		| IPF_PLAYER2,	"Player 2 B",       KEYCODE_O,      IP_JOY_NONE )
-	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_BUTTON3		| IPF_PLAYER2,	"Player 2 C",       KEYCODE_P,      IP_JOY_NONE )
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2		| IPF_PLAYER2,	"Player 2 B",       KEYCODE_O,      JOYCODE_2_BUTTON3 )
+	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_BUTTON3		| IPF_PLAYER2,	"Player 2 C",       KEYCODE_P,      JOYCODE_2_BUTTON2 )
 
 	PORT_START	/* IN3 player 2 controller, part 2 */
-	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1		| IPF_PLAYER2,	"Player 2 A",       KEYCODE_I,      IP_JOY_NONE )
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1		| IPF_PLAYER2,	"Player 2 A",       KEYCODE_I,      JOYCODE_2_BUTTON4 )
 
-	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1 		| IPF_PLAYER2,	"Player 2 Start",   KEYCODE_U,      IP_JOY_NONE )
+	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1 		| IPF_PLAYER2,	"Player 2 Start",   KEYCODE_U,      JOYCODE_2_BUTTON1 )
 
 
 
 
 	PORT_START	/* IN4 - finternal switches, and fake 'Auto' */
 
-	PORT_DIPNAME( 0x03, 0x00, "Country",0 )
+	PORT_DIPNAME( 0x03, 0x00, "Country")
 
 	PORT_DIPSETTING(    0x00, "Auto" )
 
@@ -322,6 +322,17 @@ static struct YM2612interface ym2612_interface =
 };
 
 
+
+
+/* list of file extensions */
+static const char *genesis_file_extensions[] =
+{
+	"smd",
+	"bin",
+	0       /* end of array */
+};
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -329,14 +340,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			53693100 /7 ,	/* 8 Mhz..ish */
-			0, /* number of memory regions */
 			genesis_readmem,genesis_writemem,0,0, /* zeros are ioport read/write */
 			genesis_interrupt,1	/* up to 224 interrupts per frame */
 		},
 	 	{
 	 		CPU_Z80 | CPU_AUDIO_CPU,
 	 		53693100 / 15, /* 4 Mhz..ish */
-	 		1,
 	 		genesis_s_readmem,genesis_s_writemem,0,writeport,
 	 		genesis_s_interrupt,1
 	 	}
@@ -394,6 +403,7 @@ struct GameDriver genesis_driver =
 	0,
 	genesis_load_rom,
 	genesis_id_rom,
+	genesis_file_extensions,
 	1,	/* number of ROM slots */
 	0,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
@@ -402,7 +412,7 @@ struct GameDriver genesis_driver =
 	0,
 	0,
 
-	genesis_input_ports,
+	input_ports_genesis,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

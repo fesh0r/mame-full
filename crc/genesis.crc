@@ -1,0 +1,72 @@
+# Sega Megadrive/Genesis/Nomad Cartridge CRC list
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# send submissions and/or corrections to: battlepriest@hotmail.com
+
+# Thanks to Gerardo Jorrin!
+
+[genesis]
+4aaefded = 688 Attack Sub (Sega, 1991)
+f3ac3d85 = Aero the Acro-Bat (Sunsoft, 1993)
+2b317628 = Aero the Acro-Bat 2 (Sunsoft, 1994)
+2e692c95 = Arrow Flash (Sega, 1990)
+904716ac = After Burner (Dempa, 1990)
+3fd1d885 = Air Diver (Asmik, 1990)
+ed427ea9 = Aladdin (Sega, 1993)
+f97a5fb7 = Alex Kidd in the Enchanted Castle (Sega, 1989)
+7378c290 = Alien, 3 (Acclaim)
+48069841 = Alien Storm (Sega, 1991) (graphic glitches)
+d28d5c40 = Alisia Dragoon (Game Arts, 1992) (graphic glitches)
+a0bef835 = Arcade Classics (Sega, 1996)
+6c184c71 = Atomic Runner (Data East, 1992)
+1f07577f = Awesome Possum (Tengen, 1993)
+66a388c3 = Back to the Future III
+a139c465 = Ball Jacks (Namco, 1993)
+56675088 = Ball Z (Accolade)
+8651a0ba = Barney's Hide & Seek game (Sega, 1993)
+d1447bf3 = Bart's Nightmare (Acclaim, 1993)
+2dd4eb8e = Bart Vs. the Space Mutants (Acclaim, 1992)
+503855a2 = Battle Frenzy (Domark, 1994)
+fdda2f14 = BattleTech (Sega, 1994)
+d10e103a = Battle Toads (Sega, 1993)
+bd1b36a3 = Cross Fire (Kyugo, 1991)
+773659eb = E-Swat (Sega, 1990)
+ea8f499e = James Buster Douglas KnockOut Boxing (Sega, 1990)
+beaf3c4d = Phantasy Star (Sega, 1994)
+8f043cb3 = Pulseman
+a1e89b52 = Shane Warne Cricket (Codemasters, 1996)
+f9394e97 = Sonic the Hedgehog (Sega, 1991)
+43f7dfc1 = Two Crude Dudes (Data East, 1991)
+
+#[not_working]
+bc4d9b20 = Arcus Odyssey (Wolf Team) (NOT WORKING)
+80114746 = Altered Beast (Sega, 1988) (missing graphics)
+2803a5ca = Addams Family, the (Acclaim, 1993) (NOT WORKING)
+78968b31 = Aleste (Compile, 1990) (NOT WORKING)
+beabf5a5 = Aerobiz Supersonic (Koei, 1994) (NOT WORKING)
+154e732f = Aero Blaster (NOT WORKING)
+4ce88b00 = Alien Soldier (Sega, 1995) (keyboard does not work)
+8992b900 = American Gladiators (Gametek, 1992) (NOT WORKING)
+ 83751b1 = Animaniacs (Konami, 1994) (NOT WORKING)
+e9742041 = Another World (Virgin, 1992) (NOT WORKING)
+246f960d = Arch Rivals (Acclaim) (NOT WORKING)
+b6f3b0ed = Art of Fighting (Sega, 1993) (NOT WORKING)
+226ecee2 = Asterix and the Power of the Gods (Sega, 1995) (NOT WORKING)
+1a0218a0 = Bad Omen (NOT WORKING)
+fd2b35e3 = Battle Master (Mirrorsoft, 1993) (NOT WORKING)
+9a0e1a8a = Batman (Sunsoft, 1991) (NOT WORKING)
+54f6408c = Bugs Bunny in Double Trouble (Warner, 1996) (NOT WORKING)
+2b76dbfd = Contra 4 (Konami, 1994) (NOT WORKING)
+181d7855 = Cool Spot (Virgin) (graphic glitches)
+fb704460 = Devil Crash (Technosoft, 1991) (NOT WORKING)
+ 5d14885 = The Punisher (NOT WORKING)
+edfcbf6e = Psycho Pinball (Codemasters, 1994) (NOT WORKING)
+26836223 = Super Baseball 2020 (Electronic Arts, 1993) (NOT WORKING)
+ca55ebda = World Series Baseball '96 (Sega, 1996) (NOT WORKING)
+
+#[known_bad_dumps]
+184019be = Ayrton Senna's Super Monaco GP II (Sega, 1992) (BAD DUMP?)
+ 7ed5149 = Bubba n Stix (Core) (NOT WORKING) (bad CRC)
+7a04fa45 = Ghouls 'n Ghosts (BAD DUMP?) (bad CRC)
+

@@ -15,7 +15,7 @@
 /* register write masks for HD6845S - anded with value
 written to register */
 
-static byte HD6845S_RegisterWriteMask[18]=
+static unsigned char HD6845S_RegisterWriteMask[18]=
 {
 	0x0ff,
 	0x0ff,
@@ -38,7 +38,7 @@ static byte HD6845S_RegisterWriteMask[18]=
 };
 
 /* anded with value to read from register */
-static byte HD6845S_RegisterReadMask[18]=
+static unsigned char HD6845S_RegisterReadMask[18]=
 {
 	0x00,
 	0x00,
@@ -92,17 +92,22 @@ void    hd6845s_vh_stop(void)
 ***************************************************************************/
 void    hd6845s_register_w(int data)
 {
-	byte val;
+        unsigned char val;
 
 	/* ignore writes in range 15..31 */
-	if (crt.RegIndex>15)
-		return;
+        if (crt.RegIndex<15)
+        {
 
-	/* mask bits of depending on register we are writing to */
-	val = data & HD6845S_RegisterWriteMask[crt.RegIndex];
+                /* mask bits of depending on register we are writing to */
+                val = data & HD6845S_RegisterWriteMask[crt.RegIndex];
+                /* store data to register */
+                crt.Registers[crt.RegIndex] = val;
+        }
+        else
+        {
+                crt.Registers[crt.RegIndex] = data;
+        }
 
-	/* store data to register */
-	crt.Registers[crt.RegIndex] = val;
 }
 
 /***************************************************************************
@@ -118,7 +123,7 @@ void    hd6845s_index_w(int data)
 ***************************************************************************/
 int     hd6845s_register_r()
 {
-	byte val;
+        unsigned char val;
 
 	if (crt.RegIndex>17)
 		return 0;
@@ -140,4 +145,41 @@ int	hd6845s_getreg(int RegIndex)
 int     hd6845s_index_r()
 {
 	return 0x0ff;
+}
+                
+void    hd6845s_update_line(void)
+{
+        crt.Registers[HD6845S_RA]++;
+        crt.Registers[HD6845S_RA]&=31;
+
+
+        if (crt.Registers[HD6845S_RA]==(crt.Registers[HD6845S_MAX_RASTER]+1))
+        {
+                crt.Registers[HD6845S_MA]+=crt.Registers[HD6845S_H_DISP];
+                crt.Registers[HD6845S_RA] = 0;
+                crt.Registers[HD6845S_LC]++;
+
+                if (crt.Registers[HD6845S_LC]==crt.Registers[HD6845S_V_TOT])
+                {
+                        int MA;
+
+                        MA = crt.Registers[HD6845S_SCREEN_ADDR_L] |
+                              (crt.Registers[HD6845S_SCREEN_ADDR_H]<<8);
+
+                        crt.Registers[HD6845S_LC] = 0;
+                        crt.Registers[HD6845S_MA] = MA;
+
+                        crt.Registers[HD6845S_STATE]|=HD6845S_VDISP;
+                }
+
+                if (crt.Registers[HD6845S_LC]==crt.Registers[HD6845S_V_DISP])
+                {
+                        crt.Registers[HD6845S_STATE]&=~HD6845S_VDISP;
+                }
+        }
+}
+
+void    hd6845s_update_clocks(int clocks)
+{
+        hd6845s_update_line();
 }

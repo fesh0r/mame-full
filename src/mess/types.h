@@ -1,9 +1,9 @@
-#ifndef TYPE_H
-#define TYPE_H
-/*This is for the amstrad driver*/
-//typedef int byte;
-typedef unsigned char byte;
+#ifndef TYPES_H
+#define TYPES_H
 
+/* types used by the CPU emulations */
+typedef unsigned char byte;
+typedef unsigned short word;
+typedef unsigned       dword;
 
 #endif
-

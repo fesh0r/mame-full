@@ -116,8 +116,8 @@ int pce_psg_r(int offset)
 static struct MemoryReadAddress pce_readmem[] =
 {
     { 0x000000, 0x1EDFFF, MRA_ROM },
-    { 0x1EE000, 0x1EFFFF, MRA_RAM, &pce_save_ram },
-    { 0x1F0000, 0x1F1FFF, MRA_RAM, &pce_user_ram },
+    { 0x1EE000, 0x1EFFFF, MRA_RAM },
+    { 0x1F0000, 0x1F1FFF, MRA_RAM },
     { 0x1FE000, 0x1FE003, vdc_r },
     { 0x1FE400, 0x1FE407, vce_r },
     { 0x1FE800, 0x1FE80F, pce_psg_r },
@@ -154,7 +154,7 @@ static struct IOWritePort pce_writeport[] =
 };
 
 /* todo: alternate forms of input (multitap, mouse, etc.) */
-INPUT_PORTS_START( pce_input_ports )
+INPUT_PORTS_START( pce )
 
     PORT_START  /* Player 1 controls */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* button I */
@@ -215,7 +215,6 @@ static struct MachineDriver pce_machine_driver =
         {
             CPU_H6280,
             7195090,
-            0,
             pce_readmem, pce_writemem, pce_readport, pce_writeport,
             pce_interrupt, VDC_LPF
         },
@@ -231,7 +230,7 @@ static struct MachineDriver pce_machine_driver =
     512, 512,
     0,
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-    256*2,
+    0,		/* was... (256*2) */
     pce_vh_start,
     pce_vh_stop,
     pce_vh_screenrefresh,
@@ -247,12 +246,13 @@ struct GameDriver pce_driver =
     "1987",
     "NEC",
     "Charles Mac Donald (MESS driver and code)\nDavid Shadoff (info and code)",
-    GAME_NOT_WORKING,
+    0,
     &pce_machine_driver,
     0,
     0,
     pce_load_rom,
     pce_id_rom,
+	0,	/* default file extensions */
     1,
     0,
     0,
@@ -260,8 +260,8 @@ struct GameDriver pce_driver =
     0, 0,
     0,
     0,
-    pce_input_ports,
+    input_ports_pce,
     0, 0, 0,
-    ORIENTATION_DEFAULT,
+    GAME_NOT_WORKING|ORIENTATION_DEFAULT,
     0, 0,
 };

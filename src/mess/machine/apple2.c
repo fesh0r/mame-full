@@ -54,7 +54,7 @@ void apple2_auxram_w(int offset, int data);
 ***************************************************************************/
 void apple2e_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Init our language card banks to initially point to ROM */
 	cpu_setbankhandler_w (1, MWA_ROM);
@@ -78,7 +78,7 @@ void apple2e_init_machine(void)
 
 	memset (&a2, sizeof (APPLE2_STRUCT), 0);
 	a2_speaker_state = 0;
-	
+
 	/* TODO: add more initializers as we add more slots */
 	mockingboard_init (4);
 	apple2_slot6_init();
@@ -92,8 +92,8 @@ int apple2_id_rom (const char *name, const char *gamename)
 	FILE *romfile;
 	unsigned char magic[4];
 	int retval;
-		
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_ROM_CART, 0))) return 0;
+
+	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 0;
 	/* Verify the file is in Apple II format */
@@ -111,7 +111,7 @@ int apple2_id_rom (const char *name, const char *gamename)
 int apple2e_load_rom (void)
 {
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
-	memset(Machine->memory_region[1] + 0x1000,0xFF,0x1000);
+	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
 
 	return 0;
 }
@@ -122,7 +122,7 @@ int apple2e_load_rom (void)
 int apple2ee_load_rom (void)
 {
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
-	memset(Machine->memory_region[1] + 0x1000,0xFF,0x1000);
+	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
 
 	return 0;
 }
@@ -133,18 +133,18 @@ int apple2ee_load_rom (void)
 int apple2_interrupt(void)
 {
 	int irq_freq = 1;
-	
+
 	irq_freq --;
 	if (irq_freq < 0) irq_freq = 1;
-	
-	/* We poll the keyboard periodically to scan the keys.  This is 
+
+	/* We poll the keyboard periodically to scan the keys.  This is
 	   actually consistent with how the AY-3600 keyboard controller works. */
 	AY3600_interrupt();
 
 	/* control-reset mapped to control-delete */
 	if (osd_is_key_pressed (KEYCODE_LCONTROL) && osd_is_key_pressed (KEYCODE_BACKSPACE))
 	{
-		cpu_reset (0);
+		cpu_set_reset_line (0,PULSE_LINE);
 		return 0;
 	}
 	else
@@ -161,7 +161,7 @@ int apple2_interrupt(void)
 ***************************************************************************/
 void apple2_LC_ram1_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
@@ -173,7 +173,7 @@ void apple2_LC_ram1_w(int offset, int data)
 ***************************************************************************/
 void apple2_LC_ram2_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
@@ -185,7 +185,7 @@ void apple2_LC_ram2_w(int offset, int data)
 ***************************************************************************/
 void apple2_LC_ram_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
@@ -197,7 +197,7 @@ void apple2_LC_ram_w(int offset, int data)
 ***************************************************************************/
 void apple2_mainram_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	RAM[0x0200 + offset] = data;
 }
@@ -207,7 +207,7 @@ void apple2_mainram_w(int offset, int data)
 ***************************************************************************/
 void apple2_auxram_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	RAM[0x10200 + offset] = data;
 }
@@ -231,7 +231,7 @@ int apple2_c00x_r(int offset)
 ***************************************************************************/
 void apple2_c00x_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	switch (offset)
 	{
@@ -318,7 +318,7 @@ void apple2_c00x_w(int offset, int data)
 		/* ALTCHARSETON - use alt character set */
 		case 0x0F:		a2.ALTCHARSET = 0x80;	break;
 	}
-	
+
 	if (errorlog) fprintf (errorlog, "a2 softswitch_w: %04x\n", offset + 0xc000);
 }
 
@@ -904,12 +904,12 @@ void apple2_c07x_w(int offset, int data)
 ***************************************************************************/
 int apple2_c08x_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
 	if (errorlog) fprintf (errorlog, "language card bankswitch read, offset: $c08%0x\n", offset);
-	
+
 	if ((offset & 0x01)==0x00)
 	{
 		cpu_setbankhandler_w (1, MWA_ROM);
@@ -919,7 +919,7 @@ int apple2_c08x_r(int offset)
 	else
 	{
 		cpu_setbankhandler_w (2, apple2_LC_ram_w);
-		
+
 		if ((offset & 0x08)==0x00)
 			cpu_setbankhandler_w (1, apple2_LC_ram2_w);
 		else
@@ -1111,7 +1111,7 @@ void apple2_slot7_w(int offset, int data)
 
 int apple2_slot4_r (int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (a2.INTCXROM)
 		/* Read the built-in ROM */
@@ -1123,7 +1123,7 @@ int apple2_slot4_r (int offset)
 
 static void mockingboard_init (int slot)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* TODO: fix this */
 	/* What follows is pure filth. It abuses the core like an angry pimp on a bad hair day. */
@@ -1139,7 +1139,7 @@ static void mockingboard_init (int slot)
 static int mockingboard_r (int offset)
 {
 	static int flip1 = 0, flip2 = 0;
-	
+
 	switch (offset)
 	{
 		/* This is used to ID the board */
@@ -1161,9 +1161,9 @@ static int mockingboard_r (int offset)
 static void mockingboard_w (int offset, int data)
 {
 	static int latch0, latch1;
-	
+
 	if (errorlog) fprintf (errorlog, "mockingboard_w, $%02x:%02x\n", offset, data);
-	
+
 	/* There is a 6522 in here which interfaces to the 8910s */
 	switch (offset)
 	{
@@ -1183,15 +1183,15 @@ static void mockingboard_w (int offset, int data)
 					break;
 			}
 			break;
-			
+
 		case 0x01: /* ORA1 */
 			latch0 = data;
 			break;
-			
+
 		case 0x02: /* DDRB1 */
 		case 0x03: /* DDRA1 */
 			break;
-			
+
 		case 0x80: /* ORB2 */
 			switch (data)
 			{
@@ -1208,11 +1208,11 @@ static void mockingboard_w (int offset, int data)
 					break;
 			}
 			break;
-			
+
 		case 0x81: /* ORA2 */
 			latch1 = data;
 			break;
-			
+
 		case 0x82: /* DDRB2 */
 		case 0x83: /* DDRA2 */
 			break;

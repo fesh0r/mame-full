@@ -1331,13 +1331,14 @@ char * get_alias(char *driver_name, char *argv)
 int check_crc(int crc, int length, char * driver)
 {
 
-	char crc_string[8];
+	char crc_string[10];
 	char *crc_file_name;
 
 	/* allocate the letters for the path and file */
-	crc_file_name = (char*)malloc(MAX_PATH*sizeof(char));
+	crc_file_name = (char*)malloc(MAX_PATHLEN*sizeof(char));
 
 	/* create filename from driver (.crc) */
+	if( !crcdir ) return 0;
 	sprintf(crc_file_name,"%s/%s.crc",crcdir,driver);
 
 
@@ -1348,9 +1349,10 @@ int check_crc(int crc, int length, char * driver)
 
 	/* open the override config file and see if CRC is defined */
 	override_config_file(crc_file_name);
+	free(crc_file_name);
 	image.name = get_config_string(driver,crc_string,"");
 
-	if(image.name!="")
+	if(image.name[0])
 	{
 		return 1; /* found */
  	}

@@ -336,7 +336,7 @@ static void render_sprites (int scanline)
 void nes_vh_sprite_dma_w (int offset, int data)
 {
 	/* TODO: remove this */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy (spriteram, &RAM[data * 0x100], 0x100);
 }

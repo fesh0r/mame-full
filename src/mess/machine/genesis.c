@@ -23,6 +23,9 @@ int genesis_soundram_size = 0x10000;
 /*unsigned char *genesis_sharedram;*/
 unsigned char genesis_sharedram[0x10000];
 unsigned char *genesis_soundram;
+
+unsigned char *ROM;
+
 void genesis_init_machine (void)
 {
   //	genesis_soundram = malloc(0x10000);
@@ -33,7 +36,7 @@ void genesis_init_machine (void)
    	cpu_setbank(1, &genesis_soundram[0]);
 	cpu_setbank(2, &genesis_sharedram[0]);
 
-	cpu_halt (1,HALT);
+	cpu_set_halt_line (1,ASSERT_LINE);
 
 	z80running = 0;
 	if (errorlog) fprintf (errorlog, "Machine init\n");
@@ -45,29 +48,24 @@ int genesis_load_rom (void)
 	FILE *romfile;
 	unsigned char *tmpROMnew, *tmpROM;
 	unsigned char *secondhalf;
-	int region;
 	unsigned char *rawROM;
 	int relocate;
 	int length;
 	int ptr, x;
 
-if (errorlog) fprintf (errorlog, "ROM load/init regsions\n");
+if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
 
 
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0))) return 1;
+	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
+		return 1;
 	/* Allocate memory and set up memory regions */
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-		Machine->memory_region[region] = 0;
-   	rawROM = malloc (0x405000);
-	ROM = rawROM /*+ 512*/;
-
-	if (!rawROM)
+	if( new_memory_region(REGION_CPU1,0x405000) )
 	{
-		printf ("Memory allocation failed reading roms!\n");
-		goto bad;
+		if(errorlog) fprintf(errorlog,"new_memory_region failed!\n");
+		return 1;
 	}
-
-
+	rawROM = memory_region(REGION_CPU1);
+	ROM = rawROM /*+ 512*/;
 
 	length = osd_fread (romfile, rawROM+0x2000, 0x400200);
 	if (!length) return 1;
@@ -78,8 +76,6 @@ if (errorlog) fprintf (errorlog, "ROM load/init regsions\n");
 	 && (rawROM[0x2009] == 0xbb)
 	 && (rawROM[0x200a] == 0x06) )	/* is this a SMD file..? */
 	{
-
-
 
 		tmpROMnew = ROM;
 		tmpROM = ROM + 0x2000+512;
@@ -101,8 +97,6 @@ if (errorlog) fprintf (errorlog, "ROM load/init regsions\n");
 	 && (rawROM[0x2081] == 'A')
 	 && (rawROM[0x2082] == 'M' || rawROM[0x2082] == 'G') )	/* is this a MD file..? */
 	{
-
-
 
 		tmpROMnew = malloc(length);
 		secondhalf = &tmpROMnew[length >> 1];
@@ -130,18 +124,16 @@ if (errorlog) fprintf (errorlog, "ROM load/init regsions\n");
 	  	relocate = 0x2000;
 	}
 
-	Machine->memory_region[0] = ROM; /* 68000 ROM region */
-	Machine->memory_region[1] = malloc(0x10000); /* Z80 region */
+	ROM = memory_region(REGION_CPU1); /* 68000 ROM region */
 
-	if (Machine->memory_region[1] == 0)
+	if (new_memory_region(REGION_CPU2,0x10000)) /* Z80 region */
 	{
 		printf ("Memory allocation failed creating Z80 RAM region!\n");
-		free(rawROM);
 		goto bad;
 	}
 
 
-	genesis_soundram = Machine->memory_region[1];
+	genesis_soundram = memory_region(REGION_CPU2);
 
 
    	for (ptr = 0; ptr < 0x402000; ptr+=2) /* mangle bytes for littleendian machines */
@@ -159,8 +151,6 @@ if (errorlog) fprintf (errorlog, "ROM load/init regsions\n");
 	}
 
 
-
-
 	osd_fclose (romfile);
 	return 0;
 bad:
@@ -173,7 +163,7 @@ int genesis_id_rom (const char *name, const char *gamename)
 	unsigned char temp[0x110];
 	int retval = 0;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_ROM_CART, 0))) return 0;
+	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	osd_fread (romfile, temp, 0x110);
 
@@ -251,7 +241,7 @@ int genesis_io_r (int offset)
 
 		case 0:
 
-			switch (Machine->memory_region[0][ACTUAL_BYTE_ADDRESS(0x1f0)])
+			switch (memory_region(REGION_CPU1)[ACTUAL_BYTE_ADDRESS(0x1f0)])
 
 			{
 
@@ -357,7 +347,7 @@ void genesis_ctrl_w (int offset, int data)
 				if (data == 0x100)
 					{
 					  	z80running = 0;
-					 	cpu_halt(1,HALT); /* halt Z80 */
+						cpu_set_halt_line(1,ASSERT_LINE); /* halt Z80 */
 				   //		if (errorlog) fprintf(errorlog, "z80 stopped by 68k BusReq\n");
 					}
 					else
@@ -365,7 +355,7 @@ void genesis_ctrl_w (int offset, int data)
 					  	z80running = 1;
 						cpu_setbank(1, &genesis_soundram[0]);
 
-					 	cpu_halt(1,RESUME);
+						cpu_set_halt_line(1,CLEAR_LINE);
 				   //		if (errorlog) fprintf(errorlog, "z80 started, BusReq ends\n");
 					}
 				return;
@@ -373,10 +363,10 @@ void genesis_ctrl_w (int offset, int data)
 			case 0x200: /* Z80 CPU Reset */
 				if (data == 0x00)
 				{
-			       	cpu_halt(1,HALT);
-					cpu_reset(1);
+					cpu_set_halt_line(1,ASSERT_LINE);
+					cpu_set_reset_line(1,PULSE_LINE);
 
-			   	  	cpu_halt(1,HALT);
+					cpu_set_halt_line(1,ASSERT_LINE);
 				  //	if (errorlog) fprintf(errorlog, "z80 reset, ram is %p\n", &genesis_soundram[0]);
 			   	  	z80running = 0;
 				  	return;

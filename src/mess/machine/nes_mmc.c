@@ -4,7 +4,7 @@
 	. Mapper 18 VROM switching is broken
 	. Mapper 25 VROM switching is broken
 	. Mapper 79 VROM switching is broken
-	
+
 	Also, remember that the MMC does not equal the mapper #. In particular, Mapper 4 is
 	really MMC3, Mapper 9 is MMC2 and Mapper 10 is MMC4. Makes perfect sense, right?
 */
@@ -27,6 +27,7 @@ int MMC3_DOIRQ, MMC3_IRQ;
 int MMC1_extended;	/* 0 = normal MMC1 cart, 1 = 512k MMC1, 2 = 1024k MMC1 */
 void (*mmc_write)(int offset, int data);
 
+unsigned char *ROM;
 
 /* Local variables */
 //static int MMC_chr;
@@ -86,7 +87,7 @@ void nes_strange_mapper_w (int offset, int data)
 				/* $5010 - sound IRQ control? uncharted, cv3 set to 0 */
 				/* $5011 - sound sample register? */
 				/* $5015 - ?? uncharted sets to 0 */
-				
+
 				/* $5101 - vrom banking? - uncharted sets these 3 to 3, 2, 1 respectively */
 				/* $5102 - vrom banking? */
 				/* $5104 - exram control? uncharted sets to 1, cv3 sets to 0 */
@@ -117,7 +118,7 @@ void nes_strange_mapper_w (int offset, int data)
 					$5120-$5127 depending on which bank is to be switched. Maximum CHRROM
 					addressable this way is 256k.
 					*/
-				
+
 					MMC5_vrom_bank_mode = data & 0x03;
 					break;
 				/* $5104 - EXRAM control */
@@ -125,7 +126,7 @@ void nes_strange_mapper_w (int offset, int data)
 					MMC5_exram_tile_enable = data & 0x01;
 					MMC5_exram_color_enable = data & 0x02;
 					break;
-					
+
 				case 0x1005:
 					/*
 					bits 0-1	VRAM page select for $2000-23FF
@@ -135,7 +136,7 @@ void nes_strange_mapper_w (int offset, int data)
 					*/
 					Mirroring = (data & 0x01) + 1;
 					break;
-				
+
 				/* cv3 sets bit 0x80 in the banks, uncharted sets 0xc0 */
 				/* $5113 - ?? bank switch control? uncharted sets to 5, cv3 unused */
 				/* $5114 - ?? bank switch 1 8k bank at $8000? cv3 unused, uncharted uses */
@@ -188,7 +189,7 @@ void nes_strange_mapper_w (int offset, int data)
 						cpu_setbank (4, &ROM[data * 0x2000 + 0x10000]);
 					}
 					break;
-				
+
 				case 0x1103:
 					MMC3_IRQ = data;
 					MMC5_scanline = data;
@@ -249,7 +250,7 @@ void nes_strange_mapper_w (int offset, int data)
 	}
 }
 /*
- * For games w/o a mapper & unimplemented mappers 
+ * For games w/o a mapper & unimplemented mappers
  */
 static void NoneWR (int offset, int data)
 {
@@ -274,7 +275,7 @@ static void NoneWR (int offset, int data)
 #endif
 }
 
-/* 
+/*
  * Rom switch (74HC161/74HC32) - mapper 2
  */
 static void RomSw_Write (int offset, int data)
@@ -285,14 +286,14 @@ static void RomSw_Write (int offset, int data)
 	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
-/* 
+/*
  * FFE F3xxxx - mapper 8
  */
 static void Mapper8_Write (int offset, int data)
 {
 	int bank;
 	int i;
-	
+
 	if (errorlog) fprintf (errorlog, "* Mapper 8 switch, vrom: %02x, rom: %02x\n", data & 0x07, (data >> 3));
 	/* Switch 8k VROM bank */
 	bank = data & (CHR_Rom - 1);
@@ -304,14 +305,14 @@ static void Mapper8_Write (int offset, int data)
 	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
-/* 
+/*
  * Color dreams - mapper 11
  */
 static void CDrms_Write (int offset, int data)
 {
 	int bank;
 	int i;
-	
+
 	if (errorlog) fprintf (errorlog, "* Mapper 11 switch, data: %02x\n", data);
 
 	/* Switch 8k VROM bank */
@@ -340,7 +341,7 @@ static void MMC1_Write (int offset, int data)
 	/* Note that there is only one latch and shift counter, shared amongst the 4 regs */
 	/* Space Shuttle will not work if they have independent variables. */
 	reg = (offset >> 13);
-	
+
 	if (data & 0x80)
 	{
 		MMC1_reg_count = 0;
@@ -419,18 +420,18 @@ static void MMC1_Write (int offset, int data)
 					if (MMC1_SizeVrom_4k)
 						fprintf (errorlog, "4k\n");
 					else fprintf (errorlog, "8k\n");
-					
+
 					fprintf (errorlog, "\t\tMirroring: ");
 					if (Mirroring == 2)
 						fprintf (errorlog, "Vertical\n");
 					else fprintf (errorlog, "Horizontal\n");
-					
+
 					fprintf (errorlog, "\t\tOne Screen: ");
 					if (PPU_one_screen)
 						fprintf (errorlog, "On\n");
 					else fprintf (errorlog, "Off\n");
 				}
-#endif					
+#endif
 				break;
 
 			case 1:
@@ -481,7 +482,7 @@ static void MMC1_Write (int offset, int data)
 					if (!MMC1_SizeVrom_4k)
 					{
 						int bank = MMC1_reg & ((CHR_Rom << 1) - 1);
-						
+
 						for (i = 0; i < 8; i ++)
 							nes_vram[i] = bank * 256 + 64*i;
 #ifdef VERBOSE_ERRORS
@@ -494,7 +495,7 @@ static void MMC1_Write (int offset, int data)
 					else
 					{
 						int bank = MMC1_reg & ((CHR_Rom << 1) - 1);
-						
+
 						for (i = 0; i < 4; i ++)
 							nes_vram[i] = bank * 256 + 64*i;
 #ifdef VERBOSE_ERRORS
@@ -530,7 +531,7 @@ static void MMC1_Write (int offset, int data)
 				if (MMC1_SizeVrom_4k)
 				{
 					int bank = MMC1_reg & ((CHR_Rom << 1) - 1);
-						
+
 					for (i = 4; i < 8; i ++)
 						nes_vram[i] = bank * 256 + 64*(i-4);
 #ifdef VERBOSE_ERRORS
@@ -575,7 +576,7 @@ static void MMC1_Write (int offset, int data)
 
 						MMC1_bank1 = bank * 0x4000;
 						MMC1_bank2 = bank * 0x4000 + 0x2000;
-						
+
 						cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
 						cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
 						if (!MMC1_extended)
@@ -627,7 +628,7 @@ static void MMC1_Write (int offset, int data)
 static void VRomSw_Write (int offset, int data)
 {
 	int i;
-	
+
 	if (errorlog) fprintf (errorlog, "Mapper 3 vrom switch, %04x:%02x\n", offset, data);
 	for (i = 0; i < 8; i ++)
 		nes_vram[i] = (data & (CHR_Rom -1)) * 512 + 64*i;
@@ -640,9 +641,9 @@ static void Mapper4_Write (int offset, int data)
 	static int irq;
 	static int select_high;
 	static int page;
-						
+
 //	if (errorlog) fprintf (errorlog, "mapper4_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
-	
+
 	switch (offset & 0x7001)
 	{
 		case 0x0000:
@@ -652,7 +653,7 @@ static void Mapper4_Write (int offset, int data)
 				chr = 0x1000;
 			else
 				chr = 0x0000;
-			
+
 			page = chr >> 10;
 			/* Toggle between switching $8000 and $c000 */
 			if (select_high != (data & 0x40))
@@ -684,29 +685,29 @@ static void Mapper4_Write (int offset, int data)
 					nes_vram [page] = data * 64;
 					nes_vram [page+1] = nes_vram [page] + 64;
 					break;
-								
+
 				case 1:
 					data &= 0xFE;
 					nes_vram [page ^ 2] = data * 64;
 					nes_vram [(page ^ 2)+1] = nes_vram [page ^ 2] + 64;
 					break;
-               					
+
 				case 2:
 					nes_vram [page ^ 4] = data * 64;
 					break;
-               			
+
 				case 3:
 					nes_vram [page ^ 5] = data * 64;
 					break;
-               			
+
 				case 4:
 					nes_vram [page ^ 6] = data * 64;
 					break;
-               			
+
 				case 5:
 					nes_vram [page ^ 7] = data * 64;
 					break;
-               			
+
 				case 6:
 					/* These damn games will go to great lengths to switch to banks which are outside the valid range */
 					/* i.e. the Simpsons series, the Batman games, Gauntlet 2, etc. */
@@ -746,13 +747,13 @@ static void Mapper4_Write (int offset, int data)
 			irq = data;
 			if (errorlog) fprintf (errorlog, "     MMC3 set latch: %02x\n", data);
 			break;
-                
+
 		case 0x6000: /* Copy latch & disable IRQs */
 			if (errorlog) fprintf (errorlog, "     MMC3 copy latch (disable irqs): %02x\n", data);
 			MMC3_IRQ = irq;
 			MMC3_DOIRQ = 0;
 			break;
-						
+
 		case 0x6001: /* Enable IRQs */
 			MMC3_DOIRQ = 1;
 			if (errorlog) fprintf (errorlog, "     MMC3 enable irqs: %02x\n", data);
@@ -776,7 +777,7 @@ void Mapper7_Write (int offset, int data)
 		PPU_one_screen = 0x2400;
 	else
 		PPU_one_screen = 0x2000;
-	
+
 	/* Castle of Deceit tries to deceive us by switching to invalid banks */
 	data &= ((PRG_Rom >> 1) - 1);
 	cpu_setbank (1, &ROM[data * 0x8000 + 0x10000]);
@@ -847,7 +848,7 @@ videoram you access.
 읕컴컴컴컴컴컴컴컴컴컨컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴켸
 */
 	int i;
-	
+
 	switch (offset & 0x7000)
 	{
 		case 0x2000:
@@ -906,19 +907,19 @@ void MMC4_Write (int offset, int data)
 			/* Switch the first 8k ROM bank */
 			cpu_setbank (1, &ROM[data * 0x2000 + 0x10000]);
 			break;
-			
+
 		case 0x3000:
 		case 0x4000:
 //			memcpy (&videoram [0] , &VROM [data * 0x1000], 0x1000);
 //			dirty_char = 1;
 			break;
-			
+
 		case 0x5000:
 		case 0x6000:
 //			memcpy (&videoram [0x1000], &VROM [data * 0x1000], 0x1000 );
 //			dirty_char = 1;
 			break;
-			
+
 		case 0x7000:
 			if (data)
 				Mirroring = 2;
@@ -935,7 +936,7 @@ static void Mapper15_Write (int offset, int data)
 {
 	int bank = (data & (PRG_Rom - 1)) * 0x4000;
 	int base = data & 0x80 ? 0x12000:0x10000;
-	
+
 	switch (offset)
 	{
 		case 0x0000:
@@ -969,7 +970,7 @@ static void Mapper15_Write (int offset, int data)
 static void Bandai_Write (int offset, int data)
 {
 	int i;
-	
+
 	cpu_setbank (1, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
 	cpu_setbank (2, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
 
@@ -1159,13 +1160,13 @@ static void Mapper18_Write (int offset, int data)
 			MMC3_DOIRQ = data & 0x01;
 			if (errorlog) fprintf (errorlog, "     Mapper 18 IRQ Control 1: %02x\n", data);
 			break;
-						
+
 		case 0x7002: /* Misc */
 			Mirroring = (!(data & 0x01)) + 1;
 			PPU_one_screen = (data & 0x02) << 12;
 			if (errorlog) fprintf (errorlog, "     Mapper 18 IRQ Control 1: %02x\n", data);
 			break;
-						
+
 
 		default:
 			if (errorlog) fprintf (errorlog, "Mapper 18 addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -1315,7 +1316,7 @@ static void Mapper26_Write (int offset, int data)
 {
 
 //	if (errorlog) fprintf (errorlog, "mapper26_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
-	
+
 	switch (offset & 0x7007)
 	{
 		case 0x0000:
@@ -1407,7 +1408,7 @@ static void Mapper26_Write (int offset, int data)
 			if (errorlog) fprintf (errorlog, "     Mapper 26 copy latch (disable irqs): %02x\n", data);
 			MMC3_IRQ = 0;
 			break;
-						
+
 		default:
 			if (errorlog) fprintf (errorlog, "Mapper 26 addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
@@ -1418,7 +1419,7 @@ static void Mapper33_Write (int offset, int data)
 {
 
 //	if (errorlog) fprintf (errorlog, "mapper33_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
-	
+
 	switch (offset & 0x7007)
 	{
 		case 0x0000:
@@ -1473,7 +1474,7 @@ static void Mapper34_Write (int offset, int data)
 	cpu_setbank (2, &ROM[data * 0x8000 + 0x12000]);
 	cpu_setbank (3, &ROM[data * 0x8000 + 0x14000]);
 	cpu_setbank (4, &ROM[data * 0x8000 + 0x16000]);
-}	
+}
 
 static void Mapper64_Write (int offset, int data)
 {
@@ -1481,9 +1482,9 @@ static void Mapper64_Write (int offset, int data)
 	static int chr = 0;
 	static int select_high;
 	static int page;
-						
+
 //	if (errorlog) fprintf (errorlog, "mapper64_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
-	
+
 	switch (offset & 0x7001)
 	{
 		case 0x0000:
@@ -1493,7 +1494,7 @@ static void Mapper64_Write (int offset, int data)
 				chr = 0x1000;
 			else
 				chr = 0x0000;
-			
+
 			page = chr >> 10;
 			/* Toggle switching between $8000/$A000/$C000 and $A000/$C000/$8000 */
 			if (select_high != (data & 0x40))
@@ -1508,7 +1509,7 @@ static void Mapper64_Write (int offset, int data)
 					cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
 				}
 			}
-				
+
 			select_high = data & 0x40;
 			if (errorlog) fprintf (errorlog, "   Mapper 64 select_high: %02x\n", select_high);
 			break;
@@ -1521,29 +1522,29 @@ static void Mapper64_Write (int offset, int data)
 					nes_vram [page] = data * 64;
 					nes_vram [page+1] = nes_vram [page] + 64;
 					break;
-								
+
 				case 1:
 					data &= 0xFE;
 					nes_vram [page ^ 2] = data * 64;
 					nes_vram [(page ^ 2)+1] = nes_vram [page ^ 2] + 64;
 					break;
-               					
+
 				case 2:
 					nes_vram [page ^ 4] = data * 64;
 					break;
-               			
+
 				case 3:
 					nes_vram [page ^ 5] = data * 64;
 					break;
-               			
+
 				case 4:
 					nes_vram [page ^ 6] = data * 64;
 					break;
-               			
+
 				case 5:
 					nes_vram [page ^ 7] = data * 64;
 					break;
-               			
+
 				case 6:
 					/* These damn games will go to great lengths to switch to banks which are outside the valid range */
 					data &= ((PRG_Rom << 1) - 1);
@@ -1661,16 +1662,16 @@ static void Mapper65_Write (int offset, int data)
 	}
 }
 
-/* 
+/*
  * Rom switch (74HC161/74HC32) Jaleco - mapper 66
- * 
+ *
  * The PRG-ROM is switched in 32k chunks.
  */
 static void Mapper66_Write (int offset, int data)
 {
 	int i;
 	if (errorlog) fprintf (errorlog, "* Mapper 66 switch, offset %04x, data: %02x\n", offset, data);
-	
+
 	cpu_setbank (1, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
 	cpu_setbank (2, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
 	cpu_setbank (3, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x14000]);
@@ -1687,7 +1688,7 @@ static void Mapper68_Write (int offset, int data)
 {
 	/* TODO: I can't figure out the mirroring/ppu screen base! */
 	if (errorlog) fprintf (errorlog, "mapper68_w offset: %04x, data: %02x\n", offset, data);
-	
+
 	switch (offset & 0x7000)
 	{
 		case 0x0000:
@@ -1752,14 +1753,14 @@ static void Mapper71_Write (int offset, int data)
 	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
-/* 
+/*
  * Rom switch (74HC161/74HC32) Irem - mapper 78
  */
 static void Mapper78_Write (int offset, int data)
 {
 	int bank;
 	int i;
-	
+
 	if (errorlog) fprintf (errorlog, "* Mapper 78 switch %02x\n", data);
 	/* Switch 8k VROM bank */
 	bank = ((data & 0xf0)) >> 4 & (CHR_Rom - 1);
@@ -1773,7 +1774,7 @@ static void Mapper78_Write (int offset, int data)
 
 /*
 	Mapper 79 - American Video Entertainment
-	
+
 	Writes to $4100 may be relevant also
 */
 
@@ -1796,14 +1797,14 @@ int Reset_Mapper (int mapperNum)
 {
 	int err = 0;
 	int i;
-	
+
 	/* Set the vram bank-switch values to the default */
 	for (i = 0; i < 8; i ++)
 		nes_vram[i] = i * 64;
-	
+
 	mapper_warning = 0;
 	uses_irqs = 0;
-	
+
 	switch (mapperNum)
 	{
 		case 0:
@@ -1812,7 +1813,7 @@ int Reset_Mapper (int mapperNum)
 			cpu_setbank (2, &ROM[0x12000]);
 			cpu_setbank (3, &ROM[0x14000]);
 			cpu_setbank (4, &ROM[0x16000]);
-			break;			
+			break;
 		case 1:
 			/* Reset the latch */
 			MMC1_reg = 0;
@@ -1824,7 +1825,7 @@ int Reset_Mapper (int mapperNum)
 			MMC1_extended_bank = 0;
 			MMC1_extended_swap = 0;
 			MMC1_extended_base = 0x10000;
-			
+
 			if (!MMC1_extended)
 				/* Set it to the end of the ROM */
 				MMC1_High = (PRG_Rom - 1) * 0x4000;
@@ -1982,7 +1983,7 @@ int Reset_Mapper (int mapperNum)
 			cpu_setbank (2, &ROM[0x12000]);
 			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
 			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
-			break;		
+			break;
 		case 66:
 			/* Can switch 32k ROM banks */
 			cpu_setbank (1, &ROM[0x10000]);
@@ -2021,7 +2022,7 @@ int Reset_Mapper (int mapperNum)
 
 	if (CHR_Rom)
 		memcpy (videoram, VROM, 0x2000);
-	
+
 	return err;
 }
 
@@ -2032,8 +2033,8 @@ mmc mmc_list[] = {
 	{ 1, "MMC1",                  MMC1_Write },
 	{ 2, "74HC161/74HC32",        RomSw_Write },
 	{ 3, "VROM Switch",           VRomSw_Write },
-	{ 4, "MMC3",                  Mapper4_Write }, 
-	{ 5, "MMC5",                  Mapper5_Write }, 
+	{ 4, "MMC3",                  Mapper4_Write },
+	{ 5, "MMC5",                  Mapper5_Write },
 	{ 7, "Rom Switch",            Mapper7_Write },
 	{ 8, "FFE F3xxxx",            Mapper8_Write },
 	{ 9, "MMC2",                  MMC2_Write },
@@ -2043,8 +2044,8 @@ mmc mmc_list[] = {
 	{ 16, "Bandai",               Bandai_Write },
 	{ 17, "FFE F8xxx",            NoneWR },
 	{ 18, "Jaleco SS8806",        Mapper18_Write },
-	{ 25, "Konami VRC 2/4 Even",  Mapper25_Write }, 
-	{ 26, "Konami VRC 6 V",       Mapper26_Write }, 
+	{ 25, "Konami VRC 2/4 Even",  Mapper25_Write },
+	{ 26, "Konami VRC 6 V",       Mapper26_Write },
 	{ 33, "Taito TC0190",         Mapper33_Write },
 	{ 34, "Nina-1",               Mapper34_Write },
 	{ 64, "Rambo",                Mapper64_Write },

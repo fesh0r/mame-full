@@ -11,105 +11,153 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 
-void    spectrum_init_machine(void) {
+static unsigned char *pSnapshotData=NULL;
+static unsigned long SnapshotDataSize=0;
+static void spectrum_setup_snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize);
+static int spectrum_opbaseoverride(int);
+
+void    spectrum_init_machine(void)
+{
+        if (pSnapshotData!=NULL)
+        {
+                cpu_setOPbaseoverride(0, spectrum_opbaseoverride);
+        }
 }
 
 void    spectrum_shutdown_machine(void) {
 }
 
-int     spectrum_rom_load(void) {
+int     spectrum_rom_load(void)
+{
+        void *file;
 
-  	 return 0;
+        file = osd_fopen(Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+
+        if (errorlog) fprintf(errorlog,"hmm!\r\n");
+
+        if (file)
+        {
+            int datasize;
+            unsigned char *data;
+
+            datasize = osd_fsize(file);
+
+            if (datasize!=0)
+            {
+                data = malloc(datasize);
+
+                if (data!=NULL)
+                {
+                        pSnapshotData = data;
+                        SnapshotDataSize = datasize;
+
+                        osd_fread(file, data, datasize);
+
+                        osd_fclose(file);
+
+                        if (errorlog) fprintf(errorlog, "File loaded!\r\n");
+
+                        return 0;
+                }
+
+                osd_fclose(file);
+            }
+
+            return 1;
+        }
+
+        return 0;
 
 }
 
-//static int onlyonce=1;
+int spectrum_opbaseoverride(int pc)
+{
+        /* clear op base override */
+        cpu_setOPbaseoverride(0,0);
 
-int 	load_snap (void) {
+        if (pSnapshotData)
+        {
+                /* snapshot loaded setup */
+                spectrum_setup_snapshot(pSnapshotData,SnapshotDataSize);
+        }
 
-//void    *snapfile; /* for loading the .sna file */
-//UINT8	lo,hi;
-//unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        return (cpu_get_reg(Z80_PC) & 0x0ffff);
+}
 
-	return 1;	/* small hack for now */
+void    spectrum_setup_snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize)
+{
+        int i;
+        unsigned char *RAM;
+        unsigned char lo,hi, data;
+        unsigned short addr;
 
-#if 0 // TODO: use z80_getregs
-	if (onlyonce) {
+        cpu_set_reg(Z80_I, (pSnapshot[0] & 0x0ff));
+        lo = pSnapshot[1] & 0x0ff;
+        hi = pSnapshot[2] & 0x0ff;
+        cpu_set_reg(Z80_HL2, (hi<<8) | lo);
+        lo = pSnapshot[3] & 0x0ff;
+        hi = pSnapshot[4] & 0x0ff;
+        cpu_set_reg(Z80_DE2, (hi<<8) | lo);
+        lo = pSnapshot[5] & 0x0ff;
+        hi = pSnapshot[6] & 0x0ff;
+        cpu_set_reg(Z80_BC2, (hi<<8) | lo);
+        lo = pSnapshot[7] & 0x0ff;
+        hi = pSnapshot[8] & 0x0ff;
+        cpu_set_reg(Z80_AF2, (hi<<8) | lo);
+        lo = pSnapshot[9] & 0x0ff;
+        hi = pSnapshot[10] & 0x0ff;
+        cpu_set_reg(Z80_HL, (hi<<8) | lo);
+        lo = pSnapshot[11] & 0x0ff;
+        hi = pSnapshot[12] & 0x0ff;
+        cpu_set_reg(Z80_DE, (hi<<8) | lo);
+        lo = pSnapshot[13] & 0x0ff;
+        hi = pSnapshot[14] & 0x0ff;
+        cpu_set_reg(Z80_BC, (hi<<8) | lo);
+        lo = pSnapshot[15] & 0x0ff;
+        hi = pSnapshot[16] & 0x0ff;
+        cpu_set_reg(Z80_IY, (hi<<8) | lo);
+        lo = pSnapshot[17] & 0x0ff;
+        hi = pSnapshot[18] & 0x0ff;
+        cpu_set_reg(Z80_IX, (hi<<8) | lo);
+        data = (pSnapshot[19] & 0x02)>>1;
+        cpu_set_reg(Z80_IFF2, data);
+        cpu_set_reg(Z80_IFF1, data);
+        data = (pSnapshot[20] & 0x0ff);
+        cpu_set_reg(Z80_R, data);
+        lo = pSnapshot[21] & 0x0ff;
+        hi = pSnapshot[22] & 0x0ff;
+        cpu_set_reg(Z80_AF, (hi<<8) | lo);
+        lo = pSnapshot[23] & 0x0ff;
+        hi = pSnapshot[24] & 0x0ff;
+        cpu_set_reg(Z80_SP, (hi<<8) | lo);
+        cpu_set_sp((hi<<8) | lo);
+        data = (pSnapshot[25] & 0x0ff);
+        cpu_set_reg(Z80_IM, data);
 
-		if (strlen(rom_name[0])==0) {
-			if (errorlog)
-				fprintf(errorlog,"warning : no image file specified\n");
-			return 0;
-		} else {
-			if (!(snapfile = osd_fopen (Machine->gamedrv->name,rom_name[0],OSD_FILETYPE_ROM_CART, 0))) {
-				if (errorlog)
-					fprintf(errorlog,"Unable to open file %s\n",rom_name[0]);
-				return 0;
-			}
+        // snapshot + 26 = border colour
 
-			/* Load the snap file, only .sna supported for now */
-			osd_fread(snapfile,&regs.I,1);
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.HL2.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.DE2.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.BC2.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.AF2.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.HL.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.DE.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.BC.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.IY.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.IX.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			regs.IFF2 = (lo & 0x02) >> 1;
-			osd_fread(snapfile,&lo,1);
-			regs.R = lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.AF.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);
-			osd_fread(snapfile,&hi,1);
-			regs.SP.W.l = (hi << 8) | lo;
-			osd_fread(snapfile,&lo,1);	/* IntMode */
-			regs.IM = lo;
+        cpu_set_reg(Z80_NMI_STATE, 0);
+        cpu_set_reg(Z80_IRQ_STATE, 0);
+        cpu_set_reg(Z80_HALT, 0);
 
-			osd_fread(snapfile,&lo,1);	/* Bordercolor, not used */
+        RAM = memory_region(REGION_CPU1);
 
-			osd_fread(snapfile,&RAM[16384],49152);	/* load the rest of the snapshot */
-			/* get the PC from the stack */
-			lo = RAM[regs.SP.W.l];
-			hi = RAM[regs.SP.W.l+1];
-			regs.PC.W.l = (hi << 8) | lo;
+        // memory dump
+//        memcpy(&RAM[16384], &pSnapshot[27],49152);
+        for (i=0; i<49152; i++)
+        {
+                cpu_writemem16(i+16384, pSnapshot[27 + i]);
+        }
 
-			regs.SP.W.l += 2;
-			RAM[regs.SP.W.l - 1] = 0;
-			RAM[regs.SP.W.l - 2] = 0;
+        /* get pc from stack */
+        addr = cpu_geturnpc();
+        cpu_set_reg(Z80_PC, (addr & 0x0ffff));
+        //cpu_set_pc((addr & 0x0ffff));
 
-			osd_fclose(snapfile);
-
-			if (errorlog)
-				fprintf(errorlog,"Changed the register set\n");
-			onlyonce = 0;
-		}
-	}
-	return 1;
-#endif
+        addr = cpu_get_reg(Z80_SP);
+        addr+=2;
+        cpu_set_reg(Z80_SP, (addr & 0x0ffff));
+        cpu_set_sp((addr & 0x0ffff));
 }
 
 int     spectrum_rom_id(const char *name, const char *gamename) {

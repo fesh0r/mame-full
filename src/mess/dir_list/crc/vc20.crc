@@ -1,0 +1,27 @@
+# only used when started with 1 image (in mess36b9.1)
+# problem with file formats
+# prg are images, but startet with 2 bytes for its load address
+# so gives other crc then binary file
+
+[VC20]
+#autostart moduls
+9eac9fab =  ARCARDIA.A0 (modulized version)
+963b2cae =  JAWBREAK.PRG
+a92bfff2 =  JAW2_PAL.A0 (same version as above)
+2bc4b231 =  FRANTIC.PRG
+72ee00db =  K-RAZY.60
+324e2a30 =  K-RAZY.A0
+2ffd2894 =  K-STAR.60
+2fe93f44 =  K-STAR.A0
+
+#programs 
+#alienblitz
+#blitz
+
+#multipart disk programs
+# arcardia (disk version, i knew it as multipart tape)
+# scramble bugbyte
+
+# 16k programs
+b342cce = krazy kong
+b4f12c80 = xeno2ˆ

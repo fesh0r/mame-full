@@ -13,7 +13,9 @@
 #define PORTB 0
 #define PORTA 1
 
-/* from vidhrdw/vectrex.c */ 
+//unsigned char *ROM;
+
+/* from vidhrdw/vectrex.c */
 extern void vector_add_point_stereo (int x, int y, int color, int intensity);
 extern void (*vector_add_point_function) (int, int, int, int);
 
@@ -25,7 +27,7 @@ unsigned char vectrex_via_pinlevel[2];
 int vectrex_beam_color = WHITE;    /* the color of the vectrex beam */
 int vectrex_imager_status = 0;     /* 0 = off, 1 = right eye, 2 = left eye */
 int vectrex_refresh_with_T2;       /* For all known games it's OK to do the screen refresh when T2 expires.
-				    * This behaviour can be turned off via dipswitch settings */ 
+				    * This behaviour can be turned off via dipswitch settings */
 
 /*********************************************************************
   Local variables
@@ -50,8 +52,9 @@ static double imager_wheel_time = 0;
 int vectrex_load_rom (void)
 {
 	FILE *cartfile;
+	UINT8 *ROM = memory_region(REGION_CPU1);
 	unsigned char *vectrex_cartridge_rom;
-	
+
 	cartfile = NULL;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
@@ -65,7 +68,7 @@ int vectrex_load_rom (void)
 	{
 		if (errorlog) fprintf(errorlog,"Vectrex: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0)))
+	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog) fprintf(errorlog,"Vectrex - Unable to locate cartridge: %s\n",rom_name[0]);
 		return 1;
@@ -98,11 +101,11 @@ int vectrex_id_rom (const char *name, const char *gamename)
 	FILE *romfile;
 	char magic[5];
 	int retval;
-	
+
 	/* If no file was specified, don't bother */
 	if (strlen(gamename)==0) return 1;
-	
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_ROM_CART, 0))) return 0;
+
+	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 0;
 
@@ -138,8 +141,8 @@ void vectrex_configuration(void)
 
 	/* Vectrex 'dipswitch' configuration */
 	vectrex_refresh_with_T2 = input_port_3_r (0) & 0x01;
-	
-	/* Imager control */ 
+
+	/* Imager control */
 	if (in2 & 0x01) /* Imager enabled */
 	{
 		if (vectrex_imager_status == 0)
@@ -248,24 +251,24 @@ int v_via_pb_r (int offset)
 	}
 	return vectrex_via_pinlevel[PORTB];
 }
-	
+
 int v_via_pa_r (int offset)
 {
-	if ((!(vectrex_via_pinlevel[PORTB] & 0x10)) && (vectrex_via_pinlevel[PORTB] & 0x08)) 
+	if ((!(vectrex_via_pinlevel[PORTB] & 0x10)) && (vectrex_via_pinlevel[PORTB] & 0x08))
 		/* BDIR inactive, we can read the PSG. BC1 has to be active. */
 	{
-		vectrex_via_pinlevel[PORTA] = AY8910_read_port_0_r (0) 
+		vectrex_via_pinlevel[PORTA] = AY8910_read_port_0_r (0)
 			& ~(vectrex_imager_pinlevel & 0x80);
 		vectrex_imager_pinlevel &= ~0x80;
 	}
 	return vectrex_via_pinlevel[PORTA];
 }
-	
+
 int s1_via_pb_r (int offset)
 {
 	return (vectrex_via_pinlevel[PORTB] & ~0x40) | ((input_port_1_r(0) & 0x1)<<6);
 }
-	
+
 /*********************************************************************
   3D Imager support
  *********************************************************************/

@@ -31,9 +31,3 @@
 extern int pc_blink;
 extern int pc_fill_odd_scanlines;
 
-extern int DOCLIP(struct rectangle *r1, const struct rectangle *r2);
-extern void pc_fullblit(struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,unsigned int color,int sx,int sy,const struct rectangle *clip);
-extern void pc_scanblit(struct osd_bitmap *dest,const struct GfxElement *gfx,
-    unsigned int code,unsigned int color,int sx,int sy,const struct rectangle *clip);
-

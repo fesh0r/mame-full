@@ -850,10 +850,10 @@ static void artifacts_gfx(UINT8 * src, UINT32 * dst, int width)
 	UINT8 b = gtia.w.colbk & 0xf0;
 	UINT8 c = gtia.w.colpf1 & 0x0f;
 	UINT8 *d = (UINT8 *)dst;
-	UINT8 _A = Machine->colortable[((b+0x30)&0xf0)+c];
-	UINT8 _B = Machine->colortable[((b+0x70)&0xf0)+c];
-	UINT8 _C = Machine->colortable[b+c];
-	UINT8 _D = Machine->colortable[gtia.w.colbk];
+	UINT8 _A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
+	UINT8 _B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
+	UINT8 _C = Machine->remapped_colortable[b+c];
+	UINT8 _D = Machine->remapped_colortable[gtia.w.colbk];
 
 	for( x = 0; x < width * 4; x++ )
 	{
@@ -925,10 +925,10 @@ static void artifacts_txt(UINT8 * src, UINT32 * dst, int width)
 	UINT8 b = gtia.w.colpf2 & 0xf0;
 	UINT8 c = gtia.w.colpf1 & 0x0f;
 	UINT8 *d = (UINT8 *)dst;
-	UINT8 _A = Machine->colortable[((b+0x30)&0xf0)+c];
-	UINT8 _B = Machine->colortable[((b+0x70)&0xf0)+c];
-	UINT8 _C = Machine->colortable[b+c];
-	UINT8 _D = Machine->colortable[gtia.w.colpf2];
+	UINT8 _A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
+	UINT8 _B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
+	UINT8 _C = Machine->remapped_colortable[b+c];
+	UINT8 _D = Machine->remapped_colortable[gtia.w.colpf2];
 
 	for( x = 0; x < width * 4; x++ )
 	{

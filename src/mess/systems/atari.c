@@ -268,7 +268,7 @@ static struct MemoryReadAddress readmem_5200[] =
 	{ 0x0000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc0ff, MRA_GTIA },
-	{ 0xd400, 0xd4ff, MRA_ANTIC },
+	{ 0xd400, 0xd5ff, MRA_ANTIC },
 	{ 0xe800, 0xe8ff, pokey1_r },
     { 0xf800, 0xffff, MRA_ROM },
     {-1}
@@ -279,13 +279,13 @@ static struct MemoryWriteAddress writemem_5200[] =
 	{ 0x0000, 0x3fff, MWA_RAM },
 	{ 0x4000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc0ff, MWA_GTIA },
-	{ 0xd400, 0xd4ff, MWA_ANTIC },
+	{ 0xd400, 0xd5ff, MWA_ANTIC },
 	{ 0xe800, 0xe8ff, pokey1_w },
     { 0xf800, 0xffff, MWA_ROM },
     {-1}
 };
 
-INPUT_PORTS_START( input_ports_a800 )
+INPUT_PORTS_START( a800 )
 
     PORT_START  /* IN0 console keys & switch settings */
 	PORT_BITX(0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Cursor keys act as",   KEYCODE_F4, IP_JOY_NONE )
@@ -368,7 +368,7 @@ INPUT_PORTS_START( input_ports_a800 )
 	PORT_ANALOG(0xff, 0x80, IPT_PADDLE | IPF_REVERSE /* | IPF_PLAYER8 */, 40, 8, 0x3f, 0x10, 0xf0)
 INPUT_PORTS_END
 
-INPUT_PORTS_START( input_ports_a800xl )
+INPUT_PORTS_START( a800xl )
 
     PORT_START  /* IN0 console keys & switch settings */
 	PORT_BITX(0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Cursor keys act as",   KEYCODE_F4, IP_JOY_NONE )
@@ -445,7 +445,7 @@ INPUT_PORTS_START( input_ports_a800xl )
 INPUT_PORTS_END
 
 /* !!! this is partially wrong !!! */
-INPUT_PORTS_START( input_ports_5200 )
+INPUT_PORTS_START( 5200 )
 
 	PORT_START	/* IN0 switch settings */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED)
@@ -608,6 +608,14 @@ static unsigned short colortable[] =
 };
 #endif
 
+/* Initialise the palette */
+static void atari_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
+
 static struct POKEYinterface pokey_interface = {
 	1,
 	CPU_APPROX,
@@ -641,7 +649,6 @@ static struct MachineDriver a800_machine_driver =
 		{
 			CPU_M6510,
 			CPU_APPROX,
-			0,
 			readmem_a800,writemem_a800,0,0,
 			a800_interrupt, TOTAL_LINES    /* every scanline */
         }
@@ -661,7 +668,7 @@ static struct MachineDriver a800_machine_driver =
     0,
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(colortable) / sizeof(colortable[0]),
-	0,
+	atari_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -690,7 +697,6 @@ static struct MachineDriver a800xl_machine_driver =
 		{
 			CPU_M6510,
 			CPU_APPROX,
-			0,
 			readmem_a800xl,writemem_a800xl,0,0,
 			a800xl_interrupt, TOTAL_LINES	/* every scanline */
         }
@@ -710,7 +716,7 @@ static struct MachineDriver a800xl_machine_driver =
     0,
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(colortable) / sizeof(colortable[0]),
-	0,
+	atari_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -739,7 +745,6 @@ static struct MachineDriver a5200_machine_driver =
 		{
 			CPU_M6510,
 			CPU_APPROX,
-            0,
 			readmem_5200,writemem_5200,0,0,
 			a5200_interrupt, TOTAL_LINES	  /* every scanline */
         }
@@ -759,7 +764,7 @@ static struct MachineDriver a5200_machine_driver =
     0,
 	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(colortable) / sizeof(colortable[0]),
-	0,
+	atari_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -777,23 +782,46 @@ static struct MachineDriver a5200_machine_driver =
     }
 };
 
+ROM_START(a800)
+	ROM_REGIONX(0x14000,REGION_CPU1) /* 64K for the CPU + 2 * 8K for cartridges */
+	ROM_LOAD("atariosb.rom", 0xd800, 0x2800, 0x3e28a1fe)
+ROM_END
+
+
+
+/* list of file extensions */
+static const char *a800_file_extensions[] =
+{
+	"atr",
+	0       /* end of array */
+};
+
+/* list of file extensions */
+static const char *a5200_file_extensions[] =
+{
+	"bin",
+	0       /* end of array */
+};
+
+
 struct GameDriver a800_driver =
 {
 	__FILE__,
 	0,
 	"a800",
 	"Atari 800",
-	"19??",
+	"1979",
 	"Atari",
-	"Juergen Buchmueller",
-	GAME_COMPUTER,
+	0,
+	0,
 	&a800_machine_driver,
 	0,
 
-	0,	/* ROM_LOAD structures */
+	rom_a800,	/* ROM_LOAD structures */
 	a800_load_rom,
 	a800_id_rom,
-	1,	/* number of ROM slots */
+	a800_file_extensions,
+	2,	/* number of ROM slots */
 	4,	/* number of floppy drives supported */
 	0,	/* number of hard drives supported */
 	0,	/* number of cassette drives supported */
@@ -803,11 +831,16 @@ struct GameDriver a800_driver =
 
 	input_ports_a800,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	GAME_COMPUTER | ORIENTATION_DEFAULT,
 
 	0, 0,
 };
+
+ROM_START(a800xl)
+	ROM_REGIONX(0x18000,REGION_CPU1) /* 64K for the CPU + 16K + 2 * 8K for cartridges */
+	ROM_LOAD("atarixl.rom", 0xc000, 0x4000, 0x1f9cd270)
+ROM_END
 
 struct GameDriver a800xl_driver =
 {
@@ -817,31 +850,35 @@ struct GameDriver a800xl_driver =
 	"Atari 800-XL",
 	"19??",
 	"Atari",
-	"Juergen Buchmueller",
-	GAME_NOT_WORKING | GAME_COMPUTER,
+	0,
+	0,
 	&a800xl_machine_driver,
 	0,
 
-	0,	/* ROM_LOAD structures */
+	rom_a800xl, 	/* ROM_LOAD structures */
 	a800xl_load_rom,
 	a800xl_id_rom,
-	1,	/* number of ROM slots */
-	4,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
+	a800_file_extensions,
+	1,				/* number of ROM slots */
+	4,				/* number of floppy drives supported */
+	0,				/* number of hard drives supported */
+	0,				/* number of cassette drives supported */
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,				/* sound_prom */
 
 	input_ports_a800xl,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,
 
 	0, 0,
 };
 
-
+ROM_START(a5200)
+	ROM_REGIONX(0x14000,REGION_CPU1) /* 64K for the CPU + 16K for cartridges */
+	ROM_LOAD("5200.rom", 0xf800, 0x0800, 0x4248d3e3)
+ROM_END
 
 struct GameDriver a5200_driver =
 {
@@ -849,28 +886,29 @@ struct GameDriver a5200_driver =
 	0,
 	"a5200",
 	"Atari 5200",
-	"19??",
+	"1982",
 	"Atari",
-	"Juergen Buchmueller",
-	GAME_NOT_WORKING,
+	0,
+	0,
 	&a5200_machine_driver,
 	0,
 
-	0,	/* ROM_LOAD structures */
+	rom_a5200,		/* ROM_LOAD structures */
     a5200_load_rom,
 	a5200_id_rom,
-	1,	/* number of ROM slots */
-	4,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
+	a5200_file_extensions,
+	1,				/* number of ROM slots */
+	4,				/* number of floppy drives supported */
+	0,				/* number of hard drives supported */
+	0,				/* number of cassette drives supported */
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,				/* sound_prom */
 
 	input_ports_5200,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	GAME_NOT_WORKING | ORIENTATION_DEFAULT,
 
 	0, 0,
 };

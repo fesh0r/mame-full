@@ -22,6 +22,8 @@
 POKEY   pokey;
 PIA 	pia;
 
+unsigned char *ROM;
+
 typedef struct {
 	UINT8 *image;		/* malloc'd image */
 	int type;			/* type of image (XFD, ATR, DSK) */
@@ -43,7 +45,7 @@ void a800_serial_write(void);
 void a800_serial_read(void);
 
 int  a800_cart_loaded = 0;
-int  a800_cart_32k = 0;
+int  a800_cart_16k = 0;
 int  a800_cart_banked = 0;
 int  a800xl_mode = 0;
 void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
@@ -65,17 +67,17 @@ void a800_setbank(int n)
         case 1:
 			cpu_setbankhandler_r(2, MRA_BANK1);
 			cpu_setbankhandler_w(2, MWA_ROM);
-			cpu_setbank(1, &Machine->memory_region[0][0x10000]);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);
 			break;
 		case 2:
 			cpu_setbankhandler_r(2, MRA_BANK1);
 			cpu_setbankhandler_w(2, MWA_ROM);
-			cpu_setbank(1, &Machine->memory_region[0][0x12000]);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x12000);
             break;
-        default:
+		default:
 			cpu_setbankhandler_r(2, MRA_RAM);
 			cpu_setbankhandler_w(2, MWA_RAM);
-			cpu_setbank(1, &Machine->memory_region[0][0x0a000]);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x0a000);
             break;
     }
 }
@@ -101,100 +103,59 @@ int a800_load_rom(void)
 {
 	static char filename[200];
 	void *file;
-	UINT8 *mem;
 	int size;
+	ROM = memory_region(REGION_CPU1);
 
-	size = 0x10000 + 2 * 0x2000;
-    /* allocate space for the CPU: 64K + 16K * 2 */
-	mem = malloc(size);
-	if (!mem)
-	{
-		LOG((errorlog,"%s 0x%X byte memory allocation failed\n", Machine->gamedrv->name, size));
-        return 1;
-	}
-	memset(mem, 0, size);
-
-	ROM = Machine->memory_region[0] = mem;
-
-    /*******************************************************
-	 * variant #1: open a file called a800.rom
-	 * load one 16K block for c000-ffff containing
-	 * 0000-0fff monitor or anything
-	 * 1000-17ff anything (hardware address space)
-	 * 1800-1fff floating point ROM
-	 * 2000-3fff BIOS ROM
-	 *******************************************************/
-	sprintf(filename, "a800.rom");
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
+	/* load an optional monitor.rom */
+	sprintf(filename, "monitor.rom");
+	file = osd_fopen(Machine->gamedrv->name, "monitor.rom", OSD_FILETYPE_IMAGE_R, 0);
 	if (file)
 	{
-		size = osd_fread(file, mem + 0xc000, 0x4000);
+		LOG((errorlog,"%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename));
+		size = osd_fread(file, ROM + 0xc000, 0x1000);
 		osd_fclose(file);
-
-		if (size < 0x4000)
-		{
-			LOG((errorlog,"%s image '%s' load failed (less than 16K)\n", Machine->gamedrv->name, filename));
-            free(mem);
-			return 2;
-		}
 	}
 	else
 	{
-		/*******************************************************
-		 * variant #2: load separate ROMs containing
-		 * d800-dfff atariosb.rom (part #1 0000-07ff)
-		 * e000-ffff atariosb.rom (part #2 0800-27ff)
-		 * c000-cfff monitor.rom (optionally)
-		 *******************************************************/
-		sprintf(filename, "atariosb.rom");
-		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
-		if (!file)
-		{
-			LOG((errorlog,"%s required image '%s' not found!\n", Machine->gamedrv->name, filename));
-			free(mem);
-			return 3;
-		}
-		size = osd_fread(file, mem + 0xd800, 0x2800);
-		osd_fclose(file);
-		if (size < 0x2800)
-		{
-			LOG((errorlog,"%s image '%s' load failed (less than 10K)\n", Machine->gamedrv->name, filename));
-            free(mem);
-			return 4;
-        }
-
-		/* load an optional monitor.rom */
-		sprintf(filename, "monitor.rom");
-		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
-		if (file)
-		{
-			LOG((errorlog,"%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename));
-            size = osd_fread(file, mem + 0xc000, 0x1000);
-			osd_fclose(file);
-		}
-		else
-		{
-			LOG((errorlog,"%s optional image '%s' not found\n", Machine->gamedrv->name, filename));
-		}
+		LOG((errorlog,"%s optional image '%s' not found\n", Machine->gamedrv->name, filename));
 	}
 
     /* load an optional (dual) cartidge (e.g. basic.rom) */
 	if( strlen(rom_name[0]) )
 	{
 		strcpy(filename, rom_name[0]);
-		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
+		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 		if( file )
 		{
-			size = osd_fread(file, mem + 0x10000, 0x2000);
+			size = osd_fread(file, ROM + 0x10000, 0x2000);
             a800_cart_loaded = size / 0x2000;
-			size = osd_fread(file, mem + 0x12000, 0x2000);
-			a800_cart_32k = size / 0x2000;
+			size = osd_fread(file, ROM + 0x12000, 0x2000);
+			a800_cart_16k = size / 0x2000;
 			osd_fclose(file);
-			LOG((errorlog,"%s loaded cartridge '%s' size %s\n",
+			LOG((errorlog,"%s loaded left cartridge '%s' size %s\n",
 				Machine->gamedrv->name,
 				filename,
-				(a800_cart_32k) ? "32K":"16K"));
-			a800_setbank( 1 );
+				(a800_cart_16k) ? "16K":"8K"));
+			if( strlen(rom_name[1]) )
+			{
+				strcpy(filename, rom_name[1]);
+				file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
+				if( file )
+				{
+					size = osd_fread(file, ROM + 0x12000, 0x2000);
+					a800_cart_16k = (size == 0x2000);
+					osd_fclose(file);
+					LOG((errorlog,"%s loaded right cartridge '%s' size 16K\n",
+						Machine->gamedrv->name,
+						filename));
+				}
+				else
+				{
+					LOG((errorlog,"%s cartridge '%s' not found\n", Machine->gamedrv->name, filename));
+				}
+			}
+			if( a800_cart_loaded )
+				a800_setbank( 1 );
         }
 		else
 		{
@@ -235,76 +196,41 @@ int a800xl_load_rom(void)
 {
     static char filename[200];
     void *file;
-    UINT8 *mem;
-	unsigned size = 0;
+    unsigned size;
 
-	size = 0x10000 + 0x04000 + 0x02000 * 2;
-	/* allocate space for the CPU: 64K + 16K + 2 * 8K */
-    mem = malloc(size);
-	if( !mem )
-    {
-        LOG((errorlog,"%s 0x%X byte memory allocation failed\n", Machine->gamedrv->name, size));
-        return 1;
-    }
-    memset(mem, 0, size);
-
-    ROM = Machine->memory_region[0] = mem;
-
-    /*******************************************************
-	 * variant #1: open a file called atarixl.rom
-     * load one 16K block for c000-ffff containing
-	 * 0000-0fff BIOS low ROM
-	 * 1000-17ff selftest ROM (mapped at 5000-57FF)
-     * 1800-1fff floating point ROM
-	 * 2000-3fff BIOS high ROM
-     *******************************************************/
-	sprintf(filename, "atarixl.rom");
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
-	if( file )
-    {
-		size = osd_fread(file, mem + 0x10000, 0x4000);
-        osd_fclose(file);
-    }
-	if( size < 0x4000 )
-	{
-		LOG((errorlog,"%s image '%s' load failed (less than 16K)\n", Machine->gamedrv->name, filename));
-		free(mem);
-		return 2;
-	}
-
-	memcpy(mem + 0x0c000, mem + 0x10000, 0x01000);
-	memcpy(mem + 0x05000, mem + 0x11000, 0x00800);
-	memcpy(mem + 0x0d800, mem + 0x11800, 0x02800);
+    memcpy(ROM + 0x0c000, ROM + 0x10000, 0x01000);
+	memcpy(ROM + 0x05000, ROM + 0x11000, 0x00800);
+	memcpy(ROM + 0x0d800, ROM + 0x11800, 0x02800);
 
 	sprintf(filename, "basic.rom");
 	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
 	if( file )
     {
-		size = osd_fread(file, mem + 0x14000, 0x2000);
+		size = osd_fread(file, ROM + 0x14000, 0x2000);
         osd_fclose(file);
-    }
-	if( size < 0x2000 )
-	{
-		LOG((errorlog,"%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename));
-		return 2;
+		if( size < 0x2000 )
+		{
+			LOG((errorlog,"%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename));
+			return 2;
+		}
 	}
 
     /* load an optional (dual) cartidge (e.g. basic.rom) */
 	if( strlen(rom_name[0]) )
     {
         strcpy(filename, rom_name[0]);
-        file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
+        file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
         if( file )
         {
-			size = osd_fread(file, mem + 0x14000, 0x2000);
+			size = osd_fread(file, ROM + 0x14000, 0x2000);
             a800_cart_loaded = size / 0x2000;
-			size = osd_fread(file, mem + 0x16000, 0x2000);
-            a800_cart_32k = size / 0x2000;
+			size = osd_fread(file, ROM + 0x16000, 0x2000);
+			a800_cart_16k = size / 0x2000;
             osd_fclose(file);
             LOG((errorlog,"%s loaded cartridge '%s' size %s\n",
                 Machine->gamedrv->name,
                 filename,
-                (a800_cart_32k) ? "32K":"16K"));
+				(a800_cart_16k) ? "16K":"8K"));
         }
         else
         {
@@ -337,63 +263,27 @@ int a5200_load_rom(void)
 {
 	static char filename[200];
 	void *file;
-	UINT8 *mem;
 	int size;
-
-
-
-	size = 0x10000 + 2 * 0x2000;
-    /* allocate space for the CPU: 64K */
-	mem = malloc(size);
-
-
-	if (!mem)
-	{
-		LOG((errorlog,"%s 0x%X byte memory allocation failed\n", Machine->gamedrv->name, size));
-        return 1;
-	}
-	memset(mem, 0, size);
-
-    ROM = Machine->memory_region[0] = mem;
-
-	sprintf(filename, "5200.rom");
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
-	if (!file)
-	{
-		LOG((errorlog,"%s optional image %s not found\n", Machine->gamedrv->name, filename));
-        sprintf(filename, "5200sys.bin");
-		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
-		if (!file)
-		{
-			LOG((errorlog,"%s required image %s not found!\n", Machine->gamedrv->name, filename));
-			free(mem);
-			return 2;
-		}
-	}
-	size = osd_fread(file, mem + 0xf800, 0x0800);
-	osd_fclose(file);
-	if (size < 0x0800)
-	{
-		LOG((errorlog,"%s file read failed (less than 2K)\n", Machine->gamedrv->name));
-        free(mem);
-		return 3;
-	}
-
+	ROM = memory_region(REGION_CPU1);
 
 	/* load an optional (dual) cartidge */
-	if (strlen(rom_name[0]))
+	if( strlen(rom_name[0]) )
 	{
 		strcpy(filename, rom_name[0]);
-		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
+		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 		if (file)
 		{
-			size = osd_fread(file, mem + 0x4000, 0x8000);
+			size = osd_fread(file, ROM + 0x4000, 0x8000);
             osd_fclose(file);
-            if (size < 0x8000)
+			/* move it into upper memory */
+			if (size < 0x8000)
 			{
-				/* move it into upper memory */
-				memmove(mem + 0x8000, mem + 0x4000, 0x2000);
-				memmove(mem + 0xa000, mem + 0x6000, 0x2000);
+				memcpy(ROM + 0x8000, ROM + 0x6000, 0x1000);
+				memcpy(ROM + 0xa000, ROM + 0x6000, 0x1000);
+				memcpy(ROM + 0x9000, ROM + 0x7000, 0x1000);
+				memcpy(ROM + 0xb000, ROM + 0x7000, 0x1000);
+				memcpy(ROM + 0x6000, ROM + 0x4000, 0x1000);
+				memcpy(ROM + 0x7000, ROM + 0x5000, 0x1000);
 			}
 			LOG((errorlog,"%s loaded cartridge '%s' size %dK\n",
 				Machine->gamedrv->name, filename, size/1024));
@@ -408,7 +298,7 @@ int a5200_load_rom(void)
 
 int a5200_id_rom(const char *name, const char *gamename)
 {
-	return 0;
+	return 1;
 }
 
 void pokey_reset(void)
@@ -553,20 +443,29 @@ static  void open_floppy(int drive)
             return;
         /* try to open the image read/write */
 		drv[drive].mode = 1;
-        file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE, 1);
+		file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
         if (!file)
         {
             /* if this fails, try to open it read only */
 			drv[drive].mode = 0;
-            file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE, 0);
+            file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
         }
-        /* still failed: no chance to access image */
+		/* still failed, so create a new image */
         if (!file)
         {
-            /* patch the name to zero length to avoid further tries */
-            floppy_name[drive][0] = '\0';
-            free(image);
-            return;
+			/* if this fails, try to open it read only */
+			drv[drive].mode = 1;
+			file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+			if( file )
+			{
+				int sector;
+				char buff[256];
+				memset(buff, 0, 256);
+				/* default to 720 sectors */
+				for( sector = 0; sector < 720; sector++ )
+					osd_fwrite(file, buff, 256);
+				osd_fseek(file, 0, SEEK_SET);
+			}
         }
         size = osd_fread(file, image, MAXSIZE);
         osd_fclose(file);
@@ -1214,20 +1113,20 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			LOG((errorlog,"%s MMU BIOS ROM\n", Machine->gamedrv->name));
 			cpu_setbankhandler_r(3, MRA_BANK3);
 			cpu_setbankhandler_w(3, MWA_ROM);
-            cpu_setbank(3, &Machine->memory_region[0][0x10000]);  /* 0x1000 bytes */
+            cpu_setbank(3, memory_region(REGION_CPU1)+0x10000);  /* 0x1000 bytes */
 			cpu_setbankhandler_r(4, MRA_BANK4);
 			cpu_setbankhandler_w(4, MWA_ROM);
-            cpu_setbank(4, &Machine->memory_region[0][0x11800]);  /* 0x2800 bytes */
+            cpu_setbank(4, memory_region(REGION_CPU1)+0x11800);  /* 0x2800 bytes */
         }
 		else
 		{
 			LOG((errorlog,"%s MMU BIOS RAM\n", Machine->gamedrv->name));
             cpu_setbankhandler_r(3, MRA_RAM);
 			cpu_setbankhandler_w(3, MWA_RAM);
-            cpu_setbank(3, &Machine->memory_region[0][0x0c000]);  /* 0x1000 bytes */
+            cpu_setbank(3, memory_region(REGION_CPU1)+0x0c000);  /* 0x1000 bytes */
 			cpu_setbankhandler_r(4, MRA_RAM);
 			cpu_setbankhandler_w(4, MWA_RAM);
-            cpu_setbank(4, &Machine->memory_region[0][0x0d800]);  /* 0x2800 bytes */
+            cpu_setbank(4, memory_region(REGION_CPU1)+0x0d800);  /* 0x2800 bytes */
         }
 	}
 	/* check if BASIC changed */
@@ -1238,14 +1137,14 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			LOG((errorlog,"%s MMU BASIC RAM\n", Machine->gamedrv->name));
             cpu_setbankhandler_r(2, MRA_RAM);
             cpu_setbankhandler_w(2, MWA_RAM);
-            cpu_setbank(2, &Machine->memory_region[0][0x0a000]);  /* 0x2000 bytes */
+            cpu_setbank(2, memory_region(REGION_CPU1)+0x0a000);  /* 0x2000 bytes */
         }
 		else
 		{
 			LOG((errorlog,"%s MMU BASIC ROM\n", Machine->gamedrv->name));
             cpu_setbankhandler_r(2, MRA_BANK2);
             cpu_setbankhandler_w(2, MWA_ROM);
-            cpu_setbank(2, &Machine->memory_region[0][0x14000]);  /* 0x2000 bytes */
+            cpu_setbank(2, memory_region(REGION_CPU1)+0x14000);  /* 0x2000 bytes */
 		}
     }
 	/* check if self-test ROM changed */
@@ -1256,14 +1155,14 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			LOG((errorlog,"%s MMU SELFTEST RAM\n", Machine->gamedrv->name));
             cpu_setbankhandler_r(1, MRA_RAM);
             cpu_setbankhandler_w(1, MWA_RAM);
-            cpu_setbank(1, &Machine->memory_region[0][0x05000]);  /* 0x0800 bytes */
+            cpu_setbank(1, memory_region(REGION_CPU1)+0x05000);  /* 0x0800 bytes */
         }
 		else
 		{
 			LOG((errorlog,"%s MMU SELFTEST ROM\n", Machine->gamedrv->name));
             cpu_setbankhandler_r(1, MRA_BANK1);
             cpu_setbankhandler_w(1, MWA_ROM);
-            cpu_setbank(1, &Machine->memory_region[0][0x11000]);  /* 0x0800 bytes */
+            cpu_setbank(1, memory_region(REGION_CPU1)+0x11000);  /* 0x0800 bytes */
         }
     }
 }
@@ -1738,74 +1637,63 @@ void a800_handle_keyboard(void)
 	atari_last = AKEY_NONE;
 }
 
-#define VKEY_NONE		0xff
-#define VKEY_0          0x00
-#define VKEY_1          0x01
-#define VKEY_2          0x02
-#define VKEY_3          0x03
-#define VKEY_4          0x04
-#define VKEY_5          0x05
-#define VKEY_6          0x06
-#define VKEY_7          0x07
-#define VKEY_8          0x08
-#define VKEY_9          0x09
-#define VKEY_ASTERISK   0x0a
-#define VKEY_HASH       0x0b
-#define VKEY_START      0x0c
-#define VKEY_PAUSE      0x0d
-#define VKEY_RESET      0x0e
-#define VKEY_BREAK		0x0f
-#define VSHF_0          0x40
-#define VSHF_1			0x41
-#define VSHF_2			0x42
-#define VSHF_3          0x43
-#define VSHF_4          0x44
-#define VSHF_5          0x45
-#define VSHF_6          0x46
-#define VSHF_7          0x47
-#define VSHF_8          0x48
-#define VSHF_9          0x49
-#define VSHF_ASTERISK   0x4a
-#define VSHF_HASH       0x4b
-#define VSHF_START      0x4c
-#define VSHF_PAUSE      0x4d
-#define VSHF_RESET      0x4e
-#define VSHF_BREAK		0x4f
-#define VCTL_0          0x80
-#define VCTL_1          0x81
-#define VCTL_2          0x82
-#define VCTL_3          0x83
-#define VCTL_4          0x84
-#define VCTL_5          0x85
-#define VCTL_6          0x86
-#define VCTL_7          0x87
-#define VCTL_8          0x88
-#define VCTL_9          0x89
-#define VCTL_ASTERISK   0x8a
-#define VCTL_HASH       0x8b
-#define VCTL_START      0x8c
-#define VCTL_PAUSE      0x8d
-#define VCTL_RESET      0x8e
-#define VCTL_BREAK		0x4f
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*										KBCODE							*/
+/*										Key 	bits	Keypad code 	*/
+/*										------------------- 			*/
+#define VKEY_NONE		0x00	/*		none	0000	$FF 			*/
+#define VKEY_HASH		0x01	/*		#		0001	$0B 			*/
+#define VKEY_0			0x02	/*		0		0010	$00 			*/
+#define VKEY_ASTERISK	0x03	/*		*		0011	$0A 			*/
+#define VKEY_RESET		0x04	/*		Reset	0100	$0E 			*/
+#define VKEY_9			0x05	/*		9		0101	$09 			*/
+#define VKEY_8			0x06	/*		8		0110	$08 			*/
+#define VKEY_7			0x07	/*		7		0111	$07 			*/
+#define VKEY_PAUSE		0x08	/*		Pause	1000	$0D 			*/
+#define VKEY_6			0x09	/*		6		1001	$06 			*/
+#define VKEY_5			0x0a	/*		5		1010	$05 			*/
+#define VKEY_4			0x0b	/*		4		1011	$04 			*/
+#define VKEY_START		0x0c	/*		Start	1100	$0C 			*/
+#define VKEY_3			0x0d	/*		3		1101	$03 			*/
+#define VKEY_2			0x0e	/*		2		1110	$02 			*/
+#define VKEY_1			0x0f	/*		1		1111	$01 			*/
+
+#define VKEY_BREAK		0x10
 
 static  key_trans pad_trans_us[] = {
-{0,                 0, {VKEY_NONE       ,VKEY_NONE       ,VKEY_NONE       ,VKEY_NONE       }},
-{KEYCODE_1_PAD, 	0, {VKEY_1			,VSHF_1 		 ,VCTL_1		  ,VCTL_1		   }},
-{KEYCODE_2_PAD, 	0, {VKEY_2			,VSHF_2 		 ,VCTL_2		  ,VCTL_2		   }},
-{KEYCODE_3_PAD, 	0, {VKEY_3			,VSHF_3 		 ,VCTL_3		  ,VCTL_3		   }},
-{KEYCODE_4_PAD, 	0, {VKEY_4			,VSHF_4 		 ,VCTL_4		  ,VCTL_4		   }},
-{KEYCODE_5_PAD, 	0, {VKEY_5			,VSHF_5 		 ,VCTL_5		  ,VCTL_5		   }},
-{KEYCODE_6_PAD, 	0, {VKEY_6			,VSHF_6 		 ,VCTL_6		  ,VCTL_6		   }},
-{KEYCODE_7_PAD, 	0, {VKEY_7			,VSHF_7 		 ,VCTL_7		  ,VCTL_7		   }},
-{KEYCODE_8_PAD, 	0, {VKEY_8			,VSHF_8 		 ,VCTL_8		  ,VCTL_8		   }},
-{KEYCODE_9_PAD, 	0, {VKEY_9			,VSHF_9 		 ,VCTL_9		  ,VCTL_9		   }},
-{KEYCODE_0_PAD, 	0, {VKEY_0			,VSHF_0 		 ,VCTL_0		  ,VCTL_0		   }},
-{KEYCODE_F1,		0, {VKEY_START		,VSHF_START 	 ,VCTL_START	  ,VCTL_START	   }},
-{KEYCODE_F2,		0, {VKEY_PAUSE		,VSHF_PAUSE 	 ,VCTL_PAUSE	  ,VCTL_PAUSE	   }},
-{KEYCODE_F3,		0, {VKEY_ASTERISK	,VSHF_ASTERISK	 ,VCTL_ASTERISK   ,VCTL_ASTERISK   }},
-{KEYCODE_F4,		0, {VKEY_HASH		,VSHF_HASH		 ,VCTL_HASH 	  ,VCTL_HASH	   }},
-{KEYCODE_F5,		0, {VKEY_BREAK		,VSHF_BREAK 	 ,VCTL_BREAK	  ,VCTL_BREAK	   }},
-{KEYCODE_F6,		0, {VKEY_RESET		,VSHF_RESET 	 ,VCTL_RESET	  ,VCTL_RESET	   }},
+{0, 				0, {VKEY_NONE,		VKEY_NONE,			VKEY_NONE,			VKEY_NONE		   }},
+{KEYCODE_1_PAD, 	0, {VKEY_1, 		VKEY_1|0x40,		VKEY_1|0x80,		VKEY_1|0x80 	   }},
+{KEYCODE_2_PAD, 	0, {VKEY_2, 		VKEY_2|0x40,		VKEY_2|0x80,		VKEY_2|0x80 	   }},
+{KEYCODE_3_PAD, 	0, {VKEY_3, 		VKEY_3|0x40,		VKEY_3|0x80,		VKEY_3|0x80 	   }},
+{KEYCODE_4_PAD, 	0, {VKEY_4, 		VKEY_4|0x40,		VKEY_4|0x80,		VKEY_4|0x80 	   }},
+{KEYCODE_5_PAD, 	0, {VKEY_5, 		VKEY_5|0x40,		VKEY_5|0x80,		VKEY_5|0x80 	   }},
+{KEYCODE_6_PAD, 	0, {VKEY_6, 		VKEY_6|0x40,		VKEY_6|0x80,		VKEY_6|0x80 	   }},
+{KEYCODE_7_PAD, 	0, {VKEY_7, 		VKEY_7|0x40,		VKEY_7|0x80,		VKEY_7|0x80 	   }},
+{KEYCODE_8_PAD, 	0, {VKEY_8, 		VKEY_8|0x40,		VKEY_8|0x80,		VKEY_8|0x80 	   }},
+{KEYCODE_9_PAD, 	0, {VKEY_9, 		VKEY_9|0x40,		VKEY_9|0x80,		VKEY_9|0x80 	   }},
+{KEYCODE_0_PAD, 	0, {VKEY_0, 		VKEY_0|0x40,		VKEY_0|0x80,		VKEY_0|0x80 	   }},
+{KEYCODE_F1,		0, {VKEY_START, 	VKEY_START|0x40,	VKEY_START|0x80,	VKEY_START|0x80    }},
+{KEYCODE_F2,		0, {VKEY_PAUSE, 	VKEY_PAUSE|0x40,	VKEY_PAUSE|0x80,	VKEY_PAUSE|0x80    }},
+{KEYCODE_F3,		0, {VKEY_RESET, 	VKEY_RESET|0x40,	VKEY_RESET|0x80,	VKEY_RESET|0x80    }},
+{KEYCODE_F5,		0, {VKEY_HASH,		VKEY_HASH|0x40, 	VKEY_HASH|0x80, 	VKEY_HASH|0x80	   }},
+{KEYCODE_F6,		0, {VKEY_ASTERISK,	VKEY_ASTERISK|0x40, VKEY_ASTERISK|0x80, VKEY_ASTERISK|0x80 }},
+{KEYCODE_F7,		0, {VKEY_BREAK, 	VKEY_BREAK|0x40,	VKEY_BREAK|0x80,	VKEY_BREAK|0x80    }},
 {0xff}
 };
 
@@ -1814,10 +1702,9 @@ static	key_trans *pad = pad_trans_us;
 /* absolutely no clue what to do here :((( */
 void a5200_handle_keypads(void)
 {
-	int i, modifiers, shift_control, atari_code;
+	int i, /*modifiers,*/ shift_control, atari_code;
 	static int atari_last = 0;
 
-    modifiers = 0;
 	shift_control = 0;
     /* with shift ? */
 	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
@@ -1828,10 +1715,10 @@ void a5200_handle_keypads(void)
 
 	for (i = 0; pad[i].osd != 0xff; i++)
 	{
-		if (keyboard_pressed(modifiers | pad[i].osd))
+		if( keyboard_pressed(pad[i].osd) )
 		{
 			/* joystick key and joystick mode enabled ? */
-			if (pad[i].joystick && (input_port_0_r(0) & 0x80))
+			if( pad[i].joystick && (input_port_0_r(0) & 0x80) )
 				continue;
 			atari_code = pad[i].atari[shift_control];
 			if (atari_code != VKEY_NONE)
@@ -1839,12 +1726,12 @@ void a5200_handle_keypads(void)
 				if (atari_code == atari_last)
 					return;
 				atari_last = atari_code;
-				if ((atari_code & 0x3f) == VKEY_BREAK)
-				{
-					pokey1_break_w(atari_code & 0x40);
+				if( (atari_code & 0x3f) == VKEY_BREAK )
+                {
+                    pokey1_break_w(atari_code & 0x40);
                     return;
                 }
-				pokey1_kbcode_w(atari_code, 1);
+				pokey1_kbcode_w(atari_code | 0x30, 1);
 				return;
             }
         }

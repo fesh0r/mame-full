@@ -5,6 +5,11 @@
 
 #include "driver.h"
 
+/* initialise palette function */
+void nick_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+
+#define NICK_PALETTE_SIZE	256
+#define NICK_COLOURTABLE_SIZE	256
 
 /* given a colour index in range 0..255 gives the Red component */
 #define NICK_GET_RED8(x) \

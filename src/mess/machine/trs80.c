@@ -12,7 +12,17 @@
 #include "cpu/z80/z80.h"
 #include "mess/systems/trs80.h"
 
-UINT8    port_ff = 0;
+#define VERBOSE 1
+
+#if VERBOSE
+#define LOG(x)	if( errorlog ) fprintf x
+#else
+#define LOG(x)	/* x */
+#endif
+
+UINT8 port_ff = 0;
+
+static int trs80_load_cas = 0;
 
 #define IRQ_TIMER       0x80
 #define IRQ_FDC         0x40
@@ -23,25 +33,25 @@ static	UINT8			irq_status = 0;
 #define MAX_SECTORS     5       // and granules of sectors
 
 /* this indicates whether the floppy images geometry shall be calculated */
-static	UINT8 first_fdc_access = 1;
-static	UINT8 motor_drive = 0;				  /* currently running drive */
-static	short motor_count = 0;				  /* time out for motor in frames */
-static	UINT8 tracks[4] = {0, };			  /* total tracks count per drive */
-static	UINT8 heads[4] = {0, }; 			  /* total heads count per drive */
-static	UINT8 s_p_t[4] = {0, }; 			  /* sector per track count per drive */
+static UINT8 first_fdc_access = 1;
+static UINT8 motor_drive = 0;				 /* currently running drive */
+static short motor_count = 0;				 /* time out for motor in frames */
+static UINT8 tracks[4] = {0, }; 			 /* total tracks count per drive */
+static UINT8 heads[4] = {0, };				 /* total heads count per drive */
+static UINT8 s_p_t[4] = {0, };				 /* sector per track count per drive */
 #if USE_TRACK
-static  UINT8 track[4] = {0, };               /* current track per drive */
+static UINT8 track[4] = {0, };				 /* current track per drive */
 #endif
-static	UINT8 head[4] = {0, };				  /* current head per drive */
+static UINT8 head[4] = {0, };				 /* current head per drive */
 #if USE_SECTOR
-static  UINT8 sector[4] = {0, };              /* current sector per drive */
+static UINT8 sector[4] = {0, }; 			 /* current sector per drive */
 #endif
-static	short dir_sector[4] = {0, };		  /* first directory sector (aka DDSL) */
-static	short dir_length[4] = {0, };		  /* length of directory in sectors (aka DDGA) */
+static short dir_sector[4] = {0, }; 		 /* first directory sector (aka DDSL) */
+static short dir_length[4] = {0, }; 		 /* length of directory in sectors (aka DDGA) */
 
 /* current tape file handles */
-static void * tape_put_file = 0;
-static void * tape_get_file = 0;
+static void *tape_put_file = NULL;
+static void *tape_get_file = NULL;
 
 /* tape buffer for the first eight bytes at write (to extract a filename) */
 static UINT8 tape_buffer[8];
@@ -55,17 +65,140 @@ static int in_sync = 0;         /* flag if writing to tape detected the sync hea
 static int put_cycles = 0;      /* cycle count at last output port change */
 static int get_cycles = 0;      /* cycle count at last input port read */
 
-int     trs80_videoram_r(int offset);
-void    trs80_videoram_w(int offset, int data);
+int trs80_videoram_r(int offset);
+void trs80_videoram_w(int offset, int data);
 
-static  void    tape_put_byte(UINT8 value);
-static  void    tape_get_open(void);
-static  void    tape_put_close(void);
+static void tape_put_byte(UINT8 value);
+static void tape_get_open(void);
+static void tape_put_close(void);
+
+#define FW TRS80_FONT_W
+#define FH TRS80_FONT_H
+
+void trs80_init_driver(void)
+{
+	UINT8 *FNT = memory_region(REGION_GFX1);
+    int i, y;
+	for( i = 0x000; i < 0x080; i++ )
+    {
+		/* copy eight lines from the character generator */
+        for (y = 0; y < 8; y++)
+			FNT[i*FH+y] = FNT[0x0800+i*8+y] << 3;
+		/* wipe out the lower lines (no descenders!) */
+		for (y = 8; y < FH; y++)
+			FNT[i*FH+y] = 0;
+    }
+	/* setup the 2x3 chunky block graphics (two times 64 characters) */
+	for( i = 0x080; i < 0x100; i++ )
+    {
+        UINT8 b0, b1, b2, b3, b4, b5;
+        b0 = (i & 0x01) ? 0xe0 : 0x00;
+        b1 = (i & 0x02) ? 0x1c : 0x00;
+        b2 = (i & 0x04) ? 0xe0 : 0x00;
+        b3 = (i & 0x08) ? 0x1c : 0x00;
+        b4 = (i & 0x10) ? 0xe0 : 0x00;
+        b5 = (i & 0x20) ? 0x1c : 0x00;
+
+		FNT[i*FH+ 0] = FNT[i*FH+ 1] = FNT[i*FH+ 2] = FNT[i*FH+ 3] = b0 | b1;
+		FNT[i*FH+ 4] = FNT[i*FH+ 5] = FNT[i*FH+ 6] = FNT[i*FH+ 7] = b2 | b3;
+		FNT[i*FH+ 8] = FNT[i*FH+ 9] = FNT[i*FH+10] = FNT[i*FH+11] = b4 | b5;
+    }
+}
+
+static int opbaseoverride(int PC)
+{
+	UINT8 *ram = memory_region(REGION_CPU1);
+	if( trs80_load_cas && ram[0x3c00+3*64] == 0x3e )
+    {
+		int i;
+		trs80_load_cas = 0;
+        for( i = 0; i < Machine->gamedrv->num_of_cassette_drives; i++ )
+        {
+			if( cassette_name[i][0] )
+            {
+				UINT8 *buff = malloc(65536), *s;
+				unsigned size, entry = 0, block_len, block_ofs = 0;
+                UINT8 data;
+                void *cmd;
+
+				if( !buff )
+                    continue;
+				cmd = osd_fopen(Machine->gamedrv->name, cassette_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+				if( !cmd )
+                    continue;
+                size = osd_fread(cmd, buff, 65536);
+                s = buff;
+				while( size > 3 )
+				{
+					data = *s++;
+					switch( data )
+					{
+					case 0x01:		   /* CMD file header */
+					case 0x07:		   /* another type of CMD file header */
+					case 0x3c:		   /* CAS file header */
+						block_len = *s++;
+						/* on CMD files size zero means size 256 */
+						if( block_len == 0 )
+							block_len += 256;
+						block_ofs = *s++;
+						block_ofs += 256 * *s++;
+						if( data != 0x3c )
+						{
+							block_len -= 2;
+							if( block_len == 0 )
+								block_len = 256;
+						}
+						size -= 4;
+						LOG((errorlog, "trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+						while( block_len && size )
+						{
+							cpu_writemem16(block_ofs, *s);
+							s++;
+							block_ofs++;
+							block_len--;
+							size--;
+						}
+						if( data == 0x3c )
+							s++;
+						break;
+					case 0x02:
+						block_len = *s++;
+						size -= 1;
+					case 0x78:
+						entry = *s++;
+						entry += 256 * *s++;
+						LOG((errorlog, "trs80_cmd_load entry ($%02X) at $%04X\n", data, entry));
+						size -= 3;
+						if( size <= 3 )
+							LOG((errorlog,"starting program at $%04X\n", block_ofs));
+						break;
+					default:
+						size--;
+					}
+				}
+                free(buff);
+                osd_fclose(cmd);
+				cpu_set_pc(entry);
+            }
+        }
+        cpu_setOPbaseoverride(0,NULL);
+    }
+	return PC;
+}
 
 void trs80_init_machine(void)
 {
-	wd179x_init(1);
-	first_fdc_access = 1;
+	if( floppy_name[0][0] )
+		wd179x_init(1);
+	else
+		wd179x_init(0);
+
+    first_fdc_access = 1;
+	if( cassette_name[0][0] )
+	{
+		trs80_load_cas = 1;
+		cpu_setOPbaseoverride(0, opbaseoverride);
+	}
 }
 
 void trs80_shutdown_machine(void)
@@ -74,118 +207,17 @@ void trs80_shutdown_machine(void)
 	wd179x_stop_drive();
 }
 
-int trs80_cmd_load(void * cmd)
-{
-	int i;
-    UINT8 *buff = malloc(65536), * s, * d;
-	UINT16 size, block_len, block_ofs;
-	UINT8 data;
-
-	if (!buff)
-		return 7;
-
-/* prepare RAM in the same way the TRS80 boot strap would do */
-	memcpy(&Machine->memory_region[0][0x4000],
-		   &Machine->memory_region[0][0x06d2], 0x36);
-	memset(&Machine->memory_region[0][0x4036],
-		   0,								   0x27);
-	memcpy(&Machine->memory_region[0][0x4080],
-		   &Machine->memory_region[0][0x18f7], 0x27);
-	Machine->memory_region[0][0x41e5] = 0x3a;
-	Machine->memory_region[0][0x41e6] = 0x00;
-	Machine->memory_region[0][0x41e7] = 0x2c;
-	Machine->memory_region[0][0x40a7] = 0xe8;
-	Machine->memory_region[0][0x40a8] = 0x41;
-	for (i = 0; i < 0x1c; i++)
-	{
-			Machine->memory_region[0][0x4152 + i * 3 + 0] = 0xc3;
-			Machine->memory_region[0][0x4152 + i * 3 + 1] = 0x2d;
-			Machine->memory_region[0][0x4152 + i * 3 + 2] = 0x01;
-	}
-	for (i = 0; i < 0x15; i++)
-	{
-			Machine->memory_region[0][0x41a6 + i * 3 + 0] = 0xc9;
-			Machine->memory_region[0][0x41a6 + i * 3 + 1] = 0x00;
-			Machine->memory_region[0][0x41a6 + i * 3 + 2] = 0x00;
-	}
-
-	size = osd_fread(cmd, buff, 65536);
-	s = buff;
-	while (size > 3)
-	{
-		data = *s++;
-		switch (data)
-		{
-			case 0x01:		/* CMD header */
-			case 0x07:		/* another CMD header */
-			case 0x3c:		/* CAS header */
-				block_len = *s++;
-				/* on CMD files size <= 2 means size + 256 */
-				if ((data != 0x3c) && (block_len <= 2))
-						block_len += 256;
-				block_ofs = *s++;
-				block_ofs += 256 * *s++;
-				d = &Machine->memory_region[0][block_ofs];
-				if (data != 0x3c)
-						block_len -= 2;
-				size -= 4;
-				while (block_len && size)
-				{
-					/* write into RAM ? */
-					if (block_ofs >= 0x3c00)
-					{
-						*d++ = *s++;
-					}
-					else
-					{
-						d++;
-						s++;
-					}
-					block_ofs++;
-					block_len--;
-					size--;
-				}
-				/* on CAS files skip the block checksum */
-				if( data == 0x3c )
-					s++;
-				break;
-			case 0x02:		/* CMD entry point */
-				block_len = *s++;
-				size -= 1;
-				/* fall through */
-			case 0x78:		/* CAS entry point */
-				/* patch ROM with start address */
-				Machine->memory_region[0][3] = *s++;
-				Machine->memory_region[0][4] = *s++;
-				size -= 3;
-				/* disable floppy controller */
-				wd179x_init(0);
-				break;
-			default:		/* ignore other data */
-				size--;
-		}
-	}
-	free(buff);
-	return 0;
-}
-
 int trs80_rom_load(void)
 {
-	int  result  = 0;
-	void *cmd;
-
-	/* load a cmd file */
-	if (rom_name[0])
+	int result = 0;
+	if( rom_name[0][0] )
 	{
-		cmd = osd_fopen(Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM, 0);
-		if (cmd)
-		{
-			result = trs80_cmd_load(cmd);
-			osd_fclose(cmd);
-		}
-	}
-
-	return result;
+		/* copy rom name to cassette name (same loader) */
+		strcpy(cassette_name[0], rom_name[0]);
+		trs80_load_cas = 1;
+		cpu_setOPbaseoverride(0, opbaseoverride);
+    }
+    return result;
 }
 
 int trs80_rom_id(const char *name, const char *gamename)
@@ -215,7 +247,7 @@ static void tape_put_byte(UINT8 value)
 				UINT8 zeroes[256] = {0,};
 
                 sprintf(filename, "basic%c.cas", tape_buffer[4]);
-				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 2);
+				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 				osd_fwrite(tape_put_file, zeroes, 256);
 				osd_fwrite(tape_put_file, tape_buffer, 8);
 			}
@@ -227,7 +259,7 @@ static void tape_put_byte(UINT8 value)
 				UINT8 zeroes[256] = {0,};
 
                 sprintf(filename, "%-6.6s.cas", tape_buffer+2);
-				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 2);
+				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 				osd_fwrite(tape_put_file, zeroes, 256);
 				osd_fwrite(tape_put_file, tape_buffer, 8);
 			}
@@ -300,15 +332,15 @@ static void tape_get_byte(void)
 static void tape_get_open(void)
 {
 	/* TODO: remove this */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (!tape_get_file)
 	{
         char filename[12+1];
 
         sprintf(filename, "%-6.6s.cas", RAM + 0x41e8);
-		if (errorlog) fprintf (errorlog, "filename %s\n", filename);
-		tape_get_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 0);
+		LOG((errorlog, "filename %s\n", filename));
+		tape_get_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 		tape_count = 0;
 	}
 }
@@ -321,13 +353,13 @@ static void tape_get_open(void)
 
 void trs80_port_ff_w(int offset, int data)
 {
-	int port_ff_changed = port_ff ^ data;
+	int changes = port_ff ^ data;
 
 	/* tape output changed ? */
-	if (port_ff_changed & 3)
+	if( changes & 0x03 )
 	{
 		/* virtual tape ? */
-		if (input_port_0_r(0) & 0x20)
+		if( readinputport(0) & 0x20 )
 		{
 			int now_cycles = cpu_gettotalcycles();
 			int diff = now_cycles - put_cycles;
@@ -341,14 +373,14 @@ void trs80_port_ff_w(int offset, int data)
 			}
 			else
 			/* just wrote the interesting value ? */
-			if ((data & 3) == 1)
+			if( (data & 0x03) == 0x01 )
 			{
 				/* change within time for a 1 bit ? */
-				if (diff < 2000)
+				if( diff < 2000 )
 				{
 					tape_bits = (tape_bits << 1) | 1;
 					/* in sync already ? */
-					if (in_sync)
+					if( in_sync )
 					{
 						/* count 1 bit */
 						put_bit_count += 1;
@@ -356,7 +388,7 @@ void trs80_port_ff_w(int offset, int data)
 					else
 					{
 						/* try to find sync header A5 */
-						if (tape_bits == 0xcc33)
+						if( tape_bits == 0xcc33 )
 						{
 							in_sync = 1;
 							put_bit_count = 16;
@@ -368,12 +400,12 @@ void trs80_port_ff_w(int offset, int data)
 					/* shift twice */
 					tape_bits <<= 2;
 					/* in sync already ? */
-					if (in_sync)
+					if( in_sync )
 						put_bit_count += 2;
 				}
 
 				/* collected 8 sync plus 8 data bits ? */
-				if (put_bit_count >= 16)
+				if( put_bit_count >= 16 )
 				{
 					/* extract data bits to value */
 					value = 0;
@@ -395,26 +427,24 @@ void trs80_port_ff_w(int offset, int data)
 		}
 		else
 		{
-			int dac_data = 0; /* use a 1 Vss range (0..255) */
-			switch (data & 3)
+			switch( data & 0x03 )
 			{
-				case 0: /* 0.46 Volt */
-					dac_data = 117;
-					break;
-				case 1:
-				case 3: /* 0.00 Volt */
-					dac_data = 0;
-					break;
-				case 2: /* 0.85 Volt */
-					dac_data = 217;
-					break;
+			case 0: /* 0.46 volts */
+				DAC_data_w(0, (int)(0.46*255));
+				break;
+			case 1:
+			case 3: /* 0.00 volts */
+				DAC_data_w(0, (int)(0.00*255));
+				break;
+			case 2: /* 0.85 volts */
+				DAC_data_w(0, (int)(0.85*255));
+				break;
 			}
-			DAC_data_w(0, dac_data);
 		}
 	}
 
 	/* font width change ? (32<->64 characters per line) */
-	if (port_ff_changed & 8)
+	if( changes & 0x08 )
 		memset(dirtybuffer, 1, 64 * 16);
 
 	port_ff = data;
@@ -424,7 +454,7 @@ int trs80_port_ff_r(int offset)
 {
 	int now_cycles = cpu_gettotalcycles();
 	/* virtual tape ? */
-	if (input_port_0_r(0) & 0x20)
+	if( readinputport(0) & 0x20 )
 	{
         int     diff = now_cycles - get_cycles;
 		/* overrun since last read ? */
@@ -602,7 +632,7 @@ void trs80_motor_w(int offset, int data)
 	int n;
 	void *file0, *file1;
 
-	if (errorlog) fprintf(errorlog, "trs80 motor_w $%02X\n", data);
+	LOG((errorlog, "trs80 motor_w $%02X\n", data));
 
 	switch (data)
 	{

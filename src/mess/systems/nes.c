@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "mess/machine/nes.h"
+#include "cpu/m6502/m6502.h"
 
 /* machine/nes.c */
 int nes_load_rom (void);
@@ -51,7 +52,7 @@ void battery_ram_w (int offset, int data)
 {
 	extern int Mapper;
 	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	battery_ram[offset] = data;
 
@@ -114,11 +115,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc000, 0xdfff, MRA_BANK3 },
 	{ 0x8000, 0x9fff, MRA_BANK1 }, /* 4 16k ROM banks */
 	{ 0xa000, 0xbfff, MRA_BANK2 },
-	{ 0x0000, 0x07ff, MRA_RAM, &main_ram },   /* RAM */
+	{ 0x0000, 0x07ff, MRA_RAM   },   /* RAM */
 	{ 0x2000, 0x3fff, nes_ppu_r }, /* PPU registers */
 	{ 0x6000, 0x7fff, MRA_RAM },   /* Trainer/battery RAM */
-	{ 0x4016, 0x4016, nes_IN0_r, &nes_io_0 },	/* IN0 - gamepad 1 */
-	{ 0x4017, 0x4017, nes_IN1_r, &nes_io_1 },	/* IN1 - gamepad 2 */
+	{ 0x4016, 0x4016, nes_IN0_r },	/* IN0 - gamepad 1 */
+	{ 0x4017, 0x4017, nes_IN1_r },	/* IN1 - gamepad 2 */
 	{ 0x4015, 0x4015, nes_bogus_r },	/* ?? sound status ?? */
 	{ 0x4100, 0x5fff, nes_strange_mapper_r }, /* Perform more unholy acts on the machine */
 	{ 0x0800, 0x1fff, nes_mirrorram_r },   /* mirrors of RAM */
@@ -127,13 +128,13 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x0000, 0x07ff, MWA_RAM, &main_ram },
 	{ 0x2000, 0x3fff, nes_ppu_w }, /* PPU registers */
 	{ 0x8000, 0xffff, nes_mapper_w }, /* Perform unholy acts on the machine */
 	{ 0x4100, 0x5fff, nes_strange_mapper_w }, /* Perform more unholy acts on the machine */
 	{ 0x6000, 0x7fff, battery_ram_w, &battery_ram },   /* Battery RAM */
-	{ 0x4016, 0x4016, nes_IN0_w },	/* IN0 - gamepad 1 */
-	{ 0x4017, 0x4017, nes_IN1_w },	/* IN1 - gamepad 2 */
+	{ 0x4016, 0x4016, nes_IN0_w, &nes_io_0 },	/* IN0 - gamepad 1 */
+	{ 0x4017, 0x4017, nes_IN1_w, &nes_io_1 },	/* IN1 - gamepad 2 */
 	{ 0x4014, 0x4014, nes_vh_sprite_dma_w }, /* transfer 0x100 of data to sprite ram */
 	{ 0x4011, 0x4011, DAC_data_w },
 	{ 0x4000, 0x4015, NESPSG_0_w },
@@ -143,7 +144,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( nes )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -165,12 +166,14 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
 
 	PORT_START	/* IN2 - fake */
-	PORT_DIPNAME( 0x01, 0x00, "Renderer", IP_KEY_NONE )
+	//PORT_DIPNAME( 0x01, 0x00, "Renderer", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Renderer")
 	PORT_DIPSETTING(    0x00, "Scanline" )
 	PORT_DIPSETTING(    0x01, "Experimental" )
 
 	PORT_START	/* IN3 - fake */
-	PORT_DIPNAME( 0x01, 0x00, "Split-Screen Fix", IP_KEY_NONE )
+	//PORT_DIPNAME( 0x01, 0x00, "Split-Screen Fix", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Split-Screen Fix")
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
 INPUT_PORTS_END
@@ -303,10 +306,21 @@ static unsigned short colortable[] =
 	0,1,2,3,
 };
 
+/* Initialise the palette */
+static void nes_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_colortable,colortable,sizeof(colortable));
+}
+
+
+
+
 static struct NESinterface nes_interface =
 {
 	1,
-	28624000 ,	/* 16 * 1.79MHz = 28.624 MHz */
+	//28624000 ,	/* 16 * 1.79MHz = 28.624 MHz */
+	{ REGION_CPU1 },		/* no handler */
 	{ 100 },
 };
 
@@ -316,6 +330,15 @@ static struct DACinterface nes_dac_interface =
 	{ 100 }
 };
 
+
+
+/* list of file extensions */
+static const char *nes_file_extensions[] =
+{
+	"nes",
+	0       /* end of array */
+};
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -323,7 +346,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1789000,	/* 1.79 Mhz */
-			0,
 			readmem,writemem,0,0,
 			nes_interrupt,SCANLINES_PER_FRAME /* one for each scanline - ugh */
 		}
@@ -337,7 +359,7 @@ static struct MachineDriver machine_driver =
 	32*8, 30*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	nes_gfxdecodeinfo,
 	(sizeof (palette))/3, sizeof(colortable)/sizeof(unsigned short),
-	0,
+	nes_init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -367,31 +389,23 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( nes_rom )
-	ROM_REGION( 0x10000 ) /* 6502 memory */
-
-	ROM_REGION( 0x20000 ) /* PPU memory 131072k for Super Mario Brother 2 :(*/
-	ROM_REGION( 0x4000 ) /* ??? memory */
-ROM_END
-
-
-
 struct GameDriver nes_driver =
 {
 	__FILE__,
 	0,
 	"nes",
-	"Nintendo Entertainment System / Famicom",
+	"Nintendo Entertainment System/Famicom",
 	"1983",
 	"Nintendo",
 	"Brad Oliver\nChuck Mason\nRichard Bannister\nNicolas Hamel\nJeff Mitchell\nNicola Salmoria (sound)\n",
 	0,
 	&machine_driver,
 	0,
-
-	nes_rom,
+	NULL,
 	nes_load_rom,
 	nes_id_rom,
+	nes_file_extensions,
+
 
 	/* IO support */
 	1, 0, 0, 0,
@@ -400,11 +414,13 @@ struct GameDriver nes_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_nes,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	GAME_IMPERFECT_SOUND | ORIENTATION_DEFAULT,
 
 	0, 0,
 };
+
+
 
