@@ -709,9 +709,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		case SPECTRUM_Z80_SNAPSHOT_48K:
 				logerror("48K .Z80 file\n");
 				if (!strcmp(Machine->gamedrv->name,"ts2068"))
-				{
 					logerror("48K .Z80 file in TS2068\n");
-				}
 				break;
 		case SPECTRUM_Z80_SNAPSHOT_128K:
 				logerror("128K .Z80 file\n");
@@ -728,10 +726,8 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 				break;
 		case SPECTRUM_Z80_SNAPSHOT_TS2068:
 				logerror("TS2068 .Z80 file\n");				if (strcmp(Machine->gamedrv->name,"ts2068"))
-				{
+				if (strcmp(Machine->gamedrv->name,"ts2068"))
 					logerror("Not a TS2068 machine\n");
-					return;
-				}
 				break;
 		case SPECTRUM_Z80_SNAPSHOT_SAMRAM:
 				logerror("Hardware not supported - .Z80 file\n");
@@ -859,7 +855,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		hi = pSnapshot[33] & 0x0ff;
 		cpu_set_reg(Z80_PC, (hi << 8) | lo);
 
-		if (z80_type == SPECTRUM_Z80_SNAPSHOT_128K || z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068)
+		if ((z80_type == SPECTRUM_Z80_SNAPSHOT_128K) || ((z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068) && !strcmp(Machine->gamedrv->name,"ts2068")))
 		{
 			/* Only set up sound registers for 128K machine or TS2068! */
 			for (i = 0; i < 16; i++)
@@ -935,13 +931,19 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		}
 		while (((unsigned long) pSource - (unsigned long) pSnapshot) < SnapshotDataSize);
 
-		if ((spectrum_128_port_7ffd_data != -1) && z80_type != SPECTRUM_Z80_SNAPSHOT_48K)
+		if ((spectrum_128_port_7ffd_data != -1) && (z80_type != SPECTRUM_Z80_SNAPSHOT_48K))
 		{
 			/* Set up paging */
 			spectrum_128_port_7ffd_data = (pSnapshot[35] & 0x0ff);
 			spectrum_update_paging();
 		}
-		if (z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068)
+		if ((z80_type == SPECTRUM_Z80_SNAPSHOT_48K) && !strcmp(Machine->gamedrv->name,"ts2068"))
+		{
+			ts2068_port_f4_data = 0x03;
+			ts2068_port_ff_data = 0x00;
+			ts2068_update_memory();
+		}
+		if (z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068 && !strcmp(Machine->gamedrv->name,"ts2068"))
 		{
 			ts2068_port_f4_data = pSnapshot[35];
 			ts2068_port_ff_data = pSnapshot[36];
@@ -949,41 +951,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		}
 	}
 	dump_registers();
-}
-
-/*******************************************************************
- *
- *      Returns 1 if the specified z80 snapshot is a 48K snapshot
- *      and 0 if it is a Spectrum 128K or SamRam snapshot.
- *
- *******************************************************************/
-int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize)
-{
-	unsigned char lo, hi, data;
-
-	if (SnapshotSize < 30)
-		return 0;						/* Invalid file */
-
-	lo = pSnapshot[6] & 0x0ff;
-	hi = pSnapshot[7] & 0x0ff;
-	if (hi || lo)
-		return 1;						/* V1.45 - 48K only */
-
-	lo = pSnapshot[30] & 0x0ff;
-	hi = pSnapshot[31] & 0x0ff;
-	data = pSnapshot[34] & 0x0ff;		/* Hardware mode */
-
-	if ((hi == 0) && (lo == 23))
-	{									/* V2.01 format */
-		if ((data == 0) || (data == 1))
-			return 1;
-	}
-	else
-	{									/* V3.0 format */
-		if ((data == 0) || (data == 1) || (data == 3))
-			return 1;
-	}
-	return 0;
 }
 
 /*-----------------27/02/00 10:54-------------------
