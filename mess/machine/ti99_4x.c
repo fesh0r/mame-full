@@ -402,7 +402,32 @@ int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 			default:
 				basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
 				break;
-			case 2*40*18*256:	/* 360kbytes: DSDD */
+
+			case 2*40*9*256:	/* 180kbytes: either DSSD or 18-sector-per-track
+								SSDD.  We assume DSSD since DSSD is more common
+								and is supported by the original TI SD disk
+								controller. */
+				basicdsk_set_geometry(id, 40, 2, 9, 256, 0, 0);
+				break;
+
+			case 1*40*16*256:	/* 160kbytes: 16-sector-per-track SSDD (standard
+								format for TI DD disk controller prototype (PHP
+								1240), TI hexbus disk controller, and possibly
+								some Myarc disk controller) */
+				basicdsk_set_geometry(id, 40, 1, 16, 256, 0, 0);
+				break;
+
+			case 2*40*16*256:	/* 320kbytes: 16-sector-per-track DSDD (standard
+								format for TI DD disk controller prototype (PHP
+								1240), TI hexbus disk controller, and possibly
+								some Myarc disk controller) */
+				basicdsk_set_geometry(id, 40, 2, 16, 256, 0, 0);
+				break;
+
+			case 2*40*18*256:	/* 360kbytes: 18-sector-per-track DSDD (standard
+								format for most third-party DD disk controllers,
+								but reportedly not supported by the original TI
+								DD disk controller) */
 				basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0);
 				break;
 			}
