@@ -437,12 +437,48 @@ int config_init (int argc, char *argv[])
    else
 #endif
    /* do we have a driver for this? */
+#ifdef MESS
    for (i = 0; drivers[i]; i++)
+   {
       if (strcasecmp(gamename,drivers[i]->name) == 0)
       {
          game_index = i;
          break;
       }
+   }
+#else
+   {
+      char *begin = strrchr(gamename, '/'), *end;
+      int len;
+
+      if (begin == 0)
+         begin = gamename;
+      else
+         begin++;
+
+      end = strchr(begin, '.');
+      if (end == 0)
+         len = strlen(begin);
+      else
+         len = end - begin;            
+
+      for (i = 0; drivers[i]; i++)
+      {
+         if (strncasecmp(begin, drivers[i]->name, len) == 0 
+            && len == strlen(drivers[i]->name))
+         {
+            begin = strrchr(gamename,'/');
+            if (begin)
+            {
+               *begin='\0'; // dynamic allocation and copying will be better
+               init_rom_path(gamename);
+            }
+            game_index = i;
+            break;
+         }
+      }
+   }
+#endif                                
 
    /* educated guess on what the user wants to play */
    if ( (game_index == -1) && use_fuzzycmp)

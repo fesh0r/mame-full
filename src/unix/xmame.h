@@ -167,6 +167,7 @@ void config_exit(void);
 int frontend_list(char *gamename);
 int frontend_ident(char *gamename);
 void init_search_paths(void);
+void init_rom_path(char *path);
 #ifndef HAVE_SNPRINTF
 int snprintf(char *s, size_t maxlen, const char *fmt, ...);
 #endif

@@ -20,7 +20,6 @@ int load_zipped_file (const char *zipfile,const char *filename, unsigned char **
 int checksum_zipped_file (const char *zipfile, const char *filename, unsigned int *length, unsigned int *sum);
 static int config_handle_inputfile(struct rc_option *option, const char *arg,
    int priority);
-static void init_rom_path(char *path);
 
 /* from ... */
 extern char *cheatfile;
