@@ -4,9 +4,8 @@ PK-01 Lviv driver by Krzysztof Strzecha
 
 Notes:
 1. Only one colour palette is emulated.
-2. .lvt tape images are not supported.
-3. LIST command crash Lviv.
-4. Printer is not emulated. 
+2. LIST command crash Lviv.
+3. Printer is not emulated. 
 
 Lviv technical information
 --------------------------
@@ -238,26 +237,7 @@ static	struct MachineDriver machine_driver_lviv =
 };
 
 static const struct IODevice io_lviv[] = {
-    {
-	IO_QUICKLOAD,		/* type */
-	1,			/* count */
-	"lvt\0",        	/* file extensions */
-	IO_RESET_NONE,		/* reset if file changed */
-        NULL,               	/* id */
-	lviv_snap_load,		/* init */
-	lviv_snap_exit,		/* exit */
-        NULL,		        /* info */
-        NULL,           	/* open */
-        NULL,               	/* close */
-        NULL,               	/* status */
-        NULL,               	/* seek */
-	NULL,			/* tell */
-        NULL,           	/* input */
-        NULL,               	/* output */
-        NULL,               	/* input_chunk */
-        NULL                	/* output_chunk */
-    },
-    IO_CASSETTE_WAVE(1,"wav\0",NULL,lviv_tape_init,lviv_tape_exit),
+    IO_CASSETTE_WAVE(1,"lvt\0lv0\0wav\0",NULL,lviv_tape_init,lviv_tape_exit),
     { IO_END }
 };
 
