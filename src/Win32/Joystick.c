@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mmsystem.h>
-#include <mmreg.h>
 #include <assert.h>
 #include "mame32.h"
 #include "Joystick.h"
@@ -77,15 +76,15 @@ static void             Joystick_InitJoyList(void);
 
 struct OSDJoystick  Joystick = 
 {
-    { Joystick_init },                  /* init                 */
-    { Joystick_exit },                  /* exit                 */
-    { Joystick_get_joy_list },          /* get_joy_list         */
-    { Joystick_is_joy_pressed },        /* is_joy_pressed       */
-    { Joystick_poll_joysticks },        /* poll_joysticks       */
-    { Joystick_analogjoy_read },        /* analogjoy_read       */
-    { Joystick_standard_analog_read },  /* standard_analog_read */
-    { Joystick_Available },             /* Available            */
-    { Joystick_OnMessage },             /* OnMessage            */
+    Joystick_init,                  /* init                 */
+    Joystick_exit,                  /* exit                 */
+    Joystick_get_joy_list,          /* get_joy_list         */
+    Joystick_is_joy_pressed,        /* is_joy_pressed       */
+    Joystick_poll_joysticks,        /* poll_joysticks       */
+    Joystick_analogjoy_read,        /* analogjoy_read       */
+    Joystick_standard_analog_read,  /* standard_analog_read */
+    Joystick_Available,             /* Available            */
+    Joystick_OnMessage,             /* OnMessage            */
 };
 
 /***************************************************************************
@@ -131,8 +130,8 @@ struct tJoystick_private
 static struct tJoystick_private This;
 static struct JoystickInfo      joylist[MAX_JOY] =
 {
-	/* will be filled later */
-	{ 0, 0, 0 }	/* end of table */
+    /* will be filled later */
+    { 0, 0, 0 } /* end of table */
 };
 
 static const UINT g_nJoyID[NUM_JOYSTICKS] =
@@ -573,7 +572,7 @@ static void Joystick_InitJoyList(void)
         { JOYCODE(4,JOYCODE_STICK_BTN,6,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON6 },
         { 0,0 }
     };
-    static char joynames[MAX_JOY][MAX_JOY_NAME_LEN+1];	/* will be used to store names */
+    static char joynames[MAX_JOY][MAX_JOY_NAME_LEN+1];  /* will be used to store names */
     static char* JoyAxisName[] = { "X Axis", "Y Axis", "Z Axis",
                                    "R Axis", "U Axis", "V Axis"};
     static char* JoyPOVName[] = { "POV Forward",

@@ -1,12 +1,12 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-  
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
     
 ***************************************************************************/
 
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <io.h>
 #include <fcntl.h>
-#include <Screenshot.h>
+#include "Screenshot.h"
 #include "driver.h"
 #include "options.h"
 #include "zlib.h"
@@ -48,29 +48,29 @@ char pic_format[FORMAT_MAX][4] = {
     function prototypes
 ***************************************************************************/
 
-static BOOL     LoadPNG( LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPal );
-static BOOL     LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE *Pal );
-static BOOL     DrawDIB( HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal );
-static LPVOID   ImageIdent(LPCSTR filename, int *filetype, BOOL flyer);
+static BOOL     LoadPNG(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPal);
+static BOOL     LoadBMP(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *Pal);
+static BOOL     DrawDIB(HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal);
+static LPVOID   ImageIdent(LPCSTR filename, int* filetype, BOOL flyer);
 
-static BOOL     AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal );
+static BOOL     AllocatePNG(struct png_info *p, HGLOBAL *phDIB, HPALETTE* pPal);
 
 /***************************************************************************
     Static global variables
 ***************************************************************************/
 
-static HGLOBAL          hDIB = 0;
-static HPALETTE         hPal = 0;
-static int              nLastGame = -1;
+static HGLOBAL   hDIB = 0;
+static HPALETTE  hPal = 0;
+static int       nLastGame = -1;
 
 #define WIDTHBYTES(width) ((width) / 8)
 
 /* PNG variables */
 
-static int  copy_size = 0;
-static char *pixel_ptr = 0;
-static int  row = 0;
-static int  effWidth;
+static int   copy_size = 0;
+static char* pixel_ptr = 0;
+static int   row = 0;
+static int   effWidth;
 
 /***************************************************************************
     Functions
@@ -93,7 +93,7 @@ BOOL ScreenShotLoaded(void)
  *            released by the caller.
  * pPal     - Will hold the logical palette
  */
-static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
+static BOOL LoadBMP(LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal)
 {
     int                 dibSize;
     int                 palEntrySize;
@@ -106,7 +106,7 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
     LPBITMAPINFO        bmInfo;
     LPBITMAPINFOHEADER  lpbi;
     LPBITMAPCOREHEADER  bc;
-    LPRGBQUAD           pRgb;
+    RGBQUAD*            pRgb;
     LPVOID              lpDIBBits = 0;
     DWORD               dwWidth = 0; 
     DWORD               dwHeight = 0; 
@@ -121,13 +121,13 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
 
     osd_fseek(mfile, 0L, SEEK_SET);
 
-    // Read file header
+    /* Read file header */
     if (osd_fread(mfile, (LPSTR)&bmfHeader, sizeof(bmfHeader)) != sizeof(bmfHeader))
     {
         return FALSE;
     }
     
-    // File type should be 'BM'
+    /* File type should be 'BM' */
     if (bmfHeader.bfType != ((WORD) ('M' << 8) | 'B'))
     {
         return FALSE;
@@ -145,7 +145,7 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
      */ 
     switch (size)
     {
-    case sizeof (BITMAPINFOHEADER):
+    case sizeof(BITMAPINFOHEADER):
         palEntrySize = sizeof(RGBQUAD);
         if (bi.biClrUsed != 0)
         {
@@ -154,11 +154,11 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
         else
         {
             nColors = (bi.biBitCount <= 8) ? 1 << bi.biBitCount : 0;
-            // 24 bit images have no color table
+            /* 24 bit images have no color table */
         }
         break;
 
-    case sizeof (BITMAPCOREHEADER):
+    case sizeof(BITMAPCOREHEADER):
         bc = (LPBITMAPCOREHEADER)&bi;
 
         nColors = (bc->bcBitCount <= 8) ? 1 << bc->bcBitCount : 0;        
@@ -208,7 +208,7 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
     }
     lpbi = (LPVOID)hDIB;
     memcpy(lpbi, &bi, sizeof(BITMAPINFOHEADER));
-    pRgb = (LPRGBQUAD)((LPSTR)lpbi + bi.biSize);
+    pRgb = (RGBQUAD*)((LPSTR)lpbi + bi.biSize);
     lpDIBBits = (LPVOID)((LPSTR)lpbi + bi.biSize + (nColors * sizeof(RGBQUAD)));
     if (nColors)
     {
@@ -240,7 +240,7 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
         } 
     } 
     
-    // Read the remainder of the bitmap file.
+    /* Read the remainder of the bitmap file. */
     if (osd_fread(mfile, (LPSTR)lpDIBBits, dibSize) != dibSize)
     {
         GlobalFree(hDIB);
@@ -249,11 +249,11 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
     
     bmInfo = (LPBITMAPINFO)hDIB;
 
-    // Create a halftone palette if colors > 256. 
-    if( 0 == nColors )
+    /* Create a halftone palette if colors > 256.  */
+    if (0 == nColors)
     {
-        HDC hDC = CreateCompatibleDC(0); // Desktop DC
-        *pPal = CreateHalftonePalette( hDC );
+        HDC hDC = CreateCompatibleDC(0); /* Desktop DC */
+        *pPal = CreateHalftonePalette(hDC);
         DeleteDC(hDC);
     }
     else
@@ -265,7 +265,7 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
         pLP->palVersion     = 0x300;
         pLP->palNumEntries  = nColors;
 
-        for( i=0; i < nColors; i++)
+        for (i = 0; i < nColors; i++)
         {
             pLP->palPalEntry[i].peRed   = bmInfo->bmiColors[i].rgbRed;
             pLP->palPalEntry[i].peGreen = bmInfo->bmiColors[i].rgbGreen; 
@@ -273,9 +273,9 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
             pLP->palPalEntry[i].peFlags = 0;
         }
         
-        *pPal = CreatePalette( pLP );
+        *pPal = CreatePalette(pLP);
         
-        free (pLP);
+        free(pLP);
     }
     
     *phDIB = hDIB;
@@ -287,62 +287,60 @@ static BOOL LoadBMP( LPVOID mfile, HGLOBAL *phDIB, HPALETTE  *pPal )
  * to the area associated with the passed in HWND handle.
  * Returns TRUE for success
  */
-static BOOL DrawDIB( HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal )
+static BOOL DrawDIB(HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal)
 {
-    LPVOID  lpDIBBits;          // Pointer to DIB bits
+    LPVOID  lpDIBBits;          /* Pointer to DIB bits */
     int     nResults = 0;
     RECT    rect;
     
-    LPBITMAPINFO bmInfo = (LPBITMAPINFO)hDIB ;
+    LPBITMAPINFO bmInfo = (LPBITMAPINFO)hDIB;
     int nColors = bmInfo->bmiHeader.biClrUsed ? bmInfo->bmiHeader.biClrUsed : 
                     1 << bmInfo->bmiHeader.biBitCount;
     
-    if( bmInfo->bmiHeader.biBitCount > 8 )
+    if (bmInfo->bmiHeader.biBitCount > 8 )
         lpDIBBits = (LPVOID)((LPDWORD)(bmInfo->bmiColors +
         bmInfo->bmiHeader.biClrUsed) +
         ((bmInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
     else
         lpDIBBits = (LPVOID)(bmInfo->bmiColors + nColors);
     
-    if( hPal && ( GetDeviceCaps( hDC, RASTERCAPS) & RC_PALETTE) )
+    if (hPal && (GetDeviceCaps(hDC, RASTERCAPS) & RC_PALETTE))
     {
         SelectPalette(hDC, hPal, FALSE);
         RealizePalette(hDC);
     }
 
-	GetClientRect(hWnd, &rect);
+    GetClientRect(hWnd, &rect);
 
     {
         RECT RectWindow;
         int x, y;
 
         GetWindowRect(hWnd, &RectWindow);
-        x = ((RectWindow.right - RectWindow.left) - (rect.right  - rect.left)) / 2;
-        y = ((RectWindow.bottom - RectWindow.top) - (rect.bottom  - rect.top)) / 2;
+        x = ((RectWindow.right  - RectWindow.left) - (rect.right  - rect.left)) / 2;
+        y = ((RectWindow.bottom - RectWindow.top)  - (rect.bottom - rect.top))  / 2;
 
         OffsetRect(&rect, x, y);
     }
 
-    nResults = StretchDIBits(hDC,   // hDC
-        rect.left,                  // DestX
-        rect.top,                   // DestY
-        rect.right  - rect.left,    // nDestWidth
-        rect.bottom - rect.top,     // nDestHeight
-        0,                          // SrcX
-        0,                          // SrcY
-        bmInfo->bmiHeader.biWidth,  // nStartScan
-        bmInfo->bmiHeader.biHeight, // nNumScans
-        lpDIBBits,                  // lpBits
-        (LPBITMAPINFO)hDIB,         // lpBitsInfo
-        DIB_RGB_COLORS,             // wUsage
-        SRCCOPY );                  // Flags
+    nResults = StretchDIBits(hDC,                        /* hDC */
+                             rect.left,                  /* DestX */
+                             rect.top,                   /* DestY */
+                             rect.right  - rect.left,    /* nDestWidth */
+                             rect.bottom - rect.top,     /* nDestHeight */
+                             0,                          /* SrcX */
+                             0,                          /* SrcY */
+                             bmInfo->bmiHeader.biWidth,  /* nStartScan */
+                             bmInfo->bmiHeader.biHeight, /* nNumScans */
+                             lpDIBBits,                  /* lpBits */
+                             (LPBITMAPINFO)hDIB,         /* lpBitsInfo */
+                             DIB_RGB_COLORS,             /* wUsage */
+                             SRCCOPY );                  /* Flags */
 
     return (nResults) ? TRUE : FALSE;
 }
 
-
-
-BOOL GetScreenShotRect( HWND hWnd, RECT *pRect, BOOL restrict )
+BOOL GetScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict)
 {
     int     destX, destY;
     int     destW, destH;
@@ -352,7 +350,7 @@ BOOL GetScreenShotRect( HWND hWnd, RECT *pRect, BOOL restrict )
     int rWidth, rHeight;
     double scale;
     LPBITMAPINFO bmInfo = (LPBITMAPINFO)hDIB;
-	BOOL bReduce = FALSE;
+    BOOL bReduce = FALSE;
 
     if (hDIB == 0)
         return FALSE;
@@ -363,7 +361,7 @@ BOOL GetScreenShotRect( HWND hWnd, RECT *pRect, BOOL restrict )
     x = bmInfo->bmiHeader.biWidth;
     y = bmInfo->bmiHeader.biHeight;
 
-    rWidth  = (rect.right - rect.left);
+    rWidth  = (rect.right  - rect.left);
     rHeight = (rect.bottom - rect.top);
 
     /* Limit the screen shot to max height of 254 */
@@ -373,14 +371,14 @@ BOOL GetScreenShotRect( HWND hWnd, RECT *pRect, BOOL restrict )
         rHeight = 264;
     }
 
-	/* If the bitmap does NOT fit in the screenshot area */
+    /* If the bitmap does NOT fit in the screenshot area */
     if (x > rWidth - 10 || y > rHeight - 10)
     {
-		rect.right  -= 10;
-		rect.bottom -= 10;
-		rWidth -= 10;
-		rHeight -= 10;
-		bReduce = TRUE;
+        rect.right  -= 10;
+        rect.bottom -= 10;
+        rWidth  -= 10;
+        rHeight -= 10;
+        bReduce = TRUE;
         /* Try to scale it properly */
         /*  assumes square pixels, doesn't consider aspect ratio */
         if (x > y)
@@ -413,18 +411,18 @@ BOOL GetScreenShotRect( HWND hWnd, RECT *pRect, BOOL restrict )
 
     destX = ((rWidth  - destW) / 2);
     destY = ((rHeight - destH) / 2);
-	
-	if (bReduce)
-	{
-		destX += 5;
-		destY += 5;
-	}
+
+    if (bReduce)
+    {
+        destX += 5;
+        destY += 5;
+    }
 
     pRect->left   = destX;
     pRect->top    = destY;
     pRect->right  = destX + destW;
     pRect->bottom = destY + destH;
-	
+    
     return TRUE;
 }
 
@@ -451,7 +449,7 @@ BOOL LoadScreenShot(int nGame, int nType)
     &&   (drivers[nGame]->clone_of != NULL)
     &&  !(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
     {
-        loaded = LoadDIB (drivers[nGame]->clone_of->name, &hDIB, &hPal, nType);
+        loaded = LoadDIB(drivers[nGame]->clone_of->name, &hDIB, &hPal, nType);
         if (!loaded && drivers[nGame]->clone_of->clone_of)
             loaded = LoadDIB(drivers[nGame]->clone_of->clone_of->name, &hDIB, &hPal, nType);
     }
@@ -473,7 +471,7 @@ BOOL DrawScreenShot(HWND hWnd)
     if (hDIB != 0)
     {
         hDC = GetWindowDC(hWnd);
-        bSuccess = DrawDIB( hWnd, hDC, hDIB, hPal );
+        bSuccess = DrawDIB(hWnd, hDC, hDIB, hPal);
         ReleaseDC(hWnd, hDC);
     }
     return bSuccess;
@@ -485,12 +483,13 @@ void FreeScreenShot(void)
     if (hDIB != 0)
         GlobalFree(hDIB);
     hDIB = 0;
+
     if (hPal)
         DeleteObject(hPal);
     hPal = 0;
 }
 
-BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE  *pPal, BOOL flyer )
+BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, BOOL flyer)
 {
     LPVOID  mfile;
     int     filetype;
@@ -503,9 +502,11 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE  *pPal, BOOL flyer )
         case FORMAT_BMP:    /* BMP */
             success = LoadBMP(mfile, phDIB, pPal);
             break;
+
         case FORMAT_PNG:    /* PNG */
             success = LoadPNG(mfile, phDIB, pPal);
             break;
+
         case FORMAT_UNKNOWN: /* Not a supported format */
             success = FALSE;
             break;
@@ -524,18 +525,22 @@ static LPVOID ImageIdent(LPCSTR filename, int *filetype, BOOL flyer)
     if ((mfile = osd_fopen(filename, "", ftype, 0)) == NULL)
         return FALSE;
     
-    // Read file header
+    /* Read file header */
     if (osd_fread(mfile, buf, 16) != 16)
         return 0;
 
     osd_fseek(mfile, 0L, SEEK_SET);
 
-    // File type should be 'BM'
-    if (buf[0] == 'B' && buf[1] == 'M')
+    /* File type should be 'BM' */
+    if (buf[0] == 'B'
+    &&  buf[1] == 'M')
     {
         *filetype = FORMAT_BMP;
     }
-    else if (buf[1] == 'P' && buf[2] == 'N' && buf[3] == 'G')
+    else
+    if (buf[1] == 'P'
+    &&  buf[2] == 'N'
+    &&  buf[3] == 'G')
     {
         *filetype = FORMAT_PNG;
     }
@@ -547,12 +552,12 @@ static LPVOID ImageIdent(LPCSTR filename, int *filetype, BOOL flyer)
     return mfile;
 }
 
-HBITMAP DIBToDDB( HDC hDC, HANDLE hDIB, LPMYBITMAPINFO desc )
+HBITMAP DIBToDDB(HDC hDC, HANDLE hDIB, LPMYBITMAPINFO desc)
 {
     LPBITMAPINFOHEADER  lpbi;
     HBITMAP             hBM;
     int                 nColors;
-    BITMAPINFO *        bmInfo = (LPBITMAPINFO)hDIB ;
+    BITMAPINFO *        bmInfo = (LPBITMAPINFO)hDIB;
     LPVOID              lpDIBBits;
 
     if (hDIB == NULL)
@@ -561,7 +566,7 @@ HBITMAP DIBToDDB( HDC hDC, HANDLE hDIB, LPMYBITMAPINFO desc )
     lpbi = (LPBITMAPINFOHEADER)hDIB;
     nColors = lpbi->biClrUsed ? lpbi->biClrUsed : 1 << lpbi->biBitCount;
 
-    if( bmInfo->bmiHeader.biBitCount > 8 )
+    if (bmInfo->bmiHeader.biBitCount > 8)
         lpDIBBits = (LPVOID)((LPDWORD)(bmInfo->bmiColors + 
             bmInfo->bmiHeader.biClrUsed) + 
             ((bmInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
@@ -573,15 +578,15 @@ HBITMAP DIBToDDB( HDC hDC, HANDLE hDIB, LPMYBITMAPINFO desc )
         /* Store for easy retrieval later */
         desc->bmWidth  = bmInfo->bmiHeader.biWidth;
         desc->bmHeight = bmInfo->bmiHeader.biHeight;
-        desc->bmColors = (nColors <=256 ) ? nColors : 0;
+        desc->bmColors = (nColors <= 256) ? nColors : 0;
     }
 
-    hBM = CreateDIBitmap(hDC,          // handle to device context
-            (LPBITMAPINFOHEADER)lpbi,  // pointer to bitmap info header 
-            (LONG)CBM_INIT,            // initialization flag
-            lpDIBBits,                 // pointer to initialization data 
-            (LPBITMAPINFO)lpbi,        // pointer to bitmap info
-            DIB_RGB_COLORS );          // color-data usage 
+    hBM = CreateDIBitmap(hDC,                     /* handle to device context */
+                        (LPBITMAPINFOHEADER)lpbi, /* pointer to bitmap info header  */
+                        (LONG)CBM_INIT,           /* initialization flag */
+                        lpDIBBits,                /* pointer to initialization data  */
+                        (LPBITMAPINFO)lpbi,       /* pointer to bitmap info */
+                        DIB_RGB_COLORS);          /* color-data usage  */
 
     return hBM;
 }
@@ -601,7 +606,7 @@ static void store_pixels(char *buf, int len)
     }
 }
 
-BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
+BOOL AllocatePNG(struct png_info *p, HGLOBAL *phDIB, HPALETTE *pPal)
 {
     int                 dibSize;
     HGLOBAL             hDIB;
@@ -611,7 +616,7 @@ BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
     LPVOID              lpDIBBits = 0;
     int                 lineWidth = 0;
     int                 nColors = 0;
-    LPRGBQUAD           pRgb;
+    RGBQUAD*            pRgb;
     copy_size = 0;
     pixel_ptr = 0;
     row       = p->height - 1;
@@ -624,7 +629,7 @@ BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
     bi.biWidth          = p->width;
     bi.biHeight         = p->height;
     bi.biPlanes         = 1;
-    bi.biBitCount       = (p->color_type == 3) ? 8 : 24; //bit_depth;
+    bi.biBitCount       = (p->color_type == 3) ? 8 : 24; /* bit_depth; */
     
     bi.biCompression    = BI_RGB; 
     bi.biSizeImage      = 0; 
@@ -638,27 +643,29 @@ BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
     dibSize = (effWidth * bi.biHeight);
     hDIB = GlobalAlloc(GMEM_FIXED, bi.biSize + (nColors * sizeof(RGBQUAD)) + dibSize);
     
-    if (! hDIB)
+    if (!hDIB)
     {
         return FALSE;
     }
+
     lpbi = (LPVOID)hDIB;
     memcpy(lpbi, &bi, sizeof(BITMAPINFOHEADER));
-    pRgb = (LPRGBQUAD)((LPSTR)lpbi + bi.biSize);
+    pRgb = (RGBQUAD*)((LPSTR)lpbi + bi.biSize);
     lpDIBBits = (LPVOID)((LPSTR)lpbi + bi.biSize + (nColors * sizeof(RGBQUAD)));
     if (nColors)
     {
         int i;
-        /* Convert a PNG palette (3 byte RGBTRIPLEs) to a new
-        * color table (4 byte RGBQUADs)
+        /*
+          Convert a PNG palette (3 byte RGBTRIPLEs) to a new
+          color table (4 byte RGBQUADs)
         */
         for (i = 0; i < nColors; i++)
         {
             RGBQUAD rgb;
             
-            rgb.rgbRed      = p->palette[i*3 + 0];
-            rgb.rgbGreen    = p->palette[i*3 + 1];
-            rgb.rgbBlue     = p->palette[i*3 + 2];
+            rgb.rgbRed      = p->palette[i * 3 + 0];
+            rgb.rgbGreen    = p->palette[i * 3 + 1];
+            rgb.rgbBlue     = p->palette[i * 3 + 2];
             rgb.rgbReserved = (BYTE)0;
             
             pRgb[i] = rgb; 
@@ -667,11 +674,11 @@ BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
     
     bmInfo = (LPBITMAPINFO)hDIB;
     
-    // Create a halftone palette if colors > 256. 
-    if( 0 == nColors || nColors > 256)
+    /* Create a halftone palette if colors > 256. */
+    if (0 == nColors || nColors > 256)
     {
-        HDC hDC = CreateCompatibleDC(0); // Desktop DC
-        *pPal = CreateHalftonePalette( hDC );
+        HDC hDC = CreateCompatibleDC(0); /* Desktop DC */
+        *pPal = CreateHalftonePalette(hDC);
         DeleteDC(hDC);
     }
     else
@@ -683,7 +690,7 @@ BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
         pLP->palVersion     = 0x300;
         pLP->palNumEntries  = nColors;
         
-        for( i=0; i < nColors; i++)
+        for (i = 0; i < nColors; i++)
         {
             pLP->palPalEntry[i].peRed   = bmInfo->bmiColors[i].rgbRed;
             pLP->palPalEntry[i].peGreen = bmInfo->bmiColors[i].rgbGreen; 
@@ -691,7 +698,7 @@ BOOL AllocatePNG( struct png_info *p, HGLOBAL *phDIB, HPALETTE  *pPal )
             pLP->palPalEntry[i].peFlags = 0;
         }
         
-        *pPal = CreatePalette( pLP );
+        *pPal = CreatePalette(pLP);
         
         free (pLP);
     }
@@ -715,7 +722,7 @@ static int png_read_bitmap(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPAL)
     if (p.color_type != 3 && p.color_type != 2)
     {
         logerror("Unsupported color type %i (has to be 3)\n", p.color_type);
-        free (p.image);
+        free(p.image);
         return 0;
     }
     if (p.interlace_method != 0)
@@ -726,22 +733,22 @@ static int png_read_bitmap(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPAL)
     }
  
     /* Convert < 8 bit to 8 bit */
-    png_expand_buffer_8bit (&p);
+    png_expand_buffer_8bit(&p);
     
     if (!AllocatePNG(&p, phDIB, pPAL))
     {
         logerror("Unable to allocate memory for artwork\n");
-        free (p.image);
+        free(p.image);
         return 0;
     }
-    
+
     bytespp = (p.color_type == 2) ? 3 : 1;
 
     for (i = 0; i < p.height; i++)
     {
         UINT8 *ptr = p.image + i * (p.width * bytespp);
 
-        if (p.color_type == 2) //(p->bit_depth > 8)
+        if (p.color_type == 2) /*(p->bit_depth > 8) */
         {
             int j;
             UINT8 bTmp;
@@ -757,18 +764,17 @@ static int png_read_bitmap(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPAL)
         store_pixels(p.image + i * (p.width * bytespp), p.width * bytespp);
     }
 
-    free (p.image);
+    free(p.image);
 
     return 1;
 }
 
 /* Load a png image */
-static BOOL LoadPNG( LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPal )
+static BOOL LoadPNG(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPal)
 {
     if (!png_read_bitmap(mfile, phDIB, pPal))
-		return 0;
-	return 1;
+        return 0;
+    return 1;
 }
 
 /* End of source */
-

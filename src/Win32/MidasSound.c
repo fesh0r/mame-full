@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-2000 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -50,15 +50,15 @@ static void     MidasSound_update_audio(void);
 
 struct OSDSound MIDASSound = 
 {
-    { MidasSound_init },                    /* init                    */
-    { MidasSound_exit },                    /* exit                    */
-    { MidasSound_start_audio_stream },      /* start_audio_stream      */
-    { MidasSound_update_audio_stream },     /* update_audio_stream     */
-    { MidasSound_stop_audio_stream },       /* stop_audio_stream       */
-    { MidasSound_set_mastervolume },        /* set_mastervolume        */
-    { MidasSound_get_mastervolume },        /* get_mastervolume        */
-    { MidasSound_sound_enable },            /* sound_enable            */
-    { MidasSound_update_audio }             /* update_audio            */
+    MidasSound_init,                    /* init                    */
+    MidasSound_exit,                    /* exit                    */
+    MidasSound_start_audio_stream,      /* start_audio_stream      */
+    MidasSound_update_audio_stream,     /* update_audio_stream     */
+    MidasSound_stop_audio_stream,       /* stop_audio_stream       */
+    MidasSound_set_mastervolume,        /* set_mastervolume        */
+    MidasSound_get_mastervolume,        /* get_mastervolume        */
+    MidasSound_sound_enable,            /* sound_enable            */
+    MidasSound_update_audio             /* update_audio            */
 };
 
 /***************************************************************************
@@ -235,7 +235,7 @@ static int MidasSound_start_audio_stream(int stereo)
         return 0;
 
     if (stereo)
-        stereo = 1;	/* make sure it's either 0 or 1 */
+        stereo = 1; /* make sure it's either 0 or 1 */
 
     /* determine the number of samples and bytes per frame */
     This.m_nSamplesPerFrame = (double)Machine->sample_rate / Machine->drv->frames_per_second;
@@ -267,7 +267,7 @@ static int MidasSound_update_audio_stream(INT16* buffer)
                         This.m_nBytesPerFrame,
                         FALSE);
     
-	return This.m_nSamplesPerFrame;
+    return This.m_nSamplesPerFrame;
 }
 
 static void MidasSound_stop_audio_stream(void)
@@ -310,9 +310,9 @@ static void MidasSound_sound_enable(int enable)
 {
     assert(This.m_bInitialized == TRUE);
 
-	if (enable)
+    if (enable)
         MIDASsetAmplification(This.m_dwMasterVolume);
-	else
+    else
         MIDASsetAmplification(0);
 }
 

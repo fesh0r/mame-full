@@ -1,7 +1,7 @@
 /***************************************************************************
 
     M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
     
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -25,13 +25,13 @@
 #include <winreg.h>
 #include <commctrl.h>
 #include <assert.h>
-#include "mame32.h"
-#include "m32util.h"
-#include <resource.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <malloc.h>
 #include <math.h>
-#include <sys/stat.h>
+#include "mame32.h"
+#include "m32util.h"
+#include "resource.h"
 #include "ddrawdisplay.h"
 #include "resource.h"
 
@@ -57,19 +57,22 @@ static void  PutRegOption(HKEY hKey, char *name, DWORD value);
 static void  PutRegBoolOption(HKEY hKey, char *name, BOOL value);
 static void  PutRegStringOption(HKEY hKey, char *name, char *option);
 
-static void  ColumnDecodeWidths(char *ptr, int values[]);
+static void  ColumnEncodeString(void* data, char* str);
+static void  ColumnDecodeString(const char* str, void* data);
 
-static void  ColumnDecodeString(char *ptr, int values[]);
-static void  ColumnEncodeString(int values[], char *ptr);
+static void  ColumnDecodeWidths(const char *ptr, void* data);
+
+static void  SplitterEncodeString(void* data, char* str);
+static void  SplitterDecodeString(const char* str, void* data);
+
+static void  ListEncodeString(void* data, char* str);
+static void  ListDecodeString(const char* str, void* data);
+
+static void  FontEncodeString(void* data, char* str);
+static void  FontDecodeString(const char* str, void* data);
 
 static void  SavePlayCount(int game_index);
 static void  SaveFolderFlags(char *folderName, DWORD dwFlags);
-
-static void  SplitterEncodeString(int value[], char *ptr);
-static void  SplitterDecodeString(char *ptr ,int value[]);
-
-static void  ListEncodeString(int *value, char *ptr);
-static void  ListDecodeString(char *ptr, int *value);
 
 static void  PutRegObj(HKEY hKey, REG_OPTIONS *regOpt);
 static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
@@ -126,7 +129,7 @@ static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
 */
 
 /* Used to create/retrieve Registry database */
-// #define KEY_BASE "Software\\Freeware\\TestMame32"
+/* #define KEY_BASE "Software\\Freeware\\TestMame32" */
 #define KEY_BASE "Software\\Freeware\\" MAME32NAME
 #define KEY_FMT (KEY_BASE "\\%s")
 #define KEY_BACKUP (KEY_BASE "\\.Backup\\%s")
@@ -138,6 +141,7 @@ static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
 /***************************************************************************
     Internal variables
  ***************************************************************************/
+
 static settings_type settings;
 
 static options_type gOpts;  /* Used when saving/loading from Registry */
@@ -275,7 +279,7 @@ static int  num_games = 0;
 static BOOL bResetGUI = FALSE;
 static BOOL bResetGameDefs = FALSE;
 
-// Default sizes based on 8pt font w/sort arrow in that column
+/* Default sizes based on 8pt font w/sort arrow in that column */
 static int default_column_width[] = { 186, 68, 84, 84, 64, 88, 74,108, 60,144 };
 #ifdef MESS
 // MESS doesn't have samples
@@ -283,7 +287,7 @@ static int default_column_shown[] = {   1,  0,  0,  1,  1,  1,  1,  1,  1,  1 };
 #else
 static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1 };
 #endif
-// Hidden columns need to go at the end of the order array
+/* Hidden columns need to go at the end of the order array */
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1 };
 
 #ifdef MESS
@@ -764,94 +768,6 @@ int  GetSplitterPos(int splitterId)
     return -1; /* Error */
 };
 
-static void SplitterEncodeString(int value[], char *ptr)
-{
-    int  i;
-    char tmpStr[100];
-
-    sprintf(tmpStr,"%d", value[0]);
-    
-    strcpy(ptr,tmpStr);
-
-    for (i = 1; i < SPLITTER_MAX; i++)
-    {
-        sprintf(tmpStr, ",%d", value[i]);
-        strcat(ptr,tmpStr);
-    }
-}
-
-static void SplitterDecodeString( char *ptr, int value[])
-{
-    int  i;
-    char *s, *p;
-    char tmpStr[100];
-
-    if (ptr == NULL)
-        return;
-
-    strcpy (tmpStr, ptr);
-    p = tmpStr;
-    
-    for (i = 0; p && i < SPLITTER_MAX; i++)
-    {
-        s = p;
-        
-        if ((p = strchr(s,',')) != NULL && *p == ',')
-        {
-            *p = '\0';
-            p++;
-        }
-        value[i] = atoi(s);
-    }
-}
-
-static void ColumnEncodeString(int value[], char *ptr)
-{
-    int  i;
-    char tmpStr[100];
-
-    sprintf(tmpStr,"%d", value[0]);
-    
-    strcpy(ptr,tmpStr);
-
-    for (i = 1; i < COLUMN_MAX; i++)
-    {
-        sprintf(tmpStr, ",%d", value[i]);
-        strcat(ptr,tmpStr);
-    }
-}
-
-static void ColumnDecodeString(char *ptr, int value[])
-{
-    int  i;
-    char *s, *p;
-    char tmpStr[100];
-
-    if (ptr == NULL)
-        return;
-
-    strcpy (tmpStr, ptr);
-    p = tmpStr;
-    
-    for (i = 0; p && i < COLUMN_MAX; i++)
-    {
-        s = p;
-        
-        if ((p = strchr(s,',')) != NULL && *p == ',')
-        {
-            *p = '\0';
-            p++;
-        }
-        value[i] = atoi(s);
-    }
-}
-
-static void ColumnDecodeWidths(char *ptr, int values[])
-{
-    if (settings.view == VIEW_REPORT)
-        ColumnDecodeString(ptr, values);
-}
-
 void SetColumnOrder(int order[])
 {
     int i;
@@ -1270,13 +1186,12 @@ void IncrementPlayCount(int num_game)
     assert(0 <= num_game && num_game < num_games);
 
     game[num_game].play_count++;
-    // Save play_count to the registry
+
     SavePlayCount(num_game);
 }
 
 void SetFolderFlags(char *folderName, DWORD dwFlags)
 {
-    // Save play_count to the registry
     SaveFolderFlags(folderName, dwFlags);
 }
 
@@ -1291,15 +1206,108 @@ int GetPlayCount(int num_game)
     Internal functions
  ***************************************************************************/
 
-static void ListDecodeString(char *ptr, int *value)
+static void ColumnEncodeString(void* data, char *str)
 {
+    int* value = (int*)data;
+    int  i;
+    char tmpStr[100];
+
+    sprintf(tmpStr, "%d", value[0]);
+    
+    strcpy(str, tmpStr);
+
+    for (i = 1; i < COLUMN_MAX; i++)
+    {
+        sprintf(tmpStr, ",%d", value[i]);
+        strcat(str, tmpStr);
+    }
+}
+
+static void ColumnDecodeString(const char* str, void* data)
+{
+    int* value = (int*)data;
+    int  i;
+    char *s, *p;
+    char tmpStr[100];
+
+    if (str == NULL)
+        return;
+
+    strcpy(tmpStr, str);
+    p = tmpStr;
+    
+    for (i = 0; p && i < COLUMN_MAX; i++)
+    {
+        s = p;
+        
+        if ((p = strchr(s,',')) != NULL && *p == ',')
+        {
+            *p = '\0';
+            p++;
+        }
+        value[i] = atoi(s);
+    }
+}
+
+static void ColumnDecodeWidths(const char* str, void* data)
+{
+    if (settings.view == VIEW_REPORT)
+        ColumnDecodeString(str, data);
+}
+
+static void SplitterEncodeString(void* data, char* str)
+{
+    int* value = (int*)data;
+    int  i;
+    char tmpStr[100];
+
+    sprintf(tmpStr, "%d", value[0]);
+    
+    strcpy(str, tmpStr);
+
+    for (i = 1; i < SPLITTER_MAX; i++)
+{
+        sprintf(tmpStr, ",%d", value[i]);
+        strcat(str, tmpStr);
+    }
+}
+
+static void SplitterDecodeString(const char* str, void* data)
+{
+    int* value = (int*)data;
+    int i;
+    char *s, *p;
+    char tmpStr[100];
+
+    if (str == NULL)
+        return;
+
+    strcpy(tmpStr, str);
+    p = tmpStr;
+    
+    for (i = 0; p && i < SPLITTER_MAX; i++)
+    {
+        s = p;
+        
+        if ((p = strchr(s,',')) != NULL && *p == ',')
+        {
+            *p = '\0';
+            p++;
+        }
+        value[i] = atoi(s);
+    }
+}
+
+static void ListDecodeString(const char* str, void* data)
+{
+    int* value = (int*)data;
     int i;
 
     *value = VIEW_REPORT;
 
     for (i = VIEW_LARGE_ICONS; i < VIEW_MAX; i++)
     {
-        if (strcmp(ptr,view_modes[i]) == 0)
+        if (strcmp(str, view_modes[i]) == 0)
         {
             *value = i;
             return;
@@ -1307,9 +1315,58 @@ static void ListDecodeString(char *ptr, int *value)
     }
 }
 
-static void ListEncodeString(int *value, char *ptr)
+static void ListEncodeString(void* data, char *str)
 {
-    strcpy(ptr, view_modes[*value]);
+    int* value = (int*)data;
+
+    strcpy(str, view_modes[*value]);
+}
+
+/* Parse the given comma-delimited string into a LOGFONT structure */
+static void FontDecodeString(const char* str, void* data)
+{
+    LOGFONT* f = (LOGFONT*)data;
+    char*    ptr;
+    
+    sscanf(str, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
+           &f->lfHeight,
+           &f->lfWidth,
+           &f->lfEscapement,
+           &f->lfOrientation,
+           &f->lfWeight,
+           &f->lfItalic,
+           &f->lfUnderline,
+           &f->lfStrikeOut,
+           &f->lfCharSet,
+           &f->lfOutPrecision,
+           &f->lfClipPrecision,
+           &f->lfQuality,
+           &f->lfPitchAndFamily);
+    ptr = strrchr(str, ',');
+    if (ptr != NULL)
+        strcpy(f->lfFaceName, ptr + 1);
+}
+
+/* Encode the given LOGFONT structure into a comma-delimited string */
+static void FontEncodeString(void* data, char *str)
+{
+    LOGFONT* f = (LOGFONT*)data;
+
+    sprintf(str, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%s",
+            f->lfHeight,
+            f->lfWidth,
+            f->lfEscapement,
+            f->lfOrientation,
+            f->lfWeight,
+            f->lfItalic,
+            f->lfUnderline,
+            f->lfStrikeOut,
+            f->lfCharSet,
+            f->lfOutPrecision,
+            f->lfClipPrecision,
+            f->lfQuality,
+            f->lfPitchAndFamily,
+            f->lfFaceName);
 }
 
 /* Register access functions below */
@@ -1488,7 +1545,6 @@ DWORD GetFolderFlags(char *folderName)
     HKEY  hKey;
     long  value = 0;
     char  keyString[80];
-
 
     /* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32\.Folders */
     sprintf(keyString,KEY_FMT,".Folders");
@@ -1705,8 +1761,7 @@ static BOOL SaveRegGameOptions(HKEY hKey, options_type *o)
 {
     int   i;
 
-    PutRegOption(hKey, "PlayCount", o->play_count);
-    
+    PutRegOption(hKey, "PlayCount", o->play_count);  
     PutRegOption(hKey, "ROMS", o->has_roms);
     PutRegOption(hKey, "Samples", o->has_samples);
     PutRegBoolOption(hKey, "Favorite", o->is_favorite);
@@ -1743,7 +1798,7 @@ static void LoadRegGameOptions(HKEY hKey, options_type *o)
         o->has_samples = value;
     GetRegBoolOption(hKey, "Favorite", &o->is_favorite);
 
-    // look for IsWindow.  If it's not there, then use default options for this game
+    /* look for IsWindow.  If it's not there, then use default options for this game */
     if (RegQueryValueEx(hKey, "IsWindow", 0, &value, NULL, &size) != ERROR_SUCCESS)
        return;
 
@@ -1775,28 +1830,34 @@ static void PutRegObj(HKEY hKey, REG_OPTIONS *regOpt)
         sprintf(cTemp, "%03.02f", *pDouble);
         PutRegStringOption(hKey, cName, cTemp);
         break;
+
     case RO_STRING:
         pString = (char *)regOpt->m_vpData;
         if (pString)
             PutRegStringOption(hKey, cName, pString);
         break;
+
     case RO_PSTRING:
         pString = *(char **)regOpt->m_vpData;
         if (pString)
             PutRegStringOption(hKey, cName, pString);
         break;
+
     case RO_BOOL:
         pBool = (BOOL *)regOpt->m_vpData;
         PutRegBoolOption(hKey, cName, *pBool);
         break;
+
     case RO_INT:
         pInt = (int *)regOpt->m_vpData;
         PutRegOption(hKey, cName, *pInt);
         break;
+
     case RO_ENCODE:
         regOpt->encode(regOpt->m_vpData, cTemp);
         PutRegStringOption(hKey, cName, cTemp);
         break;
+
     default:
         break;
     }
@@ -1817,10 +1878,12 @@ static void GetRegObj(HKEY hKey, REG_OPTIONS *regOpts)
         if ((pString = GetRegStringOption(hKey, cName)) != NULL)
             sscanf(pString, "%lf", pDouble);
         break;
+
     case RO_STRING:
         if ((pString = GetRegStringOption(hKey, cName)) != NULL)
             strcpy((char *)regOpts->m_vpData, pString);
         break;
+
     case RO_PSTRING:
         if ((pString = GetRegStringOption(hKey, cName)) != NULL)
         {
@@ -1829,18 +1892,22 @@ static void GetRegObj(HKEY hKey, REG_OPTIONS *regOpts)
             *(char **)regOpts->m_vpData = strdup(pString);
         }
         break;
+
     case RO_BOOL:
         GetRegBoolOption(hKey, cName, (BOOL *)regOpts->m_vpData);
         break;
+
     case RO_INT:
         pInt = (BOOL *)regOpts->m_vpData;
         if ((value = GetRegOption(hKey, cName)) != -1)
             *pInt = (value < 0) ? 0 : value;
         break;
+
     case RO_ENCODE:
         if ((pString = GetRegStringOption(hKey, cName)) != NULL)
             regOpts->decode(pString, regOpts->m_vpData);
         break;
+
     default:
         break;
     }

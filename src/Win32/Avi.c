@@ -1,15 +1,17 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-99 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
 ***************************************************************************/
- 
+
+#if defined(MAME_AVI)
+
 /***************************************************************************
 
   Avi.c
@@ -74,12 +76,12 @@ static void     AVI_Message_Error(void);
     Internal variables
  ***************************************************************************/
 
-static PAVIFILE     pfile = NULL;
+static PAVIFILE     pfile        = NULL;
 static PAVISTREAM   psCompressed = NULL;
-static PAVISTREAM   ps = NULL;
-static BOOL         bAviError = FALSE;
-static int          nAviFrames = 0;
-static BOOL         bAviCapture = FALSE;
+static PAVISTREAM   ps           = NULL;
+static BOOL         bAviError    = FALSE;
+static int          nAviFrames   = 0;
+static BOOL         bAviCapture  = FALSE;
 
 static DWORD        nAviFPS = 0;
 static char         aviFilename[MAX_PATH * 2];
@@ -131,18 +133,18 @@ void AviAddBitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEntries)
     LPBITMAPINFOHEADER lpbit;
     char* bitmap;
 
-    if (! bAviCapture)
+    if (!bAviCapture)
         return;
 
     bitmap = AVI_Convert_Bitmap(tBitmap, pPalEntries);
-    lpbit = (LPBITMAPINFOHEADER) bitmap;
+    lpbit = (LPBITMAPINFOHEADER)bitmap;
 
     if (!nAviFrames)
     {
         hr = AVIStreamSetFormat(psCompressed, 0,
-                            lpbit,              // stream format
-                            lpbit->biSize +     // format size
-                            lpbit->biClrUsed * sizeof(RGBQUAD));
+                                lpbit,              /* stream format */
+                                lpbit->biSize +     /* format size */
+                                lpbit->biClrUsed * sizeof(RGBQUAD));
 
         if (hr != AVIERR_OK)
         {
@@ -152,16 +154,16 @@ void AviAddBitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEntries)
     
     if (!bAviError)
     {
-        hr = AVIStreamWrite(psCompressed,       // stream pointer
-                        nAviFrames,             // time of this frame
-                        1,                      // number to write
-                        (LPBYTE) lpbit +        // pointer to data
-                        lpbit->biSize +
-                        lpbit->biClrUsed * sizeof(RGBQUAD),
-                        lpbit->biSizeImage,     // size of this frame
-                        AVIIF_KEYFRAME,         // flags....
-                        NULL,
-                        NULL);
+        hr = AVIStreamWrite(psCompressed,           /* stream pointer */
+                            nAviFrames,             /* time of this frame */
+                            1,                      /* number to write */
+                            (LPBYTE) lpbit +        /* pointer to data */
+                            lpbit->biSize +
+                            lpbit->biClrUsed * sizeof(RGBQUAD),
+                            lpbit->biSizeImage,     /* size of this frame */
+                            AVIIF_KEYFRAME,         /* flags.... */
+                            NULL,
+                            NULL);
     }
         
     free(bitmap);
@@ -192,45 +194,46 @@ static BOOL AVI_Init(char* filename, int width, int height, int depth)
 
     AVIFileInit();
 
-    hr = AVIFileOpen(&pfile,                    // returned file pointer
-                   filename,                    // file name
-                   OF_WRITE | OF_CREATE,        // mode to open file with
-                   NULL);                       // use handler determined
-                                                // from file extension....
+    hr = AVIFileOpen(&pfile,                      /* returned file pointer */
+                     filename,                    /* file name */
+                     OF_WRITE | OF_CREATE,        /* mode to open file with */
+                     NULL);                       /* use handler determined */
+                                                  /* from file extension.... */
     if (hr != AVIERR_OK)
     {
         AVI_Message_Error();
         return FALSE;
     }
 
-    wLineLen = (width * depth + 31)/32 * 4;
+    wLineLen = (width * depth + 31) / 32 * 4;
 
-    wColSize = sizeof(RGBQUAD)*((depth <= 8) ? OSD_NUMPENS : 0);
+    wColSize = sizeof(RGBQUAD) * ((depth <= 8) ? OSD_NUMPENS : 0);
 
     dwSize = sizeof(BITMAPINFOHEADER) + wColSize +
-                (DWORD)(UINT)wLineLen*(DWORD)(UINT)height;
+                (DWORD)(UINT)wLineLen * (DWORD)(UINT)height;
 
-    biSizeImage = dwSize - sizeof(BITMAPINFOHEADER) - wColSize ;
+    biSizeImage = dwSize - sizeof(BITMAPINFOHEADER) - wColSize;
 
-    // Fill in the header for the video stream....
-    // The video stream will run in 60ths of a second....To be changed
+    /*
+       Fill in the header for the video stream....
+       The video stream will run in 60ths of a second....To be changed
+    */
 
     _fmemset(&strhdr, 0, sizeof(strhdr));
-    strhdr.fccType                = streamtypeVIDEO;// stream type
+    strhdr.fccType                = streamtypeVIDEO;
     strhdr.fccHandler             = 0;
     strhdr.dwScale                = 1;
-    strhdr.dwRate                 = 60;         // 60 fps
+    strhdr.dwRate                 = 60;         /* 60 fps */
     strhdr.dwSuggestedBufferSize  = biSizeImage;
 
-    SetRect(&strhdr.rcFrame, 0, 0,          // rectangle for stream
+    SetRect(&strhdr.rcFrame, 0, 0,          /* rectangle for stream */
             (int) width,
             (int) height);
 
-
-    // And create the stream;
-    hr = AVIFileCreateStream(pfile,         // file pointer
-                             &ps,           // returned stream pointer
-                             &strhdr);      // stream header
+    /* And create the stream */
+    hr = AVIFileCreateStream(pfile,         /* file pointer */
+                             &ps,           /* returned stream pointer */
+                             &strhdr);      /* stream header */
     if (hr != AVIERR_OK)
     {
         AVI_Message_Error();
@@ -269,11 +272,11 @@ static void AVI_Close(char* filename)
 
     AVIFileExit();
 
-    pfile = NULL;
-    ps = NULL;
+    pfile        = NULL;
+    ps           = NULL;
     psCompressed = NULL;
-    nAviFrames = 0;
-    bAviError = FALSE;
+    nAviFrames   = 0;
+    bAviError    = FALSE;
 
     /* Directly edit the frame rate information */
     if ((fp = fopen(filename, "rb+")) != NULL)
@@ -313,20 +316,20 @@ static char* AVI_Convert_Bitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEn
     DWORD   wColSize;
     UINT    wLineLen;
 
-    wLineLen = (tBitmap->width * tBitmap->depth + 31)/32 * 4;
+    wLineLen = (tBitmap->width * tBitmap->depth + 31) / 32 * 4;
 
-    wColSize = sizeof(RGBQUAD)*((tBitmap->depth <= 8) ? OSD_NUMPENS * sizeof(RGBQUAD) : 0);
+    wColSize = sizeof(RGBQUAD) * ((tBitmap->depth <= 8) ? OSD_NUMPENS * sizeof(RGBQUAD) : 0);
 
     dwSize = sizeof(BITMAPINFOHEADER) + wColSize +
-        (DWORD)(UINT)wLineLen*(DWORD)(UINT)tBitmap->height;
+             (DWORD)(UINT)wLineLen * (DWORD)(UINT)tBitmap->height;
 
     if (tBitmap->depth <= 8)
     {
-        bitmap = (char*) malloc(sizeof(BITMAPINFOHEADER) + OSD_NUMPENS * sizeof(RGBQUAD) + tBitmap->height * wLineLen * tBitmap->depth / 8);
+        bitmap = (char*)malloc(sizeof(BITMAPINFOHEADER) + OSD_NUMPENS * sizeof(RGBQUAD) + tBitmap->height * wLineLen * tBitmap->depth / 8);
     }
     else
     {
-        bitmap = (char*) malloc(sizeof(BITMAPINFOHEADER) + tBitmap->height * wLineLen * tBitmap->depth / 8);
+        bitmap = (char*)malloc(sizeof(BITMAPINFOHEADER) + tBitmap->height * wLineLen * tBitmap->depth / 8);
     }
 
     /* This is the RGBQUAD structure */
@@ -334,10 +337,10 @@ static char* AVI_Convert_Bitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEn
     {
         for (i = 0; i < OSD_NUMPENS; i++)
         {
-            bmiColors[i].rgbRed         = pPalEntries->peRed;
-            bmiColors[i].rgbGreen       = pPalEntries->peGreen;
-            bmiColors[i].rgbBlue        = pPalEntries->peBlue;
-            bmiColors[i].rgbReserved    = 0;
+            bmiColors[i].rgbRed      = pPalEntries->peRed;
+            bmiColors[i].rgbGreen    = pPalEntries->peGreen;
+            bmiColors[i].rgbBlue     = pPalEntries->peBlue;
+            bmiColors[i].rgbReserved = 0;
             pPalEntries++;
         }
     }
@@ -370,8 +373,8 @@ static char* AVI_Convert_Bitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEn
         if (tBitmap->depth <= 8)
         {
             memcpy(bitmap + sizeof(BITMAPINFOHEADER) + OSD_NUMPENS * sizeof(RGBQUAD) + (tBitmap->height - i - 1) *
-                    (tBitmap->width * tBitmap->depth / 8), (void*)tBitmap->line[i],
-                    (tBitmap->width * tBitmap->depth / 8));
+                   (tBitmap->width * tBitmap->depth / 8), (void*)tBitmap->line[i],
+                   (tBitmap->width * tBitmap->depth / 8));
         }
         else
         {
@@ -397,3 +400,5 @@ static char* AVI_Convert_Bitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEn
 
     return bitmap;
 }
+
+#endif /* MAME_AVI */

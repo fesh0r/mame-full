@@ -73,9 +73,16 @@ EMULATOR = $(NAME)$(EXE)
 #####################################################################
 # compiler
 
+#
+# Preprocessor Definitions
+#
+
 DEFS = \
         -DWIN32 \
         -D_WINDOWS \
+        -DDIRECTSOUND_VERSION=0x0300 \
+        -DDIRECTDRAW_VERSION=0x0300 \
+        -DDIRECTINPUT_VERSION=0x0500 \
         -DM_PI=3.1415926534 \
         -DPI=3.1415926534 \
         -DINLINE='static __inline' \
@@ -84,6 +91,7 @@ DEFS = \
         -DCLIB_DECL=__cdecl \
         -DDECL_SPEC=__cdecl \
         -DPNG_SAVE_SUPPORT \
+        -DMAME_AVI \
         -DHAS_CPUS \
         -DHAS_SOUND \
         -DLSB_FIRST=1 \
@@ -113,8 +121,7 @@ INCLUDES = \
         -Isrc \
         -Isrc/Win32 \
         -Isrc/cpu/m68000 \
-        -I$(OBJ)/cpu/m68000 \
-        -IZLIB
+        -I$(OBJ)/cpu/m68000
 
 ifeq "$(TARGET)" "mess"
 INCLUDES += \
@@ -123,9 +130,23 @@ INCLUDES += \
         -Imess/Win32
 endif
 
-ifdef MIDAS
-INCLUDES += -IMIDAS
+ifdef DX_INCPATH
+INCLUDES += -I$(DX_INCPATH)
 endif
+
+ifdef ZLIB_INCPATH
+INCLUDES += -I$(ZLIB_INCPATH)
+endif
+
+ifdef MIDAS
+ifdef MIDAS_INCPATH
+INCLUDES += -I$(MIDAS_INCPATH)
+endif
+endif
+
+#
+# C Compiler flags
+#
 
 CFLAGS = -W3 -nologo -MT $(INCLUDES)
 
@@ -165,17 +186,28 @@ LIBS = \
         vfw32.lib \
         dxguid.lib \
         dinput.lib \
-        ZLIB/zlib.lib
+        zlib.lib
 
 ifdef MAME_NET
 LIBS += wsock32.lib
 endif
 
 ifdef MIDAS
-LIBS   += MIDAS/MIDASDLL.lib
+LIBS    += MIDASDLL.lib
+ifdef MIDAS_LIBPATH
+LDFLAGS += -LIBPATH:$(MIDAS_LIBPATH)
+endif
 endif
 
-LDFLAGS = -machine:x86 -nologo
+ifdef DX_LIBPATH
+LDFLAGS += -LIBPATH:$(DX_LIBPATH)
+endif
+
+ifdef ZLIB_LIBPATH
+LDFLAGS += -LIBPATH:$(ZLIB_LIBPATH)
+endif
+
+LDFLAGS += -machine:x86 -nologo
 
 ifdef DEBUG
 LDFLAGS += -debug:full

@@ -89,51 +89,6 @@ int strcasecmp(const char* a, const char* b)
     return stricmp(a, b);
 }
 
-/* Parse the given comma-delimited string into a LOGFONT structure */
-void FontDecodeString(char *string, LOGFONT *f)
-{
-    char *ptr;
-    
-    sscanf(string, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
-        &f->lfHeight,
-        &f->lfWidth,
-        &f->lfEscapement,
-        &f->lfOrientation,
-        &f->lfWeight,
-        &f->lfItalic,
-        &f->lfUnderline,
-        &f->lfStrikeOut,
-        &f->lfCharSet,
-        &f->lfOutPrecision,
-        &f->lfClipPrecision,
-        &f->lfQuality,
-        &f->lfPitchAndFamily);
-    ptr = strrchr(string, ',');
-    if (ptr != NULL)
-        strcpy(f->lfFaceName, ptr + 1);
-}
-
-/* Encode the given LOGFONT structure into a comma-delimited string */
-void FontEncodeString(LOGFONT *f, char *string)
-{
-    sprintf(string, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%s",
-        f->lfHeight,
-        f->lfWidth,
-        f->lfEscapement,
-        f->lfOrientation,
-        f->lfWeight,
-        f->lfItalic,
-        f->lfUnderline,
-        f->lfStrikeOut,
-        f->lfCharSet,
-        f->lfOutPrecision,
-        f->lfClipPrecision,
-        f->lfQuality,
-        f->lfPitchAndFamily,
-        f->lfFaceName
-        );
-}
-
 UINT GetDepth(HWND hWnd)
 {
     UINT    nBPP;

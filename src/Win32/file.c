@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
   
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -88,23 +88,23 @@ static int checksum_file(const char* file, unsigned char **p, unsigned int *size
 
 struct OSDFile File =
 {
-    { File_init },
-    { File_exit },
-    { File_faccess },
-    { File_fopen },
-    { File_fread },
-    { File_fwrite },
-    { File_fseek },
-    { File_fclose },
-    { File_fchecksum },
-    { File_fsize },
-    { File_fcrc },
-	{ File_fread_scatter },
-    { File_fgetc },
-    { File_ungetc },
-    { File_fgets },
-    { File_feof },
-    { File_ftell }
+    File_init,
+    File_exit,
+    File_faccess,
+    File_fopen,
+    File_fread,
+    File_fwrite,
+    File_fseek,
+    File_fclose,
+    File_fchecksum,
+    File_fsize,
+    File_fcrc,
+    File_fread_scatter,
+    File_fgetc,
+    File_ungetc,
+    File_fgets,
+    File_feof,
+    File_ftell
 };
 
 /***************************************************************************
@@ -1241,7 +1241,7 @@ BOOL File_Status(const char *gamename,const char *filename,int filetype)
     if (filetype == OSD_FILETYPE_SAMPLE)
         pDirPaths = &SampleDirPath;
     else
-        return FALSE; // Only used for ROMS and Samples
+        return FALSE; /* Only used for ROMS and Samples */
 
     found = FALSE;
 

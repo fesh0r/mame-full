@@ -239,6 +239,8 @@
 #define IDC_LANGUAGEBROWSE              1234
 #define IDC_LANGUAGEEDIT                1236
 #define IDC_FILTER_EDIT                 1237
+#define IDC_ABOUT                       1238
+#define IDC_PROP_DISPLAY                1239
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004
@@ -314,7 +316,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        179
 #define _APS_NEXT_COMMAND_VALUE         40062
-#define _APS_NEXT_CONTROL_VALUE         1238
+#define _APS_NEXT_CONTROL_VALUE         1240
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -55,33 +55,33 @@ static void               AdjustColorMap(void);
     External variables
  ***************************************************************************/
 
-struct OSDDisplay   OSDDisplay = 
+struct OSDDisplay OSDDisplay = 
 {
-    { Display_init },               /* init              */
-    { Display_exit },               /* exit              */
-    { Display_alloc_bitmap },       /* alloc_bitmap      */
-    { Display_free_bitmap },        /* free_bitmap       */
-    { 0 },                          /* create_display    */
-    { 0 },                          /* close_display     */
-    { 0 },                          /* set_visible_area  */
-    { 0 },                          /*        */
-    { 0 },                          /* allocate_colors   */
-    { 0 },                          /* modify_pen        */
-    { 0 },                          /* get_pen           */
-    { 0 },                          /* mark_dirty        */
-    { Display_skip_this_frame },    /* skip_this_frame   */
-    { Display_update_display },     /* update_display    */
-    { 0 },                          /* led_w             */
-    { Display_set_gamma },          /* set_gamma         */
-    { Display_get_gamma },          /* get_gamma         */
-    { Display_set_brightness },     /* set_brightness    */
-    { Display_get_brightness },     /* get_brightness    */
-    { 0 },                          /* save_snapshot     */
+    Display_init,               /* init              */
+    Display_exit,               /* exit              */
+    Display_alloc_bitmap,       /* alloc_bitmap      */
+    Display_free_bitmap,        /* free_bitmap       */
+    0,                          /* create_display    */
+    0,                          /* close_display     */
+    0,                          /* set_visible_area  */
+    0,                          /*        */
+    0,                          /* allocate_colors   */
+    0,                          /* modify_pen        */
+    0,                          /* get_pen           */
+    0,                          /* mark_dirty        */
+    Display_skip_this_frame,    /* skip_this_frame   */
+    Display_update_display,     /* update_display    */
+    0,                          /* led_w             */
+    Display_set_gamma,          /* set_gamma         */
+    Display_get_gamma,          /* get_gamma         */
+    Display_set_brightness,     /* set_brightness    */
+    Display_get_brightness,     /* get_brightness    */
+    0,                          /* save_snapshot     */
 
-    { 0 },                          /* OnMessage         */
-    { 0 },                          /* Refresh           */
-    { 0 },                          /* GetBlackPen       */
-    { 0 },                          /* UpdateFPS         */
+    0,                          /* OnMessage         */
+    0,                          /* Refresh           */
+    0,                          /* GetBlackPen       */
+    0,                          /* UpdateFPS         */
 };
 
 /***************************************************************************
@@ -241,10 +241,10 @@ static struct osd_bitmap* Display_alloc_bitmap(int width, int height, int depth)
 
         for (i = 0; i < height + 2 * safety; i++)
         {
-			if (depth == 16)
-				pBitmap->line[i] = &bm[i * rowlen + safety * 2];
-			else
-				pBitmap->line[i] = &bm[i * rowlen + safety];
+            if (depth == 16)
+                pBitmap->line[i] = &bm[i * rowlen + safety * 2];
+            else
+                pBitmap->line[i] = &bm[i * rowlen + safety];
         }
 
         pBitmap->line += safety;
@@ -504,7 +504,7 @@ void Display_WriteBitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEntries)
     pFile = osd_fopen(sFileName, "", OSD_FILETYPE_SCREENSHOT, TRUE);
     if (pFile != NULL)
     {
-		save_screen_snapshot_as(pFile, tBitmap);
+        save_screen_snapshot_as(pFile, tBitmap);
         osd_fclose(pFile);
     }
 }

@@ -15,6 +15,11 @@
 #define NOWINRES
 #include "windows.h"
 #include "commctrl.h"
+#ifdef __GNUC__
+#define MAMECLASSNAME MAME32
+#else
+#define MAMECLASSNAME "MAME32"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -193,6 +198,11 @@ BEGIN
     "#define NOWINRES\r\n"
     "#include ""windows.h""\r\n"
     "#include ""commctrl.h""\r\n"
+    "#ifdef __GNUC__\r\n"
+    "#define MAMECLASSNAME MAME32\r\n"
+    "#else\r\n"
+    "#define MAMECLASSNAME ""MAME32""\r\n"
+    "#endif\r\n"
     "\0"
 END
 
@@ -355,8 +365,7 @@ BEGIN
     CTEXT           "Win32 version by",IDC_STATIC,153,62,142,10,NOT WS_GROUP
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,55,142,1
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,87,142,1
-    CONTROL         113,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,7,7,135,
-                    124
+    CONTROL         "",IDC_ABOUT,"Static",SS_BITMAP | SS_SUNKEN,7,7,135, 124
     CTEXT           "Additional Win32 code by",IDC_STATIC,153,93,142,9
     CTEXT           "Mohammad Rezaei, Robert Schlabbach",IDC_STATIC,153,115,
                     142,9
@@ -527,7 +536,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
-    CONTROL         167,IDC_STATIC,"Static",SS_BITMAP,26,47,67,57
+    CONTROL         "",IDC_PROP_DISPLAY,"Static",SS_BITMAP,26,47,67,57
     GROUPBOX        "Screen area",IDC_STATIC,7,109,97,70,WS_GROUP
     COMBOBOX        IDC_SIZES,15,122,82,72,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP,0,HIDC_SIZES
@@ -762,7 +771,7 @@ CAPTION "MESS32"
 #else
 CAPTION "MAME32"
 #endif
-CLASS "MAME32"
+CLASS MAMECLASSNAME
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "List1",IDC_LIST,"SysListView32",LVS_REPORT | 
@@ -790,7 +799,7 @@ BEGIN
     CONTROL         "",IDC_SSFRAME,"Static",SS_ETCHEDFRAME,121,11,181,194
     CONTROL         "",IDC_SSPICTURE,"Static",SS_BITMAP | SS_NOTIFY | 
                     SS_CENTERIMAGE | NOT WS_VISIBLE,141,18,141,127
-    CONTROL         113,IDC_SSDEFPIC,"Static",SS_BITMAP | SS_NOTIFY | 
+    CONTROL         "",IDC_SSDEFPIC,"Static",SS_BITMAP | SS_NOTIFY | 
                     SS_SUNKEN,145,19,135,124,WS_EX_STATICEDGE
     CONTROL         "",IDC_DIVIDER,"Static",SS_ETCHEDHORZ,0,5,304,1
     EDITTEXT        IDC_HISTORY,129,150,167,49,ES_MULTILINE | ES_READONLY | 

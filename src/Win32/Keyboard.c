@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -52,16 +52,16 @@ static void         Keyboard_AdjustKeylist(void);
     External variables
  ***************************************************************************/
 
-struct OSDKeyboard  Keyboard = 
+struct OSDKeyboard Keyboard = 
 {
-    { Keyboard_init },                         /* init                         */
-    { Keyboard_exit },                         /* exit                         */
-    { Keyboard_get_key_list },                 /* get_key_list                 */
-    { Keyboard_customize_inputport_defaults }, /* customize_inputport_defaults */
-    { Keyboard_is_key_pressed },               /* is_key_pressed               */
-    { Keyboard_readkey_unicode },              /* readkey_unicode              */
+    Keyboard_init,                         /* init                         */
+    Keyboard_exit,                         /* exit                         */
+    Keyboard_get_key_list,                 /* get_key_list                 */
+    Keyboard_customize_inputport_defaults, /* customize_inputport_defaults */
+    Keyboard_is_key_pressed,               /* is_key_pressed               */
+    Keyboard_readkey_unicode,              /* readkey_unicode              */
 
-    { Keyboard_OnMessage }                     /* OnMessage                    */
+    Keyboard_OnMessage                     /* OnMessage                    */
 };
 
 /***************************************************************************
@@ -189,7 +189,7 @@ static struct KeyboardInfo keylist[] =
     { "ENTER",      VK_RETURN,          KEYCODE_ENTER },
     { ";",          0xBA,               KEYCODE_COLON },
     { "'",          0xDE,               KEYCODE_QUOTE },
-    { "\\",			0xDC,		        KEYCODE_BACKSLASH },
+    { "\\",         0xDC,               KEYCODE_BACKSLASH },
     { ",",          0xBC,               KEYCODE_COMMA },
     { ".",          0xBE,               KEYCODE_STOP },
     { "/",          0xBF,               KEYCODE_SLASH },
@@ -264,8 +264,8 @@ static int Keyboard_is_key_pressed(int keycode)
 
     MAME32App.ProcessMessages();
 
-	if (keycode == VK_PAUSE)
-	{
+    if (keycode == VK_PAUSE)
+    {
         if (This.m_bPauseKeyPressed == TRUE)
         {
             This.m_bPauseKeyPressed = FALSE;
@@ -309,73 +309,73 @@ void Keyboard_CustomizeInputportDefaults(int DefaultInput, struct ipd *defaults)
 #endif
 #endif
 
-	if (DefaultInput == INPUT_LAYOUT_HR
+    if (DefaultInput == INPUT_LAYOUT_HR
     ||  DefaultInput == INPUT_LAYOUT_HRSE)
-	{
-		while (defaults->type != IPT_END)
-		{
-			int j;
-			for (j = 0; j < SEQ_MAX; ++j)
-			{
-				if (defaults->seq[j] == KEYCODE_UP)    defaults->seq[j] = KEYCODE_8_PAD;
-				if (defaults->seq[j] == KEYCODE_DOWN)  defaults->seq[j] = KEYCODE_2_PAD;
-				if (defaults->seq[j] == KEYCODE_LEFT)  defaults->seq[j] = KEYCODE_4_PAD;
-				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
-			}
-			if (defaults->type == IPT_UI_SELECT)                           seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-			if (defaults->type == IPT_START1)                              seq_set_1(&defaults->seq, KEYCODE_1);
-			if (defaults->type == IPT_START2)                              seq_set_1(&defaults->seq, KEYCODE_2);
-			if (defaults->type == IPT_COIN1)                               seq_set_1(&defaults->seq, KEYCODE_3);
-			if (defaults->type == IPT_COIN2)                               seq_set_1(&defaults->seq, KEYCODE_4);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_R);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_F);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_D);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_G);
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_8_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_2_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_4_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_6_PAD);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LALT);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_SPACE);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LSHIFT);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_Z);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_X);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_A);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_S);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_Q);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_W);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_E);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_OPENBRACE);
+    {
+        while (defaults->type != IPT_END)
+        {
+            int j;
+            for (j = 0; j < SEQ_MAX; ++j)
+            {
+                if (defaults->seq[j] == KEYCODE_UP)    defaults->seq[j] = KEYCODE_8_PAD;
+                if (defaults->seq[j] == KEYCODE_DOWN)  defaults->seq[j] = KEYCODE_2_PAD;
+                if (defaults->seq[j] == KEYCODE_LEFT)  defaults->seq[j] = KEYCODE_4_PAD;
+                if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
+            }
+            if (defaults->type == IPT_UI_SELECT)                           seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
+            if (defaults->type == IPT_START1)                              seq_set_1(&defaults->seq, KEYCODE_1);
+            if (defaults->type == IPT_START2)                              seq_set_1(&defaults->seq, KEYCODE_2);
+            if (defaults->type == IPT_COIN1)                               seq_set_1(&defaults->seq, KEYCODE_3);
+            if (defaults->type == IPT_COIN2)                               seq_set_1(&defaults->seq, KEYCODE_4);
+            if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_R);
+            if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_F);
+            if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_D);
+            if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_G);
+            if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_8_PAD);
+            if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_2_PAD);
+            if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_4_PAD);
+            if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_6_PAD);
+            if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
+            if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LALT);
+            if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_SPACE);
+            if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LSHIFT);
+            if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_Z);
+            if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_X);
+            if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_A);
+            if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_S);
+            if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_Q);
+            if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_W);
+            if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_E);
+            if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_OPENBRACE);
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-			if (DefaultInput == INPUT_LAYOUT_HRSE &&
-			    (Machine->gamedrv->clone_of == &driver_neogeo ||
-			    (Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
-			{
-				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_C);
-				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_LSHIFT);
-				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_Z);
-				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_X);
-				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_CLOSEBRACE);
-				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_W);
-				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_E);
-				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_OPENBRACE);
-				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
-			}
+            if (DefaultInput == INPUT_LAYOUT_HRSE &&
+                (Machine->gamedrv->clone_of == &driver_neogeo ||
+                (Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
+            {
+                if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_C);
+                if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_LSHIFT);
+                if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_Z);
+                if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_X);
+                if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_CLOSEBRACE);
+                if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_W);
+                if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_E);
+                if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_OPENBRACE);
+                if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+                if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+            }
 #endif
 #endif
-			defaults++;
-		}
-	}
+            defaults++;
+        }
+    }
 }
 
 /***************************************************************************

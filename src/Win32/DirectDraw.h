@@ -13,6 +13,7 @@
 #ifndef __DIRECTDRAW_H__
 #define __DIRECTDRAW_H__
 
+#include <multimon.h>
 #include <ddraw.h>
 
 /************************************************************************/

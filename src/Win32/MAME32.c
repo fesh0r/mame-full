@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -59,40 +59,40 @@ static void                 OnClose(HWND hWnd);
     External variables
  ***************************************************************************/
 
-struct tMAME32App   MAME32App = 
+struct tMAME32App MAME32App = 
 {
-    { NULL },                   /* m_hwndUI          */
-    { NULL },                   /* m_hWnd            */
-    { MAME32NAME },             /* m_pName           */
+    NULL,                   /* m_hwndUI          */
+    NULL,                   /* m_hWnd            */
+    MAME32NAME,             /* m_pName           */
 
-    { FALSE },                  /* m_bIsInitialized  */
-    { FALSE },                  /* m_bIsActive       */
-    { FALSE },                  /* m_bAutoPaused     */
-    { FALSE },                  /* m_bMamePaused     */
-    { FALSE },                  /* m_bDone           */
-    { FALSE },                  /* m_bMMXDetected    */
+    FALSE,                  /* m_bIsInitialized  */
+    FALSE,                  /* m_bIsActive       */
+    FALSE,                  /* m_bAutoPaused     */
+    FALSE,                  /* m_bMamePaused     */
+    FALSE,                  /* m_bDone           */
+    FALSE,                  /* m_bMMXDetected    */
 
-    { FALSE },                  /* m_bUseAIMouse     */
+    FALSE,                  /* m_bUseAIMouse     */
 
-    { NULL },                   /* m_pDisplay        */
-    { NULL },                   /* m_pSound          */
-    { NULL },                   /* m_pKeyboard       */
-    { NULL },                   /* m_pJoystick       */
-    { NULL },                   /* m_pTrak           */
+    NULL,                   /* m_pDisplay        */
+    NULL,                   /* m_pSound          */
+    NULL,                   /* m_pKeyboard       */
+    NULL,                   /* m_pJoystick       */
+    NULL,                   /* m_pTrak           */
 
-    { NULL },                   /* m_pFMSynth        */
+    NULL,                   /* m_pFMSynth        */
 #ifdef MAME_NET
-    { NULL },                   /* m_pNetwork        */
-    { FALSE },                  /* m_bUseNetwork     */
+    NULL,                   /* m_pNetwork        */
+    FALSE,                  /* m_bUseNetwork     */
 #endif /* MAME_NET */
 
-    { MAME32_CreateWindow },            /* CreateMAMEWindow     */
-    { MAME32_ProcessMessages },         /* ProcessMessages      */
-    { MAME32_PumpAndReturnMessage },    /* PumpAndReturnMessage */
-    { MAME32_HandleAutoPause },         /* HandleAutoPause      */
-    { MAME32_Quit },                    /* Quit                 */
-    { MAME32_DetectMMX },               /* detect MMX           */
-    { MAME32_Done },                    /* close was clicked    */
+    MAME32_CreateWindow,            /* CreateMAMEWindow     */
+    MAME32_ProcessMessages,         /* ProcessMessages      */
+    MAME32_PumpAndReturnMessage,    /* PumpAndReturnMessage */
+    MAME32_HandleAutoPause,         /* HandleAutoPause      */
+    MAME32_Quit,                    /* Quit                 */
+    MAME32_DetectMMX,               /* detect MMX           */
+    MAME32_Done                     /* close was clicked    */
 };
 
 /***************************************************************************
@@ -339,7 +339,7 @@ static void OnClose(HWND hWnd)
 
 static BOOL MAME32_DetectMMX(void)
 {
-#if defined(_M_IX86) && defined(MAME_MMX)
+#if defined(_M_IX86) && defined(MAME_MMX) && defined(_MSC_VER)
 
     BOOL result = FALSE;
     int cpu_properties;

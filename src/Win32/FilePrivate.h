@@ -19,7 +19,7 @@ typedef struct
     FILE *fptr;
     
     /* ACCESS_ZIP */
-    char *file_data;
+    unsigned char *file_data;
     int file_length;
     int file_offset;
     

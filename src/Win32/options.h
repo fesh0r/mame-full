@@ -114,7 +114,7 @@ typedef struct
     int  m_iType;                           /* reg key type     */
     void *m_vpData;                         /* reg key data     */
     void (*encode)(void *data, char *str);  /* encode function  */
-    void (*decode)(char *str, void *data);  /* decode function  */
+    void (*decode)(const char *str, void *data);  /* decode function  */
 } REG_OPTIONS;
 
 typedef struct

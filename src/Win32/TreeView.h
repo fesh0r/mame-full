@@ -1,7 +1,7 @@
 /***************************************************************************
 
     M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+    Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
     
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -87,40 +87,34 @@ typedef struct
     LPBITS      m_lpGameBits;       /* Game bits, represent game indices */
 } TREEFOLDER, *LPTREEFOLDER;
 
-LPTREEFOLDER    NewFolder(LPSTR lpTitle, FOLDERTYPE nFolderType, UINT nFolderId,
-                          int nParent, UINT nIconId, DWORD dwFlags, UINT nBits);
-void            DeleteFolder(LPTREEFOLDER lpFolder);
+extern BOOL InitFolders(UINT nGames);
+extern void FreeFolders(void);
 
-BOOL InitFolders(UINT nGames);
-BOOL AddFolder(LPTREEFOLDER lpFolder);
-BOOL RemoveFolder(LPTREEFOLDER lpFolder);
-void FreeFolders(void);
+extern void SetCurrentFolder(LPTREEFOLDER lpFolder);
+extern UINT GetCurrentFolderID(void);
 
-void SetCurrentFolder(LPTREEFOLDER lpFolder);
-UINT GetCurrentFolderID(void);
-
-LPTREEFOLDER GetCurrentFolder(void);
-LPTREEFOLDER GetFolder(UINT nFolder);
-LPTREEFOLDER GetFolderByID(UINT nID);
+extern LPTREEFOLDER GetCurrentFolder(void);
+extern LPTREEFOLDER GetFolder(UINT nFolder);
+extern LPTREEFOLDER GetFolderByID(UINT nID);
 
 extern TREEFOLDER **    treeFolders;
 extern UINT             numFolders;
 
-void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
-void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);
-int  FindGame(LPTREEFOLDER lpFolder, int nGame);
+extern void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
+extern void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);
+extern int  FindGame(LPTREEFOLDER lpFolder, int nGame);
 
-void InitTree(HWND hWnd, UINT nGames);
-void InitGames(UINT nGames);
+extern void InitTree(HWND hWnd, UINT nGames);
+extern void InitGames(UINT nGames);
 
-void Tree_Initialize(HWND hWnd);
-BOOL GameFiltered(int nGame, DWORD dwFlags);
+extern void Tree_Initialize(HWND hWnd);
+extern BOOL GameFiltered(int nGame, DWORD dwFlags);
 
 INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-void SetTreeIconSize(HWND hWnd, BOOL bLarge);
-BOOL GetTreeIconSize(void);
+extern void SetTreeIconSize(HWND hWnd, BOOL bLarge);
+extern BOOL GetTreeIconSize(void);
 
 #endif /* TREEVIEW_H */

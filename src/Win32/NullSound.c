@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -41,15 +41,15 @@ static void     NullSound_update_audio(void);
 
 struct OSDSound NullSound = 
 {
-    { NullSound_init },                     /* init                    */
-    { NullSound_exit },                     /* exit                    */
-    { NullSound_start_audio_stream },       /* start_audio_stream      */
-    { NullSound_update_audio_stream },      /* update_audio_stream     */
-    { NullSound_stop_audio_stream },        /* stop_audio_stream       */
-    { NullSound_set_mastervolume },         /* set_mastervolume        */
-    { NullSound_get_mastervolume },         /* get_mastervolume        */
-    { NullSound_sound_enable },             /* sound_enable            */
-    { NullSound_update_audio }              /* update_audio            */
+    NullSound_init,                     /* init                    */
+    NullSound_exit,                     /* exit                    */
+    NullSound_start_audio_stream,       /* start_audio_stream      */
+    NullSound_update_audio_stream,      /* update_audio_stream     */
+    NullSound_stop_audio_stream,        /* stop_audio_stream       */
+    NullSound_set_mastervolume,         /* set_mastervolume        */
+    NullSound_get_mastervolume,         /* get_mastervolume        */
+    NullSound_sound_enable,             /* sound_enable            */
+    NullSound_update_audio              /* update_audio            */
 };
 
 /***************************************************************************

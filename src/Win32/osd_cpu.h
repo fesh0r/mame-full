@@ -21,22 +21,27 @@
 *																			   *
 *******************************************************************************/
 
-
-/***************************** DOS Section ************************************/
-
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
 
 #include <stddef.h>
 
+#if defined(__GNUC__)
+#include <basetsd.h> /* from w32api */
 typedef unsigned char		UINT8;
 typedef unsigned short		UINT16;
+typedef signed char         INT8;
+typedef signed short        INT16;
+#else
+typedef unsigned char       UINT8;
+typedef unsigned short      UINT16;
 typedef unsigned int		UINT32;
 typedef unsigned __int64	UINT64;
 typedef signed char 		INT8;
 typedef signed short		INT16;
 typedef signed int			INT32;
 typedef signed __int64	    INT64;
+#endif
 
 /* Combine to 32-bit integers into a 64-bit integer */
 #define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (UINT32)(B))

@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -20,15 +20,13 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <multimon.h>
 #include <ddraw.h>
 #include "DirectDraw.h"
 #include "M32Util.h"
 #include "win32ui.h"
 #include "mame32.h"
 #include "dxdecode.h"
-
-#define COMPILE_MULTIMON_STUBS
-#include <multimon.h>
 
 /***************************************************************************
     function prototypes
@@ -98,36 +96,27 @@ static struct tDisplayModes DisplayModes;
  *
  ****************************************************************************/
 
-#ifndef LPDIRECTDRAWNUMERATEEX
-#ifdef UNICODE
-/* For our friends doing translations */
+#if !defined(LPDIRECTDRAWENUMERATE)
+#if defined(UNICODE)
 
-typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXW)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR);
-typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKW)(GUID FAR *, LPSTR, LPSTR, LPVOID);
-typedef HRESULT (WINAPI *  LPDIRECTDRAWENUMERATEEXW)( LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags);
-typedef HRESULT (WINAPI *  LPDIRECTDRAWENUMERATEW)( LPDDENUMCALLBACKW lpCallback, LPVOID lpContext ); 
+typedef HRESULT (WINAPI* LPDIRECTDRAWENUMERATEW)(LPDDENUMCALLBACKW lpCallback, LPVOID lpContext); 
 
-#define LPDIRECTDRAWENUMERATEEX LPDIRECTDRAWENUMERATEEXW
 #define LPDIRECTDRAWENUMERATE   LPDIRECTDRAWENUMERATEW
 
-#define SDirectDrawEnumerateEx	    "DirectDrawEnumerateExW"
-#define SDirectDrawEnumerate	    "DirectDrawEnumerateW"
+#define SDirectDrawEnumerateEx "DirectDrawEnumerateExW"
+#define SDirectDrawEnumerate   "DirectDrawEnumerateW"
 
-#else   /* !UNICODE */
+#else
 
-typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXA)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR);
-typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKA)(GUID FAR *, LPSTR, LPSTR, LPVOID);
-typedef HRESULT (WINAPI *  LPDIRECTDRAWENUMERATEEXA)( LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags);
-typedef HRESULT (WINAPI *  LPDIRECTDRAWENUMERATEA)( LPDDENUMCALLBACKA lpCallback, LPVOID lpContext ); 
+typedef HRESULT (WINAPI* LPDIRECTDRAWENUMERATEA)(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext); 
 
-#define LPDIRECTDRAWENUMERATEEX LPDIRECTDRAWENUMERATEEXA
 #define LPDIRECTDRAWENUMERATE   LPDIRECTDRAWENUMERATEA
 
-#define SDirectDrawEnumerateEx	    "DirectDrawEnumerateExA"
-#define SDirectDrawEnumerate 	    "DirectDrawEnumerateA"
+#define SDirectDrawEnumerateEx "DirectDrawEnumerateExA"
+#define SDirectDrawEnumerate   "DirectDrawEnumerateA"
 
-#endif /* !UNICODE */
-#endif /* LPDIRECTDRAWNUMERATEEX */
+#endif
+#endif /* LPDIRECTDRAWENUMERATE */
 
 
 /****************************************************************************/
@@ -177,13 +166,17 @@ BOOL DirectDraw_Initialize(void)
     IDirectDraw_Release(dd_directx1);
 
 
-    // Note that you must know which version of the
-    // function to retrieve (see the following text).
-    // For this example, we use the ANSI version.
+    /*
+       Note that you must know which version of the
+       function to retrieve (see the following text).
+       For this example, we use the ANSI version.
+     */
     lpDDEnumEx = (LPDIRECTDRAWENUMERATEEX) GetProcAddress(hDLL, SDirectDrawEnumerateEx);
 
-    // If the function is there, call it to enumerate all display devices
-    // attached to the desktop, and any non-display DirectDraw devices.
+    /*
+       If the function is there, call it to enumerate all display devices
+       attached to the desktop, and any non-display DirectDraw devices.
+     */
     if (lpDDEnumEx)
         lpDDEnumEx(DDEnumInfo, NULL, 
                    DDENUM_ATTACHEDSECONDARYDEVICES | DDENUM_DETACHEDSECONDARYDEVICES );
@@ -361,8 +354,8 @@ static HRESULT CALLBACK EnumDisplayModesCallback(DDSURFACEDESC* pddsd, LPVOID Co
         pDisplayModes->m_Modes[pDisplayModes->m_nNumModes].m_dwWidth  = pddsd->dwWidth;
         pDisplayModes->m_Modes[pDisplayModes->m_nNumModes].m_dwHeight = pddsd->dwHeight;
         pDisplayModes->m_Modes[pDisplayModes->m_nNumModes].m_dwBPP    = pddsd->ddpfPixelFormat.dwRGBBitCount;
-        //printf("%i x %i %iHz %ibpp; ",pddsd->dwWidth,pddsd->dwHeight,pddsd->dwRefreshRate,
-        //pddsd->ddpfPixelFormat.dwRGBBitCount);
+        /*printf("%i x %i %iHz %ibpp; ",pddsd->dwWidth,pddsd->dwHeight,pddsd->dwRefreshRate,
+        pddsd->ddpfPixelFormat.dwRGBBitCount);*/
         pDisplayModes->m_nNumModes++;
     }
 

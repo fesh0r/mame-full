@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -48,7 +48,6 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <stdio.h>
-#define DIRECTDRAW_VERSION 0x0300
 #include <ddraw.h>
 #include <assert.h>
 #include <math.h>
@@ -69,10 +68,10 @@
 typedef struct 
 {
     int    width, height;
-    int    pitch;        // Distance between addresses of two vertically adjacent pixels
-                         // (may not equal width in some cases).
-    char   *base_bits;   // Raw bits of surface
-    char   *bits;        // Raw bits of surface to draw at (top left of window if windowed)
+    int    pitch;        /* Distance between addresses of two vertically adjacent pixels */
+                         /* (may not equal width in some cases). */
+    char   *base_bits;   /* Raw bits of surface */
+    char   *bits;        /* Raw bits of surface to draw at (top left of window if windowed) */
 } Surface;
 
 typedef struct  
@@ -165,33 +164,33 @@ static void               DDrawWindow_UpdateFPS(BOOL bShow, int nSpeed, int nFPS
     External variables
  ***************************************************************************/
 
-struct OSDDisplay   DDrawWindowDisplay = 
+struct OSDDisplay DDrawWindowDisplay = 
 {
-    { DDrawWindow_init },               /* init              */
-    { DDrawWindow_exit },               /* exit              */
-    { DDrawWindow_alloc_bitmap },       /* alloc_bitmap      */
-    { DDrawWindow_free_bitmap },        /* free_bitmap       */
-    { DDrawWindow_create_display },     /* create_display    */
-    { DDrawWindow_close_display },      /* close_display     */
-    { DDrawWindow_set_visible_area },   /* set_visible_area  */
-    { DDrawWindow_set_debugger_focus }, /* set_debugger_focus*/
-    { DDrawWindow_allocate_colors },    /* allocate_colors   */
-    { DDrawWindow_modify_pen },         /* modify_pen        */
-    { DDrawWindow_get_pen },            /* get_pen           */
-    { DDrawWindow_mark_dirty },         /* mark_dirty        */
-    { 0 },                              /* skip_this_frame   */
-    { DDrawWindow_update_display },     /* update_display    */
-    { DDrawWindow_led_w },              /* led_w             */
-    { DDrawWindow_set_gamma },          /* set_gamma         */
-    { Display_get_gamma },              /* get_gamma         */
-    { DDrawWindow_set_brightness },     /* set_brightness    */
-    { Display_get_brightness },         /* get_brightness    */
-    { DDrawWindow_save_snapshot },      /* save_snapshot     */
+    DDrawWindow_init,               /* init              */
+    DDrawWindow_exit,               /* exit              */
+    DDrawWindow_alloc_bitmap,       /* alloc_bitmap      */
+    DDrawWindow_free_bitmap,        /* free_bitmap       */
+    DDrawWindow_create_display,     /* create_display    */
+    DDrawWindow_close_display,      /* close_display     */
+    DDrawWindow_set_visible_area,   /* set_visible_area  */
+    DDrawWindow_set_debugger_focus, /* set_debugger_focus*/
+    DDrawWindow_allocate_colors,    /* allocate_colors   */
+    DDrawWindow_modify_pen,         /* modify_pen        */
+    DDrawWindow_get_pen,            /* get_pen           */
+    DDrawWindow_mark_dirty,         /* mark_dirty        */
+    0,                              /* skip_this_frame   */
+    DDrawWindow_update_display,     /* update_display    */
+    DDrawWindow_led_w,              /* led_w             */
+    DDrawWindow_set_gamma,          /* set_gamma         */
+    Display_get_gamma,              /* get_gamma         */
+    DDrawWindow_set_brightness,     /* set_brightness    */
+    Display_get_brightness,         /* get_brightness    */
+    DDrawWindow_save_snapshot,      /* save_snapshot     */
 
-    { DDrawWindow_OnMessage },          /* OnMessage         */
-    { DDrawWindow_Refresh },            /* Refresh           */
-    { DDrawWindow_GetBlackPen },        /* GetBlackPen       */
-    { DDrawWindow_UpdateFPS },          /* UpdateFPS         */
+    DDrawWindow_OnMessage,          /* OnMessage         */
+    DDrawWindow_Refresh,            /* Refresh           */
+    DDrawWindow_GetBlackPen,        /* GetBlackPen       */
+    DDrawWindow_UpdateFPS,          /* UpdateFPS         */
 };
 
 /***************************************************************************
@@ -776,7 +775,7 @@ static void DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGr
 
 static void DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2)
 {
-   //printf("%3i,%3i to %3i,%3i\n",x1,y1,x2,y2);
+   /*printf("%3i,%3i to %3i,%3i\n",x1,y1,x2,y2); */
 
     if (!fast_8bit)
         MarkDirty(x1,y1,x2,y2);
@@ -818,7 +817,7 @@ static void DDrawWindow_save_snapshot(struct osd_bitmap *bitmap)
     {
         char buf[40];
 
-		bAviRun = !bAviRun;     /* toggle capture on/off */
+        bAviRun = !bAviRun;     /* toggle capture on/off */
         sprintf(buf, "AVI Capture %s", (bAviRun) ? "ON" : "OFF");
         StatusSetString(buf);
     }
@@ -929,8 +928,8 @@ static void DrawGame()
     }
 
     MAME32App.ProcessMessages();
-    //if (MAME32App.m_bIsPaused && !in_paint)
-    //    return;
+    /*if (MAME32App.m_bIsPaused && !in_paint) */
+    /*    return; */
     
     draw_foreground = (!in_paint) && !IsWindowObscured() && ((scale == 1) || scanlines || vdouble);
     

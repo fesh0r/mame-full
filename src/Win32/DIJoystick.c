@@ -16,8 +16,6 @@
 
  ***************************************************************************/
 
-#define DIRECTINPUT_VERSION 0x0500
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
@@ -104,15 +102,15 @@ static void DIJoystick_InitJoyList(void);
 
 struct OSDJoystick  DIJoystick = 
 {
-    { DIJoystick_init },                /* init              */
-    { DIJoystick_exit },                /* exit              */
-    { DIJoystick_get_joy_list },        /* get_joy_list      */
-    { DIJoystick_is_joy_pressed },      /* joy_pressed       */
-    { DIJoystick_poll_joysticks },      /* poll_joysticks    */
-    { DIJoystick_analogjoy_read },      /* analogjoy_read    */
-    { DIJoystick_standard_analog_read },/* standard_analog_read    */
-    { DIJoystick_Available },           /* Available         */
-    { DIJoystick_OnMessage },           /* OnMessage         */
+    DIJoystick_init,                /* init              */
+    DIJoystick_exit,                /* exit              */
+    DIJoystick_get_joy_list,        /* get_joy_list      */
+    DIJoystick_is_joy_pressed,      /* joy_pressed       */
+    DIJoystick_poll_joysticks,      /* poll_joysticks    */
+    DIJoystick_analogjoy_read,      /* analogjoy_read    */
+    DIJoystick_standard_analog_read,/* standard_analog_read    */
+    DIJoystick_Available,           /* Available         */
+    DIJoystick_OnMessage,           /* OnMessage         */
 };
 
 /***************************************************************************
@@ -161,17 +159,13 @@ struct tDIJoystick_private
 };
 
 /* internal functions needing our declarations */
-static BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                                    joystick_type *joystick);
-static BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                                   joystick_type *joystick);
-static BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                                      joystick_type *joystick);
+static BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef);
+static BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef);
+static BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef);
 static void ClearJoyState(DIJOYSTATE *pdijs);
 
 static void InitJoystick(joystick_type *joystick);
 static void ExitJoystick(joystick_type *joystick);
-
 
 /***************************************************************************
     Internal variables
@@ -594,7 +588,7 @@ static BOOL DIJoystick_Available(void)
     /* Determine if DX5 is available by a QI for a DX5 interface. */
     hr = IDirectInputDevice_QueryInterface(didTemp,
                                            &IID_IDirectInputDevice2,
-                                           &didJoystick);
+                                           (void**)&didJoystick);
     if (FAILED(hr))
     {
         bAvailable = FALSE;
@@ -656,8 +650,9 @@ BOOL CALLBACK DIJoystick_EnumDeviceProc(LPDIDEVICEINSTANCE pdidi, LPVOID pv)
 }
 
 static BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                                    joystick_type *joystick)
+                                                    LPVOID pvRef)
 {
+    joystick_type* joystick = (joystick_type*)pvRef;
     DIPROPRANGE diprg;
     HRESULT hr;
 
@@ -712,17 +707,17 @@ static BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lp
     return DIENUM_CONTINUE;
 }
 
-static BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                                   joystick_type *joystick)
+static BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
+    joystick_type* joystick = (joystick_type*)pvRef;
     joystick->num_pov++;
    
     return DIENUM_CONTINUE;
 }
 
-static BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                                      joystick_type *joystick)
+static BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
+    joystick_type* joystick = (joystick_type*)pvRef;
     joystick->num_buttons++;
 
     return DIENUM_CONTINUE;
@@ -768,7 +763,7 @@ static void InitJoystick(joystick_type *joystick)
     /* get a did2 interface to work with polling (most) joysticks */
     hr = IDirectInputDevice_QueryInterface(didTemp,
                                            &IID_IDirectInputDevice2,
-                                           &joystick->did);
+                                           (void**)&joystick->did);
 
     /* dispose of the temp interface */
     IDirectInputDevice_Release(didTemp);

@@ -1155,8 +1155,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     wndclass.cbClsExtra      = 0;
     wndclass.cbWndExtra      = DLGWINDOWEXTRA;
     wndclass.hInstance       = hInstance;
-    wndclass.hIcon           = LoadIcon(hInstance, 
-        MAKEINTRESOURCE(IDI_MAME32_ICON));
+    wndclass.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MAME32_ICON));
     wndclass.hCursor         = NULL;
     wndclass.hbrBackground   = (HBRUSH)(COLOR_3DFACE + 1);
     wndclass.lpszMenuName    = MAKEINTRESOURCE(IDR_UI_MENU);
@@ -1205,9 +1204,17 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     File.init();
     strcpy(last_directory, GetInpDir());
 
-    hMain = MAME32App.m_hwndUI = CreateDialog(hInstance,
-        MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
+    hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
 
+    /* Load the pic for the default screenshot. */
+    SendMessage(GetDlgItem(hMain, IDC_SSDEFPIC),
+                STM_SETIMAGE,
+                (WPARAM)IMAGE_BITMAP,
+                (LPARAM)LoadImage(GetModuleHandle(NULL),
+                                  MAKEINTRESOURCE(IDB_ABOUT),
+                                  IMAGE_BITMAP, 0, 0, LR_SHARED));
+
+    MAME32App.m_hwndUI = hMain;
     hPicker = hMain;
 
     /* Stash hInstance for later use */
@@ -1329,6 +1336,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     case VIEW_SMALL_ICONS:
         SetView(ID_VIEW_SMALL_ICON,LVS_SMALLICON);
         break;
+
     case VIEW_INLIST:
         SetView(ID_VIEW_LIST_MENU,LVS_LIST);
         break;
@@ -4545,7 +4553,14 @@ static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
     switch (Msg)
     {
     case WM_INITDIALOG:
+        {
+            HBITMAP hBitmap;
+            hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+                                         MAKEINTRESOURCE(IDB_ABOUT),
+                                         IMAGE_BITMAP, 0, 0, LR_SHARED);
+            SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
         Static_SetText(GetDlgItem(hDlg,IDC_VERSION), GetVersionString());
+        }
         return 1;
   
     case WM_COMMAND :

@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -83,33 +83,33 @@ static void               GDI_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nM
     External variables
  ***************************************************************************/
 
-struct OSDDisplay   GDIDisplay = 
+struct OSDDisplay GDIDisplay = 
 {
-    { GDI_init },               /* init              */
-    { GDI_exit },               /* exit              */
-    { GDI_alloc_bitmap },       /* aloc_bitmap       */
-    { GDI_free_bitmap },        /* free_bitmap       */
-    { GDI_create_display },     /* create_display    */
-    { GDI_close_display },      /* close_display     */
-    { GDI_set_visible_area },   /* set_visible_area  */
-    { GDI_set_debugger_focus }, /* set_debugger_focus*/
-    { GDI_allocate_colors },    /* allocate_colors   */
-    { GDI_modify_pen },         /* modify_pen        */
-    { GDI_get_pen },            /* get_pen           */
-    { GDI_mark_dirty },         /* mark_dirty        */
-    { 0 },                      /* skip_this_frame   */
-    { GDI_update_display },     /* update_display    */
-    { GDI_led_w },              /* led_w             */
-    { GDI_set_gamma },          /* set_gamma         */
-    { Display_get_gamma },      /* get_gamma         */
-    { GDI_set_brightness },     /* set_brightness    */
-    { Display_get_brightness }, /* get_brightness    */
-    { GDI_save_snapshot },      /* save_snapshot     */
+    GDI_init,               /* init              */
+    GDI_exit,               /* exit              */
+    GDI_alloc_bitmap,       /* aloc_bitmap       */
+    GDI_free_bitmap,        /* free_bitmap       */
+    GDI_create_display,     /* create_display    */
+    GDI_close_display,      /* close_display     */
+    GDI_set_visible_area,   /* set_visible_area  */
+    GDI_set_debugger_focus, /* set_debugger_focus*/
+    GDI_allocate_colors,    /* allocate_colors   */
+    GDI_modify_pen,         /* modify_pen        */
+    GDI_get_pen,            /* get_pen           */
+    GDI_mark_dirty,         /* mark_dirty        */
+    0,                      /* skip_this_frame   */
+    GDI_update_display,     /* update_display    */
+    GDI_led_w,              /* led_w             */
+    GDI_set_gamma,          /* set_gamma         */
+    Display_get_gamma,      /* get_gamma         */
+    GDI_set_brightness,     /* set_brightness    */
+    Display_get_brightness, /* get_brightness    */
+    GDI_save_snapshot,      /* save_snapshot     */
 
-    { GDI_OnMessage },          /* OnMessage         */
-    { GDI_Refresh },            /* Refresh           */
-    { GDI_GetBlackPen },        /* GetBlackPen       */
-    { GDI_UpdateFPS },          /* UpdateFPS         */
+    GDI_OnMessage,          /* OnMessage         */
+    GDI_Refresh,            /* Refresh           */
+    GDI_GetBlackPen,        /* GetBlackPen       */
+    GDI_UpdateFPS,          /* UpdateFPS         */
 };
 
 /***************************************************************************
@@ -306,20 +306,20 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
     {
         bmwidth  = width;
-	    bmheight = height;
+        bmheight = height;
     }
     else
     {
         bmwidth  = Machine->drv->screen_width;
-	    bmheight = Machine->drv->screen_height;
+        bmheight = Machine->drv->screen_height;
 
         if (orientation & ORIENTATION_SWAP_XY)
-	    {
-		    int temp;
-		    temp     = bmwidth;
+        {
+            int temp;
+            temp     = bmwidth;
             bmwidth  = bmheight;
             bmheight = temp;
-	    }
+        }
     }
 
     if (This.m_bUseDirty == TRUE)
@@ -532,7 +532,7 @@ static int GDI_allocate_colors(unsigned int totalcolors,
     }
     else
     {
-		if (This.m_nDepth == 8 && 255 <= totalcolors)
+        if (This.m_nDepth == 8 && 255 <= totalcolors)
         {
             int bestblack;
             int bestwhite;
@@ -717,8 +717,8 @@ static void GDI_save_snapshot(struct osd_bitmap *bitmap)
     if (This.m_bAviCapture)
     {
         This.m_nAviShowMessage = 10;        /* show message for 10 frames */
-		This.m_bAviRun = !This.m_bAviRun;   /* toggle capture on/off */
-	}
+        This.m_bAviRun = !This.m_bAviRun;   /* toggle capture on/off */
+    }
     else
         Display_WriteBitmap(bitmap, This.m_PalEntries);
 }
@@ -761,7 +761,7 @@ static void SetPaletteColors(void)
 
         for (i = 0; i < This.m_nTotalColors; i++)
         {
-	        This.m_p16BitLookup[i] = MAKECOL(This.m_AdjustedPalette[i].peRed,
+            This.m_p16BitLookup[i] = MAKECOL(This.m_AdjustedPalette[i].peRed,
                                              This.m_AdjustedPalette[i].peGreen,
                                              This.m_AdjustedPalette[i].peBlue) * 0x10001;
         }
@@ -1022,8 +1022,15 @@ static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
     switch (Msg)
     {
         case WM_INITDIALOG:
+        {
+            HBITMAP hBitmap;
+            hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+                                         MAKEINTRESOURCE(IDB_ABOUT),
+                                         IMAGE_BITMAP, 0, 0, LR_SHARED);
+            SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
             Static_SetText(GetDlgItem(hDlg, IDC_VERSION), GetVersionString());
             return 1;
+        }
 
         case WM_COMMAND:
             ShowWindow(hDlg, SW_HIDE);

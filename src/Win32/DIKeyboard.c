@@ -16,8 +16,6 @@
 
  ***************************************************************************/
 
-#define DIRECTINPUT_VERSION 0x0500
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
@@ -53,14 +51,14 @@ static void         DIKeyboard_PollKeyboard(void);
 
 struct OSDKeyboard  DIKeyboard = 
 {
-    { DIKeyboard_init },                         /* init                         */
-    { DIKeyboard_exit },                         /* exit                         */
-    { DIKeyboard_get_key_list },                 /* get_key_list                 */
-    { DIKeyboard_customize_inputport_defaults }, /* customize_inputport_defaults */
-    { DIKeyboard_is_key_pressed },               /* is_key_pressed               */
-    { DIKeyboard_readkey_unicode },              /* readkey_unicode              */
+    DIKeyboard_init,                         /* init                         */
+    DIKeyboard_exit,                         /* exit                         */
+    DIKeyboard_get_key_list,                 /* get_key_list                 */
+    DIKeyboard_customize_inputport_defaults, /* customize_inputport_defaults */
+    DIKeyboard_is_key_pressed,               /* is_key_pressed               */
+    DIKeyboard_readkey_unicode,              /* readkey_unicode              */
 
-    { DIKeyboard_OnMessage },                    /* OnMessage                    */
+    DIKeyboard_OnMessage,                    /* OnMessage                    */
 };
 
 /***************************************************************************

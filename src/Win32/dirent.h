@@ -15,9 +15,11 @@
 #include <direct.h>
 #include <sys/types.h>
 
+#if !defined(__GNUC__)
 /* Convienience macros used with stat structures */
 #define S_ISDIR(x) (x & _S_IFDIR)
 #define S_ISREG(x) (x & _S_IFREG)
+#endif
 
 /* Structure to keep track of the current directory status */
 typedef struct my_dir {

@@ -69,7 +69,7 @@ static void OnXButtonUp(HWND hWnd, int x, int y, WORD wKeyState, WORD wXButton);
 static int  Trak_init(options_type *options);
 static void Trak_exit(void);
 static void Trak_read(int player, int *deltax, int *deltay);
-static int  Trak_pressed(int trakcode);
+static int  Trak_pressed(enum ETrakCode eTrakCode);
 static BOOL Trak_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 
 /***************************************************************************
@@ -78,12 +78,12 @@ static BOOL Trak_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LR
 
 struct OSDTrak Trak = 
 {
-    { Trak_init },              /* init              */
-    { Trak_exit },              /* exit              */
-    { Trak_read },              /* trak_read         */
+    Trak_init,              /* init              */
+    Trak_exit,              /* exit              */
+    Trak_read,              /* trak_read         */
 
-    { Trak_pressed },           /* trak_pressed      */
-    { Trak_OnMessage }          /* OnMessage         */
+    Trak_pressed,           /* trak_pressed      */
+    Trak_OnMessage          /* OnMessage         */
 };
 
 /***************************************************************************

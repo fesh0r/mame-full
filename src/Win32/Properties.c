@@ -51,8 +51,6 @@
 #include "DataMap.h"
 #include "resource.hm"
 
-#include <multimon.h>
-
 #ifdef MESS
 #include "Directories.h"
 #include "mess/utils.h"
@@ -87,6 +85,7 @@ extern int load_driver_history (const struct GameDriver *drv, char *buffer, int 
  **************************************************************/
 
 static INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
+static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 static void SetStereoEnabled(HWND hWnd, int index);
@@ -123,7 +122,8 @@ static void HistoryFixBuf(char *buf);
  * Local private variables
  **************************************************************/
 
-static options_type origGameOpts, * lpGameOpts = NULL;
+static options_type  origGameOpts;
+static options_type* lpGameOpts = NULL;
 
 static int  iGame = 0;
 static BOOL bUseDefaults = FALSE;
@@ -233,6 +233,7 @@ static DWORD dwHelpIDs [] = {
 /***************************************************************
  * Public functions
  ***************************************************************/
+
 DWORD GetHelpIDs(void)
 {
     return (DWORD) (LPSTR) dwHelpIDs;
@@ -453,8 +454,9 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
         pspage[i].pszTemplate = MAKEINTRESOURCE(dwDlgId[i + 2]);
         pspage[i].pfnCallback = NULL;
         pspage[i].lParam      = 0;
-        pspage[i].pfnDlgProc  = GameDisplayOptionsProc;
+        pspage[i].pfnDlgProc  = GameOptionsProc;
     }
+    pspage[2 - 2].pfnDlgProc = GameDisplayOptionsProc;
 
     /* Create the Property sheet and display it */
     if (PropertySheet(&pshead) == -1)
@@ -521,19 +523,19 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num,int start_p
     pspage[1].pfnDlgProc  = GameAuditDialogProc;
 
     pspage[2].pfnDlgProc  = GameDisplayOptionsProc;
-    pspage[3].pfnDlgProc  = GameDisplayOptionsProc;
-    pspage[4].pfnDlgProc  = GameDisplayOptionsProc;
-    pspage[5].pfnDlgProc  = GameDisplayOptionsProc;
-    pspage[6].pfnDlgProc  = GameDisplayOptionsProc;
+    pspage[3].pfnDlgProc = GameOptionsProc;
+    pspage[4].pfnDlgProc = GameOptionsProc;
+    pspage[5].pfnDlgProc = GameOptionsProc;
+    pspage[6].pfnDlgProc = GameOptionsProc;
     
 #ifdef MESS
-    pspage[7].pfnDlgProc  = GameDisplayOptionsProc;
+    pspage[7].pfnDlgProc = GameOptionsProc;
 #endif
 
     /* If this is a vector game, add the vector prop sheet */
     if ( maxPropSheets == NUM_PROPSHEETS)
     {
-        pspage[NUM_PROPSHEETS - 1].pfnDlgProc  = GameDisplayOptionsProc;
+        pspage[NUM_PROPSHEETS - 1].pfnDlgProc = GameOptionsProc;
     }
 
     /* Create the Property sheet and display it */
@@ -652,9 +654,11 @@ char *GameInfoColors(UINT nIndex)
         sprintf(buf,"%d colors ",drivers[nIndex]->drv->total_colors);
         if (drivers[nIndex]->drv->video_attributes & GAME_REQUIRES_16BIT)
             strcat(buf,"(16-bit required)");
-        else if (drivers[nIndex]->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+        else
+        if (drivers[nIndex]->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
             strcat(buf,"(dynamic)");
-        else strcat(buf,"(static)");
+        else
+            strcat(buf, "(static)");
     }
     return buf;
 }
@@ -778,7 +782,7 @@ BOOL ReadSkipCtrl(HWND hWnd, UINT nCtrlID, int *value)
 }
 
 /* Handle all options property pages */
-static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     switch (Msg)
     {
@@ -973,7 +977,7 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
         switch (((NMHDR *) lParam)->code)
         {
         case PSN_SETACTIVE:
-            // Initialize the controls.
+            /* Initialize the controls. */
             PopulateControls(hDlg);
             OptionsToProp(hDlg, lpGameOpts);
             SetPropEnabledControls(hDlg);
@@ -981,7 +985,7 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
             break;
 
         case PSN_APPLY:
-            // Save and apply the options here
+            /* Save and apply the options here */
             PropToOptions(hDlg, lpGameOpts);
             ReadControls(hDlg);
             lpGameOpts->use_default = bUseDefaults;
@@ -1002,7 +1006,7 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
             break;
 
         case PSN_KILLACTIVE:
-            // Save Changes to the options here.
+            /* Save Changes to the options here. */
             ReadControls(hDlg);
             ResetDataMap();
             lpGameOpts->use_default = bUseDefaults;
@@ -1011,8 +1015,7 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
             return 1;  
 
         case PSN_RESET:
-            // Reset to the original values.
-            // Disregard changes
+            /* Reset to the original values. Disregard changes */
             memcpy(lpGameOpts, &origGameOpts, sizeof(options_type));
             SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
             break;
@@ -1030,6 +1033,7 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
 #endif
         }
         break;
+
     case WM_HELP:
         /* User clicked the ? from the upper right on a control */
         WinHelp(((LPHELPINFO) lParam)->hItemHandle, "mame32.hlp", HELP_WM_HELP, GetHelpIDs());
@@ -1043,6 +1047,24 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
     EnableWindow(GetDlgItem(hDlg, IDC_PROP_RESET), bReset);
 
     return 0;
+}
+
+static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (Msg)
+    {
+    case WM_INITDIALOG:        
+        {
+            HBITMAP hBitmap;
+            hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+                                         MAKEINTRESOURCE(IDB_PROP_DISPLAY),
+                                         IMAGE_BITMAP, 0, 0,
+                                         LR_SHARED | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
+            SendMessage(GetDlgItem(hDlg, IDC_PROP_DISPLAY), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
+        }
+    }
+
+    return GameOptionsProc(hDlg, Msg, wParam, lParam);
 }
 
 #ifdef MESS
@@ -1096,6 +1118,11 @@ static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
 
 	*lpBuf = '\0';
 }
+
+/* multimon.h likes to redefine GetSystemMetrics */
+#ifdef GetSystemMetrics
+#undef GetSystemMetrics
+#endif /* GetSystemMetrics */
 
 static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
 {
@@ -2018,7 +2045,6 @@ static void DisplayChange(HWND hWnd)
        UpdateDisplayModeUI(hWnd, lpGameOpts->depth);
 
     }
-
 }
 
 /* Handle changes to the Volume slider */
@@ -2280,7 +2306,4 @@ static void HistoryFixBuf(char *buf)
     strcpy(buf, tempHistoryBuf);
 }
 
-
 /* End of source file */
-
-
