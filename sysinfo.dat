@@ -4789,13 +4789,11 @@ as a cartridge like in the real machine.
 Known Issues:
 
 - cassette not working
-- disc emulation not working (disk rom required)
+- disc emulation not working
 - no memory expansion supported
 - no extra peripherals supported
 
-Development has been temporarily halted until I have a disk rom and some
-disk software to test.
-
+Development has been temporarily halted until I can work out the disc interface.
 
 History and Trivia:
 
@@ -7258,3 +7256,38 @@ Stopped. For me it is much too cryptic to operate and therefore not interesting.
 $end
 
 #---------------------------------------------------------------------------------------------#
+
+$info=einstein
+$bio
+Tatung Einstein TC-01
+
+The Tatung Einstein is a 8-bit computer with hardware similar
+to the MSX-1. The computer was produced with two 3" disk drives and
+ran the CP/M operating system.
+
+The TC-01 is the first version of the hardware, with the 256 being
+the second version aimed more towards games.
+
+When this driver starts, and a disk is not in the drive, a internal
+monitor program will start. 
+
+To use this driver you will need the Xtal operating system disks
+which will start CP/M and from here you can run many CP/M based
+programs.
+
+You can put a disk image into the drive and boot CP/M by pressing
+CTRL+ALT togethr.
+
+Usage/Known Issues:
+
+The floppy disc emulation may not be fully working.
+Interrupts are not working properly.
+
+Thankyou to Chris Coxall for the schematics, a dump of the bios rom,
+and the Xtal operating system. He has been a great help with the development
+of this driver.
+
+Thankyou to Andrew Dunipace for help with the 80-column expansion card.
+
+
+$end
