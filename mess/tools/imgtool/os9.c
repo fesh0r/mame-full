@@ -151,8 +151,8 @@ static imgtoolerr_t os9_locate_lsn(imgtool_image *image, UINT32 lsn, UINT32 *hea
 	if (lsn > disk_info->total_sectors)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
-	*head = 0;
-	*track = lsn / disk_info->sectors_per_track;
+	*track = lsn / (disk_info->sectors_per_track * disk_info->sides);
+	*head = (lsn / disk_info->sectors_per_track) % disk_info->sides;
 	*sector = (lsn % disk_info->sectors_per_track) + 1;
 	return IMGTOOLERR_SUCCESS;
 }

@@ -25,7 +25,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [OS9] Fixed a bug that caused problems when dealing with double sided disk
+  images.  (bug #633) [Nate Woods]
 
 
 
