@@ -427,7 +427,7 @@ void image_unload_all(int ispreload)
 			/* all instances */
 			for (id = 0; id < dev->count; id++)
 			{
-				img = image_from_devtype_and_index(dev->type, id);
+				img = image_from_device_and_index(dev, id);
 
 				/* unload this image */
 				image_unload_internal(img, TRUE);

@@ -137,21 +137,21 @@ static int use_filename_quotes(const char *filename)
 
 void osd_begin_final_unloading(void)
 {
-	int devtype;
 	int count, id;
 	size_t blocksize;
 	char *s;
 	mess_image *img;
 	const char *filename;
 	size_t len;
+	const struct IODevice *dev;
 
 	memset(dev_opts, 0, sizeof(dev_opts));
 
-	for (devtype = 0; devtype < IO_COUNT; devtype++)
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
-		for (count = device_count(devtype); count > 0; count--)
+		for (count = dev->count; count > 0; count--)
 		{
-			img = image_from_devtype_and_index(devtype, count-1);
+			img = image_from_device_and_index(dev, count - 1);
 			if (image_exists(img))
 				break;
 		}
@@ -162,7 +162,7 @@ void osd_begin_final_unloading(void)
 			blocksize = 0;
 			for (id = 0; id < count; id++)
 			{
-				img = image_from_devtype_and_index(devtype, id);
+				img = image_from_device_and_index(dev, id);
 
 				if (image_exists(img))
 				{
@@ -181,7 +181,7 @@ void osd_begin_final_unloading(void)
 
 			for (id = 0; id < count; id++)
 			{
-				img = image_from_devtype_and_index(devtype, id);
+				img = image_from_device_and_index(dev, id);
 
 				if (image_exists(img))
 				{
@@ -200,7 +200,7 @@ void osd_begin_final_unloading(void)
 				}
 			}
 
-			dev_opts[devtype] = s;
+			dev_opts[dev->type] = s;
 		}
 	}
 }
