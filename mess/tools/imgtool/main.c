@@ -17,6 +17,7 @@
 const struct GameDriver *drivers[1];
 int rompath_extra;
 int cheatfile;
+const char *db_filename;
 int history_filename;
 int mameinfo_filename;
 
