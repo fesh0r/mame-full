@@ -55,7 +55,7 @@ static oprandinfo of[] = {
 
 /* 25 */ { {" A,%s",	"",			"",			""},		{PCREL, DONE, DONE, DONE} },
 /* 26 */ { {" B,%s",	"",			"",			""},		{PCREL, DONE, DONE, DONE} },
-/* 27 */ { {" R%u"		",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 27 */ { {" R%u",		",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
 
 /* 28 */ { {" %s",		"",			"",			""},		{PCREL, DONE, DONE, DONE} },			
 
@@ -382,7 +382,7 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 			UINT16	c;
 			INT16	d;
 
-			buffer += sprintf (buffer, opcodes[i].name);
+			buffer += sprintf (buffer, "%s", opcodes[i].name);
 
 			j=opcodes[i].operand;
 							
@@ -393,11 +393,11 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 					case DONE:
 						return size;
 					case NONE:
-						buffer += sprintf (buffer, of[j].opstr[k]);
+						buffer += sprintf (buffer, "%s", of[j].opstr[k]);
 						break;
 					case UI8:
 						a = (UINT8)cpu_readop( pc++ );
-						buffer += sprintf (buffer, of[j].opstr[k], (unsigned int)a);
+						buffer += sprintf(buffer, of[j].opstr[k], (unsigned int)a);
 						size += 1;
 						break;
 					case I8:
@@ -406,12 +406,16 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 						size += 1;
 						break;
 					case UI16:
-						c = (UINT16)((cpu_readop( pc++ ) << 8) + cpu_readop( pc++ ));
+						c = (UINT16)cpu_readop(pc++);
+						c <<= 8;
+						c += cpu_readop(pc++);
 						buffer += sprintf (buffer, of[j].opstr[k], (unsigned int)c);
 						size += 2;
 						break;
 					case I16:
-						d = (INT16)((cpu_readop( pc++ ) << 8) + cpu_readop( pc++ ));
+						d = (INT16)cpu_readop(pc++);
+						d <<= 8;
+						d += cpu_readop(pc++);
 						buffer += sprintf (buffer, of[j].opstr[k], (signed int)d);
 						size += 2;
 						break;
@@ -422,7 +426,9 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 						size += 1;
 						break;
 					case PCABS:
-						c = (UINT16)((cpu_readop( pc++ ) << 8) + cpu_readop( pc++ ));
+						c = (UINT16)cpu_readop(pc++);
+						c <<= 8;
+						c += cpu_readop(pc++);
 						sym1 = set_ea_info(EA_DST, c, EA_UINT16, EA_ABS_PC);
 						buffer += sprintf (buffer, of[j].opstr[k], sym1);
 						size += 2;
