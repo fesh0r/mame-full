@@ -914,8 +914,8 @@ static floperr_t coco_dmk_seek_sector_in_track(floppy_image *floppy, int head, i
 
 		/* check IDAM integrity and check for matching sector */
 		if ((calculated_crc == dmk_idam_crc(&track_data[idam_offset]))
-				&& (track == dmk_idam_track(&track_data[idam_offset]))
-				&& (head == dmk_idam_side(&track_data[idam_offset]))
+/*				&& (track == dmk_idam_track(&track_data[idam_offset]))	*/
+/*				&& (head == dmk_idam_side(&track_data[idam_offset]))	*/
 				&& (sector == dmk_idam_sector(&track_data[idam_offset])))
 			break;
 	}
@@ -966,7 +966,7 @@ static floperr_t coco_dmk_get_sector_length(floppy_image *floppy, int head, int 
 
 
 
-static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *sector, UINT32 *sector_length)
+static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *sector, UINT32 *sector_length)
 {
 	floperr_t err;
 	UINT32 idam_offset;
@@ -989,6 +989,8 @@ static floperr_t coco_dmk_get_indexed_sector_info(floppy_image *floppy, int head
 	if (idam_offset == 0)
 		return FLOPPY_ERROR_SEEKERROR;
 
+	if (cylinder)
+		*cylinder = dmk_idam_track(&track_data[idam_offset]);
 	if (sector)
 		*sector = dmk_idam_sector(&track_data[idam_offset]);
 	if (sector_length)

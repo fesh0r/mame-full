@@ -738,7 +738,7 @@ floperr_t floppy_get_sector_length(floppy_image *floppy, int head, int track, in
 
 
 
-floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *sector, UINT32 *sector_length)
+floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *cylinder, int *sector, UINT32 *sector_length)
 {
 	const struct FloppyCallbacks *fmt;
 
@@ -746,7 +746,7 @@ floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int tra
 	if (!fmt->get_indexed_sector_info)
 		return FLOPPY_ERROR_UNSUPPORTED;
 
-	return fmt->get_indexed_sector_info(floppy, head, track, sector_index, sector, sector_length);
+	return fmt->get_indexed_sector_info(floppy, head, track, sector_index, cylinder, sector, sector_length);
 }
 
 
@@ -758,7 +758,7 @@ floperr_t floppy_get_sector_count(floppy_image *floppy, int head, int track, int
 
 	do
 	{
-		err = floppy_get_indexed_sector_info(floppy, head, track, sector_index, NULL, NULL);
+		err = floppy_get_indexed_sector_info(floppy, head, track, sector_index, NULL, NULL, NULL);
 		if (!err)
 			sector_index++;
 	}

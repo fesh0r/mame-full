@@ -76,18 +76,18 @@ static int flopimg_get_sectors_per_track(mess_image *image, int side)
 static void flopimg_get_id_callback(mess_image *image, chrn_id *id, int id_index, int side)
 {
 	struct mess_flopimg *flopimg;
-	int sector, N;
+	int cylinder, sector, N;
 	UINT32 sector_length;
 	
 	flopimg = get_flopimg(image);
 	if (!flopimg || !flopimg->floppy)
 		return;
 
-	floppy_get_indexed_sector_info(flopimg->floppy, side, flopimg->track, id_index, &sector, &sector_length);
+	floppy_get_indexed_sector_info(flopimg->floppy, side, flopimg->track, id_index, &cylinder, &sector, &sector_length);
 
 	N = compute_log2(sector_length);
 
-	id->C = flopimg->track;
+	id->C = cylinder;
 	id->H = side;
 	id->R = sector;
 	id->data_id = sector;

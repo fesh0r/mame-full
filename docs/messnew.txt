@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [COCO] Fixed a bug in DMK disk loading; games encoded with certain forms of
+  copy protection now run.  (bug #606) [Tim Lindner]
 
 
 
