@@ -485,6 +485,7 @@ void smartmedia_data_w(int id, data8_t data)
 
 	switch (smartmedia[id].mode)
 	{
+	case SM_M_INIT:
 	case SM_M_READ:
 		logerror("smartmedia: unexpected data port write\n");
 		break;
@@ -498,8 +499,6 @@ void smartmedia_data_w(int id, data8_t data)
 	case SM_M_READSTATUS:
 	case SM_M_READID:
 		logerror("smartmedia: unexpected data port write\n");
-		break;
-	case SM_M_INIT:
 		break;
 	}
 }
