@@ -1159,7 +1159,7 @@ static const struct IODevice io_c16v[] =
 
 /*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	COMPANY 								FULLNAME */
 COMPX ( 1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX ( 1984,	c16hun, c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16 (PAL), Hungarian Character Set Hack", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	c16hun, c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16 Novotrade (PAL, Hungarian Character Set)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX ( 1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
