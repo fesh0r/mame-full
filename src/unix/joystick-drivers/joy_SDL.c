@@ -15,7 +15,7 @@ struct rc_option joy_SDL_opts[] = {
 void joy_SDL_init(void);
 void joy_SDL_poll(void);
 
-SDL_Joystick 	*joystick;
+SDL_Joystick 	*joystick[JOY_MAX];
 
 void joy_SDL_init (void)
 {
@@ -29,17 +29,19 @@ void joy_SDL_init (void)
 
 	joy_n=SDL_NumJoysticks();
 	printf("SDL: %d joysticks found.\n", joy_n );
+	if (joy_n > JOY_MAX)
+		joy_n = JOY_MAX;
 
 	for (i = 0; i < joy_n; i++)
 	{
 		printf("SDL: The names of the joysticks :  %s\n", SDL_JoystickName(i));
-		joystick=SDL_JoystickOpen(i);      
-		if ( joystick )
+		joystick[i]=SDL_JoystickOpen(i);      
+		if ( joystick[i] )
 		{
 			/* Set the file descriptor to a dummy value. */
 			joy_data[i].fd = 1;
-			joy_data[i].num_buttons = SDL_JoystickNumButtons(joystick);
-			joy_data[i].num_axes    = SDL_JoystickNumAxes(joystick);
+			joy_data[i].num_buttons = SDL_JoystickNumButtons(joystick[i]);
+			joy_data[i].num_axes    = SDL_JoystickNumAxes(joystick[i]);
 
 			if (joy_data[i].num_buttons > JOY_BUTTONS)
 				joy_data[i].num_buttons = JOY_BUTTONS;
@@ -74,10 +76,10 @@ void joy_SDL_poll (void)
 		if (joy_data[i].fd)
 		{
 			for (j=0; j<joy_data[i].num_axes; j++)
-				joy_data[i].axis[j].val= SDL_JoystickGetAxis(joystick, j);
+				joy_data[i].axis[j].val= SDL_JoystickGetAxis(joystick[i], j);
 
 			for (j=0; j<joy_data[i].num_buttons; j++)
-				joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick, j);
+				joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick[i], j);
 		}
 	}
 #endif
