@@ -95,7 +95,6 @@ struct prodos_diskinfo
 
 struct prodos_direnum
 {
-	UINT32 first_block;
 	UINT32 block;
 	UINT32 index;
 	UINT8 block_data[BLOCK_SIZE];
@@ -653,63 +652,69 @@ static imgtoolerr_t prodos_diskimage_create_35(imgtool_image *image, option_reso
 
 /* ----------------------------------------------------------------------- */
 
+static imgtoolerr_t prodos_enum_seek(imgtool_image *image,
+	struct prodos_direnum *appleenum, UINT32 block, UINT32 index)
+{
+	imgtoolerr_t err;
+	UINT8 buffer[BLOCK_SIZE];
+
+	if (appleenum->block != block)
+	{
+		if (block != 0)
+		{
+			err = prodos_load_block(image, block, buffer);
+			if (err)
+				return err;
+			memcpy(appleenum->block_data, buffer, sizeof(buffer));
+		}
+		appleenum->block = block;
+	}
+
+	appleenum->index = index;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	struct prodos_direnum *appleenum, struct prodos_dirent *ent)
 {
 	imgtoolerr_t err;
 	struct prodos_diskinfo *di;
-	UINT32 next_block;
+	UINT32 next_block, next_index;
 	UINT32 offset;
-	UINT8 buffer[BLOCK_SIZE];
 
 	di = get_prodos_info(image);
+	memset(ent, 0, sizeof(*ent));
 
-	do
-	{
-		/* go to next image */
-		if (appleenum->index >= di->dirents_per_block)
-		{
-			if (appleenum->block == 0)
-				next_block = appleenum->first_block;
-			else
-				next_block = pick_integer(appleenum->block_data, 2, 2);
+	/* have we hit the end of the file? */
+	if (appleenum->block == 0)
+		return IMGTOOLERR_SUCCESS;
 
-			if (next_block > 0)
-			{
-				/* read next block */
-				err = prodos_load_block(image, next_block, buffer);
-				if (err)
-					return err;
-				appleenum->block = next_block;
-				memcpy(appleenum->block_data, buffer, sizeof(buffer));
-			}
-			else
-			{
-				appleenum->block = 0;
-			}
-			appleenum->index = 0;
-		}
-		else
-		{
-			appleenum->index++;
-		}
-
-		offset = appleenum->index * di->dirent_size + 4;
-		if (appleenum->block)
-			ent->storage_type = appleenum->block_data[offset + 0];
-		else
-			ent->storage_type = 0x00;
-	}
-	while(!is_file_storagetype(ent->storage_type)
-		&& !is_dir_storagetype(ent->storage_type)
-		&& appleenum->block);
-
+	/* populate the resulting dirent */
+	offset = appleenum->index * di->dirent_size + 4;
+	ent->storage_type = appleenum->block_data[offset + 0];
 	memcpy(ent->filename, &appleenum->block_data[offset + 1], 15);
 	ent->filename[15] = '\0';
 	ent->key_pointer		= pick_integer(appleenum->block_data, offset + 17, 2);
 	ent->filesize			= pick_integer(appleenum->block_data, offset + 21, 3);
 	ent->creation_time		= pick_integer(appleenum->block_data, offset + 24, 4);
 	ent->lastmodified_time	= pick_integer(appleenum->block_data, offset + 33, 4);
+
+	/* identify next entry */
+	next_block = appleenum->block;
+	next_index = appleenum->index + 1;
+	if (next_index >= di->dirents_per_block)
+	{
+		next_block = pick_integer(appleenum->block_data, 2, 2);
+		next_index = 0;
+	}
+
+	/* seek next block */
+	err = prodos_enum_seek(image, appleenum, next_block, next_index);
+	if (err)
+		return err;
+
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -748,19 +753,32 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 	struct prodos_direnum direnum;
 	UINT32 block = ROOTDIR_BLOCK;
 	const char *old_path;
+	UINT32 free_block = 0;
+	UINT32 free_index = 0;
 
 	while(*path)
 	{
 		memset(&direnum, 0, sizeof(direnum));
-		direnum.first_block = block;
+		err = prodos_enum_seek(image, &direnum, block, 0);
+		if (err)
+			return err;
 
 		do
 		{
 			err = prodos_get_next_dirent(image, &direnum, ent);
 			if (err)
 				return err;
+
+			/* if we need to create a file entry and this is free, track it */
+			if (create && direnum.block && !free_block && !ent->storage_type)
+			{
+				free_block = direnum.block;
+				free_index = direnum.index;
+			}
 		}
-		while(direnum.block && strcmp(path, ent->filename));
+		while(direnum.block && (strcmp(path, ent->filename) || (
+			!is_file_storagetype(ent->storage_type) &&
+			!is_dir_storagetype(ent->storage_type))));
 
 		old_path = path;
 		path += strlen(path) + 1;	
@@ -771,17 +789,28 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 				return IMGTOOLERR_FILENOTFOUND;
 			block = ent->key_pointer;
 		}
-		else if (!ent->storage_type)
+		else if (!direnum.block)
 		{
 			/* did not find file; maybe we need to create it */
 			if (create == CREATE_NONE)
 				return IMGTOOLERR_FILENOTFOUND;
 
+			/* we dont support expanding the directory yet */
+			if (!free_block)
+				return IMGTOOLERR_UNIMPLEMENTED;
+
+			/* seek back to the free space */
+			err = prodos_enum_seek(image, &direnum, free_block, free_index);
+			if (err)
+				return err;
+
+			/* prepare the dirent */
 			memset(ent, 0, sizeof(*ent));
 			ent->storage_type = 0x10;
 			ent->creation_time = ent->lastmodified_time = prodos_time_now();
 			strncpy(ent->filename, old_path, sizeof(ent->filename) / sizeof(ent->filename[0]));
 
+			/* and place it */
 			err = prodos_put_dirent(image, &direnum, ent);
 			if (err)
 				return err;
@@ -814,16 +843,21 @@ static UINT32 prodos_get_storagetype_maxfilesize(UINT8 storage_type)
 
 static imgtoolerr_t prodos_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
+	imgtoolerr_t err;
+	imgtool_image *image;
 	struct prodos_direnum *appleenum;
 
+	image = img_enum_image(enumeration);
 	appleenum = (struct prodos_direnum *) img_enum_extrabytes(enumeration);
 
-	/* first directory is at block 2 */
-	appleenum->first_block = 2;
-	appleenum->index = ~0;
-
+	/* only partially implemented */
 	if (*path)
 		return IMGTOOLERR_UNIMPLEMENTED;
+
+	/* seek initial block */
+	err = prodos_enum_seek(image, appleenum, ROOTDIR_BLOCK, 0);
+	if (err)
+		return err;
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -841,9 +875,15 @@ static imgtoolerr_t prodos_diskimage_nextenum(imgtool_imageenum *enumeration, im
 	image = img_enum_image(enumeration);
 	appleenum = (struct prodos_direnum *) img_enum_extrabytes(enumeration);
 
-	err = prodos_get_next_dirent(image, appleenum, &pd_ent);
-	if (err)
-		return err;
+	do
+	{
+		err = prodos_get_next_dirent(image, appleenum, &pd_ent);
+		if (err)
+			return err;
+	}
+	while(appleenum->block
+		&& !is_file_storagetype(pd_ent.storage_type)
+		&& !is_dir_storagetype(pd_ent.storage_type));
 
 	/* end of file? */
 	if (pd_ent.storage_type == 0x00)
@@ -970,7 +1010,7 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->begin_enum					= prodos_diskimage_beginenum;
 	module->next_enum					= prodos_diskimage_nextenum;
 	module->read_file					= prodos_diskimage_readfile;
-	//module->write_file					= prodos_diskimage_writefile;
+	module->write_file					= prodos_diskimage_writefile;
 	return IMGTOOLERR_SUCCESS;
 }
 

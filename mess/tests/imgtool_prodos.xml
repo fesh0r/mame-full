@@ -3,6 +3,12 @@
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
 	<checkdirectory/>
+	
+	<putfile name="FOO.TXT"/>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="0"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT"/>
 </imgtooltest>
 
 <imgtooltest name="prodos_525_po">
