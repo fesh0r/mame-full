@@ -156,7 +156,7 @@ strHelpProjectPath = strObjDir & "\mess.hhp"
 
 ' ---------------------------------------------------------------------------
 
-strSysInfoFile = "docs\sysinfo.dat"
+strSysInfoFile = "sysinfo.dat"
 strHHC = """C:\Program Files\HTML Help Workshop\hhc.exe"""
 
 Set objFSO = CreateObject("Scripting.FileSystemObject")
