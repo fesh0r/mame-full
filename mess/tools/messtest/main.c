@@ -46,7 +46,6 @@ static int handle_arg(char *arg)
 {
 	int this_test_count;
 	int this_failure_count;
-	int flags = 0;
 	struct messtest_options opts;
 
 	/* setup options */
