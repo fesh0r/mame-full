@@ -8,15 +8,25 @@
 	structure using X-ray diffraction.
 
 	It was one of the APEC series of computer, which were simple electronic computers
-	built in the early 1950s for various British Universities.  The HEC (built by
-	the British Tabulating Machine Company) and another machine named MAC were based
-	on the APEXC.
+	built in the early 1950s for various British Universities.  Known members of this series
+	are :
+	* APE(X)C : Birkbeck College, London (before 1953 (1951 ?))
+	* APE(N)C : Board of Mathematical Machines, Oslo
+	* APE(H)C : British Tabulating Machine Company
+	* APE(R)C : British Rayon Research Association
+	* UCC : University College, London (circa january 1956)
+	* MAC (Magnetic Automatic Calculator) : "built by Wharf Engineering Laboratories"
+	(february 1955), which used germanium diodes
+	* The HEC (built by the British Tabulating Machine Company), a commercial machine sold
+	in two models at least (HEC 2M and HEC 4) (before 1955)
 
 	References :
 	* Andrew D. Booth & Kathleen H. V. Booth : Automatic Digital Calculators, 2nd edition
 	(Buttersworth Scientific Publications, 1956)  (referred to as 'Booth&Booth')
 	* Kathleen H. V. Booth : Programming for an Automatic Digital Calculator
 	(Buttersworth Scientific Publications, 1958)  (referred to as 'Booth')
+	* Digital Engineering Newsletter vol 7 nb 1 p 60 and vol 8 nb 1 p 60-61 provided some
+	dates
 */
 
 /*
@@ -133,6 +143,10 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 		 v         v
 
 	  are the vector counterparts of A(x)(y) and +(x)(y).
+
+
+	Note4 : The code is presented as it was in 1957.  It appears that it was somewhat
+	different in 1953
 */
 
 /*
@@ -382,12 +396,12 @@ static void word_write(int address, UINT32 data, UINT32 mask)
 
 static int papertape_read(void)
 {
-	return cpu_readport16bedw(0) & 0x1f;
+	return cpu_readport16bedw_dword(0) & 0x1f;
 }
 
 static void papertape_punch(int data)
 {
-	cpu_writeport16bedw(0, data);
+	cpu_writeport16bedw_dword(0, data);
 }
 
 /*
