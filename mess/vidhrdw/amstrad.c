@@ -2,37 +2,42 @@
 
   amstrad.c.c
 
-  Functions to emulate the video hardware of the Amstrad CPC.
+  Functions to emulate the video hardware of the amstrad CPC.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/amstrad.h"
-#include "vidhrdw/hd6845s.h"
+#include "mess/includes/amstrad.h"
+#include "mess/vidhrdw/hd6845s.h"
 
+/* CRTC emulation code */
+#include "mess/vidhrdw/m6845.h"
+/* event list for storing colour changes, mode changes and CRTC writes */
+#include "mess/eventlst.h"
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
 
+/* this contains the colours in Machine->pens form.*/
+/* this is updated from the eventlist and reflects the current state
+of the render colours - these may be different to the current colour palette values */
+/* colours can be changed at any time and will take effect immediatly */
+static unsigned long amstrad_render_colours[17];
+
+/* the mode is re-loaded at each HSYNC */
+/* current mode to render */
+static int amstrad_render_mode;
+
+/* current programmed mode */
+static int amstrad_current_mode;
+
 static unsigned long Mode0Lookup[256];
 static unsigned long Mode1Lookup[256];
-static struct osd_bitmap *amstrad_bitmap;
-static int amstrad_scanline = 0;
 
-struct GfxElement amstrad_gfx_element;
-
-int amstrad_render_x, amstrad_render_y;
-
-int amstrad_vh_start(void)
+static void amstrad_init_lookups(void)
 {
-
 	int i;
-
-	amstrad_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-
-	if (amstrad_bitmap==0)
-		return 1;
 
 	for (i=0; i<256; i++)
 	{
@@ -55,38 +60,61 @@ int amstrad_vh_start(void)
 		Mode1Lookup[i] = pen;
 
 	}
-
-	return 0;
-}
-
-void    amstrad_vh_stop(void)
-{
-	if (amstrad_bitmap!=NULL)
-		osd_free_bitmap(amstrad_bitmap);
-
 }
 
 extern unsigned char *Amstrad_Memory;
 extern short AmstradCPC_PenColours[18];
 extern unsigned char AmstradCPC_GA_RomConfiguration;
 
-static void amstrad_vh_decodebyte(struct osd_bitmap *bitmap, unsigned char byte1, unsigned char
-byte2)
+// this is the pixel position of the start of a scanline
+// -96 sets the screen display to the middle of emulated screen.
+static int x_screen_offset=0;	//-96;
+
+static int y_screen_offset=0;
+
+static int amstrad_HSync=0;
+static int amstrad_VSync=0;
+static int amstrad_Character_Row=0;
+static int amstrad_DE=0;
+
+
+//static unsigned char *amstrad_Video_RAM;
+static unsigned char *amstrad_display;
+static struct osd_bitmap *amstrad_bitmap;
+
+static int x_screen_pos;
+static int y_screen_pos;
+
+static void (*draw_function)(void);
+
+void amstrad_draw_screen_enabled(void)
 {
-        struct rectangle r;
+	int sc1;
+	int ma, ra;
+	int addr;
+	int byte1, byte2;
 
-        r.min_x = amstrad_render_x;
-        r.max_x = amstrad_render_x+16;
-        r.min_y = amstrad_render_y;
-        r.max_y = amstrad_render_y;
+	sc1 = 0;
+	ma = crtc6845_memory_address_r(0);
+	ra = crtc6845_row_address_r(0);
 
-        // depending on the mode!
-	switch (AmstradCPC_GA_RomConfiguration & 0x03)
+	// calc mem addr to fetch data from
+	//based on ma, and ra
+	addr = (((ma>>(4+8)) & 0x03)<<14) |
+			((ra & 0x07)<<11) |
+			((ma & 0x03ff)<<1);
+
+	// amstrad fetches two bytes per CRTC clock.
+	byte1 = Amstrad_Memory[addr];
+	byte2 = Amstrad_Memory[addr+1];
+
+    // depending on the mode!
+	switch (amstrad_render_mode)		//AmstradCPC_GA_RomConfiguration & 0x03)
 	{
-                // mode 0 - low resolution - 16 colours
+    
+		// mode 0 - low resolution - 16 colours
 		case 0:
 		{
-			//int i;
 			int cpcpen,messpen;
 			unsigned char data;
 
@@ -94,63 +122,73 @@ byte2)
 
 			{
 				cpcpen = Mode0Lookup[data];
-				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
 
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
+				amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
 
 				data = data<<1;
 
 				cpcpen = Mode0Lookup[data];
-				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
+//				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
+			
+				amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                
 			}
 
 			data = byte2;
 
 			{
 				cpcpen = Mode0Lookup[data];
-				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
+//				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
+				amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                
 
 				data = data<<1;
 
 				cpcpen = Mode0Lookup[data];
-				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
+//				messpen = Machine->pens[AmstradCPC_PenColours[cpcpen]];
+				amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                
                 	}
 		}
 		break;
 
-                // mode 1 - medium resolution - 4 colours
+        // mode 1 - medium resolution - 4 colours
 		case 1:
 		{
                         int i;
@@ -163,12 +201,14 @@ byte2)
                         for (i=0; i<4; i++)
                         {
 				cpcpen = Mode1Lookup[data & 0x0ff];
-				messpen =Machine->pens[AmstradCPC_PenColours[cpcpen]];
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
+//				messpen =Machine->pens[AmstradCPC_PenColours[cpcpen]];
+    			amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                
 				data = data<<1;
 			}
 
@@ -177,18 +217,21 @@ byte2)
                         for (i=0; i<4; i++)
 			{
 				cpcpen = Mode1Lookup[data & 0x0ff];
-				messpen =Machine->pens[AmstradCPC_PenColours[cpcpen]];
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
+//				messpen =Machine->pens[AmstradCPC_PenColours[cpcpen]];
+				amstrad_display[sc1] = messpen;
+				sc1++;
+                amstrad_display[sc1] = messpen;
+				sc1++;
+                
 				data = data<<1;
 			}
 
 		}
 		break;
 
+		// mode 2: high resolution - 2 colours
 		case 2:
 		{
 			int i;
@@ -198,11 +241,12 @@ byte2)
 			for (i=0; i<16; i++)
 			{
 				cpcpen = (Data>>15) & 0x01;
-				messpen =Machine->pens[AmstradCPC_PenColours[cpcpen]];
-
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
-
+				messpen = amstrad_render_colours[cpcpen];
+				//Machine->pens[AmstradCPC_PenColours[cpcpen]];
+//				messpen =Machine->pens[AmstradCPC_PenColours[cpcpen]];
+				amstrad_display[sc1] = messpen;
+				sc1++;
+                
 				Data = Data<<1;
 
 			}
@@ -214,320 +258,279 @@ byte2)
 
 }
 
-
-/***************************************************************************
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function,
-  it will be called by the main emulation engine.
-***************************************************************************/
-void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void amstrad_draw_screen_disabled(void)
 {
-        int i;
-        int lc;
+	int sc1;
+	int border_colour;
 
-        lc = hd6845s_getreg(HD6845S_V_SYNC_POS);
-        hd6845s_index_w(HD6845S_RA);
-        hd6845s_register_w(0);
-        hd6845s_index_w(HD6845S_LC);
-        hd6845s_register_w(lc);
-        amstrad_scanline = 0;
-        for (i=0; i<272;  i++)  //312; i++)
-        {
-            amstrad_update_scanline();
-        }
-    copybitmap(bitmap,amstrad_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	border_colour = amstrad_render_colours[16];	//Machine->pens[AmstradCPC_PenColours[16]];
+
+	// if the display is not enable, just draw a blank area.
+	for(sc1=0;sc1<16;sc1++)
+	{
+		amstrad_display[sc1]=border_colour;	//VideoULA_border_colour;
+	}
+}
+
+// Select the Function to draw the screen area
+void amstrad_Set_VideoULA_DE(void)
+{
+	if (amstrad_DE)
+	{
+		draw_function=*amstrad_draw_screen_enabled;
+	} 
+	else 
+	{
+		draw_function=*amstrad_draw_screen_disabled;
+	}
+}
+
+
+/************************************************************************
+ * amstrad 6845 Outputs to Video ULA
+ ************************************************************************/
+
+// called when the 6845 changes the character row
+void amstrad_Set_Character_Row(int offset, int data)
+{
+	amstrad_Character_Row=data;
+	amstrad_Set_VideoULA_DE();
+}
+
+/* the horizontal screen position on the display is determined
+by the length of the HSYNC and the position of the hsync */
+void amstrad_Set_HSync(int offset, int data)
+{
+        /* hsync changed state? */
+	if ((amstrad_HSync^data)!=0)
+	{
+		if (data!=0)
+		{
+                        /* start of hsync */
+	
+			/* set new render mode */
+			amstrad_render_mode = amstrad_current_mode;
+		}
+                else
+                {
+                        /* end of hsync */
+                        y_screen_pos+=1;
+                        x_screen_pos=x_screen_offset;
+                        amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+                }
+	}
+
+
+	amstrad_HSync=data;
+}
+
+void amstrad_Set_VSync(int offset, int data)
+{
+        /* vsync changed state? */
+        if ((amstrad_VSync^data)!=0)
+	{
+                if (data!=0)
+                {
+                   y_screen_pos=y_screen_offset;
+                   amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+                 }
+       }
+       amstrad_VSync=data;
 
 }
 
-/* maps from hsync len programmed to HD6845S and actual
-HSYNC len output to monitor. Timings in 1us cycles */
-static int hsync_output_remap[]=
+// called when the 6845 changes the Display Enabled
+void amstrad_Set_DE(int offset, int data)
 {
-	0, 0, 0,3,4,5,6, 6,6,6,6,6,6,6,6,6
+	amstrad_DE=data;
+	amstrad_Set_VideoULA_DE();
+}
+
+// called when the 6845 changes the Cursor Enabled
+void amstrad_Set_CR(int offset, int data)
+{
+}
+
+// If the cursor is on there is a counter in the VideoULA to control the length of the Cursor
+void amstrad_Clock_CR(void)
+{
+}
+
+
+/* The cursor is not used on Amstrad. The CURSOR signal is available on the Expansion port
+for other hardware to use, but as far as I know it is not used by anything. */
+
+
+static struct crtc6845_interface
+amstrad6845= {
+	0,// Memory Address register
+	amstrad_Set_Character_Row,// Row Address register
+	amstrad_Set_HSync,// Horizontal status
+	amstrad_Set_VSync,// Vertical status
+	amstrad_Set_DE,// Display Enabled status
+	NULL,// Cursor status 
 };
 
-static int left_margin, right_margin, graphics_clocks;
+/************************************************************************
+ * amstrad_vh_screenrefresh
+ * resfresh the amstrad video screen
+ ************************************************************************/
 
-/* calculate left and right margin widths */
-void	amstrad_calculate_left_and_right_margins(void)
+void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int htot;
-	int hsyncpos;
-        int hsynclen;
-        int hdisp;
-        int hsync_end;
+	int c;
 
-	/* get horizontal total */
-        htot = hd6845s_getreg(HD6845S_H_TOT);
-	/* get horizontal sync position */
-        hsyncpos = hd6845s_getreg(HD6845S_H_SYNC_POS);
 
-	/* get hsync output to monitor */
-	hsynclen = hd6845s_getreg(HD6845S_SYNC) & 0x0f;
-	hsynclen = hsync_output_remap[hsynclen];
+	int crtc_execute_cycles;
+	int num_cycles_remaining;
+	EVENT_LIST_ITEM *pItem;
+	int NumItemsRemaining;
+	int previous_time;
 
-	/* calculate hsync end */
-	hsync_end = hsyncpos + hsynclen + HD6845S_MONITOR_HSYNC_LEN;
+	previous_time = 0;
+	num_cycles_remaining = 19968;
 
-	if ((hsync_end)>(htot+1))
+	amstrad_bitmap=bitmap;
+	amstrad_display = amstrad_bitmap->line[0];
+	c=0;
+
+	// video_refresh is set if any of the 6845 or Video ULA registers are changed
+	// this then forces a full screen redraw
+
+
+        pItem = EventList_GetFirstItem();
+        NumItemsRemaining = EventList_NumEvents();
+
+	do
 	{
-		/* no left border is visible */
-		left_margin = 0;
-	}
-	else
-	{
-		/* part of left border is visible */
-		left_margin = (htot+1) - hsync_end;
-
-	}
-
-	/* get horizontal displayed */
-        hdisp = hd6845s_getreg(HD6845S_H_DISP);
-
-	if ((hdisp+left_margin)>50)
-	{
-		/* no right border is visible */
-		right_margin = 0;
-	}
-	else
-	{
-		/* part of right border is visible */
-		right_margin = 50 - hdisp - left_margin;
-	}
-
-        graphics_clocks = 50 - right_margin - left_margin;
-
-        //fprintf(errorlog, "%d %d %d\r\n",left_margin, right_margin, graphics_clocks);
-        //fprintf(errorlog, "R: %d %d %d %d\r\n",htot, hsyncpos, hsynclen, hdisp);
-}
-
-int lc1,rc1;
-                #if 0
-// 35 is top of screen.
-// 38 chars in vtot.
-// 30 is normal
-// 4 lines == 36 blanking lines
-void    amstrad_calculate_top_and_bottom_margins(void)
-{
-        int vtot;
-        int vsyncpos;
-        int mr;
-
-        vtot = hd6845s_getreg(HD6845S_V_TOT);
-        vsyncpos = hd6845s_getreg(HD6845S_V_SYNC_POS);
-        mr = hd6845s_getreg(HD6845S_MAX_RASTER);
-
-        vsync_end = (vsyncpos*mr) + HD6845S_MONITOR_VSYNC_LEN;
-
-        if ((vsync_end)>(vtot+1))
-	{
-                int lines_over;
-
-                lines_over = vsync_end - vtot;
-
-
-                lc1 = vsync_end - v
-		/* no left border is visible */
-		left_margin = 0;
-	}
-	else
-	{
-		/* part of left border is visible */
-		left_margin = (htot+1) - hsync_end;
-
-	}
-                     #endif
-
-
-
-void amstrad_render_graphics(struct osd_bitmap *bitmap)        //unsigned char *bm)
-{
-        int i;
-        int ma;
-        int Addr, byte0, byte1;
-        //unsigned char *bm;
-        int r;
-
-        ma = hd6845s_getreg(HD6845S_MA);
-        r = hd6845s_getreg(HD6845S_RA);
-
-	/* setup render ptr for this line */
-        //bm = amstrad_bitmap->line[amstrad_scanline] + (x<<4);
-
-        for (i=0; i<graphics_clocks; i++)
-        {
-				// calc mem addr to fetch data from
-				//based on ma, and ra
-				Addr = (((ma>>(4+8)) & 0x03)<<14) |
-					((r & 0x07)<<11) |
-					((ma & 0x03ff)<<1);
-
-                // get data from memory
-                byte0 = Amstrad_Memory[Addr];
-                byte1 = Amstrad_Memory[Addr+1];
-
-                // decode byte 0 and 1 depending on mode
-                amstrad_vh_decodebyte(bitmap, byte0,byte1);
-
-				// update ma
-				ma++;
-
-
-
-        }
-}
-
-
-void amstrad_render_scanline(void)
-{
-	unsigned int hd6845s_state;
-        int border_colour;
-
-	/* setup render ptr for this line */
-
-        amstrad_render_y = amstrad_scanline;
-
-	hd6845s_state = hd6845s_getreg(HD6845S_STATE);
-
-        border_colour = Machine->pens[AmstradCPC_PenColours[16]];
-
-        if (!(hd6845s_state & HD6845S_VDISP))
-       {
-               /* inhibit display */
-                /* On Amstrad, border colour is displayed */
-                int i;
-
-                for (i=0;i<Machine->drv->screen_width; i++)
-                {
-                        plot_pixel(amstrad_bitmap, i, amstrad_render_y, border_colour);
-                }
-        }
-        else
-	{
-                int x;
-
-		amstrad_calculate_left_and_right_margins();
-
-                x = 0;
-
-		if (left_margin!=0)
-                {
-                        int i;
-
-                        for (i=0;i<(left_margin<<4); i++)
-                        {
-                                plot_pixel(amstrad_bitmap, i, amstrad_render_y, border_colour);
-                        }
-
-                        x+=left_margin<<4;
-                }
-
-		if (graphics_clocks!=0)
+                if (NumItemsRemaining==0)
 		{
-
-                        amstrad_render_x = x;
-
-                        amstrad_render_graphics(amstrad_bitmap);
-
-                        x+=(graphics_clocks<<4);
-                }
-
-
-		if (right_margin!=0)
-		{
-                        int i;
-
-                        for (i=0;i<(right_margin<<4); i++)
-                        {
-                                plot_pixel(amstrad_bitmap, i+x, amstrad_render_y, border_colour);
-                        }
+			crtc_execute_cycles = num_cycles_remaining;
+			num_cycles_remaining = 0;
 		}
-
-	}
-}
-
-
-void amstrad_update_scanline(void)
-{
-  //
-    //    if (amstrad_scanline<272)
-      //  {
-		amstrad_render_scanline();
-        amstrad_scanline++;
-      //  }
-
-        hd6845s_update_clocks(64);
-
-     //   if (amstrad_scanline==312)
-       // {
-         //       amstrad_scanline=0;
-        //}
-
-}
-
-
-
-
-/*
-	unsigned char *bm;
-
-	int vdisp = hd6845s_getreg(6);
-	int hdisp = hd6845s_getreg(1);
-	int maxras = hd6845s_getreg(9);
-
-	int scr_addr_hi = hd6845s_getreg(12);
-	int scr_addr_lo = hd6845s_getreg(13);
-
-	int v,r,h;
-
-	int ma_store;
-	int ma;
-	int l;
-
-	l = 8;
-
-	// initial ma
-	ma = ((scr_addr_hi & 0x0ff)<<8) | (scr_addr_lo & 0x0ff);
-
-	for (v=0; v<vdisp; v++)
-	{
-		ma_store = ma;
-
-		for (r=0; r<(maxras+1); r++)
+		else
 		{
-			// reload ma from ma_store
-			ma = ma_store;
+			int time_delta;
 
-			// setup render ptr for this line
-			bm = bitmap->line[l];
+			/* calculate time between last event and this event */
+			time_delta = pItem->Event_Time - previous_time;
+		
+			crtc_execute_cycles = time_delta/4;
 
-			// render visible part of display
-			for (h=0; h<hdisp; h++)
+			num_cycles_remaining -= time_delta/4;
+
+                  //      logerror("Time Delta: %04x\r\n", time_delta);
+
+                }
+
+                while (crtc_execute_cycles>0)
+		{
+			// check that we are on the emulated screen area.
+			if ((x_screen_pos>=0) && (x_screen_pos<AMSTRAD_SCREEN_WIDTH) && (y_screen_pos>=0) && (y_screen_pos<AMSTRAD_SCREEN_HEIGHT))
 			{
-				unsigned char byte0, byte1;
-				unsigned long Addr;
+				// Move the CRT Beam on one 6845 character distance
+				x_screen_pos=x_screen_pos+16;	
+				amstrad_display=amstrad_display+16;	
 
-				// calc mem addr to fetch data from
-				//based on ma, and ra
-				Addr = (((ma>>(4+8)) & 0x03)<<14) |
-					((r & 0x07)<<11) |
-					((ma & 0x03ff)<<1);
+				// if the video ULA DE 'Display Enabled' input is high then draw the pixels else blank the screen
+				(draw_function)();
 
-				// get data from memory
-				byte0 = Amstrad_Memory[Addr];
-				byte1 = Amstrad_Memory[Addr+1];
-
-				// decode byte 0 and 1 depending on mode
-				amstrad_vh_decodebyte(byte0,byte1, bm);
-				bm+=16;
-
-				// update ma
-				ma++;
 			}
 
-			l++;
+			// Clock the 6845
+			crtc6845_clock();
+			crtc_execute_cycles--;
+		}
+
+		if (NumItemsRemaining!=0)
+		{
+			switch ((pItem->Event_ID>>6) & 0x03)
+			{
+				case EVENT_LIST_CODE_GA_COLOUR:
+				{
+					int PenIndex = pItem->Event_ID & 0x03f;
+					int Colour = pItem->Event_Data;
+
+					amstrad_render_colours[PenIndex] = Machine->pens[/*AmstradCPC_PenColours[*/Colour/*]*/];
+				}
+				break;
+
+				case EVENT_LIST_CODE_GA_MODE:
+				{
+					amstrad_current_mode = pItem->Event_Data;
+				}
+				break;
+
+				case EVENT_LIST_CODE_CRTC_INDEX_WRITE:
+				{
+					/* register select */
+					crtc6845_address_w(0,pItem->Event_Data);
+				}
+				break;
+
+				case EVENT_LIST_CODE_CRTC_WRITE:
+				{
+					crtc6845_register_w(0, pItem->Event_Data);
+				}
+				break;
+
+				default:
+					break;
+			}
+		
+			/* store time for next calculation */
+			previous_time = pItem->Event_Time;
+			pItem++;
+			NumItemsRemaining--;		
 		}
 	}
+	while (num_cycles_remaining>0);
+
+    /* Assume all other routines have processed their data from the list */
+    EventList_Reset();
+    EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+
 
 }
-*/
+
+
+/************************************************************************
+ * amstrad_vh_start
+ * Initialize the amstrad video emulation
+ ************************************************************************/
+
+int amstrad_vh_start(void)
+{
+        int i;
+
+	amstrad_init_lookups();
+
+	crtc6845_config(&amstrad6845);
+
+//	amstrad_Video_RAM= memory_region(REGION_CPU1);
+	draw_function=*amstrad_draw_screen_disabled;
+
+
+	/* 64 us Per Line, 312 lines (PAL) = 19968 */
+        amstrad_render_mode = 0;
+        amstrad_current_mode = 0;
+        for (i=0; i<17; i++)
+        {
+                amstrad_render_colours[i] = 0;
+        }
+
+	EventList_Initialise(19968);
+
+	return 0;
+
+}
+
+/************************************************************************
+ * amstrad_vh_stop
+ * Shutdown the amstrad video emulation
+ ************************************************************************/
+
+void amstrad_vh_stop(void)
+{
+	EventList_Finish();
+}

@@ -40,3 +40,7 @@ int crtc6845_horizontal_sync_r(int offset);
 int crtc6845_vertical_sync_r(int offset);
 int crtc6845_display_enabled_r(int offset);
 int crtc6845_cursor_enabled_r(int offset);
+
+int crtc6845_cycles_to_vsync(void);
+int crtc6845_vsync_length_in_cycles(void);
+

@@ -2,7 +2,7 @@
 
 /* TODO:
 	- check how the drive select from DOR register, and the drive select
-	from the fdc are related !!!!
+	from the fdc are related !!!! 
 	- if all drives do not have a disk in them, and the fdc is reset, is a int generated?
 	(if yes, indicates drives are ready without discs, if no indicates no drives are ready)
 	- status register a, status register b
@@ -16,7 +16,7 @@ static pc_fdc fdc;
 static void pc_fdc_hw_interrupt(int state);
 static void pc_fdc_hw_dma_drq(int,int);
 
-static nec765_interface pc_fdc_nec765_interface =
+static nec765_interface pc_fdc_nec765_interface = 
 {
 	pc_fdc_hw_interrupt,
 	pc_fdc_hw_dma_drq
@@ -46,6 +46,17 @@ void	pc_fdc_init(pc_fdc_hw_interface *iface)
 	nec765_init(&pc_fdc_nec765_interface, NEC765A);
 
 	pc_fdc_reset();
+
+        floppy_drives_init();
+        floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_geometry(1, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_geometry(2, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_geometry(3, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
+        floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT,1);
+        floppy_drive_set_flag_state(2, FLOPPY_DRIVE_PRESENT,1);
+        floppy_drive_set_flag_state(3, FLOPPY_DRIVE_PRESENT,1);
+
 }
 
 void	pc_fdc_set_tc_state(int state)
@@ -129,7 +140,7 @@ static WRITE_HANDLER(pc_fdc_data_rate_w)
 		/* toggle reset state */
 		nec765_set_reset_state(1);
  		nec765_set_reset_state(0);
-
+	
 		/* bit is self-clearing */
 		data &= ~0x080;
 	}
@@ -156,11 +167,26 @@ READ_HANDLER(pc_fdc_dir_r)
 WRITE_HANDLER(pc_fdc_dor_w)
 {
 
+        int selected_drive;
+
 	logerror("FDC DOR: %02x\r\n",data);
-	fdc.digital_output_register = data;
+
+        floppy_drive_set_ready_state(fdc.digital_output_register & 0x03, 1, 0);
+
+        fdc.digital_output_register = data;
+
+        selected_drive = data & 0x03;
 
 	/* set floppy drive motor state */
-	floppy_drive_set_motor_state((data>>4) & 0x0f);
+        floppy_drive_set_motor_state(0,(data>>4) & 0x0f);
+        floppy_drive_set_motor_state(1,(data>>5) & 0x01);
+        floppy_drive_set_motor_state(2,(data>>6) & 0x01);
+        floppy_drive_set_motor_state(3,(data>>7) & 0x01);
+
+        if ((data>>4) & (1<<selected_drive))
+        {
+           floppy_drive_set_ready_state(selected_drive, 1, 0);
+        }
 
 	/* changing the DMA enable bit, will affect the terminal count state
 	from reaching the fdc - if dma is enabled this will send it through
@@ -186,15 +212,15 @@ WRITE_HANDLER(pc_fdc_dor_w)
 			when the fdc is reset.
 			In the FDC docs, it states that a INT will
 			be generated if READY input is true when the
-			fdc is reset.
-
+			fdc is reset. 
+			
 			 It also states, that outputs to drive are set to 0.
 			 Maybe this causes the drive motor to go on, and therefore
-			 the ready line is set.
+			 the ready line is set. 
 
 			This in return causes a int?? ---
-
-
+		
+		
 		what is not yet clear is if this is a result of the drives ready state
 		changing...
 		*/

@@ -8,12 +8,23 @@
  ******************************************************************************/
 #include "driver.h"
 #include "machine/8255ppi.h"
-/*#include "systems/i8255.h" */
-#include "vidhrdw/hd6845s.h"
-#include "machine/amstrad.h"
-#include "vidhrdw/amstrad.h"
+/*#include "mess/systems/i8255.h" */
+/*#include "mess/vidhrdw/hd6845s.h"*/
+/* CRTC display */
+#include "vidhrdw/m6845.h"
+#include "includes/amstrad.h"
 #include "includes/nec765.h"
 #include "includes/dsk.h"
+#include "eventlst.h"
+
+/*-------------------------------------------*/
+/* MULTIFACE */
+static void multiface_rethink_memory(void);
+static WRITE_HANDLER(multiface_io_write);
+void multiface_init(void);
+void multiface_exit(void);
+void multiface_stop(void);
+/*-------------------------------------------*/
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
 hardware (GA and CRTC - the CRTC specifies the memory address to access,
@@ -36,11 +47,6 @@ This gives a total of 19968 NOPs per frame. */
 #define AMSTRAD_US_PER_FRAME	19968
 #define AMSTRAD_FPS 			50
 #define AMSTRAD_T_STATES_PER_US 4
-
-/* These are the measured visible screen dimensions in CRTC characters.
-50 CRTC chars in X, 35 CRTC chars in Y (8 lines per char assumed) */
-#define AMSTRAD_SCREEN_WIDTH	(50*16)
-#define AMSTRAD_SCREEN_HEIGHT	(35*8)
 
 /* machine name is defined in bits 3,2,1.
 Names are: Isp, Triumph, Saisho, Solavox, Awa, Schneider, Orion, Amstrad.
@@ -67,6 +73,10 @@ static int ppi_port_outputs[3];
 /* keyboard line 0-9 */
 static int amstrad_keyboard_line;
 static int crtc_vsync_output;
+
+static void *amstrad_interrupt_timer;
+static void *amstrad_vsync_timer;
+
 
 static void update_psg(void)
 {
@@ -102,7 +112,7 @@ static void update_psg(void)
 
 
 /* ppi port a read */
-READ_HANDLER( amstrad_ppi_porta_r)
+READ_HANDLER(amstrad_ppi_porta_r)
 {
 	update_psg();
 
@@ -114,7 +124,7 @@ READ_HANDLER( amstrad_ppi_porta_r)
 /* Bit 7 = Cassette tape input */
 /* Bit 0 = VSYNC from CRTC */
 
-READ_HANDLER ( amstrad_ppi_portb_r )
+READ_HANDLER(amstrad_ppi_portb_r)
 {
 	int cassette_data;
 
@@ -126,9 +136,9 @@ READ_HANDLER ( amstrad_ppi_portb_r )
 	return ((ppi_port_inputs[1] & 0x07e) | crtc_vsync_output | cassette_data);
 }
 
-WRITE_HANDLER ( amstrad_ppi_porta_w )
+WRITE_HANDLER(amstrad_ppi_porta_w)
 {
-	ppi_port_outputs[0] = data;
+        ppi_port_outputs[0] = data;
 
 	update_psg();
 }
@@ -140,22 +150,22 @@ WRITE_HANDLER ( amstrad_ppi_porta_w )
 /* bit 4 = Cassette motor control */
 /* bit 3-0 =  Specify keyboard line */
 
-WRITE_HANDLER ( amstrad_ppi_portc_w )
+WRITE_HANDLER(amstrad_ppi_portc_w)
 {
-	ppi_port_outputs[2] = data;
+        ppi_port_outputs[2] = data;
 
 	/* cassette motor control */
-	device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
+        device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
 
 	/*-----------------27/02/00 10:35-------------------
 	 cassette write data
 	--------------------------------------------------*/
-	device_output(IO_CASSETTE, 0, (data & (1<<5)) ? -32768 : 32767);
+        device_output(IO_CASSETTE, 0, (data & (1<<5)) ? -32768 : 32767);
 
 	/* psg operation */
-	amstrad_psg_operation = (data >> 6) & 0x03;
+        amstrad_psg_operation = (data >> 6) & 0x03;
 	/* keyboard line */
-	amstrad_keyboard_line = (data & 0x0f);
+        amstrad_keyboard_line = (data & 0x0f);
 
 	update_psg();
 }
@@ -173,12 +183,7 @@ static ppi8255_interface amstrad_ppi8255_interface =
 
 static nec765_interface amstrad_nec765_interface =
 {
-#if 0
-	dsk_seek_callback,
-	dsk_get_sectors_per_track,
-	dsk_get_id_callback,
-	dsk_get_sector_ptr_callback,
-#endif
+	NULL,
 	NULL
 };
 
@@ -234,6 +239,7 @@ static unsigned char AmstradCPC_ReadKeyboard(void)
 	return readinputport(amstrad_keyboard_line);
 }
 
+
 void Amstrad_RethinkMemory(void)
 {
 	/* the following is used for banked memory read/writes and for setting up
@@ -252,13 +258,16 @@ void Amstrad_RethinkMemory(void)
 		}
 		/* set bank address for MRA_BANK1 */
 		cpu_setbank(1, BankBase);
+		cpu_setbank(2, BankBase+0x02000);
 
 
 		/* bank 1 - 0x04000..0x07fff */
-		cpu_setbank(2, AmstradCPC_RamBanks[1]);
+		cpu_setbank(3, AmstradCPC_RamBanks[1]);
+		cpu_setbank(4, AmstradCPC_RamBanks[1]+0x02000);
 
 		/* bank 2 - 0x08000..0x0bfff */
-		cpu_setbank(3, AmstradCPC_RamBanks[2]);
+		cpu_setbank(5, AmstradCPC_RamBanks[2]);
+		cpu_setbank(6, AmstradCPC_RamBanks[2]+0x02000);
 
 		/* bank 3 - 0x0c000..0x0ffff */
 		if ((AmstradCPC_GA_RomConfiguration & 0x08) == 0)
@@ -269,15 +278,25 @@ void Amstrad_RethinkMemory(void)
 		{
 			BankBase = AmstradCPC_RamBanks[3];
 		}
-		cpu_setbank(4, BankBase);
+		cpu_setbank(7, BankBase);
+		cpu_setbank(8, BankBase+0x02000);
 
-		cpu_setbank(5, AmstradCPC_RamBanks[0]);
-		cpu_setbank(6, AmstradCPC_RamBanks[1]);
-		cpu_setbank(7, AmstradCPC_RamBanks[2]);
-		cpu_setbank(8, AmstradCPC_RamBanks[3]);
+		cpu_setbank(9, AmstradCPC_RamBanks[0]);
+		cpu_setbank(10, AmstradCPC_RamBanks[0]+0x02000);
+		cpu_setbank(11, AmstradCPC_RamBanks[1]);
+		cpu_setbank(12, AmstradCPC_RamBanks[1]+0x02000);
+		cpu_setbank(13, AmstradCPC_RamBanks[2]);
+		cpu_setbank(14, AmstradCPC_RamBanks[2]+0x02000);
+		cpu_setbank(15, AmstradCPC_RamBanks[3]);
+		cpu_setbank(16, AmstradCPC_RamBanks[3]+0x02000);
+
+		/* multiface hardware enabled? */
+		if (readinputport(11) & 0x01)
+		{
+			multiface_rethink_memory();
+		}
 	}
 }
-
 
 
 
@@ -326,6 +345,7 @@ void AmstradCPC_GA_Write(int Data)
 
 	case 1:
 		{
+			int PreviousColour;
 			int PenIndex;
 
 			/* colour selection */
@@ -339,13 +359,35 @@ void AmstradCPC_GA_Write(int Data)
 				PenIndex = AmstradCPC_GA_PenSelected & 0x0f;
 			}
 
+	
+			PreviousColour = AmstradCPC_PenColours[PenIndex];
+
 			AmstradCPC_PenColours[PenIndex] = Data & 0x01f;
+		
+			/* colour changed? */
+			if (PreviousColour!=AmstradCPC_PenColours[PenIndex])
+			{
+                                logerror("%d\r\n",Machine->drv->cpu[0].cpu_clock);
+                                logerror("%d\r\n",Machine->drv->frames_per_second);
+                                logerror("%d\r\n",cpu_getcurrentcycles());
+
+                                EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cpu_getcurrentcycles());
+			}
+
 		}
 		return;
 
 	case 2:
 		{
+			int Previous_GA_RomConfiguration = AmstradCPC_GA_RomConfiguration;
+
 			AmstradCPC_GA_RomConfiguration = Data;
+
+			/* mode change? */
+			if (((Data^Previous_GA_RomConfiguration) & 0x03)!=0)
+			{
+				EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, cpu_getcurrentcycles());
+			}
 		}
 		break;
 
@@ -411,7 +453,7 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 		if (Index == 3)
 		{
 			/* CRTC Read register */
-			data = hd6845s_register_r();
+			data = 	crtc6845_register_r(0);
 		}
 	}
 
@@ -485,15 +527,24 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		{
 		case 0:
 			{
-				/* register select */
-				hd6845s_index_w(data);
+				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, cpu_getcurrentcycles());
+
+				///* register select */
+				//crtc6845_address_w(0,data);
 			}
 			break;
 
 		case 1:
 			{
-				/* write data */
-				hd6845s_register_w(data);
+				/* crtc register write */
+				{
+					
+					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, cpu_getcurrentcycles());
+				}
+
+//				/* write data */
+//				crtc6845_register_w(0,data);
+
 			}
 			break;
 
@@ -529,8 +580,10 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 			case 0:
 				{
 					/* fdc motor on */
-					floppy_drive_set_motor_state(data & 0x01);
-					/*					FDD_SetMotor(Data); */
+					floppy_drive_set_motor_state(0,data & 0x01);
+					floppy_drive_set_motor_state(1,data & 0x01);
+					floppy_drive_set_ready_state(0,1,1);
+					floppy_drive_set_ready_state(1,1,1);
 				}
 				break;
 
@@ -545,9 +598,270 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 			}
 		}
 	}
+
+	multiface_io_write(offset,data);
 }
 
-/* The Amstrad interrupts are not really 300hz. The gate array
+/******************************************************************************************
+	Multiface emulation
+  ****************************************************************************************/
+
+
+
+static unsigned char *multiface_ram;
+static unsigned long multiface_flags;
+
+/* stop button has been pressed */
+#define MULTIFACE_STOP_BUTTON_PRESSED	0x0001
+/* ram/rom is paged into memory space */
+#define MULTIFACE_RAM_ROM_ENABLED		0x0002
+/* when visible OUT commands are performed! */
+#define MULTIFACE_VISIBLE				0x0004
+
+/* multiface traps calls to 0x0065 when it is active. 
+This address has a RET and so executes no code. 
+
+It is believed that it is used to make multiface invisible to programs */
+
+#define MULTIFACE_0065_TOGGLE			0x0008
+
+
+/* used to setup computer if a snapshot was specified */
+OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
+{
+	if (cpu_get_pc()==0x065)
+	{
+		/* first call? */
+		if ((multiface_flags & MULTIFACE_0065_TOGGLE)==0)
+		{
+			/* yes */
+			multiface_flags |= MULTIFACE_VISIBLE;
+			
+			/* set flag */
+			multiface_flags |= MULTIFACE_0065_TOGGLE;
+		}
+		else
+		{
+			/* no, second call */
+			
+			/* no longer visible */
+			multiface_flags &= ~MULTIFACE_VISIBLE;
+
+			/* clear op base override */
+			cpu_setOPbaseoverride(0,0);
+		}
+	}
+
+	return (cpu_get_pc() & 0x0ffff);
+}
+
+void    multiface_init(void)
+{
+	/* after a reset the multiface is visible */
+	multiface_flags = MULTIFACE_VISIBLE;
+
+	/* allocate ram */
+        multiface_ram = (unsigned char *)malloc(8192);
+}
+
+void    multiface_exit(void)
+{
+	/* free ram */
+	if (multiface_ram!=NULL)
+	{
+		free(multiface_ram);
+		multiface_ram = NULL;
+	}
+}
+
+
+/* simulate the stop button has been pressed */
+void    multiface_stop(void)
+{
+	/* multiface hardware enabled? */
+	if ((readinputport(11) & 0x01)==0)
+		return;
+
+	/* if stop button not already pressed, do press action */
+	/* pressing stop button while multiface is running has no effect */
+	if ((multiface_flags & MULTIFACE_STOP_BUTTON_PRESSED)==0)
+	{
+		/* initialise 0065 toggle */
+		multiface_flags &= ~MULTIFACE_0065_TOGGLE;
+
+		multiface_flags |= MULTIFACE_RAM_ROM_ENABLED;
+
+		/* stop button has been pressed, furthur pressess will not issue a NMI */
+		multiface_flags |= MULTIFACE_STOP_BUTTON_PRESSED;
+
+		AmstradCPC_GA_RomConfiguration &=~0x04;
+
+		/* page rom into memory */
+		multiface_rethink_memory();
+
+		/* pulse the nmi line */
+		cpu_set_nmi_line(0, PULSE_LINE);
+
+		/* initialise 0065 override to monitor calls to 0065 */
+		cpu_setOPbaseoverride(0,amstrad_multiface_opbaseoverride);
+	}
+
+}
+
+static void multiface_rethink_memory(void)
+{
+        unsigned char *multiface_rom;
+
+	/* multiface hardware enabled? */
+	if ((readinputport(11) & 0x01)==0)
+		return;
+
+        multiface_rom = &memory_region(REGION_CPU1)[0x01C000];
+
+	if (
+		((multiface_flags & MULTIFACE_RAM_ROM_ENABLED)!=0) &&
+		((AmstradCPC_GA_RomConfiguration & 0x04) == 0)
+		)
+	{
+
+		/* set bank addressess */
+		cpu_setbank(1, multiface_rom);
+		cpu_setbank(2, multiface_ram);
+		cpu_setbank(9, multiface_rom);
+		cpu_setbank(10, multiface_ram);
+	}
+}
+
+/* any io writes are passed through here */
+static WRITE_HANDLER(multiface_io_write)
+{
+	/* multiface hardware enabled? */
+	if ((readinputport(11) & 0x01)==0)
+		return;
+
+        /* visible? */
+	if (multiface_flags & MULTIFACE_VISIBLE)
+	{
+		if (offset==0x0fee8)
+		{
+			multiface_flags |= MULTIFACE_RAM_ROM_ENABLED;
+			Amstrad_RethinkMemory();
+		}
+
+		if (offset==0x0feea)
+		{
+			multiface_flags &= ~MULTIFACE_RAM_ROM_ENABLED;
+			Amstrad_RethinkMemory();
+		}
+	}
+
+	/* update multiface ram with data */
+        /* these are decoded fully! */
+        switch (offset>>8)
+        {
+                /* gate array */
+                case 0x07f:
+                {
+                        switch ((data>>6) & 0x03)
+                        {
+                                /* pen index */
+                                case 0x00:
+                                {
+                                    multiface_ram[0x01fcf] = data;
+
+                                }
+                                break;
+
+                                /* pen colour */
+                                case 0x040:
+                                {
+                                    int pen_index;
+
+                                    pen_index = multiface_ram[0x01fcf] & 0x0f;
+
+                                    if (multiface_ram[0x01fcf] & 0x010)
+                                    {
+
+                                        multiface_ram[0x01fdf + pen_index] = data & 0x01f;
+                                    }
+                                    else
+                                    {
+                                        multiface_ram[0x01f90 + pen_index] = data & 0x01f;
+                                    }
+
+                                }
+                                break;
+
+                                /* rom/mode selection */
+                                case 0x080:
+                                {
+
+                                    multiface_ram[0x01fef] = data;
+
+                                }
+                                break;
+
+                                /* ram configuration */
+                                case 0x0c0:
+                                {
+
+                                    multiface_ram[0x01fff] = data;
+
+                                }
+                                break;
+
+                                default:
+                                  break;
+
+                        }
+                        
+                }
+                break;
+
+
+                /* crtc register index */
+                case 0x0bc:
+                {
+                        multiface_ram[0x01cff] = data;
+                }
+                break;
+
+                /* crtc register write */
+                case 0x0bd:
+                {
+                        int reg_index;
+
+                        reg_index = multiface_ram[0x01cff] & 0x0f;
+
+                        multiface_ram[0x01db0 + reg_index] = data;
+                }
+                break;
+
+
+                /* 8255 ppi control */
+                case 0x0f7:
+                {
+                  multiface_ram[0x017ff] = data;
+
+                }
+                break;
+
+                /* rom select */
+                case 0x0df:
+                {
+                   multiface_ram[0x01aac] = data;
+                }
+                break;
+
+                default:
+                   break;
+
+         }
+
+}
+
+
+/* The gate array
 counts the CRTC HSYNC pulses. (It has a internal 6-bit counter).
 When the counter in the gate array reaches 52, a interrupt is signalled.
 The counter is reset and the count starts again. If the Z80 has ints
@@ -555,74 +869,58 @@ enabled, the int will be executed, otherwise the int can be held.
 As soon as the z80 acknowledges the int, this is recognised by the
 gate array and the top bit of this counter is reset.
 
-  This counter is also reset two scanlines into the VSYNC signal
+This counter is also reset two scanlines into the VSYNC signal
 
-Interrupts are therefore never closer than 32 lines. For this
-driver, for now, we will assume that ints do occur every 300Hz. */
+Interrupts are therefore never closer than 32 lines. */
 
-static int count = 6;
-
-int amstrad_timer_interrupt(void)
+#if 0
+void    amstrad_vsync_timer_callback(int dummy)
 {
-	count--;
-
-	if (count < 0)
+	if ((readinputport(11) & 0x02)!=0)
 	{
-		crtc_vsync_output = 1;
-		count = 6;
-	}
-	else
-	{
-		crtc_vsync_output = 0;
+		multiface_stop();
 	}
 
 
-	cpu_set_irq_line(0, 0, HOLD_LINE);
 
-	return ignore_interrupt();
-	/*return 0; */
 }
+#endif
 
-int amstrad_frame_interrupt(void)
+/* called every 64us to update a counter which can set an interrupt */
+static int amstrad_52_divider;
+static int block_counter;
+
+void    amstrad_interrupt_timer_callback(int dummy)
 {
-	return 0;
+        amstrad_52_divider++;
+
+        if (amstrad_52_divider == 52)
+        {
+                block_counter++;
+
+                crtc_vsync_output = 0;
+                if (block_counter==6)
+                {
+                        block_counter = 0;
+
+                        crtc_vsync_output = 1;
+
+                        if ((readinputport(11) & 0x02)!=0)
+                        {
+                                multiface_stop();
+                        }
+                }
+
+                amstrad_52_divider = 0;
+                cpu_set_irq_line(0,0, HOLD_LINE);
+        }
 }
 
-int int_counter = 0;
-
-
-int amstrad_interrupt(void)
-{
-	/* update graphics display */
-	amstrad_update_scanline();
-
-	int_counter++;
-
-	if (int_counter == 52)
-	{
-		int_counter = 0;
-		cpu_set_irq_line(0, 0, HOLD_LINE);
-	}
-
-
-	return ignore_interrupt();
-
-}
-
-/*void amstrad_timer_callback(int timer_id)
-{
-
-
-}
-  */
-
-
-
-/*		  timer_set(amstrad_time_to_int, 0, amstrad_timer_callback); */
 
 
 void amstrad_common_init(void)
 {
+
 	/* set all colours to black */
 	int i;
 
@@ -633,22 +931,44 @@ void amstrad_common_init(void)
 
 	ppi8255_init(&amstrad_ppi8255_interface);
 
+        amstrad_interrupt_timer = NULL;
+        amstrad_vsync_timer = NULL;
+        amstrad_52_divider = 0;
+        block_counter = 0;
+
 	cpu_setbankhandler_r(1, MRA_BANK1);
 	cpu_setbankhandler_r(2, MRA_BANK2);
 	cpu_setbankhandler_r(3, MRA_BANK3);
 	cpu_setbankhandler_r(4, MRA_BANK4);
+	cpu_setbankhandler_r(5, MRA_BANK5);
+	cpu_setbankhandler_r(6, MRA_BANK6);
+	cpu_setbankhandler_r(7, MRA_BANK7);
+	cpu_setbankhandler_r(8, MRA_BANK8);
 
-	cpu_setbankhandler_w(5, MWA_BANK5);
-	cpu_setbankhandler_w(6, MWA_BANK6);
-	cpu_setbankhandler_w(7, MWA_BANK7);
-	cpu_setbankhandler_w(8, MWA_BANK8);
+	cpu_setbankhandler_w(9, MWA_BANK9);
+	cpu_setbankhandler_w(10, MWA_BANK10);
+	cpu_setbankhandler_w(11, MWA_BANK11);
+	cpu_setbankhandler_w(12, MWA_BANK12);
+	cpu_setbankhandler_w(13, MWA_BANK13);
+	cpu_setbankhandler_w(14, MWA_BANK14);
+	cpu_setbankhandler_w(15, MWA_BANK15);
+	cpu_setbankhandler_w(16, MWA_BANK16);
 
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
 
+	floppy_drives_init();
+	floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
+	floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
+
+        /* more accurate but won't be perfect yet */
+        amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
+
+        timer_set_overclock(0, (double)4000000/(double)(AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS));
+
 }
 
 void amstrad_init_machine(void)
@@ -674,6 +994,7 @@ void amstrad_init_machine(void)
 
 	ppi_port_inputs[1] = readinputport(10) & 0x01e;
 
+	multiface_init();
 }
 
 void kccomp_init_machine(void)
@@ -751,14 +1072,20 @@ static void amstrad_init_palette(unsigned char *sys_palette, unsigned short *sys
 	memcpy(sys_colortable, amstrad_colour_table, sizeof (amstrad_colour_table));
 }
 
-/* Memory is banked in 16k blocks. The ROM can
+
+/* Memory is banked in 16k blocks. However, the multiface
+pages the memory in 8k blocks! The ROM can
 be paged into bank 0 and bank 3. */
 static struct MemoryReadAddress readmem_amstrad[] =
 {
-	{0x00000, 0x03fff, MRA_BANK1},
-	{0x04000, 0x07fff, MRA_BANK2},
-	{0x08000, 0x0bfff, MRA_BANK3},
-	{0x0c000, 0x0ffff, MRA_BANK4},
+	{0x00000, 0x01fff, MRA_BANK1},
+	{0x02000, 0x03fff, MRA_BANK2},
+	{0x04000, 0x05fff, MRA_BANK3},
+	{0x06000, 0x07fff, MRA_BANK4},
+	{0x08000, 0x09fff, MRA_BANK5},
+	{0x0a000, 0x0bfff, MRA_BANK6},
+	{0x0c000, 0x0dfff, MRA_BANK7},
+	{0x0e000, 0x0ffff, MRA_BANK8},
 	{0x010000, 0x013fff, MRA_ROM},	   /* OS */
 	{0x014000, 0x017fff, MRA_ROM},	   /* BASIC */
 	{0x018000, 0x01bfff, MRA_ROM},	   /* AMSDOS */
@@ -768,10 +1095,14 @@ static struct MemoryReadAddress readmem_amstrad[] =
 
 static struct MemoryWriteAddress writemem_amstrad[] =
 {
-	{0x00000, 0x03fff, MWA_BANK5},
-	{0x04000, 0x07fff, MWA_BANK6},
-	{0x08000, 0x0bfff, MWA_BANK7},
-	{0x0c000, 0x0ffff, MWA_BANK8},
+	{0x00000, 0x01fff, MWA_BANK9},
+	{0x02000, 0x03fff, MWA_BANK10},
+	{0x04000, 0x05fff, MWA_BANK11},
+	{0x06000, 0x07fff, MWA_BANK12},
+	{0x08000, 0x09fff, MWA_BANK13},
+	{0x0a000, 0x0bfff, MWA_BANK14},
+	{0x0c000, 0x0dfff, MWA_BANK15},
+	{0x0e000, 0x0ffff, MWA_BANK16},
 	{-1}							   /* end of table */
 };
 
@@ -943,6 +1274,17 @@ static struct AY8910interface amstrad_ay_interface =
 	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL", KEYCODE_BACKSPACE, IP_JOY_NONE) \
 
 
+#define MULTIFACE_PORTS \
+	PORT_START \
+        PORT_BITX(0x001, 0x000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Multiface Hardware", IP_KEY_NONE, IP_JOY_NONE) \
+	PORT_DIPSETTING(0x00, DEF_STR( Off) ) \
+	PORT_DIPSETTING(0x01, DEF_STR( On) ) \
+	PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Multiface Stop", KEYCODE_F1, IP_JOY_NONE) \
+
+
+
+
+
 
 INPUT_PORTS_START(amstrad)
 
@@ -966,6 +1308,8 @@ INPUT_PORTS_START(amstrad)
 	PORT_DIPSETTING(0x00, "60hz")
 	PORT_DIPSETTING(0x010, "50hz")
 
+	MULTIFACE_PORTS
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START(kccomp)
@@ -988,7 +1332,7 @@ static struct MachineDriver machine_driver_amstrad =
 		/* MachineCPU */
 		{
 			CPU_Z80 | CPU_16BIT_PORT,  /* type */
-			(AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS), 								  /* clock: See Note Above */
+                        4000000, /*(AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS)*/                                                               /* clock: See Note Above */
 			readmem_amstrad,		   /* MemoryReadAddress */
 			writemem_amstrad,		   /* MemoryWriteAddress */
 			readport_amstrad,		   /* IOReadPort */
@@ -996,7 +1340,7 @@ static struct MachineDriver machine_driver_amstrad =
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
 										* Interrupt */
 			0 /*1 */ ,				   /* vblanks per frame */
-			amstrad_timer_interrupt, 300,	/* every scanline */
+                        0, 0,   /* every scanline */
 		},
 	},
 	50, 							   /* frames per second */
@@ -1052,8 +1396,8 @@ static struct MachineDriver machine_driver_kccomp =
 			writeport_amstrad,		   /* IOWritePort */
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
 										* Interrupt */
-			0 /*1 */ ,				   /* vblanks per frame */
-			amstrad_timer_interrupt, 300,	/* every scanline */
+                        0,  
+                        0, 0,  
 		},
 	},
 	50, 							   /* frames per second */
@@ -1110,10 +1454,13 @@ static struct MachineDriver machine_driver_kccomp =
 are banked. */
 ROM_START(cpc6128)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGION(0x01c000, REGION_CPU1)
+	ROM_REGION(0x020000, REGION_CPU1)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc6128.rom", 0x10000, 0x8000, 0x9e827fe1)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
+
+	/* optional Multiface hardware */
+        ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x02000, 0x00000000)
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0100,REGION_GFX1) */

@@ -35,7 +35,7 @@
 	run on it!!!!!!!!!!!!!!
 
     Later systems had:
-		- black/white monitor,
+		- black/white monitor, 
 		- dedicated printer was removed, and support for any printer was added
 		- 3" internal drive replaced by a 3.5" drive
 
@@ -86,7 +86,7 @@
   compatible with the previous models (though documents ARE compatible)"
 
 
-  TODO:
+  TODO: 
   - Printer hardware emulation (8256 etc)
   - Parallel port emulation (9512, 9512+, 10)
   - emulation of serial hardware
@@ -653,14 +653,23 @@ WRITE_HANDLER(pcw_system_control_w)
 		/* disc motor on */
 		case 9:
 		{
-			floppy_drive_set_motor_state(1);
-		}
+                        floppy_drive_set_motor_state(0,1);
+                        floppy_drive_set_motor_state(1,1);
+                        floppy_drive_set_ready_state(0,1,1);
+                        floppy_drive_set_ready_state(1,1,1);
+
+                }
 		break;
 
 		/* disc motor off */
 		case 10:
 		{
-			floppy_drive_set_motor_state(0);
+                        floppy_drive_set_motor_state(0,0);
+                        floppy_drive_set_motor_state(1,0);
+                        floppy_drive_set_ready_state(0,1,1);
+                        floppy_drive_set_ready_state(1,1,1);
+
+
 		}
 		break;
 
@@ -854,6 +863,7 @@ void pcw_init_machine(void)
 
 	nec765_init(&pcw_nec765_interface,NEC765A);
 
+
 	/* ram paging is actually undefined at power-on */
 	pcw_banks[0] = 0;
 	pcw_banks[1] = 1;
@@ -873,6 +883,9 @@ void pcw_init_machine(void)
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
 	floppy_drive_set_geometry(1, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
+        floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
+
 
 	roller_ram_offset = 0;
 
@@ -895,7 +908,7 @@ void pcw_init_memory(int size)
 			pcw_ram = malloc(256*1024);
 		}
 		break;
-
+	
 		case 512:
 		{
 			pcw_ram_size = 2;
@@ -1255,7 +1268,7 @@ static struct MachineDriver machine_driver_pcw9512 =
 
 ***************************************************************************/
 
-/* I am loading the boot-program outside of the Z80 memory area, because it
+/* I am loading the boot-program outside of the Z80 memory area, because it 
 is banked. */
 
 // for now all models use the same rom

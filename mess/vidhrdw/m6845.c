@@ -92,7 +92,7 @@ static int R14_cursor_address_H;         /* Cursor address high */
 static int R15_cursor_address_L;         /* Cursor address low */
 static int R16_light_pen_address_H;      /* *** Not implemented yet *** */
 static int R17_light_pen_address_L;      /* *** Not implemented yet *** */
-
+static int vertical_sync_width, horizontal_sync_width;
 static int screen_start_address;         /* = R12<<8 + R13 */
 static int cursor_address;				  /* = R14<<8 + R15 */
 //static int light_pen_address;			  /* = R16<<8 + R17 */
@@ -119,9 +119,20 @@ void crtc6845_register_w(int offset, int data)
 			R2_horizontal_sync_position=data;
 			break;
 		case 3:
-			R3_sync_width=data;
-			break;
-		case 4:
+                {
+                        /* if 0 is programmed, vertical sync width is 16 */
+                        vertical_sync_width = data>>4;
+
+                        if (vertical_sync_width == 0)
+                             vertical_sync_width = 16;
+
+                        R3_sync_width=data;
+
+                        horizontal_sync_width = data & 0x0f;
+                }
+                break;
+
+                case 4:
 			R4_vertical_total=data&0x7f;
 			break;
 		case 5:
@@ -263,6 +274,47 @@ void check_display_enabled(void)
 	Display_Enabled=Next_Display_Enabled;
 }
 
+/* calculate the number of cycles to the next vsync */
+int     crtc6845_cycles_to_vsync(void)
+{
+        int cycles_to_vsync;
+
+        if (Character_Row_Counter<R7_vertical_sync_position)
+        {
+                /* not yet reached the vertical sync position */
+                int rows;
+
+                rows = R7_vertical_sync_position - Character_Row_Counter;
+
+                cycles_to_vsync = rows * R9_scan_lines_per_character;
+
+        }
+        else
+        {
+                /* passed vertical sync position */
+
+                int rows;
+
+                /* rows to end of frame */
+                rows = (R4_vertical_total - Character_Row_Counter);
+                /* plus the number of rows to the vertical sync position */
+                rows += R7_vertical_sync_position;
+
+                cycles_to_vsync = rows * R9_scan_lines_per_character;
+
+        }
+
+        return cycles_to_vsync;
+
+}
+
+/* calculate the number of CRTC cycles for VSYNC */
+int     crtc6845_length_of_vsync_in_cycles(void)
+{
+        return R0_horizontal_total*vertical_sync_width;
+}
+
+
 /* clock the 6845 */
 void crtc6845_clock(void)
 {
@@ -327,7 +379,7 @@ void crtc6845_clock(void)
 			}
 
 			/* Check for end of Vertical Sync Pulse */
-			if (Vertical_Sync_Width_Counter>=((R3_sync_width>>4)&0xf))
+                        if (Vertical_Sync_Width_Counter>=vertical_sync_width)
 			{
 				Vertical_Sync_Width_Counter=0;
 				VSYNC=False;
@@ -368,12 +420,17 @@ void crtc6845_clock(void)
 	/* Check for start of Horizontal Sync Pulse */
 	if (Horizontal_Counter==R2_horizontal_sync_position)
 	{
-		HSYNC=True;
-		if (crct6845_calls.out_HS_func) (crct6845_calls.out_HS_func)(0,HSYNC); /* call HS update */
-	}
+                /* KT - If horizontal sync width is 0, on UM6845R/HD6845S
+                no hsync is generated */
+                if (horizontal_sync_width!=0)
+                {
+                        HSYNC=True;
+                        if (crct6845_calls.out_HS_func) (crct6845_calls.out_HS_func)(0,HSYNC); /* call HS update */
+                }
+        }
 
 	/* Check for end of Horizontal Sync Pulse */
-	if (Horizontal_Sync_Width_Counter>=(R3_sync_width&0xf))
+        if (Horizontal_Sync_Width_Counter>=horizontal_sync_width)
 	{
 		Horizontal_Sync_Width_Counter=0;
 		HSYNC=False;

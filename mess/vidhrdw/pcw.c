@@ -72,7 +72,7 @@ void pcw_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		pen1^=1;
 		pen0^=1;
 	}
-
+	
 	pen0 = Machine->pens[pen0];
 	pen1 = Machine->pens[pen1];
 

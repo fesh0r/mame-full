@@ -39,7 +39,7 @@ static void pc_fdc_interrupt(int state)
 //			pc_DMA_status &= ~(0x010<<FDC_DMA);
 //			pc_DMA_status |= 0x01 << FDC_DMA;		/* set DMA terminal count flag */
 //		}
-
+		
 		/* issue IRQ */
 		FDC_irq(6);
 	}
@@ -52,13 +52,13 @@ static void pc_fdc_dma_read(void)
 {
 	int data;
 
-
+	
 	/* dma acknowledge - and get byte from fdc */
 
 	data = pc_fdc_dack_r();
 
 	/* write byte to pc mem and update mem address */
-	if (pc_DMA_operation[FDC_DMA] == 1)
+	if (pc_DMA_operation[FDC_DMA] == 1) 
 	{
 		cpu_writemem20(pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA], data);
 	}
@@ -72,9 +72,9 @@ static void pc_fdc_dma_read(void)
 		pc_DMA_status &= ~(0x10 << FDC_DMA);	/* reset DMA running flag */
 		pc_DMA_status |= 0x01 << FDC_DMA;		/* set DMA terminal count flag */
 
+		/* it says the TC is pulsed.. I have no furthur details */
 		pc_fdc_set_tc_state(1);
-
-
+		pc_fdc_set_tc_state(0);
 	}
 
 }
@@ -85,7 +85,7 @@ static void pc_fdc_dma_write(void)
 	int data;
 
 	/* read byte from pc mem and update address */
-	if (pc_DMA_operation[FDC_DMA] == 2)
+	if (pc_DMA_operation[FDC_DMA] == 2) 
 	{
 		data = cpu_readmem20(pc_DMA_page[FDC_DMA] + pc_DMA_address[FDC_DMA]);
 	}
@@ -105,11 +105,12 @@ static void pc_fdc_dma_write(void)
 		pc_DMA_status |= 0x01 << FDC_DMA;		/* set DMA terminal count flag */
 
 		pc_fdc_set_tc_state(1);
+		pc_fdc_set_tc_state(0);
 
 	}
 
 }
-
+	
 
 void	pc_fdc_dma_drq(int state, int read)
 {
@@ -126,7 +127,7 @@ void	pc_fdc_dma_drq(int state, int read)
 			everything else continue. So this is a bodge*/
 			pc_dma_started = 1;
 
-//			logerror("DMA Bytes To Transfer: %d\r\n", pc_DMA_count[FDC_DMA]+1);
+			logerror("DMA Bytes To Transfer: %d\r\n", pc_DMA_count[FDC_DMA]+1);
 
 			if (read)
 			{
@@ -153,7 +154,7 @@ void	pc_fdc_dma_drq(int state, int read)
 				pc_dma_started = 0;
 			}
 
-//			logerror("DMA Bytes Remaining: %d\r\n", pc_DMA_count[FDC_DMA]+1);
+			logerror("DMA Bytes Remaining: %d\r\n", pc_DMA_count[FDC_DMA]+1);
 
 		}
 	}

@@ -36,7 +36,9 @@ floppy_interface dsk_floppy_interface=
 	dsk_seek_callback,
 	dsk_get_sectors_per_track,
 	dsk_get_id_callback,
-	dsk_get_sector_ptr_callback,
+	dsk_read_sector_data_into_buffer,
+	dsk_write_sector_data_from_buffer,
+	NULL
 };
 
 static void dsk_disk_image_init(dsk_drive *);
@@ -96,8 +98,8 @@ int dsk_floppy_load(int id)
 		if (thedrive->data)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
-			floppy_drive_setup_drive_status(id); /* mark disk as inserted */
-			floppy_set_interface(id,&dsk_floppy_interface);
+			floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 1);
+			floppy_drive_set_interface(id,&dsk_floppy_interface);
 			return INIT_OK;
 		}
 	}
@@ -182,6 +184,7 @@ void dsk_floppy_exit(int id)
 		dsk_save(IO_FLOPPY,id,&thedrive->data);
 		free(thedrive->data);
 	}
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 0);
 	thedrive->data = NULL;
 }
 
@@ -410,7 +413,7 @@ static unsigned char *get_floppy_data(int drive)
 	return drives[drive].data;
 }
 
-void dsk_get_id_callback(int drive, nec765_id *id, int id_index, int side)
+void dsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 {
 	int id_offset;
 	int track_offset;
@@ -441,13 +444,21 @@ void dsk_get_id_callback(int drive, nec765_id *id, int id_index, int side)
 	id->H = track_header[id_offset + 1];
 	id->R = track_header[id_offset + 2];
 	id->N = track_header[id_offset + 3];
-	id->ST0 = track_header[id_offset + 4];
-	id->ST1 = track_header[id_offset + 5];
+	id->flags = 0;
+
+	if (track_header[id_offset + 5] & 0x040)
+	{
+		id->flags |= ID_FLAG_DELETED_DATA;
+	}
+
+
+//	id->ST0 = track_header[id_offset + 4];
+//	id->ST1 = track_header[id_offset + 5];
 
 }
 
 
-void dsk_get_sector_ptr_callback(int drive, int sector_index, int side, char **ptr)
+char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
 {
 	int track_offset;
 	int sector_offset;
@@ -465,11 +476,9 @@ void dsk_get_sector_ptr_callback(int drive, int sector_index, int side, char **p
 	/* offset to track header in image */
 	track_offset = get_track_offset(drive, side);
 
-	*ptr = 0;
-
 	/* track exists? */
 	if (track_offset==0)
-		return;
+		return NULL;
 
 
 	/* setup sector offsets */
@@ -493,9 +502,33 @@ void dsk_get_sector_ptr_callback(int drive, int sector_index, int side, char **p
 	data = get_floppy_data(drive);
 
 	if (data==0)
-		return;
+		return NULL;
 
-	*ptr = (char *)(data + track_offset + sector_offset);
+	return (char *)(data + track_offset + sector_offset);
+}
+
+void dsk_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length)
+{
+	char * pSectorData;
+	
+        pSectorData = dsk_get_sector_ptr_callback(drive, index1, side);
+	
+	if (pSectorData!=NULL)
+	{
+		memcpy(pSectorData, ptr, length);
+	}
+}
+
+void dsk_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length)
+{
+	char *pSectorData;
+
+        pSectorData = dsk_get_sector_ptr_callback(drive, index1, side);
+
+	if (pSectorData!=NULL)
+	{
+		memcpy(ptr, pSectorData, length);
+	}
 }
 
 int    dsk_get_sectors_per_track(int drive, int side)
