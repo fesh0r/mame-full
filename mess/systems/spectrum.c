@@ -796,39 +796,35 @@ static void spectrum_plus3_port_1ffd_w(int offset, int data)
 
 
 
-static struct MemoryReadAddress spectrum_readmem[] = {
+static MEMORY_READ_START (spectrum_readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x57ff, spectrum_characterram_r },
 	{ 0x5800, 0x5aff, spectrum_colorram_r },
 	{ 0x5b00, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spectrum_writemem[] = {
+static MEMORY_WRITE_START (spectrum_writemem)
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x57ff, spectrum_characterram_w },
 	{ 0x5800, 0x5aff, spectrum_colorram_w },
 	{ 0x5b00, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress spectrum_128_readmem[] = {
+static MEMORY_READ_START (spectrum_128_readmem)
 		{ 0x0000, 0x3fff, MRA_BANK1 },
 		{ 0x4000, 0x7fff, MRA_BANK2 },
 		{ 0x8000, 0xbfff, MRA_BANK3 },
 		{ 0xc000, 0xffff, MRA_BANK4 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress spectrum_128_writemem[] = {
+static MEMORY_WRITE_START (spectrum_128_writemem)
 		{ 0x0000, 0x3fff, MWA_BANK5 },
 		{ 0x4000, 0x7fff, MWA_BANK6 },
 		{ 0x8000, 0xbfff, MWA_BANK7 },
 		{ 0xc000, 0xffff, MWA_BANK8 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress ts2068_readmem[] = {
+static MEMORY_READ_START (ts2068_readmem)
 		{ 0x0000, 0x1fff, MRA_BANK1 },
 		{ 0x2000, 0x3fff, MRA_BANK2 },
 		{ 0x4000, 0x5fff, MRA_BANK3 },
@@ -837,10 +833,9 @@ static struct MemoryReadAddress ts2068_readmem[] = {
 		{ 0xa000, 0xbfff, MRA_BANK6 },
 		{ 0xc000, 0xdfff, MRA_BANK7 },
 		{ 0xe000, 0xffff, MRA_BANK8 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ts2068_writemem[] = {
+static MEMORY_WRITE_START (ts2068_writemem)
 		{ 0x0000, 0x1fff, MWA_BANK9 },
 		{ 0x2000, 0x3fff, MWA_BANK10 },
 		{ 0x4000, 0x5fff, MWA_BANK11 },
@@ -849,20 +844,17 @@ static struct MemoryWriteAddress ts2068_writemem[] = {
 		{ 0xa000, 0xbfff, MWA_BANK14 },
 		{ 0xc000, 0xdfff, MWA_BANK15 },
 		{ 0xe000, 0xffff, MWA_BANK16 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress tc2048_readmem[] = {
+static MEMORY_READ_START (tc2048_readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },
 		{ 0x4000, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress tc2048_writemem[] = {
+static MEMORY_WRITE_START (tc2048_writemem)
 	{ 0x0000, 0x3fff, MWA_ROM },
 		{ 0x4000, 0xffff, MWA_BANK2 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* KT: more accurate keyboard reading */
 /* DJR: Spectrum+ keys added */
@@ -986,18 +978,15 @@ WRITE_HANDLER ( spectrum_port_w )
 
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
-static struct IOReadPort spectrum_readport[] = {
+static PORT_READ_START (spectrum_readport)
 		{0x0000, 0xffff, spectrum_port_r},
-	{ -1 }
-};
+PORT_END
 
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
-static struct IOWritePort spectrum_writeport[] = {
+static PORT_WRITE_START (spectrum_writeport)
 		{0x0000, 0xffff, spectrum_port_w},
-	{ -1 }
-};
-
+PORT_END
 
 READ_HANDLER ( spectrum_128_port_r )
 {
@@ -1189,51 +1178,43 @@ WRITE_HANDLER ( tc2048_port_w )
 		}
 }
 
-static struct IOReadPort spectrum_128_readport[] = {
+static PORT_READ_START (spectrum_128_readport)
 		{0x0000, 0xffff, spectrum_128_port_r},
-		{ -1 }
-};
+PORT_END
 
-static struct IOWritePort spectrum_128_writeport[] = {
+static PORT_WRITE_START (spectrum_128_writeport)
 		{0x0000, 0xffff, spectrum_128_port_w},
-		{ -1 }
-};
+PORT_END
 
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
-static struct IOReadPort spectrum_plus3_readport[] = {
+static PORT_READ_START (spectrum_plus3_readport)
 		{0x0000, 0xffff, spectrum_plus3_port_r},
-		{ -1 }
-};
+PORT_END
 
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
-static struct IOWritePort spectrum_plus3_writeport[] = {
+static PORT_WRITE_START (spectrum_plus3_writeport)
 		{0x0000, 0xffff, spectrum_plus3_port_w},
-		{ -1 }
-};
+PORT_END
 
 
-static struct IOReadPort ts2068_readport[] = {
+static PORT_READ_START (ts2068_readport)
 		{0x0000, 0x0ffff, ts2068_port_r},
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort ts2068_writeport[] = {
+static PORT_WRITE_START (ts2068_writeport)
 		{0x0000, 0x0ffff, ts2068_port_w},
-	{ -1 }
-};
+PORT_END
 
 
-static struct IOReadPort tc2048_readport[] = {
+static PORT_READ_START (tc2048_readport)
 		{0x0000, 0x0ffff, tc2048_port_r},
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort tc2048_writeport[] = {
+static PORT_WRITE_START (tc2048_writeport)
 		{0x0000, 0x0ffff, tc2048_port_w},
-	{ -1 }
-};
+PORT_END
 
 
 static struct AY8910interface spectrum_128_ay_interface =
