@@ -404,8 +404,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 		ui_displaymessagewindow(bitmap, buf);
 
 		sel = 0;
-		if (input_ui_posted() ||
-			code_read_async() != KEYCODE_NONE ||
+		if (code_read_async() != KEYCODE_NONE ||
 			code_read_async() != JOYCODE_NONE)
 			sel = -1;
 	}

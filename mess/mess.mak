@@ -698,6 +698,7 @@ COREOBJS += \
 	$(OBJ)/mess/device.o	       \
 	$(OBJ)/mess/config.o	       \
 	$(OBJ)/mess/inputx.o		   \
+	$(OBJ)/mess/mesintrf.o	       \
 	$(OBJ)/mess/filemngr.o	       \
 	$(OBJ)/mess/compcfg.o	       \
 	$(OBJ)/mess/tapectrl.o	       \

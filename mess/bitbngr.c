@@ -27,7 +27,7 @@ static int bitbanger_init(int id, void *fp, int open_mode)
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;
 
-	config = (const struct bitbanger_config *) device_find(Machine->gamedrv, IO_BITBANGER)->dummy;
+	config = (const struct bitbanger_config *) device_find(Machine->gamedrv, IO_BITBANGER)->user1;
 
 	bi = (struct bitbanger_info *) image_malloc(IO_BITBANGER, id, sizeof(struct bitbanger_info));
 	if (!bi)
@@ -156,7 +156,7 @@ void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger
 	iodev->exit = printer_exit;
 	iodev->status = printer_status;
 	iodev->output = bitbanger_output;
-	iodev->dummy = (char *) config;
+	iodev->user1 = (char *) config;
 }
 
 

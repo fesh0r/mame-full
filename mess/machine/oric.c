@@ -1456,7 +1456,7 @@ WRITE_HANDLER ( oric_IO_w )
 
 int oric_cassette_init(int id, void *file, int open_mode)
 {
-	struct wave_args wa;
+	struct wave_args_legacy wa;
 
 
 	if (file == NULL)
@@ -1522,7 +1522,6 @@ int oric_cassette_init(int id, void *file, int open_mode)
 					wa.fill_wave = oric_cassette_fill_wave;
 					wa.header_samples = ORIC_WAVESAMPLES_HEADER;
 					wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
-					wa.display = 1;
 					if( device_open(IO_CASSETTE,id,0,&wa) )
 						return INIT_FAIL;
 
@@ -1536,7 +1535,6 @@ int oric_cassette_init(int id, void *file, int open_mode)
 		{
 			memset(&wa, 0, sizeof(&wa));
 			wa.file = file;
-			wa.display = 1;
 			wa.smpfreq = 19200;
 			if( device_open(IO_CASSETTE,id,1,&wa) )
 				return INIT_FAIL;
@@ -1562,9 +1560,8 @@ int oric_cassette_init(int id)
 	{
 		if (! is_effective_mode_create(effective_mode))
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 
 			if (device_open(IO_CASSETTE, id, 0, &wa))
 				return INIT_FAIL;
@@ -1574,9 +1571,8 @@ int oric_cassette_init(int id)
 		/* HJB 02/18: no file, created a new file instead */
 		else
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 			wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 			/* open in write mode */
 			if (device_open(IO_CASSETTE, id, 1, &wa))

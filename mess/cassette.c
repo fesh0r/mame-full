@@ -4,7 +4,7 @@
 
 int cassette_init(int id, void *file, int open_mode, const struct cassette_args *args)
 {
-	struct wave_args wa;
+	struct wave_args_legacy wa;
 
 	if (file == NULL)
 	{	/* no cassette */
@@ -36,7 +36,6 @@ int cassette_init(int id, void *file, int open_mode, const struct cassette_args 
 			wa.fill_wave = args->fill_wave;
 			wa.header_samples = args->header_samples;
 			wa.trailer_samples = args->trailer_samples;
-			wa.display = 1;
 
 			if (device_open(IO_CASSETTE, id, 0, &wa))
 				return INIT_FAIL;
@@ -49,7 +48,6 @@ int cassette_init(int id, void *file, int open_mode, const struct cassette_args 
 			memset(&wa, 0, sizeof(&wa));
 
 			wa.file = file;
-			wa.display = 1;
 			wa.smpfreq = args->create_smpfreq ? args->create_smpfreq : Machine->sample_rate;
 			if (device_open(IO_CASSETTE, id, 1, &wa))
 				return INIT_FAIL;

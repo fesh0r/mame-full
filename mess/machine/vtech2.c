@@ -521,9 +521,8 @@ int laser_cassette_init(int id, void *file, int open_mode)
 	{
 		if (! is_effective_mode_create(open_mode))
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 			wa.fill_wave = fill_wave;
 			wa.smpfreq = 600*BITSAMPLES;
 			wa.header_samples = SILENCE;
@@ -536,9 +535,8 @@ int laser_cassette_init(int id, void *file, int open_mode)
 		}
 		else
 	    {
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 			wa.fill_wave = fill_wave;
 			wa.smpfreq = 600*BITSAMPLES;
 			if( device_open(IO_CASSETTE,id,1,&wa) )

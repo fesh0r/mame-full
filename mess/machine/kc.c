@@ -447,9 +447,8 @@ int kc_cassette_device_init(int id, void *file, int open_mode)
 	{
 		if (! is_effective_mode_create(open_mode))
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 
 			if (device_open(IO_CASSETTE, id, 0, &wa))
 				return INIT_FAIL;
@@ -459,9 +458,8 @@ int kc_cassette_device_init(int id, void *file, int open_mode)
 		else
 		/* HJB 02/18: no file, created a new file instead */
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 			wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 			/* open in write mode */
 			if (device_open(IO_CASSETTE, id, 1, &wa))

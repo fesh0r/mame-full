@@ -26,6 +26,10 @@ Source Changes:
 - New options.disable_normal_ui and osd_trying_to_quit() functions created, to
   support the new Win32 UI. [Nate Woods]
 
+- Added the ability for drivers to support drawing to the UI in a standard way;
+  which helped fix a problem where the tape graphic was lost in MESS 0.61. (bug
+  #270) [Nate Woods]
+
 - [Win32] New user interface replaces old UI; this is on by default but can be
   disabled with the -nonewui command switch.  This new UI uses Windows native
   menus and should be much easier to use. [Nate Woods]

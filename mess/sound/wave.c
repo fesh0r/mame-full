@@ -17,7 +17,6 @@ struct wave_file {
 	void *timer;			/* timer (TIME_NEVER) for reading sample values */
 	INT16 play_sample;		/* current sample value for playback */
 	INT16 record_sample;	/* current sample value for playback */
-	int display;			/* display tape status on screen */
 	int offset; 			/* offset set by device_seek function */
 	int play_pos;			/* sample position for playback */
 	int record_pos; 		/* sample position for recording */
@@ -391,25 +390,29 @@ static int wave_write(int id)
 /*
 	display a small tape icon, with the current position in the tape image
 */
-static void wave_display(int id)
+static void wave_display(struct mame_bitmap *bitmap, int id)
 {
-	static int tape_pos = 0;
     struct wave_file *w = &wave[id];
 
-	if (w->smpfreq && (abs(w->play_pos - tape_pos) > w->smpfreq / 4))
+	if (image_exists(IO_CASSETTE, id))
 	{
-        char buf[32];
-		int x, y, n, t0, t1;
+		if ((wave_status(id, -1) & (WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MOTOR_INHIBIT)) == WAVE_STATUS_MOTOR_ENABLE)
+		{
+			if (w->smpfreq)
+			{
+				char buf[32];
+				int x, y, n, t0, t1;
 
-        x = id * Machine->uifontwidth * 16 + 1;
-		y = Machine->uiheight - 9;
-		n = (w->play_pos * 4 / w->smpfreq) & 3;
-		t0 = w->play_pos / w->smpfreq;
-		t1 = w->samples / w->smpfreq;
-		sprintf(buf, "%c%c %02d:%02d (%04d) [%02d:%02d (%04d)]", n*2+2,n*2+3, t0/60,t0%60, t0, t1/60, t1%60, t1);
-		ui_text(Machine->scrbitmap,buf, x, y);
-		tape_pos = w->play_pos;
-    }
+				x = id * Machine->uifontwidth * 16 + 1;
+				y = Machine->uiheight - 9;
+				n = (w->play_pos * 4 / w->smpfreq) & 3;
+				t0 = w->play_pos / w->smpfreq;
+				t1 = w->samples / w->smpfreq;
+				sprintf(buf, "%c%c %02d:%02d (%04d) [%02d:%02d (%04d)]", n*2+2,n*2+3, t0/60,t0%60, t0, t1/60, t1%60, t1);
+				ui_text(bitmap, buf, x, y);
+			}
+		}
+	}
 }
 
 /*****************************************************************************
@@ -476,9 +479,6 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 		w->play_pos = pos;
 		w->play_sample = sample;
 	}
-
-	if( w->display )
-		wave_display(id);
 }
 
 int wave_sh_start(const struct MachineSound *msound)
@@ -535,39 +535,6 @@ void wave_sh_update(void)
 const void *wave_info(int id, int whatinfo)
 {
 	return NULL;
-}
-
-/*
- * You can use this default handler if you don't want
- * to support your own file types with the fill_wave()
- * extension
- */
-/*
-	hurk - no wave write support
-*/
-#if 0
-int wave_init(int id, const char *name)
-{
-	void *file;
-	if( !name || strlen(name) == 0 )
-		return INIT_PASS;
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	if( file )
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAIL;
-		return INIT_PASS;
-    }
-	return INIT_FAIL;
-}
-#endif
-
-void wave_exit(int id)
-{
-	wave_close(id);
 }
 
 int wave_status(int id, int newstatus)
@@ -630,7 +597,7 @@ int wave_status(int id, int newstatus)
 int wave_open(int id, int mode, void *args)
 {
 	struct wave_file *w = &wave[id];
-    struct wave_args *wa = args;
+    struct wave_args_legacy *wa = args;
 	int result;
 
     /* wave already opened? */
@@ -647,7 +614,6 @@ int wave_open(int id, int mode, void *args)
 	w->mode = mode;
 	w->fill_wave = wa->fill_wave;
 	w->smpfreq = wa->smpfreq;
-	w->display = wa->display;
 
 	if( w->mode )
 	{	/* write-only image */
@@ -936,8 +902,6 @@ int wave_input(int id)
 				level = 256 * *((INT8 *)w->data + pos);
 		}
     }
-	if( w->display )
-		wave_display(id);
     return level;
 }
 
@@ -1005,9 +969,6 @@ void wave_output(int id, int data)
 		stream_update(w->channel, 0);
 
 	wave_update_output_buffer(id);
-
-    if( w->display )
-        wave_display(id);
 
     w->record_sample = data;
 }
@@ -1080,4 +1041,29 @@ int wave_output_chunk(int id, void *src, int count)
     return count;
 }
 
+/* ----------------------------------------------------------------------- */
+
+void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
+	int (*init)(int id, void *fp, int open_mode), void (*exit_)(int id))
+{
+	strcpy(actualext, "wav");
+	strcpy(actualext + 4, fileext);
+	memset(iodev, 0, sizeof(*iodev));
+	iodev->type = IO_CASSETTE;
+	iodev->count = count;
+	iodev->file_extensions = actualext;
+	iodev->reset_depth = IO_RESET_NONE;
+	iodev->open_mode = OSD_FOPEN_READ_OR_WRITE;
+	iodev->init = init;
+	iodev->exit = exit_;
+	iodev->info = wave_info;
+	iodev->open = wave_open;
+	iodev->close = wave_close;
+	iodev->status = wave_status;
+	iodev->seek = wave_seek;
+	iodev->tell = wave_tell;
+	iodev->input = wave_input;
+	iodev->output = wave_output;
+	iodev->display = wave_display;
+}
 

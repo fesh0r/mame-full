@@ -42,37 +42,20 @@ extern int wave_output_chunk(int id, void *src, int chunks);
 
 extern void cassette_exit(int id);
 
-#define IO_CASSETTE_WAVE(count,fileext,id,init,exit)	\
-{														\
-	IO_CASSETTE,		/* type */						\
-	count,				/* count */ 					\
-	fileext,			/* file extensions */			\
-	IO_RESET_NONE,		/* reset depth */				\
-	/*OSD_FOPEN_DUMMY*/OSD_FOPEN_READ_OR_WRITE,	/* open mode */					\
-	id, 				/* id */						\
-	init,				/* init */						\
-	exit,				/* exit */						\
-	wave_info,			/* info */						\
-	wave_open,			/* open */						\
-	wave_close, 		/* close */ 					\
-	wave_status,		/* status */					\
-	wave_seek,			/* seek */						\
-	wave_tell,			/* tell */						\
-	wave_input, 		/* input */ 					\
-	wave_output,		/* output */					\
-	wave_input_chunk,	/* input_chunk */				\
-	wave_output_chunk	/* output_chunk */				\
-}
+extern void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
+	int (*init)(int id, void *fp, int open_mode), void (*exit_)(int id));
 
-#define CONFIG_DEVICE_CASSETTE(count,fileext,init)											\
-	CONFIG_DEVICE(IO_CASSETTE, (count), "wav\0" fileext, IO_RESET_NONE, OSD_FOPEN_READ_OR_WRITE,	\
-		(init), cassette_exit,	wave_info, wave_open, wave_close, wave_status, wave_seek,	\
-		wave_tell, wave_input, wave_output, NULL)											\
+#define CONFIG_DEVICE_CASSETTEX(count,fileext,init,exit)					\
+	if (cfg->device_num-- == 0)												\
+	{																		\
+		static struct IODevice iodev;										\
+		static char actualext[sizeof(fileext)+4];							\
+		wave_specify(&iodev, (count), actualext, (fileext), (init), (exit));\
+		cfg->dev = &iodev;													\
+	}																		\
 
-#define CONFIG_DEVICE_CASSETTEX(count,fileext,init,exit)											\
-	CONFIG_DEVICE(IO_CASSETTE, (count), "wav\0" fileext, IO_RESET_NONE, OSD_FOPEN_READ_OR_WRITE,	\
-		(init), (exit),	wave_info, wave_open, wave_close, wave_status, wave_seek,					\
-		wave_tell, wave_input, wave_output, NULL)											\
+#define CONFIG_DEVICE_CASSETTE(count,fileext,init)	\
+	CONFIG_DEVICE_CASSETTEX((count), (fileext), (init), cassette_exit)
 
 /*****************************************************************************
  * Use this structure for the "void *args" argument of device_open()
@@ -94,9 +77,9 @@ extern void cassette_exit(int id);
  * chunk_samples
  *	  number of samples produced for a data chunk (optional)
  *****************************************************************************/
-struct wave_args {
+struct wave_args_legacy
+{
     void *file;
-	int display;
 	int (*fill_wave)(INT16 *buffer, int length, UINT8 *bytes);
 	int smpfreq;
     int header_samples;

@@ -1583,9 +1583,8 @@ int msx_cassette_init(int id, void *file, int open_mode)
 	{
 		if (! is_effective_mode_create(open_mode))
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 			/* for cas files */
 			cas_samples = NULL;
 			cas_len = -1;
@@ -1607,9 +1606,8 @@ int msx_cassette_init(int id, void *file, int open_mode)
 		}
 		else
 		{
-			struct wave_args wa = {0,};
+			struct wave_args_legacy wa = {0,};
 			wa.file = file;
-			wa.display = 1;
 			wa.smpfreq = 44100;
 			if( device_open(IO_CASSETTE,id,1,&wa) )
 				return INIT_FAIL;

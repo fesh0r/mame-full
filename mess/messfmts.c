@@ -164,8 +164,8 @@ static int bdf_floppy_init(int id, void *fp, int open_mode)
 	dev = device_find(Machine->gamedrv, IO_FLOPPY);
 	assert(dev);
 
-	open_formats = (const formatdriver_ctor *) dev->input;
-	create_format = (formatdriver_ctor) dev->output;
+	open_formats = (const formatdriver_ctor *) dev->user1;
+	create_format = (formatdriver_ctor) dev->user2;
 
 	return bdf_floppy_init_internal(id, fp, open_mode, open_formats, create_format, fp, open_mode);
 }
@@ -230,8 +230,8 @@ const struct IODevice *bdf_device_specify(struct IODevice *iodev, char *extbuf, 
 		iodev->open_mode = create_format ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
 		iodev->init = bdf_floppy_init;
 		iodev->exit = bdf_floppy_exit;
-		iodev->input = (int (*)(int)) (void *) open_formats;
-		iodev->output = (void (*)(int, int)) (void *) create_format;
+		iodev->user1 = (void *) open_formats;
+		iodev->user2 = (void *) create_format;
 	}
 	return iodev;
 }

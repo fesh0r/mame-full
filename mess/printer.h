@@ -22,9 +22,10 @@ extern int printer_status (int id, int newstatus);
 extern void printer_output (int id, int data);
 extern int printer_output_chunk (int id, void *src, int chunks);
 
-#define CONFIG_DEVICE_PRINTER(count)															\
-	CONFIG_DEVICE(IO_PRINTER, (count), "prn\0", IO_RESET_NONE, OSD_FOPEN_WRITE, printer_init,	\
-		printer_exit, NULL, NULL, NULL, printer_status, NULL, NULL, NULL, printer_output, NULL)	\
+#define CONFIG_DEVICE_PRINTER(count)												\
+	CONFIG_DEVICE(IO_PRINTER, (count), "prn\0", IO_RESET_NONE, OSD_FOPEN_WRITE,		\
+		printer_init, printer_exit, NULL, NULL, NULL, printer_status, NULL, NULL,	\
+		NULL, printer_output, NULL, NULL)	\
 
 #ifdef __cplusplus
 }

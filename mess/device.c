@@ -160,32 +160,6 @@ void device_output(int type, int id, int data)
 	}
 }
 
-int device_input_chunk(int type, int id, void *dst, int chunks)
-{
-	const struct IODevice *dev;
-
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->input_chunk )
-			return (*dev->input_chunk)(id,dst,chunks);
-	}
-	return 1;
-}
-
-void device_output_chunk(int type, int id, void *src, int chunks)
-{
-	const struct IODevice *dev;
-
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->output )
-		{
-			(*dev->output_chunk)(id,src,chunks);
-			return;
-		}
-	}
-}
-
 static const struct IODevice *get_sysconfig_device(const struct GameDriver *gamedrv, int device_num)
 {
 	struct SystemConfigurationParamBlock params;

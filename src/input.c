@@ -777,7 +777,6 @@ struct ui_info {
 };
 
 static struct ui_info ui_map[__ipt_max];
-static int ui_posted_press;
 
 int input_ui_pressed(int code)
 {
@@ -785,26 +784,17 @@ int input_ui_pressed(int code)
 
 	profiler_mark(PROFILER_INPUT);
 
-	/* NPW 02-Oct-2001 - Added ability for front end to post UI events */
-	if (code && (ui_posted_press == code))
-	{
-		pressed = 1;
-		ui_posted_press = 0;
-	}
-	else
-	{
-		pressed = seq_pressed(input_port_type_seq(code));
+	pressed = seq_pressed(input_port_type_seq(code));
 
-		if (pressed)
+	if (pressed)
+	{
+		if (ui_map[code].memory == 0)
 		{
-			if (ui_map[code].memory == 0)
-			{
-         	               ui_map[code].memory = 1;
-			} else
-				pressed = 0;
+			ui_map[code].memory = 1;
 		} else
-			ui_map[code].memory = 0;
-	}
+			pressed = 0;
+	} else
+		ui_map[code].memory = 0;
 
 	profiler_mark(PROFILER_END);
 
@@ -887,13 +877,3 @@ int return_os_joycode(InputCode code)
 	}
 	return 0;
 }
-void input_ui_post(int code)
-{
-	ui_posted_press = code;
-}
-
-int input_ui_posted(void)
-{
-	return ui_posted_press;
-}
-

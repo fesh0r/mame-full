@@ -220,7 +220,10 @@ static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
 
-
+#ifdef MESS
+#include "mesintrf.h"
+#define handle_user_interface	handle_mess_user_interface
+#endif
 
 /***************************************************************************
 

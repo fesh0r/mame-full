@@ -26,7 +26,7 @@ int apf_cassette_init(int id, void *fp, int open_mode)
 
 int apf_cassette_init(int id, void *file, int effective_mode)
 {
-	struct wave_args wa;
+	struct wave_args_legacy wa;
 
 
 	if (file == NULL)
@@ -90,7 +90,6 @@ int apf_cassette_init(int id, void *file, int effective_mode)
 					wa.fill_wave = apf_cassette_fill_wave;
 					wa.header_samples = 0;
 					wa.trailer_samples = 0;
-					wa.display = 1;
 					if( device_open(IO_CASSETTE,id,0,&wa) )
 						return INIT_FAIL;
 
@@ -104,7 +103,6 @@ int apf_cassette_init(int id, void *file, int effective_mode)
 		{
 			memset(&wa, 0, sizeof(&wa));
 			wa.file = file;
-			wa.display = 1;
 			wa.smpfreq = 22050;
 			if( device_open(IO_CASSETTE,id,1,&wa) )
 				return INIT_FAIL;

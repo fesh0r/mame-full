@@ -27,13 +27,15 @@
  *	input_chunk 		input chunk of data (eg. sector or track)
  *	output_chunk		output chunk of data (eg. sector or track)
  ******************************************************************************/
-struct IODevice {
+struct mame_bitmap;
+
+struct IODevice
+{
 	int type;
 	int count;
 	const char *file_extensions;
 	int reset_depth;
 	int open_mode;
-	char *dummy;
 	int (*init)(int id, void *fp, int open_mode);
 	void (*exit)(int id);
 	const void *(*info)(int id, int whatinfo);
@@ -44,9 +46,10 @@ struct IODevice {
     int (*tell)(int id);
 	int (*input)(int id);
 	void (*output)(int id, int data);
-	int (*input_chunk)(int id, void *dst, int chunks);
-	int (*output_chunk)(int id, void *src, int chunks);
 	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
+	void (*display)(struct mame_bitmap *bitmap, int id);
+	void *user1;
+	void *user2;
 };
 
 struct SystemConfigurationParamBlock
@@ -86,36 +89,36 @@ struct SystemConfigurationParamBlock
 
 
 #define CONFIG_DEVICE(type, count, file_extensions, reset_depth, open_mode, init, exit,		\
-						info, open, close, status, seek, tell, input, output, partialcrc)	\
+				info, open, close, status, seek, tell, input, output, partialcrc, display)	\
 	if (cfg->device_num-- == 0)																\
 	{																						\
 		static struct IODevice device = { (type), (count), (file_extensions), (reset_depth),\
-			(open_mode), NULL, (init), (exit), (info), (open), (close), (status), (seek),	\
-			(tell), (input), (output), NULL, NULL, (partialcrc) };							\
+			(open_mode), (init), (exit), (info), (open), (close), (status), (seek),			\
+			(tell), (input), (output), (partialcrc), (display), NULL, NULL };				\
 		cfg->dev = &device;																	\
 	}																						\
 
 #define CONFIG_DEVICE_CARTSLOT(count,file_extensions,init,exit,partialcrc)					\
 	CONFIG_DEVICE(IO_CARTSLOT, (count), (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,	\
-		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (partialcrc))		\
+		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (partialcrc), NULL)	\
 
 #define CONFIG_DEVICE_SNAPSHOT(file_extensions,init,exit)									\
 	CONFIG_DEVICE(IO_SNAPSHOT, 1, (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,			\
-		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)				\
+		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)			\
 
 #define CONFIG_DEVICE_QUICKLOAD(file_extensions,init,exit)									\
 	CONFIG_DEVICE(IO_QUICKLOAD, 1, (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,			\
-		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)				\
+		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)			\
 
 #define CONFIG_DEVICE_LEGACY(type, count, file_extensions, reset_depth, open_mode,			\
 		init, exit, status)																	\
 	CONFIG_DEVICE((type), (count), (file_extensions), (reset_depth), (open_mode),			\
-		(init), (exit), NULL, NULL, NULL, (status), NULL, NULL, NULL, NULL, NULL)			\
+		(init), (exit), NULL, NULL, NULL, (status), NULL, NULL, NULL, NULL, NULL, NULL)		\
 
 #define CONFIG_DEVICE_LEGACYX(type, count, file_extensions, reset_depth, open_mode,			\
 		init, exit, open, status)															\
 	CONFIG_DEVICE((type), (count), (file_extensions), (reset_depth), (open_mode),			\
-		(init), (exit), NULL, (open), NULL, (status), NULL, NULL, NULL, NULL, NULL)			\
+		(init), (exit), NULL, (open), NULL, (status), NULL, NULL, NULL, NULL, NULL, NULL)	\
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME
