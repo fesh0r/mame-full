@@ -14,8 +14,6 @@ static void hd6402_in_callback(int id, unsigned long state)
 
 void	hd6402_init(void)
 {
-	uart.transmit_timer = NULL;
-	uart.receive_timer = NULL;
 	uart.callback = NULL;
 	serial_connection_init(&uart.connection);
 	serial_connection_set_in_callback(&uart.connection, hd6402_in_callback);
@@ -34,20 +32,9 @@ void	hd6402_reset(void)
 
 void	hd6402_exit(void)
 {
-	if (uart.transmit_timer)
-	{
-		timer_remove(uart.transmit_timer);
-		uart.transmit_timer = NULL;
-	}
-
-	if (uart.receive_timer)
-	{
-		timer_remove(uart.receive_timer);
-		uart.receive_timer = NULL;
-	}
 }
 
-static void hd6402_transmit_timer_callback(int dummy)
+void	hd6402_transmit_clock(void)
 {
 #if 0
 	/* if transmit reg is empty */
@@ -84,7 +71,7 @@ static void hd6402_receive_character(char ch)
 }
 
 
-static void hd6402_receive_timer_callback(int dummy)
+void	hd6402_receive_clock(void)
 {
 	/* get bit received from other side and update receive register */
 	receive_register_update_bit(&uart.receive_reg, get_in_data_bit(uart.connection.input_state));
@@ -104,33 +91,6 @@ void	hd6402_set_callback(void (*callback)(int,int))
 {
 	uart.callback = callback;
 
-}
-/* set transmit clock */
-void	hd6402_set_transmit_baud_rate(int baud_rate)
-{
-	logerror("hd6402: set transmit baud rate: %d\n",baud_rate);
-
-	if (uart.transmit_timer)
-	{
-		timer_remove(uart.transmit_timer);
-		uart.transmit_timer = NULL;
-	}
-
-	uart.transmit_timer = timer_pulse(TIME_IN_HZ(baud_rate), 0, hd6402_transmit_timer_callback);
-}
-
-/* set receive clock */
-void	hd6402_set_receive_baud_rate(int baud_rate)
-{
-	logerror("hd6402: set receive baud rate: %d\n",baud_rate);
-
-	if (uart.receive_timer)
-	{
-		timer_remove(uart.receive_timer);
-		uart.receive_timer = NULL;
-	}
-
-	uart.receive_timer = timer_pulse(TIME_IN_HZ(baud_rate), 0, hd6402_receive_timer_callback);
 }
 
 /* connect this uart to the serial connection specified */

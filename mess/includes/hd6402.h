@@ -63,11 +63,6 @@ struct hd6402
 	/* state of input and output pins */
 	unsigned long state;
 
-	/* timer for transmit */
-	void *transmit_timer;
-	/* timer for receive */
-	void *receive_timer;
-
 	unsigned char received_char;
 
 	/* callback to execute when state changes */
@@ -86,10 +81,16 @@ void	hd6402_init(void);
 void	hd6402_exit(void);
 /* set callback which will be executed when output pins change state */
 void	hd6402_set_callback(void (*callback)(int,int));
-/* set transmitter clock (baud rate) */
-void	hd6402_set_transmit_baud_rate(int);
-/* set receiver clock (baud rate) */
-void	hd6402_set_receive_baud_rate(int);
+
+
+/* The hd6402 has a transmit and receive clock input for external clocks.
+these two functions are used to update the state of hd6402 at each clock pulse */
+
+/* transmit clk input */
+void	hd6402_transmit_clock(void);
+/* receive clk input */
+void	hd6402_receive_clock(void);
+
 /* set state of input(s) */
 void	hd6402_set_input(int mask, int data);
 
