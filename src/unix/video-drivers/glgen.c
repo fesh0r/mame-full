@@ -23,7 +23,7 @@
 
 int LoadCabinet (const char *fname);
 void SwapBuffers (void);
-void vector_vh_update (struct osd_bitmap *bitmap, int full_refresh);
+void vector_vh_update (struct mame_bitmap *bitmap, int full_refresh);
 void vector_clear_list (void);
 
 
@@ -42,8 +42,8 @@ void WAvg (GLfloat perc, GLfloat x1, GLfloat y1, GLfloat z1,
 	   GLfloat * ax, GLfloat * ay, GLfloat * az);
 void UpdateCabDisplay (void);
 void UpdateFlatDisplay (void);
-void UpdateGLDisplayBegin (struct osd_bitmap *bitmap);
-void UpdateGLDisplayEnd   (struct osd_bitmap *bitmap);
+void UpdateGLDisplayBegin (struct mame_bitmap *bitmap);
+void UpdateGLDisplayEnd   (struct mame_bitmap *bitmap);
 
 int cabspecified;
 
@@ -499,7 +499,7 @@ void gl_set_alphablending (int new_value)
 /* ---------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-void gl_update_16_to_16bpp (struct osd_bitmap *bitmap)
+void gl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned short
 #define DEST_PIXEL unsigned short
@@ -521,7 +521,7 @@ void gl_update_16_to_16bpp (struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-void gl_update_32_to_32bpp(struct osd_bitmap *bitmap)
+void gl_update_32_to_32bpp(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL unsigned int
 #define DEST_PIXEL unsigned int
@@ -836,14 +836,14 @@ int sysdep_display_alloc_palette (int writable_colors)
 	  if(useGLEXT78)
 	  {
 	      if (disp__glColorTableEXT == 0)
-	        printf("GLINFO: glColorTableEXT not avaiable .. BAD & SLOW\n");
+	        printf("GLINFO: glColorTableEXT not available .. BAD & SLOW\n");
 	      else
-	        printf("GLINFO: glColorTableEXT avaiable .. GOOD & FAST\n");
+	        printf("GLINFO: glColorTableEXT available .. GOOD & FAST\n");
 
 	      if (disp__glColorSubTableEXT == 0)
-	        printf("GLINFO: glColorSubTableEXT not avaiable .. BAD & SLOW\n");
+	        printf("GLINFO: glColorSubTableEXT not available .. BAD & SLOW\n");
 	      else
-	        printf("GLINFO: glColorSubTableEXT avaiable .. GOOD & FAST\n");
+	        printf("GLINFO: glColorSubTableEXT available .. GOOD & FAST\n");
 	  } else
 	      fprintf (stderr, "GLINFO: useGLEXT78 = 0 (BAD & SLOW)\n");
   }
@@ -866,6 +866,14 @@ void InitTextures ()
 
   if (glContext == 0)
     return;
+
+  /* JAU: find some n,m for 
+	(w=2**n)>=text_width, (h=2**m)>=text_height */
+  /* we try to use the bitmap for OpenGL 
+     textures directly .. no copies */
+
+  text_width  = visual_width;
+  text_height = visual_height;
 
   CHECK_GL_BEGINEND();
 
@@ -944,7 +952,7 @@ void InitTextures ()
 
       if(text_width < 64 || text_height < 64)
       {
-      	fprintf (stderr, "GLERROR: Give up .. usable texture size not avaiable, or texture config error !\n");
+      	fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
 	exit(1);
       }
     }
@@ -978,7 +986,7 @@ void InitTextures ()
   line_1 = (unsigned char *) Machine->scrbitmap->line[visual.min_y];
   line_2 = (unsigned char *) Machine->scrbitmap->line[visual.min_y + 1];
 
-  mem_start = (unsigned char *) Machine->scrbitmap->_private;
+  mem_start = (unsigned char *) Machine->scrbitmap->base;
 
   raw_line_len = line_2 - line_1;
 
@@ -1819,7 +1827,7 @@ UpdateFlatDisplay (void)
     disp__glFlush ();
 }
 
-void UpdateGLDisplayBegin (struct osd_bitmap *bitmap)
+void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
 {
   if (gl_is_initialized == 0)
     return;
@@ -1852,7 +1860,7 @@ void UpdateGLDisplayBegin (struct osd_bitmap *bitmap)
   CHECK_GL_ERROR ();
 }
 
-void UpdateGLDisplayEnd (struct osd_bitmap *bitmap)
+void UpdateGLDisplayEnd (struct mame_bitmap *bitmap)
 {
   if (vecgame)
   {
@@ -1876,7 +1884,7 @@ osd_refresh_screen (void)
 /* invoked by main tree code to update bitmap into screen */
 
 void
-sysdep_update_display (struct osd_bitmap *bitmap)
+sysdep_update_display (struct mame_bitmap *bitmap)
 {
   UpdateGLDisplayBegin (bitmap);
 
@@ -1927,7 +1935,7 @@ sysdep_update_display (struct osd_bitmap *bitmap)
   UpdateGLDisplayEnd (bitmap);
 }
 
-void osd_save_snapshot(struct osd_bitmap *bitmap)
+void osd_save_snapshot(struct mame_bitmap *bitmap)
 {
 	do_snapshot = 1;
 }

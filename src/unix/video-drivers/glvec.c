@@ -22,6 +22,8 @@
 
 #include "osinline.h"
 
+extern void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
+
 extern GLfloat cscrx1,cscry1,cscrz1,cscrx2,cscry2,cscrz2,
   cscrx3,cscry3,cscrz3,cscrx4,cscry4,cscrz4;
 extern GLfloat cscrwdx,cscrwdy,cscrwdz;
@@ -360,7 +362,7 @@ void vector_clear_list(void)
 
 /* Called when the frame is complete */
 
-void vector_vh_update (struct osd_bitmap *bitmap, int full_refresh)
+void vector_vh_update (struct mame_bitmap *bitmap, int full_refresh)
 {
   if (full_refresh && bitmap!=NULL)
   {
@@ -380,26 +382,26 @@ void vector_vh_update (struct osd_bitmap *bitmap, int full_refresh)
   }
 }
 
-void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	vector_vh_update (bitmap, full_refresh);
 }
 
 
 /*
-void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+void vector_vh_update_backdrop(struct mame_bitmap *bitmap, struct artwork *a, int full_refresh)
 {
    osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
    vector_vh_update(bitmap, full_refresh);
 }
 
-void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+void vector_vh_update_overlay(struct mame_bitmap *bitmap, struct artwork *a, int full_refresh)
 {
    osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
    vector_vh_update(bitmap, full_refresh);
 }
 
-void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh)
+void vector_vh_update_artwork(struct mame_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh)
 {
    osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
    vector_vh_update(bitmap, full_refresh);
