@@ -331,13 +331,13 @@ static struct osd_bitmap *create_disk (int r, int fg, int bg)
 
 		for (i = 0; i < twox; i++)
 		{
-			plot_pixel(disk, r-x+i, r-y  , fg);
+			plot_pixel(disk, r-x+i, r-y	 , fg);
 			plot_pixel(disk, r-x+i, r+y-1, fg);
 		}
 
 		for (i = 0; i < twoy; i++)
 		{
-			plot_pixel(disk, r-y+i, r-x  , fg);
+			plot_pixel(disk, r-y+i, r-x	 , fg);
 			plot_pixel(disk, r-y+i, r+x-1, fg);
 		}
 	}
@@ -412,8 +412,8 @@ static unsigned int *transparency_hist (struct artwork_info *a, int num_shades)
   load_palette
 
   This sets the palette colors used by the backdrop to the new colors
-  passed in as palette.  The values should be stored as one byte of red,
-  one byte of blue, one byte of green.  This could hopefully be used
+  passed in as palette.	 The values should be stored as one byte of red,
+  one byte of blue, one byte of green.	This could hopefully be used
   for special effects, like lightening and darkening the backdrop.
  *********************************************************************/
 static void load_palette(struct artwork_info *a, UINT8 *palette)
@@ -637,7 +637,7 @@ static void load_png(const char *filename, unsigned int start_pen, unsigned int 
 	if ((*a)->num_pens_used > max_pens)
 	{
 		logerror("Too many colors in artwork.\n");
-		logerror("Colors found: %d  Max Allowed: %d\n",
+		logerror("Colors found: %d	Max Allowed: %d\n",
 				 (*a)->num_pens_used,max_pens);
 		artwork_free(a);
 		bitmap_free(picture);
@@ -686,7 +686,7 @@ static void load_png_fit(const char *filename, unsigned int start_pen, unsigned 
   backdrop_refresh
 
   This remaps the "original" palette indexes to the abstract OS indexes
-  used by MAME.  This needs to be called every time palette_recalc
+  used by MAME.	 This needs to be called every time palette_recalc
   returns a non-zero value, since the mappings will have changed.
  *********************************************************************/
 
@@ -1115,7 +1115,7 @@ int overlay_set_palette (UINT8 *palette, int num_shades)
 						artwork_overlay->pTable[(i << 8) + j] = i + artwork_overlay->start_pen;
 					else
 						artwork_overlay->pTable[(i << 8) + j] = artwork_overlay->num_pens_used +
-							shades + step - 1 + artwork_overlay->start_pen;
+															   shades + step - 1 + artwork_overlay->start_pen;
 				}
 				shades += hist[i] - 1;
 			}
@@ -1417,7 +1417,7 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 	if (artwork_overlay->num_pens_used > max_pens)
 	{
 		logerror("Too many colors in overlay.\n");
-		logerror("Colors found: %d  Max Allowed: %d\n",
+		logerror("Colors found: %d	Max Allowed: %d\n",
 				      artwork_overlay->num_pens_used,max_pens);
 		artwork_kill();
 		return;

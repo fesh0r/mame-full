@@ -13,7 +13,6 @@
 
 #define MAX_PIA 8
 
-#define PIA_8BIT 0
 
 /* this is the standard ordering of the registers */
 /* alternate ordering swaps registers 1 and 2 */
@@ -25,7 +24,12 @@
 /* PIA addressing modes */
 #define PIA_STANDARD_ORDERING		0
 #define PIA_ALTERNATE_ORDERING		1
+
+#ifdef MESS
+#define PIA_8BIT                    0
 #define PIA_AUTOSENSE				8
+#endif
+
 
 struct pia6821_interface
 {

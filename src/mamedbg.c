@@ -2068,38 +2068,22 @@ static int hit_brk_regs(void)
  * name_rom
  * Find the name for a rom from the drivers list
  **************************************************************************/
-static const char *name_rom( const char *type, int region, unsigned *base, unsigned start )
+static const char *name_rom( const char *type, int regnum, unsigned *base, unsigned start )
 {
-	const struct RomModule *romp = Machine->gamedrv->rom;
+	const struct RomModule *region, *rom, *chunk;
 	unsigned offset = *base;
 
-	while( romp && (romp->name || romp->offset || romp->length ) )
-	{
-		romp++; /* skip memory region definition */
-
-		while( romp->length )
+	for (region = rom_first_region(Machine->gamedrv); region; region = rom_next_region(region))
+		if (ROMREGION_GETTYPE(region) == regnum)
 		{
-			const char *name;
-			int length;
-
-			name = romp->name;
-			length = 0;
-
-			do
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
-				/* ROM_RELOAD */
-				if (romp->name == (char *)-1)
-					length = 0; /* restart */
+				const char *name = ROM_GETNAME(rom);
+				int length = 0;
 
-				length += romp->length & ~ROMFLAG_MASK;
+				for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+					length += ROM_GETLENGTH(chunk);
 
-				romp++;
-
-			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-			/* region found already ? */
-			if( region == 0 )
-			{
 				/* address inside that range ? */
 				if( offset < length )
 				{
@@ -2110,10 +2094,8 @@ static const char *name_rom( const char *type, int region, unsigned *base, unsig
 				/* subtract length of that ROM */
 				offset -= length;
 			}
-
+			break;
 		}
-		--region;
-	}
 
 	/* default to ROM + xxxx (base - start) */
 	*base -= start;
@@ -2138,9 +2120,9 @@ static const char *name_rdmem( unsigned base )
 	dst = buffer[which];
 	*dst = '\0';
 
-	while( *dst == '\0' && !IS_MEMORY_END(mr))
+	while( *dst == '\0' && !IS_MEMPORT_END(mr))
 	{
-		if (!IS_MEMORY_MARKER(mr))
+		if (!IS_MEMPORT_MARKER(mr))
 		{
 			if( base >= mr->start && base <= mr->end )
 			{
@@ -2264,9 +2246,9 @@ static const char *name_wrmem( unsigned base )
 	*dst = '\0';
 
 	ram_cnt = nop_cnt = 1;
-	while( *dst == '\0' && !IS_MEMORY_END(mw))
+	while( *dst == '\0' && !IS_MEMPORT_END(mw))
 	{
-		if (!IS_MEMORY_MARKER(mw))
+		if (!IS_MEMPORT_MARKER(mw))
 		{
 			if( base >= mw->start && base <= mw->end )
 			{

@@ -16,8 +16,8 @@ struct MachineCPU
 	int cpu_clock;	/* in Hertz */
 	const void *memory_read;	/* struct Memory_ReadAddress */
 	const void *memory_write;	/* struct Memory_WriteAddress */
-	const struct IO_ReadPort *port_read;
-	const struct IO_WritePort *port_write;
+	const void *port_read;
+	const void *port_write;
 	int (*vblank_interrupt)(void);
     int vblank_interrupts_per_frame;    /* usually 1 */
 /* use this for interrupts which are not tied to vblank 	*/
@@ -35,9 +35,6 @@ enum
 	CPU_DUMMY,
 #if (HAS_Z80)
 	CPU_Z80,
-#endif
-#if (HAS_SH2)
-	CPU_SH2,
 #endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,
@@ -112,46 +109,46 @@ enum
 	CPU_V33,
 #endif
 #if (HAS_I8035)
-	CPU_I8035,	/* same as CPU_I8039 */
+	CPU_I8035,
 #endif
 #if (HAS_I8039)
 	CPU_I8039,
 #endif
 #if (HAS_I8048)
-	CPU_I8048,	/* same as CPU_I8039 */
+	CPU_I8048,
 #endif
 #if (HAS_N7751)
-	CPU_N7751,	/* same as CPU_I8039 */
+	CPU_N7751,
 #endif
 #if (HAS_M6800)
-	CPU_M6800,	/* same as CPU_M6802/CPU_M6808 */
+	CPU_M6800,
 #endif
 #if (HAS_M6801)
-	CPU_M6801,	/* same as CPU_M6803 */
+	CPU_M6801,
 #endif
 #if (HAS_M6802)
-	CPU_M6802,	/* same as CPU_M6800/CPU_M6808 */
+	CPU_M6802,
 #endif
 #if (HAS_M6803)
-	CPU_M6803,	/* same as CPU_M6801 */
+	CPU_M6803,
 #endif
 #if (HAS_M6808)
-	CPU_M6808,	/* same as CPU_M6800/CPU_M6802 */
+	CPU_M6808,
 #endif
 #if (HAS_HD63701)
-	CPU_HD63701,	/* 6808 with some additional opcodes */
+	CPU_HD63701,
 #endif
 #if (HAS_NSC8105)
-	CPU_NSC8105,	/* same(?) as CPU_M6802(?) with scrambled opcodes. There is at least one new opcode. */
+	CPU_NSC8105,
 #endif
 #if (HAS_M6805)
 	CPU_M6805,
 #endif
 #if (HAS_M68705)
-	CPU_M68705,	/* same as CPU_M6805 */
+	CPU_M68705,
 #endif
 #if (HAS_HD63705)
-	CPU_HD63705,	/* M6805 family but larger address space, different stack size */
+	CPU_HD63705,
 #endif
 #if (HAS_HD6309)
 	CPU_HD6309,
@@ -347,11 +344,10 @@ struct cpu_interface
 	mem_write_handler memory_write;
 	mem_read_handler internal_read;
 	mem_write_handler internal_write;
-	unsigned pgm_memory_base;
+	offs_t pgm_memory_base;
 	void (*set_op_base)(offs_t pc);
 	int address_shift;
 	unsigned address_bits, endianess, align_unit, max_inst_len;
-	unsigned abits1, abits2, abitsmin;
 };
 
 extern struct cpu_interface cpuintf[];
@@ -378,14 +374,15 @@ int cpu_getactivecpu(void);
 void cpu_setactivecpu(int cpunum);
 
 /* Returns the current program counter */
-unsigned cpu_get_pc(void);
+offs_t cpu_get_pc(void);
+offs_t cpu_get_pc_byte(void);
 /* Set the current program counter */
-void cpu_set_pc(unsigned val);
+void cpu_set_pc(offs_t val);
 
 /* Returns the current stack pointer */
-unsigned cpu_get_sp(void);
+offs_t cpu_get_sp(void);
 /* Set the current stack pointer */
-void cpu_set_sp(unsigned val);
+void cpu_set_sp(offs_t val);
 
 /* Get the active CPUs context and return it's size */
 unsigned cpu_get_context(void *context);
@@ -487,7 +484,7 @@ void cpu_generate_internal_interrupt(int cpunum, int type);
 void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
 
 /* use this function to install a driver callback for IRQ acknowledge */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int));
+void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
 
 /* use these in your write memory/port handles to set an IRQ vector */
 /* offset corresponds to the irq line number here */

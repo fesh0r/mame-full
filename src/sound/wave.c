@@ -459,7 +459,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 	w->counter = count;
 	w->play_pos = pos;
 	w->play_sample = sample;
-		
+
 	if( w->display )
 		wave_display(id);
 }

@@ -265,6 +265,7 @@ void ppi8255_w( int which, int offset, int data ) {
 	logerror("8255 chip %d: Port %c is being written to but has no handler", which, 'A' + offset );
 }
 
+#ifdef MESS
 data8_t ppi8255_peek( int which, offs_t offset )
 {
 	ppi8255 *chip;
@@ -286,6 +287,7 @@ data8_t ppi8255_peek( int which, offs_t offset )
 
 	return chip->latch[offset];
 }
+#endif
 
 /* Helpers */
 READ_HANDLER( ppi8255_0_r ) { return ppi8255_r( 0, offset ); }

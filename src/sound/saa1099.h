@@ -11,7 +11,7 @@
 struct SAA1099_interface
 {
 	int numchips;						/* number of chips */
-	int volume[MAX_SAA1099][2];			/* playback volume */	
+	int volume[MAX_SAA1099][2];			/* playback volume */
 };
 
 #ifdef __cplusplus

@@ -1002,12 +1002,23 @@ else
 SOUNDDEFS += -DHAS_TIA=0
 endif
 
+ifndef MESS
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
-SOUNDOBJS += $(OBJ)/sound/nes_apu.o $(OBJ)/sound/nesintf.o
+SOUNDOBJS += $(OBJ)/sound/nes_apu.o
 else
 SOUNDDEFS += -DHAS_NES=0
+endif
+
+else
+SOUND=$(strip $(findstring NES@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_NES=1
+SOUNDOBJS += $(OBJ)/sound/nes_apu2.o $(OBJ)/sound/nesintf.o
+else
+SOUNDDEFS += -DHAS_NES=0
+endif
 endif
 
 SOUND=$(strip $(findstring ASTROCADE@,$(SOUNDS)))
