@@ -7,10 +7,12 @@
 	different from the English-language versions, as they have different ROMs
 	with Japanese messages and support for the katakana syllabus.  There are at
 	least 4 versions:
-	* original Pyuuta (1982 or 1983) with Japanese language and no Basic
-	* Pyuuta Jr. (1983 or 1984) which is a console with a simplified keyboard
-	* Tutor/Grandstand (1983 or 1984) with English language and Basic
-	* Pyuuta Mk. 2 (1984?) with a better-looking keyboard and Basic
+	* original Pyuuta (1982 or 1983) with title screens in Japanese but no
+	  Basic
+	* Pyuuta Jr. (1983?) which is a console with a simplified keyboard
+	* Tomy/Grandstand Tutor (circa October 1983?) with title screens in English
+	  and integrated Basic
+	* Pyuuta Mk. 2 (1984?) with a better-looking keyboard and integrated Basic
 
 	The Tomy Tutor features a TMS9995 CPU @10.7MHz (which includes a
 	timer/counter and 256 bytes of 16-bit RAM), 48kb of ROM (32kb on early
@@ -34,18 +36,18 @@
 
 	While the OS is not derived directly from the TI99/4(a) OS, there are
 	disturbing similarities: the Japanese title screen is virtually identical
-	to the TI-99 title screen, and the ROM include a GPL interpreter (although
-	the Tutor GPL is incompatible with TI BASIC GPL).  Furthermore, the Tutor
+	to the TI-99 title screen, and the ROMs include a GPL interpreter (although
+	the Tutor GPL is incompatible with TI BASIC GPL).  Moreover, the Tutor
 	BASIC seems to be be derived from TI Extended BASIC.
 
-	It therefore appears that TI sold the licence of the TI BASIC to Tomy,
-	probably after it terminated its TI99 series.  It is not impossible that
-	the entire Tutor concept is derived from a TI project under licence: this
-	machine looks like a crossbreed of the TI99/2 and the TI99/4 (or /4a, /4b,
-	/5), and it could either have been an early version of the TI99/2 project
-	with a tms9918a/99289a VDP instead of the DMA video controller, or a
-	"TI99/3" that would have closed the gap between the extremely low-end
-	TI99/2 and the relatively mid-range TI99/5.
+	It looks like TI has sold the licence of the TI BASIC to Tomy, probably
+	after it terminated its TI99 series.  It is not impossible that the entire
+	Tutor concept is derived from a TI project under licence: this machine
+	looks like a crossbreed of the TI99/2 and the TI99/4 (or /4a, /4b, /5), and
+	it could either have been an early version of the TI99/2 project with a
+	tms9918a/99289a VDP instead of the DMA video controller, or a "TI99/3" that
+	would have closed the gap between the extremely low-end TI99/2 and the
+	relatively mid-range TI99/5.
 
 
 	Raphael Nabet, 2003
@@ -55,8 +57,6 @@ TODO :
 	* debug the tape interface (Saved tapes sound OK, both Verify and Load
 	  recognize the tape as a Tomy tape, but the data seems to be corrupted and
 	  we end with a read error.)
-	* emulate joystick interface (I don't know how they work)
-	* support cartridges? (I don't have any cartridge dump)
 	* guess which device is located at the >e600 base
 	* find info about other Tutor variants
 
@@ -73,6 +73,7 @@ TODO :
 //#include "inputx.h"
 #include "cpu/tms9900/tms9900.h"
 #include "vidhrdw/tms9928a.h"
+#include "devices/cartslot.h"
 #include "devices/cassette.h"
 
 
@@ -89,6 +90,12 @@ static void *tape_interrupt_timer;
 static mame_file *printer_fp;
 static UINT8 printer_data;
 static char printer_strobe;
+
+enum
+{
+	basic_base = 0x8000,
+	cartridge_base = 0xe000
+};
 
 
 static void machine_init_tutor(void)
@@ -115,11 +122,28 @@ static void tutor_vblank_interrupt(void)
 	address >7600->763f).  There is one bit per key (bit >00 for keycode >00,
 	bit >01 for keycode >01, etc.), each bit is set to one when the key is
 	down.
+
+	Joystick:
+
+	Joystick ports seem to overlap keyboard portds, i.e. some CRU bits are
+	mapped to both a keyboard key and a joystick switch.
 */
 
 static READ_HANDLER(read_keyboard)
 {
 	return readinputport(offset);
+}
+
+static DEVICE_LOAD(tutor_cart)
+{
+	mame_fread(file, memory_region(REGION_CPU1) + cartridge_base, 0x6000);
+
+	return INIT_PASS;
+}
+
+static DEVICE_UNLOAD(tutor_cart)
+{
+	memset(memory_region(REGION_CPU1) + cartridge_base, 0x6000, 0);
 }
 
 /*
@@ -167,11 +191,13 @@ static WRITE_HANDLER(tutor_mapper_w)
 	case 0x08:
 		/* disable cartridge ROM, enable BASIC ROM at base >8000 */
 		cartridge_enable = 0;
+		cpu_setbank(1, memory_region(REGION_CPU1) + basic_base);
 		break;
 
 	case 0x0c:
 		/* enable cartridge ROM, disable BASIC ROM at base >8000 */
 		cartridge_enable = 1;
+		cpu_setbank(1, memory_region(REGION_CPU1) + cartridge_base);
 		break;
 
 	default:
@@ -179,13 +205,7 @@ static WRITE_HANDLER(tutor_mapper_w)
 			logerror("unknown port in %s %d\n", __FILE__, __LINE__);
 		break;
 	}
-
 }
-
-/*static READ_HANDLER(mapper_test_r)
-{
-	return (cartridge_enable) ? 0 : memory_region(REGION_CPU1)[0x8000+offset];
-}*/
 
 /*
 	Cassette interface:
@@ -377,7 +397,7 @@ static MEMORY_READ_START (tutor_readmem )
 
 	{ 0x0000, 0x7fff, MRA_ROM },			/*system ROM*/
 
-	{ 0x8000, 0xbfff, MRA_ROM/*mapper_test_r*/ },			/*BASIC ROM & cartridge ROM*/
+	{ 0x8000, 0xbfff, MRA_BANK1 },			/*BASIC ROM & cartridge ROM*/
 	{ 0xc000, 0xdfff, MRA_NOP },			/*free for expansion, or cartridge ROM?*/
 
 	{ 0xe000, 0xe000, TMS9928A_vram_r },	/*VDP data*/
@@ -483,6 +503,13 @@ INPUT_PORTS_START(tutor)
 		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, ", <",  KEYCODE_COMMA, IP_JOY_NONE)
 		PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, ". >",  KEYCODE_STOP,  IP_JOY_NONE)
 
+		PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+		PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
+		PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER1)
+		PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER1)
+		PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER1)
+		PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1)
+
 	PORT_START    /* col 5 */
 		/* Unused? */
 		PORT_BITX(0x03, IP_ACTIVE_HIGH, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
@@ -493,6 +520,13 @@ INPUT_PORTS_START(tutor)
 		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "[ {",  KEYCODE_OPENBRACE, IP_JOY_NONE)
 		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/ ?",  KEYCODE_SLASH,     IP_JOY_NONE)
 		PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "] }",  KEYCODE_CLOSEBRACE,IP_JOY_NONE)
+
+		PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
+		PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2)
+		PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2)
+		PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2)
+		PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2)
+		PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2)
 
 	PORT_START    /* col 6 */
 		/* Unused? */
@@ -597,7 +631,7 @@ MACHINE_DRIVER_END
 */
 ROM_START(tutor)
 	/*CPU memory space*/
-	ROM_REGION(0x10000,REGION_CPU1,0)
+	ROM_REGION(0x14000,REGION_CPU1,0)
 	ROM_LOAD("tutor1.bin", 0x0000, 0x8000, CRC(702c38ba))      /* system ROM */
 	ROM_LOAD("tutor2.bin", 0x8000, 0x4000, CRC(05f228f5))      /* BASIC ROM */
 ROM_END
@@ -605,6 +639,7 @@ ROM_END
 SYSTEM_CONFIG_START(tutor)
 
 	/* cartridge port is not emulated */
+	CONFIG_DEVICE_CARTSLOT_OPT(1,	"",	NULL,	NULL,	device_load_tutor_cart,	device_unload_tutor_cart,	NULL,	NULL)
 	CONFIG_DEVICE_CASSETTE	(1, "",		device_load_tutor_cassette)
 	CONFIG_DEVICE_LEGACY	(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_WRITE,	NULL,	NULL,	device_load_tutor_printer,	device_unload_tutor_printer,		NULL)
 
