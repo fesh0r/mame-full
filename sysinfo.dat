@@ -5809,11 +5809,14 @@ $bio
 DEC PDP-1
 
 
-Currently supports three images: Spacewar!, Munching Squares and LISP. No
-other images are known at the time of writing: I know there were a text editor
-(Expensive Typewriter), an assembler/linker (MACRO), a debugger (DDT), and
-even a multi-user, multi-tasking operating system (MIT PDP-1 Timesharing
-System), but I have no idea where a copy of these programs could be found.
+Currently supports three images: Spacewar! (first computer-based video game),
+Munching Squares (minimalistic yet beautiful graphic demo) and LISP (programming
+language). I have OCR'ed and assembled the source code of DDT (debugger), but I
+am still looking for bugs in this program. No other images are known at the
+time of writing: I know there were a text editor (Expensive Typewriter), an
+assembler/linker (MACRO), and even a multi-user, multi-tasking operating system
+(MIT PDP-1 Timesharing System), but I have no idea where a copy of these
+programs could be found (except for macro1, which is should be OCR'ed soon).
 
 
 This driver emulates a complete pdp-1 system, including:
