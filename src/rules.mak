@@ -858,10 +858,10 @@ endif
 
 CPU=$(strip $(findstring APEXC@,$(CPUS)))
 ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/apexc
+OBJDIRS += $(OBJ)/mess/cpu/apexc
 CPUDEFS += -DHAS_APEXC=1
-CPUOBJS += $(OBJ)/cpu/apexc/apexc.o
-DBGOBJS += $(OBJ)/cpu/apexc/apexcdsm.o
+CPUOBJS += $(OBJ)/mess/cpu/apexc/apexc.o
+DBGOBJS += $(OBJ)/mess/cpu/apexc/apexcdsm.o
 $(OBJ)/cpu/apexc/apexc.o: apexc.c apexc.h
 else
 CPUDEFS += -DHAS_APEXC=0

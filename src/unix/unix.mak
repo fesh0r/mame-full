@@ -103,7 +103,7 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
 	$(OBJ)/cpu $(OBJ)/sound \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools $(OBJ)/mess/cpu
 
 IMGTOOL_OBJS =  $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz
@@ -150,7 +150,7 @@ LDFLAGS   = -Lcontrib/cutzlib-1.1.3
 endif
 
 ifdef MAME_DEBUG
-MY_CFLAGS += -DMAME_DEBUG
+MY_CFLAGS += -DMAME_DEBUG -DMESS_DEBUG
 MY_LIBS   += -lcurses
 endif
    
