@@ -630,7 +630,10 @@ void coco3_vh_blink(void)
 {
 	coco3_blinkstatus = !coco3_blinkstatus;
 	if (coco3_hires && ((coco3_gimevhreg[0] & 0x80) == 0))
+	{
+		videomap_invalidate_frameinfo();
 		schedule_full_refresh();
+	}
 }
 
 WRITE8_HANDLER(coco3_palette_w)

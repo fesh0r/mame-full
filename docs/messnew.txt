@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A7800] Changed driver to use MAME/MESS standard 6532 RIOT code.  [Ken
+  Siders]
+
 - [AT] Marked driver as compatible with IBM-PC.  [Nate Woods]
 
 - [BBC] BBCB1770 merged into BBCB.  Also modernized the driver, added tape
@@ -16,6 +19,9 @@ System Driver Changes:
 - [COCO3] Fixed a regression that prevented cartridges from loading on startup.
   [Nate Woods]
   
+- [COCO3] Fixed a regression that prevented hires text blinking from updating
+  properly.  (bug #628) [Nate Woods]
+
 - [COCO3H] Fixed a bug in the 6309 LDBT/STBT instructions.  (bug #625) [Nate
   Woods]
 

@@ -125,6 +125,7 @@
 <imgtooltest name="fat_004">
 	<!-- Testing directories -->
 	<createimage driver="pc_dsk_fat"/>
+	<recordfreespace/>
 	
 	<createdirectory path="FOO"/>
 	<putfile name="\FOO\BAR.TXT">'Party'</putfile>
@@ -146,6 +147,7 @@
 	<deletedirectory path="/FOO"/>
 
 	<checkdirectory path="/"/>
+	<checkfreespace/>
 </imgtooltest>
 
 <imgtooltest name="fat_005">

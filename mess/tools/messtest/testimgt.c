@@ -22,6 +22,7 @@ static struct expected_dirent entries[256];
 static char filename_buffer[256];
 static int entry_count;
 static int failed;
+static UINT64 recorded_freespace;
 
 
 
@@ -338,11 +339,60 @@ static void deletedirectory_start_handler(const char **attributes)
 
 
 
+static void recordfreespace_start_handler(const char **attributes)
+{
+	imgtoolerr_t err;
+
+	err = img_freespace(image, &recorded_freespace);
+	if (err)
+	{
+		report_imgtoolerr(err);
+		return;
+	}
+}
+
+
+
+static void checkfreespace_start_handler(const char **attributes)
+{
+	imgtoolerr_t err;
+	UINT64 current_freespace;
+	INT64 leaked_space;
+	const char *verb;
+
+	err = img_freespace(image, &current_freespace);
+	if (err)
+	{
+		report_imgtoolerr(err);
+		return;
+	}
+
+	if (recorded_freespace != current_freespace)
+	{
+		leaked_space = recorded_freespace - current_freespace;
+		if (leaked_space > 0)
+		{
+			verb = "Leaked";
+		}
+		else
+		{
+			leaked_space = -leaked_space;
+			verb = "Reverse leaked";
+		}
+
+		failed = TRUE;
+		report_message(MSG_FAILURE, "%s %u bytes of space", verb, (unsigned int) leaked_space);
+	}
+}
+
+
+
 void testimgtool_start_handler(const char **attributes)
 {
 	imgtoolerr_t err;
 
 	failed = FALSE;
+	recorded_freespace = ~0;
 
 	if (!library)
 	{
@@ -387,6 +437,8 @@ const struct messtest_tagdispatch testimgtool_dispatch[] =
 	{ "deletefile",			DATA_NONE,		deletefile_start_handler,		NULL },
 	{ "createdirectory",	DATA_NONE,		createdirectory_start_handler,	NULL },
 	{ "deletedirectory",	DATA_NONE,		deletedirectory_start_handler,	NULL },
+	{ "recordfreespace",	DATA_NONE,		recordfreespace_start_handler,	NULL },
+	{ "checkfreespace",		DATA_NONE,		checkfreespace_start_handler,	NULL },
 	{ NULL }
 };
 

@@ -53,4 +53,18 @@
 	<checkfile name="FOO.TXT">'Hello'</checkfile>
 </imgtooltest>
 
+<imgtooltest name="coco_rs_002">
+	<createimage driver="coco_jvc_rsdos"/>
+	<recordfreespace/>
+
+	<putfile name="ALPHA.TXT">'Hello!'</putfile>
+	<putfile name="BRAVO.TXT">'Achtung!'</putfile>
+	<putfile name="CHARLIE.TXT">'Bienvenue!'</putfile>
+	<deletefile name="ALPHA.TXT"/>
+	<deletefile name="BRAVO.TXT"/>
+	<deletefile name="CHARLIE.TXT"/>
+
+	<checkfreespace/>
+</imgtooltest>
+
 </tests>

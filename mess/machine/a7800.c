@@ -27,6 +27,7 @@
 #include "cpuintrf.h"
 #include "zlib.h"
 #include "image.h"
+#include "machine/6532riot.h"
 
 #include "includes/a7800.h"
 
@@ -40,12 +41,6 @@ static int a7800_ctrl_lock;
 static int a7800_ctrl_reg;
 static int maria_flag;
 
-static int riot_pa_ddr;
-static int riot_pa_out;
-static int riot_pb_ddr;
-static int riot_pb_out;
-static int riot_timer;
-
 static unsigned char *a7800_cartridge_rom;
 static unsigned int a7800_cart_type;
 static unsigned long a7800_cart_size;
@@ -53,6 +48,15 @@ static unsigned char a7800_stick_type;
 static UINT8 *ROM;
 
 
+/****** RIOT ****************************************/
+
+static struct R6532interface r6532_interface =
+{
+	input_port_0_r,
+	input_port_3_r,
+	NULL,
+	NULL
+};
 
 /* -----------------------------------------------------------------------
  * Driver/Machine Init
@@ -89,6 +93,8 @@ DRIVER_INIT( a7800_pal )
 MACHINE_INIT( a7800 )
 {
 	UINT8 *memory;
+
+	r6532_init(0, &r6532_interface);
 
 	a7800_ctrl_lock = 0;
 	a7800_ctrl_reg = 0;
@@ -361,66 +367,6 @@ WRITE8_HANDLER( a7800_TIA_w )
 	ROM[offset] = data;
 }
 
-/****** RIOT ****************************************/
-
- READ8_HANDLER( a7800_RIOT_r )
-{
-	unsigned char data;
-
-	offset &= 0xF;
-
-	switch( offset )
-	{
-		case 0:
-			if( a7800_stick_type == 0x01 )
-				data = input_port_0_r(0);
-			else
-				data = ((input_port_1_r(0) & 0x02) << 3);
-
-			return ( data & ~riot_pa_ddr ) | ( riot_pa_out & riot_pa_ddr );
-
-		case 2:
-			return ( input_port_3_r(0) & ~riot_pb_ddr ) | ( riot_pb_out & riot_pb_ddr );
-
-		case 4:
-			return riot_timer--;
-
-		default:
-			logerror("undefined RIOT I/O read %x\n",offset);
-	}
-
-	return 0xFF;
-}
-
-WRITE8_HANDLER( a7800_RIOT_w )
-{
-	switch( offset & 0x1F )
-	{
-		case 0:
-			riot_pa_out = data;
-			break;
-
-		case 1:
-			riot_pa_ddr = data;
-			break;
-
-		case 2:
-			riot_pb_out = data;
-			break;
-
-		case 3:
-			riot_pb_ddr = data;
-			break;
-
-		case 0x17:
-			riot_timer = data;
-			break;
-
-		default:
-			logerror("undefined RIOT write %x,%x\n", offset, data );
-			break;
-	}
-}
 
 
 /****** RAM Mirroring ******************************/
