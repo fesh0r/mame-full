@@ -139,7 +139,8 @@ int a7800_load_rom (int id)
 	if (device_filename(IO_CARTSLOT,id) == NULL ||
 		strlen(device_filename(IO_CARTSLOT,id)) == 0)
     {
-        logerror("A7800 - warning: no cartridge specified!\n");
+        logerror("A7800 - no cartridge specified!\n");
+        return INIT_FAIL;
     }
 	else
 	if (!(cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
