@@ -80,9 +80,6 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
 #define IPT_KEYBOARD	IPT_TILT
 /* driver.h - end */
 
-/* The wrapper for osd_fopen() */
-void *image_fopen(int type, int id, int filetype, int read_or_write);
-
 /* IODevice Initialisation return values.  Use these to determine if */
 /* the emulation can continue if IODevice initialisation fails */
 #define INIT_PASS 0
@@ -90,7 +87,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 #define IMAGE_VERIFY_PASS 0
 #define IMAGE_VERIFY_FAIL 1
 
-/* possible values for osd_fopen() last argument
+/* possible values for osd_fopen() last argument:
  * OSD_FOPEN_READ
  *	open existing file in read only mode.
  *	ZIP images can be opened only in this mode, unless
@@ -109,8 +106,33 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
  *	it shall be created. Used to 'format' new floppy or harddisk
  *	images from within the emulation. A driver might use this
  *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ modes, failed.
+ *
+ * extra values for IODevice openmode field (modes are not supported by
+ * osd_fopen() yet, image_fopen_new emulates them):
+ * OSD_FOPEN_RW_OR_READ
+ *  open existing file in read/write mode.  If it fails, try to open it as
+ *  read-only.
+ * OSD_FOPEN_RW_CREATE_OR_READ
+ *  open existing file in read/write mode.  If it fails, try to open it as
+ *  read-only.  If it fails, try to create a new R/W image
+ * OSD_FOPEN_READ_OR_WRITE
+ *  open existing file in read-only mode if it exists.  If it does not, open
+ *  the file as write-only.  (used by wave.c)
  */
-enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE };
+typedef enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE,
+OSD_FOPEN_RW_OR_READ, OSD_FOPEN_RW_CREATE_OR_READ, OSD_FOPEN_READ_OR_WRITE } image_open_mode_t;
+
+#define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
+
+/* hack: placeholder used until I determine what the open_mode value should be for an image */
+#define OSD_FOPEN_DUMMY -1
+
+/* The wrapper for osd_fopen() */
+void *image_fopen(int type, int id, int filetype, int read_or_write);
+
+/* new wrapper: always use OSD_FILETYPE_IMAGE as the filetype, and take
+the read_or_write parameters from IODevice */
+void *image_fopen_new(int type, int id, image_open_mode_t *effective_mode);
 
 
 #ifdef MAX_KEYS

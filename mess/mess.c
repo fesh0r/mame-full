@@ -218,6 +218,113 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 }
 
 
+void *image_fopen_new(int type, int id, image_open_mode_t *effective_mode)
+{
+	struct image_info *img = &images[type][id];
+	void *fref;
+	image_open_mode_t requested_mode;
+	image_open_mode_t effective_mode_local;
+
+
+	if( type >= IO_COUNT )
+	{
+		logerror("image_fopen: type out of range (%d)\n", type);
+		return NULL;
+	}
+
+	if( id >= count[type] )
+	{
+		logerror("image_fopen: id out of range (%d)\n", id);
+		return NULL;
+	}
+
+	{	/* look for open_mode */
+		const struct IODevice *img_dev;
+
+		requested_mode = OSD_FOPEN_DUMMY;
+
+		img_dev = Machine->gamedrv->dev;
+		if (img_dev)
+			while (img_dev->count)
+			{
+				if (img_dev->type == type)
+				{
+					requested_mode = img_dev->open_mode;
+					break;
+				}
+				img_dev++;
+			}
+	}
+
+	switch (requested_mode)
+	{
+	case OSD_FOPEN_DUMMY:
+	default:
+		/* unsupported modes */
+		printf(/*stderr,*/ "Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
+		fref = NULL;
+		effective_mode_local = OSD_FOPEN_DUMMY;
+		break;
+
+	case OSD_FOPEN_READ:
+	case OSD_FOPEN_WRITE:
+	case OSD_FOPEN_RW:
+	case OSD_FOPEN_RW_CREATE:
+		/* supported modes */
+		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, requested_mode);
+		effective_mode_local = requested_mode;
+		break;
+
+	case OSD_FOPEN_RW_OR_READ:
+		/* R/W or read-only: emulated mode */
+		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+		if (fref)
+			effective_mode_local = OSD_FOPEN_RW;
+		else
+		{
+			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			effective_mode_local = OSD_FOPEN_READ;
+		}
+		break;
+
+	OSD_FOPEN_RW_CREATE_OR_READ:
+		/* R/W, read-only, or create new R/W image: emulated mode */
+		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+		if (fref)
+			effective_mode_local = OSD_FOPEN_RW;
+		else
+		{
+			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			if (fref)
+				effective_mode_local = OSD_FOPEN_READ;
+			else
+			{
+				fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				effective_mode_local = OSD_FOPEN_RW_CREATE;
+			}
+		}
+		break;
+
+	case OSD_FOPEN_READ_OR_WRITE:
+		/* read or write: emulated mode */
+		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		if (fref)
+			effective_mode_local = OSD_FOPEN_READ;
+		else
+		{
+			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+			effective_mode_local = OSD_FOPEN_WRITE;
+		}
+		break;
+	}
+
+	if (effective_mode)
+		*effective_mode = effective_mode_local;
+
+	return fref;
+}
+
+
 /* common init for all IO_FLOPPY devices */
 static void	floppy_device_common_init(int id)
 {
