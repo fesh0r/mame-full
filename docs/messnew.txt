@@ -37,6 +37,8 @@ System Driver Changes:
   auto-repeat functionality when using a numeric keypad.  [Christopher
   Stone]
 
+- [APPLE2] RESET key enhancements. (bug #642) [Christopher Stone]
+
 
 
 User Interface Changes:
