@@ -86,13 +86,24 @@ void win_shutdown_input(void)
 	gx_close_input();
 }
 
+#define KEYCODE_CEBTN1	KEYCODE_1_PAD
+#define KEYCODE_CEBTN2	KEYCODE_2_PAD
+#define KEYCODE_CEBTN3	KEYCODE_3_PAD
+#define KEYCODE_CEBTN4	KEYCODE_4_PAD
+#define KEYCODE_CEBTN5	KEYCODE_5_PAD
+#define KEYCODE_CEBTN6	KEYCODE_6_PAD
+#define KEYCODE_CEBTN7	KEYCODE_7_PAD
+#define KEYCODE_CEBTN8	KEYCODE_8_PAD
+
 // Keyboard Definitions
 static struct KeyboardInfo keylist[] =
 {
-	{ "Button 1",	VK_IPAQ_B1,			KEYCODE_F1 },
-	{ "Button 2",	VK_IPAQ_B2,			KEYCODE_F2 },
-	{ "Button 3",	VK_IPAQ_B3,			KEYCODE_F3 },
-	{ "Button 4",	VK_IPAQ_B4,			KEYCODE_F4 },
+	{ "QStart",		VK_IPAQ_B4,			KEYCODE_CEBTN1 },
+	{ "QMenu",		VK_IPAQ_B3,			KEYCODE_CEBTN2 },
+	{ "Contacts",	VK_IPAQ_B2,			KEYCODE_CEBTN3 },
+	{ "Calendar",	VK_IPAQ_B1,			KEYCODE_CEBTN4 },
+	{ "Action",		VK_IPAQ_ACTION,		KEYCODE_CEBTN7 },
+	{ "Record",		VK_IPAQ_REC,		KEYCODE_CEBTN8 },
     { "A",          'A',                KEYCODE_A },
     { "B",          'B',                KEYCODE_B },
     { "C",          'C',                KEYCODE_C },
@@ -172,89 +183,6 @@ const struct KeyboardInfo* osd_get_key_list(void)
     return keylist;
 }
 
-static int ration_input(const struct GameDriver *drv, UINT32 player, int *buttons, int buttons_available)
-{
-	const struct InputPortTiny *input_ports;
-	int button_count = 0;
-	int start_count = 0;
-	int coin_count = 0;
-	UINT32 type;
-	int input_id;
-
-	/* clear out the output */
-	memset(buttons, 0, sizeof(*buttons) * buttons_available);
-
-	/* go through the input list, and count the number of the appropriate type
-	 * of buttons, and identify the arrow buttons if possible
-	 */
-	input_ports = drv->input_ports;
-	while(input_ports->type != IPT_END)
-	{
-		type = input_ports->type;
-
-		/* right player? */
-		if ((type & IPF_PLAYERMASK) == player)
-		{
-			type &= 0xffff;
-			switch(type)
-			{
-			case IPT_START1:
-			case IPT_START2:
-			case IPT_START3:
-			case IPT_START4:
-				start_count = 1;
-				break;
-
-			case IPT_COIN1:
-			case IPT_COIN2:
-			case IPT_COIN3:
-			case IPT_COIN4:
-				coin_count = 1;
-				break;
-
-			case IPT_BUTTON1:
-			case IPT_BUTTON2:
-			case IPT_BUTTON3:
-			case IPT_BUTTON4:
-			case IPT_BUTTON5:
-			case IPT_BUTTON6:
-			case IPT_BUTTON7:
-			case IPT_BUTTON8:
-			case IPT_BUTTON9:
-			case IPT_BUTTON10:
-				button_count++;
-				break;
-			}
-		}
-		input_ports++;
-	}
-
-	/* do we have enough buttons? */
-	if ((start_count + coin_count + button_count) > buttons_available)
-	{
-		logerror("not enough buttons for driver\n");
-		return 1;
-	}
-
-	/* now time to allocate buttons */
-	input_id = IPT_BUTTON1;
-	while(button_count--)
-		*(buttons++) = input_id++;
-
-	/* now time to allocate coins */
-	input_id = IPT_COIN1;
-	while(coin_count--)
-		*(buttons++) = input_id++;
-
-	/* now time to allocate start buttons */
-	input_id = IPT_START1;
-	while(start_count--)
-		*(buttons++) = input_id++;
-
-	/* done */
-	return 0;
-}
-
 /*
   inptport.c defines some general purpose defaults for key bindings. They may be
   further adjusted by the OS dependant code to better match the available keyboard,
@@ -264,31 +192,59 @@ static int ration_input(const struct GameDriver *drv, UINT32 player, int *button
   This function is called on startup, before reading the configuration from disk.
   Scan the list, and change the keys you want.
 */
+
+static void add_seq(struct ipd *defaults, InputCode code)
+{
+	InputCode oldcode;
+	oldcode = seq_get_1(&defaults->seq);
+	seq_set_3(&defaults->seq, oldcode, CODE_OR, code);
+}
+
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
-	int i, err;
 	UINT32 player;
-	UINT32 buttons[4];
 
 	/* this is the player that gets the UI keys */
 	player = IPF_PLAYER1;
-
-	err = ration_input(Machine->gamedrv, player, buttons, sizeof(buttons) / sizeof(buttons[0]));
-	if (err)
-		return;
 
 	while (defaults->type != IPT_END)
 	{
 		if ((defaults->type & IPF_PLAYERMASK) == player)
 		{
-			for (i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
-			{
-				if (buttons[i] == (defaults->type & ~IPF_PLAYERMASK))
+				switch(defaults->type & ~IPF_PLAYERMASK)
 				{
-					seq_set_1(&defaults->seq, KEYCODE_F1 + i);
+				case IPT_BUTTON1:
+					add_seq(defaults, KEYCODE_CEBTN1);
+					break;
+
+				case IPT_BUTTON2:
+					add_seq(defaults, KEYCODE_CEBTN2);
+					break;
+
+				case IPT_BUTTON3:
+					add_seq(defaults, KEYCODE_CEBTN3);
+					break;
+
+				case IPT_BUTTON4:
+					add_seq(defaults, KEYCODE_CEBTN4);
+					break;
+
+				case IPT_BUTTON5:
+					add_seq(defaults, KEYCODE_CEBTN5);
+					break;
+
+				case IPT_BUTTON6:
+					add_seq(defaults, KEYCODE_CEBTN6);
+					break;
+
+				case IPT_START1:
+					add_seq(defaults, KEYCODE_CEBTN7);
+					break;
+
+				case IPT_COIN1:
+					add_seq(defaults, KEYCODE_CEBTN8);
 					break;
 				}
-			}
 		}
 		defaults++;
 	}

@@ -13,7 +13,7 @@ TARGET = mess
 # DEBUG = 1
 
 # build with browser information for debugging
-BSCMAKE = -bscmake.exe
+BSCMAKE = @-bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
 # UPX = upx.exe -9 --compress-icons=0

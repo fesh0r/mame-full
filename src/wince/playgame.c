@@ -174,6 +174,7 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 
 void CLIB_DECL logerror(const char *text,...)
 {
+#ifdef _X86_
 	va_list arg;
 
 	/* standard vfprintf stuff here */
@@ -184,6 +185,6 @@ void CLIB_DECL logerror(const char *text,...)
 		_vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), text, arg);
 		OutputDebugString(A2T(szBuffer));
 	}
-
 	va_end(arg);
+#endif
 }

@@ -51,11 +51,13 @@ static void calc_skip_mask(int dimension, int maximum, int *new_dimension, int *
 		do {
 			*new_dimension = reduce_width_mask(dimension, *skip_mask);
 			if (*new_dimension > maximum) {
+				if (*skip_mask == 1)
+					break;
 				*skip_mask >>= 1;
 				*skip_mask |= 1;
 			}
 		}
-		while((*new_dimension > maximum) && (*skip_mask != 1));
+		while(*new_dimension > maximum);
 	}
 	else {
 		// We already fit

@@ -10,13 +10,10 @@ TARGET = mess
 # TARGET=tinyms
 
 # uncomment next line to make a debug version
-DEBUG = 1
-
-# build a version for debugging games
-MAME_DEBUG = -DMAME_DEBUG
+# DEBUG = 1
 
 # build with browser information for debugging
-BSCMAKE = @bscmake.exe
+BSCMAKE = @-bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
 # UPX = upx.exe -9 --compress-icons=0
@@ -30,9 +27,6 @@ BSCMAKE = @bscmake.exe
 # if MAME_NET is defined, network support will be compiled in
 # MAME_NET = -DMAME_NET
 
-# if MAME_MMX is defined, MMX will be compiled in
-MAME_MMX = -DMAME_MMX
-
 # use fast (register) calling convention
 USE_FASTCALL = -DFASTCALL
 
@@ -40,9 +34,8 @@ USE_FASTCALL = -DFASTCALL
 # HELP = 1
 
 # set this the operating system you're building for
-# OS = win32
-OS = wince
 # OS = windows
+OS = wince
 
 # extension for executables
 EXE = .exe
@@ -140,8 +133,6 @@ DEFS = \
         -DLSB_FIRST=1 \
         $(MAME_VERSION) \
         $(MAME_NET) \
-        $(MAME_MMX) \
-        $(MAME_DEBUG) \
         $(USE_FASTCALL)
 
 ifeq "$(OS)" "wince"
@@ -209,7 +200,7 @@ endif
 # C Compiler flags
 #
 
-CFLAGS = -W3 -nologo $(INCLUDES)
+CFLAGS = -W1 -nologo $(INCLUDES)
 
 ifdef USE_FASTCALL
 ifneq "$(OS)" "wince"
@@ -339,7 +330,7 @@ else
 endif
 include src/$(MAMEOS)/$(MAMEOS).mak
 
-ifdef MAME_DEBUG
+ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
 else
 DBGDEFS =
@@ -443,7 +434,7 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
-	@-$(RM) $(subst /,\,$@)
+	@-$(RM) $(subst /,\\,$@)
 	$(AR) -nologo -out:$@ $^
 
 makedir:
