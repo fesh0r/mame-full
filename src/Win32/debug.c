@@ -25,7 +25,7 @@
 #include "MAME32.h"
 #include "M32Util.h"
 #include "DebugKeyboard.h"
-#include "osd_dbg.h"
+/*#include "osd_dbg.h"*/
 
 /***************************************************************************
     function prototypes
