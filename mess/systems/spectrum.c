@@ -97,7 +97,7 @@ xx/xx/2001		KS - TS-2068 sound fixed.
 					where it was readed as pressing key 4 (which is exit
 					in Tapecopy by R. Dannhoefer for example).
 			     Added support to load .SP snapshots.
-			     Added .BLK tape images dupport.
+			     Added .BLK tape images support.
 					.BLK files are identical to .TAP ones, extension is
 					an only difference.
 
