@@ -31,6 +31,10 @@ void osd_fdc_get_sector(int unit, int side, int C, int H, int R, int N, unsigned
 {
 }
 
+void osd_fdc_read_id(int unit, int side, unsigned char *buff)
+{
+}
+
 void osd_fdc_seek(int unit, int dir)
 {
 }
