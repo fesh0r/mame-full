@@ -74,6 +74,14 @@ BEGIN
     END
 END
 
+IDR_FILECONTEXT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "Context Menu"
+    BEGIN
+        MENUITEM "&Extract File...",            ID_IMAGE_EXTRACT
+        MENUITEM "&Delete",                     ID_IMAGE_DELETE
+    END
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //

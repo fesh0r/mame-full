@@ -5,6 +5,7 @@
 //============================================================
 
 #include <windows.h>
+#include <windowsx.h>
 #include <commctrl.h>
 #include <tchar.h>
 
@@ -200,13 +201,16 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 static imgtoolerr_t refresh_image(HWND window)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	struct wimgtool_info *info;
 	imgtool_imageenum *imageenum = NULL;
 	char filename_buf[256];
 	char attributes_buf[256];
+	char size_buf[32];
 	imgtool_dirent entry;
-	struct wimgtool_info *info;
+	UINT64 filesize;
 
 	info = get_wimgtool_info(window);
+	size_buf[0] = '\0';
 
 	ListView_DeleteAllItems(info->listview);
 
@@ -236,7 +240,14 @@ static imgtoolerr_t refresh_image(HWND window)
 			}
 		}
 		while(!entry.eof);
+
+		err = img_freespace(info->image, &filesize);
+		if (err)
+			goto done;
+		snprintf(size_buf, sizeof(size_buf) / sizeof(size_buf[0]), "%u bytes free", (unsigned) filesize);
+
 	}
+	SendMessage(info->statusbar, SB_SETTEXT, 2, (LPARAM) U2T(size_buf));
 
 done:
 	if (imageenum)
@@ -248,16 +259,14 @@ done:
 
 static imgtoolerr_t full_refresh_image(HWND window)
 {
-	imgtoolerr_t err;
 	struct wimgtool_info *info;
 	LVCOLUMN col;
 	const struct ImageModule *module;
 	int column_index = 0;
 	int i;
 	const char *window_text;
-	const char *statusbar_text[3];
 	char buf[256];
-	UINT64 filesize;
+	const char *statusbar_text[2];
 
 	info = get_wimgtool_info(window);
 
@@ -267,13 +276,6 @@ static imgtoolerr_t full_refresh_image(HWND window)
 		window_text = U2T(info->filename);
 		statusbar_text[0] = osd_basename((char *) info->filename);
 		statusbar_text[1] = module->description;
-
-		err = img_freespace(info->image, &filesize);
-		if (err)
-			buf[0] = '\0';
-		else
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%u bytes free", (unsigned) filesize);
-		statusbar_text[2] = buf;
 	}
 	else
 	{
@@ -282,7 +284,6 @@ static imgtoolerr_t full_refresh_image(HWND window)
 		window_text = buf;
 		statusbar_text[0] = NULL;
 		statusbar_text[1] = NULL;
-		statusbar_text[2] = NULL;
 	}
 	SetWindowText(window, U2T(window_text));
 	for (i = 0; i < sizeof(statusbar_text) / sizeof(statusbar_text[0]); i++)
@@ -881,6 +882,7 @@ static void menu_extract(HWND window)
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = host_filename;
+	ofn.lpstrFilter = TEXT("All files (*.*)\0*.*\0");
 	ofn.nMaxFile = sizeof(host_filename) / sizeof(host_filename[0]);
 	if (!GetSaveFileName(&ofn))
 		goto done;
@@ -1008,6 +1010,33 @@ done:
 
 
 
+static BOOL context_menu(HWND window, LONG x, LONG y)
+{
+	struct wimgtool_info *info;
+	LVHITTESTINFO hittest;
+	BOOL rc = FALSE;
+	HMENU menu;
+
+	info = get_wimgtool_info(window);
+
+	memset(&hittest, 0, sizeof(hittest));
+	hittest.pt.x = x;
+	hittest.pt.y = y;
+	ScreenToClient(info->listview, &hittest.pt);
+	ListView_HitTest(info->listview, &hittest);
+
+	if (hittest.flags & LVHT_ONITEM)
+	{
+		menu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_FILECONTEXT_MENU));
+		TrackPopupMenu(GetSubMenu(menu, 0), TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, window, NULL);
+		DestroyMenu(menu);
+		rc = TRUE;
+	}
+	return rc;
+}
+
+
+
 static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	struct wimgtool_info *info;
@@ -1103,6 +1132,10 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 					break;
 
 			}
+			break;
+
+		case WM_CONTEXTMENU:
+			context_menu(window, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 			break;
 	}
 
