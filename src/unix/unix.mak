@@ -300,13 +300,60 @@ SOUND_OBJS.beos    =
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
-SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
-    $(DSP_DIR)/arts.o $(DSP_DIR)/sdl.o $(DSP_DIR)/waveout.o
+SOUND_OBJS = $(SOUND_OBJS.$(ARCH))
+
+ifdef SOUND_ESOUND
+SOUND_OBJS += $(DSP_DIR)/esound.o
+endif
+
+ifdef SOUND_ARTS_TEIRA
+SOUND_OBJS += $(DSP_DIR)/artssound.o
+endif
+
+ifdef SOUND_ARTS_SMOTEK
+SOUND_OBJS += $(DSP_DIR)/arts.o
+endif
+
+ifdef SOUND_SDL
+SOUND_OBJS += $(DSP_DIR)/sdl.o
+endif
+
+ifdef SOUND_WAVEOUT
+SOUND_OBJS += $(DSP_DIR)/waveout.o
+endif
 
 # joystick objs
-JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
-    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/joy_ps2.o $(JOY_DIR)/joy_SDL.o \
-    $(JOY_DIR)/XInputDevices.o $(JOY_DIR)/lightgun_abs_event.o
+ifdef JOY_X11
+JOY_OBJS += $(JOY_DIR)/joy_x11.o
+endif
+
+ifdef JOY_I386
+JOY_OBJS += $(JOY_DIR)/joy_i386.o
+endif
+
+ifdef JOY_PAD
+JOY_OBJS += $(JOY_DIR)/joy_pad.o
+endif
+
+ifdef JOY_USB
+JOY_OBJS += $(JOY_DIR)/joy_usb.o
+endif
+
+ifdef JOY_PS2
+JOY_OBJS += $(JOY_DIR)/joy_ps2.o
+endif
+
+ifdef JOY_SDL
+JOY_OBJS += $(JOY_DIR)/joy_SDL.o
+endif
+
+ifdef XINPUT_DEVICES
+JOY_OBJS += $(JOY_DIR)/XInputDevices.o
+endif
+
+ifdef LIGHTGUN_ABS_EVENT
+JOY_OBJS += $(JOY_DIR)/lightgun_abs_event.o
+endif
 
 # framskip objs
 FRAMESKIP_OBJS = $(FRAMESKIP_DIR)/dos.o $(FRAMESKIP_DIR)/barath.o
