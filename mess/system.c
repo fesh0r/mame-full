@@ -94,7 +94,7 @@ const struct GameDriver *drivers[] =
 
 	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
-#if 0						/* Please dont include these next 2 in a distribution, they are Hacks	*/
+#if 0					/* Please dont include these next 2 in a distribution, they are Hacks	*/
 	DRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
 	DRIVER( coleconb )	/* ColecoVision (No BIOS load)					  */
 #endif
@@ -278,7 +278,7 @@ TESTDRIVER( avigo ) 	/*												  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
-	DRIVER( coco3h ) /* Hacked Color Computer 3 (6309)						  */
+	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
 	DRIVER( mc10 )		/* MC-10										  */
 
@@ -290,57 +290,57 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( sys80 ) 	/* System 80									  */
 
 	/* VIDEO TECHNOLOGY */
-	DRIVER( laser110 )	/* Laser 110									  */
-	DRIVER( laser200 )	/* Laser 200									  */
-	DRIVER( laser210 )	/* Laser 210 (indentical to Laser 200 ?)		  */
-	DRIVER( laser310 )	/* Laser 310 (210 with diff. keyboard and RAM)	  */
-	DRIVER( vz200 ) 	/* Dick Smith Electronics / Sanyo VZ200 		  */
-	DRIVER( vz300 ) 	/* Dick Smith Electronics / Sanyo VZ300 		  */
-	DRIVER( fellow )	/* Salora Fellow (Finland)						  */
-	DRIVER( tx8000 )	/* Texet TX-8000 (U.K.) 						  */
-	DRIVER( laser350 )	/* Laser 350									  */
-	DRIVER( laser500 )	/* Laser 500									  */
-	DRIVER( laser700 )	/* Laser 700									  */
+	DRIVER( laser110 )	/* 1983 Laser 110								  */
+	DRIVER( laser200 )	/* 1983 Laser 200								  */
+	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)	  */
+	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM) */
+	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200	  */
+	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300	  */
+	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 				  */
+	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)					  */
+	DRIVER( laser350 )	/* 1984? Laser 350								  */
+	DRIVER( laser500 )	/* 1984? Laser 500								  */
+	DRIVER( laser700 )	/* 1984? Laser 700								  */
 
 	/* TANGERINE */
-	DRIVER( microtan )	/* Microtan 65									  */
-	DRIVER( oric1 ) 	/* Oric 1										  */
-	DRIVER( orica ) 	/* Oric Atmos									  */
+	DRIVER( microtan )	/* 1979 Microtan 65 							  */
+	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
+	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
 
 	/* TEXAS INSTRUMENTS */
-/*DRIVER( ti99_2_24 )*/ /* Texas Instruments TI 99/2					  */
-/*DRIVER( ti99_2_32 )*/ /* Texas Instruments TI 99/2					  */
-	DRIVER( ti99_4 )	/* Texas Instruments TI 99/4					  */
-	DRIVER( ti99_4e )	/* Texas Instruments TI 99/4E					  */
-	DRIVER( ti99_4a )	/* Texas Instruments TI 99/4A					  */
-	DRIVER( ti99_4ae )	/* Texas Instruments TI 99/4AE					  */
+/*DRIVER( ti99_2_24 )*/ /* 1983 TI 99/2 								  */
+/*DRIVER( ti99_2_32 )*/ /* 1983 TI 99/2 								  */
+	DRIVER( ti99_4 )	/* 1978 TI 99/4 								  */
+	DRIVER( ti99_4e )	/* 1980 TI 99/4E								  */
+	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
+	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
 #ifndef MESS_EXCLUDE_IBMPC
 	/* IBM & Clones */
-	DRIVER( pc )		/* PC											  */
-	DRIVER( pcmda ) 	/* PC/XT with MDA (MGA aka Hercules)			  */
-	DRIVER( pccga ) 	/* PC/XT with CGA								  */
+	DRIVER( pc )		/* 1982 PC										  */
+	DRIVER( pcmda ) 	/* 1983 PC/XT with MDA (MGA aka Hercules)		  */
+	DRIVER( pccga ) 	/* 1983 PC/XT with CGA							  */
 
-	DRIVER( t1000hx )	/* Tandy 1000HX (similiar to PCJr)				  */
+	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr) 		  */
 
-	DRIVER( pc1512 )	/* Amstrad PC1512 (XT, CGA compatible)			  */
-	DRIVER( pc1640 )	/* Amstrad PC1640 (XT, EGA compatible)			  */
+	DRIVER( pc1512 )	/* 1987 Amstrad PC1512 (XT, CGA compatible) 	  */
+	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (XT, EGA compatible) 	  */
 
-TESTDRIVER( xtcga ) 	/*												  */
-	DRIVER( xtvga ) 	/*												  */
-	DRIVER( atcga ) 	/*												  */
+TESTDRIVER( xtcga ) 	/* 1983 PC-XT (CGA, MF2 Keyboard)				  */
+	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)				  */
+	DRIVER( atcga ) 	/* 1984 PC-AT (CGA, MF2 Keyboard)				  */
 TESTDRIVER( atvga ) 	/*												  */
 #endif
 
 	/* PHILIPS */
-	DRIVER( p2000t )	/* Philips - P2000T 							  */
-	DRIVER( p2000m )	/* Philips - P2000M 							  */
+	DRIVER( p2000t )	/* 1980 P2000T									  */
+	DRIVER( p2000m )	/* 1980 P2000M									  */
 
 	/* COMPUKIT */
-	DRIVER( uk101 ) 	/*												  */
+	DRIVER( uk101 ) 	/* 1979 UK101									  */
 
 	/* OHIO SCIENTIFIC */
-	DRIVER( superbrd )	/*												  */
+	DRIVER( superbrd )	/* 1979 Superboard II							  */
 
 #ifndef MESS_EXCLUDE_SINCLAIR
 	/* SINCLAIR */
@@ -351,49 +351,50 @@ TESTDRIVER( atvga ) 	/*												  */
 	DRIVER( pc8300 )	/* Your Computer - PC8300						  */
 	DRIVER( pow3000 )	/* Creon Enterprises - Power 3000				  */
 
-	DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 					  */
-	DRIVER( specbusy )	/*												  */
-	DRIVER( specgrot )	/*												  */
-	DRIVER( specimc )	/*												  */
-	DRIVER( speclec )	/*												  */
-	DRIVER( inves ) 	/*												  */
-	DRIVER( tk90x ) 	/*												  */
-	DRIVER( tk95 )		/*												  */
-	DRIVER( tc2048 )	/*												  */
-	DRIVER( ts2068 )	/*												  */
+	DRIVER( spectrum )	/* 1982 ZX Spectrum 							  */
+	DRIVER( specpls4 )	/* 2000 ZX Spectrum +4							  */
+	DRIVER( specbusy )	/* 1994 ZX Spectrum (BusySoft Upgrade)			  */
+	DRIVER( specgrot )	/* ???? ZX Spectrum (De Groot's Upgrade)          */
+	DRIVER( specimc )	/* 1985 ZX Spectrum (Collier's Upgrade)           */
+	DRIVER( speclec )	/* 1987 ZX Spectrum (LEC Upgrade)				  */
+	DRIVER( inves ) 	/* 1986 Inves Spectrum 48K+ 					  */
+	DRIVER( tk90x ) 	/* 1985 TK90x Color Computer					  */
+	DRIVER( tk95 )		/* 1986 TK95 Color Computer 					  */
+	DRIVER( tc2048 )	/* 198? TC2048									  */
+	DRIVER( ts2068 )	/* 1983 TS2068									  */
 
-	DRIVER( spec128 )	/* Spectrum 									  */
-	DRIVER( spec128s )	/* Spectrum 									  */
-	DRIVER( specpls2 )	/* Spectrum 									  */
-	DRIVER( specpl2a )	/* Spectrum 									  */
-	DRIVER( specp2fr )	/*												  */
-	DRIVER( specp2sp )	/*												  */
-	DRIVER( specpls3 )	/* Spectrum Plus 3								  */
-	DRIVER( specp3sp )	/*												  */
-	DRIVER( specpl3e )	/*												  */
-	DRIVER( specpls4 )	/*												  */
+	DRIVER( spec128 )	/* 1986 ZX Spectrum 128"                          */
+	DRIVER( spec128s )	/* 1985 ZX Spectrum 128 (Spain) 				  */
+	DRIVER( specpls2 )	/* 1986 ZX Spectrum +2							  */
+	DRIVER( specpl2a )	/* 1987 ZX Spectrum +2a 						  */
+	DRIVER( specpls3 )	/* 1987 ZX Spectrum +3							  */
+
+	DRIVER( specp2fr )	/* 1986 ZX Spectrum +2 (France) 				  */
+	DRIVER( specp2sp )	/* 1986 ZX Spectrum +2 (Spain)					  */
+	DRIVER( specp3sp )	/* 1987 ZX Spectrum +3 (Spain)					  */
+	DRIVER( specpl3e )	/* 2000 ZX Spectrum +3e 						  */
 #endif
 
 	/* ASCII & MICROSOFT */
-	DRIVER( msx )		/* MSX											  */
-	DRIVER( msxj )		/* MSX Jap										  */
-	DRIVER( msxkr ) 	/* MSX Korean									  */
-	DRIVER( msxuk ) 	/* MSX UK										  */
+	DRIVER( msx )		/* 1983 MSX 									  */
+	DRIVER( msxj )		/* 1983 MSX Jap 								  */
+	DRIVER( msxkr ) 	/* 1983 MSX Korean								  */
+	DRIVER( msxuk ) 	/* 1983 MSX UK									  */
 
 	/* NASCOM MICROCOMPUTERS */
-	DRIVER( nascom1 )	/* Nascom 1 									  */
-	DRIVER( nascom2 )	/* Nascom 2 									  */
+	DRIVER( nascom1 )	/* 1978 Nascom 1								  */
+	DRIVER( nascom2 )	/* 1979 Nascom 2								  */
 
 	/* ACORN */
 #ifndef MESS_EXCLUDE_ACORN
-	DRIVER( atom )		/* Acorn Atom									  */
-	DRIVER( bbca )		/* BBC Micro									  */
-	DRIVER( bbcb )		/* BBC Micro									  */
-	DRIVER( a310 )		/* Acorn Archimedes 310 						  */
+	DRIVER( atom )		/* 1979 Acorn Atom								  */
+	DRIVER( bbca )		/* 1981 BBC Micro								  */
+	DRIVER( bbcb )		/* 1981 BBC Micro								  */
+TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310					  */
 #endif
 
 	/* MILES GORDON TECHNOLOGY */
-	DRIVER( coupe ) 	/*												  */
+	DRIVER( coupe ) 	/* 1989 Sam Coupe								  */
 
 #ifndef MESS_EXCLUDE_SHARP
 	/* SHARP */
@@ -402,21 +403,22 @@ TESTDRIVER( atvga ) 	/*												  */
 	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
 	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
 
-	DRIVER( mz700 ) 	/* Sharp MZ700									  */
-	DRIVER( mz700j )	/* Sharp MZ700 Japan							  */
+	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
+	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
+TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 #endif
 
 	/* MOTOROLA */
-/*	DRIVER( mekd2 )*/	/* Motorola Evaluation Kit						  */
+/*	DRIVER( mekd2 )*/	/* 1977 Motorola Evaluation Kit 				  */
 
 	/* DEC */
-	DRIVER( pdp1 )		/* DEC PDP1 for SPACEWAR! - 1962				  */
+	DRIVER( pdp1 )		/* 1962 DEC PDP1 for SPACEWAR! - 1962			  */
 
 	/* MEMOTECH */
-	DRIVER( mtx512 )	/* Memotech MTX512								  */
+	DRIVER( mtx512 )	/* 1983 Memotech MTX512 						  */
 
 	/* MATTEL */
-	DRIVER( aquarius )	/*												  */
+	DRIVER( aquarius )	/* 1983 Aquarius								  */
 
 /****************OTHERS******************************************************/
 
