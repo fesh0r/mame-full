@@ -1,6 +1,7 @@
 /******************************************************************************
  Peter.Trauner@jk.uni-linz.ac.at May 2000
 
+ Paul Robson's Emulator at www.classicgaming.com/studio2 made it possible
 ******************************************************************************/
 
 #include "driver.h"
@@ -219,5 +220,5 @@ void init_studio2(void)
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac vip ditto
-CONSX( 1976, studio2,	  0, 		studio2,  studio2, 	studio2,	  "RCA",  "Studio II", GAME_NOT_WORKING)
+CONS( 1976, studio2,	  0, 		studio2,  studio2, 	studio2,	  "RCA",  "Studio II")
 // colour studio 2 (m1200) with little color capability
