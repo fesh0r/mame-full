@@ -41,7 +41,7 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 	 */
 
 	strs[0] = image_basename_noext(img);
-	strs[1] = image_longname(img);
+	strs[1] = strs[0] ? image_longname(img) : NULL;
 	strs[2] = defaultartfile;
 
 	/* concatenate the strings; first calculate length of the string */
