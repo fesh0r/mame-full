@@ -49,7 +49,7 @@
 #define KEY_SPC input_port_5_r(0)&1
 #define KEY_PLUS input_port_6_r(0)&0x80
 
-// in machine/hp48.c
+/* in machine/hp48.c */
 typedef struct { 
 	int data[0x40]; 
 	UINT16 crc;
@@ -66,30 +66,15 @@ void hp48_crc(int adr, int data);
 int hp48_in(void);
 void hp48_out(int v);
 
-void init_hp48s(void);
-void init_hp48g(void);
+extern DRIVER_INIT( hp48s );
+extern DRIVER_INIT( hp48g );
+extern MACHINE_INIT( hp48 );
 
-void hp48_machine_init(void);
-int hp48_frame_int(void);
-
-// in vidhrdw/hp48.c
-extern unsigned char hp48_palette[248][3];
+/* in vidhrdw/hp48.c */
 extern unsigned short hp48_colortable[0x20][2];
-//extern struct artwork_info *hp48_backdrop;
 
-void hp48_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-					   const unsigned char *color_prom);
-int hp48_vh_start(void);
-void hp48_vh_stop(void);
-void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-WRITE_HANDLER( hp48_write );
-READ_HANDLER( hp48_read );
-
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-extern "C" void hp48_runtime_loader_init(void);
-# else
-extern void hp48_runtime_loader_init(void);
-# endif
-#endif
+extern PALETTE_INIT( hp48 );
+extern VIDEO_START( hp48 );
+extern VIDEO_UPDATE( hp48 );
+extern WRITE_HANDLER( hp48_write );
+extern READ_HANDLER( hp48_read );

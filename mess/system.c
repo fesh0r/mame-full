@@ -664,8 +664,8 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 TESTDRIVER( comquest )	/* Comquest Plus German							*/
 
 	/* Hewlett Packard */
-//TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
-//TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
+TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
+TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318										  */

@@ -4,12 +4,12 @@
 
 #include "includes/hp48.h"
 
-unsigned char hp48_palette[248][3] =
+static unsigned char hp48_palette[] =
 {
-	{ 49,70,64 }, //background
-	{ 40,35,55 }, //symbol color
-	{ 49,72,73 }, //lcd light
-	{ 37,42,64 }, //lcd dark
+	49,70,64,	/* background */
+	40,35,55,	/* symbol color */
+	49,72,73,	/* lcd light */
+	37,42,64	/* lcd dark */
 };
 
 /* 32 contrast steps */
@@ -51,34 +51,29 @@ unsigned short hp48_colortable[0x20][2] = {
 	{ 2, 3 }
 };
 
-void hp48_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+PALETTE_INIT( hp48 )
 {
-	memcpy (sys_palette, hp48_palette, sizeof (hp48_palette));
-	memcpy(sys_colortable,hp48_colortable,sizeof(hp48_colortable));
+	palette_set_colors(0, hp48_palette, sizeof(hp48_palette) / 3);
+	memcpy(colortable,hp48_colortable,sizeof(hp48_colortable));
 }
 
-
-int hp48_vh_start(void)
+VIDEO_START( hp48 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*) auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
+#if 0
 	{
 		char backdrop_name[200];
 	    /* try to load a backdrop for the machine */
 		sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
 		backdrop_load(backdrop_name, 8);
 	}
+#endif
 
-	return video_start_generic();
-}
-
-void hp48_vh_stop(void)
-{
+	return generic_vh_start();
 }
 
 static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const char *figure, int color)
@@ -88,6 +83,7 @@ static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const cha
 		switch (figure[j]) {
 		case '1': 
 			plot_pixel(bitmap, x+xi, y, color);
+			osd_mark_dirty(x+xi,y,x+xi,y);
 			xi++;
 			break;
 		case ' ': 
@@ -175,6 +171,11 @@ void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
     color[0] = Machine->pens[0];
 //    color[0] = Machine->pens[1];
 	color[1] = Machine->pens[1];
+
+    if (full_refresh)
+    {
+		osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
+    }
 
 	for (y=0,i=LCD_BASE_ADDRESS; y<64; y+=8, i+=LCD_LINE_OFFSET) {
 		for (x=0; x<131; x++) {

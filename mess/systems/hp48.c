@@ -184,84 +184,40 @@ static SATURN_CONFIG config={
 	hp48_mem_reset, hp48_mem_config, hp48_mem_unconfig, hp48_mem_id,
 	hp48_crc
 };
-static struct MachineDriver machine_driver_hp48s =
-{
+
+
+static MACHINE_DRIVER_START( hp48s )
 	/* basic machine hardware */
-	{
-		{
-			CPU_SATURN,
-			4000000,	/* 2 MHz */
-			readmem,writemem,0,0,
-			hp48_frame_int, 1,
-			0,0,
-			&config
-        }
-	},
-	/* frames per second, VBL duration */
-	64, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	hp48_machine_init,
-	NULL,			/* stop machine */
+	MDRV_CPU_ADD_TAG("main", SATURN, 4000000)        /* 2 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_CONFIG(config)
+	MDRV_FRAMES_PER_SECOND(64)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( hp48 )
 
 	/* video hardware (well, actually there was no video ;) */
 	/* scanned with 300 dpi, scaled x 55%, y 55% for perfect display 2x2 pixels */
-	339, 775, { 0, 339-1, 0, 775-1 },
-	hp48_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (hp48_palette) / sizeof (hp48_palette[0]) ,
-	sizeof (hp48_colortable) / sizeof(hp48_colortable[0][0]),
-	hp48_init_colors,		/* convert color prom */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(339, 775)
+	MDRV_VISIBLE_AREA(0, 339-1, 0, 775-1)
+	MDRV_GFXDECODE( hp48_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH( 248 )
+	MDRV_COLORTABLE_LENGTH( sizeof (hp48_colortable) / sizeof(hp48_colortable[0][0]) )
+	MDRV_PALETTE_INIT( hp48 )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-	hp48_vh_start,
-	hp48_vh_stop,
-	hp48_vh_screenrefresh,
+	MDRV_VIDEO_START( hp48 )
+	MDRV_VIDEO_UPDATE( hp48 )
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-        { 0 }
-    }
-};
 
-static struct MachineDriver machine_driver_hp48g =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_SATURN,
-			8000000,	/* 4 MHz */
-			readmem,writemem,0,0,
-			hp48_frame_int, 1,
-			0,0,
-			&config
-        }
-	},
-	/* frames per second, VBL duration */
-	64, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	hp48_machine_init,
-	NULL,			/* stop machine */
-
-	/* video hardware (well, actually there was no video ;) */
-	339, 775, { 0, 339-1, 0, 775-1 },
-	hp48_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (hp48_palette) / sizeof (hp48_palette[0]) ,
-	sizeof (hp48_colortable) / sizeof(hp48_colortable[0][0]),
-	hp48_init_colors,		/* convert color prom */
-
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-	hp48_vh_start,
-	hp48_vh_stop,
-	hp48_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-        { 0 }
-    }
-};
+static MACHINE_DRIVER_START( hp48g )
+	MDRV_IMPORT_FROM( hp48s )
+	MDRV_CPU_REPLACE( "main", SATURN, 8000000 )		/* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_CONFIG(config)
+MACHINE_DRIVER_END
 
 ROM_START(hp48s)
 	ROM_REGION(0x1c0000,REGION_CPU1, 0)
@@ -313,14 +269,3 @@ static const struct IODevice io_hp48s[] = {
 // hp49????
 COMP( 1989, hp48s,	  0, 		hp48s,  hp48s, 	hp48s,	  "Hewlett Packard",  "HP48S/SX")
 COMP( 1993, hp48g,	  0, 		hp48g,  hp48s, 	hp48g,	  "Hewlett Packard",  "HP48G/GX")
-
-#ifdef RUNTIME_LOADER
-extern void hp48_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"hp48s")==0) drivers[i]=&driver_hp48s;
-		if ( strcmp(drivers[i]->name,"hp48g")==0) drivers[i]=&driver_hp48g;
-	}
-}
-#endif

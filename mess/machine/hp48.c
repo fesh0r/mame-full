@@ -430,8 +430,7 @@ int hp48_in(void)
 	return data;
 }
 
-
-void init_hp48s(void)
+DRIVER_INIT( hp48s )
 {
 	int i,j,t;
 	UINT8 *mem=memory_region(REGION_CPU1);
@@ -451,7 +450,7 @@ void init_hp48s(void)
 	timer_pulse(1.0/8192, 0, hp48_timer);
 }
 
-void init_hp48g(void)
+DRIVER_INIT( hp48g )
 {
 	int i,j,t;
 	UINT8 *mem=memory_region(REGION_CPU1);
@@ -471,14 +470,7 @@ void init_hp48g(void)
 	timer_pulse(1.0/8192, 0, hp48_timer);
 }
 
-void hp48_machine_init(void)
+MACHINE_INIT( hp48 )
 {
 	hp48_mem_reset();
-}
-
-
-int hp48_frame_int(void)
-{
-//	cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
-	return 0;
 }
