@@ -274,9 +274,10 @@ static void rsdos_diskimage_exit(IMAGE *img)
 {
 	rsdos_diskimage *rsimg = (rsdos_diskimage *) img;
 
+	/* Do we have to flush the granule map? */
 	if (rsimg->granulemap_dirty) {
 		stream_seek(rsimg->f, OFFSET(17,2), SEEK_SET);
-		stream_write(rsimg->f, rsimg->granulemap, sizeof(rsimg->granulemap));
+		stream_write(rsimg->f, rsimg->granulemap, rsimg->granule_count);
 	}
 
 	stream_close(rsimg->f);
@@ -437,8 +438,12 @@ static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sour
 	}
 	while(sz > 0);
 
+	/* Now that we are done with the file, we need to specify the final entry
+	 * in the file allocation table
+	 */
 	*gptr = 0xc0 + ((i + 255) / 256);
 
+	/* Now we need to find an empty directory entry */
 	i = 0;
 	do {
 		err = get_rsdos_dirent(rsimg->f, i++, &ent2);
