@@ -74,6 +74,12 @@ static void cassette_update(mess_image *cassette)
 			break;
 
 		case CASSETTE_PLAY:
+			{
+				/* clip position into legal bounds */
+				double lenght = cassette_get_length(cassette);
+				if (new_position > lenght)
+					new_position = lenght;
+			}
 			cassette_get_sample(tag->cassette, 0, new_position, 0.0, &tag->value);
 			break;
 		}
@@ -193,6 +199,7 @@ double cassette_get_length(mess_image *cassette)
 void cassette_seek(mess_image *cassette, double time, int origin)
 {
 	struct mess_cassetteimg *tag;
+	double lenght = cassette_get_length(cassette);
 
 	cassette_update(cassette);
 
@@ -201,13 +208,19 @@ void cassette_seek(mess_image *cassette, double time, int origin)
 		break;
 
 	case SEEK_END:
-		time += cassette_get_length(cassette);
+		time += lenght;
 		break;
 
 	case SEEK_CUR:
 		time += cassette_get_position(cassette);
 		break;
 	}
+
+	/* clip position into legal bounds */
+	if (time < 0)
+		time = 0;
+	if (time > lenght)
+		time = lenght;
 
 	tag = get_cassimg(cassette);
 	tag->position = time;
