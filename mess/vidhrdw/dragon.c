@@ -80,14 +80,34 @@ void dragon_charproc(UINT8 c)
 	m6847_inv_w(0,	inv);
 }
 
-static int internal_dragon_vh_start(int m6847_version)
+static void coco2b_charproc(UINT8 c)
+{
+	int inv;
+	int gm0;
+
+	gm0 = m6847_gm0_r(0);
+
+	if (gm0 && (c < 0x20)) {
+		/* A lowercase char */
+		inv = 1;
+	}
+	else {
+		/* something else */
+		inv = (c & 0x40) ? 1 : 0;
+	}
+
+	m6847_as_w(0, (c & 0x80) || (!gm0 && m6847_intext_r(0)));
+	m6847_inv_w(0, inv);
+}
+
+static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 {
 	struct m6847_init_params p;
 	p.version = m6847_version;
 	p.artifactdipswitch = 12;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
-	p.charproc = dragon_charproc;
+	p.charproc = charproc;
 
 	if (m6847_vh_start(&p))
 		return 1;
@@ -98,12 +118,12 @@ static int internal_dragon_vh_start(int m6847_version)
 
 int dragon_vh_start(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL);
+	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL, dragon_charproc);
 }
 
 int coco2b_vh_start(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_M6847T1);
+	return internal_dragon_vh_start(M6847_VERSION_M6847T1, coco2b_charproc);
 }
 
 WRITE_HANDLER(coco_ram_w)
@@ -174,7 +194,7 @@ int coco3_vh_start(void)
 	p.artifactdipswitch = 12;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
-	p.charproc = dragon_charproc;
+	p.charproc = coco2b_charproc;
 
 	if (internal_m6847_vh_start(&p, MAX_HIRES_VRAM)) {
 		paletteram = NULL;

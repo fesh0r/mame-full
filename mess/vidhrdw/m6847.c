@@ -284,22 +284,13 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 	UINT8 b;
 	UINT8 *character;
 	int bgc, fgc;
-	int lowercase_hack = 0;
 
 	b = *mem;
 
 	/* Give the host machine a chance to pull our strings */
 	the_state.initparams.charproc(b);
 
-	/* HACKHACK - Need to know more about the M6847T1 to be accurate! */
-	if (the_state.initparams.version == M6847_VERSION_M6847T1) {
-		if (the_state.modebits & M6847_MODEBIT_GM0) {
-			if (b < 0x80)
-				lowercase_hack = 1;
-		}
-	}
-
-	if (!lowercase_hack && (the_state.modebits & M6847_MODEBIT_AS)) {
+	if (the_state.modebits & M6847_MODEBIT_AS) {
 		/* Semigraphics */
 		bgc = 8;
 
@@ -338,17 +329,23 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 		if (the_state.modebits & M6847_MODEBIT_INV)
 			fgc ^= 1;
 
-		if (lowercase_hack && (b < 0x20)) {
-			b += 0x40;
-			fgc ^= 1;
+		if (the_state.initparams.version == M6847_VERSION_M6847T1) {
+			/* M6847T1 specific features */
+
+			/* Lowercase */
+			if ((the_state.modebits & M6847_MODEBIT_GM0) && (b < 0x20))
+				b += 0x40;
+			else
+				b &= 0x3f;
+
+			/* Inverse (The following was verified in Rainbow Magazine 12/86) */
+			if (the_state.modebits & M6847_MODEBIT_GM1)
+				fgc ^= 1;
 		}
 		else {
 			b &= 0x3f;
 		}
 
-		/* The following was verified in Rainbow */
-		if ((the_state.initparams.version == M6847_VERSION_M6847T1) && (the_state.modebits & M6847_MODEBIT_GM1))
-			fgc ^= 1;
 
 		if (b == 0x20) {
 			character = NULL;
