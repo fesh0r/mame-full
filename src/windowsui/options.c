@@ -302,7 +302,7 @@ void OptionsInit(int total_games)
 	settings.splitter[0] = 150;
 	settings.splitter[1] = 300;
 #ifdef MESS
-    settings.splitter[2] = 450;
+    settings.splitter[2] = 406;
 #endif
 
 	settings.language          = strdup("english");
