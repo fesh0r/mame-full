@@ -479,7 +479,9 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 /*	DRIVER( ti80 )*/	/*TI 80 */
 
 /* TI-81 (Z80 2 MHz) */
-/*	DRIVER( ti81 )*/	/*TI 81 rom ver. 1.1 */
+	DRIVER( ti81 )		/*TI 81 rom ver. 1.8 */
+/*	DRIVER( ti81v11 )*/	/*TI 81 rom ver. 1.1 */
+/*	DRIVER( ti81v20 )*/	/*TI 81 rom ver. 2.0 */
 
 /* TI-82 (Z80 6 MHz) */
 /*	DRIVER( ti82 )*/	/*TI 82 rom ver. 3.0 */

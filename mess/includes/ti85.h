@@ -4,6 +4,8 @@ extern UINT8 ti85_LCD_memory_base;
 extern UINT8 ti85_LCD_contrast;
 extern UINT8 ti85_LCD_status;
 extern UINT8 ti85_timer_interrupt_mask;
+extern void ti81_init_machine (void);
+extern void ti81_stop_machine (void);
 extern void ti85_init_machine (void);
 extern void ti85_stop_machine (void);
 extern void ti86_init_machine (void);

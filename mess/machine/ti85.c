@@ -157,6 +157,23 @@ void update_ti86_memory (void)
 	}
 }
 
+void ti81_init_machine(void)
+{
+	ti85_timer = timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
+
+	ti85_timer_interrupt_mask = 0;
+	ti85_power_mode = 0;
+}
+
+void ti81_stop_machine(void)
+{
+	if (ti85_timer)
+	{
+		timer_remove(ti85_timer);
+		ti85_timer = NULL;
+	}
+}
+
 void ti85_init_machine(void)
 {
 	ti85_timer = timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
