@@ -902,6 +902,7 @@ void pcw_init_machine(void)
 	pcw_system_status &= ~((1<<6) | (1<<5) | (1<<4));
 
 	pcw_interrupt_counter = 0;
+	fdc_interrupt_code = 0;
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
 
@@ -937,7 +938,6 @@ void pcw_init_memory(int size)
 
 void	init_pcw8256(void)
 {
-	logerror("init pcw8256\n");
 	pcw_init_memory(256);
 	pcw_init_machine();
 }
