@@ -57,12 +57,21 @@ Interrupt handling:
 	interrupt pin.  I think the request is set by the decrementer reaching 0, and is cleared by a
 	write to the 9901 int3 enable bit ("SBO 3") (or am I wrong once again ?).
 
-nota:
-	On TI99/4a, interrupt routines notify (by software) the TMS9901 of interrupt recognition
-	("SBO n").  However, AFAIK, this has strictly no consequence in the TMS9901, and interrupt
-	routines would work fine without this (except probably TIMER interrupt).  All this is quite
-	weird.  Maybe the interrupt recognition notification is needed on TMS9985, or any other weird
-	variant of this hardware (how about the TI99 board to be inserted in a TI990/10?).
+TODO:
+	* Emulate the RST1* input.  Note that RST1* active (low) makes INTREQ*
+	  inactive (high) with IC0-IC3 = 0.
+	* the clock read register is updated every time the timer decrements when
+	  the TMS9901 is not in clock mode.  This probably implies tat if you clear
+	  the clock mode and re-assert it immediately, the tms9901 may have failed
+	  to update the clock read register: this is not emulated.
+	* The clock mode is entered when a 1 is written to the control bit.  It is
+	  exited when a 0 is written to the control bit or the a tms9901 select bit
+	  greater than 15 is accessed.  According to the data sheet, "when CE* is
+	  inactive (HIGH), the PSI is not disabled from seeing the select lines.
+	  As the CPU is accessing memory, A10-A14 could very easily have a value of
+	  15 or greater" (this is assuming that S0-S4 are connected to A10-A14,
+	  which makes sense with most tms9900 family members).  There is no way
+	  this "feature" (I would call this a hardwre bug) can be emulated.
 */
 
 
@@ -98,11 +107,9 @@ typedef struct tms9901_t
 							  0 means decrementer off */
 	int latchedtimer;		/* when we go into timer mode, the decrementer is copied there to allow to read it reliably */
 
-	int clockinvlchanged;	/* set to true when clockinvl has been written to, which means the
-							  decrementer must be reloaded when we quit timer mode (??) */
 	int mode9901;			/* TMS9901 current mode
-							  0 = I/O mode (allow interrupts ???),
-							  1 = Timer mode (we're programming the clock). */
+							  0 = I/O mode,
+							  1 = Clock mode (we're programming the clock). */
 
 	/* driver-dependent read and write handlers */
 	int (*read_handlers[4])(int offset);
@@ -268,7 +275,7 @@ static void tms9901_field_interrupts(int which)
 		tms9901[which].int_pending = FALSE;
 
 		if (tms9901[which].interrupt_callback)
-			(*tms9901[which].interrupt_callback)(0, 0);
+			(*tms9901[which].interrupt_callback)(0, 0xf);
 	}
 }
 
@@ -384,13 +391,8 @@ int tms9901_CRU_read(int which, int offset)
 		}
 		break;
 	case 2:
-		if (tms9901[which].mode9901)
-		{	/* exit timer mode */
-			tms9901[which].mode9901 = 0;
-
-			if (tms9901[which].clockinvlchanged)
-				tms9901_timer_reload(which);
-		}
+		/* exit timer mode */
+		tms9901[which].mode9901 = 0;
 
 		answer = (tms9901[which].read_handlers[2]) ? (* tms9901[which].read_handlers[2])(2) : 0;
 
@@ -399,13 +401,8 @@ int tms9901_CRU_read(int which, int offset)
 
 		break;
 	default:
-		if (tms9901[which].mode9901)
-		{	/* exit timer mode */
-			tms9901[which].mode9901 = 0;
-
-			if (tms9901[which].clockinvlchanged)
-				tms9901_timer_reload(which);
-		}
+		/* exit timer mode */
+		tms9901[which].mode9901 = 0;
 
 		answer = (tms9901[which].read_handlers[3]) ? (* tms9901[which].read_handlers[3])(3) : 0;
 
@@ -451,14 +448,10 @@ void tms9901_CRU_write(int which, int offset, int data)
 					tms9901[which].latchedtimer = ceil(timer_timeleft(tms9901[which].timer) * (tms9901[which].clock_rate / 64.));
 				else
 					tms9901[which].latchedtimer = 0;		/* timer inactive... */
-				tms9901[which].clockinvlchanged = FALSE;
 			}
 			else
 			{
-				/* we are quitting clock mode: reload the clock interval if it
-				has been written to */
-				if (tms9901[which].clockinvlchanged)
-					tms9901_timer_reload(which);
+				/* we are quitting clock mode */
 			}
 		}
 		break;
@@ -488,11 +481,12 @@ void tms9901_CRU_write(int which, int offset, int data)
 			int mask = 1 << ((offset & 0x0F) - 1);	/* corresponding mask */
 
 			if (data)
-				tms9901[which].clockinvl |= mask;			/* set bit */
+				tms9901[which].clockinvl |= mask;		/* set bit */
 			else
 				tms9901[which].clockinvl &= ~ mask;		/* clear bit */
 
-			tms9901[which].clockinvlchanged = TRUE;
+			/* reset clock timer */
+			tms9901_timer_reload(which);
 		}
 		else
 		{	/* modify interrupt mask */
@@ -551,14 +545,8 @@ void tms9901_CRU_write(int which, int offset, int data)
 			int pin = offset & 0x0F;
 			int mask = (1 << pin);
 
-
-			if (tms9901[which].mode9901)
-			{	/* exit timer mode */
-				tms9901[which].mode9901 = 0;
-
-				if (tms9901[which].clockinvlchanged)
-					tms9901_timer_reload(which);
-			}
+			/* exit timer mode */
+			tms9901[which].mode9901 = 0;
 
 			tms9901[which].pio_direction |= mask;			/* set up as output pin */
 
@@ -596,6 +584,16 @@ READ_HANDLER ( tms9901_0_CRU_read )
 WRITE_HANDLER ( tms9901_0_CRU_write )
 {
 	tms9901_CRU_write(0, offset, data);
+}
+
+READ_HANDLER ( tms9901_1_CRU_read )
+{
+	return tms9901_CRU_read(1, offset);
+}
+
+WRITE_HANDLER ( tms9901_1_CRU_write )
+{
+	tms9901_CRU_write(1, offset, data);
 }
 
 READ16_HANDLER ( tms9901_0_CRU_read16 )

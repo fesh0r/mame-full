@@ -47,6 +47,8 @@ void tms9901_CRU_write(int which, int offset, int data);
 
 READ_HANDLER ( tms9901_0_CRU_read );
 WRITE_HANDLER ( tms9901_0_CRU_write );
+READ_HANDLER ( tms9901_1_CRU_read );
+WRITE_HANDLER ( tms9901_1_CRU_write );
 
 /*********************** Standard 16-bit CPU interfaces *********************/
 
