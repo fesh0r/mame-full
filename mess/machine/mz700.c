@@ -30,17 +30,21 @@ static UINT8 ne556_out[2] = {0,};		/* NE556 current output status */
 static UINT8 mz700_motor_ff = 0;    /* cassette motor control flipflop */
 static UINT8 mz700_motor_on = 0;	/* cassette motor key (play key) */
 
-static int pio_port_a_r (int chip);
-static int pio_port_b_r (int chip);
-static int pio_port_c_r (int chip);
-static void pio_port_a_w (int chip, int data);
-static void pio_port_b_w (int chip, int data);
-static void pio_port_c_w (int chip, int data);
+static READ_HANDLER ( pio_port_a_r );
+static READ_HANDLER ( pio_port_b_r );
+static READ_HANDLER ( pio_port_c_r );
+static WRITE_HANDLER ( pio_port_a_w );
+static WRITE_HANDLER ( pio_port_b_w );
+static WRITE_HANDLER ( pio_port_c_w );
 
 static ppi8255_interface ppi8255 = {
     1,
-	pio_port_a_r, pio_port_b_r, pio_port_c_r,
-	pio_port_a_w, pio_port_b_w, pio_port_c_w
+	{pio_port_a_r},
+	{pio_port_b_r},
+	{pio_port_c_r},
+	{pio_port_a_w},
+	{pio_port_b_w},
+	{pio_port_c_w}
 };
 
 static int pio_port_a_output;
@@ -137,7 +141,7 @@ static void pit_irq_2(int which)
 
 /************************ PIO ************************************************/
 
-static int pio_port_a_r (int chip)
+static READ_HANDLER ( pio_port_a_r )
 {
 	data8_t data = pio_port_a_output;
 	LOG(2,"mz700_pio_port_a_r",("%02X\n", data));
@@ -145,7 +149,7 @@ static int pio_port_a_r (int chip)
 }
 
 /* read keyboard row - indexed by a demux LS145 which is connected to PA0-3 */
-static int pio_port_b_r (int chip)
+static READ_HANDLER ( pio_port_b_r )
 {
 	data8_t demux_LS145, data = 0xff;
 
@@ -159,7 +163,7 @@ static int pio_port_b_r (int chip)
     return data;
 }
 
-static int pio_port_c_r (int chip)
+static READ_HANDLER (pio_port_c_r )
 {
     data8_t data = pio_port_c_output & 0x0f;
 
@@ -185,13 +189,13 @@ static int pio_port_c_r (int chip)
     return data;
 }
 
-static void pio_port_a_w (int chip, int data)
+static WRITE_HANDLER (pio_port_a_w )
 {
 	LOG(2,"mz700_pio_port_a_w",("%02X\n", data));
 	pio_port_a_output = data;
 }
 
-static void pio_port_b_w (int chip, int data)
+static WRITE_HANDLER ( pio_port_b_w )
 {
 	/*
 	 * bit 7	NE556 reset
@@ -209,7 +213,7 @@ static void pio_port_b_w (int chip, int data)
     timer_enable(ne556_timer[0], (data & 0x80) ? 0 : 1);
 }
 
-static void pio_port_c_w (int chip, int data)
+static WRITE_HANDLER ( pio_port_c_w )
 {
     /*
      * bit 3 out    motor control (0 = on)
