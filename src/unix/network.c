@@ -786,7 +786,10 @@ static int _build_net_keymap(void)
 		Machine->gamedrv->input_ports[unmapped_bit_index].mask;
 	    input_mapping_count += 1;
 	}
+    /* Putting an empty statement after the label suppresses a 
+     * warning from gcc-3.1. */
     skip_duplicate:
+	;
     }
     return 1;
 }
