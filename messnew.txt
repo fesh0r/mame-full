@@ -33,7 +33,8 @@ System Driver Changes:
   them much more accurate.  Fixed a bug that caused the joystick to max out all
   the time. Added a new abstraction layer for cartridge IO interfaces.  Optimized
   graphics emulation a bit.  Adjusted default controls so that joystick buttons
-  will work by default.  [Nate Woods]
+  will work by default.  Improved PMODE 4 artifact colors to be more accurate
+  (special thanks to John Kowalski for providing color information) [Nate Woods]
 
 - [DRAGON] Fixed DragonDOS cartrdige, so now DragonDOS works fine.  [Nate Woods]
 

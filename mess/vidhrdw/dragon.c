@@ -56,6 +56,8 @@ static int coco3_vidbase;
 #define LOG_GIME	0
 #define LOG_VIDEO	0
 
+#define COLORSLOT_BORDER 16
+
 /* -------------------------------------------------- */
 
 static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
@@ -385,7 +387,7 @@ static int coco3_vh_setborder(int red, int green, int blue)
 		coco3_borderred = red;
 		coco3_bordergreen = green;
 		coco3_borderblue = blue;
-		palette_change_color(16, red, green, blue);
+		palette_change_color(COLORSLOT_BORDER, red, green, blue);
 
 		full_refresh = palette_recalc() ? 1 : 0;
 	}
@@ -426,13 +428,16 @@ WRITE_HANDLER(coco3_palette_w)
 #endif
 }
 
-static void coco3_artifact(UINT16 *artifactcolors)
+static void coco3_artifact(UINT16 *artifactcolors, UINT16 p0, UINT16 p1)
 {
 	int c1, c2, r1, r2, g1, g2, b1, b2;
 	static int oldc1, oldc2;
 
-	c1 = paletteram[artifactcolors[0]];
-	c2 = paletteram[artifactcolors[3]];
+	artifactcolors[0] = p0;
+	artifactcolors[3] = p1;
+
+	c1 = paletteram[p0];
+	c2 = paletteram[p1];
 
 	/* Have the colors actually changed? */
 	if ((oldc1 != c1) || (oldc2 != c2)) {
@@ -441,20 +446,6 @@ static void coco3_artifact(UINT16 *artifactcolors)
 		palette_change_color(17, r2, (g1+g2)/2, b1);
 		palette_change_color(18, r1, (g1+g2)/2, b2);
 	}
-}
-
-static void coco3_artifact_red(UINT16 *artifactcolors)
-{
-	coco3_artifact(artifactcolors);
-	artifactcolors[2] = 18;
-	artifactcolors[1] = 17;
-}
-
-static void coco3_artifact_blue(UINT16 *artifactcolors)
-{
-	coco3_artifact(artifactcolors);
-	artifactcolors[1] = 18;
-	artifactcolors[2] = 17;
 }
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom)
@@ -625,13 +616,21 @@ static UINT8 *coco3_textmapper_attr(UINT8 *mem, int param, int *fg, int *bg, int
 	return coco3_textmapper_noattr(mem, param, NULL, NULL, NULL);
 }
 
+static void coco3_getcolorrgb(int color, UINT8 *red, UINT8 *green, UINT8 *blue)
+{
+	int r, g, b;
+	coco3_compute_color(paletteram[color], &r, &g, &b);
+	*red = (UINT8) r;
+	*green = (UINT8) g;
+	*blue = (UINT8) b;
+}
+
 /*
  * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen
  */
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-//	rastertrack_sync();
 	rastertrack_refresh(bitmap, full_refresh);
 }
 
@@ -641,11 +640,6 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	static UINT16 coco3_pens[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-	};
-	static artifactproc artifacts[] = {
-		NULL,
-		coco3_artifact_red,
-		coco3_artifact_blue
 	};
 	static int old_cmprgb;
 	int cmprgb, i;
@@ -706,7 +700,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		}
 		rf->width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
 		rf->height = rows;
-		rf->border_pen = full_refresh ? Machine->pens[16] : -1;
+		rf->border_pen = full_refresh ? Machine->pens[COLORSLOT_BORDER] : -1;
 		rf->total_scanlines = 263;
 		rf->top_scanline = bordertop;
 
@@ -787,7 +781,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm->bytesperrow);
 	}
 	else {
-		int bordercolor = 0, borderred, bordergreen, borderblue;
+		int bordercolor = 0, r, g, b;
 
 		switch(m6847_get_bordercolor()) {
 		case M6847_BORDERCOLOR_BLACK:
@@ -807,17 +801,18 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			break;
 		}
 
-		coco3_compute_color(bordercolor, &borderred, &bordergreen, &borderblue);
+		coco3_compute_color(bordercolor, &r, &g, &b);
 
-		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
+		full_refresh += coco3_vh_setborder(r, g, b);
 		if (palette_recalc())
 			full_refresh = 1;
 
 		internal_m6847_vh_screenrefresh(rs, rvm, rf,
 			full_refresh, coco3_pens,
 			&RAM[coco3_vidbase],
-			1, (full_refresh ? 16 : -1), 2,
-			artifacts[readinputport(12) & 3]);
+			1, (full_refresh ? COLORSLOT_BORDER : -1), 2,
+			readinputport(12) & 3,
+			17, coco3_getcolorrgb);
 	}
 }
 

@@ -615,13 +615,13 @@ static struct MachineDriver machine_driver_coco3 =
 	dragon_stop_machine,
 
 	/* video hardware */
-	640,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 639, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
-	19,	/* 16 colors + border color + 2 artifact colors */
+	640,							/* screen width */
+	240,							/* screen height (pixels doubled) */
+	{ 0, 639, 0, 239 },				/* visible_area */
+	0,								/* graphics decode info */
+	17+M6847_ARTIFACT_COLOR_COUNT,	/* 16 colors + border color + artifact colors */
 	0,
-	NULL,								/* initialise palette */
+	NULL,							/* initialise palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
@@ -662,13 +662,13 @@ static struct MachineDriver machine_driver_coco3h =
 	dragon_stop_machine,
 
 	/* video hardware */
-	640,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 639, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
-	19,	/* 16 colors + border color + 2 artifact colors */
+	640,							/* screen width */
+	240,							/* screen height (pixels doubled) */
+	{ 0, 639, 0, 239 },				/* visible_area */
+	0,								/* graphics decode info */
+	17+M6847_ARTIFACT_COLOR_COUNT,	/* 16 colors + border color + artifact colors */
 	0,
-	NULL,								/* initialise palette */
+	NULL,							/* initialise palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,

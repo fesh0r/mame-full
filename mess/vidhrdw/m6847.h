@@ -12,7 +12,9 @@ extern "C" {
 
 /******************* Initialization & Functionality *******************/
 
-#define M6847_TOTAL_COLORS 17
+#define M6847_ARTIFACT_COLOR_COUNT	14
+
+#define M6847_TOTAL_COLORS (13 + (M6847_ARTIFACT_COLOR_COUNT * 4))
 
 enum {
 	M6847_VERSION_ORIGINAL,

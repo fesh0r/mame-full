@@ -46,6 +46,8 @@ enum {
 
 #define LOG_M6847 0
 
+static UINT8 *game_palette;
+
 static unsigned char palette[] = {
 	0x00,0x00,0x00, /* BLACK */
 	0x00,0xff,0x00, /* GREEN */
@@ -56,14 +58,34 @@ static unsigned char palette[] = {
 	0x00,0xff,0xff, /* CYAN */
 	0xff,0x00,0xff, /* MAGENTA */
 	0xff,0x80,0x00, /* ORANGE */
-	0x00,0x80,0x00, /* ARTIFACT GREEN/RED */
-	0x00,0x80,0x00, /* ARTIFACT GREEN/BLUE */
-	0xff,0x80,0x00, /* ARTIFACT BUFF/RED */
-	0x00,0x80,0xff, /* ARTIFACT BUFF/BLUE */
 	0x00,0x40,0x00,	/* ALPHANUMERIC DARK GREEN */
 	0x00,0xff,0x00,	/* ALPHANUMERIC BRIGHT GREEN */
 	0x40,0x10,0x00,	/* ALPHANUMERIC DARK ORANGE */
-	0xff,0xc4,0x18,	/* ALPHANUMERIC BRIGHT ORANGE */
+	0xff,0xc4,0x18	/* ALPHANUMERIC BRIGHT ORANGE */
+};
+
+static double artifactfactors[] = {
+#if M6847_ARTIFACT_COLOR_COUNT == 2
+	1.000, 0.500, 0.000, /* [ 1] */
+	0.000, 0.500, 1.000  /* [ 2] */
+#elif M6847_ARTIFACT_COLOR_COUNT == 14
+	0.157, 0.000, 0.157, /* [ 1] */
+	1.000, 0.824, 1.000, /* [ 2] */
+	1.000, 0.157, 1.000, /* [ 3] */
+	1.000, 1.000, 0.824, /* [ 4] */
+	0.706, 0.236, 0.118, /* [ 5] */
+	1.000, 0.500, 0.000, /* [ 6] */
+	1.000, 0.550, 0.393, /* [ 7] */
+	0.000, 0.197, 0.471, /* [ 8] */
+	0.000, 0.500, 1.000, /* [ 9] */
+	0.275, 0.785, 1.000, /* [10] */
+	1.000, 0.942, 0.785, /* [11] */
+	0.393, 0.942, 1.000, /* [12] */
+	0.236, 0.000, 0.000, /* [13] */
+	0.000, 0.000, 0.236  /* [14] */
+#else
+#error Bad Artifact Color Count!!
+#endif
 };
 
 static unsigned char fontdata8x12[] =
@@ -258,7 +280,23 @@ static unsigned char fontdata8x12[] =
 
 void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
-	memcpy(sys_palette,palette,sizeof(palette));
+	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
+
+	memcpy(sys_palette, palette, sizeof(palette));
+
+	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*0),
+		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);
+	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*1),
+		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 1);
+	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*2),
+		0, 5, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);
+	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*3),
+		0, 5, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 1);
+
+	/* I'm taking advantage about how 'sys_palette' will be valid for the
+	 * entire emulation; check src/palette.c for details
+	 */
+	game_palette = sys_palette;
 }
 
 int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyramsize)
@@ -546,7 +584,9 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
 	UINT16 *pens, UINT8 *vrambase,
-	int skew_up, int border_color, int wf, artifactproc artifact)
+	int skew_up, int border_color, int wf,
+	int artifact_value, int artifact_palettebase,
+	void (*getcolorrgb)(int c, UINT8 *red, UINT8 *green, UINT8 *blue))
 {
 	rs->videoram = vrambase;
 	rs->size = the_state.initparams.ramsize;
@@ -577,10 +617,25 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 			rvm->depth = 1;
 			rvm->pens = &pens[the_state.modebits & M6847_MODEBIT_CSS ? 10 : 8];
 
-			if (artifact && (rvm->bytesperrow == 32)) {
+			if (artifact_value && (rvm->bytesperrow == 32)) {
 				/* I am here because we are doing PMODE 4 artifact colors */
+
 				rvm->flags |= RASTERBITS_FLAG_ARTIFACT;
-				rvm->u.artifact = artifact;
+				if (artifact_palettebase < 0) {
+					rvm->u.artifact.flags = RASTERBITS_ARTIFACT_STATICPALLETTE;
+					rvm->u.artifact.u.staticpalette = game_palette;
+				}
+				else {
+					rvm->u.artifact.flags = RASTERBITS_ARTIFACT_DYNAMICPALETTE;
+					rvm->u.artifact.u.dynamicpalettebase = artifact_palettebase;
+				}
+
+				if (artifact_value >= 2)
+					rvm->u.artifact.flags |= RASTERBITS_ARTIFACT_REVERSE;
+
+				rvm->u.artifact.colorfactors = artifactfactors;
+				rvm->u.artifact.numfactors = M6847_ARTIFACT_COLOR_COUNT;
+				rvm->u.artifact.getcolorrgb = getcolorrgb;
 			}
 		}
 		else
@@ -603,35 +658,6 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 		rvm->u.text.mapper_param = skew_up;
 		rvm->u.text.fontheight = 12;
 		rvm->u.text.underlinepos = -1;
-	}
-}
-
-
-static void m6847_artifact_red(UINT16 *artifactcolors)
-{
-	switch(artifactcolors[3]) {
-	case 1:
-		artifactcolors[2] = 10;
-		artifactcolors[1] = 9;
-		break;
-	case 5:
-		artifactcolors[2] = 12;
-		artifactcolors[1] = 11;
-		break;
-	}
-}
-
-static void m6847_artifact_blue(UINT16 *artifactcolors)
-{
-	switch(artifactcolors[3]) {
-	case 1:
-		artifactcolors[1] = 10;
-		artifactcolors[2] = 9;
-		break;
-	case 5:
-		artifactcolors[1] = 12;
-		artifactcolors[2] = 11;
-		break;
 	}
 }
 
@@ -676,7 +702,7 @@ static int m6847_bordercolor(void)
 		pen = 5;
 		break;
 	case M6847_BORDERCOLOR_ORANGE:
-		pen = 16;
+		pen = 12;
 		break;
 	}
 	return pen;
@@ -685,13 +711,14 @@ static int m6847_bordercolor(void)
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
 	static UINT16 m6847_metapalette[] = {
-		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 13, 14, 15, 16
+		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 9, 10, 11, 12
 	};
-	static artifactproc artifacts[] = {
+/*	static artifactproc artifacts[] = {
 		NULL,
 		m6847_artifact_red,
 		m6847_artifact_blue
 	};
+*/
 	struct rasterbits_source rs;
 	struct rasterbits_videomode rvm;
 	struct rasterbits_frame rf;
@@ -702,7 +729,7 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
 		full_refresh, m6847_metapalette, the_state.initparams.ram,
 		0, (full_refresh ? m6847_bordercolor() : -1),
-		1, artifacts[artifact_value & 3]);
+		1, artifact_value, -1, NULL);
 
 	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
