@@ -13,3 +13,6 @@ int avigo_vh_start(void);
 void avigo_vh_stop(void);
 void avigo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+
+void	avigo_vh_set_stylus_marker_position(int x,int y);
+
