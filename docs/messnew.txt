@@ -17,7 +17,8 @@ System Driver Changes:
 
 - [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.  The
   apple2 driver no longer requires a CTRL key to reset.  (bug #642)
-  [Christopher Stone]
+  The apple2+ driver now has a DIP switch to switch between RESET and
+  CTRL-RESET. (bug #645)  [Christopher Stone]
 
 - [CBM FAMILY] Fixed SID regressions introduced in 0.93.  SID chips now
   packaged as actual MAME/MESS sound cores.  (bug #658) [Nate Woods]
