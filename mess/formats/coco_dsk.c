@@ -242,10 +242,6 @@ BLOCKDEVICE_FORMATDRIVER_END
 #define DMK_DATA_GAP 80
 #define DMK_IDFIELD 7
 
-#ifdef macintosh
-#pragma options align=packed
-#endif
-
 struct dmk_header
 {
 	UINT8		writeProtect; /* 0xff = writed protected, 0x00 = OK to write											*/
@@ -278,17 +274,28 @@ struct dmk_track_toc
 
 struct dmk_IDAM
 {
-	UINT8	type;
-	UINT8	trackNumber;
-	UINT8	sideNumber;
-	UINT8	sectorNumber;
-	UINT8	sectorLength;
-	UINT16	crc;				/* Big endian */
+	UINT8	data[7];	/*	UINT8	type;
+							UINT8	trackNumber;
+							UINT8	sideNumber;
+							UINT8	sectorNumber;
+							UINT8	sectorLength;
+							UINT16	crc;				Big endian
+						*/
 };
 
-#ifdef macintosh
-#pragma options align=reset
-#endif
+#define dmk_idam_type(x)			x.data[0]
+#define dmk_idam_trackNumber(x)		x.data[1]
+#define dmk_idam_sideNumber(x)		x.data[2]
+#define dmk_idam_sectorNumber(x)	x.data[3]
+#define dmk_idam_sectorLength(x)	x.data[4]
+#define dmk_idam_crc(x)				((x.data[5] << 8) + x.data[6])
+
+#define dmk_set_idam_type(x, y)				x.data[0] = y
+#define dmk_set_idam_trackNumber(x, y)		x.data[1] = y
+#define dmk_set_iaam_sideNumber(x, y)		x.data[2] = y
+#define dmk_set_idam_sectorNumber(x, y)		x.data[3] = y
+#define dmk_set_idam_sectorLength(x, y)		x.data[4] = y
+#define dmk_set_idam_crc(x, y)				{ x.data[5] = (y >> 8 & 0xff); x.data[6] = (y & 0xff); }
 
 /* crc.c
    Compute CCITT CRC-16 using the correct bit order for floppy disks.
@@ -436,7 +443,7 @@ static int cocodmk_seek_to_start_of_sector( void *bdf, struct dmk_header *hdr, U
 		cocodmk_calculate_crc( &calculated_crc, (UINT8 *)&idam, sizeof( struct dmk_IDAM ) - 2 );
 
 		/* Check IDAM integraity. Check for matching sector */
-		if( calculated_crc == BIG_ENDIANIZE_INT16(idam.crc) && idam.trackNumber == track && idam.sideNumber == head && idam.sectorNumber == sector )
+		if( calculated_crc == dmk_idam_crc(idam) && dmk_idam_trackNumber(idam) == track && dmk_idam_sideNumber(idam) == head && dmk_idam_sectorNumber(idam) == sector )
 			break;
 	}
 	
@@ -444,7 +451,7 @@ static int cocodmk_seek_to_start_of_sector( void *bdf, struct dmk_header *hdr, U
 		return BLOCKDEVICE_ERROR_SECORNOTFOUND;
 
 	/* Hey, we found a matching sector ID */
-	*length = 128 << idam.sectorLength;
+	*length = 128 << dmk_idam_sectorLength(idam);
 
 	state = 0;
 	
