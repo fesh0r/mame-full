@@ -2,7 +2,11 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.86.1
+Release 0.87, 2 October 2004
+	- Everything from MAME 0.87 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.87 (http://x.mame.net/changes-mess.html).  Christopher Stone's 
+	  makefile support for MAGE has been added, but MAGE is not yet 
+	  included.
 	- Setting the display method to SDL again implies JOY_SDL.  It now also 
 	  implies SOUND_SDL.
 	- Reworked the video mode functions (Hans de Goede):
@@ -43,7 +47,7 @@ Release 0.86.1
 	    instead of falling back to MITSHM.
 	  * The Xv window is now resized with the correct aspect ratio after a 
 	    user resize; this prevents black borders from appearing.
-	  * Renamed "-perfect-yv12" to "-perfect-yuv"
+	  * Renamed "-perfect-yv12" to "-perfect-yuv".
 	  * Enabled perfect blitting by default for yuy2, since it fixes the 
 	    ugly color bleeding in, for example, pacman.
 	  * Removed unused SGI pause map/unmap code.
@@ -70,6 +74,8 @@ Release 0.86.1
 	  * The xfx target now also always grabs the mouse and keyboard, since 
 	    losing focus when the Voodoo is controlling the monitor is not 
 	    good.
+	  * Fixed a bug which caused the window to disappear with Xv windowed 
+	    mode under KDE.
 	- Fixed a crash in the svgalib and svgafx targets that occurred when 
 	  the mouse couldn't be opened.  (Hans de Goede)
 	- Arbitrary Y scaling is now disabled when the debugger is used.  (Hans 
@@ -155,13 +161,16 @@ Release 0.86.1
 	  as well as the jittery movement of the mouse cursor in games such as 
 	  Missile Command.
 	- Audio should work much better on Mac OS X.  (anonymous)
-
-
-	*** broken MMX code
+	- The MMX assembly language version of the 6-tap filter now works for 
+	  16 and 32bpp source and destination bitmaps; previously, only the 
+	  32bpp screen depth was accelerated.  (Richard Goedeken)
+	- Corrected some of the out-of-date information in the documentation.  
+	  Fixes Bugzilla bug 604.
+	- Light guns should work again. Also added support for the triggers on 
+	  an ACT LABS USB PC Monitor model that didn't work previously.
 
 Release 0.86, 25 August 2004
-	- Everything from MAME 0.86 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.86 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.86 and MESS 0.86.
 	- The SVGAlib target links again.
 	- Fixed redefinition warnings in src/sha1.[ch].  (Krister Walfridsson)
 	- Fixed buffer overruns in the effects and rotation code that caused a 
@@ -192,7 +201,7 @@ Release 0.86, 25 August 2004
 	  * Fixed a lot of buffer overruns.
 	- The SVGAlib targets now detect the signals used for console 
 	  switching.  (Hans de Goede)
-	- When "-norotate(-nr)" is specified, the UI is no longer rotated 
+	- When "-norotate (-nr)" is specified, the UI is no longer rotated 
 	  relative to the game.  (Hans de Goede)
 	- Did major cleanup of the blit core (Hans de Goede):
 	  * Rotation should be a bit faster.  
@@ -866,8 +875,8 @@ Release 0.56.2, 1 January 2002
 	  Trauner)
 	- Renamed several xmame-specific keyboard functions to prevent a clash 
 	  with svgalib and to avoid future clashes.  (Bugzilla #123)
-        - Added rapid-fire support for joysticks: Use "-rapidfire" or 
-	  "-rapidf".  (Shyouzou Sugitani)
+	- Added rapid-fire support for joysticks: Use "-rapidfire (-rapidf)".  
+	  (Shyouzou Sugitani)
 	- Added an SDL azerty keymap to doc/xmamerc.dist.  (Luc Saillard)
 	- The xfx target can now compile, though it still won't run.  (Viet)
 	- Upgraded to romalizer 0.7pre2; fixed a problem that caused "-listfull 
@@ -918,7 +927,7 @@ Release 0.55.1 (xmame only), 17 September 2001
 	- Updated the ALSA 0.9 support: Added "-alsa-buffer"; replaced the use 
 	  of SND_PCM_FORMAT_S16_{LE,BE} with SND_PCM_FORMAT_S16; changed
 	  "-alsapcm (-pcm)" to "-alsa-pcm (-apcm)"; changed the default value 
-	    of "-alsa-pcm".  (Shyouzou Sugitani)
+	  of "-alsa-pcm".  (Shyouzou Sugitani)
 
 Release 0.54.2 (xmame only), 4 September 2001
 	- Applied a fix for the Bubble Bobble driver.  (Haze)

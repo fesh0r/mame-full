@@ -464,7 +464,7 @@ HREF="xmame-doc-3.html#PROMS"
 ></LI
 ><LI
 ><P
->Try asking the friendly folks at the newsgroup alt.game.mame to see if anyone else has experienced the same problem as you.
+>Try asking the friendly folks at the newsgroup alt.games.mame to see if anyone else has experienced the same problem as you.
     </P
 ></LI
 ><LI
@@ -640,7 +640,7 @@ NAME="AEN255"
 >Silicon Graphics provides several native compilers. xmame/xmess has  been compiled and tested with the normal cc. There were some problems with this when using -n32 for new style 32bit code. It does work when using -o32 for oldstyle 32 bit code. It should now also work with -n32 which is much faster.
     </P
 ><P
->The use of DCC is not recommended (anymore) since it's a C++  compiler and thus won't even compile xmame/xmess out of the box due to uncasted mallocs. Changing all these mallocs would be crazy, esp. since they are not only in the osd part, but also in the core which is not under our control. Besides that, mame is normal C, so please compile it with a normal C compiler.
+>The use of DCC is not recommended (anymore) since it's a C++  compiler and thus won't even compile xmame/xmess out of the box due to uncasted mallocs. Changing all these mallocs would be crazy, esp. since they are not only in the osd part, but also in the core which is not under our control. Besides that, MAME is normal C, so please compile it with a normal C compiler.
     </P
 ><P
 >Some problems have been reported using the GNU linker. It's recommended that you use the native one.
@@ -767,7 +767,7 @@ NAME="AEN287"
 ></A
 >Openstep</H3
 ><P
->You must use the OpenStep gnumake, not make. You must also use the NeXT/Apple cc rather than gcc. Also use only the optimisation options as recommended for OpenStep in the makefile, others will cause the resulting executable to crash. The OpenStep assembler on i386 architectures is incompatible with the mame assembler CPU cores and thus you must use the C versions (Use i386-noasm instead of i386 when compiling for i386).
+>You must use the OpenStep gnumake, not make. You must also use the NeXT/Apple cc rather than gcc. Also use only the optimisation options as recommended for OpenStep in the makefile, others will cause the resulting executable to crash. The OpenStep assembler on i386 architectures is incompatible with the MAME assembler CPU cores and thus you must use the C versions (Use i386-noasm instead of i386 when compiling for i386).
     </P
 ><P
 >The supplied complier is based on gcc 2.7.2.1 which will not compile src/profiler.c without crashing. To get around this you must turn off + optimisation when this crash occurs, re-make to compile this file only, then stop the make, re-enable optimisation, and continue.

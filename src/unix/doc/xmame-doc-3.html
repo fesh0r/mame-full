@@ -80,9 +80,9 @@ CLASS="SECT2"
 ><A
 NAME="AEN295"
 ></A
->What is mame?</H2
+>What is MAME?</H2
 ><P
->MAME is an arcade machine emulator. Started in 1997 by Nicola  Salmoria, mame started out as a series of emulators for  individual games. This series of emulators was combined into a  simgle multi-game emulator. This is the current form of mame; no longer a one-man show, there are over 100 contributors to the project.
+>MAME is an arcade machine emulator. Started in 1997 by Nicola  Salmoria, MAME started out as a series of emulators for  individual games. This series of emulators was combined into a  simgle multi-game emulator. This is the current form of MAME; no longer a one-man show, there are over 100 contributors to the project.
    </P
 ><P
 >MAME was created by Nicola Salmoria.
@@ -102,9 +102,9 @@ CLASS="SECT2"
 ><A
 NAME="AEN301"
 ></A
->What is mess?</H2
+>What is MESS?</H2
 ><P
->Mess is just like mame---a virtual machine emulator, only it doesn't emulate arcade machines but rather computers and consoles.
+>MESS is just like MAME---a virtual machine emulator, only it doesn't emulate arcade machines but rather computers and consoles.
    </P
 ><P
 >Also see <A
@@ -123,7 +123,7 @@ NAME="AEN306"
 ></A
 >What is xmame/xmess?</H2
 ><P
->Xmame/xmess are the Unix/X11 ports of the mame and mess projects. It makes mame/mess available on *ix machines using the X11R6 X-Window System (and SVGAlib/ggi/XF86-DGA/OpenGL/SDL too).
+>Xmame/xmess are the Unix/X11 ports of the MAME and MESS projects. It makes MAME/MESS available on *ix machines using the X11R6 X-Window System (and SVGAlib/ggi/XF86-DGA/OpenGL/SDL too).
    </P
 ><P
 >MAME was orginally ported by Allard Van Der Bas, Dick the Ridder, Juan Antonio Martinez, and Hans de Goede.
@@ -139,12 +139,12 @@ CLASS="SECT2"
 ><A
 NAME="AEN311"
 ></A
->What are the differences between mame/mess and xmame/xmess?</H2
+>What are the differences between MAME/MESS and xmame/xmess?</H2
 ><P
 >None significant.
    </P
 ><P
->Xmame/xmess is based on the mame/mess source code. Due to technical reasons beyond the scope of this document, the mame/mess source may not compile under Unix. That's why the xmame/xmess project exists. Each time mame/mess is updated, the code is tested  (and patched if needed) under Unix. This way xmame/xmess releases are always the same as their mame counterparts.
+>Xmame/xmess is based on the MAME/MESS source code. Due to technical reasons beyond the scope of this document, the MAME/MESS source may not compile under Unix. That's why the xmame/xmess project exists. Each time MAME/MESS is updated, the code is tested  (and patched if needed) under Unix. This way xmame/xmess releases are always the same as their MAME counterparts.
    </P
 ><P
 >There are no plans for the independent development of xmame/xmess.
@@ -1109,7 +1109,7 @@ NAME="AEN526"
 >Screenshots, which can be made by pressing F12, are saved as png files in the directory from where xmame is started (cwd).
     </P
 ><P
->This can be overidden by the screenshotdir entry in xmamerc/xmessrc, which can again be overidden by the -screenshotdir cmdline-option.
+>This can be overridden by the snapshot_directory entry in xmamerc/xmessrc, which can again be overridden by the -snapshot_directory command line option.
     </P
 ><P
 >They are saved as:
@@ -1122,7 +1122,7 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->    &#60;screenshotdir&#62;/&#60;game&#62;xxxx.png
+>    &#60;snapshotdir&#62;/&#60;game&#62;xxxx.png
     Where xxxx is a number.
     </PRE
 ></TD
@@ -1136,9 +1136,9 @@ CLASS="SECT3"
 ><A
 NAME="AEN532"
 ></A
->Highscores</H3
+>High scores</H3
 ><P
->Highscores are stored in XMAMEROOT as defined in Makefile when building. This can be overidden by the spooldir entry in xmamerc/xmessrc, which can again be overidden by the -spooldir cmdline-option.
+>High scores are stored in XMAMEROOT as defined in Makefile when building. This can be overridden by the hiscore_directory entry in xmamerc/xmessrc, which can again be overridden by the -hiscore-directory command line option.
     </P
 ><P
 >So only give a 
@@ -1151,19 +1151,51 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->    drwxrwsr-x root games &#60;spooldir&#62;
+>    drwxrwsr-x root games &#60;highscoredir&#62;
     </PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->permission and setgid xmame/xmess to &quot;games&quot; to get it to work. Note this doesn't work with suid root versions (svgalib &amp; XF86-DGA), suggestions welcome.
+>permission and setgid xmame/xmess to &ldquo;games&rdquo; to get it to work. Note this doesn't work with suid root versions (svgalib and XF86 DGA); suggestions are welcome.
     </P
 ><P
->For now use &dollar;&lcub;HOME&rcub;/.xmame or &dollar; &lcub;HOME&rcub;/.xmess as the spooldir in xmamerc/xmessrc for  suid root versions.
+>For now, use
+    </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>${HOME}/.xmame
+    </PRE
+></TD
+></TR
+></TABLE
+><P
+>or
+    </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>${HOME}/.xmess
+    </PRE
+></TD
+></TR
+></TABLE
+><P
+>as the high score dir in xmamerc/xmessrc for  suid root versions.
     </P
 ><P
->Note: For highscores to work, xmame must also be able to find hiscore.dat.
+>Note: For high scores to work, xmame must also be able to find hiscore.dat.
     </P
 ></DIV
 ><DIV
@@ -1171,17 +1203,17 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN540"
+NAME="AEN544"
 ></A
 >hiscore.dat</H3
 ><P
->If you want to use highscores mame needs to load hiscore.dat to get highscore info.
+>If you want to use high scores, xmame needs to load hiscore.dat to get high score info.
     </P
 ><P
->The default is XMAMEROOT/hiscore.dat . XMAMEROOT is set during compile-time; see the Makefile. This can be overridden by the hiscorefile entry in xmamerc if present, which can again be overridden by the cmdline-option -hiscorefile.
+>The default is XMAMEROOT/hiscore.dat. XMAMEROOT is set at compile time; see the Makefile. This can be overridden by the hiscore_file entry in xmamerc if present, which can again be overridden by the command line option -hiscore_file.
     </P
 ><P
->hiscore.dat is available from the mame homepage: <A
+>hiscore.dat is available from the MAME homepage: <A
 HREF="http://www.mame.net"
 TARGET="_top"
 >http://www.mame.net</A
@@ -1193,17 +1225,17 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN546"
+NAME="AEN550"
 ></A
 >cheat.dat</H3
 ><P
->If you want to use cheats mame needs to load cheat.dat to get cheat info.
+>If you want to use cheats, xmame needs to load cheat.dat to get cheat info.
     </P
 ><P
->The default is XMAMEROOT/cheat.dat . XMAMEROOT is set during compile-time; see the Makefile. This can be overridden by the cheatfile entry in xmamerc if present, which can again be overridden by the cmdline-option -cheatfile.
+>The default is XMAMEROOT/cheat.dat. XMAMEROOT is set at compile time; see the Makefile. This can be overridden by the cheatfile entry in xmamerc if present, which can again be overridden by the command line option -cheat_file.
     </P
 ><P
->cheat.dat is available from the mame homepage: <A
+>cheat.dat is available from the MAME homepage: <A
 HREF="http://www.mame.net"
 TARGET="_top"
 >http://www.mame.net</A
@@ -1215,17 +1247,17 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN552"
+NAME="AEN556"
 ></A
 >history.dat</H3
 ><P
->If you want to display some nice background info on games, mame needs to load history.dat.
+>If you want to display some nice background info on games, xmame needs to load history.dat.
     </P
 ><P
->The default is XMAMEROOT/history.dat . XMAMEROOT is set during compile-time, see the Makefile. This can be overridden by the historyfile entry in xmamerc if present, which can again be overridden by the cmdline-option -historyfile.
+>The default is XMAMEROOT/history.dat . XMAMEROOT is set during compile-time, see the Makefile. This can be overridden by the history_file entry in xmamerc if present, which can again be overridden by the command line option -history_file.
     </P
 ><P
->history.dat is available from the mame homepage: <A
+>history.dat is available from the MAME homepage: <A
 HREF="http://www.mame.net"
 TARGET="_top"
 >http://www.mame.net</A
@@ -1237,7 +1269,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN558"
+NAME="AEN562"
 ></A
 >Input logs</H3
 ><P
@@ -1249,11 +1281,11 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN561"
+NAME="AEN565"
 ></A
->Xmame/xmess still can't find files/store highscores</H3
+>Xmame/xmess still can't find files/store high scores</H3
 ><P
->Type &quot;xmame/xmess -showconfig | more&quot; and check that the rompath and spooldir shown are correct and readable/writable. Otherwise recheck xmamerc/xmessrc. Remember that xmess also searches the current dir.
+>Type &quot;xmame/xmess -showconfig | more&quot; and check that the rompath and hiscore_directory shown are correct and readable and writable. Otherwise, recheck xmamerc/xmessrc. Remember that xmess also searches the current dir.
     </P
 ></DIV
 ></DIV
@@ -1262,7 +1294,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN564"
+NAME="AEN568"
 ></A
 >How do I start xmess/xmame ?</H2
 ><P
@@ -1302,7 +1334,7 @@ CLASS="PROGRAMLISTING"
 >All options are optional. ;)
    </P
 ><P
->Xmame/xmess supports most dos command line options (see readme.mame / readme.mess) as well as a few of its own: Type xmame -help |  more for a complete list.
+>Xmame/xmess supports most dos command line options (see doc/mame/windows.txt and doc/mess/windows/main.htm) as well as a few of its own: Type xmame -help |  more for a complete list.
    </P
 ><P
 >With xmess, some systems don't require a disk/romimage, but most do.
@@ -1313,7 +1345,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN573"
+NAME="AEN577"
 ></A
 >What are the command line parameters for xmame/xmess?</H2
 ><P
@@ -1333,10 +1365,10 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
->Xmame/xmess supports most of the command line parameters as the DOS  version as well a some of its own.
+>Xmame/xmess supports most of the same command line parameters as the Windows  version as well a some of its own.
    </P
 ><P
->See the file readme.mame / readme.mess for more information about the command line parameters.
+>See the file doc/mame/windows.txt / doc/mess/windows/main.htm for more information about the command line parameters.
    </P
 ></DIV
 ><DIV
@@ -1344,14 +1376,14 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN579"
+NAME="AEN583"
 ></A
 >What keys does xmame/xmess use?<A
 NAME="KEYBINDINGS"
 ></A
 ></H2
 ><P
->Xmame/xmess uses the same key-bindings as the DOS version of mame: The following keys work in all emulators:
+>Xmame/xmess uses the same key bindings as the Windows version of MAME: The following keys work in all emulators:
    </P
 ><TABLE
 BORDER="0"
@@ -1465,7 +1497,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN593"
+NAME="AEN597"
 ></A
 >Why doesn't a game have sound?</H2
 ><P
@@ -1483,12 +1515,12 @@ NAME="AEN593"
 ></LI
 ><LI
 ><P
->For xmame, take a look at gamelist.mame: Is the sound for the game emulated?
+>For xmame, take a look at doc/mame/gamelist.txt: Is the sound for the game emulated?
     </P
 ></LI
 ><LI
 ><P
->For xmess take a look at readme.mess: Is the sound for the system emulated?
+>For xmess take a look at doc/mess/windows/suppsys.htm: Is the sound for the system emulated?
     </P
 ></LI
 ><LI
@@ -1503,7 +1535,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN606"
+NAME="AEN610"
 ></A
 >My sound seems lagged. / My sound Clicks. / What does -bufsize do?</H2
 ><P
@@ -1527,7 +1559,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN613"
+NAME="AEN617"
 ></A
 >Why doesn't a game work? <A
 NAME="GAMENOTWORKING"
@@ -1548,12 +1580,12 @@ NAME="GAMENOTWORKING"
 ></LI
 ><LI
 ><P
->For xmame, check the file gamelist.mame to see if the game is playable. Just because a game is included doesn't mean it is working yet.
+>For xmame, check the file doc/mame/gamelist.txt to see if the game is playable. Just because a game is included doesn't mean it is working yet.
     </P
 ></LI
 ><LI
 ><P
->For xmess, take a look at readme.mess. Maybe the system isn't emulated all that well yet.
+>For xmess, take a look at doc/mess/windows/suppsys.htm. Maybe the system isn't emulated all that well yet.
     </P
 ></LI
 ><LI
@@ -1568,14 +1600,14 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN627"
+NAME="AEN631"
 ></A
 >What are PROMs? <A
 NAME="PROMS"
 ></A
 ></H2
 ><P
->PROMs contain game-specific information that used to be built in  to mame in versions prior to 0.34. This information has been  extracted and is now included with new versions of ROM files for  games that require this information.
+>PROMs contain game-specific information that used to be built into MAME in versions prior to 0.34. This information has been  extracted and is now included with new versions of ROM files for  games that require this information.
    </P
 ><P
 >If you want to use your current ROM files, you can obtain just the PROM images in one large file at:
@@ -1593,7 +1625,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN634"
+NAME="AEN638"
 ></A
 >Why is xmame/xmess slow?</H2
 ><P
@@ -1652,7 +1684,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN650"
+NAME="AEN654"
 ></A
 >SPEEDUP &num; 1 - Inline compiling</H3
 ><P
@@ -1678,7 +1710,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN654"
+NAME="AEN658"
 ></A
 >SPEEDUP &num; 2 - Direct Graphics Access</H3
 ><P
@@ -1740,7 +1772,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN667"
+NAME="AEN671"
 ></A
 >SPEEDUP &num; 3 - NASM</H3
 ><P
@@ -1752,7 +1784,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN670"
+NAME="AEN674"
 ></A
 >SPEEDUP &num; 4 - ICC</H3
 ><P
@@ -1765,7 +1797,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN673"
+NAME="AEN677"
 ></A
 >I've got a dual processor machine. What can I do to take full advantage of this?</H2
 ><P
@@ -1780,7 +1812,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN677"
+NAME="AEN681"
 ></A
 >Why doesn't my joystick handle diagonal movement correctly on my Intel x86 system?</H2
 ><P
@@ -1792,7 +1824,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN680"
+NAME="AEN684"
 ></A
 >How do I enable XinputExtensions X11 based joystick in Xfree86?</H2
 ><P
@@ -1804,7 +1836,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN683"
+NAME="AEN687"
 ></A
 >How do I read a manual page?</H2
 ><P
@@ -1816,7 +1848,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN686"
+NAME="AEN690"
 ></A
 >Why do I get gz_open symbol not found while compiling? <A
 NAME="GZOPEN"
@@ -1840,7 +1872,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN693"
+NAME="AEN697"
 ></A
 >Why do I get zlib.h not found? <A
 NAME="ZLIB"
@@ -1858,7 +1890,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN698"
+NAME="AEN702"
 ></A
 >When I run xmame.x11, nothing happens---no window pops up or anything. Help!</H2
 ><P
@@ -1883,7 +1915,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN702"
+NAME="AEN706"
 ></A
 >Can I run xmame fullscreen?</H2
 ><P
@@ -1900,7 +1932,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN707"
+NAME="AEN711"
 ></A
 >xmame.x11/DGA</H3
 ><P
@@ -1927,7 +1959,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN715"
+NAME="AEN719"
 ></A
 >xmame.x11/Xv</H3
 ><P
@@ -1970,7 +2002,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN725"
+NAME="AEN729"
 ></A
 >xmame.SDL</H3
 ><P
@@ -1998,7 +2030,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN733"
+NAME="AEN737"
 ></A
 >xmame.SDL / fullscreen has a large border around the game. <A
 NAME="SCREENBORDER"
@@ -2029,7 +2061,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN742"
+NAME="AEN746"
 ></A
 >I only use some of the emulation parts (Neo Geo / CPS-2 /...). Do I need the entire xmame?</H2
 ><P
@@ -2041,7 +2073,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN745"
+NAME="AEN749"
 ></A
 >Why does xmame freeze and lock up when I hit &lt;ESC&gt; to exit the game or P to pause the game?</H2
 ><P
@@ -2059,7 +2091,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN750"
+NAME="AEN754"
 ></A
 >Why does xmame report &ldquo;can't resolve host name '/dev/dsp'&rdquo; when trying to use esound?</H2
 ><P
@@ -2071,7 +2103,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN753"
+NAME="AEN757"
 ></A
 >Where can I get the latest version of xmame/xmess?</H2
 ><P
@@ -2090,7 +2122,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN758"
+NAME="AEN762"
 ></A
 >I upgraded xmame and now some games do not work anymore.</H2
 ><P
@@ -2125,7 +2157,7 @@ TYPE="1"
 ></LI
 ><LI
 ><P
->If the above steps don't solve the problem, then check to see if it is a known problem; if necessary, report it to the mame testers project.
+>If the above steps don't solve the problem, then check to see if it is a known problem; if necessary, report it to the MAME Testers project.
     </P
 ></LI
 ></OL
@@ -2138,7 +2170,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN774"
+NAME="AEN778"
 ></A
 >Where can I send fixes, bug reports, suggestions, or money?  :-)</H2
 ><P
@@ -2153,11 +2185,11 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN778"
+NAME="AEN782"
 ></A
 >What if my question is still not answered?</H2
 ><P
->Please check the offical mame and mess readme files to see if that answers your question:
+>Please check the offical MAME and MESS readme files to see if that answers your question:
    </P
 ><P
 ></P

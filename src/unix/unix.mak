@@ -114,6 +114,10 @@ CFLAGS.x11 += -DUSE_XIL
 LIBS.x11   += -lxil -lpthread
 endif
 
+ifndef HOST_CC
+HOST_CC = $(CC)
+endif
+
 
 ##############################################################################
 # Quiet the compiler output if requested
@@ -636,7 +640,7 @@ $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake
 # generate C source files for the 68000 emulator
 $(OBJ)/cpu/m68000/m68kmake: src/cpu/m68000/m68kmake.c
 	$(CC_COMMENT) @echo 'M68K make $<...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake $<
+	$(CC_COMPILE) $(HOST_CC) $(MY_CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake $<
 	$(CC_COMMENT) @echo 'Generating M68K source files...'
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 

@@ -1,6 +1,6 @@
 XMAME/XMESS DOCUMENTATION
 
-24 August 2004
+2 October 2004
 
 <authorgroup>
 <author><firstname>Juan 
@@ -273,7 +273,7 @@ xmame/xmess.
   setuid root. Are your permissions correct?
 
 * Try asking the friendly folks at the newsgroup 
-  alt.game.mame to see if anyone else has experienced 
+  alt.games.mame to see if anyone else has experienced 
   the same problem as you.
 
 * Try mailing to the xmame mailinglist, see [Mail] for more 
@@ -403,7 +403,7 @@ a C++  compiler and thus won't even compile xmame/xmess
 out of the box due to uncasted mallocs. Changing all 
 these mallocs would be crazy, esp. since they are not 
 only in the osd part, but also in the core which is not 
-under our control. Besides that, mame is normal C, so 
+under our control. Besides that, MAME is normal C, so 
 please compile it with a normal C compiler.
 
 Some problems have been reported using the GNU linker. 
@@ -504,7 +504,7 @@ also use the NeXT/Apple cc rather than gcc. Also use
 only the optimisation options as recommended for 
 OpenStep in the makefile, others will cause the 
 resulting executable to crash. The OpenStep assembler 
-on i386 architectures is incompatible with the mame 
+on i386 architectures is incompatible with the MAME 
 assembler CPU cores and thus you must use the C 
 versions (Use i386-noasm instead of i386 when compiling 
 for i386).
@@ -527,22 +527,22 @@ you run xmame.
 
  <xmame-doc-3>Xmame Frequently Asked Questions<xmamefaq>
 
- What is mame?
+ What is MAME?
 
 MAME is an arcade machine emulator. Started in 1997 by 
-Nicola  Salmoria, mame started out as a series of 
+Nicola  Salmoria, MAME started out as a series of 
 emulators for  individual games. This series of 
 emulators was combined into a  simgle multi-game 
-emulator. This is the current form of mame; no longer a 
+emulator. This is the current form of MAME; no longer a 
 one-man show, there are over 100 contributors to the project.
 
 MAME was created by Nicola Salmoria.
 
 Also see [readme.mame||the official mame readme file (readme.mame)]
 
- What is mess?
+ What is MESS?
 
-Mess is just like mame---a virtual machine emulator, 
+MESS is just like MAME---a virtual machine emulator, 
 only it doesn't emulate arcade machines but rather 
 computers and consoles.
 
@@ -550,8 +550,8 @@ Also see [readme.mess||the official mess readme file (readme.mess)]
 
  What is xmame/xmess?
 
-Xmame/xmess are the Unix/X11 ports of the mame and mess 
-projects. It makes mame/mess available on *ix machines 
+Xmame/xmess are the Unix/X11 ports of the MAME and MESS 
+projects. It makes MAME/MESS available on *ix machines 
 using the X11R6 X-Window System (and 
 SVGAlib/ggi/XF86-DGA/OpenGL/SDL too).
 
@@ -560,17 +560,17 @@ the Ridder, Juan Antonio Martinez, and Hans de Goede.
 
 Xmame/xmess is currently maintained by Lawrence Gold.
 
- What are the differences between mame/mess and xmame/xmess?
+ What are the differences between MAME/MESS and xmame/xmess?
 
 None significant.
 
-Xmame/xmess is based on the mame/mess source code. Due 
+Xmame/xmess is based on the MAME/MESS source code. Due 
 to technical reasons beyond the scope of this document, 
-the mame/mess source may not compile under Unix. That's 
-why the xmame/xmess project exists. Each time mame/mess 
+the MAME/MESS source may not compile under Unix. That's 
+why the xmame/xmess project exists. Each time MAME/MESS 
 is updated, the code is tested  (and patched if needed) 
 under Unix. This way xmame/xmess releases are always 
-the same as their mame counterparts.
+the same as their MAME counterparts.
 
 There are no plans for the independent development of 
 xmame/xmess.
@@ -947,74 +947,81 @@ Screenshots, which can be made by pressing F12, are
 saved as png files in the directory from where xmame is 
 started (cwd).
 
-This can be overidden by the screenshotdir entry in 
-xmamerc/xmessrc, which can again be overidden by the 
--screenshotdir cmdline-option.
+This can be overridden by the snapshot_directory entry 
+in xmamerc/xmessrc, which can again be overridden by 
+the -snapshot_directory command line option.
 
 They are saved as:
 
-    <screenshotdir>/<game>xxxx.png
+    <snapshotdir>/<game>xxxx.png
     Where xxxx is a number.
 
- Highscores
+ High scores
 
-Highscores are stored in XMAMEROOT as defined in 
-Makefile when building. This can be overidden by the 
-spooldir entry in xmamerc/xmessrc, which can again be 
-overidden by the -spooldir cmdline-option.
+High scores are stored in XMAMEROOT as defined in 
+Makefile when building. This can be overridden by the 
+hiscore_directory entry in xmamerc/xmessrc, which can 
+again be overridden by the -hiscore-directory command 
+line option.
 
 So only give a 
 
-    drwxrwsr-x root games <spooldir>
+    drwxrwsr-x root games <highscoredir>
 
-permission and setgid xmame/xmess to "games" to get it 
-to work. Note this doesn't work with suid root versions 
-(svgalib & XF86-DGA), suggestions welcome.
+permission and setgid xmame/xmess to "games" to get it to 
+work. Note this doesn't work with suid root versions 
+(svgalib and XF86 DGA); suggestions are welcome.
 
-For now use ${HOME}/.xmame or $ {HOME}/.xmess as the 
-spooldir in xmamerc/xmessrc for  suid root versions.
+For now, use
 
-Note: For highscores to work, xmame must also be able 
+${HOME}/.xmame
+
+or
+
+${HOME}/.xmess
+
+as the high score dir in xmamerc/xmessrc for  suid root versions.
+
+Note: For high scores to work, xmame must also be able 
 to find hiscore.dat.
 
  hiscore.dat
 
-If you want to use highscores mame needs to load 
-hiscore.dat to get highscore info.
+If you want to use high scores, xmame needs to load 
+hiscore.dat to get high score info.
 
-The default is XMAMEROOT/hiscore.dat . XMAMEROOT is set 
-during compile-time; see the Makefile. This can be 
-overridden by the hiscorefile entry in xmamerc if 
-present, which can again be overridden by the 
-cmdline-option -hiscorefile.
+The default is XMAMEROOT/hiscore.dat. XMAMEROOT is set 
+at compile time; see the Makefile. This can be 
+overridden by the hiscore_file entry in xmamerc if 
+present, which can again be overridden by the command 
+line option -hiscore_file.
 
-hiscore.dat is available from the mame homepage: [http://www.mame.net||http://www.mame.net]
+hiscore.dat is available from the MAME homepage: [http://www.mame.net||http://www.mame.net]
 
  cheat.dat
 
-If you want to use cheats mame needs to load cheat.dat 
-to get cheat info.
+If you want to use cheats, xmame needs to load 
+cheat.dat to get cheat info.
 
-The default is XMAMEROOT/cheat.dat . XMAMEROOT is set 
-during compile-time; see the Makefile. This can be 
-overridden by the cheatfile entry in xmamerc if 
-present, which can again be overridden by the 
-cmdline-option -cheatfile.
+The default is XMAMEROOT/cheat.dat. XMAMEROOT is set at 
+compile time; see the Makefile. This can be overridden 
+by the cheatfile entry in xmamerc if present, which can 
+again be overridden by the command line option -cheat_file.
 
-cheat.dat is available from the mame homepage: [http://www.mame.net||http://www.mame.net]
+cheat.dat is available from the MAME homepage: [http://www.mame.net||http://www.mame.net]
 
  history.dat
 
 If you want to display some nice background info on 
-games, mame needs to load history.dat.
+games, xmame needs to load history.dat.
 
 The default is XMAMEROOT/history.dat . XMAMEROOT is set 
 during compile-time, see the Makefile. This can be 
-overridden by the historyfile entry in xmamerc if 
-present, which can again be overridden by the 
-cmdline-option -historyfile.
+overridden by the history_file entry in xmamerc if 
+present, which can again be overridden by the command 
+line option -history_file.
 
-history.dat is available from the mame homepage: [http://www.mame.net||http://www.mame.net]
+history.dat is available from the MAME homepage: [http://www.mame.net||http://www.mame.net]
 
  Input logs
 
@@ -1022,12 +1029,13 @@ Input logs are saved/read under the name specified
 after the -record / -playback option; this name is 
 relative to the current path.
 
- Xmame/xmess still can't find files/store highscores
+ Xmame/xmess still can't find files/store high scores
 
 Type "xmame/xmess -showconfig | more" and check that 
-the rompath and spooldir shown are correct and 
-readable/writable. Otherwise recheck xmamerc/xmessrc. 
-Remember that xmess also searches the current dir.
+the rompath and hiscore_directory shown are correct and 
+readable and writable. Otherwise, recheck 
+xmamerc/xmessrc. Remember that xmess also searches the 
+current dir.
 
  How do I start xmess/xmame ?
 
@@ -1043,8 +1051,9 @@ For xmess, type
 All options are optional. ;)
 
 Xmame/xmess supports most dos command line options (see 
-readme.mame / readme.mess) as well as a few of its own: 
-Type xmame -help |  more for a complete list.
+doc/mame/windows.txt and doc/mess/windows/main.htm) as 
+well as a few of its own: Type xmame -help |  more for 
+a complete list.
 
 With xmess, some systems don't require a disk/romimage, 
 but most do.
@@ -1055,16 +1064,18 @@ To see a list of available parameters, type:
 
     /usr/games/xmame -help | more
 
-Xmame/xmess supports most of the command line 
-parameters as the DOS  version as well a some of its own.
+Xmame/xmess supports most of the same command line 
+parameters as the Windows  version as well a some of 
+its own.
 
-See the file readme.mame / readme.mess for more 
-information about the command line parameters.
+See the file doc/mame/windows.txt / 
+doc/mess/windows/main.htm for more information about 
+the command line parameters.
 
  What keys does xmame/xmess use?<keybindings>
 
-Xmame/xmess uses the same key-bindings as the DOS 
-version of mame: The following keys work in all emulators:
+Xmame/xmess uses the same key bindings as the Windows 
+version of MAME: The following keys work in all emulators:
 
     `  or ~      Enter On screen display to change 
 volume, brightness etc.
@@ -1132,11 +1143,12 @@ release it.
 * Check that sound is supported for the game that has 
   no sound; not all games have sound.
 
-* For xmame, take a look at gamelist.mame: Is the sound 
-  for the game emulated?
+* For xmame, take a look at doc/mame/gamelist.txt: Is 
+  the sound for the game emulated?
 
-* For xmess take a look at readme.mess: Is the sound 
-  for the system emulated?
+* For xmess take a look at 
+  doc/mess/windows/suppsys.htm: Is the sound for the 
+  system emulated?
 
 * Check the operating system support chart in the 
   earlier part of  this file: Does xmame/xmess support 
@@ -1176,12 +1188,13 @@ since I'm planning on removing it in a future release.
   version 0.34. See the question on PROMs  below for 
   more information.
 
-* For xmame, check the file gamelist.mame to see if the 
-  game is playable. Just because a game is included 
-  doesn't mean it is working yet.
+* For xmame, check the file doc/mame/gamelist.txt to 
+  see if the game is playable. Just because a game is 
+  included doesn't mean it is working yet.
 
-* For xmess, take a look at readme.mess. Maybe the 
-  system isn't emulated all that well yet.
+* For xmess, take a look at 
+  doc/mess/windows/suppsys.htm. Maybe the system isn't 
+  emulated all that well yet.
 
 * Some games require sound support. If you don't have 
   sound  support under your Unix installation or sound 
@@ -1191,7 +1204,7 @@ since I'm planning on removing it in a future release.
  What are PROMs? <PROMs>
 
 PROMs contain game-specific information that used to be 
-built in  to mame in versions prior to 0.34. This 
+built into MAME in versions prior to 0.34. This 
 information has been  extracted and is now included 
 with new versions of ROM files for  games that require 
 this information.
@@ -1598,7 +1611,7 @@ Here are some things you can do:
 
 5. If the above steps don't solve the problem, then 
   check to see if it is a known problem; if necessary, 
-  report it to the mame testers project.
+  report it to the MAME Testers project.
 
 If none of these fixes the problem, then try using the 
 older version of xmame you have backed up somewhere to 
@@ -1611,7 +1624,7 @@ See [Mail] of this document.
 
  What if my question is still not answered?
 
-Please check the offical mame and mess readme files to 
+Please check the offical MAME and MESS readme files to 
 see if that answers your question:
 
 * [readme.mame||The official mame readme file (readme.mame)]
@@ -1963,7 +1976,7 @@ option "-noglbitmap".
 A problem with vector games and the cabinet mode is 
 that some vector points do not reside within the screen 
 coordinates, so you may see some vectors outside of the 
-cabinet's mame display.
+cabinet's MAME display.
 
 *** IMPORTANT! ***
 
@@ -2531,7 +2544,7 @@ maintainer. --Lawrence Gold)
 * Xmame/xmess should be distributed under terms of the 
   license in [readme.mame||readme.mame]
 
-* And if you are interested in mess, take a look in [readme.mess||readme.mess]
+* And if you are interested in MESS, take a look in [readme.mess||readme.mess]
 
 * The main issue involves ROM images. ROM images are 
   protected under the copyrights of their authors, and 
@@ -2549,7 +2562,7 @@ maintainer. --Lawrence Gold)
 
  Unix sources and docs
 
-* The xmame/xmess sources[download/xmame-0.86.tar.bz2||xmame/xmess-0.86 sources]
+* The xmame/xmess sources[download/xmame-0.87.tar.bz2||xmame/xmess-0.87 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2581,7 +2594,7 @@ maintainer. --Lawrence Gold)
 
 * [ftp://ftp.kaupp.cx/pub/xmame||ftp://ftp.kaupp.cx/pub/xmame](US)
 
- (X)Mame front-ends
+ (X)mame front-ends
 
 * [http://www.mame.net/frontend.html||The official mame frontend page ]
 
@@ -2650,7 +2663,7 @@ maintainer. --Lawrence Gold)
 
 * The official M.A.M.E home is at [http://www.mame.net||http://www.mame.net]
 
-* The official mess site is [http://www.mess.org||http://www.mess.org]
+* The official MESS site is [http://www.mess.org||http://www.mess.org]
 
 * Some other emulation sites are [http://www.vg-network.com||http://www.vg-network.com] and [http://www.retrogames.com||http://www.retrogames.com]
 

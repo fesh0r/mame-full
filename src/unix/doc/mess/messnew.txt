@@ -1,3 +1,61 @@
+0.87
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [APPLE1] Added natural keyboard support.  [Nate Woods]
+
+- [AMSTRAD] M6845 changes; the Backtro demo now runs.  [bobz, Nate Woods]
+
+- [MICROBEE,EXIDY,VTECH] Implemented a binary quickload device.  (bug #599)
+  [Nate Woods]
+
+- [NESPAL] Fixed a major slowdown that only affected the PAL version of the
+  NES driver.  (bug #457) [Nate Woods]
+
+- [VTECH1] Fixed '*' and '+' keys on natural keyboard.  [Nate Woods]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Fixed a regression that prevented all customize input, analog
+  controls and configuration dialogs from working on Win95/Win98/WinME.
+  [Nate Woods]
+
+- [Windows GUI] Fixed a problem in hash calculation in which UnmapViewOfFile()
+  was not properly being called. (bug #584)  [Nate Woods]
+
+- [Windows GUI] ZIP paths prefixed with ./ will now have the ./ ignored.
+  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.87.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Major changes to the IODevice structure; made major changes to how they are
+  initialized and iterated.  The new technique should be much more
+  maintainable in the long run.  [Nate Woods]
+  
+- Hash tags in hash file now can specify a 'type' attribute that indicates
+  what device type to which any given entry pertains.  [Nate Woods]
+
+
+
 0.86
 
 New System Drivers Supported (in no particular order):

@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-24 August 2004
+2 October 2004
 \layout SGML
 
 <authorgroup>
@@ -651,7 +651,7 @@ The svgalib/xf86_dga build of xmame/xmess requires setuid root.
  Are your permissions correct?
 \layout Itemize
 
-Try asking the friendly folks at the newsgroup alt.game.mame to see if anyone
+Try asking the friendly folks at the newsgroup alt.games.mame to see if anyone
  else has experienced the same problem as you.
 \layout Itemize
 
@@ -851,7 +851,7 @@ The use of DCC is not recommended (anymore) since it's a C++  compiler and
  Changing all these mallocs would be crazy, esp.
  since they are not only in the osd part, but also in the core which is
  not under our control.
- Besides that, mame is normal C, so please compile it with a normal C compiler.
+ Besides that, MAME is normal C, so please compile it with a normal C compiler.
 \layout Standard
 
 Some problems have been reported using the GNU linker.
@@ -985,7 +985,7 @@ You must use the OpenStep gnumake, not make.
  You must also use the NeXT/Apple cc rather than gcc.
  Also use only the optimisation options as recommended for OpenStep in the
  makefile, others will cause the resulting executable to crash.
- The OpenStep assembler on i386 architectures is incompatible with the mame
+ The OpenStep assembler on i386 architectures is incompatible with the MAME
  assembler CPU cores and thus you must use the C versions (Use i386-noasm
  instead of i386 when compiling for i386).
 \layout Standard
@@ -1019,14 +1019,14 @@ Xmame Frequently Asked Questions
 
 \layout Subsection
 
-What is mame?
+What is MAME?
 \layout Standard
 
 MAME is an arcade machine emulator.
- Started in 1997 by Nicola  Salmoria, mame started out as a series of emulators
+ Started in 1997 by Nicola  Salmoria, MAME started out as a series of emulators
  for  individual games.
  This series of emulators was combined into a  simgle multi-game emulator.
- This is the current form of mame; no longer a one-man show, there are over
+ This is the current form of MAME; no longer a one-man show, there are over
  100 contributors to the project.
 \layout Standard
 
@@ -1041,10 +1041,10 @@ Also see
 
 \layout Subsection
 
-What is mess?
+What is MESS?
 \layout Standard
 
-Mess is just like mame---a virtual machine emulator, only it doesn't emulate
+MESS is just like MAME---a virtual machine emulator, only it doesn't emulate
  arcade machines but rather computers and consoles.
 \layout Standard
 
@@ -1059,8 +1059,8 @@ Also see
 What is xmame/xmess?
 \layout Standard
 
-Xmame/xmess are the Unix/X11 ports of the mame and mess projects.
- It makes mame/mess available on *ix machines using the X11R6 X-Window System
+Xmame/xmess are the Unix/X11 ports of the MAME and MESS projects.
+ It makes MAME/MESS available on *ix machines using the X11R6 X-Window System
  (and SVGAlib/ggi/XF86-DGA/OpenGL/SDL too).
 \layout Standard
 
@@ -1071,19 +1071,19 @@ MAME was orginally ported by Allard Van Der Bas, Dick the Ridder, Juan Antonio
 Xmame/xmess is currently maintained by Lawrence Gold.
 \layout Subsection
 
-What are the differences between mame/mess and xmame/xmess?
+What are the differences between MAME/MESS and xmame/xmess?
 \layout Standard
 
 None significant.
 \layout Standard
 
-Xmame/xmess is based on the mame/mess source code.
- Due to technical reasons beyond the scope of this document, the mame/mess
+Xmame/xmess is based on the MAME/MESS source code.
+ Due to technical reasons beyond the scope of this document, the MAME/MESS
  source may not compile under Unix.
  That's why the xmame/xmess project exists.
- Each time mame/mess is updated, the code is tested  (and patched if needed)
+ Each time MAME/MESS is updated, the code is tested  (and patched if needed)
  under Unix.
- This way xmame/xmess releases are always the same as their mame counterparts.
+ This way xmame/xmess releases are always the same as their MAME counterparts.
 \layout Standard
 
 There are no plans for the independent development of xmame/xmess.
@@ -1849,76 +1849,88 @@ Screenshots, which can be made by pressing F12, are saved as png files in
  the directory from where xmame is started (cwd).
 \layout Standard
 
-This can be overidden by the screenshotdir entry in xmamerc/xmessrc, which
- can again be overidden by the 
+This can be overridden by the snapshot_directory entry in xmamerc/xmessrc,
+ which can again be overridden by the 
 \family typewriter 
--screenshotdir
+-snapshot_directory
 \family default 
- cmdline-option.
+ command line option.
 \layout Standard
 
 They are saved as:
 \layout Code
 
-    <screenshotdir>/<game>xxxx.png
+    <snapshotdir>/<game>xxxx.png
 \newline 
     Where xxxx is a number.
 \layout Subsubsection
 
-Highscores
+High scores
 \layout Standard
 
-Highscores are stored in XMAMEROOT as defined in Makefile when building.
- This can be overidden by the spooldir entry in xmamerc/xmessrc, which can
- again be overidden by the 
+High scores are stored in XMAMEROOT as defined in Makefile when building.
+ This can be overridden by the hiscore_directory entry in xmamerc/xmessrc,
+ which can again be overridden by the 
 \family typewriter 
--spooldir
+-hiscore-directory
 \family default 
- cmdline-option.
+ command line option.
 \layout Standard
 
 So only give a 
 \layout Code
 
-    drwxrwsr-x root games <spooldir>
+    drwxrwsr-x root games <highscoredir>
 \layout Standard
 
-permission and setgid xmame/xmess to "games" to get it to work.
- Note this doesn't work with suid root versions (svgalib & XF86-DGA), suggestion
-s welcome.
+permission and setgid xmame/xmess to 
+\begin_inset Quotes eld
+\end_inset 
+
+games
+\begin_inset Quotes erd
+\end_inset 
+
+ to get it to work.
+ Note this doesn't work with suid root versions (svgalib and XF86 DGA);
+ suggestions are welcome.
 \layout Standard
 
-For now use 
-\family typewriter 
+For now, use
+\layout Code
+
 ${HOME}/.xmame
-\family default 
- or 
-\family typewriter 
-$ {HOME}/.xmess
-\family default 
- as the spooldir in xmamerc/xmessrc for  suid root versions.
 \layout Standard
 
-Note: For highscores to work, xmame must also be able to find hiscore.dat.
+or
+\layout Code
+
+${HOME}/.xmess
+\layout Standard
+
+as the high score dir in xmamerc/xmessrc for  suid root versions.
+\layout Standard
+
+Note: For high scores to work, xmame must also be able to find hiscore.dat.
 \layout Subsubsection
 
 hiscore.dat
 \layout Standard
 
-If you want to use highscores mame needs to load hiscore.dat to get highscore
- info.
+If you want to use high scores, xmame needs to load hiscore.dat to get high
+ score info.
 \layout Standard
 
 The default is 
 \family typewriter 
 XMAMEROOT
 \family default 
-/hiscore.dat .
- XMAMEROOT is set during compile-time; see the Makefile.
- This can be overridden by the hiscorefile entry in xmamerc if present,
- which can again be overridden by the cmdline-option 
+/hiscore.dat.
+ XMAMEROOT is set at compile time; see the Makefile.
+ This can be overridden by the hiscore_file entry in xmamerc if present,
+ which can again be overridden by the command line option 
 \family typewriter 
--hiscorefile
+-hiscore_file
 \family default 
 .
 \layout Standard
@@ -1927,7 +1939,7 @@ XMAMEROOT
 \family typewriter 
 hiscore.dat
 \family default 
- is available from the mame homepage: 
+ is available from the MAME homepage: 
 \begin_inset LatexCommand \url[http://www.mame.net]{http://www.mame.net}
 
 \end_inset 
@@ -1938,15 +1950,15 @@ hiscore.dat
 cheat.dat
 \layout Standard
 
-If you want to use cheats mame needs to load cheat.dat to get cheat info.
+If you want to use cheats, xmame needs to load cheat.dat to get cheat info.
 \layout Standard
 
-The default is XMAMEROOT/cheat.dat .
- XMAMEROOT is set during compile-time; see the Makefile.
+The default is XMAMEROOT/cheat.dat.
+ XMAMEROOT is set at compile time; see the Makefile.
  This can be overridden by the cheatfile entry in xmamerc if present, which
- can again be overridden by the cmdline-option 
+ can again be overridden by the command line option 
 \family typewriter 
--cheatfile
+-cheat_file
 \family default 
 .
 \layout Standard
@@ -1955,7 +1967,7 @@ The default is XMAMEROOT/cheat.dat .
 \family typewriter 
 cheat.dat
 \family default 
- is available from the mame homepage: 
+ is available from the MAME homepage: 
 \begin_inset LatexCommand \url[http://www.mame.net]{http://www.mame.net}
 
 \end_inset 
@@ -1966,16 +1978,16 @@ cheat.dat
 history.dat
 \layout Standard
 
-If you want to display some nice background info on games, mame needs to
+If you want to display some nice background info on games, xmame needs to
  load history.dat.
 \layout Standard
 
 The default is XMAMEROOT/history.dat .
  XMAMEROOT is set during compile-time, see the Makefile.
- This can be overridden by the historyfile entry in xmamerc if present,
- which can again be overridden by the cmdline-option 
+ This can be overridden by the history_file entry in xmamerc if present,
+ which can again be overridden by the command line option 
 \family typewriter 
--historyfile
+-history_file
 \family default 
 .
 \layout Standard
@@ -1984,7 +1996,7 @@ The default is XMAMEROOT/history.dat .
 \family typewriter 
 history.dat
 \family default 
- is available from the mame homepage: 
+ is available from the MAME homepage: 
 \begin_inset LatexCommand \url[http://www.mame.net]{http://www.mame.net}
 
 \end_inset 
@@ -2002,15 +2014,16 @@ Input logs are saved/read under the name specified after the
  option; this name is relative to the current path.
 \layout Subsubsection
 
-Xmame/xmess still can't find files/store highscores
+Xmame/xmess still can't find files/store high scores
 \layout Standard
 
 Type 
 \family typewriter 
 "xmame/xmess -showconfig | more"
 \family default 
- and check that the rompath and spooldir shown are correct and readable/writable.
- Otherwise recheck xmamerc/xmessrc.
+ and check that the rompath and hiscore_directory shown are correct and
+ readable and writable.
+ Otherwise, recheck xmamerc/xmessrc.
  Remember that xmess also searches the current dir.
 \layout Subsection
 
@@ -2037,8 +2050,9 @@ All options are optional.
  ;)
 \layout Standard
 
-Xmame/xmess supports most dos command line options (see readme.mame / readme.mess)
- as well as a few of its own: Type xmame -help |  more for a complete list.
+Xmame/xmess supports most dos command line options (see doc/mame/windows.txt
+ and doc/mess/windows/main.htm) as well as a few of its own: Type xmame -help
+ |  more for a complete list.
 \layout Standard
 
 With xmess, some systems don't require a disk/romimage, but most do.
@@ -2053,12 +2067,12 @@ To see a list of available parameters, type:
     /usr/games/xmame -help | more
 \layout Standard
 
-Xmame/xmess supports most of the command line parameters as the DOS  version
- as well a some of its own.
+Xmame/xmess supports most of the same command line parameters as the Windows
+  version as well a some of its own.
 \layout Standard
 
-See the file readme.mame / readme.mess for more information about the command
- line parameters.
+See the file doc/mame/windows.txt / doc/mess/windows/main.htm for more information
+ about the command line parameters.
 \layout Subsection
 
 What keys does xmame/xmess use?
@@ -2069,8 +2083,8 @@ What keys does xmame/xmess use?
 
 \layout Standard
 
-Xmame/xmess uses the same key-bindings as the DOS version of mame: The following
- keys work in all emulators:
+Xmame/xmess uses the same key bindings as the Windows version of MAME: The
+ following keys work in all emulators:
 \layout Code
 
     `  or ~      Enter On screen display to change volume, brightness etc.
@@ -2174,10 +2188,12 @@ Check that sound is supported for the game that has no sound; not all games
  have sound.
 \layout Itemize
 
-For xmame, take a look at gamelist.mame: Is the sound for the game emulated?
+For xmame, take a look at doc/mame/gamelist.txt: Is the sound for the game
+ emulated?
 \layout Itemize
 
-For xmess take a look at readme.mess: Is the sound for the system emulated?
+For xmess take a look at doc/mess/windows/suppsys.htm: Is the sound for the
+ system emulated?
 \layout Itemize
 
 Check the operating system support chart in the earlier part of  this file:
@@ -2235,11 +2251,11 @@ Xmame version 0.34 and higher require PROM files that were not included in
  See the question on PROMs  below for more information.
 \layout Itemize
 
-For xmame, check the file gamelist.mame to see if the game is playable.
+For xmame, check the file doc/mame/gamelist.txt to see if the game is playable.
  Just because a game is included doesn't mean it is working yet.
 \layout Itemize
 
-For xmess, take a look at readme.mess.
+For xmess, take a look at doc/mess/windows/suppsys.htm.
  Maybe the system isn't emulated all that well yet.
 \layout Itemize
 
@@ -2260,7 +2276,7 @@ What are PROMs?
 
 \layout Standard
 
-PROMs contain game-specific information that used to be built in  to mame
+PROMs contain game-specific information that used to be built into MAME
  in versions prior to 0.34.
  This information has been  extracted and is now included with new versions
  of ROM files for  games that require this information.
@@ -2911,7 +2927,7 @@ RTFM!
 \layout Enumerate
 
 If the above steps don't solve the problem, then check to see if it is a
- known problem; if necessary, report it to the mame testers project.
+ known problem; if necessary, report it to the MAME Testers project.
 \layout Standard
 
 If none of these fixes the problem, then try using the older version of
@@ -2933,7 +2949,7 @@ See
 What if my question is still not answered?
 \layout Standard
 
-Please check the offical mame and mess readme files to see if that answers
+Please check the offical MAME and MESS readme files to see if that answers
  your question:
 \layout Itemize
 
@@ -3460,7 +3476,7 @@ Because bitmap overlaying is the default, you can toggle it on and off by
 
 A problem with vector games and the cabinet mode is that some vector points
  do not reside within the screen coordinates, so you may see some vectors
- outside of the cabinet's mame display.
+ outside of the cabinet's MAME display.
 \layout Standard
 
 
@@ -4454,7 +4470,7 @@ Xmame/xmess should be distributed under terms of the license in
 
 \layout Itemize
 
-And if you are interested in mess, take a look in 
+And if you are interested in MESS, take a look in 
 \begin_inset LatexCommand \url[readme.mess]{readme.mess}
 
 \end_inset 
@@ -4487,7 +4503,7 @@ Unix sources and docs
 \layout Itemize
 
 The xmame/xmess sources
-\begin_inset LatexCommand \url[xmame/xmess-0.86 sources]{download/xmame-0.86.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.87 sources]{download/xmame-0.87.tar.bz2}
 
 \end_inset 
 
@@ -4598,7 +4614,7 @@ Xmame/xmess download mirrors
 (US)
 \layout Subsection
 
-(X)Mame front-ends
+(X)mame front-ends
 \layout Itemize
 
 
@@ -4855,7 +4871,7 @@ The official M.A.M.E home is at
 
 \layout Itemize
 
-The official mess site is 
+The official MESS site is 
 \begin_inset LatexCommand \url[http://www.mess.org]{http://www.mess.org}
 
 \end_inset 

@@ -207,7 +207,8 @@
 				MESS</A> to include new gaming consoles and computers. The complicated 
 			answer is that it is hard to tell the difference.
 		</p>
-		<h2 id="g09"></h2>
+		<h2 id="g09">I still do not understand why MAME and MESS will not merge. Since 
+					the cores are kept so close together, shouldn't #ifdef's suffice?</h2>
 		<p>
 			Yes, to a point. In a sense, #ifdefs do suffice and all of <A href="http://www.mess.org/">
 				MESS</A>'s overrides to the core are encapsulated in #ifdefs. In theory, <A href="http://www.mame.net/">
@@ -216,7 +217,7 @@
 			unified fashion. But there are additional considerations. Unlike Xmame and 
 			Xmess, <A href="http://www.mame.net/">MAME</A> and <A href="http://www.mess.org/">MESS</A>
 			are maintained by different groups. In the course of <A href="http://www.mame.net/">
-				MAME</A> developement, occasionally sweeping changes are made that require 
+				MAME</A> development, occasionally sweeping changes are made that require 
 			small changes to every <A href="http://www.mame.net/">MAME</A> driver. If <A href="http://www.mame.net/">
 				MAME</A> and <A href="http://www.mess.org/">MESS</A> were maintained out of 
 			the same source tree, then the <A href="http://www.mame.net/">MAME</A> people 
@@ -225,7 +226,7 @@
 			scrutinized for breakage in <A href="http://www.mame.net/">MAME</A>.
 		</p>
 		<p>
-			Because of these isssues, it is more prudent to keep two separate source trees. 
+			Because of these issues, it is more prudent to keep two separate source trees. 
 			When breaking changes occur in <A href="http://www.mame.net/">MAME</A>, the <A href="http://www.mame.net/">
 				MAME</A> people can then update all of the <A href="http://www.mame.net/">MAME</A>
 			drivers and when that is done and the changes are released, the <A href="http://www.mess.org/">
@@ -353,7 +354,7 @@
 		<p>In <A href="http://www.mess.org/">MESS</A> for Win32, there are two UIs use at 
 			runtime. There is the "Classic UI" which is derived from <A href="http://www.mame.net/">
 				MAME</A>'s UI, and there is the "New UI" which uses a standard Windows 
-			menubar to operate the emulation. By default, the New UI is enabled. However, 
+			menu bar to operate the emulation. By default, the New UI is enabled. However, 
 			some people prefer to use the older UI. This can be done in one of two ways.</p>
 		<OL>
 			<LI>
@@ -403,7 +404,7 @@
 		<p>On the <A href="http://www.mess.org/">MESS</A> download site, there are Visual C 
 			project files but they are extremely outdated. In theory, one could grab the <a href="http://www.vcmame.net/">
 				VCMame</a> project files and port them over to build <A href="http://www.mess.org/">
-				MESS</A>, but to my knowledge noone has done this yet.</p>
+				MESS</A>, but to my knowledge no one has done this yet.</p>
 		<P>There is also an alternative makefile (makefile.vc) that uses the Visual C 
 			command line compilers but the makefile itself requires <a href="http://www.gnu.org/software/make/">
 				GNU make</a> rather than nmake. Using the Microsoft compilers allows one to 
@@ -460,7 +461,7 @@
 			create a reproducible case and report it at <a href="http://bugzilla.mess.org">MESS 
 				Bugzilla</a>. When reporting a bug, be sure to keep in mind that <A href="http://www.mess.org/">
 				MESS</A> is a multiple emulation system, and the reader of your bug report 
-			might not be intimitely familiar with the system that you are using. In other 
+			might not be intimately familiar with the system that you are using. In other 
 			words, if you find a bug in the WowieZowie driver, do not expect the reader of 
 			the bug report to know the command for loading a file on WowieZowieOS. If a bug 
 			report contains a concrete reproducible case that is understandable even to 
