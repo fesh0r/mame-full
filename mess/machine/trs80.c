@@ -45,6 +45,8 @@ static UINT8 sector[4] = {0, }; 			/* current sector per drive */
 static short dir_sector[4] = {0, }; 		/* first directory sector (aka DDSL) */
 static short dir_length[4] = {0, }; 		/* length of directory in sectors (aka DDGA) */
 
+static UINT8 irq_mask = 0;
+
 static UINT8 *cas_buff = NULL;
 static UINT32 cas_size = 0;
 
@@ -466,6 +468,11 @@ static void tape_get_open(void)
  *
  *************************************/
 
+READ_HANDLER( trs80_port_xx_r )
+{
+	return 0;
+}
+
 WRITE_HANDLER( trs80_port_ff_w )
 {
 	int changes = trs80_port_ff ^ data;
@@ -571,7 +578,7 @@ READ_HANDLER( trs80_port_ff_r )
 	/* virtual tape ? */
 	if( readinputport(0) & 0x20 )
 	{
-        int     diff = now_cycles - get_cycles;
+		int diff = now_cycles - get_cycles;
 		/* overrun since last read ? */
 		if (diff >= 4000)
 		{
@@ -690,7 +697,7 @@ READ_HANDLER( trs80_irq_status_r )
 
 WRITE_HANDLER( trs80_irq_mask_w )
 {
-/*	irq_mask = data; */
+	irq_mask = data;
 }
 
 WRITE_HANDLER( trs80_motor_w )

@@ -27,6 +27,36 @@ NMI
 #define FW	TRS80_FONT_W
 #define FH  TRS80_FONT_H
 
+static struct MemoryReadAddress readmem_level1[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+    { 0x3800, 0x38ff, trs80_keyboard_r },
+	{ 0x3c00, 0x3fff, MRA_RAM },
+	{ 0x4000, 0x7fff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress writemem_level1[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x4000, 0x7fff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort readport_level1[] =
+{
+	{ 0xff, 0xfe, trs80_port_xx_r },
+    { 0xff, 0xff, trs80_port_ff_r },
+	{ -1 }
+};
+
+static struct IOWritePort writeport_level1[] =
+{
+	{ 0xff, 0xff, trs80_port_ff_w },
+	{ -1 }
+};
+
 static struct MemoryReadAddress readmem_model1[] =
 {
 	{ 0x0000, 0x2fff, MRA_ROM },
@@ -66,7 +96,8 @@ static struct MemoryWriteAddress writemem_model1[] =
 
 static struct IOReadPort readport_model1[] =
 {
-	{ 0xff, 0xff, trs80_port_ff_r },
+	{ 0xff, 0xfe, trs80_port_xx_r },
+    { 0xff, 0xff, trs80_port_ff_r },
 	{ -1 }
 };
 
@@ -309,6 +340,49 @@ static struct Speaker_interface speaker_interface =
 };
 
 
+static struct MachineDriver machine_driver_level1 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			1796000,	/* 1.796 Mhz */
+			readmem_level1,writemem_level1,
+			readport_level1,writeport_level1,
+			trs80_frame_interrupt,1,
+			trs80_timer_interrupt,40
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
+	1,
+	trs80_init_machine,
+	trs80_shutdown_machine,
+
+	/* video hardware */
+	64*FW,									/* screen width */
+	16*FH,									/* screen height */
+	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
+	trs80_gfxdecodeinfo,					/* graphics decode info */
+	sizeof(palette)/sizeof(palette[0])/3,
+	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
+	trs80_init_palette, 					/* init palette */
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	trs80_vh_start,
+	trs80_vh_stop,
+	trs80_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SPEAKER,
+			&speaker_interface
+		}
+	}
+};
+
 static struct MachineDriver machine_driver_model1 =
 {
 	/* basic machine hardware */
@@ -401,6 +475,15 @@ static struct MachineDriver machine_driver_model3 =
 
 ***************************************************************************/
 
+ROM_START(trs80l1)
+	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_LOAD("level1.rom",  0x0000, 0x1000, 0x70d06dff)
+
+	ROM_REGION(0x00c00, REGION_GFX1)
+	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
+ROM_END
+
+
 ROM_START(trs80)
 	ROM_REGION(0x10000, REGION_CPU1)
 	ROM_LOAD("trs80.z33",   0x0000, 0x1000, 0x83dbbbe2)
@@ -442,6 +525,48 @@ ROM_START(trs80m3)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
+
+static const struct IODevice io_trs80l1[] = {
+	{
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0",            /* file extensions */
+		NULL,				/* private */
+		trs80_cas_id,		/* id */
+		trs80_cas_init, 	/* init */
+		trs80_cas_exit, 	/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
+        NULL,               /* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{
+		IO_QUICKLOAD,		/* type */
+		1,					/* count */
+		"cmd\0",            /* file extensions */
+		NULL,				/* private */
+		trs80_cmd_id,		/* id */
+		trs80_cmd_init, 	/* init */
+		trs80_cmd_exit, 	/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
+        NULL,               /* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+	{ IO_END }
+};
 
 
 static const struct IODevice io_trs80[] = {
@@ -510,6 +635,7 @@ static const struct IODevice io_trs80[] = {
 #define io_trs80m3	io_trs80
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
+COMP ( 1977, trs80l1,  0,		 level1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
 COMP ( 1978, trs80,    0,		 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
 COMP ( 1978, trs80alt, trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
 COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    "EACA Computers Ltd.","System-80" )
