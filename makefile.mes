@@ -123,10 +123,17 @@ LIBS = -lz
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(OS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
-ifdef MESS
-OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
-endif
+# MESS object directories
+OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/msdos                \
+		$(OBJ)/mess/systems $(OBJ)/mess/machine              \
+		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw              \
+		$(OBJ)/mess/formats $(OBJ)/mess/tools                \
+		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
+		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
+		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound
+
+#MESS CPU's
+OBJDIRS += $(OBJ)/mess/cpu
 
 all:	maketree $(EMULATOR) extra
 
@@ -134,6 +141,7 @@ all:	maketree $(EMULATOR) extra
 include src/core.mak
 include src/$(TARGET).mak
 include src/rules.mak
+include src/rules_ms.mak
 include src/$(OS)/$(OS).mak
 
 ifdef DEBUG
@@ -176,6 +184,10 @@ $(OBJ)/$(OS)/%.o: src/$(OS)/%.c
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
+
+$(OBJ)/mess/%.o: mess/%.c
+	@echo [$(NAME)] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 
 # compile generated C files for the 68000 emulator
