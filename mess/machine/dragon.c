@@ -1140,7 +1140,7 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	m6847_gm0_w(0,		data & 0x10);
 	m6847_intext_w(0,	data & 0x10);
 	m6847_css_w(0,		data & 0x08);
-	schedule_full_refresh();
+	set_vh_global_attribute(NULL, 0);
 
 	/* PB1 will drive the sound output.  This is a rarely
 	 * used single bit sound mode. It is always connected thus

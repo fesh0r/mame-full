@@ -106,7 +106,7 @@ b0 is set if b2 and b1 are set (remember, color bus is 3 bits)
 
 */
 
-void palette_init_v9938(unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( v9938 )
 {
 	int	i, red, green, blue;
 
@@ -155,7 +155,7 @@ to emulate this. Also it keeps the palette a reasonable size. :)
 
 */
 
-void palette_init_v9958(unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( v9958 )
 {
 	int r,g,b,y,j,k,i,k0,j0,n;
 	unsigned char pal[19268*3];
@@ -166,7 +166,7 @@ void palette_init_v9958(unsigned short *colortable,const unsigned char *color_pr
 	/* set up YJK table */
 	if (!pal_indYJK)
 	{
-		pal_indYJK = malloc(0x20000 * sizeof(UINT16));
+		pal_indYJK = auto_malloc(0x20000 * sizeof(UINT16));
 		if (!pal_indYJK)
 		{
 			logerror ("Fatal: cannot malloc () in v9958_init_palette (), cannot exit\n");
@@ -441,7 +441,7 @@ WRITE_HANDLER (v9938_command_w)
 ***************************************************************************/
 
 int v9938_init (int model, int vram_size, void (*callback)(int) )
-	{
+{
 	memset (&vdp, 0, sizeof (vdp) );
 
 	vdp.model = model;
@@ -450,30 +450,31 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	vdp.size_old = -1;
 
 	/* allocate VRAM */
-	vdp.vram = malloc (0x20000);
-	if (!vdp.vram) return 1;
+	vdp.vram = auto_malloc (0x20000);
+	if (!vdp.vram)
+		return 1;
+
 	memset (vdp.vram, 0, 0x20000);
 	if (vdp.vram_size < 0x20000)
-		{
+	{
 		/* set unavailable RAM to 0xff */
 		memset (vdp.vram + vdp.vram_size, 0xff, (0x20000 - vdp.vram_size) );
-		}
+	}
+
 	/* do we have expanded memory? */
 	if (vdp.vram_size > 0x20000)
-		{
-		vdp.vram_exp = malloc (0x10000);
+	{
+		vdp.vram_exp = auto_malloc (0x10000);
 		if (!vdp.vram_exp)
-			{
-			free (vdp.vram);
 			return 1;
-			}
+
 		memset (vdp.vram_exp, 0, 0x10000);
-		}
+	}
 	else
 		vdp.vram_exp = NULL;
 
 	return 0;
-	}
+}
 
 void v9938_reset (void)
 	{
@@ -495,16 +496,8 @@ void v9938_reset (void)
 	vdp.scanline = 0;
 	}
 
-void video_stop_v9938(void)
+VIDEO_STOP( v9938 )
 {
-	free (vdp.vram);
-	if (vdp.vram_exp)
-		free (vdp.vram_exp);
-	if (pal_indYJK)
-	{
-		free (pal_indYJK);
-		pal_indYJK = NULL;
-	}
 }
 
 static void v9938_check_int (void)

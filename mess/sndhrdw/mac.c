@@ -132,7 +132,7 @@ void mac_sh_data_w(int indexx)
 		/* should never happen */
 		return;
 
-	snd_cache[snd_cache_tail] = sample_enable ? (READ_WORD(base + (indexx << 1))  >> 8) & 0xff : 0;
+	snd_cache[snd_cache_tail] = sample_enable ? (*((data16_t *) (base + (indexx << 1)))  >> 8) & 0xff : 0;
 	snd_cache_tail++;
 	snd_cache_tail %= snd_cache_size;
 	snd_cache_len++;

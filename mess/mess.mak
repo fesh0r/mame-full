@@ -58,13 +58,13 @@ CPUS+=F8@
 CPUS+=CP1600@
 #CPUS+=TMS34010@
 #CPUS+=TMS34020@
-#CPUS+=TMS9900@
+CPUS+=TMS9900@
 #CPUS+=TMS9940@
 #CPUS+=TMS9980@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
 #CPUS+=TMS9995@
-#CPUS+=TMS99010@
+CPUS+=TMS99010@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 #CPUS+=Z8000@
@@ -144,7 +144,7 @@ DRVLIBS = \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/apexc.a	  \
 	$(OBJ)/apple.a    \
-#	$(OBJ)/ti99.a     \
+	$(OBJ)/ti99.a     \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
@@ -359,20 +359,19 @@ $(OBJ)/apple.a:   \
 	  $(OBJ)/mess/systems/lisa.o     \
 	  $(OBJ)/mess/machine/iwm.o	 \
 	  $(OBJ)/mess/machine/sonydriv.o \
+	  $(OBJ)/mess/machine/ap_disk2.o \
+	  $(OBJ)/mess/vidhrdw/apple2.o	 \
+	  $(OBJ)/mess/machine/apple2.o	 \
+	  $(OBJ)/mess/systems/apple2.o   \
+	  $(OBJ)/mess/machine/ay3600.o	 \
+	  $(OBJ)/mess/sndhrdw/mac.o	 \
+	  $(OBJ)/mess/machine/sonydriv.o \
+	  $(OBJ)/mess/vidhrdw/mac.o	 \
+	  $(OBJ)/mess/machine/mac.o	 \
+	  $(OBJ)/mess/systems/mac.o      \
 #	  $(OBJ)/mess/vidhrdw/apple1.o	 \
 #	  $(OBJ)/mess/machine/apple1.o	 \
 #	  $(OBJ)/mess/systems/apple1.o   \
-#	  $(OBJ)/mess/machine/ay3600.o	 \
-#	  $(OBJ)/mess/machine/ap_disk2.o \
-#	  $(OBJ)/mess/vidhrdw/apple2.o	 \
-#	  $(OBJ)/mess/machine/apple2.o	 \
-#	  $(OBJ)/mess/systems/apple2.o   \
-#	  $(OBJ)/mess/sndhrdw/mac.o	 \
-#	  $(OBJ)/mess/machine/iwm.o	 \
-#	  $(OBJ)/mess/machine/sonydriv.o \
-#	  $(OBJ)/mess/vidhrdw/mac.o	 \
-#	  $(OBJ)/mess/machine/mac.o	 \
-#	  $(OBJ)/mess/systems/mac.o      \
 
 
 $(OBJ)/avigo.a: \
@@ -399,12 +398,12 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/sndhrdw/spchroms.o \
 	  $(OBJ)/mess/machine/ti99_4x.o  \
 	  $(OBJ)/mess/systems/ti99_4x.o  \
-	  $(OBJ)/mess/systems/ti99_2.o	 \
-	  $(OBJ)/mess/systems/ti990_4.o  \
-	  $(OBJ)/mess/systems/ti990_10.o \
 	  $(OBJ)/mess/machine/990_hd.o	 \
 	  $(OBJ)/mess/machine/990_tap.o	 \
-	  $(OBJ)/mess/vidhrdw/911_vdt.o
+	  $(OBJ)/mess/vidhrdw/911_vdt.o  \
+	  $(OBJ)/mess/systems/ti990_10.o \
+#	  $(OBJ)/mess/systems/ti99_2.o	 \
+#	  $(OBJ)/mess/systems/ti990_4.o  \
 
 $(OBJ)/bally.a:    \
 	  $(OBJ)/sound/astrocde.o	 \
@@ -488,7 +487,6 @@ $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/systems/enterp.o
 
 $(OBJ)/ascii.a :   \
-	  $(OBJ)/mess/vidhrdw/v9938.o	 \
 	  $(OBJ)/mess/machine/msx.o	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o \
 	  $(OBJ)/mess/systems/msx.o
@@ -710,6 +708,7 @@ COREOBJS += \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \
+	$(OBJ)/mess/vidhrdw/v9938.o    \
 	$(OBJ)/mess/vidhrdw/crtc6845.o \
 	$(OBJ)/mess/vidhrdw/tms9928a.o \
 	$(OBJ)/mess/machine/28f008sa.o \

@@ -4,6 +4,7 @@
 #include <time.h>
 #include "videomap.h"
 #include "mess.h"
+#include "vidhrdw/generic.h"
 
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -37,7 +38,6 @@ static struct videomap_linecallback_info line_info;
 
 /* used at draw time */
 static UINT16 *scanline_data;
-static const UINT8 *videoram;
 static const UINT8 *videoram_pos;
 static int videoram_windowsize;
 static UINT8 *videoram_dirtybuffer;
@@ -1029,11 +1029,16 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 
 void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
+	int full_refresh;
+
+	full_refresh = 1; /*get_vh_global_attribute_changed();*/
+
 	if (cliprect->min_y == Machine->visible_area.min_y)
 		calc_videoram_pos();
 
 	internal_videomap_update(bitmap, cliprect,
-		/*videoram_dirtybuffer ? &videoram_dirtybuffer_pos :*/ NULL, 1);
+		(!full_refresh && videoram_dirtybuffer) ? &videoram_dirtybuffer_pos : NULL,
+		((flags & FLAG_BORDER_MODIFIED) || full_refresh) ? 1 : 0);
 }
 
 /* ----------------------------------------------------------------------- *

@@ -225,7 +225,7 @@ static void via_t2_timeout (int which)
 	if (v->intf->t2_callback)
 		v->intf->t2_callback(timer_timeelapsed(v->t2));
 
-	v->t2 = 0;
+	timer_reset(v->t2, TIME_NEVER);
 	v->time2=timer_get_time();
 
 	if (!(v->ifr & INT_T2))
