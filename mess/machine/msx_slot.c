@@ -12,8 +12,6 @@
 
 extern MSX msx1;
 
-/* #define MSX_VERBOSE */
-
 MSX_SLOT_INIT(empty)
 {
 	state->type = SLOT_EMPTY;
@@ -174,27 +172,22 @@ MSX_SLOT_WRITE(msxdos2)
 
 MSX_SLOT_INIT(konami)
 {
+	int banks;
+
+	if (size > 0x200000) {
+		logerror ("konami: warning: truncating to 2mb\n");
+		size = 0x200000;
+		return 1;
+	}
+	banks = size / 0x2000;
+	if (size != banks * 0x2000 || (~(banks - 1) % banks)) {
+		logerror ("konami: error: must be a 2 power of 8kb\n");
+		return 1;
+	}
 	state->type = SLOT_KONAMI;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 7;
-		break;
-	case 0x20000:
-		state->bank_mask = 15;
-		break;
-	case 0x40000:
-		state->bank_mask = 31;
-		break;
-	case 0x80000:
-		state->bank_mask = 63;
-		break;
-	default:
-		logerror ("konami4: error: only 64kb, 128kb, 256kb, 512kb supported\n");
-		return 1;
-	}
+	state->bank_mask = banks - 1;
 
 	return 0;
 }
@@ -210,11 +203,11 @@ MSX_SLOT_MAP(konami)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, state->mem + state->banks[0] * 0x2000);
+		cpu_setbank (1, state->mem);
 		cpu_setbank (2, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
+		cpu_setbank (3, state->mem);
 		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
@@ -255,27 +248,23 @@ MSX_SLOT_WRITE(konami)
 
 MSX_SLOT_INIT(konami_scc)
 {
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 7;
-		break;
-	case 0x20000:
-		state->bank_mask = 15;
-		break;
-	case 0x40000:
-		state->bank_mask = 31;
-		break;
-	case 0x80000:
-		state->bank_mask = 63;
-		break;
-	default:
-		logerror ("konami5: error: only 64kb, 128kb, 256kb, 512kb supported\n");
+	int banks;
+
+	if (size > 0x200000) {
+		logerror ("konami_scc: warning: truncating to 2mb\n");
+		size = 0x200000;
+		return 1;
+	}
+	banks = size / 0x2000;
+	if (size != banks * 0x2000 || (~(banks - 1) % banks)) {
+		logerror ("konami_scc: error: must be a 2 power of 8kb\n");
 		return 1;
 	}
 
 	state->type = SLOT_KONAMI_SCC;
 	state->mem = mem;
 	state->size = size;
+	state->bank_mask = banks - 1;
 
 	return 0;
 }
@@ -333,24 +322,24 @@ MSX_SLOT_WRITE(konami_scc)
 {
 	if (addr >= 0x5000 && addr < 0x5800) {
 		state->banks[0] = val & state->bank_mask;
-		slot_konami_map (state, 1);
+		slot_konami_scc_map (state, 1);
 		if (msx1.state[3] == state) {
-			slot_konami_map (state, 3);
+			slot_konami_scc_map (state, 3);
 		}
 	} 
 	else if (addr >= 0x7000 && addr < 0x7800) {
 		state->banks[1] = val & state->bank_mask;
-		slot_konami_map (state, 1);
+		slot_konami_scc_map (state, 1);
 		if (msx1.state[3] == state) {
-			slot_konami_map (state, 3);
+			slot_konami_scc_map (state, 3);
 		}
 	} 
 	else if (addr >= 0x9000 && addr < 0x9800) {
 		state->banks[2] = val & state->bank_mask;
 		state->cart.scc.active = ((val & 0x3f) == 0x3f);
-		slot_konami_map (state, 2);
+		slot_konami_scc_map (state, 2);
 		if (msx1.state[0] == state) {
-			slot_konami_map (state, 0);
+			slot_konami_scc_map (state, 0);
 		}
 	} 
 	else if (state->cart.scc.active && addr >= 0x9800 && addr < 0xa000) {
@@ -379,36 +368,31 @@ MSX_SLOT_WRITE(konami_scc)
 	} 
 	else if (addr >= 0xb000 && addr < 0xb800) {
 		state->banks[3] = val & state->bank_mask;
-		slot_konami_map (state, 2);
+		slot_konami_scc_map (state, 2);
 		if (msx1.state[0] == state) {
-			slot_konami_map (state, 0);
+			slot_konami_scc_map (state, 0);
 		}
 	}
 }
 
 MSX_SLOT_INIT(ascii8)
 {
+	int banks;
+
+	if (size > 0x200000) {
+		logerror ("ascii8: warning: truncating to 2mb\n");
+		size = 0x200000;
+		return 1;
+	}
+	banks = size / 0x2000;
+	if (size != banks * 0x2000 || (~(banks - 1) % banks)) {
+		logerror ("ascii8: error: must be a 2 power of 8kb\n");
+		return 1;
+	}
 	state->type = SLOT_ASCII8;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 7;
-		break;
-	case 0x20000:
-		state->bank_mask = 15;
-		break;
-	case 0x40000:
-		state->bank_mask = 31;
-		break;
-	case 0x80000:
-		state->bank_mask = 63;
-		break;
-	default:
-		logerror ("ascii8: error: only 64kb, 128kb, 256kb, 512kb supported\n");
-		return 1;
-	}
+	state->bank_mask = banks - 1;
 
 	return 0;
 }
@@ -556,12 +540,6 @@ MSX_SLOT_INIT(ascii8_sram)
 	if (!state->sramfile) {
 		state->sramfile = sramfile;
 	}
-#ifdef MSX_VERBOSE
-	logerror ("ascii8_sram: info: size = %d/0x%x, bank_mask = %02x, "
-			  "sram_mask = %02x, empty_mask = %02x\n",
-			  size, size, state->bank_mask, state->cart.sram.sram_mask,
-			  state->cart.sram.empty_mask);
-#endif
 
 	return 0;
 }
@@ -725,6 +703,7 @@ MSX_SLOT_RESET(ascii16_sram)
 
 	for (i=0; i<2; i++) state->banks[i] = i;
 }
+
 static UINT8 *ascii16_sram_bank_select (slot_state *state, int bankno)
 {
 	int bank = state->banks[bankno];
@@ -769,12 +748,12 @@ MSX_SLOT_WRITE(ascii16_sram)
 {
 	if (addr >= 0x6000 && addr < 0x6800) {
 		state->banks[0] = val;
-		slot_ascii16_map (state, 1);
+		slot_ascii16_sram_map (state, 1);
 	}
 	else if (addr >= 0x7000 && addr < 0x7800) {
 		state->banks[1] = val;
 		if (msx1.state[2] == state) {
-			slot_ascii16_map (state, 2);
+			slot_ascii16_sram_map (state, 2);
 		}
 	}
 	else if (addr >= 0x8000 && addr < 0xc000) {
@@ -1118,18 +1097,13 @@ static READ_HANDLER (msx_diskrom_page1_r)
 																				
 static READ_HANDLER (msx_diskrom_page2_r)
 {
-	if (offset >= 0x1ff8) {
-		switch (offset) {
-		case 0x1ff8: return wd179x_status_r (0);
-		case 0x1ff9: return wd179x_track_r (0);
-		case 0x1ffa: return wd179x_sector_r (0);
-		case 0x1ffb: return wd179x_data_r (0);
-		case 0x1fff: return msx1.dsk_stat;
-		default: return msx1.state[2]->mem[offset + 0x2000];
-		}
-	} 
-	else {
-		return 0xff;
+	switch (offset) {
+	case 0x1ff8: return wd179x_status_r (0);
+	case 0x1ff9: return wd179x_track_r (0);
+	case 0x1ffa: return wd179x_sector_r (0);
+	case 0x1ffb: return wd179x_data_r (0);
+	case 0x1fff: return msx1.dsk_stat;
+	default: return msx1.state[2]->mem[offset + 0x2000];
 	}
 }
 																				
@@ -1181,10 +1155,10 @@ MSX_SLOT_WRITE(diskrom)
 		state->mem[0x3ffc] = val | 0xfe;
 	case 0x7ffd:
 		wd179x_set_drive (val & 1);
-		if ((state->mem[0x3ffd] ^ val) & 2) {
-			set_led_status (0, !(val & 2));
+		if ((state->mem[0x3ffd] ^ val) & 0x40) {
+			set_led_status (0, !(val & 0x40));
 		}
-		state->mem[0x3ffd] = val | 0x7c;
+		state->mem[0x3ffd] = (val & 0xfb) | 0x38;
 		break;
 	}
 }
@@ -1300,11 +1274,17 @@ MSX_SLOT_WRITE(majutsushi)
 
 MSX_SLOT_INIT(fmpac)
 {
-	UINT8 *p;
 	static const char sramfile[] = "fmpac.rom";
+	UINT8 *p;
+	int banks;
 
-	if (size != 0x10000) {
-		logerror ("fmpac: error: rom file must be 64kb\n");
+	if (size > 0x400000) {
+		logerror ("fmpac: warning: truncating rom to 4mb\n");
+		size = 0x400000;
+	}
+	banks = size / 0x4000;
+	if (size != banks * 0x4000 || (~(banks - 1) % banks)) {
+		logerror ("fmpac: error: must be a 2 power of 16kb\n");
 		return 1;
 	}
 
@@ -1325,9 +1305,9 @@ MSX_SLOT_INIT(fmpac)
 	}
 
 	state->type = SLOT_FMPAC;
-	state->size = 0x10000;
+	state->size = size;
 	state->mem = mem;
-	state->bank_mask = 3;
+	state->bank_mask = banks - 1;
 	if (!state->sramfile) {
 		state->sramfile = sramfile;
 	}
@@ -1337,19 +1317,24 @@ MSX_SLOT_INIT(fmpac)
 
 MSX_SLOT_RESET(fmpac)
 {
+	int i;
+
 	state->banks[0] = 0;
 	state->cart.fmpac.sram_active = 0;
 	state->cart.fmpac.opll_active = 0;
+	msx1.opll_active = 0;
+	for (i=0; i<=state->bank_mask; i++) {
+		state->mem[0x3ff6 + i * 0x4000] = 0;
+	}
+	state->cart.fmpac.mem[0x3ff6] = 0;
+	state->cart.fmpac.mem[0x3ff7] = 0;
+
 	/* IMPROVE: reset sound chip */
 }
 
 MSX_SLOT_MAP(fmpac)
 {
-	if (page != 1) {
-		cpu_setbank (page * 2 + 1, msx1.empty);
-		cpu_setbank (page * 2 + 2, msx1.empty);
-	}
-	else {
+	if (page == 1) {
 		if (state->cart.fmpac.sram_active) {
 			cpu_setbank (3, state->cart.fmpac.mem);
 			cpu_setbank (4, state->cart.fmpac.mem + 0x2000);
@@ -1359,48 +1344,54 @@ MSX_SLOT_MAP(fmpac)
 			cpu_setbank (4, state->mem + state->banks[0] * 0x4000 + 0x2000);
 		}
 	}
+	else {
+		cpu_setbank (page * 2 + 1, msx1.empty);
+		cpu_setbank (page * 2 + 2, msx1.empty);
+	}
 }
 
 MSX_SLOT_WRITE(fmpac)
 {
-	if (state->cart.fmpac.sram_support) {
-		if (addr >= 0x4000 && addr < 0x7ffe && state->cart.fmpac.sram_active) {
+	int i, data;
+
+	if (addr >= 0x4000 && addr < 0x6000 && state->cart.fmpac.sram_support) {
+		if (state->cart.fmpac.sram_active || addr >= 0x5ffe) {
 			state->cart.fmpac.mem[addr & 0x1fff] = val;
 		}
-		if (addr == 0x7ffe || addr == 0x7fff) {
-			state->cart.fmpac.mem[addr & 0x1fff] = val;
 
-			if (state->cart.fmpac.mem[0x1ffe] == 0x4d &&
-				state->cart.fmpac.mem[0x1fff] == 0x69) {
-				state->cart.fmpac.sram_active = 1;
-			}
-			else {
-				state->cart.fmpac.sram_active = 0;
-			}
+		state->cart.fmpac.sram_active = 
+				(state->cart.fmpac.mem[0x1ffe] == 0x4d &&
+				 state->cart.fmpac.mem[0x1fff] == 0x69);
+	}
+
+	switch (addr) {
+	case 0x7ff4: 
+		if (state->cart.fmpac.opll_active) {
+			YM2413_register_port_0_w (0, val);
 		}
-	}
-
-	if (addr == 0x7ff4 && state->cart.fmpac.opll_active) {
-		YM2413_register_port_0_w (0, val);
-	}
-	else if (addr == 0x7ff5 && state->cart.fmpac.opll_active) {
-		YM2413_data_port_0_w (0, val);
-	}
-	else if (addr == 0x7ff6) {
-		int data = val & 0x11;
-		state->mem[0x3ff6] = data;
-		state->mem[0x7ff6] = data;
-		state->mem[0xbff6] = data;
-		state->mem[0xfff6] = data;
+		break;
+	case 0x7ff5:
+		if (state->cart.fmpac.opll_active) {
+			YM2413_data_port_0_w (0, val);
+		}
+		break;
+	case 0x7ff6: 
+		data = val & 0x11;
+		for (i=0; i<=state->bank_mask; i++) {
+			state->mem[0x3ff6 + i * 0x4000] = data;
+		}
 		state->cart.fmpac.mem[0x3ff6] = data;
 		state->cart.fmpac.opll_active = val & 1;
+		if ((msx1.opll_active ^ val) & 1) {
+			logerror ("FM-PAC: OPLL %sactivated\n", val & 1 ? "" : "de");
+		}
 		msx1.opll_active = val & 1;
-		logerror ("FM-PAC: OPLL %sactivated\n", val & 1 ? "" : "de");
-	}
-	else if (addr == 0x7ff7) {
-		state->banks[0] = val & 3;
-		state->cart.fmpac.mem[0x3ff7] = val & 3;
+		break;
+	case 0x7ff7:
+		state->banks[0] = val & state->bank_mask;
+		state->cart.fmpac.mem[0x3ff7] = val & state->bank_mask;
 		slot_fmpac_map (state, 1);
+		break;
 	}
 }
 
@@ -1495,26 +1486,16 @@ MSX_SLOT_RESET(superloadrunner)
 
 MSX_SLOT_MAP(superloadrunner)
 {
-	UINT8 *mem;
-
-	switch (page) {
-	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
-		break;
-	case 1:
-		cpu_setbank (3, msx1.empty);
-		cpu_setbank (4, msx1.empty);
-		break;
-	case 2:
-		mem = state->mem + 
+	if (page == 2) {
+		UINT8 *mem = state->mem + 
 				(msx1.superloadrunner_bank & state->bank_mask) * 0x4000;
+
 		cpu_setbank (5, mem);
 		cpu_setbank (6, mem + 0x2000);
-		break;
-	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+	}
+	else {
+		cpu_setbank (page * 2 + 1, msx1.empty);
+		cpu_setbank (page * 2 + 2, msx1.empty);
 	}
 }
 
@@ -1642,9 +1623,9 @@ MSX_SLOT_INIT(korean90in1)
 {
 	int banks;
 
-	if (size > 0x200000) {
-		logerror ("korean-90in1: warning: truncating to 2mb\n");
-		size = 0x200000;
+	if (size > 0x100000) {
+		logerror ("korean-90in1: warning: truncating to 1mb\n");
+		size = 0x100000;
 	}
 	banks = size / 0x4000;
 	if (size != banks * 0x4000 || (~(banks - 1) % banks)) {
@@ -1684,7 +1665,7 @@ MSX_SLOT_MAP(korean90in1)
 		switch (msx1.korean90in1_bank & 0xc0) {
 		case 0x80: /* 32 kb mode */
 			mem += 0x4000;
-		default: /* ie. 0x00 and 0x40): same memory as page 1 */
+		default: /* ie. 0x00 and 0x40: same memory as page 1 */
 			cpu_setbank (5, mem);
 			cpu_setbank (6, mem + 0x2000);
 			break;
@@ -1767,6 +1748,7 @@ MSX_SLOT_WRITE(korean126in1)
 		}
 	}
 }
+
 MSX_SLOT_INIT(soundcartridge)
 {
 	UINT8 *p;
@@ -2003,8 +1985,6 @@ MSX_SLOT_WRITE(soundcartridge)
 			for (i=0; i<4; i++) {
 				state->cart.sccp.ram_mode[i] = 1;
 			}
-			state->cart.sccp.scc_active = 0;
-			state->cart.sccp.sccp_active = 0;
 		}
 		else {
 			state->cart.sccp.ram_mode[0] = val & 1;

@@ -3,6 +3,7 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - [MSX2] Sony HB-F700P (Sean Young)
+- [MSX] National FS-4000 (Sean Young)
 
 
 
@@ -14,6 +15,7 @@ System Driver Changes:
     in a subslot of slot 3.
   * Adds support for Konami's Sound Cartridge (64kb)
   * Adds support for Korean 90-in-1 
+  * Adds support for Kanji ROM
 
   If no cartridges are supplied, it sets the Sound Cartridge in slot 1
   and the FM-PAC in slot 2. The Snatcher, SD-Snatcher and the Konami

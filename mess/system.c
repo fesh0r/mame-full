@@ -604,6 +604,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* ASCII & MICROSOFT */
 	DRIVER( msx )		/* 1983 MSX 										*/
 	DRIVER( msxj )		/* 1983 MSX Jap 									*/
+	DRIVER( fs4000 )	/* 1985 MSX Jap 									*/
 	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
 	DRIVER( msxuk ) 	/* 1983 MSX UK										*/
 	DRIVER( hotbit11 )	/* 198? ???											*/

@@ -6,7 +6,6 @@
 #define MSX_MAX_CARTS	(2)
 
 typedef struct {
-	int run; /* set after init_msx () */
 	/* PSG */
 	int psg_b;
 	int opll_active;
@@ -19,6 +18,9 @@ typedef struct {
 	int rtc_latch;
 	/* disk */
 	UINT8 dsk_stat;
+	/* kanji */
+	UINT8 *kanji_mem;
+	int kanji_latch;
 	/* memory */
 	msx_slot_layout *layout;
 	slot_state *cart_state[MSX_MAX_CARTS];
@@ -81,6 +83,8 @@ WRITE_HANDLER (msx_sec_slot_w);
 READ_HANDLER (msx_sec_slot_r);
 WRITE_HANDLER (msx_ram_mapper_w);
 READ_HANDLER (msx_ram_mapper_r);
+READ_HANDLER (msx_kanji_r);
+WRITE_HANDLER (msx_kanji_w);
 
 void msx_memory_map_all (void);
 void msx_memory_map_page (int page);

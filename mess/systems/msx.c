@@ -1,5 +1,5 @@
 /*
-** msx.c : driver for MSX1
+** msx.c : driver for MSX
 **
 ** Todo:
 ** - Add support for other MSX models (br,fr,de,ru etc.)
@@ -46,6 +46,7 @@ static PORT_READ_START (readport)
 	{ 0xa8, 0xab, ppi8255_0_r },
 	{ 0x98, 0x98, TMS9928A_vram_r },
 	{ 0x99, 0x99, TMS9928A_register_r },
+	{ 0xd9, 0xd9, msx_kanji_r },
 PORT_END
 
 static PORT_WRITE_START (writeport)
@@ -56,6 +57,7 @@ static PORT_WRITE_START (writeport)
 	{ 0xa8, 0xab, ppi8255_0_w },
 	{ 0x98, 0x98, TMS9928A_vram_w },
 	{ 0x99, 0x99, TMS9928A_register_w },
+	{ 0xd8, 0xd9, msx_kanji_w },
 PORT_END
 
 static PORT_READ_START (readport2)
@@ -65,6 +67,7 @@ static PORT_READ_START (readport2)
 	{ 0x98, 0x98, v9938_vram_r },
 	{ 0x99, 0x99, v9938_status_r },
 	{ 0xb5, 0xb5, msx_rtc_reg_r },
+	{ 0xd9, 0xd9, msx_kanji_r },
 	{ 0xfc, 0xff, msx_ram_mapper_r },
 PORT_END
 
@@ -80,6 +83,7 @@ static PORT_WRITE_START (writeport2)
 	{ 0x9b, 0x9b, v9938_register_w },
 	{ 0xb4, 0xb4, msx_rtc_latch_w },
 	{ 0xb5, 0xb5, msx_rtc_reg_w },
+	{ 0xd8, 0xd9, msx_kanji_w },
 	{ 0xfc, 0xff, msx_ram_mapper_w },
 PORT_END
 
@@ -807,6 +811,25 @@ MSX_LAYOUT_INIT (msxj)
 	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM, 0x10000, 0x0000)	/* 64KB RAM */
 MSX_LAYOUT_END
 
+ROM_START (fs4000)
+	ROM_REGION (0x48000 ,REGION_CPU1, 0)
+	ROM_LOAD ("4000bios.rom", 0, 0x8000, CRC(071135e0))
+	ROM_LOAD ("4000word.rom", 0x8000, 0x8000, CRC(950b6c87))
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+	ROM_LOAD ("4000je.rom", 0x20000, 0x8000, CRC(ebaa5a1e))
+	ROM_LOAD ("4000kanj.rom", 0x28000, 0x20000, CRC(956dc96d))
+ROM_END
+
+MSX_LAYOUT_INIT (fs4000)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000) 
+	MSX_LAYOUT_SLOT (3, 0, 0, 2, ROM, 0x8000, 0x8000) 
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000) 
+	MSX_LAYOUT_SLOT (3, 2, 0, 4, RAM, 0x10000, 0x0000)	/* 64KB RAM */
+	MSX_LAYOUT_KANJI (0x28000)
+MSX_LAYOUT_END
+
 ROM_START (msxuk)
 	ROM_REGION (0x20000, REGION_CPU1, 0)
 	ROM_LOAD ("msxuk.rom", 0x0000, 0x8000, CRC(e9ccd789))
@@ -979,6 +1002,7 @@ SYSTEM_CONFIG_END
 MSX_DRIVER_LIST
 	MSX_DRIVER (msx) 
 	MSX_DRIVER (msxj) 
+	MSX_DRIVER (fs4000)
 	MSX_DRIVER (msxuk) 
 	MSX_DRIVER (msxkr) 
 	MSX_DRIVER (hotbit11) 
@@ -994,6 +1018,7 @@ MSX_DRIVER_END
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE  INPUT	   INIT   CONFIG  COMPANY			   FULLNAME */
 COMP( 1983,	msx,	  0,		0,		msx_pal, msx,	   msx,	msx,	"ASCII & Microsoft", "MSX 1" )
 COMP( 1983, msxj,	  msx,		0,		msx,	 msxj,	   msx,	msx,	"ASCII & Microsoft", "MSX 1 (Japan)" )
+COMP( 1985, fs4000,	  msx,		0,		msx,	 msxj,	   msx,	msx,	"Matsushita", "National FS-4000 (MSX1 Japan)" )
 COMP( 1983, msxkr,	  msx,		0,		msx,	 msxkr,    msx,	msx,	"ASCII & Microsoft", "MSX 1 (Korea)" )
 /*COMP(1983,msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX 1 (Korea ALT)" ) */
 COMP( 1983, msxuk,	  msx,		0,		msx_pal, msxuk,    msx,	msx,	"ASCII & Microsoft", "MSX 1 (UK)" )

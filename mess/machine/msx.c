@@ -33,20 +33,6 @@
 #endif
 
 MSX msx1;
-static WRITE_HANDLER ( msx_ppi_port_a_w );
-static WRITE_HANDLER ( msx_ppi_port_c_w );
-static READ_HANDLER (msx_ppi_port_b_r );
-
-static ppi8255_interface msx_ppi8255_interface =
-{
-	1,
-	{NULL}, 
-	{msx_ppi_port_b_r},
-	{NULL},
-	{msx_ppi_port_a_w},
-	{NULL}, 
-	{msx_ppi_port_c_w}
-};
 
 static int msx_probe_type (UINT8* pmem, int size)
 {
@@ -143,7 +129,7 @@ DEVICE_LOAD (msx_cart)
 		type = -1;
 	}
 	else if ((1 != sscanf (extra, "%d", &type) ) || 
-			type < 0 || type >= SLOT_SOUNDCARTRIDGE) {
+			type < 0 || type > SLOT_LAST_CARTRIDGE_TYPE) {
 		logerror("cart #%d: warning: information in crc file not valid\n", id);
 		type = -1;
 	}
@@ -289,15 +275,8 @@ void msx_vdp_interrupt(int i)
 
 static void msx_ch_reset_core (void)
 {
-	/* set interrupt stuff */
-	cpu_irq_line_vector_w(0,0,0xff);
-	/* setup PPI */
-	ppi8255_init (&msx_ppi8255_interface);
-
 	msx_memory_reset ();
 	msx_memory_map_all ();
-
-	msx1.run = 1;
 }
 
 MACHINE_INIT( msx )
@@ -328,6 +307,23 @@ static struct {
 
 static void msx_wd179x_int (int state);
 
+static WRITE_HANDLER ( msx_ppi_port_a_w );
+static WRITE_HANDLER ( msx_ppi_port_c_w );
+static READ_HANDLER (msx_ppi_port_b_r );
+
+static ppi8255_interface msx_ppi8255_interface =
+{
+	1,
+	{NULL}, 
+	{msx_ppi_port_b_r},
+	{NULL},
+	{msx_ppi_port_a_w},
+	{NULL}, 
+	{msx_ppi_port_c_w}
+};
+
+static struct tc8521_interface tc = { NULL };
+
 DRIVER_INIT( msx )
 {
 	int i,n;
@@ -335,6 +331,11 @@ DRIVER_INIT( msx )
 	wd179x_init (WD_TYPE_179X,msx_wd179x_int);
 	wd179x_set_density (DEN_FM_HI);
 	msx1.dsk_stat = 0x7f;
+
+	/* set interrupt stuff */
+	cpu_irq_line_vector_w(0,0,0xff);
+	/* setup PPI */
+	ppi8255_init (&msx_ppi8255_interface);
 
 	msx_memory_init ();
 
@@ -364,8 +365,6 @@ DRIVER_INIT( msx )
 	}
 }
 
-static struct tc8521_interface tc = { NULL };
-
 DRIVER_INIT( msx2 )
 {
 	init_msx ();
@@ -380,7 +379,6 @@ MACHINE_STOP( msx )
 		z80_set_cycle_table (z80_cycle_table[i].table, 
 						(void*)z80_cycle_table[i].old_table);
 	}
-	msx1.run = 0;
 }
 
 INTERRUPT_GEN( msx2_interrupt )
@@ -727,7 +725,7 @@ static READ_HANDLER( msx_ppi_port_b_r )
 
 void msx_memory_init (void)
 {
-	int	prim, sec, page, extent;
+	int	prim, sec, page, extent, option;
 	int size = 0;
 	const msx_slot_layout *layout= (msx_slot_layout*)NULL;
 	const msx_slot *slot;
@@ -762,78 +760,86 @@ void msx_memory_init (void)
 		return;
 	}
 
-	for (; layout->type != SLOT_END; layout++) {
+	for (; layout->entry != MSX_LAYOUT_LAST; layout++) {
 		
-		prim = layout->slot_primary;
-		sec = layout->slot_secondary;
-		page = layout->slot_page;
-		extent = layout->page_extent;
+		switch (layout->entry) {
+		case MSX_LAYOUT_SLOT_ENTRY:
+			prim = layout->slot_primary;
+			sec = layout->slot_secondary;
+			page = layout->slot_page;
+			extent = layout->page_extent;
 
-		if (layout->slot_secondary) {
-			msx1.slot_expanded[layout->slot_primary]= TRUE;
-		}
+			if (layout->slot_secondary) {
+				msx1.slot_expanded[layout->slot_primary]= TRUE;
+			}
 
-		slot = &msx_slot_list[layout->type];
-		if (slot->slot_type != layout->type) {
-			logerror ("internal error: msx_slot_list[%d].type != %d\n",
+			slot = &msx_slot_list[layout->type];
+			if (slot->slot_type != layout->type) {
+				logerror ("internal error: msx_slot_list[%d].type != %d\n",
 							slot->slot_type, slot->slot_type);
-		}
-
-		size = layout->size;
-
-		logerror ("slot %d/%d/%d-%d: type %s, size 0x%x\n",
-				prim, sec, page, page + extent - 1, slot->name, size);
-
-		st = (slot_state*)NULL;
-		if (layout->type == SLOT_CARTRIDGE1) {
-			st = msx1.cart_state[0];
-			if (!st) {
-				slot = &msx_slot_list[SLOT_SOUNDCARTRIDGE];
-				mem = (UINT8*)NULL;
-				size = 0x10000;
 			}
-		}
-		if (layout->type == SLOT_CARTRIDGE2) {
-			st = msx1.cart_state[1];
-			if (!st) {
-				slot = &msx_slot_list[SLOT_FMPAC];
-				mem = memory_region(REGION_CPU1) + 0x10000;
-				size = 0x10000;
-			}
-		}
 
-		if (!st) {
-			switch (slot->mem_type) {
+			size = layout->size;
+			option = layout->option;
 
-			case MSX_MEM_HANDLER:
-			case MSX_MEM_ROM:
-				mem = memory_region(REGION_CPU1) + layout->option;
-				break;
-			case MSX_MEM_RAM:
-				mem = NULL;
-				break;
+			logerror ("slot %d/%d/%d-%d: type %s, size 0x%x\n",
+					prim, sec, page, page + extent - 1, slot->name, size);
+
+			st = (slot_state*)NULL;
+			if (layout->type == SLOT_CARTRIDGE1) {
+				st = msx1.cart_state[0];
+				if (!st) {
+					slot = &msx_slot_list[SLOT_SOUNDCARTRIDGE];
+					mem = (UINT8*)NULL;
+					size = 0x10000;
+				}
 			}
-			st = (slot_state*)auto_malloc (sizeof (slot_state));
+			if (layout->type == SLOT_CARTRIDGE2) {
+				st = msx1.cart_state[1];
+				if (!st) {
+					slot = &msx_slot_list[SLOT_FMPAC];
+					option = 0x10000;
+					size = 0x10000;
+				}
+			}
+
 			if (!st) {
-				logerror ("fatal error: cannot malloc %d\n", 
+				switch (slot->mem_type) {
+
+				case MSX_MEM_HANDLER:
+				case MSX_MEM_ROM:
+					mem = memory_region(REGION_CPU1) + option;
+					break;
+				case MSX_MEM_RAM:
+					mem = NULL;
+					break;
+				}
+				st = (slot_state*)auto_malloc (sizeof (slot_state));
+				if (!st) {
+					logerror ("fatal error: cannot malloc %d\n", 
 								sizeof (slot_state));
-				continue;
-			}
-			memset (st, 0, sizeof (slot_state));
+					continue;
+				}
+				memset (st, 0, sizeof (slot_state));
 
-			if (slot->init (st, layout->slot_page, mem, size)) {
-				continue;
+				if (slot->init (st, layout->slot_page, mem, size)) {
+					continue;
+				}
 			}
-		}
 
-		while (extent--) {
-			if (page > 3) {
-				logerror ("internal error: msx_slot_layout wrong, "
+			while (extent--) {
+				if (page > 3) {
+					logerror ("internal error: msx_slot_layout wrong, "
 						 "page + extent > 3\n");
-				break;
+					break;
+				}
+				msx1.all_state[prim][sec][page] = st;
+				page++;
 			}
-			msx1.all_state[prim][sec][page] = st;
-			page++;
+			break;
+		case MSX_LAYOUT_KANJI_ENTRY:
+			msx1.kanji_mem = memory_region(REGION_CPU1) + layout->option;
+			break;
 		}
 	}
 }
@@ -870,22 +876,27 @@ void msx_memory_set_carts (void)
 		return;
 	}
 	
-	for (layout = msx1.layout; layout->type != SLOT_END; layout++) {
-		switch (layout->type) {
-		case SLOT_CARTRIDGE1:
-			for (page=0; page<4; page++) {
-				msx1.all_state[layout->slot_primary]
-						      [layout->slot_secondary]
-							  [page] = msx1.cart_state[0];
+	for (layout = msx1.layout; layout->entry != MSX_LAYOUT_LAST; 
+					layout++) {
+
+		if (layout->entry == MSX_LAYOUT_SLOT_ENTRY) {
+
+			switch (layout->type) {
+			case SLOT_CARTRIDGE1:
+				for (page=0; page<4; page++) {
+					msx1.all_state[layout->slot_primary]
+								  [layout->slot_secondary]
+								  [page] = msx1.cart_state[0];
+				}
+				break;
+			case SLOT_CARTRIDGE2:
+				for (page=0; page<4; page++) {
+					msx1.all_state[layout->slot_primary]
+								  [layout->slot_secondary]
+								  [page] = msx1.cart_state[1];
+				}
+				break;
 			}
-			break;
-		case SLOT_CARTRIDGE2:
-			for (page=0; page<4; page++) {
-				msx1.all_state[layout->slot_primary]
-						      [layout->slot_secondary]
-							  [page] = msx1.cart_state[1];
-			}
-			break;
 		}
 	}
 }
@@ -1027,6 +1038,37 @@ WRITE_HANDLER (msx_90in1_w)
 	}
 	if (msx1.slot[2]->slot_type == SLOT_KOREAN_90IN1) {
 		msx1.slot[2]->map (msx1.state[2], 2);
+	}
+}
+
+READ_HANDLER (msx_kanji_r)
+{
+	if (msx1.kanji_mem) {
+		int latch;
+		UINT8 ret;
+		
+		latch = msx1.kanji_latch;
+		ret = msx1.kanji_mem[latch++];
+
+		msx1.kanji_latch &= ~0x1f;
+		msx1.kanji_latch |= latch & 0x1f;
+
+		return ret;
+	}
+	else {
+		return 0xff;
+	}
+}
+
+WRITE_HANDLER (msx_kanji_w)
+{
+	if (offset) {
+		msx1.kanji_latch = 
+				(msx1.kanji_latch & 0x007E0) | ((data & 0x3f) << 11);
+	}
+	else {
+		msx1.kanji_latch = 
+				(msx1.kanji_latch & 0x1f800) | ((data & 0x3f) << 5);
 	}
 }
 

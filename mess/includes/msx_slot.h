@@ -1,8 +1,14 @@
 
+enum {
+	MSX_LAYOUT_SLOT_ENTRY,
+	MSX_LAYOUT_KANJI_ENTRY,
+	MSX_LAYOUT_LAST
+};
+
 typedef struct {
+	int entry;
 	int type;
-	int slot_primary, slot_secondary;
-	int slot_page, page_extent;
+	int slot_primary, slot_secondary, slot_page, page_extent;
 	int size, option;
 } msx_slot_layout;
 
@@ -10,26 +16,40 @@ typedef struct {
 msx_slot_layout msx_slot_layout_##msx[] = { 
 
 #define MSX_LAYOUT_SLOT(prim, sec, page, extend, type, size, option) \
-	{							\
-		SLOT_##type,			\
-		prim,					\
-		sec,					\
-		page,					\
-		extend,					\
-		size,					\
-		option					\
+	{								\
+		MSX_LAYOUT_SLOT_ENTRY,		\
+		SLOT_##type,				\
+		prim,						\
+		sec,						\
+		page,						\
+		extend,						\
+		size,						\
+		option						\
 	},
 
-#define MSX_LAYOUT_END			\
-	{							\
-		SLOT_END,				\
-		0,						\
-		0,						\
-		0,						\
-		0,						\
-		0,						\
-		0						\
-	}							\
+#define MSX_LAYOUT_KANJI(offset) \
+	{								\
+		MSX_LAYOUT_KANJI_ENTRY,		\
+		SLOT_EMPTY,					\
+		0,							\
+		0,							\
+		0,							\
+		0,							\
+		0,							\
+		offset						\
+	},
+
+#define MSX_LAYOUT_END \
+	{								\
+		MSX_LAYOUT_LAST,			\
+		SLOT_END,					\
+		0,							\
+		0,							\
+		0,							\
+		0,							\
+		0,							\
+		0							\
+	}								\
 };
 
 
@@ -53,6 +73,7 @@ enum msx_slot_type {
 	SLOT_KOREAN_80IN1,
 	SLOT_KOREAN_126IN1,
 	SLOT_KOREAN_90IN1,
+	SLOT_LAST_CARTRIDGE_TYPE = SLOT_KOREAN_90IN1,
 	SLOT_SOUNDCARTRIDGE,
 	SLOT_ROM,
 	SLOT_RAM,
