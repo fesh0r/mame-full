@@ -3,6 +3,10 @@
 
 #define MAX_PRINTER	(4)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * functions for the IODevice entry IO_PRINTER
  * 
@@ -36,5 +40,9 @@ extern int printer_output_chunk (int id, void *src, int chunks);
 	NULL,						/* input chunk */		\
 	printer_output_chunk,		/* output chunk */		\
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PRINTER_H_INCLUDED */

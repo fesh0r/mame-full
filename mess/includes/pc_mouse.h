@@ -1,4 +1,8 @@
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { TYPE_MICROSOFT_MOUSE, TYPE_MOUSE_SYSTEMS } PC_MOUSE_PROTOCOL;
 
 void pc_mouse_handshake_in(int n, int data);
@@ -32,3 +36,6 @@ void	pc_mouse_initialise(void);
 	PORT_START /* IN14 mouse Y */ \
 	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,100,0,0,0xfff,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN) \
 
+#ifdef __cplusplus
+}
+#endif

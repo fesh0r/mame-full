@@ -6,7 +6,7 @@
 	Not (currently) used, since an XT does not have IDE support in BIOS :(
 
 ***************************************************************************/
-#include "includes/pc.h"
+#include "includes/pc_ide.h"
 
 static int drv = 0; 					/* 0 master, 1 slave drive */
 static int lba[2] = {0,0};				/* 0 CHS mode, 1 LBA mode */
@@ -221,4 +221,41 @@ int pc_ide_status_r(void)
 	return data;
 }
 
+
+/*************************************************************************
+ *
+ *		ATHD
+ *		AT hard disk
+ *
+ *************************************************************************/
+WRITE_HANDLER(at_mfm_0_w)
+{
+	switch (offset) {
+	case 0: pc_ide_data_w(data);				break;
+	case 1: pc_ide_write_precomp_w(data);		break;
+	case 2: pc_ide_sector_count_w(data);		break;
+	case 3: pc_ide_sector_number_w(data);		break;
+	case 4: pc_ide_cylinder_number_l_w(data);	break;
+	case 5: pc_ide_cylinder_number_h_w(data);	break;
+	case 6: pc_ide_drive_head_w(data);			break;
+	case 7: pc_ide_command_w(data); 			break;
+	}
+}
+
+READ_HANDLER(at_mfm_0_r)
+{
+	int data=0;
+
+	switch (offset) {
+	case 0: data = pc_ide_data_r(); 			break;
+	case 1: data = pc_ide_error_r();			break;
+	case 2: data = pc_ide_sector_count_r(); 	break;
+	case 3: data = pc_ide_sector_number_r();	break;
+	case 4: data = pc_ide_cylinder_number_l_r();break;
+	case 5: data = pc_ide_cylinder_number_h_r();break;
+	case 6: data = pc_ide_drive_head_r();		break;
+	case 7: data = pc_ide_status_r();			break;
+	}
+	return data;
+}
 

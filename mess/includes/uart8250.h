@@ -1,7 +1,12 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum { TYPE8250, TYPE16550 } UART_TYPE;
 
 typedef struct
 {
-	enum { TYPE8250, TYPE16550 } type;
+	UART_TYPE type;
 	long clockin;
 	void (*interrupt)(int id, int int_state);
 
@@ -37,3 +42,6 @@ READ_HANDLER ( uart8250_3_r );
 int uart8250_r(int n, int offset);
 void uart8250_w(int n, int offset, int data);
 
+#ifdef __cplusplus
+}
+#endif

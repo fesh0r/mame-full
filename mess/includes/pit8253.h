@@ -9,8 +9,14 @@
 
 #define MAX_PIT8253 2
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum { TYPE8253, TYPE8254 } PIT8253_TYPE;
+
 typedef struct {
-    enum { TYPE8253, TYPE8254 } type;
+    PIT8253_TYPE type;
 	struct {
 		double clockin;
 		void (*irq_callback)(int state);
@@ -33,6 +39,10 @@ extern WRITE_HANDLER ( pit8253_1_gate_w );
 extern int pit8253_get_frequency(int which, int timer);
 extern int pit8253_get_output(int which, int timer);
 extern void pit8253_set_clockin(int which, int timer, double new_clockin);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* PIT8253_H */
 

@@ -1,5 +1,9 @@
 #include "driver.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* if not 1, DACK and TC inputs to FDC are disabled, and DRQ and IRQ are held
 at high impedance i.e they are not affective */ 
 #define PC_FDC_FLAGS_DOR_DMA_ENABLED (1<<3)
@@ -56,3 +60,8 @@ void	pc_fdc_set_tc_state(int state);
 int		pc_fdc_dack_r(void);
 void	pc_fdc_dack_w(int);
 void	pc_fdc_exit(void);
+
+#ifdef __cplusplus
+}
+#endif
+

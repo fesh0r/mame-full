@@ -13,7 +13,6 @@
 #define VERBOSE_PIO 0		/* PIO (keyboard controller) */
 
 #define VERBOSE_FDC 0		/* FDC (floppy disk controller) */
-#define VERBOSE_HDC 0		/* HDC (hard disk controller) */
 
 #define VERBOSE_LPT 0		/* LPT (line printer) */
 #define VERBOSE_JOY 0		/* JOY (joystick port) */
@@ -47,12 +46,6 @@ extern UINT8 pc_port[0x400];
 #define FDC_LOG(n,m,a)
 #endif
 
-#if VERBOSE_HDC
-#define HDC_LOG(n,m,a) LOG(VERBOSE_HDC,n,m,a)
-#else
-#define HDC_LOG(n,m,a)
-#endif
-
 #if VERBOSE_JOY
 #define JOY_LOG(n,m,a) LOG(VERBOSE_JOY,n,m,a)
 #else
@@ -65,44 +58,9 @@ extern UINT8 pc_port[0x400];
 #define SND_LOG(n,m,a)
 #endif
 
-/* from machine/pc.c */
-extern int	pc_floppy_init(int id);
-extern void pc_floppy_exit(int id);
-extern int	pc_harddisk_init(int id);
-extern void pc_harddisk_exit(int id);
-
-typedef enum { 
-	SETUP_END,
-	SETUP_HEADER,
-	SETUP_COMMENT,
-	SETUP_MEMORY,
-	SETUP_GRAPHIC0,
-	SETUP_KEYB,
-	SETUP_FDC0, 
-	SETUP_FDC0D0, SETUP_FDC0D1, SETUP_FDC0D2, SETUP_FDC0D3,
-	SETUP_HDC0, SETUP_HDC0D0, SETUP_HDC0D1,
-	SETUP_RTC,
-	SETUP_SER0, SETUP_SER0CHIP, SETUP_SER0DEV, 
-	SETUP_SER1, SETUP_SER1CHIP, SETUP_SER1DEV, 
-	SETUP_SER2, SETUP_SER2CHIP, SETUP_SER2DEV, 
-	SETUP_SER3, SETUP_SER3CHIP, SETUP_SER3DEV,
-	SETUP_SERIAL_MOUSE,
-	SETUP_PAR0, SETUP_PAR0TYPE, SETUP_PAR0DEV, 
-	SETUP_PAR1, SETUP_PAR1TYPE, SETUP_PAR1DEV, 
-	SETUP_PAR2, SETUP_PAR2TYPE, SETUP_PAR2DEV,
-	SETUP_GAME0, SETUP_GAME0C0, SETUP_GAME0C1,
-	SETUP_MPU0, SETUP_MPU0D0,
-	SETUP_FM, SETUP_FM_TYPE, SETUP_FM_PORT,
-	SETUP_CMS, SETUP_CMS_TEXT,
-	SETUP_PCJR_SOUND,
-	SETUP_AMSTRAD_JOY, SETUP_AMSTRAD_MOUSE
-} PC_ID;
-typedef struct {
-	PC_ID id, def, mask; 
-} PC_SETUP;
-
-extern PC_SETUP pc_setup_at[], pc_setup_t1000hx[];
-void pc_init_setup(PC_SETUP *setup);
+struct _PC_SETUP;
+extern struct _PC_SETUP pc_setup_at[], pc_setup_t1000hx[];
+void pc_init_setup(struct _PC_SETUP *setup);
 
 
 extern void init_pccga(void);
@@ -142,19 +100,9 @@ extern READ_HANDLER ( pc_COM4_r );
 extern WRITE_HANDLER ( pc_JOY_w );
 extern READ_HANDLER ( pc_JOY_r );
 
-extern WRITE_HANDLER ( pc_FDC_w );
-extern READ_HANDLER ( pc_FDC_r );
-
-extern WRITE_HANDLER ( pc_HDC1_w );
-extern READ_HANDLER (	pc_HDC1_r );
-extern WRITE_HANDLER ( pc_HDC2_w );
-extern READ_HANDLER ( pc_HDC2_r );
-
 extern int  pc_cga_frame_interrupt(void);
 extern int  pc_mda_frame_interrupt(void);
 extern int  pc_vga_frame_interrupt(void);
-
-/* from vidhrdw/pc.c */
 
 /* from sndhrdw/pc.c */
 extern int  pc_sh_init(const char *name);
@@ -167,51 +115,7 @@ extern void pc_sh_update(int param, INT16 *buff, int length);
 extern void pc_sh_speaker(int mode);
 
 /* from machine/pc_fdc.c */
-extern void pc_fdc_command_w(int data);
-extern void pc_fdc_data_rate_w(int data);
-extern void pc_fdc_DOR_w(int data);
-
-extern int	pc_fdc_data_r(void);
-extern int	pc_fdc_status_r(void);
-extern int	pc_fdc_DIR_r(void);
-
-extern void *pc_fdc_file[2];
-extern UINT8 pc_fdc_spt[2];
-extern UINT8 pc_fdc_heads[2];
-extern UINT8 pc_fdc_scl[2];
-
-#if 0
-/* from machine/pc_ide.c */
-extern void pc_ide_data_w(int data);
-extern void pc_ide_write_precomp_w(int data);
-extern void pc_ide_sector_count_w(int data);
-extern void pc_ide_sector_number_w(int data);
-extern void pc_ide_cylinder_number_l_w(int data);
-extern void pc_ide_cylinder_number_h_w(int data);
-extern void pc_ide_drive_head_w(int data);
-extern void pc_ide_command_w(int data);
-
-extern int	pc_ide_data_r(void);
-extern int	pc_ide_error_r(void);
-extern int	pc_ide_sector_count_r(void);
-extern int	pc_ide_sector_number_r(void);
-extern int	pc_ide_cylinder_number_l_r(void);
-extern int	pc_ide_cylinder_number_h_r(void);
-extern int	pc_ide_drive_head_r(void);
-extern int	pc_ide_status_r(void);
-#endif
-
-/* from machine/pc_hdc.c */
-extern void *pc_hdc_file[4];
-
-extern void pc_hdc_data_w(int n, int data);
-extern void pc_hdc_reset_w(int n, int data);
-extern void pc_hdc_select_w(int n, int data);
-extern void pc_hdc_control_w(int n, int data);
-
-extern int	pc_hdc_data_r(int n);
-extern int	pc_hdc_status_r(int n);
-extern int	pc_hdc_dipswitch_r(int n);
+void pc_fdc_setup(void);
 
 /***************************************************************************
 

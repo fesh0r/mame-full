@@ -4,6 +4,10 @@
 #include "driver.h"
 #include "includes/centroni.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { 
 	LPT_UNIDIRECTIONAL
 //	, LPT_BIDIRECTIONAL
@@ -31,6 +35,10 @@ WRITE_HANDLER ( pc_parallelport2_w );
 READ_HANDLER ( pc_parallelport0_r );
 READ_HANDLER ( pc_parallelport1_r );
 READ_HANDLER ( pc_parallelport2_r );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -31,6 +31,8 @@
 #include "includes/pc_mda.h"
 #include "includes/pc_t1t.h"
 
+#include "includes/pc_hdc.h"
+#include "includes/pc_ide.h"
 #include "includes/pc_fdc_h.h"
 #include "includes/pc_flopp.h"
 #include "includes/pckeybrd.h"

@@ -180,28 +180,28 @@ static struct {
 
 static int ega_get_clock(void)
 {
-	int clock=0;
+	int clck=0;
 	switch(vga.miscellaneous_output&0xc) {
-	case 0: clock=14000000;break;
-	case 4: clock=16000000;break;
+	case 0: clck=14000000;break;
+	case 4: clck=16000000;break;
 	/* case 8: external */
 	/* case 0xc: reserved */
 	}
-	if (vga.sequencer.data[1]&8) clock/=2;
-	return clock;
+	if (vga.sequencer.data[1]&8) clck/=2;
+	return clck;
 }
 
 static int vga_get_clock(void)
 {
-	int clock=0;
+	int clck=0;
 	switch(vga.miscellaneous_output&0xc) {
-	case 0: clock=25000000;break;
-	case 4: clock=28000000;break;
+	case 0: clck=25000000;break;
+	case 4: clck=28000000;break;
 	/* case 8: external */
 	/* case 0xc: reserved */
 	}
-	if (vga.sequencer.data[1]&8) clock/=2;
-	return clock;
+	if (vga.sequencer.data[1]&8) clck/=2;
+	return clck;
 }
 
 static int ega_get_crtc_columns(void) /* in clocks! */
@@ -824,7 +824,7 @@ void vga_init(mem_read_handler read_dipswitch)
 		}
 	}
 	vga.read_dipswitch=read_dipswitch;
-	vga.memory=malloc(0x40000);
+	vga.memory=(UINT8*)malloc(0x40000);
 	vga_reset();
 }
 

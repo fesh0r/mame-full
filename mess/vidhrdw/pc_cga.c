@@ -1057,7 +1057,7 @@ extern WRITE_HANDLER ( pc1512_videoram_w )
 extern int	pc1512_vh_start(void)
 {
 	type=TYPE_PC1512;
-	videoram=malloc(0x10000);
+	videoram=(UINT8*)malloc(0x10000);
 	if (videoram==0) return 1;
 	videoram_size=0x4000; //! used in cga this way, size of plain memory in 1 bank
 	cpu_setbank(1,videoram+videoram_offset[0]);

@@ -52,8 +52,6 @@ UINT8 pc_port[0x400];
 
 #define FDC_DMA 2
 
-void pc_fdc_setup(void);
-
 /* called when a interrupt is set/cleared from com hardware */
 static void pc_com_interrupt(int nr, int state)
 {
@@ -281,6 +279,38 @@ void pc_vga_init(void)
 #define SETUP_FDC_DSHD 5
 #define SETUP_FDC_3DSHD 6
 #define SETUP_FDC_3DSED 7
+
+typedef enum { 
+	SETUP_END,
+	SETUP_HEADER,
+	SETUP_COMMENT,
+	SETUP_MEMORY,
+	SETUP_GRAPHIC0,
+	SETUP_KEYB,
+	SETUP_FDC0, 
+	SETUP_FDC0D0, SETUP_FDC0D1, SETUP_FDC0D2, SETUP_FDC0D3,
+	SETUP_HDC0, SETUP_HDC0D0, SETUP_HDC0D1,
+	SETUP_RTC,
+	SETUP_SER0, SETUP_SER0CHIP, SETUP_SER0DEV, 
+	SETUP_SER1, SETUP_SER1CHIP, SETUP_SER1DEV, 
+	SETUP_SER2, SETUP_SER2CHIP, SETUP_SER2DEV, 
+	SETUP_SER3, SETUP_SER3CHIP, SETUP_SER3DEV,
+	SETUP_SERIAL_MOUSE,
+	SETUP_PAR0, SETUP_PAR0TYPE, SETUP_PAR0DEV, 
+	SETUP_PAR1, SETUP_PAR1TYPE, SETUP_PAR1DEV, 
+	SETUP_PAR2, SETUP_PAR2TYPE, SETUP_PAR2DEV,
+	SETUP_GAME0, SETUP_GAME0C0, SETUP_GAME0C1,
+	SETUP_MPU0, SETUP_MPU0D0,
+	SETUP_FM, SETUP_FM_TYPE, SETUP_FM_PORT,
+	SETUP_CMS, SETUP_CMS_TEXT,
+	SETUP_PCJR_SOUND,
+	SETUP_AMSTRAD_JOY, SETUP_AMSTRAD_MOUSE
+} PC_ID;
+typedef struct _PC_SETUP {
+	PC_ID id;
+	int def, mask; 
+} PC_SETUP;
+
 
 PC_SETUP pc_setup_at[]= {
 	{ SETUP_HEADER },
@@ -800,24 +830,6 @@ void pc_vga_init_machine(void)
 	pc_keyboard_init();
 }
 
-/*************************************
- *
- *		Port handlers.
- *
- *************************************/
-int pc_harddisk_init(int id)
-{
-	pc_hdc_file[id] = image_fopen(IO_HARDDISK, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
-	return INIT_OK;
-}
-
-void pc_harddisk_exit(int id)
-{
-	if( pc_hdc_file[id] )
-		osd_fclose(pc_hdc_file[id]);
-    pc_hdc_file[id] = NULL;
-}
-
 /***********************************/
 /* PC interface to PC COM hardware */
 /* Done this way because PCW16 also has PC-com hardware but it
@@ -1027,7 +1039,7 @@ READ_HANDLER ( pc_JOY_r )
 	}
 	else
 	{
-		delta = 256 * 1000 * (new_time - JOY_time);
+		delta = (int)( 256 * 1000 * (new_time - JOY_time) );
 		if (input_port_16_r(0) < delta) data &= ~0x01;
 		if (input_port_17_r(0) < delta) data &= ~0x02;
 		if (input_port_18_r(0) < delta) data &= ~0x04;
@@ -1040,45 +1052,6 @@ READ_HANDLER ( pc_JOY_r )
 }
 #endif
 
-
-
-/*************************************************************************
- *
- *		HDC
- *		hard disk controller
- *
- *************************************************************************/
-void pc_HDC_w(int chip, int offset, int data)
-{
-	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
-		return;
-	switch( offset )
-	{
-		case 0: pc_hdc_data_w(chip,data);	 break;
-		case 1: pc_hdc_reset_w(chip,data);	 break;
-		case 2: pc_hdc_select_w(chip,data);  break;
-		case 3: pc_hdc_control_w(chip,data); break;
-	}
-}
-WRITE_HANDLER ( pc_HDC1_w ) { pc_HDC_w(0, offset, data); }
-WRITE_HANDLER ( pc_HDC2_w ) { pc_HDC_w(1, offset, data); }
-
-int pc_HDC_r(int chip, int offset)
-{
-	int data = 0xff;
-	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
-		return data;
-	switch( offset )
-	{
-		case 0: data = pc_hdc_data_r(chip); 	 break;
-		case 1: data = pc_hdc_status_r(chip);	 break;
-		case 2: data = pc_hdc_dipswitch_r(chip); break;
-		case 3: break;
-	}
-	return data;
-}
-READ_HANDLER ( pc_HDC1_r ) { return pc_HDC_r(0, offset); }
-READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
 
 /*************************************************************************
  *

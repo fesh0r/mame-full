@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum
 {
@@ -147,5 +150,9 @@ void at_keyboard_set_type(AT_KEYBOARD_TYPE type);
 	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Left Win",     CODE_NONE,          IP_JOY_NONE ) /* Left Win                    7d  fd */
 	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Right Win",    CODE_NONE,          IP_JOY_NONE ) /* Right Win                   7e  fe */
 	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Menu",         CODE_NONE,          IP_JOY_NONE ) /* Menu                        7f  ff */
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 

@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern WRITE_HANDLER ( dma8237_0_w );
 extern WRITE_HANDLER ( dma8237_1_w );
 
@@ -61,3 +65,7 @@ extern DMA8237 dma8237[2];
 #define pc_DMA_compressed_timing dma8237->compressed_timing
 #define pc_DMA_enable_controller dma8237->enable_controller
 #define pc_DMA_channel dma8237->channel
+
+#ifdef __cplusplus
+}
+#endif

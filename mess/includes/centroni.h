@@ -9,6 +9,10 @@
 
 #include "driver.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { 
 	PRINTER_CENTRONICS, 
 	PRINTER_IBM // select line not important
@@ -47,5 +51,10 @@ void centronics_write_handshake(int nr, int data, int mask);
 int centronics_read_handshake(int nr);
 
 extern CENTRONICS_DEVICE CENTRONICS_PRINTER_DEVICE;
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif
