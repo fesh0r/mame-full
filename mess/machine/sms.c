@@ -229,14 +229,14 @@ WRITE_HANDLER(sms_cartram_w) {
 	}
 }
 
-WRITE_HANDLER(sms_ram_w) {
+/*WRITE_HANDLER(sms_ram_w) {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	RAM[0xC000 + (offset & 0x1FFF)] = data;
 	if ((offset & 0x1FFF) <= 0x1FFB) {
 		RAM[0xE000 + (offset & 0x1FFF)] = data;
 	}
-}
+}*/
 
 WRITE_HANDLER(gg_sio_w) {
 	logerror("*** write %02X to SIO register #%d\n", data, offset);
