@@ -205,6 +205,8 @@ void init_pc1512(void)
 
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	mc146818_init(MC146818_IGNORE_CENTURY);
+	mc146818_load();
+	mc146818_set_time();
 }
 
 extern void init_pc1640(void)
@@ -213,6 +215,8 @@ extern void init_pc1640(void)
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 
 	mc146818_init(MC146818_IGNORE_CENTURY);
+	mc146818_load();
+	mc146818_set_time();
 
 	vga_init(input_port_0_r);
 }
@@ -249,13 +253,13 @@ void init_pc_vga(void)
 
 extern void pc1512_close_machine(void)
 {
-	mc146818_close();
+	mc146818_save();
 }
 
 extern void pc1640_close_machine(void)
 {
 	vga_reset();
-	mc146818_close();
+	mc146818_save();
 }
 
 void pc_mda_init_machine(void)

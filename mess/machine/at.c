@@ -32,6 +32,8 @@ void init_at(void)
 {
 	init_pc();
 	mc146818_init(MC146818_STANDARD);
+	mc146818_load();
+	mc146818_set_time();
 	/* initialise keyboard */
 	at_keyboard_init();
 	at_keyboard_set_scan_code_set(1);
@@ -65,6 +67,8 @@ void init_at_vga(void)
 
 	init_pc_common();
 	mc146818_init(MC146818_STANDARD);
+	mc146818_load();
+	mc146818_set_time();
 	/* initialise keyboard */
 	at_keyboard_init();
 	at_keyboard_set_scan_code_set(1);
@@ -76,7 +80,7 @@ void init_at_vga(void)
 
 void at_driver_close(void)
 {
-	mc146818_close();
+	mc146818_save();
 }
 
 void at_machine_init(void)
