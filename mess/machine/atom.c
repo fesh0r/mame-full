@@ -22,9 +22,9 @@
 #include "machine/6522via.h"
 
 /* printer data written */
-static char printer_data;
+static char atom_printer_data = 0x07f;
 /* 2.4khz timer state */
-static void *atom_timer;
+static void *atom_timer = NULL;
 
 /* I am not sure if this is correct, the atom appears to have a 2.4Khz timer used for reading tapes?? */
 static int	timer_state = 0;
@@ -46,38 +46,58 @@ static void atom_via_irq_func(int state)
 /* printer status */
 READ_HANDLER(atom_via_in_a_func)
 {
-	if (device_status(IO_PRINTER,0,0))
+	unsigned char data;
+
+	data = atom_printer_data;
+
+	if (!device_status(IO_PRINTER,0,0))
 	{
-		/* online */
-		return 0x07f;
+		/* offline */
+		data |=0x080;
 	}
 
-
-	return 0x0ff;
+	return data;
 }
 
 /* printer data */
 WRITE_HANDLER(atom_via_out_a_func)
 {
+	/* data is written to port, this causes a pulse on ca2 (printer /strobe input),
+	and data is written */
 	/* atom has a 7-bit printer port */
-	printer_data = data & 0x07f;
+	atom_printer_data = data & 0x07f;
+}
 
-	/* data out */
+static unsigned char previous_ca2_data = 0;
 
-	/* pcr of 6522 used to control printer */
+/* one of these is pulsed! */
+WRITE_HANDLER(atom_via_out_ca2_func)
+{
+	/* change in state of ca2 output? */
+	if (((previous_ca2_data^data)&0x01)!=0)
+	{
+		/* only look for one transition state */
+		if (data & 0x01)
+		{
+			/* output data to printer */
+			device_output(IO_PRINTER, 0, atom_printer_data);
+		}
+	}
+
+	previous_ca2_data = data;
 }
 
 struct via6522_interface atom_6522_interface=
 {
-	atom_via_in_a_func,
+	atom_via_in_a_func,		/* printer status */
 	NULL,
 	NULL,			
 	NULL,
 	NULL,
 	NULL,
-	atom_via_out_a_func,
+	atom_via_out_a_func,	/* printer data */
 	NULL,
-	NULL,
+	atom_via_out_ca2_func,	/* printer strobe */
 	NULL,
 	atom_via_irq_func,
 	NULL,
@@ -119,7 +139,7 @@ static	struct
 
 
 
-static int previous_i8271_int_state;
+static int previous_i8271_int_state = 0;
 
 static void atom_8271_interrupt_callback(int state)
 {
@@ -175,7 +195,6 @@ void atom_init_machine(void)
 	via_set_clock(0,1000000);
 	via_reset();
 
-	previous_i8271_int_state = 0;
 	timer_state = 0;
 	atom_timer = timer_pulse(TIME_IN_HZ(2400*2), 0, atom_timer_callback);
 }
@@ -188,64 +207,122 @@ void atom_stop_machine(void)
 	i8271_stop();
 }
 
-/* start 2900. exec C2B2.
-   start xxxx. exec C2B2.
-   start xxxx. exec xxxx.
-*/
 
-int atom_init_atm (int id)
+
+/* load image */
+int atom_load(int type, int id, unsigned char **ptr)
 {
-	int		loop;
-	void	*file;
-	UINT8	*mem = memory_region (REGION_CPU1);
+	void *file;
 
-	struct
-	{
-		UINT8	atm_name[16];
-		UINT16	atm_start;
-		UINT16	atm_exec;
-		UINT16	atm_size;
-	} atm;
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 
-	return (1);
-
-	/* This code not endian safe */
-
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (file)
 	{
-		if (osd_fread(file, &atm, sizeof (atm)) != sizeof (atm))
-		{
-			logerror("atom: Could not read atm header\n");
-			osd_fclose(file);
-			return (1);
-		}
-		else
-		{
-			*mem += atm.atm_start;
-			if (osd_fread(file, mem, atm.atm_size) != atm.atm_size)
-			{
-				logerror("atom: Could not read atm data\n");
-				osd_fclose(file);
-				return (1);
-			}
-			else
-			{
+		int datasize;
+		unsigned char *data;
 
-				{
-				    logerror("atom: Atm: %s, %04X, %04X, %04X\n", atm.atm_name, atm.atm_start, atm.atm_exec, atm.atm_size);
-					for (loop = 0; loop < 16; loop++)
-					{
-						logerror("%02X ", mem[loop]);
-					}
-					logerror("\n");
-				}
+		/* get file size */
+		datasize = osd_fsize(file);
+
+		if (datasize!=0)
+		{
+			/* malloc memory for this data */
+			data = malloc(datasize);
+
+			if (data!=NULL)
+			{
+				/* read whole file */
+				osd_fread(file, data, datasize);
+
+				*ptr = data;
+
+				/* close file */
 				osd_fclose(file);
-				return (0);
+
+				logerror("File loaded!\r\n");
+
+				/* ok! */
+				return 1;
 			}
+			osd_fclose(file);
+
 		}
 	}
-	return (1);
+
+	return 0;
+}
+
+
+struct atm
+{
+	UINT8	atm_name[16];
+	UINT8	atm_start_high;
+	UINT8	atm_start_low;
+	UINT8	atm_exec_high;
+	UINT8	atm_exec_low;
+	UINT8	atm_size_high;
+	UINT8	atm_size_low;
+};
+
+/* this only works if loaded using file-manager. This should work
+for binary files, but will not work with basic files. This also does not support
+.tap files which contain multiple .atm files joined together! */
+int atom_init_atm (int id)
+{
+	unsigned char *quickload_data;
+
+	if (atom_load(IO_QUICKLOAD, id, &quickload_data))
+	{
+		if (quickload_data!=NULL)
+		{
+			int i;
+			unsigned char *data;
+			struct atm *atm_header = (struct atm *)quickload_data;
+			unsigned long addr;
+			unsigned long exec;
+			unsigned long size;
+
+			/* calculate data address */
+			data = (unsigned char *)((unsigned long)quickload_data + sizeof(struct atm));
+			
+			/* get start address */
+			addr = (
+					(atm_header->atm_start_low & 0x0ff) | 
+					((atm_header->atm_start_high & 0x0ff)<<8)
+					);
+
+			/* get size */
+			size = (
+					(atm_header->atm_size_low & 0x0ff) | 
+					((atm_header->atm_size_high & 0x0ff)<<8)
+					);
+
+			/* get execute address */
+			exec = (
+				(atm_header->atm_exec_low & 0x0ff)	| 
+				((atm_header->atm_exec_high & 0x0ff)<<8)
+				);
+
+			/* copy data into memory */
+			for (i=size-1; i>=0; i--)
+			{
+				cpu_writemem16(addr, data[0]);
+				addr++;
+				data++;
+			}
+
+
+			/* set new pc address */
+			cpu_set_pc(exec);
+
+			/* free the data */
+			free(quickload_data);
+
+			return INIT_OK;
+		}
+	}
+
+	return INIT_FAILED;
 }
 
 
