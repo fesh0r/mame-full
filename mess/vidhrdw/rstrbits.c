@@ -807,7 +807,11 @@ int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct
 		 */
 		firstrow = (myclip.ybegin - basey) / scaley;
 		lastrow = (myclip.yend - basey) / scaley;
-		totalcoverage = ((myclip.yend - myclip.ybegin + 1) / scaley) * mode->bytesperrow;
+
+		totalcoverage = (
+			((myclip.yend + 1 - basey) / scaley) -
+			((myclip.ybegin - basey) / scaley)
+			) * mode->bytesperrow;
 
 		/* Render the content */
 		((mode->flags & RASTERBITS_FLAG_TEXT) ? raster_text : raster_graphics)
