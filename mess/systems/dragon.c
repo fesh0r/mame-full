@@ -437,6 +437,10 @@ INPUT_PORTS_START( coco3 )
 	PORT_DIPNAME( 0x08, 0x00, "Video type" )
 	PORT_DIPSETTING(	0x00, "Composite" )
 	PORT_DIPSETTING(	0x08, "RGB" )
+	PORT_DIPNAME( 0x30, 0x00, "Joystick Type" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x10, "Hi-Res Interface" )
+	PORT_DIPSETTING(	0x30, "Hi-Res Interface (CoCoMax 3 Style)" )
 INPUT_PORTS_END
 
 static struct DACinterface d_dac_interface =
