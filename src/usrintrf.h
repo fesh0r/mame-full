@@ -54,11 +54,21 @@ void switch_debugger_orientation(struct mame_bitmap *bitmap);
 void switch_true_orientation(struct mame_bitmap *bitmap);
 
 #ifdef __GNUC__
+#ifndef printf
 void CLIB_DECL usrintf_showmessage(const char *text,...)
       __attribute__ ((format (printf, 1, 2)));
 
 void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
       __attribute__ ((format (printf, 2, 3)));
+#else
+#undef printf
+void CLIB_DECL usrintf_showmessage(const char *text,...)
+      __attribute__ ((format (printf, 1, 2)));
+
+void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
+      __attribute__ ((format (printf, 2, 3)));
+#define printf printf_substitute
+#endif
 #else
 void CLIB_DECL usrintf_showmessage(const char *text,...);
 void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...);

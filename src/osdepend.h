@@ -382,8 +382,15 @@ int osd_net_game_exit(void);
 #endif
 
 #ifdef __GNUC__
+#ifndef printf
 void CLIB_DECL logerror(const char *text,...)
       __attribute__ ((format (printf, 1, 2)));
+#else
+#undef printf
+void CLIB_DECL logerror(const char *text,...)
+      __attribute__ ((format (printf, 1, 2)));
+#define printf printf_substitute
+#endif
 #else
 void CLIB_DECL logerror(const char *text,...);
 #endif
