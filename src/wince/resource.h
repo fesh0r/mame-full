@@ -5,13 +5,12 @@
 #define IDS_APP_TITLE                   1
 #define IDS_HELLO                       2
 #define IDC_MAMECE                      3
-#define IDI_MAMECE                      101
-#define IDM_MENU                        102
-#define IDM_RUNMENU                     103
-#define IDS_HELP                        104
-#define IDB_BITMAP1                     104
-#define IDB_BITMAP2                     105
-#define IDS_COMMAND1                    301
+#define IDI_MAMECE                      1101
+#define IDM_MENU                        1102
+#define IDS_HELP                        1103
+#define IDB_BITMAP1                     1104
+#define IDB_BITMAP2                     1105
+#define IDS_COMMAND1                    1301
 #define IDD_ABOUTBOX                    10000
 #define IDD_INSTRUCTIONS                10001
 #define IDD_FAQ                         10002
@@ -48,9 +47,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        138
+#define _APS_NEXT_RESOURCE_VALUE        1138
 #define _APS_NEXT_COMMAND_VALUE         40032
 #define _APS_NEXT_CONTROL_VALUE         1001
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_SYMED_VALUE           1101
 #endif
 #endif

@@ -70,15 +70,6 @@ BEGIN
     IDS_CAP_OPTIONS, 0, 1,
 END
 
-IDM_RUNMENU SHMENUBAR MOVEABLE PURE 
-BEGIN
-    IDM_RUNMENU, 2,
-    I_IMAGENONE, IDM_MAIN_COMMAND1, TBSTATE_ENABLED, 
-    TBSTYLE_DROPDOWN | TBSTYLE_AUTOSIZE, IDS_CAP_FILE, 0, 0,
-    I_IMAGENONE, ID_OPTIONS, TBSTATE_ENABLED, TBSTYLE_DROPDOWN, 
-    IDS_CAP_OPTIONS, 0, 1,
-END
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menubar
@@ -118,24 +109,6 @@ BEGIN
         MENUITEM "",                            ID_MENUITEM40020
         MENUITEM "Show Clones",                 ID_OPTIONS_SHOWCLONES
         MENUITEM "Show All Games",              ID_OPTIONS_SHOWALLGAMES
-    END
-END
-
-IDM_RUNMENU MENU DISCARDABLE 
-BEGIN
-    POPUP "File"
-    BEGIN
-		MENUITEM "Pause",						ID_FILE_PAUSE
-        MENUITEM "E&xit",                       IDOK
-    END
-    POPUP "Options"
-    BEGIN
-        MENUITEM "Show Frame Rate",             ID_OPTIONS_SHOWFRAMERATE
-#ifdef MAME_DEBUG
-        MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
-#endif
-        MENUITEM "",                            ID_MENUITEM40022
-        MENUITEM "Enable Throttling",           ID_OPTIONS_ENABLETHROTTLE
     END
 END
 

@@ -104,7 +104,7 @@ static int scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes, 
 				else if (code < NUM_CODES)
 				{
 					memcpy(codes[code].port, ports, sizeof(ports[0]) * keys);
-					memcpy(codes[code].ipt, ipts, sizeof(ipts[0]) * keys);
+					memcpy((void *) codes[code].ipt, ipts, sizeof(ipts[0]) * keys);
 					codes[code].port[keys] = port;
 					codes[code].ipt[keys] = ipt_key;
 #if LOG_INPUTX
@@ -169,6 +169,133 @@ static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes
 
 /***************************************************************************
 
+	Alternative key translations
+
+***************************************************************************/
+
+static const struct
+{
+	unicode_char_t ch;
+	const char *str;
+} alternate_charmap[] =
+{
+	{ 0x00a0,	" " },		/* non breaking space */
+	{ 0x00a1,	"!" },		/* inverted exclaimation mark */
+	{ 0x00a6,	"|" },		/* broken bar */
+	{ 0x00a9,	"(c)" },	/* copyright sign */
+	{ 0x00ab,	"<<" },		/* left pointing double angle */
+	{ 0x00ae,	"(r)" },	/* registered sign */
+	{ 0x00bb,	">>" },		/* right pointing double angle */
+	{ 0x00bc,	"1/4" },	/* vulgar fraction one quarter */
+	{ 0x00bd,	"1/2" },	/* vulgar fraction one half */
+	{ 0x00be,	"3/4" },	/* vulgar fraction three quarters */
+	{ 0x00bf,	"?" },		/* inverted question mark */
+	{ 0x00c0,	"A" },		/* 'A' grave */
+	{ 0x00c1,	"A" },		/* 'A' acute */
+	{ 0x00c2,	"A" },		/* 'A' circumflex */
+	{ 0x00c3,	"A" },		/* 'A' tilde */
+	{ 0x00c4,	"A" },		/* 'A' diaeresis */
+	{ 0x00c5,	"A" },		/* 'A' ring above */
+	{ 0x00c6,	"AE" },		/* 'AE' ligature */
+	{ 0x00c7,	"C" },		/* 'C' cedilla */
+	{ 0x00c8,	"E" },		/* 'E' grave */
+	{ 0x00c9,	"E" },		/* 'E' acute */
+	{ 0x00ca,	"E" },		/* 'E' circumflex */
+	{ 0x00cb,	"E" },		/* 'E' diaeresis */
+	{ 0x00cc,	"I" },		/* 'I' grave */
+	{ 0x00cd,	"I" },		/* 'I' acute */
+	{ 0x00ce,	"I" },		/* 'I' circumflex */
+	{ 0x00cf,	"I" },		/* 'I' diaeresis */
+	{ 0x00d0,	"D" },		/* 'ETH' */
+	{ 0x00d1,	"N" },		/* 'N' tilde */
+	{ 0x00d2,	"O" },		/* 'O' grave */
+	{ 0x00d3,	"O" },		/* 'O' acute */
+	{ 0x00d4,	"O" },		/* 'O' circumflex */
+	{ 0x00d5,	"O" },		/* 'O' tilde */
+	{ 0x00d6,	"O" },		/* 'O' diaeresis */
+	{ 0x00d7,	"X" },		/* multiplication sign */
+	{ 0x00d8,	"O" },		/* 'O' stroke */
+	{ 0x00d9,	"U" },		/* 'U' grave */
+	{ 0x00da,	"U" },		/* 'U' acute */
+	{ 0x00db,	"U" },		/* 'U' circumflex */
+	{ 0x00dc,	"U" },		/* 'U' diaeresis */
+	{ 0x00dd,	"Y" },		/* 'Y' acute */
+	{ 0x00df,	"SS" },		/* sharp S */
+	{ 0x00e0,	"a" },		/* 'a' grave */
+	{ 0x00e1,	"a" },		/* 'a' acute */
+	{ 0x00e2,	"a" },		/* 'a' circumflex */
+	{ 0x00e3,	"a" },		/* 'a' tilde */
+	{ 0x00e4,	"a" },		/* 'a' diaeresis */
+	{ 0x00e5,	"a" },		/* 'a' ring above */
+	{ 0x00e6,	"ae" },		/* 'ae' ligature */
+	{ 0x00e7,	"c" },		/* 'c' cedilla */
+	{ 0x00e8,	"e" },		/* 'e' grave */
+	{ 0x00e9,	"e" },		/* 'e' acute */
+	{ 0x00ea,	"e" },		/* 'e' circumflex */
+	{ 0x00eb,	"e" },		/* 'e' diaeresis */
+	{ 0x00ec,	"i" },		/* 'i' grave */
+	{ 0x00ed,	"i" },		/* 'i' acute */
+	{ 0x00ee,	"i" },		/* 'i' circumflex */
+	{ 0x00ef,	"i" },		/* 'i' diaeresis */
+	{ 0x00f0,	"d" },		/* 'eth' */
+	{ 0x00f1,	"n" },		/* 'n' tilde */
+	{ 0x00f2,	"o" },		/* 'o' grave */
+	{ 0x00f3,	"o" },		/* 'o' acute */
+	{ 0x00f4,	"o" },		/* 'o' circumflex */
+	{ 0x00f5,	"o" },		/* 'o' tilde */
+	{ 0x00f6,	"o" },		/* 'o' diaeresis */
+	{ 0x00f8,	"o" },		/* 'o' stroke */
+	{ 0x00f9,	"u" },		/* 'u' grave */
+	{ 0x00fa,	"u" },		/* 'u' acute */
+	{ 0x00fb,	"u" },		/* 'u' circumflex */
+	{ 0x00fc,	"u" },		/* 'u' diaeresis */
+	{ 0x00fd,	"y" },		/* 'y' acute */
+	{ 0x00ff,	"y" },		/* 'y' diaeresis */
+	{ 0x2010,	"-" },		/* hyphen */
+	{ 0x2011,	"-" },		/* non-breaking hyphen */
+	{ 0x2012,	"-" },		/* figure dash */
+	{ 0x2013,	"-" },		/* en dash */
+	{ 0x2014,	"-" },		/* em dash */
+	{ 0x2015,	"-" },		/* horizontal dash */
+	{ 0x2018,	"\'" },		/* left single quotation mark */
+	{ 0x2019,	"\'" },		/* right single quotation mark */
+	{ 0x201a,	"\'" },		/* single low quotation mark */
+	{ 0x201b,	"\'" },		/* single high reversed quotation mark */
+	{ 0x201c,	"\"" },		/* left double quotation mark */
+	{ 0x201d,	"\"" },		/* right double quotation mark */
+	{ 0x201e,	"\"" },		/* double low quotation mark */
+	{ 0x201f,	"\"" },		/* double high reversed quotation mark */
+	{ 0x2024,	"." },		/* one dot leader */
+	{ 0x2025,	".." },		/* two dot leader */
+	{ 0x2026,	"..." },	/* horizontal ellipsis */
+	{ 0x2047,	"??" },		/* double question mark */
+	{ 0x2048,	"?!" },		/* question exclamation mark */
+	{ 0x2049,	"!?" }		/* exclamation question mark */		
+};
+
+static const char *find_alternate(unicode_char_t target_char)
+{
+	int low = 0;
+	int high = sizeof(alternate_charmap) / sizeof(alternate_charmap[0]);
+	int i;
+	unicode_char_t ch;
+
+	while(high > low)
+	{
+		i = (high + low) / 2;
+		ch = alternate_charmap[i].ch;
+		if (ch < target_char)
+			low = i + 1;
+		else if (ch > target_char)
+			high = i;
+		else
+			return alternate_charmap[i].str;
+	}
+	return NULL;
+}
+
+/***************************************************************************
+
 	Validity checks
 
 ***************************************************************************/
@@ -180,133 +307,64 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	struct InputCode *codes;
 	const struct InputPortTiny *ipt;
 	int port_count, i, j;
+	const char *str;
 	int error = 0;
+	unicode_char_t last_char = 0;
 
-	if (gamedrv->flags & GAME_COMPUTER)
+	if (gamedrv)
 	{
-		codes = (struct InputCode *) buf;
-		build_codes(gamedrv, codes, FALSE);
-
-		port_count = 0;
-		for (ipt = gamedrv->input_ports; ipt->type != IPT_END; ipt++)
+		if (gamedrv->flags & GAME_COMPUTER)
 		{
-			if (ipt->type == IPT_PORT)
-				port_count++;
+			codes = (struct InputCode *) buf;
+			build_codes(gamedrv, codes, FALSE);
+
+			port_count = 0;
+			for (ipt = gamedrv->input_ports; ipt->type != IPT_END; ipt++)
+			{
+				if (ipt->type == IPT_PORT)
+					port_count++;
+			}
+
+			for (i = 0; i < NUM_CODES; i++)
+			{
+				for (j = 0; j < NUM_SIMUL_KEYS; j++)
+				{
+					if (codes[i].port[j] >= port_count)
+					{
+						printf("%s: invalid inputx translation for code %i port %i\n", gamedrv->name, i, j);
+						error = 1;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		/* check to make sure that alternate_charmap is in order */
+		for (i = 0; i < sizeof(alternate_charmap) / sizeof(alternate_charmap[0]); i++)
+		{
+			if (last_char >= alternate_charmap[i].ch)
+			{
+				printf("inputx: alternate_charmap is out of order; 0x%08x should be higher than 0x%08x\n", alternate_charmap[i].ch, last_char);
+				error = 1;
+			}
+			last_char = alternate_charmap[i].ch;
 		}
 
-		for (i = 0; i < NUM_CODES; i++)
+		/* check to make sure that I can look up everything on alternate_charmap */
+		for (i = 0; i < sizeof(alternate_charmap) / sizeof(alternate_charmap[0]); i++)
 		{
-			for (j = 0; j < NUM_SIMUL_KEYS; j++)
+			str = find_alternate(alternate_charmap[i].ch);
+			if (str != alternate_charmap[i].str)
 			{
-				if (codes[i].port[j] >= port_count)
-				{
-					printf("%s: invalid inputx translation for code %i port %i\n", gamedrv->name, i, j);
-					error = 1;
-				}
+				printf("inputx: expected find_alternate(0x%08x) to return '%s', but instead got '%s'\n", alternate_charmap[i].ch, alternate_charmap[i].str, str);
+				error = 1;
 			}
 		}
 	}
 	return error;
 }
 #endif
-
-/***************************************************************************
-
-	Alternative key translations
-
-***************************************************************************/
-
-static const char *find_alternate(unicode_char_t ch)
-{
-	static const struct
-	{
-		unicode_char_t ch;
-		const char *str;
-	} map[] =
-	{
-		{ 0x00a0,	" " },		/* non breaking space */
-		{ 0x00a1,	"!" },		/* inverted exclaimation mark */
-		{ 0x00a6,	"|" },		/* broken bar */
-		{ 0x00a9,	"(c)" },	/* copyright sign */
-		{ 0x00ab,	"<<" },		/* left pointing double angle */
-		{ 0x00ae,	"(r)" },	/* registered sign */
-		{ 0x00bb,	">>" },		/* right pointing double angle */
-		{ 0x00bc,	"1/4" },	/* vulgar fraction one quarter */
-		{ 0x00bd,	"1/2" },	/* vulgar fraction one half */
-		{ 0x00be,	"3/4" },	/* vulgar fraction three quarters */
-		{ 0x00bf,	"?" },		/* inverted question mark */
-		{ 0x00c0,	"A" },		/* 'A' grave */
-		{ 0x00c1,	"A" },		/* 'A' acute */
-		{ 0x00c2,	"A" },		/* 'A' circumflex */
-		{ 0x00c3,	"A" },		/* 'A' tilde */
-		{ 0x00c4,	"A" },		/* 'A' diaeresis */
-		{ 0x00c5,	"A" },		/* 'A' ring above */
-		{ 0x00c6,	"AE" },		/* 'AE' ligature */
-		{ 0x00c7,	"C" },		/* 'C' cedilla */
-		{ 0x00c8,	"E" },		/* 'E' grave */
-		{ 0x00c9,	"E" },		/* 'E' acute */
-		{ 0x00ca,	"E" },		/* 'E' circumflex */
-		{ 0x00cb,	"E" },		/* 'E' diaeresis */
-		{ 0x00cc,	"I" },		/* 'I' grave */
-		{ 0x00cd,	"I" },		/* 'I' acute */
-		{ 0x00ce,	"I" },		/* 'I' circumflex */
-		{ 0x00cf,	"I" },		/* 'I' diaeresis */
-		{ 0x00d0,	"D" },		/* 'ETH' */
-		{ 0x00d1,	"N" },		/* 'N' tilde */
-		{ 0x00d2,	"O" },		/* 'O' grave */
-		{ 0x00d3,	"O" },		/* 'O' acute */
-		{ 0x00d4,	"O" },		/* 'O' circumflex */
-		{ 0x00d5,	"O" },		/* 'O' tilde */
-		{ 0x00d6,	"O" },		/* 'O' diaeresis */
-		{ 0x00d7,	"X" },		/* multiplication sign */
-		{ 0x00d8,	"O" },		/* 'O' stroke */
-		{ 0x00d9,	"U" },		/* 'U' grave */
-		{ 0x00da,	"U" },		/* 'U' acute */
-		{ 0x00db,	"U" },		/* 'U' circumflex */
-		{ 0x00dc,	"U" },		/* 'U' diaeresis */
-		{ 0x00dd,	"Y" },		/* 'Y' acute */
-		{ 0x00df,	"SS" },		/* sharp S */
-		{ 0x00e0,	"a" },		/* 'a' grave */
-		{ 0x00e1,	"a" },		/* 'a' acute */
-		{ 0x00e2,	"a" },		/* 'a' circumflex */
-		{ 0x00e3,	"a" },		/* 'a' tilde */
-		{ 0x00e4,	"a" },		/* 'a' diaeresis */
-		{ 0x00e5,	"a" },		/* 'a' ring above */
-		{ 0x00e6,	"ae" },		/* 'ae' ligature */
-		{ 0x00e7,	"c" },		/* 'c' cedilla */
-		{ 0x00e8,	"e" },		/* 'e' grave */
-		{ 0x00e9,	"e" },		/* 'e' acute */
-		{ 0x00ea,	"e" },		/* 'e' circumflex */
-		{ 0x00eb,	"e" },		/* 'e' diaeresis */
-		{ 0x00ec,	"i" },		/* 'i' grave */
-		{ 0x00ed,	"i" },		/* 'i' acute */
-		{ 0x00ee,	"i" },		/* 'i' circumflex */
-		{ 0x00ef,	"i" },		/* 'i' diaeresis */
-		{ 0x00f0,	"d" },		/* 'eth' */
-		{ 0x00f1,	"n" },		/* 'n' tilde */
-		{ 0x00f2,	"o" },		/* 'o' grave */
-		{ 0x00f3,	"o" },		/* 'o' acute */
-		{ 0x00f4,	"o" },		/* 'o' circumflex */
-		{ 0x00f5,	"o" },		/* 'o' tilde */
-		{ 0x00f6,	"o" },		/* 'o' diaeresis */
-		{ 0x00f8,	"o" },		/* 'o' stroke */
-		{ 0x00f9,	"u" },		/* 'u' grave */
-		{ 0x00fa,	"u" },		/* 'u' acute */
-		{ 0x00fb,	"u" },		/* 'u' circumflex */
-		{ 0x00fc,	"u" },		/* 'u' diaeresis */
-		{ 0x00fd,	"y" },		/* 'y' acute */
-		{ 0x00ff,	"y" }		/* 'y' diaeresis */
-	};
-
-	int i;
-
-	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
-	{
-		if (ch == map[i].ch)
-			return map[i].str;
-	}
-	return NULL;
-}
 
 /***************************************************************************
 

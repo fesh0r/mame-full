@@ -86,10 +86,12 @@ void setup_paths()
 #ifdef MESS
 	set_fileio_opt(rootpath, "biospath",			"\\Bios");
 	set_fileio_opt(rootpath, "cheat_file",			"\\cheat.cdb");
+	set_fileio_opt(rootpath, "softwarepath",		"\\Software");
 #else
 	set_fileio_opt(rootpath, "rompath",				"\\ROMs");
 	set_fileio_opt(rootpath, "cheat_file",			"\\cheat.dat");
 #endif
+	set_fileio_opt(rootpath, "inipath",				"\\Ini");
 	set_fileio_opt(rootpath, "samplepath",			"\\Samples");
 	set_fileio_opt(rootpath, "cfg_directory",		"\\Cfg");
 	set_fileio_opt(rootpath, "nvram_directory",		"\\Nvram");

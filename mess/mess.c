@@ -617,6 +617,8 @@ int messvaliditychecks(void)
 			error = 1;
 	}
 
+	if (inputx_validitycheck(NULL))
+		error = 1;
 	if (device_valididtychecks())
 		error = 1;
 	return error;
