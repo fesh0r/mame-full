@@ -44,10 +44,14 @@
 static MEMORY_READ16_START (mac512ke_readmem)
 
 /*	{ 0x000000, 0x3fffff, MRA16_BANK1 },*/	/* ram/rom */
+	{ 0x000000, 0x01ffff, /*MRA16_NOP*/MRA16_RAM }, /* ram/rom */
+	{ 0x020000, 0x07ffff, /*MRA16_NOP*/MRA16_RAM }, /* ram/rom */
+	{ 0x080000, 0x3fffff, /*MRA16_NOP*/MRA16_RAM }, /* ram/rom */
 /*	{ 0x400000, 0x5fffff, MRA16_BANK3 },*/ /* rom */
 /* for some reason, the system will not work without the next line */
 	{ 0x400000, 0x41ffff, MRA16_BANK3 }, /* rom */
-/*	{ 0x600000, 0x6fffff, MRA16_BANK2 },*/	/* ram */
+	{ 0x420000, 0x5fffff, /*MRA16_NOP*/MRA16_RAM }, /* rom */
+	{ 0x600000, 0x6fffff, /*MRA16_NOP*/MRA16_RAM }, /* ram */
 	{ 0x800000, 0x9fffff, mac_scc_r },
 	{ 0xc00000, 0xdfffff, mac_iwm_r },
 	{ 0xe80000, 0xefffff, mac_via_r },
@@ -58,8 +62,12 @@ MEMORY_END
 static MEMORY_WRITE16_START (mac512ke_writemem)
 
 /*	{ 0x000000, 0x3fffff, MWA16_BANK1 },*/ /* ram/rom */
-	{ 0x400000, 0x5fffff, MWA16_ROM },
-/*	{ 0x600000, 0x6fffff, MWA16_BANK2 },*/ /* ram */
+	{ 0x000000, 0x01ffff, /*MWA16_NOP*/MWA16_RAM }, /* ram/rom */
+	{ 0x020000, 0x07ffff, /*MWA16_NOP*/MWA16_RAM }, /* ram/rom */
+	{ 0x080000, 0x3fffff, /*MWA16_NOP*/MWA16_RAM }, /* ram/rom */
+	{ 0x400000, 0x5fffff, MWA16_ROM },	/* rom */
+
+	{ 0x600000, 0x6fffff, /*MWA16_NOP*/MWA16_RAM }, /* ram */
 	{ 0xa00000, 0xbfffff, mac_scc_w },
 	{ 0xc00000, 0xdfffff, mac_iwm_w },
 	{ 0xe80000, 0xefffff, mac_via_w },

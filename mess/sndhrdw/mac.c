@@ -8,7 +8,7 @@
 
 static int mac_stream;
 static int sample_enable = 0;
-static UINT8 *mac_snd_buf_ptr;
+static UINT16 *mac_snd_buf_ptr;
 
 
 #define MAC_MAIN_SND_BUF_OFFSET	0x0300
@@ -95,12 +95,12 @@ void mac_enable_sound(int on)
 /*
 	Set the current sound buffer (one VIA port line)
 */
-void mac_set_buffer(int buffer)
+void mac_set_sound_buffer(int buffer)
 {
 	if (buffer)
-		mac_snd_buf_ptr = mac_ram_ptr+mac_ram_size-MAC_MAIN_SND_BUF_OFFSET;
+		mac_snd_buf_ptr = (UINT16 *) (mac_ram_ptr+mac_ram_size-MAC_MAIN_SND_BUF_OFFSET);
 	else
-		mac_snd_buf_ptr = mac_ram_ptr+mac_ram_size-MAC_ALT_SND_BUF_OFFSET;
+		mac_snd_buf_ptr = (UINT16 *) (mac_ram_ptr+mac_ram_size-MAC_ALT_SND_BUF_OFFSET);
 }
 
 /*
@@ -120,7 +120,7 @@ void mac_set_volume(int volume)
 */
 void mac_sh_data_w(int indexx)
 {
-	UINT8 *base = mac_snd_buf_ptr;
+	UINT16 *base = mac_snd_buf_ptr;
 
 	if (snd_cache_len >= snd_cache_size)
 	{
@@ -132,7 +132,7 @@ void mac_sh_data_w(int indexx)
 		/* should never happen */
 		return;
 
-	snd_cache[snd_cache_tail] = sample_enable ? (*((data16_t *) (base + (indexx << 1)))  >> 8) & 0xff : 0;
+	snd_cache[snd_cache_tail] = sample_enable ? (base[indexx] >> 8) & 0xff : 0;
 	snd_cache_tail++;
 	snd_cache_tail %= snd_cache_size;
 	snd_cache_len++;
