@@ -48,6 +48,9 @@ typedef struct crtc6845_state
 
 	int HSYNC;
 	int VSYNC;
+	
+	int Vertical_Total_Adjust_Active;
+	int Vertical_Total_Adjust_Counter;
 
 	int Memory_Address;
 	int Memory_Address_of_next_Character_Row;
@@ -65,6 +68,7 @@ typedef struct crtc6845_state
 	int Display_Enabled_Delay;
 	int Display_Disable_Delay;
 
+	int	Vertical_Adjust_Done;
 //	int cycles_to_vsync_start;
 //	int cycles_to_vsync_end;
 } crtc6845_state;
@@ -97,3 +101,8 @@ void crtc6845_set_state(int offset, crtc6845_state *state);
 void crtc6845_get_state(int offset, crtc6845_state *state);
 
 void	crtc6845_reset(int which);
+
+void	crtc6845_start(void);
+void	crtc6845_stop(void);
+
+

@@ -84,7 +84,7 @@ Bit 6 	Bit 5
 
 static crtc6845_state crtc;
 
-
+#if 0
 /* VSYNC functions */
 
 /* timer to set vsync */
@@ -101,6 +101,7 @@ static void crtc6845_set_new_vsync_clear_time(int);
 static void crtc6845_recalc_cycles_to_vsync_start(void);
 static void crtc6845_recalc_cycles_to_vsync_end(void);
 
+#endif
 
 // local copy of the 6845 external procedure calls
 static struct crtc6845_interface
@@ -122,6 +123,22 @@ void crtc6845_config(const struct crtc6845_interface *intf)
 	crct6845_calls.out_VS_func=*intf->out_VS_func;
 	crct6845_calls.out_DE_func=*intf->out_DE_func;
 	crct6845_calls.out_CR_func=*intf->out_CR_func;
+}
+
+void	crtc6845_start(void)
+{
+#if 0
+	crtc6845_vsync_set_timer = NULL;
+	crtc6845_vsync_clear_timer = NULL;
+#endif
+}
+
+void	crtc6845_stop(void)
+{
+#if 0
+	crtc6845_remove_vsync_set_timer();
+	crtc6845_remove_vsync_clear_timer();
+#endif
 }
 
 
@@ -149,46 +166,49 @@ void crtc6845_register_w(int offset, int data)
 	switch (crtc.address_register)
 	{
 		case 0:
-			R0_horizontal_total=data;
-			crtc6845_recalc_cycles_to_vsync_end();
-			crtc6845_recalc_cycles_to_vsync_start();
+                        R0_horizontal_total=data & 0x0ff;
+//                        crtc6845_recalc_cycles_to_vsync_end();
+  //                      crtc6845_recalc_cycles_to_vsync_start();
 			break;
 		case 1:
-			R1_horizontal_displayed=data;
+                        R1_horizontal_displayed=data & 0x0ff;
 			break;
 		case 2:
-			R2_horizontal_sync_position=data;
+                        R2_horizontal_sync_position=data & 0x0ff;
 			break;
 		case 3:
                 {
                         /* if 0 is programmed, vertical sync width is 16 */
                         crtc.vertical_sync_width = (data>>4) & 0x0f;
 
-                        //if (crtc.vertical_sync_width == 0)
-                        //   crtc.vertical_sync_width = 16;
+                        if (crtc.vertical_sync_width == 0)
+                           crtc.vertical_sync_width = 16;
 
                         R3_sync_width=data;
 
                         crtc.horizontal_sync_width = data & 0x0f;
                
-						crtc6845_recalc_cycles_to_vsync_end();
+    //                                            crtc6845_recalc_cycles_to_vsync_end();
 				}
                 break;
 
         case 4:
-			R4_vertical_total=data&0x7f;
-			crtc6845_recalc_cycles_to_vsync_start();
+                        R4_vertical_total=data&0x7f;
+          //              crtc6845_recalc_cycles_to_vsync_start();
 			break;
 		case 5:
 			R5_vertical_total_adjust=data&0x1f;
-			crtc6845_recalc_cycles_to_vsync_start();
+
+
+        //                crtc6845_recalc_cycles_to_vsync_start();
+
 			break;
 		case 6:
 			R6_vertical_displayed=data&0x7f;
 			break;
 		case 7:
 			R7_vertical_sync_position=data&0x7f;
-			crtc6845_recalc_cycles_to_vsync_start();
+      //                  crtc6845_recalc_cycles_to_vsync_start();
 			break;
 		case 8:
 			R8_interlace_display_enabled=data&0xf3;
@@ -196,6 +216,7 @@ void crtc6845_register_w(int offset, int data)
 			break;
 		case 9:
 			R9_scan_lines_per_character=data&0x1f;
+            //            crtc6845_recalc_cycles_to_vsync_start();
 			break;
 		case 10:
 			R10_cursor_start=data&0x7f;
@@ -286,6 +307,9 @@ void	crtc6845_reset(int which)
 	crtc.Display_Enabled_Delay=0;
 	crtc.Display_Disable_Delay=0;
 	crtc.cursor_address =0 ;
+	crtc.Vertical_Total_Adjust_Active = False;
+	crtc.Vertical_Total_Adjust_Counter = 0;
+	crtc.Vertical_Adjust_Done = False;
 }
 
 /* called when the internal horizontal display enabled or the
@@ -313,6 +337,20 @@ void check_display_enabled(void)
 	crtc.Display_Enabled=Next_Display_Enabled;
 }
 
+static void crtc6845_restart_frame(void)
+{
+					/* no restart frame */
+					/* End of All Vertical Character rows */
+					crtc.Scan_Line_Counter = 0;
+					crtc.Character_Row_Counter=0;
+					crtc.Vertical_Display_Enabled=True;
+					check_display_enabled();
+
+									/* KT - As it stands it emulates the UM6845R well */
+					crtc.Memory_Address=(crtc.Memory_Address_of_this_Character_Row=crtc.screen_start_address);
+									/* HD6845S/MC6845 */
+					crtc.Memory_Address_of_next_Character_Row = crtc.Memory_Address;
+}
 
 /* clock the 6845 */
 void crtc6845_clock(void)
@@ -338,6 +376,19 @@ void crtc6845_clock(void)
 		/*crtc.Scan_Line_Counter=(crtc.Scan_Line_Counter+crtc.scan_lines_increment)%32;*/
 		crtc.Scan_Line_Counter=(crtc.Scan_Line_Counter+crtc.scan_lines_increment)&0x01f;
 
+	if (crtc.Vertical_Total_Adjust_Active)
+		{
+			/* update counter */
+			crtc.Vertical_Total_Adjust_Counter = (crtc.Vertical_Total_Adjust_Counter+1) & 0x01f;
+		}
+
+
+                /* Vertical Sync Clock Pulse (In Vertical control) */
+                if (crtc.VSYNC)
+                {
+                        crtc.Vertical_Sync_Width_Counter=(crtc.Vertical_Sync_Width_Counter+1);	// & 0x0f;
+                }
+
 		if (crtc.Scan_Line_Counter_Reset)
 		{
 			/* End of a Vertical Character row */
@@ -350,22 +401,34 @@ void crtc6845_clock(void)
 			crtc.Character_Row_Counter=(crtc.Character_Row_Counter+1)&0x07f;
 			if (crtc.Character_Row_Counter_Reset)
 			{
-				/* End of All Vertical Character rows */
-				crtc.Character_Row_Counter=0;
 				crtc.Character_Row_Counter_Reset=False;
-				crtc.Vertical_Display_Enabled=True;
-				check_display_enabled();
 
-                                /* KT - As it stands it emulates the UM6845R well */
-				crtc.Memory_Address=(crtc.Memory_Address_of_this_Character_Row=crtc.screen_start_address);
-                                /* HD6845S/MC6845 */
-                crtc.Memory_Address_of_next_Character_Row = crtc.Memory_Address;
-            }
+				/* if vertical adjust is set, the first time it will do the vertical, adjust, the
+				next time, it will not do it and complete the frame */
+
+				/* vertical adjust set? */
+				if (R5_vertical_total_adjust!=0)
+				{
+					/* it's active */
+					//crtc.Vertical_Adjust_Done = TRUE;
+
+					crtc.Vertical_Total_Adjust_Active = TRUE;
+					crtc.Vertical_Total_Adjust_Counter = 0;
+				}
+				else
+				{
+					crtc6845_restart_frame();
+				}
+
+	        }
 
 			/* Check for end of All Vertical Character rows */
-			if (crtc.Character_Row_Counter==R4_vertical_total)
+			if (crtc.Character_Row_Counter==R4_vertical_total) 
 			{
-				crtc.Character_Row_Counter_Reset=True;
+				if (!(crtc.Vertical_Total_Adjust_Active))
+				{
+					crtc.Character_Row_Counter_Reset=True;
+				}
 			}
 
 			/* Check for end of Displayed Vertical Character rows */
@@ -375,11 +438,6 @@ void crtc6845_clock(void)
 				check_display_enabled();
 			}
 
-			/* Vertical Sync Clock Pulse (In Vertical control) */
-			if (crtc.VSYNC)
-			{
-				crtc.Vertical_Sync_Width_Counter=(crtc.Vertical_Sync_Width_Counter+1) & 0x0f;
-			}
 
 			/* Check for start of Vertical Sync Pulse */
 			if (crtc.Character_Row_Counter==R7_vertical_sync_position)
@@ -388,15 +446,48 @@ void crtc6845_clock(void)
 				if (crct6845_calls.out_VS_func) (crct6845_calls.out_VS_func)(0,crtc.VSYNC); /* call VS update */
 			}
 
-			/* Check for end of Vertical Sync Pulse */
-            if (crtc.Vertical_Sync_Width_Counter==crtc.vertical_sync_width)
-			{
-				crtc.Vertical_Sync_Width_Counter=0;
-				crtc.VSYNC=False;
-				if (crct6845_calls.out_VS_func) (crct6845_calls.out_VS_func)(0,crtc.VSYNC); /* call VS update */
-			}
 
 		}
+
+                /* KT - Moved here because VSYNC length is in scanlines */
+                if (crtc.VSYNC)
+                {
+                        /* Check for end of Vertical Sync Pulse */
+                        if (crtc.Vertical_Sync_Width_Counter==crtc.vertical_sync_width)
+                        {
+                                crtc.Vertical_Sync_Width_Counter=0;
+                                crtc.VSYNC=False;
+                                if (crct6845_calls.out_VS_func) (crct6845_calls.out_VS_func)(0,crtc.VSYNC); /* call VS update */
+                        }
+                }
+
+	
+		/* vertical total adjust active? */
+		if (crtc.Vertical_Total_Adjust_Active)
+		{
+			/* equals r5? */
+			if (crtc.Vertical_Total_Adjust_Counter==R5_vertical_total_adjust)
+			{
+				/* not active, clear counter and restart frame */
+				crtc.Vertical_Total_Adjust_Active = False;
+				crtc.Vertical_Total_Adjust_Counter = 0;
+	//			/* cause a scan-line counter reset, and a character row counter reset.
+	//			i.e. restart frame */
+	//			crtc.Scan_Line_Counter_Reset = TRUE;
+	//			crtc.Character_Row_Counter_Reset = TRUE;
+
+				// KT this caused problems when R7 == 0 and R5 was set!
+				crtc6845_restart_frame();
+			
+				/* Check for start of Vertical Sync Pulse */
+				if (crtc.Character_Row_Counter==R7_vertical_sync_position)
+				{
+					crtc.VSYNC=True;
+					if (crct6845_calls.out_VS_func) (crct6845_calls.out_VS_func)(0,crtc.VSYNC); /* call VS update */
+				}
+			}
+		}
+
 
 		/* Check for end of Vertical Character Row */
 		if (crtc.Scan_Line_Counter==R9_scan_lines_per_character)
@@ -528,7 +619,7 @@ int crtc6845_vertical_sync_r(int offset)   { return crtc.VSYNC; }             /*
 int crtc6845_display_enabled_r(int offset) { return crtc.Display_Delayed_Enabled; }   /* DE = Display Enabled */
 int crtc6845_cursor_enabled_r(int offset)  { return crtc.Cursor_Delayed_Status; }             /* CR = Cursor Enabled */
 
-
+#if 0
 
 /* KT:
 
@@ -763,6 +854,7 @@ void crtc6845_recalc(int offset,int num_cycles)
 		num_scan_lines -= scans_to_end_of_frame;
 		scans_into_frame = 0;
 		/* subtract R5 lines here! */
+
 	}
 
 	/* update row position */
@@ -771,3 +863,4 @@ void crtc6845_recalc(int offset,int num_cycles)
     crtc.Scan_Line_Counter = num_scan_lines % scan_lines_per_char;
 }
 
+#endif
