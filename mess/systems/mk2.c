@@ -32,26 +32,22 @@ MOS MPS 6332 005 2179
   83, 84 contains display variables
  */
 // only lower 12 address bits on bus!
-static struct MemoryReadAddress mk2_readmem[] =
-{
+static MEMORY_READ_START( mk2_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, // 2 2111, should be mirrored
 	{ 0x8009, 0x8009, MRA_NOP },// bit $8009 (ora #$80) causes false accesses
 	{ 0x8b00, 0x8f0f, rriot_0_r },
 	{ 0x8b80, 0x8bbf, MRA_RAM }, // rriot ram
 	{ 0x8c00, 0x8fff, MRA_ROM }, // rriot rom
 	{ 0xf000, 0xffff, MRA_ROM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mk2_writemem[] =
-{
+static MEMORY_WRITE_START( mk2_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x8b00, 0x8f0f, rriot_0_w },
 	{ 0x8b80, 0x8bbf, MWA_RAM },
 	{ 0x8c00, 0x8fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)

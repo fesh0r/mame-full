@@ -125,7 +125,7 @@ static void mk2_draw_7segment(struct osd_bitmap *bitmap,int value, int x, int y)
 		if (mask!=0) {
 			color=Machine->pens[(value&mask)?1:0];
 			plot_pixel(bitmap, x+xi, y+yi, color);
-			osd_mark_dirty(x+xi,y+yi,x+xi,y+yi,0);
+			osd_mark_dirty(x+xi,y+yi,x+xi,y+yi);
 		}
 		if (led[i]!='\r') xi++;
 		else { yi++, xi=0; }
@@ -175,7 +175,7 @@ void mk2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 			case '1': 
 				color=Machine->pens[(mk2_led[i]&0x80)?1:0];
 				plot_pixel(bitmap, x+xi, y, color);
-				osd_mark_dirty(x+xi,y,x+xi,y,0);
+				osd_mark_dirty(x+xi,y,x+xi,y);
 				xi++;
 				break;
 			case ' ': 

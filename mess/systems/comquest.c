@@ -17,7 +17,7 @@ speaker 2, manual volume control:2 levels
 cartridge slot, serial port
 
 512 kbyte rom on print with little isolation/case
-12 pin chip on print with little isolation/case
+12 pin chip on print with little isolation/case (eeprom? at i2c bus)
 cpu on print, soldered so nothing visible
 32 kbyte sram
 
@@ -55,20 +55,16 @@ WRITE_HANDLER(comquest_write)
 	logerror("comquest read %.4x %.2x\n",offset,data);
 }
 
-static struct MemoryReadAddress comquest_readmem[] =
-{
+static MEMORY_READ_START( comquest_readmem )
 //	{ 0x0000, 0x7fff, MRA_BANK1 },
 	{ 0x0000, 0x7ffff, MRA_ROM },
 //	{ 0x8000, 0xffff, MRA_RAM }, // batterie buffered
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress comquest_writemem[] =
-{
+static MEMORY_WRITE_START( comquest_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_RAM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -236,7 +232,7 @@ static struct MachineDriver machine_driver_comquest =
 	/* basic machine hardware */
 	{
 		{
-			CPU_I8039, //?
+			CPU_I86, //?
 /*
   8 bit bus, integrated io, serial io?,
 
@@ -327,7 +323,7 @@ static const struct IODevice io_comquest[] = {
 		IO_CARTSLOT,					/* type */
 		1,								/* count */
 		"bin\0",						/* file extensions */
-		NULL,							/* private */
+		IO_RESET_ALL,							/* private */
 		a2600_id_rom,					/* id */
 		a2600_load_rom,					/* init */
 		NULL,							/* exit */

@@ -143,7 +143,7 @@ static void mk1_draw_9segment(struct osd_bitmap *bitmap,int value, int x, int y)
 		if (mask!=0) {
 			color=Machine->pens[(value&mask)?1:0];
 			plot_pixel(bitmap, x+xi, y+yi, color);
-			osd_mark_dirty(x+xi,y,x+yi,y,0);
+			osd_mark_dirty(x+xi,y,x+yi,y);
 		}
 		if (led[i]!='\r') xi++;
 		else { yi++, xi=0; }

@@ -11,19 +11,15 @@
 
 static UINT8 *studio2_mem;
 
-static struct MemoryReadAddress studio2_readmem[] =
-{
+static MEMORY_READ_START( studio2_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x0800, 0x09ff, MRA_RAM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress studio2_writemem[] =
-{
+static MEMORY_WRITE_START( studio2_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM, &studio2_mem },
 	{ 0x0800, 0x09ff, MWA_RAM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -207,9 +203,54 @@ ROM_START(studio2)
 	ROM_REGION(0x100,REGION_GFX1)
 ROM_END
 
+static int studio2_id_rom(int id)
+{
+	return ID_OK;	/* no id possible */
+
+}
+
+static int studio2_load_rom(int id)
+{
+	FILE *cartfile;
+	UINT8 *rom = memory_region(REGION_CPU1);
+
+	if (device_filename(IO_CARTSLOT, id) == NULL)
+	{
+/* A cartridge isn't strictly mandatory, but it's recommended */
+		return 0;
+	}
+	
+	if (!(cartfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	{
+		return 1;
+	}	
+
+	osd_fread(cartfile, rom+0x400, 0x400);
+	osd_fclose(cartfile);
+	return 0;
+}
 
 static const struct IODevice io_studio2[] = {
 	// cartridges at 0x400-0x7ff ?
+	{
+		IO_CARTSLOT,					/* type */
+		1,								/* count */
+		"bin\0",                        /* file extensions */
+		IO_RESET_ALL,					/* reset if file changed */
+		studio2_id_rom,					/* id */
+		studio2_load_rom, 				/* init */
+		NULL,							/* exit */
+		NULL,							/* info */
+		NULL,							/* open */
+		NULL,							/* close */
+		NULL,							/* status */
+		NULL,							/* seek */
+		NULL,							/* tell */
+		NULL,							/* input */
+		NULL,							/* output */
+		NULL,							/* input_chunk */
+		NULL							/* output_chunk */
+	},
     { IO_END }
 };
 
@@ -226,4 +267,5 @@ void init_studio2(void)
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac vip ditto
 CONS( 1976, studio2,	  0, 		studio2,  studio2, 	studio2,	  "RCA",  "Studio II")
+// hanimex mpt-02
 // colour studio 2 (m1200) with little color capability

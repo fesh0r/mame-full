@@ -34,15 +34,12 @@ Philips P2000 1 Memory map
 
 /* port i/o functions */
 
-static	struct	IOReadPort	p2000t_readport[] =
-{
+static PORT_READ_START( p2000t_readport )
 	{0x00, 0x0f, p2000t_port_000f_r},
 	{0x20, 0x2f, p2000t_port_202f_r},
-	{-1}
-};
+PORT_END
 
-static	struct	IOWritePort	p2000t_writeport[] =
-{
+static PORT_WRITE_START( p2000t_writeport )
 	{0x10, 0x1f, p2000t_port_101f_w},
 	{0x30, 0x3f, p2000t_port_303f_w},
 	{0x50, 0x5f, p2000t_port_505f_w},
@@ -50,50 +47,41 @@ static	struct	IOWritePort	p2000t_writeport[] =
 	{0x88, 0x8b, p2000t_port_888b_w},
 	{0x8c, 0x90, p2000t_port_8c90_w},
 	{0x94, 0x94, p2000t_port_9494_w},
-	{-1}
-};
+PORT_END
 
 /* Memory w/r functions */
 
-static	struct	MemoryReadAddress	p2000t_readmem[] =
-{
+static MEMORY_READ_START( p2000t_readmem )
 	{0x0000, 0x0fff, MRA_ROM},
 	{0x1000, 0x4fff, MRA_RAM},
 	{0x5000, 0x57ff, videoram_r},
 	{0x5800, 0x9fff, MRA_RAM},
 	{0xa000, 0xffff, MRA_NOP},
-	{-1}
-};
+MEMORY_END
 
-static	struct	MemoryWriteAddress	p2000t_writemem[] =
-{
+static MEMORY_WRITE_START( p2000t_writemem )
 	{0x0000, 0x0fff, MWA_ROM},
 	{0x1000, 0x4fff, MWA_RAM},
 	{0x5000, 0x57ff, videoram_w, &videoram, &videoram_size},
 	{0x5800, 0x9fff, MWA_RAM},
 	{0xa000, 0xffff, MWA_NOP},
-	{-1}
-};
+MEMORY_END
 
-static	struct	MemoryReadAddress	p2000m_readmem[] =
-{
+static MEMORY_READ_START( p2000m_readmem )
 	{0x0000, 0x0fff, MRA_ROM},
 	{0x1000, 0x4fff, MRA_RAM},
 	{0x5000, 0x5fff, videoram_r},
 	{0x6000, 0x9fff, MRA_RAM},
 	{0xa000, 0xffff, MRA_NOP},
-	{-1}
-};
+MEMORY_END
 
-static	struct	MemoryWriteAddress	p2000m_writemem[] =
-{
+static MEMORY_WRITE_START( p2000m_writemem )
 	{0x0000, 0x0fff, MWA_ROM},
 	{0x1000, 0x4fff, MWA_RAM},
 	{0x5000, 0x5fff, videoram_w, &videoram, &videoram_size},
 	{0x6000, 0x9fff, MWA_RAM},
 	{0xa000, 0xffff, MWA_NOP},
-	{-1}
-};
+MEMORY_END
 
 /* graphics output */
 

@@ -27,32 +27,24 @@ switch s/l
 (power on switch)
  */
 
-static struct MemoryReadAddress mk1_readmem[] =
-{
+static MEMORY_READ_START( mk1_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x0800, 0x08ff, MRA_RAM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mk1_writemem[] =
-{
+static MEMORY_WRITE_START( mk1_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
 	{ 0x0800, 0x08ff, MWA_RAM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 
-static struct IOReadPort mk1_readport[] =
-{
+static PORT_READ_START( mk1_readport )
 	// 0, 1 integrated io
 	// c,d,e,f timer in 3853? (position mask programmed)
-	MEMORY_TABLE_END
-};
+PORT_END
 
-static struct IOWritePort mk1_writeport[] =
-{
-	MEMORY_TABLE_END
-};
+static PORT_WRITE_START( mk1_writeport )
+PORT_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -98,9 +90,11 @@ static int mk1_frame_int(void)
 	return 0;
 }
 
+#if 0
 static void mk1_machine_init(void)
 {
 }
+#endif
 
 static struct MachineDriver machine_driver_mk1 =
 {
