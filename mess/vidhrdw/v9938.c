@@ -110,38 +110,17 @@ PALETTE_INIT( v9938 )
 {
 	int	i, red, green, blue;
 
-	if (Machine->scrbitmap->depth == 8)
+	/* create the full 512 colour palette */
+	for (i=0;i<512;i++)
 	{
-		/* create 256 colour palette -- this is actually the graphic 7
-		   palette, with duplicate entries so the core fill shrink it to
-		   256 colours */
-		for (i=0;i<512;i++)
-		{
-			red = (i >> 6) & 7;		/* red */
-			red = (red << 5) | (red << 2) | (red >> 1);			/* convert to 8 bits */
-			green = (i >> 3) & 7;	/* green */
-			green = (green << 5) | (green << 2) | (green >> 1);	/* convert to 8 bits */
-			blue = (i >> 1) & 3;	/* blue */
-			blue = (blue << 6) | (blue << 4) | (blue << 2) | blue;	/* convert to 8 bits */
-			palette_set_color(i, red, green, blue);
-		}
+		red = (i >> 6) & 7;		/* red */
+		red = (red << 5) | (red << 2) | (red >> 1);			/* convert to 8 bits */
+		green = (i >> 3) & 7;	/* green */
+		green = (green << 5) | (green << 2) | (green >> 1);	/* convert to 8 bits */
+		blue = i & 7;			/* blue */
+		blue = (blue << 5) | (blue << 2) | (blue >> 1);		/* convert to 8 bits */
+		palette_set_color(i, red, green, blue);
 	}
-	else
-	{
-		/* create the full 512 colour palette */
-		for (i=0;i<512;i++)
-		{
-			red = (i >> 6) & 7;		/* red */
-			red = (red << 5) | (red << 2) | (red >> 1);			/* convert to 8 bits */
-			green = (i >> 3) & 7;	/* green */
-			green = (green << 5) | (green << 2) | (green >> 1);	/* convert to 8 bits */
-			blue = i & 7;			/* blue */
-			blue = (blue << 5) | (blue << 2) | (blue >> 1);		/* convert to 8 bits */
-			palette_set_color(i, red, green, blue);
-		}
-	}
-
-	
 }
 
 /*
@@ -188,40 +167,30 @@ PALETTE_INIT( v9958 )
 		if (g < 0) g = 0; else if (g > 31) g = 31;
 		if (b < 0) b = 0; else if (b > 31) b = 31;
 
-		if (Machine->scrbitmap->depth == 8)
+		r = (r << 3) | (r >> 2);
+		b = (b << 3) | (b >> 2);
+		g = (g << 3) | (g >> 2);
+		/* have we seen this one before? */
+		n = 0;
+		while (n < i)
 		{
-			/* we don't have the space for more entries, so map it to the
-			   256 colours we already have */
-			r /= 4; g /= 4; b /= 4;
-			pal_indYJK[y | j << 5 | k << (5 + 6)] = (r << 6) | (g << 3) | b;
+			if (pal[n*3+0] == r && pal[n*3+1] == g && pal[n*3+2] == b)
+			{
+				pal_indYJK[y | j << 5 | k << (5 + 6)] = n + 512;
+				break;
+			}
+			n++;
 		}
-		else
-		{
-			r = (r << 3) | (r >> 2);
-			b = (b << 3) | (b >> 2);
-			g = (g << 3) | (g >> 2);
-			/* have we seen this one before? */
-			n = 0;
-			while (n < i)
-			{
-				if (pal[n*3+0] == r && pal[n*3+1] == g && pal[n*3+2] == b)
-				{
-					pal_indYJK[y | j << 5 | k << (5 + 6)] = n + 512;
-					break;
-				}
-				n++;
-			}
 
-			if (i == n)
-			{
-				/* so we haven't; add it */
-				pal[i*3+0] = r;
-				pal[i*3+1] = g;
-				pal[i*3+2] = b;
-				palette_set_color(i+512, r, g, b);
-				pal_indYJK[y | j << 5 | k << (5 + 6)] = i + 512;
-				i++;
-			}
+		if (i == n)
+		{
+			/* so we haven't; add it */
+			pal[i*3+0] = r;
+			pal[i*3+1] = g;
+			pal[i*3+2] = b;
+			palette_set_color(i+512, r, g, b);
+			pal_indYJK[y | j << 5 | k << (5 + 6)] = i + 512;
+			i++;
 		}
 	}
 
@@ -1069,64 +1038,6 @@ static void v9938_set_mode (void)
 	vdp.mode = i;
 	}
 
-static void v9938_refresh_8 (struct mame_bitmap *bmp, int line)
-	{
-	int i, double_lines;
-	UINT8 col[256], *ln, *ln2 = NULL;
-
-	double_lines = 0;
-
-	if (vdp.size == RENDER_HIGH)
-		{
-		if (vdp.contReg[9] & 0x08)
-			{
-			vdp.size_now = RENDER_HIGH;
-			ln = bmp->line[line*2+((vdp.statReg[2]>>1)&1)];
-			}
-		else
-			{
-			ln = bmp->line[line*2];
-			ln2 = bmp->line[line*2+1];
-			double_lines = 1;
-			}
-		}
-	else
-		ln = bmp->line[line];
-
-	if ( !(vdp.contReg[1] & 0x40) || (vdp.statReg[2] & 0x40) )
-		{
-		if (vdp.size == RENDER_HIGH)
-			modes[vdp.mode].border_8 (ln);
-		else
-			modes[vdp.mode].border_8s (ln);
-		}
-	else
-		{
-		i = (line - vdp.offset_y) & 255;
-		if (vdp.size == RENDER_HIGH)
-			{
-			modes[vdp.mode].visible_8 (ln, i);
-			if (modes[vdp.mode].sprites)
-				{
-				modes[vdp.mode].sprites (i, col);
-				modes[vdp.mode].draw_sprite_8 (ln, col);
-				}
-			}
-		else
-			{
-			modes[vdp.mode].visible_8s (ln, i);
-			if (modes[vdp.mode].sprites)
-				{
-				modes[vdp.mode].sprites (i, col);
-				modes[vdp.mode].draw_sprite_8s (ln, col);
-				}
-			}
-		}
-
-	if (double_lines)
-		memcpy (ln2, ln, (512 + 32) );
-	}
-
 static void v9938_refresh_16 (struct mame_bitmap *bmp, int line)
 	{
 	int i, double_lines;
@@ -1199,10 +1110,7 @@ static void v9938_refresh_line (struct mame_bitmap *bmp, int line)
 		pal_ind256[0] = pal_ind256[vdp.contReg[7]];
 		}
 
-	if (Machine->scrbitmap->depth == 8)
-		v9938_refresh_8 (bmp, line);
-	else
-		v9938_refresh_16 (bmp, line);
+	v9938_refresh_16 (bmp, line);
 
 	if ( !(vdp.contReg[8] & 0x20) && (vdp.mode != V9938_MODE_GRAPHIC5) )
 		{
