@@ -155,6 +155,7 @@ extern void SetCurrentFolder(LPTREEFOLDER lpFolder);
 extern UINT GetCurrentFolderID(void);
 
 extern LPTREEFOLDER GetCurrentFolder(void);
+extern int GetNumFolders(void);
 extern LPTREEFOLDER GetFolder(UINT nFolder);
 extern LPTREEFOLDER GetFolderByID(UINT nID);
 

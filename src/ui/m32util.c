@@ -238,7 +238,7 @@ char* MyStrStrI(const char* pFirst, const char* pSrch)
 
 char * ConvertToWindowsNewlines(const char *source)
 {
-	static char buf[4000];
+	static char buf[9000];
 	char *dest;
 
 	dest = buf;

@@ -179,7 +179,6 @@ void ResetFilters(void)
 		for (i = 0; i < (int)numFolders; i++)
 		{
 			treeFolders[i]->m_dwFlags &= ~F_MASK;
-			SetFolderFlags(treeFolders[i]->m_lpTitle, 0);
 		}
 	}
 }
@@ -222,9 +221,14 @@ UINT GetCurrentFolderID(void)
 	return nCurrentFolder;
 }
 
+int GetNumFolders(void)
+{
+	return numFolders;
+}
+
 LPTREEFOLDER GetFolder(UINT nFolder)
 {
-	return (nFolder < numFolders) ? treeFolders[nFolder] : (LPTREEFOLDER)0;
+	return (nFolder < numFolders) ? treeFolders[nFolder] : NULL;
 }
 
 LPTREEFOLDER GetFolderByID(UINT nID)
@@ -478,7 +482,8 @@ void CreateSourceFolders(int parent_index)
 		{
 			// nope, it's a source file we haven't seen before, make it.
 			LPTREEFOLDER lpTemp;
-			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_SOURCE,0);
+			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_SOURCE,
+							   GetFolderFlags(numFolders));
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
@@ -494,7 +499,8 @@ void CreateManufacturerFolders(int parent_index)
 
 	// not sure why this is added separately
 	LPTREEFOLDER lpTemp;
-	lpTemp = NewFolder("Romstar", next_folder_id++, parent_index, IDI_MANUFACTURER, 0);
+	lpTemp = NewFolder("Romstar", next_folder_id++, parent_index, IDI_MANUFACTURER,
+					   GetFolderFlags(numFolders));
 	AddFolder(lpTemp);
 
 	// no games in top level folder
@@ -521,7 +527,8 @@ void CreateManufacturerFolders(int parent_index)
 		if (i == start_folder-1)
 		{
 			// nope, it's a manufacturer we haven't seen before, make it.
-			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_MANUFACTURER, 0);
+			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_MANUFACTURER,
+							   GetFolderFlags(numFolders));
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
@@ -541,7 +548,8 @@ void CreateCPUFolders(int parent_index)
 	for (i=1;i<CPU_COUNT;i++)
 	{
 		LPTREEFOLDER lpTemp;
-		lpTemp = NewFolder(cputype_name(i), next_folder_id++, parent_index, IDI_CPU, 0);
+		lpTemp = NewFolder(cputype_name(i), next_folder_id++, parent_index, IDI_CPU,
+						   GetFolderFlags(numFolders));
 		AddFolder(lpTemp);
 	}
 
@@ -587,7 +595,8 @@ void CreateSoundFolders(int parent_index)
 		extern struct snd_interface sndintf[];
 
 		LPTREEFOLDER lpTemp;
-		lpTemp = NewFolder(sndintf[i].name, next_folder_id++, parent_index, IDI_CPU, 0);
+		lpTemp = NewFolder(sndintf[i].name, next_folder_id++, parent_index, IDI_CPU,
+						   GetFolderFlags(numFolders));
 		AddFolder(lpTemp);
 	}
 
@@ -641,7 +650,8 @@ void CreateYearFolders(int parent_index)
 		{
 			// nope, it's a year we haven't seen before, make it.
 			LPTREEFOLDER lpTemp;
-			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_YEAR, 0);
+			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_YEAR,
+							   GetFolderFlags(numFolders));
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
@@ -1016,12 +1026,10 @@ BOOL InitFolders(void)
 	{
 		fData = &g_lpFolderData[i];
 		/* get the saved folder flags */
-		dwFolderFlags = GetFolderFlags(fData->m_lpTitle);
+		dwFolderFlags = GetFolderFlags(numFolders);
 		/* create the folder */
-		treeFolders[numFolders] = NewFolder(fData->m_lpTitle, fData->m_nFolderId, -1,
-											fData->m_nIconId, dwFolderFlags);
-		if (treeFolders[numFolders])
-			numFolders++;
+		AddFolder(NewFolder(fData->m_lpTitle, fData->m_nFolderId, -1,
+							fData->m_nIconId, dwFolderFlags));
 	}
 	
 	numExtraFolders = InitExtraFolders();
@@ -1031,14 +1039,11 @@ BOOL InitFolders(void)
 		LPEXFOLDERDATA  fExData = ExtraFolderData[i];
 
 		// OR in the saved folder flags
-		dwFolderFlags = fExData->m_dwFlags | GetFolderFlags(fExData->m_szTitle);
+		dwFolderFlags = fExData->m_dwFlags | GetFolderFlags(numFolders);
 		// create the folder
 		//dprintf("creating top level custom folder with icon %i",fExData->m_nIconId);
-		treeFolders[numFolders] = NewFolder(fExData->m_szTitle,
-		                                    fExData->m_nFolderId, fExData->m_nParent,
-		                                    fExData->m_nIconId, dwFolderFlags);
-		if (treeFolders[numFolders])
-			 numFolders++;
+		AddFolder(NewFolder(fExData->m_szTitle,fExData->m_nFolderId,fExData->m_nParent,
+							fExData->m_nIconId,dwFolderFlags));
 	}
 
 	CreateAllChildFolders();
@@ -1392,8 +1397,6 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 				/* or in the set filters */
 				lpCurrentFolder->m_dwFlags |= dwFilters;
 
-				/* Save the filters to the Registry */
-				SetFolderFlags(lpCurrentFolder->m_lpTitle, dwFilters);
 				EndDialog(hDlg, 1);
 				return TRUE;
 
@@ -1733,13 +1736,11 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
                     /* create a new folder with this name,
                        and the flags for this folder as read from the registry */
 
-                    lpTemp = NewFolder( name, 
-                                        current_id,
-                                        parent_index,
-                                        ExtraFolderData[id]->m_nSubIconId,
-                                        GetFolderFlags( name ) | F_CUSTOM);
+                    lpTemp = NewFolder(name,current_id,parent_index,
+									   ExtraFolderData[id]->m_nSubIconId,
+									   GetFolderFlags(numFolders) | F_CUSTOM);
 
-                    AddFolder( lpTemp );
+                    AddFolder(lpTemp);
                 }
             }
         }

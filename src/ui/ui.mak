@@ -34,6 +34,7 @@ OSOBJS += \
         $(OBJ)/ui/datamap.o \
         $(OBJ)/ui/dxdecode.o \
 		$(OBJ)/ui/help.o \
+	$(OBJ)/ui/history.o \
 		$(OBJ)/mess/ui/layoutms.o \
 		$(OBJ)/mess/ui/mess32ui.o \
 		$(OBJ)/mess/ui/ms32util.o \

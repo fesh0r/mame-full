@@ -74,7 +74,7 @@ DIRECTORYINFO g_directoryInfo[] =
 {
 	{ "BIOSes",                GetRomDirs,      SetRomDirs,      TRUE,  DIRDLG_ROMS },
 	{ "Software",              GetSoftwareDirs, SetSoftwareDirs, TRUE,  DIRDLG_SOFTWARE },
-	{ "Ini Files",             GetIniDirs,      SetIniDirs,      TRUE,  DIRDLG_INI },
+	{ "Ini Files",             GetIniDir,       SetIniDir,       FALSE, DIRDLG_INI },
 	{ "CRC",                   GetCrcDir,       SetCrcDir,       FALSE, 0 },
 	{ "Config",                GetCfgDir,       SetCfgDir,       FALSE, DIRDLG_CFG },
 	{ "High Scores",           GetHiDir,        SetHiDir,        FALSE, DIRDLG_HI },

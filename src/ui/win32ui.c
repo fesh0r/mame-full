@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2003 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
   distributed under the terms of the MAME license, in "readme.txt".
@@ -61,6 +61,7 @@
 #include "TreeView.h"
 #include "Splitters.h"
 #include "help.h"
+#include "history.h"
 
 #include "DirectDraw.h"
 #include "DirectInput.h"
@@ -623,7 +624,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -rompath \"%s\"",            GetRomDirs());
 #endif
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -samplepath \"%s\"",         GetSampleDirs());
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -inipath \"%s\"",			GetIniDirs());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -inipath \"%s\"",			GetIniDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cfg_directory \"%s\"",      GetCfgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -nvram_directory \"%s\"",    GetNvramDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -memcard_directory \"%s\"",  GetMemcardDir());
@@ -1394,7 +1395,7 @@ int GetGameNameIndex(const char *name)
 								DriverDataCompareFunc);
 
 	if (driver_index_info == NULL)
-		return -1; // shouldn't happen
+		return -1;
 
 	return driver_index_info->index;
 
@@ -1863,6 +1864,9 @@ static void Win32UI_exit()
 	DirectDraw_Close();
 
 	SetSavedFolderID(GetCurrentFolderID());
+
+	SaveOptions();
+
 	FreeFolders();
 	SetViewMode(current_view_id - ID_VIEW_LARGE_ICON);
 
@@ -1873,8 +1877,6 @@ static void Win32UI_exit()
 	OptionsExit();
 
 	HelpExit();
-
-	SplittersExit();
 }
 
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
@@ -2033,7 +2035,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 			/* Save the users current game options and default game */
 			nItem = GetSelectedPickItem();
-			SetDefaultGame(ModifyThe(drivers[nItem]->description));
+			SetDefaultGame(ModifyThe(drivers[nItem]->name));
 
 #ifdef MESS
 			/* Set the default software in the pane */
@@ -2224,11 +2226,11 @@ static BOOL GameCheck(void)
 
 static void OnIdle()
 {
-	LV_FINDINFO lvfi;
-	int 		i;
-	char*		pDescription;
 	static int	bFirstTime = TRUE;
 	static int	bResetList = TRUE;
+
+	char *pDescription;
+	int driver_index;
 
 	if (bFirstTime)
 	{
@@ -2241,13 +2243,12 @@ static void OnIdle()
 		return;
 	}
 
-	lvfi.flags = LVFI_STRING;
-	lvfi.psz   = GetDefaultGame();
-	i = ListView_FindItem(hwndList, -1, &lvfi);
+	driver_index = GetGameNameIndex(GetDefaultGame());
+	SetSelectedPickItem(driver_index);
+	// in case it's not found, get it back
+	driver_index = GetSelectedPickItem();
 
-	SetSelectedPick((i != -1) ? i : 0);
-	i = GetSelectedPickItem();
-	pDescription = ModifyThe(drivers[i]->description);
+	pDescription = ModifyThe(drivers[driver_index]->description);
 	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)pDescription);
 	idle_work = FALSE;
 	UpdateStatusBar();
@@ -2593,7 +2594,7 @@ static void UpdateHistory(void)
 
 	if (GetSelectedPick() >= 0)
 	{
-		char *histText = GameHistory(GetSelectedPickItem());
+		char *histText = GetGameHistory(GetSelectedPickItem());
 
 		have_history = (histText && histText[0]) ? TRUE : FALSE;
 		Edit_SetText(GetDlgItem(hMain, IDC_HISTORY), histText);
@@ -2670,7 +2671,7 @@ static void EnableSelection(int nGame)
 
 	if (bProgressShown && bListReady == TRUE)
 	{
-		SetDefaultGame(ModifyThe(drivers[nGame]->description));
+		SetDefaultGame(ModifyThe(drivers[nGame]->name));
 	}
 	have_selection = TRUE;
 
@@ -3505,7 +3506,10 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_GAME_AUDIT:
 		InitGameAudit(0);
 		if (!oldControl)
+		{
 			InitPropertyPageToPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon(), AUDIT_PAGE);
+			SaveGameOptions(GetSelectedPickItem());
+		}
 		/* Just in case the toggle MMX on/off */
 		UpdateStatusBar();
 	   break;
@@ -3635,6 +3639,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 								hMain,
 								DirectoriesDialogProc);
 
+			SaveDefaultOptions();
+
 			bUpdateRoms    = ((nResult & DIRDLG_ROMS)	 == DIRDLG_ROMS)	? TRUE : FALSE;
 			bUpdateSamples = ((nResult & DIRDLG_SAMPLES) == DIRDLG_SAMPLES) ? TRUE : FALSE;
 #ifdef MESS
@@ -3661,6 +3667,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_OPTIONS_INTERFACE:
 		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_INTERFACE_OPTIONS),
 				  hMain, InterfaceDialogProc);
+		SaveDefaultOptions();
 		return TRUE;
 
 	case ID_OPTIONS_BG:
@@ -3856,7 +3863,6 @@ static void InitListView()
 /* Re/initialize the ListControl Columns */
 static void ResetColumnDisplay(BOOL first_time)
 {
-	LV_FINDINFO lvfi;
 	LV_COLUMN   lvc;
 	int         i;
 	int         nColumn;
@@ -3864,6 +3870,7 @@ static void ResetColumnDisplay(BOOL first_time)
 	int         order[COLUMN_MAX];
 	int         shown[COLUMN_MAX];
 	int shown_columns;
+	int driver_index;
 
 	GetColumnWidths(widths);
 	GetColumnOrder(order);
@@ -3935,12 +3942,8 @@ static void ResetColumnDisplay(BOOL first_time)
 
 	ResetListView();
 
-	lvfi.flags = LVFI_STRING;
-	lvfi.psz = GetDefaultGame();
-
-	i = ListView_FindItem(hwndList, -1, &lvfi);
-
-	SetSelectedPick(i);
+	driver_index = GetGameNameIndex(GetDefaultGame());
+	SetSelectedPickItem(driver_index);
 }
 
 static int GetRealColumnFromViewColumn(int view_column)
@@ -4815,15 +4818,15 @@ static int GetIconForDriver(int nItem)
 	 * also must match IDI_WIN_NOROMS + iconRoms
      */
 
-	/* Show Red-X if the ROMs are present and flaged as NOT WORKING */
+	// Show Red-X if the ROMs are present and flagged as NOT WORKING
 	if (iconRoms == 1 && DriverIsBroken(nItem))
 		iconRoms = 4;
 
-	/* show clone icon if we have roms and game is working */
+	// show clone icon if we have roms and game is working
 	if (iconRoms == 1 && DriverIsClone(nItem))
 		iconRoms = 3;
 
-	/* if we have the roms, then look for a custom per-game icon to override */
+	// if we have the roms, then look for a custom per-game icon to override
 	if (iconRoms == 1 || iconRoms == 3)
 	{
 		if (icon_index[nItem] == 0)
@@ -5908,8 +5911,8 @@ INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPA
 					tvi.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 					tvi.pszText = folders[i]->m_lpTitle;
 					tvi.lParam = (LPARAM)folders[i];
-					tvi.iImage = folders[i]->m_nIconId;
-					tvi.iSelectedImage = folders[i]->m_nIconId;
+					tvi.iImage = GetTreeViewIconIndex(folders[i]->m_nIconId);
+					tvi.iSelectedImage = 0;
 #if defined(__GNUC__) /* bug in commctrl.h */
 					tvis.item = tvi;
 #else
@@ -5929,8 +5932,8 @@ INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPA
 							tvi.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 							tvi.pszText = folders[jj]->m_lpTitle;
 							tvi.lParam = (LPARAM)folders[jj];
-							tvi.iImage = folders[jj]->m_nIconId;
-							tvi.iSelectedImage = folders[jj]->m_nIconId;
+							tvi.iImage = GetTreeViewIconIndex(folders[jj]->m_nIconId);
+							tvi.iSelectedImage = 0;
 #if defined(__GNUC__) /* bug in commctrl.h */
 					        tvis.item = tvi;
 #else

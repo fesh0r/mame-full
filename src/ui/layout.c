@@ -79,7 +79,7 @@ DIRECTORYINFO g_directoryInfo[] =
 {
 	{ "ROMs",                  GetRomDirs,      SetRomDirs,      TRUE,  DIRDLG_ROMS },
 	{ "Samples",               GetSampleDirs,   SetSampleDirs,   TRUE,  DIRDLG_SAMPLES },
-	{ "Ini Files",             GetIniDirs,      SetIniDirs,      TRUE,  DIRDLG_INI },
+	{ "Ini Files",             GetIniDir,       SetIniDir,       FALSE, DIRDLG_INI },
 	{ "Config",                GetCfgDir,       SetCfgDir,       FALSE, DIRDLG_CFG },
 	{ "High Scores",           GetHiDir,        SetHiDir,        FALSE, DIRDLG_HI },
 	{ "Snapshots",             GetImgDir,       SetImgDir,       FALSE, DIRDLG_IMG },

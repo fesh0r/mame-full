@@ -35,9 +35,6 @@ BOOL    FindRomSet(int game);
 BOOL    FindSampleSet(int game);
 
 /* Get Game status text string */
-const char*   GameInfoStatus(UINT game);
-
-/* Get Game history information */
-char*   GameHistory(int game_index);
+const char *GameInfoStatus(int driver_index);
 
 #endif
