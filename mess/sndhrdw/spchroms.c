@@ -12,6 +12,7 @@
 */
 
 #include "spchroms.h"
+#include "driver.h"
 
 static UINT8 *speechrom_data = NULL;	/* pointer to speech ROM data */
 static unsigned long speechROMlen = 0;	/* length of data pointed by speechrom_data, from 0 to 2^18 */

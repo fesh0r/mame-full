@@ -26,6 +26,8 @@
 */
 
 #include "sonydriv.h"
+#include "mame.h"
+#include "timer.h"
 
 #ifdef MAME_DEBUG
 #define LOG_SONY		1

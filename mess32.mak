@@ -457,6 +457,7 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/apple2.o	\
           $(OBJ)/mess/sndhrdw/mac.o      \
           $(OBJ)/mess/machine/iwm.o      \
+          $(OBJ)/mess/machine/sonydriv.o      \
           $(OBJ)/mess/vidhrdw/mac.o      \
           $(OBJ)/mess/machine/mac.o      \
           $(OBJ)/mess/systems/mac.o	\
@@ -471,6 +472,7 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/tms9901.o  \
           $(OBJ)/mess/machine/ti99_4x.o  \
           $(OBJ)/mess/systems/ti99_4x.o  \
+          $(OBJ)/mess/sndhrdw/spchroms.o  \
           $(OBJ)/mess/vidhrdw/astrocde.o \
           $(OBJ)/mess/machine/astrocde.o \
           $(OBJ)/mess/systems/astrocde.o	\
