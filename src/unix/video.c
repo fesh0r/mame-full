@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "profiler.h"
-#include "input.h"
+#include "devices.h"
 #include "artwork.h"
 /* for uclock */
 #include "sysdep/misc.h"
