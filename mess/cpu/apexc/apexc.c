@@ -145,7 +145,8 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	with the contents of Y when instruction execution is complete, so that the next fetch
 	can be executed correctly.
 */
-
+#include "driver.h"
+#include "mamedbg.h"
 #include "apexc.h"
 
 typedef struct
@@ -179,7 +180,7 @@ int apexc_ICount;
 static apexc_regs apexc;
 
 /* decrement ICount by n */
-#define DELAY(n)	{apexc_ICount -= n; apexc.current_word = (apexc.current_word + n) & 0x1f;}
+#define DELAY(n)	{apexc_ICount -= (n); apexc.current_word = (apexc.current_word + (n)) & 0x1f;}
 
 /* set/clear/get running and tracing flags flag */
 #define set_running_flag apexc.flags |= flag_running
@@ -341,7 +342,7 @@ static void word_write(UINT32 data, UINT32 mask, int vector)
 	no address is used, these functions just punch or read 5 bits
 */
 
-static int papertape_read()
+static int papertape_read(void)
 {
 	return cpu_readport16bedw(0) & 0x1f;
 }
