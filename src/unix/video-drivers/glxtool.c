@@ -405,14 +405,14 @@ VisualGC LIBAPIENTRY findVisualGlX( Display *display,
     {
 	    (void) setGLCapabilities (display, vgc.visual, glCaps);
 
-	    fprintf(stderr, "\nfindVisualGlX results vi(ID:%d): \n screen %d, depth %d, class %d,\n clrmapsz %d, bitsPerRGB %d, shared with %d\n",
+	    fprintf(stderr, "\nfindVisualGlX results vi(ID:%d): \n screen %d, depth %d, class %d,\n clrmapsz %d, bitsPerRGB %d, shared with %ld\n",
 		(int)vgc.visual->visualid,
 		(int)vgc.visual->screen,
 		(int)vgc.visual->depth,
 		(int)vgc.visual->class,
 		(int)vgc.visual->colormap_size,
 		(int)vgc.visual->bits_per_rgb,
-		(int)shareWith);
+		(unsigned long)shareWith);
     }
 
     return vgc;
