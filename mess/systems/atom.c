@@ -269,9 +269,9 @@ static struct MachineDriver machine_driver_atom =
 	atom_stop_machine,
 
 	/* video hardware */
-	32*8,										/* screen width */
-	16*12,									/* screen height (pixels doubled) */
-	{ 0, 32*8-1, 0, 16*12-1},					/* visible_area */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
 	0,							/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
