@@ -26,7 +26,7 @@ extern unsigned char vdt911_palette[];
 extern unsigned short vdt911_colortable[];
 enum
 {
-	vdt911_palette_size = 3 * 3,
+	vdt911_palette_size = 3 /** 3*/,
 	vdt911_colortable_size = 4 * 2
 };
 
@@ -52,7 +52,7 @@ typedef struct vdt911_init_params_t
 	void (*int_callback)(int state);
 } vdt911_init_params_t;
 
-void vdt911_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy);
+void palette_init_vdt911(unsigned short *colortable, const unsigned char *dummy);
 
 void vdt911_init(void);
 int vdt911_init_term(int unit, const vdt911_init_params_t *params);
@@ -65,7 +65,7 @@ void vdt911_cru_w(int offset, int data, int unit);
 READ16_HANDLER(vdt911_0_cru_r);
 WRITE16_HANDLER(vdt911_0_cru_w);
 
-void vdt911_refresh(struct mame_bitmap *bitmap, int full_refresh, int unit, int x, int y);
+void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y);
 
 void vdt911_keyboard(int unit);
 

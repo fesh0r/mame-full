@@ -67,14 +67,14 @@ struct GfxDecodeInfo vdt911_gfxdecodeinfo[] =
 	{ -1 }	/* end of array */
 };
 
-unsigned char vdt911_palette[] =
+unsigned char vdt911_palette[vdt911_palette_size*3] =
 {
 	0x00,0x00,0x00,	/* black */
 	0xC0,0xC0,0xC0,	/* low intensity */
 	0xFF,0xFF,0xFF	/* high intensity */
 };
 
-unsigned short vdt911_colortable[] =
+unsigned short vdt911_colortable[vdt911_colortable_size] =
 {
 	0, 2,	/* high intensity */
 	0, 1,	/* low intensity */
@@ -95,7 +95,7 @@ typedef struct vdt_t
 	unsigned int cursor_address_mask; /* 1023 for 960-char model, 2047 for 1920-char model */
 
 	void *beep_timer;
-	void *blink_clock;
+	/*void *blink_clock;*/
 
 	UINT8 keyboard_data;
 	unsigned int keyboard_data_ready : 1;
@@ -114,20 +114,19 @@ typedef struct vdt_t
 static vdt_t vdt[MAX_VDT];
 
 static void blink_callback(int unit);
+static void beep_callback(int unit);
 
 /*
 	Initialize vdt911 palette
 */
-void vdt911_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
+void palette_init_vdt911(unsigned short *colortable, const unsigned char *dummy)
 {
-	if ((sizeof(vdt911_palette) != vdt911_palette_size)
-		|| (sizeof(vdt911_colortable) != (vdt911_colortable_size*2)))
-	{
-		logerror("Major internal error\n");
-		exit(1);
-	}
+	int i;
 
-	memcpy(palette, & vdt911_palette, sizeof(vdt911_palette));
+	/*memcpy(palette, & vdt911_palette, sizeof(vdt911_palette));*/
+	for (i=0; i<vdt911_palette_size; i++)
+		palette_set_color(i, vdt911_palette[3*i], vdt911_palette[3*i+1], vdt911_palette[3*i+2]);
+
 	memcpy(colortable, & vdt911_colortable, sizeof(vdt911_colortable));
 }
 
@@ -226,7 +225,10 @@ int vdt911_init_term(int unit, const vdt911_init_params_t *params)
 	beep_set_frequency(unit, 2000);
 
 	/* set up cursor blink clock.  2Hz frequency -> .25s half-period. */
-	vdt[unit].blink_clock = timer_pulse(TIME_IN_SEC(.25), unit, blink_callback);
+	/*vdt[unit].blink_clock =*/ timer_pulse(TIME_IN_SEC(.25), unit, blink_callback);
+
+	/* alloc beep timer */
+	vdt[unit].beep_timer = timer_alloc(beep_callback);
 
 	return 0;
 }
@@ -252,8 +254,6 @@ static void blink_callback(int unit)
 static void beep_callback(int unit)
 {
 	beep_set_state(unit, 0);
-
-	vdt[unit].beep_timer = NULL;
 }
 
 /*
@@ -270,7 +270,7 @@ int vdt911_cru_r(int offset, int unit)
 		switch (offset)
 		{
 		case 0:
-			reply = /*vdt[unit].data_reg*/vdt[unit].display_RAM[vdt[unit].cursor_address];
+			reply = vdt[unit].display_RAM[vdt[unit].cursor_address];
 			break;
 
 		case 1:
@@ -351,7 +351,7 @@ void vdt911_cru_w(int offset, int data, int unit)
 				vdt[unit].cursor_address++;
 			vdt[unit].cursor_address &= vdt[unit].cursor_address_mask;
 
-			vdt[unit].data_reg = vdt[unit].display_RAM[vdt[unit].cursor_address];
+			//vdt[unit].data_reg = vdt[unit].display_RAM[vdt[unit].cursor_address];
 			break;
 
 		case 0xb:
@@ -404,7 +404,7 @@ void vdt911_cru_w(int offset, int data, int unit)
 				vdt[unit].cursor_address &= ~ (1 << offset);
 			vdt[unit].cursor_address &= vdt[unit].cursor_address_mask;
 
-			vdt[unit].data_reg = vdt[unit].display_RAM[vdt[unit].cursor_address];
+			//vdt[unit].data_reg = vdt[unit].display_RAM[vdt[unit].cursor_address];
 			break;
 
 		case 0xb:
@@ -429,15 +429,9 @@ void vdt911_cru_w(int offset, int data, int unit)
 
 		case 0xe:
 			/* beep enable strobe - not tested */
-			if (vdt[unit].beep_timer)
-			{
-				timer_remove(vdt[unit].beep_timer);
-				vdt[unit].beep_timer = NULL;
-			}
-			else
-				beep_set_state(unit, 1);
+			beep_set_state(unit, 1);
 
-			vdt[unit].beep_timer = timer_set(TIME_IN_SEC(.3), unit, beep_callback);
+			timer_adjust(vdt[unit].beep_timer, TIME_IN_SEC(.3), unit, 0.);
 			break;
 
 		case 0xf:
@@ -460,7 +454,7 @@ WRITE16_HANDLER(vdt911_0_cru_w)
 }
 
 
-void vdt911_refresh(struct mame_bitmap *bitmap, int full_refresh, int unit, int x, int y)
+void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
 {
 	const struct GfxElement *gfx = Machine->gfx[unit];
 	int height = (vdt[unit].screen_size == char_960) ? 12 : /*25*/24;
