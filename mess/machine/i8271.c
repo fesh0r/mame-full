@@ -44,10 +44,6 @@ static I8271 i8271;
 #define FDC_LOG_COMMAND(x)
 #endif
 
-
-static int floppy_drive_status[4] = {
-	0,0};
-
 void	i8271_init(i8271_interface *iface)
 {
 	memset(&i8271, 0, sizeof(I8271));
@@ -232,8 +228,11 @@ static int i8271_read_bad_track(int surface, int track)
 
 static void i8271_get_drive(void)
 {
-	/* 01 = drive 0 side 0 */
-	/* 10 = drive 1 side 1 */
+	/* &40 = drive 0 side 0 */
+	/* &80 = drive 1 side 0 */
+
+
+	
 	if (i8271.CommandRegister & (1<<6))
 	{
 		i8271.drive = 0;
@@ -406,8 +405,6 @@ static void i8271_clear_data_request(void)
 	else
 	{
 		/* dma */
-		i8271.StatusRegister &= ~I8271_STATUS_NON_DMA_REQUEST;
-
 		i8271_set_dma_drq();
 	}
 }
@@ -440,7 +437,7 @@ static void i8271_command_continue(void)
 		case I8271_COMMAND_WRITE_DATA_SINGLE_RECORD:
 		{
 			/* get the sector into the buffer */
-			floppy_drive_read_sector_data(i8271.drive, 0, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
+			floppy_drive_read_sector_data(i8271.drive, i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
 
 			/* completed all sectors? */
 			i8271.Counter--;
@@ -484,7 +481,7 @@ static void i8271_do_read(void)
 	if (i8271_find_sector())
 	{
 		/* get the sector into the buffer */
-		floppy_drive_read_sector_data(i8271.drive, 0, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
+		floppy_drive_read_sector_data(i8271.drive, i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
 			
 		/* initialise for reading */
         i8271_initialise_execution_phase_read(1<<(i8271.ID_N+7));
@@ -505,7 +502,7 @@ static void i8271_do_read_id(void)
 	chrn_id	id;
 
 	/* get next id from disc */
-	floppy_drive_get_next_id(i8271.drive, 0,&id);
+	floppy_drive_get_next_id(i8271.drive, i8271.side,&id);
 
 	i8271.pExecutionPhaseData[0] = id.C;
 	i8271.pExecutionPhaseData[1] = id.H;
@@ -553,24 +550,25 @@ static int i8271_find_sector(void)
 		chrn_id id;
 
 		/* get next id from disc */
-		floppy_drive_get_next_id(i8271.drive, 0,&id);
-
-		/* tested on Amstrad CPC - All bytes must match, otherwise
-		a NO DATA error is reported */
-		if (id.R == i8271.ID_R)
+		if (floppy_drive_get_next_id(i8271.drive, i8271.side,&id))
 		{
-			/* TODO: Is this correct? What about bad tracks? */
-			if (id.C == i8271.CurrentTrack[i8271.drive])
+			/* tested on Amstrad CPC - All bytes must match, otherwise
+			a NO DATA error is reported */
+			if (id.R == i8271.ID_R)
 			{
-				i8271.data_id = id.data_id;
-				return 1;
-			}
-			else
-			{
-				/* TODO: if track doesn't match, the real 8271 does a step */
+				/* TODO: Is this correct? What about bad tracks? */
+				if (id.C == i8271.CurrentTrack[i8271.drive])
+				{
+					i8271.data_id = id.data_id;
+					return 1;
+				}
+				else
+				{
+					/* TODO: if track doesn't match, the real 8271 does a step */
 
 
-				return 0;
+					return 0;
+				}
 			}
 		}
 
@@ -699,7 +697,7 @@ static void i8271_command_execute(void)
 					/* assumption: select bits reflect the select bits from the previous
 					command. i.e. read drive status */
 					data = (i8271.drive_control_output & ~0x0c0)
-						| ((i8271.drive)<<6);
+						| (i8271.CommandRegister & 0x0c0);
 
 
 				}
@@ -879,6 +877,9 @@ static void i8271_command_execute(void)
 					/* get drive */
 					i8271_get_drive();
 
+					/* on bbc dfs 09 this is the side select output */
+					i8271.side = (i8271.CommandParameters[1]>>5) & 0x01;
+
 					/* load head - on mini-sized drives this turns on the disc motor,
 					on standard-sized drives this loads the head and turns the motor on */
 					floppy_drive_set_motor_state(i8271.drive, i8271.CommandParameters[1] & 0x08);
@@ -930,23 +931,39 @@ static void i8271_command_execute(void)
 
 		case I8271_COMMAND_READ_DRIVE_STATUS:
 		{
+			unsigned char status;
+
 			i8271_get_drive();
 
-			floppy_drive_status[i8271.drive] = (1<<6) | (1<<2);
+			/* no write fault */
+			status = 0;
 			
-			/* bit 3 = 0 if write protected */
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+			status |= (1<<2) | (1<<6);
+
+			/* these two do not appear to be set at all! ?? */
+			if (floppy_drive_get_flag_state(0, FLOPPY_DRIVE_READY))
 			{
-				floppy_drive_status[i8271.drive] |= (1<<3);
+				status |= (1<<2);
 			}
 
-			/* bit 1 = 0 if head at track 0 */
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			if (floppy_drive_get_flag_state(1, FLOPPY_DRIVE_READY))
 			{
-				floppy_drive_status[i8271.drive] |= (1<<1);
+				status |= (1<<6);
+			}
+			
+			/* bit 3 = 1 if write protected */
+			if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+			{
+				status |= (1<<3);
 			}
 
-			i8271.ResultRegister = floppy_drive_status[i8271.drive];
+			/* bit 1 = 1 if head at track 0 */
+			if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			{
+				status |= (1<<1);
+			}
+
+			i8271.ResultRegister = status;
 			i8271_command_complete(1,0);
 
 		}
@@ -1225,11 +1242,18 @@ WRITE_HANDLER(i8271_w)
 				break;
 
 				case I8271_COMMAND_READ_SPECIAL_REGISTER:
-				case I8271_COMMAND_WRITE_SPECIAL_REGISTER:
 				{
-					FDC_LOG_COMMAND("READ/WRITE SPECIAL REGISTER");
+					FDC_LOG_COMMAND("READ SPECIAL REGISTER");
 
 					i8271.ParameterCount = 1;
+				}
+				break;
+
+				case I8271_COMMAND_WRITE_SPECIAL_REGISTER:
+				{
+					FDC_LOG_COMMAND("WRITE SPECIAL REGISTER");
+
+					i8271.ParameterCount = 2;
 				}
 				break;
 
