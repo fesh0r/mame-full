@@ -19,6 +19,7 @@ const TCHAR wimgtool_class[] = TEXT("wimgtoolclass");
 struct wimgtool_info
 {
 	HWND listview;
+	HWND statusbar;
 	IMAGE *image;
 	HIMAGELIST iconlist_normal;
 	HIMAGELIST iconlist_small;
@@ -219,7 +220,8 @@ done:
 
 
 
-static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, HWND window, memory_pool *pool)
+static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *pool,
+	HWND window, int has_autodetect_option)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	mess_pile pile;
@@ -230,6 +232,14 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, HWND window, me
 
 	memset(ofn, 0, sizeof(*ofn));
 	pile_init(&pile);
+
+	if (has_autodetect_option)
+	{
+		pile_puts(&pile, "Autodetect (*.*)");
+		pile_putc(&pile, '\0');
+		pile_puts(&pile, "*.*");
+		pile_putc(&pile, '\0');
+	}
 
 	// write out library modules
 	while((module = imgtool_library_iterate(library, module)) != NULL)
@@ -299,7 +309,7 @@ static void menu_new(HWND window)
 
 	pool_init(&pool);
 
-	err = setup_openfilename_struct(&ofn, window, &pool);
+	err = setup_openfilename_struct(&ofn, &pool, window, FALSE);
 	if (err)
 		goto done;
 	if (!GetSaveFileName(&ofn))
@@ -321,20 +331,33 @@ static void menu_open(HWND window)
 	memory_pool pool;
 	OPENFILENAME ofn;
 	const struct ImageModule *module = NULL;
+	const char *filename;
 	IMAGE *image;
 	struct wimgtool_info *info;
+	char buf[256];
 
 	info = get_wimgtool_info(window);
 	pool_init(&pool);
 
-	err = setup_openfilename_struct(&ofn, window, &pool);
+	err = setup_openfilename_struct(&ofn, &pool, window, TRUE);
 	if (err)
 		goto done;
 	if (!GetOpenFileName(&ofn))
 		goto done;
 
-	module = imgtool_library_index(library, ofn.nFilterIndex - 1);
-	err = img_open(module, ofn.lpstrFile, (ofn.Flags & OFN_READONLY)
+	filename = T2A(ofn.lpstrFile);
+
+	if (ofn.nFilterIndex <= 1)
+	{
+		err = img_identify(library, filename, &module, 1);
+		if (err)
+			goto done;
+	}
+	else
+	{
+		module = imgtool_library_index(library, ofn.nFilterIndex - 2);
+	}
+	err = img_open(module, filename, (ofn.Flags & OFN_READONLY)
 		? OSD_FOPEN_READ : OSD_FOPEN_RW, &image);
 	if (err)
 		goto done;
@@ -343,8 +366,12 @@ static void menu_open(HWND window)
 		img_close(info->image);
 	info->image = image;
 
+	// refresh the window
 	SetWindowText(window, ofn.lpstrFile);
 	refresh_image(window);
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+		"%s: %s", osd_basename((char *) filename), module->description);
+	SetWindowText(info->statusbar, buf);
 
 done:
 	if (err)
@@ -497,6 +524,13 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 		return -1;
 	set_listview_style(window, LVS_REPORT);
 
+	// create the status bar
+	info->statusbar = CreateWindow(STATUSCLASSNAME, NULL, WS_VISIBLE | WS_CHILD,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, window, NULL, NULL, NULL);
+	if (!info->statusbar)
+		return -1;
+
+	// create the listview columns
 	col.mask = LVCF_TEXT | LVCF_WIDTH;
 	col.pszText = (LPTSTR) TEXT("Filename");
 	col.cx = 100;
@@ -506,6 +540,7 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	if (ListView_InsertColumn(info->listview, 1, &col) < 0)
 		return -1;
 
+	// create imagelists
 	info->iconlist_normal = ImageList_Create(32, 32, ILC_COLOR, 0, 0);
 	info->iconlist_small = ImageList_Create(16, 16, ILC_COLOR, 0, 0);
 	if (!info->iconlist_normal || !info->iconlist_small)
@@ -521,7 +556,11 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	struct wimgtool_info *info;
-	RECT r;
+	RECT window_rect;
+	RECT status_rect;
+	int window_width;
+	int window_height;
+	int status_height;
 
 	info = get_wimgtool_info(window);
 
@@ -543,9 +582,17 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			break;
 
 		case WM_SIZE:
-			GetClientRect(window, &r);
-			SetWindowPos(info->listview, NULL, 0, 0, r.right - r.left,
-				r.bottom - r.top, SWP_NOMOVE | SWP_NOZORDER);
+			GetClientRect(window, &window_rect);
+			GetClientRect(info->statusbar, &status_rect);
+
+			window_width = window_rect.right - window_rect.left;
+			window_height = window_rect.bottom - window_rect.top;
+			status_height = status_rect.bottom - status_rect.top;
+
+			SetWindowPos(info->listview, NULL, 0, 0, window_width,
+				window_height - status_height, SWP_NOMOVE | SWP_NOZORDER);
+			SetWindowPos(info->statusbar, NULL, 0, window_height - status_height,
+				window_width, status_height, SWP_NOMOVE | SWP_NOZORDER);
 			break;
 
 		case WM_INITMENU:

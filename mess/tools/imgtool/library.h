@@ -23,6 +23,13 @@ struct tagIMAGE;
 struct tagIMAGEENUM;
 typedef struct _imgtool_library imgtool_library;
 
+typedef enum
+{
+	ITSL_NAME,
+	ITLS_DESCRIPTION
+}
+imgtool_libsort_t;
+
 typedef struct
 {
 	char *fname;
@@ -72,6 +79,9 @@ imgtool_library *imgtool_library_create(void);
 
 /* closes an imgtool library */
 void imgtool_library_close(imgtool_library *library);
+
+/* sorts an imgtool library */
+void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort);
 
 /* creates an imgtool module; called within module constructors */
 imgtoolerr_t imgtool_library_createmodule(imgtool_library *library,

@@ -34,6 +34,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	err = imgtool_create_cannonical_library(&library);
 	if (!library)
 		goto done;
+	imgtool_library_sort(library, ITLS_DESCRIPTION);
 
 	window = CreateWindow(wimgtool_class, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);

@@ -1,3 +1,12 @@
+/****************************************************************************
+
+	library.c
+
+	Code relevant to the Imgtool library; analgous to the MESS/MAME driver
+	list.
+
+****************************************************************************/
+
 #include <assert.h>
 #include <string.h>
 
@@ -32,6 +41,13 @@ void imgtool_library_close(imgtool_library *library)
 {
 	pool_exit(&library->pool);
 	free(library);
+}
+
+
+
+void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort)
+{
+	/* NYI */
 }
 
 

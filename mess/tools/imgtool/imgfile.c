@@ -45,9 +45,13 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
 	IMAGE *image;
 	size_t i = 0;
 	const char *extension;
+	int null_terminate;
 
 	if (count <= 0)
 		return IMGTOOLERR_UNEXPECTED;
+	null_terminate = (count > 1);
+	if (null_terminate)
+		count--;
 
 	extension = strrchr(fname, '.');
 	if (extension)
@@ -70,7 +74,11 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
 			}
 		}
 	}
-	modules[i] = NULL;
+
+	if (i <= 0)
+		return IMGTOOLERR_MODULENOTFOUND;
+	if (null_terminate)
+		modules[i] = NULL;
 	return IMGTOOLERR_SUCCESS;
 }
 
