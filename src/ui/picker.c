@@ -743,6 +743,7 @@ void Picker_SetViewID(HWND hwndPicker, int nViewID)
 {
 	struct PickerInfo *pPickerInfo;
 	LONG_PTR nListViewStyle;
+	DWORD dwStyle;
 
 	pPickerInfo = GetPickerInfo(hwndPicker);
 
@@ -769,8 +770,33 @@ void Picker_SetViewID(HWND hwndPicker, int nViewID)
 			nListViewStyle = LVS_REPORT;
 			break;
 	}
-	SetWindowLong(hwndPicker, GWL_STYLE, (GetWindowLong(hwndPicker, GWL_STYLE)
-		& ~LVS_TYPEMASK) | nListViewStyle);
+
+	dwStyle = GetWindowLong(hwndPicker, GWL_STYLE);
+	if (GetUseXPControl())
+	{
+		// RS Microsoft must have changed something in the Ownerdraw handling with Version 6 of the Common Controls
+		// as on all other OSes it works without this...
+		if (nViewID == VIEW_LARGE_ICONS || nViewID == VIEW_SMALL_ICONS)
+		{
+			// remove Ownerdraw style for Icon views
+			dwStyle &= ~LVS_OWNERDRAWFIXED;
+			if( nViewID == VIEW_SMALL_ICONS )
+			{
+				// to properly get them to arrange, otherwise the entries might overlap
+				dwStyle &= ~LVS_TYPEMASK;
+				dwStyle |= LVS_ICON;
+			}
+		}
+		else
+		{
+			// add again..
+			dwStyle |= LVS_OWNERDRAWFIXED;
+		}
+	}
+
+	dwStyle &= ~LVS_TYPEMASK;
+	dwStyle |= nListViewStyle;
+	SetWindowLong(hwndPicker, GWL_STYLE, dwStyle);
 }
 
 
@@ -1279,6 +1305,7 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	BOOL        bDrawAsChild;
 	int indent_space;
 	BOOL		bColorChild = FALSE;
+	BOOL		bParentFound = FALSE;
 	int nParent;
 	HBITMAP		hBackground = GetBackgroundBitmap();
 	MYBITMAPINFO *pbmDesc = GetBackgroundInfo();
@@ -1337,9 +1364,26 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 		nParent = -1;
 	bDrawAsChild = (pPickerInfo->pCallbacks->pfnGetViewMode() == VIEW_GROUPED && (nParent >= 0));
 
+	/* only indent if parent is also in this view */
+	if ((nParent >= 0) && bDrawAsChild)
+	{
+		for (i = 0; i < ListView_GetItemCount(hWnd); i++)
+		{
+			lvi.mask = LVIF_PARAM;
+			lvi.iItem = i;
+			ListView_GetItem(hWnd, &lvi);
+
+			if (lvi.lParam == nParent)
+			{
+				bParentFound = TRUE;
+				break;
+			}
+		}
+	}
+
 	if (pPickerInfo->pCallbacks->pfnGetOffsetChildren && pPickerInfo->pCallbacks->pfnGetOffsetChildren())
 	{
-		if ((nParent < 0) && bDrawAsChild)
+		if (!bParentFound && bDrawAsChild)
 		{
 			/*Reset it, as no Parent is there*/
 			bDrawAsChild = FALSE;
@@ -1348,6 +1392,7 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 		else
 		{
 			nParent = -1;
+			bParentFound = FALSE;
 		}
 	}
 
