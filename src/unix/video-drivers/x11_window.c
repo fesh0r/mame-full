@@ -576,12 +576,12 @@ int x11_window_create_display (int bitmap_depth)
    fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
    if (bitmap_depth == 32)
    {
-      if (depth == 32 && Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+      if (depth == 32)
          x11_window_update_display_func = x11_window_update_32_to_32bpp_direct;
    }
    else if (bitmap_depth == 16)
    {
-      switch(depth)
+      switch (depth)
       {
          case 16:
             x11_window_update_display_func = x11_window_update_16_to_16bpp;
@@ -596,7 +596,7 @@ int x11_window_create_display (int bitmap_depth)
    }
    else
    {
-      switch(depth)
+      switch (depth)
       {
          case 8:
             x11_window_update_display_func = x11_window_update_8_to_8bpp;

@@ -243,8 +243,7 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 
 	if (bitmap_depth == 32)
 	{
-	    if (depth == 32 
-		&& Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	    if (depth == 32) 
 	    {
 		xf86ctx.xf86_dga_update_display_func =
 			xf86_dga_update_display_32_to_32bpp_direct;

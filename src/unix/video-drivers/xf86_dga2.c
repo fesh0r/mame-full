@@ -133,8 +133,7 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 		
 		if (mode_disabled(xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight, bitmap_depth))
 			continue;
-		if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
-			&& bitmap_depth == 32)
+		if (bitmap_depth == 32)
 		{
 			if (xf86ctx.modes[i].bitsPerPixel != 32)
 				continue;
@@ -250,8 +249,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 
 	if (bitmap_depth == 32)
 	{
-	    if (depth == 32 
-		&& Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	    if (depth == 32)
 	    {
 		xf86ctx.xf86_dga_update_display_func =
 			xf86_dga_update_display_32_to_32bpp_direct;
@@ -364,8 +362,7 @@ int xf86_dga2_create_display(int bitmap_depth)
 	xf86ctx.base_addr = xf86ctx.device->data;
 	xf86ctx.vidmode_changed = TRUE;
 
-	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT
-		&& bitmap_depth == 32)
+	if (bitmap_depth == 32)
 		depth = xf86ctx.device->mode.bitsPerPixel;
 	else
 		depth = xf86ctx.device->mode.depth;

@@ -449,7 +449,7 @@ int ph_window_create_display (int bitmap_depth)
 	fprintf(stderr_file, "Actual bits per pixel = %d...\n", depth);
     if (bitmap_depth == 32)
    {
-      if (depth == 32 && Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+      if (depth == 32)
          ph_window_update_display_func = ph_window_update_32_to_32bpp_direct;
    }
 	else if (bitmap_depth == 16)

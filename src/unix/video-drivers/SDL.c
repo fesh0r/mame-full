@@ -26,6 +26,7 @@
        Test mouse buttons (which games use them?)
 
 ***************************************************************************/
+#define PARANOIC
 #define __SDL_C
 
 #undef SDL_DEBUG
@@ -269,7 +270,7 @@ int sysdep_create_display(int depth)
    }
    else if (depth == 32)
    {
-      if (Vid_depth == 32 && Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+      if (Vid_depth == 32)
       {
          update_function = &sdl_update_rgb_direct_32bpp; 
       }
@@ -573,7 +574,7 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
       H_Palette_modified = 0;
    }
    
-#ifdef PANANOIC 
+#ifdef PARANOIC 
       memset(Offscreen_surface->pixels,'\0' ,Vid_height * Vid_width);
 #endif 
 

@@ -1117,11 +1117,11 @@ void InitTextures ()
       tsq->texobj=0;
 
       tsq->dirtyXoff=0; tsq->dirtyYoff=0; 
-      if (use_dirty)
+      /*if (use_dirty)
       {
 	      tsq->isDirty=GL_FALSE;
 	      tsq->dirtyWidth=-1; tsq->dirtyHeight=-1;
-      } else {
+      } else */{
 	      tsq->isDirty=GL_TRUE;
 	      tsq->dirtyWidth=text_width; tsq->dirtyHeight=text_height;
       }
@@ -1477,7 +1477,7 @@ void gl_mark_dirty(int x, int y, int x2, int y2)
 
 	screendirty = 1;
 
-	if (!use_dirty)
+	/*if (!use_dirty)*/
 		return;
 
 	wdecr=w; hdecr=h; xh=x; yh=y;
@@ -1640,11 +1640,11 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 		 gl_bitmap_format, gl_bitmap_type, square->texture);
 
            square->dirtyXoff=0; square->dirtyYoff=0; 
-	   if (use_dirty)
+	   /*if (use_dirty)
 	   {
 	      square->isDirty=GL_FALSE;
 	      square->dirtyWidth=-1; square->dirtyHeight=-1;
-           } else {
+           } else */{
 	      square->isDirty=GL_TRUE;
 	      square->dirtyWidth=text_width; square->dirtyHeight=text_height;
 	   }
@@ -2065,7 +2065,8 @@ sysdep_update_display (struct mame_bitmap *bitmap)
   UpdateGLDisplayEnd (bitmap);
 }
 
-void osd_save_snapshot(struct mame_bitmap *bitmap)
+void osd_save_snapshot(struct mame_bitmap *bitmap,
+		const struct rectangle *bounds)
 {
 	do_snapshot = 1;
 }
