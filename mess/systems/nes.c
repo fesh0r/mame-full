@@ -395,6 +395,25 @@ static struct MachineDriver machine_driver_nespal =
 
 static const struct IODevice io_famicom[] = {
     {
+        IO_CARTSLOT,        /* type */
+        1,                  /* count */
+        "nes\0",            /* file extensions */
+        IO_RESET_CPU,       /* reset if file changed */
+        0,
+        nes_init_cart,      /* init */
+        NULL,               /* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* tell */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
         IO_FLOPPY,          /* type */
         1,                  /* count */
         "dsk\0",            /* file extensions */
@@ -413,25 +432,6 @@ static const struct IODevice io_famicom[] = {
         NULL,               /* input_chunk */
         NULL,                /* output_chunk */
         nes_partialcrc      /* correct CRC */
-    },
-    {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "nes\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-        0,
-        nes_init_cart,      /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
     },
     { IO_END }
 };

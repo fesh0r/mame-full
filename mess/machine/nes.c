@@ -1078,7 +1078,6 @@ end:
 
 int nes_init_cart (int id)
 {
-
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
 	FILE *romfile;
@@ -1088,9 +1087,12 @@ int nes_init_cart (int id)
 	char m;
 	int i;
 
+	const char *sysname;
+	sysname = Machine->gamedrv->name;
+
 	if ((!device_filename(IO_CARTSLOT,id)) && (id == 0))
 	{
-		if(famicom_image_registered)
+		if(!strcmp(sysname, "famicom")) /* If its a famicom, then pass! */
 			return INIT_PASS;
 		else
 			return INIT_FAIL;
@@ -1318,10 +1320,14 @@ int nes_load_disk (int id)
 
 	if (!device_filename(IO_FLOPPY,id))
 	{
-		/* The cart will be checked next - if that also fails, then stop */
-		logerror("No floppy Disk specified - hope there is a cart!\n");
-		famicom_image_registered = 0;
-		return INIT_PASS;
+		/* The cart has passed, so this must fail if no image inserted */
+		if(!famicom_image_registered)
+		{
+			logerror("No Cart OR Floppy Disk specified!\n");
+			return INIT_FAIL;
+		}
+		else
+			return INIT_PASS;
 	}
 
 	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
@@ -1367,7 +1373,7 @@ int nes_load_disk (int id)
 	nes_fds.sides --;
 	nes_fds.data = realloc (nes_fds.data, nes_fds.sides * 65500);
 
-	logerror ("Number of sides: %d", nes_fds.sides);
+	logerror ("Number of sides: %d\n", nes_fds.sides);
 
 	osd_fclose (diskfile);
 	famicom_image_registered = 1;
