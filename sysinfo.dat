@@ -6644,11 +6644,75 @@ port for power supply
 $end
 
 #---------------------------------------------------------------------------------------------#
+$info=ti81
+$bio
+
+Texas Instruments TI-81 (1990)
+------------------------------
+
+The TI-81, TI's first graphing calculator, was designed for algebra and
+precalculus. It has since been replaced by newer models which have faster
+processors, more memory, and popular features such as linking capability and
+flash upgradability. The TI-81 drew little in the way of third-party games and
+other programs, since the code must be typed into the calculator by hand. 
+(note taken from www.ticalc.org)
+
+
+Features
+--------
+CPU: Z80 2 MHz
+Memory: RAM 32kB(?), ROM 128kB
+Screen: 96x64 pixels, 16x8 characters
+Known ROM versions: 1.1, 1.8, 2.0
+
+
+Emulator
+--------
+Texas Instruments TI-81 simulator (http://www.ti.com)
+
+Links
+-----
+Texas Instruments Homepage
+http://www.ti.com
+ticalc.org
+http://www.ticalc.org
+TI-Files
+http://www.ti-files.org
+
+
+Mess Emulation State
+--------------------
+driver for rom versions:  1.8
+grayscale effects emulated
+200Hz(?) timer and ON key interrupts emulated
+there are bugs in port 3 emulation (ON/OFF)
+
+Notes:
+1. After start TI-81 waits for ON key interrupt, so press ON key to start
+   calculator.
+2. Video engine (with grayscale support) based on the idea found in VTI source
+   emulator written by Rusty Wagner.
+
+To do:
+- port 3 and 4
+- nvram
+- better artworks
+- drivers for other rom versions
+
+Needed:
+1. Any hardware info.
+2. High quality artwork.
+3. Dumps of other rom versions.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
 $info=ti85
 $bio
 
-Texas Instruments TI-85
------------------------
+Texas Instruments TI-85 (1992)
+------------------------------
 
 The TI-85 was designed as a powerful engineering and calculus calculator.
 It was the first TI calculator to have a link port and assembly programming
@@ -6660,7 +6724,7 @@ the TI-86, which features TI-85 compatibility along with more advanced features.
 Features
 --------
 CPU: Z80 6 MHz
-Memory: RAM 28kB, ROM 128kB
+Memory: RAM 32kB, ROM 128kB
 Screen: 128x64 pixels, 21x8 characters
 Known ROM versions: 1.0, 2.0, 3.0A, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0
 Link port
@@ -6724,8 +6788,8 @@ $end
 $info=ti86
 $bio
 
-Texas Instruments TI-86
------------------------
+Texas Instruments TI-86 (1997)
+------------------------------
 
 Just as the TI-83 succeeded the TI-82, the TI-86 followed up on the TI-85's
 advanced functionality while adding a stylish new case, assembly support
@@ -6737,7 +6801,7 @@ maintaining compatibility with TI-85 programs.
 Features
 --------
 CPU: Z80 6 MHz
-Memory: RAM 96kB, ROM 256kB
+Memory: RAM 128kB, ROM 256kB
 Screen: 128x64 pixels, 21x8 characters
 Known ROM versions: 1.2, 1.3, 1.4, 1.5, 1.6
 Link port
