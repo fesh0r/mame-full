@@ -196,9 +196,10 @@ DRVLIBS = \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/ti85.a     \
 	$(OBJ)/avigo.a    \
-        $(OBJ)/amiga.a    \
-        $(OBJ)/apf.a      \
-        $(OBJ)/sord.a     \
+	$(OBJ)/amiga.a    \
+	$(OBJ)/apf.a      \
+	$(OBJ)/sord.a     \
+	$(OBJ)/tatung.a   \
 #	$(OBJ)/hp48.a     \
 
 
@@ -308,6 +309,7 @@ $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \
+          $(OBJ)/mess/formats/dmkdsk.o   \
 	  $(OBJ)/mess/systems/dragon.o	\
 	  $(OBJ)/mess/machine/cococart.o
 
@@ -668,6 +670,9 @@ $(OBJ)/apf.a:      \
 
 $(OBJ)/sord.a:     \
 	$(OBJ)/mess/systems/sord.o
+
+$(OBJ)/tatung.a:     \
+	$(OBJ)/mess/systems/einstein.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
