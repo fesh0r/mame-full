@@ -143,7 +143,7 @@ const struct GameDriver *test_drivers[] =
 //	DRIVER( smsumd3d )	/* Sega Master System								*/
 //	DRIVER( smsemd3d )	/* Sega Master System								*/
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
-	DRIVER( saturn )	/* Sega Saturn										*/
+TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade									*/
@@ -183,7 +183,7 @@ TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)						*/
 	DRIVER( advision )	/* Adventurevision									*/
 
 	/* CAPCOM */
-	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
+TESTDRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
 TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
