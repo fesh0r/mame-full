@@ -27,6 +27,8 @@ System Driver Changes:
 
 - [PC] Hard disk controller enhancements; FreeDOS now boots.  [Nate Woods]
 
+- [SORDM5] Fixed Sord M5 .cas image loading.  [Tim Schuerwegen]
+
 
 
 User Interface Changes:

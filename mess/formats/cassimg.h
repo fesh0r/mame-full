@@ -186,6 +186,9 @@ casserr_t cassette_put_modulated_filler(cassette_image *cassette, int channel, d
 casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, double time_index,
 	UINT64 offset, UINT64 length, const struct CassetteModulation *modulation,
 	double *time_displacement);
+casserr_t cassette_put_modulated_data_bit(cassette_image *cassette, int channel, double time_index,
+	UINT8 data, const struct CassetteModulation *modulation,
+	double *time_displacement);
 
 /* debug calls */
 void cassette_dump(cassette_image *image, const char *filename);

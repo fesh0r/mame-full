@@ -831,6 +831,37 @@ casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, do
 
 
 
+casserr_t cassette_put_modulated_data_bit(cassette_image *cassette, int channel, double time_index,
+	UINT8 data, const struct CassetteModulation *modulation,
+	double *time_displacement)
+{
+	casserr_t err;
+	const INT8 *wave_bytes;
+	size_t wave_bytes_length;
+	double total_displacement = 0.0;
+	double pulse_period;
+	double pulse_frequency;
+
+	wave_bytes = choose_wave(modulation, &wave_bytes_length);
+
+	pulse_frequency = (data) ? modulation->one_frequency_cannonical : modulation->zero_frequency_cannonical;
+	pulse_period = 1 / pulse_frequency;
+	err = cassette_put_samples(cassette, 0, time_index, pulse_period, wave_bytes_length, 1, wave_bytes, CASSETTE_WAVEFORM_8BIT);
+	if (err)
+		goto done;	
+	time_index += pulse_period;
+	total_displacement += pulse_period;
+
+	err = CASSETTE_ERROR_SUCCESS;
+
+done:
+	if (time_displacement)
+		*time_displacement = total_displacement;
+	return err;
+}
+
+
+
 /*********************************************************************
 	waveform accesses to/from the raw image
 *********************************************************************/

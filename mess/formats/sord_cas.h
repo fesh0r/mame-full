@@ -2,7 +2,7 @@
 
 	sord_cas.h
 
-	Format code for Sord M5 casette files
+	Format code for Sord M5 cassette files
 
 *********************************************************************/
 
