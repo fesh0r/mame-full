@@ -643,8 +643,6 @@ static void FillSoftwareList(int nGame)
     imgd = mess_images;
     while(imgd) {
         ImageData *next = imgd->next;
-        if (imgd->name)
-            free(imgd->name);
         if (imgd->fullname)
             free(imgd->fullname);
         free(imgd);
