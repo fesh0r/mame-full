@@ -672,9 +672,17 @@ void exit_devices(void)
 			{
 				if( images[type][id].name )
 					free(images[type][id].name);
-				images[type][id].name = NULL;
+				if( images[type][id].longname )
+					free(images[type][id].longname);
+				if( images[type][id].manufacturer )
+					free(images[type][id].manufacturer);
+				if( images[type][id].year )
+					free(images[type][id].year);
+				if( images[type][id].playable )
+					free(images[type][id].playable);
+				if( images[type][id].extrainfo )
+					free(images[type][id].extrainfo);
 			}
-			free(images[type]);
 		}
 		count[type] = 0;
 	}
