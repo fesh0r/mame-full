@@ -33,7 +33,7 @@ Porting MAME
 - Run prep-new-mame from within this directory, providing the path to a previous
   xmame release's directory.  For example:
 
-	fix-mame ~/emulators/xmame-0.37b13.2
+	prep-new-mame ~/emulators/xmame-0.37b13.2
 
   This will copy over src/unix and makefile.unix from the previous release;
   create symlinks to some of the directories in there; rename/move doc files;
