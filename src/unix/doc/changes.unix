@@ -2,10 +2,13 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.87.1
+Release 0.88
 	- The xml2info utility can now link against the system's libexpat, and 
 	  no longer requires BUILD_EXPAT to be set.  Fixes Bugzilla bug 592.
 	- Another slew of changes from Hans de Goede:
+	  * Renamed "-x11-mode (-x11)" to "-video-mode (-vidmod)". The help 
+	    text for this option is now auto-generated based on which options 
+	    are available.
 	  * Added "-alwaysusemouse(-aum)" to the X11 driver.  If this is not 
 	    set, mouse events won't be reported to the core when fullscreen 
 	    mode is disabled and the mouse is not grabbed.
@@ -24,8 +27,8 @@ Release 0.87.1
 	    artwork enabled.
 	  * The xgl and xfx drivers are now built into the X11 target, 
 	    alongside Xv and DGA.   OpenGL can be selected at runtime with 
-	    "-x11-mode (-x11) 2", and Glide can be selected with "-x11-mode 
-	    (-x11) 2".
+	    "-video-mode (-vidmod) 2", and Glide can be selected with 
+	    "-video-mode (-vidmod) 3".
 	  * Reworked the hotkeys for switching between X11 video modes and 
 	    fullscreen and windowed modes: left-alt +
 	    insert:    normal or DGA rendering
@@ -87,12 +90,11 @@ Release 0.87.1
 	  * Added a "-fxresolution (-fxres)" option for Glide: Now "-geometry 
 	    (-geo)" can be used for hardware-scaled windows (Xv, OpenGL) 
 	    without causing Glide to complain about an invalid resolution.
-	  * Completely rewrote the handling of visual area changes in order to 
-	    catch a few corner cases: In non-hardware scaling display targets, 
-	    the display is no longer destroyed and recreated when the visual 
-	    area changes; only the window is resized or the video mode changed.
-	  * Made XIL a separate X11 mode, which can be enabled with "-x11-mode 
-	    (-x11) 4" or left-alt + end.
+	  * Whenever possible, the display is no longer destroyed and recreated 
+	    when settings change; only the window is resized or the video mode 
+	    changed.
+	  * Made XIL a separate X11 mode, which can be enabled with 
+	    "-video-mode (-vidmod) 4" or left-alt + end.
 	  * Fixed a rounding error which caused vector games to get a slightly 
 	    different resolution than requested.
 	  * Shuffled options somewhat so that the output of "-help" and 
@@ -130,6 +132,21 @@ Release 0.87.1
 	    page down: decrease vector beam size
 	    Left-ctrl + left-alt + insert also works for toggling bilinear 
 	    filtering in Glide.
+	  * Core dumps are disabled when DGA is available, since dumping core 
+	    with DGA leads to X server freezes.
+	  * Fixed artwork not showing in OpenGL and Glide modes under certain 
+	    circumstances. 
+	  * Scanlines are now at the bottom of each line, an no longer halfway 
+	    in certain cases.
+	  * Only close and reopen the sound device if necessary.
+	  * Align not only min_x but also max_x of the destination coordinates. 
+	    This fixes screen corruption with DGA on certain buggy hardware.
+	  * Fixed a problem with DGA where garbage would show on the right side 
+	    of the screen for certain artwork.
+	  * Handling failures in the video setup is now more graceful; this 
+	    should make sure that the abort case doesn't get reached unless a 
+	    system is running out of memory or the like.
+	  * Fixed 16bpp to YUY2 blitting on 64-bit architectures.
 	- Added an ALSA mixer plugin, which can be enabled with 
 	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
 	  option accepts the name of a "simple mixer control", which you can 
@@ -176,14 +193,14 @@ Release 0.87, 3 October 2004
 	  * The mouse and keyboard are always grabbed when OpenGL on Glide is 
 	    used.
 	- Made changes to the X11 targets (Hans de Goede):
-	  * Restored widthscale == 2 yuy2 code for perfect yuy2 blitting. 
+	  * Restored widthscale == 2 YUY2 code for perfect YUY2 blitting. 
 	  * Fixed a bug introduced by the aspect ratio patches which caused the 
 	    Xv fallback code to not detect an error case and crash later on 
 	    instead of falling back to MITSHM.
 	  * The Xv window is now resized with the correct aspect ratio after a 
 	    user resize; this prevents black borders from appearing.
 	  * Renamed "-perfect-yv12" to "-perfect-yuv".
-	  * Enabled perfect blitting by default for yuy2, since it fixes the 
+	  * Enabled perfect blitting by default for YUY2, since it fixes the 
 	    ugly color bleeding in, for example, pacman.
 	  * Removed unused SGI pause map/unmap code.
 	  * Don't resize the window when testing Xv during image creation.
