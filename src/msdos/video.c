@@ -23,6 +23,9 @@
 #include "gen15khz.h"
 #include "blit.h"
 
+/* from zvg/zvgintrf.c, for zvg board */
+extern int zvg_enabled;
+
 /* function to make scanline mode */
 Register *make_nondoubled_mode(Register *inreg,int entries);
 Register *make_scanline_mode(Register *inreg,int entries);
@@ -1718,9 +1721,9 @@ static void update_palette(struct mame_display *display)
 						for( i = 0; i < display->game_palette_entries; i++ )
 						{
 							rgb_t rgbvalue = display->game_palette[ i ];
-							r = scale_palette_r[ RGB_RED( rgbvalue ) ];
-							g = scale_palette_g[ RGB_GREEN( rgbvalue ) ];
-							b = scale_palette_b[ RGB_BLUE( rgbvalue ) ];
+							int r = scale_palette_r[ RGB_RED( rgbvalue ) ];
+							int g = scale_palette_g[ RGB_GREEN( rgbvalue ) ];
+							int b = scale_palette_b[ RGB_BLUE( rgbvalue ) ];
 							logerror( "%02x %02x %02x\n", r, g, b );
 						}
 #endif
@@ -1730,15 +1733,19 @@ static void update_palette(struct mame_display *display)
 			}
 
 #if PEDANTIC
-			/* invalidate unused pens to make bugs in color allocation evident. */
-			for( pen = 0; pen < TOTAL_PENS; pen++ )
 			{
-				if( pen_usage_count[ pen ] == 0 )
+				int pen;
+
+				/* invalidate unused pens to make bugs in color allocation evident. */
+				for( pen = 0; pen < TOTAL_PENS; pen++ )
 				{
-					shrinked_palette[ pen ].r = scale_palette_r[ rand() & 0xff ];
-					shrinked_palette[ pen ].g = scale_palette_g[ rand() & 0xff ];
-					shrinked_palette[ pen ].b = scale_palette_b[ rand() & 0xff ];
-					set_color( pen, &shrinked_palette[ pen ] );
+					if( pen_usage_count[ pen ] == 0 )
+					{
+						shrinked_palette[ pen ].r = scale_palette_r[ rand() & 0xff ];
+						shrinked_palette[ pen ].g = scale_palette_g[ rand() & 0xff ];
+						shrinked_palette[ pen ].b = scale_palette_b[ rand() & 0xff ];
+						set_color( pen, &shrinked_palette[ pen ] );
+					}
 				}
 			}
 #endif
@@ -2869,7 +2876,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 			/* copy the bitmap to screen memory */
 			profiler_mark( PROFILER_BLIT );
-			bitblit( display->game_bitmap, srcxoffs, srcyoffs, srcwidth, srcheight, dstxoffs, dstyoffs );
+			if (zvg_enabled != 2)
+			{
+				bitblit( display->game_bitmap, srcxoffs, srcyoffs, srcwidth, srcheight, dstxoffs, dstyoffs );
+			}
 			profiler_mark( PROFILER_END );
 		}
 
@@ -3001,29 +3011,30 @@ void osd_update_video_and_audio(struct mame_display *display)
 }
 
 
+#define blit_swapxy video_swapxy
+#define blit_flipx video_flipx
+#define blit_flipy video_flipy
+
 //============================================================
-//	osd_save_snapshot
+//	osd_override_snapshot
 //============================================================
 
-void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds)
+struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
 {
 	struct rectangle newbounds;
 	struct mame_bitmap *copy;
 	int x, y, w, h, t;
 
-	// if we can send it in raw, do it
-	if (!video_swapxy && !video_flipx && !video_flipy)
-	{
-		save_screen_snapshot(bitmap, bounds);
-		return;
-	}
+	// if we can send it in raw, no need to override anything
+	if (!blit_swapxy && !blit_flipx && !blit_flipy)
+		return NULL;
 
 	// allocate a copy
-	w = video_swapxy ? bitmap->height : bitmap->width;
-	h = video_swapxy ? bitmap->width : bitmap->height;
+	w = blit_swapxy ? bitmap->height : bitmap->width;
+	h = blit_swapxy ? bitmap->width : bitmap->height;
 	copy = bitmap_alloc_depth(w, h, bitmap->depth);
 	if (!copy)
-		return;
+		return NULL;
 
 	// populate the copy
 	for (y = bounds->min_y; y <= bounds->max_y; y++)
@@ -3032,13 +3043,13 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 			int tx = x, ty = y;
 
 			// apply the rotation/flipping
-			if (video_swapxy)
+			if (blit_swapxy)
 			{
 				t = tx; tx = ty; ty = t;
 			}
-			if (video_flipx)
+			if (blit_flipx)
 				tx = copy->width - tx - 1;
-			if (video_flipy)
+			if (blit_flipy)
 				ty = copy->height - ty - 1;
 
 			// read the old pixel and copy to the new location
@@ -3061,14 +3072,14 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 	newbounds = *bounds;
 
 	// apply X/Y swap first
-	if (video_swapxy)
+	if (blit_swapxy)
 	{
 		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
 		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
 	}
 
 	// apply X flip
-	if (video_flipx)
+	if (blit_flipx)
 	{
 		t = copy->width - newbounds.min_x - 1;
 		newbounds.min_x = copy->width - newbounds.max_x - 1;
@@ -3076,16 +3087,15 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 	}
 
 	// apply Y flip
-	if (video_flipy)
+	if (blit_flipy)
 	{
 		t = copy->height - newbounds.min_y - 1;
 		newbounds.min_y = copy->height - newbounds.max_y - 1;
 		newbounds.max_y = t;
 	}
 
-	// now save the copy and nuke it when done
-	save_screen_snapshot(copy, &newbounds);
-	bitmap_free(copy);
+	*bounds = newbounds;
+	return copy;
 }
 
 
