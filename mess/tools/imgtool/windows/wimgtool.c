@@ -15,6 +15,7 @@
 #include "pool.h"
 #include "strconv.h"
 #include "attrdlg.h"
+#include "secview.h"
 
 const TCHAR wimgtool_class[] = TEXT("wimgtool_class");
 const TCHAR wimgtool_producttext[] = TEXT("MESS Image Tool");
@@ -1155,6 +1156,15 @@ static void menu_delete(HWND window)
 
 
 
+static void menu_sectorview(HWND window)
+{
+	struct wimgtool_info *info;
+	info = get_wimgtool_info(window);
+	win_sectorview_dialog(window, info->image);
+}
+
+
+
 static void set_listview_style(HWND window, DWORD style)
 {
 	struct wimgtool_info *info;
@@ -1539,6 +1549,10 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 
 				case ID_IMAGE_DELETE:
 					menu_delete(window);
+					break;
+
+				case ID_IMAGE_SECTORVIEW:
+					menu_sectorview(window);
 					break;
 
 				case ID_VIEW_ICONS:

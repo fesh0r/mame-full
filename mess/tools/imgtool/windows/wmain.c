@@ -10,6 +10,7 @@
 
 #include "wimgtool.h"
 #include "wimgres.h"
+#include "hexview.h"
 #include "../modules.h"
 
 imgtool_library *library;
@@ -29,6 +30,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	// Initialize Windows classes
 	InitCommonControls();
 	if (!wimgtool_registerclass())
+		goto done;
+	if (!hexview_registerclass())
 		goto done;
 
 	// Initialize the Imgtool library

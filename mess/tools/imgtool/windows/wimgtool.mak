@@ -9,5 +9,7 @@ WIMGTOOL_OBJS=\
 	$(OBJ)/mess/tools/imgtool/windows/attrdlg.o		\
 	$(OBJ)/mess/tools/imgtool/windows/assoc.o		\
 	$(OBJ)/mess/tools/imgtool/windows/assocdlg.o	\
+	$(OBJ)/mess/tools/imgtool/windows/hexview.o		\
+	$(OBJ)/mess/tools/imgtool/windows/secview.o		\
 	$(OBJ)/mess/tools/imgtool/windows/wimgtool.res	\
 
