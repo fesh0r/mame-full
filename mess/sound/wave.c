@@ -28,7 +28,7 @@ static void wave_sound_update(int num, INT16 *buffer, int length)
 	state = cassette_get_state(image);
 
 	state &= CASSETTE_MASK_UISTATE | CASSETTE_MASK_MOTOR | CASSETTE_MASK_SPEAKER;
-	if (ALWAYS_PLAY_SOUND || (state == (CASSETTE_PLAY | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_ENABLED)))
+	if (image_exists(image) && (ALWAYS_PLAY_SOUND || (state == (CASSETTE_PLAY | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_ENABLED))))
 	{
 		cassette = cassette_get_image(image);
 		time_index = cassette_get_position(image);
