@@ -8,10 +8,9 @@
 
 int *pdp1_memory;
 
-static int fio_dec = 0;
-static int concise = 0;
-static int case_state = 0;
 static int reader_buffer = 0;
+static int typewriter_buffer = 0;
+static int typewriter_buffer_status = 0;
 
 
 
@@ -160,7 +159,7 @@ int pdp1_teletyper_init(int id)
 }
 
 /*
-	Close teletyper output
+	Close teletyper output file
 */
 void pdp1_teletyper_exit(int id)
 {
@@ -191,15 +190,15 @@ static void teletyper_write(UINT8 data)
 /* time in micro seconds, (*io_register) */
 int pdp1_iot(int *io, int md)
 {
-	int etime=0;
+	int etime /*=0*/;
 
 	switch (md & 077)
 	{
 	case 00:
 	{
 		/* Waiting for output to finnish */
-		/* not documented !!! */
-		etime=5;
+		logerror("Warning, IOT instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
+		etime = 0;
 		break;
 	}
 
@@ -221,10 +220,9 @@ int pdp1_iot(int *io, int md)
 		 * TAPE CHANNELS  8  7  6  5  4  3  2  1
 		 */
 		UINT8 read_byte;
-		logerror("\nWarning, RPA instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
+		logerror("Warning, RPA instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
 
-		etime=10;	/* approximately 1/400s (actually, it is 1/400s after last character) */
-		/* somehow read a byte... */
+		etime = 10;	/* approximately 1/400s (actually, it is 1/400s after last character) */
 
 		(void)tape_read(& read_byte);
 
@@ -279,9 +277,9 @@ int pdp1_iot(int *io, int md)
 		 */
 		UINT32 read_word;
 		int not_ready;
-		logerror("\nWarning, RPB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
+		logerror("Warning, RPB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
 
-		etime=10;	/* probably some more */
+		etime = 10;	/* approximately 1/400s*3 (actually, it is 1/400s after last character) */
 
 		not_ready = pdp1_tape_read_binary(& read_word);
 
@@ -308,8 +306,8 @@ int pdp1_iot(int *io, int md)
 	}
 	case 030: /* RRB */
 	{
-		logerror("\nWarning, RRB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o",*io, md, cpu_get_reg(PDP1_PC));
-		etime=5;
+		logerror("Warning, RRB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n",*io, md, cpu_get_reg(PDP1_PC));
+		etime = 5;
 		cpu_set_reg(PDP1_F1,0);
 		*io = reader_buffer;
 		break;
@@ -325,7 +323,7 @@ int pdp1_iot(int *io, int md)
 		 * Bit 17 conditions Hole 1. Bit 16 conditions Hole 2, etc. Bit 10 conditions Hole 8
 		 */
 		tape_write(*io & 0377);
-		etime=5;	/* 1/63 second, actually */
+		etime = 15875;	/* 1/63 second */
 		break;
 	}
 	case 06: /* PPB */
@@ -338,15 +336,17 @@ int pdp1_iot(int *io, int md)
 		 * Hole 7 is left blank. Hole 8 is always punched in this mode. 
 		 */
 		tape_write((*io >> 12) | 0200);
-		etime=5;	/* 1/63 second, actually */
+		etime = 15875;	/* 1/63 second */
 		break;
 	}
 
 	/* alphanumeric on-line typewriter */
 	case 03: /* TYO */
 	{
+		logerror("Warning, TYO instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
+
 		teletyper_write((*io) & 077);
-		etime=5;
+		etime = 105000;	/* approx. 1/9.5 second */
 		break;
 	}
 	case 04: /* TYI */
@@ -363,13 +363,14 @@ int pdp1_iot(int *io, int md)
 		 * the type-in status bit.
 		 */
 
-		logerror("\nWarning, TYI instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
+		logerror("Warning, TYI instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
 
-		etime=10; /* probably heaps more */
-		*io=0;
-		*io=fio_dec&077;
-		fio_dec=0;
-		concise=0;
+		etime = 0; /* To be confirmed */
+		*io = typewriter_buffer;
+		if (! typewriter_buffer_status)
+			*io |= 0100;
+		else
+			typewriter_buffer_status = 0;
 
 		break;
 	}
@@ -411,10 +412,7 @@ int pdp1_iot(int *io, int md)
 		 */
 		int x;
 		int y;
-		if (md & 10000)
-			etime = 5;
-		else
-			etime = 50; 	/* found in munching squares */
+		etime = 45;
 		x = ((cpu_get_reg(PDP1_AC)+0400000)&0777777) >> 8;
 		y = ((cpu_get_reg(PDP1_IO)+0400000)&0777777) >> 8;
 		pdp1_plot(x,y);
@@ -424,9 +422,9 @@ int pdp1_iot(int *io, int md)
 	/* Spacewar! controllers */
 	case 011: /* IOT 011 (undocumented?), Input... */
 	{
-		int key_state=readinputport(0);
-		etime=10; /* probably heaps more */
-		*io=0;
+		int key_state = readinputport(pdp1_spacewar_controllers);
+		etime = 0;	/* value unknown */
+		*io = 0;
 		if (key_state&FIRE_PLAYER2)         *io |= 040000;
 		if (key_state&THRUST_PLAYER2)       *io |= 0100000;
 		if (key_state&ROTATE_LEFT_PLAYER2)  *io |= 0200000;
@@ -441,13 +439,15 @@ int pdp1_iot(int *io, int md)
 	/* check status */
 	case 033: /* CKS */
 	{
-		etime=5;
+		logerror("Warning, CKS instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
+		etime = 0;
+		break;
 	}
 
 	default:
 	{
-		etime=5;
-		logerror("\nNot supported IOT command: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
+		logerror("Not supported IOT command: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
+		etime = 0;
 		break;
 	}
 	}
@@ -460,120 +460,122 @@ int pdp1_iot(int *io, int md)
 	keyboard handlers
 */
 
-typedef struct
-{
-	int     fio_dec;
-	int     concise;
-	int     lower_osd;
-	int     upper_osd;
-	char   *lower_text;
-	char   *upper_text;
-} key_trans_pdp1;
-
-static key_trans_pdp1 kbd[] =
-{
-{  000,     0000, 0            , 0                ,"Tape Feed"                 ,""             },
-{  256,     0100, KEYCODE_DEL  , KEYCODE_DEL      ,"Delete"                    ,""             },
-{  000,     0200, KEYCODE_SPACE, KEYCODE_SPACE    ,"Space"                     ,""             },
-{  001,     0001, KEYCODE_1    , KEYCODE_SLASH    ,"1"                         ,"\""           },
-{  002,     0002, KEYCODE_2    , KEYCODE_QUOTE    ,"2"                         ,"'"            },
-{  003,     0203, KEYCODE_3    , KEYCODE_TILDE    ,"3"                         ,"~"            },
-{  004,     0004, KEYCODE_4    , 0                ,"4"                         ,"(implies)"    },
-{  005,     0205, KEYCODE_5    , 0                ,"5"                         ,"(or)"         },
-{  006,     0206, KEYCODE_6    , 0                ,"6"                         ,"(and)"        },
-{  007,     0007, KEYCODE_7    , 0                ,"7"                         ,"<"            },
-{  010,     0010, KEYCODE_8    , 0                ,"8"                         ,">"            },
-{  011,     0211, KEYCODE_9    , KEYCODE_UP       ,"9"                         ,"(up arrow)"   },
-{  256,     0013, KEYCODE_STOP , KEYCODE_STOP     ,"Stop Code"                 ,""             },
-{  020,     0020, KEYCODE_0    , KEYCODE_RIGHT    ,"0"                         ,"(right arrow)"},
-{  021,     0221, KEYCODE_SLASH, 0                ,"/"                         ,"?"            },
-{  022,     0222, KEYCODE_S    , KEYCODE_S        ,"s"                         ,"S"            },
-{  023,     0023, KEYCODE_T    , KEYCODE_T        ,"t"                         ,"T"            },
-{  024,     0224, KEYCODE_U    , KEYCODE_U        ,"u"                         ,"U"            },
-{  025,     0025, KEYCODE_V    , KEYCODE_V        ,"v"                         ,"V"            },
-{  026,     0026, KEYCODE_W    , KEYCODE_W        ,"w"                         ,"W"            },
-{  027,     0227, KEYCODE_X    , KEYCODE_X        ,"x"                         ,"X"            },
-{  030,     0230, KEYCODE_Y    , KEYCODE_Y        ,"y"                         ,"Y"            },
-{  031,     0031, KEYCODE_Z    , KEYCODE_Z        ,"z"                         ,"Z"            },
-{  033,     0233, KEYCODE_COMMA, KEYCODE_EQUALS   ,","                         ,"="            },
-{  034,      256, 0            , 0                ,"black"                     ,""             },
-{  035,      256, 0            , 0                ,"red"                       ,""             },
-{  036,     0236, KEYCODE_TAB  , 0                ,"tab"                       ,""             },
-{  040,     0040, 0            , 0                ," (non-spacing middle dot)" ,"_"            },
-{  041,     0241, KEYCODE_J    , KEYCODE_J        ,"j"                         ,"J"            },
-{  042,     0242, KEYCODE_K    , KEYCODE_K        ,"k"                         ,"K"            },
-{  043,     0043, KEYCODE_L    , KEYCODE_L        ,"l"                         ,"L"            },
-{  044,     0244, KEYCODE_M    , KEYCODE_M        ,"m"                         ,"M"            },
-{  045,     0045, KEYCODE_N    , KEYCODE_N        ,"n"                         ,"N"            },
-{  046,     0046, KEYCODE_O    , KEYCODE_O        ,"o"                         ,"O"            },
-{  047,     0247, KEYCODE_P    , KEYCODE_P        ,"p"                         ,"P"            },
-{  050,     0250, KEYCODE_Q    , KEYCODE_Q        ,"q"                         ,"Q"            },
-{  051,     0051, KEYCODE_R    , KEYCODE_R        ,"r"                         ,"R"            },
-{  054,     0054, KEYCODE_MINUS, KEYCODE_PLUS_PAD ,"-"                         ,"+"            },
-{  055,     0255, KEYCODE_CLOSEBRACE, 0           ,")"                         ,"]"            },
-{  056,     0256, 0            , 0                ," (non-spacing overstrike)" ,"|"            },
-{  057,     0057, KEYCODE_OPENBRACE, 0            ,"("                         ,"["            },
-{  061,     0061, KEYCODE_A    , KEYCODE_A        ,"a"                         ,"A"            },
-{  062,     0062, KEYCODE_B    , KEYCODE_B        ,"b"                         ,"B"            },
-{  063,     0263, KEYCODE_C    , KEYCODE_C        ,"c"                         ,"C"            },
-{  064,     0064, KEYCODE_D    , KEYCODE_D        ,"d"                         ,"D"            },
-{  065,     0265, KEYCODE_E    , KEYCODE_E        ,"e"                         ,"E"            },
-{  066,     0266, KEYCODE_F    , KEYCODE_F        ,"f"                         ,"F"            },
-{  067,     0067, KEYCODE_G    , KEYCODE_G        ,"g"                         ,"G"            },
-{  070,     0070, KEYCODE_H    , KEYCODE_H        ,"h"                         ,"H"            },
-{  071,     0271, KEYCODE_I    , KEYCODE_I        ,"i"                         ,"I"            },
-{  072,     0272, KEYCODE_LSHIFT, 0               ,"Lower Case"                ,""             },
-{  073,     0073, KEYCODE_ASTERISK,0              ,".(multiply)"               ,""             },
-{  074,     0274, KEYCODE_LSHIFT, 0               ,"Upper Case"                ,""             },
-{  075,     0075, KEYCODE_BACKSPACE,0             ,"Backspace"                 ,""             },
-{  077,     0277, KEYCODE_ENTER, 0                ,"Carriage Return"           ,""             },
-{  257,     0000, 0            , 0                ,""                          ,""             }
-};
-
-/* return first found pressed key */
 int pdp1_keyboard(void)
 {
-	int i=0;
+	int i;
+	int j;
 
-	fio_dec=0;
-	concise=0;
-	if (osd_is_key_pressed(KEYCODE_LSHIFT))
+	int typewriter_keys[4];
+
+	static int old_typewriter_keys[4];
+
+	int typewriter_transitions;
+
+
+	for (i=0; i<4; i++)
+		typewriter_keys[i] = readinputport(pdp1_typewriter + i);
+
+	for (i=0; i<4; i++)
 	{
-		if (case_state)
+		typewriter_transitions = typewriter_keys[i] & (~ old_typewriter_keys[i]);
+		if (typewriter_transitions)
 		{
-			fio_dec=072;
-			concise=0272;
+			for (j=0; (((typewriter_transitions >> j) & 1) == 0) /*&& (j<16)*/; j++)
+				;
+			typewriter_buffer = (i << 4) + j;
+			typewriter_buffer_status = 1;
+			cpu_set_reg(PDP1_F1, 1);
+			break;
 		}
-		else
-		{
-			fio_dec=074;
-			concise=0274;
-		}
-		case_state=(case_state+1)%2;
-		return 1;
 	}
 
-	while (kbd[i].fio_dec!=257)
-	{
-		if (case_state==0) /* lower case */
-		{
-			if ((kbd[i].lower_osd)&&(osd_is_key_pressed(kbd[i].lower_osd)))
-			{
-				fio_dec=kbd[i].fio_dec;
-				concise=kbd[i].concise;
-				return 1;
-			}
-		}
-		else
-		{
-			if ((kbd[i].upper_osd)&&(osd_is_key_pressed(kbd[i].upper_osd)))
-			{
-				fio_dec=kbd[i].fio_dec;
-				concise=kbd[i].concise;
-				return 1;
-			}
-		}
-		i++;
-	}
+	for (i=0; i<4; i++)
+		old_typewriter_keys[i] = typewriter_keys[i];
+
 	return 0;
 }
+
+static int test_word;
+static int test_address;
+
+/*
+	Not a real interrupt - just handle keyboard input
+*/
+int pdp1_interrupt(void)
+{
+	int control_keys;
+	int tw_keys;
+	int ta_keys;
+
+	static int old_control_keys;
+	static int old_tw_keys;
+	static int old_ta_keys;
+
+	int control_transitions;
+	int tw_transitions;
+	int ta_transitions;
+
+
+	/* update display */
+	pdp1_screen_update();
+
+
+	cpu_set_reg(PDP1_S, readinputport(pdp1_sense_switches));
+
+	/* read new state of control keys */
+	control_keys = readinputport(pdp1_control_switches);
+
+	if (control_keys & pdp1_control)
+	{
+		/* compute transitions */
+		control_transitions = control_keys & (~ old_control_keys);
+
+		if (control_transitions & pdp1_read_in)
+		{	/* set cpu to read instruction from perforated tape */
+			cpunum_set_reg(0, PDP1_RUN, 0);
+			cpunum_set_reg(0, PDP1_RIM, 1);
+		}
+
+		/* remember new state of control keys */
+		old_control_keys = control_keys;
+
+
+		tw_keys = (readinputport(pdp1_tw_switches_MSB) << 16) | readinputport(pdp1_tw_switches_LSB);
+
+		/* compute transitions */
+		tw_transitions = tw_keys & (~ old_tw_keys);
+
+		test_word ^= tw_transitions;
+
+		/* remember new state of test word keys */
+		old_tw_keys = tw_keys;
+
+
+		ta_keys = readinputport(pdp1_ta_switches);
+
+		/* compute transitions */
+		ta_transitions = ta_keys & (~ old_ta_keys);
+
+		test_address ^= ta_transitions;
+
+		/* remember new state of test word keys */
+		old_ta_keys = ta_keys;
+
+	}
+	else
+	{
+		old_control_keys = 0;
+		old_tw_keys = 0;
+		old_ta_keys = 0;
+
+		pdp1_keyboard();
+	}
+
+	return ignore_interrupt();
+}
+
+int pdp1_get_test_word(void)
+{
+	return test_word;
+}
+

@@ -331,7 +331,7 @@
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
 {
-	PDP1_PC, PDP1_AC, PDP1_IO, PDP1_MA, PDP1_IB, PDP1_OV, -1,
+	PDP1_PC, PDP1_AC, PDP1_IO, PDP1_MA, PDP1_OV, -1,
 	PDP1_F, PDP1_S, -1,
 	PDP1_RUN, PDP1_RIM, 0
 };
@@ -347,17 +347,16 @@ static UINT8 pdp1_win_layout[] =
 };
 
 static int intern_iot (int *io, int md);
-static int execute_instruction(void);
+static void execute_instruction(void);
 
 /* PDP1 Registers */
 typedef struct
 {
 	/* processor registers */
-	UINT32 pc;		/* program counter (12 or 16 bits) */
+	UINT32 pc;		/* program counter (12, 15 or 16 bits) */
 	int instr;		/* basic operation code of current instruction (5 bits) */
 	int mb;			/* memory buffer (used for holding the current instruction only) (18 bits) */
-	int ma;			/* memory address (12 or 16 bits) */
-	int ib;			/* indirection flag (1 bit) */
+	int ma;			/* memory address (12, 15 or 16 bits) */
 	int ac;			/* accumulator (18 bits) */
 	int io;			/* i/o register (18 bits) */
 	int ov;			/* overflow flip-flop (1 bit) */
@@ -382,8 +381,7 @@ typedef struct
 	/* read a byte from the perforated tape reader */
 	int (*read_binary_word)(UINT32 *reply);
 	/* get current state of the test switches */
-	int (*get_test_switches)(void);
-
+	int (*get_test_word)(void);
 }
 pdp1_Regs;
 
@@ -394,7 +392,6 @@ static pdp1_Regs pdp1;
 #define INSTR	pdp1.instr
 #define MB		pdp1.mb
 #define MA		pdp1.ma
-#define IB		pdp1.ib
 #define AC		pdp1.ac
 #define IO		pdp1.io
 #define OV		pdp1.ov
@@ -443,8 +440,8 @@ void pdp1_reset (void *untyped_param)
 	pdp1.extern_iot = (param && param->extern_iot)
 									? param->extern_iot
 									: intern_iot;
-	pdp1.get_test_switches = (param && param->get_test_switches)
-									? param->get_test_switches
+	pdp1.get_test_word = (param && param->get_test_word)
+									? param->get_test_word
 									: NULL;
 }
 
@@ -475,7 +472,6 @@ unsigned pdp1_get_reg (int regnum)
 	case PDP1_AC: return AC;
 	case PDP1_IO: return IO;
 	case PDP1_MA: return MA;
-	case PDP1_IB: return IB;
 	case PDP1_OV: return OV;
 	case PDP1_F:  return FLAGS;
 	case PDP1_F1: return READFLAG(1);
@@ -507,7 +503,6 @@ void pdp1_set_reg (int regnum, unsigned val)
 	case PDP1_AC: AC = val & 0777777; break;
 	case PDP1_IO: IO = val & 0777777; break;
 	case PDP1_MA: MA = val & 07777; break;
-	case PDP1_IB: IB = val ? 1 : 0; break;
 	case PDP1_OV: OV = val ? 1 : 0; break;
 	case PDP1_F:  FLAGS = val & 077; break;
 	case PDP1_F1: WRITEFLAG(1, val ? 1 : 0); break;
@@ -529,6 +524,24 @@ void pdp1_set_reg (int regnum, unsigned val)
 	}
 }
 
+/*
+	flags:
+	* 1 for each instruction which supports indirect addressing (memory reference instructions, except
+	  cal and jda, and with the addition of jmp and jsp)
+	* 2 for memory reference instructions
+*/
+static const char instruction_kind[32] =
+{
+/*		and	ior	xor	xct			cal/jda */
+	0,	3,	3,	3,	3,	0,	0,	2,
+/*	lac	lio	dac	dap	dip	dio	dzm		*/
+	3,	3,	3,	3,	3,	3,	3,	0,
+/*	add	sub	idx	isp	sad	sas	mus	dis	*/
+	3,	3,	3,	3,	3,	3,	3,	3,
+/*	jmp	jsp	skp	sft	law	iot		opr	*/
+	1,	1,	0,	0,	0,	0,	0,	0
+};
+
 
 /* execute instructions on this CPU until icount expires */
 int pdp1_execute (int cycles)
@@ -539,91 +552,98 @@ int pdp1_execute (int cycles)
 	{
 		CALL_MAME_DEBUG;
 
-		if (! pdp1.run)
+		if ((! pdp1.run) && (! pdp1.read_in))
 			pdp1_ICount = 0;	/* if processor is stopped, just burn cycles */
+		else if (pdp1.read_in)
+		{
+			if (! pdp1.read_binary_word)
+				pdp1.read_in = 0;	/* what else can we do ??? */
+			else
+			{
+				UINT32 data18;
+
+				/* read first word as instruction */
+				(void)(*pdp1.read_binary_word)(&data18);
+				IO = data18;						/* data is transferred to IO register */
+				MB = IO;
+				INSTR = MB >> 13;		/* basic opcode */
+				if (INSTR == JMP)		/* jmp instruction ? */
+				{
+					PC = MB & 07777;
+					pdp1.read_in = 0;	/* exit read-in mode */
+					pdp1.run = 1;
+				}
+				else if ((INSTR == DIO) || (INSTR == DAC))	/* dio or dac instruction ? */
+				{	/* there is a discrepancy: the pdp1 handbook tells that only dio should be used,
+					but the lisp tape uses the dac instruction instead */
+					MA = MB & 07777;
+
+					/* read second word as data */
+					(void)(*pdp1.read_binary_word)(&data18);
+					IO = data18;						/* data is transferred to IO register */
+					MB = IO;
+					WRITE_PDP_18BIT(MA, MB);
+				}
+				else
+				{
+					/* what the heck? */
+					logerror("It seems this tape should not be operated in read-in mode\n");
+					pdp1.read_in = 0;	/* exit read-in mode (right???) */
+				}
+
+				pdp1_ICount -= 1000;	/* ***HACK*** */
+			}
+		}
 		else
 		{
+			/* no instruction in progress: time to fetch a new instruction, I guess */
 			if (! pdp1.cycle)
 			{
-				/* no instruction in progress: time to fetch a new instruction, I guess */
-				if (pdp1.read_in)
-				{
-					if (! pdp1.read_binary_word)
-						pdp1.run = 0;	/* what else can we do ??? */
-					else
-					{	/* there is a discrepancy: the pdp1 handbook tells that only dio should be used,
-						but the lisp tape uses the dac instruction instead */
-						UINT32 data18;
+				MB = READ_PDP_18BIT(PC);
+				INCREMENT_PC;
+				INSTR = MB >> 13;		/* basic opcode */
 
-						/* read first word as instruction */
-						(void)(*pdp1.read_binary_word)(&data18);
-						IO = data18;						/* data is transferred to IO register */
-						/* handle as instruction */
-						MB = IO;				/* could be wrong, actually */
-						MA = MB & 07777;
-						IB = (MB >> 12) & 1;	/* indirection flag */
-						INSTR = MB >> 13;		/* basic opcode */
-						if ((INSTR == DIO) || (INSTR == DAC) || (INSTR == JMP))
-						{	/* is it a dio, dac or jmp instruction ? */
-							pdp1.cycle = 1;			/* if so, instruction shall be executed */
-
-							if (INSTR == JMP)		/* jmp instruction ? */
-								pdp1.read_in = 0;	/* if so, exit read-in mode */
-						}
-						else
-							/* what the heck? */
-							logerror("It seems this tape should not be operated in read-in mode\n");
-
-						/* read second word as data */
-						(void)(*pdp1.read_binary_word)(&data18);
-						IO = data18;						/* data is transferred to IO register */
-						/* Lame hack to support tapes which use dac instead of dio */
-						/* Although I do not have a pdp-1 to test such tapes, I guess they
-						are buggy, which is why we only set the accumulator when required */
-						if (INSTR == DAC)
-							AC = IO;	/* copy data to accumulator */
-
-					}
-				}
-				else
-				{
-					MB = READ_PDP_18BIT(PC);
-					INCREMENT_PC;
-					MA = MB & 07777;
-					IB = (MB >> 12) & 1;	/* indirection flag */
-					INSTR = MB >> 13;		/* basic opcode */
-					pdp1.cycle = 1;			/* instruction shall be executed */
-				}
-			}
-
-			if (pdp1.cycle)
-			{
-				/* a 1 for each instruction which supports indirect addressing (<-> memory reference instructions) */
-				static const char support_indirect_addressing[32] =
-				{
-				/*		and	ior	xor	xct			cal/jda */
-					0,	1,	1,	1,	1,	0,	0,	0,
-				/*	lac	lio	dac	dap	dip	dio	dzm		*/
-					1,	1,	1,	1,	1,	1,	1,	0,
-				/*	add	sub	idx	isp	sad	sas	mus	dis	*/
-					1,	1,	1,	1,	1,	1,	1,	1,
-				/*	jmp	jsp	skp	sft	law	iot		opr	*/
-					1,	1,	0,	0,	0,	0,	0,	0
-				};
-
-				if (IB && support_indirect_addressing[INSTR])
+				if ((instruction_kind[INSTR] & 1) && (MB & 010000))
 				{
 					pdp1.deferred = 1;
-					pdp1_ICount -= 5;
-					MB = READ_PDP_18BIT(MA);
-					IB = (MB >> 12) & 1;
-					MA = MB & 07777;
+					pdp1.cycle = 1;			/* instruction shall be executed later */
 				}
+				else if (instruction_kind[INSTR] & 2)
+					pdp1.cycle = 1;			/* instruction shall be executed later */
 				else
+					execute_instruction();	/* execute instruction at once */
+
+				pdp1_ICount -= 5;
+			}
+			else if (pdp1.deferred)
+			{	/* defer cycle : handle indirect addressing */
+				int new_deferred;
+
+				MA = MB & 07777;
+
+				MB = READ_PDP_18BIT(MA);
+
+				/* determinate new value of pdp1.deferred */
+				new_deferred = (/*(pdp1.extend) &&*/ (MB & 010000)) ? 1 : 0;
+
+				/* execute JMP and JSP immediately if applicable */
+				if ((! new_deferred) && (! instruction_kind[INSTR] & 2))
 				{
-					pdp1.deferred = 0;
-					pdp1_ICount -= execute_instruction();	/* execute instruction */
+					execute_instruction();	/* execute instruction at once */
+					/*pdp1.cycle = 0;*/
 				}
+
+				/* set new value of pdp1.deferred */
+				pdp1.deferred = new_deferred;
+
+				pdp1_ICount -= 5;
+			}
+			else
+			{	/* memory reference instruction in cycle 1 */
+				MA = MB & 07777;
+				execute_instruction();	/* execute instruction */
+
+				pdp1_ICount -= 5;
 			}
 		}
 	}
@@ -663,7 +683,6 @@ const char *pdp1_info (void *context, int regnum)
 	case CPU_INFO_REG + PDP1_AC: sprintf (buffer[which], "AC:0%06o", r->ac); break;
 	case CPU_INFO_REG + PDP1_IO: sprintf (buffer[which], "IO:0%06o", r->io); break;
 	case CPU_INFO_REG + PDP1_MA: sprintf (buffer[which], "MA:0%06o", r->ma);  break;
-	case CPU_INFO_REG + PDP1_IB: sprintf (buffer[which], "IB:%X", r->ib); break;
 	case CPU_INFO_REG + PDP1_OV: sprintf (buffer[which], "OV:%X", r->ov); break;
 	case CPU_INFO_REG + PDP1_F:  sprintf (buffer[which], "FLAGS :0%02o", r->flags);  break;
 	case CPU_INFO_REG + PDP1_F1: sprintf (buffer[which], "FLAG1:%X", (r->flags >> 5) & 1); break;
@@ -712,69 +731,64 @@ const char *pdp1_info (void *context, int regnum)
 
 
 /* execute one instruction */
-static int execute_instruction(void)
+static void execute_instruction(void)
 {
-	int etime;
-
-
 	switch (INSTR)
 	{
 	case AND:		/* Logical And */
 		AC &= READ_PDP_18BIT(MA);
-		etime = 10;
 		break;
 	case IOR:		/* Inclusive Or */
 		AC |= READ_PDP_18BIT(MA);
-		etime = 10;
 		break;
 	case XOR:		/* Exclusive Or */
 		AC ^= READ_PDP_18BIT(MA);
-		etime = 10;
 		break;
 	case XCT:		/* Execute */
 		MB = READ_PDP_18BIT(MA);
-		MA = MB & 07777;
-		IB = (MB >> 12) & 1;	/* indirection flag */
 		INSTR = MB >> 13;		/* basic opcode */
-		etime = 5;			/* actually 10, but we save next instruction fetch */
-		goto no_fetch;			/* fall through to next instruction */
+		if ((instruction_kind[INSTR] & 1) && (MB & 010000))
+		{
+			pdp1.deferred = 1;
+			/*pdp1.cycle = 1;*/			/* instruction shall be executed later */
+			goto no_fetch;			/* fall through to next instruction */
+		}
+		else if (instruction_kind[INSTR] & 2)
+		{
+			/*pdp1.cycle = 1;*/			/* instruction shall be executed later */
+			goto no_fetch;			/* fall through to next instruction */
+		}
+		else
+			execute_instruction();	/* execute instruction at once */
+		break;
 	case CALJDA:	/* Call subroutine and Jump and Deposit Accumulator instructions */
-		if (IB == 0)
-			MA = 0100;	/* CAL is equivalent to JDA 100 */
+		MA = (MB & 010000) ? (MB & 07777) : 0100;	/* CAL is equivalent to JDA 100 */
 
-		WRITE_PDP_18BIT (MA, AC);
+		WRITE_PDP_18BIT(MA, AC);
 		INCREMENT_MA;
 		AC = (OV << 17) + PC;
 		PC = MA;
-		etime = 10;
 		break;
 	case LAC:		/* Load Accumulator */
 		AC = READ_PDP_18BIT(MA);
-		etime = 10;
 		break;
 	case LIO:		/* Load i/o register */
 		IO = READ_PDP_18BIT(MA);
-		etime = 10;
 		break;
 	case DAC:		/* Deposit Accumulator */
 		WRITE_PDP_18BIT(MA, AC);
-		etime = 10;
 		break;
 	case DAP:		/* Deposit Address Part */
 		WRITE_PDP_18BIT(MA, (READ_PDP_18BIT(MA) & 0770000) | (AC & 07777));
-		etime = 10;
 		break;
 	case DIP:		/* Deposit Instruction Part */
 		WRITE_PDP_18BIT(MA, (READ_PDP_18BIT(MA) & 07777) | (AC & 0770000));
-		etime = 10;
 		break;
 	case DIO:		/* Deposit I/O Register */
 		WRITE_PDP_18BIT(MA, IO);
-		etime = 10;
 		break;
 	case DZM:		/* Deposit Zero in Memory */
 		WRITE_PDP_18BIT(MA, 0);
-		etime = 10;
 		break;
 	case ADD:		/* Add */
 		AC = AC + READ_PDP_18BIT(MA);
@@ -782,7 +796,6 @@ static int execute_instruction(void)
 		AC = (AC + OV) & 0777777;
 		if (AC == 0777777)
 			AC = 0;
-		etime = 10;
 		break;
 	case SUB:		/* Subtract */
 		{
@@ -795,7 +808,6 @@ static int execute_instruction(void)
 				AC = 0;
 			if (diffsigns && (READ_PDP_18BIT(MA) >> 17 == AC >> 17))
 				OV = 1;
-			etime = 10;
 			break;
 		}
 	case IDX:		/* Index */
@@ -803,7 +815,6 @@ static int execute_instruction(void)
 		if (AC == 0777777)
 			AC = 0;
 		WRITE_PDP_18BIT(MA, AC);
-		etime = 10;
 		break;
 	case ISP:		/* Index and Skip if Positive */
 		AC = READ_PDP_18BIT(MA) + 1;
@@ -812,17 +823,14 @@ static int execute_instruction(void)
 		WRITE_PDP_18BIT(MA, AC);
 		if ((AC & 0400000) == 0)
 			INCREMENT_PC;
-		etime = 10;
 		break;
 	case SAD:		/* Skip if Accumulator and Y differ */
 		if (AC != READ_PDP_18BIT(MA))
 			INCREMENT_PC;
-		etime = 10;
 		break;
 	case SAS:		/* Skip if Accumulator and Y are the same */
 		if (AC == READ_PDP_18BIT(MA))
 			INCREMENT_PC;
-		etime = 10;
 		break;
 	case MUS:		/* Multiply Step */
 		if ((IO & 1) == 1)
@@ -834,7 +842,6 @@ static int execute_instruction(void)
 		}
 		IO = (IO >> 1 | AC << 17) & 0777777;
 		AC >>= 1;
-		etime = 10;
 		break;
 	case DIS:		/* Divide Step */
 		{
@@ -855,17 +862,14 @@ static int execute_instruction(void)
 			}
 			if (AC == 0777777)
 				AC = 0;
-			etime = 10;
 			break;
 		}
 	case JMP:		/* Jump */
-		PC = MA;
-		etime = 5;
+		PC = MB & 07777;
 		break;
 	case JSP:		/* Jump and Save Program Counter */
 		AC = (OV << 17) + PC;
-		PC = MA;
-		etime = 5;
+		PC = MB & 07777;
 		break;
 	case SKP:		/* Skip Instruction Group */
 		{
@@ -878,7 +882,7 @@ static int execute_instruction(void)
 				|| (((mb & 7) != 0) && (((mb & 7) == 7) ? ! FLAGS : ! READFLAG(mb & 7)))	/* ZERO Flag (deleted by mistake in PDP-1 handbook) */
 				|| (((mb & 070) != 0) && (((mb & 070) == 070) ? ! SENSE_SW : ! READSENSE((mb & 070) >> 3)));	/* ZERO Switch */
 
-			if (IB == 0)
+			if (! (mb & 010000))
 			{
 				if (cond)
 					INCREMENT_PC;
@@ -890,7 +894,6 @@ static int execute_instruction(void)
 			}
 			if (mb & 01000)
 				OV = 0;
-			etime = 5;
 			break;
 		}
 	case SFT:		/* Shift Instruction Group */
@@ -983,12 +986,12 @@ static int execute_instruction(void)
 				logerror("Undefined shift: 0%06o at 0%06o\n", mb, PC - 1);
 				break;
 			}
-			etime = 5;
 			break;
 		}
 	case LAW:		/* Load Accumulator with N */
-		AC = (IB == 0) ? MA : MA ^ 0777777;
-		etime = 5;
+		AC = MB & 07777;
+		if (MB & 010000)
+			AC ^= 0777777;
 		break;
 	case IOT:		/* In-Out Transfer Instruction Group */
 		/*
@@ -1024,36 +1027,24 @@ static int execute_instruction(void)
 			be attached, these bits may be used to further the in-out transfer instruction
 			to perform totally distinct functions. 
 		*/
-		etime = pdp1.extern_iot (&IO, MB);
+		if (MB == 10000)
+			pdp1_ICount -= pdp1.extern_iot (&IO, MB);
+		else
+			(void) pdp1.extern_iot (&IO, MB);
 		break;
 	case OPR:		/* Operate Instruction Group */
 		{
 			int mb = MB;
 			int nflag;
 
-			if (mb & 04000)		/* clear I/O register */
-				IO = 0;
 			if (mb & 00200)		/* clear AC */
 				AC = 0;
+			if (mb & 04000)		/* clear I/O register */
+				IO = 0;
 			if (mb & 02000)		/* load Accumulator from Test Word */
-				AC |= pdp1.get_test_switches ? (*pdp1.get_test_switches)() : 0;
+				AC |= pdp1.get_test_word ? (*pdp1.get_test_word)() : 0;
 			if (mb & 00100)		/* load Accumulator with Program Counter */
 				AC |= (OV << 17) + PC;
-			if (mb & 01000)		/* Complement AC */
-				AC ^= 0777777;
-			if (mb & 00400)		/* Halt */
-			{
-				logerror("PDP1 Program executed HALT: at 0%06o\n", PC - 1);
-#if 0
-				/* ignored till I emulate the extention switches... with
-				 * continue...
-				 */
-				logerror("HALT ignored...\n");
-#else
-				pdp1.run = 0;
-#endif
-			}
-
 			nflag = mb & 7;
 			if (nflag)
 			{
@@ -1062,23 +1053,25 @@ static int execute_instruction(void)
 				else
 					WRITEFLAG(nflag, (mb & 010) ? 1 : 0);
 			}
-
-			etime = 5;
+			if (mb & 01000)		/* Complement AC */
+				AC ^= 0777777;
+			if (mb & 00400)		/* Halt */
+			{
+				logerror("PDP1 Program executed HALT: at 0%06o\n", PC - 1);
+				pdp1.run = 0;
+			}
 			break;
 		}
 	default:
 		logerror("Illegal instruction: 0%06o at 0%06o\n", MB, PC - 1);
-		etime = 5;
-#if 0
-		/* we handle this like a nop, for lack of any specific info */
-		/* maybe we had better stop the CPU ? */
+		/* let us stop the CPU, like a real pdp-1 */
 		pdp1.run = 0;
-#endif
+
 		break;
 	}
 	pdp1.cycle = 0;
 no_fetch:
-	return etime;
+	;
 }
 
 static int intern_iot (int *io, int mb)

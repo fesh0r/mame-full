@@ -7,7 +7,7 @@
 
 /* register ids for pdp1_get_reg/pdp1_set_reg */
 enum {
-	PDP1_PC=1, PDP1_AC, PDP1_IO, PDP1_MA, PDP1_IB, PDP1_OV,
+	PDP1_PC=1, PDP1_AC, PDP1_IO, PDP1_MA, PDP1_OV,
 	PDP1_F, PDP1_F1, PDP1_F2, PDP1_F3, PDP1_F4, PDP1_F5, PDP1_F6,
 	PDP1_S, PDP1_S1, PDP1_S2, PDP1_S3, PDP1_S4, PDP1_S5, PDP1_S6,
 	PDP1_RUN, PDP1_RIM
@@ -20,7 +20,7 @@ typedef struct pdp1_reset_param
 	/* read a byte from the perforated tape reader (required for read-in mode) */
 	int (*read_binary_word)(UINT32 *reply);
 	/* get current state of the test switches */
-	int (*get_test_switches)(void);
+	int (*get_test_word)(void);
 } pdp1_reset_param;
 
 
