@@ -4,7 +4,6 @@
 	Raphael Nabet, 2003
 
 	TODO:
-	* add support for tag data
 	* add support for HFS write
 */
 
@@ -33,7 +32,14 @@
 		in common with HFS, but it supports more allocation blocks (up to 4
 		billions IIRC), and many extra features, including longer file names
 		(up to 255 UTF-16 Unicode chars).
-
+	tag data: with the GCR encoding, each disk block is associated with a 12
+		(3.5" floppies) or 20 (HD20) tag record.  This tag record contains
+		information on the block allocation status (whether it is allocated
+		in a file or free, which file is it belongs to, what offset the block
+		has in the file).  This enables to recover all files whose data blocks
+		are still on the disk surface even if the disk catalog has been trashed
+		completely (though most file properties, like the name, type and
+		logical EOF, are not saved in the tag record and cannot be recovered).
 
 	Organization of an MFS volume:
 
@@ -58,6 +64,17 @@
 #include <limits.h>
 #include "osdepend.h"
 #include "imgtoolx.h"
+
+/* if 1, check consistency of B-Tree (most of the checks will eventually be
+	suppressed when the image is opened as read-only and only enabled when
+	the image is opened as read/write) */
+#define BTREE_CHECKS 1
+/* if 1, check consistency of tag data when we are at risk of corrupting the
+	disk (file write and allocation) */
+#define TAG_CHECKS 1
+/* if 1, check consistency of tag data when reading files (not recommended
+	IMHO) */
+#define TAG_EXTRA_CHECKS 0
 
 #if 0
 #pragma mark MISCELLANEOUS UTILITIES
@@ -1373,7 +1390,9 @@ typedef struct floppy_tag_record
 	UINT32BE fileID;			/* a.k.a. CNID */
 								/* a value of 1 seems to be the default for non-AB blocks, but this is not consistent */
 	UINT8 ftype;				/* bit 1 = 1 if resource fork */
-								/* bit 0 = 1 if block is allocated??? */
+								/* bit 0 = 1 if block is allocated to user file (i.e. it is not
+									in HFS extent & catalog, and not in non-AB blocks such
+									as MDB and MFS directory)??? */
 								/* bit 7 seems to be used, but don't know what it means */
 								/* a value of $FF seems to be the default for non-AB blocks, but this is not consistent */
 	UINT8 fattr;				/* bit 0 = 1 if locked(?) */
@@ -1536,8 +1555,11 @@ static int mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 f
 static int mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 {
 	UINT32 block;
-	int errorcode = 0;
+#if TAG_EXTRA_CHECKS
+	floppy_tag_record tag;
+#endif
 	int run_len;
+	int errorcode = 0;
 
 	if ((fileref->crPs + len) > fileref->eof)
 		/* EOF */
@@ -1563,6 +1585,22 @@ static int mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 			if (errorcode)
 				return errorcode;
 			fileref->reload_buf = FALSE;
+#if TAG_EXTRA_CHECKS
+			/* optional check */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			{
+				errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
+				if (errorcode)
+					return errorcode;
+
+				if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+					|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+					|| (get_UINT16BE(tag.fblock) != ((fileref->crPs/512) & 0xffff)))
+				{
+					return IMGTOOLERR_CORRUPTIMAGE;
+				}
+			}
+#endif
 		}
 		run_len = 512 - (fileref->crPs % 512);
 		if (run_len > len)
@@ -1593,8 +1631,9 @@ static int mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 static int mac_file_write(mac_fileref *fileref, UINT32 len, const void *src)
 {
 	UINT32 block;
-	int errorcode = 0;
+	floppy_tag_record tag;
 	int run_len;
+	int errorcode = 0;
 
 	if ((fileref->crPs + len) > fileref->eof)
 		/* EOF */
@@ -1614,6 +1653,22 @@ static int mac_file_write(mac_fileref *fileref, UINT32 len, const void *src)
 		}
 		if (errorcode)
 			return errorcode;
+#if TAG_CHECKS
+		/* optional check */
+		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+		{
+			errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
+			if (errorcode)
+				return errorcode;
+
+			if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+				|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+				|| (get_UINT16BE(tag.fblock) != ((fileref->crPs/512) & 0xffff)))
+			{
+				return IMGTOOLERR_CORRUPTIMAGE;
+			}
+		}
+#endif
 		if (fileref->reload_buf)
 		{
 			errorcode = image_read_block(&fileref->l2_img->l1_img, block, fileref->block_buffer);
@@ -1629,6 +1684,30 @@ static int mac_file_write(mac_fileref *fileref, UINT32 len, const void *src)
 		errorcode = image_write_block(&fileref->l2_img->l1_img, block, fileref->block_buffer);
 		if (errorcode)
 			return errorcode;
+		/* update tag data */
+		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+		{
+#if 0
+			errorcode = image_read_tag(&fileref->l2_img->l1_img, block, &tag);
+			if (errorcode)
+				return errorcode;
+#endif
+
+			switch (fileref->l2_img->format)
+			{
+			case L2I_MFS:
+				set_UINT32BE(&tag.wrCnt, mac_GetDateTime());
+				break;
+
+			case L2I_HFS:
+				/*set_UINT32BE(&tag.wrCnt, ++fileref->l2_img.u.hfs.wrCnt);*/	/* ***TODO*** */
+				break;
+			}
+
+			errorcode = image_write_tag(&fileref->l2_img->l1_img, block, &tag);
+			if (errorcode)
+				return errorcode;
+		}
 		len -= run_len;
 		src = (const UINT8 *)src + run_len;
 		fileref->crPs += run_len;
@@ -2536,17 +2615,20 @@ static int mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 		fileref->u.mfs.stBlk != 1)
 	allocABs (I): number of ABs to allocate in addition to the current file
 		allocation
+	fblock (I): first file block to allocate (used for tag data)
 
 	Return imgtool error code
 */
-static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocABs)
+static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocABs, UINT32 fblock)
 {
 	int numABs = fileref->l2_img->numABs;
 	int free_ABs;
-	int i;
+	int i, j;
+	floppy_tag_record tag;
 	int extentBaseAB, extentABlen;
 	int firstBestExtentBaseAB = 0, firstBestExtentABlen;
 	int secondBestExtentBaseAB = 0, secondBestExtentABlen;
+	int errorcode;
 
 	/* return if done */
 	if (! allocABs)
@@ -2557,7 +2639,29 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 	for (i=0; i<numABs; i++)
 	{
 		if (mfs_get_ABlink(fileref->l2_img, i) == 0)
+		{
+#if TAG_CHECKS
+			/* optional check */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			{
+				for (j=0; j<fileref->l2_img->blocksperAB; j++)
+				{
+					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
+					if (errorcode)
+						return errorcode;
+
+					if (get_UINT32BE(tag.fileID) != 0)
+					{
+						/*return IMGTOOLERR_CORRUPTIMAGE;*/
+						goto corrupt_free_block;
+					}
+				}
+			}
+#endif
 			free_ABs++;
+		}
+corrupt_free_block:
+		;
 	}
 
 	/* check we have enough free space */
@@ -2569,11 +2673,30 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 		/* append free ABs after last AB */
 		for (i=lastAB+1; (mfs_get_ABlink(fileref->l2_img, i) == 0) && (allocABs > 0) && (i < numABs); i++)
 		{
+#if TAG_CHECKS
+			/* optional check */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			{
+				for (j=0; j<fileref->l2_img->blocksperAB; j++)
+				{
+					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
+					if (errorcode)
+						return errorcode;
+
+					if (get_UINT32BE(tag.fileID) != 0)
+					{
+						/*return IMGTOOLERR_CORRUPTIMAGE;*/
+						goto corrupt_free_block2;
+					}
+				}
+			}
+#endif
 			mfs_set_ABlink(fileref->l2_img, lastAB, i+2);
 			lastAB = i;
 			allocABs--;
 			free_ABs--;
 		}
+corrupt_free_block2:
 		/* return if done */
 		if (! allocABs)
 		{
@@ -2597,9 +2720,28 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 				extentABlen = 0;
 				while ((i<numABs) && (mfs_get_ABlink(fileref->l2_img, i) == 0))
 				{
+#if TAG_CHECKS
+					/* optional check */
+					if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+					{
+						for (j=0; j<fileref->l2_img->blocksperAB; j++)
+						{
+							errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + i * fileref->l2_img->blocksperAB + j, &tag);
+							if (errorcode)
+								return errorcode;
+
+							if (get_UINT32BE(tag.fileID) != 0)
+							{
+								/*return IMGTOOLERR_CORRUPTIMAGE;*/
+								goto corrupt_free_block3;
+							}
+						}
+					}
+#endif
 					extentABlen++;
 					i++;
 				}
+corrupt_free_block3:
 				/* compare to previous best and second-best blocks */
 				if ((extentABlen < firstBestExtentABlen) && (extentABlen >= allocABs))
 				{
@@ -2627,8 +2769,30 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 				else
 					fileref->u.mfs.stBlk = firstBestExtentBaseAB+i+2;
 				lastAB = firstBestExtentBaseAB+i;
+				free_ABs--;
+				/* set tag to allocated */
+				if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+				{
+					set_UINT32BE(&tag.fileID, fileref->fileID);
+					tag.ftype = 1;
+					if ((fileref->forkType) == rsrc_fork)
+						tag.ftype |= 2;
+					tag.fattr = /*fattr*/ 0;		/* ***TODO*** */
+					for (j=0; j<fileref->l2_img->blocksperAB; j++)
+					{
+						set_UINT16BE(&tag.fblock, fblock & 0xffff);
+						set_UINT32BE(&tag.wrCnt, mac_GetDateTime());
+						errorcode = image_write_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + lastAB * fileref->l2_img->blocksperAB + j, &tag);
+						if (errorcode)
+						{
+							mfs_set_ABlink(fileref->l2_img, lastAB, 1);
+							fileref->l2_img->freeABs = free_ABs;
+							return errorcode;
+						}
+						fblock++;
+					}
+				}
 			}
-			free_ABs -= allocABs;
 			allocABs = 0;
 			mfs_set_ABlink(fileref->l2_img, lastAB, 1);
 			fileref->l2_img->freeABs = free_ABs;
@@ -2643,8 +2807,30 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 				else
 					fileref->u.mfs.stBlk = secondBestExtentBaseAB+i+2;
 				lastAB = secondBestExtentBaseAB+i;
+				free_ABs--;
+				/* set tag to allocated */
+				if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+				{
+					set_UINT32BE(&tag.fileID, fileref->fileID);
+					tag.ftype = 1;
+					if ((fileref->forkType) == rsrc_fork)
+						tag.ftype |= 2;
+					tag.fattr = /*fattr*/ 0;		/* ***TODO*** */
+					for (j=0; j<fileref->l2_img->blocksperAB; j++)
+					{
+						set_UINT16BE(&tag.fblock, fblock & 0xffff);
+						set_UINT32BE(&tag.wrCnt, mac_GetDateTime());
+						errorcode = image_write_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + lastAB * fileref->l2_img->blocksperAB + j, &tag);
+						if (errorcode)
+						{
+							mfs_set_ABlink(fileref->l2_img, lastAB, 1);
+							fileref->l2_img->freeABs = free_ABs;
+							return errorcode;
+						}
+						fblock++;
+					}
+				}
 			}
-			free_ABs -= secondBestExtentABlen;
 			allocABs -= secondBestExtentABlen;
 		}
 		else
@@ -2671,9 +2857,10 @@ static int mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 {
 	UINT16 AB_address = 0;
 	UINT16 AB_link;
-	int i;
-	int errorcode = 0;
+	int i, j;
+	floppy_tag_record tag;
 	int MDB_dirty = 0;
+	int errorcode = 0;
 
 
 	assert(fileref->l2_img->format == L2I_MFS);
@@ -2691,6 +2878,25 @@ static int mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 			/* 0 -> empty block: there is no way an empty block could make it
 			into the link chain!!! */
 			return IMGTOOLERR_CORRUPTIMAGE;
+#if TAG_CHECKS
+		/* optional check */
+		if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+		{
+			for (j=0; j<fileref->l2_img->blocksperAB; j++)
+			{
+				errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
+				if (errorcode)
+					return errorcode;
+
+				if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+					|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+					|| (get_UINT16BE(tag.fblock) != ((i * fileref->l2_img->blocksperAB + j) & 0xffff)))
+				{
+					return IMGTOOLERR_CORRUPTIMAGE;
+				}
+			}
+		}
+#endif
 	}
 
 	if (i == newABeof)
@@ -2720,14 +2926,45 @@ static int mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 				}
 				return IMGTOOLERR_CORRUPTIMAGE;
 			}
+#if TAG_CHECKS
+			/* optional check */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			{
+				for (j=0; j<fileref->l2_img->blocksperAB; j++)
+				{
+					errorcode = image_read_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
+					if (errorcode)
+						return errorcode;
+
+					if ((get_UINT32BE(tag.fileID) != fileref->fileID)
+						|| (((tag.ftype & 2) != 0) != (fileref->forkType == rsrc_fork))
+						|| (get_UINT16BE(tag.fblock) != ((i * fileref->l2_img->blocksperAB + j) & 0xffff)))
+					{
+						return IMGTOOLERR_CORRUPTIMAGE;
+					}
+				}
+			}
+#endif
 			mfs_set_ABlink(fileref->l2_img, AB_address, 0);
 			fileref->l2_img->freeABs++;
 			MDB_dirty = 1;
+			/* set tag to free */
+			if (image_get_tag_len(&fileref->l2_img->l1_img) == 12)
+			{
+				memset(&tag, 0, sizeof(tag));
+				for (j=0; j<fileref->l2_img->blocksperAB; j++)
+				{
+					errorcode = image_write_tag(&fileref->l2_img->l1_img, fileref->l2_img->u.mfs.ABStart + AB_address * fileref->l2_img->blocksperAB + j, &tag);
+					if (errorcode)
+						return errorcode;
+				}
+			}
+			i++;
 		}
 	}
 	else
 	{	/* new EOF is larger than old one */
-		errorcode = mfs_file_allocABs(fileref, AB_address, newABeof - i);
+		errorcode = mfs_file_allocABs(fileref, AB_address, newABeof - i, i * fileref->l2_img->blocksperAB);
 		if (errorcode)
 			return errorcode;
 		MDB_dirty = 1;
@@ -3758,7 +3995,7 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 	if (!BTref->node_buf)
 		return IMGTOOLERR_OUTOFMEMORY;
 
-#if 1
+#if BTREE_CHECKS
 	/* optional: check integrity of B-tree */
 	errorcode = BT_check(BTref, is_extent);
 	if (errorcode)
