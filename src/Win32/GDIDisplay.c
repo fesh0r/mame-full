@@ -110,6 +110,9 @@ struct OSDDisplay GDIDisplay =
     GDI_Refresh,            /* Refresh           */
     GDI_GetBlackPen,        /* GetBlackPen       */
     GDI_UpdateFPS,          /* UpdateFPS         */
+#ifdef MESS
+    0,                      /* AllowModalDialog  */
+#endif
 };
 
 /***************************************************************************

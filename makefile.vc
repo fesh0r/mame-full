@@ -177,7 +177,7 @@ RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 RCFLAGS = -l 0x409 -I./Win32
 
 ifeq "$(TARGET)" "mess"
-RCFLAGS += -DMESS -Imess/Win32
+RCFLAGS += -DMESS -Imess/Win32 -Isrc/Win32
 endif
 
 #####################################################################
@@ -335,6 +335,10 @@ $(OBJ)/mess/%.o: mess/%.c
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
 $(OBJ)/Win32/%.res: src/Win32/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
+
+$(OBJ)/mess/Win32/%.res: mess/Win32/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

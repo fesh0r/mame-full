@@ -39,7 +39,11 @@ OSOBJS = \
         $(OBJ)/Win32/RenderMMX.o \
         $(OBJ)/Win32/dxdecode.o
 
+ifdef MESS
+RES = $(OBJ)/mess/Win32/mess32.res
+else
 RES = $(OBJ)/Win32/mame32.res
+endif
 
 # additional OS specific object files
 

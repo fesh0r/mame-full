@@ -170,6 +170,9 @@ static BOOL               DDraw_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LP
 static void               DDraw_Refresh(void);
 static int                DDraw_GetBlackPen(void);
 static void               DDraw_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, int nFrameskip, int nVecUPS);
+#ifdef MESS
+static int                DDraw_AllowModalDialog(BOOL bAllow);
+#endif
 
 /***************************************************************************
     External variables
@@ -202,6 +205,9 @@ struct OSDDisplay DDrawDisplay =
     DDraw_Refresh,              /* Refresh           */
     DDraw_GetBlackPen,          /* GetBlackPen       */
     DDraw_UpdateFPS,            /* UpdateFPS         */
+#ifdef MESS
+    DDraw_AllowModalDialog,     /* AllowModalDialog  */
+#endif
 };
 
 /***************************************************************************
@@ -2033,6 +2039,24 @@ static void DDraw_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, i
         }
     }
 }
+
+#ifdef MESS
+static int DDraw_AllowModalDialog(BOOL bAllow)
+{
+	HRESULT hResult;
+
+	if (bAllow) {
+		hResult = IDirectDrawSurface_SetPalette(This.m_pDDSPrimary, NULL);
+	}
+	else {
+		hResult = IDirectDrawSurface_SetPalette(This.m_pDDSPrimary, This.m_pDDPal);
+		ClearSurface(This.m_pDDSPrimary);
+		ClearSurface(This.m_pDDSBack);
+	}
+
+	return FAILED(hResult) ? 1 : 0;
+}
+#endif
 
 static void AdjustPalette(void)
 {

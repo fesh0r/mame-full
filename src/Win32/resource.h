@@ -307,6 +307,7 @@
 #define ID_MESS_OPEN_SOFTWARE           2200
 #define ID_MESS_CREATE_SOFTWARE         2201
 #define IDD_PROP_SOFTWARE               2202
+#define IDD_FILEMGR                     2203
 #endif
 
 // Next default values for new objects

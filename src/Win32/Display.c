@@ -82,6 +82,9 @@ struct OSDDisplay OSDDisplay =
     0,                          /* Refresh           */
     0,                          /* GetBlackPen       */
     0,                          /* UpdateFPS         */
+#ifdef MESS
+    0,                          /* AllowModalDialog  */
+#endif
 };
 
 /***************************************************************************

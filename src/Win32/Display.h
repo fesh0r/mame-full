@@ -52,6 +52,9 @@ struct OSDDisplay
     void                (*Refresh)(void);
     int                 (*GetBlackPen)(void);
     void                (*UpdateFPS)(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, int nFrameskip, int nVecUPS);
+#ifdef MESS
+	int                 (*AllowModalDialog)(BOOL bAllow);
+#endif
 };
 
 extern float Display_get_gamma(void);

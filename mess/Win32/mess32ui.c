@@ -50,12 +50,12 @@ extern const char *osd_get_cwd(void);
 extern void resetdir(void);
 extern void osd_change_directory(const char *);
 static void FillSoftwareList(int nGame);
-static void InitMessPicker(void);
-static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
-static BOOL MessPickerNotify(NMHDR *nm);
+static void InitMessPicker(HWND hWnd, BOOL firsttime);
+static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP hBackground);
+static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void));
 static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
-static void MessRetrievePickerDefaults(void);
+static void MessRetrievePickerDefaults(HWND hWnd);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
@@ -277,7 +277,22 @@ static char *mess_column_names[MESS_COLUMN_MAX] = {
     "Playable"
 };
 
-static void ResetMessColumnDisplay(BOOL firstime)
+static void MessInsertPickerItem(HWND hWnd, int i)
+{
+    LV_ITEM lvi;
+
+    lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
+    lvi.stateMask = 0;
+    lvi.iItem    = i;
+    lvi.iSubItem = 0; 
+    lvi.lParam   = i;
+    // Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
+    lvi.pszText  = LPSTR_TEXTCALLBACK;
+    lvi.iImage   = I_IMAGECALLBACK;
+    ListView_InsertItem(hWnd,&lvi);
+}
+
+static void ResetMessColumnDisplay(BOOL firstime, HWND hWnd)
 {
     LV_COLUMN   lvc;
     int         i;
@@ -290,25 +305,26 @@ static void ResetMessColumnDisplay(BOOL firstime)
     GetMessColumnOrder(order);
     GetMessColumnShown(shown);
 
+/*
     if (!firstime)
     {
-        nColumn = GetNumColumns(hwndSoftware);
+        nColumn = GetNumColumns(hWnd);
 
         // The first time thru this won't happen, on purpose
         for (i = 0; i < nColumn; i++)
         {
-            widths[messRealColumn[i]] = ListView_GetColumnWidth(hwndSoftware, i);
+            widths[messRealColumn[i]] = ListView_GetColumnWidth(hWnd, i);
         }
 
         SetColumnWidths(widths);
 
         for (i = nColumn; i > 0; i--)
         {
-            ListView_DeleteColumn(hwndSoftware, i - 1);
+            ListView_DeleteColumn(hWnd, i - 1);
         }
     }
-
-    ListView_SetExtendedListViewStyle(hwndSoftware,
+*/
+    ListView_SetExtendedListViewStyle(hWnd,
         LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
     lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -326,7 +342,7 @@ static void ResetMessColumnDisplay(BOOL firstime)
             lvc.pszText = mess_column_names[order[i]];
             lvc.iSubItem = nColumn;
             lvc.cx = widths[order[i]]; 
-            ListView_InsertColumn(hwndSoftware, nColumn, &lvc);
+            ListView_InsertColumn(hWnd, nColumn, &lvc);
             messRealColumn[nColumn] = order[i];
             nColumn++;
         }
@@ -343,21 +359,30 @@ static void ResetMessColumnDisplay(BOOL firstime)
     }
 
     if (GetListFontColor() == RGB(255, 255, 255))
-        ListView_SetTextColor(hwndSoftware, RGB(240,240,240));
+        ListView_SetTextColor(hWnd, RGB(240,240,240));
     else
-        ListView_SetTextColor(hwndSoftware, GetListFontColor());
+        ListView_SetTextColor(hWnd, GetListFontColor());
 
-    // Set the default software
-    MessRetrievePickerDefaults();
+
+	if (!firstime) {
+		ListView_DeleteAllItems(hWnd);
+		ListView_SetItemCount(hWnd, mess_images_count);
+		for (i = 0; i < mess_images_count; i++) {
+			MessInsertPickerItem(hWnd, i);
+		}
+	}
+
+	// Set the default software
+	MessRetrievePickerDefaults(hWnd);
 }
 
-static void InitMessPicker()
+static void InitMessPicker(HWND hWnd, BOOL firsttime)
 {
     int order[MESS_COLUMN_MAX];
     int shown[MESS_COLUMN_MAX];
     int i;
 
-    Header_Initialize(hwndSoftware);
+    Header_Initialize(hWnd);
 
     // Disabled column customize with old Control
     if (oldControl)
@@ -372,12 +397,12 @@ static void InitMessPicker()
     }
 
     /* Create IconsList for ListView Control */
-    ListView_SetImageList (hwndSoftware, hSmall, LVSIL_SMALL);
-    ListView_SetImageList (hwndSoftware, hLarge, LVSIL_NORMAL);
+    ListView_SetImageList (hWnd, hSmall, LVSIL_SMALL);
+    ListView_SetImageList (hWnd, hLarge, LVSIL_NORMAL);
 
     GetMessColumnOrder(messRealColumn);
 
-    ResetMessColumnDisplay(TRUE);
+    ResetMessColumnDisplay(firsttime, hWnd);
 
     /* Allow selection to change the default saved game */
     bListReady = TRUE;
@@ -461,7 +486,7 @@ static int WhichMessIcon(int nItem)
     return nIcon;
 }
 
-static BOOL MessPickerNotify(NMHDR *nm)
+static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void))
 {
     NM_LISTVIEW *pnmv;
     static int nLastState = -1;
@@ -473,7 +498,7 @@ static BOOL MessPickerNotify(NMHDR *nm)
     case NM_RCLICK:
     case NM_CLICK:
         /* don't allow selection of blank spaces in the listview */
-        if (!PickerHitTest(hwndSoftware))
+        if (!PickerHitTest(hWnd))
         {
             /* we have no current game selected */
             return TRUE;
@@ -482,12 +507,10 @@ static BOOL MessPickerNotify(NMHDR *nm)
 
     case NM_DBLCLK:
         /* Check here to make sure an item was selected */
-        if (!PickerHitTest(hwndSoftware))
-        {
+        if (!PickerHitTest(hWnd))
             return TRUE;
-        }
-        else
-            MamePlayGame();
+        else if (runhandler)
+            runhandler();
         return TRUE;
 
     case LVN_GETDISPINFO:
@@ -525,7 +548,7 @@ static BOOL MessPickerNotify(NMHDR *nm)
                     for (i = 0; i < options.image_count; i++) {
                         int imagenum = mess_image_nums[i];
                         mess_image_nums[i] = -1;
-                        ListView_Update(hwndSoftware, imagenum);
+                        ListView_Update(hWnd, imagenum);
                     }
                     MessRemoveImage(-1);
                 }
@@ -615,21 +638,6 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
         }
         osd_dir_close(d);
     }
-}
-
-static void MessInsertPickerItem(int i)
-{
-    LV_ITEM lvi;
-
-    lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
-    lvi.stateMask = 0;
-    lvi.iItem    = i;
-    lvi.iSubItem = 0; 
-    lvi.lParam   = i;
-    // Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
-    lvi.pszText  = LPSTR_TEXTCALLBACK;
-    lvi.iImage   = I_IMAGECALLBACK;
-    ListView_InsertItem(hwndSoftware,&lvi);
 }
 
 static void FillSoftwareList(int nGame)
@@ -723,7 +731,7 @@ static void FillSoftwareList(int nGame)
     ListView_SetItemCount(hwndSoftware, mess_images_count);
 
     for (i = 0; i < mess_images_count; i++) {
-        MessInsertPickerItem(i);
+        MessInsertPickerItem(hwndSoftware, i);
     }
     mess_idle_work = TRUE;
     nIdleImageNum = 0;
@@ -777,7 +785,7 @@ static void MessSetPickerDefaults(void)
         free(default_software);
 }
 
-static void MessRetrievePickerDefaults(void)
+static void MessRetrievePickerDefaults(HWND hWnd)
 {
     char *default_software = strdup(GetDefaultSoftware());
     char *this_software;
@@ -798,11 +806,11 @@ static void MessRetrievePickerDefaults(void)
         i = MessLookupByFilename(this_software);
         if (i >= 0) {
             if (this_software == default_software) {
-                ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-                ListView_EnsureVisible(hwndSoftware, i, FALSE);
+                ListView_SetItemState(hWnd, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+                ListView_EnsureVisible(hWnd, i, FALSE);
             }
             else {
-                ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
+                ListView_SetItemState(hWnd, i, LVIS_SELECTED, LVIS_SELECTED);
             }
         }
 
@@ -812,7 +820,7 @@ static void MessRetrievePickerDefaults(void)
     free(default_software);
 }
 
-static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
+static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP hBackground)
 {
     HDC         hDC = lpDrawItemStruct->hDC;
     RECT        rcItem = lpDrawItemStruct->rcItem;
@@ -822,7 +830,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     COLORREF    clrTextSave, clrBkSave;
     COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
     static CHAR szBuff[MAX_PATH];
-    BOOL        bFocus = (GetFocus() == hwndSoftware);
+    BOOL        bFocus = (GetFocus() == hWnd);
     LPCTSTR     pszText;
     UINT        nStateImageMask;
     BOOL        bSelected;
@@ -839,7 +847,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     int         nResults = 0;
     int         order[COLUMN_MAX];
 
-    nColumnMax = GetNumColumns(hwndSoftware);
+    nColumnMax = GetNumColumns(hWnd);
 
     if (oldControl)
     {
@@ -848,7 +856,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     else
     {
         /* Get the Column Order and save it */
-        ListView_GetColumnOrderArray(hwndSoftware, nColumnMax, order);
+        ListView_GetColumnOrderArray(hWnd, nColumnMax, order);
 
         /* Disallow moving column 0 */
         if (order[0] != 0)
@@ -861,7 +869,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
                     order[0] = 0;
                 }
             }
-            ListView_SetColumnOrderArray(hwndSoftware, nColumnMax, order);
+            ListView_SetColumnOrderArray(hWnd, nColumnMax, order);
         }
     }
 
@@ -876,25 +884,25 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     lvi.pszText = szBuff;
     lvi.cchTextMax = sizeof(szBuff);
     lvi.stateMask = 0xFFFF;       // get all state flags
-    ListView_GetItem(hwndSoftware, &lvi);
+    ListView_GetItem(hWnd, &lvi);
 
     // This makes NO sense, but doesn't work without it?
     strcpy(szBuff, lvi.pszText);
 
 
     bSelected = mess_images_count
-        && ((bFocus) || (GetWindowLong(hwndSoftware, GWL_STYLE) & LVS_SHOWSELALWAYS))
+        && ((bFocus) || (GetWindowLong(hWnd, GWL_STYLE) & LVS_SHOWSELALWAYS))
         && MessIsImageSelected(nItem);
 
 //    bSelected = mess_images_count && (((lvi.state & LVIS_DROPHILITED) || ( (lvi.state & LVIS_SELECTED)
-//      && ((bFocus) || (GetWindowLong(hwndSoftware, GWL_STYLE) & LVS_SHOWSELALWAYS)))));
+//      && ((bFocus) || (GetWindowLong(hWnd, GWL_STYLE) & LVS_SHOWSELALWAYS)))));
 
-    ListView_GetItemRect(hwndSoftware, nItem, &rcAllLabels, LVIR_BOUNDS);
+    ListView_GetItemRect(hWnd, nItem, &rcAllLabels, LVIR_BOUNDS);
 
-    ListView_GetItemRect(hwndSoftware, nItem, &rcLabel, LVIR_LABEL);
+    ListView_GetItemRect(hWnd, nItem, &rcLabel, LVIR_LABEL);
     rcAllLabels.left = rcLabel.left;
 
-    if( hBitmap != NULL )
+    if( hBackground != NULL )
     {
         RECT        rcClient;
         HRGN        rgnBitmap;
@@ -907,13 +915,13 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
         htempDC = CreateCompatibleDC(hDC);
 
-        oldBitmap = SelectObject(htempDC, hBitmap);
+        oldBitmap = SelectObject(htempDC, hBackground);
 
-        GetClientRect(hwndSoftware, &rcClient); 
+        GetClientRect(hWnd, &rcClient); 
         rcTmpBmp.right = rcClient.right;
         // We also need to check whether it is the last item
         // The update region has to be extended to the bottom if it is
-        if ((mess_images_count == 0) || (nItem == ListView_GetItemCount(hwndSoftware) - 1))
+        if ((mess_images_count == 0) || (nItem == ListView_GetItemCount(hWnd) - 1))
             rcTmpBmp.bottom = rcClient.bottom;
         
         rgnBitmap = CreateRectRgnIndirect(&rcTmpBmp);
@@ -928,7 +936,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
             RealizePalette(htempDC);
         }
         
-        ListView_GetItemRect(hwndSoftware, 0, &rcFirstItem, LVIR_BOUNDS);
+        ListView_GetItemRect(hWnd, 0, &rcFirstItem, LVIR_BOUNDS);
         
         for( i = rcFirstItem.left; i < rcClient.right; i += bmDesc.bmWidth )
             for( j = rcFirstItem.top; j < rcClient.bottom; j += bmDesc.bmHeight )
@@ -969,7 +977,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
         SelectObject(hDC, hOldBrush);
         DeleteObject(hBrush);
     }
-    else if( hBitmap == NULL )
+    else if( hBackground == NULL )
     {
         HBRUSH hBrush;
 
@@ -1001,14 +1009,14 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     if(nStateImageMask)
     {
         int nImage = (nStateImageMask >> 12) - 1;
-        hImageList = ListView_GetImageList(hwndSoftware, LVSIL_STATE);
+        hImageList = ListView_GetImageList(hWnd, LVSIL_STATE);
         if(hImageList)
             ImageList_Draw(hImageList, nImage, hDC, rcItem.left, rcItem.top, ILD_TRANSPARENT);
     }
 
-    ListView_GetItemRect(hwndSoftware, nItem, &rcIcon, LVIR_ICON);
+    ListView_GetItemRect(hWnd, nItem, &rcIcon, LVIR_ICON);
 
-    hImageList = ListView_GetImageList(hwndSoftware, LVSIL_SMALL);
+    hImageList = ListView_GetImageList(hWnd, LVSIL_SMALL);
     if(hImageList)
     {
         UINT nOvlImageMask = lvi.state & LVIS_OVERLAYMASK;
@@ -1017,7 +1025,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
                 16, 16, GetSysColor(COLOR_WINDOW), clrImage, uiFlags | nOvlImageMask);
     }
 
-    ListView_GetItemRect(hwndSoftware, nItem, &rcItem,LVIR_LABEL);
+    ListView_GetItemRect(hWnd, nItem, &rcItem,LVIR_LABEL);
 
     pszText = MakeShortString(hDC, szBuff,rcItem.right - rcItem.left,  2 * offset);
 
@@ -1035,7 +1043,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
         LV_ITEM lvi;
         
         lvc.mask = LVCF_FMT | LVCF_WIDTH;
-        ListView_GetColumn(hwndSoftware, order[nColumn] , &lvc);
+        ListView_GetColumn(hWnd, order[nColumn] , &lvc);
 
         lvi.mask = LVIF_TEXT;
         lvi.iItem = nItem; 
@@ -1043,7 +1051,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
         lvi.pszText = szBuff;
         lvi.cchTextMax = sizeof(szBuff);
 
-        if (ListView_GetItem(hwndSoftware, &lvi) == FALSE)
+        if (ListView_GetItem(hWnd, &lvi) == FALSE)
             continue;
 
         /* This shouldn't oughtta be, but it's needed!!! */
@@ -1116,6 +1124,10 @@ static void OnMessIdle()
         nIdleImageNum = 0;
     }
 }
+
+/* ------------------------------------------------------------------------ *
+ * Open others dialog                                                       *
+ * ------------------------------------------------------------------------ */
 
 static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
 {
@@ -1247,7 +1259,7 @@ static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
     pNewIndex[i] = (*pOldLastImageNext);
     mess_images_index = pNewIndex;
 
-    MessInsertPickerItem(i);
+    MessInsertPickerItem(hwndSoftware, i);
     ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
     ListView_EnsureVisible(hwndSoftware, i, FALSE);
 
@@ -1271,4 +1283,104 @@ static void MessCreateDevice(int iDevice)
 {
     MessSetupDevice(GetSaveFileName, iDevice);
 }
+
+
+/* ------------------------------------------------------------------------ *
+ * New File Manager                                                         *
+ * ------------------------------------------------------------------------ */
+
+static BOOL s_bChosen;
+
+static void FileManagerItemChosen(void)
+{
+	s_bChosen = TRUE;
+}
+
+static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	HWND hSoftwarePicker;
+	RECT r;
+
+	hSoftwarePicker = GetDlgItem(hDlg, IDC_LIST2);
+
+	switch(message) {
+	case WM_INITDIALOG:
+		ShowWindow(hDlg, SW_SHOWMAXIMIZED);
+		GetClientRect(hDlg, &r);
+		r.left += 10;
+		r.right -= 10;
+		r.top += 10;
+		r.bottom -= 10;
+		SetWindowPos(hSoftwarePicker, HWND_TOP, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_DRAWFRAME);
+		InitMessPicker(hSoftwarePicker, FALSE);
+		break;
+
+    case WM_NOTIFY:
+        /* Where is this message intended to go */
+        {
+            LPNMHDR lpNmHdr = (LPNMHDR)lParam;            
+            if (lpNmHdr->hwndFrom == hSoftwarePicker)
+                return MessPickerNotify( hSoftwarePicker, lpNmHdr, FileManagerItemChosen );
+        }
+        break;
+
+    case WM_DRAWITEM:
+        {
+            LPDRAWITEMSTRUCT lpDis = (LPDRAWITEMSTRUCT)lParam;
+            switch(lpDis->CtlID) {
+			case IDC_LIST2:
+				s_bChosen = FALSE;
+                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hSoftwarePicker, NULL);
+				if (s_bChosen)
+					EndDialog(hDlg, 0);
+                break;
+            }
+        }
+        break;
+
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL UseNewFileManager(void)
+{
+	return FALSE;
+}
+
+/* osd_select_file allows MESS32 to override the default file manager
+ *
+ * sel indexes an entry in options.image_files[]
+ *
+ * Returns:
+ *	0 if the core should handle it
+ *  1 if we successfully selected a file
+ * -1 if we cancelled
+ */
+int osd_select_file(int sel, char *filename)
+{
+	int result;
+
+	if (UseNewFileManager()) {
+		ShowCursor(TRUE);
+
+		if (MAME32App.m_pDisplay->AllowModalDialog)
+			MAME32App.m_pDisplay->AllowModalDialog(TRUE);
+
+		DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
+
+		if (MAME32App.m_pDisplay->AllowModalDialog)
+			MAME32App.m_pDisplay->AllowModalDialog(FALSE);
+
+		ShowCursor(FALSE);
+		result = -1;
+	}
+	else {
+		result = 0;
+	}
+	return result;
+}
+
+
 

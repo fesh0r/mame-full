@@ -145,8 +145,3 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 	}
 	return 1;
 }
-
-int osd_select_file(int sel, char *filename)
-{
-	return 0;
-}

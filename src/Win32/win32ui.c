@@ -1350,7 +1350,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     /* Initialize listview columns */
     InitPicker();
 #ifdef MESS
-	InitMessPicker();
+	InitMessPicker(hwndSoftware, TRUE);
 #endif
     SetFocus(hwndList);
 
@@ -1639,7 +1639,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 return TreeViewNotify( lpNmHdr );
 #ifdef MESS
             if (lpNmHdr->hwndFrom == hwndSoftware)
-                return MessPickerNotify( lpNmHdr );
+                return MessPickerNotify( hwndSoftware, lpNmHdr, MamePlayGame );
 #endif
         }
         break;
@@ -1654,7 +1654,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 break;
 #ifdef MESS
 			case IDC_LIST2:
-                DrawMessItem((LPDRAWITEMSTRUCT)lParam);
+                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hwndSoftware, hBitmap);
                 break;
 #endif
             }
