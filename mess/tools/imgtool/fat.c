@@ -260,6 +260,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	const char *title;
 	const char *fat_bits_string;
 	UINT8 header[512];
+	UINT64 first_fat_entries;
 
 	heads = option_resolution_lookup_int(opts, 'H');
 	tracks = option_resolution_lookup_int(opts, 'T');
@@ -346,9 +347,25 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	if (ferr)
 		return imgtool_floppy_error(ferr);
 
+	/* clear out file allocation table */
 	for (i = 0; i < (sectors_per_fat * fat_count + root_dir_sectors); i++)
 	{
 		ferr = floppy_clear_sector(imgtool_floppy(image), 0, 0, first_sector_id + 1 + i, 0);
+		if (ferr)
+			return imgtool_floppy_error(ferr);
+	}
+
+	/* set first two FAT entries */
+	first_fat_entries = ((UINT64) media_descriptor) | 0xFFFFFF00;
+	first_fat_entries &= (((UINT64) 1) << fat_bits) - 1;
+	first_fat_entries |= ((((UINT64) 1) << fat_bits) - 1) << fat_bits;
+	first_fat_entries = LITTLE_ENDIANIZE_INT64(first_fat_entries);
+
+	for (i = 0; i < fat_count; i++)
+	{
+		ferr = floppy_write_sector(imgtool_floppy(image), 0, 0,
+			first_sector_id + 1 + (i * sectors_per_fat), 0, &first_fat_entries,
+			fat_bits * 2 / 8);
 		if (ferr)
 			return imgtool_floppy_error(ferr);
 	}
