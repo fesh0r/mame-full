@@ -10,7 +10,7 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "machine/bbc.h"
+#include "includes/bbc.h"
 #include "vidhrdw/bbc.h"
 #include "machine/6522via.h"
 #include "includes/basicdsk.h"
@@ -338,10 +338,10 @@ ROM_START(bbcb)
 														  /* rom page 1  14000 */
 														  /* rom page 2  18000 */
 														  /* rom page 3  1c000 */
-														  /* rom page 4  20000 */
-														  /* rom page 5  24000 */
-														  /* rom page 6  28000 */
-														  /* rom page 7  2c000 */
+	                                                      /* rom page 4  20000 */
+	                                                      /* rom page 5  24000 */
+	ROM_LOAD("dnfs.rom", 0x028000, 0x04000, 0x0)		  /* rom page 6  28000 */
+	                                                      /* rom page 7  2c000 */
 														  /* rom page 8  30000 */
 														  /* rom page 9  34000 */
 														  /* rom page 10 38000 */
@@ -359,7 +359,7 @@ static int bbcb_vsync(void)
 {
 	via_0_ca1_w(0,0);
 	via_0_ca1_w(0,1);
-	check_disc_status();
+    //check_disc_status();
 	return 0;
 }
 
