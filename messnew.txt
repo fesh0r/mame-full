@@ -15,13 +15,16 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
-- [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to $FF95
+- [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to $FF95 [Nate Woods]
 
 Other Changes:
 --------------
 
 - The core is based on MAME 0.37b10. This incorporates all 
   features of the update to this core.  [MAME team] 
+- [IMGTOOL] Added filter support, and filters that translate endoflines, as
+  well as the startings of BASIC tokenization.  Also updated the docs [Nate
+  Woods]
 
 0.37b9 
 ---------

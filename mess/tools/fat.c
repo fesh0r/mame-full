@@ -323,10 +323,10 @@ static int fat_write_sector(IMAGE *img, int head, int track, int sector, char *b
 
 static struct OptionTemplate fat_createopts[] =
 {
-	{ "cylinders",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [0] */
-	{ "sectors",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [1] */
-	{ "heads",		IMGOPTION_FLAG_TYPE_INTEGER,	1,		2,			NULL	},	/* [2] */
-	{ NULL, 0, 0, 0, 0 }
+	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [0] */
+	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [1] */
+	{ "heads",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		2,			NULL	},	/* [2] */
+	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 #define FAT_CREATEOPTIONS_CYLINDERS		0
@@ -365,10 +365,10 @@ static int fathd_image_create(STREAM *f, const ResolvedOption *options);
 
 static struct OptionTemplate fathd_createopts[] =
 {
-	{ "cylinders",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		63,		NULL	},	/* [0] */
-	{ "sectors",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		1024,	NULL	},	/* [1] */
-	{ "heads",		IMGOPTION_FLAG_TYPE_INTEGER,	1,		16,		NULL	},	/* [2] */
-	{ NULL, 0, 0, 0, 0 }
+	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		63,		NULL	},	/* [0] */
+	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		1024,	NULL	},	/* [1] */
+	{ "heads",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		16,		NULL	},	/* [2] */
+	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 IMAGEMODULE(

@@ -5,6 +5,7 @@
 #include <time.h>
 #include <assert.h>
 #include "imgtool.h"
+#include "snprintf.h"
 #include "utils.h"
 
 struct command {
@@ -518,23 +519,126 @@ static int cmd_listformats(struct command *c, int argc, char *argv[])
 	return 0;
 }
 
+static int cmd_listfilters(struct command *c, int argc, char *argv[])
+{
+	FILTERMODULE *f = filters;
+
+	fprintf(stdout, "Filters supported by imgtool:\n\n");
+
+	while(*f) {
+		fprintf(stdout, "  %-10s%s\n", (*f)->name, (*f)->humanname);
+		f++;
+	}
+
+	return 0;
+}
+
+static void listoptions(const struct OptionTemplate *opttemplate)
+{
+	const char *attrtypename;
+	const char *minval;
+	const char *maxval;
+	char buf1[256];
+	char buf2[16];
+	char buf3[16];
+
+	assert(opttemplate);
+
+	fprintf(stdout, "Option   Type      Min  Max  Default Description\n");
+	fprintf(stdout, "-------- --------- ---- ---- ------- -----------\n");
+
+	while(opttemplate->name) {
+		minval = maxval = "";
+
+		/* Min/Max/Default representations are dependant on type */
+		switch(opttemplate->flags & IMGOPTION_FLAG_TYPE_MASK) {
+		case IMGOPTION_FLAG_TYPE_INTEGER:
+			attrtypename = "(integer)";
+			snprintf(buf2, sizeof(buf2) / sizeof(buf2[0]), "%i", opttemplate->min);
+			snprintf(buf3, sizeof(buf3) / sizeof(buf3[0]), "%i", opttemplate->max);
+			minval = buf2;
+			maxval = buf3;
+			break;
+		case IMGOPTION_FLAG_TYPE_CHAR:
+			attrtypename = "(char)";
+			buf2[0] = opttemplate->min;
+			buf2[1] = '\0';
+			buf3[0] = opttemplate->max;
+			buf3[1] = '\0';
+			minval = buf2;
+			maxval = buf3;
+			break;
+		case IMGOPTION_FLAG_TYPE_STRING:
+			attrtypename = "(string)";
+			break;
+		default:
+			assert(0);
+			attrtypename = NULL;
+			break;
+		}
+
+		snprintf(buf1, sizeof(buf1) / sizeof(buf1[0]), "--%s", opttemplate->name);
+
+		fprintf(stdout, "%8s %-9s %4s %4s %7s %s\n", buf1, attrtypename, minval, maxval,
+			opttemplate->defaultvalue ? opttemplate->defaultvalue : "",
+			opttemplate->description ? opttemplate->description : "");
+		opttemplate++;
+	}
+}
+
+static int cmd_listdriveroptions(struct command *c, int argc, char *argv[])
+{
+	const struct ImageModule *mod;
+	const struct OptionTemplate *opttemplate;
+
+	mod = findimagemodule(argv[0]);
+	if (!mod)
+		goto error;
+
+	fprintf(stdout, "Driver specific options for module '%s':\n\n", argv[0]);
+
+	opttemplate = mod->fileoptions_template;
+	if (opttemplate) {
+		fprintf(stdout, "Image specific file options (usable on the 'put' command):\n\n", argv[0]);
+		listoptions(opttemplate);
+		puts("\n");
+	}
+	else {
+		fprintf(stdout, "No image specific file options\n\n");
+	}
+
+	opttemplate = mod->createoptions_template;
+	if (opttemplate) {
+		fprintf(stdout, "Image specific creation options (usable on the 'create' command):\n\n", argv[0]);
+		listoptions(opttemplate);
+		puts("\n");
+	}
+	else {
+		fprintf(stdout, "No image specific creation options\n\n");
+	}
+
+	return 0;
+
+error:
+	reporterror(IMGTOOLERR_MODULENOTFOUND|IMGTOOLERR_SRC_MODULE, c, argv[0], NULL, NULL, NULL, NULL);
+	return -1;
+}
+
 /* ----------------------------------------------------------------------- */
 
 static struct command cmds[] = {
-	{ "create", "<format> <imagename> [<internalname>] "
-	  "[--heads=HEADS] [--cylinders=CYLINDERS] "
-	  "[--sectors=SECTORS] [--sectorsize=SIZE] "
-	  "[--htype=HARDWARETYPE] [--exrom=LEVEL] [--game=LEVEL]",
-	  cmd_create, 2, 8, 0},
+	{ "create", "<format> <imagename>", cmd_create, 2, 8, 0},
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },
-	{ "get", "<format> <imagename> <filename> [newname]", cmd_get, 3, 4, 0 },
-	{ "put", "<format> <imagename> <filename> [newname] [--ftype=FILETYPE] [--ascii=0|1] [--addr=ADDR] [--bank=BANK]", cmd_put, 3, 8, 0 },
-	{ "getall", "<format> <imagename>", cmd_getall, 2, 2, 0 },
+	{ "get", "<format> <imagename> <filename> [newname] [--filter=filter]", cmd_get, 3, 4, 0 },
+	{ "put", "<format> <imagename> <filename> [newname] [--(fileoption)==value] [--filter=filter]", cmd_put, 3, 8, 0 },
+	{ "getall", "<format> <imagename> [--filter=filter]", cmd_getall, 2, 2, 0 },
 	{ "del", "<format> <imagename> <filename>...", cmd_del, 3, 3, 1 },
 	{ "info", "<format> <imagename>...", cmd_info, 2, 2, 1 },
 	{ "crc", "<format> <imagename>...", cmd_crc, 2, 2, 1 },
 	{ "good", "<format> <imagename>...", cmd_good, 2, 2, 1 },
-	{ "listformats", NULL, cmd_listformats, 0, 0, 0 }
+	{ "listformats", NULL, cmd_listformats, 0, 0, 0 },
+	{ "listfilters", NULL, cmd_listfilters, 0, 0, 0 },
+	{ "listdriveroptions", "<format>", cmd_listdriveroptions, 1, 1, 0 }
 };
 
 int CLIB_DECL main(int argc, char *argv[])

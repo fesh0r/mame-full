@@ -117,9 +117,9 @@ static int t64_image_create(STREAM *f, const ResolvedOption *options);
 
 static struct OptionTemplate t64_createopts[] =
 {
-	{ "entries", IMGOPTION_FLAG_TYPE_INTEGER,							0,		3,		NULL	},	/* [0] */
-	{ "label", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [1] */
-	{ NULL, 0, 0, 0, 0 }
+	{ "entries", NULL, IMGOPTION_FLAG_TYPE_INTEGER,							0,		3,		NULL	},	/* [0] */
+	{ "label", NULL, IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [1] */
+	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 #define T64_OPTION_ENTRIES	0

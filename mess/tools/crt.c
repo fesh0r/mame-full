@@ -377,10 +377,10 @@ static int crt_image_create(STREAM *f, const ResolvedOption *options);
 
 static struct OptionTemplate c64crt_fileeopts[] =
 {
-	{ "ftype",	IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [0] */
-	{ "faddr",	IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [1] */
-	{ "fbank",	IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [2] */
-	{ NULL, 0, 0, 0, 0 }
+	{ "ftype",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [0] */
+	{ "faddr",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [1] */
+	{ "fbank",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [2] */
+	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 #define C64CRT_FILEOPTION_FTYPE		0
@@ -389,11 +389,11 @@ static struct OptionTemplate c64crt_fileeopts[] =
 
 static struct OptionTemplate c64crt_createopts[] =
 {
-	{ "hardwaretype",	IMGOPTION_FLAG_TYPE_INTEGER,							0,		0xffff,	NULL	},	/* [0] */
-	{ "gameline",		IMGOPTION_FLAG_TYPE_INTEGER,							0,		0x00ff,	NULL	},	/* [1] */
-	{ "exromline",		IMGOPTION_FLAG_TYPE_INTEGER,							0,		0x00ff,	NULL	},	/* [2] */
-	{ "label",			IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [3] */
-	{ NULL, 0, 0, 0, 0 }
+	{ "hardwaretype",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,							0,		0xffff,	NULL	},	/* [0] */
+	{ "gameline",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,							0,		0x00ff,	NULL	},	/* [1] */
+	{ "exromline",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,							0,		0x00ff,	NULL	},	/* [2] */
+	{ "label",			NULL, IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [3] */
+	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 #define C64CRT_CREATEOPTION_HARDWARETYPE	0

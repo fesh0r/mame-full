@@ -46,8 +46,8 @@ static int rsdos_diskimage_create(STREAM *f, const ResolvedOption *createoptions
 
 static struct OptionTemplate rsdos_fileopts[] =
 {
-	{ "ftype", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,		3,		"1"	},	/* [0] */
-	{ "ascii", IMGOPTION_FLAG_TYPE_CHAR | IMGOPTION_FLAG_HASDEFAULT,	'A',	'B',	"B"	},	/* [1] */
+	{ "ftype", "File type (0=basic|1=data|2=bin|3=source)", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,		3,		"1"	},	/* [0] */
+	{ "ascii", "Ascii flag (A=ascii|B=binary)",				IMGOPTION_FLAG_TYPE_CHAR | IMGOPTION_FLAG_HASDEFAULT,		'A',	'B',	"B"	},	/* [1] */
 	{ NULL, 0, 0, 0, 0 }
 };
 

@@ -518,8 +518,8 @@ static int d64_write_sector(IMAGE *img, int head, int track, int sector, char *b
 
 static struct OptionTemplate d64_createopts[] =
 {
-	{ "label",			IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [3] */
-	{ NULL, 0, 0, 0, 0 }
+	{ "label",	NULL, IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [3] */
+	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 #define D64_CREATEOPTION_LABEL			0

@@ -112,7 +112,7 @@ struct ImageModule;
 
 struct filter_module {
 	const char *name;
-	const char *longname;
+	const char *humanname;
 	void *(*calcreadparam)(const struct ImageModule *imgmod);
 	void *(*calcwriteparam)(const struct ImageModule *imgmod);
 	int (*filterreadproc)(struct filter_info *fi, void *buf, int buflen);
@@ -168,6 +168,7 @@ enum {
 
 struct OptionTemplate {
 	const char *name;
+	const char *description;
 	int flags;
 	int min;
 	int max;
