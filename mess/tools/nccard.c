@@ -273,6 +273,20 @@ static unsigned long memcard_get_free_dir_entry(struct nc_memcard *memcard)
 	return -1;
 }
 
+const char *nc_memcard_executable_id = "NC100PRG";
+
+/* if memory card has "NC100PRG" at 0x0200 then the card is executable! */
+static int memcard_is_executable(struct nc_memcard *memcard)
+{
+	if (memcmp(&memcard->memcard_data[0x0200], nc_memcard_executable_id, 8)==0)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+
 /* format a blank card */
 static void	memcard_format(struct nc_memcard *memcard)
 {
@@ -723,7 +737,13 @@ struct nc_card_direnum
 
 static int nc_card_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
+	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	struct nc_card_direnum *card_enum;
+
+	if (memcard_is_executable(&nc_card->memcard))
+	{
+		return IMGTOOLERR_MODULENOTFOUND;
+	}	
 
 	card_enum = (struct nc_card_direnum *) malloc(sizeof(struct nc_card_direnum));
 	if (!card_enum)
