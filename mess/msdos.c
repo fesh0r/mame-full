@@ -178,7 +178,7 @@ int requested_device_type(char *tchar)
 			return(IO_PRINTER);
 	else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
 			return(IO_SERIAL);
-	else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-snap"))
+	else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-dump"))
 			return(IO_SNAPSHOT);
 	else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
 			return(IO_QUICKLOAD);
@@ -393,7 +393,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "person. If you are not sure who to contact, write to Ben (ben@mame.net) - who is the \n"
 			   "current coordinator of the MESS project [DOS]. \n\n"
 
-			   "PLEASE DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.\n"
+			   "PLEASE DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST! \n"
 
 			   "THESE ARE NOT SUPPORT ADDRESSES. Support questions sent to these addresses\n"
 			   "*will* be ignored. Please understand that this is a *free* project, mostly\n"
@@ -562,51 +562,50 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 		       "=======================\n"
 		       "In order to use MESS, you must at least specify at the command line\n\n"
                "      MESS <system>\n\n"
-			   "This will emulate the system requested.  Note that most systems require ROMS for\n"
-			   "emulation.  These system ROM files are copyright and ARE NOT supplied with MESS.\n\n"
-			   "To use files created for the system emulated (IMAGES), MESS works by attaching an image\n"
-			   "of the file created for the particular device of that system, for example, a cartridge,\n"
-               "floppydisk, harddisk, cassette, image etc.  Therefore, in order to attach an image to the\n"
+			   "This will emulate the system requested.  Note that most systems require the BIOS for\n"
+			   "emulation.  These system BIOS files are copyright and ARE NOT supplied with MESS.\n\n"
+			   "To use files created for the system emulated (SOFTWARE), MESS works by attaching these\n"
+			   "files created for the particular device of that system, for example, a cartridge,\n"
+               "floppydisk, harddisk, cassette, software etc.  Therefore, in order to attach software to the\n"
 			   "system, you must specify at the command line:\n\n"
-               "      MESS <system> <device> <image_name>\n\n"
+               "      MESS <system> <device> <software_name>\n\n"
 			   "To manually manipulate the emulation options, you must specify:\n\n"
-               "      MESS <system> <device> <image_name> <options>\n\n");
+               "      MESS <system> <device> <software_name> <options>\n\n");
 		printf("*For a complete list of systems emulated,  use: MESS -listfull\n"
-			   "*For system files (ROMS) required by each system, use: MESS <system> -listroms\n"
+			   "*For system files (BIOS) required by each system, use: MESS <system> -listroms\n"
 			   "*See below for valid device names and usage.\n"
 			   "*See the MAME readme.txt and below for a detailed list of options.\n\n"
-			   "Make sure you have ROMS and IMAGES in a subdirectory from your ROMPATH\n"
-			   "with the same name as the system (eg ROMS/COLECO)\n\n\n");
+			   "Make sure you have BIOS and SOFTWARE in a subdirectory specified in mess.cfg\n\n\n");
 		printf("Examples:\n\n"
 			   "    MESS nes -cart zelda.nes\n"
 			   "        will attach zelda.nes to the cartridge device and run MESS in\n"
 			   "        the following way:\n"
-			   "        <system>      = nes             (Nintendo Entertainment System)\n"
-			   "        <device>      = CARTRIDGE\n"
-			   "        <image_name>  = zelda.nes       (Zelda cartridge)\n"
-			   "        <options>     = none specified, so default options (see mess.cfg)\n\n"
+			   "        <system>        = nes             (Nintendo Entertainment System)\n"
+			   "        <device>        = CARTRIDGE\n"
+			   "        <software_name> = zelda.nes       (Zelda cartridge)\n"
+			   "        <options>       = none specified, so default options (see mess.cfg)\n\n"
 			   "    MESS coleco -cart dkong -soundcard 0\n"
 			   "        will run MESS in the following way:\n\n"
-			   "        <system>      = coleco          (ColecoVision)\n"
-			   "        <device>      = CARTRIDGE\n"
-			   "        <image_name>  = dkong.rom       (Donkey Kong cartridge)\n"
-			   "        <options>     = default options without sound (see mess.cfg)\n\n"
+			   "        <system>        = coleco          (ColecoVision)\n"
+			   "        <device>        = CARTRIDGE\n"
+			   "        <software_name> = dkong.rom       (Donkey Kong cartridge)\n"
+			   "        <options>       = default options without sound (see mess.cfg)\n\n"
 			   "    MESS trs80 -flop boot.dsk -flop arcade1.dsk\n"
 			   "        will run MESS in the following way:\n"
-			   "        <system>      = trs80           (TRs-80 model 1)\n"
-			   "        <device1>     = FLOPPYDISK\n"
-			   "        <image_name1> = boot.dsk        (The Trs80 boot floppy diskl)\n"
-			   "        <device2>     = FLOPPYDISK\n"
-			   "        <image_name2> = arcade1.dsk     (floppy Disk which contains games)\n"
-			   "        <options>     = default options (all listed in mess.cfg)\n\n"
+			   "        <system>         = trs80           (TRs-80 model 1)\n"
+			   "        <device1>        = FLOPPYDISK\n"
+			   "        <software_name1> = boot.dsk        (The Trs80 boot floppy diskl)\n"
+			   "        <device2>        = FLOPPYDISK\n"
+			   "        <software_name2> = arcade1.dsk     (floppy Disk which contains games)\n"
+			   "        <options>        = default options (all listed in mess.cfg)\n\n"
 			   "    MESS cgenie -flop games1\n"
-			   "        will run the system Colour Genie with one disk image loaded,\n"
+			   "        will run the system Colour Genie with one disk loaded,\n"
 			   "        automatically appending the file extension .dsk.\n\n\n"
 			   "If you dont want to type out device/image combinations, MESS supports \n"
 			   "ALIASed command lines from MESS.cfg.  An example entry is:\n\n"
 			   "    [ti99_4a]\n"
 			   "    parsec = -cart parsecg.bin -cart parsecc.bin \n\n"
-			   "So to load these images, you would simply then type:\n\n"
+			   "So to load these files, you would simply then type:\n\n"
 			   "    MESS ti99_4a -alias parsec\n\n"
 			   "and both cartridges will be attached to the TI99_4a.\n\n\n\n\n");
 
@@ -615,10 +614,10 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 		printf("DEVICE support list\n");
 		printf("===================\n");
-		printf("As mentioned, in order to fully utilise MESS, you will need to attach image files\n"
-			   "to the system devices.  The following list specifies all the devices and image \n"
+		printf("As mentioned, in order to fully utilise MESS, you will need to attach software files\n"
+			   "to the system devices.  The following list specifies all the devices and software \n"
 			   "file extensions currently supported by MESS.  Remember to use the DEVICE name \n"
-			   "(or the brief name) to attach an image.  This list can easily be generated by \n"
+			   "(or the brief name) to attach software.  This list can easily be generated by \n"
 			   "specifying:\n\n"
 			   "    MESS -listdevices\n\n");
 		printf("Also note that MESS has a preliminary built-in File Manager for attaching images to\n"
@@ -632,8 +631,8 @@ void list_mess_info(char *gamename, char *arg, int listclones)
     else if (!stricmp(arg, "-createdir"))
 	{
 	/***************************************************/
-	/* To create the ROM directories */
-		char* sys_rom_path  = "ROMS";
+	/* To create the SOFTWARE directories */
+		char* sys_rom_path  = "SOFTWARE";
 		char buf[128];
 		int d=0;
 

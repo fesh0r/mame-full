@@ -923,12 +923,12 @@ void showmessdisclaimer(void)
 	mess_printf(
 		"MESS is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
 		"several computer and console systems. But hardware is useless without software\n"
-		"so an image of the ROMs, cartridges, discs, and cassettes which run on that\n"
-		"hardware is required. Such images, like any other commercial software, are\n"
+		"so a file dump of the ROMs, cartridges, discs, and cassettes which run on that\n"
+		"hardware is required. Such files, like any other commercial software, are\n"
 		"copyrighted material and it is therefore illegal to use them if you don't own\n"
-		"the original media from which the images are derived. Needless to say, these\n"
-		"images are not distributed together with MESS. Distribution of MESS together\n"
-		"with these images is a violation of copyright law and should be promptly\n"
+		"the original media from which the files are derived. Needless to say, these\n"
+		"files are not distributed together with MESS. Distribution of MESS together\n"
+		"with these files is a violation of copyright law and should be promptly\n"
 		"reported to the authors so that appropriate legal action can be taken.\n\n");
 }
 
@@ -942,7 +942,7 @@ void showmessinfo(void)
 		build_version, mess_alpha);
 	showmessdisclaimer();
 	mess_printf(
-		"Usage:  MESS <system> <device> <image> <options>\n\n"
+		"Usage:  MESS <system> <device> <software> <options>\n\n"
 		"        MESS -list        for a brief list of supported systems\n"
 		"        MESS -listfull    for a full list of supported systems\n"
 		"        MESS -listdevices for a full list of supported devices\n"
