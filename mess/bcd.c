@@ -9,3 +9,8 @@ int dec_2_bcd(int a)
 {
 	return (a%10)|((a/10)<<4);
 }
+
+int bcd_2_dec(int a)
+{
+	return (a&0xf)+(a>>4)*10;
+}
