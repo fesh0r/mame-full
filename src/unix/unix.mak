@@ -145,6 +145,10 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/tools/messtest $(OBJ)/mess/tools/mkimage \
 	   $(OBJ)/mess/sound
 endif
+ifeq ($(TARGET), mage)
+OBJDIRS += $(OBJ)/mage/src/machine $(OBJ)/mage/src/vidhrdw $(OBJ)/mage/src/drivers \
+           $(OBJ)/mage/src/sndhrdw
+endif
 
 UNIX_OBJDIR = $(OBJ)/unix.$(DISPLAY_METHOD)
 
@@ -166,7 +170,7 @@ else
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
 ifeq ($(TARGET), mage)
-INCLUDE_PATH = -I. -Image/src -Image/src/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Image/src -Image/src/includes -Isrc/includes -Isrc -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
 
 ##############################################################################
@@ -216,11 +220,11 @@ ifeq ($(TARGET), mess)
 include mess/$(TARGET).mak
 endif
 
-ifeq ($(TARGET), mage)
-include mage/src/rules.mak
-else
+#ifeq ($(TARGET), mage)
+#include mage/src/rules.mak
+#else
 include src/rules.mak
-endif
+#endif
 
 ifeq ($(TARGET), mess)
 include mess/rules_ms.mak
@@ -584,14 +588,15 @@ $(OBJ)/mess/%.o: mess/%.c
 endif
 
 ifdef MAGE
-$(OBJ)/%.o: mage/src/%.c
+$(OBJ)/mage/src/%.o: mage/src/%.c
 	$(CC_COMMENT) @echo '[MAGE] Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
-else
+#else
+endif
 $(OBJ)/%.o: src/%.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
-endif
+#endif
 
 $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
