@@ -131,8 +131,8 @@ static int KeyAutoRepeatTimer;
 	The Geneve does not include any GROM, but it features a simple GROM emulator.
 
 	One oddity is that, since the Geneve does not use a look-ahead buffer, GPL
-	data is always off one byte, i.e. GPL byte 0, 1, 2... are stored in bytes
-	1, 2, 3... of page >38->3f (byte 0 of page >38 is has GPL address >ffff).
+	data is always off one byte, i.e. GPL bytes 0, 1, 2... are stored in bytes
+	1, 2, 3... of pages >38->3f (byte 0 of page >38 is has GPL address >ffff).
 
 	I think that I have once read that the geneve GROM emulator does not
 	emulate wrap-around within a GROM, i.e. address >1fff is followed by >2000

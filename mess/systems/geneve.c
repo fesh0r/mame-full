@@ -20,35 +20,49 @@
 	64-kbyte CPU address space is mapped to a 2-Mbyte virtual address space.
 	8 8-kbyte pages are available simultaneously, out of a total of 256.
 
-	Pages (regular console):
+	Page map (regular console):
 	>00->3f: 512kbytes of CPU RAM (pages >36 and >37 are used to emulate
 	  cartridge CPU ROMs in ti99 mode, and pages >38 through >3f are used to
 	  emulate console and cartridge GROMs in ti99 mode)
-	>40->7f: optional Memex RAM
-	>80->b7: PE-bus space using spare address lines (AMA-AMC)???  Used by
-	  RAM extension (Memex or PE-Bus 512k card).
+	>40->7f: optional Memex RAM (except >7a and >7c that are mirrors of >ba and
+	  >bc?)
+	>80->b7: PE-bus space using spare address lines (AMA-AMC)?  Used by RAM
+		extension (Memex or PE-Bus 512k card).
 	>b8->bf: PE-bus space (most useful pages are >ba: DSR space and >bc: speech
 	  synthesizer page; other pages are used by RAM extension)
+	>c0->e7: optional Memex RAM
 	>e8->ef: 64kbytes of 0-wait-state RAM (with 32kbytes of SRAM installed,
 	  only even pages (>e8, >ea, >ec and >ee) are available)
 	>f0->f1: boot ROM
-	>f2->ff: Memex RAM
+	>f2->fe: optional Memex RAM? (except >fa and >fc that are mirrors of >ba
+	  and >bc?)
+	>ff: always empty?
 
-	Pages (genmod console):
-	>00->3f: switch-selectable(?): 512kbytes of onboard RAM (1-wait-state DRAM)
-	  or first 512kbytes of the Memex Memory board (0-wait-state SRAM).  The
-	  latter setting is incompatible with TI mode.
-	>40->b9, >bb, >bd->ef, f2->ff: Memex RAM (it is unknown if >e8->ef is on
-	  the Memex board or the Geneve motherboard)
+	Page map (genmod console):
+	>00->39, >40->b9, >bb, >bd->ef, f2->fe: Memex RAM (except >3a, >3c, >7a,
+	  >7c, >fa and >fc that are mirrors of >ba and >bc?) (I don't know if
+	  >e8->ef is on the Memex board or the Geneve motherboard)
 	>ba: DSR space
 	>bc: speech synthesizer space
 	>f0->f1: boot ROM
+	>ff: always empty?
+
+	>00->3f: switch-selectable(?): 512kbytes of onboard RAM (1-wait-state DRAM)
+	  or first 512kbytes of the Memex Memory board (0-wait-state SRAM).  The
+	  latter setting is incompatible with TI mode.
+
+	Note that >bc is actually equivalent to >8000->9fff on the /4a bus,
+	therefore the speech synthesizer is only available at offsets >1800->1bff
+	(read port) and >1c00->1fff (write port).  OTOH, if you installed a FORTI
+	sound card, it will be available in the same page at offsets >0400->7ff.
+
 
 	Unpaged locations (ti99 mode):
 	>8000->8007: memory page registers (>8000 for page 0, >8001 for page 1,
 	  etc.  register >8003 is ignored (this page is hard-wired to >36->37).
 	>8008: key buffer
-	>8009->801f: ???
+	>8009->800f: ???
+	>8010->801f: clock chip
 	>8400->9fff: sound, VDP, speech, and GROM registers (according to one
 	  source, the GROM and sound registers are only available if page >3
 	  is mapped in at location >c000 (register 6).  I am not sure the Speech
@@ -75,6 +89,48 @@
 	>fffa->fffb: tms9995 timer register
 	Note: accessing tms9995 locations will also read/write corresponding paged
 	  locations.
+
+
+	GROM emulator:
+
+	The GPL interface is accessible only in TI99 mode.  GPL data is fetched
+	from pages >38->3f.  It uses a straight 16-bit address pointer.  The
+	address pointer is incremented when the read data and write data ports
+	are accessed, and when the second byte of the GPL address is written.  A
+	weird consequence of this is the fact that GPL data is always off by one
+	byte, i.e. GPL bytes 0, 1, 2... are stored in bytes 1, 2, 3... of pages 
+	>38->3f (byte 0 of page >38 is has GPL address >ffff).
+
+	I think that I have once read that the geneve GROM emulator does not
+	emulate wrap-around within a GROM, i.e. address >1fff is followed by >2000
+	(instead of >0000 with a real GROM).
+
+	There are two ways to implement GPL address load and store.
+	One is maintaining 2 flags (one for address read and one for address write)
+	that tell if you are accessing address LSB: these flags must be cleared
+	whenever data is read, and the read flag must be clered when the write
+	address port is written to.
+	The other is when always reading/writing the MSByte of the address pointer.
+	The LSByte is copied to the MSbyte when the address is read, whereas the
+	former MSByte is copied to the LSByte when the address is written.  The
+	address pointer must be incremented after the address is written to.  It
+	will not harm if it is incremented after the address is read, provided the
+	LSByte has been cleared.
+
+
+	Cartridge emulator:
+
+	The cartridge interface is in the >6000->7fff area.
+	
+	If CRU bit @>F7C is set, the cartridge area is always mapped to virtual
+	page >36.  Writes in the >6000->6fff area are ignored if the CRU bit @>F7D
+	is 0, whereas writes in the >7000->7fff area are ignored if the CRU bit
+	@>F7E is 0.
+
+	If CRU bit @>F7C is clear, the cartridge area is mapped either to virtual
+	page >36 or to page >37 according to which page is currently selected.
+	Writing data to address >6000->6fff will select page >36 if A14 is 0,
+	>37 if A14 is 1.
 
 
 	CRU map:
@@ -118,6 +174,25 @@
 	Bit 13: 0 = protect cartridge range >6000->6fff
 	Bit 14: 0 = protect cartridge range >7000->7fff
 	bit 15: 1 = add 1 extra wait state when accessing 0-wait-state SRAM???
+
+
+	Keyboard interface:
+
+	The XT keyboard interface is described in various places on the internet,
+	like (http://www-2.cs.cmu.edu/afs/cs/usr/jmcm/www/info/key2.txt).  It is a
+	synchronous unidirectional serial interface: the data line is driven by the
+	keyboard to send data to the CPU; the CTS/clock line has a pull up resistor
+	and can be driven low by both keyboard and CPU.  To send data to the CPU,
+	the keyboard pulses the clock line low 9 times, and the Geneve samples all
+	8 bits of data (plus one start bit) on each falling edge of the clock.
+	When the key code buffer is full, the Geneve gate array asserts the kbdint*
+	line (connected to 9901 INT8*).  The Geneve gate array will hold the
+	CTS/clock line low as long as the keyboard buffer is full or CRU bit @>F78
+	is 0.  Writing a 0 to >F79 will clear the Geneve keyboard buffer, and
+	writing a 1 will resume normal operation: you need to write a 0 to >F78
+	before clearing >F79, or the keyboard will be enabled to send data the gate
+	array when >F79 is is set to 0, and any such incoming data from the
+	keyboard will be cleared as soon as it is buffered by the gate array.
 */
 
 #include "driver.h"

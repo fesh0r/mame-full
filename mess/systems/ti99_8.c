@@ -3,9 +3,9 @@
 	Raphael Nabet, 2003.
 */
 /*
-  TI-99/8 preliminary infos:
+	TI-99/8 preliminary info:
 
-  name: Texas Instruments Computer TI-99/8 (no "Home")
+Name: Texas Instruments Computer TI-99/8 (no "Home")
 
 References:
 	* machine room <http://...>
@@ -14,7 +14,7 @@ References:
 	* TI99/8 ROM source code
 	* Message on TI99 yahoo group for CPU info
 
-general:
+General:
 	* a few dozen units were built in 1983, never released
 	* CPU is a custom variant of tms9995 (part code MP9537): the 16-bit RAM and
 	  (presumably) the on-chip decrementer are disabled
@@ -23,9 +23,9 @@ general:
 	  - 32kb system ROM with GPL interpreter, TI-extended basic II and a few
 	    utilities (no dump, but 90% of source code is available and has been
 	    compiled)
-	  - 18kb of GROMs, with monitor and TI-extended basic II (no dump, source
-	    code is available but has NOT been compiled, 99/4a GROMs can sort of
-	    work instead)
+	  - 18kb system GROMs, with monitor and TI-extended basic II (no dump,
+	    source code is available but has NOT been compiled, 99/4a GROMs can
+	    sort of work instead)
 	  - 4(???)kb DSR ROM for hexbus (no dump)
 	  - 32(?)kb speech ROM: contents are slightly different from the 99/4(a)
 	    speech ROMs, due to the use of a tms5220 speech synthesizer instead of
@@ -46,11 +46,14 @@ general:
 	* 50-pin(?) expansion port on the back
 	* Programs can enable/disable the ROM and memory mapped register areas.
 
-mapper:
+Mapper:
 	Mapper has 4kb page size (-> 16 pages per map file), 32 bits per page
-	entry.  Virtual address space is 16Mbytes.  The mapper can load any of 4
-	map files from SRAM by DMA.  Map file 0 is used by BIOS, file 1 by memory
-	XOPs(?), file 2 by P-code interpreter(???).
+	entry.  Address bits A0-A3 are the page index, whereas bits A4-A15 are the
+	offset in the page.  Virtual address space is 16Mbytes.  All virtual pages
+	are 4 kBytes in lenght, and they can start anywhere in the 24-bit virtual
+	address space.  The mapper can load any of 4 map files from SRAM by DMA.
+	Map file 0 is used by BIOS, file 1 by memory XOPs(?), file 2 by P-code
+	interpreter(???).
 
 	Format of map table entry:
 	* bit 0: WTPROT: page is write protected if 1
@@ -65,7 +68,17 @@ mapper:
 	* bit 5-6: map file to load/save (0 for file 0, 1 for file 1, etc.)
 	* bit 7: 0 -> load map file from RAM, 1 -> save map file to RAM
 
-	24-bit address space map:
+	Format of mapper status register (cleared by read):
+	* bit 0: WPE - Write-Protect Error
+	* bit 1: XCE - eXeCute Error
+	* bit 2: RPE - Read-Protect Error
+	* bits 3-7: unused???
+
+	Memory error interrupts are enabled by setting WTPROT/XPROT/RDPROT.  When
+	an error occurs, the tms9901 INT1* pin is pulled low (active).  The pin
+	remains low until the mapper status register is read.
+
+24-bit address map:
 	* >000000->00ffff: console RAM
 	* >010000->feffff: expansion?
 	* >ff0000->ff0fff: empty???
@@ -76,50 +89,60 @@ mapper:
 	* >ffa000->ffbfff(?): >2000 ROM
 	* >ffc000->ffdfff(?): >6000 ROM
 
-	CRU space:
-	Since the tms9995 supports full 15-bit CRU addresses, the 0x1000-0x17ff
-	(0x2000-0x2fff) range was assigned to support up to 16 extra expansion
-	slot.  The good thing with using 0x1000-0x17ff is the fact that older
-	expansion cards that only decode 12 address bits will think that addresses
-	0x1000-0x17ff refer to internal TI99 peripherals (0x000-0x7ff range), which
+
+CRU map:
+	Since the tms9995 supports full 15-bit CRU addresses, the >1000->17ff
+	(>2000->2fff) range was assigned to support up to 16 extra expansion slot.
+	The good thing with using >1000->17ff is the fact that older expansion
+	cards that only decode 12 address bits will think that addresses
+	>1000->17ff refer to internal TI99 peripherals (>000->7ff range), which
 	suppresses any risk of bus contention.
-	* 0x0000-0x001f (0x0000-0x003e): tms9901
+	* >0000->001f (>0000->003e): tms9901
 	  - P4: 1 -> MMD (Memory Mapped Devices?) at >8000, ROM enabled
 	  - P5: 1 -> no P-CODE GROMs
-	* 0x0800-0x17ff (0x1000-0x2ffe): Peripheral CRU space
-	* 0x1380-0x13ff (0x2700-0x27fe): Internal DSR, with two output bits:
-	  - 0x2700: Internal DSR select (basic(?), various routines)
-	  - 0x2702: SBO -> hardware reset
+	* >0800->17ff (>1000->2ffe): Peripheral CRU space
+	* >1380->13ff (>2700->27fe): Internal DSR, with two output bits:
+	  - >2700: Internal DSR select (parts of Basic and various utilities)
+	  - >2702: SBO -> hardware reset
 
-memory map (TMS9901 P4 == 1):
-	* 0x8000-0x83ff: SRAM (0x8000-0x80ff is used by the mapper DMA controller
+
+Memory map (TMS9901 P4 == 1):
+	When TMS9901 P4 output is set, locations >8000->9fff are ignored by mapper.
+	* >8000->83ff: SRAM (>8000->80ff is used by the mapper DMA controller
 	  to hold four map files) (r/w)
-	* 0x8400: sound port (w)
-	* 0x8410-0x87ff: SRAM (r/w)
-	* 0x8800: VDP data read port (r)
-	* 0x8802: VDP status read port (r)
-	* 0x8810: memory mapper status and control registers (r/w)
-	* 0x8c00: VDP data write port (w)
-	* 0x8c02: VDP address and register write port (w)
-	* 0x9000: speech synthesizer read port (r)
-	* 0x9400: speech synthesizer write port (w)
-	* 0x9800 GPL data read port (r)
-	* 0x9802 GPL address read port (r)
-	* 0x9c00 GPL data write port -- unused (w)
-	* 0x9c02 GPL address write port (w)
-
-memory map (TMS9901 P5 == 0):
-	* 0xf840: data port for P-code grom library 0 (r?)
-	* 0xf880: data port for P-code grom library 1 (r?)
-	* 0xf8c0: data port for P-code grom library 2 (r?)
-	* 0xf842: address port for P-code grom library 0 (r/w?)
-	* 0xf882: address port for P-code grom library 1 (r/w?)
-	* 0xf8c2: address port for P-code grom library 2 (r/w?)
+	* >8400: sound port (w)
+	* >8410->87ff: SRAM (r/w)
+	* >8800: VDP data read port (r)
+	* >8802: VDP status read port (r)
+	* >8810: memory mapper status and control registers (r/w)
+	* >8c00: VDP data write port (w)
+	* >8c02: VDP address and register write port (w)
+	* >9000: speech synthesizer read port (r)
+	* >9400: speech synthesizer write port (w)
+	* >9800 GPL data read port (r)
+	* >9802 GPL address read port (r)
+	* >9c00 GPL data write port -- unused (w)
+	* >9c02 GPL address write port (w)
 
 
-keyboard interface:
+Memory map (TMS9901 P5 == 0):
+	When TMS9901 P5 output is cleared, locations >f840->f8ff(?) are ignored by
+	mapper.
+	* >f840: data port for P-code grom library 0 (r?)
+	* >f880: data port for P-code grom library 1 (r?)
+	* >f8c0: data port for P-code grom library 2 (r?)
+	* >f842: address port for P-code grom library 0 (r/w?)
+	* >f882: address port for P-code grom library 1 (r/w?)
+	* >f8c2: address port for P-code grom library 2 (r/w?)
+
+
+Cassette interface:
+	Identical to ti99/4(a), except that the CS2 unit is not implemented.
+
+
+Keyboard interface:
 	The keyboard interface uses the console tms9901 PSI, but the pin assignment
-	is different from both 99/4 and 99/4a.
+	and key matrix are different from both 99/4 and 99/4a.
 	- P0-P3: column select
 	- INT6*-INT11*: row inputs (int6* is only used for joystick fire)
 */
