@@ -399,7 +399,6 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/tsamurai.o $(OBJ)/drivers/tsamurai.o \
 	$(OBJ)/machine/flstory.o $(OBJ)/vidhrdw/flstory.o $(OBJ)/drivers/flstory.o \
 	$(OBJ)/vidhrdw/gladiatr.o $(OBJ)/drivers/gladiatr.o \
-	$(OBJ)/drivers/ppking.o \
 	$(OBJ)/machine/nycaptor.o $(OBJ)/vidhrdw/nycaptor.o $(OBJ)/drivers/nycaptor.o \
 	$(OBJ)/vidhrdw/ksayakyu.o $(OBJ)/drivers/ksayakyu.o \
 	$(OBJ)/drivers/halleys.o \
@@ -718,7 +717,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/sndhrdw/sprint2.o \
 	$(OBJ)/vidhrdw/sprint4.o $(OBJ)/drivers/sprint4.o \
 	$(OBJ)/vidhrdw/sprint8.o $(OBJ)/drivers/sprint8.o \
-	$(OBJ)/vidhrdw/tank8.o $(OBJ)/drivers/tank8.o \
+	$(OBJ)/vidhrdw/tank8.o $(OBJ)/drivers/tank8.o $(OBJ)/sndhrdw/tank8.o \
 	$(OBJ)/vidhrdw/nitedrvr.o $(OBJ)/machine/nitedrvr.o $(OBJ)/drivers/nitedrvr.o \
 	$(OBJ)/sndhrdw/nitedrvr.o \
 	$(OBJ)/vidhrdw/triplhnt.o $(OBJ)/drivers/triplhnt.o \
@@ -1257,6 +1256,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/spaceg.o \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/laserbas.o \
+	$(OBJ)/drivers/turbosub.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

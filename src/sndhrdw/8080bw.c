@@ -460,7 +460,7 @@ const struct discrete_op_amp_tvca_info polaris_hit_tvca_info =
 
 // The schematic shows a 1uF cap but Guru's board has a 2.2uF
 const struct discrete_integrate_info polaris_plane_integrate_info =
-	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(2.2), 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
+	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(2.2), 12, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
 
 // A bit of a cheat.  The schematic show the cap as 47p, but that makes the frequency too high.
 // Guru's board has a .01 cap, which would make the freq sub-sonic using the other schematic values.

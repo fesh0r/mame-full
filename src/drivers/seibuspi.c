@@ -33,6 +33,14 @@
 	                 past the end of z80 ram)
 	  E-Jan HS        : ---
 
+TODO:
+- Alpha blending. Screen shot on www.system16.com show that during attract mode
+  in Viper Phase 1 the "Viper" part of the logo (the red part) should be partially
+  transparent. Same thing with the blu "Viper" logo when on the "push 1 or 2
+  players button" screen. Note that the red logo is tiles, the blue logo is sprites.
+  Same thing with the lights on the ground at the beginning of the game. They are
+  opaque now, you should see the background tiles through.
+
 */
 
 /*
@@ -558,17 +566,17 @@ RFJ-09 - PRG3   27C040
 #include "machine/eeprom.h"
 #include "machine/intelfsh.h"
 
-void seibuspi_text_decrypt(unsigned char *rom);
-void seibuspi_bg_decrypt(unsigned char *rom, int size);
-void seibuspi_sprite_decrypt(data16_t* src, int romsize);
+void seibuspi_text_decrypt(UINT8 *rom);
+void seibuspi_bg_decrypt(UINT8 *rom, int size);
+void seibuspi_sprite_decrypt(UINT8 *src, int romsize);
 
-void seibuspi_rise10_text_decrypt(unsigned char *rom);
-void seibuspi_rise10_bg_decrypt(unsigned char *rom, int size);
-void seibuspi_rise10_sprite_decrypt(data16_t* src, int romsize);
+void seibuspi_rise10_text_decrypt(UINT8 *rom);
+void seibuspi_rise10_bg_decrypt(UINT8 *rom, int size);
+void seibuspi_rise10_sprite_decrypt(UINT8 *rom, int romsize);
 
-void seibuspi_rise11_text_decrypt(unsigned char *rom);
-void seibuspi_rise11_bg_decrypt(unsigned char *rom, int size);
-void seibuspi_rise11_sprite_decrypt(data16_t* src, int romsize);
+void seibuspi_rise11_text_decrypt(UINT8 *rom);
+void seibuspi_rise11_bg_decrypt(UINT8 *rom, int size);
+void seibuspi_rise11_sprite_decrypt(UINT8 *rom, int romsize);
 
 VIDEO_START( spi );
 VIDEO_UPDATE( spi );
@@ -579,6 +587,7 @@ WRITE32_HANDLER( spi_fore_layer_w );
 WRITE32_HANDLER( spi_paletteram32_xBBBBBGGGGGRRRRR_w );
 READ32_HANDLER( spi_layer_bank_r );
 WRITE32_HANDLER( spi_layer_bank_w );
+void rf2_set_layer_banks(int banks);
 READ32_HANDLER( spi_layer_enable_r );
 WRITE32_HANDLER( spi_layer_enable_w );
 
@@ -660,6 +669,11 @@ READ32_HANDLER( eeprom_r )
 
 WRITE32_HANDLER( eeprom_w )
 {
+	// tile banks
+	if( !(mem_mask & 0x00ff0000) ) {
+		rf2_set_layer_banks(data >> 16);
+	}
+
 	/* TODO */
 }
 
@@ -674,6 +688,12 @@ WRITE32_HANDLER( z80_fifo_w )
 
 WRITE32_HANDLER( z80_enable_w )
 {
+	// tile banks
+	if( !(mem_mask & 0x00ff0000) ) {
+		rf2_set_layer_banks(data >> 16);
+	}
+
+logerror("z80 data = %08x mask = %08x\n",data,mem_mask);
 	if( !(mem_mask & 0x000000ff) ) {
 		if( data & 0x1 ) {
 			z80_fifo_pos = 0;
@@ -1060,16 +1080,88 @@ INPUT_PORTS_END
 
 /********************************************************************/
 
+#define PLANE_CHAR 0
+#define PLANE_TILE 0
+#define PLANE_SPRITE 1
+
 static struct GfxLayout spi_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
 	5,			/* 6 bits per pixel */
 	{ 4, 8, 12, 16, 20 },
-	{ 0, 1, 2, 3, 24, 25, 26, 27 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
 	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
 	6*8*8
 };
+
+#if PLANE_CHAR
+static struct GfxLayout spi_charlayout0 =
+{
+	8,8,		/* 8*8 characters */
+	4096,		/* 4096 characters */
+	1,			/* 6 bits per pixel */
+	{ 0 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
+	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
+	6*8*8
+};
+
+static struct GfxLayout spi_charlayout1 =
+{
+	8,8,		/* 8*8 characters */
+	4096,		/* 4096 characters */
+	1,			/* 6 bits per pixel */
+	{ 4 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
+	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
+	6*8*8
+};
+
+static struct GfxLayout spi_charlayout2 =
+{
+	8,8,		/* 8*8 characters */
+	4096,		/* 4096 characters */
+	1,			/* 6 bits per pixel */
+	{ 8 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
+	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
+	6*8*8
+};
+
+static struct GfxLayout spi_charlayout3 =
+{
+	8,8,		/* 8*8 characters */
+	4096,		/* 4096 characters */
+	1,			/* 6 bits per pixel */
+	{ 12 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
+	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
+	6*8*8
+};
+
+static struct GfxLayout spi_charlayout4 =
+{
+	8,8,		/* 8*8 characters */
+	4096,		/* 4096 characters */
+	1,			/* 6 bits per pixel */
+	{ 16 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
+	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
+	6*8*8
+};
+
+static struct GfxLayout spi_charlayout5 =
+{
+	8,8,		/* 8*8 characters */
+	4096,		/* 4096 characters */
+	1,			/* 6 bits per pixel */
+	{ 20 },
+	{ 3, 2, 1, 0, 27, 26, 25, 24 },
+	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
+	6*8*8
+};
+#endif
 
 static struct GfxLayout spi_tilelayout =
 {
@@ -1078,16 +1170,126 @@ static struct GfxLayout spi_tilelayout =
 	6,
 	{ 0, 4, 8, 12, 16, 20 },
 	{
-		 0, 1, 2, 3,
-	    24,25,26,27,
-		48,49,50,51,
-		72,73,74,75
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
 	},
 	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
 	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
 	},
 	6*16*16
 };
+
+#if PLANE_TILE
+static struct GfxLayout spi_tilelayout0 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
+	},
+	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
+	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	},
+	6*16*16
+};
+
+static struct GfxLayout spi_tilelayout1 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 4 },
+	{
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
+	},
+	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
+	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	},
+	6*16*16
+};
+
+static struct GfxLayout spi_tilelayout2 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 8 },
+	{
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
+	},
+	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
+	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	},
+	6*16*16
+};
+
+static struct GfxLayout spi_tilelayout3 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 12 },
+	{
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
+	},
+	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
+	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	},
+	6*16*16
+};
+
+static struct GfxLayout spi_tilelayout4 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 16 },
+	{
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
+	},
+	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
+	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	},
+	6*16*16
+};
+
+static struct GfxLayout spi_tilelayout5 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	1,
+	{ 20 },
+	{
+		 3, 2, 1, 0,
+	    27,26,25,24,
+		51,50,49,48,
+		75,74,73,72
+	},
+	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
+	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	},
+	6*16*16
+};
+#endif
 
 static struct GfxLayout spi_spritelayout =
 {
@@ -1096,7 +1298,7 @@ static struct GfxLayout spi_spritelayout =
 	6,
 	{ 0,8, RGN_FRAC(1,3)+0,RGN_FRAC(1,3)+8,RGN_FRAC(2,3)+0,RGN_FRAC(2,3)+8  },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1104,8 +1306,7 @@ static struct GfxLayout spi_spritelayout =
 	16*32
 };
 
-// 1bpp decodes, used for viewing each plane (decryption aid)
-#if 0
+#if PLANE_SPRITE
 static struct GfxLayout spi_spritelayout0 =
 {
 	16,16,
@@ -1113,7 +1314,7 @@ static struct GfxLayout spi_spritelayout0 =
 	1,
 	{ 0 },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1128,7 +1329,7 @@ static struct GfxLayout spi_spritelayout1 =
 	1,
 	{ 8 },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1143,7 +1344,7 @@ static struct GfxLayout spi_spritelayout2 =
 	1,
 	{ RGN_FRAC(1,3)+0 },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1158,7 +1359,7 @@ static struct GfxLayout spi_spritelayout3 =
 	1,
 	{ RGN_FRAC(1,3)+8 },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1173,7 +1374,7 @@ static struct GfxLayout spi_spritelayout4 =
 	1,
 	{ RGN_FRAC(2,3)+0 },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1188,7 +1389,7 @@ static struct GfxLayout spi_spritelayout5 =
 	1,
 	{ RGN_FRAC(2,3)+8 },
 	{
-		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+		7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16
 	},
 	{
 		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
@@ -1199,16 +1400,32 @@ static struct GfxLayout spi_spritelayout5 =
 
 static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &spi_charlayout,   5632, 512 },
-	{ REGION_GFX2, 0, &spi_tilelayout,   4096, 1536 },
-	{ REGION_GFX3, 0, &spi_spritelayout,   0, 4096 },
-#if 0
-	{ REGION_GFX3, 0, &spi_spritelayout0,   0, 4096 },
-	{ REGION_GFX3, 0, &spi_spritelayout1,   0, 4096 },
-	{ REGION_GFX3, 0, &spi_spritelayout2,   0, 4096 },
-	{ REGION_GFX3, 0, &spi_spritelayout3,   0, 4096 },
-	{ REGION_GFX3, 0, &spi_spritelayout4,   0, 4096 },
-	{ REGION_GFX3, 0, &spi_spritelayout5,   0, 4096 },
+	{ REGION_GFX1, 0, &spi_charlayout,   5632, 16 },
+	{ REGION_GFX2, 0, &spi_tilelayout,   4096, 24 },
+	{ REGION_GFX3, 0, &spi_spritelayout,    0, 96 },
+#if PLANE_CHAR
+	{ REGION_GFX1, 0, &spi_charlayout0,   0x3ff, 1 },
+	{ REGION_GFX1, 0, &spi_charlayout1,   0x3ff, 1 },
+	{ REGION_GFX1, 0, &spi_charlayout2,   0x3ff, 1 },
+	{ REGION_GFX1, 0, &spi_charlayout3,   0x3ff, 1 },
+	{ REGION_GFX1, 0, &spi_charlayout4,   0x3ff, 1 },
+	{ REGION_GFX1, 0, &spi_charlayout5,   0x3ff, 1 },
+#endif
+#if PLANE_TILE
+	{ REGION_GFX2, 0, &spi_tilelayout0,   0x3ff, 1 },
+	{ REGION_GFX2, 0, &spi_tilelayout1,   0x3ff, 1 },
+	{ REGION_GFX2, 0, &spi_tilelayout2,   0x3ff, 1 },
+	{ REGION_GFX2, 0, &spi_tilelayout3,   0x3ff, 1 },
+	{ REGION_GFX2, 0, &spi_tilelayout4,   0x3ff, 1 },
+	{ REGION_GFX2, 0, &spi_tilelayout5,   0x3ff, 1 },
+#endif
+#if PLANE_SPRITE
+	{ REGION_GFX3, 0, &spi_spritelayout0, 0x3ff, 1 },
+	{ REGION_GFX3, 0, &spi_spritelayout1, 0x3ff, 1 },
+	{ REGION_GFX3, 0, &spi_spritelayout2, 0x3ff, 1 },
+	{ REGION_GFX3, 0, &spi_spritelayout3, 0x3ff, 1 },
+	{ REGION_GFX3, 0, &spi_spritelayout4, 0x3ff, 1 },
+	{ REGION_GFX3, 0, &spi_spritelayout5, 0x3ff, 1 },
 #endif
 	{ -1 } /* end of array */
 };
@@ -1407,7 +1624,7 @@ static DRIVER_INIT( spi )
 {
 	seibuspi_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
-	seibuspi_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x400000);
+	seibuspi_sprite_decrypt(memory_region(REGION_GFX3), 0x400000);
 
 }
 
@@ -1481,7 +1698,7 @@ static DRIVER_INIT( rf2 )
 {
 	seibuspi_rise10_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rise10_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
-	seibuspi_rise10_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x600000);
+	seibuspi_rise10_sprite_decrypt(memory_region(REGION_GFX3), 0x600000);
 }
 
 static DRIVER_INIT( rf2_eur )
@@ -1503,7 +1720,7 @@ static DRIVER_INIT( rfjet )
 {
 	seibuspi_rise11_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rise11_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
-	seibuspi_rise11_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x800000);
+	seibuspi_rise11_sprite_decrypt(memory_region(REGION_GFX3), 0x800000);
 
 	old_vidhw = 0;
 	bg_size = 2;
@@ -1861,15 +2078,25 @@ ROM_START(rf2_us)
 	ROM_LOAD32_BYTE("prg3u.bin", 0x000003, 0x80000, CRC(83f4fb5f) SHA1(73f58daa1aae0c4978db409cedd736fb49b15f1c) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)
-	ROM_LOAD24_BYTE("fix0.bin", 0x000000, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
-	ROM_LOAD24_BYTE("fix1.bin", 0x000001, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
+	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
+	ROM_LOAD24_BYTE("fix1.bin", 0x000000, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
 	ROM_LOAD24_BYTE("fixp.bin", 0x000002, 0x10000, CRC(99a5fece) SHA1(44ae95d650ed6e00202d3438f5f91a5e52e319cb) )
 
 	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
-	/* Not dumped ? */
+	// ROMs were not dumped, using the rf2_2k ones (which are likely the same)
+	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, BAD_DUMP CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, BAD_DUMP CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
+	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, BAD_DUMP CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, BAD_DUMP CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
 
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
-	/* Not dumped ? */
+	// ROMs were not dumped, using the rf2_2k ones (which are likely the same)
+	ROM_LOAD("obj3.075",  0x0000000, 0x400000, BAD_DUMP CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x0400000, 0x200000, BAD_DUMP CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj2.074",  0x0600000, 0x400000, BAD_DUMP CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
+	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, BAD_DUMP CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
+	ROM_LOAD("obj1.073",  0x0c00000, 0x400000, BAD_DUMP CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x1000000, 0x200000, BAD_DUMP CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(cc543c4f) SHA1(6e5c93fd3d21c594571b071d4a830211e1f162b2) )
@@ -1890,15 +2117,26 @@ ROM_START(rf2_eur)
 	ROM_LOAD32_BYTE("prg3e.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)
-	ROM_LOAD24_BYTE("fix0.bin", 0x000000, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
-	ROM_LOAD24_BYTE("fix1.bin", 0x000001, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
+	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
+	ROM_LOAD24_BYTE("fix1.bin", 0x000000, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
 	ROM_LOAD24_BYTE("fixp.bin", 0x000002, 0x10000, CRC(99a5fece) SHA1(44ae95d650ed6e00202d3438f5f91a5e52e319cb) )
 
 	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
-	/* Not dumped ? */
+	// ROMs were not dumped, using the rf2_2k ones (which are likely the same)
+	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, BAD_DUMP CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, BAD_DUMP CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
+	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, BAD_DUMP CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, BAD_DUMP CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
 
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
-	/* Not dumped ? */
+	// ROMs were not dumped, using the rf2_2k ones (which are likely the same)
+	ROM_LOAD("obj3.075",  0x0000000, 0x400000, BAD_DUMP CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x0400000, 0x200000, BAD_DUMP CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj2.074",  0x0600000, 0x400000, BAD_DUMP CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
+	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, BAD_DUMP CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
+	ROM_LOAD("obj1.073",  0x0c00000, 0x400000, BAD_DUMP CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x1000000, 0x200000, BAD_DUMP CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
+
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
@@ -1916,14 +2154,14 @@ ROM_START(rfjet) /* SPI Cart, Europe */
 	ROM_LOAD32_BYTE("prg3.u0220", 0x000003, 0x80000, CRC(cbdf100d) SHA1(c9efd11103429f7f36c1652cadb5384d925cb767) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
-	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
-	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000001, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000000, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
 	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
 
 	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
-	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_WORD("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
 	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
-	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_WORD("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
 	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
 
 	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
@@ -1947,14 +2185,14 @@ ROM_START(rfjetu) /* SPI Cart, US */
 	ROM_LOAD32_BYTE("prg3.u0220",  0x000003, 0x80000, CRC(cbdf100d) SHA1(c9efd11103429f7f36c1652cadb5384d925cb767) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
-	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
-	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000001, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000000, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
 	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
 
 	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
-	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_WORD("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
 	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
-	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_WORD("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
 	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
 
 	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
@@ -1978,14 +2216,14 @@ ROM_START(rfjeta) /* SPI Cart, Asia */
 	ROM_LOAD32_BYTE("prg3.u0220",  0x000003, 0x80000, CRC(cbdf100d) SHA1(c9efd11103429f7f36c1652cadb5384d925cb767) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
-	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
-	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000001, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000000, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
 	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
 
 	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
-	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_WORD("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
 	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
-	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_WORD("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
 	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
 
 	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
@@ -2009,14 +2247,14 @@ ROM_START(rfjetus)	/* Single board version SXX2G */
 	ROM_LOAD32_BYTE("rfj-09.u0264", 0x000003, 0x80000, CRC(cc71c402) SHA1(b040e600744e7b3f52de0fa852ce3ae08ae49985) ) /* PRG3 */
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
-	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) ) /* rfj-01 */
-	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) ) /* rfj-02 */
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000001, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) ) /* rfj-01 */
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000000, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) ) /* rfj-02 */
 	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) ) /* rfj-03 */
 
 	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
-	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_WORD("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
 	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
-	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_WORD("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
 	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
 
 	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
@@ -2044,23 +2282,23 @@ ROM_START(rf2_2k)
 	ROM_LOAD32_WORD("prg2-3.266", 0x000002, 0x100000, CRC(ead53e69) SHA1(b0e2e06f403317054ecb48d2747034424245f129) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)	/* text layer roms */
-	ROM_LOAD24_BYTE("fix0.524", 0x000000, 0x10000, CRC(ed11d043) SHA1(fd3a5a33aa4d795941d64c0d23f9d6f8222843e3) )
-	ROM_LOAD24_BYTE("fix1.518", 0x000001, 0x10000, CRC(7036d70a) SHA1(3535b52c0fa1a1158cacc041f8aba2b9a1b43af5) )
+	ROM_LOAD24_BYTE("fix0.524", 0x000001, 0x10000, CRC(ed11d043) SHA1(fd3a5a33aa4d795941d64c0d23f9d6f8222843e3) )
+	ROM_LOAD24_BYTE("fix1.518", 0x000000, 0x10000, CRC(7036d70a) SHA1(3535b52c0fa1a1158cacc041f8aba2b9a1b43af5) )
 	ROM_LOAD24_BYTE("fix2.514", 0x000002, 0x10000, CRC(29b465da) SHA1(644454ab5e0dc1028e9512f85adfe5d8adb757de) )
 
 	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
-	ROM_LOAD24_WORD_SWAP("bg-1d.535", 0x000000, 0x400000, CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
 	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
-	ROM_LOAD24_WORD_SWAP("bg-2d.536", 0x600000, 0x400000, CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
 	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
 
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD("obj1.073",  0x0000000, 0x400000, CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
-	ROM_LOAD("obj4.076",  0x0400000, 0x200000, CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
+	ROM_LOAD("obj3.075",  0x0000000, 0x400000, CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x0400000, 0x200000, CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
 	ROM_LOAD("obj2.074",  0x0600000, 0x400000, CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
 	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
-	ROM_LOAD("obj3.075",  0x0c00000, 0x400000, CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
-	ROM_LOAD("obj6.078",  0x1000000, 0x200000, CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj1.073",  0x0c00000, 0x400000, CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x1000000, 0x200000, CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0)	/* sound data for MSM6295 */
 	ROM_LOAD("pcm0.1022", 0x000000, 0x80000, CRC(fd599b35) SHA1(00c0307d1b503bd5ce02d7960ce5e1ad600a7290) )
@@ -2072,30 +2310,30 @@ ROM_END
 /*******************************************************************/
 
 /* SPI */
-GAMEX( 1995, senkyu,    0,	     spi, spi_3button, senkyu,		ROT0,	"Seibu Kaihatsu",	"Senkyu (Japan)", GAME_NOT_WORKING )
-GAMEX( 1995, senkyua,   senkyu,  spi, spi_3button, senkyua, 	ROT0,	"Seibu Kaihatsu",	"Senkyu (Japan, set 2)", GAME_NOT_WORKING )
-GAMEX( 1995, batlball,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls (Germany, Tuning License)", GAME_NOT_WORKING )
-GAMEX( 1995, batlbala,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls (Asia, Metrotainment License)", GAME_NOT_WORKING )
-GAMEX( 1995, viperp1,	0,	     spi, spi_3button, viperp1,		ROT270,	"Seibu Kaihatsu",	"Viper Phase 1 (New Version)", GAME_NOT_WORKING )
-GAMEX( 1995, viperp1o,  viperp1, spi, spi_3button, viperp1o,	ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
-GAMEX( 1996, ejanhs, 	0,	     spi, spi_ejanhs, ejanhs,		ROT0,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )
-GAMEX( 1996, rdft,	    0,	     spi, spi_3button, rdft,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters", GAME_NOT_WORKING )
-GAMEX( 1996, rdftau,	rdft,    spi, spi_3button, rdft,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters (Australia)", GAME_NOT_WORKING )
+GAMEX( 1995, senkyu,    0,       spi,      spi_3button, senkyu,   ROT0,   "Seibu Kaihatsu", "Senkyu (Japan)", GAME_NOT_WORKING )
+GAMEX( 1995, senkyua,   senkyu,  spi,      spi_3button, senkyua,  ROT0,   "Seibu Kaihatsu", "Senkyu (Japan, set 2)", GAME_NOT_WORKING )
+GAMEX( 1995, batlball,  senkyu,  spi,      spi_3button, batlball, ROT0,   "Seibu Kaihatsu (Tuning License)", "Battle Balls (Germany)", GAME_NOT_WORKING )
+GAMEX( 1995, batlbala,  senkyu,  spi,      spi_3button, batlball, ROT0,   "Seibu Kaihatsu (Metrotainment License)", "Battle Balls (Asia)", GAME_NOT_WORKING )
+GAMEX( 1995, viperp1,   0,       spi,      spi_3button, viperp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (New Version)", GAME_NOT_WORKING )
+GAMEX( 1995, viperp1o,  viperp1, spi,      spi_3button, viperp1o, ROT270, "Seibu Kaihatsu", "Viper Phase 1", GAME_NOT_WORKING )
+GAMEX( 1996, ejanhs,    0,       spi,      spi_ejanhs,  ejanhs,   ROT0,   "Seibu Kaihatsu", "E-Jan High School (Japan)", GAME_NOT_WORKING )
+GAMEX( 1996, rdft,      0,       spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Japan)", GAME_NOT_WORKING )
+GAMEX( 1996, rdftau,    rdft,    spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Australia)", GAME_NOT_WORKING )
 
 
-GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, rf2_eur,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
+GAMEX( 1997, rf2_eur,   0,       spi,      spi_2button, rf2_eur,  ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 (Europe, SPI)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )
 
-GAMEX( 1998, rfjet,	0,       spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet", GAME_NOT_WORKING )
-GAMEX( 1998, rfjetu,	rfjet,   spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet (US)", GAME_NOT_WORKING )
-GAMEX( 1998, rfjeta,	rfjet,   spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet (ASIAN)", GAME_NOT_WORKING )
+GAMEX( 1998, rfjet,     0,       spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Tuning license)", "Raiden Fighters Jet", GAME_NOT_WORKING )
+GAMEX( 1998, rfjetu,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (US)", GAME_NOT_WORKING )
+GAMEX( 1998, rfjeta,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Dream Island license)", "Raiden Fighters Jet (Asia)", GAME_NOT_WORKING )
 
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 
 /* SXX2F */
-GAMEX( 1997, rf2_us,	rf2_eur,	sxx2f, spi_2button, rf2_us,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
+GAMEX( 1997, rf2_us,    rf2_eur, sxx2f,    spi_2button, rf2_us,   ROT270, "Seibu Kaihatsu (Fabtek license)", "Raiden Fighters 2 (US, Single Board)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )
 
 /* SXX2G */
-GAMEX( 1997, rfjetus,	rfjet,		sxx2f, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet (US, Single Board)", GAME_NOT_WORKING )
+GAMEX( 1997, rfjetus,   rfjet,   sxx2f,    spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (US, Single Board)", GAME_NOT_WORKING )
 
 /* SYS386 */
-GAMEX( 2000, rf2_2k,	rf2_eur,	seibu386, spi_2button, rf2_2k,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )
+GAMEX( 2000, rf2_2k,    rf2_eur, seibu386, spi_2button, rf2_2k,   ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 - 2000 (China)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

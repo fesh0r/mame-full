@@ -133,15 +133,31 @@ u16 mix2(u16 x, u16 m)
   return x^m;
 }
 
-void seibuspi_sprite_decrypt(data16_t *src, int rom_size)
+void seibuspi_sprite_decrypt(UINT8 *src, int rom_size)
 {
 	int i;
 
-	for(i=0; i<rom_size/2; i++) {
+	for(i=0; i<rom_size/2; i++)
+	{
 		data16_t x;
-		x = src[i+0*(rom_size/2)];  src[i+0*(rom_size/2)] = ~mix0(swap0(x, 0), swap0(spi_gm0(i), 0));
-		x = src[i+1*(rom_size/2)];  src[i+1*(rom_size/2)] = ~mix1(swap1(x, 0), swap1(spi_gm1(i), 0));
-		x = src[i+2*(rom_size/2)];  src[i+2*(rom_size/2)] = ~mix2(swap2(x, 0), swap2(spi_gm2(i), 0));
+
+		x = src[2*(i+0*(rom_size/2))] + (src[2*(i+0*(rom_size/2))+1] << 8);
+		x = ~mix0(swap0(x, 0), swap0(spi_gm0(i), 0));
+		x = BITSWAP16(x ,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+		src[2*(i+0*(rom_size/2))] = x;
+		src[2*(i+0*(rom_size/2))+1] = x >> 8;
+
+		x = src[2*(i+1*(rom_size/2))] + (src[2*(i+1*(rom_size/2))+1] << 8);
+		x = ~mix1(swap1(x, 0), swap1(spi_gm1(i), 0));
+		x = BITSWAP16(x ,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+		src[2*(i+1*(rom_size/2))] = x;
+		src[2*(i+1*(rom_size/2))+1] = x >> 8;
+
+		x = src[2*(i+2*(rom_size/2))] + (src[2*(i+2*(rom_size/2))+1] << 8);
+		x = ~mix2(swap2(x, 0), swap2(spi_gm2(i), 0));
+		x = BITSWAP16(x ,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+		src[2*(i+2*(rom_size/2))] = x;
+		src[2*(i+2*(rom_size/2))+1] = x >> 8;
 	}
 }
 

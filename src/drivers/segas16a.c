@@ -2687,8 +2687,8 @@ static DRIVER_INIT( timesca1 )
  *************************************/
 
 /* "Pre-System 16" */
-GAME( 1987, aliensy2, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 2, System16A, FD1089A 317-0033?)" )
-GAME( 1987, aliensy1, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 1, System16A, FD1089A 317-0033)" )
+GAME( 1987, aliensy2, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 2, System 16A, FD1089A 317-0033)" )
+GAME( 1987, aliensy1, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 1, System 16A, FD1089A 317-0033)" )
 GAME( 1986, bodyslam, 0,        system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Body Slam (8751 317-unknown)" )
 GAME( 1986, dumpmtmt, bodyslam, system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Dump Matsumoto (Japan, 8751 317-unknown))" )
 GAME( 1985, mjleague, 0,        system16a,        mjleague, mjleague,    ROT270, "Sega",           "Major League" )

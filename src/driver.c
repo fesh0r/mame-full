@@ -1285,6 +1285,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( lotlot )	/* (c) 1985 licensed from Tokuma Shoten */
 	DRIVER( kidniki )	/* (c) 1986 + Data East USA license */
 	DRIVER( yanchamr )	/* (c) 1986 (Japan) */
+	DRIVER( lithero )	/* bootleg */
 	DRIVER( spelunkr )	/* (c) 1985 licensed from Broderbund */
 	DRIVER( spelnkrj )	/* (c) 1985 licensed from Broderbund */
 	DRIVER( spelunk2 )	/* (c) 1986 licensed from Broderbund */
@@ -3517,6 +3518,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( abattle )	/* Sidam */
 	DRIVER( abattle2 )	/* Sidam */
 	DRIVER( afire )		/* René Pierre */
+	DRIVER( acombat )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
 	DRIVER( prosoccr )	/* (c) 1983 */
@@ -4252,6 +4254,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( missile )	/* 035820-035825	(c) 1980 */
 	DRIVER( missile2 )	/* 035820-035825	(c) 1980 */
 	DRIVER( suprmatk )	/* 					(c) 1980 + (c) 1981 Gencomp */
+	DRIVER( sprmatkd )	/* 					(c) 1980 + (c) 1981 Gencomp */
 
 	/* Atari vector games */
 	DRIVER( llander )	/* 0345xx			no copyright notice */
@@ -6431,6 +6434,7 @@ Other Sun games
 	DRIVER( laserbas )
 	DRIVER( laserbsa )
 	DRIVER( futflash )
+	DRIVER( turbosub )
 
 #endif	/* DRIVER_RECURSIVE */
 

@@ -202,6 +202,7 @@ struct discrete_module module_list[] =
 	{ DST_OP_AMP_FILT ,"DST_OP_AMP_FILT" ,sizeof(struct dst_op_amp_filt_context) ,dst_op_amp_filt_reset ,dst_op_amp_filt_step },
 	{ DST_RCDISC      ,"DST_RCDISC"      ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
 	{ DST_RCDISC2     ,"DST_RCDISC2"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
+	{ DST_RCDISC3     ,"DST_RCDISC3"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc3_reset     ,dst_rcdisc3_step     },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_rcfilter_reset    ,dst_rcfilter_step    },
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	{ DST_RCFILTERN   ,"DST_RCFILTERN"   ,sizeof(struct dss_filter1_context)     ,dst_rcfilterN_reset   ,dst_filter1_step     },
@@ -473,7 +474,6 @@ static void init_nodes(struct discrete_sound_block *block_list)
 		for (inputnum = 0; inputnum < DISCRETE_MAX_INPUTS; inputnum++)
 		{
 			node->input[inputnum] = &(block->initial[inputnum]);
-			node->input_r[inputnum] = NULL;
 		}
 
 		node->context = NULL;
@@ -526,7 +526,6 @@ static void find_input_nodes(struct discrete_sound_block *block_list)
 					osd_die("discrete_sh_start - Node NODE_%02d referenced a non existent node NODE_%02d\n", node->node - NODE_START, inputnode - NODE_START);
 
 				node->input[inputnum] = &(node_ref->output);	// Link referenced node out to input
-				node->input_r[inputnum] = &(node_ref->node_r);	// Link referenced node r to input r
 				node->input_is_node |= 1 << inputnum;			// Bit flag if input is node
 			}
 		}
