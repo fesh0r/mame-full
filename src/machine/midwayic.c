@@ -757,6 +757,7 @@ void midway_ioasic_fifo_w(data16_t data)
 		if (LOG_FIFO)
 			logerror("fifo_w(%04X): out of space!\n", data);
 	}
+	dcs_fifo_notify(ioasic.fifo_bytes, FIFO_SIZE);
 }
 
 

@@ -82,8 +82,10 @@ void set_flags( UINT32 f )
 	I.OF = (f & 0x800) ? 1 : 0;
 }
 
-static void sib_byte(UINT8 mod, UINT32* ea, UINT8* segment)
+static void sib_byte(UINT8 mod, UINT32* out_ea, UINT8* out_segment)
 {
+	UINT32 ea = 0;
+	UINT8 segment = 0;
 	UINT8 scale, i, base;
 	UINT8 sib = FETCH();
 	scale = (sib >> 6) & 0x3;
@@ -92,103 +94,117 @@ static void sib_byte(UINT8 mod, UINT32* ea, UINT8* segment)
 
 	switch( base )
 	{
-		case 0: *ea = REG32(EAX); *segment = DS; break;
-		case 1: *ea = REG32(ECX); *segment = DS; break;
-		case 2: *ea = REG32(EDX); *segment = DS; break;
-		case 3: *ea = REG32(EBX); *segment = DS; break;
-		case 4: *ea = REG32(ESP); *segment = SS; break;
+		case 0: ea = REG32(EAX); segment = DS; break;
+		case 1: ea = REG32(ECX); segment = DS; break;
+		case 2: ea = REG32(EDX); segment = DS; break;
+		case 3: ea = REG32(EBX); segment = DS; break;
+		case 4: ea = REG32(ESP); segment = SS; break;
 		case 5:
 			if( mod == 0 ) {
-				*ea = FETCH32();
-				*segment = DS;
+				ea = FETCH32();
+				segment = DS;
 			} else if( mod == 1 ) {
-				*ea = REG32(EBP);
-				*segment = SS;
+				ea = REG32(EBP);
+				segment = SS;
 			} else if( mod == 2 ) {
-				*ea = REG32(EBP);
-				*segment = SS;
+				ea = REG32(EBP);
+				segment = SS;
 			}
 			break;
-		case 6: *ea = REG32(ESI); *segment = DS; break;
-		case 7: *ea = REG32(EDI); *segment = DS; break;
+		case 6: ea = REG32(ESI); segment = DS; break;
+		case 7: ea = REG32(EDI); segment = DS; break;
 	}
 	switch( i )
 	{
-		case 0: *ea += REG32(EAX) * (1 << scale); break;
-		case 1: *ea += REG32(ECX) * (1 << scale); break;
-		case 2: *ea += REG32(EDX) * (1 << scale); break;
-		case 3: *ea += REG32(EBX) * (1 << scale); break;
+		case 0: ea += REG32(EAX) * (1 << scale); break;
+		case 1: ea += REG32(ECX) * (1 << scale); break;
+		case 2: ea += REG32(EDX) * (1 << scale); break;
+		case 3: ea += REG32(EBX) * (1 << scale); break;
 		case 4: break;
-		case 5: *ea += REG32(EBP) * (1 << scale); break;
-		case 6: *ea += REG32(ESI) * (1 << scale); break;
-		case 7: *ea += REG32(EDI) * (1 << scale); break;
+		case 5: ea += REG32(EBP) * (1 << scale); break;
+		case 6: ea += REG32(ESI) * (1 << scale); break;
+		case 7: ea += REG32(EDI) * (1 << scale); break;
 	}
+	*out_ea = ea;
+	*out_segment = segment;
 }
 		
-static void modrm_to_EA(UINT8 mod_rm, UINT32* ea, UINT8* segment)
+static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 {
 	INT8 disp8;
 	INT16 disp16;
 	INT32 disp32;
 	UINT8 mod = (mod_rm >> 6) & 0x3;
 	UINT8 rm = mod_rm & 0x7;
+	UINT32 ea;
+	UINT8 segment;
 
-	if( (mod == 0) && (rm == 5) ) {
-		if( I.address_size ) {
-			*segment = DS;
-			*ea = FETCH32();
-		} else {
-			*segment = DS;
-			*ea = FETCH16();
-		}
-		return;
-	}
+	if( mod_rm >= 0xc0 )
+		osd_die("i386: Called modrm_to_EA with modrm value %02X !\n",mod_rm);
 
 	if( I.address_size ) {
 		switch( rm )
 		{
-			case 0: *ea = REG32(EAX); *segment = DS; break;
-			case 1: *ea = REG32(ECX); *segment = DS; break;
-			case 2: *ea = REG32(EDX); *segment = DS; break;
-			case 3: *ea = REG32(EBX); *segment = DS; break;
-			case 4: sib_byte( mod, ea, segment ); break;
-			case 5: *ea = REG32(EBP); *segment = SS; break;
-			case 6: *ea = REG32(ESI); *segment = DS; break;
-			case 7: *ea = REG32(EDI); *segment = DS; break;
+			case 0: ea = REG32(EAX); segment = DS; break;
+			case 1: ea = REG32(ECX); segment = DS; break;
+			case 2: ea = REG32(EDX); segment = DS; break;
+			case 3: ea = REG32(EBX); segment = DS; break;
+			case 4: sib_byte( mod, &ea, &segment ); break;
+			case 5: 
+				if( mod == 0 ) {
+					ea = FETCH32(); segment = DS;
+				} else {
+					ea = REG32(EBP); segment = SS; 
+				}
+				break;
+			case 6: ea = REG32(ESI); segment = DS; break;
+			case 7: ea = REG32(EDI); segment = DS; break;
 		}
 		if( mod == 1 ) {
 			disp8 = FETCH();
-			*ea += disp8;
+			ea += (INT32)disp8;
 		} else if( mod == 2 ) {
 			disp32 = FETCH32();
-			*ea += disp32;
+			ea += disp32;
 		}
 
 		if( I.segment_prefix )
-			*segment = I.segment_override;
+			segment = I.segment_override;
+
+		*out_ea = ea;
+		*out_segment = segment;
 	
 	} else {
 		switch( rm )
 		{
-			case 0: *ea = REG16(BX) + REG16(SI); *segment = DS; break;
-			case 1: *ea = REG16(BX) + REG16(DI); *segment = DS; break;
-			case 2: *ea = REG16(BP) + REG16(SI); *segment = SS; break;
-			case 3: *ea = REG16(BP) + REG16(DI); *segment = SS; break;
-			case 4: *ea = REG16(SI); *segment = DS; break;
-			case 5: *ea = REG16(DI); *segment = DS; break;
-			case 6: *ea = FETCH16(); *segment = DS; break;
-			case 7: *ea = REG16(BX); *segment = DS; break;
+			case 0: ea = REG16(BX) + REG16(SI); segment = DS; break;
+			case 1: ea = REG16(BX) + REG16(DI); segment = DS; break;
+			case 2: ea = REG16(BP) + REG16(SI); segment = SS; break;
+			case 3: ea = REG16(BP) + REG16(DI); segment = SS; break;
+			case 4: ea = REG16(SI); segment = DS; break;
+			case 5: ea = REG16(DI); segment = DS; break;
+			case 6:
+				if( mod == 0 ) {
+					ea = FETCH16(); segment = DS;
+				} else {
+					ea = REG16(BP); segment = SS; 
+				}
+				break;
+			case 7: ea = REG16(BX); segment = DS; break;
 		}
 		if( mod == 1 ) {
 			disp8 = FETCH();
-			*ea += disp8;
+			ea += (INT32)disp8;
 		} else if( mod == 2 ) {
 			disp16 = FETCH16();
-			*ea += disp16;
+			ea += (INT32)disp16;
 		}
 
 		if( I.segment_prefix )
-			*segment = I.segment_override;
+			segment = I.segment_override;
+
+		*out_ea = ea & 0xffff;
+		*out_segment = segment;
 	}
 }
 

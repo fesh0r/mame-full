@@ -757,11 +757,11 @@ void set_global_register(UINT8 code, UINT32 val)
 						printf("Fast Page Mode DRAMs\n");
 					else
 						printf("EDO DRAMs\n");
-
-					//bits 14..12 EntryTableMap
-					e132xs_set_trap_entry((val & 0x7000) >> 12);
-					printf("trap_entry = %X\n",trap_entry);					
 				}
+
+				//bits 14..12 EntryTableMap
+				e132xs_set_trap_entry((val & 0x7000) >> 12);
+				printf("trap_entry = %X\n", trap_entry);
 
 				//bits 7..6 MEM3BusSize
 				size = (val & 0xc0) >> 6;
@@ -1250,7 +1250,7 @@ static void set_irq_line(int irqline, int state)
 static offs_t e132xs_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return dasm_e132xs( buffer, pc );
+	return dasm_e132xs( buffer, pc, GET_H );
 #else
 	sprintf(buffer, "$%08x", READ_OP(pc));
 	return 1;
@@ -4825,10 +4825,7 @@ void e132xs_frame(void)
 
 	SET_FP(GET_FP - S_CODE);
 
-	if( D_CODE )
-		SET_FL( D_CODE );
-	else
-		SET_FL( 16 ); //when Ld is L0
+	SET_FL(D_CODE);
 
 	SET_M( 0 );
 

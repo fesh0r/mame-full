@@ -220,7 +220,7 @@ static struct
 	{ "glpracr2", mg01, mg02 }, /* locks up when starting a game/entering test mode */
 	{ "glprac2j", mg01, mg02 }, /* locks up when starting a game/entering test mode */
 	{ "glprac2l", mg01, mg02 }, /* locks up when starting a game/entering test mode */
-	{ "cbaj",     mg01, mg03 }, /* OK, ( rendering glitches ) */
+	{ "cbaj",     mg01, mg03 }, /* OK */
 	{ "shngmtkb", mg01, mg04 }, /* OK */
 	{ "doapp",    mg01, mg05 }, /* system error D094 */
 	{ "tondemo",  mg01, mg09 }, /* system error D094 */

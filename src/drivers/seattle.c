@@ -15,7 +15,7 @@
 		* Mace: The Dark Age [Atari, 200MHz]
 		* San Francisco Rush [Atari]
 		* Vapor TRX [Atari, 192MHz, 8MB RAM, 1-TMU * 4MB]
-		* Wayne Gretzky's 3d Hockey [Atari]
+		* Wayne Gretzky's 3d Hockey [Atari, ~100MHz, 4MB RAM]
 
 	Still missing hard disks for:
 		* Hyperdrive [Midway, 200MHz]
@@ -23,11 +23,57 @@
 
 	Known bugs:
 		* Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
-		* Blitz99/2k: sounds play at the wrong frequency unless we use 12MHz
 		* Carnevil: lets you set the flash brightness; need to emulate that
 		* SF Rush: hangs when trying to start a game (security?)
 		* Vapor TRX: missing BG graphics in level select screen
 		* Vapor TRX: resets when trying to start a game
+
+***************************************************************************
+
+	Interrupt summary:
+
+	                    __________
+	UART clear-to-send |          |  
+	-------(0x2000)--->|          |
+	                   |          |
+	UART data ready    |          |
+	-------(0x1000)--->|          |                     __________
+	                   |          |   VSYNC            |          |
+	Main-to-sound empty|  IOASIC  |   ----(IRQ3/4/5)-->|          |
+	-------(0x0080)--->|          |                    |          |
+	                   |          |                    |          |
+	Sound-to-main full |          |   IDE Controller   |          |
+	-------(0x0040)--->|          |   -------(IRQ2)--->|          |
+	                   |          |                    |   CPU    |
+	Sound FIFO empty   |          |                    |          |
+	-------(0x0008)--->|          |   IOASIC Summary   |          |
+	                   |__________|----------(IRQ1)--->|          |
+	                                                   |          |
+	                    __________                     |          |
+	Timer 3            |          |   Galileo Summary  |          |
+	-------(0x0800)--->|          |----------(IRQ0)--->|          |
+	                   |          |                    |__________|
+	Timer 2            |          |
+	-------(0x0400)--->|          |
+	                   |          |
+	Timer 1            |          |
+	-------(0x0200)--->|          |
+	                   |          |
+	Timer 0            |          |
+	-------(0x0100)--->|          |
+	                   | Galileo  |
+	DMA channel 3      |          |
+	-------(0x0080)--->|          |
+	                   |          |
+	DMA channel 2      |          |
+	-------(0x0040)--->|          |
+	                   |          |
+	DMA channel 1      |          |
+	-------(0x0020)--->|          |
+	                   |          |
+	DMA channel 0      |          |
+	-------(0x0010)--->|          |
+	                   |__________|
 
 **************************************************************************/
 
@@ -2165,10 +2211,10 @@ ROM_START( sfrushrk )
 	ROM_LOAD32_BYTE( "audboot.bin",    0x000000, 0x080000, CRC(c70c060d) SHA1(dd014bd13efdf5adc5450836bd4650351abefc46) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 )	/* TMS320C31 sound ROMs */
-	ROM_LOAD32_WORD( "audio.u62",  0x400000, 0x200000, CRC(5d66490e) SHA1(bd39ea3b45d44cae6ca5890f365653326bbecd2d) )
-	ROM_LOAD32_WORD( "audio.u61",  0x400002, 0x200000, CRC(f3a00ee8) SHA1(c1ac780efc32b2e30522d7cc3e6d92e7daaadddd) )
-	ROM_LOAD32_WORD( "audio.u53",  0x800000, 0x200000, CRC(71f8ddb0) SHA1(c24bef801f43bae68fda043c4356e8cf1298ca97) )
-	ROM_LOAD32_WORD( "audio.u49",  0x800002, 0x200000, CRC(dfb0a54c) SHA1(ed34f9485f7a7e5bb73bf5c6428b27548e12db12) )
+	ROM_LOAD32_WORD( "audio.u62",  0x400000, 0x200000, CRC(eabcb398) SHA1(02c8405c0a740b2717b25bc7bb550f655f3bbd8a) )
+	ROM_LOAD32_WORD( "audio.u61",  0x400002, 0x200000, CRC(73765b2d) SHA1(cbedb9c425c87d088e0946914b4b65b544320d03) )
+	ROM_LOAD32_WORD( "audio.u53",  0x800000, 0x200000, CRC(a35106e7) SHA1(6919c5dfa92b42817950e9dac657f6fb724b1225) )
+	ROM_LOAD32_WORD( "audio.u49",  0x800002, 0x200000, CRC(5656d6de) SHA1(89eda110afc3a2ff6766c3a8750396861328b18f) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive */
 	DISK_IMAGE( "sfrushrk", 0, NO_DUMP )
@@ -2295,13 +2341,13 @@ static DRIVER_INIT( wg3dh )
 	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80);
 
 	/* unlike the other games, we only have 4MB of RAM */
-	install_mem_read32_handler(0, 0x00400000, 0x007fffff, MRA32_NOP);
+	install_mem_read32_handler (0, 0x00400000, 0x007fffff, MRA32_NOP);
 	install_mem_write32_handler(0, 0x00400000, 0x007fffff, MWA32_NOP);
-	install_mem_read32_handler(0, 0x20400000, 0x207fffff, MRA32_NOP);
+	install_mem_read32_handler (0, 0x20400000, 0x207fffff, MRA32_NOP);
 	install_mem_write32_handler(0, 0x20400000, 0x207fffff, MWA32_NOP);
-	install_mem_read32_handler(0, 0x80400000, 0x807fffff, MRA32_NOP);
+	install_mem_read32_handler (0, 0x80400000, 0x807fffff, MRA32_NOP);
 	install_mem_write32_handler(0, 0x80400000, 0x807fffff, MWA32_NOP);
-	install_mem_read32_handler(0, 0xa0400000, 0xa07fffff, MRA32_NOP);
+	install_mem_read32_handler (0, 0xa0400000, 0xa07fffff, MRA32_NOP);
 	install_mem_write32_handler(0, 0xa0400000, 0xa07fffff, MWA32_NOP);
 
 	/* speedups */

@@ -59,6 +59,8 @@ ends up going wrong and writing to rom areas etc.
 */
 
 #include "driver.h"
+#include "machine/8255ppi.h"
+#include "machine/eeprom.h"
 #include "machine/random.h"
 
 VIDEO_START(lordgun)
@@ -71,41 +73,73 @@ VIDEO_UPDATE(lordgun)
 
 }
 
-READ16_HANDLER( lordgun_check_r )
+static READ16_HANDLER( lordgun_check_0_r )
 {
-	return 0x01;
+	//cpu #0 (PC=0001444C): unmapped program memory word read from 00508000 & FFFF
+	//cpu #0 (PC=00017D5A): unmapped program memory word read from 00508000 & FFFF
+
+	int pc = activecpu_get_pc();
+
+	if(pc == 0x1444C)
+		return 1;
+	else
+		return mame_rand();
 }
 
-READ16_HANDLER( lordgun_random_r )
+static READ16_HANDLER( lordgun_check_1_r )
 {
-//	return mame_rand();
-	return 0x1234;
-
+	return mame_rand();
 }
 
-static ADDRESS_MAP_START( lordgun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x300000, 0x314fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x318000, 0x319fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x31c000, 0x31c7ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x400000, 0x4007ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x500000, 0x500fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x506000, 0x506001) AM_READ(lordgun_random_r) // protection device?
-	AM_RANGE(0x506004, 0x506005) AM_READ(lordgun_random_r) // protection device?
-	AM_RANGE(0x508000, 0x508001) AM_READ(lordgun_check_r)  // protection device?
-	AM_RANGE(0x508002, 0x508003) AM_READ(lordgun_random_r)
-ADDRESS_MAP_END
+static READ16_HANDLER( lordgun_check_2_r )
+{
+	//cpu #0 (PC=00017D5A): unmapped program memory word read from 00508004 & FFFF
+	return mame_rand();
+}
 
-static ADDRESS_MAP_START( lordgun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x300000, 0x314fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x318000, 0x319fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x31c000, 0x31c7ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x400000, 0x4007ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x500000, 0x500fff) AM_WRITE(MWA16_RAM)
+static READ16_HANDLER( lordgun_check_r )
+{
+	//cpu #0 (PC=0001482C): unmapped program memory word read from 0050A984 & FFFF
 
+	//it the value read has no 0x10 set, the game writes to rom area. 0x10 should be always set ?
+	return mame_rand() | 0x10;
+}
+
+static READ_HANDLER( lordgun_random_r )
+{
+	return mame_rand();
+}
+
+static WRITE16_HANDLER( lordgun_ppi8255_0_w )
+{
+	ppi8255_0_w(offset, data & 0xff);
+}
+
+static WRITE16_HANDLER( lordgun_ppi8255_1_w )
+{
+	ppi8255_1_w(offset, data & 0xff);
+}
+
+static READ16_HANDLER( lordgun_ppi8255_0_r )
+{
+	return ppi8255_0_r(offset);
+}
+
+static READ16_HANDLER( lordgun_ppi8255_1_r )
+{
+	return ppi8255_1_r(offset);
+}
+
+static ADDRESS_MAP_START( lordgun_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM
+	AM_RANGE(0x210000, 0x21ffff) AM_RAM
+	AM_RANGE(0x300000, 0x317fff) AM_RAM
+	AM_RANGE(0x318000, 0x319fff) AM_RAM
+	AM_RANGE(0x31c000, 0x31c7ff) AM_RAM
+	AM_RANGE(0x400000, 0x4007ff) AM_RAM
+	AM_RANGE(0x500000, 0x500fff) AM_READWRITE(MRA16_RAM, paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	
 	AM_RANGE(0x502000, 0x502001) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x502200, 0x502201) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x502400, 0x502401) AM_WRITE(MWA16_NOP)
@@ -115,8 +149,29 @@ static ADDRESS_MAP_START( lordgun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x502c00, 0x502c01) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x502e00, 0x502e01) AM_WRITE(MWA16_NOP)
 
-	AM_RANGE(0x503000, 0x503001) AM_WRITE(MWA16_NOP) // ?
-	AM_RANGE(0x506004, 0x506005) AM_WRITE(MWA16_NOP) // protection device?
+	AM_RANGE(0x503000, 0x503001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x504000, 0x504001) AM_WRITE(MWA16_NOP)
+
+	AM_RANGE(0x506000, 0x506003) AM_READWRITE(lordgun_ppi8255_0_r, lordgun_ppi8255_0_w)
+	AM_RANGE(0x506004, 0x506007) AM_READWRITE(lordgun_ppi8255_1_r, lordgun_ppi8255_1_w)
+
+	AM_RANGE(0x508000, 0x508001) AM_READ(lordgun_check_0_r)  // protection device?
+	AM_RANGE(0x508002, 0x508003) AM_READ(lordgun_check_1_r)  // protection device?
+	AM_RANGE(0x508004, 0x508005) AM_READ(lordgun_check_2_r)  // protection device?
+	AM_RANGE(0x508006, 0x508007) AM_WRITE(MWA16_NOP)
+
+
+	AM_RANGE(0x50a900, 0x50a901) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x50a902, 0x50a903) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x50a906, 0x50a907) AM_WRITE(MWA16_NOP)
+
+	AM_RANGE(0x50a984, 0x50a985) AM_READ(lordgun_check_r)
+	AM_RANGE(0x50a988, 0x50a989) AM_READ(lordgun_check_r)
+	AM_RANGE(0x50a98c, 0x50a98d) AM_READ(lordgun_check_r)
+	AM_RANGE(0x50a990, 0x50a991) AM_READ(lordgun_check_r)
+	AM_RANGE(0x50a994, 0x50a995) AM_READ(lordgun_check_r)
+
+	AM_RANGE(0x50a9c0, 0x50a9c1) AM_WRITE(MWA16_NOP)
 
 ADDRESS_MAP_END
 
@@ -146,29 +201,54 @@ static struct GfxLayout lordgun_8x8x6_layout =
 };
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &lordgun_8x8x6_layout,  0x0, 2  },
-	{ REGION_GFX2, 0, &lordgun_16x16x6_layout,  0x0, 2  },
-	{ REGION_GFX3, 0, &lordgun_16x16x6_layout,  0x0, 2  }, /* later part of this is pretty strange, might just be unused tiles */
+	{ REGION_GFX1, 0, &lordgun_8x8x6_layout,    0x0, 0x80  },
+	{ REGION_GFX2, 0, &lordgun_16x16x6_layout,  0x0, 0x80  },
+	{ REGION_GFX3, 0, &lordgun_16x16x6_layout,  0x0, 0x80  }, /* later part of this is pretty strange, might just be unused tiles */
 
 	{ -1 } /* end of array */
 };
 
+
+static WRITE_HANDLER(fake_w)
+{
+}
+
+static ppi8255_interface ppi8255_intf =
+{
+	2, 					/* 2 chips */
+	{ lordgun_random_r, lordgun_random_r },			/* Port A read */
+	{ lordgun_random_r, lordgun_random_r },			/* Port B read */
+	{ lordgun_random_r, lordgun_random_r },			/* Port C read */
+	{ fake_w, fake_w },			/* Port A write */
+	{ fake_w, fake_w },			/* Port B write */
+	{ fake_w, fake_w }, 		/* Port C write */
+};
+
+static MACHINE_INIT( lordgun )
+{
+	ppi8255_init(&ppi8255_intf);
+}
+
 static MACHINE_DRIVER_START( lordgun )
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(lordgun_readmem,lordgun_writemem)
+	MDRV_CPU_PROGRAM_MAP(lordgun_map,0)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
-//	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
 	/* z80 */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(lordgun)
+
+	MDRV_NVRAM_HANDLER(93C46)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
-	MDRV_PALETTE_LENGTH(0x200)
+	MDRV_PALETTE_LENGTH(0x800)
 
 	MDRV_VIDEO_START(lordgun)
 	MDRV_VIDEO_UPDATE(lordgun)

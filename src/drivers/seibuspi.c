@@ -11,6 +11,7 @@
 		  Raiden Fighters 2
 		  Raiden Fighters Jet
 		  Senkyu / Battle Balls
+		  E-Jan High School
 		  Viper Phase 1
 
 	  Hardware:
@@ -23,6 +24,16 @@
 	  SYS386 seems like a lower-cost version of single-board SPI.
 	  It has a 40MHz AMD 386 and a considerably weaker sound system (dual MSM6295).
 
+	  Bugs:
+
+	  Raiden Fighters : First boss doesn't correctly appear, it will fly onto the screen
+	                    then leave the screen, pass the screen once at a high speed
+	                    then flicker in for the odd frame before the level ends.
+	                    Strange Pauses
+	  Senkyu / BBalls : All shapes are treated as the same colour, you can't win and
+	                    can't lose
+	                    Crashes sometimes on Coin
+
 */
 
 #include "driver.h"
@@ -31,6 +42,7 @@
 
 void seibuspi_text_decrypt(unsigned char *rom);
 void seibuspi_bg_decrypt(unsigned char *rom);
+void seibuspi_sprite_decrypt(data16_t* src, int romsize);
 
 VIDEO_START( spi );
 VIDEO_UPDATE( spi );
@@ -274,8 +286,8 @@ static ADDRESS_MAP_START( spisound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x4008, 0x4008) AM_READ(z80_com_r)			/* Checksum checking */
 	AM_RANGE(0x4009, 0x4009) AM_READ(z80_semaphore_r)	/* Z80 read semaphore */
-	AM_RANGE(0x400a, 0x400a) AM_READ(z80_unk_r)		
-	AM_RANGE(0x4013, 0x4013) AM_READNOP		
+	AM_RANGE(0x400a, 0x400a) AM_READ(z80_unk_r)
+	AM_RANGE(0x4013, 0x4013) AM_READNOP
 	AM_RANGE(0x6000, 0x600f) AM_READ(YMF271_0_r)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK4)		/* Banked ram */
 ADDRESS_MAP_END
@@ -485,23 +497,124 @@ static struct GfxLayout spi_tilelayout =
 static struct GfxLayout spi_spritelayout =
 {
 	16,16,
-	65536,
+	RGN_FRAC(1,3),
 	6,
-	{ 0, 4, 16, 20, 32, 36 },
+	{ 0,8, RGN_FRAC(1,3)+0,RGN_FRAC(1,3)+8,RGN_FRAC(2,3)+0,RGN_FRAC(2,3)+8  },
 	{
-		0, 1, 2, 3, 8, 9, 10, 11, 48, 49, 50, 51, 56, 57, 58, 59
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
 	},
-	{ 0*96, 1*96, 2*96, 3*96, 4*96, 5*96, 6*96, 7*96,
-	  8*96, 9*96, 10*96, 11*96, 12*96, 13*96, 14*96, 15*96
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
 	},
-	6*16*16
+	16*32
 };
+
+// 1bpp decodes, used for viewing each plane (decryption aid)
+#if 0
+static struct GfxLayout spi_spritelayout0 =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	1,
+	{ 0 },
+	{
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+	},
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
+	},
+	16*32
+};
+
+static struct GfxLayout spi_spritelayout1 =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	1,
+	{ 8 },
+	{
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+	},
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
+	},
+	16*32
+};
+
+static struct GfxLayout spi_spritelayout2 =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	1,
+	{ RGN_FRAC(1,3)+0 },
+	{
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+	},
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
+	},
+	16*32
+};
+
+static struct GfxLayout spi_spritelayout3 =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	1,
+	{ RGN_FRAC(1,3)+8 },
+	{
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+	},
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
+	},
+	16*32
+};
+
+static struct GfxLayout spi_spritelayout4 =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	1,
+	{ RGN_FRAC(2,3)+0 },
+	{
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+	},
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
+	},
+	16*32
+};
+
+static struct GfxLayout spi_spritelayout5 =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	1,
+	{ RGN_FRAC(2,3)+8 },
+	{
+		0,1,2,3,4,5,6,7,16,17,18,19,20,21,22,23
+	},
+	{
+		0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32
+	},
+	16*32
+};
+#endif
 
 static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spi_charlayout,   5632, 512 },
-	{ REGION_GFX2, 0, &spi_tilelayout,   4096, 1024 },
+	{ REGION_GFX2, 0, &spi_tilelayout,   4096, 1536 },
 	{ REGION_GFX3, 0, &spi_spritelayout,   0, 4096 },
+#if 0
+	{ REGION_GFX3, 0, &spi_spritelayout0,   0, 4096 },
+	{ REGION_GFX3, 0, &spi_spritelayout1,   0, 4096 },
+	{ REGION_GFX3, 0, &spi_spritelayout2,   0, 4096 },
+	{ REGION_GFX3, 0, &spi_spritelayout3,   0, 4096 },
+	{ REGION_GFX3, 0, &spi_spritelayout4,   0, 4096 },
+	{ REGION_GFX3, 0, &spi_spritelayout5,   0, 4096 },
+#endif
 	{ -1 } /* end of array */
 };
 
@@ -567,6 +680,8 @@ static DRIVER_INIT( spi )
 {
 	seibuspi_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_bg_decrypt(memory_region(REGION_GFX2));
+	seibuspi_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x400000);
+
 }
 
 static DRIVER_INIT( raidnfgt )
@@ -692,9 +807,9 @@ ROM_START(senkyu)
 	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
 
 	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("fb_obj-1.322", 0x000000, 0x400000, CRC(29f86f68) SHA1(1afe809ce00a25f8b27543e4188edc3e3e604951) )
-	ROM_LOAD48_WORD("fb_obj-2.324", 0x000002, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
-	ROM_LOAD48_WORD("fb_obj-3.323", 0x000004, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
+	ROM_LOAD("fb_obj-1.322", 0x000000, 0x400000, CRC(29f86f68) SHA1(1afe809ce00a25f8b27543e4188edc3e3e604951) )
+	ROM_LOAD("fb_obj-2.324", 0x400000, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
+	ROM_LOAD("fb_obj-3.323", 0x800000, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
 
@@ -720,9 +835,9 @@ ROM_START(batlball)
 	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
 
 	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("fb_obj-1.322", 0x000000, 0x400000, CRC(29f86f68) SHA1(1afe809ce00a25f8b27543e4188edc3e3e604951) )
-	ROM_LOAD48_WORD("fb_obj-2.324", 0x000002, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
-	ROM_LOAD48_WORD("fb_obj-3.323", 0x000004, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
+	ROM_LOAD("fb_obj-1.322", 0x000000, 0x400000, CRC(29f86f68) SHA1(1afe809ce00a25f8b27543e4188edc3e3e604951) )
+	ROM_LOAD("fb_obj-2.324", 0x400000, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
+	ROM_LOAD("fb_obj-3.323", 0x800000, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
 
@@ -750,9 +865,9 @@ ROM_START(ejanhs)
 	ROM_LOAD24_BYTE("ej3_bg2p.49",  0x300002, 0x080000, CRC(a4a9cb0f) SHA1(da177d13bb95bf6b987d3ca13bcdc86570807b2c) )
 
 	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("ej3_obj1.322", 0x000000, 0x400000, CRC(852f180e) SHA1(d4845dace45c05a68f3b38ccb301c5bf5dce4174) )
-	ROM_LOAD48_WORD("ej3_obj2.324", 0x000002, 0x400000, CRC(1116ad08) SHA1(d5c81383b3f9ede7dd03e6be35487b40740b1f8f) )
-	ROM_LOAD48_WORD("ej3_obj3.323", 0x000004, 0x400000, CRC(ccfe02b6) SHA1(368bc8efe9d6677ba3d0cfc0f450a4bda32988be) )
+	ROM_LOAD("ej3_obj1.322", 0x000000, 0x400000, CRC(852f180e) SHA1(d4845dace45c05a68f3b38ccb301c5bf5dce4174) )
+	ROM_LOAD("ej3_obj2.324", 0x400000, 0x400000, CRC(1116ad08) SHA1(d5c81383b3f9ede7dd03e6be35487b40740b1f8f) )
+	ROM_LOAD("ej3_obj3.323", 0x800000, 0x400000, CRC(ccfe02b6) SHA1(368bc8efe9d6677ba3d0cfc0f450a4bda32988be) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
 
@@ -781,9 +896,9 @@ ROM_START(viperp1)
 	ROM_LOAD24_BYTE("v_bg-22.416",  0x300002, 0x080000, CRC(24a0a23a) SHA1(0b0330717620e3f3274a25845d9edaf8023b9db2) )
 
 	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
-	ROM_LOAD48_WORD("v_obj-2.324",  0x000002, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
-	ROM_LOAD48_WORD("v_obj-3.323",  0x000004, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
+	ROM_LOAD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
+	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
+	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
 
@@ -810,9 +925,9 @@ ROM_START(viperp1o)
 	ROM_LOAD24_BYTE("v_bg-22.416",  0x300002, 0x080000, CRC(24a0a23a) SHA1(0b0330717620e3f3274a25845d9edaf8023b9db2) )
 
 	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
-	ROM_LOAD48_WORD("v_obj-2.324",  0x000002, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
-	ROM_LOAD48_WORD("v_obj-3.323",  0x000004, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
+	ROM_LOAD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
+	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
+	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
 
@@ -840,9 +955,9 @@ ROM_START(raidnfgt)
 	ROM_LOAD24_BYTE("gd_bg2-p.49",  0x300002, 0x100000, CRC(502d5799) SHA1(c3a0e1a4f5a7b35572ae1ff31315da4ed08aa2fe) )
 
 	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("gd_obj-1.322", 0x000000, 0x400000, CRC(59d86c99) SHA1(d3c9241e7b51fe21f8351051b063f91dc69bf905))
-	ROM_LOAD48_WORD("gd_obj-2.324", 0x000002, 0x400000, CRC(1ceb0b6f) SHA1(97225a9b3e7be18080aa52f6570af2cce8f25c06) )
-	ROM_LOAD48_WORD("gd_obj-3.323", 0x000004, 0x400000, CRC(36e93234) SHA1(51917a80b7da5c32a9434a1076fc2916d62e6a3e) )
+	ROM_LOAD("gd_obj-1.322", 0x000000, 0x400000, CRC(59d86c99) SHA1(d3c9241e7b51fe21f8351051b063f91dc69bf905))
+	ROM_LOAD("gd_obj-2.324", 0x400000, 0x400000, CRC(1ceb0b6f) SHA1(97225a9b3e7be18080aa52f6570af2cce8f25c06) )
+	ROM_LOAD("gd_obj-3.323", 0x800000, 0x400000, CRC(36e93234) SHA1(51917a80b7da5c32a9434a1076fc2916d62e6a3e) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
 
@@ -953,12 +1068,12 @@ ROM_START(rf2_2k)
 	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
 
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
-	ROM_LOAD48_WORD("obj1.073",  0x000000, 0x400000, CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
-	ROM_LOAD48_WORD("obj2.074",  0x000002, 0x400000, CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
-	ROM_LOAD48_WORD("obj3.075",  0x000004, 0x400000, CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
-	ROM_LOAD48_WORD("obj4.076",  0xc00000, 0x200000, CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
-	ROM_LOAD48_WORD("obj5.077",  0xc00002, 0x200000, CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
-	ROM_LOAD48_WORD("obj6.078",  0xc00004, 0x200000, CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj1.073",  0x0000000, 0x400000, CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x0400000, 0x200000, CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
+	ROM_LOAD("obj2.074",  0x0600000, 0x400000, CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
+	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
+	ROM_LOAD("obj3.075",  0x0c00000, 0x400000, CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x1000000, 0x200000, CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0)	/* sound data for MSM6295 */
 	ROM_LOAD("pcm0.1022", 0x000000, 0x80000, CRC(fd599b35) SHA1(00c0307d1b503bd5ce02d7960ce5e1ad600a7290) )

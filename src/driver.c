@@ -5018,6 +5018,18 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ultrax )	/* (c) 1995 Banpresto */
 	DRIVER( jsk )		/* (c) 1997 Visco */
 
+	/* ST-0016 based games (ST-0016 is a z80 / gfx / sound all in one) */
+	/* plain ST-0016 */
+	DRIVER( renju )
+	DRIVER( nratechu )
+	/* R3000 + ST-0016 */
+	DRIVER( srmp5 )
+	DRIVER( speglsht )
+	DRIVER( speglsha )
+	/* V810 + ST-0016 */
+	DRIVER( mayjinsn )
+	DRIVER( mayjisn2 )
+
 	/* Atlus games */
 	DRIVER( powerins )	/* (c) 1993 Atlus (Japan) */
 	DRIVER( powerina )	/* (c) 1993 Atlus (Japan) */

@@ -1835,7 +1835,7 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 	address = (((STV_VDP2_RPTAU << 16) | STV_VDP2_RPTAL) << 1);
 	if ( rot_parameter == 1 )
 	{
-		address &= ~0x00000080; 
+		address &= ~0x00000080;
 	}
 	else if ( rot_parameter == 2 )
 	{
@@ -2238,7 +2238,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		--------BBBBBBBBGGGGGGGGRRRRRRRR
 		*/
 		case 4:
-			usrintf_showmessage("BITMAP type 4 enabled");
+			usrintf_showmessage("BITMAP type 4 enabled"); // shanhigw 'sunsoft' after gameover
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
 				destline = (UINT16 *)(bitmap->line[ycnt]);
@@ -2250,9 +2250,9 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					t_pen = ((gfxdata[0] & 0x80) >> 7);
 					if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
 
-					b = ((gfxdata[1] & 0xff));
-					g = ((gfxdata[2] & 0xff));
-					r = ((gfxdata[3] & 0xff));
+					b = (gfxdata[1] & 0xf8) >> 3;
+					g = (gfxdata[2] & 0xf8) >> 3;
+					r = (gfxdata[3] & 0xf8) >> 3;
 
 					tw = stv_vdp2_window_process(xcnt,ycnt);
 					if(tw == 0)

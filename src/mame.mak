@@ -820,6 +820,8 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/vidhrdw/sengokmj.o $(OBJ)/drivers/sengokmj.o \
 	$(OBJ)/vidhrdw/mustache.o $(OBJ)/drivers/mustache.o \
 	$(OBJ)/vidhrdw/seibuspi.o $(OBJ)/machine/seibuspi.o $(OBJ)/drivers/seibuspi.o \
+	$(OBJ)/machine/spisprit.o \
+	$(OBJ)/machine/spistab1.o $(OBJ)/machine/spistab2.o $(OBJ)/machine/spistab3.o \
 
 $(OBJ)/tad.a: \
 	$(OBJ)/vidhrdw/cabal.o $(OBJ)/drivers/cabal.o \
@@ -909,6 +911,7 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/drivers/seta.o \
 	$(OBJ)/vidhrdw/seta2.o $(OBJ)/drivers/seta2.o \
 	$(OBJ)/vidhrdw/ssv.o $(OBJ)/drivers/ssv.o \
+	$(OBJ)/vidhrdw/st0016.o $(OBJ)/drivers/st0016.o \
 
 $(OBJ)/atlus.a: \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \

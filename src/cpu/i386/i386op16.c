@@ -1,9 +1,7 @@
 static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 {
-	int i;
 	UINT16 src = value;
 	UINT16 dst = value;
-	UINT32 tempCF;
 
 	if( shift == 0 ) {
 		CYCLES_RM(modrm, 3, 7);
@@ -12,55 +10,48 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 		switch( (modrm >> 3) & 0x7 )
 		{
 			case 0:			/* ROL rm16, 1 */
-				tempCF = (src & 0x8000) ? 1 : 0;
+				I.CF = (src & 0x8000) ? 1 : 0;
 				dst = (src << 1) + I.CF;
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 1:			/* ROR rm16, 1 */
-				tempCF = src & 0x1;
-				dst = (src >> 1) | (I.CF << 15);
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				I.CF = (src & 0x1) ? 1 : 0;
+				dst = (I.CF << 15) | (src >> 1);
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 2:			/* RCL rm16, 1 */
-				tempCF = (src & 0x8000) ? 1 : 0;
 				dst = (src << 1) + I.CF;
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				I.CF = (src & 0x8000) ? 1 : 0;
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 3:			/* RCR rm16, 1 */
-				tempCF = src & 0x1;
-				dst = (src >> 1) | (I.CF << 15);
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				dst = (I.CF << 15) | (src >> 1);
+				I.CF = src & 0x1;
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 4:			/* SHL/SAL rm16, 1 */
-			case 7:
-				I.CF = (src & 0x8000) ? 1 : 0;
+			case 6:
 				dst = src << 1;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
-				I.AF = 1;
+				I.CF = (src & 0x8000) ? 1 : 0;
+				I.OF = (((I.CF << 15) ^ dst) & 0x8000) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 5:			/* SHR rm16, 1 */
-				I.CF = src & 0x1;
 				dst = src >> 1;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
-				I.AF = 1;
+				I.CF = src & 0x1;
+				I.OF = (dst & 0x8000) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
-			case 6:			/* SAR rm16, 1 */
-				I.CF = src & 0x1;
+			case 7:			/* SAR rm16, 1 */
 				dst = (INT16)(src) >> 1;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
-				I.AF = 1;
+				I.CF = src & 0x1;
+				I.OF = 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
@@ -70,56 +61,47 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 		switch( (modrm >> 3) & 0x7 )
 		{
 			case 0:			/* ROL rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					I.CF = (dst & 0x8000) ? 1 : 0;
-					dst = (dst << 1) + I.CF;
-				}
+				dst = ((src & ((UINT16)0xffff >> shift)) << shift) |
+					  ((src & ((UINT16)0xffff << (16-shift))) >> (16-shift));
+				I.CF = (src >> (16-shift)) & 0x1;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 1:			/* ROR rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					I.CF = dst & 0x1;
-					dst = (dst >> 1) + (I.CF << 15);
-				}
+				dst = ((src & ((UINT16)0xffff << shift)) >> shift) |
+					  ((src & ((UINT16)0xffff >> (16-shift))) << (16-shift));
+				I.CF = (src >> (shift-1)) & 0x1;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 2:			/* RCL rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					tempCF = (dst & 0x8000) ? 1 : 0;
-					dst = (dst << 1) + I.CF;
-					I.CF = tempCF;
-				}
+				dst = ((src & ((UINT16)0xffff >> shift)) << shift) |
+					  ((src & ((UINT16)0xffff << (17-shift))) >> (17-shift)) |
+					  (I.CF << (shift-1));
+				I.CF = (src >> (16-shift)) & 0x1;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 3:			/* RCR rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					tempCF = dst & 0x1;
-					dst = (dst >> 1) | (I.CF << 15);
-					I.CF = tempCF;
-				}
+				dst = ((src & ((UINT16)0xffff << shift)) >> shift) |
+					  ((src & ((UINT16)0xffff >> (16-shift))) << (17-shift)) |
+					  (I.CF << (16-shift));
+				I.CF = (src >> (shift-1)) & 0x1;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 4:			/* SHL/SAL rm16, i8 */
-			case 7:
-				dst <<= shift;
-				SetCF16(dst);
-				I.AF = 1;
+			case 6:
+				dst = src << shift;
+				I.CF = (src & (1 << (16-shift))) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 5:			/* SHR rm16, i8 */
-				dst >>= shift - 1;
-				I.CF = dst & 0x1;
-				dst >>= 1;
-				I.AF = 1;
+				dst = src >> shift;
+				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
-			case 6:			/* SAR rm16, i8 */
-				dst = (INT16)(dst) >> (shift - 1);
-				I.CF = dst & 0x1;
-				dst = (INT16)(dst) >> 1;
-				I.AF = 1;
+			case 7:			/* SAR rm16, i8 */
+				dst = (INT16)src >> shift;
+				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
@@ -631,7 +613,7 @@ static void I386OP(in_ax_i8)(void)			// Opcode 0xe5
 {
 	UINT16 port = FETCH();
 	UINT16 data = READPORT16(port);
-	REG16(AL) = data;
+	REG16(AX) = data;
 }
 
 static void I386OP(in_ax_dx)(void)			// Opcode 0xed

@@ -126,6 +126,8 @@ static int transfer_type;
 static int transfer_temp;
 static int transfer_writes_left;
 static UINT16 transfer_sum;
+static int transfer_fifo_entries;
+static mame_timer *transfer_watchdog;
 
 
 
@@ -158,6 +160,7 @@ static void sound_tx_callback(int port, INT32 data);
 
 static READ16_HANDLER( dcs_polling_r );
 
+static void transfer_watchdog_callback(int param);
 static int preprocess_write(data16_t data);
 
 
@@ -199,11 +202,13 @@ ADDRESS_MAP_END
 
 /* DCS2-based readmem/writemem structures */
 ADDRESS_MAP_START( dcs2_program_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x3fff) AM_RAM	AM_BASE(&dcs_program_ram) /* internal/external program ram */
 ADDRESS_MAP_END
 
 
 ADDRESS_MAP_START( dcs2_data_map, ADDRESS_SPACE_DATA, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20)	AM_BASE(&dcs_data_ram) /* D/RAM */
 	AM_RANGE(0x0400, 0x0400) AM_READWRITE(input_latch_r, input_latch_ack_w) /* input latch read */
 	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)			/* soundlatch write */
@@ -218,6 +223,7 @@ ADDRESS_MAP_START( dcs2_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
 	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
 	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
+	AM_RANGE(0x3a00, 0x3a00) AM_READNOP							/* controls final sample rate */
 	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
 ADDRESS_MAP_END
 
@@ -414,6 +420,10 @@ void dcs2_init(offs_t polling_offset)
 	if (polling_offset)
 		dcs_polling_base = memory_install_read16_handler(dcs_cpunum, ADDRESS_SPACE_DATA, polling_offset, polling_offset, 0, dcs_polling_r);
 
+	/* allocate a watchdog timer for HLE transfers */
+	if (HLE_TRANSFERS)
+		transfer_watchdog = timer_alloc(transfer_watchdog_callback);
+
 	/* reset the system */
 	dcs_reset();
 }
@@ -552,8 +562,10 @@ static READ16_HANDLER( latch_status_r )
 		result |= 0x80;
 	if (IS_OUTPUT_EMPTY())
 		result |= 0x40;
-	if (dcs.fifo_status_r)
+	if (dcs.fifo_status_r && (!HLE_TRANSFERS || transfer_state == 0))
 		result |= (*dcs.fifo_status_r)() & 0x38;
+	if (HLE_TRANSFERS && transfer_state != 0)
+		result |= 0x08;
 	return result;
 }
 
@@ -901,6 +913,36 @@ static READ16_HANDLER( dcs_polling_r )
 	DATA TRANSFER HLE MECHANISM
 ****************************************************************************/
 
+void dcs_fifo_notify(int count, int max)
+{
+	/* skip if not in mid-transfer */
+	if (!HLE_TRANSFERS || transfer_state == 0 || !dcs.fifo_data_r)
+	{
+		transfer_fifo_entries = 0;
+		return;
+	}
+	
+	/* preprocess a word */
+	transfer_fifo_entries = count;
+	if (transfer_state != 5 || transfer_fifo_entries == transfer_writes_left || transfer_fifo_entries >= 256)
+	{
+		for ( ; transfer_fifo_entries; transfer_fifo_entries--)
+			preprocess_write((*dcs.fifo_data_r)());
+	}
+}
+
+
+static void transfer_watchdog_callback(int starting_writes_left)
+{
+	if (transfer_fifo_entries && starting_writes_left == transfer_writes_left)
+	{
+		for ( ; transfer_fifo_entries; transfer_fifo_entries--)
+			preprocess_write((*dcs.fifo_data_r)());
+	}
+	timer_adjust(transfer_watchdog, TIME_IN_MSEC(1), transfer_writes_left, 0);
+}
+
+
 static void s1_ack_callback2(int data)
 {
 	/* if the output is full, stall for a usec */
@@ -1101,7 +1143,11 @@ static int preprocess_stage_2(data16_t data)
 
 			/* reset the checksum */
 			transfer_sum = 0;
-			if (HLE_TRANSFERS) return 1;
+			if (HLE_TRANSFERS)
+			{
+				timer_adjust(transfer_watchdog, TIME_IN_MSEC(1), transfer_writes_left, 0);
+				return 1;
+			}
 			break;
 
 		case 5:
@@ -1124,7 +1170,10 @@ static int preprocess_stage_2(data16_t data)
 
 				/* if we're done, start a timer to send the response words */
 				if (transfer_state == 0)
+				{
 					timer_set(TIME_IN_USEC(1), transfer_sum, s2_ack_callback);
+					timer_adjust(transfer_watchdog, TIME_NEVER, 0, 0);
+				}
 				return 1;
 			}
 			break;
@@ -1135,13 +1184,25 @@ static int preprocess_stage_2(data16_t data)
 
 static int preprocess_write(data16_t data)
 {
+	int result;
+	
 	/* if we're not DCS2, skip */
 	if (!dcs.sport_timer)
 		return 0;
 
 	/* state 0 - initialization phase */
 	if (dcs_state == 0)
-		return preprocess_stage_1(data);
+		result = preprocess_stage_1(data);
 	else
-		return preprocess_stage_2(data);
+		result = preprocess_stage_2(data);
+	
+	/* if we did the write, toggle the full/not full state so interrupts are generated */
+	if (result && dcs.input_empty_cb)
+	{
+		if (dcs.last_input_empty)
+			(*dcs.input_empty_cb)(dcs.last_input_empty = 0);
+		if (!dcs.last_input_empty)
+			(*dcs.input_empty_cb)(dcs.last_input_empty = 1);
+	}
+	return result;
 }

@@ -938,7 +938,7 @@ static void ldp(void)
 }
 static void ldpk(void)
 {
-		MODIFY_DP(R.opcode.b.l & 0x1ff);
+		MODIFY_DP(R.opcode.w.l & 0x1ff);
 }
 static void lph(void)
 {
@@ -1242,9 +1242,10 @@ static void sar_ar7(void)	{ PUTDATA(R.AR[7]); }
 static void sblk(void)
 {
 		oldacc.d = R.ACC.d;
-		R.ALU.d = (M_RDOP_ARG(R.PC) << (R.opcode.b.h & 0xf));
+		if (SXM) R.ALU.d =  (INT16)M_RDOP_ARG(R.PC);
+		else     R.ALU.d = (UINT16)M_RDOP_ARG(R.PC);
 		R.PC++;
-		if (SXM && (R.ALU.d & 0x8000)) R.ALU.d = -R.ALU.d;
+		R.ALU.d <<= (R.opcode.b.h & 0xf);
 		R.ACC.d -= R.ALU.d;
 		CALCULATE_SUB_OVERFLOW(R.ALU.d);
 		CALCULATE_SUB_CARRY();
@@ -1656,6 +1657,8 @@ static void tms32025_init (void)
 {
 	int cpu = cpu_getactivecpu();
 
+	R.intRAM = malloc(0x800*2);
+
 	state_save_register_UINT16("tms32025", cpu, "PC", &R.PC, 1);
 	state_save_register_UINT16("tms32025", cpu, "STR0", &R.STR0, 1);
 	state_save_register_UINT16("tms32025", cpu, "STR1", &R.STR1, 1);
@@ -1705,7 +1708,6 @@ static void tms32025_reset (void *param)
 
 	S_OUT(TMS32025_XF,ASSERT_LINE);	/* XF flag is high. Must set the pin */
 
-	R.intRAM = malloc(0x800*2);
 	/* Set the internal memory mapped registers */
 	GREG = 0;
 	TIM  = 0xffff;

@@ -2513,9 +2513,9 @@ static void docop2( int gteop )
 			n_sf = 12 * GTE_SF( gteop );
 			FLAG = 0;
 
-			MAC1 = A1( ( ( (INT64)(INT32)MAC1 << 12 ) + ( (INT16)IR0 * (INT16)IR1 ) ) >> n_sf );
-			MAC2 = A2( ( ( (INT64)(INT32)MAC2 << 12 ) + ( (INT16)IR0 * (INT16)IR2 ) ) >> n_sf );
-			MAC3 = A3( ( ( (INT64)(INT32)MAC3 << 12 ) + ( (INT16)IR0 * (INT16)IR3 ) ) >> n_sf );
+			MAC1 = A1( ( ( (INT64)(INT32)MAC1 << n_sf ) + ( (INT16)IR0 * (INT16)IR1 ) ) >> n_sf );
+			MAC2 = A2( ( ( (INT64)(INT32)MAC2 << n_sf ) + ( (INT16)IR0 * (INT16)IR2 ) ) >> n_sf );
+			MAC3 = A3( ( ( (INT64)(INT32)MAC3 << n_sf ) + ( (INT16)IR0 * (INT16)IR3 ) ) >> n_sf );
 			IR1 = Lm_B1( (INT32)MAC1, 0 );
 			IR2 = Lm_B2( (INT32)MAC2, 0 );
 			IR3 = Lm_B3( (INT32)MAC3, 0 );

@@ -1049,18 +1049,20 @@ static void vdp1_fill_quad(struct mame_bitmap *bitmap, const struct rectangle *c
 
 static int x2s(int v)
 {
-	int r = v & 0x7ff;
+	/*int r = v & 0x7ff;
 	if (r & 0x400)
 		r -= 0x800;
-	return r + stvvdp1_local_x;
+	return r + stvvdp1_local_x;*/
+	return (INT32)(INT16)v + stvvdp1_local_x;
 }
 
 static int y2s(int v)
 {
-	int r = v & 0x7ff;
+	/*int r = v & 0x7ff;
 	if (r & 0x400)
 		r -= 0x800;
-	return r + stvvdp1_local_y;
+	return r + stvvdp1_local_y;*/
+	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
 void stv_vpd1_draw_distorded_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)

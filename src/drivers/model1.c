@@ -64,16 +64,19 @@ static WRITE16_HANDLER( bank_w )
 }
 
 
+static int last_irq;
+
 static void irq_raise(int level)
 {
 	//	logerror("irq: raising %d\n", level);
 	//	irq_status |= (1 << level);
+	last_irq = level;
 	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 static int irq_callback(int irqline)
 {
-	return 1;
+	return last_irq;
 }
 // vf
 // 1 = fe3ed4
@@ -95,12 +98,26 @@ static void irq_init(void)
 	cpu_set_irq_callback(0, irq_callback);
 }
 
+extern void tgp_tick(void);
 static INTERRUPT_GEN(model1_interrupt)
 {
-	extern void tgp_tick(void);
+	if (cpu_getiloops())
+	{
+		irq_raise(1);
+		tgp_tick();
+	}
+	else
+	{
+		irq_raise(3);
+	}
+}
+
+static INTERRUPT_GEN(swa_interrupt)
+{
 	irq_raise(1);
 	tgp_tick();
 }
+
 
 static MACHINE_INIT(model1)
 {
@@ -119,20 +136,6 @@ static READ16_HANDLER( network_ctl_r )
 
 static WRITE16_HANDLER( network_ctl_w )
 {
-}
-
-static WRITE16_HANDLER( network_w )
-{
-}
-
-static READ16_HANDLER( network_r )
-{
-	return 0;
-}
-
-static READ16_HANDLER( network2_r )
-{
-	return 0xffff;
 }
 
 static WRITE16_HANDLER(md1_w)
@@ -196,6 +199,35 @@ static WRITE16_HANDLER(mr2_w)
 		logerror("MW 10[r10], %f (%x)\n", *(float *)(mr2+0x1f10/2), activecpu_get_pc());
 }
 
+static int to_68k;
+
+static READ16_HANDLER( snd_68k_ready_r )
+{
+	int sr = cpunum_get_reg(1, M68K_REG_SR);
+
+	if ((sr & 0x0700) > 0x0100)
+	{
+		cpu_spinuntil_time(TIME_IN_USEC(40));
+		return 0;	// not ready yet, interrupts disabled
+	}
+	
+	return 0xff;
+}
+
+static WRITE16_HANDLER( snd_latch_to_68k_w )
+{
+	while (!snd_68k_ready_r(0, 0))
+	{
+		cpu_spinuntil_time(TIME_IN_USEC(40));
+	}
+
+	to_68k = data;
+	
+	cpu_set_irq_line(1, 2, HOLD_LINE);
+	// give the 68k time to reply
+	cpu_spinuntil_time(TIME_IN_USEC(40));
+}
+
 static ADDRESS_MAP_START( model1_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0x100000, 0x1fffff) AM_ROMBANK(1)
@@ -221,9 +253,10 @@ static ADDRESS_MAP_START( model1_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc0003f) AM_READ(io_r)
 
 	AM_RANGE(0xc00040, 0xc00043) AM_READWRITE(network_ctl_r, network_ctl_w)
-    AM_RANGE(0xc00200, 0xc002ff) AM_RAM             // ??
+	AM_RANGE(0xc00200, 0xc002ff) AM_RAM             // ??
 
-	AM_RANGE(0xc40002, 0xc40003) AM_READ(network2_r)
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(snd_latch_to_68k_w)
+	AM_RANGE(0xc40002, 0xc40003) AM_READ(snd_68k_ready_r)
 
 	AM_RANGE(0xd00000, 0xd00001) AM_READWRITE(model1_tgp_copro_adr_r, model1_tgp_copro_adr_w)
 	AM_RANGE(0xd20000, 0xd20003) AM_WRITE(model1_tgp_copro_ram_w )
@@ -241,6 +274,112 @@ static ADDRESS_MAP_START( model1_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0xd20000, 0xd20003) AM_READ(model1_tgp_copro_ram_r)
 	AM_RANGE(0xd80000, 0xd80003) AM_READ(model1_tgp_copro_r)
 ADDRESS_MAP_END
+
+static READ16_HANDLER( m1_snd_68k_latch_r )
+{
+	return to_68k;
+}
+
+static READ16_HANDLER( m1_snd_v60_ready_r )
+{
+	return 0;
+}
+
+static READ16_HANDLER( m1_snd_mpcm0_r )
+{
+	return MultiPCM_reg_0_r(0);
+}
+
+static WRITE16_HANDLER( m1_snd_mpcm0_w )
+{
+	MultiPCM_reg_0_w(offset, data);
+}
+
+static WRITE16_HANDLER( m1_snd_mpcm0_bnk_w )
+{
+	MultiPCM_bank_0_w(0, data);
+}
+
+static READ16_HANDLER( m1_snd_mpcm1_r )
+{
+	return MultiPCM_reg_1_r(0);
+}
+
+static WRITE16_HANDLER( m1_snd_mpcm1_w )
+{
+	MultiPCM_reg_1_w(offset, data);
+}
+
+static WRITE16_HANDLER( m1_snd_mpcm1_bnk_w )
+{
+	MultiPCM_bank_1_w(0, data);
+}
+
+static READ16_HANDLER( m1_snd_ym_r )
+{
+	return YM2612_status_port_0_A_r(0);
+}
+
+static WRITE16_HANDLER( m1_snd_ym_w )
+{
+	switch (offset)
+	{
+		case 0:
+			YM2612_control_port_0_A_w(0, data);
+			break;
+
+		case 1:
+			YM2612_data_port_0_A_w(0, data);
+			break;
+
+		case 2:
+			YM2612_control_port_0_B_w(0, data);
+			break;
+
+		case 3:
+			YM2612_data_port_0_B_w(0, data);
+			break;
+	}
+}
+
+static WRITE16_HANDLER( m1_snd_68k_latch1_w )
+{
+}
+
+static WRITE16_HANDLER( m1_snd_68k_latch2_w )
+{
+}
+
+static ADDRESS_MAP_START( model1_snd, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0bffff) AM_ROM
+	AM_RANGE(0xc20000, 0xc20001) AM_READWRITE( m1_snd_68k_latch_r, m1_snd_68k_latch1_w )
+	AM_RANGE(0xc20002, 0xc20003) AM_READWRITE( m1_snd_v60_ready_r, m1_snd_68k_latch2_w )
+	AM_RANGE(0xc40000, 0xc40007) AM_READWRITE( m1_snd_mpcm0_r, m1_snd_mpcm0_w )
+	AM_RANGE(0xc40012, 0xc40013) AM_WRITENOP
+	AM_RANGE(0xc50000, 0xc50001) AM_WRITE( m1_snd_mpcm0_bnk_w )
+	AM_RANGE(0xc60000, 0xc60007) AM_READWRITE( m1_snd_mpcm1_r, m1_snd_mpcm1_w )
+	AM_RANGE(0xc70000, 0xc70001) AM_WRITE( m1_snd_mpcm1_bnk_w )
+	AM_RANGE(0xd00000, 0xd00007) AM_READWRITE( m1_snd_ym_r, m1_snd_ym_w )
+	AM_RANGE(0xf00000, 0xf0ffff) AM_RAM
+ADDRESS_MAP_END
+
+static struct MultiPCM_interface m1_multipcm_interface =
+{
+	2,
+	{ 8000000, 8000000 },
+	{ MULTIPCM_MODE_MODEL1, MULTIPCM_MODE_MODEL1 },
+	{ (1024*1024), (1024*1024) },
+	{ REGION_SOUND1, REGION_SOUND2 },
+	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT), YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) }
+};
+
+static struct YM2612interface m1_ym3438_interface =
+{
+	1,
+	8000000,
+	{ 60,60 },
+	{ 0 },	{ 0 },	{ 0 },	{ 0 }
+};
 
 INPUT_PORTS_START( vf1 )
 	PORT_START  /* Unused analog port 0 */
@@ -422,15 +561,18 @@ ROM_START( vf1 )
 	ROM_LOAD16_BYTE( "vf_16090.rom", 0x1300000, 0x80000, CRC(90c76831) SHA1(5a3c25f2a131cfbb2ad067bef1ab7b1c95645d41) )
 	ROM_LOAD16_BYTE( "vf_16091.rom", 0x1300001, 0x80000, CRC(53115448) SHA1(af798d5b1fcb720d7288a5ac48839d9ace16a2f2) )
 
-	ROM_REGION( 0x40000, REGION_CPU2, 0 )  /* 68K code */
-	ROM_LOAD( "vf_16120.rom", 0x00000, 0x20000, CRC(2bff8378) SHA1(854b08ab983e4e98cb666f2f44de9a6829b1eb52) )
-	ROM_LOAD( "vf_16121.rom", 0x20000, 0x20000, CRC(ff6723f9) SHA1(53498b8c103745883657dfd6efe27edfd48b356f) )
+	ROM_REGION( 0xc0000, REGION_CPU2, 0 )  /* 68K code */
+	ROM_LOAD16_WORD_SWAP( "vf_16120.rom", 0x00000, 0x20000, CRC(2bff8378) SHA1(854b08ab983e4e98cb666f2f44de9a6829b1eb52) )
+	ROM_LOAD16_WORD_SWAP( "vf_16121.rom", 0x20000, 0x20000, CRC(ff6723f9) SHA1(53498b8c103745883657dfd6efe27edfd48b356f) )
+	ROM_RELOAD( 0x80000, 0x20000)
 
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "vf_16122.rom", 0x000000, 0x200000, CRC(568bc64e) SHA1(31fd0ef8319efe258011b4621adebb790b620770) )
 	ROM_LOAD( "vf_16123.rom", 0x200000, 0x200000, CRC(15d78844) SHA1(37c17e38604cf7004a951408024941cd06b1d93e) )
-	ROM_LOAD( "vf_16124.rom", 0x400000, 0x200000, CRC(45520ba1) SHA1(c33e3c12639961016e5fa6b5025d0a67dff28907) )
-	ROM_LOAD( "vf_16125.rom", 0x600000, 0x200000, CRC(9b4998b6) SHA1(0418d9b0acf79f35d0f7575c21f1be9a0ea343da) )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 ) /* Samples */
+	ROM_LOAD( "vf_16124.rom", 0x000000, 0x200000, CRC(45520ba1) SHA1(c33e3c12639961016e5fa6b5025d0a67dff28907) )
+	ROM_LOAD( "vf_16125.rom", 0x200000, 0x200000, CRC(9b4998b6) SHA1(0418d9b0acf79f35d0f7575c21f1be9a0ea343da) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER1, 0 ) /* TGP model roms */
 	ROM_LOAD32_WORD( "vf_16096.rom", 0x000000, 0x200000, CRC(a92b0bf3) SHA1(fd3adff5f41f0b0be98df548c848eda04fc0da48) )
@@ -460,12 +602,14 @@ ROM_START( vr )
 	ROM_LOAD16_BYTE( "vrrmem.12", 0x1300000, 0x80000, CRC(04BFDC5B) SHA1(bb8788a761620d0440a62ae51c3b41f70a04b5e4) )
 	ROM_LOAD16_BYTE( "vrrmem.13", 0x1300001, 0x80000, CRC(C49F0486) SHA1(cc2bb9059c016ba2c4f6e7508bd1687df07b8b48) )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )  /* 68K code */
-	ROM_LOAD( "vrrsnd.7", 0x00000, 0x20000, CRC(919d9b75) SHA1(27be79881cc9a2b5cf37e18f1e2d87251426b428) )
+	ROM_REGION( 0xc0000, REGION_CPU2, 0 )  /* 68K code */
+	ROM_LOAD16_WORD_SWAP( "vrrsnd.7", 0x00000, 0x20000, CRC(919d9b75) SHA1(27be79881cc9a2b5cf37e18f1e2d87251426b428) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "vrrsnd.32", 0x000000, 0x200000, CRC(b1965190) SHA1(fc47e9ed4a44d48477bd9a35e42c26508c0f4a0c) )
-	ROM_LOAD( "vrrsndo.4", 0x200000, 0x200000, CRC(ba6b2327) SHA1(02285520624a4e612cb4b65510e3458b13b1c6ba) )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 ) /* Samples */
+	ROM_LOAD( "vrrsndo.4", 0x000000, 0x200000, CRC(ba6b2327) SHA1(02285520624a4e612cb4b65510e3458b13b1c6ba) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER1, 0 ) /* TGP model roms */
 	ROM_LOAD32_WORD( "vrrmem.26", 0x000000, 0x200000, CRC(dcbe006b) SHA1(195be7fabec405ca1b4e1338d3b8d7bb4a06dd73) )
@@ -492,9 +636,11 @@ ROM_START( swa )
 	ROM_LOAD16_BYTE( "16474.41",  0x1100000, 0x80000, CRC(5864a26f) SHA1(be0c22dfff37408f6b401b1970f7fcc6fc7fbcd2) )
 	ROM_LOAD16_BYTE( "16475.42",  0x1100001, 0x80000, CRC(b9266be9) SHA1(cf195cd89c9d191b9eb8c5299f8cc154c2b4bd82) )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )  /* 68K code - missing */
+	ROM_REGION( 0xc0000, REGION_CPU2, 0 )  /* 68K code - missing */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples - missing */
+
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 ) /* Samples - missing */
 
 	ROM_REGION32_LE( 0xc00000, REGION_USER1, 0 ) /* TGP model roms */
 	ROM_LOAD32_WORD( "16476.26", 0x000000, 0x200000, CRC(d48609ae) SHA1(8c8686a5c9ca4837447a7f70ed194e2f1882b66d) )
@@ -526,9 +672,18 @@ ROM_START( wingwar )
 	ROM_LOAD16_BYTE( "16739.41", 0x1400000, 0x80000, CRC(6c73e98f) SHA1(7b31e62922ab6d0df97c3ecc52b78e6d086c8635) )
 	ROM_LOAD16_BYTE( "16740.42", 0x1400001, 0x80000, CRC(44b31007) SHA1(4bb265fea25a7bbcbb8ab080fdcf09849b18f1de) )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )  /* 68K code - missing */
+	ROM_REGION( 0xc0000, REGION_CPU2, 0 )  /* 68K code - missing */
+	ROM_LOAD16_WORD_SWAP("16751.epr", 0x000000, 0x20000, CRC(23ba5ebc) )
+	ROM_LOAD16_WORD_SWAP("16752.epr", 0x020000, 0x20000, CRC(6541c48f) )
+	ROM_RELOAD(0x80000, 0x20000)
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples - missing */
+	ROM_LOAD("16753.mpr", 0x000000, 0x200000, CRC(324a8333) )
+	ROM_LOAD("16754.mpr", 0x200000, 0x200000, CRC(144f3cf5) )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 ) /* Samples - missing */
+	ROM_LOAD("16755.mpr", 0x000000, 0x200000, CRC(4baaf878) )
+	ROM_LOAD("16756.mpr", 0x200000, 0x200000, CRC(d9c40672) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER1, 0 ) /* TGP model roms */
 	ROM_LOAD32_WORD( "16743.26", 0x000000, 0x200000, CRC(a710d33c) SHA1(1d0184545b34789ed511caaa25d57db3cd9a8e2f) )
@@ -545,7 +700,35 @@ static MACHINE_DRIVER_START( model1 )
 	MDRV_CPU_ADD(V60, 16000000/12) // Reality is 16Mhz
 	MDRV_CPU_PROGRAM_MAP(model1_mem, 0)
 	MDRV_CPU_IO_MAP(model1_io, 0)
-	MDRV_CPU_VBLANK_INT(model1_interrupt, 1)
+	MDRV_CPU_VBLANK_INT(model1_interrupt, 2)
+
+	MDRV_CPU_ADD(M68000, 12000000)	// Confirmed 10 MHz on real PCB, run slightly faster here to prevent sync trouble
+	MDRV_CPU_PROGRAM_MAP(model1_snd, 0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(model1)
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(62*8, 48*8)
+	MDRV_VISIBLE_AREA(0*8, 62*8-1, 0*8, 48*8-1)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(model1)
+	MDRV_VIDEO_UPDATE(model1)
+	MDRV_VIDEO_EOF(model1)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3438, m1_ym3438_interface)
+	MDRV_SOUND_ADD(MULTIPCM, m1_multipcm_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( model1nosnd )
+	MDRV_CPU_ADD(V60, 16000000/12) // Reality is 16Mhz
+	MDRV_CPU_PROGRAM_MAP(model1_mem, 0)
+	MDRV_CPU_IO_MAP(model1_io, 0)
+	MDRV_CPU_VBLANK_INT(swa_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -562,7 +745,7 @@ static MACHINE_DRIVER_START( model1 )
 	MDRV_VIDEO_EOF(model1)
 MACHINE_DRIVER_END
 
-GAMEX( 1993, vf1,      0, model1, vf1,      0, ROT0, "Sega", "Virtua Fighter 1", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1992, vr,       0, model1, vr,       0, ROT0, "Sega", "Virtua Racing", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1993, swa,      0, model1, swa,      0, ROT0, "Sega", "Star Wars Arcade", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1994, wingwar,  0, model1, wingwar,  0, ROT0, "Sega", "Wing War", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1993, vf1,      0, model1, vf1,      0, ROT0, "Sega", "Virtua Fighter 1", GAME_NOT_WORKING )
+GAMEX( 1992, vr,       0, model1, vr,       0, ROT0, "Sega", "Virtua Racing", GAME_NOT_WORKING )
+GAMEX( 1993, swa,      0, model1nosnd, swa,      0, ROT0, "Sega", "Star Wars Arcade", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1994, wingwar,  0, model1, wingwar,  0, ROT0, "Sega", "Wing War", GAME_NOT_WORKING )

@@ -1,6 +1,5 @@
 static UINT32 I386OP(shift_rotate32)(UINT8 modrm, UINT32 value, UINT8 shift)
 {
-	int i;
 	UINT32 dst, src;
 	dst = value;
 	src = value;
@@ -19,28 +18,27 @@ static UINT32 I386OP(shift_rotate32)(UINT8 modrm, UINT32 value, UINT8 shift)
 				break;
 			case 1:			/* ROR rm32, 1 */
 				I.CF = (src & 0x1) ? 1 : 0;
-				dst = ((I.CF << 31) + src) >> 1;
+				dst = (I.CF << 31) | (src >> 1);
 				I.OF = ((src ^ dst) & 0x80000000) ? 1 : 0;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 2:			/* RCL rm32, 1 */
 				dst = (src << 1) + I.CF;
-				SetCF32(dst);
+				I.CF = (src & 0x80000000) ? 1 : 0;
 				I.OF = ((src ^ dst) & 0x80000000) ? 1 : 0;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 3:			/* RCR rm32, 1 */
-				dst = ((I.CF << 31) + src) >> 1;
+				dst = (I.CF << 31) | (src >> 1);
 				I.CF = src & 0x1;
 				I.OF = ((src ^ dst) & 0x80000000) ? 1 : 0;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 4:			/* SHL/SAL rm32, 1 */
-			case 7:
+			case 6:
 				dst = src << 1;
-				SetCF32(dst);
-				I.OF = ((src ^ dst) & 0x80000000) ? 1 : 0;
-				I.AF = 1;
+				I.CF = (src & 0x80000000) ? 1 : 0;
+				I.OF = (((I.CF << 31) ^ dst) & 0x80000000) ? 1 : 0;
 				SetSZPF32(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
@@ -48,15 +46,13 @@ static UINT32 I386OP(shift_rotate32)(UINT8 modrm, UINT32 value, UINT8 shift)
 				dst = src >> 1;
 				I.CF = src & 0x1;
 				I.OF = (src & 0x80000000) ? 1 : 0;
-				I.AF = 1;
 				SetSZPF32(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
-			case 6:			/* SAR rm32, 1 */
+			case 7:			/* SAR rm32, 1 */
 				dst = (INT32)(src) >> 1;
 				I.CF = src & 0x1;
 				I.OF = 0;
-				I.AF = 1;
 				SetSZPF32(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
@@ -67,55 +63,47 @@ static UINT32 I386OP(shift_rotate32)(UINT8 modrm, UINT32 value, UINT8 shift)
 		switch( (modrm >> 3) & 0x7 )
 		{
 			case 0:			/* ROL rm32, i8 */
-				for( i=0; i < shift; i++ ) {
-					I.CF = (dst & 0x80000000) ? 1 : 0;
-					dst = (dst << 1) + I.CF;
-				}
+				dst = ((src & ((UINT32)0xffffffff >> shift)) << shift) |
+					  ((src & ((UINT32)0xffffffff << (32-shift))) >> (32-shift));
+				I.CF = (src >> (32-shift)) & 0x1;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 1:			/* ROR rm32, i8 */
-				for( i=0; i < shift; i++ ) {
-					I.CF = dst & 0x1;
-					dst = (dst >> 1) + (I.CF << 31);
-				}
+				dst = ((src & ((UINT32)0xffffffff << shift)) >> shift) |
+					  ((src & ((UINT32)0xffffffff >> (32-shift))) << (32-shift));
+				I.CF = (src >> (shift-1)) & 0x1;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 2:			/* RCL rm32, i8 */
-				for( i=0; i < shift; i++ ) {
-					dst = (dst << 1) + I.CF;
-					SetCF32(dst);
-				}
+				dst = ((src & ((UINT32)0xffffffff >> shift)) << shift) |
+					  ((src & ((UINT32)0xffffffff << (33-shift))) >> (33-shift)) |
+					  (I.CF << (shift-1));
+				I.CF = (src >> (32-shift)) & 0x1;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 3:			/* RCR rm32, i8 */
-				for( i=0; i < shift; i++ ) {
-					dst = dst + ((UINT64)I.CF << 32);
-					I.CF = dst & 0x1;
-					dst >>= 1;
-				}
+				dst = ((src & ((UINT32)0xffffffff << shift)) >> shift) |
+					  ((src & ((UINT32)0xffffffff >> (32-shift))) << (33-shift)) |
+					  (I.CF << (32-shift));
+				I.CF = (src >> (shift-1)) & 0x1;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 4:			/* SHL/SAL rm32, i8 */
-			case 7:
-				dst <<= shift;
-				SetCF32(dst);
-				I.AF = 1;
+			case 6:
+				dst = src << shift;
+				I.CF = (src & (1 << (32-shift))) ? 1 : 0;
 				SetSZPF32(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 5:			/* SHR rm32, i8 */
-				dst >>= shift - 1;
-				I.CF = dst & 0x1;
-				dst >>= 1;
-				I.AF = 1;
+				dst = src >> shift;
+				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF32(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
-			case 6:			/* SAR rm32, i8 */
-				dst = (INT32)(dst) >> (shift - 1);
-				I.CF = dst & 0x1;
-				dst = (INT32)(dst) >> 1;
-				I.AF = 1;
+			case 7:			/* SAR rm32, i8 */
+				dst = (INT32)src >> shift;
+				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF32(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;

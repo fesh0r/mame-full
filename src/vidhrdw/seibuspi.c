@@ -21,13 +21,24 @@ WRITE32_HANDLER( spi_layer_bank_w )
 	COMBINE_DATA( &layer_bank );
 }
 
+static int sprite_xtable[2][8] =
+{
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	{ 7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 }
+};
+static int sprite_ytable[2][8] =
+{
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	{ 7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 }
+};
+
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri_mask)
 {
 	int xpos, ypos, tile_num, color;
 	int width, height;
 	int flip_x = 0, flip_y = 0;
 	int a;
-	int x,y;
+	int x,y, x1, y1;
 	const struct GfxElement *gfx = Machine->gfx[2];
 
 	for( a = 0x400 - 2; a >= 0; a -= 2 ) {
@@ -46,14 +57,27 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 		width = ((spriteram32[a + 0] >> 8) & 0x7) + 1;
 		height = ((spriteram32[a + 0] >> 12) & 0x7) + 1;
+		flip_x = (spriteram32[a + 0] >> 11) & 0x1;
+		flip_y = (spriteram32[a + 0] >> 15) & 0x1;
+		x1 = 0;
+		y1 = 0;
 
-		for( x=0; x < width*16; x += 16 ) {
-			for( y=0; y < height*16; y += 16 ) {			
+		if( flip_x ) {
+			x1 = 8 - width;
+			width = width + x1;
+		}
+		if( flip_y ) {
+			y1 = 8 - height;
+			height = height + y1;
+		}
+
+		for( x=x1; x < width; x++ ) {
+			for( y=y1; y < height; y++ ) {
 				drawgfx(
 					bitmap,
 					gfx,
 					tile_num,
-					color, flip_x, flip_y, xpos + x, ypos + y,
+					color, flip_x, flip_y, xpos + sprite_xtable[flip_x][x], ypos + sprite_ytable[flip_y][y],
 					cliprect,
 					TRANSPARENCY_PEN, 63
 					);
@@ -125,10 +149,9 @@ static void get_back_tile_info( int tile_index )
 {
 	int offs = tile_index / 2;
 	int tile = (back_ram[offs] >> ((tile_index & 0x1) ? 16 : 0)) & 0xffff;
-	int color = (tile >> 12) & 0xf;
+	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	color = 0;
 
 	SET_TILE_INFO(1, tile, color, 0)
 }
@@ -137,23 +160,21 @@ static void get_mid_tile_info( int tile_index )
 {
 	int offs = tile_index / 2;
 	int tile = (mid_ram[offs] >> ((tile_index & 0x1) ? 16 : 0)) & 0xffff;
-	int color = (tile >> 12) & 0xf;
+	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	color = 0;
 	tile |= 0x2000;
 
-	SET_TILE_INFO(1, tile, color, 0)
+	SET_TILE_INFO(1, tile, color + 16, 0)
 }
 
 static void get_fore_tile_info( int tile_index )
 {
 	int offs = tile_index / 2;
 	int tile = (fore_ram[offs] >> ((tile_index & 0x1) ? 16 : 0)) & 0xffff;
-	int color = (tile >> 12) & 0xf;
+	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	color = 0;
 	if( bg_2layer ) {
 		tile |= 0x2000;
 	} else {
@@ -161,7 +182,7 @@ static void get_fore_tile_info( int tile_index )
 	}
 	tile |= ((layer_bank >> 27) & 0x1) << 13;
 
-	SET_TILE_INFO(1, tile, color, 0)
+	SET_TILE_INFO(1, tile, color + 8, 0)
 }
 
 VIDEO_START( spi )
