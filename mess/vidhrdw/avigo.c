@@ -122,36 +122,23 @@ WRITE_HANDLER(avigo_vid_memory_w)
         }
 }
 
-int avigo_vh_start(void)
+VIDEO_START( avigo )
 {
     /* current selected column to read/write */
     avigo_screen_column = 0;
 
     /* allocate video memory */
-    avigo_video_memory = malloc(((AVIGO_SCREEN_WIDTH>>3)*AVIGO_SCREEN_HEIGHT));
+    avigo_video_memory = auto_malloc(((AVIGO_SCREEN_WIDTH>>3)*AVIGO_SCREEN_HEIGHT));
 
 /*	if (avigo_backdrop)
 		backdrop_refresh(avigo_backdrop);
 */
-	stylus_pointer = decodegfx(pointermask, &pointerlayout);
+	Machine->gfx[0] = stylus_pointer = decodegfx(pointermask, &pointerlayout);
 	stylus_pointer->colortable = stylus_color_table;
 	stylus_pointer->total_colors = 3;
 	stylus_color_table[1] = Machine->pens[0];
 	stylus_color_table[2] = Machine->pens[1]; 
 	return 0;
-}
-void    avigo_vh_stop(void)
-{
-    if (avigo_video_memory!=NULL)
-    {
-            free(avigo_video_memory);
-            avigo_video_memory = NULL;
-    }
-
-/*	if (avigo_backdrop)
-		artwork_free(&avigo_backdrop);
-*/
-	freegfx(stylus_pointer);
 }
 
 /* two colours */
@@ -169,13 +156,12 @@ static unsigned char avigo_palette[AVIGO_NUM_COLOURS * 3] =
 
 
 /* Initialise the palette */
-void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( avigo )
 {
 /*	char *backdrop_name;
     int used = 2; */
-    memcpy(sys_palette, avigo_palette, sizeof (avigo_palette));
-    memcpy(sys_colortable, avigo_colour_table, sizeof (avigo_colour_table));
-
+	palette_set_colors(0, avigo_palette, sizeof(avigo_palette) / 3);
+    memcpy(colortable, avigo_colour_table, sizeof (avigo_colour_table));
 
 	/* load backdrop */
 #if 0
@@ -218,7 +204,7 @@ unsigned int avigo_ad_y;
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void avigo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( avigo )
 {
     int y;
     int b;
@@ -237,7 +223,7 @@ void avigo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
         unsigned char *line_ptr = avigo_video_memory +  (y*(AVIGO_SCREEN_WIDTH>>3));
 		
         x = 0;
-        for (by=AVIGO_SCREEN_WIDTH>>3; by>=0; by--)
+        for (by=((AVIGO_SCREEN_WIDTH>>3)-1); by>=0; by--)
         {
 			int px;
             unsigned char byte;

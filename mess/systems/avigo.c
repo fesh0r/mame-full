@@ -43,10 +43,6 @@
 #include "includes/tc8521.h"
 #include "includes/uart8250.h"
 
-
-/* dummy timer used to read keys and pen stylus and generate an interrupt */
-static void *avigo_dummy_timer;
-
 static UINT8 avigo_key_line;
 /* 
 	bit 7:						?? high priority. When it occurs, clear this bit.
@@ -432,10 +428,9 @@ static uart8250_interface avigo_com_interface[1]=
 	},
 };
 
-
-void avigo_init_machine(void)
+static MACHINE_INIT( avigo )
 {
-		int i;
+	int i;
 	unsigned char *addr;
 
 	/* initialise flash memory */
@@ -503,7 +498,7 @@ void avigo_init_machine(void)
 
 	/* a timer used to check status of pen */
 	/* an interrupt is generated when the pen is pressed to the screen */
-	avigo_dummy_timer = timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
+	timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
 
     memory_set_bankhandler_r(1, 0, MRA_BANK1);
     memory_set_bankhandler_r(2, 0, MRA_BANK2);
@@ -531,7 +526,7 @@ void avigo_init_machine(void)
 	uart8250_reset(0);
 
 	/* allocate memory */
-	avigo_memory = (unsigned char *)malloc(128*1024);
+	avigo_memory = (unsigned char *)auto_malloc(128*1024);
 
 	if (avigo_memory!=NULL)
 	{
@@ -558,7 +553,7 @@ void avigo_init_machine(void)
 	avigo_refresh_memory();
 }
 
-void avigo_shutdown_machine(void)
+static MACHINE_STOP( avigo )
 {
 	/* store and free flash memory */
 	amd_flash_store(0, "avigof1.nv");
@@ -570,23 +565,7 @@ void avigo_shutdown_machine(void)
     amd_flash_store(2, "avigof3.nv");
     amd_flash_finish(2);
 
-    tc8521_stop();
-
-	/* free memory */
-	if (avigo_memory!=NULL)
-    {
-		free(avigo_memory);
-		avigo_memory = NULL;
-    }
-
-	/* free timer */
-	if (avigo_dummy_timer!=NULL)
-	{
-		timer_remove(avigo_dummy_timer);
-		avigo_dummy_timer = NULL;
-	}
-
-
+	avigo_memory = NULL;
 }
 
 
@@ -1013,59 +992,33 @@ static struct Speaker_interface avigo_speaker_interface=
  {50},
 };
 
-static struct MachineDriver machine_driver_avigo =
-{
+
+static MACHINE_DRIVER_START( avigo )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-            CPU_Z80 ,  /* type */
-            4000000, 
-            readmem_avigo,                   /* MemoryReadAddress */
-            writemem_avigo,                  /* MemoryWriteAddress */
-            readport_avigo,                  /* IOReadPort */
-            writeport_avigo,                 /* IOWritePort */
-			0,						   /*amstrad_frame_interrupt, *//* VBlank
-										* Interrupt */
-			0 /*1 */ ,				   /* vblanks per frame */
-                        0, 0,   /* every scanline */
-		},
-	},
-        50,                                                     /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-        avigo_init_machine,                      /* init machine */
-        avigo_shutdown_machine,
-	/* video hardware */
-        640, /* screen width */
-        480,  /* screen height */
-        {0, (640 - 1), 0, (480 - 1)},        /* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-        256,                                                        /* total colours */
-        256,                                                        /* color table len */
-        avigo_init_palette,                      /* init palette */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_avigo,writemem_avigo)
+	MDRV_CPU_PORTS(readport_avigo,writeport_avigo)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-        VIDEO_TYPE_RASTER,                                  /* video attributes */
-        0,                                                                 /* MachineLayer */
-        avigo_vh_start,
-        avigo_vh_stop,
-        avigo_vh_screenrefresh,
+	MDRV_MACHINE_INIT( avigo )
+	MDRV_MACHINE_STOP( avigo )
 
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-	{
-		{
-                SOUND_SPEAKER,
-                &avigo_speaker_interface
-        },
-	}
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(640, 480)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 480-1)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256)
+	MDRV_PALETTE_INIT( avigo )
 
+	MDRV_VIDEO_START( avigo )
+	MDRV_VIDEO_UPDATE( avigo )
 
+	/* sound hardware */
+	MDRV_SOUND_ADD(SPEAKER, avigo_speaker_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
