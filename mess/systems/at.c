@@ -639,6 +639,35 @@ static struct MachineDriver machine_driver_at386 =
 };
 #endif
 
+#if 0
+	// ibm at
+	// most likely 2 32 kbyte chips for 16 bit access
+    ROM_LOAD("atbios.bin", 0xf0000, 0x10000, 0x674426be) // BASIC C1.1, beeps
+	// split into 2 chips for 16 bit access
+    ROM_LOAD_EVEN("ibmat.0", 0xf0000, 0x8000, 0x4995be7a)
+    ROM_LOAD_ODD("ibmat.1", 0xf0000, 0x8000, 0xc32713e4)
+
+	/* I know about a 1984 version in 2 32kb roms */
+
+	/* at, ami bios and diagnostics */
+    ROM_LOAD_EVEN("rom01.bin", 0xf0000, 0x8000, 0x679296a7)
+    ROM_LOAD_ODD("rom02.bin", 0xf0000, 0x8000, 0x65ae1f97)
+
+	/* */
+    ROM_LOAD("neat286.bin", 0xf0000, 0x10000, 0x07985d9b)
+	// split into 2 chips for 16 bit access
+    ROM_LOAD_EVEN("neat.0", 0xf0000, 0x8000, 0x4c36e61d)
+    ROM_LOAD_ODD("neat.1", 0xf0000, 0x8000, 0x4e90f294)
+
+	/* most likely 1 chip!, for lower costs */
+    ROM_LOAD("at386.bin", 0xf0000, 0x10000, 0x3df9732a)
+
+	/* at486 */
+    ROM_LOAD("at486.bin", 0xf0000, 0x10000, 0x31214616)
+
+    ROM_LOAD("", 0x??000, 0x2000, 0x)
+#endif
+
 ROM_START( ibmat )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
