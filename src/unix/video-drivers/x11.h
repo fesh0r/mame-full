@@ -29,14 +29,15 @@ EXTERN int		x11_grab_keyboard;
 EXTERN int		run_in_root_window;
 EXTERN int		show_cursor;
 EXTERN int		use_private_cmap;
+#ifdef USE_XIL
 EXTERN int		use_xil;
 EXTERN int		use_mt_xil;
-#ifdef USE_HWSCALE
-EXTERN int		use_hwscale;
+#endif
+#ifdef USE_XV
 EXTERN int		use_xv;
-EXTERN long		hwscale_redmask;
-EXTERN long		hwscale_greenmask;
-EXTERN long		hwscale_bluemask;
+EXTERN long		xv_redmask;
+EXTERN long		xv_greenmask;
+EXTERN long		xv_bluemask;
 #endif
 extern struct rc_option xf86_dga_opts[];
 extern struct rc_option x11_window_opts[];

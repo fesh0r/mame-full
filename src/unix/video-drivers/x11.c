@@ -16,12 +16,6 @@
 #include "input.h"
 #include "devices.h"
 
-#ifdef USE_HWSCALE
-long hwscale_redmask;
-long hwscale_greenmask;
-long hwscale_bluemask;
-#endif
-
 extern int force_dirty_palette;
 
 int x11_grab_keyboard;
@@ -31,7 +25,7 @@ struct rc_option display_opts[] = {
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-1, NULL, "Select x11 video mode: (if compiled in)\n0 Normal windowed (hotkey left-alt + insert)\n1 DGA fullscreen (hotkey left-alt + home)\n2 Xv windowed\n3 Xv fullscreen" },
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
-#if defined DGA || defined USE_HWSCALE
+#if defined DGA || defined USE_XV
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 #endif
 	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
@@ -176,12 +170,12 @@ int x11_init_palette_info(void)
 					depth);
 			return OSD_NOT_OK;
 		}
-#ifdef USE_HWSCALE
-		if(use_hwscale)
+#ifdef USE_XV
+		if(use_xv)
 		{
-			display_palette_info.red_mask   = hwscale_redmask;
-			display_palette_info.green_mask = hwscale_greenmask;
-			display_palette_info.blue_mask  = hwscale_bluemask;
+			display_palette_info.red_mask   = xv_redmask;
+			display_palette_info.green_mask = xv_greenmask;
+			display_palette_info.blue_mask  = xv_bluemask;
 		}
 		else
 #endif
