@@ -1019,7 +1019,7 @@ static int keyboard_r(void)
 {
 	int porta = 0x7f;
 	int joyport;
-	double joyval;
+	int joyval;
 
 	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
 	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
@@ -1039,8 +1039,9 @@ static int keyboard_r(void)
 	else {
 		/* Normal joystick */
 		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
-		joyval = read_joystick(joyport);
-		if (d_dac <= ((int) (joyval * 255.0)))
+		joyval = (read_joystick(joyport) * 64.0) - 1.0;
+
+		if ((d_dac >> 2 ) <= joyval)
 			porta |= 0x80;
 	}
 
