@@ -155,8 +155,17 @@ the OpenGL driver, do the following in the Makefile:
 <P>
 <UL>
 <LI>Select &quot;xgl&quot; as your display method.</LI>
-<LI>For runtime printed debug info, add &quot;-DGLDEBUG&quot; to
-the &quot;CFLAGS&quot; variable.</LI>
+<LI>For runtime printed debug info, add "
+-DGLDEBUG"
+to the "
+GLCFLAGS&quot;
+variable.</LI>
+<LI>GLU version 1.2 is recommended (e.g., from SGI). If you use Mesa's
+GLU, you may have to add "
+-DGLU_VERSION_1_2"
+to the "
+GLCFLAGS"
+.</LI>
 </UL>
 <P>The GLmame executable is called &quot;xmame.xgl&quot;.
 <H3>Running</H3>

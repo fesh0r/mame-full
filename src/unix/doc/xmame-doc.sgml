@@ -14,7 +14,7 @@ Juan Antonio Martinez <tt><url url="mailto:jantonio@dit.upm.es" name="jantonio@d
 </tt>
 </author>
 <date>
-v2.1.4, 29 March 2001
+v2.1.5, 10 April 2001
 </date>
 <abstract>
 xmame/xmess documentation with an installation guide, the FAQ
@@ -1939,8 +1939,18 @@ Follow the general instructions for installing xmame. To specify
  <item>
 Select &quot;xgl&quot; as your display method.
  <item>
-For runtime printed debug info, add &quot;-DGLDEBUG&quot; to
- the &quot;CFLAGS&quot; variable.
+For runtime printed debug info, add "
+-DGLDEBUG"
+ to the "
+GLCFLAGS&quot;
+ variable.
+ <item>
+GLU version 1.2 is recommended (e.g., from SGI). If you use Mesa's
+ GLU, you may have to add "
+-DGLU_VERSION_1_2"
+ to the "
+GLCFLAGS"
+.
 </itemize>
 </p><p>
 The GLmame executable is called &quot;xmame.xgl&quot;.

@@ -7,7 +7,7 @@ and Hans de Goede [mailto:hans@highrise.nl||hans@highrise.nl]
 and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de]
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
 
-v2.1.4, 29 March 2001
+v2.1.5, 10 April 2001
 
 Abstract
 
@@ -1631,8 +1631,12 @@ specify the OpenGL driver, do the following in the Makefile:
 
 * Select "xgl" as your display method.
 
-* For runtime printed debug info, add "-DGLDEBUG" to the
-  "CFLAGS" variable.
+* For runtime printed debug info, add "-DGLDEBUG"
+  to the "GLCFLAGS" variable.
+
+* GLU version 1.2 is recommended (e.g., from SGI). If you
+  use Mesa's GLU, you may have to add "-DGLU_VERSION_1_2"
+  to the "GLCFLAGS".
 
 The GLmame executable is called "xmame.xgl".
 

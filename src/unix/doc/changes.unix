@@ -2,6 +2,35 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.37b14.2
+	- Updated the romulan.pl script in contrib/tools.  (Nathan Hand)
+	- The sound device is now released when the emulation is paused.
+	  (Shyouzou Sugitani)
+	- Updated the comment in makefile.unix about nasm to indicate that v0.98
+	  or higher must be used to build the asm 68k cores.
+	- Added -hotrod for HotRod and HotRod SE support.  Set it to 1 for
+	  HotRod, 2 for HotRod SE.
+
+Release 0.37b14.1 (xmame only)
+	- Everything from MAME 0.37b14 except for 'steadykey' support.
+	- Major updates to the files in contrib/porting.  Added prep-new-mame
+	  and prep-new-mess scripts for porting from the MS-DOS sources.
+	- Added new CFLAGS to makefile.unix for more optimal builds under IRIX.
+	  (John Gilbert) 
+	- Fixed the files in src/unix for which Per Wigren reported problems
+	  when using the Tru64 compiler.
+	- Incorporated fixes to the core sources for the Tru64 compilation
+	  problems. (Nicola Salmoria)
+	- Audio now works on the released version of Mac OS X.  (Pete French)
+	- Fixed a bug in logerror() that could cause a crash.  (Pete French)
+	- Added the German HTML docs.  (Robert Hamberger)
+	- Added a note to the docs and makefile about adding -DGLU_VERSION_1_2
+	  to the GLCFLAGS when using Mesa's GLU.  (Sven Goethel)
+	- Updates to the ALSA dsp driver: cosmetic changes, suppression of bogus
+	  warnings about underruns.  (Shyouzou Sugitani)
+	- Added new sound driver plugins for IRIX.  (Brandon Corey)
+	- Updated the changelog for the ALSA dsp driver.  (Shyouzou Sugitani)
+
 Release 0.37b13.2
 	- MESS 0.37b13 is now included.
 	- Added an updated romulan.pl to contrib/tools.  (Nathan Hand)
