@@ -61,8 +61,6 @@ struct rc_option display_opts[] = {
      NULL }
 };
 
-struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
-
 struct mode_list {
     int width;
     int height;

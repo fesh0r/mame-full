@@ -429,31 +429,32 @@ int gl_open_display (void)
   gl_internal_format=GL_RGB;
 
   /* fill the sysdep_display_properties struct & determine bitmap format */
-  memset (&sysdep_display_properties, 0, sizeof (sysdep_display_properties));
+  sysdep_display_properties.palette_info.fourcc_format = 0;
   switch(sysdep_display_params.depth)
   {
-	case 15:
-	case 16:
-		    /* ARGB1555 */
-		    sysdep_display_properties.palette_info.red_mask   = 0x00007C00;
-		    sysdep_display_properties.palette_info.green_mask = 0x000003E0;
-		    sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
-		    gl_bitmap_format = GL_BGRA;
-		    /*                                   A R G B */
-		    gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-		    break;
-	case 32:
-		  /* ARGB8888 */
-		  sysdep_display_properties.palette_info.red_mask    = 0x00FF0000;
-		  sysdep_display_properties.palette_info.green_mask  = 0x0000FF00;
-		  sysdep_display_properties.palette_info.blue_mask   = 0x000000FF;
-		  gl_bitmap_format = GL_BGRA;
-		  /*                                 A R G B */
-		  gl_bitmap_type   = GL_UNSIGNED_INT_8_8_8_8_REV;
-		  break;
+    case 15:
+    case 16:
+      /* ARGB1555 */
+      sysdep_display_properties.palette_info.red_mask   = 0x00007C00;
+      sysdep_display_properties.palette_info.green_mask = 0x000003E0;
+      sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
+      sysdep_display_properties.palette_info.depth      = 15;
+      sysdep_display_properties.palette_info.bpp        = 16;
+      gl_bitmap_format = GL_BGRA;       /* A R G B */
+      gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+      break;
+    case 32:
+      /* ARGB8888 */
+      sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
+      sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
+      sysdep_display_properties.palette_info.blue_mask  = 0x000000FF;
+      sysdep_display_properties.palette_info.depth      = 24;
+      sysdep_display_properties.palette_info.bpp        = 32;
+      gl_bitmap_format = GL_BGRA;     /* A R G B */
+      gl_bitmap_type   = GL_UNSIGNED_INT_8_8_8_8_REV;
+      break;
   }
   sysdep_display_properties.vector_renderer = glvec_renderer;
-  sysdep_display_properties.hwscale = 1;
 
   /* determine the texture size to use */
   if(force_text_width_height>0)

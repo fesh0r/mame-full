@@ -40,10 +40,10 @@ struct TexSquare
 
 int vscrntlx;
 int vscrntly;
-unsigned int vscrnwidth;
-unsigned int vscrnheight;
 int vecvscrntlx;
 int vecvscrntly;
+unsigned int vscrnwidth;
+unsigned int vscrnheight;
 unsigned int vecvscrnwidth;
 unsigned int vecvscrnheight;
 unsigned int fxwidth;
@@ -115,7 +115,7 @@ int InitGlide(void)
   int fd = open("/dev/3dfx", O_RDWR);
   if ((fd < 0) && geteuid())
   {
-    fprintf(stderr, "Glide error: couldn't open /dev/3dfx and not running as root, disabling use of Glide");
+    fprintf(stderr, "Glide error: couldn't open /dev/3dfx and not running as root\n");
     return 1;
   }
   if (fd >= 0)
@@ -457,22 +457,25 @@ int InitVScreen(void)
   vecvscrntly    = vscrntly;
   
   /* fill the sysdep_display_properties struct */
-  memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
+  sysdep_display_properties.palette_info.fourcc_format = 0;
   switch(sysdep_display_params.depth) {
     case 15:
     case 16:
       sysdep_display_properties.palette_info.red_mask   = 0x7C00;
       sysdep_display_properties.palette_info.green_mask = 0x03E0;
       sysdep_display_properties.palette_info.blue_mask  = 0x001F;
+      sysdep_display_properties.palette_info.depth      = 15;
+      sysdep_display_properties.palette_info.bpp        = 16;
       break;
     case 32:
       sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
       sysdep_display_properties.palette_info.green_mask = 0x00FF00;
       sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
+      sysdep_display_properties.palette_info.depth      = 24;
+      sysdep_display_properties.palette_info.bpp        = 32;
       break;
   }
   sysdep_display_properties.vector_renderer = fxvec_renderer;
-  sysdep_display_properties.hwscale = 1;
   
   /* force an update of the bitmap for the first frame */
   bitmap_dirty = 1;

@@ -39,8 +39,8 @@ static void PointConvert(int x,int y,float *sx,float *sy)
 {
   float dx,dy,tmp;
 
-  dx=(float)((x+0x8000)>>16)/vecsrcwidth;
-  dy=(float)((y+0x8000)>>16)/vecsrcheight;
+  dx=(float)x/vecsrcwidth;
+  dy=(float)y/vecsrcheight;
   
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
@@ -55,8 +55,8 @@ static void PointConvert(int x,int y,float *sx,float *sy)
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY)
     dy = 1.0 - dy;
     
-  *sx=(int)vecvscrntlx + dx*(int)vecvscrnwidth;
-  *sy=(int)fxheight - ((int)vecvscrntly + dy*(int)vecvscrnheight);
+  *sx=vecvscrntlx + dx*vecvscrnwidth;
+  *sy=fxheight - (vecvscrntly + dy*vecvscrnheight);
 }
 
 /*
@@ -82,10 +82,10 @@ int fxvec_renderer(point *pt, int num_points)
   {
     GrVertex v1,v2;
     
-    vecsrcwidth  = (sysdep_display_params.vec_src_bounds->max_x + 1) -
-      sysdep_display_params.vec_src_bounds->min_x;
-    vecsrcheight = (sysdep_display_params.vec_src_bounds->max_y + 1) -
-      sysdep_display_params.vec_src_bounds->min_y;
+    vecsrcwidth  = ((sysdep_display_params.vec_src_bounds->max_x + 1) -
+      sysdep_display_params.vec_src_bounds->min_x) * 65536;
+    vecsrcheight = ((sysdep_display_params.vec_src_bounds->max_y + 1) -
+      sysdep_display_params.vec_src_bounds->min_y) * 65536;
 
     grColorCombine(GR_COMBINE_FUNCTION_LOCAL,
                                    GR_COMBINE_FACTOR_NONE,
@@ -125,7 +125,7 @@ int fxvec_renderer(point *pt, int num_points)
           ymin = ymax;
           ymax = tmp;
         }
-        grClipWindow(xmin, ymin, xmax, ymax);
+        grClipWindow(xmin+0.5, ymin+0.5, xmax+0.5, ymax+0.5);
       }
       else
       {

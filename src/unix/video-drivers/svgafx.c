@@ -25,11 +25,16 @@ struct rc_option sysdep_display_opts[] = {
 
 int sysdep_display_init(void)
 {
+   memset(sysdep_display_properties.mode, 0,
+      SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
+   sysdep_display_properties.mode[0] = SYSDEP_DISPLAY_FULLSCREEN|
+     SYSDEP_DISPLAY_HWSCALE;
+   
    fprintf(stderr,
       "info: using FXmame v0.5 driver for xmame, written by Mike Oliphant\n");
    
    /* do this before calling vga_init, since this might need root rights */
-   if (InitGlide()!=0)
+   if (InitGlide())
       return 1;
    
    if (vga_init())
@@ -102,10 +107,13 @@ void sysdep_display_close(void)
    CloseVScreen();
 }
 
+
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags)
+  struct sysdep_palette_struct *palette, unsigned int flags,
+  const char **status_msg)
 {
-   xfx_update_display(bitmap, vis_area, dirty_area, palette, flags);
-   return 0;
+  xfx_update_display(bitmap, vis_area, dirty_area, palette, flags,
+    status_msg);
+  return 0;
 }

@@ -53,8 +53,8 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
   { 1, 8, 1, 8, 0 }, /* no effect */
   { 2, 2, 2, 2, 1 }, /* scale2x */
   { 2, 2, 2, 2, 1 }, /* scan2 */
-  { 3, 3, 2, 2, 1 }, /* rgbstripe */
-  { 2, 2, 3, 3, 1 }, /* rgbscan */
+  { 3, 3, 2, 2, 0 }, /* rgbstripe */
+  { 2, 2, 3, 3, 0 }, /* rgbscan */
   { 3, 3, 3, 3, 1 }, /* scan3 */
   { 2, 2, 2, 2, 1 }, /* lq2x */
   { 2, 2, 2, 2, 1 }, /* hq2x */
@@ -156,6 +156,10 @@ void sysdep_display_check_effect_params(
 {
   /* warn only once about disabling yarbsize */
   static int firsttime = 1;
+  
+  if (!(sysdep_display_properties.mode[params->video_mode] &
+        SYSDEP_DISPLAY_EFFECTS))
+    params->effect = 0;
   
   if (params->widthscale <
       sysdep_display_effect_properties[params->effect].min_widthscale)
@@ -406,13 +410,13 @@ static effect_6tap_render_func_p effect_6tap_render_funcs[] = {
    NULL
 };
 
-/* called from <driver>_create_display by each video driver;
+/* called from sysdep_display_open;
  * initializes function pointers to correct depths
  * and allocates buffer for doublebuffering.
  *
- * The caller should call effect_close() on failure and when
+ * The caller should call sysdep_display_effect_close() on failure and when
  * done, to free (partly) allocated buffers */
-int effect_open(void)
+int sysdep_display_effect_open(void)
 {
   int i = -1;
 
@@ -582,7 +586,7 @@ int effect_open(void)
   return 0;
 }
 
-void effect_close(void)
+void sysdep_display_effect_close(void)
 {
   if (effect_dbbuf)
   {

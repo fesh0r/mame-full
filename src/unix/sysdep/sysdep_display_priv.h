@@ -26,11 +26,16 @@
 #include "sysdep/sysdep_display.h"
 #include "begin_code.h"
 
+/* from sysdep_display.c */
 extern struct sysdep_display_open_params sysdep_display_params;
 
-void sysdep_display_set_params(const struct sysdep_display_open_params *params);
 void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height);
 void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align);
+
+/* from the sysdep display driver */
+int  sysdep_display_driver_open(void);
+void sysdep_display_driver_close(void);
+int  sysdep_display_driver_resize(void);
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_PRIV_H */

@@ -4,11 +4,13 @@
  *      by Shyouzou Sugitani <shy@debian.or.jp>
  *      Stea Greene <stea@cs.binghamton.edu>
  */
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/xf86dga.h>
@@ -47,8 +49,6 @@ struct rc_option xf86_dga2_opts[] = {
   { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
-static int xf86_dga_set_mode(void);
-
 int xf86_dga2_init(void)
 {
 	int i,j ;
@@ -61,13 +61,21 @@ int xf86_dga2_init(void)
 		fprintf(stderr,"This driver requires DGA 2.0 or newer\n");
 	else if(!XDGAQueryExtension(display, &i, &j))
 		fprintf(stderr,"XDGAQueryExtension failed\n");
-	else if(!XDGAOpenFramebuffer(display,xf86ctx.screen))
-		fprintf(stderr,"XDGAOpenFramebuffer failed\n");
 	else
-		return 0; 
+	{
+          /* Dumping core while DirectVideo is active causes an X-server
+             freeze with kernel 2.6, so don't dump core! */
+          struct rlimit limit = { 0, 0 };
+          if(setrlimit(RLIMIT_CORE, &limit))
+                  perror("rlimit");
+          else if(!XDGAOpenFramebuffer(display,xf86ctx.screen))
+                  fprintf(stderr,"XDGAOpenFramebuffer failed\n");
+          else
+                  return SYSDEP_DISPLAY_FULLSCREEN|SYSDEP_DISPLAY_EFFECTS;
+        }
 		
 	fprintf(stderr,"Use of DGA-modes is disabled\n");
-	return 1;
+	return 0;
 }
 
 static int xf86_dga_vidmode_find_best_vidmode(void)
@@ -138,9 +146,8 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
                 
 		score = mode_match(xf86ctx.modes[i].viewportWidth,
 			xf86ctx.modes[i].viewportHeight,
-			(xf86ctx.modes[i].depth==24)?
-			xf86ctx.modes[i].bitsPerPixel:
-			xf86ctx.modes[i].depth, 1);
+			xf86ctx.modes[i].depth,
+			xf86ctx.modes[i].bitsPerPixel, 1);
 		if(score > best_score)
 		{
 			best_score = score;
@@ -183,7 +190,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	        sysdep_display_params.yarbsize:
 	        sysdep_display_params.height*sysdep_display_params.heightscale;
 	
-	xf86ctx.update_display_func = sysdep_display_get_blitfunc_doublebuffer(modeinfo.bitsPerPixel);
+	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
 	if (xf86ctx.update_display_func == NULL)
 	{
 		fprintf(stderr, "\nError: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, modeinfo.bitsPerPixel);
@@ -260,10 +267,7 @@ int xf86_dga2_open_display(void)
 	    return 1;
 	}
 
-	if(effect_open())
-	    return 1;
-	    
-	if(xf86_dga_set_mode())
+	if(xf86_dga2_resize_display())
 	    return 1;
 	    
 	/* setup the colormap */
@@ -274,7 +278,7 @@ int xf86_dga2_open_display(void)
 	return 0;
 }
 
-static int xf86_dga_set_mode(void)
+int xf86_dga2_resize_display(void)
 {
 	int bestmode = xf86_dga_vidmode_find_best_vidmode();
 
@@ -320,10 +324,13 @@ static int xf86_dga_set_mode(void)
                   ;
 
           /* fill the sysdep_display_properties struct */
-          memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
+	  sysdep_display_properties.palette_info.fourcc_format = 0;
           sysdep_display_properties.palette_info.red_mask   = xf86ctx.device->mode.redMask;
           sysdep_display_properties.palette_info.green_mask = xf86ctx.device->mode.greenMask;
           sysdep_display_properties.palette_info.blue_mask  = xf86ctx.device->mode.blueMask;
+          sysdep_display_properties.palette_info.depth = xf86ctx.device->mode.depth;
+          sysdep_display_properties.palette_info.bpp   = xf86ctx.device->mode.bitsPerPixel;
+	  sysdep_display_properties.vector_renderer    = NULL;
 	}
 
 	/* clear the screen */
@@ -332,22 +339,6 @@ static int xf86_dga_set_mode(void)
 	       * xf86ctx.device->mode.imageHeight);
 
 	return 0;
-}
-
-int  xf86_dga2_resize_display(void)
-{
-        struct sysdep_display_properties_struct old_properties;
-	if (xf86_dga_set_mode())
-	{
-		fprintf(stderr, "FATAL Error changing videomode, aborting\n");
-		sysdep_display_close();
-		exit(1);
-	}
-	if(memcmp(&sysdep_display_properties, &old_properties,
-	    sizeof(struct sysdep_display_properties_struct)))
-	  return 1;
-        else
-          return 0;
 }
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
@@ -398,7 +389,6 @@ void xf86_dga2_close_display(void)
 		XFreeColormap(display,xf86ctx.cmap);
 		xf86ctx.cmap = 0;
 	}
-    	effect_close();
 	xinput_close();
 	if(xf86ctx.current_mode != -1)
 	{

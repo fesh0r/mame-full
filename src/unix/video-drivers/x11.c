@@ -25,14 +25,12 @@
 
 static XSizeHints x11_init_hints;
 
-static int x11_verify_mode(struct rc_option *option, const char *arg, int priority);
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
    	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, x11_verify_mode, "Select X11 video mode (if compiled in):\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
 	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "root_window_id", "rid", rc_int, &root_window_id, "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
@@ -79,7 +77,7 @@ typedef struct {
 } MotifWmHints;
 
 
-static struct x_func_struct x_func[X11_MODE_COUNT] = {
+static struct x_func_struct x_func[] = {
 { x11_init,
   x11_window_open_display,
   x11_window_close_display,
@@ -146,23 +144,6 @@ static const char *x11_mode_names[] = {
   "XIL"
 };
 
-static int mode_available[X11_MODE_COUNT] = { 1, 0, 0, 0, 0 ,0 };
-static struct sysdep_display_open_params orig_params;
-
-static int x11_verify_mode(struct rc_option *option, const char *arg,
-		int priority)
-{
-  if(!mode_available[x11_video_mode])
-  {
-    fprintf(stderr, "Error: x11-mode %d is not available\n", x11_video_mode);
-    return 1;
-  }
-
-  option->priority = priority;
-
-  return 0;
-}
-
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority)
 {
 	int i,x,y,ok = 0;
@@ -215,6 +196,13 @@ int sysdep_display_init (void)
 
 	window = 0;
 
+	memset(sysdep_display_properties.mode, 0,
+	  SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
+        /* to satisfy checking for a valid video_mode for
+           handling -help, etc without a display. */
+        sysdep_display_properties.mode[X11_WINDOW] =
+          SYSDEP_DISPLAY_WINDOWED|SYSDEP_DISPLAY_EFFECTS;
+
 	if(!(display = XOpenDisplay (NULL)))
 	{
 		/* don't make this a fatal error so that cmdline options
@@ -224,13 +212,16 @@ int sysdep_display_init (void)
 	}
 	screen=DefaultScreenOfDisplay(display);
 
-	for (i=0;i<X11_MODE_COUNT;i++)
+	for (i=0;i<SYSDEP_DISPLAY_VIDEO_MODES;i++)
 	{
 		if(x_func[i].init)
-			mode_available[i] = !x_func[i].init();
+			sysdep_display_properties.mode[i] = x_func[i].init();
 		else
-			mode_available[i] = 0;
+			sysdep_display_properties.mode[i] = 0;
 	}
+
+	if (x_func[X11_DGA].init)
+          sysdep_display_properties.mode[X11_WINDOW] |= x_func[X11_DGA].init();
 
 	return 0;
 }
@@ -241,7 +232,7 @@ void sysdep_display_exit(void)
         
 	if(display)
 	{
-                for (i=0;i<X11_MODE_COUNT;i++)
+                for (i=0;i<=X11_DGA;i++)
                         if(x_func[i].exit)
                                 x_func[i].exit();
 
@@ -249,19 +240,10 @@ void sysdep_display_exit(void)
         }
 }
 
-static void x11_check_mode(int *mode)
-{
-	if ((*mode == X11_WINDOW) && mode_available[X11_DGA] &&
-	    sysdep_display_params.fullscreen)
-	  *mode = X11_DGA;
-	if ((*mode == X11_DGA) && !sysdep_display_params.fullscreen)
-	  *mode = X11_WINDOW;
-}
-
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_display_open (const struct sysdep_display_open_params *params)
+int sysdep_display_driver_open(void)
 {
         if (!display)
         {
@@ -269,102 +251,33 @@ int sysdep_display_open (const struct sysdep_display_open_params *params)
 		return 1;
         }
 
-	orig_params = *params;
-	sysdep_display_set_params(params);
+	if ((sysdep_display_params.video_mode == X11_WINDOW) && 
+	    (sysdep_display_properties.mode[X11_WINDOW] &
+	     SYSDEP_DISPLAY_FULLSCREEN) &&
+	    sysdep_display_params.fullscreen)
+	  sysdep_display_params.video_mode = X11_DGA;
 
-	x11_check_mode(&x11_video_mode);
-	return (*x_func[x11_video_mode].open_display)();
+	return (*x_func[sysdep_display_params.video_mode].open_display)();
 }
 
-void sysdep_display_close(void)
+void sysdep_display_driver_close(void)
 {
   if (display)
-    (*x_func[x11_video_mode].close_display)();
+    (*x_func[sysdep_display_params.video_mode].close_display)();
 }
 
-int sysdep_display_resize(int width, int height)
+int sysdep_display_driver_resize(void)
 {
-  /* this should never happen! */
-  if ((width  > orig_params.max_width) ||
-      (height > orig_params.max_height))
-  {
-    fprintf(stderr, "Fatal error in sysdep_display_resize:\n"
-      "requested size (%dx%d) bigger then max size (%dx%d)\n",
-      width, height, orig_params.max_width, orig_params.max_height);
-    sysdep_display_close();
-    exit(1);
-  }
-
-  orig_params.width  = width;
-  orig_params.height = height;
-
-  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-  {
-    sysdep_display_params.width  = height;
-    sysdep_display_params.height = width;
-  }
-  else
-  {
-    sysdep_display_params.width  = width;
-    sysdep_display_params.height = height;
-  }
-  
-  return x_func[x11_video_mode].resize_display();
+  return x_func[sysdep_display_params.video_mode].resize_display();
 }
 
-int sysdep_display_update(struct mame_bitmap *bitmap,
+void sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags,
   const char **status_msg)
 {
-	int new_video_mode = x11_video_mode;
-	
 	*status_msg = NULL;
 
-	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE0)
-		new_video_mode = X11_WINDOW;
-
-	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE1)
-		new_video_mode = X11_XV;
-
-	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE2)
-		new_video_mode = X11_OPENGL;
-
-	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE3)
-		new_video_mode = X11_GLIDE;
-
-	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE4)
-		new_video_mode = X11_XIL;
-
-	x11_check_mode(&new_video_mode);
-	if (new_video_mode != x11_video_mode && mode_available[new_video_mode])
-	{
-		int old_video_mode = x11_video_mode;
-
-		(*x_func[x11_video_mode].close_display)();
-		x11_video_mode = new_video_mode;
-		sysdep_display_set_params(&orig_params);
-		if ((*x_func[x11_video_mode].open_display)())
-		{
-			fprintf(stderr,
-					"X11-Warning: Couldn't create display for new x11-mode\n"
-					"   Trying again with the old x11-mode\n");
-			(*x_func[x11_video_mode].close_display)();
-			x11_video_mode = old_video_mode;
-			sysdep_display_set_params(&orig_params);
-			if ((*x_func[x11_video_mode].open_display)())
-			{
-				(*x_func[x11_video_mode].close_display)();
-				fprintf (stderr, "X11-Error: couldn't create new display while switching display modes\n");
-				exit (1); /* ugly, anyone know a better way ? */
-			}
-		}
-		else
-		        *status_msg = x11_mode_names[x11_video_mode];
-		
-		return 1;
-	}
-	
 	/* do we need todo a full update? */
 	if(x11_exposed)
 	{
@@ -372,24 +285,26 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 	 	x11_exposed = 0;
 	}
    
-	(*x_func[x11_video_mode].update_display) (bitmap, vis_area, dirty_area, palette, flags, status_msg);
+	(*x_func[sysdep_display_params.video_mode].update_display)
+	  (bitmap, vis_area, dirty_area, palette, flags, status_msg);
 	xinput_check_hotkeys(flags);
-	return 0;
 }
 
-int x11_init_palette_info(Visual *xvisual)
+int x11_init_palette_info(void)
 {
-	if (xvisual->class != TrueColor)
+	if (screen->root_visual->class != TrueColor)
 	{
 		fprintf(stderr, "X11-Error: only TrueColor visuals are supported\n");
 		return 1;
 	}
 
 	/* fill the sysdep_display_properties struct */
-	memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
-	sysdep_display_properties.palette_info.red_mask   = xvisual->red_mask;
-	sysdep_display_properties.palette_info.green_mask = xvisual->green_mask;
-	sysdep_display_properties.palette_info.blue_mask  = xvisual->blue_mask;
+	sysdep_display_properties.palette_info.fourcc_format = 0;
+	sysdep_display_properties.palette_info.red_mask      = screen->root_visual->red_mask;
+	sysdep_display_properties.palette_info.green_mask    = screen->root_visual->green_mask;
+	sysdep_display_properties.palette_info.blue_mask     = screen->root_visual->blue_mask;
+	sysdep_display_properties.palette_info.depth         = screen->root_depth;
+	sysdep_display_properties.vector_renderer            = NULL;
 
 	return 0;
 }

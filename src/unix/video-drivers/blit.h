@@ -26,12 +26,9 @@
                  format, see x11_window.c for an example.
                  If indirect is not set the contents of SRC_PIXEL after
                  applying CONVERT_PIXEL should be 32 bits RGB 888.
-   DOUBLEBUFFER  First copy each line to a buffer then do a memcpy to the
-                 real destination. This speeds up scaling when writing directly
-                 to a framebuffer since it tremendously speeds up the reads
-                 done to copy one line to the next. This define only has effect
-                 in scenarios where there are reads from the destination,
-                 in other scenarios it is ignored.
+   DFB           Direct Frame buffer access, avoid reading from DEST. This
+                 define only has effect in scenarios where there could be reads
+                 from the destination, in other scenarios it is ignored.
 
 These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
 */
@@ -49,7 +46,7 @@ These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
 /* arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
 #define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*yarbsize)/(YMAX) - ((YV)*yarbsize)/(YMAX)))
 
-#ifdef DOUBLEBUFFER
+#ifdef DFB
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
    int reps = REPS_FOR_Y(1, YV, YMAX); \

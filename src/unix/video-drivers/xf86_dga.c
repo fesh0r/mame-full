@@ -41,29 +41,29 @@ int xf86_dga_init(void)
 	if(geteuid())
 		fprintf(stderr,"DGA requires root rights\n");
 	else if (!(s = getenv("DISPLAY")) || (s[0] != ':'))
-		fprintf(stderr,"DGA only works on a local display\n");
-	else if(!XF86DGAQueryExtension(display, &i, &i))
-		fprintf(stderr,"XF86DGAQueryExtension failed\n");
-	else if(!XF86DGAQueryVersion(display, &i, &j))
-		fprintf(stderr,"XF86DGAQueryVersion failed\n");
+                fprintf(stderr,"DGA only works on a local display\n");
+        else if(!XF86DGAQueryExtension(display, &i, &i))
+                fprintf(stderr,"XF86DGAQueryExtension failed\n");
+        else if(!XF86DGAQueryVersion(display, &i, &j))
+                fprintf(stderr,"XF86DGAQueryVersion failed\n");
 #ifdef X_XDGASetMode
-	else if (i >= 2)
-	{
-		p_xf86_dga_open_display   = xf86_dga2_open_display;
-		p_xf86_dga_close_display  = xf86_dga2_close_display;
-		p_xf86_dga_resize_display = xf86_dga2_resize_display;
-		p_xf86_dga_update_display = xf86_dga2_update_display;
-		return xf86_dga2_init();
-	}
+        else if (i >= 2)
+        {
+                p_xf86_dga_open_display   = xf86_dga2_open_display;
+                p_xf86_dga_close_display  = xf86_dga2_close_display;
+                p_xf86_dga_resize_display = xf86_dga2_resize_display;
+                p_xf86_dga_update_display = xf86_dga2_update_display;
+                return xf86_dga2_init();
+        }
 #endif
-	else
-	{
-		p_xf86_dga_open_display   = xf86_dga1_open_display;
-		p_xf86_dga_close_display  = xf86_dga1_close_display;
-		p_xf86_dga_resize_display = xf86_dga1_resize_display;
-		p_xf86_dga_update_display = xf86_dga1_update_display;
-		return xf86_dga1_init();
-	}
+        else
+        {
+                p_xf86_dga_open_display   = xf86_dga1_open_display;
+                p_xf86_dga_close_display  = xf86_dga1_close_display;
+                p_xf86_dga_resize_display = xf86_dga1_resize_display;
+                p_xf86_dga_update_display = xf86_dga1_update_display;
+                return xf86_dga1_init();
+        }
 
 	fprintf(stderr,"Use of DGA-modes is disabled\n");
 	return 1;

@@ -55,7 +55,8 @@ static unsigned int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
 
 
 /* public methods */
-struct sysdep_palette_struct *sysdep_palette_create(struct sysdep_palette_info *display_palette, int src_depth)
+struct sysdep_palette_struct *sysdep_palette_create(
+  struct sysdep_palette_info *display_palette, int src_depth)
 {
    int r,g,b;
    struct sysdep_palette_struct *palette = NULL;

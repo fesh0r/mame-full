@@ -22,16 +22,22 @@ static vga_modeinfo video_modeinfo;
 
 struct rc_option display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ "Svgalib Related", NULL, rc_seperator, NULL, NULL, 0,	0, NULL, NULL },
 	{ "linear", NULL, rc_bool, &use_linear, "1", 0, 0, NULL, "Enable/disable use of linear framebuffer (fast)" },
-	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
 int sysdep_display_init(void)
 {
-	vga_init();
+	memset(sysdep_display_properties.mode, 0,
+	  SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
+        sysdep_display_properties.mode[0] =
+          SYSDEP_DISPLAY_FULLSCREEN | SYSDEP_DISPLAY_EFFECTS;
+
+        if (vga_init())
+            return 1;
 
 	return svga_input_init();
 }
@@ -142,7 +148,7 @@ int sysdep_display_open(const struct sysdep_display_open_params *params)
 			video_modeinfo.width, video_modeinfo.height, startx, starty);
 
 	/* fill the sysdep_display_properties struct */
-	memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
+	sysdep_display_properties.palette_info.fourcc_format = 0;
 	switch(video_modeinfo.colors)
 	{
 	  case 32768:
@@ -161,6 +167,7 @@ int sysdep_display_open(const struct sysdep_display_open_params *params)
             sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
             break;
 	}
+	sysdep_display_properties.vector_renderer = NULL;
 
 	/* get a blit func */
 	blit_func = sysdep_display_get_blitfunc_doublebuffer(video_modeinfo.bytesperpixel*8);

@@ -18,6 +18,8 @@
    Boston, MA 02111-1307, USA.
 */
 #include "sysdep_display_priv.h"
+#include <stdlib.h>
+#include <string.h>
 
 struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_MAX] = {
 #ifdef USE_XINPUT_DEVICES
@@ -32,7 +34,62 @@ struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_M
 struct sysdep_display_properties_struct sysdep_display_properties;
 struct sysdep_display_open_params sysdep_display_params;
 
-void sysdep_display_set_params(const struct sysdep_display_open_params *params)
+static struct sysdep_display_open_params sysdep_display_orig_params;
+
+static int sysdep_display_check_params(struct sysdep_display_open_params *params)
+{
+  /* these should never happen! */
+  if ((params->width  > params->max_width) ||
+      (params->height > params->max_height))
+  {
+    fprintf(stderr, "Error in sysdep_display:\n"
+      "  requested size (%dx%d) bigger then max size (%dx%d)\n",
+      params->width, params->height, params->max_width, params->max_height);
+    return 1;
+  }
+  switch (params->depth)
+  {
+    case 15:
+    case 16:
+    case 32:
+      break;
+    default:
+      fprintf(stderr, "Error in sysdep_display: unsupported depth: %d\n",
+        params->depth);
+      return 1;
+  }
+  if ((params->video_mode < 0) ||
+      (params->video_mode >= SYSDEP_DISPLAY_VIDEO_MODES) ||
+      (!sysdep_display_properties.mode[params->video_mode]))
+  {
+    fprintf(stderr, "Error invalid video mode: %d\n",
+      params->video_mode);
+    return 1;
+  }
+  
+  /* lett the effect code do its magic */
+  sysdep_display_check_effect_params(&sysdep_display_params);
+  
+  if (!params->effect && (sysdep_display_properties.mode[params->video_mode] &
+        SYSDEP_DISPLAY_HWSCALE))
+  {
+    params->widthscale  = 1;
+    params->heightscale = 1;
+    params->yarbsize    = 0;
+  }
+  
+  if (!(sysdep_display_properties.mode[params->video_mode] &
+        SYSDEP_DISPLAY_WINDOWED))
+    params->fullscreen = 1;
+  
+  if (!(sysdep_display_properties.mode[params->video_mode] &
+        SYSDEP_DISPLAY_FULLSCREEN))
+    params->fullscreen = 0;
+  
+  return 0;  
+}
+
+static void sysdep_display_set_params(struct sysdep_display_open_params *params)
 {
   sysdep_display_params = *params;
   
@@ -59,9 +116,133 @@ void sysdep_display_set_params(const struct sysdep_display_open_params *params)
     needs to recalculate the aligned width themselves */
   sysdep_display_params.max_width += 3;
   sysdep_display_params.max_width &= ~3;
+}
+
+int sysdep_display_open (struct sysdep_display_open_params *params)
+{
+  if (sysdep_display_check_params(params))
+    return 1;
   
-  /* lett the effect code do its magic */
-  sysdep_display_check_effect_params(&sysdep_display_params);
+  sysdep_display_orig_params = *params;
+  sysdep_display_set_params(params);
+  
+  if (sysdep_display_driver_open())
+    return 1;
+
+  if ((sysdep_display_properties.mode[params->video_mode] &
+       SYSDEP_DISPLAY_EFFECTS) && sysdep_display_effect_open())
+    return 1;
+    
+  return 0;
+}
+
+void sysdep_display_close(void)
+{
+  sysdep_display_effect_close();
+  sysdep_display_driver_close();
+}
+
+int sysdep_display_change_settings(
+  struct sysdep_display_open_params *new_params, int force)
+{
+  int effect_changed = 0;
+  int resize = 0;
+  struct sysdep_display_properties_struct old_properties = 
+    sysdep_display_properties;
+  
+  /* If the changes aren't forced and the video mode is not available
+     use the old video mode */
+  if (!force && (new_params->video_mode >= 0) &&
+      (new_params->video_mode < SYSDEP_DISPLAY_VIDEO_MODES) &&
+      !sysdep_display_properties.mode[new_params->video_mode])
+    new_params->video_mode = sysdep_display_orig_params.video_mode;
+
+  /* Check (and adjust) the new params */   
+  if (sysdep_display_check_params(new_params))
+    goto sysdep_display_change_settings_error;
+
+  /* if any of these change we have to recreate the display */    
+  if ((new_params->depth        != sysdep_display_orig_params.depth)        ||
+      ((new_params->orientation & SYSDEP_DISPLAY_SWAPXY) !=
+       (sysdep_display_orig_params.orientation & SYSDEP_DISPLAY_SWAPXY))    ||
+      (new_params->max_width    != sysdep_display_orig_params.max_width)    ||
+      (new_params->max_height   != sysdep_display_orig_params.max_height)   ||
+      (new_params->title        != sysdep_display_orig_params.title)        ||
+      (new_params->video_mode   != sysdep_display_orig_params.video_mode)   ||
+      (new_params->widthscale   != sysdep_display_orig_params.widthscale)   ||
+      (new_params->yarbsize     != sysdep_display_orig_params.yarbsize)     ||
+      (!new_params->yarbsize &&
+       (new_params->heightscale != sysdep_display_orig_params.heightscale)) ||
+      (new_params->fullscreen   != sysdep_display_orig_params.fullscreen)   ||
+      (new_params->aspect_ratio != sysdep_display_orig_params.aspect_ratio) )
+  {
+    sysdep_display_close();
+    sysdep_display_set_params(new_params);
+    if (sysdep_display_driver_open())
+    {
+      sysdep_display_close();
+
+      if (force)
+        goto sysdep_display_change_settings_error;
+
+      /* try again with old settings */
+      sysdep_display_set_params(&sysdep_display_orig_params);
+      if (sysdep_display_driver_open())
+      {
+        sysdep_display_close();
+        goto sysdep_display_change_settings_error;
+      }
+      *new_params = sysdep_display_orig_params;
+    }
+    else
+      sysdep_display_orig_params = *new_params;
+
+    if ((sysdep_display_properties.mode[new_params->video_mode] &
+         SYSDEP_DISPLAY_EFFECTS) && sysdep_display_effect_open())
+      goto sysdep_display_change_settings_error;
+    
+    return 1;
+  }
+  
+  /* do we need to reinit the effect code? */
+  if (new_params->effect != sysdep_display_orig_params.effect)
+    effect_changed = 1;
+  
+  /* if these change we need to resize */
+  if ((new_params->width           != sysdep_display_orig_params.width)  ||
+      (new_params->height          != sysdep_display_orig_params.height) ||
+      (new_params->vec_src_bounds  !=
+        sysdep_display_orig_params.vec_src_bounds) ||
+      (new_params->vec_dest_bounds !=
+        sysdep_display_orig_params.vec_dest_bounds))
+    resize = 1;
+
+  /* apply the changes */
+  sysdep_display_orig_params = *new_params;
+  sysdep_display_set_params(new_params);
+
+  if (effect_changed)
+  {
+    sysdep_display_effect_close();
+    if (sysdep_display_effect_open())
+      goto sysdep_display_change_settings_error;
+  }  
+
+  if (resize && sysdep_display_driver_resize())
+    goto sysdep_display_change_settings_error;
+
+  /* other changes are handled 100% on the fly */
+  if(memcmp(&sysdep_display_properties, &old_properties,
+      sizeof(struct sysdep_display_properties_struct)))
+    return 1;
+  else
+    return 0;
+  
+sysdep_display_change_settings_error:
+  /* oops this sorta sucks, FIXME don't use exit! */
+  fprintf(stderr, "Fatal error in sysdep_display_change_settings\n");
+  exit(1);
+  return 0; /* shut up warnings, never reached */
 }
 
 void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height)
@@ -137,3 +318,4 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
           vis_in_dest_out->max_y *= sysdep_display_params.heightscale;
         }
 }
+

@@ -15,24 +15,19 @@
 #include "blit_funcs.c"
 #undef  FUNC_NAME
 
-#define FUNC_NAME(x) x##_doublebuffer
-#define DOUBLEBUFFER
+#define FUNC_NAME(x) x##_dfb
+#define DFB
 #include "blit_funcs.c"
 
 /* Find out of blitting from sysdep_display_params.depth to
    dest_depth including scaling, rotation and effects will result in
    exactly the same bitmap, in this case the blitting can be skipped under
-   certain circumstances.
-   Params:
-   dest_depth	not really the standard definition of depth, but, the depth
-                for all modes, except for depth 24 32bpp sparse where 32 should be
-                passed. This is done to differentiate depth 24 24bpp
-                packed pixel and depth 24 32bpp sparse.
-*/
-int sysdep_display_blit_dest_bitmap_equals_src_bitmap(int dest_depth)
+   certain circumstances. */
+int sysdep_display_blit_dest_bitmap_equals_src_bitmap(void)
 {
   if((sysdep_display_params.depth != 16) &&         /* no palette lookup */
-     (sysdep_display_params.depth == dest_depth) && /* no depth conversion */
+     (((sysdep_display_params.depth+7) & ~7) ==     /* bpp matches */
+      sysdep_display_properties.palette_info.bpp) &&
      (!sysdep_display_params.orientation) &&        /* no rotation */
      (!sysdep_display_params.effect) &&             /* no effect */
      (sysdep_display_params.widthscale == 1) &&     /* no widthscale */
@@ -199,15 +194,7 @@ static void FUNC_NAME(blit_32_to_32_direct)(struct mame_bitmap *bitmap,
 #undef DEST_PIXEL
 }
 
-/* Get a function which will blit from sysdep_display_params.depth to
-   dest_depth.
-   Params:
-   dest_depth	not really the standard definition of depth, but, the depth
-                for all modes, except for depth 24 32bpp sparse where 32 should be
-                passed. This is done to differentiate depth 24 24bpp
-                packed pixel and depth 24 32bpp sparse.
-*/
-blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(int dest_depth)
+blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(void)
 {
   if (sysdep_display_params.depth == 32)
   {
@@ -216,7 +203,7 @@ blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(int dest_depth)
       case FOURCC_YUY2:
         return FUNC_NAME(blit_32_to_YUY2_direct);
       case 0:
-        switch(dest_depth)
+        switch(sysdep_display_properties.palette_info.bpp)
         {
           case 16:
             if ((sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
@@ -244,7 +231,7 @@ blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(int dest_depth)
       case FOURCC_YUY2:
         return FUNC_NAME(blit_16_to_YUY2);
       case 0:
-        switch(dest_depth)
+        switch(sysdep_display_properties.palette_info.bpp)
         {
           case 16:
             return FUNC_NAME(blit_16_to_16);

@@ -21,11 +21,14 @@ extern char *_6tap2x_buf3;
 extern char *_6tap2x_buf4;
 extern char *_6tap2x_buf5;
 
-/* called from <driver>_create_display by each video driver;
+/* called from sysdep_display_open;
  * initializes function pointers to correct depths
- * and allocates buffer for doublebuffering */
-int  effect_open(void);
-void effect_close(void);
+ * and allocates buffer for doublebuffering.
+ *
+ * The caller should call sysdep_display_effect_close() on failure and when
+ * done, to free (partly) allocated buffers */
+int  sysdep_display_effect_open(void);
+void sysdep_display_effect_close(void);
 
 /*** effect function pointers (use these) ***/
 typedef void (*effect_func_p)(void *dst0, void *dst1,

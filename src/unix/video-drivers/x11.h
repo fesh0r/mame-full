@@ -10,7 +10,7 @@
 #define EXTERN extern
 #endif
 
-enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_XIL, X11_DGA, X11_MODE_COUNT };
+enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_XIL, X11_DGA };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
@@ -20,7 +20,6 @@ EXTERN Window		window;
 EXTERN Screen 		*screen;
 EXTERN unsigned int	window_width;
 EXTERN unsigned int	window_height;
-EXTERN int		x11_video_mode;
 EXTERN unsigned int	custom_window_width;
 EXTERN unsigned int	custom_window_height;
 EXTERN int		use_xsync;
@@ -66,7 +65,7 @@ void xinput_close(void);
 void xinput_check_hotkeys(unsigned int flags);
 
 /* generic helper functions */
-int x11_init_palette_info(Visual *xvisual);
+int x11_init_palette_info(void);
 /* Create a resizable window with the correct aspect ratio, honor
    custom_width, custom_height, run_in_root_window and
    sysdep_display_params.fullscreen, return width and height in width

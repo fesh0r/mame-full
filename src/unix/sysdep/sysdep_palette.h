@@ -35,6 +35,8 @@ struct sysdep_palette_info
    int red_mask;
    int green_mask;
    int blue_mask;
+   int depth;           /* color depth */
+   int bpp;             /* bits per pixel */
 };
 
 struct sysdep_palette_struct
@@ -49,7 +51,7 @@ struct sysdep_palette_struct
    display, which can be used with the display update functions.
 
    Parameters:
-   src_depth       Color depth of the src palette valid values:
+   src_depth       Color "depth" of the src palette valid values:
    		   15 555 direct rgb mode
    		   16 palettised mode
    		   32 888 direct rgb mode 

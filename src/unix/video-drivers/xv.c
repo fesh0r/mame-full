@@ -86,6 +86,7 @@ static int FindXvPort(long format)
 					{
 						xv_port=p;
 						sysdep_display_properties.palette_info.fourcc_format=format;
+						sysdep_display_properties.palette_info.bpp=fo[j].bits_per_pixel;
 						XFree(fo);
 						return 1;
 					}
@@ -98,7 +99,7 @@ static int FindXvPort(long format)
 	return 0;
 }
 
-static int FindRGBXvFormat(int *bpp)
+static int FindRGBXvFormat(void)
 {
 	int i,j,p,ret,num_formats;
 	unsigned int num_adaptors;
@@ -129,11 +130,12 @@ static int FindRGBXvFormat(int *bpp)
 					if(XvGrabPort(display,p,CurrentTime)==Success)
 					{
 						xv_port=p;
-						*bpp=fo[j].bits_per_pixel;
 						sysdep_display_properties.palette_info.fourcc_format=fo[j].id;
 						sysdep_display_properties.palette_info.red_mask  =fo[j].red_mask;
 						sysdep_display_properties.palette_info.green_mask=fo[j].green_mask;
 						sysdep_display_properties.palette_info.blue_mask =fo[j].blue_mask;
+						sysdep_display_properties.palette_info.depth=fo[j].depth;
+						sysdep_display_properties.palette_info.bpp=fo[j].bits_per_pixel;
 						XFree(fo);
 						return 1;
 					}
@@ -196,11 +198,12 @@ int xv_init(void)
   
   if(XQueryExtension (display, "MIT-SHM", &i, &i, &i) &&
      (XvQueryExtension(display, &u, &u, &u, &u, &u)==Success))
-    return 0;
+    return SYSDEP_DISPLAY_WINDOWED|SYSDEP_DISPLAY_FULLSCREEN|
+      SYSDEP_DISPLAY_HWSCALE|SYSDEP_DISPLAY_EFFECTS;
 
   fprintf (stderr, "X-Server Doesn't support MIT-SHM or Xv extension.\n"
     "Disabling use of Xv mode.\n");
-  return 1;
+  return 0;
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
@@ -212,7 +215,6 @@ int xv_open_display(void)
         XvAttribute *attr;
 	unsigned int height, width;
         int i, count;
-        int dest_bpp=0;
 
         /* set the aspect_ratio, do this here since
            this can change yarbsize */
@@ -244,17 +246,15 @@ int xv_open_display(void)
 	gc = XCreateGC (display, window, 0, &xgcv);
 
 	/* Initial settings of the sysdep_display_properties struct,
-           the FindXvXXX fucntions will fill in the rest */
-	memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
-        sysdep_display_properties.hwscale = 1;
+           the FindXvXXX fucntions will fill in the palette part */
+	sysdep_display_properties.vector_renderer = NULL;
 
         fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
         /* find a suitable format */
-        sysdep_display_properties.palette_info.fourcc_format = -1;
         switch(hwscale_force_yuv)
         {
           case 0: /* try normal RGB */
-            if(FindRGBXvFormat(&dest_bpp))
+            if(FindRGBXvFormat())
               break;
             fprintf(stderr,"\nCan't find a suitable RGB format - trying YUY2 instead... ");
           case 1: /* force YUY2 */
@@ -276,6 +276,8 @@ int xv_open_display(void)
               /* YV12 always does normal scaling, no effects! */
               if (sysdep_display_params.effect)
                 fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
+              /* sysdep_display_properties.mode[X11_XV] &=
+                ~SYSDEP_DISPLAY_EFFECTS; */
               /* setup the image size and scaling params for YV12:
                  -align width and x-coordinates to 8, I don't know
                   why, this is needed, but it is.
@@ -451,17 +453,18 @@ int xv_open_display(void)
           }
         }
         else
-          xv_update_display_func = sysdep_display_get_blitfunc(dest_bpp);
+          xv_update_display_func = sysdep_display_get_blitfunc();
 
 	if (xv_update_display_func == NULL)
 	{
-		fprintf(stderr, "Error: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, dest_bpp);
+		fprintf(stderr, "Error: bitmap depth %d is not supported on %dbpp displays\n",
+		  sysdep_display_params.depth, sysdep_display_properties.palette_info.bpp);
 		return 1;
 	}
 
 	xinput_open(sysdep_display_params.fullscreen, 0);
 
-	return effect_open();
+	return 0;
 }
 
 /*
@@ -472,9 +475,6 @@ void xv_close_display (void)
 {
    /* Restore error handler to default */
    XSetErrorHandler (None);
-
-   /* free effect buffers */
-   effect_close();
 
    /* ungrab keyb and mouse */
    xinput_close();

@@ -58,6 +58,10 @@ struct mode
 static struct mode disabled_modes[MODE_DISABLED_MAX];
 static struct mode forced_mode;
 
+/* Note: depthis not really the standard definition of depth, but, the depth
+         for all modes, except for depth 24 32bpp sparse where 32 should be
+         passed. This is done to differentiate depth 24 24bpp packed pixel
+         and depth 24 32bpp sparse. */
 static int mode_disable(struct rc_option *option, const char *s, int priority)
 {
    if (disabled_modes_count == MODE_DISABLED_MAX)
@@ -66,6 +70,7 @@ static int mode_disable(struct rc_option *option, const char *s, int priority)
           MODE_DISABLED_MAX, s);
       return 0;
    }
+   disabled_modes[disabled_modes_count].depth = 0;
    if (sscanf(s, "%dx%dx%d",
        &disabled_modes[disabled_modes_count].width,
        &disabled_modes[disabled_modes_count].height,
@@ -101,6 +106,19 @@ static int mode_force(struct rc_option *option, const char *s, int priority)
       fprintf(stderr, "Error: %s is not a valid mode\n", s);
       return 1;
    }
+   switch (forced_mode.depth)
+   {
+      case 0:
+      case 15:
+      case 16:
+      case 24:
+      case 32:
+         break;
+      default:
+         fprintf(stderr, "Error no such depth: %d.\n",
+            forced_mode.depth);
+         return 1;
+   }
    option->priority = priority;
    return 0;
 }
@@ -121,6 +139,7 @@ void mode_set_aspect_ratio(double _display_resolution_aspect_ratio)
 static int mode_disabled(int width, int height, int depth)
 {
    int i;
+
    for(i=0; i<disabled_modes_count; i++)
    {
       if ( disabled_modes[i].width  == width &&
@@ -134,29 +153,27 @@ static int mode_disabled(int width, int height, int depth)
 
 /* match a given mode to the needed width, height and aspect ratio to
    perfectly display a game. This function returns 0 for a not usable mode
-   and 100 for the perfect mode +10 for a mode with a well matched depth and
-   +20 for a mode with the perfect depth (=120 for the really perfect mode).
-   
-   Params:
-   depth	not really the standard definition of depth, but, the depth
-                for all modes, except for depth 24 32bpp sparse where 32 should be
-                passed. This is done to differentiate depth 24 24bpp
-                packed pixel and depth 24 32bpp sparse.
-*/
-int mode_match(int width, int height, int depth, int dga)
+   and 100 for the perfect mode +10 for a mode with a well matched depth&bpp
+   and +20 for a mode with the perfect depth&bpp
+   (=120 for the really perfect mode). */
+int mode_match(int width, int height, int depth, int bpp, int dfb)
 {
   int score, viswidth, visheight;
   double perfect_width, perfect_height, perfect_aspect = 0.0;
   static int first_time = 1;
   double aspect = (double)width/height;
-  
+
+  /* convert depth to a pseudodepth which differentiates 24bpp packed/sparse */  
+  if (depth == 24)
+    depth = bpp;
+
   /* is this mode disabled? */
   if(mode_disabled(width, height, depth))
      return 0;
   
   /* if using direct framebuffer access, make sure the width is properly
      aligned */
-  if(dga && (width & 3))
+  if(dfb && (width & 3))
      return 0;
 
   /* get the width and height after scaling */
@@ -173,7 +190,7 @@ int mode_match(int width, int height, int depth, int dga)
   }
   
   /* does the game fit at all ? */
-  if(width  < (dga?
+  if(width  < (dfb?
       ((sysdep_display_params.width+3)&~3)*sysdep_display_params.widthscale:
       viswidth) ||
      height < visheight)

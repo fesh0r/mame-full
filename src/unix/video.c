@@ -46,10 +46,9 @@ static int video_autorol;
 static struct sysdep_palette_struct *normal_palette = NULL;
 static struct sysdep_palette_struct *debug_palette  = NULL;
 
-static struct sysdep_display_open_params current_params;
 static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
-  0, 0, 16, 0, 0, 0, NAME " debug window", 1, 1, 0, 0, 0, 0.0,
+  0, 0, 16, 0, 0, 0, NAME " debug window", 0, 1, 1, 0, 0, 0, 0.0,
   xmame_keyboard_register_event, NULL, NULL };
 
 static struct rectangle debug_bounds;
@@ -76,6 +75,8 @@ static int video_verify_flicker(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_intensity(struct rc_option *option, const char *arg,
 		int priority);
+static int video_verify_mode(struct rc_option *option, const char *arg,
+		int priority);
 
 static void osd_free_colors(void);
 
@@ -84,6 +85,11 @@ struct rc_option video_opts[] = {
    { "Video Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
+#ifdef x11 /* currently only x11 has different video modes */   
+   { "x11-mode",	"x11",			rc_int,		&normal_params.video_mode,
+     "0",		0,			SYSDEP_DISPLAY_VIDEO_MODES-1, video_verify_mode,
+     "Select X11 video mode (if compiled in):\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
+#endif
    { "fullscreen",   	NULL,    		rc_bool,	&normal_params.fullscreen,
      "0",           	0,       		0,		NULL,
      "Start in fullscreen mode (default: false)" },
@@ -207,6 +213,21 @@ struct rc_option video_opts[] = {
      NULL },
    { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
+
+static int video_verify_mode(struct rc_option *option, const char *arg,
+		int priority)
+{
+  if(!sysdep_display_properties.mode[normal_params.video_mode])
+  {
+    fprintf(stderr, "Error: x11-mode %d is not available\n",
+      normal_params.video_mode);
+    return 1;
+  }
+
+  option->priority = priority;
+
+  return 0;
+}
 
 static int video_handle_scale(struct rc_option *option, const char *arg,
    int priority)
@@ -428,7 +449,6 @@ int osd_create_display(const struct osd_create_params *params,
 	if (sysdep_display_open(&normal_params) != OSD_OK)
 		return -1;
 
-	current_params = normal_params;
 	if (normal_params.vec_src_bounds)
 	      vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 
@@ -500,35 +520,16 @@ static void display_settings_changed(void)
 
 static void change_display_settings(struct sysdep_display_open_params *new_params, int force)
 {
-	if (memcmp(new_params, &current_params, sizeof(current_params)))
-	{
-		sysdep_display_close();
-		/* Close sound, DGA (fork) makes the filehandle open twice,
-		   so closing it here and re-openeing after the transition
-		   fixes that.	   -- Steve bpk@hoopajoo.net */
-		osd_sound_enable( 0 );
+  /* Close sound, DGA (fork) makes the filehandle open twice,
+     so closing it here and re-openeing after the transition
+     fixes that.	   -- Steve bpk@hoopajoo.net */
+  osd_sound_enable( 0 );
 
-		if (sysdep_display_open(new_params))
-		{
-			sysdep_display_close();
-			/* try again with old settings */
-			if (force || sysdep_display_open(&current_params))
-			{
-				if (!force) /* don't call close twice */
-					sysdep_display_close();
-				/* oops this sorta sucks */
-				fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
-				exit(1);
-			}
-			*new_params = current_params;
-		}
-		else
-			current_params = *new_params;
+  if (sysdep_display_change_settings(new_params, force))
+    display_settings_changed();
 
-		display_settings_changed();
-		/* Re-enable sound */
-		osd_sound_enable( 1 );
-	}
+  /* Re-enable sound */
+  osd_sound_enable( 1 );
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)
@@ -589,9 +590,8 @@ static void update_debug_display(struct mame_display *display)
 					i, r, g, b);
 		}
 	}
-	if(sysdep_display_update(display->debug_bitmap, &debug_bounds,
-	   &debug_bounds, debug_palette, 0, &msg))
-		display_settings_changed();	
+	sysdep_display_update(display->debug_bitmap, &debug_bounds,
+	   &debug_bounds, debug_palette, 0, &msg);
 }
 
 static void osd_free_colors(void)
@@ -687,15 +687,30 @@ void osd_update_video_and_audio(struct mame_display *display)
             else if (code_pressed(KEYCODE_LALT))
             {
 		if (code_pressed_memory(KEYCODE_INSERT))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE0;
+		{
+			normal_params.video_mode = 0;
+			normal_params_changed = 1;
+		}
 		if (code_pressed_memory(KEYCODE_HOME))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE1;
+		{
+			normal_params.video_mode = 1;
+			normal_params_changed = 1;
+		}
 		if (code_pressed_memory(KEYCODE_PGUP))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE2;
+		{
+			normal_params.video_mode = 2;
+			normal_params_changed = 1;
+		}
 		if (code_pressed_memory(KEYCODE_DEL))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE3;
+		{
+			normal_params.video_mode = 3;
+			normal_params_changed = 1;
+		}
 		if (code_pressed_memory(KEYCODE_END))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE4;
+		{
+			normal_params.video_mode = 4;
+			normal_params_changed = 1;
+		}
 		if (code_pressed_memory(KEYCODE_PGDN))
 		{
 			normal_params.fullscreen = 1 - normal_params.fullscreen;
@@ -920,8 +935,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 		
 		if (vis_area_changed)
 		{
-			if (sysdep_display_resize(normal_params.width,
-			     normal_params.height) && normal_palette)
+			if (sysdep_display_change_settings(&normal_params, 1)
+			    && normal_palette)
 			{
 				sysdep_palette_destroy(normal_palette);
 				normal_palette = NULL;
@@ -952,11 +967,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 		profiler_mark(PROFILER_BLIT);
 		/* udpate and check if the display properties were changed */
-		if(sysdep_display_update(display->game_bitmap,
+		sysdep_display_update(display->game_bitmap,
 		   &(display->game_visible_area),
 		   &(display->game_bitmap_update),
-		   normal_palette, flags, &msg))
-			display_settings_changed();
+		   normal_palette, flags, &msg);
 		profiler_mark(PROFILER_END);
 		if (msg)
 		{

@@ -1,11 +1,13 @@
 /*
  *	XFree86 VidMode and DGA support by Jens Vaasjo <jvaasjo@iname.com>
  */
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/xf86dga.h>
@@ -26,11 +28,9 @@ static struct
 	XF86VidModeModeInfo orig_mode;
 	int mode_count;
 	int vidmode_changed;
-	int dest_bpp;
-} xf86ctx = {-1,NULL,NULL,-1,-1,-1,NULL,NULL,{0},0,0,0};
+} xf86ctx = {-1,NULL,NULL,-1,-1,-1,NULL,NULL,{0},0,0};
 
 static int xf86_dga_vidmode_check_exts(void);
-static int xf86_dga_set_mode(void);
 		
 int xf86_dga1_init(void)
 {
@@ -42,15 +42,23 @@ int xf86_dga1_init(void)
 		fprintf(stderr,"XF86DGAQueryDirectVideo failed\n");
 	else if(!(i & XF86DGADirectPresent))
 		fprintf(stderr,"XF86DGADirectVideo support is not present\n");
-	else if(!XF86DGAGetVideo(display,xf86ctx.screen,
-		 &xf86ctx.base_addr,&xf86ctx.width,
-		 &xf86ctx.bank_size,&xf86ctx.ram_size))
-		fprintf(stderr,"XF86DGAGetVideo failed\n");
-	else if(!xf86_dga_vidmode_check_exts())
-		return 0; 
+	else
+        {
+          /* Dumping core while DirectVideo is active causes an X-server
+             freeze with kernel 2.6, so don't dump core! */
+          struct rlimit limit = { 0, 0 };
+          if(setrlimit(RLIMIT_CORE, &limit))
+                  perror("rlimit");
+          else if(!XF86DGAGetVideo(display,xf86ctx.screen,
+                   &xf86ctx.base_addr,&xf86ctx.width,
+                   &xf86ctx.bank_size,&xf86ctx.ram_size))
+                  fprintf(stderr,"XF86DGAGetVideo failed\n");
+          else if(!xf86_dga_vidmode_check_exts())
+                  return SYSDEP_DISPLAY_FULLSCREEN|SYSDEP_DISPLAY_EFFECTS; 
+        }
 		
 	fprintf(stderr,"Use of DGA-modes is disabled\n");
-	return 1;
+	return 0;
 }
 
 static int xf86_dga_vidmode_check_exts(void)
@@ -72,7 +80,7 @@ static int xf86_dga_vidmode_check_exts(void)
 	return 0;
 }
 
-static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(int depth)
+static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(void)
 {
 	XF86VidModeModeInfo *bestmode = NULL;
 	int i, score, best_score = 0;
@@ -91,7 +99,8 @@ static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(int depth)
 		fprintf(stderr, "XF86DGA: info: found mode: %dx%d\n",
 		   xf86ctx.modes[i]->hdisplay, xf86ctx.modes[i]->vdisplay);
 		score = mode_match(xf86ctx.modes[i]->hdisplay, 
-				xf86ctx.modes[i]->vdisplay, depth, 1);
+		  xf86ctx.modes[i]->vdisplay, screen->root_depth,
+                  sysdep_display_properties.palette_info.bpp, 1);
 		if(score > best_score)
 		{
 			best_score = score;
@@ -179,21 +188,21 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo)
 		return 1;
 	}
 
-	xf86ctx.update_display_func = sysdep_display_get_blitfunc_doublebuffer(xf86ctx.dest_bpp);
+	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
 	if (xf86ctx.update_display_func == NULL)
 	{
-		fprintf(stderr, "unsupported bpp: %dbpp\n", xf86ctx.dest_bpp);
+		fprintf(stderr, "unsupported bpp: %dbpp\n", sysdep_display_properties.palette_info.bpp);
 		return 1;
 	}
 	
-	fprintf(stderr, "XF86-DGA1 running at: %dbpp\n", xf86ctx.dest_bpp);
+	fprintf(stderr, "XF86-DGA1 running at: %dbpp\n", sysdep_display_properties.palette_info.bpp);
 	
 	xf86ctx.addr  = (unsigned char*)xf86ctx.base_addr;
 	xf86ctx.addr += (((modeinfo->hdisplay - sysdep_display_params.width*
 		sysdep_display_params.widthscale) / 2) & ~3) *
-		xf86ctx.dest_bpp / 8;
+		sysdep_display_properties.palette_info.bpp / 8;
 	xf86ctx.addr += ((modeinfo->vdisplay - scaled_height)
-		/ 2) * xf86ctx.width * xf86ctx.dest_bpp / 8;
+		/ 2) * xf86ctx.width * sysdep_display_properties.palette_info.bpp / 8;
 	return 0;
 }
 
@@ -207,7 +216,7 @@ int xf86_dga1_open_display(void)
 
 	window  = RootWindow(display,xf86ctx.screen);
 
-	/* detect dest_bpp */
+	/* detect bpp */
 	pixmaps = XListPixmapFormats(display, &count);
 	if (!pixmaps)
 	{
@@ -220,19 +229,19 @@ int xf86_dga1_open_display(void)
 	{
 		if(pixmaps[i].depth==DefaultDepth(display,xf86ctx.screen))
 		{
-			xf86ctx.dest_bpp = pixmaps[i].bits_per_pixel;
+			sysdep_display_properties.palette_info.bpp = pixmaps[i].bits_per_pixel;
 			break;
 		}  
 	}
 	if(i==count)
 	{
-		fprintf(stderr, "Couldn't find a zpixmap with the defaultcolordepth\nThis should not happen!\n");
+		fprintf(stderr, "Couldn't find a pixmap with the defaultcolordepth\nThis should not happen!\n");
 		return 1;
 	}
 	XFree(pixmaps);
 
 	/* setup the palette_info struct */
-	if (x11_init_palette_info(DefaultVisual(display,xf86ctx.screen)) != 0)
+	if (x11_init_palette_info())
 		return 1;
 		
 	/* HACK HACK HACK, keys get stuck when they are pressed when
@@ -250,13 +259,10 @@ int xf86_dga1_open_display(void)
 		return 1;
 	}
 
-	if(effect_open())
-		return 1;
-
-	return xf86_dga_set_mode();
+	return xf86_dga1_resize_display();
 }
 
-static int xf86_dga_set_mode(void)
+int xf86_dga1_resize_display(void)
 {
 	XF86VidModeModeInfo *bestmode;
 	/* only have todo the fork's the first time we go DGA, otherwise people
@@ -267,9 +273,7 @@ static int xf86_dga_set_mode(void)
 	xf86_dga_fix_viewport  = 0;
 	xf86_dga_first_click   = 1;
 	
-	bestmode = xf86_dga_vidmode_find_best_vidmode(
-		(DefaultDepth(display,xf86ctx.screen)==24)? xf86ctx.dest_bpp:
-		DefaultDepth(display,xf86ctx.screen));
+	bestmode = xf86_dga_vidmode_find_best_vidmode();
 	if(!bestmode)
 	{
 		fprintf(stderr,"no suitable mode found\n");
@@ -323,17 +327,6 @@ static int xf86_dga_set_mode(void)
 	return 0;
 }
 
-int  xf86_dga1_resize_display(void)
-{
-	if (xf86_dga_set_mode())
-	{
-		fprintf(stderr, "FATAL Error changing videomode, aborting\n");
-		sysdep_display_close();
-		exit(1);
-	}
-	return 0;
-}
-
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags,
@@ -351,7 +344,6 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 
 void xf86_dga1_close_display(void)
 {
-    	effect_close();
 	xinput_close();
 	XF86DGADirectVideo(display,xf86ctx.screen, 0);
 	if(xf86ctx.vidmode_changed)

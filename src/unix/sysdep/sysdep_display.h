@@ -36,27 +36,20 @@
 #define SYSDEP_DISPLAY_MOUSE_AXES	8
 
 /* sysdep_display_update flags */
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE0  0x00000001
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE1  0x00000002
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE2  0x00000004
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE3  0x00000008
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE4  0x00000010
+#define SYSDEP_DISPLAY_HOTKEY_OPTION0   0x0001
+#define SYSDEP_DISPLAY_HOTKEY_OPTION1   0x0002
+#define SYSDEP_DISPLAY_HOTKEY_OPTION2   0x0004
+#define SYSDEP_DISPLAY_HOTKEY_OPTION3   0x0008
+#define SYSDEP_DISPLAY_HOTKEY_OPTION4   0x0010
+#define SYSDEP_DISPLAY_HOTKEY_GRABMOUSE 0x0040
+#define SYSDEP_DISPLAY_HOTKEY_GRABKEYB  0x0080
 
-#define SYSDEP_DISPLAY_HOTKEY_GRABMOUSE 0x00000100
-#define SYSDEP_DISPLAY_HOTKEY_GRABKEYB  0x00000200
-
-#define SYSDEP_DISPLAY_HOTKEY_OPTION0   0x00010000
-#define SYSDEP_DISPLAY_HOTKEY_OPTION1   0x00020000
-#define SYSDEP_DISPLAY_HOTKEY_OPTION2   0x00040000
-#define SYSDEP_DISPLAY_HOTKEY_OPTION3   0x00080000
-#define SYSDEP_DISPLAY_HOTKEY_OPTION4   0x00100000
-
-#define SYSDEP_DISPLAY_UI_DIRTY         0x01000000
+#define SYSDEP_DISPLAY_UI_DIRTY         0x0100
 
 /* orientation flags */
-#define SYSDEP_DISPLAY_FLIPX  1
-#define SYSDEP_DISPLAY_FLIPY  2
-#define SYSDEP_DISPLAY_SWAPXY 4
+#define SYSDEP_DISPLAY_FLIPX		0x01
+#define SYSDEP_DISPLAY_FLIPY		0x02
+#define SYSDEP_DISPLAY_SWAPXY		0x04
 
 /* effect type */
 #define SYSDEP_DISPLAY_EFFECT_NONE      0
@@ -70,6 +63,14 @@
 #define SYSDEP_DISPLAY_EFFECT_6TAP2X    8
 #define SYSDEP_DISPLAY_EFFECT_FAKESCAN  9
 #define SYSDEP_DISPLAY_EFFECT_LAST      SYSDEP_DISPLAY_EFFECT_FAKESCAN
+
+/* mode flags */
+#define SYSDEP_DISPLAY_WINDOWED		0x01
+#define SYSDEP_DISPLAY_FULLSCREEN	0x02
+#define SYSDEP_DISPLAY_HWSCALE 		0x04
+#define SYSDEP_DISPLAY_EFFECTS		0x08
+/* number of modes */
+#define SYSDEP_DISPLAY_VIDEO_MODES	5
 
 /* from mame's palette.h */
 #ifndef PALETTE_H
@@ -137,7 +138,7 @@ struct sysdep_display_open_params {
      displayed */  
   int width;
   int height;
-  /* depth of the bitmap to be displayed (15/32 direct or 16 palettised) */
+  /* "depth" of the bitmap to be displayed (15/32 direct or 16 palettised) */
   int depth;
   /* should we rotate and or flip ? */
   int orientation;
@@ -148,6 +149,9 @@ struct sysdep_display_open_params {
   int max_height;
   /* title of the window */
   const char *title;
+  /* some sysdep display driver have multiple sub-drivers this selects
+     which one to use */
+  int video_mode;
   /* scaling and effect options */
   int widthscale;
   int heightscale;
@@ -165,9 +169,11 @@ struct sysdep_display_open_params {
 };
 
 struct sysdep_display_properties_struct {
+  /* info available after sysdep_display_open */
   struct sysdep_palette_info palette_info;
   int (*vector_renderer)(point *pt, int num_points);
-  int hwscale;
+  /* per mode info availabe after sysdep_init */
+  int mode[SYSDEP_DISPLAY_VIDEO_MODES];
 };
 
 struct sysdep_display_effect_properties_struct {
@@ -183,12 +189,13 @@ int sysdep_display_init(void);
 void sysdep_display_exit(void);
 
 /* open / close */
-int sysdep_display_open(const struct sysdep_display_open_params *params);
+int sysdep_display_open(struct sysdep_display_open_params *params);
 void sysdep_display_close(void);
 
 /* update */
-int sysdep_display_resize(int width, int height);
-int sysdep_display_update(struct mame_bitmap *bitmap,
+int sysdep_display_change_settings(
+  struct sysdep_display_open_params *new_params, int force);
+void sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags,
   const char **status_msg);

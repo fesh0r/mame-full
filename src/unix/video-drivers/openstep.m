@@ -47,8 +47,6 @@ struct rc_option display_opts[] = {
 	}
 };
 
-struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
-
 /*
  * Size of the black border
  */

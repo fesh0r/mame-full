@@ -41,8 +41,6 @@ struct rc_option display_opts[] = {
      NULL }
 };
 
-struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
-
 struct ph_func_struct {
    int  (*init)(void);
    int  (*create_display)(int depth);

@@ -26,7 +26,11 @@ int xfx_init(void)
   fprintf(stderr,
      "info: using FXmame v0.5 driver for xmame, written by Mike Oliphant\n");
   
-  return InitGlide();
+  if (!InitGlide())
+    return SYSDEP_DISPLAY_FULLSCREEN|SYSDEP_DISPLAY_HWSCALE;
+
+  fprintf(stderr, "Disabling use of Glide mode\n");  
+  return 0;
 }
 
 void xfx_exit(void)

@@ -86,7 +86,7 @@ int x11_init(void)
   else
     fprintf (stderr, "X-Server Doesn't support MIT-SHM extension\n");
 #endif
-  return 0;          
+  return SYSDEP_DISPLAY_WINDOWED|SYSDEP_DISPLAY_EFFECTS;
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
@@ -94,7 +94,6 @@ int x11_init(void)
    mouse and keyboard can't be setup before the display has. */
 int x11_window_open_display(void)
 {
-        Visual *xvisual;
 	XGCValues xgcv;
 	int image_height, image_width;
 	char *scaled_buffer_ptr;
@@ -120,10 +119,6 @@ int x11_window_open_display(void)
         else
 #endif
 	  x11_window_update_method = X11_NORMAL;
-
-        /* get a visual */
-	xvisual = screen->root_visual;
-	fprintf(stderr, "Using a Visual with a depth of %dbpp.\n", screen->root_depth);
 
 	/* create a window */
 	if (run_in_root_window)
@@ -163,7 +158,7 @@ int x11_window_open_display(void)
                         x11_mit_shm_error = 0;
 			XSetErrorHandler (x11_test_mit_shm);
 			image = XShmCreateImage (display,
-					xvisual,
+					screen->root_visual,
 					screen->root_depth,
 					ZPixmap,
 					NULL,
@@ -233,7 +228,7 @@ int x11_window_open_display(void)
 				return 1;
 			}
 			image = XCreateImage (display,
-					xvisual,
+					screen->root_visual,
 					screen->root_depth,
 					ZPixmap,
 					0,
@@ -254,23 +249,22 @@ int x11_window_open_display(void)
 			return 1;
 	}
 	
-	/* setup the sysdep_display_properties struct now we have the visual */
-	if (x11_init_palette_info(xvisual) != 0)
+	/* setup the sysdep_display_properties struct */
+	if (x11_init_palette_info())
 		return 1;
-	
+        sysdep_display_properties.palette_info.bpp = image->bits_per_pixel;
+
 	/* get a blit function */
-	fprintf(stderr, "Bits per pixel = %d... ", image->bits_per_pixel);
-        x11_window_update_display_func = sysdep_display_get_blitfunc(image->bits_per_pixel);
+        x11_window_update_display_func = sysdep_display_get_blitfunc();
 	if (x11_window_update_display_func == NULL)
 	{
-		fprintf(stderr, "\nError: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, image->bits_per_pixel);
+		fprintf(stderr, "\nError: bitmap depth %d is not supported on %dbpp displays\n", sysdep_display_params.depth, image->bits_per_pixel);
 		return 1;
 	}
-	fprintf(stderr, "Ok\n");
 
 	xinput_open(0, ExposureMask);
 
-	return effect_open();
+	return 0;
 }
 
 /*
@@ -281,9 +275,6 @@ void x11_window_close_display (void)
 {
    /* Restore error handler to default */
    XSetErrorHandler (None);
-
-   /* free effect buffers */
-   effect_close();
 
    /* ungrab keyb and mouse */
    xinput_close();

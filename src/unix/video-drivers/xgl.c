@@ -86,11 +86,13 @@ int xgl_init(void)
   if (!loadGLLibrary(libGLName, libGLUName))
   {
     fprintf(stderr, "Use of OpenGL mode disabled\n");
-    return 1;
+    return 0;
   }
 
   fetch_GL_FUNCS(libGLName, libGLUName, 0);
-  return 0;
+
+  return SYSDEP_DISPLAY_WINDOWED|SYSDEP_DISPLAY_FULLSCREEN|
+    SYSDEP_DISPLAY_HWSCALE;
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse

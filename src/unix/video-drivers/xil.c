@@ -39,12 +39,11 @@ int xil_init( void )
 {
   if( (state = xil_open()) == NULL ) {
     fprintf( stderr, "Failed to open XIL library, disabling\n" );
-    return 1;
-  }
-  else {
-    fprintf( stderr, "Using XIL library\n" );
     return 0;
   }
+
+  return SYSDEP_DISPLAY_WINDOWED|SYSDEP_DISPLAY_FULLSCREEN|
+    SYSDEP_DISPLAY_HWSCALE|SYSDEP_DISPLAY_EFFECTS;
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
@@ -74,26 +73,24 @@ int xil_open_display(void)
         xil_resize_display();
 
 	/* setup the sysdep_display_properties struct */
-	memset (&sysdep_display_properties, 0, sizeof (sysdep_display_properties));
-	sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
-	sysdep_display_properties.palette_info.green_mask = 0x000007E0;
-	sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
-        sysdep_display_properties.hwscale = 1;
+	sysdep_display_properties.palette_info.fourcc_format = 0;
+	sysdep_display_properties.palette_info.red_mask      = 0x0000F800;
+	sysdep_display_properties.palette_info.green_mask    = 0x000007E0;
+	sysdep_display_properties.palette_info.blue_mask     = 0x0000001F;
+        sysdep_display_properties.palette_info.depth         = 16;
+        sysdep_display_properties.palette_info.bpp           = 16;
+	sysdep_display_properties.vector_renderer            = NULL;
 	
 	if (x11_init_palette_info(xvisual) != 0)
 		return 1;
 	
 	/* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
-        xil_update_display_func = sysdep_display_get_blitfunc(16);
+        xil_update_display_func = sysdep_display_get_blitfunc();
 	if (x11_window_update_display_func == NULL)
 	{
 		fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
 		return 1;
 	}
-
-	/* init the effect code */
-	if (effect_open())
-		return 1;
 
         /* init the input code */
 	xinput_open(sysdep_display_params.fullscreen, 0);
@@ -107,9 +104,6 @@ int xil_open_display(void)
  */
 void xil_close_display (void)
 {
-   /* free effect buffers */
-   effect_close();
-
    /* ungrab keyb and mouse */
    xinput_close();
 

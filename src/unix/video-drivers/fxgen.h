@@ -17,5 +17,6 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 
 extern unsigned int fxwidth;
 extern unsigned int fxheight;
+extern struct rc_option	fx_opts[];
 
 #endif
