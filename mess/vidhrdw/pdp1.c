@@ -115,7 +115,8 @@ static void clear_points(struct osd_bitmap *bitmap)
 		int x=(&old_list[i])->x;
 		int y=(&old_list[i])->y;
 
-		bitmap->line[y][x]=bg;
+		/*bitmap->line[y][x]=bg;*/
+		plot_pixel(bitmap, x, y, bg);
 		osd_mark_dirty(x,y,x,y);
 	}
 	old_index=0;
@@ -131,7 +132,8 @@ static void set_points(struct osd_bitmap *bitmap)
 		int x=(&new_list[i])->x;
 		int y=(&new_list[i])->y;
 
-		bitmap->line[y][x]=fg;
+		/*bitmap->line[y][x]=fg;*/
+		plot_pixel(bitmap, x, y, fg);
 		osd_mark_dirty(x,y,x,y);
 	}
 }
