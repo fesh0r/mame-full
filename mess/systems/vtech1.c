@@ -283,60 +283,7 @@ INPUT_PORTS_START( vtech1 )
     PORT_BIT(0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-#ifdef OLD_VIDEO
-static struct GfxLayout charlayout =
-{
-    8,12,                   /* 8 x 12 characters */
-    256,                    /* 256 characters */
-    1,                      /* 1 bits per pixel */
-    { 0 },                  /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 7, 6, 5, 4, 3, 2, 1, 0 },
-    /* y offsets */
-    {  0*8,  1*8,  2*8,  3*8,  4*8,  5*8,
-       6*8,  7*8,  8*8,  9*8, 10*8, 11*8 },
-    8*12                    /* every char takes 12 bytes */
-};
-
-static struct GfxLayout gfxlayout =
-{
-    8,3,                    /* 4 times 2x3 pixels */
-    256,                    /* 256 codes */
-    2,                      /* 2 bits per pixel */
-    { 0,1 },                /* two bitplanes */
-    /* x offsets */
-    { 0,0, 2,2, 4,4, 6,6 },
-    /* y offsets */
-    {  0, 0, 0  },
-    8                       /* one byte per code */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-    { 1, 0x0000, &charlayout,   0, 10 },
-    { 1, 0x0c00, &gfxlayout, 2*10, 2 },
-MEMORY_END   /* end of array */
-
-static unsigned short vt_colortable[] =
-{
-/* block graphics in text mode */
-     0, 1,      /* green */
-     0, 2,      /* yellow */
-     0, 3,      /* blue */
-     0, 4,      /* red */
-     0, 5,      /* white */
-     0, 6,      /* cyan */
-     0, 7,      /* magenta */
-     0, 8,      /* orange */
-/* text in text mode */
-     9,10,      /* green on dark green */
-    11,12,      /* yellow on dark orange */
-/* graphics mode */
-    1,2,3,4,    /* green, yellow, blue, red */
-    5,6,8,7     /* buff, cyan, orange, magenta */
-};
-#endif
-
+/* note - Juergen's colors do not match the colors in the m6847 code */
 static unsigned char vt_palette[] =
 {
       0,  0,  0,    /* black (block graphics) */
@@ -364,18 +311,12 @@ static PALETTE_INIT( monochrome )
         mono = (int)(vt_palette[i*3+0] * 0.299 + vt_palette[i*3+1] * 0.587 + vt_palette[i*3+2] * 0.114);
 		palette_set_color(i, mono, mono, mono);
     }
-#ifdef OLD_VIDEO
-    memcpy(colortable, vt_colortable, sizeof(vt_colortable));
-#endif
 }
 
 /* Initialise the palette */
 static PALETTE_INIT( color )
 {
 	palette_set_colors(0, vt_palette, sizeof(vt_palette) / (sizeof(vt_palette[0]) * 3));
-#ifdef OLD_VIDEO
-    memcpy(colortable, vt_colortable, sizeof(vt_colortable));
-#endif
 }
 
 static INT16 speaker_levels[] = {-32768,0,32767,0};
@@ -406,23 +347,8 @@ static MACHINE_DRIVER_START( laser110 )
 	MDRV_MACHINE_STOP( vtech1 )
 
     /* video hardware */
-#ifdef OLD_VIDEO
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
-	MDRV_SCREEN_SIZE(36*8, 38+192+25+1+6+13)
-	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0, 20+192+12-1)
-	MDRV_GFXDECODE( gfxdecodeinfo )
-	MDRV_COLORTABLE_LENGTH(sizeof(vt_colortable) / sizeof(vt_colortable[0]))
-	MDRV_VIDEO_START( generic )
-	MDRV_VIDEO_UPDATE( vtech1 )
-#else
-	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE)
-	MDRV_SCREEN_SIZE(M6847_SCREEN_WIDTH, M6847_SCREEN_HEIGHT)
-	MDRV_VISIBLE_AREA(0,319,11,250)
-	MDRV_VIDEO_START(vtech1)
-	MDRV_VIDEO_UPDATE(m6847)
-#endif
+	MDRV_M6847_PAL( vtech1 )
 	MDRV_PALETTE_INIT(monochrome)
-	MDRV_PALETTE_LENGTH(sizeof(vt_palette) / (sizeof(vt_palette[0])*3))
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
@@ -542,12 +468,12 @@ static const struct IODevice io_laser[] = {
 #define io_laser310 io_laser
 #define io_vz300    io_laser
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP ( 1983, laser110, 0,        laser110, vtech1,   vtech1,   "Video Technology", "Laser 110" )
-COMP ( 1983, laser210, 0,        laser210, vtech1,   vtech1,   "Video Technology", "Laser 210" )
-COMPX( 1983, laser200, laser210, laser210, vtech1,   vtech1,   "Video Technology", "Laser 200", GAME_ALIAS )
-COMPX( 1983, vz200,    laser210, laser210, vtech1,   vtech1,   "Video Technology", "Sanyo / Dick Smith VZ200", GAME_ALIAS )
-COMPX( 1983, fellow,   laser210, laser210, vtech1,   vtech1,   "Video Technology", "Salora Fellow", GAME_ALIAS )
-COMPX( 1983, tx8000,   laser210, laser210, vtech1,   vtech1,   "Video Technology", "Texet TX8000", GAME_ALIAS )
-COMP ( 1983, laser310, 0,        laser310, vtech1,   vtech1,   "Video Technology", "Laser 310" )
-COMPX( 1983, vz300,    laser310, laser310, vtech1,   vtech1,   "Video Technology", "Sanyo / Dick Smith VZ300", GAME_ALIAS )
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT    COMPANY   FULLNAME */
+COMP ( 1983, laser110, 0,        laser110, vtech1,  NULL,   "Video Technology", "Laser 110" )
+COMP ( 1983, laser210, 0,        laser210, vtech1,  NULL,   "Video Technology", "Laser 210" )
+COMPX( 1983, laser200, laser210, laser210, vtech1,  NULL,   "Video Technology", "Laser 200", GAME_ALIAS )
+COMPX( 1983, vz200,    laser210, laser210, vtech1,  NULL,   "Video Technology", "Sanyo / Dick Smith VZ200", GAME_ALIAS )
+COMPX( 1983, fellow,   laser210, laser210, vtech1,  NULL,   "Video Technology", "Salora Fellow", GAME_ALIAS )
+COMPX( 1983, tx8000,   laser210, laser210, vtech1,  NULL,   "Video Technology", "Texet TX8000", GAME_ALIAS )
+COMP ( 1983, laser310, 0,        laser310, vtech1,  NULL,   "Video Technology", "Laser 310" )
+COMPX( 1983, vz300,    laser310, laser310, vtech1,  NULL,   "Video Technology", "Sanyo / Dick Smith VZ300", GAME_ALIAS )

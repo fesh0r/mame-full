@@ -1,6 +1,4 @@
 /* vidhrdw/a2600.c */
-extern VIDEO_START( a2600 );
-extern VIDEO_UPDATE( a2600 );
 extern int a2600_scanline_interrupt(void);
 
 

@@ -20,6 +20,7 @@
 #include "machine/tia.h"
 #include "drawgfx.h"
 #include "zlib.h"
+#include "vidhrdw/generic.h"
 
 #include "includes/a2600.h"
 
@@ -164,9 +165,6 @@ static void *HSYNC_timer;
 
 static int msize0 = 0;
 static int msize1 = 0;
-
-/* bitmap */
-static struct mame_bitmap *stella_bitmap = NULL;
 
 /* local */
 static unsigned char *a2600_cartridge_rom;
@@ -908,20 +906,6 @@ void a2600_stop_machine(void)
 /* Video functions for the a2600         */
 /* Since all software drivern, have here */
 
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-VIDEO_START( a2600 )
-{
-	if ((stella_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
-		return 1;
-	return 0;
-}
-
-
 /***************************************************************************
 
   Update Bitmap When called
@@ -932,6 +916,7 @@ static void a2600_scanline_cb(void)
 	int regpos;
 	int xs = Machine->visible_area.min_x;
 	int backcolor;
+	UINT16 scanline[160];
 
 	profiler_mark(PROFILER_VIDEO);
 
@@ -942,22 +927,16 @@ static void a2600_scanline_cb(void)
 	{
 		if ((currentline <= 261) && (TIA_vblank == 0))
 		{
-		/* now we have color, plot for 4 color cycles */
-		for (regpos = 0; regpos < 160; regpos++)
-		{
-			int i = PF_Data[regpos] % Machine->drv->color_table_len;
-
-				plot_pixel(stella_bitmap, regpos + xs, currentline, Machine->pens[0]);
-
+			/* now we have color, plot for 4 color cycles */
+			for (regpos = 0; regpos < 160; regpos++)
+			{
+				int i = PF_Data[regpos] % Machine->drv->color_table_len;
 				if (i == 0)
-				{
-					plot_pixel(stella_bitmap, regpos + xs, currentline, Machine->pens[backcolor]);
-				}
+					scanline[regpos] = Machine->pens[backcolor];
 				else
-				{
-					plot_pixel(stella_bitmap, regpos + xs, currentline, Machine->pens[i]);
-				}
+					scanline[regpos] = Machine->pens[i];
 			}
+			draw_scanline16(tmpbitmap, xs, currentline, 160, scanline, NULL, -1);
 		}
 	}
 	#ifndef USE_SCANLINE_WSYNC
@@ -1335,18 +1314,6 @@ MACHINE_INIT( a2600 )
 	TIA_pf_mask.shiftreg = 0x080000;
 	return;
 
-}
-
-/***************************************************************************
-
-  Refresh the video screen
-	This routine is called at the start of vblank to refresh the screen
-
-***************************************************************************/
-VIDEO_UPDATE( a2600 )
-{
-	if (!osd_skip_this_frame())
-		copybitmap(bitmap, stella_bitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
 

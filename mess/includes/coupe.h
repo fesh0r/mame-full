@@ -36,9 +36,6 @@ void coupe_update_memory(void);
 int coupe_floppy_init(int);
 
 extern MACHINE_INIT( coupe );
-extern VIDEO_UPDATE( coupe );
-
-#define video_start_coupe	video_start_generic_bitmapped
 
 void coupe_eof_callback(void);
 

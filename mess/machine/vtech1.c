@@ -57,18 +57,6 @@ static int vtech1_fdc_write = 0;
 static int vtech1_fdc_offs = 0;
 static int vtech1_fdc_latch = 0;
 
-void init_vtech1(void)
-{
-#ifdef OLD_VIDEO
-	int i;
-    UINT8 *gfx = memory_region(REGION_GFX1);
-
-	/* create 256 bit patterns */
-    for( i = 0; i < 256; i++ )
-        gfx[0x0c00+i] = i;
-#endif
-}
-
 static void common_init_machine(void)
 {
 
@@ -752,16 +740,13 @@ WRITE_HANDLER( vtech1_latch_w )
     /* mode or the background color are toggle? */
 	if( (vtech1_latch ^ data) & 0x18 )
 	{
-#ifdef OLD_VIDEO
-		schedule_full_refresh();
-#else
 		/* background */
 		m6847_css_w(0,	data & 0x08);
 		/* text/graphics */
 		m6847_ag_w(0,	data & 0x10);
 		m6847_set_cannonical_row_height();
 		schedule_full_refresh();
-#endif
+
 		if( (vtech1_latch ^ data) & 0x10 )
 			logerror("vtech1_latch_w: change background %d\n", (data>>4)&1);
 		if( (vtech1_latch ^ data) & 0x08 )

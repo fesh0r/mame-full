@@ -17,7 +17,7 @@ static UINT8 bg_zbuf[160];
 
 INLINE void gb_update_sprites (void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam;
 	int i, yindex;
 
@@ -120,7 +120,7 @@ struct layer_struct
 
 void gb_refresh_scanline (void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	UINT8 *zbuf = bg_zbuf;
 	int l = 0, yindex = CURLINE;
 
@@ -234,7 +234,7 @@ void gb_refresh_scanline (void)
 
 INLINE void sgb_update_sprites (void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam, pal;
 	INT16 i, yindex;
 
@@ -329,7 +329,7 @@ INLINE void sgb_update_sprites (void)
 
 void sgb_refresh_scanline (void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	UINT8 *zbuf = bg_zbuf;
 	int l = 0, yindex = CURLINE;
 
@@ -484,7 +484,7 @@ void sgb_refresh_border(void)
 	UINT16 *map;
 	UINT16 yidx, xidx, xindex;
 	UINT8 pal, i;
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 
 	map = (UINT16 *)sgb_tile_map - 32;
 
@@ -548,7 +548,7 @@ void sgb_refresh_border(void)
 
 INLINE void gbc_update_sprites (void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	UINT8 height, tilemask, line, *oam;
 	int i, xindex, yindex;
 
@@ -640,7 +640,7 @@ INLINE void gbc_update_sprites (void)
 
 void gbc_refresh_scanline (void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	UINT8 *zbuf = bg_zbuf;
 	int l = 0, yindex = CURLINE;
 
@@ -774,8 +774,3 @@ void gbc_refresh_scanline (void)
 	if (LCDCONT & 0x02)
 		gbc_update_sprites();
 }
-
-VIDEO_UPDATE( gb )
-{
-}
-

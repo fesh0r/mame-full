@@ -35,6 +35,12 @@ System Driver Changes:
 
 - [COUPE] Combined coupe and coupe512 drivers into one driver that uses
   configurable RAM sizes. [Nate Woods]
+  
+- [A2600] Converted video code from using plot_pixel() to draw_scanline() [Nate
+  Woods]
+  
+- [VTECH1] Converted back to using generic M6847 video hardware module [Nate
+  Woods]
 
 Source Changes:
 ---------------
@@ -42,7 +48,7 @@ Source Changes:
   update to this core.  [MAME team] 
 
 - Converted numerous drivers to use the auto_malloc() and auto_bitmap_alloc()
-  calls. [Nate Woods]
+  calls, and also to use generic_bitmapped video calls. [Nate Woods]
 
 - Added new videomap code that makes it easy to support arbitrary video modes
   in a fast, efficient manner.  This takes the place of the old

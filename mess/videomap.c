@@ -53,7 +53,8 @@ enum
 	FLAG_INVAL_FRAMEINFO	= 1,
 	FLAG_INVAL_LINEINFO		= 2,
 	FLAG_BORDER_MODIFIED	= 4,
-	FLAG_ENDIAN_FLIP		= 8
+	FLAG_ENDIAN_FLIP		= 8,
+	FLAG_FIRST_DRAW			= 16
 };
 static UINT8 flags;
 
@@ -765,16 +766,33 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 
 void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	int full_refresh;
+	struct mame_bitmap *bmp = bitmap;
+	int full_refresh = 1;
 
-	full_refresh = 1; /*get_vh_global_attribute_changed();*/
+	if (tmpbitmap)
+	{
+		/* writing to buffered bitmap; partial refresh (except on first draw) */
+		full_refresh = (flags & FLAG_FIRST_DRAW) ? 1 : 0;
+		bmp = tmpbitmap;
+	}
+	else
+	{
+		/* writing to main bitmap; always refresh */
+		flags = 1;
+		bmp = bitmap;
+	}
 
+	/* if we are at the beginning of the frame, recalculate the video pos */
 	if (cliprect->min_y == Machine->visible_area.min_y)
 		calc_videoram_pos();
 
-	internal_videomap_update(bitmap, cliprect,
+	internal_videomap_update(bmp, cliprect,
 		(!full_refresh && videoram_dirtybuffer) ? &videoram_dirtybuffer_pos : NULL,
 		((flags & FLAG_BORDER_MODIFIED) || full_refresh) ? 1 : 0);
+
+	/* if we are writing to buffered bitmap, copy it */
+	if (tmpbitmap)
+		video_update_generic_bitmapped(bitmap, cliprect);
 }
 
 /* ----------------------------------------------------------------------- *
@@ -783,6 +801,8 @@ void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 int videomap_init(const struct videomap_config *config)
 {
+	int memory_flags;
+
 	/* check parameters for obvious problems */
 	assert(config);
 	assert(config->intf);
@@ -792,21 +812,30 @@ int videomap_init(const struct videomap_config *config)
 	assert(config->videoram_windowsize || mess_ram_size);
 
 	callbacks = config->intf;
-	flags = 0;
+	flags = FLAG_FIRST_DRAW;
 	scanline_data = (Machine->orientation) ? (UINT16 *) auto_malloc((Machine->drv->screen_width + 32) * sizeof(UINT16)) : NULL;
 	border_scanline = (UINT16 *) auto_malloc(Machine->drv->screen_width * sizeof(UINT16));
 	if (!border_scanline)
 		return 1;
 
+	/* do we need to perform endian flipping? */
+	memory_flags = config->intf->flags & VIDEOMAP_FLAGS_MEMORY_MASK;
 #ifdef LSB_FIRST
-	if (config->intf->memory_flags == VIDEOMAP_FLAGS_MEMORY16_BE)
+	if (memory_flags == VIDEOMAP_FLAGS_MEMORY16_BE)
 #else
-	if (config->intf->memory_flags == VIDEOMAP_FLAGS_MEMORY16_LE)
+	if (memory_flags == VIDEOMAP_FLAGS_MEMORY16_LE)
 #endif
 	{
 		flags |= FLAG_ENDIAN_FLIP;
 	}
 
+	/* are we buffering video */
+	tmpbitmap = NULL;
+	if (config->intf->flags & VIDEOMAP_FLAGS_BUFFERVIDEO)
+	{
+		if (video_start_generic_bitmapped() != 0)
+			return 1;
+	}
 
 	border_position = 0;
 	border_color = 0;

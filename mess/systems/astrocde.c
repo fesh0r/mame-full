@@ -199,7 +199,7 @@ static MACHINE_DRIVER_START( astrocde )
 	MDRV_PALETTE_INIT( astrocade )
 
 	MDRV_VIDEO_START( generic )
-	MDRV_VIDEO_UPDATE( astrocade )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)

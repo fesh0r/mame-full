@@ -29,8 +29,6 @@
 
 #define READ_MEM(x) cpu_readmem16(x)
 
-static struct mame_bitmap *maria_bitmap;
-
 /*static unsigned char *ROM; */
 
 /********** Maria ***********/
@@ -73,7 +71,7 @@ VIDEO_START( a7800 )
 {
 	int i;
 
-	if ((maria_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (video_start_generic_bitmapped())
 		return 1;
 
 	for(i=0; i<8; i++)
@@ -101,11 +99,6 @@ VIDEO_START( a7800 )
 	return 0;
 }
 
-void a7800_vh_stop(void)
-{
-	bitmap_free(maria_bitmap);
-}
-
 /***************************************************************************
 
   Stop the video hardware emulation.
@@ -114,16 +107,15 @@ void a7800_vh_stop(void)
 
 void maria_draw_scanline(void)
 {
-unsigned int graph_adr,data_addr;
-int width,hpos,pal,mode,ind;
-unsigned int dl;
-int x,d,c;
-int ind_bytes;
+	unsigned int graph_adr,data_addr;
+	int width,hpos,pal,mode,ind;
+	unsigned int dl;
+	int x,d,c;
+	int ind_bytes;
 
 	/* Process this DLL entry */
 	dl = maria_dl;
-	for (d=0; d<320; d++)
-		plot_pixel(maria_bitmap, d, maria_scanline, maria_backcolor);
+	plot_box(tmpbitmap, 0, maria_scanline, 320, 1, maria_backcolor);
 
 	/* Step through DL's */
 	while (READ_MEM(dl + 1) != 0)
@@ -193,8 +185,8 @@ int ind_bytes;
 						c = (d & 0xC0) >> 6;
 						if (c)
 						{
-							plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(maria_bitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
 						}
 
 						inc_hpos_by_2();
@@ -202,8 +194,8 @@ int ind_bytes;
 						c = (d & 0x30) >> 4;
 						if (c)
 						{
-							plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(maria_bitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
 						}
 
 						inc_hpos_by_2();
@@ -211,8 +203,8 @@ int ind_bytes;
 						c = (d & 0x0C) >> 2;
 						if (c)
 						{
-							plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(maria_bitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
 						}
 
 						inc_hpos_by_2();
@@ -220,8 +212,8 @@ int ind_bytes;
 						c = (d & 0x03);
 						if (c)
 						{
-							plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(maria_bitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
 						}
 
 						inc_hpos_by_2();
@@ -256,49 +248,49 @@ int ind_bytes;
 
 					c = ( ( d & 0x80 ) >> 6 ) | ( ( pal & 2 ) >> 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( ( d & 0x40 ) >> 5 ) | ( pal & 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( ( d & 0x20 ) >> 4 ) | ( ( pal & 2 ) >> 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( ( d & 0x10 ) >> 3 ) | ( pal & 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( ( d & 0x08 ) >> 2 ) | ( ( pal & 2 ) >> 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( ( d & 0x4 ) >> 1 ) | ( pal & 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( d & 0x02 ) | ( ( pal & 2 ) >> 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
 					c = ( ( d & 0x1 ) << 1 ) | ( pal & 1 );
 					if ( c )
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
 
 					inc_hpos();
 
@@ -330,42 +322,42 @@ int ind_bytes;
 					}
 
 					if (d & 0x80)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x40)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x20)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x10)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x08)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x04)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x02)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
 					if (d & 0x01)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
 
 					inc_hpos();
 
@@ -410,8 +402,8 @@ int ind_bytes;
 							c=0;
 						if (c)
 						{
-							plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(maria_bitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
 						}
 
 						inc_hpos_by_2();
@@ -423,8 +415,8 @@ int ind_bytes;
 
 						if (c)
 						{
-							plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(maria_bitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
 						}
 
 						inc_hpos_by_2();
@@ -458,26 +450,26 @@ int ind_bytes;
 
 					c = ((d & 0x80) >> 6) | ((d & 0x08) >> 3);
 					if (c)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
 
 					inc_hpos();
 
 					c = ((d & 0x40) >> 5) | ((d & 0x04) >> 2);
 					if (c)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
 
 					inc_hpos();
 
 					c = ((d & 0x20) >> 4) | ((d & 0x02) >> 1);
 					if (c)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
 
 					inc_hpos();
 
 					c = ((d & 0x10) >> 3) | (d & 0x01);
 
 					if (c)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[pal][c]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
 
 					inc_hpos();
 
@@ -510,23 +502,23 @@ int ind_bytes;
 
 					c = ((d & 0x0C) >> 2) | (pal & 0x04);
 					if (d & 0x80)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[c][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
 
 					inc_hpos();
 
 					if (d & 0x40)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[c][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
 
 					inc_hpos();
 
 					c = (d & 0x03) | (pal & 0x04);
 					if (d & 0x20)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[c][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
 
 					inc_hpos();
 
 					if (d & 0x10)
-						plot_pixel(maria_bitmap, hpos, maria_scanline, maria_palette[c][2]);
+						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
 
 					inc_hpos();
 				}
@@ -649,7 +641,7 @@ void a7800_interrupt(void)
 VIDEO_UPDATE( a7800 )
 {
 	maria_scanline=0;
-	copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	video_update_generic_bitmapped(bitmap, cliprect);
 }
 
 

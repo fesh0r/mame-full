@@ -360,12 +360,6 @@ WRITE_HANDLER ( astrocade_magicram_w )
 	magic_expand_flipflop ^= 1;
 }
 
-VIDEO_UPDATE( astrocade )
-{
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-}
-
 void astrocade_copy_line(int line)
 {
 	/* Copy one line to bitmap, using current colour register settings */

@@ -791,8 +791,8 @@ static MACHINE_DRIVER_START( a2600 )
 	MDRV_COLORTABLE_LENGTH(sizeof(a2600_colortable) / sizeof(a2600_colortable[0]))
 	MDRV_PALETTE_INIT(a2600)
 
-	MDRV_VIDEO_START(a2600)
-	MDRV_VIDEO_UPDATE(a2600)
+	MDRV_VIDEO_START( generic_bitmapped )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(TIA, tia_interface)
@@ -803,10 +803,6 @@ MACHINE_DRIVER_END
   Game driver
 
 ***************************************************************************/
-
-static void init_a2600(void)
-{
-}
 
 ROM_START(a2600)
     ROM_REGION(0x20000, REGION_CPU1,0)        /* 6502 memory */
@@ -837,14 +833,4 @@ static const struct IODevice io_a2600[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(1977, a2600,    0,        a2600,    a2600,    a2600,    "Atari",  "Atari 2600", GAME_NOT_WORKING)
-
-#ifdef RUNTIME_LOADER
-extern void vcs_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"a2600")==0) drivers[i]=&driver_a2600;
-	}
-}
-#endif
+CONSX(1977, a2600,    0,        a2600,    a2600,    NULL,     "Atari",  "Atari 2600", GAME_NOT_WORKING)

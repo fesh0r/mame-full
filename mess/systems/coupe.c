@@ -48,7 +48,7 @@ MEMORY_END
 
 INTERRUPT_GEN( coupe_line_interrupt )
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = tmpbitmap;
 	int interrupted=0;	/* This is used to allow me to clear the STAT flag (easiest way I can do it!) */
 
 	HPEN = CURLINE;
@@ -445,8 +445,8 @@ static MACHINE_DRIVER_START( coupe )
 	MDRV_COLORTABLE_LENGTH(128)
 	MDRV_PALETTE_INIT(coupe)
 
-	MDRV_VIDEO_START( coupe )
-	MDRV_VIDEO_UPDATE( coupe )
+	MDRV_VIDEO_START( generic_bitmapped )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SPEAKER, coupe_speaker_interface)

@@ -43,14 +43,18 @@ struct videomap_linecallback_info
 
 enum
 {
-	VIDEOMAP_FLAGS_MEMORY8 = 0,
-	VIDEOMAP_FLAGS_MEMORY16_BE = 1,
-	VIDEOMAP_FLAGS_MEMORY16_LE = 2
+	VIDEOMAP_FLAGS_MEMORY8		= 0,
+	VIDEOMAP_FLAGS_MEMORY16_BE	= 1,
+	VIDEOMAP_FLAGS_MEMORY16_LE	= 2,
+	VIDEOMAP_FLAGS_MEMORY_MASK	= 3,
+
+	VIDEOMAP_FLAGS_BUFFERVIDEO	= 4
 };
 
 struct videomap_interface
 {
-	int memory_flags;
+	/* specifies miscellaneous flags */
+	int flags;
 
 	/* called once per frame */
 	void (*frame_callback)(struct videomap_framecallback_info *info);

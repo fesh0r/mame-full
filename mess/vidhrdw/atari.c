@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "includes/atari.h"
+#include "vidhrdw/generic.h"
 
 #ifdef	LSB_FIRST
 #define BYTE_XOR(n) (n)
@@ -778,7 +779,7 @@ VIDEO_START( atari )
 		memset(antic.video[i], 0, sizeof(VIDEO));
     }
 
-    return 0;
+    return video_start_generic_bitmapped();
 }
 
 /************************************************************************
@@ -788,6 +789,8 @@ VIDEO_START( atari )
  ************************************************************************/
 VIDEO_UPDATE( atari )
 {
+	video_update_generic_bitmapped(bitmap, cliprect);
+
 	if( tv_artifacts != (readinputport(0) & 0x40) )
 	{
 		tv_artifacts = readinputport(0) & 0x40;
@@ -795,9 +798,7 @@ VIDEO_UPDATE( atari )
 	}
 	if( atari_frame_counter > 0 )
 	{
-		if( --atari_frame_counter == 0 )
-			schedule_full_refresh();
-		else
+		if( --atari_frame_counter )
 			ui_text(bitmap, atari_frame_message, 0, Machine->uiheight - 10);
 	}
 }
@@ -1008,7 +1009,7 @@ static void antic_linerefresh(void)
 	dst[2] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 
-	draw_scanline8(Machine->scrbitmap, 12, y, sizeof(scanline), (const UINT8 *) scanline, Machine->pens, -1);
+	draw_scanline8(tmpbitmap, 12, y, sizeof(scanline), (const UINT8 *) scanline, Machine->pens, -1);
 }
 
 #if VERBOSE

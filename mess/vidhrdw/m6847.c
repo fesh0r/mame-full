@@ -1160,7 +1160,7 @@ static UINT16 internal_m6847_get_border_color_callback(void)
 
 static struct videomap_interface m6847_videomap_interface =
 {
-	VIDEOMAP_FLAGS_MEMORY8,
+	VIDEOMAP_FLAGS_MEMORY8 | VIDEOMAP_FLAGS_BUFFERVIDEO,
 	m6847_frame_callback,
 	m6847_line_callback,
 	internal_m6847_get_border_color_callback

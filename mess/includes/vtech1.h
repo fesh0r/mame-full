@@ -1,13 +1,12 @@
 /* from machine/vtech1.c */
 
-#define OLD_VIDEO
+/* #define OLD_VIDEO */
 
 extern char vtech1_frame_message[64+1];
 extern int vtech1_frame_time;
 
 extern int vtech1_latch;
 
-extern void init_vtech1(void);
 extern MACHINE_INIT( laser110 );
 extern MACHINE_INIT( laser210 );
 extern MACHINE_INIT( laser310 );
