@@ -332,3 +332,8 @@ int osd_keyboard_disabled()
 {
 	return 0;
 }
+
+int osd_trying_to_quit()
+{
+	return 0;
+}
