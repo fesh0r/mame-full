@@ -241,7 +241,7 @@ static imgtoolerr_t refresh_image(HWND window)
 	if (info->image)
 	{
 		is_root_directory = TRUE;
-		if (is_root_directory)
+		if (info->current_directory)
 		{
 			for (i = 0; info->current_directory[i]; i++)
 			{

@@ -414,8 +414,7 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\
 		$(OBJ)/mess/windows/parallel.o			\
-		$(OBJ)/mess/ui/dirent.o					\
-		$(OBJ)/mess/snprintf.o
+		$(OBJ)/mess/ui/dirent.o					
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ $(ZLIB) winmm.lib user32.lib -out:$@
 
