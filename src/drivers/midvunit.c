@@ -175,17 +175,13 @@ static WRITE32_HANDLER( midvunit_cmos_protect_w )
 static WRITE32_HANDLER( midvunit_cmos_w )
 {
 	if (!cmos_protected)
-	{
-		data32_t *cmos = (data32_t *)generic_nvram;
-		COMBINE_DATA(&cmos[offset]);
-	}
+		COMBINE_DATA(generic_nvram32 + offset);
 }
 
 
 static READ32_HANDLER( midvunit_cmos_r )
 {
-	data32_t *cmos = (data32_t *)generic_nvram;
-	return cmos[offset];
+	return generic_nvram32[offset];
 }
 
 
@@ -349,10 +345,9 @@ static UINT32 bit_data[0x10] =
 
 static READ32_HANDLER( bit_data_r )
 {
-	data32_t *cmos_base = (data32_t *)generic_nvram;
 	int bit = (bit_data[bit_index / 32] >> (31 - (bit_index % 32))) & 1;
 	bit_index = (bit_index + 1) % 512;
-	return bit ? cmos_base[offset] : ~cmos_base[offset];
+	return bit ? generic_nvram32[offset] : ~generic_nvram32[offset];
 }
 
 

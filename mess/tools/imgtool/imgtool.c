@@ -48,6 +48,7 @@ int imgtool_validitychecks(void)
 	imgtool_library *library;
 	const struct ImageModule *module = NULL;
 	const struct OptionGuide *guide_entry;
+	struct imgtool_module_features features;
 
 	err = imgtool_create_cannonical_library(&library);
 	if (err)
@@ -55,23 +56,48 @@ int imgtool_validitychecks(void)
 
 	while((module = imgtool_library_iterate(library, module)) != NULL)
 	{
+		features = img_get_module_features(module);
+
+		if (!module->name)
+		{
+			printf("imgtool module %s has null 'name'\n", module->name);
+			error = 1;
+		}
+		if (!module->description)
+		{
+			printf("imgtool module %s has null 'description'\n", module->name);
+			error = 1;
+		}
+		if (!module->extensions)
+		{
+			printf("imgtool module %s has null 'extensions'\n", module->extensions);
+			error = 1;
+		}
+
+		if (features.supports_directories)
+		{
+			if (module->read_file)
+			{
+				printf("imgtool module %s supports directories and read_file without core support\n", module->name);
+				error = 1;
+			}
+
+			if (module->write_file)
+			{
+				printf("imgtool module %s supports directories and write_file without core support\n", module->name);
+				error = 1;
+			}
+
+			if (module->delete_file)
+			{
+				printf("imgtool module %s supports directories and delete_file without core support\n", module->name);
+				error = 1;
+			}
+		}
+
+		/* sanity checks on creation options */
 		if (module->createimage_optguide || module->createimage_optspec)
 		{
-			if (!module->name)
-			{
-				printf("imgtool module %s has null 'name'\n", module->name);
-				error = 1;
-			}
-			if (!module->description)
-			{
-				printf("imgtool module %s has null 'description'\n", module->description);
-				error = 1;
-			}
-			if (!module->extensions)
-			{
-				printf("imgtool module %s has null 'extensions'\n", module->extensions);
-				error = 1;
-			}
 			if (!module->create)
 			{
 				printf("imgtool module %s has creation options without supporting create\n", module->name);

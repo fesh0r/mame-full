@@ -144,10 +144,72 @@ imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len)
 
 
 
+static imgtoolerr_t cannonicalize_path(imgtool_image *image,
+	const char **path, char **alloc_path)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	char *new_path = NULL;
+	char path_separator;
+	const char *s;
+	int in_path_separator, i, j;
+	
+	path_separator = image->module->path_separator;
+
+	if (path_separator == '\0')
+	{
+		/* do we specify a path when paths are not supported? */
+		if (path && *path)
+		{
+			err = IMGTOOLERR_CANNOTUSEPATH | IMGTOOLERR_SRC_FUNCTIONALITY;
+			goto done;
+		}
+		*path = NULL;
+	}
+	else
+	{
+		s = *path ? *path : "";
+
+		/* allocate space for a new cannonical path */
+		new_path = malloc(strlen(s) + 4);
+		if (!new_path)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+
+		/* copy the path */
+		in_path_separator = TRUE;
+		i = j = 0;
+		do
+		{
+			if ((s[i] != '\0') && (s[i] != path_separator))
+			{
+				new_path[j++] = s[i];
+				in_path_separator = FALSE;
+			}
+			else if (!in_path_separator)
+			{
+				new_path[j++] = '\0';
+				in_path_separator = TRUE;
+			}
+		}
+		while(s[i++] != '\0');
+		new_path[j++] = '\0';
+		new_path[j++] = '\0';
+		*path = new_path;
+	}
+
+done:
+	*alloc_path = new_path;
+	return err;
+}
+
+
+
 imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
-	imgtoolerr_t err;
-	char buf[2];
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	char *alloc_path = NULL;
 
 	assert(img);
 	assert(outenum);
@@ -155,34 +217,26 @@ imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageen
 	*outenum = NULL;
 
 	if (!img->module->begin_enum)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
 
-	if (!img->module->path_separator)
-	{
-		/* do we specify a path when paths are not supported? */
-		if (path)
-			return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-	}
-	else if (!path)
-	{
-		/* must set up default path */
-		if (img->module->initial_path_separator)
-		{
-			buf[0] = img->module->path_separator;
-			buf[1] = '\0';
-			path = buf;
-		}
-		else
-		{
-			path = "";
-		}
-	}
+	err = cannonicalize_path(img, &path, &alloc_path);
+	if (err)
+		goto done;
 
 	err = img->module->begin_enum(img, path, outenum);
 	if (err)
-		return markerrorsource(err);
+	{
+		err = markerrorsource(err);
+		goto done;
+	}
 
-	return IMGTOOLERR_SUCCESS;
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
 }
 
 

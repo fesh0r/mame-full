@@ -1417,17 +1417,15 @@ static WRITE32_HANDLER( widget_w )
 
 static WRITE32_HANDLER( cmos_w )
 {
-	data32_t *cmos_base = (data32_t *)generic_nvram;
 	if (cmos_write_enabled)
-		COMBINE_DATA(&cmos_base[offset]);
+		COMBINE_DATA(generic_nvram32 + offset);
 	cmos_write_enabled = 0;
 }
 
 
 static READ32_HANDLER( cmos_r )
 {
-	data32_t *cmos_base = (data32_t *)generic_nvram;
-	return cmos_base[offset];
+	return generic_nvram32[offset];
 }
 
 

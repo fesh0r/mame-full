@@ -20,7 +20,10 @@ static const char *msgs[] =
 	"Invalid parameter",
 	"Bad file name",
 	"Out of space on image",
-	"Input past end of file"
+	"Input past end of file",
+	"Cannot specify path",
+	"Invalid path",
+	"Path not found"
 };
 
 const char *imgtool_error(imgtoolerr_t err)

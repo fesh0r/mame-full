@@ -265,9 +265,9 @@ static WRITE32_HANDLER( latch_w )
 static READ32_HANDLER( eeprom_data_r )
 {
 	if (cojag_is_r3000)
-		return ((UINT32 *)generic_nvram)[offset] | 0xffffff00;
+		return generic_nvram32[offset] | 0xffffff00;
 	else
-		return ((UINT32 *)generic_nvram)[offset] | 0x00ffffff;
+		return generic_nvram32[offset] | 0x00ffffff;
 }
 
 
@@ -282,9 +282,9 @@ static WRITE32_HANDLER( eeprom_data_w )
 //	if (eeprom_enable)
 	{
 		if (cojag_is_r3000)
-			((UINT32 *)generic_nvram)[offset] = data & 0x000000ff;
+			generic_nvram32[offset] = data & 0x000000ff;
 		else
-			((UINT32 *)generic_nvram)[offset] = data & 0xff000000;
+			generic_nvram32[offset] = data & 0xff000000;
 	}
 //	else
 //		logerror("%08X:error writing to disabled EEPROM\n", activecpu_get_previouspc());

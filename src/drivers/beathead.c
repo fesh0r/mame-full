@@ -247,7 +247,7 @@ static WRITE32_HANDLER( eeprom_data_w )
 	if (eeprom_enabled)
 	{
 		mem_mask |= 0xffffff00;
-		COMBINE_DATA(&((data32_t *)generic_nvram)[offset]);
+		COMBINE_DATA(generic_nvram32 + offset);
 		eeprom_enabled = 0;
 	}
 }

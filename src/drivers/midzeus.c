@@ -870,17 +870,13 @@ static WRITE32_HANDLER( cmos_protect_w )
 static WRITE32_HANDLER( cmos_w )
 {
 	if (!cmos_protected)
-	{
-		data32_t *cmos = (data32_t *)generic_nvram;
-		COMBINE_DATA(&cmos[offset]);
-	}
+		COMBINE_DATA(generic_nvram32 + offset);
 }
 
 
 static READ32_HANDLER( cmos_r )
 {
-	data32_t *cmos = (data32_t *)generic_nvram;
-	return cmos[offset];
+	return generic_nvram32[offset];
 }
 
 

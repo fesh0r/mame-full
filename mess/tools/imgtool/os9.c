@@ -197,6 +197,25 @@ static int os9_decode_file_header(imgtool_image *image,
 
 
 
+static imgtoolerr_t os9_read_lsn(imgtool_image *img, const struct os9_diskinfo *disk_info,
+	UINT32 lsn, int offset, void *buffer, size_t buffer_len)
+{
+	floperr_t ferr;
+	UINT32 head, track, sector;
+
+	head = 0;
+	track = lsn / disk_info->sectors_per_track;
+	sector = (lsn % disk_info->sectors_per_track) + 1;
+
+	ferr = floppy_read_sector(imgtool_floppy(img), head, track, sector, offset, buffer, buffer_len);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static UINT32 os9_lookup_lsn(const struct os9_diskinfo *disk_info,
 	const struct os9_fileinfo *file_info, UINT32 *index)
 {
@@ -212,6 +231,81 @@ static UINT32 os9_lookup_lsn(const struct os9_diskinfo *disk_info,
 	lsn = file_info->sector_map[i].lsn + lsn;
 	*index %= disk_info->sector_size;
 	return lsn;
+}
+
+
+
+static int os9_interpret_dirent(void *entry, char **filename, UINT32 *lsn, int *corrupt)
+{
+	int i;
+	char *entry_b = (char *) entry;
+
+	*filename = NULL;
+	*lsn = 0;
+	if (corrupt)
+		*corrupt = FALSE;
+
+	if (entry_b[28] != '\0')
+	{
+		if (corrupt)
+			*corrupt = TRUE;
+	}
+
+	for (i = 0; (i < 28) && !(entry_b[i] & 0x80); i++)
+		;
+	entry_b[i] &= 0x7F;
+	entry_b[i+1] = '\0';
+
+	*lsn = pick_integer(entry, 29, 3);
+	if (strcmp(entry_b, ".") && strcmp(entry_b, ".."))
+		*filename = entry_b;
+	return *filename != NULL;
+}
+
+
+
+static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinfo *disk_info,
+	const char *path, UINT32 *lsn)
+{
+	imgtoolerr_t err;
+	struct os9_fileinfo dir_info;
+	UINT32 index, entry_index, entry_lsn;
+	UINT8 entry[32];
+	char *filename;
+
+	*lsn = disk_info->root_dir_lsn;
+
+	while(*path)
+	{
+		err = os9_decode_file_header(img, disk_info, *lsn, &dir_info);
+		if (err)
+			return err;
+
+		/* sanity check directory */
+		if (!dir_info.directory)
+			return (*lsn == disk_info->root_dir_lsn) ? IMGTOOLERR_CORRUPTIMAGE : IMGTOOLERR_INVALIDPATH;
+
+		for (index = 0; index < dir_info.file_size; index += 32)
+		{
+			entry_index = index;
+			entry_lsn = os9_lookup_lsn(disk_info, &dir_info, &entry_index);
+			
+			err = os9_read_lsn(img, disk_info, entry_lsn, entry_index, entry, sizeof(entry));
+			if (err)
+				return err;
+
+			if (os9_interpret_dirent(entry, &filename, lsn, NULL))
+			{
+				if (!strcmp(path, filename))
+					break;
+			}
+		}
+
+		if (index >= dir_info.file_size)
+			return IMGTOOLERR_PATHNOTFOUND;
+		path += strlen(path) + 1;
+	}
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -234,7 +328,9 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_image *img, const char *path
 	if (err)
 		goto done;
 
-	lsn = os9enum->disk_info.root_dir_lsn;
+	err = os9_lookup_path(img, &os9enum->disk_info, path, &lsn);
+	if (err)
+		goto done;
 
 	err = os9_decode_file_header(img, &os9enum->disk_info,
 		lsn, &os9enum->dir_info);
@@ -252,10 +348,10 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_image *img, const char *path
 	os9enum->img = img;
 
 done:
-	if (err && outenum)
+	if (err && os9enum)
 	{
-		free(*outenum);
-		outenum = NULL;
+		free(os9enum);
+		os9enum = NULL;
 	}
 	*outenum = &os9enum->base;
 	return err;
@@ -265,18 +361,7 @@ done:
 
 static imgtoolerr_t os9_enum_readlsn(struct os9_direnum *os9enum, UINT32 lsn, int offset, void *buffer, size_t buffer_len)
 {
-	floperr_t ferr;
-	UINT32 head, track, sector;
-
-	head = 0;
-	track = lsn / os9enum->disk_info.sectors_per_track;
-	sector = (lsn % os9enum->disk_info.sectors_per_track) + 1;
-
-	ferr = floppy_read_sector(imgtool_floppy(os9enum->img), head, track, sector, offset, buffer, buffer_len);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
-
-	return IMGTOOLERR_SUCCESS;
+	return os9_read_lsn(os9enum->img, &os9enum->disk_info, lsn, offset, buffer, buffer_len);
 }
 
 
@@ -349,13 +434,22 @@ static void os9_diskimage_closeenum(imgtool_imageenum *enumeration)
 
 
 
+static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf)
+{
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImageModule *module)
 {
-	module->prefer_ucase		= 1;
-	module->eoln				= EOLN_CR;
-	module->begin_enum			= os9_diskimage_beginenum;
-	module->next_enum			= os9_diskimage_nextenum;
-	module->close_enum			= os9_diskimage_closeenum;
+	module->initial_path_separator	= 1;
+	module->eoln					= EOLN_CR;
+	module->path_separator			= '/';
+	module->begin_enum				= os9_diskimage_beginenum;
+	module->next_enum				= os9_diskimage_nextenum;
+	module->close_enum				= os9_diskimage_closeenum;
+//	module->read_file				= os9_diskimage_readfile;
 	return IMGTOOLERR_SUCCESS;
 }
 

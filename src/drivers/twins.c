@@ -1,0 +1,128 @@
+/*
+
+Twins
+Electronic Devices, 1994
+
+PCB Layout
+----------
+
+This is a very tiny PCB,
+only about 6 inches square.
+
+|-----------------------|
+|     6116   16MHz 62256|
+|TEST 6116 24C02        |
+|             PAL  62256|
+|J   62256 |--------|   |
+|A         |TPC1020 | 2 |
+|M   62256 |AFN-084C|   |
+|M         |        | 1 |
+|A         |--------|   |
+| AY3-8910              |
+|                 D70116|
+|-----------------------|
+Notes:
+    V30 clock      : 8.000MHz (16/2)
+    AY3-8910 clock : 2.000MHz (16/8)
+    VSync          : 50Hz
+
+
+
+seems a similar board to hotblocks
+
+
+*/
+
+#include "driver.h"
+
+
+static ADDRESS_MAP_START( twins_map, ADDRESS_SPACE_PROGRAM, 8 )
+//	AM_RANGE(0x00000, 0x0ffff) AM_RAM
+//	AM_RANGE(0x10000, 0x1ffff) AM_RAM
+	AM_RANGE(0x20000, 0xfffff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( twins_io, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_END
+
+
+
+VIDEO_START(twins)
+{
+	return 0;
+}
+
+VIDEO_UPDATE(twins)
+{
+
+}
+
+
+INPUT_PORTS_START(twins)
+	PORT_START	/* 8bit */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+
+	PORT_START	/* 8bit */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+INPUT_PORTS_END
+
+static INTERRUPT_GEN( twins_irq ) /* right? */
+{
+//	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+}
+
+static struct AY8910interface ay8910_interface =
+{
+	1, /* number of chips */
+	2000000, /* 2 MHz */
+	{ 50 },
+	{ input_port_0_r },
+	{ input_port_1_r },
+	{ 0 },
+	{ 0 }
+};
+
+static MACHINE_DRIVER_START( twins )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(V30, 8000000)
+	MDRV_CPU_PROGRAM_MAP(twins_map, 0)
+	MDRV_CPU_IO_MAP(twins_io,0)
+	MDRV_CPU_VBLANK_INT(twins_irq,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(1024,1024)
+	MDRV_VISIBLE_AREA(0, 1024-1, 0, 1024-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(twins)
+	MDRV_VIDEO_UPDATE(twins)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+ROM_START( twins )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "1.bin", 0x000000, 0x080000, CRC(d5ef7b0d) SHA1(7261dca5bb0aef755b4f2b85a159b356e7ac8219) )
+	ROM_LOAD16_BYTE( "2.bin", 0x000001, 0x080000, CRC(8a5392f4) SHA1(e6a2ecdb775138a87d27aa4ad267bdec33c26baa) )
+ROM_END
+
+GAMEX( 1994, twins,    0,        twins, twins, 0, ROT0,  "Electronic Devices", "Twins",GAME_NOT_WORKING )

@@ -578,7 +578,7 @@ int cli_frontend_init (int argc, char **argv)
 	{
 		const struct GameDriver *tmp_gd;
 
-		sprintf(buffer, "%s", drivers[game_index]->source_file+12);
+		sprintf(buffer, "%s", drivers[game_index]->source_file+4);
 		buffer[strlen(buffer) - 2] = 0;
 
 		tmp_gd = drivers[game_index];

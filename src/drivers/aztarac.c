@@ -46,7 +46,7 @@ static MACHINE_INIT( aztarac )
 
 static READ16_HANDLER( nvram_r )
 {
-	return ((data16_t *)generic_nvram)[offset] | 0xfff0;
+	return generic_nvram16[offset] | 0xfff0;
 }
 
 

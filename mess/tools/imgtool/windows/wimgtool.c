@@ -28,12 +28,16 @@ struct wimgtool_info
 	imgtool_image *image;
 	char *filename;
 	int open_mode;
+	char *current_directory;
 
 	HIMAGELIST iconlist_normal;
 	HIMAGELIST iconlist_small;
 	mess_pile iconlist_extensions;
+
 	HICON readonly_icon;
+	int readonly_icon_index;
 	HICON directory_icon;
+	int directory_icon_index;
 
 	HIMAGELIST dragimage;
 	POINT dragpt;
@@ -79,7 +83,7 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 		goto done;
 	}
 
-	err = img_beginenum(info->image, NULL, &imageenum);
+	err = img_beginenum(info->image, info->current_directory, &imageenum);
 	if (err)
 		goto done;
 	do
@@ -161,29 +165,37 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 	size_t size, i;
 
 	info = get_wimgtool_info(window);
-	extension = strchr(entry->filename, '.');
-	if (!extension)
-		extension = ".bin";
 
-	ptr = pile_getptr(&info->iconlist_extensions);
-	size = pile_size(&info->iconlist_extensions);
-	icon_index = 0;
-	for (i = 0; i < size; i += strlen(&ptr[i]) + 1)
+	if (entry->directory)
 	{
-		if (!stricmp(&ptr[i], extension))
-			break;
-		icon_index++;
+		icon_index = info->directory_icon_index;
 	}
-
-	if (i >= size)
+	else
 	{
-		icon_index = append_associated_icon(window, extension);
-		if (icon_index < 0)
-			return IMGTOOLERR_UNEXPECTED;
-		if (pile_puts(&info->iconlist_extensions, extension))
-			return IMGTOOLERR_OUTOFMEMORY;
-		if (pile_putc(&info->iconlist_extensions, '\0'))
-			return IMGTOOLERR_OUTOFMEMORY;
+		extension = strchr(entry->filename, '.');
+		if (!extension)
+			extension = ".bin";
+
+		ptr = pile_getptr(&info->iconlist_extensions);
+		size = pile_size(&info->iconlist_extensions);
+		icon_index = 0;
+		for (i = 0; i < size; i += strlen(&ptr[i]) + 1)
+		{
+			if (!stricmp(&ptr[i], extension))
+				break;
+			icon_index++;
+		}
+
+		if (i >= size)
+		{
+			icon_index = append_associated_icon(window, extension);
+			if (icon_index < 0)
+				return IMGTOOLERR_UNEXPECTED;
+			if (pile_puts(&info->iconlist_extensions, extension))
+				return IMGTOOLERR_OUTOFMEMORY;
+			if (pile_putc(&info->iconlist_extensions, '\0'))
+				return IMGTOOLERR_OUTOFMEMORY;
+		}
 	}
 
 	memset(&lvi, 0, sizeof(lvi));
@@ -272,7 +284,6 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	const struct ImageModule *module;
 	int column_index = 0;
 	int i;
-	const char *window_text;
 	char buf[256];
 	const char *statusbar_text[2];
 
@@ -281,7 +292,9 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	module = info->image ? img_module(info->image) : NULL;
 	if (info->filename)
 	{
-		window_text = U2T(info->filename);
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+			(info->current_directory && info->current_directory[0]) ? "%s - %s" : "%s",
+			info->filename, info->current_directory);
 		statusbar_text[0] = osd_basename((char *) info->filename);
 		statusbar_text[1] = module->description;
 	}
@@ -289,11 +302,10 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 			"%s %s", wimgtool_producttext, build_version);
-		window_text = buf;
 		statusbar_text[0] = NULL;
 		statusbar_text[1] = NULL;
 	}
-	SetWindowText(window, U2T(window_text));
+	SetWindowText(window, U2T(buf));
 	for (i = 0; i < sizeof(statusbar_text) / sizeof(statusbar_text[0]); i++)
 		SendMessage(info->statusbar, SB_SETTEXT, i, (LPARAM) U2T(statusbar_text[i]));
 
@@ -451,6 +463,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	imgtool_image *image;
 	struct wimgtool_info *info;
 	struct imgtool_module_features features;
+	char buf[2];
 
 	info = get_wimgtool_info(window);
 
@@ -485,6 +498,31 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 		img_close(info->image);
 	info->image = image;
 	info->open_mode = read_or_write;
+	if (info->current_directory)
+	{
+		free(info->current_directory);
+		info->current_directory = NULL;
+	}
+
+	// do we support directories?
+	if (features.supports_directories)
+	{
+		if (module->initial_path_separator)
+		{
+			buf[0] = module->path_separator;
+			buf[1] = '\0';
+		}
+		else
+		{
+			buf[0] = '\0';
+		}
+		info->current_directory = strdup(buf);
+		if (!info->current_directory)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+	}
 
 	// refresh the window
 	full_refresh_image(window);
@@ -750,9 +788,34 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	// get icons
 	info->readonly_icon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_READONLY), IMAGE_ICON, 16, 16, 0);
 	info->directory_icon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DIRECTORY), IMAGE_ICON, 16, 16, 0);
+	info->readonly_icon_index = ImageList_AddIcon(info->iconlist_normal, info->readonly_icon);
+	ImageList_AddIcon(info->iconlist_small, info->readonly_icon);
+	info->directory_icon_index = ImageList_AddIcon(info->iconlist_normal, info->directory_icon);
+	ImageList_AddIcon(info->iconlist_small, info->directory_icon);
 
 	full_refresh_image(window);
 	return 0;
+}
+
+
+
+static void wimgtool_destroy(HWND window)
+{
+	struct wimgtool_info *info;
+
+	info = get_wimgtool_info(window);
+
+	if (info)
+	{
+		if (info->image)
+			img_close(info->image);
+		pile_delete(&info->iconlist_extensions);
+		DestroyIcon(info->readonly_icon);
+		DestroyIcon(info->directory_icon);
+		if (info->current_directory)
+			free(info->current_directory);
+		free(info);
+	}
 }
 
 
@@ -837,13 +900,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			break;
 
 		case WM_DESTROY:
-			if (info)
-			{
-				if (info->image)
-					img_close(info->image);
-				pile_delete(&info->iconlist_extensions);
-				free(info);
-			}
+			wimgtool_destroy(window);
 			break;
 
 		case WM_SIZE:

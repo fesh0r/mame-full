@@ -760,7 +760,7 @@ $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/snk68.o $(OBJ)/drivers/snk68.o \
 	$(OBJ)/vidhrdw/prehisle.o $(OBJ)/drivers/prehisle.o \
 	$(OBJ)/vidhrdw/bbusters.o $(OBJ)/drivers/bbusters.o \
-	$(OBJ)/drivers/hng64.o \
+	$(OBJ)/drivers/hng64.o $(OBJ)/vidhrdw/hng64.o \
 
 $(OBJ)/alpha.a: \
 	$(OBJ)/drivers/shougi.o \
@@ -1102,6 +1102,10 @@ $(OBJ)/edevices.a: \
 	$(OBJ)/vidhrdw/stlforce.o $(OBJ)/drivers/stlforce.o \
 	$(OBJ)/vidhrdw/diverboy.o $(OBJ)/drivers/diverboy.o \
 	$(OBJ)/vidhrdw/fantland.o $(OBJ)/drivers/fantland.o \
+	$(OBJ)/drivers/ppmast93.o \
+	$(OBJ)/drivers/twinbrat.o \
+	$(OBJ)/drivers/twins.o \
+	$(OBJ)/drivers/mwarr.o \
 
 $(OBJ)/excelent.a: \
 	$(OBJ)/vidhrdw/gcpinbal.o $(OBJ)/drivers/gcpinbal.o \
