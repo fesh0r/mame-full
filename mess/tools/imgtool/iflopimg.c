@@ -44,12 +44,12 @@ static int imgtool_floppy_seekproc(void *file, INT64 offset, int whence)
 	return 0;
 }
 
-static UINT32 imgtool_floppy_readproc(void *file, void *buffer, UINT32 length)
+static size_t imgtool_floppy_readproc(void *file, void *buffer, size_t length)
 {
 	return stream_read((STREAM *) file, buffer, length);
 }
 
-static UINT32 imgtool_floppy_writeproc(void *file, const void *buffer, UINT32 length)
+static size_t imgtool_floppy_writeproc(void *file, const void *buffer, size_t length)
 {
 	stream_write((STREAM *) file, buffer, length);
 	return length;

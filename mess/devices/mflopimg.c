@@ -144,12 +144,12 @@ static int mame_fseek_thunk(void *file, INT64 offset, int whence)
 	return mame_fseek((mame_file *) file, offset, whence);
 }
 
-static UINT32 mame_fread_thunk(void *file, void *buffer, UINT32 length)
+static size_t mame_fread_thunk(void *file, void *buffer, size_t length)
 {
 	return mame_fread((mame_file *) file, buffer, length);
 }
 
-static UINT32 mame_fwrite_thunk(void *file, const void *buffer, UINT32 length)
+static size_t mame_fwrite_thunk(void *file, const void *buffer, size_t length)
 {
 	return mame_fwrite((mame_file *) file, buffer, length);
 }
