@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600] Various fixes on certain Activision games.  (bug #570) [Judge]
+
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
 - [PC] New PIT implementation; Styx and Digger run better now.  Also fixed the
@@ -26,7 +28,7 @@ System Driver Changes:
 User Interface Changes:
 -----------------------
 - [Windows GUI] Fixed some miscellaneous bugs having to do with the software
-  picker settings.  (bug #568)  [Nate Woods]
+  picker settings.  (bug #568, bug #569)  [Nate Woods]
 
 
 

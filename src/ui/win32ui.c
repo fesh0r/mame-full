@@ -3886,7 +3886,6 @@ UINT_PTR CALLBACK CFHookProc(
 						if( iIndex == SendDlgItemMessage(hdlg, cmb4, CB_GETCOUNT, 0, 0)-1)
 						{
 							//Custom color selected
- 							COLORREF cList;
  							cList = GetListFontColor();
  							PickColor(&cList);
 							SendDlgItemMessage(hdlg, cmb4, CB_DELETESTRING, iIndex, 0);
