@@ -15,6 +15,7 @@
 #include "cpuintrf.h"
 #include "machine/tia.h"
 #include "drawgfx.h"
+#include <zlib.h>
 
 
 UINT8 Bankswitch_Method = 0;
