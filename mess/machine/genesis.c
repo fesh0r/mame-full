@@ -10,8 +10,9 @@
 #include <zlib.h>
 
 int z80running;
-int	port_a_io = 0;
-int	port_b_io = 0;
+int port_a_io = 0;
+int port_b_io = 0;
+
 #define MRAM_SIZE	0x10000
 #define SRAM_SIZE	0x10000
 
@@ -22,30 +23,30 @@ int genesis_isfunkySMD(unsigned char *);
 int genesis_isSMD(unsigned char *);
 int genesis_sharedram_size = 0x10000;
 int genesis_soundram_size = 0x10000;
+
 /*unsigned char *genesis_sharedram;*/
 unsigned char genesis_sharedram[0x10000];
 unsigned char *genesis_soundram;
 
 static unsigned char *ROM;
 
-void genesis_init_machine (void)
+void genesis_init_machine(void)
 {
-  //	genesis_soundram = malloc(0x10000);
 	/* the following ensures that the Z80 begins without running away from 0 */
 	/* 0x76 is just a forced 'halt' as soon as the CPU is initially run */
 	genesis_soundram[0] = 0x76;
-	genesis_soundram[0x38]=0x76;
-   	cpu_setbank(1, &genesis_soundram[0]);
+	genesis_soundram[0x38] = 0x76;
+	cpu_setbank(1, &genesis_soundram[0]);
 	cpu_setbank(2, &genesis_sharedram[0]);
 
-	cpu_set_halt_line (1,ASSERT_LINE);
+	cpu_set_halt_line(1, ASSERT_LINE);
 
 	z80running = 0;
 	logerror("Machine init\n");
 }
 
 
-int genesis_load_rom (int id)
+int genesis_load_rom(int id)
 {
 	FILE *romfile;
 	unsigned char *tmpROMnew, *tmpROM;
@@ -58,46 +59,52 @@ int genesis_load_rom (int id)
 	logerror("ROM load/init regions\n");
 
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	genesis_soundram = memory_region(REGION_CPU2);
+
+
+    if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		printf("Genesis Requires Cartridge!\n");
 		return INIT_FAILED;
 	}
-	/* Allocate memory and set up memory regions */
-	if( new_memory_region(REGION_CPU1,0x405000) )
+
+    /* Allocate memory and set up memory regions */
+	if (new_memory_region(REGION_CPU1, 0x405000))
 	{
 		logerror("new_memory_region failed!\n");
 		return INIT_FAILED;
 	}
 	rawROM = memory_region(REGION_CPU1);
-	ROM = rawROM /*+ 512*/;
+	ROM = rawROM /*+ 512 */ ;
 
-	length = osd_fread (romfile, rawROM+0x2000, 0x400200);
+	length = osd_fread(romfile, rawROM + 0x2000, 0x400200);
 	logerror("image length = 0x%x", length);
-	if (length < 1024+512 ) goto bad; // smallest known rom is 1.7K
+	if (length < 1024 + 512)
+		goto bad;						/* smallest known rom is 1.7K */
 
-	if (genesis_isSMD(&rawROM[0x2200])) /* is this a SMD file..? */
+	if (genesis_isSMD(&rawROM[0x2200]))	/* is this a SMD file..? */
 	{
 
 		tmpROMnew = ROM;
-		tmpROM = ROM + 0x2000+512;
+		tmpROM = ROM + 0x2000 + 512;
 
-		for(ptr = 0; ptr < (0x400000) / (8192); ptr += 2)
+		for (ptr = 0; ptr < (0x400000) / (8192); ptr += 2)
 		{
-			for(x = 0; x < 8192; x++)
+			for (x = 0; x < 8192; x++)
 			{
 				*tmpROMnew++ = *(tmpROM + ((ptr + 1) * 8192) + x);
 				*tmpROMnew++ = *(tmpROM + ((ptr + 0) * 8192) + x);
-		  	}
+			}
 		}
 
 		relocate = 0;
 
 	}
-	else  /* check if it's a MD file */
-	if ((rawROM[0x2080] == 'E')
-	 && (rawROM[0x2081] == 'A')
-	 && (rawROM[0x2082] == 'M' || rawROM[0x2082] == 'G') )	/* is this a MD file..? */
+	else
+	/* check if it's a MD file */
+	if ((rawROM[0x2080] == 'E') &&
+		(rawROM[0x2081] == 'A') &&
+		(rawROM[0x2082] == 'M' || rawROM[0x2082] == 'G'))  /* is this a MD file..? */
 	{
 
 		tmpROMnew = malloc(length);
@@ -109,457 +116,507 @@ int genesis_load_rom (int id)
 			goto bad;
 		}
 
-		memcpy(tmpROMnew, ROM+0x2000, length);
+		memcpy(tmpROMnew, ROM + 0x2000, length);
 
-		for(ptr = 0; ptr < length; ptr+=2)
+		for (ptr = 0; ptr < length; ptr += 2)
 		{
 
-			ROM[ptr    ] = secondhalf[ptr >> 1];
-			ROM[ptr + 1] =  tmpROMnew[ptr >> 1];
+			ROM[ptr] = secondhalf[ptr >> 1];
+			ROM[ptr + 1] = tmpROMnew[ptr >> 1];
 		}
 		free(tmpROMnew);
 		relocate = 0;
 
 	}
-	else /* BIN it is, then */
+	else
+	/* BIN it is, then */
 	{
-	  	relocate = 0x2000;
+		relocate = 0x2000;
 	}
 
-	ROM = memory_region(REGION_CPU1); /* 68000 ROM region */
+	ROM = memory_region(REGION_CPU1);	/* 68000 ROM region */
 
-	if (new_memory_region(REGION_CPU2,0x10000)) /* Z80 region */
+	if (new_memory_region(REGION_CPU2, 0x10000))	/* Z80 region */
 	{
 		logerror("Memory allocation failed creating Z80 RAM region!\n");
 		goto bad;
 	}
 
 
-	genesis_soundram = memory_region(REGION_CPU2);
-
-
-   	for (ptr = 0; ptr < 0x402000; ptr+=2) /* mangle bytes for littleendian machines */
+	for (ptr = 0; ptr < 0x402000; ptr += 2)		/* mangle bytes for littleendian machines */
 	{
-	#ifdef LSB_FIRST
-		int temp   = ROM[relocate+ptr  ];
-		ROM[ptr  ] = ROM[relocate+ptr+1];
-		ROM[ptr+1] = temp;
-        #else
+#ifdef LSB_FIRST
+		int temp = ROM[relocate + ptr];
 
-		ROM[ptr  ] = ROM[relocate+ptr  ];
-		ROM[ptr+1] = ROM[relocate+ptr+1];
-	#endif
-
+		ROM[ptr] = ROM[relocate + ptr + 1];
+		ROM[ptr + 1] = temp;
+#else
+		ROM[ptr] = ROM[relocate + ptr];
+		ROM[ptr + 1] = ROM[relocate + ptr + 1];
+#endif
 	}
 
 
-	osd_fclose (romfile);
+	osd_fclose(romfile);
 	return INIT_OK;
+
 bad:
-	osd_fclose (romfile);
+	osd_fclose(romfile);
 	return INIT_FAILED;
 }
 
-// code taken directly from GoodGEN by Cowering
+/* code taken directly from GoodGEN by Cowering */
 
-int genesis_isfunkySMD(unsigned char *buf) {
-
-// aq quiz
-if (!strncmp("UZ(-01  ",(const char *) &buf[0xf0],8)) return 1;
-// Phelios USA redump
-// target earth 
-// klax (namcot)
-if (buf[0x2080] == ' ' && buf[0x0080] == 'S' && buf[0x2081] == 'E' && buf[0x0081] == 'G') return 1;
-// jap baseball 94
-if (!strncmp("OL R-AEAL",(const char *) &buf[0xf0],9)) return 1;
-// devilish Mahjonng Tower
-if (!strncmp("optrEtranet",(const char *) &buf[0xf3],11)) return 1;
-// golden axe 2 beta
-if (buf[0x0100] == 0x3c && buf[0x0101] == 0 && buf[0x0102] == 0 && buf[0x0103] == 0x3c) return 1;
-// omega race
-if (!strncmp("OEARC   ",(const char *)&buf[0x90],8)) return 1;
-// budokan beta
-if (!strncmp(" NTEBDKN",(const char *)&buf[0x6708],8)) return 1;
-// cdx pro 1.8 bios
-if (!strncmp("so fCXP",(const char *)&buf[0x2c0],7)) return 1;
-//ishido (hacked)
-if (!strncmp("sio-Wyo ",(const char *)&buf[0x0090],8)) return 1;
-// onslaught
-if (!strncmp("SS  CAL ",(const char *)&buf[0x0088],8)) return 1;
-// tram terror pirate
-if (!strncmp("SG NEPIE",(const char *)&buf[0x3648],8)) return 1;
-// breath of fire 3 chinese
-if (buf[0x0007] == 0x1c && buf[0x0008] == 0x0a && buf[0x0009] == 0xb8 && buf[0x000a] == 0x0a) return 1;
-//tetris pirate
-if (!strncmp("@TTI>",(const char *)&buf[0x1cbe],5)) return 1;
-
-return 0;
-}
-
-// code taken directly from GoodGEN by Cowering
-
-int genesis_isSMD(unsigned char *buf) {
-if (buf[0x2080] == 'S' && buf[0x80] == 'E' && buf[0x2081] == 'G' && buf[0x81] == 'A') return 1;
-return genesis_isfunkySMD(buf);
-}
-
-int genesis_isfunkyBIN(unsigned char *buf) {
-// all the special cases for crappy headered roms
-// aq quiz
-if (!strncmp("QUIZ (G-3051",(const char *)&buf[0x1e0],12)) return 1;
-// phelios USA redump
-// target earth
-// klax namcot
-if (buf[0x0104] == 'A' && buf[0x0101] == 'S' && buf[0x0102] == 'E' && buf[0x0103] == 'G') return 1;
-// jap baseball 94
-if (!strncmp("WORLD PRO-B",(const char *)&buf[0x1e0],11)) return 1;
-// devlish mahj tower
-if (!strncmp("DEVILISH MAH",(const char *)&buf[0x120],12)) return 1;
-// golden axe 2 beta 
-if (!strncmp("SEGA",(const char *)&buf[0xe40a],4)) return 1;
-// omega race
-if (!strncmp(" OMEGA RAC",(const char *)&buf[0x120],10)) return 1;
-// budokan beta
-if (!strncmp("BUDOKAN.",(const char *)&buf[0x4e18],8)) return 1;
-// cdx 1.8 bios
-if (!strncmp(" CDX PRO",(const char *)&buf[0x588],8)) return 1;
-// ishido (hacked)
-if (!strncmp("Ishido - ",(const char *)&buf[0x120],9)) return 1;
-// onslaught
-if (!strncmp("(C)ACLD 1991",(const char *)&buf[0x118],12)) return 1;
-// tram terror pirate
-if (!strncmp("DREAMWORK",(const char *)&buf[0x2c70],9)) return 1;
-// breath of fire 3 chinese
-if (buf[0x000f] == 0x1c && buf[0x0010] == 0x00 && buf[0x0011] == 0x0a && buf[0x0012] == 0x5c) return 1;
-// tetris pirate
-if (!strncmp("TETRIS",(const char *)&buf[0x397f],6)) return 1;
-return 0;
-}
-
-int genesis_isBIN(unsigned char *buf) {
-if (buf[0x0100] == 'S' && buf[0x0101] == 'E' && buf[0x0102] == 'G' && buf[0x0103] == 'A') return 1;
-return genesis_isfunkyBIN(buf);
-}
-
-// code taken directly from GoodGEN by Cowering
-// same effect as code in genesis_load_rom() except for .smd 
-// where (size % 16384) != 0
-
-int genesis_smd2bin(unsigned char *inbuf,unsigned int len) {
-unsigned long i,j,offset=0;
-unsigned char *tbuf = NULL;
-
-if (len < 16384) return 0;
-tbuf = malloc(len+32768);
-if (tbuf) 
+int genesis_isfunkySMD(unsigned char *buf)
 {
-	for (i = 0;i<len;i += 16384) {
-		for (j = 0;j < 8192; j++) {
-			tbuf[offset+(j<<1)+1] = inbuf[i+j];
-		}
-		for (j = 8192;j < 16384; j++) {
-			tbuf[offset+((j-8192)<<1)] = inbuf[i+j];
-		}
-		offset += 16384;
-	}
-	memcpy(inbuf,tbuf,len);
-	free(tbuf);
-	return 1;
-} else 
-{
+
+/* aq quiz */
+	if (!strncmp("UZ(-01  ", (const char *) &buf[0xf0], 8))
+		return 1;
+/* Phelios USA redump */
+/* target earth */
+/* klax (namcot) */
+	if (buf[0x2080] == ' ' && buf[0x0080] == 'S' && buf[0x2081] == 'E' && buf[0x0081] == 'G')
+		return 1;
+/* jap baseball 94 */
+	if (!strncmp("OL R-AEAL", (const char *) &buf[0xf0], 9))
+		return 1;
+/* devilish Mahjonng Tower */
+	if (!strncmp("optrEtranet", (const char *) &buf[0xf3], 11))
+		return 1;
+/* golden axe 2 beta */
+	if (buf[0x0100] == 0x3c && buf[0x0101] == 0 && buf[0x0102] == 0 && buf[0x0103] == 0x3c)
+		return 1;
+/* omega race */
+	if (!strncmp("OEARC   ", (const char *) &buf[0x90], 8))
+		return 1;
+/* budokan beta */
+	if (!strncmp(" NTEBDKN", (const char *) &buf[0x6708], 8))
+		return 1;
+/* cdx pro 1.8 bios */
+	if (!strncmp("so fCXP", (const char *) &buf[0x2c0], 7))
+		return 1;
+/* ishido (hacked) */
+	if (!strncmp("sio-Wyo ", (const char *) &buf[0x0090], 8))
+		return 1;
+/* onslaught */
+	if (!strncmp("SS  CAL ", (const char *) &buf[0x0088], 8))
+		return 1;
+/* tram terror pirate */
+	if (!strncmp("SG NEPIE", (const char *) &buf[0x3648], 8))
+		return 1;
+/* breath of fire 3 chinese */
+	if (buf[0x0007] == 0x1c && buf[0x0008] == 0x0a && buf[0x0009] == 0xb8 && buf[0x000a] == 0x0a)
+		return 1;
+/*tetris pirate */
+	if (!strncmp("@TTI>", (const char *) &buf[0x1cbe], 5))
+		return 1;
+
 	return 0;
 }
+
+/* code taken directly from GoodGEN by Cowering */
+
+int genesis_isSMD(unsigned char *buf)
+{
+	if (buf[0x2080] == 'S' && buf[0x80] == 'E' && buf[0x2081] == 'G' && buf[0x81] == 'A')
+		return 1;
+	return genesis_isfunkySMD(buf);
 }
 
-int genesis_md2bin(unsigned char *inbuf,unsigned long len) {
-unsigned long i,j,offset=0;
-unsigned char *tbuf = NULL;
-
-if (len < 16384) return 0;
-tbuf = malloc(len+32768);
-if (tbuf)
+int genesis_isfunkyBIN(unsigned char *buf)
 {
-	j = len/2;
-	for (i = 0;i<j;i++) {
-		tbuf[offset]   = inbuf[j+i];
-		tbuf[offset+1] = inbuf[i];
-		offset += 2;
-	}
-	memcpy(inbuf,tbuf,len);
-	free(tbuf);
-	return 1;
-} else 
-{
+/* all the special cases for crappy headered roms */
+/* aq quiz */
+	if (!strncmp("QUIZ (G-3051", (const char *) &buf[0x1e0], 12))
+		return 1;
+/* phelios USA redump */
+/* target earth */
+/* klax namcot */
+	if (buf[0x0104] == 'A' && buf[0x0101] == 'S' && buf[0x0102] == 'E' && buf[0x0103] == 'G')
+		return 1;
+/* jap baseball 94 */
+	if (!strncmp("WORLD PRO-B", (const char *) &buf[0x1e0], 11))
+		return 1;
+/* devlish mahj tower */
+	if (!strncmp("DEVILISH MAH", (const char *) &buf[0x120], 12))
+		return 1;
+/* golden axe 2 beta */
+	if (!strncmp("SEGA", (const char *) &buf[0xe40a], 4))
+		return 1;
+/* omega race */
+	if (!strncmp(" OMEGA RAC", (const char *) &buf[0x120], 10))
+		return 1;
+/* budokan beta */
+	if (!strncmp("BUDOKAN.", (const char *) &buf[0x4e18], 8))
+		return 1;
+/* cdx 1.8 bios */
+	if (!strncmp(" CDX PRO", (const char *) &buf[0x588], 8))
+		return 1;
+/* ishido (hacked) */
+	if (!strncmp("Ishido - ", (const char *) &buf[0x120], 9))
+		return 1;
+/* onslaught */
+	if (!strncmp("(C)ACLD 1991", (const char *) &buf[0x118], 12))
+		return 1;
+/* tram terror pirate */
+	if (!strncmp("DREAMWORK", (const char *) &buf[0x2c70], 9))
+		return 1;
+/* breath of fire 3 chinese */
+	if (buf[0x000f] == 0x1c && buf[0x0010] == 0x00 && buf[0x0011] == 0x0a && buf[0x0012] == 0x5c)
+		return 1;
+/* tetris pirate */
+	if (!strncmp("TETRIS", (const char *) &buf[0x397f], 6))
+		return 1;
 	return 0;
 }
+
+int genesis_isBIN(unsigned char *buf)
+{
+	if (buf[0x0100] == 'S' && buf[0x0101] == 'E' && buf[0x0102] == 'G' && buf[0x0103] == 'A')
+		return 1;
+	return genesis_isfunkyBIN(buf);
 }
 
-UINT32 genesis_partialcrc(const unsigned char *buf,unsigned int len) {
-UINT32 crc = 0;
-if (len < 1700) return 0; // smallest known working ROM
-if (genesis_isSMD((unsigned char *)&buf[0x200]))
+/* code taken directly from GoodGEN by Cowering
+ * same effect as code in genesis_load_rom() except for .smd
+ * where (size % 16384) != 0
+ */
+
+int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
 {
-	if (genesis_smd2bin((unsigned char *)&buf[0x200],len-0x200))
+	unsigned long i, j, offset = 0;
+	unsigned char *tbuf = NULL;
+
+	if (len < 16384)
+		return 0;
+	tbuf = malloc(len + 32768);
+	if (tbuf)
 	{
-		crc = (UINT32) crc32(0L,&buf[0x200],len-0x200);
+		for (i = 0; i < len; i += 16384)
+		{
+			for (j = 0; j < 8192; j++)
+			{
+				tbuf[offset + (j << 1) + 1] = inbuf[i + j];
+			}
+			for (j = 8192; j < 16384; j++)
+			{
+				tbuf[offset + ((j - 8192) << 1)] = inbuf[i + j];
+			}
+			offset += 16384;
+		}
+		memcpy(inbuf, tbuf, len);
+		free(tbuf);
+		return 1;
 	}
-} else 
-if (genesis_isBIN((unsigned char *)buf))
-{
-	crc = (UINT32) crc32(0L,buf,len);
-} else 
-if ((buf[0x080] == 'E') && (buf[0x081] == 'A') && (buf[0x082] == 'M' || buf[0x082] == 'G'))
-{
-	if (genesis_md2bin((unsigned char *)buf,len))
+	else
 	{
-		crc = (UINT32) crc32(0L,buf,len);
+		return 0;
 	}
-}
-logerror("Genesis Partial CRC: %08lx %d\n",crc,len);
-return crc;
 }
 
-int genesis_id_rom (int id)
+int genesis_md2bin(unsigned char *inbuf, unsigned long len)
+{
+	unsigned long i, j, offset = 0;
+	unsigned char *tbuf = NULL;
+
+	if (len < 16384)
+		return 0;
+	tbuf = malloc(len + 32768);
+	if (tbuf)
+	{
+		j = len / 2;
+		for (i = 0; i < j; i++)
+		{
+			tbuf[offset] = inbuf[j + i];
+			tbuf[offset + 1] = inbuf[i];
+			offset += 2;
+		}
+		memcpy(inbuf, tbuf, len);
+		free(tbuf);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
+{
+	UINT32 crc = 0;
+
+	if (len < 1700)
+		return 0;						/* smallest known working ROM */
+	if (genesis_isSMD((unsigned char *) &buf[0x200]))
+	{
+		if (genesis_smd2bin((unsigned char *) &buf[0x200], len - 0x200))
+		{
+			crc = (UINT32) crc32(0L, &buf[0x200], len - 0x200);
+		}
+	}
+	else if (genesis_isBIN((unsigned char *) buf))
+	{
+		crc = (UINT32) crc32(0L, buf, len);
+	}
+	else if ((buf[0x080] == 'E') && (buf[0x081] == 'A') && (buf[0x082] == 'M' || buf[0x082] == 'G'))
+	{
+		if (genesis_md2bin((unsigned char *) buf, len))
+		{
+			crc = (UINT32) crc32(0L, buf, len);
+		}
+	}
+	logerror("Genesis Partial CRC: %08lx %d\n", crc, len);
+	return crc;
+}
+
+int genesis_id_rom(int id)
 {
 	FILE *romfile;
 	unsigned char *temp;
 	int retval = ID_FAILED;
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return ID_FAILED;
-	temp = (unsigned char *)malloc(0x8000+0x200);
-	if (temp) 
+	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+		return ID_FAILED;
+	temp = (unsigned char *) malloc(0x8000 + 0x200);
+	if (temp)
 	{
 
-		osd_fread (romfile, temp, 0x8000+0x200);
+		osd_fread(romfile, temp, 0x8000 + 0x200);
 
 		/* is this an SMD file..? */
-        if (genesis_isSMD(&temp[0x200])) retval = ID_OK;
+		if (genesis_isSMD(&temp[0x200]))
+			retval = ID_OK;
 
 		/* How about a BIN file..? */
-		if ((retval == ID_FAILED) && genesis_isBIN(&temp[0])) retval = ID_OK;
+		if ((retval == ID_FAILED) && genesis_isBIN(&temp[0]))
+			retval = ID_OK;
 
 		/* maybe a .md file? (rare) */
-		if ((retval == ID_FAILED) && (temp[0x080] == 'E') && (temp[0x081] == 'A') && (temp[0x082] == 'M' || temp[0x082] == 'G')) retval = ID_OK;
-	} else
+		if ((retval == ID_FAILED) && (temp[0x080] == 'E') && (temp[0x081] == 'A') && (temp[0x082] == 'M' || temp[0x082] == 'G'))
+			retval = ID_OK;
+	}
+	else
 	{
 		logerror("genesis_id_rom(): Out of Memory\n");
 	}
 
-	osd_fclose (romfile);
+	osd_fclose(romfile);
 	return retval;
 }
 
-int genesis_interrupt (void)
+int genesis_interrupt(void)
 {
-static int inter = 0;
-//inter ++;
-//if (inter > 223) inter = 0;
-//genesis_modify_display(inter);
-if (inter == 0)
-{
-//static int inter=0;
-//	inter = (inter+1);
-//	if (inter < 20) return -1;
-	if (vdp_v_interrupt /*&& vdp_display_enable*/)
+	static int inter = 0;
+
+/*	inter ++; */
+/*	if (inter > 223) inter = 0; */
+/*	genesis_modify_display(inter); */
+	if (inter == 0)
 	{
-		logerror("Interrupt\n");
-		return 6;  /*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
-	}
-	if (vdp_h_interrupt /*&& vdp_display_enable*/)
-	{
-  		logerror("H Interrupt\n");
-		return 4;  /*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
-	}
+/*		static int inter=0; */
+/*		inter = (inter+1); */
+/*		if (inter < 20) return -1; */
+		if (vdp_v_interrupt /* && vdp_display_enable */ )
+		{
+			logerror("Interrupt\n");
+			return 6;					/*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
+		}
+		if (vdp_h_interrupt /* && vdp_display_enable */ )
+		{
+			logerror("H Interrupt\n");
+			return 4;					/*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
+		}
 /*	else
 		return 4;*/
-		/*printf("denied\n");*/
+		/*printf("denied\n"); */
+		return 0;
+	}
 	return 0;
 }
-return 0;
-}
-WRITE_HANDLER ( genesis_io_w )
+WRITE_HANDLER(genesis_io_w)
 {
-  	data = COMBINE_WORD(0, data);
-  //	logerror("genesis_io_w %x, %x\n", offset, data);
-  	switch (offset)
-		{
-			case 2: /* joystick port a IO bit set */
-		  //	logerror("port a set to %x\n", port_a_io);
-				port_a_io = data & 0xff;
-				break;
-			case 4: /* joystick port b IO bit set */
-				port_b_io = data & 0xff;
-				break;
-			case 8:
-		  //	 logerror("port a dir set to %x\n", data & 0xff);
-
-				break;
-			case 0x0a:
-				break;
- 		}
+	data = COMBINE_WORD(0, data);
+/*	logerror("genesis_io_w %x, %x\n", offset, data); */
+	switch (offset)
+	{
+	case 2:							/* joystick port a IO bit set */
+		/* logerror("port a set to %x\n", port_a_io); */
+		port_a_io = data & 0xff;
+		break;
+	case 4:							/* joystick port b IO bit set */
+		port_b_io = data & 0xff;
+		break;
+	case 8:
+		/* logerror("port a dir set to %x\n", data & 0xff); */
+		break;
+	case 0x0a:
+		break;
+	}
 }
-READ_HANDLER ( genesis_io_r )
+READ_HANDLER(genesis_io_r)
 {
 
 	int returnval = 0x80;
 
-   //	logerror("inputport 3 is %d\n", readinputport(3));
+/*	logerror("inputport 3 is %d\n", readinputport(3)); */
 
 	switch (readinputport(4))
 
 	{
 
-		case 0:
+	case 0:
 
-			switch (memory_region(REGION_CPU1)[ACTUAL_BYTE_ADDRESS(0x1f0)])
+		switch (memory_region(REGION_CPU1)[ACTUAL_BYTE_ADDRESS(0x1f0)])
 
-			{
+		{
 
-				case 'J':
-
-					returnval = 0x00;
-
-					break;
-
-				case 'E':
-
-					returnval = 0xc0;
-
-					break;
-
-				case 'U':
-
-					returnval = 0x80;
-
-					break;
-
-			}
-
-			break;
-
-		case 1:	/* USA */
-
-			returnval = 0x80;
-
-			break;
-
-		case 2:	/* Japan */
+		case 'J':
 
 			returnval = 0x00;
 
 			break;
 
-		case 3:	/* Europe */
+		case 'E':
 
 			returnval = 0xc0;
 
 			break;
 
+		case 'U':
+
+			returnval = 0x80;
+
+			break;
+
+		}
+
+		break;
+
+	case 1:							/* USA */
+
+		returnval = 0x80;
+
+		break;
+
+	case 2:							/* Japan */
+
+		returnval = 0x00;
+
+		break;
+
+	case 3:							/* Europe */
+
+		returnval = 0xc0;
+
+		break;
+
 	}
 
 
-  //	logerror("genesis_io_r %x\n", offset);
+/*	logerror("genesis_io_r %x\n", offset); */
 	switch (offset)
-		{
-			case 0:
-  				// logerror("coo!\n");
-  				return returnval; /* was just NTSC, overseas (USA) no FDD, now auto */
-				break;
-			case 2: /* joystick port a */
-				if (port_a_io == 0x00)
-					return readinputport(1);
-				else
-					return readinputport(0);
-				break;
-			case 4: /* joystick port b */
-				if (port_b_io == 0x00)
-					return readinputport(3);
-				else
-					return readinputport(2);
-				break;
- 		}
- 	return 0x00;
+	{
+	case 0:
+/*		logerror("coo!\n"); */
+		return returnval;				/* was just NTSC, overseas (USA) no FDD, now auto */
+		break;
+	case 2:							/* joystick port a */
+		if (port_a_io == 0x00)
+			return readinputport(1);
+		else
+			return readinputport(0);
+		break;
+	case 4:							/* joystick port b */
+		if (port_b_io == 0x00)
+			return readinputport(3);
+		else
+			return readinputport(2);
+		break;
+	}
+	return 0x00;
 }
-READ_HANDLER ( genesis_ctrl_r )
+READ_HANDLER(genesis_ctrl_r)
 {
-	//int returnval;
-   //	logerror("genesis_ctrl_r %x\n", offset);
+/*	int returnval; */
+
+/*  logerror("genesis_ctrl_r %x\n", offset); */
 	switch (offset)
-		{
-			case 0:	 /* DRAM mode is write only */
-				return 0xffff;
-				break;
-			case 0x100: /* return Z80 CPU Function Stop Accessible or not */
-			 //	logerror("Returning z80 state\n");
-				return (z80running ? 0x0100 : 0x0);
-				/* docs comflict here, page 91 says 0 == z80 has access */
-				/* page 76 says 0 means you can access the space */
-				break;
-			case 0x200: /* Z80 CPU Reset - write only */
-				return 0xffff;
-				break;
-		}
-		return 0x00;
+	{
+	case 0:							/* DRAM mode is write only */
+		return 0xffff;
+		break;
+	case 0x100:						/* return Z80 CPU Function Stop Accessible or not */
+		/* logerror("Returning z80 state\n"); */
+		return (z80running ? 0x0100 : 0x0);
+		/* docs comflict here, page 91 says 0 == z80 has access */
+		/* page 76 says 0 means you can access the space */
+		break;
+	case 0x200:						/* Z80 CPU Reset - write only */
+		return 0xffff;
+		break;
+	}
+	return 0x00;
 
 }
-WRITE_HANDLER ( genesis_ctrl_w )
+WRITE_HANDLER(genesis_ctrl_w)
 {
-  data = COMBINE_WORD(0, data);
+	data = COMBINE_WORD(0, data);
 
-  //	logerror("genesis_ctrl_w %x, %x\n", offset, data);
+/*	logerror("genesis_ctrl_w %x, %x\n", offset, data); */
 
 	switch (offset)
+	{
+	case 0:							/* set DRAM mode... we have to ignore this for production cartridges */
+		return;
+		break;
+	case 0x100:						/* Z80 BusReq */
+		if (data == 0x100)
 		{
-			case 0: /* set DRAM mode... we have to ignore this for production cartridges */
-				return;
-				break;
-			case 0x100: /* Z80 BusReq */
-				if (data == 0x100)
-					{
-					  	z80running = 0;
-						cpu_set_halt_line(1,ASSERT_LINE); /* halt Z80 */
-				   //		logerror("z80 stopped by 68k BusReq\n");
-					}
-					else
-					{
-					  	z80running = 1;
-						cpu_setbank(1, &genesis_soundram[0]);
-
-						cpu_set_halt_line(1,CLEAR_LINE);
-				   //		logerror("z80 started, BusReq ends\n");
-					}
-				return;
-				break;
-			case 0x200: /* Z80 CPU Reset */
-				if (data == 0x00)
-				{
-					cpu_set_halt_line(1,ASSERT_LINE);
-					cpu_set_reset_line(1,PULSE_LINE);
-
-					cpu_set_halt_line(1,ASSERT_LINE);
-				  //	logerror("z80 reset, ram is %p\n", &genesis_soundram[0]);
-			   	  	z80running = 0;
-				  	return;
-				}
-				else
-				{
-				 //  logerror("z80 out of reset\n");
-				}
-				return;
-
-				break;
+			z80running = 0;
+			cpu_set_halt_line(1, ASSERT_LINE);	/* halt Z80 */
+			/* logerror("z80 stopped by 68k BusReq\n"); */
 		}
+		else
+		{
+			z80running = 1;
+			cpu_setbank(1, &genesis_soundram[0]);
+
+			cpu_set_halt_line(1, CLEAR_LINE);
+			/* logerror("z80 started, BusReq ends\n"); */
+		}
+		return;
+		break;
+	case 0x200:						/* Z80 CPU Reset */
+		if (data == 0x00)
+		{
+			cpu_set_halt_line(1, ASSERT_LINE);
+			cpu_set_reset_line(1, PULSE_LINE);
+
+			cpu_set_halt_line(1, ASSERT_LINE);
+			/* logerror("z80 reset, ram is %p\n", &genesis_soundram[0]); */
+			z80running = 0;
+			return;
+		}
+		else
+		{
+			/* logerror("z80 out of reset\n"); */
+		}
+		return;
+
+		break;
+	}
 }
+
 #if 0
-READ_HANDLER ( cartridge_ram_r )
+READ_HANDLER(cartridge_ram_r)
 {
-/*  logerror("cartridge ram read.. %x\n", offset);*/
+/*	logerror("cartridge ram read.. %x\n", offset);* /
 	return cartridge_ram[offset];
 }
-WRITE_HANDLER ( cartridge_ram_w )
+WRITE_HANDLER(cartridge_ram_w)
 {
-/*  logerror("cartridge ram write.. %x to %x\n", data, offset);*/
+/*	logerror("cartridge ram write.. %x to %x\n", data, offset); */
 	cartridge_ram[offset] = data;
 }
 #endif
-
