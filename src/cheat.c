@@ -209,14 +209,7 @@ enum
 	kCheatSpecial_Timed = 1000
 };
 
-char cheatfile[256] = "cheat.dat";
-
-#ifndef MESS
-/* HJB: what was this? */
-#if 0
-sprintf(cheatfile,"%s.cdb",(char *)(Machine->gamedrv->name));
-#endif
-#endif
+char *cheatfile = NULL;
 
 char database[CHEAT_FILENAME_MAXLEN+1];
 
@@ -928,13 +921,11 @@ void InitCheat(void)
 #ifdef MESS
 // append MESS specific cheat database if generic 'cheat' was specified
 // 2000-09-27 Cow and Steph 20000730
-// this can be simpler once cheatfile is malloc() not an array...
 
 	copyofcheat = (char *)malloc(strlen(cheatfile)+strlen(Machine->gamedrv->name)+16);
-	oldcheat = (char *)malloc(strlen(cheatfile)+1);
-	if (copyofcheat && oldcheat)
+	oldcheat = cheatfile;
+	if (copyofcheat)
 	{
-		strcpy(oldcheat,cheatfile);
 		t_cheat = strstr(cheatfile,"cheat.dat");
 		if (!t_cheat) t_cheat = strstr(cheatfile,"cheat.cdb");
 		if (!t_cheat) t_cheat = strstr(cheatfile,"CHEAT.DAT");
@@ -945,11 +936,8 @@ void InitCheat(void)
 			strcat(copyofcheat,";");
 			strcat(copyofcheat,Machine->gamedrv->name);
 			strcat(copyofcheat,".cdb");
-			if (strlen(copyofcheat) < sizeof(cheatfile))
-			{
-				strcpy(cheatfile,copyofcheat);
-				logerror("New cheatfile: %s\n",cheatfile);
-			}
+			cheatfile = copyofcheat;
+			logerror("New cheatfile: %s\n",cheatfile);
 		}
 		else 
 		{
@@ -961,18 +949,13 @@ void InitCheat(void)
 		logerror("No memory for temp cheat names - cheatfile not changed\n");
 	}
 
-	if (copyofcheat) free(copyofcheat);
-
 #endif
 
 	LoadCheatFiles ();
 
 #ifdef MESS
-	if (oldcheat)
-	{
-		strcpy(cheatfile,oldcheat);
-		free(oldcheat);
-	}
+	cheatfile = oldcheat;
+	if (copyofcheat) free(copyofcheat);
 #endif
 
 /*	InitMemoryAreas(); */
