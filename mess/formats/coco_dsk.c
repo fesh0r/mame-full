@@ -550,7 +550,7 @@ static int cocodmk_seek_to_start_of_sector( void *bdf, struct dmk_header *hdr, U
 	return error;
 }
 
-static int cocodmk_read_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
+static int cocodmk_read_sector(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
 	int					error, actual_sector_length, size;
 	UINT16				crc_on_disk, calculated_crc;
@@ -604,7 +604,7 @@ static int cocodmk_read_sector(void *bdf, const void *header, UINT8 track, UINT8
 	return error;
 }
 
-static int cocodmk_write_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
+static int cocodmk_write_sector(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
 	int					error, actual_sector_length, size;
 	UINT16				calculated_crc;
@@ -687,7 +687,7 @@ static void bdf_write_repeat( void *bdf, UINT8 value, int count, int *track_leng
 	*track_length += count;
 }
 
-static int cocodmk_format_track(struct InternalBdFormatDriver *drv, void *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head)
+static int cocodmk_format_track(struct InternalBdFormatDriver *drv, bdf_file *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head)
 {
 	int						i, j, track_length = 0, error;
 	UINT16					offset, calculated_crc;

@@ -75,7 +75,7 @@ CPUS+=TMS9995@
 #CPUS+=ADSP2101@
 #CPUS+=ADSP2105@
 #CPUS+=ADSP2115@
-#CPUS+=PSXCPU@
+CPUS+=PSXCPU@
 #CPUS+=ASAP@
 #CPUS+=UPD7810@
 #CPUS+=UPD7807@
@@ -231,6 +231,7 @@ DRVLIBS = \
 	$(OBJ)/cbmshare.a \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
+	$(OBJ)/sony.a     \
 
 
 
@@ -729,6 +730,9 @@ $(OBJ)/sord.a:     \
 
 $(OBJ)/tatung.a:     \
 	$(OBJ)/mess/systems/einstein.o
+
+$(OBJ)/sony.a:     \
+	$(OBJ)/mess/systems/psx.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \

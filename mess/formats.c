@@ -13,7 +13,7 @@
 
 /**************************************************************************/
 
-struct bdf_file
+struct _bdf_file
 {
 	void *file;
 	const struct bdf_procs *procs;
@@ -22,17 +22,17 @@ struct bdf_file
 	int position;					/* current position */
 	int is_readonly;
 	UINT8 filler_byte;
-	int (*read_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
-	int (*write_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
-	void (*get_sector_info)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
-	UINT8 (*get_sector_count)(void *bdf, const void *header, UINT8 track, UINT8 head);
+	int (*read_sector)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+	int (*write_sector)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+	void (*get_sector_info)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
+	UINT8 (*get_sector_count)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head);
 	char header;
 };
 
-static int default_read_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
-static int default_write_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
-static void default_get_sector_info(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
-static UINT8 default_get_sector_count(void *bdf, const void *header, UINT8 track, UINT8 head);
+static int default_read_sector(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+static int default_write_sector(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+static void default_get_sector_info(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
+static UINT8 default_get_sector_count(bdf_file *bdf, const void *header, UINT8 track, UINT8 head);
 
 int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	void *file, const struct disk_geometry *geometry, void **outbdf)
@@ -45,7 +45,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	formatdriver_ctor formats[2];
 	struct disk_geometry local_geometry;
 	UINT8 track, head;
-	struct bdf_file dummy_bdf;
+	bdf_file dummy_bdf;
 	
 	if (!geometry)
 	{
@@ -136,11 +136,11 @@ error:
 
 static int try_format_driver(const struct InternalBdFormatDriver *drv, const struct bdf_procs *procs,
 	const char *extension, void *file, UINT32 file_size,
-	struct bdf_file **bdffile)
+	bdf_file **bdffile)
 {
 	UINT32 header_size;
-	struct bdf_file *bdf;
 	int bdf_size;
+	bdf_file *bdf;
 
 	*bdffile = NULL;
 
@@ -160,7 +160,7 @@ static int try_format_driver(const struct InternalBdFormatDriver *drv, const str
 		return 0;
 
 	/* allocate the bdf_file */
-	bdf_size = sizeof(struct bdf_file) - sizeof(char) + header_size;
+	bdf_size = sizeof(struct _bdf_file) - sizeof(char) + header_size;
 	bdf = malloc(bdf_size);
 	if (!bdf)
 		return BLOCKDEVICE_ERROR_OUTOFMEMORY;
@@ -173,7 +173,7 @@ static int try_format_driver(const struct InternalBdFormatDriver *drv, const str
 		procs->readproc(file, &bdf->header, header_size);
 
 		/* reallocate the bdf so that it takes up the right size */
-		bdf = realloc(bdf, sizeof(struct bdf_file) - sizeof(char) + header_size);
+		bdf = realloc(bdf, sizeof(struct _bdf_file) - sizeof(char) + header_size);
 		if (!bdf)
 			return BLOCKDEVICE_ERROR_OUTOFMEMORY;
 	}
@@ -197,7 +197,7 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	void *file, int is_readonly, const char *extension, void **outbdf)
 {
 	int err;
-	struct bdf_file *bdffile;
+	bdf_file *bdf;
 	int filesize;
 	void *header;
 	struct InternalBdFormatDriver drv;
@@ -216,152 +216,145 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	filesize = procs->filesizeproc(file);
 
 	/* the first task is to locate an appropriate format driver */
-	bdffile = NULL;
-	while(!bdffile && *formats)
+	bdf = NULL;
+	while(!bdf && *formats)
 	{
 		/* build the format driver */
 		(*formats)(&drv);
 
-		err = try_format_driver(&drv, procs, extension, file, filesize, &bdffile);
+		err = try_format_driver(&drv, procs, extension, file, filesize, &bdf);
 		if (err)
 			goto done;
 
-		if (!bdffile)
+		if (!bdf)
 			formats++;
 	}
 
 	/* did we find an appropriate format driver? */
-	if (!bdffile)
+	if (!bdf)
 	{
 		err = BLOCKDEVICE_ERROR_CANTDECODEFORMAT;
 		goto done;
 	}
 
-	bdffile->file = file;
-	bdffile->procs = procs;
-	bdffile->is_readonly = is_readonly;
-	bdffile->filler_byte = drv.filler_byte;
-	bdffile->position = 0;
-	bdffile->read_sector = drv.read_sector ? drv.read_sector : default_read_sector;
-	bdffile->write_sector = drv.write_sector ? drv.write_sector : default_write_sector;
-	bdffile->get_sector_info = drv.get_sector_info ? drv.get_sector_info : default_get_sector_info;
-	bdffile->get_sector_count = drv.get_sector_count ? drv.get_sector_count : default_get_sector_count;
+	bdf->file = file;
+	bdf->procs = procs;
+	bdf->is_readonly = is_readonly;
+	bdf->filler_byte = drv.filler_byte;
+	bdf->position = 0;
+	bdf->read_sector = drv.read_sector ? drv.read_sector : default_read_sector;
+	bdf->write_sector = drv.write_sector ? drv.write_sector : default_write_sector;
+	bdf->get_sector_info = drv.get_sector_info ? drv.get_sector_info : default_get_sector_info;
+	bdf->get_sector_count = drv.get_sector_count ? drv.get_sector_count : default_get_sector_count;
 	err = BLOCKDEVICE_ERROR_SUCCESS;
 
 done:
 	if (err)
 	{
-		if (bdffile)
-			free(bdffile);
-		bdffile = NULL;
+		if (bdf)
+			free(bdf);
+		bdf = NULL;
 	}
-	*outbdf = (void *) bdffile;
+	*outbdf = (void *) bdf;
 	return err;
 }
 
-void bdf_close(void *bdf)
+void bdf_close(bdf_file *bdf)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	if (bdffile->procs->closeproc)
-		bdffile->procs->closeproc(bdffile->file);
-	free(bdffile);
+	if (bdf->procs->closeproc)
+		bdf->procs->closeproc(bdf->file);
+	free(bdf);
 }
 
-int bdf_read(void *bdf, void *buffer, int length)
+int bdf_read(bdf_file *bdf, void *buffer, int length)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
 	int file_size;
 	int actual_length = length;
 	int bytes_read;
 
-	file_size = bdffile->procs->filesizeproc(bdffile->file);
-	actual_length = MAX(MIN(length, file_size - bdffile->position), 0);
-	bytes_read = bdffile->procs->readproc(bdffile->file, buffer, actual_length);
+	file_size = bdf->procs->filesizeproc(bdf->file);
+	actual_length = MAX(MIN(length, file_size - bdf->position), 0);
+	bytes_read = bdf->procs->readproc(bdf->file, buffer, actual_length);
 	if (actual_length < length)
 	{
-		memset(((UINT8 *) buffer) + actual_length, bdffile->filler_byte, length - actual_length);
+		memset(((UINT8 *) buffer) + actual_length, bdf->filler_byte, length - actual_length);
 		bytes_read += length - actual_length;
 	}
-	bdffile->position += bytes_read;
+	bdf->position += bytes_read;
 	return bytes_read;
 }
 
-int bdf_write(void *bdf, const void *buffer, int length)
+int bdf_write(bdf_file *bdf, const void *buffer, int length)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
 	int bytes_written;
 
-	bytes_written = bdffile->procs->writeproc(bdffile->file, buffer, length);
-	bdffile->position += bytes_written;
+	bytes_written = bdf->procs->writeproc(bdf->file, buffer, length);
+	bdf->position += bytes_written;
 	return bytes_written;
 }
 
-static void bdf_writefiller(void *bdf, int filler_length)
+static void bdf_writefiller(bdf_file *bdf, int filler_length)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
 	UINT8 filler[512];
 	int this_filler_length;
 
-	memset(filler, bdffile->filler_byte, MIN(sizeof(filler), filler_length));
+	memset(filler, bdf->filler_byte, MIN(sizeof(filler), filler_length));
 	while(filler_length > 0)
 	{
 		this_filler_length = MIN(sizeof(filler), filler_length);
-		bdffile->procs->writeproc(bdffile->file, filler, this_filler_length);
+		bdf->procs->writeproc(bdf->file, filler, this_filler_length);
 		filler_length -= this_filler_length;
 	}
-	bdffile->position += filler_length;
+	bdf->position += filler_length;
 }
 
-int bdf_seek(void *bdf, int offset)
+int bdf_seek(bdf_file *bdf, int offset)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
 	int file_size;
 	int actual_offset = offset;
 	int grow = 0;
 
-	file_size = bdffile->procs->filesizeproc(bdffile->file);
+	file_size = bdf->procs->filesizeproc(bdf->file);
 	if (file_size < offset)
 	{
 		grow = offset - file_size;
 		actual_offset = file_size;
 	}
-	bdffile->procs->seekproc(bdffile->file, actual_offset, SEEK_SET);
+	bdf->procs->seekproc(bdf->file, actual_offset, SEEK_SET);
 
 	/* grow file if necessary */
-	if ((grow > 0) && !bdffile->is_readonly)
+	if ((grow > 0) && !bdf->is_readonly)
 		bdf_writefiller(bdf, grow);
-	bdffile->position = offset;
+	bdf->position = offset;
 	return 0;
 }
 
-const struct disk_geometry *bdf_get_geometry(void *bdf)
+const struct disk_geometry *bdf_get_geometry(bdf_file *bdf)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return &bdffile->geometry;
+	return &bdf->geometry;
 }
 
-static int default_seek_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset)
+static int default_seek_sector(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset)
 {
 	int pos;
 
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	sector -= bdffile->geometry.first_sector_id;
-	if ((track >= bdffile->geometry.tracks) || (head >= bdffile->geometry.heads) || (sector >= bdffile->geometry.sectors))
+	sector -= bdf->geometry.first_sector_id;
+	if ((track >= bdf->geometry.tracks) || (head >= bdf->geometry.heads) || (sector >= bdf->geometry.sectors))
 		return -1;
 
 	pos = track;
-	pos *= bdffile->geometry.heads;
+	pos *= bdf->geometry.heads;
 	pos += head;
-	pos *= bdffile->geometry.sectors;
+	pos *= bdf->geometry.sectors;
 	pos += sector;
-	pos *= bdffile->geometry.sector_size;
-	pos += bdffile->offset;
+	pos *= bdf->geometry.sector_size;
+	pos += bdf->offset;
 	pos += offset;
 	bdf_seek(bdf, pos);
 	return 0;
 }
 
-static int default_read_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
+static int default_read_sector(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
 	if (default_seek_sector(bdf, track, head, sector, offset))
 		return -1;
@@ -369,7 +362,7 @@ static int default_read_sector(void *bdf, const void *header, UINT8 track, UINT8
 	return 0;
 }
 
-static int default_write_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
+static int default_write_sector(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
 	if (default_seek_sector(bdf, track, head, sector, offset))
 		return -1;
@@ -377,7 +370,7 @@ static int default_write_sector(void *bdf, const void *header, UINT8 track, UINT
 	return 0;
 }
 
-static void default_get_sector_info(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size)
+static void default_get_sector_info(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size)
 {
 	const struct disk_geometry *geo;
 	geo = bdf_get_geometry(bdf);
@@ -385,39 +378,34 @@ static void default_get_sector_info(void *bdf, const void *header, UINT8 track, 
 	*sector_size = geo->sector_size;
 }
 
-static UINT8 default_get_sector_count(void *bdf, const void *header, UINT8 track, UINT8 head)
+static UINT8 default_get_sector_count(bdf_file *bdf, const void *header, UINT8 track, UINT8 head)
 {
 	return bdf_get_geometry(bdf)->sectors;
 }
 
-int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
+int bdf_read_sector(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return bdffile->read_sector(bdf, (const void *) &bdffile->header, track, head, sector, offset, buffer, length);
+	return bdf->read_sector(bdf, (const void *) &bdf->header, track, head, sector, offset, buffer, length);
 }
 
-int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
+int bdf_write_sector(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return bdffile->write_sector(bdf, (const void *) &bdffile->header, track, head, sector, offset, buffer, length);
+	return bdf->write_sector(bdf, (const void *) &bdf->header, track, head, sector, offset, buffer, length);
 }
 
-int bdf_is_readonly(void *bdf)
+int bdf_is_readonly(bdf_file *bdf)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
-	return bdffile->is_readonly;
+	return bdf->is_readonly;
 }
 
-void bdf_get_sector_info(void *bdf, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size)
+void bdf_get_sector_info(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
-	bdffile->get_sector_info(bdf, (const void *) &bdffile->header, track, head, sector_index, sector, sector_size);
+	bdf->get_sector_info(bdf, (const void *) &bdf->header, track, head, sector_index, sector, sector_size);
 }
 
-UINT8 bdf_get_sector_count(void *bdf, UINT8 track, UINT8 head)
+UINT8 bdf_get_sector_count(bdf_file *bdf, UINT8 track, UINT8 head)
 {
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
-	return bdffile->get_sector_count(bdf, (const void *) &bdffile->header, track, head);
+	return bdf->get_sector_count(bdf, (const void *) &bdf->header, track, head);
 }
 
 #ifdef MAME_DEBUG

@@ -42,6 +42,8 @@ enum
 #define HEADERSIZE_FLAG_MODULO	0x80000000	/* for when headers are the file size modulo something */
 #define HEADERSIZE_FLAGS		0x80000000
 
+typedef struct _bdf_file bdf_file;
+
 struct InternalBdFormatDriver
 {
 	const char *name;
@@ -55,11 +57,11 @@ struct InternalBdFormatDriver
 	UINT8 filler_byte;
 	int (*header_decode)(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset);
 	int (*header_encode)(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry);
-	int (*read_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
-	int (*write_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
-	int (*format_track)(struct InternalBdFormatDriver *drv, void *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head);
-	void (*get_sector_info)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
-	UINT8 (*get_sector_count)(void *bdf, const void *header, UINT8 track, UINT8 head);
+	int (*read_sector)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+	int (*write_sector)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+	int (*format_track)(struct InternalBdFormatDriver *drv, bdf_file *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head);
+	void (*get_sector_info)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
+	UINT8 (*get_sector_count)(bdf_file *bdf, const void *header, UINT8 track, UINT8 head);
 	int flags;
 };
 
@@ -156,15 +158,15 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	void *file, const struct disk_geometry *geometry, void **outbdf);
 int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	void *file, int is_readonly, const char *extension, void **outbdf);
-void bdf_close(void *bdf);
-int bdf_read(void *bdf, void *buffer, int length);
-int bdf_write(void *bdf, const void *buffer, int length);
-int bdf_seek(void *bdf, int offset);
-const struct disk_geometry *bdf_get_geometry(void *bdf);
-int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
-int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
-void bdf_get_sector_info(void *bdf, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
-UINT8 bdf_get_sector_count(void *bdf, UINT8 track, UINT8 head);
-int bdf_is_readonly(void *bdf);
+void bdf_close(bdf_file *bdf);
+int bdf_read(bdf_file *bdf, void *buffer, int length);
+int bdf_write(bdf_file *bdf, const void *buffer, int length);
+int bdf_seek(bdf_file *bdf, int offset);
+const struct disk_geometry *bdf_get_geometry(bdf_file *bdf);
+int bdf_read_sector(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+int bdf_write_sector(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+void bdf_get_sector_info(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
+UINT8 bdf_get_sector_count(bdf_file *bdf, UINT8 track, UINT8 head);
+int bdf_is_readonly(bdf_file *bdf);
 
 #endif /* FORMATS_H */
