@@ -716,7 +716,7 @@ static UINT32 mac_GetDateTime(void)
 #endif
 
 /*
-	MacBinary format - encode data and ressource forks into a single file
+	MacBinary format - encode data and resource forks into a single file
 
 	AppleSingle is much more flexible than MacBinary IMHO, but MacBinary is
 	supported by many more utilities.
@@ -1839,7 +1839,7 @@ typedef struct mfs_dir_entry
 	UINT16BE dataStartBlock;	/* first allocation block of data fork */
 	UINT32BE dataLogicalSize;	/* logical EOF of data fork */
 	UINT32BE dataPhysicalSize;	/* physical EOF of data fork */
-	UINT16BE rsrcStartBlock;	/* first allocation block of ressource fork */
+	UINT16BE rsrcStartBlock;	/* first allocation block of resource fork */
 	UINT32BE rsrcLogicalSize;	/* logical EOF of resource fork */
 	UINT32BE rsrcPhysicalSize;	/* physical EOF of resource fork */
 
@@ -1856,7 +1856,7 @@ typedef struct mfs_dir_entry
 	FOBJ desktop resource: describes a folder, or the location of the volume
 	icon.
 
-	In typical Apple manner, this ressource is not documented.  However, I have
+	In typical Apple manner, this resource is not documented.  However, I have
 	managed to reverse engineer some parts of it.
 */
 typedef struct mfs_FOBJ
@@ -3019,7 +3019,7 @@ static imgtoolerr_t mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 	mfs_hashString
 
 	Hash a string: under MFS, this provides the resource ID of the comment
-	resource associated with the file whose name is provided (FCMT ressource
+	resource associated with the file whose name is provided (FCMT resource
 	type).
 
 	Ripped from Apple technote TB06 (converted from 68k ASM to C)
@@ -5097,10 +5097,10 @@ static imgtoolerr_t BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerat
 	implies the format of the data (e.g. 'PICT' is for a quickdraw picture,
 	'STR ' for a macintosh string, 'CODE' for 68k machine code, etc).  The
 	resource id is a signed 16-bit number that uniquely identifies each
-	resource of a given type.  Note that, with most ressource types, resources
+	resource of a given type.  Note that, with most resource types, resources
 	with id < 128 are system resources that are available to all applications,
 	whereas resources with id >= 128 are application resources visible only to
-	the application that define them.
+	the application that defines them.
 
 	Each resource can optionally have a resource name, which is a macintosh
 	string of 255 chars at most.
@@ -5181,7 +5181,7 @@ typedef struct mac_resfileref
 	mac_fileref fileref;	/* open resource fork ref (you may open resources
 								files in data fork, too, if you ever need to,
 								but Classic MacOS never does such a thing
-								(MacOS X often does so, though) */
+								(MacOS X often does so, though)) */
 	UINT32 data_offs;		/* Offset from beginning of resource file to resource data */
 	UINT32 map_offs;		/* Offset from beginning of resource file to resource data */
 
@@ -5198,7 +5198,7 @@ typedef struct mac_resfileref
 	Open a file as a resource file.  The file must be already open as a
 	macintosh file.
 
-	resfileref (I/O): ressource file handle to open (resfileref->fileref must
+	resfileref (I/O): resource file handle to open (resfileref->fileref must
 		have been opened previously)
 
 	Return imgtool error code
@@ -5243,7 +5243,7 @@ static imgtoolerr_t resfile_open(mac_resfileref *resfileref)
 	Get the resource entry in the resource map associated with a given type/id
 	pair.
 
-	resfileref (I/O): open ressource file handle
+	resfileref (I/O): open resource file handle
 	type (I): type of the resource
 	id (I): id of the resource
 	entry (O): resource entry that has been read
@@ -5310,10 +5310,10 @@ static imgtoolerr_t resfile_get_entry(mac_resfileref *resfileref, UINT32 type, U
 
 	Get the name of a resource.
 
-	resfileref (I/O): open ressource file handle
+	resfileref (I/O): open resource file handle
 	entry (I): resource entry in the resource map (returned by
 		resfile_get_entry)
-	string (O): ressource name
+	string (O): resource name
 
 	Return imgtool error code
 */
@@ -5354,10 +5354,10 @@ static imgtoolerr_t resfile_get_resname(mac_resfileref *resfileref, const rsrc_r
 
 	Get the data lenght for a given resource.
 
-	resfileref (I/O): open ressource file handle
+	resfileref (I/O): open resource file handle
 	entry (I): resource entry in the resource map (returned by
 		resfile_get_entry)
-	len (O): ressource lenght
+	len (O): resource lenght
 
 	Return imgtool error code
 */
@@ -5389,13 +5389,13 @@ static imgtoolerr_t resfile_get_reslen(mac_resfileref *resfileref, const rsrc_re
 
 	Get the data for a given resource.
 
-	resfileref (I/O): open ressource file handle
+	resfileref (I/O): open resource file handle
 	entry (I): resource entry in the resource map (returned by
 		resfile_get_entry)
 	offset (I): offset the data should be read from, usually 0
 	len (I): lenght of the data to read, usually the value returned by
 		resfile_get_reslen
-	dest (O): ressource data
+	dest (O): resource data
 
 	Return imgtool error code
 */
@@ -5470,9 +5470,9 @@ static imgtoolerr_t resfile_get_resdata(mac_resfileref *resfileref, const rsrc_r
 
 
 	The reasons for the introduction of the desktop database were:
-	* the macintosh ressource manager cannot share ressource files, which was
+	* the macintosh resource manager cannot share resource files, which was
 		a problem for Appleshare
-	* the macintosh ressource manager is pretty limited (+/-16MByte of data and
+	* the macintosh resource manager is pretty limited (+/-16MByte of data and
 		2727 resources at most), which was a problem for large hard disks with
 		many programs/comments
 */
