@@ -203,7 +203,7 @@ static	struct MachineDriver machine_driver_ti85 =
 	}
 };
 
-ROM_START (ti85v30a)
+ROM_START (ti85)
 	ROM_REGION (0x30000, REGION_CPU1,0)
 	ROM_LOAD ("ti85v30a.bin", 0x10000, 0x20000, 0xde4c0b1a)
 ROM_END
@@ -243,7 +243,6 @@ static const struct IODevice io_ti85[] = {
     { IO_END }
 };
 
-#define	io_ti85v30a	io_ti85
 #define	io_ti85v40	io_ti85
 #define	io_ti85v50	io_ti85
 #define	io_ti85v60	io_ti85
@@ -252,10 +251,10 @@ static const struct IODevice io_ti85[] = {
 #define	io_ti85v100	io_ti85
                                                        
 /*    YEAR     NAME  PARENT  MACHINE  INPUT  INIT              COMPANY        FULLNAME */
-COMP( 1983, ti85v30a,      0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 3.0a" )
-COMP( 1983, ti85v40,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 4.0" )
-COMP( 1983, ti85v50,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 5.0" )
-COMP( 1983, ti85v60,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 6.0" )
-COMP( 1983, ti85v80,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 8.0" )
-COMP( 1983, ti85v90,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 9.0" )
-COMP( 1983, ti85v100,      0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 10.0" )
+COMP( 1983, ti85,          0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 3.0a" )
+COMP( 1983, ti85v40,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 4.0" )
+COMP( 1983, ti85v50,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 5.0" )
+COMP( 1983, ti85v60,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 6.0" )
+COMP( 1983, ti85v80,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 8.0" )
+COMP( 1983, ti85v90,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 9.0" )
+COMP( 1983, ti85v100,   ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 10.0" )
