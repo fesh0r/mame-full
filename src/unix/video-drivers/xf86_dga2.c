@@ -198,12 +198,13 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 
 static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 {
+        int startx,starty,page,y;
+	int scaled_height = sysdep_display_params.yarbsize?
+	        sysdep_display_params.yarbsize:
+	        sysdep_display_params.height*sysdep_display_params.heightscale;
         int scaled_width  = sysdep_display_params.width *
-          sysdep_display_params.widthscale;
-        int scaled_height = sysdep_display_params.yarbsize?
-          sysdep_display_params.yarbsize:
-          sysdep_display_params.height * sysdep_display_params.heightscale;
-        
+                sysdep_display_params.widthscale;
+	
 	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
 	if (xf86ctx.update_display_func == NULL)
 	{
@@ -213,11 +214,40 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	
 	fprintf(stderr, "XF86-DGA2 color depth: %d, %dbpp\n", modeinfo.depth, modeinfo.bitsPerPixel);
 
+        startx = ((modeinfo.viewportWidth - scaled_width) / 2) & ~3;
+        starty = (modeinfo.viewportHeight - scaled_height) / 2;
 	xf86ctx.addr  = xf86ctx.device->data;
-	xf86ctx.addr += (((modeinfo.viewportWidth - scaled_width) / 2) & ~3) *
-          modeinfo.bitsPerPixel / 8;
-	xf86ctx.addr += ((modeinfo.viewportHeight - scaled_height) / 2) *
-	  modeinfo.bytesPerScanline;
+	xf86ctx.addr += startx * modeinfo.bitsPerPixel / 8;
+	xf86ctx.addr += starty * modeinfo.bytesPerScanline;
+
+	/* clear the not used area of the display */
+	for(page=0; page<=xf86ctx.max_page; page++)
+	{
+	  unsigned char *page_start = xf86ctx.device->data +
+	       page * xf86ctx.aligned_viewport_height *
+	       xf86ctx.device->mode.bytesPerScanline;
+          
+	  /* top */
+	  memset(page_start, 0,
+	       starty * xf86ctx.device->mode.bytesPerScanline);
+	  for(y=starty; y < (starty+scaled_height); y++)
+	  {
+	    /* left */
+	    memset(page_start + y * xf86ctx.device->mode.bytesPerScanline, 0,
+	       startx * modeinfo.bitsPerPixel / 8);
+            /* right */
+	    memset(page_start + ((startx + scaled_width) & ~3) * 
+	       modeinfo.bitsPerPixel / 8 +
+	       y * xf86ctx.device->mode.bytesPerScanline, 0,
+	       (modeinfo.viewportWidth - ((startx + scaled_width) & ~3)) *
+	       modeinfo.bitsPerPixel / 8);
+	  }
+	  /* bottom */
+	  memset(page_start + (starty + scaled_height) *
+	       xf86ctx.device->mode.bytesPerScanline, 0,
+	       (modeinfo.viewportHeight - (starty + scaled_height)) *
+	       xf86ctx.device->mode.bytesPerScanline);
+	}
 
 	/* reset dest_area */
 	memset(&xf86ctx.dest_area, 0, sizeof(xf86ctx.dest_area));
@@ -324,9 +354,6 @@ static int xf86_dga2_set_mode(void)
           /* setup page flipping */
           if(xf86ctx.device->mode.viewportFlags & XDGAFlipRetrace)
           {
-            /* add a 16 additional lines between the pages, because some
-               cards (*cough* ATI *cough*) use the lines immediatly above the
-               viewport as vblank */
             xf86ctx.aligned_viewport_height =
               (xf86ctx.device->mode.viewportHeight+
                xf86ctx.device->mode.yViewportStep-1) &
@@ -344,10 +371,6 @@ static int xf86_dga2_set_mode(void)
           else
             xf86ctx.max_page = 0;
             
-          memset(xf86ctx.device->data, 0, (xf86ctx.max_page+1) *
-            xf86ctx.aligned_viewport_height *
-            xf86ctx.device->mode.bytesPerScanline);
-
           /* fill the sysdep_display_properties struct */
 	  sysdep_display_properties.palette_info.fourcc_format = 0;
           sysdep_display_properties.palette_info.red_mask   = xf86ctx.device->mode.redMask;
