@@ -119,17 +119,16 @@ void sysdep_update_keyboard (void)
 	   {
 		xgl_aspect_resize_action = 1;
 
-		winwidth = E.xconfigure.width;
-		winheight= E.xconfigure.height;
+                winwidth  = E.xconfigure.width;
+                winheight = E.xconfigure.height; 
 
-		vscrnaspect = (double) winwidth / (double) winheight;
+		xgl_fixaspectratio(&winwidth, &winheight);
 
-		if (scrnaspect < vscrnaspect)
-			winwidth = winheight * scrnaspect;
-		else
-			winheight= winwidth / scrnaspect;
+		fprintf(stderr, "X11INFO: xinput resize to %dx%d\n", 
+				winwidth, winheight);
 
-		XResizeWindow(display,window,winwidth,winheight);
+		XResizeWindow(display,window,winwidth, winheight);
+
 		xgl_resize(winwidth, winheight);
 	   } else {
 		xgl_aspect_resize_action = 0;

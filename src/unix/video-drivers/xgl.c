@@ -24,12 +24,15 @@
 #include <X11/Xutil.h>
 #include <X11/Xmd.h>
 #include <X11/cursorfont.h>
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
+
+#include "glxtool.h"
+
 #include "xmame.h"
 #include "glmame.h"
 #include "x11.h"
+
+#include "driver.h"
+#include "xmame.h"
 
 void InitVScreen(void);
 void CloseVScreen(void);
@@ -47,54 +50,28 @@ typedef struct {
 
 int winwidth = 0;
 int winheight = 0;
+int fullscreen_width = 0;
+int fullscreen_height = 0;
 int doublebuffer = 1;
 int bilinear=1; /* Do binlinear filtering? */
-int alphablending=0; /* alphablending */
+int alphablending=1; /* alphablending */
 int bitmap_lod=0; /* level of bitmap-texture detail */
 
 int fullscreen = 0;
 int antialias=0;
-
-int translucency;
+int translucency = 0;
 
 GLXContext glContext=NULL;
 
-int visualAttribList[64];
+const GLCapabilities glCapsDef = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
+			           1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 
+			           -1
+			         };
 
-static void setVisualAttribList(int color, int accumPerColor, 
-				int alpha, int dbuffer, int stencil)
-{
-    int i=0;
-    visualAttribList[i++] = GLX_RED_SIZE;
-    visualAttribList[i++] = 1;
-    visualAttribList[i++] = GLX_GREEN_SIZE;
-    visualAttribList[i++] = 1;
-    visualAttribList[i++] = GLX_BLUE_SIZE;
-    visualAttribList[i++] = 1;
-    visualAttribList[i++] = GLX_DEPTH_SIZE;
-    visualAttribList[i++] = 1;
-    visualAttribList[i++] = GLX_ACCUM_RED_SIZE;
-    visualAttribList[i++] = (accumPerColor>0)?1:0;
-    visualAttribList[i++] = GLX_ACCUM_GREEN_SIZE;
-    visualAttribList[i++] = (accumPerColor>0)?1:0;
-    visualAttribList[i++] = GLX_ACCUM_BLUE_SIZE;
-    visualAttribList[i++] = (accumPerColor>0)?1:0;
+GLCapabilities glCaps;
 
-    if(GLX_RGBA == color)
-    {
-	    visualAttribList[i++] = GLX_RGBA;
-	    visualAttribList[i++] = GLX_ALPHA_SIZE;
-	    visualAttribList[i++] = (alpha>0)?1:0;
-	    visualAttribList[i++] = GLX_ACCUM_ALPHA_SIZE;
-	    visualAttribList[i++] = (accumPerColor>0)?1:0;
-    }
-    if(dbuffer)
-	    visualAttribList[i++] = GLX_DOUBLEBUFFER;
-
-    visualAttribList[i++] = GLX_STENCIL_SIZE;
-    visualAttribList[i++] = stencil;
-    visualAttribList[i] = None;
-}
+static const char * xgl_version_str = 
+	"\nGLmame v0.74, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -110,6 +87,9 @@ struct rc_option display_opts[] = {
    { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
      "0",		0,			0,		NULL,
      "Force the max width and height of one texture segment (default: autosize)" },
+   { "glext",	NULL,			rc_bool,	&useGlEXT,
+     "1",		0,			0,		NULL,
+     "Force the usage of gl extensions (default: auto)" },
    { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
      "1",		0,			0,		NULL,
      "Enable/disable bilinear filtering" },
@@ -117,22 +97,25 @@ struct rc_option display_opts[] = {
      "1.0",		1.0,			16.0,		NULL,
      "Set the beam size for vector games" },
    { "glalphablending",	"glalpha",		rc_bool,	&alphablending,
-     "0",		0,			0,		NULL,
-     "Enable/disable alphablending (auto on if using vector games, else off)" },
+     "1",		0,			0,		NULL,
+     "Enable/disable alphablending (default: try alphablending)" },
    { "glantialias",	"glaa",			rc_bool,	&antialias,
-     "0",		0,			0,		NULL,
+     "1",		0,			0,		NULL,
      "Enable/disable antialiasing" },
-   { "gltranslucency",	"gltrans",		rc_float,	&gl_translucency,
-     "1.0",		0,			0,		NULL,
-     "Enable/disable tranlucency" },
    { "gllod",	NULL,			rc_int,	&bitmap_lod,
      "0",		0,			0,		NULL,
      "level of bitmap-texture detail" },
+   { "gllibname",	"gllib",		rc_string,	&libGLName,
+     "libGL.so",	0,			0,		NULL,
+     "Choose the dynamically loaded OpenGL Library (default libGL.so)" },
+   { "glulibname",	"glulib",		rc_string,	&libGLUName,
+     "libGLU.so",	0,			0,		NULL,
+     "Choose the dynamically loaded GLU Library (default libGLU.so)" },
    { "cabview",		NULL,			rc_bool,	&cabview,
      "0",		0,			0,		NULL,
      "Start/ don't start in cabinet view mode" },
    { "cabinet",		NULL,			rc_string,	&cabname,
-     "glmame",		0,			0,		NULL,
+     "glmamejau",	0,			0,		NULL,
      "Specify which cabinet model to use" },
    { NULL,		NULL,			rc_link,	x11_input_opts,
      NULL,		0,			0,		NULL,
@@ -144,8 +127,7 @@ struct rc_option display_opts[] = {
 
 int sysdep_init(void)
 {
-   fprintf(stdout, "GLmame v0.7, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\n");
-   fprintf(stdout, "based upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n");
+   fprintf(stderr, xgl_version_str);
 
    /* Open the display. */
    display=XOpenDisplay(NULL);
@@ -155,6 +137,8 @@ int sysdep_init(void)
       return OSD_NOT_OK; 
    }
   
+   gl_bootstrap_resources();
+
    return OSD_OK;
 }
 
@@ -179,6 +163,8 @@ int sysdep_create_display(int depth)
   Atom mwmatom;
   char *glxfx;
   int resizeEvtMask = 0;
+  VisualGC vgc;
+  int ownwin = 1;
 
   /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
      We have to do this after glXMakeCurrent(), or else the voodoo driver
@@ -189,13 +175,15 @@ int sysdep_create_display(int depth)
   if(!fullscreen) 
 	  resizeEvtMask = StructureNotifyMask ;
 
-  fprintf(stdout, "Using GLmame v0.7, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\n");
-  fprintf(stdout, "based upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n");
+  fprintf(stdout, xgl_version_str);
   
   screen=DefaultScreenOfDisplay(display);
   myscreen=DefaultScreen(display);
   cursor=XCreateFontCursor(display,XC_trek);
   
+  fullscreen_width = screen->width;
+  fullscreen_height = screen->height;
+
   if(fullscreen)
   {
 	winwidth = screen->width;
@@ -204,29 +192,6 @@ int sysdep_create_display(int depth)
 	winwidth = visual_width*widthscale;
 	winheight = visual_height*heightscale;
   }
-
-  setVisualAttribList(GLX_RGBA, 0 /* accum */, alphablending, doublebuffer, 
-  		      0 /* stencil */);
-
-  myvisual=glXChooseVisual(display,myscreen,visualAttribList);
-
-  if(!myvisual) {
-	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
-	sysdep_display_close();
-	return OSD_NOT_OK; 
-  }
-
-  glContext=glXCreateContext(display,myvisual,0,GL_TRUE);
-
-  if(!glContext) {
-	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
-	sysdep_display_close();
-	return OSD_NOT_OK; 
-  }
-  
-  colormap=XCreateColormap(display,
-			   RootWindow(display,myvisual->screen),
-			   myvisual->visual,AllocNone);
 
   winattr.background_pixel=0;
   winattr.border_pixel=WhitePixelOfScreen(screen);
@@ -237,7 +202,7 @@ int sysdep_create_display(int depth)
   winattr.save_under=False;
   winattr.event_mask=0; 
   winattr.do_not_propagate_mask=0;
-  winattr.colormap=colormap;
+  winattr.colormap=0; /* done later, within findVisualGlX .. */
   winattr.cursor=None;
 
   if(fullscreen) 
@@ -248,18 +213,47 @@ int sysdep_create_display(int depth)
       winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap    
 	        ;
 
-  window=XCreateWindow(display,RootWindowOfScreen(screen),
-		       0,0,winwidth,winheight,
-		       0,myvisual->depth,
-		       InputOutput,myvisual->visual,
-		       winmask, &winattr);
-  
+  fetch_GL_FUNCS (1 /* force refetch ... */);
+
+  glCaps = glCapsDef;
+
+  glCaps.alphaBits=(alphablending>0)?1:0;
+  glCaps.buffer   =(doublebuffer>0)?BUFFER_DOUBLE:BUFFER_SINGLE;
+
+  window = RootWindow(display,DefaultScreen( display ));
+  vgc = findVisualGlX( display, window,
+                       &window, winwidth, winheight, &glCaps, 
+		       &ownwin, &winattr, winmask,
+		       NULL, 0, NULL, 1);
+
+  if(vgc.success==0)
+  {
+	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
+	sysdep_display_close();
+	return OSD_NOT_OK; 
+  }
+
+  myvisual =vgc.visual;
+  glContext=vgc.gc;
+  colormap=winattr.colormap;
+
   if (!window) {
 	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
 	sysdep_display_close();
 	return OSD_NOT_OK; 
   }
   
+  if(!glContext) {
+	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
+	sysdep_display_close();
+	return OSD_NOT_OK; 
+  }
+  
+  setGLCapabilities ( display, myvisual, &glCaps);
+
+  alphablending= (glCaps.alphaBits>0)?1:0;
+  doublebuffer = (glCaps.buffer==BUFFER_DOUBLE)?1:0;
+
   /*  Placement hints etc. */
   
   hints.flags=PMinSize|PMaxSize;
@@ -337,8 +331,6 @@ int sysdep_create_display(int depth)
   XClearWindow(display,window);
   XWindowEvent(display,window,ExposureMask,&event);
   
-  glXMakeCurrent(display,window,glContext);
-
   XResizeWindow(display,window,winwidth,winheight);
 
   fprintf(stdout, "using window size(%dx%d)\n", winwidth, winheight);
@@ -362,16 +354,22 @@ int sysdep_create_display(int depth)
 
 void sysdep_display_close (void)
 {
-   glXDestroyContext(display,glContext);
+   __glXMakeCurrent(display, None, NULL);
+   __glXDestroyContext(display,glContext);
+   glContext=0;
+
+   CloseVScreen();  /* Shut down GL stuff */
 
    XFreeColormap(display, colormap);
+   colormap=0;
      
    if(window) {
      /* ungrab the pointer */
 
      if(use_mouse) XUngrabPointer(display,CurrentTime);
 
-     CloseVScreen();  /* Shut down GL stuff */
+     XDestroyWindow(display, window);
+     window=0;
    }
 
    XSync(display,False); /* send all events to sync; */
@@ -381,5 +379,42 @@ void sysdep_display_close (void)
 
 void SwapBuffers(void)
 {
-  glXSwapBuffers(display,window);
+  __glXSwapBuffers(display,window);
+}
+
+void switch2Fullscreen()
+{
+	Window rootwin, childwin;
+	int rx, ry, x, y, dx, dy;
+	int w, h;
+	unsigned int mask;
+	Bool ok;
+
+	/* sync with root window to coord 0/0 */
+	XMoveWindow(display,window, 0, 0);
+        XSync(display,False); /* send all events to sync; */
+
+	/* get the diff of both orig. coord */
+	ok = XQueryPointer(display, window, &rootwin, &childwin,
+			    &rx, &ry, &x, &y, &mask);
+	dx = rx-x;
+	dy = ry-y;
+	
+	/* get the aspect future full screen size */
+	w = fullscreen_width;
+	h = fullscreen_height;
+	xgl_fixaspectratio(&w, &h);
+
+	/*
+	printf("GLINFO: query-ptr ok=%d / rx=%d ry=%d / x=%d y=%d / dx=%d dy=%d\n",
+		ok, rx, ry, x, y, dx, dy);
+	*/
+
+	/* the new coords .. */
+	x = ( fullscreen_width  - w  ) / 2 - dx;
+	y = ( fullscreen_height - h ) / 2 - dy;
+
+	printf("GLINFO: switching to max aspect %d/%d, %dx%d\n", x, y, w, h);
+
+	XMoveResizeWindow(display, window, x, y, w, h);
 }
