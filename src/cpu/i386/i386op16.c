@@ -1551,6 +1551,15 @@ static void I386OP(pushf)(void)				// Opcode 0x9c
 	CYCLES(4);
 }
 
+static void I386OP(ret_near16_i16)(void)	// Opcode 0xc2
+{
+	INT16 disp = FETCH16();
+	I.eip = POP16();
+	REG16(SP) += disp;
+	CHANGE_PC(I.eip);
+	CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+}
+
 static void I386OP(ret_near16)(void)		// Opcode 0xc3
 {
 	I.eip = POP16();
@@ -2607,6 +2616,53 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 			break;
 		default:
 			osd_die("i386: groupFF_16 /%d unimplemented\n", (modrm >> 3) & 0x7);
+			break;
+	}
+}
+
+static void I386OP(group0F00_16)(void)			// Opcode 0x0f 00
+{
+	UINT32 address, ea;
+	UINT8 modrm = FETCH();
+
+	switch( (modrm >> 3) & 0x7 )
+	{
+		case 2:			/* LLDT */
+			if ( PROTECTED_MODE && !V8086_MODE )
+			{
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				I.ldtr.segment = READ16(ea);
+			}
+			else
+			{
+				i386_trap(6);
+			}
+			break;
+
+		case 3:			/* LTR */
+			if ( PROTECTED_MODE && !V8086_MODE )
+			{
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				I.task.segment = READ16(ea);
+			}
+			else
+			{
+				i386_trap(6);
+			}
+			break;
+
+		default:
+			osd_die("i386: group0F00_16 /%d unimplemented\n", (modrm >> 3) & 0x7);
 			break;
 	}
 }

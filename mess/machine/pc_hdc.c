@@ -78,7 +78,6 @@ static int cylinders[MAX_HARD] = {612,612,};    /* number of cylinders */
 static int rwc[MAX_HARD] = {613,613,};			/* recduced write current from cyl */
 static int wp[MAX_HARD] = {613,613,};			/* write precompensation from cyl */
 static int heads[MAX_HARD] = {4,4,};			/* heads */
-static int spt[MAX_HARD] = {17,17,};			/* sectors per track */
 static int ecc[MAX_HARD] = {11,11,};			/* ECC bytes */
 
 /* indexes */

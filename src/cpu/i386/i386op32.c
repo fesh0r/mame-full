@@ -2577,6 +2577,53 @@ static void I386OP(groupFF_32)(void)		// Opcode 0xff
 	}
 }
 
+static void I386OP(group0F00_32)(void)			// Opcode 0x0f 00
+{
+	UINT32 address, ea;
+	UINT8 modrm = FETCH();
+
+	switch( (modrm >> 3) & 0x7 )
+	{
+		case 2:			/* LLDT */
+			if ( PROTECTED_MODE && !V8086_MODE )
+			{
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM32(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				I.ldtr.segment = READ32(ea);
+			}
+			else
+			{
+				i386_trap(6);
+			}
+			break;
+
+		case 3:			/* LTR */
+			if ( PROTECTED_MODE && !V8086_MODE )
+			{
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM32(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				I.task.segment = READ32(ea);
+			}
+			else
+			{
+				i386_trap(6);
+			}
+			break;
+
+		default:
+			osd_die("i386: group0F00_32 /%d unimplemented\n", (modrm >> 3) & 0x7);
+			break;
+	}
+}
+
 static void I386OP(group0F01_32)(void)		// Opcode 0x0f 01
 {
 	UINT8 modrm = FETCH();

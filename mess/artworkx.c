@@ -127,24 +127,6 @@ struct artwork_callbacks mess_artwork_callbacks =
 
 /********************************************************************/
 
-/*-------------------------------------------------
-	strip_space - strip leading/trailing spaces
--------------------------------------------------*/
-
-static char *strip_space(char *string)
-{
-	char *start, *end;
-
-	/* skip over leading space */
-	for (start = string; *start && isspace(*start); start++) ;
-
-	/* NULL terminate over trailing space */
-	for (end = start + strlen(start) - 1; end > start && isspace(*end); end--) *end = 0;
-	return start;
-}
-
-
-
 int artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	const char *section,
 	struct inputform_customization *customizations,

@@ -238,6 +238,14 @@ INLINE void CHANGE_PC(UINT32 pc)
 	change_pc(I.pc);
 }
 
+INLINE void NEAR_BRANCH(INT32 offs)
+{
+	/* TODO: limit */
+	I.eip += offs;
+	I.pc += offs;
+	change_pc(I.pc);
+}
+
 INLINE UINT8 FETCH(void)
 {
 	UINT8 value = program_read_byte_32le( I.pc );
