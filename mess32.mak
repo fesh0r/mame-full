@@ -531,15 +531,22 @@ DRV_OBJS = \
 
 
 IMGTOOL_OBJS= \
-		$(OBJ)/mess/tools/main.o \
-		$(OBJ)/mess/tools/imgtool.o \
-		$(OBJ)/mess/tools/pchd.o \
-		$(OBJ)/mess/tools/rsdos.o \
-		$(OBJ)/mess/tools/stream.o \
-		$(OBJ)/mess/tools/stubs.o \
-		$(OBJ)/mess/tools/crt.o \
-		$(OBJ)/mess/tools/t64.o \
-		$(OBJ)/unzip.o zlib\zlib.lib $(OBJ)/mess/config.o
+          $(OBJ)/mess/tools/stubs.o   \
+          $(OBJ)/mess/config.o        \
+          $(OBJ)/unzip.o              \
+          $(OBJ)/mess/tools/main.o    \
+          $(OBJ)/mess/tools/imgtool.o \
+          $(OBJ)/mess/tools/rsdos.o   \
+          $(OBJ)/mess/tools/stream.o  \
+          $(OBJ)/mess/tools/t64.o     \
+          $(OBJ)/mess/tools/lynx.o    \
+          $(OBJ)/mess/tools/crt.o     \
+          $(OBJ)/mess/tools/d64.o     \
+          $(OBJ)/mess/tools/fat.o     \
+          $(OBJ)/mess/tools/pchd.o    \
+          $(OBJ)/mess/tools/zip.o     \
+          $(OBJ)/mess/tools/fs.o     \
+          $(OBJ)/mess/Win32/dirio.o zlib\zlib.lib
 
 !ifdef TINY_COMPILE
 OBJS = $(TINY_OBJS)
