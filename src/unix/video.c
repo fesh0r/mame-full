@@ -29,7 +29,6 @@ static int frameskipper = 0;
 static int brightness = 100;
 float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
-static int rgb_direct;
 static struct mame_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 static struct my_rectangle normal_visual;
@@ -243,8 +242,6 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
    bitmap_depth = (params->depth != 15) ? params->depth : 16;
 
-   rgb_direct = (params->depth == 15) || (params->depth == 32);
-
    current_palette = normal_palette = NULL;
    debug_visual.min_x = 0;
    debug_visual.max_x = options.debug_width - 1;
@@ -252,7 +249,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
    debug_visual.max_y = options.debug_height - 1;
 
    /* Can we do dirty? */
-   if ( (params->video_attributes & VIDEO_SUPPORTS_DIRTY) == 0 )
+   /*if ( (params->video_attributes & VIDEO_SUPPORTS_DIRTY) == 0 )*/
    {
       use_dirty = FALSE;
    }
@@ -446,7 +443,7 @@ static void update_visible_area(struct mame_display *display)
          normal_visual.max_x = ((normal_visual.max_x + 1) & ~7) - 1;
    }
    
-   /* rounding of the y-coordinates is only nescesarry when we are doing dirty */
+   /* rounding of the y-coordinates is only necessary when we are doing dirty */
    if (use_dirty)
    {
       if (normal_visual.min_y & 7)
@@ -526,7 +523,7 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
          normal_visual.max_x = ((normal_visual.max_x + 1) & ~7) - 1;
    }
    
-   /* rounding of the y-coordinates is only nescesarry when we are doing dirty */
+   /* rounding of the y-coordinates is only necessary when we are doing dirty */
    if (use_dirty)
    {
       if (normal_visual.min_y & 7)
