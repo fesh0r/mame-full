@@ -451,7 +451,7 @@ static struct MachineDriver machine_driver_model3 =
 
 ***************************************************************************/
 
-ROM_START(trs80l1)
+ROM_START(trs80)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("level1.rom",  0x0000, 0x1000, 0x70d06dff)
 
@@ -460,7 +460,7 @@ ROM_START(trs80l1)
 ROM_END
 
 
-ROM_START(trs80)
+ROM_START(trs80l2)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("trs80.z33",   0x0000, 0x1000, 0x83dbbbe2)
 	ROM_LOAD("trs80.z34",   0x1000, 0x1000, 0x05818718)
@@ -471,7 +471,7 @@ ROM_START(trs80)
 ROM_END
 
 
-ROM_START(trs80alt)
+ROM_START(trs80l2a)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("trs80alt.z33",0x0000, 0x1000, 0xbe46faf5)
 	ROM_LOAD("trs80alt.z34",0x1000, 0x1000, 0x6c791c2d)
@@ -486,7 +486,7 @@ ROM_START(sys80)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("sys80rom.1",  0x0000, 0x1000, 0x8f5214de)
 	ROM_LOAD("sys80rom.2",  0x1000, 0x1000, 0x46e88fbf)
-	ROM_LOAD("sys80rom.3",  0x2000, 0x1000, 0x306e5d66)
+	ROM_LOAD("trs80.zl2",  0x2000, 0x1000, 0x306e5d66)
 
 	ROM_REGION(0x00c00, REGION_GFX1,0)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
@@ -502,7 +502,7 @@ ROM_START(trs80m3)
 ROM_END
 
 
-static const struct IODevice io_trs80l1[] = {
+static const struct IODevice io_trs80[] = {
 	{
 		IO_CASSETTE,			/* type */
 		1,						/* count */
@@ -545,7 +545,7 @@ static const struct IODevice io_trs80l1[] = {
 };
 
 
-static const struct IODevice io_trs80[] = {
+static const struct IODevice io_trs80l2[] = {
 	{
 		IO_CASSETTE,			/* type */
 		1,						/* count */
@@ -606,14 +606,14 @@ static const struct IODevice io_trs80[] = {
 	{ IO_END }
 };
 
-#define io_trs80alt io_trs80
-#define io_sys80	io_trs80
-#define io_trs80m3	io_trs80
+#define io_trs80l2a io_trs80l2
+#define io_sys80	io_trs80l2
+#define io_trs80m3	io_trs80l2
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-COMP ( 1977, trs80l1,  0,		 level1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
-COMP ( 1978, trs80,    0,		 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
-COMP ( 1978, trs80alt, trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
+COMP ( 1977, trs80,    0,		 level1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
+COMP ( 1978, trs80l2,  trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
+COMP ( 1978, trs80l2a, trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
 COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    "EACA Computers Ltd.","System-80" )
 COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
 

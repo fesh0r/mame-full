@@ -13,7 +13,6 @@
 ******************************************************************************/
 
 #include "driver.h"
-#define MESS_DEBUG
 
 
 #ifndef DRIVER_RECURSIVE
@@ -61,7 +60,7 @@ const struct GameDriver * drivers[] =
 #undef DRIVER
 #undef TESTDRIVER
 #define DRIVER(NAME) &driver_##NAME,
-#ifdef MESS_DEBUG
+#ifdef MAME_DEBUG
 #define TESTDRIVER(NAME) &driver_##NAME,
 #else
 #define TESTDRIVER(NAME)
@@ -526,9 +525,9 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( mbee56k )	/* Microbee 56K (CP/M)							  */
 
 	/* TANDY RADIO SHACK */
-	DRIVER( trs80l1 )	/* TRS-80 Model I	- Radio Shack Level I BASIC   */
-	DRIVER( trs80 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
-	DRIVER( trs80alt )	/* TRS-80 Model I	- R/S L2 BASIC				  */
+	DRIVER( trs80 )	    /* TRS-80 Model I	- Radio Shack Level I BASIC   */
+	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
+	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC				  */
 	DRIVER( sys80 ) 	/* EACA System 80								  */
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
