@@ -402,8 +402,7 @@ pdp1_reset_param_t pdp1_reset_param =
 	pdp1_tape_read_binary,
 	pdp1_io_sc_callback,
 	0,	/* extend mode support defined in input ports and pdp1_init_machine */
-	0,	/* hardware multiply support defined in input ports and pdp1_init_machine */
-	0,	/* hardware divide support defined in input ports and pdp1_init_machine */
+	0,	/* hardware multiply/divide support defined in input ports and pdp1_init_machine */
 	0	/* type 20 sequence break system support defined in input ports and pdp1_init_machine */
 };
 

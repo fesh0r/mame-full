@@ -34,8 +34,7 @@ typedef struct pdp1_reset_param_t
 	/* 0: no extend support, 1: extend with 15-bit address, 2: extend with 16-bit address */
 	int extend_support;
 	/* 1 to use hardware multiply/divide (MUL, DIV) instead of MUS, DIS */
-	int hw_multiply;
-	int hw_divide;
+	int hw_mul_div;
 	/* 0: standard sequence break system 1: type 20 sequence break system */
 	int type_20_sbs;
 } pdp1_reset_param_t;
@@ -43,21 +42,7 @@ typedef struct pdp1_reset_param_t
 #define IOT_NO_COMPLETION_PULSE -1
 
 /* PUBLIC FUNCTIONS */
-/*extern void pdp1_init(void);
-extern unsigned pdp1_get_context (void *dst);
-extern void pdp1_set_context (void *src);
-extern unsigned pdp1_get_reg (int regnum);
-extern void pdp1_set_reg (int regnum, unsigned val);
-extern void pdp1_set_irq_line(int irqline, int state);
-extern void pdp1_set_irq_callback(int (*callback)(int irqline));
-extern void pdp1_reset(void *param);
-extern void pdp1_exit (void);
-extern int pdp1_execute(int cycles);
-extern const char *pdp1_info(void *context, int regnum);
-extern unsigned pdp1_dasm(char *buffer, unsigned pc);*/
 void pdp1_get_info(UINT32 state, union cpuinfo *info);
-
-extern int pdp1_ICount;
 
 #define READ_PDP_18BIT(A) ((signed)program_read_dword_32be((A)<<2))
 #define WRITE_PDP_18BIT(A,V) (program_write_dword_32be((A)<<2,(V)))

@@ -76,10 +76,10 @@ enum
 {
 	pdp1_config_extend_bit			= 0,
 	pdp1_config_extend_mask			= 0x3,	/* 2 bits */
-	pdp1_config_hw_multiply_bit		= 2,
-	pdp1_config_hw_multiply_mask	= 0x1,
-	pdp1_config_hw_divide_bit		= 3,
-	pdp1_config_hw_divide_mask		= 0x1,
+	pdp1_config_hw_mul_div_bit		= 2,
+	pdp1_config_hw_mul_div_mask		= 0x1,
+	/*pdp1_config_hw_obsolete_bit	= 3,
+	pdp1_config_hw_obsolete_mask	= 0x1,*/
 	pdp1_config_type_20_sbs_bit		= 4,
 	pdp1_config_type_20_sbs_mask	= 0x1,
 	pdp1_config_lightpen_bit		= 5,

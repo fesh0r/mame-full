@@ -281,8 +281,7 @@ MACHINE_INIT( pdp1 )
 
 	config = readinputport(pdp1_config);
 	pdp1_reset_param.extend_support = (config >> pdp1_config_extend_bit) & pdp1_config_extend_mask;
-	pdp1_reset_param.hw_multiply = (config >> pdp1_config_hw_multiply_bit) & pdp1_config_hw_multiply_mask;
-	pdp1_reset_param.hw_divide = (config >> pdp1_config_hw_divide_bit) & pdp1_config_hw_divide_mask;
+	pdp1_reset_param.hw_mul_div = (config >> pdp1_config_hw_mul_div_bit) & pdp1_config_hw_mul_div_mask;
 	pdp1_reset_param.type_20_sbs = (config >> pdp1_config_type_20_sbs_bit) & pdp1_config_type_20_sbs_mask;
 
 	tape_reader.timer = timer_alloc(reader_callback);

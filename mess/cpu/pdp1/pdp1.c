@@ -438,8 +438,7 @@ typedef struct
 	int address_extension_mask;	/* 00000 with no extend support, 070000 or 0170000 with extend support */
 
 	/* 1 to use hardware multiply/divide (MUL, DIV) instead of MUS, DIS */
-	int hw_multiply;
-	int hw_divide;
+	int hw_mul_div;
 
 	/* 1 for 16-line sequence break system, 0 for default break system */
 	int type_20_sbs;
@@ -475,7 +474,7 @@ static pdp1_Regs pdp1;
 #define PREVIOUS_PC		((PC & ADDRESS_EXTENSION_MASK) | ((PC-1) & BASE_ADDRESS_MASK))
 
 /* public globals */
-signed int pdp1_ICount;
+static signed int pdp1_ICount;
 
 
 
@@ -572,8 +571,7 @@ static void pdp1_reset (void *untyped_param)
 	pdp1.read_binary_word = (param) ? param->read_binary_word : NULL;
 	pdp1.io_sc_callback = (param) ? param->io_sc_callback : NULL;
 	pdp1.extend_support = (param) ? param->extend_support : 0;
-	pdp1.hw_multiply = (param) ? param->hw_multiply : 0;
-	pdp1.hw_divide = (param) ? param->hw_divide : 0;
+	pdp1.hw_mul_div = (param) ? param->hw_mul_div : 0;
 	pdp1.type_20_sbs = (param) ? param->type_20_sbs : 0;
 
 	switch (pdp1.extend_support)
@@ -1301,7 +1299,7 @@ static void execute_instruction(void)
 			INCREMENT_PC;
 		break;
 	case MUS_MUL:	/* Multiply Step or Multiply */
-		if (pdp1.hw_multiply)
+		if (pdp1.hw_mul_div)
 		{	/* MUL */
 			int scr;
 			int smb, srm;
@@ -1364,7 +1362,7 @@ static void execute_instruction(void)
 		}
 		break;
 	case DIS_DIV:	/* Divide Step or Divide */
-		if (pdp1.hw_divide)
+		if (pdp1.hw_mul_div)
 		{	/* DIV */
 			/* As a side note, the order of -0 detection and overflow checking does not matter,
 			because the sum of two positive number cannot give 0777777 (since positive
