@@ -89,12 +89,18 @@ INLINE void ARM_WRMEM_32(UINT32 addr, UINT32 val)
 #define PSW 	arm.psw
 #define PC		arm.reg[15]
 
-#define N		0x80000000L
-#define Z		0x40000000L
-#define C		0x20000000L
-#define V		0x10000000L
-#define I		0x08000000L
-#define F		0x04000000L
+#define N_BIT	31
+#define N		(1L << N_BIT)
+#define Z_BIT	30
+#define Z		(1L << Z_BIT)
+#define C_BIT	29
+#define C		(1L << C_BIT)
+#define V_BIT	28
+#define V		(1L << V_BIT)
+#define I_BIT	27
+#define I		(1L << I_BIT)
+#define F_BIT	26
+#define F		(1L << F_BIT)
 #define S01 	0x00000003L
 
 /* mode flags */
@@ -104,22 +110,22 @@ INLINE void ARM_WRMEM_32(UINT32 addr, UINT32 val)
 #define SVC 	0x00000003L
 
 /* coniditional execution: bits 31-28 */
-#define C_EQ	 0
-#define C_NE	 1
-#define C_CS	 2	/* aka HS (higher or same) */
-#define C_CC	 3	/* aka UL (unsigned lower) or LO (lower) */
-#define C_MI	 4
-#define C_PL	 5
-#define C_VS	 6
-#define C_VC	 7
-#define C_HI	 8
-#define C_LS	 9
-#define C_GE	10
-#define C_LT	11
-#define C_GT	12
-#define C_LE	13
-#define C_AL	14
-#define C_NV	15
+#define COND_EQ  0
+#define COND_NE  1
+#define COND_CS  2	/* aka HS (higher or same) */
+#define COND_CC  3	/* aka UL (unsigned lower) or LO (lower) */
+#define COND_MI  4
+#define COND_PL  5
+#define COND_VS  6
+#define COND_VC  7
+#define COND_HI  8
+#define COND_LS  9
+#define COND_GE 10
+#define COND_LT 11
+#define COND_GT 12
+#define COND_LE 13
+#define COND_AL 14
+#define COND_NV 15
 
 /* registers */
 #define RD	arm.reg[(OP>>12)&15]
@@ -220,15 +226,16 @@ INLINE UINT32 RS(void)
 		/* shift count == 0 is RRX */
 		if (s == 0)
 		{
-			UINT32 c = rs & 1;
+			UINT32 c = (rs & 1) << C_BIT;
 			UINT32 rc = ((PSW & C) << 3) | (rs >> 1);
-			PSW = (PSW & ~C) | (c << 29);
+			PSW = (PSW & ~C) | c;
 			return rc;
 		}
 		/* ROR #1 .. #31 */
 		return (rs << (31 - s)) | (rs >> s);
 
-	default:
+	case 0x70:
+    default:
 		/* ROR R0 .. R15 */
 		s = arm.reg[s >> 1];
 		return (rs << (31 - s)) | (rs >> s);
@@ -553,7 +560,7 @@ INLINE void shift_queue(void)
 
 INLINE void PUT_PC(UINT32 val, int link)
 {
-	switch( (PSW & S01) | ((val & S01) << 2) )
+    switch( (PSW & S01) | ((val & S01) << 2) )
 	{
 	case  0: /* from USER mode to USER mode */
 	case  5: /* from FIRQ mode to FIRQ mode */
@@ -623,15 +630,16 @@ INLINE void PUT_PC(UINT32 val, int link)
 	}
 
 	/* if this is a BL (branch with link) make a copy of R15 and the status now */
-	if (link) arm.reg[14] = arm.reg[15] | PSW;
+	if (link)
+		arm.reg[14] = PC | PSW;
 
 	/* store the status flags in an extra field */
 	PSW = val & (N|Z|C|V|I|F|S01);
 
 	/* only store the address part of val into r[15] */
-	PC = val ^ PSW;
-	fill_queue();
+	PC = val & ~(N|Z|C|V|I|F|S01);
 
+    fill_queue();
 }
 
 /*
@@ -640,7 +648,7 @@ INLINE void PUT_PC(UINT32 val, int link)
  * which is a combination of the program counter
  * and the processor status word
  */
-INLINE void PUT_RD(UINT32 val)
+static void PUT_RD(UINT32 val)
 {
 	UINT32 rd = (OP>>12)&15;
 	if ( rd == 15 ) /* destination is R15 (PC) ? */
@@ -649,28 +657,28 @@ INLINE void PUT_RD(UINT32 val)
 		arm.reg[rd] = val;
 }
 
-#define GET_C	((PSW & C) >> 29)
+#define GET_C	((PSW >> C_BIT) & 1)
 
 #define SET_NZ(d)											\
-	PSW = (PSW & ~(N | Z)) |								\
-		(d & N) |											\
-		(d ? Z : 0)
+	PSW &= ~(N | Z);										\
+	if (d == 0) PSW |= Z;									\
+	else if (d & N) PSW |= N
 
 #define SET_NZCV_ADD(d,s,v) 								\
-	PSW = (PSW & ~(N | Z | C | V)) |						\
-		(d & N) |											\
-		(d ? Z : 0) |										\
-		(v != 0 && d < s ? C : 0) | 						\
-		( ((INT32)v > 0 && (INT32)d < (INT32)s) ||			\
-		  ((INT32)v < 0 && (INT32)d > (INT32)d) ? V : 0)
+	PSW &= ~(N | Z | C | V);								\
+	if (d == 0) PSW |= Z;									\
+	else if (d & N) PSW |= N;								\
+	if (v != 0 && d < s) PSW |= C;							\
+	if( ((INT32)v > 0 && (INT32)d < (INT32)s) ||			\
+		((INT32)v < 0 && (INT32)d > (INT32)d) ) PSW |= V
 
 #define SET_NZCV_SUB(d,s,v) 								\
-	PSW = (PSW & ~(N | Z | C | V)) |						\
-		(d & N) |											\
-		(d ? Z : 0) |										\
-		(v != 0 && d > s ? C : 0) | 						\
-		( ((INT32)v < 0 && (INT32)d < (INT32)s) ||			\
-		  ((INT32)v > 0 && (INT32)d > (INT32)d) ? V : 0)
+	PSW &= ~(N | Z | C | V);								\
+	if( d == 0 ) PSW |= Z;									\
+	else if( d & N ) PSW |= N;								\
+	if( v != 0 && d > s) PSW |= C;							\
+	if( ((INT32)v < 0 && (INT32)d < (INT32)s) ||			\
+		((INT32)v > 0 && (INT32)d > (INT32)d) ) PSW |= V
 
 
 /*****************************************************************************
@@ -2623,7 +2631,6 @@ void (*func[256])(void) =
 void arm_reset(void *param)
 {
 	memset(&arm, 0, sizeof(struct ARM));
-	PUT_PC(0x00000000, 0);
 }
 
 void arm_exit(void)
@@ -2634,65 +2641,64 @@ void arm_exit(void)
 int arm_execute(int cycles)
 {
 	arm_ICount = cycles;
-//	change_pc26lew(-1);
-
+	change_pc26lew(0);
 	do
 	{
 		int cond;
 
-		shift_queue();
+        shift_queue();
 
 		CALL_MAME_DEBUG;
 
-		/* conditionally execute _every_ opcode (yes, the ARM is like this) */
+        /* conditionally execute _every_ opcode (yes, the ARM is like this) */
 		switch (OP >> 28)
 		{
-		case C_EQ:
+		case COND_EQ:
 			cond =	PSW & Z;
 			break;
-		case C_NE:
+		case COND_NE:
 			cond = ~PSW & Z;
 			break;
-		case C_CS:
+		case COND_CS:
 			cond =	PSW & C;
 			break;
-		case C_CC:
+		case COND_CC:
 			cond = ~PSW & C;
 			break;
-		case C_MI:
+		case COND_MI:
 			cond =	PSW & N;
 			break;
-		case C_PL:
+		case COND_PL:
 			cond = ~PSW & N;
 			break;
-		case C_VS:
+		case COND_VS:
 			cond =	PSW & V;
 			break;
-		case C_VC:
+		case COND_VC:
 			cond = ~PSW & V;
 			break;
-		case C_HI:
+		case COND_HI:
 			cond = ((PSW & C) >> 1) & (~PSW & Z);
 			break;
-		case C_LS:
+		case COND_LS:
 			cond = ((~PSW & C) >> 1) | (PSW & Z);
 			break;
-		case C_GE:
+		case COND_GE:
 			cond = ((~PSW & N) >> 3) ^ (PSW & V);
 			break;
-		case C_LT:
+		case COND_LT:
 			cond = ((PSW & N) >> 3) ^ (PSW & V);
 			break;
-		case C_GT:
+		case COND_GT:
 			cond = (((~PSW & N) >> 3) ^ (PSW & V)) & ((~PSW << 1) & Z);
 			break;
-		case C_LE:
+		case COND_LE:
 			cond = (((PSW & N) >> 3) ^ (PSW & V)) | ((PSW << 1) & Z);
 			break;
-		case C_AL:
+		case COND_AL:
 			cond = 1;
 			break;
-		case C_NV:
+		case COND_NV:
 		default:
 			cond = 0; break;
 		}
@@ -2723,12 +2729,12 @@ void arm_set_context(void *src)
 
 unsigned arm_get_pc(void)
 {
-	return PC - 8;
+	return (PC - 8) & AMASK;
 }
 
 void arm_set_pc(unsigned val)
 {
-	PUT_PC(val, 0);
+    PUT_PC(val, 0);
 }
 
 unsigned arm_get_sp(void)
@@ -2920,7 +2926,6 @@ const char *arm_info(void *context, int regnum)
 
 unsigned arm_dasm(char *buffer, unsigned pc)
 {
-	change_pc26lew(pc);
 #ifdef MAME_DEBUG
 	return DasmARM(buffer,pc);
 #else

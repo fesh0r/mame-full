@@ -113,14 +113,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x00000000, 0x007fffff, MWA_BANK1 },
-	{ 0x00800000, 0x00ffffff, MWA_BANK2 },
-	{ 0x01000000, 0x007fffff, MWA_BANK3 },
-	{ 0x01800000, 0x00ffffff, MWA_BANK4 },
-	{ 0x02000000, 0x007fffff, MWA_BANK5 },
-	{ 0x02800000, 0x00ffffff, MWA_BANK6 },
-	{ 0x03000000, 0x007fffff, MWA_BANK7 },
-	{ 0x03800000, 0x00ffffff, MWA_BANK8 },
     { 0x001ff000, 0x001fffff, videoram_w, &videoram, &videoram_size },
+	{ 0x00800000, 0x00ffffff, MWA_BANK2 },
+	{ 0x01000000, 0x017fffff, MWA_BANK3 },
+	{ 0x01800000, 0x01ffffff, MWA_BANK4 },
+	{ 0x02000000, 0x027fffff, MWA_BANK5 },
+	{ 0x02800000, 0x02ffffff, MWA_BANK6 },
+	{ 0x03000000, 0x037fffff, MWA_BANK7 },
+	{ 0x03800000, 0x03ffffff, MWA_BANK8 },
     {-1}
 };
 
