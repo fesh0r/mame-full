@@ -122,7 +122,8 @@ int msx_load_rom (int id)
         "Konami Game Master 2", "ASCII/8kB with 8kB SRAM",
         "ASCII/16kB with 2kB SRAM", "R-Type", "Konami Majutsushi",
         "Panasonic FM-PAC", "Super Load Runner",
-        "Konami Synthesizer", "Cross Blaim", "Disk ROM" };
+        "Konami Synthesizer", "Cross Blaim", "Disk ROM",
+		"Korean 80-in-1", "Korean 126-in-1" };
 
     /* try to load it */
     F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
@@ -144,7 +145,7 @@ int msx_load_rom (int id)
    		}
    	else
    		{
-       	if (type < 0 || type > 15)
+       	if (type < 0 || type > 17)
        		{
            	logerror("Cart #%d Invalid extra info\n", id);
            	type = -1;
@@ -436,8 +437,13 @@ int msx_load_rom (int id)
         msx1.cart[id].mem = pmem;
         break;
     case 5: /* ASCII 16kb */
-    case 12: /* Super Load Runner */
         msx1.cart[id].banks[0] = 0;
+        msx1.cart[id].banks[1] = 1;
+        msx1.cart[id].banks[2] = 0;
+        msx1.cart[id].banks[3] = 1;
+        break;
+    case 12: /* Super Load Runner */
+        msx1.cart[id].banks[0] = 1;
         msx1.cart[id].banks[1] = 1;
         msx1.cart[id].banks[2] = 0;
         msx1.cart[id].banks[3] = 1;
@@ -922,12 +928,10 @@ int msx_floppy_id (int id)
 			case 360*1024:
 			case 720*1024:
 				return INIT_OK;
-			default:
-				return INIT_FAILED;
 			}	
 		}
-	else
-		return INIT_OK;
+	
+	return INIT_FAILED;
 	}
 	
 int msx_floppy_init (int id)
@@ -951,6 +955,8 @@ int msx_floppy_init (int id)
 				return INIT_FAILED;
 			}	
 		}
+	else
+		return INIT_FAILED;
 
 	if (basicdsk_floppy_init (id) != INIT_OK)
 		return INIT_FAILED;
@@ -1201,6 +1207,15 @@ static void msx_cart_write (int cart, int offset, int data)
             if ((offset/0x800) < 2 || msx_cart_page_2 (cart) )
                 cpu_setbank (3+(offset/0x800),msx1.cart[cart].mem + n * 0x2000);
         }
+   case 16: /* Korean 80-in-1 */
+        if ( (offset < 4) )
+        {
+            n = data & msx1.cart[cart].bank_mask;
+            msx1.cart[cart].banks[offset] = n;
+            if (offset < 2 || msx_cart_page_2 (cart) )
+                cpu_setbank (3+offset,msx1.cart[cart].mem + n * 0x2000);
+        }
+        break;
         break;
     case 12: /* Super Load Runner */
 		if (offset == -1)
@@ -1224,6 +1239,30 @@ static void msx_cart_write (int cart, int offset, int data)
             n = (data * 2) & msx1.cart[cart].bank_mask;
 
             if (offset & 0x1000)
+            {
+                /* page 2 */
+                msx1.cart[cart].banks[2] = n;
+                msx1.cart[cart].banks[3] = n + 1;
+                if (msx_cart_page_2 (cart))
+                {
+                    cpu_setbank (5,msx1.cart[cart].mem + n * 0x2000);
+                    cpu_setbank (6,msx1.cart[cart].mem + (n + 1) * 0x2000);
+                }
+            } else {
+                /* page 1 */
+                msx1.cart[cart].banks[0] = n;
+                msx1.cart[cart].banks[1] = n + 1;
+                cpu_setbank (3,msx1.cart[cart].mem + n * 0x2000);
+                cpu_setbank (4,msx1.cart[cart].mem + (n + 1) * 0x2000);
+            }
+        }
+        break;
+   case 17: /* 126-in-1 */
+        if (offset < 2)
+        {
+            n = (data * 2) & msx1.cart[cart].bank_mask;
+
+            if (offset)
             {
                 /* page 2 */
                 msx1.cart[cart].banks[2] = n;
