@@ -632,6 +632,7 @@ void LoadCheatFile (int merge, char *filename)
 	struct subcheat_struct *subcheat;
 	int sub = 0;
 
+	logerror("LoadCheatFile = %s\n",filename);
 	if (!merge)
 	{
 		ActiveCheatTotal = 0;
