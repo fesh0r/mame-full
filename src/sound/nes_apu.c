@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu.c,v 1.8 2000/09/12 17:56:23 hjb Exp $
+** $Id: nes_apu.c,v 1.9 2000/09/12 19:01:07 hjb Exp $
 */
 
 #include <string.h>
@@ -372,11 +372,11 @@ static INT32 apu_triangle(void)
 	while (apu.triangle.accu < 0)
 	{
 		apu.triangle.accu += apu.sample_rate;
-		apu.triangle.adder = (apu.triangle.adder + 1) & 0x1f;
-		if (apu.triangle.adder <= 0x10)
-			apu.triangle.output_vol -= 2 * 256;
+		apu.triangle.adder = (apu.triangle.adder + 1) & 0x1F;
+		if (apu.triangle.adder & 0x10)
+			apu.triangle.output_vol += APU_MIX_TRIANGLE;
 		else
-			apu.triangle.output_vol += 2 * 256;
+			apu.triangle.output_vol -= APU_MIX_TRIANGLE;
 	}
 
 	return apu.triangle.output_vol;
@@ -917,7 +917,7 @@ void apu_process(void *buffer, int num_samples)
 		}
 
 		/* little extra kick for the kids */
-/*		  accum <<= 1; */
+		accum <<= 1;
 
 		/* prevent clipping */
 		if (accum > 0x7FFF)
@@ -1014,9 +1014,7 @@ apu_t *apu_create(int cpunum, double baseclock, int sample_rate, int refresh_rat
 	for (channel = 0; channel < 6; channel++)
 	   apu_setchan(channel, TRUE);
 
-#if 0
     apu_setfilter(APU_FILTER_LOWPASS);
-#endif
 
 	return &apu;
 }
@@ -1044,6 +1042,9 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu.c,v $
+** Revision 1.9  2000/09/12 19:01:07  hjb
+** Some more bugfixes - enabled the low-pass filter again.
+**
 ** Revision 1.8  2000/09/12 17:56:23  hjb
 ** - Added functions to read/write memory from a specific cpu to cpuintrf.c/h
 **   data_t cpunum_readmem(int cpunum, offs_t offset);
