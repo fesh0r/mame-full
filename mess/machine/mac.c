@@ -140,7 +140,7 @@ static int mac_overlay = 0;
 	Interrupt handling
 */
 
-int scc_interrupt, via_interrupt;
+static int scc_interrupt, via_interrupt;
 
 static void mac_field_interrupts(void)
 {
