@@ -45,6 +45,7 @@
 	  33       4  Last modified date
 	  37       2  Header pointer
 
+
   In "seedling files", the key pointer points to a single block that is the
   whole file.  In "sapling files", the key pointer points to an index block
   that contains 256 2-byte index pointers that point to the actual blocks of
@@ -60,6 +61,17 @@
 	bits  9-15	Year (0-49 is 2000-2049, 50-99 is 1950-1999)
 	bits 16-21	Minute
 	bits 24-28	Hour
+
+
+  ProDOS directory and volume headers have this information:
+
+  Offset  Length  Description
+  ------  ------  -----------
+      31       1  Length of the entry; expected to be 39
+	  32       1  Number of entries per block; expected to be 13
+	  33       2  Active entry count in directory
+	  35       2  Volume bitmap block number
+	  37       2  Total blocks on volume
 
 *****************************************************************************/
 
@@ -94,6 +106,13 @@ struct prodos_dirent
 	UINT32 lastmodified_time;
 	UINT32 creation_time;
 };
+
+typedef enum
+{
+	CREATE_NONE,
+	CREATE_FILE,
+	CREATE_DIR,
+} creation_policy_t;
 
 
 
@@ -354,6 +373,26 @@ static imgtoolerr_t prodos_load_enum_block(imgtool_image *image,
 
 
 
+#if 0
+static imgtoolerr_t prodos_load_volume_header(imgtool_image *image)
+{
+	imgtoolerr_t err;
+	UINT8 buffer[BLOCK_SIZE];
+
+	err = prodos_load_block(image, 2, buffer);
+	if (err)
+		return err;
+
+	if ((buffer[0] & 0xF0) == 0xF0)
+	{
+	}
+
+	return IMGTOOLERR_UNIMPLEMENTED;;
+}
+#endif
+
+
+
 static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolution *opts)
 {
 	imgtoolerr_t err;
@@ -441,7 +480,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 
 
 static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
-	struct prodos_dirent *ent)
+	creation_policy_t create, struct prodos_dirent *ent)
 {
 	imgtoolerr_t err;
 	struct prodos_direnum direnum;
@@ -460,12 +499,22 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 		}
 		while(strcmp(path, ent->filename));
 
-		path += strlen(path) + 1;
+		path += strlen(path) + 1;	
 		if (*path)
 		{
+			/* next part of the file */
 			if (!is_dir_storagetype(ent->storage_type))
 				return IMGTOOLERR_FILENOTFOUND;
 			block = ent->key_pointer;
+		}
+		else if (!ent->storage_type)
+		{
+			/* did not find file; maybe we need to create it */
+			if (!create)
+				return IMGTOOLERR_FILENOTFOUND;
+
+			/* NYI */
+			return IMGTOOLERR_UNIMPLEMENTED;
 		}
 	}
 	return IMGTOOLERR_SUCCESS;
@@ -601,7 +650,7 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 
-	err = prodos_lookup_path(image, filename, &ent);
+	err = prodos_lookup_path(image, filename, CREATE_NONE, &ent);
 	if (err)
 		return err;
 
@@ -614,6 +663,24 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 		return err;
 
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char *filename, imgtool_stream *sourcef, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+
+	err = prodos_lookup_path(image, filename, CREATE_FILE, &ent);
+	if (err)
+		return err;
+
+	if (is_dir_storagetype(ent.storage_type))
+		return IMGTOOLERR_FILENOTFOUND;
+
+	/* NYI */
+	return IMGTOOLERR_UNIMPLEMENTED;
 }
 
 
@@ -631,6 +698,7 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->begin_enum					= prodos_diskimage_beginenum;
 	module->next_enum					= prodos_diskimage_nextenum;
 	module->read_file					= prodos_diskimage_readfile;
+	//module->write_file					= prodos_diskimage_writefile;
 	return IMGTOOLERR_SUCCESS;
 }
 
