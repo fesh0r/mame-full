@@ -9,6 +9,7 @@
 #include "formats/flopimg.h"
 #include "imgtoolx.h"
 #include "library.h"
+#include "iflopimg.h"
 
 imgtoolerr_t imgtool_floppy_error(floperr_t err)
 {
