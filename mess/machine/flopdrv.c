@@ -368,48 +368,64 @@ void    floppy_drive_seek(int id, signed int signed_tracks)
 /* this is not accurate. But it will do for now */
 int	floppy_drive_get_next_id(int drive, int side, chrn_id *id)
 {
-	int spt;
-
-	/* get sectors per track */
-	spt = 0;
-	if (drives[drive].interface.get_sectors_per_track)
-		spt = drives[drive].interface.get_sectors_per_track(drive, side);
-
-	/* set index */
-	if ((drives[drive].id_index==(spt-1)) || (spt==0))
+	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_REAL_FDD))
 	{
-		floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_INDEX, 1);
+		osd_fdc_read_id(drive, side, drives[drive].id_buffer);
+
+		id->C = drives[drive].id_buffer[0];
+		id->H = drives[drive].id_buffer[1];
+		id->R = drives[drive].id_buffer[2];
+		id->N = drives[drive].id_buffer[3];
+		id->flags = 0;
+		id->data_id = 0;
+		return 1;
+
+	//	id.flags = 0;
+	//	id.data_id = i;
 	}
 	else
 	{
-		floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_INDEX, 0);
-	}
+		int spt;
 
-	/* get id */
-	if (spt!=0)
-	{
-		if (drives[drive].interface.get_id_callback)
+		/* get sectors per track */
+		spt = 0;
+		if (drives[drive].interface.get_sectors_per_track)
+			spt = drives[drive].interface.get_sectors_per_track(drive, side);
+
+		/* set index */
+		if ((drives[drive].id_index==(spt-1)) || (spt==0))
 		{
-			drives[drive].interface.get_id_callback(drive, id, drives[drive].id_index, side);
+			floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_INDEX, 1);
 		}
+		else
+		{
+			floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_INDEX, 0);
+		}
+
+		/* get id */
+		if (spt!=0)
+		{
+			if (drives[drive].interface.get_id_callback)
+			{
+				drives[drive].interface.get_id_callback(drive, id, drives[drive].id_index, side);
+			}
+		}
+
+		drives[drive].id_index++;
+		if (spt!=0)
+		{
+			drives[drive].id_index %= spt;
+		}
+		else
+		{
+			drives[drive].id_index = 0;
+		}
+
+		if (spt==0)
+			return 0;
+		
+		return 1;
 	}
-
-	drives[drive].id_index++;
-	if (spt!=0)
-	{
-		drives[drive].id_index %= spt;
-	}
-	else
-	{
-		drives[drive].id_index = 0;
-	}
-
-	if (spt==0)
-		return 0;
-	
-	return 1;
-
-
 }
 
 int	floppy_drive_get_current_track(int drive)
@@ -427,18 +443,14 @@ void    floppy_drive_read_sector_data(int drive, int side, int index1, char *pBu
 {
 	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_REAL_FDD))
 	{
-                floppy_drive *pDrive = &drives[drive];
-                chrn_id      *id = &pDrive->ids[index1];
+		floppy_drive *pDrive = &drives[drive];
 
-                id->C = pDrive->current_track;
-                id->H = 0;
-                id->R = 0x0c1 + index1;
-                id->N = 2;
+		logerror("real floppy read\n");
 
-                logerror("real floppy read\r\n");
-
-                /* track, head, sector */
-				osd_fdc_get_sector(pDrive->fdd_unit,side, id->C, id->H, id->R, id->N,(unsigned char *)pBuffer, 0);
+        /* track, head, sector */
+		osd_fdc_get_sector(pDrive->fdd_unit,side, pDrive->id_buffer[0],
+			pDrive->id_buffer[1], pDrive->id_buffer[2], pDrive->id_buffer[3],
+			(unsigned char *)pBuffer, 0);
 	}
 	else
 	{
@@ -451,11 +463,12 @@ void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pB
 {
 	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_REAL_FDD))
 	{
-                floppy_drive *pDrive = &drives[drive];
-                chrn_id      *id = &pDrive->ids[index1];
+		floppy_drive *pDrive = &drives[drive];
 
-                
-                osd_fdc_put_sector(pDrive->fdd_unit,side, id->C, id->H,id->R, id->N,(unsigned char *)pBuffer, ddam);
+        /* track, head, sector */
+		osd_fdc_put_sector(pDrive->fdd_unit,side, pDrive->id_buffer[0],
+			pDrive->id_buffer[1], pDrive->id_buffer[2], pDrive->id_buffer[3],
+			(unsigned char *)pBuffer, ddam);
 	}
 	else
 	{
