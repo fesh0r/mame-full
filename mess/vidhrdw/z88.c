@@ -14,16 +14,6 @@
   Start the video hardware emulation.
 ***************************************************************************/
 
-int z88_vh_start(void)
-{
-
-	return 0;
-}
-
-void    z88_vh_stop(void)
-{
-}
-
 /* two colours */
 static unsigned short z88_colour_table[Z88_NUM_COLOURS] =
 {
@@ -39,10 +29,10 @@ static unsigned char z88_palette[Z88_NUM_COLOURS * 3] =
 
 
 /* Initialise the palette */
-void z88_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( z88 )
 {
-        memcpy(sys_palette, z88_palette, sizeof (z88_palette));
-        memcpy(sys_colortable, z88_colour_table, sizeof (z88_colour_table));
+	palette_set_colors(0, z88_palette, sizeof(z88_palette) / 3);
+	memcpy(colortable, z88_colour_table, sizeof (z88_colour_table));
 }
 
 extern unsigned char *z88_memory;
@@ -160,7 +150,7 @@ unsigned  char *z88_convert_address(unsigned long offset)
   Do NOT call osd_update_display() from this fuz88tion,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void z88_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( z88 )
 {
     int x,y;
     unsigned char *ptr = z88_convert_address(blink.sbf);

@@ -20,7 +20,7 @@
 #define LOG(x)	/* x */
 #endif
 
-void a310_init_machine(void)
+static MACHINE_INIT( a310 )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 
@@ -57,28 +57,20 @@ void a310_init_machine(void)
 	memory_set_bankhandler_w(8,0,MWA_ROM);
 }
 
-void init_a310(void)
-{
-}
-
-int a310_vh_start(void)
+static VIDEO_START( a310 )
 {
 	if (video_start_generic())
         return 1;
 	return 0;
 }
 
-void a310_vh_stop(void)
-{
-}
-
-void a310_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+static VIDEO_UPDATE( a310 )
 {
     int offs;
+	int full_refresh = 1;
 
     if( full_refresh )
 	{
-		fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->visible_area);
 		memset(dirtybuffer, 1, videoram_size);
     }
 
@@ -245,38 +237,28 @@ INPUT_PORTS_START( a310 )
 	PORT_BIT (0xf8, 0x80, IPT_UNUSED)
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_a310 =
-{
+
+static MACHINE_DRIVER_START( a310 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_ARM,
-			8000000,	/* 8 MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,						/* single CPU */
-	a310_init_machine,
-	NULL,					/* stop machine */
+	MDRV_CPU_ADD_TAG("main", ARM, 8000000)        /* 8 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware - include overscan */
-	32*8, 16*16, { 0*8, 32*8 - 1, 0*16, 16*16 - 1},
-	NULL,
-	2, 2,
-	NULL,					/* convert color prom */
+	MDRV_MACHINE_INIT( a310 )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-	a310_vh_start,
-	a310_vh_stop,
-	a310_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 16*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8 - 1, 0*16, 16*16 - 1)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	/* sound hardware */
-	0,0,0,0,
-};
+	MDRV_VIDEO_START(a310)
+	MDRV_VIDEO_UPDATE(a310)
+MACHINE_DRIVER_END
+
 
 ROM_START(a310)
 	ROM_REGION(0x00400000,REGION_CPU1,0)
@@ -285,7 +267,6 @@ ROM_START(a310)
 		ROM_LOAD("ic26.rom", 0x00300000, 0x00080000, 0xa81ceb7c)
 		ROM_LOAD("ic27.rom", 0x00380000, 0x00080000, 0x707b0c6c)
 	ROM_REGION(0x00800,REGION_GFX1,0)
-
 ROM_END
 
 static const struct IODevice io_a310[] = {
@@ -293,7 +274,7 @@ static const struct IODevice io_a310[] = {
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	   FULLNAME */
-COMP( 1988, a310,	  0,		a310,	  a310, 	a310,	  "Acorn","Archimedes 310" )
+COMP( 1988, a310,	  0,		a310,	  a310, 	NULL,	  "Acorn","Archimedes 310" )
 
 
 

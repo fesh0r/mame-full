@@ -19,8 +19,6 @@
 #include "includes/z88.h"
 
 unsigned char *z88_memory = NULL;
-static void *z88_rtc_timer = NULL;
-
 
 struct blink_hw blink;
 
@@ -402,16 +400,14 @@ static void z88_refresh_memory_bank(int index1)
 	}
 }
 
-void z88_init_machine(void)
+static MACHINE_INIT( z88 )
 {
-	z88_memory = malloc(2048*1024);
+	z88_memory = auto_malloc(2048*1024);
 
 	if (z88_memory)
-	{
 		memset(z88_memory, 0x0ff, 2048*1024);
-	}
 
-	z88_rtc_timer = timer_pulse(TIME_IN_MSEC(5), 0, z88_rtc_timer_callback);
+	timer_pulse(TIME_IN_MSEC(5), 0, z88_rtc_timer_callback);
 
 	blink_reset();
 
@@ -432,24 +428,6 @@ void z88_init_machine(void)
 	z88_refresh_memory_bank(2);
 	z88_refresh_memory_bank(3);
 }
-
-
-void z88_shutdown_machine(void)
-{
-	if (z88_memory!=NULL)
-	{
-		free(z88_memory);
-		z88_memory = NULL;
-	}
-
-	if (z88_rtc_timer!=NULL)
-	{
-		timer_remove(z88_rtc_timer);
-		z88_rtc_timer = NULL;
-	}
-
-}
-
 
 static MEMORY_READ_START (readmem_z88)
         {0x00000, 0x01fff, MRA_BANK1},
@@ -910,59 +888,30 @@ INPUT_PORTS_START(z88)
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( z88 )
-{
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-                        CPU_Z80 | CPU_16BIT_PORT ,  /* type */
-                        3276800, /* clock */
-                        readmem_z88,                   /* MemoryReadAddress */
-                        writemem_z88,                  /* MemoryWriteAddress */
-                        readport_z88,                  /* IOReadPort */
-                        writeport_z88,                 /* IOWritePort */
-			0,						   /*amstrad_frame_interrupt, *//* VBlank
-										* Interrupt */
-			0 /*1 */ ,				   /* vblanks per frame */
-                        0, 0,   /* every scanline */
-		},
-	},
-        50,                                                     /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-        z88_init_machine,                      /* init machine */
-        z88_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 3276800)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem_z88, writemem_z88)
+	MDRV_CPU_PORTS(readport_z88, writeport_z88)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( z88 )
+
 	/* video hardware */
-        Z88_SCREEN_WIDTH, /* screen width */
-        480,  /* screen height */
-        {0, (Z88_SCREEN_WIDTH - 1), 0, (480 - 1)},        /* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-        Z88_NUM_COLOURS,                                                        /* total colours */
-        Z88_NUM_COLOURS,                                                        /* color table len */
-        z88_init_palette,                      /* init palette */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(Z88_SCREEN_WIDTH, 480)
+	MDRV_VISIBLE_AREA(0, (Z88_SCREEN_WIDTH - 1), 0, (480 - 1))
+	MDRV_PALETTE_LENGTH(Z88_NUM_COLOURS)
+	MDRV_COLORTABLE_LENGTH(Z88_NUM_COLOURS)
+	MDRV_PALETTE_INIT( z88 )
 
-        VIDEO_TYPE_RASTER,                                  /* video attributes */
-        0,                                                                 /* MachineLayer */
-        z88_vh_start,
-        z88_vh_stop,
-        z88_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE( z88 )
 
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-    {
-		{
-			SOUND_SPEAKER,
-			&z88_speaker_interface,
-        }
-    }
-
-};
-
-
+	/* sound hardware */
+	MDRV_SOUND_ADD(SPEAKER, z88_speaker_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

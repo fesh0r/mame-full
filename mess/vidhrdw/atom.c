@@ -15,7 +15,7 @@ static void atom_charproc(UINT8 c)
 	m6847_intext_w(0,	(c & 0x40));
 }
 
-int atom_vh_start(void)
+VIDEO_START( atom )
 {
 	struct m6847_init_params p;
 
@@ -25,7 +25,7 @@ int atom_vh_start(void)
 	p.ramsize = 0x10000;
 	p.charproc = atom_charproc;
 
-	if (m6847_vh_start(&p))
+	if (video_start_m6847(&p))
 		return 1;
 
 	return (0);

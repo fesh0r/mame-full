@@ -30,8 +30,6 @@ static UINT8	atom_8255_portc;
 
 /* printer data written */
 static char atom_printer_data = 0x07f;
-/* 2.4khz timer state */
-static void *atom_timer = NULL;
 
 /* I am not sure if this is correct, the atom appears to have a 2.4Khz timer used for reading tapes?? */
 static int	timer_state = 0;
@@ -239,7 +237,8 @@ static OPBASE_HANDLER(atom_opbase_handler)
 
 	return activecpu_get_pc() & 0x0ffff;
 }
-void atom_init_machine(void)
+
+MACHINE_INIT( atom )
 {
 	ppi8255_init (&atom_8255_int);
 	atom_8255_porta = 0xff;
@@ -253,16 +252,13 @@ void atom_init_machine(void)
 	via_reset();
 
 	timer_state = 0;
-	atom_timer = timer_pulse(TIME_IN_HZ(2400*2), 0, atom_timer_callback);
+	timer_pulse(TIME_IN_HZ(2400*2), 0, atom_timer_callback);
 
 	/* cassette motor control */
 	device_status(IO_CASSETTE, 0, 1);
 
 	memory_set_opbase_handler(0,atom_opbase_handler);
-
 }
-
-
 
 /* load image */
 int atom_load(int type, int id, unsigned char **ptr)
@@ -574,9 +570,9 @@ READ_HANDLER(atom_eprom_box_r)
 	return selected_eprom;
 }
 
-void	atomeb_init_machine(void)
+MACHINE_INIT( atomeb )
 {
-	atom_init_machine();
+	machine_init_atom();
 	atom_eprom_box_init();
 }
 

@@ -5,10 +5,8 @@
 #define Z88_SCREEN_WIDTH        856
 #define Z88_SCREEN_HEIGHT       64
 
-int z88_vh_start(void);
-void z88_vh_stop(void);
-void z88_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void z88_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( z88 );
+extern VIDEO_UPDATE( z88 );
 
 #define Z88_AWAKE	0
 #define Z88_SNOOZE	1

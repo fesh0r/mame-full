@@ -153,6 +153,7 @@ DRVLIBS = \
 	$(OBJ)/trs80.a	  \
 	$(OBJ)/arcadia.a  \
 	$(OBJ)/acorn.a    \
+	$(OBJ)/tangerin.a \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
@@ -163,7 +164,6 @@ DRVLIBS = \
 #	$(OBJ)/vc4000.a   \
 #	$(OBJ)/p2000.a	  \
 #	$(OBJ)/ep128.a	  \
-#	$(OBJ)/tangerin.a \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/samcoupe.a \
 #	$(OBJ)/aquarius.a \
@@ -517,9 +517,9 @@ $(OBJ)/tangerin.a :\
 	  $(OBJ)/mess/machine/microtan.o \
 	  $(OBJ)/mess/systems/microtan.o \
 	  $(OBJ)/mess/formats/orictap.o  \
-	  $(OBJ)/mess/vidhrdw/oric.o     \
-	  $(OBJ)/mess/machine/oric.o     \
-	  $(OBJ)/mess/systems/oric.o
+#	  $(OBJ)/mess/vidhrdw/oric.o     \
+#	  $(OBJ)/mess/machine/oric.o     \
+#	  $(OBJ)/mess/systems/oric.o
 
 $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \
@@ -564,12 +564,12 @@ $(OBJ)/acorn.a:    \
 	  $(OBJ)/mess/vidhrdw/bbc.o	 \
 	  $(OBJ)/mess/machine/bbc.o	 \
 	  $(OBJ)/mess/systems/bbc.o	 \
-#	  $(OBJ)/mess/systems/a310.o	 \
-#	  $(OBJ)/mess/systems/z88.o	 \
-#	  $(OBJ)/mess/vidhrdw/z88.o \
-#	  $(OBJ)/mess/vidhrdw/atom.o	 \
-#	  $(OBJ)/mess/systems/atom.o	 \
-#	  $(OBJ)/mess/machine/atom.o	 \
+	  $(OBJ)/mess/systems/a310.o	 \
+	  $(OBJ)/mess/systems/z88.o	 \
+	  $(OBJ)/mess/vidhrdw/z88.o \
+	  $(OBJ)/mess/vidhrdw/atom.o	 \
+	  $(OBJ)/mess/systems/atom.o	 \
+	  $(OBJ)/mess/machine/atom.o	 \
 
 $(OBJ)/samcoupe.a: \
 	  $(OBJ)/mess/machine/coupe.o	 \

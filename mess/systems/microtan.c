@@ -249,53 +249,34 @@ static struct AY8910interface ay8910_interface =
     { 0 }
 };
 
-static struct MachineDriver machine_driver_microtan =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_M6502,
-            750000,    /* 750 kHz */
-            readmem_mtan,writemem_mtan,
-            0,0,
-            microtan_interrupt, 1
-        }
-    },
-    /* frames per second, VBL duration */
-    60, DEFAULT_60HZ_VBLANK_DURATION,
-    1,              /* single CPU */
-    microtan_init_machine,
-    microtan_exit_machine,           /* stop machine */
+static MACHINE_DRIVER_START( microtan )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 750000)        /* 750 kHz */
+	MDRV_CPU_MEMORY(readmem_mtan,writemem_mtan)
+	MDRV_CPU_VBLANK_INT(microtan_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( microtan )
 
     /* video hardware - include overscan */
-    32*8, 16*16, { 0*8, 32*8 - 1, 0*16, 16*16 - 1},
-    gfxdecodeinfo,
-    2, 2,
-    microtan_init_colors,       /* convert color prom */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 16*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8 - 1, 0*16, 16*16 - 1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT( microtan )
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,   /* video flags */
-    0,                      /* obsolete */
-    microtan_vh_start,
-    microtan_vh_stop,
-    microtan_vh_screenrefresh,
+	MDRV_VIDEO_START( microtan )
+	MDRV_VIDEO_UPDATE( microtan )
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_WAVE,
-            &wave_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
-        },
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        },
-    }
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 ROM_START(microtan)
     ROM_REGION(0x10000,REGION_CPU1,0)

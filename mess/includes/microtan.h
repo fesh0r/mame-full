@@ -26,8 +26,7 @@ extern UINT8 *microtan_chunky_buffer;
 
 /* from src/mess/machine/microtan.c */
 extern void init_microtan(void);
-extern void microtan_init_machine(void);
-extern void microtan_exit_machine(void);
+extern MACHINE_INIT( microtan );
 
 extern int microtan_cassette_init(int id);
 extern void microtan_cassette_exit(int id);
@@ -39,7 +38,7 @@ extern void microtan_snapshot_exit(int id);
 extern int microtan_hexfile_init(int id);
 extern void microtan_hexfile_exit(int id);
 
-extern int microtan_interrupt(void);
+extern INTERRUPT_GEN( microtan_interrupt );
 
 extern READ_HANDLER ( microtan_via_0_r );
 extern READ_HANDLER ( microtan_via_1_r );
@@ -59,7 +58,6 @@ extern int microtan_frame_time;
 
 extern WRITE_HANDLER ( microtan_videoram_w );
 
-extern void microtan_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-extern int microtan_vh_start (void);
-extern void microtan_vh_stop (void);
-extern void microtan_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern PALETTE_INIT( microtan );
+extern VIDEO_START( microtan );
+extern VIDEO_UPDATE( microtan );

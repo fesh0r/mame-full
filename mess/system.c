@@ -177,19 +177,19 @@ const struct GameDriver *drivers[] =
 
 /****************COMPUTERS****************************************************/
     /* ACORN */
-////	DRIVER( atom )      /* 1979 Acorn Atom                                */
-////	DRIVER( atomeb )    /* 1979 Acorn Atom                                */
+	DRIVER( atom )      /* 1979 Acorn Atom                                */
+	DRIVER( atomeb )    /* 1979 Acorn Atom                                */
 	DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
 	DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
 	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
 	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K                    */
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K                   */
 TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor */
-/*//	DRIVER( electron )*//* 198? Acorn Electron							  */
+TESTDRIVER( electron )	/* 198? Acorn Electron							  */
 
-//TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
+TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
-////	DRIVER( z88 )		/*												  */
+	DRIVER( z88 )		/*												  */
 
 //	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
 //	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
@@ -663,7 +663,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* Creativision console */
 
 	/* TANGERINE */
-//	DRIVER( microtan )	/* 1979 Microtan 65 							  */
+	DRIVER( microtan )	/* 1979 Microtan 65 							  */
 
 //	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
 //	DRIVER( orica ) 	/* 1984 Oric Atmos								  */

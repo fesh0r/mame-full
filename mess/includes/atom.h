@@ -1,7 +1,5 @@
 /* machine/atom.c */
-
-extern void atom_init_machine (void);
-extern void atom_stop_machine (void);
+extern MACHINE_INIT( atom );
 extern int atom_init_atm (int id);
 extern READ_HANDLER (atom_8255_porta_r);
 extern READ_HANDLER (atom_8255_portb_r);
@@ -11,8 +9,7 @@ extern WRITE_HANDLER (atom_8255_portb_w );
 extern WRITE_HANDLER (atom_8255_portc_w );
 
 /* machine/vidhrdw.c */
-
-extern int atom_vh_start (void);
+extern VIDEO_START( atom );
 
 /* for floppy disc interface */
 extern READ_HANDLER (atom_8271_r);
@@ -31,4 +28,4 @@ extern READ_HANDLER(atom_eprom_box_r);
 extern WRITE_HANDLER(atom_eprom_box_w);
 extern void atom_eprom_box_init(void);
 
-extern void	atomeb_init_machine(void);
+extern MACHINE_INIT( atomeb );

@@ -493,7 +493,7 @@ static MACHINE_DRIVER_START( dragon32 )
 	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	MDRV_M6847( dragon )
+	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, d_dac_interface)
@@ -512,7 +512,7 @@ static MACHINE_DRIVER_START( dragon64 )
 	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	MDRV_M6847( dragon )
+	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, d_dac_interface)
@@ -531,7 +531,7 @@ static MACHINE_DRIVER_START( coco )
 	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	MDRV_M6847( dragon )
+	MDRV_M6847_NTSC( dragon )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, d_dac_interface)
@@ -550,7 +550,7 @@ static MACHINE_DRIVER_START( coco2 )
 	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	MDRV_M6847( dragon )
+	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, d_dac_interface)
@@ -569,7 +569,7 @@ static MACHINE_DRIVER_START( coco2b )
 	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	MDRV_M6847( coco2b )
+	MDRV_M6847_NTSC( coco2b )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, d_dac_interface)

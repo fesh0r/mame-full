@@ -740,21 +740,20 @@ static void store_key(int key)
     microtan_set_irq_line();
 }
 
-int microtan_interrupt(void)
+INTERRUPT_GEN( microtan_interrupt )
 {
     int mod, row, col, chg, new;
     static int lastrow = 0, mask = 0x00, key = 0x00, repeat = 0, repeater = 0;
 
-    if( setup_active() || onscrd_active() )
-        return ignore_interrupt();
+	if( setup_active() || onscrd_active() )
+		return;
 
     if( repeat )
     {
         if( !--repeat )
             repeater = 4;
     }
-    else
-    if( repeater )
+    else if( repeater )
     {
         repeat = repeater;
     }
@@ -762,15 +761,12 @@ int microtan_interrupt(void)
     if (readinputport(11) & 1) /* F5 tape stop */
     {
         device_status(IO_CASSETTE,0,0);
-        if (microtan_timer)
-            timer_remove(microtan_timer);
-        microtan_timer = NULL;
+		timer_reset(microtan_timer, TIME_NEVER);
     }
     if (readinputport(11) & 2) /* F6 tape start */
     {
         device_status(IO_CASSETTE,0,1);
-        if (!microtan_timer)
-            microtan_timer = timer_pulse(TIME_IN_HZ(11025), 0, microtan_read_cassette);
+		timer_adjust(microtan_timer, 0, 0, TIME_IN_HZ(11025));
     }
     if (readinputport(11) & 4) /* F7 tape rewind */
     {
@@ -849,7 +845,6 @@ int microtan_interrupt(void)
     {
         store_key(key);
     }
-    return ignore_interrupt();
 }
 
 static void microtan_set_cpu_regs(int base)
@@ -857,12 +852,12 @@ static void microtan_set_cpu_regs(int base)
     LOG(("microtan_snapshot_copy: PC:%02X%02X P:%02X A:%02X X:%02X Y:%02X SP:1%02X",
         snapshot_buff[base+1], snapshot_buff[base+0], snapshot_buff[base+2], snapshot_buff[base+3],
         snapshot_buff[base+4], snapshot_buff[base+5], snapshot_buff[base+6]);
-    cpu_set_reg(M6502_PC, snapshot_buff[base+0] + 256 * snapshot_buff[base+1]));
-    cpu_set_reg(M6502_P, snapshot_buff[base+2]);
-    cpu_set_reg(M6502_A, snapshot_buff[base+3]);
-    cpu_set_reg(M6502_X, snapshot_buff[base+4]);
-    cpu_set_reg(M6502_Y, snapshot_buff[base+5]);
-    cpu_set_reg(M6502_S, snapshot_buff[base+6]);
+    activecpu_set_reg(M6502_PC, snapshot_buff[base+0] + 256 * snapshot_buff[base+1]));
+    activecpu_set_reg(M6502_P, snapshot_buff[base+2]);
+    activecpu_set_reg(M6502_A, snapshot_buff[base+3]);
+    activecpu_set_reg(M6502_X, snapshot_buff[base+4]);
+    activecpu_set_reg(M6502_Y, snapshot_buff[base+5]);
+    activecpu_set_reg(M6502_S, snapshot_buff[base+6]);
 }
 
 static void microtan_snapshot_copy(int param)
@@ -1026,7 +1021,7 @@ void init_microtan(void)
     }
 }
 
-void microtan_init_machine(void)
+MACHINE_INIT( microtan )
 {
     int i;
 
@@ -1044,9 +1039,6 @@ void microtan_init_machine(void)
     via_config(1, &via6522[1]);
 
 	acia_6551_init();
-}
 
-void	microtan_exit_machine(void)
-{
-	acia_6551_stop();
+	microtan_timer = timer_alloc(microtan_read_cassette);
 }

@@ -148,7 +148,7 @@ static MACHINE_DRIVER_START( mc10 )
 	MDRV_VBLANK_DURATION(0)
 
 	/* video hardware */
-	MDRV_M6847(mc10)
+	MDRV_M6847_NTSC( mc10 )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, mc10_dac_interface)

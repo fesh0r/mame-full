@@ -250,91 +250,32 @@ static	struct	Speaker_interface atom_sh_interface =
 };
 
 /* machine definition */
-
-static struct MachineDriver machine_driver_atom =
-{
+static MACHINE_DRIVER_START( atom )
 	/* basic machine hardware */
-	{
-		{
-            CPU_M65C02,
-			1000000,
-			atom_readmem, atom_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0
-		},
-	},
-	50, 128, /* frames/sec, vblank duration */
-	0,
-	atom_init_machine,
-	atom_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M65C02, 1000000)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(atom_readmem, atom_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(128)
+
+	MDRV_MACHINE_INIT( atom )
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,							/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
+	MDRV_M6847_PAL( atom )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	atom_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&atom_sh_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, atom_sh_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_atomeb =
-{
-	/* basic machine hardware */
-	{
-		{
-            CPU_M65C02,
-			1000000,
-			atomeb_readmem, atomeb_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0
-		},
-	},
-	50, 128, /* frames/sec, vblank duration */
-	0,
-	atomeb_init_machine,
-	atom_stop_machine,
+static MACHINE_DRIVER_START( atomeb )
+	MDRV_IMPORT_FROM( atom )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( atomeb_readmem, atomeb_writemem )
 
-	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,							/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
+	MDRV_MACHINE_INIT( atomeb )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	atom_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&atom_sh_interface
-		}
-	}
-};
 
 ROM_START (atom)
 	ROM_REGION (0x10000, REGION_CPU1,0)
