@@ -20,6 +20,8 @@ System Driver Changes:
 
 - [ORIC] Fixed fatal regression crash on startup.  (bug #538) [Nate Woods]
 
+- [MPF1] Changed MPF-1 BIOS set.  [Curt Coder]
+
 - [PC] Cleanups; code simplified and CGA video slightly faster now.  [Nate
   Woods]
 
