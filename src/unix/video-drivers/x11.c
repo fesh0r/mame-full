@@ -16,6 +16,15 @@
 #include "input.h"
 #include "keyboard.h"
 
+int use_xv = 1;  /* use xv extension if available */
+long xv_redmask;
+long xv_greenmask;
+long xv_bluemask;
+
+extern int force_dirty_palette;
+
+int x11_grab_keyboard;
+
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "X11 Related",	NULL,			rc_seperator,	NULL,
@@ -157,9 +166,20 @@ int x11_init_palette_info(void)
             depth);
          return OSD_NOT_OK;
       }
-      display_palette_info.red_mask   = xvisual->red_mask;
-      display_palette_info.green_mask = xvisual->green_mask;
-      display_palette_info.blue_mask  = xvisual->blue_mask;
+#ifdef USE_XV
+      if(use_xv)
+      {
+         display_palette_info.red_mask   = xv_redmask;
+         display_palette_info.green_mask = xv_greenmask;
+         display_palette_info.blue_mask  = xv_bluemask;
+      }
+      else
+#endif
+      {
+         display_palette_info.red_mask   = xvisual->red_mask;
+         display_palette_info.green_mask = xvisual->green_mask;
+         display_palette_info.blue_mask  = xvisual->blue_mask;
+      }
    }
    return OSD_OK;
 }
@@ -187,7 +207,7 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
    }
 
    if (keyboard_pressed (KEYCODE_LALT))
-   { 
+   {
       if (keyboard_pressed_memory (KEYCODE_INSERT))
          new_video_mode = X11_WINDOW;
       if (keyboard_pressed_memory (KEYCODE_HOME))
@@ -220,14 +240,19 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 
       if (debug_palette && sysdep_palette_change_display(&debug_palette))
          goto barf;
-      
+
       if (current_palette_normal)
          current_palette = normal_palette;
       else
          current_palette = debug_palette;
 
-      if(sysdep_display_alloc_palette(video_colors_used))
+      if (sysdep_display_alloc_palette(video_colors_used))
          goto barf;
+
+      /* Force the palette lookup table to be updated.  This is necessary 
+       * because switching to/from fullscreen mode could cause the screen 
+       * depth to change. */
+      force_dirty_palette = 1;  
 
       xmame_keyboard_clear();
       /* poll mouse twice to clear internal vars */
@@ -243,8 +268,8 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 
    (*x_func[x11_video_mode].update_display) (bitmap);
    return;
-   
-barf:   
+
+barf:
    sysdep_display_close();   /* This cleans up and must be called to
                              restore the videomode with dga */
    fprintf (stderr_file,
