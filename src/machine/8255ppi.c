@@ -153,17 +153,19 @@ int ppi8255_r( int which, int offset )
 
 			case 2:
 			{
-				if (chip->portAread)
-					chip->latch[0] = chip->portAread(0);
+				int data;
+
+				data = chip->latch[0];
 
 				/* input buffer is now empty */
 				ppi8255_ibfa_w(which, 0);
 
 				ppi8255_set_intra(which);
 
+				logerror("8255 chip %d: Read latched data from port A %02x\n",which, data);
 
-				/* return data */
-				return chip->latch[0];
+				/* return latched data */
+				return data;
 			}
 			break;
 
@@ -335,6 +337,8 @@ void ppi8255_w( int which, int offset, int data )
 			case 2:
 			{
 				/* mode 2 */
+				logerror("8255 chip %d: Write to port A latch %02x\n",which, chip->latch[0]);
+
 				if (chip->portAwrite)
 					chip->portAwrite(0,chip->latch[0]);
 
@@ -673,6 +677,8 @@ void ppi8255_set_input_stba(int which, int data)
 		{
 			/* latch data from port A */
 			if (chip->portAread)  chip->latch[0] = chip->portAread(0);
+
+			logerror("8255 chip %d: Received /STBA, just latched data into port A %02x\n",which, chip->latch[0]);
 
 			/* input buffer is full */
 			ppi8255_ibfa_w(which, 1);
