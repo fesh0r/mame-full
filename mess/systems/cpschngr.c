@@ -21,17 +21,10 @@ merged Street Fighter Zero for MESS
 
 #include "drivers/cps1.h"       /* External CPS1 definitions */
 
-/* in machine/kabuki.c */
-void wof_decode(void);
-void dino_decode(void);
-void punisher_decode(void);
-void slammast_decode(void);
-
-
 
 static READ16_HANDLER( cps1_input2_r )
 {
-	int buttons=readinputport(5);
+	int buttons=readinputport(7);
 	return buttons << 8 | buttons;
 }
 
@@ -75,7 +68,7 @@ static WRITE16_HANDLER( cps1_sound_command_w )
 
 static READ16_HANDLER( cps1_input_r )
 {
-	int control=readinputport(offset);
+	int control=readinputport(offset/2);
 	return (control<<8) | control;
 }
 
@@ -83,22 +76,22 @@ static int dial[2];
 
 static READ16_HANDLER( forgottn_dial_0_r )
 {
-	return ((readinputport(5) - dial[0]) >> (8*offset)) & 0xff;
+	return ((readinputport(6) - dial[0]) >> (8*offset)) & 0xff;
 }
 
 static READ16_HANDLER( forgottn_dial_1_r )
 {
-	return ((readinputport(6) - dial[1]) >> (8*offset)) & 0xff;
+	return ((readinputport(7) - dial[1]) >> (8*offset)) & 0xff;
 }
 
 static WRITE16_HANDLER( forgottn_dial_0_reset_w )
 {
-	dial[0] = readinputport(5);
+	dial[0] = readinputport(6);
 }
 
 static WRITE16_HANDLER( forgottn_dial_1_reset_w )
 {
-	dial[1] = readinputport(6);
+	dial[1] = readinputport(7);
 }
 
 static WRITE16_HANDLER( cps1_coinctrl_w )
@@ -521,14 +514,6 @@ static struct YM2151interface ym2151_interface =
 	3579580,    /* 3.579580 MHz ? */
 	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
 	{ cps1_irq_handler_mus }
-};
-
-static struct OKIM6295interface okim6295_interface_6061 =
-{
-	1,  /* 1 chip */
-	{ 6061 },
-	{ REGION_SOUND1 },
-	{ 30 }
 };
 
 static struct OKIM6295interface okim6295_interface_7576 =
