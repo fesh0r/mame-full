@@ -38,6 +38,7 @@ Priority:  Todo:                                                  Done:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/gb.h"
+#include "includes/gb.h"
 
 static MEMORY_READ_START (readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },   /* 16k fixed ROM BANK #0*/
@@ -103,6 +104,12 @@ static void gb_init_palette(unsigned char *sys_palette, unsigned short *sys_colo
 	memcpy(sys_colortable,colortable,sizeof(colortable));
 }
 
+static struct CustomSound_interface gameboy_sound_interface = {
+	gameboy_sh_start,
+	0,
+	0
+};
+
 static struct MachineDriver machine_driver_gameboy =
 {
 	/* basic machine hardware */
@@ -135,6 +142,10 @@ static struct MachineDriver machine_driver_gameboy =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{ SOUND_CUSTOM, &gameboy_sound_interface },
+	}
+
 };
 
 static const struct IODevice io_gameboy[] = {

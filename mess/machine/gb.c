@@ -10,6 +10,7 @@
 #include "driver.h"
 #include "machine/gb.h"
 #include "cpu/z80gb/z80gb.h"
+#include "includes/gb.h"
 
 static UINT8 MBCType;				   /* MBC type: 1 for MBC2, 0 for MBC1            */
 static UINT8 *ROMMap[256];			   /* Addresses of ROM banks                      */
@@ -264,14 +265,16 @@ WRITE_HANDLER ( gb_w_io )
 		gb_spal1[3] = Machine->pens[((data & 0xC0) >> 6) + 8];
 		break;
 	default:
-#ifdef SOUND
+
 		if ((offset >= 0xFF10) && (offset <= 0xFF26))
 		{
-			Adlib_WriteSoundReg (offset, data);
+            logerror("SOUND WRITE offset: %x  data: %x\n",offset,data);
+            gameboy_sound_w(offset,data);
+			gb_ram [offset] = data;
 			return;
 		}
-#else
-		if (offset == 0xFF26)
+
+/*		if (offset == 0xFF26)
 		{
 			if (data & 0x80)
 				gb_ram [0xFF26] = 0xFF;
@@ -279,7 +282,7 @@ WRITE_HANDLER ( gb_w_io )
 				gb_ram [0xFF26] = 0;
 			return;
 		}
-#endif
+*/
 	}
 	gb_ram [offset] = data;
 }

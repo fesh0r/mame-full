@@ -247,6 +247,7 @@ $(OBJ)/gce.a:	   \
 	  $(OBJ)/mess/systems/vectrex.o
 
 $(OBJ)/nintendo.a: \
+	  $(OBJ)/mess/sndhrdw/gb.o	 \
 	  $(OBJ)/mess/vidhrdw/gb.o	 \
 	  $(OBJ)/mess/machine/gb.o	 \
 	  $(OBJ)/mess/systems/gb.o	 \
