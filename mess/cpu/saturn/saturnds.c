@@ -209,7 +209,7 @@ typedef enum {
 } MNEMONICS;
 
 static struct {
-	char *name[2];
+	const char *name[2];
 } mnemonics[]={
 	{ { "rtn",					"RET" } },
 	{ { "rtnsXM",				"RETSETXM" } },
@@ -588,7 +588,7 @@ typedef struct {
 	MNEMONICS mnemonic;
 } OPCODE;
 
-static char *field_2_string(int adr_enum)
+static const char *field_2_string(int adr_enum)
 {
 	switch (adr_enum) {
 	case FieldP: return P;
@@ -1315,7 +1315,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 			cont=0;
 			switch (level->adr==AdrNone?adr:level->adr) {
 			case AdrNone: 
-				sprintf(dst, mnemonics[level->mnemonic].name[set]);
+				strcpy(dst, mnemonics[level->mnemonic].name[set]);
 				break;
 			case Imm:
 				sprintf(dst, mnemonics[level->mnemonic].name[set], PEEK_OP(pc++));
@@ -1390,7 +1390,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 			case BranchReturn:
 				v=saturn_peekop_dis8(pc);
 				if (v==0) {
-					sprintf(dst, mnemonics[level->mnemonic+1].name[set]);
+					strcpy(dst, mnemonics[level->mnemonic+1].name[set]);
 				} else {
 					c=(pc+v)&0xfffff;
 					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );

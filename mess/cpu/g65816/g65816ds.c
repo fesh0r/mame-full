@@ -63,7 +63,7 @@ enum
   TYA ,  TYX ,  WAI ,  WDM ,  XBA ,  XCE
 };
 
-static char* g_opnames[] =
+static const char* g_opnames[] =
 {
  "ADC", "AND", "ASL", "BCC", "BCS", "BEQ", "BIT", "BMI", "BNE", "BPL", "BRA",
  "BRK", "BRL", "BVC", "BVS", "CLC", "CLD", "CLI", "CLV", "CMP", "COP", "CPX",
@@ -207,7 +207,7 @@ int g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag,
 	instruction = read_8(address);
 	opcode = g_opcodes + instruction;
 
-	sprintf(buff, g_opnames[opcode->name]);
+	strcpy(buff, g_opnames[opcode->name]);
 	ptr = buff + strlen(buff);
 
 	switch(opcode->ea)

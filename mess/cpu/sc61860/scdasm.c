@@ -93,7 +93,7 @@ typedef enum {
 	Lp
 } Adr;
 
-static const struct { char *mnemonic; Adr adr; } table[]={
+static const struct { const char *mnemonic; Adr adr; } table[]={
 	{ "LII",	Imm	}, { "LIJ",		Imm }, { "LIA",		Imm	}, { "LIB",		Imm },
 	{ "IX",		Imp	}, { "DX",		Imp }, { "IY",		Imp	}, { "DY",		Imp },
 	{ "MVW",	Imp	}, { "EXW",		Imp }, { "MVB",		Imp	}, { "EXB",		Imp },

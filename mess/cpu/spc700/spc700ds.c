@@ -55,7 +55,7 @@ enum
 };
 
 
-static char* g_opnames[] =
+static const char* g_opnames[] =
 {
 	"ADC  ", "ADDW ", "AND  ", "AND1 ", "ASL  ", "BBC  ", "BBS  ", "BCC  ",
 	"BCS  ", "BEQ  ", "BMI  ", "BNE  ", "BPL  ", "BRA  ", "BRK  ", "BVC  ",

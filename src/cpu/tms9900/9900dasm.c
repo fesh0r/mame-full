@@ -89,7 +89,7 @@ enum
 
 typedef struct description_t
 {
-	char *mnemonic;
+	const char *mnemonic;
 	format_t format;
 	int flags;
 } description_t;
@@ -354,7 +354,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id)
 	int byte_count, checkpoint;
 	int bit_position, bit_width;
 
-	char *mnemonic;
+	const char *mnemonic;
 	format_t format;
 	int flags;
 

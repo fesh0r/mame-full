@@ -95,7 +95,7 @@ struct DEBUGOPTS
 };
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0,0,0}, 0};
 /*                                    red   green  blue    purple  yellow cyan    grey    white */
-static UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };
+/*static UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };*/
 /*static UINT16 dbg_pty_colours[12] = { 0x1084, 0x18c6, 0x2529, 0x2d6b, 0x39ce, 0x4210, 0x4e73, 0x56b5, 0x6318, 0x6b5a, 0x77bd, 0x7fff };*/
 #endif
 

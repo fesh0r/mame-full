@@ -48,7 +48,7 @@ OSOBJS += \
         #$(OBJ)/windowsui/options.o \		<<--- included from MESS' version
 
 # add resource file
-GUIRESFILE = $(OBJ)/mess/windowsui/mess32.res $(OBJ)/windowsui/mame32.res
+GUIRESFILE = $(OBJ)/mess/windowsui/mess32.res
 
 #####################################################################
 # compiler

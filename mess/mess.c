@@ -627,7 +627,7 @@ int messvaliditychecks(void)
 			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
 				char name[100];
-				sprintf(name,ROM_GETNAME(rom));
+				snprintf(name, sizeof(name) / sizeof(name[0]), "%s", ROM_GETNAME(rom));
 			}
 		}
 

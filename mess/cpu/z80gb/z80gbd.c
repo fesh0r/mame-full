@@ -26,7 +26,8 @@
 #include "mamedbg.h"
 #include "z80gb.h"
 
-enum e_mnemonics {
+enum e_mnemonics
+{
 	zADC,  zADD,  zAND,  zBIT,	zCALL, zCCF,  zCP,
 	zCPL,  zDAA,  zDB,	 zDEC,	zDI,   zEI,   zHLT,
 	zIN,   zINC,  zJP,	 zJR,	zLD,   zNOP,  zOR,
@@ -36,7 +37,8 @@ enum e_mnemonics {
 	zSTOP, zSUB,  zXOR
 };
 
-static char *s_mnemonic[] = {
+static const char *s_mnemonic[] =
+{
 	"adc", "add", "and", "bit", "call","ccf", "cp",
 	"cpl", "daa", "db",  "dec", "di",  "ei",  "halt",
 	"in",  "inc", "jp",  "jr",  "ld",  "nop", "or",
@@ -46,7 +48,8 @@ static char *s_mnemonic[] = {
 	"stop","sub", "xor"
 };
 
-typedef struct {
+typedef struct
+{
 	UINT8	access;
 	UINT8	mnemonic;
 	const char *arguments;
