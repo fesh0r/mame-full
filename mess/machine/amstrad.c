@@ -20,7 +20,7 @@ rom/ram selection
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-//#include "vidhrdw/m6845.h"
+#include "vidhrdw/m6845.h"
 #include "machine/amstrad.h"
 //#include "systems/i8255.h"
 #include "machine/8255ppi.h"
@@ -33,13 +33,6 @@ void Amstrad_RethinkMemory(void);
 void Amstrad_Init(void);
 void amstrad_handle_snapshot(unsigned char *);
 
-
-/* hd6845s functions */
-int hd6845s_index_r(void);
-int hd6845s_register_r(void);
-void hd6845s_index_w(int data);
-void hd6845s_register_w(int data);
-int hd6845s_getreg(int);
 
 static unsigned char *snapshot = NULL;
 
@@ -228,11 +221,15 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 	/* init CRTC */
 	for (i=0; i<18; i++)
 	{
-		hd6845s_index_w(i);
-		hd6845s_register_w(pSnapshot[0x043+i] & 0x0ff);
+                crtc6845_address_w(0,i);
+                crtc6845_register_w(0, pSnapshot[0x043+i] & 0x0ff);
+
+          //      hd6845s_index_w(i);
+            //    hd6845s_register_w(pSnapshot[0x043+i] & 0x0ff);
 	}
 
-	hd6845s_index_w(pSnapshot[0x042] & 0x0ff);
+        //hd6845s_index_w(pSnapshot[0x042] & 0x0ff);
+        crtc6845_address_w(0,i);
 
 	/* upper rom selection */
 	AmstradCPC_SetUpperRom(pSnapshot[0x055]);
