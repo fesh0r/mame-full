@@ -83,11 +83,11 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		break;
 	case 0x10: /* 0001 0000 */
 		sym = set_ea_info( 0, 10, EA_UINT16, EA_ZPG_RD );
-        sprintf(buffer, "LR   DC,H");
+		sprintf(buffer, "LR   DC,H");
 		break;
 	case 0x11: /* 0001 0001 */
 		sym = set_ea_info( 0, 10, EA_UINT16, EA_ZPG_WR );
-        sprintf(buffer, "LR   H,DC");
+		sprintf(buffer, "LR   H,DC");
 		break;
 	case 0x12: /* 0001 0010 */
 		sprintf(buffer, "SR   1");
@@ -102,10 +102,12 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		sprintf(buffer, "SL   4");
 		break;
 	case 0x16: /* 0001 0110 */
-        sprintf(buffer, "LM") ;
+		sym = set_ea_info( 0, cpu_get_reg(F8_DC0), EA_UINT8, EA_MEM_RD );
+		sprintf(buffer, "LM") ;
 		break;
 	case 0x17: /* 0001 0111 */
-        sprintf(buffer, "ST");
+		sym = set_ea_info( 0, cpu_get_reg(F8_DC0), EA_UINT8, EA_MEM_WR );
+		sprintf(buffer, "ST");
 		break;
 	case 0x18: /* 0001 1000 */
 		sprintf(buffer, "COM");
