@@ -44,6 +44,7 @@ extern struct ImageModule imgmod_c64crt;	/* c64 cartridge */
 extern struct ImageModule imgmod_vmsx_tap;	/* vMSX .tap archiv */
 extern struct ImageModule imgmod_vmsx_gm2;	/* vMSX gmaster2.ram file */
 
+extern struct ImageModule imgmod_rom16;
 extern struct ImageModule imgmod_zip;
 extern struct ImageModule imgmod_fs;
 
@@ -82,6 +83,7 @@ static const struct ImageModule *images[] = {
 	&imgmod_vmsx_tap,
 	&imgmod_vmsx_gm2
 #if 1 /* these are only here for testing of these two */
+	,&imgmod_rom16
 	,&imgmod_fs,
 	&imgmod_zip
 #endif
