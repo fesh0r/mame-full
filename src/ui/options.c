@@ -381,6 +381,7 @@ static REG_OPTION regGameOpts[] =
 	{ "parallel",               RO_STRING,  &gOpts.mess.software[IO_PARALLEL],      "", TRUE },
 	{ "snapshot",               RO_STRING,  &gOpts.mess.software[IO_SNAPSHOT],      "", TRUE },
 	{ "quickload",              RO_STRING,  &gOpts.mess.software[IO_QUICKLOAD],     "", TRUE },
+	{ "memcard",                RO_STRING,  &gOpts.mess.software[IO_MEMCARD],       "", TRUE },
 
 	{ "cartridge_dir",          RO_STRING,  &gOpts.mess.softwaredirs[IO_CARTSLOT],  "", TRUE },
 	{ "floppydisk_dir",         RO_STRING,  &gOpts.mess.softwaredirs[IO_FLOPPY],    "", TRUE },
@@ -394,6 +395,7 @@ static REG_OPTION regGameOpts[] =
 	{ "parallel_dir",           RO_STRING,  &gOpts.mess.softwaredirs[IO_PARALLEL],  "", TRUE },
 	{ "snapshot_dir",           RO_STRING,  &gOpts.mess.softwaredirs[IO_SNAPSHOT],  "", TRUE },
 	{ "quickload_dir",          RO_STRING,  &gOpts.mess.softwaredirs[IO_QUICKLOAD], "", TRUE },
+	{ "memcard_dir",            RO_STRING,  &gOpts.mess.softwaredirs[IO_MEMCARD],   "", TRUE },
 #endif /* MESS */
 	{ "" }
 };

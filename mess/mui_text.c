@@ -44,5 +44,6 @@ const char *mess_default_text[] =
 	"Serial Port",
 	"Parallel Port",
 	"Snapshot",
-	"Quickload"
+	"Quickload",
+	"Memory Card"
 };

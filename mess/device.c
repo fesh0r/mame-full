@@ -34,7 +34,8 @@ static const struct Devices devices[] =
 	{IO_PARALLEL,   "parallel",		"parl"}, /*  9 */
 	{IO_SNAPSHOT,	"snapshot",		"dump"}, /* 10 */
 	{IO_QUICKLOAD,	"quickload",	"quik"}, /* 11 */
-	{IO_COUNT,		NULL,			NULL  }, /* 12 Always at end of this array! */
+	{IO_MEMCARD,	"memcard",		"memc"}, /* 12 */
+	{IO_COUNT,		NULL,			NULL  }, /* 13 Always at end of this array! */
 };
 
 

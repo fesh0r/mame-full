@@ -17,7 +17,8 @@ enum
 	IO_PARALLEL,    /*  9 - Generic Parallel Port														*/
 	IO_SNAPSHOT,	/* 10 - Complete 'snapshot' of the state of the computer 							*/
 	IO_QUICKLOAD,	/* 11 - Allow to load program/data into memory, without matching any actual device	*/
-	IO_COUNT		/* 12 - Total Number of IO_devices for searching									*/
+	IO_MEMCARD,		/* 12 - Memory card																	*/
+	IO_COUNT		/* 13 - Total Number of IO_devices for searching									*/
 };
 
 /* Call this from the CLI to add a DEVICE (with its arg) to the options struct */

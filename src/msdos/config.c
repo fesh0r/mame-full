@@ -522,6 +522,7 @@ static void extract_resolution( const char *s_resolution )
 #ifdef MESS
 
 static const char *dev_opts[IO_COUNT];
+//static char *dev_dirs[IO_COUNT];
 static const char *ramsize_opt;
 
 static int add_device(struct rc_option *option, const char *arg, int priority);
@@ -531,6 +532,7 @@ struct rc_option mess_opts[] =
 {
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+//	{ "newui",			"nu",   rc_bool,	&options.disable_normal_ui,	"1", 0, 0, NULL,			"use the new MESS UI" },
 	{ "cartridge",		"cart", rc_string,	&dev_opts[IO_CARTSLOT],		NULL, 0, 0, add_device,		"attach software to cartridge device" },
 	{ "floppydisk",		"flop", rc_string,	&dev_opts[IO_FLOPPY],		NULL, 0, 0, add_device,		"attach software to floppy disk device" },
 	{ "harddisk",		"hard", rc_string,	&dev_opts[IO_HARDDISK],		NULL, 0, 0, add_device,		"attach software to hard disk device" },
@@ -543,9 +545,26 @@ struct rc_option mess_opts[] =
 	{ "parallel",		"parl", rc_string,	&dev_opts[IO_PARALLEL],		NULL, 0, 0, add_device,		"attach software to parallel device" },
 	{ "snapshot",		"dump", rc_string,	&dev_opts[IO_SNAPSHOT],		NULL, 0, 0, add_device,		"attach software to snapshot device" },
 	{ "quickload",		"quik", rc_string,	&dev_opts[IO_QUICKLOAD],	NULL, 0, 0, add_device,		"attach software to quickload device" },
+	{ "memcard",		"memc", rc_string,	&dev_opts[IO_MEMCARD],		NULL, 0, 0, add_device,		"attach image to memcard device" },
+//	{ "cartridge_dir",	NULL,   rc_string,	&dev_dirs[IO_CARTSLOT],		NULL, 0, 0, NULL,			"default directory for cartridge devices" },
+//	{ "floppydisk_dir",	NULL,   rc_string,	&dev_dirs[IO_FLOPPY],		NULL, 0, 0, NULL,			"default directory for floppy disk device" },
+//	{ "harddisk_dir",	NULL,   rc_string,	&dev_dirs[IO_HARDDISK],		NULL, 0, 0, NULL,			"default directory for hard disk devices" },
+//	{ "cylinder_dir",	NULL,   rc_string,	&dev_dirs[IO_CYLINDER],		NULL, 0, 0, NULL,			"default directory for cylinder devices" },
+//	{ "cassette_dir",	NULL,   rc_string,	&dev_dirs[IO_CASSETTE],		NULL, 0, 0, NULL,			"default directory for cassette devices" },
+//	{ "punchcard_dir",	NULL,   rc_string,	&dev_dirs[IO_PUNCHCARD],	NULL, 0, 0, NULL,			"default directory for punch card devices" },
+//	{ "punchtape_dir",	NULL,   rc_string,	&dev_dirs[IO_PUNCHTAPE],	NULL, 0, 0, NULL,			"default directory for punch tape devices" },
+//	{ "printer_dir",	NULL,   rc_string,	&dev_dirs[IO_PRINTER],		NULL, 0, 0, NULL,			"default directory for printer devices" },
+//	{ "serial_dir",		NULL,   rc_string,	&dev_dirs[IO_SERIAL],		NULL, 0, 0, NULL,			"default directory for serial devices" },
+//	{ "parallel_dir",	NULL,   rc_string,	&dev_dirs[IO_PARALLEL],		NULL, 0, 0, NULL,			"default directory for parallel devices" },
+//	{ "snapshot_dir",	NULL,   rc_string,	&dev_dirs[IO_SNAPSHOT],		NULL, 0, 0, NULL,			"default directory for snapshot devices" },
+//	{ "quickload_dir",	NULL,   rc_string,	&dev_dirs[IO_QUICKLOAD],	NULL, 0, 0, NULL,			"default directory for quickload devices" },
+//	{ "memcard_dir",	NULL,   rc_string,	&dev_dirs[IO_MEMCARD],		NULL, 0, 0, NULL,			"default directory for memcard devices" },
 	{ "ramsize",		"ram",  rc_string,	&ramsize_opt,				NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
+//	{ "threads",		"thr",  rc_int,		&win_task_count,			NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
+//	{ "natural",		"nat",  rc_bool,	&win_use_natural_keyboard,	NULL, 0, 0, NULL,			"specifies whether to use a natural keyboard or not" },
 	{ "min_width",		"mw",   rc_int,		&options.min_width,			"200", 0, 0, NULL,			"specifies the minimum width for the display" },
 	{ "min_height",		"mh",   rc_int,		&options.min_height,		"200", 0, 0, NULL,			"specifies the minimum height for the display" },
+//	{ "writeconfig",	"wc",	rc_bool,	&win_write_config,			NULL, 0, 0, NULL,			"writes configuration to (driver).ini on exit" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
