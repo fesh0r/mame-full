@@ -1515,6 +1515,7 @@ void timer_hblank(int param)
     }
 }
 
+/*
 static void dump_vdp2(void)
 
 {
@@ -1585,6 +1586,7 @@ static void draw_pal(void)
 	    plot_pixel(saturn_bitmap[video_w],loopx*16 + rectx,loopy*16 + recty,Machine->pens[col]);
       }
 }
+*/
 
 static READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
 {

@@ -19,17 +19,6 @@ extern "C" {
  * c128
  * c65*/
 
-#if 0
-#include "snprintf.h"
-//#else
-/* quick (and unsafe as sprintf) snprintf */
-#define snprintf cbm_snprintf
-int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...);
-#endif
-
-#define memset16 cbm_memset16
-void *cbm_memset16 (void *dest, int value, size_t size);
-
 /**************************************************************************
  * Logging
  * call the XXX_LOG with XXX_LOG("info",(errorlog,"%fmt\n",args));

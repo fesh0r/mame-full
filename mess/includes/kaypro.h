@@ -33,9 +33,5 @@ extern WRITE_HANDLER ( kaypro_conin_w );
 extern READ_HANDLER ( kaypro_conout_r );
 extern WRITE_HANDLER ( kaypro_conout_w );
 
-extern int	kaypro_sh_start(const struct MachineSound *msound);
-extern void kaypro_sh_stop(void);
-extern void kaypro_sh_update(void);
-
 extern void kaypro_bell(void);
 extern void kaypro_click(void);

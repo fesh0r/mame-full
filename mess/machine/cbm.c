@@ -5,25 +5,6 @@
 
 #include "includes/cbm.h"
 
-/* safer replacement str[0]=0; */
-static int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...)
-{
-	va_list list;
-
-	va_start (list, format);
-
-	return vsprintf (str, format, list);
-}
-
-void *cbm_memset16 (void *dest, int value, size_t size)
-{
-	register int i;
-
-	for (i = 0; i < size; i++)
-		((short *) dest)[i] = value;
-	return dest;
-}
-
 static struct
 {
 	int specified;

@@ -356,6 +356,7 @@ Video part
 #include <stdio.h>
 #include "osd_cpu.h"
 #include "driver.h"
+#include "utils.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"

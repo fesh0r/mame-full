@@ -61,6 +61,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "statetxt.h"
+#include "utils.h"
 
 
 #define VERBOSE_DBG 1

@@ -70,3 +70,14 @@ int strncmpi(const char *dst, const char *src, size_t n)
 }
 #endif /* strncmpi */
 
+#ifndef memset16
+void *memset16 (void *dest, int value, size_t size)
+{
+	register int i;
+
+	for (i = 0; i < size; i++)
+		((short *) dest)[i] = value;
+	return dest;
+}
+#endif
+
