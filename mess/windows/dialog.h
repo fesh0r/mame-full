@@ -30,6 +30,13 @@ void win_dialog_exit(dialog_box *dialog);
 
 /* dialog memory allocation */
 void *win_dialog_malloc(dialog_box *dialog, size_t size);
+char *win_dialog_strdup(dialog_box *dialog, const char *s);
+
+#ifdef UNICODE
+#define win_dialog_tcsdup	win_dialog_wcsdup
+#else
+#define win_dialog_tcsdup	win_dialog_strdup
+#endif
 
 /* dialog operations */
 void win_dialog_runmodal(dialog_box *dialog);
@@ -39,7 +46,17 @@ int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, i
 	dialog_itemstoreval storeval, void *storeval_param,
 	dialog_itemchangedproc changed, void *changed_param);
 int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int item_data);
+
+int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int default_value,
+	int min_value, int max_value, BOOL is_percentage,
+	dialog_itemstoreval storeval, void *storeval_param);
+
+int win_dialog_add_slider(dialog_box *dialog, const char *item_label, int default_value,
+	int min_value, int max_value,
+	dialog_itemstoreval storeval, void *storeval_param);
+
 int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const RECT *r);
+
 int win_dialog_add_standard_buttons(dialog_box *dialog);
 int win_dialog_add_image(dialog_box *dialog, const struct png_info *png);
 int win_dialog_add_separator(dialog_box *dialog);

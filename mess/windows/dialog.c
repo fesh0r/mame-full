@@ -5,6 +5,8 @@
 //============================================================
 
 #include <windows.h>
+#include <commctrl.h>
+#include <tchar.h>
 
 #include "dialog.h"
 #include "mame.h"
@@ -127,20 +129,23 @@ extern void win_poll_input(void);
 #define DIM_HORIZONTAL_SPACING	5
 #define DIM_NORMAL_ROW_HEIGHT	10
 #define DIM_COMBO_ROW_HEIGHT	12
+#define DIM_SLIDER_ROW_HEIGHT	18
 #define DIM_BUTTON_ROW_HEIGHT	12
 #define DIM_EDIT_WIDTH			120
 #define DIM_BUTTON_WIDTH		50
+#define DIM_ADJUSTER_SCR_WIDTH	12
+#define DIM_ADJUSTER_HEIGHT		12
 #define DIM_SCROLLBAR_WIDTH		10
 #define DIM_BOX_VERTSKEW		-3
 
 #define WNDLONG_DIALOG			GWLP_USERDATA
 
-#define DLGITEM_BUTTON			0x0080
-#define DLGITEM_EDIT			0x0081
-#define DLGITEM_STATIC			0x0082
-#define DLGITEM_LISTBOX			0x0083
-#define DLGITEM_SCROLLBAR		0x0084
-#define DLGITEM_COMBOBOX		0x0085
+#define DLGITEM_BUTTON			((const WCHAR *) dlgitem_button)
+#define DLGITEM_EDIT			((const WCHAR *) dlgitem_edit)
+#define DLGITEM_STATIC			((const WCHAR *) dlgitem_static)
+#define DLGITEM_LISTBOX			((const WCHAR *) dlgitem_listbox)
+#define DLGITEM_SCROLLBAR		((const WCHAR *) dlgitem_scrollbar)
+#define DLGITEM_COMBOBOX		((const WCHAR *) dlgitem_combobox)
 
 #define DLGTEXT_OK				ui_getstring(UI_OK)
 #define DLGTEXT_APPLY			"Apply"
@@ -168,7 +173,12 @@ static double pixels_to_xdlgunits;
 static double pixels_to_ydlgunits;
 
 static const struct dialog_layout default_layout = { 80, 140 };
-
+static const WORD dlgitem_button[] =	{ 0xFFFF, 0x0080 };
+static const WORD dlgitem_edit[] =		{ 0xFFFF, 0x0081 };
+static const WORD dlgitem_static[] =	{ 0xFFFF, 0x0082 };
+static const WORD dlgitem_listbox[] =	{ 0xFFFF, 0x0083 };
+static const WORD dlgitem_scrollbar[] =	{ 0xFFFF, 0x0084 };
+static const WORD dlgitem_combobox[] =	{ 0xFFFF, 0x0085 };
 
 
 //============================================================
@@ -177,7 +187,24 @@ static const struct dialog_layout default_layout = { 80, 140 };
 
 static void dialog_prime(dialog_box *di);
 static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
-	 short width, short height, const char *str, WORD class_atom, WORD *id);
+	 short width, short height, const char *str, const WCHAR *class_name, WORD *id);
+
+
+
+//============================================================
+//	call_windowproc
+//============================================================
+
+static LRESULT call_windowproc(WNDPROC wndproc, HWND hwnd, UINT msg,
+	WPARAM wparam, LPARAM lparam)
+{
+	LRESULT rc;
+	if (IsWindowUnicode(hwnd))
+		rc = CallWindowProcW(wndproc, hwnd, msg, wparam, lparam);
+	else
+		rc = CallWindowProcA(wndproc, hwnd, msg, wparam, lparam);
+	return rc;
+}
 
 
 
@@ -325,51 +352,60 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 		break;
 
 	case WM_VSCROLL:
-		// retrieve vital info about the scroll bar
-		memset(&si, 0, sizeof(si));
-		si.cbSize = sizeof(si);
-		si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
-		GetScrollInfo(dlgwnd, SB_VERT, &si);
-
-		scroll_pos = si.nPos;
-
-		// change scroll_pos in accordance with this message
-		switch(LOWORD(wparam)) {
-		case SB_BOTTOM:
-			scroll_pos = si.nMax;
-			break;
-		case SB_LINEDOWN:
-			scroll_pos += SCROLL_DELTA_LINE;
-			break;
-		case SB_LINEUP:
-			scroll_pos -= SCROLL_DELTA_LINE;
-			break;
-		case SB_PAGEDOWN:
-			scroll_pos += SCROLL_DELTA_PAGE;
-			break;
-		case SB_PAGEUP:
-			scroll_pos -= SCROLL_DELTA_PAGE;
-			break;
-		case SB_THUMBPOSITION:
-		case SB_THUMBTRACK:
-			scroll_pos = HIWORD(wparam);
-			break;
-		case SB_TOP:
-			scroll_pos = si.nMin;
-			break;
-		}
-
-		// max out hte scroll bar value
-		if (scroll_pos < si.nMin)
-			scroll_pos = si.nMin;
-		else if (scroll_pos > (si.nMax - si.nPage))
-			scroll_pos = (si.nMax - si.nPage);
-
-		// if the value changed, set the scroll position
-		if (scroll_pos != si.nPos)
+		if (lparam)
 		{
-			SetScrollPos(dlgwnd, SB_VERT, scroll_pos, TRUE);
-			ScrollWindow(dlgwnd, 0, si.nPos - scroll_pos, NULL, NULL);
+			// this scroll message came from an actual scroll bar window;
+			// pass it on
+			SendMessage((HWND) lparam, msg, wparam, lparam);
+		}
+		else
+		{
+			// retrieve vital info about the scroll bar
+			memset(&si, 0, sizeof(si));
+			si.cbSize = sizeof(si);
+			si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
+			GetScrollInfo(dlgwnd, SB_VERT, &si);
+
+			scroll_pos = si.nPos;
+
+			// change scroll_pos in accordance with this message
+			switch(LOWORD(wparam)) {
+			case SB_BOTTOM:
+				scroll_pos = si.nMax;
+				break;
+			case SB_LINEDOWN:
+				scroll_pos += SCROLL_DELTA_LINE;
+				break;
+			case SB_LINEUP:
+				scroll_pos -= SCROLL_DELTA_LINE;
+				break;
+			case SB_PAGEDOWN:
+				scroll_pos += SCROLL_DELTA_PAGE;
+				break;
+			case SB_PAGEUP:
+				scroll_pos -= SCROLL_DELTA_PAGE;
+				break;
+			case SB_THUMBPOSITION:
+			case SB_THUMBTRACK:
+				scroll_pos = HIWORD(wparam);
+				break;
+			case SB_TOP:
+				scroll_pos = si.nMin;
+				break;
+			}
+
+			// max out hte scroll bar value
+			if (scroll_pos < si.nMin)
+				scroll_pos = si.nMin;
+			else if (scroll_pos > (si.nMax - si.nPage))
+				scroll_pos = (si.nMax - si.nPage);
+
+			// if the value changed, set the scroll position
+			if (scroll_pos != si.nPos)
+			{
+				SetScrollPos(dlgwnd, SB_VERT, scroll_pos, TRUE);
+				ScrollWindow(dlgwnd, 0, si.nPos - scroll_pos, NULL, NULL);
+			}
 		}
 		break;
 
@@ -442,15 +478,18 @@ static int dialog_write_string(dialog_box *di, const char *str)
 	return dialog_write(di, wstr, (wcslen(wstr) + 1) * sizeof(WCHAR), 2);
 }
 
+
+
 //============================================================
 //	dialog_write_item
 //============================================================
 
 static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
-	 short width, short height, const char *str, WORD class_atom, WORD *id)
+	 short width, short height, const char *str, const WCHAR *class_name, WORD *id)
 {
 	DLGITEMTEMPLATE item_template;
-	WORD w[2];
+	UINT class_name_length;
+	WORD w;
 
 	memset(&item_template, 0, sizeof(item_template));
 	item_template.style = style;
@@ -463,16 +502,18 @@ static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
 	if (dialog_write(di, &item_template, sizeof(item_template), 4))
 		return 1;
 
-	w[0] = 0xffff;
-	w[1] = class_atom;
-	if (dialog_write(di, w, sizeof(w), 2))
+	if (*class_name == 0xffff)
+		class_name_length = 4;
+	else
+		class_name_length = (wcslen(class_name) + 1) * sizeof(WCHAR);
+	if (dialog_write(di, class_name, class_name_length, 2))
 		return 1;
 
 	if (dialog_write_string(di, str))
 		return 1;
 
-	w[0] = 0;
-	if (dialog_write(di, w, sizeof(w[0]), 2))
+	w = 0;
+	if (dialog_write(di, &w, sizeof(w), 2))
 		return 1;
 
 	di->item_count++;
@@ -481,6 +522,8 @@ static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
 		*id = di->item_count;
 	return 0;
 }
+
+
 
 //============================================================
 //	dialog_add_trigger
@@ -631,6 +674,17 @@ static LRESULT dialog_get_combo_value(dialog_box *dialog, HWND dialog_item, UINT
 
 
 //============================================================
+//	dialog_get_slider_value
+//============================================================
+
+static LRESULT dialog_get_slider_value(dialog_box *dialog, HWND dialog_item, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	return SendMessage(dialog_item, TBM_GETPOS, 0, 0);
+}
+
+
+
+//============================================================
 //	win_dialog_init
 //============================================================
 
@@ -739,8 +793,8 @@ static LRESULT dialog_combo_changed(dialog_box *dialog, HWND dlgitem, UINT messa
 //============================================================
 
 int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, int default_value,
-	void (*storeval)(void *param, int val), void *storeval_param,
-	void (*changed)(dialog_box *dialog, HWND dlgwnd, void *changed_param), void *changed_param)
+	dialog_itemstoreval storeval, void *storeval_param,
+	dialog_itemchangedproc changed, void *changed_param)
 {
 	short x;
 	short y;
@@ -821,6 +875,191 @@ int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int
 			return 1;
 	}
 	return 0;
+}
+
+
+
+//============================================================
+//	adjuster_sb_wndproc
+//============================================================
+
+struct adjuster_sb_stuff
+{
+	WNDPROC oldwndproc;
+	int min_value;
+	int max_value;
+};
+
+static INT_PTR CALLBACK adjuster_sb_wndproc(HWND sbwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	INT_PTR result;
+	struct adjuster_sb_stuff *stuff;
+	TCHAR buf[64];
+	HWND dlgwnd, editwnd;
+	int value, id;
+
+	stuff = (struct adjuster_sb_stuff *) GetWindowLongPtr(sbwnd, GWLP_USERDATA);
+
+	if (msg == WM_VSCROLL)
+	{
+		id = GetWindowLong(sbwnd, GWL_ID);
+		dlgwnd = GetParent(sbwnd);
+		editwnd = GetDlgItem(dlgwnd, id - 1);
+		GetWindowText(editwnd, buf, sizeof(buf) / sizeof(buf[0]));
+		value = _ttoi(buf);
+
+		switch(wparam)
+		{
+			case SB_LINEDOWN:
+			case SB_PAGEDOWN:
+				value--;
+				break;
+
+			case SB_LINEUP:
+			case SB_PAGEUP:
+				value++;
+				break;
+		}
+
+		if (value < stuff->min_value)
+			value = stuff->min_value;
+		else if (value > stuff->max_value)
+			value = stuff->max_value;
+		_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%d"), value);
+		SetWindowText(editwnd, buf);
+		result = 0;
+	}
+	else
+	{
+		result = call_windowproc(stuff->oldwndproc, sbwnd, msg, wparam, lparam);
+	}
+	return result;
+}
+
+
+
+//============================================================
+//	adjuster_sb_setup
+//============================================================
+
+static LRESULT adjuster_sb_setup(dialog_box *dialog, HWND sbwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	struct adjuster_sb_stuff *stuff;
+
+	stuff = (struct adjuster_sb_stuff *) win_dialog_malloc(dialog, sizeof(struct adjuster_sb_stuff));
+	if (!stuff)
+		return 1;
+	stuff->min_value = (WORD) (lparam >> 0);
+	stuff->max_value = (WORD) (lparam >> 16);
+
+	SetWindowLongPtr(sbwnd, GWLP_USERDATA, (LONG_PTR) stuff);
+	stuff->oldwndproc = (WNDPROC) SetWindowLongPtr(sbwnd, GWLP_WNDPROC, (LONG_PTR) adjuster_sb_wndproc);
+	return 0;
+}
+
+
+
+//============================================================
+//	win_dialog_add_adjuster
+//============================================================
+
+int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int default_value,
+	int min_value, int max_value, BOOL is_percentage,
+	dialog_itemstoreval storeval, void *storeval_param)
+{
+	short x;
+	short y;
+	TCHAR buf[32];
+	TCHAR *s;
+
+	dialog_new_control(dialog, &x, &y);
+
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, dialog->layout->label_width, DIM_ADJUSTER_HEIGHT, item_label, DLGITEM_STATIC, NULL))
+		goto error;
+	x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
+
+	y += DIM_BOX_VERTSKEW;
+
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_NUMBER,
+			x, y, dialog->layout->combo_width - DIM_ADJUSTER_SCR_WIDTH, DIM_ADJUSTER_HEIGHT, NULL, DLGITEM_EDIT, NULL))
+		goto error;
+	x += dialog->layout->combo_width - DIM_ADJUSTER_SCR_WIDTH;
+
+	_snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+		is_percentage ? TEXT("%d%%") : TEXT("%d"),
+		default_value);
+	s = win_dialog_tcsdup(dialog, buf);
+	if (!s)
+		return 1;
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, WM_SETTEXT, NULL,
+			0, (LPARAM) s, NULL, NULL))
+		goto error;
+
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_TABSTOP | SBS_VERT,
+			x, y, DIM_ADJUSTER_SCR_WIDTH, DIM_ADJUSTER_HEIGHT, NULL, DLGITEM_SCROLLBAR, NULL))
+		goto error;
+	x += DIM_ADJUSTER_SCR_WIDTH + DIM_HORIZONTAL_SPACING;
+
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, 0, adjuster_sb_setup,
+			0, MAKELONG(min_value, max_value), NULL, NULL))
+		return 1;
+
+	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+
+	dialog_finish_control(dialog, x, y);
+	return 0;
+
+error:
+	return 1;
+}
+
+
+
+//============================================================
+//	win_dialog_add_slider
+//============================================================
+
+int win_dialog_add_slider(dialog_box *dialog, const char *item_label, int default_value,
+	int min_value, int max_value,
+	dialog_itemstoreval storeval, void *storeval_param)
+{
+	short x;
+	short y;
+
+	dialog_new_control(dialog, &x, &y);
+
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, dialog->layout->label_width, DIM_SLIDER_ROW_HEIGHT, item_label, DLGITEM_STATIC, NULL))
+		goto error;
+
+	y += DIM_BOX_VERTSKEW;
+
+	x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_TABSTOP | TBS_NOTICKS | TBS_HORZ | TBS_BOTH,
+			x, y, dialog->layout->combo_width, DIM_SLIDER_ROW_HEIGHT, NULL, TRACKBAR_CLASSW, NULL))
+		goto error;
+
+	x += dialog->layout->combo_width + DIM_HORIZONTAL_SPACING;
+	y += DIM_SLIDER_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, TBM_SETRANGE, NULL, 0,
+			(LPARAM) MAKELONG(min_value, max_value), NULL, NULL))
+		goto error;
+
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, TBM_SETPOS, NULL, 0,
+			(LPARAM) default_value, NULL, NULL))
+		goto error;
+
+	// add the trigger invoked when the apply button is pressed
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_APPLY, 0, dialog_get_slider_value, 0, 0, storeval, storeval_param))
+		goto error;
+
+	dialog_finish_control(dialog, x, y);
+	return 0;
+
+error:
+	return 1;
 }
 
 
@@ -921,12 +1160,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	}
 
 	if (call_baseclass)
-	{
-		if (IsWindowUnicode(editwnd))
-			result = CallWindowProcW(stuff->oldwndproc, editwnd, msg, wparam, lparam);
-		else
-			result = CallWindowProcA(stuff->oldwndproc, editwnd, msg, wparam, lparam);
-	}
+		result = call_windowproc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
 	return result;
 }
 
@@ -1286,6 +1520,17 @@ void win_dialog_exit(dialog_box *dialog)
 void *win_dialog_malloc(dialog_box *dialog, size_t size)
 {
 	return pool_malloc(&dialog->mempool, size);
+}
+
+
+
+//============================================================
+//	win_dialog_strdup
+//============================================================
+
+char *win_dialog_strdup(dialog_box *dialog, const char *s)
+{
+	return pool_strdup(&dialog->mempool, s);
 }
 
 

@@ -296,7 +296,7 @@ static void storeval_inputport(void *param, int val)
 
 static void customize_switches(int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
 {
-	void *dlg;
+	dialog_box *dlg;
 	struct InputPort *in;
 	const char *switch_name = NULL;
 	UINT32 type;
@@ -362,6 +362,97 @@ static void customize_dipswitches(void)
 static void customize_configuration(void)
 {
 	customize_switches(UI_configuration, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
+}
+
+
+
+//============================================================
+//	customize_analogcontrols
+//============================================================
+
+static void store_delta(void *param, int val)
+{
+	((struct InputPort *) param)->analog.delta = val;
+}
+
+
+
+static void store_centerdelta(void *param, int val)
+{
+	((struct InputPort *) param)->analog.centerdelta = val;
+}
+
+
+
+static void store_reverse(void *param, int val)
+{
+	((struct InputPort *) param)->analog.reverse = val;
+}
+
+
+
+static void store_sensitivity(void *param, int val)
+{
+	((struct InputPort *) param)->analog.sensitivity = val;
+}
+
+
+
+static void customize_analogcontrols(void)
+{
+	dialog_box *dlg;
+	struct InputPort *in;
+	const char *name;
+	char buf[255];
+	static const struct dialog_layout layout = { 120, 52 };
+	
+	dlg = win_dialog_init(ui_getstring(UI_analogcontrols), &layout);
+	if (!dlg)
+		goto done;
+
+	in = Machine->input_ports;
+
+	while (in->type != IPT_END)
+	{
+		if (port_type_is_analog(in->type))
+		{
+			name = input_port_name(in);
+
+			_snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+				"%s %s", name, ui_getstring(UI_keyjoyspeed));
+			if (win_dialog_add_adjuster(dlg, buf, in->analog.delta, 1, 255, FALSE, store_delta, in))
+				goto done;
+
+			_snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+				"%s %s", name, ui_getstring(UI_centerspeed));
+			if (win_dialog_add_adjuster(dlg, buf, in->analog.centerdelta, 1, 255, FALSE, store_centerdelta, in))
+				goto done;
+
+			_snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+				"%s %s", name, ui_getstring(UI_reverse));
+			if (win_dialog_add_combobox(dlg, buf, in->analog.reverse ? 1 : 0, store_reverse, in))
+				goto done;
+			if (win_dialog_add_combobox_item(dlg, ui_getstring(UI_off), 0))
+				goto done;
+			if (win_dialog_add_combobox_item(dlg, ui_getstring(UI_on), 1))
+				goto done;
+
+			_snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+				"%s %s", name, ui_getstring(UI_sensitivity));
+			if (win_dialog_add_adjuster(dlg, buf, in->analog.sensitivity, 1, 255, TRUE, store_sensitivity, in))
+				goto done;
+		}
+		in++;
+	}
+
+	if (win_dialog_add_standard_buttons(dlg))
+		goto done;
+
+	win_dialog_runmodal(dlg);
+
+done:
+	if (dlg)
+		win_dialog_exit(dlg);
 }
 
 
@@ -1517,6 +1608,10 @@ static int invoke_command(UINT command)
 
 	case ID_OPTIONS_MISCINPUT:
 		customize_miscinput();
+		break;
+
+	case ID_OPTIONS_ANALOGCONTROLS:
+		customize_analogcontrols();
 		break;
 
 #if HAS_TOGGLEFULLSCREEN
