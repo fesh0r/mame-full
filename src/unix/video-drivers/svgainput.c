@@ -7,17 +7,10 @@
 #include <signal.h>
 #include <linux/kd.h>
 #include <sys/ioctl.h>
+#include <sys/vt.h>
 #include "svgainput.h"
 #include "xmame.h"
 #include "devices.h"
-
-#ifdef __FreeBSD__ 
-#define	SIGUNUSED	SIGUSR2
-#endif
-
-#if defined(__ARCH_freebsd)
-#define	SIGUNUSED	SIGUSR2
-#endif
 
 static int console_fd       = -1;
 static int mouse_fd         = -1;
@@ -236,23 +229,26 @@ void svga_input_exit(void)
 
 int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 {
+   struct vt_mode vtmode;
+   extern int __svgalib_tty_fd;
+
    release_function = release_func;
    acquire_function = acquire_func;
    
-   /* newer svgalib's use different signals */
-   if (vga_setmode(-1)<0x1410)
-   {
-      fprintf(stderr_file, "info: svgalib version older then 1.4.1 detected, using old style signals\n");
-      release_signal = SIGUSR1;
-      acquire_signal = SIGUSR2;
-   }
-   else
-   {
-      fprintf(stderr_file, "info: svgalib version 1.4.1 or newer detected, using new style signals\n");
-      release_signal = SIGPROF;
-      acquire_signal = SIGUNUSED;
-   }
-  
+   /* svgalib prior to 1.4.1 used SIGUSR1 and SIGUSR2 as signals for
+      console switching later versions use SIGPROF and sigunused, but
+      certain distros have changed svgalib 1.4.1 and later to return
+      to the old behaviour because of glibc conflicts.
+      
+      Thus we can no longer use the svgalib version to determine which
+      signals are used. To solve this problem we query the tty to see
+      which signals are actually used. which we should have done in the
+      first place :)                                                     */
+   if(ioctl(__svgalib_tty_fd, VT_GETMODE, &vtmode) == -1)
+      return -1;
+   release_signal = vtmode.relsig;
+   acquire_signal = vtmode.acqsig;
+
    /* catch console switch signals to enable / disable the vga pass through */
    memset(&release_sa, 0, sizeof(struct sigaction));
    memset(&acquire_sa, 0, sizeof(struct sigaction));
@@ -347,4 +343,9 @@ void sysdep_set_leds(int new_leds)
       
       old_leds = new_leds;
    }
+}
+
+void sysdep_update_keyboard (void)
+{
+   keyboard_update();
 }
