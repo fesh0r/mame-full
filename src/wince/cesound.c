@@ -63,7 +63,7 @@ static UINT32 samples_this_frame;
     Internal structures
  ***************************************************************************/
 
-#define NUM_WAVEHDRS 2
+#define NUM_WAVEHDRS 1
 //#define FPS			60
 
 struct tSound_private
@@ -91,6 +91,17 @@ static struct tSound_private      This;
     External OSD functions  
  ***************************************************************************/
 
+static void init_waveformatex_pcm(WAVEFORMATEX *wf, DWORD sample_rate, WORD bits_per_sample, WORD channels)
+{
+	wf->wFormatTag = WAVE_FORMAT_PCM;
+	wf->nChannels = channels;
+	wf->nSamplesPerSec = sample_rate;
+	wf->wBitsPerSample  = bits_per_sample;
+	wf->nBlockAlign = wf->nChannels * wf->wBitsPerSample / 8;
+	wf->nAvgBytesPerSec = wf->nSamplesPerSec * wf->nBlockAlign;
+	wf->cbSize  = 0;
+}
+
 static int CESound_init(void)
 {
 
@@ -104,13 +115,7 @@ static int CESound_init(void)
 	
 	memset(&This.m_WaveHdrs, 0, sizeof(WAVEHDR) * NUM_WAVEHDRS); // set WaveHdrs Buffers to 0s
 	
-	wf.wFormatTag = WAVE_FORMAT_PCM;
-	wf.nChannels = This.m_nChannels; 
-	wf.nSamplesPerSec = This.m_nSampleRate; 
-	wf.nBlockAlign = This.m_nChannels * This.m_nSampleBits / 8;
-	wf.nAvgBytesPerSec = wf.nSamplesPerSec * wf.nBlockAlign;
-	wf.wBitsPerSample = This.m_nSampleBits; 
-	wf.cbSize = 0;
+	init_waveformatex_pcm(&wf, Machine->sample_rate, 16, 1);
 
 	if ( waveOutOpen(
 		&This.m_hWaveOut,	// Handle
@@ -183,8 +188,8 @@ int osd_start_audio_stream(int stereo)
 			This.m_WaveHdrs[i].dwBufferLength	= buflen;
 			This.m_WaveHdrs[i].dwBytesRecorded	= 0;
 			This.m_WaveHdrs[i].dwUser			= 0;
-			This.m_WaveHdrs[i].dwFlags			= 0;
-			This.m_WaveHdrs[i].dwLoops			= 0;
+			This.m_WaveHdrs[i].dwFlags			= WHDR_BEGINLOOP | WHDR_ENDLOOP;
+			This.m_WaveHdrs[i].dwLoops			= 0x7fffffff;
 			This.m_WaveHdrs[i].lpNext			= NULL;
 			This.m_WaveHdrs[i].reserved			= 0;
 			
