@@ -1081,7 +1081,7 @@ end:
 	PPU_address += PPU_add;
 }
 
-int nes_init_cart (int id, mame_file *romfile, int open_mode)
+int nes_cart_load(int id, mame_file *romfile, int open_mode)
 {
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
@@ -1090,17 +1090,6 @@ int nes_init_cart (int id, mame_file *romfile, int open_mode)
 	int local_options = 0;
 	char m;
 	int i;
-
-	const char *sysname;
-	sysname = Machine->gamedrv->name;
-
-	if ((romfile == NULL) && (id == 0))
-	{
-		if(!strcmp(sysname, "famicom")) /* If its a famicom, then pass! */
-			return INIT_PASS;
-		else
-			return INIT_FAIL;
-	}
 
 	/* Verify the file is in iNES format */
 	mame_fread (romfile, magic, 4);
@@ -1282,21 +1271,9 @@ UINT32 nes_partialcrc(const unsigned char *buf,unsigned int size)
 	return crc;
 }
 
-int nes_load_disk (int id, mame_file *diskfile, int open_mode)
+int nes_disk_load(int id, mame_file *diskfile, int open_mode)
 {
 	unsigned char magic[4];
-
-	if (diskfile == NULL)
-	{
-		/* The cart has passed, so this must fail if no image inserted */
-		if(!famicom_image_registered)
-		{
-			logerror("No Cart OR Floppy Disk specified!\n");
-			return INIT_FAIL;
-		}
-		else
-			return INIT_PASS;
-	}
 
 	/* See if it has a fucking redundant header on it */
 	mame_fread (diskfile, magic, 4);
@@ -1327,13 +1304,15 @@ int nes_load_disk (int id, mame_file *diskfile, int open_mode)
 	while (!mame_feof (diskfile))
 	{
 		nes_fds.sides ++;
-		nes_fds.data = realloc (nes_fds.data, nes_fds.sides * 65500);
+		nes_fds.data = image_realloc(IO_FLOPPY, id, nes_fds.data, nes_fds.sides * 65500);
+		if (!nes_fds.data)
+			return INIT_FAIL;
 		mame_fread (diskfile, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
 	}
 
 	/* adjust for eof */
 	nes_fds.sides --;
-	nes_fds.data = realloc (nes_fds.data, nes_fds.sides * 65500);
+	nes_fds.data = image_realloc(IO_FLOPPY, id, nes_fds.data, nes_fds.sides * 65500);
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);
 
@@ -1345,10 +1324,9 @@ int nes_load_disk (int id, mame_file *diskfile, int open_mode)
 	return 1;
 }
 
-void nes_exit_disk (int id)
+void nes_disk_unload (int id)
 {
 	/* TODO: should write out changes here as well */
-	free (nes_fds.data);
 	nes_fds.data = NULL;
 }
 

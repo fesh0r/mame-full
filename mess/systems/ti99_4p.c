@@ -29,7 +29,7 @@
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
 static MEMORY_READ16_START (readmem)
 

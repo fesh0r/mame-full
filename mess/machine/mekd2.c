@@ -572,24 +572,24 @@ int mekd2_rom_load(int id, mame_file *file, int open_mode)
 	const char magic[] = "MEK6800D2";
 	char buff[9];
 
-		if (file)
-		{
-			UINT16 addr, size;
-			UINT8 ident, *RAM = memory_region(REGION_CPU1);
+	if (file)
+	{
+		UINT16 addr, size;
+		UINT8 ident, *RAM = memory_region(REGION_CPU1);
 
-			mame_fread(file, buff, sizeof (buff));
-			if (memcmp(buff, magic, sizeof (buff)))
-			{
-				logerror( "mekd2_rom_load: magic '%s' not found\n", magic);
-				return 1;
-			}
-			mame_fread_lsbfirst(file, &addr, 2);
-			mame_fread_lsbfirst(file, &size, 2);
-			mame_fread(file, &ident, 1);
-/*			LOG(( "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident)); */
-			while (size-- > 0)
-				mame_fread(file, &RAM[addr++], 1);
+		mame_fread(file, buff, sizeof (buff));
+		if (memcmp(buff, magic, sizeof (buff)))
+		{
+			logerror( "mekd2_rom_load: magic '%s' not found\n", magic);
+			return 1;
 		}
+		mame_fread_lsbfirst(file, &addr, 2);
+		mame_fread_lsbfirst(file, &size, 2);
+		mame_fread(file, &ident, 1);
+/*			LOG(( "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident)); */
+		while (size-- > 0)
+			mame_fread(file, &RAM[addr++], 1);
+	}
 
 	return 0;
 }

@@ -93,7 +93,7 @@ ROM_START (advision)
 ROM_END
 
 SYSTEM_CONFIG_START(advision)
-	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", advision_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", advision_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

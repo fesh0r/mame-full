@@ -159,7 +159,7 @@ WRITE_HANDLER(kc85_module_w);
 
 /*** DISC INTERFACE **/
 #include "includes/nec765.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
 /* IO_FLOPPY device */
 

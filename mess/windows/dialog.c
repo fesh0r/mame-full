@@ -74,7 +74,7 @@ struct dialog_info
 	WORD cx, cy;
 	int combo_string_count;
 	int combo_default_value;
-	void *memory_pool;
+	memory_pool mempool;
 };
 
 //============================================================
@@ -312,7 +312,7 @@ static int dialog_add_trigger(struct dialog_info *di, WORD dialog_item,
 	assert(di);
 	assert(trigger_flags);
 
-	trigger = (struct dialog_info_trigger *) pool_malloc(&di->memory_pool, sizeof(struct dialog_info_trigger));
+	trigger = (struct dialog_info_trigger *) pool_malloc(&di->mempool, sizeof(struct dialog_info_trigger));
 	if (!trigger)
 		return 1;
 
@@ -377,7 +377,7 @@ void *win_dialog_init(const char *title)
 		goto error;
 	memset(di, 0, sizeof(*di));
 
-	pool_init(&di->memory_pool);
+	pool_init(&di->mempool);
 
 	di->cx = 0;
 	di->cy = 0;
@@ -620,7 +620,7 @@ static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | ES_CENTER,
 			x, y, cx, cy, "", DLGITEM_EDIT))
 		return 1;
-	stuff = (struct seqselect_stuff *) pool_malloc(&di->memory_pool, sizeof(struct seqselect_stuff));
+	stuff = (struct seqselect_stuff *) pool_malloc(&di->mempool, sizeof(struct seqselect_stuff));
 	if (!stuff)
 		return 1;
 	stuff->code = code;
@@ -809,7 +809,7 @@ void win_dialog_exit(void *dialog)
 	if (di->handle)
 		GlobalFree(di->handle);
 
-	pool_exit(&di->memory_pool);
+	pool_exit(&di->mempool);
 	free(di);
 }
 

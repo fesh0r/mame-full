@@ -295,7 +295,7 @@ SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
 	/* cartridges at 0x400-0x7ff ? */
-	CONFIG_DEVICE_CARTSLOT(1, "bin\0", studio2_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", studio2_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

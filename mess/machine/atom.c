@@ -19,8 +19,8 @@
 #include "vidhrdw/m6847.h"
 #include "includes/atom.h"
 #include "includes/i8271.h"
-#include "includes/basicdsk.h"
-#include "includes/flopdrv.h"
+#include "devices/basicdsk.h"
+#include "devices/flopdrv.h"
 #include "machine/6522via.h"
 #include "devices/cassette.h"
 
@@ -338,7 +338,7 @@ QUICKLOAD_LOAD(atom)
 /* load floppy */
 int atom_floppy_init(int id, mame_file *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */

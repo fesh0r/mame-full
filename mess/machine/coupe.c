@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/coupe.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "includes/wd179x.h"
 
 UINT8 LMPR,HMPR,VMPR;	/* Bank Select Registers (Low Page p250, Hi Page p251, Video Page p252) */
@@ -27,7 +27,7 @@ extern UINT8 *sam_screen;
 
 int coupe_floppy_init(int id, mame_file *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 
 		basicdsk_set_geometry(id, 80, 2, 10, 512, 1, 0);

@@ -15,7 +15,7 @@
 #include "machine/6522via.h"
 #include "includes/bbc.h"
 #include "includes/upd7002.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "devices/cartslot.h"
 
 
@@ -1152,7 +1152,7 @@ static MACHINE_DRIVER_START( bbcb6502 )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(bbc)
-	CONFIG_DEVICE_CARTSLOT			(4, "rom\0",			bbcb_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT		(4, "rom\0",			bbcb_load_rom, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	bbc_floppy_init)
 SYSTEM_CONFIG_END
 

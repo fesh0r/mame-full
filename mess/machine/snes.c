@@ -1142,7 +1142,7 @@ int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 	return valid;
 }
 
-int snes_load_rom(int id, mame_file *file, int open_mode)
+int snes_cart_load(int id, mame_file *file, int open_mode)
 {
 	int i;
 	UINT16 totalblocks, readblocks;
@@ -1190,12 +1190,6 @@ int snes_load_rom(int id, mame_file *file, int open_mode)
 		"UNKNOWN"
 	};
 #endif	/* SNES_DBG_GENERAL */
-
-	if (file == NULL)
-	{
-		printf("Cartridge name required!\n");
-		return INIT_FAIL;
-	}
 
 	if( new_memory_region(REGION_CPU1, 0x1000000,0) )
 	{

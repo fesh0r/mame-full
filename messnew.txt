@@ -15,6 +15,10 @@ System Driver Changes:
 
 Source Changes:
 ---------------
+- Major change to device handling; all devices now have separate init/exit
+  and load/unload handlers.  The former are called on startup/shutdown, and
+  the latter are called when images are loaded and unloaded. [Nate Woods]
+
 - Moved CRC handling to use the core fileio functions. [Nate Woods]
 
 - [Win32 GUI] Now uses INI files rather than the registry to store settings

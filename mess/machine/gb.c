@@ -1225,7 +1225,7 @@ READ_HANDLER ( gb_r_io )
 	}
 }
 
-int gb_load_rom (int id, mame_file *F, int open_mode)
+int gb_cart_load(int id, mame_file *F, int open_mode)
 {
 	static const char *CartTypes[] =
 	{
@@ -1360,12 +1360,6 @@ int gb_load_rom (int id, mame_file *F, int open_mode)
 
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
-
-	if (F == NULL)
-	{
-		printf("Cartridge name required!\n");
-		return INIT_FAIL;
-	}
 
 	if( new_memory_region(REGION_CPU1, 0x10000,0) )
 	{

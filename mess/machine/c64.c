@@ -819,9 +819,6 @@ static void c64_common_driver_init (void)
 	if (c64_cia1_on)
 	{
 		cbm_drive_open ();
-
-		cbm_drive_attach_fs (0);
-		cbm_drive_attach_fs (1);
 	}
 
 	cia6526_init();

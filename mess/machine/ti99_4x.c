@@ -52,7 +52,7 @@ TODO:
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 #include "sndhrdw/spchroms.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "ti99_4x.h"
 #include "994x_ser.h"
@@ -339,7 +339,7 @@ int ti99_floppy_init(int id, mame_file *fp, int open_mode)
 	int done;
 
 
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 		done = FALSE;
 

@@ -98,24 +98,24 @@ static int d64_find (CBM_Drive * drive, unsigned char *name)
 	int pos, track, sector, i;
 
 	pos = d64_tracksector2offset (18, 0);
-	track = drive->d.d64.image[pos];
-	sector = drive->d.d64.image[pos + 1];
+	track = drive->image[pos];
+	sector = drive->image[pos + 1];
 
 	while ((track >= 1) && (track <= 35))
 	{
 		pos = d64_tracksector2offset (track, sector);
 		for (i = 2; i < 256; i += 32)
 		{
-			if (drive->d.d64.image[pos + i] & 0x80)
+			if (drive->image[pos + i] & 0x80)
 			{
 				if (stricmp ((char *) name, (char *) "*") == 0)
 					return pos + i;
-				if (cbm_compareNames (name, drive->d.d64.image + pos + i + 3))
+				if (cbm_compareNames (name, drive->image + pos + i + 3))
 					return pos + i;
 			}
 		}
-		track = drive->d.d64.image[pos];
-		sector = drive->d.d64.image[pos + 1];
+		track = drive->image[pos];
+		sector = drive->image[pos + 1];
 	}
 	return -1;
 }
@@ -126,20 +126,20 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 	int i;
 
 	for (i = 0; i < 16; i++)
-		c1551->d.d64.filename[i] = toupper (c1551->d.d64.image[pos + i + 3]);
+		c1551->filename[i] = toupper (c1551->image[pos + i + 3]);
 
-	c1551->d.d64.filename[i] = 0;
+	c1551->filename[i] = 0;
 
-	pos = d64_tracksector2offset (c1551->d.d64.image[pos + 1], c1551->d.d64.image[pos + 2]);
+	pos = d64_tracksector2offset (c1551->image[pos + 1], c1551->image[pos + 2]);
 
 	i = pos;
 	c1551->size = 0;
-	while (c1551->d.d64.image[i] != 0)
+	while (c1551->image[i] != 0)
 	{
 		c1551->size += 254;
-		i = d64_tracksector2offset (c1551->d.d64.image[i], c1551->d.d64.image[i + 1]);
+		i = d64_tracksector2offset (c1551->image[i], c1551->image[i + 1]);
 	}
-	c1551->size += c1551->d.d64.image[i + 1];
+	c1551->size += c1551->image[i + 1];
 
 	DBG_LOG (3, "d64 readprg", ("size %d\n", c1551->size));
 
@@ -154,23 +154,23 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 	c1551->size--;
 
 	DBG_LOG (3, "d64 readprg", ("track: %d sector: %d\n",
-								c1551->d.d64.image[pos + 1],
-								c1551->d.d64.image[pos + 2]));
+								c1551->image[pos + 1],
+								c1551->image[pos + 2]));
 
 	for (i = 0; i < c1551->size; i += 254)
 	{
 		if (i + 254 < c1551->size)
 		{							   /* not last sector */
-			memcpy (c1551->buffer + i, c1551->d.d64.image + pos + 2, 254);
-			pos = d64_tracksector2offset (c1551->d.d64.image[pos + 0],
-									  c1551->d.d64.image[pos + 1]);
+			memcpy (c1551->buffer + i, c1551->image + pos + 2, 254);
+			pos = d64_tracksector2offset (c1551->image[pos + 0],
+									  c1551->image[pos + 1]);
 			DBG_LOG (3, "d64 readprg", ("track: %d sector: %d\n",
-										c1551->d.d64.image[pos],
-										c1551->d.d64.image[pos + 1]));
+										c1551->image[pos],
+										c1551->image[pos + 1]));
 		}
 		else
 		{
-			memcpy (c1551->buffer + i, c1551->d.d64.image + pos + 2, c1551->size - i);
+			memcpy (c1551->buffer + i, c1551->image + pos + 2, c1551->size - i);
 		}
 	}
 }
@@ -180,7 +180,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 {
 	int pos;
 
-	snprintf (c1551->d.d64.filename, sizeof (c1551->d.d64.filename),
+	snprintf (c1551->filename, sizeof (c1551->filename),
 			  "track %d sector %d", track, sector);
 
 	pos = d64_tracksector2offset (track, sector);
@@ -194,7 +194,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 
 	logerror("d64 read track %d sector %d\n", track, sector);
 
-	memcpy (c1551->buffer, c1551->d.d64.image + pos, 256);
+	memcpy (c1551->buffer, c1551->image + pos, 256);
 	c1551->size = 256;
 	c1551->pos = 0;
 }
@@ -215,13 +215,13 @@ static void d64_read_directory (CBM_Drive * c1551)
 	c1551->size = 0;
 
 	pos = d64_tracksector2offset (18, 0);
-	track = c1551->d.d64.image[pos];
-	sector = c1551->d.d64.image[pos + 1];
+	track = c1551->image[pos];
+	sector = c1551->image[pos + 1];
 
 	blocksfree = 0;
 	for (j = 1, i = 4; j <= 35; j++, i += 4)
 	{
-		blocksfree += c1551->d.d64.image[pos + i];
+		blocksfree += c1551->image[pos + i];
 	}
 	c1551->buffer[c1551->size++] = addr & 0xff;
 	c1551->buffer[c1551->size++] = addr >> 8;
@@ -232,15 +232,15 @@ static void d64_read_directory (CBM_Drive * c1551)
 	c1551->buffer[c1551->size++] = 0;
 	c1551->buffer[c1551->size++] = '\"';
 	for (j = 0; j < 16; j++)
-		c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + 0x90 + j];
+		c1551->buffer[c1551->size++] = c1551->image[pos + 0x90 + j];
 /*memcpy(c1551->buffer+c1551->size,c1551->image+pos+0x90, 16);c1551->size+=16; */
 	c1551->buffer[c1551->size++] = '\"';
 	c1551->buffer[c1551->size++] = ' ';
-	c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + 162];
-	c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + 163];
+	c1551->buffer[c1551->size++] = c1551->image[pos + 162];
+	c1551->buffer[c1551->size++] = c1551->image[pos + 163];
 	c1551->buffer[c1551->size++] = ' ';
-	c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + 165];
-	c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + 166];
+	c1551->buffer[c1551->size++] = c1551->image[pos + 165];
+	c1551->buffer[c1551->size++] = c1551->image[pos + 166];
 	c1551->buffer[c1551->size++] = 0;
 
 	while ((track >= 1) && (track <= 35))
@@ -248,10 +248,10 @@ static void d64_read_directory (CBM_Drive * c1551)
 		pos = d64_tracksector2offset (track, sector);
 		for (i = 2; i < 256; i += 32)
 		{
-			if (c1551->d.d64.image[pos + i] & 0x80)
+			if (c1551->image[pos + i] & 0x80)
 			{
-				int len, blocks = c1551->d.d64.image[pos + i + 28]
-				+ 256 * c1551->d.d64.image[pos + i + 29];
+				int len, blocks = c1551->image[pos + i + 28]
+				+ 256 * c1551->image[pos + i + 29];
 				char dummy[10];
 
 				sprintf (dummy, "%d", blocks);
@@ -259,16 +259,16 @@ static void d64_read_directory (CBM_Drive * c1551)
 				addr += 29 - len;
 				c1551->buffer[c1551->size++] = addr & 0xff;
 				c1551->buffer[c1551->size++] = addr >> 8;
-				c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + i + 28];
-				c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + i + 29];
+				c1551->buffer[c1551->size++] = c1551->image[pos + i + 28];
+				c1551->buffer[c1551->size++] = c1551->image[pos + i + 29];
 				for (j = 4; j > len; j--)
 					c1551->buffer[c1551->size++] = ' ';
 				c1551->buffer[c1551->size++] = '\"';
 				for (j = 0; j < 16; j++)
-					c1551->buffer[c1551->size++] = c1551->d.d64.image[pos + i + 3 + j];
+					c1551->buffer[c1551->size++] = c1551->image[pos + i + 3 + j];
 				c1551->buffer[c1551->size++] = '\"';
 				c1551->buffer[c1551->size++] = ' ';
-				switch (c1551->d.d64.image[pos + i] & 0x3f)
+				switch (c1551->image[pos + i] & 0x3f)
 				{
 				case 0:
 					c1551->buffer[c1551->size++] = 'D';
@@ -299,8 +299,8 @@ static void d64_read_directory (CBM_Drive * c1551)
 				c1551->buffer[c1551->size++] = 0;
 			}
 		}
-		track = c1551->d.d64.image[pos];
-		sector = c1551->d.d64.image[pos + 1];
+		track = c1551->image[pos];
+		sector = c1551->image[pos + 1];
 	}
 	addr += 14;
 	c1551->buffer[c1551->size++] = addr & 0xff;
@@ -311,7 +311,7 @@ static void d64_read_directory (CBM_Drive * c1551)
 	c1551->size += 11;
 	c1551->buffer[c1551->size++] = 0;
 
-	strcpy (c1551->d.d64.filename, "$");
+	strcpy (c1551->filename, "$");
 }
 
 static int c1551_d64_command (CBM_Drive * c1551, unsigned char *name)
@@ -331,90 +331,6 @@ static int c1551_d64_command (CBM_Drive * c1551, unsigned char *name)
 			return 1;
 		}
 		d64_readprg (c1551, pos);
-	}
-	return 0;
-}
-
-static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
-{
-	mame_file *fp;
-	int type=0;
-	int read_;
-	int i;
-	char n[32];
-
-	strcpy(n,(char*)name);
-	fp = mame_fopen (Machine->gamedrv->name, n, FILETYPE_IMAGE, 0);
-
-	if (!fp)
-	{
-		for (i = 0; n[i] != 0; i++)
-			n[i] = tolower (n[i]);
-		fp = mame_fopen (Machine->gamedrv->name, n, FILETYPE_IMAGE, 0);
-	}
-	if (!fp)
-	{
-		strcpy(n, (char*)name);
-		strcat ((char *) n, ".prg");
-
-		fp = mame_fopen (Machine->gamedrv->name, n, FILETYPE_IMAGE, 0);
-	}
-	if (!fp)
-	{
-		for (i = 0; n[i] != 0; i++)
-			n[i] = tolower (n[i]);
-		fp = mame_fopen (Machine->gamedrv->name, n, FILETYPE_IMAGE, 0);
-	}
-	if (!fp)
-	{
-		type=1;
-		strcpy(n,(char*)name);
-		strcat(n,".p00");
-		fp = mame_fopen (Machine->gamedrv->name, n, FILETYPE_IMAGE, 0);
-	}
-	if (!fp)
-	{
-		for (i = 0; n[i] != 0; i++)
-			n[i] = tolower (n[i]);
-		fp = mame_fopen (Machine->gamedrv->name, n, FILETYPE_IMAGE, 0);
-	}
-	if (fp)
-	{
-		if (type==1)
-		{
-			c1551->size = mame_fsize (fp);
-			c1551->buffer = (UINT8*)realloc (c1551->buffer, c1551->size);
-			if (!c1551->buffer) {
-				logerror("out of memory %s %d\n",__FILE__, __LINE__);
-				osd_exit();
-				exit(1);
-			}
-
-			read_ = mame_fread (fp, c1551->buffer, 26);
-			strncpy (c1551->d.fs.filename, (char *) c1551->buffer + 8, 16);
-			c1551->size -= 26;
-			read_ = mame_fread (fp, c1551->buffer, c1551->size);
-		}
-		else
-		{
-			c1551->size = mame_fsize (fp);
-			c1551->buffer = (UINT8*)realloc (c1551->buffer,c1551->size);
-			if (!c1551->buffer) {
-				logerror("out of memory %s %d\n",__FILE__, __LINE__);
-				osd_exit();
-				exit(1);
-			}
-
-			read_ = mame_fread (fp, c1551->buffer, c1551->size);
-			mame_fclose (fp);
-			logerror("loading file %s\n", name);
-			strcpy (c1551->d.fs.filename, (char *) name);
-		}
-	}
-	else
-	{
-		logerror("file %s not found\n", name);
-		return 1;
 	}
 	return 0;
 }
@@ -523,11 +439,6 @@ static void cbm_command (CBM_Drive * drive)
 		{
 			if ((type == 'P') || (type == 'S'))
 				rc = c1551_d64_command (drive, name);
-		}
-		else if (drive->drive == FILESYSTEM)
-		{
-			if (type == 'P')
-				rc = c1551_fs_command (drive, name);
 		}
 		if (!rc)
 		{

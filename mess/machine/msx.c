@@ -18,7 +18,7 @@
 #include "machine/8255ppi.h"
 #include "includes/tc8521.h"
 #include "includes/wd179x.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80_msx.h"
@@ -935,7 +935,7 @@ int msx_floppy_init (int id, mame_file *fp, int open_mode)
 	else
 		return INIT_FAIL;
 
-	if (basicdsk_floppy_init (id, fp, open_mode) != INIT_PASS)
+	if (basicdsk_floppy_load (id, fp, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry (id, 80, heads, 9, 512, 1, 0);

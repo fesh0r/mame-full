@@ -575,7 +575,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(laser)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", laser_cassette_init)
-	CONFIG_DEVICE_CARTSLOT(1, "rom\0", laser_rom_init, laser_rom_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", laser_rom_init, laser_rom_exit, NULL)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, laser_floppy_init, laser_floppy_exit, NULL)
 SYSTEM_CONFIG_END
 

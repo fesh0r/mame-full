@@ -960,16 +960,16 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a400)
 	CONFIG_IMPORT_FROM(atari)
-	CONFIG_DEVICE_CARTSLOT(1, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a800)
 	CONFIG_IMPORT_FROM(atari)
-	CONFIG_DEVICE_CARTSLOT(2, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(2, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a5200)
-	CONFIG_DEVICE_CARTSLOT(1, "rom\0bin\0", a5200_rom_init, a5200_rom_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", a5200_rom_init, a5200_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

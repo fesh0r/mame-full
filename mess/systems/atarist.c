@@ -54,7 +54,7 @@ Vidhrdw:
 #include "includes/wd179x.h"
 #include "cpu/m68000/m68k.h"
 #include "cpu/m68000/m68000.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
 #define MASTER_CLOCK	8000000
 #define	MK68901_CLOCK	2457600
@@ -1831,7 +1831,7 @@ static int atari_st_image_type[2] = {ATARI_ST_IMAGE_TYPE_NONE, ATARI_ST_IMAGE_TY
 /* basic format like .ST */
 static int atarist_basic_floppy_init(int id, mame_file *file, int open_mode)
 {
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_load(id)==INIT_PASS)
 	{
 		/* Figure out correct disk format, try standard formats first */
 		if (file) {
@@ -2316,7 +2316,6 @@ void atarist_floppy_exit(int id)
 	{
 		case ATARI_ST_IMAGE_TYPE_RAW:
 		{
-			basicdsk_floppy_exit(id);
 		}
 		break;
 

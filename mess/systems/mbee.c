@@ -39,7 +39,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
 #include "includes/mbee.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "devices/cartslot.h"
 
 #define VERBOSE 1
@@ -369,8 +369,8 @@ ROM_END
 
 SYSTEM_CONFIG_START(mbee)
 	CONFIG_DEVICE_CASSETTE			(1, "",			mbee_cassette_init)
-	CONFIG_DEVICE_CARTSLOT			(1, "rom\0",	mbee_rom_load, NULL, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	basicdsk_floppy_init)
+	CONFIG_DEVICE_CARTSLOT)OPT		(1, "rom\0",	mbee_rom_load, NULL, NULL)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	basicdsk_floppy_load)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

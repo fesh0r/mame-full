@@ -2783,8 +2783,8 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(cpcplus)
 	CONFIG_IMPORT_FROM(cpc6128)
-	CONFIG_DEVICE_CARTSLOT(1,	"cpr\0", amstrad_plus_cartridge_init, NULL, NULL)
-	CONFIG_DEVICE_SNAPSHOT(		"sna\0", amstrad)
+	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", amstrad_plus_cartridge_init, NULL, NULL)
+	CONFIG_DEVICE_SNAPSHOT(			"sna\0", amstrad)
 SYSTEM_CONFIG_END
 
 /*      YEAR  NAME       PARENT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "includes/oric.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "includes/wd179x.h"
 #include "machine/6522via.h"
 #include "includes/mfmdisk.h"
@@ -1227,7 +1227,7 @@ int oric_floppy_init(int id, mame_file *fp, int open_mode)
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_init(id, fp, open_mode))
+	if (basicdsk_floppy_load(id, fp, open_mode))
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
@@ -1253,7 +1253,7 @@ void	oric_floppy_exit(int id)
 
 		case ORIC_FLOPPY_BASIC_DISK:
 		{
-			basicdsk_floppy_exit(id);
+			basicdsk_floppy_unload(id);
 		}
 		break;
 

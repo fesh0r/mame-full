@@ -5,8 +5,8 @@ the data will be accessed correctly */
 
 /* THIS DISK IMAGE CODE USED TO BE PART OF THE WD179X EMULATION, EXTRACTED INTO THIS FILE */
 #include "driver.h"
-#include "includes/basicdsk.h"
-#include "includes/flopdrv.h"
+#include "devices/basicdsk.h"
+#include "devices/flopdrv.h"
 #include "image.h"
 
 #define basicdsk_MAX_DRIVES 4
@@ -30,52 +30,29 @@ floppy_interface basicdsk_floppy_interface=
 	NULL
 };
 
-/* attempt to insert a disk into the drive specified with id */
-int basicdsk_floppy_init(int id, mame_file *fp, int open_mode)
+int basicdsk_floppy_init(int id)
 {
-	if (id < basicdsk_MAX_DRIVES)
-	{
-		basicdsk *w = &basicdsk_drives[id];
-
-		/* do we have an image name ? */
-		if (fp == NULL)
-			return INIT_PASS;
-
-		w->image_file = fp;
-		w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
-
-		/* this will be setup in the set_geometry function */
-		w->ddam_map = NULL;
-
-		/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
-		so we need to reflect this */
-		w->track = 0;
-
-		floppy_drive_set_disk_image_interface(id,&basicdsk_floppy_interface);
-
-		return  INIT_PASS;
-	}
-
-	return INIT_FAIL;
+	return floppy_drive_init(id, &basicdsk_floppy_interface);
 }
 
-/* remove a disk from the drive specified by id */
-void basicdsk_floppy_exit(int id)
+/* attempt to insert a disk into the drive specified with id */
+int basicdsk_floppy_load(int id, mame_file *fp, int open_mode)
 {
-	basicdsk *pDisk;
+	basicdsk *w = &basicdsk_drives[id];
 
-	/* sanity check */
-	if ((id<0) || (id>=basicdsk_MAX_DRIVES))
-		return;
+	assert(id < basicdsk_MAX_DRIVES);
 
-	pDisk = &basicdsk_drives[id];
+	w->image_file = fp;
+	w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
 
-	/* free ddam map */
-	if (pDisk->ddam_map!=NULL)
-	{
-		free(pDisk->ddam_map);
-		pDisk->ddam_map = NULL;
-	}
+	/* this will be setup in the set_geometry function */
+	w->ddam_map = NULL;
+
+	/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
+	so we need to reflect this */
+	w->track = 0;
+
+	return  INIT_PASS;
 }
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will
@@ -195,7 +172,7 @@ void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_pe
 	}
 	/* setup a new ddam map */
 	pDisk->ddam_map_size = ((pDisk->tracks * pDisk->heads * pDisk->sec_per_track)+7)>>3;
-	pDisk->ddam_map = (UINT8 *)malloc(pDisk->ddam_map_size);
+	pDisk->ddam_map = (UINT8 *) image_realloc(IO_FLOPPY, drive, pDisk->ddam_map, pDisk->ddam_map_size);
 
 	if (pDisk->ddam_map!=NULL)
 	{

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.10 2003/03/03 14:05:14 npwoods Exp $
+  $Id: pc8801.c,v 1.11 2003/03/10 01:12:30 npwoods Exp $
 
 ***************************************************************************/
 
@@ -771,17 +771,15 @@ static struct nec765_interface pc8801_fdc_interface=
 
 void pc8801_init_5fd(void)
 {
-  use_5FD = (input_port_18_r(0)&0x80)!=0x00;
-  ppi8255_init(&pc8801_8255_config);
-  timer_suspendcpu(1, !use_5FD, SUSPEND_REASON_DISABLE);
-  nec765_init(&pc8801_fdc_interface,NEC765A);
-  cpu_irq_line_vector_w(1,0,0);
-  floppy_drive_set_flag_state(0, FLOPPY_DRIVE_CONNECTED, 1);
-  floppy_drive_set_flag_state(1, FLOPPY_DRIVE_CONNECTED, 1);
-  floppy_drive_set_motor_state(0, 1);
-  floppy_drive_set_motor_state(1, 1);
-  floppy_drive_set_ready_state(0, 1,0);
-  floppy_drive_set_ready_state(1, 1,0);
+	use_5FD = (input_port_18_r(0)&0x80)!=0x00;
+	ppi8255_init(&pc8801_8255_config);
+	timer_suspendcpu(1, !use_5FD, SUSPEND_REASON_DISABLE);
+	nec765_init(&pc8801_fdc_interface,NEC765A);
+	cpu_irq_line_vector_w(1,0,0);
+	floppy_drive_set_motor_state(0, 1);
+	floppy_drive_set_motor_state(1, 1);
+	floppy_drive_set_ready_state(0, 1,0);
+	floppy_drive_set_ready_state(1, 1,0);
 }
 
 /*

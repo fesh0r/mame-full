@@ -227,7 +227,7 @@ ROM_START(channelf)
 ROM_END
 
 SYSTEM_CONFIG_START(channelf)
-	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", channelf_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", channelf_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -34,10 +34,6 @@ typedef struct chrn_id
 	unsigned long flags;
 } chrn_id;
 
-/* set if drive is present */
-#define FLOPPY_DRIVE_CONNECTED					0x0008
-/* set if disc is in drive */
-#define FLOPPY_DRIVE_DISK_INSERTED				0x0001
 /* set if disc is write protected - also set if drive is present but no disc in drive */
 #define FLOPPY_DRIVE_DISK_WRITE_PROTECTED		0x0002
 /* set if drive is connected and head is positioned over track 0 */
@@ -108,7 +104,7 @@ struct floppy_drive
 };
 
 /* a callback which will be executed if the ready state of the drive changes e.g. not ready->ready, ready->not ready */
-void	floppy_drive_set_ready_state_change_callback(int drive, void (*callback)(int drive, int state));
+void floppy_drive_set_ready_state_change_callback(int drive, void (*callback)(int drive, int state));
 
 /* floppy drive types */
 typedef enum
@@ -117,7 +113,7 @@ typedef enum
 	FLOPPY_DRIVE_DS_80
 } floppy_type;
 
-void	floppy_drive_set_index_pulse_callback(int drive, void (*callback)(int id));
+void floppy_drive_set_index_pulse_callback(int drive, void (*callback)(int id));
 
 /* set flag state */
 int floppy_drive_get_flag_state(int drive, int flag);
@@ -126,25 +122,22 @@ void floppy_drive_set_flag_state(int drive, int flag, int state);
 /* get current physical track drive is on */
 int floppy_drive_get_current_track(int drive);
 
-void	floppy_drive_set_geometry(int,floppy_type type);
-void	floppy_drive_set_geometry_absolute(int id, int tracks, int sides);
+void floppy_drive_set_geometry(int,floppy_type type);
+void floppy_drive_set_geometry_absolute(int id, int tracks, int sides);
 
-void	floppy_drives_init(void);
-void	floppy_drives_exit(void);
+/* called in device init/exit functions */
+int floppy_drive_init(int id, const floppy_interface *iface);
 
 /* get next id from track, 1 if got a id, 0 if no id was got */
 int floppy_drive_get_next_id(int drive, int side, chrn_id *);
 /* set ready state of drive. If flag == 1, set ready state only if drive present,
 disk is in drive, and motor is on. Otherwise set ready state to the state passed */
-void	floppy_drive_set_ready_state(int drive, int state, int flag);
+void floppy_drive_set_ready_state(int drive, int state, int flag);
 
-void	floppy_drive_set_motor_state(int drive, int state);
-
-/* set interface for disk image functions */
-void	floppy_drive_set_disk_image_interface(int, floppy_interface *);
+void floppy_drive_set_motor_state(int drive, int state);
 
 /* set real fdd unit */
-void	floppy_drive_set_real_fdd_unit(int, unsigned char);
+void floppy_drive_set_real_fdd_unit(int, unsigned char);
 
 /* seek up or down */
 void floppy_drive_seek(int drive, signed int signed_tracks);

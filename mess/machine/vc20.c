@@ -488,9 +488,6 @@ static void vc20_common_driver_init (void)
 
 	cbm_drive_open ();
 
-	cbm_drive_attach_fs (0);
-	cbm_drive_attach_fs (1);
-
 #ifdef VC1541
 	vc1541_config (0, 0, &vc1541);
 #endif
@@ -639,18 +636,18 @@ static int vc20_rom_id (int id, mame_file *romfile)
 	return retval;
 }
 
-int vc20_rom_load (int id, mame_file *fp, int open_mode)
+int vc20_rom_init(int id)
+{
+	vc20_memory_init();
+	return INIT_PASS;
+}
+
+int vc20_rom_load(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
-	//mame_file *fp;
 	int size, read_;
 	const char *cp;
 	int addr = 0;
-
-	vc20_memory_init();
-
-	if (fp == NULL)
-		return INIT_PASS;
 
 	if (!vc20_rom_id (id, fp))
 		return 1;

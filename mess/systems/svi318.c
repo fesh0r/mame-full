@@ -375,7 +375,7 @@ ROM_END
 SYSTEM_CONFIG_START(svi318)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_CASSETTE			(1,	"cas\0",	svi318_cassette_init)
-	CONFIG_DEVICE_CARTSLOT			(1,	"rom\0",	svi318_load_rom, svi318_exit_rom, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT		(1,	"rom\0",	svi318_load_rom, svi318_exit_rom, NULL)
 #ifdef SVI_DISK
 	CONFIG_DEVICE_FLOPPY_SVI318DSK	(2,	"dsk\0",	svi318_floppy_init)
 #endif

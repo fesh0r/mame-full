@@ -43,7 +43,7 @@ int pce_load_rom(int id, mame_file *fp, int open_mode)
         mame_fseek(fp, 512, SEEK_SET);
     }
     size = mame_fread(fp, ROM, size);
-return 0;
+	return 0;
 }
 
 MACHINE_INIT( pce )

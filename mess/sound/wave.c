@@ -971,78 +971,10 @@ void wave_output(int id, int data)
     w->record_sample = data;
 }
 
-int wave_input_chunk(int id, void *dst, int count)
-{
-	struct wave_file *w = &wave[id];
-	UINT32 pos = 0;
-
-	if( !w->file )
-		return 0;
-
-    if( w->timer )
-	{
-		pos = wave_tell(id);
-	}
-
-    if( pos + count >= w->samples )
-		count = w->samples - pos - 1;
-
-    if( count > 0 )
-	{
-		if( w->resolution == 16 )
-			memcpy(dst, (INT16 *)w->data + pos, count * sizeof(INT16));
-		else
-			memcpy(dst, (INT8 *)w->data + pos, count * sizeof(INT8));
-	}
-
-    return count;
-}
-
-int wave_output_chunk(int id, void *src, int count)
-{
-	struct wave_file *w = &wave[id];
-	UINT32 pos = 0;
-
-	if( !w->file )
-		return 0;
-
-    if( w->timer )
-	{
-		pos = wave_tell(id);
-	}
-
-	if( pos + count >= w->max_samples )
-	{
-		/* add space for new data */
-		w->max_samples += count - pos;
-		w->length = w->samples * w->resolution / 8;
-		w->data = realloc(w->data, w->length);
-		if( !w->data )
-		{
-			logerror("WAVE realloc(%d) failed\n", w->length);
-			memset(w, 0, sizeof(struct wave_file));
-			return 0;
-		}
-	}
-
-	if( pos + count >= w->samples )
-		w->samples = pos + count;
-
-    if( count > 0 )
-	{
-		if( w->resolution == 16 )
-			memcpy((INT16 *)w->data + pos, src, count * sizeof(INT16));
-		else
-			memcpy((INT8 *)w->data + pos, src, count * sizeof(INT8));
-	}
-
-    return count;
-}
-
 /* ----------------------------------------------------------------------- */
 
 void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*init)(int id, mame_file *fp, int open_mode), void (*exit_)(int id))
+	int (*loadproc)(int id, mame_file *fp, int open_mode), void (*unloadproc)(int id))
 {
 	strcpy(actualext, "wav");
 	strcpy(actualext + 4, fileext);
@@ -1052,8 +984,8 @@ void wave_specify(struct IODevice *iodev, int count, char *actualext, const char
 	iodev->file_extensions = actualext;
 	iodev->flags = DEVICE_LOAD_RESETS_NONE;
 	iodev->open_mode = OSD_FOPEN_READ_OR_WRITE;
-	iodev->init = init;
-	iodev->exit = exit_;
+	iodev->load = loadproc;
+	iodev->unload = unloadproc;
 	iodev->info = wave_info;
 	iodev->open = wave_open;
 	iodev->close = wave_close;

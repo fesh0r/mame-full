@@ -801,10 +801,10 @@ static void pc_keyb_timer(int param)
 
 void pc_keyb_set_clock(int on)
 {
-	if ((!pc_keyb.on)&&on) {
+	if (!pc_keyb.on && on)
 		timer_set(1/200.0, 0, pc_keyb_timer);
-	}
-	pc_keyb.on=on;
+
+	pc_keyb.on = on;
 	// NPW 2-Feb-2001 - Disabling this because it appears to cause problems
 	//pc_keyboard();
 }

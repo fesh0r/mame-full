@@ -13,5 +13,6 @@
 #include "usrintrf.h"
 
 int handle_mess_user_interface(struct mame_bitmap *bitmap);
+int displayimageinfo(struct mame_bitmap *bitmap, int selected);
 
 #endif /* MESINTRF_H */

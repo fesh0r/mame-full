@@ -643,10 +643,6 @@ int vc1541_init (int id, mame_file *in, int open_mode)
 {
 	int size;
 
-	/*memset (&(drive->d64), 0, sizeof (drive->d64)); */
-	if (!in)
-		return INIT_FAIL;
-
 	size = mame_fsize (in);
 	if (!(vc1541->d64.data = (UINT8*) image_malloc(IO_FLOPPY, id, size)))
 		return INIT_FAIL;

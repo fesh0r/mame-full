@@ -16,7 +16,7 @@
 #include "includes/bbc.h"
 #include "includes/upd7002.h"
 #include "includes/i8271.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "image.h"
 
 int startbank;
@@ -783,7 +783,7 @@ BBC_uPD7002= {
 
 int bbc_floppy_init(int id, mame_file *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */

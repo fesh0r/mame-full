@@ -1782,7 +1782,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(nc_common)
 	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
 	CONFIG_DEVICE_LEGACY(IO_SERIAL, 1, "txt\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, nc_serial_init, serial_device_exit, NULL)
 SYSTEM_CONFIG_END
 
@@ -1794,7 +1794,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(nc200)
 	CONFIG_IMPORT_FROM(nc_common)
 	CONFIG_RAM_DEFAULT(128 * 1024)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, pc_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, NULL, floppy_status)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

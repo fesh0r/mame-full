@@ -16,7 +16,7 @@
 */
 
 #include "driver.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 #include "image.h"
 
 #define MAX_DRIVES 4
@@ -25,67 +25,35 @@ static struct floppy_drive	drives[MAX_DRIVES];
 
 static void	floppy_drive_index_callback(int id);
 
-/* this is called once in init_devices */
-/* initialise all floppy drives */
-/* and initialise real disc access */
-void floppy_drives_init(void)
+/* this is called on device init */
+int floppy_drive_init(int id, const floppy_interface *iface)
 {
-	int i;
+	struct floppy_drive *pDrive = &drives[id];
 
-	/* if no floppies, no point setting this up */
-	if (device_count(IO_FLOPPY)==0)
-		return;
+	assert(id >= 0);
+	assert(id < device_count(IO_FLOPPY));
 
-	/* ensure first drive is present, all other drives are marked
-	as not present - override in driver if more are to be made available */
-	for (i=0; i<MAX_DRIVES; i++)
-	{
-		struct floppy_drive *pDrive = &drives[i];
+	memset(pDrive, 0, sizeof(*pDrive));
 
-		/* initialise flags */
-		pDrive->flags = 0;
-		pDrive->index_pulse_callback = NULL;
-		pDrive->ready_state_change_callback = NULL;
-		pDrive->index_timer = timer_alloc(floppy_drive_index_callback);
+	/* initialise flags */
+	pDrive->flags = 0;
+	pDrive->index_pulse_callback = NULL;
+	pDrive->ready_state_change_callback = NULL;
+	pDrive->index_timer = timer_alloc(floppy_drive_index_callback);
 
-		if (i==0)
-		{
-			/* set first drive connected */
-			floppy_drive_set_flag_state(i, FLOPPY_DRIVE_CONNECTED, 1);
-		}
-		else
-		{
-			/* all remaining drives are not connected - can be overriden in driver */
-			floppy_drive_set_flag_state(i, FLOPPY_DRIVE_CONNECTED, 0);
-		}
+	/* all drives are double-sided 80 track - can be overriden in driver! */
+	floppy_drive_set_geometry(id, FLOPPY_DRIVE_DS_80);
 
-		/* all drives are double-sided 80 track - can be overriden in driver! */
-		floppy_drive_set_geometry(i, FLOPPY_DRIVE_DS_80);
+	pDrive->fdd_unit = id;
 
-		pDrive->fdd_unit = i;
+	/* initialise id index - not so important */
+	pDrive->id_index = 0;
+	/* initialise track */
+	pDrive->current_track = 1;
 
-		/* initialise id index - not so important */
-		pDrive->id_index = 0;
-		/* initialise track */
-		pDrive->current_track = 1;
-	}
-}
-
-void floppy_drives_exit(void)
-{
-	int i;
-
-	/* if no floppies, no point cleaning up*/
-	if (device_count(IO_FLOPPY)==0)
-		return;
-
-	for (i=0; i<MAX_DRIVES; i++)
-	{
-		struct floppy_drive *pDrive;
-
-		pDrive = &drives[i];
-	}
-
+	if (iface)
+		memcpy(&drives[id].interface, iface, sizeof(floppy_interface));
+	return INIT_PASS;
 }
 
 /* this callback is executed every 300 times a second to emulate the index
@@ -160,7 +128,6 @@ int	floppy_status(int id, int new_status)
 		if drive is connected etc. So if we wrote the flags back it would
 		corrupt this information. Therefore we update the flags depending on new_status */
 
-		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, (new_status & FLOPPY_DRIVE_CONNECTED));
 		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED, (new_status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED));
 	}
 
@@ -174,18 +141,6 @@ void floppy_drive_set_real_fdd_unit(int id, UINT8 unit_id)
 		return;
 
 	drives[id].fdd_unit = unit_id;
-}
-
-/* set interface for image interface */
-void floppy_drive_set_disk_image_interface(int id, floppy_interface *iface)
-{
-	if ((id<0) || (id>=MAX_DRIVES))
-		return;
-
-	if (iface==NULL)
-		return;
-
-	memcpy(&drives[id].interface, iface, sizeof(floppy_interface));
 }
 
 /* set flag state */
@@ -232,10 +187,10 @@ void floppy_drive_set_motor_state(int drive, int state)
 	/* calc new state */
 
 	/* drive present? */
-	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_CONNECTED))
+	if (device_count(IO_FLOPPY) > drive)
 	{
 		/* disk inserted? */
-		if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_DISK_INSERTED))
+		if (image_exists(IO_FLOPPY, drive))
 		{
 			/* drive present and disc inserted */
 
@@ -287,10 +242,10 @@ void floppy_drive_set_ready_state(int drive, int state, int flag)
 		and disk motor is on - for Amstrad, Spectrum and PCW*/
 
 		/* drive present? */
-		if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_CONNECTED))
+		if (device_count(IO_FLOPPY) > drive)
 		{
 			/* disk inserted? */
-			if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_DISK_INSERTED))
+			if (image_exists(IO_FLOPPY, drive))
 			{
 				if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON))
 				{
@@ -328,9 +283,7 @@ int	floppy_drive_get_flag_state(int id, int flag)
 	drive_flags = drives[id].flags;
 
 	/* these flags are independant of a real drive/disk image */
-    flags |= drive_flags & (FLOPPY_DRIVE_CONNECTED | FLOPPY_DRIVE_READY | FLOPPY_DRIVE_MOTOR_ON | FLOPPY_DRIVE_INDEX);
-
-	flags |= drive_flags & FLOPPY_DRIVE_DISK_INSERTED;
+    flags |= drive_flags & (FLOPPY_DRIVE_READY | FLOPPY_DRIVE_MOTOR_ON | FLOPPY_DRIVE_INDEX);
 
 	flags |= drive_flags & FLOPPY_DRIVE_HEAD_AT_TRACK_0;
 
@@ -346,12 +299,11 @@ int	floppy_drive_get_flag_state(int id, int flag)
 	}
 
 	/* drive present not */
-	if (!(drive_flags & FLOPPY_DRIVE_CONNECTED))
+	if (device_count(IO_FLOPPY) < id)
 	{
 		/* adjust some flags if drive is not present */
 		flags &= ~FLOPPY_DRIVE_HEAD_AT_TRACK_0;
 		flags |= FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
-		flags &= ~FLOPPY_DRIVE_DISK_INSERTED;
 	}
 
     flags &= flag;

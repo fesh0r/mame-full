@@ -27,35 +27,33 @@ extern void wave_sh_update(void);
  * IO_CASSETTE_WAVE(1,"wav\0cas\0",mycas_id,mycas_init,mycas_exit)
  *****************************************************************************/
 
-extern int wave_init(int id, const char *name);
-extern void wave_exit(int id);
-extern const void *wave_info(int id, int whatinfo);
-extern int wave_open(int id, int mode, void *args);
-extern void wave_close(int id);
-extern int wave_status(int id, int newstatus);
-extern int wave_seek(int id, int offset, int whence);
-extern int wave_tell(int id);
-extern int wave_input(int id);
-extern void wave_output(int id, int data);
-extern int wave_input_chunk(int id, void *dst, int chunks);
-extern int wave_output_chunk(int id, void *src, int chunks);
+int wave_load(int id, const char *name);
+void wave_unload(int id);
+const void *wave_info(int id, int whatinfo);
+int wave_open(int id, int mode, void *args);
+void wave_close(int id);
+int wave_status(int id, int newstatus);
+int wave_seek(int id, int offset, int whence);
+int wave_tell(int id);
+int wave_input(int id);
+void wave_output(int id, int data);
 
-extern void cassette_exit(int id);
+void cassette_exit(int id);
 
-extern void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*init)(int id, mame_file *fp, int open_mode), void (*exit_)(int id));
+void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
+	int (*loadproc)(int id, mame_file *fp, int open_mode), void (*unloadproc)(int id));
 
-#define CONFIG_DEVICE_CASSETTEX(count,fileext,init,exit)					\
+#define CONFIG_DEVICE_CASSETTEX(count, fileext, loadproc, unloadproc)		\
 	if (cfg->device_num-- == 0)												\
 	{																		\
 		static struct IODevice iodev;										\
 		static char actualext[sizeof(fileext)+4];							\
-		wave_specify(&iodev, (count), actualext, (fileext), (init), (exit));\
+		wave_specify(&iodev, (count), actualext, (fileext), (loadproc), (unloadproc));\
 		cfg->dev = &iodev;													\
 	}																		\
 
-#define CONFIG_DEVICE_CASSETTE(count,fileext,init)	\
-	CONFIG_DEVICE_CASSETTEX((count), (fileext), (init), cassette_exit)
+#define CONFIG_DEVICE_CASSETTE(count, fileext, loadproc)	\
+	CONFIG_DEVICE_CASSETTEX((count), (fileext), (loadproc), cassette_exit)
 
 /*****************************************************************************
  * Use this structure for the "void *args" argument of device_open()

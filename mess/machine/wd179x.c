@@ -17,7 +17,7 @@
 
 #include "driver.h"
 #include "includes/wd179x.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 
 #define VERBOSE 0
 #define VERBOSE_DATA 0		/* This turns on and off the recording of each byte during read and write */
@@ -809,7 +809,7 @@ READ_HANDLER ( wd179x_status_r )
 	{
 
 		/* if disc present toggle index pulse */
-		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_DISK_INSERTED))
+		if (image_exists(IO_FLOPPY, drv))
 		{
 			/* eventually toggle index pulse bit */
 			w->status ^= STA_1_IPL;

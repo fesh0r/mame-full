@@ -29,7 +29,7 @@ NMI
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/cgenie.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START (readmem)
@@ -457,7 +457,7 @@ ROM_START (cgenie)
 ROM_END
 
 SYSTEM_CONFIG_START(cgenie)
-	CONFIG_DEVICE_CARTSLOT			(1, "rom\0", cgenie_rom_load, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT		(1, "rom\0", cgenie_rom_load, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0", cgenie_floppy_init)
 	CONFIG_DEVICE_LEGACY			(IO_CASSETTE, 1, "cas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, cgenie_cassette_init, NULL, NULL)
 SYSTEM_CONFIG_END

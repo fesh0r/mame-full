@@ -1,6 +1,6 @@
 #include "image.h"
 #include "mess.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 #include "config.h"
 #include "utils.h"
 #include "mscommon.h"
@@ -9,11 +9,16 @@
 
 static mame_file *image_fopen_new(int type, int id, int *effective_mode);
 
+enum
+{
+	IMAGE_STATUS_ISLOADING	= 1,
+	IMAGE_STATUS_ISLOADED	= 2
+};
 
 struct image_info
 {
 	mame_file *fp;
-	int loaded;
+	UINT32 status;
 	char *name;
 	char *dir;
 	UINT32 crc;
@@ -23,11 +28,10 @@ struct image_info
 	char *year;
 	char *playable;
 	char *extrainfo;
-	void *memory_pool;
+	memory_pool mempool;
 };
 
 static struct image_info images[IO_COUNT][MAX_DEV_INSTANCES];
-int images_is_running;
 
 /* ----------------------------------------------------------------------- */
 
@@ -40,25 +44,54 @@ static struct image_info *get_image(int type, int id)
 
 /* ----------------------------------------------------------------------- */
 
+int image_init(int type, int id)
+{
+	int err;
+	const struct IODevice *iodev;
+	
+	iodev = device_find(Machine->gamedrv, type);
+
+	if (iodev->init)
+	{
+		err = iodev->init(id);
+		if (err != INIT_PASS)
+			return err;
+	}
+	return INIT_PASS;
+}
+
+void image_exit(int type, int id)
+{
+	const struct IODevice *iodev;	
+	iodev = device_find(Machine->gamedrv, type);
+	if (iodev->exit)
+		iodev->exit(id);
+}
+
+/* ----------------------------------------------------------------------- */
+
 void *image_malloc(int type, int id, size_t size)
 {
 	struct image_info *img;
 	img = get_image(type, id);
-	return pool_malloc(&img->memory_pool, size);
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	return pool_malloc(&img->mempool, size);
 }
 
 void *image_realloc(int type, int id, void *ptr, size_t size)
 {
 	struct image_info *img;
 	img = get_image(type, id);
-	return pool_realloc(&img->memory_pool, ptr, size);
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	return pool_realloc(&img->mempool, ptr, size);
 }
 
 char *image_strdup(int type, int id, const char *src)
 {
 	struct image_info *img;
 	img = get_image(type, id);
-	return pool_strdup(&img->memory_pool, src);
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	return pool_strdup(&img->mempool, src);
 }
 
 static void image_free_resources(struct image_info *img)
@@ -68,52 +101,36 @@ static void image_free_resources(struct image_info *img)
 		mame_fclose(img->fp);
 		img->fp = NULL;
 	}
-	pool_exit(&img->memory_pool);
+	pool_exit(&img->mempool);
 }
 
 /* ----------------------------------------------------------------------- */
-
-/* common init for all IO_FLOPPY devices */
-static void	floppy_device_common_init(int id)
-{
-	logerror("floppy device common init: id: %02x\n",id);
-	/* disk inserted */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_INSERTED, 1);
-	/* drive connected */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 1);
-}
-
-/* common exit for all IO_FLOPPY devices */
-static void floppy_device_common_exit(int id)
-{
-	logerror("floppy device common exit: id: %02x\n",id);
-	/* disk removed */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_INSERTED, 0);
-	/* drive disconnected */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 0);
-}
 
 int image_load(int type, int id, const char *name)
 {
 	const struct IODevice *dev;
 	char *newname;
 	struct image_info *img;
-	int err;
+	int err = INIT_PASS;
+	int effective_mode;
 	mame_file *fp = NULL;
+	UINT8 *buffer = NULL;
+	UINT64 size;
 
 	img = get_image(type, id);
 
 	dev = device_find(Machine->gamedrv, type);
 	assert(dev);
 
-	if (img->loaded)
+	if (img->status & IMAGE_STATUS_ISLOADED)
 		image_unload(type, id);
+	img->status |= IMAGE_STATUS_ISLOADING;
 
 	if (name && *name)
 	{
 		newname = image_strdup(type, id, name);
 		if (!newname)
-			return INIT_FAIL;
+			goto error;
 	}
 	else
 		newname = NULL;
@@ -121,47 +138,59 @@ int image_load(int type, int id, const char *name)
 	img->name = newname;
 	img->dir = NULL;
 
-	if (images_is_running && (dev->flags & DEVICE_LOAD_RESETS_CPU))
+	if (!dev->load)
+		goto error;
+
+	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
-	if (dev->init)
+	if ((dev->open_mode == OSD_FOPEN_NONE) || !image_exists(type, id))
 	{
-		int effective_mode;
-		int err0 = INIT_PASS;
-
-		if ((dev->open_mode == OSD_FOPEN_NONE) || !image_exists(type, id))
-			fp = NULL;
-		else
-		{
-			fp = image_fopen_new(type, id, &effective_mode);
-			if (fp == NULL)
-			{
-				printf("Unable to open image file %s\n", image_filename(type, id));
-				err0 = INIT_FAIL;
-			}
-		}
-		err = dev->init(id, fp, effective_mode);
-		if (err0 != INIT_PASS)
-			err = err0;
-		if (err != INIT_PASS)
-		{
-			if (fp)
-			{
-				mame_fclose(fp);
-				img->fp = NULL;
-			}
-			return err;
-		}
+		fp = NULL;
+	}
+	else
+	{
+		fp = image_fopen_new(type, id, &effective_mode);
+		if (fp == NULL)
+			goto error;
 	}
 
-	/* init succeeded */
-	/* if floppy, perform common init */
-	if ((type == IO_FLOPPY) && img->name)
-		floppy_device_common_init(id);
+	/* if applicable, call device verify */
+	if (dev->verify)
+	{
+		size = mame_fsize(fp);
+		buffer = malloc(size);
+		if (!buffer)
+			goto error;
 
-	//img->fp = fp;
-	img->loaded = TRUE;
+		if (mame_fread(fp, buffer, (UINT32) size) != size)
+			goto error;
+
+		err = dev->verify(buffer, size);
+		if (err)
+			goto error;
+
+		free(buffer);
+		buffer = NULL;
+	}
+
+	/* call device load */
+	err = dev->load(id, fp, effective_mode);
+	if (err)
+		goto error;
+
+	img->status &= ~IMAGE_STATUS_ISLOADING;
+	img->status |= IMAGE_STATUS_ISLOADED;
 	return INIT_PASS;
+
+error:
+	if (fp)
+		mame_fclose(fp);
+	if (img)
+		img->fp = NULL;
+	if (buffer)
+		free(buffer);
+	return err;
 }
 
 void image_unload(int type, int id)
@@ -170,24 +199,14 @@ void image_unload(int type, int id)
 	struct image_info *img;
 
 	img = get_image(type, id);
-	if (!img->loaded)
+	if ((img->status & IMAGE_STATUS_ISLOADED) == 0)
 		return;
 
 	dev = device_find(Machine->gamedrv, type);
-	if (!dev)
-		return;
+	assert(dev);
 
-	if (dev->exit)
-		dev->exit(id);
-
-	/* The following is always executed for a IO_FLOPPY exit */
-	/* KT: if a image is removed:
-		1. Disconnect drive
-		2. Remove disk from drive */
-	/* This is done here, so if a device doesn't support exit, the status
-		will still be correct */
-	if (type == IO_FLOPPY)
-		floppy_device_common_exit(id);
+	if (dev->unload)
+		dev->unload(id);
 
 	image_free_resources(img);
 	memset(img, 0, sizeof(*img));

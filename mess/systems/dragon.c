@@ -19,7 +19,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/6883sam.h"
 #include "includes/dragon.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "includes/6551.h"
 #include "formats/coco_dsk.h"
 #include "devices/printer.h"
@@ -28,6 +28,7 @@
 #include "devices/bitbngr.h"
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
+#include "devices/coco_vhd.h"
 
 #define SHOW_FULL_AREA			0
 #define JOYSTICK_DELTA			10
@@ -761,9 +762,9 @@ SYSTEM_CONFIG_START( generic_coco )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( generic_coco12 )
-	CONFIG_IMPORT_FROM		( generic_coco )
-	CONFIG_DEVICE_CARTSLOT	( 1, "rom\0", coco_rom_load, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco_pak )
+	CONFIG_IMPORT_FROM			( generic_coco )
+	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "rom\0", NULL, NULL, coco_rom_load, coco_rom_unload, NULL, NULL )
+	CONFIG_DEVICE_SNAPSHOT		(    "pak\0", coco_pak )
 SYSTEM_CONFIG_END
 
 /* ----------------------------------------------------------------------- */
@@ -783,13 +784,13 @@ SYSTEM_CONFIG_START(coco2)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco3)
-	CONFIG_IMPORT_FROM		( generic_coco )
-	CONFIG_DEVICE_CARTSLOT	( 1, "rom\0", coco3_rom_load, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco3_pak )
-	CONFIG_DEVICE_LEGACY	(IO_VHD, 1, "vhd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE, coco_vhd_init, NULL, NULL)
-	CONFIG_RAM				(128 * 1024)
-	CONFIG_RAM_DEFAULT		(512 * 1024)
-	CONFIG_RAM				(2048 * 1024)
+	CONFIG_IMPORT_FROM			( generic_coco )
+	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "rom\0", NULL, NULL, coco3_rom_load, coco3_rom_unload, NULL, NULL )
+	CONFIG_DEVICE_SNAPSHOT		(    "pak\0", coco3_pak )
+	CONFIG_DEVICE_COCOVHD
+	CONFIG_RAM					(128 * 1024)
+	CONFIG_RAM_DEFAULT			(512 * 1024)
+	CONFIG_RAM					(2048 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon32)

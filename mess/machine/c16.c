@@ -508,8 +508,6 @@ static void c16_common_driver_init (void)
 	c16_tape_open ();
 
 	cbm_drive_open ();
-	cbm_drive_attach_fs (0);
-	cbm_drive_attach_fs (1);
 
 	if (REAL_C1551)
 		c1551_config (0, 0, &config);

@@ -143,12 +143,12 @@ READ_HANDLER ( nes_bogus_r );
 extern struct GfxLayout nes_charlayout;
 
 /* machine/nes.c */
-int nes_init_cart (int id, mame_file *fp, int open_mode);
-int nes_load_disk (int id, mame_file *fp, int open_mode);
-void nes_exit_disk(int id);
+int nes_cart_load(int id, mame_file *fp, int open_mode);
+int nes_disk_load(int id, mame_file *diskfile, int open_mode);
+void nes_disk_unload(int id);
 
-extern MACHINE_INIT( nes );
-extern MACHINE_STOP( nes );
+MACHINE_INIT( nes );
+MACHINE_STOP( nes );
 
 void init_nes (void);
 void init_nespal (void);

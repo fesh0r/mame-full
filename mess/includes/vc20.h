@@ -146,25 +146,25 @@
 extern UINT8 *vc20_memory;
 extern UINT8 *vc20_memory_9400;
 
-extern WRITE_HANDLER ( vc20_write_9400 );
+WRITE_HANDLER ( vc20_write_9400 );
 
 /* split for more performance */
 /* VIC reads bits 8 till 11 */
-extern int vic6560_dma_read_color (int offset);
+int vic6560_dma_read_color (int offset);
 
 /* VIC reads bits 0 till 7 */
-extern int vic6560_dma_read (int offset);
+int vic6560_dma_read (int offset);
 
-extern int vc20_rom_init (int id);
-extern int vc20_rom_load (int id, mame_file *fp, int open_mode);
+int vc20_rom_init(int id);
+int vc20_rom_load(int id, mame_file *fp, int open_mode);
 
-extern void vc20_driver_init (void);
-extern void vic20_driver_init (void);
-extern void vic20ieee_driver_init (void);
-extern void vc20_driver_shutdown (void);
+void vc20_driver_init (void);
+void vic20_driver_init (void);
+void vic20ieee_driver_init (void);
+void vc20_driver_shutdown (void);
 
-extern MACHINE_INIT( vc20 );
-extern INTERRUPT_GEN( vc20_frame_interrupt );
+MACHINE_INIT( vc20 );
+INTERRUPT_GEN( vc20_frame_interrupt );
 
 #endif
 

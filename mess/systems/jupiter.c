@@ -235,7 +235,7 @@ ROM_START (jupiter)
 ROM_END
 
 SYSTEM_CONFIG_START(jupiter)
-	CONFIG_DEVICE_CARTSLOT(1, "ace\0", jupiter_load_ace, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "ace\0", jupiter_load_ace, NULL, NULL)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, jupiter_load_tap, jupiter_exit_tap, NULL)
 SYSTEM_CONFIG_END
 

@@ -21,9 +21,6 @@ int cbm_quick_init (int id, mame_file *fp, int open_mode)
 
 	memset (&quick, 0, sizeof (quick));
 
-	if (fp == NULL)
-		return INIT_PASS;
-
 	quick.specified = 1;
 
 	quick.length = mame_fsize (fp);
@@ -172,16 +169,10 @@ INT8 cbm_c64_game;
 INT8 cbm_c64_exrom;
 CBM_ROM cbm_rom[0x20]= { {0} };
 
-void cbm_rom_exit(int id)
+void cbm_rom_unload(int id)
 {
-    int i;
-    if (id!=0) return;
-    for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-	     &&(cbm_rom[i].size!=0);i++)
-	{
-		cbm_rom[i].chip=0;
-		cbm_rom[i].size=0;
-    }
+	cbm_rom[id].size = 0;
+	cbm_rom[id].chip = 0;
 }
 
 static const struct IODevice *cbm_rom_find_device(void)
@@ -189,21 +180,23 @@ static const struct IODevice *cbm_rom_find_device(void)
 	return device_find(Machine->gamedrv, IO_CARTSLOT);
 }
 
-int cbm_rom_init(int id, mame_file *fp, int open_mode)
+int cbm_rom_init(int id)
+{
+	if (id == 0)
+	{
+		cbm_c64_game = -1;
+		cbm_c64_exrom = -1;
+	}
+	return INIT_PASS;
+}
+
+int cbm_rom_load(int id, mame_file *fp, int open_mode)
 {
 	int i;
 	int size, j, read_;
 	const char *filetype;
 	int adr = 0;
 	const struct IODevice *dev;
-
-	if (id==0) {
-	    cbm_c64_game=-1;
-	    cbm_c64_exrom=-1;
-	}
-
-	if (fp == NULL)
-		return INIT_PASS;
 
 	for (i=0; (i<sizeof(cbm_rom) / sizeof(cbm_rom[0])) && (cbm_rom[i].size!=0); i++)
 		;
@@ -223,7 +216,7 @@ int cbm_rom_init(int id, mame_file *fp, int open_mode)
 		logerror("rom prg %.4x\n", in);
 		size -= 2;
 		logerror("loading rom %s at %.4x size:%.4x\n",
-			 image_filename(IO_CARTSLOT,id), in, size);
+				image_filename(IO_CARTSLOT,id), in, size);
 		cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
 		if (!cbm_rom[i].chip)
 			return INIT_FAIL;
@@ -310,7 +303,7 @@ int cbm_rom_init(int id, mame_file *fp, int open_mode)
 			adr = CBM_ROM_ADDR_UNKNOWN;
 
 		logerror("loading %s rom at %.4x size:%.4x\n",
-			 image_filename(IO_CARTSLOT,id), adr, size);
+				image_filename(IO_CARTSLOT,id), adr, size);
 
 		cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
 		if (!cbm_rom[i].chip)

@@ -9,7 +9,7 @@
 */
 #include "driver.h"
 #include "includes/mfmdisk.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 
 static void mfm_disk_seek_callback(int,int);
 static int mfm_disk_get_sectors_per_track(int,int);

@@ -12,7 +12,7 @@
 */
 
 #include "includes/i8271.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 
 I8271_STATE_t I8271_STATE;
 

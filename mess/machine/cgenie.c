@@ -14,7 +14,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/cgenie.h"
 #include "includes/wd179x.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "image.h"
 
 #define AYWriteReg(chip,port,value) \
@@ -378,7 +378,7 @@ int cgenie_floppy_init(int id, mame_file *fp, int open_mode)
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_init(id, fp, open_mode) != INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	/* determine image geometry */

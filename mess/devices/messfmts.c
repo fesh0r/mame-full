@@ -1,7 +1,7 @@
 #include "devices/messfmts.h"
 #include "osdepend.h"
 #include "mess.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 #include "image.h"
 #include "utils.h"
 
@@ -139,7 +139,12 @@ static floppy_interface bdf_floppy_interface =
 	NULL
 };
 
-static int bdf_floppy_init_internal(int id, void *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, mame_file *fp, int open_mode)
+static int bdf_floppy_init(int id)
+{
+	return floppy_drive_init(id, &bdf_floppy_interface);
+}
+
+static int bdf_floppy_load_internal(int id, void *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, mame_file *fp, int open_mode)
 {
 	const char *name;
 	const char *ext;
@@ -150,34 +155,30 @@ static int bdf_floppy_init_internal(int id, void *file, int mode, const formatdr
 	assert(id < (sizeof(bdfs) / sizeof(bdfs[0])));
 	memset(&bdfs[id], 0, sizeof(bdfs[id]));
 
-	if (file)
+	name = image_filename(device_type, id);
+
+	if (mode == OSD_FOPEN_RW_CREATE)
 	{
-		name = image_filename(device_type, id);
-
-		if (mode == OSD_FOPEN_RW_CREATE)
-		{
-			err = bdf_create(&mess_bdf_procs, create_format, file, NULL, &bdfs[id].bdf);
-		}
-		else
-		{
-			if (!open_formats)
-			{
-				fmts[0] = create_format;
-				fmts[1] = NULL;
-				open_formats = fmts;				
-			}
-			ext = image_filetype(device_type, id);
-			err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &bdfs[id].bdf);
-		}
-		if (err)
-			return INIT_FAIL;
-
-		floppy_drive_set_disk_image_interface(id, &bdf_floppy_interface);
+		err = bdf_create(&mess_bdf_procs, create_format, file, NULL, &bdfs[id].bdf);
 	}
+	else
+	{
+		if (!open_formats)
+		{
+			fmts[0] = create_format;
+			fmts[1] = NULL;
+			open_formats = fmts;				
+		}
+		ext = image_filetype(device_type, id);
+		err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &bdfs[id].bdf);
+	}
+	if (err)
+		return INIT_FAIL;
+
 	return INIT_PASS;
 }
 
-static int bdf_floppy_init(int id, mame_file *fp, int open_mode)
+static int bdf_floppy_load(int id, mame_file *fp, int open_mode)
 {
 	const struct IODevice *dev;
 	const formatdriver_ctor *open_formats;
@@ -189,10 +190,10 @@ static int bdf_floppy_init(int id, mame_file *fp, int open_mode)
 	open_formats = (const formatdriver_ctor *) dev->user1;
 	create_format = (formatdriver_ctor) dev->user2;
 
-	return bdf_floppy_init_internal(id, fp, open_mode, open_formats, create_format, fp, open_mode);
+	return bdf_floppy_load_internal(id, fp, open_mode, open_formats, create_format, fp, open_mode);
 }
 
-static void bdf_floppy_exit(int id)
+static void bdf_floppy_unload(int id)
 {
 	if (bdfs[id].bdf)
 	{
@@ -251,7 +252,8 @@ const struct IODevice *bdf_device_specify(struct IODevice *iodev, char *extbuf, 
 		iodev->flags = DEVICE_LOAD_RESETS_NONE;
 		iodev->open_mode = create_format ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
 		iodev->init = bdf_floppy_init;
-		iodev->exit = bdf_floppy_exit;
+		iodev->load = bdf_floppy_load;
+		iodev->unload = bdf_floppy_unload;
 		iodev->user1 = (void *) open_formats;
 		iodev->user2 = (void *) create_format;
 	}

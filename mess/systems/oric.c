@@ -16,7 +16,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/oric.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
 

@@ -67,11 +67,13 @@ extern const char *radius_2_led;
 
 ***************************************************************************/
 
-void pool_init(void **pool);
-void pool_exit(void **pool);
-void *pool_malloc(void **pool, size_t size);
-void *pool_realloc(void **pool, void *ptr, size_t size);
-char *pool_strdup(void **pool, const char *src);
+typedef struct memory_pool_header *memory_pool;
+
+void pool_init(memory_pool *pool);
+void pool_exit(memory_pool *pool);
+void *pool_malloc(memory_pool *pool, size_t size);
+void *pool_realloc(memory_pool *pool, void *ptr, size_t size);
+char *pool_strdup(memory_pool *pool, const char *src);
 
 /***************************************************************************
 

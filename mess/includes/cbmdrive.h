@@ -58,30 +58,15 @@ typedef struct
 	}
 	i;
 #define D64_IMAGE 1
-#define FILESYSTEM 2
 	int drive;
-	union
-	{
-		struct
-		{
-			/* for visualization */
-			char filename[20];
-		}
-		fs;
-		struct
-		{
-			unsigned char *image;	   /*d64 image */
-			/*    int track, sector; */
-			/*    int sectorbuffer[256]; */
+	unsigned char *image;	   /*d64 image */
+	/*    int track, sector; */
+	/*    int sectorbuffer[256]; */
 
-			/* for visualization */
-			int image_type;
-            int image_id;
-			char filename[20];
-		}
-		d64;
-	}
-	d;
+	/* for visualization */
+	int image_type;
+    int image_id;
+	char filename[20];
 }
 CBM_Drive;
 

@@ -1,7 +1,7 @@
 
 /* DISK IMAGE FORMAT WHICH USED TO BE PART OF WD179X - NOW SEPERATED */
 
-#include "flopdrv.h"
+#include "devices/flopdrv.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -7,8 +7,8 @@
 
 ***************************************************************************/
 #include "includes/trs80.h"
-#include "includes/basicdsk.h"
-#include "includes/flopdrv.h"
+#include "devices/basicdsk.h"
+#include "devices/flopdrv.h"
 
 #ifdef MAME_DEBUG
 #define VERBOSE 1
@@ -259,7 +259,7 @@ int trs80_floppy_init(int id, mame_file *fp, int open_mode)
 	int dir_sector; /* first directory sector (aka DDSL) */
 	int dir_length; /* length of directory in sectors (aka DDGA) */
 
-    if (basicdsk_floppy_init(id, fp, open_mode) != INIT_PASS)
+    if (basicdsk_floppy_load(id, fp, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
     if (id == 0)        /* first floppy? */

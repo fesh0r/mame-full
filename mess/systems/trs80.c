@@ -23,7 +23,7 @@ IRQ mode 1
 NMI
 ***************************************************************************/
 #include "includes/trs80.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
 #define FW	TRS80_FONT_W
 #define FH	TRS80_FONT_H

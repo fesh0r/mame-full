@@ -266,6 +266,10 @@ static void cpu_pre_run(void)
 	cpu_vblankreset();
 	current_frame = 0;
 	state_save_dump_registry();
+
+#ifdef MESS
+	devices_initialload(Machine->gamedrv, FALSE);
+#endif
 }
 
 

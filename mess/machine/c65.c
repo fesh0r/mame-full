@@ -753,9 +753,6 @@ static void c65_common_driver_init (void)
 	/*memset(c64_memory+0x40000, 0, 0x800000-0x40000); */
 	cbm_drive_open ();
 
-	cbm_drive_attach_fs (0);
-	cbm_drive_attach_fs (1);
-
 	cia6526_init();
 
 	c64_cia0.todin50hz = c64_cia1.todin50hz = c64_pal;

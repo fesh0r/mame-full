@@ -12,8 +12,6 @@
 
 #define LCD_FRAMES_PER_SECOND	30
 
-#define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
-
 /* MESS_DEBUG is a debug switch (for developers only) for
    debug code, which should not be found in distributions, like testdrivers,...
    contrary to MAME_DEBUG, NDEBUG it should not be found in the makefiles of distributions
@@ -46,23 +44,6 @@ extern "C" {
 #define FALSE 0
 #endif
 
-/* Endian macros */
-#define FLIPENDIAN_INT16(x)	((((x) >> 8) | ((x) << 8)) & 0xffff)
-#define FLIPENDIAN_INT32(x)	((((x) << 24) | (((UINT32) (x)) >> 24) | \
-                       (( (x) & 0x0000ff00) << 8) | (( (x) & 0x00ff0000) >> 8)))
-
-#ifdef LSB_FIRST
-#define BIG_ENDIANIZE_INT16(x)		(FLIPENDIAN_INT16(x))
-#define BIG_ENDIANIZE_INT32(x)		(FLIPENDIAN_INT32(x))
-#define LITTLE_ENDIANIZE_INT16(x)	(x)
-#define LITTLE_ENDIANIZE_INT32(x)	(x)
-#else
-#define BIG_ENDIANIZE_INT16(x)		(x)
-#define BIG_ENDIANIZE_INT32(x)		(x)
-#define LITTLE_ENDIANIZE_INT16(x)	(FLIPENDIAN_INT16(x))
-#define LITTLE_ENDIANIZE_INT32(x)	(FLIPENDIAN_INT32(x))
-#endif /* LSB_FIRST */
-
 /* Win32 defines this for vararg functions */
 #ifndef DECL_SPEC
 #define DECL_SPEC
@@ -71,7 +52,6 @@ extern "C" {
 int mess_printf(const char *fmt, ...);
 
 void showmessinfo(void);
-int displayimageinfo(struct mame_bitmap *bitmap, int selected);
 int filemanager(struct mame_bitmap *bitmap, int selected);
 
 #if HAS_WAVE
@@ -141,13 +121,6 @@ enum
 #define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
 #define is_effective_mode_create(mode) (((mode) == OSD_FOPEN_RW_CREATE) || ((mode) == OSD_FOPEN_WRITE))
 
-
-#ifdef MAX_KEYS
- #undef MAX_KEYS
- #define MAX_KEYS	128 /* for MESS but already done in INPUT.C*/
-#endif
-
-
 enum
 {
 	DEVICE_LOAD_RESETS_NONE	= 0,	/* changing the device file doesn't reset anything */
@@ -168,7 +141,7 @@ void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderima
 
 /* these are called from mame.c*/
 int devices_init(const struct GameDriver *gamedrv);
-int devices_initialload(void);
+int devices_initialload(const struct GameDriver *gamedrv, int ispreload);
 void devices_exit(void);
 
 /* access mess.c internal fields for a device type (instance id) */

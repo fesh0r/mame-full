@@ -215,12 +215,12 @@ struct pool_memory_header
 #endif
 };
 
-void pool_init(void **pool)
+void pool_init(memory_pool *pool)
 {
 	*pool = NULL;
 }
 
-void pool_exit(void **pool)
+void pool_exit(memory_pool *pool)
 {
 	struct pool_memory_header *mem;
 	struct pool_memory_header *next;
@@ -239,7 +239,7 @@ void pool_exit(void **pool)
 	*pool = NULL;
 }
 
-void *pool_realloc(void **pool, void *ptr, size_t size)
+void *pool_realloc(memory_pool *pool, void *ptr, size_t size)
 {
 	struct pool_memory_header *block;
 	size_t actual_size;
@@ -279,12 +279,12 @@ void *pool_realloc(void **pool, void *ptr, size_t size)
 	return (void *) (block+1);
 }
 
-void *pool_malloc(void **pool, size_t size)
+void *pool_malloc(memory_pool *pool, size_t size)
 {
 	return pool_realloc(pool, NULL, size);
 }
 
-char *pool_strdup(void **pool, const char *src)
+char *pool_strdup(memory_pool *pool, const char *src)
 {
 	char *dst = NULL;
 	if (src)

@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/enterp.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "includes/wd179x.h"
 #include "sndhrdw/dave.h"
 #include "image.h"
@@ -29,7 +29,7 @@ int enterprise_floppy_init(int id, mame_file *fp, int open_mode)
 	if (fp == NULL)
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
 		return INIT_PASS;

@@ -7,7 +7,7 @@
 
 #include "machine/6821pia.h"
 #include "includes/wd179x.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
  /*
 0000- 2000-2003 PIA of M1000. is itself repeated until 3fff. 

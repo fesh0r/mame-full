@@ -12,7 +12,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 #include "includes/dsk.h"
 /* disk image and extended disk image support code */
 /* supports up to 84 tracks and 2 sides */

@@ -30,7 +30,7 @@ Changes:
 #include "vidhrdw/generic.h"
 #include "includes/coupe.h"
 #include "includes/wd179x.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
 MEMORY_READ_START( coupe_readmem )	 {
 	 0x0000, 0x3FFF, MRA_BANK1 },

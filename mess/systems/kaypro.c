@@ -11,7 +11,7 @@
 
 #include "driver.h"
 #include "includes/kaypro.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 
 static MEMORY_READ_START( readmem_kaypro )
     { 0x0000, 0xffff, MRA_RAM },

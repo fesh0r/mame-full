@@ -18,8 +18,8 @@ struct Devices
 	const char *shortname;
 };
 
-/* The List of Devices, with Associated Names - Be careful to ensure that 	*/
-/* this list matches the ENUM from device.h, so searches can use IO_COUNT	*/
+/* The List of Devices, with Associated Names - Be careful to ensure that   *
+ * this list matches the ENUM from device.h, so searches can use IO_COUNT	*/
 static const struct Devices devices[] =
 {
 	{IO_END,		"NONE",			"NONE"}, /*  0 */
@@ -61,9 +61,8 @@ int register_device (const int type, const char *arg)
 	}
 
 	/* All seems ok to add device and argument to options{} struct			*/
-	#ifdef MAME_DEBUG
-	mess_printf("Image [%s] Registered for Device [%s]\n", arg, device_typename(type));
-	#endif
+	logerror("Image [%s] Registered for Device [%s]\n", arg, device_typename(type));
+
 	/* the user specified a device type */
 	options.image_files[options.image_count].type = type;
 	options.image_files[options.image_count].name = strdup(arg);

@@ -11,7 +11,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 #include "includes/msx.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "devices/printer.h"
 #include "devices/cartslot.h"
 
@@ -839,7 +839,7 @@ ROM_END
 SYSTEM_CONFIG_START(msx)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", msx_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT(MSX_MAX_CARTS, "rom\0", msx_load_rom, msx_exit_rom, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(MSX_MAX_CARTS, "rom\0", msx_load_rom, msx_exit_rom, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK(2, "dsk\0", msx_floppy_init)
 SYSTEM_CONFIG_END
 

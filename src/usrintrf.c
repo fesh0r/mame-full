@@ -15,7 +15,8 @@
 #include "state.h"
 
 #ifdef MESS
-  #include "mess.h"
+#include "mess.h"
+#include "mesintrf.h"
 #endif
 
 
@@ -2623,12 +2624,14 @@ int showgameinfo(struct mame_bitmap *bitmap)
 		update_video_and_audio();
 	}
 
-	#ifdef MESS
+#ifdef MESS
+#if 0
 	while (displayimageinfo(bitmap,0) == 1)
 	{
 		update_video_and_audio();
 	}
-	#endif
+#endif
+#endif
 
 	erase_screen(bitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */

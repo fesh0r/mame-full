@@ -436,9 +436,6 @@ static void pet_common_driver_init (void)
 
 	cbm_drive_open ();
 
-	cbm_drive_attach_fs (0);
-	cbm_drive_attach_fs (1);
-
 	cbm_ieee_open();
 }
 

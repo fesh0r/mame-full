@@ -46,8 +46,8 @@ void cbm_drive_close (void)
 
 		if (cbm_drive[i].drive == D64_IMAGE)
 		{
-			if (cbm_drive[i].d.d64.image)
-				free (cbm_drive[i].d.d64.image);
+			if (cbm_drive[i].image)
+				free (cbm_drive[i].image);
 		}
 		cbm_drive[i].drive = 0;
 	}
@@ -100,37 +100,21 @@ void cbm_drive_1_config (int interface, int serialnr)
 	cbm_drive_config (cbm_drive + 1, interface, serialnr);
 }
 
-/* load *.prg files directy from filesystem (rom directory) */
-int cbm_drive_attach_fs (int id)
-{
-	CBM_Drive *drive = cbm_drive + id;
-
-	if (drive->drive == D64_IMAGE)
-	{
-		return 1;					   /* as long as floppy system is called before driver init */
-		if (drive->d.d64.image)
-			free (drive->d.d64.image);
-	}
-	memset (&(drive->d.fs), 0, sizeof (drive->d.fs));
-	drive->drive = FILESYSTEM;
-	return 0;
-}
-
 static int d64_open (int id, mame_file *in)
 {
 	int size;
 
-	memset (&(cbm_drive[id].d.d64), 0, sizeof (cbm_drive[id].d.d64));
+	memset (&(cbm_drive[id]), 0, sizeof (cbm_drive[id]));
 
-	cbm_drive[id].d.d64.image_type = IO_FLOPPY;
-	cbm_drive[id].d.d64.image_id = id;
+	cbm_drive[id].image_type = IO_FLOPPY;
+	cbm_drive[id].image_id = id;
 	size = mame_fsize (in);
-	if (!(cbm_drive[id].d.d64.image = (UINT8*)malloc (size)))
+	if (!(cbm_drive[id].image = (UINT8*)malloc (size)))
 		return 1;
 
-	if (size != mame_fread (in, cbm_drive[id].d.d64.image, size))
+	if (size != mame_fread (in, cbm_drive[id].image, size))
 	{
-		free (cbm_drive[id].d.d64.image);
+		free (cbm_drive[id].image);
 		return 1;
 	}
 
@@ -144,15 +128,6 @@ static int d64_open (int id, mame_file *in)
 /* open an d64 image */
 int cbm_drive_attach_image (int id, mame_file *fp, int open_mode)
 {
-#if 1
-	if (!image_exists(IO_FLOPPY, id))
-		return cbm_drive_attach_fs (id);
-#else
-    CBM_Drive *drive = cbm_drive + id;
-	if (drive->drive == FILESYSTEM) {
-
-	}
-#endif
 	return d64_open (id, fp);
 }
 
@@ -390,39 +365,22 @@ static void cbm_drive_status (CBM_Drive * c1551, char *text, int size)
 		return;
 	}
 #endif
-	if (c1551->drive == FILESYSTEM)
-	{
-		switch (c1551->state)
-		{
-		case OPEN:
-			snprintf (text, size, "Romdir File %s open", c1551->d.fs.filename);
-			break;
-		case READING:
-			snprintf (text, size, "Romdir File %s loading %d",
-					  c1551->d.fs.filename, c1551->size - c1551->pos - 1);
-			break;
-		case WRITING:
-			snprintf (text, size, "Romdir File %s saving %d",
-					  c1551->d.fs.filename, c1551->pos);
-			break;
-		}
-	}
-	else if (c1551->drive == D64_IMAGE)
+	if (c1551->drive == D64_IMAGE)
 	{
 		switch (c1551->state)
 		{
 		case OPEN:
 			snprintf (text, size, "Image File %s open",
-					  c1551->d.d64.filename);
+					  c1551->filename);
 			break;
 		case READING:
 			snprintf (text, size, "Image File %s loading %d",
-					  c1551->d.d64.filename,
+					  c1551->filename,
 					  c1551->size - c1551->pos - 1);
 			break;
 		case WRITING:
 			snprintf (text, size, "Image File %s saving %d",
-					  c1551->d.d64.filename, c1551->pos);
+					  c1551->filename, c1551->pos);
 			break;
 		}
 	}

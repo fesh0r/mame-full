@@ -446,7 +446,7 @@ static void nec765_seek_setup(int is_recalibrate)
 		else
 		{
 			/* is drive present? */
-			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_CONNECTED))
+			if (device_count(IO_FLOPPY) < fdc.drive)
 			{
 				/* yes - calculate real number of tracks to seek */
 
@@ -1825,7 +1825,7 @@ static void     nec765_setup_command(void)
 			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
 			{
 				/* is disk inserted? */
-				if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_DISK_INSERTED))
+				if (image_exists(IO_FLOPPY, fdc.drive))
 				{
 					int index_count = 0;
 
@@ -2149,7 +2149,7 @@ void	nec765_reset(int offset)
 		a_drive_is_ready = 0;
 		for (i=0; i<4; i++)
 		{
-			if (floppy_drive_get_flag_state(i, FLOPPY_DRIVE_DISK_INSERTED))
+			if (image_exists(IO_FLOPPY, i))
 			{
 				a_drive_is_ready = 1;
 				break;

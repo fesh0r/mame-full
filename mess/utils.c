@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdlib.h>
 #include "utils.h"
 
 char *strncpyz(char *dest, const char *source, size_t len)
@@ -98,3 +99,41 @@ char *stripspace(const char *src)
 	return NULL;
 }
 
+//============================================================
+//	strip_extension
+//============================================================
+
+char *strip_extension(const char *filename)
+{
+	char *newname;
+	char *c;
+
+	// NULL begets NULL
+	if (!filename)
+		return NULL;
+
+	// allocate space for it
+	newname = (char *) malloc(strlen(filename) + 1);
+	if (!newname)
+		return NULL;
+
+	// copy in the name
+	strcpy(newname, filename);
+
+	// search backward for a period, failing if we hit a slash or a colon
+	for (c = newname + strlen(newname) - 1; c >= newname; c--)
+	{
+		// if we hit a period, NULL terminate and break
+		if (*c == '.')
+		{
+			*c = 0;
+			break;
+		}
+
+		// if we hit a slash or colon just stop
+		if (*c == '\\' || *c == '/' || *c == ':')
+			break;
+	}
+
+	return newname;
+}

@@ -212,7 +212,7 @@ static MACHINE_DRIVER_START( pce )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(pce)
-	CONFIG_DEVICE_CARTSLOT(1, "pce\0", pce_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "pce\0", pce_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

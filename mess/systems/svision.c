@@ -410,7 +410,7 @@ static int svision_load_rom(int id, mame_file *cartfile, int open_mode)
 }
 
 SYSTEM_CONFIG_START(svision)
-	CONFIG_DEVICE_CARTSLOT(1, "bin\0", svision_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", svision_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -2,7 +2,7 @@
 
 #include "driver.h"
 #include "includes/d88.h"
-#include "includes/flopdrv.h"
+#include "devices/flopdrv.h"
 #include "image.h"
 
 #define d88image_MAX_DRIVES 4
@@ -26,119 +26,97 @@ floppy_interface d88image_floppy_interface=
 	NULL
 };
 
+int d88image_floppy_init(int id)
+{
+	return floppy_drive_init(id, &d88image_floppy_interface);
+}
+
 /* attempt to insert a disk into the drive specified with id */
-int d88image_floppy_init(int id, mame_file *fp, int open_mode)
+int d88image_floppy_load(int id, mame_file *fp, int open_mode)
 {
 	UINT8 tmp8;
 	UINT16 tmp16;
 	UINT32 tmp32;
 	int i,j,k;
 	unsigned long toffset;
-
-	/* do we have an image name ? */
-	if (fp == NULL)
-		return INIT_PASS;
-
-	if (id < d88image_MAX_DRIVES)
-	{
-		d88image *w = &d88image_drives[id];
-
-		w->image_file = fp;
-		w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
-
-		/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
-		so we need to reflect this */
-		w->track = 0;
-
-		mame_fread(w->image_file, w->disk_name, 17);
-		for(i=0;i<9;i++) mame_fread(w->image_file, &tmp8, 1);
-		mame_fread(w->image_file, &tmp8, 1);
-		w->write_protected = (tmp8&0x10 || !w->mode);
-		mame_fread(w->image_file, &tmp8, 1);
-		w->disktype = tmp8 >> 4;
-		mame_fread_lsbfirst(w->image_file, &tmp32, 4);
-		w->image_size=tmp32;
-
-		for(i=0;i<D88_NUM_TRACK;i++) {
-		  mame_fseek(w->image_file, 0x20 + i*4, SEEK_SET);
-		  mame_fread_lsbfirst(w->image_file, &tmp32, 4);
-		  toffset = tmp32;
-		  if(toffset) {
-		    mame_fseek(w->image_file, toffset + 4, SEEK_SET);
-		    mame_fread_lsbfirst(w->image_file, &tmp16, 2);
-		    w->num_sects[i] = tmp16;
-		    w->sects[i]=malloc(sizeof(d88sect)*w->num_sects[i]);
-		    mame_fseek(w->image_file, toffset, SEEK_SET);
-
-		    for(j=0;j<w->num_sects[i];j++) {
-		      mame_fread(w->image_file, &(w->sects[i][j].C), 1);
-		      mame_fread(w->image_file, &(w->sects[i][j].H), 1);
-		      mame_fread(w->image_file, &(w->sects[i][j].R), 1);
-		      mame_fread(w->image_file, &(w->sects[i][j].N), 1);
-		      mame_fread_lsbfirst(w->image_file, &tmp16, 2);
-		      mame_fread(w->image_file, &tmp8, 1);
-		      w->sects[i][j].den=tmp8&0x40 ?
-			(w->disktype==2 ? DEN_FM_HI : DEN_FM_LO) :
-			(w->disktype==2 ? DEN_MFM_HI : DEN_MFM_LO);
-		      mame_fread(w->image_file, &tmp8, 1);
-		      w->sects[i][j].flags=tmp8&0x10 ? ID_FLAG_DELETED_DATA : 0;
-		      mame_fread(w->image_file, &tmp8, 1);
-		      switch(tmp8 & 0xf0) {
-		      case 0xa0:
-			w->sects[i][j].flags|=ID_FLAG_CRC_ERROR_IN_ID_FIELD;
-			break;
-		      case 0xb0:
-			w->sects[i][j].flags|=ID_FLAG_CRC_ERROR_IN_DATA_FIELD;
-			break;
-		      }
-		      for(k=0;k<5;k++) mame_fread(w->image_file, &tmp8, 1);
-		      mame_fread_lsbfirst(w->image_file, &tmp16, 2);
-		      w->sects[i][j].offset = osd_ftell(w->image_file);
-		      mame_fseek(w->image_file, tmp16, SEEK_CUR);
-		    }
-		  } else {
-		    w->num_sects[i] = 0;
-		    w->sects[i]=NULL;
-		  }
-		}
-
-                floppy_drive_set_disk_image_interface(id,&d88image_floppy_interface);
-
-		return  INIT_PASS;
-	}
-
-	return INIT_FAIL;
-}
-
-/* remove a disk from the drive specified by id */
-void d88image_floppy_exit(int id)
-{
 	d88image *w;
-	int i;
 
-	/* sanity check */
-	if ((id<0) || (id>=d88image_MAX_DRIVES))
-		return;
+	assert(id < d88image_MAX_DRIVES);
 
 	w = &d88image_drives[id];
 
-	w->image_file = NULL;
+	w->image_file = fp;
+	w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
 
-	/* free sector map */
+	/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
+	so we need to reflect this */
+	w->track = 0;
+
+	mame_fread(w->image_file, w->disk_name, 17);
+	for(i=0;i<9;i++) mame_fread(w->image_file, &tmp8, 1);
+	mame_fread(w->image_file, &tmp8, 1);
+	w->write_protected = (tmp8&0x10 || !w->mode);
+	mame_fread(w->image_file, &tmp8, 1);
+	w->disktype = tmp8 >> 4;
+	mame_fread_lsbfirst(w->image_file, &tmp32, 4);
+	w->image_size=tmp32;
+
 	for(i=0;i<D88_NUM_TRACK;i++)
 	{
-		if(w->sects[i]!=NULL)
+		mame_fseek(w->image_file, 0x20 + i*4, SEEK_SET);
+		mame_fread_lsbfirst(w->image_file, &tmp32, 4);
+		toffset = tmp32;
+		if(toffset)
 		{
-			free(w->sects[i]);
+			mame_fseek(w->image_file, toffset + 4, SEEK_SET);
+			mame_fread_lsbfirst(w->image_file, &tmp16, 2);
+			w->num_sects[i] = tmp16;
+			w->sects[i] = image_malloc(IO_FLOPPY, id, sizeof(d88sect)*w->num_sects[i]);
+			mame_fseek(w->image_file, toffset, SEEK_SET);
+
+			for(j=0;j<w->num_sects[i];j++)
+			{
+				mame_fread(w->image_file, &(w->sects[i][j].C), 1);
+				mame_fread(w->image_file, &(w->sects[i][j].H), 1);
+				mame_fread(w->image_file, &(w->sects[i][j].R), 1);
+				mame_fread(w->image_file, &(w->sects[i][j].N), 1);
+				mame_fread_lsbfirst(w->image_file, &tmp16, 2);
+				mame_fread(w->image_file, &tmp8, 1);
+					w->sects[i][j].den=tmp8&0x40 ?
+					(w->disktype==2 ? DEN_FM_HI : DEN_FM_LO) :
+					(w->disktype==2 ? DEN_MFM_HI : DEN_MFM_LO);
+				mame_fread(w->image_file, &tmp8, 1);
+				w->sects[i][j].flags=tmp8&0x10 ? ID_FLAG_DELETED_DATA : 0;
+				mame_fread(w->image_file, &tmp8, 1);
+
+				switch(tmp8 & 0xf0) {
+				case 0xa0:
+					w->sects[i][j].flags|=ID_FLAG_CRC_ERROR_IN_ID_FIELD;
+					break;
+				case 0xb0:
+					w->sects[i][j].flags|=ID_FLAG_CRC_ERROR_IN_DATA_FIELD;
+					break;
+				}
+				for(k=0;k<5;k++)
+					mame_fread(w->image_file, &tmp8, 1);
+				mame_fread_lsbfirst(w->image_file, &tmp16, 2);
+				w->sects[i][j].offset = osd_ftell(w->image_file);
+				mame_fseek(w->image_file, tmp16, SEEK_CUR);
+			}
+		}
+		else
+		{
+			w->num_sects[i] = 0;
 			w->sects[i]=NULL;
 		}
 	}
+	return  INIT_PASS;
 }
 
 /* seek to track/head/sector relative position in image file */
 static int d88image_seek(d88image * w, UINT8 t, UINT8 h, UINT8 s)
 {
-unsigned long offset;
+	unsigned long offset;
 	/* allow two additional tracks */
     if (t >= D88_NUM_TRACK/2)
 	{

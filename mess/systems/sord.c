@@ -22,7 +22,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "cpu/z80/z80.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
@@ -365,7 +365,7 @@ static int sord_floppy_init(int id, mame_file *fp, int open_mode)
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
 		basicdsk_set_geometry(id, 40, 1, 18, 256, 1,0);
@@ -866,7 +866,7 @@ SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_CASSETTE			(1, "",			sord_cassette_init)
-	CONFIG_DEVICE_CARTSLOT			(1, "rom\0",	sord_cartslot_init, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	sord_cartslot_init, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(srdm5fd5)

@@ -4,7 +4,7 @@
 /* - or uses size of file */
 
 #include "driver.h"
-#include "includes/basicdsk.h"
+#include "devices/basicdsk.h"
 #include "includes/pc_flopp.h"
 
 static int common_length_spt_heads[][3] = {
@@ -22,7 +22,7 @@ static int common_length_spt_heads[][3] = {
 
 int pc_floppy_init(int id, mame_file *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;
@@ -87,9 +87,3 @@ int pc_floppy_init(int id, mame_file *fp, int open_mode)
 	}
 	return INIT_PASS;
 }
-
-void pc_floppy_exit(int id)
-{
-	 basicdsk_floppy_exit(id);
-}
-

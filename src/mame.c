@@ -388,7 +388,7 @@ static int init_machine(void)
 
 #ifdef MESS
 	/* initialize the devices */
-	if (devices_init(gamedrv))
+	if (devices_init(gamedrv) || devices_initialload(gamedrv, TRUE))
 	{
 		logerror("devices_init failed\n");
 		goto cant_load_roms;

@@ -322,7 +322,7 @@ static int arcadia_init_cart(int id, mame_file *cartfile, int open_mode)
 }
 
 SYSTEM_CONFIG_START(arcadia)
-	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", arcadia_init_cart, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", arcadia_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
