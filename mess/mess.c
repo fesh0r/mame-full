@@ -6,7 +6,6 @@ This file is a set of function calls and defs required for MESS.
 #include <stdarg.h>
 #include <assert.h>
 #include "driver.h"
-#include "config.h"
 #include "devices/flopdrv.h"
 #include "utils.h"
 #include "ui_text.h"
