@@ -842,3 +842,4 @@ static void ph_window_update_32_to_32bpp_direct(struct mame_bitmap *bitmap)
 #undef DEST_PIXEL
 #undef SRC_PIXEL
 
+#endif /* ifdef photon2 */
