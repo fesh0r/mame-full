@@ -123,6 +123,9 @@ struct MachineSound
 #if (HAS_SAA1099)
 #include "sound/saa1099.h"
 #endif
+#if (HAS_IREMGA20)
+#include "sound/iremga20.h"
+#endif
 #if (HAS_SPEAKER)
 #include "sound/speaker.h"
 #endif
@@ -265,6 +268,9 @@ enum
 #endif
 #if (HAS_SAA1099)
 	SOUND_SAA1099,
+#endif
+#if (HAS_IREMGA20)
+	SOUND_IREMGA20,
 #endif
 #if (HAS_SPEAKER)
 	SOUND_SPEAKER,

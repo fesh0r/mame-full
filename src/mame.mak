@@ -112,6 +112,8 @@ SOUNDS+=RF5C68@
 SOUNDS+=CEM3394@
 SOUNDS+=C140@
 SOUNDS+=QSOUND@
+#SOUNDS+=SAA1099@
+SOUNDS+=IREMGA20@
 #SOUNDS+=SPEAKER@
 #SOUNDS+=WAVE@
 #SOUNDS+=BEEP@
@@ -229,7 +231,9 @@ $(OBJ)/irem.a: \
 	$(OBJ)/vidhrdw/vigilant.o $(OBJ)/drivers/vigilant.o \
 	$(OBJ)/vidhrdw/m72.o $(OBJ)/sndhrdw/m72.o $(OBJ)/drivers/m72.o \
 	$(OBJ)/vidhrdw/shisen.o $(OBJ)/drivers/shisen.o \
-	$(OBJ)/vidhrdw/m92.o $(OBJ)/drivers/m92.o \
+	$(OBJ)/machine/irem_cpu.o \
+        $(OBJ)/vidhrdw/m90.o $(OBJ)/drivers/m90.o \
+        $(OBJ)/vidhrdw/m92.o $(OBJ)/drivers/m92.o \
 	$(OBJ)/drivers/m97.o \
 	$(OBJ)/vidhrdw/m107.o $(OBJ)/drivers/m107.o \
 
