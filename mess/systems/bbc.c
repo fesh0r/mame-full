@@ -765,12 +765,12 @@ ROM_START(bbca)
 	ROM_REGION(0x04000,REGION_CPU1,0) /* RAM */
 
 	ROM_REGION(0x14000,REGION_USER1,0) /* ROM */
-	ROM_LOAD("os12.rom",    0x10000,  0x4000, CRC(3c14fc70))
+	ROM_LOAD("os12.rom",    0x10000,  0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
 														  /* rom page 0  00000 */
 														  /* rom page 1  04000 */
 														  /* rom page 2  08000 */
-	ROM_LOAD("basic2.rom",  0x0c000, 0x4000, CRC(79434781 )) /* rom page 3  0c000 */
+	ROM_LOAD("basic2.rom",  0x0c000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 3  0c000 */
 ROM_END
 
 
@@ -784,7 +784,7 @@ ROM_START(bbcb)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
-	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70))
+	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
 
 	                                                      /* rom page 0  00000 */
@@ -813,9 +813,9 @@ ROM_START(bbcb)
 //	ROM_RELOAD(             0x3a000, 0x2000             )
 
 	/* dfs 1.44 from watford electronics, this is the best of the non-acorn dfs roms */
-	ROM_LOAD("dfs144.rom",  0x38000, 0x4000, CRC(9fb8d13f )) /* rom page 14 38000 */
+	ROM_LOAD("dfs144.rom",  0x38000, 0x4000, CRC(9fb8d13f) SHA1(387d2468c6e1360f5b531784ce95d5f71a50c2b5)) /* rom page 14 38000 */
 
-	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, CRC(79434781 )) /* rom page 15 3c000 */
+	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
 
 
 ROM_END
@@ -826,7 +826,7 @@ ROM_START(bbcb1770)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
-	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70))
+	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
 	                                                      /* rom page 0  00000 */
 	                                                      /* rom page 1  04000 */
@@ -844,9 +844,9 @@ ROM_START(bbcb1770)
 														  /* rom page 13 34000 */
 
 /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
-    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7 )) /* rom page 14 38000 */
+    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7) SHA1(0d7ed0b0b3852cb61970ada1993244f2896896aa)) /* rom page 14 38000 */
 
-	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, CRC(79434781 )) /* rom page 15 3c000 */
+	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
 
 ROM_END
 
@@ -857,7 +857,7 @@ ROM_START(bbcbp)
 	ROM_REGION(0x10000,REGION_CPU1,0) /* ROM MEMORY */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
-	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, CRC(9f356396 ))  /* basic rom */
+	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, CRC(9f356396) SHA1(ea7d3a7e3ee1ecfaa1483af994048057362b01f2))  /* basic rom */
 	ROM_CONTINUE(           0x40000, 0x4000)  /* OS */
 
 	                                                      /* rom page 0  00000 */
@@ -876,7 +876,7 @@ ROM_START(bbcbp)
 														  /* rom page 13 34000 */
 
     /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
-    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7 )) /* rom page 14 38000 */
+    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7) SHA1(0d7ed0b0b3852cb61970ada1993244f2896896aa)) /* rom page 14 38000 */
 
 ROM_END
 
@@ -885,7 +885,7 @@ ROM_START(bbcbp128)
 	ROM_REGION(0x10000,REGION_CPU1,0) /* ROM MEMORY */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
-	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, CRC(9f356396 ))  /* basic rom */
+	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, CRC(9f356396) SHA1(ea7d3a7e3ee1ecfaa1483af994048057362b01f2))  /* basic rom */
 	ROM_CONTINUE(           0x40000, 0x4000)  /* OS */
 
 	                                                      /* rom page 0  00000 */
@@ -904,7 +904,7 @@ ROM_START(bbcbp128)
 														  /* rom page 13 34000 */
 
     /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
-    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7 )) /* rom page 14 38000 */
+    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7) SHA1(0d7ed0b0b3852cb61970ada1993244f2896896aa)) /* rom page 14 38000 */
 
 ROM_END
 
@@ -914,7 +914,7 @@ ROM_START(bbcb6502)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
-	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70))
+	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
 	                                                      /* rom page 0  00000 */
 	                                                      /* rom page 1  04000 */
@@ -932,12 +932,12 @@ ROM_START(bbcb6502)
 														  /* rom page 13 34000 */
 
 /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
-    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7 )) /* rom page 14 38000 */
+    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, CRC(7891f9b7) SHA1(0d7ed0b0b3852cb61970ada1993244f2896896aa)) /* rom page 14 38000 */
 
-	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, CRC(79434781 )) /* rom page 15 3c000 */
+	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
 
 	ROM_REGION(0x11000,REGION_CPU2,0)
-	ROM_LOAD("6502tube.rom" , 0x10000,0x1000, CRC(98b5fe42))
+	ROM_LOAD("6502tube.rom" , 0x10000,0x1000, CRC(98b5fe42) SHA1(338269d03cf6bfa28e09d1651c273ea53394323b))
 
 ROM_END
 
