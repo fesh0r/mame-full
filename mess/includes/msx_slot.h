@@ -1,7 +1,7 @@
 
 typedef struct {
 	int type;
-	int	slot_primary, slot_secondary;
+	int slot_primary, slot_secondary;
 	int slot_page, page_extent;
 	int size, option;
 } msx_slot_layout;
@@ -52,6 +52,7 @@ enum msx_slot_type {
 	SLOT_DISK_ROM,
 	SLOT_KOREAN_80IN1,
 	SLOT_KOREAN_126IN1,
+	SLOT_KOREAN_90IN1,
 	SLOT_SOUNDCARTRIDGE,
 	SLOT_ROM,
 	SLOT_RAM,
@@ -74,7 +75,7 @@ typedef struct {
 	int banks[4];
 	int size;
 	UINT8 *mem;
-	char *sramfile;
+	const char *sramfile;
 	union {
 		struct {
 			UINT8 *mem;
@@ -158,7 +159,7 @@ const msx_slot msx_slot_list[] = {
 #define MSX_SLOT_NULL(type) { \
 	type,							\
 	MSX_MEM_ROM,					\
-	"",								\
+	#type,							\
 	NULL,							\
 	NULL,							\
 	NULL,							\

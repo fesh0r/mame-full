@@ -31,6 +31,7 @@ typedef struct {
 	UINT8 primary_slot;
 	UINT8 secondary_slot[4];
 	UINT8 superloadrunner_bank;
+	UINT8 korean90in1_bank;
 } MSX;
 
 /* start/stop functions */
@@ -62,6 +63,7 @@ WRITE_HANDLER ( msx_fmpac_w );
 READ_HANDLER ( msx_rtc_reg_r );
 WRITE_HANDLER ( msx_rtc_reg_w );
 WRITE_HANDLER ( msx_rtc_latch_w );
+WRITE_HANDLER ( msx_90in1_w );
 
 /* cassette functions */
 DEVICE_LOAD( msx_cassette );
@@ -83,5 +85,6 @@ READ_HANDLER (msx_ram_mapper_r);
 void msx_memory_map_all (void);
 void msx_memory_map_page (int page);
 void msx_memory_init (void);
+void msx_memory_set_carts (void);
 void msx_memory_reset (void);
 

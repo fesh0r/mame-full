@@ -1,5 +1,8 @@
 /*
  * msx_slot.c : definitions of the different slots 
+ *
+ * This hopefully contains all the possible cartridges and memory types that
+ * exist in the world msx. :)
  */
 
 #include "driver.h"
@@ -9,6 +12,7 @@
 
 extern MSX msx1;
 
+/* #define MSX_VERBOSE */
 
 MSX_SLOT_INIT(empty)
 {
@@ -58,6 +62,7 @@ MSX_SLOT_INIT(ram)
 		logerror ("ram: error: out of memory\n");
 		return 1;
 	}
+	memset (state->mem, 0, size);
 	state->type = SLOT_RAM;
 	state->start_page = page;
 	state->size = size;
@@ -101,6 +106,7 @@ MSX_SLOT_INIT(rammm)
 		logerror ("ram mapper: error: out of memory\n");
 		return 1;
 	}
+	memset (state->mem, 0, size);
 
 	state->type = SLOT_RAM_MM;
 	state->start_page = page;
@@ -439,7 +445,7 @@ MSX_SLOT_WRITE(ascii8)
 {
 	int bank;
 
-	if (addr >= 0x2000 && addr < 0x4000) {
+	if (addr >= 0x6000 && addr < 0x8000) {
 		bank = (addr / 0x800) & 3;
 
 		state->banks[bank] = val & state->bank_mask;
@@ -454,27 +460,22 @@ MSX_SLOT_WRITE(ascii8)
 
 MSX_SLOT_INIT(ascii16)
 {
+	int banks;
+
+	if (size > 0x400000) {
+		logerror ("ascii16: warning: truncating to 4mb\n");
+		size = 0x400000;
+	}
+	banks = size / 0x4000;
+	if (size != banks * 0x4000 || (~(banks - 1) % banks)) {
+		logerror ("ascii16: error: must be a 2 power of 16kb\n");
+		return 1;
+	}
+
 	state->type = SLOT_ASCII16;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 3;
-		break;
-	case 0x20000:
-		state->bank_mask = 7;
-		break;
-	case 0x40000:
-		state->bank_mask = 15;
-		break;
-	case 0x80000:
-		state->bank_mask = 31;
-		break;
-	default:
-		logerror ("ascii16: error: only 64kb, 128kb, 256kb, 512kb supported\n");
-		return 1;
-	}
+	state->bank_mask = banks - 1;
 
 	return 0;
 }
@@ -527,47 +528,40 @@ MSX_SLOT_WRITE(ascii16)
 
 MSX_SLOT_INIT(ascii8_sram)
 {
+	static const char sramfile[] = "ascii8";
+	int banks;
+
 	state->cart.sram.mem = auto_malloc (0x2000);
 	if (!state->cart.sram.mem) {
 		logerror ("ascii8_sram: error: failed to malloc sram memory\n");
+		return 1;
+	}
+	if (size > 0x100000) {
+		logerror ("ascii8_sram: warning: truncating to 1mb\n");
+		size = 0x100000;
+		return 1;
+	}
+	banks = size / 0x2000;
+	if (size != banks * 0x2000 || (~(banks - 1) % banks)) {
+		logerror ("ascii8_sram: error: must be a 2 power of 8kb\n");
 		return 1;
 	}
 	memset (state->cart.sram.mem, 0, 0x2000);
 	state->type = SLOT_ASCII8_SRAM;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 7;
-		state->cart.sram.sram_mask = 8;
-		state->cart.sram.empty_mask = 0xf0;
-		break;
-	case 0x20000:
-		state->bank_mask = 15;
-		state->cart.sram.sram_mask = 16;
-		state->cart.sram.empty_mask = 0xe0;
-		break;
-	case 0x40000:
-		state->bank_mask = 31;
-		state->cart.sram.sram_mask = 32;
-		state->cart.sram.empty_mask = 0xc0;
-		break;
-	case 0x80000:
-		state->bank_mask = 63;
-		state->cart.sram.sram_mask = 64;
-		state->cart.sram.empty_mask = 0x80;
-		break;
-	case 0x100000: /* Royal Blood (1MB) */
-		state->bank_mask = 127;
-		state->cart.sram.sram_mask = 128;
-		state->cart.sram.empty_mask = 0;
-		break;
-	default:
-		logerror ("ascii8_sram: error: only exactly 64kb, 128kb, 256kb, "
-				  "512kb and 1mb supported\n");
-		return 1;
+	state->bank_mask = banks - 1;
+	state->cart.sram.sram_mask = banks;
+	state->cart.sram.empty_mask = ~(banks | (banks - 1));
+	if (!state->sramfile) {
+		state->sramfile = sramfile;
 	}
+#ifdef MSX_VERBOSE
+	logerror ("ascii8_sram: info: size = %d/0x%x, bank_mask = %02x, "
+			  "sram_mask = %02x, empty_mask = %02x\n",
+			  size, size, state->bank_mask, state->cart.sram.sram_mask,
+			  state->cart.sram.empty_mask);
+#endif
 
 	return 0;
 }
@@ -590,7 +584,7 @@ static UINT8 *ascii8_sram_bank_select (slot_state *state, int bankno)
 		return state->cart.sram.mem;
 	}
 	else {
-		return state->mem + (bank & state->banks[bankno]) * 0x2000;
+		return state->mem + (bank & state->bank_mask) * 0x2000;
 	}
 }
 
@@ -619,20 +613,21 @@ MSX_SLOT_WRITE(ascii8_sram)
 {
 	int bank;
 
-	if (addr >= 0x2000 && addr < 0x4000) {
+	if (addr >= 0x6000 && addr < 0x8000) {
 		bank = (addr / 0x800) & 3;
 
-		state->banks[bank] = val & state->bank_mask;
+		state->banks[bank] = val;
 		if (bank <= 1) {
-			slot_ascii8_map (state, 1);
+			slot_ascii8_sram_map (state, 1);
 		}
 		else if (msx1.state[2] == state) {
-			slot_ascii8_map (state, 2);
+			slot_ascii8_sram_map (state, 2);
 		}
 	}
 	if (addr >= 0x8000 && addr < 0xc000) {
 		bank = addr < 0xa000 ? 2 : 3;
-		if (state->banks[bank] & state->cart.sram.sram_mask) {
+		if (!(state->banks[bank] & state->cart.sram.empty_mask) && 
+		     (state->banks[bank] & state->cart.sram.sram_mask)) {
 			state->cart.sram.mem[addr & 0x1fff] = val;
 		}
 	}
@@ -648,7 +643,7 @@ MSX_SLOT_LOADSRAM(ascii8_sram)
 	}
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile, 
-					FILETYPE_MEMCARD, 0);
+					FILETYPE_MEMCARD, OSD_FOPEN_READ);
 	if (f) {
 		if (mame_fread (f, state->cart.sram.mem, 0x2000) == 0x2000) {
 			mame_fclose (f);
@@ -675,7 +670,7 @@ MSX_SLOT_SAVESRAM(ascii8_sram)
 	}
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile,
-					FILETYPE_MEMCARD, 1);
+					FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
 	if (f) {
 		mame_fwrite (f, state->cart.sram.mem, 0x2000);
 		mame_fclose (f);
@@ -691,46 +686,34 @@ MSX_SLOT_SAVESRAM(ascii8_sram)
 
 MSX_SLOT_INIT(ascii16_sram)
 {
+	static const char sramfile[] = "ascii16";
+	int banks;
+
 	state->cart.sram.mem = auto_malloc (0x4000);
 	if (!state->cart.sram.mem) {
 		logerror ("ascii16_sram: error: failed to malloc sram memory\n");
 		return 1;
 	}
+
+	if (size > 0x200000) {
+		logerror ("ascii16_sram: warning: truncating to 2mb\n");
+		size = 0x200000;
+	}
+	banks = size / 0x4000;
+	if (size != banks * 0x4000 || (~(banks - 1) % banks)) {
+		logerror ("ascii16_sram: error: must be a 2 power of 16kb\n");
+		return 1;
+	}
+
 	memset (state->cart.sram.mem, 0, 0x4000);
 	state->type = SLOT_ASCII16_SRAM;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 3;
-		state->cart.sram.sram_mask = 4;
-		state->cart.sram.empty_mask = 0xf8;
-		break;
-	case 0x20000:
-		state->bank_mask = 7;
-		state->cart.sram.sram_mask = 8;
-		state->cart.sram.empty_mask = 0xf0;
-		break;
-	case 0x40000:
-		state->bank_mask = 15;
-		state->cart.sram.sram_mask = 16;
-		state->cart.sram.empty_mask = 0xe0;
-		break;
-	case 0x80000:
-		state->bank_mask = 31;
-		state->cart.sram.sram_mask = 32;
-		state->cart.sram.empty_mask = 0xc0;
-		break;
-	case 0x100000: 
-		state->bank_mask = 63;
-		state->cart.sram.sram_mask = 64;
-		state->cart.sram.empty_mask = 0xc0;
-		break;
-	default:
-		logerror ("ascii16_sram: error: only exactly 64kb, 128kb, 256kb, "
-				  "512kb and 1mb supported\n");
-		return 1;
+	state->bank_mask = banks - 1;
+	state->cart.sram.sram_mask = banks;
+	state->cart.sram.empty_mask = ~(banks | (banks - 1));
+	if (!state->sramfile) {
+		state->sramfile = sramfile;
 	}
 
 	return 0;
@@ -740,7 +723,7 @@ MSX_SLOT_RESET(ascii16_sram)
 {
 	int i;
 
-	for (i=0; i<4; i++) state->banks[i] = i;
+	for (i=0; i<2; i++) state->banks[i] = i;
 }
 static UINT8 *ascii16_sram_bank_select (slot_state *state, int bankno)
 {
@@ -753,7 +736,7 @@ static UINT8 *ascii16_sram_bank_select (slot_state *state, int bankno)
 		return state->cart.sram.mem;
 	}
 	else {
-		return state->mem + (bank & state->banks[bankno]) * 0x4000;
+		return state->mem + (bank & state->bank_mask) * 0x4000;
 	}
 }
 
@@ -795,7 +778,8 @@ MSX_SLOT_WRITE(ascii16_sram)
 		}
 	}
 	else if (addr >= 0x8000 && addr < 0xc000) {
-		if (state->banks[1] & state->cart.sram.sram_mask) {
+		if (!(state->banks[1] & state->cart.sram.empty_mask) && 
+		     (state->banks[1] & state->cart.sram.sram_mask)) {
 			int offset, i;
 
 			offset = addr & 0x07ff;
@@ -818,11 +802,11 @@ MSX_SLOT_LOADSRAM(ascii16_sram)
 	}
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile, 
-					FILETYPE_MEMCARD, 0);
+					FILETYPE_MEMCARD, OSD_FOPEN_READ);
 	if (f) {
 		p = state->cart.sram.mem;
 
-		if (mame_fread (f, state->cart.sram.mem, 0x200) == 0x000) {
+		if (mame_fread (f, state->cart.sram.mem, 0x200) == 0x200) {
 			int offset, i;
 			
 			mame_fclose (f);
@@ -856,7 +840,7 @@ MSX_SLOT_SAVESRAM(ascii16_sram)
 	}
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile,
-					FILETYPE_MEMCARD, 1);
+					FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
 	if (f) {
 		mame_fwrite (f, state->cart.sram.mem, 0x200);
 		mame_fclose (f);
@@ -872,7 +856,7 @@ MSX_SLOT_SAVESRAM(ascii16_sram)
 
 MSX_SLOT_INIT(rtype)
 {
-	if (state->size != 0x60000) {
+	if (!(size == 0x60000 || size == 0x80000)) {
 		logerror ("rtype: error: rom file should be exactly 384kb\n");
 		return 1;
 	}
@@ -887,7 +871,6 @@ MSX_SLOT_INIT(rtype)
 MSX_SLOT_RESET(rtype)
 {
 	state->banks[0] = 15;
-	state->banks[1] = 15;
 }
 
 MSX_SLOT_MAP(rtype)
@@ -900,12 +883,12 @@ MSX_SLOT_MAP(rtype)
 		cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		mem = state->mem + state->banks[0] * 0x4000;
+		mem = state->mem + 15 * 0x4000;
 		cpu_setbank (3, mem);
 		cpu_setbank (4, mem + 0x2000);
 		break;
 	case 2:
-		mem = state->mem + state->banks[1] * 0x4000;
+		mem = state->mem + state->banks[0] * 0x4000;
 		cpu_setbank (5, mem);
 		cpu_setbank (6, mem + 0x2000);
 		break;
@@ -926,7 +909,7 @@ MSX_SLOT_WRITE(rtype)
 		else {
 			data = val & 0x0f;
 		}
-		state->banks[1] = data;
+		state->banks[0] = data;
 		if (msx1.state[2] == state) {
 			slot_rtype_map (state, 2);
 		}
@@ -936,6 +919,7 @@ MSX_SLOT_WRITE(rtype)
 MSX_SLOT_INIT(gmaster2)
 {
 	UINT8 *p;
+	static const char sramfile[] = "GameMaster2";
 
 	if (size != 0x20000) {
 		logerror ("gmaster2: error: rom file should be 128kb\n");
@@ -953,6 +937,9 @@ MSX_SLOT_INIT(gmaster2)
 
 	memset (p, 0, 0x4000);
 	state->cart.sram.mem = p;
+	if (!state->sramfile) {
+		state->sramfile = sramfile;
+	}
 
 	return 0;
 }
@@ -977,7 +964,7 @@ MSX_SLOT_MAP(gmaster2)
 		cpu_setbank (3, state->mem); /* bank 0 is hardwired */
 		if (state->banks[1] > 15) {
 			cpu_setbank (4, state->cart.sram.mem + 
-					(state->banks[2] - 16) * 0x2000);
+					(state->banks[1] - 16) * 0x2000);
 		}
 		else {
 			cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
@@ -993,10 +980,10 @@ MSX_SLOT_MAP(gmaster2)
 		}
 		if (state->banks[3] > 15) {
 			cpu_setbank (6, state->cart.sram.mem +
-					(state->banks[2] - 16) * 0x2000);
+					(state->banks[3] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (5, state->mem + state->banks[3] * 0x2000);
+			cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 		}
 		break;
 	case 3:
@@ -1059,7 +1046,7 @@ MSX_SLOT_LOADSRAM(gmaster2)
 
 	p = state->cart.sram.mem;
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile, 
-					FILETYPE_MEMCARD, 0);
+					FILETYPE_MEMCARD, OSD_FOPEN_READ);
 	if (f) {
 		if (mame_fread (f, p + 0x1000, 0x2000) == 0x2000) {
 			memcpy (p, p + 0x1000, 0x1000);
@@ -1084,7 +1071,7 @@ MSX_SLOT_SAVESRAM(gmaster2)
 	void *f;
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile,
-					FILETYPE_MEMCARD, 1);
+					FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
 	if (f) {
 		mame_fwrite (f, state->cart.sram.mem + 0x1000, 0x2000);
 		mame_fclose (f);
@@ -1314,6 +1301,7 @@ MSX_SLOT_WRITE(majutsushi)
 MSX_SLOT_INIT(fmpac)
 {
 	UINT8 *p;
+	static const char sramfile[] = "fmpac.rom";
 
 	if (size != 0x10000) {
 		logerror ("fmpac: error: rom file must be 64kb\n");
@@ -1340,6 +1328,9 @@ MSX_SLOT_INIT(fmpac)
 	state->size = 0x10000;
 	state->mem = mem;
 	state->bank_mask = 3;
+	if (!state->sramfile) {
+		state->sramfile = sramfile;
+	}
 
 	return 0;
 }
@@ -1432,7 +1423,7 @@ MSX_SLOT_LOADSRAM(fmpac)
 	}
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile, 
-				FILETYPE_MEMCARD, 0);
+				FILETYPE_MEMCARD, OSD_FOPEN_READ);
 	if (f) {
 		if ((mame_fread (f, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
 			!strncmp (buf, PAC_HEADER, PAC_HEADER_LEN) &&
@@ -1456,12 +1447,12 @@ MSX_SLOT_SAVESRAM(fmpac)
 {
 	void *f;
 
-	if (!state->cart.fmpac.sram_support|| !state->sramfile) {
+	if (!state->cart.fmpac.sram_support || !state->sramfile) {
 		return 0;
 	}
 
 	f = mame_fopen (Machine->gamedrv->name, state->sramfile,
-				FILETYPE_MEMCARD, 1);
+				FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
 	if (f) {
 		if ((mame_fwrite (f, PAC_HEADER, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
 			(mame_fwrite (f, state->cart.fmpac.mem, 0x1ffe) == 0x1ffe)) {
@@ -1542,11 +1533,7 @@ MSX_SLOT_INIT(crossblaim)
 
 MSX_SLOT_RESET(crossblaim)
 {
-	int i;
-
-	for (i=0; i<2; i++) {
-		state->banks[i] = i;
-	}
+	state->banks[0] = 0;
 }
 
 MSX_SLOT_MAP(crossblaim)
@@ -1559,12 +1546,11 @@ MSX_SLOT_MAP(crossblaim)
 		cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		mem = state->mem + state->banks[0] * 0x4000;
-		cpu_setbank (3, mem);
-		cpu_setbank (4, mem + 0x2000);
+		cpu_setbank (3, state->mem);
+		cpu_setbank (4, state->mem + 0x2000);
 		break;
 	case 2:
-		mem = state->mem + state->banks[1] * 0x4000;
+		mem = state->mem + state->banks[0] * 0x4000;
 		cpu_setbank (5, mem);
 		cpu_setbank (6, mem + 0x2000);
 		break;
@@ -1577,7 +1563,7 @@ MSX_SLOT_MAP(crossblaim)
 MSX_SLOT_WRITE(crossblaim)
 {
 	if (addr == 0x4045) {
-		state->banks[1] = val & 3;
+		state->banks[0] = val & 3;
 		if (msx1.state[2] == state) {
 			slot_crossblaim_map (state, 2);
 		}
@@ -1586,28 +1572,21 @@ MSX_SLOT_WRITE(crossblaim)
 
 MSX_SLOT_INIT(korean80in1)
 {
+	int banks;
+
+	if (size > 0x200000) {
+		logerror ("korean-80in1: warning: truncating to 2mb\n");
+		size = 0x200000;
+	}
+	banks = size / 0x2000;
+	if (size != banks * 0x2000 || (~(banks - 1) % banks)) {
+		logerror ("korean-80in1: error: must be a 2 power of 8kb\n");
+		return 1;
+	}
 	state->type = SLOT_KOREAN_80IN1;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 7;
-		break;
-	case 0x20000:
-		state->bank_mask = 15;
-		break;
-	case 0x40000:
-		state->bank_mask = 31;
-		break;
-	case 0x80000:
-		state->bank_mask = 63;
-		break;
-	default:
-		logerror ("korean-80in1: error: only 64kb, 128kb, 256kb, 512kb "
-				  "supported\n");
-		return 1;
-	}
+	state->bank_mask = banks - 1;
 
 	return 0;
 }
@@ -1659,30 +1638,86 @@ MSX_SLOT_WRITE(korean80in1)
 	}
 }
 
+MSX_SLOT_INIT(korean90in1)
+{
+	int banks;
+
+	if (size > 0x200000) {
+		logerror ("korean-90in1: warning: truncating to 2mb\n");
+		size = 0x200000;
+	}
+	banks = size / 0x4000;
+	if (size != banks * 0x4000 || (~(banks - 1) % banks)) {
+		logerror ("korean-90in1: error: must be a 2 power of 16kb\n");
+		return 1;
+	}
+	state->type = SLOT_KOREAN_90IN1;
+	state->mem = mem;
+	state->size = size;
+	state->bank_mask = banks - 1;
+
+	return 0;
+}
+
+MSX_SLOT_RESET(korean90in1)
+{
+	msx1.korean90in1_bank = 0;
+}
+
+MSX_SLOT_MAP(korean90in1)
+{
+	UINT8 *mem;
+	UINT8 mask = (msx1.korean90in1_bank & 0xc0) == 0x80 ? 0x3e : 0x3f;
+	mem = state->mem + 
+		((msx1.korean90in1_bank & mask) & state->bank_mask) * 0x4000;
+
+	switch (page) {
+	case 0:
+		cpu_setbank (1, msx1.empty);
+		cpu_setbank (2, msx1.empty);
+		break;
+	case 1:
+		cpu_setbank (3, mem);
+		cpu_setbank (4, mem + 0x2000);
+		break;
+	case 2:
+		switch (msx1.korean90in1_bank & 0xc0) {
+		case 0x80: /* 32 kb mode */
+			mem += 0x4000;
+		default: /* ie. 0x00 and 0x40): same memory as page 1 */
+			cpu_setbank (5, mem);
+			cpu_setbank (6, mem + 0x2000);
+			break;
+		case 0xc0: /* same memory as page 1, but swap lower/upper 8kb */
+			cpu_setbank (5, mem + 0x2000);
+			cpu_setbank (6, mem);
+			break;
+		}
+		break;
+	case 3:
+		cpu_setbank (7, msx1.empty);
+		cpu_setbank (8, msx1.empty);
+	}
+}
+
 MSX_SLOT_INIT(korean126in1)
 {
+	int banks;
+
+	if (size > 0x400000) {
+		logerror ("korean-126in1: warning: truncating to 4mb\n");
+		size = 0x400000;
+	}
+	banks = size / 0x4000;
+	if (size != banks * 0x4000 || (~(banks - 1) % banks)) {
+		logerror ("korean-126in1: error: must be a 2 power of 16kb\n");
+		return 1;
+	}
+
 	state->type = SLOT_KOREAN_126IN1;
 	state->mem = mem;
 	state->size = size;
-
-	switch (size) {
-	case 0x10000:
-		state->bank_mask = 3;
-		break;
-	case 0x20000:
-		state->bank_mask = 7;
-		break;
-	case 0x40000:
-		state->bank_mask = 15;
-		break;
-	case 0x80000:
-		state->bank_mask = 31;
-		break;
-	default:
-		logerror ("korean-126in1: error: only 64kb, 128kb, 256kb, 512kb "
-				  "supported\n");
-		return 1;
-	}
+	state->bank_mask = banks - 1;
 
 	return 0;
 }
@@ -1999,7 +2034,7 @@ MSX_SLOT_START
 	MSX_SLOT (SLOT_ASCII16, ascii16)
 	MSX_SLOT_SRAM (SLOT_GAMEMASTER2, gmaster2)
 	MSX_SLOT_SRAM (SLOT_ASCII8_SRAM, ascii8_sram)
-	MSX_SLOT_SRAM (SLOT_ASCII16_SRAM, ascii16_sram)
+	MSX_SLOT_SRAM (SLOT_ASCII16_SRAM, ascii16_sram) 
 	MSX_SLOT (SLOT_RTYPE, rtype)
 	MSX_SLOT (SLOT_MAJUTSUSHI, majutsushi)
 	MSX_SLOT_SRAM (SLOT_FMPAC, fmpac)
@@ -2009,9 +2044,12 @@ MSX_SLOT_START
 	MSX_SLOT (SLOT_DISK_ROM, diskrom)
 	MSX_SLOT (SLOT_KOREAN_80IN1, korean80in1)
 	MSX_SLOT (SLOT_KOREAN_126IN1, korean126in1)
+	MSX_SLOT_ROM (SLOT_KOREAN_90IN1, korean90in1)
 	MSX_SLOT (SLOT_SOUNDCARTRIDGE, soundcartridge)
 	MSX_SLOT_ROM (SLOT_ROM, rom)
 	MSX_SLOT_RAM (SLOT_RAM, ram)
 	MSX_SLOT_RAM (SLOT_RAM_MM, rammm)
+	MSX_SLOT_NULL (SLOT_CARTRIDGE1)
+	MSX_SLOT_NULL (SLOT_CARTRIDGE2)
 MSX_SLOT_END
 

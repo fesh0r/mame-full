@@ -1,13 +1,12 @@
 /*
-** msx.c : MSX1 emulation
+** msx.c : MSX emulation
 **
 ** Todo:
 **
-** - memory emulation needs be rewritten
 ** - add support for serial ports
 ** - fix mouse support
-** - add support for SCC+ and megaRAM
-** - diskdrives support doesn't work yet!
+** - add support for megaRAM
+** - cassette support doesn't work
 **
 ** Sean Young
 */
@@ -104,13 +103,16 @@ DEVICE_LOAD (msx_cart)
 	UINT8 *mem;
 	int type;
 	const char *extra;
+	char *sramfile;
 	slot_state *state;
 	int id;
 
+	id = image_index_in_device (image);
+
 	size = mame_fsize (file);
 	if (size < 0x2000) {
-		logerror ("msx_cart: error: file is smaller than 2kb, too small "
-				  "to be true!\n");
+		logerror ("cart #%d: error: file is smaller than 2kb, too small "
+				  "to be true!\n", id);
 		return INIT_FAIL;
 	}
 
@@ -121,30 +123,32 @@ DEVICE_LOAD (msx_cart)
 	}
 	mem = image_malloc (image, size_aligned);
 	if (!mem) {
-		logerror ("msx_cart: error: failed to allocate memory for cartridge\n");
+		logerror ("cart #%d: error: failed to allocate memory for cartridge\n", 
+						id);
 		return INIT_FAIL;
 	}
 	if (size < size_aligned) {
 		memset (mem, 0xff, size_aligned);
 	}
 	if (mame_fread (file, mem, size) != size) {
-		logerror ("%s: can't read full %d bytes\n", 
-						image_filename (image), size);
+		logerror ("cart #%d: %s: can't read full %d bytes\n", 
+						id, image_filename (image), size);
 		return INIT_FAIL;
 	}
 
 	/* see if msx.crc will tell us more */
 	extra = image_extrainfo (image);
 	if (!extra) {
-		logerror("msx_cart: warning: no information in crc file\n");
+		logerror("cart #%d: warning: no information in crc file\n", id);
 		type = -1;
 	}
-	else if ((1 != sscanf (extra, "%d", &type) ) || type < 0 || type > 17) {
-		logerror("msx_cart: warning: information in crc file not valid\n");
+	else if ((1 != sscanf (extra, "%d", &type) ) || 
+			type < 0 || type >= SLOT_SOUNDCARTRIDGE) {
+		logerror("cart #%d: warning: information in crc file not valid\n", id);
 		type = -1;
 	}
 	else {
-		logerror ("msx_cart: info: cart extra info: '%s' = %s", extra,
+		logerror ("cart #%d: info: cart extra info: '%s' = %s\n", id, extra,
 						msx_slot_list[type].name);
 	}
 
@@ -153,11 +157,11 @@ DEVICE_LOAD (msx_cart)
 		type = msx_probe_type (mem, size);
 
 		if (mem[0] != 'A' || mem[1] != 'B') {
-			logerror("%s: May not be a valid ROM file\n",
-							image_filename (image));
+			logerror("cart #%d: %s: May not be a valid ROM file\n",
+							id, image_filename (image));
 		}
 
-		logerror("Probed cartridge mapper %d/%s\n", 
+		logerror("cart #%d: Probed cartridge mapper %d/%s\n", id,
 						type, msx_slot_list[type].name);
 	}
 
@@ -167,7 +171,7 @@ DEVICE_LOAD (msx_cart)
 		size_aligned = 0x10000;
 		mem = image_realloc(image, mem, 0x10000);
 		if (!mem) {
-			logerror ("msx_cart: error: cannot allocate memory\n");
+			logerror ("cart #%d: error: cannot allocate memory\n", id);
 			return INIT_FAIL;
 		}
 		
@@ -175,8 +179,8 @@ DEVICE_LOAD (msx_cart)
 			memset (mem + size, 0xff, 0x10000 - size);
 		}
 		if (size > 0x10000) {
-			logerror ("msx_cart: warning: rom truncated to 64kb due to "
-					  "mapperless type (possibly detected)\n");
+			logerror ("cart #%d: warning: rom truncated to 64kb due to "
+					  "mapperless type (possibly detected)\n", id);
 
 			size = 0x10000;
 		}
@@ -226,40 +230,44 @@ DEVICE_LOAD (msx_cart)
 		}
 
 		if (page) {
-			logerror ("msx_cart: info: rom in page %d\n", page);
+			logerror ("cart #%d: info: rom in page %d\n", id, page);
 		}
 		else {
-			logerror ("msx_cart: info: rom duplicted in all pages\n");
+			logerror ("cart #%d: info: rom duplicted in all pages\n", id);
 		}
 	}
 
 	/* allocate and set slot_state for this cartridge */
 	state = (slot_state*)auto_malloc (sizeof (slot_state));
 	if (!state) {
-		logerror ("msx_cart: error: cannot allocate memory for "
-				  "cartridge state\n");
+		logerror ("cart #%d: error: cannot allocate memory for "
+				  "cartridge state\n", id);
 	}
 	memset (state, 0, sizeof (slot_state));
 
 	state->type = type;
-	state->sramfile = image_malloc (image, strlen (image_filename (image) + 1));
-	if (state->sramfile) {
+	sramfile = image_malloc (image, strlen (image_filename (image) + 1));
+
+	if (sramfile) {
 		char *ext;
 
-		strcpy (state->sramfile, image_basename (image));
-		ext = strrchr (state->sramfile, '.');
+		strcpy (sramfile, image_basename (image));
+		ext = strrchr (sramfile, '.');
 		if (ext) {
 			*ext = 0;
 		}
+		state->sramfile = sramfile;
 	}
 
-	msx_slot_list[type].init (state, 0, mem, size_aligned);
+	if (msx_slot_list[type].init (state, 0, mem, size_aligned)) {
+		return INIT_FAIL;
+	}
 	if (msx_slot_list[type].loadsram) {
 		msx_slot_list[type].loadsram (state);
 	}
 
-	id = image_index_in_device (image);
 	msx1.cart_state[id] = state;
+	msx_memory_set_carts ();
 
 	return INIT_PASS;
 }
@@ -781,6 +789,7 @@ void msx_memory_init (void)
 			st = msx1.cart_state[0];
 			if (!st) {
 				slot = &msx_slot_list[SLOT_SOUNDCARTRIDGE];
+				mem = (UINT8*)NULL;
 				size = 0x10000;
 			}
 		}
@@ -848,6 +857,35 @@ void msx_memory_reset (void)
 				}
 				last_state = state;
 			}
+		}
+	}
+}
+
+void msx_memory_set_carts (void)
+{
+	const msx_slot_layout *layout;
+	int page;
+
+	if (!msx1.layout) {
+		return;
+	}
+	
+	for (layout = msx1.layout; layout->type != SLOT_END; layout++) {
+		switch (layout->type) {
+		case SLOT_CARTRIDGE1:
+			for (page=0; page<3; page++) {
+				msx1.all_state[layout->slot_primary]
+						      [layout->slot_secondary]
+							  [page] = msx1.cart_state[0];
+			}
+			break;
+		case SLOT_CARTRIDGE2:
+			for (page=0; page<3; page++) {
+				msx1.all_state[layout->slot_primary]
+						      [layout->slot_secondary]
+							  [page] = msx1.cart_state[1];
+			}
+			break;
 		}
 	}
 }
@@ -980,3 +1018,15 @@ READ_HANDLER (msx_ram_mapper_r)
 {
 	return msx1.ram_mapper[offset];
 }
+
+WRITE_HANDLER (msx_90in1_w)
+{
+	msx1.korean90in1_bank = data;
+	if (msx1.slot[1]->slot_type == SLOT_KOREAN_90IN1) {
+		msx1.slot[1]->map (msx1.state[1], 1);
+	}
+	if (msx1.slot[2]->slot_type == SLOT_KOREAN_90IN1) {
+		msx1.slot[2]->map (msx1.state[2], 2);
+	}
+}
+
