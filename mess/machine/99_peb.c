@@ -462,6 +462,23 @@ READ_HANDLER ( geneve_peb_r )
 }
 
 /*
+	Write mem in range >4000->5fff
+*/
+WRITE_HANDLER ( geneve_peb_w )
+{
+	mem_write_handler handler;
+
+	tms9995_ICount -= 8;
+
+	if (active_card != -1)
+	{
+		handler = expansion_ports[active_card].mem_write;
+		if (handler)
+			(*handler)(offset, data);
+	}
+}
+
+/*
 	Read CRU in range >1000->2ffe (>0800->17ff)
 */
 READ_HANDLER ( ti99_8_peb_CRU_r )
@@ -511,13 +528,33 @@ WRITE_HANDLER ( ti99_8_peb_CRU_w )
 }
 
 /*
+	Read mem in range >4000->5fff
+*/
+READ_HANDLER ( ti99_8_peb_r )
+{
+	int reply = 0;
+	mem_read_handler handler;
+
+	tms9995_ICount -= 4;
+
+	if (active_card != -1)
+	{
+		handler = expansion_ports[active_card].mem_read;
+		if (handler)
+			reply = (*handler)(offset);
+	}
+
+	return reply;
+}
+
+/*
 	Write mem in range >4000->5fff
 */
-WRITE_HANDLER ( geneve_peb_w )
+WRITE_HANDLER ( ti99_8_peb_w )
 {
 	mem_write_handler handler;
 
-	tms9995_ICount -= 8;
+	tms9995_ICount -= 4;
 
 	if (active_card != -1)
 	{
@@ -526,7 +563,6 @@ WRITE_HANDLER ( geneve_peb_w )
 			(*handler)(offset, data);
 	}
 }
-
 
 /*
 	Read CRU in range >0400->1ffe (>200->fff)

@@ -213,8 +213,8 @@ static const tms9901reset_param tms9901reset_param_ti99_8 =
 	/* interrupt handler */
 	tms9901_interrupt_callback,
 
-	/* clock rate = 3.58MHz */
-	3579545.
+	/* clock rate = 3.58MHz??? 2.68MHz??? */
+	/*3579545.*/2684658.75
 };
 
 /* handset interface */
@@ -1360,15 +1360,11 @@ READ_HANDLER ( ti99_8_r )
 					if (! (offset & 1))
 					{
 						if (offset & 2)
-						{	/* read VDP status */
-							tms9995_ICount -= 1;
+							/* read VDP status */
 							reply = TMS9928A_register_r(0);
-						}
 						else
-						{	/* read VDP RAM */
-							tms9995_ICount -= 1;
+							/* read VDP RAM */
 							reply = TMS9928A_vram_r(0);
-						}
 					}
 				}
 				else
@@ -1383,7 +1379,7 @@ READ_HANDLER ( ti99_8_r )
 				/* speech read */
 				if (! (offset & 1))
 				{
-					tms9995_ICount -= 16;		/* this is just a minimum, it can be more */
+					tms9995_ICount -= 16*4;		/* this is just a minimum, it can be more */
 					reply = tms5220_status_r(0);
 				}
 				break;
@@ -1535,15 +1531,11 @@ WRITE_HANDLER ( ti99_8_w )
 				if (! (offset & 1))
 				{
 					if (offset & 2)
-					{	/* read VDP status */
+						/* read VDP status */
 						TMS9928A_register_w(0, data);
-						tms9995_ICount -= 1;
-					}
 					else
-					{	/* read VDP RAM */
+						/* read VDP RAM */
 						TMS9928A_vram_w(0, data);
-						tms9995_ICount -= 1;
-					}
 				}
 				break;
 
@@ -1551,7 +1543,7 @@ WRITE_HANDLER ( ti99_8_w )
 				/* speech write */
 				if (! (offset & 1))
 				{
-					tms9995_ICount -= 48;		/* this is just an approx. minimum, it can be much more */
+					tms9995_ICount -= 48*4;		/* this is just an approx. minimum, it can be much more */
 
 					/* the stupid design of the tms5220 core means that ready is cleared when
 					there are 15 bytes in FIFO.  It should be 16.  Of course, if it were the
@@ -1560,7 +1552,7 @@ WRITE_HANDLER ( ti99_8_w )
 					if (! tms5220_ready_r())
 					{
 						double time_to_ready = tms5220_time_to_ready();
-						int cycles_to_ready = ceil(TIME_TO_CYCLES(0, time_to_ready));
+						int cycles_to_ready = ((int) ceil(TIME_TO_CYCLES(0, time_to_ready)) + 3) & ~3;
 
 						logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
 
@@ -2162,7 +2154,7 @@ static int ti99_R9901_1(int offset)
 		answer = ((readinputport(input_port_keyboard + (KeyCol >> 1)) >> ((KeyCol & 1) * 8)) >> 5) & 0x07;
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
-	/*if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
+	/*if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
 		answer |= 8;*/
 
 	return answer;
@@ -2194,7 +2186,7 @@ static int ti99_R9901_3(int offset)
 		answer = 4;	/* on systems without handset, the pin is pulled up to avoid spurious interrupts */
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
 		answer |= 8;
 
 	return answer;
@@ -2284,7 +2276,7 @@ static int ti99_8_R9901_1(int offset)
 		answer = (readinputport(input_port_keyboard_8 + KeyCol) >> 2) & 0x07;
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
-	/*if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
+	/*if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
 		answer |= 8;*/
 
 	return answer;
@@ -2342,9 +2334,9 @@ static void ti99_audio_gate(int offset, int data)
 */
 static void ti99_CS_output(int offset, int data)
 {
-	device_output(image_from_devtype_and_index(IO_CASSETTE, 0), data ? 32767 : -32767);
+	cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), data ? +1 : -1);
 	if (ti99_model != model_99_8)	/* 99/8 only has one tape port!!! */
-		device_output(image_from_devtype_and_index(IO_CASSETTE, 1), data ? 32767 : -32767);
+		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 1), data ? +1 : -1);
 }
 
 
