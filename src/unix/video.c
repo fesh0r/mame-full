@@ -913,7 +913,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
 		change_debugger_focus(!debugger_has_focus);
 
-	/*** STEP 3: update the focussed display ***/
+	/*** STEP 3: update the focused display ***/
 	if (debugger_has_focus)
 	{
 		if (display->changed_flags & DEBUG_BITMAP_CHANGED)
@@ -921,269 +921,274 @@ void osd_update_video_and_audio(struct mame_display *display)
 	}
 	else
 	{
-            if (code_pressed(KEYCODE_LALT) &&
-                code_pressed(KEYCODE_LCONTROL))
-            {
-                if (code_pressed_memory(KEYCODE_INSERT))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_OPTION0;
-                if (code_pressed_memory(KEYCODE_HOME))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
-                if (code_pressed_memory(KEYCODE_PGUP))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
-                if (code_pressed_memory(KEYCODE_END))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_OPTION3;
-                if (code_pressed_memory(KEYCODE_PGDN))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_OPTION4;
-            }
-            else if (code_pressed(KEYCODE_LSHIFT) &&
-                     code_pressed(KEYCODE_LCONTROL))
-            {
-                if (code_pressed_memory(KEYCODE_INSERT))
-                {
-                  game_vis_area_override_index++;
-                  if(game_vis_area_override_index>2)
-                    game_vis_area_override_index = 0;
-	          game_vis_area = display->game_visible_area;
-                  update_game_vis_area();
-                }
-            }
-            else if (code_pressed(KEYCODE_LALT))
-            {
-                if (code_pressed_memory(KEYCODE_INSERT))
-                {
-                        normal_params.video_mode = 0;
-                        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                }
-                if (code_pressed_memory(KEYCODE_HOME))
-                {
-                        normal_params.video_mode = 1;
-                        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                }
-                if (code_pressed_memory(KEYCODE_PGUP))
-                {
-                        normal_params.video_mode = 2;
-                        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                }
-                if (code_pressed_memory(KEYCODE_DEL))
-                {
-                        normal_params.video_mode = 3;
-                        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                }
-                if (code_pressed_memory(KEYCODE_END))
-                {
-                        normal_params.video_mode = 4;
-                        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                }
-                if (code_pressed_memory(KEYCODE_PGDN))
-                {
-                        normal_params.fullscreen = 1 - normal_params.fullscreen;
-                        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
-                }
-            }
-            else if (code_pressed(KEYCODE_LCONTROL))
-            {
-                int effect_mod = 0;
-                if (code_pressed_memory(KEYCODE_INSERT))
-                        frameskipper = 0;
-                if (code_pressed_memory(KEYCODE_HOME))
-                        frameskipper = 1;
-                if (code_pressed_memory(KEYCODE_DEL))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
-                if (code_pressed_memory(KEYCODE_END))
-                        flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
-                if (code_pressed_memory(KEYCODE_PGUP))
-                        effect_mod = 1;
-                if (code_pressed_memory(KEYCODE_PGDN))
-                        effect_mod = -1;
-                if (effect_mod && (sysdep_display_properties.mode_info[
-                     normal_params.video_mode] & SYSDEP_DISPLAY_EFFECTS))
-                {
-                  int i=0, scaled_width, scaled_height;
-
-                  /* check if the effect fits the screen */
-                  do
-                  {
-                    if (!(i&1)) /* 1st try, 3rd try, etc: next effect */
-                    {
-                      /* next effect */
-                      user_effect += effect_mod;
-                      if (user_effect < 0)
-                        user_effect = SYSDEP_DISPLAY_EFFECT_SCAN_V-1;
-                      if (user_effect >= SYSDEP_DISPLAY_EFFECT_SCAN_V)
-                        user_effect = 0;
-                      
-                      update_effect();
-                    }
-                    else /* 2nd try, 4th try... same effect... */
-                    {
-                      normal_params.widthscale  = 1;
-                      normal_params.heightscale = 1;
-                      normal_params.yarbsize    = 0;
-                    }
-                    
-                    /* is this going to fit? */
-                    sysdep_display_check_effect_params(&normal_params);
-                    if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-                    {
-                      scaled_width  = normal_params.height * normal_params.widthscale;
-                      scaled_height = normal_params.yarbsize? normal_params.yarbsize:
-                        normal_params.width * normal_params.heightscale;
-                    }
-                    else
-                    {
-                      scaled_width  = normal_params.width * normal_params.widthscale;
-                      scaled_height = normal_params.yarbsize? normal_params.yarbsize:
-                        normal_params.height * normal_params.heightscale;
-                    }
-                    i++;
-                  } while ((i <= (2*SYSDEP_DISPLAY_EFFECT_LAST)) &&
-                           ((scaled_width  > sysdep_display_properties.max_width ) ||
-                            (scaled_height > sysdep_display_properties.max_height)));
-
-                  normal_params_changed |= EFFECT_CHANGED;
-                }
-            }
-            else if (code_pressed(KEYCODE_LSHIFT))
-            {
-                int widthscale_mod  = 0;
-                int heightscale_mod = 0;
-                int scale_mod = 0;
-
-                if (code_pressed_memory(KEYCODE_INSERT))
-                        widthscale_mod = 1;
-                if (code_pressed_memory(KEYCODE_DEL))
-                        widthscale_mod = -1;
-                if (code_pressed_memory(KEYCODE_HOME))
-                        heightscale_mod = 1;
-                if (code_pressed_memory(KEYCODE_END))
-                        heightscale_mod = -1;
-                if (code_pressed_memory(KEYCODE_PGUP))
-                        scale_mod = 1;
-                if (code_pressed_memory(KEYCODE_PGDN))
-                        scale_mod = -1;
-                if (scale_mod)
-                {
-                  if (normal_params.widthscale == normal_params.heightscale)
-                  {
-                        normal_params.widthscale  += scale_mod;
-                        normal_params.heightscale += scale_mod;
-                  }
-                  else if (normal_params.widthscale == 
-                           (2*normal_params.heightscale))
-                  {
-                        normal_params.widthscale  += 2*scale_mod;
-                        normal_params.heightscale += scale_mod;
-                  }
-                  else if (normal_params.heightscale == 
-                           (2*normal_params.widthscale))
-                  {
-                        normal_params.widthscale  += scale_mod;
-                        normal_params.heightscale += 2*scale_mod;
-                  }
-                  else
-                  {
-                        normal_params.widthscale  += scale_mod *
-                          normal_params.widthscale;
-                        normal_params.heightscale += scale_mod *
-                          normal_params.heightscale;
-                  }
-                  normal_params_changed |= X_SCALING_CHANGED|Y_SCALING_CHANGED;
-                  sysdep_display_check_effect_params(&normal_params);
-                }
-                if (widthscale_mod)
-                {
-                  normal_params.widthscale += widthscale_mod;
-                  normal_params_changed |= X_SCALING_CHANGED;
-                  sysdep_display_check_effect_params(&normal_params);
-                }
-                if (heightscale_mod)
-                {
-                  normal_params.heightscale += heightscale_mod;
-                  normal_params.yarbsize = 0;
-                  normal_params_changed |= Y_SCALING_CHANGED;
-                  sysdep_display_check_effect_params(&normal_params);
-                }
-            }
-
-            /* determine non hotkey flags */
-	    if (ui_dirty)
-		flags |= SYSDEP_DISPLAY_UI_DIRTY;
-            
-            if (display->changed_flags & GAME_BITMAP_CHANGED)
-            {
-                struct rectangle vis_area = game_vis_area;
-            
-		/* at the end, we need the current time */
-		curr = osd_cycles();
-
-		/* update stats for the FPS average calculation */
-		if (start_time == 0)
+#ifdef MESS
+		if (mess_ui_active())
+#endif
 		{
-			/* start the timer going 1 second into the game */
-			if (timer_get_time() > 1.0)
-				start_time = curr;
-		}
-		else
-		{
-			frames_displayed++;
-			if (frames_displayed + 1 == frames_to_display)
+			if (code_pressed(KEYCODE_LALT) &&
+					code_pressed(KEYCODE_LCONTROL))
 			{
-				char name[20];
-				mame_file *fp;
-
-				/* make a filename with an underscore prefix */
-				sprintf(name, "_%.8s", Machine->gamedrv->name);
-
-				/* write out the screenshot */
-				if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
-				{
-					save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
-					mame_fclose(fp);
-				}
-				trying_to_quit = 1;
+				if (code_pressed_memory(KEYCODE_INSERT))
+					flags |= SYSDEP_DISPLAY_HOTKEY_OPTION0;
+				if (code_pressed_memory(KEYCODE_HOME))
+					flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
+				if (code_pressed_memory(KEYCODE_PGUP))
+					flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
+				if (code_pressed_memory(KEYCODE_END))
+					flags |= SYSDEP_DISPLAY_HOTKEY_OPTION3;
+				if (code_pressed_memory(KEYCODE_PGDN))
+					flags |= SYSDEP_DISPLAY_HOTKEY_OPTION4;
 			}
-			end_time = curr;
+			else if (code_pressed(KEYCODE_LSHIFT) &&
+					code_pressed(KEYCODE_LCONTROL))
+			{
+				if (code_pressed_memory(KEYCODE_INSERT))
+				{
+					game_vis_area_override_index++;
+					if(game_vis_area_override_index>2)
+						game_vis_area_override_index = 0;
+					game_vis_area = display->game_visible_area;
+					update_game_vis_area();
+				}
+			}
+			else if (code_pressed(KEYCODE_LALT))
+			{
+				if (code_pressed_memory(KEYCODE_INSERT))
+				{
+					normal_params.video_mode = 0;
+					normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+				}
+				if (code_pressed_memory(KEYCODE_HOME))
+				{
+					normal_params.video_mode = 1;
+					normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+				}
+				if (code_pressed_memory(KEYCODE_PGUP))
+				{
+					normal_params.video_mode = 2;
+					normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+				}
+				if (code_pressed_memory(KEYCODE_DEL))
+				{
+					normal_params.video_mode = 3;
+					normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+				}
+				if (code_pressed_memory(KEYCODE_END))
+				{
+					normal_params.video_mode = 4;
+					normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+				}
+				if (code_pressed_memory(KEYCODE_PGDN))
+				{
+					normal_params.fullscreen = 1 - normal_params.fullscreen;
+					normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+				}
+			}
+			else if (code_pressed(KEYCODE_LCONTROL))
+			{
+				int effect_mod = 0;
+				if (code_pressed_memory(KEYCODE_INSERT))
+					frameskipper = 0;
+				if (code_pressed_memory(KEYCODE_HOME))
+					frameskipper = 1;
+				if (code_pressed_memory(KEYCODE_DEL))
+					flags |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
+				if (code_pressed_memory(KEYCODE_END))
+					flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
+				if (code_pressed_memory(KEYCODE_PGUP))
+					effect_mod = 1;
+				if (code_pressed_memory(KEYCODE_PGDN))
+					effect_mod = -1;
+				if (effect_mod && (sysdep_display_properties.mode_info[
+							normal_params.video_mode] & SYSDEP_DISPLAY_EFFECTS))
+				{
+					int i=0, scaled_width, scaled_height;
+
+					/* check if the effect fits the screen */
+					do
+					{
+						if (!(i&1)) /* 1st try, 3rd try, etc: next effect */
+						{
+							/* next effect */
+							user_effect += effect_mod;
+							if (user_effect < 0)
+								user_effect = SYSDEP_DISPLAY_EFFECT_SCAN_V-1;
+							if (user_effect >= SYSDEP_DISPLAY_EFFECT_SCAN_V)
+								user_effect = 0;
+
+							update_effect();
+						}
+						else /* 2nd try, 4th try... same effect... */
+						{
+							normal_params.widthscale  = 1;
+							normal_params.heightscale = 1;
+							normal_params.yarbsize    = 0;
+						}
+
+						/* is this going to fit? */
+						sysdep_display_check_effect_params(&normal_params);
+						if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+						{
+							scaled_width  = normal_params.height * normal_params.widthscale;
+							scaled_height = normal_params.yarbsize? normal_params.yarbsize:
+								normal_params.width * normal_params.heightscale;
+						}
+						else
+						{
+							scaled_width  = normal_params.width * normal_params.widthscale;
+							scaled_height = normal_params.yarbsize? normal_params.yarbsize:
+								normal_params.height * normal_params.heightscale;
+						}
+						i++;
+					} while ((i <= (2*SYSDEP_DISPLAY_EFFECT_LAST)) &&
+							((scaled_width  > sysdep_display_properties.max_width ) ||
+							 (scaled_height > sysdep_display_properties.max_height)));
+
+					normal_params_changed |= EFFECT_CHANGED;
+				}
+			}
+			else if (code_pressed(KEYCODE_LSHIFT))
+			{
+				int widthscale_mod  = 0;
+				int heightscale_mod = 0;
+				int scale_mod = 0;
+
+				if (code_pressed_memory(KEYCODE_INSERT))
+					widthscale_mod = 1;
+				if (code_pressed_memory(KEYCODE_DEL))
+					widthscale_mod = -1;
+				if (code_pressed_memory(KEYCODE_HOME))
+					heightscale_mod = 1;
+				if (code_pressed_memory(KEYCODE_END))
+					heightscale_mod = -1;
+				if (code_pressed_memory(KEYCODE_PGUP))
+					scale_mod = 1;
+				if (code_pressed_memory(KEYCODE_PGDN))
+					scale_mod = -1;
+				if (scale_mod)
+				{
+					if (normal_params.widthscale == normal_params.heightscale)
+					{
+						normal_params.widthscale  += scale_mod;
+						normal_params.heightscale += scale_mod;
+					}
+					else if (normal_params.widthscale == 
+							(2*normal_params.heightscale))
+					{
+						normal_params.widthscale  += 2*scale_mod;
+						normal_params.heightscale += scale_mod;
+					}
+					else if (normal_params.heightscale == 
+							(2*normal_params.widthscale))
+					{
+						normal_params.widthscale  += scale_mod;
+						normal_params.heightscale += 2*scale_mod;
+					}
+					else
+					{
+						normal_params.widthscale  += scale_mod *
+							normal_params.widthscale;
+						normal_params.heightscale += scale_mod *
+							normal_params.heightscale;
+					}
+					normal_params_changed |= X_SCALING_CHANGED|Y_SCALING_CHANGED;
+					sysdep_display_check_effect_params(&normal_params);
+				}
+				if (widthscale_mod)
+				{
+					normal_params.widthscale += widthscale_mod;
+					normal_params_changed |= X_SCALING_CHANGED;
+					sysdep_display_check_effect_params(&normal_params);
+				}
+				if (heightscale_mod)
+				{
+					normal_params.heightscale += heightscale_mod;
+					normal_params.yarbsize = 0;
+					normal_params_changed |= Y_SCALING_CHANGED;
+					sysdep_display_check_effect_params(&normal_params);
+				}
+			}
 		}
-		
-		if (normal_params_changed)
-		        update_params();
-		
-		if (!normal_palette)
+
+		/* determine non hotkey flags */
+		if (ui_dirty)
+			flags |= SYSDEP_DISPLAY_UI_DIRTY;
+
+		if (display->changed_flags & GAME_BITMAP_CHANGED)
 		{
-			/* the palette had been destroyed because of display changes */
-			normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth);
+			struct rectangle vis_area = game_vis_area;
+
+			/* at the end, we need the current time */
+			curr = osd_cycles();
+
+			/* update stats for the FPS average calculation */
+			if (start_time == 0)
+			{
+				/* start the timer going 1 second into the game */
+				if (timer_get_time() > 1.0)
+					start_time = curr;
+			}
+			else
+			{
+				frames_displayed++;
+				if (frames_displayed + 1 == frames_to_display)
+				{
+					char name[20];
+					mame_file *fp;
+
+					/* make a filename with an underscore prefix */
+					sprintf(name, "_%.8s", Machine->gamedrv->name);
+
+					/* write out the screenshot */
+					if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
+					{
+						save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+						mame_fclose(fp);
+					}
+					trying_to_quit = 1;
+				}
+				end_time = curr;
+			}
+
+			if (normal_params_changed)
+				update_params();
+
 			if (!normal_palette)
 			{
-				/* oops this sorta sucks */
-				fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
-				sysdep_display_close();
-				sysdep_display_exit();
-				exit(1);
+				/* the palette had been destroyed because of display changes */
+				normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth);
+				if (!normal_palette)
+				{
+					/* oops this sorta sucks */
+					fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
+					sysdep_display_close();
+					sysdep_display_exit();
+					exit(1);
+				}
+				update_palette(display, 1);
+				palette_changed = 0;
 			}
-			update_palette(display, 1);
-			palette_changed = 0;
+
+			if (palette_changed)
+			{
+				update_palette(display, 0);
+				palette_changed = 0;
+			}
+
+			profiler_mark(PROFILER_BLIT);
+			/* update and check if the display properties were changed */
+			msg = sysdep_display_update(display->game_bitmap,
+					&vis_area, &(display->game_bitmap_update),
+					normal_palette, display->led_state, flags);
+			profiler_mark(PROFILER_END);
+			if (msg)
+			{
+				status_msg  = msg;
+				show_status = 2.0 * display->game_refresh_rate;
+				ui_show_fps_temp(2.0);
+			}
+			flags = 0;
 		}
-		
-		if (palette_changed)
-		{
-			update_palette(display, 0);
-			palette_changed = 0;
-		}
-		
-		profiler_mark(PROFILER_BLIT);
-		/* update and check if the display properties were changed */
-		msg = sysdep_display_update(display->game_bitmap,
-		   &vis_area, &(display->game_bitmap_update),
-		   normal_palette, display->led_state, flags);
-		profiler_mark(PROFILER_END);
-		if (msg)
-		{
-		  status_msg  = msg;
-		  show_status = 2.0 * display->game_refresh_rate;
-		  ui_show_fps_temp(2.0);
-		}
-		flags = 0;
-            }
 	}
 
 	/*** STEP 4: handle frameskip ***/
@@ -1200,7 +1205,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		else if (frameskip == FRAMESKIP_LEVELS - 1)
 		{
 			frameskip = 0;
-			autoframeskip = 1;
+			AUTOFRAMESKIP = 1;
 		}
 
 		/* else just increment */
