@@ -65,7 +65,7 @@ static int                GDI_create_display(int width, int height, int depth, i
 static void               GDI_close_display(void);
 static void               GDI_set_visible_area(int min_x, int max_x, int min_y, int max_y);
 static void               GDI_set_debugger_focus(int debugger_has_focus);
-static int                GDI_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
+static int                GDI_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *pens, int modifiable, const UINT8 *debug_palette, UINT32 *debug_pens);
 static void               GDI_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               GDI_mark_dirty(int x1, int y1, int x2, int y2);
@@ -255,6 +255,8 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     int             bmheight;
 
     This.m_nDepth = depth;
+    if (This.m_nDepth == 15)
+        This.m_nDepth = 16;
 
     if (attributes & VIDEO_TYPE_VECTOR)
     {
@@ -330,15 +332,6 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     /* Make a copy of the scrbitmap for 16 bit palette lookup. */
     This.m_pTempBitmap = osd_alloc_bitmap(bmwidth, bmheight, This.m_nDepth);
 
-    /* Palette */
-    if (This.m_nDepth == 8)
-    {
-        LogPalette.palVersion    = 0x0300;
-        LogPalette.palNumEntries = 1;
-        This.m_hPalette = CreatePalette(&LogPalette);
-        ResizePalette(This.m_hPalette, OSD_NUMPENS);
-    }
-
     /* Create BitmapInfo */
     This.m_pInfo = (BITMAPINFO*)malloc(sizeof(BITMAPINFOHEADER) +
                                        sizeof(RGBQUAD) * OSD_NUMPENS);
@@ -357,6 +350,12 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
 
     if (This.m_nDepth == 8)
     {
+        /* Palette */
+        LogPalette.palVersion    = 0x0300;
+        LogPalette.palNumEntries = 1;
+        This.m_hPalette = CreatePalette(&LogPalette);
+        ResizePalette(This.m_hPalette, OSD_NUMPENS);
+
         /* Map image values to palette index */
         for (i = 0; i < OSD_NUMPENS; i++)
             ((WORD*)(This.m_pInfo->bmiColors))[i] = i;
@@ -491,10 +490,10 @@ static void GDI_set_debugger_focus(int debugger_has_focus)
 
 static int GDI_allocate_colors(unsigned int totalcolors,
                                const UINT8* palette,
-                               UINT16*      pens,
+                               UINT32*      pens,
                                int          modifiable,
                                const UINT8* debug_palette,
-                               UINT16*      debug_pens)
+                               UINT32*      debug_pens)
 {
     unsigned int i;
 

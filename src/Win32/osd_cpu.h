@@ -205,7 +205,6 @@ typedef union {
 #define HAS_I186        1
 #define HAS_I188        0
 #define HAS_I286        0
-#define HAS_I288        0
 #define HAS_V20         1
 #define HAS_V30         1
 #define HAS_V33         1
@@ -241,7 +240,7 @@ typedef union {
 #define HAS_TMS9980     1
 #define HAS_TMS9985     0
 #define HAS_TMS9989     0
-#define HAS_TMS9995     0
+#define HAS_TMS9995     1
 #define HAS_TMS99105A   0
 #define HAS_TMS99110A   0
 #define HAS_Z8000       1

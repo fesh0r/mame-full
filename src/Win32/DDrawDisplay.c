@@ -157,7 +157,7 @@ static int                DDraw_create_display(int width, int height, int depth,
 static void               DDraw_close_display(void);
 static void               DDraw_set_visible_area(int min_x, int max_x, int min_y, int max_y);
 static void               DDraw_set_debugger_focus(int debugger_has_focus);
-static int                DDraw_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
+static int                DDraw_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *pens, int modifiable, const UINT8 *debug_palette, UINT32 *debug_pens);
 static void               DDraw_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               DDraw_mark_dirty(int x1, int y1, int x2, int y2);
@@ -752,10 +752,10 @@ static void DDraw_set_debugger_focus(int debugger_has_focus)
 
 static int DDraw_allocate_colors(unsigned int totalcolors,
                                  const UINT8* palette,
-                                 UINT16*      pens,
+                                 UINT32*      pens,
                                  int          modifiable,
                                  const UINT8* debug_palette,
-                                 UINT16*      debug_pens)
+                                 UINT32*      debug_pens)
 {
     unsigned int    i;
     BOOL            bResult = TRUE;

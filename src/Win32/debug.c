@@ -229,7 +229,7 @@ void MAME32Debug_update_display(struct osd_bitmap *debug_bitmap)
 
 int MAME32Debug_allocate_colors(int          modifiable,
                                 const UINT8* debug_palette,
-                                UINT16*      debug_pens)
+                                UINT32*      debug_pens)
 {
     int i;
 

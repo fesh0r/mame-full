@@ -201,6 +201,12 @@ static struct osd_bitmap* Display_alloc_bitmap(int width, int height, int depth)
 {
     struct osd_bitmap*  pBitmap;
 
+    if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
+    {
+        logerror("osd_alloc_bitmap() unknown depth %d\n", depth);
+        return NULL;
+    }
+
     pBitmap = (struct osd_bitmap*)malloc(sizeof(struct osd_bitmap));
 
     if (pBitmap != NULL)
@@ -216,10 +222,12 @@ static struct osd_bitmap* Display_alloc_bitmap(int width, int height, int depth)
 
         rdwidth = (width + 7) & ~7;     /* round width to a quadword */
 
-        if (depth == 16)
-            rowlen = 2 * (rdwidth + 2 * safety) * sizeof(unsigned char);
+        rowlen = (rdwidth + 2 * safety) * sizeof(unsigned char);
+        if (depth == 32)
+            rowlen *= 4;
         else
-            rowlen =     (rdwidth + 2 * safety) * sizeof(unsigned char);
+        if (depth == 15 ||  depth == 16)
+            rowlen *= 2;
 
         bm = (unsigned char*)malloc((height + 2 * safety) * rowlen);
         if (bm == NULL)
@@ -241,7 +249,10 @@ static struct osd_bitmap* Display_alloc_bitmap(int width, int height, int depth)
 
         for (i = 0; i < height + 2 * safety; i++)
         {
-            if (depth == 16)
+            if (depth == 32)
+                pBitmap->line[i] = &bm[i * rowlen + safety * 4];
+            else
+            if (depth == 15 || depth == 16)
                 pBitmap->line[i] = &bm[i * rowlen + safety * 2];
             else
                 pBitmap->line[i] = &bm[i * rowlen + safety];

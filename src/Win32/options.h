@@ -165,8 +165,8 @@ typedef struct
     int    sample_rate;
     int    volume;
     BOOL   stereo;
-
     BOOL   fm_ym3812;
+    BOOL   use_filter;
 
     BOOL   cheat;
     BOOL   auto_pause;

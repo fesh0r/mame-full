@@ -461,8 +461,8 @@ void OptionsInit(int total_games)
     global.sample_rate  = 22050;
     global.volume       = 0;
     global.stereo       = TRUE;
-
     global.fm_ym3812    = FALSE;
+    global.use_filter   = TRUE;
 
     global.cheat        = FALSE;
     global.auto_pause   = TRUE;

@@ -59,6 +59,7 @@
 #define HIDC_TRIPLE_BUFFER              0x809a04ce    // IDD_PROP_DISPLAY
 #define HIDC_USEBLIT                    0x80920423    // IDD_PROP_ADVANCED
 #define HIDC_USE_DEFAULT                0x8092041b    // IDD_PROP_ADVANCED
+#define HIDC_USE_FILTER                 0x809b04d8    // IDD_PROP_SOUND
 #define HIDC_USE_FM_YM3812              0x809b0437    // IDD_PROP_SOUND
 #define HIDC_VECTOR_DOUBLE              0x80950401    // IDD_PROP_VECTOR
 #define HIDC_VOLUME                     0x809b04c9    // IDD_PROP_SOUND

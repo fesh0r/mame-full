@@ -345,15 +345,19 @@ void osd_set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 int osd_allocate_colors(unsigned int totalcolors,
                         const UINT8* palette,
-                        UINT16*      pens,
+                        UINT32*      pens,
                         int          modifiable,
                         const UINT8* debug_palette,
-                        UINT16*      debug_pens)
+                        UINT32*      debug_pens)
 {
     int nResult;
 
-    nResult = MAME32App.m_pDisplay->allocate_colors(totalcolors, palette, pens, modifiable,
-                                                    debug_palette, debug_pens);
+    nResult = MAME32App.m_pDisplay->allocate_colors(totalcolors,
+                                                    palette,
+                                                    pens,
+                                                    modifiable,
+                                                    debug_palette,
+                                                    debug_pens);
     
     /* Fully initialized only after colors are successfully allocated. */
     if (nResult == 0)
@@ -578,7 +582,7 @@ void osd_joystick_start_calibration(void)
 
 /* Prepare the next calibration step. Return a description of this step. */
 /* (e.g. "move to upper left") */
-char *osd_joystick_calibrate_next(void)
+const char *osd_joystick_calibrate_next(void)
 {
     assert(FALSE);
     return " ";

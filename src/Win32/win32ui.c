@@ -4279,6 +4279,17 @@ static BOOL ParseCommandLine(char *command_line)
             continue;
         }
 
+        if (stricmp(argv[i], "-resamplefilter") == 0)
+        {
+            o->use_filter = TRUE;
+            continue;
+        }
+        if (stricmp(argv[i], "-noresamplefilter") == 0)
+        {
+            o->use_filter = FALSE;
+            continue;
+        }
+
         /* Input */
         if (stricmp(argv[i], "-mouse") == 0)
         {
@@ -5031,6 +5042,7 @@ static void MamePlayGameWithOptions()
     }
     options.use_samples         = playing_game_options.use_samples;
     options.use_emulated_ym3812 = (playing_game_options.fm_ym3812 == 0);
+    options.use_filter          = playing_game_options.use_filter;
 
     options.color_depth         = playing_game_options.depth;
     if (playing_game_options.is_window        == FALSE

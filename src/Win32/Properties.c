@@ -202,6 +202,7 @@ static DWORD dwHelpIDs [] = {
     IDC_USEBLIT,            HIDC_USEBLIT,
     IDC_USE_DEFAULT,        HIDC_USE_DEFAULT,
     IDC_USE_FM_YM3812,      HIDC_USE_FM_YM3812,
+    IDC_USE_FILTER,         HIDC_USE_FILTER,
     IDC_VECTOR_DOUBLE,      HIDC_VECTOR_DOUBLE, 
     IDC_VSCANLINES,         HIDC_VSCANLINES, 
     IDC_WINDOW_DDRAW,       HIDC_WINDOW_DDRAW,
@@ -1771,6 +1772,7 @@ void BuildDataMap(void)
     DataMapAdd(IDC_JOYSTICK,      DM_BOOL, CT_BUTTON,   &lpGameOpts->use_joystick,    0, 0, 0);   
     DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &lpGameOpts->default_input,   0, 0, 0);
     DataMapAdd(IDC_USE_FM_YM3812, DM_BOOL, CT_BUTTON,   &lpGameOpts->fm_ym3812,       0, 0, 0);
+    DataMapAdd(IDC_USE_FILTER,    DM_BOOL, CT_BUTTON,   &lpGameOpts->use_filter,      0, 0, 0);
     DataMapAdd(IDC_STEREO,        DM_BOOL, CT_BUTTON,   &lpGameOpts->stereo,          0, 0, 0);
     DataMapAdd(IDC_CHEAT,         DM_BOOL, CT_BUTTON,   &lpGameOpts->cheat,           0, 0, 0);
     DataMapAdd(IDC_AUTO_PAUSE,    DM_BOOL, CT_BUTTON,   &lpGameOpts->auto_pause,      0, 0, 0);
