@@ -54,6 +54,9 @@ extern struct plugin_struct sysdep_dsp_arts;
 #ifdef SYSDEP_DSP_ARTS_SMOTEK
 extern struct plugin_struct sysdep_dsp_arts;
 #endif
+#ifdef SYSDEP_DSP_SDL
+extern struct plugin_struct sysdep_dsp_sdl;
+#endif
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DSP_PLUGINS_H */

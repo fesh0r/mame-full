@@ -59,7 +59,7 @@ static struct rc_option sysdep_dsp_opts[] = {
      "List available sound-dsp plugins" },
    { "timer",		"ti",			rc_bool,	&sysdep_dsp_use_timer,
      "0",		0,			0,		NULL,
-     "Use / don't use timer based audio (normally it will be used automagicly when nescesarry)" },
+     "Use / don't use timer based audio (normally it will be used automagically when nescesarry)" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -97,6 +97,9 @@ static const struct plugin_struct *sysdep_dsp_plugins[] = {
 #endif
 #ifdef SYSDEP_DSP_ARTS_SMOTEK
    &sysdep_dsp_arts,
+#endif
+#ifdef SYSDEP_DSP_SDL
+   &sysdep_dsp_sdl,
 #endif
    NULL
 };
@@ -205,7 +208,7 @@ struct sysdep_dsp_struct *sysdep_dsp_create(const char *plugin,
    }
    
    if(sysdep_dsp_use_timer || !dsp->get_freespace)
-      fprintf(stderr, "info: dsp: using timer based audio\n");
+      fprintf(stderr, "info: dsp: using timer-based audio\n");
    
    /* return actual type and samplerate */
    *type = dsp->emu_info.type;
