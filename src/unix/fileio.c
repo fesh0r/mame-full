@@ -1041,6 +1041,6 @@ int osd_select_file(int sel, char *filename)
 
 void osd_device_eject(int type, int id)
 {
-	device_filename_change(type, id, NULL);
+	image_unload(type, id);
 }
 #endif
