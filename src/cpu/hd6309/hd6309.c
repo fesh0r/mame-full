@@ -1014,7 +1014,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 					subb_ex, cmpb_ex, sbcb_ex, addd_ex, andb_ex, bitb_ex, ldb_ex,  stb_ex,
 					eorb_ex, adcb_ex, orb_ex,  addb_ex, ldd_ex,  std_ex,  ldu_ex,  stu_ex
 				};
-				(*opcode_table[hd6309.ireg]);
+				(*opcode_table[hd6309.ireg])();
 			}
 			
 			hd6309_ICount -= cycle_counts_page0[hd6309.ireg];
