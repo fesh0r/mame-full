@@ -1546,7 +1546,7 @@ static const struct IODevice io_nc100[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },		
-	IO_PRINTER_PORT(1,"\0"),
+	IO_PRINTER_PORT(1,"prn\0"),
 		{IO_END}
 };
 
@@ -1609,7 +1609,7 @@ static const struct IODevice io_nc200[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },	
-	IO_PRINTER_PORT(1,"\0"),
+	IO_PRINTER_PORT(1,"prn\0"),
 	{IO_END}
 };
 
