@@ -806,7 +806,7 @@ void sysdep_set_leds(int leds)
 
 void sysdep_update_keyboard() 
 {
-   struct keyboard_event kevent;
+   struct xmame_keyboard_event kevent;
    SDL_Event event;
    
    if (Surface) {
@@ -828,7 +828,7 @@ void sysdep_update_keyboard()
             case SDL_KEYUP:
                kevent.scancode = klookup[event.key.keysym.sym];
                kevent.unicode = event.key.keysym.unicode;
-               keyboard_register_event(&kevent);
+               xmame_keyboard_register_event(&kevent);
                if(!kevent.scancode)
                   fprintf (stderr, "Unknown symbol 0x%x\n",
                      event.key.keysym.sym);

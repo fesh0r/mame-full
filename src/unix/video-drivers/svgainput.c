@@ -170,7 +170,7 @@ void acquire_handler(int n)
    sigaction(release_signal, &release_sa, NULL);
    sigaction(acquire_signal, &acquire_sa, NULL);
    keyboard_clearstate();
-   keyboard_clear();
+   xmame_keyboard_clear();
    if (console_fd >= 0)
       ioctl(console_fd, KDSETLED, leds);
    if (acquire_function)
@@ -181,7 +181,7 @@ void keyboard_handler(int scancode, int press)
 {
    static int shift = 0;
    int shift_mask = 0;
-   struct keyboard_event event;
+   struct xmame_keyboard_event event;
    
    switch (scancode)
    {
@@ -201,7 +201,7 @@ void keyboard_handler(int scancode, int press)
    event.press = press;   
    event.scancode = scancode;
    event.unicode = scancode_to_unicode[scancode][shift? 1:0];
-   keyboard_register_event(&event);
+   xmame_keyboard_register_event(&event);
 }
 
 int svga_input_init(void)

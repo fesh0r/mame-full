@@ -178,7 +178,7 @@ sysdep_mouse_poll(void)
 static inline void
 queue_key_event(NSEvent *keyevent)
 {
-	struct keyboard_event event;
+	struct xmame_keyboard_event event;
 	unichar buf[2];	/* just in case theres more than 1 */
 	NSString *string = [keyevent charactersIgnoringModifiers];
 	[string getCharacters:buf range:NSMakeRange(0,1)];
@@ -351,11 +351,11 @@ queue_key_event(NSEvent *keyevent)
 	switch([keyevent type]) {
 		case NSKeyUp:
 			event.press = FALSE;
-			keyboard_register_event(&event);
+			xmame_keyboard_register_event(&event);
 			break;
 		case NSKeyDown:
 			event.press = TRUE;
-			keyboard_register_event(&event);
+			xmame_keyboard_register_event(&event);
 			break;
 		default:
 			break;

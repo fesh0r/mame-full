@@ -122,10 +122,10 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 	int kdosomething=FALSE;
 	PhKeyEvent_t *kevent;
 	PhPointerEvent_t *pevent;	
-	int                   keycode,code;
-	int                   *pt;
-	struct keyboard_event mame_key_event;
-	char                  keyname[16+1];
+	int                         keycode,code;
+	int                         *pt;
+	struct xmame_keyboard_event mame_key_event;
+	char                        keyname[16+1];
 	
    	mame_key_event.press = FALSE;
    
@@ -168,8 +168,7 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 				}
 				mame_key_event.unicode = keyname[0];
 				//phkey [ *(pt+keycode) ] = mask;
-				keyboard_register_event(&mame_key_event);
-			}		
+				xmame_keyboard_register_event(&mame_key_event); }		
 			break;
 		}
 		case Ph_EV_BUT_PRESS:

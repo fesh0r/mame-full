@@ -1186,7 +1186,7 @@ void sysdep_update_keyboard(void)
     ggi_event_mask em = emAll; /*emKeyPress | emKeyRelease;*/
     ggi_event ev;
     struct timeval to = { 0 , 0 };
-    struct keyboard_event event;
+    struct xmame_keyboard_event event;
 
     if (vis) {
         while(ggiEventPoll(vis,em,&to)) {
@@ -1200,7 +1200,7 @@ void sysdep_update_keyboard(void)
               case evKeyRelease:
                   event.scancode = ggi_key(&ev);
                   event.unicode = ev.key.sym;
-                  keyboard_register_event(&event);
+                  xmame_keyboard_register_event(&event);
                   break;
             }
 
