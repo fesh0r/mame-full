@@ -8626,11 +8626,11 @@ Video Board.
 You can use all the video opcodes documented in the University Basic Manual.
 
 The optional demonstration EPROM set includes demonstration programs.  They can
-be loaded with LOAD 0, LOAD 1, LOAD 2 and LOAD 3.  Some programs are supposed to
-do some user interaction, but they were set up in demo mode, so that you must
-edit the source code to run the programs: for instance, to play the brick-wall
-game, you must type 'LOAD 2', then '5 SP=0' to disable demonstration mode,
-then 'RUN'.
+be loaded with LOAD 0, LOAD 1, LOAD 2 and LOAD 3.  Some programs are supposed
+to do some user interaction, but they were set up to run in demo mode, so that
+you must edit the source code to run the programs interactively: for instance,
+to play the brick-wall game, you must type 'LOAD 2', then enter '5 SP=0' to
+disable demonstration mode, then 'RUN'.
 
 There is one undocumented built-in Basic function that can be used if you have
 the demonstration EPROMs installed: JOY.  This instruction is not fully
