@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "mbee.h"
+#include "includes/mbee.h"
 
 typedef struct {		 // CRTC 6545
 	UINT8 horizontal_total;
