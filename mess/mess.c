@@ -211,7 +211,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
         img->length = osd_fsize(file);
-		img->crc = osd_fcrc(file);
+		if (!img->crc) img->crc = osd_fcrc(file);
 		if( img->crc == 0 && img->length < 0x100000 )
 		{
 			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
@@ -518,6 +518,33 @@ int init_devices(const void *game)
 	/* initialize all devices */
 	while( dev->count )
 	{
+
+		/* try and check for valid image and compute 'partial' CRC
+		   for imageinfo if possible */
+		if(dev->id )
+		{
+			for( id = 0; id < dev->count; id++ )
+			{
+				const char *filename = device_filename(dev->type,id);
+				int result;
+
+				/* initialize */
+				logerror("%s id (%s)\n", device_typename_id(dev->type,id), filename ? filename : "NULL");
+				result = (*dev->id)(id);
+				logerror("%s id returns %d\n", device_typename_id(dev->type,id), result);
+
+                if( result != INIT_OK && filename )
+				{
+					mess_printf("%s id failed (%s)\n", device_typename_id(dev->type,id), filename);
+					return 1;
+				}
+			}
+		}
+		else
+		{
+			logerror("%s does not support id!\n", device_typename(dev->type));
+		}
+
 		/* if this device supports initialize (it should!) */
 		if( dev->init )
 		{
