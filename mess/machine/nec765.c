@@ -30,7 +30,7 @@ typedef enum
 } NEC765_PHASE;
 
 /* uncomment the following line for verbose information */
-//#define VERBOSE
+#define VERBOSE
 
 /* uncomment this to not allow end of cylinder "error" */
 #define NO_END_OF_CYLINDER
