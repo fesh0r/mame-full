@@ -11,8 +11,12 @@
 #include <unzip.h>
 #include <zlib.h>
 
+#ifndef S_ISDIR
+#define S_ISDIR(mode) ((mode) & _S_IFDIR)
+#endif
+
 #ifndef MESS
-enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
+enum { LIST_SHORT = 1, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC,
@@ -21,7 +25,7 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, L
 		LIST_GAMESPERSOURCEFILE };
 #else
 void list_mess_info(const char *gamename, const char *arg, int listclones);
-enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
+enum { LIST_SHORT = 1, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC, LIST_WRONGMERGE,
@@ -69,7 +73,6 @@ struct rc_option frontend_opts[] = {
 	{ "gamelist", NULL, rc_set_int, &list, NULL, LIST_GAMELIST, 0, NULL, "output gamelist.txt main body" },
 	{ "listsourcefile",	NULL, rc_set_int, &list, NULL, LIST_SOURCEFILE, 0, NULL, "driver sourcefile" },
 	{ "listgamespersourcefile",	NULL, rc_set_int, &list, NULL, LIST_GAMESPERSOURCEFILE, 0, NULL, "games per sourcefile" },
-	{ "listinfo", "li", rc_set_int, &list, NULL, LIST_INFO, 0, NULL, "all available info on driver" },
 	{ "listxml", "lx", rc_set_int, &list, NULL, LIST_XML, 0, NULL, "all available info on driver in XML format" },
 	{ "listclones", "lc", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "show clones" },
 	{ "listsamdir", NULL, rc_set_int, &list, NULL, LIST_SAMDIR, 0, NULL, "shared sample directory" },
@@ -466,7 +469,7 @@ int frontend_help (const char *gamename)
 	{
 		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n\n",build_version);
+				"Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list         for a brief list of supported games\n"
@@ -490,7 +493,7 @@ int frontend_help (const char *gamename)
 	/* HACK: some options REQUIRE gamename field to work: default to "*" */
 	if (!gamename || (strlen(gamename) == 0))
 		gamename = all_games;
-	
+
 	/* since the cpuintrf structure is filled dynamically now, we have to init first */
 	cpuintrf_init();
 
@@ -1610,10 +1613,6 @@ j = 0;	// count only the main cpu
 			return 0;
 			break;
 
-
-		case LIST_INFO: /* list all info */
-			print_mame_info( stdout, drivers );
-			return 0;
 
 		case LIST_XML: /* list all info */
 			print_mame_xml( stdout, drivers );

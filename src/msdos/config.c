@@ -107,7 +107,6 @@ extern int soundcard, usestereo, attenuation, sampleratedetect;
 
 /* from input.c */
 extern int use_mouse, joystick, steadykey;
-extern const char *ctrlrtype;
 
 /* from cheat.c */
 extern char *cheatfile;
@@ -156,7 +155,7 @@ static char **mame_argv;
 static int game;
 static char srcfile[10];
 
-int use_dirty; /* not used, keep for future dirty vector updating */
+//int use_dirty; /* not used, keep for future dirty vector updating */
 
 struct { const char *name; int id; } joy_table[] =
 {
@@ -873,7 +872,7 @@ struct rc_option config_opts[] =
 	{ "tweak", NULL, rc_bool, &use_tweaked, "0", 0, 0, NULL, "use tweaked vga modes" },
 	{ "vesamode", "vesa", rc_string, &vesamode, "vesa3", 0, 0, NULL, "use vesa modes" },
 	{ "mmx", NULL, rc_bool, &use_mmx, "1", 0, 0, NULL, "use mmx blitter (if possible)" },
-	{ "dirty", NULL, rc_bool, &use_dirty, "1", 0, 0, NULL, NULL },
+//	{ "dirty", NULL, rc_bool, &use_dirty, "1", 0, 0, NULL, NULL },
 	{ "vgafreq", NULL, rc_int, &vgafreq, "-1", 0, 0, NULL, "tweaked mode frequency" },
 	{ "alwayssynced", NULL, rc_bool, &always_synced, "0", 0, 0, NULL, "use tweaked vsync frequency" },
 	{ "depth", NULL, rc_string, &s_depth, "auto", 0, 0, NULL, "screen mode depth" },
@@ -952,10 +951,21 @@ struct rc_option config_opts[] =
 	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "mouse", NULL, rc_bool, &use_mouse, "1", 0, 0, NULL, "enable mouse input" },
 	{ "joystick", "joy", rc_string, &joyname, "none", 0, 0, NULL, "set joystick type" },
+//	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable lightgun input" },
+//	{ "dual_lightgun", "dual", rc_bool, &use_lightgun_dual, "0", 0, 0, NULL, "enable dual lightgun input" },
+//	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },				
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
+//	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
 //	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
-	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
+	{ "ctrlr", NULL, rc_string, &options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
+//	{ "paddle", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
+//	{ "adstick", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
+//	{ "lightgun", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_LIGHTGUN, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a lightgun control is present" },
+//	{ "pedal", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
+//	{ "dial", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
+//	{ "trackball", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
+//	{ "digital", NULL, rc_string, &dummy, "none", 1, 0, decode_digital, "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
 
 #ifdef MESS
 	{ NULL, NULL, rc_link, mess_opts, NULL, 0, 0, NULL, NULL },
@@ -1050,7 +1060,7 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	use_tweaked					= get_bool( "config", "tweak", NULL, 0 );
 	vesamode					= get_string( "config", "vesamode", "vesa", "vesa3", "no", "yes", "yes" );
 	use_mmx						= get_bool( "config", "mmx", NULL, -1 );
-	use_dirty					= get_bool( "config", "dirty", NULL, -1 );
+//	use_dirty					= get_bool( "config", "dirty", NULL, -1 );
 	options.antialias			= get_bool( "config", "antialias", "aa", 1 );
 	options.translucency		= get_bool( "config", "translucency", "tl", 1 );
 	vgafreq 					= get_int( "config", "vgafreq", NULL, -1 );
@@ -1089,7 +1099,7 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	joyname						= get_string( "config", "joystick", "joy", "none", "none", "auto", "auto" );
 	steadykey					= get_bool( "config", "steadykey", "steady", 0 );
 	use_keyboard_leds			= get_bool( "config", "keyboard_leds", "leds", 1 );
-	ctrlrtype					= get_string( "config", "ctrlr", NULL, "standard" ,"", NULL, NULL );
+	options.controller			= get_string( "config", "ctrlr", NULL, NULL ,"", NULL, NULL );
 
 	/* misc configuration */
 	options.cheat				= get_bool( "config", "cheat", "c", 0 );
@@ -1284,7 +1294,7 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 		options.debug_height = 480;
 		g_s_resolution = "640x480x0";
 		extract_resolution( debugres );
-		use_dirty = 0;
+//		use_dirty = 0;
 	}
 	else
 	{

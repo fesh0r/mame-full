@@ -1044,9 +1044,9 @@ void osd_dir_close(void *dir)
 int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
 {
 	if (name)
-		fprintf(stdout, "loading %-12s\r", name);
+		fprintf(stdout, "loading %-32s\r", name);
 	else
-		fprintf(stdout, "                    \r");
+		fprintf(stdout, "                                        \r");
 	fflush(stdout);
 
 	return 0;
@@ -1077,7 +1077,7 @@ void set_pathlist(int file_type, const char *new_rawpath)
 	// by default, start with an empty list
 	list->path = NULL;
 	list->pathcount = 0;
-		
+
 	list->rawpath = new_rawpath;
 
 }

@@ -1,3 +1,27 @@
+0.85
+
+- More input port changes, joystick and second mouse support is not
+  tested. [smf].
+
+
+==========================================================================
+
+0.84
+
+- Input port changes [smf].
+
+- Removed -listinfo [smf].
+
+
+==========================================================================
+
+0.83
+
+- No changes.
+
+
+==========================================================================
+
 0.82
 
 - Dynamic refresh rate changes [smf].
