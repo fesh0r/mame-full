@@ -375,7 +375,10 @@ static const struct IODevice io_oric1[] =
 /*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
 COMP( 1983,  oric1,    0,	 oric,	   oric,	0,	"Tangerine", "Oric 1" )
 COMP( 1984,  orica,    oric1,	 oric,	   oric,	0,	"Tangerine", "Oric Atmos" )
-COMP( 1985,  prav8d,   oric1,   oric,   oric,   0,  "Pravetz",  "Pravetz 8D" )
-COMPX( 1989, prav8dd,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED )
-COMPX( 1989, prav8dda,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM, alternate)", GAME_COMPUTER_MODIFIED )
+COMPX( 1985,  prav8d,   oric1,   oric,   oric,   0,  "Pravetz",  "Pravetz 8D", 
+GAME_NOT_WORKING )
+COMPX( 1989, prav8dd,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED
+|GAME_NOT_WORKING )
+COMPX( 1989, prav8dda,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM, alternate)", GAME_COMPUTER_MODIFIED
+|GAME_NOT_WORKING )
 COMP( 198?,  telstrat,oric1,    telstrat,telstrat,   0,      "Tangerine", "Oric Telestrat" )
