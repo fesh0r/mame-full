@@ -223,6 +223,9 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
 #endif
+#if (HAS_TX0_64KW || HAS_TX0_8KW)
+#include "cpu/tx0/tx0.h"
+#endif
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
@@ -691,6 +694,12 @@ const struct
 #endif
 #if (HAS_SC61860)
 	{ CPU_SC61860, sc61860_get_info },
+#endif
+#if (HAS_TX0_64KW)
+	{ CPU_TX0_64KW, tx0_64kw_get_info },
+#endif
+#if (HAS_TX0_8KW)
+	{ CPU_TX0_8KW, tx0_8kw_get_info },
 #endif
 #if (HAS_Z80GB)
 	{ CPU_Z80GB, z80gb_get_info },
