@@ -9,8 +9,17 @@
    not in ansi-c, so here is a replacement
 */
 
+#ifdef _GNU_SOURCE
+#define SNPRINTF_PRESENT
+#endif
 
-#ifndef _GNU_SOURCE
+#ifdef WIN32
+#include <stdio.h>
+#define snprintf _snprintf
+#define SNPRINTF_PRESENT
+#endif
+
+#ifndef SNPRINTF_PRESENT
 /*linking when using gnu libraries, but not defined _GNU_SOURCE?*/
 
 #include "osdepend.h"
