@@ -294,11 +294,15 @@ void vectrex_set_palette (void)
 		return;
 	}
 	
+	memset (palette, 0, Machine->drv->total_colors * 3);
 	vectrex_new_palette (palette);
-
 	palette_recalc();
 
-	for (i = 0; i < Machine->drv->total_colors; i++)
+
+	i = (Machine->scrbitmap->depth == 8) ? MIN(256,Machine->drv->total_colors) 
+		: Machine->drv->total_colors;
+
+	while (--i >= 0)
 		palette_change_color(i, palette[i*3], palette[i*3+1], palette[i*3+2]);
 		
 	free (palette);
