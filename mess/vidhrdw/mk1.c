@@ -164,17 +164,12 @@ void mk1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
     if (backdrop)
         copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
-					TRANSPARENCY_NONE, 0);
-	else
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
-
-	for (i=0; i<4; i++) {
-		mk1_draw_9segment(bitmap, mk1_led[i], mk1_led_pos[i].x, mk1_led_pos[i].y);
-	}
-
-#if 0
-			drawgfx(bitmap, Machine->gfx[0], studio2_video.data[y][j],0,
-					0,0,x,y,
-					0, TRANSPARENCY_NONE,0);
-#endif
+		    TRANSPARENCY_NONE, 0);
+    else
+	fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
+    
+    for (i=0; i<4; i++) {
+	mk1_draw_9segment(bitmap, mk1_led[i], mk1_led_pos[i].x, mk1_led_pos[i].y);
+	mk1_led[i]=0;
+    }
 }
