@@ -9,15 +9,13 @@
 
 #include "includes/studio2.h"
 
-static UINT8 *studio2_mem;
-
 static MEMORY_READ_START( studio2_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x0800, 0x09ff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( studio2_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM, &studio2_mem },
+	{ 0x0000, 0x07ff, MWA_ROM },
 	{ 0x0800, 0x09ff, MWA_RAM },
 MEMORY_END
 
@@ -29,22 +27,22 @@ INPUT_PORTS_START( studio2 )
 	DIPS_HELPER( 0x002, "Player 1/Left 1", KEYCODE_1, CODE_NONE)
 	DIPS_HELPER( 0x004, "Player 1/Left 2", KEYCODE_2, CODE_NONE)
 	DIPS_HELPER( 0x008, "Player 1/Left 3", KEYCODE_3, CODE_NONE)
-	DIPS_HELPER( 0x010, "Player 1/Left 4", KEYCODE_4, CODE_NONE)
-	DIPS_HELPER( 0x020, "Player 1/Left 5", KEYCODE_5, CODE_NONE)
-	DIPS_HELPER( 0x040, "Player 1/Left 6", KEYCODE_6, CODE_NONE)
-	DIPS_HELPER( 0x080, "Player 1/Left 7", KEYCODE_7, CODE_NONE)
-	DIPS_HELPER( 0x100, "Player 1/Left 8", KEYCODE_8, CODE_NONE)
-	DIPS_HELPER( 0x200, "Player 1/Left 9", KEYCODE_9, CODE_NONE)
-	DIPS_HELPER( 0x001, "Player 1/Left 0", KEYCODE_0, CODE_NONE)
+	DIPS_HELPER( 0x010, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q)
+	DIPS_HELPER( 0x020, "Player 1/Left 5", KEYCODE_5, KEYCODE_W)
+	DIPS_HELPER( 0x040, "Player 1/Left 6", KEYCODE_6, KEYCODE_E)
+	DIPS_HELPER( 0x080, "Player 1/Left 7", KEYCODE_7, KEYCODE_A)
+	DIPS_HELPER( 0x100, "Player 1/Left 8", KEYCODE_8, KEYCODE_S)
+	DIPS_HELPER( 0x200, "Player 1/Left 9", KEYCODE_9, KEYCODE_D)
+	DIPS_HELPER( 0x001, "Player 1/Left 0", KEYCODE_0, KEYCODE_X)
 	PORT_START
 	DIPS_HELPER( 0x002, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE)
-	DIPS_HELPER( 0x004, "Player 2/Right 2", KEYCODE_2_PAD, CODE_NONE)
+	DIPS_HELPER( 0x004, "Player 2/Right 2", KEYCODE_2_PAD, KEYCODE_UP)
 	DIPS_HELPER( 0x008, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE)
-	DIPS_HELPER( 0x010, "Player 2/Right 4", KEYCODE_4_PAD, CODE_NONE)
+	DIPS_HELPER( 0x010, "Player 2/Right 4", KEYCODE_4_PAD, KEYCODE_LEFT)
 	DIPS_HELPER( 0x020, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE)
-	DIPS_HELPER( 0x040, "Player 2/Right 6", KEYCODE_6_PAD, CODE_NONE)
+	DIPS_HELPER( 0x040, "Player 2/Right 6", KEYCODE_6_PAD, KEYCODE_RIGHT)
 	DIPS_HELPER( 0x080, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE)
-	DIPS_HELPER( 0x100, "Player 2/Right 8", KEYCODE_8_PAD, CODE_NONE)
+	DIPS_HELPER( 0x100, "Player 2/Right 8", KEYCODE_8_PAD, KEYCODE_DOWN)
 	DIPS_HELPER( 0x200, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE)
 	DIPS_HELPER( 0x001, "Player 2/Right 0", KEYCODE_0_PAD, CODE_NONE)
 INPUT_PORTS_END
@@ -213,6 +211,7 @@ static int studio2_load_rom(int id)
 {
 	FILE *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
+	int size;
 
 	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
@@ -222,10 +221,16 @@ static int studio2_load_rom(int id)
 	
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
+		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return 1;
 	}	
+	size=osd_fsize(cartfile);
 
-	osd_fread(cartfile, rom+0x400, 0x400);
+	if (osd_fread(cartfile, rom+0x400, size)!=size) {
+		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		osd_fclose(cartfile);
+		return 1;
+	}
 	osd_fclose(cartfile);
 	return 0;
 }
