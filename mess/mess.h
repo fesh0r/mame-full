@@ -259,7 +259,7 @@ extern void device_output_chunk(int type, int id, void *src, int chunks);
 
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
    It allows us to use an empty PARENT field in the macros. */
-extern struct GameDriver driver_0;
+extern const struct GameDriver driver_0;
 
 /* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
  * but keep the program going. It will be set eg. if the filename for a
@@ -273,8 +273,8 @@ extern int mess_keep_going;
  * COMP and COMPX are for computers
  ******************************************************************************/
 #define CONS(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
-extern struct GameDriver driver_##PARENT;	\
-struct GameDriver driver_##NAME =			\
+extern const struct GameDriver driver_##PARENT; \
+const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -291,8 +291,8 @@ struct GameDriver driver_##NAME =			\
 };
 
 #define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
-extern struct GameDriver driver_##PARENT;	\
-struct GameDriver driver_##NAME =			\
+extern const struct GameDriver driver_##PARENT;   \
+const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -309,8 +309,8 @@ struct GameDriver driver_##NAME =			\
 };
 
 #define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
-extern struct GameDriver driver_##PARENT;	\
-struct GameDriver driver_##NAME =			\
+extern const struct GameDriver driver_##PARENT;   \
+const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -327,8 +327,8 @@ struct GameDriver driver_##NAME =			\
 };
 
 #define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
-extern struct GameDriver driver_##PARENT;	\
-struct GameDriver driver_##NAME =			\
+extern const struct GameDriver driver_##PARENT;   \
+const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
