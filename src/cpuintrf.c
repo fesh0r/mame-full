@@ -117,6 +117,9 @@
 #if (HAS_MIPS)
 #include "cpu/mips/mips.h"
 #endif
+#if (HAS_SH2)
+#include "cpu/sh2/sh2.h"
+#endif
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
 #endif
@@ -548,7 +551,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             16,    0,16,LE,1, 3,16   ),
+	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   29,	  3,29,LE,2,10,29	),
@@ -597,6 +600,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_MIPS)
 	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
+#endif
+#if (HAS_SH2)
+	CPU4(SH2,	   sh2, 	 16,-1,1.00,SH2_INT_NONE,	   SH2_INT_NONE,   SH2_INT_NONE,   27bew, 0,27,BE,2, 2,27BEW),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount

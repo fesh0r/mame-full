@@ -73,6 +73,7 @@ CPUS+=PDP1@
 #CPUS+=ADSP2100@
 #CPUS+=ADSP2105@
 #CPUS+=MIPS@
+CPUS+=SH2@
 CPUS+=SC61860@
 CPUS+=ARM@
 CPUS+=G65816@
@@ -212,7 +213,8 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/vidhrdw/genesis.o  \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
-	  $(OBJ)/mess/systems/genesis.o
+	  $(OBJ)/mess/systems/genesis.o  \
+	  $(OBJ)/mess/systems/saturn.o
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \

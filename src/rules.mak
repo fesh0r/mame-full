@@ -746,6 +746,17 @@ else
 CPUDEFS += -DHAS_MIPS=0
 endif
 
+CPU=$(strip $(findstring SH2@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/sh2
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
+DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
+$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
+else
+CPUDEFS += -DHAS_SH2=0
+endif
+
 CPU=$(strip $(findstring SC61860@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/sc61860
