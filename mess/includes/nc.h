@@ -16,7 +16,7 @@ void nc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void nc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
 
 void    nc_set_card_present_state(int);
-void    nc_set_card_write_protect_state(int);
+
 int     nc_pcmcia_card_id(int);
 int    nc_pcmcia_card_load(int);
 void    nc_pcmcia_card_exit(int);
