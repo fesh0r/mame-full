@@ -738,11 +738,43 @@ static const struct IODevice io_pc1401[] = {
 #define io_pc1251 io_pc1401
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
+
+/* cpu sc43177, sc43178 (4bit!)
+   pc 1211
+   clone tandy trs80 pocket computer
+   pc1246/pc1247
+*/
+
+/* cpu lh5801
+   pc1500 
+   clone tandy pc2 look into systems/pc1500.c 
+   pc1600
+*/
+
+/* cpu sc61860 */
 COMPX( 198?, pc1251,	  0, 		pc1251,  pc1251, 	pc1251,	  "Sharp",  "Pocket Computer 1251", GAME_NOT_WORKING)
+// clone tandy trs80 pc-3
+
+// pc1261/pc1262
+
 COMPX( 198?, pc1350,	  0, 		pc1350,  pc1350, 	pc1350,	  "Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
-COMPX( 198?, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
+
+COMPX( 1983, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
 COMPX( 198?, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
 
+/* 72kb rom, 32kb ram, cpu? 
+   pc1360
+   pc1403/pc1403h
+*/
+
+/* cpu sc62015 esr-l
+   pc-e500
+ */
+
+/* cpu hd61747 ???
+   tandy pocket scientific computer pc-6
+   clone of ? sharp pb1000
+*/
 #ifdef RUNTIME_LOADER
 extern void pocketc_runtime_loader_init(void)
 {
