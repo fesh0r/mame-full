@@ -38,6 +38,14 @@ static struct mess_cassetteimg *get_cassimg(mess_image *image)
 
 
 
+static cassette_state get_default_state(const struct IODevice *dev)
+{
+	assert(dev->type == IO_CASSETTE);
+	return (cassette_state) dev->user2;
+}
+
+
+
 /*********************************************************************
 	cassette IO
 *********************************************************************/
@@ -64,7 +72,7 @@ static void cassette_update(mess_image *cassette)
 	cur_time = timer_get_time();
 	tag = get_cassimg(cassette);
 
-	if (cassette_is_motor_on(cassette))
+	if (cassette_is_motor_on(cassette) && tag->cassette)
 	{
 		new_position = tag->position + (cur_time - tag->position_time);
 
@@ -99,7 +107,7 @@ void cassette_change_state(mess_image *cassette, cassette_state state, cassette_
 	tag = get_cassimg(cassette);
 	new_state = tag->state;
 	new_state &= ~mask;
-	new_state |= state;
+	new_state |= (state & mask);
 
 	if (new_state != tag->state)
 	{
@@ -222,8 +230,15 @@ void cassette_seek(mess_image *cassette, double time, int origin)
 
 static DEVICE_INIT(cassette)
 {
+	const struct IODevice *dev;
+
 	if (!image_alloctag(image, CASSETTE_TAG, sizeof(struct mess_cassetteimg)))
 		return INIT_FAIL;
+
+	/* set to default state */
+	dev = device_find(Machine->gamedrv, IO_CASSETTE);
+	get_cassimg(image)->state = get_default_state(dev);
+
 	return INIT_PASS;
 }
 
@@ -238,7 +253,6 @@ static DEVICE_LOAD(cassette)
 	const struct CassetteFormat **formats;
 	const struct CassetteOptions *create_opts;
 	const char *extension;
-	cassette_state default_state;
 	int is_writable;
 
 	tag = get_cassimg(image);
@@ -276,8 +290,8 @@ static DEVICE_LOAD(cassette)
 			goto error;
 	}
 
-	default_state = (cassette_state) dev->user2;
-	tag->state = default_state;
+	/* set to default state, but only change the UI state */
+	cassette_change_state(image, get_default_state(dev), CASSETTE_MASK_UISTATE);
 
 	return INIT_PASS;
 
@@ -300,7 +314,9 @@ static DEVICE_UNLOAD(cassette)
 	/* close out the cassette */
 	cassette_close(tag->cassette);
 	tag->cassette = NULL;
-	tag->state &= ~CASSETTE_MASK_UISTATE;
+
+	/* set to default state, but only change the UI state */
+	cassette_change_state(image, CASSETTE_STOPPED, CASSETTE_MASK_UISTATE);
 }
 
 

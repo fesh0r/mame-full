@@ -460,6 +460,8 @@ casserr_t cassette_get_samples(cassette_image *cassette, int channel,
 	INT32 dword;
 	INT64 sum;
 
+	assert(cassette);
+
 	err = compute_manipulation_ranges(cassette, channel, time_index, sample_period, &ranges);
 	if (err)
 		return err;
@@ -522,6 +524,8 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 	INT32 dword;
 	const UINT8 *source_ptr;
 	double d;
+
+	assert(cassette);
 
 	if (sample_period == 0)
 		return CASSETTE_ERROR_SUCCESS;
