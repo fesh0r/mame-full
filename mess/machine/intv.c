@@ -470,7 +470,7 @@ READ_HANDLER( intv_right_control_r )
 	UINT8 rv = 0x00;
 
 	int bit, byte;
-	int value;
+	int value=0;
 
 	for(byte=0; byte<3; byte++)
 	{
