@@ -14,7 +14,7 @@ Juan Antonio Martinez <tt><url url="mailto:jantonio@dit.upm.es" name="jantonio@d
 </tt>
 </author>
 <date>
-v2.1.6, 5 May 2001
+v2.1.7, 4 July 2001
 </date>
 <abstract>
 xmame/xmess documentation with an installation guide, the FAQ
@@ -1706,7 +1706,11 @@ Are you running a recent version of KDE, such as 2.1.1? It appears
 <verb>
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '&lcub;print &dollar;4&rcub;'`
 </verb>
-</p><sect1>
+</p><p>
+<em>Update: </em>I have been told that as of KDE 2.2b1, this problem has
+ been fixed.
+</p>
+<sect1>
 Where can I get the latest version of xmame/xmess?
 <p>
 The xmame/xmess Home Page always has the most up-to-date version.

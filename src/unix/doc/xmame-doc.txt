@@ -7,7 +7,7 @@ and Hans de Goede [mailto:hans@highrise.nl||hans@highrise.nl]
 and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de]
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
 
-v2.1.6, 5 May 2001
+v2.1.7, 4 July 2001
 
 Abstract
 
@@ -1469,6 +1469,9 @@ as being successful:
 
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print
 $4}'`
+
+Update: I have been told that as of KDE 2.2b1, this problem
+has been fixed.
 
 3.25 Where can I get the latest version of xmame/xmess?
 
