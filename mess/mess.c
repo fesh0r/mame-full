@@ -14,8 +14,6 @@ extern struct GameOptions options;
 extern const char *crcfile;
 extern const char *pcrcfile;
 
-/* used to tell updatescreen() to clear the bitmap */
-extern int need_to_clear_bitmap;
 
 /* Globals */
 int mess_keep_going;
@@ -987,7 +985,7 @@ int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 	if (sel == -1 || sel == -2)
 	{
 		/* tell updatescreen() to clean after us */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 	}
 
 	return sel + 1;

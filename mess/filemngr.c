@@ -2,9 +2,6 @@
 #include <signal.h>
 //#include <unistd.h>
 
-/* used to tell updatescreen(void) to clear the bitmap */
-extern int need_to_clear_bitmap;
-
 static int count_chars_entered;
 static char *enter_string;
 static int enter_string_size;
@@ -537,7 +534,7 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 				fs_free();
 			}
 
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 			return sel + 1;
 		}
 
@@ -593,7 +590,7 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 				case FILESELECT_FILESPEC:
 					start_enter_string(current_filespecification, 32, 0);
 					sel |= 1 << SEL_BITS; /* we'll ask for a key */
-					need_to_clear_bitmap = 1;
+					schedule_full_refresh();
 					break;
 
 				case FILESELECT_FILE:
@@ -610,14 +607,14 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 					osd_change_directory(fs_item[sel]);
 					fs_free();
 
-					need_to_clear_bitmap = 1;
+					schedule_full_refresh();
 					break;
 
 				case FILESELECT_DEVICE:
 					/*	 fs_chdir("/"); */
 					osd_change_device(fs_item[sel]);
 					fs_free();
-					need_to_clear_bitmap = 1;
+					schedule_full_refresh();
 					break;
 
 				default:
@@ -641,7 +638,7 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 		fs_free();
 
 	if (sel == -1 || sel == -2 || sel == -3)
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 
 	return sel + 1;
 }
@@ -744,7 +741,7 @@ int filemanager(struct osd_bitmap *bitmap, int selected)
 				device_filename_change(types[sel], ids[sel], name);
 		}
 
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 		return sel + 1;
 	}
 
@@ -797,7 +794,7 @@ int filemanager(struct osd_bitmap *bitmap, int selected)
 				sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 
 				/* tell updatescreen() to clean after us (in case the window changes size) */
-				need_to_clear_bitmap = 1;
+				schedule_full_refresh();
 			}
 		}
 	}
@@ -809,7 +806,7 @@ int filemanager(struct osd_bitmap *bitmap, int selected)
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 
 	return sel + 1;
 }
