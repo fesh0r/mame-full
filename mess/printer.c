@@ -6,7 +6,7 @@
 #include "driver.h"
 #include "printer.h"
 
-static void *prn_ports[MAX_PRINTER];
+static void *prn_ports[MAX_PRINTER]= { 0 };
 
 int printer_init (int id)
 	{
@@ -41,18 +41,21 @@ int printer_status (int id, int newstatus)
 
 void printer_output (int id, int data)
 	{
+		UINT8 d=data;
+
 	if (!prn_ports[id]) 
 		{
 		logerror ("Printer port %d# data written while port not open\n", id);
 		return;
 		}
 
-	if (1 != osd_fwrite (prn_ports[id], &data, 1) )
+	if (1 != osd_fwrite (prn_ports[id], &d, 1) )
 		{
-		logerror ("Printer port %d# failed to write data\n");
+		logerror ("Printer port %d# failed to write data\n",id );
 		return;	
 		}
 
+//	logerror ("Printer port %d# write %.2x data\n",id, d );
 	return;
 	}
 
