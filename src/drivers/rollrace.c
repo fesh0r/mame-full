@@ -152,7 +152,7 @@ INPUT_PORTS_START( rollrace )
 	PORT_DIPSETTING( 	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING( 	0x40, DEF_STR( On ) )
 /*	PORT_DIPNAME( 0x80, 0x00, "Free Run" ) */
-	PORT_BIT(    0x80, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CHEAT
+	PORT_BIT(    0x80, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability (Cheat)")
 	PORT_DIPSETTING( 	0x00, DEF_STR( Off ) ) /* test mode, you are invulnerable */
 	PORT_DIPSETTING( 	0x80, DEF_STR( On ) )	/* to 'static' objects */
 
@@ -166,7 +166,7 @@ INPUT_PORTS_START( rollrace )
 	PORT_DIPSETTING( 	0x04, "20000" )
 	PORT_DIPSETTING( 	0x08, "50000" )
 	PORT_DIPSETTING( 	0x0c, "100000" )
-	PORT_DIPSETTING( 	0x00, "None" )
+	PORT_DIPSETTING( 	0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING( 	0x00, "A" )
 	PORT_DIPSETTING( 	0x10, "B" )

@@ -57,10 +57,10 @@ WRITE8_HANDLER( clshroad_sharedram_w )	{	clshroad_sharedram[offset] = data;	}
 
 READ8_HANDLER( clshroad_input_r )
 {
-	return	((~readinputport(0) & (1 << offset)) ? 1 : 0) |
-			((~readinputport(1) & (1 << offset)) ? 2 : 0) |
-			((~readinputport(2) & (1 << offset)) ? 4 : 0) |
-			((~readinputport(3) & (1 << offset)) ? 8 : 0) ;
+	return	((~readinputportbytag("IN0") & (1 << offset)) ? 1 : 0) |
+			((~readinputportbytag("IN1") & (1 << offset)) ? 2 : 0) |
+			((~readinputportbytag("DSW1") & (1 << offset)) ? 4 : 0) |
+			((~readinputportbytag("DSW2") & (1 << offset)) ? 8 : 0) ;
 }
 
 
@@ -103,7 +103,7 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( clshroad )
-	PORT_START	// IN0 - Player 1
+	PORT_START_TAG("IN0")	// Player 1
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -113,7 +113,7 @@ INPUT_PORTS_START( clshroad )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
-	PORT_START	// IN1 - Player 2
+	PORT_START_TAG("IN1") 	// Player 2
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_COCKTAIL
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_COCKTAIL
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_COCKTAIL
@@ -123,7 +123,7 @@ INPUT_PORTS_START( clshroad )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	// IN2 - DSW 1
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -137,7 +137,7 @@ INPUT_PORTS_START( clshroad )
 	PORT_DIPSETTING(    0x10, DEF_STR( Hard )    )	// A
 	PORT_DIPSETTING(    0x08, DEF_STR( Harder )  )	// C
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )	// E
-	PORT_BIT(    0x20, 0x20, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CHEAT
+	PORT_DIPNAME( 0x20, 0x20, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown 1-6" )
@@ -147,7 +147,7 @@ INPUT_PORTS_START( clshroad )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	// IN3 - DSW 2
+	PORT_START_TAG("DSW2")
 /*
 first bit OFF is:	0 			0	<- value
 					1			1
@@ -187,7 +187,7 @@ But the values seems unused then.
 INPUT_PORTS_END
 
 INPUT_PORTS_START( firebatl )
-	PORT_START	// IN0 - Player 1
+	PORT_START_TAG("IN0")
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -197,7 +197,7 @@ INPUT_PORTS_START( firebatl )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
-	PORT_START	// IN1 - Player 2
+	PORT_START_TAG("IN1")
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_COCKTAIL
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_COCKTAIL
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_COCKTAIL
@@ -207,7 +207,7 @@ INPUT_PORTS_START( firebatl )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	// IN2 - DSW 1
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x7f, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
@@ -221,7 +221,7 @@ INPUT_PORTS_START( firebatl )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	// IN3 - DSW 2
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )

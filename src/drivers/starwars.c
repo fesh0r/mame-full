@@ -296,7 +296,7 @@ INPUT_PORTS_START( starwars )
 	PORT_DIPSETTING (  0xa0, "3 gives 1" )
 	PORT_DIPSETTING (  0x40, "4 gives 1" )
 	PORT_DIPSETTING (  0x80, "5 gives 1" )
-	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x00, DEF_STR( None ) )
 /* 0xc0 and 0xe0 None */
 
 	PORT_START	/* IN4 */
@@ -373,7 +373,7 @@ INPUT_PORTS_START( esb )
 	PORT_DIPSETTING (  0xa0, "3 gives 1" )
 	PORT_DIPSETTING (  0x40, "4 gives 1" )
 	PORT_DIPSETTING (  0x80, "5 gives 1" )
-	PORT_DIPSETTING (  0xe0, "None" )
+	PORT_DIPSETTING (  0xe0, DEF_STR( None ) )
 /* 0xc0 and 0x00 None */
 
 	PORT_START	/* IN4 */

@@ -94,16 +94,16 @@ ADDRESS_MAP_END
 ***********************************************************/
 
 #define VOLFIED_INPUT_BITS                                                          \
-	PORT_START                                                                    \
+	PORT_START_TAG("IN0")                                                         \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )                                   \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )                                   \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )                                 \
 	                                                                              \
-	PORT_START                                                                    \
+	PORT_START_TAG("IN1")                                                         \
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)                        \
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)                        \
 	                                                                              \
-	PORT_START                                                                    \
+	PORT_START_TAG("IN2")                                                         \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )                                     \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY                \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY                \
@@ -111,7 +111,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY                \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )                                  \
 	                                                                              \
-	PORT_START                                                                    \
+	PORT_START_TAG("IN3")                                                         \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL \
@@ -120,7 +120,7 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( volfied )
-	PORT_START	/* DSW A */
+	PORT_START_TAG("DSWA")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -142,7 +142,7 @@ INPUT_PORTS_START( volfied )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* DSW B */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "20k,40k,120k,480k,2400k" )
 	PORT_DIPSETTING(    0x03, "50k,150k,600k,3000k" )
@@ -158,7 +158,7 @@ INPUT_PORTS_START( volfied )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Infinite Lives") PORT_CHEAT
+	PORT_DIPNAME( 0x40, 0x40, "Infinite Lives (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Language ) )
@@ -169,7 +169,7 @@ INPUT_PORTS_START( volfied )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( volfiedu )
-	PORT_START	/* DSW A */
+	PORT_START_TAG("DSWA")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -192,7 +192,7 @@ INPUT_PORTS_START( volfiedu )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* DSW B */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "20k,40k,120k,480k,2400k" )
 	PORT_DIPSETTING(    0x03, "50k,150k,600k,3000k" )
@@ -208,7 +208,7 @@ INPUT_PORTS_START( volfiedu )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Infinite Lives") PORT_CHEAT
+	PORT_DIPNAME( 0x40, 0x40, "Infinite Lives (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Language ) )
@@ -219,7 +219,7 @@ INPUT_PORTS_START( volfiedu )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( volfiedj )
-	PORT_START	/* DSW A */
+	PORT_START_TAG("DSWA")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -241,7 +241,7 @@ INPUT_PORTS_START( volfiedj )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START	/* DSW B */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "20k,40k,120k,480k,2400k" )
 	PORT_DIPSETTING(    0x03, "50k,150k,600k,3000k" )
@@ -257,7 +257,7 @@ INPUT_PORTS_START( volfiedj )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Infinite Lives") PORT_CHEAT
+	PORT_DIPNAME( 0x40, 0x40, "Infinite Lives (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )

@@ -123,6 +123,19 @@ static const char *mame_default_text[] =
 	"Autocenter Speed",
 	"Reverse",
 	"Sensitivity",
+	
+	/* input groups */
+	"User interface",
+	"Player 1 controls",
+	"Player 2 controls",
+	"Player 3 controls",
+	"Player 4 controls",
+	"Player 5 controls",
+	"Player 6 controls",
+	"Player 7 controls",
+	"Player 8 controls",
+	"Other controls",
+	"Return to groups",
 
 	/* stats */
 	"Tickets dispensed",

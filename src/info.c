@@ -796,7 +796,7 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 	fprintf(out, "\t</" XML_TOP ">\n");
 }
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE)
 /* Print the resource info */
 static void print_resource_info(FILE* out, const struct GameDriver* game)
 {
@@ -875,7 +875,7 @@ static void print_mame_data(FILE* out, const struct GameDriver* games[])
 	for(j=0;games[j];++j)
 		print_game_info(out, games[j]);
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE)
 	/* print resources */
 	print_resources_data(out, games);
 #endif

@@ -53,10 +53,10 @@ INPUT_PORTS_START( lynx )
 	// power on and power off buttons
 	PORT_START
 	PORT_DIPNAME ( 0x03, 3, "90 Degree Rotation")
-	PORT_DIPSETTING(	2, "counterclockwise" )
-	PORT_DIPSETTING(	1, "clockwise" )
-	PORT_DIPSETTING(	0, "None" )
-	PORT_DIPSETTING(	3, "crcfile" )
+	PORT_DIPSETTING(	2, "Counterclockwise" )
+	PORT_DIPSETTING(	1, "Clockwise" )
+	PORT_DIPSETTING(	0, DEF_STR( None ) )
+	PORT_DIPSETTING(	3, "Crcfile" )
 INPUT_PORTS_END
 
 static INTERRUPT_GEN( lynx_frame_int )

@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <winioctl.h>
+#include <ctype.h>
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
@@ -47,6 +48,25 @@ extern int win_window_mode;
 #define MAX_AXES			8
 #define MAX_BUTTONS			32
 #define MAX_POV				4
+
+enum
+{
+	ANALOG_TYPE_PADDLE = 0,
+	ANALOG_TYPE_ADSTICK,
+	ANALOG_TYPE_LIGHTGUN,
+	ANALOG_TYPE_PEDAL,
+	ANALOG_TYPE_DIAL,
+	ANALOG_TYPE_TRACKBALL,
+	ANALOG_TYPE_COUNT
+};
+
+enum
+{
+	SELECT_TYPE_KEYBOARD = 0,
+	SELECT_TYPE_MOUSE,
+	SELECT_TYPE_JOYSTICK,
+	SELECT_TYPE_LIGHTGUN
+};
 
 
 
@@ -94,20 +114,8 @@ static int					use_lightgun_reload;
 static int					use_keyboard_leds;
 static const char *			ledmode;
 static int					steadykey;
-static const char*			ctrlrtype;
-static const char*			ctrlrname;
-static const char*			trackball_ini;
-static const char*			paddle_ini;
-static const char*			dial_ini;
-static const char*			ad_stick_ini;
-static const char*			pedal_ini;
-static const char*			lightgun_ini;
-
-// this is used for the ipdef_custom_rc_func
-//static struct ipd 			*ipddef_ptr = NULL;
-
-//static int					num_osd_ik = 0;
-//static int					size_osd_ik = 0;
+static UINT8				analog_type[ANALOG_TYPE_COUNT];
+static int					dummy;
 
 // keyboard states
 static int					keyboard_count;
@@ -138,14 +146,18 @@ static LPDIRECTINPUTDEVICE2	joystick_device2[MAX_JOYSTICKS];
 static DIDEVCAPS			joystick_caps[MAX_JOYSTICKS];
 static DIJOYSTATE			joystick_state[MAX_JOYSTICKS];
 static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
+static UINT8				joystick_digital[MAX_JOYSTICKS][MAX_AXES];
+static char					joystick_name[MAX_JOYSTICKS][MAX_PATH];
 
 // gun states
 static INT32				gun_axis[MAX_LIGHTGUNS][2];
 
 // led states
-static int original_leds;
-static HANDLE hKbdDev;
-static int ledmethod;
+static int					original_leds;
+static HANDLE				hKbdDev;
+static int					ledmethod;
+
+
 
 //============================================================
 //	OPTIONS
@@ -153,6 +165,8 @@ static int ledmethod;
 
 // prototypes
 static int decode_ledmode(struct rc_option *option, const char *arg, int priority);
+static int decode_analog_select(struct rc_option *option, const char *arg, int priority);
+static int decode_digital(struct rc_option *option, const char *arg, int priority);
 
 // global input options
 struct rc_option input_opts[] =
@@ -168,41 +182,18 @@ struct rc_option input_opts[] =
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
 	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
-	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-
-struct rc_option *ctrlr_input_opts = NULL;
-
-struct rc_option ctrlr_input_opts2[] =
-{
-	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
-	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
-	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
-	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
-	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
-	{ "lightgun_ini", NULL, rc_string, &lightgun_ini, 0, 0, 0, NULL, "ctrlr opts if game has LIGHTGUN input" },
-	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
+	{ "ctrlr", NULL, rc_string, &options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
+	{ "paddle", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
+	{ "adstick", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
+	{ "lightgun", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_LIGHTGUN, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a lightgun control is present" },
+	{ "pedal", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
+	{ "dial", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
+	{ "trackball", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
+	{ "digital", NULL, rc_string, &dummy, "none", 1, 0, decode_digital, "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
 
-//============================================================
-//	decode_cleanstretch
-//============================================================
-
-static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
-{
-	if( strcmp( arg, "ps/2" ) != 0 &&
-		strcmp( arg, "usb" ) != 0 )
-	{
-		fprintf(stderr, "error: invalid value for led_mode: %s\n", arg);
-		return -1;
-	}
-	option->priority = priority;
-	return 0;
-}
 
 //============================================================
 //	PROTOTYPES
@@ -537,6 +528,179 @@ static int joy_trans_table[][2] =
 
 
 //============================================================
+//	decode_ledmode
+//============================================================
+
+static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
+{
+	if( strcmp( arg, "ps/2" ) != 0 &&
+		strcmp( arg, "usb" ) != 0 )
+	{
+		fprintf(stderr, "error: invalid value for led_mode: %s\n", arg);
+		return -1;
+	}
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_analog_select
+//============================================================
+
+static int decode_analog_select(struct rc_option *option, const char *arg, int priority)
+{
+	if (strcmp(arg, "keyboard") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_KEYBOARD;
+	else if (strcmp(arg, "mouse") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_MOUSE;
+	else if (strcmp(arg, "joystick") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_JOYSTICK;
+	else if (strcmp(arg, "lightgun") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_LIGHTGUN;
+	else
+	{
+		fprintf(stderr, "error: invalid value for %s: %s\n", option->name, arg);
+		return -1;
+	}
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_digital
+//============================================================
+
+static int decode_digital(struct rc_option *option, const char *arg, int priority)
+{
+	if (strcmp(arg, "none") == 0)
+		memset(joystick_digital, 0, sizeof(joystick_digital));
+	else if (strcmp(arg, "all") == 0)
+		memset(joystick_digital, 1, sizeof(joystick_digital));
+	else
+	{
+		/* scan the string */
+		while (1)
+		{
+			int joynum = 0;
+			int axisnum = 0;
+			
+			/* stop if we hit the end */
+			if (arg[0] == 0)
+				break;
+			
+			/* we require the next bits to be j<N> */
+			if (tolower(arg[0]) != 'j' || sscanf(&arg[1], "%d", &joynum) != 1)
+				goto usage;
+			arg++;
+			while (arg[0] != 0 && isdigit(arg[0]))
+				arg++;
+			
+			/* if we are followed by a comma or an end, mark all the axes digital */
+			if (arg[0] == 0 || arg[0] == ',')
+			{
+				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS)
+					memset(&joystick_digital[joynum - 1], 1, sizeof(joystick_digital[joynum - 1]));
+				if (arg[0] == 0)
+					break;
+				arg++;
+				continue;
+			}
+
+			/* loop over axes */
+			while (1)
+			{
+				/* stop if we hit the end */
+				if (arg[0] == 0)
+					break;
+				
+				/* if we hit a comma, skip it and break out */
+				if (arg[0] == ',')
+				{
+					arg++;
+					break;
+				}
+				
+				/* we require the next bits to be a<N> */
+				if (tolower(arg[0]) != 'a' || sscanf(&arg[1], "%d", &axisnum) != 1)
+					goto usage;
+				arg++;
+				while (arg[0] != 0 && isdigit(arg[0]))
+					arg++;
+				
+				/* set that axis to digital */
+				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS && axisnum < MAX_AXES)
+					joystick_digital[joynum - 1][axisnum] = 1;
+			}
+		}
+	}
+	option->priority = priority;
+	return 0;
+
+usage:
+	fprintf(stderr, "error: invalid value for digital: %s -- valid values are:\n", arg);
+	fprintf(stderr, "         none -- no axes on any joysticks are digital\n");
+	fprintf(stderr, "         all -- all axes on all joysticks are digital\n");
+	fprintf(stderr, "         j<N> -- all axes on joystick <N> are digital\n");
+	fprintf(stderr, "         j<N>a<M> -- axis <M> on joystick <N> is digital\n");
+	fprintf(stderr, "    Multiple axes can be specified for one joystick:\n");
+	fprintf(stderr, "         j1a5a6 -- axes 5 and 6 on joystick 1 are digital\n");
+	fprintf(stderr, "    Multiple joysticks can be specified separated by commas:\n");
+	fprintf(stderr, "         j1,j2a2 -- all joystick 1 axes and axis 2 on joystick 2 are digital\n");
+	return -1;
+}
+
+
+
+//============================================================
+//	autoselect_analog_devices
+//============================================================
+
+static void autoselect_analog_devices(const struct InputPort *inp, int type1, int type2, int type3, int anatype, const char *ananame)
+{
+	// loop over input ports
+	for ( ; inp->type != IPT_END; inp++)
+	
+		// if this port type is in use, apply the autoselect criteria
+		if ((type1 != 0 && inp->type == type1) || 
+			(type2 != 0 && inp->type == type2) ||
+			(type3 != 0 && inp->type == type3))
+		{
+			// autoenable mouse devices
+			if (analog_type[anatype] == SELECT_TYPE_MOUSE && !win_use_mouse)
+			{
+				win_use_mouse = 1;
+				if (verbose)
+					printf("Autoenabling mice due to presence of a %s\n", ananame);
+			}
+				
+			// autoenable joystick devices
+			if (analog_type[anatype] == SELECT_TYPE_JOYSTICK && !use_joystick)
+			{
+				use_joystick = 1;
+				if (verbose)
+					printf("Autoenabling joysticks due to presence of a %s\n", ananame);
+			}
+				
+			// autoenable lightgun devices
+			if (analog_type[anatype] == SELECT_TYPE_LIGHTGUN && !use_lightgun)
+			{
+				use_lightgun = 1;
+				if (verbose)
+					printf("Autoenabling lightguns due to presence of a %s\n", ananame);
+			}
+			
+			// all done
+			break;
+		}	
+}
+
+
+
+//============================================================
 //	enum_keyboard_callback
 //============================================================
 
@@ -547,7 +711,7 @@ static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	// if we're not out of mice, log this one
 	if (keyboard_count >= MAX_KEYBOARDS)
 		goto out_of_keyboards;
-
+	
 	// attempt to create a device
 	result = IDirectInput_CreateDevice(dinput, &instance->guidInstance, &keyboard_device[keyboard_count], NULL);
 	if (result != DI_OK)
@@ -690,6 +854,9 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInputDevice_QueryInterface(joystick_device[joystick_count], &IID_IDirectInputDevice2, (void **)&joystick_device2[joystick_count]);
 	if (result != DI_OK)
 		joystick_device2[joystick_count] = NULL;
+	
+	// remember the name
+	strcpy(joystick_name[joystick_count], instance->tszInstanceName);
 
 	// get the caps
 	joystick_caps[joystick_count].dwSize = STRUCTSIZE(DIDEVCAPS);
@@ -718,8 +885,7 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 #else
 	flags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
 #endif
-	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window,
-					flags);
+	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window, flags);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
 
@@ -747,6 +913,7 @@ out_of_joysticks:
 
 int win_init_input(void)
 {
+	const struct InputPort *inp;
 	HRESULT result;
 
 	// first attempt to initialize DirectInput
@@ -761,6 +928,20 @@ int win_init_input(void)
 	}
 	if (verbose)
 		fprintf(stderr, "Using DirectInput %d\n", dinput_version >> 8);
+	
+	// enable devices based on autoselect
+	if (Machine != NULL && Machine->gamedrv != NULL)
+	{
+		begin_resource_tracking();
+		inp = input_port_allocate(Machine->gamedrv->construct_ipt);
+		autoselect_analog_devices(inp, IPT_PADDLE,     IPT_PADDLE_V,   0,             ANALOG_TYPE_PADDLE,   "paddle");
+		autoselect_analog_devices(inp, IPT_AD_STICK_X, IPT_AD_STICK_Y, IPT_AD_STICK_Z,ANALOG_TYPE_ADSTICK,  "analog joystick");
+		autoselect_analog_devices(inp, IPT_LIGHTGUN_X, IPT_LIGHTGUN_Y, 0,             ANALOG_TYPE_LIGHTGUN, "lightgun");
+		autoselect_analog_devices(inp, IPT_PEDAL,      IPT_PEDAL2,     IPT_PEDAL3,    ANALOG_TYPE_PEDAL,    "pedal");
+		autoselect_analog_devices(inp, IPT_DIAL,       IPT_DIAL_V,     0,             ANALOG_TYPE_DIAL,     "dial");
+		autoselect_analog_devices(inp, IPT_TRACKBALL_X,IPT_TRACKBALL_X,0,             ANALOG_TYPE_TRACKBALL,"trackball");
+		end_resource_tracking();
+	}
 
 	// initialize keyboard devices
 	keyboard_count = 0;
@@ -771,17 +952,23 @@ int win_init_input(void)
 	// initialize mouse devices
 	lightgun_count = 0;
 	mouse_count = 0;
-	lightgun_dual_player_state[0]=lightgun_dual_player_state[1]=0;
-	lightgun_dual_player_state[2]=lightgun_dual_player_state[3]=0;
-	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
-	if (result != DI_OK)
-		goto cant_init_mouse;
+	if (win_use_mouse || use_lightgun)
+	{
+		lightgun_dual_player_state[0] = lightgun_dual_player_state[1] = 0;
+		lightgun_dual_player_state[2] = lightgun_dual_player_state[3] = 0;
+		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
+		if (result != DI_OK)
+			goto cant_init_mouse;
+	}
 
 	// initialize joystick devices
 	joystick_count = 0;
-	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_JOYSTICK, enum_joystick_callback, 0, DIEDFL_ATTACHEDONLY);
-	if (result != DI_OK)
-		goto cant_init_joystick;
+	if (use_joystick)
+	{
+		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_JOYSTICK, enum_joystick_callback, 0, DIEDFL_ATTACHEDONLY);
+		if (result != DI_OK)
+			goto cant_init_joystick;
+	}
 
 	// init the keyboard list
 	init_keycodes();
@@ -794,7 +981,11 @@ int win_init_input(void)
 
 	// print the results
 	if (verbose)
-		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d Lightguns=%d\n", keyboard_count, mouse_count, joystick_count, lightgun_count);
+	{
+		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d  Lightguns=%d\n", keyboard_count, mouse_count, joystick_count, lightgun_count);
+		if (options.controller)
+			fprintf(stderr,"\"%s\" controller support enabled\n", options.controller);
+	}
 	return 0;
 
 cant_init_joystick:
@@ -817,7 +1008,8 @@ void win_shutdown_input(void)
 	int i;
 
 	// release all our keyboards
-	for (i = 0; i < keyboard_count; i++) {
+	for (i = 0; i < keyboard_count; i++)
+	{
 		IDirectInputDevice_Release(keyboard_device[i]);
 		if (keyboard_device2[i])
 			IDirectInputDevice_Release(keyboard_device2[i]);
@@ -825,7 +1017,8 @@ void win_shutdown_input(void)
 	}
 
 	// release all our joysticks
-	for (i = 0; i < joystick_count; i++) {
+	for (i = 0; i < joystick_count; i++)
+	{
 		IDirectInputDevice_Release(joystick_device[i]);
 		if (joystick_device2[i])
 			IDirectInputDevice_Release(joystick_device2[i]);
@@ -833,7 +1026,8 @@ void win_shutdown_input(void)
 	}
 
 	// release all our mice
-	for (i = 0; i < mouse_count; i++) {
+	for (i = 0; i < mouse_count; i++)
+	{
 		IDirectInputDevice_Release(mouse_device[i]);
 		if (mouse_device2[i])
 			IDirectInputDevice_Release(mouse_device2[i]);
@@ -877,7 +1071,7 @@ void win_pause_input(int paused)
 
 		// acquire all our mice if active
 		if (mouse_active && !win_has_menu())
-			for (i = 0; i < mouse_count && (win_use_mouse||use_lightgun); i++)
+			for (i = 0; i < mouse_count && (win_use_mouse || use_lightgun); i++)
 				IDirectInputDevice_Acquire(mouse_device[i]);
 	}
 
@@ -957,7 +1151,7 @@ void win_poll_input(void)
 		return;
 
 	// poll all joysticks
-	for (i = 0; i < joystick_count && use_joystick; i++)
+	for (i = 0; i < joystick_count; i++)
 	{
 		// first poll the device
 		if (joystick_device2[i])
@@ -1193,42 +1387,56 @@ static void add_joylist_entry(const char *name, os_code_t code, input_code_t sta
 
 static void init_joycodes(void)
 {
-	int mouse, stick, axis, button, pov;
+	int mouse, gun, stick, axis, button, pov;
 	char tempname[MAX_PATH];
 
-	// first of all, map mouse buttons
-	if (win_use_mouse||use_lightgun)
-		for (mouse = 0; mouse < mouse_count; mouse++)
+	// map mice first
+	for (mouse = 0; mouse < mouse_count; mouse++)
+	{
+		// add analog axes (fix me -- should enumerate these)
+		sprintf(tempname, "Mouse %d X", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
+		sprintf(tempname, "Mouse %d Y", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+
+		// add mouse buttons
+		for (button = 0; button < 4; button++)
 		{
-			// add analog axes (fix me -- should enumerate these)
-			sprintf(tempname, "Mouse %d X", mouse + 1);
-			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
-			sprintf(tempname, "Mouse %d Y", mouse + 1);
-			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+			DIDEVICEOBJECTINSTANCE instance = { 0 };
+			HRESULT result;
 
-			for (button = 0; button < 4; button++)
+			// attempt to get the object info
+			instance.dwSize = STRUCTSIZE(DIDEVICEOBJECTINSTANCE);
+			result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
+			if (result == DI_OK)
 			{
-				DIDEVICEOBJECTINSTANCE instance = { 0 };
-				HRESULT result;
-
-				// attempt to get the object info
-				instance.dwSize = STRUCTSIZE(DIDEVICEOBJECTINSTANCE);
-				result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
-				if (result == DI_OK)
-				{
-					// add mouse number to the name
-					if (mouse_count > 1)
-						sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
-					else
-						sprintf(tempname, "Mouse %s", instance.tszName);
-					add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
-				}
+				// add mouse number to the name
+				if (mouse_count > 1)
+					sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
+				else
+					sprintf(tempname, "Mouse %s", instance.tszName);
+				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 			}
 		}
+	}
+
+	// map lightguns second
+	for (gun = 0; gun < lightgun_count; gun++)
+	{
+		// add lightgun axes (fix me -- should enumerate these)
+		sprintf(tempname, "Lightgun %d X", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_GUNAXIS, 0), CODE_OTHER_ANALOG_ABSOLUTE);
+		sprintf(tempname, "Lightgun %d Y", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_GUNAXIS, 1), CODE_OTHER_ANALOG_ABSOLUTE);
+	}
 
 	// now map joysticks
 	for (stick = 0; stick < joystick_count; stick++)
 	{
+		// log the info
+		if (verbose)
+			fprintf(stderr, "Joystick %d: %s (%d axes, %d buttons, %d POVs)\n", stick + 1, joystick_name[stick], (int)joystick_caps[stick].dwAxes, (int)joystick_caps[stick].dwButtons, (int)joystick_caps[stick].dwPOVs);
+
 		// loop over all axes
 		for (axis = 0; axis < MAX_AXES; axis++)
 		{
@@ -1240,9 +1448,15 @@ static void init_joycodes(void)
 			result = IDirectInputDevice_GetObjectInfo(joystick_device[stick], &instance, offsetof(DIJOYSTATE, lX) + axis * sizeof(LONG), DIPH_BYOFFSET);
 			if (result == DI_OK)
 			{
+				if (verbose)
+					fprintf(stderr, "  Axis %d (%s)%s\n", axis, instance.tszName, joystick_digital[stick][axis] ? " - digital" : "");
+
 				// add analog axis
-				sprintf(tempname, "J%d %s", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
+				if (!joystick_digital[stick][axis])
+				{
+					sprintf(tempname, "J%d %s", stick + 1, instance.tszName);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
+				}
 
 				// add negative value
 				sprintf(tempname, "J%d %s -", stick + 1, instance.tszName);
@@ -1493,7 +1707,7 @@ static void poll_lightguns(void)
 	int player;
 
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active && (win_use_mouse||use_lightgun) && !win_has_menu())
+	if (!mouse_active && (win_use_mouse || use_lightgun) && !win_has_menu())
 	{
 		mouse_active = 1;
 		win_pause_input(0);
@@ -1639,155 +1853,8 @@ void osd_joystick_end_calibration(void)
 
 
 //============================================================
-//	osd_customize_inputport_defaults
+//	osd_customize_inputport_list
 //============================================================
-/*
-extern struct rc_struct *rc;
-
-void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *filename)
-{
-	mame_file *f;
-
-	// open the specified controller type/filename
-	f = mame_fopen (ctype, filename, FILETYPE_CTRLR, 0);
-
-	if (f)
-	{
-		if (verbose)
-		{
-			if (ctype)
-				fprintf (stderr, "trying to parse ctrlr file %s/%s.ini\n", ctype, filename);
-			else
-				fprintf (stderr, "trying to parse ctrlr file %s.ini\n", filename);
-		}
-
-		// process this file
-		if(osd_rc_read(iptrc, f, filename, 1, 1))
-		{
-			if (verbose)
-			{
-				if (ctype)
-					fprintf (stderr, "problem parsing ctrlr file %s/%s.ini\n", ctype, filename);
-				else
-					fprintf (stderr, "problem parsing ctrlr file %s.ini\n", filename);
-			}
-		}
-	}
-
-	// close the file
-	if (f)
-		mame_fclose (f);
-}
-
-void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
-{
-	// recursive call to process parents first
-	if (drv->clone_of)
-		process_ctrlr_game (iptrc, ctype, drv->clone_of);
-
-	// now process this game
-	if (drv->name && *(drv->name) != 0)
-		process_ctrlr_file (iptrc, ctype, drv->name);
-}
-
-// nice hack: load source_file.ini (omit if referenced later any)
-void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
-{
-	char buffer[128];
-	const struct GameDriver *tmp_gd;
-
-	sprintf(buffer, "%s", drv->source_file+12);
-	buffer[strlen(buffer) - 2] = 0;
-
-	tmp_gd = drv;
-	while (tmp_gd != NULL)
-	{
-		if (strcmp(tmp_gd->name, buffer) == 0) break;
-		tmp_gd = tmp_gd->clone_of;
-	}
-
-	// not referenced later, so load it here
-	if (tmp_gd == NULL)
-		// now process this system
-		process_ctrlr_file (iptrc, ctype, buffer);
-}
-
-static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, int priority)
-{
-	struct ik *pinput_keywords = (struct ik *)option->dest;
-	struct ipd *idef = ipddef_ptr;
-
-	// only process the default definitions if the input port definitions
-	// pointer has been defined
-	if (idef)
-	{
-		// if a keycode was re-assigned
-		if (pinput_keywords->type == IKT_STD)
-		{
-			input_seq_t is;
-
-			// get the new keycode
-			string_to_seq (arg, &is);
-
-			// was a sequence was assigned to a keycode? - not valid!
-			if (is.code[1] != CODE_NONE)
-			{
-				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
-			}
-
-			// for all definitions
-			while (idef->type != IPT_END)
-			{
-				int seq_count = (idef->type > IPT_ANALOG_START && idef->type < IPT_ANALOG_END) ? 2 : 1;
-				int j, k;
-				
-				// loop over all sequences
-				for (k = 0; k < seq_count; k++)
-				{
-					// reassign all matching keystrokes to the given argument
-					for (j = 0; j < SEQ_MAX; j++)
-					{
-						// if the keystroke matches
-						if (idef->seq[k].code[j] == pinput_keywords->val)
-						{
-							// re-assign
-							idef->seq[k].code[j] = is.code[0];
-						}
-					}
-				}
-				
-				// move to the next definition
-				idef++;
-			}
-		}
-
-		// if an input definition was re-defined
-		else if (pinput_keywords->type == IKT_IPT ||
-                 pinput_keywords->type == IKT_IPT_EXT)
-		{
-			// loop through all definitions
-			while (idef->type != IPT_END)
-			{
-				// if the definition matches
-				if (idef->type == pinput_keywords->val && idef->player == pinput_keywords->player)
-				{
-					int seqnum = 0;
-                    if (pinput_keywords->type == IKT_IPT_EXT)
-                        seqnum = 1;
-					string_to_seq(arg, &idef->seq[seqnum]);
-					// and abort (there shouldn't be duplicate definitions)
-					break;
-				}
-
-				// move to the next definition
-				idef++;
-			}
-		}
-	}
-
-	return 0;
-}
-*/
 
 void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 {
@@ -1849,157 +1916,6 @@ void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 
 		// find the next one
 		idef++;
-	}
-/*
-	// create a structure for the input port options
-	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
-	{
-		fprintf(stderr, "error on ctrlr_input_opts creation\n");
-		exit(1);
-	}
-
-	// Populate the structure with the input_keywords.
-	// For all, use the ipdef_custom_rc_func callback.
-	// Also, reference the original ik structure.
-	for (i=0; i<num_ik+num_osd_ik; i++)
-	{
-		if (i < num_ik)
-		{
-	   		ctrlr_input_opts[i].name = input_keywords[i].name;
-			ctrlr_input_opts[i].dest = (void *)&input_keywords[i];
-		}
-		else
-		{
-	   		ctrlr_input_opts[i].name = osd_input_keywords[i-num_ik].name;
-			ctrlr_input_opts[i].dest = (void *)&osd_input_keywords[i-num_ik];
-		}
-		ctrlr_input_opts[i].shortname = NULL;
-		ctrlr_input_opts[i].type = rc_use_function;
-		ctrlr_input_opts[i].deflt = NULL;
-		ctrlr_input_opts[i].min = 0.0;
-		ctrlr_input_opts[i].max = 0.0;
-		ctrlr_input_opts[i].func = ipdef_custom_rc_func;
-		ctrlr_input_opts[i].help = NULL;
-		ctrlr_input_opts[i].priority = 0;
-	}
-
-	// add an end-of-opts indicator
-	ctrlr_input_opts[i].type = rc_end;
-
-	if (rc_register(rc, ctrlr_input_opts))
-	{
-		fprintf (stderr, "error on registering ctrlr_input_opts\n");
-		exit(1);
-	}
-
-	if (rc_register(rc, ctrlr_input_opts2))
-	{
-		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
-		exit(1);
-	}
-
-	// set a static variable for the ipdef_custom_rc_func callback
-	ipddef_ptr = defaults;
-
-	// process the main platform-specific default file
-	process_ctrlr_file (rc, NULL, "windows");
-
-	// if a custom controller has been selected
-	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
-	{
-		const struct InputPort* input = Machine->input_ports;
-		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
-
-		// process the controller-specific default file
-		process_ctrlr_file (rc, ctrlrtype, "default");
-
-		// process the system-specific files for this controller
-		process_ctrlr_system (rc, ctrlrtype, Machine->gamedrv);
-
-		// process the game-specific files for this controller
-		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
-
-
-		while (input->type != IPT_END)
-		{
-			switch (input->type)
-			{
-				case IPT_PADDLE:
-				case IPT_PADDLE_V:
-					if (!paddle)
-					{
-						if ((paddle_ini != NULL) && (*paddle_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, paddle_ini);
-						paddle = 1;
-					}
-					break;
-
-				case IPT_DIAL:
-				case IPT_DIAL_V:
-					if (!dial)
-					{
-						if ((dial_ini != NULL) && (*dial_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, dial_ini);
-						dial = 1;
-					}
-					break;
-
-				case IPT_TRACKBALL_X:
-				case IPT_TRACKBALL_Y:
-					if (!trackball)
-					{
-						if ((trackball_ini != NULL) && (*trackball_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, trackball_ini);
-						trackball = 1;
-					}
-					break;
-
-				case IPT_AD_STICK_X:
-				case IPT_AD_STICK_Y:
-					if (!adstick)
-					{
-						if ((ad_stick_ini != NULL) && (*ad_stick_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, ad_stick_ini);
-						adstick = 1;
-					}
-					break;
-
-				case IPT_LIGHTGUN_X:
-				case IPT_LIGHTGUN_Y:
-					if (!lightgun)
-					{
-						if ((lightgun_ini != NULL) && (*lightgun_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, lightgun_ini);
-						lightgun = 1;
-					}
-					break;
-
-				case IPT_PEDAL:
-					if (!pedal)
-					{
-						if ((pedal_ini != NULL) && (*pedal_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, pedal_ini);
-						pedal = 1;
-					}
-					break;
-
-			}
-			++input;
-		}
-	}
-*/
-	// print the results
-	if (verbose)
-	{
-		if (ctrlrname)
-			fprintf (stderr,"\"%s\" controller support enabled\n",ctrlrname);
-
-		fprintf(stderr, "Mouse support %sabled\n",win_use_mouse ? "en" : "dis");
-		fprintf(stderr, "Joystick support %sabled\n",use_joystick ? "en" : "dis");
-		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d\n",
-			keyboard_count,
-			win_use_mouse ? mouse_count : 0,
-			use_joystick ? joystick_count : 0);
 	}
 }
 

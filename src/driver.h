@@ -77,10 +77,6 @@
 #include "messdrv.h"
 #endif
 
-#ifdef MMSND
-#include "mmsnd/mmsnd.h"
-#endif
-
 
 /***************************************************************************
 

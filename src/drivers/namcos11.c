@@ -26,7 +26,8 @@ tekken2b   Tekken 2 (TES2/VER.A)                   COH 100             "        
 souledge   Soul Edge Ver. II (SO4/VER.C)           COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C409     6
 souledga   Soul Edge (SO3/VER.A)                   COH 100 / COH 110   "                        "                       "        "
 souledgb   Soul Edge (SO1/VER.A)                   COH 100 / COH 110   "                        "                       "        "
-dunkmnia   Dunk Mania (DM1/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
+dunkmnia   Dunk Mania (DM2/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
+dunkmnic   Dunk Mania (DM1/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
 xevi3dg    Xevious 3D/G (XV31/VER.A)               COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C430     5
 primglex   Prime Goal EX (PG1/VER.A)               COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C411     6
 danceyes   Dancing Eyes (DC1/VER.A)                COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C431     5
@@ -966,8 +967,8 @@ ROM_START( dunkmnia )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "dm2verc.2l",   0x0000000, 0x100000, CRC(f6a6c46e) SHA1(5552c3a8fb0ef18e6f0bca8d81ec68b904824a66) )
 	ROM_LOAD16_BYTE( "dm2verc.2j",   0x0000001, 0x100000, CRC(1df539ce) SHA1(89ac436c685cf26899168c73fdaccee778fd7d2d) )
-	ROM_LOAD16_BYTE( "dm2verc.2k",   0x0200000, 0x100000, CRC(c8d72f78) SHA1(30341301f0d1cdcb14f3e0672ec1165c0583fbc8) )
-	ROM_LOAD16_BYTE( "dm2verc.2f",   0x0200001, 0x100000, CRC(d379dfa9) SHA1(142cb70b5ea060c961c5bc60a624643b5ec390df) )
+	ROM_LOAD16_BYTE( "dm1verc.2k",   0x0200000, 0x100000, CRC(c8d72f78) SHA1(30341301f0d1cdcb14f3e0672ec1165c0583fbc8) )
+	ROM_LOAD16_BYTE( "dm1verc.2f",   0x0200001, 0x100000, CRC(d379dfa9) SHA1(142cb70b5ea060c961c5bc60a624643b5ec390df) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "dm1rm0l.5",    0x0000000, 0x200000, CRC(4bb5d71d) SHA1(7d61211c7a6d1f6593604390fe99206a6a8cc7b3) )

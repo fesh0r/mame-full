@@ -257,7 +257,7 @@ INPUT_PORTS_START( foodf )
 
 	PORT_START	/* SW1 */
 	PORT_DIPNAME( 0x07, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x05, "1 for every 2" )
 	PORT_DIPSETTING(    0x02, "1 for every 4" )
 	PORT_DIPSETTING(    0x01, "1 for every 5" )

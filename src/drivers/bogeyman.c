@@ -143,7 +143,7 @@ INPUT_PORTS_START( bogeyman )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "50000" )
-	PORT_DIPSETTING(    0x00, "none" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( Easy ) )			// Normal
 	PORT_DIPSETTING(    0x08, DEF_STR( Medium ) )			//   |

@@ -504,10 +504,10 @@ INPUT_PORTS_START (c64)
 	 PORT_DIPSETTING (0x14, "Ocean Robocop2")
 #endif
 	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	 PORT_DIPSETTING (0, "None")
+	 PORT_DIPSETTING (0, DEF_STR( None ))
 	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")
 	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	 PORT_DIPSETTING (0, "None")
+	 PORT_DIPSETTING (0, DEF_STR( None ))
 	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
      C64_KEYBOARD
 INPUT_PORTS_END
@@ -537,10 +537,10 @@ INPUT_PORTS_START (vic64s)
 	 PORT_DIPSETTING (0x14, "Ocean Robocop2")
 #endif
 	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	 PORT_DIPSETTING (0, "None")
+	 PORT_DIPSETTING (0, DEF_STR( None ))
 	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")
 	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	 PORT_DIPSETTING (0, "None")
+	 PORT_DIPSETTING (0, DEF_STR( None ))
 	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
      VIC64S_KEYBOARD
 INPUT_PORTS_END
@@ -563,10 +563,10 @@ INPUT_PORTS_START (sx64)
 #endif
 	/* 1 vc1541 build in, device number selectable 8,9,10,11 */
 	PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	PORT_DIPSETTING (0, "None")
+	PORT_DIPSETTING (0, DEF_STR( None ))
 	PORT_DIPSETTING (2, "VC1541 Floppy Drive")
 	PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	PORT_DIPSETTING (0, "None")
+	PORT_DIPSETTING (0, DEF_STR( None ))
 	PORT_DIPSETTING (1, "VC1541 Floppy Drive")
 	C64_KEYBOARD
 INPUT_PORTS_END
@@ -589,10 +589,10 @@ INPUT_PORTS_START (vip64)
 #endif
 	 /* 1 vc1541 build in, device number selectable 8,9,10,11 */
 	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	 PORT_DIPSETTING (0, "None")
+	 PORT_DIPSETTING (0, DEF_STR( None ))
 	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")
 	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	 PORT_DIPSETTING (0, "None")
+	 PORT_DIPSETTING (0, DEF_STR( None ))
 	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
 	 VIC64S_KEYBOARD
 INPUT_PORTS_END

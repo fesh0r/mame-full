@@ -152,7 +152,7 @@ INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
 	PORT_DIPNAME( 0x10, 0x00, "Track Set" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )
-	PORT_DIPSETTING(	0x10, "Reverse" )
+	PORT_DIPSETTING(	0x10, DEF_STR( Reverse ) )
 	PORT_DIPNAME( 0x20, 0x20, "Bonus Time" )
 	PORT_DIPSETTING(	0x00, DEF_STR ( No ) )
 	PORT_DIPSETTING(	0x20, "Score = 350" )

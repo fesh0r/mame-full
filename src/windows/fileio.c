@@ -125,12 +125,6 @@ struct rc_option fileio_opts[] =
 	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
 #endif
-
-#ifdef MMSND
-	{ "MMSND directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "waveout", NULL, rc_string, &wavebasename, "waveout", 0, 0, NULL, "wave out path" },
-#endif
-
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -514,7 +508,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 			goto error;
 
 		s = temp_file;
-		flags |= FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE; 
+		flags |= FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE;
 	}
 	else
 	{
@@ -690,9 +684,9 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 	if (result == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
 		return 0;
 
-	// do the write
-	WriteFile(file->handle, buffer, length, &result, NULL);
-	file->filepos = file->offset + result;
+    // do the write
+    WriteFile(file->handle, buffer, length, &result, NULL);
+    file->filepos = file->offset + result;
 
 	// adjust the pointers
 	file->offset += result;
@@ -746,7 +740,7 @@ int osd_display_loading_rom_message(const char *name,struct rom_load_data *romda
 	if (name)
 		fprintf(stdout, "loading %-32s\r", name);
 	else
-		fprintf(stdout, "                    \r");
+		fprintf(stdout, "                                        \r");
 	fflush(stdout);
 
 	return 0;
@@ -777,7 +771,7 @@ void set_pathlist(int file_type, const char *new_rawpath)
 	// by default, start with an empty list
 	list->path = NULL;
 	list->pathcount = 0;
-		
+
 	list->rawpath = new_rawpath;
 
 }

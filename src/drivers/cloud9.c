@@ -165,7 +165,7 @@ INPUT_PORTS_START( cloud9 )
 	PORT_DIPSETTING (	0xC0, "4 coins + 2 coins" )
 	PORT_DIPSETTING (	0x80, "4 coins + 1 coin" )
 	PORT_DIPSETTING (	0x40, "2 coins + 1 coin" )
-	PORT_DIPSETTING (	0x00, "None" )
+	PORT_DIPSETTING (	0x00, DEF_STR( None ) )
 INPUT_PORTS_END
 
 

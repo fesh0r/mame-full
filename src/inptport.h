@@ -34,12 +34,42 @@ extern "C" {
 #define IP_ACTIVE_HIGH		0x00000000
 #define IP_ACTIVE_LOW		0xffffffff
 
+
+/* sequence types for input_port_seq() call */
 enum
 {
 	SEQ_TYPE_STANDARD = 0,
 	SEQ_TYPE_INCREMENT = 1,
 	SEQ_TYPE_DECREMENT = 2
 };
+
+
+/* conditions for DIP switches */
+enum
+{
+	PORTCOND_ALWAYS = 0,
+	PORTCOND_EQUALS,
+	PORTCOND_NOTEQUALS
+};
+
+
+/* groups for input ports */
+enum
+{
+	IPG_UI = 0,
+	IPG_PLAYER1,
+	IPG_PLAYER2,
+	IPG_PLAYER3,
+	IPG_PLAYER4,
+	IPG_PLAYER5,
+	IPG_PLAYER6,
+	IPG_PLAYER7,
+	IPG_PLAYER8,
+	IPG_OTHER,
+	IPG_TOTAL_GROUPS,
+	IPG_INVALID
+};
+
 
 /* various input port types */
 enum
@@ -109,6 +139,7 @@ enum
 	IPT_COIN6,
 	IPT_COIN7,
 	IPT_COIN8,
+	IPT_BILL1,
 
 	/* service coin */
 	IPT_SERVICE1,
@@ -119,6 +150,7 @@ enum
 	/* misc other digital inputs */
 	IPT_SERVICE,
 	IPT_TILT,
+	IPT_INTERLOCK,
 	IPT_VOLUME_UP,
 	IPT_VOLUME_DOWN,
 	
@@ -309,6 +341,10 @@ enum
 	STR_Mono,
 	STR_Unused,
 	STR_Unknown,
+	STR_Standard,
+	STR_Reverse,
+	STR_Alternate,
+	STR_None,
 	STR_TOTAL
 };
 
@@ -325,6 +361,7 @@ struct IptInitParams;
 struct InputPortDefinition
 {
 	UINT32		type;			/* type of port; see enum above */
+	UINT8		group;			/* which group the port belongs to */
 	UINT8		player;			/* player number (0 is player 1) */
 	const char *token;			/* token used to store settings */
 	const char *name;			/* user-friendly name */
@@ -385,6 +422,15 @@ struct InputPort
 	{
 		const char *tag;		/* used to tag PORT_START declarations */
 	} start;
+
+	/* valid if type is IPT_DIPSWITCH_SETTING */
+	struct
+	{
+		UINT8	portnum;		/* portnumber to use for condition */
+		UINT8	condition;		/* condition to use */
+		UINT32	mask;			/* mask to apply to the portnum */
+		UINT32	value;			/* value to compare against */
+	} dipsetting;
 
 	/* valid if type is IPT_KEYBOARD */
 #ifdef MESS
@@ -506,9 +552,6 @@ struct InputPort
 #define PORT_UNUSED													\
 	port->unused = 1;												\
 
-/* fix me -- this should go away */
-#define PORT_CHEAT
-
 
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name)								\
@@ -516,6 +559,13 @@ struct InputPort
 
 #define PORT_DIPSETTING(default,name)								\
 	PORT_BIT(0, default, IPT_DIPSWITCH_SETTING) PORT_NAME(name)		\
+
+/* conditionals for dip switch settings */
+#define PORT_DIPCONDITION(port_,mask_,condition_,value_)			\
+	port->dipsetting.portnum = (port_);								\
+	port->dipsetting.mask = (mask_);								\
+	port->dipsetting.condition = (condition_);						\
+	port->dipsetting.value = (value_);								\
 
 /* analog adjuster definition */
 #define PORT_ADJUSTER(default,name)									\
@@ -568,9 +618,13 @@ struct InputPortDefinition *get_input_port_list_backup(void);
 
 int input_port_active(const struct InputPort *in);
 int port_type_is_analog(int type);
+int port_type_in_use(int type);
+int port_type_to_group(int type, int player);
+int port_tag_to_index(const char *tag);
 const char *input_port_name(const struct InputPort *in);
 input_seq_t *input_port_seq(struct InputPort *in, int seqtype);
 input_seq_t *input_port_default_seq(int type, int player, int seqtype);
+int input_port_condition(const struct InputPort *in);
 
 const char *port_type_to_token(int type, int player);
 int token_to_port_type(const char *string, int *player);
@@ -647,36 +701,36 @@ READ16_HANDLER( input_port_27_word_r );
 READ16_HANDLER( input_port_28_word_r );
 READ16_HANDLER( input_port_29_word_r );
 
-READ32_HANDLER( input_port_0_long_r );
-READ32_HANDLER( input_port_1_long_r );
-READ32_HANDLER( input_port_2_long_r );
-READ32_HANDLER( input_port_3_long_r );
-READ32_HANDLER( input_port_4_long_r );
-READ32_HANDLER( input_port_5_long_r );
-READ32_HANDLER( input_port_6_long_r );
-READ32_HANDLER( input_port_7_long_r );
-READ32_HANDLER( input_port_8_long_r );
-READ32_HANDLER( input_port_9_long_r );
-READ32_HANDLER( input_port_10_long_r );
-READ32_HANDLER( input_port_11_long_r );
-READ32_HANDLER( input_port_12_long_r );
-READ32_HANDLER( input_port_13_long_r );
-READ32_HANDLER( input_port_14_long_r );
-READ32_HANDLER( input_port_15_long_r );
-READ32_HANDLER( input_port_16_long_r );
-READ32_HANDLER( input_port_17_long_r );
-READ32_HANDLER( input_port_18_long_r );
-READ32_HANDLER( input_port_19_long_r );
-READ32_HANDLER( input_port_20_long_r );
-READ32_HANDLER( input_port_21_long_r );
-READ32_HANDLER( input_port_22_long_r );
-READ32_HANDLER( input_port_23_long_r );
-READ32_HANDLER( input_port_24_long_r );
-READ32_HANDLER( input_port_25_long_r );
-READ32_HANDLER( input_port_26_long_r );
-READ32_HANDLER( input_port_27_long_r );
-READ32_HANDLER( input_port_28_long_r );
-READ32_HANDLER( input_port_29_long_r );
+READ32_HANDLER( input_port_0_dword_r );
+READ32_HANDLER( input_port_1_dword_r );
+READ32_HANDLER( input_port_2_dword_r );
+READ32_HANDLER( input_port_3_dword_r );
+READ32_HANDLER( input_port_4_dword_r );
+READ32_HANDLER( input_port_5_dword_r );
+READ32_HANDLER( input_port_6_dword_r );
+READ32_HANDLER( input_port_7_dword_r );
+READ32_HANDLER( input_port_8_dword_r );
+READ32_HANDLER( input_port_9_dword_r );
+READ32_HANDLER( input_port_10_dword_r );
+READ32_HANDLER( input_port_11_dword_r );
+READ32_HANDLER( input_port_12_dword_r );
+READ32_HANDLER( input_port_13_dword_r );
+READ32_HANDLER( input_port_14_dword_r );
+READ32_HANDLER( input_port_15_dword_r );
+READ32_HANDLER( input_port_16_dword_r );
+READ32_HANDLER( input_port_17_dword_r );
+READ32_HANDLER( input_port_18_dword_r );
+READ32_HANDLER( input_port_19_dword_r );
+READ32_HANDLER( input_port_20_dword_r );
+READ32_HANDLER( input_port_21_dword_r );
+READ32_HANDLER( input_port_22_dword_r );
+READ32_HANDLER( input_port_23_dword_r );
+READ32_HANDLER( input_port_24_dword_r );
+READ32_HANDLER( input_port_25_dword_r );
+READ32_HANDLER( input_port_26_dword_r );
+READ32_HANDLER( input_port_27_dword_r );
+READ32_HANDLER( input_port_28_dword_r );
+READ32_HANDLER( input_port_29_dword_r );
 
 
 #ifdef __cplusplus

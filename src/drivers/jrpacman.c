@@ -140,7 +140,7 @@ static INTERRUPT_GEN( jrpacman_interrupt )
 	/* speed up cheat */
 	if (speedcheat)
 	{
-		if (readinputport(3) & 1)	/* check status of the fake dip switch */
+		if (readinputportbytag("FAKE") & 1)	/* check status of the fake dip switch */
 		{
 			/* activate the cheat */
 			RAM[0x180b] = 0x01;
@@ -213,19 +213,19 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( jrpacman )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test") PORT_CODE(KEYCODE_F1) PORT_CHEAT
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_BIT( 0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1) //Funny looking, I know
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )// But this is currently the only way to assign a key to a dipswitch
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
@@ -237,7 +237,7 @@ INPUT_PORTS_START( jrpacman )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-	PORT_START	/* DSW0 */
+	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
@@ -260,12 +260,12 @@ INPUT_PORTS_START( jrpacman )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("FAKE")
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BIT(    0x01, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Speedup Cheat") PORT_CODE(KEYCODE_LCONTROL) PORT_CODE(JOYCODE_1_BUTTON1) PORT_CODE(MOUSECODE_1_BUTTON1) PORT_CHEAT
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT(   0x01, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Increase Game Speed (Cheat)") PORT_CODE(KEYCODE_LCONTROL) PORT_CODE(JOYCODE_1_BUTTON1) PORT_CODE(MOUSECODE_1_BUTTON1)
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )//This is a hack, surely?
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )//Better as a cheat.dat cheat?
 INPUT_PORTS_END
 
 

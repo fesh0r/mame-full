@@ -257,7 +257,7 @@ INPUT_PORTS_START(geneve)
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
 		PORT_BIT( config_fdc_mask << config_fdc_bit, fdc_kind_hfdc << config_fdc_bit, IPT_DIPSWITCH_NAME) PORT_NAME("Floppy disk controller")
-			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
+			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, DEF_STR( None ) )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments SD" )
 #if HAS_99CCFDC
 			PORT_DIPSETTING( fdc_kind_CC << config_fdc_bit, "CorComp" )

@@ -154,6 +154,7 @@ endif
 
 INCLUDES += \
 	-Isrc \
+	-Isrc/expat \
 	-Isrc/zlib \
 	-Isrc/includes \
 	-Isrc/windows \

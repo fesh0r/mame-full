@@ -177,7 +177,7 @@ INPUT_PORTS_START( 88games )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 //	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via cheat?_r */
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell Cheat") PORT_PLAYER(1)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell (Cheat)") PORT_PLAYER(1)
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

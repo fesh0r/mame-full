@@ -193,8 +193,8 @@ INPUT_PORTS_START( dragon32 )
 	PORT_START /* 12 */
 	PORT_CONFNAME( 0x03, 0x00, "Artifacting" )
 	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
-	PORT_CONFSETTING(    0x01, "Standard" )
-	PORT_CONFSETTING(    0x02, "Reverse" )
+	PORT_CONFSETTING(    0x01, DEF_STR( Standard ) )
+	PORT_CONFSETTING(    0x02, DEF_STR( Reverse ) )
 INPUT_PORTS_END
 
 /* CoCo keyboard
@@ -293,8 +293,8 @@ INPUT_PORTS_START( coco )
 	PORT_START /* 12 */
 	PORT_CONFNAME( 0x03, 0x01, "Artifacting" )
 	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
-	PORT_CONFSETTING(    0x01, "Standard" )
-	PORT_CONFSETTING(    0x02, "Reverse" )
+	PORT_CONFSETTING(    0x01, DEF_STR( Standard ) )
+	PORT_CONFSETTING(    0x02, DEF_STR( Reverse ) )
 	
 	PORT_START /* 13 */
 	PORT_CONFNAME( 0x03, 0x00, "Real Time Clock" )
@@ -404,8 +404,8 @@ INPUT_PORTS_START( coco3 )
 	PORT_START /* 12 */
 	PORT_CONFNAME( 0x03, 0x01, "Artifacting" )
 	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
-	PORT_CONFSETTING(    0x01, "Standard" )
-	PORT_CONFSETTING(    0x02, "Reverse" )
+	PORT_CONFSETTING(    0x01, DEF_STR( Standard ) )
+	PORT_CONFSETTING(    0x02, DEF_STR( Reverse ) )
 	PORT_CONFNAME( 0x08, 0x00, "Video type" )
 	PORT_CONFSETTING(	0x00, "Composite" )
 	PORT_CONFSETTING(	0x08, "RGB" )

@@ -8,15 +8,8 @@
 /****************************************************************************/
 /* libexpat */
 
-#if 1
-/* Include the internal copy of the libexpat library */
-#include "xmlrole.c"
-#include "xmltok.c"
-#include "xmlparse.c"
-#else
 /* Use the system libexpat library */
-#include <expat.h>
-#endif
+#include "expat.h"
 
 #include <stdio.h>
 #include <stdlib.h>

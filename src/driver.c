@@ -71,7 +71,9 @@ const struct GameDriver *drivers[] =
 	/* "Pacman hardware" games */
 	DRIVER( puckman )	/* (c) 1980 Namco */
 	DRIVER( puckmana )	/* (c) 1980 Namco */
+	DRIVER( puckmanf )	/* hack */
 	DRIVER( pacman )	/* (c) 1980 Midway */
+	DRIVER( pacmanf )	/* hack */
 	DRIVER( puckmod )	/* (c) 1981 Namco */
 	DRIVER( pacmod )	/* (c) 1981 Midway */
 	DRIVER( hangly )	/* hack */
@@ -90,6 +92,7 @@ const struct GameDriver *drivers[] =
 						/* Woodpecker somewhere around here?*/
 	DRIVER( pacplus )
 	DRIVER( mspacman )	/* (c) 1981 Midway */	/* made by Gencomp */
+	DRIVER( mspacmnf )	/* hack */
 	DRIVER( mspacmab )	/* bootleg */
 	DRIVER( mspacmat )	/* hack */
 	DRIVER( mspacpls )	/* hack */
@@ -2509,6 +2512,7 @@ V-V                           TP-027
 	DRIVER( capbowl )	/* (c) 1988 Incredible Technologies */
 	DRIVER( capbowl2 )	/* (c) 1988 Incredible Technologies */
 	DRIVER( capbowl3 )	/* (c) 1988 Incredible Technologies */
+	DRIVER( capbowl4 )	/* (c) 1989 Incredible Technologies */
 	DRIVER( clbowl )	/* (c) 1989 Incredible Technologies */
 	DRIVER( bowlrama )	/* (c) 1991 P & P Marketing */
 	DRIVER( wfortune )	/* (c) 1989 GameTek */
@@ -3807,6 +3811,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( pepper2 )	/* (c) 1982 */
 	DRIVER( hardhat )	/* (c) 1982 */
 	DRIVER( fax )		/* (c) 1983 */
+	DRIVER( faxa )		/* (c) 1983 */
 	DRIVER( circus )	/* no copyright notice [1977?] */
 	DRIVER( robotbwl )	/* no copyright notice */
 	DRIVER( crash )		/* Exidy [1979?] */
@@ -4657,6 +4662,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* Valadon Automation games */
 	DRIVER( bagman )	/* (c) 1982 */
 	DRIVER( bagnard )	/* (c) 1982 */
+	DRIVER( bagnarda )	/* (c) 1982 */
 	DRIVER( bagmans )	/* (c) 1982 + Stern license */
 	DRIVER( bagmans2 )	/* (c) 1982 + Stern license */
 	DRIVER( sbagman )	/* (c) 1984 */

@@ -155,7 +155,7 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( exerion )
-	PORT_START      /* player 1 inputs (muxed on 0xa000) */
+	PORT_START_TAG("IN0")      /* player 1 inputs (muxed on 0xa000) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
@@ -165,7 +165,7 @@ INPUT_PORTS_START( exerion )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* player 2 inputs (muxed on 0xa000) */
+	PORT_START_TAG("IN1")      /* player 2 inputs (muxed on 0xa000) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
@@ -175,14 +175,14 @@ INPUT_PORTS_START( exerion )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* dip switches (0xa800) */
+	PORT_START_TAG("DSW0")      /* dip switches (0xa800) */
 	PORT_DIPNAME( 0x07, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x03, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_BIT(0,        0x07, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
+	PORT_DIPSETTING(    0x07, "Infinite (Cheat)")
 	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x08, "20000" )
@@ -198,7 +198,7 @@ INPUT_PORTS_START( exerion )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START      /* dip switches/VBLANK (0xb000) */
+	PORT_START_TAG("DSW1")      /* dip switches/VBLANK (0xb000) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )		/* VBLANK */
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -210,7 +210,7 @@ INPUT_PORTS_START( exerion )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* FAKE */
+	PORT_START_TAG("FAKE")      /* FAKE */
 	/* The coin slots are not memory mapped. */
 	/* This fake input port is used by the interrupt */
 	/* handler to be notified of coin insertions. We use IMPULSE to */

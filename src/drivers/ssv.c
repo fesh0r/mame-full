@@ -48,7 +48,7 @@ STA-0001B	SSV_SUB     00  Vasara									Visco
 STA-0001B	SSV_SUB		01  Vasara 2								Visco
 -----------------------------------------------------------------------------------
 
-(1) Uses an unemulated NEC V810 CPU instead of the V60.
+(1) Uses NEC V810 CPU as sub cpu
 
 
 Games not yet dumped:
@@ -709,6 +709,18 @@ static ADDRESS_MAP_START( ultrax_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
+/***************************************************************************
+			Joryuu Syougi Kyoushitsu
+***************************************************************************/
+
+static ADDRESS_MAP_START( jsk_mem,ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_RAM
+	AM_RANGE(0x80000000, 0x8001ffff) AM_RAM 
+	AM_RANGE(0xc0000000, 0xc001ffff) AM_RAM 
+	AM_RANGE(0x40000000, 0x4000000f) AM_NOP // I/O 
+	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK2)
+ADDRESS_MAP_END
+
 
 /***************************************************************************
 
@@ -758,10 +770,10 @@ INPUT_PORTS_START( cairblad )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -769,7 +781,7 @@ INPUT_PORTS_START( cairblad )
 	PORT_DIPSETTING(      0x0040, "Every 2 Mil" )
 	PORT_DIPSETTING(      0x0060, "2 Mil/6 Mil" )
 	PORT_DIPSETTING(      0x0020, "4 Million" )
-	PORT_DIPSETTING(      0x0000, "None" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( None ) )
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 
 	PORT_START	// IN2
@@ -830,10 +842,10 @@ INPUT_PORTS_START( drifto94 )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, "Unknown 2-2&3*" )
 	PORT_DIPSETTING(      0x000c, "11 (0)" )
 	PORT_DIPSETTING(      0x0008, "10 (1)" )
@@ -915,9 +927,9 @@ INPUT_PORTS_START( eaglshot )
 	PORT_DIPNAME( 0x0010, 0x0010, "Discount to Continue" )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) ) // 2 Coins to start, 1 to continue
-	PORT_DIPNAME( 0x0020, 0x0020, "Controls" )
-	PORT_DIPSETTING(      0x0020, "Trackball" )
-	PORT_DIPSETTING(      0x0000, "Joystick" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Controls ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Trackball ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Joystick ) )
 	PORT_DIPNAME( 0x0040, 0x0040, "Trackball Type" )
 	PORT_DIPSETTING(      0x0040, "24 Counts (USA)" )
 	PORT_DIPSETTING(      0x0000, "12 Counts (Japan)" )
@@ -932,13 +944,13 @@ INPUT_PORTS_START( eaglshot )
 	PORT_DIPSETTING(      0x0001, "4 Holes" )
 	PORT_DIPSETTING(      0x0000, "5 Holes" )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) ) // No listed value for ON & ON
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
@@ -1014,13 +1026,13 @@ INPUT_PORTS_START( hypreact )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy"    )
-	PORT_DIPSETTING(      0x000c, "Normal"  )
-	PORT_DIPSETTING(      0x0004, "Hard"    )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x0010, 0x0010, "Controls" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy )    )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal )  )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Controls ) )
 	PORT_DIPSETTING(      0x0010, "Keyboard" )
-	PORT_DIPSETTING(      0x0000, "Joystick" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Joystick ) )
 	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 2-5" )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1130,13 +1142,13 @@ INPUT_PORTS_START( hypreac2 )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x0010, 0x0010, "Controls" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Controls ) )
 	PORT_DIPSETTING(      0x0010, "Keyboard" )
-	PORT_DIPSETTING(      0x0000, "Joystick" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Joystick ) )
 	PORT_DIPNAME( 0x0020, 0x0020, "Communication 1" )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1236,10 +1248,10 @@ INPUT_PORTS_START( janjans1 )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0004, 0x0004, "Nudity" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( On ) )
@@ -1253,7 +1265,7 @@ INPUT_PORTS_START( janjans1 )
 	PORT_DIPSETTING(      0x0000, "3000" )
 	PORT_DIPNAME( 0x00c0, 0x00c0, "Communication" )
 //	PORT_DIPSETTING(      0x0080, "unused" )
-	PORT_DIPSETTING(      0x00c0, "None" )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( None ) )
 	PORT_DIPSETTING(      0x0040, "Board 1 (Main)" )
 	PORT_DIPSETTING(      0x0000, "Board 2 (Sub)" )
 
@@ -1341,10 +1353,10 @@ INPUT_PORTS_START( keithlcy )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy"	)	// 15 sec
-	PORT_DIPSETTING(      0x0003, "Normal"	)	// 12
-	PORT_DIPSETTING(      0x0001, "Hard"	)	// 10
-	PORT_DIPSETTING(      0x0000, "Hardest"	)	// 8
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy )	)	// 15 sec
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )	)	// 12
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard )	)	// 10
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest )	)	// 8
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0008, "2" )
 	PORT_DIPSETTING(      0x000c, "3" )
@@ -1415,16 +1427,16 @@ INPUT_PORTS_START( koikois2 )
 	PORT_DIPNAME( 0x0040, 0x0040, "Voice" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "Controls" )
-	PORT_DIPSETTING(      0x0080, "Joystick" )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Controls ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(      0x0000, "Keyboard" )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0004, 0x0004, "Nudity" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Yes ) )
@@ -1439,7 +1451,7 @@ INPUT_PORTS_START( koikois2 )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, "Communication" )
 //	PORT_DIPSETTING(      0x0080, "unused" )
-	PORT_DIPSETTING(      0x00c0, "None" )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( None ) )
 	PORT_DIPSETTING(      0x0040, "Board 1 (Main)" )
 	PORT_DIPSETTING(      0x0000, "Board 2 (Sub)" )
 
@@ -1539,8 +1551,8 @@ INPUT_PORTS_START( meosism )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0080, "Reel Speed" )
-	PORT_DIPSETTING(      0x0080, "Low" )
-	PORT_DIPSETTING(      0x0000, "High" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Low ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( High ) )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, "Game Rate" )
@@ -1557,7 +1569,7 @@ INPUT_PORTS_START( meosism )
 	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 2-4" )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, "Controls" )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Controls ) )
 //	PORT_DIPSETTING(      0x0020, "Simple") )
 	PORT_DIPSETTING(      0x0000, "Complex" )
 	PORT_DIPNAME( 0x0040, 0x0000, "Coin Sensor" )
@@ -1634,10 +1646,10 @@ INPUT_PORTS_START( mslider )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0030, 0x0030, "Rounds (Vs Mode)" )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0030, "2" )
@@ -1796,12 +1808,12 @@ INPUT_PORTS_START( srmp4 )
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0006, "Easiest" )
 	PORT_DIPSETTING(      0x0005, "Easier" )
-	PORT_DIPSETTING(      0x0004, "Easy" )
-	PORT_DIPSETTING(      0x0007, "Normal" )
-	PORT_DIPSETTING(      0x0003, "Medium" )
-	PORT_DIPSETTING(      0x0002, "Hard" )
-	PORT_DIPSETTING(      0x0001, "Harder" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Harder ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1809,7 +1821,7 @@ INPUT_PORTS_START( srmp4 )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
 	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 2-7" )
@@ -1906,16 +1918,16 @@ INPUT_PORTS_START( srmp7 )
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0006, "Easiest" )
 	PORT_DIPSETTING(      0x0005, "Easier" )
-	PORT_DIPSETTING(      0x0004, "Easy" )
-	PORT_DIPSETTING(      0x0007, "Normal" )
-	PORT_DIPSETTING(      0x0003, "Medium" )
-	PORT_DIPSETTING(      0x0002, "Hard" )
-	PORT_DIPSETTING(      0x0001, "Harder" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Harder ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0008, 0x0008, "Kuitan" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Allow Continue" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Demo_Sounds ) )
@@ -2021,10 +2033,10 @@ INPUT_PORTS_START( stmblade )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0020, "1" )
 	PORT_DIPSETTING(      0x0010, "2" )
@@ -2121,19 +2133,19 @@ INPUT_PORTS_START( survarts )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0004, 0x0004, "Timer Speed" )
-	PORT_DIPSETTING(      0x0004, "Normal" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0000, "Fast" )
 	PORT_DIPNAME( 0x0008, 0x0008, "Damage Level" )
-	PORT_DIPSETTING(      0x0008, "Normal" )
-	PORT_DIPSETTING(      0x0000, "High" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( High ) )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0020, "Easy" )
-	PORT_DIPSETTING(      0x0030, "Normal" )
-	PORT_DIPSETTING(      0x0010, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x00c0, 0x0000, "Fatal Damage" )
 	PORT_DIPSETTING(      0x00c0, "Light" )
-	PORT_DIPSETTING(      0x0040, "Normal" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0080, "Heavy" )
 	PORT_DIPSETTING(      0x0000, "Heaviest" )
 
@@ -2352,9 +2364,9 @@ INPUT_PORTS_START( sxyreact )
 	PORT_DIPSETTING(      0x000c, "Normal?" )
 	PORT_DIPSETTING(      0x0004, "Hard?" )
 	PORT_DIPSETTING(      0x0000, "Hardest?" )
-	PORT_DIPNAME( 0x0010, 0x0010, "Controls" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Controls ) )
 	PORT_DIPSETTING(      0x0010, "Dial" )
-	PORT_DIPSETTING(      0x0000, "Joystick" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Joystick ) )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2447,12 +2459,12 @@ INPUT_PORTS_START( twineag2 )
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0006, "Easiest" )
 	PORT_DIPSETTING(      0x0005, "Easier" )
-	PORT_DIPSETTING(      0x0004, "Easy" )
-	PORT_DIPSETTING(      0x0007, "Normal" )
-	PORT_DIPSETTING(      0x0003, "Medium" )
-	PORT_DIPSETTING(      0x0002, "Hard" )
-	PORT_DIPSETTING(      0x0001, "Harder" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Harder ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2527,15 +2539,15 @@ INPUT_PORTS_START( ultrax )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy"	)	//$140
-	PORT_DIPSETTING(      0x0003, "Normal"	)	//$190
-	PORT_DIPSETTING(      0x0001, "Hard"	)	//$200
-	PORT_DIPSETTING(      0x0000, "Hardest"	)	//$300
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy )	)	//$140
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )	)	//$190
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard )	)	//$200
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest )	)	//$300
 	PORT_DIPNAME( 0x0014, 0x0004, "Country" )
 	PORT_DIPSETTING(      0x0000, "China" )
-	PORT_DIPSETTING(      0x0014, "Japan" )
-//	PORT_DIPSETTING(      0x0010, "Japan" )
-	PORT_DIPSETTING(      0x0004, "World" )
+	PORT_DIPSETTING(      0x0014, DEF_STR( Japan ) )
+//	PORT_DIPSETTING(      0x0010, DEF_STR( Japan ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( World ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2607,10 +2619,10 @@ INPUT_PORTS_START( vasara )
 
 	PORT_START	// IN1
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, "Bomber Stock" )
 	PORT_DIPSETTING(      0x0000, "0" )
 	PORT_DIPSETTING(      0x0004, "1" )
@@ -2656,7 +2668,6 @@ INPUT_PORTS_START( vasara )
 	PORT_BIT(  0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 INPUT_PORTS_END
 
-
 /***************************************************************************
 		                       Vasara 2
 ***************************************************************************/
@@ -2686,10 +2697,10 @@ INPUT_PORTS_START( vasara2 )
 
 	PORT_START	// IN1
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0004, "2" )
@@ -2735,7 +2746,6 @@ INPUT_PORTS_START( vasara2 )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
 	PORT_BIT(  0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 INPUT_PORTS_END
-
 
 
 /***************************************************************************
@@ -2890,6 +2900,7 @@ DRIVER_INIT( hypreac2 )		{	hypreac2_init();	// different
 DRIVER_INIT( janjans1 )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
+
 DRIVER_INIT( keithlcy )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf1;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
@@ -2931,6 +2942,12 @@ DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
 DRIVER_INIT( vasara )		{	init_ssv(); ssv_special = 2;
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
+
+DRIVER_INIT( jsk )		{	cpu_setbank(2, memory_region(REGION_USER2));
+								init_ssv();
+								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
+
 
 static MACHINE_DRIVER_START( ssv )
 
@@ -3159,6 +3176,21 @@ static MACHINE_DRIVER_START( ultrax )
 	MDRV_IMPORT_FROM(ssv)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(ultrax_readmem, ultrax_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( jsk )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(janjans1_readmem, janjans1_writemem)
+	
+	MDRV_CPU_ADD(V810,25000000)	
+	MDRV_CPU_PROGRAM_MAP(jsk_mem, 0)
+
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
@@ -3576,12 +3608,9 @@ U70.BIN     [--------] /
 ***************************************************************************/
 
 ROM_START( jsk )
-	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )		/* !! V810 Code !! */
-	ROM_LOAD32_BYTE( "jsk-u4.bin",  0x00000, 0x20000, CRC(ec22fb41) SHA1(c0d6b0a92075214a91da78be52d273771cb9f646) )	// order?
-	ROM_LOAD32_BYTE( "jsk-u24.bin", 0x00001, 0x20000, CRC(1fa6e156) SHA1(4daedf660d89c185c945d4a526312f6528fe7b17) )
-	ROM_LOAD32_BYTE( "jsk-u38.bin", 0x00002, 0x20000, CRC(8e5c0de3) SHA1(54c5dfd858086b0eb7ffa82c19fb1dfd7752d50e) )
-	ROM_LOAD32_BYTE( "jsk-u52.bin", 0x00003, 0x20000, CRC(19cc585f) SHA1(b53138e93d40c0cf03aee838d7653f5665d9cf35) )
-
+	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )
+	ROM_LOAD16_WORD( "jsk-main.bin", 0x000000, 0x100000, NO_DUMP ) // missing ?
+		
 	ROM_LOAD16_BYTE( "jsk-u72.bin", 0x80000, 0x20000, CRC(41ed8a9f) SHA1(a81efc91fbf1abc70ed64f4fa9b828a8b6f554ec) )
 	ROM_LOAD16_BYTE( "jsk-u71.bin", 0x80001, 0x20000, CRC(b529f331) SHA1(be6259f5c3a6106280a4b519f83ee008d761be4e) )
 
@@ -3602,6 +3631,12 @@ ROM_START( jsk )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND4, ROMREGION_SOUNDONLY ) /* Samples */
 	ROM_COPY( REGION_SOUND1, 0x000000, 0x000000, 0x400000 )
+	
+	ROM_REGION32_LE( 0x20000*4, REGION_USER2, 0 )
+	ROM_LOAD32_BYTE( "jsk-u4.bin",  0x00003, 0x20000, CRC(ec22fb41) SHA1(c0d6b0a92075214a91da78be52d273771cb9f646) )
+	ROM_LOAD32_BYTE( "jsk-u24.bin", 0x00002, 0x20000, CRC(1fa6e156) SHA1(4daedf660d89c185c945d4a526312f6528fe7b17) )
+	ROM_LOAD32_BYTE( "jsk-u38.bin", 0x00001, 0x20000, CRC(8e5c0de3) SHA1(54c5dfd858086b0eb7ffa82c19fb1dfd7752d50e) )
+	ROM_LOAD32_BYTE( "jsk-u52.bin", 0x00000, 0x20000, CRC(19cc585f) SHA1(b53138e93d40c0cf03aee838d7653f5665d9cf35) )
 ROM_END
 
 
@@ -4399,7 +4434,6 @@ ROM_START( vasara2a )
 	ROM_LOAD16_BYTE( "s1.u37", 0x000000, 0x200000, CRC(11cd7098) SHA1(f75288b5c89df039dfb41d66bd275cda8605e75a) )
 ROM_END
 
-
 /***************************************************************************
 
 
@@ -4427,7 +4461,7 @@ GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta", 
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
-GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                           GAME_NO_COCKTAIL )
+GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                 GAME_NO_COCKTAIL )
 GAMEX( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
 GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )
 
@@ -4439,5 +4473,5 @@ GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpres
 
 GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1997,  jsk,      0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1997,  jsk,      0,        jsk, 			janjans1, jsk, 			ROT0,   "Visco",          "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 

@@ -350,7 +350,7 @@ INPUT_PORTS_START( liberatr )
 	PORT_DIPSETTING (   0x10, "*2" )
 	/* TODO: verify the following settings */
 	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x00, DEF_STR( None ) )
 	PORT_DIPSETTING (   0x80, "1 each 5" )
 	PORT_DIPSETTING (   0x40, "1 each 4 (+Demo)" )
 	PORT_DIPSETTING (   0xa0, "1 each 3" )

@@ -408,12 +408,24 @@ ROM_END
 ROM_START( capbowl3 )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "bowl30.bin",   0x08000, 0x8000, CRC(32e30928) SHA1(db47b6ace949d86aa1cdd1e5c7a5981f30b590af) )
-	ROM_LOAD( "grom-gr0.bin", 0x10000, 0x8000, CRC(2b5eb091) SHA1(43976bfa9fbe9694c7274f113641f671fa32bbb7) )
-	ROM_LOAD( "grom-gr1.bin", 0x10000, 0x8000, NO_DUMP )
-	ROM_LOAD( "grom-gr2.bin", 0x20000, 0x8000, CRC(f3d2468d) SHA1(0348ee5d0000b753ad90a525048d05bfb552bee1) )
+	ROM_LOAD( "bfb.gr0",      0x10000, 0x8000, CRC(2b5eb091) SHA1(43976bfa9fbe9694c7274f113641f671fa32bbb7) )
+	ROM_LOAD( "bfb.gr1",      0x18000, 0x8000, CRC(880e4e1c) SHA1(9f88b26877596667f1ac4e0083795bf266712879) )
+	ROM_LOAD( "bfb.gr2",      0x20000, 0x8000, CRC(f3d2468d) SHA1(0348ee5d0000b753ad90a525048d05bfb552bee1) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sound-r2.bin",  0x8000, 0x8000, CRC(43ac1658) SHA1(1fab23d649d0c565ef1a7f45b30806f9d1bb4afd) )
+ROM_END
+
+
+ROM_START( capbowl4 )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
+	ROM_LOAD( "bfb.u6",        0x08000, 0x8000, CRC(79f1d083) SHA1(36e9a90403fc9b876d7660ee46c5fbb855321769) )
+	ROM_LOAD( "bfb.gr0",       0x10000, 0x8000, CRC(2b5eb091) SHA1(43976bfa9fbe9694c7274f113641f671fa32bbb7) )
+	ROM_LOAD( "bfb.gr1",       0x18000, 0x8000, CRC(880e4e1c) SHA1(9f88b26877596667f1ac4e0083795bf266712879) )
+	ROM_LOAD( "bfb.gr2",       0x20000, 0x8000, CRC(f3d2468d) SHA1(0348ee5d0000b753ad90a525048d05bfb552bee1) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "bfb.u30",     0x8000, 0x8000, CRC(6fe2c4ff) SHA1(862823264d243be590fd29a228a32e7a0a818e57) )
 ROM_END
 
 
@@ -466,5 +478,6 @@ static DRIVER_INIT( capbowl )
 GAME( 1988, capbowl,  0,       capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 1)" )
 GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 2)" )
 GAME( 1988, capbowl3, capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 3)" )
+GAME( 1988, capbowl4, capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 4)" )
 GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Coors Light Bowling" )
 GAME( 1991, bowlrama, 0,       bowlrama, capbowl, capbowl, ROT270, "P&P Marketing", "Bowl-O-Rama" )

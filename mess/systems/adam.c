@@ -300,7 +300,7 @@ INPUT_PORTS_START( adam )
 
     PORT_START /* IN6 */
     PORT_DIPNAME(0x0F, 0x00, "Controllers")
-    PORT_DIPSETTING(0x00, "None" )
+    PORT_DIPSETTING(0x00, DEF_STR( None ) )
     PORT_DIPSETTING(0x01, "Driving Controller" )
     PORT_DIPSETTING(0x02, "Roller Controller" )
     PORT_DIPSETTING(0x04, "Super Action Controllers" )

@@ -2348,7 +2348,7 @@ INPUT_PORTS_START( tfrceac ) /* ThunderForce AC Input Ports */
     PORT_DIPSETTING(    0x10, "10k, 70k, 150k" )
     PORT_DIPSETTING(    0x30, "20k, 100k, 200k" )
     PORT_DIPSETTING(    0x20, "40k, 150k, 300k" )
-    PORT_DIPSETTING(    0x00, "None" )
+    PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
     PORT_DIPSETTING(    0xc0, DEF_STR( Medium ) )
@@ -3607,7 +3607,14 @@ ROM_START( columnsj ) /* Columns (Jpn) (c)1990 Sega */
 ROM_END
 
 
-ROM_START( columns2 ) /* Columns II - The Voyage Through Time (Jpn)  (c)1990 Sega */
+ROM_START( columns2 ) /* Columns II - The Voyage Through Time  (c)1990 Sega */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr13363.bin", 0x000000, 0x020000, CRC(c99e4ffd) SHA1(67981aa08c8a625af35dd7689011364159cf9194) )
+	ROM_LOAD16_BYTE( "epr13362.bin", 0x000001, 0x020000, CRC(394e2419) SHA1(d4f726b32cf301d0d52611237b83177e69bfaf71) )
+ROM_END
+
+
+ROM_START( column2j ) /* Columns II - The Voyage Through Time (Jpn)  (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "epr13361.rom", 0x000000, 0x020000, CRC(b54b5f12) SHA1(4d7fbae7d9bcadd433ebc25aef255dc43df611bc) )
 	ROM_LOAD16_BYTE( "epr13360.rom", 0x000001, 0x020000, CRC(a59b1d4f) SHA1(e9ee315677782e1c61ae8f11260101cc03176188) )
@@ -4758,7 +4765,8 @@ GAME ( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elo
 GAME ( 1989, bloxeedu, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (US, C System)" )
 GAME ( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)" )
 GAME ( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)" )
-GAME ( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)" )
+GAME ( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time" )
+GAME ( 1990, column2j, columns2, segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)" )
 
 /* System C-2 Games */
 GAME ( 1990, borench,  0,        segac2,   borench,  borench,  ROT0, "Sega",                   "Borench" )

@@ -143,8 +143,8 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS_BASE = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Isrc/includes -Imess/$(MAMEOS) \
-	-Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
+CFLAGS_BASE = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
+	-Isrc -Isrc/includes -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Werror -Wall -Wno-unused -g

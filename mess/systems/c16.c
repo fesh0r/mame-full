@@ -457,11 +457,11 @@ INPUT_PORTS_START (c16)
 	PORT_START
 	PORT_BIT (0xc0, 0x0, IPT_UNUSED)		   /* no real floppy */
 	PORT_DIPNAME ( 0x38, 8, "Device 8")\
-	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  0, DEF_STR( None ) )\
 	PORT_DIPSETTING( 8, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING( 0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
-	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  0, DEF_STR( None ) )\
 	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_START
@@ -526,11 +526,11 @@ INPUT_PORTS_START (plus4)
 	PORT_START
 	PORT_BIT (0xc0, 0x00, IPT_UNUSED)		   /* no real floppy */
 	PORT_DIPNAME ( 0x38, 0x8, "Device 8")\
-	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  0, DEF_STR( None ) )\
 	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
-	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  0, DEF_STR( None ) )\
 	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_START
@@ -587,11 +587,11 @@ INPUT_PORTS_START (c364)
 	PORT_START
 	PORT_BIT (0xc0, 0x00, IPT_UNUSED)		   /* no real floppy */
 	PORT_DIPNAME ( 0x38, 0x10, "Device 8")\
-	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  0, DEF_STR( None ) )\
 	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_DIPNAME ( 0x03, 0x01, "Device 9")\
-	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  0, DEF_STR( None ) )\
 	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_START

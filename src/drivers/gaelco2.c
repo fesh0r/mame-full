@@ -518,7 +518,7 @@ PORT_START	/* DSW #2 */
 	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(      0x0000, "Analog" )		/* TO-DO */
-	PORT_DIPSETTING(      0x4000, "Standard" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Standard ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 PORT_START	/* COINSW & Service */

@@ -185,11 +185,6 @@ Dave Widel
 #include "cpu/s2650/s2650.h"
 
 
-static UINT8 speedcheat = 0;	/* a well known hack allows to make Pac Man run at four times */
-								/* his usual speed. When we start the emulation, we check if the */
-								/* hack can be applied, and set this flag accordingly. */
-
-
 
 /*************************************
  *
@@ -197,52 +192,16 @@ static UINT8 speedcheat = 0;	/* a well known hack allows to make Pac Man run at 
  *
  *************************************/
 
-MACHINE_INIT( pacman )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the loaded set of ROMs allows the Pac Man speed hack */
-	if ((RAM[0x180b] == 0xbe && RAM[0x1ffd] == 0x00) ||
-			(RAM[0x180b] == 0x01 && RAM[0x1ffd] == 0xbd))
-		speedcheat = 1;
-	else
-		speedcheat = 0;
-}
-
-
-MACHINE_INIT( pacplus )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the loaded set of ROMs allows the Pac Man speed hack */
-	if ((RAM[0x182d] == 0xbe && RAM[0x1ffd] == 0xff) ||
-			(RAM[0x182d] == 0x01 && RAM[0x1ffd] == 0xbc))
-		speedcheat = 1;
-	else
-		speedcheat = 0;
-}
-
-
 MACHINE_INIT( mschamp )
 {
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
-	int bankaddr = ((readinputport(3) & 1) * 0x8000);
+	int bankaddr = ((readinputportbytag("DSW 2") & 1) * 0x8000);
 
 	cpu_setbank(1,&rom[bankaddr]);
 	cpu_setbank(2,&rom[bankaddr+0x4000]);
 }
 
-MACHINE_INIT( piranha )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* check if the loaded set of ROMs allows the Pac Man speed hack */
-	if ((RAM[0x180b] == 0xbe && RAM[0x1ffd] == 0x00) ||
-			(RAM[0x180b] == 0x01 && RAM[0x1ffd] == 0xbd))
-		speedcheat = 1;
-	else
-	speedcheat = 0;
-}
 
 /*************************************
  *
@@ -252,77 +211,24 @@ MACHINE_INIT( piranha )
 
 static INTERRUPT_GEN( pacman_interrupt )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* speed up cheat */
-	if (speedcheat)
+	/* always signal a normal VBLANK */
+	if (cpu_getiloops() == 0)
+		irq0_line_hold();
+	
+	/* on other "VBLANK" opportunities, check to make sure the cheat is enabled */
+	/* and that the speedup button is pressed */
+	else
 	{
-		if (readinputportbytag("FAKE") & 1)	/* check status of the fake dip switch */
+		int portnum = port_tag_to_index("FAKE");
+		if (portnum != -1)
 		{
-			/* activate the cheat */
-			RAM[0x180b] = 0x01;
-			RAM[0x1ffd] = 0xbd;
-		}
-		else
-		{
-			/* remove the cheat */
-			RAM[0x180b] = 0xbe;
-			RAM[0x1ffd] = 0x00;
+			UINT8 value = readinputport(portnum);
+			if ((value & 7) == 5 || (value & 6) == 2)
+				irq0_line_hold();
 		}
 	}
-
-	irq0_line_hold();
 }
 
-
-static INTERRUPT_GEN( pacplus_interrupt )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* speed up cheat */
-	if (speedcheat)
-	{
-		if (readinputportbytag("FAKE") & 1)	/* check status of the fake dip switch */
-		{
-			/* activate the cheat */
-			RAM[0x182d] = 0x01;
-			RAM[0x1ffd] = 0xbc;
-		}
-		else
-		{
-			/* remove the cheat */
-			RAM[0x182d] = 0xbe;
-			RAM[0x1ffd] = 0xff;
-		}
-	}
-
-	irq0_line_hold();
-}
-
-
-static INTERRUPT_GEN( mspacman_interrupt )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* speed up cheat */
-	if (speedcheat)
-	{
-		if (readinputportbytag("FAKE") & 1)	/* check status of the fake dip switch */
-		{
-			/* activate the cheat */
-			RAM[0x1180b] = 0x01;
-			RAM[0x11ffd] = 0xbd;
-		}
-		else
-		{
-			/* remove the cheat */
-			RAM[0x1180b] = 0xbe;
-			RAM[0x11ffd] = 0x00;
-		}
-	}
-
-	irq0_line_hold();
-}
 
 /*
    The piranha board has a sync bus controler card similar to Midway's pacman. It
@@ -1044,7 +950,7 @@ INPUT_PORTS_START( pacman )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )	PORT_PLAYER(1) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )	PORT_PLAYER(1) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )	PORT_PLAYER(1) PORT_4WAY
-	PORT_DIPNAME(0x10, 0x10, "Rack Test" )	PORT_CODE(KEYCODE_F1)
+	PORT_DIPNAME(0x10, 0x10, "Rack Test (Cheat)" )	PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1078,13 +984,13 @@ INPUT_PORTS_START( pacman )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x80, 0x80, "Ghost Names" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x00, "Alternate" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Alternate ) )
 
 	PORT_START_TAG("DSW 2")
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1092,9 +998,11 @@ INPUT_PORTS_START( pacman )
 	PORT_START_TAG("FAKE")
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_DIPNAME(0x01, 0x00, "Speedup Cheat" ) PORT_CODE(KEYCODE_LCONTROL) PORT_CODE(JOYCODE_1_BUTTON1)
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "2x Speed (Cheat)" )
+	PORT_DIPNAME( 0x06, 0x00, "2x Speed Cheat" )
+	PORT_DIPSETTING(    0x00, "Disabled" )
+	PORT_DIPSETTING(    0x02, "Enabled Always" )
+	PORT_DIPSETTING(    0x04, "Enabled with Button" )
 INPUT_PORTS_END
 
 
@@ -1106,7 +1014,7 @@ INPUT_PORTS_START( mspacman )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1140,7 +1048,7 @@ INPUT_PORTS_START( mspacman )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
@@ -1152,9 +1060,11 @@ INPUT_PORTS_START( mspacman )
 	PORT_START_TAG("FAKE")
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BIT(    0x01, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Speedup Cheat") PORT_CODE(KEYCODE_LCONTROL) PORT_CODE(JOYCODE_1_BUTTON1) PORT_CODE(MOUSECODE_1_BUTTON1) PORT_CHEAT
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "2x Speed (Cheat)" )
+	PORT_DIPNAME( 0x06, 0x00, "2x Speed Cheat" )
+	PORT_DIPSETTING(    0x00, "Disabled" )
+	PORT_DIPSETTING(    0x02, "Enabled Always" )
+	PORT_DIPSETTING(    0x04, "Enabled with Button" )
 INPUT_PORTS_END
 
 
@@ -1165,7 +1075,7 @@ INPUT_PORTS_START( mspacpls )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1199,7 +1109,7 @@ INPUT_PORTS_START( mspacpls )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
@@ -1216,7 +1126,7 @@ INPUT_PORTS_START( mschamp )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1250,7 +1160,7 @@ INPUT_PORTS_START( mschamp )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
@@ -1485,7 +1395,7 @@ INPUT_PORTS_START( ponpoko )
 	PORT_DIPSETTING(    0x01, "10000" )
 	PORT_DIPSETTING(    0x02, "30000" )
 	PORT_DIPSETTING(    0x03, "50000" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x04, "1" )
@@ -1770,7 +1680,7 @@ INPUT_PORTS_START( vanvan )
 	PORT_DIPSETTING(    0x08, "20k and 100k" )
 	PORT_DIPSETTING(    0x04, "40k and 140k" )
 	PORT_DIPSETTING(    0x00, "70k and 200k" )
-	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -1787,7 +1697,7 @@ INPUT_PORTS_START( vanvan )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_BIT(    0x02, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(    0x02, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
@@ -1843,7 +1753,7 @@ INPUT_PORTS_START( vanvank )
 	PORT_DIPSETTING(    0x08, "20k and 100k" )
 	PORT_DIPSETTING(    0x04, "40k and 140k" )
 	PORT_DIPSETTING(    0x00, "70k and 200k" )
-	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -1861,7 +1771,7 @@ INPUT_PORTS_START( vanvank )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_BIT(    0x02, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(    0x02, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
@@ -1917,7 +1827,7 @@ INPUT_PORTS_START( dremshpr )
 	PORT_DIPSETTING(    0x08, "30000" )
 	PORT_DIPSETTING(    0x04, "50000" )
 	PORT_DIPSETTING(    0x00, "70000" )
-	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -1930,7 +1840,7 @@ INPUT_PORTS_START( dremshpr )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
 
 	PORT_START_TAG("DSW 2")
-  //PORT_BIT(    0x01, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CHEAT
+  //PORT_DIPNAME(    0x01, 0x00,"Invulnerability (Cheat)")
   //PORT_DIPSETTING(    0x00, DEF_STR( Off ) )		/* turning this on crashes puts the */
   //PORT_DIPSETTING(    0x01, DEF_STR( On ) )       /* emulated machine in an infinite loop once in a while */
 //	PORT_DIPNAME( 0xff, 0x00, DEF_STR( Unused ) )
@@ -1944,7 +1854,7 @@ INPUT_PORTS_START( alibaba )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT(0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1978,7 +1888,7 @@ INPUT_PORTS_START( alibaba )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
@@ -2216,7 +2126,7 @@ INPUT_PORTS_START( nmouse )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test") PORT_CODE(KEYCODE_F1) PORT_CHEAT
+	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -2250,7 +2160,7 @@ INPUT_PORTS_START( nmouse )
 	PORT_DIPSETTING(    0x00, "5000" )
 	PORT_DIPSETTING(    0x10, "10000" )
 	PORT_DIPSETTING(    0x20, "15000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
@@ -2656,11 +2566,10 @@ static MACHINE_DRIVER_START( pacman )
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(0,writeport)
-	MDRV_CPU_VBLANK_INT(pacman_interrupt,1)
+	MDRV_CPU_VBLANK_INT(pacman_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(pacman)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2679,18 +2588,6 @@ static MACHINE_DRIVER_START( pacman )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( pacplus )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(pacman)
-
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_VBLANK_INT(pacplus_interrupt,1)
-
-	MDRV_MACHINE_INIT(pacplus)
-MACHINE_DRIVER_END
-
-
 static MACHINE_DRIVER_START( mspacman )
 
 	/* basic machine hardware */
@@ -2698,7 +2595,6 @@ static MACHINE_DRIVER_START( mspacman )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(mspacman_readmem,mspacman_writemem)
-	MDRV_CPU_VBLANK_INT(mspacman_interrupt,1)
 
 	MDRV_MACHINE_INIT(mspacman)
 MACHINE_DRIVER_END
@@ -2711,8 +2607,6 @@ static MACHINE_DRIVER_START( mspacpls )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_MACHINE_INIT(NULL)
 MACHINE_DRIVER_END
 
 
@@ -2756,8 +2650,6 @@ static MACHINE_DRIVER_START( vanvan )
 	MDRV_CPU_IO_MAP(0,vanvan_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_MACHINE_INIT(NULL)
-
 	/* video hardware */
 	MDRV_VISIBLE_AREA(2*8, 34*8-1, 0*8, 28*8-1)
 	MDRV_VIDEO_UPDATE(vanvan)
@@ -2776,8 +2668,6 @@ static MACHINE_DRIVER_START( dremshpr )
 	MDRV_CPU_IO_MAP(0,dremshpr_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_MACHINE_INIT(NULL)
-
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("namco", AY8910, dremshpr_ay8910_interface)
 MACHINE_DRIVER_END
@@ -2791,8 +2681,6 @@ static MACHINE_DRIVER_START( alibaba )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(alibaba_readmem,alibaba_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_MACHINE_INIT(NULL)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( piranha )
@@ -2803,8 +2691,6 @@ static MACHINE_DRIVER_START( piranha )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(0,piranha_writeport)
-
-	MDRV_MACHINE_INIT(piranha)
 MACHINE_DRIVER_END
 
 
@@ -2816,8 +2702,6 @@ static MACHINE_DRIVER_START( nmouse )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(0,nmouse_writeport)
-
-	MDRV_MACHINE_INIT(NULL)
 MACHINE_DRIVER_END
 
 
@@ -2844,8 +2728,6 @@ static MACHINE_DRIVER_START( bigbucks )
 	MDRV_CPU_PROGRAM_MAP(readmem,bigbucks_writemem)
 	MDRV_CPU_IO_MAP(bigbucks_readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,20)
-
-	MDRV_MACHINE_INIT(NULL)
 
 	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
 MACHINE_DRIVER_END
@@ -2914,8 +2796,6 @@ static MACHINE_DRIVER_START( rocktrv2 )
 	MDRV_CPU_PROGRAM_MAP(rocktrv2_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_MACHINE_INIT(NULL)
-
 	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
 MACHINE_DRIVER_END
 
@@ -2931,6 +2811,29 @@ ROM_START( puckman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, CRC(fee263b3) SHA1(87117ba5082cd7a615b4ec7c02dd819003fbd669) )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, CRC(39d1fc83) SHA1(326dbbf94c6fa2e96613dedb53702f8832b47d59) )
+	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, CRC(02083b03) SHA1(7e1945f6eb51f2e51806d0439f975f7a2889b9b8) )
+	ROM_LOAD( "namcopac.6j",  0x3000, 0x1000, CRC(7a36fe55) SHA1(01b4c38108d9dc4e48da4f8d685248e1e6821377) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, CRC(0c944964) SHA1(06ef227747a440831c9a3a613b76693d52a2f0a9) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, CRC(958fedf9) SHA1(4a937ac02216ea8c96477d4a15522070507fb599) )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+
+ROM_START( puckmanf )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, CRC(fee263b3) SHA1(87117ba5082cd7a615b4ec7c02dd819003fbd669) )
+	ROM_LOAD( "nampfast.6f",  0x1000, 0x1000, CRC(51b38db9) SHA1(0a796f93462aec4758c2aa1c1f34cd05bb10a178) )
 	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, CRC(02083b03) SHA1(7e1945f6eb51f2e51806d0439f975f7a2889b9b8) )
 	ROM_LOAD( "namcopac.6j",  0x3000, 0x1000, CRC(7a36fe55) SHA1(01b4c38108d9dc4e48da4f8d685248e1e6821377) )
 
@@ -3002,6 +2905,29 @@ ROM_START( pacman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC(c1e6ab10) SHA1(e87e059c5be45753f7e9f33dff851f16d6751181) )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, CRC(1a6fb2d4) SHA1(674d3a7f00d8be5e38b1fdc208ebef5a92d38329) )
+	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, CRC(bcdd1beb) SHA1(8e47e8c2c4d6117d174cdac150392042d3e0a881) )
+	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, CRC(817d94e3) SHA1(d4a70d56bb01d27d094d73db8667ffb00ca69cb9) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, CRC(0c944964) SHA1(06ef227747a440831c9a3a613b76693d52a2f0a9) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, CRC(958fedf9) SHA1(4a937ac02216ea8c96477d4a15522070507fb599) )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+
+ROM_START( pacmanf )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC(c1e6ab10) SHA1(e87e059c5be45753f7e9f33dff851f16d6751181) )
+	ROM_LOAD( "pacfast.6f",   0x1000, 0x1000, CRC(720dc3ee) SHA1(7224d7acfa0144b681c71d7734a7337189835361) )
 	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, CRC(bcdd1beb) SHA1(8e47e8c2c4d6117d174cdac150392042d3e0a881) )
 	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, CRC(817d94e3) SHA1(d4a70d56bb01d27d094d73db8667ffb00ca69cb9) )
 
@@ -3310,6 +3236,32 @@ ROM_START( mspacman )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code+64k for decrypted code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC(c1e6ab10) SHA1(e87e059c5be45753f7e9f33dff851f16d6751181) )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, CRC(1a6fb2d4) SHA1(674d3a7f00d8be5e38b1fdc208ebef5a92d38329) )
+	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, CRC(bcdd1beb) SHA1(8e47e8c2c4d6117d174cdac150392042d3e0a881) )
+	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, CRC(817d94e3) SHA1(d4a70d56bb01d27d094d73db8667ffb00ca69cb9) )
+	ROM_LOAD( "u5",           0x8000, 0x0800, CRC(f45fbbcd) SHA1(b26cc1c8ee18e9b1daa97956d2159b954703a0ec) )
+	ROM_LOAD( "u6",           0x9000, 0x1000, CRC(a90e7000) SHA1(e4df96f1db753533f7d770aa62ae1973349ea4cf) )
+	ROM_LOAD( "u7",           0xb000, 0x1000, CRC(c82cd714) SHA1(1d8ac7ad03db2dc4c8c18ade466e12032673f874) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5e",           0x0000, 0x1000, CRC(5c281d01) SHA1(5e8b472b615f12efca3fe792410c23619f067845) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x1000, CRC(615af909) SHA1(fd6a1dde780b39aea76bf1c4befa5882573c2ef4) )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+
+ROM_START( mspacmnf )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code+64k for decrypted code */
+	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, CRC(c1e6ab10) SHA1(e87e059c5be45753f7e9f33dff851f16d6751181) )
+	ROM_LOAD( "pacfast.6f",   0x1000, 0x1000, CRC(720dc3ee) SHA1(7224d7acfa0144b681c71d7734a7337189835361) )
 	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, CRC(bcdd1beb) SHA1(8e47e8c2c4d6117d174cdac150392042d3e0a881) )
 	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, CRC(817d94e3) SHA1(d4a70d56bb01d27d094d73db8667ffb00ca69cb9) )
 	ROM_LOAD( "u5",           0x8000, 0x0800, CRC(f45fbbcd) SHA1(b26cc1c8ee18e9b1daa97956d2159b954703a0ec) )
@@ -4549,7 +4501,9 @@ static DRIVER_INIT( rocktrv2 )
 /*          rom       parent    machine   inp       init */
 GAME( 1980, puckman,  0,        pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
 GAME( 1980, puckmana, puckman,  pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 2)" )
+GAME( 1980, puckmanf, puckman,  pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1 with speedup hack)" )
 GAME( 1980, pacman,   puckman,  pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
+GAME( 1980, pacmanf,  puckman,  pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, with speedup hack)" )
 GAME( 1981, puckmod,  puckman,  pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (harder?)" )
 GAME( 1981, pacmod,   puckman,  pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
 GAME( 1981, hangly,   puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 1)" )
@@ -4565,8 +4519,9 @@ GAME( 1981, piranhao, puckman,  piranha,  mspacman, eyes,     ROT90,  "GL (US Bi
 GAME( 1981, piranhah, puckman,  pacman,   mspacman, 0,        ROT90,  "hack", "Piranha (hack)" )
 GAME( 1981, nmouse,   0	     ,  nmouse ,  nmouse,   eyes,     ROT90,  "Amenip (Palcom Queen River)", "Naughty Mouse (set 1)" )
 GAME( 1981, nmouseb,  nmouse ,  nmouse ,  nmouse,   eyes,     ROT90,  "Amenip Nova Games Ltd.", "Naughty Mouse (set 2)" )
-GAME( 1982, pacplus,  0,        pacplus,  pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
+GAME( 1982, pacplus,  0,        pacman,   pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
 GAME( 1981, mspacman, 0,        mspacman, mspacman, 0,        ROT90,  "Midway", "Ms. Pac-Man" )
+GAME( 1981, mspacmnf, mspacman, mspacman, mspacman, 0,        ROT90,  "Midway", "Ms. Pac-Man (with speedup hack)" )
 GAME( 1981, mspacmab, mspacman, pacman,   mspacman, 0,        ROT90,  "bootleg", "Ms. Pac-Man (bootleg)" )
 GAME( 1981, mspacmat, mspacman, mspacman, mspacman, 0,        ROT90,  "hack", "Ms. Pac Attack" )
 GAME( 1981, mspacpls, mspacman, mspacpls, mspacpls, 0,        ROT90,  "hack", "Ms. Pac-Man Plus" )

@@ -221,10 +221,6 @@ static void shutdown_machine(void);
 static int run_machine(void);
 static void run_machine_core(void);
 
-#ifdef MAME_DEBUG
-static int validitychecks(void);
-#endif
-
 static void recompute_fps(int skipped_it);
 static int vh_open(void);
 static void vh_close(void);
@@ -282,11 +278,8 @@ int run_game(int game)
 
 #ifdef MAME_DEBUG
 	/* validity checks -- debug build only */
-	if (validitychecks())
+	if (mame_validitychecks())
 		return 1;
-	#ifdef MESS
-	if (messvaliditychecks()) return 1;
-	#endif
 #endif
 
 	/* first give the machine a good cleaning */
@@ -1691,8 +1684,6 @@ UINT64 mame_chd_length(struct chd_interface_file *file)
 
 ***************************************************************************/
 
-#ifdef MAME_DEBUG
-
 INLINE int my_stricmp(const char *dst, const char *src)
 {
 	while (*src && *dst)
@@ -1706,7 +1697,7 @@ INLINE int my_stricmp(const char *dst, const char *src)
 }
 
 
-static int validitychecks(void)
+int mame_validitychecks(void)
 {
 	int i,j,cpu;
 	UINT8 a,b;
@@ -2155,9 +2146,13 @@ static int validitychecks(void)
 		}
 	}
 
+#ifdef MESS
+	if (messvaliditychecks())
+		error = 1;
+#endif /* MESS */
+
 	return error;
 }
-#endif
 
 
 

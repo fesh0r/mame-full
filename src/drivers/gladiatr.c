@@ -134,8 +134,8 @@ READ8_HANDLER( gladiatr_bankswitch_r ){
 
 static READ8_HANDLER( gladiator_dsw1_r )
 {
-	int orig = readinputport(0); /* DSW1 */
-/*Reverse all bits for Input Port 0*/
+	int orig = readinputportbytag("DSW1");
+/*Reverse all bits for Input Port 0 (DSW1)*/
 /*ie..Bit order is: 0,1,2,3,4,5,6,7*/
 return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
        | ((orig&0x04)<<3) | ((orig&0x08)<<1)
@@ -145,8 +145,8 @@ return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
 
 static READ8_HANDLER( gladiator_dsw2_r )
 {
-	int orig = readinputport(1); /* DSW2 */
-/*Bits 2-7 are reversed for Input Port 1*/
+	int orig = readinputportbytag("DSW2");
+/*Bits 2-7 are reversed for Input Port 1 (DSW2)*/
 /*ie..Bit order is: 2,3,4,5,6,7,1,0*/
 return	  (orig&0x01) | (orig&0x02)
 	| ((orig&0x04)<<5) | ((orig&0x08)<<3)
@@ -158,15 +158,15 @@ static READ8_HANDLER( gladiator_controll_r )
 {
 	int coins = 0;
 
-	if( readinputport(4) & 0xc0 ) coins = 0x80;
+	if( readinputportbytag("COINS") & 0xc0 ) coins = 0x80;
 	switch(offset)
 	{
 	case 0x01: /* start button , coins */
-		return readinputport(3) | coins;
+		return readinputportbytag("IN0") | coins;
 	case 0x02: /* Player 1 Controller , coins */
-		return readinputport(5) | coins;
+		return readinputportbytag("IN1") | coins;
 	case 0x04: /* Player 2 Controller , coins */
-		return readinputport(6) | coins;
+		return readinputportbytag("IN2") | coins;
 	}
 	/* unknown */
 	return 0;
@@ -177,7 +177,7 @@ static READ8_HANDLER( gladiator_button3_r )
 	switch(offset)
 	{
 	case 0x01: /* button 3 */
-		return readinputport(7);
+		return readinputportbytag("IN3");
 	}
 	/* unknown */
 	return 0;
@@ -339,7 +339,7 @@ static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( gladiatr )
-	PORT_START		/* DSW1 (8741-0 parallel port)*/
+	PORT_START_TAG("DSW1")		/* (8741-0 parallel port)*/
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Medium ) )
@@ -363,7 +363,7 @@ INPUT_PORTS_START( gladiatr )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START      /* DSW2  (8741-1 parallel port) - Dips 6 Unused */
+	PORT_START_TAG("DSW2")      /* (8741-1 parallel port) - Dips 6 Unused */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
@@ -384,8 +384,8 @@ INPUT_PORTS_START( gladiatr )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START      /* DSW3 (YM2203 port B) - Dips 5,6,7 Unused */
-	PORT_BIT(    0x01, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CHEAT
+	PORT_START_TAG("DSW3")      /* (YM2203 port B) - Dips 5,6,7 Unused */
+	PORT_DIPNAME( 0x01, 0x00, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Memory Backup" )
@@ -398,7 +398,7 @@ INPUT_PORTS_START( gladiatr )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
-	PORT_START	/* IN0 (8741-3 parallel port 1) */
+	PORT_START_TAG("IN0")	/*(8741-3 parallel port 1) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -409,7 +409,7 @@ INPUT_PORTS_START( gladiatr )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* COINS */
 
-	PORT_START	/* COINS (8741-3 parallel port bit7) */
+	PORT_START_TAG("COINS")	/*(8741-3 parallel port bit7) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -419,7 +419,7 @@ INPUT_PORTS_START( gladiatr )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
 
-	PORT_START	/* IN1 (8741-3 parallel port 2) */
+	PORT_START_TAG("IN1")	/* (8741-3 parallel port 2) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -429,7 +429,7 @@ INPUT_PORTS_START( gladiatr )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* COINS */
 
-	PORT_START	/* IN2 (8741-3 parallel port 4) */
+	PORT_START_TAG("IN2")	/* (8741-3 parallel port 4) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
@@ -439,7 +439,7 @@ INPUT_PORTS_START( gladiatr )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* COINS */
 
-	PORT_START	/* IN3 (8741-2 parallel port 1) */
+	PORT_START_TAG("IN3")	/* (8741-2 parallel port 1) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )

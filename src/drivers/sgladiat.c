@@ -95,7 +95,6 @@ static WRITE8_HANDLER( sgladiat_soundlatch_w )
 	soundlatch_w( offset, data );
 
 	/* trigger NMI on sound CPU */
-//	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);	// safer because NMI can be lost in rare occations
 }
 
@@ -115,7 +114,7 @@ static READ8_HANDLER( sgladiat_sound_nmi_ack_r )
 
 static READ8_HANDLER( sgladiat_inp0_r )
 {
-	return(readinputport(0) | snk_sound_busy_bit);
+	return(readinputportbytag("IN0") | snk_sound_busy_bit);
 }
 
 static WRITE8_HANDLER( sglatiat_flipscreen_w )
@@ -261,7 +260,7 @@ ROM_START( sgladiat )
 ROM_END
 
 INPUT_PORTS_START( sgladiat )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -271,7 +270,7 @@ INPUT_PORTS_START( sgladiat )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
@@ -281,7 +280,7 @@ INPUT_PORTS_START( sgladiat )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_COCKTAIL
@@ -291,8 +290,8 @@ INPUT_PORTS_START( sgladiat )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* DSW1 - copied from TNK3! */
-	PORT_BIT( 0x01,    0x01, IPT_DIPSWITCH_NAME ) PORT_NAME("Walk everywhere") PORT_CHEAT
+	PORT_START_TAG("DSW1")	/* Copied from TNK3! */
+	PORT_DIPNAME( 0x01,  0x01, "Walk everywhere (Cheat)")
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
@@ -312,9 +311,9 @@ INPUT_PORTS_START( sgladiat )
 	PORT_DIPSETTING(    0xc0, "20k 60k" )
 	PORT_DIPSETTING(    0x80, "40k 90k" )
 	PORT_DIPSETTING(    0x40, "50k 120k" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 
-	PORT_START	/* DSW2 - copied from TNK3!  */
+	PORT_START_TAG("DSW2")	/* Copied from TNK3!  */
 	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurrence" )
 	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
@@ -327,7 +326,7 @@ INPUT_PORTS_START( sgladiat )
 	PORT_DIPSETTING(    0x18, "Demo Sounds Off" )
 	PORT_DIPSETTING(    0x10, "Demo Sounds On" )
 	PORT_DIPSETTING(    0x00, "Freeze" )
-	PORT_BIT( 0,       0x08, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite Lives") PORT_CHEAT
+	PORT_DIPSETTING(    0x08, "Infinite Lives (Cheat)")
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

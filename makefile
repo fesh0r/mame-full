@@ -101,7 +101,7 @@ EMULATOR = $(NAME)$(EXE)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
 
-CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Werror -Wall -Wno-unused -g
@@ -159,6 +159,7 @@ endif
 LIBS = 
 
 ifdef BUILD_EXPAT
+CFLAGS += -Isrc/expat
 OBJDIRS += $(OBJ)/expat
 EXPAT = $(OBJ)/libexpat.a
 else
@@ -166,7 +167,8 @@ LIBS += -lexpat
 EXPAT =
 endif
 
-ifdef BUILD_EXPAT
+ifdef BUILD_ZLIB
+CFLAGS += -Isrc/zlib
 OBJDIRS += $(OBJ)/zlib
 ZLIB = $(OBJ)/libz.a
 else
@@ -206,27 +208,24 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(EXPAT) $(ZLIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-xml2info$(EXE): $(OBJ)/xml2info.o $(OBJ)/libexpat.a
+xml2info$(EXE): $(OBJ)/xml2info.o $(EXPAT)
 	@echo Linking $@...
-	$(CC) -O1 -o xml2info$(EXE) $^ -Xlinker $(OBJ)/libexpat.a
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 # secondary libraries
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
-	$(AR) cr $@ $^
 
 $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o \
-				$(OBJ)/zlib/example.o $(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o \
-				$(OBJ)/zlib/infback.o $(OBJ)/zlib/inftrees.o $(OBJ)/zlib/minigzip.o $(OBJ)/zlib/trees.o \
-				$(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
-	$(AR) cr $@ $^
+				$(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o $(OBJ)/zlib/infback.o \
+				$(OBJ)/zlib/inftrees.o $(OBJ)/zlib/trees.o $(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
 
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak

@@ -330,7 +330,7 @@ INPUT_PORTS_START(oric)
 	PORT_START
 	/* floppy interface  */
 	PORT_DIPNAME( 0x07, 0x00, "Floppy disc interface" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x01, "Microdisc" )
 	PORT_DIPSETTING(    0x02, "Jasmin" )
 /*	PORT_DIPSETTING(    0x03, "Low 8D DOS" ) */
@@ -350,7 +350,7 @@ INPUT_PORTS_START(orica)
 	PORT_START
 	/* floppy interface  */
 	PORT_DIPNAME( 0x07, 0x00, "Floppy disc interface" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x01, "Microdisc" )
 	PORT_DIPSETTING(    0x02, "Jasmin" )
 /*	PORT_DIPSETTING(    0x03, "Low 8D DOS" ) */
@@ -370,12 +370,12 @@ INPUT_PORTS_START(prav8d)
 	/* force apple2 disc interface for pravetz */
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x00, "Floppy disc interface" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x03, "Low 8D DOS" )
 	PORT_DIPSETTING(    0x04, "High 8D DOS" )
 	PORT_DIPNAME(0x08, 0x00, "Vsync cable hardware")
-	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x8, DEF_STR( On) )
+	PORT_DIPSETTING(0x0, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x8, DEF_STR( On ) )
 	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_VBLANK)
 INPUT_PORTS_END
 
@@ -387,8 +387,8 @@ INPUT_PORTS_START(telstrat)
 	allowing interrupts to be generated from the vsync signal. */
 	PORT_BIT (0x07, 0x00, IPT_UNUSED)
 	PORT_DIPNAME(0x08, 0x00, "Vsync cable hardware")
-	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x8, DEF_STR( On) )
+	PORT_DIPSETTING(0x0, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x8, DEF_STR( On ) )
 	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_VBLANK)
 	/* left joystick port */
 	PORT_START

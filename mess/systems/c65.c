@@ -73,7 +73,7 @@ ADDRESS_MAP_END
 	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_SLASH_PAD)\
 	 PORT_BIT (0x7c00, 0x0, IPT_UNUSED) /* no tape */\
      PORT_DIPNAME (0x300, 0x0, "Memory Expansion")\
-	 PORT_DIPSETTING (0, "None")\
+	 PORT_DIPSETTING (0, DEF_STR( None ))\
 	 PORT_DIPSETTING (0x100, "512 KByte")\
 	 PORT_DIPSETTING (0x200, "4 MByte")\
 	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
@@ -86,10 +86,10 @@ ADDRESS_MAP_END
 	 /*PORT_DIPSETTING (0x10, "CBM Supergames")*/\
 	 /*PORT_DIPSETTING (0x14, "Ocean Robocop2")*/\
 	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 10")\
-	 PORT_DIPSETTING (0, "None")\
+	 PORT_DIPSETTING (0, DEF_STR( None ))\
 	 PORT_DIPSETTING (2, "Floppy Drive Simulation")\
 	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 11")\
-	 PORT_DIPSETTING (0, "None")\
+	 PORT_DIPSETTING (0, DEF_STR( None ))\
 	 PORT_DIPSETTING (1, "Floppy Drive Simulation")
 
 

@@ -10,7 +10,7 @@
 #include "config.h"
 #include "common.h"
 #include "sound/mixer.h"
-#include "expat/expat.h"
+#include "expat.h"
 
 
 
@@ -23,6 +23,13 @@
 #define CONFIG_VERSION			10
 #define TEMP_BUFFER_SIZE		4096
 #define MAX_DEPTH				8
+
+enum
+{
+	FILE_TYPE_GAME,				/* game-specific config file */
+	FILE_TYPE_DEFAULT,			/* default keys config file */
+	FILE_TYPE_CONTROLLER		/* controller-specific config file */
+};
 
 
 
@@ -66,7 +73,8 @@ struct config_mixer
 struct config_data
 {
 	int						version;			/* from the <mameconfig> field */
-	char					game[256];			/* name of the game */
+	UINT8					ignore_game;		/* are we ignoring this game entry? */
+	UINT8					loaded_count;		/* number of systems we loaded */
 	struct config_port *	port;				/* from the <port> field */
 	struct config_counters  counters;			/* from the <counters> field */
 	struct config_mixer		mixer;				/* from the <mixer> field */
@@ -85,7 +93,7 @@ struct config_parse
 struct config_file
 {
 	mame_file *				file;				/* handle to the file */
-	UINT8					is_default;			/* is this a config file with just the default keys? */
+	int						filetype;			/* what type of config file is this? */
 	struct config_data		data;				/* the accumulated data */
 	struct config_parse		parse;				/* parsing info */
 };
@@ -144,7 +152,7 @@ int config_load(const struct InputPort *input_ports_default, struct InputPort *i
 	curfile.file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_CONFIG, 0);
 	if (!curfile.file)
 		return 0;
-	curfile.is_default = 0;
+	curfile.filetype = FILE_TYPE_GAME;
 	
 	/* load the XML */
 	result = config_load_xml();
@@ -183,7 +191,7 @@ void config_save(const struct InputPort *input_ports_default, const struct Input
 	curfile.file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_CONFIG, 1);
 	if (!curfile.file)
 		return;
-	curfile.is_default = 0;
+	curfile.filetype = FILE_TYPE_GAME;
 	
 	/* save the XML */
 	config_save_xml();
@@ -212,7 +220,7 @@ int config_load_default(const struct InputPortDefinition *input_ports_backup, st
 	curfile.file = mame_fopen("default", 0, FILETYPE_CONFIG, 0);
 	if (!curfile.file)
 		return 0;
-	curfile.is_default = 1;
+	curfile.filetype = FILE_TYPE_DEFAULT;
 	
 	/* load the XML */
 	result = config_load_xml();
@@ -240,7 +248,7 @@ void config_save_default(const struct InputPortDefinition *input_ports_backup, c
 	curfile.file = mame_fopen("default", 0, FILETYPE_CONFIG, 1);
 	if (!curfile.file)
 		goto error;
-	curfile.is_default = 1;
+	curfile.filetype = FILE_TYPE_DEFAULT;
 	
 	/* save the XML */
 	config_save_xml();
@@ -248,6 +256,39 @@ void config_save_default(const struct InputPortDefinition *input_ports_backup, c
 
 error:
 	cleanup_file();
+}
+
+
+
+/*************************************
+ *
+ *	Controller-specific data load
+ *
+ *************************************/
+
+int config_load_controller(const char *name, struct InputPortDefinition *input_ports)
+{
+	int result;
+	
+	/* clear current file data to zero */
+	memset(&curfile, 0, sizeof(curfile));
+	
+	/* open the config file */
+	curfile.file = mame_fopen(NULL, name, FILETYPE_CTRLR, 0);
+	if (!curfile.file)
+		return 0;
+	curfile.filetype = FILE_TYPE_CONTROLLER;
+	
+	/* load the XML */
+	result = config_load_xml();
+	mame_fclose(curfile.file);
+	if (!result)
+		return 0;
+
+	/* return true only if we can apply the port data */
+	result = apply_default_ports(NULL, input_ports);
+	cleanup_file();
+	return result;
 }
 
 
@@ -287,7 +328,7 @@ INLINE input_code_t get_default_code(int type)
 			return CODE_NONE;
 		
 		default:
-			if (curfile.is_default)
+			if (curfile.filetype != FILE_TYPE_GAME)
 				return CODE_NONE;
 			else
 				return CODE_DEFAULT;
@@ -329,15 +370,33 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 	if (!stricmp(curfile.parse.tag, "/mameconfig/system"))
 	{
 		for (attr = 0; attributes[attr]; attr += 2)
-		{
 			if (!stricmp(attributes[attr], "name"))
-				strncpy(curfile.data.game, attributes[attr + 1], sizeof(curfile.data.game));
-		}
+			{
+				switch (curfile.filetype)
+				{
+					case FILE_TYPE_GAME:
+						curfile.data.ignore_game = (strcmp(attributes[attr + 1], Machine->gamedrv->name) != 0);
+						break;
+					
+					case FILE_TYPE_DEFAULT:
+						curfile.data.ignore_game = (strcmp(attributes[attr + 1], "default") != 0);
+						break;
+					
+					case FILE_TYPE_CONTROLLER:
+						curfile.data.ignore_game = 
+							(strcmp(attributes[attr + 1], "default") != 0 &&
+							 strcmp(attributes[attr + 1], Machine->gamedrv->name) != 0 &&
+							 strcmp(attributes[attr + 1], Machine->gamedrv->source_file) != 0 &&
+							 (Machine->gamedrv->clone_of == NULL || strcmp(attributes[attr + 1], Machine->gamedrv->clone_of->name) != 0) &&
+							 (Machine->gamedrv->clone_of == NULL || Machine->gamedrv->clone_of->clone_of == NULL || strcmp(attributes[attr + 1], Machine->gamedrv->clone_of->clone_of->name) != 0));
+						break;
+				}
+				curfile.data.loaded_count += !curfile.data.ignore_game;
+			}
 	}
 	
 	/* if we don't match the current game, punt now */
-	if ((curfile.is_default && stricmp(curfile.data.game, "default")) ||
-		(!curfile.is_default && stricmp(curfile.data.game, Machine->gamedrv->name)))
+	if (curfile.data.ignore_game)
 		return;
 	
 	/* look for second-level port tag */
@@ -383,6 +442,21 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 				seq_set_1(&port->newseq[seqnum], get_default_code(curfile.data.port->type));
 			}
 		}
+	}
+	
+	/* look for second-level remap tag (we never write it, so it's only value for controller files) */
+	if (curfile.filetype == FILE_TYPE_CONTROLLER && !stricmp(curfile.parse.tag, "/mameconfig/system/input/remap"))
+	{
+		input_code_t origcode = CODE_NONE, newcode = CODE_NONE;
+		for (attr = 0; attributes[attr]; attr += 2)
+		{
+			if (!stricmp(attributes[attr], "origcode"))
+				origcode = token_to_code(attributes[attr + 1]);
+			else if (!stricmp(attributes[attr], "newcode"))
+				newcode = token_to_code(attributes[attr + 1]);
+		}
+		if (origcode != CODE_NONE && newcode != CODE_NONE)
+			code_remap(origcode, newcode);
 	}
 	
 	/* look for third-level defseq or newseq tag */
@@ -530,8 +604,7 @@ static int config_load_xml(void)
 	} while (!done);
 
 	/* error if this isn't a valid game match */
-	if ((curfile.is_default && stricmp(curfile.data.game, "default")) ||
-		(!curfile.is_default && stricmp(curfile.data.game, Machine->gamedrv->name)))
+	if (curfile.data.loaded_count == 0)
 		goto error;
 	
 	/* reverse the port list */
@@ -590,7 +663,7 @@ static int config_save_xml(void)
 	mame_fprintf(curfile.file, "<mameconfig version=\"%d\">\n", CONFIG_VERSION);
 	
 	/* print out the system */
-	mame_fprintf(curfile.file, "\t<system name=\"%s\">\n\n", curfile.is_default ? "default" : Machine->gamedrv->name);
+	mame_fprintf(curfile.file, "\t<system name=\"%s\">\n\n", (curfile.filetype == FILE_TYPE_DEFAULT) ? "default" : Machine->gamedrv->name);
 	
 	/* first write the input section */
 	mame_fprintf(curfile.file, "\t\t<input>\n");
@@ -600,7 +673,7 @@ static int config_save_xml(void)
 	
 		/* write the port information and attributes */
 		mame_fprintf(curfile.file, "\t\t\t<port type=\"%s\"", port_type_to_token(port->type, port->player));
-		if (!curfile.is_default)
+		if (curfile.filetype != FILE_TYPE_DEFAULT)
 		{
 			mame_fprintf(curfile.file, " mask=\"%d\" defvalue=\"%d\" value=\"%d\"", port->mask, port->defvalue & port->mask, port->value & port->mask);
 			if (is_analog)
@@ -634,7 +707,7 @@ static int config_save_xml(void)
 	mame_fprintf(curfile.file, "\t\t</input>\n\n");
 	
 	/* if we are just writing default ports, leave it at that */
-	if (!curfile.is_default)
+	if (curfile.filetype != FILE_TYPE_DEFAULT)
 	{
 		/* next write the counters section */
 		doit = (curfile.data.counters.tickets != 0);
@@ -789,34 +862,39 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 		for (portnum = 0; input_ports_default[portnum].type != IPT_END; portnum++)
 			if (input_ports_default[portnum].type == port->type && input_ports_default[portnum].player == port->player)
 			{
-				/* load stored settings only if the default hasn't changed */
+				/* load stored settings only if the default hasn't changed or if the backup array is NULL */
+				
+				/* non-analog case */
 				if (!port_type_is_analog(port->type))
 				{
-					if (seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0)
+					if (input_ports_default_backup == NULL || seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0)
 					{
-						if (seq_get_1(&port->newseq[0]) != CODE_NONE)
+						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[0]) != CODE_NONE)
 							seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
 						else
 							seq_copy(&input_ports_default[portnum].defaultseq, &input_ports_default_backup[portnum].defaultseq);
 					}
 				}
+				
+				/* analog case */
 				else
 				{
-					if (seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0 &&
-						seq_cmp(&input_ports_default_backup[portnum].defaultdecseq, &port->defseq[1]) == 0 &&
-						seq_cmp(&input_ports_default_backup[portnum].defaultincseq, &port->defseq[2]) == 0)
+					if (input_ports_default_backup == NULL || 
+						(seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0 &&
+						 seq_cmp(&input_ports_default_backup[portnum].defaultdecseq, &port->defseq[1]) == 0 &&
+						 seq_cmp(&input_ports_default_backup[portnum].defaultincseq, &port->defseq[2]) == 0))
 					{
-						if (seq_get_1(&port->newseq[0]) != CODE_NONE)
+						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[0]) != CODE_NONE)
 							seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
 						else
 							seq_copy(&input_ports_default[portnum].defaultseq, &input_ports_default_backup[portnum].defaultseq);
 							
-						if (seq_get_1(&port->newseq[1]) != CODE_NONE)
+						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[1]) != CODE_NONE)
 							seq_copy(&input_ports_default[portnum].defaultdecseq, &port->newseq[1]);
 						else
 							seq_copy(&input_ports_default[portnum].defaultdecseq, &input_ports_default_backup[portnum].defaultdecseq);
 							
-						if (seq_get_1(&port->newseq[2]) != CODE_NONE)
+						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[2]) != CODE_NONE)
 							seq_copy(&input_ports_default[portnum].defaultincseq, &port->newseq[2]);
 						else
 							seq_copy(&input_ports_default[portnum].defaultincseq, &input_ports_default_backup[portnum].defaultincseq);

@@ -227,7 +227,7 @@ INPUT_PORTS_START( solarfox )
 
 	PORT_START	/* IN3 -- dipswitches */
 	PORT_DIPNAME( 0x03, 0x03, "Bonus" )
-	PORT_DIPSETTING(    0x02, "None" )
+	PORT_DIPSETTING(    0x02, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x03, "After 10 racks" )
 	PORT_DIPSETTING(    0x01, "After 20 racks" )
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNKNOWN )

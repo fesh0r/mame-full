@@ -238,7 +238,7 @@ INPUT_PORTS_START( gcpinbal )
 	PORT_DIPSETTING(      0x0004, "300k" )
 	PORT_DIPSETTING(      0x0008, "500k" )
 	PORT_DIPSETTING(      0x000c, "1000k" )
-	PORT_DIPSETTING(      0x0000, "None" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( None ) )
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Flip_Screen ) )	// to be confirmed - code at 0x000508
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )

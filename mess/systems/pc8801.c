@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.31 2004/08/01 23:50:42 npwoods Exp $
+  $Id: pc8801.c,v 1.32 2004/08/04 00:27:16 npwoods Exp $
 
 ***************************************************************************/
 
@@ -189,7 +189,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 #define SW_EXTMEM \
 	PORT_DIPNAME( 0x1f, 0x00, "Extension memory" ) \
-	PORT_DIPSETTING(    0x00, "none" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) ) \
 	PORT_DIPSETTING(    0x01, "32KB (PC-8012-02 x 1)" ) \
 	PORT_DIPSETTING(    0x02, "64KB (PC-8012-02 x 2)" ) \
 	PORT_DIPSETTING(    0x03, "128KB (PC-8012-02 x 4)" ) \

@@ -683,6 +683,33 @@ ROM_START( bagnard )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
 ROM_END
 
+ROM_START( bagnarda )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "bagman.005",   0x0000, 0x1000, CRC(98fca49c) SHA1(60bf15d700cf4174ac531c11febf21d69ec02db5) )
+	ROM_LOAD( "bagman.006",   0x1000, 0x1000, CRC(8f447432) SHA1(71fee4feb92cdd35dcd3ad9e95ea9f186cb25e25) )
+	ROM_LOAD( "bagman.007",   0x2000, 0x1000, CRC(236203a6) SHA1(3d661c135a5036adeaf5fed2be38c97bbc72cd0a) )
+	ROM_LOAD( "bagman.008",   0x3000, 0x1000, CRC(8bd8c6cb) SHA1(3d34333b20d8ef189425334985285e0634c5ee23) )
+	ROM_LOAD( "bagman.009",   0x4000, 0x1000, CRC(6211ba82) SHA1(6d43e16cc99159b188f93bed7f9afef81c1b7fb3) )
+	ROM_LOAD( "bagman.010",   0x5000, 0x1000, CRC(08ed1247) SHA1(172fb0d1b919fb80f5603ebb52779664122f8e94) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bagman.002",   0x0000, 0x1000, CRC(7dc57abc) SHA1(73ae325ac1077936741833d33095ad6375353c31) )
+	ROM_LOAD( "bagman.004",   0x1000, 0x1000, CRC(1e21577e) SHA1(fc849c2fbaf7353a44a9f2743ccf6ac1adb8dc62) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "bagman.001",   0x0000, 0x1000, CRC(1eb56acd) SHA1(f75f6709006e78417999d423d2078ed80eae73a2) )
+	ROM_LOAD( "bagman.003",   0x1000, 0x1000, CRC(0ad82a39) SHA1(30ac0ff5bc63934c3eb572c7c13df324757e5e44) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, CRC(2a855523) SHA1(91e032233fee397c90b7c1662934aca9e0671482) )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, CRC(ae6f1019) SHA1(fd711882b670380cb4bd909c840ba06277b8fbe3) )
+	ROM_LOAD( "r6.bin",       0x0040, 0x0020, CRC(c58a4f6a) SHA1(35ef244b3e94032df2610aa594ea5670b91e1449) ) /*state machine driving TMS5110*/
+
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, CRC(2e0057ff) SHA1(33e3ffa6418f86864eb81e5e9bda4bf540c143a6) )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, CRC(b2120edd) SHA1(52b89dbcc749b084331fa82b13d0876e911fce52) )
+ROM_END
+
 ROM_START( bagmans )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, CRC(5fb0a1a3) SHA1(849cd60b58de9585a78a1c4c1747f666a4a4fcc3) )
@@ -855,13 +882,19 @@ ROM_START( botanic )
 	ROM_LOAD( "bota_3a.3a",    0x0020, 0x0020, CRC(edf88f34) SHA1(b9c342d51303d552f87df2543a34e38c30acd07c) )
 ROM_END
 
+DRIVER_INIT( bagnarda )
+{
+	/* initialize video enable because it's not done in the code */
+	*bagman_video_enable = 1;
+}
 
-GAME(1982, bagman,	 0, 	  bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman" )
-GAME(1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard" )
-GAME(1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
-GAME(1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
-GAME(1984, sbagman,  0, 	  bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman" )
-GAME(1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
-GAME(1983, pickin,	 0, 	  pickin, pickin,  0, ROT270, "Valadon Automation", "Pickin'" )
-GAME(1984, botanic,  0,       botanic, pickin, 0, ROT270, "Valadon Automation (Itisa license)", "Botanic" )
+GAME(1982, bagman,	 0, 	  bagman,  bagman,  0,        ROT270, "Valadon Automation", "Bagman" )
+GAME(1982, bagnard,  bagman,  bagman,  bagman,  0,        ROT270, "Valadon Automation", "Le Bagnard (set 1)" )
+GAME(1982, bagnarda, bagman,  bagman,  bagman,  bagnarda, ROT270, "Valadon Automation", "Le Bagnard (set 2)" )
+GAME(1982, bagmans,  bagman,  bagman,  bagmans, 0,        ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
+GAME(1982, bagmans2, bagman,  bagman,  bagman,  0,        ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
+GAME(1984, sbagman,  0, 	  bagman,  sbagman, 0,        ROT270, "Valadon Automation", "Super Bagman" )
+GAME(1984, sbagmans, sbagman, bagman,  sbagman, 0,        ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
+GAME(1983, pickin,	 0, 	  pickin,  pickin,  0,        ROT270, "Valadon Automation", "Pickin'" )
+GAME(1984, botanic,  0,       botanic, pickin,  0,        ROT270, "Valadon Automation (Itisa license)", "Botanic" )
 

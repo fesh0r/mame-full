@@ -117,6 +117,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 		case FILETYPE_ARTWORK:
 		case FILETYPE_HISTORY:
 		case FILETYPE_LANGUAGE:
+		case FILETYPE_CTRLR:
 #ifndef MESS
 		case FILETYPE_INI:
 #endif
@@ -244,7 +245,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* ctrlr files */
 		case FILETYPE_CTRLR:
-			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD);
 
 		/* game specific ini files */
 		case FILETYPE_INI:
@@ -831,6 +832,7 @@ static const char *get_extension_for_filetype(int filetype)
 			extension = "lng";
 			break;
 
+		case FILETYPE_CTRLR:		/* controller files */
 		case FILETYPE_CONFIG:		/* config files */
 			extension = "cfg";
 			break;
@@ -847,7 +849,6 @@ static const char *get_extension_for_filetype(int filetype)
 			extension = "mem";
 			break;
 
-		case FILETYPE_CTRLR:		/* config files */
 		case FILETYPE_INI:			/* game specific ini files */
 			extension = "ini";
 			break;

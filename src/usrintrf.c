@@ -35,7 +35,6 @@ extern char build_version[];
 /* MARTINEZ.F 990207 Memory Card */
 #ifndef MESS
 #ifndef TINY_COMPILE
-#ifndef MMSND
 int 		memcard_menu(struct mame_bitmap *bitmap, int);
 extern int	mcd_action;
 extern int	mcd_number;
@@ -43,7 +42,6 @@ extern int	memcard_status;
 extern int	memcard_number;
 extern int	memcard_manager;
 extern struct GameDriver driver_neogeo;
-#endif
 #endif
 #endif
 
@@ -1560,7 +1558,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 		{
 			in = entry[i] + 1;
 			while (in->type == switch_setting &&
-					in->default_value != entry[i]->default_value)
+					(in->default_value != entry[i]->default_value || !input_port_condition(in)))
 				in++;
 
 			if (in->type != switch_setting)
@@ -1575,7 +1573,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 	{
 		in = entry[sel] + 1;
 		while (in->type == switch_setting &&
-				in->default_value != entry[sel]->default_value)
+				(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
 			in++;
 
 		if (in->type != switch_setting)
@@ -1583,7 +1581,10 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 			arrowize |= 1;
 		else
 		{
-			if ((in-1)->type == switch_setting)
+			in--;
+			while (in->type == switch_setting && !input_port_condition(in))
+				in--;
+			if (in->type == switch_setting)
 				arrowize |= 1;
 		}
 	}
@@ -1591,7 +1592,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 	{
 		in = entry[sel] + 1;
 		while (in->type == switch_setting &&
-				in->default_value != entry[sel]->default_value)
+				(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
 			in++;
 
 		if (in->type != switch_setting)
@@ -1599,7 +1600,10 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 			arrowize |= 2;
 		else
 		{
-			if ((in+1)->type == switch_setting)
+			in++;
+			while (in->type == switch_setting && !input_port_condition(in))
+				in++;
+			if (in->type == switch_setting)
 				arrowize |= 2;
 		}
 	}
@@ -1618,7 +1622,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 		{
 			in = entry[sel] + 1;
 			while (in->type == switch_setting &&
-					in->default_value != entry[sel]->default_value)
+					(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
 				in++;
 
 			if (in->type != switch_setting)
@@ -1626,8 +1630,11 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
-				if ((in+1)->type == switch_setting)
-					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
+				in++;
+				while (in->type == switch_setting && !input_port_condition(in))
+					in++;
+				if (in->type == switch_setting)
+					entry[sel]->default_value = in->default_value & entry[sel]->mask;
 			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1641,7 +1648,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 		{
 			in = entry[sel] + 1;
 			while (in->type == switch_setting &&
-					in->default_value != entry[sel]->default_value)
+					(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
 				in++;
 
 			if (in->type != switch_setting)
@@ -1649,8 +1656,11 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
-				if ((in-1)->type == switch_setting)
-					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
+				in--;
+				while (in->type == switch_setting && !input_port_condition(in))
+					in--;
+				if (in->type == switch_setting)
+					entry[sel]->default_value = in->default_value & entry[sel]->mask;
 			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1714,6 +1724,7 @@ static char menu_subitem_buffer[MAX_PORT_ENTRIES][96];
 
 static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 {
+	static int menugroup = -1;
 	const char *menu_item[MAX_PORT_ENTRIES];
 	const char *menu_subitem[MAX_PORT_ENTRIES];
 	input_seq_t *entry[MAX_PORT_ENTRIES];
@@ -1729,93 +1740,105 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	if (Machine->input_ports == 0)
 		return 0;
 
-	in = get_input_port_list();
+	if (menugroup == -1)
+	{
+		for (total = 0; total < IPG_TOTAL_GROUPS; total++)
+			menu_item[total] = ui_getstring(UI_uigroup + total);
+		menu_item[total++] = ui_getstring (UI_returntomain);
+		menu_item[total] = 0;
 
-	total = 0;
+		ui_displaymenu(bitmap,menu_item,0,0,sel,0);
+	}
+	else
+	{
+		in = get_input_port_list();
+
+		total = 0;
+		
+		while (in->type != IPT_END)
+		{
+			if (in->name != 0 && in->type != IPT_UNKNOWN && in->type != IPT_DIPSWITCH_NAME && in->name[0] != 0 && in->group == menugroup)
+			{
+				analog[total] = port_type_is_analog(in->type);
+				if (!analog[total])
+				{
+					entry[total] = &in->defaultseq;
+					menu_item[total] = in->name;
+					total++;
+				}
+				else
+				{
+					entry[total] = &in->defaultseq;
+					sprintf(menu_item_buffer[total], "%s Analog", in->name);
+					menu_item[total] = menu_item_buffer[total];
+					total++;
+
+					analog[total] = 0;
+					entry[total] = &in->defaultdecseq;
+					sprintf(menu_item_buffer[total], "%s Dec", in->name);
+					menu_item[total] = menu_item_buffer[total];
+					total++;
+
+					analog[total] = 0;
+					entry[total] = &in->defaultincseq;
+					sprintf(menu_item_buffer[total], "%s Inc", in->name);
+					menu_item[total] = menu_item_buffer[total];
+					total++;
+				}
+			}
+
+			in++;
+		}
+
+		if (total == 0) return 0;
+
+		menu_item[total] = ui_getstring (UI_returntogroup);
+		menu_item[total + 1] = 0;	/* terminate array */
+		total++;
+
+		for (i = 0;i < total;i++)
+		{
+			if (i < total - 1)
+			{
+				seq_name(entry[i],menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+				menu_subitem[i] = menu_subitem_buffer[i];
+			} else
+				menu_subitem[i] = 0;	/* no subitem */
+			flag[i] = 0;
+		}
+
+		if (sel > SEL_MASK)   /* are we waiting for a new key? */
+		{
+			int ret;
+
+			menu_subitem[sel & SEL_MASK] = "    ";
+			ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel & SEL_MASK,3);
+
+			ret = seq_read_async(entry[sel & SEL_MASK],record_first_insert);
+
+			if (ret >= 0)
+			{
+				sel &= SEL_MASK;
+
+				if (ret > 0 || seq_get_1(entry[sel]) == CODE_NONE)
+				{
+					seq_set_1(entry[sel],CODE_NONE);
+					ret = 1;
+				}
+
+				/* tell updatescreen() to clean after us (in case the window changes size) */
+				schedule_full_refresh();
+
+				record_first_insert = ret != 0;
+			}
+
+			return sel + 1;
+		}
+
+
+		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,0);
+	}
 	
-	while (in->type != IPT_END)
-	{
-		if (in->name != 0 && in->type != IPT_UNKNOWN && in->type != IPT_DIPSWITCH_NAME && in->name[0] != 0)
-		{
-			analog[total] = port_type_is_analog(in->type);
-			if (!analog[total])
-			{
-				entry[total] = &in->defaultseq;
-				menu_item[total] = in->name;
-				total++;
-			}
-			else
-			{
-				entry[total] = &in->defaultseq;
-				sprintf(menu_item_buffer[total], "%s Analog", in->name);
-				menu_item[total] = menu_item_buffer[total];
-				total++;
-
-				analog[total] = 0;
-				entry[total] = &in->defaultdecseq;
-				sprintf(menu_item_buffer[total], "%s Dec", in->name);
-				menu_item[total] = menu_item_buffer[total];
-				total++;
-
-				analog[total] = 0;
-				entry[total] = &in->defaultincseq;
-				sprintf(menu_item_buffer[total], "%s Inc", in->name);
-				menu_item[total] = menu_item_buffer[total];
-				total++;
-			}
-		}
-
-		in++;
-	}
-
-	if (total == 0) return 0;
-
-	menu_item[total] = ui_getstring (UI_returntomain);
-	menu_item[total + 1] = 0;	/* terminate array */
-	total++;
-
-	for (i = 0;i < total;i++)
-	{
-		if (i < total - 1)
-		{
-			seq_name(entry[i],menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
-			menu_subitem[i] = menu_subitem_buffer[i];
-		} else
-			menu_subitem[i] = 0;	/* no subitem */
-		flag[i] = 0;
-	}
-
-	if (sel > SEL_MASK)   /* are we waiting for a new key? */
-	{
-		int ret;
-
-		menu_subitem[sel & SEL_MASK] = "    ";
-		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel & SEL_MASK,3);
-
-		ret = seq_read_async(entry[sel & SEL_MASK],record_first_insert);
-
-		if (ret >= 0)
-		{
-			sel &= SEL_MASK;
-
-			if (ret > 0 || seq_get_1(entry[sel]) == CODE_NONE)
-			{
-				seq_set_1(entry[sel],CODE_NONE);
-				ret = 1;
-			}
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
-
-			record_first_insert = ret != 0;
-		}
-
-		return sel + 1;
-	}
-
-
-	ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,0);
-
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		sel = (sel + 1) % total;
@@ -1830,7 +1853,21 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 
 	if (input_ui_pressed(IPT_UI_SELECT))
 	{
-		if (sel == total - 1) sel = -1;
+		if (sel == total - 1)
+		{
+			if (menugroup == -1)
+				sel = -1;
+			else
+			{
+				sel = menugroup;
+				menugroup = -1;
+			}
+		}
+		else if (menugroup == -1)
+		{
+			menugroup = sel;
+			sel = 0;
+		}
 		else
 		{
 			seq_read_async_start(analog[sel]);
@@ -1843,7 +1880,15 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	}
 
 	if (input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
+	{
+		if (menugroup == -1)
+			sel = -1;
+		else
+		{
+			sel = menugroup;
+			menugroup = -1;
+		}
+	}
 
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
@@ -1863,6 +1908,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 
 static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 {
+	static input_code_t starting_code = CODE_NONE;
 	const char *menu_item[MAX_PORT_ENTRIES];
 	const char *menu_subitem[MAX_PORT_ENTRIES];
 	input_seq_t *seq[MAX_PORT_ENTRIES];
@@ -1885,13 +1931,10 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	while (in->type != IPT_END)
 	{
 		if (input_port_name(in) != NULL && 
-			seq_get_1(&in->seq) != CODE_NONE &&
 #ifdef MESS
 			(in->category == 0 || input_category_active(in->category)) &&
 #endif /* MESS */
-			in->type != IPT_UNKNOWN &&
-			in->type != IPT_DIPSWITCH_NAME &&
-			in->type != IPT_CATEGORY_NAME)
+			port_type_to_group(in->type, in->player) != IPG_INVALID)
 		{
 			analog[total] = port_type_is_analog(in->type);
 			if (!analog[total])
@@ -1964,7 +2007,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 
 			if (ret > 0 || seq_get_1(seq[sel]) == CODE_NONE)
 			{
-				seq_set_1(seq[sel], CODE_DEFAULT);
+				seq_set_1(seq[sel], (starting_code == CODE_DEFAULT) ? CODE_NONE : CODE_DEFAULT);
 				ret = 1;
 			}
 
@@ -1997,6 +2040,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
+			starting_code = seq_get_1(seq[sel]);
 			seq_read_async_start(analog[sel]);
 
 			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
@@ -2481,39 +2525,6 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 				Machine->visible_area.max_y - Machine->visible_area.min_y + 1,
 				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
 				Machine->refresh_rate);
-#if 0
-		{
-			int pixelx,pixely,tmax,tmin,rem;
-
-			pixelx = 4 * (Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
-			pixely = 3 * (Machine->visible_area.max_x - Machine->visible_area.min_x + 1);
-
-			/* calculate MCD */
-			if (pixelx >= pixely)
-			{
-				tmax = pixelx;
-				tmin = pixely;
-			}
-			else
-			{
-				tmax = pixely;
-				tmin = pixelx;
-			}
-			while ( (rem = tmax % tmin) )
-			{
-				tmax = tmin;
-				tmin = rem;
-			}
-			/* tmin is now the MCD */
-
-			pixelx /= tmin;
-			pixely /= tmin;
-
-			sprintf(&buf[strlen(buf)],"pixel aspect ratio %d:%d\n",
-					pixelx,pixely);
-		}
-		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
-#endif
 	}
 
 
@@ -2998,7 +3009,6 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
-#ifndef MMSND
 int memcard_menu(struct mame_bitmap *bitmap, int selection)
 {
 	int sel;
@@ -3128,15 +3138,14 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 }
 #endif
 #endif
-#endif
 
 
 #ifndef MESS
-enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
+enum { UI_SWITCH = 0,UI_DEFGROUP,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_GAMEINFO, UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 #else
-enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
+enum { UI_SWITCH = 0,UI_DEFGROUP,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
 		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT,
 		UI_CONFIGURATION, UI_CATEGORIES };
@@ -3224,7 +3233,7 @@ static void setup_menu_init(void)
 {
 	menu_total = 0;
 
-	append_menu(UI_inputgeneral, UI_DEFCODE);
+	append_menu(UI_inputgeneral, UI_DEFGROUP);
 	append_menu(UI_inputspecific, UI_CODE);
 
 	if (has_dipswitches())
@@ -3267,14 +3276,12 @@ static void setup_menu_init(void)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
-#ifndef MMSND
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 	{
 		append_menu(UI_memorycard, UI_MEMCARD);
 	}
-#endif
 #endif
 #endif
 
@@ -3301,7 +3308,7 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_SWITCH:
 				res = setdipswitches(bitmap, sel >> SEL_BITS);
 				break;
-			case UI_DEFCODE:
+			case UI_DEFGROUP:
 				res = setdefcodesettings(bitmap, sel >> SEL_BITS);
 				break;
 			case UI_CODE:
@@ -3348,11 +3355,9 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 				break;
 #ifndef MESS
 #ifndef TINY_COMPILE
-#ifndef MMSND
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
-#endif
 #endif
 #endif
 		}
@@ -3382,7 +3387,7 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 		switch (menu_action[sel])
 		{
 			case UI_SWITCH:
-			case UI_DEFCODE:
+			case UI_DEFGROUP:
 			case UI_CODE:
 			case UI_ANALOG:
 			case UI_CALIBRATE:
@@ -4090,54 +4095,6 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			}
 		}
 	if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
-
-
-#if 0
-	if (code_pressed_memory(KEYCODE_BACKSPACE))
-	{
-		if (jukebox_selected != -1)
-		{
-			jukebox_selected = -1;
-			cpu_halt(0,1);
-		}
-		else
-		{
-			jukebox_selected = 0;
-			cpu_halt(0,0);
-		}
-	}
-
-	if (jukebox_selected != -1)
-	{
-		char buf[40];
-		watchdog_reset_w(0,0);
-		if (code_pressed_memory(KEYCODE_LCONTROL))
-		{
-#include "cpu/z80/z80.h"
-			soundlatch_w(0,jukebox_selected);
-			cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
-		}
-		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
-		{
-			jukebox_selected = (jukebox_selected + 1) & 0xff;
-		}
-		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
-		{
-			jukebox_selected = (jukebox_selected - 1) & 0xff;
-		}
-		if (input_ui_pressed_repeat(IPT_UI_UP,8))
-		{
-			jukebox_selected = (jukebox_selected + 16) & 0xff;
-		}
-		if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-		{
-			jukebox_selected = (jukebox_selected - 16) & 0xff;
-		}
-		sprintf(buf,"sound cmd %02x",jukebox_selected);
-		displaymessage(buf);
-	}
-#endif
-
 
 	/* if the user pressed F3, reset the emulation */
 	if (input_ui_pressed(IPT_UI_RESET_MACHINE))

@@ -197,7 +197,7 @@ INPUT_PORTS_START(ti99_8)
 	/* 1 port for config */
 	PORT_START	/* config */
 		PORT_BIT( config_fdc_mask << config_fdc_bit, /*fdc_kind_hfdc << config_fdc_bit*/0, IPT_DIPSWITCH_NAME) PORT_NAME("Floppy disk controller")
-			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
+			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, DEF_STR( None ) )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments SD" )
 #if HAS_99CCFDC
 			PORT_DIPSETTING( fdc_kind_CC << config_fdc_bit, "CorComp" )

@@ -187,7 +187,7 @@ static void win_expand_wildcards(int *argc, char **argv[])
 
 int main(int argc, char *argv[])
 {
-	struct rc_struct *rc;
+	struct rc_struct *rc = NULL;
 	int result = -1;
 	clock_t begin_time;
 	double elapsed_time;
@@ -218,6 +218,10 @@ int main(int argc, char *argv[])
 
 	/* since the cpuintrf structure is filled dynamically now, we have to init first */
 	cpuintrf_init();
+	
+	/* run MAME's validity checks; if these fail cop out now */
+	if (mame_validitychecks())
+		goto done;
 
 	/* create rc struct */
 	rc = rc_create();

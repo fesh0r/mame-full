@@ -406,7 +406,7 @@ INPUT_PORTS_START( bwidow )
 	PORT_DIPSETTING (  0x40, "1 each 4" )
 	PORT_DIPSETTING (  0xa0, "1 each 3" )
 	PORT_DIPSETTING (  0x20, "1 each 2" )
-	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x00, DEF_STR( None ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x03, 0x01, "Max Start" )
@@ -428,7 +428,7 @@ INPUT_PORTS_START( bwidow )
 	PORT_DIPSETTING (  0x00, "20000" )
 	PORT_DIPSETTING (  0x40, "30000" )
 	PORT_DIPSETTING (  0x80, "40000" )
-	PORT_DIPSETTING (  0xc0, "None" )
+	PORT_DIPSETTING (  0xc0, DEF_STR( None ) )
 
 	PORT_START	/* IN3 - Movement joystick */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY
@@ -480,7 +480,7 @@ INPUT_PORTS_START( gravitar )
 	PORT_DIPSETTING (  0x00, "10000" )
 	PORT_DIPSETTING (  0x40, "20000" )
 	PORT_DIPSETTING (  0x80, "30000" )
-	PORT_DIPSETTING (  0xc0, "None" )
+	PORT_DIPSETTING (  0xc0, DEF_STR( None ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x03, 0x00, DEF_STR( Coinage ) )
@@ -502,7 +502,7 @@ INPUT_PORTS_START( gravitar )
 	PORT_DIPSETTING (  0x40, "1 each 4" )
 	PORT_DIPSETTING (  0xa0, "1 each 3" )
 	PORT_DIPSETTING (  0x20, "1 each 2" )
-	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x00, DEF_STR( None ) )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -593,7 +593,7 @@ INPUT_PORTS_START( spacduel )
 	PORT_DIPSETTING (  0xc0, "8000" )
 	PORT_DIPSETTING (  0x00, "10000" )
 	PORT_DIPSETTING (  0x40, "15000" )
-	PORT_DIPSETTING (  0x80, "None" )
+	PORT_DIPSETTING (  0x80, DEF_STR( None ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x03, 0x00, DEF_STR( Coinage ) )
@@ -615,7 +615,7 @@ INPUT_PORTS_START( spacduel )
 	PORT_DIPSETTING (  0x40, "1 each 4" )
 	PORT_DIPSETTING (  0xa0, "1 each 3" )
 	PORT_DIPSETTING (  0x20, "1 each 2" )
-	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x00, DEF_STR( None ) )
 
 	/* See machine/spacduel.c for more info on these 2 ports */
 	PORT_START	/* IN3 - Player 1 - spread over 8 memory locations */

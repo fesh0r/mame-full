@@ -2303,7 +2303,7 @@ static DRIVER_INIT( shufshot )
 
 
 static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
-				/* The security PROM is NOT interchangable between the Deluxe and DEF_STR( Normal ) versions. */
+				/* The security PROM is NOT interchangable between the Deluxe and "Normal" versions. */
 {
 	init_program_rom();
 	itech32_vram_height = 1024;

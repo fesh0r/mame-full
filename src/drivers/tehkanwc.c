@@ -680,7 +680,7 @@ INPUT_PORTS_START( teedoff )
 	PORT_DIPSETTING (   0x08, "1/2/3/4/4" )
 	PORT_DIPSETTING (   0x00, "2/3/3/4/4" )
 	PORT_DIPNAME( 0x20, 0x20, "Bonus Balls (Multiple coins)" )
-	PORT_DIPSETTING (   0x20, "None" )
+	PORT_DIPSETTING (   0x20, DEF_STR( None ) )
 	PORT_DIPSETTING (   0x00, "+1" )
 	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty?" )				// Check table at 0x5df9
 	PORT_DIPSETTING (   0x80, DEF_STR( Easy ) )

@@ -2264,7 +2264,7 @@ INPUT_PORTS_START( gtmr )
 	PORT_DIPSETTING(      0xc000, "Use Memory"  )
 	PORT_DIPSETTING(      0x8000, "Anthem Only" )
 	PORT_DIPSETTING(      0x4000, "Flag Only"   )
-	PORT_DIPSETTING(      0x0000, "None"        )
+	PORT_DIPSETTING(      0x0000, DEF_STR( None )        )
 
 	PORT_START	// IN5 - Wheel - 100015.b <- ffffe.b
 	PORT_BIT ( 0x00ff, 0x0080, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
@@ -2318,7 +2318,7 @@ INPUT_PORTS_START( gtmr2 )
 
 	PORT_START	// IN4 - DSW from the MCU - 1016f7.b <- 206000.b
 	PORT_DIPNAME( 0x0700, 0x0700, "Communication" )
-	PORT_DIPSETTING(      0x0700, "None" )
+	PORT_DIPSETTING(      0x0700, DEF_STR( None ) )
 	PORT_DIPSETTING(      0x0600, "Machine 1" )
 	PORT_DIPSETTING(      0x0500, "Machine 2" )
 	PORT_DIPSETTING(      0x0400, "Machine 3" )

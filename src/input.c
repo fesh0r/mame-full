@@ -35,6 +35,7 @@ struct input_code_info
 {
 	UINT8						analogtype;				/* analog type */
 	INT32						memory;					/* memory */
+	input_code_t				remap;					/* code we remap to */
 	const struct OSCodeInfo *	osinfo;					/* pointer to the OS code info */
 	char						token[MAX_TOKEN_LEN];	/* token string */
 };
@@ -504,6 +505,9 @@ int code_init(void)
 	for (codenum = 0; codenum < code_count; codenum++)
 	{
 		int nameindex;
+		
+		/* initialize the remap alias to point to ourself */
+		code_map[codenum].remap = codenum;
 	
 		/* look up the name in the standard table if we can */
 		if (codenum < __code_max)
@@ -553,6 +557,7 @@ INT32 code_analog_value(input_code_t code)
 	INT32 value = 0;
 
 	profiler_mark(PROFILER_INPUT);
+	code = code_map[code].remap;
 	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
 		value = osd_get_code_value(code_map[code].osinfo->oscode);
 	profiler_mark(PROFILER_END);
@@ -574,6 +579,7 @@ int code_pressed(input_code_t code)
 	int pressed = 0;
 
 	profiler_mark(PROFILER_INPUT);
+	code = code_map[code].remap;
 	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
 		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 	profiler_mark(PROFILER_END);
@@ -596,6 +602,7 @@ int code_pressed_memory(input_code_t code)
 
 	/* determine if the code is still being pressed */
 	profiler_mark(PROFILER_INPUT);
+	code = code_map[code].remap;
 	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
 		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 
@@ -638,6 +645,7 @@ int code_pressed_memory_repeat(input_code_t code, int speed)
 
 	/* determine if the code is still being pressed */
 	profiler_mark(PROFILER_INPUT);
+	code = code_map[code].remap;
 	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
 		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 
@@ -690,6 +698,7 @@ static int code_pressed_not_memorized(input_code_t code)
 
 	/* determine if the code is still being pressed */
 	profiler_mark(PROFILER_INPUT);
+	code = code_map[code].remap;
 	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
 		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 
@@ -756,7 +765,7 @@ const char *code_name(input_code_t code)
 	/* a few special other codes */
 	switch (code)
 	{
-		case CODE_NONE : return "None";
+		case CODE_NONE : return DEF_STR( None );
 		case CODE_NOT : return "not";
 		case CODE_OR : return "or";
 	}
@@ -771,10 +780,12 @@ input_code_t token_to_code(const char *token)
 	input_code_t code;
 	
 	/* look for special cases */
-	if (!stricmp(token, "NOT"))
-		return CODE_NOT;
 	if (!stricmp(token, "OR"))
 		return CODE_OR;
+	if (!stricmp(token, "NOT"))
+		return CODE_NOT;
+	if (!stricmp(token, "NONE"))
+		return CODE_NONE;
 	if (!stricmp(token, "DEFAULT"))
 		return CODE_DEFAULT;
 
@@ -808,6 +819,15 @@ void code_to_token(input_code_t code, char *token)
 	/* return an empty token */
 	token[0] = 0;
 	return;
+}
+
+
+void code_remap(input_code_t origcode, input_code_t newcode)
+{
+	/* only works for codes in range */
+	if (origcode < code_count && newcode < code_count &&
+		code_map[origcode].analogtype == code_map[newcode].analogtype)
+		code_map[origcode].remap = newcode;
 }
 
 
@@ -1077,9 +1097,9 @@ void seq_name(const input_seq_t *seq, char *buffer, unsigned max)
 		}
 	}
 
-	/* if we ended up with nothing, say "None", otherwise NULL-terminate */
+	/* if we ended up with nothing, say DEF_STR( None ), otherwise NULL-terminate */
 	if (dest == buffer && 4 + 1 <= max)
-		strcpy(dest, "None");
+		strcpy(dest, DEF_STR( None ));
 	else
 		*dest = 0;
 }
