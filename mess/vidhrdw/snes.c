@@ -1,41 +1,41 @@
 /***************************************************************************
 
-  snes.c
+snes.c
 
-  Video file to handle emulation of the Nintendo Super NES.
+Video file to handle emulation of the Nintendo Super NES.
 
-  Anthony Kruize
-  Based on the original code by Lee Hammerton (aka Savoury Snax)
+Anthony Kruize
+Based on the original code by Lee Hammerton (aka Savoury Snax)
 
-  Some notes on the snes video hardware:
+Some notes on the snes video hardware:
 
-  Object Attribute Memory(OAM) is made up of 128 blocks of 32 bits, followed
-  by 128 blocks of 2 bits. The format for each block is:
-  -First Block----------------------------------------------------------------
-  | x pos  | y pos  |char no.| v flip | h flip |priority|palette |char no msb|
-  +--------+--------+--------+--------+--------+--------+--------+-----------+
-  | 8 bits | 8 bits | 8 bits | 1 bit  | 1 bit  | 2 bits | 3 bits | 1 bit     |
-  -Second Block---------------------------------------------------------------
-  | size  | x pos msb |
-  +-------+-----------+
-  | 1 bit | 1 bit     |
-  ---------------------
+Object Attribute Memory(OAM) is made up of 128 blocks of 32 bits, followed
+by 128 blocks of 2 bits. The format for each block is:
+-First Block----------------------------------------------------------------
+| x pos  | y pos  |char no.| v flip | h flip |priority|palette |char no msb|
++--------+--------+--------+--------+--------+--------+--------+-----------+
+| 8 bits | 8 bits | 8 bits | 1 bit  | 1 bit  | 2 bits | 3 bits | 1 bit     |
+-Second Block---------------------------------------------------------------
+| size  | x pos msb |
++-------+-----------+
+| 1 bit | 1 bit     |
+---------------------
 
-  Video RAM contains information for character data and screen maps.
-  Screen maps are made up of 32 x 32 blocks of 16 bits each.
-  The format for each block is:
-  ----------------------------------------------
-  | v flip | x flip |priority|palette |char no.|
-  +--------+--------+--------+--------+--------+
-  | 1 bit  | 1 bit  | 1 bit  | 3 bits |10 bits |
-  ----------------------------------------------
-  Mode 7 is stored differently. Character data and screen map are interleaved.
-  There are two formats:
-  -Normal-----------------  -EXTBG-----------------------------
-  | char data | char no. |  | priority | char data | char no. |
-  +-----------+----------+  +----------+-----------+----------+
-  | 8 bits    | 8 bits   |  | 1 bit    | 7 bits    | 8 bits   |
-  ------------------------  -----------------------------------
+Video RAM contains information for character data and screen maps.
+Screen maps are made up of 32 x 32 blocks of 16 bits each.
+The format for each block is:
+----------------------------------------------
+| v flip | x flip |priority|palette |char no.|
++--------+--------+--------+--------+--------+
+| 1 bit  | 1 bit  | 1 bit  | 3 bits |10 bits |
+----------------------------------------------
+Mode 7 is stored differently. Character data and screen map are interleaved.
+There are two formats:
+-Normal-----------------  -EXTBG-----------------------------
+| char data | char no. |  | priority | char data | char no. |
++-----------+----------+  +----------+-----------+----------+
+| 8 bits    | 8 bits   |  | 1 bit    | 7 bits    | 8 bits   |
+------------------------  -----------------------------------
 
 ***************************************************************************/
 
@@ -57,8 +57,8 @@
 #ifdef MAME_DEBUG
 struct DEBUGOPTS
 {
-	UINT8 input_count;
-	UINT8 bg_disabled[5];
+UINT8 input_count;
+UINT8 bg_disabled[5];
 };
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0}};
 #endif
@@ -68,6 +68,17 @@ UINT8  ppu_obj_size[2];					/* Object sizes */
 /* Lookup tables */
 static const UINT8  table_bgd_pty[4][2] = { {5,7}, {4,6}, {1,3}, {0,2} };
 static const UINT8  table_obj_pty[4]    = { 2, 4, 6, 8 };
+static const UINT16 table_obj_offset[8][8] =
+{
+	{ (0*32),   (0*32)+32,   (0*32)+64,   (0*32)+96,   (0*32)+128,   (0*32)+160,   (0*32)+192,   (0*32)+224 },
+	{ (16*32),  (16*32)+32,  (16*32)+64,  (16*32)+96,  (16*32)+128,  (16*32)+160,  (16*32)+192,  (16*32)+224 },
+	{ (32*32),  (32*32)+32,  (32*32)+64,  (32*32)+96,  (32*32)+128,  (32*32)+160,  (32*32)+192,  (32*32)+224 },
+	{ (48*32),  (48*32)+32,  (48*32)+64,  (48*32)+96,  (48*32)+128,  (48*32)+160,  (48*32)+192,  (48*32)+224 },
+	{ (64*32),  (64*32)+32,  (64*32)+64,  (64*32)+96,  (64*32)+128,  (64*32)+160,  (64*32)+192,  (64*32)+224 },
+	{ (80*32),  (80*32)+32,  (80*32)+64,  (80*32)+96,  (80*32)+128,  (80*32)+160,  (80*32)+192,  (80*32)+224 },
+	{ (96*32),  (96*32)+32,  (96*32)+64,  (96*32)+96,  (96*32)+128,  (96*32)+160,  (96*32)+192,  (96*32)+224 },
+	{ (112*32), (112*32)+32, (112*32)+64, (112*32)+96, (112*32)+128, (112*32)+160, (112*32)+192, (112*32)+224 }
+};
 static const UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0}, {0,0x800,0,0x800} };
 static const UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
 
@@ -197,9 +208,9 @@ INLINE void snes_draw_tile_2( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		/* Only draw if we have a colour (0 == transparent) */
 		if( colour )
 		{
-			c = Machine->remapped_colortable[pal + colour];
 			if( scanlines[screen].zbuf[x+ii] <= priority )
 			{
+				c = Machine->remapped_colortable[pal + colour];
 				SNES_DRAW_BLEND( x+ii, c, blend );
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
@@ -207,6 +218,7 @@ INLINE void snes_draw_tile_2( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		}
 		else if( !scanlines[screen].zbuf[x+ii] )
 		{
+			/* FIXME: This is a hack for Super Mario World! */
 			scanlines[screen].buffer[x+ii] = scanlines[SUBSCREEN].buffer[x+ii];
 		}
 	}
@@ -255,18 +267,13 @@ INLINE void snes_draw_tile_4( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		/* Only draw if we have a colour (0 == transparent) */
 		if( colour )
 		{
-			c = Machine->remapped_colortable[pal + colour];
 			if( scanlines[screen].zbuf[x+ii] <= priority )
 			{
+				c = Machine->remapped_colortable[pal + colour];
 				SNES_DRAW_BLEND( x+ii, c, blend );	/* Blend with the subscreen */
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
 			}
-		}
-		else if( !scanlines[screen].zbuf[x+ii] )
-		{
-			/* There was nothing already drawn here so draw the subscreen */
-			scanlines[screen].buffer[x+ii] = scanlines[SUBSCREEN].buffer[x+ii];
 		}
 	}
 }
@@ -330,17 +337,13 @@ INLINE void snes_draw_tile_8( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		/* Only draw if we have a colour (0 == transparent) */
 		if( colour )
 		{
-			c = Machine->remapped_colortable[colour];
 			if( scanlines[screen].zbuf[x+ii] <= priority )
 			{
+				c = Machine->remapped_colortable[colour];
 				SNES_DRAW_BLEND( x+ii, c, blend );
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
 			}
-		}
-		else if( !scanlines[screen].zbuf[x+ii] )
-		{
-			scanlines[screen].buffer[x+ii] = scanlines[SUBSCREEN].buffer[x+ii];
 		}
 	}
 }
@@ -755,17 +758,17 @@ static void snes_update_line_mode7( UINT16 curline )
 }
 
 /*********************************************
- * snes_update_sprites()
+ * snes_update_objects()
  *
  * Update an entire line of sprites.
  *********************************************/
 INLINE void snes_update_objects( UINT8 screen, UINT16 curline )
 {
-	INT8 xs, tileincr;
-	UINT8 ys, line;
+	INT8 xs, ys, tileincr;
+	UINT8 line;
 	UINT16 oam, oam_extra, extra;
 	UINT8 range_over = 0, time_over = 0;
-	UINT8 size, vflip, hflip, priority, pal, count;
+	UINT8 size, vflip, hflip, priority, pal;
 	UINT16 x, y, tile;
 	INT16 i;
 	UINT8 *oamram = (UINT8 *)snes_oam;
@@ -798,59 +801,51 @@ INLINE void snes_update_objects( UINT8 screen, UINT16 curline )
 		x |= ((extra & 0x80) << 1);
 		extra <<= 1;
 
-		tileincr = 16;
-		if( vflip )
-		{
-			tile += tileincr;
-			tileincr = -tileincr;
-		}
-
 		if( y > 239 )
 			y -= 256;	/* y is past sprite max pos */
 
 		/* Draw sprite if it intersects the current line */
-		for( ys = 0; ys < ppu_obj_size[size]; ys++ )
+		if( curline >= y && curline < (y + (ppu_obj_size[size] << 3)) )
 		{
-			count = 0;
-			line = curline - (y + (ys << 3));
+			ys = (curline - y) >> 3;
+			line = (curline - y) % 8;
 			if( vflip )
-				line = (-1 * line) + 7;
-
-			line <<= 1;
-			/* If the object intersects this line, then draw it */
-			if( curline >= (y + (ys << 3)) && curline < (y + (ys << 3) + 8) )
 			{
-				if( hflip )
+				ys = ppu_obj_size[size] - ys - 1;
+				line = (-1 * line) + 7;
+			}
+			line <<= 1;
+			tile <<= 5;
+			if( hflip )
+			{
+				UINT8 count = 0;
+				for( xs = (ppu_obj_size[size] - 1); xs >= 0; xs-- )
 				{
-					for( xs = (ppu_obj_size[size] - 1); xs >= 0; xs-- )
-					{
-						if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
-							snes_draw_tile_4( screen, layers[4].data + ((tile + xs) << 5) + line, x + (count++ << 3), priority, hflip, pal, layers[4].blend, layers[4].clip );
-						time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
-					}
-				}
-				else
-				{
-					for( xs = 0; xs < ppu_obj_size[size]; xs++ )
-					{
-						if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
-							snes_draw_tile_4( screen, layers[4].data + ((tile + xs) << 5) + line, x + (count++ << 3), priority, hflip, pal, layers[4].blend, layers[4].clip );
-						time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
-					}
-				}
-
-				/* Increase range_over. 
-				 * Stop drawing if exceeded 32 objects and
-				 * enforcing that limit is enabled */
-				range_over++;
-				if( range_over == 32 && (readinputport( 8 ) & 0x1) )
-				{
-					/* Set the flag in STAT77 register */
-					snes_ram[STAT77] |= 0x40;
-					return;
+					if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
+						snes_draw_tile_4( screen, layers[4].data + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, layers[4].blend, layers[4].clip );
+					time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
 				}
 			}
-			tile += tileincr;
+			else
+			{
+				for( xs = 0; xs < ppu_obj_size[size]; xs++ )
+				{
+					if( (x + (xs << 3) < SNES_SCR_WIDTH + 8) )
+						snes_draw_tile_4( screen, layers[4].data + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, layers[4].blend, layers[4].clip );
+					time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
+				}
+			}
+
+			/* Increase range_over. 
+			 * Stop drawing if exceeded 32 objects and
+			 * enforcing that limit is enabled */
+			range_over++;
+			if( range_over == 32 && (readinputport( 8 ) & 0x1) )
+			{
+				/* Set the flag in STAT77 register */
+				snes_ram[STAT77] |= 0x40;
+				return;
+			}
 		}
 	}
 
@@ -1188,11 +1183,12 @@ void snes_refresh_scanline( UINT16 curline )
 		/* Clear zbuffers */
 		memset( scanlines[MAINSCREEN].zbuf, 0, SNES_SCR_WIDTH );
 		memset( scanlines[SUBSCREEN].zbuf, 0, SNES_SCR_WIDTH );
+		/* Clear Mainscreen buffer */
+		memset( scanlines[MAINSCREEN].buffer, 0, SNES_SCR_WIDTH * 2 );
 
 		/* Draw back colour */
 		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
 		{
-			scanlines[MAINSCREEN].buffer[ii] = 0;
 			scanlines[SUBSCREEN].buffer[ii] = Machine->remapped_colortable[FIXED_COLOUR];
 		}
 
