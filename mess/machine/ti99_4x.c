@@ -28,9 +28,9 @@ Emulated:
 	Compatibility looks quite good.
 
 Issues:
-	* disk images in MESS format are not quite the same a images in MESS
-	  format: they are identical for single-sided floppies, but not
-	  double-sided ones.
+	* disk images in MESS format are not quite the same a images in V9T9
+	  format: they are identical for single-sided floppies, but use a different
+	  track order for double-sided floppies.
 		DS image (V9T9): side0 Trk0, side0 Trk1,... side0 Trk39, side1 Trk0,... side1 Trk39
 		DS image (MESS): side0 Trk0, side1 Trk0, side0 Trk1,... side0 Trk39, side1 Trk39
 	* floppy disk timings are not emulated (general issue)
@@ -1225,7 +1225,7 @@ In short:
 	* EVPC (video card): 0x1400-0x14FE
 	* HSGPL (GROM replacement): 0x1B00-0x1BFE
 
-	Of course, these devices additionnally need some support routines, and possibly memory-mapped
+	Of course, these devices additionally need some support routines, and possibly memory-mapped
 	registers.  To do this, memory range 0x4000-5FFF is shared by all cards.  The system enables
 	each card as needed by writing a 1 to the first CRU bit: when this happens the card can safely
 	enable its ROM, RAM, memory-mapped registers, etc.  Provided the ROM uses the proper ROM header,
@@ -1301,7 +1301,16 @@ typedef struct ti99_4p_16bit_expansion_port_t
 static ti99_4p_expansion_port_t ti99_4p_expansion_ports[28];
 
 /* index of the currently active card (-1 if none) */
-static int active_card = -1;
+static int active_card;
+
+/* when 1, enable a workaround required by 99/4p, which mistakenly enables 2
+cards simultaneously */
+#define ACTIVATE_BIT_EMULATE 1
+
+#if ACTIVATE_BIT_EMULATE
+/* activate mask: 1 bit set for each card enable CRU bit set */
+static int active_card_mask;
+#endif
 
 /* ila: inta status register (not actually used on TI99/4(A), but still present) */
 static int ila;
@@ -1341,6 +1350,9 @@ static void ti99_expansion_card_init(void)
 	memset(expansion_ports, 0, sizeof(expansion_ports));
 
 	active_card = -1;
+#if ACTIVATE_BIT_EMULATE
+	active_card_mask = 0;
+#endif
 	ila = 0;
 	ilb = 0;
 }
@@ -1578,12 +1590,30 @@ WRITE16_HANDLER ( ti99_4p_expansion_CRU_w )
 		{
 			/* enable */
 			active_card = port;
+#if ACTIVATE_BIT_EMULATE
+			active_card_mask |= (1 << port);
+#endif
 		}
 		else
 		{
+#if ACTIVATE_BIT_EMULATE
+			active_card_mask &= ~(1 << port);
+#endif
 			if (port == active_card)	/* geez... who cares? */
 			{
 				active_card = -1;			/* no port selected */
+#if ACTIVATE_BIT_EMULATE
+				active_card_mask &= ~(1 << port);
+
+				if (active_card_mask)
+				{
+					int i;
+					logerror("Extension card error, trying to recover\n");
+					for (i = 0; i<28; i++)
+						if (active_card_mask & (1 << i))
+							active_card = i;
+				}
+#endif
 			}
 		}
 	}
