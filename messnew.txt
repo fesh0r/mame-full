@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Myarc Geneve 9640 [Raphael Nabet]
 
 System Driver Changes:
 ----------------------
