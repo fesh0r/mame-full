@@ -744,7 +744,8 @@ $(OBJ)/apf.a:      \
     $(OBJ)/mess/formats/apfapt.o
 
 $(OBJ)/sord.a:     \
-	$(OBJ)/mess/systems/sord.o
+	$(OBJ)/mess/systems/sord.o	\
+    $(OBJ)/mess/formats/sord_cas.o
 
 $(OBJ)/tatung.a:     \
 	$(OBJ)/mess/systems/einstein.o
