@@ -572,7 +572,7 @@ int WINAPI WinMain(HINSTANCE    hInstance,
 			if (idle_work)
 				OnIdle();
 			else if (mess_idle_work)
-				OnMessIdle();
+				OnMessIdle(hwndSoftware);
 		}
 #else
         while (idle_work && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))

@@ -49,7 +49,7 @@ static UINT nIdleImageNum;
 static int nTheCurrentGame;
 static int *mess_icon_index;
 
-static void OnMessIdle(void);
+static void OnMessIdle(HWND hwndPicker);
 
 extern const char *osd_get_cwd(void);
 extern void resetdir(void);
@@ -806,12 +806,27 @@ static void MessSetPickerDefaults(void)
         free(default_software);
 }
 
+static void MessPickerSelectSoftware(HWND hWnd, const char *software, BOOL bFocus)
+{
+	int i;
+
+    i = MessLookupByFilename(software);
+    if (i >= 0) {
+        if (bFocus) {
+            ListView_SetItemState(hWnd, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+            ListView_EnsureVisible(hWnd, i, FALSE);
+        }
+        else {
+            ListView_SetItemState(hWnd, i, LVIS_SELECTED, LVIS_SELECTED);
+        }
+    }
+}
+
 static void MessRetrievePickerDefaults(HWND hWnd)
 {
     char *default_software = strdup(GetDefaultSoftware());
     char *this_software;
     char *s;
-    int i;
 
     if (!default_software)
         return;
@@ -824,16 +839,7 @@ static void MessRetrievePickerDefaults(HWND hWnd)
         else
             s = NULL;
 
-        i = MessLookupByFilename(this_software);
-        if (i >= 0) {
-            if (this_software == default_software) {
-                ListView_SetItemState(hWnd, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-                ListView_EnsureVisible(hWnd, i, FALSE);
-            }
-            else {
-                ListView_SetItemState(hWnd, i, LVIS_SELECTED, LVIS_SELECTED);
-            }
-        }
+		MessPickerSelectSoftware(hWnd, this_software, this_software == default_software);
 
         this_software = s;
     }
@@ -1039,9 +1045,16 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP h
     if(hImageList)
     {
         UINT nOvlImageMask = lvi.state & LVIS_OVERLAYMASK;
-        if(rcItem.left < rcItem.right-1)
+        if(rcItem.left < rcItem.right-1) {
+			if (!hBackground) {
+				HBRUSH hBrush;
+				hBrush = CreateSolidBrush( GetSysColor(COLOR_WINDOW));
+				FillRect(hDC, &rcIcon, hBrush);
+				DeleteObject(hBrush);
+			}
             ImageList_DrawEx(hImageList, lvi.iImage, hDC, rcIcon.left, rcIcon.top,
                 16, 16, GetSysColor(COLOR_WINDOW), clrImage, uiFlags | nOvlImageMask);
+		}
     }
 
     ListView_GetItemRect(hWnd, nItem, &rcItem,LVIR_LABEL);
@@ -1119,7 +1132,7 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP h
     }
 }
 
-static void OnMessIdle()
+static void OnMessIdle(HWND hwndPicker)
 {
     static mess_image_type imagetypes[64];
     ImageData *pImageData;
@@ -1133,7 +1146,7 @@ static void OnMessIdle()
 
         if (pImageData->type == IO_ALIAS) {
             pImageData->type = MessDiscoverImageType(pImageData->fullname, imagetypes, TRUE);
-            ListView_RedrawItems(hwndSoftware,nIdleImageNum,nIdleImageNum);
+            ListView_RedrawItems(hwndPicker,nIdleImageNum,nIdleImageNum);
         }
         nIdleImageNum++;
     }
@@ -1311,6 +1324,7 @@ static void MessCreateDevice(int iDevice)
  * ready for prime time so it isn't enabled by default                      *
  * ------------------------------------------------------------------------ */
 
+static const char *s_pInitialFileName;
 static BOOL s_bChosen;
 static long s_lSelectedItem;
 
@@ -1333,6 +1347,12 @@ static BOOL FileManagerItemChangeProc(HWND hWnd, NM_LISTVIEW *pnmv)
 static BOOL FileManagerIsItemSelected(int nItem)
 {
 	return nItem == s_lSelectedItem;
+}
+
+static void EndFileManager(HWND hDlg, long lSelectedItem)
+{
+	s_lSelectedItem = lSelectedItem;
+	PostMessage(hDlg, WM_QUIT, 0, 0);
 }
 
 static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1366,6 +1386,10 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 
 		/* Initialize */
 		InitMessPicker(hSoftwarePicker, FALSE);
+		if (s_pInitialFileName && *s_pInitialFileName)
+			MessPickerSelectSoftware(hSoftwarePicker, s_pInitialFileName, TRUE);
+
+		ShowWindow(hDlg, TRUE);
 		break;
 
     case WM_NOTIFY:
@@ -1376,7 +1400,7 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
                 bResult = MessPickerNotify( hSoftwarePicker, lpNmHdr, FileManagerItemChosen, FileManagerItemChangeProc );
 				if (s_bChosen) {
 					s_bChosen = FALSE;
-					EndDialog(hDlg, s_lSelectedItem);
+					EndFileManager(hDlg, s_lSelectedItem);
 				}
 				return bResult;
 			}
@@ -1394,10 +1418,14 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
         }
         break;
 
-	case WM_KEYDOWN:
+    case WM_COMMAND:
 		switch(wParam) {
-		case VK_ESCAPE:
-			EndDialog(hDlg, -1);
+		case IDOK:
+			EndFileManager(hDlg, s_lSelectedItem);
+			break;
+
+		case IDCANCEL:
+			EndFileManager(hDlg, -1);
 			break;
 
 		default:
@@ -1427,16 +1455,43 @@ static BOOL UseNewFileManager(void)
  */
 int osd_select_file(int sel, char *filename)
 {
+	MSG msg;
+	HWND hDlg;
 	int nSelectedItem;
 	int result;
+	BOOL bDialogDone;
 
 	if (UseNewFileManager()) {
+		s_pInitialFileName = filename;
+
 		ShowCursor(TRUE);
 
 		if (MAME32App.m_pDisplay->AllowModalDialog)
 			MAME32App.m_pDisplay->AllowModalDialog(TRUE);
 
-		nSelectedItem = DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
+		hDlg = CreateDialog(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
+
+		bDialogDone = FALSE;
+		while(!bDialogDone) {
+			while(mess_idle_work && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+				OnMessIdle(hwndSoftware);
+
+			do {
+				if (GetMessage(&msg, NULL, 0, 0) && msg.message != WM_CLOSE) {
+					if (!IsDialogMessage(hDlg, &msg)) {
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
+				}
+				else {
+					bDialogDone = TRUE;
+				}
+			}
+			while(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE));
+		}
+
+		DestroyWindow(hDlg);
+		nSelectedItem = s_lSelectedItem; //DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
 
 		if (MAME32App.m_pDisplay->AllowModalDialog)
 			MAME32App.m_pDisplay->AllowModalDialog(FALSE);
