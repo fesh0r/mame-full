@@ -18,7 +18,7 @@ CBM_Drive cbm_drive[2];
 CBM_Serial cbm_serial;
 
 /* must be called before other functions */
-void cbm_drive_open (void)
+static void cbm_drive_open (void)
 {
 	int i;
 
@@ -37,7 +37,7 @@ void cbm_drive_open (void)
 	}
 }
 
-void cbm_drive_close (void)
+static void cbm_drive_close (void)
 {
 	int i;
 
@@ -103,23 +103,35 @@ void cbm_drive_1_config (int interface, int serialnr)
 
 
 
+static DEVICE_INIT(cbm_drive)
+{
+	int id = image_index_in_device(image);
+	if (id == 0)
+		cbm_drive_open();	/* boy these C64 drivers are butt ugly */
+	return INIT_PASS;
+}
+
+static DEVICE_EXIT(cbm_drive)
+{
+	int id = image_index_in_device(image);
+	if (id == 0)
+		cbm_drive_close();	/* boy these C64 drivers are butt ugly */
+}
+
+
+
 /* open an d64 image */
-DEVICE_LOAD(cbm_drive)
+static DEVICE_LOAD(cbm_drive)
 {
 	int size;
 	int id = image_index_in_device(image);
 
 	cbm_drive[id].drive = 0;
 	cbm_drive[id].image = NULL;
-	cbm_drive[id].image_type = 0;
-	cbm_drive[id].image_id = 0;
-	memset(&cbm_drive[id].filename, 0, sizeof(cbm_drive[id].filename));
 
-	cbm_drive[id].image_type = IO_FLOPPY;
-	cbm_drive[id].image_id = id;
 	size = mame_fsize(file);
 
-	cbm_drive[id].image = (UINT8*) auto_malloc (size);
+	cbm_drive[id].image = (UINT8*) image_malloc(image, size);
 	if (!cbm_drive[id].image)
 		return INIT_FAIL;
 
@@ -404,6 +416,8 @@ void cbmfloppy_device_getinfo(struct IODevice *dev)
 	dev->readable = 1;
 	dev->writeable = 0;
 	dev->creatable = 0;
+	dev->init = device_init_cbm_drive;
+	dev->exit = device_exit_cbm_drive;
 	dev->load = device_load_cbm_drive;
 }
 

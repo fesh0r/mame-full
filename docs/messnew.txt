@@ -15,6 +15,12 @@ System Driver Changes:
 
 - [APPLE2GS] Implemented Ensoniq ES5503 sound system.  [R. Belmont]
 
+- [C64] Fixed a regression intorduced in 0.92 that prevented the first floppy
+  drive from working properly.  (bug #681) [Nate Woods]
+
+- [MSX] Fixed a sound regression introduced in the 0.93 MAME core update.
+  (bug #683) [Nate Woods]
+
 
 
 User Interface Changes:

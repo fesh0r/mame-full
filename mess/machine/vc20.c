@@ -486,8 +486,6 @@ static void vc20_common_driver_init (void)
 
 	vc20_tape_open (via_1_ca1_w);
 
-	cbm_drive_open ();
-
 #ifdef VC1541
 	vc1541_config (0, 0, &vc1541);
 #endif
@@ -498,7 +496,6 @@ static void vc20_common_driver_init (void)
 /* currently not used, but when time comes */
 void vc20_driver_shutdown (void)
 {
-	cbm_drive_close ();
 	vc20_tape_close ();
 }
 

@@ -750,8 +750,6 @@ static void c128_common_driver_init (void)
 	c128 = 1;
 	vc20_tape_open (c64_tape_read);
 
-	cbm_drive_open ();
-
 	cia6526_init();
 
 	c64_cia0.todin50hz = c64_pal;
@@ -785,7 +783,6 @@ void c128pal_driver_init (void)
 
 void c128_driver_shutdown (void)
 {
-	cbm_drive_close ();
 	vc20_tape_close ();
 }
 

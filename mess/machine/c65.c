@@ -772,7 +772,6 @@ static void c65_common_driver_init (void)
 	c65=1;
 	c64_tape_on=0;
 	/*memset(c64_memory+0x40000, 0, 0x800000-0x40000); */
-	cbm_drive_open ();
 
 	cia6526_init();
 
@@ -802,11 +801,6 @@ void c65pal_driver_init (void)
 	dma.version=1;
 	c64_pal = 1;
 	c65_common_driver_init ();
-}
-
-void c65_driver_shutdown (void)
-{
-	cbm_drive_close ();
 }
 
 MACHINE_INIT( c65 )

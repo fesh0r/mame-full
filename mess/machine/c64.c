@@ -817,11 +817,6 @@ static void c64_common_driver_init (void)
 	if (c64_tape_on)
 		vc20_tape_open (c64_tape_read);
 
-	if (c64_cia1_on)
-	{
-		cbm_drive_open ();
-	}
-
 	cia6526_init();
 
 	c64_cia0.todin50hz = c64_pal;
@@ -884,10 +879,6 @@ void sx64_driver_init (void)
 
 void c64_driver_shutdown (void)
 {
-	if (!ultimax)
-	{
-		cbm_drive_close ();
-	}
 	if (c64_tape_on)
 		vc20_tape_close ();
 }

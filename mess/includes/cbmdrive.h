@@ -60,12 +60,7 @@ typedef struct
 #define D64_IMAGE 1
 	int drive;
 	unsigned char *image;	   /*d64 image */
-	/*    int track, sector; */
-	/*    int sectorbuffer[256]; */
 
-	/* for visualization */
-	int image_type;
-    int image_id;
 	char filename[20];
 }
 CBM_Drive;

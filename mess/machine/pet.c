@@ -443,8 +443,6 @@ static void pet_common_driver_init (void)
 
 	statetext_add_function(pet_state);
 
-	cbm_drive_open ();
-
 	cbm_ieee_open();
 }
 

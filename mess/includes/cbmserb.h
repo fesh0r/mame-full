@@ -3,10 +3,6 @@
 
 #include "cbmdrive.h"
 
-/* must be called before other functions */
-void cbm_drive_open (void);
-void cbm_drive_close (void);
-
 void cbmfloppy_device_getinfo(struct IODevice *dev);
 
 #define IEC 1

@@ -509,8 +509,6 @@ static void c16_common_driver_init (void)
 
 	c16_tape_open ();
 
-	cbm_drive_open ();
-
 	if (REAL_C1551)
 		c1551_config (0, 0, &config);
 
@@ -530,7 +528,6 @@ void c16_driver_init (void)
 void c16_driver_shutdown (void)
 {
 	vc20_tape_close ();
-	cbm_drive_close ();
 }
 
 static WRITE8_HANDLER(c16_sidcart_16k)
