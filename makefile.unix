@@ -30,7 +30,7 @@
 # xmame or xmess ?
 ##############################################################################
 
-#set TAGET to "mame" (without the ") to compile xmame and to "mess" to
+#set TARGET to "mame" (without the ") to compile xmame and to "mess" to
 #compile xmess.
 TARGET = mame
 
