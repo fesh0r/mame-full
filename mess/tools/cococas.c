@@ -204,7 +204,7 @@ static int cococas_initalt(STREAM *instream, STREAM **outstream, int *basepos,
 		goto outofmemory;
 
 	*basepos = 0;
-	*length = samplepos;
+	*length = samplepos * 2;
 	*channels = 1;
 	*frequency = 4800;
 	*resolution = 16;

@@ -43,11 +43,14 @@ real discs in a real drive [Kev Thacker]
 of MESS. Run under pure DOS, or in a Windows 95
 DOS box mode for this to work correct. [Kev Thacker]
 
+- Imgtool now supports CoCo cassette files (both .CAS and .WAV).  This is done
+  through a framework that makes it easy to implement cassette images in
+  general. [Nate Woods]
+
 - CRC and sysinfo updates will now be appearing at the official MESS homepage:
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 
   (battlepriest@hotmail.com).
-
 
 ------------------------
 
