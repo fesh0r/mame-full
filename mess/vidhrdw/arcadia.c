@@ -13,73 +13,65 @@
 static UINT8 rectangle[0x40][8]={
     { 0 }
 };
-#define FONTUNKNOWN 24,60,60,60,24,0,24,0
 static UINT8 chars[0x40][8]={
-    { 0,0,0,0,0,0,0,0 }, //                ; 00 (space)
+    // read from the screen generated from a palladium
+    { 0,0,0,0,0,0,0,0 },			// 00 (space)
     { 1,2,4,8,16,32,64,128 }, //           ; 01 (\)
     { 128,64,32,16,8,4,2,1 }, //           ; 02 (/)
     { 255,255,255,255,255,255,255,255 }, //; 03 (solid block)
-    { FONTUNKNOWN }, //                    ; 04 (?)
-    { 15,15,15,15,15,15,15,15 }, //        ; 05 (half square right on)
-    { 0,0,0,0,0,0,0,255 }, //              ; 06 (horz lower line)
-    { 240,240,240,240,240,240,240,240 }, //; 07 (half square left on)
-    { FONTUNKNOWN }, //                    ; 08 (?)
-    { FONTUNKNOWN }, //                    ; 09 (?)
+    { 0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00 },//  04 (?)
+    { 3,3,3,3,3,3,3,3 }, //        ; 05 (half square right on)
+    { 0,0,0,0,0,0,255,255 }, //              ; 06 (horz lower line)
+    { 0xc0,0xc0,0xc0,0xc0,0xc0,0xc0,0xc0,0xc0 },// 07 (half square left on)
+    { 0xff,0xff,3,3,3,3,3,3 },			// 08 (?)
+    { 0xff,0xff,0xc0,0xc0,0xc0,0xc0,0xc0,0xc0 },// 09 (?)
     { 192,192,192,192,192,192,255,255 }, //; 0A (!_)
     { 3,3,3,3,3,3,255,255 }, //            ; 0B (_!)
     { 1,3,7,15,31,63,127,255 }, //         ; 0C (diagonal block)
     { 128,192,224,240,248,252,254,255 }, //; 0D (diagonal block)
     { 255,254,252,248,240,224,192,128 }, //; 0E (diagonal block)
     { 255,127,63,31,15,7,3,1 }, //         ; 0F (diagonal block)
-    { 124,198,206,214,230,198,124,0 }, //  ; 10 (0)
-    { 24,56,24,24,24,24,126,0 }, //        ; 11 (1)
-    { 124,198,6,124,192,192,254,0 }, //    ; 12 (2)
-    { 124,198,6,124,6,198,124,0 }, //      ; 13 (3)
-    { 12,28,60,108,254,12,12,0 }, //       ; 14 (4)
-    { 254,194,192,252,6,198,124,0 }, //    ; 15 (5)
-    { 124,198,192,252,198,198,124,0 }, //  ; 16 (6)
-    { 254,198,12,24,48,96,192,0 }, //      ; 17 (7)
-    { 124,198,198,124,198,198,124,0 }, //  ; 18 (8)
-    { 124,198,198,126,6,198,124,0 }, //    ; 19 (9)
-    { 56,108,198,254,198,198,198,0 }, //   ; 1A (A)
-    { 252,198,198,252,198,198,252,0 }, //  ; 1B (B)
-    { 124,198,192,192,192,198,124,0 }, //  ; 1C (C)
-    { 248,204,198,198,198,204,248,0 }, //  ; 1D (D)
-    { 254,192,192,254,192,192,254,0 }, //  ; 1E (E)
-    { 254,192,192,254,192,192,192,0 }, //  ; 1F (F)
-    { 124,198,192,222,198,198,124,0 }, //  ; 20 (G)
-    { 198,198,198,254,198,198,198,0 }, //  ; 21 (H)
-    { 126,24,24,24,24,24,126,0 }, //       ; 22 (I)
-    { 254,24,24,24,24,216,112,0 }, //      ; 23 (J)
-    { 198,204,216,240,216,204,198,0 }, //  ; 24 (K)
-    { 192,192,192,192,192,192,254,0 }, //  ; 25 (L)
-    { 198,198,238,214,198,198,198,0 }, //  ; 26 (M)
-    { 198,198,230,214,206,198,198,0 }, //  ; 27 (N)
-    { 124,198,198,198,198,198,124,0 }, //  ; 28 (O)
-    { 252,198,198,252,192,192,192,0 }, //  ; 29 (P)
-    { 124,198,198,198,206,196,122,0 }, //  ; 2A (Q)
-    { 252,198,198,252,216,204,198,0 }, //  ; 2B (R)
-    { 124,198,192,124,6,198,124,0 }, //    ; 2C (S)
-    { 126,24,24,24,24,24,24,0 }, //        ; 2D (T)
-    { 198,198,198,198,198,198,124,0 }, //  ; 2E (U)
-    { 198,198,198,198,108,56,16,0 }, //    ; 2F (V)
-    { 198,198,198,214,238,198,198,0 }, //  ; 30 (W)
-    { 198,108,56,56,56,108,198,0 }, //     ; 31 (X)
-    { 195,102,60,24,24,24,24,0 }, //       ; 32 (Y)
-    { 254,6,12,24,48,96,254,0 }, //        ; 33 (Z)
-    { 0,0,0,0,0,0,8,0 }, //                ; 34 (.)
-    { FONTUNKNOWN }, //                    ; 35 (?)
-    { FONTUNKNOWN }, //                    ; 36 (?)
-    { FONTUNKNOWN }, //                    ; 37 (?)
+    { 0x00,0x1c,0x22,0x26,0x2a,0x32,0x22,0x1c },// 10 0
+    { 0x00,0x08,0x18,0x08,0x08,0x08,0x08,0x1c },// 10 1
+    { 0x00,0x1c,0x22,0x02,0x0c,0x10,0x20,0x3e },// 10 2
+    { 0x00,0x3e,0x02,0x04,0x0c,0x02,0x22,0x1c },// 10 3
+    { 0x00,0x04,0x0c,0x14,0x24,0x3e,0x04,0x04 },// 10 4
+    { 0x00,0x3e,0x20,0x3c,0x02,0x02,0x22,0x1c },// 10 5
+    { 0x00,0x0c,0x10,0x20,0x3c,0x22,0x22,0x1c },// 10 6
+    { 0x00,0x7c,0x02,0x04,0x08,0x10,0x10,0x10 },// 10 7
+    { 0x00,0x1c,0x22,0x22,0x1c,0x22,0x22,0x1c },// 10 8
+    { 0x00,0x1c,0x22,0x22,0x3e,0x02,0x04,0x18 },// 10 9
+    { 0x00,0x08,0x14,0x22,0x22,0x3e,0x22,0x22 },// 10 A
+    { 0x00,0x3c,0x22,0x22,0x3c,0x22,0x22,0x3c },// 10 B
+    { 0x00,0x1c,0x22,0x20,0x20,0x20,0x22,0x1c },// 10 C
+    { 0x00,0x3c,0x22,0x22,0x22,0x22,0x22,0x3c },// 10 D
+    { 0x00,0x3e,0x20,0x20,0x3c,0x20,0x20,0x3e },// 10 E
+    { 0x00,0x3e,0x20,0x20,0x3c,0x20,0x20,0x20 },// 10 F
+    { 0x00,0x1e,0x20,0x20,0x20,0x26,0x22,0x1e },// 10 G
+    { 0x00,0x22,0x22,0x22,0x3e,0x22,0x22,0x22 },// 10 H
+    { 0x00,0x1c,0x08,0x08,0x08,0x08,0x08,0x1c },// 10 I
+    { 0x00,0x02,0x02,0x02,0x02,0x02,0x22,0x1c },// 10 J
+    { 0x00,0x22,0x24,0x28,0x30,0x28,0x24,0x22 },// 10 K
+    { 0x00,0x20,0x20,0x20,0x20,0x20,0x20,0x3e },// 10 L
+    { 0x00,0x22,0x36,0x2a,0x2a,0x22,0x22,0x22 },// 10 M
+    { 0x00,0x22,0x22,0x32,0x2a,0x26,0x22,0x22 },// 10 N
+    { 0x00,0x1c,0x22,0x22,0x22,0x22,0x22,0x1c },// 10 O
+    { 0x00,0x3c,0x22,0x22,0x3c,0x20,0x20,0x20 },// 10 P
+    { 0x00,0x1c,0x22,0x22,0x22,0x2a,0x24,0x1a },// 10 Q
+    { 0x00,0x3c,0x22,0x22,0x3c,0x28,0x24,0x22 },// 10 R
+    { 0x00,0x1c,0x22,0x20,0x1c,0x02,0x22,0x1c },// 10 S
+    { 0x00,0x3e,0x08,0x08,0x08,0x08,0x08,0x08 },// 10 T
+    { 0x00,0x22,0x22,0x22,0x22,0x22,0x22,0x1c },// 10 U
+    { 0x00,0x22,0x22,0x22,0x22,0x22,0x14,0x08 },// 10 V
+    { 0x00,0x22,0x22,0x22,0x2a,0x2a,0x36,0x22 },// 10 W
+    { 0x00,0x22,0x22,0x14,0x08,0x14,0x22,0x22 },// 10 X
+    { 0x00,0x22,0x22,0x14,0x08,0x08,0x08,0x08 },// 10 Y
+    { 0x00,0x3e,0x02,0x04,0x08,0x10,0x20,0x3e },// 10 Z
+    { 0,0,0,0,0,0,0,8 },			// 34  .
+    { 0,0,0,0,0,8,8,0x10 },			// 35 ,
+    { 0,0,8,8,0x3e,8,8,0 },			// 36 +
+    { 0,8,0x1e,0x28,0x1c,0xa,0x3c,8 },		// 37 $
     // 8x user defined
-    { FONTUNKNOWN }, //			   ; 38 (udg 0)
-    { FONTUNKNOWN }, //                    ; 39 (udg 1)
-    { FONTUNKNOWN }, //                    ; 3A (udg 2)
-    { FONTUNKNOWN }, //                    ; 3B (udg 3)
-    { FONTUNKNOWN }, //                    ; 3C (udg 4)
-    { FONTUNKNOWN }, //                    ; 3D (udg 5)
-    { FONTUNKNOWN }, //                    ; 3E (udg 6)
-    { FONTUNKNOWN }, //                    ; 3F (udg 7)
 };
 
 static struct {
@@ -104,8 +96,8 @@ static struct {
 	    UINT8 sound1, sound2;
 	    UINT8 char_line;
 	    // 0x1900
-	    UINT8 pad1a, pad1b,pad1c, unmapped1;
-	    UINT8 pad2a, pad2b,pad2c, unmapped2;
+	    UINT8 pad1a, pad1b, pad1c, pad1d;
+	    UINT8 pad2a, pad2b, pad2c, pad2d;
 	    UINT8 keys, unmapped3[0x80-9];
 	    UINT8 chars[8][8];
 	    UINT8 unknown[0x38];
@@ -152,9 +144,11 @@ READ_HANDLER(arcadia_video_r)
     case 0x100: data=input_port_1_r(0);break;
     case 0x101: data=input_port_2_r(0);break;
     case 0x102: data=input_port_3_r(0);break;
-    case 0x104: data=input_port_4_r(0);break;
-    case 0x105: data=input_port_5_r(0);break;
-    case 0x106: data=input_port_6_r(0);break;
+    case 0x103: data=input_port_4_r(0);break;
+    case 0x104: data=input_port_5_r(0);break;
+    case 0x105: data=input_port_6_r(0);break;
+    case 0x106: data=input_port_7_r(0);break;
+    case 0x107: data=input_port_8_r(0);break;
     case 0x108: data=input_port_0_r(0);break;
 #if 0
     case 0x1fe:
@@ -169,21 +163,21 @@ READ_HANDLER(arcadia_video_r)
     case 0x1fe:
 	data = 0x80;
 	if (arcadia_video.ad_select) {
-	    if (input_port_7_r(0)&0x10) data=0;
-	    if (input_port_7_r(0)&0x20) data=0xff;
+	    if (input_port_9_r(0)&0x10) data=0;
+	    if (input_port_9_r(0)&0x20) data=0xff;
 	} else {
-	    if (input_port_7_r(0)&0x40) data=0xff;
-	    if (input_port_7_r(0)&0x80) data=0;
+	    if (input_port_9_r(0)&0x40) data=0xff;
+	    if (input_port_9_r(0)&0x80) data=0;
 	}
 	break;
     case 0x1ff:
 	data = 0x6f; // 0x7f too big for alien invaders (movs right)
 	if (arcadia_video.ad_select) {
-	    if (input_port_7_r(0)&0x1) data=0;
-	    if (input_port_7_r(0)&0x2) data=0xff;
+	    if (input_port_9_r(0)&0x1) data=0;
+	    if (input_port_9_r(0)&0x2) data=0xff;
 	} else {
-	    if (input_port_7_r(0)&0x4) data=0xff;
-	    if (input_port_7_r(0)&0x8) data=0;
+	    if (input_port_9_r(0)&0x4) data=0xff;
+	    if (input_port_9_r(0)&0x8) data=0;
 	}
 	break;
 #endif
@@ -257,7 +251,7 @@ INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
     Machine->gfx[0]->colortable[1]=Machine->pens[4];
 #else
     Machine->gfx[0]->colortable[1]=
-	Machine->pens[((arcadia_video.reg.d.pal1>>3)&7)^((color>>5)&6)];
+	Machine->pens[((arcadia_video.reg.d.pal1>>3)&1)|((color>>5)&6)];
 #endif
     if (!(arcadia_video.reg.d.resolution&0x40)) {
 	for (k=0; k<8; k++) {
