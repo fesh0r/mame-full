@@ -2,7 +2,10 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.80.2
+Release 0.81.2
+	- The romcmp tool should now build on Solaris.
+
+Release 0.81.1, 11 April 2004
 	- Everything from MAME 0.81 (http://x.mame.net/changes-mame.html) and 
 	  MESS 0.81 (http://x.mame.net/changes-mess.html).
 	- Fixed a problem with the lightgun offscreen reloading that caused a 
@@ -11,7 +14,10 @@ Release 0.80.2
 	  instead of just d2u.
 	- Restructured the makefiles a bit so that object directories are 
 	  created before compilation begins.  This should take care of the 
-	  problems with parallel compilation.
+	  problems with parallel compilation.  Thanks to Arnaud G. Gibert for 
+	  much help and critique.
+	- Fixed a crash that occurred when Xv was enabled and DISPLAY was 
+	  pointing to a remote screen.  (Krister Walfridsson)
 
 Release 0.80.1, 13 March 2004
 	- Everything from MAME 0.80 and MESS 0.80.

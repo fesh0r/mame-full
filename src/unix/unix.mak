@@ -131,14 +131,15 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/formats \
 	   $(OBJ)/mess/tools $(OBJ)/mess/tools/dat2html \
 	   $(OBJ)/mess/tools/mkhdimg $(OBJ)/mess/tools/messroms \
-	   $(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/messdocs $(OBJ)/mess/tools/messtest \
-	   $(OBJ)/mess/tools/mkimage $(OBJ)/mess/sound
+	   $(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/messdocs \
+	   $(OBJ)/mess/tools/messtest $(OBJ)/mess/tools/mkimage \
+	   $(OBJ)/mess/sound
 endif
 
 IMGTOOL_LIBS = -lz
 
 ifeq ($(TARGET), mess)
-INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/unix -Isrc/unix/sysdep -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 else
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
@@ -222,6 +223,10 @@ endif
 
 ifdef HAVE_BCOPY
 MY_CFLAGS += -DHAVE_BCOPY
+endif
+
+ifdef HAVE_MPROTECT
+MY_CFLAGS += -DHAVE_MPROTECT
 endif
 
 # CONFIG are the cflags used to build the unix tree, this is where most defines
@@ -370,7 +375,7 @@ imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
-messtest: $(EXPAT_OBJS)  $(ZLIB) $(OBJS) $(VECTOR)	\
+messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/mess/tools/messtest/messtest.o \
 		$(OBJ)/mess/tools/messtest/testexec.o \
 		$(OBJ)/mess/tools/messtest/tststubs.o \
@@ -378,9 +383,15 @@ messtest: $(EXPAT_OBJS)  $(ZLIB) $(OBJS) $(VECTOR)	\
 		$(OBJDIR)/dirio.o \
 		$(OBJDIR)/fileio.o \
 		$(OBJDIR)/ticker.o \
-		$(OBJDIR)/parallel.o
+		$(OBJDIR)/parallel.o \
+		$(OBJDIR)/sysdep/misc.o \
+		$(OBJDIR)/sysdep/rc.o \
+		$(OBJDIR)/tststubs.o
 	$(CC_COMMENT) @echo Linking $@...
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $(VECTOR) $^ -o $@
+
+$(OBJDIR)/tststubs.o: src/unix/tststubs.c
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
 $(OSDEPEND):
 	$(CC_COMMENT) @echo 'Compiling in the unix directory...'

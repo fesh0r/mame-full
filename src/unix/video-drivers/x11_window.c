@@ -912,8 +912,8 @@ int x11_window_create_display (int bitmap_depth)
 					/* else we have failed clean up before retrying without MITSHM */
 					shmdt ((char *) scaled_buffer_ptr);
 					scaled_buffer_ptr = NULL;
-					XDestroyImage (image);
-					image = NULL;
+					XFree(xvimage);
+					xvimage = NULL;
 				}
 			}
 			fprintf (stderr_file, "Failed\nReverting to normal XPutImage() mode\n");

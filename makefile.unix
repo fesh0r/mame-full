@@ -49,9 +49,12 @@ TARGET = mame
 # much memory, uncomment this.
 # LOW_MEM = 1
 
-# Enable experimental network support.  See 
-# src/unix/doc/multiplayer-readme.txt for more information.
+# Enable experimental network support.  See src/unix/doc/multiplayer-readme.txt
+# for more information.
 # XMAME_NET = 1
+
+# Enable rapid-fire support.
+XMAME_RAPIDFIRE = 1
 
 # Uncomment the next lines to use x86-asm cpu cores.  This is only
 # supported for x86 machines with nasm-0.98 or higher available in your
@@ -452,6 +455,11 @@ HAVE_GETTIMEOFDAY = 1
 # HAVE_BCOPY.  This is needed for xmess.
 HAVE_MEMMOVE = 1 
 # HAVE_BCOPY = 1
+
+# Does your system support the mprotect() function?  If so, enable this if 
+# you're having problems using X86_MIPS3_DRC on an OS and CPU that supports the 
+# NO_EXECUTE bit (currently only 64-bit AMD chips).
+# HAVE_MPROTECT = 1
 
 # Uncomment this if you want to link with ElectricFence (for developers 
 # only).

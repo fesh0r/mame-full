@@ -2,14 +2,51 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Tesla PMD-85.1/PMD-85.2/PMD-85.2A/PMD-85.2B/PMD-85.3 [Krzysztof Strzecha]
+- Didaktik Alfa [Krzysztof Strzecha]
+- Statny Mato [Krzysztof Strzecha]
 - Multitech MPF-1/MPF1-B [Mooglyguy and Curt Coder]
+- [MSX] National CF-3300 [Jirou Kaneda]
+- [MSX] Sony HB-75D [Jirou Kaneda]
+- [MSX] Sony HB-201 [Jirou Kaneda]
+- [MSX] Sony HB-201P [Jirou Kaneda]
+- [MSX] Sony HB-501P [Jirou Kaneda]
+- [MSX] Spectravideo SVI-738 [Jirou Kaneda]
+- [MSX] Gradiente Expert Plus [Jirou Kaneda]
+- [MSX] Gradiente Expert DDPlus [Jirou Kaneda]
 - [MSX] Daewoo IQ-1000 / DPC-200 - Korean [Jirou Kaneda]
 - [MSX2] Daewoo IQ-2000 / CPC-300 - Korean [Jirou Kaneda]
+- [MSX2] Daewoo X-II CPC-400 - Korean [Jirou Kaneda]
+- [MSX2] Daewoo X-II CPC-400S - Korean [Jirou Kaneda]
+- [MSX2] Philips NMS-8250 [Jirou Kaneda]
+- [MSX2] Philips NMS-8280 [Jirou Kaneda]
+- [MSX2] Philips VG-8235 [Jirou Kaneda]
+- [MSX2] Sony HB-F9P [Jirou Kaneda]
+- [MSX2] Sony HB-F500P [Jirou Kaneda]
+- [MSX2] Sony HB-F700D [Jirou Kaneda]
+- [MSX2] Sony HB-F700S [Jirou Kaneda]
+- [MSX2] Sony HB-G900P [Jirou Kaneda]
+- [MSX2] National FS-5500F1/F2 [Jirou Kaneda]
+- [MSX2] National FS-4500 [Jirou Kaneda]
+- [MSX2] National FS-4700 [Jirou Kaneda]
+- [MSX2] National FS-5000F2 [Jirou Kaneda]
+- [MSX2] National FS-4600 [Jirou Kaneda]
+- [MSX2] Panasonic FS-A1F [Jirou Kaneda]
+- [MSX2] Panasonic FS-A1FM [Jirou Kaneda]
+- [MSX2] Sony HB-F500 [Jirou Kaneda]
+- [MSX2] Sony HB-F900 [Jirou Kaneda]
+- [MSX2] Sony HB-F1 [Jirou Kaneda]
+- [MSX2] Sony HB-F1II [Jirou Kaneda]
+- [MSX2] Sony HB-F1XD [Jirou Kaneda]
+- [MSX2] Sony HB-F1XDMK2 [Jirou Kaneda]
+- [MSX2] Sanyo Wavy PHC-23 [Jirou Kaneda]
 
 
 
 System Driver Changes:
 ----------------------
+- [DAI] Stack overflow interrupt added. [Krzysztof Strzecha]
+
 - [MZ700] Fixed a crash on startup. (bug #530) [Nate Woods]
 
 - [NES] Fixed a crash when running certain games such as the SMB/Duck Hunt
@@ -47,6 +84,9 @@ Source Changes:
 - Changed around how CRC files work; changed the format to XML and they are
   no longer specific to CRC32; SHA-1 and MD5 are now supported.  The files
   are now called 'Hash' files are are in the hash directory.  [Nate Woods]
+
+- The artwork will now try to load artwork files with the goodname of the
+  image in addition to the other filenames.  [Nate Woods]
 
 
 

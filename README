@@ -6,7 +6,7 @@
  -------------
 
  Quick Readme by Matt Lowry
- Last Updated : 17th Jan 2001
+ Last Updated : 12th April 2001
 
  -------------
 
@@ -45,6 +45,9 @@ A: You will find documentation (of sorts) in the doc/ subdirectory.
      doc/xmame.6
      doc/xmess.6
 
+   There are various other files in the doc/ directory that contain information
+    you may find interesting or useful.
+
    Also you can check out the xmame/xmess homepage at:
                        http://x.mame.net
     (Deutsche version: http://x.mame.net/german.html)
@@ -60,7 +63,6 @@ A: The documentation (doc/xmame-doc.*) contains detailed instructions,
    No, there is no configure script. Feel free to write one yourself and
     contribute it to the project. :)
 
-
 Q: What platforms can I run XMAME/XMESS on?
 
 A: Lots! :)
@@ -73,7 +75,7 @@ A: Lots! :)
    The following display methods are explicitly supported:
    X11(R6) / SVGAlib (Linux only) / GGI (only tested on Linux) / 
    XGL (i.e. X with OpenGL) / XFX (i.e. X with 3Dfx) / 
-   SVGAfx (i.e. SVGAlib with 3Dfx) / OpenStep / SDL
+   SVGAfx (i.e. SVGAlib with 3Dfx) / OpenStep / SDL / Photon2
 
    If your OS is not listed above, then there is also a "generic unix"
     compilation target that may work for you.
@@ -85,17 +87,21 @@ A: Lots! :)
 
 Q: When I tried compiling <xyz> went wrong. Help?
 
-A: Read the documentation.
+A: Read the documentation. In particular the section of the main documentation
+    that discussed compilation.
 
 
-Q: OK, I've got the source and compiled it. Where are the games?
+Q: OK, I've got the source and compiled it. How do I run a game?
 
-A: Read the documentation.
+A: Xmame/xmess are __emulators__. They make the hardware in front of you
+    (an X86 box, say) pretend to be the specialist hardware that arcade
+    machines contain. In this way the original game code can run on your
+    PC. So to play a game you need that original game code as well.
+   The documentation discusses this matter in some detail.
 
 
 Q: I've got more questions!
 
-A: Read the documentation.
-
+A: Read the documentation. :)
 
 

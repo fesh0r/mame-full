@@ -8,3 +8,12 @@ void osd_parallelize(void (*task)(void *param, int task_num, int task_count),
 {
 	task(param, 0, 1);
 }
+
+int win_parallel_init(void)
+{
+	return 1;
+}
+
+void win_parallel_exit(void)
+{
+}

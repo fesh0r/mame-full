@@ -5,7 +5,7 @@
 #define __MAIN_C_
 #include "xmame.h"
 
-#ifdef __QNXNTO__
+#if defined HAVE_MPROTECT || defined __QNXNTO__
 #include <sys/mman.h>
 #endif
 
@@ -36,6 +36,19 @@ void osd_exit(void)
 	osd_input_close();
 }
 
+void *osd_alloc_executable(size_t size)
+{
+	void *addr = malloc(size);
+#ifdef HAVE_MPROTECT
+	mprotect(addr, size, PROT_READ | PROT_WRITE | PROT_EXEC);
+#endif
+	return addr;
+}
+
+void osd_free_executable(void *ptr)
+{
+	free(ptr);
+}
 
 int main(int argc, char **argv)
 {
