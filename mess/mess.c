@@ -600,6 +600,7 @@ int init_devices(const void *game)
 					if( result != ID_OK)
 					{
 						mess_printf(" Driver Reports Invalid Image\n");
+						return 1;
 					}
 					else
 					{
