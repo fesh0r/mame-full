@@ -486,7 +486,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    f->file = fopen(name,write ? "w" : "r");
 		    break;
 		case OSD_FILETYPE_STATE:
-		    snprintf(name, MAXPATHL, "%s/.%s/sta/%s.sta", home_dir, NAME, gamename);
+		    snprintf(name, MAXPATHL, "%s/.%s/sta/%s-%s.sta", home_dir, NAME, gamename, filename);
 		    f->file = fopen(name,write ? "w" : "r");
 		    break;
 		case OSD_FILETYPE_NVRAM:
