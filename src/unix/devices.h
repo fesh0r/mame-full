@@ -125,8 +125,6 @@ EXTERN struct mousedata_struct mouse_data[MOUSE];
 EXTERN struct rapidfire_struct rapidfire_data[4];
 EXTERN void (*joy_poll_func) (void);
 EXTERN int joytype;
-EXTERN int hotrod;
-EXTERN int hotrodse;
 EXTERN int is_usb_ps_gamepad;
 EXTERN int rapidfire_enable;
 

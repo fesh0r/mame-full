@@ -58,8 +58,6 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 }
 #endif
 
-static struct rc_struct *rc;
-
 static int config_handle_arg(char *arg);
 #ifdef MAME_DEBUG
 static int config_handle_debug_size(struct rc_option *option, const char *arg,

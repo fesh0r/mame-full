@@ -499,10 +499,17 @@ MSU II and MSU IIa are SCSI units to be connected to the 990/SCSI controller
 board.
 
 
-Macintosh MFS images (mfs)
------------------------------
+Macintosh floppy disk images (mac)
+----------------------------------
 
-This module can catalog macintosh floppy disk images in diskcopy 4.2 format and
-in raw format (which is mostly equivalent to diskcopy 6 format).  The module is
-preliminary, but it seems to work fine.
+This module supports MFS (Macintosh File System) and HFS (Hierarchical File
+System) floppy disk images, either in diskcopy 4.2 or raw image format (the raw
+image format is partially compatible with diskcopy 6 format).
 
+This module can catalog images and extract individual files.  It does not
+support folders in MFS format, because MFS folders are not documented by Apple.
+
+Extracted files are in MacBinary III format (which is fully compatible with
+MacBinary I and II).  The MacBinary III format joins both macintosh file forks,
+the comment field, and most file info in one single file: it is supported by
+several Macintosh utilities.

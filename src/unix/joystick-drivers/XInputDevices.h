@@ -22,7 +22,11 @@ typedef struct {
 /* prototypes */
 void XInputDevices_init(void);
 int XInputProcessEvent(XEvent *);
-
+/* <jake> */
+#ifdef USE_XINPUT_DEVICES
+void XInputPollDevices(int, int *, int *);
+#endif
+/* </jake> */
 
 extern struct rc_option XInputDevices_opts[];
 

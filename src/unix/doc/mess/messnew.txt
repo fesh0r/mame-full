@@ -1,70 +1,36 @@
-0.72
+0.74
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 (none)
 
+
 System Driver Changes:
 ----------------------
-- [COCO3] Fixed a bug whereby $FE00-$FEFF would be mapped to the wrong memory
-  when bit 3 of $FF90 was set when more than 512k was available.  This caused
-  some NitrOS-9 programs to crash when allocating too much memory (bug #352).
-  [Nate Woods]
+- [A7800] Implemented Kangaroo and transparency modes. [Eric Ball]
 
-- [COCO3] Added '_' to the supported keys for the natural keyboard.  '_' is
-  specific to [Nitr]OS-9. [Nate Woods]
+- [A7800] Removed use of plot_pixel(), resulting in performance gains. [Nate
+  Woods]
 
-- [JAGUAR] Some enhancements to the blitter; most games are still not
-  playable however. [Nate Woods]
+- [APPLE2] Writing to disk images and ProDOS order (*.po) disk images are now
+  supported.  [Nate Woods]
 
-- [NES] Updated NES so that it uses the ppu2c03b support within MAME (which
-  was actually originally based on the MESS NES driver code). [Brad Oliver,
-  Nate Woods]
-  
-- [PC] Made fonts, monitor types and CGA chipsets configurable. [John Elliot] 
-
-- [PC] Basic state save support. [Nate Woods]
-
-- [SNES] Name select is only for sprites using tiles over 255. Fixed sprite
-  wrap at the bottom of the screen. Fixed clearing of HDMA channels. Fixed
-  background colours in mode 0. [Jimmy Li, Anthony Kruize]
-
-- [TI99] Several behind-the-scenes changes to support TI-99/8 emulation
-  (which is not 100% working and disabled in MESS builds but implemented
-  in source code).  Hopefully, there will be no change in functionality in
-  the various TI-99/4(a) drivers. [Raphael Nabet]
-  
-- [VECTREX] Fixed a bug that prevented the default mine.art file from being
-  loaded if no other artwork was found. [Nate Woods]
 
 User Interface Changes:
 -----------------------
-- Added separate configuration menu, to be used for configuration items that
-  were formerly represented with DIP switches.  [Nate Woods]
+- [Windows] It is now possible to make customized keyboard dialogs for
+  different drivers, in the same way that it is possible to make per-driver
+  customized joystick dialogs.  [Nate Woods]
   
-- [Windows] Revamped options menu, and added a keyboard customization menu.
-  Also added the ability to create artwork for controller configuration
-  screens (used NES as a testbed).  [Nate Woods]
 
 Imgtool Changes:
 ----------------
-- [MAC] Added preliminary support for MFS images. [Raphael Nabet]
-- [TI99] Added support for HD images. [Raphael Nabet]
+(none)
+
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.72.  This incorporates all features of the
+- The core is based on MAME 0.74.  This incorporates all features of the
   update to this core.  [MAME team]
 
-- Fixed a bug that would cause a hang when parsing certain invalid filenames
-  (for example, D:\FOO\D:\FOO\BAR.ZIP). [Nate Woods]
-
-- Revamped some inputs, added IPT_MOUSE, IPT_START, and IPT_SELECT.  The
-  latter two can be used with IPF_PLAYER masks.  Also removed legacy
-  IPT_SELECT1-4, and IPT_START1-4 should no longer be used by MESS. 
-  [Nate Woods]
-
-- Tripled the delay in which wd179x errors are reported.  This manifested
-  itself in the CoCo driver by an emulated crash on some versions of NitrOS-9
-  when run on a write protected image. [Nate Woods]
 

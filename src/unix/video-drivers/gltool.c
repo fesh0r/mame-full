@@ -237,10 +237,26 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
 #ifdef _X11_
   if(libHandleGL!=NULL) return 1;
 
+#ifdef SUN_FORTE_DLOPEN_LIBCRUN
+  {
+     void *libcrun;
+
+     libcrun = dlopen (SUN_FORTE_DLOPEN_LIBCRUN, RTLD_LAZY | RTLD_GLOBAL);
+     if (libcrun == NULL)
+     {
+        printf ("GLERROR: cannot access library %s\n", SUN_FORTE_DLOPEN_LIBCRUN);
+        printf ("GLERROR: dlerror() returns [%s]\n", dlerror());
+        fflush (NULL);
+        return 0;
+     }
+  }
+#endif
+
   libHandleGL = dlopen (libGLName, RTLD_LAZY | RTLD_GLOBAL);
   if (libHandleGL == NULL)
   {
       printf ("GLERROR: cannot access OpenGL library %s\n", libGLName);
+      printf ("GLERROR: dlerror() returns [%s]\n", dlerror());
       fflush (NULL);
       return 0;
   }
@@ -249,14 +265,16 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   if (libHandleGLU == NULL)
   {
       printf ("GLERROR: cannot access GLU library %s\n", libGLUName);
+      printf ("GLERROR: dlerror() returns [%s]\n", dlerror());
       fflush (NULL);
       return 0;
   }
 
-  libHandleGLX = dlopen ("libglx.so", RTLD_LAZY | RTLD_GLOBAL);
+  libHandleGLX = dlopen (GLXLIB_NAME, RTLD_LAZY | RTLD_GLOBAL);
   if (libHandleGLX == NULL)
   {
-      printf ("GLINFO: cannot access GLX library libglx.so directly ...\n");
+      printf ("GLINFO: cannot access GLX library %s directly ...\n", GLXLIB_NAME);
+      printf ("GLERROR: dlerror() returns [%s]\n", dlerror());
       fflush (NULL);
   }
 
@@ -402,7 +420,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	  if (disp__glXGetProcAddress != NULL && verbose)
 	  {
-	    printf ("GLINFO: found glXGetProcAddressARB in libglx.so\n");
+	    printf ("GLINFO: found glXGetProcAddressARB in %s\n", GLXLIB_NAME);
 	    fflush (NULL);
 	  }
 
@@ -413,7 +431,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	    if (disp__glXGetProcAddress != NULL && verbose)
 	    {
-	      printf ("GLINFO: found glXGetProcAddressEXT in libglx.so\n");
+	      printf ("GLINFO: found glXGetProcAddressEXT in %s\n", GLXLIB_NAME);
 	      fflush (NULL);
 	    }
 	  }
@@ -425,13 +443,13 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	    if (disp__glXGetProcAddress != NULL && verbose)
 	    {
-	      printf ("GLINFO: found glXGetProcAddress in libglx.so\n");
+	      printf ("GLINFO: found glXGetProcAddress in %s\n", GLXLIB_NAME);
 	      fflush (NULL);
 	    }
 	  }
 	  if (disp__glXGetProcAddress == NULL)
 	  {
-	    printf ("GLINFO: cannot find glXGetProcAddress* in GLX library libglx.so\n");
+	    printf ("GLINFO: cannot find glXGetProcAddress* in GLX library %s\n", GLXLIB_NAME);
 	    fflush (NULL);
 	  }
 	}

@@ -66,6 +66,9 @@
  * Global variables.
  */
 
+/* Used for the rc handling. */
+EXTERN struct rc_struct *rc;
+
 /* Used for artwork games. */
 EXTERN struct rectangle updatebounds;
 

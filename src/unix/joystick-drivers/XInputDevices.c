@@ -170,6 +170,24 @@ XInputProcessEvent(XEvent *ev)
   return 0;
 }
 
+/* <jake> */
+/* call from osd_trak_read for polling trackballs */
+void
+XInputPollDevices(int player, int *deltax, int *deltay)
+{
+	int i=player;
+	if (player < MOUSE && XIdevices[player].deviceName) {
+		*deltax=mouse_data[player].deltas[0];
+		*deltay=mouse_data[player].deltas[1];
+		mouse_data[player].deltas[0] = 0;
+		mouse_data[player].deltas[1] = 0;
+	} else {
+		*deltax=0;
+		*deltay=0;
+	}
+}
+/* </jake> */
+
 /* this piece of code was taken from package xinput-1.12 */
 static XDeviceInfo*
 find_device_info(Display	*display,

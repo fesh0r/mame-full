@@ -187,11 +187,12 @@ Lawrence <CODE>
 <H2><A NAME="ss3.6">3.6</A> <A HREF="xmame-doc.html#toc3.6">My system is supported but xmame/xmess gives me errors and fails.</A>
  Why?</H2>
 
-<P>Xmame/xmess should run on 8bpp Pseudo Color displays and on 16,
-24 and 32bpp True Color displays. If your X-Server does not support
-any  of these display types, xmame/xmess will not run.</P>
+<P>Xmame/xmess should run on 16, 24 and 32bpp true color displays.
+If your X server does not support any  of these display types, xmame/xmess
+will not run. Support for 8bpp pseudo color displays may return in
+future versions.</P>
 
-<P>You can verify your X-Server support by starting your X-Server
+<P>You can verify your X server support by starting your X server
 and running the xdpyinfo program. See the xdpyinfo manual page 
 for more information.</P>
 
@@ -839,7 +840,7 @@ to dga mode; that should be a lot faster, and doesn't need/use xsync.
 <P>The benefit of DGA is that it is Direct Graphics Access and therefore
 writes directly to the framebuffer (think DirectX versus GDI under
 MS Windows). So it should be a tad faster, unless you've got a really
-really well accelerated X-server, which could be just as fast. Try
+really well accelerated X server, which could be just as fast. Try
 pressing F11 to see the actual framerate, although it might be hardly
 noticable (visually, at least), it should give you some speed increase.</P>
 

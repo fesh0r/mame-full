@@ -38,11 +38,16 @@
 #endif
 #endif
 
+#ifndef __ARCH_solaris
 /* grrr work around some stupid header conflicts */
 #if !defined __XF86_DGA_C && !defined __XOPENGL_C_ && !defined LONG64
 typedef signed   char      INT8;
 typedef signed   short     INT16;
 typedef signed   int       INT32;
+#endif
+
+#else
+#include "X11/Xmd.h"
 #endif
 
 #ifndef LONG64

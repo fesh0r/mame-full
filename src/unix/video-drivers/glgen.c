@@ -340,7 +340,11 @@ void gl_bootstrap_resources()
   inlist=0;
 
   gl_is_initialized = 0;
+#ifdef NOGLEXT78
+  useGLEXT78 = GL_FALSE;
+#else
   useGLEXT78 = GL_TRUE;
+#endif
   isGL12=GL_TRUE;
   useColorIndex = GL_FALSE; 
   use_mod_ctable = 1;
@@ -970,6 +974,7 @@ void InitVScreen (int depth)
   {
 	  display_palette_info.depth=depth;
 
+#ifndef NOGLEXT78
 	  if(useGLEXT78)
 	  {
 	  	if(depth==8)
@@ -977,6 +982,7 @@ void InitVScreen (int depth)
 		else if(depth==16)
 		 gl_internal_format=GL_COLOR_INDEX16_EXT;
 	  } else
+#endif
 		 gl_internal_format=(alphablending)?GL_RGBA:GL_RGB;
 
 	  gl_bitmap_format = GL_COLOR_INDEX;
@@ -1298,9 +1304,12 @@ void InitTextures (struct mame_bitmap *bitmap)
     disp__glGetTexLevelParameteriv
       (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
 
+#ifndef NOTEXIDXSIZE
     disp__glGetTexLevelParameteriv
       (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INDEX_SIZE_EXT, &tidxsize);
-
+#else
+    tidxsize = -1;
+#endif
     CHECK_GL_ERROR ();
 
     if (format == gl_internal_format &&

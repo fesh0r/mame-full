@@ -90,6 +90,9 @@ CC	= gcc
 # CC	= icc
 # CC	= c89
 
+# Uncomment for Sun Forte 7 and above C/C++ compiler, see below for
+# additional optimizations.
+# CC = sun-forte
 
 ###########################################################################
 # Reset CFLAGS
@@ -258,9 +261,71 @@ ifeq ($(CC),icc)
   # Optimizations for the Intel compiler.
   CFLAGS    = -O3 -rcd -Xa -ipo -ipo_obj
 
-endif
-endif
+else
+ifeq ($(CC),sun-forte)
+  #
+  # sun-forte given above is just an artifice to get us into this section
+  CC = cc
 
+  # uncomment to set compiler defaults oriented for maximum performance
+  XOPT += -fast
+
+  # Choose one optimization level;
+  #XOPT += -xO0
+  #XOPT += -xO1
+  #XOPT += -xO2
+  #XOPT += -xO3
+  # -xO4 and above automatically inline
+  #XOPT += -xO4
+  XOPT += -xO5
+
+  # uncomment for code generation targeted to the local machine; this
+  # supplies -xarch, -xcpu, -xtarget.  It also seems to cause an annoying
+  # message related to code generated at -native being compatible with 
+  # older hardware, which apparently can't be disabled.  As an alternative,
+  # the particular -xtarget for your system could be specified; 
+  # -xtarget=ultra2/2300
+  XTARGET += -native 
+  #XTARGET += -xtarget=ultra2/2300
+
+  # uncomment to inline library math functions
+  EXTRA_OPTS += -xlibmil
+
+  ######################################################
+  # Additional options for parallelization optimizations
+  ######################################################
+  # uncomment for automatic parallelization (if your machine has > 1 cpu)
+  # Before starting xmame, be sure to set the env variable PARALLEL to the #
+  # of processors to use; PARALLEL=2 ./xmame.x11 
+  # xmame doesn't appear to like these at present
+  # XPARALLEL += -xparallel
+  # uncomment to have cc collapse various math expression sequences, possibly 
+  # affecting roundoffs.  Requires -xparallel
+  # EXTRA_OPTS += -xreduction
+
+  # Sparc only, uncomment to do loop restructuring optimizations
+  # and speculative prefetch for v8plusa and above
+  EXTRA_OPTS += -xdepend  -xsafe=mem
+
+  #################################################
+  # Additional options for glx builds
+  #################################################
+  #
+  # uncomment and modify as required if Mesa wants /lib/libCrun.so
+  # (libGLU dlopen() complains of missing name mangled symbols)
+  # GLCFLAGS += -DSUN_FORTE_DLOPEN_LIBCRUN='\"libCrun.so.1\"'
+
+  CFLAGS= $(XOPT) $(XTARGET) $(XPARALLEL) $(EXTRA_OPTS)
+  LDFLAGS=$(XOPT) $(XTARGET) $(XPARALLEL) $(EXTRA_OPTS)
+
+  # uncomment for silence...
+  CFLAGS += -erroff
+  # Tell xmame that we really are in fact elf.  If not supplied, SHARED_PREFIX 
+  # is set causing dlopen()'s to fail.
+  CFLAGS += -D__ELF__ 
+endif
+endif
+endif
 
 ###########################################################################
 # Inlining
@@ -271,7 +336,7 @@ endif
 # compilers.
 IL	= '-DINLINE=static __inline__'
 
-# Use this with strict ANSI or BeOS.
+# Use this with strict ANSI or BeOS or Sun Forte
 # IL	= -DINLINE=static
 
 # Intel C++ Compiler doesn't know about __inline__.
@@ -442,6 +507,9 @@ ARCH  = linux
 
 # Solaris/SunOS
 # ARCH  = solaris
+# For Solaris, add paths where other stuff is; libjpeg and so on...
+# CFLAGS += -I/usr/local/include -I/usr/sfw/include 
+# LDFLAGS += -L/usr/local/lib -L/usr/sfw/lib
 
 # QNX Neutrino (QNX4/QNX6)
 # ARCH = nto
@@ -572,6 +640,8 @@ X11_XV = 1
 
 # The XIL library (Solaris 2.5.1 and higher)
 # X11_XIL = 1
+# Turn off the annoying obsolesence message if XIL is enabled
+# CFLAGS += -DSUNXIL_WARNING_DISABLE
 
 # Choose the location of your X headers and libraries.
 
@@ -611,7 +681,7 @@ SDL_CONFIG	= sdl-config
 ##############################################################################
 # OpenGL info -- configure if you are using the xgl display option
 ##############################################################################
-GLLIBS= -ldl
+GLLIBS += -ldl
 
 # General OpenGL (GL/GLU) dynamic loading support for:
 #
@@ -627,8 +697,18 @@ GLLIBS= -ldl
 # the GLCFLAGS below.
 #
 # To get more verbose debugging messages, just add -DGLDEBUG !
-GLCFLAGS= -D_X11_
+GLCFLAGS += -D_X11_
 
+# Uncomment to add more libraries that Mesa may require.
+# GLLIBS += -lXmu -lXi
+
+# Building against Sun's OpenGL will probably need these.
+# GLCFLAGS += -DNOGLEXT78 -DNOTEXIDXSIZE
+
+# Uncomment depending on which is supplying GLX functions.  nVidia uses
+# libglx, Mesa/SGI use libglut 
+GLCFLAGS+=-DGLXLIB_NAME='\"libglut.so\"'
+# GLCFLAGS+=-DGLXLIB_NAME='\"libglx.so\"'
 
 ###########################################################################
 # Debug support and object file format

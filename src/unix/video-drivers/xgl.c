@@ -99,9 +99,11 @@ struct rc_option display_opts[] = {
    { "glforceblitmode", "glblit",		rc_bool,	&useColorBlitter,
      "0",		0,			0,		NULL,
      "Force blitter for true color modes 15/32bpp (default: true)" },
+#ifndef NOGLEXT78
    { "glext78",	        "glext",		rc_bool,	&useGLEXT78,
      "1",		0,			0,		NULL,
      "Force the usage of the gl extension #78, if available (paletted texture, default: true)" },
+#endif
    { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
      "1",		0,			0,		NULL,
      "Enable/disable bilinear filtering (default: true)" },

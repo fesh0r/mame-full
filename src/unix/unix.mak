@@ -195,7 +195,7 @@ endif
 
 ifdef ZLIB
 MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.1.4 -I../../contrib/cutzlib-1.1.4
-LDFLAGS   = -Lsrc/unix/contrib/cutzlib-1.1.4
+LDFLAGS   += -Lsrc/unix/contrib/cutzlib-1.1.4
 endif
 
 ifdef DEBUG

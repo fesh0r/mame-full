@@ -202,6 +202,70 @@ int rc_save(struct rc_struct *rc, const char *name, int append)
    return rc_write(rc, f, name);
 }
 
+int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
+   int priority, int continue_on_errors)
+{
+   char buf[BUF_SIZE];
+   int line = 0;
+
+   while(mame_fgets(buf, BUF_SIZE, f))
+   {
+      struct rc_option *option;
+      char *name, *tmp, *arg = NULL;
+
+      line ++;
+
+      /* get option name */
+      if(!(name = strtok(buf, " \t\r\n")))
+         continue;
+      if(name[0] == '#')
+         continue;
+
+      /* get complete rest of line */
+      arg = strtok(NULL, "\r\n");
+
+      if (arg)
+      {
+      /* ignore white space */
+      for (; (*arg == '\t' || *arg == ' '); arg++) {}
+
+      /* deal with quotations */
+      if (arg[0] == '"')
+         arg = strtok (arg, "\"");
+      else if (arg[0] == '\'')
+         arg = strtok (arg, "'");
+      else
+         arg = strtok (arg, " \t\r\n");
+      }
+
+      if(!(option = rc_get_option2(rc->option, name)))
+      {
+         fprintf(stderr, "error: unknown option %s, on line %d of file: %s\n",
+            name, line, description);
+      }
+      else if (rc_requires_arg[option->type] && !arg)
+      {
+         fprintf(stderr,
+            "error: %s requires an argument, on line %d of file: %s\n",
+            name, line, description);
+      }
+      else if ( (tmp = strtok(NULL, " \t\r\n")) && (tmp[0] != '#') )
+      {
+         fprintf(stderr,
+            "error: trailing garbage: \"%s\" on line: %d of file: %s\n",
+            tmp, line, description);
+      }
+      else if (!rc_set_option3(option, arg, priority))
+         continue;
+
+      if (continue_on_errors)
+         fprintf(stderr, "   ignoring line\n");
+      else
+         return -1;
+   }
+   return 0;
+}
+
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors)
 {
@@ -309,6 +373,65 @@ static int rc_real_write(struct rc_option *option, FILE *f,
    if (description)
       fprintf(f, "\n");   
    return 0;
+}
+
+static int real_rc_write(struct rc_option *option, mame_file *f,
+		const char *description)
+{
+	int i;
+
+	if (description)
+		mame_fprintf(f, "### %s ###\n", description);
+
+	for(i=0; option[i].type; i++)
+	{
+		switch (option[i].type)
+		{
+			case rc_seperator:
+				mame_fprintf(f, "\n### %s ###\n", option[i].name);
+				break;
+
+			case rc_link:
+				if (real_rc_write(option[i].dest, f, NULL))
+					return -1;
+				break;
+
+			case rc_string:
+				if(!*(char **)option[i].dest)
+				{
+					mame_fprintf(f, "# %-19s   <NULL> (not set)\n", option[i].name);
+					break;
+				}
+				/* fall through */
+
+			case rc_bool:
+			case rc_int:
+			case rc_float:
+				mame_fprintf(f, "%-21s   ", option[i].name);
+				switch(option[i].type)
+				{
+					case rc_bool:
+					case rc_int:
+						mame_fprintf(f, "%d\n", *(int *)option[i].dest);
+						break;
+					case rc_float:
+						mame_fprintf(f, "%f\n", *(float *)option[i].dest);
+						break;
+					case rc_string:
+						mame_fprintf(f, "%s\n", *(char **)option[i].dest);
+						break;
+				}
+				break;
+		}
+	}
+	if (description)
+		mame_fprintf(f, "\n");
+	return 0;
+}
+
+int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description)
+{
+	return real_rc_write(rc->option, f, description);
 }
 
 int rc_write(struct rc_struct *rc, FILE *f, const char *description)

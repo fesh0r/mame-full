@@ -66,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.32, 14 August 2003
+v2.1.33, 15 September 2003
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -1434,13 +1434,13 @@ My system is supported but xmame/xmess gives me errors and fails.
  Why?
 \layout Standard
 
-Xmame/xmess should run on 8bpp Pseudo Color displays and on 16, 24 and 32bpp
- True Color displays.
- If your X-Server does not support any  of these display types, xmame/xmess
+Xmame/xmess should run on 16, 24 and 32bpp true color displays.
+ If your X server does not support any  of these display types, xmame/xmess
  will not run.
+ Support for 8bpp pseudo color displays may return in future versions.
 \layout Standard
 
-You can verify your X-Server support by starting your X-Server  and running
+You can verify your X server support by starting your X server  and running
  the xdpyinfo program.
  See the xdpyinfo manual page  for more information.
 \layout Subsection
@@ -2313,7 +2313,7 @@ To get back to a window without exiting, press left-alt + insert.
 The benefit of DGA is that it is Direct Graphics Access and therefore writes
  directly to the framebuffer (think DirectX versus GDI under MS Windows).
  So it should be a tad faster, unless you've got a really really well accelerate
-d X-server, which could be just as fast.
+d X server, which could be just as fast.
  Try pressing F11 to see the actual framerate, although it might be hardly
  noticable (visually, at least), it should give you some speed increase.
 \layout Standard
@@ -4432,7 +4432,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame/xmess-0.72.1 sources]{download/xmame-0.72.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.74.1 sources]{download/xmame-0.74.1.tar.bz2}
 
 \end_inset 
 
@@ -4648,7 +4648,15 @@ Xmame/xmess download mirrors
 
 \end_inset 
 
-(primarily for converted arcade cabinets)
+, a front-end primarily for converted arcade cabinets
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[MAMEd]{www.xs4all.nl/~phulshof/mame.html}
+
+\end_inset 
+
+, a new front-end for arcade cabinets
 \layout Itemize
 
 

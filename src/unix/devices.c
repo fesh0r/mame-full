@@ -32,73 +32,71 @@ static struct JoystickInfo joy_list[JOY_LIST_LEN + MOUSE_LIST_LEN + 1];
 static char joy_list_names[JOY_LIST_LEN + MOUSE_LIST_LEN][JOY_NAME_LEN];
 static int analogstick = 0;
 static int ugcicoin;
+static const char *ctrlrtype;
+static const char *ctrlrname;
+static const char *trackball_ini;
+static const char *paddle_ini;
+static const char *dial_ini;
+static const char *ad_stick_ini;
+static const char *pedal_ini;
+static const char *lightgun_ini;
+
+/* this is used for the ipdef_custom_rc_func */
+static struct ipd *ipddef_ptr = NULL;
+
+static int num_osd_ik = 0;
+static int size_osd_ik = 0;
+
+void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, 
+		const char *filename);
 
 /* input relelated options */
-struct rc_option input_opts[] = {
-   /* name, shortname, type, dest, deflt, min, max, func, help */
-   { "Input Related",	NULL,			rc_seperator,	NULL,
-      NULL,		0,			0,		NULL,
-      NULL },
-   { "joytype",		"jt",			rc_int,		&joytype,
-      "0",      	0,			7,		NULL,
-      "Select type of joystick support to use:\n"
-	      "0 No joystick\n"
-	      "1 i386 style joystick driver (if compiled in)\n"
-	      "2 Fm Town Pad support (if compiled in)\n"
-	      "3 X11 input extension joystick (if compiled in)\n"
-	      "4 new i386 linux 1.x.x joystick driver(if compiled in)\n"
-	      "5 NetBSD USB joystick driver (if compiled in)\n"
-	      "6 PS2-Linux native pad (if compiled in)\n"
-	      "7 SDL joystick driver" },
-   { "analogstick",	"as",			rc_bool,	&analogstick,
-     "0",		0,			0,		NULL,
-
-     "Use Joystick as analog for analog controls" },
-   { NULL,		NULL,			rc_link,	joy_i386_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	joy_pad_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	joy_x11_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	joy_usb_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
+struct rc_option input_opts[] =
+{
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "Input Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "joytype", "jt", rc_int, &joytype, "0", 0, 7, NULL, "Select type of joystick support to use:\n"
+		"0 No joystick\n"
+		"1 i386 style joystick driver (if compiled in)\n"
+		"2 Fm Town Pad support (if compiled in)\n"
+		"3 X11 input extension joystick (if compiled in)\n"
+		"4 new i386 linux 1.x.x joystick driver(if compiled in)\n"
+		"5 NetBSD USB joystick driver (if compiled in)\n"
+		"6 PS2-Linux native pad (if compiled in)\n"
+		"7 SDL joystick driver" },
+	{ "analogstick", "as", rc_bool, &analogstick, "0", 0, 0, NULL, "Use Joystick as analog for analog controls" },
+	{ NULL, NULL, rc_link, joy_i386_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, joy_pad_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, joy_x11_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, joy_usb_opts, NULL, 0, 0, NULL, NULL },
 #ifdef PS2_JOYSTICK
-   { NULL,		NULL,			rc_link,	joy_ps2_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
+	{ NULL, NULL, rc_link, joy_ps2_opts, NULL, 0, 0, NULL, NULL },
 #endif
 #ifdef USE_XINPUT_DEVICES
-   { NULL,		NULL,			rc_link,        XInputDevices_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
+	{ NULL, NULL, rc_link, XInputDevices_opts, NULL, 0, 0, NULL, NULL },
 #endif
-   { "mouse",		"m",			rc_bool,	&use_mouse,
-     "1",		0,			0,		NULL,
-     "Enable/disable mouse (if supported)" },
-   { "ugcicoin",	NULL,			rc_bool,	&ugcicoin,
-     "0",		0,			0,		NULL,
-     "Enable/disable UGCI(tm) Coin/Play support" },
-   { "hotrod",		"hr",			rc_bool,	&hotrod,
-      "0",      	0,			0,		NULL,
-      "Enable HotRod joystick support" },
-   { "hotrodse",	"hrse",			rc_bool,	&hotrodse,
-      "0",      	0,			0,		NULL,
-      "Select HotRod SE joystick support" },
-   { "usbpspad",	"pspad",		rc_bool,	&is_usb_ps_gamepad,
-     "0",		0,			0,		NULL,
-     "The Joystick(s) are USB PS Game Pads" },
-   { "rapidfire",	"rapidf",		rc_bool,	&rapidfire_enable,
-     "0",		0,			0,		NULL,
-     "Enable rapid-fire support for joysticks" },
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
+	{ "mouse", "m", rc_bool, &use_mouse, "1", 0, 0, NULL, "Enable/disable mouse (if supported)" },
+	{ "ugcicoin", NULL, rc_bool, &ugcicoin, "0", 0, 0, NULL, "Enable/disable UGCI(tm) Coin/Play support" },
+	{ "usbpspad", "pspad", rc_bool, &is_usb_ps_gamepad, "0", 0, 0, NULL, "The Joystick(s) are USB PS Game Pads" },
+	{ "rapidfire", "rapidf", rc_bool, &rapidfire_enable, "0", 0, 0, NULL, "Enable rapid-fire support for joysticks" },
+	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "Preconfigure for specified controller" },
+	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
+struct rc_option *ctrlr_input_opts = NULL;
+
+struct rc_option ctrlr_input_opts2[] =
+{
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
+	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
+	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
+	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
+	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
+	{ "lightgun_ini", NULL, rc_string, &lightgun_ini, 0, 0, 0, NULL, "ctrlr opts if game has LIGHTGUN input" },
+	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
 
 static int joy_list_equiv[][2] =
 {
@@ -177,7 +175,8 @@ static void ugci_callback(int id, enum ugci_event_type type, int value)
 	if (id >= MAX_PLAYERS)
 		return;
 
-	switch (type) {
+	switch (type)
+	{
 		case UGCI_EVENT_PLAY:
 			event.press = value;
 			event.scancode = PLAY_KEYCODE_BASE + id;
@@ -481,8 +480,20 @@ const struct JoystickInfo *osd_get_joy_list(void)
 	return joy_list;
 }
 
+/* <jake> */
 void osd_trak_read(int player,int *deltax,int *deltay)
 {
+#ifdef USE_XINPUT_DEVICES
+	if (player < XINPUT_JOYSTICK_1)
+	{
+		XInputPollDevices(player,deltax,deltay);
+	}
+	else
+	{
+		*deltax = 0;
+		*deltay = 0;
+	}
+#else
 	if (player < MOUSE)
 	{
 		*deltax = mouse_data[player].deltas[0];
@@ -493,7 +504,9 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 		*deltax = 0;
 		*deltay = 0;
 	}
+#endif
 }
+/* </jake> */
 
 int get_rapidfire_speed(int joy_num, int button_num)
 {
@@ -561,7 +574,7 @@ void unset_rapidfire_ctrl_button(int joy_num)
 
 int setrapidfire(struct mame_bitmap *bitmap, int selected)
 {
-        const char *menu_item[42] = {
+	const char *menu_item[42] = {
 		"Joy1Button 1",
 		"Joy1Button 2",
 		"Joy1Button 3",
@@ -604,164 +617,164 @@ int setrapidfire(struct mame_bitmap *bitmap, int selected)
 		"Joy4Button10",
 		0,
 		0              /* terminate array */
-        };
-        const char *menu_subitem[42];
-        char sub[42][16];
-        int sel;
-        int arrowize;
-        int items = 41;
-        int joy;
-        int button;
-        int d0,flag;
+	};
+	const char *menu_subitem[42];
+	char sub[42][16];
+	int sel;
+	int arrowize;
+	int items = 41;
+	int joy;
+	int button;
+	int d0,flag;
 
-        menu_subitem[40] = 0;
-        menu_item[40] = ui_getstring (UI_returntomain);
+	menu_subitem[40] = 0;
+	menu_item[40] = ui_getstring (UI_returntomain);
 
-        sel = selected - 1;
+	sel = selected - 1;
 
-        for (joy = 0; joy < 4; joy += 1)
+	for (joy = 0; joy < 4; joy += 1)
 	{
-                for (button = 0; button < 10; button += 1)
+		for (button = 0; button < 10; button += 1)
 		{
-                        if (is_rapidfire_ctrl_button(joy, button))
-                        {
-                                sprintf(&sub[ (joy*10) + button ][0], "    SWITCH");
-                        }
-                        else
-                        {
-                                int speed = get_rapidfire_speed(joy, button);
-                                if (speed & 0x0100)
-                                        sprintf(&sub[ (joy*10) + button ][0], "RAPID %3d", speed & 0xFF);
-                                else if(speed & 0x0200)
-                                        sprintf(&sub[ (joy*10) + button ][0], "CHARGE %3d", speed & 0xFF);
-                                else
-                                        sprintf(&sub[ (joy*10) + button ][0], "     OFF");
-                        }
-                        menu_subitem[ (joy*10) + button ] = &sub[ (joy*10) + button ][0];
-                }
-        }
-        arrowize = 0;
-        ui_displaymenu(bitmap, menu_item, menu_subitem, 0, sel, arrowize);
+			if (is_rapidfire_ctrl_button(joy, button))
+			{
+				sprintf(&sub[ (joy*10) + button ][0], "    SWITCH");
+			}
+			else
+			{
+				int speed = get_rapidfire_speed(joy, button);
+				if (speed & 0x0100)
+					sprintf(&sub[ (joy*10) + button ][0], "RAPID %3d", speed & 0xFF);
+				else if(speed & 0x0200)
+					sprintf(&sub[ (joy*10) + button ][0], "CHARGE %3d", speed & 0xFF);
+				else
+					sprintf(&sub[ (joy*10) + button ][0], "     OFF");
+			}
+			menu_subitem[ (joy*10) + button ] = &sub[ (joy*10) + button ][0];
+		}
+	}
+	arrowize = 0;
+	ui_displaymenu(bitmap, menu_item, menu_subitem, 0, sel, arrowize);
 
-        if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-                sel = (sel + 1) % items;
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
+		sel = (sel + 1) % items;
 
-        if (input_ui_pressed_repeat(IPT_UI_UP,8))
-                sel = (sel + items - 1) % items;
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
+		sel = (sel + items - 1) % items;
 
-        if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
-        {
-                if (sel < items - 1)
-                {
-                        joy    = sel / 10;
-                        button = sel % 10;
-                        d0 = get_rapidfire_speed(joy, button);
-                        flag = d0 & 0xff00;
-                        if((flag & 0x300)&&(!is_rapidfire_ctrl_button(joy, button)))
-                        {
-                                d0 &= 0xff;
-                                if              (d0 <= 32){
-                                        d0 = 128;
-                                }else if(d0 <= 64){
-                                        d0 = 32;
-                                }else if(d0 <= 96){
-                                        d0 = 64;
-                                }else if(d0 <= 128){
-                                        d0 = 96;
-                                }else{
-                                        d0 = 128;
-                                }
-                                d0 |= flag;
-                                set_rapidfire_speed(joy, button, d0);
-                                /* tell updatescreen() to clean after us (in case the window changes size) */
-                                schedule_full_refresh();
-                        }
-                }
-        }
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
+	{
+		if (sel < items - 1)
+		{
+			joy    = sel / 10;
+			button = sel % 10;
+			d0 = get_rapidfire_speed(joy, button);
+			flag = d0 & 0xff00;
+			if((flag & 0x300)&&(!is_rapidfire_ctrl_button(joy, button)))
+			{
+				d0 &= 0xff;
+				if              (d0 <= 32){
+					d0 = 128;
+				}else if(d0 <= 64){
+					d0 = 32;
+				}else if(d0 <= 96){
+					d0 = 64;
+				}else if(d0 <= 128){
+					d0 = 96;
+				}else{
+					d0 = 128;
+				}
+				d0 |= flag;
+				set_rapidfire_speed(joy, button, d0);
+				/* tell updatescreen() to clean after us (in case the window changes size) */
+				schedule_full_refresh();
+			}
+		}
+	}
 
-        if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
-        {
-                if (sel < items - 1)
-                {
-                        joy    = sel / 10;
-                        button = sel % 10;
-                        d0 = get_rapidfire_speed(joy, button);
-                        flag = d0 & 0xff00;
-                        if((flag & 0x300)&&(is_rapidfire_ctrl_button(joy, button)))
-                        {
-                                d0 &= 0xff;
-                                if              (d0 <= 32){
-                                        d0 = 64;
-                                }else if(d0 <= 64){
-                                        d0 = 96;
-                                }else if(d0 <= 96){
-                                        d0 = 128;
-                                }else if(d0 <= 128){
-                                        d0 = 32;
-                                }else{
-                                        d0 = 128;
-                                }
-                                d0 |= flag;
-                                set_rapidfire_speed(joy, button, d0);
-                                /* tell updatescreen() to clean after us (in case the window changes size) */
-                                schedule_full_refresh();
-                        }
-                }
-        }
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
+	{
+		if (sel < items - 1)
+		{
+			joy    = sel / 10;
+			button = sel % 10;
+			d0 = get_rapidfire_speed(joy, button);
+			flag = d0 & 0xff00;
+			if((flag & 0x300)&&(is_rapidfire_ctrl_button(joy, button)))
+			{
+				d0 &= 0xff;
+				if (d0 <= 32)
+					d0 = 64;
+				else if (d0 <= 64)
+					d0 = 96;
+				else if (d0 <= 96)
+					d0 = 128;
+				else if (d0 <= 128)
+					d0 = 32;
+				else
+					d0 = 128;
 
-        if (input_ui_pressed(IPT_UI_SELECT))
-        {
-                if (sel == items - 1) sel = -1;         /* cancel */
-                else if (sel < items - 1)
-                {
-                        joy    = sel / 10;
-                        button = sel % 10;
-                        d0 = get_rapidfire_speed(joy, button);
-                        flag = d0 & 0xff00;
-                        d0 &= 0xff;
-                        if (is_rapidfire_ctrl_button(joy, button))
-                        {
+				d0 |= flag;
+				set_rapidfire_speed(joy, button, d0);
+				/* tell updatescreen() to clean after us (in case the window changes size) */
+				schedule_full_refresh();
+			}
+		}
+	}
+
+	if (input_ui_pressed(IPT_UI_SELECT))
+	{
+		if (sel == items - 1) sel = -1;         /* cancel */
+		else if (sel < items - 1)
+		{
+			joy    = sel / 10;
+			button = sel % 10;
+			d0 = get_rapidfire_speed(joy, button);
+			flag = d0 & 0xff00;
+			d0 &= 0xff;
+			if (is_rapidfire_ctrl_button(joy, button))
+			{
 				/* off */
-                                flag = 0;
+				flag = 0;
 				unset_rapidfire_ctrl_button(joy);
-                        }
-                        else if(flag & 0x100)
-                        {
-                                flag = 0x200; /* rapid */
-                        }
-                        else if(flag & 0x200)
-                        {
+			}
+			else if(flag & 0x100)
+			{
+				flag = 0x200; /* rapid */
+			}
+			else if(flag & 0x200)
+			{
 				/* switch */
-                                if(no_rapidfire_ctrl_button(joy))
-                                {
-                                        set_rapidfire_ctrl_button(joy, button);
-                                }
-                                flag = 0;
-                        }
-                        else
-                        {
-                                flag = 0x100; /* charge */
-                        }
-                        d0 |= flag;
-                        set_rapidfire_speed(joy, button, d0);
-                        /* tell updatescreen() to clean after us (in case the window changes size) */
-                        schedule_full_refresh();
-                }
-        }
+				if(no_rapidfire_ctrl_button(joy))
+				{
+					set_rapidfire_ctrl_button(joy, button);
+				}
+				flag = 0;
+			}
+			else
+			{
+				flag = 0x100; /* charge */
+			}
+			d0 |= flag;
+			set_rapidfire_speed(joy, button, d0);
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			schedule_full_refresh();
+		}
+	}
 
-        if (input_ui_pressed(IPT_UI_CANCEL))
-                sel = -1;                                                       
-/* cancel */
+	if (input_ui_pressed(IPT_UI_CANCEL))
+		sel = -1;                                                       
+	/* cancel */
 
-        if (input_ui_pressed(IPT_UI_CONFIGURE))
-                sel = -2;
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
+		sel = -2;
 
-        if (sel == -1 || sel == -2)
-        {
-                schedule_full_refresh();
-        }
+	if (sel == -1 || sel == -2)
+	{
+		schedule_full_refresh();
+	}
 
-        return sel + 1;
+	return sel + 1;
 }
 
 void joystick_rapidfire(void)
@@ -957,7 +970,8 @@ void joy_evaluate_moves(void)
  * sdevaux 02/2003 : Updated from windows code.
  * sdevaux 04/2003 : fix y-axis not seen as analog (reported by Paul Rahme)
  */
-void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input[])
+void osd_analogjoy_read(int player, int analog_axis[],
+		InputCode analogjoy_input[])
 {
 	int i, j;
 	/* is player var enough to select joystick : what if joystick 2 is mapped to
@@ -972,8 +986,10 @@ void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input
 		analog_axis[i] = (axis->val - axis->center) * 257 / (axis->max - axis->min);
 		/* Does overflow can really happen, since axis->max and axis->min are updated
 		   when val is outside [min;max] (cf void joy_evaluate_moves(void) ) ? */
-		if (analog_axis[i] < -128) analog_axis[i] = -128;
-		if (analog_axis[i] >  128) analog_axis[i] =  128;
+		if (analog_axis[i] < -128)
+			analog_axis[i] = -128;
+		if (analog_axis[i] >  128)
+			analog_axis[i] =  128;
 		if (JOYTYPE( analogjoy_input[i] ) == JOYTYPE_AXIS_POS)
 			analog_axis[i] = -analog_axis[i];
 	}
@@ -988,7 +1004,7 @@ void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input
  */
 int osd_is_joystick_axis_code(int joycode)
 {
-	switch (JOYTYPE( joycode ))
+	switch (JOYTYPE(joycode))
 	{
 		case JOYTYPE_AXIS_POS:
 		case JOYTYPE_AXIS_NEG:
@@ -1027,4 +1043,257 @@ void osd_joystick_calibrate(void)
 
 void osd_joystick_end_calibration(void)
 {
+}
+
+
+extern struct rc_struct *rc;
+
+void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, 
+		const char *filename)
+{
+	mame_file *f;
+
+	/* open the specified controller type/filename */
+	f = mame_fopen (ctype, filename, FILETYPE_CTRLR, 0);
+
+	if (f)
+	{
+		if (ctype)
+			fprintf (stderr_file, "trying to parse ctrlr file %s/%s.ini\n", ctype, filename);
+		else
+			fprintf (stderr_file, "trying to parse ctrlr file %s.ini\n", filename);
+
+		/* process this file */
+		if (osd_rc_read(iptrc, f, filename, 1, 1))
+		{
+			if (ctype)
+				fprintf (stderr_file, "problem parsing ctrlr file %s/%s.ini\n", ctype, filename);
+			else
+				fprintf (stderr_file, "problem parsing ctrlr file %s.ini\n", filename);
+		}
+	}
+
+	/* close the file */
+	if (f)
+		mame_fclose (f);
+}
+
+void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, 
+		const struct GameDriver *drv)
+{
+	/* recursive call to process parents first */
+	if (drv->clone_of)
+		process_ctrlr_game (iptrc, ctype, drv->clone_of);
+
+	/* now process this game */
+	if (drv->name && *(drv->name) != 0)
+		process_ctrlr_file (iptrc, ctype, drv->name);
+}
+
+/* nice hack: load source_file.ini (omit if referenced later any) */
+void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype, 
+		const struct GameDriver *drv)
+{
+	char buffer[128];
+	const struct GameDriver *tmp_gd;
+
+	sprintf(buffer, "%s", drv->source_file+12);
+	buffer[strlen(buffer) - 2] = 0;
+
+	tmp_gd = drv;
+	while (tmp_gd != NULL)
+	{
+		if (strcmp(tmp_gd->name, buffer) == 0) break;
+		tmp_gd = tmp_gd->clone_of;
+	}
+
+	/* not referenced later, so load it here */
+	if (tmp_gd == NULL)
+		/* now process this system */
+		process_ctrlr_file (iptrc, ctype, buffer);
+}
+
+static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, 
+		int priority)
+{
+	struct ik *pinput_keywords = (struct ik *)option->dest;
+	struct ipd *idef = ipddef_ptr;
+
+	/* only process the default definitions if the input port definitions */
+	/* pointer has been defined */
+	if (idef)
+	{
+		/* if a keycode was re-assigned */
+		if (pinput_keywords->type == IKT_STD)
+		{
+			InputSeq is;
+
+			/* get the new keycode */
+			seq_set_string (&is, arg);
+
+			/* was a sequence was assigned to a keycode? - not valid! */
+			if (is[1] != CODE_NONE)
+			{
+				fprintf(stderr_file, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
+			}
+
+			/* for all definitions */
+			while (idef->type != IPT_END)
+			{
+				int j;
+
+				/* reassign all matching keystrokes to the given argument */
+				for (j = 0; j < SEQ_MAX; j++)
+				{
+					/* if the keystroke matches */
+					if (idef->seq[j] == pinput_keywords->val)
+					{
+						/* re-assign */
+						idef->seq[j] = is[0];
+					}
+				}
+				/* move to the next definition */
+				idef++;
+			}
+		}
+
+		/* if an input definition was re-defined */
+		else if (pinput_keywords->type == IKT_IPT ||
+                 pinput_keywords->type == IKT_IPT_EXT)
+		{
+			/* loop through all definitions */
+			while (idef->type != IPT_END)
+			{
+				/* if the definition matches */
+				if (idef->type == pinput_keywords->val)
+				{
+                    if (pinput_keywords->type == IKT_IPT_EXT)
+                        idef++;
+					seq_set_string(&idef->seq, arg);
+					/* and abort (there shouldn't be duplicate definitions) */
+					break;
+				}
+
+				/* move to the next definition */
+				idef++;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+/*============================================================ */
+/*	osd_customize_inputport_defaults */
+/*============================================================ */
+
+void osd_customize_inputport_defaults(struct ipd *defaults)
+{
+	static InputSeq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
+	UINT32 next_reserved = IPT_OSD_1;
+	struct ipd *idef = defaults;
+	int i;
+
+	/* loop over all the defaults */
+	while (idef->type != IPT_END)
+	{
+		/* if the type is OSD reserved */
+		if (idef->type == IPT_OSD_RESERVED)
+		{
+			/* process the next reserved entry */
+			switch (next_reserved)
+			{
+				/* OSD_1 is alt-enter for fullscreen */
+				case IPT_OSD_1:
+					idef->type = next_reserved;
+					idef->name = "Toggle fullscreen";
+					seq_set_2 (&idef->seq, KEYCODE_LALT, KEYCODE_ENTER);
+				break;
+
+				default:
+				break;
+			}
+			next_reserved++;
+		}
+
+		/* disable the config menu if the ALT key is down */
+		/* (allows ALT-TAB to switch between windows apps) */
+		if (idef->type == IPT_UI_CONFIGURE)
+		{
+			seq_copy(&idef->seq, &no_alt_tab_seq);
+		}
+
+		/* find the next one */
+		idef++;
+	}
+
+	/* create a structure for the input port options */
+	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
+	{
+		fprintf(stderr, "error on ctrlr_input_opts creation\n");
+		exit(1);
+	}
+
+	/* Populate the structure with the input_keywords. */
+	/* For all, use the ipdef_custom_rc_func callback. */
+	/* Also, reference the original ik structure. */
+	for (i=0; i<num_ik+num_osd_ik; i++)
+	{
+		if (i < num_ik)
+		{
+	   		ctrlr_input_opts[i].name = input_keywords[i].name;
+			ctrlr_input_opts[i].dest = (void *)&input_keywords[i];
+		}
+		else
+		{
+	   		ctrlr_input_opts[i].name = osd_input_keywords[i-num_ik].name;
+			ctrlr_input_opts[i].dest = (void *)&osd_input_keywords[i-num_ik];
+		}
+		ctrlr_input_opts[i].shortname = NULL;
+		ctrlr_input_opts[i].type = rc_use_function;
+		ctrlr_input_opts[i].deflt = NULL;
+		ctrlr_input_opts[i].min = 0.0;
+		ctrlr_input_opts[i].max = 0.0;
+		ctrlr_input_opts[i].func = ipdef_custom_rc_func;
+		ctrlr_input_opts[i].help = NULL;
+		ctrlr_input_opts[i].priority = 0;
+	}
+
+	/* add an end-of-opts indicator */
+	ctrlr_input_opts[i].type = rc_end;
+
+	if (rc_register(rc, ctrlr_input_opts))
+	{
+		fprintf (stderr, "error on registering ctrlr_input_opts\n");
+		exit(1);
+	}
+
+	if (rc_register(rc, ctrlr_input_opts2))
+	{
+		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
+		exit(1);
+	}
+
+	/* set a static variable for the ipdef_custom_rc_func callback */
+	ipddef_ptr = defaults;
+
+	/* process the main platform-specific default file */
+	process_ctrlr_file (rc, NULL, "default");
+
+	/* if a custom controller has been selected */
+	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
+	{
+		const struct InputPortTiny* input = Machine->gamedrv->input_ports;
+		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
+
+		/* process the controller-specific default file */
+		process_ctrlr_file (rc, ctrlrtype, "default");
+
+		/* process the system-specific files for this controller */
+		process_ctrlr_system (rc, ctrlrtype, Machine->gamedrv);
+
+		/* process the game-specific files for this controller */
+		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
+	}
 }
