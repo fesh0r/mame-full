@@ -1,13 +1,16 @@
+/*
+ * msx_dsk.c : converts .ddi/.img/.msx disk images to .dsk image
+ *
+ * Sean Young
+ */
+
 #include "osdepend.h"
 #include "imgtool.h"
 #include "osdtools.h"
 #include "utils.h"
 
-/*
- * msx_dsk.c : converts .ddi/.img/.msx disk images to .dsk image
- */
 
-int xsa_extract (STREAM *in, STREAM *out);
+static int xsa_extract (STREAM *in, STREAM *out);
 
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
@@ -71,13 +74,13 @@ IMAGEMODULE(
 static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 	{
 	DSK_IMAGE *image;
-	int len, name_len, format;
-    UINT8 header[4];
+	int pos, len, name_len, format;
+    UINT8 header[4], byt;
 	char *pbase, default_name[] = "msxdisk";
 
 	format = 0;
 	len=stream_size(f);
-	if (len < 5) return IMGTOOLERR_CORRUPTIMAGE;
+	if (len < 5) return IMGTOOLERR_MODULENOTFOUND;
 	if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
 
     if (!memcmp (header, "PCK\010", 4) )
@@ -108,8 +111,8 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 			len -= 0x1800;
 			format = DDI_2DD;
 		}
-
-	if (!format) return IMGTOOLERR_CORRUPTIMAGE;
+	
+	if (!format) return IMGTOOLERR_MODULENOTFOUND;
 
 	image = (DSK_IMAGE*)malloc (sizeof (DSK_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
@@ -125,9 +128,9 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 	if (format != XSA_2DD)
 		{
 	    if (f->name) pbase = basename (f->name);
-		else pbase = NULL;
-   		if (pbase) len = strlen (pbase);
-    	else len = strlen (default_name);
+		else pbase = default_name;
+
+   		len = strlen (pbase);
 
     	image->file_name = malloc (len + 5);
 		if (!image->file_name)
@@ -137,34 +140,41 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 			return IMGTOOLERR_CORRUPTIMAGE;
 			}
 
-	    if (!pbase)
-			strcpy (image->file_name, default_name);
-   	 	else
-			{
-			strcpy (image->file_name, pbase);
-        	if (len > 4 || image->file_name[len -4] == '.') len -= 4;
+		strcpy (image->file_name, pbase);
+        if (len > 4 || image->file_name[len -4] == '.') len -= 4;
 
-			strcpy (image->file_name + len, ".dsk");
-			}
+		strcpy (image->file_name + len, ".dsk");
 		}
 	else
 		{
 		/* get name from XSA header, can't be longer than 8.3 really */
-#define XSA_MAX_FILENAME 	(64)
-		image->file_name = malloc (XSA_MAX_FILENAME);
-		if (!image->file_name)
+		/* but could be, it's zero-terminated */
+		pos = len = 0;
+		image->file_name = NULL;
+		while (1)
 			{
-			free(image);
-			*outimg=NULL;
-			return IMGTOOLERR_OUTOFMEMORY;
-			}
-		if (XSA_MAX_FILENAME != stream_read (f, image->file_name,
-			XSA_MAX_FILENAME) )
-			{
-			free(image->file_name);
-			free(image);
-			*outimg=NULL;
-			return IMGTOOLERR_READERROR;
+			if (1 != stream_read (f, &byt, 1) )
+				{
+				if (image->file_name) free (image->file_name);
+				free(image);
+				*outimg=NULL;
+				return IMGTOOLERR_READERROR;
+				}
+			if (len <= pos)
+				{
+				len += 8; /* why 8? */
+				pbase = realloc (image->file_name, len);
+				if (!pbase)
+					{
+					if (image->file_name) free (image->file_name);
+					free(image);
+					*outimg=NULL;
+					return IMGTOOLERR_OUTOFMEMORY;
+					}
+				image->file_name = pbase;
+				}
+			image->file_name[pos++] = byt;
+			if (!byt) break;
 			}
 		}
 
@@ -274,20 +284,14 @@ static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
  * .xsa decompression. Code stolen from :
  *
  * http://web.inter.nl.net/users/A.P.Wulms/
- *
- * note that this code is severly hacked to work with imgtool and mess.
- * basically all file handling and system-specific stuff is taken out,
- * just decompressing in memory (which is nice and fast anyways).
- *
- * Sean Young. For use with MSX driver (MSX specific format)
  */
 
 
 /****************************************************************/
-/* LZ77 data decompression					*/
-/* Copyright (c) 1994 by XelaSoft				*/
-/* version history:						*/
-/*   version 0.9, start date: 11-27-1994			*/
+/* LZ77 data decompression										*/
+/* Copyright (c) 1994 by XelaSoft								*/
+/* version history:												*/
+/*   version 0.9, start date: 11-27-1994						*/
 /****************************************************************/
 
 #define SHORT unsigned
@@ -305,7 +309,7 @@ typedef struct huf_node {
 } huf_node;
 
 /****************************************************************/
-/* global vars							*/
+/* global vars													*/
 /****************************************************************/
 static unsigned updhufcnt;
 static unsigned cpdist[tblsize+1];
@@ -318,7 +322,7 @@ static SHORT tblsizes[tblsize];
 static huf_node huftbl[2*tblsize-1];
 
 /****************************************************************/
-/* maak de huffman codeer informatie				*/
+/* maak de huffman codeer informatie							*/
 /****************************************************************/
 static void mkhuftbl( void )
 {
@@ -386,7 +390,7 @@ static void inithufinfo( void )
 }
 
 /****************************************************************/
-/* global vars							*/
+/* global vars													*/
 /****************************************************************/
 static STREAM *in_stream, *out_stream;
 
@@ -402,7 +406,7 @@ static UINT8 bitcnt;  /* #resterende bits   */
 #define outbufsize (slwinsize+4096)
 
 /****************************************************************/
-/* The function prototypes					*/
+/* The function prototypes										*/
 /****************************************************************/
 static void unlz77( void );       /* perform the real decompression       */
 static void charout(UINT8);      /* put a character in the output stream */
@@ -413,9 +417,9 @@ static UINT8 charin( void );       /* read a char                          */
 static UINT8 bitin( void );        /* read a bit                           */
 
 /****************************************************************/
-/* de hoofdlus							*/
+/* de hoofdlus													*/
 /****************************************************************/
-int xsa_extract (STREAM *in, STREAM *out)
+static int xsa_extract (STREAM *in, STREAM *out)
     {
     UINT8 byt;
 
@@ -430,7 +434,7 @@ int xsa_extract (STREAM *in, STREAM *out)
 
 	/* setup the out buffer */
     outbuf = malloc (outbufsize);
-    if (!outbuf) return 2;
+    if (!outbuf) return IMGTOOLERR_OUTOFMEMORY;
     outbufcnt = 0;
     outbufpos = outbuf; /* dadelijk vooraan in laden           */
 	out_stream = out;
@@ -447,7 +451,7 @@ int xsa_extract (STREAM *in, STREAM *out)
     }
 
 /****************************************************************/
-/* the actual decompression algorithm itself			*/
+/* the actual decompression algorithm itself					*/
 /****************************************************************/
 static void unlz77( void )
 {
@@ -505,7 +509,7 @@ static void flushoutbuf( void )
 }
 
 /****************************************************************/
-/* read string length						*/
+/* read string length											*/
 /****************************************************************/
 static unsigned rdstrlen( void )
 {
@@ -530,7 +534,7 @@ static unsigned rdstrlen( void )
 }
 
 /****************************************************************/
-/* read string pos						*/
+/* read string pos												*/
 /****************************************************************/
 static unsigned rdstrpos( void )
 {
@@ -572,7 +576,7 @@ static unsigned rdstrpos( void )
 }
 
 /****************************************************************/
-/* read a bit from the input file				*/
+/* read a bit from the input file								*/
 /****************************************************************/
 static UINT8 bitin( void )
 {
