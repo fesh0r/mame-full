@@ -61,7 +61,7 @@ CPUS+=M6803@
 CPUS+=M6808@
 CPUS+=HD63701@
 CPUS+=NSC8105@
-#CPUS+=M6805@
+CPUS+=M6805@
 #CPUS+=M68705@
 #CPUS+=HD63705@
 CPUS+=HD6309@
@@ -191,7 +191,8 @@ DRVLIBS += \
 		$(OBJ)/galaxy.a \
 		$(OBJ)/teamconc.a \
 		$(OBJ)/motorola.a \
-		$(OBJ)/svi.a
+        $(OBJ)/exidy.a \
+        $(OBJ)/svi.a
 
 # not working yet, cpu core not submitted yet
 #		$(OBJ)/hp48.a \
@@ -691,6 +692,12 @@ $(OBJ)/svi.a: \
 	  $(OBJ)/mess/machine/svi318.o \
 	  $(OBJ)/mess/systems/svi318.o \
 	  $(OBJ)/mess/formats/svi_cas.o 
+
+$(OBJ)/exidy.a: \
+      $(OBJ)/mess/machine/hd6402.o \
+      $(OBJ)/mess/machine/exidy.o \
+      $(OBJ)/mess/systems/exidy.o \
+      $(OBJ)/mess/vidhrdw/exidy.o 
 
 $(OBJ)/intv.a:	\
 	$(OBJ)/mess/systems/intv.o
