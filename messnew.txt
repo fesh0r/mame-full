@@ -18,6 +18,8 @@ New System Drivers Supported (in no particular order):
 - Enterprise 128 (with EXOS 2.1) [Stefano Priore]
 - Some ZX Spectrum ROM mods, Spectrum 128 (Spain) [Stefano Priore]
 - Sharp PC1402, PC1350 [Peter Trauner]
+- Atari2600 (preliminary) [Lee Ward]
+
 
 System Driver Changes:
 ----------------------
@@ -135,6 +137,12 @@ System Driver Changes:
 - PDP/1: Fixed a null pointer access if no image is loaded. [Nate Woods]
 
 - PC1401/1402/1350: Artwork support added [Peter Trauner]
+
+- PCW: Added sound emulation. [Kev Thacker]
+
+- PCW/CPC/SPECTRUM: Fixed some bugs in the disk image handling code used in
+the Amstrad CPC, Amstrad PCW, and Spectrum+3 drivers [Kev Thacker]
+
 
 Other Changes:
 --------------
