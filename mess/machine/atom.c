@@ -192,6 +192,24 @@ static void atom_timer_callback(int dummy)
 	}
 }
 
+
+static OPBASE_HANDLER(atom_opbase_handler)
+{
+	/* clear op base override */
+	memory_set_opbase_handler(0,0);
+
+	/* this is temporary */
+	/* Kees van Oss mentions that address 8-b are used for the random number
+	generator. I don't know if this is hardware, or random data because the
+	ram chips are not cleared at start-up. So at this time, these numbers
+	are poked into the memory to simulate it. When I have more details I will fix it */
+	memory_region(REGION_CPU1)[0x08] = rand() & 0x0ff;
+	memory_region(REGION_CPU1)[0x09] = rand() & 0x0ff;
+	memory_region(REGION_CPU1)[0x0a] = rand() & 0x0ff;
+	memory_region(REGION_CPU1)[0x0b] = rand() & 0x0ff;
+
+	return cpu_get_pc() & 0x0ffff;
+}
 void atom_init_machine(void)
 {
 	ppi8255_init (&atom_8255_int);
@@ -210,6 +228,9 @@ void atom_init_machine(void)
 
 	/* cassette motor control */
 	device_status(IO_CASSETTE, 0, 1);
+
+	memory_set_opbase_handler(0,atom_opbase_handler);
+
 }
 
 void atom_stop_machine(void)
@@ -560,3 +581,10 @@ READ_HANDLER(atom_eprom_box_r)
 {
 	return selected_eprom;
 }
+
+void	atomeb_init_machine(void)
+{
+	atom_init_machine();
+	atom_eprom_box_init();
+}
+
