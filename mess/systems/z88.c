@@ -795,5 +795,5 @@ static const struct IODevice io_z88[] =
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
 COMP( 19??, z88,   0,                z88,  z88,      0,       "Cambridge Comput
-ers", "z88")
+ers", "Z88")
 
