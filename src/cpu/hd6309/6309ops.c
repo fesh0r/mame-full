@@ -2733,19 +2733,30 @@ INLINE void muld_im( void )
 /* $118d DIVD immediate */
 INLINE void divd_im( void )
 {
-	UINT8 t;
-
+	UINT8   t;
+	INT16   v;
+	
 	IMMBYTE( t );
 
 	if( t != 0 )
 	{
-		W = (INT16) D % (INT8) t;
-		D = (INT16) D / (INT8) t;
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+		
+		CLR_NZVC;
+		SET_NZ8(B);
+		/* Warning still need to set the C flag */
+		/* But I don't know what to set it to */
+		
+		if ( (v > 127) || (v < -128) )
+			SEV;
 	}
 	else
+	{
+		hd6309_ICount -= 8;
 		DZError();
-
-	/* Warning: Set CC */
+	}
 }
 
 /* $118e DIVQ immediate */
@@ -3027,18 +3038,29 @@ INLINE void muld_di( void )
 INLINE void divd_di( void )
 {
 	UINT8	t;
+	INT16   v;
 
 	DIRBYTE(t);
 
 	if( t != 0 )
 	{
-		W = (INT16) D % (INT8) t;
-		D = (INT16) D / (INT8) t;
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+		
+		CLR_NZVC;
+		SET_NZ8(B);
+		/* Warning still need to set the C flag */
+		/* But I don't know what to set it to */
+		
+		if ( (v > 127) || (v < -128) )
+			SEV;
 	}
 	else
+	{
+		hd6309_ICount -= 8;
 		DZError();
-
-	/* Warning: Set CC */
+	}
 }
 
 /* $119e DIVQ direct -**0- */
@@ -3381,19 +3403,30 @@ INLINE void muld_ix( void )
 INLINE void divd_ix( void )
 {
 	UINT8	t;
+	INT16   v;
 
 	fetch_effective_address();
 	t=RM(EAD);
 	
 	if( t != 0 )
 	{
-		W = (INT16) D % (INT8) t;
-		D = (INT16) D / (INT8) t;
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+		
+		CLR_NZVC;
+		SET_NZ8(B);
+		/* Warning still need to set the C flag */
+		/* But I don't know what to set it to */
+		
+		if ( (v > 127) || (v < -128) )
+			SEV;
 	}
 	else
+	{
+		hd6309_ICount -= 8;
 		DZError();
-
-	/* Warning: Set CC */
+	}
 }
 
 /* $11ae DIVQ indexed -**0- */
@@ -3724,18 +3757,29 @@ INLINE void muld_ex( void )
 INLINE void divd_ex( void )
 {
 	UINT8	t;
+	INT16   v;
 
 	EXTBYTE(t);
 
 	if( t != 0 )
 	{
-		W = (INT16) D % (INT8) t;
-		D = (INT16) D / (INT8) t;
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+		
+		CLR_NZVC;
+		SET_NZ8(B);
+		/* Warning still need to set the C flag */
+		/* But I don't know what to set it to */
+		
+		if ( (v > 127) || (v < -128) )
+			SEV;
 	}
 	else
+	{
+		hd6309_ICount -= 8;
 		DZError();
-
-	/* Warning: Set CC */
+	}
 }
 
 /* $11be DIVQ extended -**0- */
@@ -5465,10 +5509,10 @@ INLINE void pref11( void )
 		case 0x35: bieor(); 		break;
 		case 0x36: ldbt();			break;
 		case 0x37: stbt();			break;
-		case 0x38: tfmpp(); 		break;	/* Timing for TFM is actually 6+3n.       */
-		case 0x39: tfmmm(); 		break;	/* To avoid saving the state, I decided   */
-		case 0x3a: tfmpc(); 		break;	/* to ignore to initial 6 cycles.         */
-		case 0x3b: tfmcp(); 		break;  /* We will soon see how this fairs!       */
+		case 0x38: tfmpp(); 		break;	/* Timing for TFM is actually 6+3n.        */
+		case 0x39: tfmmm(); 		break;	/* To avoid saving the state, I decided    */
+		case 0x3a: tfmpc(); 		break;	/* to push the initial 6 cycles to the end */
+		case 0x3b: tfmcp(); 		break;  /* We will soon see how this fairs!        */
 		case 0x3c: bitmd_im();		break;
 		case 0x3d: ldmd_im();		break;
 		case 0x3f: swi3();			break;
