@@ -16,8 +16,8 @@
 	Raphael Nabet, 2002-2003.
 */
 
-/*#include "harddisk.h"
-#include "machine/idectrl.h"*/
+/*#include "harddisk.h"*/
+#include "machine/idectrl.h"
 #include "devices/idedrive.h"
 #include "machine/rtc65271.h"
 #include "ti99_4x.h"
@@ -78,6 +78,14 @@ struct ide_interface ti99_ide_interface =
 static void ide_interrupt_callback(int state)
 {
 	ide_irq = state;
+}
+
+/*
+	Init an IDE image
+*/
+DEVICE_INIT( ti99_ide )
+{
+	return ide_hd_init(image, 0, 0, &ti99_ide_interface);
 }
 
 /*

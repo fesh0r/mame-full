@@ -1,3 +1,4 @@
+DEVICE_INIT( ti99_ide );
 DEVICE_LOAD( ti99_ide );
 DEVICE_UNLOAD( ti99_ide );
 

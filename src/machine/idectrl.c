@@ -30,6 +30,8 @@
  *
  *************************************/
 
+#define IDE_DISK_SECTOR_SIZE		512
+
 #define TIME_PER_SECTOR				(TIME_IN_USEC(100))
 #define TIME_PER_ROTATION			(TIME_IN_HZ(5400/60))
 
@@ -84,8 +86,8 @@ struct ide_state
 	UINT8	error;
 	UINT8	interrupt_pending;
 
-	UINT8	buffer[HARD_DISK_SECTOR_SIZE];
-	UINT8	features[HARD_DISK_SECTOR_SIZE];
+	UINT8	buffer[IDE_DISK_SECTOR_SIZE];
+	UINT8	features[IDE_DISK_SECTOR_SIZE];
 	UINT16	buffer_offset;
 	UINT16	sector_count;
 
@@ -183,6 +185,9 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, void *disk
 		ide->num_cylinders = header->cylinders;
 		ide->num_sectors = header->sectors;
 		ide->num_heads = header->heads;
+		if (header->seclen != IDE_DISK_SECTOR_SIZE)
+			/* wrong sector len */
+			return 1;
 #if PRINTF_IDE_COMMANDS
 		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_sectors, ide->num_heads);
 #endif
@@ -348,7 +353,7 @@ static void ide_build_features(struct ide_state *ide)
 {
 	int total_sectors = ide->num_cylinders * ide->num_heads * ide->num_sectors;
 
-	memset(ide->buffer, 0, HARD_DISK_SECTOR_SIZE);
+	memset(ide->buffer, 0, IDE_DISK_SECTOR_SIZE);
 
 	/* basic geometry */
 	ide->features[ 0*2+0] = 0x5a;						/*  0: configuration bits */
@@ -703,7 +708,7 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 				}
 
 				/* if we're at the end of the buffer, handle it */
-				if (ide->buffer_offset >= HARD_DISK_SECTOR_SIZE)
+				if (ide->buffer_offset >= IDE_DISK_SECTOR_SIZE)
 				{
 					/* reset the totals */
 					ide->buffer_offset = 0;
@@ -820,7 +825,7 @@ static void ide_controller_write(struct ide_state *ide, offs_t offset, int size,
 				}
 
 				/* if we're at the end of the buffer, handle it */
-				if (ide->buffer_offset >= HARD_DISK_SECTOR_SIZE)
+				if (ide->buffer_offset >= IDE_DISK_SECTOR_SIZE)
 				{
 					/* reset the totals */
 					ide->buffer_offset = 0;

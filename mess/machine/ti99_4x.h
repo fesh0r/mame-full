@@ -106,14 +106,14 @@ enum
 	config_speech_mask	= 0x1,
 	config_fdc_bit		= 4,
 	config_fdc_mask		= 0x3,	/* 2 bits */
-	config_ide_bit		= 8,
-	config_ide_mask		= 0x1,
 	config_rs232_bit	= 6,
 	config_rs232_mask	= 0x1,
 	/* next option only makes sense for ti99/4 */
 	config_handsets_bit	= 7,
 	config_handsets_mask= 0x1,
-	config_hsgpl_bit	= 8,
+	config_ide_bit		= 8,
+	config_ide_mask		= 0x1,
+	config_hsgpl_bit	= 9,
 	config_hsgpl_mask	= 0x1
 };
 

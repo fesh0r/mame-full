@@ -1,109 +1,59 @@
 /*
-	Code to interface the MESS image code with MAME's ide and harddisk cores.
-
-	We do not support diff files as it will involve some changes in the MESS
-	image code.
+	Code to interface the MESS image code with MAME's ide core.
 
 	Raphael Nabet 2003
 */
 
-/*#include "harddisk.h"
-#include "machine/idectrl.h"*/
+/*#include "harddisk.h"*/
+#include "machine/idectrl.h"
+#include "mess_hd.h"
 #include "idedrive.h"
 
-static mame_file *ide_fp;
-static void *ide_hard_disk_handle;
-static int ide_fp_wp;
-
-static void *mess_hard_disk_open(const char *filename, const char *mode);
-static void mess_hard_disk_close(void *file);
-static UINT32 mess_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mess_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer);
-
-struct hard_disk_interface mess_hard_disk_interface =
-{
-	mess_hard_disk_open,
-	mess_hard_disk_close,
-	mess_hard_disk_read,
-	mess_hard_disk_write
-};
-
 /*
-	MAME hard disk core interface
-*/
+	ide_hd_init()
 
-/*
-	mess_hard_disk_open - interface for opening a hard disk image
-*/
-static void *mess_hard_disk_open(const char *filename, const char *mode)
-{
-	/* read-only fp? */
-	if (ide_fp_wp && ! (mode[0] == 'r' && !strchr(mode, '+')))
-		return NULL;
+	Init an IDE hard disk device
 
-	/* otherwise return file pointer */
-	return ide_fp;
-}
-
-/*
-	mess_hard_disk_close - interface for closing a hard disk image
-*/
-static void mess_hard_disk_close(void *file)
-{
-	//mame_fclose((mame_file *)file);
-}
-
-/*
-	mess_hard_disk_read - interface for reading from a hard disk image
-*/
-static UINT32 mess_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
-{
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fread((mame_file *)file, buffer, count);
-}
-
-/*
-	mess_hard_disk_write - interface for writing to a hard disk image
-*/
-static UINT32 mess_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
-{
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fwrite((mame_file *)file, buffer, count);
-}
-
-
-/*
-	MAME IDE core interface
-*/
-
-/*
-	ide_hd_load()
-
-	Load an IDE image
-
-	id, fp, open_mode: parameters passed by the MESS image code to the load
-		function
+	img: parameter passed by the MESS image code to the init function
 	which_bus: IDE bus the drive is attached to (only bus 0 is supported now)
 	which_address: address of the drive on the bus (0->master, 1->slave, only
 		master is supported now)
 	intf: ide_interface required by the idectrl.c core
 */
-int ide_hd_load(mess_image *img, mame_file *fp, int open_mode, int which_bus, int which_address, struct ide_interface *intf)
+int ide_hd_init(mess_image *img, int which_bus, int which_address, struct ide_interface *intf)
 {
 	assert(which_address == 0);
 
-	hard_disk_set_interface(& mess_hard_disk_interface);
-
-	ide_fp = fp;
-	ide_fp_wp = ! is_effective_mode_writable(open_mode);
-
-	ide_hard_disk_handle = hard_disk_open(image_filename(img), is_effective_mode_writable(open_mode), NULL);
-	if (ide_hard_disk_handle != NULL)
+	if (device_init_mess_hd(img) == INIT_PASS)
 	{
-		ide_controller_init_custom(which_bus, intf, ide_hard_disk_handle);
+		ide_controller_init_custom(which_bus, intf, NULL);
+		ide_controller_reset(which_bus);
+	}
+
+	return INIT_PASS;
+}
+
+/*
+	ide_hd_load()
+
+	Load an IDE hard disk image
+
+	img: parameter passed by the MESS image code to the load function
+	which_bus: IDE bus the drive is attached to (only bus 0 is supported now)
+	which_address: address of the drive on the bus (0->master, 1->slave, only
+		master is supported now)
+	intf: ide_interface required by the idectrl.c core
+*/
+int ide_hd_load(mess_image *img, int which_bus, int which_address, struct ide_interface *intf)
+{
+	assert(which_address == 0);
+
+	if (device_load_mess_hd(img, image_fp(img), 0) == INIT_PASS)
+	{
+		ide_controller_init_custom(which_bus, intf, mess_hd_get_hard_disk_handle(img));
 		ide_controller_reset(which_bus);
 		return INIT_PASS;
-	}
+	}	
 
 	return INIT_FAIL;
 }
@@ -111,9 +61,9 @@ int ide_hd_load(mess_image *img, mame_file *fp, int open_mode, int which_bus, in
 /*
 	ide_hd_unload()
 
-	Unload an IDE image
+	Unload an IDE hard disk image
 
-	id: parameter passed by the MESS image code to the load function
+	img: parameter passed by the MESS image code to the load function
 	which_bus: IDE bus the drive is attached to (only bus 0 is supported now)
 	which_address: address of the drive on the bus (0->master, 1->slave, only
 		master is supported now)
@@ -123,12 +73,7 @@ void ide_hd_unload(mess_image *img, int which_bus, int which_address, struct ide
 {
 	assert(which_address == 0);
 
-	if (ide_hard_disk_handle)
-	{
-		hard_disk_close(ide_hard_disk_handle);
-		ide_hard_disk_handle = NULL;
-	}
-	ide_fp = NULL;
+	device_unload_mess_hd(img);
 	ide_controller_init_custom(which_bus, intf, NULL);
 	ide_controller_reset(which_bus);
 }
@@ -136,7 +81,7 @@ void ide_hd_unload(mess_image *img, int which_bus, int which_address, struct ide
 /*
 	ide_machine_init()
 
-	Perform machine initialization
+	Perform machine initialization for an IDE hard disk device
 
 	which_bus: IDE bus the drive is attached to (only bus 0 is supported now)
 	which_address: address of the drive on the bus (0->master, 1->slave, only
@@ -147,6 +92,5 @@ void ide_hd_machine_init(int which_bus, int which_address, struct ide_interface 
 {
 	assert(which_address == 0);
 
-	ide_controller_init_custom(which_bus, intf, NULL);
 	ide_controller_reset(which_bus);
 }
