@@ -36,7 +36,6 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <SDL.h>
-#include "xmame.h"
 #include "devices.h"
 #include "driver.h"
 #include "keycodes.h"
@@ -337,7 +336,7 @@ int sysdep_create_display(int depth)
    H_dst_format = Hermes_FormatNew (16,Surface->format->Rmask,Surface->format->Gmask,Surface->format->Bmask,0,0);
    /*  H_dst_format = Hermes_FormatNew (16,5,5,5,0,0); */
    if ( ! (Hermes_ConverterRequest(H_ConverterHandle,H_src_format , H_dst_format)) ) {
-      fprintf (stderr_file, "Hermes: Info: Converter request failed\n");
+      fprintf (stderr, "Hermes: Info: Converter request failed\n");
       exit (OSD_NOT_OK);
    }
 #endif /* DIRECT_HERMES */
@@ -391,7 +390,7 @@ static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
          klookup[from] = to;
 	 return OSD_OK;
       }
-      /* stderr_file isn't defined yet when we're called. */
+      /* stderr isn't defined yet when we're called. */
       fprintf(stderr,"Invalid keymapping %s. Ignoring...\n", arg);
    }
    return OSD_NOT_OK;

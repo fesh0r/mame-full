@@ -97,7 +97,7 @@ ChangeLog:
    if (reps >0) { \
      COPY_LINE2(SRC, END, (DEST_PIXEL *)effect_dbbuf); \
      do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), effect_dbbuf, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
-     } while (reps-- > sysdep_display_params.scanlines); \
+     } while (--reps > sysdep_display_params.scanlines); \
    } \
 }
 #else /* speedup hack for GETPIXEL(src) == (src) */
@@ -106,7 +106,7 @@ ChangeLog:
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      do { COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH))); \
-     } while (reps-- > sysdep_display_params.scanlines); \
+     } while (--reps > sysdep_display_params.scanlines); \
    } \
 }
 #endif
@@ -117,7 +117,7 @@ ChangeLog:
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      COPY_LINE2(SRC, END, DST); \
-     while (reps-- > (1+sysdep_display_params.scanlines)) \
+     while (--reps > sysdep_display_params.scanlines) \
        memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
   } \
 }

@@ -130,7 +130,7 @@ static int FindRGBXvFormat(int *bpp)
 					{
 						xv_port=p;
 						*bpp=fo[j].bits_per_pixel;
-						sysdep_display_properties.palette_info.fourcc_format=0;
+						sysdep_display_properties.palette_info.fourcc_format=fo[j].id;
 						sysdep_display_properties.palette_info.red_mask  =fo[j].red_mask;
 						sysdep_display_properties.palette_info.green_mask=fo[j].green_mask;
 						sysdep_display_properties.palette_info.blue_mask =fo[j].blue_mask;
@@ -247,7 +247,6 @@ int xv_open_display(void)
            the FindXvXXX fucntions will fill in the rest */
 	memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
         sysdep_display_properties.hwscale = 1;
-        sysdep_display_properties.palette_info.fourcc_format = sysdep_display_properties.palette_info.fourcc_format;
 
         fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
         /* find a suitable format */
@@ -392,6 +391,8 @@ int xv_open_display(void)
           case FOURCC_YV12:
             ClearYV12();
             break;
+          default:
+            sysdep_display_properties.palette_info.fourcc_format = 0;
         }
           
         mode_clip_aspect(window_width, window_height, &width, &height);

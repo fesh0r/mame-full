@@ -18,10 +18,7 @@
  * Win32                  _WIN32_
  *
  */
-
-#include "xmame.h"
 #include "gltool.h"
-
 #include "gl-disp-var.hc"
 #include "glu-disp-var.hc"
 
@@ -65,9 +62,9 @@ void LIBAPIENTRY print_gl_error (const char *msg, const char *file, int line, GL
   {
     const char *errstr = (const char *) disp__gluErrorString (errorcode);
     if (errstr != 0)
-      fprintf (stderr_file, "\n\n****\n**%s %s:%d>0x%X %s\n****\n", msg, file, line, errorcode, errstr);
+      fprintf (stderr, "\n\n****\n**%s %s:%d>0x%X %s\n****\n", msg, file, line, errorcode, errstr);
     else
-      fprintf (stderr_file, "\n\n****\n**%s %s:%d>0x%X <unknown>\n****\n", msg, file, line, errorcode);
+      fprintf (stderr, "\n\n****\n**%s %s:%d>0x%X <unknown>\n****\n", msg, file, line, errorcode);
   }
 }
 
@@ -80,7 +77,7 @@ void LIBAPIENTRY check_wgl_error (HWND wnd, const char *file, int line)
 		 0, GetLastError (), MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),	// Default language
 		 (LPTSTR) & lpMsgBuf, 0, 0);	// Display the string.
 
-  fprintf (stderr_file, "\n\n****\n** %s:%d>%s\n****\n", file, line, lpMsgBuf);
+  fprintf (stderr, "\n\n****\n** %s:%d>%s\n****\n", file, line, lpMsgBuf);
 
   // Free the buffer.
   LocalFree (lpMsgBuf);
@@ -98,7 +95,7 @@ void LIBAPIENTRY __sglBegin(const char * file, int line, GLenum mode)
 
 	if(gl_begin_ctr!=0)
 	{
-		fprintf(stderr_file, "\n\n****\n** GL-BEGIN-ERROR %s:%d> glBegin was called %d times (reset now)\n****\n", 
+		fprintf(stderr, "\n\n****\n** GL-BEGIN-ERROR %s:%d> glBegin was called %d times (reset now)\n****\n", 
 			file, line, gl_begin_ctr);
 		gl_begin_ctr=0;
 	} else
@@ -111,7 +108,7 @@ void LIBAPIENTRY __sglEnd(const char * file, int line)
 {
 	if(gl_begin_ctr!=1)
 	{
-		fprintf(stderr_file, "\n\n****\n** GL-END-ERROR %s:%d> glBegin was called %d times (reset now)\n****\n", 
+		fprintf(stderr, "\n\n****\n** GL-END-ERROR %s:%d> glBegin was called %d times (reset now)\n****\n", 
 			file, line, gl_begin_ctr);
 		gl_begin_ctr=1;
 	} else
@@ -131,7 +128,7 @@ void LIBAPIENTRY checkGlBeginEndBalance(const char *file, int line)
 {
 	if(gl_begin_ctr!=0)
 	{
-		fprintf(stderr_file, "\n****\n** GL-BeginEnd-ERROR %s:%d> glBegin was called %d times\n****\n", 
+		fprintf(stderr, "\n****\n** GL-BeginEnd-ERROR %s:%d> glBegin was called %d times\n****\n", 
 			file, line, gl_begin_ctr);
 	}
   	print_gl_error("GL-BeginEnd-CHECK", file, line, disp__glGetError());
@@ -139,7 +136,7 @@ void LIBAPIENTRY checkGlBeginEndBalance(const char *file, int line)
 
 void LIBAPIENTRY showGlBeginEndBalance(const char *file, int line)
 {
-	fprintf(stderr_file, "\n****\n** GL-BeginEnd %s:%d> glBegin was called %d times\n****\n", 
+	fprintf(stderr, "\n****\n** GL-BeginEnd %s:%d> glBegin was called %d times\n****\n", 
 		file, line, gl_begin_ctr);
 }
 
@@ -295,7 +292,7 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
  
         if (returnError != fragNoErr)
         {
-                fprintf (stderr_file, "GetSharedLibrary Err(%d): Ahhh!  Didn't find LIBRARY !\n",
+                fprintf (stderr, "GetSharedLibrary Err(%d): Ahhh!  Didn't find LIBRARY !\n",
                         returnError);
 		return 0;
         }
@@ -612,7 +609,7 @@ static void PrintSymbolNamesByConnection (CFragConnectionID myConnID)
 		{
 			p2cstrcpy (buffer, myName);
 								 
-            fprintf(stderr_file, "%d/%d: class %d - name %s\n", 
+            fprintf(stderr, "%d/%d: class %d - name %s\n", 
 		   		myIndex, myCount, myClass, buffer);
 		}
              }

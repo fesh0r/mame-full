@@ -198,7 +198,10 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	/* setup page flipping */
 	if(modeinfo.viewportFlags & XDGAFlipRetrace)
 	{
-	  xf86ctx.aligned_viewport_height = (modeinfo.viewportHeight+
+	  /* add a 16 additional lines between the pages, because some
+	     cards (*cough* ATI *cough*) use the lines immediatly above the
+	     viewport as vblank */
+	  xf86ctx.aligned_viewport_height = (modeinfo.viewportHeight+16+
 	    modeinfo.yViewportStep-1) & ~(modeinfo.yViewportStep-1);
 	  xf86ctx.page = 0;
 	  xf86ctx.max_page = modeinfo.maxViewportY /

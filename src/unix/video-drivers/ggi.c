@@ -25,7 +25,6 @@
 /*#define GGI_DEBUG*/
 /*#define CATCH_SIGNALS*/
 
-#include "xmame.h"
 #include "driver.h"
 #include "devices.h"
 #include "keycodes.h"
@@ -135,7 +134,7 @@ static void myhandler(int signum)
             sprintf(tmpbuf,"unknown(%d)",signum);
             signam=tmpbuf;
     }
-    fprintf(stderr_file,"%s: aborting...\n",signam);
+    fprintf(stderr,"%s: aborting...\n",signam);
     if (first_call) {
         first_call=FALSE;
         ggi_cleanup(); /* try again once */
@@ -148,8 +147,8 @@ static void myhandler(int signum)
 int sysdep_init(void)
 {
 #ifdef GGI_DEBUG
-   if (stderr_file)
-      fprintf(stderr_file,"sysdep_init called\n");
+   if (stderr)
+      fprintf(stderr,"sysdep_init called\n");
 #endif
 
    if (ggiInit())
@@ -164,7 +163,7 @@ int sysdep_init(void)
 void sysdep_close(void)
 {
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"sysdep_close called\n");
+    fprintf(stderr,"sysdep_close called\n");
 #endif
     ggiExit();
 }
@@ -180,7 +179,7 @@ static int ggi_check_mode(ggi_visual_t vis, int w, int h, int depth,
     ggi_mode mode;
 
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"ggi_check_mode called (%dx%d)\n",w,h);
+    fprintf(stderr,"ggi_check_mode called (%dx%d)\n",w,h);
 #endif
     memset(&mode,0xff,sizeof(mode));
     /* try 8bit color depth */
@@ -262,7 +261,7 @@ static int set_video_mode(int depth)
     int updater = 0;
 
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"set_video_mode called\n");
+    fprintf(stderr,"set_video_mode called\n");
 #endif
     scaled_visual_width = visual_width  * widthscale;
     scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
@@ -278,13 +277,13 @@ static int set_video_mode(int depth)
         ggi_video_height = force_y;
 
     if (ggi_video_height < scaled_visual_height || ggi_video_width < scaled_visual_width) {
-        fprintf(stderr_file,"Forced resolution %dx%d < needed resolution %dx%d -- aborting...\n",
+        fprintf(stderr,"Forced resolution %dx%d < needed resolution %dx%d -- aborting...\n",
                 ggi_video_width,ggi_video_height,scaled_visual_width,scaled_visual_height);
         return(FALSE);
     }
 
     if (force_x || force_y)
-        fprintf(stderr_file,"Command line override: setting mode %dx%d\n",ggi_video_width,ggi_video_height);
+        fprintf(stderr,"Command line override: setting mode %dx%d\n",ggi_video_width,ggi_video_height);
 
     /* some GGI stuff */
     vis = ggiOpen(NULL);
@@ -313,12 +312,12 @@ static int set_video_mode(int depth)
         }
         
         if (! best_score) {
-            fprintf(stderr_file, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n"
+            fprintf(stderr, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n"
                     "Trying to get any mode....\n",
                     scaled_visual_width,scaled_visual_height);
             /* trying to get any mode from GGI */
             if (ggiSetSimpleMode(vis,GGI_AUTO,GGI_AUTO,GGI_AUTO,GT_AUTO) != 0) {
-                fprintf(stderr_file, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n",
+                fprintf(stderr, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n",
                         scaled_visual_width,scaled_visual_height);
                 return(FALSE);
             }
@@ -341,14 +340,14 @@ static int set_video_mode(int depth)
     ggiGetMode(vis, &mode); /* Maybe we did not get what we asked for */
     if ((mode.visible.x < scaled_visual_width)||
 	(mode.visible.y < scaled_visual_height)) {
-	fprintf(stderr_file,
+	fprintf(stderr,
 		"Fatal: cannot get big enough mode %dx%d\n",
 		scaled_visual_width,scaled_visual_height);
         return(FALSE);
     }
     if ((mode.visible.x != scaled_visual_width)||
 	(mode.visible.y != scaled_visual_height)) {
-	fprintf(stderr_file,
+	fprintf(stderr,
 		"Notice: cannot get ideal mode %dx%d, setting to %dx%d\n",
 		scaled_visual_width,scaled_visual_height,mode.visible.x,mode.visible.y);
     }
@@ -370,7 +369,7 @@ static int set_video_mode(int depth)
               GT_SIZE(mode.graphtype) / 8);
            if (!doublebuffer_buffer)
            {
-              fprintf(stderr_file, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
+              fprintf(stderr, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
               return FALSE;
            }
         }
@@ -379,7 +378,7 @@ static int set_video_mode(int depth)
         video_mem += screen_starty * ggi_video_width *
            GT_SIZE(mode.graphtype) / 8;
 #ifdef GGI_DEBUG
-        fprintf(stderr_file,
+        fprintf(stderr,
            "ggi.c: set_video_mode: using %d bit linear update\n",
            GT_SIZE(mode.graphtype));
 #endif
@@ -401,7 +400,7 @@ static int set_video_mode(int depth)
               GT_SIZE(mode.graphtype) / 8);
            if (!doublebuffer_buffer)
            {
-              fprintf(stderr_file, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
+              fprintf(stderr, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
               return FALSE;
            }
         }
@@ -444,7 +443,7 @@ static int set_video_mode(int depth)
 int sysdep_create_display(int depth)
 {
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"sysdep_create_display called\n");
+    fprintf(stderr,"sysdep_create_display called\n");
 #endif
 /* do we need this? It makes debugging crashes sorta hard without a core file */
 #ifdef CATCH_SIGNALS
@@ -452,18 +451,18 @@ int sysdep_create_display(int depth)
     oldsigbush=signal(SIGBUS,myhandler);
     oldsigquith=signal(SIGQUIT,myhandler);
     if (oldsigsegvh == SIG_ERR || oldsigbush == SIG_ERR || oldsigquith == SIG_ERR) {
-	fprintf (stderr_file, "Cannot install signal handler. Exiting\n");
+	fprintf (stderr, "Cannot install signal handler. Exiting\n");
 	return OSD_NOT_OK;
     }
 #endif
     if (! set_video_mode(depth)) {
-        fprintf(stderr_file,"cannot find a mode to use :-(\n");
+        fprintf(stderr,"cannot find a mode to use :-(\n");
         return OSD_NOT_OK;
     }
 
-    fprintf(stderr_file,"GGI: using mode %dx%d\n",ggi_video_width,ggi_video_height);
+    fprintf(stderr,"GGI: using mode %dx%d\n",ggi_video_width,ggi_video_height);
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
+    fprintf(stderr,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
 #endif
 
     if(effect_open())
@@ -479,7 +478,7 @@ int sysdep_create_display(int depth)
 void sysdep_display_close(void)
 {
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"sysdep_display_close called\n");
+    fprintf(stderr,"sysdep_display_close called\n");
 #endif
     effect_close();
 /* do we need this? It makes debugging crashes sorta hard without a core file */
@@ -490,7 +489,7 @@ void sysdep_display_close(void)
 #endif
     ggi_cleanup();
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"sysdep_display_close finished\n");
+    fprintf(stderr,"sysdep_display_close finished\n");
 #endif
 }
 
@@ -498,7 +497,7 @@ void sysdep_display_close(void)
 static void ggi_cleanup(void)
 {
 #ifdef GGI_DEBUG
-    fprintf(stderr_file,"ggi_cleanup called\n");
+    fprintf(stderr,"ggi_cleanup called\n");
 #endif
     if (vis) {
       ggiClose(vis);
@@ -716,7 +715,7 @@ int ggi_key(ggi_event *ev)
     int label = ev->key.label;
 
 #ifdef KEY_DEBUG
-    fprintf(stderr_file,
+    fprintf(stderr,
         "Keyevent detected: sym = 0x%02x, code = 0x%02x, label = 0x%02x\n",
         ev->key.sym, ev->key.button, label);
 #endif
@@ -934,7 +933,7 @@ int ggi_key(ggi_event *ev)
           break;
     }
 #ifdef KEY_DEBUG
-    fprintf(stderr_file,"returning keycode = %d\n",keycode);
+    fprintf(stderr,"returning keycode = %d\n",keycode);
 #endif
     return(keycode);
 }

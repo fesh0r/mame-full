@@ -66,11 +66,16 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority);
 #endif
 
 /* struct definitions */
-static struct rc_option opts[] = {
+static struct rc_option opts1[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
 	{ NULL, NULL, rc_link, video_opts, NULL, 0, 0, NULL, NULL },
-	{ NULL, NULL, rc_link, sound_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, input_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, sound_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
+};
+
+static struct rc_option opts2[] = {
+   /* name, shortname, type, dest, deflt, min, max, func, help */
 	{ NULL, NULL, rc_link, network_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, fileio_opts, NULL, 0, 0, NULL, NULL },
 #ifdef MESS
@@ -262,13 +267,16 @@ int config_init (int argc, char *argv[])
 	if (!(rc = rc_create()))
 		return OSD_NOT_OK;
 
+	if(rc_register(rc, opts1))
+		return OSD_NOT_OK;
+
 	if(sysdep_dsp_init(rc, NULL))
 		return OSD_NOT_OK;
 
 	if(sysdep_mixer_init(rc, NULL))
 		return OSD_NOT_OK;
 
-	if(rc_register(rc, opts))
+	if(rc_register(rc, opts2))
 		return OSD_NOT_OK;
 
 	/* get the homedir */

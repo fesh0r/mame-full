@@ -60,7 +60,6 @@ int x11_test_mit_shm (Display * display, XErrorEvent * error)
 	char msg[256];
 	unsigned char ret = error->error_code;
 
-	XGetErrorText (display, ret, msg, 256);
 	/* if MIT-SHM request failed, note and continue */
 	if ((ret == BadAccess) || (ret == BadAlloc))
 	{
@@ -68,7 +67,8 @@ int x11_test_mit_shm (Display * display, XErrorEvent * error)
 		return 0;
 	}
 	/* else unexpected error code: notify and exit */
-	fprintf (stderr, "Unexpected X Error %d: %s\n", ret, msg);
+	XGetErrorText (display, ret, msg, 256);
+	fprintf (stderr, "Unexpected X Error %d: %s\n", (int)ret, msg);
 	exit(1);
 	/* to make newer gcc's shut up, grrr */
 	return 0;

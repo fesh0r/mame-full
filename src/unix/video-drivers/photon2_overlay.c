@@ -19,7 +19,6 @@
 #include <float.h>
 #include <Ph.h>
 #include <Pt.h>
-#include "xmame.h"
 #include "photon2.h"
 #include "driver.h"
 //#include "phkeyboard.h"
@@ -265,14 +264,14 @@ int ph_ovr_create_display (int bitmap_depth)
 		image = PdCreateOffscreenContext(0, ((view_size.w+7) & ~7), view_size.h, Pg_OSC_MEM_PAGE_ALIGN);
 	 	if (image == NULL)
 	 	{
-			fprintf(stderr_file, "error: failed to create offscreen context\n");
+			fprintf(stderr, "error: failed to create offscreen context\n");
 			return OSD_NOT_OK;
 		}
 
 		scaled_buffer_ptr = PdGetOffscreenContextPtr (image);
 		if (!scaled_buffer_ptr)
 		{
-			fprintf (stderr_file, "error: failed get a pointer to offscreen context.\n");
+			fprintf (stderr, "error: failed get a pointer to offscreen context.\n");
 			PhDCRelease (image);
 			return OSD_NOT_OK;
 		}
@@ -294,7 +293,7 @@ int ph_ovr_create_display (int bitmap_depth)
 		break;
 	
 		default:
-			fprintf (stderr_file, "error: unknown photon update method, this shouldn't happen\n");
+			fprintf (stderr, "error: unknown photon update method, this shouldn't happen\n");
 		return OSD_NOT_OK;
 	}
 
@@ -302,7 +301,7 @@ int ph_ovr_create_display (int bitmap_depth)
 	if (ph_init_palette_info() != OSD_OK)
 	return OSD_NOT_OK;
 
-	fprintf(stderr_file, "info: actual bits per pixel = %d...\n", depth);
+	fprintf(stderr, "info: actual bits per pixel = %d...\n", depth);
 	if (bitmap_depth == 16)
 	{
 		switch(depth)
@@ -321,11 +320,11 @@ int ph_ovr_create_display (int bitmap_depth)
 
 	if (ph_ovr_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "error: unsupported\n");
+		fprintf(stderr, "error: unsupported\n");
 		return OSD_NOT_OK;
 	}
 
-	fprintf(stderr_file, "Ok\n");
+	fprintf(stderr, "Ok\n");
 
 	return OSD_OK;
 }

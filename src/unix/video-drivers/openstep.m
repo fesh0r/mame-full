@@ -14,7 +14,6 @@
 #import <unistd.h> 
 #import <AppKit/AppKit.h>
 
-#import "xmame.h"
 #import "osdepend.h"
 #import "driver.h"
 #import "devices.h"

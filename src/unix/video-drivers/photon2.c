@@ -13,7 +13,6 @@
 #define __PH_C__
 
 #include <math.h>
-#include "xmame.h"
 #include "photon2.h"
 #include "input.h"
 #include "sysdep/sysdep_display.h"
@@ -75,7 +74,6 @@ int sysdep_init (void)
    // attach to default photon server 
    if(!(ph_ctx= PhAttach (NULL,NULL)))
    {
-      /* Don't use stderr_file here it isn't assigned a value yet ! */
       fprintf (stderr, "error: could not open display\n");
       return OSD_NOT_OK;
    }
@@ -168,7 +166,7 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
       (*ph_func[ph_video_mode].close_display)();
       if ((*ph_func[new_video_mode].create_display)(bitmap_depth) != OSD_OK)
       {
-         fprintf(stderr_file,
+         fprintf(stderr,
             "warning: could not create display for new photon-mode\n"
             "   Trying again with the old photon-mode\n");
          (*ph_func[new_video_mode].close_display)();
@@ -179,7 +177,7 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
                                       restore the videomode with dga */
             osd_exit();
             sysdep_close();
-            fprintf (stderr_file,
+            fprintf (stderr,
                "error: could not create new photon display while switching display modes\n");
             exit (1);              /* ugly, anyone know a better way ? */
          }
@@ -204,7 +202,7 @@ barf:
                              restore the videomode with dga */
    osd_exit();
    sysdep_close();
-   fprintf (stderr_file,
+   fprintf (stderr,
       "error: could not create new display while switching display modes\n");
    exit (1);              /* ugly, anyone know a better way ? */
 }

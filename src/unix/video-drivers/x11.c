@@ -31,17 +31,19 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
+   	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, x11_verify_mode, "Select X11 video mode (if compiled in):\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
 	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "root_window_id", "rid", rc_int, &root_window_id, "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
 	{ "run-in-root-window", "root", rc_bool, &run_in_root_window, "0", 0, 0, NULL, "Enable/disable running in root window" },
-	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
-   	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 #ifdef USE_DGA
 	{ NULL, NULL, rc_link, xf86_dga_opts, NULL, 0, 0, NULL, NULL },
+#endif
+#ifdef USE_XV
+	{ NULL, NULL, rc_link, xv_opts, NULL, 0, 0, NULL, NULL },
 #endif
 #ifdef USE_OPENGL
 	{ NULL, NULL, rc_link, xgl_opts, NULL, 0, 0, NULL, NULL },
@@ -52,6 +54,7 @@ struct rc_option sysdep_display_opts[] = {
 #ifdef USE_XIL
 	{ NULL, NULL, rc_link, xil_opts, NULL, 0, 0, NULL, NULL },
 #endif
+	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
@@ -206,7 +209,6 @@ int sysdep_display_init (void)
 
 	if(!(display = XOpenDisplay (NULL)))
 	{
-		/* Don't use stderr_file here it isn't assigned a value yet ! */
 		fprintf (stderr, "Could not open display\n");
 		return 1;
 	}
