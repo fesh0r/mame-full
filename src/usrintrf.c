@@ -16,7 +16,7 @@
 #include "state.h"
 
 #ifdef MESS
-  #include "mess.h"
+#include "mess.h"
 #include "mesintrf.h"
 #include "inputx.h"
 #endif
@@ -3102,36 +3102,87 @@ static void append_menu(int uistring, int action)
 }
 
 
+static int has_dipswitches(void)
+{
+	struct InputPort *in;
+	int num;
+
+	/* Determine if there are any dip switches */
+	num = 0;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if (in->type == IPT_DIPSWITCH_NAME && input_port_active(in))
+			num++;
+	}
+	return num > 0;
+}
+
+
+static int has_analog(void)
+{
+	struct InputPort *in;
+	int num;
+
+	/* Determine if there are any analog controls */
+	num = 0;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END && input_port_active(in))
+			num++;
+	}
+	return num > 0;
+}
+
+
+#ifdef MESS
+static int has_configurables(void)
+{
+	struct InputPort *in;
+	int num;
+
+	num = 0;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if (in->type == IPT_CONFIG_NAME && input_port_active(in))
+			num++;
+	}
+	return num > 0;
+}
+
+
+static int has_categories(void)
+{
+	struct InputPort *in;
+	int num;
+
+	num = 0;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if (in->category > 0 && input_port_active(in))
+			num++;
+	}
+	return num > 0;
+}
+#endif /* MESS */
+
+
 static void setup_menu_init(void)
 {
 	menu_total = 0;
 
 	append_menu(UI_inputgeneral, UI_DEFCODE);
 	append_menu(UI_inputspecific, UI_CODE);
+
+	if (has_dipswitches())
+		append_menu(UI_dipswitches, UI_SWITCH);
+
 #ifdef MESS
-	append_menu(UI_configuration, UI_CONFIGURATION);
+	if (has_configurables())
+		append_menu(UI_configuration, UI_CONFIGURATION);
+	if (has_categories())
+		append_menu(UI_categories, UI_CATEGORIES);
 #endif /* MESS */
 
-	/* Determine if there are any dip switches */
-	{
-		struct InputPort *in;
-		int num;
-
-		in = Machine->input_ports;
-
-		num = 0;
-		while (in->type != IPT_END)
-		{
-			if (in->type == IPT_DIPSWITCH_NAME && input_port_active(in))
-				num++;
-			in++;
-		}
-
-		if (num != 0)
-		{
-			append_menu(UI_dipswitches, UI_SWITCH);
-		}
-	}
 
 #ifdef XMAME
 	{
@@ -3144,27 +3195,8 @@ static void setup_menu_init(void)
 	}
 #endif
 
-	/* Determine if there are any analog controls */
-	{
-		struct InputPort *in;
-		int num;
-
-		in = Machine->input_ports;
-
-		num = 0;
-		while (in->type != IPT_END)
-		{
-			if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
-					&& !(!options.cheat && in->cheat))
-				num++;
-			in++;
-		}
-
-		if (num != 0)
-		{
-			append_menu(UI_analogcontrols, UI_ANALOG);
-		}
-	}
+	if (has_analog())
+		append_menu(UI_analogcontrols, UI_ANALOG);
 
 	/* Joystick calibration possible? */
 	if ((osd_joystick_needs_calibration()) != 0)
@@ -3319,15 +3351,16 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_CODE:
 			case UI_ANALOG:
 			case UI_CALIBRATE:
-			#ifndef MESS
+#ifndef MESS
 			case UI_STATS:
 			case UI_GAMEINFO:
-			#else
+#else
 			case UI_GAMEINFO:
 			case UI_IMAGEINFO:
 			case UI_FILEMANAGER:
 			case UI_TAPECONTROL:
 			case UI_CONFIGURATION:
+			case UI_CATEGORIES:
 #endif /* !MESS */
 			case UI_HISTORY:
 			case UI_CHEAT:

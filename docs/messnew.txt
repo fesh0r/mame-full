@@ -18,6 +18,13 @@ System Driver Changes:
 
 
 
+User Interface Changes:
+-----------------------
+- Fixed the input device categorization feature so that it was accesible from
+  the classic UI.  (bug #556)  [Nate Woods]
+
+
+
 Imgtool Changes:
 ----------------
 (none)

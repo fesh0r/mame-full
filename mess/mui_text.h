@@ -31,6 +31,7 @@ enum
 	UI_unmount,
 	UI_emptyslot,
 	UI_configuration,
+	UI_categories,
 	UI_quitfileselector,
 	UI_filespecification,	/* IMPORTANT: be careful to ensure that the following */
 	UI_cartridge,			/* device list matches the order found in device.h    */

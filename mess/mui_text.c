@@ -31,6 +31,7 @@ const char *mess_default_text[] =
 	"Unmount",
 	"[empty slot]",
 	"Configuration",
+	"Input Devices",
 	"Quit Fileselector",
 	"File Specification",	/* IMPORTANT: be careful to ensure that the following */
 	"Cartridge",		/* device list matches the order found in device.h    */
