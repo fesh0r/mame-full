@@ -1,21 +1,23 @@
-/******************************************************************
+/************************************************************************
  *  Mattel Intellivision + Keyboard Component Drivers
  *
  *  Frank Palazzolo
  *
  *  TBD:
- *		  Implement text scrolling and cursor (intvkbd)
- *		  Map game controllers correctly
- *		  Add tape support (intvkbd)
- *		  Add better runtime cart loading
- *		  Add runtime tape loading
- *		  Fix memory system workaround
+ *		    Map game controllers correctly (right controller + 16 way)
+ *		    Add tape support (intvkbd)
+ *		    Add runtime tape loading
+ *		    Fix memory system workaround
  *            (memory handler stuff in CP1610, debugger, and shared mem)
- *		  Switch to tilemap system
- *		  Finish STIC emulation
- *		  Cleanup
+ *		    STIC
+ *            collisions
+ *            reenable dirty support
+ *		    Cleanup
+ *			  Separate stic & vidhrdw better, get rid of *2 for kbd comp
+ *		    Add better runtime cart loading
+ *		    Switch to tilemap system
  *
- ******************************************************************/
+ ************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -66,10 +68,10 @@ static void intv_init_palette(unsigned char *sys_palette,
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	2*894000,	/* ???? */
+	3579545/2,	/* Colorburst/2 */
 	{ 100 },
-	{ input_port_0_r },
-	{ input_port_1_r },
+	{ intv_right_control_r },
+	{ intv_left_control_r },
 	{ 0 },
 	{ 0 },
 	{ 0 }
@@ -92,7 +94,7 @@ struct GfxLayout intv_gromlayout =
 struct GfxLayout intv_gramlayout =
 {
 	16, 16,
-	256,
+	64,
 	1,
 	{ 0 },
 	{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7},
@@ -128,25 +130,42 @@ static struct	GfxDecodeInfo intvkbd_gfxdecodeinfo[] =
 };
 
 INPUT_PORTS_START( intv )
-	PORT_START /* IN0 */	/* Right Player Controller */
-    PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE )
-	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE )
-    PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE )
+	PORT_START /* IN0 */	/* Right Player Controller Starts Here */
+    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE )
+    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE )
+    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE )
+    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE )
+    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6", KEYCODE_6, IP_JOY_NONE )
+    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE )
+    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE )
 
-	PORT_START /* IN1 */	/* Left Player Controller */
-    PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE )
-	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE )
-	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE )
+	PORT_START /* IN1 */
+    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE )
+    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_DEL, IP_JOY_NONE )
+    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE )
+    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "But1", KEYCODE_LCONTROL, IP_JOY_NONE )
+    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "But2", KEYCODE_Z, IP_JOY_NONE )
+    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "But3", KEYCODE_X, IP_JOY_NONE )
+    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "NA", KEYCODE_NONE, IP_JOY_NONE )
+
+	PORT_START /* IN2 */
+    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "UP", KEYCODE_UP, IP_JOY_NONE )
+    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "PGUP", KEYCODE_PGUP, IP_JOY_NONE )
+    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "PGDN", KEYCODE_PGDN, IP_JOY_NONE )
+    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DOWN", KEYCODE_DOWN, IP_JOY_NONE )
+    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "END", KEYCODE_END, IP_JOY_NONE )
+    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LEFT", KEYCODE_LEFT, IP_JOY_NONE )
+    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "HOME", KEYCODE_HOME, IP_JOY_NONE )
+
+	PORT_START /* IN3 */	/* Left Player Controller Starts Here */
+
+	PORT_START /* IN4 */
+
+	PORT_START /* IN5 */
+
 INPUT_PORTS_END
 
 /*
@@ -287,10 +306,7 @@ static MEMORY_READ16_START( readmem )
 	MEM16( 0x1000, 0x1fff, MRA16_ROM ),		/* Exec ROM, 10-bits wide */
 	MEM16( 0x3000, 0x37ff, MRA16_ROM ), 	/* GROM,     8-bits wide */
 	MEM16( 0x3800, 0x39ff, intv_gram_r ),	/* GRAM,     8-bits wide */
-	MEM16( 0x4800, 0x4801, intv_empty_r ),	/* needed to ignore playcable */
-	MEM16( 0x5000, 0x6fff, MRA16_ROM ),		/* Cartridge */
-	MEM16( 0x7000, 0x7001, intv_empty_r ),	/* needed to ignore keyboard */
-	MEM16( 0x7000, 0x7fff, MRA16_ROM ),		/* Cartridge */
+	MEM16( 0x4800, 0x7fff, MRA16_ROM ),		/* Cartridges? */
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
@@ -301,8 +317,7 @@ static MEMORY_WRITE16_START( writemem )
 	MEM16( 0x1000, 0x1fff, MWA16_ROM ), 	/* Exec ROM, 10-bits wide */
 	MEM16( 0x3000, 0x37ff, MWA16_ROM ),		/* GROM,     8-bits wide */
 	MEM16( 0x3800, 0x39ff, intv_gram_w ),	/* GRAM,     8-bits wide */
-	MEM16( 0x5000, 0x6fff, MWA16_ROM ),		/* Cartridge */
-	MEM16( 0x7000, 0x7fff, MWA16_ROM ),		/* Cartridge */
+	MEM16( 0x4800, 0x7fff, MWA16_ROM ),		/* Cartridges? */
 MEMORY_END
 
 static MEMORY_READ16_START( readmem_kbd )
@@ -313,8 +328,7 @@ static MEMORY_READ16_START( readmem_kbd )
 	MEM16( 0x1000, 0x1fff, MRA16_ROM ),		/* Exec ROM, 10-bits wide */
 	MEM16( 0x3000, 0x37ff, MRA16_ROM ), 	/* GROM,     8-bits wide */
 	MEM16( 0x3800, 0x39ff, intv_gram_r ),	/* GRAM,     8-bits wide */
-	MEM16( 0x4800, 0x4801, intv_empty_r ),	/* needed to ignore playcable */
-	MEM16( 0x5000, 0x6fff, MRA16_ROM ),		/* Cartridge */
+	MEM16( 0x4800, 0x6fff, MRA16_ROM ),		/* Cartridges? */
 	MEM16( 0x7000, 0x7fff, MRA16_ROM ),		/* Keyboard ROM */
 	MEM16( 0x8000, 0xbfff, intvkbd_dualport16_r ),	/* Dual-port RAM */
 MEMORY_END
@@ -327,7 +341,7 @@ static MEMORY_WRITE16_START( writemem_kbd )
 	MEM16( 0x1000, 0x1fff, MWA16_ROM ), 	/* Exec ROM, 10-bits wide */
 	MEM16( 0x3000, 0x37ff, MWA16_ROM ),		/* GROM,     8-bits wide */
 	MEM16( 0x3800, 0x39ff, intv_gram_w ),	/* GRAM,     8-bits wide */
-	MEM16( 0x5000, 0x6fff, MWA16_ROM ),		/* Cartridge */
+	MEM16( 0x4800, 0x6fff, MWA16_ROM ),		/* Cartridges? */
 	MEM16( 0x7000, 0x7fff, MWA16_ROM ),		/* Keyboard ROM */
 	MEM16( 0x8000, 0xbfff, intvkbd_dualport16_w ),	/* Dual-port RAM */
 MEMORY_END
@@ -355,13 +369,13 @@ static struct MachineDriver machine_driver_intv =
 		/* Main CPU (in Master System) */
 		{
 			CPU_CP1600,
-			894000,
+			3579545/4,  /* Colorburst/4 */
 			readmem,writemem,0,0,
 			intv_interrupt,1
 		}
 	},
 	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
+	59.92, DEFAULT_60HZ_VBLANK_DURATION,
 	1,						/* slices per frame */
 	intv_machine_init,		/* init machine */
 	NULL,					/* stop machine */
@@ -397,7 +411,7 @@ static struct MachineDriver machine_driver_intvkbd =
 		/* Main CPU (in Master System) */
 		{
 			CPU_CP1600,
-			894000,
+			3579545/4,  /* Colorburst/4 */
 			readmem_kbd,writemem_kbd,0,0,
 			intv_interrupt,1
 		},
@@ -410,7 +424,7 @@ static struct MachineDriver machine_driver_intvkbd =
         }
 	},
 	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
+	59.92, DEFAULT_60HZ_VBLANK_DURATION,
 	100,						/* slices per frame */
 	intv_machine_init,		/* init machine */
 	NULL,					/* stop machine */
@@ -442,43 +456,59 @@ static struct MachineDriver machine_driver_intvkbd =
 ROM_START(intv)
 	ROM_REGION(0x10000<<1,REGION_CPU1,0)
 		ROM_LOAD16_WORD( "exec.bin", 0x1000<<1, 0x2000, 0xcbce86f7 )
-		//ROM_LOAD16_WORD( "searsexc.bin", 0x1000<<1, 0x2000, 0xea552a22 )
 		ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, 0x683a4158 )
-		//ROM_LOAD16_WORD( "astro.bin",0x5000<<1, 0x2000, 0xfab2992c ) // need to move
-		//ROM_LOAD16_WORD( "tests.bin",0x5000<<1, 0x2000, 0x01010101 ) // need to move
-		//ROM_LOAD16_WORD( "testcart.bin",0x5000<<1, 0x2000, 0x10000000 ) // need to move
-		//ROM_CONTINUE(0x7000<<1,0x2000)
-		//ROM_LOAD16_WORD( "lunar_mp.bin",0x5000<<1, 0x2400, 0x6df64895 ) // need to move
-		//ROM_LOAD16_WORD( "take3.bin",0x5000<<1, 0x2600, 0x00010000 ) // need to move
+ROM_END
+
+ROM_START(intvsrs)
+	ROM_REGION(0x10000<<1,REGION_CPU1,0)
+		ROM_LOAD16_WORD( "searsexc.bin", 0x1000<<1, 0x2000, 0xea552a22 )
+		ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, 0x683a4158 )
 ROM_END
 
 ROM_START(intvkbd)
 	ROM_REGION(0x10000<<1,REGION_CPU1,0)
 		ROM_LOAD16_WORD( "exec.bin", 0x1000<<1, 0x2000, 0xcbce86f7 )
-		//ROM_LOAD16_WORD( "searsexc.bin", 0x1000<<1, 0x2000, 0xea552a22 )
 		ROM_LOAD16_BYTE( "grom.bin", (0x3000<<1)+1, 0x0800, 0x683a4158 )
-		//ROM_LOAD16_WORD( "astro.bin",0x5000<<1, 0x2000, 0xfab2992c ) // need to move
-		//ROM_LOAD16_WORD( "applemon.bin",0x5000<<1, 0x4000,  0x18ab6a61 ) // need to move
 		ROM_LOAD16_WORD( "024.u60", 0x7000<<1, 0x1000, 0x4f7998ec )
 		ROM_LOAD16_BYTE( "4d72.u62", 0x7800<<1, 0x0800, 0xaa57c594 )
 		ROM_LOAD16_BYTE( "4d71.u63", (0x7800<<1)+1, 0x0800, 0x069b2f0b )
 
 	ROM_REGION(0x10000,REGION_CPU2,0)
 		ROM_LOAD( "0104.u20",  0xc000, 0x1000, 0x5c6f1256)
-		//ROM_RELOAD( 0xe000, 0x1000 )
+		ROM_RELOAD( 0xe000, 0x1000 )
 		ROM_LOAD("cpu2d.u21",  0xd000, 0x1000, 0x2c2dba33)
-		//ROM_RELOAD( 0xf000, 0x1000 )
-		/* temporarily requiring the BASIC as well */
-		ROM_LOAD( "0106.u1",   0xe000, 0x1000, 0x5ae9546a)
-		ROM_LOAD( "0107.u2",   0xf000, 0x1000, 0x72ea3d34)
-
-		//ROM_LOAD( "mon.obj",   0x3000, 0x1000, 0x00000001)
+		ROM_RELOAD( 0xf000, 0x1000 )
 
 	ROM_REGION(0x00800,REGION_GFX1,0)
 		ROM_LOAD( "4c52.u34",  0x0000, 0x0800, 0xcbeb2e96)
+
 ROM_END
 
 static const struct IODevice io_intv[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"rom\0",            /* file extensions */
+		IO_RESET_CPU,		/* reset if file changed */
+		0,
+		intv_load_rom,		/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,               /* open */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,				/* tell */
+        NULL,               /* input */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL,				/* output_chunk */
+		NULL				/* correct CRC */
+    },
+    { IO_END }
+};
+
+static const struct IODevice io_intvsrs[] = {
 	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
@@ -524,14 +554,12 @@ static const struct IODevice io_intvkbd[] = {
 		NULL				/* correct CRC */
     },
 	{
-		IO_FLOPPY,			/* type */	/* Actually a tape drive! */
+		IO_CASSETTE,		/* type */	/* Actually a tape drive! */
 		1,					/* count */
 		"tap\0",       		/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		//intvkbd_id_tape,	/* id */
-		//intvkbd_load_tape,	/* init */
-		NULL,
-		NULL,
+		0,
+		NULL,				/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
 		NULL,               /* open */
@@ -549,5 +577,6 @@ static const struct IODevice io_intvkbd[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
-CONS( 1979, intv,     0,		intv,     intv, 	intv,	  "Mattel",    "Intellivision" )
-COMP( 1981, intvkbd,  0,		intvkbd,  intvkbd, 	intvkbd,  "Mattel",    "Intellivision Keyboard Component (Unreleased)" )
+CONSX( 1979, intv,     0,		intv,     intv, 	intv,	  "Mattel",    "Intellivision", GAME_NOT_WORKING )
+CONSX( 19??, intvsrs,  0,		intv,     intv, 	intv,	  "Mattel",    "Intellivision (Sears)", GAME_NOT_WORKING )
+COMPX( 1981, intvkbd,  0,		intvkbd,  intvkbd, 	intvkbd,  "Mattel",    "Intellivision Keyboard Component (Unreleased)", GAME_NOT_WORKING)

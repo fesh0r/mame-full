@@ -152,8 +152,8 @@ READ_HANDLER ( intvkbd_dualport8_msb_r )
 			case 0xcd:
 			case 0xce:
 			case 0xcf:
-				/* TMS9927 regs - TBD */
-				rv = 0x00;
+				/* TMS9927 regs */
+				rv = intvkbd_tms9927_r(offset-0xc0);
 				break;
 			default:
 				rv = (intvkbd_dualport_ram[offset]&0x0300)>>8;
@@ -172,7 +172,7 @@ static int tape_motor_mode;
 static char *tape_motor_mode_desc[8] =
 {
 	"IDLE", "IDLE", "IDLE", "IDLE",
-	"EJECT", "PLAY/RECORD", "REWIND", "FF???"
+	"EJECT", "PLAY/RECORD", "REWIND", "FF"
 };
 
 WRITE_HANDLER ( intvkbd_dualport8_msb_w )
@@ -270,7 +270,8 @@ WRITE_HANDLER ( intvkbd_dualport8_msb_w )
 			case 0xcd:
 			case 0xce:
 			case 0xcf:
-				/* TMS9927 regs - TBD */
+				/* TMS9927 regs */
+				intvkbd_tms9927_w(offset-0xc0, data);
 				break;
 			default:
 				logerror("%04X: Unknown write %02x to 0x40%02x\n",cpu_get_pc(),data,offset);
@@ -300,11 +301,6 @@ WRITE16_HANDLER( intv_gram_w )
 	//logerror("write: GRAM(%d) = %d\n",offset,data);
 }
 
-READ16_HANDLER( intv_empty_r )
-{
-	return 0xffff;
-}
-
 static unsigned char intv_ram8[256];
 
 READ16_HANDLER( intv_ram8_r )
@@ -329,11 +325,12 @@ READ16_HANDLER( intv_ram16_r )
 
 WRITE16_HANDLER( intv_ram16_w )
 {
+	//logerror("%g: WRITING TO GRAM offset = %d\n",timer_get_time(),offset);
 	//logerror("ram16_w(%x) = %x\n",offset,data);
 	intv_ram16[offset] = data&0xffff;
 }
 
-int intv_load_rom(int id)
+int intv_load_rom_file(int id, int required)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *romfile;
@@ -350,20 +347,23 @@ int intv_load_rom(int id)
 	UINT8 high_byte;
 	UINT8 low_byte;
 
-	UINT8 *memory = NULL;
+	UINT8 *memory = memory_region(REGION_CPU1);
 
 	if(!rom_name)
 	{
-		printf("intv requires cartridge!\n");
-		return INIT_FAIL;
+		if (required)
+		{
+			printf("intv requires cartridge!\n");
+			return INIT_FAIL;
+		}
+		else
+			printf("intvkbd legacy cartridge slot empty - ok\n");
 	}
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		return INIT_FAIL;
 	}
-
-	memory = memory_region(REGION_CPU1);
 
 	osd_fread(romfile,&temp,1);			/* header */
 	if (temp != 0xa8)
@@ -379,8 +379,6 @@ int intv_load_rom(int id)
 		return INIT_FAIL;
 	}
 
-	logerror("Reading %d segment(s)\n",num_segments);
-
 	for(i=0;i<num_segments;i++)
 	{
 		osd_fread(romfile,&start_seg,1);
@@ -388,10 +386,6 @@ int intv_load_rom(int id)
 
 		osd_fread(romfile,&end_seg,1);
 		end_address = end_seg*0x100 + 0xff;
-
-		logerror("  Segment #%d\n",i);
-		logerror("    Start address = 0x%04x\n",current_address);
-		logerror("    End address   = 0x%04x\n",end_address);
 
 		while(current_address <= end_address)
 		{
@@ -416,6 +410,23 @@ int intv_load_rom(int id)
 	return INIT_PASS;
 }
 
+int intv_load_rom(int id)
+{
+	/* First, initialize these as empty so that the intellivision
+	 * will think that the playcable and keyboard are not attached */
+	UINT8 *memory = memory_region(REGION_CPU1);
+
+	/* assume playcable is absent */
+	memory[0x4800<<1] = 0xff;
+	memory[(0x4800<<1)+1] = 0xff;
+
+	/* assume keyboard is absent */
+	memory[0x7000<<1] = 0xff;
+	memory[(0x7000<<1)+1] = 0xff;
+
+	return intv_load_rom_file(id, 1);
+}
+
 /* Set Reset and INTR/INTRM Vector */
 void init_intv(void)
 {
@@ -432,10 +443,10 @@ void intv_machine_init(void)
 	return;
 }
 
+
 void intv_interrupt_complete(int x)
 {
 	cpu_set_irq_line(0, CP1600_INT_INTRM, CLEAR_LINE);
-	sr1_int_pending = 0;
 }
 
 int intv_interrupt(void)
@@ -443,7 +454,52 @@ int intv_interrupt(void)
 	cpu_set_irq_line(0, CP1600_INT_INTRM, ASSERT_LINE);
 	sr1_int_pending = 1;
 	timer_set(TIME_NOW+TIME_IN_CYCLES(3791, 0), 0, intv_interrupt_complete);
+	stic_screenrefresh();
 	return 0;
+}
+
+static UINT8 controller_table[] =
+{
+	0x81, 0x41, 0x21, 0x82, 0x42, 0x22, 0x84, 0x44,
+	0x24, 0x88, 0x48, 0x28, 0xa0, 0x60, 0xc0, 0x00,
+	0x04, 0x16, 0x02, 0x13, 0x01, 0x19, 0x08, 0x1c
+};
+
+READ_HANDLER( intv_right_control_r )
+{
+	UINT8 rv = 0x00;
+
+	int bit, byte;
+	int value;
+
+	for(byte=0; byte<3; byte++)
+	{
+		switch(byte)
+		{
+			case 0:
+				value = input_port_0_r(0);
+				break;
+			case 1:
+				value = input_port_1_r(0);
+				break;
+			case 2:
+				value = input_port_2_r(0);
+				break;
+		}
+		for(bit=7; bit>=0; bit--)
+		{
+			if (value & (1<<bit))
+			{
+				rv |= controller_table[byte*8+(7-bit)];
+			}
+		}
+	}
+	return rv ^ 0xff;
+}
+
+READ_HANDLER( intv_left_control_r )
+{
+	return 0xff;
 }
 
 /* Intellivision console + keyboard component */
@@ -454,8 +510,43 @@ void init_intvkbd(void)
 
 int intvkbd_load_rom (int id)
 {
-	if (id == 0) /* Normal Intellivision Cartridges */
-		return intv_load_rom(id);
+	if (id == 0) /* Legacy cartridge slot */
+	{
+		/* First, initialize these as empty so that the intellivision
+		 * will think that the playcable is not attached */
+		UINT8 *memory = memory_region(REGION_CPU1);
+
+		/* assume playcable is absent */
+		memory[0x4800<<1] = 0xff;
+		memory[(0x4800<<1)+1] = 0xff;
+
+		intv_load_rom_file(id, 0);
+	}
+
+	if (id == 1) /* Keyboard component cartridge slot */
+	{
+		const char *rom_name = device_filename(IO_CARTSLOT,id);
+    	FILE *romfile;
+
+		UINT8 *memory = memory_region(REGION_CPU2);
+
+		if(!rom_name)
+		{
+			printf("intvkbd cartridge slot empty - ok\n");
+			return INIT_PASS;
+		}
+
+		if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+		{
+			return INIT_FAIL;
+		}
+
+		/* Assume an 8K cart, like BASIC */
+		osd_fread(romfile,&memory[0xe000],0x2000);
+
+		osd_fclose(romfile);
+	}
 
 	return INIT_PASS;
+
 }

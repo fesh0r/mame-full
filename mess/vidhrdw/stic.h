@@ -27,5 +27,9 @@ extern int intv_color_stack_offset;
 extern int intv_color_stack[];
 extern int intv_stic_handshake;
 extern int intv_border_color;
+extern int intv_col_delay;
+extern int intv_row_delay;
+extern int intv_left_edge_inhibit;
+extern int intv_top_edge_inhibit;
 
 #endif

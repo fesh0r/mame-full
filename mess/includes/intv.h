@@ -31,6 +31,11 @@ WRITE16_HANDLER( intv_ram8_w );
 READ16_HANDLER( intv_ram16_r );
 WRITE16_HANDLER( intv_ram16_w );
 
+void stic_screenrefresh();
+
+READ_HANDLER( intv_right_control_r );
+READ_HANDLER( intv_left_control_r );
+
 /* for the console + keyboard component... */
 extern int intvkbd_text_blanked;
 
@@ -43,6 +48,9 @@ READ_HANDLER ( intvkbd_dualport8_lsb_r );
 WRITE_HANDLER ( intvkbd_dualport8_lsb_w );
 READ_HANDLER ( intvkbd_dualport8_msb_r );
 WRITE_HANDLER ( intvkbd_dualport8_msb_w );
+
+READ_HANDLER ( intvkbd_tms9927_r );
+WRITE_HANDLER ( intvkbd_tms9927_w );
 
 /* in sndhrdw/intv.c */
 READ16_HANDLER( AY8914_directread_port_0_lsb_r );
