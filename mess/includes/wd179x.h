@@ -96,7 +96,7 @@ typedef struct {
 
 	UINT8	status; 				/* status register */
 	UINT8	status_drq; 			/* status register data request bit */
-	UINT8	status_ipl; 			/* status register toggle index pulse bit */
+	/*UINT8	status_ipl;*/ 			/* status register toggle index pulse bit */
 	UINT8	busy_count; 			/* how long to keep busy bit set */
 
 	UINT8	buffer[6144];			/* I/O buffer (holds up to a whole track) */
@@ -113,6 +113,7 @@ typedef struct {
 	UINT8	ddam;					/* ddam of sector found - used when reading */
 	UINT8	sector_data_id;
 	void	*timer;
+	int		data_direction;
 }	WD179X;
 
 extern void wd179x_init(void (*callback)(int));
@@ -128,6 +129,8 @@ void wd179x_set_drive(UINT8);
 void wd179x_set_side(UINT8);
 /* set density */
 void wd179x_set_density(DENSITY);
+
+void	wd179x_reset(void);
 
 extern WRITE_HANDLER ( wd179x_command_w );
 extern WRITE_HANDLER ( wd179x_track_w );
