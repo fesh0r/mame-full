@@ -359,17 +359,6 @@ void GetColumnOrder(int order[]);
 void SetColumnShown(int shown[]);
 void GetColumnShown(int shown[]);
 
-#ifdef MESS
-void SetMessColumnWidths(int widths[]);
-void GetMessColumnWidths(int widths[]);
-
-void SetMessColumnOrder(int order[]);
-void GetMessColumnOrder(int order[]);
-
-void SetMessColumnShown(int shown[]);
-void GetMessColumnShown(int shown[]);
-#endif
-
 void SetSplitterPos(int splitterId, int pos);
 int  GetSplitterPos(int splitterId);
 
@@ -398,11 +387,6 @@ void SetRomDirs(const char* paths);
 
 const char* GetSampleDirs(void);
 void  SetSampleDirs(const char* paths);
-
-#ifdef MESS
-const char* GetSoftwareDirs(void);
-void  SetSoftwareDirs(const char* paths);
-#endif
 
 const char * GetIniDir(void);
 void SetIniDir(const char *path);

@@ -669,6 +669,10 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snorotate",                pOpts->norotate        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sror",                     pOpts->ror             ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%srol",                     pOpts->rol             ? "" : "no");
+	if (pOpts->auto_ror)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -autoror");
+	if (pOpts->auto_rol)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -autorol");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",                   pOpts->flipx           ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",                   pOpts->flipy           ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -debug_resolution %s",       pOpts->debugres); 
@@ -716,6 +720,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)]," -skip_disclaimer");
 	if (GetShowGameInfo() == FALSE)
 		sprintf(&pCmdLine[strlen(pCmdLine)]," -skip_gameinfo");
+	if (GetHighPriority() == TRUE)
+		sprintf(&pCmdLine[strlen(pCmdLine)]," -high_priority");
 }
 
 static BOOL WaitWithMessageLoop(HANDLE hEvent)
@@ -3649,6 +3655,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		if (DialogBox(GetModuleHandle(NULL),
 					  MAKEINTRESOURCE(IDD_RESET), hMain, ResetDialogProc) == TRUE)
         {
+			// these may have been changed
+			SaveDefaultOptions();
             DestroyWindow( hwnd );
 			PostQuitMessage(0);
         }

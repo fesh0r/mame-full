@@ -10,7 +10,7 @@
 
 ***************************************************************************/
 
-#include "win32ui.c"
+#include "win32ui.h"
 
 int WINAPI WinMain(HINSTANCE    hInstance,
                    HINSTANCE    hPrevInstance,

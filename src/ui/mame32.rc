@@ -241,8 +241,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,66,0,0
- PRODUCTVERSION 0,66,0,0
+ FILEVERSION 0,67,0,0
+ PRODUCTVERSION 0,67,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -559,12 +559,9 @@ BEGIN
                     HIDC_KEEPASPECT
     CONTROL         "Throttle",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,16,81,77,9,0,HIDC_THROTTLE
-    GROUPBOX        "Rotation",IDC_STATIC,5,105,105,75
-    COMBOBOX        IDC_ROTATE,16,118,83,72,CBS_DROPDOWNLIST | WS_VSCROLL |
+    GROUPBOX        "Rotation",IDC_STATIC,5,120,105,60
+    COMBOBOX        IDC_ROTATE,15,130,83,72,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP,0,HIDC_ROTATE
-    CONTROL         "Do not apply rotation",IDC_NOROTATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,135,80,10,0,
-                    HIDC_NOROTATE
     CONTROL         "Flip screen upside-down",IDC_FLIPY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,148,90,10,0,HIDC_FLIPY
     CONTROL         "Flip screen left-right",IDC_FLIPX,"Button",
@@ -1023,6 +1020,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,120,65,10,0,
                     HIDC_SHOW_GAME_INFO
 #endif
+    CONTROL         "&High thread priority",IDC_HIGH_PRIORITY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,135,75,10,0,
+                    HIDC_HIGH_PRIORITY
     DEFPUSHBUTTON   "&OK",IDOK,50,155,50,14
     PUSHBUTTON      "&Cancel",IDCANCEL,105,155,50,14
 END
@@ -1104,14 +1104,6 @@ BEGIN
         RIGHTMARGIN, 289
         TOPMARGIN, 7
         BOTTOMMARGIN, 123
-    END
-
-    IDD_HELP, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 329
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 177
     END
 
     IDD_DIRECTX, DIALOG

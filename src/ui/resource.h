@@ -224,7 +224,6 @@
 #define IDC_KEEPASPECT                  1139
 #define IDC_MATCHREFRESH                1140
 #define IDC_SYNCREFRESH                 1141
-#define IDC_NOROTATE                    1142
 #define IDC_USE_MOUSE                   1143
 #define IDC_THROTTLE                    1144
 #define IDC_RESDEPTH                    1145

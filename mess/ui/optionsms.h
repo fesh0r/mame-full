@@ -3,6 +3,18 @@
 
 #include "ui/options.h"
 
+void SetMessColumnWidths(int widths[]);
+void GetMessColumnWidths(int widths[]);
+
+void SetMessColumnOrder(int order[]);
+void GetMessColumnOrder(int order[]);
+
+void SetMessColumnShown(int shown[]);
+void GetMessColumnShown(int shown[]);
+
+const char* GetSoftwareDirs(void);
+void  SetSoftwareDirs(const char* paths);
+
 void SetCrcDir(const char *dir);
 const char *GetCrcDir(void);
 

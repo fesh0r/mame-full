@@ -46,7 +46,6 @@
 #define HIDC_LOG                        0x809e03f7    // IDD_PROP_MISC
 #define HIDC_MATCHREFRESH               0x809c04e1    // IDD_PROP_ADVANCED
 #define HIDC_MAXIMIZE                   0x809a0472    // IDD_PROP_DISPLAY
-#define HIDC_NOROTATE                   0x809a0476    // IDD_PROP_DISPLAY
 #define HIDC_OLD_TIMING                 0x809e049a    // IDD_PROP_MISC
 #define HIDC_OVERLAYS                   0x809e03fb    // IDD_PROP_MISC
 #define HIDC_PAUSEBRIGHT                0x809a049c    // IDD_PROP_DISPLAY

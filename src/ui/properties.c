@@ -201,7 +201,6 @@ static DWORD dwHelpIDs[] =
 	IDC_SLEEP,				HIDC_SLEEP,
 	IDC_MATCHREFRESH,       HIDC_MATCHREFRESH,
 	IDC_MAXIMIZE,           HIDC_MAXIMIZE,
-	IDC_NOROTATE,           HIDC_NOROTATE,
 	IDC_OVERLAYS,			HIDC_OVERLAYS,
 	IDC_PROP_RESET,         HIDC_PROP_RESET,
 	IDC_REFRESH,            HIDC_REFRESH,
@@ -472,7 +471,7 @@ static char *GameInfoCPU(UINT nIndex)
 					drv.cpu[i].cpu_clock / 1000,
 					drv.cpu[i].cpu_clock % 1000);
 
-		if (drv.cpu[i].cpu_type & CPU_AUDIO_CPU)
+		if (drv.cpu[i].cpu_flags & CPU_AUDIO_CPU)
 			strcat(buf, " (sound)");
 
 		strcat(buf, "\n");
@@ -1492,12 +1491,18 @@ static void AssignRotate(HWND hWnd)
 {
 	pGameOpts->ror = 0;
 	pGameOpts->rol = 0;
+	pGameOpts->norotate = 0;
+	pGameOpts->auto_ror = 0;
+	pGameOpts->auto_rol = 0;
 
 	switch (g_nRotateIndex)
 	{
-		case 1:  pGameOpts->ror = 1; break;
-		case 2:  pGameOpts->rol = 1; break;
-		default: break;
+	case 1 : pGameOpts->ror = 1; break;
+	case 2 : pGameOpts->rol = 1; break;
+	case 3 : pGameOpts->norotate = 1; break;
+	case 4 : pGameOpts->auto_ror = 1; break;
+	case 5 : pGameOpts->auto_rol = 1; break;
+	default : break;
 	}
 }
 
@@ -1553,16 +1558,17 @@ static void ResetDataMap(void)
 		pGameOpts->ctrlr = strdup("Standard");
 	}
 
-	if (pGameOpts->ror == 0 && pGameOpts->rol == 0)
-		g_nRotateIndex = 0;
-	else
-	if (pGameOpts->ror == 1 && pGameOpts->rol == 0)
+	g_nRotateIndex = 0;
+	if (pGameOpts->ror == TRUE && pGameOpts->rol == FALSE)
 		g_nRotateIndex = 1;
-	else
-	if (pGameOpts->ror == 0 && pGameOpts->rol == 1)
+	if (pGameOpts->ror == FALSE && pGameOpts->rol == TRUE)
 		g_nRotateIndex = 2;
-	else
-		g_nRotateIndex = 0;
+	if (pGameOpts->norotate)
+		g_nRotateIndex = 3;
+	if (pGameOpts->auto_ror)
+		g_nRotateIndex = 4;
+	if (pGameOpts->auto_rol)
+		g_nRotateIndex = 5;
 
 	g_nVolumeIndex = pGameOpts->attenuation + 32;
 	switch (pGameOpts->samplerate)
@@ -1629,7 +1635,6 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_BRIGHTCORRECTDISP,DM_NONE, CT_NONE,  NULL,  DM_DOUBLE, &pGameOpts->f_bright_correct, 0, 0, 0);
 	DataMapAdd(IDC_PAUSEBRIGHT,   DM_INT,  CT_SLIDER,   &g_nPauseBrightIndex,      DM_DOUBLE, &pGameOpts->f_pause_bright,      0, 0, AssignPauseBright);
 	DataMapAdd(IDC_PAUSEBRIGHTDISP,DM_NONE, CT_NONE,  NULL,  DM_DOUBLE, &pGameOpts->f_pause_bright, 0, 0, 0);
-	DataMapAdd(IDC_NOROTATE,      DM_BOOL, CT_BUTTON,   &pGameOpts->norotate,      DM_BOOL, &pGameOpts->norotate,      0, 0, 0);
 	DataMapAdd(IDC_ROTATE,        DM_INT,  CT_COMBOBOX, &g_nRotateIndex,           DM_INT, &pGameOpts->ror, 0, 0, AssignRotate);
 	DataMapAdd(IDC_FLIPX,         DM_BOOL, CT_BUTTON,   &pGameOpts->flipx,         DM_BOOL, &pGameOpts->flipx,         0, 0, 0);
 	DataMapAdd(IDC_FLIPY,         DM_BOOL, CT_BUTTON,   &pGameOpts->flipy,         DM_BOOL, &pGameOpts->flipy,         0, 0, 0);
@@ -2246,9 +2251,12 @@ static void InitializeRotateUI(HWND hwnd)
 
 	if (hCtrl)
 	{
-		ComboBox_AddString(hCtrl, "None");           /* 0 */
-		ComboBox_AddString(hCtrl, "Clockwise");      /* 1 */
-		ComboBox_AddString(hCtrl, "Anti-clockwise"); /* 2 */
+		ComboBox_AddString(hCtrl, "Default");             // 0
+		ComboBox_AddString(hCtrl, "Clockwise");           // 1
+		ComboBox_AddString(hCtrl, "Anti-clockwise");      // 2
+		ComboBox_AddString(hCtrl, "None");                // 3
+		ComboBox_AddString(hCtrl, "Auto clockwise");      // 4
+		ComboBox_AddString(hCtrl, "Auto anti-clockwise"); // 5
 	}
 }
 

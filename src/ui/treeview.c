@@ -542,8 +542,9 @@ void CreateCPUFolders(int parent_index)
 {
 	int i,jj;
 	int nGames = GetNumGames();
-	int start_folder = numFolders;
+	int nFolder = numFolders;
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
+	LPTREEFOLDER map[CPU_COUNT];
 
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);
@@ -551,9 +552,21 @@ void CreateCPUFolders(int parent_index)
 	for (i=1;i<CPU_COUNT;i++)
 	{
 		LPTREEFOLDER lpTemp;
+
+		for (jj = 1; jj < i; jj++)
+			if (!strcmp(cputype_name(i), cputype_name(jj)))
+				break;
+
+		if (i != jj)
+		{
+			map[i] = map[jj];
+			continue;
+		}
+
 		lpTemp = NewFolder(cputype_name(i), next_folder_id++, parent_index, IDI_CPU,
 						   GetFolderFlags(numFolders));
 		AddFolder(lpTemp);
+		map[i] = treeFolders[nFolder++];
 	}
 
 	for (jj = 0; jj < nGames; jj++)
@@ -566,7 +579,7 @@ void CreateCPUFolders(int parent_index)
 			if (drv.cpu[n].cpu_type != CPU_DUMMY)
 			{
 				// cpu type #'s are one-based
-				AddGame(treeFolders[start_folder + drv.cpu[n].cpu_type-1],jj);
+				AddGame(map[drv.cpu[n].cpu_type],jj);
 			}
 	}
 }
@@ -575,8 +588,9 @@ void CreateSoundFolders(int parent_index)
 {
 	int i,jj;
 	int nGames = GetNumGames();
-	int start_folder = numFolders;
+	int nFolder = numFolders;
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
+	LPTREEFOLDER map[SOUND_COUNT];
 
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);
@@ -598,9 +612,21 @@ void CreateSoundFolders(int parent_index)
 		extern struct snd_interface sndintf[];
 
 		LPTREEFOLDER lpTemp;
+
+		for (jj = 1; jj < i; jj++)
+			if (!strcmp(soundtype_name(i), soundtype_name(jj)))
+				break;
+
+		if (i != jj)
+		{
+			map[i] = map[jj];
+			continue;
+		}
+
 		lpTemp = NewFolder(sndintf[i].name, next_folder_id++, parent_index, IDI_CPU,
 						   GetFolderFlags(numFolders));
 		AddFolder(lpTemp);
+		map[i] = treeFolders[nFolder++];
 	}
 
 	for (jj = 0; jj < nGames; jj++)
@@ -613,7 +639,7 @@ void CreateSoundFolders(int parent_index)
 			if (drv.sound[n].sound_type != SOUND_DUMMY)
 			{
 				// sound type #'s are one-based
-				AddGame(treeFolders[start_folder + drv.sound[n].sound_type-1],jj);
+				AddGame(map[drv.sound[n].sound_type],jj);
 			}
 	}
 }
@@ -1997,4 +2023,3 @@ int GetTreeViewIconIndex(int icon_id)
 }
 
 /* End of source file */
-
