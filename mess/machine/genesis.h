@@ -16,8 +16,8 @@ WRITE16_HANDLER ( genesis_ctrl_w );
 /*READ_HANDLER  ( cartridge_ram_r );
 WRITE_HANDLER ( cartridge_ram_w );*/
 
-//#define SINGLE_BYTE_ACCESS(d) (((d & 0xffff0000) == 0xff000000) || \
-//			       ((d & 0xffff0000) == 0x00ff0000))
+/* #define SINGLE_BYTE_ACCESS(d) (((d & 0xffff0000) == 0xff000000) ||
+			       ((d & 0xffff0000) == 0x00ff0000))				  */
 
 #ifdef LSB_FIRST
 #define ACTUAL_BYTE_ADDRESS(a) ((a) ^ 1)
