@@ -20,7 +20,6 @@
 
 #define MAX_PIXELS 850000  /* Maximum of pixels we can remember */
 
-#define vector_vh_update vector_vh_screenrefresh
 
 extern int translucency;  /* translucent vectors  */
 

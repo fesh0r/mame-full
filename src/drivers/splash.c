@@ -233,7 +233,7 @@ static struct MSM5205interface splash_msm5205_interface =
 };
 
 
-static struct MachineDriver machine_driver_splash =
+static const struct MachineDriver machine_driver_splash =
 {
 	{
 		{

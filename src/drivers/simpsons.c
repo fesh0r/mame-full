@@ -288,7 +288,7 @@ static int simpsons_irq(void)
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver_simpsons =
+static const struct MachineDriver machine_driver_simpsons =
 {
 	/* basic machine hardware */
 	{

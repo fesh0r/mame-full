@@ -1,10 +1,8 @@
-/***************************************************************************
+/*
 
-  1943
-
-  Driver provided by Paul Leaman
-
-***************************************************************************/
+TODO: 1943 is almost identical to GunSmoke (one more scrolling playfield). We
+      should merge the two drivers.
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -12,17 +10,15 @@
 
 
 
-extern unsigned char *c1943_fgvideoram;
-
-WRITE_HANDLER( c1943_fgvideoram_w );
-WRITE_HANDLER( c1943_bg1_scrollx_w );
-WRITE_HANDLER( c1943_bg2_scrollx_w );
-WRITE_HANDLER( c1943_bg2_scrolly_w );
-WRITE_HANDLER( c1943_c804_w );
-WRITE_HANDLER( c1943_d806_w );
+extern unsigned char *c1943_scrollx;
+extern unsigned char *c1943_scrolly;
+extern unsigned char *c1943_bgscrolly;
+WRITE_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
+WRITE_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
 void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int c1943_vh_start(void);
+void c1943_vh_stop(void);
 
 
 
@@ -59,10 +55,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc804, 0xc804, c1943_c804_w },	/* ROM bank switch, screen flip */
 	{ 0xc806, 0xc806, watchdog_reset_w },
 	{ 0xc807, 0xc807, MWA_NOP }, 	/* protection chip write (we don't emulate it) */
-	{ 0xd000, 0xd7ff, c1943_fgvideoram_w, &c1943_fgvideoram },
-	{ 0xd800, 0xd801, c1943_bg2_scrollx_w },
-	{ 0xd802, 0xd802, c1943_bg2_scrolly_w },
-	{ 0xd803, 0xd804, c1943_bg1_scrollx_w },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd800, 0xd801, MWA_RAM, &c1943_scrolly },
+	{ 0xd802, 0xd802, MWA_RAM, &c1943_scrollx },
+	{ 0xd803, 0xd804, MWA_RAM, &c1943_bgscrolly },
 	{ 0xd806, 0xd806, c1943_d806_w },	/* sprites, bg1, bg2 enable */
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
@@ -261,7 +258,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_1943 =
+static const struct MachineDriver machine_driver_1943 =
 {
 	/* basic machine hardware */
 	{
@@ -291,7 +288,7 @@ static struct MachineDriver machine_driver_1943 =
 	VIDEO_TYPE_RASTER,
 	0,
 	c1943_vh_start,
-	0,
+	c1943_vh_stop,
 	c1943_vh_screenrefresh,
 
 	/* sound hardware */
@@ -348,11 +345,9 @@ ROM_START( 1943 )
 	ROM_LOAD( "1943.12",      0x30000, 0x8000, 0x5e7efdb7 )
 	ROM_LOAD( "1943.13",      0x38000, 0x8000, 0x1143829a )
 
-	ROM_REGION( 0x8000,  REGION_GFX5 )	/* tilemaps */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* tilemaps */
 	ROM_LOAD( "1943.14",      0x0000, 0x8000, 0x4d3c6401 )	/* front background */
-
-	ROM_REGION( 0x8000,  REGION_GFX6 )	/* tilemaps */
-	ROM_LOAD( "1943.23",      0x0000, 0x8000, 0xa52aecbd )	/* back background */
+	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 
 	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
@@ -405,11 +400,9 @@ ROM_START( 1943j )
 	ROM_LOAD( "1943.12",      0x30000, 0x8000, 0x5e7efdb7 )
 	ROM_LOAD( "1943.13",      0x38000, 0x8000, 0x1143829a )
 
-	ROM_REGION( 0x8000,  REGION_GFX5 )	/* tilemaps */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* tilemaps */
 	ROM_LOAD( "1943.14",      0x0000, 0x8000, 0x4d3c6401 )	/* front background */
-
-	ROM_REGION( 0x8000,  REGION_GFX6 )	/* tilemaps */
-	ROM_LOAD( "1943.23",      0x0000, 0x8000, 0xa52aecbd )	/* back background */
+	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 
 	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
@@ -462,11 +455,9 @@ ROM_START( 1943kai )
 	ROM_LOAD( "1943kai.12",   0x30000, 0x8000, 0x0f50c001 )
 	ROM_LOAD( "1943kai.13",   0x38000, 0x8000, 0xfd1acf8e )
 
-	ROM_REGION( 0x8000,  REGION_GFX5 )	/* tilemaps */
+	ROM_REGION( 0x10000, REGION_GFX5 )	/* tilemaps */
 	ROM_LOAD( "1943kai.14",   0x0000, 0x8000, 0xcf0f5a53 )	/* front background */
-
-	ROM_REGION( 0x8000,  REGION_GFX6 )	/* tilemaps */
-	ROM_LOAD( "1943kai.23",   0x0000, 0x8000, 0x17f77ef9 )	/* back background */
+	ROM_LOAD( "1943kai.23",   0x8000, 0x8000, 0x17f77ef9 )	/* back background */
 
 	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "bmk01.bin",    0x0000, 0x0100, 0xe001ea33 )	/* red component */
@@ -485,6 +476,6 @@ ROM_END
 
 
 
-GAME( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)" )
-GAME( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)" )
-GAME( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai" )
+GAMEX( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai", GAME_NO_COCKTAIL )

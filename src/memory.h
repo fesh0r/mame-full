@@ -204,10 +204,6 @@ constants for each address space type we support.
 #define ABITS1_26LEW	14
 #define ABITS2_26LEW	10
 #define ABITS_MIN_26LEW 2			/* minimum memory block is 4 bytes */
-/* 27 bits address (big endian - dword access) */
-#define ABITS1_27BEW	16
-#define ABITS2_27BEW	9
-#define ABITS_MIN_27BEW 2			/* minimum memory block is 4 bytes */
 /* 29 bits address (dword access) */
 #define ABITS1_29		19
 #define ABITS2_29		8
@@ -257,7 +253,7 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 /* ----- opcode reading ----- */
 #define cpu_readop(A)		(OP_ROM[A])
 #define cpu_readop16(A) 	READ_WORD(&OP_ROM[A])
-#define cpu_readop_arg(A)	(OP_RAM[A])
+#define cpu_readop_arg(A)   (OP_RAM[A])
 #define cpu_readop_arg16(A) READ_WORD(&OP_RAM[A])
 
 /* ----- bank switching for CPU cores ----- */
@@ -275,8 +271,7 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 #define change_pc24(pc) 	 change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
 #define change_pc24bew(pc)	 change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
 #define change_pc26lew(pc)	 change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
-#define change_pc27bew(pc)	 change_pc_generic(pc, ABITS2_27BEW, ABITS_MIN_27BEW, 0, cpu_setOPbase27bew)
-#define change_pc29(pc) 	 change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
+#define change_pc29(pc)      change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
 #define change_pc32(pc) 	 change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
 #define change_pc32lew(pc)	 change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
 
@@ -292,7 +287,7 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 		if (ophw == bank)								\
 		{												\
 			ophw = 0xff;								\
-			cpu_setOPbase16(cpu_get_pc());				\
+			cpu_set_op_base(cpu_get_pc());				\
 		}												\
 	}													\
 }
@@ -324,9 +319,6 @@ READ_HANDLER(cpu_readmem24bew_dword);
 READ_HANDLER(cpu_readmem26lew);
 READ_HANDLER(cpu_readmem26lew_word);
 READ_HANDLER(cpu_readmem26lew_dword);
-READ_HANDLER(cpu_readmem27bew);
-READ_HANDLER(cpu_readmem27bew_word);
-READ_HANDLER(cpu_readmem27bew_dword);
 READ_HANDLER(cpu_readmem29);
 READ_HANDLER(cpu_readmem29_word);
 READ_HANDLER(cpu_readmem29_dword);
@@ -352,9 +344,6 @@ WRITE_HANDLER(cpu_writemem24bew_dword);
 WRITE_HANDLER(cpu_writemem26lew);
 WRITE_HANDLER(cpu_writemem26lew_word);
 WRITE_HANDLER(cpu_writemem26lew_dword);
-WRITE_HANDLER(cpu_writemem27bew);
-WRITE_HANDLER(cpu_writemem27bew_word);
-WRITE_HANDLER(cpu_writemem27bew_dword);
 WRITE_HANDLER(cpu_writemem29);
 WRITE_HANDLER(cpu_writemem29_word);
 WRITE_HANDLER(cpu_writemem29_dword);
@@ -388,7 +377,6 @@ void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
 void cpu_setOPbase24bew(int pc);
 void cpu_setOPbase26lew(int pc);
-void cpu_setOPbase27bew(int pc);
 void cpu_setOPbase29(int pc);
 void cpu_setOPbase32(int pc);
 void cpu_setOPbase32lew(int pc);

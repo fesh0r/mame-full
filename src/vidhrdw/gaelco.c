@@ -168,11 +168,11 @@ static void gaelco_sort_sprites(void)
 	sprite_count[2] = 0;
 	sprite_count[3] = 0;
 	sprite_count[4] = 0;
-	
+
 	for (i = 6; i < 0x1000 - 6; i += 8){
 		int color = (READ_WORD(&gaelco_spriteram[i+4]) & 0x7e00) >> 9;
 		int priority = (READ_WORD(&gaelco_spriteram[i]) & 0x3000) >> 12;
-		
+
 		/* palettes 0x38-0x3f are used for high priority sprites in Big Karnak */
 		if (color >= 0x38){
 			sprite_table[4][sprite_count[4]] = i;
@@ -285,7 +285,7 @@ void maniacsq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	gaelco_draw_sprites(bitmap,1);
 
 	tilemap_draw(bitmap,pant[1],0);
-	tilemap_draw(bitmap,pant[0],0);	
+	tilemap_draw(bitmap,pant[0],0);
 	gaelco_draw_sprites(bitmap,0);
 }
 

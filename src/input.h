@@ -110,7 +110,10 @@ INT8 code_read_hex_async(void);
 #define SEQ_MAX 16
 
 typedef InputCode InputSeq[SEQ_MAX];
-#define seq_get_1(a) (*a)[0]
+
+INLINE InputCode seq_get_1(InputSeq* a) {
+	return (*a)[0];
+}
 
 void seq_set_0(InputSeq* seq);
 void seq_set_1(InputSeq* seq, InputCode code);

@@ -106,9 +106,9 @@ static WRITE_HANDLER( cps1_coinctrl_w )
 	if ((data & 0x00ff0000) == 0)
 	{
 		/* mercs sets bit 0 */
-		osd_led_w(0,(data & 0x02) >> 1);
-		osd_led_w(1,(data & 0x04) >> 2);
-		osd_led_w(2,(data & 0x08) >> 3);
+		set_led_status(0,data & 0x02);
+		set_led_status(1,data & 0x04);
+		set_led_status(2,data & 0x08);
 	}
 }
 
@@ -3558,7 +3558,7 @@ static struct OKIM6295interface okim6295_interface_7576 =
 ********************************************************************/
 
 #define MACHINE_DRIVER(DRVNAME,CPU,CPU_FRQ,OKI_FREQ,NVRAM)					\
-static struct MachineDriver machine_driver_##DRVNAME =						\
+static const struct MachineDriver machine_driver_##DRVNAME =						\
 {																			\
 	/* basic machine hardware */											\
 	{																		\
@@ -3600,7 +3600,7 @@ static struct MachineDriver machine_driver_##DRVNAME =						\
 	NVRAM																	\
 };
 
-static struct MachineDriver machine_driver_qsound =
+static const struct MachineDriver machine_driver_qsound =
 {
 	{
 		{

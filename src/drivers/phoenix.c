@@ -49,15 +49,12 @@ read-only:
 #include "driver.h"
 
 
-
-READ_HANDLER( phoenix_videoram_r );
-WRITE_HANDLER( phoenix_videoram_w );
+READ_HANDLER( phoenix_paged_ram_r );
+WRITE_HANDLER( phoenix_paged_ram_w );
 WRITE_HANDLER( phoenix_videoreg_w );
-WRITE_HANDLER( pleiads_videoreg_w );
 WRITE_HANDLER( phoenix_scroll_w );
-READ_HANDLER( pleiads_input_port_0_r );
+READ_HANDLER( phoenix_input_port_0_r );
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  phoenix_vh_start(void);
 void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -75,45 +72,32 @@ void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
 
-static struct MemoryReadAddress phoenix_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
-	{ 0x7000, 0x73ff, input_port_0_r }, 		/* IN0 */
+	{ 0x4000, 0x4fff, phoenix_paged_ram_r },	/* 2 pages selected by Bit 0 of videoregister */
+	{ 0x7000, 0x73ff, phoenix_input_port_0_r }, /* IN0 */
 	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress pleiads_readmem[] =
-{
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
-	{ 0x7000, 0x73ff, pleiads_input_port_0_r }, /* IN0 + protection */
-	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
-	{ -1 }	/* end of table */
+
+#define WRITEMEM(GAMENAME)										\
+																\
+static struct MemoryWriteAddress GAMENAME##_writemem[] =		\
+{																\
+	{ 0x0000, 0x3fff, MWA_ROM },								\
+	{ 0x4000, 0x4fff, phoenix_paged_ram_w },  /* 2 pages selected by Bit 0 of the video register */ \
+	{ 0x5000, 0x53ff, phoenix_videoreg_w }, 					\
+	{ 0x5800, 0x5bff, phoenix_scroll_w },	/* the game sometimes writes at mirror addresses */ 	\
+	{ 0x6000, 0x63ff, GAMENAME##_sound_control_a_w },			\
+	{ 0x6800, 0x6bff, GAMENAME##_sound_control_b_w },			\
+	{ -1 }	/* end of table */									\
 };
 
-static struct MemoryWriteAddress phoenix_writemem[] =
-{
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4fff, phoenix_videoram_w },		/* 2 pages selected by bit 0 of the video register */
-	{ 0x5000, 0x53ff, phoenix_videoreg_w },
-	{ 0x5800, 0x5bff, phoenix_scroll_w },
-	{ 0x6000, 0x63ff, phoenix_sound_control_a_w },
-	{ 0x6800, 0x6bff, phoenix_sound_control_b_w },
-	{ -1 }	/* end of table */
-};
+WRITEMEM(phoenix)
+WRITEMEM(pleiads)
 
-static struct MemoryWriteAddress pleiads_writemem[] =
-{
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4fff, phoenix_videoram_w },		/* 2 pages selected by bit 0 of the video register */
-	{ 0x5000, 0x53ff, pleiads_videoreg_w },
-	{ 0x5800, 0x5bff, phoenix_scroll_w },
-	{ 0x6000, 0x63ff, pleiads_sound_control_a_w },
-	{ 0x6800, 0x6bff, pleiads_sound_control_b_w },
-	{ -1 }	/* end of table */
-};
 
 
 INPUT_PORTS_START( phoenix )
@@ -185,6 +169,7 @@ INPUT_PORTS_START( phoenixa )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( phoenixt )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -229,7 +214,6 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
-
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
@@ -253,17 +237,17 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( pleiads )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL )	   /* Protection. See 0x0552 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	   /* Protection. See 0x0552 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
-
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
@@ -299,19 +283,13 @@ static struct GfxLayout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo phoenix_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 16 },
 	{ REGION_GFX2, 0, &charlayout, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo pleiads_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,	  0, 32 },
-	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },
-	{ -1 } /* end of array */
-};
 
 
 static struct TMS36XXinterface phoenix_tms36xx_interface =
@@ -353,19 +331,16 @@ static struct CustomSound_interface pleiads_custom_interface =
 	pleiads_sh_update
 };
 
-
-
-
-#define MACHINE_DRIVER(NAME, PENS)									\
+#define MACHINE_DRIVER(GAMENAME)									\
 																	\
-static struct MachineDriver machine_driver_##NAME = 				\
+static const struct MachineDriver machine_driver_##GAMENAME = 			\
 {																	\
 	/* basic machine hardware */									\
 	{																\
 		{															\
 			CPU_8080,												\
 			3072000,	/* 3 MHz ? */								\
-			NAME##_readmem,NAME##_writemem,0,0,						\
+			readmem,GAMENAME##_writemem,0,0,						\
 			ignore_interrupt,1										\
 		}															\
 	},																\
@@ -375,9 +350,9 @@ static struct MachineDriver machine_driver_##NAME = 				\
 																	\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },						\
-	NAME##_gfxdecodeinfo,											\
-	256,PENS*4+PENS*4,												\
-	NAME##_vh_convert_color_prom,									\
+	gfxdecodeinfo,													\
+	256,16*4+16*4,													\
+	phoenix_vh_convert_color_prom,									\
 																	\
 	VIDEO_TYPE_RASTER,												\
 	0,																\
@@ -390,18 +365,19 @@ static struct MachineDriver machine_driver_##NAME = 				\
 	{																\
 		{															\
 			SOUND_TMS36XX,											\
-			&NAME##_tms36xx_interface								\
+			&GAMENAME##_tms36xx_interface							\
 		},															\
 		{															\
 			SOUND_CUSTOM,											\
-			&NAME##_custom_interface								\
+			&GAMENAME##_custom_interface							\
 		}															\
 	}																\
 };
 
 
-MACHINE_DRIVER(phoenix,16)
-MACHINE_DRIVER(pleiads,32)
+MACHINE_DRIVER(phoenix)
+MACHINE_DRIVER(pleiads)
+
 
 
 /***************************************************************************
@@ -603,11 +579,13 @@ ROM_START( pleiadce )
 ROM_END
 
 
-GAMEX( 1980, phoenix,  0,	    phoenix, phoenix,  0, ROT90, "Amstar", "Phoenix (Amstar)", GAME_NO_COCKTAIL )
+
+GAMEX( 1980, phoenix,  0,	   phoenix, phoenix,  0, ROT90, "Amstar", "Phoenix (Amstar)", GAME_NO_COCKTAIL )
 GAMEX( 1980, phoenixa, phoenix, phoenix, phoenixa, 0, ROT90, "Amstar (Centuri license)", "Phoenix (Centuri)", GAME_NO_COCKTAIL )
 GAMEX( 1980, phoenixt, phoenix, phoenix, phoenixt, 0, ROT90, "Taito", "Phoenix (Taito)", GAME_NO_COCKTAIL )
 GAMEX( 1980, phoenix3, phoenix, phoenix, phoenix3, 0, ROT90, "bootleg", "Phoenix (T.P.N.)", GAME_NO_COCKTAIL )
 GAMEX( 1981, phoenixc, phoenix, phoenix, phoenixt, 0, ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)", GAME_NO_COCKTAIL )
-GAMEX( 1981, pleiads,  0,	    pleiads, pleiads,  0, ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_NO_COCKTAIL )
+GAMEX( 1981, pleiads,  0,	   pleiads, pleiads,  0, ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_NO_COCKTAIL )
 GAMEX( 1981, pleiadbl, pleiads, pleiads, pleiads,  0, ROT90, "bootleg", "Pleiads (bootleg)", GAME_NO_COCKTAIL )
 GAMEX( 1981, pleiadce, pleiads, pleiads, pleiads,  0, ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)", GAME_NO_COCKTAIL )
+

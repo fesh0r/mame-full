@@ -274,7 +274,7 @@ static void get_bg1_tile_info(int tile_index)
 }
 
 /* Added by Yochizo 2000/08/19 */
-static void get_text_tile_info_0(int tile_index)
+static void get_text_tile_info(int tile_index)
 {
 	int color, tile_number, attrib;
 	UINT16 *source = (UINT16 *)textvideoram;
@@ -283,17 +283,6 @@ static void get_text_tile_info_0(int tile_index)
 	tile_number = attrib & 0x3ff;
 	color = ((attrib >> 10) | 0x40) & 0x7f;
 	SET_TILE_INFO(2,tile_number,color)
-	tile_info.priority = 0;
-}
-static void get_text_tile_info_1(int tile_index)
-{
-	int color, tile_number, attrib;
-	UINT16 *source = (UINT16 *)textvideoram;
-
-	attrib = source[tile_index];
-	tile_number = attrib & 0x3ff;
-	color = ((attrib >> 10) | 0x40) & 0x7f;
-	SET_TILE_INFO(4,tile_number,color)
 	tile_info.priority = 0;
 }
 
@@ -434,7 +423,21 @@ int raizing_0_vh_start(void)
 	if (toaplan2_vh_start(0))
 		return 1;
 	memset(textvideoram,0,TOAPLAN2_TEXT_VRAM_SIZE);
-	text_tilemap = tilemap_create(get_text_tile_info_0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+	if (!text_tilemap)
+		return 1;
+	text_tilemap->transparent_pen = 0;
+	return 0;
+}
+int raizing_1_vh_start(void)
+{
+	int error_level = 0;
+	error_level |= toaplan2_vh_start(0);
+	error_level |= toaplan2_vh_start(1);
+	if (error_level)
+		return 1;
+	memset(textvideoram,0,TOAPLAN2_TEXT_VRAM_SIZE);
+	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	if (!text_tilemap)
 		return 1;
 	text_tilemap->transparent_pen = 0;
@@ -1355,6 +1358,11 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void raizing_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	toaplan2_0_vh_screenrefresh(bitmap, full_refresh);
+	tilemap_draw(bitmap,text_tilemap,0);
+}
+void raizing_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	toaplan2_1_vh_screenrefresh(bitmap, full_refresh);
 	tilemap_draw(bitmap,text_tilemap,0);
 }
 

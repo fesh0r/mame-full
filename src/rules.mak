@@ -735,26 +735,15 @@ else
 CPUDEFS += -DHAS_PDP1=0
 endif
 
-CPU=$(strip $(findstring MIPS@,$(CPUS)))
+CPU=$(strip $(findstring PSXCPU@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/mips
-CPUDEFS += -DHAS_MIPS=1
+CPUDEFS += -DHAS_PSXCPU=1
 CPUOBJS += $(OBJ)/cpu/mips/mips.o
 DBGOBJS += $(OBJ)/cpu/mips/mipsdasm.o
 $(OBJ)/cpu/mips/mips.o: mips.c mips.h
 else
-CPUDEFS += -DHAS_MIPS=0
-endif
-
-CPU=$(strip $(findstring SH2@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/sh2
-CPUDEFS += -DHAS_SH2=1
-CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
-DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
-$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
-else
-CPUDEFS += -DHAS_SH2=0
+CPUDEFS += -DHAS_PSXCPU=0
 endif
 
 CPU=$(strip $(findstring SC61860@,$(CPUS)))
@@ -1146,14 +1135,6 @@ SOUNDDEFS += -DHAS_QSOUND=1
 SOUNDOBJS += $(OBJ)/sound/qsound.o
 else
 SOUNDDEFS += -DHAS_QSOUND=0
-endif
-
-SOUND=$(strip $(findstring SAA1099@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_SAA1099=1
-SOUNDOBJS += $(OBJ)/sound/saa1099.o
-else
-SOUNDDEFS += -DHAS_SAA1099=0
 endif
 
 SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))

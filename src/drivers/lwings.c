@@ -599,52 +599,52 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	1024,   /* 1024 characters */
-	2,      /* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8    /* every char takes 16 consecutive bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
+	16,16,
 	RGN_FRAC(1,2),
-	4,      /* 4 bits per pixel */
+	4,
 	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8    /* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 static struct GfxLayout bg1_tilelayout =
 {
-	16,16,  /* 16*16 tiles */
-	2048,   /* 2048 tiles */
-	4,      /* 4 bits per pixel */
-	{ 0x30000*8, 0x20000*8, 0x10000*8, 0x00000*8  },  /* the bitplanes are separated */
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8    /* every tile takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout bg2_tilelayout =
 {
-	16,16,  /* 16*16 sprites */
-	512,   /* 512 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0x08000*8+0, 0x08000*8+4, 0, 4 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8    /* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 
@@ -689,7 +689,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver_lwings =
+static const struct MachineDriver machine_driver_lwings =
 {
 	/* basic machine hardware */
 	{
@@ -732,7 +732,7 @@ static struct MachineDriver machine_driver_lwings =
 	}
 };
 
-static struct MachineDriver machine_driver_trojan =
+static const struct MachineDriver machine_driver_trojan =
 {
 	/* basic machine hardware */
 	{
@@ -786,7 +786,7 @@ static struct MachineDriver machine_driver_trojan =
 	}
 };
 
-static struct MachineDriver machine_driver_avengers =
+static const struct MachineDriver machine_driver_avengers =
 {
 	/* basic machine hardware */
 	{

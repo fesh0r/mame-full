@@ -80,7 +80,6 @@ enum
 	UI_imageinfo,
 	UI_filemanager,
 	UI_tapecontrol,
-        UI_diskcontrol,
 #endif
 	UI_cheat,
 	UI_memorycard,

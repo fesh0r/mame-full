@@ -132,8 +132,8 @@ READ_HANDLER( pc10_prot_r )
 	if ( cart_sel == 0 )
 	{
 		RP5H01_0_enable_w( 0, 0 );
-		data |= ( ( ~RP5H01_counter_r( 0 ) ) << 4 ) & 0x10; /* D4 */
-		data |= ( ( RP5H01_data_r( 0 ) ) << 3 ) & 0x08; 	/* D3 */
+		data |= ( ( ~RP5H01_counter_r( 0 ) ) << 4 ) & 0x10;	/* D4 */
+		data |= ( ( RP5H01_data_r( 0 ) ) << 3 ) & 0x08;		/* D3 */
 		RP5H01_0_enable_w( 0, 1 );
 	}
 	return data;
@@ -146,13 +146,13 @@ WRITE_HANDLER( pc10_prot_w )
 	{
 		RP5H01_0_enable_w( 0, 0 );
 		RP5H01_0_test_w( 0, data & 0x10 );		/* D4 */
-		RP5H01_0_clock_w( 0, data & 0x08 ); 	/* D3 */
+		RP5H01_0_clock_w( 0, data & 0x08 );		/* D3 */
 		RP5H01_0_reset_w( 0, ~data & 0x01 );	/* D0 */
 		RP5H01_0_enable_w( 0, 1 );
 
 		/* this thing gets dense at some point						*/
 		/* it wants to jump and execute an opcode at $ffff, wich	*/
-		/* is the actual protection memory area 					*/
+		/* is the actual protection memory area						*/
 		/* setting the whole 0x2000 region every time is a waste	*/
 		/* so we just set $ffff with the current value				*/
 		memory_region( REGION_CPU1 )[0xffff] = pc10_prot_r(0);
@@ -342,9 +342,9 @@ static WRITE_HANDLER( mmc1_rom_switch_w )
 		/* apply data to registers */
 		switch( reg )
 		{
-			case 0: 	/* mirroring and options */
+			case 0:		/* mirroring and options */
 				{
-					int mirrormode;
+					int _mirroring;
 
 					vrom4k = mmc1_shiftreg & 0x10;
 					size16k = mmc1_shiftreg & 0x08;
@@ -353,29 +353,29 @@ static WRITE_HANDLER( mmc1_rom_switch_w )
 					switch( mmc1_shiftreg & 3 )
 					{
 						case 0:
-							mirrormode = PPU_MIRROR_LOW;
+							_mirroring = PPU_MIRROR_LOW;
 						break;
 
 						case 1:
-							mirrormode = PPU_MIRROR_HIGH;
+							_mirroring = PPU_MIRROR_HIGH;
 						break;
 
 						case 2:
-							mirrormode = PPU_MIRROR_VERT;
+							_mirroring = PPU_MIRROR_VERT;
 						break;
 
 						default:
 						case 3:
-							mirrormode = PPU_MIRROR_HORZ;
+							_mirroring = PPU_MIRROR_HORZ;
 						break;
 					}
 
 					/* apply mirroring */
-					ppu2c03b_set_mirroring( 0, mirrormode );
+					ppu2c03b_set_mirroring( 0, _mirroring );
 				}
 			break;
 
-			case 1: /* video rom banking - bank 0 - 4k or 8k */
+			case 1:	/* video rom banking - bank 0 - 4k or 8k */
 				ppu2c03b_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, ( mmc1_shiftreg & 0x1f ), 256 );
 			break;
 
@@ -384,7 +384,7 @@ static WRITE_HANDLER( mmc1_rom_switch_w )
 					ppu2c03b_set_videorom_bank( 0, 4, 4, ( mmc1_shiftreg & 0x1f ), 256 );
 			break;
 
-			case 3: /* program banking */
+			case 3:	/* program banking */
 				{
 					int bank = ( mmc1_shiftreg & mmc1_rom_mask ) * 0x4000;
 
@@ -639,7 +639,7 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 
 				switch( cmd )
 				{
-					case 0: /* char banking */
+					case 0:	/* char banking */
 					case 1: /* char banking */
 						data &= 0xfe;
 						page ^= ( cmd << 1 );
@@ -788,4 +788,3 @@ void init_pckboard( void )
 	/* common init */
 	init_playch10();
 }
-

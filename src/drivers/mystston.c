@@ -189,46 +189,33 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	2048,	/* 2048 characters */
-	3,	/* 3 bits per pixel */
-	{ 2*2048*8*8, 2048*8*8, 0 },	/* the bitplanes are separated */
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
-	512,    /* 512 sprites */
-	3,	/* 3 bits per pixel */
-	{ 2*512*16*16, 512*16*16, 0 },	/* the bitplanes are separated */
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 16 consecutive bytes */
-};
-
-static struct GfxLayout tilelayout =
-{
-	16,16,  /* 16*16 tiles */
-	512,    /* 512 tiles */
-	3,	/* 3 bits per pixel */
-	{ 2*512*16*16, 512*16*16, 0 },	/* the bitplanes are separated */
-	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
-			0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every tile takes 16 consecutive bytes */
+	32*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   3*8, 4 },
-	{ REGION_GFX2, 0, &tilelayout,   2*8, 1 },
-	{ REGION_GFX1, 0, &spritelayout,   0, 2 },
+	{ REGION_GFX2, 0, &spritelayout, 2*8, 1 },
+	{ REGION_GFX1, 0, &spritelayout, 0*8, 2 },
 	{ -1 } /* end of array */
 };
 
@@ -247,7 +234,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_mystston =
+static const struct MachineDriver machine_driver_mystston =
 {
 	/* basic machine hardware */
 	{

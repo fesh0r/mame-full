@@ -246,7 +246,7 @@ static struct OKIM6295interface bigkarnk_okim6295_interface =
 };
 
 
-static struct MachineDriver machine_driver_bigkarnk =
+static const struct MachineDriver machine_driver_bigkarnk =
 {
 	{
 		{
@@ -266,7 +266,7 @@ static struct MachineDriver machine_driver_bigkarnk =
 	10,
 	0,
 
-	/* video hardware */	
+	/* video hardware */
 	32*16, 32*16, { 0, 320-1, 16, 256-1 },
 	gfxdecodeinfo_0x100000,
 	1024, 1024,
@@ -517,7 +517,7 @@ static struct OKIM6295interface maniacsq_okim6295_interface =
 	{ 100 }				/* volume */
 };
 
-static struct MachineDriver machine_driver_maniacsq =
+static const struct MachineDriver machine_driver_maniacsq =
 {
 	{
 		{

@@ -9,16 +9,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-unsigned char *vulgus_fg_videoram;
-unsigned char *vulgus_bg_videoram;
-
+unsigned char *vulgus_fgvideoram,*vulgus_bgvideoram;
 unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
 
 static data_t vulgus_palette_bank;
 static struct tilemap *fg_tilemap, *bg_tilemap;
-
 
 
 /***************************************************************************
@@ -94,8 +89,8 @@ static void get_fg_tile_info(int tile_index)
 {
 	int code, color;
 
-	code = vulgus_fg_videoram[tile_index];
-	color = vulgus_fg_videoram[tile_index + 0x400];
+	code = vulgus_fgvideoram[tile_index];
+	color = vulgus_fgvideoram[tile_index + 0x400];
 	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f);
 }
 
@@ -103,8 +98,8 @@ static void get_bg_tile_info(int tile_index)
 {
 	int code, color;
 
-	code = vulgus_bg_videoram[tile_index];
-	color = vulgus_bg_videoram[tile_index + 0x400];
+	code = vulgus_bgvideoram[tile_index];
+	color = vulgus_bgvideoram[tile_index + 0x400];
 	SET_TILE_INFO(1, code + ((color & 0x80) << 1), (color & 0x1f) + (0x20 * vulgus_palette_bank));
 	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
 }
@@ -119,7 +114,7 @@ static void get_bg_tile_info(int tile_index)
 int vulgus_vh_start(void)
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,32,32);
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,           16,16,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE           ,16,16,32,32);
 
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
@@ -136,16 +131,27 @@ int vulgus_vh_start(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( vulgus_fg_videoram_w )
+WRITE_HANDLER( vulgus_fgvideoram_w )
 {
-	vulgus_fg_videoram[offset] = data;
+	vulgus_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( vulgus_bg_videoram_w )
+WRITE_HANDLER( vulgus_bgvideoram_w )
 {
-	vulgus_bg_videoram[offset] = data;
+	vulgus_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
+}
+
+
+WRITE_HANDLER( vulgus_c804_w )
+{
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
+
+	/* bit 7 flips screen */
+	flip_screen_w(offset, data & 0x80);
 }
 
 
@@ -155,22 +161,6 @@ WRITE_HANDLER( vulgus_palette_bank_w )
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 
 	vulgus_palette_bank = data;
-}
-
-
-WRITE_HANDLER( vulgus_c804_w )
-{
-	extern struct GameDriver driver_vulgus;
-
-	/* bits 0 and 1 are coin counters */
-	coin_counter_w(0, data & 0x01);
-	coin_counter_w(1, data & 0x02);
-
-	/* bit 7 flips screen, but it's active LO in set 1 */
-	if (Machine->gamedrv == &driver_vulgus)
-		data ^= 0x80;
-
-	flip_screen_w(offset, data & 0x80);
 }
 
 

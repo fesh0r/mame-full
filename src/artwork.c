@@ -632,7 +632,7 @@ static void load_png(const char *filename, unsigned int start_pen, unsigned int 
 	(*a)->num_pens_trans = p.num_trans;
 	(*a)->orig_palette = p.palette;
 	(*a)->transparency = p.trans;
- 
+
 	/* Make sure we don't have too many colors */
 	if ((*a)->num_pens_used > max_pens)
 	{
@@ -791,7 +791,7 @@ void artwork_remap(void)
 {
 	if (artwork_backdrop) backdrop_remap();
 	if (artwork_overlay) overlay_remap();
-}	
+}
 
 /*********************************************************************
   overlay_draw
@@ -1179,7 +1179,7 @@ void backdrop_load(const char *filename, unsigned int start_pen, unsigned int ma
 		if (Machine->orientation & ORIENTATION_SWAP_XY)
 		{
 			int temp;
-			
+
 			temp = height;
 			height = width;
 			width = temp;
@@ -1436,10 +1436,8 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 int artwork_get_size_info(const char *file_name, struct artwork_size_info *a)
 {
 	void *fp;
-#if 0
-    struct png_info p;
-#endif
-    int file_name_len;
+	struct png_info p;
+	int file_name_len;
 	char file_name2[256];
 
 	/* If the user turned artwork off, bail */
@@ -1459,22 +1457,17 @@ int artwork_get_size_info(const char *file_name, struct artwork_size_info *a)
 		return 0;
 	}
 
-#if 0
-    if (!png_read_info(fp, &p))
+	if (!png_read_info(fp, &p))
 	{
 		osd_fclose (fp);
 		return 0;
 	}
-    osd_fclose (fp);
+	osd_fclose (fp);
 
 	a->width = p.width;
 	a->height = p.height;
 	a->screen = p.screen;
 
 	return 1;
-#else
-	osd_fclose (fp);
-	return 0;
-#endif
 }
 

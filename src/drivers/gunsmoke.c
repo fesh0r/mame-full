@@ -5,19 +5,6 @@
 
   Driver provided by Paul Leaman
 
-
-  Notes:
-
-  The routine at 0x0e69 tries to read data starting at 0xc4c9.
-  If this value is zero, it interprets the next two bytes as a
-  jump address.  These are probably mirror addressed for the input ports.
-  This was resulting in a reboot which happens at the end of level 3
-  if you go too far to the right of the screen when fighting the level boss.
-  This is probably a bug in the arcade game, and it's masked by the fact that
-  the only way a zero can be returned, if all the input lines are low, which
-  is impossible with a standard joystick.  The routine in question is a
-  standard sprite handler called all the time.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -25,16 +12,40 @@
 
 
 
-extern unsigned char *gunsmoke_fgvideoram;
+READ_HANDLER( gunsmoke_bankedrom_r );
+extern void gunsmoke_init_machine(void);
 
-WRITE_HANDLER( gunsmoke_fgvideoram_w );
-WRITE_HANDLER( gunsmoke_scrollx_w );
-WRITE_HANDLER( gunsmoke_scrolly_w );
-WRITE_HANDLER( gunsmoke_c804_w );
-WRITE_HANDLER( gunsmoke_d806_w );
-int gunsmoke_vh_start(void);
+extern unsigned char *gunsmoke_bg_scrollx;
+extern unsigned char *gunsmoke_bg_scrolly;
+
+WRITE_HANDLER( gunsmoke_c804_w );	/* in vidhrdw/c1943.c */
+WRITE_HANDLER( gunsmoke_d806_w );	/* in vidhrdw/c1943.c */
 void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int gunsmoke_vh_start(void);
+void gunsmoke_vh_stop(void);
+
+
+
+static READ_HANDLER( gunsmoke_unknown_r )
+{
+    static int gunsmoke_fixed_data[]={ 0xff, 0x00, 0x00 };
+    /*
+    The routine at 0x0e69 tries to read data starting at 0xc4c9.
+    If this value is zero, it interprets the next two bytes as a
+    jump address.
+
+    This was resulting in a reboot which happens at the end of level 3
+    if you go too far to the right of the screen when fighting the level boss.
+
+    A non-zero for the first byte seems to be harmless  (although it may not be
+    the correct behaviour).
+
+    This could be some devious protection or it could be a bug in the
+    arcade game.  It's hard to tell without pulling the code apart.
+    */
+    return gunsmoke_fixed_data[offset];
+}
 
 
 
@@ -47,9 +58,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
-	{ 0xc4c9, 0xc4c9, input_port_0_r },	/* see notes */
-	{ 0xc4ca, 0xc4ca, input_port_1_r },
-	{ 0xc4cb, 0xc4cb, input_port_2_r },
+    { 0xc4c9, 0xc4cb, gunsmoke_unknown_r },
     { 0xd000, 0xd3ff, videoram_r },
     { 0xd400, 0xd7ff, colorram_r },
 	{ 0xe000, 0xffff, MRA_RAM }, /* Work + sprite RAM */
@@ -61,15 +70,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, gunsmoke_c804_w },	/* ROM bank switch, screen flip */
-	{ 0xc806, 0xc806, watchdog_reset_w },
-	{ 0xd000, 0xd7ff, gunsmoke_fgvideoram_w, &gunsmoke_fgvideoram },
-	{ 0xd800, 0xd801, gunsmoke_scrollx_w },
-	{ 0xd802, 0xd802, gunsmoke_scrolly_w },
+	{ 0xc806, 0xc806, MWA_NOP }, /* Watchdog ?? */
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd800, 0xd801, MWA_RAM, &gunsmoke_bg_scrolly },
+	{ 0xd802, 0xd802, MWA_RAM, &gunsmoke_bg_scrollx },
 	{ 0xd806, 0xd806, gunsmoke_d806_w },	/* sprites and bg enable */
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 	{ -1 }	/* end of table */
 };
+
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -179,8 +190,8 @@ static struct GfxLayout charlayout =
 	1024,	/* 1024 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
-	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
-	{ 7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -237,7 +248,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_gunsmoke =
+static const struct MachineDriver machine_driver_gunsmoke =
 {
 	/* basic machine hardware */
 	{
@@ -267,7 +278,7 @@ static struct MachineDriver machine_driver_gunsmoke =
 	VIDEO_TYPE_RASTER,
 	0,
 	gunsmoke_vh_start,
-	0,
+	gunsmoke_vh_stop,
 	gunsmoke_vh_screenrefresh,
 
 	/* sound hardware */

@@ -35,10 +35,10 @@ void playch10_vh_convert_color_prom( unsigned char *palette, unsigned short *col
 		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		color_prom++;
-		
+
 		colortable[i] = i;
 	}
-	
+
 	ppu2c03b_init_palette( palette );
 }
 
@@ -88,10 +88,10 @@ void playch10_vh_stop( void )
 void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 {
 	int offs;
-	
+
 	struct rectangle top_monitor = Machine->visible_area;
 	struct rectangle bottom_monitor = Machine->visible_area;
-	
+
 	top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 	bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
 
@@ -108,7 +108,7 @@ void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 	{
 		/* render the ppu */
 		ppu2c03b_render( 0, bitmap, 0, 0, 0, 30*8 );
-		
+
 		/* if this is a gun game, draw a simple crosshair */
 		if ( pc10_gun_controller )
 		{
@@ -117,7 +117,7 @@ void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 			UINT16 color;
 			int x, y;
 			int minmax_x[2], minmax_y[2];
-			
+
 			minmax_x[0] = Machine->visible_area.min_x;
 			minmax_x[1] = Machine->visible_area.max_x;
 			minmax_y[0] = Machine->visible_area.min_y + 30*8;
@@ -168,10 +168,10 @@ void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 		if ( dirtybuffer[offs] || dirtybuffer[offs+1] )
 		{
 			int offs2 = offs / 2;
-			
+
 			int sx = offs2 % 32;
 			int sy = offs2 / 32;
-			
+
 			int tilenum = videoram[offs] + ( ( videoram[offs+1] & 7 ) << 8 );
 			int color = ( videoram[offs+1] >> 3 ) & 0x1f;
 
@@ -185,7 +185,7 @@ void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 					 &Machine->visible_area, TRANSPARENCY_NONE, 0 );
 		}
 	}
-	
+
 	/* copy the temporary bitmap to the screen */
 	copybitmap( bitmap, tmpbitmap, 0, 0, 0, 0, &top_monitor, TRANSPARENCY_NONE, 0 );
 }

@@ -73,7 +73,7 @@ void xmen_vh_stop(void)
 ***************************************************************************/
 
 /* useful function to sort the three tile layers by priority order */
-static void sortlayers(int *layer, int *pri)
+static void sortlayers(int *layer,int *pri)
 {
 #define SWAP(a,b) \
 	if (pri[a] < pri[b]) \

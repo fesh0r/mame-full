@@ -7,15 +7,16 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 
-unsigned char *c1942_fgvideoram,*c1942_bgvideoram;
+unsigned char *c1942_fgvideoram;
+unsigned char *c1942_bgvideoram;
+unsigned char *c1942_spriteram;
+size_t c1942_spriteram_size;
 
 static data_t c1942_palette_bank;
 static struct tilemap *fg_tilemap, *bg_tilemap;
-
 
 
 
@@ -33,7 +34,6 @@ static struct tilemap *fg_tilemap, *bg_tilemap;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -104,7 +104,7 @@ static void get_fg_tile_info(int tile_index)
 
 	code = c1942_fgvideoram[tile_index];
 	color = c1942_fgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f)
+	SET_TILE_INFO(0,code + ((color & 0x80) << 1),color & 0x3f)
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -115,7 +115,7 @@ static void get_bg_tile_info(int tile_index)
 
 	code = c1942_bgvideoram[tile_index];
 	color = c1942_bgvideoram[tile_index + 0x10];
-	SET_TILE_INFO(1, code + ((color & 0x80) << 1), (color & 0x1f) + (0x20 * c1942_palette_bank));
+	SET_TILE_INFO(1,code + ((color & 0x80) << 1),(color & 0x1f) + (0x20 * c1942_palette_bank));
 	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
 }
 
@@ -125,11 +125,10 @@ static void get_bg_tile_info(int tile_index)
   Start the video hardware emulation.
 
 ***************************************************************************/
-
 int c1942_vh_start(void)
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE     ,16,16,32,16);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,16);
 
 	if (!fg_tilemap || !bg_tilemap)
 		return 1;
@@ -159,22 +158,20 @@ WRITE_HANDLER( c1942_bgvideoram_w )
 }
 
 
-
-WRITE_HANDLER( c1942_scrollx_w )
-{
-	static unsigned char scroll[2];
-
-	scroll[offset] = data;
-	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
-}
-
-
 WRITE_HANDLER( c1942_palette_bank_w )
 {
 	if (c1942_palette_bank != data)
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 
 	c1942_palette_bank = data;
+}
+
+WRITE_HANDLER( c1942_scroll_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
 
@@ -203,16 +200,16 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	int offs;
 
 
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = c1942_spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int i,code,col,sx,sy,dir;
 
 
-		code = (spriteram[offs] & 0x7f) + 4*(spriteram[offs + 1] & 0x20)
-				+ 2*(spriteram[offs] & 0x80);
-		col = spriteram[offs + 1] & 0x0f;
-		sx = spriteram[offs + 3] - 0x10 * (spriteram[offs + 1] & 0x10);
-		sy = spriteram[offs + 2];
+		code = (c1942_spriteram[offs] & 0x7f) + 4*(c1942_spriteram[offs + 1] & 0x20)
+				+ 2*(c1942_spriteram[offs] & 0x80);
+		col = c1942_spriteram[offs + 1] & 0x0f;
+		sx = c1942_spriteram[offs + 3] - 0x10 * (c1942_spriteram[offs + 1] & 0x10);
+		sy = c1942_spriteram[offs + 2];
 		dir = 1;
 		if (flip_screen)
 		{
@@ -221,8 +218,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			dir = -1;
 		}
 
-		/* handle double / quadruple height (actually width because this is a rotated game) */
-		i = (spriteram[offs + 1] & 0xc0) >> 6;
+		/* handle double / quadruple height */
+		i = (c1942_spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
 
 		do
@@ -249,4 +246,3 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,fg_tilemap,0);
 }
-

@@ -1,5 +1,6 @@
 /***************************************************************************
 
+Hot Pinball
 Gals Pinball
 
 driver by Nicola Salmoria
@@ -31,7 +32,6 @@ READ_HANDLER( galspnbl_bgvideoram_r );
 WRITE_HANDLER( galspnbl_bgvideoram_w );
 WRITE_HANDLER( galspnbl_scroll_w );
 void galspnbl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 
 
 static WRITE_HANDLER( soundcommand_w )
@@ -336,7 +336,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static struct MachineDriver machine_driver_hotpinbl =
+static const struct MachineDriver machine_driver_hotpinbl =
 {
 	/* basic machine hardware */
 	{
@@ -394,14 +394,14 @@ static struct MachineDriver machine_driver_hotpinbl =
 
 ROM_START( galspnbl )
 	ROM_REGION( 0x400000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "7.rom",        0x000000, 0x080000, 0xce0189bf )
-	ROM_LOAD_ODD ( "3.rom",        0x000000, 0x080000, 0x9b0a8744 )
-	ROM_LOAD_EVEN( "8.rom",        0x100000, 0x080000, 0xeee2f087 )
-	ROM_LOAD_ODD ( "4.rom",        0x100000, 0x080000, 0x56298489 )
-	ROM_LOAD_EVEN( "9.rom",        0x200000, 0x080000, 0xd9e4964c )
-	ROM_LOAD_ODD ( "5.rom",        0x200000, 0x080000, 0xa5e71ee4 )
-	ROM_LOAD_EVEN( "10.rom",       0x300000, 0x080000, 0x3a20e1e5 )
-	ROM_LOAD_ODD ( "6.rom",        0x300000, 0x080000, 0x94927d20 )
+	ROM_LOAD_EVEN( "7.rom",        0x000000, 0x80000, 0xce0189bf )
+	ROM_LOAD_ODD ( "3.rom",        0x000000, 0x80000, 0x9b0a8744 )
+	ROM_LOAD_EVEN( "8.rom",        0x100000, 0x80000, 0xeee2f087 )
+	ROM_LOAD_ODD ( "4.rom",        0x100000, 0x80000, 0x56298489 )
+	ROM_LOAD_EVEN( "9.rom",        0x200000, 0x80000, 0xd9e4964c )
+	ROM_LOAD_ODD ( "5.rom",        0x200000, 0x80000, 0xa5e71ee4 )
+	ROM_LOAD_EVEN( "10.rom",       0x300000, 0x80000, 0x3a20e1e5 )
+	ROM_LOAD_ODD ( "6.rom",        0x300000, 0x80000, 0x94927d20 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Z80 code */
 	ROM_LOAD( "2.rom",        0x0000, 0x10000, 0xfae688a7 )
@@ -420,14 +420,14 @@ ROM_END
 
 ROM_START( hotpinbl )
 	ROM_REGION( 0x400000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "hp_07.bin",    0x000000, 0x080000, 0x978cc13e )
-	ROM_LOAD_ODD ( "hp_03.bin",    0x000000, 0x080000, 0x68388726 )
-	ROM_LOAD_EVEN( "hp_08.bin",    0x100000, 0x080000, 0xbd16be12 )
-	ROM_LOAD_ODD ( "hp_04.bin",    0x100000, 0x080000, 0x655b0cf0 )
-	ROM_LOAD_EVEN( "hp_09.bin",    0x200000, 0x080000, 0xa6368624 )
-	ROM_LOAD_ODD ( "hp_05.bin",    0x200000, 0x080000, 0x48efd028 )
-	ROM_LOAD_EVEN( "hp_10.bin",    0x300000, 0x080000, 0xa5c63e34 )
-	ROM_LOAD_ODD ( "hp_06.bin",    0x300000, 0x080000, 0x513eda91 )
+	ROM_LOAD_EVEN( "hp_07.bin",    0x000000, 0x80000, 0x978cc13e )
+	ROM_LOAD_ODD ( "hp_03.bin",    0x000000, 0x80000, 0x68388726 )
+	ROM_LOAD_EVEN( "hp_08.bin",    0x100000, 0x80000, 0xbd16be12 )
+	ROM_LOAD_ODD ( "hp_04.bin",    0x100000, 0x80000, 0x655b0cf0 )
+	ROM_LOAD_EVEN( "hp_09.bin",    0x200000, 0x80000, 0xa6368624 )
+	ROM_LOAD_ODD ( "hp_05.bin",    0x200000, 0x80000, 0x48efd028 )
+	ROM_LOAD_EVEN( "hp_10.bin",    0x300000, 0x80000, 0xa5c63e34 )
+	ROM_LOAD_ODD ( "hp_06.bin",    0x300000, 0x80000, 0x513eda91 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* Z80 code */
 	ROM_LOAD( "hp_02.bin",    0x0000, 0x10000, 0x82698269 )

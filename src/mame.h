@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #ifdef MESS
-#include "../mess/mess.h"
+#include "mess/mess.h"
 #endif
 
 extern char build_version[];
@@ -119,5 +119,6 @@ void draw_screen(int bitmap_dirty);
 void update_video_and_audio(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
+void set_led_status(int num,int on);
 
 #endif

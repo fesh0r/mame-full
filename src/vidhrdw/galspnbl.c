@@ -96,7 +96,8 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 
 		attr = READ_WORD(&spriteram[offs]);
 		if ((attr & 0x0004) && ((attr & 0x0040) == 0 || (cpu_getcurrentframe() & 1))
-				&& ((attr & 0x0030) >> 4) == priority)
+//				&& ((attr & 0x0030) >> 4) == priority)
+				&& ((attr & 0x0020) >> 5) == priority)
 		{
 			code = READ_WORD(&spriteram[offs+2]);
 			color = READ_WORD(&spriteram[offs+4]);
@@ -139,7 +140,6 @@ void galspnbl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copyscrollbitmap(bitmap,tmpbitmap,1,&screenscroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	draw_sprites(bitmap,0);
-	draw_sprites(bitmap,1);
 
 	for (offs = 0;offs < 0x1000;offs += 2)
 	{
@@ -163,6 +163,5 @@ void galspnbl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	draw_sprites(bitmap,2);
-	draw_sprites(bitmap,3);
+	draw_sprites(bitmap,1);
 }

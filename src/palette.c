@@ -1503,6 +1503,12 @@ WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w )
 	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w )
+{
+	paletteram[offset] = data;
+	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
+}
+
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w )
 {
 	int oldword = READ_WORD(&paletteram[offset]);

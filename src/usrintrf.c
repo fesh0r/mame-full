@@ -14,7 +14,7 @@
 #include "ui_text.h"
 
 #ifdef MESS
-#include "../mess/mess.h"
+  #include "mess/mess.h"
 #endif
 
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
@@ -2830,7 +2830,7 @@ enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 #else
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
-                UI_DISKCONTROL,UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
+		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 #endif
 
 
@@ -2884,7 +2884,6 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
 	menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
-        menu_item[menu_total] = ui_getstring (UI_diskcontrol); menu_action[menu_total++] = UI_DISKCONTROL;
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #endif
 
@@ -2957,9 +2956,6 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_TAPECONTROL:
 				res = tapecontrol(bitmap, sel >> SEL_BITS);
 				break;
-                        case UI_DISKCONTROL:
-                                res = diskcontrol(bitmap, sel >> SEL_BITS);
-				break;
 #endif
 			case UI_HISTORY:
 				res = displayhistory(bitmap, sel >> SEL_BITS);
@@ -3013,8 +3009,7 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_IMAGEINFO:
 			case UI_FILEMANAGER:
 			case UI_TAPECONTROL:
-                        case UI_DISKCONTROL:
-                        #endif
+			#endif
 			case UI_HISTORY:
 			case UI_CHEAT:
 			case UI_MEMCARD:

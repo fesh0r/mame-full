@@ -478,7 +478,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static struct MachineDriver machine_driver_bigtwin =
+static const struct MachineDriver machine_driver_bigtwin =
 {
 	/* basic machine hardware */
 	{
@@ -515,7 +515,7 @@ static struct MachineDriver machine_driver_bigtwin =
 	}
 };
 
-static struct MachineDriver machine_driver_wbeachvl =
+static const struct MachineDriver machine_driver_wbeachvl =
 {
 	/* basic machine hardware */
 	{

@@ -55,6 +55,8 @@ enum {
  */
 #define REG_SP_CONTENTS -2
 
+
+
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
 {
@@ -154,6 +156,7 @@ void cpu_set_reg(int regnum, unsigned val);
 
 int cycles_currently_ran(void);
 int cycles_left_to_run(void);
+void cpu_set_op_base(unsigned val);
 
 /* Returns the number of CPU cycles which take place in one video frame */
 int cpu_gettotalcycles(void);

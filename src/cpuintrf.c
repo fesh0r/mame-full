@@ -114,11 +114,8 @@
 #if (HAS_ADSP2100 || HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
-#if (HAS_MIPS)
+#if (HAS_PSXCPU)
 #include "cpu/mips/mips.h"
-#endif
-#if (HAS_SH2)
-#include "cpu/sh2/sh2.h"
 #endif
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
@@ -551,7 +548,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   16,	  0,16,LE,1, 3,16	),
+    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             16,    0,16,LE,1, 3,16   ),
 #endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   29,	  3,29,LE,2,10,29	),
@@ -598,11 +595,8 @@ struct cpu_interface cpuintf[] =
 #if (HAS_ADSP2105)
 	CPU3(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
 #endif
-#if (HAS_MIPS)
-	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
-#endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	 16,-1,1.00,SH2_INT_NONE,	   SH2_INT_NONE,   SH2_INT_NONE,   27bew, 0,27,BE,2, 2,27BEW),
+#if (HAS_PSXCPU)
+	CPU0(PSX,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
@@ -1054,6 +1048,11 @@ int cycles_left_to_run(void)
 	return ICOUNT(cpunum);
 }
 
+void cpu_set_op_base(unsigned val)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SET_OP_BASE(cpunum,val);
+}
 
 
 /***************************************************************************
@@ -2038,6 +2037,20 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
+#if (HAS_PSXCPU)
+			case CPU_PSX:
+				switch (num)
+				{
+				case MIPS_IRQ0: 		irq_line = 0; LOG(("MIPS IRQ0\n")); break;
+				case MIPS_IRQ1: 		irq_line = 1; LOG(("MIPS IRQ1\n")); break;
+				case MIPS_IRQ2: 		irq_line = 2; LOG(("MIPS IRQ2\n")); break;
+				case MIPS_IRQ3: 		irq_line = 3; LOG(("MIPS IRQ3\n")); break;
+				case MIPS_IRQ4: 		irq_line = 4; LOG(("MIPS IRQ4\n")); break;
+				case MIPS_IRQ5: 		irq_line = 5; LOG(("MIPS IRQ5\n")); break;
+				default:				irq_line = 0; LOG(("MIPS unknown\n"));
+				}
+				break;
+#endif
 			default:
 				irq_line = 0;
 				/* else it should be an IRQ type; assume line 0 and store vector */
@@ -2548,7 +2561,7 @@ unsigned cpu_address_bits(void)
 unsigned cpu_address_mask(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return (1 << cpuintf[CPU_TYPE(cpunum)].address_bits) - 1;
+	return MHMASK(cpuintf[CPU_TYPE(cpunum)].address_bits);
 }
 
 /***************************************************************************
@@ -2750,7 +2763,7 @@ unsigned cputype_address_mask(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < CPU_COUNT )
-		return (1 << cpuintf[cpu_type].address_bits) - 1;
+		return MHMASK(cpuintf[cpu_type].address_bits);
 	return 0;
 }
 

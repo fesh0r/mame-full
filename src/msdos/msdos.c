@@ -7,7 +7,7 @@
 #include "ticker.h"
 
 #ifdef MESS
-#include "../mess/msdos.h"
+#include "mess/msdos.h"
 /* from msdos/config.c */
 extern char *crcdir;
 static char crcfilename[256] = "";
@@ -116,6 +116,8 @@ int main (int argc, char **argv)
     char *playbackname = NULL;
 	char override_path[256];
 
+
+	override_path[0] = 0;
 
 	memset(&options,0,sizeof(options));
 

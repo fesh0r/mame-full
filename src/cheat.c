@@ -207,7 +207,7 @@ enum
 	kCheatSpecial_Timed = 1000
 };
 
-char *cheatfile = NULL;
+char *cheatfile = "cheat.dat";
 
 char database[CHEAT_FILENAME_MAXLEN+1];
 
@@ -503,9 +503,8 @@ void cheat_set_status (int cheat_num, int active)
 	{
 		for (i = 0; i <= CheatTable[cheat_num].num_sub; i ++)
 		{
-#ifdef MESS
-            struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];  /* Steph */
-#endif
+//			struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];	/* Steph */
+
 			/* Reset the active variables */
 			CheatTable[cheat_num].subcheat[i].frame_count = 0;
 			CheatTable[cheat_num].subcheat[i].backup = 0;
@@ -2119,7 +2118,7 @@ INT32 ViewSearchResults (struct osd_bitmap *bitmap, INT32 selected)
 
 void RestoreSearch (void)
 {
-	int restoreString = 0;	 /* Juergen :) */
+	int restoreString = NULL;	/* Steph */
 
 	switch (restoreStatus)
 	{

@@ -60,23 +60,23 @@ static void update_samples(void)
 	3 = IC6 - CPU Board, Sheet 5, D7
 */
 
-static READ_HANDLER ( portA_r )
+static int portA_r(int chip)
 {
-	if (offset == 3)
+	if (chip == 3)
 		return readinputport(4);	 /* Wheel */
 	return 0;
 }
 
-static READ_HANDLER ( portB_r )
+static int portB_r(int chip)
 {
-	if (offset == 3)
+	if (chip == 3)
 		return readinputport(2);	/* DSW 2 */
 	return 0;
 }
 
-static WRITE_HANDLER( portA_w )
+static void portA_w(int chip, int data)
 {
-	switch (offset)
+	switch (chip)
 	{
 		case 0: /* signals 0PA0 to 0PA7 */
 			turbo_opa = data;
@@ -110,9 +110,9 @@ static WRITE_HANDLER( portA_w )
 	}
 }
 
-static WRITE_HANDLER ( portB_w )
+static void portB_w(int chip, int data)
 {
-	switch (offset)
+	switch (chip)
 	{
 		case 0: /* signals 0PB0 to 0PB7 */
 			turbo_opb = data;
@@ -149,9 +149,9 @@ static WRITE_HANDLER ( portB_w )
 	}
 }
 
-static WRITE_HANDLER ( portC_w )
+static void portC_w(int chip, int data)
 {
-	switch (offset)
+	switch (chip)
 	{
 		case 0: /* signals 0PC0 to 0PC7 */
 			turbo_opc = data;
@@ -289,7 +289,7 @@ WRITE_HANDLER( turbo_coin_and_lamp_w )
 			break;
 
 		case 3:		/* Start Lamp */
-			osd_led_w(0, data);
+			set_led_status(0, data & 1);
 			break;
 
 		case 4:		/* n/c */

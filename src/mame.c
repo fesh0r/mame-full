@@ -24,6 +24,8 @@ static int settingsloaded;
 
 int bitmap_dirty;	/* set by osd_clearbitmap() */
 
+static int leds_status;
+
 
 /* Used in vh_open */
 extern unsigned char *spriteram,*spriteram_2;
@@ -460,31 +462,23 @@ int run_game(int game)
 
 	if (osd_init() == 0)
 	{
-#ifdef MESS
-		do
+		if (init_machine() == 0)
 		{
-			mess_keep_going = 0;
-#endif
-			if (init_machine() == 0)
-			{
-				if (run_machine() == 0)
-					err = 0;
-				else if (!bailing)
-				{
-					bailing = 1;
-					printf("Unable to start machine emulation\n");
-				}
-
-				shutdown_machine();
-			}
+			if (run_machine() == 0)
+				err = 0;
 			else if (!bailing)
 			{
 				bailing = 1;
-				printf("Unable to initialize machine emulation\n");
+				printf("Unable to start machine emulation\n");
 			}
-#ifdef MESS
-		} while (mess_keep_going);
-#endif
+
+			shutdown_machine();
+		}
+		else if (!bailing)
+		{
+			bailing = 1;
+			printf("Unable to initialize machine emulation\n");
+		}
 
 		osd_exit();
 	}
@@ -857,6 +851,8 @@ static int vh_open(void)
 		return 1;
 	}
 
+	leds_status = 0;
+
 	return 0;
 }
 
@@ -900,12 +896,6 @@ int updatescreen(void)
 
 	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
 
-#ifdef MESS
-	/* leave the driver and start over if mess_keep_going is set */
-	if (mess_keep_going)
-		return 1;
-#endif
-
     return 0;
 }
 
@@ -935,7 +925,7 @@ void update_video_and_audio(void)
 #ifdef MAME_DEBUG
 	debug_trace_delay = 0;
 #endif
-	osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap);
+	osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap,leds_status);
 }
 
 
@@ -987,16 +977,6 @@ int run_machine(void)
 
 				if (showgamewarnings(real_scrbitmap) == 0)	/* show info about incorrect behaviour (wrong colors etc.) */
 				{
-					/* shut down the leds (work around Allegro hanging bug in the DOS port) */
-					osd_led_w(0,1);
-					osd_led_w(1,1);
-					osd_led_w(2,1);
-					osd_led_w(3,1);
-					osd_led_w(0,0);
-					osd_led_w(1,0);
-					osd_led_w(2,0);
-					osd_led_w(3,0);
-
 					init_user_interface();
 
 					/* disable cheat if no roms */
@@ -1086,3 +1066,9 @@ int mame_highscore_enabled(void)
 	return 1;
 }
 
+
+void set_led_status(int num,int on)
+{
+	if (on) leds_status |=  (1 << num);
+	else    leds_status &= ~(1 << num);
+}

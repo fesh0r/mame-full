@@ -156,7 +156,7 @@ if (serial_count)
 
 	serial_count = 0;
 	sending = 0;
-	reset_delay = 5;	/* delay a little before returning "ready" */
+	reset_delay = 5;	/* delay a little before returning setting data to 1 (needed by wbeachvl) */
 }
 
 
@@ -178,6 +178,7 @@ int EEPROM_read_bit(void)
 	{
 		if (reset_delay > 0)
 		{
+			/* this is needed by wbeachvl */
 			reset_delay--;
 			res = 0;
 		}

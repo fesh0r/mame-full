@@ -333,7 +333,7 @@ INPUT_PORTS_END
 
 
 
-static struct MachineDriver machine_driver_xexex =
+static const struct MachineDriver machine_driver_xexex =
 {
 	{
 		{

@@ -252,7 +252,7 @@ INPUT_PORTS_START( invaders )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_invaders =
+static const struct MachineDriver machine_driver_invaders =
 {
 	/* basic machine hardware */
 	{
@@ -402,7 +402,7 @@ INPUT_PORTS_END
 
 /* same as regular invaders, but with a color board added */
 
-static struct MachineDriver machine_driver_invadpt2 =
+static const struct MachineDriver machine_driver_invadpt2 =
 {
 	/* basic machine hardware */
 	{
@@ -651,7 +651,7 @@ INPUT_PORTS_START( invad2ct )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_invad2ct =
+static const struct MachineDriver machine_driver_invad2ct =
 {
 	/* basic machine hardware */
 	{
@@ -1031,7 +1031,7 @@ INPUT_PORTS_START( rollingc )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_rollingc =
+static const struct MachineDriver machine_driver_rollingc =
 {
 	/* basic machine hardware */
 	{
@@ -1245,7 +1245,7 @@ INPUT_PORTS_START( bandido )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_sheriff =
+static const struct MachineDriver machine_driver_sheriff =
 {
 	/* basic machine hardware */
 	{
@@ -1348,7 +1348,7 @@ INPUT_PORTS_START( spcenctr )
 	PORT_DIPSETTING(    0xc0, "90" )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_spcenctr =
+static const struct MachineDriver machine_driver_spcenctr =
 {
 	/* basic machine hardware */
 	{
@@ -1458,7 +1458,7 @@ INPUT_PORTS_START( gunfight )
 	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE, 50, 10, 1, 255, KEYCODE_Z, KEYCODE_A, IP_JOY_NONE, IP_JOY_NONE )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_gunfight =
+static const struct MachineDriver machine_driver_gunfight =
 {
 	/* basic machine hardware */
 	{
@@ -1534,7 +1534,7 @@ INPUT_PORTS_START( m4 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_m4 =
+static const struct MachineDriver machine_driver_m4 =
 {
 	/* basic machine hardware */
 	{
@@ -1612,7 +1612,7 @@ INPUT_PORTS_START( boothill )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_boothill =
+static const struct MachineDriver machine_driver_boothill =
 {
 	/* basic machine hardware */
 	{
@@ -1726,7 +1726,7 @@ INPUT_PORTS_START( schaser )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_schaser =
+static const struct MachineDriver machine_driver_schaser =
 {
 	/* basic machine hardware */
 	{
@@ -1869,7 +1869,7 @@ INPUT_PORTS_START( clowns )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_clowns =
+static const struct MachineDriver machine_driver_clowns =
 {
 	/* basic machine hardware */
 	{
@@ -1989,7 +1989,7 @@ INPUT_PORTS_START( 280zzzap )
 	PORT_DIPSETTING(    0xc0, "Spanish" )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_280zzzap =
+static const struct MachineDriver machine_driver_280zzzap =
 {
 	/* basic machine hardware */
 	{
@@ -2071,7 +2071,7 @@ INPUT_PORTS_START( lupin3 )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_lupin3 =
+static const struct MachineDriver machine_driver_lupin3 =
 {
 	/* basic machine hardware */
 	{
@@ -2177,7 +2177,7 @@ INPUT_PORTS_START( helifire )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_helifire =
+static const struct MachineDriver machine_driver_helifire =
 {
 	/* basic machine hardware */
 	{
@@ -2301,7 +2301,7 @@ INPUT_PORTS_START( polaris )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_polaris =
+static const struct MachineDriver machine_driver_polaris =
 {
 	/* basic machine hardware */
 	{
@@ -2515,7 +2515,7 @@ INPUT_PORTS_START( bowler )
 	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X, 10, 10, 0, 0)
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_bowler =
+static const struct MachineDriver machine_driver_bowler =
 {
 	/* basic machine hardware */
 	{
@@ -2602,7 +2602,7 @@ INPUT_PORTS_START( shuffle )
 	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X | IPF_REVERSE, 10, 10, 0, 0)
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_shuffle =
+static const struct MachineDriver machine_driver_shuffle =
 {
 	/* basic machine hardware */
 	{
@@ -2679,7 +2679,7 @@ INPUT_PORTS_START( seawolf )
 	PORT_DIPSETTING(    0xe0, "Test Mode" )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_seawolf =
+static const struct MachineDriver machine_driver_seawolf =
 {
 	/* basic machine hardware */
 	{
@@ -2735,7 +2735,7 @@ INPUT_PORTS_START( blueshrk )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_blueshrk =
+static const struct MachineDriver machine_driver_blueshrk =
 {
 	/* basic machine hardware */
 	{
@@ -2801,7 +2801,7 @@ INPUT_PORTS_START( desertgu )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_desertgu =
+static const struct MachineDriver machine_driver_desertgu =
 {
 	/* basic machine hardware */
 	{
@@ -2987,7 +2987,7 @@ INPUT_PORTS_START( tornbase )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_tornbase =
+static const struct MachineDriver machine_driver_tornbase =
 {
 	/* basic machine hardware */
 	{
@@ -3093,7 +3093,7 @@ INPUT_PORTS_START( checkmat )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_checkmat =
+static const struct MachineDriver machine_driver_checkmat =
 {
 	/* basic machine hardware */
 	{
@@ -3379,7 +3379,7 @@ INPUT_PORTS_START( ballbomb )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_ballbomb =
+static const struct MachineDriver machine_driver_ballbomb =
 {
 	/* basic machine hardware */
 	{

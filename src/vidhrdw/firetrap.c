@@ -87,7 +87,9 @@ UINT32 get_fg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num
 
 UINT32 get_bg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
-	return ((row & 0x0f) ^ 0x0f) | ((col & 0x0f) << 4) | ((row & 0x10) << 4) | ((col & 0x10) << 5);
+	return ((row & 0x0f) ^ 0x0f) | ((col & 0x0f) << 4) |
+			/* hole at bit 8 */
+			((row & 0x10) << 5) | ((col & 0x10) << 6);
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -103,7 +105,6 @@ INLINE void get_bg_tile_info(int tile_index, unsigned char *bgvideoram, int gfx_
 {
 	int code, color;
 
-	tile_index = (tile_index & 0x0ff) | ((tile_index & 0x300) << 1);
 	code = bgvideoram[tile_index];
 	color = bgvideoram[tile_index + 0x100];
 	SET_TILE_INFO(gfx_region, code + ((color & 0x03) << 8), (color & 0x30) >> 4);
@@ -158,13 +159,13 @@ WRITE_HANDLER( firetrap_fgvideoram_w )
 WRITE_HANDLER( firetrap_bg1videoram_w )
 {
 	firetrap_bg1videoram[offset] = data;
-	tilemap_mark_tile_dirty(bg1_tilemap,(offset & 0x0ff) | ((offset & 0x600) >> 1));
+	tilemap_mark_tile_dirty(bg1_tilemap,offset & 0x6ff);
 }
 
 WRITE_HANDLER( firetrap_bg2videoram_w )
 {
 	firetrap_bg2videoram[offset] = data;
-	tilemap_mark_tile_dirty(bg2_tilemap,(offset & 0x0ff) | ((offset & 0x600) >> 1));
+	tilemap_mark_tile_dirty(bg2_tilemap,offset & 0x6ff);
 }
 
 

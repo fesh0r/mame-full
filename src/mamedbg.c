@@ -868,6 +868,7 @@ static int readkey(void)
 	{
 		if ((cursor_flash++ & 15) == 0)
 			toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
+		draw_screen(0);	/* so we can change stuff in RAM and see the effect on screen */
 		update_video_and_audio();
 
 		k = KEYCODE_NONE;
@@ -5627,7 +5628,8 @@ void MAME_Debug(void)
 			}
 			else
 			{
-				update_video_and_audio();
+				if (dbg_trace_delay != 0x7fffffff)
+					update_video_and_audio();
 				debug_trace_delay = dbg_trace_delay;
 				if( debug_key_pressed )
 				{

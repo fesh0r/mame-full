@@ -1,10 +1,13 @@
 #include "mamalleg.h"
 #include "driver.h"
 #include "unzip.h"
-#ifndef MESS
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+
+#ifdef MESS
+#include "mess/msdos.h"
+#endif
 
 /* Verbose outputs to error.log ? */
 #define VERBOSE 	0
@@ -1416,7 +1419,3 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 
 	return 0;
 }
-
-#endif  /* !MESS */
-
-

@@ -1731,11 +1731,11 @@ INPUT_PORTS_START( qzshowby )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 
 	PORT_START /* IN X */ /*all OK*/
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1  ) /* IPT_START1 in test mode */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START1 in test mode */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2  ) /* IPT_START2 in test mode */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START2 in test mode */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1791,11 +1791,11 @@ INPUT_PORTS_START( qzshowby )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
 
 	PORT_START      /* IN7 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3  ) /* IPT_START3 in test mode */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START3 in test mode */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START4  ) /* IPT_START4 in test mode */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START4 in test mode */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2219,7 +2219,7 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-static struct MachineDriver machine_driver_rastsag2 =
+static const struct MachineDriver machine_driver_rastsag2 =
 {
 	/* basic machine hardware */
 	{
@@ -2263,7 +2263,7 @@ static struct MachineDriver machine_driver_rastsag2 =
 	}
 };
 
-static struct MachineDriver machine_driver_ashura =
+static const struct MachineDriver machine_driver_ashura =
 {
 	/* basic machine hardware */
 	{
@@ -2307,7 +2307,7 @@ static struct MachineDriver machine_driver_ashura =
 	}
 };
 
-static struct MachineDriver machine_driver_crimec =
+static const struct MachineDriver machine_driver_crimec =
 {
 	/* basic machine hardware */
 	{
@@ -2351,7 +2351,7 @@ static struct MachineDriver machine_driver_crimec =
 	}
 };
 
-static struct MachineDriver machine_driver_tetrist =
+static const struct MachineDriver machine_driver_tetrist =
 {
 	/* basic machine hardware */
 	{
@@ -2396,7 +2396,7 @@ static struct MachineDriver machine_driver_tetrist =
 };
 
 
-static struct MachineDriver machine_driver_hitice =
+static const struct MachineDriver machine_driver_hitice =
 {
 	/* basic machine hardware */
 	{
@@ -2444,7 +2444,7 @@ static struct MachineDriver machine_driver_hitice =
 	}
 };
 
-static struct MachineDriver machine_driver_rambo3 =
+static const struct MachineDriver machine_driver_rambo3 =
 {
 	/* basic machine hardware */
 	{
@@ -2488,7 +2488,7 @@ static struct MachineDriver machine_driver_rambo3 =
 	}
 };
 
-static struct MachineDriver machine_driver_rambo3a =
+static const struct MachineDriver machine_driver_rambo3a =
 {
 	/* basic machine hardware */
 	{
@@ -2548,7 +2548,7 @@ static void patch_puzzb(void)
 }
 #endif
 
-static struct MachineDriver machine_driver_puzbobb =
+static const struct MachineDriver machine_driver_puzbobb =
 {
 	/* basic machine hardware */
 	{
@@ -2595,7 +2595,7 @@ static struct MachineDriver machine_driver_puzbobb =
 
 };
 
-static struct MachineDriver machine_driver_spacedx =
+static const struct MachineDriver machine_driver_spacedx =
 {
 	/* basic machine hardware */
 	{
@@ -2643,7 +2643,7 @@ static struct MachineDriver machine_driver_spacedx =
 };
 
 
-static struct MachineDriver machine_driver_qzshowby =
+static const struct MachineDriver machine_driver_qzshowby =
 {
 	/* basic machine hardware */
 	{
@@ -2690,7 +2690,7 @@ static struct MachineDriver machine_driver_qzshowby =
 
 };
 
-static struct MachineDriver machine_driver_viofight =
+static const struct MachineDriver machine_driver_viofight =
 {
 	/* basic machine hardware */
 	{
@@ -2738,7 +2738,7 @@ static struct MachineDriver machine_driver_viofight =
 	}
 };
 
-static struct MachineDriver machine_driver_masterw =
+static const struct MachineDriver machine_driver_masterw =
 {
 	/* basic machine hardware */
 	{
@@ -2782,7 +2782,7 @@ static struct MachineDriver machine_driver_masterw =
 	}
 };
 
-static struct MachineDriver machine_driver_silentd =
+static const struct MachineDriver machine_driver_silentd =
 {
 	/* basic machine hardware */
 	{
