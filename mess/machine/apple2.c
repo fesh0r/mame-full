@@ -57,8 +57,8 @@ static double joystick_y2_time;
  * New Apple II memory manager
  * ----------------------------------------------------------------------- */
 
-const struct apple2_memmap_entry *apple2_cur_memory_map;
-struct apple2_meminfo *apple2_current_meminfo;
+static struct apple2_memmap_config apple2_mem_config;
+static struct apple2_meminfo *apple2_current_meminfo;
 
 
 static READ8_HANDLER(read_floatingbus)
@@ -68,9 +68,9 @@ static READ8_HANDLER(read_floatingbus)
 
 
 
-void apple2_setup_memory(const struct apple2_memmap_entry *memmap)
+void apple2_setup_memory(const struct apple2_memmap_config *config)
 {
-	apple2_cur_memory_map = memmap;
+	apple2_mem_config = *config;
 	apple2_current_meminfo = NULL;
 	apple2_update_memory();
 }
@@ -92,7 +92,7 @@ void apple2_update_memory(void)
 	/* need to build list of current info? */
 	if (!apple2_current_meminfo)
 	{
-		for (i = 0; apple2_cur_memory_map[i].end; i++)
+		for (i = 0; apple2_mem_config.memmap[i].end; i++)
 			;
 		apple2_current_meminfo = auto_malloc(i * sizeof(*apple2_current_meminfo));
 		full_update = 1;
@@ -105,14 +105,14 @@ void apple2_update_memory(void)
 	slot_ram = (slot_length > 0) ? &rom[rom_length] : NULL;
 
 	/* loop through the entire memory map */
-	bank = 1;
-	for (i = 0; apple2_cur_memory_map[i].get_meminfo; i++)
+	bank = apple2_mem_config.first_bank;
+	for (i = 0; apple2_mem_config.memmap[i].get_meminfo; i++)
 	{
 		/* retrieve information on this entry */
 		memset(&meminfo, 0, sizeof(meminfo));
-		apple2_cur_memory_map[i].get_meminfo(apple2_cur_memory_map[i].begin, apple2_cur_memory_map[i].end, &meminfo);
+		apple2_mem_config.memmap[i].get_meminfo(apple2_mem_config.memmap[i].begin, apple2_mem_config.memmap[i].end, &meminfo);
 
-		bank_disposition = apple2_cur_memory_map[i].bank_disposition;
+		bank_disposition = apple2_mem_config.memmap[i].bank_disposition;
 
 		/* do we need to memory reading? */
 		if (full_update
@@ -121,8 +121,8 @@ void apple2_update_memory(void)
 		{
 			rbase = NULL;
 			rbank = (bank_disposition != A2MEM_IO) ? bank : 0;
-			begin = apple2_cur_memory_map[i].begin;
-			end_r = apple2_cur_memory_map[i].end;
+			begin = apple2_mem_config.memmap[i].begin;
+			end_r = apple2_mem_config.memmap[i].end;
 			rh = (read8_handler) (STATIC_BANK1 + rbank - 1);
 
 			LOG(("apple2_update_memory():  Updating RD {%06X..%06X} [#%02d] --> %08X\n",
@@ -138,6 +138,12 @@ void apple2_update_memory(void)
 			{
 				/* floating RAM */
 				rh = read_floatingbus;
+			}
+			else if ((meminfo.read_mem & 0xC0000000) == APPLE2_MEM_AUX)
+			{
+				/* auxillary memory */
+				offset = meminfo.read_mem & APPLE2_MEM_MASK;
+				rbase = &apple2_mem_config.auxmem[offset];
 			}
 			else if ((meminfo.read_mem & 0xC0000000) == APPLE2_MEM_SLOT)
 			{
@@ -167,8 +173,8 @@ void apple2_update_memory(void)
 				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end_r, 0, 0, rh);
 
 			/* did we 'go past the end?' */
-			if (end_r < apple2_cur_memory_map[i].end)
-				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, end_r + 1, apple2_cur_memory_map[i].end, 0, 0, MRA8_NOP);
+			if (end_r < apple2_mem_config.memmap[i].end)
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, end_r + 1, apple2_mem_config.memmap[i].end, 0, 0, MRA8_NOP);
 
 			/* set the memory bank */
 			if (rbase)
@@ -193,8 +199,8 @@ void apple2_update_memory(void)
 				wbank = bank + 1;
 			else
 				wbank = 0;
-			begin = apple2_cur_memory_map[i].begin;
-			end_w = apple2_cur_memory_map[i].end;
+			begin = apple2_mem_config.memmap[i].begin;
+			end_w = apple2_mem_config.memmap[i].end;
 			wh = (write8_handler) (STATIC_BANK1 + wbank - 1);
 
 			LOG(("apple2_update_memory():  Updating WR {%06X..%06X} [#%02d] --> %08X\n",
@@ -205,6 +211,12 @@ void apple2_update_memory(void)
 			{
 				/* handler */
 				wh = meminfo.write_handler;
+			}
+			else if ((meminfo.write_mem & 0xC0000000) == APPLE2_MEM_AUX)
+			{
+				/* auxillary memory */
+				offset = meminfo.write_mem & APPLE2_MEM_MASK;
+				wbase = &apple2_mem_config.auxmem[offset];
 			}
 			else if ((meminfo.write_mem & 0xC0000000) == APPLE2_MEM_SLOT)
 			{
@@ -234,8 +246,8 @@ void apple2_update_memory(void)
 				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end_w, 0, 0, wh);
 
 			/* did we 'go past the end?' */
-			if (end_w < apple2_cur_memory_map[i].end)
-				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, end_w + 1, apple2_cur_memory_map[i].end, 0, 0, MWA8_NOP);
+			if (end_w < apple2_mem_config.memmap[i].end)
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, end_w + 1, apple2_mem_config.memmap[i].end, 0, 0, MWA8_NOP);
 
 			/* set the memory bank */
 			if (wbase)
@@ -467,7 +479,7 @@ static void apple2_mem_E000(offs_t begin, offs_t end, struct apple2_meminfo *mem
 
 
 
-static const struct apple2_memmap_entry apple2_memory_map[] =
+static const struct apple2_memmap_entry apple2_memmap_entries[] =
 {
 	{ 0x0000, 0x01FF, apple2_mem_0000, A2MEM_MONO },
 	{ 0x0200, 0x03FF, apple2_mem_0200, A2MEM_DUAL },
@@ -662,7 +674,7 @@ data8_t apple2_getfloatingbusvalue(void)
   driver init
 ***************************************************************************/
 
-DRIVER_INIT( apple2 )
+void apple2_init_common(void)
 {
 	state_save_register_UINT32("apple2", 0, "softswitch", &a2, 1);
 	state_save_register_func_postload(apple2_updatevar);
@@ -671,8 +683,20 @@ DRIVER_INIT( apple2 )
 	memset(mess_ram, 0, mess_ram_size);
 
 	apple2_slot6_init();
+}
 
-	apple2_setup_memory(apple2_memory_map);
+
+
+DRIVER_INIT( apple2 )
+{
+	struct apple2_memmap_config cfg;
+
+	apple2_init_common();
+
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.first_bank = 1;
+	cfg.memmap = apple2_memmap_entries;
+	apple2_setup_memory(&cfg);
 }
 
 

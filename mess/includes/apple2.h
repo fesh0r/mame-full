@@ -35,6 +35,7 @@
 extern UINT32 a2;
 
 /* machine/apple2.c */
+void apple2_init_common(void);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
 
@@ -130,6 +131,7 @@ int apple2_get_bgcolor(void);
  * New Apple II memory manager
  * ----------------------------------------------------------------------- */
 
+#define APPLE2_MEM_AUX		0x40000000
 #define APPLE2_MEM_SLOT		0x80000000
 #define APPLE2_MEM_ROM		0xC0000000
 #define APPLE2_MEM_FLOATING	0xFFFFFFFF
@@ -158,7 +160,15 @@ struct apple2_memmap_entry
 	bank_disposition_t bank_disposition;
 };
 
-void apple2_setup_memory(const struct apple2_memmap_entry *memmap);
+struct apple2_memmap_config
+{
+	int first_bank;
+	UINT8 *auxmem;
+	UINT32 auxmem_length;
+	const struct apple2_memmap_entry *memmap;
+};
+
+void apple2_setup_memory(const struct apple2_memmap_config *config);
 void apple2_update_memory(void);
 
 WRITE8_HANDLER( apple2_mainram0400_w );
