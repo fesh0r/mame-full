@@ -108,6 +108,7 @@ void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void dotron_change_light(int light);
 int dotron_vh_start(void);
+void dotron_vh_stop(void);
 void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -1191,7 +1192,7 @@ static const struct MachineDriver machine_driver_dotron =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dotron_vh_start,
-	generic_vh_stop,
+	dotron_vh_stop,
 	dotron_vh_screenrefresh,
 
 	/* sound hardware */
