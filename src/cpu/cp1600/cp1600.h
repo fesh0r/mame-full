@@ -30,9 +30,9 @@ enum {
 	CP1600_R4, CP1600_R5, CP1600_R6, CP1600_R7
 };
 
-#define cp1600_INT_NONE  0
+#define CP1600_INT_NONE  0
 
-extern int CP1600_icount;				 /* cycle count */
+extern int cp1600_icount;				 /* cycle count */
 
 extern void cp1600_reset (void *param); 		 /* Reset registers to the initial values */
 extern void cp1600_exit  (void);				 /* Shut down CPU core */

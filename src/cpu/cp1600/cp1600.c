@@ -43,9 +43,24 @@ typedef struct {
 	int 	(*irq_callback)(int irqline);
 }	CP1600;
 
-int CP1600_icount;
+int cp1600_icount;
 
 static CP1600 cp1600;
+
+/* Layout of the registers in the debugger */
+static UINT8 cp1600_reg_layout[] = {
+	CP1600_R0, CP1600_R1, CP1600_R2, CP1600_R3, -1,
+	CP1600_R4, CP1600_R5, CP1600_R6, CP1600_R7, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 cp1600_win_layout[] = {
+	 0, 0,80, 2,	/* register window (top rows) */
+	 0, 3,24,19,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
 
 /* clear all flags */
 #define CLR_OZCS                \
@@ -589,7 +604,7 @@ void cp1600_exit(void)
 /* Execute cycles - returns number of cycles actually run */
 int cp1600_execute(int cycles)
 {
-	CP1600_icount = cycles;
+	cp1600_icount = cycles;
 
     do
     {
@@ -1750,11 +1765,155 @@ int cp1600_execute(int cycles)
 		case 0x3fe: /* 1 111 111 110 */ cp1600_xori(6);			break;
 		case 0x3ff: /* 1 111 111 111 */ cp1600_xori(7);			break;
         }
-	} while( CP1600_icount > 0 );
+	} while( cp1600_icount > 0 );
 
-	return cycles - CP1600_icount;
+	return cycles - cp1600_icount;
+}
+
+/* Get registers, return context size */
+unsigned cp1600_get_context(void *dst)
+{
+	if( dst )
+		memcpy(dst, &cp1600, sizeof(CP1600));
+	return sizeof(CP1600);
+}
+
+/* Set registers */
+void cp1600_set_context(void *src)
+{
+	if( src )
+		memcpy(&cp1600, src, sizeof(CP1600));
+}
+
+/* Get program counter */
+unsigned cp1600_get_pc(void)
+{
+	return cp1600.r[7];
+}
+
+/* Set program counter */
+void cp1600_set_pc(unsigned val)
+{
+	cp1600.r[7] = val;
+}
+
+/* Get stack pointer */
+unsigned cp1600_get_sp(void)
+{
+	return 0;
+}
+
+/* Set stack pointer */
+void cp1600_set_sp(unsigned val)
+{
+	/* nothing */
 }
 
 
+unsigned cp1600_get_reg(int regnum)
+{
+	switch( regnum )
+	{
+	case CP1600_R0: return cp1600.r[0];
+	case CP1600_R1: return cp1600.r[1];
+	case CP1600_R2: return cp1600.r[2];
+	case CP1600_R3: return cp1600.r[3];
+	case CP1600_R4: return cp1600.r[4];
+	case CP1600_R5: return cp1600.r[5];
+	case CP1600_R6: return cp1600.r[6];
+	case CP1600_R7: return cp1600.r[7];
+	}
+	return 0;
+}
 
+void cp1600_set_reg (int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+	case CP1600_R0: cp1600.r[0] = val; break;
+	case CP1600_R1: cp1600.r[1] = val; break;
+	case CP1600_R2: cp1600.r[2] = val; break;
+	case CP1600_R3: cp1600.r[3] = val; break;
+	case CP1600_R4: cp1600.r[4] = val; break;
+	case CP1600_R5: cp1600.r[5] = val; break;
+	case CP1600_R6: cp1600.r[6] = val; break;
+	case CP1600_R7: cp1600.r[7] = val; break;
+    }
+}
+
+void cp1600_set_nmi_line(int state)
+{
+	/* not applicable */
+}
+
+void cp1600_set_irq_line(int irqline, int state)
+{
+	switch( irqline )
+	{
+	}
+}
+
+void cp1600_set_irq_callback(int (*callback)(int irqline))
+{
+	cp1600.irq_callback = callback;
+}
+
+void cp1600_state_save(void *file)
+{
+}
+
+void cp1600_state_load(void *file)
+{
+}
+
+const char *cp1600_info(void *context, int regnum)
+{
+	static char buffer[8][15+1];
+	static int which = 0;
+	CP1600 *r = context;
+
+	which = ++which % 8;
+	buffer[which][0] = '\0';
+	if( !context )
+		r = &cp1600;
+
+    switch( regnum )
+	{
+		case CPU_INFO_REG+CP1600_R0:sprintf(buffer[which], "R0:%04X", r->r[0]); break;
+		case CPU_INFO_REG+CP1600_R1:sprintf(buffer[which], "R1:%04X", r->r[1]); break;
+		case CPU_INFO_REG+CP1600_R2:sprintf(buffer[which], "R2:%04X", r->r[2]); break;
+		case CPU_INFO_REG+CP1600_R3:sprintf(buffer[which], "R3:%04X", r->r[3]); break;
+		case CPU_INFO_REG+CP1600_R4:sprintf(buffer[which], "R4:%04X", r->r[4]); break;
+		case CPU_INFO_REG+CP1600_R5:sprintf(buffer[which], "R5:%04X", r->r[5]); break;
+		case CPU_INFO_REG+CP1600_R6:sprintf(buffer[which], "R6:%04X", r->r[6]); break;
+		case CPU_INFO_REG+CP1600_R7:sprintf(buffer[which], "R7:%04X", r->r[7]); break;
+        case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c",
+				r->flags & 0x80 ? 'S':'.',
+				r->flags & 0x40 ? 'Z':'.',
+				r->flags & 0x10 ? 'V':'.',
+				r->flags & 0x10 ? 'C':'.');
+			break;
+		case CPU_INFO_NAME: return "CP1600";
+		case CPU_INFO_FAMILY: return "????";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (c) 2000 Frank Palazzolo, all rights reserved.";
+		case CPU_INFO_REG_LAYOUT: return (const char*)cp1600_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)cp1600_win_layout;
+	}
+    return buffer[which];
+}
+
+unsigned cp1600_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+/*	return DasmCP1600( buffer, pc ); */
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
+    return 1;
+#else
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	return 1;
+#endif
+}
 
