@@ -2435,10 +2435,35 @@ to do anything useful, so you are out of luck.
 
 History and Trivia:
 
-This is just another 68k-based PC.  The CCOS is mono-tasking, and vaguely
-reminiscent of UNIX.  There was also an UCSD runtime, a 8080 simulator, CPM,
-and a few application programs.  The most original feature is the extensive
-network support, but this is not emulated.
+The Concept was announced in the spring of 1982.
+
+This computer uses a state-of-art (at the time) MC68000 CPU.  Its CCOS
+operating system is a variant of the Merlin operating system by Silicon Valley
+Software: it is a mono-tasking OS, with source-level compatibility with the
+UCSD p-system, and vague reminiscences of UNIX.
+
+The Concept has a bitmapped screen, which enables to mix text in any style and
+size with graphics, and some programs were reportedly WYSIWYG (which was still
+relatively uncommon at the time).  The system includes a primitive window
+manager, but don't delude yourself: it is no GUI.  The most original feature is
+probably the rotatable screen that can be used either in horizontal or vertical
+position: however you need to reboot the computer after flipping the screen. 
+Another feature of interest is the integrated network support: the Concept can
+be used either as a disk-less network computer or as a full-featured personal
+computer, and you could connect Concepts, Apple IIs and IBM PCs in an
+heterogeneous Omninet LAN.
+
+Available programs were mostly business applications: word processor,
+spreadsheet, grapher, database, accounting...  Thanks to its large screen, its
+WYSIWYG capability and to the use of various hierarchical menus, the Concept is
+relatively user-friendly for a 1982 business computer.  There were also Pascal
+and FORTRAN compilers, a BASIC, a UCSD runtime, an 8080 simulator, a port of
+the CP/M OS, a version of SPICE to simulate discrete ICs, and even a paint
+program that could take advantage of a mouse.
+
+The price was about 4000$ for a bare 256-kbyte system in 1984 (1000$ for extra
+256kbytes, $750 for floppy, from 2000$ to 4000$ for hard disk according to
+size).
 
 
 $end
