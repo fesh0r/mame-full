@@ -874,7 +874,7 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 				snprintf(ent->attr, ent->attr_len, "PGM%s",
 							(fdr.flags & fdr99_f_wp) ? " R/O" : "");
 			else
-				snprintf(ent->attr, ent->attr_len, "%c/%c %d%s%s",
+				snprintf(ent->attr, ent->attr_len, "%c/%c %d%s",
 							(fdr.flags & fdr99_f_int) ? 'I' : 'D',
 							(fdr.flags & fdr99_f_var) ? 'V' : 'F',
 							fdr.reclen,
