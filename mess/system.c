@@ -582,7 +582,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( apfimag )
 
 	/* Tatung */
-TESTDRIVER( einstein )
+	DRIVER( einstein )
 
 	/* INTELLIGENT SOFTWARE */
 	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */
