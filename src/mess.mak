@@ -446,8 +446,9 @@ $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/systems/enterp.o
 
 $(OBJ)/ascii.a :   \
-	  $(OBJ)/mess/sndhrdw/scc.o	 \
-	  $(OBJ)/mess/machine/msx.o	 \
+	  $(OBJ)/mess/sndhrdw/scc.o	 	 \
+	  $(OBJ)/mess/machine/msx.o	 	 \
+	  $(OBJ)/mess/formats/fmsx_cas.o \
 	  $(OBJ)/mess/systems/msx.o
 
 $(OBJ)/kim1.a :    \
