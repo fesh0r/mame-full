@@ -367,6 +367,8 @@ static BOOL CreateMessIcons(void)
     for (i = 0; i < (game_count * IO_COUNT); i++)
         mess_icon_index[i] = 0;
 
+	if (s_pSoftwareListView)
+		SmartListView_AssociateImageLists(s_pSoftwareListView, hSmall, hLarge);
     return TRUE;
 }
 

@@ -111,12 +111,6 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->nNumRows = 0;
 	pListView->rowMapping = NULL;
 
-	/* Create IconsList for ListView Control */
-	if (pOptions->hSmall)
-		ListView_SetImageList(hwndListView, pOptions->hSmall, LVSIL_SMALL);
-	if (pOptions->hLarge)
-		ListView_SetImageList(hwndListView, pOptions->hLarge, LVSIL_NORMAL);
-
 	/* Do we automatically center on our parent? */
 	if (pOptions->bCenterOnParent) {
 		GetClientRect(pOptions->hwndParent, &rParent);
@@ -134,6 +128,7 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 			SWP_DRAWFRAME);
 	}
 
+	SmartListView_AssociateImageLists(pListView, pOptions->hSmall, pOptions->hLarge);
 	SmartListView_InternalResetColumnDisplay(pListView, TRUE);
 	return pListView;
 }
@@ -997,6 +992,15 @@ void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn)
 
 	SmartListView_GetSorting(pListView, &nCurrentSorting, &bCurrentReverse);
 	SmartListView_SetSorting(pListView, nColumn, (nCurrentSorting == nColumn) && !bCurrentReverse);
+}
+
+void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELIST hSmall, HIMAGELIST hLarge)
+{
+	/* Create IconsList for ListView Control */
+	if (hSmall)
+		ListView_SetImageList(pListView->hwndListView, hSmall, LVSIL_SMALL);
+	if (hLarge)
+		ListView_SetImageList(pListView->hwndListView, hLarge, LVSIL_NORMAL);
 }
 
 /* ------------------------------------------------------------------------ *

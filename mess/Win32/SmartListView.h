@@ -78,5 +78,6 @@ void SmartListView_SetSorting(struct SmartListView *pListView, int nColumn, BOOL
 void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn);
 void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOrder);
 void SmartListView_SaveColumnSettings(struct SmartListView *pListView);
+void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELIST hSmall, HIMAGELIST hLarge);
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
