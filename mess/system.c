@@ -82,22 +82,26 @@ const struct GameDriver *drivers[] =
 	DRIVER( a2600 ) 	/* Atari 2600									  */
 	DRIVER( a5200 ) 	/* Atari 5200									  */
 	DRIVER( a7800 ) 	/* Atari 7800									  */
+/*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
+/*	DRIVER( lynx )*/	/* Atari Lynx Handheld							  */
 
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								  */
 
 	/* RCA */
 	DRIVER( studio2 )	/* Studio II									  */
+/*	DRIVER( cstudio2 )*//* Colour Studio II								  */
+
 	/* FAIRCHILD */
+	DRIVER( channelf )	/* Fairchild Channel F VES - 1976				  */
 
-	DRIVER( channelf )	/* Channel F									  */
-
-	/* COLECO */
+    /* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
 #if 0					/* Please dont include these next 2 in a distribution, they are Hacks	*/
 	DRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
 	DRIVER( coleconb )	/* ColecoVision (No BIOS load)					  */
 #endif
+
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System				  */
 	DRIVER( nespal )	/* Nintendo Entertainment System				  */
@@ -124,8 +128,12 @@ TESTDRIVER( saturn )	/* Sega Saturn									  */
 	DRIVER( advision )	/* Adventurevision								  */
 
 	/* Magnavox */
+/*	DRIVER( odyssey )*/	/* Magnavox Odyssey - analogue (1972)			  */
 TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
+/*	DRIVER( arcadia )*/	/* Arcadia 2001                                   */
+
+/*	DRIVER( intv )*/	/* Mattel Intellivision - 1979 AKA INTV 		  */
 
 	/* CAPCOM */
 	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
@@ -161,11 +169,13 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	DRIVER( apple2e )	/* 1983 Apple //e								  */
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced						  */
 	DRIVER( apple2ep )	/* 1987 Apple //e Platinum						  */
-/*	DRIVER( mac512k )*/ /* 1984 Apple Macintosh 512k					  */
-	DRIVER( mac512ke )	/* 1986 Apple Macintosh 512ke					  */
+
+	DRIVER( lisa2 ) 	/*												  */
+
+/*	DRIVER( mac512k )*/	/* 1984 Apple Macintosh 512k					  */
+    DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
 /*	DRIVER( mac2 )*/	/* 1987 Apple Macintosh II						  */
-	DRIVER( lisa2 ) 	/*												  */
 
 	/* ATARI */
 	DRIVER( a400 )		/* 1979 Atari 400								  */
@@ -174,9 +184,13 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	DRIVER( a800pal )	/* 1979 Atari 800 PAL							  */
 	DRIVER( a800xl )	/* 1983 Atari 800 XL							  */
 
+/*	DRIVER( atarist )*/	/* Atari ST 									  */
+
 #ifndef MESS_EXCLUDE_CBM
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
+/*  DRIVER( sym1 )*/	/* Synertek SYM1								  */
+/*  DRIVER( aim65 )*/	/* Rockwell AIM65								  */
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 			  */
 	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 					  */
@@ -191,23 +205,28 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	DRIVER( superpet )	/* Commodore SP9000/MMF9000 (50Hz)				  */
 
 	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
+/*	DRIVER( vic1001 )*/	/* Commodore VIC-1001 (VIC20 Japan)				  */
 	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
 	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
 	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
 
 	DRIVER( max )		/* Max (Japan)/Ultimax (US)/VC10 (German)		  */
 	DRIVER( c64 )		/* Commodore 64 - NTSC							  */
+/*	DRIVER( j64 )*/		/* Commodore 64 - NTSC (Japan)					  */
 	DRIVER( c64pal )	/* Commodore 64 - PAL							  */
 	DRIVER( vic64s )	/* Commodore VIC64S (Swedish)					  */
 	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
 TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
-	DRIVER( c64gs ) 	/* Commodore 64 - NTSC							  */
+/*	DRIVER( vip64 )*/	/* Commodore VIP64 (SX64, PAL, Swedish)			  */
+	DRIVER( c64gs ) 	/* Commodore 64 Games System					  */
 
 	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
 	DRIVER( cbm610 )	/* Commodore 610/B128LP 						  */
 	DRIVER( cbm620 )	/* Commodore 620/B256LP 						  */
+/*	DRIVER( cbm630 )*/	/* Commodore 630								  */
 	DRIVER( cbm710 )	/* Commodore 710/B128HP 						  */
 	DRIVER( cbm720 )	/* Commodore 620/B256HP 						  */
+/*	DRIVER( cbm730 )*/	/* Commodore 730								  */
 
 	DRIVER( c16 )		/* Commodore 16 								  */
 	DRIVER( c16hun )	/* Commodore 16 Hungarian Character Set Hack	  */
@@ -222,6 +241,8 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( c128ger )	/* Commodore 128 - PAL (german) 				  */
 	DRIVER( c128fra )	/* Commodore 128 - PAL (french) 				  */
 	DRIVER( c128ita )	/* Commodore 128 - PAL (italian)				  */
+
+/*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype						  */
 
 	DRIVER( amiga ) 	/* Commodore Amiga								  */
 
@@ -240,14 +261,17 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
 /*	DRIVER( cpc464p )*/ /* Amstrad CPC464  Plus - 1987					  */
 /*	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
+
 	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
 	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
 	DRIVER( pcw9256 )	/* 198? PCW9256 								  */
 	DRIVER( pcw9512 )	/* 198? PCW9512 (+) 							  */
 	DRIVER( pcw10 ) 	/* 198? PCW10									  */
+
 	DRIVER( pcw16 ) 	/* 1995 PCW16									  */
+
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
-		DRIVER( nc200 ) 		/* 19?? NC200 */
+	DRIVER( nc200 )     /* 19?? NC200									  */
 #endif
 #ifndef MESS_EXCLUDE_ACORN
 TESTDRIVER( z88 )		/*												  */
@@ -277,8 +301,11 @@ TESTDRIVER( avigo ) 	/*												  */
 	DRIVER( trs80l1 )	/* TRS-80 Model I	- Radio Shack Level I BASIC   */
 	DRIVER( trs80 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
 	DRIVER( trs80alt )	/* TRS-80 Model I	- R/S L2 BASIC				  */
+/*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
+
 	DRIVER( coco )		/* Color Computer								  */
+/*	DRIVER( coco2 )*/ 	/* Color Computer 2 							  */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
@@ -330,6 +357,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 TESTDRIVER( xtcga ) 	/* 1983 PC-XT (CGA, MF2 Keyboard)				  */
 	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)				  */
+
 	DRIVER( atcga ) 	/* 1984 PC-AT (CGA, MF2 Keyboard)				  */
 TESTDRIVER( atvga ) 	/*												  */
 #endif
@@ -409,6 +437,8 @@ TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310					  */
 	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
 	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
 TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
+
+/*	DRIVER( x68000 )*/	/* X68000										  */
 #endif
 
 	/* MOTOROLA */
@@ -423,19 +453,24 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 	/* MATTEL */
 	DRIVER( aquarius )	/* 1983 Aquarius								  */
 
+	/* Team Concepts */
+	/* CPU not known, else should be easy, look into systems/comquest.c */
+TESTDRIVER( comquest )	/* Comquest Plus German							*/
+
+
 /****************OTHERS******************************************************/
 
 #if 0
-	DRIVER( arcadia )	/* Arcadia 2001 								  */
-	DRIVER( atarist )	/* Atari ST 									  */
-	DRIVER( channelf )	/* Fairchild Channel F VES - 1976				  */
-	DRIVER( coco2 ) 	/* Color Computer 2 							  */
-	DRIVER( intv )		/* Mattel Intellivision - 1979 AKA INTV 		  */
-	DRIVER( jaguar )	/* Atari Jaguar 								  */
-	DRIVER( lynx )		/* Atari Lynx Handheld							  */
-	DRIVER( odyssey )	/* Magnavox Odyssey - analogue (1972)			  */
-	DRIVER( trs80_m2 )	/* TRS-80 Model II -							  */
-	DRIVER( x68000 )	/* X68000										  */
+	/* Hewlett Packard */
+	DRIVER( hp48s ) 	/* HP48 S/SX 							  		  */
+	DRIVER( hp48g ) 	/* HP48 G/GX 							  		  */
+#endif
+
+/****************Games*******************************************************/
+
+#if 0
+	/* The Ideal Game Corp. */
+	DRIVER( maniac )	/* Maniac, PIC1655A dumping problems              */
 #endif
 
 #endif /* NEOMAME */
