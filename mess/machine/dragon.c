@@ -2081,12 +2081,15 @@ static int count_bank(void)
 	switch( crc )
 	{
 		case 0x83bd6056:		/* Mind-Roll */
+			logerror("ROM cartridge bankswitching enabled: Mind-Roll (26-3100)\n");
 			return 1;
 			break;
 		case 0xBF4AD8F8:		/* Predator */
+			logerror("ROM cartridge bankswitching enabled: Predator (26-3165)\n");
 			return 3;
 			break;
 		case 0xDD94DD06:		/* RoboCop */
+			logerror("ROM cartridge bankswitching enabled: RoboCop (26-3164)\n");
 			return 7;
 			break;
 		default:				/* No bankswitching */
