@@ -291,6 +291,9 @@ int wave_num(const struct MachineSound *msound) { return ((struct Wave_interface
 #if (HAS_SAA1099)
 int saa1099_num(const struct MachineSound *msound) { return ((struct saa1099_interface*)msound->sound_interface)->numchips; }
 #endif
+#if (HAS_BEEP)
+int beep_num(const struct MachineSound *msound) { return ((struct beep_interface *)msound->sound_interface)->num; }
+#endif
 
 struct snd_interface sndintf[] =
 {
@@ -816,6 +819,18 @@ struct snd_interface sndintf[] =
 		saa1099_sh_start,
 		saa1099_sh_stop,
 		0,
+		0
+	},
+#endif
+#if (HAS_BEEP)
+	{
+		SOUND_BEEP,
+		"Constant Tone",
+		beep_num,
+		0,
+		beep_sh_start,
+		beep_sh_stop,
+                0,
 		0
 	},
 #endif

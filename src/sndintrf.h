@@ -126,6 +126,9 @@ struct MachineSound
 #if (HAS_SAA1099)
 #include "sound/saa1099.h"
 #endif
+#if (HAS_BEEP)
+#include "sound/beep.h"
+#endif
 
 
 enum
@@ -263,6 +266,11 @@ enum
 #if (HAS_SAA1099)
 	SOUND_SAA1099,
 #endif
+#if (HAS_BEEP)
+	SOUND_BEEP,
+#endif
+
+
     SOUND_COUNT
 };
 
