@@ -444,6 +444,8 @@ static unsigned char US_key_translate[4][91] =
 	}
 };
 
+
+#ifdef USE_FRENCH
 /*
 	key translation table for French terminals
 */
@@ -887,4 +889,5 @@ static unsigned char French_key_translate[4][91] =
 		0
 	}
 };
+#endif
 
