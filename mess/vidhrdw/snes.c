@@ -40,31 +40,33 @@
   The screen layers are drawn with the following priorities:
   (highest to lowest)
 
+  Modes 0 and 1                         Modes 2 to 7
+  -------------------------------------------------------
   Mainscreens
-          (BG3:1 - If BG3 priority set)
-           OBJ:3
-           BG1:1
-           BG2:1
-           OBJ:2
-           BG1:0
-           BG2:0
-           OBJ:1
-          (BG3:1 - if BG3 priority not set)
+          (BG3:1 - BG3 priority)        OBJ:3
+           OBJ:3                        BG1:1
+           BG1:1                        OBJ:2
+           BG2:1                        BG2:1
+           OBJ:2                        OBJ:1
+           BG1:0                        BG1:0
+           BG2:0                        OBJ:0
+           OBJ:1                        BG2:0
+          (BG3:1 - BG3 not priority)    Background Colour
            BG4:1
            OBJ:0
            BG3:0
            BG4:0
-           Background Color
+           Background Colour
   Subscreens
-          (BG3:1 - If BG3 priority set)
-           OBJ:3
-           BG1:1
-           BG2:1
-           OBJ:2
-           BG1:0
-           BG2:0
-           OBJ:1
-          (BG3:1 - if BG3 priority not set)
+          (BG3:1 - BG3 priority)        OBJ:3
+           OBJ:3                        BG1:1
+           BG1:1                        OBJ:2
+           BG2:1                        BG2:1
+           OBJ:2                        OBJ:1
+           BG1:0                        BG1:0
+           BG2:0                        OBJ:0
+           OBJ:1                        BG2:0
+          (BG3:1 - BG3 not priority)
            BG4:1
            OBJ:0
            BG3:0
@@ -100,8 +102,8 @@ static struct DEBUGOPTS debug_options  = {5, {0,0,0,0,0,0}, 0};
 #endif /* SNES_DBG_VIDHRDW */
 
 /* Lookup tables */
-static const UINT8  table_bgd_pty[4][2] = { {7,10}, {6,9}, {1,4}, {0,3} };
-static const UINT8  table_obj_pty[4]    = { 2, 5, 8, 11 };
+static const UINT8  table_bgd_pty[2][4][2] = { { {7,10}, {6,9}, {1,4}, {0,3} }, { {3,10}, {1,7}, {0,0}, {0,0} } };
+static const UINT8  table_obj_pty[4]       = { 2, 5, 8, 11 };
 static const UINT16 table_obj_offset[8][8] =
 {
 	{ (0*32),   (0*32)+32,   (0*32)+64,   (0*32)+96,   (0*32)+128,   (0*32)+160,   (0*32)+192,   (0*32)+224 },
@@ -433,17 +435,6 @@ INLINE void snes_draw_tile_object( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8
 				c = Machine->remapped_colortable[pal + colour];
 				if( blend && screen == MAINSCREEN )	/* Only blend main screens */
 					snes_draw_blend( x+ii, &c, snes_ppu.layer[4].blend, (snes_ram[CGWSEL] & 0x30) >> 4 );
-#ifdef MAME_DEBUG
-/*				switch( priority )
-				{
-					case 2: c = Machine->pens[0x1f]; break;
-					case 5: c = Machine->pens[0x3e0]; break;
-					case 8: c = Machine->pens[0x7c00]; break;
-					case 11: c = Machine->pens[0x3ff]; break;
-					case 20: c = Machine->pens[0x7fff]; break;
-				}*/
-/*				c = Machine->pens[dbg_pty_colours[priority]];*/
-#endif /* MAME_DEBUG */
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
 			}
@@ -524,7 +515,7 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 		}
 		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
-		priority = table_bgd_pty[layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
+		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
 		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* 8 palettes of 4 colours */
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
@@ -652,7 +643,7 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 		}
 		vflip = snes_vram[tilemap + ii + 1] & 0x80;
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
-		priority = table_bgd_pty[layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];		/* is this even right??? */
+		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];		/* is this even right??? */
 		pal = (snes_vram[tilemap + ii + 1] & 0x1c) << 2;	/* 8 palettes of 16 colours */
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
@@ -776,7 +767,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 		}
 		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
-		priority = table_bgd_pty[layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
+		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
 		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* what does this do for 8 bit screen? */
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
@@ -929,13 +920,13 @@ static void snes_update_line_mode7( UINT8 screen, UINT16 curline )
 		colour &= snes_ppu.clipmasks[0][xpos];
 
 		/* Draw pixel if appropriate */
-		if( scanlines[screen].zbuf[xpos] < table_bgd_pty[0][priority] && colour > 0 )
+		if( scanlines[screen].zbuf[xpos] < table_bgd_pty[1][0][priority] && colour > 0 )
 		{
 			UINT16 clr = Machine->remapped_colortable[colour];
 			if( screen == MAINSCREEN )	/* Only blend main screens */
 				snes_draw_blend( xpos, &clr, snes_ppu.layer[0].blend, (snes_ram[CGWSEL] & 0x30) >> 4 );		/* FIXME: Need to support clip mode */
 			scanlines[screen].buffer[xpos] = clr;
-			scanlines[screen].zbuf[xpos] = table_bgd_pty[0][priority];
+			scanlines[screen].zbuf[xpos] = table_bgd_pty[1][0][priority];
 		}
 	}
 }
@@ -1581,7 +1572,7 @@ void snes_refresh_scanline( UINT16 curline )
 				(snes_ram[BG4SC] & 0xfc) << 9,
 				snes_ppu.layer[3].data );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "%sO %s%s%s%s%s%c%s%s  %4X",
+		sprintf( t, "%sO %s%s%s%s%s%c%s%s%d%d      %4X",
 				debug_options.bg_disabled[4]?" ":"*",
 				(snes_ram[TM] & 0x10)?"M":" ",
 				(snes_ram[TS] & 0x10)?"S":" ",
@@ -1591,9 +1582,11 @@ void snes_refresh_scanline( UINT16 curline )
 				WINLOGIC[(snes_ram[WOBJLOG] & 0x3)],
 				(snes_ram[WOBJSEL] & 0x2)?((snes_ram[WOBJSEL] & 0x1)?"o":"i"):" ",
 				(snes_ram[WOBJSEL] & 0x8)?((snes_ram[WOBJSEL] & 0x4)?"o":"i"):" ",
-				(((snes_ram[OBSEL] & 0x3) * 0x2000) + (((snes_ram[OBSEL] & 0x18)>>3) * 0x1000)) * 2 );
+				snes_ppu.oam.size[0], snes_ppu.oam.size[1],
+				snes_ppu.layer[4].data );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "B   %s  %c%s%s",
+		sprintf( t, "%sB   %s  %c%s%s",
+				debug_options.bg_disabled[5]?" ":"*",
 				(snes_ram[CGADSUB] & 0x20)?"B":" ",
 				WINLOGIC[(snes_ram[WOBJLOG] & 0xc)>>2],
 				(snes_ram[WOBJSEL] & 0x20)?((snes_ram[WOBJSEL] & 0x10)?"o":"i"):" ",

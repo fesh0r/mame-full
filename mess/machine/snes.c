@@ -70,6 +70,7 @@ void snes_init_ram(void)
 	snes_ppu.beam.current_vert = 0;
 	snes_ppu.beam.current_horz = 0;
 	snes_ppu.beam.last_visible_line = 240;
+	snes_ppu.mode = 0;
 	cgram_address = 0;
 	vram_read_offset = 2;
 }
@@ -664,6 +665,7 @@ WRITE_HANDLER( snes_w_io )
 				return;
 			}
 		case BGMODE:	/* BG mode and character size settings */
+			snes_ppu.mode = data & 0x7;
 			snes_ppu.layer[0].tile_size = (data >> 4) & 0x1;
 			snes_ppu.layer[1].tile_size = (data >> 5) & 0x1;
 			snes_ppu.layer[2].tile_size = (data >> 6) & 0x1;
@@ -1087,16 +1089,18 @@ int snes_cart_load(int id, mame_file *file, int open_mode)
 		char *Name;
 	} CartTypes[] =
 	{
-		{  0, "ROM ONLY"       },
-		{  1, "ROM+RAM"        },
-		{  2, "ROM+SRAM"       },
-		{  3, "ROM+DSP1"       },
-		{  4, "ROM+RAM+DSP1"   },
-		{  5, "ROM+SRAM+DSP1"  },
-		{ 19, "ROM+SuperFX"    },
-		{ 21, "ROM+RAM+SuperFX"},
-		{227, "ROM+RAM+GBData" },
-		{246, "ROM+DSP2"       }
+		{  0, "ROM"             },
+		{  1, "ROM,RAM"         },
+		{  2, "ROM,SRAM"        },
+		{  3, "ROM,DSP1"        },
+		{  4, "ROM,RAM,DSP1"    },
+		{  5, "ROM,SRAM,DSP1"   },
+		{ 19, "ROM,SuperFX"     },
+		{ 21, "ROM,SRAM,SuperFX"},
+		{ 69, "ROM,SRAM,S-DD1"  },
+		{227, "ROM,Z80GB"       },
+		{243, "ROM,?(1)"        },
+		{246, "ROM,DSP2"        }
 	};
 
 	/* Some known countries */
@@ -1242,14 +1246,21 @@ int snes_cart_load(int id, mame_file *file, int open_mode)
 
 #ifdef SNES_DBG_GENERAL
 	{
-		char title[21];
+		char title[21], romid[4], companyid[2];
 		UINT8 country;
 		printf( "ROM DETAILS\n" );
 		printf( "\tHeader found:  %s\n", offset ? "Yes" : "No" );
 		printf( "\tTotal blocks:  %d (%dmb)\n", totalblocks, totalblocks / (cart.mode == SNES_MODE_20 ? 32 : 16) );
 		printf( "\tROM bank size: %s\n", (cart.mode == SNES_MODE_20) ? "LoROM" : "HiROM" );
-		printf( "CART DETAILS\n" );
-		memcpy(title, &snes_ram[0xffc0], 21);
+		for( i = 0; i < 2; i++ )
+			companyid[i] = snes_r_bank1(0x00ffb0 + i);
+		printf( "\tCompany ID:    %s\n", companyid );
+		for( i = 0; i < 4; i++ )
+			romid[i] = snes_r_bank1(0x00ffb2 + i);
+		printf( "\tROM ID:        %s\n", romid );
+		printf( "HEADER DETAILS\n" );
+		for( i = 0; i < 21; i++ )
+			title[i] = snes_r_bank1(0x00ffc0 + i);
 		printf( "\tName:          %s\n", title );
 		printf( "\tSpeed:         %s [%d]\n", ((snes_r_bank1(0x00ffd5) & 0xf0)) ? "FastROM" : "SlowROM", (snes_r_bank1(0x00ffd5) & 0xf0) >> 4 );
 		printf( "\tBank size:     %s [%d]\n", (snes_r_bank1(0x00ffd5) & 0xf) ? "HiROM" : "LoROM", snes_r_bank1(0x00ffd5) & 0xf );
@@ -1304,7 +1315,7 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	{
 		snes_refresh_scanline( snes_ppu.beam.current_vert );
 
-		/* If HDMA is enabled, then do that first */
+		/* Do HDMA */
 		if( snes_ram[HDMAEN] )
 			snes_hdma();
 	}
@@ -1618,7 +1629,8 @@ void snes_gdma( UINT8 channels )
 			/* We're done so write the new abus back to the registers */
 			snes_ram[SNES_DMA_BASE + dma + 2] = abus & 0xff;
 			snes_ram[SNES_DMA_BASE + dma + 3] = (abus >> 8) & 0xff;
-			snes_ram[SNES_DMA_BASE + dma + 4] = (abus >> 16) & 0xff;
+			snes_ram[SNES_DMA_BASE + dma + 5] = 0;
+			snes_ram[SNES_DMA_BASE + dma + 6] = 0;
 		}
 		dma += 0x10;
 		mask <<= 1;
