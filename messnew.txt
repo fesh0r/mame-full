@@ -9,6 +9,9 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Amstrad NC100 [Kev Thacker]
 - CoCo 3 (with 6309 processor) [Tim Linder, Nate Woods]
+- SNES (preliminary) [Lee Hammerton]
+- ChannelF [Frank Palazzolo, Juergen Buchmueller]
+
 
 System Driver Changes:
 ----------------------
