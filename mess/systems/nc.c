@@ -52,6 +52,8 @@ UINT8 nc_type;
 static char nc_memory_config[4];
 unsigned long nc_display_memory_start;
 static void *nc_keyboard_timer = NULL;
+static void *dummy_timer = NULL;
+
 static int nc_membank_rom_mask;
 static int nc_membank_internal_ram_mask;
 static int nc_membank_card_ram_mask;
@@ -65,7 +67,7 @@ static int nc_membank_card_ram_mask;
         bit 1: parallel interface busy (0 if busy)
         bit 0: parallel interface ack (1 if ack);
 */
-static int nc_card_battery_status;
+static int nc_card_battery_status=0x0c0;
 
 static UINT8 nc_poweroff_control;
 
@@ -118,6 +120,8 @@ static int nc_irq_mask;
 static int nc_irq_status;
 static int nc_sound_channel_periods[2];
 
+static unsigned char previous_on_off_button_state;
+
 static void nc_update_interrupts(void)
 {
         /* any ints set and they are not masked? */
@@ -149,14 +153,24 @@ static void nc_keyboard_timer_callback(int dummy)
         timer_reset(nc_keyboard_timer, TIME_NEVER);
 }
 
-/* set int by index - see bit assignments above */
-static void nc_set_int(int index1)
+static void dummy_timer_callback(int dummy)
 {
-        nc_irq_status |= (1<<index1);
+    unsigned char on_off_button_state;
 
-        /* update interrupt */
-        nc_update_interrupts();
+    on_off_button_state = readinputport(10) & 0x01;
+
+    if (on_off_button_state^previous_on_off_button_state)
+    {
+        if (on_off_button_state)
+        {
+            logerror("nmi triggered\r\n");
+            cpu_set_nmi_line(0, PULSE_LINE);
+        }
+    }
+
+    previous_on_off_button_state = on_off_button_state;
 }
+
 
 
 static mem_read_handler nc_bankhandler_r[]={
@@ -298,6 +312,8 @@ void nc_common_init_machine(void)
         nc_memory_config[2] = 0;
         nc_memory_config[3] = 0;
 
+        previous_on_off_button_state = readinputport(10) & 0x01;
+
         /* ints are masked */
         nc_irq_mask = 0;
         /* no ints wanting servicing */
@@ -312,25 +328,35 @@ void nc_common_init_machine(void)
                                             
         /* enough power - see bit assignments where
         nc card battery status is defined */
-        nc_card_battery_status = (1<<5) | (1<<4);
+        /* keep card status bits in case card has been inserted and
+        the machine is then reset! */
+        nc_card_battery_status &= ~((1<<7) | (1<<6));
 
-        nc_set_card_present_state(0);
+        nc_card_battery_status |= (1<<5) | (1<<4);
+
+/*        nc_set_card_present_state(0); */
         
-        nc_card_ram = (unsigned char *)malloc(1024*1024);
+        /*nc_card_ram = (unsigned char *)malloc(1024*1024);*/
 
         nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
+
+        dummy_timer = timer_pulse(TIME_IN_HZ(50), 0, dummy_timer_callback);
 
         /* 256k of rom */
         nc_membank_rom_mask = 0x0f;
 
         if (nc_memory!=NULL)
         {
+                char filename[13];
+
+                sprintf(filename,"%s.nv", Machine->gamedrv->name);
+
                 /* restore nc memory from file */
-                file = osd_fopen(Machine->gamedrv->name, "nc100.nv", OSD_FILETYPE_MEMCARD, OSD_FOPEN_READ);
+                file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_READ);
         
                 if (file!=NULL)
                 {
-                   logerror("restoring nc100 memory\r\n");
+                   logerror("restoring nc memory\r\n");
                    osd_fread(file, nc_memory, nc_memory_size);
                    osd_fclose(file);
                 }
@@ -387,7 +413,8 @@ void nc200_init_machine(void)
 {
         nc_type = NC_TYPE_200;
 
-        nc_memory = (unsigned char *)malloc(128*1024);
+        nc_memory_size = 128*1024;
+        nc_memory = (unsigned char *)malloc(nc_memory_size);
         nc_membank_internal_ram_mask = 7;
 
         nc_membank_card_ram_mask = 0x03f;
@@ -411,12 +438,15 @@ void nc_shutdown_machine(void)
         {
                 /* write nc memory to file */
                 void *file;
+                char filename[13];
 
-                file = osd_fopen(Machine->gamedrv->name, "nc100.nv", OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
+                sprintf(filename,"%s.nv", Machine->gamedrv->name);
+
+                file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
 
                 if (file!=NULL)
                 {
-                   logerror("writing nc100 memory!\r\n");
+                   logerror("writing nc memory!\r\n");
                    osd_fwrite(file, nc_memory, nc_memory_size);
                    osd_fclose(file);
                 }
@@ -425,16 +455,22 @@ void nc_shutdown_machine(void)
                 nc_memory = NULL;
         }
 
-        if (nc_card_ram!=NULL)
-        {
-                free(nc_card_ram);
-                nc_card_ram = NULL;
-        }
+//        if (nc_card_ram!=NULL)
+  //      {
+    //            free(nc_card_ram);
+    //            nc_card_ram = NULL;
+    //    }
 
         if (nc_keyboard_timer!=NULL)
         {
                 timer_remove(nc_keyboard_timer);
                 nc_keyboard_timer = NULL;
+        }
+
+        if (dummy_timer!=NULL)
+        {
+                timer_remove(dummy_timer);
+                dummy_timer = NULL;
         }
 }
 
@@ -678,7 +714,7 @@ static struct IOReadPort readport_nc200[] =
 //        {0x0a0, 0x0a0, nc_card_battery_status_r},
         {0x0b0, 0x0b9, nc_key_data_in_r},
         {0x090, 0x090, nc_irq_status_r},
-        {0x0d0, 0x0d0, nc200_rtc_register_r},
+        {0x0d1, 0x0d1, nc200_rtc_register_r},
         {0x0e0, 0x0e0, nec765_status_r},
         {0x0e1, 0x0e1, nec765_data_r},
         {-1}							   /* end of table */
@@ -715,6 +751,7 @@ INPUT_PORTS_START(nc100)
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE", KEYCODE_ESC, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
         PORT_BIT (0x010, 0x00, IPT_UNUSED)
@@ -725,7 +762,7 @@ INPUT_PORTS_START(nc100)
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_RALT, IP_JOY_NONE)
-        PORT_BIT (0x002, 0x00, IPT_UNUSED)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
         PORT_BIT (0x010, 0x00, IPT_UNUSED)
@@ -803,6 +840,11 @@ INPUT_PORTS_START(nc100)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".", KEYCODE_STOP,IP_JOY_NONE)
 
+        /* these are not part of the nc100 keyboard */ 
+        /* extra */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ON BUTTON", KEYCODE_END, IP_JOY_NONE)
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START(nc200)
@@ -820,6 +862,7 @@ INPUT_PORTS_START(nc200)
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE", KEYCODE_ESC, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
         PORT_BIT (0x010, 0x00, IPT_UNUSED)
@@ -830,7 +873,7 @@ INPUT_PORTS_START(nc200)
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_RALT, IP_JOY_NONE)
-        PORT_BIT (0x002, 0x00, IPT_UNUSED)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
         PORT_BIT (0x010, 0x00, IPT_UNUSED)
@@ -907,6 +950,10 @@ INPUT_PORTS_START(nc200)
         PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".", KEYCODE_STOP,IP_JOY_NONE)
+
+        /* not part of the nc200 keyboard */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ON BUTTON", KEYCODE_END, IP_JOY_NONE)
 
 INPUT_PORTS_END
 
