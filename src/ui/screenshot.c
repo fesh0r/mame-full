@@ -39,8 +39,6 @@
     function prototypes
 ***************************************************************************/
 
-static BOOL     DrawDIB(HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal);
-
 static BOOL     AllocatePNG(struct png_info *p, HGLOBAL *phDIB, HPALETTE* pPal);
 
 static int png_read_bitmap(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPAL);
@@ -72,67 +70,6 @@ BOOL ScreenShotLoaded(void)
 {
 	return m_hDDB != NULL;
 }
-
-/* Draw a DIB on the screen. It will scale the bitmap
- * to the area associated with the passed in HWND handle.
- * Returns TRUE for success
- */
-static BOOL DrawDIB(HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal)
-{
-	LPVOID	lpDIBBits;			/* Pointer to DIB bits */
-	int 	nResults = 0;
-	RECT	rect;
-	
-	LPBITMAPINFO bmInfo = (LPBITMAPINFO)hDIB;
-	int nColors = bmInfo->bmiHeader.biClrUsed ? bmInfo->bmiHeader.biClrUsed : 
-					1 << bmInfo->bmiHeader.biBitCount;
-	
-	if (bmInfo->bmiHeader.biBitCount > 8 )
-		lpDIBBits = (LPVOID)((LPDWORD)(bmInfo->bmiColors +
-		bmInfo->bmiHeader.biClrUsed) +
-		((bmInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
-	else
-		lpDIBBits = (LPVOID)(bmInfo->bmiColors + nColors);
-	
-	if (hPal && (GetDeviceCaps(hDC, RASTERCAPS) & RC_PALETTE))
-	{
-		SelectPalette(hDC, hPal, FALSE);
-		RealizePalette(hDC);
-	}
-
-	GetClientRect(hWnd, &rect);
-
-	{
-		RECT RectWindow;
-		int x, y;
-
-		GetWindowRect(hWnd, &RectWindow);
-		x = ((RectWindow.right	- RectWindow.left) - (rect.right  - rect.left)) / 2;
-		y = ((RectWindow.bottom - RectWindow.top)  - (rect.bottom - rect.top))	/ 2;
-
-		OffsetRect(&rect, x, y);
-	}
-
-	SetStretchBltMode(hDC, STRETCH_HALFTONE);
-
-    nResults = StretchDIBits(hDC,                        /* hDC */
-							 rect.left,                  /* DestX */
-							 rect.top,                   /* DestY */
-							 rect.right  - rect.left,    /* nDestWidth */
-							 rect.bottom - rect.top,     /* nDestHeight */
-							 0,                          /* SrcX */
-							 0,                          /* SrcY */
-							 bmInfo->bmiHeader.biWidth,  /* nStartScan */
-							 bmInfo->bmiHeader.biHeight, /* nNumScans */
-							 lpDIBBits,                  /* lpBits */
-							 (LPBITMAPINFO)hDIB,         /* lpBitsInfo */
-							 DIB_RGB_COLORS,             /* wUsage */
-							 SRCCOPY );                  /* Flags */
-
-	return (nResults) ? TRUE : FALSE;
-}
-
-
 
 #ifdef MESS
 static BOOL LoadSoftwareScreenShot(const struct GameDriver *drv, LPCSTR lpSoftwareName, int nType)

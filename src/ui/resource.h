@@ -85,7 +85,7 @@
 #define IDI_HEADER_UP                   182
 #define IDI_HEADER_DOWN                 183
 #define IDD_PROP_DIRECT3D               184
-#define IDI_SOUNDTAB                    666 // RADIUS_ADD
+#define IDI_SOUNDTAB                    666
 #define IDC_LIST                        1000
 #define IDC_PLAY                        1001
 #define IDC_DISPLAYS                    1002
@@ -304,6 +304,7 @@
 #define IDC_SKIP_VALIDITY_CHECKS        1227
 #define IDC_CYCLETIMESECTXT             1230
 #define IDC_SCREENSHOT_BORDERSIZETXT    1232
+#define IDC_CRC_ONLY                    1233
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001

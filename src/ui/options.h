@@ -217,6 +217,11 @@ typedef struct
 	BOOL   old_timing;
 	BOOL   leds;
 	char   *ledmode;
+	BOOL   high_priority;
+	BOOL   skip_disclaimer;
+	BOOL   skip_gameinfo;
+	BOOL   skip_validitychecks;
+	BOOL   crc_only;
 	int bios;
 
 #ifdef MESS
@@ -485,18 +490,6 @@ BOOL GetGameCaption(void);
 
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);
-
-void SetSkipDisclaimer(BOOL skip_disclaimer);
-BOOL GetSkipDisclaimer(void);
-
-void SetSkipGameInfo(BOOL show_gameinfo);
-BOOL GetSkipGameInfo(void);
-
-void SetSkipValidityChecks(BOOL skip_validitychecks);
-BOOL GetSkipValidityChecks(void);
-
-void SetHighPriority(BOOL high_priority);
-BOOL GetHighPriority(void);
 
 void SetRandomBackground(BOOL random_bg);
 BOOL GetRandomBackground(void);

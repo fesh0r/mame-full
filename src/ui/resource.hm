@@ -101,4 +101,6 @@
 #define HIDC_WAITVSYNC                  0x809c04da    // IDD_PROP_ADVANCED
 #define HIDC_WINDOWED                   0x809a0445    // IDD_PROP_DISPLAY
 #define HIDC_ZOOM                       0x809a04b2    // IDD_PROP_DISPLAY
-#define HIDC_GAMECAPTION               0x80ad049f    // IDD_INTERFACE_OPTIONS
+#define HIDC_GAMECAPTION                0x80ad049f    // IDD_INTERFACE_OPTIONS
+#define HIDC_CRC_ONLY                   0x809f049a    // IDD_PROP_MISC
+#define HIDC_SKIP_VALIDITY_CHECKS       0x809f059a    // IDD_PROP_MISC

@@ -213,7 +213,7 @@ static REG_OPTION regSettings[] =
 	{ "ui_key_down",                RO_ENCODE,  &settings.ui_key_down,               "KEYCODE_DOWN",                FALSE, KeySeqEncodeString,   KeySeqDecodeString},
 	{ "ui_key_left",                RO_ENCODE,  &settings.ui_key_left,               "KEYCODE_LEFT",                FALSE, KeySeqEncodeString,   KeySeqDecodeString},
 	{ "ui_key_right",               RO_ENCODE,  &settings.ui_key_right,              "KEYCODE_RIGHT",               FALSE, KeySeqEncodeString,   KeySeqDecodeString},
-	{ "ui_key_start",               RO_ENCODE,  &settings.ui_key_start,              "KEYCODE_ENTER ! KEYCODE_LALT",FALSE, KeySeqEncodeString,   KeySeqDecodeString},
+	{ "ui_key_start",               RO_ENCODE,  &settings.ui_key_start,              "KEYCODE_ENTER NOT KEYCODE_LALT",FALSE, KeySeqEncodeString, KeySeqDecodeString},
 	{ "ui_key_pgup",                RO_ENCODE,  &settings.ui_key_pgup,               "KEYCODE_PGUP",                FALSE, KeySeqEncodeString,   KeySeqDecodeString},
 	{ "ui_key_pgdwn",               RO_ENCODE,  &settings.ui_key_pgdwn,              "KEYCODE_PGDN",                FALSE, KeySeqEncodeString,   KeySeqDecodeString},
 	{ "ui_key_home",                RO_ENCODE,  &settings.ui_key_home,               "KEYCODE_HOME",                FALSE, KeySeqEncodeString,   KeySeqDecodeString},
@@ -383,6 +383,11 @@ static REG_OPTION regGameOpts[] =
 	{ "rdtsc",                  RO_BOOL,    &gOpts.old_timing,                      "1" },
 	{ "leds",                   RO_BOOL,    &gOpts.leds,                            "0" },
 	{ "led_mode",               RO_STRING,  &gOpts.ledmode,                         "ps/2" },
+	{ "high_priority",          RO_BOOL,    &gOpts.high_priority,                   "0" },
+	{ "skip_disclaimer",        RO_BOOL,    &gOpts.skip_disclaimer,                 "0" },
+	{ "skip_gameinfo",          RO_BOOL,    &gOpts.skip_gameinfo,                   "0" },
+	{ "skip_validitychecks",    RO_BOOL,    &gOpts.skip_validitychecks,             "1" },
+	{ "crconly",                RO_BOOL,    &gOpts.crc_only,                        "0" },
 	{ "bios",                   RO_INT,     &gOpts.bios,                            "0" },
 
 #ifdef MESS
@@ -1037,6 +1042,12 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	//Core expects it there
 	snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
 	SyncInGameOptions(&game_options[driver_index], buffer);
+	//Sync in parent settings if it has one
+	if( DriverIsClone(driver_index))
+	{
+		snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->clone_of->name );
+		SyncInGameOptions(&game_options[driver_index], buffer);
+	}
 	//last but not least, sync in game specific settings
 	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name );
 	SyncInGameOptions(&game_options[driver_index], buffer);
@@ -1259,46 +1270,6 @@ void SetBroadcast(BOOL broadcast)
 BOOL GetBroadcast(void)
 {
 	return settings.broadcast;
-}
-
-void SetSkipDisclaimer(BOOL skip_disclaimer)
-{
-	settings.skip_disclaimer = skip_disclaimer;
-}
-
-BOOL GetSkipDisclaimer(void)
-{
-	return settings.skip_disclaimer;
-}
-
-void SetSkipGameInfo(BOOL skip_gameinfo)
-{
-	settings.skip_gameinfo = skip_gameinfo;
-}
-
-BOOL GetSkipGameInfo(void)
-{
-	return settings.skip_gameinfo;
-}
-
-void SetSkipValidityChecks(BOOL skip_validitychecks)
-{
-	settings.skip_validitychecks = skip_validitychecks;
-}
-
-BOOL GetSkipValidityChecks(void)
-{
-	return settings.skip_validitychecks;
-}
-
-void SetHighPriority(BOOL high_priority)
-{
-	settings.high_priority = high_priority;
-}
-
-BOOL GetHighPriority(void)
-{
-	return settings.high_priority;
 }
 
 void SetRandomBackground(BOOL random_bg)

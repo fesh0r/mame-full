@@ -23,11 +23,7 @@
   Nov/Dec 1998 - Mike Haaland
 
 ***************************************************************************/
-#ifdef MESS
 #define MULTISESSION 0
-#else
-#define MULTISESSION 1
-#endif
 
 #ifdef _MSC_VER
 #ifndef NONAMELESSUNION
@@ -963,18 +959,19 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (pOpts->old_timing)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -rdtsc");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
+	if (pOpts->crc_only)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -crconly");		
+	if (pOpts->skip_disclaimer)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_disclaimer");
+	if (pOpts->skip_gameinfo)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_gameinfo");
+	if (pOpts->skip_validitychecks)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -skip_validitychecks");
+	if (pOpts->high_priority)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -high_priority");
 
 	if (DriverHasOptionalBIOS(nGameIndex))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -bios %i",pOpts->bios);		
-
-	if (GetSkipDisclaimer())
-		sprintf(&pCmdLine[strlen(pCmdLine)]," -skip_disclaimer");
-	if (GetSkipGameInfo())
-		sprintf(&pCmdLine[strlen(pCmdLine)]," -skip_gameinfo");
-	if (GetSkipValidityChecks())
-		sprintf(&pCmdLine[strlen(pCmdLine)]," -skip_validitychecks");
-	if (GetHighPriority() == TRUE)
-		sprintf(&pCmdLine[strlen(pCmdLine)]," -high_priority");
 
 	dprintf("Launching MAME32:");
 	dprintf("%s",pCmdLine);

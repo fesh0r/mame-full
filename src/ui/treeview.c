@@ -123,13 +123,10 @@ static LPFILTER_ITEM g_lpFilterList;
 extern BOOL InitFolders(void);
 static BOOL         CreateTreeIcons(void);
 static void         TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static const char * FixString(const char *s);
-static const char * LicenseManufacturer(const char *s);
 static const char* ParseManufacturer(const char *s, int *pParsedChars );
 static const char* TrimManufacturer(const char *s);
 static void CreateAllChildFolders(void);
 static BOOL         AddFolder(LPTREEFOLDER lpFolder);
-static BOOL         RemoveFolder(LPTREEFOLDER lpFolder);
 static LPTREEFOLDER NewFolder(const char *lpTitle,
                               UINT nFolderId, int nParent, UINT nIconId,
                               DWORD dwFlags);
@@ -1451,32 +1448,6 @@ static BOOL AddFolder(LPTREEFOLDER lpFolder)
 	return TRUE;
 }
 
-/* Remove a folder from the list, but do NOT delete it */
-static BOOL RemoveFolder(LPTREEFOLDER lpFolder)
-{
-	int 	found = -1;
-	UINT	i = 0;
-
-	/* Find the folder */
-	for (i = 0; i < numFolders && found == -1; i++)
-	{
-		if (lpFolder == treeFolders[i])
-		{
-			found = i;
-		}
-	}
-	if (found != -1)
-	{
-		numFolders--;
-		treeFolders[i] = 0; /* In case we removed the last folder */
-
-		/* Move folders up in the array if needed */
-		for (i = (UINT)found; (UINT)found < numFolders; i++)
-			treeFolders[i] = treeFolders[i+1];
-	}
-	return (found != -1) ? TRUE : FALSE;
-}
-
 /* Allocate and initialize a NEW TREEFOLDER */
 static LPTREEFOLDER NewFolder(const char *lpTitle,
 					   UINT nFolderId, int nParent, UINT nIconId, DWORD dwFlags)
@@ -1510,84 +1481,6 @@ static void DeleteFolder(LPTREEFOLDER lpFolder)
 		free(lpFolder);
 		lpFolder = 0;
 	}
-}
-
-/* Make a reasonable name out of the one found in the driver array */
-static const char* FixString( const char *s )
-{
-	static char tmp[40];
-    char* ptmp;
-
-	if ( *s == '?' || *s == '<' || s[3] == '?' )
-    {
-		return "<unknown>";
-    }
-
-    ptmp = tmp;
-
-	while( *s )
-	{
-        /* combinations where to end string */
-		
-		if ( 
-            ( (*s == ' ') && ( s[1] == '(' || s[1] == '/' || s[1] == '+' ) ) ||
-            ( *s == ']' ) ||
-            ( *s == '/' )
-            )
-        {
-			break;
-        }
-		
-        /* skip over opening braces */
-
-		if ( *s != '[' )
-        {
-			*ptmp++ = *s;
-        }
-
-        ++s;
-	}
-
-	*ptmp = '\0';
-	return tmp;
-}
-
-/* Make a reasonable name out of the one found in the driver array */
-static const char * LicenseManufacturer(const char *s)
-{
-	static char tmp[40];
-	char *		ptr, *t;
-
-	t = tmp;
-
-    /* "Irem (licensed from Hudson Soft)" */
-    /* "Namco (Atari license)" */
-
-	ptr = strchr( s,'(' );
-    if ( ptr == NULL )
-    {
-        return NULL;
-    }
-
-	ptr++;
-
-	if (strncmp(ptr, "licensed from ", 14) == 0)
-    {
-		ptr += 14;
-    }
-	
-	while (*ptr != ')')
-	{
-		if (*ptr == ' ' && strncmp(ptr, " license", 8) == 0)
-        {
-			break;
-        }
-
-		*t++ = *ptr++;
-	}
-	
-	*t = '\0';
-	return tmp;
 }
 
 /* Can be called to re-initialize the array of treeFolders */
