@@ -1,3 +1,60 @@
+0.86
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [AMSTRAD/C16/MSX/PC] Fixed a regression in which certain input ports were
+  being ignored.  This was caused by a defect in PORT_INCLUDE.  [Nate Woods]
+
+- [PC1512] Fixed a vblank regression introduced in the 0.85 input port changes
+  [Andrew Jenner]
+
+- [TELMAC] Added printer output, tone sound, colorram/blink attribute, a
+  preliminary quickload for BASIC programs, and devices.  [Curt Coder]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Added an "Analog Controls" dialog to the new UI.  [Nate Woods]
+
+- [Windows] The MAME arrow key chars now show up in the new UI remap dialogs
+  [Nate Woods]
+
+- [Windows GUI] Added a tab view that provides an alternate way to load and
+  unload software images.  [Nate Woods]
+
+- [Windows GUI] Revamped the software picker; file iteration is now
+  asynchronous and multiple files within ZIPs are now supported.  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.86.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Fixed default names for input ports that use PORT_CHAR.  [Nate Woods]
+
+- CDP1802 cycle count fixes.  [Curt Coder]
+
+- Fixed a regression in which Start and Select buttons were not properly
+  specified.  This could result in crashes when customizing the inputs of
+  certain drivers in the new Win32 UI.  [Nate Woods]
+
+
+
 0.85
 
 New System Drivers Supported (in no particular order):
