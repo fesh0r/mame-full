@@ -159,7 +159,7 @@ struct AnalogPortInfo
 	UINT8				shift;		/* left shift to apply to the final result */
 	UINT8				bits;		/* how many bits of resolution are expected? */
 	UINT8				absolute;	/* is this an absolute or relative input? */
-	UINT8				reverse;	/* reverse the sense of this input? */
+	UINT8				pedal;		/* is this a pedal input? */
 	UINT8				autocenter;	/* autocenter this input? */
 	UINT8				interpolate;/* should we do linear interpolation for mid-frame reads? */
 	UINT8				lastdigital;/* was the last modification caused by a digital form? */
@@ -196,8 +196,8 @@ struct IptInitParams
 #define JOYSTICK_INFO_FOR_PORT(in)	(&joystick_info[(in)->player][((in)->type - __ipt_digital_joystick_start) / 4])
 #define JOYSTICK_DIR_FOR_PORT(in)	(((in)->type - __ipt_digital_joystick_start) % 4)
 
-#define APPLY_SENSITIVITY(x,s)		(((x) >= 0) ? (((x) * (s) + 50) / 100) : ((-(x) * (s) + 50) / -100))
-#define APPLY_INVERSE_SENSITIVITY(x,s) (((x) >= 0) ? (((x) * 100 - 50) / (s)) : ((-(x) * 100 - 50) / -(s)))
+#define APPLY_SENSITIVITY(x,s)		(((x) >= 0) ? (((INT64)(x) * (s) + 50) / 100) : ((-(INT64)(x) * (s) + 50) / -100))
+#define APPLY_INVERSE_SENSITIVITY(x,s) (((x) >= 0) ? (((INT64)(x) * 100 - 50) / (s)) : ((-(INT64)(x) * 100 - 50) / -(s)))
 
 
 /*************************************
@@ -939,7 +939,7 @@ static void inputport_init(void)
 					case IPT_PEDAL2:
 					case IPT_PEDAL3:
 						info->maximum = 0;
-						info->reverse = 1;
+						info->pedal = 1;
 						/* fall through... */
 
 					/* pedals, paddles and analog joysticks are absolute and autocenter */
@@ -960,6 +960,9 @@ static void inputport_init(void)
 						break;
 
 					/* dials, mice and trackballs are relative devices */
+					/* these have fixed "min" and "max" values based on how many bits are in the port */
+					/* in addition, we set the wrap around min/max values to 512 * the min/max values */
+					/* this takes into account the mapping that one mouse unit ~= 512 analog units */
 					case IPT_DIAL:
 					case IPT_DIAL_V:
 					case IPT_MOUSE_X:
@@ -969,6 +972,8 @@ static void inputport_init(void)
 						info->absolute = 0;
 						port->analog.min = 0;
 						port->analog.max = (1 << info->bits) - 1;
+						info->minimum = 0;
+						info->maximum = port->analog.max * 512;
 						break;
 					
 					default:
@@ -990,13 +995,12 @@ static void inputport_init(void)
 						info->scaleneg = (double)((INT32)((port->default_value - port->analog.min) << (32 - info->bits)) >> (32 - info->bits)) / (double)(0 - ANALOG_VALUE_MIN);
 					}
 				}
+				
+				/* relative controls all map directly with a 512x scale factor */
 				else
-				{
-					if (port->analog.max > port->analog.min)
-						info->scalepos = info->scaleneg = (double)(port->analog.max - port->analog.min) / (double)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN);
-					else
-						info->scalepos = info->scaleneg = (double)((INT32)((port->analog.max - port->analog.min) << (32 - info->bits)) >> (32 - info->bits)) / (double)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN);
-				}
+					info->scalepos = info->scaleneg = 1.0 / 512.0;
+
+				/* compute scale for keypresses */
 				info->keyscale = 1.0 / (0.5 * (info->scalepos + info->scaleneg));
 
 				/* hook in the list */
@@ -1085,7 +1089,7 @@ struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *p
 	
 	/* construct the ports */
  	construct_ipt(&iip);
-
+ 	
 	/* append final IPT_END */
 	input_port_initialize(&iip, IPT_END);
  	
@@ -1829,8 +1833,12 @@ profiler_mark(PROFILER_INPUT);
 		current = apply_analog_min_max(info, current);
 		current = APPLY_SENSITIVITY(current, info->port->analog.sensitivity);
 
-		/* apply reversal */
-		if (!info->port->analog.reverse ^ !info->reverse)
+		/* apply special reversal rules for pedals */
+		if (info->pedal)
+			current = !info->port->analog.reverse ? (info->maximum - current) : (-info->minimum + current);
+		
+		/* apply standard reversal rules for everything else */
+		else if (info->port->analog.reverse)
 			current = -current;
 
 		/* map differently for positive and negative values */
