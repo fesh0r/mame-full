@@ -1,3 +1,137 @@
+0.94
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Apple IIgs [Nate Woods]
+
+
+
+System Driver Changes:
+----------------------
+- [A2600,A7800] Add keys to toggle switches.  New keyboard mappings are:
+
+  1 - Select
+  2 - Reset
+  3 - Toggle Left Difficulty switch
+  4 - Toggle Right Difficulty switch
+  C - Toggle Black & White switch (a2600 only)
+  ] - Toggle Pause switch (a7800 only)
+
+  [Christopher Stone]
+
+- [APPLE2] Reset key fixes:
+
+  + The default Apple RESET key is now F12.
+  + The apple2 driver no longer requires a CTRL key to reset.  (bug #642)
+  + The apple2+ driver now has a DIP switch to switch between RESET and
+    CTRL-RESET. (bug #645)
+
+  [Christopher Stone]
+
+- [CBM FAMILY] Fixed SID regressions introduced in 0.93.  SID chips now
+  packaged as actual MAME/MESS sound cores.  (bug #658) [Nate Woods]
+
+- [GAMEBOY] Fixed crash regression introduced in 0.93.  [Nate Woods]
+
+- [TI99] Fixed crash regression introduced in 0.92.  (bug #662) [Nate Woods]
+
+- [VIC20] Fixed crash regression introduced in 0.93.  (bug #659) [Nate Woods]
+
+
+
+User Interface Changes:
+-----------------------
+- Classic MESS UI now performs hard resets instead of soft resets.
+  [Christopher Stone]
+
+- [Windows GUI] If MESS crashes at runtime, an error message will now be
+  displayed.  Previously, the emulation would end and the user would be sent
+  back into the GUI without explanation.  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.94.  This incorporates all features of the
+  update to this core.  [MAME team]  
+
+- Devices can now be marked as 'not working'.  [Nate Woods]
+  
+
+
+0.93
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Frankin ACE 100 [Cowering]
+- Luxor Datorer ABC 80 family [Curt Coder]
+- Sinclair QL family [Curt Coder]
+
+
+
+System Driver Changes:
+----------------------
+- [A7800] Remapped Select and Reset keys. [Nate Woods]
+
+- [AMIGA] Fixed the Amiga's BIOS length.  (bug #649) [Nate Woods]
+
+- [APPLE2] Fixed modifier keys.  (bug #637) [Nate Woods]
+
+- [APPLE2] Recalibrated Joysticks.  (bug #648) [Nate Woods]
+
+- [APPLE2] Workaround for apple2/apple2p inverse colors.  (bug #475) [Nate
+  Woods]
+
+- [APPLE2] Synchronized the floppy disk controllers with the Apple II's ROM
+  routines, speeding up floppy access.  [Nick Westgate]
+
+- [APPLE2] Added keyboard mappings for the apple2/apple2p drivers.
+  (bug #636) [Christopher Stone]
+
+- [APPLE2] Added special REPT key to apple2/apple2p drivers. (bug #636)
+  [Christopher Stone]
+
+- [APPLE2] Added numeric keypad support to apple2ep driver. (bug #636)
+  [Christopher Stone]
+
+- [APPLE2] Fixed a bug in the ay3600 keyboard emulator which corrects
+  auto-repeat functionality when using a numeric keypad.  [Christopher
+  Stone]
+
+- [APPLE2] RESET key enhancements. (bug #642) [Christopher Stone]
+
+
+
+User Interface Changes:
+-----------------------
+- The tape control in the classic UI is now only available on systems with
+  a cassette device.  [Dave Humphreys]
+
+- [Windows] Fixed a bug in the new UI that could cause crashes when
+  customizing analog inputs.  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+- [OS9] Fixed a bug that could cause erroneous disk full errors when shrinking
+  a file.  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.93.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.92
 
 New System Drivers Supported (in no particular order):

@@ -8,6 +8,12 @@ Release 0.94
 	- The pause key works again in the input setup.  For keyboards that 
 	  generate 119 instead of 101, there's now a PAUSE_KEY_119 option in 
 	  the makefile.
+	- Trying to load more devices of one kind than a MESS driver supports 
+	  no longer results in a crash.
+	- The messtest tool is no longer built by default.
+	- Hotkeys for effect and mode switching are now enabled in xmess only 
+	  when the MESS UI is active.
+	- Fixed the output of '-listdevices' for xmess.  (Christopher Stone)
 
 Release 0.92, 23 February 2005
 	- Everything from MAME 0.92 and MESS 0.92.
