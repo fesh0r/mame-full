@@ -24,8 +24,8 @@ Priority:  Todo:                                                  Done:
   2        Replace Marat's code in machine/gb.c by Playboy code     ?
   1        Check, and fix if needed flags bug which troubles ffa    ?
   1        Save/restore battery backed ram                          *
-  1        Add sound                                                In Progress
-  0        Add supergb support                                      In Progress
+  1        Add sound                                                *
+  0        Add supergb support                                      *
   0        Add palette editting, save & restore
   0        Add somekind of backdrop support
   0        Speedups if remotly possible
@@ -40,8 +40,11 @@ Priority:  Todo:                                                  Done:
 #include "machine/gb.h"
 #include "includes/gb.h"
 
-/*static UINT16 gb_cpu_af_reset  = 0x01B0;
-static UINT16 gbp_cpu_af_reset = 0xFFB0;*/
+/* Initial value of the AF register:
+ *   GameBoy        / Super GameBoy   - 0x01B0
+ *   GameBoy Pocket / Super GameBoy 2 - 0xFFB0
+ *   GameBoy Color  / GameBoy Advance - 0x11B0
+ */
 static UINT16 gbc_cpu_af_reset = 0x11B0;
 
 static MEMORY_READ_START (gb_readmem)
@@ -120,16 +123,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 INPUT_PORTS_START( gameboy )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1       )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2       )
-	/*PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN, "Select", KEYCODE_LSHIFT, IP_JOY_DEFAULT ) */
-	/*PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN, "Start",  KEYCODE_Z,      IP_JOY_DEFAULT ) */
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "Select", KEYCODE_5, IP_JOY_DEFAULT )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "Start",  KEYCODE_1, IP_JOY_DEFAULT )
+	PORT_BIT_NAME( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT,  "Left" )
+	PORT_BIT_NAME( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT, "Right" )
+	PORT_BIT_NAME( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP,    "Up" )
+	PORT_BIT_NAME( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN,  "Down" )
+	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1,        "Button A" )
+	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2,        "Button B" )
+	PORT_BIT_NAME( 0x80, IP_ACTIVE_LOW, IPT_START1,         "Start" )
+	PORT_BIT_NAME( 0x40, IP_ACTIVE_LOW, IPT_SELECT1,        "Select" )
 INPUT_PORTS_END
 
 static unsigned char palette[] =
@@ -141,10 +142,10 @@ static unsigned char palette[] =
 	0x00,0x00,0x00 */
 
 /* Possibly needs a little more green in it */
-	0xFF,0xFB,0x87,
-	0xB1,0xAE,0x4E,
-	0x84,0x80,0x4E,
-	0x4E,0x4E,0x4E
+	0xFF,0xFB,0x87,		/* Background */
+	0xB1,0xAE,0x4E,		/* Light */
+	0x84,0x80,0x4E,		/* Medium */
+	0x4E,0x4E,0x4E		/* Dark */
 };
 
 /* Initialise the palette */
@@ -228,13 +229,14 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_COLORTABLE_LENGTH(sizeof(palette) / sizeof(palette[0]) / 3)
 	MDRV_PALETTE_INIT(gb)
 
-    /* sound hardware */
+	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, gameboy_sound_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( supergb )
 	MDRV_IMPORT_FROM(gameboy)
-	MDRV_CPU_REPLACE("main", Z80GB, 4295454)			/* 4.295454 Mhz */
+	MDRV_CPU_REPLACE("main", Z80GB, 4295454)	/* 4.295454 Mhz */
 	MDRV_CPU_MEMORY(gb_readmem, sgb_writemem)
 
 	MDRV_MACHINE_INIT( sgb )
@@ -283,8 +285,8 @@ ROM_START( gbcolor )
 ROM_END
 
 
-/*     YEAR  NAME     PARENT   MACHINE  INPUT    INIT	CONFIG		COMPANY     FULLNAME         FLAGS*/
-CONSX( 1990, gameboy, 0,       gameboy, gameboy, 0,		gameboy,	"Nintendo", "GameBoy",       GAME_IMPERFECT_SOUND )
-CONSX( 1994, supergb, gameboy, supergb, gameboy, 0,		gameboy,	"Nintendo", "Super GameBoy", GAME_IMPERFECT_SOUND )
-CONSX( 1998, gbcolor, gameboy, gbcolor, gameboy, 0,		gameboy,	"Nintendo", "GameBoy Color", GAME_IMPERFECT_SOUND )
+/*     YEAR  NAME     PARENT   MACHINE  INPUT    INIT  CONFIG   COMPANY     FULLNAME */
+CONS( 1990, gameboy, 0,       gameboy, gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
+CONS( 1994, supergb, gameboy, supergb, gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
+CONS( 1998, gbcolor, gameboy, gbcolor, gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )
 
