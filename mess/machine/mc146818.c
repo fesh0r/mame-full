@@ -116,7 +116,7 @@ static void mc146818_timer(int param)
 							} else {
 								YEAR%=100;
 							}
-						}
+                       }
 					}
 				}
 			}
@@ -131,7 +131,7 @@ void mc146818_init(MC146818_TYPE type)
 	memset(&mc146818, 0, sizeof(mc146818));
 	mc146818.type=type;
 	mc146818.last_refresh=timer_get_time();
-	mc146818.timer=timer_pulse(1.0,0,mc146818_timer);
+    mc146818.timer=timer_pulse(TIME_IN_HZ(1.0),0,mc146818_timer);
 }
 
 void mc146818_load(void)
@@ -230,7 +230,7 @@ READ_HANDLER(mc146818_port_r)
 		switch (mc146818.index&0x3f) {
 		case 0xa:
 			data=mc146818.data[mc146818.index&0x3f];
-			if (timer_get_time()-mc146818.last_refresh<1.0/32768) data|=0x80;
+			if (timer_get_time()-mc146818.last_refresh<TIME_IN_SEC(1.0/32768.0f)) data|=0x80;
 #if 0
 			/* for pc1512 bios realtime clock test */
 			mc146818.data[mc146818.index&0x3f]^=0x80; /* 0x80 update in progress */
