@@ -15,6 +15,18 @@
 #define PATH_SEPARATOR	"\\"
 #define strncasecmp	strnicmp
 
+inline const char *basename(const char *name)
+{
+	const char *s = name;
+	const char *result = name;
+
+	for (s = name; *s; s++) {
+		if ((*s == '\\') || (*s == '/'))
+			result = s + 1;
+	}
+	return result;
+}
+
 #else
 
 #include <unistd.h>
