@@ -52,21 +52,21 @@ $F000-$FFFF:	PROM (programmable read-only memory) used by the Apple Monitor prog
 /* memory w/r functions */
 
 MEMORY_READ_START( apple1_readmem )
-	{0x0000, 0x1fff, MRA_RAM},
-	{0x2000, 0xcfff, MRA_NOP},
-	{0xd000, 0xd00f, MRA_NOP},
+	{0x0000, 0x1fff, MRA8_RAM},
+	{0x2000, 0xcfff, MRA8_NOP},
+	{0xd000, 0xd00f, MRA8_NOP},
 	{0xd010, 0xd013, pia_0_r},
-	{0xd014, 0xfeff, MRA_NOP},
-	{0xff00, 0xffff, MRA_ROM},
+	{0xd014, 0xfeff, MRA8_NOP},
+	{0xff00, 0xffff, MRA8_ROM},
 MEMORY_END
 
 MEMORY_WRITE_START( apple1_writemem )
-	{0x0000, 0x1fff, MWA_RAM},
-	{0x2000, 0xcfff, MWA_NOP},
-	{0xd000, 0xd00f, MWA_NOP},
+	{0x0000, 0x1fff, MWA8_RAM},
+	{0x2000, 0xcfff, MWA8_NOP},
+	{0xd000, 0xd00f, MWA8_NOP},
 	{0xd010, 0xd013, pia_0_w},
-	{0xd014, 0xfeff, MWA_NOP},
-	{0xff00, 0xffff, MWA_ROM},
+	{0xd014, 0xfeff, MWA8_NOP},
+	{0xff00, 0xffff, MWA8_ROM},
 MEMORY_END
 
 /* graphics output */

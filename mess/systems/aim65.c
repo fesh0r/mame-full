@@ -13,25 +13,25 @@
 static MEMORY_READ_START( aim65_readmem )
 	//     -03ff 1k version
 	//     -0fff 4k version
-	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x0000, 0x0fff, MRA8_RAM },
 //	{ 0xa000, 0xa00f, via_1_r }, // user via
-	{ 0xa400, 0xa47f, MRA_RAM }, // riot6532 ram
+	{ 0xa400, 0xa47f, MRA8_RAM }, // riot6532 ram
 	{ 0xa480, 0xa48f, riot_0_r },
 	{ 0xa800, 0xa80f, via_0_r },
 	{ 0xac00, 0xac03, pia_0_r },
-	{ 0xac04, 0xac43, MRA_RAM },
-	{ 0xb000, 0xffff, MRA_ROM },
+	{ 0xac04, 0xac43, MRA8_RAM },
+	{ 0xb000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( aim65_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA8_RAM },
 //	{ 0xa000, 0xa00f, via_1_w }, // user via
-	{ 0xa400, 0xa47f, MWA_RAM }, // riot6532 ram
+	{ 0xa400, 0xa47f, MWA8_RAM }, // riot6532 ram
 	{ 0xa480, 0xa48f, riot_0_w },
 	{ 0xa800, 0xa80f, via_0_w },
 	{ 0xac00, 0xac03, pia_0_w },
-	{ 0xac04, 0xac43, MWA_RAM },
-	{ 0xb000, 0xffff, MWA_ROM },
+	{ 0xac04, 0xac43, MWA8_RAM },
+	{ 0xb000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \

@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	messtest.h
+
+	Automated testing for MAME/MESS
+
+*********************************************************************/
+
 #ifndef MESSTEST_H
 #define MESSTEST_H
 
@@ -9,6 +17,7 @@ enum messtest_command_type
 	MESSTEST_COMMAND_END,
 	MESSTEST_COMMAND_WAIT,
 	MESSTEST_COMMAND_INPUT,
+	MESSTEST_COMMAND_SWITCH,
 	MESSTEST_COMMAND_SCREENSHOT,
 	MESSTEST_COMMAND_IMAGE_CREATE,
 	MESSTEST_COMMAND_IMAGE_LOAD,
@@ -43,6 +52,11 @@ struct messtest_command
 			int device_type;
 			int device_slot;
 		} image_args;
+		struct
+		{
+			const char *name;
+			const char *value;
+		} switch_args;
 	} u;
 };
 

@@ -52,35 +52,35 @@ PORT_END
 /* Memory w/r functions */
 
 static MEMORY_READ_START( p2000t_readmem )
-	{0x0000, 0x0fff, MRA_ROM},
-	{0x1000, 0x4fff, MRA_RAM},
+	{0x0000, 0x0fff, MRA8_ROM},
+	{0x1000, 0x4fff, MRA8_RAM},
 	{0x5000, 0x57ff, videoram_r},
-	{0x5800, 0x9fff, MRA_RAM},
-	{0xa000, 0xffff, MRA_NOP},
+	{0x5800, 0x9fff, MRA8_RAM},
+	{0xa000, 0xffff, MRA8_NOP},
 MEMORY_END
 
 static MEMORY_WRITE_START( p2000t_writemem )
-	{0x0000, 0x0fff, MWA_ROM},
-	{0x1000, 0x4fff, MWA_RAM},
+	{0x0000, 0x0fff, MWA8_ROM},
+	{0x1000, 0x4fff, MWA8_RAM},
 	{0x5000, 0x57ff, videoram_w, &videoram, &videoram_size},
-	{0x5800, 0x9fff, MWA_RAM},
-	{0xa000, 0xffff, MWA_NOP},
+	{0x5800, 0x9fff, MWA8_RAM},
+	{0xa000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 static MEMORY_READ_START( p2000m_readmem )
-	{0x0000, 0x0fff, MRA_ROM},
-	{0x1000, 0x4fff, MRA_RAM},
+	{0x0000, 0x0fff, MRA8_ROM},
+	{0x1000, 0x4fff, MRA8_RAM},
 	{0x5000, 0x5fff, videoram_r},
-	{0x6000, 0x9fff, MRA_RAM},
-	{0xa000, 0xffff, MRA_NOP},
+	{0x6000, 0x9fff, MRA8_RAM},
+	{0xa000, 0xffff, MRA8_NOP},
 MEMORY_END
 
 static MEMORY_WRITE_START( p2000m_writemem )
-	{0x0000, 0x0fff, MWA_ROM},
-	{0x1000, 0x4fff, MWA_RAM},
+	{0x0000, 0x0fff, MWA8_ROM},
+	{0x1000, 0x4fff, MWA8_RAM},
 	{0x5000, 0x5fff, videoram_w, &videoram, &videoram_size},
-	{0x6000, 0x9fff, MWA_RAM},
-	{0xa000, 0xffff, MWA_NOP},
+	{0x6000, 0x9fff, MWA8_RAM},
+	{0xa000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 /* graphics output */

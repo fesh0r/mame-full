@@ -413,7 +413,7 @@ static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 		case PCW16_MEM_ROM:
 		{
 			memory_set_bankhandler_r(bank+1, 0, pcw16_read_handler_dram[bank]);
-			memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
+			memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
 		}
 		break;
 
@@ -436,7 +436,7 @@ static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 		case PCW16_MEM_NONE:
 		{
 			memory_set_bankhandler_r(bank+1, 0, pcw16_no_mem_r);
-			memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
+			memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
 		}
 		break;
 

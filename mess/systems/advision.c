@@ -28,13 +28,13 @@ T1	Mirror sync pulse
 
 static MEMORY_READ_START( readmem )
     { 0x0000, 0x03FF,  MRA_BANK1 },
-    { 0x0400, 0x0fff,  MRA_ROM },
-	{ 0x2000, 0x23ff,  MRA_RAM },	/* MAINRAM four banks */
+    { 0x0400, 0x0fff,  MRA8_ROM },
+	{ 0x2000, 0x23ff,  MRA8_RAM },	/* MAINRAM four banks */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },	/* MAINRAM four banks */
+    { 0x0000, 0x0fff, MWA8_ROM },
+	{ 0x2000, 0x23ff, MWA8_RAM },	/* MAINRAM four banks */
 MEMORY_END
 
 static PORT_READ_START( readport )

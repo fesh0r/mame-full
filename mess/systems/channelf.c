@@ -123,13 +123,13 @@ static WRITE_HANDLER( channelf_port_5_w )
 }
 
 static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x0800, 0x0fff, MRA_ROM },
+	{ 0x0000, 0x07ff, MRA8_ROM },
+	{ 0x0800, 0x0fff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem)
-	{ 0x0000, 0x03ff, MWA_ROM },
-	{ 0x0400, 0x07ff, MWA_ROM },
+	{ 0x0000, 0x03ff, MWA8_ROM },
+	{ 0x0400, 0x07ff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START (readport)

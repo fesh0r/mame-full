@@ -93,28 +93,28 @@ static WRITE_HANDLER(mekd2_kbd_w)
 
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-//	{ 0x0100, 0x01ff, MRA_RAM },	/* optional, set up in mekd2_init_machine */
-//	{ 0x6000, 0x67ff, MRA_ROM },	/* -"- */
+	{ 0x0000, 0x00ff, MRA8_RAM },
+//	{ 0x0100, 0x01ff, MRA8_RAM },	/* optional, set up in mekd2_init_machine */
+//	{ 0x6000, 0x67ff, MRA8_ROM },	/* -"- */
 //	  { 0x8004, 0x8007, mekd2_pia_r },
 //	  { 0x8008, 0x8008, mekd2_cas_r },
 //	  { 0x8020, 0x8023, mekd2_kbd_r },
-	{ 0xa000, 0xa07f, MRA_RAM },
-//	{ 0xc000, 0xc7ff, MRA_RAM },	/* optional, set up in mekd2_init_machine */
-	{ 0xe000, 0xe3ff, MRA_ROM },	/* JBUG ROM */
+	{ 0xa000, 0xa07f, MRA8_RAM },
+//	{ 0xc000, 0xc7ff, MRA8_RAM },	/* optional, set up in mekd2_init_machine */
+	{ 0xe000, 0xe3ff, MRA8_ROM },	/* JBUG ROM */
 	{ 0xe400, 0xffff, mekd2_mirror_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-//	{ 0x0100, 0x01ff, MWA_RAM },	/* optional, set up in mekd2_init_machine */
-//	{ 0x6000, 0x67ff, MWA_ROM },	/* -"- */
+	{ 0x0000, 0x00ff, MWA8_RAM },
+//	{ 0x0100, 0x01ff, MWA8_RAM },	/* optional, set up in mekd2_init_machine */
+//	{ 0x6000, 0x67ff, MWA8_ROM },	/* -"- */
 //	  { 0x8004, 0x8007, mekd2_pia_w },
 //	  { 0x8008, 0x8008, mekd2_cas_w },
 	{ 0x8020, 0x8023, mekd2_kbd_w },
-	{ 0xa000, 0xa07f, MWA_RAM },
-//	{ 0xc000, 0xc7ff, MWA_RAM },	/* optional, set up in mekd2_init_machine */
-	{ 0xe000, 0xe3ff, MWA_ROM },	/* JBUG ROM */
+	{ 0xa000, 0xa07f, MWA8_RAM },
+//	{ 0xc000, 0xc7ff, MWA8_RAM },	/* optional, set up in mekd2_init_machine */
+	{ 0xe000, 0xe3ff, MWA8_ROM },	/* JBUG ROM */
 MEMORY_END
 
 INPUT_PORTS_START( mekd2 )

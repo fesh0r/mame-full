@@ -17,8 +17,8 @@
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START (wswan_readmem)
-	{ 0x00000, 0x03fff, MRA_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MRA_NOP },		/* Not used */
+	{ 0x00000, 0x03fff, MRA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
+	{ 0x04000, 0x0ffff, MRA8_NOP },		/* Not used */
 	{ 0x10000, 0x1ffff, MRA_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MRA_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MRA_BANK3 },	/* ROM bank 2 */
@@ -37,8 +37,8 @@ static MEMORY_READ_START (wswan_readmem)
 MEMORY_END
 
 static MEMORY_WRITE_START (wswan_writemem)
-	{ 0x00000, 0x03fff, MWA_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MWA_NOP },		/* Not used */
+	{ 0x00000, 0x03fff, MWA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
+	{ 0x04000, 0x0ffff, MWA8_NOP },		/* Not used */
 	{ 0x10000, 0x1ffff, MWA_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MWA_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MWA_BANK3 },	/* ROM bank 2 */
@@ -57,8 +57,8 @@ static MEMORY_WRITE_START (wswan_writemem)
 MEMORY_END
 
 static MEMORY_READ_START (wsc_readmem)
-	{ 0x00000, 0x03fff, MRA_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MRA_RAM },		/* 16 colour tiles + palettes */
+	{ 0x00000, 0x03fff, MRA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
+	{ 0x04000, 0x0ffff, MRA8_RAM },		/* 16 colour tiles + palettes */
 	{ 0x10000, 0x1ffff, MRA_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MRA_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MRA_BANK3 },	/* ROM bank 2 */
@@ -77,8 +77,8 @@ static MEMORY_READ_START (wsc_readmem)
 MEMORY_END
 
 static MEMORY_WRITE_START (wsc_writemem)
-	{ 0x00000, 0x03fff, MWA_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MWA_RAM },		/* 16 colour tiles + palettes */
+	{ 0x00000, 0x03fff, MWA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
+	{ 0x04000, 0x0ffff, MWA8_RAM },		/* 16 colour tiles + palettes */
 	{ 0x10000, 0x1ffff, MWA_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MWA_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MWA_BANK3 },	/* ROM bank 2 */

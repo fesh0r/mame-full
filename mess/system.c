@@ -95,11 +95,7 @@ const struct GameDriver *test_drivers[] =
 
 #else /* DRIVER_RECURSIVE */
 
-#ifndef NEOMAME
-
 /****************CONSOLES****************************************************/
-
-/* for pong style games look into docs/pong.txt */
 
 	/* ATARI */
 //	DRIVER( a2600 ) 	/* Atari 2600										*/
@@ -112,15 +108,15 @@ const struct GameDriver *test_drivers[] =
 //	DRIVER( jaguar )	/* Atari Jaguar										*/
 
 	/* NINTENDO */
-//	DRIVER( nes )		/* Nintendo Entertainment System					*/
-//	DRIVER( nespal )	/* Nintendo Entertainment System					*/
-//	DRIVER( famicom )
+	DRIVER( nes )		/* Nintendo Entertainment System					*/
+	DRIVER( nespal )	/* Nintendo Entertainment System					*/
+	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld						*/
 	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge			*/
 	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld					*/
 	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld					*/
-//	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
-//	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
+	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
+	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
 	/* SEGA */
 //	DRIVER( gamegear )	/* Sega GameGear									*/
@@ -701,8 +697,6 @@ XL/XE 16kB OS roms
 //	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
 //TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
-
-#endif /* NEOMAME */
 
 #endif /* DRIVER_RECURSIVE */
 

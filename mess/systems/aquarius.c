@@ -47,22 +47,22 @@ PORT_END
 /* Memory w/r functions */
 
 MEMORY_READ_START( aquarius_readmem )
-	{0x0000, 0x1fff, MRA_ROM},
-	{0x2000, 0x2fff, MRA_NOP},
+	{0x0000, 0x1fff, MRA8_ROM},
+	{0x2000, 0x2fff, MRA8_NOP},
 	{0x3000, 0x37ff, videoram_r},
-	{0x3800, 0x3fff, MRA_RAM},
-	{0x4000, 0x7fff, MRA_NOP},
-	{0x8000, 0xffff, MRA_NOP},
+	{0x3800, 0x3fff, MRA8_RAM},
+	{0x4000, 0x7fff, MRA8_NOP},
+	{0x8000, 0xffff, MRA8_NOP},
 
 MEMORY_END
 
 MEMORY_WRITE_START( aquarius_writemem )
-	{0x0000, 0x1fff, MWA_ROM},
-	{0x2000, 0x2fff, MWA_NOP},
+	{0x0000, 0x1fff, MWA8_ROM},
+	{0x2000, 0x2fff, MWA8_NOP},
 	{0x3000, 0x37ff, aquarius_videoram_w, &videoram, &videoram_size},
-	{0x3800, 0x3fff, MWA_RAM},
-	{0x4000, 0x7fff, MWA_NOP},
-	{0x8000, 0xffff, MWA_NOP},
+	{0x3800, 0x3fff, MWA8_RAM},
+	{0x4000, 0x7fff, MWA8_NOP},
+	{0x8000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 /* graphics output */

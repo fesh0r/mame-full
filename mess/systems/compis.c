@@ -41,23 +41,23 @@
 #include "cpuintrf.h"
 
 static MEMORY_READ_START( compis_readmem )
-	{ 0x00000, 0x3ffff, MRA_RAM },
-	{ 0x40000, 0x4ffff, MRA_RAM },
-	{ 0x50000, 0x5ffff, MRA_RAM },
-	{ 0x60000, 0x6ffff, MRA_RAM },
-	{ 0x70000, 0x7ffff, MRA_RAM },
-	{ 0x80000, 0xeffff, MRA_NOP },
-	{ 0xf0000, 0xfffff, MRA_ROM },
+	{ 0x00000, 0x3ffff, MRA8_RAM },
+	{ 0x40000, 0x4ffff, MRA8_RAM },
+	{ 0x50000, 0x5ffff, MRA8_RAM },
+	{ 0x60000, 0x6ffff, MRA8_RAM },
+	{ 0x70000, 0x7ffff, MRA8_RAM },
+	{ 0x80000, 0xeffff, MRA8_NOP },
+	{ 0xf0000, 0xfffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( compis_writemem )
-	{ 0x00000, 0x3ffff, MWA_RAM },
-	{ 0x40000, 0x4ffff, MWA_RAM },
-	{ 0x50000, 0x5ffff, MWA_RAM },
-	{ 0x60000, 0x6ffff, MWA_RAM },
-	{ 0x70000, 0x7ffff, MWA_RAM },
-	{ 0x80000, 0xeffff, MWA_NOP },
-	{ 0xf0000, 0xfffff, MWA_ROM },
+	{ 0x00000, 0x3ffff, MWA8_RAM },
+	{ 0x40000, 0x4ffff, MWA8_RAM },
+	{ 0x50000, 0x5ffff, MWA8_RAM },
+	{ 0x60000, 0x6ffff, MWA8_RAM },
+	{ 0x70000, 0x7ffff, MWA8_RAM },
+	{ 0x80000, 0xeffff, MWA8_NOP },
+	{ 0xf0000, 0xfffff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START( compis_readport )

@@ -208,25 +208,25 @@ PORT_END
 MEMORY_READ_START( ti81_readmem )
 	{0x0000, 0x3fff, MRA_BANK1},
 	{0x4000, 0x7fff, MRA_BANK2},
-	{0x8000, 0xffff, MRA_RAM},
+	{0x8000, 0xffff, MRA8_RAM},
 MEMORY_END
 
 MEMORY_WRITE_START( ti81_writemem )
 	{0x0000, 0x3fff, MWA_BANK3},
 	{0x4000, 0x7fff, MWA_BANK4},
-	{0x8000, 0xffff, MWA_RAM},
+	{0x8000, 0xffff, MWA8_RAM},
 MEMORY_END
 
 MEMORY_READ_START( ti85_readmem )
 	{0x0000, 0x3fff, MRA_BANK1},
 	{0x4000, 0x7fff, MRA_BANK2},
-	{0x8000, 0xffff, MRA_RAM},
+	{0x8000, 0xffff, MRA8_RAM},
 MEMORY_END
 
 MEMORY_WRITE_START( ti85_writemem )
 	{0x0000, 0x3fff, MWA_BANK3},
 	{0x4000, 0x7fff, MWA_BANK4},
-	{0x8000, 0xffff, MWA_RAM},
+	{0x8000, 0xffff, MWA8_RAM},
 MEMORY_END
 
 MEMORY_READ_START( ti86_readmem )

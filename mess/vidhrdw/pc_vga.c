@@ -9,13 +9,13 @@
    { 0xa0000, 0xaffff, MRA_BANK1 }
    { 0xb0000, 0xb7fff, MRA_BANK2 }
    { 0xb8000, 0xbffff, MRA_BANK3 }
-   { 0xc0000, 0xc7fff, MRA_ROM }
+   { 0xc0000, 0xc7fff, MRA8_ROM }
 
    and in memory write list
    { 0xa0000, 0xaffff, MWA_BANK1 }
    { 0xb0000, 0xb7fff, MWA_BANK2 }
    { 0xb8000, 0xbffff, MWA_BANK3 }
-   { 0xc0000, 0xc7fff, MWA_ROM }
+   { 0xc0000, 0xc7fff, MWA8_ROM }
 
 	(oti 037 chip)
     ROM_LOAD("oakvga.bin", 0xc0000, 0x8000, 0x318c5f43)
@@ -557,28 +557,28 @@ static void vga_cpu_interface(void)
 		break;
 	case 4:
 		memory_set_bankhandler_r(1, 0, read_handler);
-		memory_set_bankhandler_r(2, 0, MRA_NOP);
-		memory_set_bankhandler_r(3, 0, MRA_NOP);
+		memory_set_bankhandler_r(2, 0, MRA8_NOP);
+		memory_set_bankhandler_r(3, 0, MRA8_NOP);
 		memory_set_bankhandler_w(1, 0, write_handler);
-		memory_set_bankhandler_w(2, 0, MWA_NOP);
-		memory_set_bankhandler_w(3, 0, MWA_NOP);
+		memory_set_bankhandler_w(2, 0, MWA8_NOP);
+		memory_set_bankhandler_w(3, 0, MWA8_NOP);
 		DBG_LOG(1,"vga memory",("a0000-affff\n"));
 		break;
 	case 8:
-		memory_set_bankhandler_r(1, 0, MRA_NOP);
+		memory_set_bankhandler_r(1, 0, MRA8_NOP);
 		memory_set_bankhandler_r(2, 0, read_handler);
-		memory_set_bankhandler_r(3, 0, MRA_NOP);
-		memory_set_bankhandler_w(1, 0, MWA_NOP);
+		memory_set_bankhandler_r(3, 0, MRA8_NOP);
+		memory_set_bankhandler_w(1, 0, MWA8_NOP);
 		memory_set_bankhandler_w(2, 0, write_handler);
-		memory_set_bankhandler_w(3, 0, MWA_NOP);
+		memory_set_bankhandler_w(3, 0, MWA8_NOP);
 		DBG_LOG(1,"vga memory",("b0000-b7fff\n"));
 		break;
 	case 0xc:
-		memory_set_bankhandler_r(1, 0, MRA_NOP);
-		memory_set_bankhandler_r(2, 0, MRA_NOP);
+		memory_set_bankhandler_r(1, 0, MRA8_NOP);
+		memory_set_bankhandler_r(2, 0, MRA8_NOP);
 		memory_set_bankhandler_r(3, 0, read_handler);
-		memory_set_bankhandler_w(1, 0, MWA_NOP);
-		memory_set_bankhandler_w(2, 0, MWA_NOP);
+		memory_set_bankhandler_w(1, 0, MWA8_NOP);
+		memory_set_bankhandler_w(2, 0, MWA8_NOP);
 		memory_set_bankhandler_w(3, 0, write_handler);
 		DBG_LOG(1,"vga memory",("b8000-bffff\n"));
 		break;

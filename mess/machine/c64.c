@@ -587,12 +587,12 @@ static void c64_bankswitch (int reset)
 //	    || (loram && hiram && !c64_exrom))
 	{
 		cpu_setbank (1, roml);
-		memory_set_bankhandler_w (2, 0, MWA_RAM); // always ram: pitstop
+		memory_set_bankhandler_w (2, 0, MWA8_RAM); // always ram: pitstop
 	}
 	else
 	{
 		cpu_setbank (1, c64_memory + 0x8000);
-		memory_set_bankhandler_w (2, 0, MWA_RAM);
+		memory_set_bankhandler_w (2, 0, MWA8_RAM);
 	}
 
 #if 1
@@ -638,11 +638,11 @@ static void c64_bankswitch (int reset)
 	if (!c64_game && c64_exrom)
 	{
 		cpu_setbank (7, romh);
-		memory_set_bankhandler_w (8, 0, MWA_NOP);
+		memory_set_bankhandler_w (8, 0, MWA8_NOP);
 	}
 	else
 	{
-		memory_set_bankhandler_w (8, 0, MWA_RAM);
+		memory_set_bankhandler_w (8, 0, MWA8_RAM);
 		if (hiram)
 		{
 			cpu_setbank (7, c64_kernal);
@@ -805,12 +805,12 @@ static void c64_common_driver_init (void)
 		c64_roml=memory_region(REGION_CPU1)+0x15400;
 		c64_romh=memory_region(REGION_CPU1)+0x17400;
 #if 0
-	{0x10000, 0x11fff, MWA_ROM, &c64_basic},	/* basic at 0xa000 */
-	{0x12000, 0x13fff, MWA_ROM, &c64_kernal},	/* kernal at 0xe000 */
-	{0x14000, 0x14fff, MWA_ROM, &c64_chargen},	/* charrom at 0xd000 */
-	{0x15000, 0x153ff, MWA_RAM, &c64_colorram},		/* colorram at 0xd800 */
-	{0x15400, 0x173ff, MWA_ROM, &c64_roml},	/* basic at 0xa000 */
-	{0x17400, 0x193ff, MWA_ROM, &c64_romh},	/* kernal at 0xe000 */
+	{0x10000, 0x11fff, MWA8_ROM, &c64_basic},	/* basic at 0xa000 */
+	{0x12000, 0x13fff, MWA8_ROM, &c64_kernal},	/* kernal at 0xe000 */
+	{0x14000, 0x14fff, MWA8_ROM, &c64_chargen},	/* charrom at 0xd000 */
+	{0x15000, 0x153ff, MWA8_RAM, &c64_colorram},		/* colorram at 0xd800 */
+	{0x15400, 0x173ff, MWA8_ROM, &c64_roml},	/* basic at 0xa000 */
+	{0x17400, 0x193ff, MWA8_ROM, &c64_romh},	/* kernal at 0xe000 */
 #endif
 	}
 	if (c64_tape_on)

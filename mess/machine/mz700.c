@@ -277,15 +277,15 @@ static void bank1_RAM(UINT8 *mem)
 static void bank1_NOP(UINT8 *mem)
 {
     cpu_setbank(1, &mem[0x00000]);
-	memory_set_bankhandler_r(1, 0, MRA_NOP);
-	memory_set_bankhandler_w(1, 0, MWA_NOP);
+	memory_set_bankhandler_r(1, 0, MRA8_NOP);
+	memory_set_bankhandler_w(1, 0, MWA8_NOP);
 }
 
 static void bank1_ROM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x10000]);
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_w(1, 0, MWA_ROM);
+	memory_set_bankhandler_w(1, 0, MWA8_ROM);
 }
 
 
@@ -301,7 +301,7 @@ static void bank2_ROM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x11000]);
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_w(2, 0, MWA_ROM);
+	memory_set_bankhandler_w(2, 0, MWA8_ROM);
 }
 
 
@@ -357,8 +357,8 @@ static void bank5_VID(UINT8 *mem)
 static void bank6_NOP(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x0d000]);
-	memory_set_bankhandler_r(6, 0, MRA_NOP);
-	memory_set_bankhandler_w(6, 0, MWA_NOP);
+	memory_set_bankhandler_r(6, 0, MRA8_NOP);
+	memory_set_bankhandler_w(6, 0, MWA8_NOP);
 }
 
 static void bank6_RAM(UINT8 *mem)
@@ -380,8 +380,8 @@ static void bank6_VIO(UINT8 *mem)
 static void bank7_NOP(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x0d800]);
-	memory_set_bankhandler_r(7, 0, MRA_NOP);
-	memory_set_bankhandler_w(7, 0, MWA_NOP);
+	memory_set_bankhandler_r(7, 0, MRA8_NOP);
+	memory_set_bankhandler_w(7, 0, MWA8_NOP);
 }
 
 static void bank7_RAM(UINT8 *mem)
@@ -403,8 +403,8 @@ static void bank7_VIO(UINT8 *mem)
 static void bank8_NOP(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x0e000]);
-	memory_set_bankhandler_r(8, 0, MRA_NOP);
-	memory_set_bankhandler_w(8, 0, MWA_NOP);
+	memory_set_bankhandler_r(8, 0, MRA8_NOP);
+	memory_set_bankhandler_w(8, 0, MWA8_NOP);
 
 }
 

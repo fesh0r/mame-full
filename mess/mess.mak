@@ -131,7 +131,7 @@ SOUNDS+=YM3812@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
 SOUNDS+=TIA@
-#SOUNDS+=NES@
+SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 #SOUNDS+=NAMCO@
 #SOUNDS+=NAMCONA@
@@ -302,20 +302,20 @@ $(OBJ)/gce.a:	                     \
 	$(OBJ)/mess/machine/vectrex.o  \
 	$(OBJ)/mess/systems/vectrex.o
 
-$(OBJ)/nintendo.a:                   \
-	$(OBJ)/mess/sndhrdw/gb.o       \
-	$(OBJ)/mess/vidhrdw/gb.o       \
-	$(OBJ)/mess/machine/gb.o       \
-	$(OBJ)/mess/systems/gb.o       \
-#	$(OBJ)/mess/machine/nes_mmc.o  \
-#	$(OBJ)/vidhrdw/ppu2c03b.o		 \
-#	$(OBJ)/mess/vidhrdw/nes.o      \
-#	$(OBJ)/mess/machine/nes.o	     \
-#	$(OBJ)/mess/systems/nes.o	     \
-#	$(OBJ)/sndhrdw/snes.o          \
-#	$(OBJ)/machine/snes.o          \
-#	$(OBJ)/vidhrdw/snes.o          \
-#	$(OBJ)/mess/systems/snes.o	 
+$(OBJ)/nintendo.a:					\
+	$(OBJ)/mess/sndhrdw/gb.o		\
+	$(OBJ)/mess/vidhrdw/gb.o		\
+	$(OBJ)/mess/machine/gb.o		\
+	$(OBJ)/mess/systems/gb.o		\
+	$(OBJ)/mess/machine/nes_mmc.o	\
+	$(OBJ)/vidhrdw/ppu2c03b.o		\
+	$(OBJ)/mess/vidhrdw/nes.o		\
+	$(OBJ)/mess/machine/nes.o		\
+	$(OBJ)/mess/systems/nes.o		\
+	$(OBJ)/sndhrdw/snes.o			\
+	$(OBJ)/machine/snes.o			\
+	$(OBJ)/vidhrdw/snes.o			\
+	$(OBJ)/mess/systems/snes.o	 
 
 $(OBJ)/amiga.a: \
 	$(OBJ)/mess/vidhrdw/amiga.o	 \

@@ -49,26 +49,26 @@
 #endif
 
 static MEMORY_READ_START( readmem_mtan )
-    { 0x0000, 0x03ff, MRA_RAM },
-/*  { 0x0400, 0x1fff, MRA_RAM },    */  /* TANEX 7K RAM */
-/*  { 0x2000, 0xbbff, MRA_RAM },    */  /* TANRAM 40K RAM */
-    { 0xbc00, 0xbc00, MRA_NOP },
+    { 0x0000, 0x03ff, MRA8_RAM },
+/*  { 0x0400, 0x1fff, MRA8_RAM },    */  /* TANEX 7K RAM */
+/*  { 0x2000, 0xbbff, MRA8_RAM },    */  /* TANRAM 40K RAM */
+    { 0xbc00, 0xbc00, MRA8_NOP },
     { 0xbc01, 0xbc01, AY8910_read_port_0_r },
-    { 0xbc02, 0xbc02, MRA_NOP },
+    { 0xbc02, 0xbc02, MRA8_NOP },
     { 0xbc03, 0xbc03, AY8910_read_port_1_r },
     { 0xbfc0, 0xbfcf, microtan_via_0_r },
     { 0xbfd0, 0xbfd3, microtan_sio_r },
     { 0xbfe0, 0xbfef, microtan_via_1_r },
     { 0xbff0, 0xbfff, microtan_bffx_r },
-    { 0xc000, 0xe7ff, MRA_ROM },
-    { 0xf000, 0xffff, MRA_ROM },
+    { 0xc000, 0xe7ff, MRA8_ROM },
+    { 0xf000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_mtan )
-    { 0x0000, 0x01ff, MWA_RAM },
+    { 0x0000, 0x01ff, MWA8_RAM },
     { 0x0200, 0x03ff, microtan_videoram_w, &videoram, &videoram_size },
-/*  { 0x0400, 0x1fff, MRA_RAM },    */  /* TANEX 7K RAM */
-/*  { 0x2000, 0xbbff, MRA_RAM },    */  /* TANRAM 40K RAM */
+/*  { 0x0400, 0x1fff, MRA8_RAM },    */  /* TANEX 7K RAM */
+/*  { 0x2000, 0xbbff, MRA8_RAM },    */  /* TANRAM 40K RAM */
     { 0xbc00, 0xbc00, AY8910_control_port_0_w },
     { 0xbc01, 0xbc01, AY8910_write_port_0_w },
     { 0xbc02, 0xbc02, AY8910_control_port_1_w },
@@ -78,8 +78,8 @@ static MEMORY_WRITE_START( writemem_mtan )
     { 0xbfd0, 0xbfd3, microtan_sio_w },
     { 0xbfe0, 0xbfef, microtan_via_1_w },
     { 0xbff0, 0xbfff, microtan_bffx_w },
-    { 0xc000, 0xe7ff, MWA_ROM },
-    { 0xf000, 0xffff, MWA_ROM },
+    { 0xc000, 0xe7ff, MWA8_ROM },
+    { 0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 INPUT_PORTS_START( microtan )

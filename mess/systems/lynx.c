@@ -21,21 +21,21 @@ static int lynx_line_y;
 UINT32 lynx_palette[0x10];
 
 static MEMORY_READ_START( lynx_readmem )
-	{ 0x0000, 0xfbff, MRA_RAM },
+	{ 0x0000, 0xfbff, MRA8_RAM },
 	{ 0xfc00, 0xfcff, MRA_BANK1 },
 	{ 0xfd00, 0xfdff, MRA_BANK2 },
 	{ 0xfe00, 0xfff7, MRA_BANK3 },
-	{ 0xfff8, 0xfff9, MRA_RAM },
+	{ 0xfff8, 0xfff9, MRA8_RAM },
     { 0xfffa, 0xffff, MRA_BANK4 },
 MEMORY_END
 
 static MEMORY_WRITE_START( lynx_writemem )
-	{ 0x0000, 0xfbff, MWA_RAM },
+	{ 0x0000, 0xfbff, MWA8_RAM },
 	{ 0xfc00, 0xfcff, MWA_BANK1 },
 	{ 0xfd00, 0xfdff, MWA_BANK2 },
-	{ 0xfe00, 0xfff8, MWA_RAM },
+	{ 0xfe00, 0xfff8, MWA8_RAM },
     { 0xfff9, 0xfff9, lynx_memory_config },
-    { 0xfffa, 0xffff, MWA_RAM },
+    { 0xfffa, 0xffff, MWA8_RAM },
 MEMORY_END
 
 INPUT_PORTS_START( lynx )

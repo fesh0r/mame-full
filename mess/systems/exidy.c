@@ -343,28 +343,28 @@ static WRITE_HANDLER ( exidy_wd179x_w )
 
 
 MEMORY_READ_START( readmem_exidy )
-	{0x00000, 0x07fff, MRA_RAM},		/* ram 32k machine */
+	{0x00000, 0x07fff, MRA8_RAM},		/* ram 32k machine */
 //	{0x08000, 0x0bbff, exidy_unmapped_r},
-	{0x0bc00,0x0bcff, MRA_ROM},
+	{0x0bc00,0x0bcff, MRA8_ROM},
 //	{0x0bd00, 0x0bfff, exidy_unmapped_r},
 	{0x0be00,0x0be03, exidy_wd179x_r},
 
-	{0x0c000, 0x0efff, MRA_ROM},		/* rom pac */
-	{0x0f000, 0x0f7ff, MRA_RAM},		/* screen ram */	
-	{0x0f800, 0x0fbff, MRA_ROM},		/* char rom */
-	{0x0fc00, 0x0ffff, MRA_RAM},		/* programmable chars */
+	{0x0c000, 0x0efff, MRA8_ROM},		/* rom pac */
+	{0x0f000, 0x0f7ff, MRA8_RAM},		/* screen ram */	
+	{0x0f800, 0x0fbff, MRA8_ROM},		/* char rom */
+	{0x0fc00, 0x0ffff, MRA8_RAM},		/* programmable chars */
 MEMORY_END
 
 
 MEMORY_WRITE_START( writemem_exidy )
-	{0x00000, 0x07fff, MWA_RAM},		/* ram 32k machine */
+	{0x00000, 0x07fff, MWA8_RAM},		/* ram 32k machine */
 //	{0x08000, 0x0bbff, exidy_unmapped_w},
 //	{0x0bd00, 0x0bfff, exidy_unmapped_w},
 {0x0be00, 0x0be03, exidy_wd179x_w},	
-{0x0c000, 0x0efff, MWA_ROM},			/* rom pac */	
-	{0x0f000, 0x0f7ff, MWA_RAM},		/* screen ram */
-	{0x0f800, 0x0fbff, MWA_ROM},		/* char rom */
-	{0x0fc00, 0x0ffff, MWA_RAM},		/* programmable chars */
+{0x0c000, 0x0efff, MWA8_ROM},			/* rom pac */	
+	{0x0f000, 0x0f7ff, MWA8_RAM},		/* screen ram */
+	{0x0f800, 0x0fbff, MWA8_ROM},		/* char rom */
+	{0x0fc00, 0x0ffff, MWA8_RAM},		/* programmable chars */
 MEMORY_END
 
 static WRITE_HANDLER(exidy_fc_port_w)

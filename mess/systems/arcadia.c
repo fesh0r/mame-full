@@ -12,15 +12,15 @@
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START( arcadia_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x0000, 0x0fff, MRA8_ROM },
 	{ 0x1800, 0x1aff, arcadia_video_r },
-	{ 0x2000, 0x2fff, MRA_ROM },
+	{ 0x2000, 0x2fff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( arcadia_writemem )
-//	{ 0x0000, 0x0fff, MWA_ROM },
+//	{ 0x0000, 0x0fff, MWA8_ROM },
 	{ 0x1800, 0x1aff, arcadia_video_w },
-//	{ 0x2000, 0x2fff, MWA_ROM },
+//	{ 0x2000, 0x2fff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START( arcadia_readport )

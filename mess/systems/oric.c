@@ -54,10 +54,10 @@
 
 
 static MEMORY_READ_START(oric_readmem)
-    { 0x0000, 0x02FF, MRA_RAM },
+    { 0x0000, 0x02FF, MRA8_RAM },
 
 	/* { 0x0300, 0x03ff, oric_IO_r }, */
-    { 0x0400, 0xBFFF, MRA_RAM },
+    { 0x0400, 0xBFFF, MRA8_RAM },
 
     { 0xc000, 0xdFFF, MRA_BANK1 },
 	{ 0xe000, 0xf7ff, MRA_BANK2 },
@@ -65,9 +65,9 @@ static MEMORY_READ_START(oric_readmem)
 MEMORY_END
 
 static MEMORY_WRITE_START(oric_writemem)
-    { 0x0000, 0x02FF, MWA_RAM },
+    { 0x0000, 0x02FF, MWA8_RAM },
     /* { 0x0300, 0x03ff, oric_IO_w }, */
-    { 0x0400, 0xbFFF, MWA_RAM },
+    { 0x0400, 0xbFFF, MWA8_RAM },
     { 0xc000, 0xdFFF, MWA_BANK5 },
     { 0xe000, 0xf7ff, MWA_BANK6 },
 	{ 0xf800, 0xffff, MWA_BANK7 },
@@ -77,16 +77,16 @@ MEMORY_END
 The telestrat has the memory regions split into 16k blocks.
 Memory region &c000-&ffff can be ram or rom. */
 static MEMORY_READ_START(telestrat_readmem)
-    { 0x0000, 0x02FF, MRA_RAM },
+    { 0x0000, 0x02FF, MRA8_RAM },
     { 0x0300, 0x03ff, telestrat_IO_r },
-    { 0x0400, 0xBFFF, MRA_RAM },
+    { 0x0400, 0xBFFF, MRA8_RAM },
     { 0xc000, 0xfFFF, MRA_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE_START(telestrat_writemem)
-    { 0x0000, 0x02FF, MWA_RAM },
+    { 0x0000, 0x02FF, MWA8_RAM },
     { 0x0300, 0x03ff, telestrat_IO_w },
-    { 0x0400, 0xbFFF, MWA_RAM },
+    { 0x0400, 0xbFFF, MWA8_RAM },
     { 0xc000, 0xffff, MWA_BANK2 },
 MEMORY_END
 

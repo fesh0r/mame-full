@@ -15,19 +15,19 @@ Bruce Tomlin (hardware info)
 #include "devices/cartslot.h"
 
 MEMORY_READ_START( vectrex_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc800, 0xcbff, MRA_RAM },
+	{ 0x0000, 0x7fff, MRA8_ROM },
+	{ 0xc800, 0xcbff, MRA8_RAM },
 	{ 0xcc00, 0xcfff, vectrex_mirrorram_r },
 	{ 0xd000, 0xd7ff, via_0_r },    /* VIA 6522 */
-	{ 0xe000, 0xffff, MRA_ROM },
+	{ 0xe000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 MEMORY_WRITE_START( vectrex_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc800, 0xcbff, MWA_RAM, &vectrex_ram },
+	{ 0x0000, 0x7fff, MWA8_ROM },
+	{ 0xc800, 0xcbff, MWA8_RAM, &vectrex_ram },
 	{ 0xcc00, 0xcfff, vectrex_mirrorram_w },
 	{ 0xd000, 0xd7ff, via_0_w },    /* VIA 6522 */
-	{ 0xe000, 0xffff, MWA_ROM },
+	{ 0xe000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 INPUT_PORTS_START( vectrex )
@@ -144,22 +144,22 @@ ROM_END
 *****************************************************************/
 
 MEMORY_READ_START( raaspec_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM }, /* Battery backed RAM for the Spectrum I+ */
-	{ 0xc800, 0xcbff, MRA_RAM },
+	{ 0x0000, 0x7fff, MRA8_ROM },
+	{ 0x8000, 0x87ff, MRA8_RAM }, /* Battery backed RAM for the Spectrum I+ */
+	{ 0xc800, 0xcbff, MRA8_RAM },
 	{ 0xcc00, 0xcfff, vectrex_mirrorram_r },
 	{ 0xd000, 0xd7ff, via_0_r },
-	{ 0xe000, 0xffff, MRA_ROM },
+	{ 0xe000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 MEMORY_WRITE_START( raaspec_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x0000, 0x7fff, MWA8_ROM },
+	{ 0x8000, 0x87ff, MWA8_RAM },
 	{ 0xa000, 0xa000, raaspec_led_w },
-	{ 0xc800, 0xcbff, MWA_RAM, &vectrex_ram },
+	{ 0xc800, 0xcbff, MWA8_RAM, &vectrex_ram },
 	{ 0xcc00, 0xcfff, vectrex_mirrorram_w },
 	{ 0xd000, 0xd7ff, via_0_w },
-	{ 0xe000, 0xffff, MWA_ROM },
+	{ 0xe000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 INPUT_PORTS_START( raaspec )

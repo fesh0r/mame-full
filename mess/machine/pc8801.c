@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.14 2003/10/29 02:01:46 npwoods Exp $
+  $Id: pc8801.c,v 1.15 2004/02/02 20:12:54 npwoods Exp $
 
 ***************************************************************************/
 
@@ -373,8 +373,8 @@ void pc8801_update_bank(void)
     cpu_setbank(2, ext_r + 0x6000);
     if(ext_w==NULL) {
       /* read only mode */
-      memory_set_bankhandler_w(1, 0, MWA_NOP);
-      memory_set_bankhandler_w(2, 0, MWA_NOP);
+      memory_set_bankhandler_w(1, 0, MWA8_NOP);
+      memory_set_bankhandler_w(2, 0, MWA8_NOP);
     } else {
       /* r/w mode */
       memory_set_bankhandler_w(1, 0, MWA_BANK1);

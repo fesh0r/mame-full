@@ -58,8 +58,8 @@ static void hp48_config(void)
 	int begin, end;
 
 	// lowest priority first
-	install_mem_read_handler(0, 0, 0xfffff, MRA_ROM);
-	install_mem_write_handler(0, 0, 0xfffff, MWA_NOP);
+	install_mem_read_handler(0, 0, 0xfffff, MRA8_ROM);
+	install_mem_write_handler(0, 0, 0xfffff, MWA8_NOP);
 	if (hp48s.mem[CARD1].adr!=-1) {
 		begin=hp48s.mem[CARD1].adr&hp48s.mem[CARD1].size&~0xfff;
 		end=begin|(hp48s.mem[CARD1].size^0xff000)|0xfff;

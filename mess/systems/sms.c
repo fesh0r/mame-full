@@ -44,16 +44,16 @@
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x3FFF, MRA_RAM }, /* ROM bank #1 */
-	{ 0x4000, 0x7FFF, MRA_RAM }, /* ROM bank #2 */
-	{ 0x8000, 0xBFFF, MRA_RAM }, /* ROM bank #3 / On-cart RAM */
-	{ 0xC000, 0xDFFF, MRA_RAM }, /* RAM */
-	{ 0xE000, 0xFFFF, MRA_RAM }, /* RAM (mirror) */
+	{ 0x0000, 0x3FFF, MRA8_RAM }, /* ROM bank #1 */
+	{ 0x4000, 0x7FFF, MRA8_RAM }, /* ROM bank #2 */
+	{ 0x8000, 0xBFFF, MRA8_RAM }, /* ROM bank #3 / On-cart RAM */
+	{ 0xC000, 0xDFFF, MRA8_RAM }, /* RAM */
+	{ 0xE000, 0xFFFF, MRA8_RAM }, /* RAM (mirror) */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x3FFF, MWA_NOP }, /* ROM bank #1 */
-	{ 0x4000, 0x7FFF, MWA_NOP }, /* ROM bank #2 */
+	{ 0x0000, 0x3FFF, MWA8_NOP }, /* ROM bank #1 */
+	{ 0x4000, 0x7FFF, MWA8_NOP }, /* ROM bank #2 */
 	{ 0x8000, 0xBFFF, sms_cartram_w }, /* ROM bank #3 / On-cart RAM */
 	{ 0xC000, 0xDFFF, sms_ram_w }, /* RAM */
 //	{ 0xC000, 0xDFFB, sms_ram_w }, /* RAM */

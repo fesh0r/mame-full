@@ -52,34 +52,34 @@
 #endif
 
 static MEMORY_READ_START( readmem_mbee )
-    { 0x0000, 0x7fff, MRA_RAM },
-    { 0x8000, 0xbfff, MRA_ROM },
-    { 0xc000, 0xdfff, MRA_ROM },
-    { 0xe000, 0xefff, MRA_ROM },
+    { 0x0000, 0x7fff, MRA8_RAM },
+    { 0x8000, 0xbfff, MRA8_ROM },
+    { 0xc000, 0xdfff, MRA8_ROM },
+    { 0xe000, 0xefff, MRA8_ROM },
     { 0xf000, 0xf7ff, mbee_videoram_r },
     { 0xf800, 0xffff, mbee_pcg_color_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_mbee )
-    { 0x0000, 0x7fff, MWA_RAM },
-    { 0x8000, 0xbfff, MWA_ROM },
-    { 0xc000, 0xdfff, MWA_ROM },
-    { 0xe000, 0xefff, MWA_ROM },
+    { 0x0000, 0x7fff, MWA8_RAM },
+    { 0x8000, 0xbfff, MWA8_ROM },
+    { 0xc000, 0xdfff, MWA8_ROM },
+    { 0xe000, 0xefff, MWA8_ROM },
     { 0xf000, 0xf7ff, mbee_videoram_w, &pcgram, &videoram_size },
     { 0xf800, 0xffff, mbee_pcg_color_w },
 MEMORY_END
 
 
 MEMORY_READ_START( readmem_56k )
-    { 0x0000, 0xdfff, MRA_RAM },
-    { 0xe000, 0xefff, MRA_ROM },
+    { 0x0000, 0xdfff, MRA8_RAM },
+    { 0xe000, 0xefff, MRA8_ROM },
     { 0xf000, 0xf7ff, mbee_videoram_r },
     { 0xf800, 0xffff, mbee_pcg_color_r },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_56k )
-    { 0x0000, 0xdfff, MWA_RAM },
-    { 0xe000, 0xefff, MWA_ROM },
+    { 0x0000, 0xdfff, MWA8_RAM },
+    { 0xe000, 0xefff, MWA8_ROM },
     { 0xf000, 0xf7ff, mbee_videoram_w, &pcgram, &videoram_size },
     { 0xf800, 0xffff, mbee_pcg_color_w },
 MEMORY_END

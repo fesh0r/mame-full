@@ -180,12 +180,12 @@ DRIVER_INIT( pc1350 )
 MACHINE_INIT( pc1350 )
 {
 	if (PC1350_RAM20K) {
-		install_mem_write_handler (0, 0x2000, 0x5fff, MWA_RAM);
+		install_mem_write_handler (0, 0x2000, 0x5fff, MWA8_RAM);
 	} else if (PC1350_RAM12K) {
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_NOP);
-		install_mem_write_handler (0, 0x4000, 0x5fff, MWA_RAM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
+		install_mem_write_handler (0, 0x4000, 0x5fff, MWA8_RAM);
 	} else {
-		install_mem_write_handler (0, 0x2000, 0x5fff, MWA_NOP);
+		install_mem_write_handler (0, 0x2000, 0x5fff, MWA8_NOP);
 	}
 }
 

@@ -75,16 +75,16 @@ static MACHINE_INIT( ssystem3 )
 }
 
 static MEMORY_READ_START( ssystem3_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0000, 0x03ff, MRA8_RAM },
 	{ 0x6000, 0x600f, via_0_r },
-	{ 0xc000, 0xffff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( ssystem3_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0000, 0x03ff, MWA8_RAM },
 // 0x4000, 0x40ff, lcd chip!?
 	{ 0x6000, 0x600f, via_0_w },
-	{ 0xc000, 0xffff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \

@@ -85,74 +85,74 @@
 #endif
 
 MEMORY_READ_START( readmem_laser110 )
-    { 0x0000, 0x3fff, MRA_ROM },
-    { 0x4000, 0x5fff, MRA_ROM },
-    { 0x6000, 0x67ff, MRA_ROM },
+    { 0x0000, 0x3fff, MRA8_ROM },
+    { 0x4000, 0x5fff, MRA8_ROM },
+    { 0x6000, 0x67ff, MRA8_ROM },
     { 0x6800, 0x6fff, vtech1_keyboard_r },
-//    { 0x7000, 0x77ff, MRA_RAM },
+//    { 0x7000, 0x77ff, MRA8_RAM },
 	{ 0x7000, 0x77ff, videoram_r}, // VDG 6847
-    { 0x7800, 0x7fff, MRA_RAM },
-//  { 0x8000, 0xbfff, MRA_RAM },    /* opt. installed */
-    { 0xc000, 0xffff, MRA_NOP },
+    { 0x7800, 0x7fff, MRA8_RAM },
+//  { 0x8000, 0xbfff, MRA8_RAM },    /* opt. installed */
+    { 0xc000, 0xffff, MRA8_NOP },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_laser110 )
-    { 0x0000, 0x3fff, MWA_ROM },
-    { 0x4000, 0x5fff, MWA_ROM },
-    { 0x6000, 0x67ff, MWA_ROM },
+    { 0x0000, 0x3fff, MWA8_ROM },
+    { 0x4000, 0x5fff, MWA8_ROM },
+    { 0x6000, 0x67ff, MWA8_ROM },
     { 0x6800, 0x6fff, vtech1_latch_w },
     { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
 //	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
 
-   { 0x7800, 0x7fff, MWA_RAM },
-//  { 0x8000, 0xbfff, MWA_RAM },    /* opt. installed */
-    { 0xc000, 0xffff, MWA_NOP },
+   { 0x7800, 0x7fff, MWA8_RAM },
+//  { 0x8000, 0xbfff, MWA8_RAM },    /* opt. installed */
+    { 0xc000, 0xffff, MWA8_NOP },
 MEMORY_END
 
 MEMORY_READ_START( readmem_laser210 )
-    { 0x0000, 0x3fff, MRA_ROM },
-    { 0x4000, 0x5fff, MRA_ROM },
-    { 0x6000, 0x67ff, MRA_ROM },
+    { 0x0000, 0x3fff, MRA8_ROM },
+    { 0x4000, 0x5fff, MRA8_ROM },
+    { 0x6000, 0x67ff, MRA8_ROM },
     { 0x6800, 0x6fff, vtech1_keyboard_r },
-//   { 0x7000, 0x77ff, MRA_RAM },
+//   { 0x7000, 0x77ff, MRA8_RAM },
 	{ 0x7000, 0x77ff, videoram_r}, // VDG 6847
-    { 0x7800, 0x8fff, MRA_RAM },
-//  { 0x9000, 0xcfff, MRA_RAM },    /* opt. installed */
-    { 0xd000, 0xffff, MRA_NOP },
+    { 0x7800, 0x8fff, MRA8_RAM },
+//  { 0x9000, 0xcfff, MRA8_RAM },    /* opt. installed */
+    { 0xd000, 0xffff, MRA8_NOP },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_laser210 )
-    { 0x0000, 0x3fff, MWA_ROM },
-    { 0x4000, 0x5fff, MWA_ROM },
-    { 0x6000, 0x67ff, MWA_ROM },
+    { 0x0000, 0x3fff, MWA8_ROM },
+    { 0x4000, 0x5fff, MWA8_ROM },
+    { 0x6000, 0x67ff, MWA8_ROM },
     { 0x6800, 0x6fff, vtech1_latch_w },
     { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
-    { 0x7800, 0x8fff, MWA_RAM },
-//  { 0x9000, 0xcfff, MWA_RAM },    /* opt. installed */
-    { 0xd000, 0xffff, MWA_NOP },
+    { 0x7800, 0x8fff, MWA8_RAM },
+//  { 0x9000, 0xcfff, MWA8_RAM },    /* opt. installed */
+    { 0xd000, 0xffff, MWA8_NOP },
 MEMORY_END
 
 MEMORY_READ_START( readmem_laser310 )
-    { 0x0000, 0x3fff, MRA_ROM },
-    { 0x4000, 0x5fff, MRA_ROM },
-    { 0x6000, 0x67ff, MRA_ROM },
+    { 0x0000, 0x3fff, MRA8_ROM },
+    { 0x4000, 0x5fff, MRA8_ROM },
+    { 0x6000, 0x67ff, MRA8_ROM },
     { 0x6800, 0x6fff, vtech1_keyboard_r },
-//    { 0x7000, 0x77ff, MRA_RAM },
+//    { 0x7000, 0x77ff, MRA8_RAM },
 	{ 0x7000, 0x77ff, videoram_r}, // VDG 6847
-     { 0x7800, 0xb7ff, MRA_RAM },
-//  { 0xb800, 0xf7ff, MRA_RAM },    /* opt. installed */
-    { 0xf800, 0xffff, MRA_NOP },
+     { 0x7800, 0xb7ff, MRA8_RAM },
+//  { 0xb800, 0xf7ff, MRA8_RAM },    /* opt. installed */
+    { 0xf800, 0xffff, MRA8_NOP },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_laser310 )
-    { 0x0000, 0x3fff, MWA_ROM },
-    { 0x4000, 0x5fff, MWA_ROM },
-    { 0x6000, 0x67ff, MWA_ROM },
+    { 0x0000, 0x3fff, MWA8_ROM },
+    { 0x4000, 0x5fff, MWA8_ROM },
+    { 0x6000, 0x67ff, MWA8_ROM },
     { 0x6800, 0x6fff, vtech1_latch_w },
     { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
-    { 0x7800, 0xb7ff, MWA_RAM },
-//  { 0xb800, 0xf7ff, MWA_RAM },    /* opt. installed */
-    { 0xf800, 0xffff, MWA_NOP },
+    { 0x7800, 0xb7ff, MWA8_RAM },
+//  { 0xb800, 0xf7ff, MWA8_RAM },    /* opt. installed */
+    { 0xf800, 0xffff, MWA8_NOP },
 MEMORY_END
 
 PORT_READ_START( readport_vtech1 )

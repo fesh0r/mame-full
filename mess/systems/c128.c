@@ -324,7 +324,7 @@ static MEMORY_READ_START( c128_z80_readmem )
 #if 1
 	{0x0000, 0x0fff, MRA_BANK10},
 	{0x1000, 0xbfff, MRA_BANK11},
-	{0xc000, 0xffff, MRA_RAM},
+	{0xc000, 0xffff, MRA8_RAM},
 #else
 	/* best to do reuse bankswitching numbers */
 	{0x0000, 0x03ff, MRA_BANK10},
@@ -345,7 +345,7 @@ static MEMORY_WRITE_START( c128_z80_writemem )
 #if 1
 	{0x0000, 0x0fff, c128_write_0000, &c64_memory},
 	{0x1000, 0xbfff, c128_write_1000 },
-	{0xc000, 0xffff, MWA_RAM },
+	{0xc000, 0xffff, MWA8_RAM },
 #else
 	{0x0000, 0x03ff, MWA_BANK1, &c64_memory},
 	{0x0400, 0x0fff, MWA_BANK2},
@@ -360,20 +360,20 @@ static MEMORY_WRITE_START( c128_z80_writemem )
 #endif
 
 #if 0
-	{0x10000, 0x1ffff, MWA_RAM},
-	{0x20000, 0xfffff, MWA_RAM},	   /* or nothing */
-	{0x100000, 0x107fff, MWA_ROM, &c128_basic},	/* maps to 0x4000 */
-	{0x108000, 0x109fff, MWA_ROM, &c64_basic},	/* maps to 0xa000 */
-	{0x10a000, 0x10bfff, MWA_ROM, &c64_kernal},	/* maps to 0xe000 */
-	{0x10c000, 0x10cfff, MWA_ROM, &c128_editor},
-	{0x10d000, 0x10dfff, MWA_ROM, &c128_z80},		/* maps to z80 0 */
-	{0x10e000, 0x10ffff, MWA_ROM, &c128_kernal},
-	{0x110000, 0x117fff, MWA_ROM, &c128_internal_function},
-	{0x118000, 0x11ffff, MWA_ROM, &c128_external_function},
-	{0x120000, 0x120fff, MWA_ROM, &c64_chargen},
-	{0x121000, 0x121fff, MWA_ROM, &c128_chargen},
-	{0x122000, 0x1227ff, MWA_RAM, &c64_colorram},
-	{0x122800, 0x1327ff, MWA_RAM, &c128_vdcram},
+	{0x10000, 0x1ffff, MWA8_RAM},
+	{0x20000, 0xfffff, MWA8_RAM},	   /* or nothing */
+	{0x100000, 0x107fff, MWA8_ROM, &c128_basic},	/* maps to 0x4000 */
+	{0x108000, 0x109fff, MWA8_ROM, &c64_basic},	/* maps to 0xa000 */
+	{0x10a000, 0x10bfff, MWA8_ROM, &c64_kernal},	/* maps to 0xe000 */
+	{0x10c000, 0x10cfff, MWA8_ROM, &c128_editor},
+	{0x10d000, 0x10dfff, MWA8_ROM, &c128_z80},		/* maps to z80 0 */
+	{0x10e000, 0x10ffff, MWA8_ROM, &c128_kernal},
+	{0x110000, 0x117fff, MWA8_ROM, &c128_internal_function},
+	{0x118000, 0x11ffff, MWA8_ROM, &c128_external_function},
+	{0x120000, 0x120fff, MWA8_ROM, &c64_chargen},
+	{0x121000, 0x121fff, MWA8_ROM, &c128_chargen},
+	{0x122000, 0x1227ff, MWA8_RAM, &c64_colorram},
+	{0x122800, 0x1327ff, MWA8_RAM, &c128_vdcram},
 	/* 2 kbyte by 8 bits, only 1 kbyte by 4 bits used) */
 #endif
 MEMORY_END

@@ -308,12 +308,12 @@ void init_pc1401(void)
 MACHINE_INIT( pc1401 )
 {
 	if (RAM10K) {
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_RAM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_RAM);
 	} else if (RAM4K) {
-		install_mem_write_handler (0, 0x2000, 0x37ff, MWA_NOP);
-		install_mem_write_handler (0, 0x3800, 0x3fff, MWA_RAM);
+		install_mem_write_handler (0, 0x2000, 0x37ff, MWA8_NOP);
+		install_mem_write_handler (0, 0x3800, 0x3fff, MWA8_RAM);
 	} else {
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_NOP);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
 	}
 }
 

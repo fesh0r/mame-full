@@ -218,19 +218,19 @@ static WRITE_HANDLER(svision_w)
 }
 
 static MEMORY_READ_START( readmem )
-    { 0x0000, 0x1fff, MRA_RAM },
+    { 0x0000, 0x1fff, MRA8_RAM },
     { 0x2000, 0x3fff, svision_r },
-    { 0x4000, 0x5fff, MRA_RAM }, //?
-	{ 0x6000, 0x7fff, MRA_ROM },
+    { 0x4000, 0x5fff, MRA8_RAM }, //?
+	{ 0x6000, 0x7fff, MRA8_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xffff, MRA_BANK2 },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA8_RAM },
     { 0x2000, 0x3fff, svision_w, &svision_reg },
-	{ 0x4000, 0x5fff, MWA_RAM },
-	{ 0x6000, 0xffff, MWA_ROM },
+	{ 0x4000, 0x5fff, MWA8_RAM },
+	{ 0x6000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 INPUT_PORTS_START( svision )

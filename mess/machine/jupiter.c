@@ -95,22 +95,22 @@ MACHINE_INIT( jupiter )
 		{
 			case 03:
 			case 02:
-				install_mem_write_handler(0, 0x8800, 0xffff, MWA_RAM);
-				install_mem_read_handler(0, 0x8800, 0xffff, MRA_RAM);
-				install_mem_write_handler(0, 0x4800, 0x87ff, MWA_RAM);
-				install_mem_read_handler(0, 0x4800, 0x87ff, MRA_RAM);
+				install_mem_write_handler(0, 0x8800, 0xffff, MWA8_RAM);
+				install_mem_read_handler(0, 0x8800, 0xffff, MRA8_RAM);
+				install_mem_write_handler(0, 0x4800, 0x87ff, MWA8_RAM);
+				install_mem_read_handler(0, 0x4800, 0x87ff, MRA8_RAM);
 				break;
 			case 01:
-				install_mem_write_handler(0, 0x8800, 0xffff, MWA_NOP);
-				install_mem_read_handler(0, 0x8800, 0xffff, MRA_NOP);
-				install_mem_write_handler(0, 0x4800, 0x87ff, MWA_RAM);
-				install_mem_read_handler(0, 0x4800, 0x87ff, MRA_RAM);
+				install_mem_write_handler(0, 0x8800, 0xffff, MWA8_NOP);
+				install_mem_read_handler(0, 0x8800, 0xffff, MRA8_NOP);
+				install_mem_write_handler(0, 0x4800, 0x87ff, MWA8_RAM);
+				install_mem_read_handler(0, 0x4800, 0x87ff, MRA8_RAM);
 				break;
 			case 00:
-				install_mem_write_handler(0, 0x8800, 0xffff, MWA_NOP);
-				install_mem_read_handler(0, 0x8800, 0xffff, MRA_NOP);
-				install_mem_write_handler(0, 0x4800, 0x87ff, MWA_NOP);
-				install_mem_read_handler(0, 0x4800, 0x87ff, MRA_NOP);
+				install_mem_write_handler(0, 0x8800, 0xffff, MWA8_NOP);
+				install_mem_read_handler(0, 0x8800, 0xffff, MRA8_NOP);
+				install_mem_write_handler(0, 0x4800, 0x87ff, MWA8_NOP);
+				install_mem_read_handler(0, 0x4800, 0x87ff, MRA8_NOP);
 				break;
 		}
 

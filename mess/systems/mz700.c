@@ -80,21 +80,21 @@
 
 MEMORY_READ_START( readmem_mz700 )
 	{ 0x00000, 0x00fff, MRA_BANK1 },
-	{ 0x01000, 0x0cfff, MRA_RAM },
+	{ 0x01000, 0x0cfff, MRA8_RAM },
 	{ 0x0d000, 0x0d7ff, MRA_BANK6 },
 	{ 0x0d800, 0x0dfff, MRA_BANK7 },
 	{ 0x0e000, 0x0ffff, MRA_BANK8 },
 #if 0 //mame37b9 traps
-	{ 0x10000, 0x10fff, MRA_ROM },
-	{ 0x12000, 0x127ff, MRA_RAM },
-	{ 0x12800, 0x12fff, MRA_RAM },
-	{ 0x16000, 0x16fff, MRA_RAM },
+	{ 0x10000, 0x10fff, MRA8_ROM },
+	{ 0x12000, 0x127ff, MRA8_RAM },
+	{ 0x12800, 0x12fff, MRA8_RAM },
+	{ 0x16000, 0x16fff, MRA8_RAM },
 #endif
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_mz700 )
 	{ 0x00000, 0x00fff, MWA_BANK1 },
-	{ 0x01000, 0x0cfff, MWA_RAM },
+	{ 0x01000, 0x0cfff, MWA8_RAM },
 	{ 0x0d000, 0x0d7ff, MWA_BANK6 },
 	{ 0x0d800, 0x0dfff, MWA_BANK7 },
 	{ 0x0e000, 0x0ffff, MWA_BANK8 },
@@ -115,7 +115,7 @@ PORT_END
 MEMORY_READ_START( readmem_mz800 )
 	{ 0x00000, 0x00fff, MRA_BANK1 },
 	{ 0x01000, 0x01fff, MRA_BANK2 },
-	{ 0x02000, 0x07fff, MRA_RAM },
+	{ 0x02000, 0x07fff, MRA8_RAM },
 	{ 0x08000, 0x09fff, MRA_BANK3 },
 	{ 0x0a000, 0x0bfff, MRA_BANK4 },
 	{ 0x0c000, 0x0cfff, MRA_BANK5 },
@@ -123,16 +123,16 @@ MEMORY_READ_START( readmem_mz800 )
 	{ 0x0d800, 0x0dfff, MRA_BANK7 },
 	{ 0x0e000, 0x0ffff, MRA_BANK8 },
 #if 0
-	{ 0x10000, 0x10fff, MRA_ROM },
-	{ 0x11000, 0x11fff, MRA_ROM },
-	{ 0x12000, 0x15fff, MRA_RAM },
+	{ 0x10000, 0x10fff, MRA8_ROM },
+	{ 0x11000, 0x11fff, MRA8_ROM },
+	{ 0x12000, 0x15fff, MRA8_RAM },
 #endif
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_mz800 )
 	{ 0x00000, 0x00fff, MWA_BANK1 },
 	{ 0x01000, 0x01fff, MWA_BANK2 },
-	{ 0x02000, 0x07fff, MWA_RAM },
+	{ 0x02000, 0x07fff, MWA8_RAM },
 	{ 0x08000, 0x09fff, MWA_BANK3 },
 	{ 0x0a000, 0x0bfff, MWA_BANK4 },
 	{ 0x0c000, 0x0cfff, MWA_BANK5 },
@@ -140,8 +140,8 @@ MEMORY_WRITE_START( writemem_mz800 )
 	{ 0x0d800, 0x0dfff, MWA_BANK7 },
 	{ 0x0e000, 0x0ffff, MWA_BANK8 },
 #if 0
-	{ 0x10000, 0x10fff, MWA_ROM },
-	{ 0x11000, 0x11fff, MWA_ROM },
+	{ 0x10000, 0x10fff, MWA8_ROM },
+	{ 0x11000, 0x11fff, MWA8_ROM },
     { 0x12000, 0x16fff, videoram_w, &videoram, &videoram_size },
 	{ 0x12800, 0x12fff, colorram_w, &colorram },
 #endif

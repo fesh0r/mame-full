@@ -288,13 +288,13 @@ static void z88_refresh_memory_bank(int index1)
 		   
      //  logerror("%02x: unavailable ram\n",index1);
 
-			memory_set_bankhandler_r(read_bank, 0, MRA_NOP);
-			memory_set_bankhandler_w(write_bank, 0, MWA_NOP);
+			memory_set_bankhandler_r(read_bank, 0, MRA8_NOP);
+			memory_set_bankhandler_w(write_bank, 0, MWA8_NOP);
 
 			if (index1==0)
 			{
-				memory_set_bankhandler_r(read_bank-1, 0, MRA_NOP);
-				memory_set_bankhandler_w(write_bank-1, 0, MWA_NOP);
+				memory_set_bankhandler_r(read_bank-1, 0, MRA8_NOP);
+				memory_set_bankhandler_w(write_bank-1, 0, MWA8_NOP);
 			}
 	   }
 	   else
@@ -335,13 +335,13 @@ static void z88_refresh_memory_bank(int index1)
        {
 	//	   logerror("%02x: unmapped rom\n",index1);
 
-			memory_set_bankhandler_r(read_bank, 0, MRA_NOP);
-			memory_set_bankhandler_w(write_bank, 0, MWA_NOP);
+			memory_set_bankhandler_r(read_bank, 0, MRA8_NOP);
+			memory_set_bankhandler_w(write_bank, 0, MWA8_NOP);
 
 			if (index1==0)
 			{
-				memory_set_bankhandler_r(read_bank-1, 0, MRA_NOP);
-				memory_set_bankhandler_w(write_bank-1, 0, MWA_NOP);
+				memory_set_bankhandler_r(read_bank-1, 0, MRA8_NOP);
+				memory_set_bankhandler_w(write_bank-1, 0, MWA8_NOP);
 			}
        }
        else
@@ -350,14 +350,14 @@ static void z88_refresh_memory_bank(int index1)
 
 			addr = memory_region(REGION_CPU1) + 0x010000;
 			memory_set_bankhandler_r(read_bank, 0, z88_read_handler[index1+1]);
-			memory_set_bankhandler_w(write_bank, 0, MWA_NOP);
+			memory_set_bankhandler_w(write_bank, 0, MWA8_NOP);
 
 			addr = addr + (block<<14);
 
 			if (index1==0)
 			{
 				memory_set_bankhandler_r(read_bank-1, 0, z88_read_handler[index1]);
-				memory_set_bankhandler_w(write_bank-1, 0, MWA_NOP);
+				memory_set_bankhandler_w(write_bank-1, 0, MWA8_NOP);
 
 				cpu_setbank(read_bank-1, addr);
 				cpu_setbank(read_bank, addr+0x02000);
@@ -381,7 +381,7 @@ static void z88_refresh_memory_bank(int index1)
 
 			cpu_setbank(1, addr);
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 
 			logerror("lower 8k is rom\n");
 		}

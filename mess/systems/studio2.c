@@ -11,25 +11,25 @@
 #include "includes/studio2.h"
 
 static MEMORY_READ_START( studio2_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x0800, 0x09ff, MRA_RAM },
+	{ 0x0000, 0x07ff, MRA8_ROM },
+	{ 0x0800, 0x09ff, MRA8_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( studio2_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x0800, 0x09ff, MWA_RAM },
+	{ 0x0000, 0x07ff, MWA8_ROM },
+	{ 0x0800, 0x09ff, MWA8_RAM },
 MEMORY_END
 
 static MEMORY_READ_START( vip_readmem )
     { 0x0000, 0x03ff, MRA_BANK1 }, // rom mapped in at reset, switched to ram with out 4
-	{ 0x0400, 0x0fff, MRA_RAM },
-	{ 0x8000, 0x83ff, MRA_ROM },
+	{ 0x0400, 0x0fff, MRA8_RAM },
+	{ 0x8000, 0x83ff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( vip_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x0fff, MWA_RAM },
-	{ 0x8000, 0x83ff, MWA_ROM },
+	{ 0x0000, 0x03ff, MWA8_RAM },
+	{ 0x0400, 0x0fff, MWA8_RAM },
+	{ 0x8000, 0x83ff, MWA8_ROM },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \

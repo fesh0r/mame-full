@@ -68,25 +68,25 @@ static void a800_setbank(int n)
 	{
 		case 1:
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_w(1, 0, MWA_ROM);
+			memory_set_bankhandler_w(1, 0, MWA8_ROM);
 			cpu_setbank(1, &mem[0x10000]);
 			break;
 		case 2:
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_w(1, 0, MWA_ROM);
+			memory_set_bankhandler_w(1, 0, MWA8_ROM);
 			cpu_setbank(1, &mem[0x12000]);
 			break;
 		default:
 			if( atari <= ATARI_400 )
 			{
 				/* Atari 400 has no RAM here, so install the NOP handler */
-				memory_set_bankhandler_r(1, 0, MRA_NOP);
-				memory_set_bankhandler_w(1, 0, MWA_NOP);
+				memory_set_bankhandler_r(1, 0, MRA8_NOP);
+				memory_set_bankhandler_w(1, 0, MWA8_NOP);
 			}
 			else
 			{
-				memory_set_bankhandler_r(1, 0, MRA_RAM);
-				memory_set_bankhandler_w(1, 0, MWA_RAM);
+				memory_set_bankhandler_r(1, 0, MRA8_RAM);
+				memory_set_bankhandler_w(1, 0, MWA8_RAM);
 			}
 			cpu_setbank(1, &mem[0x0a000]);
 			break;
@@ -1045,20 +1045,20 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		{
 			logerror("%s MMU BIOS ROM\n", Machine->gamedrv->name);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
-			memory_set_bankhandler_w(3, 0, MWA_ROM);
+			memory_set_bankhandler_w(3, 0, MWA8_ROM);
 			cpu_setbank(3, memory_region(REGION_CPU1)+0x14000);  /* 8K lo BIOS */
 			memory_set_bankhandler_r(4, 0, MRA_BANK4);
-			memory_set_bankhandler_w(4, 0, MWA_ROM);
+			memory_set_bankhandler_w(4, 0, MWA8_ROM);
 			cpu_setbank(4, memory_region(REGION_CPU1)+0x15800);  /* 4K FP ROM + 8K hi BIOS */
 		}
 		else
 		{
 			logerror("%s MMU BIOS RAM\n", Machine->gamedrv->name);
-			memory_set_bankhandler_r(3, 0, MRA_RAM);
-			memory_set_bankhandler_w(3, 0, MWA_RAM);
+			memory_set_bankhandler_r(3, 0, MRA8_RAM);
+			memory_set_bankhandler_w(3, 0, MWA8_RAM);
 			cpu_setbank(3, memory_region(REGION_CPU1)+0x0c000);  /* 8K RAM */
-			memory_set_bankhandler_r(4, 0, MRA_RAM);
-			memory_set_bankhandler_w(4, 0, MWA_RAM);
+			memory_set_bankhandler_r(4, 0, MRA8_RAM);
+			memory_set_bankhandler_w(4, 0, MWA8_RAM);
 			cpu_setbank(4, memory_region(REGION_CPU1)+0x0d800);  /* 4K RAM + 8K RAM */
 		}
 	}
@@ -1068,15 +1068,15 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x02 )
 		{
 			logerror("%s MMU BASIC RAM\n", Machine->gamedrv->name);
-			memory_set_bankhandler_r(1, 0, MRA_RAM);
-			memory_set_bankhandler_w(1, 0, MWA_RAM);
+			memory_set_bankhandler_r(1, 0, MRA8_RAM);
+			memory_set_bankhandler_w(1, 0, MWA8_RAM);
 			cpu_setbank(1, memory_region(REGION_CPU1)+0x0a000);  /* 8K RAM */
 		}
 		else
 		{
 			logerror("%s MMU BASIC ROM\n", Machine->gamedrv->name);
 			memory_set_bankhandler_r(1, 0, MRA_BANK2);
-			memory_set_bankhandler_w(1, 0, MWA_ROM);
+			memory_set_bankhandler_w(1, 0, MWA8_ROM);
 			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);  /* 8K BASIC */
 		}
 	}
@@ -1086,15 +1086,15 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x80 )
 		{
 			logerror("%s MMU SELFTEST RAM\n", Machine->gamedrv->name);
-			memory_set_bankhandler_r(2, 0, MRA_RAM);
-			memory_set_bankhandler_w(2, 0, MWA_RAM);
+			memory_set_bankhandler_r(2, 0, MRA8_RAM);
+			memory_set_bankhandler_w(2, 0, MWA8_RAM);
 			cpu_setbank(2, memory_region(REGION_CPU1)+0x05000);  /* 0x0800 bytes */
 		}
 		else
 		{
 			logerror("%s MMU SELFTEST ROM\n", Machine->gamedrv->name);
 			memory_set_bankhandler_r(2, 0, MRA_BANK1);
-			memory_set_bankhandler_w(2, 0, MWA_ROM);
+			memory_set_bankhandler_w(2, 0, MWA8_ROM);
 			cpu_setbank(2, memory_region(REGION_CPU1)+0x15000);  /* 0x0800 bytes */
 		}
 	}

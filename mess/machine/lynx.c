@@ -1149,27 +1149,27 @@ WRITE_HANDLER( lynx_memory_config )
     // when these are safe in the cpu
     memory_region(REGION_CPU1)[0xfff9]=data;
     if (data&1) {
-	memory_set_bankhandler_r(1, 0, MRA_RAM);
-	memory_set_bankhandler_w(1, 0, MWA_RAM);
+	memory_set_bankhandler_r(1, 0, MRA8_RAM);
+	memory_set_bankhandler_w(1, 0, MWA8_RAM);
     } else {
 	memory_set_bankhandler_r(1, 0, suzy_read);
 	memory_set_bankhandler_w(1, 0, suzy_write);
     }
     if (data&2) {
-	memory_set_bankhandler_r(2, 0, MRA_RAM);
-	memory_set_bankhandler_w(2, 0, MWA_RAM);
+	memory_set_bankhandler_r(2, 0, MRA8_RAM);
+	memory_set_bankhandler_w(2, 0, MWA8_RAM);
     } else {
 	memory_set_bankhandler_r(2, 0, mikey_read);
 	memory_set_bankhandler_w(2, 0, mikey_write);
     }
     if (data&4) {
-	memory_set_bankhandler_r(3, 0, MRA_RAM);
+	memory_set_bankhandler_r(3, 0, MRA8_RAM);
     } else {
 	cpu_setbank(3,memory_region(REGION_CPU1)+0x10000);
 	memory_set_bankhandler_r(3, 0, MRA_BANK3);
     }
     if (data&8) {
-	memory_set_bankhandler_r(4, 0, MRA_RAM);
+	memory_set_bankhandler_r(4, 0, MRA8_RAM);
     } else {
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	cpu_setbank(4,memory_region(REGION_CPU1)+0x101fa);

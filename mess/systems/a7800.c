@@ -32,8 +32,8 @@ static MEMORY_READ_START( readmem )
     { 0x0280, 0x02FF, a7800_RIOT_r },
     { 0x0300, 0x031f, a7800_TIA_r },
     { 0x0320, 0x033f, a7800_MARIA_r },
-    { 0x0480, 0x04ff, MRA_RAM },		/* RIOT RAM */
-    { 0x1800, 0x27FF, MRA_RAM },
+    { 0x0480, 0x04ff, MRA8_RAM },		/* RIOT RAM */
+    { 0x1800, 0x27FF, MRA8_RAM },
     { 0x2800, 0x2FFF, MRA_BANK7 },		/* MAINRAM */
     { 0x3000, 0x37FF, MRA_BANK7 },		/* MAINRAM */
     { 0x3800, 0x3FFF, MRA_BANK7 },		/* MAINRAM */
@@ -41,7 +41,7 @@ static MEMORY_READ_START( readmem )
     { 0x8000, 0x9FFF, MRA_BANK2 },		/* sc */
     { 0xA000, 0xBFFF, MRA_BANK3 },		/* sc + ac */
     { 0xC000, 0xDFFF, MRA_BANK4 },		/* ac */
-    { 0xE000, 0xFFFF, MRA_ROM },
+    { 0xE000, 0xFFFF, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
@@ -56,8 +56,8 @@ static MEMORY_WRITE_START( writemem )
     { 0x0280, 0x02FF, a7800_RIOT_w },
     { 0x0300, 0x031f, a7800_TIA_w },
     { 0x0320, 0x033f, a7800_MARIA_w },
-    { 0x0480, 0x04ff, MWA_RAM },		/* RIOT RAM */
-    { 0x1800, 0x27FF, MWA_RAM },
+    { 0x0480, 0x04ff, MWA8_RAM },		/* RIOT RAM */
+    { 0x1800, 0x27FF, MWA8_RAM },
     { 0x2800, 0x2FFF, MWA_BANK7 },		/* MAINRAM */
     { 0x3000, 0x37FF, MWA_BANK7 },		/* MAINRAM */
     { 0x3800, 0x3FFF, MWA_BANK7 },		/* MAINRAM */

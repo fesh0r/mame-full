@@ -53,14 +53,14 @@ static MACHINE_INIT( sord_m5 );
 static unsigned char fd5_databus;
 
 MEMORY_READ_START( readmem_sord_fd5 )
-	{0x0000, 0x03fff, MRA_ROM},	/* internal rom */
-	{0x4000, 0x0ffff, MRA_RAM},
+	{0x0000, 0x03fff, MRA8_ROM},	/* internal rom */
+	{0x4000, 0x0ffff, MRA8_RAM},
 MEMORY_END
 
 
 MEMORY_WRITE_START( writemem_sord_fd5 )
-	{0x0000, 0x03fff, MWA_ROM}, /* internal rom */
-	{0x4000, 0x0ffff, MWA_RAM},
+	{0x0000, 0x03fff, MWA8_ROM}, /* internal rom */
+	{0x4000, 0x0ffff, MWA8_RAM},
 MEMORY_END
 
 static int obfa,ibfa, intra;
@@ -383,17 +383,17 @@ static READ_HANDLER ( sord_keyboard_r )
 }
 
 MEMORY_READ_START( readmem_sord_m5 )
-	{0x0000, 0x01fff, MRA_ROM},	/* internal rom */
+	{0x0000, 0x01fff, MRA8_ROM},	/* internal rom */
 	{0x2000, 0x06fff, MRA_BANK1},
-	{0x7000, 0x0ffff, MRA_RAM},
+	{0x7000, 0x0ffff, MRA8_RAM},
 MEMORY_END
 
 
 
 MEMORY_WRITE_START( writemem_sord_m5 )
-	{0x0000, 0x01fff, MWA_ROM}, /* internal rom */
-	{0x02000, 0x06fff, MWA_NOP},	
-	{0x7000, 0x0ffff, MWA_RAM},
+	{0x0000, 0x01fff, MWA8_ROM}, /* internal rom */
+	{0x02000, 0x06fff, MWA8_NOP},	
+	{0x7000, 0x0ffff, MWA8_RAM},
 MEMORY_END
 
 static READ_HANDLER(sord_ctc_r)

@@ -724,9 +724,9 @@ static void oric_jasmin_set_mem_0x0c000(void)
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
-			memory_set_bankhandler_w(5, 0, MWA_NOP);
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
-			memory_set_bankhandler_w(7, 0, MWA_NOP);
+			memory_set_bankhandler_w(5, 0, MWA8_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
+			memory_set_bankhandler_w(7, 0, MWA8_NOP);
 
 			rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 			cpu_setbank(1, rom_ptr);
@@ -762,12 +762,12 @@ static void oric_jasmin_set_mem_0x0c000(void)
 
 			/*logerror("&c000-&f8ff is nothing!\n"); */
 
-			memory_set_bankhandler_r(1, 0, MRA_NOP);
-			memory_set_bankhandler_r(2, 0, MRA_NOP);
-			memory_set_bankhandler_r(3, 0, MRA_NOP);
-			memory_set_bankhandler_w(5, 0, MWA_NOP);
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
-			memory_set_bankhandler_w(7, 0, MWA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA8_NOP);
+			memory_set_bankhandler_r(2, 0, MRA8_NOP);
+			memory_set_bankhandler_r(3, 0, MRA8_NOP);
+			memory_set_bankhandler_w(5, 0, MWA8_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
+			memory_set_bankhandler_w(7, 0, MWA8_NOP);
 		}
 		else
 		{
@@ -1011,7 +1011,7 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		/*logerror("&c000-&dfff is os rom\n"); */
 		/* basic rom */
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_w(5, 0, MWA_NOP);
+		memory_set_bankhandler_w(5, 0, MWA8_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(1, rom_ptr);
 		cpu_setbank(5, rom_ptr);
@@ -1026,8 +1026,8 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		/* basic rom */
 		memory_set_bankhandler_r(2, 0, MRA_BANK2);
 		memory_set_bankhandler_r(3, 0, MRA_BANK3);
-		memory_set_bankhandler_w(6, 0, MWA_NOP);
-		memory_set_bankhandler_w(7, 0, MWA_NOP);
+		memory_set_bankhandler_w(6, 0, MWA8_NOP);
+		memory_set_bankhandler_w(7, 0, MWA8_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(2, rom_ptr+0x02000);
 		cpu_setbank(3, rom_ptr+0x03800);
@@ -1044,8 +1044,8 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 			/*logerror("&e000-&ffff is disk rom\n"); */
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
-			memory_set_bankhandler_w(7, 0, MWA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
+			memory_set_bankhandler_w(7, 0, MWA8_NOP);
 			/* enable rom of microdisc interface */
 			rom_ptr = memory_region(REGION_CPU1) + 0x014000;
 			cpu_setbank(2, rom_ptr);
@@ -1275,9 +1275,9 @@ MACHINE_INIT( oric )
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
-			memory_set_bankhandler_w(5, 0, MWA_NOP);
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
-			memory_set_bankhandler_w(7, 0, MWA_NOP);
+			memory_set_bankhandler_w(5, 0, MWA8_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
+			memory_set_bankhandler_w(7, 0, MWA8_NOP);
 			rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 			cpu_setbank(1, rom_ptr);
 			cpu_setbank(2, rom_ptr+0x02000);
@@ -1504,7 +1504,7 @@ static void	telestrat_refresh_mem(void)
 		case TELESTRAT_MEM_BLOCK_ROM:
 		{
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_w(2, 0, MWA_NOP);
+			memory_set_bankhandler_w(2, 0, MWA8_NOP);
 			cpu_setbank(1, mem_block->ptr);
 		}
 		break;
@@ -1512,8 +1512,8 @@ static void	telestrat_refresh_mem(void)
 		default:
 		case TELESTRAT_MEM_BLOCK_UNDEFINED:
 		{
-			memory_set_bankhandler_r(1, 0, MRA_NOP);
-			memory_set_bankhandler_w(2, 0, MWA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA8_NOP);
+			memory_set_bankhandler_w(2, 0, MWA8_NOP);
 		}
 		break;
 	}

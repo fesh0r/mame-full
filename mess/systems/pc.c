@@ -84,20 +84,20 @@ static READ_HANDLER( return_0xff ) { return 0xff; }
 
 static MEMORY_READ_START( pc_readmem )
 	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xbffff, MRA_NOP },
-	{ 0xc0000, 0xc7fff, MRA_NOP },
-	{ 0xc8000, 0xcffff, MRA_ROM },
-	{ 0xd0000, 0xeffff, MRA_NOP },
-	{ 0xf0000, 0xfffff, MRA_ROM },
+	{ 0xa0000, 0xbffff, MRA8_NOP },
+	{ 0xc0000, 0xc7fff, MRA8_NOP },
+	{ 0xc8000, 0xcffff, MRA8_ROM },
+	{ 0xd0000, 0xeffff, MRA8_NOP },
+	{ 0xf0000, 0xfffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc_writemem )
 	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xbffff, MWA_NOP },
-	{ 0xc0000, 0xc7fff, MWA_NOP },
-	{ 0xc8000, 0xcffff, MWA_ROM },
-	{ 0xd0000, 0xeffff, MWA_NOP },
-	{ 0xf0000, 0xfffff, MWA_ROM },
+	{ 0xa0000, 0xbffff, MWA8_NOP },
+	{ 0xc0000, 0xc7fff, MWA8_NOP },
+	{ 0xc8000, 0xcffff, MWA8_ROM },
+	{ 0xd0000, 0xeffff, MWA8_NOP },
+	{ 0xf0000, 0xfffff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START( pc_readport )
@@ -165,22 +165,22 @@ PORT_END
 
 static MEMORY_READ_START( europc_readmem )
 	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xaffff, MRA_NOP },
+	{ 0xa0000, 0xaffff, MRA8_NOP },
 	{ 0xb0000, 0xbffff, pc_aga_videoram_r },
-	{ 0xc0000, 0xc7fff, MRA_NOP },
-	{ 0xc8000, 0xcffff, MRA_ROM },
-	{ 0xd0000, 0xeffff, MRA_NOP },
-	{ 0xf0000, 0xfffff, MRA_ROM },
+	{ 0xc0000, 0xc7fff, MRA8_NOP },
+	{ 0xc8000, 0xcffff, MRA8_ROM },
+	{ 0xd0000, 0xeffff, MRA8_NOP },
+	{ 0xf0000, 0xfffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( europc_writemem )
 	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xaffff, MWA_NOP },
+	{ 0xa0000, 0xaffff, MWA8_NOP },
 	{ 0xb0000, 0xbffff, pc_aga_videoram_w, &videoram, &videoram_size },
-	{ 0xc0000, 0xc7fff, MWA_NOP },
-	{ 0xc8000, 0xcffff, MWA_ROM },
-	{ 0xd0000, 0xeffff, MWA_NOP },
-	{ 0xf0000, 0xfffff, MWA_ROM },
+	{ 0xc0000, 0xc7fff, MWA8_NOP },
+	{ 0xc8000, 0xcffff, MWA8_ROM },
+	{ 0xd0000, 0xeffff, MWA8_NOP },
+	{ 0xf0000, 0xfffff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START( europc_readport)
@@ -241,26 +241,26 @@ PORT_END
 
 static MEMORY_READ_START(t1t_readmem)
 	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xaffff, MRA_RAM },
-	{ 0xb0000, 0xb7fff, MRA_NOP },
+	{ 0xa0000, 0xaffff, MRA8_RAM },
+	{ 0xb0000, 0xb7fff, MRA8_NOP },
 	{ 0xb8000, 0xbffff, pc_t1t_videoram_r },
-	{ 0xc0000, 0xc7fff, MRA_NOP },
-	{ 0xc8000, 0xc9fff, MRA_ROM },
-	{ 0xca000, 0xcffff, MRA_NOP },
-	{ 0xd0000, 0xeffff, MRA_NOP },
-	{ 0xf0000, 0xfffff, MRA_ROM },
+	{ 0xc0000, 0xc7fff, MRA8_NOP },
+	{ 0xc8000, 0xc9fff, MRA8_ROM },
+	{ 0xca000, 0xcffff, MRA8_NOP },
+	{ 0xd0000, 0xeffff, MRA8_NOP },
+	{ 0xf0000, 0xfffff, MRA8_ROM },
 PORT_END
 
 static MEMORY_WRITE_START( t1t_writemem )
 	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xaffff, MWA_RAM },
-    { 0xb0000, 0xb7fff, MWA_NOP },
+	{ 0xa0000, 0xaffff, MWA8_RAM },
+    { 0xb0000, 0xb7fff, MWA8_NOP },
 	{ 0xb8000, 0xbffff, pc_video_videoram_w },
-	{ 0xc0000, 0xc7fff, MWA_NOP },
-	{ 0xc8000, 0xc9fff, MWA_ROM },
-	{ 0xca000, 0xcffff, MWA_NOP },
-	{ 0xd0000, 0xeffff, MWA_NOP },
-	{ 0xf0000, 0xfffff, MWA_ROM },
+	{ 0xc0000, 0xc7fff, MWA8_NOP },
+	{ 0xc8000, 0xc9fff, MWA8_ROM },
+	{ 0xca000, 0xcffff, MWA8_NOP },
+	{ 0xd0000, 0xeffff, MWA8_NOP },
+	{ 0xf0000, 0xfffff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START( t1t_readport )
@@ -343,20 +343,20 @@ PORT_END
 
 static MEMORY_READ_START( pc1640_readmem )
 	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xbffff, MRA_NOP },
-	{ 0xc0000, 0xc7fff, MRA_ROM },
-    { 0xc8000, 0xcffff, MRA_ROM },
-    { 0xd0000, 0xfbfff, MRA_NOP },
-	{ 0xfc000, 0xfffff, MRA_ROM },
+	{ 0xa0000, 0xbffff, MRA8_NOP },
+	{ 0xc0000, 0xc7fff, MRA8_ROM },
+    { 0xc8000, 0xcffff, MRA8_ROM },
+    { 0xd0000, 0xfbfff, MRA8_NOP },
+	{ 0xfc000, 0xfffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1640_writemem )
 	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xbffff, MWA_NOP },
-	{ 0xc0000, 0xc7fff, MWA_ROM },
-	{ 0xc8000, 0xcffff, MWA_ROM },
-    { 0xd0000, 0xfbfff, MWA_NOP },
-	{ 0xfc000, 0xfffff, MWA_ROM },
+	{ 0xa0000, 0xbffff, MWA8_NOP },
+	{ 0xc0000, 0xc7fff, MWA8_ROM },
+	{ 0xc8000, 0xcffff, MWA8_ROM },
+    { 0xd0000, 0xfbfff, MWA8_NOP },
+	{ 0xfc000, 0xfffff, MWA8_ROM },
 MEMORY_END
 
 static PORT_READ_START( pc1640_readport )

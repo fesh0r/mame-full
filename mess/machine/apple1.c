@@ -69,13 +69,13 @@ MACHINE_INIT( apple1 )
 
 	if (readinputport(4) & 0x01)
 	{
-		install_mem_write_handler (0, 0x2000, 0xcfff, MWA_RAM);
-		install_mem_read_handler (0, 0x2000, 0xcfff, MRA_RAM);
+		install_mem_write_handler (0, 0x2000, 0xcfff, MWA8_RAM);
+		install_mem_read_handler (0, 0x2000, 0xcfff, MRA8_RAM);
 	}
 	else
 	{
-		install_mem_write_handler (0, 0x2000, 0xcfff, MWA_NOP);
-		install_mem_read_handler (0, 0x2000, 0xcfff, MRA_NOP);
+		install_mem_write_handler (0, 0x2000, 0xcfff, MWA8_NOP);
+		install_mem_read_handler (0, 0x2000, 0xcfff, MRA8_NOP);
 	}
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
 }

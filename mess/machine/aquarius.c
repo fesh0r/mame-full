@@ -23,22 +23,22 @@ MACHINE_INIT( aquarius )
 		switch (aquarius_ramsize)
 		{
 			case 02:
-				install_mem_write_handler(0, 0x8000, 0xffff, MWA_RAM);
-				install_mem_read_handler(0, 0x8000, 0xffff, MRA_RAM);
-				install_mem_write_handler(0, 0x4000, 0x7fff, MWA_RAM);
-				install_mem_read_handler(0, 0x4000, 0x7fff, MRA_RAM);
+				install_mem_write_handler(0, 0x8000, 0xffff, MWA8_RAM);
+				install_mem_read_handler(0, 0x8000, 0xffff, MRA8_RAM);
+				install_mem_write_handler(0, 0x4000, 0x7fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x4000, 0x7fff, MRA8_RAM);
 				break;
 			case 01:
-				install_mem_write_handler(0, 0x8000, 0xffff, MWA_NOP);
-				install_mem_read_handler(0, 0x8000, 0xffff, MRA_NOP);
-				install_mem_write_handler(0, 0x4000, 0x7fff, MWA_RAM);
-				install_mem_read_handler(0, 0x4000, 0x7fff, MRA_RAM);
+				install_mem_write_handler(0, 0x8000, 0xffff, MWA8_NOP);
+				install_mem_read_handler(0, 0x8000, 0xffff, MRA8_NOP);
+				install_mem_write_handler(0, 0x4000, 0x7fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x4000, 0x7fff, MRA8_RAM);
 				break;
 			case 00:
-				install_mem_write_handler(0, 0x8000, 0xffff, MWA_NOP);
-				install_mem_read_handler(0, 0x8000, 0xffff, MRA_NOP);
-				install_mem_write_handler(0, 0x4000, 0x7fff, MWA_NOP);
-				install_mem_read_handler(0, 0x4000, 0x7fff, MRA_NOP);
+				install_mem_write_handler(0, 0x8000, 0xffff, MWA8_NOP);
+				install_mem_read_handler(0, 0x8000, 0xffff, MRA8_NOP);
+				install_mem_write_handler(0, 0x4000, 0x7fff, MWA8_NOP);
+				install_mem_read_handler(0, 0x4000, 0x7fff, MRA8_NOP);
 				break;
 		}
 	}

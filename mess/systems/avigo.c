@@ -368,7 +368,7 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(7, addr);
 
                         memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
-						memory_set_bankhandler_w(7,0, MWA_NOP);
+						memory_set_bankhandler_w(7,0, MWA8_NOP);
 						//   memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
 
 
@@ -388,7 +388,7 @@ static void avigo_refresh_memory(void)
 
                         memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
 //                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
-						memory_set_bankhandler_w(7, 0, MWA_NOP);
+						memory_set_bankhandler_w(7, 0, MWA8_NOP);
 
                 }
                 break;

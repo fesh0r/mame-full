@@ -81,101 +81,101 @@
    red c-ce and reset; warm boot, program NOT lost*/
 
 static MEMORY_READ_START( pc1401_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x47ff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA8_ROM },
+	{ 0x2000, 0x47ff, MRA8_RAM },
 /*	{ 0x5000, 0x57ff, ? }, */
 	{ 0x6000, 0x67ff, pc1401_lcd_read },
 	{ 0x7000, 0x77ff, pc1401_lcd_read },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x8000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1401_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-/*	{ 0x2000, 0x3fff, MWA_RAM }, // done in pc1401_machine_init */
-	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA8_ROM },
+/*	{ 0x2000, 0x3fff, MWA8_RAM }, // done in pc1401_machine_init */
+	{ 0x4000, 0x47ff, MWA8_RAM },
 /*	{ 0x5000, 0x57ff, ? }, */
 	{ 0x6000, 0x67ff, pc1401_lcd_write },
 	{ 0x7000, 0x77ff, pc1401_lcd_write },
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x8000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( pc1251_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-//	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_ROM },
-	{ 0xa000, 0xcbff, MRA_ROM },
+	{ 0x0000, 0x1fff, MRA8_ROM },
+//	{ 0x2000, 0x3fff, MRA8_RAM },
+	{ 0x4000, 0x7fff, MRA8_ROM },
+	{ 0xa000, 0xcbff, MRA8_ROM },
 	{ 0xf800, 0xf8ff, pc1251_lcd_read },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1251_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_ROM },
-//	{ 0xa000, 0xcbff, MWA_ROM }, // c600 b800 b000 a000 tested
+	{ 0x0000, 0x1fff, MWA8_ROM },
+	{ 0x4000, 0x7fff, MWA8_ROM },
+//	{ 0xa000, 0xcbff, MWA8_ROM }, // c600 b800 b000 a000 tested
 	{ 0xf800, 0xf8ff, pc1251_lcd_write },
 MEMORY_END
 
 static MEMORY_READ_START( pc1350_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0x6fff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA8_ROM },
+	{ 0x2000, 0x3fff, MRA8_RAM },
+	{ 0x4000, 0x5fff, MRA8_RAM },
+	{ 0x6000, 0x6fff, MRA8_RAM },
 	{ 0x7000, 0x7eff, pc1350_lcd_read },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x8000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1350_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, MWA_RAM }, /*ram card 16k */
-	{ 0x4000, 0x5fff, MWA_RAM }, /*ram card 16k oder 8k */
-	{ 0x6000, 0x6fff, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA8_ROM },
+	{ 0x2000, 0x3fff, MWA8_RAM }, /*ram card 16k */
+	{ 0x4000, 0x5fff, MWA8_RAM }, /*ram card 16k oder 8k */
+	{ 0x6000, 0x6fff, MWA8_RAM },
 	{ 0x7000, 0x7eff, pc1350_lcd_write },
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x8000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( pc1403_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x0000, 0x1fff, MRA8_ROM },
 { 0x3000, 0x30bf, pc1403_lcd_read },    
 { 0x3800, 0x3fff, pc1403_asic_read },    
 { 0x4000, 0x7fff, MRA_BANK1 },
-{ 0xe000,0xffff, MRA_RAM },
+{ 0xe000,0xffff, MRA8_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1403_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x0000, 0x1fff, MWA8_ROM },
 { 0x3000, 0x30bf, pc1403_lcd_write },    
 { 0x3800, 0x3fff, pc1403_asic_write },    
-{ 0xe000,0xffff, MWA_RAM },
+{ 0xe000,0xffff, MWA8_RAM },
 MEMORY_END
 
 
 
 #if 0
 static MEMORY_READ_START( pc1421_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x3800, 0x47ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x0000, 0x1fff, MRA8_ROM },
+	{ 0x3800, 0x47ff, MRA8_RAM },
+	{ 0x8000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1421_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x47ff, MWA_RAM },
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x0000, 0x1fff, MWA8_ROM },
+	{ 0x2000, 0x37ff, MWA8_RAM },
+	{ 0x3800, 0x47ff, MWA8_RAM },
+	{ 0x8000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( pc1260_readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x0000, 0x1fff, MRA8_ROM },
+	{ 0x4000, 0x5fff, MRA8_RAM },
+	{ 0x8000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1260_writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x57ff, MWA_RAM }, /* 1261 */
-	{ 0x5800, 0x67ff, MWA_RAM },
-	{ 0x6000, 0x6fff, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA8_ROM },
+	{ 0x4000, 0x57ff, MWA8_RAM }, /* 1261 */
+	{ 0x5800, 0x67ff, MWA8_RAM },
+	{ 0x6000, 0x6fff, MWA8_RAM },
 
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x8000, 0xffff, MWA8_ROM },
 MEMORY_END
 #endif
 

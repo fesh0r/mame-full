@@ -53,38 +53,33 @@ static void init_nes_core (void)
 	{
 		case 20:
 			nes.slow_banking = 0;
-			install_mem_read_handler(0, 0x4030, 0x403f, fds_r);
-			install_mem_read_handler(0, 0x6000, 0xdfff, MRA_RAM);
-			install_mem_read_handler(0, 0xe000, 0xffff, MRA_ROM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4030, 0x403f, 0, fds_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0xdfff, 0, MRA8_RAM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, MRA8_ROM);
 
-			install_mem_write_handler(0, 0x4020, 0x402f, fds_w);
-			install_mem_write_handler(0, 0x6000, 0xdfff, MWA_RAM);
-			install_mem_write_handler(0, 0xe000, 0xffff, MWA_ROM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4020, 0x402f, 0, fds_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0xdfff, 0, MWA8_RAM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, MWA8_ROM);
 			break;
 		case 40:
 			nes.slow_banking = 1;
 			/* Game runs code in between banks, so we do things different */
-			install_mem_read_handler(0, 0x6000, 0x7fff, MRA_RAM);
-			install_mem_read_handler(0, 0x8000, 0xffff, MRA_ROM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MRA8_RAM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, MRA8_ROM);
 
-			install_mem_write_handler(0, 0x6000, 0x7fff, nes_mid_mapper_w);
-			install_mem_write_handler(0, 0x8000, 0xffff, nes_mapper_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, nes_mid_mapper_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, nes_mapper_w);
 			break;
 		default:
 			nes.slow_banking = 0;
-			install_mem_read_handler(0, 0x6000, 0x7fff, MRA_BANK5);
-			install_mem_read_handler(0, 0x8000, 0x9fff, MRA_BANK1);
-			install_mem_read_handler(0, 0xa000, 0xbfff, MRA_BANK2);
-			install_mem_read_handler(0, 0xc000, 0xdfff, MRA_BANK3);
-			install_mem_read_handler(0, 0xe000, 0xffff, MRA_BANK4);
-			memory_set_bankhandler_r (1, 0, MRA_BANK1);
-			memory_set_bankhandler_r (2, 0, MRA_BANK2);
-			memory_set_bankhandler_r (3, 0, MRA_BANK3);
-			memory_set_bankhandler_r (4, 0, MRA_BANK4);
-			memory_set_bankhandler_r (5, 0, MRA_BANK5);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MRA8_BANK5);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, MRA8_BANK1);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, MRA8_BANK2);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, MRA8_BANK3);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, MRA8_BANK4);
 
-			install_mem_write_handler(0, 0x6000, 0x7fff, nes_mid_mapper_w);
-			install_mem_write_handler(0, 0x8000, 0xffff, nes_mapper_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, nes_mid_mapper_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, nes_mapper_w);
 			break;
 	}
 
@@ -607,10 +602,10 @@ DEVICE_UNLOAD(nes_disk)
 
 void ppu_mirror_custom (int page, int address)
 {
-	exit(-1);
+	osd_die("Unimplemented");
 }
 
 void ppu_mirror_custom_vrom (int page, int address)
 {
-	exit(-1);
+	osd_die("Unimplemented");
 }

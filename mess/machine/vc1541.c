@@ -317,35 +317,35 @@ static void vc1541_sector_to_gcr(int track, int sector)
 }
 
 MEMORY_READ_START( vc1541_readmem )
-	{0x0000, 0x07ff, MRA_RAM},
+	{0x0000, 0x07ff, MRA8_RAM},
 	{0x1800, 0x180f, via_2_r},		   /* 0 and 1 used in vc20 */
-	{0x1810, 0x189f, MRA_NOP}, /* for debugger */
+	{0x1810, 0x189f, MRA8_NOP}, /* for debugger */
 	{0x1c00, 0x1c0f, via_3_r},
-	{0x1c10, 0x1c9f, MRA_NOP}, /* for debugger */
-	{0xc000, 0xffff, MRA_ROM},
+	{0x1c10, 0x1c9f, MRA8_NOP}, /* for debugger */
+	{0xc000, 0xffff, MRA8_ROM},
 MEMORY_END
 
 MEMORY_WRITE_START( vc1541_writemem )
-	{0x0000, 0x07ff, MWA_RAM},
+	{0x0000, 0x07ff, MWA8_RAM},
 	{0x1800, 0x180f, via_2_w},
 	{0x1c00, 0x1c0f, via_3_w},
-	{0xc000, 0xffff, MWA_ROM},
+	{0xc000, 0xffff, MWA8_ROM},
 MEMORY_END
 
 MEMORY_READ_START( dolphin_readmem )
-	{0x0000, 0x07ff, MRA_RAM},
+	{0x0000, 0x07ff, MRA8_RAM},
 	{0x1800, 0x180f, via_2_r},		   /* 0 and 1 used in vc20 */
 	{0x1c00, 0x1c0f, via_3_r},
-	{0x8000, 0x9fff, MRA_RAM},
-	{0xa000, 0xffff, MRA_ROM},
+	{0x8000, 0x9fff, MRA8_RAM},
+	{0xa000, 0xffff, MRA8_ROM},
 MEMORY_END
 
 MEMORY_WRITE_START( dolphin_writemem )
-	{0x0000, 0x07ff, MWA_RAM},
+	{0x0000, 0x07ff, MWA8_RAM},
 	{0x1800, 0x180f, via_2_w},
 	{0x1c00, 0x1c0f, via_3_w},
-	{0x8000, 0x9fff, MWA_RAM},
-	{0xa000, 0xffff, MWA_ROM},
+	{0x8000, 0x9fff, MWA8_RAM},
+	{0xa000, 0xffff, MWA8_ROM},
 MEMORY_END
 
 #if 0
@@ -965,16 +965,16 @@ int c1551_config (int id, int mode, C1551_CONFIG *config)
 
 MEMORY_READ_START( c1551_readmem )
     {0x0000, 0x0001, c1551_port_r},
-	{0x0002, 0x07ff, MRA_RAM},
+	{0x0002, 0x07ff, MRA8_RAM},
     {0x4000, 0x4007, tpi6525_0_port_r},
-	{0xc000, 0xffff, MRA_ROM},
+	{0xc000, 0xffff, MRA8_ROM},
 MEMORY_END
 
 MEMORY_WRITE_START( c1551_writemem )
     {0x0000, 0x0001, c1551_port_w},
-	{0x0002, 0x07ff, MWA_RAM},
+	{0x0002, 0x07ff, MWA8_RAM},
     {0x4000, 0x4007, tpi6525_0_port_w},
-	{0xc000, 0xffff, MWA_ROM},
+	{0xc000, 0xffff, MWA8_ROM},
 MEMORY_END
 
 static void c1551x_write_data (TPI6525 *This, int data)

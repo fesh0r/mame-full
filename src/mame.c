@@ -1817,6 +1817,7 @@ static int validitychecks(void)
 				region_length[j] = 0;
 			}
 
+			/* consistency checks on ROMs */
 			while (!ROMENTRY_ISEND(romp))
 			{
 				const char *c;
@@ -1878,6 +1879,7 @@ static int validitychecks(void)
 			}
 
 
+			/* consistency checks on CPUs */
 			for (cpu = 0;cpu < MAX_CPU;cpu++)
 			{
 				if (drv.cpu[cpu].cpu_type)
@@ -1958,6 +1960,7 @@ static int validitychecks(void)
 			}
 
 
+			/* consistency chekcs on GfxDecodeInfo */
 			if (drv.gfxdecodeinfo)
 			{
 				for (j = 0;j < MAX_GFX_ELEMENTS && drv.gfxdecodeinfo[j].memory_region != -1;j++)

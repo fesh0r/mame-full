@@ -178,25 +178,25 @@ MACHINE_INIT( pc1251 )
 	// 4 kb memory feedback 512 bytes too few???
 	// 11 kb ram: program stored at 8000
 #if 1
-	install_mem_write_handler (0, 0x8000, 0xc7ff, MWA_RAM);
+	install_mem_write_handler (0, 0x8000, 0xc7ff, MWA8_RAM);
 #else
 	if (PC1251_RAM11K) {
-		install_mem_write_handler (0, 0x8000, 0xafff, MWA_RAM);
-		install_mem_write_handler (0, 0xb000, 0xc5ff, MWA_NOP);
-		install_mem_write_handler (0, 0xc600, 0xc7ff, MWA_RAM);
-		install_mem_write_handler (0, 0xc800, 0xf7ff, MWA_RAM);
+		install_mem_write_handler (0, 0x8000, 0xafff, MWA8_RAM);
+		install_mem_write_handler (0, 0xb000, 0xc5ff, MWA8_NOP);
+		install_mem_write_handler (0, 0xc600, 0xc7ff, MWA8_RAM);
+		install_mem_write_handler (0, 0xc800, 0xf7ff, MWA8_RAM);
 	} else if (PC1251_RAM6K) {
-		install_mem_write_handler (0, 0xa000, 0xafff, MWA_NOP);
-		install_mem_write_handler (0, 0xb000, 0xc7ff, MWA_RAM);
-		install_mem_write_handler (0, 0xc800, 0xcbff, MWA_RAM);
+		install_mem_write_handler (0, 0xa000, 0xafff, MWA8_NOP);
+		install_mem_write_handler (0, 0xb000, 0xc7ff, MWA8_RAM);
+		install_mem_write_handler (0, 0xc800, 0xcbff, MWA8_RAM);
 	} else if (PC1251_RAM4K) {
-		install_mem_write_handler (0, 0xa000, 0xb7ff, MWA_NOP);
-		install_mem_write_handler (0, 0xb800, 0xc7ff, MWA_RAM);
-		install_mem_write_handler (0, 0xc800, 0xcbff, MWA_RAM);
+		install_mem_write_handler (0, 0xa000, 0xb7ff, MWA8_NOP);
+		install_mem_write_handler (0, 0xb800, 0xc7ff, MWA8_RAM);
+		install_mem_write_handler (0, 0xc800, 0xcbff, MWA8_RAM);
 	} else {
-		install_mem_write_handler (0, 0xa000, 0xc5ff, MWA_NOP);
-		install_mem_write_handler (0, 0xc600, 0xc9ff, MWA_RAM);
-		install_mem_write_handler (0, 0xca00, 0xcbff, MWA_RAM);
+		install_mem_write_handler (0, 0xa000, 0xc5ff, MWA8_NOP);
+		install_mem_write_handler (0, 0xc600, 0xc9ff, MWA8_RAM);
+		install_mem_write_handler (0, 0xca00, 0xcbff, MWA8_RAM);
 	}
 #endif
 }

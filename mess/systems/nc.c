@@ -355,7 +355,7 @@ static void nc_refresh_memory_bank_config(int bank)
 
                    cpu_setbank(bank+1, addr);
 
-                   memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
+                   memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
 #ifdef VERBOSE
                    logerror("BANK %d: ROM %d\n",bank,mem_bank);
 #endif
@@ -405,7 +405,7 @@ static void nc_refresh_memory_bank_config(int bank)
 						else
 						{
 							/* no */
-							memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
+							memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
 						}
 
 #ifdef VERBOSE
@@ -415,8 +415,8 @@ static void nc_refresh_memory_bank_config(int bank)
 					else
 					{
 						/* if no card connected, then writes fail */
-						memory_set_bankhandler_r(bank+1, 0, MRA_NOP);
-						memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
+						memory_set_bankhandler_r(bank+1, 0, MRA8_NOP);
+						memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
 					}
                 }
                 break;

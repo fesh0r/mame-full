@@ -736,18 +736,18 @@ static void c128_common_driver_init (void)
 	int i;
 
 #if 0
-	{0x100000, 0x107fff, MWA_ROM, &c128_basic},	/* maps to 0x4000 */
-	{0x108000, 0x109fff, MWA_ROM, &c64_basic},	/* maps to 0xa000 */
-	{0x10a000, 0x10bfff, MWA_ROM, &c64_kernal},	/* maps to 0xe000 */
-	{0x10c000, 0x10cfff, MWA_ROM, &c128_editor},
-	{0x10d000, 0x10dfff, MWA_ROM, &c128_z80},		/* maps to z80 0 */
-	{0x10e000, 0x10ffff, MWA_ROM, &c128_kernal},
-	{0x110000, 0x117fff, MWA_ROM, &c128_internal_function},
-	{0x118000, 0x11ffff, MWA_ROM, &c128_external_function},
-	{0x120000, 0x120fff, MWA_ROM, &c64_chargen},
-	{0x121000, 0x121fff, MWA_ROM, &c128_chargen},
-	{0x122000, 0x1227ff, MWA_RAM, &c64_colorram},
-	{0x122800, 0x1327ff, MWA_RAM, &c128_vdcram},
+	{0x100000, 0x107fff, MWA8_ROM, &c128_basic},	/* maps to 0x4000 */
+	{0x108000, 0x109fff, MWA8_ROM, &c64_basic},	/* maps to 0xa000 */
+	{0x10a000, 0x10bfff, MWA8_ROM, &c64_kernal},	/* maps to 0xe000 */
+	{0x10c000, 0x10cfff, MWA8_ROM, &c128_editor},
+	{0x10d000, 0x10dfff, MWA8_ROM, &c128_z80},		/* maps to z80 0 */
+	{0x10e000, 0x10ffff, MWA8_ROM, &c128_kernal},
+	{0x110000, 0x117fff, MWA8_ROM, &c128_internal_function},
+	{0x118000, 0x11ffff, MWA8_ROM, &c128_external_function},
+	{0x120000, 0x120fff, MWA8_ROM, &c64_chargen},
+	{0x121000, 0x121fff, MWA8_ROM, &c128_chargen},
+	{0x122000, 0x1227ff, MWA8_RAM, &c64_colorram},
+	{0x122800, 0x1327ff, MWA8_RAM, &c128_vdcram},
 #endif
 		c128_basic=memory_region(REGION_CPU1)+0x100000;
 		c64_basic=memory_region(REGION_CPU1)+0x108000;

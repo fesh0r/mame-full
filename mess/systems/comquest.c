@@ -57,13 +57,13 @@ static WRITE_HANDLER(comquest_write)
 
 static MEMORY_READ_START( comquest_readmem )
 //	{ 0x0000, 0x7fff, MRA_BANK1 },
-	{ 0x0000, 0xffff, MRA_ROM },
-//	{ 0x8000, 0xffff, MRA_RAM }, // batterie buffered
+	{ 0x0000, 0xffff, MRA8_ROM },
+//	{ 0x8000, 0xffff, MRA8_RAM }, // batterie buffered
 MEMORY_END
 
 static MEMORY_WRITE_START( comquest_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_RAM },
+	{ 0x0000, 0x7fff, MWA8_ROM },
+	{ 0x8000, 0xffff, MWA8_RAM },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \

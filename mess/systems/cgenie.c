@@ -33,42 +33,42 @@ NMI
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_RAM },
-//	{ 0x8000, 0xbfff, MRA_RAM },	// only if 32K RAM is enabled
-//	{ 0xc000, 0xdfff, MRA_ROM },	// installed in cgenie_init_machine
-//	{ 0xe000, 0xefff, MRA_ROM },	// installed in cgenie_init_machine
+	{ 0x0000, 0x3fff, MRA8_ROM },
+	{ 0x4000, 0x7fff, MRA8_RAM },
+//	{ 0x8000, 0xbfff, MRA8_RAM },	// only if 32K RAM is enabled
+//	{ 0xc000, 0xdfff, MRA8_ROM },	// installed in cgenie_init_machine
+//	{ 0xe000, 0xefff, MRA8_ROM },	// installed in cgenie_init_machine
 	{ 0xf000, 0xf3ff, cgenie_colorram_r },
 	{ 0xf400, 0xf7ff, cgenie_fontram_r	},
 	{ 0xf800, 0xf8ff, cgenie_keyboard_r },
-	{ 0xf900, 0xffdf, MRA_NOP },
+	{ 0xf900, 0xffdf, MRA8_NOP },
 	{ 0xffe0, 0xffe3, cgenie_irq_status_r },
-	{ 0xffe4, 0xffeb, MRA_NOP },
+	{ 0xffe4, 0xffeb, MRA8_NOP },
 	{ 0xffec, 0xffec, cgenie_status_r },
-	{ 0xffe4, 0xffeb, MRA_NOP },
+	{ 0xffe4, 0xffeb, MRA8_NOP },
 	{ 0xffed, 0xffed, cgenie_track_r },
 	{ 0xffee, 0xffee, cgenie_sector_r },
 	{ 0xffef, 0xffef, cgenie_data_r },
-	{ 0xfff0, 0xffff, MRA_NOP },
+	{ 0xfff0, 0xffff, MRA8_NOP },
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem)
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x0000, 0x3fff, MWA8_ROM },
 	{ 0x4000, 0x7fff, cgenie_videoram_w, &videoram },
-//	{ 0x8000, 0xbfff, MWA_RAM },	// only if 32K RAM is enabled
-//	{ 0xc000, 0xdfff, MWA_ROM },	// installed in cgenie_init_machine
-//	{ 0xe000, 0xefff, MWA_ROM },	// installed in cgenie_init_machine
+//	{ 0x8000, 0xbfff, MWA8_RAM },	// only if 32K RAM is enabled
+//	{ 0xc000, 0xdfff, MWA8_ROM },	// installed in cgenie_init_machine
+//	{ 0xe000, 0xefff, MWA8_ROM },	// installed in cgenie_init_machine
 	{ 0xf000, 0xf3ff, cgenie_colorram_w, &colorram },
 	{ 0xf400, 0xf7ff, cgenie_fontram_w, &cgenie_fontram },
-	{ 0xf800, 0xf8ff, MWA_NOP },
-	{ 0xf900, 0xffdf, MWA_NOP },
+	{ 0xf800, 0xf8ff, MWA8_NOP },
+	{ 0xf900, 0xffdf, MWA8_NOP },
 	{ 0xffe0, 0xffe3, cgenie_motor_w },
-	{ 0xffe4, 0xffeb, MWA_NOP },
+	{ 0xffe4, 0xffeb, MWA8_NOP },
 	{ 0xffec, 0xffec, cgenie_command_w },
 	{ 0xffed, 0xffed, cgenie_track_w },
 	{ 0xffee, 0xffee, cgenie_sector_w },
 	{ 0xffef, 0xffef, cgenie_data_w },
-	{ 0xfff0, 0xffff, MWA_NOP },
+	{ 0xfff0, 0xffff, MWA8_NOP },
 MEMORY_END
 
 static PORT_READ_START (readport)

@@ -203,32 +203,32 @@ when problems start with -log and look into error.log file
 
 static MEMORY_READ_START( ultimax_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
-	{0x0002, 0x0fff, MRA_RAM},
-	{0x8000, 0x9fff, MRA_ROM},
+	{0x0002, 0x0fff, MRA8_RAM},
+	{0x8000, 0x9fff, MRA8_ROM},
 	{0xd000, 0xd3ff, vic2_port_r},
 	{0xd400, 0xd7ff, sid6581_0_port_r},
-	{0xd800, 0xdbff, MRA_RAM},		   /* colorram  */
+	{0xd800, 0xdbff, MRA8_RAM},		   /* colorram  */
 	{0xdc00, 0xdcff, cia6526_0_port_r},
-	{0xe000, 0xffff, MRA_ROM},		   /* ram or kernel rom */
+	{0xe000, 0xffff, MRA8_ROM},		   /* ram or kernel rom */
 MEMORY_END
 
 static MEMORY_WRITE_START( ultimax_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
-	{0x0002, 0x0fff, MWA_RAM},
-	{0x8000, 0x9fff, MWA_ROM, &c64_roml},
+	{0x0002, 0x0fff, MWA8_RAM},
+	{0x8000, 0x9fff, MWA8_ROM, &c64_roml},
 	{0xd000, 0xd3ff, vic2_port_w},
 	{0xd400, 0xd7ff, sid6581_0_port_w},
 	{0xd800, 0xdbff, c64_colorram_write, &c64_colorram},
 	{0xdc00, 0xdcff, cia6526_0_port_w},
-	{0xe000, 0xffff, MWA_ROM, &c64_romh},
+	{0xe000, 0xffff, MWA8_ROM, &c64_romh},
 MEMORY_END
 
 static MEMORY_READ_START( c64_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
-	{0x0002, 0x7fff, MRA_RAM},
+	{0x0002, 0x7fff, MRA8_RAM},
 	{0x8000, 0x9fff, MRA_BANK1},	   /* ram or external roml */
 	{0xa000, 0xbfff, MRA_BANK3},	   /* ram or basic rom or external romh */
-	{0xc000, 0xcfff, MRA_RAM},
+	{0xc000, 0xcfff, MRA8_RAM},
 #if 1
 	{0xd000, 0xdfff, MRA_BANK5},
 #else
@@ -247,9 +247,9 @@ MEMORY_END
 
 static MEMORY_WRITE_START( c64_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
-	{0x0002, 0x7fff, MWA_RAM},
+	{0x0002, 0x7fff, MWA8_RAM},
 	{0x8000, 0x9fff, MWA_BANK2},
-	{0xa000, 0xcfff, MWA_RAM},
+	{0xa000, 0xcfff, MWA8_RAM},
 //	{0xa000, 0xcfff, MWA_BANK16},
 #if 1
 	{0xd000, 0xdfff, MWA_BANK6},
@@ -260,8 +260,8 @@ static MEMORY_WRITE_START( c64_writemem )
 	{0xd800, 0xdbff, c64_colorram_write},
 	{0xdc00, 0xdcff, cia6526_0_port_w},
 	{0xdd00, 0xddff, cia6526_1_port_w},
-	{0xde00, 0xdeff, MWA_NOP},		   /* csline expansion port */
-	{0xdf00, 0xdfff, MWA_NOP},		   /* csline expansion port */
+	{0xde00, 0xdeff, MWA8_NOP},		   /* csline expansion port */
+	{0xdf00, 0xdfff, MWA8_NOP},		   /* csline expansion port */
 #endif
 	{0xe000, 0xffff, MWA_BANK8},
 MEMORY_END

@@ -42,13 +42,13 @@ static READ_HANDLER(vc4000_key_r)
 
 
 static MEMORY_READ_START( vc4000_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
+	{ 0x0000, 0x07ff, MRA8_ROM },
 { 0x1e88, 0x1e8e, vc4000_key_r },
 	{ 0x1f00, 0x1fff, vc4000_video_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( vc4000_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
+	{ 0x0000, 0x07ff, MWA8_ROM },
 	{ 0x1f00, 0x1fff, vc4000_video_w },
 MEMORY_END
 

@@ -315,17 +315,17 @@ COMPX( 1986,	macplus,  0,		0,		macplus,  macplus,  macplus,	macplus,	"Apple Comp
 
 static MEMORY_READ16_START (mac2_readmem)
 
-	{ 0x00000000, 0x007fffff, MRA_RAM },	/* ram */
-	{ 0x00800000, 0x008fffff, MRA_ROM },	/* rom */
-	{ 0x00900000, 0x00ffffff, MRA_NOP },
+	{ 0x00000000, 0x007fffff, MRA8_RAM },	/* ram */
+	{ 0x00800000, 0x008fffff, MRA8_ROM },	/* rom */
+	{ 0x00900000, 0x00ffffff, MRA8_NOP },
 
 MEMORY_END
 
 static MEMORY_WRITE16_START (mac2_writemem)
 
-	{ 0x00000000, 0x007fffff, MWA_RAM },	/* ram */
-	{ 0x00800000, 0x008fffff, MWA_ROM },	/* rom */
-	{ 0x00900000, 0x00ffffff, MWA_NOP },
+	{ 0x00000000, 0x007fffff, MWA8_RAM },	/* ram */
+	{ 0x00800000, 0x008fffff, MWA8_ROM },	/* rom */
+	{ 0x00900000, 0x00ffffff, MWA8_NOP },
 
 MEMORY_END
 

@@ -14,11 +14,11 @@
  0xc0000- 0xcffff ram also mapped at 0xd0000-0xdffff */
 
 static MEMORY_READ_START( readmem )
-	{ 0x00000, 0xfffff, MRA_ROM }, // configured at runtime, complexe mmu
+	{ 0x00000, 0xfffff, MRA8_ROM }, // configured at runtime, complexe mmu
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0xfffff, MWA_ROM },
+	{ 0x00000, 0xfffff, MWA8_ROM },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \

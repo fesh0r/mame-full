@@ -1190,8 +1190,8 @@ static void kc85_4_update_0x08000(void)
 			logerror("RAM8 write protected\n");
 #endif
 			/* ram8 is enabled and write protected */
-			memory_set_bankhandler_w(9, 0, MWA_NOP);
-			memory_set_bankhandler_w(10, 0, MWA_NOP);
+			memory_set_bankhandler_w(9, 0, MWA8_NOP);
+			memory_set_bankhandler_w(10, 0, MWA8_NOP);
 		}
 		else
 		{
@@ -1210,10 +1210,10 @@ static void kc85_4_update_0x08000(void)
 #ifdef KC_DEBUG
 		logerror("no memory at ram8\n");
 #endif
-		memory_set_bankhandler_r(3, 0, MRA_NOP);
-		memory_set_bankhandler_r(4, 0, MRA_NOP);
-		memory_set_bankhandler_w(9, 0, MWA_NOP);
-		memory_set_bankhandler_w(10, 0, MWA_NOP);
+		memory_set_bankhandler_r(3, 0, MRA8_NOP);
+		memory_set_bankhandler_r(4, 0, MRA8_NOP);
+		memory_set_bankhandler_w(9, 0, MWA8_NOP);
+		memory_set_bankhandler_w(10, 0, MWA8_NOP);
     }
 
 	/* if IRM is enabled override block 3/9 settings */
@@ -1286,7 +1286,7 @@ static void kc85_4_update_0x00000(void)
 	#endif
 
 				/* ram is enabled and write protected */
-				memory_set_bankhandler_w(7, 0, MWA_NOP);
+				memory_set_bankhandler_w(7, 0, MWA8_NOP);
 			}
 			else
 			{
@@ -1308,10 +1308,10 @@ static void kc85_4_update_0x00000(void)
 
 	//		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000);
 			/* ram is disabled */
-			memory_set_bankhandler_r(1, 0, MRA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA8_NOP);
 
 
-			memory_set_bankhandler_w(7, 0, MWA_NOP);
+			memory_set_bankhandler_w(7, 0, MWA8_NOP);
 		}
 	}
 }
@@ -1343,7 +1343,7 @@ static void kc85_4_update_0x04000(void)
 #endif
 
 			/* ram is enabled and write protected */
-			memory_set_bankhandler_w(8, 0, MWA_NOP);
+			memory_set_bankhandler_w(8, 0, MWA8_NOP);
 		}
 		else
 		{
@@ -1362,8 +1362,8 @@ static void kc85_4_update_0x04000(void)
 		logerror("no memory at ram4!\n");
 #endif
 		/* ram is disabled */
-		memory_set_bankhandler_r(2, 0,MRA_NOP);
-		memory_set_bankhandler_w(8, 0,MWA_NOP);
+		memory_set_bankhandler_r(2, 0,MRA8_NOP);
+		memory_set_bankhandler_w(8, 0,MWA8_NOP);
 	}
 }
 
@@ -1407,7 +1407,7 @@ static void kc85_4_update_0x0c000(void)
 			logerror("No roms 0x0c000\n");
 #endif
 
-			memory_set_bankhandler_r(5, 0, MRA_NOP);
+			memory_set_bankhandler_r(5, 0, MRA8_NOP);
 		}
 	}
 }
@@ -1430,7 +1430,7 @@ static void kc85_4_update_0x0e000(void)
 #ifdef KC_DEBUG
 		logerror("no rom 0x0e000\n");
 #endif
-		memory_set_bankhandler_r(6,0, MRA_NOP);
+		memory_set_bankhandler_r(6,0, MRA8_NOP);
 	}
 }
 
@@ -1546,7 +1546,7 @@ static void kc85_3_update_0x0c000(void)
 #ifdef KC_DEBUG
 		logerror("No roms 0x0c000\n");
 #endif
-		memory_set_bankhandler_r(4, 0, MRA_NOP);
+		memory_set_bankhandler_r(4, 0, MRA8_NOP);
 	}
 }
 
@@ -1567,7 +1567,7 @@ static void kc85_3_update_0x0e000(void)
 #ifdef KC_DEBUG
 		logerror("no rom 0x0e000\n");
 #endif
-		memory_set_bankhandler_r(5, 0, MRA_NOP);
+		memory_set_bankhandler_r(5, 0, MRA8_NOP);
 	}
 }
 
@@ -1597,7 +1597,7 @@ static void kc85_3_update_0x00000(void)
 	#endif
 
 				/* ram is enabled and write protected */
-				memory_set_bankhandler_w(6, 0, MWA_NOP);
+				memory_set_bankhandler_w(6, 0, MWA8_NOP);
 			}
 			else
 			{
@@ -1618,8 +1618,8 @@ static void kc85_3_update_0x00000(void)
 	#endif
 
 			/* ram is disabled */
-			memory_set_bankhandler_r(1, 0, MRA_NOP);
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA8_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 		}
 	}
 }
@@ -1663,7 +1663,7 @@ static void kc85_3_update_0x08000(void)
 			logerror("RAM8 write protected\n");
 #endif
 			/* ram8 is enabled and write protected */
-			memory_set_bankhandler_w(8, 0, MWA_NOP);
+			memory_set_bankhandler_w(8, 0, MWA8_NOP);
 		}
 		else
 		{
@@ -1680,8 +1680,8 @@ static void kc85_3_update_0x08000(void)
 #ifdef KC_DEBUG
 		logerror("no memory at ram8!\n");
 #endif
-		memory_set_bankhandler_r(3, 0, MRA_NOP);
-		memory_set_bankhandler_w(8, 0, MWA_NOP);
+		memory_set_bankhandler_r(3, 0, MRA8_NOP);
+		memory_set_bankhandler_w(8, 0, MWA8_NOP);
     }
 }
 

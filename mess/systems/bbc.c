@@ -44,7 +44,7 @@ read:
 
 
 static MEMORY_READ_START(readmem_bbca)
-	{ 0x0000, 0x3fff, MRA_RAM		   },
+	{ 0x0000, 0x3fff, MRA8_RAM		   },
 	{ 0x4000, 0x7fff, MRA_BANK1 	   },  /* bank 1 is a repeat of the memory at 0x0000 to 0x3fff	 */
 	{ 0x8000, 0xbfff, MRA_BANK3 	   },  /* Paged ROM                                              */
 	{ 0xc000, 0xfbff, MRA_BANK2		   },  /* OS                                                     */
@@ -68,28 +68,28 @@ MEMORY_END
 static MEMORY_WRITE_START(writemem_bbca)
 	{ 0x0000, 0x3fff, memory_w		   },
 	{ 0x4000, 0x7fff, memory_w		   },  /* this is a repeat of the memory at 0x0000 to 0x3fff	 */
-	{ 0x8000, 0xdfff, MWA_ROM		   },  /* Paged ROM                                              */
-	{ 0xc000, 0xfdff, MWA_ROM		   },  /* OS                                                     */
-	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages                                       */
+	{ 0x8000, 0xdfff, MWA8_ROM		   },  /* Paged ROM                                              */
+	{ 0xc000, 0xfdff, MWA8_ROM		   },  /* OS                                                     */
+	{ 0xfc00, 0xfdff, MWA8_NOP		   },  /* FRED & JIM Pages                                       */
 										   /* Shiela Address Page &fe00 - &feff 					 */
 	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			     */
-	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			     */
-	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		     */
-	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No.   */
+	{ 0xfe08, 0xfe0f, MWA8_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			     */
+	{ 0xfe10, 0xfe17, MWA8_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		     */
+	{ 0xfe18, 0xfe1f, MWA8_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No.   */
 	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip				 */
 	{ 0xfe30, 0xfe3f, page_selecta_w   },  /* &30-&3f  84LS161		 Paged ROM selector 			 */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 					 */
-	{ 0xfe60, 0xfe7f, MWA_NOP		   },  /* &60-&7f  6522 VIA 	 1 USER VIA 					 */
-	{ 0xfe80, 0xfe9f, MWA_NOP		   },  /* &80-&9f  8271/1770 FDC 1 Floppy disc controller		 */
-	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 1 ECONET controller			 */
-	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
-	{ 0xff00, 0xffff, MWA_ROM		   },  /* Hardware marked with a 1 is not present in a Model A	 */
+	{ 0xfe60, 0xfe7f, MWA8_NOP		   },  /* &60-&7f  6522 VIA 	 1 USER VIA 					 */
+	{ 0xfe80, 0xfe9f, MWA8_NOP		   },  /* &80-&9f  8271/1770 FDC 1 Floppy disc controller		 */
+	{ 0xfea0, 0xfebf, MWA8_NOP		   },  /* &a0-&bf  68B54 ADLC	 1 ECONET controller			 */
+	{ 0xfec0, 0xfedf, MWA8_NOP		   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, MWA8_NOP		   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
+	{ 0xff00, 0xffff, MWA8_ROM		   },  /* Hardware marked with a 1 is not present in a Model A	 */
 MEMORY_END
 
 
 static MEMORY_READ_START(readmem_bbcb)
-	{ 0x0000, 0x7fff, MRA_RAM		   },
+	{ 0x0000, 0x7fff, MRA8_RAM		   },
 	{ 0x8000, 0xbfff, MRA_BANK3 	   },
 	{ 0xc000, 0xfbff, MRA_BANK2		   },
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
@@ -111,28 +111,28 @@ MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcb)
 	{ 0x0000, 0x7fff, memory_w		   },
-	{ 0x8000, 0xdfff, MWA_ROM		   },
-	{ 0xc000, 0xfdff, MWA_ROM		   },
-	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages */
+	{ 0x8000, 0xdfff, MWA8_ROM		   },
+	{ 0xc000, 0xfdff, MWA8_ROM		   },
+	{ 0xfc00, 0xfdff, MWA8_NOP		   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
-	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
-	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
-	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe08, 0xfe0f, MWA8_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, MWA8_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, MWA8_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
 	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
 	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_i8271_write  },  /* &80-&9f  8271 FDC      Floppy disc controller 	   */
-	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfea0, 0xfebf, MWA8_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_w        },  /* &c0-&df  uPD7002		 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MWA_ROM		   },
+	{ 0xfee0, 0xfeff, MWA8_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MWA8_ROM		   },
 MEMORY_END
 
 
 static MEMORY_READ_START(readmem_bbcb1770)
-	{ 0x0000, 0x7fff, MRA_RAM		   },
+	{ 0x0000, 0x7fff, MRA8_RAM		   },
 	{ 0x8000, 0xbfff, MRA_BANK3 	   },
 	{ 0xc000, 0xfbff, MRA_BANK2		   },
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
@@ -154,28 +154,28 @@ MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcb1770)
 	{ 0x0000, 0x7fff, memory_w		   },
-	{ 0x8000, 0xdfff, MWA_ROM		   },
-	{ 0xc000, 0xfdff, MWA_ROM		   },
-	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages */
+	{ 0x8000, 0xdfff, MWA8_ROM		   },
+	{ 0xc000, 0xfdff, MWA8_ROM		   },
+	{ 0xfc00, 0xfdff, MWA8_NOP		   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
-	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
-	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
-	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe08, 0xfe0f, MWA8_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, MWA8_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, MWA8_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
 	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
 	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
-	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfea0, 0xfebf, MWA8_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MWA_ROM		   },
+	{ 0xfee0, 0xfeff, MWA8_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MWA8_ROM		   },
 MEMORY_END
 
 
 static MEMORY_READ_START(readmem_bbcbp)
-	{ 0x0000, 0x2fff, MRA_RAM		   },  /* Normal Ram                                           */
+	{ 0x0000, 0x2fff, MRA8_RAM		   },  /* Normal Ram                                           */
 	{ 0x3000, 0x7fff, MRA_BANK1        },  /* Video/Shadow Ram                                     */
 	{ 0x8000, 0xafff, MRA_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
 	{ 0xb000, 0xbfff, MRA_BANK4        },  /* Rest of paged ROM area                               */
@@ -201,29 +201,29 @@ static MEMORY_WRITE_START(writemem_bbcbp)
 	{ 0x0000, 0x2fff, memorybp0_w	   },  /* Normal Ram                                           */
 	{ 0x3000, 0x7fff, memorybp1_w      },  /* Video/Shadow Ram                                     */
 	{ 0x8000, 0xafff, memorybp3_w      },  /* Paged ROM or 12K of RAM                              */
-	{ 0xb000, 0xdfff, MWA_ROM          },  /* Rest of paged ROM area                               */
-	{ 0xc000, 0xfdff, MWA_ROM		   },  /* OS                                                   */
-	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages                                     */
+	{ 0xb000, 0xdfff, MWA8_ROM          },  /* Rest of paged ROM area                               */
+	{ 0xc000, 0xfdff, MWA8_ROM		   },  /* OS                                                   */
+	{ 0xfc00, 0xfdff, MWA8_NOP		   },  /* FRED & JIM Pages                                     */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
-	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
-	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
-	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe08, 0xfe0f, MWA8_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, MWA8_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, MWA8_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
 	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
 	{ 0xfe30, 0xfe3f, page_selectbp_w  },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
-	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfea0, 0xfebf, MWA8_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MWA_ROM		   },
+	{ 0xfee0, 0xfeff, MWA8_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MWA8_ROM		   },
 MEMORY_END
 
 
 
 static MEMORY_READ_START(readmem_bbcbp128)
-	{ 0x0000, 0x2fff, MRA_RAM		   },  /* Normal Ram                                           */
+	{ 0x0000, 0x2fff, MRA8_RAM		   },  /* Normal Ram                                           */
 	{ 0x3000, 0x7fff, MRA_BANK1        },  /* Video/Shadow Ram                                     */
 	{ 0x8000, 0xafff, MRA_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
 	{ 0xb000, 0xbfff, MRA_BANK4        },  /* Rest of paged ROM area                               */
@@ -250,22 +250,22 @@ static MEMORY_WRITE_START(writemem_bbcbp128)
 	{ 0x3000, 0x7fff, memorybp1_w      },  /* Video/Shadow Ram                                     */
 	{ 0x8000, 0xafff, memorybp3_128_w  },  /* Paged ROM or 12K of RAM                              */
 	{ 0xb000, 0xdfff, memorybp4_128_w  },  /* Rest of paged ROM area                               */
-	{ 0xc000, 0xfdff, MWA_ROM		   },  /* OS                                                   */
-	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages                                     */
+	{ 0xc000, 0xfdff, MWA8_ROM		   },  /* OS                                                   */
+	{ 0xfc00, 0xfdff, MWA8_NOP		   },  /* FRED & JIM Pages                                     */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
-	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
-	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
-	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe08, 0xfe0f, MWA8_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, MWA8_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, MWA8_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
 	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
 	{ 0xfe30, 0xfe3f, page_selectbp_w  },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
-	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfea0, 0xfebf, MWA8_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MWA_ROM		   },
+	{ 0xfee0, 0xfeff, MWA8_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MWA8_ROM		   },
 MEMORY_END
 
 
@@ -630,7 +630,7 @@ static READ_HANDLER ( bbcs_tube_r )
 /* now add a bbc B with the Tube Connected */
 
 static MEMORY_READ_START(readmem_bbcbtube)
-	{ 0x0000, 0x7fff, MRA_RAM		   },
+	{ 0x0000, 0x7fff, MRA8_RAM		   },
 	{ 0x8000, 0xbfff, MRA_BANK3 	   },
 	{ 0xc000, 0xfbff, MRA_BANK2		   },
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
@@ -652,38 +652,38 @@ MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcbtube)
 	{ 0x0000, 0x7fff, memory_w		   },
-	{ 0x8000, 0xdfff, MWA_ROM		   },
-	{ 0xc000, 0xfdff, MWA_ROM		   },
-	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages */
+	{ 0x8000, 0xdfff, MWA8_ROM		   },
+	{ 0xc000, 0xfdff, MWA8_ROM		   },
+	{ 0xfc00, 0xfdff, MWA8_NOP		   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
-	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
-	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
-	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe08, 0xfe0f, MWA8_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, MWA8_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, MWA8_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
 	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
 	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
-	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfea0, 0xfebf, MWA8_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, tube_port_a_w	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MWA_ROM		   },
+	{ 0xff00, 0xffff, MWA8_ROM		   },
 MEMORY_END
 
 /* Tube memory */
 
 static MEMORY_READ_START(readmem_bbc6502)
-	{ 0x0000, 0xefff, MRA_RAM       },
+	{ 0x0000, 0xefff, MRA8_RAM       },
 	{ 0xf000, 0xfeF7, MRA_BANK5     },
 	{ 0xfef8, 0xfeff, bbcs_tube_r   },
 	{ 0xff00, 0xffff, MRA_BANK5     },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbc6502)
-	{ 0x0000, 0xfeF7, MWA_RAM       },
+	{ 0x0000, 0xfeF7, MWA8_RAM       },
 	{ 0xfef8, 0xfeff, tube_port_b_w },
-	{ 0xff00, 0xffff, MWA_RAM       },
+	{ 0xff00, 0xffff, MWA8_RAM       },
 MEMORY_END
 
 

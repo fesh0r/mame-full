@@ -78,13 +78,13 @@ MACHINE_INIT( laser110 )
 {
     if( readinputport(0) & 0x80 )
     {
-		install_mem_read_handler(0, 0x8000, 0xbfff, MRA_RAM);
-		install_mem_write_handler(0, 0x8000, 0xbfff, MWA_RAM);
+		install_mem_read_handler(0, 0x8000, 0xbfff, MRA8_RAM);
+		install_mem_write_handler(0, 0x8000, 0xbfff, MWA8_RAM);
     }
     else
     {
-		install_mem_read_handler(0, 0x8000, 0xbfff, MRA_NOP);
-		install_mem_write_handler(0, 0x8000, 0xbfff, MWA_NOP);
+		install_mem_read_handler(0, 0x8000, 0xbfff, MRA8_NOP);
+		install_mem_write_handler(0, 0x8000, 0xbfff, MWA8_NOP);
     }
 	common_init_machine();
 }
@@ -93,13 +93,13 @@ MACHINE_INIT( laser210 )
 {
     if( readinputport(0) & 0x80 )
     {
-        install_mem_read_handler(0, 0x9000, 0xcfff, MRA_RAM);
-        install_mem_write_handler(0, 0x9000, 0xcfff, MWA_RAM);
+        install_mem_read_handler(0, 0x9000, 0xcfff, MRA8_RAM);
+        install_mem_write_handler(0, 0x9000, 0xcfff, MWA8_RAM);
     }
     else
     {
-        install_mem_read_handler(0, 0x9000, 0xcfff, MRA_NOP);
-        install_mem_write_handler(0, 0x9000, 0xcfff, MWA_NOP);
+        install_mem_read_handler(0, 0x9000, 0xcfff, MRA8_NOP);
+        install_mem_write_handler(0, 0x9000, 0xcfff, MWA8_NOP);
     }
 	common_init_machine();
 }
@@ -108,13 +108,13 @@ MACHINE_INIT( laser310 )
 {
     if( readinputport(0) & 0x80 )
     {
-        install_mem_read_handler(0, 0xb800, 0xf7ff, MRA_RAM);
-        install_mem_write_handler(0, 0xb800, 0xf7ff, MWA_RAM);
+        install_mem_read_handler(0, 0xb800, 0xf7ff, MRA8_RAM);
+        install_mem_write_handler(0, 0xb800, 0xf7ff, MWA8_RAM);
     }
     else
     {
-        install_mem_read_handler(0, 0xb800, 0xf7ff, MRA_NOP);
-        install_mem_write_handler(0, 0xb800, 0xf7ff, MWA_NOP);
+        install_mem_read_handler(0, 0xb800, 0xf7ff, MRA8_NOP);
+        install_mem_write_handler(0, 0xb800, 0xf7ff, MWA8_NOP);
     }
 	common_init_machine();
 }

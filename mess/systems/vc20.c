@@ -164,80 +164,80 @@ when problems start with -log and look into error.log file
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START( vc20_readmem )
-	{0x0000, 0x03ff, MRA_RAM},
+	{0x0000, 0x03ff, MRA8_RAM},
 #if 0
-	{0x0400, 0x0fff, MRA_RAM},		   /* ram, rom or nothing; I think read 0xff! */
+	{0x0400, 0x0fff, MRA8_RAM},		   /* ram, rom or nothing; I think read 0xff! */
 #endif
-	{0x1000, 0x1fff, MRA_RAM},
+	{0x1000, 0x1fff, MRA8_RAM},
 #if 0
-	{0x2000, 0x3fff, MRA_RAM},		   /* ram, rom or nothing */
-	{0x4000, 0x5fff, MRA_RAM},		   /* ram, rom or nothing */
-	{0x6000, 0x7fff, MRA_RAM},		   /* ram, rom or nothing */
+	{0x2000, 0x3fff, MRA8_RAM},		   /* ram, rom or nothing */
+	{0x4000, 0x5fff, MRA8_RAM},		   /* ram, rom or nothing */
+	{0x6000, 0x7fff, MRA8_RAM},		   /* ram, rom or nothing */
 #endif
-	{0x8000, 0x8fff, MRA_ROM},
+	{0x8000, 0x8fff, MRA8_ROM},
 	{0x9000, 0x900f, vic6560_port_r},
-	{0x9010, 0x910f, MRA_NOP},
+	{0x9010, 0x910f, MRA8_NOP},
 	{0x9110, 0x911f, via_0_r},
 	{0x9120, 0x912f, via_1_r},
-	{0x9130, 0x93ff, MRA_NOP},
-	{0x9400, 0x97ff, MRA_RAM},		   /*color ram 4 bit */
-	{0x9800, 0x9fff, MRA_NOP},
+	{0x9130, 0x93ff, MRA8_NOP},
+	{0x9400, 0x97ff, MRA8_RAM},		   /*color ram 4 bit */
+	{0x9800, 0x9fff, MRA8_NOP},
 #if 0
-	{0xa000, 0xbfff, MRA_RAM},		   /* or nothing */
+	{0xa000, 0xbfff, MRA8_RAM},		   /* or nothing */
 #endif
-	{0xc000, 0xffff, MRA_ROM},
+	{0xc000, 0xffff, MRA8_ROM},
 MEMORY_END
 
 static MEMORY_WRITE_START( vc20_writemem )
-	{0x0000, 0x03ff, MWA_RAM, &vc20_memory},
-	{0x1000, 0x1fff, MWA_RAM},
-	{0x8000, 0x8fff, MWA_ROM},
+	{0x0000, 0x03ff, MWA8_RAM, &vc20_memory},
+	{0x1000, 0x1fff, MWA8_RAM},
+	{0x8000, 0x8fff, MWA8_ROM},
 	{0x9000, 0x900f, vic6560_port_w},
-	{0x9010, 0x910f, MWA_NOP},
+	{0x9010, 0x910f, MWA8_NOP},
 	{0x9110, 0x911f, via_0_w},
 	{0x9120, 0x912f, via_1_w},
-	{0x9130, 0x93ff, MWA_NOP},
+	{0x9130, 0x93ff, MWA8_NOP},
 	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
-	{0x9800, 0x9fff, MWA_NOP},
-	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
+	{0x9800, 0x9fff, MWA8_NOP},
+	{0xc000, 0xffff, MWA8_NOP},		   /* MWA8_ROM }, but logfile */
 MEMORY_END
 
 static MEMORY_READ_START( vc20i_readmem )
-	{0x0000, 0x03ff, MRA_RAM},
+	{0x0000, 0x03ff, MRA8_RAM},
 #if 0
-	{0x0400, 0x0fff, MRA_RAM},		   /* ram, rom or nothing; I think read 0xff! */
+	{0x0400, 0x0fff, MRA8_RAM},		   /* ram, rom or nothing; I think read 0xff! */
 #endif
-	{0x1000, 0x1fff, MRA_RAM},
+	{0x1000, 0x1fff, MRA8_RAM},
 #if 0
-	{0x2000, 0x3fff, MRA_RAM},		   /* ram, rom or nothing */
-	{0x4000, 0x5fff, MRA_RAM},		   /* ram, rom or nothing */
-	{0x6000, 0x7fff, MRA_RAM},		   /* ram, rom or nothing */
+	{0x2000, 0x3fff, MRA8_RAM},		   /* ram, rom or nothing */
+	{0x4000, 0x5fff, MRA8_RAM},		   /* ram, rom or nothing */
+	{0x6000, 0x7fff, MRA8_RAM},		   /* ram, rom or nothing */
 #endif
-	{0x8000, 0x8fff, MRA_ROM},
+	{0x8000, 0x8fff, MRA8_ROM},
 	{0x9000, 0x900f, vic6560_port_r},
-	{0x9010, 0x910f, MRA_NOP},
+	{0x9010, 0x910f, MRA8_NOP},
 	{0x9110, 0x911f, via_0_r},
 	{0x9120, 0x912f, via_1_r},
-	{0x9400, 0x97ff, MRA_RAM},		   /*color ram 4 bit */
+	{0x9400, 0x97ff, MRA8_RAM},		   /*color ram 4 bit */
 	{0x9800, 0x980f, via_4_r},
 	{0x9810, 0x981f, via_5_r},
-	{0xa000, 0xbfff, MRA_ROM},
-	{0xc000, 0xffff, MRA_ROM},
+	{0xa000, 0xbfff, MRA8_ROM},
+	{0xc000, 0xffff, MRA8_ROM},
 MEMORY_END
 
 static MEMORY_WRITE_START( vc20i_writemem )
-	{0x0000, 0x03ff, MWA_RAM, &vc20_memory},
-	{0x1000, 0x1fff, MWA_RAM},
-	{0x8000, 0x8fff, MWA_ROM},
+	{0x0000, 0x03ff, MWA8_RAM, &vc20_memory},
+	{0x1000, 0x1fff, MWA8_RAM},
+	{0x8000, 0x8fff, MWA8_ROM},
 	{0x9000, 0x900f, vic6560_port_w},
-	{0x9010, 0x910f, MWA_NOP},
+	{0x9010, 0x910f, MWA8_NOP},
 	{0x9110, 0x911f, via_0_w},
 	{0x9120, 0x912f, via_1_w},
 	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
 	{0x9800, 0x980f, via_4_w},
 	{0x9810, 0x981f, via_5_w},
-	{0xa000, 0xbfff, MWA_ROM},
-	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
+	{0xa000, 0xbfff, MWA8_ROM},
+	{0xc000, 0xffff, MWA8_NOP},		   /* MWA8_ROM }, but logfile */
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \

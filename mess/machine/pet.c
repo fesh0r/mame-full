@@ -298,7 +298,7 @@ WRITE_HANDLER(cbm8096_w)
 			if (!(data&2)) {
 				memory_set_bankhandler_w(7, 0, MWA_BANK7);
 			} else {
-				memory_set_bankhandler_w(7, 0, MWA_NOP);
+				memory_set_bankhandler_w(7, 0, MWA8_NOP);
 			}
 		}
 		if (!(data&2)) {
@@ -306,9 +306,9 @@ WRITE_HANDLER(cbm8096_w)
 			memory_set_bankhandler_w(8, 0, MWA_BANK8);
 			memory_set_bankhandler_w(9, 0, MWA_BANK9);
 		} else {
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
-			memory_set_bankhandler_w(8, 0, MWA_NOP);
-			memory_set_bankhandler_w(9, 0, MWA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA8_NOP);
+			memory_set_bankhandler_w(8, 0, MWA8_NOP);
+			memory_set_bankhandler_w(9, 0, MWA8_NOP);
 		}
 		if (data&0x20) {
 			cpu_setbank(1,pet_memory+0x8000);
@@ -317,7 +317,7 @@ WRITE_HANDLER(cbm8096_w)
 			if (!(data&1)) {
 				memory_set_bankhandler_w(1, 0, MWA_BANK1);
 			} else {
-				memory_set_bankhandler_w(1, 0, MWA_NOP);
+				memory_set_bankhandler_w(1, 0, MWA8_NOP);
 			}
 		}
 		if (!(data&1)) {
@@ -325,9 +325,9 @@ WRITE_HANDLER(cbm8096_w)
 			memory_set_bankhandler_w(3, 0, MWA_BANK3);
 			memory_set_bankhandler_w(4, 0, MWA_BANK4);
 		} else {
-			memory_set_bankhandler_w(2, 0, MWA_NOP);
-			memory_set_bankhandler_w(3, 0, MWA_NOP);
-			memory_set_bankhandler_w(4, 0, MWA_NOP);
+			memory_set_bankhandler_w(2, 0, MWA8_NOP);
+			memory_set_bankhandler_w(3, 0, MWA8_NOP);
+			memory_set_bankhandler_w(4, 0, MWA8_NOP);
 		}
 		if (data&4) {
 			if (!(data&0x20)) {
@@ -363,20 +363,20 @@ WRITE_HANDLER(cbm8096_w)
 		cpu_setbank(1,pet_memory+0x8000);
 		memory_set_bankhandler_w(1, 0, videoram_w);
 		cpu_setbank(2,pet_memory+0x9000);
-		memory_set_bankhandler_w(2, 0, MWA_ROM);
+		memory_set_bankhandler_w(2, 0, MWA8_ROM);
 		cpu_setbank(3,pet_memory+0xa000);
-		memory_set_bankhandler_w(3, 0, MWA_ROM);
+		memory_set_bankhandler_w(3, 0, MWA8_ROM);
 		cpu_setbank(4,pet_memory+0xb000);
-		memory_set_bankhandler_w(4, 0, MWA_ROM);
+		memory_set_bankhandler_w(4, 0, MWA8_ROM);
 
 		cpu_setbank(6,pet_memory+0xc000);
-		memory_set_bankhandler_w(6, 0, MWA_ROM);
+		memory_set_bankhandler_w(6, 0, MWA8_ROM);
 		memory_set_bankhandler_r(7, 0, cbm8096_io_r);
 		memory_set_bankhandler_w(7, 0, cbm8096_io_w);
 		cpu_setbank(8,pet_memory+0xf000);
-		memory_set_bankhandler_w(8, 0, MWA_ROM);
+		memory_set_bankhandler_w(8, 0, MWA8_ROM);
 		cpu_setbank(9,pet_memory+0xfff1);
-		memory_set_bankhandler_w(9, 0, MWA_ROM);
+		memory_set_bankhandler_w(9, 0, MWA8_ROM);
 	}
 }
 
@@ -508,24 +508,24 @@ MACHINE_INIT( pet )
 
 	switch (MEMORY) {
 	case MEMORY_4:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA_NOP);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_NOP);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA_NOP);
+		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_NOP);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
+		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_NOP);
 		break;
 	case MEMORY_8:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA_RAM);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_NOP);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA_NOP);
+		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_RAM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
+		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_NOP);
 		break;
 	case MEMORY_16:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA_RAM);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_RAM);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA_NOP);
+		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_RAM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_RAM);
+		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_NOP);
 		break;
 	case MEMORY_32:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA_RAM);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_RAM);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA_RAM);
+		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_RAM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_RAM);
+		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_RAM);
 		break;
 	}
 
@@ -533,7 +533,7 @@ MACHINE_INIT( pet )
 		if (CBM8096_MEMORY) {
 			install_mem_write_handler(0, 0xfff0, 0xfff0, cbm8096_w);
 		} else {
-			install_mem_write_handler(0, 0xfff0, 0xfff0, MWA_NOP);
+			install_mem_write_handler(0, 0xfff0, 0xfff0, MWA8_NOP);
 		}
 		cbm8096_w(0,0);
 	}

@@ -201,7 +201,7 @@ when problems start with -log and look into error.log file
 
 static MEMORY_READ_START( c16_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
-	{0x0002, 0x3fff, MRA_RAM},
+	{0x0002, 0x3fff, MRA8_RAM},
 	{0x4000, 0x7fff, MRA_BANK1},	   /* only ram memory configuration */
 	{0x8000, 0xbfff, MRA_BANK2},
 	{0xc000, 0xfbff, MRA_BANK3},
@@ -215,12 +215,12 @@ static MEMORY_READ_START( c16_readmem )
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
-/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
+/*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
 MEMORY_END
 
 static MEMORY_WRITE_START( c16_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
-	{0x0002, 0x3fff, MWA_RAM},
+	{0x0002, 0x3fff, MWA8_RAM},
 #ifndef NEW_BANKHANDLER
 	{0x4000, 0x7fff, MWA_BANK5},
 	{0x8000, 0xbfff, MWA_BANK6},
@@ -248,13 +248,13 @@ static MEMORY_WRITE_START( c16_writemem )
 	{0xff3f, 0xff3f, c16_switch_to_ram},
 #if 0
 	{0xff40, 0xffff, c16_write_ff40},  /*configure in c16_common_init */
-//	{0x10000, 0x3ffff, MWA_ROM},
+//	{0x10000, 0x3ffff, MWA8_ROM},
 #endif
 MEMORY_END
 
 static MEMORY_READ_START( plus4_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
-	{0x0002, 0x7fff, MRA_RAM},
+	{0x0002, 0x7fff, MRA8_RAM},
 	{0x8000, 0xbfff, MRA_BANK2},
 	{0xc000, 0xfbff, MRA_BANK3},
 	{0xfc00, 0xfcff, MRA_BANK4},
@@ -268,12 +268,12 @@ static MEMORY_READ_START( plus4_readmem )
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
-/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
+/*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
 MEMORY_END
 
 static MEMORY_WRITE_START( plus4_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
-	{0x0002, 0xfcff, MWA_RAM},
+	{0x0002, 0xfcff, MWA8_RAM},
 	{0xfd00, 0xfd0f, c16_6551_port_w},
 	{0xfd10, 0xfd1f, plus4_6529_port_w},
 	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
@@ -286,16 +286,16 @@ static MEMORY_WRITE_START( plus4_writemem )
 	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
 #endif
 	{0xff00, 0xff1f, ted7360_port_w},
-	{0xff20, 0xff3d, MWA_RAM},
+	{0xff20, 0xff3d, MWA8_RAM},
 	{0xff3e, 0xff3e, c16_switch_to_rom},
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
-	{0xff40, 0xffff, MWA_RAM},
-//	{0x10000, 0x3ffff, MWA_ROM},
+	{0xff40, 0xffff, MWA8_RAM},
+//	{0x10000, 0x3ffff, MWA8_ROM},
 MEMORY_END
 
 static MEMORY_READ_START( c364_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
-	{0x0002, 0x7fff, MRA_RAM},
+	{0x0002, 0x7fff, MRA8_RAM},
 	{0x8000, 0xbfff, MRA_BANK2},
 	{0xc000, 0xfbff, MRA_BANK3},
 	{0xfc00, 0xfcff, MRA_BANK4},
@@ -310,12 +310,12 @@ static MEMORY_READ_START( c364_readmem )
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
-/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
+/*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
 MEMORY_END
 
 static MEMORY_WRITE_START( c364_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
-	{0x0002, 0xfcff, MWA_RAM},
+	{0x0002, 0xfcff, MWA8_RAM},
 	{0xfd00, 0xfd0f, c16_6551_port_w},
 	{0xfd10, 0xfd1f, plus4_6529_port_w},
 	{0xfd20, 0xfd2f, c364_speech_w },
@@ -329,11 +329,11 @@ static MEMORY_WRITE_START( c364_writemem )
 	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
 #endif
 	{0xff00, 0xff1f, ted7360_port_w},
-	{0xff20, 0xff3d, MWA_RAM},
+	{0xff20, 0xff3d, MWA8_RAM},
 	{0xff3e, 0xff3e, c16_switch_to_rom},
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
-	{0xff40, 0xffff, MWA_RAM},
-//	{0x10000, 0x3ffff, MWA_ROM},
+	{0xff40, 0xffff, MWA8_RAM},
+//	{0x10000, 0x3ffff, MWA8_ROM},
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \

@@ -77,66 +77,66 @@ Hardware:	PPIA 8255
 /* memory w/r functions */
 
 static MEMORY_READ_START (atom_readmem)
-	{ 0x0000, 0x09ff, MRA_RAM },
+	{ 0x0000, 0x09ff, MRA8_RAM },
     { 0x0a00, 0x0a04, atom_8271_r},
-	{ 0x0a05, 0x07fff, MRA_RAM},
+	{ 0x0a05, 0x07fff, MRA8_RAM},
 	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
-	{ 0x9800, 0x9fff, MRA_RAM },
+	{ 0x9800, 0x9fff, MRA8_RAM },
     { 0xb000, 0xb003, ppi8255_0_r },    // PPIA 8255
 	{ 0xb800, 0xbbff, atom_via_r},		// VIA 6522
-    { 0xc000, 0xcfff, MRA_ROM },
-    { 0xd000, 0xdfff, MRA_ROM },
-    { 0xe000, 0xefff, MRA_ROM },
-    { 0xf000, 0xffff, MRA_ROM },
+    { 0xc000, 0xcfff, MRA8_ROM },
+    { 0xd000, 0xdfff, MRA8_ROM },
+    { 0xe000, 0xefff, MRA8_ROM },
+    { 0xf000, 0xffff, MRA8_ROM },
 
 MEMORY_END
 
 static MEMORY_WRITE_START (atom_writemem)
-	{ 0x0000, 0x09ff, MWA_RAM },
+	{ 0x0000, 0x09ff, MWA8_RAM },
     { 0x0a00, 0x0a04, atom_8271_w},
-	{ 0x0a05, 0x07fff, MWA_RAM},
+	{ 0x0a05, 0x07fff, MWA8_RAM},
 	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
-	{ 0x9800, 0x9fff, MWA_RAM },
+	{ 0x9800, 0x9fff, MWA8_RAM },
     { 0xb000, 0xb003, ppi8255_0_w },    // PIA 8255
 	{ 0xb800, 0xbbff, atom_via_w},		// VIA 6522
-	{ 0xc000, 0xffff, MWA_ROM },
-    { 0xd000, 0xdfff, MWA_ROM },
-    { 0xe000, 0xefff, MWA_ROM },
-    { 0xf000, 0xffff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA8_ROM },
+    { 0xd000, 0xdfff, MWA8_ROM },
+    { 0xe000, 0xefff, MWA8_ROM },
+    { 0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 
 static MEMORY_READ_START (atomeb_readmem)
-	{ 0x0000, 0x09ff, MRA_RAM },
+	{ 0x0000, 0x09ff, MRA8_RAM },
     { 0x0a00, 0x0a04, atom_8271_r},
-	{ 0x0a05, 0x07fff, MRA_RAM},
+	{ 0x0a05, 0x07fff, MRA8_RAM},
 	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
-	{ 0x9800, 0x9fff, MRA_RAM },
+	{ 0x9800, 0x9fff, MRA8_RAM },
     { 0xa000, 0xafff, MRA_BANK1 },		// eprom data from eprom box
     { 0xb000, 0xb003, ppi8255_0_r },    // PPIA 8255
 	{ 0xb800, 0xbbff, atom_via_r},		// VIA 6522
     { 0xbfff, 0xbfff, atom_eprom_box_r},
-	{ 0xc000, 0xcfff, MRA_ROM },
-    { 0xd000, 0xdfff, MRA_ROM },
-    { 0xe000, 0xefff, MRA_ROM },
-    { 0xf000, 0xffff, MRA_ROM },
+	{ 0xc000, 0xcfff, MRA8_ROM },
+    { 0xd000, 0xdfff, MRA8_ROM },
+    { 0xe000, 0xefff, MRA8_ROM },
+    { 0xf000, 0xffff, MRA8_ROM },
 
 MEMORY_END
 
 static MEMORY_WRITE_START (atomeb_writemem)
-	{ 0x0000, 0x09ff, MWA_RAM },
+	{ 0x0000, 0x09ff, MWA8_RAM },
     { 0x0a00, 0x0a04, atom_8271_w},
-	{ 0x0a05, 0x07fff, MWA_RAM},
+	{ 0x0a05, 0x07fff, MWA8_RAM},
 	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
-	{ 0x9800, 0x9fff, MWA_RAM },
- /*   { 0xa000, 0xafff, MWA_NOP }, */
+	{ 0x9800, 0x9fff, MWA8_RAM },
+ /*   { 0xa000, 0xafff, MWA8_NOP }, */
     { 0xb000, 0xb003, ppi8255_0_w },    // PIA 8255
 	{ 0xb800, 0xbbff, atom_via_w},		// VIA 6522
     { 0xbfff, 0xbfff, atom_eprom_box_w},
-	{ 0xc000, 0xffff, MWA_ROM },
-    { 0xd000, 0xdfff, MWA_ROM },
-    { 0xe000, 0xefff, MWA_ROM },
-    { 0xf000, 0xffff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA8_ROM },
+    { 0xd000, 0xdfff, MWA8_ROM },
+    { 0xe000, 0xefff, MWA8_ROM },
+    { 0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 /* graphics output */
 

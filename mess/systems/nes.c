@@ -21,16 +21,6 @@
 unsigned char *battery_ram;
 unsigned char *main_ram;
 
-static READ_HANDLER ( nes_mirrorram_r )
-{
-    return main_ram[offset & 0x7ff];
-}
-
-static WRITE_HANDLER ( nes_mirrorram_w )
-{
-    main_ram[offset & 0x7ff] = data;
-}
-
 static READ_HANDLER ( nes_bogus_r )
 {
     static int val = 0xff;
@@ -38,32 +28,15 @@ static READ_HANDLER ( nes_bogus_r )
     return val;
 }
 
-MEMORY_READ_START( readmem_nes )
-    { 0x0000, 0x07ff, MRA_RAM },                /* RAM */
-    { 0x0800, 0x1fff, nes_mirrorram_r },        /* mirrors of RAM */
-    { 0x2000, 0x3fff, ppu2c03b_0_r },           /* PPU registers */
-    { 0x4015, 0x4015, nes_bogus_r },            /* ?? sound status ?? */
-    { 0x4016, 0x4016, nes_IN0_r },              /* IN0 - input port 1 */
-    { 0x4017, 0x4017, nes_IN1_r },              /* IN1 - input port 2 */
-    { 0x4100, 0x5fff, nes_low_mapper_r },       /* Perform unholy acts on the machine */
-//  { 0x6000, 0x7fff, MRA_BANK5 },              /* RAM (also trainer ROM) */
-//  { 0x8000, 0x9fff, MRA_BANK1 },              /* 4 16k NES_ROM banks */
-//  { 0xa000, 0xbfff, MRA_BANK2 },
-//  { 0xc000, 0xdfff, MRA_BANK3 },
-//  { 0xe000, 0xffff, MRA_BANK4 },
-MEMORY_END
-
-MEMORY_WRITE_START( writemem_nes )
-    { 0x0000, 0x07ff, MWA_RAM, &main_ram },
-    { 0x0800, 0x1fff, nes_mirrorram_w },        /* mirrors of RAM */
-    { 0x2000, 0x3fff, ppu2c03b_0_w },           /* PPU registers */
-    { 0x4000, 0x4015, NESPSG_0_w },
-    { 0x4016, 0x4016, nes_IN0_w },              /* IN0 - input port 1 */
-    { 0x4017, 0x4017, nes_IN1_w },              /* IN1 - input port 2 */
-    { 0x4100, 0x5fff, nes_low_mapper_w },       /* Perform unholy acts on the machine */
-//  { 0x6000, 0x7fff, nes_mid_mapper_w },       /* RAM (sometimes battery-backed) */
-//  { 0x8000, 0xffff, nes_mapper_w },           /* Perform unholy acts on the machine */
-MEMORY_END
+static ADDRESS_MAP_START( nes_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM		AM_MIRROR(0x1800)	AM_BASE(&main_ram)	/* RAM */
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c03b_0_r,     ppu2c03b_0_w)		/* PPU registers */
+	AM_RANGE(0x4000, 0x4014) AM_WRITE(NESPSG_0_w)
+	AM_RANGE(0x4015, 0x4015) AM_READWRITE(nes_bogus_r,      NESPSG_0_w)			/* ?? sound status ?? */
+	AM_RANGE(0x4016, 0x4016) AM_READWRITE(nes_IN0_r,        nes_IN0_w)			/* IN0 - input port 1 */
+	AM_RANGE(0x4017, 0x4017) AM_READWRITE(nes_IN0_r,        nes_IN1_w)			/* IN1 - input port 2 */
+	AM_RANGE(0x4100, 0x5fff) AM_READWRITE(nes_low_mapper_r, nes_low_mapper_w)	/* Perform unholy acts on the machine */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( nes )
@@ -235,13 +208,6 @@ struct GfxLayout nes_vram_charlayout =
 };
 
 
-static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
-{
-//    { REGION_GFX1, 0x0000, &nes_charlayout,        0, 8 },
-//    { REGION_GFX2, 0x0000, &nes_vram_charlayout,   0, 8 },
-MEMORY_END   /* end of array */
-
-
 static WRITE_HANDLER(nes_vh_sprite_dma_w)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -298,7 +264,7 @@ ROM_END
 static MACHINE_DRIVER_START( nes )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", N2A03, N2A03_DEFAULTCLOCK)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(readmem_nes,writemem_nes)
+	MDRV_CPU_PROGRAM_MAP(nes_map, 0)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(114*(NTSC_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
 
@@ -311,8 +277,6 @@ static MACHINE_DRIVER_START( nes )
 	MDRV_PALETTE_INIT(nes)
 	MDRV_VIDEO_START(nes)
 	MDRV_VIDEO_UPDATE(nes)
-
-	MDRV_GFXDECODE(nes_gfxdecodeinfo)
 
 	MDRV_PALETTE_LENGTH(4*16*8)
 	MDRV_COLORTABLE_LENGTH(4*8)

@@ -76,10 +76,10 @@ PORT_END
 /* memory w/r functions */
 MEMORY_READ_START( dai_readmem )
 	{ 0x0000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA8_ROM },
 	{ 0xe000, 0xefff, MRA_BANK2 },
-	{ 0xf000, 0xf7ff, MRA_NOP },
-	{ 0xf800, 0xf8ff, MRA_RAM },
+	{ 0xf000, 0xf7ff, MRA8_NOP },
+	{ 0xf800, 0xf8ff, MRA8_RAM },
 	{ 0xfb00, 0xfbff, amd9511_r },
 	{ 0xfc00, 0xfcff, pit8253_0_r },
 	{ 0xfd00, 0xfdff, dai_io_discrete_devices_r },
@@ -89,10 +89,10 @@ MEMORY_END
 
 MEMORY_WRITE_START( dai_writemem )
 	{ 0x0000, 0xbfff, MWA_BANK1},
-	{ 0xc000, 0xdfff, MWA_ROM},
+	{ 0xc000, 0xdfff, MWA8_ROM},
 	{ 0xe000, 0xefff, MWA_BANK2},
-	{ 0xf000, 0xf7ff, MWA_NOP},
-	{ 0xf800, 0xf8ff, MWA_RAM},
+	{ 0xf000, 0xf7ff, MWA8_NOP},
+	{ 0xf800, 0xf8ff, MWA8_RAM},
 	{ 0xfb00, 0xfbff, amd9511_w },
 	{ 0xfc00, 0xfcff, pit8253_0_w },
 	{ 0xfd00, 0xfdff, dai_io_discrete_devices_w },

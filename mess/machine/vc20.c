@@ -528,58 +528,58 @@ MACHINE_INIT( vc20 )
 {
 	if (RAMIN0X0400)
 	{
-		install_mem_write_handler (0, 0x400, 0xfff, MWA_RAM);
-		install_mem_read_handler (0, 0x400, 0xfff, MRA_RAM);
+		install_mem_write_handler (0, 0x400, 0xfff, MWA8_RAM);
+		install_mem_read_handler (0, 0x400, 0xfff, MRA8_RAM);
 	}
 	else
 	{
-		install_mem_write_handler (0, 0x400, 0xfff, MWA_NOP);
-		install_mem_read_handler (0, 0x400, 0xfff, MRA_ROM);
+		install_mem_write_handler (0, 0x400, 0xfff, MWA8_NOP);
+		install_mem_read_handler (0, 0x400, 0xfff, MRA8_ROM);
 	}
 	if (RAMIN0X2000)
 	{
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_RAM);
-		install_mem_read_handler (0, 0x2000, 0x3fff, MRA_RAM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_RAM);
+		install_mem_read_handler (0, 0x2000, 0x3fff, MRA8_RAM);
 	}
 	else
 	{
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_NOP);
-		install_mem_read_handler (0, 0x2000, 0x3fff, MRA_ROM);
+		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
+		install_mem_read_handler (0, 0x2000, 0x3fff, MRA8_ROM);
 	}
 	if (RAMIN0X4000)
 	{
-		install_mem_write_handler (0, 0x4000, 0x5fff, MWA_RAM);
-		install_mem_read_handler (0, 0x4000, 0x5fff, MRA_RAM);
+		install_mem_write_handler (0, 0x4000, 0x5fff, MWA8_RAM);
+		install_mem_read_handler (0, 0x4000, 0x5fff, MRA8_RAM);
 	}
 	else
 	{
-		install_mem_write_handler (0, 0x4000, 0x5fff, MWA_NOP);
-		install_mem_read_handler (0, 0x4000, 0x5fff, MRA_ROM);
+		install_mem_write_handler (0, 0x4000, 0x5fff, MWA8_NOP);
+		install_mem_read_handler (0, 0x4000, 0x5fff, MRA8_ROM);
 	}
 	if (RAMIN0X6000)
 	{
-		install_mem_write_handler (0, 0x6000, 0x7fff, MWA_RAM);
-		install_mem_read_handler (0, 0x6000, 0x7fff, MRA_RAM);
+		install_mem_write_handler (0, 0x6000, 0x7fff, MWA8_RAM);
+		install_mem_read_handler (0, 0x6000, 0x7fff, MRA8_RAM);
 	}
 	else
 	{
-		install_mem_write_handler (0, 0x6000, 0x7fff, MWA_NOP);
-		install_mem_read_handler (0, 0x6000, 0x7fff, MRA_ROM);
+		install_mem_write_handler (0, 0x6000, 0x7fff, MWA8_NOP);
+		install_mem_read_handler (0, 0x6000, 0x7fff, MRA8_ROM);
 	}
 	if (ieee)
 	{
-		install_mem_write_handler (0, 0xa000, 0xbfff, MWA_ROM);
-		install_mem_read_handler (0, 0xa000, 0xbfff, MRA_ROM);
+		install_mem_write_handler (0, 0xa000, 0xbfff, MWA8_ROM);
+		install_mem_read_handler (0, 0xa000, 0xbfff, MRA8_ROM);
 	}
 	else if	(RAMIN0XA000)
 	{
-		install_mem_write_handler (0, 0xa000, 0xbfff, MWA_RAM);
-		install_mem_read_handler (0, 0xa000, 0xbfff, MRA_RAM);
+		install_mem_write_handler (0, 0xa000, 0xbfff, MWA8_RAM);
+		install_mem_read_handler (0, 0xa000, 0xbfff, MRA8_RAM);
 	}
 	else
 	{
-		install_mem_write_handler (0, 0xa000, 0xbfff, MWA_NOP);
-		install_mem_read_handler (0, 0xa000, 0xbfff, MRA_ROM);
+		install_mem_write_handler (0, 0xa000, 0xbfff, MWA8_NOP);
+		install_mem_read_handler (0, 0xa000, 0xbfff, MRA8_ROM);
 	}
 
 	cbm_serial_reset_write (0);

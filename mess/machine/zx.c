@@ -95,13 +95,13 @@ MACHINE_INIT( zx80 )
 {
 	if (readinputport(0) & 0x80)
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA_RAM);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA_RAM);
+		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_RAM);
+		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_RAM);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA_NOP);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA_NOP);
+		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_NOP);
+		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_NOP);
 	}
 	common_init_machine();
 }
@@ -110,13 +110,13 @@ MACHINE_INIT( zx81 )
 {
 	if (readinputport(0) & 0x80)
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA_RAM);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA_RAM);
+		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_RAM);
+		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_RAM);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA_NOP);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA_NOP);
+		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_NOP);
+		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_NOP);
 	}
 	common_init_machine();
 }

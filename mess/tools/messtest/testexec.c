@@ -151,6 +151,43 @@ int osd_trying_to_quit(void)
 
 
 
+static void find_switch(const char *switch_name, const char *switch_setting,
+	int switch_type, int switch_setting_type,
+	struct InputPort **in_switch, struct InputPort **in_switch_setting)
+{
+	struct InputPort *in;
+
+	*in_switch = NULL;
+	*in_switch_setting = NULL;
+
+	/* find switch with the name */
+	in = Machine->input_ports;
+	while(in->type != IPT_END)
+	{
+		if ((in->type & ~IPF_MASK) == switch_type && (in->type & IPF_UNUSED) == 0
+			&& input_port_name(in) && !stricmp(input_port_name(in), switch_name))
+			break;
+		in++;
+	}
+	if (in->type == IPT_END)
+		return;
+	*in_switch = in;
+
+	/* find the setting */
+	in++;
+	while((in->type & ~IPF_MASK) == switch_setting_type)
+	{
+		if ((in->type & IPF_UNUSED) == 0 && input_port_name(in) && !stricmp(input_port_name(in), switch_setting))
+			break;
+		in++;
+	}
+	if ((in->type & ~IPF_MASK) != switch_setting_type)
+		return;
+	*in_switch_setting = in;
+}
+
+
+
 void osd_update_video_and_audio(struct mame_display *display)
 {
 	int i;
@@ -167,6 +204,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 	const char *filename;
 	char buf[128];
 	mess_image *image;
+	struct InputPort *switch_name;
+	struct InputPort *switch_setting;
 
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
@@ -214,6 +253,32 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 	case MESSTEST_COMMAND_SCREENSHOT:
 		dump_screenshot();
+		break;
+
+	case MESSTEST_COMMAND_SWITCH:
+		find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
+			IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING, &switch_name, &switch_setting);
+
+		if (!switch_name || !switch_setting)
+		{
+			find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
+				IPT_CONFIG_NAME, IPT_CONFIG_SETTING, &switch_name, &switch_setting);
+		}
+
+		if (!switch_name)
+		{
+			message(MSG_FAILURE, "Cannot find switch named '%s'", current_command->u.switch_args.name);
+			break;
+		}
+
+		if (!switch_setting)
+		{
+			message(MSG_FAILURE, "Cannot find setting '%s' on switch '%s'",
+				current_command->u.switch_args.value, current_command->u.switch_args.name);
+			break;
+		}
+
+		switch_name->default_value = switch_setting->default_value;
 		break;
 
 	case MESSTEST_COMMAND_IMAGE_CREATE:

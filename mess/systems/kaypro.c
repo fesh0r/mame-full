@@ -14,11 +14,11 @@
 #include "devices/basicdsk.h"
 
 static MEMORY_READ_START( readmem_kaypro )
-    { 0x0000, 0xffff, MRA_RAM },
+    { 0x0000, 0xffff, MRA8_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_kaypro )
-    { 0x0000, 0xffff, MWA_RAM },
+    { 0x0000, 0xffff, MWA8_RAM },
 MEMORY_END
 
 PORT_READ_START( readport_kaypro )

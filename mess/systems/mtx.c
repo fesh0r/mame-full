@@ -642,7 +642,7 @@ static MACHINE_INIT( mtx512 )
 
 
 	memory_set_bankhandler_w(9, 0, mtx_trap_write);
-	memory_set_bankhandler_w(10, 0, MWA_NOP);
+	memory_set_bankhandler_w(10, 0, MWA8_NOP);
 	memory_set_bankhandler_w(11, 0, MWA_BANK11);
 	memory_set_bankhandler_w(12, 0, MWA_BANK12);
 	memory_set_bankhandler_w(13, 0, MWA_BANK13);

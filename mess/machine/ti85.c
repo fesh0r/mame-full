@@ -145,7 +145,7 @@ static void update_ti86_memory (void)
 	else
 	{
 		cpu_setbank(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti85_memory_page_0x4000&0x0f));
-		memory_set_bankhandler_w(6, 0, MWA_ROM);
+		memory_set_bankhandler_w(6, 0, MWA8_ROM);
 	}
 	if (ti86_memory_page_0x8000 & 0x40)
 	{
@@ -156,7 +156,7 @@ static void update_ti86_memory (void)
 	else
 	{
 		cpu_setbank(3,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti86_memory_page_0x8000&0x0f));
-		memory_set_bankhandler_w(7, 0, MWA_ROM);
+		memory_set_bankhandler_w(7, 0, MWA8_ROM);
 	}
 }
 
@@ -190,9 +190,9 @@ MACHINE_INIT( ti81 )
 	timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_w(3, 0, MWA_ROM);
+	memory_set_bankhandler_w(3, 0, MWA8_ROM);
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_w(4, 0, MWA_ROM);
+	memory_set_bankhandler_w(4, 0, MWA8_ROM);
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 }
@@ -224,9 +224,9 @@ MACHINE_INIT( ti85 )
 	ti85_reset_serial();
 
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_w(3, 0, MWA_ROM);
+	memory_set_bankhandler_w(3, 0, MWA8_ROM);
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_w(4, 0, MWA_ROM);
+	memory_set_bankhandler_w(4, 0, MWA8_ROM);
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 }
@@ -262,7 +262,7 @@ MACHINE_INIT( ti86 )
 		memory_set_bankhandler_r(3, 0, MRA_BANK3);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-		memory_set_bankhandler_w(5, 0, MWA_ROM);
+		memory_set_bankhandler_w(5, 0, MWA8_ROM);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
 		memory_set_bankhandler_w(8, 0, MWA_BANK8);

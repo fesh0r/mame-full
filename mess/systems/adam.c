@@ -230,17 +230,17 @@ and the 6801 ASM code is a replacement coded for this driver.
 
 static MEMORY_READ_START( master6801_readmem )
 	{ 0x0000, 0x001f, m6803_internal_registers_r },
-	{ 0x0020, 0x007f, MRA_NOP }, /* Unused */
-	{ 0x0080, 0x00ff, MRA_RAM }, /* 6801 internal RAM */
-	{ 0x0100, 0x3fff, MRA_ROM }, /* Replacement Master ROM code */
+	{ 0x0020, 0x007f, MRA8_NOP }, /* Unused */
+	{ 0x0080, 0x00ff, MRA8_RAM }, /* 6801 internal RAM */
+	{ 0x0100, 0x3fff, MRA8_ROM }, /* Replacement Master ROM code */
 	{ 0x4000, 0xffff, master6801_ram_r }, /* RAM Memory shared with Z80 not banked*/
 MEMORY_END
 
 static MEMORY_WRITE_START( master6801_writemem )
 	{ 0x0000, 0x001f, m6803_internal_registers_w },
-	{ 0x0020, 0x007f, MWA_NOP }, /* Unused */
-	{ 0x0080, 0x00ff, MWA_NOP }, /* 6801 internal RAM */
-	{ 0x0100, 0x3fff, MWA_NOP }, /* Unused */
+	{ 0x0020, 0x007f, MWA8_NOP }, /* Unused */
+	{ 0x0080, 0x00ff, MWA8_NOP }, /* 6801 internal RAM */
+	{ 0x0100, 0x3fff, MWA8_NOP }, /* Unused */
     { 0x4000, 0xffff, master6801_ram_w }, /* RAM Memory shared with Z80 not banked*/
 MEMORY_END
 

@@ -571,10 +571,10 @@ MACHINE_INIT( c16 )
 		install_mem_read_handler (0, 0xfe80, 0xfe9f, sid6581_0_port_r);
 		install_mem_write_handler (0, 0xfe80, 0xfe9f, sid6581_0_port_w);
 	} else {
-		install_mem_read_handler (0, 0xfd40, 0xfd5f, MRA_NOP);
-		install_mem_write_handler (0, 0xfd40, 0xfd5f, MWA_NOP);
-		install_mem_read_handler (0, 0xfe80, 0xfe9f, MRA_NOP);
-		install_mem_write_handler (0, 0xfe80, 0xfe9f, MWA_NOP);
+		install_mem_read_handler (0, 0xfd40, 0xfd5f, MRA8_NOP);
+		install_mem_write_handler (0, 0xfd40, 0xfd5f, MWA8_NOP);
+		install_mem_read_handler (0, 0xfe80, 0xfe9f, MRA8_NOP);
+		install_mem_write_handler (0, 0xfe80, 0xfe9f, MWA8_NOP);
 	}
 
 #if 0
@@ -606,7 +606,7 @@ MACHINE_INIT( c16 )
 			break;
 		case MEMORY32K:
 #ifdef NEW_BANKHANDLER
-			install_mem_write_handler (0, 0x4000, 0x7fff, MWA_RAM);
+			install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_RAM);
 			cpu_setbank (5, c16_memory);
 			install_mem_write_handler (0, 0x8000, 0xfcff, MWA_BANK5);
 			cpu_setbank (6, (c16_memory + 0x7f20));
@@ -626,19 +626,19 @@ MACHINE_INIT( c16 )
 			}
 			break;
 		case MEMORY64K:
-			install_mem_write_handler (0, 0x4000, 0xfcff, MWA_RAM);
+			install_mem_write_handler (0, 0x4000, 0xfcff, MWA8_RAM);
 			if (SIDCARD_HACK) {
 				install_mem_write_handler (0, 0xd400, 0xd41f, c16_sidcart_64k);
 			}
-			install_mem_write_handler (0, 0xff20, 0xff3d, MWA_RAM);
-			install_mem_write_handler (0, 0xff40, 0xffff, MWA_RAM);
+			install_mem_write_handler (0, 0xff20, 0xff3d, MWA8_RAM);
+			install_mem_write_handler (0, 0xff40, 0xffff, MWA8_RAM);
 			ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
 			break;
 		}
 	}
 	else
 	{
-		install_mem_write_handler (0, 0x4000, 0xfcff, MWA_RAM);
+		install_mem_write_handler (0, 0x4000, 0xfcff, MWA8_RAM);
 		if (SIDCARD_HACK) {
 			install_mem_write_handler (0, 0xd400, 0xd41f, c16_sidcart_64k);
 		}
@@ -651,8 +651,8 @@ MACHINE_INIT( c16 )
 	}
 	else
 	{
-		install_mem_write_handler (0, 0xfee0, 0xfeff, MWA_NOP);
-		install_mem_read_handler (0, 0xfee0, 0xfeff, MRA_NOP);
+		install_mem_write_handler (0, 0xfee0, 0xfeff, MWA8_NOP);
+		install_mem_read_handler (0, 0xfee0, 0xfeff, MRA8_NOP);
 	}
 	if (IEC9ON)
 	{
@@ -661,8 +661,8 @@ MACHINE_INIT( c16 )
 	}
 	else
 	{
-		install_mem_write_handler (0, 0xfec0, 0xfedf, MWA_NOP);
-		install_mem_read_handler (0, 0xfec0, 0xfedf, MRA_NOP);
+		install_mem_write_handler (0, 0xfec0, 0xfedf, MWA8_NOP);
+		install_mem_read_handler (0, 0xfec0, 0xfedf, MRA8_NOP);
 	}
 
 	if (SERIAL8ON)

@@ -25,40 +25,40 @@
 #endif
 
 MEMORY_READ_START( readmem_zx80 )
-	{0x0000, 0x0fff, MRA_ROM},
-	{0x4000, 0x43ff, MRA_RAM},
-	{0x8000, 0xffff, MRA_NOP},
+	{0x0000, 0x0fff, MRA8_ROM},
+	{0x4000, 0x43ff, MRA8_RAM},
+	{0x8000, 0xffff, MRA8_NOP},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_zx80 )
-	{0x0000, 0x0fff, MWA_ROM},
-	{0x4000, 0x43ff, MWA_RAM},
-	{0x8000, 0xffff, MWA_NOP},
+	{0x0000, 0x0fff, MWA8_ROM},
+	{0x4000, 0x43ff, MWA8_RAM},
+	{0x8000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 
 MEMORY_READ_START( readmem_zx81 )
-	{0x0000, 0x1fff, MRA_ROM},
-	{0x4000, 0x43ff, MRA_RAM},
-	{0x8000, 0xffff, MRA_NOP},
+	{0x0000, 0x1fff, MRA8_ROM},
+	{0x4000, 0x43ff, MRA8_RAM},
+	{0x8000, 0xffff, MRA8_NOP},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_zx81 )
-	{0x0000, 0x3fff, MWA_ROM},
-	{0x4000, 0x43ff, MWA_RAM},
-	{0x8000, 0xffff, MWA_NOP},
+	{0x0000, 0x3fff, MWA8_ROM},
+	{0x4000, 0x43ff, MWA8_RAM},
+	{0x8000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 MEMORY_READ_START( readmem_pc8300 )
-	{0x0000, 0x1fff, MRA_ROM},
-	{0x4000, 0x7fff, MRA_RAM},		   /* PC8300 comes with 16K RAM */
-	{0x8000, 0xffff, MRA_NOP},
+	{0x0000, 0x1fff, MRA8_ROM},
+	{0x4000, 0x7fff, MRA8_RAM},		   /* PC8300 comes with 16K RAM */
+	{0x8000, 0xffff, MRA8_NOP},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_pc8300 )
-	{0x0000, 0x3fff, MWA_ROM},
-	{0x4000, 0x7fff, MWA_RAM},		   /* PC8300 comes with 16K RAM */
-	{0x8000, 0xffff, MWA_NOP},
+	{0x0000, 0x3fff, MWA8_ROM},
+	{0x4000, 0x7fff, MWA8_RAM},		   /* PC8300 comes with 16K RAM */
+	{0x8000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 static PORT_READ_START (readport)
@@ -70,15 +70,15 @@ static PORT_WRITE_START (writeport)
 PORT_END
 
 MEMORY_READ_START( readmem_pow3000 )
-	{0x0000, 0x1fff, MRA_ROM},
-	{0x4000, 0x7fff, MRA_RAM},		   /* Power 3000 comes with 16K RAM */
-	{0x8000, 0xffff, MRA_NOP},
+	{0x0000, 0x1fff, MRA8_ROM},
+	{0x4000, 0x7fff, MRA8_RAM},		   /* Power 3000 comes with 16K RAM */
+	{0x8000, 0xffff, MRA8_NOP},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_pow3000 )
-	{0x0000, 0x3fff, MWA_ROM},
-	{0x4000, 0x7fff, MWA_RAM},		   /* Power 3000 comes with 16K RAM */
-	{0x8000, 0xffff, MWA_NOP},
+	{0x0000, 0x3fff, MWA8_ROM},
+	{0x4000, 0x7fff, MWA8_RAM},		   /* Power 3000 comes with 16K RAM */
+	{0x8000, 0xffff, MWA8_NOP},
 MEMORY_END
 
 static PORT_READ_START (readport_pow3000)

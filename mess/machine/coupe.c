@@ -50,8 +50,8 @@ void coupe_update_memory(void)
 		}
 		else
 		{
-			memory_set_bankhandler_r(1, 0, MRA_NOP);	/* Attempt to page in non existant ram region */
-			memory_set_bankhandler_w(1, 0, MWA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
+			memory_set_bankhandler_w(1, 0, MWA8_NOP);
 		}
 	}
 	else
@@ -59,7 +59,7 @@ void coupe_update_memory(void)
 		cpu_setbank(1, rom);	/* Rom0 paged in */
 		cpu_setbank(1, rom);
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_w(1, 0, MWA_ROM);
+		memory_set_bankhandler_w(1, 0, MWA8_ROM);
 	}
 
 	if (( (LMPR+1) & 0x1F) <= PAGE_MASK)
@@ -70,8 +70,8 @@ void coupe_update_memory(void)
 	}
 	else
 	{
-		memory_set_bankhandler_r(2, 0, MRA_NOP);	/* Attempt to page in non existant ram region */
-		memory_set_bankhandler_w(2, 0, MWA_NOP);
+		memory_set_bankhandler_r(2, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
+		memory_set_bankhandler_w(2, 0, MWA8_NOP);
 	}
 
 	if ( (HMPR & 0x1F) <= PAGE_MASK )
@@ -82,15 +82,15 @@ void coupe_update_memory(void)
 	}
 	else
 	{
-		memory_set_bankhandler_r(3, 0, MRA_NOP);	/* Attempt to page in non existant ram region */
-		memory_set_bankhandler_w(3, 0, MWA_NOP);
+		memory_set_bankhandler_r(3, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
+		memory_set_bankhandler_w(3, 0, MWA8_NOP);
 	}
 
 	if (LMPR & LMPR_ROM1)	/* Is Rom1 paged in at bank 4 */
 	{
 		cpu_setbank(4, rom + 0x4000);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
-		memory_set_bankhandler_w(4, 0, MWA_ROM);
+		memory_set_bankhandler_w(4, 0, MWA8_ROM);
 	}
 	else
 	{
@@ -102,8 +102,8 @@ void coupe_update_memory(void)
 		}
 		else
 		{
-			memory_set_bankhandler_r(4, 0, MRA_NOP);	/* Attempt to page in non existant ram region */
-			memory_set_bankhandler_w(4, 0, MWA_NOP);
+			memory_set_bankhandler_r(4, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
+			memory_set_bankhandler_w(4, 0, MWA8_NOP);
 		}
 	}
 

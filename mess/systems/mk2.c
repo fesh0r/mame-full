@@ -46,35 +46,35 @@ MOS MPS 6332 005 2179
 static MEMORY_READ_START( mk2_readmem )
 #ifdef M6504_MEMORY_LAYOUT
 	MEMORY_ADDRESS_BITS(13) // m6504
-	{ 0x0000, 0x01ff, MRA_RAM }, // 2 2111, should be mirrored
+	{ 0x0000, 0x01ff, MRA8_RAM }, // 2 2111, should be mirrored
 	{ 0x0b00, 0x0b0f, rriot_0_r },
-	{ 0x0b80, 0x0bbf, MRA_RAM }, // rriot ram
-	{ 0x0c00, 0x0fff, MRA_ROM }, // rriot rom
-	{ 0x1000, 0x1fff, MRA_ROM },
+	{ 0x0b80, 0x0bbf, MRA8_RAM }, // rriot ram
+	{ 0x0c00, 0x0fff, MRA8_ROM }, // rriot rom
+	{ 0x1000, 0x1fff, MRA8_ROM },
 #else
-	{ 0x0000, 0x01ff, MRA_RAM }, // 2 2111, should be mirrored
-	{ 0x8009, 0x8009, MRA_NOP },// bit $8009 (ora #$80) causes false accesses
+	{ 0x0000, 0x01ff, MRA8_RAM }, // 2 2111, should be mirrored
+	{ 0x8009, 0x8009, MRA8_NOP },// bit $8009 (ora #$80) causes false accesses
 	{ 0x8b00, 0x8b0f, rriot_0_r },
-	{ 0x8b80, 0x8bbf, MRA_RAM }, // rriot ram
-	{ 0x8c00, 0x8fff, MRA_ROM }, // rriot rom
-	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0x8b80, 0x8bbf, MRA8_RAM }, // rriot ram
+	{ 0x8c00, 0x8fff, MRA8_ROM }, // rriot rom
+	{ 0xf000, 0xffff, MRA8_ROM },
 #endif
 MEMORY_END
 
 static MEMORY_WRITE_START( mk2_writemem )
 #ifdef M6504_MEMORY_LAYOUT
 	MEMORY_ADDRESS_BITS(13) // m6504
-	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0x0000, 0x01ff, MWA8_RAM },
 	{ 0x0b00, 0x0b0f, rriot_0_w },
-	{ 0x0b80, 0x0bbf, MWA_RAM },
-	{ 0x0c00, 0x0fff, MWA_ROM },
-	{ 0x1000, 0x1fff, MWA_ROM },
+	{ 0x0b80, 0x0bbf, MWA8_RAM },
+	{ 0x0c00, 0x0fff, MWA8_ROM },
+	{ 0x1000, 0x1fff, MWA8_ROM },
 #else
-	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0x0000, 0x01ff, MWA8_RAM },
 	{ 0x8b00, 0x8b0f, rriot_0_w },
-	{ 0x8b80, 0x8bbf, MWA_RAM },
-	{ 0x8c00, 0x8fff, MWA_ROM },
-	{ 0xf000, 0xffff, MWA_ROM },
+	{ 0x8b80, 0x8bbf, MWA8_RAM },
+	{ 0x8c00, 0x8fff, MWA8_ROM },
+	{ 0xf000, 0xffff, MWA8_ROM },
 #endif
 MEMORY_END
 

@@ -22,7 +22,7 @@
 
 static MEMORY_READ_START( c65_readmem )
 	{0x00000, 0x00001, c64_m6510_port_r},
-	{0x00002, 0x07fff, MRA_RAM},
+	{0x00002, 0x07fff, MRA8_RAM},
 	{0x08000, 0x09fff, MRA_BANK1},
 	{0x0a000, 0x0bfff, MRA_BANK2},
 	{0x0c000, 0x0cfff, MRA_BANK3},
@@ -30,38 +30,38 @@ static MEMORY_READ_START( c65_readmem )
 	{0x0d800, 0x0dbff, MRA_BANK6},
 	{0x0dc00, 0x0dfff, MRA_BANK8},
 	{0x0e000, 0x0ffff, MRA_BANK10},
-	{0x10000, 0x1ffff, MRA_RAM},
-	{0x20000, 0x3ffff, MRA_ROM},
-	{0x40000, 0x7ffff, MRA_NOP},
-	{0x80000, 0xfffff, MRA_RAM},
+	{0x10000, 0x1ffff, MRA8_RAM},
+	{0x20000, 0x3ffff, MRA8_ROM},
+	{0x40000, 0x7ffff, MRA8_NOP},
+	{0x80000, 0xfffff, MRA8_RAM},
 	/* 8 megabyte full address space! */
 MEMORY_END
 
 static MEMORY_WRITE_START( c65_writemem )
 	{0x00000, 0x00001, c64_m6510_port_w, &c64_memory},
-	{0x00002, 0x07fff, MWA_RAM},
-	{0x08000, 0x09fff, MWA_RAM},
-	{0x0a000, 0x0cfff, MWA_RAM},
+	{0x00002, 0x07fff, MWA8_RAM},
+	{0x08000, 0x09fff, MWA8_RAM},
+	{0x0a000, 0x0cfff, MWA8_RAM},
 	{0x0d000, 0x0d7ff, MWA_BANK5},
 	{0x0d800, 0x0dbff, MWA_BANK7},
 	{0x0dc00, 0x0dfff, MWA_BANK9},
-	{0x0e000, 0x0ffff, MWA_RAM},
-	{0x10000, 0x1f7ff, MWA_RAM},
-	{0x1f800, 0x1ffff, MWA_RAM, &c64_colorram},
-	{0x20000, 0x23fff, MWA_ROM}, /* &c65_dos},	   maps to 0x8000    */
-	{0x24000, 0x28fff, MWA_ROM}, /* reserved */
-	{0x29000, 0x29fff, MWA_ROM, &c65_chargen},
-	{0x2a000, 0x2bfff, MWA_ROM, &c64_basic},
-	{0x2c000, 0x2cfff, MWA_ROM, &c65_interface},
-	{0x2d000, 0x2dfff, MWA_ROM, &c64_chargen},
-	{0x2e000, 0x2ffff, MWA_ROM, &c64_kernal},
-	{0x30000, 0x31fff, MWA_ROM}, /*&c65_monitor},	  monitor maps to 0x6000    */
-	{0x32000, 0x37fff, MWA_ROM}, /*&c65_basic}, */
-	{0x38000, 0x3bfff, MWA_ROM}, /*&c65_graphics}, */
-	{0x3c000, 0x3dfff, MWA_ROM}, /* reserved */
-	{0x3e000, 0x3ffff, MWA_ROM}, /* &c65_kernal}, */
-	{0x40000, 0x7ffff, MWA_NOP},
-	{0x80000, 0xfffff, MWA_RAM},
+	{0x0e000, 0x0ffff, MWA8_RAM},
+	{0x10000, 0x1f7ff, MWA8_RAM},
+	{0x1f800, 0x1ffff, MWA8_RAM, &c64_colorram},
+	{0x20000, 0x23fff, MWA8_ROM}, /* &c65_dos},	   maps to 0x8000    */
+	{0x24000, 0x28fff, MWA8_ROM}, /* reserved */
+	{0x29000, 0x29fff, MWA8_ROM, &c65_chargen},
+	{0x2a000, 0x2bfff, MWA8_ROM, &c64_basic},
+	{0x2c000, 0x2cfff, MWA8_ROM, &c65_interface},
+	{0x2d000, 0x2dfff, MWA8_ROM, &c64_chargen},
+	{0x2e000, 0x2ffff, MWA8_ROM, &c64_kernal},
+	{0x30000, 0x31fff, MWA8_ROM}, /*&c65_monitor},	  monitor maps to 0x6000    */
+	{0x32000, 0x37fff, MWA8_ROM}, /*&c65_basic}, */
+	{0x38000, 0x3bfff, MWA8_ROM}, /*&c65_graphics}, */
+	{0x3c000, 0x3dfff, MWA8_ROM}, /* reserved */
+	{0x3e000, 0x3ffff, MWA8_ROM}, /* &c65_kernal}, */
+	{0x40000, 0x7ffff, MWA8_NOP},
+	{0x80000, 0xfffff, MWA8_RAM},
 /*	{0x80000, 0xfffff, MWA_BANK16}, */
 MEMORY_END
 

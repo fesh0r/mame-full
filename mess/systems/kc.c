@@ -222,7 +222,7 @@ MEMORY_READ_START( readmem_kc85_4 )
 	{0x00000, 0x03fff, MRA_BANK1},
 	{0x04000, 0x07fff, MRA_BANK2},
 	{0x08000, 0x0a7ff, MRA_BANK3},
-	//{0x0a800, 0x0bfff, MRA_RAM},
+	//{0x0a800, 0x0bfff, MRA8_RAM},
 	{0x0a800, 0x0bfff, MRA_BANK4},
 	{0x0c000, 0x0dfff, MRA_BANK5},
 	{0x0e000, 0x0ffff, MRA_BANK6},
@@ -232,7 +232,7 @@ MEMORY_WRITE_START( writemem_kc85_4 )
 	{0x00000, 0x03fff, MWA_BANK7},
 	{0x04000, 0x07fff, MWA_BANK8},
 	{0x08000, 0x0a7ff, MWA_BANK9},
-	//{0x0a800, 0x0bfff, MWA_RAM},
+	//{0x0a800, 0x0bfff, MWA8_RAM},
 	{0x0a800, 0x0bfff, MWA_BANK10},
 MEMORY_END
 
@@ -331,11 +331,11 @@ INPUT_PORTS_END
 /** DISC INTERFACE **/
 
 MEMORY_READ_START( readmem_kc85_disc_hw )
-	{0x0000, 0x0ffff, MRA_RAM},
+	{0x0000, 0x0ffff, MRA8_RAM},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_kc85_disc_hw )
-	{0x0000, 0x0ffff, MWA_RAM},
+	{0x0000, 0x0ffff, MWA8_RAM},
 MEMORY_END
 
 PORT_READ_START( readport_kc85_disc_hw )
@@ -343,7 +343,7 @@ PORT_READ_START( readport_kc85_disc_hw )
 	{0x0f1, 0x0f1, nec765_data_r},
 	{0x0f2, 0x0f3, nec765_dack_r},
 	{0x0f4, 0x0f5, kc85_disc_hw_input_gate_r},
-	/*{0x0f6, 0x0f7, MRA_NOP},*/			/* for controller */
+	/*{0x0f6, 0x0f7, MRA8_NOP},*/			/* for controller */
 	{0x0fc, 0x0ff, kc85_disk_hw_ctc_r},
 PORT_END
 

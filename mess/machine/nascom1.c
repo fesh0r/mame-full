@@ -38,36 +38,36 @@ MACHINE_INIT( nascom1 )
 		switch (nascom1_ramsize)
 		{
 			case 03:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA_RAM);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA_RAM);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA_RAM);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA_RAM);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA_RAM);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA_RAM);
+				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_RAM);
+				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_RAM);
+				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_RAM);
+				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_RAM);
 				break;
 			case 02:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA_NOP);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA_NOP);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA_RAM);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA_RAM);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA_RAM);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA_RAM);
+				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_NOP);
+				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_NOP);
+				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_RAM);
+				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_RAM);
 				break;
 			case 01:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA_NOP);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA_NOP);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA_NOP);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA_NOP);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA_RAM);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA_RAM);
+				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_NOP);
+				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_NOP);
+				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_NOP);
+				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_NOP);
+				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_RAM);
+				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_RAM);
 				break;
 			case 00:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA_NOP);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA_NOP);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA_NOP);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA_NOP);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA_NOP);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA_NOP);
+				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_NOP);
+				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_NOP);
+				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_NOP);
+				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_NOP);
+				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_NOP);
+				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_NOP);
 				break;
 		}
 	}

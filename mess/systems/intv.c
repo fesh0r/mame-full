@@ -364,17 +364,17 @@ MEMORY_END
 static MEMORY_READ_START( readmem2 )
 	{ 0x0000, 0x3fff, intvkbd_dualport8_lsb_r }, /* Dual-port RAM */
 	{ 0x4000, 0x7fff, intvkbd_dualport8_msb_r }, /* Dual-port RAM */
-	{ 0xb7f8, 0xb7ff, MRA_RAM }, /* ??? */
+	{ 0xb7f8, 0xb7ff, MRA8_RAM }, /* ??? */
 	{ 0xb800, 0xbfff, &videoram_r }, /* Text Display */
-	{ 0xc000, 0xffff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem2 )
 	{ 0x0000, 0x3fff, intvkbd_dualport8_lsb_w }, /* Dual-port RAM */
 	{ 0x4000, 0x7fff, intvkbd_dualport8_msb_w }, /* Dual-port RAM */
-	{ 0xb7f8, 0xb7ff, MWA_RAM }, /* ??? */
+	{ 0xb7f8, 0xb7ff, MWA8_RAM }, /* ??? */
 	{ 0xb800, 0xbfff, &videoram_w }, /* Text Display */
-	{ 0xc000, 0xffff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static INTERRUPT_GEN( intv_interrupt2 )

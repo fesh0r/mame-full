@@ -126,50 +126,50 @@ when problems start with -log and look into error.log file
 /*#include "includes/vc1541.h" */
 
 static MEMORY_READ_START( pet_readmem )
-	{0x0000, 0x7fff, MRA_RAM},
-	{0x8000, 0x83ff, MRA_RAM },
-	{0xa000, 0xe7ff, MRA_ROM },
+	{0x0000, 0x7fff, MRA8_RAM},
+	{0x8000, 0x83ff, MRA8_RAM },
+	{0xa000, 0xe7ff, MRA8_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
 /*	{0xe900, 0xe91f, cbm_ieee_state }, // for debugging */
-	{0xf000, 0xffff, MRA_ROM },
+	{0xf000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pet_writemem )
-	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
+	{0x0000, 0x7fff, MWA8_RAM, &pet_memory},
 	{0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{0xa000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA8_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
-	{0xf000, 0xffff, MWA_ROM },
+	{0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( pet40_readmem )
-	{0x0000, 0x7fff, MRA_RAM},
-	{0x8000, 0x83ff, MRA_RAM },
-	{0xa000, 0xe7ff, MRA_ROM },
+	{0x0000, 0x7fff, MRA8_RAM},
+	{0x8000, 0x83ff, MRA8_RAM },
+	{0xa000, 0xe7ff, MRA8_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
 	{0xe880, 0xe881, crtc6845_0_port_r },
-	{0xf000, 0xffff, MRA_ROM },
+	{0xf000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pet40_writemem )
-	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
+	{0x0000, 0x7fff, MWA8_RAM, &pet_memory},
 	{0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{0xa000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA8_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_0_port_w },
-	{0xf000, 0xffff, MWA_ROM },
+	{0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( pet80_readmem )
-	{0x0000, 0x7fff, MRA_RAM },
+	{0x0000, 0x7fff, MRA8_RAM },
 	{0x8000, 0x8fff, MRA_BANK1 },
 	{0x9000, 0x9fff, MRA_BANK2 },
 	{0xa000, 0xafff, MRA_BANK3 },
@@ -187,7 +187,7 @@ static MEMORY_READ_START( pet80_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( pet80_writemem )
-	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
+	{0x0000, 0x7fff, MWA8_RAM, &pet_memory},
 	{0x8000, 0x8fff, MWA_BANK1, &videoram },
 	{0x9000, 0x9fff, MWA_BANK2 },
 	{0xa000, 0xafff, MWA_BANK3 },
@@ -222,9 +222,9 @@ MEMORY_END
 
 */
 static MEMORY_READ_START( superpet_readmem )
-	{0x0000, 0x7fff, MRA_RAM},
-	{0x8000, 0x87ff, MRA_RAM },
-	{0xa000, 0xe7ff, MRA_ROM },
+	{0x0000, 0x7fff, MRA8_RAM},
+	{0x8000, 0x87ff, MRA8_RAM },
+	{0xa000, 0xe7ff, MRA8_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
@@ -232,45 +232,45 @@ static MEMORY_READ_START( superpet_readmem )
 	/* 0xefe0, 0xefe3, mos 6702 */
 	/* 0xeff0, 0xeff3, acia6551 */
 	{0xeff8, 0xefff, superpet_r },
-	{0xf000, 0xffff, MRA_ROM },
+	{0xf000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( superpet_writemem )
-	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
+	{0x0000, 0x7fff, MWA8_RAM, &pet_memory},
 	{0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
-	{0xa000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA8_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_0_port_w },
 	{0xeff8, 0xefff, superpet_w },
-	{0xf000, 0xffff, MWA_ROM },
+	{0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( superpet_m6809_readmem)
 	{0x0000, 0x7fff, MRA_BANK1,},
 	{0x8000, 0x87ff, MRA_BANK2 },
     {0x9000, 0x9fff, MRA_BANK3 },
-	{0xa000, 0xe7ff, MRA_ROM },
+	{0xa000, 0xe7ff, MRA8_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
 	{0xe880, 0xe881, crtc6845_0_port_r },
 	{0xeff8, 0xefff, superpet_r },
-	{0xf000, 0xffff, MRA_ROM },
+	{0xf000, 0xffff, MRA8_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( superpet_m6809_writemem )
 	{0x0000, 0x7fff, MWA_BANK1 }, /* same memory as m6502 */
 	{0x8000, 0x87ff, videoram_w }, /* same memory as m6502 */
     {0x9000, 0x9fff, MWA_BANK3 }, /* 64 kbyte ram turned in */
-	{0xa000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA8_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_0_port_w },
 	{0xeff8, 0xefff, superpet_w },
-	{0xf000, 0xffff, MWA_ROM },
+	{0xf000, 0xffff, MWA8_ROM },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \

@@ -98,9 +98,9 @@ static READ_HANDLER ( pce_psg_r )
 }
 
 MEMORY_READ_START( pce_readmem )
-    { 0x000000, 0x1EDFFF, MRA_ROM },
-    { 0x1EE000, 0x1EFFFF, MRA_RAM },
-    { 0x1F0000, 0x1F1FFF, MRA_RAM },
+    { 0x000000, 0x1EDFFF, MRA8_ROM },
+    { 0x1EE000, 0x1EFFFF, MRA8_RAM },
+    { 0x1F0000, 0x1F1FFF, MRA8_RAM },
     { 0x1FE000, 0x1FE003, vdc_r },
     { 0x1FE400, 0x1FE407, vce_r },
     { 0x1FE800, 0x1FE80F, pce_psg_r },
@@ -110,9 +110,9 @@ MEMORY_READ_START( pce_readmem )
 MEMORY_END
 
 MEMORY_WRITE_START( pce_writemem )
-    { 0x000000, 0x1EDFFF, MWA_ROM },
-    { 0x1EE000, 0x1EFFFF, MWA_RAM, &pce_save_ram },
-    { 0x1F0000, 0x1F1FFF, MWA_RAM, &pce_user_ram },
+    { 0x000000, 0x1EDFFF, MWA8_ROM },
+    { 0x1EE000, 0x1EFFFF, MWA8_RAM, &pce_save_ram },
+    { 0x1F0000, 0x1F1FFF, MWA8_RAM, &pce_user_ram },
     { 0x1FE000, 0x1FE003, vdc_w },
     { 0x1FE400, 0x1FE407, vce_w },
     { 0x1FE800, 0x1FE80F, pce_psg_w },

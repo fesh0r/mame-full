@@ -186,6 +186,28 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			/* <input> - inputs natural keyboard data into a system */
 			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
 		}
+		else if (!strcmp(tagname, "switch"))
+		{
+			/* <switch> - switches a DIP switch/config setting */
+			state->current_command.command_type = MESSTEST_COMMAND_SWITCH;
+
+			/* 'name' attribute */
+			attr_name = "name";
+			s1 = find_attribute(attributes, attr_name);
+			if (!s1)
+				goto missing_attribute;
+
+			/* 'value' attribute */
+			attr_name = "value";
+			s2 = find_attribute(attributes, attr_name);
+			if (!s2)
+				goto missing_attribute;
+
+			state->current_command.u.switch_args.name =
+				pool_strdup(&state->pool, s1);
+			state->current_command.u.switch_args.value =
+				pool_strdup(&state->pool, s2);
+		}
 		else if (!strcmp(tagname, "screenshot"))
 		{
 			/* <screenshot> - dumps a screenshot */

@@ -62,17 +62,17 @@
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START( coleco_readmem )
-    { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM (ColecoVision OS7 Bios) */
-    { 0x2000, 0x5FFF, MRA_NOP },  /* No memory here */
+    { 0x0000, 0x1FFF, MRA8_ROM },  /* COLECO.ROM (ColecoVision OS7 Bios) */
+    { 0x2000, 0x5FFF, MRA8_NOP },  /* No memory here */
     { 0x6000, 0x7fff, coleco_mem_r },  /* 1Kbyte RAM mapped on 8Kbyte Slot */
-    { 0x8000, 0xFFFF, MRA_ROM },  /* Cartridge (32k max)*/
+    { 0x8000, 0xFFFF, MRA8_ROM },  /* Cartridge (32k max)*/
 MEMORY_END
 
 static MEMORY_WRITE_START( coleco_writemem )
-    { 0x0000, 0x1FFF, MWA_ROM }, /* COLECO.ROM (ColecoVision OS7 Bios) */
-    { 0x2000, 0x5FFF, MWA_NOP }, /* No memory here */
+    { 0x0000, 0x1FFF, MWA8_ROM }, /* COLECO.ROM (ColecoVision OS7 Bios) */
+    { 0x2000, 0x5FFF, MWA8_NOP }, /* No memory here */
     { 0x6000, 0x7fff, coleco_mem_w }, /* 1Kbyte RAM mapped on 8Kbyte Slot */
-    { 0x8000, 0xFFFF, MWA_ROM }, /* Cartridge (32k max)*/
+    { 0x8000, 0xFFFF, MWA8_ROM }, /* Cartridge (32k max)*/
 MEMORY_END
 
 READ_HANDLER(coleco_mem_r)

@@ -102,13 +102,13 @@ static WRITE_HANDLER(mk1_f8_w)
 }
 
 static MEMORY_READ_START( mk1_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x1800, 0x18ff, MRA_RAM },
+	{ 0x0000, 0x07ff, MRA8_ROM },
+	{ 0x1800, 0x18ff, MRA8_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( mk1_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x1800, 0x18ff, MWA_RAM },
+	{ 0x0000, 0x07ff, MWA8_ROM },
+	{ 0x1800, 0x18ff, MWA8_RAM },
 MEMORY_END
 
 

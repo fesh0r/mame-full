@@ -13,13 +13,13 @@
 #include "devices/cartslot.h"
 
 MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03FF, MRA_ROM },
+	{ 0x0000, 0x03FF, MRA8_ROM },
 	{ 0x0400, 0x0bFF, MRA_BANK1 },
 	{ 0x0c00, 0x0FFF, MRA_BANK2 },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03FF, MWA_ROM },
+	{ 0x0000, 0x03FF, MWA8_ROM },
 	{ 0x0400, 0x0bFF, MWA_BANK1 },
 	{ 0x0c00, 0x0FFF, MWA_BANK2 },
 MEMORY_END

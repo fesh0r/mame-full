@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.22 2003/10/29 02:01:48 npwoods Exp $
+  $Id: pc8801.c,v 1.23 2004/02/02 20:13:05 npwoods Exp $
 
 ***************************************************************************/
 
@@ -514,13 +514,13 @@ static INTERRUPT_GEN( pc8801fd_interrupt )
 }
 
 MEMORY_READ_START( pc8801fd_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_RAM },
+	{ 0x0000, 0x07ff, MRA8_ROM },
+	{ 0x4000, 0x7fff, MRA8_RAM },
 MEMORY_END
 
 MEMORY_WRITE_START( pc8801fd_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_RAM },
+	{ 0x0000, 0x07ff, MWA8_ROM },
+	{ 0x4000, 0x7fff, MWA8_RAM },
 MEMORY_END
 
 PORT_READ_START( pc8801fd_readport )

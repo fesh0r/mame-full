@@ -213,17 +213,17 @@ static WRITE_HANDLER(spectrum_port_fe_w)
 
 
 static MEMORY_READ_START (spectrum_readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA8_ROM },
 	{ 0x4000, 0x57ff, spectrum_characterram_r },
 	{ 0x5800, 0x5aff, spectrum_colorram_r },
-	{ 0x5b00, 0xffff, MRA_RAM },
+	{ 0x5b00, 0xffff, MRA8_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START (spectrum_writemem)
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x0000, 0x3fff, MWA8_ROM },
 	{ 0x4000, 0x57ff, spectrum_characterram_w },
 	{ 0x5800, 0x5aff, spectrum_colorram_w },
-	{ 0x5b00, 0xffff, MWA_RAM },
+	{ 0x5b00, 0xffff, MWA8_RAM },
 MEMORY_END
 
 /* KT: more accurate keyboard reading */
@@ -551,7 +551,7 @@ static MACHINE_INIT( spectrum_128 )
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 		/* 0x0000-0x3fff always holds ROM */
-		memory_set_bankhandler_w(5, 0, MWA_ROM);
+		memory_set_bankhandler_w(5, 0, MWA8_ROM);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
 		memory_set_bankhandler_w(8, 0, MWA_BANK8);
@@ -669,7 +669,7 @@ extern void spectrum_plus3_update_memory(void)
 				ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
 				cpu_setbank(1, ChosenROM);
-				memory_set_bankhandler_w(5, 0, MWA_ROM);
+				memory_set_bankhandler_w(5, 0, MWA8_ROM);
 
 				logerror("rom switch: %02x\n", ROMSelection);
 		}
@@ -1034,7 +1034,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(1, ExROM);
 						memory_set_bankhandler_r(1, 0, MRA_BANK1);
-						memory_set_bankhandler_w(9, 0, MWA_ROM);
+						memory_set_bankhandler_w(9, 0, MWA8_ROM);
 						logerror("0000-1fff EXROM\n");
 				}
 				else
@@ -1046,12 +1046,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x01)
 								memory_set_bankhandler_w(9, 0, MWA_BANK9);
 							else
-								memory_set_bankhandler_w(9, 0, MWA_ROM);
+								memory_set_bankhandler_w(9, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(1, 0, MRA_NOP);
-							memory_set_bankhandler_w(9, 0, MWA_ROM);
+							memory_set_bankhandler_r(1, 0, MRA8_NOP);
+							memory_set_bankhandler_w(9, 0, MWA8_ROM);
 						}
 						logerror("0000-1fff Cartridge\n");
 				}
@@ -1061,7 +1061,7 @@ extern void ts2068_update_memory(void)
 				ChosenROM = memory_region(REGION_CPU1) + 0x010000;
 				cpu_setbank(1, ChosenROM);
 				memory_set_bankhandler_r(1, 0, MRA_BANK1);
-				memory_set_bankhandler_w(9, 0, MWA_ROM);
+				memory_set_bankhandler_w(9, 0, MWA8_ROM);
 				logerror("0000-1fff HOME\n");
 		}
 
@@ -1071,7 +1071,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(2, ExROM);
 						memory_set_bankhandler_r(2, 0, MRA_BANK2);
-						memory_set_bankhandler_w(10, 0, MWA_ROM);
+						memory_set_bankhandler_w(10, 0, MWA8_ROM);
 						logerror("2000-3fff EXROM\n");
 				}
 				else
@@ -1083,12 +1083,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x02)
 								memory_set_bankhandler_w(10, 0, MWA_BANK10);
 							else
-								memory_set_bankhandler_w(10, 0, MWA_ROM);
+								memory_set_bankhandler_w(10, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(2, 0, MRA_NOP);
-							memory_set_bankhandler_w(10, 0, MWA_ROM);
+							memory_set_bankhandler_r(2, 0, MRA8_NOP);
+							memory_set_bankhandler_w(10, 0, MWA8_ROM);
 						}
 						logerror("2000-3fff Cartridge\n");
 				}
@@ -1098,7 +1098,7 @@ extern void ts2068_update_memory(void)
 				ChosenROM = memory_region(REGION_CPU1) + 0x012000;
 				cpu_setbank(2, ChosenROM);
 				memory_set_bankhandler_r(2, 0, MRA_BANK2);
-				memory_set_bankhandler_w(10, 0, MWA_ROM);
+				memory_set_bankhandler_w(10, 0, MWA8_ROM);
 				logerror("2000-3fff HOME\n");
 		}
 
@@ -1108,7 +1108,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(3, ExROM);
 						memory_set_bankhandler_r(3, 0, MRA_BANK3);
-						memory_set_bankhandler_w(11, 0, MWA_ROM);
+						memory_set_bankhandler_w(11, 0, MWA8_ROM);
 						logerror("4000-5fff EXROM\n");
 				}
 				else
@@ -1120,12 +1120,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x04)
 								memory_set_bankhandler_w(11, 0, MWA_BANK11);
 							else
-								memory_set_bankhandler_w(11, 0, MWA_ROM);
+								memory_set_bankhandler_w(11, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(3, 0, MRA_NOP);
-							memory_set_bankhandler_w(11, 0, MWA_ROM);
+							memory_set_bankhandler_r(3, 0, MRA8_NOP);
+							memory_set_bankhandler_w(11, 0, MWA8_ROM);
 						}
 						logerror("4000-5fff Cartridge\n");
 				}
@@ -1145,7 +1145,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(4, ExROM);
 						memory_set_bankhandler_r(4, 0, MRA_BANK4);
-						memory_set_bankhandler_w(12, 0, MWA_ROM);
+						memory_set_bankhandler_w(12, 0, MWA8_ROM);
 						logerror("6000-7fff EXROM\n");
 				}
 				else
@@ -1157,12 +1157,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x08)
 								memory_set_bankhandler_w(12, 0, MWA_BANK12);
 							else
-								memory_set_bankhandler_w(12, 0, MWA_ROM);
+								memory_set_bankhandler_w(12, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(4, 0, MRA_NOP);
-							memory_set_bankhandler_w(12, 0, MWA_ROM);
+							memory_set_bankhandler_r(4, 0, MRA8_NOP);
+							memory_set_bankhandler_w(12, 0, MWA8_ROM);
 						}
 						logerror("6000-7fff Cartridge\n");
 				}
@@ -1182,7 +1182,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(5, ExROM);
 						memory_set_bankhandler_r(5, 0, MRA_BANK5);
-						memory_set_bankhandler_w(13, 0, MWA_ROM);
+						memory_set_bankhandler_w(13, 0, MWA8_ROM);
 						logerror("8000-9fff EXROM\n");
 				}
 				else
@@ -1194,12 +1194,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x10)
 								memory_set_bankhandler_w(13, 0, MWA_BANK13);
 							else
-								memory_set_bankhandler_w(13, 0, MWA_ROM);
+								memory_set_bankhandler_w(13, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(5, 0, MRA_NOP);
-							memory_set_bankhandler_w(13, 0, MWA_ROM);
+							memory_set_bankhandler_r(5, 0, MRA8_NOP);
+							memory_set_bankhandler_w(13, 0, MWA8_ROM);
 						}
 						logerror("8000-9fff Cartridge\n");
 				}
@@ -1219,7 +1219,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(6, ExROM);
 						memory_set_bankhandler_r(6, 0, MRA_BANK6);
-						memory_set_bankhandler_w(14, 0, MWA_ROM);
+						memory_set_bankhandler_w(14, 0, MWA8_ROM);
 						logerror("a000-bfff EXROM\n");
 				}
 				else
@@ -1231,12 +1231,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x20)
 								memory_set_bankhandler_w(14, 0, MWA_BANK14);
 							else
-								memory_set_bankhandler_w(14, 0, MWA_ROM);
+								memory_set_bankhandler_w(14, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(6, 0, MRA_NOP);
-							memory_set_bankhandler_w(14, 0, MWA_ROM);
+							memory_set_bankhandler_r(6, 0, MRA8_NOP);
+							memory_set_bankhandler_w(14, 0, MWA8_ROM);
 						}
 						logerror("a000-bfff Cartridge\n");
 				}
@@ -1256,7 +1256,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(7, ExROM);
 						memory_set_bankhandler_r(7, 0, MRA_BANK7);
-						memory_set_bankhandler_w(15, 0, MWA_ROM);
+						memory_set_bankhandler_w(15, 0, MWA8_ROM);
 						logerror("c000-dfff EXROM\n");
 				}
 				else
@@ -1268,12 +1268,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x40)
 								memory_set_bankhandler_w(15, 0, MWA_BANK15);
 							else
-								memory_set_bankhandler_w(15, 0, MWA_ROM);
+								memory_set_bankhandler_w(15, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(7, 0, MRA_NOP);
-							memory_set_bankhandler_w(15, 0, MWA_ROM);
+							memory_set_bankhandler_r(7, 0, MRA8_NOP);
+							memory_set_bankhandler_w(15, 0, MWA8_ROM);
 						}
 						logerror("c000-dfff Cartridge\n");
 				}
@@ -1293,7 +1293,7 @@ extern void ts2068_update_memory(void)
 				{
 						cpu_setbank(8, ExROM);
 						memory_set_bankhandler_r(8, 0, MRA_BANK8);
-						memory_set_bankhandler_w(16, 0, MWA_ROM);
+						memory_set_bankhandler_w(16, 0, MWA8_ROM);
 						logerror("e000-ffff EXROM\n");
 				}
 				else
@@ -1305,12 +1305,12 @@ extern void ts2068_update_memory(void)
 							if (timex_cart_chunks&0x80)
 								memory_set_bankhandler_w(16, 0, MWA_BANK16);
 							else
-								memory_set_bankhandler_w(16, 0, MWA_ROM);
+								memory_set_bankhandler_w(16, 0, MWA8_ROM);
 						}
 						else
 						{
-							memory_set_bankhandler_r(8, 0, MRA_NOP);
-							memory_set_bankhandler_w(16, 0, MWA_ROM);
+							memory_set_bankhandler_r(8, 0, MRA8_NOP);
+							memory_set_bankhandler_w(16, 0, MWA8_ROM);
 						}
 						logerror("e000-ffff Cartridge\n");
 				}
@@ -1444,12 +1444,12 @@ PORT_END
 
 
 static MEMORY_READ_START (tc2048_readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA8_ROM },
 	{ 0x4000, 0xffff, MRA_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE_START (tc2048_writemem)
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x0000, 0x3fff, MWA8_ROM },
 	{ 0x4000, 0xffff, MWA_BANK2 },
 MEMORY_END
 
@@ -1656,7 +1656,7 @@ static void scorpion_update_memory(void)
 
 			/* connect page 0 of rom to 0x0000 */
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_w(5, 0, MWA_NOP);
+			memory_set_bankhandler_w(5, 0, MWA8_NOP);
 
 			if (scorpion_256_port_1ffd_data & (1<<1))
 			{
