@@ -110,7 +110,7 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 				return 0;
 			strcpy(s, filename);
 			if (lpExt)
-				strcpy(s + (strlen(lpExt) - strlen(filename)), zipext);
+				strcpy(s + (strlen(filename) - strlen(lpExt)), zipext);
 			else
 				strcat(s, zipext);
 			found = MessImageFopenZip(s, mf, write);
