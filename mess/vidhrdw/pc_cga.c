@@ -361,7 +361,7 @@ static void cga_text_inten(struct mame_bitmap *bitmap)
 					}
 				}
 
-				if (!dirtybuffer)
+				if (dirtybuffer)
 					dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
 			}
 		}
@@ -702,25 +702,34 @@ extern WRITE_HANDLER ( pc1512_w )
 	}
 }
 
-extern READ_HANDLER ( pc1512_r )
+READ_HANDLER ( pc1512_r )
 {
-	int data;
+	data8_t data;
 	switch (offset) {
-	case 0xd: data=pc1512.write;break;
-	case 0xe: data=pc1512.read;break;
-	default: data=pc_CGA_r(offset);
+	case 0xd:
+		data = pc1512.write;
+		break;
+
+	case 0xe:
+		data = pc1512.read;
+		break;
+
+	default:
+		data = pc_CGA_r(offset);
+		break;
 	}
 	return data;
 }
 
 
-extern WRITE_HANDLER ( pc1512_videoram_w )
+WRITE_HANDLER ( pc1512_videoram_w )
 {
 	if (pc1512.write&1) videoram[offset+videoram_offset[0]]=data; //blue plane
 	if (pc1512.write&2) videoram[offset+videoram_offset[1]]=data; //green
 	if (pc1512.write&4) videoram[offset+videoram_offset[2]]=data; //red
 	if (pc1512.write&8) videoram[offset+videoram_offset[3]]=data; //intensity (text, 4color)
-	dirtybuffer[offset]=1;
+	if (dirtybuffer)
+		dirtybuffer[offset]=1;
 }
 
 VIDEO_START( pc1512 )

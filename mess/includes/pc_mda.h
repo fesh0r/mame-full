@@ -1,7 +1,5 @@
 #include "includes/pc_video.h"
 
-/*void pc_mda_init(void);*/
-
 #if 0
 	// cutted from some aga char rom
 	// 256 9x14 in 8x16 chars, line 3 is connected to a10

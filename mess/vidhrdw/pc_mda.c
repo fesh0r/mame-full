@@ -131,13 +131,16 @@ static void pc_mda_blink_textcolors(int on)
 	offs = (crtc6845_get_start(mda.crtc)*2)% videoram_size;
 	size = crtc6845_get_char_lines(mda.crtc)*crtc6845_get_char_columns(mda.crtc);
 
-	for (i = 0; i < size; i++)
+	if (dirtybuffer)
 	{
-		if( videoram[offs+1] & 0x80 )
-			dirtybuffer[offs+1] = 1;
-		if( (offs += 2) == videoram_size )
-			offs = 0;
-    }
+		for (i = 0; i < size; i++)
+		{
+			if (videoram[offs+1] & 0x80)
+				dirtybuffer[offs+1] = 1;
+			if ((offs += 2) == videoram_size)
+				offs = 0;
+		}
+	}
 }
 
 extern void pc_mda_timer(void)
@@ -291,16 +294,19 @@ static void mda_text_inten(struct mame_bitmap *bitmap)
 	int lines = crtc6845_get_char_lines(mda.crtc);
 	int height = crtc6845_get_char_height(mda.crtc);
 	int columns = crtc6845_get_char_columns(mda.crtc);
+	int char_width;
 	struct rectangle r;
 	CRTC6845_CURSOR cursor;
+
+	char_width = Machine->scrbitmap->width / 80;
 
 	crtc6845_time(mda.crtc);
 	crtc6845_get_cursor(mda.crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
-		for (sx=0, r.min_x=0, r.max_x=8; sx<columns; 
-			 sx++, offs=(offs+2)&0x3fff, r.min_x+=9, r.max_x+=9) {
+		for (sx=0, r.min_x=0, r.max_x = char_width-1; sx<columns; 
+			 sx++, offs=(offs+2)&0x3fff, r.min_x += char_width, r.max_x += char_width) {
 			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1]) {
 				
 				drawgfx(bitmap, mda.gfx_char, videoram[offs], videoram[offs+1], 
@@ -316,7 +322,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap)
 					if (k>0)
 						plot_box(Machine->scrbitmap, r.min_x, 
 								 r.min_y+cursor.top, 
-								 9, k, Machine->pens[2/*?*/]);
+								 char_width, k, Machine->pens[2/*?*/]);
 				}
 
 				if (dirtybuffer)
@@ -341,14 +347,17 @@ static void mda_text_blink(struct mame_bitmap *bitmap)
 	int columns = crtc6845_get_char_columns(mda.crtc);
 	struct rectangle r;
 	CRTC6845_CURSOR cursor;
+	int char_width;
+
+	char_width = Machine->scrbitmap->width / 80;
 
 	crtc6845_time(mda.crtc);
 	crtc6845_get_cursor(mda.crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
-		for (sx=0, r.min_x=0, r.max_x=8; sx<columns; 
-			 sx++, offs=(offs+2)&0x3fff, r.min_x+=9, r.max_x+=9) {
+		for (sx=0, r.min_x=0, r.max_x = char_width-1; sx<columns; 
+			 sx++, offs=(offs+2)&0x3fff, r.min_x += char_width, r.max_x += char_width) {
 
 			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1]) {
 				
@@ -375,7 +384,7 @@ static void mda_text_blink(struct mame_bitmap *bitmap)
 					if (k>0)
 						plot_box(Machine->scrbitmap, r.min_x, 
 								 r.min_y+cursor.top, 
-								 9, k, Machine->pens[2/*?*/]);
+								 char_width, k, Machine->pens[2/*?*/]);
 				}
 
 				if (dirtybuffer)
@@ -456,11 +465,11 @@ pc_video_update_proc pc_mda_choosevideomode(int *xfactor, int *yfactor)
 	switch (mda.mode_control & 0x2a) { /* text and gfx modes */
 	case 0x08:
 		proc = mda_text_inten;
-		*xfactor = 9;
+		*xfactor = Machine->scrbitmap->width / 80;
 		break;
 	case 0x28:
 		proc = mda_text_blink;
-		*xfactor = 9;
+		*xfactor = Machine->scrbitmap->width / 80;
 		break;
 	case 0x0a:
 	case 0x2a:
