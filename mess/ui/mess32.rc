@@ -45,17 +45,6 @@ BEGIN
 	PUSHBUTTON		"Browse",IDC_PRINTER_BROWSE,158,70,40,14,0,0
 END
 
-IDD_FILEMGR DIALOGEX 0, 0, 300, 200
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-EXSTYLE WS_EX_CONTROLPARENT
-CAPTION "File Manager"
-FONT 8, "MS Sans Serif"
-BEGIN
-    CONTROL         "List2",IDC_LIST2,"SysListView32",LVS_REPORT | LVS_SINGLESEL |
-                    LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED | LVS_SHAREIMAGELISTS |
-					WS_BORDER |	WS_TABSTOP,10,10,280,180
-END
-
 /////////////////////////////////////////////////////////////////////////////
 
 #include "ui/mame32.rc"

@@ -22,11 +22,12 @@
 #define IDI_WIN_SNAP                    2105
 #define IDI_WIN_PRIN                    2106
 #define IDI_WIN_HARD                    2107
+#define IDC_D3D_NEWUI_WARNING			2108
+#define IDC_NEWUI_D3D_WARNING			2109
 #define ID_MESS_OPEN_SOFTWARE           2200
 #define ID_MESS_CREATE_SOFTWARE         2201
 #define ID_MESS_RUN_TESTS				2299
 #define IDD_PROP_SOFTWARE               2202
 #define IDD_PROP_CONFIGURATION          2203
-#define IDD_FILEMGR                     2204
 
 #endif /* RESOURCEMS_H */

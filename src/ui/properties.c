@@ -53,12 +53,9 @@
 #include "resource.hm"
 
 #ifdef MESS
-/* done like this until I figure out a better idea */
+// done like this until I figure out a better idea
 #include "ui/resourcems.h"
-
-void MessOptionsToProp(int nGame, HWND hWnd, options_type *o);
-BOOL MessPropertiesCommand(int nGame, HWND hWnd, WORD wNotifyCode, WORD wID, BOOL *changed);
-void MessPropToOptions(int nGame, HWND hWnd, options_type *o);
+#include "ui/propertiesms.h"
 #endif
 
 // missing win32 api defines
@@ -1373,6 +1370,10 @@ static void SetPropEnabledControls(HWND hWnd)
 	BOOL useart = FALSE;
 	int joystick_attached = 9;
 	int in_window = 0;
+
+#ifdef MESS
+	MessSetPropEnabledControls(hWnd, pGameOpts);
+#endif
 
 	nIndex = g_nGame;
 

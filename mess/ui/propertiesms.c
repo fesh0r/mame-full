@@ -16,6 +16,7 @@
 #include "ui/mame32.h"
 #include "ui/directories.h"
 #include "ui/m32util.h"
+#include "ui/options.h"
 #include "resourcems.h"
 #include "mess.h"
 #include "utils.h"
@@ -26,10 +27,6 @@ static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR l
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
 static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR);
-
-#ifdef bool
-#undef bool
-#endif
 
 extern BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
 BOOL g_bModifiedSoftwarePaths = FALSE;
@@ -549,3 +546,13 @@ BOOL MessPropertiesCommand(int nGame, HWND hWnd, WORD wNotifyCode, WORD wID, BOO
 	return InvokeComponentProcs(nGame, CMSG_COMMAND, hWnd, &params);
 }
 
+void MessSetPropEnabledControls(HWND hWnd, options_type *o)
+{
+	if (o->use_new_ui)
+		o->use_d3d = FALSE;
+
+	ShowWindow(GetDlgItem(hWnd, IDC_D3D_NEWUI_WARNING),	o->use_new_ui ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, IDC_NEWUI_D3D_WARNING),	o->use_d3d ? SW_SHOW : SW_HIDE);
+	EnableWindow(GetDlgItem(hWnd, IDC_D3D),				!o->use_new_ui);
+	EnableWindow(GetDlgItem(hWnd, IDC_USE_NEW_UI),		!o->use_d3d);
+}
