@@ -47,7 +47,6 @@ void bbc_vh_stop(void);
 void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 WRITE_HANDLER ( videoULA_w );
-READ_HANDLER ( videoULA_r );
 
 void setscreenstart(int b4,int b5);
 void bbcbp_setvideoshadow(int vdusel);
