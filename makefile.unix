@@ -82,8 +82,13 @@ CFLAGS    = -O2 -Wall -Wno-unused
 ### for OpenStep/PPC use following opts
 # CFLAGS    = -O4 -Wall  -Wno-unused -funroll-loops -traditional-cpp \
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
-### for IRIX with all optimization
-# CFLAGS    = -O2 -OPT:Olimit=0
+### for IRIX MIPSpro with real serious optimization for R10K O2
+# CFLAGS = -fullwarn -n32 -mips4 -Ofast=ip32_10k -TARG:platform=ip32_10k \
+#  -OPT:Olimit=0 -IPA
+### for IRIX with more general optimization for R5+K Mips machines
+# CFLAGS = -fullwarn -n32 -mips4 -Ofast -OPT:Olimit=0 -IPA
+### for IRIX with R4K Mips chips (older Indys, Indigo2s, etc).
+# CFLAGS = -fullwarn -n32 -mips3 -Ofast -OPT:Olimit=0 -IPA
 ### used by me, for full ansi testing and debugging (with gcc).
 # CFLAGS    = -ggdb -ansi -pedantic -D_XOPEN_SOURCE -D_BSD_SOURCE -Wall \
 #  -Wno-long-long -Wno-trigraphs -Wp,-Wno-paste \
@@ -108,6 +113,12 @@ LD	= $(CC) -Wl,-s
 # LD	= $(CC)
 # for debugging only, only works with gnu-binutils !!
 # LD	= $(CC) -Wl,-warn-common
+# for IRIX R5+K MIPSpro, optimization at link time, takes nearly a gig of 
+# memory!!
+# LD    = $(CC) -fullwarn -n32 -mips4 -IPA
+# for IRIX R4K MIPSpro, optimization at link time, takes nearly a gig of
+# memory!!
+# LD  = $(CC) -fullwarn -n32 -mips3 -IP
 
 # *** Does your platform have a separate libm ? only comment this out if you
 # have maths libraries included within libc. This is very rare, you will
@@ -321,6 +332,9 @@ GLLIBS= -ldl
 # Macinstosh OSX         _MAC_OSX_
 # Win32                  _WIN32_    (load wgl also)
 #
+# GLU version 1.2 is recommended (e.g., from SGI).  If you 
+# use Mesa's GLU, you may have to add -DGLU_VERSION_1_2 to 
+# the GLCFLAGS below.
 #
 GLCFLAGS= -D_X11_
 
@@ -334,7 +348,7 @@ GLCFLAGS= -D_X11_
 # MAME_DEBUG = 1
 
 # *** Uncomment the next lines to use x86-asm cpu cores. This is only
-# supported for some 386 machines with nasm-0.96 or higher available in your
+# supported for some 386 machines with nasm-0.98 or higher available in your
 # path! the asm 68k core could cause problem with certain games, please test
 # with the c-core before reporting any problems.
 # uncomment next line to use Assembler 68000 engine
