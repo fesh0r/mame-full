@@ -6,8 +6,6 @@
 
 #define KC_DEBUG
 
-static void *kc85_reset_timer;
-
 static int kc85_pio_data[2];
 
 static void kc85_4_update_0x0c000(void);
@@ -189,7 +187,7 @@ int kc85_floppy_init(int id)
 
 static void kc85_disc_hw_ctc_interrupt(int state)
 {
-	cpu_cause_interrupt(1, Z80_VECTOR(0, state));
+	cpu_set_irq_line(1, 0, state);
 }
 
 READ_HANDLER(kc85_disk_hw_ctc_r)
@@ -275,20 +273,15 @@ static struct nec765_interface kc_fdc_interface=
 	kc85_fdc_dma_drq
 };
 
-static void *kc85_disk_reset_timer = NULL;
-
 static void kc85_disk_reset_timer_callback(int dummy)
 {
 	cpunum_set_pc(1,0x0f000);
-
 	cpunum_set_pc(0,0x0f000);
-
-	timer_reset(kc85_disk_reset_timer, TIME_NEVER);
 }
 
-void	kc_disc_interface_init(void)
+void kc_disc_interface_init(void)
 {
-	kc85_disk_reset_timer = timer_set(TIME_NOW, 0, kc85_disk_reset_timer_callback);
+	timer_set(TIME_NOW, 0, kc85_disk_reset_timer_callback);
 
 	nec765_init(&kc_fdc_interface,NEC765A);
 
@@ -300,14 +293,8 @@ void	kc_disc_interface_init(void)
 }
 
 
-void	kc_disc_interface_exit(void)
+void kc_disc_interface_exit(void)
 {
-	if (kc85_disk_reset_timer)
-	{
-		timer_remove(kc85_disk_reset_timer);
-		kc85_disk_reset_timer = NULL;
-	}
-
 	nec765_stop();
 }
 
@@ -433,10 +420,6 @@ static void kc85_module_system_init(void)
 	modules[30] = &kc85_disk_interface_device;
 }
 
-static void kc85_module_system_exit(void)
-{
-}
-
 
 
 /**********************/
@@ -524,29 +507,10 @@ static void kc_cassette_timer_callback(int dummy)
 	z80pio_astb_w(0,bit & kc_ardy);
 }
 
-/* free timer used for cassette update */
-static void kc_cassette_remove_timer(void)
-{
-	if (kc_cassette_timer)
-	{
-		timer_remove(kc_cassette_timer);
-		kc_cassette_timer = NULL;
-	}
-
-	/* set initial state */
-	kc_cassette_motor_state = 0;
-}
-
 static void	kc_cassette_init(void)
 {
-	kc_cassette_timer = NULL;
+	kc_cassette_timer = timer_alloc(kc_cassette_timer_callback);
 }
-
-static void	kc_cassette_exit(void)
-{
-	kc_cassette_remove_timer();
-}
-
 
 static void	kc_cassette_set_motor(int motor_state)
 {
@@ -559,12 +523,12 @@ static void	kc_cassette_set_motor(int motor_state)
 		if (motor_state)
 		{
 			/* start timer */
-			kc_cassette_timer = timer_pulse(KC_CASSETTE_TIMER_FREQUENCY, 0, kc_cassette_timer_callback);
+			timer_adjust(kc_cassette_timer, 0, 0, KC_CASSETTE_TIMER_FREQUENCY);
 		}
 		else
 		{
 			/* stop timer */
-			kc_cassette_remove_timer();
+			timer_reset(kc_cassette_timer, TIME_NEVER);
 		}
 	}
 
@@ -572,10 +536,7 @@ static void	kc_cassette_set_motor(int motor_state)
 	kc_cassette_motor_state = motor_state;
 }
 
-
-
 /*
-
   pin 2 = gnd
   pin 3 = read
   pin 1 = k1		?? modulating signal
@@ -958,12 +919,6 @@ typedef struct kc_keyboard
 
 	/* pulses to transmit */
 	unsigned char transmit_buffer[32];
-
-	/* transmit timer */
-	void	*transmit_timer;
-
-	/* update timer */
-	void	*update_timer;
 } kc_keyboard;
 
 /* previous state of keyboard - currently used to detect if a key has been pressed/released  since last scan */
@@ -1044,10 +999,10 @@ static void kc_keyboard_init(void)
 	keyboard_data.head = (keyboard_data.tail = 0);
 
 	/* 50hz is just a arbitrary value - used to put scan-codes into the queue for transmitting */
-	keyboard_data.update_timer = timer_pulse(TIME_IN_HZ(50), 0, kc_keyboard_update);
+	timer_pulse(TIME_IN_HZ(50), 0, kc_keyboard_update);
 
 	/* timer to transmit pulses to kc base unit */
-	keyboard_data.transmit_timer = timer_pulse(TIME_IN_MSEC(1.024), 0, kc_keyboard_transmit_timer_callback);
+	timer_pulse(TIME_IN_MSEC(1.024), 0, kc_keyboard_transmit_timer_callback);
 
 	/* kc keyboard is not transmitting */
 	keyboard_data.transmit_state = KC_KEYBOARD_TRANSMIT_IDLE;
@@ -1075,25 +1030,6 @@ static void kc_keyboard_queue_scancode(int scan_code)
 	keyboard_data.keycodes[keyboard_data.tail] = scan_code;
 	/* update next insert position */
 	keyboard_data.tail = (keyboard_data.tail + 1) % KC_KEYCODE_QUEUE_LENGTH;
-}
-
-
-/* exit keyboard */
-static void kc_keyboard_exit(void)
-{
-	/* turn off update timer */
-	if (keyboard_data.update_timer!=NULL)
-	{
-		timer_remove(keyboard_data.update_timer);
-		keyboard_data.update_timer = NULL;
-	}
-
-	/* turn off transmit timer */
-	if (keyboard_data.transmit_timer!=NULL)
-	{
-		timer_remove(keyboard_data.transmit_timer);
-		keyboard_data.transmit_timer = NULL;
-	}
 }
 
 /* fill transmit buffer with pulse for 0 or 1 bit */
@@ -1880,7 +1816,6 @@ WRITE_HANDLER ( kc85_3_pio_data_w )
 /*****************************************************************/
 
 /* used by KC85/4 and KC85/3 */
-static void *kc85_15khz_timer;
 static int kc85_50hz_state;
 static int kc85_15khz_state;
 static int kc85_15khz_count;
@@ -1915,8 +1850,6 @@ static OPBASE_HANDLER( kc85_4_opbaseoverride )
 static void kc85_reset_timer_callback(int dummy)
 {
 	cpunum_set_pc(0,0x0f000);
-
-	timer_reset(kc85_reset_timer, TIME_NEVER);
 }
 
 READ_HANDLER ( kc85_pio_data_r )
@@ -1958,12 +1891,12 @@ WRITE_HANDLER ( kc85_ctc_w )
 
 static void kc85_pio_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line(0, 0, state);
 }
 
 static void kc85_ctc_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(1, state));
+	cpu_set_irq_line(0, 1, state);
 }
 
 /* callback for ardy output from PIO */
@@ -2080,41 +2013,16 @@ static void	kc85_common_init(void)
 	kc85_50hz_state = 0;
 	kc85_15khz_state = 0;
 	kc85_15khz_count = 0;
-	kc85_15khz_timer = timer_pulse(TIME_IN_HZ(15625), 0, kc85_15khz_timer_callback);
-
-	kc85_reset_timer = timer_set(TIME_NOW, 0, kc85_reset_timer_callback);
-
+	timer_pulse(TIME_IN_HZ(15625), 0, kc85_15khz_timer_callback);
+	timer_set(TIME_NOW, 0, kc85_reset_timer_callback);
 	kc85_module_system_init();
-}
-
-static void	kc85_common_shutdown_machine(void)
-{
-	kc85_module_system_exit();
-
-	if (kc85_15khz_timer)
-	{
-		timer_remove(kc85_15khz_timer);
-		kc85_15khz_timer = NULL;
-	}
-
-	kc_keyboard_exit();
-	kc_cassette_exit();
-
-	if (kc85_reset_timer)
-	{
-		timer_remove(kc85_reset_timer);
-		kc85_reset_timer = NULL;
-	}
-
-
 }
 
 /*****************************************************************/
 
-
-void kc85_4_init_machine(void)
+MACHINE_INIT( kc85_4 )
 {
-	kc85_ram = malloc(64*1024);
+	kc85_ram = auto_malloc(64*1024);
 
 	kc85_84_data = 0x028;
 	kc85_86_data = 0x063;
@@ -2143,33 +2051,21 @@ void kc85_4_init_machine(void)
 #endif
 }
 
-void kc85_4_shutdown_machine(void)
+MACHINE_INIT( kc85_4d )
 {
-	if (kc85_ram)
-	{
-		free(kc85_ram);
-		kc85_ram = NULL;
-	}
-
-	kc85_common_shutdown_machine();
-}
-
-void kc85_4d_init_machine(void)
-{
-	kc85_4_init_machine();
+	machine_init_kc85_4();
 	kc_disc_interface_init();
 }
 
-void kc85_4d_shutdown_machine(void)
+MACHINE_STOP( kc85_4d )
 {
-	kc85_4_shutdown_machine();
 	kc_disc_interface_exit();
 }
 
 
-void kc85_3_init_machine(void)
+MACHINE_INIT( kc85_3 )
 {
-	kc85_ram = malloc(64*1024);
+	kc85_ram = auto_malloc(64*1024);
 	kc85_pio_data[0] = 0x0f;
 	kc85_pio_data[1] = 0x0f1;
 
@@ -2193,16 +2089,3 @@ void kc85_3_init_machine(void)
 	memory_set_opbase_handler(0, kc85_3_opbaseoverride);
 #endif
 }
-
-void kc85_3_shutdown_machine(void)
-{
-	if (kc85_ram)
-	{
-		free(kc85_ram);
-		kc85_ram = NULL;
-	}
-
-	kc85_common_shutdown_machine();
-}
-
-

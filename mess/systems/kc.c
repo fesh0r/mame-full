@@ -17,13 +17,14 @@
 #include "includes/kc.h"
 
 /* pio is last in chain and therefore has highest priority */
+/*
 static Z80_DaisyChain kc85_daisy_chain[] =
 {
         {z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
         {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
         {0,0,0,-1}
 };
-
+*/
 
 static READ_HANDLER(kc85_4_port_r)
 {
@@ -352,6 +353,11 @@ PORT_WRITE_START( writeport_kc85_disc_hw )
 	{0x0fc, 0x0ff, kc85_disk_hw_ctc_w},
 PORT_END
 
+MACHINE_DRIVER_START( cpu_kc_disc )
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_kc85_disc_hw, writemem_kc85_disc_hw)
+	MDRV_CPU_PORTS(readport_kc85_disc_hw, writeport_kc85_disc_hw)
+MACHINE_DRIVER_END
 
 
 static struct Speaker_interface kc_speaker_interface=
@@ -367,163 +373,58 @@ static struct Wave_interface kc_wave_interface=
 
 };
 
-static struct MachineDriver machine_driver_kc85_4 =
-{
-		/* basic machine hardware */
-	{
-			/* MachineCPU */
-		{
-			CPU_Z80_MSX|CPU_16BIT_PORT,  /* type */
-			KC85_4_CLOCK,
-			readmem_kc85_4,		   /* MemoryReadAddress */
-			writemem_kc85_4,		   /* MemoryWriteAddress */
-			readport_kc85_4,		   /* IOReadPort */
-			writeport_kc85_4,		   /* IOWritePort */
-			0,		/* VBlank  Interrupt */
-			0,				   /* vblanks per frame */
-			0, 0,	/* every scanline */
-            kc85_daisy_chain
-	    },
-	},
-	50,								   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	kc85_4_init_machine,			   /* init machine */
-	kc85_4_shutdown_machine,
-	/* video hardware */
-	KC85_SCREEN_WIDTH,			   /* screen width */
-	KC85_SCREEN_HEIGHT,			   /* screen height */
-	{0, (KC85_SCREEN_WIDTH - 1), 0, (KC85_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /* graphics decode info */
-	KC85_PALETTE_SIZE,								   /* total colours
-									    */
-	KC85_PALETTE_SIZE,								   /* color table len */
-	kc85_init_palette,			   /* init palette */
+/* kc85_daisy_chain? */
 
-	VIDEO_TYPE_RASTER,				   /* video attributes */
-	0,								   /* MachineLayer */
-	kc85_4_vh_start,
-	kc85_4_vh_stop,
-	kc85_4_vh_screenrefresh,
+static MACHINE_DRIVER_START( kc85_3 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80_MSX, KC85_3_CLOCK)
+	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
+	MDRV_CPU_MEMORY(readmem_kc85_3, writemem_kc85_3)
+	MDRV_CPU_PORTS(readport_kc85_3, writeport_kc85_3)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( kc85_3 )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(KC85_SCREEN_WIDTH, KC85_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, (KC85_SCREEN_WIDTH - 1), 0, (KC85_SCREEN_HEIGHT - 1))
+	MDRV_PALETTE_LENGTH(KC85_PALETTE_SIZE)
+	MDRV_COLORTABLE_LENGTH(KC85_PALETTE_SIZE)
+	MDRV_PALETTE_INIT( kc85 )
+
+	MDRV_VIDEO_START( kc85_3 )
+	MDRV_VIDEO_UPDATE( kc85_3 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-				SOUND_SPEAKER,
-				&kc_speaker_interface
-		},
-		/* cassette sound is mixed with speaker sound */
-		{
-				SOUND_WAVE,
-				&kc_wave_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, kc_speaker_interface)
+	MDRV_SOUND_ADD(WAVE, kc_wave_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_kc85_4d =
-{
-		/* basic machine hardware */
-	{
-			/* MachineCPU */
-		{
-			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
-			KC85_4_CLOCK,
-			readmem_kc85_4,		   /* MemoryReadAddress */
-			writemem_kc85_4,		   /* MemoryWriteAddress */
-			readport_kc85_4d,		   /* IOReadPort */
-			writeport_kc85_4d,		   /* IOWritePort */
-			0,		/* VBlank  Interrupt */
-			0,				   /* vblanks per frame */
-			0, 0,	/* every scanline */
-            kc85_daisy_chain
-	    },
-		KC_DISC_INTERFACE_CPU 
-	},
-	50,								   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	2,								   /* cpu slices per frame */
-	kc85_4d_init_machine,			   /* init machine */
-	kc85_4d_shutdown_machine,
-	/* video hardware */
-	KC85_SCREEN_WIDTH,			   /* screen width */
-	KC85_SCREEN_HEIGHT,			   /* screen height */
-	{0, (KC85_SCREEN_WIDTH - 1), 0, (KC85_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /* graphics decode info */
-	KC85_PALETTE_SIZE,								   /* total colours
-									    */
-	KC85_PALETTE_SIZE,								   /* color table len */
-	kc85_init_palette,			   /* init palette */
+static MACHINE_DRIVER_START( kc85_4 )
+	MDRV_IMPORT_FROM( kc85_3 )
 
-	VIDEO_TYPE_RASTER,				   /* video attributes */
-	0,								   /* MachineLayer */
-	kc85_4_vh_start,
-	kc85_4_vh_stop,
-	kc85_4_vh_screenrefresh,
+	MDRV_CPU_REPLACE("main", Z80_MSX, KC85_4_CLOCK)
+	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
+	MDRV_CPU_MEMORY(readmem_kc85_4, writemem_kc85_4)
+	MDRV_CPU_PORTS(readport_kc85_4, writeport_kc85_4)
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-				SOUND_SPEAKER,
-				&kc_speaker_interface
-		},
-		/* cassette sound is mixed with speaker sound */
-		{
-				SOUND_WAVE,
-				&kc_wave_interface,
-		}
-	}
-};
+	MDRV_MACHINE_INIT( kc85_4 )
+	MDRV_VIDEO_START( kc85_4 )
+	MDRV_VIDEO_UPDATE( kc85_4 )
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_kc85_3 =
-{
-		/* basic machine hardware */
-	{
-			/* MachineCPU */
-		{
-			CPU_Z80_MSX|CPU_16BIT_PORT,  /* type */
-			KC85_3_CLOCK,
-			readmem_kc85_3,		   /* MemoryReadAddress */
-			writemem_kc85_3,		   /* MemoryWriteAddress */
-			readport_kc85_3,		   /* IOReadPort */
-			writeport_kc85_3,		   /* IOWritePort */
-			0,		/* VBlank  Interrupt */
-			0,				   /* vblanks per frame */
-			0, 0,	/* every scanline */
-            kc85_daisy_chain
-	    },
-	},
-	50,								   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	kc85_3_init_machine,			   /* init machine */
-	kc85_3_shutdown_machine,
-	/* video hardware */
-	KC85_SCREEN_WIDTH,			   /* screen width */
-	KC85_SCREEN_HEIGHT,			   /* screen height */
-	{0, (KC85_SCREEN_WIDTH - 1), 0, (KC85_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /* graphics decode info */
-	KC85_PALETTE_SIZE,								   /* total colours
-									    */
-	KC85_PALETTE_SIZE,								   /* color table len */
-	kc85_init_palette,			   /* init palette */
-
-	VIDEO_TYPE_RASTER,				   /* video attributes */
-	0,								   /* MachineLayer */
-	kc85_3_vh_start,
-	kc85_3_vh_stop,
-	kc85_3_vh_screenrefresh,
-
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-};
-
+static MACHINE_DRIVER_START( kc85_4d )
+	MDRV_IMPORT_FROM( kc85_4 )
+	MDRV_IMPORT_FROM( cpu_kc_disc )
+	MDRV_INTERLEAVE( 2 )
+	MDRV_MACHINE_INIT( kc85_4d )
+	MDRV_MACHINE_STOP( kc85_4d )
+MACHINE_DRIVER_END
 
 
 ROM_START(kc85_4)

@@ -7,6 +7,7 @@
 
 ******************************************************************************/
 #include "driver.h"
+#include "artwork.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "includes/kim1.h"
@@ -30,7 +31,11 @@ static M6530 m6530[2];
 
 static void m6530_timer_cb(int chip);
 
-void init_kim1(void)
+OVERLAY_START( kim1_overlay )
+	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0xff) )
+OVERLAY_END
+
+DRIVER_INIT( kim1 )
 {
 	UINT8 *dst;
 	int x, y, i;
@@ -591,9 +596,15 @@ void init_kim1(void)
 			}
 		}
 	}
+//	artwork_set_overlay(kim1_overlay);
 }
 
-void kim1_init_machine(void)
+static void set_chip_clock(int chip, int data)
+{
+	timer_adjust(m6530[chip].timer, 0, chip, TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256));
+}
+
+MACHINE_INIT( kim1 )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -616,12 +627,14 @@ void kim1_init_machine(void)
 	m6530[0].dria = 0xff;
 	m6530[0].drib = 0xff;
 	m6530[0].clock = (double) 1000000 / 1;
-	m6530[0].timer = timer_pulse(TIME_IN_HZ(256 * m6530[0].clock / 256 / 256), 0, m6530_timer_cb);
+	m6530[0].timer = timer_alloc(m6530_timer_cb);
+	set_chip_clock(0, 255);
 
 	m6530[1].dria = 0xff;
 	m6530[1].drib = 0xff;
 	m6530[1].clock = (double) 1000000 / 1;
-	m6530[1].timer = timer_pulse(TIME_IN_HZ(256 * m6530[1].clock / 256 / 256), 1, m6530_timer_cb);
+	m6530[1].timer = timer_alloc(m6530_timer_cb);
+	set_chip_clock(1, 255);
 }
 
 int kim1_cassette_init(int id)
@@ -666,7 +679,7 @@ static void m6530_timer_cb(int chip)
 		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-int kim1_interrupt(void)
+INTERRUPT_GEN( kim1_interrupt )
 {
 	int i;
 
@@ -676,7 +689,6 @@ int kim1_interrupt(void)
 		if (videoram[i * 2 + 1] > 0)
 			videoram[i * 2 + 1] -= 1;
 	}
-	return ignore_interrupt();
 }
 
 INLINE int m6530_r(int chip, int offset)
@@ -875,40 +887,32 @@ static void m6530_w(int chip, int offset, int data)
 		logerror("m6530(%d) TMR1  write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : "");
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		if (m6530[chip].timer)
-			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 1;
-		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		set_chip_clock(chip, data);
 		break;
 	case 0x05:
 	case 0x0d:						   /* Timer 8 start */
 		logerror("m6530(%d) TMR8  write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : "");
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		if (m6530[chip].timer)
-			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 8;
-		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		set_chip_clock(chip, data);
 		break;
 	case 0x06:
 	case 0x0e:						   /* Timer 64 start */
 		logerror("m6530(%d) TMR64 write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : "");
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		if (m6530[chip].timer)
-			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 64;
-		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		set_chip_clock(chip, data);
 		break;
 	case 0x07:
 	case 0x0f:						   /* Timer 1024 start */
 		logerror("m6530(%d) TMR1K write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : "");
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		if (m6530[chip].timer)
-			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 1024;
-		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		set_chip_clock(chip, data);
 		break;
 	}
 }

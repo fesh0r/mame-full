@@ -93,10 +93,10 @@ static unsigned char kc85_palette[KC85_PALETTE_SIZE * 3] =
 
 
 /* Initialise the palette */
-void kc85_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( kc85 )
 {
-	memcpy(sys_palette, kc85_palette, sizeof (kc85_palette));
-	memcpy(sys_colortable, kc85_colour_table, sizeof (kc85_colour_table));
+	palette_set_colors(0, kc85_palette, sizeof(kc85_palette) / 3);
+	memcpy(colortable, kc85_colour_table, sizeof (kc85_colour_table));
 }
 
 static int kc85_blink_state;
@@ -578,21 +578,15 @@ static void kc85_common_vh_start(void)
 	EventList_Initialise(30000);
 }
 
-static void kc85_common_vh_stop(void)
-{
-	EventList_Finish();
-}
-
-
 static unsigned char *kc85_4_display_video_ram;
 
 static unsigned char *kc85_4_video_ram;
 
-int kc85_4_vh_start(void)
+VIDEO_START( kc85_4 )
 {
 	kc85_common_vh_start();
 
-    kc85_4_video_ram = malloc(
+    kc85_4_video_ram = auto_malloc(
         (KC85_4_SCREEN_COLOUR_RAM_SIZE*2) +
         (KC85_4_SCREEN_PIXEL_RAM_SIZE*2));
 
@@ -639,18 +633,6 @@ unsigned char *kc85_4_get_video_ram_base(int bank, int colour)
 	return addr;
 }
 
-void    kc85_4_vh_stop(void) 
-{
-	kc85_common_vh_stop();
-
-	if (kc85_4_video_ram)
-	{
-		free(kc85_4_video_ram);
-		kc85_4_video_ram = NULL;
-	}
-	
-}
-
 static void kc85_4_pixel_grab_callback(struct grab_info *grab_data,int x,int y, unsigned char *colour, unsigned char *gfx)
 {
 	int offset;
@@ -668,7 +650,7 @@ static void kc85_4_pixel_grab_callback(struct grab_info *grab_data,int x,int y, 
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void kc85_4_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( kc85_4 )
 {
 #if 0
     unsigned char *pixel_ram = kc85_4_display_video_ram;
@@ -706,17 +688,10 @@ void kc85_4_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
  KC85/3 video
 ***************************************************************************/
 
-int kc85_3_vh_start(void)
+VIDEO_START( kc85_3 )
 {
 	kc85_common_vh_start();
-
 	return 0;
-}
-
-void    kc85_3_vh_stop(void) 
-{
-	kc85_common_vh_stop();
-
 }
 
 extern unsigned char *kc85_ram;
@@ -756,7 +731,7 @@ static void kc85_3_pixel_grab_callback(struct grab_info *grab_data,int x,int y, 
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void kc85_3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( kc85_3 )
 {
 #if 0
 	/* colour ram takes up 0x02800 bytes */

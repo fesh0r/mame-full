@@ -114,11 +114,10 @@ static	unsigned	short	p2000m_colortable[2 * 2] =
 	1,0, 0,1
 };
 
-static	void	p2000m_init_palette (unsigned char *sys_palette,
-			unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( p2000m )
 {
-	memcpy (sys_palette, p2000m_palette, sizeof (p2000m_palette));
-	memcpy (sys_colortable, p2000m_colortable, sizeof (p2000m_colortable));
+	palette_set_colors(0, p2000m_palette, sizeof(p2000m_palette) / 3);
+	memcpy(colortable, p2000m_colortable, sizeof (p2000m_colortable));
 }
 
 /* Keyboard input */
@@ -226,69 +225,54 @@ static struct Speaker_interface speaker_interface =
     { NULL }    /* optional: level lookup table */
 };
 
+static INTERRUPT_GEN( p2000_interrupt )
+{
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
+
 /* Machine definition */
+static MACHINE_DRIVER_START( p2000t )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 2500000)
+	MDRV_CPU_MEMORY(p2000t_readmem, p2000t_writemem)
+	MDRV_CPU_PORTS(p2000t_readport, p2000t_writeport)
+	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 
-static  struct  MachineDriver   machine_driver_p2000t =
-{
-	{
-		{
-			CPU_Z80,
-			2500000,
-			p2000t_readmem, p2000t_writemem,
-			p2000t_readport, p2000t_writeport,
-			interrupt, 1,
-		},
-	},
-	50, SAA5050_VBLANK,
-	1,
-	p2000t_init_machine,
-	p2000t_stop_machine,
+    /* video hardware */
+	MDRV_IMPORT_FROM( vh_saa5050 )
 
-	SAA5050_VIDHRDW
+	/* sound hardware */
+	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+MACHINE_DRIVER_END
 
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-        }
-    }
-};
 
-static  struct  MachineDriver   machine_driver_p2000m =
-{
-	{
-		{
-			CPU_Z80,
-			2500000,
-			p2000m_readmem, p2000m_writemem,
-			p2000t_readport, p2000t_writeport,
-			interrupt, 1,
-		},
-	},
-	50, 2500,
-	1,
-	p2000t_init_machine,
-	p2000t_stop_machine,
-	80 * 6,
-	24 * 10,
-	{ 0, 80 * 6 - 1, 0, 24 * 10 - 1},
-	p2000m_gfxdecodeinfo,
-	2, 4,
-	p2000m_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	p2000m_vh_start,
-	p2000m_vh_stop,
-	p2000m_vh_screenrefresh,
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-        }
-    }
-};
+/* Machine definition */
+static MACHINE_DRIVER_START( p2000m )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 2500000)
+	MDRV_CPU_MEMORY(p2000m_readmem, p2000m_writemem)
+	MDRV_CPU_PORTS(p2000t_readport, p2000t_writeport)
+	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	MDRV_INTERLEAVE(1)
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(80 * 6, 24 * 10)
+	MDRV_VISIBLE_AREA(0, 80 * 6 - 1, 0, 24 * 10 - 1)
+	MDRV_GFXDECODE( p2000m_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(4)
+	MDRV_PALETTE_INIT(p2000m)
+
+	MDRV_VIDEO_START(p2000m)
+	MDRV_VIDEO_UPDATE(p2000m)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START(p2000t)
 	ROM_REGION(0x10000, REGION_CPU1,0)

@@ -178,7 +178,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0, &led_layout, 0, 16 },
 	{ 2, 0, &key_layout, 16*2, 2 },
-MEMORY_END	 /* end of array */
+	{ -1 } /* end of array */
+};
 
 static struct DACinterface dac_interface =
 {
@@ -186,45 +187,34 @@ static struct DACinterface dac_interface =
 	{ 100 } 	/* volume */
 };
 
-static struct MachineDriver machine_driver_kim1 =
-{
+
+static MACHINE_DRIVER_START( kim1 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 MHz */
-			readmem,writemem,0,0,
-			kim1_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	kim1_init_machine,
-	NULL,			/* stop machine */
+	MDRV_CPU_ADD_TAG("main", M6502, 1000000)        /* 1 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(kim1_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( kim1 )
 
 	/* video hardware (well, actually there was no video ;) */
-	600, 768, { 0, 600 - 1, 0, 768 - 1},
-	gfxdecodeinfo,
-	32768+21,				/* leave extra colors for the overlay */
-	256,
-	kim1_init_colors,		/* convert color prom */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(600, 768)
+	MDRV_VISIBLE_AREA(0, 600 - 1, 0, 768 - 1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(32768+21)
+	MDRV_COLORTABLE_LENGTH(256)
+	MDRV_PALETTE_INIT( kim1 )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-	kim1_vh_start,
-	kim1_vh_stop,
-	kim1_vh_screenrefresh,
+	MDRV_VIDEO_START( kim1 )
+	MDRV_VIDEO_UPDATE( kim1 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START(kim1)
 	ROM_REGION(0x10000,REGION_CPU1,0)

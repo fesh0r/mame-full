@@ -12,25 +12,18 @@
 
 int	kc_quickload_load(int id);
 
-
-void kc85_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( kc85 );
 
 void	kc85_video_set_blink_state(int data);
 
-int kc85_4_vh_start(void);
-void kc85_4_vh_stop(void);
-void kc85_4_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void kc85_4_shutdown_machine(void);
-void kc85_4_init_machine(void);
-
-int	kc85_3_vh_start(void);
-void kc85_3_vh_stop(void);
-void kc85_3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void kc85_3_shutdown_machine(void);
-void kc85_3_init_machine(void);
-
-void kc85_4d_init_machine(void);
-void kc85_4d_shutdown_machine(void);
+extern VIDEO_START( kc85_3 );
+extern VIDEO_START( kc85_4 );
+extern VIDEO_UPDATE( kc85_3 );
+extern VIDEO_UPDATE( kc85_4 );
+extern MACHINE_INIT( kc85_3 );
+extern MACHINE_INIT( kc85_4 );
+extern MACHINE_INIT( kc85_4d );
+extern MACHINE_STOP( kc85_4d );
 
 /* cassette */
 int kc_cassette_device_init(int id);
@@ -183,19 +176,7 @@ int kc85_floppy_init(int id);
 	{0x0f0, 0x0f3, kc85_disc_interface_ram_w}, \
 	{0x0f4, 0x0f4, kc85_disc_interface_latch_w},
 
-#define KC_DISC_INTERFACE_CPU \
-{ \
-	CPU_Z80,  /* type */ \
-	4000000, \
-	readmem_kc85_disc_hw,		   /* MemoryReadAddress */ \
-	writemem_kc85_disc_hw,		   /* MemoryWriteAddress */ \
-	readport_kc85_disc_hw,		   /* IOReadPort */ \
-	writeport_kc85_disc_hw,		   /* IOWritePort */ \
-	0,		/* VBlank  Interrupt */ \
-	0,		/* vblanks per frame */ \
-	0, 0,	/* every scanline */ \
-    0 \
-}
+extern MACHINE_DRIVER_EXTERN( cpu_kc_disc );
 
 #define KC_DISC_INTERFACE_ROM
 

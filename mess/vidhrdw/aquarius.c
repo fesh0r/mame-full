@@ -10,22 +10,15 @@
 #include "vidhrdw/generic.h"
 #include "includes/aquarius.h"
 
-int	aquarius_vh_start (void)
+VIDEO_START( aquarius )
 {
-
-	if( video_start_generic() )
-		return 1;
-    return 0;
+	return video_start_generic();
 }
 
-void aquarius_vh_stop (void)
+VIDEO_UPDATE( aquarius )
 {
-}
-
-void aquarius_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
-{
-
 	int	sy, sx;
+	int full_refresh = 1;
 
 	if (full_refresh)
 		memset (dirtybuffer, 1, videoram_size);

@@ -290,7 +290,7 @@ XL/XE 16kB OS roms
 //!!TESTDRIVER( atarist )	/* Atari ST 								  */
 
 	/* COMMODORE */
-//	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
 //TESTDRIVER( sym1 )		/* Synertek SYM1								  */
 //TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
 
@@ -600,9 +600,9 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
-////	DRIVER( kc85_4 )	/* VEB KC 85/4									  */
-//////	DRIVER( kc85_3 )    /* VEB KC 85/3                                    */
-//TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
+	DRIVER( kc85_4 )	/* VEB KC 85/4									  */
+	DRIVER( kc85_3 )    /* VEB KC 85/3                                    */
+TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
     /* pc1715 z80/u880 based */
 	/* pc1715w z80/u880 based */
 	/* a5105 z80/u880 based */
@@ -666,15 +666,15 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 //	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
-//	DRIVER( p2000t )	/* 1980 P2000T									  */
-//	DRIVER( p2000m )	/* 1980 P2000M									  */
+	DRIVER( p2000t )	/* 1980 P2000T									  */
+	DRIVER( p2000m )	/* 1980 P2000M									  */
 	/* philips g7000 odyssey2 compatible */
 
 	/* COMPUKIT */
-//	DRIVER( uk101 ) 	/* 1979 UK101									  */
+	DRIVER( uk101 ) 	/* 1979 UK101									  */
 
 	/* OHIO SCIENTIFIC */
-//	DRIVER( superbrd )	/* 1979 Superboard II							  */
+	DRIVER( superbrd )	/* 1979 Superboard II							  */
 
 	/* ASCII & MICROSOFT */
 //	DRIVER( msx )		/* 1983 MSX 									  */
@@ -713,7 +713,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
 						/* (Test marketed, later recalled )				  */
-//	DRIVER( aquarius )	/* 1983 Aquarius								  */
+	DRIVER( aquarius )	/* 1983 Aquarius								  */
 
 	/*EXIDY INC */
 //	DRIVER( exidy )  /* Sorcerer                                       */

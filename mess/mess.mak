@@ -159,6 +159,12 @@ DRVLIBS = \
 	$(OBJ)/cbm.a      \
 	$(OBJ)/cbmshare.a \
 	$(OBJ)/sega.a     \
+	$(OBJ)/aquarius.a \
+	$(OBJ)/kim1.a     \
+	$(OBJ)/p2000.a	  \
+	$(OBJ)/veb.a	  \
+#	$(OBJ)/mk1.a      \
+#	$(OBJ)/mk2.a      \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
@@ -167,11 +173,9 @@ DRVLIBS = \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/intv.a     \
 #	$(OBJ)/vc4000.a   \
-#	$(OBJ)/p2000.a	  \
 #	$(OBJ)/ep128.a	  \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/samcoupe.a \
-#	$(OBJ)/aquarius.a \
 #	$(OBJ)/exidy.a    \
 #	$(OBJ)/galaxy.a   \
 #	$(OBJ)/lviv.a   \
@@ -190,11 +194,7 @@ DRVLIBS = \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/gce.a	  \
-#	$(OBJ)/veb.a	  \
 #	$(OBJ)/mtx.a	  \
-#	$(OBJ)/kim1.a     \
-#	$(OBJ)/mk1.a      \
-#	$(OBJ)/mk2.a      \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/sharp.a    \
@@ -345,7 +345,6 @@ $(OBJ)/kaypro.a:   \
 	  $(OBJ)/mess/systems/kaypro.o	 \
 
 $(OBJ)/sinclair.a: \
-	  $(OBJ)/mess/eventlst.o \
 	  $(OBJ)/mess/vidhrdw/border.o	 \
 	  $(OBJ)/mess/vidhrdw/spectrum.o \
 	  $(OBJ)/mess/machine/spectrum.o \
@@ -702,6 +701,7 @@ COREOBJS += \
 	$(OBJ)/mess/bcd.o	       \
 	$(OBJ)/mess/gregoria.o	       \
 	$(OBJ)/mess/led.o              \
+	$(OBJ)/mess/eventlst.o \
 	$(OBJ)/mess/videomap.o         \
 	$(OBJ)/mess/bitbngr.o          \
 	$(OBJ)/mess/vidhrdw/state.o    \

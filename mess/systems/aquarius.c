@@ -79,12 +79,13 @@ struct	GfxLayout	aquarius_charlayout =
 	8 * 8
 };
 
-static	struct	GfxDecodeInfo	aquarius_gfxdecodeinfo[] =
+static struct GfxDecodeInfo aquarius_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &aquarius_charlayout, 0, 256},
-MEMORY_END
+	{ -1 } /* end of array */
+};
 
-static	unsigned	char	aquarius_palette[] =
+static unsigned char aquarius_palette[] =
 {
 	0x00, 0x00, 0x00,	/* Black */
 	0xff, 0x7f, 0x7f,	/* Red */
@@ -124,11 +125,10 @@ static	unsigned	short	aquarius_colortable[] =
     0,15, 1,15, 2,15, 3,15, 4,15, 5,15, 6,15, 7,15, 8,15, 9,15,10,15,11,15,12,15,13,15,14,15,15,15,
 };
 
-static	void	aquarius_init_palette (unsigned char *sys_palette,
-			unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( aquarius )
 {
-	memcpy (sys_palette, aquarius_palette, sizeof (aquarius_palette));
-	memcpy (sys_colortable, aquarius_colortable, sizeof (aquarius_colortable));
+	palette_set_colors(0, aquarius_palette, sizeof(aquarius_palette) / 3);
+	memcpy(colortable, aquarius_colortable, sizeof (aquarius_colortable));
 }
 
 /* Keyboard input */
@@ -225,43 +225,40 @@ static struct Speaker_interface aquarius_speaker =
 	{ NULL }	/* optional: level lookup table */
 };
 
-/* Machine definition */
-
-static	struct	MachineDriver	machine_driver_aquarius =
+static INTERRUPT_GEN( aquarius_interrupt )
 {
-	{
-		{
-			CPU_Z80,
-			3500000,
-			aquarius_readmem, aquarius_writemem,
-			aquarius_readport, aquarius_writeport,
-			interrupt, 1,
-		},
-	},
-	60,  DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	aquarius_init_machine,
-	aquarius_stop_machine,
-	40 * 8,
-	24 * 8,
-	{ 0, 40 * 8 - 1, 0, 24 * 8 - 1},
-	aquarius_gfxdecodeinfo,
-	sizeof (aquarius_palette) / 3,
-	sizeof (aquarius_colortable),
-	aquarius_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	aquarius_vh_start,
-	aquarius_vh_stop,
-	aquarius_vh_screenrefresh,
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&aquarius_speaker
-		}
-	}
-};
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
+
+/* Machine definition */
+static MACHINE_DRIVER_START( aquarius )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 3500000)
+	MDRV_CPU_MEMORY(aquarius_readmem, aquarius_writemem)
+	MDRV_CPU_PORTS(aquarius_readport, aquarius_writeport)
+	MDRV_CPU_VBLANK_INT( aquarius_interrupt, 1 )
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( aquarius )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40 * 8, 24 * 8)
+	MDRV_VISIBLE_AREA(0, 40 * 8 - 1, 0, 24 * 8 - 1)
+	MDRV_GFXDECODE( aquarius_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof (aquarius_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (aquarius_colortable))
+	MDRV_PALETTE_INIT( aquarius )
+
+	MDRV_VIDEO_START( aquarius )
+	MDRV_VIDEO_UPDATE( aquarius )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SPEAKER, aquarius_speaker)
+MACHINE_DRIVER_END
+
 
 ROM_START(aquarius)
 	ROM_REGION(0x10000, REGION_CPU1,0)

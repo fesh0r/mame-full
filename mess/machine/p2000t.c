@@ -11,19 +11,6 @@
 #include "cpu/z80/z80.h"
 #include "includes/p2000t.h"
 
-void p2000t_init_machine(void)
-{
-
-	logerror("p2000t_init\r\n");
-
-}
-
-void p2000t_stop_machine(void)
-{
-
-	logerror("p2000t_stop\r\n");
-}
-
 #define P2000M_101F_CASDAT	0x01
 #define P2000M_101F_CASCMD	0x02
 #define P2000M_101F_CASREW	0x04

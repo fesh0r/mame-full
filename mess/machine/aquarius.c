@@ -14,7 +14,7 @@
 
 static	int	aquarius_ramsize = 0;
 
-void aquarius_init_machine(void)
+MACHINE_INIT( aquarius )
 {
 	logerror("aquarius_init\r\n");
 	if (readinputport(9) != aquarius_ramsize)
@@ -44,16 +44,12 @@ void aquarius_init_machine(void)
 	}
 }
 
-void aquarius_stop_machine(void)
-{
-}
-
 READ_HANDLER ( aquarius_port_ff_r )
 {
 
 	int loop, loop2, bc, rpl;
 
-	bc = (cpu_get_reg (Z80_BC) >> 8);
+	bc = activecpu_get_reg(Z80_BC) >> 8;
 	rpl = 0xff;
 
 	for (loop = 0x80, loop2 = 7; loop; loop >>= 1, loop2--)

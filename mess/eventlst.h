@@ -9,7 +9,6 @@ typedef struct EVENT_LIST_ITEM
 } EVENT_LIST_ITEM;
 
 void	EventList_Initialise(int NumEntries);
-void    EventList_Finish(void);
 void    EventList_Reset(void);
 void    EventList_AddItem(int ID, int Data,int Time);
 void    EventList_SetOffsetStartTime(int StartTime);

@@ -10,54 +10,32 @@
 #include "vidhrdw/generic.h"
 #include "includes/uk101.h"
 
-int	uk101_vh_start (void)
-{
-	if (video_start_generic ())
-		return (1);
-
-	return (0);
-}
-
-void	uk101_vh_stop (void)
-{
-}
-
-/* || */
-
-void	uk101_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( uk101 )
 {
 	int sx, sy;
 
-	if (full_refresh)
-		memset (dirtybuffer, 1, videoram_size);
-
-	for (sy = 0; sy < 25; sy++) {
-		for (sx = 0; sx < 32; sx++) {
-			if (dirtybuffer[0x84 + sy * 32 + sx]) {
-				drawgfx (bitmap, Machine->gfx[0], videoram[0x84 + sy * 32 + sx], 1,
+	for (sy = 0; sy < 25; sy++)
+	{
+		for (sx = 0; sx < 32; sx++)
+		{
+			drawgfx (bitmap, Machine->gfx[0], videoram[0x84 + sy * 32 + sx], 1,
 				0, 0, sx * 8, sy * 16, &Machine->visible_area,
 				TRANSPARENCY_NONE, 0);
-				dirtybuffer[0x84 + sy * 32 + sx] = 0;
-			}
 		}
 	}
 }
 
-void	superbrd_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( superbrd )
 {
 	int sx, sy;
 
-	if (full_refresh)
-		memset (dirtybuffer, 1, videoram_size);
-
-	for (sy = 0; sy < 16; sy++) {
-		for (sx = 0; sx < 64; sx++) {
-			if (dirtybuffer[sy * 64 + sx]) {
-				drawgfx (bitmap, Machine->gfx[0], videoram[sy * 64 + sx], 1,
+	for (sy = 0; sy < 16; sy++)
+	{
+		for (sx = 0; sx < 64; sx++)
+		{
+			drawgfx (bitmap, Machine->gfx[0], videoram[sy * 64 + sx], 1,
 				0, 0, sx * 8, sy * 16, &Machine->visible_area,
 				TRANSPARENCY_NONE, 0);
-				dirtybuffer[sy * 64 + sx] = 0;
-			}
 		}
 	}
 }

@@ -122,16 +122,13 @@ static unsigned short uk101_colortable[] =
 	0,1
 };
 
-static void uk101_init_palette (unsigned char *sys_palette,
-					unsigned short *sys_colortable,
-					const unsigned char *color_prom)
+static PALETTE_INIT( uk101 )
 {
-	memcpy (sys_palette, uk101_palette, sizeof (uk101_palette));
-	memcpy (sys_colortable, uk101_colortable, sizeof (uk101_colortable));
+	palette_set_colors(0, uk101_palette, sizeof(uk101_palette) / 3);
+	memcpy(colortable, uk101_colortable, sizeof (uk101_colortable));
 }
 
 /* keyboard input */
-
 INPUT_PORTS_START( uk101 )
 	PORT_START	/* 0: DF00 & 0x80 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -209,69 +206,45 @@ INPUT_PORTS_START( uk101 )
 	PORT_DIPSETTING( 2, "40Kb" )
 INPUT_PORTS_END
 
-/* sound output */
+static INTERRUPT_GEN( uk101_interrupt )
+{
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
 
 /* machine definition */
+static MACHINE_DRIVER_START( uk101 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 1000000)
+	MDRV_CPU_MEMORY( uk101_readmem, uk101_writemem )
+	MDRV_CPU_VBLANK_INT(uk101_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	MDRV_INTERLEAVE(1)
 
-static struct MachineDriver machine_driver_uk101 =
-{
-	{
-		{
-			CPU_M6502,
-			1000000,
-			uk101_readmem, uk101_writemem,
-			0, 0,
-			interrupt, 1,
-		},
-	},
-	50, 2500,
-	1,
-	uk101_init_machine,
-	uk101_stop_machine,
-	32 * 8,
-	25 * 16,
-	{ 0, 32 * 8 - 1, 0, 25 * 16 - 1 },
-	uk101_gfxdecodeinfo,
-	sizeof (uk101_palette) / 3,
-	sizeof (uk101_colortable),
-	uk101_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	uk101_vh_start,
-	uk101_vh_stop,
-	uk101_vh_screenrefresh,
-	0, 0, 0, 0,
-};
+	MDRV_MACHINE_INIT( uk101 )
 
-static struct MachineDriver machine_driver_superbrd =
-{
-	{
-		{
-			CPU_M6502,
-			1000000,
-			superbrd_readmem, superbrd_writemem,
-			0, 0,
-			interrupt, 1,
-		},
-	},
-	50, 2500,
-	1,
-	uk101_init_machine,
-	uk101_stop_machine,
-	64 * 8,
-	16 * 16,
-	{ 0, 64 * 8 - 1, 0, 16 * 16 - 1 },
-	uk101_gfxdecodeinfo,
-	sizeof (uk101_palette) / 3,
-	sizeof (uk101_colortable),
-	uk101_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	uk101_vh_start,
-	uk101_vh_stop,
-	superbrd_vh_screenrefresh,
-	0, 0, 0, 0,
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32 * 8, 25 * 16)
+	MDRV_VISIBLE_AREA(0, 32 * 8 - 1, 0, 25 * 16 - 1)
+	MDRV_GFXDECODE( uk101_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT( uk101 )
+
+	MDRV_VIDEO_START( generic )
+	MDRV_VIDEO_UPDATE( uk101 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( superbrd )
+	MDRV_IMPORT_FROM( uk101 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( superbrd_readmem, superbrd_writemem )
+	MDRV_SCREEN_SIZE(64 * 8, 16 * 16)
+	MDRV_VISIBLE_AREA(0, 64 * 8 - 1, 0, 16 * 16 - 1)
+	MDRV_VIDEO_UPDATE( superbrd )
+MACHINE_DRIVER_END
 
 ROM_START(uk101)
 	ROM_REGION(0x10000, REGION_CPU1,0)

@@ -11,40 +11,26 @@
 #include "vidhrdw/generic.h"
 #include "includes/kim1.h"
 
-void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( kim1 )
 {
     int i;
 
 	/* initialize 16 colors with shades of red (orange) */
     for (i = 0; i < 16; i++)
     {
-		palette[3 * i + 0] = 24 + (i + 1) * (i + 1) - 1;
-        palette[3 * i + 1] = (i + 1) * (i + 1) / 4;
-        palette[3 * i + 2] = 0;
-
+		palette_set_color(i,
+			24 + (i + 1) * (i + 1) - 1,
+			(i + 1) * (i + 1) / 4,
+			0);
         colortable[2 * i + 0] = 1;
         colortable[2 * i + 1] = i;
     }
 
-    palette[3 * 16 + 0] = 0;
-    palette[3 * 16 + 1] = 0;
-    palette[3 * 16 + 2] = 0;
-
-    palette[3 * 17 + 0] = 30;
-    palette[3 * 17 + 1] = 30;
-    palette[3 * 17 + 2] = 30;
-
-    palette[3 * 18 + 0] = 90;
-    palette[3 * 18 + 1] = 90;
-    palette[3 * 18 + 2] = 90;
-
-    palette[3 * 19 + 0] = 50;
-    palette[3 * 19 + 1] = 50;
-    palette[3 * 19 + 2] = 50;
-
-    palette[3 * 20 + 0] = 255;
-    palette[3 * 20 + 1] = 255;
-    palette[3 * 20 + 2] = 255;
+	palette_set_color(16,   0,   0,   0);
+	palette_set_color(17,  30,  30,  30);
+	palette_set_color(18,  90,  90,  90);
+	palette_set_color(19,  50,  50,  50);
+	palette_set_color(20, 255, 255, 255);
 
     colortable[2 * 16 + 0 * 4 + 0] = 17;
     colortable[2 * 16 + 0 * 4 + 1] = 18;
@@ -57,40 +43,24 @@ void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const
     colortable[2 * 16 + 1 * 4 + 3] = 15;
 }
 
-int kim1_vh_start (void)
+VIDEO_START( kim1 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
-	{
-		char backdrop_name[200];
-	    /* try to load a backdrop for the machine */
-		sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
-		backdrop_load(backdrop_name, 21);
-	}
-
-    if (video_start_generic () != 0)
+	if (video_start_generic () != 0)
         return 1;
 
     return 0;
 }
 
-void kim1_vh_stop (void)
-{
-    videoram = NULL;
-}
-
-void kim1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( kim1 )
 {
     int x, y;
 
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-        memset (videoram, 0x0f, videoram_size);
-    }
+	fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
 
     for (x = 0; x < 6; x++)
     {
@@ -126,7 +96,6 @@ void kim1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 				0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
         }
     }
-
 }
 
 
