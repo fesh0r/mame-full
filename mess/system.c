@@ -100,8 +100,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld				*/
 	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge	*/
 	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld			*/
-//TESTDRIVER (snes)		/* Nintendo Super Nintendo				*/
-//  ////	DRIVER (vboy)		/* Nintendo Virtual Boy 				*/
+TESTDRIVER (snes)		/* Nintendo Super Nintendo				*/
 
 	/* SEGA */
 	DRIVER( gamegear )   /* Sega Sega Master System        */
@@ -456,16 +455,16 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 //TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
 //TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 /*//	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
-//	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
-//TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
+	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
+TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
-//	DRIVER( pc1401 )	/* Pocket Computer 1401 						  */
-//	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
+	DRIVER( pc1401 )	/* Pocket Computer 1401 						  */
+	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
 
-//	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
+	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
 
-//	DRIVER( pc1403 )	/* Pocket Computer 1403 						  */
-//	DRIVER( pc1403h )	/* Pocket Computer 1403H 						  */
+	DRIVER( pc1403 )	/* Pocket Computer 1403 						  */
+	DRIVER( pc1403h )	/* Pocket Computer 1403H 						  */
 
 	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
 	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */

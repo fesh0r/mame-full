@@ -58,7 +58,7 @@ int spc700TimerExtra;						// Used to hold whether to increment T0 & T1
 
 unsigned short fixedColour;					// Fixed color encoded into here
 
-void snes_init_machine(void)
+MACHINE_INIT( snes )
 {
 	int a;
 
@@ -71,22 +71,22 @@ void snes_init_machine(void)
 		port43xx[a]=0;
 	}
 
-	SNES_WRAM=(unsigned char *)malloc(0x20000);			// 128k bytes of wram
+	SNES_WRAM=(unsigned char *) auto_malloc(0x20000);			// 128k bytes of wram
 	if (SNES_WRAM==NULL)
 		logerror("Out of ram!\n");
 	for (a=0;a<0x20000;a++)
 		SNES_WRAM[a]=0xFF;
-	SNES_VRAM=(unsigned char *)malloc(0x20000);			// 64k words of vram
+	SNES_VRAM=(unsigned char *) auto_malloc(0x20000);			// 64k words of vram
 	if (SNES_VRAM==NULL)
 		logerror("Out of ram!\n");
 	for (a=0;a<0x20000;a++)
 		SNES_VRAM[a]=0xFF;
-	SNES_CRAM=(unsigned char *)malloc(0x200);			// 512 bytes cgram
+	SNES_CRAM=(unsigned char *) auto_malloc(0x200);			// 512 bytes cgram
 	if (SNES_CRAM==NULL)
 		logerror("Out of ram!\n");
 	for (a=0;a<0x200;a++)
 		SNES_CRAM[a]=0xFF;
-	SNES_ORAM=(unsigned char *)malloc(0x400);			// 1024 bytes oam
+	SNES_ORAM=(unsigned char *) auto_malloc(0x400);			// 1024 bytes oam
 	if (SNES_ORAM==NULL)
 		logerror("Out of ram!\n");
 	for (a=0;a<0x400;a++)
@@ -104,91 +104,6 @@ void snes_init_machine(void)
 }
 
 extern unsigned char *SPCRamPtr;
-
-void snes_shutdown_machine(void)
-{
-	int a;
-	FILE *tmpFile;
-
-#ifdef EMULATE_SPC700
-	timer_remove(spc700Timer);
-#endif
-
-	tmpFile = fopen("SNES_ROM.DMP", "w");
-	for (a=0;a<0x8000;a++)
-	{
-		if ((a&15)==0)
-			fprintf(tmpFile,"%04X : ",a);
-		if ((a&15)==15)
-			fprintf(tmpFile,"%02X\n",SNES_ROM[a+0x8000]);
-		else
-			fprintf(tmpFile,"%02X,",SNES_ROM[a+0x8000]);
-	}
-	fclose(tmpFile);
-
-	tmpFile = fopen("SNESORAM.DMP", "w");
-	for (a=0;a<0x400;a++)
-	{
-		if ((a&15)==0)
-			fprintf(tmpFile,"%04X : ",a);
-		if ((a&15)==15)
-			fprintf(tmpFile,"%02X\n",SNES_ORAM[a]);
-		else
-			fprintf(tmpFile,"%02X,",SNES_ORAM[a]);
-	}
-	fclose(tmpFile);
-	free(SNES_ORAM);
-	tmpFile = fopen("SNESCRAM.DMP", "w");
-	for (a=0;a<512;a++)
-	{
-		if ((a&1)==0)
-			fprintf(tmpFile,"%04X : ",a>>1);
-		if ((a&1)==1)
-			fprintf(tmpFile,"%02X\n",SNES_CRAM[a]);
-		else
-			fprintf(tmpFile,"%02X,",SNES_CRAM[a]);
-	}
-	fclose(tmpFile);
-	free(SNES_CRAM);
-	tmpFile = fopen("SNESVRAM.DMP", "w");
-	for (a=0;a<0x20000;a++)
-	{
-		if ((a&15)==0)
-			fprintf(tmpFile,"%04X : ",a);
-		if ((a&15)==15)
-			fprintf(tmpFile,"%02X\n",SNES_VRAM[a]);
-		else
-			fprintf(tmpFile,"%02X,",SNES_VRAM[a]);
-	}
-	free(SNES_VRAM);
-	fclose(tmpFile);
-	tmpFile = fopen("SNESWRAM.DMP", "w");
-	for (a=0;a<0x20000;a++)
-	{
-		if ((a&15)==0)
-			fprintf(tmpFile,"%04X : ",a);
-		if ((a&15)==15)
-			fprintf(tmpFile,"%02X\n",SNES_WRAM[a]);
-		else
-			fprintf(tmpFile,"%02X,",SNES_WRAM[a]);
-	}
-	fclose(tmpFile);
-	free(SNES_WRAM);
-#ifdef EMULATE_SPC700
-	tmpFile = fopen("SNESSPC.DMP", "w");
-	for (a=0;a<0x10000;a++)
-	{
-		if ((a&15)==0)
-			fprintf(tmpFile,"%04X : ",a);
-		if ((a&15)==15)
-			fprintf(tmpFile,"%02X\n",SPCRamPtr[a]);
-		else
-			fprintf(tmpFile,"%02X,",SPCRamPtr[a]);
-	}
-	fclose(tmpFile);
-#endif
-}
-
 
 
 /* Simple Id done as - divide total size of rom by 32*1024... if remainder is 512 smc header present file is valid, else

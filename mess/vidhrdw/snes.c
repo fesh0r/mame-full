@@ -42,7 +42,7 @@ unsigned char *zBuffer;
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
-int snes_vh_start(void)
+VIDEO_START( snes )
 {
 	zBuffer = auto_malloc((256+32)*(256+32));
 	if (!zBuffer)
@@ -52,16 +52,12 @@ int snes_vh_start(void)
 	return 0;
 }
 
-void snes_vh_stop(void)
-{
-}
-
 /***************************************************************************
   Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void snes_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( snes )
 {
 }
 

@@ -251,10 +251,10 @@ $(OBJ)/nintendo.a: \
 	  $(OBJ)/mess/vidhrdw/gb.o	 \
 	  $(OBJ)/mess/machine/gb.o	 \
 	  $(OBJ)/mess/systems/gb.o	 \
-#	  $(OBJ)/mess/sndhrdw/snes.o	 \
-#	  $(OBJ)/mess/vidhrdw/snes.o	 \
-#	  $(OBJ)/mess/machine/snes.o	 \
-#	  $(OBJ)/mess/systems/snes.o	 \
+	  $(OBJ)/mess/sndhrdw/snes.o	 \
+	  $(OBJ)/mess/vidhrdw/snes.o	 \
+	  $(OBJ)/mess/machine/snes.o	 \
+	  $(OBJ)/mess/systems/snes.o	 \
 
 $(OBJ)/amiga.a: \
 	  $(OBJ)/mess/vidhrdw/amiga.o	 \
@@ -576,7 +576,7 @@ $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
 	  $(OBJ)/mess/systems/mz700.o	\
-#	  $(OBJ)/mess/systems/pocketc.o  \
+	  $(OBJ)/mess/systems/pocketc.o  \
 #	  $(OBJ)/mess/vidhrdw/pc1401.o	 \
 #	  $(OBJ)/mess/machine/pc1401.o	 \
 #	  $(OBJ)/mess/vidhrdw/pc1403.o	 \

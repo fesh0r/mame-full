@@ -575,11 +575,6 @@ static struct DACinterface dac_interface =
 };
 #endif
 
-static int pocketc_frame_int(void)
-{
-	return 0;
-}
-
 struct DACinterface pocketc_sound_interface =
 {
         1,
@@ -887,19 +882,3 @@ COMPX( 198?, pc1403h,	pc1403,	pc1403,		pc1403,		pc1403,	"Sharp", "Pocket Compute
    tandy pocket scientific computer pc-6
    clone of ? sharp pb1000
 */
-#ifdef RUNTIME_LOADER
-extern void pocketc_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"pc1251")==0) drivers[i]=&driver_pc1251;
-		if ( strcmp(drivers[i]->name,"trs80pc3")==0) drivers[i]=&driver_trs80pc3;
-		if ( strcmp(drivers[i]->name,"pc1401")==0) drivers[i]=&driver_pc1401;
-		if ( strcmp(drivers[i]->name,"pc1402")==0) drivers[i]=&driver_pc1402;
-		if ( strcmp(drivers[i]->name,"pc1350")==0) drivers[i]=&driver_pc1350;
-		if ( strcmp(drivers[i]->name,"pc1403")==0) drivers[i]=&driver_pc1403;
-		if ( strcmp(drivers[i]->name,"pc1403h")==0) drivers[i]=&driver_pc1403h;
-	}
-}
-#endif
-

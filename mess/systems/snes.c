@@ -954,7 +954,7 @@ static MEMORY_WRITE_START( snes_writemem )   {
     { 0x7E0000,0x7FFFFF,MWA_WRAM},
 MEMORY_END
 
-void snes_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+static PALETTE_INIT( snes )
 {
     int i;
 
@@ -966,69 +966,48 @@ void snes_init_palette(unsigned char *palette, unsigned short *colortable,const 
         g = ((i >> 5) & 0x1F) << 3;
         b = ((i >> 10) & 0x1F) << 3;
 
-        *palette++ = r;
-        *palette++ = g;
-        *palette++ = b;
-
+		palette_set_color(i, r, g, b);
         colortable[i] = i;
     }
 }
 
-static struct MachineDriver machine_driver_snes =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_G65816,
-            2680000,        /* 2.68 Mhz */
-            snes_readmem,snes_writemem,
-            0,0,                                    // No IO
-            snes_line_interrupt,262,                // 262 scanlines
 
-        },
+static MACHINE_DRIVER_START( snes )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(G65816, 2680000)					/* 2.68 Mhz */
+	MDRV_CPU_MEMORY(snes_readmem,snes_writemem)
+	MDRV_CPU_VBLANK_INT(snes_line_interrupt,262)	/* 262 scanlines */
+
 #ifdef EMULATE_SPC700
-        {
-            CPU_SPC700,
-            2048000,        /* 2.048Mhz */
-            spc_readmem,spc_writemem,
-            0,0,                                    // No IO
-            spc700Interrupt,262*10,                 // Interrupts should never be called. - Done for better sync
-        },
+	MDRV_CPU_ADD(SPC700, 2048000)					/* 2.048Mhz */
+	MDRV_CPU_MEMORY(spc_readmem,spc_writemem)
+	MDRV_CPU_VBLANK_INT(spc700Interrupt,262*10)		/* Interrupts should never be called. - Done for better sync */
 #endif
-    },
-    50, /*2500*/0,       /* frames per second, vblank duration - Emulating a PAL machine at present*/
-    1,
-    snes_init_machine,
-    snes_shutdown_machine,
+
+	MDRV_FRAMES_PER_SECOND(50)	/* frames per second, vblank duration - Emulating a PAL machine at present*/
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( snes )
 
     /* video hardware */
-    32*8+32,                               /* screen width - only emulating 256 pixel width at present*/
-    32*8+32,                               /* screen height - pal height*/
-    { 16, 16+32*8-1, 16, 16+32*8-1 },           /* visible_area */
-    snes_gfxdecodeinfo,                 /* graphics decode info */
-    65536, 65536,                       /* colors used for the characters */
-    snes_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8+32, 32*8+32)
+	MDRV_VISIBLE_AREA(16, 16+32*8-1, 16, 16+32*8-1)
+	MDRV_GFXDECODE( snes_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(65536)
+	MDRV_COLORTABLE_LENGTH(65536)
+	MDRV_PALETTE_INIT( snes )
 
-    VIDEO_TYPE_RASTER,
-    0,
-    snes_vh_start,
-    snes_vh_stop,
-    snes_vh_screenrefresh,
+	MDRV_VIDEO_START( snes )
+	MDRV_VIDEO_UPDATE( snes )
 
-    /* sound hardware */
-    0,0,0,0,
-    {
+	/* sound hardware */
 #ifdef EMULATE_SPC700
-        {
-            SOUND_CUSTOM,           // SNES has its own sample format and since its a multiple rom machine can't use SOUND_SAMPLES
-            &snesSoundInterface
-        },
+	/* SNES has its own sample format and since its a multiple rom machine can't use SOUND_SAMPLES */
+	MDRV_SOUND_ADD(CUSTOM, snesSoundInterface)
 #endif
-        {
-        0
-        }
-    }
-};
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

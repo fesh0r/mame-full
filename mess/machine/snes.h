@@ -31,12 +31,10 @@
 
 int snes_load_rom (int id);
 void snes_exit_rom (int id);
-void snes_init_machine(void);
-void snes_shutdown_machine(void);
 
-int snes_vh_start(void);
-void snes_vh_stop(void);
-void snes_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern MACHINE_INIT( snes );
+extern VIDEO_START( snes );
+extern VIDEO_UPDATE( snes );
 
 void RenderSNESScreenLine(struct mame_bitmap *,int);
 
