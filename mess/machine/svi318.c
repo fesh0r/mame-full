@@ -14,7 +14,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
-#include "includes/svi318dsk.h"
+#include "includes/svi318dk.h"
 #include "includes/svi318.h"
 #include "formats/svi_cas.h"
 #include "machine/8255ppi.h"

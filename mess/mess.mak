@@ -663,6 +663,7 @@ $(OBJ)/motorola.a: \
 $(OBJ)/svi.a:      \
 	  $(OBJ)/mess/machine/svi318.o   \
 	  $(OBJ)/mess/systems/svi318.o   \
+	  $(OBJ)/mess/machine/svi318dk.o \
 	  $(OBJ)/mess/formats/svi_cas.o
 
 $(OBJ)/exidy.a:    \

@@ -10,7 +10,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "includes/svi318.h"
 #include "includes/wd179x.h"
-#include "includes/svi318dsk.h"
+#include "includes/svi318dk.h"
 #include "printer.h"
 
 

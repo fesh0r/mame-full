@@ -5,7 +5,7 @@ the data will be accessed correctly */
 
 /* THIS DISK IMAGE CODE USED TO BE PART OF THE WD179X EMULATION, EXTRACTED INTO THIS FILE */
 #include "driver.h"
-#include "includes/svi318dsk.h"
+#include "includes/svi318dk.h"
 #include "includes/flopdrv.h"
 #include "image.h"
 
