@@ -39,8 +39,10 @@ Source Changes:
 ----------------
 - The core is based on MAME 0.94.  This incorporates all features of the
   update to this core.  [MAME team]  
+
+- Devices can now be marked as 'not working'.  [Nate Woods]
   
-  
+
 
 0.93
 

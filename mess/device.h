@@ -75,6 +75,7 @@ struct IODevice
 	unsigned int must_be_loaded : 1;
 	unsigned int load_at_init : 1;
 	unsigned int error : 1;
+	unsigned int not_working : 1;
 
 	/* image handling callbacks */
 	device_init_handler init;

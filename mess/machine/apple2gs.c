@@ -117,8 +117,6 @@
 #define LOG_ADB				0
 #define LOG_IRQ				0
 
-#define SUPPORT_SLOT6		0
-
 #define IRQ_KBD_SRQ			0x01
 #define IRQ_ADB_DATA		0x02
 #define IRQ_ADB_MOUSE		0x04
@@ -1231,14 +1229,14 @@ static void apple2gs_set_lines(data8_t lines)
 		/* slot 5: 3.5" disks */
 		sony_set_lines(lines);
 	}
-#if SUPPORT_SLOT6
+#if APPLE2GS_SUPPORT_SLOT6
 	else
 	{
 		/* slot 6: 5.25" disks */
 		if (apple2gs_cur_slot6_image)
 			apple2_slot6_set_lines(apple2gs_cur_slot6_image, lines);
 	}
-#endif /* SUPPORT_SLOT6 */
+#endif /* APPLE2GS_SUPPORT_SLOT6 */
 }
 
 
@@ -1280,14 +1278,14 @@ static data8_t apple2gs_read_data(void)
 		/* slot 5: 3.5" disks */
 		result = sony_read_data();
 	}
-#if SUPPORT_SLOT6
+#if APPLE2GS_SUPPORT_SLOT6
 	else
 	{
 		/* slot 6: 5.25" disks */
 		if (apple2gs_cur_slot6_image)
 			result = apple2_slot6_readbyte(apple2gs_cur_slot6_image);
 	}
-#endif /* SUPPORT_SLOT6 */
+#endif /* APPLE2GS_SUPPORT_SLOT6 */
 	return result;
 }
 
@@ -1300,14 +1298,14 @@ static void apple2gs_write_data(data8_t data)
 		/* slot 5: 3.5" disks */
 		sony_write_data(data);
 	}
-#if SUPPORT_SLOT6
+#if APPLE2GS_SUPPORT_SLOT6
 	else
 	{
 		/* slot 6: 5.25" disks */
 		if (apple2gs_cur_slot6_image)
 			apple2_slot6_writebyte(apple2gs_cur_slot6_image, data);
 	}
-#endif /* SUPPORT_SLOT6 */
+#endif /* APPLE2GS_SUPPORT_SLOT6 */
 }
 
 
@@ -1321,14 +1319,14 @@ static int apple2gs_read_status(void)
 		/* slot 5: 3.5" disks */
 		result = sony_read_status();
 	}
-#if SUPPORT_SLOT6
+#if APPLE2GS_SUPPORT_SLOT6
 	else
 	{
 		/* slot 6: 5.25" disks */
 		if (apple2gs_cur_slot6_image)
 			result = image_is_writable(apple2gs_cur_slot6_image) ? 0x00 : 0x80;
 	}
-#endif /* SUPPORT_SLOT6 */
+#endif /* APPLE2GS_SUPPORT_SLOT6 */
 	return result;
 }
 
@@ -1533,7 +1531,7 @@ static void apple2gs_mem_00D000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 	else
 	{
-		apple2gs_mem_xxD000(meminfo, 0x000000);
+		apple2gs_mem_xxD000(meminfo, (a2 & VAR_ALTZP) ? 0x010000 : 0x000000);
 	}
 }
 
@@ -1546,7 +1544,7 @@ static void apple2gs_mem_00E000(offs_t begin, offs_t end, struct apple2_meminfo 
 	}
 	else
 	{
-		apple2gs_mem_xxE000(meminfo, 0x000000);
+		apple2gs_mem_xxE000(meminfo, (a2 & VAR_ALTZP) ? 0x010000 : 0x000000);
 	}
 }
 
@@ -1690,7 +1688,7 @@ static OPBASE_HANDLER( apple2gs_opbase )
 {
 	const UINT8 *opptr = NULL;
 	int slot;
-
+	
 	if (((address & 0xFEF000) == 0x00C000) || ((address & 0xFEF000) == 0xE0C000))
 	{
 		if ((apple2gs_shadow & 0x40) && ((address & 0xF00000) == 0x000000))
