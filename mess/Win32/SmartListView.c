@@ -1,6 +1,9 @@
 #include <assert.h>
 #include "SmartListView.h"
 #include "resource.h"
+#include "ColumnEdit.h"
+
+static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime);
 
 /* Add ... to Items in ListView if needed */
 static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
@@ -130,7 +133,7 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 			SWP_DRAWFRAME);
 	}
 
-	SmartListView_ResetColumnDisplay(pListView);
+	SmartListView_InternalResetColumnDisplay(pListView, TRUE);
 	return pListView;
 }
 
@@ -215,6 +218,49 @@ static int SmartListView_WhichIcon(struct SmartListView *pListView, int nLogical
 }
 
 /* ------------------------------------------------------------------------ *
+ * ColumnEdit Dialog                                                        *
+ * ------------------------------------------------------------------------ */
+
+static struct SmartListView *MyColumnDialogProc_pListView;
+static int *MyColumnDialogProc_order;
+static int *MyColumnDialogProc_shown;
+
+static void MyGetRealColumnOrder(int *order)
+{
+	SmartListView_GetRealColumnOrder(MyColumnDialogProc_pListView, order);
+}
+
+static void MyGetColumnInfo(int *order, int *shown)
+{
+	MyColumnDialogProc_pListView->pClass->pfnGetColumnInfo(MyColumnDialogProc_pListView, shown, order, NULL);
+}
+
+static void MySetColumnInfo(int *order, int *shown)
+{
+	MyColumnDialogProc_pListView->pClass->pfnSetColumnInfo(MyColumnDialogProc_pListView, shown, order, NULL);
+}
+
+static INT_PTR CALLBACK MyColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	return InternalColumnDialogProc(hDlg, Msg, wParam, lParam, MyColumnDialogProc_pListView->pClass->nNumColumns,
+		MyColumnDialogProc_shown, MyColumnDialogProc_order, (char **) MyColumnDialogProc_pListView->pClass->ppColumnNames,
+		MyGetRealColumnOrder, MyGetColumnInfo, MySetColumnInfo);
+}
+
+static BOOL RunColumnDialog(struct SmartListView *pListView)
+{
+	BOOL bResult;
+
+	MyColumnDialogProc_pListView = pListView;
+	MyColumnDialogProc_order = malloc(pListView->pClass->nNumColumns * sizeof(int));
+	MyColumnDialogProc_shown = malloc(pListView->pClass->nNumColumns * sizeof(int));
+	bResult = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_COLUMNS), pListView->hwndParent, MyColumnDialogProc);
+	free(MyColumnDialogProc_order);
+	free(MyColumnDialogProc_shown);
+	return bResult;
+}
+
+/* ------------------------------------------------------------------------ *
  * Event Handling                                                           *
  * ------------------------------------------------------------------------ */
 
@@ -241,6 +287,57 @@ BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT w
 	}
 
 	return bIsEvent;
+}
+
+static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POINT ptScreen)
+{
+	HWND hwndHeader;
+	HMENU hMenu, hMenuLoad;
+	int i, nMenuItem, nLogicalColumn;
+	BOOL bFound = FALSE;
+	RECT rcCol;
+	POINT ptClient;
+
+	hwndHeader = GetDlgItem(pListView->hwndListView, 0);
+
+	ptClient = ptScreen;
+	ScreenToClient(hwndHeader, &ptClient);
+
+	for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++ ) {
+		if (PtInRect(&rcCol, ptClient)) {
+			nLogicalColumn = SmartListView_VisualColumnToLogical(pListView, i);
+			bFound = TRUE;
+		}
+	}
+
+	if (bFound) {
+		hMenuLoad = LoadMenu(NULL, MAKEINTRESOURCE(IDR_CONTEXT_HEADER));
+		hMenu = GetSubMenu(hMenuLoad, 0);
+
+		nMenuItem = (int) TrackPopupMenu(hMenu,
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+			ptScreen.x,
+			ptScreen.y,
+			0,
+			pListView->hwndParent,
+			NULL);
+
+		DestroyMenu(hMenuLoad);
+
+		switch(nMenuItem) {
+		case ID_SORT_ASCENDING:
+			SmartListView_SetSorting(pListView, nLogicalColumn, FALSE);
+			break;
+		case ID_SORT_DESCENDING:
+			SmartListView_SetSorting(pListView, nLogicalColumn, TRUE);
+			break;
+		case ID_CUSTOMIZE_FIELDS:
+			/* NYI */
+			if (RunColumnDialog(pListView))
+				SmartListView_ResetColumnDisplay(pListView);
+			break;
+		}
+	}
 }
 
 static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR lpNmHdr)
@@ -579,56 +676,6 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     }
 }
 
-static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POINT ptScreen)
-{
-	HWND hwndHeader;
-	HMENU hMenu, hMenuLoad;
-	int i, nMenuItem, nLogicalColumn;
-	BOOL bFound = FALSE;
-	RECT rcCol;
-	POINT ptClient;
-
-	hwndHeader = GetDlgItem(pListView->hwndListView, 0);
-
-	ptClient = ptScreen;
-	ScreenToClient(hwndHeader, &ptClient);
-
-	for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++ ) {
-		if (PtInRect(&rcCol, ptClient)) {
-			nLogicalColumn = SmartListView_VisualColumnToLogical(pListView, i);
-			bFound = TRUE;
-		}
-	}
-
-	if (bFound) {
-		hMenuLoad = LoadMenu(NULL, MAKEINTRESOURCE(IDR_CONTEXT_HEADER));
-		hMenu = GetSubMenu(hMenuLoad, 0);
-
-		nMenuItem = (int) TrackPopupMenu(hMenu,
-			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-			ptScreen.x,
-			ptScreen.y,
-			0,
-			pListView->hwndParent,
-			NULL);
-
-		DestroyMenu(hMenuLoad);
-
-		switch(nMenuItem) {
-		case ID_SORT_ASCENDING:
-			SmartListView_SetSorting(pListView, nLogicalColumn, FALSE);
-			break;
-		case ID_SORT_DESCENDING:
-			SmartListView_SetSorting(pListView, nLogicalColumn, TRUE);
-			break;
-		case ID_CUSTOMIZE_FIELDS:
-			/* NYI */
-			MessageBoxA(pListView->hwndParent, "3", NULL, MB_OK);
-			break;
-		}
-	}
-}
-
 BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UINT wParam, LONG lParam)
 {
 	BOOL bReturn = FALSE;
@@ -663,7 +710,7 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 
 /* ------------------------------------------------------------------------ */
 
-void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
+static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime)
 {
 	LV_COLUMN lvc;
 	int *shown;
@@ -678,6 +725,19 @@ void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 	widths = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*widths));
 
 	pListView->pClass->pfnGetColumnInfo(pListView, shown, order, widths);
+
+	if (!bFirstTime) {
+		nColumn = GetNumColumns(pListView);
+
+		/* The first time thru this won't happen, on purpose */
+		for (i = 0; i < nColumn; i++)
+			widths[pListView->piRealColumns[i]] = ListView_GetColumnWidth(pListView->hwndListView, i);
+
+		pListView->pClass->pfnSetColumnInfo(pListView, NULL, NULL, widths);
+
+		for (i = nColumn; i > 0; i--)
+			ListView_DeleteColumn(pListView->hwndListView, i - 1);
+	}
 
 	ListView_SetExtendedListViewStyle(pListView->hwndListView, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
@@ -706,6 +766,11 @@ void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 	}
 
 	ListView_SetTextColor(pListView->hwndListView, pListView->rgbListFontColor);
+}
+
+void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
+{
+	SmartListView_InternalResetColumnDisplay(pListView, FALSE);
 }
 
 void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
@@ -785,6 +850,25 @@ void SmartListView_RedrawItem(struct SmartListView *pListView, int nItem)
 	int nVisualRow;
 	nVisualRow = SmartListView_LogicalRowToVisual(pListView, nItem);
 	ListView_RedrawItems(pListView->hwndListView, nVisualRow, nVisualRow);
+}
+
+void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOrder)
+{
+	int *tmpOrder;
+	int nColumnMax;
+	int i;
+
+	tmpOrder = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(int));
+
+	nColumnMax = GetNumColumns(pListView);
+
+	/* Get the Column Order and save it */
+	if (!pListView->bOldControl) {
+		ListView_GetColumnOrderArray(pListView->hwndListView, nColumnMax, tmpOrder);
+
+		for (i = 0; i < nColumnMax; i++)
+			pnOrder[i] = pListView->piRealColumns[tmpOrder[i]];
+	}
 }
 
 /* ------------------------------------------------------------------------ *

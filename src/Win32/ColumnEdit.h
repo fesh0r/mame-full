@@ -13,6 +13,12 @@
 #ifndef __COLUMNEDIT_H__
 #define __COLUMNEDIT_H__
 
+INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam,
+	int nColumnMax, int *shown, int *order,
+	char **names, void (*pfnGetRealColumnOrder)(int *),
+	void (*pfnGetColumnInfo)(int *pnOrder, int *pnShown),
+	void (*pfnSetColumnInfo)(int *pnOrder, int *pnShown));
+
 INT_PTR CALLBACK ColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 #endif

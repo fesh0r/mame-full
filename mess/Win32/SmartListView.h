@@ -10,6 +10,7 @@ struct SmartListViewClass {
 	int (*pfnWhichIcon)(struct SmartListView *pListView, int nItem);
 	LPCSTR (*pfnGetText)(struct SmartListView *pListView, int nRow, int nColumn);
 	void (*pfnGetColumnInfo)(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
+	void (*pfnSetColumnInfo)(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 	BOOL (*pfnIsItemSelected)(struct SmartListView *pListView, int nItem);
 	int (*pfnCompare)(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
 	BOOL (*pfnCanIdle)(struct SmartListView *pListView);
@@ -50,9 +51,9 @@ struct SmartListView {
 	HPALETTE hPALbg;
 	MYBITMAPINFO bmDesc;
 	COLORREF rgbListFontColor;
+	BOOL bOldControl;
 
 	/* These are used at runtime */
-	BOOL bOldControl;
 	int nNumRows;
 	struct RowMapping *rowMapping;
 	int *piRealColumns;
@@ -75,5 +76,6 @@ void SmartListView_IdleUntilMsg(struct SmartListView *pListView);
 void SmartListView_GetSorting(struct SmartListView *pListView, int *nColumn, BOOL *bReverse);
 void SmartListView_SetSorting(struct SmartListView *pListView, int nColumn, BOOL bReverse);
 void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn);
+void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOrder);
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);

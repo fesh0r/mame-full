@@ -55,6 +55,7 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem);
 static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRow, int nColumn);
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
+static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 static void SoftwareListClass_Run(struct SmartListView *pListView);
 static BOOL SoftwareListClass_IsItemSelected(struct SmartListView *pListView, int nItem);
 static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView);
@@ -76,6 +77,7 @@ static struct SmartListViewClass s_softwareListClass =
 	SoftwareListClass_WhichIcon,
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
+	SoftwareListClass_SetColumnInfo,
 	SoftwareListClass_IsItemSelected,
 	Compare_TextCaseInsensitive,
 	SoftwareListClass_CanIdle,
@@ -953,6 +955,16 @@ static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int
 		GetMessColumnShown(pShown);
 }
 
+static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths)
+{
+	if (pWidths)
+		SetMessColumnWidths(pWidths);
+	if (pOrder)
+		SetMessColumnOrder(pOrder);
+	if (pShown)
+		SetMessColumnShown(pShown);
+}
+
 static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
 	int i;
@@ -1052,6 +1064,7 @@ static struct SmartListViewClass s_filemgrListClass =
 	SoftwareListClass_WhichIcon,
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
+	SoftwareListClass_SetColumnInfo,
 	FileMgrListClass_IsItemSelected,
 	Compare_TextCaseInsensitive,
 	SoftwareListClass_CanIdle,
