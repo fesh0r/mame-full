@@ -5,19 +5,27 @@
 				driver by	Luca Elia (eliavit@unina.it)
 
 
-CPU:	MC68000
-Sound:	YMZ280B
-Other:	EEPROM
+Main  CPU   :	MC68000
+Sound CPU   :	Z80 [Optional]
+Sound Chips :	YMZ280B or
+				OKIM6295 x (1|2) + YM2203 [Optional]
+Other       :	EEPROM
 
 ---------------------------------------------------------------------------
-Game				Year	PCB		License				Issues / Notes
+Board		Tilemaps			Sprites				Sound		Other
 ---------------------------------------------------------------------------
-Donpachi       (J)	1995								- Not Dumped -
-Dodonpachi     (J)	1997	ATC03D2	Atlus
-Dangun Feveron (J)	1998	CV01    Nihon System Inc.
-ESP Ra.De.     (J)	1998	ATC04	Atlus
-Uo Poko        (J)	1998	CV02	Jaleco
-Guwange        (J)	1999	ATC05	Atlus
+AT-C01DP-2	038 9429WX727 x3	ATLUS 8647-01 013	NMK 112
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+Game				Year	PCB			License				Issues / Notes
+---------------------------------------------------------------------------
+Donpachi       (J)	1995	AT-C01DP-2	Atlus
+Dodonpachi     (J)	1997	ATC03D2		Atlus
+Dangun Feveron (J)	1998	CV01    	Nihon System Inc.
+ESP Ra.De.     (J)	1998	ATC04		Atlus
+Uo Poko        (J)	1998	CV02		Jaleco
+Guwange        (J)	1999	ATC05		Atlus
 ---------------------------------------------------------------------------
 
 	- Note: press F2 to enter service mode: there are no DSWs -
@@ -182,6 +190,16 @@ static READ_HANDLER( cave_sound_r )
 }
 
 
+WRITE_HANDLER( cave_oki_0_w )
+{
+	if ( (data & 0x00ff0000) == 0 )
+		OKIM6295_data_0_w(0, data & 0xff);
+}
+WRITE_HANDLER( cave_oki_1_w )
+{
+	if ( (data & 0x00ff0000) == 0 )
+		OKIM6295_data_1_w(0, data & 0xff);
+}
 
 
 /***************************************************************************
@@ -388,6 +406,103 @@ static struct MemoryWriteAddress ddonpach_writemem[] =
 
 
 /***************************************************************************
+									Donpachi
+***************************************************************************/
+
+READ_HANDLER( donpachi_videoregs_r )
+{
+	switch( offset )
+	{
+		case 0x00:
+//case 0x00:	return rand() & 0xffff;
+		case 0x02:
+		case 0x04:
+		case 0x06:	return cave_irq_cause_r(offset);
+
+		default:	return 0x0000;
+	}
+}
+
+WRITE_HANDLER( donpachi_videoregs_w )
+{
+	COMBINE_WORD_MEM(&cave_videoregs[offset],data);
+	switch( offset )
+	{
+//		case 0x78:	watchdog_reset_w(0,0);			break;
+	}
+}
+
+static WRITE_HANDLER( nmk_oki6295_bankswitch_w )
+{
+	if ((data & 0x00ff0000) == 0)
+	{
+		/* The OKI6295 ROM space is divided in four banks, each one indepentently
+		   controlled. The sample table at the beginning of the addressing space is
+		   divided in four pages as well, banked together with the sample data. */
+		#define TABLESIZE 0x100
+		#define BANKSIZE 0x10000
+		int chip = (offset & 8) >> 3;
+		int banknum = (offset/2) & 3;
+		unsigned char *rom = memory_region(REGION_SOUND1 + chip);
+		int size = memory_region_length(REGION_SOUND1 + chip) - 0x40000;
+		int bankaddr = (data * BANKSIZE) % size;	// % used: size is not a power of 2
+
+		/* copy the samples */
+		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
+
+		/* and also copy the samples address table (only for chip #1) */
+		if (chip==1)
+		{
+			rom += banknum * TABLESIZE;
+			memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
+		}
+	}
+}
+
+static struct MemoryReadAddress donpachi_readmem[] =
+{
+	{ 0x000000, 0x07ffff, MRA_ROM					},	// ROM
+	{ 0x100000, 0x10ffff, MRA_BANK1					},	// RAM
+	{ 0x200000, 0x207fff, MRA_BANK2					},	// Layer 1
+	{ 0x300000, 0x307fff, MRA_BANK3					},	// Layer 0
+	{ 0x400000, 0x407fff, MRA_BANK4					},	// Layer 2
+	{ 0x500000, 0x507fff, MRA_BANK5					},	// Sprites
+	{ 0x508000, 0x50ffff, MRA_BANK6					},	// Sprites?
+/**/{ 0x600000, 0x600005, MRA_BANK7					},	// Layer 0 Control
+/**/{ 0x700000, 0x700005, MRA_BANK8					},	// Layer 1 Control
+/**/{ 0x800000, 0x800005, MRA_BANK9					},	// Layer 2 Control
+	{ 0x900000, 0x90007f, donpachi_videoregs_r		},	// Video Regs?
+/**/{ 0xa08000, 0xa08fff, MRA_BANK10				},	// Palette
+	{ 0xb00000, 0xb00001, OKIM6295_status_0_r		},	// Sound
+	{ 0xb00010, 0xb00011, OKIM6295_status_1_r		},	//
+	{ 0xc00000, 0xc00003, cave_inputs_r				},	// Inputs + EEPROM
+	{ -1 }
+};
+
+static struct MemoryWriteAddress donpachi_writemem[] =
+{
+	{ 0x000000, 0x07ffff, MWA_ROM									},	// ROM
+	{ 0x100000, 0x10ffff, MWA_BANK1									},	// RAM
+	{ 0x200000, 0x207fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
+	{ 0x300000, 0x307fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
+	{ 0x400000, 0x407fff, cave_vram_2_8x8_w, &cave_vram_2			},	// Layer 2 (size?)
+	{ 0x500000, 0x507fff, MWA_BANK5, &spriteram, &spriteram_size	},	// Sprites
+	{ 0x508000, 0x50ffff, MWA_BANK6									},	// Sprites?
+	{ 0x600000, 0x600005, MWA_BANK7,  &cave_vctrl_1					},	// Layer 1 Control
+	{ 0x700000, 0x700005, MWA_BANK8,  &cave_vctrl_0					},	// Layer 0 Control
+	{ 0x800000, 0x800005, MWA_BANK9,  &cave_vctrl_2					},	// Layer 2 Control
+	{ 0x900000, 0x90007f, donpachi_videoregs_w,  &cave_videoregs	},	// Video Regs?
+	{ 0xa08000, 0xa08fff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
+	{ 0xb00000, 0xb00003, cave_oki_0_w								},	// Sound
+	{ 0xb00010, 0xb00013, cave_oki_1_w								},	//
+	{ 0xb00020, 0xb0002f, nmk_oki6295_bankswitch_w					},	//
+	{ 0xd00000, 0xd00001, cave_eeprom_w								},	// EEPROM
+	{ -1 }
+};
+
+
+
+/***************************************************************************
 									Esprade
 ***************************************************************************/
 
@@ -530,7 +645,7 @@ static struct MemoryWriteAddress uopoko_writemem[] =
 	101626.w -> c,a6	(1:coin<<4|credit) <<8 | (2:coin<<4|credit)
 */
 
-INPUT_PORTS_START( dfeveron )
+INPUT_PORTS_START( cave )
 
 	PORT_START	// IN0 - Player 1
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
@@ -562,13 +677,13 @@ INPUT_PORTS_START( dfeveron )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN2, 1)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_SERVICE1)
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	//         0x0800  eeprom bit
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_SERVICE1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 INPUT_PORTS_END
 
@@ -597,12 +712,12 @@ INPUT_PORTS_START( guwange )
 	PORT_START	// IN1 - Coins
 	PORT_BIT_IMPULSE(  0x0001, IP_ACTIVE_LOW, IPT_COIN1, 1)
 	PORT_BIT_IMPULSE(  0x0002, IP_ACTIVE_LOW, IPT_COIN2, 1)
-	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-//             0x0080  eeprom bit
+	PORT_BITX( 0x0004, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+	PORT_BIT(  0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
 
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -628,8 +743,20 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 
+/* 8x8x4 tiles */
+static struct GfxLayout layout_8x8x4 =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{0,1,2,3},
+	{STEP8(0,4)},
+	{STEP8(0,8*4)},
+	8*8*4
+};
+
 /* 8x8x8 tiles */
-static struct GfxLayout layout_8x8_8bit =
+static struct GfxLayout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -642,7 +769,7 @@ static struct GfxLayout layout_8x8_8bit =
 
 
 /* 16x16x4 tiles */
-static struct GfxLayout layout_4bit =
+static struct GfxLayout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -656,7 +783,7 @@ static struct GfxLayout layout_4bit =
 };
 
 /* 16x16x8 tiles */
-static struct GfxLayout layout_8bit =
+static struct GfxLayout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -699,11 +826,11 @@ static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
 	/* There are only $800 colors here, the first half for sprites
 	   the second half for tiles. We use $8000 virtual colors instead
 	   for consistency with games having $8000 real colors.
-	   A vh_init_palette function is provided as well, for sprites */
+	   A vh_init_palette function is needed for sprites */
 
-	{ REGION_GFX1, 0, &layout_4bit,          0x4400, 0x40 }, // [0] Tiles
-	{ REGION_GFX2, 0, &layout_4bit,          0x4400, 0x40 }, // [1] Tiles
-//	{ REGION_GFX3, 0, &layout_4bit,          0x4400, 0x40 }, // [2] Tiles
+	{ REGION_GFX1, 0, &layout_16x16x4,       0x4400, 0x40 }, // [0] Tiles
+	{ REGION_GFX2, 0, &layout_16x16x4,       0x4400, 0x40 }, // [1] Tiles
+//	{ REGION_GFX3, 0, &layout_16x16x4,       0x4400, 0x40 }, // [2] Tiles
 //	{ REGION_GFX4, 0, &layout_spritemanager, 0x0000, 0x40 }, // [3] 4 Bit Sprites
 	{ -1 }
 };
@@ -721,9 +848,28 @@ static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
 	   in the color table. Layer 3 uses the whole 256 for any given
 	   color code and the 4000-7fff in the color table.       */
 
-	{ REGION_GFX1, 0, &layout_4bit,          0x8000, 0x40 }, // [0] Tiles
-	{ REGION_GFX2, 0, &layout_4bit,          0x8000, 0x40 }, // [1] Tiles
-	{ REGION_GFX3, 0, &layout_8x8_8bit,      0x4000, 0x40 }, // [2] Tiles
+	{ REGION_GFX1, 0, &layout_16x16x4,       0x8000, 0x40 }, // [0] Tiles
+	{ REGION_GFX2, 0, &layout_16x16x4,       0x8000, 0x40 }, // [1] Tiles
+	{ REGION_GFX3, 0, &layout_8x8x8,         0x4000, 0x40 }, // [2] Tiles
+//	{ REGION_GFX4, 0, &layout_spritemanager, 0x0000, 0x40 }, // [3] 4 Bit Sprites
+	{ -1 }
+};
+
+
+/***************************************************************************
+									Donpachi
+***************************************************************************/
+
+static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
+{
+	/* There are only $800 colors here, the first half for sprites
+	   the second half for tiles. We use $8000 virtual colors instead
+	   for consistency with games having $8000 real colors.
+	   A vh_init_palette function is needed for sprites */
+
+	{ REGION_GFX1, 0, &layout_16x16x4,       0x4400, 0x40 }, // [0] Tiles
+	{ REGION_GFX2, 0, &layout_16x16x4,       0x4400, 0x40 }, // [1] Tiles
+	{ REGION_GFX3, 0, &layout_8x8x4,         0x4400, 0x40 }, // [2] Tiles
 //	{ REGION_GFX4, 0, &layout_spritemanager, 0x0000, 0x40 }, // [3] 4 Bit Sprites
 	{ -1 }
 };
@@ -735,9 +881,9 @@ static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_8bit,          0x4000, 0x40 }, // [0] Tiles
-	{ REGION_GFX2, 0, &layout_8bit,          0x4000, 0x40 }, // [1] Tiles
-	{ REGION_GFX3, 0, &layout_8bit,          0x4000, 0x40 }, // [2] Tiles
+	{ REGION_GFX1, 0, &layout_16x16x8,       0x4000, 0x40 }, // [0] Tiles
+	{ REGION_GFX2, 0, &layout_16x16x8,       0x4000, 0x40 }, // [1] Tiles
+	{ REGION_GFX3, 0, &layout_16x16x8,       0x4000, 0x40 }, // [2] Tiles
 //	{ REGION_GFX4, 0, &layout_spritemanager, 0x0000, 0x40 }, // [3] 8 Bit Sprites
 	{ -1 }
 };
@@ -750,7 +896,7 @@ static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_8bit,          0x4000, 0x40 }, // [0] Tiles
+	{ REGION_GFX1, 0, &layout_16x16x8,       0x4000, 0x40 }, // [0] Tiles
 //	{ REGION_GFX4, 0, &layout_spritemanager, 0x0000, 0x40 }, // [1] 8 Bit Sprites
 	{ -1 }
 };
@@ -808,7 +954,7 @@ static const struct MachineDriver machine_driver_dfeveron =
 	cave_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{ SOUND_YMZ280B, &ymz280b_intf }
 	},
@@ -848,7 +994,7 @@ static const struct MachineDriver machine_driver_ddonpach =
 	cave_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{ SOUND_YMZ280B, &ymz280b_intf }
 	},
@@ -856,6 +1002,56 @@ static const struct MachineDriver machine_driver_ddonpach =
 	cave_nvram_handler
 };
 
+
+
+/***************************************************************************
+									Donpachi
+***************************************************************************/
+
+static struct OKIM6295interface donpachi_okim6295_interface =
+{
+	2,
+	{ 4220, 16000 },
+	{ REGION_SOUND1, REGION_SOUND2 },
+	{ 50, 50 }
+};
+
+static const struct MachineDriver machine_driver_donpachi =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			donpachi_readmem, donpachi_writemem,0,0,
+			cave_interrupt, 1
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	320, 240, { 0, 320-1, 0, 240-1 },
+	donpachi_gfxdecodeinfo,
+	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
+	dfeveron_vh_init_palette,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	ddonpach_vh_start,
+	0,
+	cave_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&donpachi_okim6295_interface
+		}
+	},
+
+	cave_nvram_handler
+};
 
 
 /***************************************************************************
@@ -889,7 +1085,7 @@ static const struct MachineDriver machine_driver_esprade =
 	cave_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{ SOUND_YMZ280B, &ymz280b_intf }
 	},
@@ -929,7 +1125,7 @@ static const struct MachineDriver machine_driver_guwange =
 	cave_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{ SOUND_YMZ280B, &ymz280b_intf }
 	},
@@ -969,7 +1165,7 @@ static const struct MachineDriver machine_driver_uopoko =
 	cave_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{ SOUND_YMZ280B, &ymz280b_intf }
 	},
@@ -1150,6 +1346,60 @@ void init_ddonpach(void)
 
 /***************************************************************************
 
+								Donpachi
+
+CPU:          TMP68HC000-16
+VOICE:        M6295 x2
+OSC:          28.000/16.000/4.220MHz
+BOARD #:      AT-C01DP-2
+CUSTOM:       ATLUS 8647-01 013
+              038 9429WX727 x3
+              NMK 112 (Sound)
+
+---------------------------------------------------
+ filenames          devices       kind
+---------------------------------------------------
+ PRG.U29            27C4096       68000 main prg.
+ U58.BIN            27C020        gfx   data
+ ATDP.U32           57C8200       M6295 data
+ ATDP.U33           57C16200      M6295 data
+ ATDP.U44           57C16200      gfx   data
+ ATDP.U45           57C16200      gfx   data
+ ATDP.U54           57C8200       gfx   data
+ ATDP.U57           57C8200       gfx   data
+
+***************************************************************************/
+
+ROM_START( donpachi )
+	ROM_REGION( 0x080000, REGION_CPU1 )		/* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "prg.u29",     0x00000, 0x80000, 0x6be14af6 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "atdp.u54", 0x000000, 0x100000, 0x6bda6b66 )
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "atdp.u57", 0x000000, 0x100000, 0x0a0e72b9 )
+
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* Layer 3 */
+	ROM_LOAD( "u58.bin", 0x000000, 0x040000, 0x285379ff )
+
+	ROM_REGION( 0x400000 * 2, REGION_GFX4 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "atdp.u44", 0x000000, 0x200000, 0x7189e953 )
+	ROM_LOAD( "atdp.u45", 0x200000, 0x200000, 0x6984173f )
+
+	ROM_REGION( 0x240000, REGION_SOUND1 )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "atdp.u33", 0x040000, 0x200000, 0xd749de00 )
+
+	ROM_REGION( 0x340000, REGION_SOUND2 )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "atdp.u32", 0x040000, 0x100000, 0x0d89fcca )
+	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, 0xd749de00 )
+ROM_END
+
+
+/***************************************************************************
+
 									Esprade
 
 ATC04
@@ -1287,8 +1537,9 @@ void init_uopoko(void)
 
 ***************************************************************************/
 
-GAME( 1997, ddonpach, 0, ddonpach, dfeveron, ddonpach, ROT270_16BIT, "Atlus/Cave",                  "Dodonpachi (Japan)"     )
-GAME( 1998, dfeveron, 0, dfeveron, dfeveron, dfeveron, ROT270_16BIT, "Cave (Nihon System license)", "Dangun Feveron (Japan)" )
-GAME( 1998, esprade,  0, esprade,  dfeveron, esprade,  ROT270_16BIT, "Atlus/Cave",                  "ESP Ra.De. (Japan)"     )
-GAME( 1998, uopoko,   0, uopoko,   dfeveron, uopoko,   ROT0_16BIT,   "Cave (Jaleco license)",       "Uo Poko (Japan)"        )
-GAME( 1999, guwange,  0, guwange,  guwange,  esprade,  ROT270_16BIT, "Atlus/Cave",                  "Guwange (Japan)"        )
+GAME( 1995, donpachi, 0, donpachi, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "Donpachi (Japan)"       )
+GAME( 1997, ddonpach, 0, ddonpach, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "Dodonpachi (Japan)"     )
+GAME( 1998, dfeveron, 0, dfeveron, cave,    dfeveron, ROT270_16BIT, "Cave (Nihon System license)", "Dangun Feveron (Japan)" )
+GAME( 1998, esprade,  0, esprade,  cave,    esprade,  ROT270_16BIT, "Atlus/Cave",                  "ESP Ra.De. (Japan)"     )
+GAME( 1998, uopoko,   0, uopoko,   cave,    uopoko,   ROT0_16BIT,   "Cave (Jaleco license)",       "Uo Poko (Japan)"        )
+GAME( 1999, guwange,  0, guwange,  guwange, esprade,  ROT270_16BIT, "Atlus/Cave",                  "Guwange (Japan)"        )

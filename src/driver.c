@@ -1172,7 +1172,7 @@ V-V 						  TP-027
 
 	/* Cave games */
 	/* Cave was formed in 1994 from the ruins of Toaplan, like Raizing was. */
-/* Donpachi (c) 1995 */
+	DRIVER( donpachi )	/* (c) 1995 Atlus/Cave */
 	DRIVER( ddonpach )	/* (c) 1997 Atlus/Cave */
 	DRIVER( dfeveron )	/* (c) 1998 Cave + Nihon System license */
 	DRIVER( esprade )	/* (c) 1998 Atlus/Cave */
@@ -2358,6 +2358,7 @@ TESTDRIVER( liberat2 )
 	DRIVER( indytem2 )	/* (c) 1985 */
 	DRIVER( indytem3 )	/* (c) 1985 */
 	DRIVER( indytem4 )	/* (c) 1985 */
+	DRIVER( indytemd )	/* (c) 1985 */
 	DRIVER( roadrunn )	/* (c) 1985 */
 	DRIVER( roadblst )	/* (c) 1986, 1987 */
 
@@ -2641,6 +2642,7 @@ V1.2   May 27,1999
 	DRIVER( shimpact )	/* (c) 1991 Midway */
 	DRIVER( strkforc )	/* (c) 1991 Midway */
 	DRIVER( mk )		/* (c) 1992 Midway */
+	DRIVER( mkb )		/* (c) 1992 bootleg */
 	DRIVER( mkla1 ) 	/* (c) 1992 Midway */
 	DRIVER( mkla2 ) 	/* (c) 1992 Midway */
 	DRIVER( mkla3 ) 	/* (c) 1992 Midway */
@@ -2948,7 +2950,7 @@ TESTDRIVER( msgundam )
 	DRIVER( bioship )	/* (c) 1991 NMK */
 	DRIVER( hachamf )	/* (c) 1991 NMK */
 	DRIVER( strahl )	/* (c) 1992 NMK */
-TESTDRIVER( macross )	/* (c) 1992 Banpresto */
+	DRIVER( macross )	/* (c) 1992 Banpresto */
 	DRIVER( macross2 )	/* (c) 1993 Banpresto */
 	DRIVER( bjtwin )	/* (c) 1993 NMK */
 	DRIVER( nouryoku )	/* (c) 1995 Tecmo */
