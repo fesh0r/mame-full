@@ -46,7 +46,7 @@ static struct
 	UINT32 sram_max;	/* Maximum amount sram in cart (based on ROM mode) */
 } cart = { SNES_MODE_20, 0x40000, 0x40000 };
 
-void snes_init_ram(void)
+static void snes_init_ram(void)
 {
 	/* Init VRAM */
 	snes_vram = (UINT8 *)memory_region( REGION_GFX1 );
@@ -76,7 +76,7 @@ void snes_init_ram(void)
 }
 
 /* Loads the battery backed RAM into the appropriate memory area */
-void snes_load_sram(void)
+static void snes_load_sram(void)
 {
 	UINT8 ii;
 	UINT8 *battery_ram, *ptr;
@@ -106,7 +106,7 @@ void snes_load_sram(void)
 }
 
 /* Saves the battery backed RAM from the appropriate memory area */
-void snes_save_sram(void)
+static void snes_save_sram(void)
 {
 	UINT8 ii;
 	UINT8 *battery_ram, *ptr;
@@ -1039,7 +1039,7 @@ WRITE_HANDLER( snes_w_io )
 /* In this function, we check everything is in a valid range and return how
  * 'valid' this section is as an information block.
  * If it fails at least 3 checks then we'll assume it's not valid */
-int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
+static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 {
 	INT8 valid = 3;
 

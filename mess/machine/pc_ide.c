@@ -52,7 +52,7 @@ static int pc_ide_data_r(DEVICE *This)
 	return data;
 }
 
-void pc_ide_write_precomp_w(DEVICE *This, int data)
+static void pc_ide_write_precomp_w(DEVICE *This, int data)
 {
 
 }
@@ -77,24 +77,24 @@ void pc_ide_write_precomp_w(DEVICE *This, int data)
  * 1   track 000 not found
  * 0   DAM not found (always 0 for CP-3022)
  */
-int pc_ide_error_r(DEVICE *This)
+static int pc_ide_error_r(DEVICE *This)
 {
 	int data = This->error;
 	return data;
 }
 
-void pc_ide_sector_count_w(DEVICE *This, int data)
+static void pc_ide_sector_count_w(DEVICE *This, int data)
 {
 	This->sector_cnt=data;
 }
 
-int pc_ide_sector_count_r(DEVICE *This)
+static int pc_ide_sector_count_r(DEVICE *This)
 {
 	int data = This->sector_cnt;
 	return data;
 }
 
-void pc_ide_sector_number_w(DEVICE *This,int data)
+static void pc_ide_sector_number_w(DEVICE *This,int data)
 {
 	if (This->lba)
 		This->sector = (This->sector & 0xfffff00) | (data & 0xff);
@@ -102,13 +102,13 @@ void pc_ide_sector_number_w(DEVICE *This,int data)
 		This->sector = data;
 }
 
-int pc_ide_sector_number_r(DEVICE *This)
+static int pc_ide_sector_number_r(DEVICE *This)
 {
 	int data = This->sector & 0xff;
 	return data;
 }
 
-void pc_ide_cylinder_number_l_w(DEVICE *This, int data)
+static void pc_ide_cylinder_number_l_w(DEVICE *This, int data)
 {
 	if (This->lba)
 		This->sector = (This->sector & 0xfff00ff) | ((data & 0xff) << 8);
@@ -116,7 +116,7 @@ void pc_ide_cylinder_number_l_w(DEVICE *This, int data)
 		This->cylinder = (This->cylinder & 0xff00) | (data & 0xff);
 }
 
-int pc_ide_cylinder_number_l_r(DEVICE *This)
+static int pc_ide_cylinder_number_l_r(DEVICE *This)
 {
 	int data;
     if (This->lba)
@@ -126,7 +126,7 @@ int pc_ide_cylinder_number_l_r(DEVICE *This)
 	return data;
 }
 
-void pc_ide_cylinder_number_h_w(DEVICE *This,int data)
+static void pc_ide_cylinder_number_h_w(DEVICE *This,int data)
 {
 	if (This->lba)
 		This->sector = (This->sector & 0xf00ffff) | ((data & 0xff) << 16);
@@ -134,7 +134,7 @@ void pc_ide_cylinder_number_h_w(DEVICE *This,int data)
 		This->cylinder = (This->cylinder & 0x00ff) | ((data & 0xff) << 8);
 }
 
-int pc_ide_cylinder_number_h_r(DEVICE *This)
+static int pc_ide_cylinder_number_h_r(DEVICE *This)
 {
 	int data;
     if (This->lba)
@@ -144,7 +144,7 @@ int pc_ide_cylinder_number_h_r(DEVICE *This)
 	return data;
 }
 
-void pc_ide_drive_head_w(IDE *This, int data)
+static void pc_ide_drive_head_w(IDE *This, int data)
 {
 	DEVICE *dev;
 	This->drv = (data >> 4) & 1;
@@ -157,7 +157,7 @@ void pc_ide_drive_head_w(IDE *This, int data)
 		dev->head = data & 0x0f;
 }
 
-int pc_ide_drive_head_r(IDE *This)
+static int pc_ide_drive_head_r(IDE *This)
 {
 	int data;
 	DEVICE *dev;
@@ -170,7 +170,7 @@ int pc_ide_drive_head_r(IDE *This)
 	return data;
 }
 
-void pc_ide_command_w(DEVICE *This, int data)
+static void pc_ide_command_w(DEVICE *This, int data)
 {
 	switch (data) {
 		case 0x00:
@@ -231,7 +231,7 @@ void pc_ide_command_w(DEVICE *This, int data)
  * 1	  index - set to 1 each disk revolution
  * 0	  previous command ended in an error
  */
-int pc_ide_status_r(DEVICE *This)
+static int pc_ide_status_r(DEVICE *This)
 {
 	int data = This->status;
 	return data;

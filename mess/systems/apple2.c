@@ -252,7 +252,7 @@ static PALETTE_INIT( apple2 )
     memcpy(colortable,apple2_colortable,sizeof(apple2_colortable));
 }
 
-GET_CUSTOM_DEVICENAME( apple2 )
+static GET_CUSTOM_DEVICENAME( apple2 )
 {
 	const char *name = NULL;
 	switch(type) {

@@ -123,7 +123,7 @@ static struct {
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
  ***************************************************************************/
-void pc_mda_blink_textcolors(int on)
+static void pc_mda_blink_textcolors(int on)
 {
 	int i, offs, size;
 
@@ -213,7 +213,7 @@ WRITE_HANDLER ( pc_mda_videoram_w )
 /*
  *	rW	MDA mode control register (see #P138)
  */
-void hercules_mode_control_w(int data)
+static void hercules_mode_control_w(int data)
 {
 	MDA_LOG(1,"MDA_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, enable %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>3)&1, (data>>5)&1));
@@ -232,14 +232,14 @@ void hercules_mode_control_w(int data)
  *		2-1  reserved
  *		0	 horizontal drive enable
  */
-int pc_mda_status_r(void)
+static int pc_mda_status_r(void)
 {
     int data = (input_port_0_r(0) & 0x80) | 0x08 | mda.status;
 	mda.status ^= 0x01;
 	return data;
 }
 
-void hercules_config_w(int data)
+static void hercules_config_w(int data)
 {
 	MDA_LOG(1,"HGC_config_w",(errorlog, "$%02x\n", data));
     mda.configuration_switch = data;

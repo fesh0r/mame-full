@@ -22,7 +22,7 @@ UINT8 pmd85_ppi_port_outputs[1][3];
 
 static UINT8 startup_mem_map = 0;
 
-OPBASE_HANDLER (pmd85_opbaseoverride)
+static OPBASE_HANDLER (pmd85_opbaseoverride)
 {
 	if ( startup_mem_map )
 	{

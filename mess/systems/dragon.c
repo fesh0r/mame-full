@@ -728,7 +728,7 @@ static const struct bitbanger_config coco_bitbanger_config =
 
 /* ----------------------------------------------------------------------- */
 
-GET_CUSTOM_DEVICENAME( coco )
+static GET_CUSTOM_DEVICENAME( coco )
 {
 	const char *name = NULL;
 	switch(type) {
