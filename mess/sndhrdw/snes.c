@@ -40,6 +40,45 @@
 
 int snesFirstChannel;
 unsigned char *SPCRamPtr;
+#define SOUND_INTERLEAVE_RATE		TIME_IN_USEC(50)
+#define SOUND_INTERLEAVE_REPEAT		20
+static void spc_sound_comm_timer(int reps_left)
+{
+	if (--reps_left)
+		timer_set(SOUND_INTERLEAVE_RATE, reps_left, spc_sound_comm_timer);
+}
+
+static void spc_delayed_sound_w_0(int param)
+{
+	SPCIN[0]=param;
+	/* allocate a high frequency timer until a response is generated */
+	/* the main CPU is *very* sensistive to the timing of the response */
+	timer_set(SOUND_INTERLEAVE_RATE, SOUND_INTERLEAVE_REPEAT, spc_sound_comm_timer);
+}
+
+static void spc_delayed_sound_w_1(int param)
+{
+	SPCIN[1]=param;
+	/* allocate a high frequency timer until a response is generated */
+	/* the main CPU is *very* sensistive to the timing of the response */
+	timer_set(SOUND_INTERLEAVE_RATE, SOUND_INTERLEAVE_REPEAT, spc_sound_comm_timer);
+}
+
+static void spc_delayed_sound_w_2(int param)
+{
+	SPCIN[2]=param;
+	/* allocate a high frequency timer until a response is generated */
+	/* the main CPU is *very* sensistive to the timing of the response */
+	timer_set(SOUND_INTERLEAVE_RATE, SOUND_INTERLEAVE_REPEAT, spc_sound_comm_timer);
+}
+
+static void spc_delayed_sound_w_3(int param)
+{
+	SPCIN[3]=param;
+	/* allocate a high frequency timer until a response is generated */
+	/* the main CPU is *very* sensistive to the timing of the response */
+	timer_set(SOUND_INTERLEAVE_RATE, SOUND_INTERLEAVE_REPEAT, spc_sound_comm_timer);
+}
 
 static int snesStartSamples(const struct MachineSound *msound)
 {
@@ -220,44 +259,44 @@ void snesUnpackSample(int sample,int *length,int *looping)
 			if (temp>7)							// If negative sign extend
 				temp|=0xFFF0;
 			temp<<=granularity;
-//			switch(filter)						// Handle filters
-//			{
-//				case 1:
-//					temp+=(*(data + (*length)-1)*15)/16;		// Thanks to Archeide + Brad Martin for information on filters
-//					break;
-//				case 2:
-//					temp+=(*(data + (*length)-1)*61)/32 - (*(data+(*length)-2)*15)/16;
-//					break;
-//				case 3:
-//					temp+=(*(data + (*length)-1)*115)/64 - (*(data+(*length)-2)*13)/15;
-//					break;
-//			}
+			switch(filter)						// Handle filters
+			{
+				case 1:
+					temp+=(*(data + (*length)-1)*15)/16;		// Thanks to Archeide + Brad Martin for information on filters
+					break;
+				case 2:
+					temp+=(*(data + (*length)-1)*61)/32 - (*(data+(*length)-2)*15)/16;
+					break;
+				case 3:
+					temp+=(*(data + (*length)-1)*115)/64 - (*(data+(*length)-2)*13)/15;
+					break;
+			}
 			*(data + (*length))=temp;
-			*length++;
+			(*length)++;
 
 			temp=(*startAddress++)&0x0F;		// Get lower 4 bits
 			if (temp>7)							// If negative sign extend
 				temp|=0xFFF0;
 			temp<<=granularity;
-//			switch(filter)						// Handle filters
-//			{
-//				case 1:
-//					temp+=(*(data + (*length)-1)*15)/16;		// Thanks to Archeide + Brad Martin for information on filters
-//					break;
-//				case 2:
-//					temp+=(*(data + (*length)-1)*61)/32 - (*(data+(*length)-2)*15)/16;
-//					break;
-//				case 3:
-//					temp+=(*(data + (*length)-1)*115)/64 - (*(data+(*length)-2)*13)/15;
-//					break;
-//			}
+			switch(filter)						// Handle filters
+			{
+				case 1:
+					temp+=(*(data + (*length)-1)*15)/16;		// Thanks to Archeide + Brad Martin for information on filters
+					break;
+				case 2:
+					temp+=(*(data + (*length)-1)*61)/32 - (*(data+(*length)-2)*15)/16;
+					break;
+				case 3:
+					temp+=(*(data + (*length)-1)*115)/64 - (*(data+(*length)-2)*13)/15;
+					break;
+			}
 			*(data + (*length))=temp;
-			*length++;
+			(*length)++;
 		}
 	} while (!lastBlock);
 }
 
-void DSPPlaySamp(data)
+void DSPPlaySamp(unsigned char data)
 {
 	unsigned char bMask=0x01;
 	unsigned char VoiceOffs=0;
@@ -270,7 +309,7 @@ void DSPPlaySamp(data)
 			// Play this key
 
 			snesUnpackSample(VoiceOffs,&length,&loop);
-//			mixer_play_sample_16(VoiceOffs,(signed short *)Machine->samples->sample[VoiceOffs]->data,length,8000,loop);
+			mixer_play_sample_16(VoiceOffs,(signed short *)Machine->samples->sample[VoiceOffs]->data,length,8000,loop);
 		}
 
 		bMask<<=1;
@@ -278,7 +317,7 @@ void DSPPlaySamp(data)
 	}
 }
 
-void DSPStopSamp(data)
+void DSPStopSamp(unsigned char data)
 {
 	unsigned char bMask=0x01;
 	unsigned char VoiceOffs=0;
@@ -388,11 +427,35 @@ WRITE_HANDLER ( spc_io_w )		// Not very many ports to deal with on the spc (than
 			spcPort[offset&0x0F]=data;
 			return;
 		case 0x0004:			// Port 0	:
-		case 0x0005:			// Port 1	:
-		case 0x0006:			// Port 2	:
-		case 0x0007:			// Port 3	:
-			SPCOUT[offset&0x03]=data;			// Write SPC Input port - comms between spc and cpu
+#ifdef EMULATE_SPC700
+			timer_set(TIME_NOW, data, spc_delayed_sound_w_0);
 			return;
+#else
+			return;
+#endif
+		case 0x0005:			// Port 1	:
+#ifdef EMULATE_SPC700
+			timer_set(TIME_NOW, data, spc_delayed_sound_w_1);
+			return;
+#else
+			return;
+#endif
+		case 0x0006:			// Port 2	:
+#ifdef EMULATE_SPC700
+			timer_set(TIME_NOW, data, spc_delayed_sound_w_2);
+			return;
+#else
+			return;
+#endif
+		case 0x0007:			// Port 3	:
+#ifdef EMULATE_SPC700
+			timer_set(TIME_NOW, data, spc_delayed_sound_w_3);
+			return;
+#else
+			return;
+#endif
+//			SPCOUT[offset&0x03]=data;			// Write SPC Input port - comms between spc and cpu
+//			return;
 		case 0x0003:			// Reg Data :	Register address (this and above go to dsp chip.ie they do the sound stuff)
 			spcWriteDSP(spcPort[0x02],data);
 			return;

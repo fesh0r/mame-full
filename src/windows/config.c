@@ -49,6 +49,11 @@ extern struct rc_option frontend_opts[];
 /* START: probably everything for fileio.c, datafile.c and cheat.c */
 /* FIXME: needs to be sorted out much more, leave here for the moment */
 static const char *rompath;
+#ifdef MESS
+	static const char *swpath;
+	static const char *temp;
+#endif
+
 static const char *samplepath;
 extern const char *cfgdir;
 extern const char *nvdir;
@@ -67,11 +72,20 @@ extern char *cheatfile;
 
 void decompose_rom_sample_path (const char *_rompath, const char *_samplepath);
 
+#ifdef MESS
+void decompose_software_path (const char *_softwarepath);
+#endif
+
 static struct rc_option fileio_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+#ifdef MESS
+	{ "biospath", "rp", rc_string, &rompath, "bios", 0, 0, NULL, "path to romsets" },
+	{ "softwarepath", "swp", rc_string, &swpath, "software", 0, 0, NULL, "path to software" },
+#else
 	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, NULL, "path to romsets" },
+#endif
 	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, NULL, "path to samplesets" },
 	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
 	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
@@ -82,8 +96,13 @@ static struct rc_option fileio_opts[] =
 	{ "artwork_directory", NULL, rc_string, &artworkdir, "artwork", 0, 0, NULL, "directory for Artwork (Overlays etc.)" },
 	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
 //	{ "cheat_directory", NULL, rc_string, &cheatdir, "cheat", 0, 0, NULL, "directory for cheatfiles" },
+#ifdef MESS
+	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.cdb", 0, 0, NULL, "cheat filename" },
+	{ "history_file", NULL, rc_string, &history_filename, "sysinfo.dat", 0, 0, NULL, NULL },
+#else
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
 	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
+#endif
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -101,7 +120,7 @@ extern struct rc_option video_opts[];
 extern int frontend_help(char *gamename);
 static int config_handle_arg(char *arg);
 
-int errorlog;
+int erlg;
 static int showconfig;
 static int showusage;
 static int readconfig;
@@ -226,8 +245,23 @@ static struct rc_option opts[] = {
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
-	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, NULL, "generate error.log" },
-
+	{ "log", NULL, rc_bool, &erlg, "0", 0, 0, NULL, "generate error.log" },
+#ifdef MESS
+	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "cartridge", "cart", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cartridge device" },
+	{ "floppydisk", "flop", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a floppy disk device" },
+	{ "harddisk", "hard", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a hard disk device" },
+	{ "cylinder", "cyln", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cylinder device" },
+	{ "cassette", "cass", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cassette device" },
+	{ "punchcard", "pcrd", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a punch card device" },
+	{ "punchtape", "ptap", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a punch tape device" },
+	{ "printer", "prin", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a printer device" },
+	{ "serial", "serl", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a serial device" },
+	{ "parallel", "parl", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a parallel device" },
+	{ "snapshot", "dump", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a snapshot device" },
+	{ "quickload", "quik", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a quickload device" },
+	{ "alias", NULL, rc_string, &temp, NULL, 0, 0, NULL, "Attatch an alias device" },
+#endif
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "createconfig", "cc", rc_set_int, &createconfig, NULL, 1, 0, NULL, "create the default configuration file" },
@@ -393,12 +427,21 @@ int parse_config_and_cmdline (int argc, char **argv)
 
 	/* parse the global configfile */
 	if (readconfig)
+#ifdef MESS
+		if (parse_config ("mess.ini", NULL))
+			exit(1);
+#else
 		if (parse_config ("mame.ini", NULL))
 			exit(1);
+#endif
 
 	if (createconfig)
 	{
+#ifdef MESS
+		rc_save(rc, "mess.ini", 0);
+#else
 		rc_save(rc, "mame.ini", 0);
+#endif	
 		exit(0);
 	}
 
@@ -419,6 +462,9 @@ int parse_config_and_cmdline (int argc, char **argv)
 
 	/* FIXME: split this up into two functions and use rc-callbacks" */
 	decompose_rom_sample_path (rompath, samplepath);
+#ifdef MESS
+	decompose_software_path(swpath);
+#endif
 
 	/* check for frontend options, horrible 1234 hack */
 	if (frontend_help(gamename) != 1234)

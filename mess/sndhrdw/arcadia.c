@@ -11,7 +11,7 @@
 #include "includes/arcadia.h"
 
 #ifndef __cplusplus
-typedef int bool;
+//typedef int bool;
 #endif
 
 #define VOLUME (arcadia_sound.reg[2]&0xf)

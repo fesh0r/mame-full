@@ -365,7 +365,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 	{
 		printf("                   ==========================================\n" );
 		printf("                    M.E.S.S.  -  Multi-Emulator Super System\n"  );
-		printf("                             Copyright (C) 1998-2000\n");
+		printf("                             Copyright (C) 1998-2001\n");
 		printf("                                by the MESS team\n"    );
 		printf("                    Official Page at: http://mess.emuverse.com\n");
 		printf("                   ==========================================\n\n" );
@@ -374,7 +374,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 		printf("Please note that many people helped with this project, either directly or by\n"
 		       "releasing source code which was used to write the drivers. We are not trying to\n"
-		       "appropriate merit which isn't ours. See the acknowledgemnts section for a list\n"
+		       "appropriate merit which isn't ours. See the acknowledgents section for a list\n"
 			   "of contributors, however please note that the list is largely incomplete. See\n"
 			   "also the CREDITS section in the emulator to see the people who contributed to a\n"
 			   "specific driver. Again, that list might be incomplete. We apologize in advance\n"
@@ -397,8 +397,8 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "Visit the web page at http://mess.emuverse.com to see a list of contributers\n"
 			   "If you have comments, suggestions or bug reports about an existing driver, check\n"
 			   "the page contacts section to find who has worked on it, and send comments to that \n"
-			   "person. If you are not sure who to contact, write to Ben (ben@mame.net) - who is the \n"
-			   "current coordinator of the MESS project [DOS]. \n\n"
+			   "person. If you are not sure who to contact, write to Lee (lee@the-mothershp.fsnet.co.uk)\n"
+			   "who is the current coordinator of the MESS project [Win Console][DOS]. \n\n"
 
 			   "PLEASE DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST! \n"
 
@@ -565,7 +565,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 			printf("+-----------------------------------------+-------+-------+-------+----------+\n");
 			printf("(1) There are variants of the system that work correctly\n");
-			printf("(2) Needs samples provided separately\n\n\n\n\n");
+			printf("(2) Needs samples provided separately\n\n\n");
 
 
 		printf("QUICK MESS USAGE GUIDE!\n"
@@ -622,12 +622,12 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 		printf("To EXIT the emulator, press ESC.  If the emulated system is a computer, \n"
 		       "you may need to toggle the UI mode (use the SCR_LOCK key).\n"
-		       "The on-screen display shows the current UI mode when SCR_LOCK is pressed.\n\n\n\n\n\n");
+		       "The on-screen display shows the current UI mode when SCR_LOCK is pressed.\n\n");
 
 
 		printf("To automatically create the individual system directories in the \n"
 		       "SOFTWARE folder, use:\n"
-		       "MESS -createdir\n\n\n\n\n\n");
+		       "MESS -createdir\n\n\n");
 
 		printf("DEVICE support list\n");
 		printf("===================\n");
@@ -638,7 +638,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "specifying:\n\n"
 			   "    MESS -listdevices\n\n");
 		printf("Also note that MESS has a preliminary built-in File Manager for attaching images to\n"
-			   "system devices.  Use the UI (TAB key) to access.\n\n\n\n");
+			   "system devices.  Use the UI (TAB key) to access.\n\n\n");
 
 
 

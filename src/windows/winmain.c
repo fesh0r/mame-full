@@ -20,7 +20,7 @@
 
 // from config.c
 int parse_config_and_cmdline(int argc, char **argv);
-extern int errorlog;
+extern int erlg;
 
 
 
@@ -38,7 +38,7 @@ int _CRT_glob = 0;
 //	LOCAL VARIABLES
 //============================================================
 
-static FILE *logfile;
+static FILE *errorlog;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
@@ -82,10 +82,10 @@ int main(int argc, char **argv)
 	game_index = parse_config_and_cmdline(argc, argv);
 
 	// provide errorlog from here on 
-	if (errorlog)
+	if (erlg)
 	{
-		logfile = fopen("error.log","wa");
-		if (!logfile)
+		errorlog = fopen("error.log","wa");
+		if (!errorlog)
 		{
 			perror("unable to open log file\n");
 			exit (1);
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 		res = run_game(game_index);
 
 	// close open files
-	if (logfile) fclose(logfile);
+	if (errorlog) fclose(errorlog);
 
 	// hmm, no better place for these three to be found?
 	if (options.playback) osd_fclose(options.playback);
@@ -155,8 +155,8 @@ void CLIB_DECL logerror(const char *text,...)
 	
 	// standard vfprintf stuff here
 	va_start(arg, text);
-	if (errorlog)
-		vfprintf(logfile, text, arg);
+	if (erlg)
+		vfprintf(errorlog, text, arg);
 	va_end(arg);
 }
 

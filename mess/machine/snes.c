@@ -195,6 +195,7 @@ int snes_load_rom (int id)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
 	char tempPath[256]="NVRAM\\";
+	//UINT32 aa;
     FILE *romfile,*sramFile;
 	int numBanks,a;
 
@@ -223,15 +224,18 @@ int snes_load_rom (int id)
 
 	logerror("SNES_ROM %08x\n",SNES_ROM);
 
-//	osd_fseek (romfile,0,SEEK_END);
-//	numBanks=(((osd_ftell(romfile)-512) + 65535)/ 65536);
+	//osd_fseek (romfile,0,SEEK_END);
+	//numBanks=(osd_ftell(romfile));
+	numBanks=((osd_fsize(romfile)-512)>>16);
+	printf("Number of banks : %04x\n", numBanks);
 
 	/* Position past the header */
 //	osd_fseek (romfile, 512, SEEK_SET);
 
 	/* Read in the PRG_Rom chunks */
 
-	numBanks=8;							// Need to look at another way of doing this since the above method seems to cause a few problems!!
+	//numBanks+=1;							// Need to look at another way of doing this since the above method seems to cause a few problems!!
+	//numBanks-=1;
 
 	numBanks*=2;
 
@@ -248,7 +252,12 @@ int snes_load_rom (int id)
 	for (a=0;a<numBanks;a++)
 	{
 		osd_fread(romfile,&SNES_ROM[a*0x10000 + 0x8000],0x8000);
+		//osd_fread(romfile,&SNES_ROM[a*0x10000],0x10000);
 	}
+	//for (aa=0; aa < 0x3F; aa++)
+  	//{
+    	//memcpy(SNES_ROM+(aa<<16)+0x8000, SNES_ROM+(aa<<0x0f), 32768);
+  	//}
 
 	SNES_SRAM=(unsigned char *)malloc(0x50000);			// 5 banks of sram
 	if (SNES_SRAM==NULL)

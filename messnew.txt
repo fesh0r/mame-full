@@ -1,10 +1,11 @@
-0.37b14
+0.37b15
 
 Several drivers may be broken due to the MAME memory handling changes.
 And as a result, the Amiga has been temporarily removed.
 
 Note: .inp record/playback does still not work currently.
-
+      alias system currently broken.
+     
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 NEC PC8801SR [Shouhei Nishi]
@@ -59,9 +60,31 @@ System Driver Changes:
 - [Supervision] nmi added (crystball bonus items fixed)
   irq changed, preliminary sound added [PeT]
 
+- [Snes] Added preliminary tile-mosaic effect [Lee Ward]
+
+- [Snes] Fixed a small matrix bug in mode 7, F-zero now renders the screen
+  the correct way [Lee Ward]
+
 Other Changes:
 --------------
-...
+ 
+None yet...
+
+Source:
+-------
+
+- The main binary distribution of MESS is now a completely new win32 console
+  port. Some of the benefits are: support for full screen hardware stretching
+  (if you have a decent video card), and a much better command line / options
+  file parsing (ported from xmame).
+  To create the mess.ini configuration file on startup, use the -createconfig
+  option. -showusage lists all available options. [Aaron Giles, Bernd Wiebelt]
+                                                  [MESS specific code: Lee Ward]
+
+-------------------------------------------------------------------------------  
+0.37b14
+
+This release was skipped
 
 -------------------------------------------------------------------------------  
 0.37b13
