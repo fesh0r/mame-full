@@ -19,7 +19,7 @@ struct MachineCPU
 	const struct IOReadPort *port_read;
 	const struct IOWritePort *port_write;
 	int (*vblank_interrupt)(void);
-    int vblank_interrupts_per_frame;    /* usually 1 */
+	int vblank_interrupts_per_frame;	/* usually 1 */
 /* use this for interrupts which are not tied to vblank 	*/
 /* usually frequency in Hz, but if you need 				*/
 /* greater precision you can give the period in nanoseconds */
@@ -145,7 +145,7 @@ enum
 	CPU_M6805,
 #endif
 #if (HAS_M68705)
-	CPU_M68705,	/* same as CPU_M6805 */
+	CPU_M68705, /* same as CPU_M6805 */
 #endif
 #if (HAS_HD63705)
 	CPU_HD63705,	/* M6805 family but larger address space, different stack size */
@@ -261,13 +261,13 @@ enum
 
 
 /* The old system is obsolete and no longer supported by the core */
-#define NEW_INTERRUPT_SYSTEM    1
+#define NEW_INTERRUPT_SYSTEM	1
 
 #define MAX_IRQ_LINES	16		/* maximum number of IRQ lines per CPU */
 
 #define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
-#define ASSERT_LINE     1       /* assert an interrupt immediately */
-#define HOLD_LINE       2       /* hold interrupt line until enable is true */
+#define ASSERT_LINE 	1		/* assert an interrupt immediately */
+#define HOLD_LINE		2		/* hold interrupt line until enable is true */
 #define PULSE_LINE		3		/* pulse interrupt line for one instruction */
 
 #define MAX_REGS		128 	/* maximum number of register of any CPU */
@@ -320,7 +320,7 @@ struct cpu_interface
 	void (*set_context)(void *reg);
 	void *(*get_cycle_table)(int which);
 	void (*set_cycle_table)(int which, void *new_table);
-    unsigned (*get_pc)(void);
+	unsigned (*get_pc)(void);
 	void (*set_pc)(unsigned val);
 	unsigned (*get_sp)(void);
 	void (*set_sp)(unsigned val);
@@ -642,16 +642,16 @@ void cpu_dump_states(void);
 
 /* daisy-chain link */
 typedef struct {
-	void (*reset)(int);             /* reset callback     */
-	int  (*interrupt_entry)(int);   /* entry callback     */
-	void (*interrupt_reti)(int);    /* reti callback      */
-	int irq_param;                  /* callback paramater */
+	void (*reset)(int); 			/* reset callback	  */
+	int  (*interrupt_entry)(int);	/* entry callback	  */
+	void (*interrupt_reti)(int);	/* reti callback	  */
+	int irq_param;					/* callback paramater */
 }	Z80_DaisyChain;
 
 #define Z80_MAXDAISY	4		/* maximum of daisy chan device */
 
-#define Z80_INT_REQ     0x01    /* interrupt request mask       */
-#define Z80_INT_IEO     0x02    /* interrupt disable mask(IEO)  */
+#define Z80_INT_REQ 	0x01	/* interrupt request mask		*/
+#define Z80_INT_IEO 	0x02	/* interrupt disable mask(IEO)	*/
 
 #define Z80_VECTOR(device,state) (((device)<<8)|(state))
 
@@ -660,3 +660,4 @@ typedef struct {
 #endif
 
 #endif	/* CPUINTRF_H */
+

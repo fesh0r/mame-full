@@ -32,7 +32,13 @@
 #include "mamedbg.h"
 #include "sh2.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
+
+#if VERBOSE
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif
 
 #define SH2_CAS_LATENCY_1_16b	0xffff8426
 #define SH2_CAS_LATENCY_2_16b	0xffff8446
@@ -170,58 +176,42 @@ INLINE void WL(offs_t A, data_t V)
 	cpu_writemem27bew_dword(A & AM,V);
 }
 
-static void sh2_exception(int irqline)
+static void sh2_exception(char *message, int irqline)
 {
-    int vector;
+	int vector;
 
-    vector = (*sh2.irq_callback)(irqline) * 4;
-    logerror("SH-2 #%d take irq #%d (vector %x)\n", cpu_getactivecpu(), irqline, vector);
-    sh2.r[15] -= 4;
-    WL( sh2.r[15], sh2.sr );        /* push SR onto stack */
-    sh2.r[15] -= 4;
-    WL( sh2.r[15], sh2.pc );        /* push PC onto stack */
-    /* set I flags in SR */
-    sh2.sr = (sh2.sr & ~I) | (irqline << 4);
-    /* fetch PC */
-    sh2.pc = RL( sh2.vbr + vector * 4 );
-    change_pc27bew(sh2.pc & AM);
+	vector = (*sh2.irq_callback)(irqline) * 4;
+	LOG(("SH-2 #%d take irq #%d (vector %x) after %s\n", cpu_getactivecpu(), irqline, vector, message));
+	sh2.r[15] -= 4;
+	WL( sh2.r[15], sh2.sr );		/* push SR onto stack */
+	sh2.r[15] -= 4;
+	WL( sh2.r[15], sh2.pc );		/* push PC onto stack */
+	/* set I flags in SR */
+	sh2.sr = (sh2.sr & ~I) | (irqline << 4);
+	/* fetch PC */
+	sh2.pc = RL( sh2.vbr + vector );
+	change_pc27bew(sh2.pc & AM);
 }
 
-#define CHECK_PENDING_IRQ                                           \
-	switch (sh2.sr & I) 											\
+#define CHECK_PENDING_IRQ(m)										\
+	switch ((sh2.sr >> 4) & 15) 									\
 	{																\
-	case 0x00:														\
-		if (sh2.pending_irq & 0x0001) sh2_exception( 0);			\
-	case 0x10:														\
-		if (sh2.pending_irq & 0x0002) sh2_exception( 1);			\
-    case 0x20:                                                      \
-		if (sh2.pending_irq & 0x0004) sh2_exception( 2);			\
-    case 0x30:                                                      \
-		if (sh2.pending_irq & 0x0008) sh2_exception( 3);			\
-    case 0x40:                                                      \
-		if (sh2.pending_irq & 0x0010) sh2_exception( 4);			\
-    case 0x50:                                                      \
-		if (sh2.pending_irq & 0x0020) sh2_exception( 5);			\
-    case 0x60:                                                      \
-		if (sh2.pending_irq & 0x0040) sh2_exception( 6);			\
-    case 0x70:                                                      \
-		if (sh2.pending_irq & 0x0080) sh2_exception( 7);			\
-    case 0x80:                                                      \
-		if (sh2.pending_irq & 0x0100) sh2_exception( 8);			\
-    case 0x90:                                                      \
-		if (sh2.pending_irq & 0x0200) sh2_exception( 9);			\
-    case 0xa0:                                                      \
-		if (sh2.pending_irq & 0x0400) sh2_exception(10);			\
-    case 0xb0:                                                      \
-		if (sh2.pending_irq & 0x0800) sh2_exception(11);			\
-	case 0xc0:														\
-		if (sh2.pending_irq & 0x1000) sh2_exception(12);			\
-	case 0xd0:														\
-		if (sh2.pending_irq & 0x2000) sh2_exception(13);			\
-	case 0xe0:														\
-		if (sh2.pending_irq & 0x4000) sh2_exception(14);			\
-	case 0xf0:														\
-		if (sh2.pending_irq & 0x4000) sh2_exception(15);			\
+	case  0: if (sh2.pending_irq & (1 <<  0)) sh2_exception(m, 0);	\
+	case  1: if (sh2.pending_irq & (1 <<  1)) sh2_exception(m, 1);	\
+	case  2: if (sh2.pending_irq & (1 <<  2)) sh2_exception(m, 2);	\
+	case  3: if (sh2.pending_irq & (1 <<  3)) sh2_exception(m, 3);	\
+	case  4: if (sh2.pending_irq & (1 <<  4)) sh2_exception(m, 4);	\
+	case  5: if (sh2.pending_irq & (1 <<  5)) sh2_exception(m, 5);	\
+	case  6: if (sh2.pending_irq & (1 <<  6)) sh2_exception(m, 6);	\
+	case  7: if (sh2.pending_irq & (1 <<  7)) sh2_exception(m, 7);	\
+	case  8: if (sh2.pending_irq & (1 <<  8)) sh2_exception(m, 8);	\
+	case  9: if (sh2.pending_irq & (1 <<  9)) sh2_exception(m, 9);	\
+	case 10: if (sh2.pending_irq & (1 << 10)) sh2_exception(m,10);	\
+	case 11: if (sh2.pending_irq & (1 << 11)) sh2_exception(m,11);	\
+	case 12: if (sh2.pending_irq & (1 << 12)) sh2_exception(m,12);	\
+	case 13: if (sh2.pending_irq & (1 << 13)) sh2_exception(m,13);	\
+	case 14: if (sh2.pending_irq & (1 << 14)) sh2_exception(m,14);	\
+	case 15: if (sh2.pending_irq & (1 << 15)) sh2_exception(m,15);	\
 	}																\
 
 
@@ -345,7 +335,7 @@ INLINE void ANDM(data_t i)
 	sh2.ea = sh2.gbr + sh2.r[0];
 	temp = i & RB( sh2.ea );
 	WB( sh2.ea, temp );
-    sh2_icount -= 2;
+	sh2_icount -= 2;
 }
 
 /*	code				 cycles  t-bit
@@ -433,7 +423,7 @@ INLINE void BSRF(data_t m)
 	change_pc27bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
 	sh2.pr += 2;
-    sh2_icount--;
+	sh2_icount--;
 }
 
 /*	code				 cycles  t-bit
@@ -586,9 +576,9 @@ INLINE void CMPSTR(data_t m, data_t n)
 	LH = (temp >> 4) & 0xff;
 	LL = temp & 0xff;
 	if (HH && HL && LH && LL)
-        sh2.sr &= ~T;
+		sh2.sr &= ~T;
 	else
-        sh2.sr |= T;
+		sh2.sr |= T;
 }
 
 /*	code				 cycles  t-bit
@@ -828,7 +818,7 @@ INLINE void JSR(data_t m)
 INLINE void LDCSR(data_t m)
 {
 	sh2.sr = sh2.r[m] & FLAGS;
-	CHECK_PENDING_IRQ
+	CHECK_PENDING_IRQ("LDC  Rm,SR")
 }
 
 /*	LDC 	Rm,GBR */
@@ -850,7 +840,7 @@ INLINE void LDCMSR(data_t m)
 	sh2.sr = RL( sh2.ea ) & FLAGS;
 	sh2.r[m] += 4;
 	sh2_icount -= 2;
-	CHECK_PENDING_IRQ
+	CHECK_PENDING_IRQ("LDC.L  @Rm+,SR")
 }
 
 /*	LDC.L	@Rm+,GBR */
@@ -1433,7 +1423,7 @@ INLINE void RTE(void)
 	sh2.r[15] += 4;
 	sh2.delay = sh2.ppc;
 	sh2_icount -= 3;
-	CHECK_PENDING_IRQ
+	CHECK_PENDING_IRQ("RTE")
 }
 
 /*	RTS */
@@ -2283,8 +2273,8 @@ WRITE_HANDLER( sh2_internal_w )
 			b |= sh2.m[(SH2_DVSR +1)&0x1ff] << 16;
 			b |= sh2.m[(SH2_DVSR +2)&0x1ff] <<	8;
 			b |= sh2.m[(SH2_DVSR +3)&0x1ff] <<	0;
-			logerror("SH2 #%d div+mod %d/%d\n", a, b);
-            if (b)
+			LOG(("SH2 #%d div+mod %d/%d\n", a, b));
+			if (b)
 			{
 				q = a / b;
 				r = q % b;
@@ -2320,8 +2310,8 @@ WRITE_HANDLER( sh2_internal_w )
 			b |= sh2.m[(SH2_DVSR  +1)&0x1ff] << 16;
 			b |= sh2.m[(SH2_DVSR  +2)&0x1ff] <<  8;
 			b |= sh2.m[(SH2_DVSR  +3)&0x1ff] <<  0;
-			logerror("SH2 #%d div+mod %ld/%ld\n", a, b);
-            if (b)
+			LOG(("SH2 #%d div+mod %ld/%ld\n", a, b));
+			if (b)
 			{
 				q = DIV_64_64_32(a,b);
 				r = MOD_32_64_32(a,b);
@@ -2355,9 +2345,9 @@ WRITE_HANDLER( sh2_internal_w )
 			if (offset >= FREGS[i].offs && (FREGS[i+1].offs == 0 || offset < FREGS[i+1].offs))
 			{
 				if (offset == FREGS[i].offs)
-					logerror("SH2 #%d wr %-16s $%02x\n", cpu, FREGS[i].name, data);
+					LOG(("SH2 #%d wr %-16s $%02x\n", cpu, FREGS[i].name, data));
 				else
-					logerror("SH2 #%d wr %s+%3d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 12 - strlen(FREGS[i].name), "", data);
+					LOG(("SH2 #%d wr %s+%3d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 12 - strlen(FREGS[i].name), "", data));
 			}
 		}
 	}
@@ -2392,9 +2382,9 @@ READ_HANDLER( sh2_internal_r )
 			if (offset >= FREGS[i].offs && (FREGS[i+1].offs == 0 || offset < FREGS[i+1].offs))
 			{
 				if (offset == FREGS[i].offs)
-					logerror("SH2 #%d rd %-16s $%02x\n", cpu, FREGS[i].name, data);
+					LOG(("SH2 #%d rd %-16s $%02x\n", cpu, FREGS[i].name, data));
 				else
-					logerror("SH2 #%d rd %s+%3d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 12 - strlen(FREGS[i].name), "", data);
+					LOG(("SH2 #%d rd %s+%3d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 12 - strlen(FREGS[i].name), "", data));
 			}
 		}
 	}
@@ -2444,8 +2434,8 @@ void sh2_set_reg (int regnum, unsigned val)
 	case SH2_PR:   sh2.pr = val;	   break;
 	case SH2_SR:
 		sh2.sr = val;
-		CHECK_PENDING_IRQ
-        break;
+		CHECK_PENDING_IRQ("sh2_set_reg")
+		break;
 	case SH2_GBR:  sh2.gbr = val;	   break;
 	case SH2_VBR:  sh2.vbr = val;	   break;
 	case SH2_MACH: sh2.mach = val;	   break;
@@ -2480,18 +2470,17 @@ void sh2_set_irq_line(int irqline, int state)
 		return;
 	sh2.irq_line_state[irqline] = state;
 
-    if( state == CLEAR_LINE )
+	if( state == CLEAR_LINE )
 	{
-		logerror("SH-2 #%d cleared irq #%d\n", cpu_getactivecpu(), irqline);
+		LOG(("SH-2 #%d cleared irq #%d\n", cpu_getactivecpu(), irqline));
 		sh2.pending_irq &= ~(1 << irqline);
 	}
 	else
-    {
-	/* 	int prior = (sh2.m[SH2_IRPB & 0x1ff] & 15) << 4; */
-		logerror("SH-2 #%d assert irq #%d\n", cpu_getactivecpu(), irqline);
+	{
+		LOG(("SH-2 #%d assert irq #%d\n", cpu_getactivecpu(), irqline));
 		sh2.pending_irq |= 1 << irqline;
-    }
-	CHECK_PENDING_IRQ
+		CHECK_PENDING_IRQ("sh2_set_irq_line")
+	}
 }
 
 void sh2_set_irq_callback(int (*callback)(int irqline))
@@ -2554,7 +2543,7 @@ const char *sh2_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "SH-2";
 		case CPU_INFO_FAMILY: return "Hitachi SH7600";
-		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_VERSION: return "1.01";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 2000 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char*)sh2_reg_layout;

@@ -551,7 +551,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             16,    0,16,LE,1, 3,16   ),
+	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   29,	  3,29,LE,2,10,29	),
@@ -1344,7 +1344,7 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 	if (cpu_getstatus(cpunum) == 0) return;
 
 	LOG(("cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
-	timer_set(TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
+	timer_set(TIME_NOW, (irqline & (MAX_IRQ_LINES-1)) | ((cpunum & (MAX_CPU-1)) << 4) | (state << 8), cpu_manualirqcallback);
 }
 
 /***************************************************************************
@@ -1625,9 +1625,9 @@ static void cpu_manualirqcallback(int param)
 {
 	int cpunum, irqline, state, oldactive;
 
-	irqline = param & 7;
-	cpunum = (param >> 3) & 7;
-	state = param >> 6;
+	irqline = param & (MAX_IRQ_LINES-1);
+	cpunum = (param >> 4) & (MAX_CPU-1);
+	state = param >> 8;
 
 	/* swap to the CPU's context */
 	oldactive = activecpu;
@@ -2070,7 +2070,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				LOG(("unknown IRQ\n"));
 			}
 			cpu_irq_line_vector_w(cpunum, irq_line, num);
-			cpu_manualirqcallback(irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
+			cpu_manualirqcallback(irq_line | (cpunum << 4) | (HOLD_LINE << 8) );
 		}
 	}
 

@@ -13,7 +13,7 @@ void code0000(char *buffer, UINT32 pc, UINT16 opcode)
 {
 	const char *sym;
 
-    switch(opcode & 0x3f)
+	switch(opcode & 0x3f)
 	{
 	case 0x02:
 		sprintf(buffer,"STC     SR,R%d", Rn);
@@ -54,7 +54,7 @@ void code0000(char *buffer, UINT32 pc, UINT16 opcode)
 		break;
 	case 0x23:
 		sym = set_ea_info(0, cpu_get_reg(SH2_R0 + Rn), EA_UINT32, EA_ABS_PC);
-        sprintf(buffer,"BRAF    R%d", Rn);
+		sprintf(buffer,"BRAF    R%d", Rn);
 		break;
 	case 0x28:
 		sprintf(buffer,"CLRMAC");
@@ -89,15 +89,15 @@ void code0000(char *buffer, UINT32 pc, UINT16 opcode)
 			break;
 		case  4:
 			sym = set_ea_info(0, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_R0+Rm), EA_UINT8, EA_MEM_RD);
-            sprintf(buffer, "MOV.B   R%d,@(R0,R%d)", Rn, Rm);
+			sprintf(buffer, "MOV.B   R%d,@(R0,R%d)", Rn, Rm);
 			break;
 		case  5:
 			sym = set_ea_info(0, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_R0+Rm), EA_UINT16, EA_MEM_RD);
-            sprintf(buffer, "MOV.W   R%d,@(R0,R%d)", Rn, Rm);
+			sprintf(buffer, "MOV.W   R%d,@(R0,R%d)", Rn, Rm);
 			break;
 		case  6:
 			sym = set_ea_info(0, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_R0+Rm), EA_UINT32, EA_MEM_RD);
-            sprintf(buffer, "MOV.L   R%d,@(R0,R%d)", Rn, Rm);
+			sprintf(buffer, "MOV.L   R%d,@(R0,R%d)", Rn, Rm);
 			break;
 		case  7:
 			sprintf(buffer, "MUL.L   R%d,R%d\n", Rn, Rm);
@@ -120,20 +120,20 @@ void code0000(char *buffer, UINT32 pc, UINT16 opcode)
 			break;
 		case 12:
 			sym = set_ea_info(0, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_R0+Rm), EA_UINT8, EA_MEM_WR);
-            sprintf(buffer, "MOV.B   @(R0,R%d),R%d", Rn, Rm);
+			sprintf(buffer, "MOV.B   @(R0,R%d),R%d", Rn, Rm);
 			break;
 		case 13:
 			sym = set_ea_info(0, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_R0+Rm), EA_UINT16, EA_MEM_WR);
-            sprintf(buffer, "MOV.W   @(R0,R%d),R%d", Rn, Rm);
+			sprintf(buffer, "MOV.W   @(R0,R%d),R%d", Rn, Rm);
 			break;
 		case 14:
 			sym = set_ea_info(0, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_R0+Rm), EA_UINT32, EA_MEM_WR);
-            sprintf(buffer, "MOV.L   @(R0,R%d),R%d", Rn, Rm);
+			sprintf(buffer, "MOV.L   @(R0,R%d),R%d", Rn, Rm);
 			break;
 		case 15:
 			set_ea_info(0, cpu_get_reg(SH2_R0+Rn), EA_UINT32, EA_MEM_RD);
 			set_ea_info(1, cpu_get_reg(SH2_R0+Rm), EA_UINT32, EA_MEM_RD);
-            sprintf(buffer, "MAC.L   @R%d+,@R%d+", Rn, Rm);
+			sprintf(buffer, "MAC.L   @R%d+,@R%d+", Rn, Rm);
 			break;
 		}
 	}
@@ -205,13 +205,13 @@ void code0010(char *buffer, UINT32 pc, UINT16 opcode)
 	case 15:
 		sprintf(buffer, "MULS.W  R%d,R%d", Rm, Rn);
 		break;
-    }
+	}
 }
 
 void code0011(char *buffer, UINT32 pc, UINT16 opcode)
 {
 	switch (opcode & 15)
-    {
+	{
 	case  0:
 		sprintf(buffer, "CMP/EQ  R%d,R%d", Rm, Rn);
 		break;
@@ -275,11 +275,11 @@ void code0100(char *buffer, UINT32 pc, UINT16 opcode)
 		break;
 	case 0x02:
 		set_ea_info(0, cpu_get_reg(SH2_R0+Rn) - 4, EA_UINT32, EA_MEM_WR);
-        sprintf(buffer, "STS.L   MACH,@-R%d", Rn);
+		sprintf(buffer, "STS.L   MACH,@-R%d", Rn);
 		break;
 	case 0x03:
 		set_ea_info(0, cpu_get_reg(SH2_R0+Rn) - 4, EA_UINT32, EA_MEM_WR);
-        sprintf(buffer, "STC.L   SR,@-R%d", Rn);
+		sprintf(buffer, "STC.L   SR,@-R%d", Rn);
 		break;
 	case 0x04:
 		sprintf(buffer, "ROTL    R%d",Rn);
@@ -360,7 +360,7 @@ void code0100(char *buffer, UINT32 pc, UINT16 opcode)
 		break;
 	case 0x23:
 		set_ea_info(0, cpu_get_reg(SH2_R0+Rn) - 4, EA_UINT32, EA_MEM_WR);
-        sprintf(buffer, "STC.L   VBR,@-R%d", Rn);
+		sprintf(buffer, "STC.L   VBR,@-R%d", Rn);
 		break;
 	case 0x24:
 		sprintf(buffer, "ROTCL   R%d",Rn);
@@ -396,7 +396,7 @@ void code0100(char *buffer, UINT32 pc, UINT16 opcode)
 		{
 			set_ea_info(0, cpu_get_reg(SH2_R0+Rm), EA_UINT32, EA_MEM_RD);
 			set_ea_info(1, cpu_get_reg(SH2_R0+Rn), EA_UINT32, EA_MEM_RD);
-            sprintf(buffer, "MAC.W   @R%d+,@R%d+",Rm,Rn);
+			sprintf(buffer, "MAC.W   @R%d+,@R%d+",Rm,Rn);
 		}
 		else
 			sprintf(buffer, "??????  $%04X", opcode);
@@ -482,7 +482,7 @@ void code0111(char *buffer, UINT32 pc, UINT16 opcode)
 
 void code1000(char *buffer, UINT32 pc, UINT16 opcode)
 {
-    const char *sym;
+	const char *sym;
 	switch((opcode >> 8) & 15)
 	{
 	case  0:
@@ -493,7 +493,7 @@ void code1000(char *buffer, UINT32 pc, UINT16 opcode)
 	case  1:
 		sym = set_ea_info(0, (opcode & 15) * 2, EA_UINT8, EA_VALUE);
 		set_ea_info(1, cpu_get_reg(SH2_R0+Rm) + (opcode & 15)*2, EA_UINT16, EA_MEM_WR);
-        sprintf(buffer, "MOV.W   R0,@(%s,R%d)", sym, Rm);
+		sprintf(buffer, "MOV.W   R0,@(%s,R%d)", sym, Rm);
 		break;
 	case  4:
 		sym = set_ea_info(0, (opcode & 15), EA_UINT8, EA_VALUE);
@@ -519,11 +519,11 @@ void code1000(char *buffer, UINT32 pc, UINT16 opcode)
 		break;
 	case 13:
 		sym = set_ea_info(0, pc, SIGNX8(opcode & 0xff) * 2 + 2, EA_REL_PC);
-        sprintf(buffer, "BTS     %s", sym);
+		sprintf(buffer, "BTS     %s", sym);
 		break;
 	case 15:
 		sym = set_ea_info(0, pc, SIGNX8(opcode & 0xff) * 2 + 2, EA_REL_PC);
-        sprintf(buffer, "BFS     %s", sym);
+		sprintf(buffer, "BFS     %s", sym);
 		break;
 	default :
 		sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
@@ -534,14 +534,14 @@ void code1000(char *buffer, UINT32 pc, UINT16 opcode)
 void code1001(char *buffer, UINT32 pc, UINT16 opcode)
 {
 	const char *sym;
-    sym = set_ea_info(0, (opcode & 0xff) * 2, EA_UINT32, EA_VALUE);
+	sym = set_ea_info(0, (opcode & 0xff) * 2, EA_UINT32, EA_VALUE);
 	set_ea_info(0, (opcode & 0xff) * 2 + pc + 2, EA_UINT16, EA_MEM_RD);
-    sprintf(buffer, "MOV.W   @(%s,PC),R%d", sym, Rn);
+	sprintf(buffer, "MOV.W   @(%s,PC),R%d", sym, Rn);
 }
 
 void code1010(char *buffer, UINT32 pc, UINT16 opcode)
 {
-    const char *sym;
+	const char *sym;
 	sym = set_ea_info(0, SIGNX12(opcode & 0xfff) * 2 + pc + 2, EA_UINT32, EA_ABS_PC);
 	sprintf(buffer, "BRA     %s", sym);
 }
@@ -556,7 +556,7 @@ void code1011(char *buffer, UINT32 pc, UINT16 opcode)
 void code1100(char *buffer, UINT32 pc, UINT16 opcode)
 {
 	const char *sym;
-    switch((opcode >> 8) & 15)
+	switch((opcode >> 8) & 15)
 	{
 	case  0:
 		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
@@ -571,7 +571,7 @@ void code1100(char *buffer, UINT32 pc, UINT16 opcode)
 	case  2:
 		sym = set_ea_info(0, (opcode & 0xff) * 4, EA_UINT8, EA_VALUE);
 		set_ea_info(1, cpu_get_reg(SH2_GBR) + (opcode & 0xff) * 4, EA_UINT32, EA_MEM_WR);
-        sprintf(buffer, "MOV.L   R0,@($%04X,GBR)", (opcode & 0xff) * 4);
+		sprintf(buffer, "MOV.L   R0,@($%04X,GBR)", (opcode & 0xff) * 4);
 		break;
 	case  3:
 		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
@@ -621,12 +621,12 @@ void code1100(char *buffer, UINT32 pc, UINT16 opcode)
 	case 13:
 		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
 		set_ea_info(1, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_GBR), EA_UINT8, EA_MEM_RDWR);
-        sprintf(buffer, "AND.B   #%s,@(R0,GBR)", sym);
+		sprintf(buffer, "AND.B   #%s,@(R0,GBR)", sym);
 		break;
 	case 14:
 		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
 		set_ea_info(1, cpu_get_reg(SH2_R0) + cpu_get_reg(SH2_GBR), EA_UINT8, EA_MEM_RDWR);
-        sprintf(buffer, "XOR.B   #%s,@(R0,GBR)", sym);
+		sprintf(buffer, "XOR.B   #%s,@(R0,GBR)", sym);
 		break;
 	case 15:
 		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
@@ -653,7 +653,7 @@ void code1110(char *buffer, UINT32 pc, UINT16 opcode)
 
 void code1111(char *buffer, UINT32 pc, UINT16 opcode)
 {
-    sprintf(buffer, "unknown $%04X", opcode);
+	sprintf(buffer, "unknown $%04X", opcode);
 }
 
 unsigned DasmSH2(char *buffer, unsigned pc)
@@ -685,3 +685,4 @@ unsigned DasmSH2(char *buffer, unsigned pc)
 }
 
 #endif
+

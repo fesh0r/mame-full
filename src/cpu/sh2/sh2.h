@@ -31,8 +31,24 @@
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 
-#define SH2_INT_NONE  0
-#define SH2_INT_INTR  1
+#define SH2_INT_NONE	-1
+#define SH2_INT_VBLIN	0
+#define SH2_INT_VBLOUT	1
+#define SH2_INT_HBLIN	2
+#define SH2_INT_TIMER0	3
+#define SH2_INT_TIMER1	4
+#define SH2_INT_DSP 	5
+#define SH2_INT_SOUND	6
+#define SH2_INT_SMPC	7
+#define SH2_INT_PAD 	8
+#define SH2_INT_DMA2	9
+#define SH2_INT_DMA1	10
+#define SH2_INT_DMA0	11
+#define SH2_INT_DMAILL	12
+#define SH2_INT_SPRITE	13
+#define SH2_INT_14		14
+#define SH2_INT_15		15
+#define SH2_INT_ABUS	16
 
 enum {
 	SH2_PC = 1, SH2_SP, SH2_SR, SH2_PR, SH2_GBR, SH2_VBR, SH2_MACH, SH2_MACL,
