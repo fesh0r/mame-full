@@ -263,7 +263,7 @@ static struct MachineDriver machine_driver_atom =
 			0, 0,
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames/sec, vblank duration */
+	50, 128, /* frames/sec, vblank duration */
 	0,
 	atom_init_machine,
 	atom_stop_machine,
