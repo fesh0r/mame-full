@@ -19,14 +19,17 @@
 *
 *	10/2/2002		AK - Preliminary sound code.
 *	13/2/2002		AK - Added a hack for mode 4, other fixes.
-*	23/2/2002		AK - Use lookup tables, added sweep to mode 1. Re-wrote
-*						 the square wave generation.
+*	23/2/2002		AK - Use lookup tables, added sweep to mode 1. Re-wrote the square
+*						 wave generation.
 *	13/3/2002		AK - Added mode 3, better lookup tables, other adjustments.
 *	15/3/2002		AK - Mode 4 can now change frequencies.
+*	31/3/2002		AK - Accidently forgot to handle counter/consecutive for mode 1.
+*	 3/4/2002		AK - Mode 1 sweep can still occur if shift is 0.  Don't let frequency
+*						 go past the maximum allowed value. Fixed Mode 3 length table.
+*						 Slight adjustment to Mode 4's period table generation.
 *
 ***************************************************************************************/
 
-#include <math.h>
 #include "driver.h"
 #include "includes/gb.h"
 
@@ -54,6 +57,7 @@
 
 #define LEFT 1
 #define RIGHT 2
+#define MAX_FREQUENCIES 2048
 
 static int channel = 1;
 static int rate;
@@ -63,8 +67,8 @@ static float wave_duty_table[4] = { 8, 4, 2, 1.33 };
 
 static INT32 env_length_table[8];
 static INT32 swp_time_table[8];
-static UINT32 period_table[2048];
-static UINT32 period_mode3_table[2048];
+static UINT32 period_table[MAX_FREQUENCIES];
+static UINT32 period_mode3_table[MAX_FREQUENCIES];
 static UINT32 period_mode4_table[8][16];
 static UINT32 length_table[64];
 static UINT32 length_mode3_table[256];
@@ -251,6 +255,7 @@ void gameboy_sound_w(int offset, int data)
 	case NR14: /* Frequency hi / Initialize (R/W) */
 		snd_1.frequency = ((gb_ram[NR14]&0x7)<<8) | gb_ram[NR13];
 		snd_1.period = period_table[snd_1.frequency];
+		snd_1.mode = (data & 0x40) >> 6;
 		if( data & 0x80 )
 			gameboy_init_1();
 		break;
@@ -349,7 +354,7 @@ void gameboy_sound_w(int offset, int data)
 
 void gameboy_update(int param, INT16 **buffer, int length)
 {
-	INT16 sample, left, right;
+	INT16 sample = 0, left = 0, right = 0;
 
 	while( length-- > 0 )
 	{
@@ -394,8 +399,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				}
 			}
 
-			/* Is this correct? */
-			if( snd_1.swp_time && snd_1.swp_shift )
+			if( snd_1.swp_time )
 			{
 				snd_1.swp_count++;
 				if( snd_1.swp_count >= snd_1.swp_time )
@@ -411,7 +415,13 @@ void gameboy_update(int param, INT16 **buffer, int length)
 						}
 					}
 					else
+					{
 						snd_1.frequency += snd_1.frequency / (1 << snd_1.swp_shift );
+						if( snd_1.frequency >= MAX_FREQUENCIES )
+						{
+							snd_1.frequency = MAX_FREQUENCIES - 1;
+						}
+					}
 
 					snd_1.period = period_table[snd_1.frequency];
 				}
@@ -485,7 +495,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 			sample -= 8;
 
 			if( snd_3.level )
-				sample >>= snd_3.level - 1;
+				sample >>= (snd_3.level - 1);
 			else
 				sample = 0;
 
@@ -610,7 +620,7 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	}
 
 	/* Calculate the period tables */
-	for( I = 0; I < 2048; I++ )
+	for( I = 0; I < MAX_FREQUENCIES; I++ )
 	{
 		period_table[I] = ((1 << 16) / (131072 / (2048 - I))) * rate;
 		period_mode3_table[I] = ((1 << 16) / (65536 / (2048 - I))) * rate;
@@ -620,7 +630,9 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	{
 		for( J = 0; J < 16; J++ )
 		{
-			period_mode4_table[I][J] = ((1 << 16) / (524288 / ((I == 0)?1:I) / pow(2.0, (double)(J + 1)))) * rate;
+			/* I is the dividing ratio of frequencies
+			   J is the shift clock frequency */
+			period_mode4_table[I][J] = ((1 << 16) / (524288 / ((I == 0)?0.5:I) / (1 << (J + 1)))) * rate;
 		}
 	}
 
@@ -631,10 +643,9 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	}
 
 	/* Calculate the length table for mode 3 */
-	for( I = 0; I < 64; I++ )
+	for( I = 0; I < 256; I++ )
 	{
-		length_mode3_table[I] = ((256 - I) * ((1 << 16)/2) * rate) >> 16;
-/*		length_mode3_table[n] = ((256 - n) * ((1 << 16)/256) * rate) >> 16; */
+		length_mode3_table[I] = ((256 - I) * ((1 << 16)/256) * rate) >> 16;
 	}
 
 	/* Calculate poly 7 random noise for mode 4 */
