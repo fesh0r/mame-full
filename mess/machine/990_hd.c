@@ -150,7 +150,6 @@ int ti990_hd_init(int id, void *fp, int open_mode)
 	hd_unit_t *d;
 	disk_image_header header;
 	int bytes_read;
-	//int effective_mode;
 
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
