@@ -90,7 +90,7 @@ endif
 # some structures and thus they can't be linked against each other.
 OBJ = obj/$(NAME)
 
-EMULATORDLL = lib$(NAME).dll
+EMULATORDLL = $(NAME)lib.dll
 EMULATORCLI = $(NAME)$(EXE)
 EMULATORGUI = $(GUINAME)$(EXE)
 
