@@ -60,17 +60,21 @@ int fullscreen = 0;
 int antialias=0;
 int translucency = 0;
 
+XSetWindowAttributes window_attr;
 GLXContext glContext=NULL;
 
 const GLCapabilities glCapsDef = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
-			           1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 
+			           1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1,
 			           -1
 			         };
 
 GLCapabilities glCaps;
 
+char * libGLName=0;
+char * libGLUName=0;
+
 static const char * xgl_version_str = 
-	"\nGLmame v0.84, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.85, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -166,7 +170,6 @@ void sysdep_close(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display(int depth)
 {
-  XSetWindowAttributes winattr;
   int 		myscreen;
   XEvent	event;
   XSizeHints 	hints;
@@ -211,17 +214,17 @@ int sysdep_create_display(int depth)
 	is_fullscreen=0;
   }
 
-  winattr.background_pixel=0;
-  winattr.border_pixel=WhitePixelOfScreen(screen);
-  winattr.bit_gravity=ForgetGravity;
-  winattr.win_gravity=NorthWestGravity;
-  winattr.backing_store=NotUseful;
-  winattr.override_redirect=False;
-  winattr.save_under=False;
-  winattr.event_mask=0; 
-  winattr.do_not_propagate_mask=0;
-  winattr.colormap=0; /* done later, within findVisualGlX .. */
-  winattr.cursor=None;
+  window_attr.background_pixel=0;
+  window_attr.border_pixel=WhitePixelOfScreen(screen);
+  window_attr.bit_gravity=ForgetGravity;
+  window_attr.win_gravity=NorthWestGravity;
+  window_attr.backing_store=NotUseful;
+  window_attr.override_redirect=False;
+  window_attr.save_under=False;
+  window_attr.event_mask=0; 
+  window_attr.do_not_propagate_mask=0;
+  window_attr.colormap=0; /* done later, within findVisualGlX .. */
+  window_attr.cursor=None;
 
   if(fullscreen) 
       winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWDontPropagate | 
@@ -231,17 +234,18 @@ int sysdep_create_display(int depth)
       winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap    
 	        ;
 
-  fetch_GL_FUNCS (1 /* force refetch ... */);
+  fetch_GL_FUNCS (libGLName, libGLUName, 1 /* force refetch ... */);
 
   glCaps = glCapsDef;
 
   glCaps.alphaBits=(alphablending>0)?1:0;
   glCaps.buffer   =(doublebuffer>0)?BUFFER_DOUBLE:BUFFER_SINGLE;
+  glCaps.gl_supported = 1;
 
   window = RootWindow(display,DefaultScreen( display ));
   vgc = findVisualGlX( display, window,
                        &window, winwidth, winheight, &glCaps, 
-		       &ownwin, &winattr, winmask,
+		       &ownwin, &window_attr, winmask,
 		       NULL, 0, NULL, 
 #ifndef NDEBUG
 		       1);
@@ -258,7 +262,7 @@ int sysdep_create_display(int depth)
 
   myvisual =vgc.visual;
   glContext=vgc.gc;
-  colormap=winattr.colormap;
+  colormap=window_attr.colormap;
 
   if (!window) {
 	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
@@ -380,22 +384,19 @@ int sysdep_create_display(int depth)
 
 void sysdep_display_close (void)
 {
-   __glXMakeCurrent(display, None, NULL);
-   __glXDestroyContext(display,glContext);
+   disp__glXMakeCurrent(display, None, NULL);
+   disp__glXDestroyContext(display,glContext);
    glContext=0;
 
    CloseVScreen();  /* Shut down GL stuff */
 
-   XFreeColormap(display, colormap);
-   colormap=0;
-     
    if(window) {
      /* ungrab the pointer */
 
      if(use_mouse) XUngrabPointer(display,CurrentTime);
 
-     XDestroyWindow(display, window);
-     window=0;
+     destroyOwnOverlayWin(display, &window, &window_attr);
+     colormap=window_attr.colormap;
    }
 
    XSync(display,False); /* send all events to sync; */
@@ -409,7 +410,7 @@ void sysdep_display_close (void)
 
 void SwapBuffers(void)
 {
-  __glXSwapBuffers(display,window);
+  disp__glXSwapBuffers(display,window);
 }
 
 void toggleFullscreen()

@@ -6,7 +6,7 @@
 
 #define osd_cycles() uclock()
 
-#if defined svgalib || defined x11 || defined ggi || defined openstep
+#if defined svgalib || defined x11 || defined ggi || defined openstep || defined SDL
 extern unsigned char *dirty_lines;
 extern unsigned char **dirty_blocks;
 

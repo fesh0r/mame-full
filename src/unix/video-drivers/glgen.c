@@ -297,14 +297,14 @@ void gl_reset_resources()
 GLboolean glHasEXT78 (void)
 {
   if (gl_is_initialized)
-    fetch_GL_FUNCS (0);
-  return __glColorTableEXT != NULL;
+    fetch_GL_FUNCS (libGLName, libGLUName, 0);
+  return disp__glColorTableEXT != NULL;
 }
 
 void glSetUseEXT78 (GLboolean val)
 {
   if (gl_is_initialized == 0 || val==GL_FALSE || 
-      (__glColorTableEXT!=NULL && __glColorSubTableEXT!=NULL) )
+      (disp__glColorTableEXT!=NULL && disp__glColorSubTableEXT!=NULL) )
     useGLEXT78 = val;
 }
 
@@ -321,52 +321,52 @@ void gl_set_bilinear (int new_value)
 
   if (bilinear)
   {
-    __glBindTexture (GL_TEXTURE_2D, cabtex[0]);
+    disp__glBindTexture (GL_TEXTURE_2D, cabtex[0]);
 
-    __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    __glPixelStorei (GL_UNPACK_ROW_LENGTH, memory_x_len);
-    __glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
+    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, memory_x_len);
+    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
     CHECK_GL_ERROR ();
 
     for (y = 0; y < texnumy; y++)
     {
       for (x = 0; x < texnumx; x++)
       {
-        __glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
+        disp__glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
 
-        __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        __glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
-        __glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
+        disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
+        disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
         CHECK_GL_ERROR ();
       }
     }
   }
   else
   {
-    __glBindTexture (GL_TEXTURE_2D, cabtex[0]);
+    disp__glBindTexture (GL_TEXTURE_2D, cabtex[0]);
 
-    __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    __glPixelStorei (GL_UNPACK_ROW_LENGTH, memory_x_len);
-    __glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
+    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, memory_x_len);
+    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
     CHECK_GL_ERROR ();
 
     for (y = 0; y < texnumy; y++)
     {
       for (x = 0; x < texnumx; x++)
       {
-        __glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
+        disp__glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
 
-        __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        __glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
-        __glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
+        disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
+        disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
         CHECK_GL_ERROR ();
       }
     }
@@ -462,17 +462,17 @@ void gl_set_antialias (int new_value)
 
   if (antialias)
   {
-    __glShadeModel (GL_SMOOTH);
-    __glEnable (GL_POLYGON_SMOOTH);
-    __glEnable (GL_LINE_SMOOTH);
-    __glEnable (GL_POINT_SMOOTH);
+    disp__glShadeModel (GL_SMOOTH);
+    disp__glEnable (GL_POLYGON_SMOOTH);
+    disp__glEnable (GL_LINE_SMOOTH);
+    disp__glEnable (GL_POINT_SMOOTH);
   }
   else
   {
-    __glShadeModel (GL_FLAT);
-    __glDisable (GL_POLYGON_SMOOTH);
-    __glDisable (GL_LINE_SMOOTH);
-    __glDisable (GL_POINT_SMOOTH);
+    disp__glShadeModel (GL_FLAT);
+    disp__glDisable (GL_POLYGON_SMOOTH);
+    disp__glDisable (GL_LINE_SMOOTH);
+    disp__glDisable (GL_POINT_SMOOTH);
   }
 }
 
@@ -485,12 +485,12 @@ void gl_set_alphablending (int new_value)
 
   if (alphablending)
   {
-    __glEnable (GL_BLEND);
-    __glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    disp__glEnable (GL_BLEND);
+    disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
   else
   {
-    __glDisable (GL_BLEND);
+    disp__glDisable (GL_BLEND);
   }
 }
 
@@ -557,21 +557,21 @@ void InitVScreen (int depth)
   if (glContext == 0)
     return;
 
-  fetch_GL_FUNCS (0);
+  fetch_GL_FUNCS (libGLName, libGLUName, 0);
 
   CHECK_GL_BEGINEND();
 
-  glVersion = __glGetString(GL_VERSION);
+  glVersion = disp__glGetString(GL_VERSION);
 
   printf("\nGLINFO: OpenGL Driver Information:\n");
   printf("\tvendor: %s,\n\trenderer %s,\n\tversion %s\n", 
-  	__glGetString(GL_VENDOR), 
-	__glGetString(GL_RENDERER),
+  	disp__glGetString(GL_VENDOR), 
+	disp__glGetString(GL_RENDERER),
 	glVersion);
 
   printf("GLINFO: GLU Driver Information:\n");
   printf("\tversion %s\n", 
-	__gluGetString(GLU_VERSION));
+	disp__gluGetString(GLU_VERSION));
 
   if(glVersion[0]>'1' ||
      (glVersion[0]=='1' && glVersion[2]>='2') )
@@ -590,9 +590,9 @@ void InitVScreen (int depth)
 
   InitCabGlobals ();
 
-  __glClearColor (0, 0, 0, 1);
-  __glClear (GL_COLOR_BUFFER_BIT);
-  __glFlush ();
+  disp__glClearColor (0, 0, 0, 1);
+  disp__glClear (GL_COLOR_BUFFER_BIT);
+  disp__glFlush ();
 
   if (!dodepth)
     cabview = 0;
@@ -602,7 +602,7 @@ void InitVScreen (int depth)
   xgl_resize(winwidth, winheight,1);
 
   if (dodepth)
-    __glDepthFunc (GL_LEQUAL);
+    disp__glDepthFunc (GL_LEQUAL);
 
   /* Calulate delta vectors for screen height and width */
 
@@ -781,12 +781,12 @@ int sysdep_display_alloc_palette (int writable_colors)
 	    ctable = (GLubyte *) 
 		  calloc (ctable_size * (alphablending?4:3), 1);
 
-	    __glColorTableEXT (GL_TEXTURE_2D,
+	    disp__glColorTableEXT (GL_TEXTURE_2D,
 			       gl_ctable_format,
 			       ctable_size, gl_ctable_format, 
 			       gl_ctable_type, ctable);
 
-	    err = __glGetError ();
+	    err = disp__glGetError ();
 	    if(err!=GL_NO_ERROR) 
 	    {
 	      /**
@@ -802,7 +802,7 @@ int sysdep_display_alloc_palette (int writable_colors)
       {
       	    int max_pixel_map_table;
 
-      	    __glGetIntegerv(GL_MAX_PIXEL_MAP_TABLE, &max_pixel_map_table);
+      	    disp__glGetIntegerv(GL_MAX_PIXEL_MAP_TABLE, &max_pixel_map_table);
 	    if(max_pixel_map_table<ctable_size)
 	    {
 	       /**
@@ -832,12 +832,12 @@ int sysdep_display_alloc_palette (int writable_colors)
   {
 	  if(useGLEXT78)
 	  {
-	      if (__glColorTableEXT == 0)
+	      if (disp__glColorTableEXT == 0)
 	        printf("GLINFO: glColorTableEXT not avaiable .. BAD & SLOW\n");
 	      else
 	        printf("GLINFO: glColorTableEXT avaiable .. GOOD & FAST\n");
 
-	      if (__glColorSubTableEXT == 0)
+	      if (disp__glColorSubTableEXT == 0)
 	        printf("GLINFO: glColorSubTableEXT not avaiable .. BAD & SLOW\n");
 	      else
 	        printf("GLINFO: glColorSubTableEXT avaiable .. GOOD & FAST\n");
@@ -897,14 +897,14 @@ void InitTextures ()
   /* Test the max texture size */
   do
   {
-    __glTexImage2D (GL_PROXY_TEXTURE_2D, 0,
+    disp__glTexImage2D (GL_PROXY_TEXTURE_2D, 0,
 		  gl_internal_format,
 		  text_width, text_height,
 		  0, gl_bitmap_format, gl_bitmap_type, 0);
 
     CHECK_GL_ERROR ();
 
-    __glGetTexLevelParameteriv
+    disp__glGetTexLevelParameteriv
       (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
 
     CHECK_GL_ERROR ();
@@ -1064,10 +1064,10 @@ void InitTextures ()
       tsq->isTexture=GL_FALSE;
       tsq->texobj=0;
 
-      __glGenTextures (1, &(tsq->texobj));
+      disp__glGenTextures (1, &(tsq->texobj));
 
-      __glBindTexture (GL_TEXTURE_2D, tsq->texobj);
-      err = __glGetError ();
+      disp__glBindTexture (GL_TEXTURE_2D, tsq->texobj);
+      err = disp__glGetError ();
       if(err==GL_INVALID_ENUM)
       {
 	fprintf (stderr, "GLERROR glBindTexture (glGenText) := GL_INVALID_ENUM, texnum x=%d, y=%d, texture=%d\n", x, y, tsq->texobj);
@@ -1078,7 +1078,7 @@ void InitTextures ()
 	      }
       #endif
 
-      if(__glIsTexture(tsq->texobj) == GL_FALSE)
+      if(disp__glIsTexture(tsq->texobj) == GL_FALSE)
       {
 	fprintf (stderr, "GLERROR ain't a texture (glGenText): texnum x=%d, y=%d, texture=%d\n",
 		x, y, tsq->texobj);
@@ -1092,7 +1092,7 @@ void InitTextures ()
       {
 	      if (useGLEXT78)
 	      {
-		  __glColorTableEXT (GL_TEXTURE_2D,
+		  disp__glColorTableEXT (GL_TEXTURE_2D,
 				     gl_ctable_format,
 				     ctable_size, gl_ctable_format, 
 				     gl_ctable_type, ctable);
@@ -1101,34 +1101,34 @@ void InitTextures ()
 	      }
 	      else
 	      {
-		__glPixelMapusv (GL_PIXEL_MAP_I_TO_R, ctable_size, rcolmap);
-		__glPixelMapusv (GL_PIXEL_MAP_I_TO_G, ctable_size, gcolmap);
-		__glPixelMapusv (GL_PIXEL_MAP_I_TO_B, ctable_size, bcolmap);
+		disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_R, ctable_size, rcolmap);
+		disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_G, ctable_size, gcolmap);
+		disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_B, ctable_size, bcolmap);
 		if (alphablending)
-		  __glPixelMapusv (GL_PIXEL_MAP_I_TO_A, ctable_size, acolmap);
+		  disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_A, ctable_size, acolmap);
 
 		CHECK_GL_ERROR ();
 	      }
       }
 
-      __glTexImage2D (GL_TEXTURE_2D, 0,
+      disp__glTexImage2D (GL_TEXTURE_2D, 0,
 		    gl_internal_format,
 		    text_width, text_height,
 		    0, gl_bitmap_format, gl_bitmap_type, NULL);
 
       CHECK_GL_ERROR ();
 
-      __glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
+      disp__glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
 
       CHECK_GL_ERROR ();
 
-      __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-      __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      __glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-      __glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      disp__glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
       CHECK_GL_ERROR ();
     }	/* for all texnumx */
@@ -1272,18 +1272,18 @@ SetupFrustum (void)
 {
   CHECK_GL_BEGINEND();
 
-  __glMatrixMode (GL_PROJECTION);
-  __glLoadIdentity ();
+  disp__glMatrixMode (GL_PROJECTION);
+  disp__glLoadIdentity ();
 
   if(!do_snapshot)
-	  __glFrustum (-vscrnaspect, vscrnaspect, -1.0, 1.0, 5.0, 100.0);
+	  disp__glFrustum (-vscrnaspect, vscrnaspect, -1.0, 1.0, 5.0, 100.0);
   else
-	  __glFrustum (-vscrnaspect, vscrnaspect, 1.0, -1.0, 5.0, 100.0);
+	  disp__glFrustum (-vscrnaspect, vscrnaspect, 1.0, -1.0, 5.0, 100.0);
 
   CHECK_GL_ERROR ();
-  __glMatrixMode (GL_MODELVIEW);
-  __glLoadIdentity ();
-  __glTranslatef (0.0, 0.0, -20.0);
+  disp__glMatrixMode (GL_MODELVIEW);
+  disp__glLoadIdentity ();
+  disp__glTranslatef (0.0, 0.0, -20.0);
 }
 
 
@@ -1293,16 +1293,16 @@ void SetupOrtho (void)
 {
   CHECK_GL_BEGINEND();
 
-  __glMatrixMode (GL_PROJECTION);
-  __glLoadIdentity ();
+  disp__glMatrixMode (GL_PROJECTION);
+  disp__glLoadIdentity ();
 
   if(!do_snapshot)
-	  __glOrtho (0, 1, 1, 0, -1.0, 1.0);
+	  disp__glOrtho (0, 1, 1, 0, -1.0, 1.0);
   else
-	  __glOrtho (0, 1, 0, 1, -1.0, 1.0);
+	  disp__glOrtho (0, 1, 0, 1, -1.0, 1.0);
 
-  __glMatrixMode (GL_MODELVIEW);
-  __glLoadIdentity ();
+  disp__glMatrixMode (GL_MODELVIEW);
+  disp__glLoadIdentity ();
 }
 
 /* Set up the virtual screen */
@@ -1370,9 +1370,9 @@ void xgl_resize(int w, int h, int now)
 	SetWindowRatio();
 
 	if (cabview)
-		__glViewport (0, 0, winwidth, winheight);
+		disp__glViewport (0, 0, winwidth, winheight);
 	else
-		__glViewport ((int)(vscrntlx+0.5), (int)(vscrntly+0.5),
+		disp__glViewport ((int)(vscrntlx+0.5), (int)(vscrntly+0.5),
 		            (int)(vscrnwidth+0.5), (int)(vscrnheight+0.5));
 
 	if (cabview)
@@ -1412,10 +1412,10 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
   if (updateTexture)
   {
-    __glPixelStorei (GL_UNPACK_ROW_LENGTH, memory_x_len);
-    __glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
+    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, memory_x_len);
+    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
     if (!useGLEXT78 && useColorIndex)
-    	__glPixelTransferi (GL_MAP_COLOR, GL_TRUE);
+    	disp__glPixelTransferi (GL_MAP_COLOR, GL_TRUE);
 
     if( use_blitter )
     {
@@ -1430,7 +1430,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
     }
   }
 
-  __glEnable (GL_TEXTURE_2D);
+  disp__glEnable (GL_TEXTURE_2D);
 
   for (y = 0; y < texnumy; y++)
   {
@@ -1447,8 +1447,8 @@ drawTextureDisplay (int useCabinet, int updateTexture)
       	continue;
       }
 
-      __glBindTexture (GL_TEXTURE_2D, square->texobj);
-      err = __glGetError ();
+      disp__glBindTexture (GL_TEXTURE_2D, square->texobj);
+      err = disp__glGetError ();
       if(err==GL_INVALID_ENUM)
       {
 	fprintf (stderr, "GLERROR glBindTexture := GL_INVALID_ENUM, texnum x=%d, y=%d, texture=%d\n", x, y, square->texobj);
@@ -1459,7 +1459,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 	      }
       #endif
 
-      if(__glIsTexture(square->texobj) == GL_FALSE)
+      if(disp__glIsTexture(square->texobj) == GL_FALSE)
       {
         square->isTexture=GL_FALSE;
 	fprintf (stderr, "GLERROR ain't a texture(update): texnum x=%d, y=%d, texture=%d\n",
@@ -1471,17 +1471,17 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
 	if (useGLEXT78)
 	{
-	    __glColorTableEXT (GL_TEXTURE_2D, gl_ctable_format,
+	    disp__glColorTableEXT (GL_TEXTURE_2D, gl_ctable_format,
 			       ctable_size, gl_ctable_format, 
 			       gl_ctable_type, ctable);
 	}
 	else
 	{
-	  __glPixelMapusv (GL_PIXEL_MAP_I_TO_R, ctable_size, rcolmap);
-	  __glPixelMapusv (GL_PIXEL_MAP_I_TO_G, ctable_size, gcolmap);
-	  __glPixelMapusv (GL_PIXEL_MAP_I_TO_B, ctable_size, bcolmap);
+	  disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_R, ctable_size, rcolmap);
+	  disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_G, ctable_size, gcolmap);
+	  disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_B, ctable_size, bcolmap);
 	  if (alphablending)
-	    __glPixelMapusv (GL_PIXEL_MAP_I_TO_A, ctable_size, acolmap);
+	    disp__glPixelMapusv (GL_PIXEL_MAP_I_TO_A, ctable_size, acolmap);
 	}
       }
 
@@ -1510,7 +1510,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 		  ht = visual_height - text_height * y;
 	}
 
-	__glTexSubImage2D (GL_TEXTURE_2D, 0, 
+	disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 
 	                 xoff, yoff,
 			 wd, ht,
 			 gl_bitmap_format, gl_bitmap_type, square->texture);
@@ -1519,27 +1519,27 @@ drawTextureDisplay (int useCabinet, int updateTexture)
       if (useCabinet)
       {
 	GL_BEGIN(GL_QUADS);
-	__glTexCoord2f (0, 0);
-	__glVertex3f (square->x1, square->y1, square->z1);
-	__glTexCoord2f (square->xcov, 0);
-	__glVertex3f (square->x2, square->y2, square->z2);
-	__glTexCoord2f (square->xcov, square->ycov);
-	__glVertex3f (square->x3, square->y3, square->z3);
-	__glTexCoord2f (0, square->ycov);
-	__glVertex3f (square->x4, square->y4, square->z4);
+	disp__glTexCoord2f (0, 0);
+	disp__glVertex3f (square->x1, square->y1, square->z1);
+	disp__glTexCoord2f (square->xcov, 0);
+	disp__glVertex3f (square->x2, square->y2, square->z2);
+	disp__glTexCoord2f (square->xcov, square->ycov);
+	disp__glVertex3f (square->x3, square->y3, square->z3);
+	disp__glTexCoord2f (0, square->ycov);
+	disp__glVertex3f (square->x4, square->y4, square->z4);
 	GL_END();
       }
       else
       {
 	GL_BEGIN(GL_QUADS);
-	__glTexCoord2f (0, 0);
-	__glVertex3f (square->fx1, square->fy1, z_pos);
-	__glTexCoord2f (square->xcov, 0);
-	__glVertex3f (square->fx2, square->fy2, z_pos);
-	__glTexCoord2f (square->xcov, square->ycov);
-	__glVertex3f (square->fx3, square->fy3, z_pos);
-	__glTexCoord2f (0, square->ycov);
-	__glVertex3f (square->fx4, square->fy4, z_pos);
+	disp__glTexCoord2f (0, 0);
+	disp__glVertex3f (square->fx1, square->fy1, z_pos);
+	disp__glTexCoord2f (square->xcov, 0);
+	disp__glVertex3f (square->fx2, square->fy2, z_pos);
+	disp__glTexCoord2f (square->xcov, square->ycov);
+	disp__glVertex3f (square->fx3, square->fy3, z_pos);
+	disp__glTexCoord2f (0, square->ycov);
+	disp__glVertex3f (square->fx4, square->fy4, z_pos);
 	GL_END();
       }
     } /* for all texnumx */
@@ -1547,12 +1547,12 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
   if (updateTexture)
   {
-    __glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
-    __glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
-    __glPixelTransferi (GL_MAP_COLOR, GL_FALSE);
+    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
+    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
+    disp__glPixelTransferi (GL_MAP_COLOR, GL_FALSE);
   }
 
-  __glDisable (GL_TEXTURE_2D);
+  disp__glDisable (GL_TEXTURE_2D);
 
   palette_changed = 0;
 
@@ -1560,7 +1560,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
   /* YES - lets catch this error ... 
    */
-  (void) __glGetError ();
+  (void) disp__glGetError ();
 }
 
 /* Draw a frame in Cabinet mode */
@@ -1580,11 +1580,11 @@ void UpdateCabDisplay (void)
 
   CHECK_GL_BEGINEND();
 
-  __glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  disp__glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   CHECK_GL_ERROR ();
 
-  __glPushMatrix ();
+  disp__glPushMatrix ();
 
 
   /* Do the camera panning */
@@ -1630,20 +1630,20 @@ void UpdateCabDisplay (void)
       break;
     }
 
-    __gluLookAt (camx, camy, camz, dirx, diry, dirz, normx, normy, normz);
+    disp__gluLookAt (camx, camy, camz, dirx, diry, dirz, normx, normy, normz);
 
     panframe++;
   }
   else
-    __gluLookAt (-5.0, 0.0, 5.0, 0.0, 0.0, -5.0, 0.0, 1.0, 0.0);
+    disp__gluLookAt (-5.0, 0.0, 5.0, 0.0, 0.0, -5.0, 0.0, 1.0, 0.0);
 
-  __glEnable (GL_DEPTH_TEST);
+  disp__glEnable (GL_DEPTH_TEST);
 
   /* Draw the cabinet */
-  __glCallList (cablist);
+  disp__glCallList (cablist);
 
   /* YES - lets catch this error ... */
-  glerrid = __glGetError ();
+  glerrid = disp__glGetError ();
   if (0x502 != glerrid)
   {
     CHECK_GL_ERROR ();
@@ -1655,29 +1655,29 @@ void UpdateCabDisplay (void)
   {
     if (drawbitmap)
     {
-      __glColor4f (1.0, 1.0, 1.0, 1.0);
+      disp__glColor4f (1.0, 1.0, 1.0, 1.0);
 
       drawTextureDisplay (1 /*cabinet */ , screendirty);
     }
-    __glDisable (GL_TEXTURE_2D);
-    __glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
-    __glShadeModel (GL_FLAT);
+    disp__glDisable (GL_TEXTURE_2D);
+    disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
+    disp__glShadeModel (GL_FLAT);
 
     if (antialias)
     {
-      __glEnable (GL_LINE_SMOOTH);
-      __glEnable (GL_POINT_SMOOTH);
+      disp__glEnable (GL_LINE_SMOOTH);
+      disp__glEnable (GL_POINT_SMOOTH);
     }
 
-    __glCallList (veclist);
+    disp__glCallList (veclist);
 
     if (antialias)
     {
-      __glDisable (GL_LINE_SMOOTH);
-      __glDisable (GL_POINT_SMOOTH);
+      disp__glDisable (GL_LINE_SMOOTH);
+      disp__glDisable (GL_POINT_SMOOTH);
     }
 
-    __glShadeModel (shadeModel);
+    disp__glShadeModel (shadeModel);
   }
   else
   {				/* Draw the screen of a bitmapped game */
@@ -1687,9 +1687,9 @@ void UpdateCabDisplay (void)
 
   }
 
-  __glDisable (GL_DEPTH_TEST);
+  disp__glDisable (GL_DEPTH_TEST);
 
-  __glPopMatrix ();
+  disp__glPopMatrix ();
 
   if (do_snapshot)
   {
@@ -1713,7 +1713,7 @@ void UpdateCabDisplay (void)
 #endif
   }
   else
-    __glFlush ();
+    disp__glFlush ();
 
   CHECK_GL_BEGINEND();
 
@@ -1732,52 +1732,52 @@ UpdateFlatDisplay (void)
   CHECK_GL_BEGINEND();
 
   if (!vecgame || !dopersist)
-    __glClear (GL_COLOR_BUFFER_BIT);
+    disp__glClear (GL_COLOR_BUFFER_BIT);
 
-  __glPushMatrix ();
+  disp__glPushMatrix ();
 
   CHECK_GL_BEGINEND();
 
   if (dopersist && vecgame)
   {
-    __glColor4f (0.0, 0.0, 0.0, 0.2);
+    disp__glColor4f (0.0, 0.0, 0.0, 0.2);
 
     GL_BEGIN(GL_QUADS);
-    __glVertex2f (0.0, 0.0);
-    __glVertex2f ((GLfloat) winwidth, 0.0);
-    __glVertex2f ((GLfloat) winwidth, (GLfloat) winheight);
-    __glVertex2f (0.0, (GLfloat) winheight);
+    disp__glVertex2f (0.0, 0.0);
+    disp__glVertex2f ((GLfloat) winwidth, 0.0);
+    disp__glVertex2f ((GLfloat) winwidth, (GLfloat) winheight);
+    disp__glVertex2f (0.0, (GLfloat) winheight);
     GL_END();
   }
 
   CHECK_GL_ERROR ();
 
 
-  __glColor4f (1.0, 1.0, 1.0, 1.0);
+  disp__glColor4f (1.0, 1.0, 1.0, 1.0);
 
   if(drawbitmap)
 	  drawTextureDisplay (0, screendirty);
 
   if (vecgame)
   {
-    __glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
-    __glShadeModel (GL_FLAT);
+    disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
+    disp__glShadeModel (GL_FLAT);
 
     if (antialias)
     {
-      __glEnable (GL_LINE_SMOOTH);
-      __glEnable (GL_POINT_SMOOTH);
+      disp__glEnable (GL_LINE_SMOOTH);
+      disp__glEnable (GL_POINT_SMOOTH);
     }
 
-    __glCallList (veclist);
+    disp__glCallList (veclist);
 
     if (antialias)
     {
-      __glDisable (GL_LINE_SMOOTH);
-      __glDisable (GL_POINT_SMOOTH);
+      disp__glDisable (GL_LINE_SMOOTH);
+      disp__glDisable (GL_POINT_SMOOTH);
     }
 
-    __glShadeModel (shadeModel);
+    disp__glShadeModel (shadeModel);
 
   }
 
@@ -1785,9 +1785,9 @@ UpdateFlatDisplay (void)
 
   /* YES - lets catch this error ... 
    */
-  (void) __glGetError ();
+  (void) disp__glGetError ();
 
-  __glPopMatrix ();
+  disp__glPopMatrix ();
 
   CHECK_GL_ERROR ();
 
@@ -1813,7 +1813,7 @@ UpdateFlatDisplay (void)
 #endif
   }
   else
-    __glFlush ();
+    disp__glFlush ();
 }
 
 void UpdateGLDisplayBegin (struct osd_bitmap *bitmap)

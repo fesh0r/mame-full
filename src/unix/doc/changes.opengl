@@ -1,4 +1,4 @@
-GLMame v 0.84 Mame Display Driver
+GLMame v 0.85 Mame Display Driver
 =================================
 
 Sven Goethel
@@ -10,6 +10,28 @@ MAME License
 Based upon GLmame v0.6 driver for xmame, written by Mike Oliphant
 
 peace, sven
+
+  04/April/2001 GLMame   OpenGL-Display-Driver Version 0.85
+  =================================================================
+  	o recreated general purpose opengl modules:
+		- gltool.[ch]
+		- glxtool.[ch]
+		- glcaps.[ch]
+	  these are now licensed under the LGPL _and_ the MAME license !
+	  (I am the creator and copyright holder .. so ..)
+
+	o fixed glxtool modules
+		- segmentation fault, due to NULL pix pointer
+		- bug fixed fall back method ..
+		- extended finding appropiate visual, falling back ..
+
+        o Last but not least, you can use gltool's feature of
+          specifying the GL/GLU library names by the systems
+          environment variables:
+                GLTOOL_USE_GLLIB        - OpenGL library name
+                GLTOOL_USE_GLULIB       - GLU    library name
+          these environment variables does _always_ overrides
+          any given ones !
 
   01/April/2001 GLMame   OpenGL-Display-Driver Version 0.84
   =================================================================

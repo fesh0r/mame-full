@@ -8,7 +8,7 @@
  *
  * Copyright (C) 2000-2001, The PhMAME Developement Team.
 */
- 
+
 #ifdef photon2
 #define __PH_WINDOW_C_
 
@@ -89,7 +89,7 @@ struct rc_option ph_window_opts[] = {
      NULL },
    { "cursor",		"nocursor",		rc_bool,       &show_cursor,
      "1",		0,			0,		NULL,
-     "Show/ don't show the cursor" },
+     "Show / don't show the cursor." },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -102,10 +102,12 @@ struct rc_option ph_ovr_opts[] = {
   NULL },
 { "fullscreen",	"window",	rc_bool,	&phovr_fullscreen,
   "1",		0,	0,	NULL,
-  "Full Screen/Windowed Overlay"},
+  "Full Screen/Windowed"},
+/*
 { "filteroff",	"filteron", rc_bool,	&phovr_filteron,
   "1",		0,	0,	NULL,
   "Filtering of scaled image on/off (if available)"},
+*/
 
 {NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL}
 	
@@ -134,7 +136,7 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 			kevent = PhGetData (cbinfo->event);
 			if (PkIsFirstDown (kevent->key_flags))
 			{
-              			mask=TRUE;
+              	mask=TRUE;
 				mame_key_event.press=TRUE;
 				kdosomething = TRUE;
 			}
@@ -277,10 +279,7 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 					}
 					ph_init_palette_info();
 					ph_window_update_display_func=NULL;
-					/* TRAVIS: THIS IS WHAT IT WAS... */
 					if (bitmap_depth == 16)
-					/* TRAVIS: ... AND WHAT IT IS NOW... */
-					//if (bitmap->depth == 16)
 					{
 						switch(depth)
 						{
@@ -339,11 +338,11 @@ int ph_window_16bpp_capable(void)
 
 int ph_window_create_display (int bitmap_depth)
 {
-	PtArg_t arg[8];
+	PtArg_t arg[9];
 	PhRect_t rect;
     PhRegion_t region_info;
     
-    /* TRAVIS... YOUR DOINGS! */
+    // Only image_height??!!
     int image_height;
     int window_width, window_height;
 
@@ -355,27 +354,30 @@ int ph_window_create_display (int bitmap_depth)
     image_width      = widthscale  * visual_width;
     image_height     = heightscale * visual_height;
     
-    /* ...done */
-
+    // TODO: Finish always ontop (Make phearbear happy)
 	PtSetArg( &arg[0], Pt_ARG_FILL_COLOR, Pg_TRANSPARENT, 0 );
-	PtSetArg( &arg[1], Pt_ARG_WINDOW_MANAGED_FLAGS, 0, Ph_WM_MAX | Ph_WM_RESIZE | Ph_WM_MENU);
+	PtSetArg( &arg[1], Pt_ARG_WINDOW_MANAGED_FLAGS, 0, Ph_WM_MAX | Ph_WM_RESIZE | Ph_WM_MENU | Ph_WM_CLOSE | Ph_WM_HIDE );
 	PtSetArg( &arg[2], Pt_ARG_DIM, &view_size, 0 );
-	PtSetArg( &arg[3], Pt_ARG_WINDOW_NOTIFY_FLAGS, Ph_WM_FOCUS, Ph_WM_FOCUS | Ph_WM_RESIZE);
-	PtSetArg( &arg[4], Pt_ARG_WINDOW_RENDER_FLAGS, Pt_FALSE, Ph_WM_RENDER_MENU | Ph_WM_RENDER_CLOSE | Ph_WM_RENDER_MAX | Ph_WM_RENDER_MIN | Ph_WM_RENDER_COLLAPSE | Ph_WM_RENDER_RESIZE);
+	PtSetArg( &arg[3], Pt_ARG_WINDOW_NOTIFY_FLAGS, Ph_WM_FOCUS, Ph_WM_FOCUS | Ph_WM_RESIZE | Ph_WM_CLOSE );
+	PtSetArg( &arg[4], Pt_ARG_WINDOW_RENDER_FLAGS, Pt_FALSE, Ph_WM_RENDER_MENU | Ph_WM_RENDER_CLOSE | Ph_WM_RENDER_MAX | Ph_WM_RENDER_MIN | Ph_WM_RENDER_COLLAPSE | Ph_WM_RENDER_RESIZE );
 	PtSetArg( &arg[5], Pt_ARG_WINDOW_TITLE, title, 0);
+	//PtSetArg( &arg[6], Pt_ARG_WINDOW_STATE, 0, Ph_WM_STATE_ISFRONT );
 	
 	PtSetParentWidget(NULL);
 	if((P_mainWindow = PtCreateWidget(PtWindow, NULL, 6, arg)) == NULL)
 		fprintf(stderr,"Could not create main photon window.");
 
 	/* add raw callback handler */
-	PtAddEventHandler( P_mainWindow,      Ph_EV_BUT_PRESS |
-					      Ph_EV_BUT_RELEASE |
-					      Ph_EV_BOUNDARY |
-					      Ph_EV_EXPOSE |
-					      Ph_EV_PTR_MOTION |
-					      Ph_EV_KEY |
-					      Ph_EV_INFO, I_GetEvent, NULL );
+	PtAddEventHandler( P_mainWindow,
+		Ph_EV_BUT_PRESS |
+		Ph_EV_BUT_RELEASE |
+		Ph_EV_BOUNDARY |
+		Ph_EV_EXPOSE |
+		Ph_EV_PTR_MOTION |
+		Ph_EV_KEY |
+		Ph_EV_INFO,
+		I_GetEvent,
+		NULL );
 
 	/* set draw buffer size */
 	PgSetDrawBufferSize( 0xFF00 );

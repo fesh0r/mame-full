@@ -270,8 +270,6 @@ DISPLAY_METHOD = x11
 # DISPLAY_METHOD = svgafx
 ### OpenStep bitmaps
 # DISPLAY_METHOD = openstep
-### Photon 2.x (QNX6), currently broken.
-# DISPLAY_METHOD = photon2
 ### SDL library
 # DISPLAY_METHOD = SDL
 ### Photon 2.x (QNX6), currently buggy but working...                
@@ -308,12 +306,23 @@ X11LIB		= -L/usr/X11R6/lib
 # use provided program "xlistdev" to list available ones
 X11_JOYNAME = "Joystick"
 
-
 ##############################################################################
 # *** OpenGL info -- configure if you are using the xgl display option
 ##############################################################################
-# *** what are the names of your OpenGL libs?
 GLLIBS= -ldl
+
+#
+# General dynamical loading OpenGL (GL/GLU) support for:
+#
+# <OS - System>          <#define>  commentary
+# -----------------------------------------------
+# GNU/Linux, Unices/X11  _X11_      (loads glx also)
+# Macinstosh OS9         _MAC_OS9_
+# Macinstosh OSX         _MAC_OSX_
+# Win32                  _WIN32_    (load wgl also)
+#
+#
+GLCFLAGS= -D_X11_
 
 ##############################################################################
 # *** Special features

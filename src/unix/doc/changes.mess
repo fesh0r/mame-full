@@ -1,3 +1,380 @@
+0.37b13
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+...
+
+System Driver Changes:
+----------------------
+- Sfz (cps changer) fixed to work with the new MAME code [Ben]
+
+- [DRAGON/COCO1-2-3] Added support for raw Program Pak dumps (use file extenion
+  .ROM).  Also, implemented the 1-bit sound mode. [Nate Woods]
+
+- [DRAGON/COCO1-2] Basic save state support added. [Nate Woods]
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b13. This incorporates all features of the update to this 
+  core.  [MAME team] 
+
+- [IMGTOOL] Added special support in imgtool to separate floppy image formats from the 
+  file system.  Also added a test command that only gets built in debug builds that runs 
+  a set of test cases on an imgtool driver.  [Nate Woods]
+
+
+-------------------------------------------------------------------------------  
+0.37b12
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+N/A
+
+System Driver Changes:
+----------------------
+- [KC85/4 & KC85/3] Colours fixed. Added colour flash support. Improved accuracy of video 
+  redraw;  mid frame changes are now supported (only flash changes are supported at this 
+  time); flashing lines in Boulderdash are reproduced now. Thankyou to Torsten Paul for 
+  his information about the colour flash. Swapped CLR and DEL keys (previously you had to 
+  press "delete" near Scroll Lock to delete back a char. Now you can press backspace).
+  [Kev Thacker]
+
+- [ORIC1/ORICA/TELSTRAT] Fixed .tap loading. (Conversion from .tap to internal .wav form 
+  was completely broken). [Kev Thacker]
+  
+- [COCO 3] More work on improving video timing for mid frame video register modification. 
+  Now supports mid frame palette modification, and altered the way video RAM is scanned so 
+  that John Kowalski's Boink demo now runs (albeit with many glitches).  Also fixed a bug 
+  that would cause the "Speed Up Poke" to still be in effect after a reset. [Nate Woods]
+
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b12. This incorporates all features of the update to this 
+  core.  [MAME team] 
+
+- [IMGTOOL] Added support for NC100/NC200 PCMCIA Ram Card images. Card can be formatted 
+  and files can be transfered to and from card filesystem. [Kev Thacker] 
+
+- [machine/z80fmly] The Zero count/Timeout output pulse was very short. Now the pulse is
+  active for longer. Required for KC85/4 colour flash to work! [Kev Thacker]
+
+
+
+-------------------------------------------------------------------------------  
+0.37b11
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Atari Lynx (preliminary) [PeT]
+- KC85/3 (preliminary) [Kev Thacker]
+- MSX2 and MSX2 Japanese (preliminary) [Sean Young]
+- Exidy Sorcerer (preliminary) [Kev Thacker]
+
+System Driver Changes:
+----------------------
+
+- [ATOMEB] Eproms were not being selected; now fixed. Random data is poked into address 
+  8,9,$A,$B, this is used by the OS to seed the random number generator. Thanks to Kees 
+  van Oss for providing this information [Kev Thacker]
+
+- [KC85/4] Implemented keyboard hardware. Previous hack has been removed.
+  Seperated machine/kc.c into machine/kc.c and systems/kc.c.
+  Merged all headers into includes/kc.h, and added all defines here.
+  Cleaned up some of the code, and made sure allocated memory was free'd properly.
+  Implemented preliminary tape reading using ".wav". Implemented preliminary
+  sound emulation. Added IO_QUICKLOAD to load ".kcc" and binary files with 128 byte
+  header. Load the file then type MENU and it should appear in the list, now you
+  can type the name of the program to run it.
+  [Kev Thacker]
+
+- [ORIC1/ORICA/TELSTRAT] .tap tape images can now be used. These are converted
+  at run-time into .wav files, and can be used in the same way as .wav. Code based
+  heavily on tap2wav by Fabrice Frances [Kev Thacker, Fabrice Frances]
+
+
+- [COCO 1/2/3] Reworked m6847 synchronization and sound mux signals to make
+  them much more accurate.  Fixed a bug that caused the joystick to max out all
+  the time. Added a new abstraction layer for cartridge IO interfaces.  Optimized
+  graphics emulation a bit.  Adjusted default controls so that joystick buttons
+  will work by default.  Improved PMODE 4 artifact colors to be more accurate
+  (special thanks to John Kowalski for providing color information) [Nate Woods]
+
+- [DRAGON] Fixed DragonDOS cartrdige, so now DragonDOS works fine.  [Nate Woods]
+
+- [NC100/NC200] Fixed PCMCIA Memory card emulation: Read/Write state can be changed using
+  a dipswitch in the UI, memory card changes are saved back to memory card file. 
+  Discovered more about the NC200 hardware and updated the code. Cleaned up more
+  of the source, added better description about the I/O ports and seperated it into 
+  common code, nc100 only and nc200 only code. Serial baud rate was not setup correct,
+  now fixed.
+  [Kev Thacker]
+
+- [EP128/EP128A] Initial sound emulation. Some sampled sounds work, and simple tone is 
+  working.  Fixed some interrupt problems [Kev Thacker]
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b11. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- [Intel 8271 Floppy disc controller] Writing should work now. [Kev Thacker]
+ 
+- [src/machine/z80fmly] Added support for BSTB and ASTB inputs for Z80 PIO.
+  These are required by KC85/4 and KC85/3 systems. Added code to execute callback for 
+  BRDY and ARDY outputs. [Kev Thacker]
+
+- [IMGTOOL] Fixed a bug that caused crashes when parameters to create were not
+  properly specified [Nate Woods]
+
+
+
+-------------------------------------------------------------------------------  
+0.37b10
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Super Vision [PeT]
+- SVI-318 and SVI-328 [Sean Young]
+- Pravetz,Pravetz 8D (clone of Oric) [Stefano Priore]
+
+System Driver Changes:
+----------------------
+
+- [ATOM] Implemented colour change support of M6847. 
+  Fixed eprom box emulation. [Kev Thacker]
+
+- [LASER110/LASER200/LASER310] Changed video hardware to use M6847 [Kev Thacker]
+
+- [NC100] Added MENU key and fixed problems with characters being dropped
+  in serial transfer [Kev Thacker]
+
+- [NC200] Added MENU key, fixed some key assignments, fixed a memory problem.
+  Blockade game now works. Fixed characters being dropped in serial transfer
+  [Kev Thacker]
+
+- [ORIC] Added VSYNC cable hardware; This can be enabled with a dipswitch 
+  in the UI. Added support for Jasmin floppy disc interface; Floppy disc 
+  interface can be chosen in UI: None, Microdisc or Jasmin. Improved video
+  emulation; hires/text changes in the middle of a line will now work. [Kev Thacker]
+
+- [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to
+  $FF95 [Nate Woods]
+
+- [COCO 3h] 6309 core completed; so NitrOS9 now runs.  GAME_NOT_WORKING flag
+  removed [Tim Linder]
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b10. This incorporates all 
+  features of the update to this core.  [MAME team] 
+- [IMGTOOL] Added filter support, and filters that translate endoflines, as
+  well as the startings of BASIC tokenization.  Also updated the docs [Nate
+  Woods]
+  
+-------------------------------------------------------------------------------  
+0.37b9 
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- CoCo 2B (CoCo with a M6847T1 VDG chip) [Nate Woods]
+- EURO PC, IBMXT [PeT]
+
+System Driver Changes:
+----------------------
+
+- [NC100,NC100A,NC200] Implemented serial hardware: Programs can be loaded into emulation
+  using the NC's built in terminal program. Some characters are dropped, could be 
+  synchronisation problems. XModem transfer not supported at this time. Implemented printer 
+  emulation: Documents can be printed now. [Kev Thacker]
+- [COCO 3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, 
+  but some timing is still probably off.  Hi-res text will now display the underline in the 
+  proper place when the lines per row is not 8.  Lo-res font now skewed one scanline, as 
+  was the original machine.  Fixed Composite Monitor colors.  [Nate Woods]
+- [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. 
+  [Nate Woods]
+- [ORIC] fixed a bug in microdisc memory paging. Some discs start to boot now.
+  Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
+- [PC & compatibles] repartitioned, several problems fixed,
+  major rewrite of graphic subsytems (dirtybuffering disabled temporary),
+  Tandy 1000HX now uses EURO PC'S fontrom for acceptable displayment of its 8x9 characters,
+  EURO PC supports CGA and MDA/Hercules (adjust it in its emulated setup) [PeT]
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b9. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- The M6847 interfaces were given a facelift, and now more correctly mimic the signals on 
+  the chip.  [Nate Woods]
+
+-------------------------------------------------------------------------------
+0.37b8 
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Chess Champion MK II [PeT]
+
+System Driver Changes:
+----------------------
+
+- [ATOM] Finished floppy disc emulation. To use it you require a rom using
+  the original 8271 memory locations (0x0a00-0x0a04). Linked in 6522via,
+  more programs should work with it. Added printer support. 
+  [Kev Thacker, Kees van Oss]
+
+- [BBC] Added a new BBC clone (BBCB1770) to use the WD1770 disc controller.
+  Much improved SAA5050 teletext support (mode 7), There is still a
+  problem with the Mode 7 cursor.
+  Added two new BBC clones they are BBCBP the BBC B Plus with 64K and
+  the BBCBP128 the BBC B plus with 128K.
+  Also Joystick support has now been added [Gordon Jefferyes]
+
+- [AMSTRAD CPC] Added support for printer. [Kev Thacker]
+
+- [GameBoy] Finally fixed the interrupt problem, which in turn helped a lot of carts 
+  actually run now. [Lee Ward] 
+
+- [Vectrex] Loading carts should work again. [Mathis Rosenhauer]
+
+- [ORIC] Rewrote to use 6522via code in MESS core. Previously it had it's own 
+  implementation which was not complete. Added floppy disc emulation (emulates a 
+  Microdisc interface). Added support for MFM_DISK disk image type as used by 
+  Euphoric. This driver uses the IO_CASSETTE device, and can be controlled with 
+  the "Tape Control" menu. However, this is not working yet.
+  Previous method for loading tapes has been disabled. Floppy disc emulation
+  does not appear to be working fully yet. [Kev Thacker]
+
+- [COCO/DRAGON] Added support for printer.  Optimized graphics emulation. [Nate
+  Woods]
+
+- [Studio II] added cartridge support [PeT]
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b8. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- pure DOS mode crash fixed [Ben Bruscella]
+
+- SID6581 Approximation [PeT]
+  Interface changed,
+  partitioned, unused parts removed, cleaned up 
+  support for multiple chips finished
+
+- Imgtool now supports Virtual MSX Tape Archives (converts them to .cas files)
+  and imgtool can convert .cas to .wav files. [Sean Young]
+
+
+-------------------------------------------------------------------------------
+0.37b7 
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Amstrad NC200 (preliminary) [Kev Thacker]
+- RCA Studio II [Peter Trauner]
+- Sharp Pocket Computer PC1251 [Peter Trauner]
+
+System Driver Changes:
+----------------------
+
+- [ATOM] Added preliminary floppy disc emulation. [Kev Thacker]
+
+- [BBC B] Updated to use updated 8271 FDC code. Disk images can be used and games
+  can be loaded and played. [Kev Thacker]
+ 
+- [BBC B] Cleaned up the memory accessing a little. This fixed a problem with
+  the DNFS rom thinking it found an econet controller. [Gordon Jefferyes]
+
+- [SAM COUPE] Updated Sam Coupe to use WD179x code (same as WD1772). [Kev Thacker]
+
+- [COCO] Updated CoCo and CoCo 3 drivers with new rom sets to match the actual chips 
+  in the system.  coco.rom split into bas12.rom, extbas11.rom and disk11.rom, and 
+  coco3.rom now must be of length 32768.  This requires a dump from an EPROM reader.  
+  Fixed a bug in cassette writing.  Cassette tape controls and CoCo motor signal now 
+  operate independently.  [Nate Woods]
+
+- [C16] added SIDCARD support at address $d400 [Peter Trauner]
+
+- [NES] new sound core. [Matt Conte]
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b7. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- Fixed write protect reporting in WD179x [Kev Thacker]
+
+- Added "Disk Control" menu to the user interface. With this you can
+  enable/disable a drive (e.g. this is comparable to connecting a disconnecting
+  a drive to the real machine), set write enable/write protect of the disc,
+  and selecting between disc image and real drive access. Real drive access
+  is currently limited to the drivers which use the WD179x, NEC765 and Intel
+  8271 floppy disc controllers. [Kev Thacker]
+
+- Removed hard-coded disk image format in the WD179x code. This floppy
+  disc controller emulation uses the same disk image access as the NEC765 and
+  Intel 8271. It can now support different disk image formats, and as before
+  real discs in a real drive [Kev Thacker]
+
+- NEC765 and Intel 8271 can now use real disc access in DOS version
+  of MESS. Run under pure DOS, or in a Windows 95
+  DOS box mode for this to work correct. [Kev Thacker]
+
+- Imgtool now supports CoCo cassette files (both .CAS and .WAV).  This is done
+  through a framework that makes it easy to implement cassette images in
+  general.  Also, the CoCo RSDOS disk handling is now a bit more tolerant
+  [Nate Woods]
+
+- Updated Intel 8271 floppy disc controller emulation. [Kev Thacker]
+
+- CRC and sysinfo updates will now be appearing at the official MESS homepage:
+  http://mess.emuverse.com
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+- M6510 cpu core added first write cycle for NMOS memory modifying instructions
+  [Peter Trauner]
+
+- CDP1802 cpu core [Peter Trauner]
+
+------------------------
+
 0.37b6 
 
 Note: DELETE mess.cfg!
@@ -139,18 +516,20 @@ System Driver Changes:
 - NES: Now features battery support and vastly improved PPU emulation - compare Kirby and 
   RC Pro Am. 
   * Palette is no longer hardcoded - it is mathematically generated. It may need some 
-  formulaic tweaking, but it's pretty accurate.  
-  * Games like GI Joe Atlantis Factor are working again, the NES Test cartridge no longer fails.  
-  * There is a compile switch to emulate the color intensity used in Chris Covell's "Wall" demo. 
-  It's off by default because it requires 16-bit mode and the sprite blitters need rewriting to 
-  support 16-bit. Still, you can enable it to see the demo run as it was intended.  
+    formulaic tweaking, but it's pretty accurate.  
+  * Games like GI Joe Atlantis Factor are working again, the NES Test cartridge no longer 
+    fails.  
+  * There is a compile switch to emulate the color intensity used in Chris Covell's "Wall" 
+    demo.  It's off by default because it requires 16-bit mode and the sprite blitters need 
+    rewriting to support 16-bit. Still, you can enable it to see the demo run as it was 
+    intended.  
   * Many mapper fixes: mapper 18 irqs should be close, mapper 19 added, the mid-20 Konami 
-  mappers are nearly 100%, and some of the mappers in the 60's are much more accurate.  
-  *Super Mario 3  _finally_ works! Excitebike also works again, and elite and PAL games, 
-  Elite will draw properly -- but only using the PAL NES emulation.  
+    mappers are nearly 100%, and some of the mappers in the 60's are much more accurate.  
+  * Super Mario 3  _finally_ works! Excitebike also works again, and elite and PAL games, 
+    Elite will draw properly -- but only using the PAL NES emulation.  
   * Fixed some more timing errors, Bayou Billy sine wave looks perfect now. 
   * low/high sprite priorities fixed. Super Mario 3 uses low priority sprites to mask out 
-  pieces of high priority ones.
+    pieces of high priority ones.
   * low-priority sprite/background transparency problem fixed (see Jaleco's Bases Loaded 3)
   * Mapper 5 is much better, although some interrupt problems remain.
   * Mappers 9/10 are _almost_ perfect.
@@ -158,38 +537,38 @@ System Driver Changes:
   * Fixed rendering problems in mapper 68 (Afterburner 2).
   * Fixed mapper 69 (Batman: Return of the Joker).
   * Mapper 70 (arkanoid 2 j) works, but is it right? It starts up on round 0, which appears 
-  to be the last round and not the first.
+    to be the last round and not the first.
   * Implemented some Taito mappers (80, 82).
   * Implemented Konami VRC7, minus OPL (mapper 85).
   * Preliminary support for the zapper via a fake dipswitch. Collision detection isn't 
-  working yet.
+    working yet.
   * Modified sound core to read dpcm samples from the right place in memory. Added clock 
-  specifier and read/write callbacks for register $14. NES driver now hooks into this for 
-  sprite DMA. 
+    specifier and read/write callbacks for register $14. NES driver now hooks into this for 
+    sprite DMA. 
   * Zapper support, configurable via the fake dipswitches. Most games look for it connected 
-  to the 2nd input port, not the first. Tested it with Duck Hunt and Hogan's Alley. If any 
-  other zapper games don't work, let me know and I'll beat them down.
+    to the 2nd input port, not the first. Tested it with Duck Hunt and Hogan's Alley. If any 
+    other zapper games don't work, let me know and I'll beat them down.
   * 4-player joypad support, also configurable via the fake dipswitches. For best results, 
-  set both ports to the double setting. I tested it in Gauntlet 2 and RC Pro Am 2. Again, 
-  let me know if it's busted in any other 4p games.
+    set both ports to the double setting. I tested it in Gauntlet 2 and RC Pro Am 2. Again, 
+    let me know if it's busted in any other 4p games.
   * Fixed sprite priorities for the last time. I swear it's really working now. ;-) As a 
-  side effect, the rendering code is a bit faster than before. 
+    side effect, the rendering code is a bit faster than before. 
   * More mapper fixes/additions.  
   * Added support for Famicom Disk System. Split up the main NES driver into NES and 
-  Famicom. Only the Famicom supports the disk system, because that's the way it is in real 
-  life. Press p1 button 3 to cycle amongst the disk sides. Once you switch a side, you may 
-  need to wait a second or two for the switch to be recognized. Let me know if any games 
-  fail to see the switch. Disk writing is not yet supported.
+    Famicom. Only the Famicom supports the disk system, because that's the way it is in 
+    real life. Press p1 button 3 to cycle amongst the disk sides. Once you switch a side, 
+    you may need to wait a second or two for the switch to be recognized. Let me know if 
+    any games fail to see the switch. Disk writing is not yet supported.
   * Added preliminary support for the Arkanoid paddle. It's pretty busted at the moment.
   * Fixed a small PPU bug regarding reads from the chr-gen ram portion of the ppu.
   * Correct display of left-most column when it has been programmatically disabled - 
-  see SMB3.
+    see SMB3.
   * Added some more mappers, some of which aren't working fully.
   * Fixed mapper 40 (SMB2j pirate) - it should be close to 100%
   * Fixed some issues with the disk support. It now supports that stupid padded format with 
-  the useless header in addition to the other format.
+    the useless header in addition to the other format.
   * DPCM samples fixed (now hear SMB3 in all it's steel drum glory).
-  [Brad Oliver]
+    [Brad Oliver]
 
 - COCO: Now using schedule_full_refresh() and PAK loader fixes applied [Nate Woods]
 
@@ -602,9 +981,9 @@ Other Changes:
   *"Engine" is separate from the "shell"; which gives the potential for front ends for 
    those who don't like command lines. [Nate Woods]
 
-- Disk write support for AMSTRAD CPC [Oscar Mart*n Gonz*lez]
+- Disk write support for AMSTRAD CPC [Oscar Martín González]
 
-- Wave timer fix [Oscar Mart*n Gonz*lez]
+- Wave timer fix [Oscar Martín González]
 
 - m6510t/m7501/m8502 CPU cores added [Peter Trauner]
 

@@ -5,7 +5,7 @@
                     Official Page at: http://mess.emuverse.com
                    ==========================================
 
-This document is generated for MESS 0.37 BETA 6 (Aug 23 2000)
+This document is generated for MESS 0.37 BETA 13 (Apr  7 2001)
 
 Please note that many people helped with this project, either directly or by
 releasing source code which was used to write the drivers. We are not trying to
@@ -25,8 +25,6 @@ Usage and Distribution Licence:
 ===============================
 - MESS usage and distribution follows that of MAME.  Please read the MAME
   readme.txt file distributed with MESS for further information.
-- The ScrollLock Key will toggle between User Interface mode and Emulation Mode
-  For more information on User Interface mode please read the MAME readme.txt
 
 How to Contact The MESS Team
 ============================
@@ -55,7 +53,7 @@ we are perfectly capable of finding it ourselves, thank you.
 
 Complete Emulated System List
 =============================
-Here is the list of systems supported by MESS 0.37 BETA 6 (Aug 23 2000)
+Here is the list of systems supported by MESS 0.37 BETA 13 (Apr  7 2001)
 
 The meanings of the columns are as follows:
 Working - "No" means that the emulation has shortcomings that cause the system
@@ -87,22 +85,49 @@ dat2html.exe.
 | Atari 2600                              |   No  |   No  |   No  | a2600    |
 | Atari 5200                              |  Yes  |  Yes  |  Yes  | a5200    |
 | Atari 7800                              |  Yes  |  Yes  |  Yes  | a7800    |
-| Bally Pro Arcade/Astrocade              |  Yes  |  Yes  |  Yes  | astrocde |
-| Channel F                               |  Yes  |  Yes  |   No  | channelf |
-| Colecovision                            |  Yes  |  Yes  |  Yes  | coleco   |
+| Lynx                                    |   No  |  Yes  |  Yes  | lynx     |
+| Lynx (alternate rom save!)              |   No  |  Yes  |  Yes  | lynxa    |
+| Lynx II                                 |   No  |  Yes  |  Yes  | lynx2    |
 | Nintendo Entertainment System (NTSC)    |  Yes  |  Yes  |  Yes  | nes      |
 | Nintendo Entertainment System (PAL)     |  Yes  |  Yes  |  Yes  | nespal   |
 | Famicom                                 |  Yes  |  Yes  |  Yes  | famicom  |
-| GameBoy                                 |   No  |  Yes  |   No  | gameboy  |
+| GameBoy                                 |  Yes  |  Yes  |   No  | gameboy  |
 | Super Nintendo Entertainment System     |   No  |  Yes  |   No  | snes     |
-| PC Engine/TurboGrafx 16                 |   No  |  Yes  |   No  | pce      |
 | Game Gear                               |  Yes  |  Yes  |  Yes  | gamegear |
 | Master System                           |  Yes  |  Yes  |  Yes  | sms      |
 | Megadrive / Genesis                     |  Yes  |  Yes  |  Yes  | genesis  |
+| Bally Pro Arcade/Astrocade              |  Yes  |  Yes  |  Yes  | astrocde |
+| Studio II                               |  Yes  |  Yes  |  Yes  | studio2  |
+| Channel F                               |  Yes  |  Yes  |  Yes  | channelf |
+| Colecovision                            |  Yes  |  Yes  |  Yes  | coleco   |
+| Colecovision "Thick Characters"         |  Yes  |  Yes  |  Yes  | colecoa  |
+| PC Engine/TurboGrafx 16                 |   No  |  Yes  |   No  | pce      |
 | Vectrex                                 |  Yes  |  Yes  |  Yes  | vectrex  |
 | Spectrum I+                             |  Yes  |  Yes  |  Yes  | raaspec  |
 | Adventurevision                         |  Yes  |  Yes  |   No  | advision |
 | CPS Changer (Street Fighter ZERO)       |  Yes  |  Yes  |  Yes  | sfzch    |
+| ODYSSEY 2                               |  Yes  |  Yes  |   No  | odyssey2 |
+| Super Vision                            |   No  |  Yes  |  Yes  | svision  |
+| Atom                                    |  Yes  |  Yes  |  Yes  | atom     |
+| Atom with Eprom Box                     |  Yes  |  Yes  |  Yes  | atomeb   |
+| BBC Micro Model A                       |  Yes  |  Yes  |  Yes  | bbca     |
+| BBC Micro Model B                       |  Yes  |  Yes  |  Yes  | bbcb     |
+| BBC Micro Model B with WD1770 disc contr|  Yes  |  Yes  |  Yes  | bbcb1770 |
+| BBC Micro Model B+ 64K                  |  Yes  |  Yes  |  Yes  | bbcbp    |
+| BBC Micro Model B+ 128k                 |  Yes  |  Yes  |  Yes  | bbcbp128 |
+| Amstrad/Schneider CPC464                |  Yes  |  Yes  |  Yes  | cpc464   |
+| Amstrad/Schneider CPC664                |  Yes  |  Yes  |  Yes  | cpc664   |
+| Amstrad/Schneider CPC6128               |  Yes  |  Yes  |  Yes  | cpc6128  |
+| KC Compact                              |  Yes  |  Yes  |  Yes  | kccomp   |
+| PCW8256                                 |  Yes  |  Yes  |  Yes  | pcw8256  |
+| PCW8512                                 |  Yes  |  Yes  |  Yes  | pcw8512  |
+| PCW9256                                 |  Yes  |  Yes  |  Yes  | pcw9256  |
+| PCW9512 (+)                             |  Yes  |  Yes  |  Yes  | pcw9512  |
+| PCW10                                   |  Yes  |  Yes  |  Yes  | pcw10    |
+| PCW16                                   |  Yes  |  Yes  |  Yes  | pcw16    |
+| NC100                                   |  Yes  |  Yes  |  Yes  | nc100    |
+| NC100 (Version 1.09)                    |  Yes  |  Yes  |  Yes  | nc100a   |
+| NC200                                   |  Yes  |  Yes  |  Yes  | nc200    |
 | Apple I                                 |  Yes  |  Yes  |  Yes  | apple1   |
 | Apple //c                               |  Yes  |  Yes  |  Yes  | apple2c  |
 | Apple //c (3.5 ROM)                     |  Yes  |  Yes  |  Yes  | apple2c0 |
@@ -110,9 +135,11 @@ dat2html.exe.
 | Apple //e                               |  Yes  |  Yes  |  Yes  | apple2e  |
 | Apple //e (enhanced)                    |  Yes  |  Yes  |  Yes  | apple2ee |
 | Apple //e (Platinum)                    |  Yes  |  Yes  |  Yes  | apple2ep |
+| Lisa2                                   |   No  |  Yes  |  Yes  | lisa2    |
+| Lisa2/10                                |   No  |  Yes  |  Yes  | lisa210  |
+| Macintosh XL                            |   No  |  Yes  |  Yes  | macxl    |
 | Macintosh 512ke                         |  Yes  |  Yes  |  Yes  | mac512ke |
 | Macintosh Plus                          |  Yes  |  Yes  |  Yes  | macplus  |
-| Lisa2                                   |   No  |  Yes  |  Yes  | lisa2    |
 | Atari 400 (NTSC)                        |  Yes  |  Yes  |  Yes  | a400     |
 | Atari 400 (PAL)                         |  Yes  |  Yes  |  Yes  | a400pal  |
 | Atari 800 (NTSC)                        |  Yes  |  Yes  |  Yes  | a800     |
@@ -131,7 +158,7 @@ dat2html.exe.
 | Commodore 80xx Swedish (50Hz)           |  Yes  |  Yes  |   No  | cbm80swe |
 | Commodore SP9000/MMF9000 (50Hz)         | No(1) |  Yes  |   No  | superpet |
 | VIC20 (NTSC)                            |  Yes  |  Yes  |Partial| vic20    |
-| VC20 (PAL)                              |  Yes  |  Yes  |Partial| vc20     |
+| VIC20/VC20(German) PAL (German) PAL     |  Yes  |  Yes  |Partial| vc20     |
 | VIC20 PAL, Swedish Expansion Kit        |  Yes  |  Yes  |Partial| vic20swe |
 | VIC20 (NTSC), IEEE488 Interface (SYS4506|  Yes  |  Yes  |Partial| vic20i   |
 | Commodore Max (Ultimax/VC10)            |  Yes  |  Yes  |Partial| max      |
@@ -142,11 +169,13 @@ dat2html.exe.
 | C64GS (PAL)                             |  Yes  |  Yes  |Partial| c64gs    |
 | Commodore B128-40/Pet-II/P500 60Hz      |   No  |  Yes  |Partial| cbm500   |
 | Commodore B128-80LP/610 60Hz            |   No  |  Yes  |Partial| cbm610   |
-| Commodore B256-80LP/620 Hungarian 50Hz  |   No  |  Yes  |Partial| cbm620   |
+| Commodore B256-80LP/620 50Hz            |   No  |  Yes  |Partial| cbm620   |
+| Commodore B256-80LP/620 Hungarian 50Hz  |   No  |  Yes  |Partial| cbm620hu |
 | Commodore B128-80HP/710                 |   No  |  Yes  |Partial| cbm710   |
 | Commodore B256-80HP/720                 |   No  |  Yes  |Partial| cbm720   |
+| Commodore B256-80HP/720 Swedish/Finnish |   No  |  Yes  |Partial| cbm720se |
 | Commodore 16/116/232/264 (PAL)          |  Yes  | Close |Partial| c16      |
-| Commodore 16 (PAL), Hungarian Character |  Yes  | Close |Partial| c16hun   |
+| Commodore 16 Novotrade (PAL, Hungarian C|  Yes  | Close |Partial| c16hun   |
 | Commodore 16/116/232/264 (PAL), 1551    | No(1) | Close |Partial| c16c     |
 | Commodore +4 (NTSC)                     |  Yes  | Close |Partial| plus4    |
 | Commodore +4 (NTSC), 1551               | No(1) | Close |Partial| plus4c   |
@@ -155,42 +184,94 @@ dat2html.exe.
 | Commodore 128 German (PAL)              |  Yes  |  Yes  |Partial| c128ger  |
 | Commodore 128 French (PAL)              |  Yes  |  Yes  |Partial| c128fra  |
 | Commodore 128 Italian (PAL)             |  Yes  |  Yes  |Partial| c128ita  |
-| Amiga 500 (NTSC)                        |   No  |  Yes  |  Yes  | amiga    |
+| Commodore 128 Swedish (PAL)             |  Yes  |  Yes  |Partial| c128swe  |
 | C65 / C64DX (Prototype, NTSC, 911001)   |   No  |  Yes  |Partial| c65      |
 | C65 / C64DX (Prototype, NTSC, 910828)   |   No  |  Yes  |Partial| c65e     |
 | C65 / C64DX (Prototype, NTSC, 910626)   |   No  |  Yes  |Partial| c65d     |
 | C65 / C64DX (Prototype, NTSC, 910523)   |   No  |  Yes  |Partial| c65c     |
 | C65 / C64DX (Prototype, German PAL, 9104|   No  |  Yes  |Partial| c65ger   |
 | C65 / C64DX (Prototype, NTSC, 910111)   |   No  |  Yes  |Partial| c65a     |
-| Amstrad/Schneider CPC464                |  Yes  |  Yes  |  Yes  | cpc464   |
-| Amstrad/Schneider CPC664                |  Yes  |  Yes  |  Yes  | cpc664   |
-| Amstrad/Schneider CPC6128               |  Yes  |  Yes  |  Yes  | cpc6128  |
-| PCW8256                                 |  Yes  |  Yes  |  Yes  | pcw8256  |
-| PCW8512                                 |  Yes  |  Yes  |  Yes  | pcw8512  |
-| PCW9256                                 |  Yes  |  Yes  |  Yes  | pcw9256  |
-| PCW9512 (+)                             |  Yes  |  Yes  |  Yes  | pcw9512  |
-| PCW10                                   |  Yes  |  Yes  |  Yes  | pcw10    |
-| PCW16                                   |  Yes  |  Yes  |  Yes  | pcw16    |
-| NC100                                   |  Yes  |  Yes  |  Yes  | nc100    |
-| KC Compact                              |  Yes  |  Yes  |  Yes  | kccomp   |
-| KC 85/4                                 |   No  |  Yes  |  Yes  | kc85_4   |
+| IBM PC 10/27/82                         |  Yes  |  Yes  |  Yes  | ibmpc    |
+| IBM PC 08/16/82                         |  Yes  |  Yes  |  Yes  | ibmpca   |
+| PC (MDA)                                |  Yes  |  Yes  |  Yes  | pcmda    |
+| PC (CGA)                                |  Yes  |  Yes  |  Yes  | pc       |
+| EURO PC                                 |  Yes  |  Yes  |  Yes  | europc   |
+| Tandy 1000HX                            |  Yes  |  Yes  |  Yes  | t1000hx  |
+| IBM PC/XT (CGA)                         |  Yes  |  Yes  |  Yes  | ibmxt    |
+| PC200 Professional Series               |  Yes  |  Yes  |  Yes  | pc200    |
+| Amstrad PC20                            |  Yes  |  Yes  |  Yes  | pc20     |
+| Amstrad PC1512                          |  Yes  |  Yes  |  Yes  | pc1512   |
+| Amstrad PC1640 / PC6400 (US)            | No(1) |  Yes  |  Yes  | pc1640   |
+| PC/XT (VGA, MF2 Keyboard)               | No(1) |  Yes  |  Yes  | xtvga    |
+| PC/AT (CGA, MF2 Keyboard)               |   No  |  Yes  |  Yes  | at       |
+| ZX-80                                   |   No  |  Yes  |  Yes  | zx80     |
+| ZX-81                                   |   No  |  Yes  |  Yes  | zx81     |
+| TS1000                                  |   No  |  Yes  |  Yes  | ts1000   |
+| ZX.Aszmic                               |   No  |  Yes  |  Yes  | aszmic   |
+| PC8300                                  |   No  |  Yes  |  Yes  | pc8300   |
+| Power 3000                              |   No  |  Yes  |  Yes  | pow3000  |
+| ZX Spectrum                             |  Yes  |  Yes  |  Yes  | spectrum |
+| ZX Spectrum +4                          |  Yes  |  Yes  |  Yes  | specpls4 |
+| ZX Spectrum (BusySoft Upgrade)          |  Yes  |  Yes  |  Yes  | specbusy |
+| ZX Spectrum (De Groot's Upgrade)        |  Yes  |  Yes  |  Yes  | specgrot |
+| ZX Spectrum (Collier's Upgrade)         |  Yes  |  Yes  |  Yes  | specimc  |
+| ZX Spectrum (LEC Upgrade)               |  Yes  |  Yes  |  Yes  | speclec  |
+| Inves Spectrum 48K+                     |  Yes  |  Yes  |  Yes  | inves    |
+| TK90x Color Computer                    |  Yes  |  Yes  |  Yes  | tk90x    |
+| TK95 Color Computer                     |  Yes  |  Yes  |  Yes  | tk95     |
+| TC2048                                  |  Yes  |  Yes  |  Yes  | tc2048   |
+| TS2068                                  |  Yes  |  Yes  |  Yes  | ts2068   |
+| ZX Spectrum 128                         |   No  |  Yes  |  Yes  | spec128  |
+| ZX Spectrum 128 (Spain)                 |   No  |  Yes  |  Yes  | spec128s |
+| ZX Spectrum +2                          |   No  |  Yes  |  Yes  | specpls2 |
+| ZX Spectrum +2a                         |   No  |  Yes  |  Yes  | specpl2a |
+| ZX Spectrum +3                          |   No  |  Yes  |  Yes  | specpls3 |
+| ZX Spectrum +2 (France)                 |   No  |  Yes  |  Yes  | specp2fr |
+| ZX Spectrum +2 (Spain)                  |   No  |  Yes  |  Yes  | specp2sp |
+| ZX Spectrum +3 (Spain)                  |   No  |  Yes  |  Yes  | specp3sp |
+| ZX Spectrum +3e                         |   No  |  Yes  |  Yes  | specpl3e |
+| Pocket Computer 1251                    |   No  |  Yes  |  Yes  | pc1251   |
+| Pocket Computer 1401                    |   No  |  Yes  |  Yes  | pc1401   |
+| Pocket Computer 1402                    |   No  |  Yes  |  Yes  | pc1402   |
+| Pocket Computer 1350                    |   No  |  Yes  |  Yes  | pc1350   |
+| MZ-700                                  |  Yes  |  Yes  |  Yes  | mz700    |
+| MZ-700 (Japan)                          |  Yes  |  Yes  |  Yes  | mz700j   |
+| TI99/4 Home Computer (US)               |  Yes  |  Yes  |  Yes  | ti99_4   |
+| TI99/4 Home Computer (Europe)           |  Yes  |  Yes  |  Yes  | ti99_4e  |
+| TI99/4A Home Computer (US)              |  Yes  |  Yes  |  Yes  | ti99_4a  |
+| TI99/4A Home Computer (Europe)          |  Yes  |  Yes  |  Yes  | ti99_4ae |
+| TI Avigo 100 PDA                        |   No  |  Yes  |  Yes  | avigo    |
+| TI-85 ver. 3.0a                         |  Yes  |  Yes  |  Yes  | ti85     |
+| TI-85 ver. 4.0                          |  Yes  |  Yes  |  Yes  | ti85v40  |
+| TI-85 ver. 5.0                          |  Yes  |  Yes  |  Yes  | ti85v50  |
+| TI-85 ver. 6.0                          |  Yes  |  Yes  |  Yes  | ti85v60  |
+| TI-85 ver. 8.0                          |  Yes  |  Yes  |  Yes  | ti85v80  |
+| TI-85 ver. 9.0                          |  Yes  |  Yes  |  Yes  | ti85v90  |
+| TI-85 ver. 10.0                         |  Yes  |  Yes  |  Yes  | ti85v100 |
 | Jupiter Ace                             |  Yes  |  Yes  |  Yes  | jupiter  |
-| Enterprise 128                          |  Yes  |  Yes  |   No  | ep128    |
-| Enterprise 128 (EXOS 2.1)               |  Yes  |  Yes  |   No  | ep128a   |
+| Enterprise 128                          |  Yes  |  Yes  |Partial| ep128    |
+| Enterprise 128 (EXOS 2.1)               |  Yes  |  Yes  |Partial| ep128a   |
 | Kaypro 2x                               |  Yes  |  Yes  |  Yes  | kaypro   |
+| KC 85/4                                 |   No  |  Yes  |  Yes  | kc85_4   |
+| KC 85/3                                 |   No  |  Yes  |  Yes  | kc85_3   |
 | Microbee 32K                            |  Yes  |  Yes  |  Yes  | mbee     |
+| Microbee 32K Personal Communicator      |  Yes  |  Yes  |  Yes  | mbeepc   |
 | Microbee 56K (CP/M)                     |  Yes  |  Yes  |  Yes  | mbee56k  |
-| TRS-80 Model I (Level I Basic)          |  Yes  |  Yes  |  Yes  | trs80l1  |
-| TRS-80 Model I (Radio Shack Level II Bas|  Yes  |  Yes  |  Yes  | trs80    |
-| TRS-80 Model I (R/S L2 Basic)           |  Yes  |  Yes  |  Yes  | trs80alt |
-| Color Computer                          |  Yes  |  Yes  |  Yes  | coco     |
-| Color Computer 3                        |  Yes  |  Yes  |  Yes  | coco3    |
-| Color Computer 3 (6309)                 | No(1) |  Yes  |  Yes  | coco3h   |
-| Prologica CP400                         |  Yes  |  Yes  |  Yes  | cp400    |
-| MC-10                                   |  Yes  |  Yes  |  Yes  | mc10     |
-| Dragon 32                               |  Yes  |  Yes  |  Yes  | dragon32 |
-| Colour Genie EG2000                     |  Yes  |  Yes  |  Yes  | cgenie   |
+| TRS-80 Model I (Level I Basic)          |  Yes  |  Yes  |  Yes  | trs80    |
+| TRS-80 Model I (Radio Shack Level II Bas|  Yes  |  Yes  |  Yes  | trs80l2  |
+| TRS-80 Model I (R/S L2 Basic)           |  Yes  |  Yes  |  Yes  | trs80l2a |
 | System-80                               |  Yes  |  Yes  |  Yes  | sys80    |
+| LNW-80                                  | No(1) |  Yes  |  Yes  | lnw80    |
+| Color Computer                          |  Yes  |  Yes  |  Yes  | coco     |
+| Color Computer (Extended BASIC 1.0)     |  Yes  |  Yes  |  Yes  | cocoe    |
+| Color Computer 2                        |  Yes  |  Yes  |  Yes  | coco2    |
+| Color Computer 2B                       |  Yes  |  Yes  |  Yes  | coco2b   |
+| Color Computer 3                        |  Yes  |  Yes  |  Yes  | coco3    |
+| Color Computer 3 (HD6309)               |  Yes  |  Yes  |  Yes  | coco3h   |
+| Dragon 32                               |  Yes  |  Yes  |  Yes  | dragon32 |
+| CP400                                   |  Yes  |  Yes  |  Yes  | cp400    |
+| MC-10                                   |  Yes  |  Yes  |  Yes  | mc10     |
+| Colour Genie EG2000                     |  Yes  |  Yes  |  Yes  | cgenie   |
 | Laser 110                               |  Yes  |  Yes  |  Yes  | laser110 |
 | Laser 200                               |  Yes  |  Yes  |  Yes  | laser200 |
 | Laser 210                               |  Yes  |  Yes  |  Yes  | laser210 |
@@ -205,68 +286,39 @@ dat2html.exe.
 | Microtan 65                             |  Yes  |  Yes  |  Yes  | microtan |
 | Oric 1                                  |  Yes  |  Yes  |  Yes  | oric1    |
 | Oric Atmos                              |  Yes  |  Yes  |  Yes  | orica    |
-| TI99/4 Home Computer (US)               |  Yes  |  Yes  |  Yes  | ti99_4   |
-| TI99/4 Home Computer (Europe)           |  Yes  |  Yes  |  Yes  | ti99_4e  |
-| TI99/4A Home Computer (US)              |  Yes  |  Yes  |  Yes  | ti99_4a  |
-| TI99/4A Home Computer (Europe)          |  Yes  |  Yes  |  Yes  | ti99_4ae |
-| PC                                      |  Yes  |  Yes  |  Yes  | pc       |
-| PC-XT (MDA)                             |  Yes  |  Yes  |  Yes  | pcmda    |
-| PC-XT (CGA)                             |  Yes  |  Yes  |  Yes  | pccga    |
-| Tandy 1000HX                            |  Yes  | Close |  Yes  | t1000hx  |
-| Amstrad PC1512                          | No(1) |  Yes  |  Yes  | pc1512   |
-| Amstrad PC1640 / PC6400 (US)            | No(1) |  Yes  |  Yes  | pc1640   |
-| PC-XT (VGA, MF2 Keyboard)               | No(1) |  Yes  |  Yes  | xtvga    |
-| PC-AT (CGA, MF2 Keyboard)               | No(1) |  Yes  |  Yes  | atcga    |
+| Pravetz 8D                              |  Yes  |  Yes  |  Yes  | prav8d   |
+| Pravetz 8D (Disk ROM)                   |  Yes  |  Yes  |  Yes  | prav8dd  |
+| Pravetz 8D (Disk ROM, RadoSoft)         |  Yes  |  Yes  |  Yes  | prav8dda |
+| Oric Telestrat                          | No(1) |  Yes  |  Yes  | telstrat |
 | Philips P2000T                          |  Yes  |  Yes  |  Yes  | p2000t   |
 | Philips P2000M                          |  Yes  |  Yes  |  Yes  | p2000m   |
 | UK101                                   |  Yes  |  Yes  |  Yes  | uk101    |
 | Superboard II                           |  Yes  |  Yes  |  Yes  | superbrd |
-| ZX-80                                   |   No  |  Yes  |  Yes  | zx80     |
-| ZX-81                                   |   No  |  Yes  |  Yes  | zx81     |
-| TS1000                                  |   No  |  Yes  |  Yes  | ts1000   |
-| ZX.Aszmic                               |   No  |  Yes  |  Yes  | aszmic   |
-| PC8300                                  |   No  |  Yes  |  Yes  | pc8300   |
-| Power 3000                              |   No  |  Yes  |  Yes  | pow3000  |
-| ZX Spectrum                             |  Yes  |  Yes  |  Yes  | spectrum |
-| ZX Spectrum (BusySoft Upgrade)          |  Yes  |  Yes  |  Yes  | specbusy |
-| ZX Spectrum (De Groot's Upgrade)        |  Yes  |  Yes  |  Yes  | specgrot |
-| ZX Spectrum (Collier's Upgrade)         |  Yes  |  Yes  |  Yes  | specimc  |
-| ZX Spectrum (LEC Upgrade)               |  Yes  |  Yes  |  Yes  | speclec  |
-| Inves Spectrum 48K+                     |  Yes  |  Yes  |  Yes  | inves    |
-| TK90x Color Computer                    |  Yes  |  Yes  |  Yes  | tk90x    |
-| TK95 Color Computer                     |  Yes  |  Yes  |  Yes  | tk95     |
-| TC2048                                  |  Yes  |  Yes  |  Yes  | tc2048   |
-| TS2068                                  |  Yes  |  Yes  |  Yes  | ts2068   |
-| ZX Spectrum 128                         |   No  |  Yes  |  Yes  | spec128  |
-| ZX Spectrum 128 (Spain)                 |   No  |  Yes  |  Yes  | spec128s |
-| ZX Spectrum +2                          |   No  |  Yes  |  Yes  | specpls2 |
-| ZX Spectrum +2a                         |   No  |  Yes  |  Yes  | specpl2a |
-| ZX Spectrum +2 (France)                 |   No  |  Yes  |  Yes  | specp2fr |
-| ZX Spectrum +2 (Spain)                  |   No  |  Yes  |  Yes  | specp2sp |
-| ZX Spectrum +3                          |   No  |  Yes  |  Yes  | specpls3 |
-| ZX Spectrum +3 (Spain)                  |   No  |  Yes  |  Yes  | specp3sp |
-| ZX Spectrum +3e                         |   No  |  Yes  |  Yes  | specpl3e |
-| ZX Spectrum +4                          |  Yes  |  Yes  |  Yes  | specpls4 |
-| MSX1                                    |  Yes  |  Yes  |  Yes  | msx      |
-| MSX1 (Japan)                            |  Yes  |  Yes  |  Yes  | msxj     |
-| MSX1 (Korean)                           |  Yes  |  Yes  |  Yes  | msxkr    |
-| MSX1 (UK)                               |  Yes  |  Yes  |  Yes  | msxuk    |
+| MSX 1                                   |  Yes  |  Yes  |  Yes  | msx      |
+| MSX 1 (Japan)                           |  Yes  |  Yes  |  Yes  | msxj     |
+| MSX 1 (Korea)                           |  Yes  |  Yes  |  Yes  | msxkr    |
+| MSX 1 (UK)                              |  Yes  |  Yes  |  Yes  | msxuk    |
+| HB-8000 Hotbit 1.1                      |  Yes  |  Yes  |  Yes  | hotbit11 |
+| HB-8000 Hotbit 1.2                      |  Yes  |  Yes  |  Yes  | hotbit12 |
+| XP-800 Expert 1.0                       |  Yes  |  Yes  |  Yes  | expert10 |
+| XP-800 Expert 1.1                       |  Yes  |  Yes  |  Yes  | expert11 |
+| MSX 2                                   | No(1) |  Yes  |  Yes  | msx2     |
+| MSX 2 (BASIC 2.1)                       | No(1) |  Yes  |  Yes  | msx2a    |
+| MSX 2 (Japan)                           | No(1) |  Yes  |  Yes  | msx2j    |
 | Nascom 1                                |  Yes  |  Yes  |  Yes  | nascom1  |
 | Nascom 2                                |  Yes  |  Yes  |  Yes  | nascom2  |
-| Atom                                    |  Yes  |  Yes  |  Yes  | atom     |
-| BBC Micro Model A                       |   No  |  Yes  |  Yes  | bbca     |
-| BBC Micro Model B                       |   No  |  Yes  |  Yes  | bbcb     |
-| Archimedes 310                          |  Yes  |  Yes  |  Yes  | a310     |
-| Sam Coup*                               |  Yes  |  Yes  |  Yes  | coupe    |
-| Pocket Computer 1251                    |   No  |  Yes  |  Yes  | pc1251   |
-| Pocket Computer 1401                    |   No  |  Yes  |  Yes  | pc1401   |
-| Pocket Computer 1402                    |   No  |  Yes  |  Yes  | pc1402   |
-| Pocket Computer 1350                    |   No  |  Yes  |  Yes  | pc1350   |
-| MZ-700                                  |  Yes  |  Yes  |  Yes  | mz700    |
-| MZ-700 (Japan)                          |  Yes  |  Yes  |  Yes  | mz700j   |
+| Sam Coupe 256K RAM                      |  Yes  |  Yes  |  Yes  | coupe    |
+| Sam Coupe 512K RAM                      |  Yes  |  Yes  |  Yes  | coupe512 |
 | PDP-1 (Spacewar!)                       |  Yes  |  Yes  |  Yes  | pdp1     |
 | MTX 512                                 |  Yes  |  Yes  |  Yes  | mtx512   |
 | Aquarius                                |  Yes  |   No  |  Yes  | aquarius |
+| Sorcerer                                |   No  |  Yes  |   No  | exidy    |
+| Galaksija                               |  Yes  |  Yes  |  Yes  | galaxy   |
+| SVI-318                                 |  Yes  |  Yes  |  Yes  | svi318   |
+| SVI-328                                 |  Yes  |  Yes  |  Yes  | svi328   |
+| SVI-328 (BASIC 1.11)                    |  Yes  |  Yes  |  Yes  | svi328a  |
+| APEXC                                   |  Yes  |  Yes  |  Yes  | apexc    |
+| Chess Champion MK II                    |  Yes  |  Yes  |  Yes  | mk2      |
 +-----------------------------------------+-------+-------+-------+----------+
 (1) There are variants of the system that work correctly
 (2) Needs samples provided separately
@@ -347,6 +399,14 @@ So to load these files, you would simply then type:
 and both cartridges will be attached to the TI99_4a.
 
 
+To EXIT the emulator, press ESC.  If the emulated system is a computer, 
+you may need to toggle the UI mode (use the SCR_LOCK key).
+The on-screen display shows the current UI mode when SCR_LOCK is pressed.
+
+
+
+
+
 To automatically create the individual system directories in the 
 SOFTWARE folder, use:
 MESS -createdir
@@ -375,23 +435,82 @@ system devices.  Use the UI (TAB key) to access.
 a2600        Cartridge   (Cart)   .bin  
 a5200        Cartridge   (Cart)   .rom  .bin  
 a7800        Cartridge   (Cart)   .a78  
-astrocde     Cartridge   (Cart)   .bin  
-channelf     Cartridge   (Cart)   .bin  
-coleco       Cartridge   (Cart)   .rom  
+lynx         Cartridge   (Cart)   .lnx  
+             Quickload   (Quik)   .o    
+lynxa        Cartridge   (Cart)   .lnx  
+             Quickload   (Quik)   .o    
+lynx2        Cartridge   (Cart)   .lnx  
+             Quickload   (Quik)   .o    
 nes          Cartridge   (Cart)   .nes  
 nespal       Cartridge   (Cart)   .nes  
 famicom      Cartridge   (Cart)   .nes  
              Floppydisk  (Flop)   .dsk  
 gameboy      Cartridge   (Cart)   .gb   
 snes         Cartridge   (Cart)   .smc  
-pce          Cartridge   (Cart)   .pce  
 gamegear     Cartridge   (Cart)   .gg   
 sms          Cartridge   (Cart)   .sms  
 genesis      Cartridge   (Cart)   .smd  .bin  .md   
+astrocde     Cartridge   (Cart)   .bin  
+studio2      Cartridge   (Cart)   .bin  
+channelf     Cartridge   (Cart)   .bin  
+coleco       Cartridge   (Cart)   .rom  
+colecoa      Cartridge   (Cart)   .rom  
+pce          Cartridge   (Cart)   .pce  
 vectrex      Cartridge   (Cart)   .bin  .gam  
 raaspec      UNKNOWN     
 advision     Cartridge   (Cart)   .bin  
 sfzch        UNKNOWN     
+odyssey2     Cartridge   (Cart)   .bin  
+svision      Cartridge   (Cart)   .bin  
+atom         Quickload   (Quik)   .atm  
+             Floppydisk  (Flop)   .ssd  
+             Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+atomeb       Quickload   (Quik)   .atm  
+             Floppydisk  (Flop)   .ssd  
+             Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+bbca         Cassette    (Cass)   .wav  
+bbcb         Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .ssd  .bbc  .img  
+bbcb1770     Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .ssd  .bbc  .img  
+bbcbp        Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .ssd  .bbc  .img  
+bbcbp128     Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .ssd  .bbc  .img  
+cpc464       Cartridge   (Cart)   .sna  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+cpc664       Cartridge   (Cart)   .sna  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+cpc6128      Cartridge   (Cart)   .sna  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+kccomp       Cartridge   (Cart)   .sna  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+pcw8256      Floppydisk  (Flop)   .dsk  
+pcw8512      Floppydisk  (Flop)   .dsk  
+pcw9256      Floppydisk  (Flop)   .dsk  
+pcw9512      Floppydisk  (Flop)   .dsk  
+pcw10        Floppydisk  (Flop)   .dsk  
+pcw16        Floppydisk  (Flop)   .dsk  
+nc100        Cartridge   (Cart)   .crd  .card 
+             Serial      (Serl)   .txt  
+             Printer     (Prin)   
+nc100a       Cartridge   (Cart)   .crd  .card 
+             Serial      (Serl)   .txt  
+             Printer     (Prin)   
+nc200        Cartridge   (Cart)   .crd  .card 
+             Floppydisk  (Flop)   .dsk  
+             Serial      (Serl)   .txt  
+             Printer     (Prin)   
 apple1       UNKNOWN     
 apple2c      Floppydisk  (Flop)   .dsk  
 apple2c0     Floppydisk  (Flop)   .dsk  
@@ -399,9 +518,11 @@ apple2cp     Floppydisk  (Flop)   .dsk
 apple2e      Floppydisk  (Flop)   .dsk  
 apple2ee     Floppydisk  (Flop)   .dsk  
 apple2ep     Floppydisk  (Flop)   .dsk  
+lisa2        Floppydisk  (Flop)   .img  .image
+lisa210      Floppydisk  (Flop)   .img  .image
+macxl        Floppydisk  (Flop)   .img  .image
 mac512ke     Floppydisk  (Flop)   .dsk  .img  
 macplus      Floppydisk  (Flop)   .dsk  .img  
-lisa2        Floppydisk  (Flop)   .img  
 a400         Cartridge   (Cart)   .rom  .bin  
              Floppydisk  (Flop)   .atr  .dsk  .xfd  
 a400pal      Cartridge   (Cart)   .rom  .bin  
@@ -483,9 +604,13 @@ cbm610       Quickload   (Quik)   .p00  .prg
              Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm620       Quickload   (Quik)   .p00  .prg  
              Cartridge   (Cart)   .crt  .10   .20   .40   .60   
+cbm620hu     Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm710       Quickload   (Quik)   .p00  .prg  
              Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm720       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
+cbm720se     Quickload   (Quik)   .p00  .prg  
              Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 c16          Quickload   (Quik)   .p00  .prg  
              Cartridge   (Cart)   .bin  .rom  
@@ -519,7 +644,8 @@ c128fra      Quickload   (Quik)   .p00  .prg
              Floppydisk  (Flop)   .d64  
 c128ita      Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
-amiga        Floppydisk  (Flop)   .adf  
+c128swe      Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
 c65          Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
 c65e         Quickload   (Quik)   .p00  .prg  
@@ -532,137 +658,45 @@ c65ger       Quickload   (Quik)   .p00  .prg
              Floppydisk  (Flop)   .d64  
 c65a         Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
-cpc464       Cartridge   (Cart)   .sna  
-             Floppydisk  (Flop)   .dsk  
-             Cassette    (Cass)   .wav  
-cpc664       Cartridge   (Cart)   .sna  
-             Floppydisk  (Flop)   .dsk  
-             Cassette    (Cass)   .wav  
-cpc6128      Cartridge   (Cart)   .sna  
-             Floppydisk  (Flop)   .dsk  
-             Cassette    (Cass)   .wav  
-pcw8256      Floppydisk  (Flop)   .dsk  
-pcw8512      Floppydisk  (Flop)   .dsk  
-pcw9256      Floppydisk  (Flop)   .dsk  
-pcw9512      Floppydisk  (Flop)   .dsk  
-pcw10        Floppydisk  (Flop)   .dsk  
-pcw16        Floppydisk  (Flop)   .dsk  
-nc100        Cartridge   (Cart)   .crd  .card 
-kccomp       Cartridge   (Cart)   .sna  
-             Floppydisk  (Flop)   .dsk  
-             Cassette    (Cass)   .wav  
-kc85_4       UNKNOWN     
-jupiter      Cartridge   (Cart)   .ace  
-             Cassette    (Cass)   .tap  
-ep128        Floppydisk  (Flop)   .dsk  
-ep128a       Floppydisk  (Flop)   .dsk  
-kaypro       Floppydisk  (Flop)   .dsk  
-mbee         Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .dsk  
-mbee56k      Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .dsk  
-trs80l1      Cassette    (Cass)   .cas  
-             Quickload   (Quik)   .cmd  
-trs80        Cassette    (Cass)   .cas  
-             Quickload   (Quik)   .cmd  
-             Floppydisk  (Flop)   .dsk  
-trs80alt     Cassette    (Cass)   .cas  
-             Quickload   (Quik)   .cmd  
-             Floppydisk  (Flop)   .dsk  
-coco         Snapshot    (Dump)   .pak  
-             Cassette    (Cass)   .cas  .wav  
-             Floppydisk  (Flop)   .dsk  
-coco3        Snapshot    (Dump)   .pak  
-             Cassette    (Cass)   .cas  .wav  
-             Floppydisk  (Flop)   .dsk  
-coco3h       Snapshot    (Dump)   .pak  
-             Cassette    (Cass)   .cas  .wav  
-             Floppydisk  (Flop)   .dsk  
-cp400        Snapshot    (Dump)   .pak  
-             Cassette    (Cass)   .cas  .wav  
-             Floppydisk  (Flop)   .dsk  
-mc10         Cassette    (Cass)   .cas  .wav  
-dragon32     Snapshot    (Dump)   .pak  
-             Cassette    (Cass)   .cas  .wav  
-             Floppydisk  (Flop)   .dsk  
-cgenie       Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .cas  .cmd  
-             Floppydisk  (Flop)   .dsk  
-sys80        Cassette    (Cass)   .cas  
-             Quickload   (Quik)   .cmd  
-             Floppydisk  (Flop)   .dsk  
-laser110     Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-laser200     Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-laser210     Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-laser310     Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-vz200        Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-vz300        Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-fellow       Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-tx8000       Cassette    (Cass)   .wav  .cas  
-             Snapshot    (Dump)   .vz   
-             Floppydisk  (Flop)   .dsk  
-laser350     Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  .cas  
-             Floppydisk  (Flop)   .dsk  
-laser500     Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  .cas  
-             Floppydisk  (Flop)   .dsk  
-laser700     Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  .cas  
-             Floppydisk  (Flop)   .dsk  
-microtan     Cassette    (Cass)   .tap  
-             Snapshot    (Dump)   .m65  
-             Quickload   (Quik)   .hex  
-oric1        Cartridge   (Cart)   .tap  
-orica        Cartridge   (Cart)   .tap  
-ti99_4       Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
-             Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .dsk  
-ti99_4e      Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
-             Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .dsk  
-ti99_4a      Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
-             Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .dsk  
-ti99_4ae     Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
-             Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .dsk  
-pc           Floppydisk  (Flop)   .dsk  
+ibmpc        Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
+ibmpca       Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
 pcmda        Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
-pccga        Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+pc           Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
+europc       Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
 t1000hx      Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
+ibmxt        Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
+pc200        Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
+pc20         Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
 pc1512       Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
 pc1640       Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
+             Printer     (Prin)   .prn  
 xtvga        Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
-atcga        Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+at           Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
-p2000t       UNKNOWN     
-p2000m       UNKNOWN     
-uk101        Cassette    (Cass)   .bas  
-superbrd     Cassette    (Cass)   .bas  
+             Printer     (Prin)   .prn  
 zx80         Cassette    (Cass)   .80   .o    
 zx81         Cassette    (Cass)   .81   .p    
 ts1000       Cassette    (Cass)   .81   .p    
@@ -670,6 +704,9 @@ aszmic       Cassette    (Cass)   .80   .o
 pc8300       Cassette    (Cass)   .81   .p    
 pow3000      Cassette    (Cass)   .81   .p    
 spectrum     Snapshot    (Dump)   .sna  .z80  
+             Quickload   (Quik)   .scr  
+             Cassette    (Cass)   .wav  .tap  
+specpls4     Snapshot    (Dump)   .sna  .z80  
              Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specbusy     Snapshot    (Dump)   .sna  .z80  
@@ -712,16 +749,16 @@ specpl2a     Snapshot    (Dump)   .sna  .z80
              Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
+specpls3     Snapshot    (Dump)   .sna  .z80  
+             Quickload   (Quik)   .scr  
+             Cassette    (Cass)   .wav  .tap  
+             Floppydisk  (Flop)   .dsk  
 specp2fr     Snapshot    (Dump)   .sna  .z80  
              Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specp2sp     Snapshot    (Dump)   .sna  .z80  
              Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
-specpls3     Snapshot    (Dump)   .sna  .z80  
-             Quickload   (Quik)   .scr  
-             Cassette    (Cass)   .wav  .tap  
-             Floppydisk  (Flop)   .dsk  
 specp3sp     Snapshot    (Dump)   .sna  .z80  
              Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
@@ -730,33 +767,228 @@ specpl3e     Snapshot    (Dump)   .sna  .z80
              Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
-specpls4     Snapshot    (Dump)   .sna  .z80  
-             Quickload   (Quik)   .scr  
-             Cassette    (Cass)   .wav  .tap  
-msx          Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  
-msxj         Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  
-msxkr        Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  
-msxuk        Cartridge   (Cart)   .rom  
-             Cassette    (Cass)   .wav  
-nascom1      Cassette    (Cass)   .nas  .bin  
-             Cartridge   (Cart)   .nas  .bin  
-nascom2      Cassette    (Cass)   .cas  .nas  .bin  
-             Cartridge   (Cart)   .nas  .bin  
-atom         Cartridge   (Cart)   .atm  
-bbca         Cassette    (Cass)   .wav  
-bbcb         Cassette    (Cass)   .wav  
-             Floppydisk  (Flop)   .ssd  
-a310         UNKNOWN     
-coupe        Floppydisk  (Flop)   .dsk  
 pc1251       UNKNOWN     
 pc1401       UNKNOWN     
 pc1402       UNKNOWN     
 pc1350       UNKNOWN     
 mz700        Cassette    (Cass)   .m12  .wav  
 mz700j       Cassette    (Cass)   .m12  .wav  
+ti99_4       Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+ti99_4e      Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+ti99_4a      Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+ti99_4ae     Cartridge   (Cart)   .bin  .c    .d    .g    .m    .crom .drom .grom .mrom 
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+avigo        UNKNOWN     
+ti85         UNKNOWN     
+ti85v40      UNKNOWN     
+ti85v50      UNKNOWN     
+ti85v60      UNKNOWN     
+ti85v80      UNKNOWN     
+ti85v90      UNKNOWN     
+ti85v100     UNKNOWN     
+jupiter      Cartridge   (Cart)   .ace  
+             Cassette    (Cass)   .tap  
+ep128        Floppydisk  (Flop)   .dsk  
+ep128a       Floppydisk  (Flop)   .dsk  
+kaypro       Floppydisk  (Flop)   .dsk  
+kc85_4       Quickload   (Quik)   .kcc  
+             Cassette    (Cass)   .wav  
+kc85_3       Quickload   (Quik)   .kcc  
+             Cassette    (Cass)   .wav  
+mbee         Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+mbeepc       Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+mbee56k      Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .dsk  
+trs80        Cassette    (Cass)   .cas  
+             Quickload   (Quik)   .cmd  
+trs80l2      Cassette    (Cass)   .cas  
+             Quickload   (Quik)   .cmd  
+             Floppydisk  (Flop)   .dsk  
+trs80l2a     Cassette    (Cass)   .cas  
+             Quickload   (Quik)   .cmd  
+             Floppydisk  (Flop)   .dsk  
+sys80        Cassette    (Cass)   .cas  
+             Quickload   (Quik)   .cmd  
+             Floppydisk  (Flop)   .dsk  
+lnw80        Cassette    (Cass)   .cas  
+             Quickload   (Quik)   .cmd  
+             Floppydisk  (Flop)   .dsk  
+coco         Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+cocoe        Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+coco2        Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+coco2b       Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+coco3        Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+coco3h       Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+dragon32     Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+cp400        Cartridge   (Cart)   .rom  
+             Snapshot    (Dump)   .pak  
+             Cassette    (Cass)   .cas  .wav  
+             Floppydisk  (Flop)   .dsk  
+             Printer     (Prin)   .prn  
+mc10         Cassette    (Cass)   .cas  .wav  
+cgenie       Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .cas  
+             Floppydisk  (Flop)   .dsk  
+laser110     Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+laser200     Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+laser210     Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+laser310     Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+vz200        Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+vz300        Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+fellow       Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+tx8000       Cassette    (Cass)   .wav  .cas  
+             Snapshot    (Dump)   .vz   
+             Floppydisk  (Flop)   .dsk  
+laser350     Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .wav  .cas  
+             Floppydisk  (Flop)   .dsk  
+laser500     Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .wav  .cas  
+             Floppydisk  (Flop)   .dsk  
+laser700     Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .wav  .cas  
+             Floppydisk  (Flop)   .dsk  
+microtan     Cassette    (Cass)   .tap  
+             Snapshot    (Dump)   .m65  
+             Quickload   (Quik)   .hex  
+oric1        Cassette    (Cass)   .tap  .wav  
+             Printer     (Prin)   .prn  
+             Floppydisk  (Flop)   .dsk  
+orica        Cassette    (Cass)   .tap  .wav  
+             Printer     (Prin)   .prn  
+             Floppydisk  (Flop)   .dsk  
+prav8d       Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+prav8dd      Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+prav8dda     Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+telstrat     Cassette    (Cass)   .tap  .wav  
+             Printer     (Prin)   .prn  
+             Floppydisk  (Flop)   .dsk  
+p2000t       UNKNOWN     
+p2000m       UNKNOWN     
+uk101        Cassette    (Cass)   .bas  
+superbrd     Cassette    (Cass)   .bas  
+msx          Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+msxj         Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+msxkr        Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+msxuk        Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+hotbit11     Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+hotbit12     Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+expert10     Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+expert11     Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+msx2         Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+msx2a        Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+msx2j        Cartridge   (Cart)   .rom  
+             Floppydisk  (Flop)   .dsk  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+nascom1      Cassette    (Cass)   .nas  .bin  
+             Cartridge   (Cart)   .nas  .bin  
+nascom2      Cassette    (Cass)   .cas  .nas  .bin  
+             Cartridge   (Cart)   .nas  .bin  
+coupe        Floppydisk  (Flop)   .dsk  
+coupe512     Floppydisk  (Flop)   .dsk  
 pdp1         Cartridge   (Cart)   .bin  
 mtx512       Cartridge   (Cart)   .bin  
 aquarius     UNKNOWN     
+exidy        Cassette    (Cass)   .wav  
+             Printer     (Prin)   .prn  
+galaxy       Snapshot    (Dump)   .gal  
+svi318       Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+svi328       Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+svi328a      Cartridge   (Cart)   .rom  
+             Cassette    (Cass)   .cas  .wav  
+             Printer     (Prin)   .prn  
+apexc        Cylinder    (Cyln)   .apc  
+             Punchtape   (Ptap)   .tap  
+mk2          UNKNOWN     

@@ -53,16 +53,16 @@ int gl_png_write_bitmap(void *fp)
 
 	ip = p.image;
 
-        __glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        __glPixelStorei(GL_PACK_ROW_LENGTH, p.width);
-        __glPixelStorei(GL_PACK_LSB_FIRST, GL_TRUE);
+        disp__glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        disp__glPixelStorei(GL_PACK_ROW_LENGTH, p.width);
+        disp__glPixelStorei(GL_PACK_LSB_FIRST, GL_TRUE);
 
-        __glReadPixels(0,0, p.width, p.height,
+        disp__glReadPixels(0,0, p.width, p.height,
 		     GL_RGB, GL_UNSIGNED_BYTE,
 		     ip);
 
-        __glPixelStorei(GL_PACK_ALIGNMENT,4);
-        __glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+        disp__glPixelStorei(GL_PACK_ALIGNMENT,4);
+        disp__glPixelStorei(GL_PACK_ROW_LENGTH, 0);
 
 	if(png_filter (&p)==0)
 		return 0;
@@ -97,16 +97,16 @@ void ppm_save_snapshot (void *fp)
 
   pixels=(unsigned char *)calloc(pixelsize, 1);
 
-  __glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  __glPixelStorei(GL_PACK_ROW_LENGTH, width);
-  __glPixelStorei(GL_PACK_LSB_FIRST, GL_TRUE);
+  disp__glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  disp__glPixelStorei(GL_PACK_ROW_LENGTH, width);
+  disp__glPixelStorei(GL_PACK_LSB_FIRST, GL_TRUE);
 
-  __glReadPixels(0,0, width, height,
+  disp__glReadPixels(0,0, width, height,
 			   GL_RGB, GL_UNSIGNED_BYTE,
 			   pixels);
 
-  __glPixelStorei(GL_PACK_ALIGNMENT,4);
-  __glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+  disp__glPixelStorei(GL_PACK_ALIGNMENT,4);
+  disp__glPixelStorei(GL_PACK_ROW_LENGTH, 0);
 
   fprintf(file,"P6\n#GLmame screenshot\n%d %d\n255\n",
 		  (int)width, (int)height);

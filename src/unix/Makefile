@@ -26,11 +26,11 @@ VID_DIR = $(OBJDIR)/video-drivers
 VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 	$(VID_DIR)/x11_window.o \
 	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
-VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o \
+VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
 		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o \
 		  $(VID_DIR)/gldirty.o $(VID_DIR)/glexport.o \
 		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
-		  $(VID_DIR)/xinput.o 
+		  $(VID_DIR)/xinput.o
 VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o $(VID_DIR)/xinput.o \
 	$(VID_DIR)/vectorgen.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
@@ -39,7 +39,7 @@ VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o \
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
 VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
 	$(VID_DIR)/photon2_window.o \
-	#$(VID_DIR)/photon2_overlay.o
+	$(VID_DIR)/photon2_overlay.o
 VID_OBJS = $(VID_DIR)/$(DISPLAY_METHOD).o $(VID_OBJS.$(DISPLAY_METHOD))
 
 # sound driver objs per arch
@@ -53,6 +53,7 @@ SOUND_OBJS.openbsd = $(DSP_DIR)/netbsd.o
 SOUND_OBJS.solaris = $(DSP_DIR)/solaris.o $(MIXER_DIR)/solaris.o
 SOUND_OBJS.next    = $(DSP_DIR)/soundkit.o
 SOUND_OBJS.macosx  = $(DSP_DIR)/coreaudio.o
+SOUND_OBJS.nto     = $(DSP_DIR)/io-audio.o
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
@@ -91,6 +92,7 @@ CFLAGS.openbsd    = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
 CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
 CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
+CFLAGS.nto        = -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
 CFLAGS.generic    =
 #these need to be converted to plugins first
 #CFLAGS.irix       = -DSYSDEP_DSP_IRIX
@@ -131,19 +133,21 @@ $(VID_DIR)/x11_window.o: video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/svgalib.o: video-drivers/blit.h video-drivers/blit_core.h video-drivers/twkmodes.h video-drivers/twkuser.c
 $(VID_DIR)/xf86_dga1.o: video-drivers/xf86_dga1.c video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/xf86_dga2.o: video-drivers/xf86_dga2.c video-drivers/blit.h video-drivers/blit_core.h
+$(VID_DIR)/SDL.o: video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h
 $(VID_DIR)/glgen.o:   video-drivers/glmame.h video-drivers/gltool.h \
-	              video-drivers/glxtool.h video-drivers/gldirty.h
+	              video-drivers/glxtool.h video-drivers/gldirty.h 
 $(VID_DIR)/glvec.o:   video-drivers/glmame.h video-drivers/gltool.h \
 	              video-drivers/glxtool.h
 $(VID_DIR)/glcab.o:   video-drivers/glmame.h video-drivers/gltool.h \
 	              video-drivers/glxtool.h
-$(VID_DIR)/gltool.o:  video-drivers/glmame.h video-drivers/gltool.h \
-	              video-drivers/glxtool.h
-$(VID_DIR)/glxtool.o: video-drivers/glmame.h video-drivers/gltool.h \
-	              video-drivers/glxtool.h
+$(VID_DIR)/gltool.o:  video-drivers/gltool.h \
+	              video-drivers/glxtool.h video-drivers/glcaps.h
+$(VID_DIR)/glcaps.o:  video-drivers/gltool.h 
+$(VID_DIR)/glxtool.o: video-drivers/gltool.h \
+	              video-drivers/glxtool.h video-drivers/glcaps.h
 $(VID_DIR)/xgl.o:     video-drivers/glmame.h video-drivers/gltool.h \
 	              video-drivers/glxtool.h
 $(VID_DIR)/gltool.h:  video-drivers/gl-disp-var.h video-drivers/glu-disp-var.h

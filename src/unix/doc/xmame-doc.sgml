@@ -130,7 +130,7 @@ Also see the text todo file, kept around to quickly enter stuff
 .
 </itemize>
 </p><sect>
-Compiling, Setting Up and Starting xmame/xmess
+Compiling, Setting Up and Starting Xmame/Xmess
 <p>
 Note: This section is not a Unix tutorial. You need to know some
  basic  Unix commands to compile and install xmame/xmess.
@@ -632,7 +632,7 @@ On an OpenStep keyboard the functions keys do not all operate
  the first time you run xmame.
 </p>
 <sect>
-Xmame frequently asked questions<label id="Xmame frequently asked questions" >
+Xmame Frequently Asked Questions<label id="Xmame frequently asked questions" >
 
 <sect1>
 What is mame?
@@ -1730,10 +1730,10 @@ If that doesn't help, then ask your question on the mailing list
  for contact information.
 </p>
 <sect>
-Display subsystem specific comments &amp; notes <label id="Display subsystem specific comments and notes" >
+Display Subsystem-Specific Comments and Notes <label id="Display subsystem specific comments and notes" >
 
 <sect1>
-FX-Mame a glide driver for xmame
+FXmame, a glide driver for xmame
 <p>
 The latest version of this driver can be obtained at <url url="http://glmame.linuxgames.com" name="http://glmame.linuxgames.com">
 .
@@ -2473,83 +2473,87 @@ Till GLmame version 0.6: Mike Oliphant <tt><url url="mailto:oliphant@ling.ed.ac.
 
 </p>
 <sect>
-contact information and credits
+Contact Information and Credits
 <sect1>
 Mail <label id="Mail" >
 
 <p>
 There is an official xmame/xmess mailing list. All operations
- related to this list are performed via email to <tt><url url="mailto:xmame-request@acm.csres.utexas.edu" name="xmame-request@acm.csres.utexas.edu">
+ related to this list are performed via email to <tt><url url="mailto:Xmame-request@toybox.twisted.org.uk" name="Xmame-request@toybox.twisted.org.uk">
 </tt> with a proper keyword
  in the body.
 </p>
 <p>
-Currently recognized commands are:
+Some of the currently recognized commands are:
 </p>
 <p>
 <verb>
     subscribe      - subscribe to the list
     unsubscribe    - unsubscribe from the list
+    who            - see everyone who is on the list
+    info           - view the introductory information for this list
+    help           - list all recognized commands
+    
 </verb>
 </p><p>
-X-Mame Mail List ideario
+Xmame Mailing List 
 </p>
 <p>
 <itemize>
  <item>
-The X-Mame mailing list is intended to be a technical forum for
- XMame  developers, that is,
+The xmame mailing list is intended to be a technical forum for
+ xmame developers, that is,
  <itemize>
   <item>
-To exchange ideas about getting a better X-Mame 
+To exchange ideas for producing a better xmame.
   <item>
-To share patches and notify bugs 
+To share patches and bug notifications.
   <item>
-Study new design strategies
+To study new design strategies.
   <item>
-To expose problems and learn know-how
+To expose problems and learn know-how.
  </itemize>
  <item>
-The X-Mame mailing list <bf>is not</bf> a forum about playing games (but
- everyone in xmame-list plays...), so please:
+The Xmame mailing list <bf>is not</bf> a forum about playing games (but
+ everyone on the list plays...); so please
  <itemize>
   <item>
-<bf>Don't use the list to ask about ROMs</bf>
+<bf>Don't use the list to ask about ROMs.</bf>
   <item>
-<bf>Don't ask about non-UNIX ports of Mame, just about MAME and X-Mame
+<bf>Don't ask about non-UNIX ports of MAME, just about MAME and xmame.
 </bf>
   <item>
 <bf>Don't ask about implementing a game. Just search the docs and
- contribute yourself (you'll enjoy twice: programming and playing...)
+ contribute yourself (you'll enjoy twice: programming and playing...).
 </bf>
   <item>
-<bf>Dont show your last high score in xxx game (we are interested
- in programming, and then playing, in this order)</bf>
+<bf>Don't show your last high score in xxx game (we are interested
+ in programming, and then playing, in this order).</bf>
  </itemize>
  <item>
 <bf>Copyright notice: NEVER, I repeat NEVER send ROM images to the
-  list.</bf> (but you can tell us where to retrieve them... ;-) )
+  list.</bf> (But you can tell us where to retrieve them... ;-) )
  <item>
-At this moment, the X-Mame List is <bf>unmoderated</bf>, that is: every
- one subscribed will received everything sent to the list. Expecting
- no need to change this policy...
+At this moment, the xmame list is <bf>unmoderated</bf>; that is, everyone
+ subscribed will receive everything sent to the list. We foresee no
+ need to change this policy.
 </itemize>
 </p><p>
 If you want to send a personal mail to the xmame/xmess coordinator,
- send to the address below. Everyone that contributes to xmame/xmess
- should subscribe to the xmame/xmess mail list.
+ send to the address below. Everyone who contributes to xmame/xmess
+ should subscribe to the xmame/xmess mailing list.
 </p>
 <p>
 <itemize>
  <item>
-Mailing list: <tt><url url="mailto:xmame-request@acm.csres.utexas.edu" name="xmame-request@acm.csres.utexas.edu">
+Mailing list:<tt><url url="mailto:Xmame-request@toybox.twisted.org.uk" name="Xmame-request@toybox.twisted.org.uk">
 </tt>
  <item>
 Xmame/xmess coordinator: <tt><url url="mailto:gold@aros.net" name="gold@aros.net">
 </tt>
 </itemize>
 </p><p>
-That's all. Enjoy X-Mame!
+That's all. Enjoy xmame!
 </p>
 <sect1>
 Credits
@@ -2707,7 +2711,7 @@ Rene Herrmann
  </itemize>
 </enum>
 </p><sect>
-Legal issues and copyrights concerning mame/mess
+Legal Issues and Copyrights Concerning MAME/MESS
 <p>
 <itemize>
  <item>
@@ -2734,18 +2738,18 @@ XInputExtensions-based Joystick support. Source code is entirely
 ChangeLogs<label id="ChangeLogs" >
 
 <sect1>
-The mame/mess ChangeLogs
+The MAME/MESS ChangeLogs
 <p>
-These are the changelogs of the offical mame and mess release,
- the core of xmame / xmess.
+These are the changelogs of the offical MAME and MESS release,
+ the core of xmame/xmess.
 </p>
 <p>
 <itemize>
  <item>
-<url url="changes.mame" name="The mame changelog (changes.mame)">
+<url url="changes.mame" name="The MAME changelog (changes.mame)">
 
  <item>
-<url url="changes.mess" name="The mess changelog (changes.mess)">
+<url url="changes.mess" name="The MESS changelog (changes.mess)">
 
 </itemize>
 </p><sect1>

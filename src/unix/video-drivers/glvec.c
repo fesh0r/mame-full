@@ -97,8 +97,8 @@ INLINE int vec_div(int parm1, int parm2)
 void set_gl_beam(float new_value)
 {
 	gl_beam = new_value;
-	__glLineWidth(gl_beam);
-	__glPointSize(gl_beam);
+	disp__glLineWidth(gl_beam);
+	disp__glPointSize(gl_beam);
 	printf("GLINFO (vec): beamer size %f\n", gl_beam);
 }
 
@@ -124,7 +124,7 @@ int vector_vh_start (void)
 		vec_min_x, vec_min_y, vec_max_x, vec_max_y,
 		vec_cent_x, vec_cent_y, vecwidth, vecheight);
 
-        veclist=__glGenLists(1);
+        veclist=disp__glGenLists(1);
 	listcreated=1;
 
 	set_gl_beam(gl_beam);
@@ -147,13 +147,13 @@ void vector_vh_stop (void)
 	CHECK_GL_ERROR ();
 
 	if(inlist) {
-		__glEndList();
+		disp__glEndList();
 		inlist=0;
 	}
 
 	if(listcreated)
 	{
-		__glDeleteLists(veclist, 1);
+		disp__glDeleteLists(veclist, 1);
 		listcreated=0;
 	}
 }
@@ -230,12 +230,12 @@ int PointConvert(int x,int y,GLfloat *sx,GLfloat *sy,GLfloat *sz)
 
 static void vector_begin_list(void)
 {
-  __glNewList(veclist,GL_COMPILE);
+  disp__glNewList(veclist,GL_COMPILE);
   inlist=1;
 
   CHECK_GL_ERROR ();
 
-  __glColor4f(1.0,1.0,1.0,1.0);
+  disp__glColor4f(1.0,1.0,1.0,1.0);
 
   GL_BEGIN(GL_LINE_STRIP);
   inbegin=1;
@@ -277,9 +277,9 @@ void vector_add_point (int x, int y, int color, int intensity)
 	  red   = (float)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
 	  green = (float)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
 	  blue  = (float)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
-	  __glColor3f(red, green, blue);
+	  disp__glColor3f(red, green, blue);
   } else {
-	  __glColor3ub(r1, g1, b1);
+	  disp__glColor3ub(r1, g1, b1);
   }
 
   /**
@@ -297,8 +297,8 @@ void vector_add_point (int x, int y, int color, int intensity)
 	inbegin=1;
 
 	if(cabview)
-	  __glVertex3d(sx,sy,sz);
-	else __glVertex2d(sx,sy);
+	  disp__glVertex3d(sx,sy,sz);
+	else disp__glVertex2d(sx,sy);
 
   	if(inbegin) {
 		GL_END();
@@ -309,8 +309,8 @@ void vector_add_point (int x, int y, int color, int intensity)
   }
 
   if(cabview)
-    __glVertex3f(sx,sy,sz);
-  else __glVertex2f(sx,sy);
+    disp__glVertex3f(sx,sy,sz);
+  else disp__glVertex2f(sx,sy);
 
   vecoldx=sx; vecoldy=sy;
 }
@@ -340,14 +340,14 @@ void vector_clear_list(void)
   if(!listcreated)
   {
 	  CHECK_GL_BEGINEND();
-	  veclist=__glGenLists(1);
+	  veclist=disp__glGenLists(1);
 	  listcreated=1;
   }
 
   CHECK_GL_ERROR ();
 
   if(inlist) {
-	__glEndList();
+	disp__glEndList();
 	inlist=0;
   }
 
@@ -371,7 +371,7 @@ void vector_vh_update (struct osd_bitmap *bitmap, int full_refresh)
   }
 
   if(inlist) {
-	__glEndList();
+	disp__glEndList();
 	inlist=0;
   }
 }

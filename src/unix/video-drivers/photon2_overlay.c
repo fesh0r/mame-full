@@ -9,7 +9,7 @@
  * Copyright (C) 2000-2001, The PhMAME Developement Team.
 */
 
-/* TRAVIS'S NOTE: This needs an overhaul, and is disabled. */
+/* TRAVIS'S NOTE: This needs an overhaul. */
 
 /*
  * Include files.
@@ -85,36 +85,39 @@ int ph_ovr_16bpp_capable(void)
 	return 1;
 }
 
-void
-grab_ptrs(PgVideoChannel_t *channel)
+/* I've commented out the fprintf's in this function.
+   It'll keep the compiler quiet. I'm not exacally
+   sure why there even there, but the Raw Drawing &
+   Animation Chapter in the docs gives me a good idea
+   <evil grin at dave>. */
+void grab_ptrs(PgVideoChannel_t *channel)
 {
 	/* Buffers have moved; re-obtain the pointers */
 	ybuf0 = PdGetOffscreenContextPtr(channel->yplane1);
-        ybuf1 = PdGetOffscreenContextPtr(channel->yplane2);
-        ubuf0 = PdGetOffscreenContextPtr(channel->uplane1);
-        ubuf1 = PdGetOffscreenContextPtr(channel->uplane2);
-        vbuf0 = PdGetOffscreenContextPtr(channel->vplane1);
-        vbuf1 = PdGetOffscreenContextPtr(channel->vplane2);
+	ybuf1 = PdGetOffscreenContextPtr(channel->yplane2);
+	ubuf0 = PdGetOffscreenContextPtr(channel->uplane1);
+	ubuf1 = PdGetOffscreenContextPtr(channel->uplane2);
+	vbuf0 = PdGetOffscreenContextPtr(channel->vplane1);
+	vbuf1 = PdGetOffscreenContextPtr(channel->vplane2);
 
-        if (channel->yplane1)
-		fprintf(stderr, "ybuf0: %x, stride %d\n", ybuf0,
-	                   channel->yplane1->pitch);
-        if (channel->uplane1)
-                fprintf(stderr, "ubuf0: %x, stride %d\n", ubuf0,
-	                    channel->uplane1->pitch);
-        if (channel->vplane1)
-                fprintf(stderr, "vbuf0: %x, stride %d\n", vbuf0,
-	                    channel->vplane1->pitch);
-
+	if (channel->yplane1)
+		//fprintf(stderr, "Photon 2 Overlay: ybuf0: %x, stride %d\n", ybuf0, channel->yplane1->pitch);
+		printf("Photon 2 Overlay: Undefined error.\n");
+	if (channel->uplane1)
+		//fprintf(stderr, "Photon 2 Overlay: ubuf0: %x, stride %d\n", ubuf0, channel->uplane1->pitch);
+		printf("Photon 2 Overlay: Undefined error.\n");
+	if (channel->vplane1)
+		//fprintf(stderr, "Photon 2 Overlay: vbuf0: %x, stride %d\n", vbuf0, channel->vplane1->pitch);
+		printf("Photon 2 Overlay: Undefined error.\n");
 	if (channel->yplane2)
-                fprintf(stderr, "ybuf1: %x, stride %d\n", ybuf1,
-	                  channel->yplane2->pitch);
-        if (channel->uplane2)
-		fprintf(stderr, "ubuf1: %x, stride %d\n", ubuf1,
-			channel->uplane2->pitch);
-        if (channel->vplane2)
-               fprintf(stderr, "vbuf1: %x, stride %d\n", vbuf1,
-			channel->vplane2->pitch);
+		//fprintf(stderr, "Photon 2 Overlay: ybuf1: %x, stride %d\n", ybuf1, channel->yplane2->pitch);
+		printf("Photon 2 Overlay: Undefined error.\n");
+	if (channel->uplane2)
+		//fprintf(stderr, "Photon 2 Overlay: ubuf1: %x, stride %d\n", ubuf1, channel->uplane2->pitch);
+		printf("Photon 2 Overlay: Undefined error.\n");
+	if (channel->vplane2)
+		//fprintf(stderr, "Photon 2 Overlay: vbuf1: %x, stride %d\n", vbuf1, channel->vplane2->pitch);
+		printf("Photon 2 Overlay: Undefined error.\n");
 }
 
 unsigned char *setup_overlay(int src_width, int src_height, int dst_width, int dst_height, int dst_x, int dst_y )
@@ -186,7 +189,7 @@ unsigned char *setup_overlay(int src_width, int src_height, int dst_width, int d
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int ph_ovr_create_display (void)
+int ph_ovr_create_display (int bitmap_depth)
 {
 	PtArg_t arg[8];
 	PhRect_t rect;
@@ -317,7 +320,7 @@ int ph_ovr_create_display (void)
 	return OSD_NOT_OK;
 
 	fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
-	if (bitmap->depth == 16)
+	if (bitmap_depth == 16)
 	{
 		switch(depth)
 		{
@@ -366,13 +369,14 @@ int ph_ovr_create_display (void)
  * Shut down the display, also called by the core to clean up if any error
  * happens when creating the display.
  */
-I_OverlayOff( )
+/* This is insane, utterly, utterly, utterly insane. */
+int I_OverlayOff(void)
 {
 
 	//printf("I_OverlayOff\n");
 
         if ( !overlay_on )
-                return;
+                return 1;
 	props.size = sizeof (props);
         props.src_dim.w = swidth;
         props.src_dim.h = sheight;
@@ -427,7 +431,7 @@ int ph_ovr_modify_pen (int pen, unsigned char red, unsigned char green, unsigned
 }
 
 //* invoked by main tree code to update bitmap into screen */
-void ph_ovr_update_display (void)
+void ph_ovr_update_display (struct osd_bitmap *bitmap)
 {
    PhRegion_t region_info;	
 	
@@ -435,15 +439,15 @@ void ph_ovr_update_display (void)
 
 // TODO:  Not sure just yet what this is for...if it's only x related we can probably
 //	  toss it.   
-   if (sysdep_palette->lookup_dirty || pseudo_color_lookup_dirty)
+   if (current_palette->lookup_dirty || pseudo_color_lookup_dirty)
    {
       use_dirty = 0;
       pseudo_color_lookup_dirty = 0;
-      /* sysdep_palette->lookup_dirty is cleared for us by
-         sysdep_palette_update() */
+      /* current_palette->lookup_dirty is cleared for us by
+         current_palette_update() */
    }
 
-   (*ph_ovr_update_display_func) ();
+   (*ph_ovr_update_display_func) (bitmap);
 
    use_dirty = old_use_dirty;
 
@@ -499,7 +503,7 @@ static void ph_ovr_update_8_to_8bpp (struct osd_bitmap *bitmap)
 
 #undef DEST_PIXEL
 
-#define INDIRECT sysdep_palette->lookup
+#define INDIRECT current_palette->lookup
 
 static void ph_ovr_update_8_to_16bpp (struct osd_bitmap *bitmap)
 {

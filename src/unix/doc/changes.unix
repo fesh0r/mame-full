@@ -3,8 +3,23 @@ Xmame history:
 Last Modified by Lawrence Gold (gold@aros.net)
 
 Release 0.37b13.2
+	- MESS 0.37b13 is now included.
 	- Added an updated romulan.pl to contrib/tools.  (Nathan Hand)
 	- Added an updated romalizer to contrib/tools.  (Christopher Stone)
+	- Adopted the directory layout used in MESS CVS.  Namely, all of the
+          xmame-specific directories have been moved into src/unix.  Releases
+          will now have symlinks to these directories in the root.
+        - Updated the docs to reflect the new mailing list address, courtesy of
+	  Pete French.
+	- Fixed an unmatched parenthesis error in src/drawgfx.c that was
+	  affecting non-Intel platforms.
+	- Fixed a bug in mess/cpu/apexc/apexcdsm.c that was causing xmess
+	  linking to fail.
+	- Updates to the QNX target: Added sound support via an ALSA hack, added
+	  fullscreen Photon2 support, and made other miscellaneous Photon2
+	  updates and fixes.  (Travis Coady)
+	- Updated GLMame to v0.85.  (Sven Goethel)
+        - Vector games now work with the SDL target.
 
 Release 0.37b13.1 (xmame only)
 	- Everything from MAME 0.37b13.

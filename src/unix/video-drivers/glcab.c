@@ -223,21 +223,21 @@ void ParseLine(char *buf)
 		  	   texnum,xdim,ydim,buf);
 		  #endif
 		  
-		  __glGenTextures(1,&(cabtex[texnum]));
-		  __glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
+		  disp__glGenTextures(1,&(cabtex[texnum]));
+		  disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
 		  
 		  cabimg[texnum]=read_JPEG_file(buf);
 		  if(!cabimg[texnum])
 			printf("GLError (cab): Unable to read %s\n",buf);
 		  
-		  __glTexImage2D(GL_TEXTURE_2D,0,3,xdim,ydim,0,GL_RGB,GL_UNSIGNED_BYTE,
+		  disp__glTexImage2D(GL_TEXTURE_2D,0,3,xdim,ydim,0,GL_RGB,GL_UNSIGNED_BYTE,
 					   cabimg[texnum]);
 		  
-		  __glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		  __glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		  disp__glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		  disp__glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 		  
-		  __glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-		  __glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+		  disp__glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
+		  disp__glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
 		}
 	  }
 	}
@@ -283,7 +283,7 @@ void ParseLine(char *buf)
 	      else 
 	      {
 		  ParseArg(buf+10, &a);
-		  __glPointSize(a);
+		  disp__glPointSize(a);
 	      }
         } else if(!strncasecmp(buf,"begin",5)) 
 	{
@@ -316,11 +316,11 @@ void ParseLine(char *buf)
 	}
 	else if(!strncasecmp(buf,"color3",6)) {
 	  ParseVec3(buf+7,&x,&y,&z);
-	  __glColor3f(x,y,z);
+	  disp__glColor3f(x,y,z);
 	}
 	else if(!strncasecmp(buf,"color4",6)) {
 	  ParseVec4(buf+7,&x,&y,&z,&a);
-	  __glColor4f(x,y,z,a);
+	  disp__glColor4f(x,y,z,a);
 	}
 	else if(!strncasecmp(buf,"vertex",6)) {
 	  if(inscreen) {
@@ -346,24 +346,24 @@ void ParseLine(char *buf)
 	  }
 	  else {
 		ParseVec3(buf+7,&x,&y,&z);
-		__glVertex3f(x,y,z);
+		disp__glVertex3f(x,y,z);
 	  }
 	}
 	else if(!strncasecmp(buf,"shading",7)) {
 	  if(!strncasecmp(buf+8,"flat",4))
-		__glShadeModel(GL_FLAT);
+		disp__glShadeModel(GL_FLAT);
 	  else if(!strncasecmp(buf+8,"smooth",6))
-		__glShadeModel(GL_SMOOTH);
+		disp__glShadeModel(GL_SMOOTH);
 	  else printf("GLError (cab): Invalid shading model -- %s",buf+8);
 	}
 	else if(!strncasecmp(buf,"enable",6)) {
 	  if(!strncasecmp(buf+7,"texture",7))
-		__glEnable(GL_TEXTURE_2D);
+		disp__glEnable(GL_TEXTURE_2D);
 	  else printf("GLError (cab): Invalid feature to enable -- %s",buf+7);
 	}
 	else if(!strncasecmp(buf,"disable",7)) {
 	  if(!strncasecmp(buf+8,"texture",7))
-		__glDisable(GL_TEXTURE_2D);
+		disp__glDisable(GL_TEXTURE_2D);
 	  else printf("GLError (cab): Invalid feature to disable -- %s",buf+7);
 	}
 	else if(!strncasecmp(buf,"settex",6)) {
@@ -372,11 +372,11 @@ void ParseLine(char *buf)
 	  if(texnum>=numtex)
 		printf("GLError (cab): Hightest possible texture number is %d\n",numtex-1);
 	  else
-		__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
+		disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
 	}
 	else if(!strncasecmp(buf,"texcoord",8)) {
 	  ParseVec2(buf+9,&x,&y);
-	  __glTexCoord2f(x,y);
+	  disp__glTexCoord2f(x,y);
 	}
 	else printf("GLError (cab): Invalid command -- %s",buf);
   }
@@ -386,12 +386,12 @@ void InitCabGlobals()
 {
   int i;
 
-  __glDeleteLists(cablist, 1);
+  disp__glDeleteLists(cablist, 1);
   cablist=0;
 
   if(cabtex!=0) 
   {
-          __glDeleteTextures(numtex, cabtex);
+          disp__glDeleteTextures(numtex, cabtex);
 	  free(cabtex);
   }
   cabtex=0;
@@ -441,9 +441,9 @@ int LoadCabinet(char *cabname)
     printf("GLINFO: Loading Cabinet from %s\n",buf);
   #endif
 
-  cablist=__glGenLists(1);
+  cablist=disp__glGenLists(1);
 
-  __glNewList(cablist,GL_COMPILE);
+  disp__glNewList(cablist,GL_COMPILE);
   inlist=1;
 
   if(!fgets(buf,256,cfp)) {
@@ -463,7 +463,7 @@ int LoadCabinet(char *cabname)
 	ParseLine(buf);
   }
 
-  __glEndList();
+  disp__glEndList();
   inlist=0;
 
   fclose(cfp);
@@ -471,4 +471,4 @@ int LoadCabinet(char *cabname)
   return(1);
 }
 
-#endif /*ifdef xgl */
+#endif

@@ -1,4 +1,40 @@
+/**
+ * glxtool.c
+ *
+ * Copyright (C) 2001  Sven Goethel
+ *
+ * GNU Library General Public License 
+ * as published by the Free Software Foundation
+ *
+ * http://www.gnu.org/copyleft/lgpl.html
+ * General dynamical loading OpenGL (GL/GLU) support for:
+ */
+
 #include "glxtool.h"
+
+#include "glx-disp-var.hc"
+
+/**
+ * do not call this one directly,
+ * use fetch_GL_FUNCS (gltool.c) instead
+ */
+void LIBAPIENTRY fetch_GLX_FUNCS (const char * libGLName, 
+			          const char * libGLUName, int force)
+{
+  static int _firstRun = 1;
+
+  if(force)
+        _firstRun = 1;
+
+  if(!_firstRun)
+  	return;
+
+  #define GET_GL_PROCADDRESS(a) getGLProcAddressHelper (libGLName, libGLUName, (a), NULL, 1, 0);
+
+  #include "glx-disp-fetch.hc"
+
+  _firstRun=0;
+}
 
 /*
  * Name      : get_GC
@@ -19,7 +55,7 @@
  *             context could not be created, -2 if the context could not
  *             be associated with the window
  */
-int get_GC( Display *display, Window win, XVisualInfo *visual,
+int LIBAPIENTRY get_GC( Display *display, Window win, XVisualInfo *visual,
             GLXContext *gc, GLXContext gc_share,
 	    int verbose )
 {
@@ -30,10 +66,10 @@ int get_GC( Display *display, Window win, XVisualInfo *visual,
     	switch(trial)
 	{
 	  case 2:
-	    *gc = __glXCreateContext( display, visual, gc_share, GL_TRUE );
+	    *gc = disp__glXCreateContext( display, visual, gc_share, GL_TRUE );
 	    break;
 	  case 1:
-	    *gc = __glXCreateContext( display, visual, gc_share, GL_FALSE );
+	    *gc = disp__glXCreateContext( display, visual, gc_share, GL_FALSE );
 	    break;
 	}
     	trial--;
@@ -44,17 +80,16 @@ int get_GC( Display *display, Window win, XVisualInfo *visual,
         }
 
         /* associated the context with the X window */
-        if( __glXMakeCurrent( display, win, *gc ) == False) {
-	    __glXDestroyContext( display, *gc );
+        if( disp__glXMakeCurrent( display, win, *gc ) == False) {
+	    disp__glXDestroyContext( display, *gc );
             if(verbose)
 	    {
-	      fprintf(stderr, "GLINFO: glXCreateContext  trial %p\n", *gc);
-	      fprintf(stderr, "GLINFO: glXDestroyContext trial %p\n", *gc);
+	      fprintf(stderr, "GLINFO: glXCreateContext/glXDestroyContext trial(%d) %p\n", trial, *gc);
 	    }
 	    continue;
         } else {
 	    if(verbose)
-		fprintf(stderr, "GLINFO: glXCreateContext  sure %p\n", *gc);
+		fprintf(stderr, "GLINFO: glXCreateContext trial (%d) sure %p\n", trial, *gc);
 	    return 0;
         }
     }
@@ -63,11 +98,12 @@ int get_GC( Display *display, Window win, XVisualInfo *visual,
 }
 
 
-int setVisualAttribListByGLCapabilities( 
+int LIBAPIENTRY setVisualAttribListByGLCapabilities( 
 					int visualAttribList[/*>=32*/],
 				        GLCapabilities *glCaps )
 {
     int i=0;
+    visualAttribList[i++] = GLX_USE_GL;    /* paranoia .. */
     visualAttribList[i++] = GLX_RED_SIZE;
     visualAttribList[i++] = 1;
     visualAttribList[i++] = GLX_GREEN_SIZE;
@@ -111,7 +147,7 @@ int setVisualAttribListByGLCapabilities(
  *   else if ! ownwin:
  *      i/o:    the window itself
  */
-VisualGC findVisualGlX( Display *display, 
+VisualGC LIBAPIENTRY findVisualGlX( Display *display, 
 			       Window rootWin,
 			       Window * pWin, 
 			       int width, int height,
@@ -133,31 +169,36 @@ VisualGC findVisualGlX( Display *display,
     int tryChooseVisual = 1;
     int gc_ret = 0;
     int ownwin = 0;
+    GLCapabilities _glCaps;
+    int accumTestDone=0;
 
     /** 
      * The Visual seeked by Function: findVisualIdByFeature !
      */
     XVisualInfo * visualList=NULL; /* the visual list, to be XFree-ed */
 
+    /* paranoia .. */
+    glCaps->gl_supported = 1;
+
     /* backup ... */
-    GLCapabilities _glCaps = *glCaps;
+    _glCaps = *glCaps;
 
     if(pOwnWin) ownwin=*pOwnWin;
-
-    if(verbose)
-    {
-	    fprintf(stdout, "GLINFO findVisualGlX: input capabilities:\n");
-	    printGLCapabilities ( glCaps );
-    }
 
     do {
             if(verbose)
 	    {
 	         fprintf(stderr, "GLINFO: seeking visual loop# %d\n", j);
+	         fprintf(stderr, "GLINFO: seeking gl capabilities:\n");
+		 printGLCapabilities ( glCaps );
 	    }
 
-            if(glCaps->nativeVisualID>=0)
+            if(glCaps->nativeVisualID>=0 && j==0)
 	    {
+	        /**
+		 * if somebody passes us a nativeVisualID,
+		 * we will try to use it .. the 1st time only
+		 */
 	    	vgc.visual = findVisualIdByID(&visualList, 
 		                              (int)(glCaps->nativeVisualID), 
 					       display, *pWin, verbose);
@@ -172,7 +213,7 @@ VisualGC findVisualGlX( Display *display,
 
             if(tryChooseVisual && vgc.visual==NULL)
 	    {
-		    vgc.visual = __glXChooseVisual( display,
+		    vgc.visual = disp__glXChooseVisual( display,
 						  DefaultScreen( display ),
 						  visualAttribList );
 		    if(verbose)
@@ -182,6 +223,7 @@ VisualGC findVisualGlX( Display *display,
 			    fprintf(stdout, "findVisualGlX.glXChooseVisual: found visual(ID:%d(0x%X))\n", 
 				(int) vgc.visual->visualid,
 				(int) vgc.visual->visualid);
+			        printVisualInfo ( display, vgc.visual );
 			} else {
 			    fprintf(stdout, "findVisualGlX.glXChooseVisual: no visual\n");
 			}
@@ -214,16 +256,16 @@ VisualGC findVisualGlX( Display *display,
 
 	    if( offscreen && vgc.visual!=NULL)
 	    {
-	        if(*pix!=0)
+	        if(pix!=NULL && *pix!=0)
 		{
 			XFreePixmap(display, *pix);
 		}
-		if(vgc.visual !=NULL)
+		if(pix!=NULL && vgc.visual !=NULL)
 	    		*pix = XCreatePixmap( display, rootWin, width, height, 
 		                              vgc.visual->depth); 
-		if(*pix!=0)
+		if(pix!=NULL && *pix!=0)
 		{
-	           *pWin = __glXCreateGLXPixmap( display,  vgc.visual, *pix );
+	           *pWin = disp__glXCreateGLXPixmap( display,  vgc.visual, *pix );
 		   if(*pWin==0)
 		   {
 		   	XFreePixmap(display, *pix);
@@ -248,7 +290,8 @@ VisualGC findVisualGlX( Display *display,
 
 	    gc_ret = -100;
 
-	    if( ownwin && newWin!=0 &&
+	    if( ownwin && newWin!=0 && 
+	        gc_ret==-100 /* just a poss. test stage */ &&
 	        (gc_ret=get_GC( display, newWin,
 			        vgc.visual, &(vgc.gc), shareWith, verbose)) == 0
               )
@@ -256,7 +299,7 @@ VisualGC findVisualGlX( Display *display,
 		    vgc.success=1;
 		    *pWin = newWin ;
 	    }
-	    else if( vgc.visual!=NULL &&  ownwin && *pWin!=0 &&
+	    else if( vgc.visual!=NULL &&  !ownwin && *pWin!=0 &&
 	             (gc_ret=get_GC( display, *pWin,
 			             vgc.visual, &(vgc.gc), shareWith, verbose)) == 0
 	           )    
@@ -271,10 +314,21 @@ VisualGC findVisualGlX( Display *display,
 			fflush(stderr);
 		    }
 
-		    if(*pix!=0)
+		    if(pix!=NULL && *pix!=0)
 		    {
 		   	XFreePixmap(display, *pix);
 			*pix=0;
+		    }
+
+		    if(ownwin && newWin!=0)
+		    {
+		        if(verbose)
+		        {
+		          fprintf(stdout, "findVisualGlX: FREE OWN WINDOW !\n");
+		          fflush(stdout);
+		        }
+		        destroyOwnOverlayWin(display, &newWin,
+			                     pOwnWinAttr);
 		    }
 
 		    if(visualList!=NULL)
@@ -288,27 +342,15 @@ VisualGC findVisualGlX( Display *display,
 	    		vgc.visual=NULL;
 		    }
 
+                    glCaps->nativeVisualID=-1;
+
 		    /**
 		     * Falling-Back the exact (min. requirement) parameters ..
 		     */
-		    if(ownwin && offscreen) {
+		    if(!ownwin && !offscreen) {
 		        *glCaps=_glCaps;
-			if(pOwnWin) *pOwnWin=1;
-		    } else if( (glCaps->accumRedBits>0 ||
-		                glCaps->accumGreenBits>0 ||
-		                glCaps->accumBlueBits>0 ||
-		                glCaps->accumAlphaBits>0
-			       ) && offscreen
-			     ) 
-	            {
-		        glCaps->accumRedBits=0;
-			glCaps->accumGreenBits=0;
-			glCaps->accumBlueBits=0;
-			glCaps->accumAlphaBits=0;
-		    } else if(glCaps->buffer==BUFFER_SINGLE && 
-		              offscreen) 
-		    {
-		        glCaps->buffer=BUFFER_DOUBLE;
+			ownwin=1;
+			if(pOwnWin) *pOwnWin=ownwin;
 		    } else if(glCaps->stereo==STEREO_ON) {
 			glCaps->stereo=STEREO_OFF;
 		    } else if(glCaps->stencilBits>32) {
@@ -319,13 +361,41 @@ VisualGC findVisualGlX( Display *display,
 		        glCaps->stencilBits=8;
 		    } else if(glCaps->stencilBits>0) {
 		        glCaps->stencilBits=0;
+		    } else if( glCaps->alphaBits>0 ||
+		               glCaps->accumAlphaBits>0
+			     )
+	            {
+			glCaps->alphaBits=0;
+			glCaps->accumAlphaBits=0;
+		    } else if( accumTestDone==0 &&
+		               ( glCaps->accumRedBits==0 ||
+		                 glCaps->accumGreenBits==0 ||
+		                 glCaps->accumBlueBits==0
+			       )
+			     ) 
+	            {
+		        glCaps->accumRedBits=1;
+			glCaps->accumGreenBits=1;
+			glCaps->accumBlueBits=1;
+		    } else if( glCaps->accumRedBits>0 ||
+		               glCaps->accumGreenBits>0 ||
+		               glCaps->accumBlueBits>0
+			     ) 
+	            {
+		        glCaps->accumRedBits=0;
+			glCaps->accumGreenBits=0;
+			glCaps->accumBlueBits=0;
+			accumTestDone=1;
+		    } else if(glCaps->buffer==BUFFER_SINGLE && 
+		              offscreen) 
+		    {
+		        glCaps->buffer=BUFFER_DOUBLE;
 		    } else if(glCaps->buffer==BUFFER_DOUBLE) {
 		        glCaps->buffer=BUFFER_SINGLE;
 		    } else if(tryChooseVisual) {
 		        *glCaps=_glCaps;
-			if(pOwnWin) *pOwnWin=0;
-			ownwin=0;
 			tryChooseVisual=0;
+			accumTestDone=0;
 		    } else done=1;
 	    }
     } while (vgc.success==0 && done==0) ;
@@ -342,14 +412,13 @@ VisualGC findVisualGlX( Display *display,
 		(int)vgc.visual->colormap_size,
 		(int)vgc.visual->bits_per_rgb,
 		(int)shareWith);
-	    printVisualInfo ( display, vgc.visual);
     }
 
     return vgc;
 }
 
 
-XVisualInfo * findVisualIdByID( XVisualInfo ** visualList, 
+XVisualInfo * LIBAPIENTRY findVisualIdByID( XVisualInfo ** visualList, 
 			        int visualID, Display *disp,
 			        Window win, int verbose)
 {
@@ -402,7 +471,7 @@ XVisualInfo * findVisualIdByID( XVisualInfo ** visualList,
     return NULL;
 }
 
-XVisualInfo * findVisualIdByFeature( XVisualInfo ** visualList, 
+XVisualInfo * LIBAPIENTRY findVisualIdByFeature( XVisualInfo ** visualList, 
                                      Display *disp, Window win,
 				     GLCapabilities *glCaps,
 				     int verbose)
@@ -430,7 +499,7 @@ XVisualInfo * findVisualIdByFeature( XVisualInfo ** visualList,
     for(i=0; done==0 && i<numReturns; i++)
     {
         vi = &((*visualList)[i]);
-	if ( testVisualInfo ( disp, vi, glCaps ) )
+	if ( testVisualInfo ( disp, vi, glCaps, verbose ) )
 	{
                 if(verbose)
 		{
@@ -455,7 +524,7 @@ XVisualInfo * findVisualIdByFeature( XVisualInfo ** visualList,
     return NULL;
 }
 
-int setGLCapabilities ( Display * disp, 
+int LIBAPIENTRY setGLCapabilities ( Display * disp, 
                         XVisualInfo * visual, GLCapabilities *glCaps)
 {
     int iValue=0;
@@ -463,7 +532,20 @@ int setGLCapabilities ( Display * disp,
     int iValue2=0;
     int iValue3=0;
 
-    if(__glXGetConfig( disp, visual, GLX_DOUBLEBUFFER, &iValue)==0)
+    memset(glCaps, 0, sizeof(GLCapabilities));
+
+    if(disp__glXGetConfig( disp, visual, GLX_USE_GL, &iValue)==0)
+    {
+	glCaps->gl_supported=(iValue==True)?1:0;
+    } else {
+	fprintf(stderr,"GLINFO: fetching GLX_USE_GL state failed\n");
+	fflush(stderr);
+    }
+
+    if( ! glCaps->gl_supported )
+    	return 0;
+
+    if(disp__glXGetConfig( disp, visual, GLX_DOUBLEBUFFER, &iValue)==0)
     {
 	glCaps->buffer=iValue?BUFFER_DOUBLE:BUFFER_SINGLE;
     } else {
@@ -471,7 +553,7 @@ int setGLCapabilities ( Display * disp,
 	fflush(stderr);
     }
 
-    if(__glXGetConfig( disp, visual, GLX_RGBA, &iValue)==0)
+    if(disp__glXGetConfig( disp, visual, GLX_RGBA, &iValue)==0)
     {
 	glCaps->color=iValue?COLOR_RGBA:COLOR_INDEX;
     } else {
@@ -479,7 +561,7 @@ int setGLCapabilities ( Display * disp,
 	fflush(stderr);
     }
 
-    if(__glXGetConfig( disp, visual, GLX_STEREO, &iValue)==0)
+    if(disp__glXGetConfig( disp, visual, GLX_STEREO, &iValue)==0)
     {
 	glCaps->stereo=iValue?STEREO_ON:STEREO_OFF;
     } else {
@@ -487,7 +569,7 @@ int setGLCapabilities ( Display * disp,
 	fflush(stderr);
     }
 
-    if(__glXGetConfig( disp, visual, GLX_DEPTH_SIZE, &iValue)==0)
+    if(disp__glXGetConfig( disp, visual, GLX_DEPTH_SIZE, &iValue)==0)
     {
         glCaps->depthBits = iValue;
     } else {
@@ -495,7 +577,7 @@ int setGLCapabilities ( Display * disp,
 	fflush(stderr);
     }
 
-    if(__glXGetConfig( disp, visual, GLX_STENCIL_SIZE, &iValue)==0)
+    if(disp__glXGetConfig( disp, visual, GLX_STENCIL_SIZE, &iValue)==0)
     {
         glCaps->stencilBits = iValue;
     } else {
@@ -503,10 +585,10 @@ int setGLCapabilities ( Display * disp,
 	fflush(stderr);
     }
 
-    if(__glXGetConfig(disp,visual,GLX_RED_SIZE, &iValue)==0 &&
-       __glXGetConfig(disp,visual,GLX_GREEN_SIZE, &iValue1)==0 &&
-       __glXGetConfig(disp,visual,GLX_BLUE_SIZE, &iValue2)==0 &&
-       __glXGetConfig(disp,visual,GLX_ALPHA_SIZE, &iValue3)==0 )
+    if(disp__glXGetConfig(disp,visual,GLX_RED_SIZE, &iValue)==0 &&
+       disp__glXGetConfig(disp,visual,GLX_GREEN_SIZE, &iValue1)==0 &&
+       disp__glXGetConfig(disp,visual,GLX_BLUE_SIZE, &iValue2)==0 &&
+       disp__glXGetConfig(disp,visual,GLX_ALPHA_SIZE, &iValue3)==0 )
     {
         glCaps->redBits = iValue;
         glCaps->greenBits= iValue1;
@@ -517,10 +599,10 @@ int setGLCapabilities ( Display * disp,
 	fflush(stderr);
     }
 
-    if(__glXGetConfig(disp,visual,GLX_ACCUM_RED_SIZE, &iValue)==0 &&
-       __glXGetConfig(disp,visual,GLX_ACCUM_GREEN_SIZE, &iValue1)==0 &&
-       __glXGetConfig(disp,visual,GLX_ACCUM_BLUE_SIZE, &iValue2)==0 &&
-       __glXGetConfig(disp,visual,GLX_ACCUM_ALPHA_SIZE, &iValue3)==0 )
+    if(disp__glXGetConfig(disp,visual,GLX_ACCUM_RED_SIZE, &iValue)==0 &&
+       disp__glXGetConfig(disp,visual,GLX_ACCUM_GREEN_SIZE, &iValue1)==0 &&
+       disp__glXGetConfig(disp,visual,GLX_ACCUM_BLUE_SIZE, &iValue2)==0 &&
+       disp__glXGetConfig(disp,visual,GLX_ACCUM_ALPHA_SIZE, &iValue3)==0 )
     {
         glCaps->accumRedBits = iValue;
         glCaps->accumGreenBits= iValue1;
@@ -530,55 +612,102 @@ int setGLCapabilities ( Display * disp,
 	fprintf(stderr,"GLINFO: fetching rgba AccumSize states failed\n");
 	fflush(stderr);
     }
-    glCaps->nativeVisualID=(long)visual->visualid;
+    glCaps->nativeVisualID=(long) (visual->visualid);
 
     return 1;
 }
 
-int testVisualInfo ( Display *display, XVisualInfo * vi, 
-		     GLCapabilities *glCaps)
+int LIBAPIENTRY testVisualInfo ( Display *display, XVisualInfo * vi, 
+		     GLCapabilities *glCaps, int verbose)
 {
     GLCapabilities _glCaps;
     setGLCapabilities ( display, vi, &_glCaps);
 
-    if(_glCaps.buffer<glCaps->buffer) return 0;
-
-    if(_glCaps.color<glCaps->color) return 0;
-
-    if(_glCaps.stereo<glCaps->stereo) return 0;
-
     /*
-    if(_glCaps.depthBits<glCaps->depthBits) return 0;
+    if(verbose)
+    {
+            fprintf(stderr, "testVisualInfo vi(ID:%d(0x%X)):\n",
+	            (int) vi->visualid, (int) vi->visualid);
+	    printGLCapabilities ( &_glCaps );
+    }
     */
 
-    if(_glCaps.stencilBits<glCaps->stencilBits) return 0;
+    if(_glCaps.gl_supported != glCaps->gl_supported) return 0;
 
-    /*
-    if(_glCaps.redBits<glCaps->redBits) return 0;
+    if(_glCaps.buffer!=glCaps->buffer) return 0;
 
-    if(_glCaps.greenBits<glCaps->greenBits) return 0;
+    if(_glCaps.color!=glCaps->color) return 0;
 
-    if(_glCaps.blueBits<glCaps->blueBits) return 0;
-    */
+    if(_glCaps.stereo!=glCaps->stereo) return 0;
 
-    if(_glCaps.accumRedBits<glCaps->accumRedBits) return 0;
+    if( ( glCaps->stencilBits>0 && 
+          _glCaps.stencilBits<glCaps->stencilBits
+	) ||
+        (
+	  glCaps->stencilBits==0 &&
+	  _glCaps.stencilBits!=glCaps->stencilBits
+	)
+      )
+    	return 0;
 
-    if(_glCaps.accumGreenBits<glCaps->accumGreenBits) return 0;
+    if( ( glCaps->accumRedBits>0 && 
+          _glCaps.accumRedBits<glCaps->accumRedBits
+	) ||
+        (
+	  glCaps->accumRedBits==0 &&
+          _glCaps.accumRedBits!=glCaps->accumRedBits
+	)
+      )
+    	return 0;
 
-    if(_glCaps.accumBlueBits<glCaps->accumBlueBits) return 0;
+    if( ( glCaps->accumGreenBits>0 && 
+          _glCaps.accumGreenBits<glCaps->accumGreenBits
+	) ||
+        (
+	  glCaps->accumGreenBits==0 &&
+          _glCaps.accumGreenBits!=glCaps->accumGreenBits
+	)
+      )
+    	return 0;
 
-    if(glCaps->color>0) {
-    	    /*
-	    if(_glCaps.alphaBits<glCaps->alphaBits) return 0;
-	    */
-	    if(_glCaps.accumAlphaBits<glCaps->accumAlphaBits) return 0;
+    if( ( glCaps->accumBlueBits>0 && 
+          _glCaps.accumBlueBits<glCaps->accumBlueBits
+	) ||
+        (
+	  glCaps->accumBlueBits==0 &&
+          _glCaps.accumBlueBits!=glCaps->accumBlueBits
+	)
+      )
+    	return 0;
+
+    if( ( glCaps->alphaBits>0 && 
+	  _glCaps.alphaBits<glCaps->alphaBits
+	) ||
+        (
+	  glCaps->alphaBits==0 &&
+	  _glCaps.alphaBits!=glCaps->alphaBits
+	)
+      )
+	return 0;
+
+    if( glCaps->alphaBits>0 )
+    {
+	    if( ( glCaps->accumAlphaBits>0 && 
+		  _glCaps.accumAlphaBits<glCaps->accumAlphaBits
+		) ||
+                (
+	          glCaps->accumAlphaBits==0 &&
+		  _glCaps.accumAlphaBits!=glCaps->accumAlphaBits
+	        )
+	      )
+		return 0;
     }
 
     return 1;
 }
 
 
-void printVisualInfo ( Display *display, XVisualInfo * vi)
+void LIBAPIENTRY printVisualInfo ( Display *display, XVisualInfo * vi)
 {
     GLCapabilities glCaps;
 
@@ -596,7 +725,7 @@ void printVisualInfo ( Display *display, XVisualInfo * vi)
     printGLCapabilities ( &glCaps );
 }
 
-void printAllVisualInfo ( Display *disp, Window win, int verbose)
+void LIBAPIENTRY printAllVisualInfo ( Display *disp, Window win, int verbose)
 {
     XVisualInfo    *	visualInfo=0;    
     XVisualInfo    *    vi=0;
@@ -632,28 +761,8 @@ void printAllVisualInfo ( Display *disp, Window win, int verbose)
     XFree(visualInfo); 	
 }
 
-
-void printGLCapabilities ( GLCapabilities *glCaps )
-{
-    fprintf(stdout, "\t doubleBuff: %d, ", (int)glCaps->buffer);
-    fprintf(stdout, " rgba: %d, ", (int)glCaps->color);
-    fprintf(stdout, " stereo: %d, ", (int)glCaps->stereo);
-    fprintf(stdout, " depthSize: %d, ", (int)glCaps->depthBits);
-    fprintf(stdout, " stencilSize: %d !\n", (int)glCaps->stencilBits);
-    fprintf(stdout, "\t red: %d, ", (int)glCaps->redBits);
-    fprintf(stdout, " green: %d, ", (int)glCaps->greenBits);
-    fprintf(stdout, " blue: %d, ", (int)glCaps->blueBits);
-    fprintf(stdout, " alpha: %d !\n", (int)glCaps->alphaBits);
-    fprintf(stdout, "\t red accum: %d, ", (int)glCaps->accumRedBits);
-    fprintf(stdout, " green accum: %d, ", (int)glCaps->accumGreenBits);
-    fprintf(stdout, " blue accum: %d, ", (int)glCaps->accumBlueBits);
-    fprintf(stdout, " alpha accum: %d !\n", (int)glCaps->accumAlphaBits);
-    fprintf(stdout, "\t nativeVisualID: %ld !\n", (long)glCaps->nativeVisualID);
-
-    fflush(stdout);
-}
-
-Window createOwnOverlayWin(Display *display, Window rootwini, Window parentWin,
+Window LIBAPIENTRY createOwnOverlayWin
+			(Display *display, Window rootwini, Window parentWin,
 			   XSetWindowAttributes * pOwnWinAttr,
 			   unsigned long ownWinmask,
                            XVisualInfo *visual, int width, int height)
@@ -727,5 +836,42 @@ Window createOwnOverlayWin(Display *display, Window rootwini, Window parentWin,
     if(pOwnWinAttr) *pOwnWinAttr=attribs;
 
     return window;
+}
+
+void LIBAPIENTRY destroyOwnOverlayWin(Display *display, Window *newWin,
+			   XSetWindowAttributes * pOwnWinAttr)
+{				  
+  if(newWin!=NULL)
+  {
+  	XDestroyWindow( display, *newWin );
+	*newWin=0;
+  }
+
+  if(pOwnWinAttr!=NULL && pOwnWinAttr->colormap!=0)
+  {
+    XFreeColormap(display, pOwnWinAttr->colormap);
+    pOwnWinAttr->colormap=0;
+  }
+}
+
+int LIBAPIENTRY x11gl_myErrorHandler(Display *pDisp, XErrorEvent *p_error)
+{
+	char err_msg[80];
+
+	XGetErrorText(pDisp, p_error->error_code, err_msg, 80);
+	fprintf(stderr, "X11 Error detected.\n %s\n", err_msg);
+	fprintf(stderr, " Protocol request: %d\n", p_error->request_code);
+	fprintf(stderr, " Resource ID : 0x%x\n", (int)p_error->resourceid);
+	fprintf(stderr, " \ntrying to continue ... \n");
+	fflush(stderr);
+	return 0;
+}
+
+int LIBAPIENTRY x11gl_myIOErrorHandler(Display *pDisp)
+{
+	fprintf(stderr, "X11 I/O Error detected.\n");
+	fprintf(stderr, " \ndo not know what to do ... \n");
+	fflush(stderr);
+	return 0;
 }
 

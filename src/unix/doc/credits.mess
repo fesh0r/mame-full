@@ -44,5 +44,3 @@ POSSIBILITY OF SUCH DAMAGE.
 CoCo disk controller code (src/mess/machine/cocodisk.c) based on code from 
 the PC-Dragon emulator by Paul Burgin and Stewart Orchard.
 ---------------------------------------------------------------------------
-
-

@@ -26,7 +26,7 @@ struct rc_option display_opts[] = {
    { "Photon Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "phrender-mode",	NULL,			rc_int,		&ph_video_mode,
+   { "render-mode",	NULL,			rc_int,		&ph_video_mode,
      "0",		0,			PH_MODE_COUNT-1, NULL,
      "Select Photon rendering video mode:\n0 Normal window  (hotkey left-alt + insert)\n1 Fullscreen Video Overlay (hotkey left-alt + home)" },
    { NULL,		NULL,			rc_link,	ph_window_opts,
@@ -266,6 +266,7 @@ int sysdep_set_video_mode (void)
 
 void sysdep_set_text_mode (void)
 {
+
 }
 
 

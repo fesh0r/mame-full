@@ -280,7 +280,7 @@ Also see the text todo file, kept around to quickly enter stuff while hacking:
 .
 \layout Section
 
-Compiling, Setting Up and Starting xmame/xmess
+Compiling, Setting Up and Starting Xmame/Xmess
 \layout Standard
 
 Note: This section is not a Unix tutorial.
@@ -1067,7 +1067,7 @@ On an OpenStep keyboard the functions keys do not all operate as expected.
  useful to remap this globally the first time you run xmame.
 \layout Section
 
-Xmame frequently asked questions
+Xmame Frequently Asked Questions
 \begin_inset LatexCommand \label{Xmame frequently asked questions}
 
 \end_inset 
@@ -2591,7 +2591,7 @@ If that doesn't help, then ask your question on the mailing list or send
  for contact information.
 \layout Section
 
-Display subsystem specific comments & notes 
+Display Subsystem-Specific Comments and Notes 
 \begin_inset LatexCommand \label{Display subsystem specific comments and notes}
 
 \end_inset 
@@ -2599,7 +2599,7 @@ Display subsystem specific comments & notes
 
 \layout Subsection
 
-FX-Mame a glide driver for xmame
+FXmame, a glide driver for xmame
 \layout Standard
 
 The latest version of this driver can be obtained at 
@@ -3458,7 +3458,7 @@ Till GLmame version 0.6: Mike Oliphant
 
 \layout Section
 
-contact information and credits
+Contact Information and Credits
 \layout Subsection
 
 Mail 
@@ -3473,7 +3473,7 @@ There is an official xmame/xmess mailing list.
  All operations related to this list are performed via email to 
 \family typewriter 
 
-\begin_inset LatexCommand \url[xmame-request@acm.csres.utexas.edu]{mailto:xmame-request@acm.csres.utexas.edu}
+\begin_inset LatexCommand \url[Xmame-request@toybox.twisted.org.uk]{mailto:Xmame-request@toybox.twisted.org.uk}
 
 \end_inset 
 
@@ -3482,65 +3482,77 @@ There is an official xmame/xmess mailing list.
  with a proper keyword in the body.
 \layout Standard
 
-Currently recognized commands are:
+Some of the currently recognized commands are:
 \layout Verbatim
 
     subscribe      - subscribe to the list
 \layout Verbatim
 
     unsubscribe    - unsubscribe from the list
+\layout Verbatim
+
+    who            - see everyone who is on the list
+\layout Verbatim
+
+    info           - view the introductory information for this list
+\layout Verbatim
+
+    help           - list all recognized commands
+\layout Verbatim
+
+    
 \layout Standard
 
-X-Mame Mail List ideario
+Xmame Mailing List 
 \layout Itemize
 
-The X-Mame mailing list is intended to be a technical forum for XMame  developer
-s, that is,
+The xmame mailing list is intended to be a technical forum for xmame developers,
+ that is,
 \begin_deeper 
 \layout Itemize
 
-To exchange ideas about getting a better X-Mame 
+To exchange ideas for producing a better xmame.
 \layout Itemize
 
-To share patches and notify bugs 
+To share patches and bug notifications.
 \layout Itemize
 
-Study new design strategies
+To study new design strategies.
 \layout Itemize
 
-To expose problems and learn know-how
+To expose problems and learn know-how.
 \end_deeper 
 \layout Itemize
 
-The X-Mame mailing list 
+The Xmame mailing list 
 \series bold 
 is not
 \series default 
- a forum about playing games (but everyone in xmame-list plays...), so please:
+ a forum about playing games (but everyone on the list plays...); so please
 \begin_deeper 
 \layout Itemize
 
 
 \series bold 
-Don't use the list to ask about ROMs
+Don't use the list to ask about ROMs.
 \layout Itemize
 
 
 \series bold 
-Don't ask about non-UNIX ports of Mame, just about MAME and X-Mame
+Don't ask about non-UNIX ports of MAME, just about MAME and xmame.
 \layout Itemize
 
 
 \series bold 
 Don't ask about implementing a game.
  Just search the docs and contribute yourself (you'll enjoy twice: programming
- and playing...)
+ and playing...).
 \layout Itemize
 
 
 \series bold 
-Dont show your last high score in xxx game (we are interested in programming,
- and then playing, in this order)
+Don't show your last high score in xxx game (we are interested in programming,
+ and then playing, in this order).
 \end_deeper 
 \layout Itemize
 
@@ -3549,28 +3561,28 @@ Dont show your last high score in xxx game (we are interested in programming,
 Copyright notice: NEVER, I repeat NEVER send ROM images to the  list.
 
 \series default 
- (but you can tell us where to retrieve them...
+ (But you can tell us where to retrieve them...
  ;-) )
 \layout Itemize
 
-At this moment, the X-Mame List is 
+At this moment, the xmame list is 
 \series bold 
 unmoderated
 \series default 
-, that is: every one subscribed will received everything sent to the list.
- Expecting no need to change this policy...
+; that is, everyone subscribed will receive everything sent to the list.
+ We foresee no need to change this policy.
 \layout Standard
 
 If you want to send a personal mail to the xmame/xmess coordinator, send
  to the address below.
- Everyone that contributes to xmame/xmess should subscribe to the xmame/xmess
- mail list.
+ Everyone who contributes to xmame/xmess should subscribe to the xmame/xmess
+ mailing list.
 \layout Itemize
 
-Mailing list: 
+Mailing list:
 \family typewriter 
 
-\begin_inset LatexCommand \url[xmame-request@acm.csres.utexas.edu]{mailto:xmame-request@acm.csres.utexas.edu}
+\begin_inset LatexCommand \url[Xmame-request@toybox.twisted.org.uk]{mailto:Xmame-request@toybox.twisted.org.uk}
 
 \end_inset 
 
@@ -3588,7 +3600,7 @@ Xmame/xmess coordinator:
 \layout Standard
 
 That's all.
- Enjoy X-Mame!
+ Enjoy xmame!
 \layout Subsection
 
 Credits
@@ -3800,7 +3812,7 @@ Rene Herrmann
 \end_deeper 
 \layout Section
 
-Legal issues and copyrights concerning mame/mess
+Legal Issues and Copyrights Concerning MAME/MESS
 \layout Itemize
 
 
@@ -3845,15 +3857,15 @@ ChangeLogs
 
 \layout Subsection
 
-The mame/mess ChangeLogs
+The MAME/MESS ChangeLogs
 \layout Standard
 
-These are the changelogs of the offical mame and mess release, the core
- of xmame / xmess.
+These are the changelogs of the offical MAME and MESS release, the core
+ of xmame/xmess.
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[The mame changelog (changes.mame)]{changes.mame}
+\begin_inset LatexCommand \url[The MAME changelog (changes.mame)]{changes.mame}
 
 \end_inset 
 
@@ -3861,7 +3873,7 @@ These are the changelogs of the offical mame and mess release, the core
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[The mess changelog (changes.mess)]{changes.mess}
+\begin_inset LatexCommand \url[The MESS changelog (changes.mess)]{changes.mess}
 
 \end_inset 
 

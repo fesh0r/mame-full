@@ -9,6 +9,9 @@
  * Copyright (C) 2000-2001, The PhMAME Developement Team.
 */
 
+/* There is wayyyy... to much X11 crap left
+   over here, remove later */
+
 #ifndef __MAME_PHOTON_H_
 #define __MAME_PHOTON_H_
 
@@ -16,8 +19,7 @@
 #include <Pt.h>
 
 /* Commented... */
-//enum { PH_WINDOW, PH_OVR };
-enum { PH_WINDOW };
+enum { PH_WINDOW, PH_OVR };
 #define PH_MODE_COUNT 2
 
 #ifdef __PH_C__
@@ -119,5 +121,7 @@ void swap_dbe_buffers( void );
 int x11_init_palette_info(void);
 #endif
 
+/* generic helper functions */
+int ph_init_palette_info(void);
 
 #endif /* ifndef __MAME_PHOTON_H */

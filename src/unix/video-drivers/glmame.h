@@ -51,6 +51,9 @@ struct CameraPan {
 extern float gamma_correction;
 
 /* xgl.c */
+extern char * libGLName;
+extern char * libGLUName;
+
 extern GLXContext glContext;
 extern int antialias;
 extern int fullscreen_width;
