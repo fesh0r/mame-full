@@ -58,14 +58,8 @@ struct sysdep_palette_struct
 {
    struct sysdep_palette_info emulated;
    int dirty;
-   unsigned char *colors; /* used to cache the color values of pseudo color
-                             pens for get_pen */
-   unsigned char *color_dirty;
    int *lookup;           /* lookup table to be used for blitters to convert
                              the emulated palette to the physical palette */
-   int lookup_dirty;      /* this is set when the lookup table is changed,
-                             to notify blitters that they should update the
-                             entire screen */
    float gamma;
    int brightness;        /* brightess = percentage 0-100% */
    int bright_dirty;
@@ -96,23 +90,13 @@ void sysdep_palette_destroy(struct sysdep_palette_struct *palette);
 int sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
    unsigned char red, unsigned char green, unsigned char blue);
    
-int sysdep_palette_get_pen(struct sysdep_palette_struct *palette, int pen,
-   unsigned char *red, unsigned char *green, unsigned char *blue);
-
 /* for true color modes */   
 int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
    unsigned char red, unsigned char green, unsigned char blue);
 
-void sysdep_palette_update(struct sysdep_palette_struct *palette);
-
 /* This function has to be called if the display is changed, it recreates
    the palette object with the settings from the new display */
 int sysdep_palette_change_display(struct sysdep_palette_struct **palette);
-
-/* This function will cause all pens to be reset, this is usefull for
-   pseudocolor displays, if for some reason the hw palette
-   was reset, for example after switching to textmode */
-void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette);
 
 int sysdep_palette_set_brightness(struct sysdep_palette_struct *palette,
    int brightness);

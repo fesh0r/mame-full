@@ -101,29 +101,8 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
    palette->gamma        = 1.0;
    palette->bright_dirty = 1;
    
-   /* allocate the color lookup cache for get_pen */
-   if (writable_colors)
-   {
-      palette->colors = calloc(writable_colors, 3);
-      palette->color_dirty = calloc(writable_colors, 1);
-      if(!palette->colors || !palette->color_dirty)
-      {
-         fprintf(stderr, "error malloc failed for color cache\n");
-         sysdep_palette_destroy(palette);
-         return NULL;
-      }
-   }
-   
-   /* can we do our 8 -> 16 bpp speedup hack?
-      do not check for the scaleing factors sicne those might change */
-   if((depth == 8) && (display_palette_info.depth == 16))
-      lookup_size = 65536;
-   /* do we need a lookup table? */
-   else if ( (display_palette_info.depth != depth) ||
-        ( (depth == 16) && writable_colors) )
-      lookup_size = writable_colors? writable_colors:32768;
-      
-   if (lookup_size && !(palette->lookup = calloc(lookup_size, sizeof(int))))
+   lookup_size = writable_colors;
+   if (!(palette->lookup = calloc(lookup_size, sizeof(int))))
    {
       fprintf(stderr, "error malloc failed for color lookup table\n");
       sysdep_palette_destroy(palette);
@@ -131,57 +110,33 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
    }
       
    /* do we need to fill the lookup table? */
-   if (palette->lookup && !writable_colors)
-   {
-      int r,g,b;
-      
-      for(r=0; r<32; r++)
-         for(g=0; g<32; g++)
-            for(b=0; b<32; b++)
-               palette->lookup[r*1024 + g*32 + b] =
-                  sysdep_palette_make_pen_from_info(&display_palette_info,
-                     r*8, g*8, b*8);
-     
-      palette->lookup_dirty = 1;
-   }
+   int r,g,b;
+   
+   for(r=0; r<32; r++)
+      for(g=0; g<32; g++)
+         for(b=0; b<32; b++)
+            palette->lookup[r*1024 + g*32 + b] =
+               sysdep_palette_make_pen_from_info(&display_palette_info,
+                  r*8, g*8, b*8);
    
    /* build the emulated palette info */
    palette->emulated.writable_colors = writable_colors;
    palette->emulated.depth           = depth;
    /* fill in the masks and shifts if nescesarry */
-   if(!writable_colors)
-   {
-      if(palette->lookup)
-      {
-         /* if we're emulating a truecolor palette and we use a lookup
-            table, we always emulate 555 rgb */
-         palette->emulated.red_mask    = 0x7C00;
-         palette->emulated.green_mask  = 0x03E0;
-         palette->emulated.blue_mask   = 0x001F;
-      }
-      else
-      {
-         /* otherwise we're doing direct copy so use the display's values */
-         palette->emulated = display_palette_info;
-      }
-   }
-   
-   /* and mark the palette dirty so that the lookup table (if needed)
-      get's initalised upon the first sysdep_palette_update() */
-   sysdep_palette_mark_dirty(palette);
 
+   /* if we're emulating a truecolor palette and we use a lookup
+      table, we always emulate 555 rgb */
+   palette->emulated.red_mask    = 0x7C00;
+   palette->emulated.green_mask  = 0x03E0;
+   palette->emulated.blue_mask   = 0x001F;
+   
    return palette;
 }
 
 /* destructor */
 void sysdep_palette_destroy(struct sysdep_palette_struct *palette)
 {
-   if(palette->colors)
-      free(palette->colors);
-   if(palette->color_dirty)
-      free(palette->color_dirty);
-   if(palette->lookup)
-      free(palette->lookup);
+   free(palette->lookup);
    free(palette);
 }
 
@@ -189,53 +144,8 @@ void sysdep_palette_destroy(struct sysdep_palette_struct *palette)
 int sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
    unsigned char red, unsigned char green, unsigned char blue)
 {
-   if(pen >= palette->emulated.writable_colors)
-   {
-      fprintf(stderr,
-         "error in sysdep_palette_set_pen: pen (%d) out of range for writable_colors (%d)\n",
-         pen, palette->emulated.writable_colors);
-      return -1;
-   }
-  
-   if ( (palette->colors[pen*3]   == red)   &&
-        (palette->colors[pen*3+1] == green) &&
-        (palette->colors[pen*3+2] == blue) )
-      return 0;
-     
-   palette->colors[pen*3]   = red;
-   palette->colors[pen*3+1] = green;
-   palette->colors[pen*3+2] = blue;
-   
-   palette->color_dirty[pen] = 1;
-   palette->dirty = 1;
-   return 0;
-}
-
-int sysdep_palette_get_pen(struct sysdep_palette_struct *palette, int pen,
-   unsigned char *red, unsigned char *green, unsigned char *blue)
-{
-   if (palette->emulated.writable_colors)
-   {
-      if(pen >= palette->emulated.writable_colors)
-      {
-         fprintf(stderr,
-            "error in sysdep_palette_get_pen: pen (%d) out of range for writable_colors (%d)\n",
-            pen, palette->emulated.writable_colors);
-         return -1;
-      }
-      *red   = palette->colors[pen*3];
-      *green = palette->colors[pen*3+1];
-      *blue  = palette->colors[pen*3+2];
-   }
-   else
-   {
-      *red   = ((pen & palette->emulated.red_mask) <<
-         palette->emulated.red_shift) >> 24;
-      *green = ((pen & palette->emulated.green_mask) <<
-         palette->emulated.green_shift) >> 24;
-      *blue  = ((pen & palette->emulated.blue_mask) <<
-         palette->emulated.blue_shift) >> 24;
-   }
+   palette->lookup[pen] = sysdep_palette_make_pen_from_info(
+                             &display_palette_info, red, green, blue);
    
    return 0;
 }
@@ -245,90 +155,10 @@ int sysdep_palette_get_pen(struct sysdep_palette_struct *palette, int pen,
 int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
    unsigned char red, unsigned char green, unsigned char blue)
 {
-   if(palette->emulated.writable_colors)
-   {
-      fprintf(stderr,
-         "error sysdep_palette_make_pen called for writable palette\n");
-      return -1;
-   }
-   
    return sysdep_palette_make_pen_from_info(&palette->emulated, red, green,
       blue);
 }
 
-
-void sysdep_palette_update(struct sysdep_palette_struct *palette)
-{
-   int i=0;
-   
-   palette->lookup_dirty = 0;
-   
-   if (palette->bright_dirty)
-   {
-      for (i=0; i<256; i++)
-         palette->bright_lookup[i] = (float)palette->brightness *
-            pow(i / 255.0, 1 / palette->gamma) * 2.55 + 0.5;
-      sysdep_palette_mark_dirty(palette);
-      palette->bright_dirty = 0;
-   }
-   
-   if (palette->dirty)
-   {
-      for (i=0; i<palette->emulated.writable_colors; i++)
-      {
-         if(palette->color_dirty[i])
-         {
-            unsigned char red, green, blue;
-
-            if (i != Machine->uifont->colortable[1])
-            {
-               red = palette->bright_lookup[palette->colors[i*3]];
-               green = palette->bright_lookup[palette->colors[i*3+1]];
-               blue = palette->bright_lookup[palette->colors[i*3+2]];
-            }
-            else
-            {
-               red = palette->colors[i*3];
-               green = palette->colors[i*3+1];
-               blue = palette->colors[i*3+2];
-            }
-            
-            if(!palette->lookup)
-            {
-               sysdep_display_set_pen(i, red, green, blue);
-            }
-            else
-            {
-               int color = sysdep_palette_make_pen_from_info(
-                  &display_palette_info, red, green, blue);
-               
-               /* can we do our 8 -> 16 bpp speedup hack? */
-               if((palette->emulated.depth == 8) &&
-                  (display_palette_info.depth == 16) &&
-                  (widthscale == 1) &&
-                  (heightscale <= 2))
-               {
-                  int n;
-                  for(n=0;n<256;n++)
-                  {
-                     palette->lookup[(n<<8) | i] &= 0xffff0000;
-                     palette->lookup[(n<<8) | i] |= color;
-                     
-                     palette->lookup[(i<<8) | n] &= 0x0000ffff;
-                     palette->lookup[(i<<8) | n] |= color << 16;
-                  }
-               }
-               else
-                  palette->lookup[i] = color;
-               
-               palette->lookup_dirty = 1;
-            }
-            palette->color_dirty[i] = 0;
-         }
-      }
-      palette->dirty = 0;
-   }
-}
 
 /* This is broken, and for now is no longer used, instead
    sysdep_palette_marked dirty should be used,
@@ -343,36 +173,26 @@ int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
       (*palette)->emulated.writable_colors)))
       return -1;
    
-   if ((*palette)->emulated.writable_colors)
+   /* check that the color masks of the new palette are the same as the old
+      colormasks, otherwise barf for now, we could emulate them later on
+      as follows:
+      - close new_palette
+      - recreate new_palette writable
+      - set all the pens of new_palette so that they match
+        the old masks.
+      - modify new_palette->emulated so that it becomes non-wrtiable,
+        with the masks of the old palette.
+      However if we're going this way, we might just as well
+      add the possibility to sysdep_palette_create to force specific 
+      colormasks, which we might want in the future anyway
+   */
+   if ( ((*palette)->emulated.red_mask   != new_palette->emulated.red_mask) ||
+        ((*palette)->emulated.green_mask != new_palette->emulated.green_mask) ||
+        ((*palette)->emulated.blue_mask  != new_palette->emulated.blue_mask))
    {
-      /* copy all the old colors */
-      for(i=0; i<(*palette)->emulated.writable_colors; i++)
-         sysdep_palette_set_pen(new_palette, i, (*palette)->colors[i*3],
-            (*palette)->colors[i*3+1], (*palette)->colors[i*3+2]);
-   }
-   else
-   {
-      /* check that the color masks of the new palette are the same as the old
-         colormasks, otherwise barf for now, we could emulate them later on
-         as follows:
-         - close new_palette
-         - recreate new_palette writable
-         - set all the pens of new_palette so that they match
-           the old masks.
-         - modify new_palette->emulated so that it becomes non-wrtiable,
-           with the masks of the old palette.
-         However if we're going this way, we might just as well
-         add the possibility to sysdep_palette_create to force specific 
-         colormasks, which we might want in the future anyway
-      */
-      if ( ((*palette)->emulated.red_mask   != new_palette->emulated.red_mask) ||
-           ((*palette)->emulated.green_mask != new_palette->emulated.green_mask) ||
-           ((*palette)->emulated.blue_mask  != new_palette->emulated.blue_mask))
-      {
-         fprintf(stderr, "error recreating palette, colormasks don't match!\n");
-         sysdep_palette_destroy(new_palette);
-         return -1;
-      }
+      fprintf(stderr, "error recreating palette, colormasks don't match!\n");
+      sysdep_palette_destroy(new_palette);
+      return -1;
    }
    
    sysdep_palette_set_brightness(new_palette, (*palette)->brightness);
@@ -383,19 +203,6 @@ int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
    return 0;
 }
 
-void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette)
-{
-   int i;
-   
-   if(palette->emulated.writable_colors)
-   {
-      for (i=0; i<palette->emulated.writable_colors; i++)
-         palette->color_dirty[i] = 1;
-      
-      palette->dirty = 1;
-   }
-}
-
 /* brightness = percentage 0-100% */
 int sysdep_palette_set_brightness(struct sysdep_palette_struct *palette,
    int brightness)
@@ -403,11 +210,6 @@ int sysdep_palette_set_brightness(struct sysdep_palette_struct *palette,
    if (palette->brightness != brightness)
    {
       palette->brightness = brightness;
-         
-      /* failing isn't such a disaster thus we do it quietly */
-      if(!palette->emulated.writable_colors)
-         return -1;
-      
       palette->bright_dirty = 1;
    }
 
@@ -426,11 +228,6 @@ int sysdep_palette_set_gamma(struct sysdep_palette_struct *palette,
    if (palette->gamma != gamma)
    {
       palette->gamma = gamma;
-
-      /* failing isn't such a disaster thus we do it quietly */
-      if(!palette->emulated.writable_colors)
-         return -1;
-
       palette->bright_dirty = 1;
    }
 
