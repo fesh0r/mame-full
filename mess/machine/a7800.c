@@ -188,6 +188,7 @@ int a7800_init_cart (int id)
         /* Extra ROM at $4000 */
         if (a7800_cart_type & 0x08) {
             osd_fread(cartfile,&(ROM[0x4000]),0x4000);
+            len -= 0x4000;
         }
         a7800_cartridge_rom = &(ROM[0x10000]);
         osd_fread (cartfile, a7800_cartridge_rom, len);
