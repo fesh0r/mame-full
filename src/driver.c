@@ -2924,6 +2924,7 @@ TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
 
 	/* Playmark games */
 	DRIVER( bigtwin )	/* (c) 1995 Playmark */
+	DRIVER( wbeachvl )	/* (c) 1995 Playmark */
 
     DRIVER( spacefb )   /* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
