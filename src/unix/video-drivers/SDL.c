@@ -4,6 +4,10 @@
  FIrst incarnation by Tadeusz Szczyrba <trevor@pik-nel.pl>,
  based on the Linux SVGALib adaptation by Phillip Ezolt.
 
+ Adapted for a big video reorganisation by Hans de Goede,
+ the text below is from before this reorganisation and in many
+ ways no longer accurate!
+
  updated and patched by Ricardo Calixto Quesada (riq@core-sdi.com)
 
  patched by Patrice Mandin (pmandin@caramail.com)
@@ -26,25 +30,13 @@
        Test mouse buttons (which games use them?)
 
 ***************************************************************************/
-/* #define PARANOIC */
-#define __SDL_C
-
-#undef SDL_DEBUG
-/* #define DIRECT_HERMES */
-
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <SDL.h>
-#include "devices.h"
-#include "driver.h"
 #include "keycodes.h"
 #include "SDL-keytable.h"
-#ifdef DIRECT_HERMES 
-#include <Hermes/Hermes.h>
-#endif /* DIRECT_HERMES */
-#include "effect.h"
-#include "sysdep/sysdep_display.h"
+#include "sysdep/sysdep_display_priv.h"
 
 static int Vid_width;
 static int Vid_height;
@@ -52,77 +44,46 @@ static int Vid_depth = 8;
 static SDL_Surface* Surface;
 static SDL_Surface* Offscreen_surface;
 static int hardware=1;
-static int mode_number=-1;
-static int vidmode_w = -1;
-static int vidmode_h = -1;
-static int start_fullscreen=0;
 static int doublebuf=0;
 SDL_Color *Colors=NULL;
 static int cursor_state; /* previous mouse cursor state */
 
-#ifdef DIRECT_HERMES
-HermesHandle   H_PaletteHandle;
-HermesHandle H_ConverterHandle;
-int32_t* H_Palette;
-static int H_Palette_modified = 0;
-#endif
-
-typedef void (*update_func_t)(struct mame_bitmap *bitmap);
-
-update_func_t update_function;
+blit_func update_function;
 
 static int sdl_mapkey(struct rc_option *option, const char *arg, int priority);
 
 static int list_sdl_modes(struct rc_option *option, const char *arg, int priority);
 
-struct rc_option display_opts[] = {
+struct rc_option sysdep_display_opts[] = {
     /* name, shortname, type, dest, deflt, min, max, func, help */
+   { NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
    { "SDL Related",  NULL,    rc_seperator,  NULL,
        NULL,         0,       0,             NULL,
        NULL },
-   { "fullscreen",   NULL,    rc_bool,       &start_fullscreen,
-      "0",           0,       0,             NULL,
-      "Start fullscreen" },
    { "doublebuf",   NULL,    rc_bool,       &doublebuf,
       "0",           0,       0,             NULL,
       "Use double buffering to reduce flicker/tearing" },
    { "listmodes",    NULL,    rc_use_function_no_arg,       NULL,
       NULL,           0,       0,             list_sdl_modes,
       "List all posible fullscreen modes" },
-   { "vidmode_w",   NULL,    rc_int,        &vidmode_w,
-      "-1",          0,       0,             NULL,
-      "Horizontal resolution to force a video mode (see the output of -listmodes)" },
-   { "vidmode_h",   NULL,    rc_int,        &vidmode_h,
-      "-1",          0,       0,             NULL,
-      "Vertical resolution to force a video mode (see the output of -listmodes)" },
-   { "modenumber",   NULL,    rc_int,        &mode_number,
-      "-1",          0,       0,             NULL,
-      "Modenumber is deprecated, use -vidmode_w and -vidmode_h" },
    { "sdlmapkey",	"sdlmk",	rc_use_function,	NULL,
      NULL,		0,			0,		sdl_mapkey,
      "Set a specific key mapping, see xmamerc.dist" },
+   { NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
    { NULL,           NULL,    rc_end,        NULL,
       NULL,          0,       0,             NULL,
       NULL }
 };
 
-void sdl_update_16_to_16bpp(struct mame_bitmap *bitmap);
-void sdl_update_16_to_24bpp(struct mame_bitmap *bitmap);
-void sdl_update_16_to_32bpp(struct mame_bitmap *bitmap);
-void sdl_update_rgb_direct_32bpp(struct mame_bitmap *bitmap);
-
-int sysdep_init(void)
+int sysdep_display_init(void)
 {
    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
       fprintf (stderr, "SDL: Error: %s\n",SDL_GetError());
-      return OSD_NOT_OK;
+      return 1;
    } 
-#ifdef DIRECT_HERMES
-   Hermes_Init(0);
-#endif /* DIRECT_HERMES */
    fprintf (stderr, "SDL: Info: SDL initialized\n");
    atexit (SDL_Quit);
-   return OSD_OK;
+   return 0;
 }
 
 void sysdep_close(void)
@@ -130,21 +91,16 @@ void sysdep_close(void)
    SDL_Quit();
 }
 
-int sysdep_create_display(int depth)
+int sysdep_display_driver_open(int reopen)
 {
    SDL_Rect** vid_modes;
    const SDL_VideoInfo* video_info;
    int vid_modes_i;
-#ifdef DIRECT_HERMES 
-   HermesFormat* H_src_format;
-   HermesFormat* H_dst_format;
-#endif /* DIRECT_HERMES */
    int vid_mode_flag; /* Flag to set the video mode */
 
    video_info = SDL_GetVideoInfo();
 
 #ifdef SDL_DEBUG
-   fprintf (stderr,"SDL: create_display(%d): \n",depth);
    fprintf (stderr,"SDL: Info: HW blits %d\n"
       "SDL: Info: SW blits %d\n"
       "SDL: Info: Vid mem %d\n"
@@ -223,7 +179,7 @@ int sysdep_create_display(int depth)
       if( mode_number != -1) {
          fprintf (stderr, "SDL: -modenumber is deprecated. Use -vidmode_w and -vidmode_h\n");
          SDL_Quit();
-         exit (OSD_NOT_OK);
+         exit (1);
       }
 
       /* Users wants a specific video mode? */
@@ -240,12 +196,12 @@ int sysdep_create_display(int depth)
 	 if (!mode_found) {
             fprintf (stderr, "SDL: Sorry, mode %dx%d not found.\n", vidmode_w, vidmode_h);
             SDL_Quit();
-            exit (OSD_NOT_OK);
+            exit (1);
 	 }
       } else if (vidmode_w != -1 || vidmode_h != -1) {
          fprintf (stderr, "SDL: You have to specify -vidmode_w and -vidmode_h\n");
          SDL_Quit();
-         exit (OSD_NOT_OK);
+         exit (1);
       }
 
       if( vid_modes_i<0 ) {
@@ -276,7 +232,7 @@ int sysdep_create_display(int depth)
       default:
          fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n", Vid_depth,depth);
          SDL_Quit();
-         exit (OSD_NOT_OK);
+         exit (1);
          break;
       }
    }
@@ -291,14 +247,14 @@ int sysdep_create_display(int depth)
          fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n",
             Vid_depth, depth);
          SDL_Quit();
-         exit (OSD_NOT_OK);
+         exit (1);
       }
    }
    else
    {
       fprintf (stderr, "SDL: Unsupported depth=%d\n", depth);
       SDL_Quit();
-      exit (OSD_NOT_OK);
+      exit (1);
    }
 
 
@@ -314,7 +270,7 @@ int sysdep_create_display(int depth)
    if(! (Surface = SDL_SetVideoMode(Vid_width, Vid_height,Vid_depth, vid_mode_flag))) {
       fprintf (stderr, "SDL: Error: Setting video mode failed\n");
       SDL_Quit();
-      exit (OSD_NOT_OK);
+      exit (1);
    } else {
       fprintf (stderr, "SDL: Info: Video mode set as %d x %d, depth %d\n", Vid_width, Vid_height, Vid_depth);
    }
@@ -323,7 +279,7 @@ int sysdep_create_display(int depth)
    Offscreen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE,Vid_width,Vid_height,Vid_depth,0,0,0,0); 
    if(Offscreen_surface==NULL) {
       SDL_Quit();
-      exit (OSD_NOT_OK);
+      exit (1);
    }
 #else /* DIRECT_HERMES */
    /* No offscreen surface when using hermes directly */
@@ -335,7 +291,7 @@ int sysdep_create_display(int depth)
    /*  H_dst_format = Hermes_FormatNew (16,5,5,5,0,0); */
    if ( ! (Hermes_ConverterRequest(H_ConverterHandle,H_src_format , H_dst_format)) ) {
       fprintf (stderr, "Hermes: Info: Converter request failed\n");
-      exit (OSD_NOT_OK);
+      exit (1);
    }
 #endif /* DIRECT_HERMES */
 
@@ -365,9 +321,9 @@ int sysdep_create_display(int depth)
    SDL_WM_SetCaption(title, NULL);
 
    if (effect_open())
-      exit (OSD_NOT_OK);
+      exit (1);
 
-   return OSD_OK;
+   return 0;
 }
 
 /*
@@ -386,12 +342,12 @@ static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
       if (from >= SDLK_FIRST && from < SDLK_LAST && to >= 0 && to <= 127)
       {
          klookup[from] = to;
-	 return OSD_OK;
+	 return 0;
       }
       /* stderr isn't defined yet when we're called. */
       fprintf(stderr,"Invalid keymapping %s. Ignoring...\n", arg);
    }
-   return OSD_NOT_OK;
+   return 1;
 }
 
 /* Update routines */
@@ -716,7 +672,7 @@ void sysdep_update_keyboard()
                break;
             case SDL_QUIT:
                /* Shoult leave this to application */
-               exit(OSD_OK);
+               exit(0);
                break;
 
     	    case SDL_JOYAXISMOTION:   
