@@ -123,7 +123,7 @@ static void coco_vhd_readwrite(UINT8 data)
 	}
 }
 
- READ8_HANDLER(coco_vhd_io_r)
+READ8_HANDLER(coco_vhd_io_r)
 {
 	data8_t result = 0;
 
