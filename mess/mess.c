@@ -518,6 +518,8 @@ int get_filenames(void)
 	const struct IODevice *dev = Machine->gamedrv->dev;
 	int i;
 
+	logerror("Get Filenames()...\n");
+
 	for( i = 0; i < options.image_count; i++ )
 	{
 		int type = options.image_files[i].type;
@@ -538,12 +540,12 @@ int get_filenames(void)
 				if( !images[type][count[type]].name )
 					return 1;
 			}
-			logerror("%s #%d: %s\n", devices[type].name, count[type]+1, images[type][count[type]].name);
+			logerror("  user request -  %s #%d: %s\n", devices[type].name, count[type]+1, images[type][count[type]].name);
 			count[type]++;
 		}
 		else
 		{
-			logerror("Invalid IO_ type %d for %s\n", type, options.image_files[i].name);
+			logerror("  Invalid IO_ type %d for %s\n", type, options.image_files[i].name);
 			return 1;
 		}
 	}
@@ -574,6 +576,22 @@ int get_filenames(void)
 	return 0;
 }
 
+
+
+/* Small check to see if system supports device */
+static int supported_device(const struct IODevice *dev, int type)
+{
+
+	while(dev->type!=IO_END)
+	{
+		if(dev->type==type)
+			return TRUE;	/* Return OK */
+		dev++;
+	}
+	mess_printf("Error - This system does not support %s devices \n", device_typename(type));
+	return FALSE;
+}
+
 /*
  * Call the init() functions for all devices of a driver
  * with all user specified image names.
@@ -582,7 +600,20 @@ int init_devices(const void *game)
 {
 	const struct GameDriver *gamedrv = game;
 	const struct IODevice *dev = gamedrv->dev;
-	int id;
+	int i,id;
+
+	logerror("Init Devices()...\n");
+
+	/* Check that the driver supports all devices requested */
+	for( i = 0; i < options.image_count; i++ )
+	{
+		logerror("  Checking that %s device is supported\n",device_typename(options.image_files[i].type));
+		if (supported_device(dev, options.image_files[i].type)==FALSE)
+		{
+			logerror("  FAILED!\n");
+			return 1;
+		}
+	}
 
 	/* KT - added floppy drives init here. Drivers can override settings, and
 	settings can change in the UI */
@@ -921,14 +952,14 @@ int messvaliditychecks(void)
 	{
 		if (devices[i].id != i)
 		{
-			printf("MESS Validity Error - Device struct array order mismatch\n");
+			mess_printf("MESS Validity Error - Device struct array order mismatch\n");
 			error = 1;
 		}
 		i++;
 	}
 	if (i < IO_COUNT)
 	{
-		printf("MESS Validity Error - Device struct entry missing\n");
+		mess_printf("MESS Validity Error - Device struct entry missing\n");
 		error = 1;
 	}
 	return error;

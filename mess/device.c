@@ -30,22 +30,6 @@ const struct Devices devices[] =
 };
 
 
-/* Small check to see if system supports device */
-int system_supports_device(int game_index, int type)
-{
-    const struct IODevice *dev = drivers[game_index]->dev;
-
-	while(dev->type!=IO_END)
-	{
-		if(dev->type==type)
-			return 1;
-		dev++;
-	}
-	return 0;
-}
-
-
-
 /* register_device() - used to register the device in the options struct...	*/
 /* Call this from the CLI or UI to add a DEVICE (with its arg) to the 		*/
 /* options struct.  Return 0 for success, -1 for error 						*/
@@ -56,19 +40,21 @@ int register_device (const int type, const char *arg)
 	/* Check the the device type is valid, otherwise this lookup will be bad*/
 	if (type <= IO_END || type >= IO_COUNT || !type)
 	{
-		logerror("register_device() failed! - device type [%d] is not valid\n",type);
+		mess_printf("register_device() failed! - device type [%d] is not valid\n",type);
 		return -1;
 	}
 
 	/* Next, check that we havent loaded too many images					*/
 	if (options.image_count >= MAX_IMAGES)
 	{
-		logerror("Too many image names specified!\n");
+		mess_printf("Too many image names specified!\n");
 		return -1;
 	}
 
 	/* All seems ok to add device and argument to options{} struct			*/
-	logerror("register_device() - User specified %s for %s\n", arg, device_typename(type));
+	#ifdef MAME_DEBUG
+	mess_printf("Image [%s] Registered for Device [%s]\n", arg, device_typename(type));
+	#endif
 	/* the user specified a device type */
 	options.image_files[options.image_count].type = type;
 	options.image_files[options.image_count].name = strdup(arg);
