@@ -140,7 +140,7 @@ static UINT32 ss_get_signature(void)
 	}
 
 	// Pass 3 : Compute the crc32
-	signature = crc32(0, info, size);
+	signature = crc32(0, (unsigned char*)info, size);
 
 	free(info);
 	return signature;
