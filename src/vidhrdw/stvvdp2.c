@@ -99,6 +99,7 @@ static void stv_vdp2_fade_effects(void);
 static int stv_vdp2_window_process(int x,int y);
 
 #define LOG_VDP2 1
+#define LOG_ROZ 0
 
 /*
 
@@ -1927,16 +1928,16 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 
 #define RP	stv_current_rotation_parameter_table
 
-	if(LOG_VDP2) logerror( "Rotation parameter table (%d)\n", rot_parameter );
-	if(LOG_VDP2) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
-	if(LOG_VDP2) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
-	if(LOG_VDP2) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
-	if(LOG_VDP2) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
-	if(LOG_VDP2) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
-	if(LOG_VDP2) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
-	if(LOG_VDP2) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
-	if(LOG_VDP2) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
-	if(LOG_VDP2) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
+	if(LOG_ROZ) logerror( "Rotation parameter table (%d)\n", rot_parameter );
+	if(LOG_ROZ) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
+	if(LOG_ROZ) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
+	if(LOG_ROZ) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
+	if(LOG_ROZ) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
+	if(LOG_ROZ) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
+	if(LOG_ROZ) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
+	if(LOG_ROZ) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
+	if(LOG_ROZ) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
+	if(LOG_ROZ) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
 }
 
 #define STV_VDP2_CP_NBG0_PNMDR		0x0
@@ -2283,7 +2284,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	be added...*/
 	if(STV_VDP2_LSMD == 3)
 	{
-		yoffs = (stv2_current_tilemap.scrolly)*(ysize-1);
+		yoffs = (stv2_current_tilemap.scrolly & 1)*(ysize-1);
 	}
 
 	switch( stv2_current_tilemap.colour_depth )

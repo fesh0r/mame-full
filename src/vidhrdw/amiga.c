@@ -759,15 +759,6 @@ VIDEO_START(amiga)
 	return video_start_generic_bitmapped();
 }
 
-VIDEO_UPDATE(amiga)
-{
-#ifdef MESS
-	video_update_generic_bitmapped(bitmap, cliprect, do_skip);
-#else
-	video_update_generic_bitmapped(bitmap, cliprect);
-#endif
-}
-
 void amiga_prepare_frame(void)
 {
 	/* reset the copper */

@@ -8,9 +8,9 @@
 
 	Known bugs:
 		* gprider hangs due to interrupt nesting
-		* loffire won't let you past the first level
-		* smgp seems to not draw some sprites near the bottom of the screen
-		* rachero kills you whenever you jump
+		* loffire usually won't let you past the first level
+		* rachero locks you to the middle of the road, worked in 0.89, maths bug?
+		* extra sound boards etc. in some smgp sets not hooked up
 
 	To do for each game:
 		* verify memory test
@@ -91,7 +91,7 @@ static void update_main_irqs(void)
 {
 	int irq = 0;
 
-	/* the IRQs are effectively ORed together */	
+	/* the IRQs are effectively ORed together */
 	if (vblank_irq_state)
 		irq |= 4;
 	if (timer_irq_state)
@@ -121,10 +121,10 @@ static void scanline_callback(int scanline)
 		cpunum_set_input_line(1, 4, HOLD_LINE);
 		cpu_boost_interleave(0, TIME_IN_USEC(50));
 	}
-	
+
 	/* update IRQs on the main CPU */
 	update_main_irqs();
-	
+
 	/* come back in 2 scanlines */
 	scanline = (scanline + 2) % 262;
 	timer_set(cpu_getscanlinetime(scanline), scanline, scanline_callback);
@@ -160,7 +160,7 @@ static int main_irq_callback(int irq)
 		vblank_irq_state = 0;
 		update_main_irqs();
 	}
-	
+
 	if (memory_region(REGION_USER1))
 		return fd1094_int_callback(irq);
 	return MC68000_INT_ACK_AUTOVECTOR;
@@ -176,7 +176,7 @@ MACHINE_INIT( xboard )
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)xboard_reset);
 
 	cpu_set_irq_callback(0, main_irq_callback);
-	
+
 	segaic16_compare_timer_init(0, sound_data_w, timer_ack_callback);
 	segaic16_compare_timer_init(1, NULL, NULL);
 	timer_set(cpu_getscanlinetime(1), 1, scanline_callback);
@@ -945,12 +945,12 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	4000000,
-	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
 	{ sound_cpu_irq }
 };
 
 
-static struct SEGAPCMinterface segapcm_interface = 
+static struct SEGAPCMinterface segapcm_interface =
 {
 	SEGAPCM_SAMPLE15K,
 	BANK_512,

@@ -5,9 +5,9 @@
 ****************************************************************************
 
 	Known bugs:
-		* Major League controls not hooked up
 		* Screen flip only sort of works
-		* Need to revisit/clean up 7751 sound banking
+		* sdi is unplayable after level 1 (screen / sprites get flipped)
+		  (this occurs on both s16a & s16b versions)
 		* mirroring code can't handle the proper mirroring
 
 ***************************************************************************
@@ -148,13 +148,16 @@ Tetris         -         -         -         -         EPR12169  EPR12170  -    
 
 static data16_t *workram;
 
-static UINT8 has_n7759;
 static UINT8 video_control;
+static UINT8 mj_input_num;
 
 static read16_handler custom_io_r;
 static write16_handler custom_io_w;
-
+static void (*lamp_changed_w)(UINT8 changed, UINT8 newval);
 static void (*i8751_vblank_hook)(void);
+
+static UINT8 n7751_command;
+static UINT32 n7751_rom_address;
 
 
 
@@ -212,10 +215,8 @@ static void system16a_generic_init(void)
 	/* reset the custom handlers and other pointers */
 	custom_io_r = NULL;
 	custom_io_w = NULL;
+	lamp_changed_w = NULL;
 	i8751_vblank_hook = NULL;
-
-	/* see if we have an N7759 chip */
-	has_n7759 = (mame_find_cpu_index("n7751") != -1);
 
 	/* configure the 8255 interface */
 	ppi8255_init(&single_ppi_intf);
@@ -246,7 +247,7 @@ MACHINE_INIT( system16a )
  *
  *************************************/
 
-static READ16_HANDLER( misc_io_r )
+static READ16_HANDLER( standard_io_r )
 {
 	offset &= 0x3fff/2;
 	switch (offset & (0x3000/2))
@@ -260,16 +261,13 @@ static READ16_HANDLER( misc_io_r )
 		case 0x2000/2:
 			return readinputport(4 + (offset & 1));
 	}
-	if (custom_io_r)
-		return custom_io_r(offset, mem_mask);
-	logerror("%06X:misc_io_r - unknown read access to address %04X\n", activecpu_get_pc(), offset * 2);
+	logerror("%06X:standard_io_r - unknown read access to address %04X\n", activecpu_get_pc(), offset * 2);
 	return 0xffff;
 }
 
 
-static WRITE16_HANDLER( misc_io_w )
+static WRITE16_HANDLER( standard_io_w )
 {
-	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
 	offset &= 0x3fff/2;
 	switch (offset & (0x3000/2))
 	{
@@ -278,12 +276,25 @@ static WRITE16_HANDLER( misc_io_w )
 				ppi8255_0_w(offset & 3, data & 0xff);
 			return;
 	}
+	logerror("%06X:standard_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
+}
+
+
+static READ16_HANDLER( misc_io_r )
+{
+	if (custom_io_r)
+		return (*custom_io_r)(offset, mem_mask);
+	else
+		return standard_io_r(offset, mem_mask);
+}
+
+
+static WRITE16_HANDLER( misc_io_w )
+{
 	if (custom_io_w)
-	{
-		custom_io_w(offset, data, mem_mask);
-		return;
-	}
-	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
+		(*custom_io_w)(offset, data, mem_mask);
+	else
+		standard_io_w(offset, data, mem_mask);
 }
 
 
@@ -297,17 +308,19 @@ static WRITE16_HANDLER( misc_io_w )
 static WRITE8_HANDLER( video_control_w )
 {
 	/*
-	 PPI port B
+		PPI port B
 
-	 D7 : Screen flip (1= flip, 0= normal orientation)
-	 D6 : To 8751 pin 13 (/INT1)
-	 D5 : To 315-5149 pin 17.
-	 D4 : Screen enable (1= display, 0= blank)
-	 D3 : Lamp #2 (1= on, 0= off)
-	 D2 : Lamp #1 (1= on, 0= off)
-	 D1 : Coin meter #2
-	 D0 : Coin meter #1
+		D7 : Screen flip (1= flip, 0= normal orientation)
+		D6 : To 8751 pin 13 (/INT1)
+		D5 : To 315-5149 pin 17.
+		D4 : Screen enable (1= display, 0= blank)
+		D3 : Lamp #2 (1= on, 0= off)
+		D2 : Lamp #1 (1= on, 0= off)
+		D1 : Coin meter #2
+		D0 : Coin meter #1
 	*/
+	if (((video_control ^ data) & 0x0c) && lamp_changed_w)
+		(*lamp_changed_w)(video_control ^ data, data);
 	video_control = data;
 	segaic16_tilemap_set_flip(0, data & 0x80);
 	segaic16_sprites_set_flip(0, data & 0x80);
@@ -336,18 +349,18 @@ static WRITE8_HANDLER( sound_command_w )
 static WRITE8_HANDLER( sound_control_w )
 {
 	/*
-	 PPI port C
+		PPI port C
 
-	 D7 : Port A handshaking signal /OBF
-	 D6 : Port A handshaking signal ACK
-	 D5 : Port A handshaking signal IBF
-	 D4 : Port A handshaking signal /STB
-	 D3 : Port A handshaking signal INTR
-	 D2 : To PAL 315-5107 pin 9 (SCONT1)
-	 D1 : To PAL 315-5108 pin 19 (SCONT0)
-	 D0 : To MUTE input on MB3733 amplifier.
-	      0= Sound is disabled
-	      1= sound is enabled
+		D7 : Port A handshaking signal /OBF
+		D6 : Port A handshaking signal ACK
+		D5 : Port A handshaking signal IBF
+		D4 : Port A handshaking signal /STB
+		D3 : Port A handshaking signal INTR
+		D2 : To PAL 315-5107 pin 9 (SCONT1)
+		D1 : To PAL 315-5108 pin 19 (SCONT0)
+		D0 : To MUTE input on MB3733 amplifier.
+			 0= Sound is disabled
+			 1= sound is enabled
 	*/
 	segaic16_tilemap_set_colscroll(0, ~data & 0x04);
 	segaic16_tilemap_set_rowscroll(0, ~data & 0x02);
@@ -361,103 +374,82 @@ static WRITE8_HANDLER( sound_control_w )
  *
  *************************************/
 
-static UINT8 port_8255_c03 = 0;
-static UINT8 port_8255_c47 = 0;
-static UINT8 port_7751_p27 = 0;
-static UINT32 rom_offset = 0;
-static UINT32 rom_base = 0;
-static UINT32 rom_bank = 0;
-
-static void trigger_7751_sound(int data)
+WRITE8_HANDLER( n7751_command_w )
 {
-	/* I think this is correct for 128k sound roms,
-	     it's OK for smaller roms */
-	if((data&0xf) == 0xc) rom_bank=0;
-	else if((data&0xf) == 0xd) rom_bank=0x4000;
-	else if((data&0xf) == 0xb) rom_bank=0xc000;
-	else if((data&0xf) == 0xa) rom_bank=0x8000;
+	/*
+		Z80 7751 control port
 
-	else if((data&0xf) == 0xf) rom_bank=0x1c000;
-	else if((data&0xf) == 0xe) rom_bank=0x18000;
-	else if((data&0xf) == 0x7) rom_bank=0x14000;
-	else if((data&0xf) == 0x6) rom_bank=0x10000;
-
-	port_8255_c03 = (data>>5);
-
-	cpunum_set_input_line(2, 0, PULSE_LINE);
-}
-
-// I'm sure this must be wrong, but it seems to work for quartet music.
-WRITE8_HANDLER( n7751_audio_8255_w )
-{
-	logerror("7751: %4x %4x\n",data,data^0xff);
-
-	if (has_n7759 && (data & 0x0f) != 8)
-	{
-		cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
-		timer_set(TIME_IN_USEC(300), data, trigger_7751_sound);
-	}
+		D7-D5 = connected to 7751 port C
+		D4    = /CS for ROM 3
+		D3    = /CS for ROM 2
+		D2    = /CS for ROM 1
+		D1    = /CS for ROM 0
+		D0    = A14 line to ROMs
+	*/
+	int numroms = memory_region_length(REGION_SOUND1) / 0x8000;
+	n7751_rom_address &= 0x3fff;
+	n7751_rom_address |= (data & 0x01) << 14;
+	if (!(data & 0x02) && numroms >= 1) n7751_rom_address |= 0x00000;
+	if (!(data & 0x04) && numroms >= 2) n7751_rom_address |= 0x08000;
+	if (!(data & 0x08) && numroms >= 3) n7751_rom_address |= 0x10000;
+	if (!(data & 0x10) && numroms >= 4) n7751_rom_address |= 0x18000;
+	n7751_command = data >> 5;
 }
 
 
-READ8_HANDLER( n7751_audio_8255_r )
+static WRITE8_HANDLER( n7751_control_w )
 {
-	// Only PC4 is hooked up
-	/* 0x00 = BUSY, 0x10 = NOT BUSY */
-	return (port_8255_c47 & 0x10);
+	/*
+		YM2151 output port
+
+		D1 = /RESET line on 7751
+		D0 = /IRQ line on 7751
+	*/
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, 0, (data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
 }
 
-/* read from BUS */
+
+WRITE8_HANDLER( n7751_rom_offset_w )
+{
+	/* P4 - address lines 0-3 */
+	/* P5 - address lines 4-7 */
+	/* P6 - address lines 8-11 */
+	/* P7 - address lines 12-13 */
+	int mask = (0xf << (4 * offset)) & 0x3fff;
+	int newdata = (data << (4 * offset)) & mask;
+	n7751_rom_address = (n7751_rom_address & ~mask) | newdata;
+}
+
+
 READ8_HANDLER( n7751_rom_r )
 {
-	UINT8 *sound_rom = memory_region(REGION_SOUND1);
-	int size = memory_region_length(REGION_SOUND1);
-	return sound_rom[(rom_offset + rom_base) % size];
+	/* read from BUS */
+	return memory_region(REGION_SOUND1)[n7751_rom_address];
 }
 
-/* read from T1 - Labelled as "TEST", connected to ground */
-READ8_HANDLER( n7751_t1_r )
-{
-	return 0;
-}
 
-/* read from P2 - 8255's PC0-2 connects to 7751's S0-2 (P24-P26 on an 8048) */
 READ8_HANDLER( n7751_command_r )
 {
-	return ((port_8255_c03 & 0x07) << 4) | port_7751_p27;
+	/* read from P2 - 8255's PC0-2 connects to 7751's S0-2 (P24-P26 on an 8048) */
+	/* bit 0x80 is an alternate way to control the sample on/off; doesn't appear to be used */
+	return 0x80 | ((n7751_command & 0x07) << 4);
 }
 
-/* write to P2 */
+
 WRITE8_HANDLER( n7751_busy_w )
 {
-	port_8255_c03 = (data & 0x70) >> 4;
-	port_8255_c47 = (data & 0x80) >> 3;
-	port_7751_p27 = data & 0x80;
-	rom_base = rom_bank;
+	/* write to P2 */
+	/* output of bit $80 indicates we are ready (1) or busy (0) */
+	/* no other outputs are used */
 }
 
-/* write to P4 */
-WRITE8_HANDLER( n7751_offset_a0_a3_w )
-{
-	rom_offset = (rom_offset & 0xfff0) | (data & 0x0f);
-}
 
-/* write to P5 */
-WRITE8_HANDLER( n7751_offset_a4_a7_w )
+READ8_HANDLER( n7751_t1_r )
 {
-	rom_offset = (rom_offset & 0xff0f) | ((data & 0x0f) << 4);
-}
-
-/* write to P6 */
-WRITE8_HANDLER( n7751_offset_a8_a11_w )
-{
-	rom_offset = (rom_offset & 0xf0ff) | ((data & 0x0f) << 8);
-}
-
-/* write to P7 */
-WRITE8_HANDLER( n7751_rom_select_w )
-{
-	rom_offset = (rom_offset & 0x0fff) | ((data & 0x03) << 12);
+	/* T1 - labelled as "TEST", connected to ground */
+	return 0;
 }
 
 
@@ -546,19 +538,144 @@ static void quartet_i8751_sim(void)
 
 /*************************************
  *
- *	Special I/O handlers
+ *	Major League custom I/O
  *
  *************************************/
 
-static READ16_HANDLER( sdi_custom_input_0_r )
+static READ16_HANDLER( mjleague_custom_io_r )
 {
-	return readinputportbytag((video_control & 4) ? "ANALOGY1" : "ANALOGX1");
+	switch (offset & (0x3000/2))
+	{
+		case 0x1000/2:
+			switch (offset & 3)
+			{
+				/* offset 0 contains the regular switches; the two upper bits map to the */
+				/* upper bit of the trackball controls */
+				case 0:
+				{
+					UINT8 buttons = readinputportbytag("SERVICE");
+					UINT8 analog1 = readinputportbytag((video_control & 4) ? "ANALOGY1" : "ANALOGX1");
+					UINT8 analog2 = readinputportbytag((video_control & 4) ? "ANALOGY2" : "ANALOGX2");
+					buttons |= (analog1 & 0x80) >> 1;
+					buttons |= (analog2 & 0x80);
+					return buttons;
+				}
+
+				/* offset 1 contains the low 7 bits of player 1's trackballs, plus the */
+				/* player 1 select switch mapped to bit 7 */
+				case 1:
+				{
+					UINT8 buttons = readinputportbytag("BUTTONS1");
+					UINT8 analog = readinputportbytag((video_control & 4) ? "ANALOGY1" : "ANALOGX1");
+					return (buttons & 0x80) | (analog & 0x7f);
+				}
+
+				/* offset 2 contains either the batting control or the "stance" button state */
+				case 2:
+				{
+					if (video_control & 4)
+						return (readinputportbytag("ANALOGZ1") >> 4) | (readinputportbytag("ANALOGZ2") & 0xf0);
+					else
+					{
+						static UINT8 last_buttons1 = 0;
+						static UINT8 last_buttons2 = 0;
+						UINT8 buttons1 = readinputportbytag("BUTTONS1");
+						UINT8 buttons2 = readinputportbytag("BUTTONS2");
+
+						if (!(buttons1 & 0x01))
+							last_buttons1 = 0;
+						else if (!(buttons1 & 0x02))
+							last_buttons1 = 1;
+						else if (!(buttons1 & 0x04))
+							last_buttons1 = 2;
+						else if (!(buttons1 & 0x08))
+							last_buttons1 = 3;
+
+						if (!(buttons2 & 0x01))
+							last_buttons2 = 0;
+						else if (!(buttons2 & 0x02))
+							last_buttons2 = 1;
+						else if (!(buttons2 & 0x04))
+							last_buttons2 = 2;
+						else if (!(buttons2 & 0x08))
+							last_buttons2 = 3;
+
+						return last_buttons1 | (last_buttons2 << 4);
+					}
+				}
+
+				/* offset 2 contains the low 7 bits of player 2's trackballs, plus the */
+				/* player 2 select switch mapped to bit 7 */
+				case 3:
+				{
+					UINT8 buttons = readinputportbytag("BUTTONS2");
+					UINT8 analog = readinputportbytag((video_control & 4) ? "ANALOGY2" : "ANALOGX2");
+					return (buttons & 0x80) | (analog & 0x7f);
+				}
+			}
+			break;
+	}
+	return standard_io_r(offset, mem_mask);
 }
 
 
-static READ16_HANDLER( sdi_custom_input_1_r )
+
+/*************************************
+ *
+ *	SDI custom I/O
+ *
+ *************************************/
+
+static READ16_HANDLER( sdi_custom_io_r )
 {
-	return readinputportbytag((video_control & 4) ? "ANALOGY2" : "ANALOGX2");
+	switch (offset & (0x3000/2))
+	{
+		case 0x1000/2:
+			switch (offset & 3)
+			{
+				case 1:	return readinputportbytag((video_control & 4) ? "ANALOGY1" : "ANALOGX1");
+				case 3:	return readinputportbytag((video_control & 4) ? "ANALOGY2" : "ANALOGX2");
+			}
+			break;
+	}
+	return standard_io_r(offset, mem_mask);
+}
+
+
+
+/*************************************
+ *
+ *	Sukeban Jansi Ryuko custom I/O
+ *
+ *************************************/
+
+static READ16_HANDLER( sjryuko_custom_io_r )
+{
+	static const char *portname[] = { "MJ0", "MJ1", "MJ2", "MJ3", "MJ4", "MJ5" };
+
+	switch (offset & (0x3000/2))
+	{
+		case 0x1000/2:
+			switch (offset & 3)
+			{
+				case 1:
+					if (readinputportbytag_safe(portname[mj_input_num], 0xff) != 0xff)
+						return 0xff & ~(1 << mj_input_num);
+					return 0xff;
+
+				case 2:
+					return readinputportbytag_safe(portname[mj_input_num], 0xff);
+			}
+			break;
+	}
+	return standard_io_r(offset, mem_mask);
+}
+
+
+static void sjryuko_lamp_changed_w(UINT8 changed, UINT8 newval)
+{
+	if ((changed & 4) && (newval & 4))
+		mj_input_num = (mj_input_num + 1) % 6;
 }
 
 
@@ -593,6 +710,7 @@ static ADDRESS_MAP_START( system16a_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x440000, 0x4407ff) AM_RAM AM_BASE(&segaic16_spriteram_0)
 	AM_RANGE(0x840000, 0x840fff) AM_READWRITE(paletteram16_word_r, segaic16_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xc40000, 0xc43fff) AM_READWRITE(misc_io_r, misc_io_w)
+	AM_RANGE(0xc60000, 0xc6ffff) AM_READ(watchdog_reset16_r)
 	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_BASE(&workram)
 
 //	AM_RANGE(0x000000, 0x05ffff) AM_MIRROR(0x380000) AM_ROM
@@ -619,12 +737,11 @@ static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-
 static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x00, 0x00) AM_MIRROR(0x3e) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_MIRROR(0x3e) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
-	AM_RANGE(0x80, 0x80) AM_MIRROR(0x3f) AM_WRITE(n7751_audio_8255_w)
+	AM_RANGE(0x80, 0x80) AM_MIRROR(0x3f) AM_WRITE(n7751_command_w)
 	AM_RANGE(0xc0, 0xc0) AM_MIRROR(0x3f) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
@@ -641,16 +758,12 @@ static ADDRESS_MAP_START( n7751_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x03ff) AM_ROM
 ADDRESS_MAP_END
 
-
 static ADDRESS_MAP_START( n7751_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(I8039_bus,I8039_bus) AM_READ(n7751_rom_r)
 	AM_RANGE(I8039_t1, I8039_t1)  AM_READ(n7751_t1_r)
 	AM_RANGE(I8039_p1, I8039_p1)  AM_WRITE(DAC_0_data_w)
 	AM_RANGE(I8039_p2, I8039_p2)  AM_READWRITE(n7751_command_r, n7751_busy_w)
-	AM_RANGE(I8039_p4, I8039_p4)  AM_WRITE(n7751_offset_a0_a3_w)
-	AM_RANGE(I8039_p5, I8039_p5)  AM_WRITE(n7751_offset_a4_a7_w)
-	AM_RANGE(I8039_p6, I8039_p6)  AM_WRITE(n7751_offset_a8_a11_w)
-	AM_RANGE(I8039_p7, I8039_p7)  AM_WRITE(n7751_rom_select_w)
+	AM_RANGE(I8039_p4, I8039_p7)  AM_WRITE(n7751_rom_offset_w)
 ADDRESS_MAP_END
 
 
@@ -776,11 +889,6 @@ static INPUT_PORTS_START( system16a_generic )
 INPUT_PORTS_END
 
 
-static INPUT_PORTS_START( generic )
-	PORT_INCLUDE( system16a_generic )
-INPUT_PORTS_END
-
-
 
 /*************************************
  *
@@ -788,8 +896,25 @@ INPUT_PORTS_END
  *
  *************************************/
 
+static INPUT_PORTS_START( afighter )
+	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 static INPUT_PORTS_START( alexkidd )
 	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Continues ) )
@@ -818,6 +943,14 @@ INPUT_PORTS_END
 
 static INPUT_PORTS_START( aliensyn )
 	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
@@ -854,6 +987,12 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( fantzone )
 	PORT_INCLUDE( system16a_generic )
 
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -882,19 +1021,15 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( mjleague )
 	PORT_INCLUDE( system16a_generic )
 
+	PORT_MODIFY("SERVICE")
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* upper bit of trackball */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* upper bit of trackball */
+
 	PORT_MODIFY("P1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_SPECIAL )
 
 	PORT_MODIFY("P2")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_SPECIAL )
 
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
@@ -921,17 +1056,37 @@ static INPUT_PORTS_START( mjleague )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("ANALOGY1")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_Y ) PORT_MINMAX(0,127) PORT_SENSITIVITY(70) PORT_KEYDELTA(30)
-
 	PORT_START_TAG("ANALOGX1")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_X ) PORT_MINMAX(0,127) PORT_SENSITIVITY(50) PORT_KEYDELTA(30) PORT_REVERSE
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5)
 
-	PORT_START_TAG("ANALOGY2")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_Y ) PORT_MINMAX(0,127) PORT_SENSITIVITY(70) PORT_KEYDELTA(30) PORT_PLAYER(2)
+	PORT_START_TAG("ANALOGY1")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5)
 
 	PORT_START_TAG("ANALOGX2")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_X ) PORT_MINMAX(0,127) PORT_SENSITIVITY(50) PORT_KEYDELTA(30) PORT_REVERSE PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_PLAYER(2)
+
+	PORT_START_TAG("ANALOGY2")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_PLAYER(2)
+
+	PORT_START_TAG("ANALOGZ1")
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0,255) PORT_SENSITIVITY(75) PORT_KEYDELTA(15)
+
+	PORT_START_TAG("ANALOGZ2")
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0,255) PORT_SENSITIVITY(75) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+	PORT_START_TAG("BUTTONS1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START_TAG("BUTTONS2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -944,10 +1099,9 @@ static INPUT_PORTS_START( quartet )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN5 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_MODIFY("P1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
@@ -955,10 +1109,9 @@ static INPUT_PORTS_START( quartet )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN6 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE2 )
 
 	PORT_MODIFY("UNUSED")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY PORT_PLAYER(3)
@@ -966,10 +1119,9 @@ static INPUT_PORTS_START( quartet )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN7 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE3 )
 
 	PORT_MODIFY("P2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
@@ -977,10 +1129,9 @@ static INPUT_PORTS_START( quartet )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN8 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE4 )
 
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1009,6 +1160,12 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( quartet2 )
 	PORT_INCLUDE( system16a_generic )
 
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -1023,6 +1180,66 @@ static INPUT_PORTS_START( quartet2 )
 	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( sdi )
+	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("SERVICE")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_MODIFY("UNUSED")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN )  PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP )    PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )  PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN )  PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP )    PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )  PORT_8WAY PORT_PLAYER(2)
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "Free")
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x80, "Every 50000" )
+	PORT_DIPSETTING(    0xc0, "50000" )
+	PORT_DIPSETTING(    0x40, "100000" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+
+	PORT_START_TAG("ANALOGX1")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5)
+
+	PORT_START_TAG("ANALOGY1")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_REVERSE
+
+	PORT_START_TAG("ANALOGX2")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_PLAYER(2)
+
+	PORT_START_TAG("ANALOGY2")
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_PLAYER(2) PORT_REVERSE
 INPUT_PORTS_END
 
 
@@ -1055,68 +1272,73 @@ static INPUT_PORTS_START( shinobi )
 INPUT_PORTS_END
 
 
-static INPUT_PORTS_START( sdi )
+static INPUT_PORTS_START( sjryuko )
 	PORT_INCLUDE( system16a_generic )
 
 	PORT_MODIFY("SERVICE")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("P1")
-	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
-
-	PORT_MODIFY("UNUSED")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN )  PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP )    PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )  PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN )  PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP )    PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )  PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("P2")
-	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_MODIFY("DSW")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x00, "240? (Cheat)")
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x80, "Every 50000" )
-	PORT_DIPSETTING(    0xc0, "50000" )
-	PORT_DIPSETTING(    0x40, "100000" )
-	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+	PORT_START_TAG("MJ0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("ANALOGX1")				/* fake analog X */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5)
+	PORT_START_TAG("MJ1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("ANALOGY1")				/* fake analog Y */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_REVERSE
+	PORT_START_TAG("MJ2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("ANALOGX2")				/* fake analog X */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_PLAYER(2)
+	PORT_START_TAG("MJ3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("ANALOGY2")				/* fake analog Y */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(75) PORT_KEYDELTA(5) PORT_PLAYER(2) PORT_REVERSE
+	PORT_START_TAG("MJ4")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("MJ5")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
 static INPUT_PORTS_START( tetris )
 	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1135,8 +1357,88 @@ static INPUT_PORTS_START( tetris )
 INPUT_PORTS_END
 
 
+static INPUT_PORTS_START( timescn )
+	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("UNUSED")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Out Lane Pin" )
+	PORT_DIPSETTING(    0x02, "Near" )
+	PORT_DIPSETTING(    0x00, "Far" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Special" )
+	PORT_DIPSETTING(    0x08, "7 Credits" )
+	PORT_DIPSETTING(    0x0c, "3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Credit" )
+	PORT_DIPSETTING(    0x00, "2000000 Points" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x1e, 0x14, "Bonus" )
+	PORT_DIPSETTING(    0x16, "Replay 1000000/2000000" )
+	PORT_DIPSETTING(    0x14, "Replay 1200000/2500000" )
+	PORT_DIPSETTING(    0x12, "Replay 1500000/3000000" )
+	PORT_DIPSETTING(    0x10, "Replay 2000000/4000000" )
+	PORT_DIPSETTING(    0x1c, "Replay 1000000" )
+	PORT_DIPSETTING(    0x1e, "Replay 1200000" )
+	PORT_DIPSETTING(    0x1a, "Replay 1500000" )
+	PORT_DIPSETTING(    0x18, "Replay 1800000" )
+	PORT_DIPSETTING(    0x0e, "ExtraBall 100000" )
+	PORT_DIPSETTING(    0x0c, "ExtraBall 200000" )
+	PORT_DIPSETTING(    0x0a, "ExtraBall 300000" )
+	PORT_DIPSETTING(    0x08, "ExtraBall 400000" )
+	PORT_DIPSETTING(    0x06, "ExtraBall 500000" )
+	PORT_DIPSETTING(    0x04, "ExtraBall 600000" )
+	PORT_DIPSETTING(    0x02, "ExtraBall 700000" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+	PORT_DIPNAME( 0x20, 0x20, "Match" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Pin Rebound" )
+	PORT_DIPSETTING(    0x40, "Well" )
+	PORT_DIPSETTING(    0x00, "A Little" )
+	/*
+		Pin Rebound = The Setting of "Well" or "A Little" signifies the
+		rebound strength and the resulting difficulty or ease in which the
+		ball goes out of play.
+	*/
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+INPUT_PORTS_END
+
+
 static INPUT_PORTS_START( wb3 )
 	PORT_INCLUDE( system16a_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1171,8 +1473,9 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	4000000,
-	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
-	{ 0 }
+	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
+	{ NULL },
+	{ n7751_control_w }
 };
 
 static struct YM2151interface ym2151_interface_topvolume =
@@ -2336,6 +2639,7 @@ static DRIVER_INIT( mjleague )
 	UINT16 *rombase = (UINT16 *)memory_region(REGION_CPU1);
 	rombase[0xbd42/2] = (rombase[0xbd42/2] & 0x00ff) | 0x6600;
 	system16a_generic_init();
+	custom_io_r = mjleague_custom_io_r;
 }
 
 
@@ -2351,8 +2655,7 @@ static DRIVER_INIT( sdioj )
 	void fd1089_decrypt_0027(void);
 	system16a_generic_init();
 	fd1089_decrypt_0027();
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc41002, 0xc41003, 0, 0, sdi_custom_input_0_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc41006, 0xc41007, 0, 0, sdi_custom_input_1_r);
+	custom_io_r = sdi_custom_io_r;
 }
 
 
@@ -2361,6 +2664,8 @@ static DRIVER_INIT( sjryukoa )
 	void fd1089_decrypt_5021(void);
 	system16a_generic_init();
 	fd1089_decrypt_5021();
+	custom_io_r = sjryuko_custom_io_r;
+	lamp_changed_w = sjryuko_lamp_changed_w;
 }
 
 
@@ -2391,7 +2696,7 @@ GAME( 1986, quartet2, quartet,  system16a_8751,   quartet2, quartet,     ROT0,  
 GAME( 1986, quartt2j, quartet,  system16a_8751,   quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (Japan, 8751 317-unknown)" )
 
 /* System 16A */
-GAME( 1986, afighter, 0,        system16a_no7751, generic,  afighter,    ROT270, "Sega",           "Action Fighter, FD1089A 317-0018" )
+GAME( 1986, afighter, 0,        system16a_no7751, afighter, afighter,    ROT270, "Sega",           "Action Fighter, FD1089A 317-0018" )
 GAME( 1986, alexkidd, 0,        system16a,        alexkidd, alexkidd,    ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1089A 317-unknown)" )
 GAME( 1986, alexkida, alexkidd, system16a,        alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 2, unprotected)" )
 GAME( 1986, fantzone, 0,        system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Japan New Ver., unprotected)" )
@@ -2399,8 +2704,8 @@ GAME( 1986, fantzono, fantzone, system16a_no7751, fantzone, generic_16a, ROT0,  
 GAME( 1987, sdioj,    sdi,      system16a_no7751, sdi,      sdioj,       ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Europe, System 16A, FD1089A 317-0027)" )
 GAME( 1987, shinobia, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)" )
 GAME( 1987, shinobaa, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 3, System 16A, unprotected)" )
-GAMEX(1987, sjryukoa, sjryuko,  system16a,        shinobi,  sjryukoa,    ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1089B 317-5021)", GAME_NOT_WORKING )
+GAME( 1987, sjryukoa, sjryuko,  system16a,        sjryuko,  sjryukoa,    ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1089B 317-5021)" )
 GAME( 1988, tetris,   0,        system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
 GAME( 1988, tetrisaa, tetris,   system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093a)" )
-GAME( 1987, timescna, timescn,  system16a,        shinobi,  timescna,    ROT270, "Sega",           "Time Scanner (System 16A, FD1089B 317-0024)" )
+GAME( 1987, timescna, timescn,  system16a,        timescn,  timescna,    ROT270, "Sega",           "Time Scanner (System 16A, FD1089B 317-0024)" )
 GAME( 1988, wb3a,     wb3b,     system16a_no7751, wb3,      generic_16a, ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (System 16A, FD1094 317-0084)" )

@@ -91,8 +91,15 @@ extern WRITE16_HANDLER( arabfgt_protboard_w );
 extern READ16_HANDLER( brival_protection_r );
 extern WRITE16_HANDLER( brival_protboard_w );
 
+#if 0
 extern READ16_HANDLER( ga2_sprite_protection_r );
 extern READ16_HANDLER( ga2_wakeup_protection_r );
+#endif
+
+extern void decrypt_ga2_protrom(void);
+extern READ16_HANDLER( ga2_dpram_r );
+extern WRITE16_HANDLER( ga2_dpram_w );
+
 
 extern WRITE16_HANDLER(sonic_level_load_protection);
 
@@ -493,6 +500,19 @@ static ADDRESS_MAP_START( segas32_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf00000, 0xffffff) AM_WRITE(MWA16_ROM)
 ADDRESS_MAP_END
 
+/****************************************************
+ GA2 protection board (move to machine/segas32.c?)
+****************************************************/
+
+data8_t *ga2_dpram;
+
+static ADDRESS_MAP_START( ga2_v25_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x0ffff) AM_ROM
+	AM_RANGE(0x10000, 0x1ffff) AM_RAM AM_BASE(&ga2_dpram)
+	AM_RANGE(0xf0000, 0xfffff) AM_ROM
+ADDRESS_MAP_END
+
+
 
 /******************************************************************************
  ******************************************************************************
@@ -854,6 +874,14 @@ static MACHINE_DRIVER_START( segas32_hi )
 
 	MDRV_SCREEN_SIZE(52*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 52*8-1, 0*8, 28*8-1)
+MACHINE_DRIVER_END
+
+
+/* ga2 has a v25 on a protection board */
+static MACHINE_DRIVER_START( segas32_ga2 )
+	MDRV_IMPORT_FROM( segas32 )
+	MDRV_CPU_ADD(V20, 10000000) // 10.000 MHz OSC
+	MDRV_CPU_PROGRAM_MAP(ga2_v25_map,0)
 MACHINE_DRIVER_END
 
 /******************************************************************************
@@ -1823,7 +1851,7 @@ ROM_END
  *****************************************/
 
 ROM_START( ga2 )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
 	ROM_LOAD16_WORD( "epr14960.b", 0x000000, 0x20000, CRC(87182fea) SHA1(bb669ea7091f1ea34589a565490effa934ca44a3) )
 	ROM_RELOAD     (               0x020000, 0x20000 )
 	ROM_RELOAD     (               0x040000, 0x20000 )
@@ -1833,7 +1861,7 @@ ROM_START( ga2 )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v60 data */
 	ROM_LOAD16_BYTE( "epr15146.b", 0x000000, 0x40000, CRC(7293d5c3) SHA1(535a8b4b4a05546b321cee8de6733edfc1f71589) )
 	ROM_RELOAD( 0x80000, 0x40000)
 	ROM_LOAD16_BYTE( "epr15145.b", 0x000001, 0x40000, CRC(0da61782) SHA1(f0302d747e5d55663095bb38732af423104c33ea) )
@@ -1846,7 +1874,7 @@ ROM_START( ga2 )
 	ROM_LOAD("mpr14942", 0x280000, 0x100000, CRC(a89b0e90) SHA1(e14c62418eb7f9a2deb2a6dcf635bedc1c73c253) )
 	ROM_LOAD("mpr14943", 0x380000, 0x100000, CRC(24d40333) SHA1(38faf8f3eac317a163e93bd2247fe98189b13d2d) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Protection CPU */
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* Protection CPU */
 	ROM_LOAD( "epr14468", 0x00000, 0x10000, CRC(77634daa) SHA1(339169d164b9ed7dc3787b084d33effdc8e9efc1) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
@@ -1868,7 +1896,7 @@ ROM_START( ga2 )
 ROM_END
 
 ROM_START( ga2j )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
 	ROM_LOAD16_WORD( "epr14961.b", 0x000000, 0x20000, CRC(d9cd8885) SHA1(dc9d1f01770bd23ba5959e300badbc5093a149bc) )
 	ROM_RELOAD     (               0x020000, 0x20000 )
 	ROM_RELOAD     (               0x040000, 0x20000 )
@@ -1878,7 +1906,7 @@ ROM_START( ga2j )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v60 data */
 	ROM_LOAD16_BYTE( "epr15148.b", 0x000000, 0x40000, CRC(c477a9fd) SHA1(a9d60f801c12fd067e5ad1801a92c84edd13bd08) )
 	ROM_RELOAD( 0x80000, 0x40000)
 	ROM_LOAD16_BYTE( "epr15147.b", 0x000001, 0x40000, CRC(1bb676ea) SHA1(125ffd13204f48be23e20b281c42c2307888c40b) )
@@ -1891,7 +1919,7 @@ ROM_START( ga2j )
 	ROM_LOAD("mpr14942", 0x280000, 0x100000, CRC(a89b0e90) SHA1(e14c62418eb7f9a2deb2a6dcf635bedc1c73c253) )
 	ROM_LOAD("mpr14943", 0x380000, 0x100000, CRC(24d40333) SHA1(38faf8f3eac317a163e93bd2247fe98189b13d2d) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Protection CPU */
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* Protection CPU */
 	ROM_LOAD( "epr14468", 0x00000, 0x10000, CRC(77634daa) SHA1(339169d164b9ed7dc3787b084d33effdc8e9efc1) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
@@ -2020,7 +2048,7 @@ ROM_START( radm )
 	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
 	ROM_LOAD16_BYTE( "epr13525.bin", 0x000000, 0x80000, CRC(62ad83a0) SHA1(b537176ebca15d91db04d5d7ab36aa967d41288e) )
 	ROM_LOAD16_BYTE( "epr13526.bin", 0x000001, 0x80000, CRC(59ea372a) SHA1(e7a5d59586652c59c23e07e0a99ecc740fb6144d) )
-													
+
 	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "epr13527.bin", 0x00000, 0x20000, CRC(a2e3fbbe) SHA1(2787bbef696ab3f2b7855ac991867837d3de54cd) )
 	ROM_RELOAD(               0x100000, 0x020000             )
@@ -2573,6 +2601,7 @@ static struct
 	{ "arescue",   NULL                 , NULL                 , EEPROM_SYS32_0    , 4         , 0             , 0 },
 	{ "alien3",    NULL                 , NULL                 , EEPROM_ALIEN3     , 4         , 0             , 0 },
 	{ "arabfgt",   spidey_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 4         , 0             , 0 },
+	{ "arabfgtj",  spidey_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 4         , 0             , 0 },
 	{ "brival",    brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
 	{ "darkedge",  brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
 	{ "darkedgj",  brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
@@ -2675,8 +2704,13 @@ DRIVER_INIT ( ga2 )
 	init_segas32();
 
 	/* install protection handlers */
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa0001f, 0, 0, ga2_sprite_protection_r); /* main sprite colours */
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0015f, 0, 0, ga2_wakeup_protection_r);
+	/* simulation */
+//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa0001f, 0, 0, ga2_sprite_protection_r); /* main sprite colours */
+//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0015f, 0, 0, ga2_wakeup_protection_r);
+
+	decrypt_ga2_protrom();
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, ga2_dpram_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM,  0xa00000, 0xa00fff, 0, 0, ga2_dpram_r);
 }
 
 DRIVER_INIT ( sonic )
@@ -2737,8 +2771,8 @@ GAMEX(1992, darkedgj, darkedge, segas32_hi, brival,  segas32,   ROT0, "Sega"  , 
 GAMEX(1994, dbzvrvs,  0,        segas32_hi, svf,	 segas32,   ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
 GAMEX(1991, f1en,     0,        segas32,    f1en,    segas32,   ROT0, "Sega"  , "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, f1lap,    0,        segas32,    f1en,    segas32,   ROT0, "Sega"  , "F1 Super Lap", GAME_NOT_WORKING )
-GAMEX(1992, ga2,      0,        segas32,    ga2,     ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, ga2j,     ga2,      segas32,    ga2j,    ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (Japan / World?)", GAME_IMPERFECT_GRAPHICS ) // there is no for use in Japan warning? (unusual if its a real Japan set)
+GAMEX(1992, ga2,      0,        segas32_ga2,    ga2,     ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2j,     ga2,      segas32_ga2,    ga2j,    ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (Japan / World?)", GAME_IMPERFECT_GRAPHICS ) // there is no for use in Japan warning? (unusual if its a real Japan set)
 GAME( 1992, holo,     0,        segas32,    holo,    segas32,   ROT0, "Sega"  , "Holosseum" )
 GAMEX(1994, jpark,    0,        segas32,    jpark,   jpark,     ROT0, "Sega"  , "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, radm,     0,        segas32,    radm,    segas32,   ROT0, "Sega"  , "Rad Mobile (World)", GAME_IMPERFECT_GRAPHICS )
@@ -2753,4 +2787,11 @@ GAMEX(1991, spideyj,  spidey,   segas32,    spideyj, segas32,   ROT0, "Sega"  , 
 GAMEX(1994, svf,      0,        segas32,    svf,     segas32,   ROT0, "Sega"  , "Super Visual Football: European Sega Cup", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1994, svs,	  svf,		segas32,    svf,	 segas32,   ROT0, "Sega"  , "Super Visual Soccer: Sega Cup (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1994, jleague,  svf,      segas32,    svf,     segas32,   ROT0, "Sega"  , "The J.League 1994 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+
+
+
+
+
+
+
 

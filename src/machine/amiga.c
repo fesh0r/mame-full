@@ -396,7 +396,11 @@ static void blitter_proc( int param ) {
 				ptr[2] = ( custom_regs.BLTxPTH[2] << 16 ) | custom_regs.BLTxPTL[2];
 
 			if ( custom_regs.BLTCON0 & 0x100 )
+			{
 				ptr[3] = ( custom_regs.BLTxPTH[3] << 16 ) | custom_regs.BLTxPTL[3];
+				if ( ptr[3] > 0x7ffff )
+					goto done;
+			}
 
 			if ( custom_regs.BLTCON1 & 0x0002 ) { /* Descending mode */
 				blit_func = blit_func_d;
@@ -527,6 +531,7 @@ static void blitter_proc( int param ) {
 		}
 	}
 
+done:
 	custom_regs.DMACON ^= 0x4000; /* signal we're done */
 
 	if ( blt_total )

@@ -68,7 +68,7 @@ VIDEO_START( system18 )
 		return 1;
 
 	/* create a temp bitmap to draw the VDP data into */
-	tempbitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tempbitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 	if (!tempbitmap)
 		return 1;
 	return 0;
@@ -168,7 +168,7 @@ VIDEO_UPDATE( system18 )
 	mixing = 0x00:
 		astorm: layer = 0, pri = 0x00 or 0x01
 		lghost: layer = 0, pri = 0x00 or 0x01
-		
+
 	mixing = 0x01:
 		ddcrew: layer = 0, pri = 0x00 or 0x01 or 0x02
 
@@ -195,7 +195,7 @@ VIDEO_UPDATE( system18 )
 */
 	vdplayer = (vdp_mixing >> 1) & 3;
 	vdppri = (vdp_mixing & 1) ? (1 << vdplayer) : 0;
-	
+
 #if DEBUG_VDP
 	if (code_pressed(KEYCODE_Q)) vdplayer = 0;
 	if (code_pressed(KEYCODE_W)) vdplayer = 1;
@@ -207,7 +207,7 @@ VIDEO_UPDATE( system18 )
 	if (code_pressed(KEYCODE_F)) vdppri = 0x04;
 	if (code_pressed(KEYCODE_G)) vdppri = 0x08;
 #endif
-	
+
 	/* if no drawing is happening, fill with black and get out */
 	if (!segaic16_display_enable)
 	{

@@ -853,7 +853,7 @@ static MACHINE_INIT( digdug )
 static ADDRESS_MAP_START( bosco_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
 	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)						/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -875,7 +875,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( galaga_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
 	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)						/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -892,7 +892,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( xevious_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
 	AM_RANGE(0x6800, 0x6807) AM_READ(bosco_dsw_r)
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)	/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)
@@ -912,7 +912,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( digdug_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_WRITENOP			/* the only area different for each CPU */
-	AM_RANGE(0x6800, 0x681f) AM_WRITE(pengo_sound_w) AM_BASE(&namco_soundregs)
+	AM_RANGE(0x6800, 0x681f) AM_WRITE(pacman_sound_w) AM_BASE(&namco_soundregs)
 	AM_RANGE(0x6820, 0x6827) AM_WRITE(bosco_latch_w)						/* misc latches */
 	AM_RANGE(0x6830, 0x6830) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x7000, 0x70ff) AM_READWRITE(namco_06xx_0_data_r, namco_06xx_0_data_w)

@@ -262,14 +262,6 @@ extern WRITE16_HANDLER( sys16_paletteram_w );
 extern VIDEO_START( system16 );
 extern VIDEO_UPDATE( system16 );
 
-/* hang-on video hardware */
-extern VIDEO_START( hangon_old );
-extern VIDEO_UPDATE( hangon_old );
-
-/* outrun video hardware */
-extern VIDEO_START( old_outrun );
-extern VIDEO_UPDATE( old_outrun );
-
 /* aburner video hardware */
 extern VIDEO_START( aburner );
 extern VIDEO_UPDATE( aburner );

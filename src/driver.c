@@ -67,80 +67,85 @@ const struct GameDriver *drivers[] =
 
 #else	/* DRIVER_RECURSIVE */
 
-
 	/* "Pacman hardware" games */
-	DRIVER( puckman )	/* (c) 1980 Namco */
-	DRIVER( puckmana )	/* (c) 1980 Namco */
-	DRIVER( puckmanf )	/* hack */
-	DRIVER( pacman )	/* (c) 1980 Midway */
-	DRIVER( pacmanf )	/* hack */
-	DRIVER( puckmod )	/* (c) 1981 Namco */
-	DRIVER( pacmod )	/* (c) 1981 Midway */
-	DRIVER( hangly )	/* hack */
-	DRIVER( hangly2 )	/* hack */
-	DRIVER( hangly3 )	/* hack */
-	DRIVER( newpuckx )	/* hack */
-	DRIVER( pacheart )	/* hack */
-	DRIVER( joyman )	/* hack */
-	DRIVER( newpuc2 )	/* hack */
-	DRIVER( newpuc2b )	/* hack */
-	DRIVER( piranha )	/* GL */
-	DRIVER( piranhao )	/* GL */
-	DRIVER( piranhah )	/* hack */
-	DRIVER( nmouse )	/* (c) 1981 Amenip (Palcom Queen River) */
-	DRIVER( nmouseb )	/* (c) 1981 Amenip Nova Games Ltd. */
+	DRIVER( puckman ) /* (c) 1980 Namco */
+	DRIVER( puckmana ) /* (c) 1980 Namco */
+	DRIVER( puckmanf ) /* hack */
+	DRIVER( pacman ) /* (c) 1980 Midway */
+	DRIVER( pacmanf ) /* hack */
+	DRIVER( puckmod ) /* (c) 1981 Namco */
+	DRIVER( pacmod ) /* (c) 1981 Midway */
+	DRIVER( newpuc2 ) /* hack */
+	DRIVER( newpuc2b ) /* hack */
+	DRIVER( newpuckx ) /* hack */
+	DRIVER( pacheart ) /* hack */
+	DRIVER( hangly ) /* hack */
+	DRIVER( hangly2 ) /* hack */
+	DRIVER( hangly3 ) /* hack */
+	DRIVER( piranhah ) /* hack */
+	DRIVER( crush )  /* (c) 1981 Kural Samno Electric Ltd */
+	DRIVER( crush2 ) /* (c) 1981 Kural Esco Electric Ltd - bootleg? */
+	DRIVER( crush3 ) /* Kural Electric Ltd - bootleg? */
+	DRIVER( maketrax ) /* (c) 1981 Williams, high score table says KRL (fur Kural) */
+	DRIVER( maketrxb ) /* (c) 1981 [Kural] (Williams license) */
+	DRIVER( korosuke ) /* (c) 1981 Kural Electric */
+	DRIVER( mbrush ) /* 1981 bootleg */
+	DRIVER( paintrlr ) /* 1981 bootleg */
+	DRIVER( pacplus )
+	DRIVER( joyman ) /* hack */
+	DRIVER( ctrpllrp ) /* hack */
+	DRIVER( eyes )  /* (c) 1982 Digitrex Techstar + "Rockola presents" */
+	DRIVER( eyes2 )  /* (c) 1982 Techstar + "Rockola presents" */
+	DRIVER( mrtnt )  /* (c) 1983 Telko */
+	DRIVER( gorkans ) /* (c) 1984 Techstar */
+	DRIVER( eggor )  /* (c) 1983 Telko */
+	DRIVER( jumpshot ) /* (c) 1985 Bally Midway */
+	DRIVER( jumpshtp ) /* (c) 1985 Bally Midway */
+	DRIVER( shootbul ) /* (c) 1985 Bally Midway */
+	DRIVER( piranha ) /* GL */
+	DRIVER( piranhao ) /* GL */
+	DRIVER( nmouse ) /* (c) 1981 Amenip (Palcom Queen River) */
+	DRIVER( nmouseb ) /* (c) 1981 Amenip Nova Games Ltd. */
+	DRIVER( mspacman ) /* (c) 1981 Midway */ /* made by Gencomp */
+	DRIVER( mspacmnf ) /* hack */
+	DRIVER( mspacmat ) /* hack */
 	DRIVER( woodpek )
 	DRIVER( woodpeka )
-	DRIVER( pacplus )
-	DRIVER( mspacman )	/* (c) 1981 Midway */	/* made by Gencomp */
-	DRIVER( mspacmnf )	/* hack */
-	DRIVER( mspacmab )	/* bootleg */
-	DRIVER( mspacmat )	/* hack */
-	DRIVER( mspacpls )	/* hack */
-	DRIVER( pacgal )	/* hack */
-	DRIVER( mschamp )	/* hack */
-	DRIVER( maketrax )	/* (c) 1981 Williams, high score table says KRL (fur Kural) */
-	DRIVER( maketrxb )	/* (c) 1981 [Kural] (Williams license) */
-	DRIVER( korosuke )	/* (c) 1981 Kural Electric */
-	DRIVER( crush )		/* (c) 1981 Kural Samno Electric Ltd */
-	DRIVER( crush2 )	/* (c) 1981 Kural Esco Electric Ltd - bootleg? */
-	DRIVER( crush3 )	/* Kural Electric Ltd - bootleg? */
-	DRIVER( mbrush )	/* 1981 bootleg */
-	DRIVER( paintrlr )	/* 1981 bootleg */
-	DRIVER( eyes )		/* (c) 1982 Digitrex Techstar + "Rockola presents" */
-	DRIVER( eyes2 )		/* (c) 1982 Techstar + "Rockola presents" */
-	DRIVER( mrtnt )		/* (c) 1983 Telko */
-	DRIVER( gorkans )	/* (c) 1984 Techstar */
-	DRIVER( eggor )		/* (c) 1983 Telko */
-	DRIVER( ponpoko )	/* (c) 1982 Sigma Ent. Inc. */
-	DRIVER( ponpokov )	/* (c) 1982 Sigma Ent. Inc. + Venture Line license */
-	DRIVER( lizwiz )	/* (c) 1985 Techstar + "Sunn presents" */
-	DRIVER( theglobp )	/* (c) 1983 Epos Corporation */
-	DRIVER( beastf )	/* (c) 1984 Epos Corporation */
-	DRIVER( acitya )	/* (c) 1983 Epos Corporation */
-	DRIVER( bwcasino )	/* (c) 1983 Epos Coropration */
-	DRIVER( dremshpr )	/* (c) 1982 Sanritsu */
-	DRIVER( vanvan )	/* (c) 1983 Sanritsu */
-	DRIVER( vanvank )	/* (c) 1983 Karateco (bootleg?) */
-	DRIVER( alibaba )	/* (c) 1982 Sega */
-	DRIVER( pengo )		/* 834-0386 (c) 1982 Sega */
-	DRIVER( pengo2 )	/* 834-0386 (c) 1982 Sega */
-	DRIVER( pengo2u )	/* 834-0386 (c) 1982 Sega */
-	DRIVER( pengo3u )	/* 834-0386 (c) 1982 Sega */
-	DRIVER( pengo4 )	/* 834-0386 (c) 1982 Sega */
-	DRIVER( pengob )	/* bootleg */
-	DRIVER( penta )		/* bootleg */
-	DRIVER( jrpacman )	/* (c) 1983 Midway */
-	DRIVER( jrpacmbl )	/* bootleg on Pengo HW */
-	DRIVER( jumpshot )	/* (c) 1985 Bally Midway */
-	DRIVER( shootbul )	/* (c) 1985 Bally Midway */
-	DRIVER( bigbucks )	/* (c) 1986 Dynasoft Inc. */
-	DRIVER( rocktrv2 )	/* (c) 1986 Triumph Software Inc */
+	DRIVER( mspacmab ) /* bootleg */
+	DRIVER( pacgal ) /* hack */
+	DRIVER( mspacpls ) /* hack */
+	DRIVER( ponpoko ) /* (c) 1982 Sigma Ent. Inc. */
+	DRIVER( ponpokov ) /* (c) 1982 Sigma Ent. Inc. + Venture Line license */
+	DRIVER( lizwiz ) /* (c) 1985 Techstar + "Sunn presents" */
+	DRIVER( alibaba ) /* (c) 1982 Sega */
+	DRIVER( dremshpr ) /* (c) 1982 Sanritsu */
+	DRIVER( vanvan ) /* (c) 1983 Sanritsu */
+	DRIVER( vanvank ) /* (c) 1983 Karateco (bootleg?) */
+	DRIVER( vanvanb ) /* (c) 1983 Karateco (bootleg?) */
+	DRIVER( bwcasino ) /* (c) 1983 Epos Coropration */
+	DRIVER( acitya ) /* (c) 1983 Epos Corporation */
+	DRIVER( theglobp ) /* (c) 1983 Epos Corporation */
+	DRIVER( sprglobp ) /* (c) 1983 Epos Corporation */
+	DRIVER( beastf ) /* (c) 1984 Epos Corporation */
+	DRIVER( rocktrv2 ) /* (c) 1986 Triumph Software Inc */
+	DRIVER( bigbucks ) /* (c) 1986 Dynasoft Inc. */
+	DRIVER( mschamp ) /* hack */
 
 	/* S2650 Pacman Kits */
-	DRIVER( drivfrcp )	/* (c) 1984 Shinkai Inc. (Magic Eletronics Inc. licence) */
-	DRIVER( 8bpm )		/* (c) 1985 Seatongrove Ltd (Magic Eletronics USA licence) */
-	DRIVER( porky )		/* (c) 1985 Shinkai Inc. (Magic Eletronics Inc. licence) */
+	DRIVER( drivfrcp ) /* (c) 1984 Shinkai Inc. (Magic Eletronics Inc. licence) */
+	DRIVER( 8bpm )  /* (c) 1985 Seatongrove Ltd (Magic Eletronics USA licence) */
+	DRIVER( porky )  /* (c) 1985 Shinkai Inc. (Magic Eletronics Inc. licence) */
+
+	DRIVER( pengo )  /* 834-0386 (c) 1982 Sega */
+	DRIVER( pengo2 ) /* 834-0386 (c) 1982 Sega */
+	DRIVER( pengo2u ) /* 834-0386 (c) 1982 Sega */
+	DRIVER( pengo3u ) /* 834-0386 (c) 1982 Sega */
+	DRIVER( pengo4 ) /* 834-0386 (c) 1982 Sega */
+	DRIVER( pengob ) /* bootleg */
+	DRIVER( penta )  /* bootleg */
+	DRIVER( jrpacmbl ) /* bootleg on Pengo HW */
+
+	DRIVER( jrpacman ) /* (c) 1983 Midway */
 
 	/* Epos games */
 	DRIVER( megadon )	/* (c) 1982 */
@@ -1254,6 +1259,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( travrusa )	/* (c) 1983 */
 	DRIVER( motorace )	/* (c) 1983 Williams license */
 	DRIVER( shtrider )	/* (c) 1984 Seibu Kaihatsu */
+	DRIVER( shtridra )	/* (c) 1984 Seibu Kaihatsu */
 	DRIVER( wilytowr )	/* M63 (c) 1984 */
 	DRIVER( atomboy )	/* M63 (c) 1985 Irem + Memetron license */
 	DRIVER( fghtbskt )	/* (c) 1984 Paradise Co. Ltd. */
@@ -1516,6 +1522,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( othunder )	/* B67 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( othundu )	/* B67 (c) 1988 Taito America Corporation (US) */
 	DRIVER( othunduo )	/* B67 (c) 1988 Taito America Corporation (US) */
+	DRIVER( othundrj )	/* B67 (c) 1988 Taito Corporation (Japan) */
 	DRIVER( rainbow )	/* B22 (c) 1987 Taito Corporation */
 	DRIVER( rainbowo )	/* B22 (c) 1987 Taito Corporation */
 	DRIVER( rainbowe )	/* B39 (c) 1988 Taito Corporation */
@@ -1901,6 +1908,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( 3in1semi )	/* (c) 1998 SemiCom */
 	DRIVER( moremorp )	/* (c) 1999 SemiCom + Exit */
 	DRIVER( 4in1boot )	/* (c) 2002 but bootleg of 1999 release? */
+	DRIVER( snowbro3 )	/* (c) 2002 but hack / bootleg of snowbros? */
 
 	/* More Toaplan Games */
 	DRIVER( tekipaki )	/* TP-020 (c) 1991 Toaplan */
@@ -4835,6 +4843,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bangbead )	/* 0259 (c) 2000 Visco */
 	DRIVER( nitd )		/* 0260 (c) 2000 Eleven / Gavaking */
 	DRIVER( sengoku3 )	/* 0261 (c) 2001 SNK */
+	DRIVER( kof2001 )	/* 0262 (c) 2001 Eolith / SNK */
+	DRIVER( kof2001h )	/* 0262 (c) 2001 Eolith / SNK */
+	DRIVER( mslug4 )	/* 0263 (c) 2002 Mega Enterprise */
 
 	/* Hyper NeoGeo 64 uses a 3 digit rom code? */
 

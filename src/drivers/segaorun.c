@@ -5,6 +5,7 @@
 ****************************************************************************
 
 	Known bugs:
+		* LED connected to stop lights no longer working
 
 	To do for each game:
 		* verify memory test
@@ -627,7 +628,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	4000000,
-	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -1515,9 +1516,9 @@ static DRIVER_INIT( outrunb )
 
 static DRIVER_INIT( shangon )
 {
-	extern void fd1089_decrypt_shangon(void);
+	extern void fd1089_decrypt_0034(void);
 	outrun_generic_init();
-	fd1089_decrypt_shangon();
+	fd1089_decrypt_0034();
 	custom_io_r = shangon_custom_io_r;
 	custom_io_w = shangon_custom_io_w;
 }

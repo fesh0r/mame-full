@@ -10,6 +10,9 @@
 		* timescn DIPs have not really been verified
 		* atomicp garbage
 		* screen flip not implemented
+		* sdi is unplayable after level 1 (screen / sprites get flipped)
+		  (this occurs on both s16a & s16b versions)
+
 
 	To do for each game:
 		* verify memory test
@@ -864,6 +867,7 @@ static read16_handler custom_io_r;
 static write16_handler custom_io_w;
 
 static UINT8 disable_screen_blanking;
+static UINT8 mj_input_num;
 
 static void (*i8751_vblank_hook)(void);
 static const UINT8 *i8751_initial_config;
@@ -1062,7 +1066,7 @@ static MACHINE_INIT( atomicp )
  *
  *************************************/
 
-static READ16_HANDLER( misc_io_r )
+static READ16_HANDLER( standard_io_r )
 {
 	offset &= 0x1fff;
 	switch (offset & (0x3000/2))
@@ -1073,36 +1077,27 @@ static READ16_HANDLER( misc_io_r )
 		case 0x2000/2:
 			return readinputport(4 + (offset & 1));
 	}
-	if (custom_io_r)
-		return custom_io_r(offset, mem_mask);
-	logerror("%06X:misc_io_r - unknown read access to address %04X\n", activecpu_get_pc(), offset * 2);
+	logerror("%06X:standard_io_r - unknown read access to address %04X\n", activecpu_get_pc(), offset * 2);
 	return segaic16_open_bus_r(0,0);
 }
 
 
-static WRITE16_HANDLER( misc_io_w )
+static WRITE16_HANDLER( standard_io_w )
 {
 	offset &= 0x1fff;
 	switch (offset & (0x3000/2))
 	{
 		case 0x0000/2:
 			/*
-				D7 : ?
+				D7 : 1 for most games, 0 for ddux, sdi, wb3b
 				D6 : 1= Screen flip, 0= Normal screen display
 				D5 : 1= Display on, 0= Display off
-				D4 : ?
+				D4 : 0 for most games, 1 for eswat
 				D3 : Output to lamp 2 (1= On, 0= Off)
 				D2 : Output to lamp 1 (1= On, 0= Off)
 				D1 : (Output to coin counter 2?)
 				D0 : Output to coin counter 1
 			*/
-/*
-	all sets D7, clears D4, except:
-	ddux clears D7
-	eswat sets D4
-	sdi clears D7
-	wb3b clears D7
-*/
 			segaic16_tilemap_set_flip(0, data & 0x40);
 			segaic16_sprites_set_flip(0, data & 0x40);
 			if (!disable_screen_blanking)
@@ -1113,12 +1108,25 @@ static WRITE16_HANDLER( misc_io_w )
 			coin_counter_w(0, data & 0x01);
 			return;
 	}
+	logerror("%06X:standard_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
+}
+
+
+static READ16_HANDLER( misc_io_r )
+{
+	if (custom_io_r)
+		return (*custom_io_r)(offset, mem_mask);
+	else
+		return standard_io_r(offset, mem_mask);
+}
+
+
+static WRITE16_HANDLER( misc_io_w )
+{
 	if (custom_io_w)
-	{
-		custom_io_w(offset, data, mem_mask);
-		return;
-	}
-	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
+		(*custom_io_w)(offset, data, mem_mask);
+	else
+		standard_io_w(offset, data, mem_mask);
 }
 
 
@@ -1428,7 +1436,7 @@ static READ16_HANDLER( dunkshot_custom_io_r )
 			}
 			break;
 	}
-	return segaic16_open_bus_r(0,0);
+	return standard_io_r(offset, mem_mask);
 }
 
 
@@ -1487,7 +1495,7 @@ static READ16_HANDLER( hwchamp_custom_io_r )
 			return ret;
 		}
 	}
-	return segaic16_open_bus_r(0,0);
+	return standard_io_r(offset, mem_mask);
 }
 
 
@@ -1513,6 +1521,7 @@ static WRITE16_HANDLER( hwchamp_custom_io_w )
 			}
 			break;
 	}
+	standard_io_w(offset, data, mem_mask);
 }
 
 
@@ -1537,7 +1546,52 @@ static READ16_HANDLER( sdi_custom_io_r )
 			}
 			break;
 	}
-	return segaic16_open_bus_r(0,0);
+	return standard_io_r(offset, mem_mask);
+}
+
+
+
+/*************************************
+ *
+ *	Sukeban Jansi Ryuko custom I/O
+ *
+ *************************************/
+
+static READ16_HANDLER( sjryuko_custom_io_r )
+{
+	static const char *portname[] = { "MJ0", "MJ1", "MJ2", "MJ3", "MJ4", "MJ5" };
+
+	switch (offset & (0x3000/2))
+	{
+		case 0x1000/2:
+			switch (offset & 3)
+			{
+				case 1:
+					if (readinputportbytag_safe(portname[mj_input_num], 0xff) != 0xff)
+						return 0xff & ~(1 << mj_input_num);
+					return 0xff;
+
+				case 2:
+					return readinputportbytag_safe(portname[mj_input_num], 0xff);
+			}
+			break;
+	}
+	return standard_io_r(offset, mem_mask);
+}
+
+
+static WRITE16_HANDLER( sjryuko_custom_io_w )
+{
+	static UINT8 last_val;
+
+	switch (offset & (0x3000/2))
+	{
+		case 0x0000/2:
+			if (((last_val ^ data) & 4) && (data & 4))
+				mj_input_num = (mj_input_num + 1) % 6;
+			break;
+	}
+	standard_io_w(offset, data, mem_mask);
 }
 
 
@@ -2358,6 +2412,52 @@ static INPUT_PORTS_START( shinobi )
 INPUT_PORTS_END
 
 
+static INPUT_PORTS_START( sjryuko )
+	PORT_INCLUDE( system16b_generic )
+
+	PORT_START_TAG("MJ0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("MJ1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("MJ2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("MJ3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("MJ4")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("MJ5")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 static INPUT_PORTS_START( sonicbom )
 	PORT_INCLUDE( system16b_generic )
 
@@ -2410,7 +2510,32 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( timescn )
 	PORT_INCLUDE( system16b_generic )
 
-	PORT_START_TAG("DSW2")
+	PORT_MODIFY("UNUSED")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Out Lane Pin" )
+	PORT_DIPSETTING(    0x02, "Near" )
+	PORT_DIPSETTING(    0x00, "Far" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Special" )
+	PORT_DIPSETTING(    0x08, "7 Credits" )
+	PORT_DIPSETTING(    0x0c, "3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Credit" )
+	PORT_DIPSETTING(    0x00, "2000000 Points" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -2445,31 +2570,6 @@ static INPUT_PORTS_START( timescn )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-
-	PORT_START_TAG("DSW3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Out Lane Pin" )
-	PORT_DIPSETTING(    0x02, "Near" )
-	PORT_DIPSETTING(    0x00, "Far" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Special" )
-	PORT_DIPSETTING(    0x08, "7 Credits" )
-	PORT_DIPSETTING(    0x0c, "3 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Credit" )
-	PORT_DIPSETTING(    0x00, "2000000 Points" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -2582,7 +2682,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	4000000,
-	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -5208,6 +5308,8 @@ static DRIVER_INIT( sjryuko )
 	void fd1089_decrypt_5021(void);
 	init_generic_5358();
 	fd1089_decrypt_5021();
+	custom_io_r = sjryuko_custom_io_r;
+	custom_io_w = sjryuko_custom_io_w;
 }
 
 
@@ -5307,7 +5409,7 @@ GAME( 1987, shinobi,  0,        system16b,      shinobi,  generic_5358,  ROT0,  
 GAME( 1987, shinobib, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, FD1094 317-0049)" )
 GAME( 1987, shinobic, shinobi,  system16b,      shinobi,  generic_5521,  ROT0,   "Sega",           "Shinobi (set 4, System 16B, unprotected)" )
 GAME( 1987, sonicbom, 0,        system16b,      sonicbom, generic_5358,  ROT270, "Sega",           "Sonic Boom (FD1094 317-0053)" )
-GAMEX(198?, sjryuko,  0,        timescn,        sonicbom, sjryuko,       ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089B 317-5021)",GAME_NOT_WORKING )
+GAME( 1987, sjryuko,  0,        timescn,        sjryuko,  sjryuko,       ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089B 317-5021)" )
 GAMEX(19??, suprleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Super League (FD1094 317-0045?)", GAME_NOT_WORKING )
 GAME( 1988, tetrisb,  tetris,   system16b,      tetris,   generic_5704,  ROT0,   "Sega",           "Tetris (Japan, set 1, System 16B, FD1094 317-0092)" )
 GAME( 1988, tetrisba, tetris,   system16b,      tetris,   generic_5358,  ROT0,   "Sega",           "Tetris (Japan, set 2, System 16B, FD1094 317-0091)" )
@@ -5321,4 +5423,3 @@ GAME( 1988, wb3bb,    wb3b,     system16b,      wb3b,     generic_5358,  ROT0,  
 GAME( 1989, wrestwar, 0,        system16b_8751, wrestwar, wrestwar_8751, ROT270, "Sega",           "Wrestle War (8751 317-0103)" )
 GAME( 1989, wrestwra, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (Japan, FD1094 317-0090)" )
 GAME( 1989, wrestwrb, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (World, FD1094 317-0102)" )
-

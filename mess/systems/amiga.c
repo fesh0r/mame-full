@@ -90,7 +90,7 @@ static MACHINE_DRIVER_START( ntsc )
 	MDRV_PALETTE_INIT( amiga )
 
 	MDRV_VIDEO_START( amiga )
-	MDRV_VIDEO_UPDATE( amiga )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 MACHINE_DRIVER_END
 
 

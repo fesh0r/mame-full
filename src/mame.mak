@@ -224,12 +224,12 @@ DRVLIBS = \
 	$(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
-	$(OBJ)/drivers/pacman.o $(OBJ)/machine/mspacman.o \
-	$(OBJ)/machine/pacplus.o $(OBJ)/machine/jumpshot.o \
-	$(OBJ)/machine/theglobp.o \
+	$(OBJ)/vidhrdw/pacman.o $(OBJ)/drivers/pacman.o \
+	$(OBJ)/machine/mspacman.o $(OBJ)/machine/pacplus.o \
+	$(OBJ)/machine/jumpshot.o $(OBJ)/machine/theglobp.o \
 	$(OBJ)/machine/acitya.o \
-	$(OBJ)/drivers/jrpacman.o $(OBJ)/vidhrdw/jrpacman.o \
-	$(OBJ)/vidhrdw/pengo.o $(OBJ)/drivers/pengo.o \
+	$(OBJ)/drivers/pengo.o \
+	$(OBJ)/drivers/jrpacman.o \
 
 $(OBJ)/epos.a: \
 	$(OBJ)/drivers/epos.o $(OBJ)/vidhrdw/epos.o \

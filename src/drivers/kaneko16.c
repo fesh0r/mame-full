@@ -580,8 +580,8 @@ static ADDRESS_MAP_START( bloodwar, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r)	//
 	AM_RANGE(0xb00006, 0xb00007) AM_READ(input_port_3_word_r)	//
 	AM_RANGE(0xb80000, 0xb80001) AM_WRITE(bloodwar_coin_lockout_w)	// Coin Lockout
-	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)		// ?
-	AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_NOP)			// ? (bit 0)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(kaneko16_display_enable)
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(toybox_mcu_status_r)
 	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(bloodwar_oki_0_bank_w)
 	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(bloodwar_oki_1_bank_w)
 ADDRESS_MAP_END
@@ -686,8 +686,8 @@ static ADDRESS_MAP_START( bonkadv, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r)	//
 	AM_RANGE(0xb00006, 0xb00007) AM_READ(input_port_3_word_r)	//
 	AM_RANGE(0xb80000, 0xb80001) AM_WRITE(bloodwar_coin_lockout_w)	// Coin Lockout
-	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)		// ? ($68a,$7ee)
-	AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_NOP)			// ? (bit 0) possibly MCU status
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(kaneko16_display_enable)
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(toybox_mcu_status_r)
 	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(bonkadv_oki_0_bank_w)
 	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(bonkadv_oki_1_bank_w)
 ADDRESS_MAP_END

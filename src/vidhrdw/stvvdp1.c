@@ -21,6 +21,7 @@ Framebuffer todo:
 
 data32_t *stv_vdp1_vram;
 data32_t *stv_vdp1_regs;
+
 extern data32_t *stv_scu;
 
 UINT16	 *stv_framebuffer;
@@ -195,11 +196,6 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 
 READ32_HANDLER ( stv_vdp1_vram_r )
 {
-	/*Note: Only byte and word accesses can be done from the main CPU,Steep Slope Sliders
-	tries to access this with a MOV.L */
-	//usrintf_showmessage("%08x",mem_mask);
-	if ((mem_mask & 0xffffffff) == 0) return 0;//unsure if this is ACTIVE_HIGH or ACTIVE_LOW
-
 	return stv_vdp1_vram[offset];
 }
 
@@ -222,7 +218,6 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 	vdp1[offset*4+2] = (data & 0x0000ff00) >> 8;
 	vdp1[offset*4+3] = (data & 0x000000ff) >> 0;
 }
-
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 {

@@ -5,87 +5,181 @@
  driver by
   Tomasz Slanina
   Steve Ellenoff
+	Nicola Salmoria
 
 TODO:
  - sound
- - get rid of dirty hack in DRIVER_INIT (bug in the core?)
+    my guess:
+     - data (samples?) in mem range 0000-$0680 ($1f00000 - $1f00680)
+     - 4 chn?? ( masks $000000ff, $0000ff00, $00ff0000, $ff000000)
+     - INT7 (bit 1 in IRQRQB) = sound hw 'ready' flag (checked at $56c)
+     - writes to 3600000 - 3ffffff related to snd hardware
+
+ - game doesn't work with 'demo sound' disabled
+ - get rid of dirty hack in DRIVER_INIT (bug in the ARM core?)
  - is screen double buffered ?
  - flashing text in test mode
- - timer ? ($3200014)
- - proper interrupt timing
- - fix freezes in test mode (depends on int/frame)
-   cpu sits in a loop and waiting for change
-   at $7c -  but interrupts are disabled.
- - speed - gameplay is way too fast - it depends on int/frame
-   (see above). 8 is fixing above bug
-   (imo $7c should be modifed only once/frame, but it's dangerous )
 
 **********************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/arm/arm.h"
-#include "machine/random.h"
 
 static data32_t *ertictac_mainram;
-static data32_t *vram;
-static data32_t int_flag;
+static data32_t *ram;
+static data32_t IRQSTA, IRQMSKA, IRQMSKB, FIQMSK, T1low, T1high;
+static data32_t vidFIFO[256];
 
-static READ32_HANDLER(vram_r)
+static READ32_HANDLER(ram_r)
 {
-	return vram[offset];
+	return ram[offset];
 }
 
-static WRITE32_HANDLER(vram_w)
+static WRITE32_HANDLER(ram_w)
 {
-	int x=(offset%80)<<2;
-	int y=(offset/80)&0xff	;
-	COMBINE_DATA(&vram[offset]);
-	plot_pixel(tmpbitmap,x++,y,vram[offset]&0xff);
-	plot_pixel(tmpbitmap,x++,y,(vram[offset]>>8)&0xff);
-	plot_pixel(tmpbitmap,x++,y,(vram[offset]>>16)&0xff);
-	plot_pixel(tmpbitmap,x,y,(vram[offset]>>24)&0xff);
+	COMBINE_DATA(&ram[offset]);
+	if(offset>=vidFIFO[0x88]/4 && offset<( (vidFIFO[0x88]/4) + 0x28000/4))
+	{
+		int tmp=offset-vidFIFO[0x88]/4;
+		int x=(tmp%80)<<2;
+		int y=(tmp/80)&0xff;
+
+		plot_pixel(tmpbitmap, x++, y, (ram[offset]&0xff));
+		plot_pixel(tmpbitmap, x++, y, ((ram[offset]>>8)&0xff));
+		plot_pixel(tmpbitmap, x++, y, ((ram[offset]>>16)&0xff));
+		plot_pixel(tmpbitmap, x, y, ((ram[offset]>>24)&0xff));
+	}
 }
 
-static READ32_HANDLER(random_num_r)
+static WRITE32_HANDLER(video_fifo_w)
 {
-	return mame_rand();
+	vidFIFO[data>>24]=data&0xffffff;
 }
 
-static READ32_HANDLER(int_r)
+static READ32_HANDLER(IOCR_r)
 {
-	if(!int_flag)
-		return 0x20; //vblank ?
-	if(!int_flag==1)
-		return 2; //timer ?
-	return mame_rand()&(~0x22);
+	return (input_port_5_r(0)&0x80)|0x34;
 }
 
-static READ32_HANDLER(int2_r)
+static WRITE32_HANDLER(IOCR_w)
 {
-	if(int_flag>3)
-		return 8;
-	return mame_rand()&(~8);
+	//ignored
 }
 
 
-data32_t unk34tab[256];
-static WRITE32_HANDLER(serial_w)
+static READ32_HANDLER(IRQSTA_r)
 {
-	unk34tab[data>>24]=data&0xffffff; //the upper 8 (or 6) bits are some kind of index
+	return (IRQSTA&(~2))|0x80;
+}
+
+static READ32_HANDLER(IRQRQA_r)
+{
+	return (IRQSTA&IRQMSKA)|0x80;
+}
+
+static WRITE32_HANDLER(IRQRQA_w)
+{
+	if(ACCESSING_LSB32)
+		IRQSTA&=~data;
+}
+
+static READ32_HANDLER(IRQMSKA_r)
+{
+	return IRQMSKA;
+}
+
+static WRITE32_HANDLER(IRQMSKA_w)
+{
+	if(ACCESSING_LSB32)
+		IRQMSKA=(data&(~2))|0x80;
+}
+
+static READ32_HANDLER(IRQRQB_r)
+{
+	return rand()&IRQMSKB; /* hack  0x20 - controls,  0x02 - ?sound? */
+}
+
+static READ32_HANDLER(IRQMSKB_r)
+{
+	return IRQMSKB;
+}
+
+static WRITE32_HANDLER(IRQMSKB_w)
+{
+	if(ACCESSING_LSB32)
+		IRQMSKB=data;
+}
+
+static READ32_HANDLER(FIQMSK_r)
+{
+	return FIQMSK;
+}
+
+static WRITE32_HANDLER(FIQMSK_w)
+{
+	if(ACCESSING_LSB32)
+		FIQMSK=(data&(~0x2c))|0x80;
+}
+
+static READ32_HANDLER(T1low_r)
+{
+	return T1low;
+}
+
+static WRITE32_HANDLER(T1low_w)
+{
+	if(ACCESSING_LSB32)
+		T1low=data;
+}
+
+static READ32_HANDLER(T1high_r)
+{
+	return T1high;
+}
+
+static WRITE32_HANDLER(T1high_w)
+{
+	if(ACCESSING_LSB32)
+		T1high=data;
+}
+
+static void startTimer(void);
+
+static void ertictacTimer(int val)
+{
+	IRQSTA|=0x40;
+	if(IRQMSKA&0x40)
+	{
+		cpunum_set_input_line(0, ARM_IRQ_LINE, HOLD_LINE);
+	}
+	startTimer();
+}
+
+static void startTimer(void)
+{
+	timer_set(TIME_IN_USEC( ((T1low&0xff)|((T1high&0xff)<<8))>>4), 0, ertictacTimer);
+}
+
+static WRITE32_HANDLER(T1GO_w)
+{
+	startTimer();
 }
 
 static ADDRESS_MAP_START( ertictac_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_RAM AM_BASE (&ertictac_mainram)
-	AM_RANGE(0x01f00000, 0x01fd7fff) AM_RAM /* unknown */
-	AM_RANGE(0x01fd8000, 0x01ffffff) AM_READWRITE(vram_r, vram_w) AM_BASE (&vram)
+	AM_RANGE(0x01f00000, 0x01ffffff) AM_READWRITE(ram_r, ram_w) AM_BASE (&ram)
+	AM_RANGE(0x03200000, 0x03200003) AM_READWRITE(IOCR_r, IOCR_w)
+	AM_RANGE(0x03200010, 0x03200013) AM_READ(IRQSTA_r)
+	AM_RANGE(0x03200014, 0x03200017) AM_READWRITE(IRQRQA_r, IRQRQA_w)
+	AM_RANGE(0x03200018, 0x0320001b) AM_READWRITE(IRQMSKA_r, IRQMSKA_w)
+	AM_RANGE(0x03200024, 0x03200027) AM_READ(IRQRQB_r)
+	AM_RANGE(0x03200028, 0x0320002b) AM_READWRITE(IRQMSKB_r, IRQMSKB_w)
+	AM_RANGE(0x03200038, 0x0320003b) AM_READWRITE(FIQMSK_r, FIQMSK_w)
 
-	AM_RANGE(0x03200000, 0x03200003) AM_WRITENOP AM_READ(random_num_r)
-	AM_RANGE(0x03200010, 0x03200013) AM_READ(int2_r)
-	AM_RANGE(0x03200014, 0x03200017) AM_WRITENOP AM_READ(random_num_r)  //timer ?
-	AM_RANGE(0x03200018, 0x0320001b) AM_NOP
-	AM_RANGE(0x03200024, 0x03200027) AM_READ(int_r)
-	AM_RANGE(0x03200028, 0x0320002b) AM_NOP
-	AM_RANGE(0x03200038, 0x0320003b) AM_NOP
+	AM_RANGE(0x03200050, 0x03200053) AM_READWRITE(T1low_r, T1low_w)
+	AM_RANGE(0x03200054, 0x03200057) AM_READWRITE(T1high_r, T1high_w)
+	AM_RANGE(0x03200058, 0x0320005b) AM_WRITE( T1GO_w )
+
 	AM_RANGE(0x03340000, 0x03340003) AM_NOP
 	AM_RANGE(0x03340010, 0x03340013) AM_READ(input_port_0_dword_r)
 	AM_RANGE(0x03340014, 0x03340017) AM_READ(input_port_2_dword_r)
@@ -97,12 +191,8 @@ static ADDRESS_MAP_START( ertictac_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x033c0014, 0x033c0017) AM_READ(input_port_2_dword_r)
 	AM_RANGE(0x033c0018, 0x033c001b) AM_READ(input_port_1_dword_r)
 
-	AM_RANGE(0x03400000, 0x03400003) AM_WRITE(serial_w)
-
-	AM_RANGE(0x03600000, 0x03600003) AM_NOP //unmapped program memory dword write to 03600000 = 03600000 & FFFFFFFF
-	AM_RANGE(0x03605000, 0x03605003) AM_NOP //unmapped program memory dword write to 03605000 = 03605000 & FFFFFFFF
-
-	AM_RANGE(0x03800000, 0x038fffff) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x03400000, 0x03400003) AM_WRITE(video_fifo_w)
+	AM_RANGE(0x03800000, 0x03ffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( ertictac )
@@ -170,18 +260,25 @@ INPUT_PORTS_START( ertictac )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START_TAG("dummy")
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+
 INPUT_PORTS_END
 
 static MACHINE_INIT( ertictac )
 {
 	ertictac_mainram[0]=0xeae00007; //reset vector
-	int_flag=0;
 }
 
 static INTERRUPT_GEN( ertictac_interrupt )
 {
-	int_flag=cpu_getiloops();
-	cpunum_set_input_line(0, ARM_IRQ_LINE, HOLD_LINE);
+	IRQSTA|=0x08;
+	if(IRQMSKA&0x08)
+	{
+		cpunum_set_input_line(0, ARM_IRQ_LINE, HOLD_LINE);
+	}
 }
 
 PALETTE_INIT(ertictac)
@@ -190,26 +287,25 @@ PALETTE_INIT(ertictac)
 
 	for (c = 0; c < 256; c++)
 	{
-		int r,g,b,i;
+ 		int r,g,b,i;
 
-		i = c & 0x03;
-		r = ((c & 0x04) >> 0) | ((c & 0x10) >> 1) | i;
-		g = ((c & 0x20) >> 3) | ((c & 0x40) >> 3) | i;
-		b = ((c & 0x08) >> 1) | ((c & 0x80) >> 4) | i;
+ 		i = c & 0x03;
+ 		r = ((c & 0x04) >> 0) | ((c & 0x10) >> 1) | i;
+ 		g = ((c & 0x20) >> 3) | ((c & 0x40) >> 3) | i;
+ 		b = ((c & 0x08) >> 1) | ((c & 0x80) >> 4) | i;
 
-		palette_set_color(c, r * 0x11, g * 0x11, b * 0x11);
+ 		palette_set_color(c, r * 0x11, g * 0x11, b * 0x11);
 	}
 }
 
-
 static MACHINE_DRIVER_START( ertictac )
 
-	MDRV_CPU_ADD(ARM, 12000000) /* guess */
+	MDRV_CPU_ADD(ARM, 16000000) /* guess */
 	MDRV_CPU_PROGRAM_MAP(ertictac_map,0)
-	MDRV_CPU_VBLANK_INT(ertictac_interrupt,8)
+	MDRV_CPU_VBLANK_INT(ertictac_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(ertictac)
 
@@ -248,4 +344,4 @@ static DRIVER_INIT( ertictac )
 	((data32_t *)memory_region(REGION_USER1))[0x55]=0;// patched TSTS r11,r15,lsl #32  @ $3800154
 }
 
-GAMEX( 1992, ertictac, 0, ertictac, ertictac, ertictac, ROT0, "Sisteme", "Erotictac/Tactic" ,GAME_WRONG_COLORS|GAME_NO_SOUND)
+GAMEX( 1990, ertictac, 0, ertictac, ertictac, ertictac, ROT0, "Sisteme", "Erotictac/Tactic" ,GAME_NO_SOUND)

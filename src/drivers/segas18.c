@@ -174,7 +174,7 @@ static void system18_generic_init(int _rom_board)
 	workram              = auto_malloc(0x04000);
 	if (!segaic16_spriteram_0 || !paletteram16 || !segaic16_tileram_0 || !segaic16_textram_0 || !workram)
 		osd_die("Out of memory allocating RAM space\n");
-	
+
 	/* init the memory mapper */
 	segaic16_memory_mapper_init(0, region_info_list[rom_board], sound_w, sound_r);
 
@@ -471,7 +471,7 @@ static WRITE16_HANDLER( lghost_custom_io_w )
 		case 0x3016/2:
 			lghost_value = readinputportbytag(lghost_select ? "GUNX3" : "GUNX2");
 			break;
-		
+
 		case 0x3020/2:
 			lghost_select = data & 1;
 			break;
@@ -933,7 +933,7 @@ static INPUT_PORTS_START( desertbr )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
@@ -1605,8 +1605,8 @@ ROM_START( ddcrewb )
 	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
 	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
 
-	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	/* not dumped */
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0184.key", 0x0000, 0x2000, CRC(cee06254) SHA1(d64903055fdefb49c584cbcd84f0d4fa811bd789) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "14127.1c", 0x00000, 0x40000, CRC(2228cd88) SHA1(5774bb6a401c3da05c5f3c9d3996b20bb3713cb2) )
@@ -2170,7 +2170,7 @@ GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0,   "
 GAME( 1992, desertbr, 0,        system18,      desertbr, generic_5987, ROT270, "Sega",    "Desert Breaker (FD1094 317-0196)" ) // decrypted
 GAME( 1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (US, 4 Player, FD1094 317-0186)" ) // decrypted
 GAME( 1991, ddcrewa,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 4 Player, FD1094 317-?)" ) // decrypted
-GAMEX(1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)" ) // decrypted
 GAMEX(1991, ddcrewc,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 3 Player, FD1094 317-0187)", GAME_NOT_WORKING ) // not decrypted
 GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (US, 317-0165)" ) // decrypted
 GAME( 1990, lghosta,  lghost,   lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (317-0166)" ) // decrypted
