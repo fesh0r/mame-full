@@ -29,7 +29,7 @@ MACHINE_INIT( advision )
 
 int advision_load_rom (int id)
 {
-    FILE *cartfile;
+	void *cartfile;
 
 	if(device_filename(IO_CARTSLOT,id) == NULL)
 	{

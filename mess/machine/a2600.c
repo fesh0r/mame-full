@@ -1324,7 +1324,7 @@ MACHINE_INIT( a2600 )
 ***************************************************************************/
 int a2600_load_rom(int id)
 {
-	FILE *cartfile;
+	void *cartfile;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	if (device_filename(IO_CARTSLOT, id) == NULL)

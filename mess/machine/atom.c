@@ -261,7 +261,7 @@ MACHINE_INIT( atom )
 }
 
 /* load image */
-int atom_load(int type, int id, unsigned char **ptr)
+static int atom_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 

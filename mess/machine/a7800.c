@@ -161,7 +161,7 @@ static int a7800_verify_cart(char header[128])
 
 int a7800_init_cart_cmn(int id)
 {
-	FILE *cartfile =NULL;
+	void *cartfile = NULL;
 	long len,start;
 	unsigned char header[128];
 

@@ -233,8 +233,8 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 	Amstrad_RethinkMemory();
 }
 
-/* load image */
-int amstrad_load(int type, int id, unsigned char **ptr)
+/* load image (i.e. open image, allocate buffer, load the entire image in buffer, close image) */
+static int amstrad_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
@@ -306,7 +306,6 @@ void amstrad_snapshot_exit(int id)
 		free(snapshot);
 
 	snapshot_loaded = 0;
-
 }
 
 int	amstrad_plus_cartridge_init(int id)
