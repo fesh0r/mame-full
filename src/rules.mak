@@ -16,7 +16,6 @@ DBGOBJS += $(OBJ)/cpu/z80gb/z80gbd.o
 $(OBJ)/cpu/z80gb/z80gb.o: z80gb.c z80gb.h daa_tab.h opc_cb.h opc_main.h
 endif
 
-add in rules.mak:
 CPU=$(strip $(findstring CDP1802@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_CDP1802=1
