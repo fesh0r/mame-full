@@ -127,6 +127,11 @@ static struct pit8253_config dai_pit8253_intf =
 	}
 };
 
+DRIVER_INIT( dai )
+{
+	pit8253_config(0, &dai_pit8253_intf);
+}
+
 MACHINE_INIT( dai )
 {
 	memory_set_opbase_handler(0, dai_opbaseoverride);
@@ -136,7 +141,6 @@ MACHINE_INIT( dai )
 
 	tms5501_init(0, &dai_tms5501_init_param);
 	ppi8255_init(&dai_ppi82555_intf);
-	pit8253_config(0, &dai_pit8253_intf);
 
 	timer_set(0, 0, dai_bootstrap_callback);
 }

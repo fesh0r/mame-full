@@ -4,6 +4,7 @@
 #define DAI_DEBUG	1
 
 /* machine/dai.c */
+DRIVER_INIT( dai );
 MACHINE_INIT( dai );
 READ_HANDLER( dai_io_discrete_devices_r );
 WRITE_HANDLER( dai_io_discrete_devices_w );
