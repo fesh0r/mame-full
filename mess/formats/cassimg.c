@@ -443,6 +443,8 @@ casserr_t cassette_get_samples(cassette_image *cassette, int channel,
 	UINT8 *dest_ptr;
 	const INT32 *source_ptr;
 	double d;
+	INT16 word;
+	INT32 dword;
 	INT64 sum;
 
 	err = compute_manipulation_ranges(cassette, channel, time_index, sample_period, &ranges);
@@ -476,10 +478,16 @@ casserr_t cassette_get_samples(cassette_image *cassette, int channel,
 			*((INT8 *) dest_ptr) = interpolate8(sum);
 			break;
 		case 2:
-			*((INT16 *) dest_ptr) = interpolate16(sum);
+			word = interpolate16(sum);
+			if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
+				word = FLIPENDIAN_INT16(word);
+			*((INT16 *) dest_ptr) = word;
 			break;
 		case 4:
-			*((INT32 *) dest_ptr) = sum;
+			dword = sum;
+			if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
+				dword = FLIPENDIAN_INT32(dword);
+			*((INT32 *) dest_ptr) = dword;
 			break;
 		}
 	}
@@ -521,7 +529,7 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 			dest_value = extrapolate8(*((INT8 *) source_ptr));
 			break;
 		case 2:
-			dest_value = extrapolate16(*((INT8 *) source_ptr));
+			dest_value = extrapolate16(*((INT16 *) source_ptr));
 			break;
 		case 4:
 			dest_value = *((INT32 *) source_ptr);
