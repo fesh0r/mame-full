@@ -12,7 +12,7 @@ static void apf_charproc(UINT8 c)
 {
 	/* this seems to be the same so far, as it gives the same result as vapf */
 	m6847_inv_w(0,		(c & 0x040));
-	m6847_as_w(0,		(c & 0x080));	
+	m6847_as_w(0,		(c & 0x080));
 }
 
 
@@ -24,7 +24,7 @@ void apf_dump_ram(void)
 	void *file;
 
 	file = osd_fopen(Machine->gamedrv->name, "apfram.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
- 
+
 	if (file)
 	{
 		osd_fwrite(file, apf_video_ram, 0x0400);
