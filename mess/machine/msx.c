@@ -44,23 +44,6 @@ static ppi8255_interface msx_ppi8255_interface = {
 static char PAC_HEADER[] = "PAC2 BACKUP DATA";
 #define PAC_HEADER_LEN (16)
 
-#ifdef VERIFY_IMAGE
-int msx_id_rom (int id)
-{
-    FILE *F;
-    unsigned char magic[2];
-
-    /* read the first two bytes */
-    F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
-    if (!F) return 0;
-    osd_fread (F, magic, 2);
-    osd_fclose (F);
-
-    /* first to bytes must be 'AB' */
-    return ( (magic[0] == 'A') && (magic[1] == 'B') );
-}
-#endif
-
 static int msx_probe_type (UINT8* pmem, int size)
 {
     int kon4, kon5, asc8, asc16, i;
@@ -177,6 +160,7 @@ int msx_load_rom (int id)
         return 1;
     }
     osd_fclose (F);
+
     /* check type */
     if (type < 0)
     {
@@ -945,30 +929,6 @@ WRITE_HANDLER (msx_disk_w)
 			break;
 		}
 	}
-
-#ifdef VERIFY_IMAGE
-int msx_floppy_id (int id)
-	{
-	void *f;
-	int size;
-
-	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
-	if (f)
-		{
-		size = osd_fsize (f);
-		osd_fclose (f);
-
-		switch (size)
-			{
-			case 360*1024:
-			case 720*1024:
-				return INIT_PASS;
-			}
-		}
-
-	return INIT_FAIL;
-	}
-#endif
 
 int msx_floppy_init (int id)
 	{

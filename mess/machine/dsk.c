@@ -86,6 +86,16 @@ int dsk_load(int type, int id, unsigned char **ptr)
 	return 0;
 }
 
+static int dsk_floppy_verify(UINT8 *diskimage_data)
+{
+	if ( (memcmp(diskimage_data, "MV - CPC", 8)==0) || 	/* standard disk image? */
+		 (memcmp(diskimage_data, "EXTENDED", 8)==0))	/* extended disk image? */
+	{
+		return IMAGE_VERIFY_PASS;
+	}
+	return IMAGE_VERIFY_FAIL;
+}
+
 
 /* load floppy */
 int dsk_floppy_load(int id)
@@ -99,7 +109,10 @@ int dsk_floppy_load(int id)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
             floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
-			return INIT_PASS;
+            if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
+            	return INIT_PASS;
+            else
+            	return INIT_PASS;
 		}
 	}
 
@@ -140,41 +153,6 @@ int dsk_save(int type, int id, unsigned char **ptr)
 
 	return 0;
 }
-
-
-#ifdef VERIFY_IMAGE
-int dsk_floppy_id(int id)
-{
-	int valid;
-	unsigned char *diskimage_data;
-
-	valid = 0;
-
-	/* load disk image */
-	if (dsk_load(IO_FLOPPY, id, &diskimage_data))
-	{
-		/* disk image loaded */
-		if (diskimage_data)
-		{
-			if (
-				/* standard disk image? */
-				(memcmp(diskimage_data, "MV - CPC", 8)==0) ||
-				/* extended disk image? */
-				(memcmp(diskimage_data, "EXTENDED", 8)==0)
-				)
-			{
-				valid = 1;
-
-			}
-		}
-
-		/* free the file */
-		free(diskimage_data);
-	}
-
-	return valid;
-}
-#endif
 
 
 void dsk_floppy_exit(int id)
