@@ -1,6 +1,8 @@
 #ifndef MESS_H
 #define MESS_H
 
+#include "osdepend.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

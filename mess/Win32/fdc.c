@@ -10,13 +10,13 @@ int osd_fdc_init(void)
 	return 0;
 }
 
-void osd_fdc_motors(unsigned char unit, unsigned char state)
+void osd_fdc_motors(int unit, int state)
 {
 	return;
 }
 
 
-void osd_fdc_density(unsigned char unit, unsigned char density,unsigned char tracks, unsigned char spt, unsigned char eot, unsigned char secl)
+void osd_fdc_density(int unit, int density, int tracks, int spt, int eot, int secl)
 {
 	return;
 }
@@ -27,7 +27,7 @@ unsigned char osd_fdc_step(int dir, unsigned char *track)
 }
 
 
-void osd_fdc_seek(unsigned char unit, signed int dir)
+void osd_fdc_seek(int unit, int dir)
 {
 }
 
@@ -37,11 +37,11 @@ unsigned char osd_fdc_recal(unsigned char *track)
 }
 
 
-void osd_fdc_put_sector(unsigned char unit, unsigned char side, unsigned char C, unsigned char H, unsigned char R, unsigned char N,unsigned char *buff, unsigned char ddam)
+void osd_fdc_put_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddam)
 {
 }
 
-void osd_fdc_get_sector(unsigned char unit,unsigned char side, unsigned char C, unsigned char H, unsigned char R, unsigned char N,unsigned char *buff)
+void osd_fdc_get_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddma)
 {
 }
 
@@ -50,11 +50,11 @@ void osd_fdc_exit(void)
 	return;
 }
 
-void osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char *fmt)
+void osd_fdc_format(int t, int h, int spt, UINT8 *fmt)
 {
 }
 
-unsigned char osd_fdc_get_status(unsigned char unit)
+int osd_fdc_get_status(int unit)
 {
 	return 0;
 }

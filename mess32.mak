@@ -499,8 +499,9 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/nc.o       \
           $(OBJ)/mess/machine/nc.o       \
           $(OBJ)/mess/machine/tc8521.o   \
-          $(OBJ)/mess/systems/pcw16.o    \
-          $(OBJ)/mess/vidhrdw/pcw16.o	\
+		  $(OBJ)/mess/systems/pcw16.o		\
+		  $(OBJ)/mess/machine/msm8251.o     \
+		  $(OBJ)/mess/vidhrdw/pcw16.o	\
           $(OBJ)/mess/vidhrdw/vdc.o      \
           $(OBJ)/mess/machine/pce.o      \
           $(OBJ)/mess/systems/pce.o	\
@@ -559,7 +560,6 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/coupe.o    \
           $(OBJ)/mess/vidhrdw/coupe.o    \
           $(OBJ)/mess/systems/coupe.o	\
-          $(OBJ)/mess/sndhrdw/mz700.o    \
           $(OBJ)/mess/machine/mz700.o    \
           $(OBJ)/mess/vidhrdw/mz700.o    \
           $(OBJ)/mess/systems/mz700.o    \
