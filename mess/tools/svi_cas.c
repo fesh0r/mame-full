@@ -23,7 +23,7 @@
 #ifdef LSB_FIRST
 #define intelWord(x) (x)
 #else
-#define intelWord(x) ( (x) << 8) | ( ((x) >> 8) & 0xff) )
+#define intelWord(x) ( ( (x) << 8) | ( ((x) >> 8) & 0xff) )
 #endif
 
 typedef struct {
@@ -248,13 +248,13 @@ static int svi_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_WRITEERROR;
 
 	/* block align (size of one `sample') */
-	temp16 = intelLong (2);
+	temp16 = intelWord (2);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 30 )
 		return IMGTOOLERR_WRITEERROR;
 
 	/* block align */
-	temp16 = intelLong (16);
+	temp16 = intelWord (16);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 32 )
 		return IMGTOOLERR_WRITEERROR;
