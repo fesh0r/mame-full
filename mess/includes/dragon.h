@@ -3,6 +3,7 @@
 
 #include "vidhrdw/m6847.h"
 #include "includes/rstrbits.h"
+#include "includes/rstrtrck.h"
 
 #define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
 #define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 263)
