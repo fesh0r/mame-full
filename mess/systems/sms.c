@@ -47,8 +47,8 @@ static ADDRESS_MAP_START( sms_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3FFF) AM_ROM									/* ROM bank #1 */
 	AM_RANGE(0x4000, 0x7FFF) AM_ROM									/* ROM bank #2 */
 	AM_RANGE(0x8000, 0xBFFF) AM_READWRITE(MRA8_RAM, sms_cartram_w)	/* ROM bank #3 / On-cart RAM */
-	AM_RANGE(0xC000, 0xDFFF) AM_RAM AM_MIRROR(0x2000)				/* RAM */
-	AM_RANGE(0xFFFC, 0xFFFF) AM_WRITE(sms_mapper_w)					/* Bankswitch control */
+	AM_RANGE(0xC000, 0xDFFB) AM_MIRROR(0x2000) AM_RAM				/* RAM (mirror at 0xE000) */
+	AM_RANGE(0xFFFC, 0xFFFF) AM_MIRROR(0x2000) AM_READWRITE(MRA8_RAM, sms_mapper_w)	/* Bankswitch control (mirrored at 0xDFFC???) */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sms_io, ADDRESS_SPACE_IO, 8 )
