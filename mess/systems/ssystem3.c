@@ -175,7 +175,7 @@ static int ssystem3_frame_int(void)
 	static int toggle=0;
 	via_set_input_b(0,toggle?0x40:0);
 	toggle^=0;
-	return 0;
+	return ignore_interrupt();
 }
 
 static void ssystem3_machine_init(void)

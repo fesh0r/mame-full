@@ -144,7 +144,7 @@ INPUT_PORTS_END
 
 static int mk1_frame_int(void)
 {
-	return 0;
+	return ignore_interrupt();
 }
 
 static void mk1_machine_init(void)

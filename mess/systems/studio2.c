@@ -109,7 +109,7 @@ static struct GfxDecodeInfo studio2_gfxdecodeinfo[] = {
 
 static int studio2_frame_int(void)
 {
-	return 0;
+	return ignore_interrupt();
 }
 
 /* studio 2
