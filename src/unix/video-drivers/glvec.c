@@ -26,46 +26,18 @@ Todo:
 
 *****************************************************************/
 
-#ifdef xgl
-
 #include <math.h>
-#include "xmame.h"
 #include "glmame.h"
-#include "driver.h"
-#include "artwork.h"
-#include "vidhrdw/vector.h"
+#include "sysdep/sysdep_display_priv.h"
 
-#include "osinline.h"
+/* from mame's vidhrdw/vector.h */
+#define VCLEAN  0
+#define VDIRTY  1
+#define VCLIP   2
 
-GLuint veclist=0;
-float gl_beam=1.0;
 static int vecwidth, vecheight;
 
-void set_gl_beam(float new_value)
-{
-	gl_beam = new_value;
-	disp__glLineWidth(gl_beam);
-	disp__glPointSize(gl_beam);
-	printf("GLINFO (vec): beamer size %f\n", gl_beam);
-}
-
-float get_gl_beam()
-{ return gl_beam; }
-
-void glvec_init(void)
-{
-        veclist=disp__glGenLists(1);
-
-	set_gl_beam(gl_beam);
-}
-
-void glvec_exit(void)
-{
-	disp__glDeleteLists(veclist, 1);
-}
-
 /* Convert an xy point to xyz in the 3D scene */
-
 static void PointConvert(int x,int y,GLdouble *sx,GLdouble *sy,GLdouble *sz)
 {
   GLdouble dx,dy;
@@ -161,8 +133,8 @@ int glvec_renderer(point *pt, int num_points)
 {
   if (num_points)
   {
-    vecwidth  =Machine->visible_area.max_x-Machine->visible_area.min_x;
-    vecheight =Machine->visible_area.max_y-Machine->visible_area.min_y;
+    vecwidth  =sysdep_display_params.vec_src_bounds->max_x-sysdep_display_params.vec_src_bounds->min_x;
+    vecheight =sysdep_display_params.vec_src_bounds->max_y-sysdep_display_params.vec_src_bounds->min_y;
 
     disp__glNewList(veclist,GL_COMPILE);
 
@@ -194,5 +166,3 @@ int glvec_renderer(point *pt, int num_points)
   }
   return 0;
 }
- 
-#endif /* ifdef xgl */

@@ -73,7 +73,7 @@ int x11_init_palette_info(Visual *xvisual);
 int  x11_window_open_display(void);
 void x11_window_close_display(void);
 void x11_window_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 
@@ -83,21 +83,21 @@ int  xf86_dga_init(void);
 int  xf86_dga_open_display(void);
 void xf86_dga_close_display(void);
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 int  xf86_dga1_init(void);
 int  xf86_dga1_open_display(void);
 void xf86_dga1_close_display(void);
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 int  xf86_dga2_init(void);
 int  xf86_dga2_open_display(void);
 void xf86_dga2_close_display(void);
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 #endif
@@ -108,7 +108,7 @@ void xfx_exit(void);
 int  xfx_open_display(void);
 void xfx_close_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 #endif
@@ -117,7 +117,7 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 int  xgl_open_display(void);
 void xgl_close_display(void);
 void xgl_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 #endif

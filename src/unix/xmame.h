@@ -79,8 +79,6 @@ EXTERN int		throttle;
 EXTERN int		autoframeskip;
 EXTERN int		frameskip;
 EXTERN int		game_index;
-EXTERN int		cabview; /* xgl */
-EXTERN char		*cabname; /* xgl */
 EXTERN int 		sleep_idle;
 EXTERN int 		max_autoframeskip;
 EXTERN struct sound_stream_struct *sound_stream;

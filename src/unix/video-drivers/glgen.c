@@ -13,15 +13,11 @@
 
 *****************************************************************/
 
-#ifdef xgl
-
-#include "xmame.h"
-#include "driver.h"
-#include "usrintrf.h"
-#include "glmame.h"
 #include <math.h>
-#include "effect.h"
+#include "glmame.h"
 #include <GL/glext.h>
+#include "sysdep/sysdep_display_priv.h"
+#include "x11.h"
 
 /* private functions */
 static GLdouble CompareVec (GLdouble i, GLdouble j, GLdouble k,
@@ -55,28 +51,17 @@ static void SetupOrtho (void);
 static void WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
 	   GLdouble x2, GLdouble y2, GLdouble z2,
 	   GLdouble * ax, GLdouble * ay, GLdouble * az);
-static void UpdateCabDisplay (struct mame_bitmap *bitmap);
-static void UpdateFlatDisplay (struct mame_bitmap *bitmap);
-static void UpdateGLDisplay (struct mame_bitmap *bitmap);
-
-/* cabloading stuff, FIXME */
-static int cabspecified;
-/* int cabview=0;  .. Do we want a cabinet view or not? */
-static int cabload_err;
 
 static GLint   gl_internal_format;
 static GLenum  gl_bitmap_format;
 static GLenum  gl_bitmap_type;
 static GLsizei text_width;
 static GLsizei text_height;
-
-
-static GLdouble mxModel[16];
-static GLdouble mxProjection[16];
-static GLint    dimView[4];
+static int line_len;
+static int texnumx;
+static int texnumy;
 
 /* The squares that are tiled to make up the game screen polygon */
-
 struct TexSquare
 {
   GLubyte *texture;
@@ -87,10 +72,7 @@ struct TexSquare
   GLdouble xcov, ycov;
 };
 
-static struct TexSquare *texgrid;
-
-static int texnumx;
-static int texnumy;
+static struct TexSquare *texgrid = NULL;
 
 /**
  * cscr..: cabinet screen points:
@@ -161,7 +143,7 @@ static GLdouble  s__gscr_offx_view, s__gscr_offy_view;/* delta game-start (view-
 
 /**
 *
-* ALL GAME SCREEN VECTORS ARE IN FINAL ORIENTATION (e.g. if blit_swapxy)
+* ALL GAME SCREEN VECTORS ARE IN FINAL ORIENTATION (e.g. if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY))
 *
 * v__gscr_p1 = v__cscr_p1   + 
 *              s__gscr_offx * v__scr_nx + s__gscr_offy * v__scr_ny ;
@@ -185,111 +167,29 @@ static GLdouble vx_gscr_p2, vy_gscr_p2, vz_gscr_p2;
 static GLdouble vx_gscr_p3, vy_gscr_p3, vz_gscr_p3; 
 static GLdouble vx_gscr_p4, vy_gscr_p4, vz_gscr_p4; 
 
+static GLdouble mxModel[16];
+static GLdouble mxProjection[16];
+
 /* Camera panning variables */
-static int currentpan = 0;
-static int lastpan = 0;
-static int panframe = 0;
+static int currentpan;
+static int lastpan;
+static int panframe;
 
 /* Misc variables */
-int gl_is_initialized;
-static int vecgame = 0;
-static int do_snapshot;
-static unsigned short *colorBlittedMemory;
-static int line_len=0;
-
-
-void gl_bootstrap_resources()
-{
-  #ifndef NDEBUG
-    printf("GLINFO: gl_bootstrap_resources\n");
-  #endif
-
-  blit_hardware_rotation=1; /* no rotation by the blitter macro, or else !! */
-
-  cabspecified = 0;
-  if(cabname!=NULL) cabname[0]=0;
-
-  gl_bitmap_type=0;
-  gl_bitmap_format=0;
-  text_width=0;
-  text_height=0;
-  force_text_width_height = 0;
-  cabload_err=0;
-
-  texnumx=0;
-  texnumy=0;
-  
-  colorBlittedMemory=NULL;
-  
-  vx_cscr_p1=0; vy_cscr_p1=0; vz_cscr_p1=0; vx_cscr_p2=0; vy_cscr_p2=0; vz_cscr_p2=0;
-  vx_cscr_p3=0; vy_cscr_p3=0; vz_cscr_p3=0; vx_cscr_p4=0; vy_cscr_p4=0; vz_cscr_p4=0;
-  
-  cpan=0;
-  numpans=0;
-  currentpan = 0;
-  lastpan = 0;
-  panframe = 0;
-  
-  vecgame = 0;
-  veclist=0;
-
-  gl_is_initialized = 0;
-
-  do_snapshot=0;
-}
-
-void gl_reset_resources()
-{
-  #ifndef NDEBUG
-    printf("GLINFO: gl_reset_resources\n");
-  #endif
-
-  if(texgrid) free(texgrid);
-  if(cpan) free(cpan);
-
-  texgrid = 0;
-  cpan=0;
-
-  gl_bitmap_type=0;
-  gl_bitmap_format=0;
-  cabload_err=0;
-
-  texnumx=0;
-  texnumy=0;
-  
-  colorBlittedMemory=NULL;
-  
-  vx_cscr_p1=0; vy_cscr_p1=0; vz_cscr_p1=0; vx_cscr_p2=0; vy_cscr_p2=0; vz_cscr_p2=0;
-  vx_cscr_p3=0; vy_cscr_p3=0; vz_cscr_p3=0; vx_cscr_p4=0; vy_cscr_p4=0; vz_cscr_p4=0;
-  
-  cpan=0;
-  numpans=0;
-  currentpan = 0;
-  lastpan = 0;
-  panframe = 0;
-  
-  vecgame = 0;
-  veclist=0;
-
-  if(cabname!=NULL && strlen(cabname)>0)
-  	cabspecified = 1;
-
-  gl_is_initialized = 0;
-  
-  do_snapshot=0;
-}
+static int do_snapshot = 0;
+static unsigned short *colorBlittedMemory = NULL;
+static int cab_loaded = 0;
+static int texture_init = 0;
+unsigned char *empty_text = NULL;
+GLuint veclist=0;
 
 /* ---------------------------------------------------------------------- */
 /* ------------ New OpenGL Specials ------------------------------------- */
 /* ---------------------------------------------------------------------- */
-
-void gl_set_bilinear (int new_value)
+static void gl_set_bilinear (int new_value)
 {
   int x, y;
   bilinear = new_value;
-
-  if (gl_is_initialized == 0)
-    return;
 
   if (bilinear)
   {
@@ -351,63 +251,22 @@ void gl_set_bilinear (int new_value)
   }
 }
 
-void gl_init_cabview ()
+static void gl_set_cabview (int cabv)
 {
-  if (glContext == 0)
-    return;
-
-        currentpan=1;
-	lastpan = 0;
-	panframe = 0;
-
-	#ifdef WIN32
-	  __try
-	  {
-	#endif
-	    if (!cabspecified || !LoadCabinet (cabname))
-	    {
-	      if (cabspecified)
-		printf ("GLERROR: Unable to load cabinet %s\n", cabname);
-	      strcpy (cabname, "glmamejau");
-	      cabspecified = 1;
-	      LoadCabinet (cabname);
-	      cabload_err = 0;
-	    }
-
-	#ifdef WIN32
-	  }
-	  __except (GetExceptionCode ())
-	  {
-	    fprintf (stderr, "\nGLERROR: Cabinet loading is still buggy - sorry !\n");
-	    cabload_err = 1;
-	  }
-	#endif
-}
-
-void gl_set_cabview (int new_value)
-{
-  if (glContext == 0)
-    return;
-
-  cabview = new_value;
-
-  if (cabview)
+  if (cabv)
   {
-        currentpan=1;
-	lastpan = 0;
-	panframe = 0;
-
+        currentpan = 1;
+	lastpan    = 0;
+	panframe   = 0;
 	SetupFrustum ();
   } else {
 	SetupOrtho ();
   }
+  cabview = cabv;
 }
 
-int gl_stream_antialias (int aa)
+static void gl_set_antialias(int aa)
 {
-  if (gl_is_initialized == 0)
-    return aa;
-
   if (aa)
   {
     disp__glShadeModel (GL_SMOOTH);
@@ -422,63 +281,28 @@ int gl_stream_antialias (int aa)
     disp__glDisable (GL_LINE_SMOOTH);
     disp__glDisable (GL_POINT_SMOOTH);
   }
-
-  return aa;
+  antialias = aa;
 }
 
-void gl_set_antialias (int new_value)
+static void gl_set_beam(float new_value)
 {
-  antialias = gl_stream_antialias(new_value);
+	gl_beam = new_value;
+	disp__glLineWidth(gl_beam);
+	disp__glPointSize(gl_beam);
+	printf("GLINFO (vec): beamer size %f\n", gl_beam);
 }
 
-int gl_stream_alphablending (int alpha)
-{
-  if (gl_is_initialized == 0)
-    return alpha;
-
-  if (alpha)
-  {
-    disp__glEnable (GL_BLEND);
-    disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }
-  else
-  {
-    disp__glDisable (GL_BLEND);
-  }
-
-  return alpha;
-}
-
-void gl_set_alphablending (int new_value)
-{
-  alphablending = gl_stream_alphablending(new_value);
-}
-
-int InitVScreen (int vw, int vh)
+int InitVScreen (void)
 {
   const unsigned char * glVersion;
   double game_aspect ;
   double cabn_aspect ;
   GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
   GLdouble t1;
-  int visual_orientated_width;
-  int visual_orientated_height;
-
-  gl_reset_resources();
-
-  if (glContext == 0)
-    return 1;
-
-  if( ! blit_swapxy )
-  {
-            visual_orientated_width  = visual_width;
-            visual_orientated_height = visual_height;
-  } else {
-            visual_orientated_width  = visual_height;
-            visual_orientated_height = visual_width;
-  }
-
-  fetch_GL_FUNCS (libGLName, libGLUName, 0);
+  GLint format=0;
+  GLint tidxsize=0;
+  int e_x, e_y, s, i=0;
+  int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
 
   CHECK_GL_BEGINEND();
 
@@ -497,251 +321,252 @@ int InitVScreen (int vw, int vh)
        return 1;
   }
 
-  printf("GLINFO: swapxy=%d, flipx=%d, flipy=%d\n",
-  	blit_swapxy, blit_flipx, blit_flipy);
+  cab_loaded = LoadCabinet (cabname);
+  if (cabview && !cab_loaded)
+  {
+    fprintf(stderr, "GLERROR: Unable to load cabinet %s\n", cabname);
+    cabview = 0;
+  }
 
   disp__glClearColor (0, 0, 0, 1);
   disp__glClear (GL_COLOR_BUFFER_BIT);
   disp__glFlush ();
 
-  gl_init_cabview ();
-
-  gl_resize(winwidth, winheight, vw, vh);
+  gl_resize();
 
   disp__glDepthFunc (GL_LEQUAL);
 
-  /* Calulate delta vectors for screen height and width */
-
-  DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
-	    &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
-  DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p4, vy_cscr_p4, vz_cscr_p4,
-	    &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
-
-  s__cscr_w = LengthOfVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
-  s__cscr_h = LengthOfVec (vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
-
-
-	  /*	  
-	  ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
-	  ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
-	  */
-
-  CopyVec( &vx_scr_nx, &vy_scr_nx, &vz_scr_nx,
-	    vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-  NormThisVec (&vx_scr_nx, &vy_scr_nx, &vz_scr_nx);
-
-  CopyVec( &vx_scr_ny, &vy_scr_ny, &vz_scr_ny,
-	    vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-  NormThisVec (&vx_scr_ny, &vy_scr_ny, &vz_scr_ny);
-
-  CrossVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw,
-  	    vx_cscr_dh, vy_cscr_dh, vz_cscr_dh,
-	    &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
-  NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
-
-#ifndef NDEBUG
-  /**
-   * assertions ...
-   */
-  CopyVec( &t1x, &t1y, &t1z,
-	   vx_scr_nx, vy_scr_nx, vz_scr_nx);
-  ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
-                &t1x, &t1y, &t1z);
-  t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-
-  printf("GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
-  printf("\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-  printf("\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
-  printf("\t s__cscr_w  = %f \n", s__cscr_w);
-
-  CopyVec( &t1x, &t1y, &t1z,
-	   vx_scr_ny, vy_scr_ny, vz_scr_ny);
-  ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
-                &t1x, &t1y, &t1z);
-  t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-
-  printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
-  printf("\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-  printf("\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
-  printf("\t s__cscr_h   = %f \n", s__cscr_h);
-#endif
-
-  /**
-   *
-   * Cabinet-Screen Ratio:
-   */
-   game_aspect = (double)visual_orientated_width / (double)visual_orientated_height;
-
-   cabn_aspect = (double)s__cscr_w        / (double)s__cscr_h;
-
-   if( game_aspect <= cabn_aspect )
-   {
-   	/**
-	 * cabinet_width  >  game_width
-	 * cabinet_height == game_height 
-	 *
-	 * cabinet_height(view-coord) := visual_orientated_height(view-coord) 
-	 */
-	s__cscr_h_view  = (GLdouble) visual_orientated_height;
-	s__cscr_w_view  = s__cscr_h_view * cabn_aspect;
-
-	s__gscr_h_view  = s__cscr_h_view;
-	s__gscr_w_view  = s__gscr_h_view * game_aspect; 
-
-	s__gscr_offy_view = 0.0;
-	s__gscr_offx_view = ( s__cscr_w_view - s__gscr_w_view ) / 2.0;
-
-   } else {
-   	/**
-	 * cabinet_width  <  game_width
-	 * cabinet_width  == game_width 
-	 *
-	 * cabinet_width(view-coord) := visual_orientated_width(view-coord) 
-	 */
-	s__cscr_w_view  = (GLdouble) visual_orientated_width;
-	s__cscr_h_view  = s__cscr_w_view / cabn_aspect;
-
-	s__gscr_w_view  = s__cscr_w_view;
-	s__gscr_h_view  = s__gscr_w_view / game_aspect; 
-
-	s__gscr_offx_view = 0.0;
-	s__gscr_offy_view = ( s__cscr_h_view - s__gscr_h_view ) / 2.0;
-
-   }
-   cab_vpw_fx = (GLdouble)s__cscr_w_view / (GLdouble)s__cscr_w ;
-   cab_vpw_fy = (GLdouble)s__cscr_h_view / (GLdouble)s__cscr_h ;
-
-   s__gscr_w   = (GLdouble)s__gscr_w_view  / cab_vpw_fx ;
-   s__gscr_h   = (GLdouble)s__gscr_h_view  / cab_vpw_fy ;
-   s__gscr_offx = (GLdouble)s__gscr_offx_view / cab_vpw_fx ;
-   s__gscr_offy = (GLdouble)s__gscr_offy_view / cab_vpw_fy ;
-
-
-   /**
-    * ALL GAME SCREEN VECTORS ARE IN FINAL ORIENTATION (e.g. if blit_swapxy)
-    *
-    * v__gscr_p1 = v__cscr_p1   + 
-    *              s__gscr_offx * v__scr_nx + s__gscr_offy * v__scr_ny ;
-    *
-    * v__gscr_p2  = v__gscr_p1  + 
-    *              s__gscr_w    * v__scr_nx + 0.0          * v__scr_ny ;
-    *
-    * v__gscr_p3  = v__gscr_p2  + 
-    *              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
-    *
-    * v__gscr_p4  = v__gscr_p3  - 
-    *              s__gscr_w    * v__scr_nx - 0.0          * v__scr_ny ;
-    *
-    * v__gscr_p4b = v__gscr_p1  + 
-    *              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
-    *
-    * v__gscr_p4  == v__gscr_p4b
-    */
-   TranslatePointInPlane ( vx_cscr_p1, vy_cscr_p1, vz_cscr_p1,
-                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
-			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
-			   s__gscr_offx, s__gscr_offy,
-			   &vx_gscr_p1, &vy_gscr_p1, &vz_gscr_p1);
-
-   TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
-                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
-			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
-			   s__gscr_w, 0.0,
-			   &vx_gscr_p2, &vy_gscr_p2, &vz_gscr_p2);
-
-   TranslatePointInPlane ( vx_gscr_p2, vy_gscr_p2, vz_gscr_p2,
-                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
-			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
-			   0.0, s__gscr_h,
-			   &vx_gscr_p3, &vy_gscr_p3, &vz_gscr_p3);
-
-   TranslatePointInPlane ( vx_gscr_p3, vy_gscr_p3, vz_gscr_p3,
-                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
-			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
-			   -s__gscr_w, 0.0,
-			   &vx_gscr_p4, &vy_gscr_p4, &vz_gscr_p4);
-
-   TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
-                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
-			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
-			   0.0, s__gscr_h,
-			   &vx_gscr_p4b, &vy_gscr_p4b, &vz_gscr_p4b);
-
-   t1 =  CompareVec (vx_gscr_p4,  vy_gscr_p4,  vz_gscr_p4,
-   		     vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
-
-  DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p2, vy_gscr_p2, vz_gscr_p2,
-	    &vx_gscr_dw, &vy_gscr_dw, &vz_gscr_dw);
-  DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p4, vy_gscr_p4, vz_gscr_p4,
-	    &vx_gscr_dh, &vy_gscr_dh, &vz_gscr_dh);
-
-#ifndef NDEBUG
-  printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
-  printf("GLINFO: cabinet vectors\n");
-  printf("\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
-  printf("\t cab p2     : %f / %f / %f \n", vx_cscr_p2, vy_cscr_p2, vz_cscr_p2);
-  printf("\t cab p3     : %f / %f / %f \n", vx_cscr_p3, vy_cscr_p3, vz_cscr_p3);
-  printf("\t cab p4     : %f / %f / %f \n", vx_cscr_p4, vy_cscr_p4, vz_cscr_p4);
-  printf("\n") ;
-  printf("\t cab width  : %f / %f / %f \n", vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
-  printf("\t cab height : %f / %f / %f \n", vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
-  printf("\n");
-  printf("\t x axis : %f / %f / %f \n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
-  printf("\t y axis : %f / %f / %f \n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
-  printf("\t z axis : %f / %f / %f \n", vx_scr_nz, vy_scr_nz, vz_scr_nz);
-  printf("\n");
-  printf("\n");
-  printf("\t cab wxh scal wd: %f x %f \n", s__cscr_w, s__cscr_h);
-  printf("\t cab wxh scal vw: %f x %f \n", s__cscr_w_view, s__cscr_h_view);
-  printf("\n");
-  printf("\t gam p1     : %f / %f / %f \n", vx_gscr_p1, vy_gscr_p1, vz_gscr_p1);
-  printf("\t gam p2     : %f / %f / %f \n", vx_gscr_p2, vy_gscr_p2, vz_gscr_p2);
-  printf("\t gam p3     : %f / %f / %f \n", vx_gscr_p3, vy_gscr_p3, vz_gscr_p3);
-  printf("\t gam p4     : %f / %f / %f \n", vx_gscr_p4, vy_gscr_p4, vz_gscr_p4);
-  printf("\t gam p4b    : %f / %f / %f \n", vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
-  printf("\t gam p4-p4b : %f\n", t1);
-  printf("\n");
-  printf("\t gam width  : %f / %f / %f \n", vx_gscr_dw, vy_gscr_dw, vz_gscr_dw);
-  printf("\t gam height : %f / %f / %f \n", vx_gscr_dh, vy_gscr_dh, vz_gscr_dh);
-  printf("\n");
-  printf("\t gam wxh scal wd: %f x %f \n", s__gscr_w, s__gscr_h);
-  printf("\t gam wxh scal vw: %f x %f \n", s__gscr_w_view, s__gscr_h_view);
-  printf("\n");
-  printf("\t gam off  wd: %f / %f\n", s__gscr_offx, s__gscr_offy);
-  printf("\t gam off  vw: %f / %f\n", s__gscr_offx_view, s__gscr_offy_view);
-  printf("\n");
-#endif
-
-  if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+  if (cab_loaded)
   {
-    glvec_init();
-    vecgame = 1;
-  }
-  else
-    vecgame = 0;
+    /* Calulate delta vectors for screen height and width */
+    DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
+              &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
+    DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p4, vy_cscr_p4, vz_cscr_p4,
+              &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
 
-  /* fill the display_palette_info struct */
-  memset (&display_palette_info, 0, sizeof (struct sysdep_palette_info));
+    s__cscr_w = LengthOfVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
+    s__cscr_h = LengthOfVec (vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
+
+
+            /*	  
+            ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
+            ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
+            */
+
+    CopyVec( &vx_scr_nx, &vy_scr_nx, &vz_scr_nx,
+              vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+    NormThisVec (&vx_scr_nx, &vy_scr_nx, &vz_scr_nx);
+
+    CopyVec( &vx_scr_ny, &vy_scr_ny, &vz_scr_ny,
+              vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+    NormThisVec (&vx_scr_ny, &vy_scr_ny, &vz_scr_ny);
+
+    CrossVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw,
+              vx_cscr_dh, vy_cscr_dh, vz_cscr_dh,
+              &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
+    NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
+
+#ifndef NDEBUG
+    /**
+     * assertions ...
+     */
+    CopyVec( &t1x, &t1y, &t1z,
+             vx_scr_nx, vy_scr_nx, vz_scr_nx);
+    ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
+                  &t1x, &t1y, &t1z);
+    t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+
+    printf("GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
+    printf("\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+    printf("\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+    printf("\t s__cscr_w  = %f \n", s__cscr_w);
+
+    CopyVec( &t1x, &t1y, &t1z,
+             vx_scr_ny, vy_scr_ny, vz_scr_ny);
+    ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
+                  &t1x, &t1y, &t1z);
+    t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+
+    printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+    printf("\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+    printf("\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+    printf("\t s__cscr_h   = %f \n", s__cscr_h);
+#endif
+
+    /**
+     *
+     * Cabinet-Screen Ratio:
+     */
+     game_aspect = (double)sysdep_display_params.width / (double)sysdep_display_params.height;
+
+     cabn_aspect = (double)s__cscr_w        / (double)s__cscr_h;
+
+     if( game_aspect <= cabn_aspect )
+     {
+          /**
+           * cabinet_width  >  game_width
+           * cabinet_height == game_height 
+           *
+           * cabinet_height(view-coord) := sysdep_display_params.height(view-coord) 
+           */
+          s__cscr_h_view  = (GLdouble) sysdep_display_params.height;
+          s__cscr_w_view  = s__cscr_h_view * cabn_aspect;
+
+          s__gscr_h_view  = s__cscr_h_view;
+          s__gscr_w_view  = s__gscr_h_view * game_aspect; 
+
+          s__gscr_offy_view = 0.0;
+          s__gscr_offx_view = ( s__cscr_w_view - s__gscr_w_view ) / 2.0;
+
+     } else {
+          /**
+           * cabinet_width  <  game_width
+           * cabinet_width  == game_width 
+           *
+           * cabinet_width(view-coord) := sysdep_display_params.width(view-coord) 
+           */
+          s__cscr_w_view  = (GLdouble) sysdep_display_params.width;
+          s__cscr_h_view  = s__cscr_w_view / cabn_aspect;
+
+          s__gscr_w_view  = s__cscr_w_view;
+          s__gscr_h_view  = s__gscr_w_view / game_aspect; 
+
+          s__gscr_offx_view = 0.0;
+          s__gscr_offy_view = ( s__cscr_h_view - s__gscr_h_view ) / 2.0;
+
+     }
+     cab_vpw_fx = (GLdouble)s__cscr_w_view / (GLdouble)s__cscr_w ;
+     cab_vpw_fy = (GLdouble)s__cscr_h_view / (GLdouble)s__cscr_h ;
+
+     s__gscr_w   = (GLdouble)s__gscr_w_view  / cab_vpw_fx ;
+     s__gscr_h   = (GLdouble)s__gscr_h_view  / cab_vpw_fy ;
+     s__gscr_offx = (GLdouble)s__gscr_offx_view / cab_vpw_fx ;
+     s__gscr_offy = (GLdouble)s__gscr_offy_view / cab_vpw_fy ;
+
+
+     /**
+      * ALL GAME SCREEN VECTORS ARE IN FINAL ORIENTATION (e.g. if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY))
+      *
+      * v__gscr_p1 = v__cscr_p1   + 
+      *              s__gscr_offx * v__scr_nx + s__gscr_offy * v__scr_ny ;
+      *
+      * v__gscr_p2  = v__gscr_p1  + 
+      *              s__gscr_w    * v__scr_nx + 0.0          * v__scr_ny ;
+      *
+      * v__gscr_p3  = v__gscr_p2  + 
+      *              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
+      *
+      * v__gscr_p4  = v__gscr_p3  - 
+      *              s__gscr_w    * v__scr_nx - 0.0          * v__scr_ny ;
+      *
+      * v__gscr_p4b = v__gscr_p1  + 
+      *              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
+      *
+      * v__gscr_p4  == v__gscr_p4b
+      */
+     TranslatePointInPlane ( vx_cscr_p1, vy_cscr_p1, vz_cscr_p1,
+                             vx_scr_nx, vy_scr_nx, vz_scr_nx,
+                             vx_scr_ny, vy_scr_ny, vz_scr_ny,
+                             s__gscr_offx, s__gscr_offy,
+                             &vx_gscr_p1, &vy_gscr_p1, &vz_gscr_p1);
+
+     TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
+                             vx_scr_nx, vy_scr_nx, vz_scr_nx,
+                             vx_scr_ny, vy_scr_ny, vz_scr_ny,
+                             s__gscr_w, 0.0,
+                             &vx_gscr_p2, &vy_gscr_p2, &vz_gscr_p2);
+
+     TranslatePointInPlane ( vx_gscr_p2, vy_gscr_p2, vz_gscr_p2,
+                             vx_scr_nx, vy_scr_nx, vz_scr_nx,
+                             vx_scr_ny, vy_scr_ny, vz_scr_ny,
+                             0.0, s__gscr_h,
+                             &vx_gscr_p3, &vy_gscr_p3, &vz_gscr_p3);
+
+     TranslatePointInPlane ( vx_gscr_p3, vy_gscr_p3, vz_gscr_p3,
+                             vx_scr_nx, vy_scr_nx, vz_scr_nx,
+                             vx_scr_ny, vy_scr_ny, vz_scr_ny,
+                             -s__gscr_w, 0.0,
+                             &vx_gscr_p4, &vy_gscr_p4, &vz_gscr_p4);
+
+     TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
+                             vx_scr_nx, vy_scr_nx, vz_scr_nx,
+                             vx_scr_ny, vy_scr_ny, vz_scr_ny,
+                             0.0, s__gscr_h,
+                             &vx_gscr_p4b, &vy_gscr_p4b, &vz_gscr_p4b);
+
+     t1 =  CompareVec (vx_gscr_p4,  vy_gscr_p4,  vz_gscr_p4,
+                       vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
+
+    DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p2, vy_gscr_p2, vz_gscr_p2,
+              &vx_gscr_dw, &vy_gscr_dw, &vz_gscr_dw);
+    DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p4, vy_gscr_p4, vz_gscr_p4,
+              &vx_gscr_dh, &vy_gscr_dh, &vz_gscr_dh);
+
+#ifndef NDEBUG
+    printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+    printf("GLINFO: cabinet vectors\n");
+    printf("\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
+    printf("\t cab p2     : %f / %f / %f \n", vx_cscr_p2, vy_cscr_p2, vz_cscr_p2);
+    printf("\t cab p3     : %f / %f / %f \n", vx_cscr_p3, vy_cscr_p3, vz_cscr_p3);
+    printf("\t cab p4     : %f / %f / %f \n", vx_cscr_p4, vy_cscr_p4, vz_cscr_p4);
+    printf("\n") ;
+    printf("\t cab width  : %f / %f / %f \n", vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
+    printf("\t cab height : %f / %f / %f \n", vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
+    printf("\n");
+    printf("\t x axis : %f / %f / %f \n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+    printf("\t y axis : %f / %f / %f \n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+    printf("\t z axis : %f / %f / %f \n", vx_scr_nz, vy_scr_nz, vz_scr_nz);
+    printf("\n");
+    printf("\n");
+    printf("\t cab wxh scal wd: %f x %f \n", s__cscr_w, s__cscr_h);
+    printf("\t cab wxh scal vw: %f x %f \n", s__cscr_w_view, s__cscr_h_view);
+    printf("\n");
+    printf("\t gam p1     : %f / %f / %f \n", vx_gscr_p1, vy_gscr_p1, vz_gscr_p1);
+    printf("\t gam p2     : %f / %f / %f \n", vx_gscr_p2, vy_gscr_p2, vz_gscr_p2);
+    printf("\t gam p3     : %f / %f / %f \n", vx_gscr_p3, vy_gscr_p3, vz_gscr_p3);
+    printf("\t gam p4     : %f / %f / %f \n", vx_gscr_p4, vy_gscr_p4, vz_gscr_p4);
+    printf("\t gam p4b    : %f / %f / %f \n", vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
+    printf("\t gam p4-p4b : %f\n", t1);
+    printf("\n");
+    printf("\t gam width  : %f / %f / %f \n", vx_gscr_dw, vy_gscr_dw, vz_gscr_dw);
+    printf("\t gam height : %f / %f / %f \n", vx_gscr_dh, vy_gscr_dh, vz_gscr_dh);
+    printf("\n");
+    printf("\t gam wxh scal wd: %f x %f \n", s__gscr_w, s__gscr_h);
+    printf("\t gam wxh scal vw: %f x %f \n", s__gscr_w_view, s__gscr_h_view);
+    printf("\n");
+    printf("\t gam off  wd: %f / %f\n", s__gscr_offx, s__gscr_offy);
+    printf("\t gam off  vw: %f / %f\n", s__gscr_offx_view, s__gscr_offy_view);
+    printf("\n");
+#endif
+  }
+  
+  if (sysdep_display_params.vec_src_bounds)
+  {
+    veclist=disp__glGenLists(1);
+    gl_set_beam(gl_beam);
+  }
 
   /* no alpha .. important, because mame has no alpha set ! */
   gl_internal_format=GL_RGB;
 
-  switch(video_real_depth)
+  /* fill the sysdep_display_properties struct & determine bitmap format */
+  memset (&sysdep_display_properties, 0, sizeof (sysdep_display_properties));
+  switch(sysdep_display_params.depth)
   {
 	case 15:
 		    /* ARGB1555 */
-		    display_palette_info.red_mask   = 0x00007C00;
-		    display_palette_info.green_mask = 0x000003E0;
-		    display_palette_info.blue_mask  = 0x0000001F;
+		    sysdep_display_properties.palette_info.red_mask   = 0x00007C00;
+		    sysdep_display_properties.palette_info.green_mask = 0x000003E0;
+		    sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
 		    gl_bitmap_format = GL_BGRA;
 		    /*                                   A R G B */
 		    gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
 		    break;
 	case 16:
 		    /* RGBA5551 */
-		    display_palette_info.red_mask   = 0x0000F800;
-		    display_palette_info.green_mask = 0x000007C0;
-		    display_palette_info.blue_mask  = 0x0000003E;
+		    sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
+		    sysdep_display_properties.palette_info.green_mask = 0x000007C0;
+		    sysdep_display_properties.palette_info.blue_mask  = 0x0000003E;
 		    gl_bitmap_format = GL_RGBA;
 		    /*                                   R G B A */
 		    gl_bitmap_type   = GL_UNSIGNED_SHORT_5_5_5_1;
@@ -751,9 +576,9 @@ int InitVScreen (int vw, int vh)
 		  * skip the D of DRGB 
 		  */
 		  /* ABGR8888 */
-		  display_palette_info.blue_mask   = 0x00FF0000;
-		  display_palette_info.green_mask  = 0x0000FF00;
-		  display_palette_info.red_mask    = 0x000000FF;
+		  sysdep_display_properties.palette_info.blue_mask   = 0x00FF0000;
+		  sysdep_display_properties.palette_info.green_mask  = 0x0000FF00;
+		  sysdep_display_properties.palette_info.red_mask    = 0x000000FF;
 		  gl_bitmap_format = GL_BGRA;
 			/*  gl_bitmap_format = GL_RGBA; */
 		  /*                                 A B G R */
@@ -761,85 +586,18 @@ int InitVScreen (int vw, int vh)
 		  break;
   }
 
-  printf("GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
-		video_real_depth, 
-		display_palette_info.red_mask, display_palette_info.green_mask, 
-		display_palette_info.blue_mask);
-
-  if(video_real_depth == 16) {
-	printf("GLINFO: Using bit blit to map color indices !!\n");
-  } else {
-	printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
-  }
-  
-  return 0;
-}
-
-/* Close down the virtual screen */
-
-void CloseVScreen (void)
-{
-  #ifndef NDEBUG
-    printf("GLINFO: CloseVScreen (gl_is_initialized=%d)\n", gl_is_initialized);
-  #endif
-
-  if (vecgame)
-    glvec_exit();
-
-  if(colorBlittedMemory!=NULL)
-  {
-  	free(colorBlittedMemory);
-        colorBlittedMemory = NULL;
-  }
-  
-  if (gl_is_initialized != 0)
-  {
-    CHECK_GL_BEGINEND();
-  }
-
-  gl_reset_resources();
-}
-
-static int texture_init = 0;
-
-/**
- * the given bitmap MUST be the original mame core bitmap !!!
- *    - no swapxy, flipx or flipy and no resize !
- *    - shall be Machine->scrbitmap
- */
-void InitTextures (struct mame_bitmap *bitmap)
-{
-  int e_x, e_y, s, i=0;
-  int x=0, y=0;
-  GLint format=0;
-  GLint tidxsize=0;
-  GLenum err;
-  unsigned char *line_1=0;
-  struct TexSquare *tsq=0;
-  GLdouble texwpervw=0.0;
-  GLdouble texhpervh=0.0;
-  unsigned char *empty_text;
-  int bytes_per_pixel = (video_real_depth + 7) / 8;
-
-  if (glContext == 0 || texture_init == 1)
-    return;
-
-  texture_init = 1;
-
-  text_width  = visual_width;
-  text_height = visual_height;
-
-  CHECK_GL_BEGINEND();
-
-  texnumx = 1;
-  texnumy = 1;
-
+  /* determine the texture size to use */
   if(force_text_width_height>0)
   {
-  	text_height=force_text_width_height;
-  	text_width=force_text_width_height;
-	fprintf (stderr, "GLINFO: force_text_width_height := %d x %d\n",
-		text_height, text_width);
+    text_height=force_text_width_height;
+    text_width=force_text_width_height;
+    fprintf (stderr, "GLINFO: force_text_width_height := %d x %d\n",
+             text_height, text_width);
+  }
+  else
+  {
+    text_width  = sysdep_display_params.orig_width;
+    text_height = sysdep_display_params.orig_height;
   }
   
   /* achieve the 2**e_x:=text_width, 2**e_y:=text_height */
@@ -910,61 +668,137 @@ void InitTextures (struct mame_bitmap *bitmap)
 
       fprintf (stderr, "[%dx%d] !\n", text_height, text_width);
 
-      if(text_width < 64 || text_height < 64)
-      {
-      	fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
-	exit(1);
-      }
     }
   }
-  while (format != gl_internal_format && text_width > 1 && text_height > 1);
+  while(format!=gl_internal_format && text_width>=64 && text_height>=64);
+  if(text_width < 64 || text_height < 64)
+  {
+    fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
+    return 1;
+  }
 
-  texnumx = visual_width / text_width;
-  if ((visual_width % text_width) > 0)
+  texnumx = sysdep_display_params.orig_width / text_width;
+  if ((sysdep_display_params.orig_width % text_width) > 0)
     texnumx++;
 
-  texnumy = visual_height / text_height;
-  if ((visual_height % text_height) > 0)
+  texnumy = sysdep_display_params.orig_height / text_height;
+  if ((sysdep_display_params.orig_height % text_height) > 0)
     texnumy++;
 
-  /* Allocate the texture memory */
+  fprintf (stderr, "GLINFO: texture-usage %d*width=%d, %d*height=%d\n",
+		 (int) texnumx, (int) text_width, (int) texnumy,
+		 (int) text_height);
+
+  /* allocate some buffers */
+  texgrid    = calloc (texnumx * texnumy, sizeof (struct TexSquare));
+  empty_text = calloc(text_width*text_height, bytes_per_pixel);
+  if (!texgrid || !empty_text)
+  {
+    fprintf(stderr, "GLERROR: couldn't allocate memory\n");
+    return 1;
+  }
+
+  if(sysdep_display_params.depth == 16) 
+  {
+    colorBlittedMemory = malloc( sysdep_display_params.width * sysdep_display_params.height * bytes_per_pixel);
+    if (!colorBlittedMemory)
+    {
+      fprintf(stderr, "GLERROR: couldn't allocate memory\n");
+      return 1;
+    }
+    printf("GLINFO: Using bit blit to map color indices !!\n");
+  } else {
+    printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
+  }
+
+  /* done */
+  printf("GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
+		sysdep_display_params.depth, 
+		sysdep_display_properties.palette_info.red_mask, sysdep_display_properties.palette_info.green_mask, 
+		sysdep_display_properties.palette_info.blue_mask);
+  
+  return 0;
+}
+
+/* Close down the virtual screen */
+void CloseVScreen (void)
+{
+  if(colorBlittedMemory!=NULL)
+  {
+    free(colorBlittedMemory);
+    colorBlittedMemory = NULL;
+  }
+  if (empty_text)
+  {
+    free (empty_text);
+    empty_text = NULL;
+  }  
+  if (texgrid)
+  {
+    free(texgrid);
+    texgrid = NULL;
+  }
+  if (cpan)
+  {
+    free(cpan);
+    cpan = NULL;
+  }
+
+  if (veclist)
+  {
+    disp__glDeleteLists(veclist, 1);
+    veclist = 0;
+  }
+  if (texture_init)
+  {
+    CHECK_GL_BEGINEND();
+    texture_init = 0;
+  }
+}
+
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
+static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area)
+{
+  int x=0, y=0;
+  GLenum err;
+  unsigned char *line_1=0;
+  struct TexSquare *tsq=0;
+  GLdouble texwpervw=0.0;
+  GLdouble texhpervh=0.0;
+  int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
+
+  CHECK_GL_BEGINEND();
 
   /**
    * texwpervw, texhpervh:
    * 	how much the texture covers the visual,
    * 	for both components (width/height) (percent).
    */
-  texwpervw = (GLdouble) text_width / (GLdouble) visual_width;
+  texwpervw = (GLdouble) text_width / (GLdouble) sysdep_display_params.orig_width;
   if (texwpervw > 1.0)
     texwpervw = 1.0;
 
-  texhpervh = (GLdouble) text_height / (GLdouble) visual_height;
+  texhpervh = (GLdouble) text_height / (GLdouble) sysdep_display_params.orig_height;
   if (texhpervh > 1.0)
     texhpervh = 1.0;
 
-  texgrid = (struct TexSquare *)
-    calloc (texnumx * texnumy, sizeof (struct TexSquare));
-
-  fprintf (stderr, "GLINFO: texture-usage %d*width=%d, %d*height=%d\n",
-		 (int) texnumx, (int) text_width, (int) texnumy,
-		 (int) text_height);
-
-  if(video_real_depth == 16) 
+  if(sysdep_display_params.depth == 16) 
   {
-    colorBlittedMemory = malloc( visual_width * visual_height * bytes_per_pixel);
     line_1   = (unsigned char *)colorBlittedMemory;
-    line_len = visual_width;
+    line_len = sysdep_display_params.orig_width;
   }
   else
   {
     unsigned char *line_2;
-    line_1   = (unsigned char *) bitmap->line[visual.min_y];
-    line_2   = (unsigned char *) bitmap->line[visual.min_y + 1];
+    line_1   = (unsigned char *) bitmap->line[vis_area->min_y];
+    line_2   = (unsigned char *) bitmap->line[vis_area->min_y + 1];
     line_len = (line_2 - line_1) / bytes_per_pixel;
-    line_1  += visual.min_x * bytes_per_pixel;
+    line_1  += vis_area->min_x * bytes_per_pixel;
   }
-  
-  empty_text = calloc(text_width*text_height, bytes_per_pixel);
 
   for (y = 0; y < texnumy; y++)
   {
@@ -972,15 +806,15 @@ void InitTextures (struct mame_bitmap *bitmap)
     {
       tsq = texgrid + y * texnumx + x;
 
-      if (x == texnumx - 1 && visual_width % text_width)
+      if (x == texnumx - 1 && sysdep_display_params.orig_width % text_width)
 	tsq->xcov =
-	  (GLdouble) (visual_width % text_width) / (GLdouble) text_width;
+	  (GLdouble) (sysdep_display_params.orig_width % text_width) / (GLdouble) text_width;
       else
 	tsq->xcov = 1.0;
 
-      if (y == texnumy - 1 && visual_height % text_height)
+      if (y == texnumy - 1 && sysdep_display_params.orig_height % text_height)
 	tsq->ycov =
-	  (GLdouble) (visual_height % text_height) / (GLdouble) text_height;
+	  (GLdouble) (sysdep_display_params.orig_height % text_height) / (GLdouble) text_height;
       else
 	tsq->ycov = 1.0;
 
@@ -1005,9 +839,7 @@ void InitTextures (struct mame_bitmap *bitmap)
       		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
                    &(tsq->x4), &(tsq->y4), &(tsq->z4));
 
-      /* calculate the pixel store data,
-         to use the machine-bitmap for our texture 
-      */
+      /* calculate the pixel store data, to use the machine-bitmap for our texture */
       tsq->texture = line_1 +
         ( (y * text_height * line_len) + (x * text_width)) * bytes_per_pixel;
 
@@ -1061,26 +893,25 @@ void InitTextures (struct mame_bitmap *bitmap)
     }	/* for all texnumx */
   }  /* for all texnumy */
 
-  gl_is_initialized = 1;
-
   CHECK_GL_BEGINEND();
 
   /* lets init the rest of the custumizings ... */
   gl_set_bilinear (bilinear);
   gl_set_antialias (antialias);
-  gl_set_alphablending (alphablending);
   gl_set_cabview (cabview);
 
   CHECK_GL_BEGINEND();
-
   CHECK_GL_ERROR ();
-}
 
+  free (empty_text);
+  empty_text   = NULL;
+  texture_init = 1;
+}
 
 /**
  * returns the length of the |(x,y,z)-(i,j,k)|
  */
-GLdouble
+static GLdouble
 CompareVec (GLdouble i, GLdouble j, GLdouble k,
 	    GLdouble x, GLdouble y, GLdouble z)
 {
@@ -1091,7 +922,7 @@ CompareVec (GLdouble i, GLdouble j, GLdouble k,
   return LengthOfVec(dx, dy, dz);
 }
 
-void
+static void
 AddToThisVec (GLdouble i, GLdouble j, GLdouble k,
 	      GLdouble * x, GLdouble * y, GLdouble * z)
 {
@@ -1107,8 +938,7 @@ AddToThisVec (GLdouble i, GLdouble j, GLdouble k,
  *        x_off * v__nw +
  *        y_off * v__nh;
  */
-void
-TranslatePointInPlane   (
+static void TranslatePointInPlane   (
 	      GLdouble vx_p1, GLdouble vy_p1, GLdouble vz_p1,
 	      GLdouble vx_nw, GLdouble vy_nw, GLdouble vz_nw,
 	      GLdouble vx_nh, GLdouble vy_nh, GLdouble vz_nh,
@@ -1139,7 +969,7 @@ TranslatePointInPlane   (
                  vx_p, vy_p, vz_p);
 }
 
-void
+static void
 ScaleThisVec (GLdouble i, GLdouble j, GLdouble k,
 	      GLdouble * x, GLdouble * y, GLdouble * z)
 {
@@ -1148,13 +978,13 @@ ScaleThisVec (GLdouble i, GLdouble j, GLdouble k,
   *z *= k ;
 }
 
-GLdouble
+static GLdouble
 LengthOfVec (GLdouble x, GLdouble y, GLdouble z)
 {
   return sqrt(x*x+y*y+z*z);
 }
 
-void
+static void
 NormThisVec (GLdouble * x, GLdouble * y, GLdouble * z)
 {
   double len = LengthOfVec (*x, *y, *z);
@@ -1165,8 +995,7 @@ NormThisVec (GLdouble * x, GLdouble * y, GLdouble * z)
 }
 
 /* Compute a delta vector between two points */
-
-void
+static void
 DeltaVec (GLdouble x1, GLdouble y1, GLdouble z1,
 	  GLdouble x2, GLdouble y2, GLdouble z2,
 	  GLdouble * dx, GLdouble * dy, GLdouble * dz)
@@ -1177,8 +1006,7 @@ DeltaVec (GLdouble x1, GLdouble y1, GLdouble z1,
 }
 
 /* Compute a crossproduct vector of two vectors ( plane ) */
-
-void
+static void
 CrossVec (GLdouble a1, GLdouble a2, GLdouble a3,
 	  GLdouble b1, GLdouble b2, GLdouble b3,
 	  GLdouble * c1, GLdouble * c2, GLdouble * c3)
@@ -1188,15 +1016,13 @@ CrossVec (GLdouble a1, GLdouble a2, GLdouble a3,
   *c3 = a1*b2 - a1*b1;
 }
 
-void CopyVec(GLdouble *ax,GLdouble *ay,GLdouble *az,                   /* dest   */
-	          const GLdouble bx,const GLdouble by,const GLdouble bz     /* source */
-                  )
+static void CopyVec(GLdouble *ax,GLdouble *ay,GLdouble *az,  /* dest   */
+  const GLdouble bx,const GLdouble by,const GLdouble bz)     /* source */
 {
 	*ax=bx;
 	*ay=by;
 	*az=bz;
 }
-
 
 /**
  * Calculate texture points (world) for flat screen 
@@ -1212,8 +1038,8 @@ void CopyVec(GLdouble *ax,GLdouble *ay,GLdouble *az,                   /* dest  
  * 	the resulting cabinet point
  *
  */
-void CalcFlatTexPoint( int x, int y, GLdouble texwpervw, GLdouble texhpervh, 
-		       GLdouble *px,GLdouble *py)
+static void CalcFlatTexPoint( int x, int y, GLdouble texwpervw,
+  GLdouble texhpervh, GLdouble *px,GLdouble *py)
 {
   *px=(double)x*texwpervw;
   if(*px>1.0) *px=1.0;
@@ -1248,11 +1074,9 @@ void CalcCabPointbyViewpoint(
 }
 
 /* Set up a frustum projection */
-
-void
-SetupFrustum (void)
+static void SetupFrustum (void)
 {
-  double vscrnaspect = (double) winwidth / (double) winheight;
+  double vscrnaspect = (double) window_width / (double) window_height;
 
   CHECK_GL_BEGINEND();
 
@@ -1277,10 +1101,8 @@ SetupFrustum (void)
   CHECK_GL_ERROR ();
 }
 
-
 /* Set up an orthographic projection */
-
-void SetupOrtho (void)
+static void SetupOrtho (void)
 {
   CHECK_GL_BEGINEND();
 
@@ -1299,13 +1121,13 @@ void SetupOrtho (void)
 
   disp__glRotated ( 180.0 , 1.0, 0.0, 0.0);
 
-  if ( blit_flipx )
+  if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) )
 	disp__glRotated (  180.0 , 0.0, 1.0, 0.0);
 
-  if ( blit_flipy )
+  if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY) )
 	disp__glRotated ( -180.0 , 1.0, 0.0, 0.0);
 
-  if( blit_swapxy ) {
+  if( (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY) ) {
 	disp__glRotated ( 180.0 , 0.0, 1.0, 0.0);
   	disp__glRotated (  90.0 , 0.0, 0.0, 1.0 );
   }
@@ -1314,45 +1136,34 @@ void SetupOrtho (void)
   	
 }
 
-void gl_resize(int w, int h, int vw, int vh)
+void gl_resize(void)
 {
-  int vscrndx;
-  int vscrndy;
-
-  winheight = h;
-  winwidth  = w;
-
-  vscrndx = (winwidth  - vw) / 2;
-  vscrndy = (winheight - vh) / 2;
-
   CHECK_GL_BEGINEND();
 
-  if (glContext!=NULL)
+  if (cabview)
   {
-	if (cabview)
-		disp__glViewport (0, 0, winwidth, winheight);
-	else
-		disp__glViewport (vscrndx, vscrndy, vw, vh);
-
-/*
-		disp__glViewport (0, 0, winwidth, winheight);
-			    */
-
-        disp__glGetIntegerv(GL_VIEWPORT, dimView);
-
-	if (cabview)
-		SetupFrustum ();
-	else
-		SetupOrtho ();
-
-/*	fprintf(stderr, "GLINFO: xgl_resize to %dx%d\n", winwidth, winheight);
-	fflush(stderr); */
+          disp__glViewport (0, 0, window_width, window_height);
+          SetupFrustum ();
   }
+  else
+  {
+          int vw, vh;
+          int vscrndx;
+          int vscrndy;
+
+          mode_clip_aspect(window_width, window_height, &vw, &vh);
+          
+          vscrndx = (window_width  - vw) / 2;
+          vscrndy = (window_height - vh) / 2;
+
+          disp__glViewport (vscrndx, vscrndy, vw, vh);
+          SetupOrtho ();
+  }
+  /* printf(stderr, "GLINFO: xgl_resize to %dx%d\n", window_width, window_height); */
 }
 
 /* Compute an average between two sets of 3D coordinates */
-
-void
+static void
 WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
       GLdouble x2, GLdouble y2, GLdouble z2,
       GLdouble * ax, GLdouble * ay, GLdouble * az)
@@ -1362,7 +1173,8 @@ WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
   *az = (1.0 - perc) * z1 + perc * z2;
 }
 
-void drawGameAxis ()
+#if 0 /* not used */
+static void drawGameAxis ()
 {
   GLdouble tx, ty, tz;
 
@@ -1409,9 +1221,9 @@ void drawGameAxis ()
 	disp__glColor3d (1.0,1.0,1.0);
         CHECK_GL_ERROR ();
 }
+#endif
 
-
-void cabinetTextureRotationTranslation ()
+static void cabinetTextureRotationTranslation ()
 {
 	/**
 	 * Be aware, this matrix is written in reverse logical
@@ -1438,17 +1250,17 @@ void cabinetTextureRotationTranslation ()
 
 	/********* CENTERED AT ORIGIN END  ****************/
 
-	if ( blit_flipx )
+	if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) )
 		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
 
-	if ( blit_flipy )
+	if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY) )
 		disp__glRotated ( -180.0 , vx_scr_nx, vy_scr_nx, vz_scr_nx);
 
 
 
 	/********* CENTERED AT ORIGIN BEGIN ****************/
 
-	if( blit_swapxy )
+	if( (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY) )
 	{
 		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
 
@@ -1477,9 +1289,10 @@ void cabinetTextureRotationTranslation ()
 	/** START READING ... TRANSLATION / ROTATION **/
 }
 
-
-void
-drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet)
+static void drawTextureDisplay (struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags, int useCabinet)
 {
   struct TexSquare *square;
   int x = 0, y = 0;
@@ -1488,10 +1301,8 @@ drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet)
   int updateTexture = 1;
   static int ui_was_dirty=0;
 
-  if(gl_is_initialized == 0)
-  	return;
-  	
-  if(vecgame && !ui_dirty && !ui_was_dirty)
+  if(sysdep_display_params.vec_src_bounds && !(flags & SYSDEP_DISPLAY_UI_DIRTY)
+     && !ui_was_dirty)
     updateTexture = 0;
 
   CHECK_GL_BEGINEND();
@@ -1501,15 +1312,15 @@ drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet)
     disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, line_len);
     disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
 
-    if(video_real_depth == 16)
+    if(sysdep_display_params.depth == 16)
     {
     	unsigned short *dest=colorBlittedMemory;
     	int y,x;
-    	for (y=visual.min_y;y<=visual.max_y;y++)
+    	for (y=vis_area->min_y;y<=vis_area->max_y;y++)
     	{
-    	   for (x=visual.min_x; x<=visual.max_x; x++, dest++)
+    	   for (x=vis_area->min_x; x<=vis_area->max_x; x++, dest++)
     	   {
-    	      *dest=current_palette->lookup[((UINT16*)(bitmap->line[y]))[x]];
+    	      *dest=palette->lookup[((UINT16*)(bitmap->line[y]))[x]];
     	   }
     	}
     }
@@ -1525,13 +1336,13 @@ drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet)
       
       square = texgrid + y * texnumx + x;
       
-      if(x<(texnumx-1) || !(visual_width%text_width))
+      if(x<(texnumx-1) || !(sysdep_display_params.orig_width%text_width))
 		width=text_width;
-      else width=visual_width%text_width;
+      else width=sysdep_display_params.orig_width%text_width;
 
-      if(y<(texnumy-1) || !(visual_height%text_height))
+      if(y<(texnumy-1) || !(sysdep_display_params.orig_height%text_height))
 		height=text_height;
-      else height=visual_height%text_height;
+      else height=sysdep_display_params.orig_height%text_height;
 
       if(square->isTexture==GL_FALSE)
       {
@@ -1613,12 +1424,14 @@ drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet)
    */
   (void) disp__glGetError ();
   
-  ui_was_dirty = ui_dirty;
+  ui_was_dirty = flags & SYSDEP_DISPLAY_UI_DIRTY;
 }
 
 /* Draw a frame in Cabinet mode */
-
-void UpdateCabDisplay (struct mame_bitmap *bitmap)
+static void UpdateCabDisplay (struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags)
 {
   int glerrid;
   int shadeModel;
@@ -1628,9 +1441,10 @@ void UpdateCabDisplay (struct mame_bitmap *bitmap)
   GLdouble perc;
   struct CameraPan *pan, *lpan;
 
-  if (gl_is_initialized == 0)
-    return;
-
+  /* set upside down .. */
+  if (do_snapshot)
+    SetupFrustum ();
+  
   CHECK_GL_BEGINEND();
 
   disp__glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1712,11 +1526,11 @@ void UpdateCabDisplay (struct mame_bitmap *bitmap)
 
   cabinetTextureRotationTranslation ();
 
-  if (vecgame)
+  if (sysdep_display_params.vec_src_bounds)
   {
     disp__glColor4d (1.0, 1.0, 1.0, 1.0);
 
-    drawTextureDisplay (bitmap, 1 /*cabinet */ );
+    drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags, 1 /*cabinet */ );
 
     disp__glDisable (GL_TEXTURE_2D);
     disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
@@ -1739,7 +1553,7 @@ void UpdateCabDisplay (struct mame_bitmap *bitmap)
   else
   {				/* Draw the screen of a bitmapped game */
 
-    drawTextureDisplay (bitmap, 1 /*cabinet */ );
+    drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags, 1 /*cabinet */ );
 
   }
 
@@ -1752,42 +1566,21 @@ void UpdateCabDisplay (struct mame_bitmap *bitmap)
     gl_save_screen_snapshot();
     do_snapshot = 0;
     /* reset upside down .. */
-    if (cabview)
-            SetupFrustum ();
-    else
-            SetupOrtho ();
+    SetupFrustum ();
   }
-
-  if (glCaps.buffer)
-  {
-#ifdef WIN32
-    BOOL ret = SwapBuffers (glHDC);
-    if (ret != TRUE)
-    {
-      CHECK_WGL_ERROR (glWnd, __FILE__, __LINE__);
-      doublebuffer = FALSE;
-    }
-#else
-    SwapBuffers ();
-#endif
-  }
-  else
-    disp__glFlush ();
-
-  CHECK_GL_BEGINEND();
-
-  CHECK_GL_ERROR ();
-
 }
 
-void
-UpdateFlatDisplay (struct mame_bitmap *bitmap)
+static void UpdateFlatDisplay (struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags)
 {
   int shadeModel;
 
-  if (gl_is_initialized == 0)
-    return;
-
+  /* set upside down .. */
+  if (do_snapshot)
+    SetupOrtho ();
+  
   CHECK_GL_BEGINEND();
 
   disp__glClear (GL_COLOR_BUFFER_BIT);
@@ -1800,9 +1593,9 @@ UpdateFlatDisplay (struct mame_bitmap *bitmap)
 
   disp__glColor4d (1.0, 1.0, 1.0, 1.0);
 
-  drawTextureDisplay (bitmap, 0 );
+  drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags, 0 );
 
-  if (vecgame)
+  if (sysdep_display_params.vec_src_bounds)
   {
     disp__glDisable (GL_TEXTURE_2D);
     disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
@@ -1839,11 +1632,28 @@ UpdateFlatDisplay (struct mame_bitmap *bitmap)
     gl_save_screen_snapshot();
     do_snapshot = 0;
     /* reset upside down .. */
-    if (cabview)
-            SetupFrustum ();
-    else
-            SetupOrtho ();
+    SetupOrtho ();
   }
+}
+
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
+
+static void UpdateGLDisplay (struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags)
+{
+  if (!texture_init || (flags & SYSDEP_DISPLAY_VIS_AREA_CHANGED))
+    InitTextures (bitmap, vis_area);
+
+  if (cabview)
+    UpdateCabDisplay (bitmap, vis_area, dirty_area, palette, flags);
+  else
+    UpdateFlatDisplay (bitmap, vis_area, dirty_area, palette, flags);
 
   if (doublebuffer)
   {
@@ -1860,36 +1670,8 @@ UpdateFlatDisplay (struct mame_bitmap *bitmap)
   }
   else
     disp__glFlush ();
-}
 
-/**
- * the given bitmap MUST be the original mame core bitmap !!!
- *    - no swapxy, flipx or flipy and no resize !
- *    - shall be Machine->scrbitmap
- */
-
-void UpdateGLDisplay (struct mame_bitmap *bitmap)
-{
-  if ( ! texture_init ) InitTextures (bitmap);
-
-  if (gl_is_initialized == 0)
-    return;
-
-  /* upside down .. to make a good snapshot ;-) */
-  if (do_snapshot)
-  {
-    if (cabview)
-            SetupFrustum ();
-    else
-            SetupOrtho ();
-  }
-
-  if (cabview && !cabload_err)
-    UpdateCabDisplay (bitmap);
-  else
-    UpdateFlatDisplay (bitmap);
-
-  CHECK_GL_BEGINEND();
+  CHECK_GL_BEGINEND ();
   CHECK_GL_ERROR ();
 }
 
@@ -1898,10 +1680,13 @@ void UpdateGLDisplay (struct mame_bitmap *bitmap)
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-void UpdateVScreen(struct mame_bitmap *bitmap)
+void UpdateVScreen(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags)
 {
-  UpdateGLDisplay (bitmap);
-
+  UpdateGLDisplay (bitmap, vis_area, dirty_area, palette, flags);
+/*
   if (code_pressed (KEYCODE_RALT))
   {
     if (code_pressed_memory (KEYCODE_A))
@@ -1921,21 +1706,21 @@ void UpdateVScreen(struct mame_bitmap *bitmap)
     }
     else if (code_pressed_memory (KEYCODE_PLUS_PAD))
     {
-	set_gl_beam(get_gl_beam()+0.5);
+	gl_set_beam(gl_beam+0.5);
     }
     else if (code_pressed_memory (KEYCODE_MINUS_PAD))
     {
-	set_gl_beam(get_gl_beam()-0.5);
+	gl_set_beam(gl_beam-0.5);
     }
   }
+  */
 }
 
+#if 0 /* disabled for now */
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 		struct rectangle *bounds)
 {
 	do_snapshot = 1;
 	return NULL;
 }
-
-
-#endif /* ifdef xgl */
+#endif

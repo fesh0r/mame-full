@@ -5,7 +5,7 @@
 #include "sysdep/sysdep_display.h"
 
 typedef void (*blit_func_p)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
 blit_func_p sysdep_display_get_blitfunc(int dest_bpp);

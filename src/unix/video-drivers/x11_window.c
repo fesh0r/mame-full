@@ -53,16 +53,16 @@
 
 #ifdef USE_HWSCALE
 static void x11_window_update_16_to_YV12 (struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 static void x11_window_update_16_to_YV12_perfect (struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 static void x11_window_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 #endif
 static blit_func_p x11_window_update_display_func;
@@ -952,12 +952,12 @@ void x11_window_close_display (void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-void x11_window_update_display (struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+void x11_window_update_display(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags)
 {
-   (*x11_window_update_display_func) (bitmap, src_bounds, dest_bounds, palette,
-      scaled_buffer_ptr, image_width);
+   x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
+     palette, scaled_buffer_ptr, image_width);
    
    switch (x11_window_update_method)
    {
@@ -968,8 +968,8 @@ void x11_window_update_display (struct mame_bitmap *bitmap,
          break;
       case X11_MITSHM:
 #ifdef USE_MITSHM
-         XShmPutImage (display, window, gc, image, dest_bounds->min_x, dest_bounds->min_y,
-            startx+dest_bounds->min_x, starty+dest_bounds->min_y, ((dest_bounds->max_x + 1) - dest_bounds->min_x) , ((dest_bounds->max_y + 1) - dest_bounds->min_y),
+         XShmPutImage (display, window, gc, image, vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+            startx+vis_in_dest_out->min_x, starty+vis_in_dest_out->min_y, ((vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x) , ((vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y),
             False);
 #endif
          break;
@@ -999,8 +999,8 @@ void x11_window_update_display (struct mame_bitmap *bitmap,
 #endif
          break;
       case X11_NORMAL:
-         XPutImage (display, window, gc, image, dest_bounds->min_x, dest_bounds->min_y,
-            startx+dest_bounds->min_x, starty+dest_bounds->min_y, ((dest_bounds->max_x + 1) - dest_bounds->min_x) , ((dest_bounds->max_y + 1) - dest_bounds->min_y));
+         XPutImage (display, window, gc, image, vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+            startx+vis_in_dest_out->min_x, starty+vis_in_dest_out->min_y, ((vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x) , ((vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y));
          break;
    }
 
@@ -1018,7 +1018,7 @@ void x11_window_update_display (struct mame_bitmap *bitmap,
 
 /* Hacked into place, until I integrate YV12 support into the blit core... */
 static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
    int _x,_y;
@@ -1029,34 +1029,34 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap,
    unsigned short *src2;
    int u1,v1,y1,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
    
-   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+   sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area);
    
-   _y = dest_bounds->min_y;
-   dest_bounds->min_y &= ~1;
-   src_bounds->min_y -= _y - dest_bounds->min_y;
+   _y = vis_in_dest_out->min_y;
+   vis_in_dest_out->min_y &= ~1;
+   dirty_area->min_y -= _y - vis_in_dest_out->min_y;
 
-   for(_y=src_bounds->min_y;_y<src_bounds->max_y;_y+=2)
+   for(_y=dirty_area->min_y;_y<dirty_area->max_y;_y+=2)
    {
       if (sysdep_display_params.orientation)
       {
-         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
-         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1, src_bounds);
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, dirty_area);
+         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1, dirty_area);
 	 src  = (unsigned short*)hwscale_yv12_rotate_buf0;
 	 src2 = (unsigned short*)hwscale_yv12_rotate_buf1;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= src_bounds->min_x;
+         src+= dirty_area->min_x;
          src2=bitmap->line[_y+1];
-         src2+= src_bounds->min_x;
+         src2+= dirty_area->min_x;
       }
 
-      dest_y = (xvimage->data+xvimage->offsets[0]) +  xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y)    + dest_bounds->min_x;
-      dest_u = (xvimage->data+xvimage->offsets[2]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
-      dest_v = (xvimage->data+xvimage->offsets[1]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
+      dest_y = (xvimage->data+xvimage->offsets[0]) +  xvimage->width*((_y-dirty_area->min_y)+vis_in_dest_out->min_y)    + vis_in_dest_out->min_x;
+      dest_u = (xvimage->data+xvimage->offsets[2]) + (xvimage->width*((_y-dirty_area->min_y)+vis_in_dest_out->min_y))/4 + vis_in_dest_out->min_x/2;
+      dest_v = (xvimage->data+xvimage->offsets[1]) + (xvimage->width*((_y-dirty_area->min_y)+vis_in_dest_out->min_y))/4 + vis_in_dest_out->min_x/2;
 
-      for(_x=src_bounds->min_x;_x<src_bounds->max_x;_x+=2)
+      for(_x=dirty_area->min_x;_x<dirty_area->max_x;_x+=2)
       {
             v1 = palette->lookup[*src++];
             y1 = (v1)  & 0xff;
@@ -1102,7 +1102,7 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap,
 
 
 static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {      /* this one is used when scale==2 */
    unsigned int _x,_y;
@@ -1112,25 +1112,25 @@ static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
    unsigned short *src;
    int u1,v1,y1;
 
-   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+   sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area);
 
-   for(_y=src_bounds->min_y;_y<=src_bounds->max_y;_y++)
+   for(_y=dirty_area->min_y;_y<=dirty_area->max_y;_y++)
    {
       if (sysdep_display_params.orientation)
       {
-         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, dirty_area);
          src = (unsigned short*)hwscale_yv12_rotate_buf0;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= src_bounds->min_x;
+         src+= dirty_area->min_x;
       }
 
-      dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x;
-      dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
-      dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
-      for(_x=src_bounds->min_x;_x<=src_bounds->max_x;_x++)
+      dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x;
+      dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
+      dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
+      for(_x=dirty_area->min_x;_x<=dirty_area->max_x;_x++)
       {
             v1 = palette->lookup[*src++];
             y1 = (v1)  & 0xff;
@@ -1148,7 +1148,7 @@ static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
 }
 
 static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
    int _x,_y,r,g,b;
@@ -1159,34 +1159,34 @@ static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
    unsigned int *src2;
    int u1,v1,y1,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12  34 */
 
-   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+   sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area);
 
-   _y = dest_bounds->min_y;
-   dest_bounds->min_y &= ~1;
-   src_bounds->min_y -= _y - dest_bounds->min_y;
+   _y = vis_in_dest_out->min_y;
+   vis_in_dest_out->min_y &= ~1;
+   dirty_area->min_y -= _y - vis_in_dest_out->min_y;
 
-   for(_y=src_bounds->min_y;_y<src_bounds->max_y;_y+=2)
+   for(_y=dirty_area->min_y;_y<dirty_area->max_y;_y+=2)
    {
       if (sysdep_display_params.orientation)
       {
-         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
-         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1, src_bounds);
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, dirty_area);
+         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1, dirty_area);
          src  = (unsigned int*)hwscale_yv12_rotate_buf0;
          src2 = (unsigned int*)hwscale_yv12_rotate_buf1;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= src_bounds->min_x;
+         src+= dirty_area->min_x;
          src2=bitmap->line[_y+1];
-         src2+= src_bounds->min_x;
+         src2+= dirty_area->min_x;
       }
 
-      dest_y = (xvimage->data+xvimage->offsets[0]) +  xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y)    + dest_bounds->min_x;
-      dest_u = (xvimage->data+xvimage->offsets[2]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
-      dest_v = (xvimage->data+xvimage->offsets[1]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
+      dest_y = (xvimage->data+xvimage->offsets[0]) +  xvimage->width*((_y-dirty_area->min_y)+vis_in_dest_out->min_y)    + vis_in_dest_out->min_x;
+      dest_u = (xvimage->data+xvimage->offsets[2]) + (xvimage->width*((_y-dirty_area->min_y)+vis_in_dest_out->min_y))/4 + vis_in_dest_out->min_x/2;
+      dest_v = (xvimage->data+xvimage->offsets[1]) + (xvimage->width*((_y-dirty_area->min_y)+vis_in_dest_out->min_y))/4 + vis_in_dest_out->min_x/2;
 
-      for(_x=src_bounds->min_x;_x<src_bounds->max_x;_x+=2)
+      for(_x=dirty_area->min_x;_x<dirty_area->max_x;_x+=2)
       {
          b = *src++;
          r = (b>>16) & 0xFF;
@@ -1227,7 +1227,7 @@ static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
 }
 
 static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 { /* This one is used when scale == 2 */
    int _x,_y,r,g,b;
@@ -1237,25 +1237,25 @@ static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitm
    unsigned int *src;
    int u1,v1,y1;
 
-   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+   sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area);
 
-   for(_y=src_bounds->min_y;_y<=src_bounds->max_y;_y++)
+   for(_y=dirty_area->min_y;_y<=dirty_area->max_y;_y++)
    {
       if (sysdep_display_params.orientation)
       {
-         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, dirty_area);
          src  = (unsigned int*)hwscale_yv12_rotate_buf0;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= src_bounds->min_x;
+         src+= dirty_area->min_x;
       }
 
-      dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x;
-      dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
-      dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
-      for(_x=src_bounds->min_x;_x<=src_bounds->max_x;_x++)
+      dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x;
+      dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
+      dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
+      for(_x=dirty_area->min_x;_x<=dirty_area->max_x;_x++)
       {
          b = *src++;
          r = (b>>16) & 0xFF;

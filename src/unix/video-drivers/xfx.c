@@ -75,10 +75,3 @@ void xfx_close_display (void)
 
    XSync(display, True); /* send all events to sync; */
 }
-
-void xfx_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags)
-{
-   UpdateFXDisplay(bitmap, vis_area, dirty_area, palette, flags);
-}

@@ -1,15 +1,14 @@
-#include "driver.h"
-#include "../../png.h"
 #include "glmame.h"
 #include <stdarg.h>
 
+#if 0 /* disabled for now */
 extern int snapno;
+static int gl_png_write_bitmap(void *fp);
 
 void gl_save_screen_snapshot()
 {
         void *fp;
         char name[20];
- 
  
         /* avoid overwriting existing files */
         /* first of all try with "gamename.png" */
@@ -30,7 +29,7 @@ void gl_save_screen_snapshot()
         }
 }
 
-int gl_png_write_bitmap(void *fp)
+static int gl_png_write_bitmap(void *fp)
 {
 	UINT8 *ip;
 	struct png_info p;
@@ -83,8 +82,8 @@ int gl_png_write_bitmap(void *fp)
 	return 1;
 }
 
-
-void ppm_save_snapshot (void *fp)
+#if 0 /* no longer used */
+static void ppm_save_snapshot (void *fp)
 {
   FILE						*file = fp;
   int						pixelsize, m, i, pixelnum;
@@ -92,8 +91,6 @@ void ppm_save_snapshot (void *fp)
 
   int width  = winwidth;
   int height = winheight;
-
-  if(gl_is_initialized==0) return;
 
   m         = width * 3 /*RGB*/ ;
   pixelsize = width * height  * 3 /*RGB*/ ;
@@ -124,5 +121,5 @@ void ppm_save_snapshot (void *fp)
 
   return;
 }
-
-
+#endif
+#endif

@@ -1,5 +1,3 @@
-#ifdef xgl
-
 #include "xmame.h"
 #include "glmame.h"
 
@@ -391,7 +389,7 @@ static void ParseLine(char *buf)
   }
 }
 
-void InitCabGlobals(void)
+static void InitCabGlobals(void)
 {
   int i;
 
@@ -484,5 +482,3 @@ int LoadCabinet(const char *cabname)
 
   return(1);
 }
-
-#endif

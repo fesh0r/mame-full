@@ -305,7 +305,7 @@ int xf86_dga2_open_display(void)
 }
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
   if (xf86ctx.max_page)
@@ -315,7 +315,7 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
     }
 
   xf86ctx.page = (xf86ctx.page + 1) % (xf86ctx.max_page + 1);
-  xf86ctx.update_display_func(bitmap, src_bounds, dest_bounds,
+  xf86ctx.update_display_func(bitmap, vis_area, dirty_area,
         palette, xf86ctx.addr + xf86ctx.aligned_viewport_height *
 	xf86ctx.page * xf86ctx.device->mode.bytesPerScanline, xf86ctx.width);
 

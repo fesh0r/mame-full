@@ -127,12 +127,12 @@ ChangeLog:
 if (sysdep_display_params.orientation) { \
   line_src = (SRC_PIXEL *)rotate_dbbuf0; \
   line_end = (SRC_PIXEL *)rotate_dbbuf0 + bounds_width; \
-  for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), y++) { \
-           rotate_func(rotate_dbbuf0, bitmap, y, src_bounds); \
+  for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), y++) { \
+           rotate_func(rotate_dbbuf0, bitmap, y, dirty_area); \
            COPY_LINE_FOR_Y(y, sysdep_display_params.height, line_src, line_end, line_dest); \
   } \
 } else { \
-  y = src_bounds->min_y; \
+  y = dirty_area->min_y; \
   for (;line_src < line_end; \
         line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), \
                 line_src+=src_width, y++) \
@@ -170,13 +170,13 @@ if (sysdep_display_params.orientation) { \
   SRC_PIXEL *line_src, *line_end;
   DEST_PIXEL *line_dest;
 
-  sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+  sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area);
 
   src_width    = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-  bounds_width = (src_bounds->max_x+1) - src_bounds->min_x;
-  line_src     = (SRC_PIXEL *)bitmap->line[src_bounds->min_y] + src_bounds->min_x;
-  line_end     = (SRC_PIXEL *)bitmap->line[src_bounds->max_y+1] + src_bounds->min_x;
-  line_dest    = (DEST_PIXEL *)((unsigned char *)(DEST) + (dest_bounds->min_y*DEST_WIDTH + dest_bounds->min_x)*DEST_PIXEL_SIZE);
+  bounds_width = (dirty_area->max_x+1) - dirty_area->min_x;
+  line_src     = (SRC_PIXEL *)bitmap->line[dirty_area->min_y] + dirty_area->min_x;
+  line_end     = (SRC_PIXEL *)bitmap->line[dirty_area->max_y+1] + dirty_area->min_x;
+  line_dest    = (DEST_PIXEL *)((unsigned char *)(DEST) + (vis_in_dest_out->min_y*DEST_WIDTH + vis_in_dest_out->min_x)*DEST_PIXEL_SIZE);
 
   switch(sysdep_display_params.effect)
   {

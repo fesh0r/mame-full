@@ -104,13 +104,13 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 	}
 }
 
-void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *dirty_area, struct rectangle *vis_in_dest_out)
+void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area)
 {	
 	int old_bound;
 
 	/* orient the bounds */	
-	sysdep_display_orient_bounds(dirty_area, bitmap->width, bitmap->height);
 	sysdep_display_orient_bounds(vis_in_dest_out, bitmap->width, bitmap->height);
+	sysdep_display_orient_bounds(dirty_area, bitmap->width, bitmap->height);
 	
 	/* change vis_area to destbounds */
         vis_in_dest_out->max_x = dirty_area->max_x - vis_in_dest_out->min_x;

@@ -219,9 +219,7 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 	 	x11_exposed = 0;
 	}
    
-	/* dirty_area gives the src_bounds and sysdep_display_check_params
-	   will convert vis_area to the dest bounds */
-	(*x_func[x11_video_mode].update_display) (bitmap, dirty_area, vis_area, palette, flags);
+	(*x_func[x11_video_mode].update_display) (bitmap, vis_area, dirty_area, palette, flags);
 	xinput_check_hotkeys(flags);
 	return 0;
 }

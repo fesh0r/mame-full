@@ -707,6 +707,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	cycles_t curr;
 	unsigned int flags = 0;
 	int normal_params_changed = 0;
+	static int vis_area_changed = 0;
 	
 	/*** STEP 1: handle frameskip ***/
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
@@ -794,7 +795,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 	     of the display_params hotkeys, because this can *force* changes
 	     to the normal display if focussed ***/
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
+	{
 		update_visible_area(display);
+		vis_area_changed = 1;
+	}
 
 	/*** STEP 4: now handle display_params hotkeys, but only if the normal
 	     display has focus */
@@ -916,6 +920,12 @@ void osd_update_video_and_audio(struct mame_display *display)
 		/* determine non hotkey flags */
 		if (ui_dirty)
 			flags |= SYSDEP_DISPLAY_UI_DIRTY;
+			
+		if (vis_area_changed)
+		{
+			flags |= SYSDEP_DISPLAY_VIS_AREA_CHANGED;
+			vis_area_changed = 0;
+		}
 		
 		/* at the end, we need the current time */
 		curr = osd_cycles();
@@ -963,7 +973,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 	osd_poll_joysticks();
 }
 
-#ifndef xgl
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 		struct rectangle *bounds)
 {
@@ -1043,7 +1052,6 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 	*bounds = newbounds;
 	return copy;
 }
-#endif
 
 void osd_pause(int paused)
 {

@@ -25,7 +25,7 @@
 static int  (*p_xf86_dga_open_display)(void);
 static void (*p_xf86_dga_close_display)(void);
 static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags);
 
 struct rc_option xf86_dga_opts[] = {
@@ -83,10 +83,10 @@ void xf86_dga_close_display(void)
 }
 
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-	(*p_xf86_dga_update_display)(bitmap, src_bounds, dest_bounds,
+	(*p_xf86_dga_update_display)(bitmap, vis_area, dirty_area,
 		palette, flags);
 }
 

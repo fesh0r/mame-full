@@ -132,6 +132,6 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags)
 {
-   UpdateFXDisplay(bitmap, vis_area, dirty_area, palette, flags);
+   xfx_update_display(bitmap, vis_area, dirty_area, palette, flags);
    return 0;
 }

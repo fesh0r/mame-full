@@ -33,7 +33,7 @@
 #endif
 
 #include "gltool.h"
-#include "vidhrdw/vector.h"
+#include "sysdep/sysdep_display.h"
 
 /* Camera panning stuff */
 
@@ -55,83 +55,45 @@ extern int numpans;
 extern GLuint cablist;
 
 /* xgl.c */
-extern char * libGLName;
-extern char * libGLUName;
-extern GLXContext glContext;
 extern int antialias;
-extern int winwidth;
-extern int winheight;
 extern int bilinear;
-extern int alphablending;
+extern int doublebuffer;
 extern int force_text_width_height;
-
-/* glvec.c */
 extern float gl_beam;
-extern GLuint veclist;
+extern int cabview;
+extern char *cabname;
 
 /* glgen.c */
-extern double scrnaspect, vscrnaspect;
+extern GLuint veclist;
 extern GLdouble  s__cscr_w_view, s__cscr_h_view;
 extern GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, 
         vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
         vx_cscr_p3, vy_cscr_p3, vz_cscr_p3, 
 	vx_cscr_p4, vy_cscr_p4, vz_cscr_p4;
-extern int gl_is_initialized;
-
-/* ? */
-extern int cabview;
-extern char *cabname; /* 512 bytes reserved ... */
 
 /* xgl.c */
 void SwapBuffers (void);
 
 /* glvec.c */
-void set_gl_beam(float new_value);
-float get_gl_beam();
 int glvec_renderer(point *start, int num_points);
-void glvec_init(void);
-void glvec_exit(void);
 
 /* glcab.c */
-void InitCabGlobals();
 int LoadCabinet (const char *fname);
 
-/* glgen.c
- * 
- * the calling order is the listed order:
- * 
- * first the start sequence, then the quit sequence ..
- */
-
-/* start sequence */
-void gl_bootstrap_resources();
-int  InitVScreen (int vw, int vh);
-void gl_reset_resources();
-void InitTextures (struct mame_bitmap *bitmap);
-
-/* quit sequence */
-void CloseVScreen (void);
-void gl_reset_resources();
-
-/* misc sequence */
-void UpdateVScreen(struct mame_bitmap *bitmap);
-void  gl_set_bilinear(int new_value);
-void  gl_init_cabview ();
-void  gl_set_cabview(int new_value);
-int   gl_stream_antialias (int aa);
-void  gl_set_antialias(int new_value);
-int   gl_stream_alphablending (int alpha);
-void  gl_set_alphablending(int new_value);
-void  gl_resize(int w, int h, int vw, int vh);
-void  CalcCabPointbyViewpoint( 
-		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
-                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
-		 );
+/* glgen.c */
+int  InitVScreen(void);
+void CloseVScreen(void);
+void UpdateVScreen(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
+void CalcCabPointbyViewpoint( 
+  GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
+  GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p);
+void gl_resize(void);
 
 /* glexport */
 void gl_save_screen_snapshot();
-int gl_png_write_bitmap(void *fp);
-void ppm_save_snapshot (void *fp);
 
 /* gljpeg */
 GLubyte *read_JPEG_file(char *);

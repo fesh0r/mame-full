@@ -10,8 +10,8 @@ int  InitVScreen(void);
 void CloseVScreen(void);
 void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);
-void UpdateFXDisplay(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+void xfx_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags);
 
 #endif

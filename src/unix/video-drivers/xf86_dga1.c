@@ -315,7 +315,7 @@ int xf86_dga1_open_display(void)
 }
 
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
 	if(xf86_dga_fix_viewport)
@@ -324,7 +324,7 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 		xf86_dga_fix_viewport = 0;
 	}
 	
-	xf86ctx.update_display_func(bitmap, src_bounds, dest_bounds,
+	xf86ctx.update_display_func(bitmap, vis_area, dirty_area,
 		palette, xf86ctx.addr, xf86ctx.width);
 }
 

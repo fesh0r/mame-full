@@ -643,8 +643,8 @@ void DrawFlatBitmap(void)
   }
 }
 
-void UpdateFXDisplay(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+void xfx_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
   if(!sysdep_display_params.vec_src_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))

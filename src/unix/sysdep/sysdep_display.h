@@ -46,8 +46,9 @@
 
 #define SYSDEP_DISPLAY_HOTKEY_OPTION1   0x00000400
 #define SYSDEP_DISPLAY_HOTKEY_OPTION2   0x00000800
-/* these are used by display drivers with special vector support */
+
 #define SYSDEP_DISPLAY_UI_DIRTY         0x00010000
+#define SYSDEP_DISPLAY_VIS_AREA_CHANGED 0x00020000
 
 /* orientation flags */
 #define SYSDEP_DISPLAY_FLIPX  1

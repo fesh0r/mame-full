@@ -81,8 +81,8 @@
     if (sysdep_display_params.orientation)
     {
       line_src = (SRC_PIXEL *)rotate_dbbuf0;
-      for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=sysdep_display_params.heightscale*CORRECTED_DEST_WIDTH, y++) {
-        rotate_func(rotate_dbbuf0, bitmap, y, src_bounds);
+      for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=sysdep_display_params.heightscale*CORRECTED_DEST_WIDTH, y++) {
+        rotate_func(rotate_dbbuf0, bitmap, y, dirty_area);
         EFFECT();
       }
     }
@@ -101,16 +101,16 @@
     {
       char *tmp;
       /* preload the first lines for 2x effects */
-      rotate_func(rotate_dbbuf1, bitmap, src_bounds->min_y, src_bounds);
-      rotate_func(rotate_dbbuf2, bitmap, src_bounds->min_y, src_bounds);
+      rotate_func(rotate_dbbuf1, bitmap, dirty_area->min_y, dirty_area);
+      rotate_func(rotate_dbbuf2, bitmap, dirty_area->min_y, dirty_area);
       
-      for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=2*CORRECTED_DEST_WIDTH, y++) {
+      for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=2*CORRECTED_DEST_WIDTH, y++) {
         /* shift lines up */
         tmp = rotate_dbbuf0;
         rotate_dbbuf0=rotate_dbbuf1;
         rotate_dbbuf1=rotate_dbbuf2;
         rotate_dbbuf2=tmp;
-        rotate_func(rotate_dbbuf2, bitmap, y+1, src_bounds);
+        rotate_func(rotate_dbbuf2, bitmap, y+1, dirty_area);
         EFFECT2X();
       } 
     } 
@@ -136,8 +136,8 @@
     if (sysdep_display_params.orientation)
     {
       line_src = (SRC_PIXEL *)rotate_dbbuf0;
-      for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=sysdep_display_params.heightscale*CORRECTED_DEST_WIDTH, y++) {
-        rotate_func(rotate_dbbuf0, bitmap, y, src_bounds);
+      for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=sysdep_display_params.heightscale*CORRECTED_DEST_WIDTH, y++) {
+        rotate_func(rotate_dbbuf0, bitmap, y, dirty_area);
         EFFECT3X();
       }
     }
@@ -154,17 +154,17 @@
      effect_6tap_clear_func(bounds_width);
      if (sysdep_display_params.orientation) {
        /* put in the first three lines */
-       rotate_func(rotate_dbbuf0, bitmap, src_bounds->min_y, src_bounds);
+       rotate_func(rotate_dbbuf0, bitmap, dirty_area->min_y, dirty_area);
        effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
-       rotate_func(rotate_dbbuf0, bitmap, src_bounds->min_y+1, src_bounds);
+       rotate_func(rotate_dbbuf0, bitmap, dirty_area->min_y+1, dirty_area);
        effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
-       rotate_func(rotate_dbbuf0, bitmap, src_bounds->min_y+2, src_bounds);
+       rotate_func(rotate_dbbuf0, bitmap, dirty_area->min_y+2, dirty_area);
        effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
 
-       for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=2*CORRECTED_DEST_WIDTH, y++) {
-           if (y <= src_bounds->max_y - 3)
+       for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=2*CORRECTED_DEST_WIDTH, y++) {
+           if (y <= dirty_area->max_y - 3)
            {
-             rotate_func(rotate_dbbuf0, bitmap, y+3, src_bounds);
+             rotate_func(rotate_dbbuf0, bitmap, y+3, dirty_area);
              effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
            }
 	   else
@@ -178,8 +178,8 @@
        effect_6tap_addline_func(line_src+=src_width, bounds_width, palette->lookup);
        effect_6tap_addline_func(line_src+=src_width, bounds_width, palette->lookup);
 
-       for (y = src_bounds->min_y; y <= src_bounds->max_y; y++, line_dest+=2*CORRECTED_DEST_WIDTH) {
-           if (y <= src_bounds->max_y - 3)
+       for (y = dirty_area->min_y; y <= dirty_area->max_y; y++, line_dest+=2*CORRECTED_DEST_WIDTH) {
+           if (y <= dirty_area->max_y - 3)
            {
              effect_6tap_addline_func(line_src+=src_width, bounds_width, palette->lookup);
            }

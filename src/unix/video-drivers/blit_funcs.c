@@ -23,7 +23,7 @@
 
 
 static void FUNC_NAME(blit_16_to_YUY2)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned short
@@ -38,7 +38,7 @@ static void FUNC_NAME(blit_16_to_YUY2)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_32_to_YUY2_direct)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned int
@@ -51,7 +51,7 @@ static void FUNC_NAME(blit_32_to_YUY2_direct)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_16_to_16)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned short
@@ -71,7 +71,7 @@ static void FUNC_NAME(blit_16_to_16)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_16_to_24)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned short
@@ -86,7 +86,7 @@ static void FUNC_NAME(blit_16_to_24)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_16_to_32)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned short
@@ -99,7 +99,7 @@ static void FUNC_NAME(blit_16_to_32)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_32_to_15)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned int
@@ -112,7 +112,7 @@ static void FUNC_NAME(blit_32_to_15)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_32_to_16)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned int
@@ -125,7 +125,7 @@ static void FUNC_NAME(blit_32_to_16)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_32_to_16_x)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned int
@@ -139,7 +139,7 @@ static void FUNC_NAME(blit_32_to_16_x)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_32_to_24_direct)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned int
@@ -152,7 +152,7 @@ static void FUNC_NAME(blit_32_to_24_direct)(struct mame_bitmap *bitmap,
 }
 
 static void FUNC_NAME(blit_32_to_32_direct)(struct mame_bitmap *bitmap,
-  struct rectangle *src_bounds, struct rectangle *dest_bounds,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
 #define SRC_PIXEL unsigned int

@@ -28,19 +28,21 @@
 #include "glmame.h"
 #include "x11.h"
 
-int bilinear=1; /* Do binlinear filtering? */
-int antialias=0;
-int translucency = 0;
-int force_text_width_height = 0;
+/* options initialised through the rc_option struct */
+int bilinear;
+int antialias;
+int doublebuffer;
+int force_text_width_height;
+float gl_beam;
+int cabview;
+char *cabname;
+static char *libGLName;
+static char *libGLUName;
 
-XSetWindowAttributes window_attr;
-GLXContext glContext=NULL;
-
-GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
-			           1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, -1 };
-char * libGLName=0;
-char * libGLUName=0;
-
+/* local vars */
+static GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
+static XSetWindowAttributes window_attr;
+static GLXContext glContext=NULL;
 static int window_type;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
@@ -52,10 +54,10 @@ struct rc_option xgl_opts[] = {
    { "OpenGL Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "gldblbuffer",	NULL,			rc_bool,	&(glCaps.buffer),
+   { "gldblbuffer",	NULL,			rc_bool,	&doublebuffer,
      "1",		0,			0,		NULL,
      "Enable/disable double buffering (default: true)" },
-   { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
+   { "gltexture_size",	NULL,			rc_int,		&force_text_width_height,
      "0",		0,			0,		NULL,
      "Force the max width and height of one texture segment (default: autosize)" },
    { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
@@ -87,35 +89,6 @@ struct rc_option xgl_opts[] = {
      NULL }
 };
 
-int sysdep_init(void)
-{
-   /* Open the display. */
-   display=XOpenDisplay(NULL);
-
-   if(!display) {
-      fprintf (stderr,"OSD ERROR: failed to open the display.\n");
-      return OSD_NOT_OK; 
-   }
-  
-   gl_bootstrap_resources();
-
-#ifndef NDEBUG
-   printf("GLINFO: xgl init !\n");
-#endif
-
-   return OSD_OK;
-}
-
-void sysdep_close(void)
-{
-   XCloseDisplay(display);
-
-#ifndef NDEBUG
-   printf("GLINFO: xgl closed !\n");
-#endif
-}
-
-
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
@@ -125,7 +98,6 @@ int xgl_open_display(void)
   unsigned long winmask;
   char *glxfx;
   VisualGC vgc;
-  int vw, vh;
   int ownwin = 1;
   int force_grab;
   XVisualInfo *myvisual;
@@ -195,12 +167,16 @@ int xgl_open_display(void)
   window_attr.colormap=0; /* done later, within findVisualGlX .. */
   window_attr.cursor=None;
 
-  fetch_GL_FUNCS (libGLName, libGLUName, 1 /* force refetch ... */);
+  if (!loadGLLibrary(libGLName, libGLUName))
+    return 1;
 
   if (root_window_id)
     window = root_window_id;
   else
     window = DefaultRootWindow(display);
+    
+  glCaps.buffer = doublebuffer;
+  
   vgc = findVisualGlX( display, window,
                        &window, window_width, window_height, &glCaps, 
 		       &ownwin, &window_attr, winmask,
@@ -214,7 +190,7 @@ int xgl_open_display(void)
   if(vgc.success==0)
   {
 	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
-	return OSD_NOT_OK; 
+	return 1; 
   }
 
   myvisual =vgc.visual;
@@ -222,12 +198,12 @@ int xgl_open_display(void)
 
   if (!window) {
 	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
-	return OSD_NOT_OK; 
+	return 1; 
   }
   
   if(!glContext) {
 	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
-	return OSD_NOT_OK; 
+	return 1; 
   }
   
   setGLCapabilities ( display, myvisual, &glCaps);
@@ -243,16 +219,8 @@ int xgl_open_display(void)
   XWindowEvent(display,window,ExposureMask,&event);
   
   xinput_open(force_grab, 0);
-  mode_clip_aspect(window_width, window_height, &vw, &vh);
 
-  if (InitVScreen(vw, vh))
-	return OSD_NOT_OK; 
-
-#ifndef NDEBUG
-  printf("GLINFO: xgl display created !\n");
-#endif
-
-  return OSD_OK;
+  return InitVScreen();
 }
 
 /*
@@ -260,17 +228,23 @@ int xgl_open_display(void)
  * when creating the display
  */
 
-void sysdep_display_close (void)
+void xgl_display_close (void)
 {
-   disp__glXMakeCurrent(display, None, NULL);
-   disp__glXDestroyContext(display,glContext);
-   glContext=0;
-
    CloseVScreen();  /* Shut down GL stuff */
    xinput_close();
 
+   disp__glXMakeCurrent(display, None, NULL);
+   if (glContext)
+   {
+     disp__glXDestroyContext(display,glContext);
+     glContext=0;
+   }
+
    if(window)
+   {
      destroyOwnOverlayWin(display, &window, &window_attr);
+     window = 0;
+   }
 
    XSync(display,False); /* send all events to sync; */
 
@@ -280,14 +254,15 @@ void sysdep_display_close (void)
 }
 
 /* Swap GL video buffers */
-
 void SwapBuffers(void)
 {
   disp__glXSwapBuffers(display,window);
 }
 
-void
-sysdep_update_display (struct mame_bitmap *bitmap)
+void xgl_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags)
 {
   Window _dw;
   int _dint;
@@ -296,23 +271,12 @@ sysdep_update_display (struct mame_bitmap *bitmap)
   xinput_check_hotkeys();
   
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
-  
   if ( (w != window_width) || (h != window_height) )
   {
-    int vw, vh;
-    
-    mode_clip_aspect(w, h, &vw, &vh, (double)screen->width/screen->height);
-    if ((window_type == 1) && !cabview)
-    {
-       XResizeWindow(display, window, vw, vh);
-       w = vw;
-       h = vh;
-    }
-    
-    /* this sets window_width to w and window_height to h for us, amongst other
-       important stuff */
-    gl_resize(w, h, vw, vh);
+    window_width  = w;
+    window_height = h;
+    gl_resize();
   }
 
-  UpdateVScreen(bitmap);
+  UpdateVScreen(bitmap, vis_area, dirty_area, palette, flags);
 }
