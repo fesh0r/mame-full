@@ -28,6 +28,64 @@ eprop
 // gcc -O
 // important because of inb, outb
 
+
+/*
+  2716
+
+ a7		+5v
+ a6		a8
+ a5		a9
+ a4		vpp (hi?)
+ a3		/oe
+ a2		a10
+ a1		/CE
+ a0		d7
+ d0		d6
+ d1		d5
+ d2		d4
+ gnd	d3
+*/
+
+/*
+  bally 9316
+
+  0x1000 zero
+  0x800 data
+  0x2800 zero
+
+ a7		+5v
+ a6		a8
+ a5		a9
+ a4		lo (/cs?)
+ a3		lo (/cs?)
+ a2		a10
+ a1		hi (cs?)
+ a0		d7
+ d0		d6
+ d1		d5
+ d2		d4
+ gnd	d3
+ */
+
+/*
+  2732
+  0x1000 data
+  0x3000 zero
+
+ a7		+5v
+ a6		a8
+ a5		a9
+ a4		a11
+ a3		/oe vpp
+ a2		a10
+ a1		/CE
+ a0		d7
+ d0		d6
+ d1		d5
+ d2		d4
+ gnd	d3
+*/
+
 /* signetics c19082 notes
    first 0x2800 bytes zero
    0x800 data
@@ -52,6 +110,7 @@ eprop
  dd if=dil24.bin of=hi bs=2048 count=1 skip=7
  cat lo hi >c19082.bin
  */
+
 /* signetics c19081 notes
    first 0x2000 bytes zero
    0x800 data
@@ -78,9 +137,37 @@ eprop
  cat lo hi >c19081.bin
  */
 
-/* mos 6332 notes
+/* cn45048 notes
+   0x800 data
+   0x800 zero
+   0x800 data
+   0x2800 zero
 
-2716 with 18 and 20 swapped
+ a7		+5v
+ a6		a8
+ a5		a9
+ a4		lo (!cs?)
+ a3		lo (!oe?)
+ a2		a10
+ a1		a11
+ a0		d7
+ d0		d6
+ d1		d5
+ d2		d4
+ gnd	d3
+
+ commands to extract data from dump:
+ dd if=dil24.bin of=lo bs=2048 count=1
+ dd if=dil24.bin of=hi bs=2048 count=1 skip=2
+ cat lo hi >cn45048.bin
+*/
+
+/* mos 6332 notes
+   0x800 zero
+   0x800 data
+   0x800 zero
+   0x800 data
+   0x2000 zero
 
  a7		+5v
  a6		a8
@@ -115,71 +202,6 @@ void wait_ticks(int c)
 		if (b-a>c) break;
 	}
 }
-
-/*
-  ct eprop
-  8 bit socket
-
-  1		A7
-  2		A6
-  3		A5
-  4		A4
-  5		A3
-  6		A2
-  7		A1
-  8		A0
-  9		D0
-  10	D1
-  11	D2
-  12	GND
-
-  13	D3
-  14	D4
-  15	D5
-  16	D6
-  17	D7
-  18	/CE should be A11!
-  19	A10
-  20	/OE should be !CS
-  21	A11 should be CS
-  22	A9
-  23	A8
-  24	5V
-
- */
-
-/*
-  mos 6332
-  4 kbyte 8bit rom
-
-  1		A7
-  2		A6
-  3		A5
-  4		A4
-  5		A3
-  6		A2
-  7		A1
-  8		A0
-  9		D0
-  10	D1
-  11	D2
-  12	GND
-
-  13	D3
-  14	D4
-  15	D5
-  16	D6
-  17	D7
-  18	A11
-  19	A10
-  20	CS1
-  21	CS2
-  22	A9
-  23	A8
-  24	5V
-
- */
-
 
 int port[8]={0};
 
