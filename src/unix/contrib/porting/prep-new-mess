@@ -26,8 +26,10 @@ if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.txt" -print` 2> /dev/null
   d2u `find . -name "*.mak" -print` 2> /dev/null
   d2u `find . -name "*.html" -print` 2> /dev/null
+  d2u `find . -name "*.crc" -print` 2> /dev/null
   d2u `find . -path './src/unix' -prune -o -name "*.[ch]" -print` 2> /dev/null
   d2u makefile.mes 2> /dev/null
+  d2u makefile.vc 2> /dev/null
   d2u sysinfo.dat 2> /dev/null
 else
   echo "Unable to run d2u.  This may cause build problems on some platforms."
@@ -39,7 +41,7 @@ fi
 fix-comments `find . -path './src/unix' -prune -o -name "*.[ch]" -print`
 
 # Do some cleanup.
-rm -rf artwork bios cfg cheat crc memcard nvram snap software
+rm -rf artwork bios cfg cheat memcard nvram snap software
 
 # Rename some files.
 if [ -f mess.txt ]; then
@@ -50,20 +52,24 @@ if [ -f messnew.txt ]; then
   mv messnew.txt doc/changes.mess
 fi
 
-if [ -f messold.txt ]; then
-  mv messold.txt doc/old-changes.mess
+if [ -f docs/messold.txt ]; then
+  mv docs/messold.txt doc/old-changes.mess
 fi
 
-if [ -f credits.txt ]; then
-  mv credits.txt doc/credits.mess
+if [ -f docs/credits.txt ]; then
+  mv docs/credits.txt doc/credits.mess
 fi
 
-if [ -f windows.txt ]; then
-  mv windows.txt doc/
+if [ -f docs/messhelp.txt ]; then
+  mv docs/messhelp.txt doc/
 fi
 
-if [ -f compilewin.html ]; then
-  mv compilewin.html doc/
+if [ -f docs/windows.txt ]; then
+  mv docs/windows.txt doc/
+fi
+
+if [ -f docs/compilewin.html ]; then
+  mv docs/compilewin.html doc/
 fi
 
 if [ -f sysinfo.dat ]; then
@@ -78,8 +84,9 @@ if [ -f tools/messroms.txt ]; then
   mv tools/messroms.txt doc/
 fi
 
-# Delete the MESS tools directory.
+# Delete the MESS tools and docs directories.
 rm -r tools
+rm -r docs
 
 # Clean up the files left over from d2u and fix-comments.
 rm -f `find . -name "*~" -print`
