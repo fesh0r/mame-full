@@ -1,9 +1,8 @@
-# MESS System Information Data File v37b7 (7th of September, 2000)
-# Maintained by Chris Henry
-# Send corrections/submissions to: battlepriest@hotmail.com
-
-# Thanks to Ben Bruscella, Juergen Buchmueller, JoJo Priore, and everyone on MESSDEV.
-# Special Thanks to Thierry Schimbi!
+# MESS System Information Data File
+# Maintained by Hobie Troxell & Chris Henry 
+# Send corrections/submissions to: 
+#   Hobie Troxell <ht1848@yahoo.com> 
+#   battlepriest@hotmail.com
 
 # This file contains the basic documentation for most of the drivers presented in the MESS
 # distribution. Please read the readme.txt, mess.txt and messnew.txt prior to reading this
@@ -136,7 +135,7 @@ Atari 7800 ProSystem
 
 Known Issues:
 
-The Reset key "R" and Select key "S" are hardmapped to the same location as the default 
+The Reset key "R" and Select key "S" are hard-mapped to the same location as the default 
 Player 2 up and fire two, respectively. You will need to remap these manually to avoid
 control conflicts in some games.
 
@@ -154,7 +153,7 @@ releasing a speedup chipset for Atari coinop Missile Command).
 
 The 7800 was compatible with pre-existing Atari 2600 game program cartridges, without the need 
 for expansion modules or turning switches, but was also designed to use enhanced 7800-only 
-cartridges such as thepack-in "Pole Position 2". (n.b., only the 7800-specific cartridges are 
+cartridges such as the pack-in "Pole Position 2". (n.b., only the 7800-specific cartridges are 
 currently supported in MESS.) Many peripherals, including a computer/keyboard and high score 
 saving cartridge were planned but never released.
 
@@ -299,11 +298,11 @@ You should specify a cylinder image with code to run in it. Arguably, APEXC does
 an image, since you may enter code in the control panel, but this would be a pain in the ass.
 
 
-If the program you run use punched tape I/O, you may specify tape image file. The first unit is
+If the program you run use punched tape I/O, you may specify tape image files. The first unit is
 read-only, the second unit is write-only.
 
 
-On a CLI MESS port, the resulting MESS command line may look like this :
+On a CLI MESS port, the resulting MESS command line may look like this:
 	mess apexc -cyln ram_image.apc -ptap input.tap output.tap
 
 
@@ -326,7 +325,7 @@ To start a program at another address, you need to load the first instruction in
 register with the control panel. To do so, use keys 1 through 0 on the main keyboard to enter
 the 10-bit address into the 10 most significant bits of the Control Panel display, and set
 other bits to 0 with the three rows of keys under 1 through 0 (each key toggles a bit in the
-control panel display ; don't be intimidated if it sounds complicated, it should eventually
+control panel display; don't be intimidated if it sounds complicated, it should eventually
 appear straight-forward when you try, provided you know what binary scale is). You have thus
 generated a Stop instruction pointing to the first instruction of the program. Write this
 instruction into the Control Register, by holding Left Shift pressed and pressing 1 on
@@ -345,39 +344,39 @@ the normal usage is loading the value you want to edit into the control panel, e
 then saving it to the proper location.
 
 
-Default key map :
+Default key map:
 
- Run/stop switch : Return key on main keypad
+ Run/stop switch: Return key on main keypad
 
 The next 6 keys may be used alone to read the register into the control panel display, or
 in combination with the Left Shift key to write the value in the control panel display into the
 register.
 
- Read/write Control Register : 1 key on numeric keypad
+ Read/write Control Register: 1 key on numeric keypad
 
- Read /write Accumulator : 2 key on numeric keypad
+ Read/write Accumulator: 2 key on numeric keypad
 
- Read/write Register : 3 key on numeric keypad
+ Read/write Register: 3 key on numeric keypad
 
- Read/write current Head Block (never used on APEXC - used for bank switching) : 4 key on numeric keypad
+ Read/write current Head Block (never used on APEXC - used for bank switching): 4 key on numeric keypad
 
- Read/write Memory Location : 5 key on numeric keypad
+ Read/write Memory Location: 5 key on numeric keypad
 
- Read/write memory location pointed to by ML register : 6 key on numeric keypad
+ Read/write memory location pointed to by ML register: 6 key on numeric keypad
 
- write instead of reading : Left Shift key (when you press one of the 6 keys above, the
+ write instead of reading: Left Shift key (when you press one of the 6 keys above, the
 designated register is read into the control panel display, unless this key is being pressed,
 in which case the value in the control panel display is written into the register)
 
- Toggle bits 1 through 10 in display : keys 1 through 0 on the main keyboard
+ Toggle bits 1 through 10 in display: keys 1 through 0 on the main keyboard
 
- Toggle bits 11 through 20 in display : key row directly below the former on the main keyboard
+ Toggle bits 11 through 20 in display: key row directly below the former on the main keyboard
 (Q through P if your keyboard is QWERTY)
 
- Toggle bits 21 through 30 in display : key row directly below the former on the main keyboard
+ Toggle bits 21 through 30 in display: key row directly below the former on the main keyboard
 (A through ; if your keyboard is QWERTY)
 
- Toggle bits 31 and 32 in display : key row directly below the former on the main keyboard
+ Toggle bits 31 and 32 in display: key row directly below the former on the main keyboard
 (W and X if your keyboard is QWERTY)
 
 
@@ -386,7 +385,7 @@ Known Issues:
 
 The driver should work correctly as of MESS .37b15. Still, it needs development tools, sample
 code and usage instructions desperately. I have tons of sample code (which was the reason for
-starting to write this driver), but still need to re-type it.  I have started work on an assembler,
+starting to write this driver), but still need to retype it.  I have started work on an assembler,
 too.
 
 
@@ -398,27 +397,29 @@ APEXC was operated, and the procedures I describe above are not accurate, either
 History and Trivia:
 
 
-The APEXC was designed by Andrew D. Booth and his team at Birkbeck College, London, in the early
-50's. Booth had designed an electromechanical computer, the ARC, in the late 40's. Along with
-his collaborator and future spouse Kathleen Booth, he spent a few months with von Neumann's team,
-which was the leading edge in computer research at the time. Later on, they built an experimental
-electronic computer, the SEC (Simple Electronic Computer), and finally the APEC (All-Purpose
-Electronic Computer) series.
+The APEXC was designed by Andrew D. Booth at Birkbeck College, London, in the early 50's.
+From 1943 on, he started working on the determination of crystal structures using X-ray diffraction
+data.  The computations involved were extremely tedious and there was ample incentive for automating
+the process. In 1947, along with his collaborator and future spouse Kathleen Britten, he spent
+a few months with von Neumann's team, which was the leading edge in computer research at the time.
+Booth designed an electromechanical computer, the ARC, in the late 40's. Later on, they built
+an experimental electronic computer named 'SEC' (Simple Electronic Computer), and finally the APEC
+(All-Purpose Electronic Computer) series.
 
 
-According to a 1956 document, the APEC series included the following machines :
+According to a 1956 document, the APEC series included the following machines:
 
- * APE(X)C : Birkbeck College, London (before 1955)
+ * APE(X)C: Birkbeck College, London (before 1955)
 
- * APE(N)C : Board of Mathematical Machines, Oslo ('N' must stand for 'Norway')
+ * APE(N)C: Board of Mathematical Machines, Oslo ('N' must stand for 'Norway')
 
- * APE(H)C : British Tabulating Machine Company (No idea what 'H' can stand for)
+ * APE(H)C: British Tabulating Machine Company (No idea what 'H' can stand for)
 
- * APE(R)C : British Rayon Research Association ('R' must stand for 'Rayon')
+ * APE(R)C: British Rayon Research Association ('R' must stand for 'Rayon')
 
- * UCC : University College, London (circa january 1956)
+ * UCC: University College, London (circa January 1956)
 
- * MAC (Magnetic Automatic Calculator) : "built by Wharf Engineering Laboratories" (february 1955)
+ * MAC (Magnetic Automatic Calculator): "built by Wharf Engineering Laboratories" (February 1955)
 
  * The HEC (H... Electronic Computer - still no idea what 'H' can stand for), built by the British
 Tabulating Machine Company (later to become International Computers and Tabulators (ICT),
@@ -453,7 +454,7 @@ from as high as the theoretical maximum of 1 kIPS to lower than 100IPS if progra
 and data are not contiguous. Nowadays, many a pocket calculator is faster.
 
 
-One oddity is that there is no program counter : each machine instruction includes the address
+One oddity is that there is no program counter: each machine instruction includes the address
 of the next instruction. This design may sound weird, but it is the only way to achieve optimal
 performance with this cylinder-based memory.
 
@@ -463,19 +464,19 @@ load (3 variants), store (2 variants), conditional branch, right arithmetic bit 
 right bit rotation, punched-card input, punched-card output, machine stop, and bank-switching
 (which is never used on the APEXC, since it only has 1024 words of storage, and addresses are
 10-bit-long). A so-called vector mode enables to repeat the same operation 32 times with 32
-successive memory locations. Note the lack of bitwise and/or/xor and machine division. Also, note
-the lack of indirect addressing modes : dynamic modification of opcodes is the only way one may
+successive memory locations. Note the lack of bitwise and/or/xor and division. Also, note
+the lack of indirect addressing modes: dynamic modification of opcodes is the only way one may
 simulate it.
 
 
 Another oddity is that the memory bus and the ALU are 1-bit-wide. There is a 64kHz bit-clock and
 a 2kHz word-clock, and each word memory and arithmetic operation is decomposed into 32 1-bit
-memory and arithmetic operations : this takes 32 bit cycles, for a total of 1 word cycle.
+memory and arithmetic operations: this takes 32 bit cycles, for a total of 1 word cycle.
 
 
-The processor is fairly efficient : most instructions take only 2 word cycles (1 for fetch,
+The processor is fairly efficient: most instructions take only 2 word cycles (1 for fetch,
 1 for read operand and execute), with the exception of stores, shifts and multiplications.
-Yes, the APEXC CPU is a RISC : there is no other adequate word.
+Yes, the APEXC CPU is a RISC: there is no other adequate word.
 
 
 Note there is no ROM, and therefore no 'bootstrap loader' or default start-up program whatever.
@@ -486,13 +487,13 @@ there were subroutine libraries of sorts for common arithmetic, I/O and debug ta
 Operation of the machine is normally done through a control panel which allows the user to start,
 stop and resume the CPU, and to alter registers and memory when the CPU is stopped. When starting
 the machine, the address of the first instruction of the program to be executed must be entered
-in the control panel, then the run switch must be pressed. Most program end with a stop
+in the control panel, then the run switch must be pressed. Most programs end with a stop
 instruction, which enables to check the state of the machine, possibly run some post-mortem
-debugging procedures (a core dump routine is described in an APEXC programmation book), then enter
+debugging procedures (a core dump routine is described in an APEXC programming book), then enter
 the address of another program and run it.
 
 
-Two I/O devices were supported : a paper tape reader, and a paper tape puncher. The puncher output
+Two I/O devices were supported: a paper tape reader, and a paper tape puncher. The puncher output
 could be fed to a printer ('teletyper') unit when desirable. Printer output is emulated and is
 displayed on screen. Tape input was either computer-generated by the APEXC, or hand-typed with
 a special 32-key keyboard (each tape row had 5 data holes (<-> bits), which makes 32 different
@@ -780,7 +781,7 @@ Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
-(This must NOT be specified on commandline, start the c16 emulation with no images specified)
+(This must NOT be specified on command line, start the c16 emulation with no images specified)
 
 
 The directory command LOAD"$",8 is supported when using d64 images.
@@ -805,7 +806,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore CPU level emulation of the 1541 is needed).
 
 
 Cartridge Usage:
@@ -871,7 +872,7 @@ The rs232/v.24 interface is not supported, nor are printers and other parallel d
 
 The Plus 4's userport is not supported.
 
-Note if a game runs too fast with the ntsc version, try the pal version!
+Note if a game runs too fast with the NTSC version, try the PAL version!
 
 
 The following features are emulated:
@@ -1019,7 +1020,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
  
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore CPU level emulation of the 1541 is needed).
 
 
 Cartridge Usage:
@@ -1084,12 +1085,12 @@ Gameport B supports paddles 3 & 4, joystick 2
 If you run into difficulty, be sure to start the emulation with the -log switch, and look into
 the error.log file that is created in your mess directory.
 
-If the game runs to fast with the ntsc version, try the pal version! (c64pal)
+If the game runs to fast with the NTSC version, try the PAL version! (c64pal)
 
 
 Known Issues:
 
-The rasterline based video system currently has the following issues: no cpu holding, imperfect 
+The rasterline based video system currently has the following issues: no CPU holding, imperfect 
 scrolling support (when 40 columns or 25 lines), lightpen support not finished, rasterline not 
 finished.
 
@@ -1159,7 +1160,7 @@ Christmas '85, its release date was pushed back.
 
  
 The new model does not differ much from its predecessor, the only innovation is the 
-flatter case, which makes the keyboard (which has off-white keys now) more ergonomical 
+flatter case, which makes the keyboard (which has off-white keys now) more ergonomic 
 (it looks like the C128 case), as it is less higher than the old one. But the new case 
 did not only have advantages: due to its low profile and additional metal screening, 
 some of the numerous hardware expansions did not fit anymore. This was changed with 
@@ -1274,7 +1275,7 @@ around the [,@,],# keys.
 The |CPM works by loading and executing the first sector on the first track of the disc.
 
 
-Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+Snapshots, which contain a memory dump, CPU state and hardware state, can be run from a 
 command line interface with the following command: 
 
 mess cpc464 -snap "snapshot name"
@@ -1350,7 +1351,7 @@ around the [,@,],# keys.
 The |CPM works by loading and executing the first sector on the first track of the disc.
 
 
-Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+Snapshots, which contain a memory dump, CPU state and hardware state, can be run from a 
 command line interface with the following command: 
 
 mess cpc6128 -snap "snapshot name"
@@ -1442,7 +1443,7 @@ around the [,@,],# keys.
 The |CPM works by loading and executing the first sector on the first track of the disc.
 
 
-Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+Snapshots, which contain a memory dump, CPU state and hardware state, can be run from a 
 command line interface with the following command: 
 
 mess cpc664 -snap "snapshot name"
@@ -1567,7 +1568,7 @@ newe000.rom (2,772 bytes; CRC 953491a7) but not enabled by default. If you enabl
 you can type HELP (hehe ;) and DIR and simply give a name to execute a binary file.
 
 The optional newe000.rom is loaded if the corresponding "dip switch" is set from within the 
-driver itself. There is no need to specify this rom on the commandline.
+driver itself. There is no need to specify this rom on the command line.
 
 
 Miscellaneous Usage Notes:
@@ -1637,7 +1638,8 @@ History and Trivia:
 Introduced in August 1976 at a suggested retail price of $170 (US), The Channel F was the 
 first programmable video game system to use replaceable cartridges. The controllers, which were
 often described as looking like plungers were attached directly to the system via 8 foot wires.
-The Channel F didn't fair well in the late 1970s market dominated by Atari, and Fairchild switched their efforts to developing the Spark-16 minicomputer.
+The Channel F didn't fair well in the late 1970s market dominated by Atari, and Fairchild switched 
+their efforts to developing the Spark-16 minicomputer.
 
 $end
 
@@ -1736,6 +1738,46 @@ characteristics except the added memory (64 KB instead of 32 KB), a RS232c port 
 with repetitive keys.
 
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=coco3
+$bio
+Tandy Color Computer 3
+
+First off, also read the history for the Color Computer and Color Computer 2 drivers. Much
+of the information there also applies to this driver.
+
+Besides fully emulating the Color Computer 3 this driver also contains some extras. It contains
+two different real time clocks. Currently they can be set under the 'DIP switches". The two
+types are Disto and Cloud-9.
+
+Disto Real Time Clock:
+	Chip:      OKI m6242B
+	Addressed: $FF50 and $FF51
+
+Cloud-9 Real Time Clock:
+    Chip:      Dallas Semiconductor's Phantom Time Chip DS1315
+    Addressed: $FF79, $FF78, $FF7C
+
+This driver also contains an implementation of Jeff Vavasours' Virtual Hard Disk. See his
+Color Computer 3 emulator for information regarding it.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=coco3h
+$bio
+Tandy Color Computer 3 (Hitachi)
+
+First off, also read the history for the Color Computer, Color Computer 2 and Color Computer 3
+drivers. Much of the information there also applies to this driver.
+
+This driver is exactly like the coco3 drivers except the MPU has been replaced by a Hitachi
+6309. This chip has extra features not documented by Hitachi.
 
 $end
 
@@ -1852,7 +1894,7 @@ Nintendo GameBoy
 
 Known Issues:
 
-This driver is preliminary. Input is broken in most games and sound is not yet supported.
+Preliminary sound support only.  
 
 
 History and Trivia:
@@ -1867,37 +1909,96 @@ $end
 
 $info=genesis
 $bio
-Sega Megadrive/Genesis
 
 
-Usage:
-
-Under the "Options" menu, accessible by hitting TAB, you will find the following option: 
-
-
-"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese 
-or American. Many cartridges compare their country codes with that of the Genesis itself and 
-may behave differently, or lock up if the two types do not match.
+Sega Megadrive/Genesis (1988)
+------------------------------------
+Bios = None required
 
 
-'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear 
-to be checking for. This may not be 100% accurate, however.
+The Sega Genesis was released in Japan on the 29th of
+October 1988, and in the USA on the 1st of September
+1989. At that time, no other console could compete
+with Sega´s powerful 16-bit system, apart from the
+PC-Engine / TurboGrafx-16, perhaps. But due to a lack
+of third-party support - especially with the arrival
+of the SNES, because many of the major game companies
+were still bound to Nintendo because of the contracts
+they made in the NES era - the Genesis never became as
+successful as Nintendo´s 16-bit console. Nevertheless,
+about 28.5 million consoles were sold worldwide,
+compared to about 48 million SNES consoles. Looking at
+the different regions of the world, the Genesis was
+most successful in the USA. It was quite strong in
+Europe, too (especially Great Britain is famous for
+being the European Sega stronghold), but did not
+succeed very well in Japan, Nintendo's home country.
+It was definitely no mistake to buy the console, as I
+did in early 1990, shortly after Super Shinobi had
+been released. Among the approximetaly 1000 games
+which were produced during the Genesis' lifespan
+(about 10 years during 1988-1998) are a lot of
+evergreens which deserve to be played even today.
+(note taken from www.eidolons-inn.de)
 
 
-Known Issues:
+Features
+--------
+Main Processor: Motorola M68000 (16-bit) at 7.67 Mhz 
+Co-processor: Z80a at 3.58Mhz
+Sound Chips: YM2612 and a 4 channel TI PSG76489
+Ram: 64k (Plus 64k Ram for sound)
+Max Cart Size: ??
 
-Most games tend to run fairly well. Some have slight graphic glitches, incorrect colours part 
-way down the screen or other bizarre effects. See genesis.crc for a partial list.
+
+Video: 
+Max resolution: 320 X 224 
+Color palette: 512; 64 max on screen
+Max # of sprites: 80; 20 max per scanline
+Sound: Stereo FM-based sound with 8-bit audio samples 
+
+
+Usage
+----------
+Under the "Options" menu, accessible by hitting TAB,
+you will find the following option: 
+
+
+"Country" - this allows you to alter the 'flavour' of
+Genesis, to either European, Japanese or American.
+Many cartridges compare their country codes with that
+of the Genesis itself and may behave differently, or
+lock up if the two types do not match.
+
+
+'Auto' attempts to auto-set the Genesis country code
+to the value the cartridge will appear to be checking
+for. This may not be 100% accurate, however.
+
+
+Links
+----------
+EIdolons inn - www.eidolons-inn.de
+
+
+MESS Emulation State
+---------------------------------
+Most games tend to run fairly well. Some have slight
+graphic glitches; incorrect colours part way down the
+screen or other bizarre effects. See genesis.crc for a
+partial list.
 
 
 Cartridges up to 32MBit (4MByte) are supported.
 
 
-The controller may not work well with some games. This will be resolved when more information 
-is obtained. Similarly, 6-button joypads aren't emulated yet.
+The controller may not work well with some games. This
+will be resolved when more information is obtained.
+Similarly, 6-button joypads aren't emulated yet.
 
 
-Split screen effects and interlacing are not yet supported.
+Split screen effects and interlacing are not yet
+supported.
 
 
 Sprite/layer priority should be perfect.
@@ -1906,18 +2007,25 @@ Sprite/layer priority should be perfect.
 Sound is emulated at Z80 and PSG76489 level. 
 
 
-I still consider the Genesis driver extremely preliminary. I have a lot of further work to do 
-before I consider it anywhere near complete. My initial goal is to make it as compatible as 
-possible. Currently there is scope within the driver to handle split screen colour changes/any 
-VDP effect, interlacing, without rewriting. The graphics renderer emulates VDP at scanline 
-level, and does not use tile-based methods.
+I still consider the Genesis driver extremely
+preliminary. I have a lot of further work to do before
+I consider it anywhere near complete. My initial goal
+is to make it as compatible as possible. Currently
+there is scope within the driver to handle split
+screen colour changes/any VDP effect, interlacing,
+without rewriting. The graphics renderer emulates VDP
+at scanline level, and does not use tile-based
+methods.
 
 
-Wanted: Any Sega Megadrive information! Information is extremely sparse; typically the same 
-three-four documents, with parts incomplete, conflicting, and corrupted. Specifically, some 
-of the finer points of DMA transfer, and access of the 68K memory map by the Z80. Generally, 
-points which conflict with themselves in the documentation available on the net...
-
+Wanted: Any Sega Megadrive information specifically,
+some of the finer points of DMA transfer, and access
+of the 68K memory map by the Z80! Information is
+extremely sparse; typically the same three-four
+documents, with parts incomplete, conflicting, and
+corrupted. Generally, points which conflict with
+themselves in the documentation available on the
+net...
 
 
 $end
@@ -2127,21 +2235,21 @@ $bio
 Apple Lisa
 
 
-Usage :
+Usage:
 
 This driver is still buggy. Neither the hard drive nor the serial port are supported. There are
 many other bugs remaining with MMU emulation. Only Macworks will boot.
 
-When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail :
+When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail:
 you must discard the error message by selecting the 'Ignore' or 'Start-up from...' button. Then,
 you get a boot device menu. Select the floppy drive unit, since it is the only available device.
 If the mouse temporarily refuses to work, you may use the keyboard shortcuts Apple+2 and Apple+3
-(the Apple key should be mapped to Control ; you must use the numeric keys on the main keyboard, not
+(the Apple key should be mapped to Control; you must use the numeric keys on the main keyboard, not
 on the numeric keypad). If the computer does boot, you will see an icon representing a weird floppy
 disk with a cross (maybe it actually represents a twiggy disk).
 
 
-History and Trivia :
+History and Trivia:
 
 The Lisa project started in the summer of 1979. At the time, the idea was merely designing
 a powerful business computer, with scheduled release in march 1981. After his legendary visit
@@ -2155,12 +2263,12 @@ on January, 19th, 1983.
 The Lisa was an impressive computer for its time. It had TONS of memory (1Mb on Lisa 1),
 a high-resolution graphic display, and it was fairly expandable. Its OS (weirdly called
 "Lisa 7/7 Office System") featured a complete GUI, and full preemptive multitasking
-with memory protection (something neither Windows 98 nor MacOS offer !).
+with memory protection (something neither Windows 98 nor MacOS offer!).
 Its 68000 CPU was one of the fastest microprocessor in its time.
 
 Unfortunately, Lisa was never too successful. It was quite expensive, and relatively few units were
 sold (possibly about 10,000 Lisa 1 and 80,000 Lisa 2). Little software was developed for it.
-Also, it was extremely resource hungry : it was reportedly slow, and its memory requirements were
+Also, it was extremely resource hungry: it was reportedly slow, and its memory requirements were
 the major cause for its high price.
 
 
@@ -2168,15 +2276,15 @@ On 24th January 1984, Lisa 1 was replaced by Lisa 2, with 3.5" floppies and seve
 hardware changes. In January 1985, Lisa 2 was replaced by Macintosh XL, which had a modified video
 hardware, and used a variant of the Macintosh system instead of the 7/7 Lisa OS. Mac XL was
 discontinued in May 1985 (although it was still available at much later dates). Rumor has it that
-an enhanced, 68020-based, Lisa was in development when Apple discontinued the Lisa.
+an enhanced, 68020-based Lisa was in development when Apple discontinued the Lisa.
 
 Note that, contrary to a common belief, the Macintosh is not a mere offspring of the Lisa, since
-both projects were led simulteanously. While the Macintosh borrowed many ideas from the Lisa project
-(which had more financial resources), the reverse is often true, too : for instance, the Macintosh
+both projects were led simultaneously. While the Macintosh borrowed many ideas from the Lisa project
+(which had more financial resources), the reverse is often true, too: for instance, the Macintosh
 included a GUI from the beginning.
 
 
-The significance of Lisa :
+The significance of Lisa:
 
 Lisa is a milestone in the history of computing. Arguably, the Xerox PARC research center invented
 most GUI concepts (along with Object-Oriented programming and Ethernet) 10 years before Lisa was
@@ -2197,7 +2305,7 @@ $bio
 Apple Macintosh 512ke
 
 
-History and Trivia :
+History and Trivia:
 
 Introduced on 14th April 1986, the Macintosh 512ke was essentially a Macintosh 512k with
 the same 128k ROMs and double-sided 800 KB internal floppy drive as the Mac Plus.
@@ -2218,18 +2326,18 @@ $bio
 Apple Macintosh Plus
 
 
-History and Trivia :
+History and Trivia:
 
 Introduced on 16th January 1986, the Macintosh Plus was the first real improvement of
 the original Macintosh 128k (The Macintosh 512k was just a Mac 128k with 512 kb of RAM). It had
 several new features.
 
-The extended ROM held the new version of operating system : it supported hard disk units,
-the SCSI bus, and the new file system : HFS (Hierarchical File System), along with many other
+The extended ROM held the new version of operating system: it supported hard disk units,
+the SCSI bus, and the new file system: HFS (Hierarchical File System), along with many other
 new features (Time Manager...). Additionally, various routines and managers previously located
 in RAM (Appletalk manager, RAM Serial Driver, Standard File Package...) had been moved to ROM.
 
-The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 KB
+The new floppy disk unit could use double-sided 800 kb disks (compared to single-sided 400 kb
 for the Macintosh 128k). It came with 1 Mb of RAM, and could easily be expanded to 4 Mb, using
 standard 1Mb SIMMs. It had an enhanced keyboard with a numeric pad and last but not least, it had
 a SCSI 1 interface which allowed to connect several high speed peripherals (maximal transfer rate of
@@ -2249,25 +2357,25 @@ $bio
 Apple Macintosh XL
 
 
-Usage :
+Usage:
 
 This driver is still buggy. Neither the hard drive nor the serial port are supported. There are
 many other bugs remaining with MMU emulation. Only Macworks will boot.
 
-When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail :
+When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail:
 you must discard the error message by selecting the 'Ignore' or 'Start-up from...' button. Then,
 you get a boot device menu. Select the floppy drive unit, since it is the only available device.
 If the mouse temporarily refuses to work, you may use the keyboard shortcuts Apple+2 and Apple+3
-(the Apple key should be mapped to Control ; you must use the numeric keys on the main keyboard, not
+(the Apple key should be mapped to Control; you must use the numeric keys on the main keyboard, not
 on the numeric keypad). If the computer does boot, you will see an icon representing a weird floppy
 disk with a cross (maybe it actually represents a twiggy disk).
 
 If you boot MacWorks, you should eventually see a floppy disk icon with a question mark. At this
-point, it is time to insert a bootable Macintosh image : to do so, use the file manager or whatever
+point, it is time to insert a bootable Macintosh image: to do so, use the file manager or whatever
 osd equivalent you may have.
 
 
-History and Trivia :
+History and Trivia:
 
 In late 1984, Apple's financial health was questionable, and Apple came to the conclusion that
 it did not make sense to support both Lisa and Macintosh.
@@ -2278,12 +2386,12 @@ a program named MacWorks, which enabled a Lisa to run the Macintosh operating sy
 The same day, they introduced a new variation of the Lisa hardware, named Macintosh XL,
 which was a Lisa 2 whose video hardware was modified in order for it to display square pixels.
 Additionally, existing Lisas could be upgraded to Macintosh XL. This modification improved
-the appearance of Macintosh programs ; however, it prevented the Macintosh XL from running
+the appearance of Macintosh programs; however, it prevented the Macintosh XL from running
 the Lisa operating system, or any Lisa program, for that matter. Needless to say, it would have
-been very easy to patch the Lisa OS to support the new video resolution : this was simply not done,
+been very easy to patch the Lisa OS to support the new video resolution: this was simply not done,
 since Apple had discontinued the Lisa OS.
 
-Macintosh XL was not very successful : Apple discontinued it in May 1985, and the remaining
+Macintosh XL was not very successful: Apple discontinued it in May 1985, and the remaining
 stocks were sold to another company (Sun Remarketing) which did manage to sell them.
 
 Though ill-fated, the Macintosh XL was an interesting machine. It was slow, slower than even
@@ -2323,7 +2431,7 @@ Delivered in japan only?
 
  simpler banking chip
 
-  no portlines from cpu
+  no portlines from CPU
 
  only 1 cia6526 chip
 
@@ -2409,7 +2517,7 @@ existing computer: The Spectravideo SV 318. Microsoft designed the MSX 1 compute
 first version of the OS: MSX DOS 1 (which looks like earlier versions of MS DOS).
 
 
-Almost all japanese and Korean computer companies made their own MSX computers (except 
+Almost all Japanese and Korean computer companies made their own MSX computers (except 
 perhaps NEC). Bill Gates was then very confident about the future of the MSX standard. 
 Spectravideo (one of the MSX companies) made a 80 columns card and adapted CP/M on the MSX.
 A lot of software(especially a lot of games from Sega, Konami, Taito, Ascii,...) and 
@@ -2444,7 +2552,7 @@ Ce-Tec MPC-80: 64kB RAM (other source says 32KB)
 DPC-100: 16kB RAM, built in loudspeaker, available in green, blue or silver
 DPC-200: 64kB RAM
 DPH-64: 64kB RAM (other source says 32kB RAM)
-DPH-?: 64kB RAM, built in software, arabic version
+DPH-?: 64kB RAM, built in software, Arabic version
 IQ-1000: 32kB RAM, produced for Korea
 MX64: 64kB RAM
 
@@ -2616,7 +2724,7 @@ Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
 
 AX-100: 64kB RAM
 AX-150: 64kB RAM
-AX-170: 64kB RAM, built in special roms with arabic characters set and software
+AX-170: 64kB RAM, built in special roms with Arabic characters set and software
 AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
 AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
 AX-990: 64kB RAM, 50 programs built in, SEGA-MEGADRIVE board built in
@@ -2911,8 +3019,8 @@ roms\mtx512
 the cassette image is a flat binary image with the first 0x12 bytes being the
 original mtx header and the rest being the file data.
 
-A note about cassette naming schemes - so long as the filename of the cassette image is the same as that stored
-in the header, you should be alright.
+A note about cassette naming schemes - so long as the filename of the cassette image is the same 
+as that stored in the header, you should be alright.
 
 
 To run a tape image just type LOAD"<image name>" at the Ready Prompt.
@@ -3071,6 +3179,18 @@ in a basic serial form, with start bits, data bits, parity and stop bits).
 In the future the serial device will support xmodem and xmodem send/receive will then
 work in the emulation.
 
+XMODEM transfer instructions:
+
+NC100:
+
+1. Enter wordprocessor.
+2. Start a new document
+3. Quit wordprocessor
+3. Go to list documents.
+4. Press MENU key
+5. Here you can navigate the menu to find "XMODEM receive document".
+6. Start XMODEM send on PC.
+
 Notes
 =====
 
@@ -3128,6 +3248,14 @@ c. SERIAL
 
 Serial is not working properly. It is almost at the same state as the NC100.
 
+XModem transfer instructions:
+
+1. Enter serial/terminal program.
+2. Press MENU
+3. Press R (for XMODEM receive)
+4. Start XMODEM send on PC.
+
+
 d. DISK DRIVE
 -------------
 
@@ -3142,36 +3270,103 @@ Links:
 http://genesis8.free.fr/
 http://www.ncus.org.uk/
 $end
+
 #---------------------------------------------------------------------------------------------#
+
 
 $info=nes
 $bio
-Nintendo Entertainment System/Famicom
 
 
-Usage:
-Note that the one player hand controller Select is mapped as Coin 1 (default key 5), and 
-Start is mapped as Player 1 Start (default key 1). This makes it convenient to use the driver
-with a "MAME" configured controller.
-
-Famicom Disk System switching is mapped to Player 1 Button 3 (default key [space]).
+Nintendo Entertainment System / Famicom (1985 USA)
+--------------------
+Bios = None required
 
 
-Known Issues:
+The Nintendo Entertainment System (called Famicom in
+Japan) was an instant hit with such popular titles as
+Super Mario Bros., The Legend of Zelda and Excitebike.
+It was released to the states in August, 1985. The
+8-bit graphics were far superior to any-home based
+console that had come before it. Strong sales were
+were driven by the gamers wanting the feeling of
+real-life arcade games in their homes.  
 
-The NES driver should run most of the images currently out there with very little problem.
-It doesn't yet support the obscure one-game mappers used by many "pirate carts".
 
-The NES driver has quite accurate sound and sample playback. For example, you can hear speech 
-samples in Bayou Billy, Gauntlet, Dirty Harry, and Skate or Die that are not present in a 
-few other NES emulators.
+The NES boasts an impressive library of games with
+over 8000 games (Cowering goodnes), offering a
+smorgasbord of titles for fans of every genre.The
+Nintendo continued it's reign with other big hits such
+as The Mega Man series, Ninja Gaiden, Contra,
+Castlevania, Double Dragon and of course, Super Mario
+Bros 3. The NES continued it's strong sales with over
+36 million units sold worldwide by its official
+cancellation in January 1996 but not before releasing
+a remodeled NES. 
 
-The main focus up until this point has been in getting the NES driver as accurate as 
-possible. Unfortunately, the scanline rendering method is quite slow, so future efforts 
-will be focusing on bringing up the speed. 
 
-Wanted: I'd appreciate any info on some of the more obscure mappers. If you have any of this, 
-please drop me a line at bradman@pobox.com
+Usage
+--------------------
+Note that the one player hand controller Select is
+mapped as Coin 1 (default key 5), and 
+Start is mapped as Player 1 Start (default key 1).
+This makes it convenient to use the driver with a
+"MAME" configured controller.
+
+
+Famicom Disk System switching is mapped to Player 1
+Button 3 (default key [space]).
+
+
+Features
+--------
+Main Processor: 8bit NMOS 6502 CPU with a secondary
+PPU (Picture Processing Unit). Clock Speed:
+1.7897725MHz for NTSC and 1.773447MHz for the PAL
+version.
+Data Path width: 8-bits
+Color Palette: 256; 16 max on screen
+Sprites: 64 (8x8 or 8x16)
+Sound: FM with 5 sound channels (4 analog, 1 digital)
+Video Ram: 16 Kbits
+SPR-RAM: 256 Bytes
+Rom addressing: 8k
+Cart Size: 64k - 4 Megabit
+Controls:  8 directional D-Pad, A, B, select, and
+start buttons.  
+
+
+Links
+-------
+Nintendo - www.nintendo.com
+NES World - nesworld.parodius.com
+The Warp Zone - www.classicgaming.com/thewarpzone
+
+
+MESS Emulation State
+--------------------
+The NES driver should run most of the images currently
+out there with very little problem.  It doesn't yet
+support the obscure one-game mappers used by many
+"pirate carts".
+
+
+The NES driver has quite accurate sound and sample
+playback. For example, you can hear speech samples in
+Bayou Billy, Gauntlet, Dirty Harry, and Skate or Die
+that are not present in a few other NES emulators.
+
+
+The main focus up until this point has been in getting
+the NES driver as accurate as possible. 
+Unfortunately, the scanline rendering method is quite
+slow, so future efforts will be focusing on bringing
+up the speed.
+
+
+Wanted: I'd appreciate any info on some of the more
+obscure mappers. If you have any of this, please drop
+me a line at bradman@pobox.com
 
 
 $end
@@ -3248,7 +3443,7 @@ f - FileName (1-30 signs)
 d - drive (one or two)
 v - volume
 a - beginning address
-e - end adress
+e - end address
 l - record length
 r - record number
 b - number of byte in the record
@@ -3265,7 +3460,8 @@ DIR [1] [2] - not comment
 INIT [,Vv] [,Dd] - formatting Disk (in first or second Disk Drive)
 DOS [f] [,Dd], [,Vv] - writing Dos on the disk without formatting It. File f automatically starts after booting
 MAP [1] [2] - show chart of the disk.
-SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - saving Basic file in Memory
+SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - 
+saving Basic file in Memory
 LOAD f [,Aa] [,Dd] [,Vv] - loads file in memory
 MERGE - adding program in Basic to already exists in Memory
 - -only for files B or C types. Loads file in Memory and start It. (RUN and BRUN together in Apple ][)
@@ -3300,12 +3496,43 @@ Now type CALL #<number> to execute the program.
 History and Trivia:
 
 The Pravetz 8D is a Bulgarian clone of the Oric Atmos.
-It was produced between 1986 and 1989.
+It was produced between 1985 and 1989: Pravetz is both the name of the firm and the name of
+the city where the firm is located. The "D" in the name stands for "Domashen" ('home' in
+Bulgarian) while the "8" stands for (you've never guess!) '8 bits'.
 
-Thankyou to:
+There was a whole family of Pravetz computer which included the following models:
 
-George Dramcheff for the Pravetz information,
-Fabrice Frances for the Oric information,
+Pravetz 82, 8M, 8A, 8E, 8C, 8D (8 bits)
+Pravetz 16, 16A, 286 (16 bits, PC clones)
+
+Most of 8 bits machines were Apple II compatibles, "8D" being the exception. The "8D" model was
+issued in 1985 and costed 420 lev - if you think that the average salary by that time was about
+180-200 lev, you can see that it was pretty expensive.
+
+The "82" model was the trade name of a machine called "IMKO-2" and was released in 1981. The "IMKO-2"
+was the upgraded version of the "IMKO", designed in 1979 and used for robot control.
+
+The main differences from the Oric Atmos were obviously the keyboard and the floppy interface.
+
+The Pravetz 8D can display both Cyrillic and Latin alphabets - the one currently in use is selected
+by the key labelled "C/L" which takes place of the "FUNCT" key present on the Atmos. Other features
+of the keyboard are the "ESC" and "CTRL" keys, labelled respectively "OSV" and "MK".
+
+During Pravetz' glory days none of Oric's disk interfaces were imported in Bulgaria, thus the magazine
+"Computer for you" organized a competition to develop a disk interface which was compatible with
+the most widespread disk drive currently used, namely the Apple II's disk drive.
+The competition was won in 1989 by Borislav "Boby" Zahariev, student at MEI University of Sofia.
+The first version of the disk interface used top 16Kb of RAM to store the DOS, which prevented
+users from loading larger programs. Later Boris developed an upgrade of his interface which
+used in conjunction with a new version of the DOS allowed programs to use the whole memory. He provided
+also a new version of BIOS which detected the presence of the interface and automatically booted
+the DOS from the disk.
+
+
+Thanks to:
+
+Joro Dramchev, Ventzislav Alexandrov and Todor Arnaudov for Pravetz information,
+Fabrice Frances for Oric information,
 
 $end
 #---------------------------------------------------------------------------------------------#
@@ -3616,7 +3843,7 @@ derived from the pc1251, reduced keyboard
 pc1260
 basic computer
 16x2 5x7 character display
-8 bit sharp cpu
+8 bit sharp CPU
 6+32kb rom, 4kb ram
 
 
@@ -3669,12 +3896,39 @@ $end
 
 $info=pce
 $bio
-NEC PC Engine/TurboGrafx-16
+NEC PC Engine/TurboGrafx-16 (1987)
+------------------------------
+Bios = None Required
 
 
-Known Issues:
+The PC Engine (called TurboGrafx - 16 in the US)  was the first 16-Bit graphics home entertainment system to be released. The PC Engine was created by NEC of Japan. Supporting over 1000 software titles with such popular titles as Bonk's Adventure, Bomberman, Dracula X and Ys IV . The PC Engine was embraced by millions of Japanese gamers, and because of this, the system will be remembered as the starting of a legacy. This system was the first of it's kind to use credit card size game cartridges and later supported CD-ROMs and portable models with built in TV tuners.
 
+
+Features
+-------------
+Custom 8bit CPU: HuC6280 (7.16MHz)  (1.5 Million Instructions Per Second [MIPS])
+Video Processor: HuC6270 - 16 bit
+Color Processor: HuC6260 
+Resolution: 256 x 216 
+Sound Processor: 8 bit PCM stereo / 6-channel stereo 
+Ram: 8 Kbyte (64Kbit) 
+Video Ram: 64Kbyte (512 Kbit)
+Cart Size: 256Kbit - 20 Megabit Max. (S.F. 2) Normally 8 Mbits 
+colors Pallet: 512 - (256 for sprites, 256 for the background.) 
+Max # of sprites: 64
+Sprite Size: 16 x 16 , 32x64
+
+
+Links
+-------
+Universo PCENGINE - upce.netfirms.com/index.html
+Turbo Station 16 - pcenginefx.com/TS/
+
+
+Mess Emulation State
+--------------------
 Preliminary...  Xevious and Raiden8x work OK.
+
 
 $end
 
@@ -3815,69 +4069,107 @@ $bio
 DEC PDP-1
 
 
-Currently emulates one image - SPACEWAR!
+Currently supports three images: Spacewar!, Munching Squares and LISP. No
+other images are known at the time of writing: I know there were a text editor
+(Expensive Typewriter), an assembler/linker (MACRO), a debugger (DDT), and
+even a multi-user, multi-tasking operating system (MIT PDP-1 Timesharing
+System), but I have no idea where a copy of these programs could be found.
+
+
+This driver emulates a complete pdp-1 system, including:
+
+* operator control panel
+
+* perforated tape reader and punch
+
+* typewriter for keyboard input and printer output
+
+* optional type 30 precision CRT display
+
+* optional type 15 memory expansion control, with 64kwords of RAM (16 type 12 memory modules)
+
+* optional type 10 automatic multiply and divide
+
+
+The internals of the sequence break (i.e. interrupt) system are implemented,
+but no device has been set up to trigger an interrupt.
+
+
+Usage Notes:
+
+
+PDP-1 currently supports a perforated tape reader (punchtape unit #1), a perforated tape punch
+(punchtape unit #2), and a typewriter (printer unit #1).
+
+The simplest way to load and run software is to insert a read-in mode tape (.rim files) in
+the perforated tape reader and press the read-in switch once (press simultaneously the Control
+Panel key (Left Control) and the Read In key (main keypad Return)).
+
+Three dip switches (RAM size, Hardware multiply and Hardware divide) enable or disable computer
+extensions. These switches are only read at reset. Therefore, if you edit them, you must reset
+the emulator (press F3 in partial keyboard emulation mode) for the changes to be taken into
+account.
+
+The "RAM size" switch installs and removes type 15 memory expansion control:
+it is disabled when set on 4kw, enabled with 15-bit addresses when set on
+32kw, and enabled with 16-bit addresses when set on 64kw. All known programs
+work well whether memory expansion control is installed or not. Only LISP can
+take advantage of the extra RAM.
+
+The "Hardware multiply" and "Hardware divide" switches enable or disable
+the automatic multiply/divide extension. When they are enabled, two pdp-1
+machine instructions (namely MUS and DIS) are replaced with two other,
+incompatible, instructions (MUL and DIV, repectively). Therefore, programs
+which use the former variant of these instructions require automatic
+multiply/divide to be disabled, whereas programs which use the latter require
+it to be enabled. In practice, Spacewar! requires automatic multiply and
+divide to be DISABLED (i.e. both switches OFF), whereas LISP requires
+automatic multiply and divide to be ENABLED (i.e. both switches ON).
+
+
+For information on pdp-1 operation, you may have a look at:
+<http://www.dbit.com/~greeng3/pdp1/pdp1.html>.
 
 
 History and Trivia :
 
-Note : I borrowed most details from an article by J. M. Graetz called "The origin of Spacewar".
-This article can be found at <http://www.enteract.com/~enf/lore/spacewar/spacewar.html>,
-and was originally printed in the August 1981 issue of Creative Computing magazine.
+
+In 1957, Kenneth Olsen and Harlan Anderson founded a society called Digital Equipment
+Corporation (DEC).
 
 
-Early computers, particularly mainframes, were Complex Devices to be operated by Competent People
-helped by dozens of Servants who typed the Data and fed it to the Computer. Outsiders who visited to
-see computers were often disappointed : there was nothing to SEE, these machine were just crunching
-numbers on paper tape, and printing further numbers on another tape.
-
-In the fall of 1961, Digital started production of its PDP-1. This machine was quite friendly
-for its time : it was compact enough to be located in the corner of a room, and you did not need to
-know hundreds of pages of procedures to switch it on and off. Additionally, it supported
-an optional CRT screen, which was a rare device at this time.
-
-PDP-1 may be regarded as one of the first minicomputers, although it did not include and integrated
-circuit (which hardly existed at this time). It may be regarded as one of the first personal
-computers, too, since one person was quite enough to run and operate it (although, needless to say,
-its price was not the kind of price you would expect from a personal computer today).
+In 1960, they started selling the pdp-1. This was a very interesting computer for its time.
 
 
-One of the first PDP-1 was installed at the MIT. Needless to say, the various hackers of the MIT
-immediately felt attracted to this machine. And this is how the adventure of Spacewar! began.
+First of all it was cheap and fast for its time: about 100,000 dollars, and a theorical maximum
+of 0.1 MIPS. It included 4 kWords of RAM, expandable to 64 kWord (as word size is 18 bits,
+this makes from 9 to 144 kBytes, which is HUGE for this time): this is an important detail, since,
+at this time, cheap computers (e.g. IBM 650) often had no RAM, and used a magnetic drum instead,
+which implied extremely long memory access times.
 
-Let it be clear that there were already computers games : a game of Tic-Tac-Toe and simple games
-of cards existed as early as in 1955. Attempts at implementing a game of chess can be traced back
-to the early 1950s.
 
-Yet, the use of CRT enabled the development of a new breed of real-time, action games. Several
-real-time, funny demonstration programs had already written for earlier machines : the Bouncing
-Ball, in which a ball fell from the top of the screen and bounced ; the Mouse in the Maze which
-enabled the user to draw a maze and place a piece of cheese with a lightpen : a mouse would enter
-the maze, search the cheese and eat it. However, these were no "real" video games as far as there
-was no real-time action.
+What made it even more interesting was that it was designed to be operated interactively.
+It featured an on-line typewriter (i.e. keyboard and printer), and a CRT (which was seldom used
+as a computer device at this time). You could even buy an optional light-pen (this device was
+the closest equivalent to today's mouse). Along with its simplicity, this made the pdp-1 quite
+user-friendly for its time.
 
-There were three fellows who came with the initial idea of Spacewar! : Wayne Witanen,
-J. Martin Graetz, and Stephen R. (Slug) Russell. They were about 25-year-old. They wanted to devise
-an attractive demonstration program, which used as much the computer resources as possible,
-so they came out with the idea of a video game. The basic idea was to have two players fly
-a spaceship and fight each other with torpedoes. It was somewhat inspired by Science-Fiction
-novels and films these fellow had read and watched. Soon, most hackers at the MIT knew about
-this project.
 
-Since there was no development tool, they had to wait for a text editor, assembler and debugger
-to be ported to PDP-1.
+The pdp-1 may be regarded as one of the first personal computers, since one person was quite
+enough to run and operate it (although, needless to say, its price was not the kind of price
+you would expect from a personal computer today).
 
-Eventually, in January 1962, the development started, and by February, a crude version of the game
-was already running. The development continued, as they added a star background, a big central star
-with the associated gravitic effects, and an hyperspace jump device. The game was essentially
-complete by the end of April 1962, so that it was shown MIT's annual Science Open House in May.
-Needless to say, it was a hit. Soon, program tapes with Spacewar! were circulating in the
-universities around the USA.
 
-What else can we say ? These people thought that computer games would make computers more popular :
-the least we can say is they were right. Spacewar! is the first video game, and as such it is
-the ancestor of thousands of arcade, console or computer games with hairy aliens, missiles,
-and action. Although it took about 10 additional years for video games to go commercial,
-we can say that it all started with Spacewar!.
+The pdp-1 attracted the attention of various hackers in MIT. This resulted into the creation
+of Spacewar!, which was the first computer-based videogame, but this is another story.
+
+
+The pdp-1 was a reasonably successful machine: 49 units were sold, which was not as bad as it
+sounds for this time. DEC intended to sell variants of pdp-1 with a bigger word size
+(pdp-3 with 36-bit words, and possibly other variants (pdp-2???) with 24-bit or 30-bit words),
+but it eventually did not. However, it later replaced pdp-1 with other models, including the first
+minicomputer (the pdp-8 in 1965), and, by the early 1970's, it had become a major computer
+manufacturer, second only to IBM.
 
 $end
 
@@ -4283,13 +4575,32 @@ $end
 
 $info=sms
 $bio
-Sega Master System
 
+Sega Master System (1987)
+------------------------------
+Bios = None required
 
-Usage Notes/Known Issues:
+The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega constantly developed new (and good) games, the Master System never beat the NES. The MS was most successful in Europe, especially Great Britain, where most of the games were developed in the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the end of 1994. (note taken from www.eidolons-inn.de)
 
-This driver runs just about everything!.
+Features
+-------------
+CPU: Z80 at 4 MHz
+Custom video controller (VDP) derived from the TI chip TMS9918/9928
+Resolution: 256x192 tile-based screen in 16 colors
+Sprites: 64 at 8x8, 8x16 or 16x16
+Color Pallette: 64; 32 max on screen (16 for sprites, 16 for background)
+Scrolling: Hardware up/down/left/right - all or part of screen.
+Sound chip: Generic SN76489 sound chip (PSG) made by Texas Instruments
+Sound output: 3 square-wave sound and white noise/periodic noise channel
+Music: Yamaha YM2413 FM sound chip
 
+Links
+-------
+EIdolons inn - www.eidolons-inn.de
+
+MESS Emulation State
+--------------------
+This driver runs just about everything!
 
 $end
 
@@ -4297,14 +4608,40 @@ $end
 
 $info=snes
 $bio
-Super Nintendo Entertainment System
 
+Super Nintendo Entertainment System (1989)
+------------------------------
+Bios = None required
 
-Usage Notes/Known Issues:
+The Super Nintendo features true stereo sound, multiple scrolling backgrounds and almost twice the internal memory as its competition. The SNES was home to the biggest, baddest games of its day. With player's choice games like The Legend of Zelda: A Link to the Past, Donkey Kong Country and Super Metroid, the Super NES has sold more than 20 million systems in the U.S. and 46 million systems worldwide. (note taken from www.nintendo.com)
 
-This driver is preliminary, most images will not work. Super Mario World (US version) is
-playable.
+Features
+-------------
+CPU: Custom 16-bit - 65C816 at 3.58 MHz (Machine adjustable to 3.58, 2.68, and 1.79 Mhz)
+Co-processor: None (DSP and SuperFX were inside the cartridge of selected games )
+RAM: (?)
+Video RAM: (?)
 
+Color Palette: 32,768; 256 max on screen
+Maximum Screen Resolution: 512 x 448 pixels
+Max # of sprites: 128, 32 per scanline
+Max and Min Sprite Size: 64 x 64 pixels; 8 x 8 pixels
+Scrolling: Horizontal, Vertical, Diagonal
+
+Sound channels: 8 ADPCM with 64 Kb Ram
+Sound Processor: Sony SPC700 ("wavetable-like" music, near 16-bit sound quality playback(CD) & Q-Sound surround sound.)
+
+Cart Size: 4Mbit - 128 Megabit Max. (Tengay Maikio at 70+ Megabits is the largest game)
+Controller: 8-way direction pad with Select, Start, A, B, X, Y and 2 Flipper buttons labeled R and L
+Controller Response: 16ms
+
+Links
+-------
+Nintendo - www.nintendo.com
+
+MESS Emulation State
+--------------------
+This driver is preliminary and most images will not work. Super Mario World (US version) is playable.
 
 $end
 
@@ -4369,6 +4706,79 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=ti990_10
+$bio
+Texas Instruments Model 990/10 Minicomputer System
+
+
+Known Issues:
+
+The controller panel is not emulated yet.
+
+The computer seems to lock when running various installation scripts, and
+rebuilding the system.
+
+
+Usage:
+
+This driver emulates a TI990/10 CPU with mapping option, 1Mbyte of RAM,
+a generic disk controller at TILINE base >1ff800, a generic tape controller
+at TILINE base >1ff880, and a 911 VDT at CRU base >0100.
+
+This is enough to build DX10 or DNOS. I have been able to build a working DX10
+3.7 or 3.6 system from the revelant build and backup tapes. (Tape loaded as
+tape unit #1 and a blank disk image as disk unit #1 (with the SCOSTA flag
+at offset >A4 set to >0002, so that the build tape does not try to format the
+disk)). I have even managed to instal the fun and games tape, and play pacman.
+
+
+History and Trivia:
+
+Texas Instruments has been building minicomputers since the late 1960s through
+the 1980s.
+
+Around the summer of 1973, they started to design the TI990 as a successor to
+the 960 and 980 computers they were building at the time. In 1974, TI started
+to build the prototype of the TI990 series, the TI990/9.
+
+In 1975, they released the first commercial system, the TI990/10. It was
+a minicomputer built with TTL logic. Although it was a 16-bit CPU,
+it supported an optional mapper to expand address space from 64kbytes
+to 2Mbytes.
+
+The TI990 series development continued. In 1975 or 1976, TI started shipping
+the TMS9900 microprocessor, which implemented a subset of the TI990/10 feature
+set. Two CPU boards were built around the TMS9900: the TI990/4 (1976) and
+the improved TI990/5 (date unknown). These boards were much cheaper than the
+TI990/10, but they could only address 64kbytes, did not implement the memory
+bus fully (no DMA support), and could not run the DX10 OS.
+
+Around 1978, TI released the TI990/12, a higher-end TTL implementation, which
+was faster, and supported many additional instructions and features when
+compared to TI990/10. It was replaced with a revised but similar TI990/12LR
+computer in 1982 or 1983.
+
+In 1981, TI released the new TMS99000 microprocessor. In 1982, they replaced
+the TI990/10 CPU with a cheaper, smaller, faster, and more energy-efficient
+TI990/10A board built around the TMS99000 CPU. Additionally, they released
+an all-in-one Business System 300 (1982), later replaced with the Business
+System 300A (1984). Both computers included the CPU, RAM, video terminal, and
+hard disk/tape interface in a terminal case.
+
+The TI990 series must have been abandoned around 1985, when TI introduced
+the S1500 series built around a 68020.
+
+The TI990 computers were primarily used for business applications.
+
+Two disk-based OS were available. DX10 was a multi-tasking, multi-user OS.
+DNOS (released around 1981) was similar to DX10 and mostly compatible with it:
+it supported extra features but it was bigger and slower. Neither OS could run
+on the lower-end 990/4 and /5 systems, but a kernel and various OS utilities
+were available as static-link libraries for embedded applications.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
 
 $info=ti99_4
 $bio
@@ -4382,7 +4792,7 @@ This TI99/4 driver is preliminary and could not be tested.
 
 History and Trivia:
 
-The TI99/4 Home Computer was designed and built by Texas Instrument.  About
+The TI99/4 Home Computer was designed and built by Texas Instruments.  About
 200 prototypes were built in 1978, it was first shown in June 1979, and TI
 started shipping it in October 1979.  It was replaced with TI99/4a in the
 summer of 1981.  It was first sold in US, then was available in Europe in
@@ -4397,7 +4807,7 @@ the first 16-bit home computer.
 
 The general architecture was odd.  The computer had only 256 bytes of CPU
 RAM, the remaining 16kb of RAM were attached to the video processor.  It
-had been designed to use some slow "GROM" cartridge, written in an
+had been designed to use some slow "GROM" cartridges, written in an
 interpreted language, "GPL".
 
 Due to these poor designing and programming choices, the computer was slow.
@@ -4412,7 +4822,7 @@ The design of TI99/4 caused many headaches to TI engineers.  It was first
 designed as a console, then an inexpensive home computer (which explains
 its slowness and kludgy design), then a hybrid (with remote I/R joysticks
 and keypads - which were abandoned at the last minute - and a cartridge
-port).  It was intended to use a TI-designed processor, tms9985, but the
+port).  It was intended to use a TI-designed microcontroller, tms9985, but the
 processor was never actually produced, so engineers had to use a
 software-compatible, high-end (in 1979) tms9900 with tons of glue logic.
 Note that the processor software design was remarkably weird (no stack, no
@@ -4421,8 +4831,7 @@ on-chip data register).
 
 Wanted:
 
-If you have a TI99/4 ROM image, or if you know how the extra system GROM
-maps in the memory space, please mail me at pytheas@club-internet.fr
+If you have a TI99/4 ROM image, please mail me at pytheas@club-internet.fr
 
 $end
 
@@ -4435,21 +4844,34 @@ Texas Instruments TI-99/4a Home Computer
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default. Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.
+Requires full keyboard emulation.  At startup, full keyboard emulation mode is
+enabled by default.  Whilst in full keyboard emulation mode, some key
+associated functionality may be disabled (like the ESC key for EXIT).
+The keyboard emulation mode is toggled using the scroll_lock key.
 
 
 Usage:
 
-This TI99/4a driver offers a high level of compatibility.  It currently
-supports V9t9-format cart images and up to SSSD disk images.  Speech
-synthesis is partially supported.
+This TI99/4a driver offers a high level of compatibility. It currently
+supports V9t9-format cartridge images, sampled tapes in wave format
+(CS1 and CS2), and up to 3 SSSD disk images. Speech synthesis is emulated,
+although speech ROM emulation is still in the works. TI, Super AMS and
+Foundation memory expansion cards are supported.
 
-Loading a cart:
+Loading a cartridge:
 
-No cartridge is required, as TI99/4a has a built-in small basic interpreter.
+You do not need a cartridge image to run the computer, since TI99/4a has
+a small built-in basic interpreter.
 
 V9t9-format cart images are typically split into up to 3 files. These can be
-loaded in any order, so long as all necessary portions are loaded. 
+loaded in any order, so long as all necessary portions are loaded.
+
+Setting up the system configuration:
+
+A few dip switches enable or disable computer extensions. These switches are
+only read at reset. Therefore, if you edit them, you must reset the emulator
+(press F3 in partial keyboard emulation mode) for the changes to be taken
+into account.
 
 
 History and Trivia:
@@ -4469,6 +4891,39 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=ti99_4ev
+$bio
+Texas Instruments TI-99/4a Home Computer with SNUG EVPC video card
+
+
+See the TI99/4a driver for non-EVPC information.
+
+
+Known Issues:
+
+EVPC emulation is not complete.  The palette chip is not emulated.
+Also, TI BASIC will not run under this driver, though it might be normal
+(I know there are some bugs in the TI's system ROMs which prevent them
+from running with a v9938).
+
+
+History and Trivia:
+
+A common hack on the ti99/4a is replacing the old tms9918/9928/9929a with
+a higher-end, upward-compatible v9938. This enhanced vdp supports true 16-
+and 256-color graphic modes, high-res 512*192 graphic and 80-column text
+modes, accelerated 2D graphics, etc. The only drawback is that some programs
+(including TI's system ROMs) will not run with the v9938.
+
+The EVPC card does just that: it includes a v9938 with 128kb of VRAM, 64kb of
+extended RAM, an additional palette chip to program the palette in 256-color
+mode, and a DSR ROM with various useful subroutines.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 #$info=ti99_2
 #$bio
 #Texas Instruments TI-99/2 BASIC Computer
@@ -4476,7 +4931,7 @@ $end
 
 #Known Issues:
 
-#This TI99/2 driver is preliminary and could not be tested.  (It may work,
+#This TI99/2 driver is preliminary and could not be tested. (It may work,
 #it may not work.) It is commented out in the source code distribution.
 
 
@@ -4490,9 +4945,9 @@ $end
 #It featured a TMS9995 microprocessor (with on-line timer and 256-byte RAM),
 #4kb of RAM, 24kb (or 32kb) of ROM, a B&W character-based display.  There
 #was no sound generator.  It was mostly incompatible with TI99/4(a), but
-#used the same Basic syntax and file format.
+#it used the same Basic syntax and file format.
 
-#The computer was obviously unattractive.  On the other hand, it would have
+#The computer was obviously unattractive. On the other hand, it would have
 #been cheap, fairly fast for its time, and easy to program in both BASIC and
 #assembly.
 
@@ -4683,7 +5138,7 @@ Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
-(This must NOT be specified on commandline, start the vc20 emulation with no images specified)
+(This must NOT be specified on command line, start the vc20 emulation with no images specified)
  
 
 You can also load a file from a d64 image (The directory command LOAD"$",8 is supported when 
@@ -4705,7 +5160,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore CPU level emulation of the 1541 is needed).
 
 
 Quickloader Usage:
@@ -4745,7 +5200,7 @@ The emulated light pen uses Paddle 3 x-axe and Paddle 4 y-axe.
 
 While a normal or well written program will work regardless of the video system (PAL or 
 NTSC), if the screen is too wide right or low, or the screen doesn't fit in visible 
-area or gameplay is too fast try using the pal (vc20) version, instead.
+area or gameplay is too fast try using the PAL (vc20) version, instead.
 
 
 Known Issues:
@@ -4926,11 +5381,22 @@ to use basic, you can insert one of 3 basic cartridges:
 "BASIC-I" a integer based basic, "BASIC-G" a basic for graphics, "BASIC-F" a basic
 for floating point operations.
 
-Known Issues:
+
+Cartridges:
+
+The Sord must have a cartridge to start up.
 - some cartridges may not work
-- cassette emulation is working, but may not be perfect.
-- no memory expansion supported
-- no extra peripherals supported
+
+Cassette:
+
+The cassette emulation uses .WAV sample files.
+
+saving:
+save"cmt:<filename>" where <filename> is the name of the file. 
+
+loading:
+old"cmt:" will load the next file on the cassette.
+chan"cmt:" and run"cmt:" can also be used to load and run the next file on the cassette.
 
 History and Trivia:
 
@@ -4939,6 +5405,10 @@ The Sord M5 is similar in design to the MSX but not compatible with it.
 a different sound chip and the I/O port assignments are not the same).
 
 In fact some MSX games have been converted to the Sord by enthusiasts.
+
+Known Issues:
+- no memory expansion supported
+- loading from cassette does not work
 
 $end
 
@@ -5033,7 +5503,7 @@ IBM PC compatible computer
 
 Features
 --------
-cpu on pc-type adapter
+CPU on pc-type adapter
  8088 with 3.75/8 mhz (turboswitch)
  socket for 8087
  512 kb ram build in 
@@ -5095,7 +5565,7 @@ additional vdc videochip for 80 column modes with own connector (rgbi)
  (1 mbyte ram possible)
 sid6581 soundchip
 c64 expansion port with some additional pins
-z80 cpu for CPM mode
+z80 CPU for CPM mode
 
 c128d
 -----
@@ -5115,7 +5585,7 @@ uses c64 emulation for c64 mode
 so only notes for the additional subsystems here
 
 rasterline based video system
- no cpu holding
+ no CPU holding
  imperfect scrolling support (when 40 columns or 25 lines)
  lightpen support not finished
  rasterline not finished
@@ -5129,7 +5599,7 @@ vdc emulation
 z80 emulation
  floppy simulation not enough for booting CPM
  so simplified z80 memory management not tested
-no cpu clock doubling
+no CPU clock doubling
 no internal function rom
 c64 mode
  differences to real c64???
@@ -5148,7 +5618,7 @@ gameport b
  2 button joystick/mouse joystick emulation
  no mouse
 simple tape support
- (not working, cia timing, cpu timing?)
+ (not working, cia timing, CPU timing?)
 serial bus
  simple disk drives
  no printer or other devices
@@ -5170,7 +5640,7 @@ no userport
 
 Video notes
 -----------
-if the game runs to fast with the ntsc version, try the pal version!
+if the game runs to fast with the NTSC version, try the PAL version!
 flickering affects in one video version, try the other video version
 
 
@@ -5198,7 +5668,7 @@ Tape
 ----
 (DAC 1 volume in noise volume)
 loading of wav, prg and prg files in zip archive
-commandline -cassette image
+command line -cassette image
 wav:
  8 or 16(not tested) bit, mono, 125000 Hz minimum
  has the same problems like an original tape drive (tone head must
@@ -5217,7 +5687,7 @@ several programs relies on more features
 Discs
 -----
 only file load from drive 8 and 9 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on commandline)
+ loads file from rom directory (*.prg,*.p00) (must NOT be specified on command line)
  or file from d64 image (here also directory LOAD"$",8 supported)
 use LOAD"filename",8
 or LOAD"filename",8,1 (for loading machine language programs at their address)
@@ -5228,7 +5698,7 @@ several programs rely on more features
 (loading other file types, writing, ...)
 
 most games rely on starting own programs in the floppy drive
-(and therefor cpu level emulation is needed)
+(and therefor CPU level emulation is needed)
 
 
 Roms
@@ -5386,7 +5856,7 @@ Features
 hardware emulation mode for c64
  adapter needed for c64 cartridges (many should work)
  only standard c64 keys plus cursor-up and cursor-left
- cpu not full compatible (no illegal instructions)
+ CPU not full compatible (no illegal instructions)
 enhanced keyboard
 m65ce02 processor core (1 or 3.5 Mhz frequency)
 vic3 (4567) with additional capabilities
@@ -5411,7 +5881,7 @@ MESS emulation state
 rasterline based video system
  quick modified vic6567/c64 video chip
  no support for enhanced features, only 80 column mode
- no cpu holding
+ no CPU holding
  imperfect scrolling support (when 40 columns or 25 lines)
  lightpen support not finished
  rasterline not finished
@@ -5467,7 +5937,7 @@ Paddle 6 y-axe
 Discs
 -----
 only file load from drive 10 and 11 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on commandline
+ loads file from rom directory (*.prg,*.p00) (must NOT be specified on command line
  or file from d64 image (here also directory LOAD"$",8 supported)
 use LOAD"filename",10
 or LOAD"filename",10,1 (for loading machine language programs at their address)
@@ -5478,7 +5948,7 @@ several programs rely on more features
 (loading other file types, writing, ...)
 
 most games rely on starting own programs in the floppy drive
-(and therefor cpu level emulation is needed)
+(and therefor CPU level emulation is needed)
 
 
 Quickloader
@@ -5516,8 +5986,8 @@ cartridge slot
 
 Mess Emulation State
 --------------------
-not working (not even cpu is known)
-stopped until cpu type is recognized or info found
+not working (not even CPU is known)
+stopped until CPU type is recognized or info found
 
 $end
 
@@ -5564,7 +6034,7 @@ very early computer
 Features
 --------
 operation without builtin roms, you can enter your program directly with
-help of the cpu integrated dma.
+help of the CPU integrated dma.
 2 segment digits
 tape connector
 
@@ -5642,7 +6112,7 @@ connector with support for rs232 and centronics
 
 Mess Emulation
 --------------
-not started, need information about the hd62002 cpu
+not started, need information about the hd62002 CPU
 (should be in the normal user manual!)
 
 $end
@@ -5829,7 +6299,7 @@ rough emulation of keyboard controller
 rough emulation of keyboard
 rough emulation of dma chips
 rough emulation of pic chips
-incomplete emulation of cpu
+incomplete emulation of CPU
 no support for high density disks
 no support for at harddisks
 needs i80286 v1.5
@@ -5848,17 +6318,17 @@ the grandfather of the now common personal computer
 
 Features
 --------
-8088 cpu
+8088 CPU
 expanded through several slots for interface cards
 programmable interrupt controller
 direct memory access controller
 support for a tape drive on the motherboard of the first series
-even elementar equipment is not on the motherboard
+even elementary equipment is not on the motherboard
 even a display adapter must be plugged in
 
 Features IBMXT
 --------------
-8086 cpu (16 bit data bus)
+8086 CPU (16 bit data bus)
 
 
 Mess Emulation State
@@ -5917,46 +6387,56 @@ $end
 $info=lynx
 $bio
 
-Atari Lynx
-Atari Lynx II
+
+Atari Lynx (1989)
+Atari Lynx II (1990)
 -------------
+Bios = None Required
 
-color handheld
 
-developed by EPYX (2 colors, 4 colors, cassettes instead of cartridges)
+The Lynx was the world's first hand-held color video game system.  Sold by Atari (developed by Epyx a few years earlier), the Lynx offered true multi-player competition, built-in 3D and distortion graphic effects, reversible controls, and fast arcade action.  The system featured some accurate arcade translations such as Joust, Rampart, and Klax.  The Lynx II is a lightweight redesign and features stereo sound and shorter power down timer.  Around 1993 Atari ceased marketing the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and Atari Age)
 
-Lynx II is a redesign: smaller,  shorter power down timer and stereo
 
 Features
 --------
-color display of 160x102 in 16 out of 4096 colors
-4 channel sound (integrated speaker mono), plug for headphones
-Controls for 1 Player
-Cartridge port
-Serial port
-Batterie Port
+Two 16-Bit custom CMOS chips running at 16Mhz(named Mikey and Suzy)
+Sound: 8 bit DAC for each channel; 4 channels integrated stereo speaker (wired for mono in original)
+Screen: 160 x 102 (horz) 60.00 Hz 
+Color: 4096 colors, 16 max per scanline
+Others: 64KB RAM of 120ns DRAM
+
+
+Ports: 
+-Headphones (mini-DIN 3.5mm stereo; wired for mono on the original Lynx)
+-ComLynx (multiple unit communications, serial)
+-Power (9V DC, 1 A)
+-Game cartridge slot
+-Battery holder (six AA) ~4-5 hours
+
+
+Size: 9.25" x 4.25" x 2" (10.75" x 4.25" x 1.5" for original Lynx)
+Screen: 3.5" diagonal (3.25" x 1.88" approx.) 
 
 
 Notes
------
-Lynx is flipable for optimal support of left and right hand players
-(hold down pause and press option 2 in many games)
-Some games want to be rotated by 90 degree
+-------
+Lynx is flip-able for optimal support of left and right hand players (hold down pause and press option 2 in many games) Some games want to be rotated by 90 degree
 
 
-Emulators
----------
-Handy for Win32 (excellent)
-xhandy (linux binary) (excellent)
+Links
+--------
+FAQ on Lynx - www.digiserve.com/eescape/atari/Atari.shtml
+Atari age - www.atariage.com (Excellent Site)
 
 
 Mess Emulation State
 --------------------
-several cartridges playable
-blitter imperfect
-timer system incomplete
-audio imperfect
-no serial port emulation
+-several cartridges playable
+-blitter imperfect
+-timer system incomplete
+-audio imperfect
+-no serial port emulation
+
 
 $end
 
@@ -5991,7 +6471,7 @@ than you can play as white and enter your move (enter is d/play)
 Mess Emulation State
 --------------------
 operating instructions needed!
-not working (cpu core problem?)
+not working (CPU core problem?)
 
 
 $end
@@ -6390,13 +6870,13 @@ Error Codes
 
 Mess Emulation State
 --------------------
-incomplete cpu core
+incomplete CPU core
 speaker not emulated
 tape not emulated
 printer not emulated
 work stopped until 
  more "sharps" are dumped 
- info about cpu power/interrupt management is available
+ info about CPU power/interrupt management is available
 
 $end
 
@@ -6458,7 +6938,7 @@ connector for external power supply
 Mess Emulation State
 --------------------
 not working
-incomplete cpu core
+incomplete CPU core
 lh5811 not emulated
 speaker not emulated
 realtimeclock not emulated
@@ -6466,7 +6946,7 @@ tape not emulated
 printer not emulated
 work stopped until more info about
  lh5811
- cpu lh5801 power/interrupt management available
+ CPU lh5801 power/interrupt management available
 
 
 $end
@@ -6752,7 +7232,7 @@ homecomputer for tv connection in czechoslovakia?
 
 Features
 --------
-8080 compatible cpu
+8080 compatible CPU
 288x256 dots resolution
 (version 1 and 2 mono)
 (version 3 with 4 colors)
@@ -7344,7 +7824,7 @@ and 4 additional keys per controller
 
 look into messroms for cartridge pinout
 
-german version known with pal video
+german version known with PAL video
 
 controller layout
 -----------------
@@ -7428,3 +7908,80 @@ Thankyou to Andrew Dunipace for help with the 80-column expansion card.
 
 
 $end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=saturn
+$bio
+
+
+Sega Saturn (1994)
+----------------- 
+Bios = (???)
+
+
+In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.  The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While the Saturn was much more successful in Japan than it was in the US or Europe the lack of good software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar to that of the Master System.  The CDROM based system did have some great arcade conversions such as House of The Dead and Virtua Fighter 3.  Despite being the first consoles with Internet capabilities (via the NetLink adapter), Sega was relatively quiet after the slow demise of the Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
+
+
+Features
+-------------
+CPU: Two Hitachi SH2 7604 32 Bit RISC chips at ~27 MHz (36 MIPS)
+Sound CPU: Motorola 68EC000 at 11.3 MHz
+Sound: 32 Channels, with 16 bit sampling at a sampling rate of 44.1 KHz max.
+Resolution: 704 x 512 (horz) 60.00 Hz 
+Colors: 32768 (static)
+Main Memory: 1 Megabyte of SDRAM and 1 Megabyte of DRAM
+Internal Memory Card 
+Video Hardware: Two VDP (video display processors) chip sets (VRAM: 512Kb each)
+-VDP1 Draw Sprites, lines, warped sprites (quads)
+-VDP2 controls background graphics.
+
+
+CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512 Kb Buffer RAM)
+
+
+Links
+-------
+
+
+MESS Emulation State
+--------------------
+See source code for more information.
+Bios starts requesting pad data so maybe we are now in the time set area ????
+Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly where we are at this current time.  Currently locks up waiting on (i guess) a response from the 68k cpu. Probably need to emulate this shortly.
+
+
+$end
+
+
+#---------------------------------------------------------------------------------------------#
+
+$info=gamegear
+$bio
+
+Sega Game Gear (1990)
+--------------------------
+Bios = None required
+
+The Game Gear is the portable version of the Sega Master System, with slightly enhanced graphics and stereo sound, but fully compatible (i.e. you could play SMS games on the GG with the use of a special adaptor). The Game Gear was sold 11 million times world-wide (2 million in Japan, 9 million in the rest of the world). (note taken from www.eidolons-inn.de)
+
+Features
+-------------
+CPU:  4 MHz Zilog Z80 
+Colors Palette: 512; 32 max on screen
+Resolution: 160x140 viewable from 256x224 
+Sprite size: 8x8 , 8x16 (16x16 in doubled mode) 
+Max # of sprites:  64 on screen; 128 in memory
+Sound:  6 channel FM, 2 channel noise - Stereo 
+Battery life:  6 hours on 6 AA batteries 
+
+Links
+-------
+EIdolons inn - www.eidolons-inn.de
+
+MESS Emulation State
+--------------------
+(?)
+
+#---------------------------------------------------------------------------------------------#
+
