@@ -1459,5 +1459,5 @@ static const struct IODevice io_einstein[] =
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
 COMP( 19??, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
-COMP( 19??, einstein2,      0,            einstein2,          einstein,      0,       "Tatung", "Tatung Einstein TC-01 + 80 column device + Speculator")
+COMP( 19??, einstein2,      0,            einstein2,          einstein,      0,       "Tatung", "Tatung Einstein TC-01 + 80 column device")
 
