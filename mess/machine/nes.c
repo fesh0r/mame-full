@@ -85,23 +85,19 @@ static void init_nes_core (void)
 
 	/* Set up the mapper callbacks */
 	{
-		int i = 0;
+		const mmc *mapper;
 
-		while (mmc_list[i].iNesMapper != -1)
+		mapper = nes_mapper_lookup(nes.mapper);
+		if (mapper)
 		{
-			if (mmc_list[i].iNesMapper == nes.mapper)
-			{
-				mmc_write_low = mmc_list[i].mmc_write_low;
-				mmc_read_low = mmc_list[i].mmc_read_low;
-				mmc_write_mid = mmc_list[i].mmc_write_mid;
-				mmc_write = mmc_list[i].mmc_write;
-				ppu_latch = mmc_list[i].ppu_latch;
-//				mmc_irq = mmc_list[i].mmc_irq;
-				break;
-			}
-			i ++;
+			mmc_write_low = mapper->mmc_write_low;
+			mmc_read_low = mapper->mmc_read_low;
+			mmc_write_mid = mapper->mmc_write_mid;
+			mmc_write = mapper->mmc_write;
+			ppu_latch = mapper->ppu_latch;
+//			mmc_irq = mmc_list[i].mmc_irq;
 		}
-		if (mmc_list[i].iNesMapper == -1)
+		else
 		{
 			logerror ("Mapper %d is not yet supported, defaulting to no mapper.\n",nes.mapper);
 			mmc_write_low = mmc_write_mid = mmc_write = NULL;

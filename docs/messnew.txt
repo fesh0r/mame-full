@@ -12,6 +12,9 @@ System Driver Changes:
 ----------------------
 - [MZ700] Fixed a crash on startup. (bug #530) [Nate Woods]
 
+- [NES] Fixed a crash when running certain games such as the SMB/Duck Hunt
+  cartridge. (bug #534) [Nate Woods]
+
 - [PC] Fixed some floppy disk regressions.  (bug #532) [Nate Woods]
 
 - [PC8801] Added natural keyboard support.  [Dopefish Justin and Nate Woods]

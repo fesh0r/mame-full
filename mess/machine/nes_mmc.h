@@ -13,7 +13,8 @@ typedef struct __mmc
 	ppu2c03b_scanline_cb mmc_irq;
 } mmc;
 
-extern mmc mmc_list[];
+const mmc *nes_mapper_lookup(int mapper);
+
 extern int MMC1_extended; /* 0 = normal MMC1 cart, 1 = 512k MMC1, 2 = 1024k MMC1 */
 
 #define MMC5_VRAM

@@ -3953,12 +3953,14 @@ static WRITE_HANDLER( mapper231_w )
 int mapper_reset (int mapperNum)
 {
 	int err = 0;
+	const mmc *mapper;
 
 	/* Set the vram bank-switch values to the default */
 	ppu2c03b_set_videorom_bank(0, 0, 8, 0, 64);
 	
 	/* Set the mapper irq callback */
-	ppu2c03b_set_scanline_callback (0, mmc_list[mapperNum].mmc_irq);
+	mapper = nes_mapper_lookup(mapperNum);
+	ppu2c03b_set_scanline_callback (0, mapper ? mapper->mmc_irq : NULL);
 
 	mapper_warning = 0;
 	/* 8k mask */
@@ -4229,7 +4231,10 @@ int mapper_reset (int mapperNum)
 	return err;
 }
 
-mmc mmc_list[] = {
+
+
+static mmc mmc_list[] =
+{
 /*	INES   DESC						LOW_W, LOW_R, MED_W, HIGH_W, PPU_latch, IRQ */
 	{ 0, "No Mapper",				NULL, NULL, NULL, NULL, NULL, NULL },
 	{ 1, "MMC1",					NULL, NULL, NULL, mapper1_w, NULL, NULL },
@@ -4301,7 +4306,20 @@ mmc mmc_list[] = {
 	{ 228, "Action 52",				NULL, NULL, NULL, mapper228_w, NULL, NULL },
 	{ 229, "31-in-1",				NULL, NULL, NULL, mapper229_w, NULL, NULL },
 //	{ 230, "22-in-1",				NULL, NULL, NULL, mapper230_w, NULL, NULL },
-	{ 231, "Nina-7 (AVE)",			NULL, NULL, NULL, mapper231_w, NULL, NULL },
+	{ 231, "Nina-7 (AVE)",			NULL, NULL, NULL, mapper231_w, NULL, NULL }
 // 234 - maxi-15
-	{ -1, "Not Supported",			NULL, NULL, NULL, NULL, NULL, NULL },
 };
+
+
+
+const mmc *nes_mapper_lookup(int mapper)
+{
+	int i;
+	for (i = 0; i < sizeof(mmc_list) / sizeof(mmc_list[0]); i++)
+	{
+		if (mmc_list[i].iNesMapper == nes.mapper)
+			return &mmc_list[i];
+	}
+	return NULL;
+}
+
