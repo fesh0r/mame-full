@@ -46,6 +46,11 @@ TARGET = mame
 CC	= gcc
 # otherwise try the default cc
 # CC    = cc
+# Support for the Intel C++ Compiler is new and experimental.  Be sure
+# to check the CFLAGS, RANLIB, IL, LD and MY_CPU sections in this makefile.
+# If you've set up a nice environment or alias or wrapper-script then you
+# can use the following...
+# CC	= icc
 # Use of `c89' is recommend for ultrix as it generates faster code (which
 # means less frames to be skipped and better graphics) but `gcc' works just
 # as well. However, stay away from the `cc' ultrix compiler if possible.
@@ -64,9 +69,9 @@ CC	= gcc
 # OpenStep needs -traditional-cpp
 #
 # Note 4:
-# It has been reported that adding -pipe to the CFLAGS when using gcc will speed
-# up build times a lot and reduce disk activity greatly.  Thanks to Pete French
-# for the tip!
+# It has been reported that adding -pipe to the CFLAGS when using gcc will
+# speed up build times a lot and reduce disk activity greatly.  Thanks to
+# Pete French for the tip!
 #
 # Note 5:
 # Pete French has reported that gcc can sometimes produce incorrect code for
@@ -92,6 +97,8 @@ CFLAGS    = -O -Wall
 ### for OpenStep/PPC use following opts
 # CFLAGS    = -O -Wall  -Wno-unused -funroll-loops -traditional-cpp \
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
+### for the Intel C++ Compiler try the following
+# CFLAGS    = -O3 -rcd -Xa -ipo -ipo_obj
 ### for IRIX MIPSpro with real serious optimization for R10K O2
 # CFLAGS = -fullwarn -n32 -mips4 -Ofast=ip32_10k -TARG:platform=ip32_10k \
 #  -OPT:Olimit=0 -IPA
@@ -105,18 +112,22 @@ CFLAGS    = -O -Wall
 #  -Dasm=__asm__ -O6 -march=pentiumpro -fstrength-reduce \
 #  -ffast-math -malign-functions=2 -malign-jumps=2 -malign-loops=2
 
-# *** Does your compiler supports inline funcs?. use appropiate item:
-# do not use IL = inline : wont work due to Z80 and 6809 stuffs
-# if strict ansi used set IL to "static"
+# *** Does your compiler supports inline funcs?.  Use appropiate item:
+# Do not use IL = inline : wont work due to Z80 and 6809 stuff
+# If strict ansi or BeOS is used, set IL to "static".
 # This can very noticably increase xmame's performance, so enabling this is
 # encouraged, it works fine with gcc and probably with most other compilers.
 IL	= '-DINLINE=static __inline__'
-# IL     = -DINLINE=static
+# IL	= -DINLINE=static
+# Intel C++ Compiler doesn't know about __inline__ -- use the following
+# IL	= '-DINLINE=static inline'
 
 # *** Choose your linker & linker flags (some OSes need native linker
 # instead GNU one)
 # normal
 LD	= $(CC) -Wl,-s
+# for the Intel C++ Compiler -- expect large link time due to -ipo optimization
+# LD	= $(CC) -Wl,-s -ipo -ipo_obj
 # to profile with gcc and gprof
 # LD	= $(CC) -pg
 # no profiling (less strace output), but with debug info
@@ -130,13 +141,13 @@ LD	= $(CC) -Wl,-s
 # memory!!
 # LD  = $(CC) -fullwarn -n32 -mips3 -IP
 
-# *** Does your platform have a separate libm ? only comment this out if you
-# have maths libraries included within libc. This is very rare, you will
-# probably only need it for OpenStep systems
+# *** Does your platform have a separate libm?  Only comment this out if you
+# have maths libraries included within libc.  This is very rare; you will
+# probably only need it for OpenStep and BeOS systems.
 SEPARATE_LIBM = 1
 
 # *** Does your platform have ranlib (leave this untouched unless you are
-# using irix or Unixware 7
+# using irix or Unixware 7 or the Intel C++ Compiler)
 RANLIB = ranlib
 # RANLIB = true
 
@@ -145,6 +156,7 @@ RANLIB = ranlib
 # INSTALL =            install-sh
 # INSTALL =            /bin/install
 INSTALL =              /usr/bin/install
+# INSTALL =            install      # e.g., for BeOS 
 INSTALL_PROGRAM_DIR =  $(INSTALL) -d    -o root -g bin -m  755
 INSTALL_MAN_DIR =      $(INSTALL) -d    -o root -g 0   -m  755
 INSTALL_DATA_DIR =     $(INSTALL) -d    -o root -g bin -m  755
@@ -198,7 +210,9 @@ XMAMEROOT = $(PREFIX)/lib/x$(TARGET)
 
 ### i386 + gnu-asm
 MY_CPU = i386
-### i386 no asm
+### i386 no asm -- needed for the Intel C++ Compiler which does not fully
+# understand gcc's inline assembly syntax (you may still enable X86_ASM_68000
+# etc. which are assembled by NASM).  You may also need to use this for BeOS.
 # MY_CPU = i386_noasm
 ### ia64
 # MY_CPU = ia64
@@ -239,6 +253,8 @@ ARCH  = linux
 # ARCH  = irix_al
 ### aix ( with sound, you'll need the UMS and SOM lpp's installed ( under AIX4 ))
 # ARCH  = aix
+### BeOS on Intel
+# ARCH = beos
 ### generic unix, no sound
 # ARCH  = generic
 
@@ -275,8 +291,9 @@ ARCH  = linux
 
 
 ##############################################################################
-# *** Select your display method, choose only one
-# note: x11 is the only one supported on all platforms
+# *** Select your display method; choose only one.
+# Note: x11 is the only one supported on almost all platforms.
+# For BeOS, use SDL.
 ##############################################################################
 
 ### X11
@@ -293,7 +310,7 @@ DISPLAY_METHOD = x11
 # DISPLAY_METHOD = svgafx
 ### OpenStep bitmaps
 # DISPLAY_METHOD = openstep
-### SDL library
+### SDL library 
 # DISPLAY_METHOD = SDL
 ### Photon 2.x (QNX6), currently buggy but working...                
 # DISPLAY_METHOD = photon2
