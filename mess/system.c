@@ -193,13 +193,13 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 /*	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
 //	DRIVER( kccomp )	/* VEB KC compact								  */
 
-//	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
-//	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
-//	DRIVER( pcw9256 )	/* 198? PCW9256 								  */
-//	DRIVER( pcw9512 )	/* 198? PCW9512 (+) 							  */
-//	DRIVER( pcw10 ) 	/* 198? PCW10									  */
+	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
+	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
+	DRIVER( pcw9256 )	/* 198? PCW9256 								  */
+	DRIVER( pcw9512 )	/* 198? PCW9512 (+) 							  */
+	DRIVER( pcw10 ) 	/* 198? PCW10									  */
 
-//	DRIVER( pcw16 )     /* 1995 PCW16                                     */
+	DRIVER( pcw16 )     /* 1995 PCW16                                     */
 
 	/* pc20 clone of sinclair pc200 */
 	/* pc1512 ibm xt compatible */

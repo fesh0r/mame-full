@@ -117,7 +117,7 @@ int dsk_floppy_load(int id)
 		}
 	}
 
-	return INIT_FAIL;
+	return INIT_PASS;
 }
 
 int dsk_save(int type, int id, unsigned char **ptr)

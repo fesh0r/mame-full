@@ -4,8 +4,6 @@
 
 #include "includes/hp48.h"
 
-static struct artwork_info *hp48_backdrop;
-
 unsigned char hp48_palette[248][3] =
 {
 	{ 49,70,64 }, //background
@@ -57,48 +55,30 @@ void hp48_init_colors (unsigned char *sys_palette,
 						  unsigned short *sys_colortable,
 						  const unsigned char *color_prom)
 {
-	char backdrop_name[200];
-	int used=8;
-
 	memcpy (sys_palette, hp48_palette, sizeof (hp48_palette));
 	memcpy(sys_colortable,hp48_colortable,sizeof(hp48_colortable));
-
-    /* try to load a backdrop for the machine */
-    sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
-
-    artwork_load (&hp48_backdrop, backdrop_name, used, Machine->drv->total_colors - used);
-
-	if (hp48_backdrop)
-    {
-        logerror("backdrop %s successfully loaded\n", backdrop_name);
-        memcpy (&sys_palette[used * 3], hp48_backdrop->orig_palette, 
-				hp48_backdrop->num_pens_used * 3 * sizeof (unsigned char));
-    }
-    else
-    {
-        logerror("no backdrop loaded\n");
-    }
 }
 
 
 int hp48_vh_start(void)
 {
     videoram_size = 6 * 2 + 24;
-    videoram = (UINT8*)malloc (videoram_size);
+    videoram = (UINT8*) auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
-    if (hp48_backdrop)
-        backdrop_refresh (hp48_backdrop);
+	{
+		char backdrop_name[200];
+	    /* try to load a backdrop for the machine */
+		sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
+		backdrop_load(backdrop_name, 8);
+	}
 
 	return generic_vh_start();
 }
 
 void hp48_vh_stop(void)
 {
-    if (hp48_backdrop)
-        artwork_free (&hp48_backdrop);
-
 	generic_vh_stop();
 }
 
@@ -202,11 +182,6 @@ void hp48_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     {
 		osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
     }
-    if (hp48_backdrop)
-		copybitmap (bitmap, hp48_backdrop->artwork, 0, 0, 0, 0, NULL,
-					TRANSPARENCY_NONE, 0);
-	else
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
 	for (y=0,i=LCD_BASE_ADDRESS; y<64; y+=8, i+=LCD_LINE_OFFSET) {
 		for (x=0; x<131; x++) {
