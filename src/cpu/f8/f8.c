@@ -120,7 +120,7 @@ static void ROMC_00(void)
      * of PC0.
      */
 
-    f8.dbus = cpu_readop(f8.pc0);
+	f8.dbus = cpu_readop(f8.pc0);
     f8.pc0 += 1;
     f8_icount -= cS + cL;
 }
@@ -483,7 +483,7 @@ static void illegal(void)
 static void f8_lr_a_ku(void)
 {
 	f8.a = f8.r[12];
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -493,7 +493,7 @@ static void f8_lr_a_ku(void)
 static void f8_lr_a_kl(void)
 {
 	f8.a = f8.r[13];
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -503,7 +503,7 @@ static void f8_lr_a_kl(void)
 static void f8_lr_a_qu(void)
 {
 	f8.a = f8.r[14];
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -513,7 +513,7 @@ static void f8_lr_a_qu(void)
 static void f8_lr_a_ql(void)
 {
 	f8.a = f8.r[15];
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -523,7 +523,7 @@ static void f8_lr_a_ql(void)
 static void f8_lr_ku_a(void)
 {
 	f8.r[12] = f8.a;
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -533,7 +533,7 @@ static void f8_lr_ku_a(void)
 static void f8_lr_kl_a(void)
 {
 	f8.r[13] = f8.a;
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -543,7 +543,7 @@ static void f8_lr_kl_a(void)
 static void f8_lr_qu_a(void)
 {
 	f8.r[14] = f8.a;
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -553,7 +553,7 @@ static void f8_lr_qu_a(void)
 static void f8_lr_ql_a(void)
 {
 	f8.r[15] = f8.a;
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -660,11 +660,11 @@ static void f8_lr_dc_q(void)
  ***************************************************/
 static void f8_lr_dc_h(void)
 {
-    ROMC_06();
+	ROMC_06();
     f8.r[10] = f8.dbus;
-    ROMC_09();
+	ROMC_09();
     f8.r[11] = f8.dbus;
-    ROMC_00();
+	ROMC_00();
 }
 
 /***************************************************
@@ -674,10 +674,10 @@ static void f8_lr_dc_h(void)
 static void f8_lr_h_dc(void)
 {
     f8.dbus = f8.r[10];
-    ROMC_16();
+	ROMC_16();
     f8.dbus = f8.r[11];
-    ROMC_19();
-    ROMC_00();
+	ROMC_19();
+	ROMC_00();
 }
 
 /***************************************************
@@ -1148,7 +1148,7 @@ static void f8_lr_isar_i_a(void)
  ***************************************************/
 static void f8_lr_isar_d_a(void)
 {
-	f8.a = f8.r[f8.is];
+	f8.r[f8.is] = f8.a;
 	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
     ROMC_00();
 }
@@ -1689,7 +1689,7 @@ int f8_execute(int cycles)
 		case 0x0e: /* 0000 1110 */	f8_lr_q_dc();		break;
 		case 0x0f: /* 0000 1111 */	f8_lr_dc_q();		break;
 
-		case 0x10: /* 0001 0000 */	f8_lr_dc_h();		break;
+        case 0x10: /* 0001 0000 */  f8_lr_dc_h();       break;
 		case 0x11: /* 0001 0001 */	f8_lr_h_dc();		break;
 		case 0x12: /* 0001 0010 */	f8_sr_1();			break;
 		case 0x13: /* 0001 0011 */	f8_sl_1();			break;
