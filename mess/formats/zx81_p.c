@@ -116,7 +116,6 @@ static int zx81_cassette_calculate_size_in_samples(const UINT8 *bytes, int lengt
 
 static int zx81_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
 {
-	int i;
 	INT16 * p = buffer;
 
 	return p - buffer;
