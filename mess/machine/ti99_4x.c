@@ -1007,9 +1007,6 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 	BTW, although TMS9900 is generally big-endian, it is little endian as far as CRU is
 	concerned. (i.e. bit 0 is the least significant)
 
-TODO:
-	* support for tape unit CS2, and motor control.
-
 KNOWN PROBLEMS:
 	* a read or write to bits 16-31 causes TMS9901 to quit timer mode.  The problem is:
 	  on a TI99/4A, any memory access causes a dummy CRU read.  Therefore, TMS9901 can quit
@@ -1120,7 +1117,7 @@ static int ti99_R9901_3(int offset)
 {
 	/*only important bit: bit 27: tape input */
 
-	/* we don't take CS2 into account */
+	/* we don't take CS2 into account, as CS2 is a write-only unit */
 	return device_input(IO_CASSETTE, 0) > 0 ? 8 : 0;
 }
 
@@ -1172,7 +1169,10 @@ static void ti99_AlphaW(int offset, int data)
 */
 static void ti99_CS1_motor(int offset, int data)
 {
-	/*device_status(IO_CASSETTE, 0, data);*/
+	if (data)
+		device_status(IO_CASSETTE, 0, device_status(IO_CASSETTE, 0, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
+	else
+		device_status(IO_CASSETTE, 0, device_status(IO_CASSETTE, 0, -1) | WAVE_STATUS_MOTOR_INHIBIT);
 }
 
 /*
@@ -1180,7 +1180,10 @@ static void ti99_CS1_motor(int offset, int data)
 */
 static void ti99_CS2_motor(int offset, int data)
 {
-	/*device_status(IO_CASSETTE, 1, ! data);*/
+	if (data)
+		device_status(IO_CASSETTE, 1, device_status(IO_CASSETTE, 1, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
+	else
+		device_status(IO_CASSETTE, 1, device_status(IO_CASSETTE, 1, -1) | WAVE_STATUS_MOTOR_INHIBIT);
 }
 
 /*
@@ -1189,6 +1192,7 @@ static void ti99_CS2_motor(int offset, int data)
 	connected to the AUDIO IN pin of TMS9919
 
 	set to 1 before using tape (in order not to burn the TMS9901 ??)
+	Must actually control the mixing of tape sound with computer sound.
 
 	I am not sure about polarity.
 */
@@ -1202,11 +1206,12 @@ static void ti99_audio_gate(int offset, int data)
 
 /*
 	tape output (P9)
-	I am not sure about polarity.
+	I think polarity is correct, but don't take my word for it.
 */
 static void ti99_CS_output(int offset, int data)
 {
-	device_output(IO_CASSETTE, 0, data ? -32768 : 32767);
+	device_output(IO_CASSETTE, 0, data ? 32767 : -32767);
+	device_output(IO_CASSETTE, 1, data ? 32767 : -32767);
 }
 
 
