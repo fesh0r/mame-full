@@ -16,6 +16,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600] Updated to support most games above 4 KB.  [Stefan Jokisch]
+
 - [C64] Implemented natural keyboard support.  [Nate Woods]
 
 - [ORIC] Fixed fatal regression crash on startup.  (bug #538) [Nate Woods]
