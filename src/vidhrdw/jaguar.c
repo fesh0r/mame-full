@@ -139,7 +139,7 @@
 #include "machine/atarigen.h"
 #include "cpu/mips/r3000.h"
 #include "cpu/m68000/m68000.h"
-#include "jaguar.h"
+#include "includes/jaguar.h"
 #include "jagblit.h"
 
 
