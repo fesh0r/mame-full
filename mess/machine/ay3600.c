@@ -25,6 +25,8 @@
 #define LOG(x)
 #endif /* MAME_DEBUG */
 
+static void AY3600_poll(int dummy);
+
 static unsigned char ay3600_key_remap[2][7*8][4] = {
 /* caps lock off  norm ctrl shft both */
 	{
@@ -156,7 +158,7 @@ static UINT8 keystilldown;
 #define A2_KEY_CONTROL 1
 #define A2_KEY_SHIFT   2
 #define A2_KEY_BOTH    3
-#define MAGIC_KEY_REPEAT_NUMBER 40
+#define MAGIC_KEY_REPEAT_NUMBER 80
 
 #define AY3600_KEYS_LENGTH	256
 
@@ -171,6 +173,10 @@ int AY3600_init(void)
 		return 1;
 	memset(ay3600_keys, 0, AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
 
+	/* We poll the keyboard periodically to scan the keys.  This is
+	actually consistent with how the AY-3600 keyboard controller works. */
+	timer_pulse(TIME_IN_HZ(60), 0, AY3600_poll);
+
 	/* Set Caps Lock light to ON, since that's how we default it. */
 	set_led_status(1,1);
 
@@ -181,9 +187,9 @@ int AY3600_init(void)
 }
 
 /***************************************************************************
-  AY3600_interrupt
+  AY3600_poll
 ***************************************************************************/
-void AY3600_interrupt(void)
+static void AY3600_poll(int dummy)
 {
 	int switchkey;	/* Normal, Shift, Control, or both */
 	int port, bit, data;

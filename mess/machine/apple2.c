@@ -440,10 +440,6 @@ void apple2_interrupt(void)
 		if (irq_freq < 0)
 			irq_freq = 1;
 
-		/* We poll the keyboard periodically to scan the keys.  This is
-		actually consistent with how the AY-3600 keyboard controller works. */
-		AY3600_interrupt();
-
 		if (irq_freq)
 			cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
 	}

@@ -433,7 +433,7 @@ static struct GfxDecodeInfo apple2_gfxdecodeinfo[] =
 static struct GfxLayout apple2e_text_layout =
 {
 	14,8,		/* 14*8 characters */
-	256,		/* 256 characters */
+	1024,		/* 256 characters */
 	1,			/* 1 bits per pixel */
 	{ 0 },		/* no bitplanes; 1 bit per pixel */
 	{ 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1 },   /* x offsets */
@@ -444,7 +444,7 @@ static struct GfxLayout apple2e_text_layout =
 static struct GfxLayout apple2e_dbltext_layout =
 {
 	7,8,		/* 7*8 characters */
-	256,		/* 256 characters */
+	1024,		/* 256 characters */
 	1,			/* 1 bits per pixel */
 	{ 0 },		/* no bitplanes; 1 bit per pixel */
 	{ 7, 6, 5, 4, 3, 2, 1 },    /* x offsets */
@@ -461,22 +461,8 @@ static struct GfxDecodeInfo apple2e_gfxdecodeinfo[] =
 
 static unsigned short apple2_colortable[] =
 {
-    0,0,
-    1,0,
-    2,0,
-    3,0,
-    4,0,
-    5,0,
-    6,0,
-    7,0,
-    8,0,
-    9,0,
-    10,0,
-    11,0,
-    12,0,
-    13,0,
-    14,0,
-    15,0,
+	15, 0,	/* normal */
+	0, 15	/* inverse */
 };
 
 
@@ -516,7 +502,7 @@ static struct AY8910interface ay8910_interface =
     { 0 }
 };
 
-static MACHINE_DRIVER_START( apple2 )
+static MACHINE_DRIVER_START( apple2_common )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
 	MDRV_CPU_MEMORY(readmem_apple2, writemem_apple2)
@@ -530,7 +516,6 @@ static MACHINE_DRIVER_START( apple2 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
 	MDRV_SCREEN_SIZE(280*2, 192)
 	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
-	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(apple2_palette)/3)
 	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
 	MDRV_PALETTE_INIT(apple2)
@@ -543,8 +528,13 @@ static MACHINE_DRIVER_START( apple2 )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( apple2 )
+	MDRV_IMPORT_FROM( apple2_common )
+	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( apple2e )
-	MDRV_IMPORT_FROM( apple2 )
+	MDRV_IMPORT_FROM( apple2_common )
 	MDRV_GFXDECODE(apple2e_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -598,9 +588,9 @@ ROM_START(apple2p)
 ROM_END
 
 ROM_START(apple2e)
-	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
-	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, CRC(186f432d ))
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC(b081df66 ))
+	ROM_LOAD ( "a2ealt.chr", 0x1000, 0x1000,CRC(816a86f1 ))
 
 	ROM_REGION(0x4700,REGION_CPU1,0)
 	ROM_LOAD ( "a2e.cd", 0x0000, 0x2000, CRC(e248835e ))
@@ -609,51 +599,51 @@ ROM_START(apple2e)
 ROM_END
 
 ROM_START(apple2ee)
-	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
-	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, CRC(186f432d ))
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC( b081df66 ))
+	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC( 2651014d ))
 
-    ROM_REGION(0x4700,REGION_CPU1,0)
-    ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000, CRC(443aa7c4 ))
-    ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000, CRC(95e10034 ))
-    ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6 )) /* Disk II ROM - DOS 3.3 version */
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000, CRC(443aa7c4 ))
+	ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000, CRC(95e10034 ))
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6 )) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ep)
-	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
-	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, CRC(186f432d ))
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC( b081df66 ))
+	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC( 2651014d ))
 
-    ROM_REGION(0x4700,REGION_CPU1,0)
-    ROM_LOAD ("a2ept.cf", 0x0000, 0x4000, CRC(02b648c8))
-    ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6)) /* Disk II ROM - DOS 3.3 version */
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ("a2ept.cf", 0x0000, 0x4000, CRC(02b648c8))
+	ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6)) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c)
-	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
-	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, CRC(67aba8e7 ))
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC( b081df66 ))
+	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC( 2651014d ))
 
-    ROM_REGION(0x4000,REGION_CPU1,0)
-    ROM_LOAD ( "a2c.128", 0x0000, 0x4000, CRC(f0edaa1b ))
+	ROM_REGION(0x4000,REGION_CPU1,0)
+	ROM_LOAD ( "a2c.128", 0x0000, 0x4000, CRC(f0edaa1b ))
 ROM_END
 
 ROM_START(apple2c0)
-	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
-	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, CRC(67aba8e7 ))
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC( b081df66 ))
+	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC( 2651014d ))
 
-    ROM_REGION(0x8700,REGION_CPU1,0)
-    ROM_LOAD("a2c.256", 0x0000, 0x8000, CRC(c8b979b3))
+	ROM_REGION(0x8700,REGION_CPU1,0)
+	ROM_LOAD("a2c.256", 0x0000, 0x8000, CRC(c8b979b3))
 ROM_END
 
 ROM_START(apple2cp)
-	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
-	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, CRC(67aba8e7 ))
+	ROM_REGION(0x2000,REGION_GFX1,0)
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC( b081df66 ))
+	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC( 2651014d ))
 
-    ROM_REGION(0x8700,REGION_CPU1,0)
-    ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, CRC(0b996420))
+	ROM_REGION(0x8700,REGION_CPU1,0)
+	ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, CRC(0b996420))
 ROM_END
 
 SYSTEM_CONFIG_START(apple2)
@@ -665,8 +655,8 @@ SYSTEM_CONFIG_START(apple2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
-COMP ( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][" )
-COMP ( 1979, apple2p,  apple2,   0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][+" )
+COMPX( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][", GAME_IMPERFECT_COLORS )
+COMPX( 1979, apple2p,  apple2,   0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][+", GAME_IMPERFECT_COLORS )
 COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )

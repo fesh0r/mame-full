@@ -73,31 +73,33 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
   text
 ***************************************************************************/
 
-static UINT8 apple2_text_char(int videobase, int memory_offset)
+static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory_offset)
 {
-	UINT8 b;
-	b = mess_ram[videobase + memory_offset];
-	if (flash && (b >= 0x40) && (b <= 0x7f))
-		b ^= 0x80;
-	return b;
+	int character;
+	int color = 0;
+	
+	character = mess_ram[videobase + memory_offset];
+
+	if (a2 & VAR_ALTCHARSET)
+		character |= 0x200;
+	else if (flash && (character >= 0x40) && (character <= 0x7f))
+		color = 1;
+
+	SET_TILE_INFO(
+		gfxset,		/* gfx */
+		character,	/* character */
+		color,		/* color */
+		0);			/* flags */
 }
 
 static void apple2_text_gettileinfo(int memory_offset)
 {
-	SET_TILE_INFO(
-		0,													/* gfx */
-		apple2_text_char(text_videobase, memory_offset),	/* character */
-		WHITE,												/* color */
-		0);												/* flags */
+	apple2_generaltext_gettileinfo(0, text_videobase, memory_offset);
 }
 
 static void apple2_dbltext_gettileinfo(int memory_offset)
 {
-	SET_TILE_INFO(
-		1,													/* gfx */
-		apple2_text_char(dbltext_videobase, memory_offset),	/* character */
-		WHITE,												/* color */
-		0);													/* flags */
+	apple2_generaltext_gettileinfo(1, dbltext_videobase, memory_offset);
 }
 
 static UINT32 apple2_text_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -381,7 +383,7 @@ VIDEO_UPDATE( apple2 )
 	new_a2 = a2;
 	if (new_a2 & VAR_80STORE)
 		new_a2 &= ~VAR_PAGE2;
-	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_DHIRES | VAR_80COL | VAR_PAGE2;
+	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_DHIRES | VAR_80COL | VAR_PAGE2 | VAR_ALTCHARSET;
 
 	if (new_a2 != old_a2)
 	{

@@ -16,7 +16,8 @@ System Driver Changes:
 - [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
   now boots.  Removed *.vid files from the BIOS set in favor of the proper
   character ROMs (suffixed with *.chr).  80-character text mode fixed (bug
-  #311).  Implemented double hires mode (bug #303) [Nate Woods]
+  #311).  Implemented double hires mode (bug #303) and support for the
+  alternate character set.  [Nate Woods]
 
 - [APPLE2] Now uses the Robert Munafo palette. [Steve Nickolas]
 
