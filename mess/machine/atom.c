@@ -348,7 +348,7 @@ QUICKLOAD_LOAD(atom)
 /* load floppy */
 DEVICE_LOAD( atom_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
@@ -490,7 +490,7 @@ DEVICE_LOAD( atom_cassette )
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, open_mode, &args);
+	return cassette_init(image, file, &args);
 }
 
 

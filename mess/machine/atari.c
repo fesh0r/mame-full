@@ -335,9 +335,9 @@ DEVICE_LOAD( a800_floppy )
 		return INIT_FAIL;
 
 	/* tell whether the image is writable */
-	drv[id].mode = (file) && is_effective_mode_writable(open_mode);
+	drv[id].mode = image_is_writable(image);
 	/* set up image if it has been created */
-	if ((file) && is_effective_mode_create(open_mode))
+	if (image_has_been_created(image))
 	{
 		int sector;
 		char buff[256];

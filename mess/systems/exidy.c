@@ -73,7 +73,7 @@
 
 static DEVICE_LOAD( exidy_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
 	{
 		/* not correct */
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);

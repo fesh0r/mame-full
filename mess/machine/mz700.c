@@ -812,7 +812,7 @@ static struct cassette_args mz700_cassette_args =
 
 DEVICE_LOAD( mz700_cassette )
 {
-	return cassette_init(image, file, open_mode, &mz700_cassette_args);
+	return cassette_init(image, file, &mz700_cassette_args);
 }
 
 /******************************************************************************

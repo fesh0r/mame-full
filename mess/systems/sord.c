@@ -358,7 +358,7 @@ static DEVICE_LOAD( sord_cartslot )
 
 static DEVICE_LOAD( sord_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
 	{
 		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
 		basicdsk_set_geometry(image, 40, 1, 18, 256, 1, 0, FALSE);
@@ -375,7 +375,7 @@ static DEVICE_LOAD( sord_cassette )
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, open_mode, &args);
+	return cassette_init(image, file, &args);
 }
 
 static void sord_m5_ctc_interrupt(int state)

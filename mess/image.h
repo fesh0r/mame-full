@@ -164,7 +164,7 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write);
 
 #define	DEVICE_INIT(name)	int device_init_##name(mess_image *image)
 #define DEVICE_EXIT(name)	void device_exit_##name(mess_image *image)
-#define DEVICE_LOAD(name)	int device_load_##name(mess_image *image, mame_file *file, int open_mode)
+#define DEVICE_LOAD(name)	int device_load_##name(mess_image *image, mame_file *file)
 #define DEVICE_UNLOAD(name)	void device_unload_##name(mess_image *image)
 
 #endif /* IMAGE_H */

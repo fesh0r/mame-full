@@ -247,32 +247,29 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
 
 DEVICE_LOAD( vtech1_cassette )
 {
-	if (file)
+	if (! image_has_been_created(image))
 	{
-		if (!is_effective_mode_create(open_mode))
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.fill_wave = fill_wave;
-			wa.smpfreq = 600*BITSAMPLES;
-			wa.header_samples = SILENCE;
-			wa.trailer_samples = SILENCE;
-			wa.chunk_size = 1;
-			wa.chunk_samples = BYTESAMPLES;
-			if (device_open(cassette_image(), 0, &wa) )
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
-		else
-	    {
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.fill_wave = fill_wave;
-			wa.smpfreq = 600*BITSAMPLES;
-			if( device_open(cassette_image(), 1, &wa) )
-				return INIT_FAIL;
-	        return INIT_PASS;
-		}
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		wa.header_samples = SILENCE;
+		wa.trailer_samples = SILENCE;
+		wa.chunk_size = 1;
+		wa.chunk_samples = BYTESAMPLES;
+		if (device_open(cassette_image(), 0, &wa) )
+			return INIT_FAIL;
+		return INIT_PASS;
+	}
+	else
+    {
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		if( device_open(cassette_image(), 1, &wa) )
+			return INIT_FAIL;
+        return INIT_PASS;
 	}
     return INIT_PASS;
 }
@@ -397,7 +394,7 @@ DEVICE_LOAD( vtech1_floppy )
 {
 	int id = image_index_in_device(image);
 
-	if (is_effective_mode_writable(open_mode))
+	if (image_is_writable(image))
 		vtech1_fdc_wrprot[id] = 0x00;
 	else
 		vtech1_fdc_wrprot[id] = 0x80;

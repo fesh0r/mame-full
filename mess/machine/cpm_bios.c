@@ -113,24 +113,16 @@ DEVICE_LOAD( cpm_floppy )
 {
 	int id = image_index_in_device(image);
 
-	ff[id] = (file != NULL);
+	ff[id] = TRUE;
 
 	/* now try to open the image if a filename is given */
-	if (ff[id])
-	{
-		{
-			fp[id] = file;
-			mode[id] = (fp[id]) && is_effective_mode_writable(open_mode);
+	fp[id] = file;
+	mode[id] = image_is_writable(image);
 
-			if( !fp[id] )
-			{
-				ff[id] = 0;
-			}
-		}
-	}
-
-	return 0;
+	return INIT_PASS;
 }
+
+/*TODO: implement DEVICE_UNLOAD that clears ff[id]*/
 
 /*****************************************************************************
  *	cpm_init

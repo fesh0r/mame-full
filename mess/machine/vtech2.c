@@ -498,7 +498,7 @@ int laser_cassette_verify (UINT8 buff[])
 
 DEVICE_LOAD( laser_cassette )
 {
-	if (! is_effective_mode_create(open_mode))
+	if (! image_has_been_created(image))
 	{
 		struct wave_args_legacy wa = {0,};
 		wa.file = file;

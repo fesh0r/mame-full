@@ -1313,12 +1313,12 @@ static void sony_doaction(void)
 }
 
 /*
-	opens a disk image (called from the floppy device init routine)
+	opens a disk image (called from the floppy device load routine)
 
 	the allowablesizes tells which formats should be supported
 	(single-sided and double-sided 3.5'' GCR)
 */
-int sony_floppy_load(mess_image *img, mame_file *fp, int open_mode, int allowablesizes)
+int sony_floppy_load(mess_image *img, mame_file *fp, int allowablesizes)
 {
 	floppy *f;
 	long image_len=0;
@@ -1336,7 +1336,7 @@ int sony_floppy_load(mess_image *img, mame_file *fp, int open_mode, int allowabl
 	/* open file */
 	f->fd = fp;
 	/* tell whether the image is writable */
-	f->wp = ! (is_effective_mode_writable(open_mode));
+	f->wp = ! image_is_writable(img);
 
 
 	/* R. Nabet : added support for the diskcopy format to allow exchanges with real-world macs */

@@ -1963,7 +1963,7 @@ static struct cassette_args coco_cassette_args =
 
 DEVICE_LOAD(coco_cassette)
 {
-	return cassette_init(image, file, open_mode, &coco_cassette_args);
+	return cassette_init(image, file, &coco_cassette_args);
 }
 
 /***************************************************************************

@@ -88,9 +88,9 @@ DEVICE_LOAD( ti99_4_pio )
 
 	pio_fp = file;
 	/* tell whether the image is writable */
-	pio_readable = (pio_fp && !is_effective_mode_create(open_mode));
+	pio_readable = ! image_has_been_created(image);
 	/* tell whether the image is writable */
-	pio_writable = (pio_fp && is_effective_mode_writable(open_mode));
+	pio_writable = image_is_writable(image);
 	if (pio_write && pio_writable)
 		pio_handshakein = 0;	/* receiver ready */
 	else

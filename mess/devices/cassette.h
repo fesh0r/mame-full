@@ -21,7 +21,7 @@ struct cassette_args
 	int create_smpfreq;
 };
 
-int cassette_init(mess_image *img, mame_file *file, int open_mode, const struct cassette_args *args);
+int cassette_init(mess_image *img, mame_file *file, const struct cassette_args *args);
 void cassette_exit(mess_image *img);
 
 #endif /* CASSETTE_H */

@@ -22,7 +22,7 @@ static int common_length_spt_heads[][3] = {
 
 DEVICE_LOAD(pc_floppy)
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode) == INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;

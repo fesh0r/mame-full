@@ -948,7 +948,7 @@ static void wave_output(mess_image *img, int data)
 /* ----------------------------------------------------------------------- */
 
 void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*loadproc)(mess_image *img, mame_file *fp, int open_mode), void (*unloadproc)(mess_image *img))
+	device_load_handler loadproc, device_unload_handler unloadproc)
 {
 	strcpy(actualext, "wav");
 	strcpy(actualext + 4, fileext);

@@ -1221,13 +1221,13 @@ DEVICE_LOAD( oric_floppy )
 	int id = image_index_in_device(image);
 
 	/* attempt to open mfm disk */
-	if (device_load_mfm_disk(image, file, open_mode) == INIT_PASS)
+	if (device_load_mfm_disk(image, file) == INIT_PASS)
 	{
 		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
 		return INIT_PASS;
 	}
 
-	if (device_load_basicdsk_floppy(image, file, open_mode) == INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
@@ -1437,7 +1437,7 @@ DEVICE_LOAD( oric_cassette )
 {
 	struct wave_args_legacy wa;
 
-	if (! is_effective_mode_create(open_mode))
+	if (! image_has_been_created(image))
 	{
 		int oric_tap_size;
 
@@ -1529,7 +1529,7 @@ int oric_cassette_init(int id)
 	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! image_has_been_created(image))
 		{
 			struct wave_args_legacy wa = {0,};
 			wa.file = file;

@@ -453,7 +453,7 @@ DEVICE_LOAD( microtan_cassette )
 	args.chunk_samples = 8;
 	args.input_smpfreq = Machine->sample_rate;
 	args.create_smpfreq = Machine->sample_rate;
-	return cassette_init(image, file, open_mode, &args);
+	return cassette_init(image, file, &args);
 }
 
 static int microtan_varify_snapshot(UINT8 *data, int size)

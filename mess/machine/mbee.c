@@ -153,7 +153,7 @@ DEVICE_LOAD( mbee_cassette )
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 11025;
-	return cassette_init(image, file, open_mode, &args);
+	return cassette_init(image, file, &args);
 }
 
 DEVICE_LOAD( mbee_cart )

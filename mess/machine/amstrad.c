@@ -39,7 +39,7 @@ DEVICE_LOAD( amstrad_cassette )
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, open_mode, &args);
+	return cassette_init(image, file, &args);
 }
 
 /* load CPCEMU style snapshots */

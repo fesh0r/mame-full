@@ -30,7 +30,7 @@ DEVICE_LOAD( apf_cassette )
 
 	if( file )
 	{
-		if (! is_effective_mode_create(open_mode))
+		if (! image_has_been_created(image))
 		{
 			int apf_apt_size;
 
@@ -112,7 +112,7 @@ DEVICE_LOAD( apf_cassette )
 /* 256 bytes per sector, single sided, single density, 40 track  */
 DEVICE_LOAD( apfimag_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 40, 1, 8, 256, 1, 0, FALSE);
 		return INIT_PASS;

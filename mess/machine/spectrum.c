@@ -1084,7 +1084,7 @@ DEVICE_LOAD( spectrum_cassette )
 	struct cassette_args args;
 
 	TapePosition = 0;
-	if (!is_effective_mode_create(open_mode) && !strcmpi(image_filetype(image), "tap"))
+	if (!image_has_been_created(image) && !strcmpi(image_filetype(image), "tap"))
 	{
 		cassette_snapshot_size = mame_fsize(file);
 		cassette_snapshot = image_malloc(image, cassette_snapshot_size);
@@ -1099,7 +1099,7 @@ DEVICE_LOAD( spectrum_cassette )
 		cassette_snapshot_size = 0;
 		memset(&args, 0, sizeof(args));
 		args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-		return cassette_init(image, file, open_mode, &args);
+		return cassette_init(image, file, &args);
 	}
 }
 

@@ -203,7 +203,7 @@ DEVICE_LOAD( ti990_hd )
 	/* open file */
 	d->fd = file;
 	/* tell whether the image is writable */
-	d->wp = ! is_effective_mode_writable(open_mode);
+	d->wp = ! image_is_writable(image);
 
 	d->unsafe = 1;
 	/* set attention line */

@@ -157,7 +157,7 @@ static unsigned char kc85_disc_hw_input_gate;
 
 DEVICE_LOAD( kc85_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
 		return INIT_PASS;
@@ -413,7 +413,7 @@ static void kc85_module_system_init(void)
 
 DEVICE_LOAD( kc_cassette )
 {
-	if (! is_effective_mode_create(open_mode))
+	if (! image_has_been_created(image))
 	{
 		struct wave_args_legacy wa = {0,};
 		wa.file = file;

@@ -209,9 +209,9 @@ static int ti99_hsgpl_get_dirty_flag(void)
 #if 0
 DEVICE_LOAD(ti99_hsgpl)
 {
-	hsgpl.is_image_writable = is_effective_mode_writable(open_mode);
+	hsgpl.is_image_writable = image_is_writable(image);
 
-	if (is_effective_mode_create(open_mode))
+	if (image_has_been_created(image))
 		/* There is nothing wrong with creating an image here */
 		return INIT_PASS;
 

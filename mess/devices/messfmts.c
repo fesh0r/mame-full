@@ -138,14 +138,14 @@ static floppy_interface bdf_floppy_interface =
 	NULL
 };
 
-static int bdf_floppy_init(mess_image *img)
+static DEVICE_INIT(bdf_floppy)
 {
-	if (!image_alloctag(img, BDFTAG, sizeof(struct mess_bdf)))
+	if (!image_alloctag(image, BDFTAG, sizeof(struct mess_bdf)))
 		return INIT_FAIL;
-	return floppy_drive_init(img, &bdf_floppy_interface);
+	return floppy_drive_init(image, &bdf_floppy_interface);
 }
 
-static int bdf_floppy_load_internal(mess_image *img, mame_file *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, mame_file *fp, int open_mode)
+static int bdf_floppy_load_internal(mess_image *img, mame_file *file, const formatdriver_ctor *open_formats, formatdriver_ctor create_format)
 {
 	const char *name;
 	const char *ext;
@@ -159,7 +159,7 @@ static int bdf_floppy_load_internal(mess_image *img, mame_file *file, int mode, 
 
 	name = image_filename(img);
 
-	if (mode == OSD_FOPEN_RW_CREATE)
+	if (image_has_been_created(img))
 	{
 		err = bdf_create(&mess_bdf_procs, create_format, file, NULL, &messbdf->bdf);
 	}
@@ -172,7 +172,7 @@ static int bdf_floppy_load_internal(mess_image *img, mame_file *file, int mode, 
 			open_formats = fmts;				
 		}
 		ext = image_filetype(img);
-		err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &messbdf->bdf);
+		err = bdf_open(&mess_bdf_procs, open_formats, file, ! image_is_writable(img), ext, &messbdf->bdf);
 	}
 	if (err)
 		return INIT_FAIL;
@@ -180,7 +180,7 @@ static int bdf_floppy_load_internal(mess_image *img, mame_file *file, int mode, 
 	return INIT_PASS;
 }
 
-static int bdf_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+static DEVICE_LOAD(bdf_floppy)
 {
 	const struct IODevice *dev;
 	const formatdriver_ctor *open_formats;
@@ -192,13 +192,13 @@ static int bdf_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	open_formats = (const formatdriver_ctor *) dev->user1;
 	create_format = (formatdriver_ctor) dev->user2;
 
-	return bdf_floppy_load_internal(img, fp, open_mode, open_formats, create_format, fp, open_mode);
+	return bdf_floppy_load_internal(image, file, open_formats, create_format);
 }
 
-static void bdf_floppy_unload(mess_image *img)
+static DEVICE_UNLOAD(bdf_floppy)
 {
 	struct mess_bdf *messbdf;
-	messbdf = image_lookuptag(img, BDFTAG);
+	messbdf = image_lookuptag(image, BDFTAG);
 
 	if (messbdf->bdf)
 	{
@@ -256,9 +256,9 @@ const struct IODevice *bdf_device_specify(struct IODevice *iodev, char *extbuf, 
 		iodev->file_extensions = extbuf;
 		iodev->flags = DEVICE_LOAD_RESETS_NONE;
 		iodev->open_mode = create_format ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
-		iodev->init = bdf_floppy_init;
-		iodev->load = bdf_floppy_load;
-		iodev->unload = bdf_floppy_unload;
+		iodev->init = device_init_bdf_floppy;
+		iodev->load = device_load_bdf_floppy;
+		iodev->unload = device_unload_bdf_floppy;
 		iodev->user1 = (void *) open_formats;
 		iodev->user2 = (void *) create_format;
 	}

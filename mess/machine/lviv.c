@@ -261,7 +261,7 @@ static struct cassette_args lviv_cassette_args =
 
 DEVICE_LOAD( lviv_cassette )
 {
-	return cassette_init(image, file, open_mode, &lviv_cassette_args);
+	return cassette_init(image, file, &lviv_cassette_args);
 }
 
 /*******************************************************************************

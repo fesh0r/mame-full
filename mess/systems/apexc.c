@@ -51,7 +51,7 @@ static DEVICE_LOAD(apexc_cylinder)
 	/* open file */
 	apexc_cylinder.fd = file;
 	/* tell whether the image is writable */
-	apexc_cylinder.writable = (apexc_cylinder.fd) && is_effective_mode_writable(open_mode);
+	apexc_cylinder.writable = image_is_writable(image);
 
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */

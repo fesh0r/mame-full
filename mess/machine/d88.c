@@ -52,7 +52,7 @@ DEVICE_LOAD(d88image_floppy)
 	w = &d88image_drives[id];
 
 	w->image_file = file;
-	w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
+	w->mode = image_is_writable(image);
 
 	/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
 	so we need to reflect this */

@@ -4,7 +4,7 @@
 
 #if HAS_WAVE
 
-int cassette_init(mess_image *img, mame_file *file, int open_mode, const struct cassette_args *args)
+int cassette_init(mess_image *img, mame_file *file, const struct cassette_args *args)
 {
 	struct wave_args_legacy wa;
 
@@ -21,7 +21,7 @@ int cassette_init(mess_image *img, mame_file *file, int open_mode, const struct 
 
 	if (file)
 	{
-		if (! is_effective_mode_create(open_mode))
+		if (! image_has_been_created(img))
 		{	/* existing file */
 			memset(&wa, 0, sizeof(&wa));
 

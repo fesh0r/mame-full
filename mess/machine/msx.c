@@ -924,7 +924,7 @@ DEVICE_LOAD( msx_floppy )
 {
 	int size, heads = 2;
 
-	if (file && ! is_effective_mode_create(open_mode))
+	if (! image_has_been_created(image))
 		{
 		size = mame_fsize (file);
 
@@ -941,7 +941,7 @@ DEVICE_LOAD( msx_floppy )
 	else
 		return INIT_FAIL;
 
-	if (device_load_basicdsk_floppy (image, file, open_mode) != INIT_PASS)
+	if (device_load_basicdsk_floppy (image, file) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry (image, 80, heads, 9, 512, 1, 0, FALSE);
@@ -1576,43 +1576,37 @@ DEVICE_LOAD( msx_cassette )
 	int ret;
 
 
-	if (file == NULL)
-		return INIT_PASS;
-
-	if( file )
+	if (! image_has_been_created(image))
 	{
-		if (! is_effective_mode_create(open_mode))
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		/* for cas files */
+		cas_samples = NULL;
+		cas_len = -1;
+		if (!check_fmsx_cas (file) )
 		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			/* for cas files */
-			cas_samples = NULL;
-			cas_len = -1;
-			if (!check_fmsx_cas (file) )
-			{
-				wa.smpfreq = 22050;
-				wa.fill_wave = msx_cassette_fill_wave;
-				wa.header_samples = cas_len;
-				wa.trailer_samples = 0;
-				wa.chunk_size = cas_len;
-				wa.chunk_samples = 0;
-			}
-			ret = device_open(image,0,&wa);
-			free (cas_samples);
-			cas_samples = NULL;
-			cas_len = -1;
+			wa.smpfreq = 22050;
+			wa.fill_wave = msx_cassette_fill_wave;
+			wa.header_samples = cas_len;
+			wa.trailer_samples = 0;
+			wa.chunk_size = cas_len;
+			wa.chunk_samples = 0;
+		}
+		ret = device_open(image,0,&wa);
+		free (cas_samples);
+		cas_samples = NULL;
+		cas_len = -1;
 
-			return (ret ? INIT_FAIL : INIT_PASS);
-		}
-		else
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.smpfreq = 44100;
-			if( device_open(image,1,&wa) )
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
+		return (ret ? INIT_FAIL : INIT_PASS);
+	}
+	else
+	{
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		wa.smpfreq = 44100;
+		if( device_open(image,1,&wa) )
+			return INIT_FAIL;
+		return INIT_PASS;
 	}
 	return INIT_FAIL;
 }

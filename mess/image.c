@@ -156,7 +156,7 @@ int image_load(mess_image *img, const char *name)
 	/* call device load */
 	if (dev->load)
 	{
-		err = dev->load(img, fp, img->effective_mode);
+		err = dev->load(img, fp);
 		if (err)
 			goto error;
 	}

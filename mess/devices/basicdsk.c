@@ -94,7 +94,7 @@ DEVICE_LOAD(basicdsk_floppy)
 	basicdsk *w = get_basicdsk(image);
 
 	w->image_file = file;
-	w->mode = is_effective_mode_writable(open_mode);
+	w->mode = image_is_writable(image);
 
 	/* this will be setup in the set_geometry function */
 	w->ddam_map = NULL;

@@ -369,7 +369,7 @@ DEVICE_LOAD( svi318_floppy )
 	int size;
 	int id = image_index_in_device(image);
 
-	if (file && ! is_effective_mode_create(open_mode))
+	if (! image_has_been_created(image))
 	{
 		size = mame_fsize (file);
 
@@ -388,7 +388,7 @@ DEVICE_LOAD( svi318_floppy )
 	else
 		return INIT_FAIL;
 
-	if (device_load_basicdsk_floppy(image, file, open_mode) != INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry(image, 40, svi318_dsk_heads[id], 17, 256, 1, 0, 0);
@@ -661,7 +661,7 @@ DEVICE_LOAD( svi318_cassette )
 {
 	int ret;
 
-	if (! is_effective_mode_create(open_mode))
+	if (! image_has_been_created(image))
 	{
 		struct wave_args_legacy wa = {0,};
 		wa.file = file;

@@ -48,7 +48,7 @@ int ide_hd_load(mess_image *img, int which_bus, int which_address, struct ide_in
 {
 	assert(which_address == 0);
 
-	if (device_load_mess_hd(img, image_fp(img), 0) == INIT_PASS)
+	if (device_load_mess_hd(img, image_fp(img)) == INIT_PASS)
 	{
 		ide_controller_init_custom(which_bus, intf, mess_hd_get_hard_disk_handle(img));
 		ide_controller_reset(which_bus);

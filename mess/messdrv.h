@@ -35,7 +35,7 @@ struct mame_bitmap;
 
 typedef int (*device_init_handler)(mess_image *img);
 typedef void (*device_exit_handler)(mess_image *img);
-typedef int (*device_load_handler)(mess_image *img, mame_file *fp, int open_mode);
+typedef int (*device_load_handler)(mess_image *img, mame_file *fp);
 typedef void (*device_unload_handler)(mess_image *img);
 
 struct IODevice
