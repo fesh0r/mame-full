@@ -27,33 +27,37 @@ void joy_SDL_init (void)
 	else 
 		printf("SDL: joystick interface initialization...\n");
 
-	joy_n= SDL_NumJoysticks();
+	joy_n=SDL_NumJoysticks();
 	printf("SDL: %d joysticks found.\n", joy_n );
 
 	for (i = 0; i < joy_n; i++)
 	{
 		printf("SDL: The names of the joysticks :  %s\n", SDL_JoystickName(i));
 		joystick=SDL_JoystickOpen(i);      
-		if ( joystick == NULL)   printf("SDL:  the joystick init FAIL!!\n");
-
-		joy_data[i].num_buttons = SDL_JoystickNumButtons(joystick);
-		joy_data[i].num_axis    = SDL_JoystickNumAxes(joystick);
-
-		if (joy_data[i].num_buttons > JOY_BUTTONS)
-			joy_data[i].num_buttons = JOY_BUTTONS;
-		if (joy_data[i].num_axis > JOY_AXES)
-			joy_data[i].num_axis = JOY_AXES;
-
-		for (j=0; j<joy_data[i].num_axis; j++)
+		if ( joystick )
 		{
-			joy_data[i].axis[j].min = -32768;
-			joy_data[i].axis[j].max =  32768;
+			/* Set the file descriptor to a dummy value. */
+			joy_data[i].fd = 1;
+			joy_data[i].num_buttons = SDL_JoystickNumButtons(joystick);
+			joy_data[i].num_axes    = SDL_JoystickNumAxes(joystick);
+
+			if (joy_data[i].num_buttons > JOY_BUTTONS)
+				joy_data[i].num_buttons = JOY_BUTTONS;
+			if (joy_data[i].num_axes > JOY_AXES)
+				joy_data[i].num_axes = JOY_AXES;
+
+			for (j=0; j<joy_data[i].num_axes; j++)
+			{
+				joy_data[i].axis[j].min = -32768;
+				joy_data[i].axis[j].max =  32768;
+			}
 		}
-		joy_poll_func = joy_SDL_poll;
+		else
+			printf("SDL:  the joystick init FAIL!!\n");
+
 	}
 
-	for (; i < JOY_MAX ; i++)
-		joy_data[i].fd = -1;
+	joy_poll_func = joy_SDL_poll;
 }
 
 
@@ -66,11 +70,14 @@ void joy_SDL_poll (void)
 
 	for (i = 0; i < JOY_MAX; i++)
 	{
-		for (j=0; j<joy_data[i].num_axis; j++)
-			joy_data[i].axis[j].val= SDL_JoystickGetAxis(joystick, j);
+		if (joy_data[i].fd)
+		{
+			for (j=0; j<joy_data[i].num_axes; j++)
+				joy_data[i].axis[j].val= SDL_JoystickGetAxis(joystick, j);
 
-		for (j=0; j<joy_data[i].num_buttons; j++)
-			joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick, j);
+			for (j=0; j<joy_data[i].num_buttons; j++)
+				joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick, j);
+		}
 	}
 #endif
 }
