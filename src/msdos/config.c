@@ -1,3 +1,4 @@
+
 /*
  * Configuration routines.
  *
@@ -409,6 +410,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.flipy     = get_bool ("config", "flipy",     NULL, 0);
 
 	/* read sound configuration */
+
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
 	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
