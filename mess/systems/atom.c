@@ -29,7 +29,6 @@ CPU: 65C02
 Video:		MC6847
 
 Sound:		Buzzer
-
 Floppy:		FDC8271
 
 Hardware:	PPIA 8255
@@ -88,7 +87,7 @@ static MEMORY_READ_START (atom_readmem)
 //    { 0xbc04, 0xbfdf,  MWA_NOP },
 //    { 0xbfe0, 0xbfff, MRA_NOP },        // MOUSE
     { 0xc000, 0xcfff, MRA_ROM },
-//    { 0xd000, 0xdfff, MRA_ROM },
+    { 0xd000, 0xdfff, MRA_ROM },
     { 0xe000, 0xefff, MRA_ROM },
     { 0xf000, 0xffff, MRA_ROM },
 
@@ -106,7 +105,7 @@ static MEMORY_WRITE_START (atom_writemem)
 //    { 0xbc04, 0xbfdf,  MWA_NOP },
 //    { 0xbfe0, 0xbfff, MWA_NOP },        // MOUSE
 	{ 0xc000, 0xffff, MWA_ROM },
-//    { 0xd000, 0xdfff, MWA_ROM },
+    { 0xd000, 0xdfff, MWA_ROM },
     { 0xe000, 0xefff, MWA_ROM },
     { 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -270,7 +269,7 @@ ROM_START (atom)
 	ROM_REGION (0x10000, REGION_CPU1)
 	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
 	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xe5b1f5f6)
-//    ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
+    ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
 	ROM_LOAD ("abasic.rom", 0xc000, 0x1000, 0x43798b9b)
 	//ROM_REGION (0x300, REGION_GFX1)
 	//ROM_LOAD ("atom.chr", 0x0000, 0x0300, 0x0)
@@ -279,10 +278,10 @@ ROM_END
 static const struct IODevice io_atom[] =
 {
 	{
-		IO_CARTSLOT,
+		IO_QUICKLOAD,
 		1,						/* count */
 		"atm\0",				/* file extn */
-		IO_RESET_ALL,			/* reset if file changed */
+		IO_RESET_NONE,			/* reset if file changed */
         NULL,                   /* id */
 		atom_init_atm,			/* init */
 		NULL,					/* exit */
@@ -318,7 +317,7 @@ static const struct IODevice io_atom[] =
 	},
     /* these are not working properly yet! */
 /*	IO_CASSETTE_WAVE(1,"wav\0",NULL,atom_cassette_init,atom_cassette_exit), */
-/*    IO_PRINTER_PORT (1, "prn\0"), */
+    IO_PRINTER_PORT (1, "prn\0"), 
 	{ IO_END }
 };
 
