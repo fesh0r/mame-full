@@ -284,7 +284,7 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 #endif
 #ifndef MESS_EXCLUDE_ACORN
 TESTDRIVER( z88 )		/*												  */
-TESTDRIVER( avigo ) 	/*												  */
+TESTDRIVER( avigo )     /*                                                */
 #endif
 #ifndef MESS_EXCLUDE_AMSTRAD
 	/* VEB MIKROELEKTRONIK */
@@ -344,7 +344,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( microtan )	/* 1979 Microtan 65 							  */
 	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
 	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
-
+TESTDRIVER( telestrat ) /* ??? Oric Telestrat/Stratos                       */
 	/* TEXAS INSTRUMENTS */
 TESTDRIVER( ti990_4 )	/* 197? TI 990/4								*/
 TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 								  */
