@@ -2,13 +2,20 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.55.3
+Release 0.56.1
+	- Everything from MAME 0.56.
 	- The svgafx driver is working again--it was broken by the removal of
 	  8bpp support from the core.  (Henri and Jason)
 	- Numeric keypad support is now much better.  (Andre Majorel)	
 	- Added arbitrary height scaling, available via the -arbheight option
 	  and started sanitizing the blit core.  This currently only works with
 	  the X11 (windows, DGA1, DGA2) and svgalib drivers.  (Adam Moss)
+	- Added support in makefile.unix for the Intel C++ compiler, and also a
+	  sample wrapper script in contrib/tools.  (Adam Moss)
+	- Added -usbpspad/-pspad switch for support of the direction buttons on
+	  the Playstation gamepad.  (Bill Adams)
+	- Added support for SDL under BeOS.  Sound is not currently supported,
+	  however.  (Jack Burton)
 
 Release 0.55.2
 	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
