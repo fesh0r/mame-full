@@ -1684,6 +1684,19 @@ WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
     }
 }
 
+/* 68k handlers */
+
+READ16_HANDLER( dsp_68k_r )
+
+{
+  return 0xdeed;
+}
+
+WRITE16_HANDLER( dsp_68k_w )
+
+{
+}
+
 /********************************************************
  *  Main Machine Code                                   *
  ********************************************************/
@@ -1693,9 +1706,12 @@ void saturn_init_machine(void)
   int i;
   UINT32 *mem2;
   int mem_length;
+  UINT16 *base;
 
   mem = (UINT32 *) memory_region(REGION_CPU1);
   mem2 = (UINT32 *) memory_region(REGION_CPU2);
+  cpu_set_halt_line(1, ASSERT_LINE); 
+  /* cpu_set_halt_line(2, ASSERT_LINE); */
 
   for (i = 0; i < (SATURN_ROM_SIZE/4); i++)
     {
@@ -1708,6 +1724,16 @@ void saturn_init_machine(void)
     {
       mem[i] = 0; /* Clear RAM */
     }
+
+  base = (UINT16 *) memory_region(REGION_CPU3); /* Setup reset vector for 68k stupidity */
+
+  *(base + 3) = 4;
+  *(base + 4) = 0x60fe;
+
+  base = (UINT16 *) &mem[SATURN_SOUND_RAM_BASE/4]; /* Setup loop in real sound ram */
+
+  *(base + 3) = 4;
+  *(base + 4) = 0x60fe;
 
   /* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
 
@@ -1772,11 +1798,14 @@ void saturn_init_machine(void)
       install_mem_read32_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
       install_mem_write32_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
 
-      /*install_mem_read32_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
-      install_mem_write32_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );*/
       install_mem_read32_handler (i, 0x06000000, 0x060fffff, MRA32_BANK2 );
       install_mem_write32_handler(i, 0x06000000, 0x060fffff, MWA32_BANK2 );
     }
+
+  install_mem_read16_handler(2, 0x000000, 0x07ffff, MRA16_BANK3);
+  install_mem_write16_handler(2, 0x000000, 0x0fffff, MWA16_BANK3);
+  install_mem_read16_handler(2, 0x100000, 0x100ee3, dsp_68k_r);
+  install_mem_write16_handler(2, 0x100000, 0x100ee3, dsp_68k_w);
 
   cpu_setbank(1, (UINT8 *) &mem[SATURN_WORKL_RAM_BASE/4]); /* Setup banking (for???) */
   cpu_setbank(2, (UINT8 *) &mem[SATURN_WORKH_RAM_BASE/4]);
@@ -1855,6 +1884,12 @@ INPUT_PORTS_START( saturn )
 
 INPUT_PORTS_END
 
+static MEMORY_READ16_START( readmem_68k )
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem_68k )
+MEMORY_END
+
 void saturn_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 
      /*Setup the internal palette to 15bit colour */
@@ -1897,6 +1932,13 @@ static struct MachineDriver machine_driver_saturn =
       saturn_readmem,saturn_writemem,
       0,0,
       ignore_interrupt, 1
+    },
+    {
+      CPU_M68000 | CPU_AUDIO_CPU,               /* Sound CPU */
+      14000000 ,	        /* 14 Mhz..ish */
+      readmem_68k,writemem_68k,
+      0,0,                      /* zeros are ioport read/write */
+      ignore_interrupt,1
     }
   },
   /* frames per second, VBL duration */
@@ -1933,6 +1975,7 @@ ROM_START(saturn)
      /* ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, 0x574FD2C3)*/
      /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000, 0xBF7DBDD7) */
      ROM_REGION(0x00080000, REGION_CPU2,0)
+     ROM_REGION(0x00000100, REGION_CPU3,0)
 ROM_END
 
 static const struct IODevice io_saturn[] = {
