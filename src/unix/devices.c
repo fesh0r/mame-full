@@ -26,6 +26,11 @@
 #include "sysdep/rc.h"
 #include "sysdep/fifo.h"
 
+#if defined svgalib || defined svgafx
+#include <vgakeyboard.h>
+#define sysdep_update_keyboard keyboard_update
+#endif
+
 
 
 /*============================================================ */
