@@ -245,13 +245,13 @@ static void z88_rtc_timer_callback(int dummy)
 	}
 }
 
-static mem_read_handler z88_read_handler[] =
+static read8_handler z88_read_handler[] =
 {
  MRA_BANK1, MRA_BANK2, MRA_BANK3, MRA_BANK4, MRA_BANK5
 };
 
 
-static mem_write_handler z88_write_handler[] =
+static write8_handler z88_write_handler[] =
 {
  MWA_BANK6, MWA_BANK7, MWA_BANK8, MWA_BANK9, MWA_BANK10
 };

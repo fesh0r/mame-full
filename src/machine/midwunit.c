@@ -23,7 +23,7 @@
 	midyunit_speedup_spin[0] = spin1; \
 	midyunit_speedup_spin[1] = offs1; \
 	midyunit_speedup_spin[2] = offs2; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midyunit_generic_speedup_1_16bit);
+	midyunit_speedup_base = install_mem_read16_handler(0, (addr) & ~0x1f, (addr) | 0x1f, midyunit_generic_speedup_1_16bit);
 
 #define INSTALL_SPEEDUP_3(addr, pc, spin1, spin2, spin3) \
 	midyunit_speedup_pc = (pc); \
@@ -31,12 +31,12 @@
 	midyunit_speedup_spin[0] = spin1; \
 	midyunit_speedup_spin[1] = spin2; \
 	midyunit_speedup_spin[2] = spin3; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midyunit_generic_speedup_3);
+	midyunit_speedup_base = install_mem_read16_handler(0, (addr) & ~0x1f, (addr) | 0x1f, midyunit_generic_speedup_3);
 
 #define INSTALL_SPEEDUP_1_ADDRESS( addr, pc ) \
 	midyunit_speedup_pc = (pc); \
 	midyunit_speedup_offset = ((addr) & 0x10) >> 4; \
-	midyunit_speedup_base = install_mem_read16_handler(0, TOBYTE((addr) & ~0x1f), TOBYTE((addr) | 0x1f), midwunit_generic_speedup_1_address);
+	midyunit_speedup_base = install_mem_read16_handler(0, (addr) & ~0x1f, (addr) | 0x1f, midwunit_generic_speedup_1_address);
 
 
 
@@ -548,7 +548,7 @@ DRIVER_INIT( wwfmania )
 	init_wunit_generic();
 
 	/* enable I/O shuffling */
-	install_mem_write16_handler(0, TOBYTE(0x01800000), TOBYTE(0x0180000f), wwfmania_io_0_w);
+	install_mem_write16_handler(0, 0x01800000, 0x0180000f, wwfmania_io_0_w);
 
 	/* serial prefixes 430, 528 */
 	midway_serial_pic_init(528);

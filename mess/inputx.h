@@ -94,7 +94,9 @@ int inputx_validitycheck(const struct GameDriver *gamedrv);
 /* these can be called from FEs */
 int inputx_can_post(void);
 int inputx_can_post_key(unicode_char_t ch);
+int inputx_is_posting(void);
 
+/* various posting functions; can be called from FEs */
 void inputx_post(const unicode_char_t *text);
 void inputx_postc(unicode_char_t ch);
 void inputx_postn(const unicode_char_t *text, size_t text_len);
@@ -103,6 +105,7 @@ void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
 void inputx_post_utf8(const char *text);
 void inputx_postn_utf8(const char *text, size_t text_len);
 
+/* miscellaneous functions */
 int input_categorize_port(const struct InputPort *in);
 int input_has_input_category(int category);
 int input_player_number(const struct InputPort *in);

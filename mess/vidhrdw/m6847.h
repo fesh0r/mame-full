@@ -36,8 +36,8 @@ struct m6847_init_params
 	void (*charproc)(UINT8 c);	/* the proc that gives the host a chance to change mode bits */
 	int initial_video_offset;	/* the first video offset to use */
 
-	mem_write_handler hs_func;	/* horizontal sync */
-	mem_write_handler fs_func;	/* field sync */
+	write8_handler hs_func;	/* horizontal sync */
+	write8_handler fs_func;	/* field sync */
 	double callback_delay;		/* amount of time to wait before invoking callbacks (this is a CoCo related hack */
 };
 

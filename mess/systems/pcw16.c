@@ -214,7 +214,7 @@ static WRITE_HANDLER(pcw16_palette_w)
 
 static char *pcw16_mem_ptr[4];
 
-const mem_write_handler pcw16_write_handler_dram[4] =
+const write8_handler pcw16_write_handler_dram[4] =
 {
 	MWA_BANK5,
 	MWA_BANK6,
@@ -222,7 +222,7 @@ const mem_write_handler pcw16_write_handler_dram[4] =
 	MWA_BANK8
 };
 
-const mem_read_handler pcw16_read_handler_dram[4] =
+const read8_handler pcw16_read_handler_dram[4] =
 {
 	MRA_BANK1,
 	MRA_BANK2,
@@ -293,7 +293,7 @@ static READ_HANDLER(pcw16_flash1_bank_handler3_r)
 	return pcw16_flash1_bank_handler_r(3, offset);
 }
 
-static mem_read_handler pcw16_flash0_bank_handlers_r[4] =
+static read8_handler pcw16_flash0_bank_handlers_r[4] =
 {
 	pcw16_flash0_bank_handler0_r,
 	pcw16_flash0_bank_handler1_r,
@@ -301,7 +301,7 @@ static mem_read_handler pcw16_flash0_bank_handlers_r[4] =
 	pcw16_flash0_bank_handler3_r,
 };
 
-static mem_read_handler pcw16_flash1_bank_handlers_r[4] =
+static read8_handler pcw16_flash1_bank_handlers_r[4] =
 {
 	pcw16_flash1_bank_handler0_r,
 	pcw16_flash1_bank_handler1_r,
@@ -370,7 +370,7 @@ static WRITE_HANDLER(pcw16_flash1_bank_handler3_w)
 	pcw16_flash1_bank_handler_w(3, offset, data);
 }
 
-static mem_write_handler pcw16_flash0_bank_handlers_w[4] =
+static write8_handler pcw16_flash0_bank_handlers_w[4] =
 {
 	pcw16_flash0_bank_handler0_w,
 	pcw16_flash0_bank_handler1_w,
@@ -378,7 +378,7 @@ static mem_write_handler pcw16_flash0_bank_handlers_w[4] =
 	pcw16_flash0_bank_handler3_w,
 };
 
-static mem_write_handler pcw16_flash1_bank_handlers_w[4] =
+static write8_handler pcw16_flash1_bank_handlers_w[4] =
 {
 	pcw16_flash1_bank_handler0_w,
 	pcw16_flash1_bank_handler1_w,

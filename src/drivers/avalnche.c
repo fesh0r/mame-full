@@ -76,22 +76,22 @@ static PALETTE_INIT( avalnche )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_RAM }, /* RAM SEL */
-	{ 0x2000, 0x2fff, avalnche_input_r }, /* INSEL */
-	{ 0x6000, 0x7fff, MRA_ROM }, /* ROM1-ROM2 */
-	{ 0xe000, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM) /* RAM SEL */
+	AM_RANGE(0x2000, 0x2fff) AM_READ(avalnche_input_r) /* INSEL */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM) /* ROM1-ROM2 */
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM) /* ROM2 for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, avalnche_videoram_w, &videoram, &videoram_size }, /* DISPLAY */
-	{ 0x3000, 0x3fff, MWA_NOP }, /* WATCHDOG */
-	{ 0x4000, 0x4fff, avalnche_output_w }, /* OUTSEL */
-	{ 0x5000, 0x5fff, avalnche_noise_amplitude_w }, /* SOUNDLVL */
-	{ 0x6000, 0x7fff, MWA_ROM }, /* ROM1-ROM2 */
-	{ 0xe000, 0xffff, MWA_ROM }, /* ROM1-ROM2 */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(avalnche_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* DISPLAY */
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_NOP) /* WATCHDOG */
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(avalnche_output_w) /* OUTSEL */
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(avalnche_noise_amplitude_w) /* SOUNDLVL */
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM) /* ROM1-ROM2 */
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM) /* ROM1-ROM2 */
+ADDRESS_MAP_END
 
 
 
@@ -231,7 +231,7 @@ static MACHINE_DRIVER_START( avalnche )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,12096000/16)	   /* clock input is the "2H" signal divided by two */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(avalnche_interrupt,8)
 
 	MDRV_FRAMES_PER_SECOND(60)

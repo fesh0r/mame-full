@@ -77,40 +77,40 @@ static READ_HANDLER( fake_r3 )
 	return 0x38;
 }
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x21ff, MRA_RAM },
-  { 0x2200, 0x3fff, videoram_r },
-	{ 0x4000, 0x4fff, MRA_ROM },
-	{ 0x5001, 0x5001, fake_r }, /* sub cpu communication */
-	{ 0x5002, 0x5002, fake_r2 },
-	{ 0x5035, 0x5035, fake_r3 },		/* only enigma2a (pc:1282) */
-	{ 0x5801, 0x5801, input_port_0_r }, /* only enigma2a, used instead of ports */
-	{ 0x5802, 0x5802, input_port_1_r }, /* only enigma2a, used instead of ports */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x21ff) AM_READ(MRA8_RAM)
+  AM_RANGE(0x2200, 0x3fff) AM_READ(videoram_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5001, 0x5001) AM_READ(fake_r) /* sub cpu communication */
+	AM_RANGE(0x5002, 0x5002) AM_READ(fake_r2)
+	AM_RANGE(0x5035, 0x5035) AM_READ(fake_r3)		/* only enigma2a (pc:1282) */
+	AM_RANGE(0x5801, 0x5801) AM_READ(input_port_0_r) /* only enigma2a, used instead of ports */
+	AM_RANGE(0x5802, 0x5802) AM_READ(input_port_1_r) /* only enigma2a, used instead of ports */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x21ff, MWA_RAM },
-	{ 0x2200, 0x3fff, enigma2_videoram_w, &videoram },
-	{ 0x4000, 0x4fff, MWA_ROM },
-	{ 0x5015, 0x53fb, MWA_RAM }, /* every 0x20 */
-	{ 0x5415, 0x541b, MWA_RAM }, /* always zero ? */
-	{ 0x5803, 0x5803, MWA_RAM }, /* only enigma2a, used instead of ports */
-	{ 0x5805, 0x5805, MWA_RAM }, /* only enigma2a, used instead of ports */
-	{ 0x5806, 0x5806, MWA_RAM }, /* only enigma2a, used instead of ports */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x21ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2200, 0x3fff) AM_WRITE(enigma2_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5015, 0x53fb) AM_WRITE(MWA8_RAM) /* every 0x20 */
+	AM_RANGE(0x5415, 0x541b) AM_WRITE(MWA8_RAM) /* always zero ? */
+	AM_RANGE(0x5803, 0x5803) AM_WRITE(MWA8_RAM) /* only enigma2a, used instead of ports */
+	AM_RANGE(0x5805, 0x5805) AM_WRITE(MWA8_RAM) /* only enigma2a, used instead of ports */
+	AM_RANGE(0x5806, 0x5806) AM_WRITE(MWA8_RAM) /* only enigma2a, used instead of ports */
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x01, 0x01, input_port_0_r },
-	{ 0x02, 0x02, input_port_1_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x03, 0x03, MWA_NOP },
-	{ 0x05, 0x05, MWA_NOP },
-	{ 0x06, 0x06, MWA_NOP },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x03, 0x03) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x05, 0x05) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( enigma2a )
 	PORT_START
@@ -230,8 +230,8 @@ PALETTE_INIT( enigma2 )
 
 static MACHINE_DRIVER_START( enigma2 )
 	MDRV_CPU_ADD_TAG("main",Z80, 2500000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -293,5 +293,5 @@ ROM_END
 static DRIVER_INIT(enigma2) {	cmap=1;}
 static DRIVER_INIT(enigma2a){	cmap=0;}
 
-GAMEX( 1981, enigma2,  0,		enigma2, enigma2,  enigma2, ROT90, "Game Plan (Zilec Electronics license)", "Enigma 2", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1981, enigma2,  0,		enigma2, enigma2,  enigma2, ROT90, "GamePlan (Zilec Electronics license)", "Enigma 2", GAME_NO_SOUND | GAME_WRONG_COLORS )
 GAMEX( 1984, enigma2a, enigma2, enigma2a, enigma2a, enigma2a, ROT90, "Zilec Electronics", "Enigma 2 (Space Invaders Hardware)", GAME_NO_SOUND | GAME_WRONG_COLORS )

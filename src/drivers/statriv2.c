@@ -253,88 +253,88 @@ static READ_HANDLER (supertr2_questions_read)
 	return (question_data[offs] ^ 0xFF) ^ XORval;
 }
 
-static MEMORY_READ_START( statriv2_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x48ff, MRA_RAM },
-	{ 0xc800, 0xcfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( statriv2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( statriv2_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x48ff, MWA_RAM, &generic_nvram, &generic_nvram_size },    // backup ram?
-	{ 0xc800, 0xcfff, statriv2_videoram_w, &statriv2_videoram },
-MEMORY_END
+static ADDRESS_MAP_START( statriv2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)    // backup ram?
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(statriv2_videoram_w) AM_BASE(&statriv2_videoram)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( supertr2_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x4800, 0x48ff, MRA_RAM },
-	{ 0xc800, 0xcfff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( supertr2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( supertr2_writemem )
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0x4800, 0x48ff, MWA_RAM, &generic_nvram, &generic_nvram_size },    // backup ram?
-	{ 0xc800, 0xcfff, statriv2_videoram_w, &statriv2_videoram },
-MEMORY_END
+static ADDRESS_MAP_START( supertr2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4800, 0x48ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)    // backup ram?
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(statriv2_videoram_w) AM_BASE(&statriv2_videoram)
+ADDRESS_MAP_END
 
-static PORT_READ_START( statriv2_readport )
-	{ 0x20, 0x20, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x2b, 0x2b, statriv2_questions_read },		// question data
-	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
-	{ 0xce, 0xce, IORP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( statriv2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x2b, 0x2b) AM_READ(statriv2_questions_read)		// question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( statriv2_writeport )
-	{ 0x22, 0x22, IOWP_NOP },				// ???
-	{ 0x23, 0x23, IOWP_NOP },				// ???
-	{ 0x29, 0x29, question_offset_low_w },
-	{ 0x2a, 0x2a, question_offset_high_w },
-	{ 0xb0, 0xb0, AY8910_control_port_0_w },
-	{ 0xb1, 0xb1, AY8910_write_port_0_w },
-	{ 0xc0, 0xcf, IOWP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( statriv2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_low_w)
+	AM_RANGE(0x2a, 0x2a) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_READ_START( supertr2_readport )
-	{ 0x20, 0x20, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x28, 0x28, supertr2_questions_read },                // question data
-	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
-	{ 0xce, 0xce, IORP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( supertr2_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x28, 0x28) AM_READ(supertr2_questions_read)                // question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( supertr2_writeport )
-	{ 0x22, 0x22, IOWP_NOP },				// ???
-	{ 0x23, 0x23, IOWP_NOP },				// ???
-	{ 0x28, 0x28, question_offset_low_w },
-	{ 0x29, 0x29, question_offset_med_w },
-	{ 0x2a, 0x2a, question_offset_high_w },
-	{ 0xb0, 0xb0, AY8910_control_port_0_w },
-	{ 0xb1, 0xb1, AY8910_write_port_0_w },
-	{ 0xc0, 0xcf, IOWP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( supertr2_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0x28, 0x28) AM_WRITE(question_offset_low_w)
+	AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_med_w)
+	AM_RANGE(0x2a, 0x2a) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( trivquiz_writeport )
-        { 0x22, 0x22, IOWP_NOP },                               // ???
-        { 0x23, 0x23, IOWP_NOP },                               // ???
-        { 0x28, 0x28, question_offset_low_w },
-        { 0x29, 0x29, question_offset_high_w },
-	{ 0xb0, 0xb0, AY8910_control_port_0_w },
-	{ 0xb1, 0xb1, AY8910_write_port_0_w },
-	{ 0xc0, 0xcf, IOWP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( trivquiz_writeport, ADDRESS_SPACE_IO, 8 )
+        AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)                               // ???
+        AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)                               // ???
+        AM_RANGE(0x28, 0x28) AM_WRITE(question_offset_low_w)
+        AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_high_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+ADDRESS_MAP_END
 
-static PORT_READ_START( trivquiz_readport )
-	{ 0x20, 0x20, input_port_0_r },
-	{ 0x21, 0x21, input_port_1_r },
-	{ 0x2a, 0x2a, statriv2_questions_read },                // question data
-	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
-	{ 0xce, 0xce, IORP_NOP },				// ???
-PORT_END
+static ADDRESS_MAP_START( trivquiz_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x2a, 0x2a) AM_READ(statriv2_questions_read)                // question data
+	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( statriv2 )
 	PORT_START
@@ -420,8 +420,8 @@ static INTERRUPT_GEN( statriv2_interrupt )
 static MACHINE_DRIVER_START( statriv2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
-	MDRV_CPU_MEMORY(statriv2_readmem,statriv2_writemem)
-	MDRV_CPU_PORTS(statriv2_readport,statriv2_writeport)
+	MDRV_CPU_PROGRAM_MAP(statriv2_readmem,statriv2_writemem)
+	MDRV_CPU_IO_MAP(statriv2_readport,statriv2_writeport)
 	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -448,8 +448,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( supertr2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
-	MDRV_CPU_MEMORY(supertr2_readmem,supertr2_writemem)
-	MDRV_CPU_PORTS(supertr2_readport,supertr2_writeport)
+	MDRV_CPU_PROGRAM_MAP(supertr2_readmem,supertr2_writemem)
+	MDRV_CPU_IO_MAP(supertr2_readport,supertr2_writeport)
 	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -476,8 +476,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( trivquiz )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
-	MDRV_CPU_MEMORY(supertr2_readmem,supertr2_writemem)
-	MDRV_CPU_PORTS(trivquiz_readport,trivquiz_writeport)
+	MDRV_CPU_PROGRAM_MAP(supertr2_readmem,supertr2_writemem)
+	MDRV_CPU_IO_MAP(trivquiz_readport,trivquiz_writeport)
 	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

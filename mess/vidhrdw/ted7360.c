@@ -487,8 +487,8 @@ static int lines;
 static int timer1_active, timer2_active, timer3_active;
 static void *timer1, *timer2, *timer3;
 static bool cursor1 = false;
-static mem_read_handler vic_dma_read;
-static mem_read_handler vic_dma_read_rom;
+static read8_handler vic_dma_read;
+static read8_handler vic_dma_read_rom;
 static int chargenaddr, bitmapaddr, videoaddr;
 
 static int x_begin, x_end;
@@ -531,8 +531,8 @@ void ted7360_init (int pal)
 	timer3 = timer_alloc(ted7360_timer_timeout);
 }
 
-void ted7360_set_dma (mem_read_handler dma_read,
-					  mem_read_handler dma_read_rom)
+void ted7360_set_dma (read8_handler dma_read,
+					  read8_handler dma_read_rom)
 {
 	vic_dma_read = dma_read;
 	vic_dma_read_rom = dma_read_rom;

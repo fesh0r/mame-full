@@ -143,7 +143,7 @@ WRITE16_HANDLER( midyunit_cmos_enable_w )
 		{
 			if (data == 0x500)
 			{
-				prot_result = cpu_readmem29lew_word(TOBYTE(0x10a4390)) << 4;
+				prot_result = program_read_word(TOBYTE(0x10a4390)) << 4;
 				logerror("  desired result = %04X\n", prot_result);
 			}
 		}
@@ -317,7 +317,7 @@ static WRITE16_HANDLER( term2la1_hack_w )
 #define WRITE_INT16(REG,DATA)	WRITE_U16(SCRATCH_RAM(REG), DATA)
 #define WRITE_INT32(REG,DATA)	WRITE_U32(SCRATCH_RAM(REG), BIG_DWORD_LE(DATA))
 
-#define BURN_TIME(INST_CNT)		tms34010_ICount -= INST_CNT
+#define BURN_TIME(INST_CNT)		activecpu_adjust_icount(-INST_CNT)
 
 /* General speed up loop body */
 #define DO_SPEEDUP_LOOP(X, LOC, OFFS1, OFFS2, A8SIZE, A7SIZE)	\
@@ -327,7 +327,7 @@ static WRITE16_HANDLER( term2la1_hack_w )
 	UINT32 a4 = 0;                               				\
 	 INT32 a1 = 0x80000000;										\
 	 INT32 a5 = 0x80000000;										\
-	while ((a2 = READ_INT32(a0)) != 0 && tms34010_ICount > 0)	\
+	while ((a2 = READ_INT32(a0)) != 0 && activecpu_get_icount() > 0)	\
 	{															\
 		INT32 a8 = READ_##A8SIZE(a2 + OFFS1);					\
 		INT32 a7 = READ_##A7SIZE(a2 + OFFS2);					\
@@ -525,7 +525,7 @@ static READ16_HANDLER( term2_speedup_r )
 
 			t2_FFC07DD0:
 				BURN_TIME(50);
-				if (tms34010_ICount <= 0)
+				if (activecpu_get_icount() <= 0)
 				{
 					break;
 				}
@@ -561,7 +561,7 @@ static READ16_HANDLER( term2_speedup_r )
 #define DO_SPEEDUP_LOOP_1(LOC, OFFS1, OFFS2, A8SIZE, A7SIZE)\
 															\
 	DO_SPEEDUP_LOOP(A, LOC, OFFS1, OFFS2, A8SIZE, A7SIZE);	\
-	if (tms34010_ICount > 0)								\
+	if (activecpu_get_icount() > 0)							\
 		cpu_spinuntil_int();								\
 
 READ16_HANDLER( midyunit_generic_speedup_1_16bit )
@@ -642,7 +642,7 @@ READ16_HANDLER( midyunit_generic_speedup_1_32bit )
 															\
 	UINT32 temp1,temp2,temp3;								\
 															\
-	while (tms34010_ICount > 0) 							\
+	while (activecpu_get_icount() > 0) 						\
 	{														\
 		temp1 = READ_INT32(LOC1);							\
 		temp2 = READ_INT32(LOC2);							\
@@ -762,12 +762,12 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 			memcpy(base + 0xa0000, base + 0x20000, 0x20000);
 			memcpy(base + 0x80000, base + 0x60000, 0x20000);
 			memcpy(base + 0x60000, base + 0x20000, 0x20000);
-			install_mem_write_handler(1, prot_start, prot_end, MWA_RAM);
+			install_mem_write_handler(1, prot_start, prot_end, MWA8_RAM);
 			break;
 
 		case SOUND_CVSD:
 		case SOUND_NARC:
-			install_mem_write_handler(1, prot_start, prot_end, MWA_RAM);
+			install_mem_write_handler(1, prot_start, prot_end, MWA8_RAM);
 			break;
 	}
 }
@@ -1034,38 +1034,38 @@ static void init_term2_common(void)
 	init_generic(6, SOUND_ADPCM, 0xfa8d, 0xfa9c);
 
 	/* special inputs */
-	install_mem_read16_handler(0, TOBYTE(0x01c00000), TOBYTE(0x01c0005f), term2_input_r);
-	install_mem_write16_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), term2_sound_w);
+	install_mem_read16_handler(0, 0x01c00000, 0x01c0005f, term2_input_r);
+	install_mem_write16_handler(0, 0x01e00000, 0x01e0001f, term2_sound_w);
 }
 
 DRIVER_INIT( term2 )
 {
 	init_term2_common();
-	install_mem_read16_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
+	install_mem_read16_handler(0, 0x010aa040, 0x010aa05f, term2_speedup_r);
 
 	/* HACK: this prevents the freeze on the movies */
 	/* until we figure whats causing it, this is better than nothing */
-	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2_hack_w);
+	t2_hack_mem = install_mem_write16_handler(0, 0x010aa0e0, 0x010aa0ff, term2_hack_w);
 }
 
 DRIVER_INIT( term2la2 )
 {
 	init_term2_common();
-	install_mem_read16_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
+	install_mem_read16_handler(0, 0x010aa040, 0x010aa05f, term2_speedup_r);
 
 	/* HACK: this prevents the freeze on the movies */
 	/* until we figure whats causing it, this is better than nothing */
-	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2la2_hack_w);
+	t2_hack_mem = install_mem_write16_handler(0, 0x010aa0e0, 0x010aa0ff, term2la2_hack_w);
 }
 
 DRIVER_INIT( term2la1 )
 {
 	init_term2_common();
-	install_mem_read16_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
+	install_mem_read16_handler(0, 0x010aa040, 0x010aa05f, term2_speedup_r);
 
 	/* HACK: this prevents the freeze on the movies */
 	/* until we figure whats causing it, this is better than nothing */
-	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2la1_hack_w);
+	t2_hack_mem = install_mem_write16_handler(0, 0x010aa0e0, 0x010aa0ff, term2la1_hack_w);
 }
 
 

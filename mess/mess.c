@@ -96,35 +96,7 @@ static int supported_device(const struct GameDriver *gamedrv, int type)
 	return FALSE;
 }
 
-#if 0
-extern void cpu_setbank_fromram(int bank, UINT32 ramposition, mem_read_handler rhandler, mem_write_handler whandler)
-{
-	assert(mess_ram_size > 0);
-	assert(mess_ram);
-	assert((rhandler && whandler) || (!rhandler && !whandler));
 
-	if (ramposition >= mess_ram_size && rhandler)
-	{
-		memory_set_bankhandler_r(bank, MRA_NOP);
-		memory_set_bankhandler_w(bank, MWA_NOP);
-	}
-	else
-	{
-		if (rhandler)
-		{
-			/* this is only necessary if not mirroring */
-			memory_set_bankhandler_r(bank, rhandler);
-			memory_set_bankhandler_w(bank, whandler);
-		}
-		else
-		{
-			/* NULL handlers imply mirroring */
-			ramposition %= mess_ram_size;
-		}
-		cpu_setbank(bank, &mess_ram[ramposition]);
-	}
-}
-#endif
 
 static int ram_init(const struct GameDriver *gamedrv)
 {

@@ -145,91 +145,91 @@ static PALETTE_INIT( atarifb )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x1000, 0x13bf, MRA_RAM },
-	{ 0x13c0, 0x13ff, MRA_RAM },
-	{ 0x3000, 0x3000, MRA_RAM },
-	{ 0x4000, 0x4000, atarifb_in0_r },
-	{ 0x4002, 0x4002, atarifb_in2_r },
-	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x13bf) AM_READ(MRA8_RAM)
+	AM_RANGE(0x13c0, 0x13ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(atarifb_in0_r)
+	AM_RANGE(0x4002, 0x4002) AM_READ(atarifb_in2_r)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM) /* PROM */
+	AM_RANGE(0xfff0, 0xffff) AM_READ(MRA8_ROM) /* PROM for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
-	{ 0x0260, 0x039f, MWA_RAM },
-	{ 0x03a0, 0x03ff, atarifb_alphap2_vram_w, &atarifb_alphap2_vram, &atarifb_alphap2_vram_size },
-	{ 0x1000, 0x13bf, videoram_w, &videoram, &videoram_size },
-	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x2000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x2001, 0x2001, atarifb_out1_w }, /* OUT 1 */
-	{ 0x2002, 0x2002, atarifb_out2_w }, /* OUT 2 */
-	{ 0x2003, 0x2003, atarifb_out3_w }, /* OUT 3 */
-	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
-	{ 0x5000, 0x5000, watchdog_reset_w },
-	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x025f) AM_WRITE(atarifb_alphap1_vram_w) AM_BASE(&atarifb_alphap1_vram) AM_SIZE(&atarifb_alphap1_vram_size)
+	AM_RANGE(0x0260, 0x039f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x03a0, 0x03ff) AM_WRITE(atarifb_alphap2_vram_w) AM_BASE(&atarifb_alphap2_vram) AM_SIZE(&atarifb_alphap2_vram_size)
+	AM_RANGE(0x1000, 0x13bf) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x13c0, 0x13ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(atarifb_scroll_w) AM_BASE(&atarifb_scroll_register) /* OUT 0 */
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(atarifb_out1_w) /* OUT 1 */
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(atarifb_out2_w) /* OUT 2 */
+	AM_RANGE(0x2003, 0x2003) AM_WRITE(atarifb_out3_w) /* OUT 3 */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_NOP) /* Interrupt Acknowledge */
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM) /* PROM */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( atarifb4_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x1000, 0x13bf, MRA_RAM },
-	{ 0x13c0, 0x13ff, MRA_RAM },
-	{ 0x3000, 0x3000, MRA_RAM },
-	{ 0x4000, 0x4000, atarifb4_in0_r },
-	{ 0x4001, 0x4001, input_port_1_r },
-	{ 0x4002, 0x4002, atarifb4_in2_r },
-	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( atarifb4_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x13bf) AM_READ(MRA8_RAM)
+	AM_RANGE(0x13c0, 0x13ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_READ(atarifb4_in0_r)
+	AM_RANGE(0x4001, 0x4001) AM_READ(input_port_1_r)
+	AM_RANGE(0x4002, 0x4002) AM_READ(atarifb4_in2_r)
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM) /* PROM */
+	AM_RANGE(0xfff0, 0xffff) AM_READ(MRA8_ROM) /* PROM for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( atarifb4_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
-	{ 0x0260, 0x039f, MWA_RAM },
-	{ 0x03a0, 0x03ff, atarifb_alphap2_vram_w, &atarifb_alphap2_vram, &atarifb_alphap2_vram_size },
-	{ 0x1000, 0x13bf, videoram_w, &videoram, &videoram_size },
-	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x2000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x2001, 0x2001, atarifb_out1_w }, /* OUT 1 */
-	{ 0x2002, 0x2002, atarifb_out2_w }, /* OUT 2 */
-	{ 0x2003, 0x2003, atarifb_out3_w }, /* OUT 3 */
-	{ 0x3000, 0x3000, MWA_NOP }, /* Interrupt Acknowledge */
-	{ 0x5000, 0x5000, watchdog_reset_w },
-	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
-MEMORY_END
+static ADDRESS_MAP_START( atarifb4_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x025f) AM_WRITE(atarifb_alphap1_vram_w) AM_BASE(&atarifb_alphap1_vram) AM_SIZE(&atarifb_alphap1_vram_size)
+	AM_RANGE(0x0260, 0x039f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x03a0, 0x03ff) AM_WRITE(atarifb_alphap2_vram_w) AM_BASE(&atarifb_alphap2_vram) AM_SIZE(&atarifb_alphap2_vram_size)
+	AM_RANGE(0x1000, 0x13bf) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x13c0, 0x13ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(atarifb_scroll_w) AM_BASE(&atarifb_scroll_register) /* OUT 0 */
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(atarifb_out1_w) /* OUT 1 */
+	AM_RANGE(0x2002, 0x2002) AM_WRITE(atarifb_out2_w) /* OUT 2 */
+	AM_RANGE(0x2003, 0x2003) AM_WRITE(atarifb_out3_w) /* OUT 3 */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_NOP) /* Interrupt Acknowledge */
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM) /* PROM */
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( soccer_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x0bff, MRA_RAM },	/* playfield/object RAM */
-	{ 0x2000, 0x3fff, MRA_ROM }, /* PROM */
-	{ 0x1800, 0x1800, atarifb4_in0_r },
-	{ 0x1801, 0x1801, input_port_1_r },
-	{ 0x1802, 0x1802, atarifb4_in2_r },
-	{ 0x1803, 0x1803, input_port_11_r },
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( soccer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)	/* playfield/object RAM */
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM) /* PROM */
+	AM_RANGE(0x1800, 0x1800) AM_READ(atarifb4_in0_r)
+	AM_RANGE(0x1801, 0x1801) AM_READ(input_port_1_r)
+	AM_RANGE(0x1802, 0x1802) AM_READ(atarifb4_in2_r)
+	AM_RANGE(0x1803, 0x1803) AM_READ(input_port_11_r)
+	AM_RANGE(0xfff0, 0xffff) AM_READ(MRA8_ROM) /* PROM for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( soccer_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x025f, atarifb_alphap1_vram_w, &atarifb_alphap1_vram, &atarifb_alphap1_vram_size },
-	{ 0x0260, 0x039f, MWA_RAM },
-	{ 0x03a0, 0x03ff, atarifb_alphap2_vram_w, &atarifb_alphap2_vram, &atarifb_alphap2_vram_size },
-	{ 0x0800, 0x0bbf, videoram_w, &videoram, &videoram_size },
-	{ 0x0bc0, 0x0bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1000, 0x1000, atarifb_scroll_w, &atarifb_scroll_register }, /* OUT 0 */
-	{ 0x1001, 0x1001, atarifb_out1_w }, /* OUT 1 */
-	{ 0x1002, 0x1002, atarifb_out2_w }, /* OUT 2 */
-	{ 0x1004, 0x1004, MWA_NOP }, /* Interrupt Acknowledge */
-	{ 0x1005, 0x1005, watchdog_reset_w },
-	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM */
-MEMORY_END
+static ADDRESS_MAP_START( soccer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x025f) AM_WRITE(atarifb_alphap1_vram_w) AM_BASE(&atarifb_alphap1_vram) AM_SIZE(&atarifb_alphap1_vram_size)
+	AM_RANGE(0x0260, 0x039f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x03a0, 0x03ff) AM_WRITE(atarifb_alphap2_vram_w) AM_BASE(&atarifb_alphap2_vram) AM_SIZE(&atarifb_alphap2_vram_size)
+	AM_RANGE(0x0800, 0x0bbf) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x0bc0, 0x0bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(atarifb_scroll_w) AM_BASE(&atarifb_scroll_register) /* OUT 0 */
+	AM_RANGE(0x1001, 0x1001) AM_WRITE(atarifb_out1_w) /* OUT 1 */
+	AM_RANGE(0x1002, 0x1002) AM_WRITE(atarifb_out2_w) /* OUT 2 */
+	AM_RANGE(0x1004, 0x1004) AM_WRITE(MWA8_NOP) /* Interrupt Acknowledge */
+	AM_RANGE(0x1005, 0x1005) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM) /* PROM */
+ADDRESS_MAP_END
 
 
 
@@ -716,7 +716,7 @@ static MACHINE_DRIVER_START( atarifb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 750000)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -744,7 +744,7 @@ static MACHINE_DRIVER_START( atarifb4 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarifb)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(atarifb4_readmem,atarifb4_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarifb4_readmem,atarifb4_writemem)
 
 	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
 MACHINE_DRIVER_END
@@ -765,7 +765,7 @@ static MACHINE_DRIVER_START( soccer )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarifb)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(soccer_readmem,soccer_writemem)
+	MDRV_CPU_PROGRAM_MAP(soccer_readmem,soccer_writemem)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0*8, 38*8-1, 2*8, 32*8-1)

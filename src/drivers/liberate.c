@@ -79,101 +79,101 @@ static READ_HANDLER( deco16_io_r )
 
 /***************************************************************************/
 
-static MEMORY_READ_START( prosport_readmem )
-	{ 0x0200, 0x021f, paletteram_r },
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x2fff, MRA_RAM },
-	{ 0x8000, 0x800f, deco16_io_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( prosport_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0200, 0x021f) AM_READ(paletteram_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0x800f) AM_READ(deco16_io_r)
+	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( prosport_writemem )
-	{ 0x0200, 0x021f, prosport_paletteram_w, &paletteram },
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1200, 0x1fff, MWA_RAM },
-	{ 0x3000, 0x37ff, liberate_videoram_w, &videoram },
-	{ 0x3800, 0x3fff, MWA_RAM, &spriteram },
-	{ 0x8000, 0x800f, deco16_io_w },
-	{ 0x4000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( prosport_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0200, 0x021f) AM_WRITE(prosport_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1200, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(liberate_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x8000, 0x800f) AM_WRITE(deco16_io_w)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( liberate_readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x3fff, MRA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x7fff, deco16_bank_r },
-	{ 0x8000, 0x800f, deco16_io_r },
-	{ 0x6200, 0x67ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberate_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_READ(MRA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(deco16_bank_r)
+	AM_RANGE(0x8000, 0x800f) AM_READ(deco16_io_r)
+	AM_RANGE(0x6200, 0x67ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( liberate_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x3fff, MWA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x47ff, liberate_videoram_w, &videoram },
-	{ 0x4800, 0x4fff, MWA_RAM, &spriteram },
-	{ 0x6200, 0x67ff, MWA_RAM, &scratchram },
-	{ 0x8000, 0x800f, deco16_io_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberate_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(liberate_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x6200, 0x67ff) AM_WRITE(MWA8_RAM) AM_BASE(&scratchram)
+	AM_RANGE(0x8000, 0x800f) AM_WRITE(deco16_io_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( deco16_readport )
-	{ 0x00, 0x00, input_port_0_r },
-PORT_END
+static ADDRESS_MAP_START( deco16_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( deco16_writeport )
-	{ 0x00, 0x00, deco16_bank_w },
-PORT_END
+static ADDRESS_MAP_START( deco16_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(deco16_bank_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( liberatb_readmem )
-	{ 0x00fe, 0x00fe, input_port_0_r },
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x3fff, MRA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x7fff, deco16_bank_r },
-	{ 0xf000, 0xf00f, deco16_io_r },
-	{ 0x8000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberatb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00fe, 0x00fe) AM_READ(input_port_0_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_READ(MRA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(deco16_bank_r)
+	AM_RANGE(0xf000, 0xf00f) AM_READ(deco16_io_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( liberatb_writemem )
-	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x3fff, MWA_ROM }, /* Mirror of main rom */
-	{ 0x4000, 0x47ff, liberate_videoram_w, &videoram },
-	{ 0x4800, 0x4fff, MWA_RAM, &spriteram },
-	{ 0x6200, 0x67ff, MWA_RAM, &scratchram },
-//	{ 0xf000, 0xf00f, deco16_io_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( liberatb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM) /* Mirror of main rom */
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(liberate_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x4800, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0x6200, 0x67ff) AM_WRITE(MWA8_RAM) AM_BASE(&scratchram)
+//	AM_RANGE(0xf000, 0xf00f) AM_WRITE(deco16_io_w)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static MEMORY_READ_START( prosoccr_sound_readmem )
-    { 0x0000, 0x01ff, MRA_RAM },
-	{ 0xa000, 0xa000, soundlatch_r },
-    { 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( prosoccr_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+    AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( prosoccr_sound_writemem )
-    { 0x0000, 0x01ff, MWA_RAM },
-	{ 0x2000, 0x2000, AY8910_write_port_0_w },
-	{ 0x4000, 0x4000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-    { 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( prosoccr_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_1_w)
+    AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem )
-    { 0x0000, 0x01ff, MRA_RAM },
-	{ 0xb000, 0xb000, soundlatch_r },
-    { 0xc000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
+    AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-    { 0x0000, 0x01ff, MWA_RAM },
-	{ 0x3000, 0x3000, AY8910_write_port_0_w },
-	{ 0x4000, 0x4000, AY8910_control_port_0_w },
-	{ 0x7000, 0x7000, AY8910_write_port_1_w },
-	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-    { 0xc000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_1_w)
+    AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -543,12 +543,12 @@ static MACHINE_DRIVER_START( prosoccr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 3000000)
-	MDRV_CPU_MEMORY(liberate_readmem,liberate_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberate_readmem,liberate_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(prosoccr_sound_readmem,prosoccr_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(prosoccr_sound_readmem,prosoccr_sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -574,12 +574,12 @@ static MACHINE_DRIVER_START( prosport )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 2000000)
-	MDRV_CPU_MEMORY(prosport_readmem,prosport_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(prosport_readmem,prosport_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -604,13 +604,13 @@ static MACHINE_DRIVER_START( boomrang )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 2000000)
-	MDRV_CPU_MEMORY(liberate_readmem,liberate_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberate_readmem,liberate_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 	MDRV_CPU_VBLANK_INT(deco16_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -636,13 +636,13 @@ static MACHINE_DRIVER_START( liberate )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(DECO16, 2000000)
-	MDRV_CPU_MEMORY(liberate_readmem,liberate_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberate_readmem,liberate_writemem)
+	MDRV_CPU_IO_MAP(deco16_readport,deco16_writeport)
 	MDRV_CPU_VBLANK_INT(deco16_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -668,13 +668,12 @@ static MACHINE_DRIVER_START( liberatb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 2000000)
-	MDRV_CPU_MEMORY(liberatb_readmem,liberatb_writemem)
-	MDRV_CPU_PORTS(deco16_readport,deco16_writeport)
+	MDRV_CPU_PROGRAM_MAP(liberatb_readmem,liberatb_writemem)
 	MDRV_CPU_VBLANK_INT(deco16_interrupt,1) //todo
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(60)

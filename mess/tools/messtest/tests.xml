@@ -1,0 +1,36 @@
+<tests>
+
+<test name="coco_001" driver="coco2b">
+	<wait time="2"/>
+	<input>CLS7&#13;</input>
+	<wait time="1"/>
+	<memverify start="0x421" end="0x5FF">0xef</memverify>
+</test>
+
+<test name="coco_002" driver="coco2b">
+	<wait time="2"/>
+	<input>PMODE3:PCLS1&#13;</input>
+	<wait time="1"/>
+	<memverify start="0xE00" end="0x25FF">0x00</memverify>
+	<input>PMODE3:PCLS2&#13;</input>
+	<wait time="1"/>
+	<memverify start="0xE00" end="0x25FF">0x55</memverify>
+	<input>PMODE3:PCLS3&#13;</input>
+	<wait time="1"/>
+	<memverify start="0xE00" end="0x25FF">0xAA</memverify>
+	<input>PMODE3:PCLS4&#13;</input>
+	<wait time="1"/>
+	<memverify start="0xE00" end="0x25FF">0xFF</memverify>
+</test>
+
+<test name="dragon64_001" driver="dragon64">
+	<wait time="2"/>
+	<memverify start="0x400" end="0x408">0x445241474F4E444F53</memverify>
+<!--
+	<input>EXEC 48000&#13;</input>
+	<wait time="3"/>
+	<memverify start="0x409" end="0x40E">0x445241474F4E</memverify>
+-->
+</test>
+
+</tests>

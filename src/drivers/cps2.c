@@ -308,52 +308,52 @@ static READ16_HANDLER( kludge_r )
 }
 
 
-static MEMORY_READ16_START( cps2_readmem )
-	{ 0x000000, 0x3fffff, MRA16_ROM },				/* 68000 ROM */
-	{ 0x400000, 0x40000b, MRA16_RAM },				/* CPS2 object output */
-	{ 0x618000, 0x619fff, qsound_sharedram1_r },		/* Q RAM */
-	{ 0x662000, 0x662001, MRA16_RAM },				/* Network adapter related, accessed in SSF2TB */
-	{ 0x662008, 0x662009, MRA16_RAM },				/* Network adapter related, accessed in SSF2TB */
-	{ 0x662020, 0x662021, MRA16_RAM },				/* Network adapter related, accessed in SSF2TB */
-	{ 0x660000, 0x663fff, MRA16_RAM },				/* When bit 14 of 0x804030 equals 0 this space is available. Many games store highscores and other info here if available. */
-	{ 0x664000, 0x664001, MRA16_RAM },				/* Unknown - Only used if 0x660000-0x663fff available (could be RAM enable?) */
-	{ 0x708000, 0x709fff, cps2_objram2_r },			/* Object RAM */
-	{ 0x70a000, 0x70bfff, cps2_objram2_r },			/* mirror */
-	{ 0x70c000, 0x70dfff, cps2_objram2_r },			/* mirror */
-	{ 0x70e000, 0x70ffff, cps2_objram2_r },			/* mirror */
-	{ 0x800100, 0x8001ff, cps1_output_r },			/* Output ports mirror (sfa) */
-	{ 0x804000, 0x804001, input_port_0_word_r },		/* IN0 */
-	{ 0x804010, 0x804011, input_port_1_word_r },		/* IN1 */
-	{ 0x804020, 0x804021, cps2_eeprom_port_r  },		/* IN2 + EEPROM */
-	{ 0x804030, 0x804031, cps2_qsound_volume_r },		/* Master volume. Also when bit 14=0 addon memory is present, when bit 15=0 network adapter present. */
-	{ 0x8040b0, 0x8040b3, kludge_r },  				/* unknown (xmcotaj hangs if this is 0) */
-	{ 0x804100, 0x8041ff, cps1_output_r },			/* CPS1 Output ports */
-	{ 0x900000, 0x92ffff, MRA16_RAM },				/* Video RAM */
-	{ 0xff0000, 0xffffff, MRA16_RAM },				/* RAM */
-MEMORY_END
+static ADDRESS_MAP_START( cps2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)				/* 68000 ROM */
+	AM_RANGE(0x400000, 0x40000b) AM_READ(MRA16_RAM)				/* CPS2 object output */
+	AM_RANGE(0x618000, 0x619fff) AM_READ(qsound_sharedram1_r)		/* Q RAM */
+	AM_RANGE(0x662000, 0x662001) AM_READ(MRA16_RAM)				/* Network adapter related, accessed in SSF2TB */
+	AM_RANGE(0x662008, 0x662009) AM_READ(MRA16_RAM)				/* Network adapter related, accessed in SSF2TB */
+	AM_RANGE(0x662020, 0x662021) AM_READ(MRA16_RAM)				/* Network adapter related, accessed in SSF2TB */
+	AM_RANGE(0x660000, 0x663fff) AM_READ(MRA16_RAM)				/* When bit 14 of 0x804030 equals 0 this space is available. Many games store highscores and other info here if available. */
+	AM_RANGE(0x664000, 0x664001) AM_READ(MRA16_RAM)				/* Unknown - Only used if 0x660000-0x663fff available (could be RAM enable?) */
+	AM_RANGE(0x708000, 0x709fff) AM_READ(cps2_objram2_r)			/* Object RAM */
+	AM_RANGE(0x70a000, 0x70bfff) AM_READ(cps2_objram2_r)			/* mirror */
+	AM_RANGE(0x70c000, 0x70dfff) AM_READ(cps2_objram2_r)			/* mirror */
+	AM_RANGE(0x70e000, 0x70ffff) AM_READ(cps2_objram2_r)			/* mirror */
+	AM_RANGE(0x800100, 0x8001ff) AM_READ(cps1_output_r)			/* Output ports mirror (sfa) */
+	AM_RANGE(0x804000, 0x804001) AM_READ(input_port_0_word_r)		/* IN0 */
+	AM_RANGE(0x804010, 0x804011) AM_READ(input_port_1_word_r)		/* IN1 */
+	AM_RANGE(0x804020, 0x804021) AM_READ(cps2_eeprom_port_r)		/* IN2 + EEPROM */
+	AM_RANGE(0x804030, 0x804031) AM_READ(cps2_qsound_volume_r)		/* Master volume. Also when bit 14=0 addon memory is present, when bit 15=0 network adapter present. */
+	AM_RANGE(0x8040b0, 0x8040b3) AM_READ(kludge_r)  				/* unknown (xmcotaj hangs if this is 0) */
+	AM_RANGE(0x804100, 0x8041ff) AM_READ(cps1_output_r)			/* CPS1 Output ports */
+	AM_RANGE(0x900000, 0x92ffff) AM_READ(MRA16_RAM)				/* Video RAM */
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)				/* RAM */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( cps2_writemem )
-	{ 0x000000, 0x3fffff, MWA16_ROM },				/* ROM */
-	{ 0x400000, 0x40000b, MWA16_RAM, &cps2_output, &cps2_output_size },	/* CPS2 output */
-	{ 0x618000, 0x619fff, qsound_sharedram1_w },		/* Q RAM */
-	{ 0x662000, 0x662001, MWA16_RAM },				/* Network adapter related, accessed in SSF2TB */
-	{ 0x662008, 0x662009, MWA16_RAM },				/* Network adapter related, accessed in SSF2TB (not sure if this port is write only yet)*/
-	{ 0x662020, 0x662021, MWA16_RAM },				/* Network adapter related, accessed in SSF2TB */
-	{ 0x660000, 0x663fff, MWA16_RAM },				/* When bit 14 of 0x804030 equals 0 this space is available. Many games store highscores and other info here if available. */
-	{ 0x664000, 0x664001, MWA16_RAM },				/* Unknown - Only used if 0x660000-0x663fff available (could be RAM enable?) */
-	{ 0x700000, 0x701fff, cps2_objram1_w, &cps2_objram1 },	/* Object RAM, no game seems to use it directly */
-	{ 0x708000, 0x709fff, cps2_objram2_w, &cps2_objram2 },	/* Object RAM */
-	{ 0x70a000, 0x70bfff, cps2_objram2_w },			/* mirror */
-	{ 0x70c000, 0x70dfff, cps2_objram2_w },			/* mirror */
-	{ 0x70e000, 0x70ffff, cps2_objram2_w },			/* mirror */
-	{ 0x800100, 0x8001ff, cps1_output_w },			/* Output ports mirror (sfa) */
-	{ 0x804040, 0x804041, cps2_eeprom_port_w },		/* EEPROM */
-	{ 0x8040a0, 0x8040a1, MWA16_NOP },				/* Unknown (reset once on startup) */
-	{ 0x8040e0, 0x8040e1, cps2_objram_bank_w },		/* bit 0 = Object ram bank swap */
-	{ 0x804100, 0x8041ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-	{ 0x900000, 0x92ffff, cps1_gfxram_w, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xff0000, 0xffffff, MWA16_RAM },				/* RAM */
-MEMORY_END
+static ADDRESS_MAP_START( cps2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)				/* ROM */
+	AM_RANGE(0x400000, 0x40000b) AM_WRITE(MWA16_RAM) AM_BASE(&cps2_output) AM_SIZE(&cps2_output_size)	/* CPS2 output */
+	AM_RANGE(0x618000, 0x619fff) AM_WRITE(qsound_sharedram1_w)		/* Q RAM */
+	AM_RANGE(0x662000, 0x662001) AM_WRITE(MWA16_RAM)				/* Network adapter related, accessed in SSF2TB */
+	AM_RANGE(0x662008, 0x662009) AM_WRITE(MWA16_RAM)				/* Network adapter related, accessed in SSF2TB (not sure if this port is write only yet)*/
+	AM_RANGE(0x662020, 0x662021) AM_WRITE(MWA16_RAM)				/* Network adapter related, accessed in SSF2TB */
+	AM_RANGE(0x660000, 0x663fff) AM_WRITE(MWA16_RAM)				/* When bit 14 of 0x804030 equals 0 this space is available. Many games store highscores and other info here if available. */
+	AM_RANGE(0x664000, 0x664001) AM_WRITE(MWA16_RAM)				/* Unknown - Only used if 0x660000-0x663fff available (could be RAM enable?) */
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(cps2_objram1_w) AM_BASE(&cps2_objram1)	/* Object RAM, no game seems to use it directly */
+	AM_RANGE(0x708000, 0x709fff) AM_WRITE(cps2_objram2_w) AM_BASE(&cps2_objram2)	/* Object RAM */
+	AM_RANGE(0x70a000, 0x70bfff) AM_WRITE(cps2_objram2_w)			/* mirror */
+	AM_RANGE(0x70c000, 0x70dfff) AM_WRITE(cps2_objram2_w)			/* mirror */
+	AM_RANGE(0x70e000, 0x70ffff) AM_WRITE(cps2_objram2_w)			/* mirror */
+	AM_RANGE(0x800100, 0x8001ff) AM_WRITE(cps1_output_w)			/* Output ports mirror (sfa) */
+	AM_RANGE(0x804040, 0x804041) AM_WRITE(cps2_eeprom_port_w)		/* EEPROM */
+	AM_RANGE(0x8040a0, 0x8040a1) AM_WRITE(MWA16_NOP)				/* Unknown (reset once on startup) */
+	AM_RANGE(0x8040e0, 0x8040e1) AM_WRITE(cps2_objram_bank_w)		/* bit 0 = Object ram bank swap */
+	AM_RANGE(0x804100, 0x8041ff) AM_WRITE(cps1_output_w) AM_BASE(&cps1_output) AM_SIZE(&cps1_output_size)  /* Output ports */
+	AM_RANGE(0x900000, 0x92ffff) AM_WRITE(cps1_gfxram_w) AM_BASE(&cps1_gfxram) AM_SIZE(&cps1_gfxram_size)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)				/* RAM */
+ADDRESS_MAP_END
 
 
 
@@ -871,11 +871,11 @@ static MACHINE_DRIVER_START( cps2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 11800000)
 	MDRV_CPU_CONFIG(cps2_encryption)
-	MDRV_CPU_MEMORY(cps2_readmem,cps2_writemem)
+	MDRV_CPU_PROGRAM_MAP(cps2_readmem,cps2_writemem)
 	MDRV_CPU_VBLANK_INT(cps2_interrupt,262)	// 262  /* ??? interrupts per frame */
 
 	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
+	MDRV_CPU_PROGRAM_MAP(qsound_readmem,qsound_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,251)	/* 251 is good (see 'mercy mercy mercy'section of sgemf attract mode for accurate sound sync */
 
 	MDRV_FRAMES_PER_SECOND(59.633333)
@@ -1122,6 +1122,41 @@ ROM_START( 19xxh )
 ROM_END
 
 ROM_START( armwar )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "pwge.03c", 0x000000, 0x80000, CRC(31f74931) SHA1(66150fc9896acca1691c9d586abeb2c7299bb9ad) )
+	ROM_LOAD16_WORD_SWAP( "pwge.04c", 0x080000, 0x80000, CRC(16f34f5f) SHA1(b831e3915d8cbffdfe4720d356e5196cdebdb6e7) )
+	ROM_LOAD16_WORD_SWAP( "pwge.05b", 0x100000, 0x80000, CRC(4403ed08) SHA1(cc78c84105a58e43e7a6429281397d68b91e86e5) )
+	ROM_LOAD16_WORD_SWAP( "pwg.06",   0x180000, 0x80000, CRC(87a60ce8) SHA1(e2085c7c8c6792d055dbbb023c7f4e4aa38ae924) )
+	ROM_LOAD16_WORD_SWAP( "pwg.07",   0x200000, 0x80000, CRC(f7b148df) SHA1(f369669713cf647222094c570a2eacd48a8637cf) )
+	ROM_LOAD16_WORD_SWAP( "pwg.08",   0x280000, 0x80000, CRC(cc62823e) SHA1(edaf9bebdfc65ae5414090abd6844176eec39a00) )
+	ROM_LOAD16_WORD_SWAP( "pwg.09a",  0x300000, 0x80000, CRC(4c26baee) SHA1(685f050206b9b904ce6a1ae9a8e8f019012cea43) )
+	ROM_LOAD16_WORD_SWAP( "pwg.10",   0x380000, 0x80000, CRC(07c4fb28) SHA1(58a1ff3d105be7df833dd4f32973766649efcbcf) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "pwgex.03c", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "pwgex.04c", 0x000000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x1400000, REGION_GFX1, 0 )
+	ROMX_LOAD( "pwg.13",   0x0000000, 0x400000, CRC(ae8fe08e) SHA1(b6f09663dcda69b5d7ac13e4afaf1efd692fb61e) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.15",   0x0000002, 0x400000, CRC(db560f58) SHA1(0c3716b32eb24544ff5d16b5dcadce195cd10d00) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.17",   0x0000004, 0x400000, CRC(bc475b94) SHA1(a157664450895a146a532581dd6f4b63dff21c86) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.19",   0x0000006, 0x400000, CRC(07439ff7) SHA1(f71e07c6d77c32828f5e319268b24b13a1a4b0c2) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.14",   0x1000000, 0x100000, CRC(c3f9ba63) SHA1(66191a52c39daa89b17ede5804ee41c028036f14) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.16",   0x1000002, 0x100000, CRC(815b0e7b) SHA1(549785daac3122253fb94f6541bc7016147f5306) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.18",   0x1000004, 0x100000, CRC(0109c71b) SHA1(eb51284ee0c85ff8f605fe1d166b7aa202be1344) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "pwg.20",   0x1000006, 0x100000, CRC(eb75ffbe) SHA1(e9d1deca60be696ac5bff2017fb5de3525e5239a) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "pwg.01",   0x00000, 0x08000, CRC(18a5c0e4) SHA1(bb1353dd74884aaeec9b5f1d0b284d9cad53c0ff) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "pwg.02",   0x28000, 0x20000, CRC(c9dfffa6) SHA1(64e71028befe9a2514074be765dd020e1d2ea70b) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "pwg.11",   0x000000, 0x200000, CRC(a78f7433) SHA1(e47ffba7b9dac9d0dda985c5d966194be18260f7) )
+	ROM_LOAD16_WORD_SWAP( "pwg.12",   0x200000, 0x200000, CRC(77438ed0) SHA1(733ca6c6a792e66e2aa12c5fc06dd459527afe4b) )
+ROM_END
+
+ROM_START( armwarr1 )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "pwge.03b", 0x000000, 0x80000, CRC(e822e3e9) SHA1(dcd153bb70f6c2baffa2f3687def30d85fca44ba) )
 	ROM_LOAD16_WORD_SWAP( "pwge.04b", 0x080000, 0x80000, CRC(4f89de39) SHA1(1e54ed70a6ed9330ec83fb189f76e9417c6dfc13) )
@@ -3145,8 +3180,8 @@ ROM_END
 
 ROM_START( mshvsfa )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "mvsa.03d", 0x000000, 0x80000, CRC(5b863716) SHA1(6a129274711765bbf5acbb225e3fce6d93d7f421) )
-	ROM_LOAD16_WORD_SWAP( "mvsa.04d", 0x080000, 0x80000, CRC(4886e65f) SHA1(758fc9c453a864e32588c7fb33166c93e798a39c) )
+	ROM_LOAD16_WORD_SWAP( "mvsa.03f", 0x000000, 0x80000, CRC(5b863716) SHA1(6a129274711765bbf5acbb225e3fce6d93d7f421) )
+	ROM_LOAD16_WORD_SWAP( "mvsa.04f", 0x080000, 0x80000, CRC(4886e65f) SHA1(758fc9c453a864e32588c7fb33166c93e798a39c) )
 	ROM_LOAD16_WORD_SWAP( "mvs.05a",  0x100000, 0x80000, CRC(1a5de0cb) SHA1(738a27f83704c208d36d73bf766d861ef2d51a89) )
 	ROM_LOAD16_WORD_SWAP( "mvs.06a",  0x180000, 0x80000, CRC(959f3030) SHA1(fbbaa915324815246738f3426232e623f039ce26) )
 	ROM_LOAD16_WORD_SWAP( "mvs.07b",  0x200000, 0x80000, CRC(7f915bdb) SHA1(683da09c5ba55e31b59aa95a8e13c45dc574ab3c) )
@@ -3155,8 +3190,8 @@ ROM_START( mshvsfa )
 	ROM_LOAD16_WORD_SWAP( "mvs.10b",  0x380000, 0x80000, CRC(cf0dba98) SHA1(f4c1f8a6e7a79ecc6241d5268b3039f8a09ea516) )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "mvsax.03d", 0x000000, 0x80000, NO_DUMP )
-//	ROM_LOAD16_WORD_SWAP( "mvsax.04d", 0x080000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "mvsax.03f", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "mvsax.04f", 0x080000, 0x80000, NO_DUMP )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mvs.13",   0x0000000, 0x400000, CRC(29b05fd9) SHA1(e8fdb1ee5515a560eb4256ae4fd99bb1192e1a87) , ROM_GROUPWORD | ROM_SKIP(6) )
@@ -6126,7 +6161,8 @@ GAME( 1994, xmcotaj,  xmcota,  cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men: Ch
 GAME( 1994, xmcotaj1, xmcota,  cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men: Children of the Atom (Japan 941217)" )
 GAME( 1994, xmcotajr, xmcota,  cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men: Children of the Atom (Japan 941208 rent version)" )
 GAME( 1994, xmcotaa,  xmcota,  cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men: Children of the Atom (Asia 941217)" )
-GAME( 1994, armwar,   0,       cps2, avsp,    cps2, ROT0,   "Capcom", "Armored Warriors (Euro 941011)" )
+GAMEX(1994, armwar,   0,       cps2, avsp,    cps2, ROT0,   "Capcom", "Armored Warriors (Euro 941024)", GAME_NOT_WORKING )
+GAME( 1994, armwarr1, armwar,  cps2, avsp,    cps2, ROT0,   "Capcom", "Armored Warriors (Euro 941011)" )
 GAME( 1994, armwaru,  armwar,  cps2, avsp,    cps2, ROT0,   "Capcom", "Armored Warriors (US 941024)" )
 GAME( 1994, pgear,    armwar,  cps2, avsp,    cps2, ROT0,   "Capcom", "Powered Gear: Strategic Variant Armor Equipment (Japan 941024)" )
 GAME( 1994, pgearr1,  armwar,  cps2, avsp,    cps2, ROT0,   "Capcom", "Powered Gear: Strategic Variant Armor Equipment (Japan 940916)" )

@@ -7,17 +7,17 @@
 #include "inputx.h"
 
 
-static MEMORY_READ_START( mc10_readmem )
-	{ 0x0000, 0x001f, m6803_internal_registers_r },
-	{ 0x0020, 0x007f, MRA_NOP }, /* unused */
-	{ 0x0080, 0x00ff, MRA_RAM }, /* 6803 internal RAM */
-	{ 0x0100, 0x3fff, MRA_NOP }, /* unused */
-	{ 0x4000, 0x4fff, MRA_RAM },
-//	{ 0x5000, 0xbffe, MRA_RAM }, /* expansion RAM */
-	{ 0xbfff, 0xbfff, mc10_bfff_r },
-//	{ 0xc000, 0xdfff, MWA_ROM }, /* expansion ROM */
-	{ 0xe000, 0xffff, MRA_ROM }, /* ROM */
-MEMORY_END
+static ADDRESS_MAP_START( mc10_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READ(m6803_internal_registers_r)
+	AM_RANGE(0x0020, 0x007f, MRA_NOP }, /* unused */
+	AM_RANGE(0x0080, 0x00ff, MRA_RAM }, /* 6803 internal RAM */
+	AM_RANGE(0x0100, 0x3fff, MRA_NOP }, /* unused */
+	AM_RANGE(0x4000, 0x4fff, MRA_RAM },
+//	AM_RANGE(0x5000, 0xbffe, MRA_RAM }, /* expansion RAM */
+	AM_RANGE(0xbfff, 0xbfff, mc10_bfff_r },
+//	AM_RANGE(0xc000, 0xdfff, MWA_ROM }, /* expansion ROM */
+	AM_RANGE(0xe000, 0xffff, MRA_ROM }, /* ROM */
+ADDRESS_MAP_END
 
 static MEMORY_WRITE_START( mc10_writemem )
 	{ 0x0000, 0x001f, m6803_internal_registers_w },

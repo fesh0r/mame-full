@@ -44,16 +44,16 @@ internal expansion/cartridge port
 
 struct via6522_interface config=
 {
-	0,//mem_read_handler in_a_func;
-	0,//mem_read_handler in_b_func;
-	0,//mem_read_handler in_ca1_func;
-	0,//mem_read_handler in_cb1_func;
-	0,//mem_read_handler in_ca2_func;
-	0,//mem_read_handler in_cb2_func;
-	0,//mem_write_handler out_a_func;
-	0,//mem_write_handler out_b_func;
-	0,//mem_write_handler out_ca2_func;
-	0,//mem_write_handler out_cb2_func;
+	0,//read8_handler in_a_func;
+	0,//read8_handler in_b_func;
+	0,//read8_handler in_ca1_func;
+	0,//read8_handler in_cb1_func;
+	0,//read8_handler in_ca2_func;
+	0,//read8_handler in_cb2_func;
+	0,//write8_handler out_a_func;
+	0,//write8_handler out_b_func;
+	0,//write8_handler out_ca2_func;
+	0,//write8_handler out_cb2_func;
 	0,//void (*irq_func)(int state);
 };
 

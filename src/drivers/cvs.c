@@ -91,7 +91,6 @@ INTERRUPT_GEN( cvs_interrupt );
 PALETTE_INIT( cvs );
 VIDEO_UPDATE( cvs );
 VIDEO_START( cvs );
-int  s2650_get_flag(void);
 
 extern unsigned char *dirty_character;
 extern unsigned char *character_1_ram;
@@ -125,12 +124,12 @@ READ_HANDLER( cvs_character_mode_r );
 
 READ_HANDLER( cvs_mirror_r )
 {
-	return cpu_readmem16(0x1400+offset);
+	return program_read_byte(0x1400+offset);
 }
 
 WRITE_HANDLER( cvs_mirror_w )
 {
-	cpu_writemem16(0x1400+offset,data);
+	program_write_byte(0x1400+offset,data);
 }
 
 /***************************************************************************
@@ -252,83 +251,83 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static MEMORY_READ_START( cvs_readmem )
-	{ 0x0000, 0x13ff, MRA_ROM },
-	{ 0x2000, 0x33ff, MRA_ROM },
-	{ 0x4000, 0x53ff, MRA_ROM },
-	{ 0x6000, 0x73ff, MRA_ROM },
-    { 0x1400, 0x14ff, cvs_bullet_r },
-    { 0x1500, 0x15ff, cvs_2636_3_r },
-    { 0x1600, 0x16ff, cvs_2636_2_r },
-    { 0x1700, 0x17ff, cvs_2636_1_r },
-	{ 0x1800, 0x1bff, cvs_videoram_r },
-    { 0x1c00, 0x1fff, MRA_RAM },
-	{ 0x3400, 0x3fff, cvs_mirror_r },
-	{ 0x5400, 0x5fff, cvs_mirror_r },
-	{ 0x7400, 0x7fff, cvs_mirror_r },
-MEMORY_END
+static ADDRESS_MAP_START( cvs_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x13ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x33ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x53ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x73ff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x1400, 0x14ff) AM_READ(cvs_bullet_r)
+    AM_RANGE(0x1500, 0x15ff) AM_READ(cvs_2636_3_r)
+    AM_RANGE(0x1600, 0x16ff) AM_READ(cvs_2636_2_r)
+    AM_RANGE(0x1700, 0x17ff) AM_READ(cvs_2636_1_r)
+	AM_RANGE(0x1800, 0x1bff) AM_READ(cvs_videoram_r)
+    AM_RANGE(0x1c00, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3400, 0x3fff) AM_READ(cvs_mirror_r)
+	AM_RANGE(0x5400, 0x5fff) AM_READ(cvs_mirror_r)
+	AM_RANGE(0x7400, 0x7fff) AM_READ(cvs_mirror_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cvs_writemem )
-	{ 0x0000, 0x13ff, MWA_ROM },
-	{ 0x2000, 0x33ff, MWA_ROM },
-	{ 0x4000, 0x53ff, MWA_ROM },
-	{ 0x6000, 0x73ff, MWA_ROM },
-    { 0x1400, 0x14ff, cvs_bullet_w, &bullet_ram },
-    { 0x1500, 0x15ff, cvs_2636_3_w, &s2636_3_ram },
-    { 0x1600, 0x16ff, cvs_2636_2_w, &s2636_2_ram },
-    { 0x1700, 0x17ff, cvs_2636_1_w, &s2636_1_ram },
-	{ 0x1800, 0x1bff, cvs_videoram_w, &videoram, &videoram_size },
-    { 0x1c00, 0x1fff, MWA_RAM },
-	{ 0x3400, 0x3fff, cvs_mirror_w },
-	{ 0x5400, 0x5fff, cvs_mirror_w },
-	{ 0x7400, 0x7fff, cvs_mirror_w },
+static ADDRESS_MAP_START( cvs_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x13ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x33ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x53ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x73ff) AM_WRITE(MWA8_ROM)
+    AM_RANGE(0x1400, 0x14ff) AM_WRITE(cvs_bullet_w) AM_BASE(&bullet_ram)
+    AM_RANGE(0x1500, 0x15ff) AM_WRITE(cvs_2636_3_w) AM_BASE(&s2636_3_ram)
+    AM_RANGE(0x1600, 0x16ff) AM_WRITE(cvs_2636_2_w) AM_BASE(&s2636_2_ram)
+    AM_RANGE(0x1700, 0x17ff) AM_WRITE(cvs_2636_1_w) AM_BASE(&s2636_1_ram)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(cvs_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+    AM_RANGE(0x1c00, 0x1fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3400, 0x3fff) AM_WRITE(cvs_mirror_w)
+	AM_RANGE(0x5400, 0x5fff) AM_WRITE(cvs_mirror_w)
+	AM_RANGE(0x7400, 0x7fff) AM_WRITE(cvs_mirror_w)
 
     /** Not real addresses, just memory blocks **/
 
-    { 0x8000, 0x83ff, MWA_RAM, &character_1_ram },	/* same bitplane */
-    { 0x8800, 0x8bff, MWA_RAM, &character_2_ram },	/* separation as */
-    { 0x9000, 0x93ff, MWA_RAM, &character_3_ram },	/* rom character */
-	{ 0x9400, 0x97ff, MWA_RAM, &colorram },
-    { 0x9800, 0x98ff, MWA_RAM, &paletteram },
-    { 0x9900, 0x99ff, MWA_RAM, &dirty_character },
-MEMORY_END
+    AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM) AM_BASE(&character_1_ram)	/* same bitplane */
+    AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM) AM_BASE(&character_2_ram)	/* separation as */
+    AM_RANGE(0x9000, 0x93ff) AM_WRITE(MWA8_RAM) AM_BASE(&character_3_ram)	/* rom character */
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(MWA8_RAM) AM_BASE(&colorram)
+    AM_RANGE(0x9800, 0x98ff) AM_WRITE(MWA8_RAM) AM_BASE(&paletteram)
+    AM_RANGE(0x9900, 0x99ff) AM_WRITE(MWA8_RAM) AM_BASE(&dirty_character)
+ADDRESS_MAP_END
 
-static PORT_READ_START( cvs_readport )
-	{ 0x000, 0x000, input_port_0_r },
-    { 0x002, 0x002, input_port_1_r },
-	{ 0x003, 0x003, input_port_2_r },
-    { 0x004, 0x004, input_port_3_r },
-	{ 0x006, 0x006, input_port_4_r },		// Dip 1
-	{ 0x007, 0x007, input_port_5_r },		// Dip 2
-    { 0x010, 0x0ff, cvs_character_mode_r },	// Programmable Character Settings
-	{ S2650_DATA_PORT, S2650_DATA_PORT, cvs_collision_clear },
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, cvs_collision_r },
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_6_r },
-PORT_END
+static ADDRESS_MAP_START( cvs_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x000, 0x000) AM_READ(input_port_0_r)
+    AM_RANGE(0x002, 0x002) AM_READ(input_port_1_r)
+	AM_RANGE(0x003, 0x003) AM_READ(input_port_2_r)
+    AM_RANGE(0x004, 0x004) AM_READ(input_port_3_r)
+	AM_RANGE(0x006, 0x006) AM_READ(input_port_4_r)		// Dip 1
+	AM_RANGE(0x007, 0x007) AM_READ(input_port_5_r)		// Dip 2
+    AM_RANGE(0x010, 0x0ff) AM_READ(cvs_character_mode_r)	// Programmable Character Settings
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(cvs_collision_clear)
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_READ(cvs_collision_r)
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_6_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( cvs_writeport )
-	{ 0              , 0xff           , cvs_scroll_w },
-	{ S2650_CTRL_PORT, S2650_CTRL_PORT, control_port_w },
-	{ S2650_DATA_PORT, S2650_DATA_PORT, cvs_video_fx_w },
-PORT_END
+static ADDRESS_MAP_START( cvs_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0, 0xff) AM_WRITE(cvs_scroll_w)
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_WRITE(control_port_w)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_WRITE(cvs_video_fx_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( cvs_sound_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-    { 0x1000, 0x107f, MRA_RAM },
-    { 0x1800, 0x1800, soundlatch_r },
-MEMORY_END
+static ADDRESS_MAP_START( cvs_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x1000, 0x107f) AM_READ(MRA8_RAM)
+    AM_RANGE(0x1800, 0x1800) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( cvs_sound_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-    { 0x1000, 0x107f, MWA_RAM },
-    { 0x1840, 0x1840, DAC_0_data_w },
-    { 0x1880, 0x1883, cvs_DAC2_w },
-    { 0x1884, 0x1887, MWA_NOP },		/* Not connected to anything */
-MEMORY_END
+static ADDRESS_MAP_START( cvs_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+    AM_RANGE(0x1000, 0x107f) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x1840, 0x1840) AM_WRITE(DAC_0_data_w)
+    AM_RANGE(0x1880, 0x1883) AM_WRITE(cvs_DAC2_w)
+    AM_RANGE(0x1884, 0x1887) AM_WRITE(MWA8_NOP)		/* Not connected to anything */
+ADDRESS_MAP_END
 
-static PORT_READ_START( cvs_sound_readport )
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, CVS_393hz_Clock_r },
-PORT_END
+static ADDRESS_MAP_START( cvs_sound_readport, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(CVS_393hz_Clock_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( cvs )
 
@@ -437,14 +436,14 @@ static MACHINE_DRIVER_START( cvs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650,894886.25/3)
-	MDRV_CPU_MEMORY(cvs_readmem,cvs_writemem)
-	MDRV_CPU_PORTS(cvs_readport,cvs_writeport)
+	MDRV_CPU_PROGRAM_MAP(cvs_readmem,cvs_writemem)
+	MDRV_CPU_IO_MAP(cvs_readport,cvs_writeport)
 	MDRV_CPU_VBLANK_INT(cvs_interrupt,1)
 
 	MDRV_CPU_ADD(S2650,894886.25/3)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(cvs_sound_readmem,cvs_sound_writemem)
-	MDRV_CPU_PORTS(cvs_sound_readport,0)
+	MDRV_CPU_PROGRAM_MAP(cvs_sound_readmem,cvs_sound_writemem)
+	MDRV_CPU_IO_MAP(cvs_sound_readport,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000)
@@ -506,7 +505,7 @@ ROM_START( huncholy )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "ho-sdp1.bin", 0x0000, 0x1000, CRC(3efb3ffd) SHA1(be4807c8b4fe23f2247aa3b6ac02285bee1a0520) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -549,7 +548,7 @@ ROM_START( darkwar )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "dw-sdp1.bin", 0x0000, 0x0800, CRC(b385b669) SHA1(79621d3fb3eb4ea6fa8a733faa6f21edeacae186) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -592,7 +591,7 @@ ROM_START( 8ball )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "8b-sdp1.bin", 0x0000, 0x1000, CRC(a571daf4) SHA1(0db5b95db9da27216bbfa8fff84491a7755f9f1a) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -635,7 +634,7 @@ ROM_START( 8ball1 )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "8b-sdp1.bin", 0x0000, 0x1000, CRC(a571daf4) SHA1(0db5b95db9da27216bbfa8fff84491a7755f9f1a) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -678,7 +677,7 @@ ROM_START( hunchbak )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "hb-sdp1.bin", 0x0000, 0x1000, CRC(f9ba2854) SHA1(d041198e2e8b8c3e668bd1610310f8d25c5b1119) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -721,7 +720,7 @@ ROM_START( wallst )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "ws-sdp1.bin", 0x0000, 0x1000, CRC(faed2ac0) SHA1(c2c48e24a560d918531e5c17fb109d68bdec850f) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -764,7 +763,7 @@ ROM_START( dazzler )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "dz-sdp1.bin", 0x0000, 0x1000, CRC(89847352) SHA1(54037a4d95958c4c3383467d7f4c2c9416b2eb4a) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -807,7 +806,7 @@ ROM_START( radarzon )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "rd-sdp1.bin", 0x0000, 0x0800, CRC(cd5aea6d) SHA1(f7545b87e71e3108c0dec24a4e91620d006e0602) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -850,7 +849,7 @@ ROM_START( radarzn1 )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "rd-sdp1.bin", 0x0000, 0x0800, CRC(cd5aea6d) SHA1(f7545b87e71e3108c0dec24a4e91620d006e0602) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -893,7 +892,7 @@ ROM_START( radarznt )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "rd-sdp1.bin", 0x0000, 0x0800, CRC(cd5aea6d) SHA1(f7545b87e71e3108c0dec24a4e91620d006e0602) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -936,7 +935,7 @@ ROM_START( outline )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "ot-sdp1.bin", 0x0000, 0x0800, CRC(739066a9) SHA1(7b3ba8a163d341931bc0385c298d2061fa75e644) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -979,7 +978,7 @@ ROM_START( goldbug )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "gb-sdp1.bin", 0x0000, 0x1000, CRC(c8a4b39d) SHA1(29fffaa12639f3b19db818ad374d09fbf9c7fb98) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -1022,7 +1021,7 @@ ROM_START( superbik )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "sb-sdp1.bin", 0x0000, 0x0800, CRC(e977c090) SHA1(24bd4165434c745c1514d49cc90bcb621fb3a0f8) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -1065,7 +1064,7 @@ ROM_START( hero )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "hr-sdp1.bin", 0x0000, 0x0800, CRC(c34ecf79) SHA1(07c96283410b1e7401140094db95800708cf310f) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -1108,7 +1107,7 @@ ROM_START( logger )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "lg-sdp1.bin", 0x0000, 0x1000, CRC(5af8da17) SHA1(357f02cdf38c6659aca51fa0a8534542fc29623c) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -1151,7 +1150,7 @@ ROM_START( cosmos )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "cs-sdp1.bin", 0x0000, 0x0800, CRC(b385b669) SHA1(79621d3fb3eb4ea6fa8a733faa6f21edeacae186) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -1194,7 +1193,7 @@ ROM_START( heartatk )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "ha-sdp1.bin", 0x0000, 0x1000, CRC(b9c466a0) SHA1(f28c21a15cf6d52123ed7feac4eea2a42ea5e93d) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 
@@ -1237,7 +1236,7 @@ ROM_START( spacefrt )
 	ROM_CONTINUE( 0x5000, 0x0400 ) 
 	ROM_CONTINUE( 0x7000, 0x0400 ) 
 	
-	ROM_REGION( 0x2000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x8000, REGION_CPU2, 0 ) 
 	ROM_LOAD( "sf-sdp1.bin", 0x0000, 0x0800, CRC(339a327f) SHA1(940887cd4660e37537fd9b57aa1ec3a4717ea0cf) ) 
 	
 	ROM_REGION( 0x0800, REGION_CPU3, 0 ) 

@@ -208,90 +208,90 @@ static WRITE_HANDLER( llander_zeropage_w )
  *
  *************************************/
 
-static MEMORY_READ_START( asteroid_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x2000, 0x2007, asteroid_IN0_r }, /* IN0 */
-	{ 0x2400, 0x2407, asteroid_IN1_r }, /* IN1 */
-	{ 0x2800, 0x2803, asteroid_DSW1_r }, /* DSW1 */
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x5000, 0x57ff, MRA_ROM }, /* vector rom */
-	{ 0x6800, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( asteroid_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2007) AM_READ(asteroid_IN0_r) /* IN0 */
+	AM_RANGE(0x2400, 0x2407) AM_READ(asteroid_IN1_r) /* IN1 */
+	AM_RANGE(0x2800, 0x2803) AM_READ(asteroid_DSW1_r) /* DSW1 */
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_ROM) /* vector rom */
+	AM_RANGE(0x6800, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( asteroid_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x3000, 0x3000, avgdvg_go_w },
-	{ 0x3200, 0x3200, asteroid_bank_switch_w },
-	{ 0x3400, 0x3400, watchdog_reset_w },
-	{ 0x3600, 0x3600, asteroid_explode_w },
-	{ 0x3a00, 0x3a00, asteroid_thump_w },
-	{ 0x3c00, 0x3c05, asteroid_sounds_w },
-	{ 0x3e00, 0x3e00, asteroid_noise_reset_w },
-	{ 0x4000, 0x47ff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x5000, 0x57ff, MWA_ROM }, /* vector rom */
-	{ 0x6800, 0x7fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( asteroid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x3200, 0x3200) AM_WRITE(asteroid_bank_switch_w)
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3600, 0x3600) AM_WRITE(asteroid_explode_w)
+	AM_RANGE(0x3a00, 0x3a00) AM_WRITE(asteroid_thump_w)
+	AM_RANGE(0x3c00, 0x3c05) AM_WRITE(asteroid_sounds_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(asteroid_noise_reset_w)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_ROM) /* vector rom */
+	AM_RANGE(0x6800, 0x7fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( astdelux_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x2000, 0x2007, asteroid_IN0_r }, /* IN0 */
-	{ 0x2400, 0x2407, asteroid_IN1_r }, /* IN1 */
-	{ 0x2800, 0x2803, asteroid_DSW1_r }, /* DSW1 */
-	{ 0x2c00, 0x2c0f, pokey1_r },
-	{ 0x2c40, 0x2c7f, atari_vg_earom_r },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x4800, 0x57ff, MRA_ROM }, /* vector rom */
-	{ 0x6000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( astdelux_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2007) AM_READ(asteroid_IN0_r) /* IN0 */
+	AM_RANGE(0x2400, 0x2407) AM_READ(asteroid_IN1_r) /* IN1 */
+	AM_RANGE(0x2800, 0x2803) AM_READ(asteroid_DSW1_r) /* DSW1 */
+	AM_RANGE(0x2c00, 0x2c0f) AM_READ(pokey1_r)
+	AM_RANGE(0x2c40, 0x2c7f) AM_READ(atari_vg_earom_r)
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x57ff) AM_READ(MRA8_ROM) /* vector rom */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( astdelux_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x2c00, 0x2c0f, pokey1_w },
-	{ 0x3000, 0x3000, avgdvg_go_w },
-	{ 0x3200, 0x323f, atari_vg_earom_w },
-	{ 0x3400, 0x3400, watchdog_reset_w },
-	{ 0x3600, 0x3600, asteroid_explode_w },
-	{ 0x3a00, 0x3a00, atari_vg_earom_ctrl_w },
-	{ 0x3c00, 0x3c01, astdelux_led_w },
-	{ 0x3c03, 0x3c03, astdelux_sounds_w },
-	{ 0x3c04, 0x3c04, astdelux_bank_switch_w },
-	{ 0x3c05, 0x3c07, astdelux_coin_counter_w },
-	{ 0x3e00, 0x3e00, asteroid_noise_reset_w },
-	{ 0x4000, 0x47ff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x4800, 0x57ff, MWA_ROM }, /* vector rom */
-	{ 0x6000, 0x7fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( astdelux_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x2c00, 0x2c0f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x3200, 0x323f) AM_WRITE(atari_vg_earom_w)
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3600, 0x3600) AM_WRITE(asteroid_explode_w)
+	AM_RANGE(0x3a00, 0x3a00) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x3c00, 0x3c01) AM_WRITE(astdelux_led_w)
+	AM_RANGE(0x3c03, 0x3c03) AM_WRITE(astdelux_sounds_w)
+	AM_RANGE(0x3c04, 0x3c04) AM_WRITE(astdelux_bank_switch_w)
+	AM_RANGE(0x3c05, 0x3c07) AM_WRITE(astdelux_coin_counter_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(asteroid_noise_reset_w)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x4800, 0x57ff) AM_WRITE(MWA8_ROM) /* vector rom */
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( llander_readmem )
-	{ 0x0000, 0x01ff, llander_zeropage_r },
-	{ 0x2000, 0x2000, llander_IN0_r }, /* IN0 */
-	{ 0x2400, 0x2407, asteroid_IN1_r }, /* IN1 */
-	{ 0x2800, 0x2803, asteroid_DSW1_r }, /* DSW1 */
-	{ 0x2c00, 0x2c00, input_port_3_r }, /* IN3 */
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x4800, 0x5fff, MRA_ROM }, /* vector rom */
-	{ 0x6000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( llander_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(llander_zeropage_r)
+	AM_RANGE(0x2000, 0x2000) AM_READ(llander_IN0_r) /* IN0 */
+	AM_RANGE(0x2400, 0x2407) AM_READ(asteroid_IN1_r) /* IN1 */
+	AM_RANGE(0x2800, 0x2803) AM_READ(asteroid_DSW1_r) /* DSW1 */
+	AM_RANGE(0x2c00, 0x2c00) AM_READ(input_port_3_r) /* IN3 */
+	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4800, 0x5fff) AM_READ(MRA8_ROM) /* vector rom */
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( llander_writemem )
-	{ 0x0000, 0x01ff, llander_zeropage_w, &llander_zeropage },
-	{ 0x3000, 0x3000, avgdvg_go_w },
-	{ 0x3200, 0x3200, llander_led_w },
-	{ 0x3400, 0x3400, watchdog_reset_w },
-	{ 0x3c00, 0x3c00, llander_sounds_w },
-	{ 0x3e00, 0x3e00, llander_snd_reset_w },
-	{ 0x4000, 0x47ff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x4800, 0x5fff, MWA_ROM }, /* vector rom */
-	{ 0x6000, 0x7fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( llander_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(llander_zeropage_w) AM_BASE(&llander_zeropage)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x3200, 0x3200) AM_WRITE(llander_led_w)
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3c00, 0x3c00) AM_WRITE(llander_sounds_w)
+	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(llander_snd_reset_w)
+	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x4800, 0x5fff) AM_WRITE(MWA8_ROM) /* vector rom */
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -658,7 +658,7 @@ static MACHINE_DRIVER_START( asteroid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
-	MDRV_CPU_MEMORY(asteroid_readmem,asteroid_writemem)
+	MDRV_CPU_PROGRAM_MAP(asteroid_readmem,asteroid_writemem)
 	MDRV_CPU_VBLANK_INT(asteroid_interrupt,4)	/* 250 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -692,7 +692,7 @@ static MACHINE_DRIVER_START( astdelux )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(asteroid)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(astdelux_readmem,astdelux_writemem)
+	MDRV_CPU_PROGRAM_MAP(astdelux_readmem,astdelux_writemem)
 
 	MDRV_NVRAM_HANDLER(atari_vg)
 
@@ -707,7 +707,7 @@ static MACHINE_DRIVER_START( llander )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(asteroid)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(llander_readmem,llander_writemem)
+	MDRV_CPU_PROGRAM_MAP(llander_readmem,llander_writemem)
 	MDRV_CPU_VBLANK_INT(llander_interrupt,6)	/* 250 Hz */
 
 	MDRV_FRAMES_PER_SECOND(40)

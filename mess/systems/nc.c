@@ -325,10 +325,10 @@ static void nc_keyboard_timer_callback(int dummy)
 }
 
 
-static mem_read_handler nc_bankhandler_r[]={
+static read8_handler nc_bankhandler_r[]={
 MRA_BANK1, MRA_BANK2, MRA_BANK3, MRA_BANK4};
 
-static mem_write_handler nc_bankhandler_w[]={
+static write8_handler nc_bankhandler_w[]={
 MWA_BANK5, MWA_BANK6, MWA_BANK7, MWA_BANK8};
 
 static void nc_refresh_memory_bank_config(int bank)

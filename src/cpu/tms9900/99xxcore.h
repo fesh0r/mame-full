@@ -106,86 +106,68 @@ Other references can be found on spies.com:
 
 #if (TMS99XX_MODEL == TI990_10_ID)
 
-	#define TMS99XX_PREFIX ti990_10
+	#define TMS99XX_GET_INFO ti990_10_get_info
 	#define TMS99XX_CPU_NAME "TI990/10"
 
 #elif (TMS99XX_MODEL == TMS9900_ID)
 
-	#define TMS99XX_PREFIX tms9900
+	#define TMS99XX_GET_INFO tms9900_get_info
 	#define TMS99XX_CPU_NAME "TMS9900"
 
 #elif (TMS99XX_MODEL == TMS9940_ID)
 
-	#define TMS99XX_PREFIX tms9940
+	#define TMS99XX_GET_INFO tms9940_get_info
 	#define TMS99XX_CPU_NAME "TMS9940"
 
 	#error "tms9940 is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 
-	#define TMS99XX_PREFIX tms9980a
+	#define TMS99XX_GET_INFO tms9980a_get_info
 	#define TMS99XX_CPU_NAME "TMS9980A/TMS9981"
 
 #elif (TMS99XX_MODEL == TMS9985_ID)
 
-	#define TMS99XX_PREFIX tms9985
+	#define TMS99XX_GET_INFO tms9985_get_info
 	#define TMS99XX_CPU_NAME "TMS9985"
 
 	#error "tms9985 is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS9989_ID)
 
-	#define TMS99XX_PREFIX tms9989
+	#define TMS99XX_GET_INFO tms9989_get_info
 	#define TMS99XX_CPU_NAME "TMS9989"
 
 	#error "tms9989 is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS9995_ID)
 
-	#define TMS99XX_PREFIX tms9995
+	#define TMS99XX_GET_INFO tms9995_get_info
 	#define TMS99XX_CPU_NAME "TMS9995"
+
+#elif (TMS99XX_MODEL == TMS99105A_ID)
+
+	#define TMS99XX_GET_INFO tms99105a_get_info
+	#define TMS99XX_CPU_NAME "TMS99105A"
+
+	#error "tms99105a is not yet supported"
+
+#elif (TMS99XX_MODEL == TMS99110A_ID)
+
+	#define TMS99XX_GET_INFO tms99110a_get_info
+	#define TMS99XX_CPU_NAME "TMS99110A"
+
+	#error "tms99110a is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS99000_ID)
 
-	#define TMS99XX_PREFIX tms99000
+	#define TMS99XX_GET_INFO tms99000_get_info
 	#define TMS99XX_CPU_NAME "TMS99000"
 
 	#error "tms99000 is not yet supported"
 
 #endif
 
-/*
-	Now for some preprocessor wizardry.
-*/
-#define concat2(a,b) a##b
-
-#define ICOUNT(prefix)				concat2(prefix,_ICount)
-#define INIT(prefix)				concat2(prefix,_init)
-#define RESET(prefix)				concat2(prefix,_reset)
-#define EXIT(prefix)				concat2(prefix,_exit)
-#define EXECUTE(prefix)				concat2(prefix,_execute)
-#define GET_CONTEXT(prefix)			concat2(prefix,_get_context)
-#define SET_CONTEXT(prefix)			concat2(prefix,_set_context)
-#define GET_REG(prefix)				concat2(prefix,_get_reg)
-#define SET_REG(prefix)				concat2(prefix,_set_reg)
-#define SET_IRQ_CALLBACK(prefix)	concat2(prefix,_set_irq_callback)
-#define INFO(prefix)				concat2(prefix,_info)
-#define DASM(prefix)				concat2(prefix,_dasm)
-#define RESET_PARAM(prefix)			concat2(prefix,reset_param)
-
-#define TMS99XX_ICOUNT				ICOUNT(TMS99XX_PREFIX)
-#define TMS99XX_INIT				INIT(TMS99XX_PREFIX)
-#define TMS99XX_RESET				RESET(TMS99XX_PREFIX)
-#define TMS99XX_EXIT				EXIT(TMS99XX_PREFIX)
-#define TMS99XX_EXECUTE				EXECUTE(TMS99XX_PREFIX)
-#define TMS99XX_GET_CONTEXT			GET_CONTEXT(TMS99XX_PREFIX)
-#define TMS99XX_SET_CONTEXT			SET_CONTEXT(TMS99XX_PREFIX)
-#define TMS99XX_GET_REG				GET_REG(TMS99XX_PREFIX)
-#define TMS99XX_SET_REG				SET_REG(TMS99XX_PREFIX)
-#define TMS99XX_SET_IRQ_CALLBACK	SET_IRQ_CALLBACK(TMS99XX_PREFIX)
-#define TMS99XX_INFO				INFO(TMS99XX_PREFIX)
-#define TMS99XX_DASM				DASM(TMS99XX_PREFIX)
-#define TMS99XX_RESET_PARAM			RESET_PARAM(TMS99XX_PREFIX)
 
 
 
@@ -807,15 +789,11 @@ WRITE_HANDLER(tms9995_internal2_w)
 	remember this when writing memory handlers.*/
 	/*This does not apply to tms9995 and tms99xxx, but does apply to tms9980 (see below).*/
 
-	#define readword(addr)        cpu_readmem16bew_word(addr)
-	#define writeword(addr,data)  cpu_writemem16bew_word((addr), (data))
+	#define readword(addr)        program_read_word_16be(addr)
+	#define writeword(addr,data)  program_write_word_16be((addr), (data))
 
-	#define readbyte(addr)        cpu_readmem16bew(addr)
-	#define writebyte(addr,data)  cpu_writemem16bew((addr), (data))
-
-#ifdef MAME_DEBUG
-	#define dasm_readop cpu_readmem16bew_word
-#endif
+	#define readbyte(addr)        program_read_byte_16be(addr)
+	#define writebyte(addr,data)  program_write_byte_16be((addr),(data))
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 	/*8-bit data bus, 14-bit address*/
@@ -824,8 +802,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 	there would be some implementation problems in some driver sooner or later.*/
 
 	/*Macros instead of true 14-bit handlers.  You may want to change this*/
-	#define cpu_readmem14(addr) cpu_readmem16((addr) & 0x3fff)
-	#define cpu_writemem14(addr, data) cpu_writemem16((addr) & 0x3fff, data)
+	#define cpu_readmem14(addr) program_read_byte_8((addr) & 0x3fff)
+	#define cpu_writemem14(addr, data) program_write_byte_8((addr) & 0x3fff, data)
 
 	#define readword(addr)        ( TMS99XX_ICOUNT -= 2, (cpu_readmem14(addr) << 8) + cpu_readmem14((addr)+1) )
 	#define writeword(addr,data)  { TMS99XX_ICOUNT -= 2; cpu_writemem14((addr), (data) >> 8); cpu_writemem14((addr) + 1, (data) & 0xff); }

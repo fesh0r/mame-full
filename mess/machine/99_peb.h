@@ -16,8 +16,8 @@ typedef struct ti99_peb_card_handlers_t
 	cru_read_handler cru_read;		/* card CRU read handler */
 	cru_write_handler cru_write;	/* card CRU handler */
 
-	mem_read_handler mem_read;		/* card mem read handler (8 bits) */
-	mem_write_handler mem_write;	/* card mem write handler (8 bits) */
+	read8_handler mem_read;		/* card mem read handler (8 bits) */
+	write8_handler mem_write;	/* card mem write handler (8 bits) */
 } ti99_peb_card_handlers_t;
 
 /*

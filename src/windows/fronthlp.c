@@ -247,9 +247,6 @@ void identify_rom(const char* name, const char* hash, int length)
 	for (i = 0; drivers[i]; i++)
 		match_roms(drivers[i],hash,&found);
 
-	for (i = 0; test_drivers[i]; i++)
-		match_roms(test_drivers[i],hash,&found);
-
 	if (found == 0)
 	{
 		unsigned size = length;
@@ -500,6 +497,9 @@ int frontend_help (const char *gamename)
 	/* HACK: some options REQUIRE gamename field to work: default to "*" */
 	if (!gamename || (strlen(gamename) == 0))
 		gamename = all_games;
+
+	/* since the cpuintrf structure is filled dynamically now, we have to init first */
+	cpuintrf_init();
 
 	/* sort the list if requested */
 	if (sortby)
@@ -1477,7 +1477,7 @@ int frontend_help (const char *gamename)
 j = 0;	// count only the main cpu
 								{
 									count[x_cpu[j].cpu_type]++;
-									switch(cputype_databus_width(x_cpu[j].cpu_type))
+									switch(cputype_databus_width(x_cpu[j].cpu_type, ADDRESS_SPACE_PROGRAM))
 									{
 										case  8: count_buswidth[0]++; break;
 										case 16: count_buswidth[1]++; break;

@@ -6,8 +6,6 @@
 #define strncmpi	strnicmp
 
 /* some irritating redefinitions */
-#define read	read_
-#define write	write_
 #define access	access_
 #define tell	tell_
 

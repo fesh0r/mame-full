@@ -445,11 +445,11 @@ static void resetcontrol_w(UINT8 data)
 // Rom board bank access
 
 static unsigned char curbank;
-static const UINT16 *rom_base;
 
 static void reset_bank(void)
 {
-	rom_base = (UINT16 *)(memory_region(REGION_USER1) + curbank * 0x40000);
+	cpu_setbank(1, memory_region(REGION_USER1) + curbank * 0x40000);
+	cpu_setbank(2, memory_region(REGION_USER1) + curbank * 0x40000);
 }
 
 static READ16_HANDLER( curbank_r )
@@ -463,52 +463,6 @@ static WRITE16_HANDLER( curbank_w )
 		curbank = data & 0xff;
 		reset_bank();
 	}
-}
-
-
-static READ16_HANDLER(rombank_r)
-{
-	return rom_base[offset];
-}
-
-
-// Shared banks access
-
-static UINT16 *ramlo, *ramhi, *ramprg;
-
-static READ16_HANDLER( ramlo_r )
-{
-	return ramlo[offset];
-}
-
-static WRITE16_HANDLER( ramlo_w )
-{
-	COMBINE_DATA(ramlo+offset);
-}
-
-static READ16_HANDLER( ramhi_r )
-{
-	return ramhi[offset];
-}
-
-static WRITE16_HANDLER( ramhi_w )
-{
-	COMBINE_DATA(ramhi+offset);
-}
-
-static READ16_HANDLER( ramprg_r )
-{
-	return ramprg[offset];
-}
-
-static WRITE16_HANDLER( ramprg_w )
-{
-	COMBINE_DATA(ramprg+offset);
-}
-
-static READ16_HANDLER( rom_r )
-{
-	return ((UINT16 *)memory_region(REGION_CPU1))[offset];
 }
 
 
@@ -695,126 +649,88 @@ static void irq_ym(int irq)
 }
 
 
+/*
+CPU1:
+00-03 ROM (1)
+04-07 ROM
+08-0f ramlo (2)
+10-13 ROM
+14-17 ROM
+f0-f3 ramprg (3)
+fc-ff ramhi (4)
 
-static MEMORY_READ16_START( system24_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x07ffff, rom_r },
-	{ 0x080000, 0x0fffff, MRA16_RAM },
-	{ 0x100000, 0x13ffff, rom_r },
-	{ 0x140000, 0x17ffff, rom_r },
-	{ 0x200000, 0x20ffff, sys24_tile_r },
-	{ 0x280000, 0x29ffff, sys24_char_r },
-	{ 0x400000, 0x403fff, MRA16_RAM },
-	{ 0x404000, 0x40401f, sys24_mixer_r },
-	{ 0x600000, 0x63ffff, sys24_sprite_r },
-	{ 0x800000, 0x80007f, system24temp_sys16_io_r },
-	{ 0x800102, 0x800103, ym_status_r },
-	{ 0xa00000, 0xa00007, irq_r },
+CPU2:
+00-03 ramprg
+04-07 ROM
+08-0f ramlo
+10-13 ROM
+14-17 ROM
+f0-f3 ramprg
+fc-ff ramhi
+*/
 
-	{ 0xb00000, 0xb00007, fdc_r },
-	{ 0xb00008, 0xb0000f, fdc_status_r },
+static ADDRESS_MAP_START( system24_cpu1_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_MIRROR(0x140000) AM_ROM AM_SHARE(1)
+	AM_RANGE(0x080000, 0x0fffff) AM_RAM AM_SHARE(2)
+	AM_RANGE(0x200000, 0x20ffff) AM_READWRITE(sys24_tile_r, sys24_tile_w)
+	AM_RANGE(0x220000, 0x220001) AM_WRITENOP		// Unknown, always 0
+	AM_RANGE(0x240000, 0x240001) AM_WRITENOP		// Horizontal synchronization register
+	AM_RANGE(0x260000, 0x260001) AM_WRITENOP		// Vertical synchronization register
+	AM_RANGE(0x270000, 0x270001) AM_WRITENOP		// Video synchronization switch
+	AM_RANGE(0x280000, 0x29ffff) AM_READWRITE(sys24_char_r, sys24_char_w)
+	AM_RANGE(0x400000, 0x403fff) AM_READWRITE(MRA16_RAM, system24temp_sys16_paletteram1_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x404000, 0x40401f) AM_READWRITE(sys24_mixer_r, sys24_mixer_w)
+	AM_RANGE(0x600000, 0x63ffff) AM_READWRITE(sys24_sprite_r, sys24_sprite_w)
+	AM_RANGE(0x800000, 0x80007f) AM_READWRITE(system24temp_sys16_io_r, system24temp_sys16_io_w)
+	AM_RANGE(0x800100, 0x800101) AM_WRITE(ym_register_w)
+	AM_RANGE(0x800102, 0x800103) AM_READWRITE(ym_status_r, ym_data_w)
+	AM_RANGE(0xa00000, 0xa00007) AM_READWRITE(irq_r, irq_w)
+	AM_RANGE(0xb00000, 0xb00007) AM_READWRITE(fdc_r, fdc_w)
+	AM_RANGE(0xb00008, 0xb0000f) AM_READWRITE(fdc_status_r, fdc_ctrl_w)
+	AM_RANGE(0xb80000, 0xbbffff) AM_ROMBANK(1)
+	AM_RANGE(0xbc0000, 0xbc0001) AM_READWRITE(curbank_r, curbank_w)
+	AM_RANGE(0xbc0006, 0xbc0007) AM_READWRITE(mlatch_r, mlatch_w)
+	AM_RANGE(0xc00000, 0xc00011) AM_READWRITE(hotrod3_ctrl_r, hotrod3_ctrl_w)
+	AM_RANGE(0xc80000, 0xcbffff) AM_ROMBANK(2)
+	AM_RANGE(0xcc0000, 0xcc0001) AM_READWRITE(curbank_r, curbank_w)
+	AM_RANGE(0xcc0006, 0xcc0007) AM_READWRITE(mlatch_r, mlatch_w)
+AM_RANGE(0xd00300, 0xd00301) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xf00000, 0xf3ffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0xfc0000, 0xffffff) AM_RAM AM_SHARE(4)
+ADDRESS_MAP_END
 
-	{ 0xb80000, 0xbbffff, rombank_r },
-	{ 0xbc0000, 0xbc0001, curbank_r },
-	{ 0xbc0006, 0xbc0007, mlatch_r },
+static ADDRESS_MAP_START( system24_cpu2_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_RAM AM_SHARE(3) 			// RAM here overrides the ROM mirror
+	AM_RANGE(0x040000, 0x07ffff) AM_ROM AM_SHARE(1)
+	AM_RANGE(0x080000, 0x0fffff) AM_RAM AM_SHARE(2)
+	AM_RANGE(0x100000, 0x13ffff) AM_MIRROR(0x040000) AM_ROM AM_SHARE(1)
+	AM_RANGE(0x200000, 0x20ffff) AM_READWRITE(sys24_tile_r, sys24_tile_w)
+	AM_RANGE(0x220000, 0x220001) AM_WRITENOP		// Unknown, always 0
+	AM_RANGE(0x240000, 0x240001) AM_WRITENOP		// Horizontal synchronization register
+	AM_RANGE(0x260000, 0x260001) AM_WRITENOP		// Vertical synchronization register
+	AM_RANGE(0x270000, 0x270001) AM_WRITENOP		// Video synchronization switch
+	AM_RANGE(0x280000, 0x29ffff) AM_READWRITE(sys24_char_r, sys24_char_w)
+	AM_RANGE(0x400000, 0x403fff) AM_READWRITE(MRA16_RAM, system24temp_sys16_paletteram1_w)
+	AM_RANGE(0x404000, 0x40401f) AM_READWRITE(sys24_mixer_r, sys24_mixer_w)
+	AM_RANGE(0x600000, 0x63ffff) AM_READWRITE(sys24_sprite_r, sys24_sprite_w)
+	AM_RANGE(0x800000, 0x80007f) AM_READWRITE(system24temp_sys16_io_r, system24temp_sys16_io_w)
+	AM_RANGE(0x800100, 0x800101) AM_WRITE(ym_register_w)
+	AM_RANGE(0x800102, 0x800103) AM_READWRITE(ym_status_r, ym_data_w)
+	AM_RANGE(0xa00000, 0xa00007) AM_READWRITE(irq_r, irq_w)
+//	AM_RANGE(0xb00000, 0xb00007) AM_READWRITE(fdc_r, fdc_w)
+//	AM_RANGE(0xb00008, 0xb0000f) AM_READWRITE(fdc_status_r, fdc_ctrl_w)
+	AM_RANGE(0xb80000, 0xbbffff) AM_ROMBANK(1)
+	AM_RANGE(0xbc0000, 0xbc0001) AM_READWRITE(curbank_r, curbank_w)
+	AM_RANGE(0xbc0006, 0xbc0007) AM_READWRITE(mlatch_r, mlatch_w)
+	AM_RANGE(0xc00000, 0xc00011) AM_READWRITE(hotrod3_ctrl_r, hotrod3_ctrl_w)
+	AM_RANGE(0xc80000, 0xcbffff) AM_ROMBANK(2)
+	AM_RANGE(0xcc0000, 0xcc0001) AM_READWRITE(curbank_r, curbank_w)
+	AM_RANGE(0xcc0006, 0xcc0007) AM_READWRITE(mlatch_r, mlatch_w)
+AM_RANGE(0xd00300, 0xd00301) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xf00000, 0xf3ffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0xfc0000, 0xffffff) AM_RAM AM_SHARE(4)
+ADDRESS_MAP_END
 
-	{ 0xc00000, 0xc00011, hotrod3_ctrl_r },
-
-	{ 0xc80000, 0xcbffff, rombank_r },
-	{ 0xcc0000, 0xcc0001, curbank_r },
-	{ 0xcc0006, 0xcc0007, mlatch_r },
-
-	{ 0xf00000, 0xf3ffff, ramprg_r },
-	{ 0xfc0000, 0xffffff, MRA16_RAM },
-MEMORY_END
-
-static MEMORY_WRITE16_START( system24_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x0fffff, MWA16_RAM, &ramlo },
-	{ 0x200000, 0x20ffff, sys24_tile_w },
-	{ 0x220000, 0x220001, MWA16_NOP }, // Unknown, always 0
-	{ 0x240000, 0x240001, MWA16_NOP }, // Horizontal synchronization register
-	{ 0x260000, 0x260001, MWA16_NOP }, // Vertical synchronization register
-	{ 0x270000, 0x270001, MWA16_NOP }, // Video synchronization switch
-	{ 0x280000, 0x29ffff, sys24_char_w },
-	{ 0x400000, 0x403fff, system24temp_sys16_paletteram1_w, &paletteram16 },
-	{ 0x404000, 0x40401f, sys24_mixer_w },
-	{ 0x600000, 0x63ffff, sys24_sprite_w },
-	{ 0x800000, 0x80007f, system24temp_sys16_io_w },
-	{ 0x800100, 0x800101, ym_register_w },
-	{ 0x800102, 0x800103, ym_data_w },
-	{ 0xa00000, 0xa00007, irq_w },
-
-	{ 0xb00000, 0xb00007, fdc_w },
-	{ 0xb00008, 0xb0000f, fdc_ctrl_w },
-
-	{ 0xbc0000, 0xbc0001, curbank_w },
-	{ 0xbc0006, 0xbc0007, mlatch_w },
-
-	{ 0xc00010, 0xc00011, hotrod3_ctrl_w },
-
-	{ 0xcc0000, 0xcc0001, curbank_w },
-	{ 0xcc0006, 0xcc0007, mlatch_w },
-
-{ 0xd00300, 0xd00301, MWA16_NOP },
-	{ 0xf00000, 0xf3ffff, ramprg_w },
-	{ 0xfc0000, 0xffffff, MWA16_RAM, &ramhi },
-MEMORY_END
-
-static MEMORY_READ16_START( system24_readmem2 )
-	{ 0x000000, 0x03ffff, MRA16_RAM },
-	{ 0x040000, 0x07ffff, rom_r },
-	{ 0x080000, 0x0fffff, ramlo_r },
-	{ 0x100000, 0x13ffff, rom_r },
-	{ 0x140000, 0x17ffff, rom_r },
-	{ 0x200000, 0x20ffff, sys24_tile_r },
-	{ 0x280000, 0x29ffff, sys24_char_r },
-	{ 0x400000, 0x403fff, paletteram16_word_r },
-	{ 0x404000, 0x40401f, sys24_mixer_r },
-	{ 0x600000, 0x63ffff, sys24_sprite_r },
-	{ 0x800000, 0x80007f, system24temp_sys16_io_r },
-	{ 0x800102, 0x800103, ym_status_r },
-	{ 0xa00000, 0xa00007, irq_r },
-
-	{ 0xb80000, 0xbbffff, rombank_r },
-	{ 0xbc0000, 0xbc0001, curbank_r },
-	{ 0xbc0006, 0xbc0007, mlatch_r },
-
-	{ 0xc00000, 0xc00011, hotrod3_ctrl_r },
-
-	{ 0xc80000, 0xcbffff, rombank_r },
-	{ 0xcc0000, 0xcc0001, curbank_r },
-	{ 0xcc0006, 0xcc0007, mlatch_r },
-
-	{ 0xf00000, 0xf3ffff, ramprg_r },
-	{ 0xfc0000, 0xffffff, ramhi_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( system24_writemem2 )
-	{ 0x000000, 0x03ffff, MWA16_RAM, &ramprg },
-	{ 0x080000, 0x0fffff, ramlo_w },
-	{ 0x200000, 0x20ffff, sys24_tile_w },
-	{ 0x220000, 0x220001, MWA16_NOP }, // Unknown, always 0
-	{ 0x240000, 0x240001, MWA16_NOP }, // Horizontal synchronization register
-	{ 0x260000, 0x260001, MWA16_NOP }, // Vertical synchronization register
-	{ 0x270000, 0x270001, MWA16_NOP }, // Video synchronization switch
-	{ 0x280000, 0x29ffff, sys24_char_w },
-	{ 0x400000, 0x403fff, system24temp_sys16_paletteram1_w },
-	{ 0x404000, 0x40401f, sys24_mixer_w },
-	{ 0x600000, 0x63ffff, sys24_sprite_w },
-	{ 0x800000, 0x80007f, system24temp_sys16_io_w },
-	{ 0x800100, 0x800101, ym_register_w },
-	{ 0x800102, 0x800103, ym_data_w },
-	{ 0xa00000, 0xa00007, irq_w },
-	{ 0xbc0000, 0xbc0001, curbank_w },
-	{ 0xbc0006, 0xbc0007, mlatch_w },
-	{ 0xc00010, 0xc00011, hotrod3_ctrl_w },
-	{ 0xcc0000, 0xcc0001, curbank_w },
-	{ 0xcc0006, 0xcc0007, mlatch_w },
-{ 0xd00300, 0xd00301, MWA16_NOP },
-	{ 0xf00000, 0xf3ffff, ramprg_w },
-	{ 0xfc0000, 0xffffff, ramhi_w },
-MEMORY_END
 
 static DRIVER_INIT(qgh)
 {
@@ -1500,11 +1416,11 @@ static struct DACinterface dac_interface =
 
 static MACHINE_DRIVER_START( system24 )
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(system24_readmem, system24_writemem)
+	MDRV_CPU_PROGRAM_MAP(system24_cpu1_map, 0)
 	MDRV_CPU_VBLANK_INT(irq_vbl, 2)
 
 	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(system24_readmem2, system24_writemem2)
+	MDRV_CPU_PROGRAM_MAP(system24_cpu2_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(100)

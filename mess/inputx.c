@@ -672,6 +672,17 @@ void inputx_update(unsigned short *ports)
 	}
 }
 
+
+
+int inputx_is_posting(void)
+{
+	const struct KeyBuffer *keybuf;
+	keybuf = get_buffer();
+	return keybuf->begin_pos != keybuf->end_pos;
+}
+
+
+
 /***************************************************************************
 
 	Alternative calls

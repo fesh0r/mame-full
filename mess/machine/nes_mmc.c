@@ -40,11 +40,11 @@ UINT8 IRQ_mode_jaleco;
 
 int MMC1_extended;	/* 0 = normal MMC1 cart, 1 = 512k MMC1, 2 = 1024k MMC1 */
 
-mem_write_handler mmc_write_low;
-mem_read_handler mmc_read_low;
-mem_write_handler mmc_write_mid;
-mem_read_handler mmc_read_mid;
-mem_write_handler mmc_write;
+write8_handler mmc_write_low;
+read8_handler mmc_read_low;
+write8_handler mmc_write_mid;
+read8_handler mmc_read_mid;
+write8_handler mmc_write;
 /*void (*ppu_latch)(offs_t offset);*/
 
 static int vrom_bank[16];

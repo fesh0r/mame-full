@@ -4,7 +4,7 @@
 MACHINE_DRIVER_EXTERN( pcvideo_vga );
 MACHINE_DRIVER_EXTERN( pcvideo_pc1640 );
 
-void vga_init(mem_read_handler read_dipswitch);
+void vga_init(read8_handler read_dipswitch);
 
 void vga_reset(void);
 

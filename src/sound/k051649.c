@@ -145,7 +145,7 @@ int K051649_sh_start(const struct MachineSound *msound)
 
 void K051649_sh_reset(void)
 {
-	k051649_sound_channel *voice=channel_list;
+	k051649_sound_channel *voice = channel_list;
 	int i;
 
 	/* reset all the voices */

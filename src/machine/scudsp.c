@@ -607,7 +607,7 @@ static void dsp_dma( void )
 #endif			
 		for ( counter = 0; counter < transfer_cnt ; counter++ )
 		{
-		    data = cpu_readmem32bedw_dword( source );
+		    data = program_read_dword(source );
 #ifdef DEBUG_DSP
             fprintf( log_file, "%08X, %08X,\n", source, data );
 #endif            		    
@@ -629,7 +629,7 @@ static void dsp_dma( void )
 #endif					
 		for ( counter = 0; counter < transfer_cnt; counter++ )
 		{
-			cpu_writemem32bedw_dword( dest, cpu_readmem32bew_word( dsp_get_mem_source_dma( dsp_mem, counter ) ) );
+			program_write_dword(dest, program_read_word(dsp_get_mem_source_dma( dsp_mem, counter ) ) );
 			dest += add;
 		}
 

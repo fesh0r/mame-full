@@ -49,10 +49,27 @@ static DRIVER_INIT( poolshrk )
 }
 
 
-WRITE_HANDLER( poolshrk_scratch_sound_w ) {}
-WRITE_HANDLER( poolshrk_score_sound_w ) {}
-WRITE_HANDLER( poolshrk_click_sound_w ) {}
-WRITE_HANDLER( poolshrk_bump_sound_w ) {}
+WRITE_HANDLER( poolshrk_scratch_sound_w )
+{
+	discrete_sound_w(1, offset);
+}
+
+WRITE_HANDLER( poolshrk_score_sound_w )
+{
+	/* This will trigger the sound code for 1 sample */
+	discrete_sound_w(3, 1);
+}
+
+WRITE_HANDLER( poolshrk_click_sound_w )
+{
+	/* This will trigger the sound code for 1 sample */
+	discrete_sound_w(2, 1);
+}
+
+WRITE_HANDLER( poolshrk_bump_sound_w )
+{
+	discrete_sound_w(0, offset);
+}
 
 
 WRITE_HANDLER( poolshrk_da_latch_w )
@@ -92,29 +109,29 @@ READ_HANDLER( poolshrk_interrupt_ack_r )
 }
 
 
-static MEMORY_READ_START( poolshrk_readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x1000, 0x1003, poolshrk_input_r },
-	{ 0x6800, 0x6800, poolshrk_interrupt_ack_r },
-	{ 0x7000, 0x7fff, MRA_ROM }, /* program */
-	{ 0xf800, 0xffff, MRA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( poolshrk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x1003) AM_READ(poolshrk_input_r)
+	AM_RANGE(0x6800, 0x6800) AM_READ(poolshrk_interrupt_ack_r)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( poolshrk_writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM, &poolshrk_playfield_ram },
-	{ 0x0800, 0x0810, MWA_RAM, &poolshrk_hpos_ram },
-	{ 0x0c00, 0x0c10, MWA_RAM, &poolshrk_vpos_ram },
-	{ 0x1003, 0x1003, watchdog_reset_w },
-	{ 0x1400, 0x1401, poolshrk_scratch_sound_w },
-	{ 0x1800, 0x1800, poolshrk_score_sound_w },
-	{ 0x1c00, 0x1c00, poolshrk_click_sound_w },
-	{ 0x6000, 0x6000, poolshrk_da_latch_w },
-	{ 0x6400, 0x6401, poolshrk_bump_sound_w },
-	{ 0x6c00, 0x6c07, poolshrk_led_w },
-	{ 0x7000, 0x7fff, MWA_ROM }, /* program */
-	{ 0xf800, 0xffff, MWA_ROM }, /* program mirror */
-MEMORY_END
+static ADDRESS_MAP_START( poolshrk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0400, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_playfield_ram)
+	AM_RANGE(0x0800, 0x0810) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_hpos_ram)
+	AM_RANGE(0x0c00, 0x0c10) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_vpos_ram)
+	AM_RANGE(0x1003, 0x1003) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1400, 0x1401) AM_WRITE(poolshrk_scratch_sound_w)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(poolshrk_score_sound_w)
+	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(poolshrk_click_sound_w)
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(poolshrk_da_latch_w)
+	AM_RANGE(0x6400, 0x6401) AM_WRITE(poolshrk_bump_sound_w)
+	AM_RANGE(0x6c00, 0x6c07) AM_WRITE(poolshrk_led_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
+	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( poolshrk )
@@ -214,11 +231,118 @@ static PALETTE_INIT( poolshrk )
 }
 
 
+/************************************************************************/
+/* poolshrk Sound System Analog emulation                               */
+/* Jan 2004, Derrick Renaud                                             */
+/************************************************************************/
+
+/* Nodes - Inputs */
+#define POOLSHRK_BUMP_EN	NODE_01
+#define POOLSHRK_CLICK_EN	NODE_02
+#define POOLSHRK_SCORE_EN	NODE_03
+/* Nodes - Sounds */
+#define POOLSHRK_BUMP_SND	NODE_10
+#define POOLSHRK_SCRATCH_SND	NODE_11
+#define POOLSHRK_CLICK_SND	NODE_12
+#define POOLSHRK_SCORE_SND	NODE_13
+
+static DISCRETE_SOUND_START(poolshrk_sound_interface)
+	/************************************************/
+	/* poolshrk  Effects Relataive Gain Table       */
+	/*                                              */
+	/* Effect  V-ampIn  Gain ratio        Relative  */
+	/* Bump     3.8     1/(82+1)           1000.0   */
+	/* Scratch  3.8     1/(330+1)           250.8   */
+	/* Click    3.8     1/(330+1)           250.8   */
+	/* Score    3.8     1/(330+1)           250.8   */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for poolshrk          */
+	/************************************************/
+	/*                   NODE                 ADDR  MASK     GAIN      OFFSET  INIT */
+	DISCRETE_INPUT      (POOLSHRK_BUMP_EN,     0x00, 0x000f,                    0.0)
+	DISCRETE_INPUTX     (POOLSHRK_SCRATCH_SND, 0x01, 0x000f,  250.8,    0,      0.0)
+	DISCRETE_INPUT_PULSE(POOLSHRK_CLICK_EN,    0x02, 0x000f,                    0.0)
+	DISCRETE_INPUT_PULSE(POOLSHRK_SCORE_EN,    0x03, 0x000f,                    0.0)
+	/************************************************/
+
+	/************************************************/
+	/* Scratch is just the trigger sent directly    */
+	/* to the output.  We take care of it's         */
+	/* amplitude right in it's DISCRETE_INPUTX.     */
+	/************************************************/
+
+	/************************************************/
+	/* Bump is just a triggered 128V signal         */
+	/************************************************/
+	DISCRETE_SQUAREWFIX(NODE_20, POOLSHRK_BUMP_EN, 15750.0/2.0/128.0, 1000.0, 50.0, 1000.0/2, 0.0)	// 128V signal
+	DISCRETE_RCFILTER(POOLSHRK_BUMP_SND, 1, NODE_20, 470, 4.7e-6)	// Filtered by R53/C14
+
+	/************************************************/
+	/* Score is a triggered 0-15 count of the       */
+	/* 64V signal.  This then sets the frequency of */
+	/* the 555 timer (C9).  The final signal is /2  */
+	/* to set a 50% duty cycle.  We can just start  */
+	/* the frequency at half.                       */
+	/* NOTE: when first powered up the counter is   */
+	/* not at TC, so the score is counted once.     */
+	/* This should also happen on the original PCB. */
+	/************************************************/
+	DISCRETE_COUNTER_FIX(NODE_30,		// Counter E8 (9316 is a 74161)
+	                     NODE_32,		// Clock enabled by F8, pin 13
+	                     POOLSHRK_SCORE_EN,	// Reset/triggered by score
+	                     15750.0/2.0/64.0,	// 64V signal
+	                     15, 1,		// 4 bit binary up counter
+	                     0)			// Cleared to 0
+	DISCRETE_TRANSFORM2(NODE_31, 1, NODE_30, 15, "01=")	// TC output of E8, pin 15.
+	DISCRETE_LOGIC_INVERT(NODE_32, 1, NODE_31)	// TC output modified to function as F8 clock enable
+	DISCRETE_MULTADD(NODE_33, 1, NODE_31, 200, 100)	// Freqs not tested.
+	DISCRETE_SQUAREWAVE(POOLSHRK_SCORE_SND,		// D9, pin 3 is 1/2 of 555 timer C9
+				NODE_32,		// buffer B8, pin 2
+				NODE_33,		// frequency
+				250.8, 50.0, 250.8/2, 0.0)
+
+	/*
+	 * The TC ouput of E8 is sent to a one shot made up by
+	 * C12/R62.  Clamped by CR16. Shaped to square by L9.
+	 * This causes click to be triggered at the end of score.
+	 */
+	DISCRETE_ONESHOT(NODE_39,	// buffer L9 pin 12
+			 NODE_31,	// from TC pin 15 of E8
+			 1, 0,		// output 0/1 for the minimum sample period
+			 DISC_ONESHOT_REDGE | DISC_ONESHOT_NORETRIG | DISC_OUT_ACTIVE_HIGH)
+
+	/************************************************/
+	/* Click is a triggered 0-15 count of the       */
+	/* 2V signal.  It is also triggered at the end  */
+	/* of the score sound.                          */
+	/************************************************/
+	DISCRETE_LOGIC_OR(NODE_40 ,1 ,POOLSHRK_CLICK_EN , NODE_39)	// gate K9, pin 11
+	DISCRETE_COUNTER_FIX(NODE_41,		// Counter J9 (9316 is a 74161)
+	                     NODE_42,		// Clock enabled by F8, pin 1
+	                     NODE_40,		// Reset/triggered by K9, pin 11
+	                     15750.0/2.0/2.0,	// 2V signal
+	                     15, 1,		// 4 bit binary up counter
+	                     0)			// Cleared to 0
+	DISCRETE_TRANSFORM2(NODE_42, 1, NODE_41, 15, "01=!")	// TC output of J9, pin 15. Modified to function as F8 clock enable
+	DISCRETE_TRANSFORM3(POOLSHRK_CLICK_SND, 1, NODE_41, 1, 250.8, "01&2*")	// Q0 output of J9, pin 14.  Set to proper amplitude
+
+	/************************************************/
+	/* Final gain and ouput.                        */
+	/************************************************/
+	DISCRETE_ADDER4(NODE_90, 1, POOLSHRK_BUMP_SND, POOLSHRK_SCRATCH_SND, POOLSHRK_CLICK_SND, POOLSHRK_SCORE_SND)
+	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0 + 250.8 + 250.8 + 250.8))
+	DISCRETE_CRFILTER(NODE_92, 1, NODE_91, 100000, 1e-7)	// C21 feeds amp, 100K is a guess at amp impedance.
+	DISCRETE_OUTPUT(NODE_92, 100)
+DISCRETE_SOUND_END
+
+
 static MACHINE_DRIVER_START( poolshrk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 11055000 / 8) /* ? */
-	MDRV_CPU_MEMORY(poolshrk_readmem, poolshrk_writemem)
+	MDRV_CPU_PROGRAM_MAP(poolshrk_readmem, poolshrk_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -235,6 +359,7 @@ static MACHINE_DRIVER_START( poolshrk )
 	MDRV_VIDEO_UPDATE(poolshrk)
 
 	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, poolshrk_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -256,4 +381,4 @@ ROM_START( poolshrk )
 ROM_END
 
 
-GAMEX( 1977, poolshrk, 0, poolshrk, poolshrk, poolshrk, 0, "Atari", "Poolshark", GAME_NO_SOUND )
+GAME( 1977, poolshrk, 0, poolshrk, poolshrk, poolshrk, 0, "Atari", "Poolshark" )

@@ -4,7 +4,7 @@ void iso_reset(void);
 void CD_com_update(UINT32 count);
 UINT32 cdb_find_track(UINT32 fad);
 UINT32 cdb_find_file(UINT32 fad);
-void cdb_inject_file_info(UINT32 fid, /*UINT8 **/char * dst);
+void cdb_inject_file_info(UINT32 fid, UINT8 * dst);
 
 
 #define CDB_SEND_REPORT()								\

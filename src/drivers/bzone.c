@@ -311,71 +311,71 @@ OVERLAY_END
  *
  *************************************/
 
-static MEMORY_READ_START( bzone_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
-	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
-	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
-	{ 0x1800, 0x1800, mb_status_r },
-	{ 0x1810, 0x1810, mb_lo_r },
-	{ 0x1818, 0x1818, mb_hi_r },
-	{ 0x1820, 0x182f, pokey1_r },
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( bzone_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_READ(bzone_IN0_r)    /* IN0 */
+	AM_RANGE(0x0a00, 0x0a00) AM_READ(input_port_1_r)	/* DSW1 */
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_2_r)	/* DSW2 */
+	AM_RANGE(0x1800, 0x1800) AM_READ(mb_status_r)
+	AM_RANGE(0x1810, 0x1810) AM_READ(mb_lo_r)
+	AM_RANGE(0x1818, 0x1818) AM_READ(mb_hi_r)
+	AM_RANGE(0x1820, 0x182f) AM_READ(pokey1_r)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)        /* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( bzone_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x1000, 0x1000, bzone_coin_counter_w },
-	{ 0x1200, 0x1200, avgdvg_go_w },
-	{ 0x1400, 0x1400, watchdog_reset_w },
-	{ 0x1600, 0x1600, avgdvg_reset_w },
-	{ 0x1820, 0x182f, pokey1_w },
-	{ 0x1840, 0x1840, bzone_sounds_w },
-	{ 0x1860, 0x187f, mb_go_w },
-	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x7fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( bzone_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(bzone_coin_counter_w)
+	AM_RANGE(0x1200, 0x1200) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1600, 0x1600) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x1820, 0x182f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x1840, 0x1840) AM_WRITE(bzone_sounds_w)
+	AM_RANGE(0x1860, 0x187f) AM_WRITE(mb_go_w)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START( redbaron_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
-	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
-	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
-	{ 0x1800, 0x1800, mb_status_r },
-	{ 0x1802, 0x1802, input_port_4_r },	/* IN4 */
-	{ 0x1804, 0x1804, mb_lo_r },
-	{ 0x1806, 0x1806, mb_hi_r },
-	{ 0x1810, 0x181f, pokey1_r },
-	{ 0x1820, 0x185f, atari_vg_earom_r },
-	{ 0x2000, 0x2fff, MRA_RAM },
-	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
-MEMORY_END
+static ADDRESS_MAP_START( redbaron_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x0800) AM_READ(bzone_IN0_r)    /* IN0 */
+	AM_RANGE(0x0a00, 0x0a00) AM_READ(input_port_1_r)	/* DSW1 */
+	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_2_r)	/* DSW2 */
+	AM_RANGE(0x1800, 0x1800) AM_READ(mb_status_r)
+	AM_RANGE(0x1802, 0x1802) AM_READ(input_port_4_r)	/* IN4 */
+	AM_RANGE(0x1804, 0x1804) AM_READ(mb_lo_r)
+	AM_RANGE(0x1806, 0x1806) AM_READ(mb_hi_r)
+	AM_RANGE(0x1810, 0x181f) AM_READ(pokey1_r)
+	AM_RANGE(0x1820, 0x185f) AM_READ(atari_vg_earom_r)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)        /* for the reset / interrupt vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( redbaron_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x1000, 0x1000, MWA_NOP },			/* coin out */
-	{ 0x1200, 0x1200, avgdvg_go_w },
-	{ 0x1400, 0x1400, watchdog_reset_w },
-	{ 0x1600, 0x1600, avgdvg_reset_w },
-	{ 0x1808, 0x1808, redbaron_sounds_w },	/* and select joystick pot also */
-	{ 0x180a, 0x180a, MWA_NOP },			/* sound reset, yet todo */
-	{ 0x180c, 0x180c, atari_vg_earom_ctrl_w },
-	{ 0x1810, 0x181f, pokey1_w },
-	{ 0x1820, 0x185f, atari_vg_earom_w },
-	{ 0x1860, 0x187f, mb_go_w },
-	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
-	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x5000, 0x7fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( redbaron_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(MWA8_NOP)			/* coin out */
+	AM_RANGE(0x1200, 0x1200) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1600, 0x1600) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x1808, 0x1808) AM_WRITE(redbaron_sounds_w)	/* and select joystick pot also */
+	AM_RANGE(0x180a, 0x180a) AM_WRITE(MWA8_NOP)			/* sound reset, yet todo */
+	AM_RANGE(0x180c, 0x180c) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x1810, 0x181f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x1820, 0x185f) AM_WRITE(atari_vg_earom_w)
+	AM_RANGE(0x1860, 0x187f) AM_WRITE(mb_go_w)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x7fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -712,7 +712,7 @@ static MACHINE_DRIVER_START( bzone )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
-	MDRV_CPU_MEMORY(bzone_readmem,bzone_writemem)
+	MDRV_CPU_PROGRAM_MAP(bzone_readmem,bzone_writemem)
 	MDRV_CPU_VBLANK_INT(bzone_interrupt,6) /* 4.1ms */
 
 	MDRV_FRAMES_PER_SECOND(40)
@@ -748,7 +748,7 @@ static MACHINE_DRIVER_START( redbaron )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(bzone)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(redbaron_readmem,redbaron_writemem)
+	MDRV_CPU_PROGRAM_MAP(redbaron_readmem,redbaron_writemem)
 	MDRV_CPU_VBLANK_INT(bzone_interrupt,4) /* 5.4ms */
 
 	MDRV_FRAMES_PER_SECOND(45)
@@ -881,8 +881,8 @@ static DRIVER_INIT( bzone )
 
 static DRIVER_INIT( bradley )
 {
-	install_mem_read_handler(0, 0x400, 0x7ff, MRA_RAM);
-	install_mem_write_handler(0, 0x400, 0x7ff, MWA_RAM);
+	install_mem_read_handler(0, 0x400, 0x7ff, MRA8_RAM);
+	install_mem_write_handler(0, 0x400, 0x7ff, MWA8_RAM);
 
 	install_mem_read_handler(0, 0x1808, 0x1808, input_port_4_r);
 	install_mem_read_handler(0, 0x1809, 0x1809, input_port_5_r);

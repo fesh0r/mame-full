@@ -428,82 +428,82 @@ static WRITE_HANDLER( fx1a_sound_bankswitch_w )
 	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( ( data - 1 ) & 0x07 ) * 0x4000 ) );
 }
 
-static MEMORY_READ32_START( zn_readmem )
-	{ 0x00000000, 0x003fffff, MRA32_RAM },		/* ram */
-	{ 0x1f000000, 0x1f3fffff, MRA32_BANK1 },	/* game rom */
-	{ 0x1f800000, 0x1f8003ff, MRA32_BANK3 },	/* scratchpad */
-	{ 0x1f801040, 0x1f80104f, sio0_r },
-	{ 0x1f801810, 0x1f801817, psx_gpu_r },
-	{ 0x1fb80000, 0x1fbbffff, MRA32_BANK6 },	/* country rom */
-	{ 0x80000000, 0x803fffff, MRA32_BANK4 },	/* ram mirror */
-	{ 0xa0000000, 0xa03fffff, MRA32_BANK5 },	/* ram mirror */
-	{ 0xbfc00000, 0xbfc7ffff, MRA32_BANK7 },	/* bios */
-MEMORY_END
+static ADDRESS_MAP_START( zn_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA32_RAM)		/* ram */
+	AM_RANGE(0x1f000000, 0x1f3fffff) AM_READ(MRA32_BANK1)	/* game rom */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_READ(MRA32_BANK3)	/* scratchpad */
+	AM_RANGE(0x1f801040, 0x1f80104f) AM_READ(sio0_r)
+	AM_RANGE(0x1f801810, 0x1f801817) AM_READ(psx_gpu_r)
+	AM_RANGE(0x1fb80000, 0x1fbbffff) AM_READ(MRA32_BANK6)	/* country rom */
+	AM_RANGE(0x80000000, 0x803fffff) AM_READ(MRA32_BANK4)	/* ram mirror */
+	AM_RANGE(0xa0000000, 0xa03fffff) AM_READ(MRA32_BANK5)	/* ram mirror */
+	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_READ(MRA32_BANK7)	/* bios */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( zn_writemem )
-	{ 0x00000000, 0x003fffff, MWA32_RAM },		/* ram */
-	{ 0x1f000000, 0x1f3fffff, MWA32_ROM },		/* game rom */
-	{ 0x1f800000, 0x1f8003ff, MWA32_BANK3 },	/* scratchpad */
-	{ 0x1f801040, 0x1f80104f, sio0_w },
-	{ 0x1f801810, 0x1f801817, psx_gpu_w },
-	{ 0x1fb80000, 0x1fbbffff, MWA32_ROM },		/* country rom */
-	{ 0x80000000, 0x803fffff, MWA32_BANK4 },	/* ram mirror */
-	{ 0xa0000000, 0xa03fffff, MWA32_BANK5 },	/* ram mirror */
-	{ 0xbfc00000, 0xbfc7ffff, MWA32_ROM },		/* bios */
-MEMORY_END
+static ADDRESS_MAP_START( zn_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA32_RAM)		/* ram */
+	AM_RANGE(0x1f000000, 0x1f3fffff) AM_WRITE(MWA32_ROM)		/* game rom */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_WRITE(MWA32_BANK3)	/* scratchpad */
+	AM_RANGE(0x1f801040, 0x1f80104f) AM_WRITE(sio0_w)
+	AM_RANGE(0x1f801810, 0x1f801817) AM_WRITE(psx_gpu_w)
+	AM_RANGE(0x1fb80000, 0x1fbbffff) AM_WRITE(MWA32_ROM)		/* country rom */
+	AM_RANGE(0x80000000, 0x803fffff) AM_WRITE(MWA32_BANK4)	/* ram mirror */
+	AM_RANGE(0xa0000000, 0xa03fffff) AM_WRITE(MWA32_BANK5)	/* ram mirror */
+	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_WRITE(MWA32_ROM)		/* bios */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( qsound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK10 },	/* banked (contains music data) */
-	{ 0xd007, 0xd007, qsound_status_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( qsound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK10)	/* banked (contains music data) */
+	AM_RANGE(0xd007, 0xd007) AM_READ(qsound_status_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( qsound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd000, 0xd000, qsound_data_h_w },
-	{ 0xd001, 0xd001, qsound_data_l_w },
-	{ 0xd002, 0xd002, qsound_cmd_w },
-	{ 0xd003, 0xd003, qsound_bankswitch_w },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( qsound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(qsound_data_h_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(qsound_data_l_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(qsound_cmd_w)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(qsound_bankswitch_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( qsound_readport )
-	{ 0x00, 0x00, soundlatch_r },
-PORT_END
+static ADDRESS_MAP_START( qsound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( link_readmem )
-MEMORY_END
+static ADDRESS_MAP_START( link_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( link_writemem )
-MEMORY_END
+static ADDRESS_MAP_START( link_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( fx1a_sound_readmem )
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK10 },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
-	{ 0xe001, 0xe001, YM2610_read_port_0_r },
-	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
-	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, taitosound_slave_comm_r },
-	{ 0xea00, 0xea00, MRA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( fx1a_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( fx1a_sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe000, YM2610_control_port_0_A_w },
-	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
-	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
-	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, taitosound_slave_port_w },
-	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
-	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
-	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, fx1a_sound_bankswitch_w },
-MEMORY_END
+static ADDRESS_MAP_START( fx1a_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(fx1a_sound_bankswitch_w)
+ADDRESS_MAP_END
 
 static DRIVER_INIT( zn )
 {
@@ -820,7 +820,7 @@ static struct YM2610interface ym2610_interface =
 static MACHINE_DRIVER_START( zn )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33868800) /* 33MHz ?? */
-	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
+	MDRV_CPU_PROGRAM_MAP(zn_readmem,zn_writemem)
 	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -846,13 +846,13 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( znqsound )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
-	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
+	MDRV_CPU_PROGRAM_MAP(zn_readmem,zn_writemem)
 	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_CPU_ADD(Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)  /* 8MHz ?? */
-	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
-	MDRV_CPU_PORTS(qsound_readport,0)
+	MDRV_CPU_PROGRAM_MAP(qsound_readmem,qsound_writemem)
+	MDRV_CPU_IO_MAP(qsound_readport,0)
 	MDRV_CPU_VBLANK_INT(qsound_interrupt,4) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -879,11 +879,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( znlink )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
-	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
+	MDRV_CPU_PROGRAM_MAP(zn_readmem,zn_writemem)
 	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_MEMORY(link_readmem,link_writemem)
+	MDRV_CPU_PROGRAM_MAP(link_readmem,link_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -908,12 +908,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( fx1a )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
-	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
+	MDRV_CPU_PROGRAM_MAP(zn_readmem,zn_writemem)
 	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
-	MDRV_CPU_MEMORY(fx1a_sound_readmem,fx1a_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(fx1a_sound_readmem,fx1a_sound_writemem)
 	MDRV_CPU_VBLANK_INT(fx1a_sound_interrupt,1) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -940,7 +940,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( fx1b )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
-	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
+	MDRV_CPU_PROGRAM_MAP(zn_readmem,zn_writemem)
 	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1880,7 +1880,7 @@ GAMEX( 1997, cpzn1,    0,        zn,       zn, zn,   ROT0, "Sony/Capcom", "ZN1",
 
 GAMEX( 1995, ts2,      cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1995, ts2j,     ts2,      znqsound, zn, zn,   ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, starglad, cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/", "Star Gladiator (USA 960627)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, starglad, cpzn1,    znqsound, zn, zn,   ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1996, sfex,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1996, sfexj,    sfex,     znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1996, glpracr,  cpzn1,    zn,       zn, zn,   ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )

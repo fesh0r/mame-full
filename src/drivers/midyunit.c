@@ -57,34 +57,34 @@ static NVRAM_HANDLER( midyunit )
  *
  *************************************/
 
-static MEMORY_READ16_START( readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), midyunit_vram_r },
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MRA16_RAM },
-	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), midyunit_cmos_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), MRA16_RAM },
-	{ TOBYTE(0x01a80000), TOBYTE(0x01a8009f), midyunit_dma_r },
-	{ TOBYTE(0x01c00000), TOBYTE(0x01c0005f), midyunit_input_r },
-	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), midyunit_protection_r },
-	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), midyunit_gfxrom_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(midyunit_vram_r)
+	AM_RANGE(0x01000000, 0x010fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x01400000, 0x0140ffff) AM_READ(midyunit_cmos_r)
+	AM_RANGE(0x01800000, 0x0181ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x01a80000, 0x01a8009f) AM_READ(midyunit_dma_r)
+	AM_RANGE(0x01c00000, 0x01c0005f) AM_READ(midyunit_input_r)
+	AM_RANGE(0x01c00060, 0x01c0007f) AM_READ(midyunit_protection_r)
+	AM_RANGE(0x02000000, 0x05ffffff) AM_READ(midyunit_gfxrom_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xff800000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START( writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), midyunit_vram_w },
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MWA16_RAM, &midyunit_scratch_ram },
-	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), midyunit_cmos_w },
-	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), midyunit_paletteram_w, &paletteram16 },
-	{ TOBYTE(0x01a00000), TOBYTE(0x01a0009f), midyunit_dma_w },	/* do we need this? */
-	{ TOBYTE(0x01a80000), TOBYTE(0x01a8009f), midyunit_dma_w },
-	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), midyunit_cmos_enable_w },
-	{ TOBYTE(0x01e00000), TOBYTE(0x01e0001f), midyunit_sound_w },
-	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), midyunit_control_w },
-	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), MWA16_ROM, (data16_t **)&midyunit_gfx_rom, &midyunit_gfx_rom_size },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), midyunit_io_register_w },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &midyunit_code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(midyunit_vram_w)
+	AM_RANGE(0x01000000, 0x010fffff) AM_WRITE(MWA16_RAM) AM_BASE(&midyunit_scratch_ram)
+	AM_RANGE(0x01400000, 0x0140ffff) AM_WRITE(midyunit_cmos_w)
+	AM_RANGE(0x01800000, 0x0181ffff) AM_WRITE(midyunit_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x01a00000, 0x01a0009f) AM_WRITE(midyunit_dma_w)	/* do we need this? */
+	AM_RANGE(0x01a80000, 0x01a8009f) AM_WRITE(midyunit_dma_w)
+	AM_RANGE(0x01c00060, 0x01c0007f) AM_WRITE(midyunit_cmos_enable_w)
+	AM_RANGE(0x01e00000, 0x01e0001f) AM_WRITE(midyunit_sound_w)
+	AM_RANGE(0x01f00000, 0x01f0001f) AM_WRITE(midyunit_control_w)
+	AM_RANGE(0x02000000, 0x05ffffff) AM_WRITE(MWA16_ROM) AM_BASE((data16_t **)&midyunit_gfx_rom) AM_SIZE(&midyunit_gfx_rom_size)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(midyunit_io_register_w)
+	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&midyunit_code_rom)
+ADDRESS_MAP_END
 
 
 
@@ -857,7 +857,7 @@ static MACHINE_DRIVER_START( zunit )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(COMPUTED_VBLANK(400, 432, 57))
@@ -891,7 +891,7 @@ static MACHINE_DRIVER_START( yunit_core )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
 	MDRV_VBLANK_DURATION(COMPUTED_VBLANK(256, 288, MKLA5_FPS))

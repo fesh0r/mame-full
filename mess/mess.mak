@@ -13,20 +13,20 @@ CPUS+=M6502@
 CPUS+=M65C02@
 CPUS+=M65SC02@
 #CPUS+=M65CE02@
-CPUS+=M6509@
+#CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=M6510T@
 CPUS+=M7501@
 CPUS+=M8502@
 CPUS+=N2A03@
 #CPUS+=DECO16@
-CPUS+=M4510@
+#CPUS+=M4510@
 CPUS+=H6280@
 CPUS+=I86@
 CPUS+=I88@
 CPUS+=I186@
 #CPUS+=I188@
-CPUS+=I286@
+#CPUS+=I286@
 CPUS+=V20@
 CPUS+=V30@
 #CPUS+=V33@
@@ -49,6 +49,7 @@ CPUS+=M6805@
 #CPUS+=HD63705@
 CPUS+=HD6309@
 CPUS+=M6809@
+CPUS+=M6809E@
 #CPUS+=KONAMI@
 CPUS+=M68000@
 CPUS+=M68010@
@@ -58,17 +59,18 @@ CPUS+=M68020@
 CPUS+=S2650@
 #CPUS+=TMS34010@
 #CPUS+=TMS34020@
-CPUS+=TMS9900@
+#CPUS+=TMS9900@
 #CPUS+=TMS9940@
-CPUS+=TMS9980@
+#CPUS+=TMS9980@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
-CPUS+=TMS9995@
+#CPUS+=TMS9995@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 #CPUS+=Z8000@
 #CPUS+=TMS32010@
 #CPUS+=TMS32025@
+#CPUS+=TMS32026@
 #CPUS+=TMS32031@
 #CPUS+=CCPU@
 #CPUS+=ADSP2100@
@@ -92,18 +94,18 @@ CPUS+=SH2@
 #CPUS+=PIC16C56@
 #CPUS+=PIC16C57@
 #CPUS+=PIC16C58@
-CPUS+=Z80GB@
-CPUS+=CDP1802@
-CPUS+=SC61860@
 CPUS+=G65816@
 CPUS+=SPC700@
 #CPUS+=E132XS@
-CPUS+=SATURN@
-CPUS+=APEXC@
-CPUS+=F8@
-CPUS+=CP1610@
-CPUS+=TMS99010@
-CPUS+=PDP1@
+#CPUS+=Z80GB@
+#CPUS+=CDP1802@
+#CPUS+=SC61860@
+#CPUS+=SATURN@
+#CPUS+=APEXC@
+#CPUS+=F8@
+#CPUS+=CP1610@
+#CPUS+=TMS99010@
+#CPUS+=PDP1@
 
 # SOUND cores used in MESS
 SOUNDS+=CUSTOM@
@@ -129,7 +131,7 @@ SOUNDS+=YM3812@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
 SOUNDS+=TIA@
-SOUNDS+=NES@
+#SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 #SOUNDS+=NAMCO@
 #SOUNDS+=NAMCONA@
@@ -168,7 +170,7 @@ SOUNDS+=SAA1099@
 #SOUNDS+=SP0250@
 #SOUNDS+=SCSP@
 #SOUNDS+=YMF271@
-SOUNDS+=PSXSPU@
+#SOUNDS+=PSXSPU@
 SOUNDS+=SPEAKER@
 SOUNDS+=WAVE@
 SOUNDS+=BEEP@
@@ -176,78 +178,78 @@ SOUNDS+=BEEP@
 # Archive definitions
 DRVLIBS = \
 	$(OBJ)/coco.a     \
-	$(OBJ)/nintendo.a \
-	$(OBJ)/apple.a    \
-	$(OBJ)/at.a       \
-	$(OBJ)/pc.a       \
-	$(OBJ)/pcshare.a  \
-	$(OBJ)/sega.a     \
-	$(OBJ)/acorn.a    \
-	$(OBJ)/atari.a    \
-	$(OBJ)/advision.a \
-	$(OBJ)/mbee.a	  \
-	$(OBJ)/vtech.a	  \
-	$(OBJ)/jupiter.a  \
-	$(OBJ)/trs80.a	  \
-	$(OBJ)/gce.a	  \
-	$(OBJ)/arcadia.a  \
-	$(OBJ)/kaypro.a   \
-	$(OBJ)/cgenie.a   \
-	$(OBJ)/aquarius.a \
-	$(OBJ)/tangerin.a \
-	$(OBJ)/sord.a     \
-	$(OBJ)/exidy.a    \
-	$(OBJ)/samcoupe.a \
-	$(OBJ)/p2000.a	  \
-	$(OBJ)/tatung.a   \
-	$(OBJ)/ep128.a	  \
-	$(OBJ)/cpschngr.a \
-	$(OBJ)/veb.a	  \
-	$(OBJ)/amstrad.a  \
-	$(OBJ)/necpc.a	  \
-	$(OBJ)/nec.a	  \
-	$(OBJ)/fairch.a   \
-	$(OBJ)/ascii.a	  \
-	$(OBJ)/nascom1.a  \
-	$(OBJ)/magnavox.a \
-	$(OBJ)/mtx.a	  \
-	$(OBJ)/mk1.a      \
-	$(OBJ)/mk2.a      \
-	$(OBJ)/ti85.a     \
-	$(OBJ)/galaxy.a   \
-	$(OBJ)/vc4000.a   \
-	$(OBJ)/lviv.a     \
-	$(OBJ)/pmd85.a    \
-	$(OBJ)/sinclair.a \
-	$(OBJ)/lynx.a     \
-	$(OBJ)/intv.a     \
-	$(OBJ)/svision.a  \
-	$(OBJ)/coleco.a   \
-	$(OBJ)/apf.a      \
-	$(OBJ)/bally.a	  \
-	$(OBJ)/rca.a	  \
-	$(OBJ)/teamconc.a \
-	$(OBJ)/amiga.a    \
-	$(OBJ)/svi.a      \
-	$(OBJ)/ti99.a     \
-	$(OBJ)/tutor.a    \
-	$(OBJ)/apexc.a	  \
-	$(OBJ)/pdp1.a	  \
-	$(OBJ)/sharp.a    \
-	$(OBJ)/aim65.a    \
-	$(OBJ)/avigo.a    \
-	$(OBJ)/motorola.a \
-	$(OBJ)/ssystem3.a \
-	$(OBJ)/hp48.a     \
-	$(OBJ)/cbm.a      \
-	$(OBJ)/cbmshare.a \
-	$(OBJ)/kim1.a     \
-	$(OBJ)/sym1.a     \
-	$(OBJ)/sony.a     \
-	$(OBJ)/concept.a  \
-	$(OBJ)/dai.a      \
-	$(OBJ)/bandai.a		\
-	$(OBJ)/compis.a		\
+#	$(OBJ)/nintendo.a \
+#	$(OBJ)/apple.a    \
+#	$(OBJ)/at.a       \
+#	$(OBJ)/pc.a       \
+#	$(OBJ)/pcshare.a  \
+#	$(OBJ)/sega.a     \
+#	$(OBJ)/acorn.a    \
+#	$(OBJ)/atari.a    \
+#	$(OBJ)/advision.a \
+#	$(OBJ)/mbee.a	  \
+#	$(OBJ)/vtech.a	  \
+#	$(OBJ)/jupiter.a  \
+#	$(OBJ)/trs80.a	  \
+#	$(OBJ)/gce.a	  \
+#	$(OBJ)/arcadia.a  \
+#	$(OBJ)/kaypro.a   \
+#	$(OBJ)/cgenie.a   \
+#	$(OBJ)/aquarius.a \
+#	$(OBJ)/tangerin.a \
+#	$(OBJ)/sord.a     \
+#	$(OBJ)/exidy.a    \
+#	$(OBJ)/samcoupe.a \
+#	$(OBJ)/p2000.a	  \
+#	$(OBJ)/tatung.a   \
+#	$(OBJ)/ep128.a	  \
+#	$(OBJ)/cpschngr.a \
+#	$(OBJ)/veb.a	  \
+#	$(OBJ)/amstrad.a  \
+#	$(OBJ)/necpc.a	  \
+#	$(OBJ)/nec.a	  \
+#	$(OBJ)/fairch.a   \
+#	$(OBJ)/ascii.a	  \
+#	$(OBJ)/nascom1.a  \
+#	$(OBJ)/magnavox.a \
+#	$(OBJ)/mtx.a	  \
+#	$(OBJ)/mk1.a      \
+#	$(OBJ)/mk2.a      \
+#	$(OBJ)/ti85.a     \
+#	$(OBJ)/galaxy.a   \
+#	$(OBJ)/vc4000.a   \
+#	$(OBJ)/lviv.a     \
+#	$(OBJ)/pmd85.a    \
+#	$(OBJ)/sinclair.a \
+#	$(OBJ)/lynx.a     \
+#	$(OBJ)/intv.a     \
+#	$(OBJ)/svision.a  \
+#	$(OBJ)/coleco.a   \
+#	$(OBJ)/apf.a      \
+#	$(OBJ)/bally.a	  \
+#	$(OBJ)/rca.a	  \
+#	$(OBJ)/teamconc.a \
+#	$(OBJ)/amiga.a    \
+#	$(OBJ)/svi.a      \
+#	$(OBJ)/ti99.a     \
+#	$(OBJ)/tutor.a    \
+#	$(OBJ)/apexc.a	  \
+#	$(OBJ)/pdp1.a	  \
+#	$(OBJ)/sharp.a    \
+#	$(OBJ)/aim65.a    \
+#	$(OBJ)/avigo.a    \
+#	$(OBJ)/motorola.a \
+#	$(OBJ)/ssystem3.a \
+#	$(OBJ)/hp48.a     \
+#	$(OBJ)/cbm.a      \
+#	$(OBJ)/cbmshare.a \
+#	$(OBJ)/kim1.a     \
+#	$(OBJ)/sym1.a     \
+#	$(OBJ)/sony.a     \
+#	$(OBJ)/concept.a  \
+#	$(OBJ)/dai.a      \
+#	$(OBJ)/bandai.a		\
+#	$(OBJ)/compis.a		\
 
 
 $(OBJ)/neocd.a:						\
@@ -364,15 +366,15 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/machine/cococart.o	\
 	$(OBJ)/mess/machine/ds1315.o	\
 	$(OBJ)/mess/machine/m6242b.o	\
-	$(OBJ)/mess/machine/mc10.o	\
-	$(OBJ)/mess/systems/mc10.o	\
 	$(OBJ)/mess/machine/dragon.o	\
 	$(OBJ)/mess/vidhrdw/dragon.o	\
 	$(OBJ)/mess/systems/dragon.o	\
 	$(OBJ)/mess/formats/cocopak.o	\
 	$(OBJ)/mess/formats/coco_cas.o	\
 	$(OBJ)/mess/formats/coco_dsk.o	\
-	$(OBJ)/mess/devices/coco_vhd.o 
+	$(OBJ)/mess/devices/coco_vhd.o
+#	$(OBJ)/mess/machine/mc10.o		\
+#	$(OBJ)/mess/systems/mc10.o		\
 
 $(OBJ)/trs80.a:    \
 	$(OBJ)/mess/machine/trs80.o	 \

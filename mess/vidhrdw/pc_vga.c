@@ -206,7 +206,7 @@ static UINT8 rotate_right[8][256];
 static UINT8 color_bitplane_to_packed[4/*plane*/][8/*pixel*/][256];
 
 static struct {
-	mem_read_handler read_dipswitch;
+	read8_handler read_dipswitch;
 
 	UINT8 *memory;
 	UINT8 *dirty;
@@ -516,8 +516,8 @@ static WRITE_HANDLER(vga_vga_w)
 static void vga_cpu_interface(void)
 {
 	static int sequencer, gc;
-	mem_read_handler read_handler;
-	mem_write_handler write_handler;
+	read8_handler read_handler;
+	write8_handler write_handler;
 
 	if ((gc==vga.gc.data[6])&&(sequencer==vga.sequencer.data[4])) return;
 
@@ -951,7 +951,7 @@ void vga_reset(void)
 {
 	UINT8 *memory=vga.memory, *dirty=vga.dirty, *fontdirty=vga.fontdirty;
 
-    mem_read_handler read_dipswitch=vga.read_dipswitch;
+    read8_handler read_dipswitch=vga.read_dipswitch;
 
 	memset(&vga,0, sizeof(vga));
 
@@ -969,7 +969,7 @@ void vga_reset(void)
 	vga_cpu_interface();
 }
 
-void vga_init(mem_read_handler read_dipswitch)
+void vga_init(read8_handler read_dipswitch)
 {
 	int i, j, k, mask;
 

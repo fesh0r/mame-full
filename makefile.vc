@@ -252,6 +252,7 @@ OBJDIRS += \
 	$(OBJ)/mess/tools/mkhdimg \
 	$(OBJ)/mess/tools/messroms \
 	$(OBJ)/mess/tools/messdocs \
+	$(OBJ)/mess/tools/messtest \
 	$(OBJ)/mess/tools/mkimage \
 	$(OBJ)/mess/formats \
 	$(OBJ)/mess/devices \
@@ -332,6 +333,23 @@ endif
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(DIRENTOBJS) -out:$@ $^
+
+messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(DIRENTOBJS) \
+		$(OBJ)/mess/tools/messtest/messtest.o	\
+		$(OBJ)/mess/tools/messtest/testexec.o	\
+		$(OBJ)/mess/tools/messtest/tststubs.o	\
+		$(OBJ)/windows/asmtile.o				\
+		$(OBJ)/windows/ticker.o					\
+		$(OBJ)/windows/fileio.o					\
+		$(OBJ)/windows/rc.o						\
+		$(OBJ)/windows/misc.o					\
+		$(OBJ)/mess/windows/dirio.o				\
+		$(OBJ)/xml2info/xmlrole.o				\
+		$(OBJ)/xml2info/xmltok.o				\
+		$(OBJ)/xml2info/xmlparse.o				\
+		$(OBJ)/windows/snprintf.o				
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) -out:$@ $^
 
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak

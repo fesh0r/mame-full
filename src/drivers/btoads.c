@@ -192,47 +192,47 @@ static READ16_HANDLER( main_speedup_r )
  *
  *************************************/
 
-static MEMORY_READ16_START( main_readmem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), MRA16_RAM },
-	{ TOBYTE(0x20000000), TOBYTE(0x2000007f), input_port_0_word_r },
-	{ TOBYTE(0x20000080), TOBYTE(0x200000ff), input_port_1_word_r },
-	{ TOBYTE(0x20000100), TOBYTE(0x2000017f), input_port_2_word_r },
-	{ TOBYTE(0x20000180), TOBYTE(0x200001ff), input_port_3_word_r },
-	{ TOBYTE(0x20000200), TOBYTE(0x2000027f), special_port_4_r },
-	{ TOBYTE(0x20000280), TOBYTE(0x200002ff), input_port_5_word_r },
-	{ TOBYTE(0x20000300), TOBYTE(0x2000037f), btoads_paletteram_r },
-	{ TOBYTE(0x20000380), TOBYTE(0x200003ff), main_sound_r },
-	{ TOBYTE(0x60000000), TOBYTE(0x6003ffff), MRA16_RAM },
-	{ TOBYTE(0xa0000000), TOBYTE(0xa03fffff), btoads_vram_fg_display_r },
-	{ TOBYTE(0xa4000000), TOBYTE(0xa43fffff), btoads_vram_fg_draw_r },
-	{ TOBYTE(0xa8000000), TOBYTE(0xa87fffff), MRA16_RAM },
-	{ TOBYTE(0xb0000000), TOBYTE(0xb03fffff), btoads_vram_bg0_r },
-	{ TOBYTE(0xb4000000), TOBYTE(0xb43fffff), btoads_vram_bg1_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00003ff), tms34020_io_register_r },
-	{ TOBYTE(0xfc000000), TOBYTE(0xffffffff), MRA16_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x20000000, 0x2000007f) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x20000080, 0x200000ff) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x20000100, 0x2000017f) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x20000180, 0x200001ff) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x20000200, 0x2000027f) AM_READ(special_port_4_r)
+	AM_RANGE(0x20000280, 0x200002ff) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x20000300, 0x2000037f) AM_READ(btoads_paletteram_r)
+	AM_RANGE(0x20000380, 0x200003ff) AM_READ(main_sound_r)
+	AM_RANGE(0x60000000, 0x6003ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xa0000000, 0xa03fffff) AM_READ(btoads_vram_fg_display_r)
+	AM_RANGE(0xa4000000, 0xa43fffff) AM_READ(btoads_vram_fg_draw_r)
+	AM_RANGE(0xa8000000, 0xa87fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xb0000000, 0xb03fffff) AM_READ(btoads_vram_bg0_r)
+	AM_RANGE(0xb4000000, 0xb43fffff) AM_READ(btoads_vram_bg1_r)
+	AM_RANGE(0xc0000000, 0xc00003ff) AM_READ(tms34020_io_register_r)
+	AM_RANGE(0xfc000000, 0xffffffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( main_writemem )
-	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), MWA16_RAM },
-	{ TOBYTE(0x20000000), TOBYTE(0x200000ff), MWA16_RAM, &btoads_sprite_scale },
-	{ TOBYTE(0x20000100), TOBYTE(0x2000017f), MWA16_RAM, &btoads_sprite_control },
-	{ TOBYTE(0x20000180), TOBYTE(0x200001ff), btoads_display_control_w },
-	{ TOBYTE(0x20000200), TOBYTE(0x2000027f), btoads_scroll0_w },
-	{ TOBYTE(0x20000280), TOBYTE(0x200002ff), btoads_scroll1_w },
-	{ TOBYTE(0x20000300), TOBYTE(0x2000037f), btoads_paletteram_w },
-	{ TOBYTE(0x20000380), TOBYTE(0x200003ff), main_sound_w },
-	{ TOBYTE(0x20000400), TOBYTE(0x2000047f), btoads_misc_control_w },
-	{ TOBYTE(0x40000000), TOBYTE(0x4000000f), MWA16_NOP },	/* watchdog? */
-	{ TOBYTE(0x60000000), TOBYTE(0x6003ffff), MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ TOBYTE(0xa0000000), TOBYTE(0xa03fffff), btoads_vram_fg_display_w, &btoads_vram_fg0 },
-	{ TOBYTE(0xa4000000), TOBYTE(0xa43fffff), btoads_vram_fg_draw_w, &btoads_vram_fg1 },
-	{ TOBYTE(0xa8000000), TOBYTE(0xa87fffff), MWA16_RAM, &btoads_vram_fg_data },
-	{ TOBYTE(0xa8800000), TOBYTE(0xa8ffffff), MWA16_NOP },
-	{ TOBYTE(0xb0000000), TOBYTE(0xb03fffff), btoads_vram_bg0_w, &btoads_vram_bg0 },
-	{ TOBYTE(0xb4000000), TOBYTE(0xb43fffff), btoads_vram_bg1_w, &btoads_vram_bg1 },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00003ff), tms34020_io_register_w },
-	{ TOBYTE(0xfc000000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
-MEMORY_END
+static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x20000000, 0x200000ff) AM_WRITE(MWA16_RAM) AM_BASE(&btoads_sprite_scale)
+	AM_RANGE(0x20000100, 0x2000017f) AM_WRITE(MWA16_RAM) AM_BASE(&btoads_sprite_control)
+	AM_RANGE(0x20000180, 0x200001ff) AM_WRITE(btoads_display_control_w)
+	AM_RANGE(0x20000200, 0x2000027f) AM_WRITE(btoads_scroll0_w)
+	AM_RANGE(0x20000280, 0x200002ff) AM_WRITE(btoads_scroll1_w)
+	AM_RANGE(0x20000300, 0x2000037f) AM_WRITE(btoads_paletteram_w)
+	AM_RANGE(0x20000380, 0x200003ff) AM_WRITE(main_sound_w)
+	AM_RANGE(0x20000400, 0x2000047f) AM_WRITE(btoads_misc_control_w)
+	AM_RANGE(0x40000000, 0x4000000f) AM_WRITE(MWA16_NOP)	/* watchdog? */
+	AM_RANGE(0x60000000, 0x6003ffff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa0000000, 0xa03fffff) AM_WRITE(btoads_vram_fg_display_w) AM_BASE(&btoads_vram_fg0)
+	AM_RANGE(0xa4000000, 0xa43fffff) AM_WRITE(btoads_vram_fg_draw_w) AM_BASE(&btoads_vram_fg1)
+	AM_RANGE(0xa8000000, 0xa87fffff) AM_WRITE(MWA16_RAM) AM_BASE(&btoads_vram_fg_data)
+	AM_RANGE(0xa8800000, 0xa8ffffff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xb0000000, 0xb03fffff) AM_WRITE(btoads_vram_bg0_w) AM_BASE(&btoads_vram_bg0)
+	AM_RANGE(0xb4000000, 0xb43fffff) AM_WRITE(btoads_vram_bg1_w) AM_BASE(&btoads_vram_bg1)
+	AM_RANGE(0xc0000000, 0xc00003ff) AM_WRITE(tms34020_io_register_w)
+	AM_RANGE(0xfc000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
 
 
@@ -242,29 +242,29 @@ MEMORY_END
  *
  *************************************/
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( sound_readport )
-	{ 0x8000, 0x8000, sound_data_r },
-	{ 0x8004, 0x8004, sound_data_ready_r },
-	{ 0x8005, 0x8005, sound_ready_to_send_r },
-	{ 0x8006, 0x8006, bsmt_ready_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x8000, 0x8000) AM_READ(sound_data_r)
+	AM_RANGE(0x8004, 0x8004) AM_READ(sound_data_ready_r)
+	AM_RANGE(0x8005, 0x8005) AM_READ(sound_ready_to_send_r)
+	AM_RANGE(0x8006, 0x8006) AM_READ(bsmt_ready_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( sound_writeport )
-	{ 0x0000, 0x7fff, bsmt2000_port_w },
-	{ 0x8000, 0x8000, sound_data_w },
-	{ 0x8002, 0x8002, sound_int_state_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(bsmt2000_port_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(sound_data_w)
+	AM_RANGE(0x8002, 0x8002) AM_WRITE(sound_int_state_w)
+ADDRESS_MAP_END
 
 
 
@@ -390,12 +390,12 @@ static MACHINE_DRIVER_START( btoads )
 
 	MDRV_CPU_ADD(TMS34020, 40000000/TMS34020_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(sound_interrupt,183)
 
 	MDRV_MACHINE_INIT(btoads)
@@ -453,7 +453,7 @@ static DRIVER_INIT( btoads )
 	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 
 	/* install main CPU speedup */
-	main_speedup = install_mem_read16_handler(0, TOBYTE(0x22410), TOBYTE(0x2241f), main_speedup_r);
+	main_speedup = install_mem_read16_handler(0, 0x22410, 0x2241f, main_speedup_r);
 }
 
 

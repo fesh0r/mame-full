@@ -194,32 +194,32 @@ static WRITE_HANDLER( boxer_bad_address_w )
 }
 
 
-static MEMORY_READ_START( boxer_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM },
-	{ 0x0200, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x08ff, boxer_input_r },
-	{ 0x1000, 0x17ff, boxer_misc_r },
-	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0xbfff, boxer_bad_address_r },
-	{ 0xf000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( boxer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0200, 0x03ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0800, 0x08ff) AM_READ(boxer_input_r)
+	AM_RANGE(0x1000, 0x17ff) AM_READ(boxer_misc_r)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0xbfff) AM_READ(boxer_bad_address_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( boxer_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x03ff, MWA_RAM, &boxer_tile_ram },
-	{ 0x1800, 0x1800, boxer_pot_w },
-	{ 0x1900, 0x19ff, boxer_led_w },
-	{ 0x1a00, 0x1aff, boxer_sound_w },
-	{ 0x1b00, 0x1bff, boxer_crowd_w },
-	{ 0x1c00, 0x1cff, boxer_irq_reset_w },
-	{ 0x1d00, 0x1dff, boxer_bell_w },
-	{ 0x1e00, 0x1eff, MWA_RAM, &boxer_sprite_ram },
-	{ 0x1f00, 0x1fff, watchdog_reset_w },
-	{ 0x3000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0xbfff, boxer_bad_address_w },
-	{ 0xf000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( boxer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0200, 0x03ff) AM_WRITE(MWA8_RAM) AM_BASE(&boxer_tile_ram)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(boxer_pot_w)
+	AM_RANGE(0x1900, 0x19ff) AM_WRITE(boxer_led_w)
+	AM_RANGE(0x1a00, 0x1aff) AM_WRITE(boxer_sound_w)
+	AM_RANGE(0x1b00, 0x1bff) AM_WRITE(boxer_crowd_w)
+	AM_RANGE(0x1c00, 0x1cff) AM_WRITE(boxer_irq_reset_w)
+	AM_RANGE(0x1d00, 0x1dff) AM_WRITE(boxer_bell_w)
+	AM_RANGE(0x1e00, 0x1eff) AM_WRITE(MWA8_RAM) AM_BASE(&boxer_sprite_ram)
+	AM_RANGE(0x1f00, 0x1fff) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0xbfff) AM_WRITE(boxer_bad_address_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( boxer )
@@ -320,7 +320,7 @@ static MACHINE_DRIVER_START(boxer)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(boxer_readmem, boxer_writemem)
+	MDRV_CPU_PROGRAM_MAP(boxer_readmem, boxer_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

@@ -35,16 +35,16 @@ static WRITE_HANDLER( aim65_pia_b_w)
 }
 
 static struct pia6821_interface pia= {
-	0,//mem_read_handler in_a_func,
-	0,//mem_read_handler in_b_func,
-	0,//mem_read_handler in_ca1_func,
-	0,//mem_read_handler in_cb1_func,
-	0,//mem_read_handler in_ca2_func,
-	0,//mem_read_handler in_cb2_func,
+	0,//read8_handler in_a_func,
+	0,//read8_handler in_b_func,
+	0,//read8_handler in_ca1_func,
+	0,//read8_handler in_cb1_func,
+	0,//read8_handler in_ca2_func,
+	0,//read8_handler in_cb2_func,
 	aim65_pia_a_w,
 	aim65_pia_b_w,
-	0,//mem_write_handler out_ca2_func,
-	0,//mem_write_handler out_cb2_func,
+	0,//write8_handler out_ca2_func,
+	0,//write8_handler out_cb2_func,
 	0,//void (*irq_a_func)(int state),
 	0,//void (*irq_b_func)(int state),
 };
@@ -184,16 +184,16 @@ static READ_HANDLER( aim65_via0_b_r)
 }
 
 static struct via6522_interface via0={
-	0,//mem_read_handler in_a_func;
-	aim65_via0_b_r,//mem_read_handler in_b_func;
-	0,//mem_read_handler in_ca1_func;
-	0,//mem_read_handler in_cb1_func;
-	0,//mem_read_handler in_ca2_func;
-	0,//mem_read_handler in_cb2_func;
-	0,//mem_write_handler out_a_func;
-	0,//mem_write_handler out_b_func;
-	0,//mem_write_handler out_ca2_func;
-	aim65_printer_on,//mem_write_handler out_cb2_func;
+	0,//read8_handler in_a_func;
+	aim65_via0_b_r,//read8_handler in_b_func;
+	0,//read8_handler in_ca1_func;
+	0,//read8_handler in_cb1_func;
+	0,//read8_handler in_ca2_func;
+	0,//read8_handler in_cb2_func;
+	0,//write8_handler out_a_func;
+	0,//write8_handler out_b_func;
+	0,//write8_handler out_ca2_func;
+	aim65_printer_on,//write8_handler out_cb2_func;
 	0,//void (*irq_func)(int state);
 };
 

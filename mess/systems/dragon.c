@@ -35,84 +35,19 @@
 #define JOYSTICK_DELTA			10
 #define JOYSTICK_SENSITIVITY	100
 
-static MEMORY_READ_START( coco_readmem )
-	{ 0x0000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xfeff, MRA_BANK2 },
-	{ 0xff00, 0xff1f, pia_0_r },
-	{ 0xff20, 0xff3f, coco_pia_1_r },
-	{ 0xff40, 0xff8f, coco_cartridge_r },
-	{ 0xff90, 0xffef, MRA_NOP },
-	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
-MEMORY_END
+static ADDRESS_MAP_START( coco_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
+	AM_RANGE(0x8000, 0xfeff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
+	AM_RANGE(0xff00, 0xff1f)	AM_READWRITE(pia_0_r,				pia_0_w)
+	AM_RANGE(0xff20, 0xff3f)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
+	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(dragon_mapped_irq_r,	MWA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( coco_writemem )
-	{ 0x0000, 0x7fff, MWA_BANK1 },
-	{ 0x8000, 0xfeff, MWA_BANK2 },
-	{ 0xff00, 0xff1f, pia_0_w },
-	{ 0xff20, 0xff3f, pia_1_w },
-	{ 0xff40, 0xff8f, coco_cartridge_w },
-	{ 0xff90, 0xffbf, MWA_NOP },
-	{ 0xffc0, 0xffdf, sam_w },
-	{ 0xffe0, 0xffff, MWA_NOP},
-MEMORY_END
 
-static MEMORY_READ_START( coco3_readmem )
-	{ 0x0000, 0x1fff, MRA_BANK1 },
-	{ 0x2000, 0x3fff, MRA_BANK2 },
-	{ 0x4000, 0x5fff, MRA_BANK3 },
-	{ 0x6000, 0x7fff, MRA_BANK4 },
-	{ 0x8000, 0x9fff, MRA_BANK5 },
-	{ 0xa000, 0xbfff, MRA_BANK6 },
-	{ 0xc000, 0xdfff, MRA_BANK7 },
-	{ 0xe000, 0xfdff, MRA_BANK8 },
-	{ 0xfe00, 0xfeff, MRA_BANK9 },
-	{ 0xff00, 0xff1f, pia_0_r },
-	{ 0xff20, 0xff3f, coco3_pia_1_r },
-	{ 0xff40, 0xff8f, coco_cartridge_r },
-	{ 0xff90, 0xff97, coco3_gime_r },
-	{ 0xff98, 0xff9f, coco3_gimevh_r },
-	{ 0xffa0, 0xffaf, coco3_mmu_r },
-	{ 0xffb0, 0xffbf, paletteram_r },
-	{ 0xffc0, 0xffef, MRA_NOP },
-	{ 0xfff0, 0xffff, coco3_mapped_irq_r },
-MEMORY_END
-
-static MEMORY_READ_START( d64_readmem )
-	{ 0x0000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xfeff, MRA_BANK3 },
-	{ 0xff00, 0xff03, pia_0_r },
-	{ 0xff04, 0xff07, acia_6551_r },
-	{ 0xff08, 0xff0b, pia_0_r },
-	{ 0xff0c, 0xff0f, acia_6551_r },
-	{ 0xff10, 0xff13, pia_0_r },
-	{ 0xff14, 0xff17, acia_6551_r },
-	{ 0xff18, 0xff1b, pia_0_r },
-	{ 0xff1c, 0xff1f, acia_6551_r },
-	{ 0xff20, 0xff3f, coco_pia_1_r },
-	{ 0xff40, 0xff8f, coco_cartridge_r },
-	{ 0xff90, 0xffef, MRA_NOP },
-	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( d64_writemem )
-	{ 0x0000, 0x7fff, MWA_BANK1 },
-	{ 0x8000, 0xbfff, MWA_BANK2 },
-	{ 0xc000, 0xfeff, MWA_BANK3 },
-	{ 0xff00, 0xff03, pia_0_w },
-	{ 0xff04, 0xff07, acia_6551_w },
-	{ 0xff08, 0xff0b, pia_0_w },
-	{ 0xff0c, 0xff0f, acia_6551_w },
-	{ 0xff10, 0xff13, pia_0_w },
-	{ 0xff14, 0xff17, acia_6551_w },
-	{ 0xff18, 0xff1b, pia_0_w },
-	{ 0xff1c, 0xff1f, acia_6551_w },
-	{ 0xff20, 0xff3f, pia_1_w },
-	{ 0xff40, 0xff8f, coco_cartridge_w },
-	{ 0xff90, 0xffbf, MWA_NOP },
-	{ 0xffc0, 0xffdf, sam_w },
-	{ 0xffe0, 0xffff, MWA_NOP},
-MEMORY_END
 
 /* Note that the CoCo 3 doesn't use the SAM VDG mode registers
  *
@@ -122,26 +57,45 @@ MEMORY_END
  * Tepolt implies that $FFD4-$FFD7 and $FFDA-$FFDD are ignored on the CoCo 3,
  * which would make sense, but I'm not sure.
  */
-static MEMORY_WRITE_START( coco3_writemem )
-	{ 0x0000, 0x1fff, MWA_BANK1 },
-	{ 0x2000, 0x3fff, MWA_BANK2 },
-	{ 0x4000, 0x5fff, MWA_BANK3 },
-	{ 0x6000, 0x7fff, MWA_BANK4 },
-	{ 0x8000, 0x9fff, MWA_BANK5 },
-	{ 0xa000, 0xbfff, MWA_BANK6 },
-	{ 0xc000, 0xdfff, MWA_BANK7 },
-	{ 0xe000, 0xfdff, MWA_BANK8 },
-	{ 0xfe00, 0xfeff, MWA_BANK9 },
-	{ 0xff00, 0xff1f, pia_0_w },
-	{ 0xff20, 0xff3f, pia_1_w },
-	{ 0xff40, 0xff8f, coco_cartridge_w },
-	{ 0xff90, 0xff97, coco3_gime_w },
-	{ 0xff98, 0xff9f, coco3_gimevh_w },
-	{ 0xffa0, 0xffaf, coco3_mmu_w },
-	{ 0xffb0, 0xffbf, coco3_palette_w },
-	{ 0xffc0, 0xffdf, sam_w },
-	{ 0xffe0, 0xffff, MWA_NOP },
-MEMORY_END
+static ADDRESS_MAP_START( coco3_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
+	AM_RANGE(0x2000, 0x3fff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
+	AM_RANGE(0x4000, 0x5fff)	AM_READWRITE(MRA8_BANK3,			MWA8_BANK3)
+	AM_RANGE(0x6000, 0x7fff)	AM_READWRITE(MRA8_BANK4,			MWA8_BANK4)
+	AM_RANGE(0x8000, 0x9fff)	AM_READWRITE(MRA8_BANK5,			MWA8_BANK5)
+	AM_RANGE(0xa000, 0xbfff)	AM_READWRITE(MRA8_BANK6,			MWA8_BANK6)
+	AM_RANGE(0xc000, 0xdfff)	AM_READWRITE(MRA8_BANK7,			MWA8_BANK7)
+	AM_RANGE(0xe000, 0xfdff)	AM_READWRITE(MRA8_BANK8,			MWA8_BANK8)
+	AM_RANGE(0xfe00, 0xfeff)	AM_READWRITE(MRA8_BANK9,			MWA8_BANK9)
+	AM_RANGE(0xff00, 0xff1f)	AM_READWRITE(pia_0_r,				pia_0_w)
+	AM_RANGE(0xff20, 0xff3f)	AM_READWRITE(coco3_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xff97)	AM_READWRITE(coco3_gime_r,			coco3_gime_w)
+	AM_RANGE(0xff98, 0xff9f)	AM_READWRITE(coco3_gimevh_r,		coco3_gimevh_w)
+	AM_RANGE(0xffa0, 0xffaf)	AM_READWRITE(coco3_mmu_r,			coco3_mmu_w)
+	AM_RANGE(0xffb0, 0xffbf)	AM_READWRITE(paletteram_r,			coco3_palette_w)
+	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
+	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(coco3_mapped_irq_r,	MWA8_NOP)
+ADDRESS_MAP_END
+
+
+
+static ADDRESS_MAP_START( d64_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
+	AM_RANGE(0x8000, 0xbfff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
+	AM_RANGE(0xc000, 0xfeff)	AM_READWRITE(MRA8_BANK3,			MWA8_BANK3)
+	AM_RANGE(0xff00, 0xff03)	AM_READWRITE(pia_0_r,				pia_0_w)		AM_MIRROR(0x0020)
+	AM_RANGE(0xff04, 0xff07)	AM_READWRITE(acia_6551_r,			acia_6551_w)	AM_MIRROR(0x0020)
+	AM_RANGE(0xff20, 0xff3f)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
+	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(dragon_mapped_irq_r,	MWA8_NOP)
+ADDRESS_MAP_END
+
+
 
 /* Dragon keyboard
 
@@ -491,7 +445,7 @@ static struct Wave_interface d_wave_interface =
 static MACHINE_DRIVER_START( dragon32 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_PROGRAM_MAP(coco_map, 0)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -510,7 +464,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( dragon64 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(d64_readmem, d64_writemem)
+	MDRV_CPU_PROGRAM_MAP(d64_map, 0)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -529,7 +483,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( coco )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_PROGRAM_MAP(coco_map, 0)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -548,7 +502,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( coco2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_PROGRAM_MAP(coco_map, 0)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -567,7 +521,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( coco2b )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_PROGRAM_MAP(coco_map, 0)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -586,7 +540,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( coco3 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(coco3_readmem, coco3_writemem)
+	MDRV_CPU_PROGRAM_MAP(coco3_map, 0)
 	MDRV_CPU_VBLANK_INT(coco3_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)

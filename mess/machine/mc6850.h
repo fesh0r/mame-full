@@ -26,10 +26,10 @@
 
 struct acia6850_interface
 {
-	mem_read_handler in_status_func;
-	mem_read_handler in_recv_func;
-	mem_write_handler out_status_func;
-	mem_write_handler out_tran_func;
+	read8_handler in_status_func;
+	read8_handler in_recv_func;
+	write8_handler out_status_func;
+	write8_handler out_tran_func;
 };
 
 void acia6850_unconfig(void);

@@ -1296,7 +1296,7 @@ int video_start_m6847(const struct m6847_init_params *params)
  */
 /*
 struct callback_info {
-	mem_write_handler callback;
+	write8_handler callback;
 	int value;
 };
 
@@ -1307,7 +1307,7 @@ static void do_invoke(int ci_int)
 	ci->callback(0, ci->value);
 }
 
-static void invoke_callback(mem_write_handler callback, double delay, int value)
+static void invoke_callback(write8_handler callback, double delay, int value)
 {
 	static int index_ = 0;
 	static struct callback_info callback_buf[32];

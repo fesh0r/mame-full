@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "pool.h"
+#include "utils.h"
 
 /***************************************************************************
 
@@ -95,12 +96,17 @@ void *pool_malloc(memory_pool *pool, size_t size)
 
 char *pool_strdup(memory_pool *pool, const char *src)
 {
+	return pool_strdup_len(pool, src, strlen(src));
+}
+
+char *pool_strdup_len(memory_pool *pool, const char *src, size_t len)
+{
 	char *dst = NULL;
 	if (src)
 	{
-		dst = pool_malloc(pool, strlen(src) + 1);
+		dst = pool_malloc(pool, len + 1);
 		if (dst)
-			strcpy(dst, src);
+			strncpyz(dst, src, len + 1);
 	}
 	return dst;
 }

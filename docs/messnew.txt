@@ -39,8 +39,12 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- As a consequence of the MAME 0.79 core, which has massive changes
+  to the memory system, there is a greater likelyhood of regressions
+  in this MESS release (as with MAME.)
 
+- Introduced automated messtest testing facility, in order to prevent
+  regressions in the future.  [Nate Woods]
 
 
 0.78

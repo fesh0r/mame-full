@@ -72,10 +72,10 @@ static UINT32 KeyStateSave[/*4*/3];
 
 struct
 {
-	mem_read_handler reg_read;
-	mem_write_handler reg_write;
-	mem_read_handler rom_read;
-	mem_write_handler rom_write;
+	read8_handler reg_read;
+	write8_handler reg_write;
+	read8_handler rom_read;
+	write8_handler rom_write;
 } expansion_slots[4];
 
 static void concept_fdc_init(int slot);
@@ -134,8 +134,8 @@ MACHINE_INIT(concept)
 }
 
 static void install_expansion_slot(int slot,
-									mem_read_handler reg_read, mem_write_handler reg_write,
-									mem_read_handler rom_read, mem_write_handler rom_write)
+									read8_handler reg_read, write8_handler reg_write,
+									read8_handler rom_read, write8_handler rom_write)
 {
 	expansion_slots[slot].reg_read = reg_read;
 	expansion_slots[slot].reg_write = reg_write;

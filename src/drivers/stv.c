@@ -72,8 +72,6 @@ Preliminary Memory map:
  with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
  on SMPC or controls fail
--prikura: slave cpu wants MINIT to draw sprites, master CPU never gives it.
--prikura: currently crashes the emulation.
 -shanhigw/shienryu: need to understand way vdp1 sprite colours work (vdp2 register related?)
 -mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
 -colmns97: corrupt background is lack of zooming, why is the top gem a bad colour tho?
@@ -2715,9 +2713,9 @@ static void dma_direct_lv0()
 	for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 	{
 		if(scu_dst_add_0 == 2)
-			cpu_writemem16bew_word(scu_dst_0,cpu_readmem16bew_word(scu_src_0));
+			program_write_word(scu_dst_0,program_read_word(scu_src_0));
 		else
-			cpu_writemem32bedw_dword(scu_dst_0,cpu_readmem32bedw_dword(scu_src_0));
+			program_write_dword(scu_dst_0,program_read_dword(scu_src_0));
 
 		scu_dst_0+=scu_dst_add_0;
 		scu_src_0+=scu_src_add_0;
@@ -2750,9 +2748,9 @@ static void dma_direct_lv1()
 	for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 	{
 		if(scu_dst_add_1 == 2)
-			cpu_writemem16bew_word(scu_dst_1,cpu_readmem16bew_word(scu_src_1));
+			program_write_word(scu_dst_1,program_read_word(scu_src_1));
 		else
-			cpu_writemem32bedw_dword(scu_dst_1,cpu_readmem32bedw_dword(scu_src_1));
+			program_write_dword(scu_dst_1,program_read_dword(scu_src_1));
 
 		scu_dst_1+=scu_dst_add_1;
 		scu_src_1+=scu_src_add_1;
@@ -2785,9 +2783,9 @@ static void dma_direct_lv2()
 	for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 	{
 		if(scu_dst_add_2 == 2)
-			cpu_writemem16bew_word(scu_dst_2,cpu_readmem16bew_word(scu_src_2));
+			program_write_word(scu_dst_2,program_read_word(scu_src_2));
 		else
-			cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+			program_write_dword(scu_dst_2,program_read_dword(scu_src_2));
 
 		scu_dst_2+=scu_dst_add_2;
 		scu_src_2+=scu_src_add_2;
@@ -2817,9 +2815,9 @@ static void dma_indirect_lv0()
 		tmp_src = scu_dst_0;
 
 		/*Thanks for Runik of Saturnin for pointing this out...*/
-		scu_size_0 = cpu_readmem32bedw_dword(scu_dst_0);
-		scu_src_0 =  cpu_readmem32bedw_dword(scu_dst_0+8);
-		scu_dst_0 =  cpu_readmem32bedw_dword(scu_dst_0+4);
+		scu_size_0 = program_read_dword(scu_dst_0);
+		scu_src_0 =  program_read_dword(scu_dst_0+8);
+		scu_dst_0 =  program_read_dword(scu_dst_0+4);
 
 		/*Indirect Mode end factor*/
 		if(scu_src_0 & 0x80000000)
@@ -2837,7 +2835,7 @@ static void dma_indirect_lv0()
 		for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 		{
 			if(scu_dst_add_0 == 2)
-				cpu_writemem32bedw_word(scu_dst_0,cpu_readmem32bedw_word(scu_src_0));
+				program_write_word(scu_dst_0,program_read_word(scu_src_0));
 			else
 			{
 				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
@@ -2845,15 +2843,15 @@ static void dma_indirect_lv0()
 				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
 				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
 				  should be different, I don't know */
-				cpu_writemem32bedw_word(scu_dst_0,cpu_readmem32bedw_word(scu_src_0));
-				cpu_writemem32bedw_word(scu_dst_0+2,cpu_readmem32bedw_word(scu_src_0+2));
+				program_write_word(scu_dst_0,program_read_word(scu_src_0));
+				program_write_word(scu_dst_0+2,program_read_word(scu_src_0+2));
 			}
 			scu_dst_0+=scu_dst_add_0;
 			scu_src_0+=scu_src_add_0;
 		}
 
-		if(DRUP(0))	cpu_writemem32bedw_dword(tmp_src+8,scu_src_0|job_done ? 0x80000000 : 0);
-		if(DWUP(0)) cpu_writemem32bedw_dword(tmp_src+4,scu_dst_0);
+		if(DRUP(0))	program_write_dword(tmp_src+8,scu_src_0|job_done ? 0x80000000 : 0);
+		if(DWUP(0)) program_write_dword(tmp_src+4,scu_dst_0);
 
 		scu_dst_0 = tmp_src+0xc;
 
@@ -2877,9 +2875,9 @@ static void dma_indirect_lv1()
 	do{
 		tmp_src = scu_dst_1;
 
-		scu_size_1 = cpu_readmem32bedw_dword(scu_dst_1);
-		scu_src_1 =  cpu_readmem32bedw_dword(scu_dst_1+8);
-		scu_dst_1 =  cpu_readmem32bedw_dword(scu_dst_1+4);
+		scu_size_1 = program_read_dword(scu_dst_1);
+		scu_src_1 =  program_read_dword(scu_dst_1+8);
+		scu_dst_1 =  program_read_dword(scu_dst_1+4);
 
 		/*Indirect Mode end factor*/
 		if(scu_src_1 & 0x80000000)
@@ -2899,7 +2897,7 @@ static void dma_indirect_lv1()
 		{
 
 			if(scu_dst_add_1 == 2)
-				cpu_writemem32bedw_word(scu_dst_1,cpu_readmem32bedw_word(scu_src_1));
+				program_write_word(scu_dst_1,program_read_word(scu_src_1));
 			else
 			{
 				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
@@ -2907,15 +2905,15 @@ static void dma_indirect_lv1()
 				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
 				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
 				  should be different, I don't know */
-				cpu_writemem32bedw_word(scu_dst_1,cpu_readmem32bedw_word(scu_src_1));
-				cpu_writemem32bedw_word(scu_dst_1+2,cpu_readmem32bedw_word(scu_src_1+2));
+				program_write_word(scu_dst_1,program_read_word(scu_src_1));
+				program_write_word(scu_dst_1+2,program_read_word(scu_src_1+2));
 			}
 			scu_dst_1+=scu_dst_add_1;
 			scu_src_1+=scu_src_add_1;
 		}
 
-		if(DRUP(1))	cpu_writemem32bedw_dword(tmp_src+8,scu_src_1|job_done ? 0x80000000 : 0);
-		if(DWUP(1)) cpu_writemem32bedw_dword(tmp_src+4,scu_dst_1);
+		if(DRUP(1))	program_write_dword(tmp_src+8,scu_src_1|job_done ? 0x80000000 : 0);
+		if(DWUP(1)) program_write_dword(tmp_src+4,scu_dst_1);
 
 		scu_dst_1 = tmp_src+0xc;
 
@@ -2939,9 +2937,9 @@ static void dma_indirect_lv2()
 	do{
 		tmp_src = scu_dst_2;
 
-		scu_size_2 = cpu_readmem32bedw_dword(scu_dst_2);
-		scu_src_2 =  cpu_readmem32bedw_dword(scu_dst_2+8);
-		scu_dst_2 =  cpu_readmem32bedw_dword(scu_dst_2+4);
+		scu_size_2 = program_read_dword(scu_dst_2);
+		scu_src_2 =  program_read_dword(scu_dst_2+8);
+		scu_dst_2 =  program_read_dword(scu_dst_2+4);
 
 		/*Indirect Mode end factor*/
 		if(scu_src_2 & 0x80000000)
@@ -2959,7 +2957,7 @@ static void dma_indirect_lv2()
 		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
 			if(scu_dst_add_2 == 2)
-				cpu_writemem32bedw_word(scu_dst_2,cpu_readmem32bedw_word(scu_src_2));
+				program_write_word(scu_dst_2,program_read_word(scu_src_2));
 			else
 			{
 				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
@@ -2967,16 +2965,16 @@ static void dma_indirect_lv2()
 				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
 				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
 				  should be different, I don't know */
-				cpu_writemem32bedw_word(scu_dst_2,cpu_readmem32bedw_word(scu_src_2));
-				cpu_writemem32bedw_word(scu_dst_2+2,cpu_readmem32bedw_word(scu_src_2+2));
+				program_write_word(scu_dst_2,program_read_word(scu_src_2));
+				program_write_word(scu_dst_2+2,program_read_word(scu_src_2+2));
 			}
 
 			scu_dst_2+=scu_dst_add_2;
 			scu_src_2+=scu_src_add_2;
 		}
 
-		if(DRUP(2))	cpu_writemem32bedw_dword(tmp_src+8,scu_src_2|job_done ? 0x80000000 : 0);
-		if(DWUP(2)) cpu_writemem32bedw_dword(tmp_src+4,scu_dst_2);
+		if(DRUP(2))	program_write_dword(tmp_src+8,scu_src_2|job_done ? 0x80000000 : 0);
+		if(DWUP(2)) program_write_dword(tmp_src+4,scu_dst_2);
 
 		scu_dst_2 = tmp_src+0xc;
 
@@ -3028,14 +3026,14 @@ static WRITE32_HANDLER( minit_w )
 {
 	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
 	cpu_boost_interleave(0, TIME_IN_USEC(minit_boost));
-	sh2_set_frt_input(1, PULSE_LINE);
+	cpunum_set_info_int(1, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
 static WRITE32_HANDLER( sinit_w )
 {
 	logerror("cpu #%d (PC=%08X) SINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
 	cpu_boost_interleave(0, TIME_IN_USEC(sinit_boost));
-	sh2_set_frt_input(0, PULSE_LINE);
+	cpunum_set_info_int(0, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
@@ -3062,113 +3060,114 @@ static READ32_HANDLER( stv_workram_h_mirror_r )
 }
 
 
-static MEMORY_READ32_START( stv_master_readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
-	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
-	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
-	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
-	{ 0x00400000, 0x0040001f, stv_io_r32 },
-	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
-//	{ 0x02200000, 0x04ffffff, read_cart }, // cartridge
-//	{ 0x05000000, 0x058fffff, MRA32_RAM },
-	{ 0x05800000, 0x0589ffff, cdregister_r },
+static ADDRESS_MAP_START( stv_master_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_ROM)   // bios
+	AM_RANGE(0x00100000, 0x0010007f) AM_READ(stv_SMPC_r32)/*SMPC*/
+	AM_RANGE(0x00180000, 0x0018ffff) AM_READ(MRA32_BANK5)	 /*Back up RAM*/
+	AM_RANGE(0x00200000, 0x002fffff) AM_READ(MRA32_BANK4)
+	AM_RANGE(0x00400000, 0x0040001f) AM_READ(stv_io_r32)
+	AM_RANGE(0x02000000, 0x04ffffff) AM_READ(MRA32_BANK1) // cartridge
+//	AM_RANGE(0x02200000, 0x04ffffff) AM_READ(read_cart) // cartridge
+//	AM_RANGE(0x05000000, 0x058fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x05800000, 0x0589ffff) AM_READ(cdregister_r)
 	/* Sound */
-	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
-	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_r32 },
+	AM_RANGE(0x05a00000, 0x05afffff) AM_READ(stv_sh2_soundram_r)
+	AM_RANGE(0x05b00000, 0x05b00fff) AM_READ(stv_scsp_regs_r32)
 	/* VDP1 */
 	/*0x05c00000-0x05c7ffff VRAM*/
 	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
 	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
 	/*0x05d00000-0x05d7ffff VDP1 Regs */
-	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_r },
-	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_r },
-	{ 0x5e00000 , 0x5efffff, stv_vdp2_vram_r },
-	{ 0x5f00000 , 0x5f7ffff, stv_vdp2_cram_r },
-	{ 0x5f80000 , 0x5fbffff, stv_vdp2_regs_r },
-//	{ 0x05e00000, 0x05e7ffff, MRA32_RAM },
-//	{ 0x05f00000, 0x05f0ffff, stv_palette_r }, /* CRAM */
-//	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
-	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
-	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
-	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
-MEMORY_END
+	AM_RANGE(0x05c00000, 0x05cbffff) AM_READ(stv_vdp1_vram_r)
+	AM_RANGE(0x05d00000, 0x05d0001f) AM_READ(stv_vdp1_regs_r)
+	AM_RANGE(0x5e00000, 0x5efffff) AM_READ(stv_vdp2_vram_r)
+	AM_RANGE(0x5f00000, 0x5f7ffff) AM_READ(stv_vdp2_cram_r)
+	AM_RANGE(0x5f80000, 0x5fbffff) AM_READ(stv_vdp2_regs_r)
+//	AM_RANGE(0x05e00000, 0x05e7ffff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x05f00000, 0x05f0ffff) AM_READ(stv_palette_r) /* CRAM */
+//	AM_RANGE(0x05f80000, 0x05fbffff) AM_READ(stv_vdp2_regs_r32) /* REGS */
+	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_READ(stv_scu_r32)
+	AM_RANGE(0x06000000, 0x060fffff) AM_READ(MRA32_BANK3)
+	AM_RANGE(0x06100000, 0x07ffffff) AM_READ(stv_workram_h_mirror_r) // hanagumi reads the char select 1p icon and timer gfx from here ..
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( stv_master_writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_ROM },
-	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
-	{ 0x00180000, 0x0018ffff, MWA32_BANK5 }, // backup ram
-	{ 0x00200000, 0x002fffff, MWA32_BANK4 }, // workram low
-	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
-	{ 0x01000000, 0x01000003, minit_w },
-	{ 0x02000000, 0x04ffffff, MWA32_ROM },
-//	{ 0x05000000, 0x058fffff, MWA32_RAM },
-	{ 0x05800000, 0x0589ffff, cdregister_w },
+static ADDRESS_MAP_START( stv_master_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x00100000, 0x0010007f) AM_WRITE(stv_SMPC_w32)
+	AM_RANGE(0x00180000, 0x0018ffff) AM_WRITE(MWA32_BANK5) // backup ram
+	AM_RANGE(0x00200000, 0x002fffff) AM_WRITE(MWA32_BANK4) // workram low
+	AM_RANGE(0x00400000, 0x0040001f) AM_WRITE(stv_io_w32) AM_BASE(&ioga)
+	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
+	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w)	/* needed by prikura */	
+	AM_RANGE(0x02000000, 0x04ffffff) AM_WRITE(MWA32_ROM)
+//	AM_RANGE(0x05000000, 0x058fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x05800000, 0x0589ffff) AM_WRITE(cdregister_w)
 	/* Sound */
-	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
-	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_w32 },
+	AM_RANGE(0x05a00000, 0x05afffff) AM_WRITE(stv_sh2_soundram_w)
+	AM_RANGE(0x05b00000, 0x05b00fff) AM_WRITE(stv_scsp_regs_w32)
 	/* VDP1 */
-	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_w },
-	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_w },
-	{ 0x5e00000 , 0x5efffff, stv_vdp2_vram_w },
-	{ 0x5f00000 , 0x5f7ffff, stv_vdp2_cram_w },
-	{ 0x5f80000 , 0x5fbffff, stv_vdp2_regs_w },
-	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
-	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
-//	{ 0x06100000, 0x07ffffff, MWA32_NOP },
-MEMORY_END
+	AM_RANGE(0x05c00000, 0x05cbffff) AM_WRITE(stv_vdp1_vram_w)
+	AM_RANGE(0x05d00000, 0x05d0001f) AM_WRITE(stv_vdp1_regs_w)
+	AM_RANGE(0x5e00000, 0x5efffff) AM_WRITE(stv_vdp2_vram_w)
+	AM_RANGE(0x5f00000, 0x5f7ffff) AM_WRITE(stv_vdp2_cram_w)
+	AM_RANGE(0x5f80000, 0x5fbffff) AM_WRITE(stv_vdp2_regs_w)
+	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_WRITE(stv_scu_w32)
+	AM_RANGE(0x06000000, 0x060fffff) AM_WRITE(MWA32_BANK3)
+//	AM_RANGE(0x06100000, 0x07ffffff) AM_WRITE(MWA32_NOP)
+ADDRESS_MAP_END
 
 /* slave cpu shares all devices with master */
 
-static MEMORY_READ32_START( stv_slave_readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
-	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
-	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
-	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
-	{ 0x00400000, 0x0040001f, stv_io_r32 },
-	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
-//	{ 0x05000000, 0x058fffff, MRA32_RAM },
-	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
-	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_r32 },
-	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_r },
-	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_r },
-	{ 0x05e00000, 0x05efffff, stv_vdp2_vram_r },
-	{ 0x05f00000, 0x05f7ffff, stv_vdp2_cram_r },
-	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r },
-	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
-	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
-	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
-MEMORY_END
+static ADDRESS_MAP_START( stv_slave_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_ROM)   // bios
+	AM_RANGE(0x00100000, 0x0010007f) AM_READ(stv_SMPC_r32)/*SMPC*/
+	AM_RANGE(0x00180000, 0x0018ffff) AM_READ(MRA32_BANK5)	 /*Back up RAM*/
+	AM_RANGE(0x00200000, 0x002fffff) AM_READ(MRA32_BANK4)
+	AM_RANGE(0x00400000, 0x0040001f) AM_READ(stv_io_r32)
+	AM_RANGE(0x02000000, 0x04ffffff) AM_READ(MRA32_BANK1) // cartridge
+//	AM_RANGE(0x05000000, 0x058fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x05a00000, 0x05afffff) AM_READ(stv_sh2_soundram_r)
+	AM_RANGE(0x05b00000, 0x05b00fff) AM_READ(stv_scsp_regs_r32)
+	AM_RANGE(0x05c00000, 0x05cbffff) AM_READ(stv_vdp1_vram_r)
+	AM_RANGE(0x05d00000, 0x05d0001f) AM_READ(stv_vdp1_regs_r)
+	AM_RANGE(0x05e00000, 0x05efffff) AM_READ(stv_vdp2_vram_r)
+	AM_RANGE(0x05f00000, 0x05f7ffff) AM_READ(stv_vdp2_cram_r)
+	AM_RANGE(0x05f80000, 0x05fbffff) AM_READ(stv_vdp2_regs_r)
+	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_READ(stv_scu_r32)
+	AM_RANGE(0x06000000, 0x060fffff) AM_READ(MRA32_BANK3)
+	AM_RANGE(0x06100000, 0x07ffffff) AM_READ(stv_workram_h_mirror_r) // hanagumi reads the char select 1p icon and timer gfx from here ..
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START( stv_slave_writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_ROM },
-	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
-	{ 0x00180000, 0x0018ffff, MWA32_BANK5 },
-	{ 0x00200000, 0x002fffff, MWA32_BANK4 },
-	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
-//	{ 0x01000000, 0x01000003, minit_w },
-	{ 0x01800000, 0x01800003, sinit_w },
-	{ 0x02000000, 0x04ffffff, MWA32_ROM },
-//	{ 0x05000000, 0x058fffff, MWA32_RAM },
-	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
-	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_w32 },
-	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_w },
-	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_w },
-	{ 0x05e00000, 0x05efffff, stv_vdp2_vram_w },
-	{ 0x05f00000, 0x05f7ffff, stv_vdp2_cram_w },
-	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_w },
-	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
-	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
-MEMORY_END
+static ADDRESS_MAP_START( stv_slave_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x00100000, 0x0010007f) AM_WRITE(stv_SMPC_w32)
+	AM_RANGE(0x00180000, 0x0018ffff) AM_WRITE(MWA32_BANK5)
+	AM_RANGE(0x00200000, 0x002fffff) AM_WRITE(MWA32_BANK4)
+	AM_RANGE(0x00400000, 0x0040001f) AM_WRITE(stv_io_w32) AM_BASE(&ioga)
+//	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
+	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
+	AM_RANGE(0x02000000, 0x04ffffff) AM_WRITE(MWA32_ROM)
+//	AM_RANGE(0x05000000, 0x058fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x05a00000, 0x05afffff) AM_WRITE(stv_sh2_soundram_w)
+	AM_RANGE(0x05b00000, 0x05b00fff) AM_WRITE(stv_scsp_regs_w32)
+	AM_RANGE(0x05c00000, 0x05cbffff) AM_WRITE(stv_vdp1_vram_w)
+	AM_RANGE(0x05d00000, 0x05d0001f) AM_WRITE(stv_vdp1_regs_w)
+	AM_RANGE(0x05e00000, 0x05efffff) AM_WRITE(stv_vdp2_vram_w)
+	AM_RANGE(0x05f00000, 0x05f7ffff) AM_WRITE(stv_vdp2_cram_w)
+	AM_RANGE(0x05f80000, 0x05fbffff) AM_WRITE(stv_vdp2_regs_w)
+	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_WRITE(stv_scu_w32)
+	AM_RANGE(0x06000000, 0x060fffff) AM_WRITE(MWA32_BANK3)
+ADDRESS_MAP_END
 
-static MEMORY_READ16_START( sound_readmem )
-	{ 0x000000, 0x0fffff, MRA16_BANK2 },
-	{ 0x100000, 0x100fff, SCSP_0_r },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_BANK2)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(SCSP_0_r)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( sound_writemem )
-	{ 0x000000, 0x0fffff, MWA16_BANK2 },	/*actually SDRAM*/
-	{ 0x100000, 0x100fff, SCSP_0_w },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_BANK2)	/*actually SDRAM*/
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(SCSP_0_w)
+ADDRESS_MAP_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_##_b1_         | IPF_PLAYER##_n_ ) \
@@ -3704,16 +3703,16 @@ static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
-	MDRV_CPU_MEMORY(stv_master_readmem,stv_master_writemem)
+	MDRV_CPU_PROGRAM_MAP(stv_master_readmem,stv_master_writemem)
 	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
 	MDRV_CPU_CONFIG(sh2_conf_master)
 
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
-	MDRV_CPU_MEMORY(stv_slave_readmem,stv_slave_writemem)
+	MDRV_CPU_PROGRAM_MAP(stv_slave_readmem,stv_slave_writemem)
 	MDRV_CPU_CONFIG(sh2_conf_slave)
 
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -4567,6 +4566,7 @@ GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega",
 GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Winter Heat", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
@@ -4574,7 +4574,6 @@ GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Succes
 GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Doing Something.. but not enough yet */
-GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",      "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )

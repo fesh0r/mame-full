@@ -8,6 +8,7 @@
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/s2636.h"
+#include "cpu/s2650/s2650.h"
 
 #define MAX_STARS        250
 #define STARS_COLOR_BASE 16
@@ -42,8 +43,6 @@ static int 	  character_mode=0;
 static int    character_page=0;
 static int    scroll_reg = 0;
 static int    stars_scroll=0;
-
-int  s2650_get_flag(void);
 
 unsigned char *dirty_character;
 unsigned char *character_1_ram;
@@ -194,7 +193,7 @@ WRITE_HANDLER( cvs_scroll_w )
 
 WRITE_HANDLER( cvs_videoram_w )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Colour Map
 
@@ -210,7 +209,7 @@ WRITE_HANDLER( cvs_videoram_w )
 
 READ_HANDLER( cvs_videoram_r )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Colour Map
 
@@ -226,7 +225,7 @@ READ_HANDLER( cvs_videoram_r )
 
 WRITE_HANDLER( cvs_bullet_w )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Bullet Ram
 
@@ -242,7 +241,7 @@ WRITE_HANDLER( cvs_bullet_w )
 
 READ_HANDLER( cvs_bullet_r )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Bullet Ram
 
@@ -258,7 +257,7 @@ READ_HANDLER( cvs_bullet_r )
 
 WRITE_HANDLER( cvs_2636_1_w )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// First 2636
 
@@ -278,7 +277,7 @@ WRITE_HANDLER( cvs_2636_1_w )
 
 READ_HANDLER( cvs_2636_1_r )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// First 2636
 
@@ -294,7 +293,7 @@ READ_HANDLER( cvs_2636_1_r )
 
 WRITE_HANDLER( cvs_2636_2_w )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Second 2636
 
@@ -314,7 +313,7 @@ WRITE_HANDLER( cvs_2636_2_w )
 
 READ_HANDLER( cvs_2636_2_r )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Second 2636
 
@@ -330,7 +329,7 @@ READ_HANDLER( cvs_2636_2_r )
 
 WRITE_HANDLER( cvs_2636_3_w )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Third 2636
 
@@ -350,7 +349,7 @@ WRITE_HANDLER( cvs_2636_3_w )
 
 READ_HANDLER( cvs_2636_3_r )
 {
-	if(!s2650_get_flag())
+	if(!activecpu_get_reg(S2650_FO))
     {
     	// Third 2636
 

@@ -31,7 +31,7 @@ endif
 # MAP = 1
 
 # uncomment next line to use Assembler 68000 engine
-X86_ASM_68000 = 1
+# X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
@@ -135,7 +135,7 @@ EMULATORALL = $(EMULATORCLI)
 endif
 
 CFLAGS_BASE = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Isrc/includes -Imess/$(MAMEOS) \
-	-Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+	-Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
 ifdef SYMBOLS
 CFLAGS_BASE += -O0 -g
@@ -179,8 +179,8 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/devices										\
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg	\
 		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool	\
-		$(OBJ)/mess/tools/messdocs								\
-		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
+		$(OBJ)/mess/tools/messdocs $(OBJ)/mess/tools/messtest	\								\
+		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound			\
 		$(OBJ)/ui $(OBJ)/mess/ui
 
 ifeq ($(MAMEOS),windows)
@@ -261,6 +261,22 @@ xml2info$(EXE): src/xml2info/xml2info.c
 	@echo Compiling $@...
 	$(CC) -O1 -o xml2info$(EXE) $<
 
+messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS)	\
+		$(OBJ)/mess/tools/messtest/messtest.o	\
+		$(OBJ)/mess/tools/messtest/testexec.o	\
+		$(OBJ)/mess/tools/messtest/tststubs.o	\
+		$(OBJ)/windows/asmtile.o				\
+		$(OBJ)/windows/ticker.o					\
+		$(OBJ)/windows/fileio.o					\
+		$(OBJ)/windows/rc.o						\
+		$(OBJ)/windows/misc.o					\
+		$(OBJ)/mess/windows/dirio.o				\
+		$(OBJ)/xml2info/xmlrole.o				\
+		$(OBJ)/xml2info/xmltok.o				\
+		$(OBJ)/xml2info/xmlparse.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -lz -lwinmm -o $@
+
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 	$(PERL) src/makelist.pl
@@ -291,6 +307,13 @@ ifdef DISASSEMBLY
 endif
 
 $(OBJ)/mess/tools/messdocs/%.o: mess/tools/messdocs/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
+endif
+
+$(OBJ)/mess/tools/messtest/%.o: mess/tools/messtest/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
 ifdef DISASSEMBLY

@@ -1435,31 +1435,31 @@ VIDEO_EOF( seta_buffer_sprites )
    writing to sharedram! */
 
 
-static MEMORY_READ16_START( tndrcade_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x380000, 0x3803ff, MRA16_RAM				},	// Palette
-/**/{ 0x400000, 0x400001, MRA16_RAM				},	// ? $4000
-/**/{ 0x600000, 0x600607, MRA16_RAM				},	// Sprites Y
-	{ 0xa00000, 0xa00fff, sharedram_68000_r		},	// Shared RAM
-	{ 0xc00000, 0xc03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// RAM (Mirrored?)
-	{ 0xffc000, 0xffffff, mirror_ram_r			},	// RAM (Mirrored?)
-MEMORY_END
+static ADDRESS_MAP_START( tndrcade_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x380000, 0x3803ff) AM_READ(MRA16_RAM				)	// Palette
+/**/AM_RANGE(0x400000, 0x400001) AM_READ(MRA16_RAM				)	// ? $4000
+/**/AM_RANGE(0x600000, 0x600607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xa00000, 0xa00fff) AM_READ(sharedram_68000_r		)	// Shared RAM
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM				)	// RAM (Mirrored?)
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(mirror_ram_r			)	// RAM (Mirrored?)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( tndrcade_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x200001, MWA16_NOP						},	// ? 0
-	{ 0x280000, 0x280001, MWA16_NOP						},	// ? 0 / 1 (sub cpu related?)
-	{ 0x300000, 0x300001, MWA16_NOP						},	// ? 0 / 1
-	{ 0x380000, 0x3803ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x400000, 0x400001, MWA16_RAM						},	// ? $4000
-	{ 0x600000, 0x600607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0x800000, 0x800007, sub_ctrl_w					},	// Sub CPU Control?
-	{ 0xa00000, 0xa00fff, sharedram_68000_w				},	// Shared RAM
-	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &mirror_ram		},	// RAM (Mirrored?)
-	{ 0xffc000, 0xffffff, mirror_ram_w					},	// RAM (Mirrored?)
-MEMORY_END
+static ADDRESS_MAP_START( tndrcade_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP						)	// ? 0
+	AM_RANGE(0x280000, 0x280001) AM_WRITE(MWA16_NOP						)	// ? 0 / 1 (sub cpu related?)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP						)	// ? 0 / 1
+	AM_RANGE(0x380000, 0x3803ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_RAM						)	// ? $4000
+	AM_RANGE(0x600000, 0x600607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0x800000, 0x800007) AM_WRITE(sub_ctrl_w					)	// Sub CPU Control?
+	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(sharedram_68000_w				)	// Shared RAM
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&mirror_ram		)	// RAM (Mirrored?)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(mirror_ram_w					)	// RAM (Mirrored?)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1467,37 +1467,37 @@ MEMORY_END
 		(with slight variations, and Meta Fox protection hooked in)
 ***************************************************************************/
 
-static MEMORY_READ16_START( downtown_readmem )
-	{ 0x000000, 0x09ffff, MRA16_ROM				},	// ROM
-	{ 0x100000, 0x103fff, seta_sound_word_r		},	// Sound
-	{ 0x200000, 0x200001, MRA16_NOP				},	// watchdog? (twineagl)
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// Palette
-	{ 0x900000, 0x901fff, MRA16_RAM				},	// VRAM
-	{ 0x902000, 0x903fff, MRA16_RAM				},	// VRAM
-	{ 0xb00000, 0xb00fff, sharedram_68000_r		},	// Shared RAM
-	{ 0xd00000, 0xd003ff, MRA16_RAM				},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xf00000, 0xffffff, MRA16_RAM				},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( downtown_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x09ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x103fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0x200000, 0x200001) AM_READ(MRA16_NOP				)	// watchdog? (twineagl)
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x900000, 0x901fff) AM_READ(MRA16_RAM				)	// VRAM
+	AM_RANGE(0x902000, 0x903fff) AM_READ(MRA16_RAM				)	// VRAM
+	AM_RANGE(0xb00000, 0xb00fff) AM_READ(sharedram_68000_r		)	// Shared RAM
+	AM_RANGE(0xd00000, 0xd003ff) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xf00000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( downtown_writemem )
-	{ 0x000000, 0x09ffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x103fff, seta_sound_word_w				},	// Sound
-	{ 0x200000, 0x200001, MWA16_NOP						},	// watchdog?
-	{ 0x300000, 0x300001, MWA16_NOP 					},	// IRQ enable/acknowledge?
-	{ 0x400000, 0x400007, twineagl_tilebank_w			},	// special tile banking to animate water in twineagl
-	{ 0x500000, 0x500001, MWA16_NOP						},	// ?
-	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x800000, 0x800005, MWA16_RAM, &seta_vctrl_0		},	// VRAM Ctrl
-	{ 0x900000, 0x903fff, seta_vram_0_w, &seta_vram_0	},	// VRAM
-	{ 0xa00000, 0xa00007, sub_ctrl_w					},	// Sub CPU Control?
-	{ 0xb00000, 0xb00fff, sharedram_68000_w				},	// Shared RAM
-	{ 0xc00000, 0xc00001, MWA16_RAM						},	// ? $4000
-	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xf00000, 0xffffff, MWA16_RAM						},	// RAM
-MEMORY_END
+static ADDRESS_MAP_START( downtown_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x09ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(seta_sound_word_w				)	// Sound
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP						)	// watchdog?
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP 					)	// IRQ enable/acknowledge?
+	AM_RANGE(0x400000, 0x400007) AM_WRITE(twineagl_tilebank_w			)	// special tile banking to animate water in twineagl
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x800000, 0x800005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM Ctrl
+	AM_RANGE(0x900000, 0x903fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM
+	AM_RANGE(0xa00000, 0xa00007) AM_WRITE(sub_ctrl_w					)	// Sub CPU Control?
+	AM_RANGE(0xb00000, 0xb00fff) AM_WRITE(sharedram_68000_w				)	// Shared RAM
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM						)	// ? $4000
+	AM_RANGE(0xd00000, 0xd00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xf00000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1537,40 +1537,40 @@ WRITE16_HANDLER( calibr50_soundlatch_w )
 	}
 }
 
-static MEMORY_READ16_START( calibr50_readmem )
-	{ 0x000000, 0x09ffff, MRA16_ROM				},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM				},	// RAM
-	{ 0x100000, 0x100007, MRA16_NOP				},	// ? (same as a00010-a00017?)
-	{ 0x200000, 0x200fff, MRA16_RAM				},	// NVRAM
-	{ 0x300000, 0x300001, MRA16_NOP				},	// ? (value's read but not used)
-	{ 0x400000, 0x400001, watchdog_reset16_r	},	// Watchdog
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// Palette
-	{ 0x900000, 0x901fff, MRA16_RAM				},	// VRAM
-	{ 0x902000, 0x903fff, MRA16_RAM				},	// VRAM
-	{ 0x904000, 0x904fff, MRA16_RAM				},	//
-	{ 0xa00000, 0xa00019, calibr50_ip_r			},	// Input Ports
-/**/{ 0xd00000, 0xd00607, MRA16_RAM				},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xb00000, 0xb00001, soundlatch2_word_r	},	// From Sub CPU
-/**/{ 0xc00000, 0xc00001, MRA16_RAM				},	// ? $4000
-MEMORY_END
+static ADDRESS_MAP_START( calibr50_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x09ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x100000, 0x100007) AM_READ(MRA16_NOP				)	// ? (same as a00010-a00017?)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM				)	// NVRAM
+	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP				)	// ? (value's read but not used)
+	AM_RANGE(0x400000, 0x400001) AM_READ(watchdog_reset16_r	)	// Watchdog
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x900000, 0x901fff) AM_READ(MRA16_RAM				)	// VRAM
+	AM_RANGE(0x902000, 0x903fff) AM_READ(MRA16_RAM				)	// VRAM
+	AM_RANGE(0x904000, 0x904fff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0xa00000, 0xa00019) AM_READ(calibr50_ip_r			)	// Input Ports
+/**/AM_RANGE(0xd00000, 0xd00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(soundlatch2_word_r	)	// From Sub CPU
+/**/AM_RANGE(0xc00000, 0xc00001) AM_READ(MRA16_RAM				)	// ? $4000
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( calibr50_writemem )
-	{ 0x000000, 0x09ffff, MWA16_ROM						},	// ROM
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x200000, 0x200fff, MWA16_RAM						},	// NVRAM
-	{ 0x300000, 0x300001, MWA16_NOP						},	// ? (random value)
-	{ 0x500000, 0x500001, MWA16_NOP						},	// ?
-	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x800000, 0x800005, MWA16_RAM, &seta_vctrl_0		},	// VRAM Ctrl
-	{ 0x900000, 0x903fff, seta_vram_0_w, &seta_vram_0	},	// VRAM
-	{ 0x904000, 0x904fff, MWA16_RAM						},	//
-	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xb00000, 0xb00001, calibr50_soundlatch_w			},	// To Sub CPU
-	{ 0xc00000, 0xc00001, MWA16_RAM						},	// ? $4000
-MEMORY_END
+static ADDRESS_MAP_START( calibr50_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x09ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(MWA16_RAM						)	// NVRAM
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP						)	// ? (random value)
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x800000, 0x800005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM Ctrl
+	AM_RANGE(0x900000, 0x903fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM
+	AM_RANGE(0x904000, 0x904fff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0xd00000, 0xd00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(calibr50_soundlatch_w			)	// To Sub CPU
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM						)	// ? $4000
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1625,41 +1625,41 @@ WRITE16_HANDLER( usclssic_lockout_w )
 }
 
 
-static MEMORY_READ16_START( usclssic_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
-	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
-	{ 0x800000, 0x800607, MRA16_RAM					},	// Sprites Y
-/**/{ 0x900000, 0x900001, MRA16_RAM					},	// ?
-	{ 0xa00000, 0xa00005, MRA16_RAM					},	// VRAM Ctrl
-/**/{ 0xb00000, 0xb003ff, MRA16_RAM					},	// Palette
-	{ 0xb40000, 0xb40003, usclssic_trackball_x_r	},	// TrackBall X
-	{ 0xb40004, 0xb40007, usclssic_trackball_y_r	},	// TrackBall Y + Buttons
-	{ 0xb40010, 0xb40011, input_port_2_word_r		},	// Coins
-	{ 0xb40018, 0xb4001f, usclssic_dsw_r			},	// 2 DSWs
-	{ 0xb80000, 0xb80001, MRA16_NOP					},	// watchdog (value is discarded)?
-	{ 0xc00000, 0xc03fff, MRA16_RAM					},	// Sprites Code + X + Attr
-	{ 0xd00000, 0xd01fff, MRA16_RAM					},	// VRAM
-	{ 0xd02000, 0xd03fff, MRA16_RAM					},	// VRAM
-	{ 0xd04000, 0xd04fff, MRA16_RAM					},	//
-	{ 0xe00000, 0xe00fff, MRA16_RAM					},	// NVRAM? (odd bytes)
-MEMORY_END
+static ADDRESS_MAP_START( usclssic_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x800000, 0x800607) AM_READ(MRA16_RAM					)	// Sprites Y
+/**/AM_RANGE(0x900000, 0x900001) AM_READ(MRA16_RAM					)	// ?
+	AM_RANGE(0xa00000, 0xa00005) AM_READ(MRA16_RAM					)	// VRAM Ctrl
+/**/AM_RANGE(0xb00000, 0xb003ff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0xb40000, 0xb40003) AM_READ(usclssic_trackball_x_r	)	// TrackBall X
+	AM_RANGE(0xb40004, 0xb40007) AM_READ(usclssic_trackball_y_r	)	// TrackBall Y + Buttons
+	AM_RANGE(0xb40010, 0xb40011) AM_READ(input_port_2_word_r		)	// Coins
+	AM_RANGE(0xb40018, 0xb4001f) AM_READ(usclssic_dsw_r			)	// 2 DSWs
+	AM_RANGE(0xb80000, 0xb80001) AM_READ(MRA16_NOP					)	// watchdog (value is discarded)?
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM					)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd01fff) AM_READ(MRA16_RAM					)	// VRAM
+	AM_RANGE(0xd02000, 0xd03fff) AM_READ(MRA16_RAM					)	// VRAM
+	AM_RANGE(0xd04000, 0xd04fff) AM_READ(MRA16_RAM					)	//
+	AM_RANGE(0xe00000, 0xe00fff) AM_READ(MRA16_RAM					)	// NVRAM? (odd bytes)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( usclssic_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
-	{ 0x800000, 0x800607, MWA16_RAM , &spriteram16		},	// Sprites Y
-	{ 0x900000, 0x900001, MWA16_RAM						},	// ? $4000
-	{ 0xa00000, 0xa00005, MWA16_RAM, &seta_vctrl_0		},	// VRAM Ctrl
-	{ 0xb00000, 0xb003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0xb40000, 0xb40001, usclssic_lockout_w			},	// Coin Lockout + Tiles Banking
-	{ 0xb40010, 0xb40011, calibr50_soundlatch_w			},	// To Sub CPU
-	{ 0xb40018, 0xb40019, watchdog_reset16_w			},	// Watchdog
-	{ 0xb4000a, 0xb4000b, MWA16_NOP						},	// ? (value's not important. In lev2&6)
-	{ 0xc00000, 0xc03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xd00000, 0xd03fff, seta_vram_0_w, &seta_vram_0	},	// VRAM
-	{ 0xd04000, 0xd04fff, MWA16_RAM						},	//
-	{ 0xe00000, 0xe00fff, MWA16_RAM						},	// NVRAM? (odd bytes)
-MEMORY_END
+static ADDRESS_MAP_START( usclssic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x800000, 0x800607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM						)	// ? $4000
+	AM_RANGE(0xa00000, 0xa00005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM Ctrl
+	AM_RANGE(0xb00000, 0xb003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xb40000, 0xb40001) AM_WRITE(usclssic_lockout_w			)	// Coin Lockout + Tiles Banking
+	AM_RANGE(0xb40010, 0xb40011) AM_WRITE(calibr50_soundlatch_w			)	// To Sub CPU
+	AM_RANGE(0xb40018, 0xb40019) AM_WRITE(watchdog_reset16_w			)	// Watchdog
+	AM_RANGE(0xb4000a, 0xb4000b) AM_WRITE(MWA16_NOP						)	// ? (value's not important. In lev2&6)
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM
+	AM_RANGE(0xd04000, 0xd04fff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0xe00000, 0xe00fff) AM_WRITE(MWA16_RAM						)	// NVRAM? (odd bytes)
+ADDRESS_MAP_END
 
 
 
@@ -1667,85 +1667,85 @@ MEMORY_END
 								Athena no Hatena?
 ***************************************************************************/
 
-static MEMORY_READ16_START( atehate_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-	{ 0x900000, 0x9fffff, MRA16_RAM				},	// RAM
-	{ 0x100000, 0x103fff, seta_sound_word_r		},	// Sound
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// Palette
-	{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-	{ 0xb00000, 0xb00001, input_port_0_word_r	},	// P1
-	{ 0xb00002, 0xb00003, input_port_1_word_r	},	// P2
-	{ 0xb00004, 0xb00005, input_port_2_word_r	},	// Coins
-/**/{ 0xc00000, 0xc00001, MRA16_RAM				},	// ? 0x4000
-	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-MEMORY_END
+static ADDRESS_MAP_START( atehate_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x900000, 0x9fffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x100000, 0x103fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r	)	// Coins
+/**/AM_RANGE(0xc00000, 0xc00001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( atehate_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM					},	// ROM
-	{ 0x900000, 0x9fffff, MWA16_RAM					},	// RAM
-	{ 0x100000, 0x103fff, seta_sound_word_w			},	// Sound
-	{ 0x200000, 0x200001, MWA16_NOP					},	// ? watchdog ?
-	{ 0x300000, 0x300001, MWA16_NOP					},	// ? 0 (irq ack lev 2?)
-	{ 0x500000, 0x500001, MWA16_NOP					},	// ? (end of lev 1: bit 4 goes 1,0,1)
-	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16	},	// Sprites Y
-	{ 0xc00000, 0xc00001, MWA16_RAM					},	// ? 0x4000
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
-MEMORY_END
+static ADDRESS_MAP_START( atehate_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0x900000, 0x9fffff) AM_WRITE(MWA16_RAM					)	// RAM
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(seta_sound_word_w			)	// Sound
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP					)	// ? watchdog ?
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP					)	// ? 0 (irq ack lev 2?)
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP					)	// ? (end of lev 1: bit 4 goes 1,0,1)
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites Y
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM					)	// ? 0x4000
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+ADDRESS_MAP_END
 
 /***************************************************************************
 						Blandia
 ***************************************************************************/
 
-static MEMORY_READ16_START( blandia_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM				},	// ROM (up to 2MB)
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
-	{ 0x210000, 0x21ffff, MRA16_RAM				},	// RAM (gundhara)
-	{ 0x300000, 0x30ffff, MRA16_RAM				},	// RAM (wrofaero only?)
-	{ 0x500000, 0x500005, MRA16_RAM				},	// (gundhara)
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// (rezon,jjsquawk)
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x701000, 0x70ffff, MRA16_RAM				},	//
-/**/{ 0x800000, 0x800607, MRA16_RAM				},	// Sprites Y
-	{ 0x880000, 0x880001, MRA16_RAM				},	// ? 0xc000
-	{ 0x900000, 0x903fff, MRA16_RAM				},	// Sprites Code + X + Attr
-/**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-/**/{ 0xa80000, 0xa80005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0xb04000, 0xb0ffff, MRA16_RAM				},	// (jjsquawk)
-	{ 0xb80000, 0xb83fff, MRA16_RAM				},	// VRAM 2&3
-	{ 0xb84000, 0xb8ffff, MRA16_RAM				},	// (jjsquawk)
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( blandia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM				)	// ROM (up to 2MB)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
+	AM_RANGE(0x210000, 0x21ffff) AM_READ(MRA16_RAM				)	// RAM (gundhara)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(MRA16_RAM				)	// RAM (wrofaero only?)
+	AM_RANGE(0x500000, 0x500005) AM_READ(MRA16_RAM				)	// (gundhara)
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// (rezon,jjsquawk)
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_READ(MRA16_RAM				)	//
+/**/AM_RANGE(0x800000, 0x800607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0x880000, 0x880001) AM_READ(MRA16_RAM				)	// ? 0xc000
+	AM_RANGE(0x900000, 0x903fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+/**/AM_RANGE(0xa00000, 0xa00005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+/**/AM_RANGE(0xa80000, 0xa80005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0xb04000, 0xb0ffff) AM_READ(MRA16_RAM				)	// (jjsquawk)
+	AM_RANGE(0xb80000, 0xb83fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+	AM_RANGE(0xb84000, 0xb8ffff) AM_READ(MRA16_RAM				)	// (jjsquawk)
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( blandia_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM						},	// ROM (up to 2MB)
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
-	{ 0x210000, 0x21ffff, MWA16_RAM						},	// RAM (gundhara)
-	{ 0x300000, 0x30ffff, MWA16_RAM						},	// RAM (wrofaero only?)
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700000, 0x7003ff, MWA16_RAM						},	// (rezon,jjsquawk)
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x701000, 0x70ffff, MWA16_RAM						},	//
-	{ 0x800000, 0x800607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0x880000, 0x880001, MWA16_RAM						},	// ? 0xc000
-	{ 0x900000, 0x903fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xa00000, 0xa00005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0xa80000, 0xa80005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xb00000, 0xb03fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0xb04000, 0xb0ffff, MWA16_RAM						},	// (jjsquawk)
-	{ 0xb80000, 0xb83fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0xb84000, 0xb8ffff, MWA16_RAM						},	// (jjsquawk)
-	{ 0xc00000, 0xc03fff, seta_sound_word_w				},	// Sound
-	{ 0xd00000, 0xd00007, MWA16_NOP						},	// ?
-	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ? VBlank IRQ Ack
-	{ 0xf00000, 0xf00001, MWA16_NOP						},	// ? Sound  IRQ Ack
-MEMORY_END
+static ADDRESS_MAP_START( blandia_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM						)	// ROM (up to 2MB)
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x210000, 0x21ffff) AM_WRITE(MWA16_RAM						)	// RAM (gundhara)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM						)	// RAM (wrofaero only?)
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(MWA16_RAM						)	// (rezon,jjsquawk)
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x800000, 0x800607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0x880000, 0x880001) AM_WRITE(MWA16_RAM						)	// ? 0xc000
+	AM_RANGE(0x900000, 0x903fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xa00000, 0xa00005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0xa80000, 0xa80005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0xb04000, 0xb0ffff) AM_WRITE(MWA16_RAM						)	// (jjsquawk)
+	AM_RANGE(0xb80000, 0xb83fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0xb84000, 0xb8ffff) AM_WRITE(MWA16_RAM						)	// (jjsquawk)
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+	AM_RANGE(0xd00000, 0xd00007) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)	// ? VBlank IRQ Ack
+	AM_RANGE(0xf00000, 0xf00001) AM_WRITE(MWA16_NOP						)	// ? Sound  IRQ Ack
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1753,54 +1753,54 @@ MEMORY_END
 						(with slight variations)
 ***************************************************************************/
 
-static MEMORY_READ16_START( blandiap_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM				},	// ROM (up to 2MB)
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
-	{ 0x210000, 0x21ffff, MRA16_RAM				},	// RAM (gundhara)
-	{ 0x300000, 0x30ffff, MRA16_RAM				},	// RAM (wrofaero only?)
-	{ 0x500000, 0x500005, MRA16_RAM				},	// (gundhara)
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// (rezon,jjsquawk)
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x701000, 0x70ffff, MRA16_RAM				},	//
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0x804000, 0x80ffff, MRA16_RAM				},	// (jjsquawk)
-	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
-	{ 0x884000, 0x88ffff, MRA16_RAM				},	// (jjsquawk)
-/**/{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-/**/{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( blandiap_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM				)	// ROM (up to 2MB)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
+	AM_RANGE(0x210000, 0x21ffff) AM_READ(MRA16_RAM				)	// RAM (gundhara)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(MRA16_RAM				)	// RAM (wrofaero only?)
+	AM_RANGE(0x500000, 0x500005) AM_READ(MRA16_RAM				)	// (gundhara)
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// (rezon,jjsquawk)
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0x804000, 0x80ffff) AM_READ(MRA16_RAM				)	// (jjsquawk)
+	AM_RANGE(0x880000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+	AM_RANGE(0x884000, 0x88ffff) AM_READ(MRA16_RAM				)	// (jjsquawk)
+/**/AM_RANGE(0x900000, 0x900005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+/**/AM_RANGE(0x980000, 0x980005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+/**/AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+/**/AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( blandiap_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM						},	// ROM (up to 2MB)
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
-	{ 0x210000, 0x21ffff, MWA16_RAM						},	// RAM (gundhara)
-	{ 0x300000, 0x30ffff, MWA16_RAM						},	// RAM (wrofaero only?)
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700000, 0x7003ff, MWA16_RAM						},	// (rezon,jjsquawk)
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x701000, 0x70ffff, MWA16_RAM						},	//
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x804000, 0x80ffff, MWA16_RAM						},	// (jjsquawk)
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x884000, 0x88ffff, MWA16_RAM						},	// (jjsquawk)
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc03fff, seta_sound_word_w				},	// Sound
-	{ 0xd00000, 0xd00007, MWA16_NOP						},	// ?
-	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ? VBlank IRQ Ack
-	{ 0xf00000, 0xf00001, MWA16_NOP						},	// ? Sound  IRQ Ack
-MEMORY_END
+static ADDRESS_MAP_START( blandiap_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM						)	// ROM (up to 2MB)
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x210000, 0x21ffff) AM_WRITE(MWA16_RAM						)	// RAM (gundhara)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM						)	// RAM (wrofaero only?)
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(MWA16_RAM						)	// (rezon,jjsquawk)
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x804000, 0x80ffff) AM_WRITE(MWA16_RAM						)	// (jjsquawk)
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x884000, 0x88ffff) AM_WRITE(MWA16_RAM						)	// (jjsquawk)
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+	AM_RANGE(0xd00000, 0xd00007) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)	// ? VBlank IRQ Ack
+	AM_RANGE(0xf00000, 0xf00001) AM_WRITE(MWA16_NOP						)	// ? Sound  IRQ Ack
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -1849,58 +1849,58 @@ static WRITE16_HANDLER( zombraid_gun_w )
 	old_clock = data & 1;
 }
 
-static MEMORY_READ16_START( wrofaero_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM				},	// ROM (up to 2MB)
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
-	{ 0x210000, 0x21ffff, MRA16_RAM				},	// RAM (gundhara)
-	{ 0x300000, 0x30ffff, MRA16_RAM				},	// RAM (wrofaero only?)
-	{ 0x500000, 0x500005, MRA16_RAM				},	// (gundhara)
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// (rezon,jjsquawk)
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x701000, 0x70ffff, MRA16_RAM				},	//
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0x804000, 0x80ffff, MRA16_RAM				},	// (jjsquawk)
-	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
-	{ 0x884000, 0x88ffff, MRA16_RAM				},	// (jjsquawk)
-/**/{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-/**/{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( wrofaero_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM				)	// ROM (up to 2MB)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
+	AM_RANGE(0x210000, 0x21ffff) AM_READ(MRA16_RAM				)	// RAM (gundhara)
+	AM_RANGE(0x300000, 0x30ffff) AM_READ(MRA16_RAM				)	// RAM (wrofaero only?)
+	AM_RANGE(0x500000, 0x500005) AM_READ(MRA16_RAM				)	// (gundhara)
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// (rezon,jjsquawk)
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0x804000, 0x80ffff) AM_READ(MRA16_RAM				)	// (jjsquawk)
+	AM_RANGE(0x880000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+	AM_RANGE(0x884000, 0x88ffff) AM_READ(MRA16_RAM				)	// (jjsquawk)
+/**/AM_RANGE(0x900000, 0x900005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+/**/AM_RANGE(0x980000, 0x980005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+/**/AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+/**/AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( wrofaero_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM						},	// ROM (up to 2MB)
-	{ 0x200000, 0x20ffff, MWA16_RAM, &seta_workram		},	// RAM (pointer for zombraid crosshair hack)
-	{ 0x210000, 0x21ffff, MWA16_RAM						},	// RAM (gundhara)
-	{ 0x300000, 0x30ffff, MWA16_RAM						},	// RAM (wrofaero only?)
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700000, 0x7003ff, MWA16_RAM						},	// (rezon,jjsquawk)
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x701000, 0x70ffff, MWA16_RAM						},	//
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x804000, 0x80ffff, MWA16_RAM						},	// (jjsquawk)
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x884000, 0x88ffff, MWA16_RAM						},	// (jjsquawk)
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc03fff, seta_sound_word_w				},	// Sound
+static ADDRESS_MAP_START( wrofaero_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM						)	// ROM (up to 2MB)
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM) AM_BASE(&seta_workram		)	// RAM (pointer for zombraid crosshair hack)
+	AM_RANGE(0x210000, 0x21ffff) AM_WRITE(MWA16_RAM						)	// RAM (gundhara)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM						)	// RAM (wrofaero only?)
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(MWA16_RAM						)	// (rezon,jjsquawk)
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x804000, 0x80ffff) AM_WRITE(MWA16_RAM						)	// (jjsquawk)
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x884000, 0x88ffff) AM_WRITE(MWA16_RAM						)	// (jjsquawk)
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w				)	// Sound
 #if __uPD71054_TIMER
-	{ 0xd00000, 0xd00007, timer_regs_w					},	// ?
+	AM_RANGE(0xd00000, 0xd00007) AM_WRITE(timer_regs_w					)	// ?
 #else
-	{ 0xd00000, 0xd00007, MWA16_NOP						},	// ?
+	AM_RANGE(0xd00000, 0xd00007) AM_WRITE(MWA16_NOP						)	// ?
 #endif
-	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ? VBlank IRQ Ack
-	{ 0xf00000, 0xf00001, MWA16_NOP						},	// ? Sound  IRQ Ack
-MEMORY_END
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)	// ? VBlank IRQ Ack
+	AM_RANGE(0xf00000, 0xf00001) AM_WRITE(MWA16_NOP						)	// ? Sound  IRQ Ack
+ADDRESS_MAP_END
 
 
 
@@ -1909,36 +1909,36 @@ MEMORY_END
 ***************************************************************************/
 
 /* similar to krzybowl */
-static MEMORY_READ16_START( blockcar_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0xf00000, 0xf03fff, MRA16_RAM				},	// RAM
-	{ 0xf04000, 0xf041ff, MRA16_RAM				},	// Backup RAM?
-	{ 0xf05000, 0xf050ff, MRA16_RAM				},	// Backup RAM?
-	{ 0x300000, 0x300003, seta_dsw_r			},	// DSW
-	{ 0x500000, 0x500001, input_port_0_word_r	},	// P1
-	{ 0x500002, 0x500003, input_port_1_word_r	},	// P2
-	{ 0x500004, 0x500005, input_port_2_word_r	},	// Coins
-	{ 0xa00000, 0xa03fff, seta_sound_word_r		},	// Sound
-	{ 0xb00000, 0xb003ff, MRA16_RAM				},	// Palette
-	{ 0xc00000, 0xc03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-/**/{ 0xd00000, 0xd00001, MRA16_RAM				},	// ? 0x4000
-/**/{ 0xe00000, 0xe00607, MRA16_RAM				},	// Sprites Y
-MEMORY_END
+static ADDRESS_MAP_START( blockcar_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xf00000, 0xf03fff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0xf04000, 0xf041ff) AM_READ(MRA16_RAM				)	// Backup RAM?
+	AM_RANGE(0xf05000, 0xf050ff) AM_READ(MRA16_RAM				)	// Backup RAM?
+	AM_RANGE(0x300000, 0x300003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0xa00000, 0xa03fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0xb00000, 0xb003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+/**/AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_RAM				)	// ? 0x4000
+/**/AM_RANGE(0xe00000, 0xe00607) AM_READ(MRA16_RAM				)	// Sprites Y
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( blockcar_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM					},	// ROM
-	{ 0xf00000, 0xf03fff, MWA16_RAM					},	// RAM
-	{ 0xf04000, 0xf041ff, MWA16_RAM					},	// Backup RAM?
-	{ 0xf05000, 0xf050ff, MWA16_RAM					},	// Backup RAM?
-	{ 0x100000, 0x100001, MWA16_NOP					},	// ? 1 (start of interrupts, main loop: watchdog?)
-	{ 0x200000, 0x200001, MWA16_NOP					},	// ? 0/1 (IRQ acknowledge?)
-	{ 0x400000, 0x400001, seta_vregs_w, &seta_vregs	},	// Coin Lockout + Sound Enable (bit 4?)
-	{ 0xa00000, 0xa03fff, seta_sound_word_w			},	// Sound
-	{ 0xb00000, 0xb003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xd00000, 0xd00001, MWA16_RAM					},	// ? 0x4000
-	{ 0xe00000, 0xe00607, MWA16_RAM, &spriteram16	},	// Sprites Y
-MEMORY_END
+static ADDRESS_MAP_START( blockcar_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0xf00000, 0xf03fff) AM_WRITE(MWA16_RAM					)	// RAM
+	AM_RANGE(0xf04000, 0xf041ff) AM_WRITE(MWA16_RAM					)	// Backup RAM?
+	AM_RANGE(0xf05000, 0xf050ff) AM_WRITE(MWA16_RAM					)	// Backup RAM?
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_NOP					)	// ? 1 (start of interrupts, main loop: watchdog?)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP					)	// ? 0/1 (IRQ acknowledge?)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs	)	// Coin Lockout + Sound Enable (bit 4?)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(seta_sound_word_w			)	// Sound
+	AM_RANGE(0xb00000, 0xb003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_RAM					)	// ? 0x4000
+	AM_RANGE(0xe00000, 0xe00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites Y
+ADDRESS_MAP_END
 
 
 
@@ -1946,240 +1946,240 @@ MEMORY_END
 								Daioh
 ***************************************************************************/
 
-static MEMORY_READ16_START( daioh_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x500006, 0x500007, input_port_4_word_r	},	// Buttons 4,5,6
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},
-	{ 0x700400, 0x700fff, MRA16_RAM				},  // Palette
-	{ 0x701000, 0x70ffff, MRA16_RAM				},
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0x804000, 0x80ffff, MRA16_RAM				},	//
-	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
-	{ 0x884000, 0x88ffff, MRA16_RAM				},	//
-	{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-	{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xb04000, 0xb13fff, MRA16_RAM				},	//
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( daioh_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x500006, 0x500007) AM_READ(input_port_4_word_r	)	// Buttons 4,5,6
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)  // Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_READ(MRA16_RAM				)
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0x804000, 0x80ffff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x880000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+	AM_RANGE(0x884000, 0x88ffff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x900000, 0x900005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xb04000, 0xb13fff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( daioh_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x10ffff, MWA16_RAM						},	// RAM
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700000, 0x7003ff, MWA16_RAM						},
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x701000, 0x70ffff, MWA16_RAM						},	//
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x804000, 0x80ffff, MWA16_RAM						},	//
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x884000, 0x88ffff, MWA16_RAM						},	//
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xb04000, 0xb13fff, MWA16_RAM						},	//
-	{ 0xc00000, 0xc03fff, seta_sound_word_w				},	// Sound
-	{ 0xe00000, 0xe00001, MWA16_NOP						},	//
-MEMORY_END
+static ADDRESS_MAP_START( daioh_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(MWA16_RAM						)
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x701000, 0x70ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x804000, 0x80ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x884000, 0x88ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xb04000, 0xb13fff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)	//
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 		Dragon Unit, Quiz Kokology, Quiz Kokology 2, Strike Gunner
 ***************************************************************************/
 
-static MEMORY_READ16_START( drgnunit_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x080000, 0x0bffff, MRA16_RAM				},	// ROM (qzkklgy2)
-	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM (qzkklogy)
-	{ 0xffc000, 0xffffff, MRA16_RAM				},	// RAM (drgnunit,stg)
-	{ 0x100000, 0x103fff, seta_sound_word_r		},	// Sound
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// Palette
-	{ 0x900000, 0x901fff, MRA16_RAM				},	// VRAM
-	{ 0x902000, 0x903fff, MRA16_RAM				},	// VRAM
-	{ 0xb00000, 0xb00001, input_port_0_word_r	},	// P1
-	{ 0xb00002, 0xb00003, input_port_1_word_r	},	// P2
-	{ 0xb00004, 0xb00005, input_port_2_word_r	},	// Coins
-	{ 0xb00006, 0xb00007, MRA16_NOP				},	// unused (qzkklogy)
-/**/{ 0xc00000, 0xc00001, MRA16_RAM				},	// ? $4000
-/**/{ 0xd00000, 0xd00607, MRA16_RAM				},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-MEMORY_END
+static ADDRESS_MAP_START( drgnunit_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x080000, 0x0bffff) AM_READ(MRA16_RAM				)	// ROM (qzkklgy2)
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM (qzkklogy)
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM (drgnunit,stg)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x900000, 0x901fff) AM_READ(MRA16_RAM				)	// VRAM
+	AM_RANGE(0x902000, 0x903fff) AM_READ(MRA16_RAM				)	// VRAM
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0xb00006, 0xb00007) AM_READ(MRA16_NOP				)	// unused (qzkklogy)
+/**/AM_RANGE(0xc00000, 0xc00001) AM_READ(MRA16_RAM				)	// ? $4000
+/**/AM_RANGE(0xd00000, 0xd00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( drgnunit_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x080000, 0x0bffff, MWA16_RAM						},	// ROM (qzkklgy2)
-	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM (qzkklogy)
-	{ 0xffc000, 0xffffff, MWA16_RAM						},	// RAM (drgnunit,stg)
-	{ 0x100000, 0x103fff, seta_sound_word_w				},	// Sound
-	{ 0x200000, 0x200001, MWA16_NOP						},	// Watchdog
-	{ 0x300000, 0x300001, MWA16_NOP						},	// ? IRQ Ack
-	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x800000, 0x800005, MWA16_RAM, &seta_vctrl_0		},	// VRAM Ctrl
-	{ 0x900000, 0x903fff, seta_vram_0_w, &seta_vram_0	},	// VRAM
-	{ 0x904000, 0x90ffff, MWA16_NOP						},	// unused (qzkklogy)
-	{ 0xc00000, 0xc00001, MWA16_RAM						},	// ? $4000
-	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-MEMORY_END
+static ADDRESS_MAP_START( drgnunit_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x080000, 0x0bffff) AM_WRITE(MWA16_RAM						)	// ROM (qzkklgy2)
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM						)	// RAM (qzkklogy)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM						)	// RAM (drgnunit,stg)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(seta_sound_word_w				)	// Sound
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP						)	// Watchdog
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP						)	// ? IRQ Ack
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x800000, 0x800005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM Ctrl
+	AM_RANGE(0x900000, 0x903fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM
+	AM_RANGE(0x904000, 0x90ffff) AM_WRITE(MWA16_NOP						)	// unused (qzkklogy)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM						)	// ? $4000
+	AM_RANGE(0xd00000, 0xd00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 						Extreme Downhill / Sokonuke
 ***************************************************************************/
 
-static MEMORY_READ16_START( extdwnhl_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
-	{ 0x210000, 0x21ffff, MRA16_RAM				},	// RAM
-	{ 0x220000, 0x23ffff, MRA16_RAM				},	// RAM (sokonuke)
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x400008, 0x40000b, seta_dsw_r			},	// DSW
-	{ 0x40000c, 0x40000d, watchdog_reset16_r	},	// Watchdog (extdwnhl, MUST RETURN $FFFF)
-	{ 0x500004, 0x500007, MRA16_NOP				},	// IRQ Ack  (extdwnhl)
-	{ 0x600400, 0x600fff, MRA16_RAM				},	// Palette
-	{ 0x601000, 0x610bff, MRA16_RAM				},	//
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0x804000, 0x80ffff, MRA16_RAM				},	//
-	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
-	{ 0x884000, 0x88ffff, MRA16_RAM				},	//
-/**/{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-/**/{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xb04000, 0xb13fff, MRA16_RAM				},	//
-	{ 0xe00000, 0xe03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( extdwnhl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x210000, 0x21ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x220000, 0x23ffff) AM_READ(MRA16_RAM				)	// RAM (sokonuke)
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x400008, 0x40000b) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x40000c, 0x40000d) AM_READ(watchdog_reset16_r	)	// Watchdog (extdwnhl, MUST RETURN $FFFF)
+	AM_RANGE(0x500004, 0x500007) AM_READ(MRA16_NOP				)	// IRQ Ack  (extdwnhl)
+	AM_RANGE(0x600400, 0x600fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x601000, 0x610bff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0x804000, 0x80ffff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x880000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+	AM_RANGE(0x884000, 0x88ffff) AM_READ(MRA16_RAM				)	//
+/**/AM_RANGE(0x900000, 0x900005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+/**/AM_RANGE(0x980000, 0x980005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+/**/AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+/**/AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xb04000, 0xb13fff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( extdwnhl_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
-	{ 0x210000, 0x21ffff, MWA16_RAM						},	// RAM
-	{ 0x220000, 0x23ffff, MWA16_RAM						},	// RAM (sokonuke)
-	{ 0x40000c, 0x40000d, watchdog_reset16_w			},	// Watchdog (sokonuke)
-	{ 0x500000, 0x500003, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x500004, 0x500007, MWA16_NOP						},	// IRQ Ack (sokonuke)
-	{ 0x600400, 0x600fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x601000, 0x610bff, MWA16_RAM						},	//
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x804000, 0x80ffff, MWA16_RAM						},	//
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x884000, 0x88ffff, MWA16_RAM						},	//
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xb04000, 0xb13fff, MWA16_RAM						},	//
-	{ 0xe00000, 0xe03fff, seta_sound_word_w				},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( extdwnhl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x210000, 0x21ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x220000, 0x23ffff) AM_WRITE(MWA16_RAM						)	// RAM (sokonuke)
+	AM_RANGE(0x40000c, 0x40000d) AM_WRITE(watchdog_reset16_w			)	// Watchdog (sokonuke)
+	AM_RANGE(0x500000, 0x500003) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x500004, 0x500007) AM_WRITE(MWA16_NOP						)	// IRQ Ack (sokonuke)
+	AM_RANGE(0x600400, 0x600fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x601000, 0x610bff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x804000, 0x80ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x884000, 0x88ffff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xb04000, 0xb13fff) AM_WRITE(MWA16_RAM						)	//
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+ADDRESS_MAP_END
 
 /***************************************************************************
 		(Kamen) Masked Riders Club Battle Race / Mad Shark
 ***************************************************************************/
 
-static MEMORY_READ16_START( kamenrid_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// ROM
-	{ 0x500000, 0x500001, input_port_0_word_r	},	// P1
-	{ 0x500002, 0x500003, input_port_1_word_r	},	// P2
-	{ 0x500004, 0x500007, seta_dsw_r		},	// DSW
-	{ 0x500008, 0x500009, input_port_2_word_r	},	// Coins
-	{ 0x50000c, 0x50000d, watchdog_reset16_r	},	// xx Watchdog?
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// Palette
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x701000, 0x703fff, MRA16_RAM				},	// Palette
-	{ 0x800000, 0x801fff, MRA16_RAM				},	// VRAM 0
-	{ 0x802000, 0x803fff, MRA16_RAM				},	// VRAM 1
-	{ 0x804000, 0x807fff, MRA16_RAM				},	// tested
-	{ 0x880000, 0x881fff, MRA16_RAM				},	// VRAM 2
-	{ 0x882000, 0x883fff, MRA16_RAM				},	// VRAM 3
-	{ 0x884000, 0x887fff, MRA16_RAM				},	// tested
-	{ 0xa00000, 0xa00607, MRA16_RAM			 	},	// Sprites Y
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xb04000, 0xb07fff, MRA16_RAM				},	// tested
-	{ 0xd00000, 0xd03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( kamenrid_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// ROM
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x500004, 0x500007) AM_READ(seta_dsw_r		)	// DSW
+	AM_RANGE(0x500008, 0x500009) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x50000c, 0x50000d) AM_READ(watchdog_reset16_r	)	// xx Watchdog?
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x701000, 0x703fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x800000, 0x801fff) AM_READ(MRA16_RAM				)	// VRAM 0
+	AM_RANGE(0x802000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 1
+	AM_RANGE(0x804000, 0x807fff) AM_READ(MRA16_RAM				)	// tested
+	AM_RANGE(0x880000, 0x881fff) AM_READ(MRA16_RAM				)	// VRAM 2
+	AM_RANGE(0x882000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 3
+	AM_RANGE(0x884000, 0x887fff) AM_READ(MRA16_RAM				)	// tested
+	AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM			 	)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xb04000, 0xb07fff) AM_READ(MRA16_RAM				)	// tested
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( kamenrid_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// ROM
-	{ 0x50000c, 0x50000d, watchdog_reset16_w			},	// Watchdog (sokonuke)
-	{ 0x600000, 0x600005, seta_vregs_w, &seta_vregs		},	// ? Coin Lockout + Video Registers
-	{ 0x600006, 0x600007, MWA16_NOP						},	// ?
-	{ 0x700000, 0x7003ff, MWA16_RAM						},	// Palette RAM (tested)
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x701000, 0x703fff, MWA16_RAM	},	// Palette
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x804000, 0x807fff, MWA16_RAM	},	// tested
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x884000, 0x887fff, MWA16_RAM	},	// tested
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM , &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? $4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xb04000, 0xb07fff, MWA16_RAM },	// tested
+static ADDRESS_MAP_START( kamenrid_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// ROM
+	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(watchdog_reset16_w			)	// Watchdog (sokonuke)
+	AM_RANGE(0x600000, 0x600005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// ? Coin Lockout + Video Registers
+	AM_RANGE(0x600006, 0x600007) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(MWA16_RAM						)	// Palette RAM (tested)
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x701000, 0x703fff) AM_WRITE(MWA16_RAM	)	// Palette
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x804000, 0x807fff) AM_WRITE(MWA16_RAM	)	// tested
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x884000, 0x887fff) AM_WRITE(MWA16_RAM	)	// tested
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? $4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xb04000, 0xb07fff) AM_WRITE(MWA16_RAM)	// tested
 #if __uPD71054_TIMER
-	{ 0xc00000, 0xc00007, timer_regs_w					},	// ?
+	AM_RANGE(0xc00000, 0xc00007) AM_WRITE(timer_regs_w					)	// ?
 #else
-	{ 0xc00000, 0xc00007, MWA16_NOP						},	// ?
+	AM_RANGE(0xc00000, 0xc00007) AM_WRITE(MWA16_NOP						)	// ?
 #endif
-	{ 0xd00000, 0xd03fff, seta_sound_word_w				},	// Sound
-MEMORY_END
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+ADDRESS_MAP_END
 
 /* almast identical to kamenrid */
-static MEMORY_READ16_START( madshark_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// ROM
-	{ 0x500000, 0x500001, input_port_0_word_r	},	// P1
-	{ 0x500002, 0x500003, input_port_1_word_r	},	// P2
-	{ 0x500004, 0x500005, input_port_2_word_r	},	// Coins
-	{ 0x500008, 0x50000b, seta_dsw_r			},	// DSW
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x800000, 0x801fff, MRA16_RAM				},	// VRAM 0
-	{ 0x802000, 0x803fff, MRA16_RAM				},	// VRAM 1
-	{ 0x880000, 0x881fff, MRA16_RAM				},	// VRAM 2
-	{ 0x882000, 0x883fff, MRA16_RAM				},	// VRAM 3
-	{ 0xa00000, 0xa00607, MRA16_RAM			 	},	// Sprites Y
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xd00000, 0xd03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( madshark_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// ROM
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x500008, 0x50000b) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x800000, 0x801fff) AM_READ(MRA16_RAM				)	// VRAM 0
+	AM_RANGE(0x802000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 1
+	AM_RANGE(0x880000, 0x881fff) AM_READ(MRA16_RAM				)	// VRAM 2
+	AM_RANGE(0x882000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 3
+	AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM			 	)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( madshark_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// ROM
-	{ 0x50000c, 0x50000d, watchdog_reset16_w			},	// Watchdog
-	{ 0x600000, 0x600005, seta_vregs_w, &seta_vregs		},	// ? Coin Lockout + Video Registers
-	{ 0x600006, 0x600007, MWA16_NOP						},	// ?
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM , &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? $4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
+static ADDRESS_MAP_START( madshark_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// ROM
+	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(watchdog_reset16_w			)	// Watchdog
+	AM_RANGE(0x600000, 0x600005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// ? Coin Lockout + Video Registers
+	AM_RANGE(0x600006, 0x600007) AM_WRITE(MWA16_NOP						)	// ?
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? $4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
 #if __uPD71054_TIMER
-	{ 0xc00000, 0xc00007, timer_regs_w					},	// ?
+	AM_RANGE(0xc00000, 0xc00007) AM_WRITE(timer_regs_w					)	// ?
 #else
-	{ 0xc00000, 0xc00007, MWA16_NOP						},	// ?
+	AM_RANGE(0xc00000, 0xc00007) AM_WRITE(MWA16_NOP						)	// ?
 #endif
-	{ 0xd00000, 0xd03fff, seta_sound_word_w				},	// Sound
-MEMORY_END
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+ADDRESS_MAP_END
 
 
 
@@ -2211,37 +2211,37 @@ static READ16_HANDLER( krzybowl_input_r )
 	}
 }
 
-static MEMORY_READ16_START( krzybowl_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
-	{ 0x100000, 0x100001, MRA16_NOP				},	// ?
-	{ 0x200000, 0x200001, MRA16_NOP				},	// ?
-	{ 0x300000, 0x300003, seta_dsw_r			},	// DSW
-	{ 0x500000, 0x500001, input_port_0_word_r	},	// P1
-	{ 0x500002, 0x500003, input_port_1_word_r	},	// P2
-	{ 0x500004, 0x500005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x60000f, krzybowl_input_r		},	// P1
-	{ 0x8000f0, 0x8000f1, MRA16_RAM				},	// NVRAM
-	{ 0x800100, 0x8001ff, MRA16_RAM				},	// NVRAM
-	{ 0xa00000, 0xa03fff, seta_sound_word_r		},	// Sound
-	{ 0xb00000, 0xb003ff, MRA16_RAM				},	// Palette
-	{ 0xc00000, 0xc03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-/**/{ 0xd00000, 0xd00001, MRA16_RAM				},	// ? 0x4000
-/**/{ 0xe00000, 0xe00607, MRA16_RAM				},	// Sprites Y
-MEMORY_END
+static ADDRESS_MAP_START( krzybowl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x100000, 0x100001) AM_READ(MRA16_NOP				)	// ?
+	AM_RANGE(0x200000, 0x200001) AM_READ(MRA16_NOP				)	// ?
+	AM_RANGE(0x300000, 0x300003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x60000f) AM_READ(krzybowl_input_r		)	// P1
+	AM_RANGE(0x8000f0, 0x8000f1) AM_READ(MRA16_RAM				)	// NVRAM
+	AM_RANGE(0x800100, 0x8001ff) AM_READ(MRA16_RAM				)	// NVRAM
+	AM_RANGE(0xa00000, 0xa03fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0xb00000, 0xb003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+/**/AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_RAM				)	// ? 0x4000
+/**/AM_RANGE(0xe00000, 0xe00607) AM_READ(MRA16_RAM				)	// Sprites Y
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( krzybowl_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM					},	// ROM
-	{ 0xf00000, 0xf0ffff, MWA16_RAM					},	// RAM
-	{ 0x400000, 0x400001, MWA16_NOP					},	// ?
-	{ 0x8000f0, 0x8000f1, MWA16_RAM					},	// NVRAM
-	{ 0x800100, 0x8001ff, MWA16_RAM					},	// NVRAM
-	{ 0xa00000, 0xa03fff, seta_sound_word_w			},	// Sound
-	{ 0xb00000, 0xb003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xd00000, 0xd00001, MWA16_RAM					},	// ? 0x4000
-	{ 0xe00000, 0xe00607, MWA16_RAM, &spriteram16	},	// Sprites Y
-MEMORY_END
+static ADDRESS_MAP_START( krzybowl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM					)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP					)	// ?
+	AM_RANGE(0x8000f0, 0x8000f1) AM_WRITE(MWA16_RAM					)	// NVRAM
+	AM_RANGE(0x800100, 0x8001ff) AM_WRITE(MWA16_RAM					)	// NVRAM
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(seta_sound_word_w			)	// Sound
+	AM_RANGE(0xb00000, 0xb003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_RAM					)	// ? 0x4000
+	AM_RANGE(0xe00000, 0xe00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites Y
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -2261,50 +2261,50 @@ WRITE16_HANDLER( msgundam_vregs_w )
 
 /* Mirror RAM is necessary or startup, to clear Work RAM after the test */
 
-static MEMORY_READ16_START( msgundam_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x100000, 0x1fffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x800000, 0x800607, MRA16_RAM				},	// Sprites Y
-	{ 0x900000, 0x903fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xa00000, 0xa03fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0xa80000, 0xa83fff, MRA16_RAM				},	// VRAM 2&3
-	{ 0xb00000, 0xb00005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-	{ 0xb80000, 0xb80005, MRA16_RAM				},	// VRAM 1&2 Ctrl
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( msgundam_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x1fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x800000, 0x800607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0x900000, 0x903fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xa00000, 0xa03fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0xa80000, 0xa83fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+	AM_RANGE(0xb00000, 0xb00005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+	AM_RANGE(0xb80000, 0xb80005) AM_READ(MRA16_RAM				)	// VRAM 1&2 Ctrl
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( msgundam_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x1fffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM, &mirror_ram		},	// RAM
-	{ 0x210000, 0x21ffff, mirror_ram_w					},	// Mirrored RAM
-	{ 0x220000, 0x22ffff, mirror_ram_w					},
-	{ 0x230000, 0x23ffff, mirror_ram_w					},
-	{ 0x240000, 0x24ffff, mirror_ram_w					},
-	{ 0x400000, 0x400001, MWA16_NOP						},	// Lev 2 IRQ Ack
-	{ 0x400004, 0x400005, MWA16_NOP						},	// Lev 4 IRQ Ack
-	{ 0x500000, 0x500005, msgundam_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x800000, 0x800607, MWA16_RAM , &spriteram16		},	// Sprites Y
-	{ 0x880000, 0x880001, MWA16_RAM						},	// ? 0x4000
-	{ 0x900000, 0x903fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xa00000, 0xa03fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0xa80000, 0xa83fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0xb00000, 0xb00005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0xb80000, 0xb80005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xc00000, 0xc03fff, seta_sound_word_w				},	// Sound
+static ADDRESS_MAP_START( msgundam_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x1fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM) AM_BASE(&mirror_ram		)	// RAM
+	AM_RANGE(0x210000, 0x21ffff) AM_WRITE(mirror_ram_w					)	// Mirrored RAM
+	AM_RANGE(0x220000, 0x22ffff) AM_WRITE(mirror_ram_w					)
+	AM_RANGE(0x230000, 0x23ffff) AM_WRITE(mirror_ram_w					)
+	AM_RANGE(0x240000, 0x24ffff) AM_WRITE(mirror_ram_w					)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP						)	// Lev 2 IRQ Ack
+	AM_RANGE(0x400004, 0x400005) AM_WRITE(MWA16_NOP						)	// Lev 4 IRQ Ack
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(msgundam_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x800000, 0x800607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0x880000, 0x880001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0x900000, 0x903fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0xa80000, 0xa83fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0xb00000, 0xb00005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0xb80000, 0xb80005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w				)	// Sound
 #if __uPD71054_TIMER
-	{ 0xd00000, 0xd00007, timer_regs_w					},	// ?
+	AM_RANGE(0xd00000, 0xd00007) AM_WRITE(timer_regs_w					)	// ?
 #else
-	{ 0xd00000, 0xd00007, MWA16_NOP						},	// ?
+	AM_RANGE(0xd00000, 0xd00007) AM_WRITE(MWA16_NOP						)	// ?
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
 
 
@@ -2315,41 +2315,41 @@ MEMORY_END
 
 /* similar to wrofaero */
 
-static MEMORY_READ16_START( oisipuzl_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x100000, 0x17ffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
-	{ 0x300000, 0x300003, seta_dsw_r			},	// DSW
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x700000, 0x703fff, seta_sound_word_r		},	// Sound
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
-/**/{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-/**/{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xc00400, 0xc00fff, MRA16_RAM				},	// Palette
-MEMORY_END
+static ADDRESS_MAP_START( oisipuzl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x17ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x300000, 0x300003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x700000, 0x703fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0x880000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+/**/AM_RANGE(0x900000, 0x900005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+/**/AM_RANGE(0x980000, 0x980005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+/**/AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+/**/AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00400, 0xc00fff) AM_READ(MRA16_RAM				)	// Palette
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( oisipuzl_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x17ffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x400001, MWA16_NOP						},	// ? IRQ Ack
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x700000, 0x703fff, seta_sound_word_w				},	// Sound
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xc00400, 0xc00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-MEMORY_END
+static ADDRESS_MAP_START( oisipuzl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x17ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP						)	// ? IRQ Ack
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(seta_sound_word_w				)	// Sound
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00400, 0xc00fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+ADDRESS_MAP_END
 
 /***************************************************************************
 								Triple Fun
@@ -2357,43 +2357,43 @@ MEMORY_END
 
 /* the same as oisipuzl with the sound system replaced */
 
-static MEMORY_READ16_START( triplfun_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x100000, 0x17ffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
-	{ 0x300000, 0x300003, seta_dsw_r			},	// DSW
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x500006, 0x500007, OKIM6295_status_0_lsb_r }, // tfun sound
-	{ 0x700000, 0x703fff, MRA16_RAM				},	// old sound
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
-	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
-/**/{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
-/**/{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
-/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xc00400, 0xc00fff, MRA16_RAM				},	// Palette
-MEMORY_END
+static ADDRESS_MAP_START( triplfun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x17ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x300000, 0x300003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x500006, 0x500007) AM_READ(OKIM6295_status_0_lsb_r) // tfun sound
+	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM				)	// old sound
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 0&1
+	AM_RANGE(0x880000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 2&3
+/**/AM_RANGE(0x900000, 0x900005) AM_READ(MRA16_RAM				)	// VRAM 0&1 Ctrl
+/**/AM_RANGE(0x980000, 0x980005) AM_READ(MRA16_RAM				)	// VRAM 2&3 Ctrl
+/**/AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+/**/AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00400, 0xc00fff) AM_READ(MRA16_RAM				)	// Palette
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( triplfun_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x17ffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
-	{ 0x400000, 0x400001, MWA16_NOP						},	// ? IRQ Ack
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
-	{ 0x500006, 0x500007, OKIM6295_data_0_lsb_w         },  // tfun sound
-	{ 0x700000, 0x703fff, MWA16_RAM						},	// old sound
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0xc00400, 0xc00fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-MEMORY_END
+static ADDRESS_MAP_START( triplfun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x17ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP						)	// ? IRQ Ack
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// Coin Lockout + Video Registers
+	AM_RANGE(0x500006, 0x500007) AM_WRITE(OKIM6295_data_0_lsb_w)  // tfun sound
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(MWA16_RAM						)	// old sound
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00400, 0xc00fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+ADDRESS_MAP_END
 
 /***************************************************************************
 							Pro Mahjong Kiwame
@@ -2435,29 +2435,29 @@ READ16_HANDLER( kiwame_input_r )
 	}
 }
 
-static MEMORY_READ16_START( kiwame_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
-	{ 0xfffc00, 0xffffff, kiwame_nvram_r		},	// NVRAM + Regs ?
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// Sprites Code + X + Attr
-/**/{ 0x900000, 0x900001, MRA16_RAM				},	// ? 0x4000
-/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-	{ 0xb00000, 0xb003ff, MRA16_RAM				},	// Palette
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-	{ 0xd00000, 0xd00009, kiwame_input_r		},
-	{ 0xe00000, 0xe00003, seta_dsw_r			},	// DSW
-MEMORY_END
+static ADDRESS_MAP_START( kiwame_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0xfffc00, 0xffffff) AM_READ(kiwame_nvram_r		)	// NVRAM + Regs ?
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+/**/AM_RANGE(0x900000, 0x900001) AM_READ(MRA16_RAM				)	// ? 0x4000
+/**/AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0xd00000, 0xd00009) AM_READ(kiwame_input_r		)
+	AM_RANGE(0xe00000, 0xe00003) AM_READ(seta_dsw_r			)	// DSW
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( kiwame_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
-	{ 0xfffc00, 0xffffff, kiwame_nvram_w, &kiwame_nvram	},	// NVRAM + Regs ?
-	{ 0x800000, 0x803fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
-	{ 0x900000, 0x900001, MWA16_RAM						},	// ? 0x4000
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
-	{ 0xb00000, 0xb003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0xc00000, 0xc03fff, seta_sound_word_w				},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( kiwame_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xfffc00, 0xffffff) AM_WRITE(kiwame_nvram_w) AM_BASE(&kiwame_nvram	)	// NVRAM + Regs ?
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2		)	// Sprites Code + X + Attr
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM						)	// ? 0x4000
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w				)	// Sound
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -2476,72 +2476,72 @@ static WRITE16_HANDLER( thunderl_protection_w )
 
 /* Similar to downtown etc. */
 
-static MEMORY_READ16_START( thunderl_readmem )
-	{ 0x000000, 0x00ffff, MRA16_ROM				},	// ROM
-	{ 0xffc000, 0xffffff, MRA16_RAM				},	// RAM
-	{ 0x100000, 0x103fff, seta_sound_word_r		},	// Sound
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700000, 0x7003ff, MRA16_RAM				},	// Palette
-	{ 0xb00000, 0xb00001, input_port_0_word_r	},	// P1
-	{ 0xb00002, 0xb00003, input_port_1_word_r	},	// P2
-	{ 0xb00004, 0xb00005, input_port_2_word_r	},	// Coins
-	{ 0xb0000c, 0xb0000d, thunderl_protection_r	},	// Protection (not in wits)
-	{ 0xb00008, 0xb00009, input_port_4_word_r	},	// P3 (wits)
-	{ 0xb0000a, 0xb0000b, input_port_5_word_r	},	// P4 (wits)
-/**/{ 0xc00000, 0xc00001, MRA16_RAM				},	// ? 0x4000
-/**/{ 0xd00000, 0xd00607, MRA16_RAM				},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xe04000, 0xe07fff, MRA16_RAM				},	// (wits)
-MEMORY_END
+static ADDRESS_MAP_START( thunderl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x100000, 0x103fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700000, 0x7003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0xb0000c, 0xb0000d) AM_READ(thunderl_protection_r	)	// Protection (not in wits)
+	AM_RANGE(0xb00008, 0xb00009) AM_READ(input_port_4_word_r	)	// P3 (wits)
+	AM_RANGE(0xb0000a, 0xb0000b) AM_READ(input_port_5_word_r	)	// P4 (wits)
+/**/AM_RANGE(0xc00000, 0xc00001) AM_READ(MRA16_RAM				)	// ? 0x4000
+/**/AM_RANGE(0xd00000, 0xd00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xe04000, 0xe07fff) AM_READ(MRA16_RAM				)	// (wits)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( thunderl_writemem )
-	{ 0x000000, 0x00ffff, MWA16_ROM					},	// ROM
-	{ 0xffc000, 0xffffff, MWA16_RAM					},	// RAM
-	{ 0x100000, 0x103fff, seta_sound_word_w			},	// Sound
-	{ 0x200000, 0x200001, MWA16_NOP					},	// ?
-	{ 0x300000, 0x300001, MWA16_NOP					},	// ?
-	{ 0x400000, 0x40ffff, thunderl_protection_w		},	// Protection (not in wits)
-	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs	},	// Coin Lockout
-	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0xc00000, 0xc00001, MWA16_RAM					},	// ? 0x4000
-	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16	},	// Sprites Y
-	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xe04000, 0xe07fff, MWA16_RAM					},	// (wits)
-MEMORY_END
+static ADDRESS_MAP_START( thunderl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM					)	// RAM
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(seta_sound_word_w			)	// Sound
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP					)	// ?
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP					)	// ?
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(thunderl_protection_w		)	// Protection (not in wits)
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs	)	// Coin Lockout
+	AM_RANGE(0x700000, 0x7003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM					)	// ? 0x4000
+	AM_RANGE(0xd00000, 0xd00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites Y
+	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xe04000, 0xe07fff) AM_WRITE(MWA16_RAM					)	// (wits)
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 					Ultraman Club / SD Gundam Neo Battling
 ***************************************************************************/
 
-static MEMORY_READ16_START( umanclub_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
-	{ 0x300000, 0x3003ff, MRA16_RAM				},	// Palette
-	{ 0x300400, 0x300fff, MRA16_RAM				},	//
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
-/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc03fff, seta_sound_word_r		},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( umanclub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0x300000, 0x3003ff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x300400, 0x300fff) AM_READ(MRA16_RAM				)	//
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM				)	// Sprites Y
+/**/AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(seta_sound_word_r		)	// Sound
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( umanclub_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM					},	// RAM
-	{ 0x300000, 0x3003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x300400, 0x300fff, MWA16_RAM					},	//
-	{ 0x400000, 0x400001, MWA16_NOP					},	// ? (end of lev 2)
-	{ 0x400004, 0x400005, MWA16_NOP					},	// ? (end of lev 2)
-	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs	},	// Coin Lockout + Video Registers
-	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16	},	// Sprites Y
-	{ 0xa80000, 0xa80001, MWA16_RAM					},	// ? 0x4000
-	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc03fff, seta_sound_word_w			},	// Sound
-MEMORY_END
+static ADDRESS_MAP_START( umanclub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM					)	// RAM
+	AM_RANGE(0x300000, 0x3003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x300400, 0x300fff) AM_WRITE(MWA16_RAM					)	//
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP					)	// ? (end of lev 2)
+	AM_RANGE(0x400004, 0x400005) AM_WRITE(MWA16_NOP					)	// ? (end of lev 2)
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs	)	// Coin Lockout + Video Registers
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(MWA16_RAM					)	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(seta_sound_word_w			)	// Sound
+ADDRESS_MAP_END
 
 /***************************************************************************
 							Ultra Toukond Densetsu
@@ -2556,36 +2556,36 @@ static WRITE16_HANDLER( utoukond_soundlatch_w )
 	}
 }
 
-static MEMORY_READ16_START( utoukond_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-	{ 0x200000, 0x20ffff, MRA16_RAM				},	// ROM
-	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
-	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
-	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
-	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
-	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
-	{ 0x800000, 0x801fff, MRA16_RAM				},	// VRAM 0
-	{ 0x802000, 0x803fff, MRA16_RAM				},	// VRAM 1
-	{ 0x880000, 0x881fff, MRA16_RAM				},	// VRAM 2
-	{ 0x882000, 0x883fff, MRA16_RAM				},	// VRAM 3
-	{ 0xa00000, 0xa00607, MRA16_RAM			 	},	// Sprites Y
-	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
-MEMORY_END
+static ADDRESS_MAP_START( utoukond_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM				)	// ROM
+	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0x600000, 0x600003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x700400, 0x700fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x800000, 0x801fff) AM_READ(MRA16_RAM				)	// VRAM 0
+	AM_RANGE(0x802000, 0x803fff) AM_READ(MRA16_RAM				)	// VRAM 1
+	AM_RANGE(0x880000, 0x881fff) AM_READ(MRA16_RAM				)	// VRAM 2
+	AM_RANGE(0x882000, 0x883fff) AM_READ(MRA16_RAM				)	// VRAM 3
+	AM_RANGE(0xa00000, 0xa00607) AM_READ(MRA16_RAM			 	)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START( utoukond_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM						},	// ROM
-	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// ? Coin Lockout + Video Registers
-	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
-	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
-	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
-	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
-	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
-	{ 0xa00000, 0xa00607, MWA16_RAM , &spriteram16		},	// Sprites Y
-	{ 0xb00000, 0xb03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
-	{ 0xc00000, 0xc00001, utoukond_soundlatch_w			},	// To Sound CPU (cause an IRQ)
-	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ? ack
-MEMORY_END
+static ADDRESS_MAP_START( utoukond_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM						)	// ROM
+	AM_RANGE(0x500000, 0x500005) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs		)	// ? Coin Lockout + Video Registers
+	AM_RANGE(0x700400, 0x700fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0	)	// VRAM 0
+	AM_RANGE(0x880000, 0x883fff) AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2	)	// VRAM 2
+	AM_RANGE(0x900000, 0x900005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_2		)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(utoukond_soundlatch_w			)	// To Sound CPU (cause an IRQ)
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)	// ? ack
+ADDRESS_MAP_END
 
 
 
@@ -2618,57 +2618,57 @@ static WRITE_HANDLER( sub_bankswitch_lockout_w )
 
 static READ_HANDLER( ff_r )	{return 0xff;}
 
-static MEMORY_READ_START( tndrcade_sub_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM				},	// RAM
-	{ 0x0800, 0x0800, ff_r					},	// ? (bits 0/1/2/3: 1 -> do test 0-ff/100-1e0/5001-57ff/banked rom)
-//	{ 0x0800, 0x0800, soundlatch_r			},	//
-//	{ 0x0801, 0x0801, soundlatch2_r			},	//
-	{ 0x1000, 0x1000, input_port_0_r		},	// P1
-	{ 0x1001, 0x1001, input_port_1_r		},	// P2
-	{ 0x1002, 0x1002, input_port_2_r		},	// Coins
-	{ 0x2001, 0x2001, YM2203_read_port_0_r	},
-	{ 0x5000, 0x57ff, MRA_RAM				},	// Shared RAM
-	{ 0x6000, 0x7fff, MRA_ROM				},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK1				},	// Banked ROM
-	{ 0xc000, 0xffff, MRA_ROM				},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( tndrcade_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM				)	// RAM
+	AM_RANGE(0x0800, 0x0800) AM_READ(ff_r					)	// ? (bits 0/1/2/3: 1 -> do test 0-ff/100-1e0/5001-57ff/banked rom)
+//	AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r			)	//
+//	AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r			)	//
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r		)	// P1
+	AM_RANGE(0x1001, 0x1001) AM_READ(input_port_1_r		)	// P2
+	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_2_r		)	// Coins
+	AM_RANGE(0x2001, 0x2001) AM_READ(YM2203_read_port_0_r	)
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM				)	// Shared RAM
+	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_ROM				)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1				)	// Banked ROM
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM				)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( tndrcade_sub_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM					},	// RAM
-	{ 0x1000, 0x1000, sub_bankswitch_lockout_w	},	// ROM Bank + Coin Lockout
-	{ 0x2000, 0x2000, YM2203_control_port_0_w	},
-	{ 0x2001, 0x2001, YM2203_write_port_0_w		},
-	{ 0x3000, 0x3000, YM3812_control_port_0_w	},
-	{ 0x3001, 0x3001, YM3812_write_port_0_w		},
-	{ 0x5000, 0x57ff, MWA_RAM, &sharedram		},	// Shared RAM
-	{ 0x6000, 0xffff, MWA_ROM					},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( tndrcade_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM					)	// RAM
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(sub_bankswitch_lockout_w	)	// ROM Bank + Coin Lockout
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2203_control_port_0_w	)
+	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2203_write_port_0_w		)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(YM3812_control_port_0_w	)
+	AM_RANGE(0x3001, 0x3001) AM_WRITE(YM3812_write_port_0_w		)
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram		)	// Shared RAM
+	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM
+ADDRESS_MAP_END
 
 /***************************************************************************
 								Twin Eagle
 ***************************************************************************/
 
-static MEMORY_READ_START( twineagl_sub_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM			},	// RAM
-	{ 0x0800, 0x0800, soundlatch_r		},	//
-	{ 0x0801, 0x0801, soundlatch2_r		},	//
-	{ 0x1000, 0x1000, input_port_0_r	},	// P1
-	{ 0x1001, 0x1001, input_port_1_r	},	// P2
-	{ 0x1002, 0x1002, input_port_2_r	},	// Coins
-	{ 0x5000, 0x57ff, MRA_RAM			},	// Shared RAM
-	{ 0x7000, 0x7fff, MRA_ROM			},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK1			},	// Banked ROM
-	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( twineagl_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM			)	// RAM
+	AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r		)	//
+	AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r		)	//
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r	)	// P1
+	AM_RANGE(0x1001, 0x1001) AM_READ(input_port_1_r	)	// P2
+	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_2_r	)	// Coins
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM			)	// Shared RAM
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM			)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1			)	// Banked ROM
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( twineagl_sub_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM				},	// RAM
-	{ 0x1000, 0x1000, sub_bankswitch_lockout_w	},	// ROM Bank + Coin Lockout
-	{ 0x5000, 0x57ff, MWA_RAM, &sharedram	},	// Shared RAM
-	{ 0x7000, 0x7fff, MWA_ROM				},	// ROM
-	{ 0x8000, 0xbfff, MWA_ROM				},	// ROM
-	{ 0xc000, 0xffff, MWA_ROM				},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( twineagl_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM				)	// RAM
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(sub_bankswitch_lockout_w	)	// ROM Bank + Coin Lockout
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram	)	// Shared RAM
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM				)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM				)	// ROM
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM				)	// ROM
+ADDRESS_MAP_END
 
 /***************************************************************************
 								DownTown
@@ -2697,23 +2697,23 @@ READ_HANDLER( downtown_ip_r )
 	return 0;
 }
 
-static MEMORY_READ_START( downtown_sub_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM			},	// RAM
-	{ 0x0800, 0x0800, soundlatch_r		},	//
-	{ 0x0801, 0x0801, soundlatch2_r		},	//
-	{ 0x1000, 0x1007, downtown_ip_r		},	// Input Ports
-	{ 0x5000, 0x57ff, MRA_RAM			},	// Shared RAM
-	{ 0x7000, 0x7fff, MRA_ROM			},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK1			},	// Banked ROM
-	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( downtown_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM			)	// RAM
+	AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r		)	//
+	AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r		)	//
+	AM_RANGE(0x1000, 0x1007) AM_READ(downtown_ip_r		)	// Input Ports
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM			)	// Shared RAM
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM			)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1			)	// Banked ROM
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( downtown_sub_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM				},	// RAM
-	{ 0x1000, 0x1000, sub_bankswitch_lockout_w		},	// ROM Bank + Coin Lockout
-	{ 0x5000, 0x57ff, MWA_RAM, &sharedram	},	// Shared RAM
-	{ 0x7000, 0xffff, MWA_ROM				},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( downtown_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM				)	// RAM
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(sub_bankswitch_lockout_w		)	// ROM Bank + Coin Lockout
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram	)	// Shared RAM
+	AM_RANGE(0x7000, 0xffff) AM_WRITE(MWA8_ROM				)	// ROM
+ADDRESS_MAP_END
 
 /***************************************************************************
 						Caliber 50 / U.S. Classic
@@ -2725,75 +2725,75 @@ WRITE_HANDLER( calibr50_soundlatch2_w )
 	cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
 }
 
-static MEMORY_READ_START( calibr50_sub_readmem )
-	{ 0x0000, 0x1fff, seta_sound_r		},	// Sound
-	{ 0x4000, 0x4000, soundlatch_r		},	// From Main CPU
-	{ 0x8000, 0xbfff, MRA_BANK1			},	// Banked ROM
-	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( calibr50_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(seta_sound_r		)	// Sound
+	AM_RANGE(0x4000, 0x4000) AM_READ(soundlatch_r		)	// From Main CPU
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1			)	// Banked ROM
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( calibr50_sub_writemem )
-	{ 0x0000, 0x1fff, seta_sound_w				},	// Sound
-	{ 0x4000, 0x4000, sub_bankswitch_w			},	// Bankswitching
-	{ 0x8000, 0xbfff, MWA_ROM					},	// Banked ROM
-	{ 0xc000, 0xc000, calibr50_soundlatch2_w	},	// To Main CPU
-	{ 0xc000, 0xffff, MWA_ROM					},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( calibr50_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(seta_sound_w				)	// Sound
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(sub_bankswitch_w			)	// Bankswitching
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM					)	// Banked ROM
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(calibr50_soundlatch2_w	)	// To Main CPU
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM
+ADDRESS_MAP_END
 
 /***************************************************************************
 								Meta Fox
 ***************************************************************************/
 
-static MEMORY_READ_START( metafox_sub_readmem )
-	{ 0x0000, 0x01ff, MRA_RAM			},	// RAM
-	{ 0x0800, 0x0800, soundlatch_r		},	//
-	{ 0x0801, 0x0801, soundlatch2_r		},	//
-	{ 0x1000, 0x1000, input_port_2_r	},	// Coins
-	{ 0x1002, 0x1002, input_port_0_r	},	// P1
-//	{ 0x1004, 0x1004, MRA_NOP			},	// ?
-	{ 0x1006, 0x1006, input_port_1_r	},	// P2
-	{ 0x5000, 0x57ff, MRA_RAM			},	// Shared RAM
-	{ 0x7000, 0x7fff, MRA_ROM			},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK1			},	// Banked ROM
-	{ 0xc000, 0xffff, MRA_ROM			},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( metafox_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM			)	// RAM
+	AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r		)	//
+	AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r		)	//
+	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_2_r	)	// Coins
+	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_0_r	)	// P1
+//	AM_RANGE(0x1004, 0x1004) AM_READ(MRA8_NOP			)	// ?
+	AM_RANGE(0x1006, 0x1006) AM_READ(input_port_1_r	)	// P2
+	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM			)	// Shared RAM
+	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM			)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1			)	// Banked ROM
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM			)	// ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( metafox_sub_writemem )
-	{ 0x0000, 0x01ff, MWA_RAM				},	// RAM
-	{ 0x1000, 0x1000, sub_bankswitch_lockout_w		},	// ROM Bank + Coin Lockout
-	{ 0x5000, 0x57ff, MWA_RAM, &sharedram	},	// Shared RAM
-	{ 0x7000, 0x7fff, MWA_ROM				},	// ROM
-	{ 0x8000, 0xbfff, MWA_ROM				},	// ROM
-	{ 0xc000, 0xffff, MWA_ROM				},	// ROM
-MEMORY_END
+static ADDRESS_MAP_START( metafox_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM				)	// RAM
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(sub_bankswitch_lockout_w		)	// ROM Bank + Coin Lockout
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram	)	// Shared RAM
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM				)	// ROM
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM				)	// ROM
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM				)	// ROM
+ADDRESS_MAP_END
 
 
 /***************************************************************************
 							Ultra Toukon Densetsu
 ***************************************************************************/
 
-static MEMORY_READ_START( utoukond_sound_readmem )
-	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xffff, seta_sound_r },
-MEMORY_END
-static MEMORY_WRITE_START( utoukond_sound_writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xffff, seta_sound_w },
-MEMORY_END
+static ADDRESS_MAP_START( utoukond_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_READ(seta_sound_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( utoukond_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(seta_sound_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START( utoukond_sound_readport )
-	{ 0x00, 0x00, YM2612_status_port_0_A_r },
-	{ 0xc0, 0xc0, soundlatch_r },
-PORT_END
-static PORT_WRITE_START( utoukond_sound_writeport )
-	{ 0x00, 0x00, YM2612_control_port_0_A_w },
-	{ 0x01, 0x01, YM2612_data_port_0_A_w },
-	{ 0x02, 0x02, YM2612_control_port_0_B_w },
-	{ 0x03, 0x03, YM2612_data_port_0_B_w },
-	{ 0x80, 0x80, IOWP_NOP }, //?
-PORT_END
+static ADDRESS_MAP_START( utoukond_sound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2612_status_port_0_A_r)
+	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+static ADDRESS_MAP_START( utoukond_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2612_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2612_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM2612_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM2612_data_port_0_B_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(MWA8_NOP) //?
+ADDRESS_MAP_END
 
 
 
@@ -6026,11 +6026,11 @@ static MACHINE_DRIVER_START( tndrcade )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000/2)
-	MDRV_CPU_MEMORY(tndrcade_readmem,tndrcade_writemem)
+	MDRV_CPU_PROGRAM_MAP(tndrcade_readmem,tndrcade_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
-	MDRV_CPU_MEMORY(tndrcade_sub_readmem,tndrcade_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(tndrcade_sub_readmem,tndrcade_sub_writemem)
 	MDRV_CPU_VBLANK_INT(tndrcade_sub_interrupt,TNDRCADE_SUB_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6068,11 +6068,11 @@ static MACHINE_DRIVER_START( twineagl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000/2)
-	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_PROGRAM_MAP(downtown_readmem,downtown_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
-	MDRV_CPU_MEMORY(twineagl_sub_readmem,twineagl_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(twineagl_sub_readmem,twineagl_sub_writemem)
 	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6105,11 +6105,11 @@ static MACHINE_DRIVER_START( downtown )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000/2)
-	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_PROGRAM_MAP(downtown_readmem,downtown_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
-	MDRV_CPU_MEMORY(downtown_sub_readmem,downtown_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(downtown_sub_readmem,downtown_sub_writemem)
 	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6160,11 +6160,11 @@ static MACHINE_DRIVER_START( usclssic )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000/2)
-	MDRV_CPU_MEMORY(usclssic_readmem,usclssic_writemem)
+	MDRV_CPU_PROGRAM_MAP(usclssic_readmem,usclssic_writemem)
 	MDRV_CPU_VBLANK_INT(calibr50_interrupt,calibr50_INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
-	MDRV_CPU_MEMORY(calibr50_sub_readmem,calibr50_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(calibr50_sub_readmem,calibr50_sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMI caused by main cpu when writing to the sound latch */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6201,11 +6201,11 @@ static MACHINE_DRIVER_START( calibr50 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000/2)
-	MDRV_CPU_MEMORY(calibr50_readmem,calibr50_writemem)
+	MDRV_CPU_PROGRAM_MAP(calibr50_readmem,calibr50_writemem)
 	MDRV_CPU_VBLANK_INT(calibr50_interrupt,calibr50_INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
-	MDRV_CPU_MEMORY(calibr50_sub_readmem,calibr50_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(calibr50_sub_readmem,calibr50_sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* IRQ: 4/frame
 							   NMI: when the 68k writes the sound latch */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6237,11 +6237,11 @@ static MACHINE_DRIVER_START( metafox )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000/2)
-	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_PROGRAM_MAP(downtown_readmem,downtown_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
-	MDRV_CPU_MEMORY(metafox_sub_readmem,metafox_sub_writemem)
+	MDRV_CPU_PROGRAM_MAP(metafox_sub_readmem,metafox_sub_writemem)
 	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6275,7 +6275,7 @@ static MACHINE_DRIVER_START( atehate )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(atehate_readmem,atehate_writemem)
+	MDRV_CPU_PROGRAM_MAP(atehate_readmem,atehate_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6311,7 +6311,7 @@ static MACHINE_DRIVER_START( blandia )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(blandia_readmem,blandia_writemem)
+	MDRV_CPU_PROGRAM_MAP(blandia_readmem,blandia_writemem)
 
 	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
 
@@ -6340,7 +6340,7 @@ static MACHINE_DRIVER_START( blandiap )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(blandiap_readmem,blandiap_writemem)
+	MDRV_CPU_PROGRAM_MAP(blandiap_readmem,blandiap_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6373,7 +6373,7 @@ static MACHINE_DRIVER_START( blockcar )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(blockcar_readmem,blockcar_writemem)
+	MDRV_CPU_PROGRAM_MAP(blockcar_readmem,blockcar_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6403,7 +6403,7 @@ static MACHINE_DRIVER_START( daioh )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(daioh_readmem,daioh_writemem)
+	MDRV_CPU_PROGRAM_MAP(daioh_readmem,daioh_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6438,7 +6438,7 @@ static MACHINE_DRIVER_START( drgnunit )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(drgnunit_readmem,drgnunit_writemem)
+	MDRV_CPU_PROGRAM_MAP(drgnunit_readmem,drgnunit_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6467,7 +6467,7 @@ static MACHINE_DRIVER_START( qzkklgy2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(drgnunit_readmem,drgnunit_writemem)
+	MDRV_CPU_PROGRAM_MAP(drgnunit_readmem,drgnunit_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6498,7 +6498,7 @@ static MACHINE_DRIVER_START( eightfrc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6533,7 +6533,7 @@ static MACHINE_DRIVER_START( extdwnhl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(extdwnhl_readmem,extdwnhl_writemem)
+	MDRV_CPU_PROGRAM_MAP(extdwnhl_readmem,extdwnhl_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6582,7 +6582,7 @@ static MACHINE_DRIVER_START( gundhara )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 #if	__uPD71054_TIMER
 //	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
@@ -6628,7 +6628,7 @@ static MACHINE_DRIVER_START( jjsquawk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6660,7 +6660,7 @@ static MACHINE_DRIVER_START( kamenrid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(kamenrid_readmem,kamenrid_writemem)
+	MDRV_CPU_PROGRAM_MAP(kamenrid_readmem,kamenrid_writemem)
 	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6695,7 +6695,7 @@ static MACHINE_DRIVER_START( krzybowl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(krzybowl_readmem,krzybowl_writemem)
+	MDRV_CPU_PROGRAM_MAP(krzybowl_readmem,krzybowl_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6726,7 +6726,7 @@ static MACHINE_DRIVER_START( madshark )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(madshark_readmem,madshark_writemem)
+	MDRV_CPU_PROGRAM_MAP(madshark_readmem,madshark_writemem)
 	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6766,7 +6766,7 @@ static MACHINE_DRIVER_START( msgundam )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(msgundam_readmem,msgundam_writemem)
+	MDRV_CPU_PROGRAM_MAP(msgundam_readmem,msgundam_writemem)
 #if	__uPD71054_TIMER
 	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 #else
@@ -6807,7 +6807,7 @@ static MACHINE_DRIVER_START( oisipuzl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(oisipuzl_readmem,oisipuzl_writemem)
+	MDRV_CPU_PROGRAM_MAP(oisipuzl_readmem,oisipuzl_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6846,7 +6846,7 @@ static MACHINE_DRIVER_START( triplfun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(triplfun_readmem,triplfun_writemem)
+	MDRV_CPU_PROGRAM_MAP(triplfun_readmem,triplfun_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6875,7 +6875,7 @@ static MACHINE_DRIVER_START( kiwame )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(kiwame_readmem,kiwame_writemem)
+	MDRV_CPU_PROGRAM_MAP(kiwame_readmem,kiwame_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* lev 1-7 are the same. WARNING:
 								   the interrupt table is written to. */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6908,7 +6908,7 @@ static MACHINE_DRIVER_START( rezon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6941,7 +6941,7 @@ static MACHINE_DRIVER_START( thunderl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_PROGRAM_MAP(thunderl_readmem,thunderl_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6966,7 +6966,7 @@ static MACHINE_DRIVER_START( wits )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_MEMORY(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_PROGRAM_MAP(thunderl_readmem,thunderl_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -6997,7 +6997,7 @@ static MACHINE_DRIVER_START( umanclub )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(umanclub_readmem,umanclub_writemem)
+	MDRV_CPU_PROGRAM_MAP(umanclub_readmem,umanclub_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -7027,13 +7027,13 @@ static MACHINE_DRIVER_START( utoukond )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(utoukond_readmem,utoukond_writemem)
+	MDRV_CPU_PROGRAM_MAP(utoukond_readmem,utoukond_writemem)
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(utoukond_sound_readmem,utoukond_sound_writemem)
-	MDRV_CPU_PORTS(utoukond_sound_readport,utoukond_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(utoukond_sound_readmem,utoukond_sound_writemem)
+	MDRV_CPU_IO_MAP(utoukond_sound_readport,utoukond_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -7064,7 +7064,7 @@ static MACHINE_DRIVER_START( wrofaero )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 #if	__uPD71054_TIMER
 	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 #else
@@ -7110,7 +7110,7 @@ static MACHINE_DRIVER_START( zingzip )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

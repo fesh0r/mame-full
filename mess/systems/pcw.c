@@ -308,7 +308,7 @@ static void pcw_update_memory_block(int block, int bank)
 	}
 	else
 	{
-		mem_read_handler mra=0;
+		read8_handler mra=0;
 
 		switch ((block<<1)+2)
 		{

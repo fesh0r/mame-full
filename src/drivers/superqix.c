@@ -31,41 +31,41 @@ extern VIDEO_START( superqix );
 extern VIDEO_UPDATE( superqix );
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xe000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe100, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xebff, superqix_videoram_w, &videoram },
-	{ 0xec00, 0xefff, superqix_colorram_w, &colorram },
-	{ 0xf000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe100, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe800, 0xebff) AM_WRITE(superqix_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xec00, 0xefff) AM_WRITE(superqix_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-static PORT_READ_START( readport )
-	{ 0x0000, 0x00ff, paletteram_r },
-	{ 0x0401, 0x0401, AY8910_read_port_0_r },
-	{ 0x0405, 0x0405, AY8910_read_port_1_r },
-	{ 0x0418, 0x0418, input_port_4_r },
-	{ 0x0800, 0x77ff, superqix_bitmapram_r },
-	{ 0x8800, 0xf7ff, superqix_bitmapram2_r },
-PORT_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(paletteram_r)
+	AM_RANGE(0x0401, 0x0401) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x0405, 0x0405) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x0418, 0x0418) AM_READ(input_port_4_r)
+	AM_RANGE(0x0800, 0x77ff) AM_READ(superqix_bitmapram_r)
+	AM_RANGE(0x8800, 0xf7ff) AM_READ(superqix_bitmapram2_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-	{ 0x0000, 0x00ff, paletteram_BBGGRRII_w },
-	{ 0x0402, 0x0402, AY8910_write_port_0_w },
-	{ 0x0403, 0x0403, AY8910_control_port_0_w },
-	{ 0x0406, 0x0406, AY8910_write_port_1_w },
-	{ 0x0407, 0x0407, AY8910_control_port_1_w },
-	{ 0x0408, 0x0408, superqix_flipscreen_w },
-	{ 0x0410, 0x0410, superqix_0410_w },	/* ROM bank, NMI enable, tile bank */
-	{ 0x0800, 0x77ff, superqix_bitmapram_w },
-	{ 0x8800, 0xf7ff, superqix_bitmapram2_w },
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(paletteram_BBGGRRII_w)
+	AM_RANGE(0x0402, 0x0402) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x0403, 0x0403) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x0406, 0x0406) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x0407, 0x0407) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x0408, 0x0408) AM_WRITE(superqix_flipscreen_w)
+	AM_RANGE(0x0410, 0x0410) AM_WRITE(superqix_0410_w)	/* ROM bank, NMI enable, tile bank */
+	AM_RANGE(0x0800, 0x77ff) AM_WRITE(superqix_bitmapram_w)
+	AM_RANGE(0x8800, 0xf7ff) AM_WRITE(superqix_bitmapram2_w)
+ADDRESS_MAP_END
 
 
 
@@ -217,8 +217,8 @@ static MACHINE_DRIVER_START( superqix )
 	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ? */
 //			10000000,	/* 10 MHz ? */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,3)	/* ??? */
 	MDRV_CPU_VBLANK_INT(sqix_interrupt,6)	/* ??? */
 

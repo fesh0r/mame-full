@@ -1541,20 +1541,32 @@ static WRITE_HANDLER ( coco_ramc000_w )
 
 static void d_sam_set_maptype(int val)
 {
-	if (val && (mess_ram_size > 0x8000)) {
-		cpu_setbank(2, &mess_ram[0x8000]);
-		memory_set_bankhandler_w(2, 0, coco_ram8000_w);
+	UINT8 *readbank;
+	write8_handler writebank;
+
+	if (val && (mess_ram_size > 0x8000))
+	{
+		readbank = &mess_ram[0x8000];
+		writebank = coco_ram8000_w;
 	}
-	else {
-		cpu_setbank(2, coco_rom);
-		memory_set_bankhandler_w(2, 0, MWA_ROM);
+	else
+	{
+		readbank = coco_rom;
+		writebank = MWA8_ROM;
 	}
+
+	cpu_setbank(2, readbank);
+	install_mem_write_handler(0, 0x8000, 0xfeff, writebank);
 }
 
 static void dragon64_sethipage(int type, int val)
 {
 	static int hipage = 0;
 	UINT8 *bank;
+	UINT8 *readbank2;
+	UINT8 *readbank3;
+	write8_handler writebank2;
+	write8_handler writebank3;
 
 	if (type == DRAGON64_ALL)
 	{
@@ -1571,10 +1583,10 @@ static void dragon64_sethipage(int type, int val)
 
 	if (hipage & DRAGON64_SAMMAP)
 	{
-		cpu_setbank(2, &mess_ram[0x8000]);
-		memory_set_bankhandler_w(2, 0, coco_ram8000_w);
-		cpu_setbank(3, &mess_ram[0xc000]);
-		memory_set_bankhandler_w(3, 0, coco_ramc000_w);
+		readbank2 = &mess_ram[0x8000];
+		readbank3 = &mess_ram[0xc000];
+		writebank2 = coco_ram8000_w;
+		writebank3 = coco_ramc000_w;
 	}
 	else
 	{
@@ -1587,11 +1599,17 @@ static void dragon64_sethipage(int type, int val)
 			bank = coco_rom;
 		else
 			bank = coco_rom + 0x8000;
-		cpu_setbank(2, bank);
-		memory_set_bankhandler_w(2, 0, MWA_ROM);
-		cpu_setbank(3, coco_rom + 0x4000);
-		memory_set_bankhandler_w(3, 0, MWA_ROM);
+
+		readbank2 = bank;
+		readbank3 = coco_rom + 0x4000;
+		writebank2 = MWA8_ROM;
+		writebank3 = MWA8_ROM;
 	}
+
+	cpu_setbank(2, readbank2);
+	cpu_setbank(3, readbank3);
+	install_mem_write_handler(0, 0x8000, 0xbfff, writebank2);
+	install_mem_write_handler(0, 0xc000, 0xfeff, writebank3);
 
 #if LOG_D64MEM
 	logerror("dragon64_sethipage(): hipage=%i\n", hipage);
@@ -1701,28 +1719,48 @@ int coco3_mmu_translate(int bank, int offset)
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
-	static mem_write_handler handlers[] =
+	struct bank_info_entry
 	{
-		coco3_ram_b1_w, coco3_ram_b2_w,
-		coco3_ram_b3_w, coco3_ram_b4_w,
-		coco3_ram_b5_w, coco3_ram_b6_w,
-		coco3_ram_b7_w, coco3_ram_b8_w,
-		coco3_ram_b9_w
+		write8_handler handler;
+		offs_t start;
+		offs_t end;
+	};
+
+	static const struct bank_info_entry bank_info[] =
+	{
+		{ coco3_ram_b1_w, 0x0000, 0x1fff },
+		{ coco3_ram_b2_w, 0x2000, 0x3fff },
+		{ coco3_ram_b3_w, 0x4000, 0x5fff },
+		{ coco3_ram_b4_w, 0x6000, 0x7fff },
+		{ coco3_ram_b5_w, 0x8000, 0x9fff },
+		{ coco3_ram_b6_w, 0xa000, 0xbfff },
+		{ coco3_ram_b7_w, 0xc000, 0xdfff },
+		{ coco3_ram_b8_w, 0xe000, 0xfdff },
+		{ coco3_ram_b9_w, 0xfe00, 0xfeff }
 	};
 
 	int i, offset;
+	UINT8 *readbank;
+	write8_handler writebank;
 
-	for (i = lowblock; i <= hiblock; i++) {
+	for (i = lowblock; i <= hiblock; i++)
+	{
 		offset = coco3_mmu_translate(i, 0);
-		if (offset & 0x80000000) {
-			offset &= ~0x80000000;
-			cpu_setbank(i + 1, &coco_rom[offset]);
-			memory_set_bankhandler_w(i + 1, 0, MWA_ROM);
+		if (offset & 0x80000000)
+		{
+			/* an offset into the CoCo 3 ROM */
+			readbank = &coco_rom[offset & ~0x80000000];
+			writebank = MWA8_ROM;
 		}
-		else {
-			cpu_setbank(i + 1, &mess_ram[offset]);
-			memory_set_bankhandler_w(i + 1, 0, handlers[i]);
+		else
+		{
+			/* offset into normal RAM */
+			readbank = &mess_ram[offset];
+			writebank = bank_info[i].handler;
 		}
+		cpu_setbank(i + 1, readbank);
+		install_mem_write_handler(0, bank_info[i].start, bank_info[i].end, writebank);
+
 #if LOG_MMU
 		logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
 			(i == 8) ? 0xfe00 : i * 0x2000,
@@ -2138,14 +2176,14 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 MACHINE_INIT( dragon32 )
 {
 	cpu_setbank(1, &mess_ram[0]);
-	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	install_mem_write_handler(0, 0x0000, 0x7fff, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 }
 
 MACHINE_INIT( dragon64 )
 {
 	cpu_setbank(1, &mess_ram[0]);
-	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	install_mem_write_handler(0, 0x0000, 0x7fff, coco_ram_w);
 	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
 	dragon64_sethipage(DRAGON64_ALL, 0);
@@ -2154,14 +2192,14 @@ MACHINE_INIT( dragon64 )
 MACHINE_INIT( coco )
 {
 	cpu_setbank(1, &mess_ram[0]);
-	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	install_mem_write_handler(0, 0x0000, 0x7fff, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 }
 
 MACHINE_INIT( coco2 )
 {
 	cpu_setbank(1, &mess_ram[0]);
-	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	install_mem_write_handler(0, 0x0000, 0x7fff, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 }
 

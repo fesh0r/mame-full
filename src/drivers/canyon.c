@@ -146,30 +146,30 @@ static WRITE_HANDLER( canyon_wram_w )
  *
  *************************************/
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA_RAM },
-	{ 0x0100, 0x01ff, canyon_wram_r },
-	{ 0x0800, 0x0bff, MRA_RAM },
-	{ 0x1000, 0x17ff, canyon_switches_r },
-	{ 0x1800, 0x1fff, canyon_options_r },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM }, /* mirror for 6502 vectors */
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(canyon_wram_r)
+	AM_RANGE(0x0800, 0x0bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1000, 0x17ff) AM_READ(canyon_switches_r)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(canyon_options_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM) /* mirror for 6502 vectors */
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA_RAM },
-	{ 0x0100, 0x01ff, canyon_wram_w },
-	{ 0x0400, 0x0401, canyon_motor_w },
-	{ 0x0500, 0x0500, canyon_explode_w },
-	{ 0x0501, 0x0501, MWA_NOP }, /* watchdog, disabled in service mode */
-	{ 0x0600, 0x0603, canyon_whistle_w },
-	{ 0x0680, 0x0683, canyon_led_w },
-	{ 0x0700, 0x0703, canyon_attract_w },
-	{ 0x0800, 0x0bff, canyon_videoram_w, &canyon_videoram },
-	{ 0x1000, 0x17ff, MWA_NOP }, /* sloppy code writes here */
-	{ 0x2000, 0x3fff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE(canyon_wram_w)
+	AM_RANGE(0x0400, 0x0401) AM_WRITE(canyon_motor_w)
+	AM_RANGE(0x0500, 0x0500) AM_WRITE(canyon_explode_w)
+	AM_RANGE(0x0501, 0x0501) AM_WRITE(MWA8_NOP) /* watchdog, disabled in service mode */
+	AM_RANGE(0x0600, 0x0603) AM_WRITE(canyon_whistle_w)
+	AM_RANGE(0x0680, 0x0683) AM_WRITE(canyon_led_w)
+	AM_RANGE(0x0700, 0x0703) AM_WRITE(canyon_attract_w)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(canyon_videoram_w) AM_BASE(&canyon_videoram)
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(MWA8_NOP) /* sloppy code writes here */
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -466,7 +466,7 @@ static MACHINE_DRIVER_START( canyon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -324,65 +324,65 @@ static WRITE_HANDLER( nmienable_w )
 
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x63ff, MRA_RAM },
-	{ 0x6400, 0x6407, zaccaria_prot1_r },
-	{ 0x6c00, 0x6c07, zaccaria_prot2_r },
-	{ 0x6e00, 0x6e00, zaccaria_dsw_r },
-	{ 0x7000, 0x77ff, MRA_RAM },
-	{ 0x7800, 0x7803, ppi8255_0_r },
-	{ 0x7c00, 0x7c00, watchdog_reset_r },
-	{ 0x8000, 0xdfff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x6000, 0x63ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x6400, 0x6407) AM_READ(zaccaria_prot1_r)
+	AM_RANGE(0x6c00, 0x6c07) AM_READ(zaccaria_prot2_r)
+	AM_RANGE(0x6e00, 0x6e00) AM_READ(zaccaria_dsw_r)
+	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x7800, 0x7803) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x7c00, 0x7c00) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8000, 0xdfff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x67ff, zaccaria_videoram_w, &zaccaria_videoram },	/* 6400-67ff is 4 bits wide */
-	{ 0x6800, 0x683f, zaccaria_attributes_w, &zaccaria_attributesram },
-	{ 0x6840, 0x685f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x6881, 0x68bc, MWA_RAM, &spriteram_2, &spriteram_2_size },
-	{ 0x6c00, 0x6c00, zaccaria_flip_screen_x_w },
-	{ 0x6c01, 0x6c01, zaccaria_flip_screen_y_w },
-	{ 0x6c02, 0x6c02, MWA_NOP },    /* sound reset */
-	{ 0x6e00, 0x6e00, sound_command_w },
-	{ 0x6c06, 0x6c06, coin_w },
-	{ 0x6c07, 0x6c07, nmienable_w },
-	{ 0x7000, 0x77ff, MWA_RAM },
-	{ 0x7800, 0x7803, ppi8255_0_w },
-	{ 0x8000, 0xdfff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(zaccaria_videoram_w) AM_BASE(&zaccaria_videoram)	/* 6400-67ff is 4 bits wide */
+	AM_RANGE(0x6800, 0x683f) AM_WRITE(zaccaria_attributes_w) AM_BASE(&zaccaria_attributesram)
+	AM_RANGE(0x6840, 0x685f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x6881, 0x68bc) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
+	AM_RANGE(0x6c00, 0x6c00) AM_WRITE(zaccaria_flip_screen_x_w)
+	AM_RANGE(0x6c01, 0x6c01) AM_WRITE(zaccaria_flip_screen_y_w)
+	AM_RANGE(0x6c02, 0x6c02) AM_WRITE(MWA8_NOP)    /* sound reset */
+	AM_RANGE(0x6e00, 0x6e00) AM_WRITE(sound_command_w)
+	AM_RANGE(0x6c06, 0x6c06) AM_WRITE(coin_w)
+	AM_RANGE(0x6c07, 0x6c07) AM_WRITE(nmienable_w)
+	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7800, 0x7803) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem1 )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x500c, 0x500f, pia_0_r },
-	{ 0xa000, 0xbfff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x500c, 0x500f) AM_READ(pia_0_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem1 )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x500c, 0x500f, pia_0_w },
-	{ 0xa000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x500c, 0x500f) AM_WRITE(pia_0_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( sound_readmem2 )
-	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x0090, 0x0093, pia_1_r },
-	{ 0x1800, 0x1800, soundlatch_r },
-	{ 0xa000, 0xbfff, MRA_ROM },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0090, 0x0093) AM_READ(pia_1_r)
+	AM_RANGE(0x1800, 0x1800) AM_READ(soundlatch_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( sound_writemem2 )
-	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x0090, 0x0093, pia_1_w },
-	{ 0x1000, 0x1000, mc1408_data_w },	/* MC1408 */
-	{ 0x1400, 0x1400, sound1_command_w },
-	{ 0xa000, 0xbfff, MWA_ROM },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( sound_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0090, 0x0093) AM_WRITE(pia_1_w)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(mc1408_data_w)	/* MC1408 */
+	AM_RANGE(0x1400, 0x1400) AM_WRITE(sound1_command_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
 
 
 
@@ -669,17 +669,17 @@ static MACHINE_DRIVER_START( zaccaria )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6802,3580000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 895 kHz */
-	MDRV_CPU_MEMORY(sound_readmem1,sound_writemem1)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem1,sound_writemem1)
 	MDRV_CPU_PERIODIC_INT(zaccaria_cb1_toggle,3580000/4096)
 
 	MDRV_CPU_ADD(M6802,3580000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 895 kHz */
-	MDRV_CPU_MEMORY(sound_readmem2,sound_writemem2)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem2,sound_writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

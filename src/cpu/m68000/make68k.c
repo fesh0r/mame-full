@@ -154,8 +154,8 @@
 char *	codebuf;
 int		DisOp;
 
-#define cpu_readmem24bew(addr)			(0)
-#define cpu_readmem24bew_word(addr)	 	(DisOp)
+#define program_read_byte_8bew(addr)			(0)
+#define program_read_byte_8bew_word(addr)	 	(DisOp)
 
 #define MEMORY_H	/* so memory.h will not be included... */
 /*
@@ -163,8 +163,8 @@ int		DisOp;
 */
 #undef MEMORY_H
 
-#undef cpu_readmem24bew
-#undef cpu_readmem24bew_word
+#undef program_read_byte_8bew
+#undef program_read_byte_8bew_word
 
 
 /*
@@ -1275,7 +1275,7 @@ void Memory_Fetch(char Size,int Dreg,int Extend)
 {
 	static int loopcount=0;
 
-	/* Always goes via OP_ROM */
+	/* Always goes via opcode_base */
 
 	if(CPU!=2)
 	{

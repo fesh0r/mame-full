@@ -115,14 +115,14 @@ WRITE_HANDLER( leland_i86_command_lo_w );
 WRITE_HANDLER( leland_i86_command_hi_w );
 WRITE_HANDLER( ataxx_i86_control_w );
 
-extern const struct Memory_ReadAddress leland_i86_readmem[];
-extern const struct Memory_WriteAddress leland_i86_writemem[];
+ADDRESS_MAP_EXTERN(leland_i86_readmem);
+ADDRESS_MAP_EXTERN(leland_i86_writemem);
 
-extern const struct IO_ReadPort leland_i86_readport[];
+ADDRESS_MAP_EXTERN(leland_i86_readport);
 
-extern const struct IO_WritePort redline_i86_writeport[];
-extern const struct IO_WritePort leland_i86_writeport[];
-extern const struct IO_WritePort ataxx_i86_writeport[];
+ADDRESS_MAP_EXTERN(redline_i86_writeport);
+ADDRESS_MAP_EXTERN(leland_i86_writeport);
+ADDRESS_MAP_EXTERN(ataxx_i86_writeport);
 
 
 /*----------- defined in vidhrdw/leland.c -----------*/

@@ -16,7 +16,7 @@
 #include "state.h"
 
 #ifdef MESS
-#include "mess.h"
+  #include "mess.h"
 #include "mesintrf.h"
 #endif
 
@@ -2429,7 +2429,7 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 				Machine->visible_area.max_x - Machine->visible_area.min_x + 1,
 				Machine->visible_area.max_y - Machine->visible_area.min_y + 1,
 				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
-				Machine->drv->frames_per_second);
+				Machine->refresh_rate);
 #if 0
 		{
 			int pixelx,pixely,tmax,tmin,rem;
@@ -2656,12 +2656,12 @@ int showgameinfo(struct mame_bitmap *bitmap)
 		update_video_and_audio();
 	}
 
-#ifdef MESS
+	#ifdef MESS
 	while (displayimageinfo(bitmap,0) == 1)
 	{
 		update_video_and_audio();
 	}
-#endif
+	#endif
 
 	erase_screen(bitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
@@ -3325,10 +3325,10 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_CODE:
 			case UI_ANALOG:
 			case UI_CALIBRATE:
-#ifndef MESS
+			#ifndef MESS
 			case UI_STATS:
 			case UI_GAMEINFO:
-#else
+			#else
 			case UI_GAMEINFO:
 			case UI_IMAGEINFO:
 			case UI_FILEMANAGER:
@@ -3863,7 +3863,7 @@ void CLIB_DECL usrintf_showmessage(const char *text,...)
 	va_start(arg,text);
 	vsprintf(messagetext,text,arg);
 	va_end(arg);
-	messagecounter = 2 * Machine->drv->frames_per_second;
+	messagecounter = 2 * Machine->refresh_rate;
 }
 
 void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
@@ -3872,7 +3872,7 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 	va_start(arg,text);
 	vsprintf(messagetext,text,arg);
 	va_end(arg);
-	messagecounter = seconds * Machine->drv->frames_per_second;
+	messagecounter = seconds * Machine->refresh_rate;
 }
 
 void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
@@ -3932,7 +3932,7 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 void ui_show_fps_temp(double seconds)
 {
 	if (!showfps)
-		showfpstemp = (int)(seconds * Machine->drv->frames_per_second);
+		showfpstemp = (int)(seconds * Machine->refresh_rate);
 }
 
 void ui_show_fps_set(int show)
