@@ -11,14 +11,20 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [COLECO] Changed MEMORY handlers which allows some extra carts to work (like aqua 
-  attack and tutankham - appears remaining carts have similar issues.  Let us know of any 
-  breakages).  Also, keys now configurable from OSD for both controllers [Ben]
+- [COLECO] Changed MEMORY handlers which allows some extra carts to work (like 
+  aqua attack and tutankham - appears remaining carts have similar issues.  Let 
+  us know of any breakages).  Also, keys now configurable from OSD for both 
+  controllers [Ben]
 
 - [DRAGON/COCO1-2-3] Fixed ROM loading so that ROMs are properly mirrored, and
   worked on improving the way that the CART signal is handled.  These changes
   make many more cartridges work properly.  Also, properly NOP'd invalid memory
   areas, which prevented Arkanoid from running.  [Nate Woods]
+
+- [MSX2] The V9938 emulation is improved, added interlaced mode, fixed blitter 
+  timings, sprites, and GRAPHIC 5 (SCREEN 6). The MSX2 now has a 128kB memory 
+  mapper, so now many more games run. [Sean Young]
+
 
 Other Changes:
 --------------
