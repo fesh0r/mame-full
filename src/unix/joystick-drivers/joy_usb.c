@@ -219,7 +219,7 @@ static int joy_initialize_hid(int i)
     {
       if (axis_item[j])
         {
-	  n = joy_data[i].num_axis++;
+	  n = joy_data[i].num_axes++;
 	  priv_joy_data[i].axis_item[n] = axis_item[j];
 	  
 	  joy_data[i].axis[n].min
@@ -235,10 +235,10 @@ static int joy_initialize_hid(int i)
       
   if (priv_joy_data[i].hat_item)
     {
-      if (joy_data[i].num_axis < JOY_AXES-2)
+      if (joy_data[i].num_axes < JOY_AXES-2)
         {
-	  n = joy_data[i].num_axis;
-	  joy_data[i].num_axis += 2;
+	  n = joy_data[i].num_axes;
+	  joy_data[i].num_axes += 2;
 	  priv_joy_data[i].hat_axis = n;
 	  for (j=0; j<2; j++)
 	    {
@@ -276,7 +276,7 @@ static int joy_initialize_hid(int i)
 	  
       got_values = joy_read(joy_data[i].fd, i);
       
-      for (j=0; j<joy_data[i].num_axis; j++)
+      for (j=0; j<joy_data[i].num_axes; j++)
         {
 	  if (priv_joy_data[i].axis_item[j] == NULL)
 	    {
@@ -343,7 +343,7 @@ static int joy_read(int fd, int i)
 
   p = priv_joy_data[i].data_buf + priv_joy_data[i].offset;
 
-  for (j=0; j<joy_data[i].num_axis; j++)
+  for (j=0; j<joy_data[i].num_axes; j++)
     {
       if (priv_joy_data[i].axis_item[j])
 	joy_data[i].axis[j].val=hid_get_data(p, priv_joy_data[i].axis_item[j]);

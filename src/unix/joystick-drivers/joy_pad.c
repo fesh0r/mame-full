@@ -65,7 +65,7 @@ void joy_pad_init(void)
   if ((joy_data[0].fd = open(towns_pad_dev, O_NONBLOCK | O_RDONLY)) >= 0)
   {
     joy_data[0].num_buttons=4;
-    joy_data[0].num_axis=2;
+    joy_data[0].num_axes=2;
   }
 }
 

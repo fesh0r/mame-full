@@ -106,17 +106,17 @@ void joy_i386_init(void)
 					if (ioctl (joy_data[i].fd, JSIOCGVERSION, &version)==0)
 					{
 						char name[60];
-						ioctl (joy_data[i].fd, JSIOCGAXES, &joy_data[i].num_axis);
+						ioctl (joy_data[i].fd, JSIOCGAXES, &joy_data[i].num_axes);
 						ioctl (joy_data[i].fd, JSIOCGBUTTONS, &joy_data[i].num_buttons);
 						ioctl (joy_data[i].fd, JSIOCGNAME (sizeof (name)), name);
 						if (joy_data[i].num_buttons > JOY_BUTTONS)
 							joy_data[i].num_buttons = JOY_BUTTONS;
-						if (joy_data[i].num_axis > JOY_AXES)
-							joy_data[i].num_axis = JOY_AXES;
+						if (joy_data[i].num_axes > JOY_AXES)
+							joy_data[i].num_axes = JOY_AXES;
 						fprintf (stderr_file, "Joystick: %s is %s\n", devname, name);
 						fprintf (stderr_file, "Joystick: Built in driver version: %d.%d.%d\n", JS_VERSION >> 16, (JS_VERSION >> 8) & 0xff, JS_VERSION & 0xff);
 						fprintf (stderr_file, "Joystick: Kernel driver version  : %d.%d.%d\n", version >> 16, (version >> 8) & 0xff, version & 0xff);
-						for (j=0; j<joy_data[i].num_axis; j++)
+						for (j=0; j<joy_data[i].num_axes; j++)
 						{
 							joy_data[i].axis[j].min = -32768;
 							joy_data[i].axis[j].max =  32768;
@@ -136,7 +136,7 @@ void joy_i386_init(void)
 #endif            
 					joytype = JOY_I386;
 				case JOY_I386:
-					joy_data[i].num_axis = 2;
+					joy_data[i].num_axes = 2;
 #if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
 					joy_data[i].num_buttons = 2;
 #else

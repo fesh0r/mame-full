@@ -51,7 +51,7 @@ void process_x11_joy_event(XEvent *event) {
 	/* evaluate button state */
 	for (i=0; i<joy_data[0].num_buttons; i++)
 	   joy_data[0].buttons[i] = dbe->device_state & (0x01 << i);
-	for(i=0;i<joy_data[0].num_axis;i++)
+	for(i=0;i<joy_data[0].num_axes;i++)
 		joy_data[0].axis[i].val = joy_data[0].axis[i].center +
 		   dbe->axis_data[i];
     }
@@ -60,7 +60,7 @@ void process_x11_joy_event(XEvent *event) {
 	/* evaluate button state */
 	for (i=0; i<joy_data[0].num_buttons; i++)
 	   joy_data[0].buttons[i] = dme->device_state & (0x01 << i);
-	for(i=0;i<joy_data[0].num_axis;i++)
+	for(i=0;i<joy_data[0].num_axes;i++)
 		joy_data[0].axis[i].val = joy_data[0].axis[i].center +
 		   dme->axis_data[i];
     }
@@ -120,10 +120,10 @@ void joy_x11_init(void)
 			break;
 		case ValuatorClass:
 			vinfo=(XValuatorInfoPtr) any;
-			if ((joy_data[0].num_axis=vinfo->num_axes)>=2) result |= 0x02;
-			fprintf(stderr_file,"%s: %d axes\n",x11joyname,joy_data[0].num_axis);
-			if (joy_data[0].num_axis > JOY_AXES) joy_data[0].num_axis = JOY_AXES;
-			for (i=0; i<joy_data[0].num_axis; i++)
+			if ((joy_data[0].num_axes=vinfo->num_axes)>=2) result |= 0x02;
+			fprintf(stderr_file,"%s: %d axes\n",x11joyname,joy_data[0].num_axes);
+			if (joy_data[0].num_axes > JOY_AXES) joy_data[0].num_axes = JOY_AXES;
+			for (i=0; i<joy_data[0].num_axes; i++)
 			{
 			   joy_data[0].axis[i].val = joy_data[0].axis[i].center =
 			      (vinfo->axes[i].max_value - vinfo->axes[i].min_value) / 2;
@@ -189,7 +189,7 @@ void joy_x11_init(void)
 	/* force relative motion report */
 	XSetDeviceMode(display,xdevice,Relative);
 	/* set starting point of joystick (to force joy to be centered) */
-	for(i=0; i<joy_data[0].num_axis; i++)
+	for(i=0; i<joy_data[0].num_axes; i++)
 	   XSetDeviceValuators(display,xdevice,&(joy_data[0].axis[i]),i,1);
 	
 #endif
@@ -231,7 +231,7 @@ void joy_x11_poll(void)
 			break;
 		case ValuatorClass:
 			vinfo=(XValuatorState *) any;
-			for (i=0; i<joy_data[0].num_axis; i++)
+			for (i=0; i<joy_data[0].num_axes; i++)
 			   joy_data[0].axis[i].val =
 			      joy_data[0].axis[i].center + vinfo->valuators[i];
 			break;

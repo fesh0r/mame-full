@@ -285,20 +285,20 @@ void joy_ps2_init (void)
 	    {
 		case PS2PAD_TYPE_DUALSHOCK:
 			/* 4 axes, 16 buttons. */
-			joy_data[i].num_axis = 4;
+			joy_data[i].num_axes = 4;
 			joy_data[i].num_buttons = 16;
 			break;
 		case PS2PAD_TYPE_DIGITAL:
 		default:
 			/* 0 axes, 16 buttons. */
-			joy_data[i].num_axis = 0;
+			joy_data[i].num_axes = 0;
 			joy_data[i].num_buttons = 16;
 	    }
 	    /* Sanity check. */
 	    if (joy_data[i].num_buttons > JOY_BUTTONS)
 		joy_data[i].num_buttons = JOY_BUTTONS;
-	    if (joy_data[i].num_axis > JOY_AXES)
-		joy_data[i].num_axis = JOY_AXES;
+	    if (joy_data[i].num_axes > JOY_AXES)
+		joy_data[i].num_axes = JOY_AXES;
 
 	    if (PS2PAD_TYPE(pad_data[1]) == PS2PAD_TYPE_DUALSHOCK)
 	    {
@@ -310,7 +310,7 @@ void joy_ps2_init (void)
 		/* Set min/max values to +1/-1 and let autocalibrate
 		 * take care of the rest.
                  */
-		for (j=0; j<joy_data[i].num_axis; j++)
+		for (j=0; j<joy_data[i].num_axes; j++)
 		{
 		    if (joy_data[i].axis[j].center == 0)
 			joy_data[i].axis[j].center = 0x7f;
