@@ -131,6 +131,8 @@ int currentpan = 0;
 int lastpan = 0;
 int panframe = 0;
 
+extern float gamma_correction;
+
 /* Vector variables */
 
 int vecgame = 0;
@@ -805,7 +807,7 @@ int sysdep_display_alloc_palette (int writable_colors)
   /* some bitmap fix data values .. 
    * independent of the mame bitmap line arrangement !
    */
-  bytes_per_pixel = (Machine->scrbitmap->depth+7) / 8;
+  bytes_per_pixel = (Machine->color_depth+7) / 8;
 
   if(useColorIndex)
   {
@@ -863,7 +865,7 @@ int sysdep_display_alloc_palette (int writable_colors)
 
   fprintf (stderr, "GLINFO: totalcolors = %d / colortable size= %d,\n\tdepth = %d alphablending=%d,\n\tuse_mod_ctable=%d\n\tuseColorIndex=%d\n",
 	   totalcolors, ctable_size,
-	   Machine->scrbitmap->depth, alphablending, 
+	   Machine->color_depth, alphablending, 
 	   use_mod_ctable,
 	   useColorIndex);
 
@@ -897,7 +899,7 @@ void InitTextures ()
   int x=0, y=0, raw_line_len=0;
   GLint format=0;
   GLenum err;
-  unsigned char *line_1, *line_2=0;
+  unsigned char *line_1=0, *line_2=0;
   struct TexSquare *tsq=0;
 
   if (glContext == 0)
@@ -1014,10 +1016,18 @@ void InitTextures ()
   texgrid = (struct TexSquare *)
     calloc (texnumx * texnumy, sizeof (struct TexSquare));
 
-  line_1 = (unsigned char *) Machine->scrbitmap->line[visual.min_y];
-  line_2 = (unsigned char *) Machine->scrbitmap->line[visual.min_y + 1];
+  /*line_1 = (unsigned char *) Machine->scrbitmap->line[visual.min_y];*/
+  /*line_2 = (unsigned char *) Machine->scrbitmap->line[visual.min_y + 1];*/
 
-  raw_line_len = line_2 - line_1;
+  /*raw_line_len = line_2 - line_1;*/
+
+  raw_line_len = ((Machine->drv->screen_width + 7) & ~7) + 2 * BITMAP_SAFETY;
+
+  /* multiply line length by pixel size in bytes */
+  if (Machine->color_depth == 15 || Machine->color_depth == 16)
+    raw_line_len *= 2;
+  else if (Machine->color_depth == 32)
+    raw_line_len *= 4;
 
   memory_x_len = raw_line_len / bytes_per_pixel;
 
@@ -1209,7 +1219,6 @@ void InitTextures ()
   CHECK_GL_BEGINEND();
 
   CHECK_GL_ERROR ();
-
 }
 
 /* Change the color of a pen */

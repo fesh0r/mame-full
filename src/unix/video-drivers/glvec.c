@@ -19,6 +19,7 @@
 #include "glmame.h"
 #include "driver.h"
 #include "artwork.h"
+#include "vidhrdw/vector.h"
 
 #include "osinline.h"
 
@@ -30,7 +31,7 @@ extern GLfloat cscrhdx,cscrhdy,cscrhdz;
 extern int winwidth,winheight;
 
 unsigned char *vectorram;
-int vectorram_size;
+size_t vectorram_size;
 
 GLuint veclist=0;
 
@@ -60,6 +61,10 @@ static float gamma_correction = 1.2;
 */
 static float flicker_correction = 0.0;
 static float intensity_correction = 1.5;
+
+vector_pixel_t *vector_dirty_list;
+
+float osd_get_gamma(void);
 
 /*
  * multiply and divide routines for drawing lines
@@ -302,7 +307,7 @@ static void vector_begin_list(void)
  * Adds a line end point to the vertices list. The vector processor emulation
  * needs to call this.
  */
-void vector_add_point (int x, int y, int color, int intensity)
+void vector_add_point (int x, int y, rgb_t color, int intensity)
 {
   unsigned char r1,g1,b1;
   float red=0.0, green=0.0, blue=0.0;
