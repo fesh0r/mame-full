@@ -342,7 +342,9 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 	switch (filetype)
 	{
 		case FILETYPE_ROM_NOCRC:
+#ifndef MESS
 		case FILETYPE_IMAGE:
+#endif
 			list = &pathlist[FILETYPE_ROM];
 			break;
 
@@ -386,6 +388,11 @@ static void compose_path(char *output, int pathtype, int pathindex, const char *
 {
 	const char *basepath = get_path_for_filetype(pathtype, pathindex, NULL);
 	char *p;
+
+#ifdef MESS
+	if (osd_is_absolute_path(filename))
+		basepath = NULL;
+#endif
 
 	/* compose the full path */
 	*output = 0;

@@ -337,5 +337,23 @@ char *osd_basename(char *filename)
 	return filename;
 }
 
+//============================================================
+//	osd_is_absolute_path
+//============================================================
+int osd_is_absolute_path(const char *path)
+{
+	int result;
+
+	if ((path[0] == '\\') || (path[0] == '/'))
+		result = 1;
+#ifndef UNDER_CE
+	else if (isalpha(path[0]))
+		result = (path[1] == ':');
+#endif
+	else
+		result = 0;
+	return result;
+}
+
 
 

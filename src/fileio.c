@@ -45,6 +45,10 @@
 #define FILEFLAG_VERIFY_ONLY	0x10
 #define FILEFLAG_NOZIP			0x20
 
+#ifdef MESS
+#define FILEFLAG_ALLOW_ABSOLUTE	0x40
+#endif
+
 
 
 /***************************************************************************
@@ -96,7 +100,9 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 		/* read-only cases */
 		case FILETYPE_ROM:
 		case FILETYPE_ROM_NOCRC:
+#ifndef MESS
 		case FILETYPE_IMAGE:
+#endif
 		case FILETYPE_SAMPLE:
 		case FILETYPE_HIGHSCORE_DB:
 		case FILETYPE_ARTWORK:
@@ -133,7 +139,11 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* read-only disk images */
 		case FILETYPE_IMAGE:
+#ifndef MESS
 			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_NOZIP);
+#else
+			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | (openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD));
+#endif
 
 		/* differencing disk images */
 		case FILETYPE_IMAGE_DIFF:
@@ -681,6 +691,14 @@ INLINE void compose_path(char *output, const char *gamename, const char *filenam
 	char *filename_base = output;
 	*output = 0;
 
+#ifdef MESS
+	if (filename && osd_is_absolute_path(filename))
+	{
+		strcpy(output, filename);
+		return;
+	}
+#endif
+
 	/* if there's a gamename, add that; only add a '/' if there is a filename as well */
 	if (gamename)
 	{
@@ -727,9 +745,11 @@ static const char *get_extension_for_filetype(int filetype)
 			extension = NULL;
 			break;
 
+#ifndef MESS
 		case FILETYPE_IMAGE:		/* disk image files */
 			extension = "chd";
 			break;
+#endif
 
 		case FILETYPE_IMAGE_DIFF:	/* differencing drive images */
 			extension = "dif";
@@ -795,6 +815,16 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 	mame_file file, *newfile;
 	char tempname[256];
 
+#ifdef MESS
+	int is_absolute_path = osd_is_absolute_path(filename);
+	if (is_absolute_path)
+	{
+		if ((flags & FILEFLAG_ALLOW_ABSOLUTE) == 0)
+			return NULL;
+		pathcount = 1;
+	}
+#endif
+
 	LOG(("generic_fopen(%d, %s, %s, %s, %X)\n", pathc, gamename, filename, extension, flags));
 
 	/* reset the file handle */
@@ -829,6 +859,11 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 		compose_path(name, gamename, NULL, NULL);
 		LOG(("Trying %s\n", name));
 
+#ifdef MESS
+		if (is_absolute_path)
+			*name = 0;
+#endif
+
 		/* if the directory exists, proceed */
 		if (*name == 0 || osd_get_path_info(pathtype, pathindex, name) == PATH_IS_DIRECTORY)
 		{
@@ -856,6 +891,11 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 					break;
 			}
 		}
+
+#ifdef MESS
+		if (is_absolute_path)
+			continue;
+#endif
 
 		/* ----------------- STEP 2: OPEN THE FILE IN A ZIP -------------------- */
 
