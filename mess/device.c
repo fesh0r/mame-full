@@ -25,7 +25,7 @@ const struct Devices devices[] =
 	{IO_SERIAL,		"serial",		"serl"}, /*  9 */
 	{IO_PARALLEL,   "parallel",		"parl"}, /* 10 */
 	{IO_SNAPSHOT,	"snapshot",		"dump"}, /* 11 */
-	{IO_QUICKLOAD,	"quickLoad",	"quik"}, /* 12 */
+	{IO_QUICKLOAD,	"quickload",	"quik"}, /* 12 */
 	{IO_COUNT,		NULL,			NULL  }, /* 13 Always at end of this array! */
 };
 
