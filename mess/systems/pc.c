@@ -109,8 +109,13 @@ static PORT_READ_START( pc_readport )
 	{ 0x0060, 0x0063, ppi8255_0_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
+<<<<<<< pc.c
+	{ 0x0240, 0x0257, pc_rtc_r },
+//	{ 0x0240, 0x0257, return_0xff }, // anonymous bios should not recognized realtimeclock
+=======
 	{ 0x0240, 0x257, pc_rtc_r },
 //	{ 0x0240, 0x257, return_0xff }, // anonymous bios should not recognized realtimeclock
+>>>>>>> 1.46
 #ifdef EXP_ON
 	{ 0x0210, 0x0217, pc_EXP_r },
 #endif
@@ -1679,7 +1684,7 @@ ROM_START( pc1512 )
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD16_BYTE("40044.v1", 0xfc001, 0x2000, 0x668fcc94) // v1
     ROM_LOAD16_BYTE("40043.v1", 0xfc000, 0x2000, 0xf72f1582) // v1
-	ROM_REGION(0x01100,REGION_GFX1, 0)
+	ROM_REGION(0x02100,REGION_GFX1, 0)
     ROM_LOAD("40045.bin",     0x00000, 0x02000, 0xdd5e030f)
 ROM_END
 
@@ -1690,7 +1695,7 @@ ROM_START( pc1640 )
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD16_BYTE("40043.v3", 0xfc001, 0x2000, 0xe40a1513) // v3
     ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
-	ROM_REGION(0x01100,REGION_GFX1, 0)
+	ROM_REGION(0x02100,REGION_GFX1, 0)
     ROM_LOAD("40045.bin",     0x00000, 0x02000, 0xdd5e030f)
 ROM_END
 
