@@ -2658,7 +2658,7 @@ speed of 3.8Mhz */
 
 static MACHINE_DRIVER_START( amstrad )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80_MSX, 4000000)        /*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
+	MDRV_CPU_ADD(Z80, 4000000)        /*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_MEMORY(readmem_amstrad,writemem_amstrad)
 	MDRV_CPU_PORTS(readport_amstrad,writeport_amstrad)

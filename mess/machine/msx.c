@@ -567,16 +567,17 @@ DRIVER_INIT( msx )
     z80_table = auto_malloc (0x500);
 
     if (!z80_table)
-		logerror ("Cannot malloc z80 cycle table, using default values\n");
-	else
 	{
-        for (i=0;i<5;i++)
-		{
-			old_z80_tables[i] = z80_msx_get_cycle_table (z80_table_num[i]);
-			for (n=0;n<256;n++)
-				z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
-			z80_msx_set_cycle_table (i, z80_table + i*0x100);
-		}
+		logerror ("Cannot malloc z80 cycle table, using default values\n");
+		return;
+	}
+
+	for (i=0;i<5;i++)
+	{
+		old_z80_tables[i] = z80_get_cycle_table (z80_table_num[i]);
+		for (n=0;n<256;n++)
+			z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
+		z80_set_cycle_table (i, z80_table + i*0x100);
 	}
 }
 
@@ -592,7 +593,7 @@ MACHINE_STOP( msx )
 {
 	int i;
 	for (i=0;i<5;i++)
-		z80_msx_set_cycle_table (i, (void *) old_z80_tables[i]);
+		z80_set_cycle_table (i, (void *) old_z80_tables[i]);
     msx1.run = 0;
 }
 

@@ -377,7 +377,7 @@ static struct Wave_interface kc_wave_interface=
 
 static MACHINE_DRIVER_START( kc85_3 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80_MSX, KC85_3_CLOCK)
+	MDRV_CPU_ADD_TAG("main", Z80, KC85_3_CLOCK)
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
 	MDRV_CPU_MEMORY(readmem_kc85_3, writemem_kc85_3)
 	MDRV_CPU_PORTS(readport_kc85_3, writeport_kc85_3)
@@ -408,7 +408,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( kc85_4 )
 	MDRV_IMPORT_FROM( kc85_3 )
 
-	MDRV_CPU_REPLACE("main", Z80_MSX, KC85_4_CLOCK)
+	MDRV_CPU_REPLACE("main", Z80, KC85_4_CLOCK)
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
 	MDRV_CPU_MEMORY(readmem_kc85_4, writemem_kc85_4)
 	MDRV_CPU_PORTS(readport_kc85_4, writeport_kc85_4)

@@ -702,7 +702,7 @@ static const TMS9928a_interface tms9928a_interface =
 
 static MACHINE_DRIVER_START( msx )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80_MSX, 3579545)        /* 3.579545 Mhz */
+	MDRV_CPU_ADD(Z80, 3579545)        /* 3.579545 Mhz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(msx_interrupt,1)
@@ -733,7 +733,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( msx2 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80_MSX, 3579545)        /* 3.579545 Mhz */
+	MDRV_CPU_ADD(Z80, 3579545)        /* 3.579545 Mhz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport2,writeport2)
 	MDRV_CPU_VBLANK_INT(msx2_interrupt,262)

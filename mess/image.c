@@ -405,6 +405,7 @@ static int image_checkcrc(mess_image *img)
 	const struct IODevice *dev;
 	mame_file *file;
 	UINT32 crc;
+	int rc;
 
 	/* this call should not be made when the image is not loaded */
 	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
@@ -459,7 +460,9 @@ static int image_checkcrc(mess_image *img)
 		mame_fseek(file, 0, SEEK_SET);
 
 		/* now read the CRC file */
-		read_crc_config(Machine->gamedrv->name, img);
+		rc = read_crc_config(Machine->gamedrv->name, img);
+		if (rc && Machine->gamedrv->clone_of)
+			rc = read_crc_config(Machine->gamedrv->clone_of->name, img);
 		
 		img->status |= IMAGE_STATUS_CRCCALCULATED;
 	}
