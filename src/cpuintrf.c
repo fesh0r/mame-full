@@ -105,17 +105,8 @@
 #if (HAS_PSXCPU)
 #include "cpu/mips/mips.h"
 #endif
-#if (HAS_SPC700)
-#include "cpu/spc700/spc700.h"
-#endif
 #if (HAS_ASAP)
 #include "cpu/asap/asap.h"
-#endif
-#if (HAS_LH5801)
-#include "cpu/lh5801/lh5801.h"
-#endif
-#if (HAS_SATURN)
-#include "cpu/saturn/saturn.h"
 #endif
 #if (HAS_UPD7810)
 #include "cpu/upd7810/upd7810.h"
@@ -142,14 +133,23 @@
 #if (HAS_G65816)
 #include "mess/cpu/g65816/g65816.h"
 #endif
+#if (HAS_LH5801)
+#include "mess/cpu/lh5801/lh5801.h"
+#endif
 #if (HAS_PDP1)
 #include "mess/cpu/pdp1/pdp1.h"
+#endif
+#if (HAS_SATURN)
+#include "mess/cpu/saturn/saturn.h"
 #endif
 #if (HAS_SC61860)
 #include "mess/cpu/sc61860/sc61860.h"
 #endif
 #if (HAS_SH2)
 #include "mess/cpu/sh2/sh2.h"
+#endif
+#if (HAS_SPC700)
+#include "mess/cpu/spc700/spc700.h"
 #endif
 #if (HAS_Z80GB)
 #include "mess/cpu/z80gb/z80gb.h"
@@ -618,20 +618,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_PSXCPU)
 	CPU0(PSXCPU,   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  16,32lew,  0,32,LE,4, 4	),
 #endif
-#if (HAS_SPC700)
-	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
-#endif
 #if (HAS_ASAP)
 	#define asap_ICount asap_icount
 	CPU0(ASAP,	   asap,	 1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
-#endif
-#if (HAS_LH5801)
-#define lh5801_ICount lh5801_icount
-	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_INT_NONE,   LH5801_IRQ,	   -1,			   8, 17,	  0,17,BE,1, 5	),
-#endif
-#if (HAS_SATURN)
-#define saturn_ICount saturn_icount
-	CPU0(SATURN,   saturn,	 1,  0,1.00,SATURN_INT_NONE,   SATURN_INT_IRQ, SATURN_INT_NMI,	8,20,	  0,20,LE,1, 21 ),
 #endif
 #if (HAS_UPD7810)
 #define upd7810_ICount upd7810_icount
@@ -660,8 +649,16 @@ struct cpu_interface cpuintf[] =
 #if (HAS_G65816)
 	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
 #endif
+#if (HAS_LH5801)
+#define lh5801_ICount lh5801_icount
+	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_INT_NONE,   LH5801_IRQ,	   -1,			   8, 17,	  0,17,BE,1, 5	),
+#endif
 #if (HAS_PDP1)
 	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
+#endif
+#if (HAS_SATURN)
+#define saturn_ICount saturn_icount
+	CPU0(SATURN,   saturn,	 1,  0,1.00,SATURN_INT_NONE,   SATURN_INT_IRQ, SATURN_INT_NMI,	8,20,	  0,20,LE,1, 21 ),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
@@ -669,6 +666,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_SH2)
 	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
+#endif
+#if (HAS_SPC700)
+	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),

@@ -44,11 +44,11 @@ typedef UINT8 SaturnNib; // 4 bit
 typedef short SaturnX; // 12 bit
 typedef INT64 SaturnM; // 48 bit
 
-typedef union { 
+typedef union {
 	UINT8 b[8];
 	UINT16 w[4];
 	UINT32 d[2];
-	UINT64 q; 
+	UINT64 q;
 } Saturn64;
 
 #define VERBOSE 0
@@ -72,17 +72,17 @@ extern void saturn_runtime_loader_init(void)
 
 /* Layout of the registers in the debugger */
 static UINT8 saturn_reg_layout[] = {
-	SATURN_A, 
+	SATURN_A,
 	SATURN_RSTK0,
     SATURN_PC,
 	-1,
 
-	SATURN_B, 
+	SATURN_B,
 	SATURN_RSTK1,
-	SATURN_D0, 
+	SATURN_D0,
 	-1,
 
-	SATURN_C, 
+	SATURN_C,
 	SATURN_RSTK2,
 	SATURN_D1,
 	-1,
@@ -92,24 +92,24 @@ static UINT8 saturn_reg_layout[] = {
 	SATURN_P,
 	-1,
 
-	SATURN_R0, 
+	SATURN_R0,
 	SATURN_RSTK4,
 	SATURN_HST,
 	-1,
 
-	SATURN_R1, 
+	SATURN_R1,
 	SATURN_RSTK5,
 	SATURN_ST,
 	-1,
 
-	SATURN_R2, 
+	SATURN_R2,
 	SATURN_RSTK6,
 	SATURN_OUT,
 	-1,
 
-	SATURN_R3, 
+	SATURN_R3,
 	SATURN_RSTK7,
-	SATURN_IN,	
+	SATURN_IN,
 	-1,
 
 	SATURN_R4,
@@ -331,7 +331,7 @@ INLINE void saturn_take_irq(void)
 {
 	{
 		saturn_icount -= 7;
-		
+
 		saturn_push(saturn.pc);
 		saturn.pc=IRQ_ADDRESS;
 
@@ -471,23 +471,23 @@ const char *saturn_info(void *context, int regnum)
 	case CPU_INFO_REG+SATURN_PC: sprintf(buffer[which],"PC:   %.5x",r->pc);break;
 	case CPU_INFO_REG+SATURN_D0: sprintf(buffer[which],"D0:   %.5x",r->d[0]);break;
 	case CPU_INFO_REG+SATURN_D1: sprintf(buffer[which],"D1:   %.5x",r->d[1]);break;
-	case CPU_INFO_REG+SATURN_A: 
+	case CPU_INFO_REG+SATURN_A:
 		sprintf(buffer[which],"A: %.8x %.8x",r->reg[A].d[1],r->reg[A].d[0]);break;
-	case CPU_INFO_REG+SATURN_B: 
+	case CPU_INFO_REG+SATURN_B:
 		sprintf(buffer[which],"B: %.8x %.8x",r->reg[B].d[1],r->reg[B].d[0]);break;
-	case CPU_INFO_REG+SATURN_C: 
+	case CPU_INFO_REG+SATURN_C:
 		sprintf(buffer[which],"C: %.8x %.8x",r->reg[C].d[1],r->reg[C].d[0]);break;
-	case CPU_INFO_REG+SATURN_D: 
+	case CPU_INFO_REG+SATURN_D:
 		sprintf(buffer[which],"D: %.8x %.8x",r->reg[D].d[1],r->reg[D].d[0]);break;
-	case CPU_INFO_REG+SATURN_R0: 
+	case CPU_INFO_REG+SATURN_R0:
 		sprintf(buffer[which],"R0:%.8x %.8x",r->reg[R0].d[1],r->reg[R0].d[0]);break;
-	case CPU_INFO_REG+SATURN_R1: 
+	case CPU_INFO_REG+SATURN_R1:
 		sprintf(buffer[which],"R1:%.8x %.8x",r->reg[R1].d[1],r->reg[R1].d[0]);break;
-	case CPU_INFO_REG+SATURN_R2: 
+	case CPU_INFO_REG+SATURN_R2:
 		sprintf(buffer[which],"R2:%.8x %.8x",r->reg[R2].d[1],r->reg[R2].d[0]);break;
-	case CPU_INFO_REG+SATURN_R3: 
+	case CPU_INFO_REG+SATURN_R3:
 		sprintf(buffer[which],"R3:%.8x %.8x",r->reg[R3].d[1],r->reg[R3].d[0]);break;
-	case CPU_INFO_REG+SATURN_R4: 
+	case CPU_INFO_REG+SATURN_R4:
 		sprintf(buffer[which],"R4:%.8x %.8x",r->reg[R4].d[1],r->reg[R4].d[0]);break;
 	case CPU_INFO_REG+SATURN_P: sprintf(buffer[which],"P:%x",r->p);break;
 	case CPU_INFO_REG+SATURN_IN: sprintf(buffer[which],"IN:%.4x",r->in);break;
@@ -524,3 +524,5 @@ unsigned saturn_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 #endif
+
+void saturn_init(void){ return; }

@@ -726,17 +726,6 @@ else
 CPUDEFS += -DHAS_PSXCPU=0
 endif
 
-CPU=$(strip $(findstring SPC700@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/spc700
-CPUDEFS += -DHAS_SPC700=1
-CPUOBJS += $(OBJ)/cpu/spc700/spc700.o
-DBGOBJS += $(OBJ)/cpu/spc700/spc700ds.o
-$(OBJ)/cpu/spc700/spc700.o: spc700.c spc700.h
-else
-CPUDEFS += -DHAS_SPC700=0
-endif
-
 CPU=$(strip $(findstring ASAP@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/asap
@@ -746,28 +735,6 @@ DBGOBJS += $(OBJ)/cpu/asap/asapdasm.o
 $(OBJ)/cpu/asap/asap.o: asap.c asap.h
 else
 CPUDEFS += -DHAS_ASAP=0
-endif
-
-CPU=$(strip $(findstring LH5801@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/lh5801
-CPUDEFS += -DHAS_LH5801=1
-CPUOBJS += $(OBJ)/cpu/lh5801/lh5801.o
-DBGOBJS += $(OBJ)/cpu/lh5801/5801dasm.o
-$(OBJ)/cpu/lh5801/lh5801.o: lh5801.c 5801tbl.c lh5801.h
-else
-CPUDEFS += -DHAS_LH5801=0
-endif
-
-CPU=$(strip $(findstring SATURN@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/saturn
-CPUDEFS += -DHAS_SATURN=1
-CPUOBJS += $(OBJ)/cpu/saturn/saturn.o
-DBGOBJS += $(OBJ)/cpu/saturn/saturnds.o
-$(OBJ)/cpu/saturn/saturn.o: saturn.c sattable.c satops.c saturn.h sat.h
-else
-CPUDEFS += -DHAS_SATURN=0
 endif
 
 CPU=$(strip $(findstring UPD7810@,$(CPUS)))

@@ -222,17 +222,8 @@ enum
 #if (HAS_PSXCPU)
 	CPU_PSXCPU,
 #endif
-#if (HAS_SPC700)
-	CPU_SPC700,
-#endif
 #if (HAS_ASAP)
 	CPU_ASAP,
-#endif
-#if (HAS_LH5801)
-	CPU_LH5801,
-#endif
-#if (HAS_SATURN)
-	CPU_SATURN,
 #endif
 #if (HAS_UPD7810)
 	CPU_UPD7810,
@@ -257,14 +248,23 @@ enum
 #if (HAS_G65816)
 	CPU_G65816,
 #endif
+#if (HAS_LH5801)
+	CPU_LH5801,
+#endif
 #if (HAS_PDP1)
 	CPU_PDP1,
+#endif
+#if (HAS_SATURN)
+	CPU_SATURN,
 #endif
 #if (HAS_SC61860)
 	CPU_SC61860,
 #endif
 #if (HAS_SH2)
 	CPU_SH2,
+#endif
+#if (HAS_SPC700)
+	CPU_SPC700,
 #endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,

@@ -374,6 +374,8 @@ INPUT_PORTS_END
 
 #define DECODE_GFX 0
 
+#if DECODE_GFX
+
 static struct GfxLayout tilelayout8 =
 {
 	8,8,
@@ -426,6 +428,8 @@ static struct GfxLayout tilelayout32 =
 			24*128, 25*128, 26*128, 27*128, 28*128, 29*128, 30*128, 31*128 },
 	32*128
 };
+
+#endif
 
 struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 {

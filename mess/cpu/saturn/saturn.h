@@ -69,6 +69,7 @@ typedef struct {
 
 extern int saturn_icount;				/* cycle count */
 
+extern void saturn_init(void);
 extern void saturn_reset(void *param);
 extern void saturn_exit(void);
 extern int	saturn_execute(int cycles);
@@ -91,6 +92,6 @@ extern unsigned saturn_dasm(char *buffer, unsigned pc);
 #ifdef __cplusplus
 	}
 #endif
-	
+
 #endif
 

@@ -88,6 +88,19 @@ CPUDEFS += -DHAS_G65816=0
 endif
 
 
+CPU=$(strip $(findstring LH5801@,$(CPUS)))
+ifneq ($(CPU),)
+LHD = mess/cpu/lh5801
+OBJDIRS += $(OBJ)/$(LHD)
+CPUDEFS += -DHAS_LH5801=1
+CPUOBJS += $(OBJ)/$(LHD)/lh5801.o
+DBGOBJS += $(OBJ)/$(LHD)/5801dasm.o
+$(OBJ)/$(LHD)/lh5801.o: $(LHD)/lh5801.c $(LHD)/5801tbl.c $(LHD)/lh5801.h
+else
+CPUDEFS += -DHAS_LH5801=0
+endif
+
+
 CPU=$(strip $(findstring PDP1@,$(CPUS)))
 ifneq ($(CPU),)
 PDPD = mess/cpu/pdp1
@@ -98,6 +111,19 @@ DBGOBJS += $(OBJ)/$(PDPD)/pdp1dasm.o
 $(OBJ)/$(PDPD)/pdp1.o: $(PDPD)/pdp1.c $(PDPD)/pdp1.h
 else
 CPUDEFS += -DHAS_PDP1=0
+endif
+
+
+CPU=$(strip $(findstring SATURN@,$(CPUS)))
+ifneq ($(CPU),)
+SATD = mess/cpu/saturn
+OBJDIRS += $(OBJ)/$(SATD)
+CPUDEFS += -DHAS_SATURN=1
+CPUOBJS += $(OBJ)/$(SATD)/saturn.o
+DBGOBJS += $(OBJ)/$(SATD)/saturnds.o
+$(OBJ)/$(SATD)/saturn.o: $(SATD)/saturn.c $(SATD)/sattable.c $(SATD)/satops.c $(SATD)/saturn.h $(SATD)/sat.h
+else
+CPUDEFS += -DHAS_SATURN=0
 endif
 
 
@@ -124,6 +150,19 @@ DBGOBJS += $(OBJ)/$(SH2D)/sh2dasm.o
 $(OBJ)/$(SH2D)/sh2.o: $(SH2D)/sh2.c $(SH2D)/sh2.h
 else
 CPUDEFS += -DHAS_SH2=0
+endif
+
+
+CPU=$(strip $(findstring SPC700@,$(CPUS)))
+ifneq ($(CPU),)
+SPCD = mess/cpu/spc700
+OBJDIRS += $(OBJ)/$(SPCD)
+CPUDEFS += -DHAS_SPC700=1
+CPUOBJS += $(OBJ)/$(SPCD)/spc700.o
+DBGOBJS += $(OBJ)/$(SPCD)/spc700ds.o
+$(OBJ)/$(SPCD)/spc700/spc700.o: $(SPCD)/spc700.c $(SPCD)/spc700.h
+else
+CPUDEFS += -DHAS_SPC700=0
 endif
 
 
