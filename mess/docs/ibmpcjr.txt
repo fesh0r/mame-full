@@ -8,7 +8,7 @@ Features
 --------
 basically an IBM PC
 support for cartridges
-enhanced cga graphics adapter with additional graphics modes (160x200x4, 320x200x4, 640x220x2)
+enhanced cga graphics adapter with additional graphics modes (160x200x4, 320x200x4, 640x200x2)
 integrated sound chip
 unique keyboard
 integrated joystick support
