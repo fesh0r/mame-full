@@ -198,32 +198,6 @@ struct GfxLayout CGA_charlayout =
     8*8                     /* every char takes 8 bytes */
 };
 
-struct GfxLayout CGA_gfxlayout_1bpp =
-{
-    8,1,                   /* 8 x 32 graphics */
-    256,                    /* 256 codes */
-    1,                      /* 1 bit per pixel */
-    { 0 },                  /* no bit planes */
-    /* x offsets */
-    { 0,1,2,3,4,5,6,7 },
-    /* y offsets (we only use one byte to build the block) */
-    { 0 },
-    8                       /* every code takes 1 byte */
-};
-
-struct GfxLayout CGA_gfxlayout_2bpp =
-{
-	4,1,					/* 8 x 32 graphics */
-    256,                    /* 256 codes */
-    2,                      /* 2 bits per pixel */
-	{ 0, 1 },				/* adjacent bit planes */
-    /* x offsets */
-    { 0,2,4,6  },
-    /* y offsets (we only use one byte to build the block) */
-    { 0 },
-    8                       /* every code takes 1 byte */
-};
-
 static struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
 {
 /* Support up to four CGA fonts */
@@ -231,8 +205,6 @@ static struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
 	{ 1, 0x0800, &CGA_charlayout,              0, 256 },   /* Font 1 */
 	{ 1, 0x1000, &CGA_charlayout,              0, 256 },   /* Font 2 */
 	{ 1, 0x1800, &CGA_charlayout,              0, 256 },   /* Font 3*/
-	{ 1, 0x8000, &CGA_gfxlayout_1bpp,      256*2,  16 },   /* 640x400x1 gfx */
-	{ 1, 0x8000, &CGA_gfxlayout_2bpp, 256*2+16*2,  96 },   /* 320x200x4 gfx */
     { -1 } /* end of array */
 };
 
@@ -801,13 +773,8 @@ static void cga_text_blink_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
 
 static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	int sx, sy, sh;
-	int	offs = crtc6845_get_start(crtc)*2;
-	int lines = crtc6845_get_char_lines(crtc);
-	int height = crtc6845_get_char_height(crtc);
-	int columns = crtc6845_get_char_columns(crtc)*2;
-	int colorset = cga.color_select & 0x3F;
 	const UINT16 *palette;
+	int colorset = cga.color_select & 0x3F;
 
 	/* Many clone chipsets use bit 2 of the mode control register to 
 	 * access a third palette */
@@ -832,24 +799,7 @@ static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	 */
 	palette = &cga_colortable[256*2 + 16*2] + colorset * 4;
 
-	for (sy = 0; sy < lines; sy++)
-	{
-		for (sh = 0; sh < height; sh++)
-		{
-			UINT16 *dest = (UINT16 *) bitmap->line[sy * height + sh];
-			const UINT8 *src = &videoram[offs | ((sh & 1) ? 0x2000 : 0x0000)];
-
-			for (sx = 0; sx < columns; sx++)
-			{
-				UINT8 b = *(src++);
-				*(dest++) = palette[(b >> 6) & 0x03];
-				*(dest++) = palette[(b >> 4) & 0x03];
-				*(dest++) = palette[(b >> 2) & 0x03];
-				*(dest++) = palette[(b >> 0) & 0x03];
-			}
-		}
-		offs = (offs + columns) & 0x1fff;
-	}
+	pc_render_gfx_2bpp(bitmap, crtc, NULL, palette, 2);
 }
 
 
@@ -862,11 +812,6 @@ static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	int sx, sy, sh;
-	int	offs = crtc6845_get_start(crtc)*2;
-	int lines = crtc6845_get_char_lines(crtc);
-	int height = crtc6845_get_char_height(crtc);
-	int columns = crtc6845_get_char_columns(crtc)*2;
 	const UINT16 *palette;
 
 	/* The fact that our palette is located in cga_colortable is a vestigial
@@ -876,28 +821,7 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	 */
 	palette = &cga_colortable[256*2] + (cga.color_select & 0xf) * 2;
 
-	for (sy = 0; sy < lines; sy++)
-	{
-		for (sh = 0; sh < height; sh++)
-		{
-			UINT16 *dest = (UINT16 *) bitmap->line[sy * height + sh];
-			const UINT8 *src = &videoram[offs | ((sh & 1) ? 0x2000 : 0x0000)];
-
-			for (sx = 0; sx < columns; sx++)
-			{
-				UINT8 b = *(src++);
-				*(dest++) = palette[(b >> 7) & 0x01];
-				*(dest++) = palette[(b >> 6) & 0x01];
-				*(dest++) = palette[(b >> 5) & 0x01];
-				*(dest++) = palette[(b >> 4) & 0x01];
-				*(dest++) = palette[(b >> 3) & 0x01];
-				*(dest++) = palette[(b >> 2) & 0x01];
-				*(dest++) = palette[(b >> 1) & 0x01];
-				*(dest++) = palette[(b >> 0) & 0x01];
-			}
-		}
-		offs = (offs + columns) & 0x1fff;
-	}
+	pc_render_gfx_1bpp(bitmap, crtc, NULL, palette, 2);
 }
 
 

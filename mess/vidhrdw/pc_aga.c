@@ -82,13 +82,10 @@ struct GfxDecodeInfo europc_gfxdecodeinfo[] =
 	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
 	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
 	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
-	{ 1, 0x8000, &CGA_gfxlayout_1bpp,                   256*2,  16 },   /* 640x400x1 gfx */
-	{ 1, 0x8000, &CGA_gfxlayout_2bpp,              256*2+16*2,  96 },   /* 320x200x4 gfx */
 	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
 	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
 	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
 	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x8000, &pc_mda_gfxlayout_1bpp,256*2+16*2+2*4+256*2,	 1 },	/* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 
@@ -99,14 +96,11 @@ struct GfxDecodeInfo aga_gfxdecodeinfo[] =
 	{ 1, 0x3000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
 	{ 1, 0x5000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
 	{ 1, 0x7000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
-	{ 1, 0x8000, &CGA_gfxlayout_1bpp,                   256*2,  16 },   /* 640x400x1 gfx */
-	{ 1, 0x8000, &CGA_gfxlayout_2bpp,              256*2+16*2,  96 },   /* 320x200x4 gfx */
 /* The four MDA fonts */
 	{ 1, 0x0000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
 	{ 1, 0x2000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
 	{ 1, 0x4000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
 	{ 1, 0x6000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
-	{ 1, 0x8000, &pc_mda_gfxlayout_1bpp, 256*2+16*2+2*4+2*256,   1 },   /* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 
@@ -123,6 +117,44 @@ PALETTE_INIT( pc_aga )
 static struct {
 	AGA_MODE mode;
 } aga;
+
+
+
+/*************************************
+ *
+ *	AGA MDA/CGA read/write handlers
+ *
+ *************************************/
+
+static READ8_HANDLER ( pc_aga_mda_r )
+{
+	if (aga.mode==AGA_MONO)
+		return pc_MDA_r(offset);
+	return 0xff;
+}
+
+static WRITE8_HANDLER ( pc_aga_mda_w )
+{
+	if (aga.mode==AGA_MONO)
+		pc_MDA_w(offset, data);
+}
+
+static READ8_HANDLER ( pc_aga_cga_r )
+{
+	if (aga.mode==AGA_COLOR)
+		return pc_cga8_r(offset);
+	return 0xff;
+}
+
+static WRITE8_HANDLER ( pc_aga_cga_w )
+{
+	if (aga.mode==AGA_COLOR)
+		pc_cga8_w(offset, data);
+}
+
+
+
+/*************************************/
 
 void pc_aga_set_mode(AGA_MODE mode)
 {
@@ -170,7 +202,24 @@ static struct crtc6845_config config= { 14318180 /*?*/, pc_aga_cursor };
 
 VIDEO_START( pc_aga )
 {
+	int buswidth;
+
 	pc_mda_europc_init();
+
+	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
+	switch(buswidth) {
+	case 8:
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, pc_aga_mda_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, pc_aga_mda_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_aga_cga_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_aga_cga_w );
+		break;
+
+	default:
+		osd_die("CGA:  Bus width %d not supported\n", buswidth);
+		break;
+	}
+
 	if (!pc_video_start(&config, pc_aga_choosevideomode, videoram_size))
 		return 1;
 	pc_aga_set_mode(AGA_COLOR);
@@ -250,31 +299,6 @@ READ_HANDLER( pc200_videoram_r )
 }
 
 
-extern WRITE_HANDLER ( pc_aga_mda_w )
-{
-	if (aga.mode==AGA_MONO)
-		pc_MDA_w(offset, data);
-}
-
-WRITE_HANDLER ( pc_aga_cga_w )
-{
-	if (aga.mode==AGA_COLOR)
-		pc_cga8_w(offset, data);
-}
-
-READ_HANDLER ( pc_aga_mda_r )
-{
-	if (aga.mode==AGA_MONO)
-		return pc_MDA_r(offset);
-	return 0xff;
-}
-
-READ_HANDLER ( pc_aga_cga_r )
-{
-	if (aga.mode==AGA_COLOR)
-		return pc_cga8_r(offset);
-	return 0xff;
-}
 
 static struct {
 	UINT8 port8, portd, porte;

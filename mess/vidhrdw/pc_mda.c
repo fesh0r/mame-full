@@ -44,23 +44,9 @@ struct GfxLayout pc_mda_charlayout =
 	8*8 					/* every char takes 8 bytes (upper half) */
 };
 
-struct GfxLayout pc_mda_gfxlayout_1bpp =
-{
-	8,1,					/* 8 x 32 graphics */
-	256,					/* 256 codes */
-	1,						/* 1 bit per pixel */
-	{ 0 },					/* no bit planes */
-    /* x offsets */
-	{ 0,1,2,3,4,5,6,7 },
-	/* y offsets (we only use one byte to build the block) */
-	{ 0 },
-	8						/* every code takes 1 byte */
-};
-
 struct GfxDecodeInfo pc_mda_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &pc_mda_charlayout,		0, 256 },
-	{ 1, 0x1000, &pc_mda_gfxlayout_1bpp,256*2,	 1 },	/* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 
@@ -106,7 +92,8 @@ PALETTE_INIT( pc_mda )
     memcpy(colortable, mda_colortable, sizeof(mda_colortable));
 }
 
-static struct { 
+static struct
+{
 	UINT8 status;
 
 	int pc_blink;
@@ -115,8 +102,7 @@ static struct {
 	UINT8 mode_control, configuration_switch; //hercules
 
 	struct GfxElement *gfx_char[4];
-	struct GfxElement *gfx_graphic;
-} mda = { 0 };
+} mda;
 
 /***************************************************************************
 
@@ -164,7 +150,10 @@ void pc_mda_cursor(struct crtc6845_cursor *cursor)
 
 static struct crtc6845_config config= { 14318180 /*?*/, pc_mda_cursor };
 
-static void pc_mda_init_video_internal(int gfx_char, int gfx_char_mask, int gfx_graphic)
+
+/* This code seems to go through hoops to accomodate differing GfxElement
+ * layouts.  What ugly crap */
+static void pc_mda_init_video_internal(int gfx_char, int gfx_char_mask)
 {
 	int i, y;
 
@@ -173,7 +162,6 @@ static void pc_mda_init_video_internal(int gfx_char, int gfx_char_mask, int gfx_
 	{
 		mda.gfx_char[i] = Machine->gfx[gfx_char + (i & gfx_char_mask)];
 	}
-	mda.gfx_graphic = Machine->gfx[gfx_graphic];
 
 	/* remove pixel column 9 for character codes 0 - 191 and 224 - 255 */
 	for (i = 0; i < 256; i++)
@@ -188,14 +176,12 @@ static void pc_mda_init_video_internal(int gfx_char, int gfx_char_mask, int gfx_
 
 void pc_mda_init_video(void)
 {
-	pc_mda_init_video_internal(0, 0, 1);
-	videoram_size = 0x4000;
+	pc_mda_init_video_internal(0, 0);
 }
 
 void pc_mda_europc_init(void)
 {
-	pc_mda_init_video_internal(6, 3, 10);
-	videoram_size = 0x4000;
+	pc_mda_init_video_internal(4, 3);
 }
 
 VIDEO_START( pc_mda )
@@ -407,84 +393,24 @@ static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   Every bank holds data for every n'th scanline, 8 pixels per byte,
   bit 7 being the leftmost.
 ***************************************************************************/
+
 static void hercules_gfx(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(crtc)*2;
-	int lines = crtc6845_get_char_lines(crtc);
-	int height = crtc6845_get_char_height(crtc);
-	int columns = crtc6845_get_char_columns(crtc)*2;
-	UINT8 *vram=videoram, *dbuffer=dirtybuffer;
+	const UINT8 *vram = videoram;
+	static const UINT16 palette[2] = {0, 10};
 
-	if (mda.mode_control&0x80)
-	{
-		vram+=0x8000;
-		if (dbuffer)
-			dbuffer += 0x8000;
-	}
+	if (mda.mode_control & 0x80)
+		vram += 0x8000;
 
-	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff)
-	{
-		for (sh=0; sh<height; sh++)
-		{
-			/* char line 0 used as a12 line in graphic mode */
-			switch(sh&3) { // char line 0 used as a12 line in graphic mode
-			case 0:
-				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff)
-				{
-					if (!dbuffer || dbuffer[i])
-					{
-						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
-								0,TRANSPARENCY_NONE,0);
-						if (dbuffer)
-							dbuffer[i] = 0;
-					}
-				}
-				break;
-			case 1:
-				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000)
-				{
-					if (!dbuffer || dbuffer[i])
-					{
-						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
-								0,TRANSPARENCY_NONE,0);
-						if (dbuffer)
-							dbuffer[i] = 0;
-					}
-				}
-				break;
-			case 2:
-				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000)
-				{
-					if (!dbuffer || dbuffer[i])
-					{
-						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
-								0,TRANSPARENCY_NONE,0);
-						if (dbuffer)
-							dbuffer[i] = 0;
-					}
-				}
-				break;
-			case 3:
-				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000)
-				{
-					if (!dbuffer || dbuffer[i])
-					{
-						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
-								0,TRANSPARENCY_NONE,0);
-						if (dbuffer)
-							dbuffer[i] = 0;
-					}
-				}
-				break;
-			}
-		}
-	}
+	pc_render_gfx_1bpp(bitmap, crtc, vram, palette, 4);
 }
+
+
 
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/
+
 pc_video_update_proc pc_mda_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	pc_video_update_proc proc = NULL;

@@ -70,10 +70,16 @@ extern READ_HANDLER ( pc_JOY_r );
 	PORT_START /* IN19 */\
 	PORT_ANALOGX(0xff,0x80,IPT_AD_STICK_Y|IPF_CENTER|IPF_REVERSE|IPF_PLAYER2,100,1,1,0xff,CODE_NONE,CODE_NONE,JOYCODE_2_UP,JOYCODE_2_DOWN)
 
-READ_HANDLER(pc_page_r);
-WRITE_HANDLER(pc_page_w);
-READ_HANDLER(at_page_r);
-WRITE_HANDLER(at_page_w);
+
+
+READ8_HANDLER(pc_page_r);
+WRITE8_HANDLER(pc_page_w);
+
+READ8_HANDLER(at_page8_r);
+WRITE8_HANDLER(at_page8_w);
+
+READ32_HANDLER(at_page32_r);
+WRITE32_HANDLER(at_page32_w);
 
 int pc_turbo_setup(int cpunum, int port, int mask, double off_speed, double on_speed);
 

@@ -1,27 +1,22 @@
-/* 
-   peter.trauner@jk.uni-linz.ac.at
+/*********************************************************************
 
-   real time clock chip with batterie buffered ram
-   used in ibm pc/at, several pc clones, amstrad nc200
-*/
-#include <time.h>
+	mc146818.c
 
-#include "driver.h"
+	Implementation of the MC146818 chip
+
+	Real time clock chip with batteru buffered ram
+	Used in IBM PC/AT, several PC clones, Amstrad NC200
+
+	Peter Trauner (peter.trauner@jk.uni-linz.ac.at)
+
+*********************************************************************/
 
 #include "includes/mc146818.h"
 #include "mscommon.h"
 
-#if 0
-#define DBG_LOG(level, text, print) \
-		if (level>0) { \
-				logerror("%s\t", text); \
-				logerror print; \
-		} 
-#else
-#define DBG_LOG(level, text, print) 
-#endif
 
-static struct {
+static struct
+{
 	MC146818_TYPE type;
 
 	UINT8 index;
@@ -31,7 +26,7 @@ static struct {
 	UINT8 edata[0x2000];
 
 	double last_refresh;
-} mc146818= { MC146818_STANDARD };
+} mc146818;
 
 #define HOURS_24 (mc146818.data[0xb]&2)
 #define BCD_MODE !(mc146818.data[0xb]&4) // book has other description!
@@ -43,16 +38,6 @@ static struct {
 
 static void mc146818_timer(int param)
 {
-#if 0
-	// this is a way to avoid doing date calculation myself
-	struct tm tmtime, *tp;
-	time_t t;
-
-	mc146818_to_gmtime(&tmtime);
-	t=mktime(&tmtime)+1;
-	tp=gmtime(&t);
-	mc146818_from_gmtime(tp);
-#else
 	int year, month;
 
 	if (BCD_MODE) {
@@ -120,32 +105,42 @@ static void mc146818_timer(int param)
 			}
 		}
 	}
-#endif
-	mc146818.last_refresh=timer_get_time();	
+
+	mc146818.last_refresh = timer_get_time();	
 }
+
+
 
 void mc146818_init(MC146818_TYPE type)
 {
 	memset(&mc146818, 0, sizeof(mc146818));
-	mc146818.type=type;
-	mc146818.last_refresh=timer_get_time();
-    timer_pulse(TIME_IN_HZ(1.0),0,mc146818_timer);
+	mc146818.type = type;
+	mc146818.last_refresh = timer_get_time();
+    timer_pulse(TIME_IN_HZ(1.0), 0, mc146818_timer);
 }
+
+
 
 void mc146818_load(void)
 {
 	mame_file *file;
 
-	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0))==NULL)
-		return;
-	mame_fread(file,mc146818.data, sizeof(mc146818.data));
-	mame_fclose(file);
+	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0);
+	if (file)
+	{
+		mc146818_load_stream(file);
+		mame_fclose(file);
+	}
 }
+
+
 
 void mc146818_load_stream(mame_file *file)
 {
 	mame_fread(file, mc146818.data, sizeof(mc146818.data));
 }
+ 
+
 
 void mc146818_set_gmtime(struct tm *tmtime)
 {
@@ -182,6 +177,8 @@ void mc146818_set_gmtime(struct tm *tmtime)
 	else mc146818.data[0xb]&=~1;
 }
 
+
+
 void mc146818_set_time(void)
 {
 	time_t t;
@@ -196,66 +193,28 @@ void mc146818_set_time(void)
 	// freeing of gmtime??
 }
 
+
+
 void mc146818_save(void)
 {
 	mame_file *file;
-	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1))==NULL)
-		return;
-	mame_fwrite(file, mc146818.data, sizeof(mc146818.data));
-	mame_fclose(file);
+	
+	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1);
+	if (file)
+	{
+		mame_fwrite(file, mc146818.data, sizeof(mc146818.data));
+		mame_fclose(file);
+	}
 }
+
+
 
 void mc146818_save_stream(mame_file *file)
 {
 	mame_fwrite(file, mc146818.data, sizeof(mc146818.data));
 }
 
-READ_HANDLER(mc146818_port_r)
-{
-	int data=0;
-	switch (offset) {
-	case 0:
-		data=mc146818.index;
-		break;
-	case 1:
-		switch (mc146818.index&0x3f) {
-		case 0xa:
-			data=mc146818.data[mc146818.index&0x3f];
-			if (timer_get_time()-mc146818.last_refresh<TIME_IN_SEC(1.0/32768.0f)) data|=0x80;
-#if 0
-			/* for pc1512 bios realtime clock test */
-			mc146818.data[mc146818.index&0x3f]^=0x80; /* 0x80 update in progress */
-#endif
-			break;
-		case 0xd: 
-			data=mc146818.data[mc146818.index&0x3f]|0x80; /* batterie ok */
-			break;
-		default:
-			data=mc146818.data[mc146818.index&0x3f];
-			break;
-		}
-		break;
-	}
-	DBG_LOG(1,"mc146818",("read %.2x %.2x\n",offset,data));
-	return data;
-}
 
-WRITE_HANDLER(mc146818_port_w)
-{
-	DBG_LOG(1,"mc146818",("write %.2x %.2x\n",offset,data));
-	switch (offset) {
-	case 0:
-		mc146818.index=data;
-		break;
-	case 1:
-		switch (mc146818.index&0x3f) {
-		default:
-			mc146818.data[mc146818.index&0x3f]=data;
-			break;
-		}
-		break;
-	}
-}
 
 NVRAM_HANDLER( mc146818 )
 {
@@ -268,4 +227,78 @@ NVRAM_HANDLER( mc146818 )
 		mc146818_load_stream(file);
 	}
 }
+
+
+
+READ8_HANDLER(mc146818_port_r)
+{
+	data8_t data = 0;
+	switch (offset) {
+	case 0:
+		data = mc146818.index;
+		break;
+
+	case 1:
+		switch (mc146818.index&0x3f) {
+		case 0xa:
+			data=mc146818.data[mc146818.index&0x3f];
+			if (timer_get_time()-mc146818.last_refresh<TIME_IN_SEC(1.0/32768.0f)) data|=0x80;
+#if 0
+			/* for pc1512 bios realtime clock test */
+			mc146818.data[mc146818.index&0x3f]^=0x80; /* 0x80 update in progress */
+#endif
+			break;
+
+		case 0xd: 
+			data = mc146818.data[mc146818.index&0x3f]|0x80; /* battery ok */
+			break;
+
+		default:
+			data = mc146818.data[mc146818.index&0x3f];
+			break;
+		}
+		break;
+	}
+	return data;
+}
+
+
+
+WRITE8_HANDLER(mc146818_port_w)
+{
+	switch (offset) {
+	case 0:
+		mc146818.index=data;
+		break;
+
+	case 1:
+		switch (mc146818.index & 0x3f) {
+		default:
+			mc146818.data[mc146818.index&0x3f]=data;
+			break;
+		}
+		break;
+	}
+}
+
+
+
+READ32_HANDLER(mc146818_port32_r)
+{
+	return ((data32_t) mc146818_port_r(0)) << 0 
+		|  ((data32_t) mc146818_port_r(1)) << 8; 
+}
+
+
+
+WRITE32_HANDLER(mc146818_port32_w)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		mc146818_port_w(offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		mc146818_port_w(offset * 4 + 1, data >> 8);
+}
+
+
+
 

@@ -23,4 +23,12 @@ VIDEO_UPDATE( pc_video );
 WRITE_HANDLER( pc_video_videoram_w );
 WRITE32_HANDLER( pc_video_videoram32_w );
 
+/* renderers */
+void pc_render_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc,
+	const UINT8 *vram, const UINT16 *palette, int interlace);
+void pc_render_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc,
+	const UINT8 *vram, const UINT16 *palette, int interlace);
+void pc_render_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc,
+	const UINT8 *vram, const UINT16 *palette, int interlace);
+
 #endif /* PC_VIDEO_H */

@@ -1628,7 +1628,6 @@ static void cpu_vblankcallback(int param)
 {
 	int cpunum;
 
-	logerror("cpu_vblankcallback\n");
 	if (vblank_countdown == 1)
 		vblank = 1;
 

@@ -214,12 +214,16 @@ static data8_t dma_offset[2][4];
 static data8_t at_pages[0x10];
 static offs_t pc_page_offset_mask;
 
-READ_HANDLER(pc_page_r)
+
+
+READ8_HANDLER(pc_page_r)
 {
 	return 0xFF;
 }
 
-WRITE_HANDLER(pc_page_w)
+
+
+WRITE8_HANDLER(pc_page_w)
 {
 	switch(offset % 4) {
 	case 1:
@@ -234,7 +238,9 @@ WRITE_HANDLER(pc_page_w)
 	}
 }
 
-READ_HANDLER(at_page_r)
+
+
+READ8_HANDLER(at_page8_r)
 {
 	data8_t data = at_pages[offset % 0x10];
 
@@ -255,7 +261,9 @@ READ_HANDLER(at_page_r)
 	return data;
 }
 
-WRITE_HANDLER(at_page_w)
+
+
+WRITE8_HANDLER(at_page8_w)
 {
 	at_pages[offset % 0x10] = data;
 
@@ -275,6 +283,32 @@ WRITE_HANDLER(at_page_w)
 	}
 }
 
+
+
+READ32_HANDLER(at_page32_r)
+{
+	return (((data32_t) at_page8_r(offset * 4 + 0)) << 0)
+		|  (((data32_t) at_page8_r(offset * 4 + 0)) << 8)
+		|  (((data32_t) at_page8_r(offset * 4 + 0)) << 16)
+		|  (((data32_t) at_page8_r(offset * 4 + 0)) << 24);
+}
+
+
+
+WRITE32_HANDLER(at_page32_w)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		at_page8_w(offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		at_page8_w(offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		at_page8_w(offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		at_page8_w(offset * 4 + 3, data >> 24);
+}
+
+
+
 static data8_t pc_dma_read_byte(int channel, offs_t offset)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
@@ -282,12 +316,16 @@ static data8_t pc_dma_read_byte(int channel, offs_t offset)
 	return program_read_byte(page_offset + offset);
 }
 
+
+
 static void pc_dma_write_byte(int channel, offs_t offset, data8_t data)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& pc_page_offset_mask;
 	program_write_byte(page_offset + offset, data);
 }
+
+
 
 static struct dma8237_interface pc_dma =
 {
