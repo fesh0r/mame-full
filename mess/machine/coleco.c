@@ -14,13 +14,11 @@
 
 static int JoyMode=0;
 
-unsigned char *coleco_cartridge_rom;
-
 int coleco_id_rom (int id)
 {
-	FILE *romfile;
-	unsigned char magic[2];
-	int retval = ID_FAILED;
+	void *romfile;
+	UINT8 magic[2];
+	int retval;
 
 	logerror("---------coleco_id_rom-----\n");
 	logerror("Gamename is %s\n",device_filename(IO_CARTSLOT,id));
@@ -33,7 +31,7 @@ int coleco_id_rom (int id)
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 		return ID_FAILED;
 
-	retval = 0;
+	retval = ID_FAILED;
 	/* Verify the file is in Colecovision format */
 	osd_fread (romfile, magic, 2);
 	if ((magic[0] == 0xAA) && (magic[1] == 0x55))
@@ -47,9 +45,8 @@ int coleco_id_rom (int id)
 
 int coleco_load_rom (int id)
 {
-    FILE *cartfile;
-
-	UINT8 *ROM = memory_region(REGION_CPU1);
+    void *cartfile;
+	UINT8 *coleco_cartridge_rom;
 
 	logerror("---------coleco_load_rom-----\n");
 	logerror("filetype is %d  \n",OSD_FILETYPE_IMAGE_R);
@@ -68,8 +65,7 @@ int coleco_load_rom (int id)
 		return 1;
 	}
 
-
-	coleco_cartridge_rom = &(ROM[0x8000]);
+	coleco_cartridge_rom = memory_region(REGION_CPU1) + 0x8000;
 
 	if (cartfile!=NULL)
 	{
@@ -187,29 +183,6 @@ WRITE_HANDLER ( coleco_paddle_toggle_off )
 WRITE_HANDLER ( coleco_paddle_toggle_on )
 {
 	JoyMode=1;
-    return;
-}
-
-READ_HANDLER ( coleco_VDP_reg_r )
-{
-	return TMS9928A_register_r(0);
-}
-
-READ_HANDLER ( coleco_VDP_ram_r )
-{
-	return TMS9928A_vram_r(0);
-}
-
-
-WRITE_HANDLER ( coleco_VDP_reg_w )
-{
-	TMS9928A_register_w(0, data);
-    return;
-}
-
-WRITE_HANDLER ( coleco_VDP_ram_w )
-{
-	TMS9928A_vram_w(0, data);
     return;
 }
 

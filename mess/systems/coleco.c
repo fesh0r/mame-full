@@ -21,7 +21,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "includes/coleco.h"
 
-MEMORY_READ_START( coleco_readmem )
+static MEMORY_READ_START( coleco_readmem )
     { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM */
     { 0x6000, 0x63ff, MRA_RAM },
     { 0x6400, 0x67ff, MRA_RAM },
@@ -34,7 +34,7 @@ MEMORY_READ_START( coleco_readmem )
     { 0x8000, 0xFFFF, MRA_ROM },  /* Cartridge */
 MEMORY_END
 
-MEMORY_WRITE_START( coleco_writemem )
+static MEMORY_WRITE_START( coleco_writemem )
     { 0x0000, 0x1FFF, MWA_ROM }, /* COLECO.ROM */
     { 0x6000, 0x63ff, MWA_RAM },
     { 0x6400, 0x67ff, MWA_RAM },
@@ -49,20 +49,20 @@ MEMORY_END
 
 
 static PORT_READ_START (coleco_readport)
-    { 0xA0, 0xA0, coleco_VDP_ram_r },
-    { 0xA1, 0xA1, coleco_VDP_reg_r },
-    { 0xBE, 0xBE, coleco_VDP_ram_r },
-    { 0xBF, 0xBF, coleco_VDP_reg_r },
+    { 0xA0, 0xA0, TMS9928A_vram_r },
+    { 0xA1, 0xA1, TMS9928A_register_r },
+    { 0xBE, 0xBE, TMS9928A_vram_r },
+    { 0xBF, 0xBF, TMS9928A_register_r },
 	{ 0xE0, 0xFF, coleco_paddle_r },
 PORT_END
 
 static PORT_WRITE_START (coleco_writeport)
     { 0x80, 0x80, coleco_paddle_toggle_off },
     { 0x9F, 0x9F, coleco_paddle_toggle_off }, /* Antarctic Adventure */
-    { 0xA0, 0xA0, coleco_VDP_ram_w },
-    { 0xA1, 0xA1, coleco_VDP_reg_w },
-    { 0xBE, 0xBE, coleco_VDP_ram_w },
-    { 0xBF, 0xBF, coleco_VDP_reg_w },
+    { 0xA0, 0xA0, TMS9928A_vram_w },
+    { 0xA1, 0xA1, TMS9928A_register_w },
+    { 0xBE, 0xBE, TMS9928A_vram_w },
+    { 0xBF, 0xBF, TMS9928A_register_w },
     { 0xC0, 0xC0, coleco_paddle_toggle_on },
     { 0xDF, 0xDF, coleco_paddle_toggle_on }, /* Antarctic Adventure */
     { 0xE0, 0xFF, SN76496_0_w },
@@ -131,10 +131,41 @@ static struct SN76496interface sn76496_interface =
     { 100 }
 };
 
+/***************************************************************************
+
+  The interrupts come from the vdp. The vdp (tms9928a) interrupt can go up
+  and down; the Coleco only uses nmi interrupts (which is just a pulse). They 
+  are edge-triggered: as soon as the vdp interrupt line goes up, an interrupt 
+  is generated. Nothing happens when the line stays up or goes down.
+
+  To emulate this correctly, we set a callback in the tms9928a (they
+  can occur mid-frame). At every frame we call the TMS9928A_interrupt
+  because the vdp needs to know when the end-of-frame occurs, but we don't
+  return an interrupt.
+
+***************************************************************************/
+ 
 static int coleco_interrupt(void)
 {
     TMS9928A_interrupt();
     return ignore_interrupt ();
+}
+
+static void coleco_vdp_interrupt (int state)
+{
+	static int last_state = 0;
+
+    /* only if it goes up */
+	if (state && !last_state) cpu_set_nmi_line(0, PULSE_LINE);
+	last_state = state;
+}
+
+static int coleco_vh_start(void)
+{
+	if (TMS9928A_start(TMS99x8A, 0x4000)) return 1;
+
+	TMS9928A_int_callback(coleco_vdp_interrupt);
+	return 0;
 }
 
 static struct MachineDriver machine_driver_coleco =
@@ -162,8 +193,8 @@ static struct MachineDriver machine_driver_coleco =
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
     0,
     coleco_vh_start,
-    coleco_vh_stop,
-    coleco_vh_screenrefresh,
+    TMS9928A_stop,
+    TMS9928A_refresh,
 
     /* sound hardware */
     0,0,0,0,
@@ -174,7 +205,6 @@ static struct MachineDriver machine_driver_coleco =
         }
     }
 };
-
 
 
 /***************************************************************************
