@@ -31,10 +31,10 @@ f002      ROM bank selection
 f003      flip screen
 f004      NMI disable
 f005      to port #2 of 8751 controller (signal on P3.2)
-f008-f009 bg #1 y scroll
-f00a-f00b bg #1 x scroll
-f00c-f00d bg #2 y scroll
-f00e-f00f bg #2 x scroll
+f008-f009 bg #1 x scroll
+f00a-f00b bg #1 y scroll
+f00c-f00d bg #2 x scroll
+f00e-f00f bg #2 y scroll
 
 interrupts:
 VBlank triggers NMI.
@@ -66,29 +66,30 @@ Who knows, it's protected. The bootleg doesn't have it.
 
 
 
-extern unsigned char *firetrap_bg1videoram,*firetrap_bg2videoram;
-extern unsigned char *firetrap_videoram,*firetrap_colorram;
-extern unsigned char *firetrap_scroll1x,*firetrap_scroll1y;
-extern unsigned char *firetrap_scroll2x,*firetrap_scroll2y;
-extern size_t firetrap_bgvideoram_size;
-extern size_t firetrap_videoram_size;
+extern unsigned char *firetrap_bg1videoram;
+extern unsigned char *firetrap_bg2videoram;
+extern unsigned char *firetrap_fgvideoram;
+
+WRITE_HANDLER( firetrap_fgvideoram_w );
 WRITE_HANDLER( firetrap_bg1videoram_w );
 WRITE_HANDLER( firetrap_bg2videoram_w );
-WRITE_HANDLER( firetrap_flipscreen_w );
+WRITE_HANDLER( firetrap_bg1_scrollx_w );
+WRITE_HANDLER( firetrap_bg1_scrolly_w );
+WRITE_HANDLER( firetrap_bg2_scrollx_w );
+WRITE_HANDLER( firetrap_bg2_scrolly_w );
 int firetrap_vh_start(void);
-void firetrap_vh_stop(void);
 void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int firetrap_irq_enable = 0;
 
-WRITE_HANDLER( firetrap_nmi_disable_w )
+static WRITE_HANDLER( firetrap_nmi_disable_w )
 {
 	interrupt_enable_w(offset,~data & 1);
 }
 
-WRITE_HANDLER( firetrap_bankselect_w )
+static WRITE_HANDLER( firetrap_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -98,7 +99,7 @@ WRITE_HANDLER( firetrap_bankselect_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-READ_HANDLER( firetrap_8751_r )
+static READ_HANDLER( firetrap_8751_r )
 {
 //logerror("PC:%04x read from 8751\n",cpu_get_pc());
 
@@ -109,7 +110,7 @@ READ_HANDLER( firetrap_8751_r )
 	else return 0;
 }
 
-WRITE_HANDLER( firetrap_8751_w )
+static WRITE_HANDLER( firetrap_8751_w )
 {
 logerror("PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
 	cpu_cause_interrupt(0,0xff);
@@ -127,7 +128,7 @@ static WRITE_HANDLER( firetrap_sound_2400_w )
 	firetrap_irq_enable = data & 0x02;
 }
 
-WRITE_HANDLER( firetrap_sound_bankselect_w )
+static WRITE_HANDLER( firetrap_sound_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -139,7 +140,7 @@ WRITE_HANDLER( firetrap_sound_bankselect_w )
 
 static int msm5205next;
 
-void firetrap_adpcm_int (int data)
+static void firetrap_adpcm_int (int data)
 {
 	static int toggle=0;
 
@@ -151,7 +152,7 @@ void firetrap_adpcm_int (int data)
 		cpu_cause_interrupt (1, M6502_INT_IRQ);
 }
 
-WRITE_HANDLER( firetrap_adpcm_data_w )
+static WRITE_HANDLER( firetrap_adpcm_data_w )
 {
 	msm5205next = data;
 }
@@ -175,21 +176,21 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, firetrap_bg1videoram_w, &firetrap_bg1videoram, &firetrap_bgvideoram_size },
+	{ 0xd000, 0xd7ff, firetrap_bg1videoram_w, &firetrap_bg1videoram },
 	{ 0xd800, 0xdfff, firetrap_bg2videoram_w, &firetrap_bg2videoram },
-	{ 0xe000, 0xe3ff, MWA_RAM, &firetrap_videoram, &firetrap_videoram_size },
-	{ 0xe400, 0xe7ff, MWA_RAM, &firetrap_colorram },
+	{ 0xe000, 0xe7ff, firetrap_fgvideoram_w,  &firetrap_fgvideoram },
 	{ 0xe800, 0xe97f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf000, MWA_NOP },	/* IRQ acknowledge */
 	{ 0xf001, 0xf001, firetrap_sound_command_w },
 	{ 0xf002, 0xf002, firetrap_bankselect_w },
-	{ 0xf003, 0xf003, firetrap_flipscreen_w },
+	{ 0xf003, 0xf003, flip_screen_w },
 	{ 0xf004, 0xf004, firetrap_nmi_disable_w },
 //	{ 0xf005, 0xf005, firetrap_8751_w },
-	{ 0xf008, 0xf009, MWA_RAM, &firetrap_scroll1y },
-	{ 0xf00a, 0xf00b, MWA_RAM, &firetrap_scroll1x },
-	{ 0xf00c, 0xf00d, MWA_RAM, &firetrap_scroll2y },
-	{ 0xf00e, 0xf00f, MWA_RAM, &firetrap_scroll2x },
+	{ 0xf008, 0xf009, firetrap_bg1_scrollx_w },
+	{ 0xf00a, 0xf00b, firetrap_bg1_scrolly_w },
+	{ 0xf00c, 0xf00d, firetrap_bg2_scrollx_w },
+	{ 0xf00e, 0xf00f, firetrap_bg2_scrolly_w },
+	{ 0xf800, 0xf8ff, MWA_ROM },	/* extra ROM in the bootleg with unprotection code */
 	{ -1 }	/* end of table */
 };
 
@@ -398,7 +399,7 @@ static struct MachineDriver machine_driver_firetrap =
 	VIDEO_TYPE_RASTER,
 	0,
 	firetrap_vh_start,
-	firetrap_vh_stop,
+	0,
 	firetrap_vh_screenrefresh,
 
 	/* sound hardware */
@@ -457,16 +458,16 @@ ROM_START( firetrap )
 	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
 
 	ROM_REGION( 0x0200, REGION_PROMS )
-	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
-	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
+	ROM_LOAD( "firetrap.3b",  0x0000,  0x0100, 0x8bb45337 ) /* palette red and green component */
+	ROM_LOAD( "firetrap.4b",  0x0100,  0x0100, 0xd5abfc64 ) /* palette blue component */
 ROM_END
 
 ROM_START( firetpbl )
 	ROM_REGION( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "ft0d.bin",     0x00000, 0x8000, 0x793ef849 )
+	ROM_LOAD( "ft0a.bin",     0x08000, 0x8000, 0x613313ee )	/* unprotection code */
 	ROM_LOAD( "ft0c.bin",     0x10000, 0x8000, 0x5c8a0562 )
 	ROM_LOAD( "ft0b.bin",     0x18000, 0x8000, 0xf2412fe8 )
-	ROM_LOAD( "ft0a.bin",     0x08000, 0x8000, 0x613313ee )	/* unprotection code */
 
 	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
@@ -494,8 +495,8 @@ ROM_START( firetpbl )
 	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
 
 	ROM_REGION( 0x0200, REGION_PROMS )
-	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
-	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
+	ROM_LOAD( "firetrap.3b",  0x0000,  0x0100, 0x8bb45337 ) /* palette red and green component */
+	ROM_LOAD( "firetrap.4b",  0x0100,  0x0100, 0xd5abfc64 ) /* palette blue component */
 ROM_END
 
 
