@@ -166,7 +166,7 @@ INPUT_PORTS_START(ti99_4a)
 	PORT_START	/* config */
 		PORT_BITX( config_xRAM_mask << config_xRAM_bit, xRAM_kind_TI << config_xRAM_bit, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
 		    PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
-		    PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instrument 32kb")
+		    PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instruments 32kb")
 		    PORT_DIPSETTING( xRAM_kind_super_AMS << config_xRAM_bit,		"Super AMS 1Mb")
 		    PORT_DIPSETTING( xRAM_kind_foundation_128k << config_xRAM_bit,	"Foundation 128kb")
 		    PORT_DIPSETTING( xRAM_kind_foundation_512k << config_xRAM_bit,	"Foundation 512kb")
