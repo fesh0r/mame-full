@@ -9,24 +9,33 @@
 /* - get disc image and get it to read data */
 /* - Everything! */
 
-#include "i8271.h"
+#include "includes/i8271.h"
+#include "includes/flopdrv.h"
 
 I8271_STATE_t I8271_STATE;
 
 static void i8271_command_execute(void);
 static void i8271_command_continue(void);
 static void i8271_data_request(void);
+static void i8271_timed_data_request(void);
+/* locate sector for read/write operation */
+static int i8271_find_sector(void);
+/* do a read operation */
+static void i8271_do_read(void);
 
 static char temp_buffer[16384];
 
 // uncomment to give verbose debug information
-#define VERBOSE
+//#define VERBOSE
 
 static I8271 i8271;
 
 #ifdef VERBOSE
 #define FDC_LOG(x) logerror("I8271: %s\r\n",x)
 #define FDC_LOG_COMMAND(x) logerror("I8271: COMMAND %s\r\n",x)
+#else
+#define FDC_LOG(x)
+#define FDC_LOG_COMMAND(x)
 #endif
 
 
@@ -35,20 +44,103 @@ static int floppy_drive_status[4] = {
 
 void	i8271_init(i8271_interface *iface)
 {
-	memcpy(&i8271.fdc_interface, iface, sizeof(i8271_interface));
+	memset(&i8271, 0, sizeof(I8271));
+
+	if (iface!=NULL)
+	{
+		memcpy(&i8271.fdc_interface, iface, sizeof(i8271_interface));
+	}
+	i8271.timer = NULL;
+
+	i8271.pExecutionPhaseData = temp_buffer;
 }
 
+	
+static void i8271_seek_to_track(int track)
+{
+	if (track==0)
+	{
+		/* seek to track 0 */
+		unsigned char StepCount = 0x0ff;
+
+		while (
+			/* track 0 not set */
+			(!floppy_drive_get_flag_state(i8271.drive,FLOPPY_DRIVE_HEAD_AT_TRACK_0)) &&
+			/* not seeked more than 255 tracks */
+			(StepCount!=0)
+			)
+		{
+			StepCount--;
+			floppy_drive_seek(i8271.drive, -1);
+		}
+
+		i8271.CurrentTrack[i8271.drive] = 0;
+	
+		/* failed to find track 0? */
+		if (StepCount==0)
+		{
+			/* Completion Type: operator intervation probably required for recovery */
+			/* Completion code: track 0 not found */
+			i8271.ResultRegister |= (2<<3) | 2<<1;
+		}
+	}
+	else
+	{
+
+		signed int SignedTracks;
+
+		/* calculate number of tracks to seek */
+		SignedTracks = track - i8271.CurrentTrack[i8271.drive];
+		
+		/* seek to track 0 */
+		floppy_drive_seek(i8271.drive, SignedTracks);
+
+		i8271.CurrentTrack[i8271.drive] = track;
+	}
+}
+	
+
+static void	i8271_data_timer_callback(int code)
+{
+	/* ok, trigger data request now */
+	i8271_data_request();
+
+	/* stop it, but don't allow it to be free'd */
+	timer_reset(i8271.timer, TIME_NEVER); 
+}
+
+/* setup a timed data request - data request will be triggered in a few usecs time */
+static void i8271_timed_data_request(void)
+{
+	int usecs;
+
+	/* 64 for single density */
+	usecs = 64;
+
+	/* remove old timer if it exists */
+	if (i8271.timer!=NULL)
+	{
+		timer_remove(i8271.timer);
+		i8271.timer = NULL;
+	}
+
+	/* set new timer */
+	i8271.timer = timer_set(TIME_IN_USEC(usecs), 0, i8271_data_timer_callback);
+}
+
+void	i8271_stop(void)
+{
+	if (i8271.timer)
+	{
+		timer_remove(i8271.timer);
+		i8271.timer = NULL;
+	}
+}
 
 void	i8271_reset()
 {
 	i8271.StatusRegister = I8271_STATUS_INT_REQUEST | I8271_STATUS_NON_DMA_REQUEST;
 	i8271.Mode = 0x0c0; /* bits 0, 1 are initialized to zero */
-}
-
-static void i8271_command_complete(void)
-{
-	/* clear command busy */
-	i8271.StatusRegister &= ~I8271_STATUS_COMMAND_BUSY;
 }
 
 static void i8271_set_irq_state(int state)
@@ -102,7 +194,15 @@ static int i8271_read_bad_track(int surface, int track)
 
 static void i8271_get_drive(void)
 {
-	i8271.drive = (i8271.CommandRegister>>6) & 0x03;
+	if (i8271.CommandRegister & (1<<6))
+	{
+		i8271.drive = 0;
+	}
+
+	if (i8271.CommandRegister & (1<<7))
+	{
+		i8271.drive = 1;
+	}
 }
 
 static void i8271_setup_result(int data)
@@ -127,12 +227,49 @@ static void i8271_update_state(void)
 {
 	switch (i8271.state)
 	{
-
 		/* fdc reading data and passing it to cpu which must read it */
 		case I8271_STATE_EXECUTION_READ:
 		{
-			/* setup result register with byte */
-			i8271.data = i8271.pExecutionPhaseData[i8271.ExecutionPhaseCount];
+	//		/* if data request has been cleared, i.e. caused by a read of the register */
+	//		if ((i8271.flags & I8271_FLAGS_DATA_REQUEST)==0)
+			{
+				/* setup data with byte */
+				i8271.data = i8271.pExecutionPhaseData[i8271.ExecutionPhaseCount];
+			
+			//	logerror("read data %02x\r\n", i8271.data);
+
+				/* update counters */
+				i8271.ExecutionPhaseCount++;
+				i8271.ExecutionPhaseTransferCount--;
+
+			//	logerror("Count: %04x\r\n", i8271.ExecutionPhaseCount);
+			//	logerror("Remaining: %04x\r\n", i8271.ExecutionPhaseTransferCount);
+
+				/* completed? */
+				if (i8271.ExecutionPhaseTransferCount==0)
+				{
+					/* yes */
+
+			//		logerror("sector read complete!\r\n");
+					/* continue command */
+					i8271_command_continue();
+				}
+				else
+				{
+					/* no */
+
+					/* issue data request */
+					i8271_timed_data_request();
+				}
+			}
+		}
+		break;
+
+		/* fdc reading data and passing it to cpu which must read it */
+		case I8271_STATE_EXECUTION_WRITE:
+		{
+			/* setup data with byte */
+			i8271.pExecutionPhaseData[i8271.ExecutionPhaseCount] = i8271.data;
 			/* update counters */
 			i8271.ExecutionPhaseCount++;
 			i8271.ExecutionPhaseTransferCount--;
@@ -150,23 +287,36 @@ static void i8271_update_state(void)
 				/* no */
 
 				/* issue data request */
-				i8271_data_request();
+				i8271_timed_data_request();
 			}
 		}
 		break;
+
+		default:
+			break;
 	}
 }
 
-static void i8271_initialise_execution_phase_read(char *buffer)
+static void i8271_initialise_execution_phase_read(void)
 {
 	i8271.ExecutionPhaseCount = 0;
 	i8271.ExecutionPhaseTransferCount = 1<<(i8271.ID_N+7);
-	i8271.pExecutionPhaseData = buffer;
+
+	//	i8271.pExecutionPhaseData = buffer;
 	i8271.state = I8271_STATE_EXECUTION_READ;
 }
 
+
+static void i8271_initialise_execution_phase_write(void)
+{
+	i8271.ExecutionPhaseCount = 0;
+	i8271.ExecutionPhaseTransferCount = 1<<(i8271.ID_N+7);
+//	i8271.pExecutionPhaseData = buffer;
+	i8271.state = I8271_STATE_EXECUTION_WRITE;
+}
+
 /* for data transfers */
-static void i8271_data_request()
+static void i8271_data_request(void)
 {
 	i8271.flags |= I8271_FLAGS_DATA_REQUEST;
 
@@ -174,7 +324,7 @@ static void i8271_data_request()
 	{
 		/* non-dma */
 		i8271.StatusRegister |= I8271_STATUS_NON_DMA_REQUEST;
-		i8271.StatusRegister |= I8271_STATUS_INT_REQUEST;
+		i8271.StatusRegister |= I8271_STATUS_INT_REQUEST; 
 		/* set int */
 		i8271_set_irq_state(1);
 	}
@@ -187,15 +337,21 @@ static void i8271_data_request()
 	}
 }
 
+static void i8271_command_complete(void)
+{
+	/* not busy, and not a execution phase data request in non-dma mode */
+	i8271.StatusRegister &= ~(I8271_STATUS_COMMAND_BUSY | I8271_STATUS_NON_DMA_REQUEST);
+	/* set int, and result register full */
+	i8271.StatusRegister |= I8271_STATUS_INT_REQUEST | I8271_STATUS_RESULT_FULL;
+	/* trigger an int */
+	i8271_set_irq_state(1);
+}
+
 
 /* for data transfers */
 static void i8271_clear_data_request(void)
 {
-	i8271_set_irq_state(0);
-
 	i8271.flags &= ~I8271_FLAGS_DATA_REQUEST;
-
-	i8271_set_dma_drq();
 
 	if ((i8271.Mode & 0x01)!=0)
 	{
@@ -203,7 +359,7 @@ static void i8271_clear_data_request(void)
 		i8271.StatusRegister &= ~I8271_STATUS_NON_DMA_REQUEST;
 		i8271.StatusRegister &= ~I8271_STATUS_INT_REQUEST;
 		/* set int */
-		i8271_set_irq_state(1);
+		i8271_set_irq_state(0);
 	}
 	else
 	{
@@ -213,7 +369,8 @@ static void i8271_clear_data_request(void)
 		i8271_set_dma_drq();
 	}
 }
-static void i8271_command_continue()
+
+static void i8271_command_continue(void)
 {
 	switch (i8271.Command)
 	{
@@ -222,22 +379,105 @@ static void i8271_command_continue()
 		{
 			/* completed all sectors? */
 			i8271.SectorCount--;
+			/* increment sector id */
+			i8271.ID_R++;
 
 			/* end command? */
 			if (i8271.SectorCount==0)
 			{
-
-
-
-
+				
+				i8271_command_complete();
+				return;
 			}
+			
+			i8271_do_read();
 		}
 		break;
 	}
 }
 
-static void i8271_command_execute()
+static void i8271_do_read(void)
 {
+	/* find the sector */
+	if (i8271_find_sector())
+	{
+		/* get the sector into the buffer */
+		floppy_drive_read_sector_data(i8271.drive, 0, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
+			
+		/* initialise for reading */
+        i8271_initialise_execution_phase_read();
+		
+		/* update state - gets first byte and triggers a data request */
+		i8271_timed_data_request();
+		return;
+	}
+#ifdef VERBOSE
+	logerror("error getting sector data\r\n");
+#endif
+
+	i8271_command_complete();
+}
+
+
+static int i8271_find_sector(void)
+{
+//	int track_count_attempt;
+
+//	track_count_attempt
+	/* find sector within one revolution of the disc - 2 index pulses */
+
+	/* number of times we have seen index hole */
+	int index_count = 0;
+
+	/* get sector id's */
+	do
+    {
+		chrn_id id;
+
+		/* get next id from disc */
+		floppy_drive_get_next_id(i8271.drive, 0,&id);
+
+		/* tested on Amstrad CPC - All bytes must match, otherwise
+		a NO DATA error is reported */
+		if (id.R == i8271.ID_R)
+		{
+			/* TODO: Is this correct? What about bad tracks? */
+			if (id.C == i8271.CurrentTrack[i8271.drive])
+			{
+				i8271.data_id = id.data_id;
+				return 1;
+			}
+			else
+			{
+				/* TODO: if track doesn't match, the real 8271 does a step */
+
+
+				return 0;
+			}
+		}
+
+		 /* index set? */
+		if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_INDEX))
+		{
+			index_count++;
+		}
+   
+	}
+	while (index_count!=2);
+
+	/* completion type: command/drive error */
+	/* completion code: sector not found */
+	i8271.ResultRegister |= (3<<3);
+	
+	return 0;
+}
+
+static void i8271_command_execute(void)
+{
+	/* clear it = good completion status */
+	/* this will be changed if anything bad happens! */
+	i8271.ResultRegister = 0;
+
 	switch (i8271.Command)
 	{
 		case I8271_COMMAND_SPECIFY:
@@ -521,7 +761,22 @@ static void i8271_command_execute()
 			/* command is complete */
 			i8271_command_complete();
 
+
 			floppy_drive_status[i8271.drive] = (1<<6) | (1<<2);
+
+			
+			/* bit 3 = 0 if write protected */
+			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+			{
+				floppy_drive_status[i8271.drive] |= (1<<3);
+			}
+
+			/* bit 1 = 0 if head at track 0 */
+			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			{
+				floppy_drive_status[i8271.drive] |= (1<<1);
+			}
+
 			i8271_setup_result(floppy_drive_status[i8271.drive]);
 
 		}
@@ -529,21 +784,13 @@ static void i8271_command_execute()
 
 		case I8271_COMMAND_SEEK:
 		{
-			/* to be completed! */
-			int completion_code = 0;
-
 			i8271_get_drive();
 
-			/* seek to track 0 */
-		//	floppy_drive_seek(i8271.drive, i8271.CommandParameters[0]);
 
-		//	i8271_write_current_track(0, i8271.CommandParameters[1]);
-
+			i8271_seek_to_track(i8271.CommandParameters[0]);
 
 			/* check for bad seek */
 			i8271_command_complete();
-			i8271_setup_result(completion_code);
-			i8271_set_irq_state(1);
 
 		}
 		break;
@@ -562,16 +809,22 @@ static void i8271_command_execute()
 			/* read */
 			i8271.flags |= I8271_FLAGS_DATA_DIRECTION;
 
+			FDC_LOG_COMMAND("READ DATA MULTI RECORD");
+
 #ifdef VERBOSE
+			logerror("Sector Count: %02x\r\n", i8271.SectorCount);
 			logerror("Track: %02x\r\n",i8271.CommandParameters[0]);
 			logerror("Sector: %02x\r\n", i8271.CommandParameters[1]);
-			logerror("Sector Length: %02x bytes", 1<<(i8271.ID_N+7));
+			logerror("Sector Length: %02x bytes\r\n", 1<<(i8271.ID_N+7));
 #endif
 
 			i8271_get_drive();
-			i8271_initialise_execution_phase_read(temp_buffer);
-			i8271_update_state();
 
+	
+			i8271_seek_to_track(i8271.CommandParameters[0]);
+
+
+			i8271_do_read();
 
 //			i8271_seek_to_track(i8271.CommandParameters[0]);
 
@@ -582,6 +835,8 @@ static void i8271_command_execute()
 
 		case I8271_COMMAND_READ_DATA_SINGLE_RECORD:
 		{
+			FDC_LOG_COMMAND("READ DATA SINGLE RECORD");
+
 			i8271.ID_N = 0;
 			i8271.SectorCount = 1;
 			i8271.ID_R = i8271.CommandParameters[1];
@@ -590,10 +845,17 @@ static void i8271_command_execute()
 			i8271.flags |= I8271_FLAGS_DATA_DIRECTION;
 
 #ifdef VERBOSE
+			logerror("Sector Count: %02x\r\n", i8271.SectorCount);
 			logerror("Track: %02x\r\n",i8271.CommandParameters[0]);
 			logerror("Sector: %02x\r\n", i8271.CommandParameters[1]);
-			logerror("Sector Length: %02x bytes", 1<<(i8271.ID_N+7));
+			logerror("Sector Length: %02x bytes\r\n", 1<<(i8271.ID_N+7));
 #endif
+			i8271_get_drive();
+
+			i8271_seek_to_track(i8271.CommandParameters[0]);
+
+			i8271_do_read();
+
 		}
 		break;
 
@@ -713,8 +975,9 @@ WRITE_HANDLER(i8271_w)
 
 		case 1:
 		{
+#ifdef VERBOSE
 			logerror("I8271 W Parameter Register: %02x\r\n",data);
-
+#endif
 			i8271.ParameterRegister = data;
 
 			i8271.CommandParameters[i8271.ParameterCountWritten] = data;
@@ -726,7 +989,9 @@ WRITE_HANDLER(i8271_w)
 
 		case 2:
 		{
+#ifdef VERBOSE
 			logerror("I8271 W Reset Register: %02x\r\n", data);
+#endif
 			i8271.ResetRegister = data;
 		}
 		break;
@@ -744,9 +1009,9 @@ READ_HANDLER(i8271_r)
 		{
 			/* bit 1,0 are zero other bits contain status data */
 			i8271.StatusRegister &= ~0x03;
-
+#ifdef VERBOSE
 			logerror("I8271 R Status Register: %02x\r\n",i8271.StatusRegister);
-
+#endif
 			return i8271.StatusRegister;
 		}
 
@@ -759,9 +1024,9 @@ READ_HANDLER(i8271_r)
 				i8271_set_irq_state(0);
 
 				i8271.StatusRegister &= ~I8271_STATUS_RESULT_FULL;
-
+#ifdef VERBOSE
 				logerror("I8271 R Result Register %02x\r\n",i8271.ResultRegister);
-
+#endif
 				return i8271.ResultRegister;
 			}
 
@@ -792,10 +1057,12 @@ WRITE_HANDLER(i8271_dack_w)
 
 READ_HANDLER(i8271_data_r)
 {
-
 	i8271_clear_data_request();
 
 	i8271_update_state();
+
+  //  logerror("I8271 R data: %02x\r\n",i8271.data);
+
 
 	return i8271.data;
 }
@@ -803,6 +1070,8 @@ READ_HANDLER(i8271_data_r)
 WRITE_HANDLER(i8271_data_w)
 {
 	i8271.data = data;
+
+//    logerror("I8271 W data: %02x\r\n",i8271.data);
 
 	i8271_clear_data_request();
 
