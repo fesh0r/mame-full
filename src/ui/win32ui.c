@@ -114,6 +114,95 @@
 #define HDF_SORTDOWN 0x200
 #endif
 
+#ifndef LVM_SETBKIMAGEA
+#define LVM_SETBKIMAGEA         (LVM_FIRST + 68)
+#endif // LVM_SETBKIMAGEA
+
+#ifndef LVM_SETBKIMAGEW
+#define LVM_SETBKIMAGEW         (LVM_FIRST + 138)
+#endif // LVM_SETBKIMAGEW
+
+#ifndef LVM_GETBKIMAGEA
+#define LVM_GETBKIMAGEA         (LVM_FIRST + 69)
+#endif // LVM_GETBKIMAGEA
+
+#ifndef LVM_GETBKIMAGEW
+#define LVM_GETBKIMAGEW         (LVM_FIRST + 139)
+#endif // LVM_GETBKIMAGEW
+
+#ifndef LVBKIMAGE
+
+typedef struct tagLVBKIMAGEA
+{
+	ULONG ulFlags;
+	HBITMAP hbm;
+	LPSTR pszImage;
+	UINT cchImageMax;
+	int xOffsetPercent;
+	int yOffsetPercent;
+} LVBKIMAGEA, *LPLVBKIMAGEA;
+
+typedef struct tagLVBKIMAGEW
+{
+	ULONG ulFlags;
+	HBITMAP hbm;
+	LPWSTR pszImage;
+	UINT cchImageMax;
+	int xOffsetPercent;
+	int yOffsetPercent;
+} LVBKIMAGEW, *LPLVBKIMAGEW;
+
+#ifdef UNICODE
+#define LVBKIMAGE               LVBKIMAGEW
+#define LPLVBKIMAGE             LPLVBKIMAGEW
+#define LVM_SETBKIMAGE          LVM_SETBKIMAGEW
+#define LVM_GETBKIMAGE          LVM_GETBKIMAGEW
+#else
+#define LVBKIMAGE               LVBKIMAGEA
+#define LPLVBKIMAGE             LPLVBKIMAGEA
+#define LVM_SETBKIMAGE          LVM_SETBKIMAGEA
+#define LVM_GETBKIMAGE          LVM_GETBKIMAGEA
+#endif
+#endif
+
+#ifndef LVBKIF_SOURCE_NONE
+#define LVBKIF_SOURCE_NONE      0x00000000
+#endif // LVBKIF_SOURCE_NONE
+
+#ifndef LVBKIF_SOURCE_HBITMAP
+#define LVBKIF_SOURCE_HBITMAP   0x00000001
+#endif
+
+#ifndef LVBKIF_SOURCE_URL
+#define LVBKIF_SOURCE_URL       0x00000002
+#endif // LVBKIF_SOURCE_URL
+
+#ifndef LVBKIF_SOURCE_MASK
+#define LVBKIF_SOURCE_MASK      0x00000003
+#endif // LVBKIF_SOURCE_MASK
+
+#ifndef LVBKIF_STYLE_NORMAL
+#define LVBKIF_STYLE_NORMAL     0x00000000
+#endif // LVBKIF_STYLE_NORMAL
+
+#ifndef LVBKIF_STYLE_TILE
+#define LVBKIF_STYLE_TILE       0x00000010
+#endif // LVBKIF_STYLE_TILE
+
+#ifndef LVBKIF_STYLE_MASK
+#define LVBKIF_STYLE_MASK       0x00000010
+#endif // LVBKIF_STYLE_MASK
+
+#ifndef ListView_SetBkImage
+#define ListView_SetBkImage(hwnd, plvbki) \
+    (BOOL)SNDMSG((hwnd), LVM_SETBKIMAGE, 0, (LPARAM)(plvbki))
+#endif // ListView_SetBkImage
+
+#ifndef ListView_GetBkImage
+#define ListView_GetBkImage(hwnd, plvbki) \
+    (BOOL)SNDMSG((hwnd), LVM_GETBKIMAGE, 0, (LPARAM)(plvbki))
+#endif // ListView_GetBkImage
+
 #define MM_PLAY_GAME (WM_APP + 15000)
 
 #define JOYGUI_MS 100

@@ -14,6 +14,22 @@ struct mess_flopimg
 	int (*tracktranslate_proc)(mess_image *image, floppy_image *floppy, int physical_track);
 };
 
+struct floppy_error_map
+{
+	floperr_t ferr;
+	image_error_t ierr;
+	const char *message;
+};
+
+static struct floppy_error_map errmap[] =
+{
+	{ FLOPPY_ERROR_SUCCESS,			IMAGE_ERROR_SUCCESS },
+	{ FLOPPY_ERROR_INTERNAL,		IMAGE_ERROR_INTERNAL },
+	{ FLOPPY_ERROR_UNSUPPORTED,		IMAGE_ERROR_UNSUPPORTED },
+	{ FLOPPY_ERROR_OUTOFMEMORY,		IMAGE_ERROR_OUTOFMEMORY },
+	{ FLOPPY_ERROR_INVALIDIMAGE,	IMAGE_ERROR_INVALIDIMAGE }
+};
+
 
 static struct mess_flopimg *get_flopimg(mess_image *image)
 {
@@ -218,7 +234,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 	struct mess_flopimg *flopimg;
 	const struct IODevice *dev;
 	const struct FloppyFormat *floppy_options;
-	int floppy_flags;
+	int floppy_flags, i;
 	const char *extension;
 
 	/* look up instance data */
@@ -249,6 +265,11 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 	return INIT_PASS;
 
 error:
+	for (i = 0; i < sizeof(errmap) / sizeof(errmap[0]); i++)
+	{
+		if (err == errmap[i].ferr)
+			image_seterror(image, errmap[i].ierr, errmap[i].message);
+	}
 	return INIT_FAIL;
 }
 

@@ -768,6 +768,7 @@ static void change_device(mess_image *img, int is_save)
 	BOOL result;
 	int create_format;
 	option_resolution *create_args = NULL;
+	image_error_t err;
 
 	assert(dev);
 
@@ -817,9 +818,15 @@ static void change_device(mess_image *img, int is_save)
 
 		// mount the image
 		if (is_save)
-			image_create(img, filename, create_format, create_args);
+			err = image_create(img, filename, create_format, create_args);
 		else
-			image_load(img, filename);
+			err = image_load(img, filename);
+
+		// error?
+		if (err)
+		{
+			MessageBox(win_video_window, image_error(img), NULL, MB_OK);
+		}
 	}
 
 done:
