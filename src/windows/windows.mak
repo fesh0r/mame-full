@@ -14,12 +14,14 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 
 ifdef MESS
 CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
-OSOBJS += $(OBJ)/mess/windows/dirio.o	\
-	$(OBJ)/mess/windows/messwin.o		\
-	$(OBJ)/mess/windows/messopts.o		\
-	$(OBJ)/mess/windows/menu.o			\
-	$(OBJ)/mess/windows/dialog.o		\
-	$(OBJ)/mess/windows/parallel.o		\
+OSOBJS += \
+	$(OBJ)/mess/windows/dirio.o		\
+	$(OBJ)/mess/windows/dirutils.o	\
+	$(OBJ)/mess/windows/messwin.o	\
+	$(OBJ)/mess/windows/messopts.o	\
+	$(OBJ)/mess/windows/menu.o		\
+	$(OBJ)/mess/windows/dialog.o	\
+	$(OBJ)/mess/windows/parallel.o	\
 	$(OBJ)/mess/windows/strconv.o
 endif 
 

@@ -946,28 +946,3 @@ int img_goodname_byname(const char *modulename, const char *fname, const char *b
 
 	return img_goodname(module, fname, base, result);
 }
-
-#if (!defined(TARGET_OS_MAC)) || (!TARGET_OS_MAC)
-/* copying osd_basename() here because we cannot separate it from fileio.c */
-char *osd_basename (char *filename)
-{
-	char *c;
-
-	if (!filename)
-		return NULL;
-
-	c = filename + strlen(filename);
-
-	while (c != filename)
-	{
-		c--;
-		if (*c == '\\' || *c == '/' || *c == ':')
-			return (c+1);
-	}
-
-	return filename;
-}
-#endif
-
-
-

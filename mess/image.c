@@ -267,25 +267,26 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 			{
 				int fname_length = buffer[0];
 				char *newname;
-				mame_file *newfile;
 
 				mame_fseek(file, 30, SEEK_SET);
 				mame_fread(file, buffer, fname_length);
+				mame_fclose(file);
+				file = NULL;
+
 				buffer[fname_length] = '\0';
 
 				newname = image_malloc(type, id, strlen(img->name) + 1 + fname_length + 1);
-				if (newname)
-				{
-					strcpy(newname, img->name);
-					strcat(newname, "/");
-					strcat(newname, buffer);
-					newfile = mame_fopen(sysname, newname, filetype, read_or_write);
-					if (newfile)
-					{
-						file = newfile;
-						img->name = newname;
-					}
-				}
+				if (!newname)
+					return NULL;
+
+				strcpy(newname, img->name);
+				strcat(newname, osd_path_separator());
+				strcat(newname, buffer);
+				file = mame_fopen(sysname, newname, filetype, read_or_write);
+				if (!file)
+					return NULL;
+
+				img->name = newname;
 			}
 		}
 		mame_fseek(file, 0, SEEK_SET);

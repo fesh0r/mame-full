@@ -47,6 +47,9 @@
 
 #ifdef MESS
 #define FILEFLAG_ALLOW_ABSOLUTE	0x40
+#define FILEFLAG_ZIP_PATHS		0x80
+#define FILEFLAG_CREATE_GAMEDIR	0x100
+#define FILEFLAG_MUST_EXIST		0x200
 #endif
 
 
@@ -142,7 +145,24 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 #ifndef MESS
 			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_NOZIP);
 #else
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | (openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD));
+			{
+				int flags = FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_ZIP_PATHS;
+				switch(openforwrite) {
+				case OSD_FOPEN_READ:   
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_CRC;   
+					break;   
+				case OSD_FOPEN_WRITE:   
+					flags |= FILEFLAG_OPENWRITE;   
+					break;
+				case OSD_FOPEN_RW:   
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE | FILEFLAG_MUST_EXIST;   
+					break;   
+				case OSD_FOPEN_RW_CREATE:
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
+					break;
+				} 
+				return generic_fopen(filetype, gamename, filename, 0, flags);
+			}
 #endif
 
 		/* differencing disk images */
@@ -159,7 +179,12 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* NVRAM files */
 		case FILETYPE_NVRAM:
+#ifdef MESS
+			if (filename)
+				return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD);
+#else
 			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+#endif
 
 		/* high score files */
 		case FILETYPE_HIGHSCORE:
@@ -861,7 +886,14 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 
 #ifdef MESS
 		if (is_absolute_path)
+		{
 			*name = 0;
+		}
+		else if (flags & FILEFLAG_CREATE_GAMEDIR)
+		{
+			if (osd_get_path_info(pathtype, pathindex, name) == PATH_NOT_FOUND)
+				osd_create_directory(pathtype, pathindex, name);
+		}
 #endif
 
 		/* if the directory exists, proceed */
@@ -880,6 +912,13 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				}
 			}
 
+#ifdef MESS
+			else if ((flags & FILEFLAG_MUST_EXIST) && (osd_get_path_info(pathtype, pathindex, name) == PATH_NOT_FOUND))
+			{
+				/* if FILEFLAG_MUST_EXIST is set and the file isn't there, don't open it */
+			}
+#endif
+
 			/* otherwise, just open it straight */
 			else
 			{
@@ -890,12 +929,55 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				if (file.file != NULL)
 					break;
 			}
-		}
 
 #ifdef MESS
-		if (is_absolute_path)
-			continue;
+			if (flags & FILEFLAG_ZIP_PATHS)
+			{
+				int path_info;
+				const char *oldname = name;
+				const char *zipentryname;
+				char *newname = NULL;
+				char *oldnewname = NULL;
+				char *s;
+				UINT32 ziplength;
+
+				while((path_info = osd_get_path_info(pathtype, pathindex, oldname)) == PATH_NOT_FOUND)
+				{
+					newname = osd_dirname(oldname);
+					if (oldnewname)
+						free(oldnewname);
+					oldname = oldnewname = newname;
+					if (!newname)
+						break;
+					
+					for (s = newname + strlen(newname) - 1; s >= newname && osd_is_path_separator(*s); s--)
+						*s = '\0';
+				}
+
+				if (newname)
+				{
+					if (path_info == PATH_IS_FILE)
+					{
+						zipentryname = name + strlen(newname);
+						while(osd_is_path_separator(*zipentryname))
+							zipentryname++;
+
+						if (load_zipped_file(pathtype, pathindex, newname, zipentryname, &file.data, &ziplength) == 0)
+						{
+							LOG(("Using (mame_fopen) zip file for %s\n", filename));
+							file.length = ziplength;
+							file.type = ZIPPED_FILE;
+							file.crc = crc32(0L, file.data, file.length);
+							break;
+						}
+					}
+					free(newname);
+				}
+			}
+			if (is_absolute_path)
+				continue;
 #endif
+		}
 
 		/* ----------------- STEP 2: OPEN THE FILE IN A ZIP -------------------- */
 
