@@ -386,12 +386,7 @@ WRITE_HANDLER(apf_pia_1_w)
 	pia_1_w(offset & 0x03, data);
 }
 
-void apf_common_exit(void)
-{
-	pia_unconfig();
-}
-
-void apf_imagination_init_machine(void)
+MACHINE_INIT( apf_imagination )
 {
 	pia_config(1, PIA_STANDARD_ORDERING,&apf_imagination_pia_interface);
 
@@ -400,21 +395,10 @@ void apf_imagination_init_machine(void)
 	wd179x_init(WD_TYPE_179X,NULL);
 }
 
-void apf_imagination_stop_machine(void)
-{
-	apf_common_exit();
-}
-
-void apf_m1000_init_machine(void)
+MACHINE_INIT( apf_m1000 )
 {
 	apf_common_init();
 }
-
-void apf_m1000_stop_machine(void)
-{
-	apf_common_exit();
-}
-
 
 static WRITE_HANDLER(apf_dischw_w)
 {
@@ -427,8 +411,6 @@ static WRITE_HANDLER(apf_dischw_w)
 
 	logerror("disc w %04x %04x\n",offset,data);
 }
-
-
 
 READ_HANDLER(serial_r)
 {
@@ -750,92 +732,33 @@ static	struct	Speaker_interface apf_sh_interface =
 	{ NULL }
 };
 
-static struct MachineDriver machine_driver_apf_imagination =
-{
+
+static MACHINE_DRIVER_START( apf_imagination )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6800,
-			3750000,
-			apf_imagination_readmem,apf_imagination_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
-	0,
-	apf_imagination_init_machine,
-	apf_imagination_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6800, 3750000)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(apf_imagination_readmem,apf_imagination_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
+
+	MDRV_MACHINE_INIT( apf_imagination )
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	apf_vh_start,
-	apf_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847_NTSC( apf )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&apf_sh_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, apf_sh_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_apf_m1000 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6800,
-			3750000,
-			apf_m1000_readmem,apf_m1000_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
-	0,
-	apf_m1000_init_machine,
-	apf_m1000_stop_machine,
+static MACHINE_DRIVER_START( apf_m1000 )
+	MDRV_IMPORT_FROM( apf_imagination )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( apf_m1000_readmem,apf_m1000_writemem )
+	MDRV_MACHINE_INIT( apf_m1000 )
+MACHINE_DRIVER_END
 
-	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	apf_vh_start,
-	apf_vh_stop,
-	m6847_vh_update,
-
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&apf_sh_interface
-		}
-	}
-};
 
 /***************************************************************************
 

@@ -176,28 +176,30 @@ static READ_HANDLER(svision_r)
 
 static WRITE_HANDLER(svision_w)
 {
-    svision_reg[offset]=data;
-    switch (offset) {
-    case 0x26: // bits 5,6 memory management for a000?
-	cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x60)<<9) );
-	break;
-    case 0x23: //delta hero irq routine write
-	cpu_set_irq_line(0, M65C02_IRQ_LINE, CLEAR_LINE);
-	svision.timer1_shot=FALSE;
-	if (svision.timer1)
-	    timer_reset(svision.timer1, TIME_IN_CYCLES(data*256, 0));
-	else
-	    svision.timer1=timer_set(TIME_IN_CYCLES(data*256, 0),0,svision_timer);
-	break;
-    case 0x10: case 0x11: case 0x12:
-	svision_soundport_w(svision_channel+0, offset&3, data);
-	break;
-    case 0x14: case 0x15: case 0x16:
-	svision_soundport_w(svision_channel+1, offset&3, data);
-	break;
-    default:
-	logerror("%.6f svision write %04x %02x\n",timer_get_time(),offset,data);
-    }
+	svision_reg[offset]=data;
+	switch (offset) {
+	case 0x26: // bits 5,6 memory management for a000?
+		cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x60)<<9) );
+		break;
+
+	case 0x23: //delta hero irq routine write
+		cpu_set_irq_line(0, M65C02_IRQ_LINE, CLEAR_LINE);
+		svision.timer1_shot=FALSE;
+		timer_reset(svision.timer1, TIME_IN_CYCLES(data*256, 0));
+		break;
+
+	case 0x10: case 0x11: case 0x12:
+		svision_soundport_w(svision_channel+0, offset&3, data);
+		break;
+
+	case 0x14: case 0x15: case 0x16:
+		svision_soundport_w(svision_channel+1, offset&3, data);
+		break;
+
+	default:
+		logerror("%.6f svision write %04x %02x\n",timer_get_time(),offset,data);
+		break;
+	}
 }
 
 static MEMORY_READ_START( readmem )
@@ -259,21 +261,21 @@ static struct GfxDecodeInfo svision_gfxdecodeinfo[] = {
 };
 
 /* palette in red, green, blue tribles */
-static unsigned char svision_palette[4][3] =
+static unsigned char svision_palette[] =
 {
 #if 0
     // greens grabbed from a scan of a handheld
     // in its best adjustment for contrast
-	{ 53, 73, 42 },
-	{ 42, 64, 47 },
-	{ 22, 42, 51 },
-	{ 22, 25, 32 }
+	53, 73, 42,
+	42, 64, 47,
+	22, 42, 51,
+	22, 25, 32
 #else
 	// grabbed from chris covell's black white pics
-	{ 0xe0, 0xe0, 0xe0 },
-	{ 0xb9, 0xb9, 0xb9 },
-	{ 0x54, 0x54, 0x54 },
-	{ 0x12, 0x12, 0x12 }
+	0xe0, 0xe0, 0xe0,
+	0xb9, 0xb9, 0xb9,
+	0x54, 0x54, 0x54,
+	0x12, 0x12, 0x12
 #endif
 };
 
@@ -282,15 +284,13 @@ static unsigned short svision_colortable[1][4] = {
 	{ 0, 1, 2, 3 }
 };
 
-static void svision_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+static PALETTE_INIT( svision )
 {
-	memcpy (sys_palette, svision_palette, sizeof (svision_palette));
-	memcpy(sys_colortable,svision_colortable,sizeof(svision_colortable));
+	palette_set_colors(0, svision_palette, sizeof(svision_palette) / 3);
+	memcpy(colortable, svision_colortable, sizeof(svision_colortable));
 }
 
-static void svision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+static VIDEO_UPDATE( svision )
 {
 	int x, y, i, j;
 	UINT8 *vram=memory_region(REGION_CPU1)+0x4000+XPOS/4;
@@ -298,29 +298,28 @@ static void svision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refres
 	for (y=0,i=0; y<160; y++,i+=0x30) {
 		for (x=0,j=i; x<160; x+=4,j++) {
 			drawgfx(bitmap, Machine->gfx[0], vram[j],0,0,0,
-					x,y, 0, TRANSPARENCY_NONE,0);
+				x,y, 0, TRANSPARENCY_NONE,0);
 		}
 	}
 }
 
-static int svision_frame_int(void)
+static INTERRUPT_GEN( svision_frame_int )
 {
 	cpu_set_nmi_line(0, PULSE_LINE);
-	return ignore_interrupt();
 }
 
-static void init_svision(void)
+static DRIVER_INIT( svision )
 {
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	int i;
-
-	for (i=0; i<256;i++) gfx[i]=i;
+	for (i=0; i<256;i++)
+		gfx[i]=i;
 }
 
-static void svision_reset(void)
+static MACHINE_INIT( svision )
 {
-    svision.timer1=NULL;
-    svision.timer1_shot=FALSE;
+	svision.timer1 = timer_alloc(svision_timer);
+    svision.timer1_shot = FALSE;
 }
 
 struct CustomSound_interface svision_sound_interface =
@@ -330,43 +329,33 @@ struct CustomSound_interface svision_sound_interface =
 	svision_custom_update
 };
 
-static struct MachineDriver machine_driver_svision =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M65C02, //? stz used!
-			4000000, //?
-			readmem, writemem,
-			0,0,
-			svision_frame_int,1
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION, // based on crystball sound speed!
-	1, /* single CPU */
-	svision_reset,//stub_machine_init,
-	0,//stub_machine_stop,
-	160, 160, /* width and height of screen and allocated sizes */
-	{ 0, 160 - 1, 0, 160 - 1}, /* left, right, top, bottom of visible area */
-	svision_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (svision_palette) / sizeof (svision_palette[0]) ,
-	sizeof (svision_colortable) / sizeof(svision_colortable[0][0]),
-	svision_init_colors,		/* convert color prom */
 
-	VIDEO_TYPE_RASTER,	/* lcd */
-	0,						/* obsolete */
-	0,// video_start_generic,
-	0,
-	svision_vh_screenrefresh,
+static MACHINE_DRIVER_START( svision )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M65C02, 4000000)        /* ? stz used! speed? */
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_VBLANK_INT(svision_frame_int, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( svision )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)	/* lcd */
+	MDRV_SCREEN_SIZE(160, 160)
+	MDRV_VISIBLE_AREA(0, 160-1, 0, 160-1)
+	MDRV_GFXDECODE( svision_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(svision_palette) / sizeof(svision_palette[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof (svision_colortable) / sizeof(svision_colortable[0][0]))
+	MDRV_PALETTE_INIT( svision )
+
+	MDRV_VIDEO_UPDATE( svision )
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{SOUND_CUSTOM, &svision_sound_interface},
-		{ 0 }
-    }
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, svision_sound_interface)
+MACHINE_DRIVER_END
 
 ROM_START(svision)
 	ROM_REGION(0x20000,REGION_CPU1, 0)

@@ -129,11 +129,11 @@ const struct GameDriver *drivers[] =
 	/* saba videoplay 2 */
 
 	/* COLECO */
-////	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
-////	DRIVER( colecoa )	/* ColecoVision (Thick Characters)				  */
+	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
+	DRIVER( colecoa )	/* ColecoVision (Thick Characters)				  */
 	/* Please dont include these next 2 in a distribution, they are Hacks */
-//  ////	DRIVER( colecofb )	   ColecoVision (Fast BIOS load)				  */
-//  ////	DRIVER( coleconb )	   ColecoVision (No BIOS load)					  */
+TESTDRIVER( colecofb )	/*   ColecoVision (Fast BIOS load)				  */
+TESTDRIVER( coleconb )	/*   ColecoVision (No BIOS load)					  */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
@@ -151,8 +151,8 @@ const struct GameDriver *drivers[] =
 ////	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
 
 	/* MATTEL */
-	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV           */
-	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??           */
+//	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV           */
+//	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??           */
 
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision								  */
@@ -164,7 +164,7 @@ const struct GameDriver *drivers[] =
 TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 	/* Watara */
-////	DRIVER( svision )	/* Super Vision	Handheld						  */
+	DRIVER( svision )	/* Super Vision	Handheld						  */
 
 	/* 1992 epoch barcode battler handheld*/
 
@@ -540,8 +540,8 @@ TESTDRIVER( ti86v15 )	/*TI 86 rom ver. 1.5 */
 	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
-//	DRIVER( apfm1000 )
-//	DRIVER( apfimag )
+	DRIVER( apfm1000 )
+	DRIVER( apfimag )
 
 	/* Tatung */
 	DRIVER( einstein )
@@ -665,7 +665,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
 
 	/* MATTEL */
-	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
+//	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
 						/* (Test marketed, later recalled )				  */
 	DRIVER( aquarius )	/* 1983 Aquarius								  */
 

@@ -64,12 +64,12 @@ WRITE_HANDLER(apf_vsync_int)
 	apf_update_ints();
 }
 
-int apf_vh_start(void)
+VIDEO_START( apf )
 {
 	struct m6847_init_params p;
 
 	/* allocate video memory ram */
-	apf_video_ram = (unsigned char *)malloc(0x0400);
+	apf_video_ram = (unsigned char *)auto_malloc(0x0400);
 
 	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_ORIGINAL_NTSC;
@@ -78,23 +78,8 @@ int apf_vh_start(void)
 	p.charproc = apf_charproc;
 	p.fs_func = apf_vsync_int;
 
-	if (m6847_vh_start(&p))
+	if (video_start_m6847(&p))
 		return 1;
 
 	return (0);
 }
-
-void apf_vh_stop(void)
-{
-	apf_dump_ram();
-
-	/* free video memory ram */
-	if (apf_video_ram!=NULL)
-	{
-		free(apf_video_ram);
-		apf_video_ram = NULL;
-	}
-
-	m6847_vh_stop();
-}
-

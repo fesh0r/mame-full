@@ -4,24 +4,17 @@
 #include "driver.h"
 
 /*
-  this shows the interface that your files offer
-  (the only exception is your GAME/CONS/COMP structure!)
+	this shows the interface that your files offer
+	(the only exception is your GAME/CONS/COMP structure!)
 
-  allows the compiler generate the correct dependancy,
-  so it can recognize which files to rebuild
+	allows the compiler generate the correct dependancy,
+	so it can recognize which files to rebuild
 
-  the programmer sees, when he changes this interface, he might
-  have to adapt other drivers
+	the programmer sees, when he changes this interface, he might
+	have to adapt other drivers
 
-  you must not do declarations in c files with external bindings
+	you must not do declarations in c files with external bindings
 */
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-extern "C" void svision_runtime_loader_init(void);
-# else
-extern void svision_runtime_loader_init(void);
-# endif
-#endif
 
 typedef struct {
     UINT8 reg[3];
@@ -29,6 +22,7 @@ typedef struct {
     int size;
 } SVISION_CHANNEL;
 extern SVISION_CHANNEL svision_channel[2];
+
 extern int svision_custom_start (const struct MachineSound *driver);
 extern void svision_custom_stop (void);
 extern void svision_custom_update (void);

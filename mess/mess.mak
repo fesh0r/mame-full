@@ -185,13 +185,13 @@ DRVLIBS = \
 	$(OBJ)/sinclair.a \
 	$(OBJ)/lynx.a     \
 	$(OBJ)/intv.a     \
-#	$(OBJ)/coleco.a   \
+	$(OBJ)/svision.a  \
+	$(OBJ)/coleco.a   \
+	$(OBJ)/apf.a      \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
-#	$(OBJ)/svision.a  \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/amiga.a    \
-#	$(OBJ)/apf.a      \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/aim65.a    \
