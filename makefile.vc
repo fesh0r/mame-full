@@ -1,7 +1,7 @@
 #####################################################################
 
 MAME_VERSION = -DMAME_VERSION=37
-BETA_VERSION = -DBETA_VERSION=10
+BETA_VERSION = -DBETA_VERSION=11
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
@@ -286,14 +286,14 @@ $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 # generate C source files for the 68000 emulator
 $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo M68K make $<...
-	$(CC) $(CDEFS) $(CFLAGS) -Fe$@ -Fo$(OBJ)/cpu/m68000 $<
+	$(CC) $(CDEFS) $(CFLAGS) -Fe$@ -Fo$(OBJ)/cpu/m68000/ $<
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generate asm source files for the 68000 emulator
 $(OBJ)/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -Fe$(OBJ)/cpu/m68000/make68k$(EXE) -Fo$(OBJ)/cpu/m68000 $<
+	$(CC) $(CDEFS) $(CFLAGS) -Fe$(OBJ)/cpu/m68000/make68k$(EXE) -Fo$(OBJ)/cpu/m68000/ $<
 	@echo Generating $@...
 	$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/comptab.asm
 

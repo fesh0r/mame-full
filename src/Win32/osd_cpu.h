@@ -178,6 +178,7 @@ typedef union {
 #define HAS_SH2			0
 #else
 #define HAS_Z80         1
+#define HAS_SH2         0
 #define HAS_Z80GB       0
 #define HAS_CDP1802 	0
 #define HAS_8080        1
@@ -315,6 +316,7 @@ typedef union {
 #define HAS_CUSTOM      1
 #define HAS_SAMPLES     1
 #define HAS_DAC         1
+#define HAS_DISCRETE    1
 #define HAS_AY8910      1
 #define HAS_YM2203      1
 #define HAS_YM2151      0
@@ -357,6 +359,8 @@ typedef union {
 #define HAS_QSOUND      1
 #define HAS_SAA1099     1
 #define HAS_IREMGA20    1
+#define HAS_ES5505      1
+#define HAS_ES5506      1
 #define HAS_SPEAKER     0
 #define HAS_WAVE        0
 #define HAS_BEEP        0

@@ -240,7 +240,7 @@ BEGIN
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
             VALUE "FileVersion", "0, 37, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
-            VALUE "LegalCopyright", "Copyright © 1997-2000 Nicola Salmoria and the MAME team\0"
+            VALUE "LegalCopyright", "Copyright © 1997-2001 Nicola Salmoria and the MAME team\0"
 #endif
             VALUE "LegalTrademarks", "\0"
 #ifdef MESS
@@ -327,7 +327,7 @@ BEGIN
                     153,7,142,11,NOT WS_GROUP
     CTEXT           "Version 0.35 BETA",IDC_VERSION,153,18,142,11,NOT 
                     WS_GROUP
-    CTEXT           "Copyright (C) 1998-2000",IDC_STATIC,153,29,142,10,NOT 
+    CTEXT           "Copyright (C) 1998-2001",IDC_STATIC,153,29,142,10,NOT 
                     WS_GROUP
     CTEXT           "Win32 version based on MAME32 by",IDC_STATIC,153,62,142,10,NOT WS_GROUP
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,55,142,1
@@ -350,7 +350,7 @@ BEGIN
                     153,7,142,11,NOT WS_GROUP
     CTEXT           "Version 0",IDC_VERSION,153,18,142,11,NOT 
                     WS_GROUP
-    CTEXT           "Copyright (C) 1997-2000",IDC_STATIC,153,29,142,10,NOT 
+    CTEXT           "Copyright (C) 1997-2001",IDC_STATIC,153,29,142,10,NOT 
                     WS_GROUP
     CTEXT           "Win32 version by",IDC_STATIC,153,62,142,10,NOT WS_GROUP
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,55,142,1
