@@ -395,7 +395,7 @@ $(OBJ)/cgenie.a:   \
 	  $(OBJ)/mess/systems/cgenie.o
 
 $(OBJ)/pdp1.a:	   \
-#	  $(OBJ)/mess/vidhrdw/pdp1.o	 \
+	  $(OBJ)/mess/vidhrdw/pdp1.o	 \
 	  $(OBJ)/mess/machine/pdp1.o	 \
 	  $(OBJ)/mess/systems/pdp1.o
 
