@@ -31,7 +31,7 @@ WRITE16_HANDLER( intv_ram8_w );
 READ16_HANDLER( intv_ram16_r );
 WRITE16_HANDLER( intv_ram16_w );
 
-void stic_screenrefresh();
+void stic_screenrefresh(void);
 
 READ_HANDLER( intv_right_control_r );
 READ_HANDLER( intv_left_control_r );
