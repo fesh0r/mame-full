@@ -74,7 +74,7 @@ STREAM *stream_open_write_stream(int filesize);
 STREAM *stream_open_mem(void *buf, size_t sz);
 void stream_close(STREAM *f);
 size_t stream_read(STREAM *f, void *buf, size_t sz);
-size_t stream_write(STREAM *f, const void *buf, size_t sz);
+size_t stream_write(STREAM *f, void *buf, size_t sz);
 size_t stream_size(STREAM *f);
 int stream_seek(STREAM *f, size_t pos, int where);
 /* works currently only for IMG_FILE
@@ -98,7 +98,7 @@ int file_crc(const char *fname,  unsigned long *result);
 int stream_isreadonly(STREAM *f);
 
 /* -----------------------------------------------------------------------
- * Filters                                                            
+ * Filters
  * ----------------------------------------------------------------------- */
 
 struct filter_info {
@@ -133,11 +133,11 @@ enum {
 
 FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
 void filter_term(FILTER *f);
-int filter_writetostream(FILTER *f, STREAM *s, /*const*/ void *buf, int buflen);
+int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen);
 int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
 int filter_readintobuffer(FILTER *f, STREAM *s);
 
-FILTERMODULE filters[];
+extern FILTERMODULE filters[];
 
 FILTERMODULE filter_lookup(const char *name);
 

@@ -1,8 +1,7 @@
 0.37b10
----------
+
 Several drivers may be broken due to the MAME memory handling changes.
 And as a result, the Amiga has been temporarily removed.
----------
 
 Note: .inp record/playback does still not work currently.
 
@@ -16,21 +15,21 @@ System Driver Changes:
 ----------------------
 
 - [ATOM] Implemented colour change support of M6847. 
-Fixed eprom box emulation. [Kev Thacker]
+  Fixed eprom box emulation. [Kev Thacker]
 
 - [LASER110/LASER200/LASER310] Changed video hardware to use M6847 [Kev Thacker]
 
 - [NC100] Added MENU key and fixed problems with characters being dropped
-in serial transfer [Kev Thacker]
+  in serial transfer [Kev Thacker]
 
 - [NC200] Added MENU key, fixed some key assignments, fixed a memory problem.
-Blockade game now works. Fixed characters being dropped in serial transfer
- [Kev Thacker]
+  Blockade game now works. Fixed characters being dropped in serial transfer
+  [Kev Thacker]
 
 - [ORIC] Added VSYNC cable hardware; This can be enabled with a dipswitch 
-in the UI. Added support for Jasmin floppy disc interface; Floppy disc 
-interface can be chosen in UI: None, Microdisc or Jasmin. Improved video
-emulation; hires/text changes in the middle of a line will now work. [Kev Thacker]
+  in the UI. Added support for Jasmin floppy disc interface; Floppy disc 
+  interface can be chosen in UI: None, Microdisc or Jasmin. Improved video
+  emulation; hires/text changes in the middle of a line will now work. [Kev Thacker]
 
 - [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to
   $FF95 [Nate Woods]
@@ -46,12 +45,13 @@ Other Changes:
 - [IMGTOOL] Added filter support, and filters that translate endoflines, as
   well as the startings of BASIC tokenization.  Also updated the docs [Nate
   Woods]
-
+  
+  
+-------------------------------------------------------------------------------  
 0.37b9 
----------
+
 Several drivers may be broken due to the MAME memory handling changes.
 And as a result, the Amiga has been temporarily removed.
----------
 
 Note: .inp record/playback does still not work currently.
 
@@ -64,16 +64,16 @@ System Driver Changes:
 ----------------------
 
 - [NC100,NC100A,NC200] Implemented serial hardware: Programs can be loaded into emulation
-using the NC's built in terminal program. Some characters are dropped, could be synchronisation
-problems. XModem transfer not supported at this time. Implemented printer emulation: Documents 
-can be printed now. [Kev Thacker]
+  using the NC's built in terminal program. Some characters are dropped, could be synchronisation
+  problems. XModem transfer not supported at this time. Implemented printer emulation: Documents 
+  can be printed now. [Kev Thacker]
 - [COCO 3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, but
-some timing is still probably off.  Hi-res text will now display the underline in the proper
-place when the lines per row is not 8.  Lo-res font now skewed one scanline, as was the original
-machine.  Fixed Composite Monitor colors.  [Nate Woods]
+  some timing is still probably off.  Hi-res text will now display the underline in the proper
+  place when the lines per row is not 8.  Lo-res font now skewed one scanline, as was the original
+  machine.  Fixed Composite Monitor colors.  [Nate Woods]
 - [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. [Nate Woods]
 - [ORIC] fixed a bug in microdisc memory paging. Some discs start to boot now.
-Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
+  Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
 - [PC & compatibles] repartitioned, several problems fixed,
   major rewrite of graphic subsytems (dirtybuffering disabled temporary),
   Tandy 1000HX now uses EURO PC'S fontrom for acceptable displayment of its 8x9 characters,
@@ -86,14 +86,13 @@ Other Changes:
   features of the update to this core.  [MAME team] 
 
 - The M6847 interfaces were given a facelift, and now more correctly mimic the signals on the chip.
-[Nate Woods]
+  [Nate Woods]
 
 -------------------------------------------------------------------------------
 0.37b8 
----------
+
 Several drivers may be broken due to the MAME memory handling changes.
 And as a result, the Amiga has been temporarily removed.
----------
 
 Note: .inp record/playback does still not work currently.
 

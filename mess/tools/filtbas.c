@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "imgtool.h"
-#include "osdutils.h"
+#include "../mess/msdos/osdutils.h"
 
 struct basictokens {
 	UINT16 baseaddress;
@@ -119,7 +119,7 @@ static int filter_basic_read(struct filter_info *fi, void *buf, int buflen)
 	char *bufc = (char *) buf;
 	unsigned int nextaddr;
 	unsigned int linenumber;
-	const struct basictokens *tokens = (const struct basictokens *) fi->filterparam;
+//	const struct basictokens *tokens = (const struct basictokens *) fi->filterparam;
 	struct filter_basic_state *state = (struct filter_basic_state *) fi->filterstate;
 
 	/* Skip first three bytes */
