@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 enum {
-	F8_PC0=1, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS,
+	F8_PC0=0, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS,
         F8_J, F8_HU, F8_HL, F8_KU, F8_KL, F8_QU, F8_QL,
 
         F8_R0, F8_R1, F8_R2, F8_R3, F8_R4, F8_R5, F8_R6, F8_R7, F8_R8,
@@ -45,34 +45,7 @@ enum {
 #define F8_INT_NONE  0
 #define F8_INT_INTR  1
 
-extern int f8_icount;				 /* cycle count */
-
-extern void f8_init(void);
-extern void f8_reset (void *param); 		 /* Reset registers to the initial values */
-extern void f8_exit  (void);				 /* Shut down CPU core */
-extern int	f8_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */
-extern unsigned f8_get_context (void *dst);  /* Get registers, return context size */
-extern void f8_set_context (void *src); 	 /* Set registers */
-extern unsigned f8_get_reg (int regnum);
-extern void f8_set_reg (int regnum, unsigned val);
-extern void f8_set_nmi_line(int state);
-extern void f8_set_irq_line(int irqline, int state);
-extern void f8_set_irq_callback(int (*callback)(int irqline));
-extern void f8_state_save(void *file);
-extern void f8_state_load(void *file);
-extern const char *f8_info(void *context, int regnum);
-extern unsigned f8_dasm(char *buffer, unsigned pc);
-
-WRITE_HANDLER( f8_internal_w );
-READ_HANDLER( f8_internal_r );
-
-#ifdef MAME_DEBUG
-extern unsigned DasmF8( char *dst, unsigned pc );
-#endif
-
-#ifdef RUNTIME_LOADER
-	extern void f8_runtime_loader_init(void);
-#endif
+void f8_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  *	 f8.c
  *	 Portable F8 emulator (Fairchild 3850)
  *
@@ -54,12 +54,12 @@ typedef struct {
     UINT16  irq_vector;
 	int 	(*irq_callback)(int irqline);
     UINT8   r[64];  /* scratchpad RAM */
-    bool irq_request;
-}	F8;
+    int     irq_request;
+}	f8_Regs;
 
 int f8_icount;
 
-static F8 f8;
+static f8_Regs f8;
 
 /* timer shifter polynome values (will be used for timer interrupts) */
 static UINT8 timer_shifter[256];
@@ -158,7 +158,7 @@ static void ROMC_02(void)
      * the memory location addressed by DC0; then all devices increment
      * DC0.
      */
-    f8.dbus = cpu_readmem16(f8.dc0);
+    f8.dbus = program_read_byte_8(f8.dc0);
     f8.dc0 += 1;
     f8_icount -= cL;
 }
@@ -189,7 +189,7 @@ static void ROMC_05(void)
      * Store the data bus contents into the memory location pointed
      * to by DC0; increment DC0.
      */
-    cpu_writemem16(f8.dc0, f8.dbus);
+    program_write_byte_8(f8.dc0, f8.dbus);
     f8.dc0 += 1;
     f8_icount -= cL;
 }
@@ -263,7 +263,7 @@ static void ROMC_0C(void)
      * by PC0 into the data bus; then all devices move the value that
      * has just been placed on the data bus into the low order byte of PC0.
      */
-    f8.dbus = cpu_readmem16(f8.pc0);
+    f8.dbus = cpu_readop_arg(f8.pc0);
     f8.pc0 = (f8.pc0 & 0xff00) | f8.dbus;
     f8_icount -= cL;
 }
@@ -286,7 +286,7 @@ static void ROMC_0E(void)
      * The value on the data bus is then moved to the low order byte
      * of DC0 by all devices.
      */
-    f8.dbus = cpu_readmem16(f8.pc0);
+    f8.dbus = cpu_readop_arg(f8.pc0);
     f8.dc0 = (f8.dc0 & 0xff00) | f8.dbus;
     f8_icount -= cL;
 }
@@ -326,7 +326,7 @@ static void ROMC_11(void)
      * data bus. All devices must then move the contents of the
      * data bus to the upper byte of DC0.
      */
-    f8.dbus = cpu_readmem16(f8.pc0);
+    f8.dbus = cpu_readop_arg(f8.pc0);
 	f8.dc0 = (f8.dc0 & 0x00ff) | (f8.dbus << 8);
     f8_icount -= cL;
 }
@@ -425,7 +425,7 @@ static void ROMC_1A(void)
      * register was addressed; the device containing the addressed port
      * must place the contents of the data bus into the address port.
      */
-    cpu_writeport16(f8.io, f8.dbus);
+    io_write_byte_8(f8.io, f8.dbus);
     f8_icount -= cL;
 }
 
@@ -438,7 +438,7 @@ static void ROMC_1B(void)
      * contents of timer and interrupt control registers cannot be read
      * back onto the data bus).
      */
-	f8.dbus = cpu_readport16(f8.io);
+	f8.dbus = io_read_byte_8(f8.io);
     f8_icount -= cL;
 }
 
@@ -1279,7 +1279,7 @@ static void f8_ins_0(int n)
 {
     ROMC_1C();
     CLR_OZCS;
-    f8.a = cpu_readport16(n);
+    f8.a = io_read_byte_8(n);
     SET_SZ(f8.a);
 }
 
@@ -1304,7 +1304,7 @@ static void f8_ins_1(int n)
 static void f8_outs_0(int n)
 {
     ROMC_1C();
-    cpu_writeport16(n, f8.a);
+    io_write_byte_8(n, f8.a);
 }
 
 /***************************************************
@@ -1556,7 +1556,7 @@ void f8_reset(void *param)
 	UINT8 data;
 	int i;
 
-	memset(&f8, 0, sizeof(F8));
+	memset(&f8, 0, sizeof(f8_Regs));
     f8.w&=~I;
 
 	/* save PC0 to PC1 and reset PC0 */
@@ -1899,332 +1899,21 @@ int f8_execute(int cycles)
     return cycles - f8_icount;
 }
 
-/* Get registers, return context size */
-unsigned f8_get_context(void *dst)
+static void f8_get_context (void *dst)
 {
-	if( dst )
-		memcpy(dst, &f8, sizeof(F8));
-	return sizeof(F8);
+	if (dst)
+		*(f8_Regs *) dst = f8;
 }
 
-/* Set registers */
-void f8_set_context(void *src)
+static void f8_set_context (void *src)
 {
-	if( src )
-		memcpy(&f8, src, sizeof(F8));
+	if (src)
+		f8 = *(f8_Regs *) src;
 }
 
-WRITE_HANDLER( f8_internal_w )
-{
-    f8.r[ offset & 0x3f ] = data;
-}
-
-READ_HANDLER( f8_internal_r )
-{
-    return f8.r[ offset & 0x3f ];
-}
-
-unsigned f8_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-	case REG_PC:
-	case F8_PC0: return (f8.pc0 - 1) & 0xffff;
-	case REG_SP:
-	case F8_PC1: return f8.pc1;
-	case F8_DC0: return f8.dc0;
-	case F8_DC1: return f8.dc1;
-    case F8_W:   return f8.w;
-	case F8_A:	 return f8.a;
-	case F8_IS:  return f8.is;
-	case F8_J:	 return f8.r[ 9];
-	case F8_HU:  return f8.r[10];
-	case F8_HL:  return f8.r[11];
-	case F8_KU:  return f8.r[12];
-	case F8_KL:  return f8.r[13];
-	case F8_QU:  return f8.r[14];
-	case F8_QL:  return f8.r[15];
-	
-    case F8_R0:  return f8.r[0];
-    case F8_R1:  return f8.r[1];
-    case F8_R2:  return f8.r[2];
-    case F8_R3:  return f8.r[3];
-    case F8_R4:  return f8.r[4];
-    case F8_R5:  return f8.r[5];
-    case F8_R6:  return f8.r[6];
-    case F8_R7:  return f8.r[7];
-    case F8_R8:  return f8.r[8];
-
-    case F8_R16:  return f8.r[16];
-    case F8_R17:  return f8.r[17];
-    case F8_R18:  return f8.r[18];
-    case F8_R19:  return f8.r[19];
-    case F8_R20:  return f8.r[20];
-    case F8_R21:  return f8.r[21];
-    case F8_R22:  return f8.r[22];
-    case F8_R23:  return f8.r[23];
-    case F8_R24:  return f8.r[24];
-    case F8_R25:  return f8.r[25];
-    case F8_R26:  return f8.r[26];
-    case F8_R27:  return f8.r[27];
-    case F8_R28:  return f8.r[28];
-    case F8_R29:  return f8.r[29];
-    case F8_R30:  return f8.r[30];
-    case F8_R31:  return f8.r[31];
-    case F8_R32:  return f8.r[32];
-    case F8_R33:  return f8.r[33];
-    case F8_R34:  return f8.r[34];
-    case F8_R35:  return f8.r[35];
-    case F8_R36:  return f8.r[36];
-    case F8_R37:  return f8.r[37];
-    case F8_R38:  return f8.r[38];
-    case F8_R39:  return f8.r[39];
-    case F8_R40:  return f8.r[40];
-    case F8_R41:  return f8.r[41];
-    case F8_R42:  return f8.r[42];
-    case F8_R43:  return f8.r[43];
-    case F8_R44:  return f8.r[44];
-    case F8_R45:  return f8.r[45];
-    case F8_R46:  return f8.r[46];
-    case F8_R47:  return f8.r[47];
-    case F8_R48:  return f8.r[48];
-    case F8_R49:  return f8.r[49];
-    case F8_R50:  return f8.r[50];
-    case F8_R51:  return f8.r[51];
-    case F8_R52:  return f8.r[52];
-    case F8_R53:  return f8.r[53];
-    case F8_R54:  return f8.r[54];
-    case F8_R55:  return f8.r[55];
-    case F8_R56:  return f8.r[56];
-    case F8_R57:  return f8.r[57];
-    case F8_R58:  return f8.r[58];
-    case F8_R59:  return f8.r[59];
-    case F8_R60:  return f8.r[60];
-    case F8_R61:  return f8.r[61];
-    case F8_R62:  return f8.r[62];
-    case F8_R63:  return f8.r[63];
-
-	}
-	return 0;
-}
-
-void f8_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case REG_PC:
-	case F8_PC0: f8.pc0 = val;
-		f8.dbus = cpu_readop(f8.pc0);
-    	f8.pc0 += 1;
-		break;
-	case REG_SP:
-	case F8_PC1: f8.pc1 = val; break;
-	case F8_DC0: f8.dc0 = val; break;
-	case F8_DC1: f8.dc1 = val; break;
-	case F8_W:	 f8.w = val; break;
-	case F8_A:	 f8.a = val; break;
-	case F8_IS:  f8.is = val & 0x3f; break;
-	case F8_J:	 f8.r[ 9] = val; break;
-	case F8_HU:  f8.r[10] = val; break;
-	case F8_HL:  f8.r[11] = val; break;
-	case F8_KU:  f8.r[12] = val; break;
-	case F8_KL:  f8.r[13] = val; break;
-	case F8_QU:  f8.r[14] = val; break;
-	case F8_QL:  f8.r[15] = val; break;
-	
-	case F8_R0:  f8.r[0]=val; break;
-	case F8_R1:  f8.r[1]=val; break;
-	case F8_R2:  f8.r[2]=val; break;
-	case F8_R3:  f8.r[3]=val; break;
-	case F8_R4:  f8.r[4]=val; break;
-	case F8_R5:  f8.r[5]=val; break;
-	case F8_R6:  f8.r[6]=val; break;
-	case F8_R7:  f8.r[7]=val; break;
-	case F8_R8:  f8.r[8]=val; break;
-
-	case F8_R16:  f8.r[16]=val; break;
-	case F8_R17:  f8.r[17]=val; break;
-	case F8_R18:  f8.r[18]=val; break;
-	case F8_R19:  f8.r[19]=val; break;
-	case F8_R20:  f8.r[20]=val; break;
-	case F8_R21:  f8.r[21]=val; break;
-	case F8_R22:  f8.r[22]=val; break;
-	case F8_R23:  f8.r[23]=val; break;
-	case F8_R24:  f8.r[24]=val; break;
-	case F8_R25:  f8.r[25]=val; break;
-	case F8_R26:  f8.r[26]=val; break;
-	case F8_R27:  f8.r[27]=val; break;
-	case F8_R28:  f8.r[28]=val; break;
-	case F8_R29:  f8.r[29]=val; break;
-	case F8_R30:  f8.r[30]=val; break;
-	case F8_R31:  f8.r[31]=val; break;
-	case F8_R32:  f8.r[32]=val; break;
-	case F8_R33:  f8.r[33]=val; break;
-	case F8_R34:  f8.r[34]=val; break;
-	case F8_R35:  f8.r[35]=val; break;
-	case F8_R36:  f8.r[36]=val; break;
-	case F8_R37:  f8.r[37]=val; break;
-	case F8_R38:  f8.r[38]=val; break;
-	case F8_R39:  f8.r[39]=val; break;
-	case F8_R40:  f8.r[40]=val; break;
-	case F8_R41:  f8.r[41]=val; break;
-	case F8_R42:  f8.r[42]=val; break;
-	case F8_R43:  f8.r[43]=val; break;
-	case F8_R44:  f8.r[44]=val; break;
-	case F8_R45:  f8.r[45]=val; break;
-	case F8_R46:  f8.r[46]=val; break;
-	case F8_R47:  f8.r[47]=val; break;
-	case F8_R48:  f8.r[48]=val; break;
-	case F8_R49:  f8.r[49]=val; break;
-	case F8_R50:  f8.r[50]=val; break;
-	case F8_R51:  f8.r[51]=val; break;
-	case F8_R52:  f8.r[52]=val; break;
-	case F8_R53:  f8.r[53]=val; break;
-	case F8_R54:  f8.r[54]=val; break;
-	case F8_R55:  f8.r[55]=val; break;
-	case F8_R56:  f8.r[56]=val; break;
-	case F8_R57:  f8.r[57]=val; break;
-	case F8_R58:  f8.r[58]=val; break;
-	case F8_R59:  f8.r[59]=val; break;
-	case F8_R60:  f8.r[60]=val; break;
-	case F8_R61:  f8.r[61]=val; break;
-	case F8_R62:  f8.r[62]=val; break;
-	case F8_R63:  f8.r[63]=val; break;
-    }
-}
-
-void f8_set_nmi_line(int state)
-{
-	/* not applicable */
-}
-
-void f8_set_irq_line(int irqline, int state)
-{
-    switch( irqline ) {
-    case F8_INT_INTR:
-	f8.irq_request=state;
-	break;
-    }
-}
-
-void f8_set_irq_callback(int (*callback)(int irqline))
-{
-	f8.irq_callback = callback;
-}
-
-void f8_state_save(void *file)
-{
-}
-
-void f8_state_load(void *file)
-{
-}
-
-const char *f8_info(void *context, int regnum)
-{
-	static char buffer[8][15+1];
-	static int which = 0;
-	F8 *r = context;
-
-	which = (which + 1) % 8;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &f8;
-
-    switch( regnum )
-	{
-		case CPU_INFO_REG+F8_PC0:sprintf(buffer[which], "PC0:%04X", ((r->pc0) - 1) & 0xffff); break;
-		case CPU_INFO_REG+F8_PC1:sprintf(buffer[which], "PC1:%04X", r->pc1); break;
-		case CPU_INFO_REG+F8_DC0:sprintf(buffer[which], "DC0:%04X", r->dc0); break;
-		case CPU_INFO_REG+F8_DC1:sprintf(buffer[which], "DC1:%04X", r->dc1); break;
-        case CPU_INFO_REG+F8_W:  sprintf(buffer[which], "W  :%02X", r->w); break;
-		case CPU_INFO_REG+F8_A:  sprintf(buffer[which], "A  :%02X", r->a); break;
-		case CPU_INFO_REG+F8_IS: sprintf(buffer[which], "IS :%02X", r->is); break;
-		case CPU_INFO_REG+F8_J:  sprintf(buffer[which], "J  :%02X", r->r[9]); break;
-		case CPU_INFO_REG+F8_HU: sprintf(buffer[which], "HU :%02X", r->r[10]); break;
-		case CPU_INFO_REG+F8_HL: sprintf(buffer[which], "HL :%02X", r->r[11]); break;
-        case CPU_INFO_REG+F8_KU: sprintf(buffer[which], "KU :%02X", r->r[12]); break;
-		case CPU_INFO_REG+F8_KL: sprintf(buffer[which], "KL :%02X", r->r[13]); break;
-		case CPU_INFO_REG+F8_QU: sprintf(buffer[which], "QU :%02X", r->r[14]); break;
-		case CPU_INFO_REG+F8_QL: sprintf(buffer[which], "QL :%02X", r->r[15]); break;
-		
-		case CPU_INFO_REG+F8_R0: sprintf(buffer[which], "R0 :%02X", r->r[0]); break;
-		case CPU_INFO_REG+F8_R1: sprintf(buffer[which], "R1 :%02X", r->r[1]); break;
-		case CPU_INFO_REG+F8_R2: sprintf(buffer[which], "R2 :%02X", r->r[2]); break;
-		case CPU_INFO_REG+F8_R3: sprintf(buffer[which], "R3 :%02X", r->r[3]); break;
-		case CPU_INFO_REG+F8_R4: sprintf(buffer[which], "R4 :%02X", r->r[4]); break;
-		case CPU_INFO_REG+F8_R5: sprintf(buffer[which], "R5 :%02X", r->r[5]); break;
-		case CPU_INFO_REG+F8_R6: sprintf(buffer[which], "R6 :%02X", r->r[6]); break;
-		case CPU_INFO_REG+F8_R7: sprintf(buffer[which], "R7 :%02X", r->r[7]); break;
-		case CPU_INFO_REG+F8_R8: sprintf(buffer[which], "R8 :%02X", r->r[8]); break;
-
-		case CPU_INFO_REG+F8_R16: sprintf(buffer[which], "R16 :%02X", r->r[16]); break;
-		case CPU_INFO_REG+F8_R17: sprintf(buffer[which], "R17 :%02X", r->r[17]); break;
-		case CPU_INFO_REG+F8_R18: sprintf(buffer[which], "R18 :%02X", r->r[18]); break;
-		case CPU_INFO_REG+F8_R19: sprintf(buffer[which], "R19 :%02X", r->r[19]); break;
-		case CPU_INFO_REG+F8_R20: sprintf(buffer[which], "R20 :%02X", r->r[20]); break;
-		case CPU_INFO_REG+F8_R21: sprintf(buffer[which], "R21 :%02X", r->r[21]); break;
-		case CPU_INFO_REG+F8_R22: sprintf(buffer[which], "R22 :%02X", r->r[22]); break;
-		case CPU_INFO_REG+F8_R23: sprintf(buffer[which], "R23 :%02X", r->r[23]); break;
-		case CPU_INFO_REG+F8_R24: sprintf(buffer[which], "R24 :%02X", r->r[24]); break;
-		case CPU_INFO_REG+F8_R25: sprintf(buffer[which], "R25 :%02X", r->r[25]); break;
-		case CPU_INFO_REG+F8_R26: sprintf(buffer[which], "R26 :%02X", r->r[26]); break;
-		case CPU_INFO_REG+F8_R27: sprintf(buffer[which], "R27 :%02X", r->r[27]); break;
-		case CPU_INFO_REG+F8_R28: sprintf(buffer[which], "R28 :%02X", r->r[28]); break;
-		case CPU_INFO_REG+F8_R29: sprintf(buffer[which], "R29 :%02X", r->r[29]); break;
-		case CPU_INFO_REG+F8_R30: sprintf(buffer[which], "R30 :%02X", r->r[30]); break;
-		case CPU_INFO_REG+F8_R31: sprintf(buffer[which], "R31 :%02X", r->r[31]); break;
-		case CPU_INFO_REG+F8_R32: sprintf(buffer[which], "R32 :%02X", r->r[32]); break;
-		case CPU_INFO_REG+F8_R33: sprintf(buffer[which], "R33 :%02X", r->r[33]); break;
-		case CPU_INFO_REG+F8_R34: sprintf(buffer[which], "R34 :%02X", r->r[34]); break;
-		case CPU_INFO_REG+F8_R35: sprintf(buffer[which], "R35 :%02X", r->r[35]); break;
-		case CPU_INFO_REG+F8_R36: sprintf(buffer[which], "R36 :%02X", r->r[36]); break;
-		case CPU_INFO_REG+F8_R37: sprintf(buffer[which], "R37 :%02X", r->r[37]); break;
-		case CPU_INFO_REG+F8_R38: sprintf(buffer[which], "R38 :%02X", r->r[38]); break;
-		case CPU_INFO_REG+F8_R39: sprintf(buffer[which], "R39 :%02X", r->r[39]); break;
-		case CPU_INFO_REG+F8_R40: sprintf(buffer[which], "R40 :%02X", r->r[40]); break;
-		case CPU_INFO_REG+F8_R41: sprintf(buffer[which], "R41 :%02X", r->r[41]); break;
-		case CPU_INFO_REG+F8_R42: sprintf(buffer[which], "R42 :%02X", r->r[42]); break;
-		case CPU_INFO_REG+F8_R43: sprintf(buffer[which], "R43 :%02X", r->r[43]); break;
-		case CPU_INFO_REG+F8_R44: sprintf(buffer[which], "R44 :%02X", r->r[44]); break;
-		case CPU_INFO_REG+F8_R45: sprintf(buffer[which], "R45 :%02X", r->r[45]); break;
-		case CPU_INFO_REG+F8_R46: sprintf(buffer[which], "R46 :%02X", r->r[46]); break;
-		case CPU_INFO_REG+F8_R47: sprintf(buffer[which], "R47 :%02X", r->r[47]); break;
-		case CPU_INFO_REG+F8_R48: sprintf(buffer[which], "R48 :%02X", r->r[48]); break;
-		case CPU_INFO_REG+F8_R49: sprintf(buffer[which], "R49 :%02X", r->r[49]); break;
-		case CPU_INFO_REG+F8_R50: sprintf(buffer[which], "R50 :%02X", r->r[50]); break;
-		case CPU_INFO_REG+F8_R51: sprintf(buffer[which], "R51 :%02X", r->r[51]); break;
-		case CPU_INFO_REG+F8_R52: sprintf(buffer[which], "R52 :%02X", r->r[52]); break;
-		case CPU_INFO_REG+F8_R53: sprintf(buffer[which], "R53 :%02X", r->r[53]); break;
-		case CPU_INFO_REG+F8_R54: sprintf(buffer[which], "R54 :%02X", r->r[54]); break;
-		case CPU_INFO_REG+F8_R55: sprintf(buffer[which], "R55 :%02X", r->r[55]); break;
-		case CPU_INFO_REG+F8_R56: sprintf(buffer[which], "R56 :%02X", r->r[56]); break;
-		case CPU_INFO_REG+F8_R57: sprintf(buffer[which], "R57 :%02X", r->r[57]); break;
-		case CPU_INFO_REG+F8_R58: sprintf(buffer[which], "R58 :%02X", r->r[58]); break;
-		case CPU_INFO_REG+F8_R59: sprintf(buffer[which], "R59 :%02X", r->r[59]); break;
-		case CPU_INFO_REG+F8_R60: sprintf(buffer[which], "R60 :%02X", r->r[60]); break;
-		case CPU_INFO_REG+F8_R61: sprintf(buffer[which], "R61 :%02X", r->r[61]); break;
-		case CPU_INFO_REG+F8_R62: sprintf(buffer[which], "R62 :%02X", r->r[62]); break;
-		case CPU_INFO_REG+F8_R63: sprintf(buffer[which], "R63 :%02X", r->r[63]); break;
-
-        case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c",
-				r->w & 0x10 ? 'I':'.',
-				r->w & 0x08 ? 'O':'.',
-				r->w & 0x04 ? 'Z':'.',
-				r->w & 0x02 ? 'C':'.',
-				r->w & 0x01 ? 'S':'.');
-			break;
-		case CPU_INFO_NAME: return "F8";
-		case CPU_INFO_FAMILY: return "Fairchild F8";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 2000 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)f8_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)f8_win_layout;
-	}
-    return buffer[which];
-}
+#ifdef MAME_DEBUG
+unsigned DasmF8( char *dst, unsigned pc );
+#endif
 
 unsigned f8_dasm(char *buffer, unsigned pc)
 {
@@ -2236,18 +1925,328 @@ unsigned f8_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-#ifdef RUNTIME_LOADER
-struct cpu_interface
-f8_interface=
-CPU4(F8,       f8,       1,  0,1.00,F8_INT_NONE,       F8_INT_INTR,    -1,             8, 16,     0,16,LE,1, 3);
-
-extern void f8_runtime_loader_init(void)
-{
-	cpuintf[CPU_F8]=f8_interface;
-}
-#endif
-
 void f8_init (void) { }
+
+static void f8_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	case CPUINFO_INT_SP:			f8.pc1 = info->i;						break;
+	case CPUINFO_INT_PC:
+		f8.pc0 = info->i;
+		f8.dbus = cpu_readop(f8.pc0);
+    	f8.pc0 += 1;
+  		break;
+	case CPUINFO_INT_PREVIOUSPC:	break;	/* TODO? */
+	case CPUINFO_INT_IRQ_STATE:		f8.irq_request = info->i;				break;
+	case CPUINFO_INT_REGISTER + F8_PC0:
+		f8.pc0 = info->i;
+		f8.dbus = cpu_readop(f8.pc0);
+    	f8.pc0 += 1;
+		break;
+	case CPUINFO_INT_REGISTER + F8_PC1: f8.pc1 = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_DC0: f8.dc0 = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_DC1: f8.dc1 = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_W:	f8.w = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_A:	f8.a = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_IS:  f8.is = info->i & 0x3f; break;
+	case CPUINFO_INT_REGISTER + F8_J:	f8.r[ 9] = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_HU:  f8.r[10] = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_HL:  f8.r[11] = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_KU:  f8.r[12] = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_KL:  f8.r[13] = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_QU:  f8.r[14] = info->i; break;
+	case CPUINFO_INT_REGISTER + F8_QL:  f8.r[15] = info->i; break;
+
+	case CPUINFO_INT_REGISTER + F8_R0:
+	case CPUINFO_INT_REGISTER + F8_R1:
+	case CPUINFO_INT_REGISTER + F8_R2:
+	case CPUINFO_INT_REGISTER + F8_R3:
+	case CPUINFO_INT_REGISTER + F8_R4:
+	case CPUINFO_INT_REGISTER + F8_R5:
+	case CPUINFO_INT_REGISTER + F8_R6:
+	case CPUINFO_INT_REGISTER + F8_R7:
+	case CPUINFO_INT_REGISTER + F8_R8:
+		f8.r[state - (CPUINFO_INT_REGISTER + F8_R0)]=info->i;
+		break;
+
+	case CPUINFO_INT_REGISTER + F8_R16:
+	case CPUINFO_INT_REGISTER + F8_R17:
+	case CPUINFO_INT_REGISTER + F8_R18:
+	case CPUINFO_INT_REGISTER + F8_R19:
+	case CPUINFO_INT_REGISTER + F8_R20:
+	case CPUINFO_INT_REGISTER + F8_R21:
+	case CPUINFO_INT_REGISTER + F8_R22:
+	case CPUINFO_INT_REGISTER + F8_R23:
+	case CPUINFO_INT_REGISTER + F8_R24:
+	case CPUINFO_INT_REGISTER + F8_R25:
+	case CPUINFO_INT_REGISTER + F8_R26:
+	case CPUINFO_INT_REGISTER + F8_R27:
+	case CPUINFO_INT_REGISTER + F8_R28:
+	case CPUINFO_INT_REGISTER + F8_R29:
+	case CPUINFO_INT_REGISTER + F8_R30:
+	case CPUINFO_INT_REGISTER + F8_R31:
+	case CPUINFO_INT_REGISTER + F8_R32:
+	case CPUINFO_INT_REGISTER + F8_R33:
+	case CPUINFO_INT_REGISTER + F8_R34:
+	case CPUINFO_INT_REGISTER + F8_R35:
+	case CPUINFO_INT_REGISTER + F8_R36:
+	case CPUINFO_INT_REGISTER + F8_R37:
+	case CPUINFO_INT_REGISTER + F8_R38:
+	case CPUINFO_INT_REGISTER + F8_R39:
+	case CPUINFO_INT_REGISTER + F8_R40:
+	case CPUINFO_INT_REGISTER + F8_R41:
+	case CPUINFO_INT_REGISTER + F8_R42:
+	case CPUINFO_INT_REGISTER + F8_R43:
+	case CPUINFO_INT_REGISTER + F8_R44:
+	case CPUINFO_INT_REGISTER + F8_R45:
+	case CPUINFO_INT_REGISTER + F8_R46:
+	case CPUINFO_INT_REGISTER + F8_R47:
+	case CPUINFO_INT_REGISTER + F8_R48:
+	case CPUINFO_INT_REGISTER + F8_R49:
+	case CPUINFO_INT_REGISTER + F8_R50:
+	case CPUINFO_INT_REGISTER + F8_R51:
+	case CPUINFO_INT_REGISTER + F8_R52:
+	case CPUINFO_INT_REGISTER + F8_R53:
+	case CPUINFO_INT_REGISTER + F8_R54:
+	case CPUINFO_INT_REGISTER + F8_R55:
+	case CPUINFO_INT_REGISTER + F8_R56:
+	case CPUINFO_INT_REGISTER + F8_R57:
+	case CPUINFO_INT_REGISTER + F8_R58:
+	case CPUINFO_INT_REGISTER + F8_R59:
+	case CPUINFO_INT_REGISTER + F8_R60:
+	case CPUINFO_INT_REGISTER + F8_R61:
+	case CPUINFO_INT_REGISTER + F8_R62:
+	case CPUINFO_INT_REGISTER + F8_R63:
+		f8.r[state - (CPUINFO_INT_REGISTER + F8_R16) + 16]=info->i;
+		break;
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	case CPUINFO_PTR_IRQ_CALLBACK:	f8.irq_callback = info->irqcallback;	break;
+	}
+	return;
+}
+
+void f8_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(f8_Regs);	break;
+	case CPUINFO_INT_IRQ_LINES:						info->i = 1;			break;
+	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;			break;
+	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	break;
+	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;			break;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;			break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;			break;
+	case CPUINFO_INT_MIN_CYCLES:					info->i = 1;			break;
+	case CPUINFO_INT_MAX_CYCLES:					info->i = 7;			break;
+
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;	break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;	break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 8;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;	break;
+
+	case CPUINFO_INT_SP:				info->i = f8.pc1;					break;
+	case CPUINFO_INT_PC:				info->i = (f8.pc0 - 1) & 0xffff;	break;
+	case CPUINFO_INT_PREVIOUSPC:		info->i = 0;	/* TODO??? */		break;
+
+	case CPUINFO_INT_IRQ_STATE:			info->i = f8.irq_request;			break;
+
+	case CPUINFO_INT_REGISTER + F8_PC0:	info->i = (f8.pc0 - 1) & 0xffff;	break;
+	case CPUINFO_INT_REGISTER + F8_PC1: info->i = f8.pc1;					break;
+	case CPUINFO_INT_REGISTER + F8_DC0: info->i = f8.dc0;					break;
+	case CPUINFO_INT_REGISTER + F8_DC1: info->i = f8.dc1;					break;
+    case CPUINFO_INT_REGISTER + F8_W: 	info->i = f8.w;						break;
+	case CPUINFO_INT_REGISTER + F8_A: 	info->i = f8.a;						break;
+	case CPUINFO_INT_REGISTER + F8_IS: 	info->i = f8.is;					break;
+	case CPUINFO_INT_REGISTER + F8_J:	info->i = f8.r[ 9];					break;
+	case CPUINFO_INT_REGISTER + F8_HU:  info->i = f8.r[10];					break;
+	case CPUINFO_INT_REGISTER + F8_HL:  info->i = f8.r[11];					break;
+	case CPUINFO_INT_REGISTER + F8_KU:  info->i = f8.r[12];					break;
+	case CPUINFO_INT_REGISTER + F8_KL:  info->i = f8.r[13];					break;
+	case CPUINFO_INT_REGISTER + F8_QU:  info->i = f8.r[14];					break;
+	case CPUINFO_INT_REGISTER + F8_QL:  info->i = f8.r[15];					break;
+
+    case CPUINFO_INT_REGISTER + F8_R0:
+    case CPUINFO_INT_REGISTER + F8_R1:
+    case CPUINFO_INT_REGISTER + F8_R2:
+    case CPUINFO_INT_REGISTER + F8_R3:
+    case CPUINFO_INT_REGISTER + F8_R4:
+    case CPUINFO_INT_REGISTER + F8_R5:
+    case CPUINFO_INT_REGISTER + F8_R6:
+    case CPUINFO_INT_REGISTER + F8_R7:
+    case CPUINFO_INT_REGISTER + F8_R8:
+    	info->i = f8.r[state - (CPUINFO_INT_REGISTER + F8_R0)];	break;
+
+
+    case CPUINFO_INT_REGISTER + F8_R16:
+    case CPUINFO_INT_REGISTER + F8_R17:
+    case CPUINFO_INT_REGISTER + F8_R18:
+    case CPUINFO_INT_REGISTER + F8_R19:
+    case CPUINFO_INT_REGISTER + F8_R20:
+    case CPUINFO_INT_REGISTER + F8_R21:
+    case CPUINFO_INT_REGISTER + F8_R22:
+    case CPUINFO_INT_REGISTER + F8_R23:
+    case CPUINFO_INT_REGISTER + F8_R24:
+    case CPUINFO_INT_REGISTER + F8_R25:
+    case CPUINFO_INT_REGISTER + F8_R26:
+    case CPUINFO_INT_REGISTER + F8_R27:
+    case CPUINFO_INT_REGISTER + F8_R28:
+    case CPUINFO_INT_REGISTER + F8_R29:
+    case CPUINFO_INT_REGISTER + F8_R30:
+    case CPUINFO_INT_REGISTER + F8_R31:
+    case CPUINFO_INT_REGISTER + F8_R32:
+    case CPUINFO_INT_REGISTER + F8_R33:
+    case CPUINFO_INT_REGISTER + F8_R34:
+    case CPUINFO_INT_REGISTER + F8_R35:
+    case CPUINFO_INT_REGISTER + F8_R36:
+    case CPUINFO_INT_REGISTER + F8_R37:
+    case CPUINFO_INT_REGISTER + F8_R38:
+    case CPUINFO_INT_REGISTER + F8_R39:
+    case CPUINFO_INT_REGISTER + F8_R40:
+    case CPUINFO_INT_REGISTER + F8_R41:
+    case CPUINFO_INT_REGISTER + F8_R42:
+    case CPUINFO_INT_REGISTER + F8_R43:
+    case CPUINFO_INT_REGISTER + F8_R44:
+    case CPUINFO_INT_REGISTER + F8_R45:
+    case CPUINFO_INT_REGISTER + F8_R46:
+    case CPUINFO_INT_REGISTER + F8_R47:
+    case CPUINFO_INT_REGISTER + F8_R48:
+    case CPUINFO_INT_REGISTER + F8_R49:
+    case CPUINFO_INT_REGISTER + F8_R50:
+    case CPUINFO_INT_REGISTER + F8_R51:
+    case CPUINFO_INT_REGISTER + F8_R52:
+    case CPUINFO_INT_REGISTER + F8_R53:
+    case CPUINFO_INT_REGISTER + F8_R54:
+    case CPUINFO_INT_REGISTER + F8_R55:
+    case CPUINFO_INT_REGISTER + F8_R56:
+    case CPUINFO_INT_REGISTER + F8_R57:
+    case CPUINFO_INT_REGISTER + F8_R58:
+    case CPUINFO_INT_REGISTER + F8_R59:
+    case CPUINFO_INT_REGISTER + F8_R60:
+    case CPUINFO_INT_REGISTER + F8_R61:
+    case CPUINFO_INT_REGISTER + F8_R62:
+    case CPUINFO_INT_REGISTER + F8_R63:
+    	info->i = f8.r[state - (CPUINFO_INT_REGISTER + F8_R16) + 16];	break;
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	case CPUINFO_PTR_SET_INFO:						info->setinfo = f8_set_info;			break;
+	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = f8_get_context;		break;
+	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = f8_set_context;		break;
+	case CPUINFO_PTR_INIT:							info->init = f8_init;					break;
+	case CPUINFO_PTR_RESET:							info->reset = f8_reset;					break;
+	case CPUINFO_PTR_EXIT:							info->exit = f8_exit;					break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = f8_execute;				break;
+	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = f8_dasm;			break;
+	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = f8.irq_callback;	break;
+	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &f8_icount;				break;
+	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = f8_reg_layout;				break;
+	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = f8_win_layout;				break;
+
+	/* --- the following bits of info are returned as NULL-terminated strings --- */
+	case CPUINFO_STR_NAME: 			strcpy(info->s = cpuintrf_temp_str(), "F8");			break;
+	case CPUINFO_STR_CORE_FAMILY:	strcpy(info->s = cpuintrf_temp_str(), "Fairchild F8");	break;
+	case CPUINFO_STR_CORE_VERSION:	strcpy(info->s = cpuintrf_temp_str(), "1.0");			break;
+	case CPUINFO_STR_CORE_FILE:		strcpy(info->s = cpuintrf_temp_str(), __FILE__);		break;
+	case CPUINFO_STR_CORE_CREDITS:	strcpy(info->s = cpuintrf_temp_str(),
+									"Copyright (c) 2000 Juergen Buchmueller, all rights reserved.");
+									break;
+
+    case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c",
+				f8.w & 0x10 ? 'I':'.',
+				f8.w & 0x08 ? 'O':'.',
+				f8.w & 0x04 ? 'Z':'.',
+				f8.w & 0x02 ? 'C':'.',
+				f8.w & 0x01 ? 'S':'.');
+			break;
+
+	case CPUINFO_STR_REGISTER+F8_PC0:sprintf(info->s = cpuintrf_temp_str(), "PC0:%04X", ((f8.pc0) - 1) & 0xffff); break;
+	case CPUINFO_STR_REGISTER+F8_PC1:sprintf(info->s = cpuintrf_temp_str(), "PC1:%04X", f8.pc1); break;
+	case CPUINFO_STR_REGISTER+F8_DC0:sprintf(info->s = cpuintrf_temp_str(), "DC0:%04X", f8.dc0); break;
+	case CPUINFO_STR_REGISTER+F8_DC1:sprintf(info->s = cpuintrf_temp_str(), "DC1:%04X", f8.dc1); break;
+	case CPUINFO_STR_REGISTER+F8_W:  sprintf(info->s = cpuintrf_temp_str(), "W  :%02X", f8.w); break;
+	case CPUINFO_STR_REGISTER+F8_A:  sprintf(info->s = cpuintrf_temp_str(), "A  :%02X", f8.a); break;
+	case CPUINFO_STR_REGISTER+F8_IS: sprintf(info->s = cpuintrf_temp_str(), "IS :%02X", f8.is); break;
+	case CPUINFO_STR_REGISTER+F8_J:  sprintf(info->s = cpuintrf_temp_str(), "J  :%02X", f8.r[9]); break;
+	case CPUINFO_STR_REGISTER+F8_HU: sprintf(info->s = cpuintrf_temp_str(), "HU :%02X", f8.r[10]); break;
+	case CPUINFO_STR_REGISTER+F8_HL: sprintf(info->s = cpuintrf_temp_str(), "HL :%02X", f8.r[11]); break;
+	case CPUINFO_STR_REGISTER+F8_KU: sprintf(info->s = cpuintrf_temp_str(), "KU :%02X", f8.r[12]); break;
+	case CPUINFO_STR_REGISTER+F8_KL: sprintf(info->s = cpuintrf_temp_str(), "KL :%02X", f8.r[13]); break;
+	case CPUINFO_STR_REGISTER+F8_QU: sprintf(info->s = cpuintrf_temp_str(), "QU :%02X", f8.r[14]); break;
+	case CPUINFO_STR_REGISTER+F8_QL: sprintf(info->s = cpuintrf_temp_str(), "QL :%02X", f8.r[15]); break;
+	case CPUINFO_STR_REGISTER+F8_R0: sprintf(info->s = cpuintrf_temp_str(), "R0 :%02X", f8.r[0]); break;
+	case CPUINFO_STR_REGISTER+F8_R1: sprintf(info->s = cpuintrf_temp_str(), "R1 :%02X", f8.r[1]); break;
+	case CPUINFO_STR_REGISTER+F8_R2: sprintf(info->s = cpuintrf_temp_str(), "R2 :%02X", f8.r[2]); break;
+	case CPUINFO_STR_REGISTER+F8_R3: sprintf(info->s = cpuintrf_temp_str(), "R3 :%02X", f8.r[3]); break;
+	case CPUINFO_STR_REGISTER+F8_R4: sprintf(info->s = cpuintrf_temp_str(), "R4 :%02X", f8.r[4]); break;
+	case CPUINFO_STR_REGISTER+F8_R5: sprintf(info->s = cpuintrf_temp_str(), "R5 :%02X", f8.r[5]); break;
+	case CPUINFO_STR_REGISTER+F8_R6: sprintf(info->s = cpuintrf_temp_str(), "R6 :%02X", f8.r[6]); break;
+	case CPUINFO_STR_REGISTER+F8_R7: sprintf(info->s = cpuintrf_temp_str(), "R7 :%02X", f8.r[7]); break;
+	case CPUINFO_STR_REGISTER+F8_R8: sprintf(info->s = cpuintrf_temp_str(), "R8 :%02X", f8.r[8]); break;
+	case CPUINFO_STR_REGISTER+F8_R16: sprintf(info->s = cpuintrf_temp_str(), "R16 :%02X", f8.r[16]); break;
+	case CPUINFO_STR_REGISTER+F8_R17: sprintf(info->s = cpuintrf_temp_str(), "R17 :%02X", f8.r[17]); break;
+	case CPUINFO_STR_REGISTER+F8_R18: sprintf(info->s = cpuintrf_temp_str(), "R18 :%02X", f8.r[18]); break;
+	case CPUINFO_STR_REGISTER+F8_R19: sprintf(info->s = cpuintrf_temp_str(), "R19 :%02X", f8.r[19]); break;
+	case CPUINFO_STR_REGISTER+F8_R20: sprintf(info->s = cpuintrf_temp_str(), "R20 :%02X", f8.r[20]); break;
+	case CPUINFO_STR_REGISTER+F8_R21: sprintf(info->s = cpuintrf_temp_str(), "R21 :%02X", f8.r[21]); break;
+	case CPUINFO_STR_REGISTER+F8_R22: sprintf(info->s = cpuintrf_temp_str(), "R22 :%02X", f8.r[22]); break;
+	case CPUINFO_STR_REGISTER+F8_R23: sprintf(info->s = cpuintrf_temp_str(), "R23 :%02X", f8.r[23]); break;
+	case CPUINFO_STR_REGISTER+F8_R24: sprintf(info->s = cpuintrf_temp_str(), "R24 :%02X", f8.r[24]); break;
+	case CPUINFO_STR_REGISTER+F8_R25: sprintf(info->s = cpuintrf_temp_str(), "R25 :%02X", f8.r[25]); break;
+	case CPUINFO_STR_REGISTER+F8_R26: sprintf(info->s = cpuintrf_temp_str(), "R26 :%02X", f8.r[26]); break;
+	case CPUINFO_STR_REGISTER+F8_R27: sprintf(info->s = cpuintrf_temp_str(), "R27 :%02X", f8.r[27]); break;
+	case CPUINFO_STR_REGISTER+F8_R28: sprintf(info->s = cpuintrf_temp_str(), "R28 :%02X", f8.r[28]); break;
+	case CPUINFO_STR_REGISTER+F8_R29: sprintf(info->s = cpuintrf_temp_str(), "R29 :%02X", f8.r[29]); break;
+	case CPUINFO_STR_REGISTER+F8_R30: sprintf(info->s = cpuintrf_temp_str(), "R30 :%02X", f8.r[30]); break;
+	case CPUINFO_STR_REGISTER+F8_R31: sprintf(info->s = cpuintrf_temp_str(), "R31 :%02X", f8.r[31]); break;
+	case CPUINFO_STR_REGISTER+F8_R32: sprintf(info->s = cpuintrf_temp_str(), "R32 :%02X", f8.r[32]); break;
+	case CPUINFO_STR_REGISTER+F8_R33: sprintf(info->s = cpuintrf_temp_str(), "R33 :%02X", f8.r[33]); break;
+	case CPUINFO_STR_REGISTER+F8_R34: sprintf(info->s = cpuintrf_temp_str(), "R34 :%02X", f8.r[34]); break;
+	case CPUINFO_STR_REGISTER+F8_R35: sprintf(info->s = cpuintrf_temp_str(), "R35 :%02X", f8.r[35]); break;
+	case CPUINFO_STR_REGISTER+F8_R36: sprintf(info->s = cpuintrf_temp_str(), "R36 :%02X", f8.r[36]); break;
+	case CPUINFO_STR_REGISTER+F8_R37: sprintf(info->s = cpuintrf_temp_str(), "R37 :%02X", f8.r[37]); break;
+	case CPUINFO_STR_REGISTER+F8_R38: sprintf(info->s = cpuintrf_temp_str(), "R38 :%02X", f8.r[38]); break;
+	case CPUINFO_STR_REGISTER+F8_R39: sprintf(info->s = cpuintrf_temp_str(), "R39 :%02X", f8.r[39]); break;
+	case CPUINFO_STR_REGISTER+F8_R40: sprintf(info->s = cpuintrf_temp_str(), "R40 :%02X", f8.r[40]); break;
+	case CPUINFO_STR_REGISTER+F8_R41: sprintf(info->s = cpuintrf_temp_str(), "R41 :%02X", f8.r[41]); break;
+	case CPUINFO_STR_REGISTER+F8_R42: sprintf(info->s = cpuintrf_temp_str(), "R42 :%02X", f8.r[42]); break;
+	case CPUINFO_STR_REGISTER+F8_R43: sprintf(info->s = cpuintrf_temp_str(), "R43 :%02X", f8.r[43]); break;
+	case CPUINFO_STR_REGISTER+F8_R44: sprintf(info->s = cpuintrf_temp_str(), "R44 :%02X", f8.r[44]); break;
+	case CPUINFO_STR_REGISTER+F8_R45: sprintf(info->s = cpuintrf_temp_str(), "R45 :%02X", f8.r[45]); break;
+	case CPUINFO_STR_REGISTER+F8_R46: sprintf(info->s = cpuintrf_temp_str(), "R46 :%02X", f8.r[46]); break;
+	case CPUINFO_STR_REGISTER+F8_R47: sprintf(info->s = cpuintrf_temp_str(), "R47 :%02X", f8.r[47]); break;
+	case CPUINFO_STR_REGISTER+F8_R48: sprintf(info->s = cpuintrf_temp_str(), "R48 :%02X", f8.r[48]); break;
+	case CPUINFO_STR_REGISTER+F8_R49: sprintf(info->s = cpuintrf_temp_str(), "R49 :%02X", f8.r[49]); break;
+	case CPUINFO_STR_REGISTER+F8_R50: sprintf(info->s = cpuintrf_temp_str(), "R50 :%02X", f8.r[50]); break;
+	case CPUINFO_STR_REGISTER+F8_R51: sprintf(info->s = cpuintrf_temp_str(), "R51 :%02X", f8.r[51]); break;
+	case CPUINFO_STR_REGISTER+F8_R52: sprintf(info->s = cpuintrf_temp_str(), "R52 :%02X", f8.r[52]); break;
+	case CPUINFO_STR_REGISTER+F8_R53: sprintf(info->s = cpuintrf_temp_str(), "R53 :%02X", f8.r[53]); break;
+	case CPUINFO_STR_REGISTER+F8_R54: sprintf(info->s = cpuintrf_temp_str(), "R54 :%02X", f8.r[54]); break;
+	case CPUINFO_STR_REGISTER+F8_R55: sprintf(info->s = cpuintrf_temp_str(), "R55 :%02X", f8.r[55]); break;
+	case CPUINFO_STR_REGISTER+F8_R56: sprintf(info->s = cpuintrf_temp_str(), "R56 :%02X", f8.r[56]); break;
+	case CPUINFO_STR_REGISTER+F8_R57: sprintf(info->s = cpuintrf_temp_str(), "R57 :%02X", f8.r[57]); break;
+	case CPUINFO_STR_REGISTER+F8_R58: sprintf(info->s = cpuintrf_temp_str(), "R58 :%02X", f8.r[58]); break;
+	case CPUINFO_STR_REGISTER+F8_R59: sprintf(info->s = cpuintrf_temp_str(), "R59 :%02X", f8.r[59]); break;
+	case CPUINFO_STR_REGISTER+F8_R60: sprintf(info->s = cpuintrf_temp_str(), "R60 :%02X", f8.r[60]); break;
+	case CPUINFO_STR_REGISTER+F8_R61: sprintf(info->s = cpuintrf_temp_str(), "R61 :%02X", f8.r[61]); break;
+	case CPUINFO_STR_REGISTER+F8_R62: sprintf(info->s = cpuintrf_temp_str(), "R62 :%02X", f8.r[62]); break;
+	case CPUINFO_STR_REGISTER+F8_R63: sprintf(info->s = cpuintrf_temp_str(), "R63 :%02X", f8.r[63]); break;
+
+	}
+
+	return;
+}
+
 
 
 

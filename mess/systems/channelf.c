@@ -24,24 +24,29 @@
 #define LOG(x)	/* x */
 #endif
 
-/* The F8 has funny latches on its port pins  */
-/* These mimic's their behavior               */
-/* [0]=port0, [1]=port1, [2]=port4, [3]=port5 */
+/* The F8 has latches on its port pins
+ * These mimic's their behavior
+ * [0]=port0, [1]=port1, [2]=port4, [3]=port5
+ *
+ * Note: this should really be moved into f8.c,
+ * but it's complicated by possible peripheral usage.
+ *
+ * If the read/write operation is going external to the F3850
+ * (or F3853, etc.), then the latching applies.  However, relaying the
+ * port read/writes from the F3850 to a peripheral like the F3853
+ * should not be latched in this way. (See mk1 driver)
+ *
+ * The f8 cannot determine how its ports are mapped at runtime,
+ * so it can't easily decide to latch or not.
+ *
+ * ...so it stays here for now.
+ */
 
 static UINT8 latch[4];
 
 static UINT8 port_read_with_latch(UINT8 ext, UINT8 latch_state)
 {
 	return (~ext | latch_state);
-}
-
-static void init_channelf(void)
-{
-	UINT8 *mem = memory_region(REGION_GFX1);
-	int i;
-
-    for (i = 0; i < 256; i++)
-		mem[i] = i;
 }
 
 static DEVICE_LOAD( channelf_cart )
@@ -122,29 +127,24 @@ static WRITE_HANDLER( channelf_port_5_w )
     channelf_row_reg = (data | 0xc0) ^ 0xff;
 }
 
-static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x07ff, MRA8_ROM },
-	{ 0x0800, 0x0fff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( channelf_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_ROM, MWA8_ROM)
+	AM_RANGE(0x0800, 0x0fff) AM_READ(MRA8_ROM) /* Cartridge Data */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (writemem)
-	{ 0x0000, 0x03ff, MWA8_ROM },
-	{ 0x0400, 0x07ff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(channelf_port_0_r) /* Front panel switches */
+	AM_RANGE(0x01, 0x01) AM_READ(channelf_port_1_r) /* Right controller     */
+	AM_RANGE(0x04, 0x04) AM_READ(channelf_port_4_r) /* Left controller      */
+	AM_RANGE(0x05, 0x05) AM_READ(channelf_port_5_r)
+ADDRESS_MAP_END
 
-static PORT_READ_START (readport)
-	{ 0x00, 0x00,	channelf_port_0_r }, /* Front panel switches */
-	{ 0x01, 0x01,	channelf_port_1_r }, /* Right controller     */
-	{ 0x04, 0x04,	channelf_port_4_r }, /* Left controller      */
-	{ 0x05, 0x05,	channelf_port_5_r },
-PORT_END
-
-static PORT_WRITE_START (writeport)
-	{ 0x00, 0x00,	channelf_port_0_w }, /* Enable Controllers & ARM WRT */
-	{ 0x01, 0x01,	channelf_port_1_w }, /* Video Write Data */
-	{ 0x04, 0x04,	channelf_port_4_w }, /* Video Horiz */
-	{ 0x05, 0x05,	channelf_port_5_w }, /* Video Vert & Sound */
-PORT_END
+static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(channelf_port_0_w) /* Enable Controllers & ARM WRT */
+	AM_RANGE(0x01, 0x01) AM_WRITE(channelf_port_1_w) /* Video Write Data */
+	AM_RANGE(0x04, 0x04) AM_WRITE(channelf_port_4_w) /* Video Horiz */
+	AM_RANGE(0x05, 0x05) AM_WRITE(channelf_port_5_w) /* Video Vert & Sound */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( channelf )
 	PORT_START /* Front panel buttons */
@@ -186,16 +186,16 @@ static struct CustomSound_interface channelf_sound_interface = {
 static MACHINE_DRIVER_START( channelf )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(F8, 3579545/2)        /* Colorburst/2 */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(channelf_map, 0)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(128*2, 64*2)
-	MDRV_VISIBLE_AREA(1*2, 112*2 - 1, 0, 64*2 - 1)
+	MDRV_SCREEN_SIZE(128, 64)
+	MDRV_VISIBLE_AREA(1, 112 - 1, 0, 64 - 1)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_COLORTABLE_LENGTH(0)
 	MDRV_PALETTE_INIT( channelf )
@@ -211,8 +211,6 @@ ROM_START(channelf)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("sl31253.rom",  0x0000, 0x0400, CRC(04694ed9))
 		ROM_LOAD("sl31254.rom",  0x0400, 0x0400, CRC(9c047ba3))
-	ROM_REGION(0x00100,REGION_GFX1,0)
-		/* bit pattern is stored here */
 ROM_END
 
 SYSTEM_CONFIG_START(channelf)
@@ -226,6 +224,6 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT		CONFIG		COMPANY		 FULLNAME */
-CONS( 1976, channelf, 0,		0,		channelf, channelf, channelf,	channelf,	"Fairchild", "Channel F" )
+CONS( 1976, channelf, 0,		0,		channelf, channelf, 0,			channelf,	"Fairchild", "Channel F" )
 
 

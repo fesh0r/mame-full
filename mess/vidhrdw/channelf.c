@@ -47,27 +47,6 @@ VIDEO_START( channelf )
 	return video_start_generic();
 }
 
-static void plot_4_pixel(int x, int y, int color)
-{
-	int pen;
-
-	if (x < Machine->visible_area.min_x ||
-		x + 1 >= Machine->visible_area.max_x ||
-		y < Machine->visible_area.min_y ||
-		y + 1 >= Machine->visible_area.max_y)
-		return;
-
-	if (color >= 16)
-		return;
-
-    pen = Machine->pens[colormap[color]];
-
-	plot_pixel(Machine->scrbitmap, x, y, pen);
-	plot_pixel(Machine->scrbitmap, x+1, y, pen);
-	plot_pixel(Machine->scrbitmap, x, y+1, pen);
-	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
-}
-
 static int recalc_palette_offset(int reg1, int reg2)
 {
 	/* Note: This is based on the very strange decoding they    */
@@ -91,6 +70,7 @@ static int recalc_palette_offset(int reg1, int reg2)
 VIDEO_UPDATE( channelf )
 {
 	int x,y,offset, palette_offset;
+	int pen, color;
 
 	for(y=0;y<64;y++)
 	{
@@ -98,7 +78,9 @@ VIDEO_UPDATE( channelf )
 		for (x=0;x<128;x++)
 		{
 			offset = y*128+x;
-			plot_4_pixel(x*2, y*2, palette_offset+(videoram[offset]&3));
+			color = palette_offset+(videoram[offset]&3);
+			pen = Machine->pens[colormap[color]];
+			plot_pixel(Machine->scrbitmap, x, y, pen);
 		}
 	}
 }
