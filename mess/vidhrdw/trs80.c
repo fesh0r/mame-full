@@ -92,12 +92,6 @@ static UINT8 translate_videoram[2][256] = {
 		full_refresh = 1;
     }
 
-    /* draw entire scrbitmap because of usrintrf functions
-	 * called osd_clearbitmap or color change / scanline change
-	 */
-	if( palette_recalc() || full_refresh )
-		memset(dirtybuffer, 1, videoram_size);
-
 	/* do we have double width characters enabled ? */
 	if( trs80_port_ff & 0x08 )
 	{

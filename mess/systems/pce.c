@@ -16,7 +16,7 @@
 
 static int pce_interrupt(void)
 {
-    int ret = H6280_INT_NONE;
+    int ret = 0;
 
     /* bump current scanline */
     vdc.curline = (vdc.curline + 1) % VDC_LPF;

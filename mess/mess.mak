@@ -177,20 +177,20 @@ DRVLIBS = \
 	$(OBJ)/svi.a      \
 	$(OBJ)/ti85.a     \
 	$(OBJ)/sinclair.a \
-#	$(OBJ)/necpc.a	  \
-#	$(OBJ)/nec.a	  \
-#	$(OBJ)/sharp.a    \
+	$(OBJ)/trs80.a	  \
+	$(OBJ)/mbee.a	  \
+	$(OBJ)/cgenie.a   \
+	$(OBJ)/necpc.a	  \
+	$(OBJ)/nec.a	  \
+	$(OBJ)/gce.a	  \
 #	$(OBJ)/pc.a       \
+#	$(OBJ)/sharp.a    \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pcshare.a  \
 #	$(OBJ)/hp48.a     \
-#	$(OBJ)/gce.a	  \
 #	$(OBJ)/cpschngr.a \
 #	$(OBJ)/veb.a	  \
-#	$(OBJ)/trs80.a	  \
-#	$(OBJ)/cgenie.a   \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/mbee.a	  \
 #	$(OBJ)/mtx.a	  \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/mk1.a      \
@@ -233,7 +233,7 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/a2600.o	 \
 	  $(OBJ)/mess/systems/a2600.o    \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
-#	  $(OBJ)/mess/vidhrdw/atari.o	 \
+	  $(OBJ)/mess/vidhrdw/atari.o	 \
 #         $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \
@@ -424,7 +424,7 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/machine/europc.o	 \
 	  $(OBJ)/mess/machine/pc.o       \
 	  $(OBJ)/mess/systems/pc.o		\
-#	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
 
 $(OBJ)/at.a:	   \
 	  $(OBJ)/mess/machine/pc_ide.o   \
@@ -471,7 +471,7 @@ $(OBJ)/nec.a:	   \
 $(OBJ)/necpc.a:	   \
 	  $(OBJ)/mess/machine/pc8801.o	 \
 	  $(OBJ)/mess/systems/pc8801.o	 \
-	  $(OBJ)/mess/vidhrdw/pc8801.o
+#	  $(OBJ)/mess/vidhrdw/pc8801.o
 
 $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/sndhrdw/dave.o	 \

@@ -1003,6 +1003,7 @@ static void antic_linerefresh(void)
 	int x, y;
 	UINT8 *src;
 	UINT32 *dst;
+	UINT32 scanline[4 + (HCHARS * 2) + 4];
 
 	/* increment the scanline */
     if( ++antic.scanline == Machine->drv->screen_height )
@@ -1019,7 +1020,7 @@ static void antic_linerefresh(void)
 
 	y = antic.scanline - MIN_Y;
 	src = &antic.cclock[PMOFFSET - antic.hscrol_old + 12];
-	dst = (UINT32 *)&Machine->scrbitmap->line[y][12];
+	dst = scanline;
 
 	if( tv_artifacts )
 	{
@@ -1051,6 +1052,8 @@ static void antic_linerefresh(void)
 	dst[1] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[2] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+
+	draw_scanline8(Machine->scrbitmap, 12, y, sizeof(scanline), (const UINT8 *) scanline, Machine->pens, -1);
 }
 
 #if VERBOSE

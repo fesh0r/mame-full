@@ -3435,7 +3435,6 @@ int handle_user_interface(struct osd_bitmap *bitmap)
 	int request_loadsave = LOADSAVE_NONE;
 #ifdef MESS   
 	static int mess_pause_for_ui = 0;
-	static int ui_posted_press;
 #endif	
 
 #ifdef MESS

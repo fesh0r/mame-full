@@ -274,50 +274,56 @@ void pce_refresh_line(int line)
     int cell_palette;
     int x, c, i;
 
-    line_buffer = (UINT8 *)&(vdc.bmp->line[center_y+line][(center_x-8)+(8-(scroll_x & 7))]);
+	line_buffer = malloc(vdc.physical_width);
+	if (!line_buffer)
+		return;
 
     /* character blanking bit */
     if(!(vdc.vdc_data[CR].w & CR_BB))
     {
         memset(line_buffer, Machine->pens[0], vdc.physical_width);
-        return;
     }
+	else
+	{
+		for(i=0;i<(vdc.physical_width >> 3)+1;i++)
+		{
+			nt_index = (i + (scroll_x >> 3)) & ((2 << (v_width-1))-1);
 
-    for(i=0;i<(vdc.physical_width >> 3)+1;i++)
-    {
-        nt_index = (i + (scroll_x >> 3)) & ((2 << (v_width-1))-1);
+			/* get name table data: */
 
-        /* get name table data: */
+			/* palette # = index from 0-15 */
+			cell_palette = (bat[nt_index] >> 12) & 0x0F;
 
-        /* palette # = index from 0-15 */
-        cell_palette = (bat[nt_index] >> 12) & 0x0F;
+			/* This is the 'character number', from 0-0x0FFF         */
+			/* then it is shifted left 4 bits to form a VRAM address */
+			/* and one more bit to convert VRAM word offset to a     */
+			/* byte-offset within the VRAM space                     */
+			cell_pattern_index = (bat[nt_index] & 0x0FFF) << 5;
 
-        /* This is the 'character number', from 0-0x0FFF         */
-        /* then it is shifted left 4 bits to form a VRAM address */
-        /* and one more bit to convert VRAM word offset to a     */
-        /* byte-offset within the VRAM space                     */
-        cell_pattern_index = (bat[nt_index] & 0x0FFF) << 5;
+			b0 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x00];
+			b1 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x01];
+			b2 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x10];
+			b3 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x11];
 
-        b0 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x00];
-        b1 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x01];
-        b2 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x10];
-        b3 = vdc.vram[(cell_pattern_index) + (v_row << 1) + 0x11];
+			for(x=0;x<8;x++)
+			{
+				i0 = (b0 >> (7-x)) & 1;
+				i1 = (b1 >> (7-x)) & 1;
+				i2 = (b2 >> (7-x)) & 1;
+				i3 = (b3 >> (7-x)) & 1;
+				c = (cell_palette << 4 | i3 << 3 | i2 << 2 | i1 << 1 | i0);
+				line_buffer[(i<<3)+x] = Machine->pens[c];
+			}
+		}
 
-        for(x=0;x<8;x++)
-        {
-            i0 = (b0 >> (7-x)) & 1;
-            i1 = (b1 >> (7-x)) & 1;
-            i2 = (b2 >> (7-x)) & 1;
-            i3 = (b3 >> (7-x)) & 1;
-            c = (cell_palette << 4 | i3 << 3 | i2 << 2 | i1 << 1 | i0);
-            line_buffer[(i<<3)+x] = Machine->pens[c];
-        }
-    }
+		if(vdc.vdc_data[CR].w & CR_SB)
+		{
+			pce_refresh_sprites(line);
+		}
+	}
 
-    if(vdc.vdc_data[CR].w & CR_SB)
-    {
-        pce_refresh_sprites(line);
-    }
+	draw_scanline8(vdc.bmp, (center_x-8)+(8-(scroll_x & 7)), center_y+line, vdc.physical_width, line_buffer, Machine->pens, -1);
+	free(line_buffer);
 }
 
 
@@ -362,65 +368,72 @@ void pce_refresh_sprites(int line)
     int i, x, c /*, b*/;
     char buf[16];
 
-    UINT8 *line_buffer = (UINT8 *)&(vdc.bmp->line[center_y+line][center_x]);
+    UINT8 *line_buffer;
+	
+	line_buffer = malloc(vdc.physical_width);
+	if (!line_buffer)
+		return;
 
-    if ((vdc.vdc_data[DVSSR].w & 0x8000) != 0)
-        return;
+    if ((vdc.vdc_data[DVSSR].w & 0x8000) == 0)
+	{
+		for(i=63; i>=-1; i--)
+		{
+			obj_y = (vdc.sprite_ram[(i<<2)+0] & 0x03FF) - 64;
+			obj_x = (vdc.sprite_ram[(i<<2)+1] & 0x03FF) - 32;
 
-    for(i=63; i>=-1; i--)
-    {
-        obj_y = (vdc.sprite_ram[(i<<2)+0] & 0x03FF) - 64;
-        obj_x = (vdc.sprite_ram[(i<<2)+1] & 0x03FF) - 32;
+			if ((obj_y == -64) || (obj_y > line)) continue;
+			if ((obj_x == -32) || (obj_x > vdc.physical_width)) continue;
 
-        if ((obj_y == -64) || (obj_y > line)) continue;
-        if ((obj_x == -32) || (obj_x > vdc.physical_width)) continue;
+			obj_a = (vdc.sprite_ram[(i<<2)+3]);
 
-        obj_a = (vdc.sprite_ram[(i<<2)+3]);
+	//      if ((obj_a & 0x80) == 0) continue;
 
-//      if ((obj_a & 0x80) == 0) continue;
+			cgx   = (obj_a >> 8) & 1;   /* sprite width */
+			cgy   = (obj_a >> 12) & 3;  /* sprite height */
+			hf    = (obj_a >> 11) & 1;  /* horizontal flip */
+			vf    = (obj_a >> 15) & 1;  /* vertical flip */
+			palette = (obj_a & 0x000F);
 
-        cgx   = (obj_a >> 8) & 1;   /* sprite width */
-        cgy   = (obj_a >> 12) & 3;  /* sprite height */
-        hf    = (obj_a >> 11) & 1;  /* horizontal flip */
-        vf    = (obj_a >> 15) & 1;  /* vertical flip */
-        palette = (obj_a & 0x000F);
+			obj_i = (vdc.sprite_ram[(i<<2)+2] & 0x07FE);
 
-        obj_i = (vdc.sprite_ram[(i<<2)+2] & 0x07FE);
+			obj_w = cgx_table[cgx];
+			obj_h = cgy_table[cgy];
+			obj_l = (line - obj_y);
 
-        obj_w = cgx_table[cgx];
-        obj_h = cgy_table[cgy];
-        obj_l = (line - obj_y);
+			if (obj_l < obj_h)
+			{
+				cgypos = (obj_l >> 4);
+				if(vf) cgypos = ((obj_h - 1) >> 4) - cgypos;
 
-        if (obj_l < obj_h)
-        {
-            cgypos = (obj_l >> 4);
-            if(vf) cgypos = ((obj_h - 1) >> 4) - cgypos;
+				if(cgx == 0)
+				{
+					conv_obj(obj_i + (cgypos << 2), obj_l, hf, vf, buf);
+					for(x=0;x<16;x++)
+					{
+						c = buf[x];
+						if(c) line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+					}
+				}
+				else
+				{
+					conv_obj(obj_i + (cgypos << 2) + (hf ? 2 : 0), obj_l, hf, vf, buf);
+					for(x=0;x<16;x++)
+					{
+						c = buf[x];
+						if(c) line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
+					}
 
-            if(cgx == 0)
-            {
-                conv_obj(obj_i + (cgypos << 2), obj_l, hf, vf, buf);
-                for(x=0;x<16;x++)
-                {
-                    c = buf[x];
-                    if(c) line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
-                }
-            }
-            else
-            {
-                conv_obj(obj_i + (cgypos << 2) + (hf ? 2 : 0), obj_l, hf, vf, buf);
-                for(x=0;x<16;x++)
-                {
-                    c = buf[x];
-                    if(c) line_buffer[obj_x + x] = Machine->pens[0x100 + (palette << 4) + c];
-                }
+					conv_obj(obj_i + (cgypos << 2) + (hf ? 0 : 2), obj_l, hf, vf, buf);
+					for(x=0;x<16;x++)
+					{
+						c = buf[x];
+						if(c) line_buffer[obj_x + 0x10 + x] = Machine->pens[0x100 + (palette << 4) + c];
+					}
+				}
+			}
+		}
+	}
 
-                conv_obj(obj_i + (cgypos << 2) + (hf ? 0 : 2), obj_l, hf, vf, buf);
-                for(x=0;x<16;x++)
-                {
-                    c = buf[x];
-                    if(c) line_buffer[obj_x + 0x10 + x] = Machine->pens[0x100 + (palette << 4) + c];
-                }
-            }
-        }
-    }
+	draw_scanline8(vdc.bmp, center_x, center_y+line, vdc.physical_width, line_buffer, Machine->pens, -1);
+	free(line_buffer);
 }

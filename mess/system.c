@@ -128,7 +128,7 @@ TESTDRIVER( vip )		/* Cosmac VIP						*/
 //      DRIVER( coleconb )	   ColecoVision (No BIOS load)					  */
 
 	/* NEC */
-//	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
+	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
 
 	DRIVER( arcadia ) /* Emerson Arcadia 2001                           */
 	/* schmid tvg 2000 */
@@ -138,9 +138,9 @@ TESTDRIVER( vip )		/* Cosmac VIP						*/
 				/* different cartridge connector, more keys */
 
 	/* GCE */
-//	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
+	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
 				/* (aka Milton-Bradley Vectrex) 				  */
-//	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
+	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
 
 	/* MATTEL */
 	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV           */
@@ -276,11 +276,11 @@ XL/XE 16kB OS roms
 4    XEGS    05/07/1987  0x1eaf4002  C101687
 */
 
-//	DRIVER( a400 )		/* 1979 Atari 400								  */
-//	DRIVER( a400pal )	/* 1979 Atari 400 PAL							  */
-//	DRIVER( a800 )		/* 1979 Atari 800								  */
-//	DRIVER( a800pal )	/* 1979 Atari 800 PAL							  */
-//	DRIVER( a800xl )	/* 1983 Atari 800 XL							  */
+	DRIVER( a400 )		/* 1979 Atari 400								  */
+	DRIVER( a400pal )	/* 1979 Atari 400 PAL							  */
+	DRIVER( a800 )		/* 1979 Atari 800								  */
+	DRIVER( a800pal )	/* 1979 Atari 800 PAL							  */
+	DRIVER( a800xl )	/* 1983 Atari 800 XL							  */
 
 //!!TESTDRIVER( atarist )	/* Atari ST 								  */
 
@@ -609,7 +609,6 @@ TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
 	/* a7100 i8086 based */
 
 	/* MICROBEE SYSTEMS */
-#if 0
 	DRIVER( mbee )		/* Microbee 									  */
 	DRIVER( mbeepc )	/* Microbee (Personal Communicator)				  */
 	DRIVER( mbee56k )	/* Microbee 56K (CP/M)							  */
@@ -622,7 +621,6 @@ TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
 	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
-#endif
 
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)			  */
@@ -639,7 +637,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 /*	DRIVER( dragon64 */	/* Dragon 64									  */
 
 	/* EACA */
-//	DRIVER( cgenie )	/* Colour Genie EG2000							  */
+	DRIVER( cgenie )	/* Colour Genie EG2000							  */
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */

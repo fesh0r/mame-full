@@ -12,9 +12,6 @@ TARGET = mess
 # uncomment next line to make a debug version
 # DEBUG = 1
 
-# build a version for debugging games
-# MAME_DEBUG = -DMAME_DEBUG
-
 # build with browser information for debugging
 BSCMAKE = -bscmake.exe
 
@@ -29,9 +26,6 @@ BSCMAKE = -bscmake.exe
 
 # if MAME_NET is defined, network support will be compiled in
 # MAME_NET = -DMAME_NET
-
-# if MAME_MMX is defined, MMX will be compiled in
-MAME_MMX = -DMAME_MMX
 
 # use fast (register) calling convention
 USE_FASTCALL = -DFASTCALL
@@ -108,8 +102,6 @@ DEFS = \
         -DZLIB_DLL \
         $(MAME_VERSION) \
         $(MAME_NET) \
-        $(MAME_MMX) \
-        $(MAME_DEBUG) \
         $(USE_FASTCALL)
 
 ifndef DEBUG
@@ -265,7 +257,7 @@ else
 endif
 include src/$(MAMEOS)/$(MAMEOS).mak
 
-ifdef MAME_DEBUG
+ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
 else
 DBGDEFS =
