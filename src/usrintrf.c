@@ -3369,15 +3369,15 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 {
 	static int show_profiler;
 	int request_loadsave = LOADSAVE_NONE;
-#ifdef MESS   
+#ifdef MESS
 	static int mess_pause_for_ui = 0;
-#endif	
+#endif
 
 #ifdef MESS
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		static int ui_active = 0, ui_toggle_key = 0;
-		static int ui_display_count = 4 * 60;
+		static int ui_display_count = 30;
 
 		if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
 		{
@@ -3385,7 +3385,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			{
 				ui_toggle_key = 1;
 				ui_active = !ui_active;
-				ui_display_count = 4 * 60;
+				ui_display_count = 30;
 				schedule_full_refresh();
 			}
 		}
