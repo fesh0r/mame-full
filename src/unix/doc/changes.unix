@@ -2,7 +2,7 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.88, 7 November 2004
+Release 0.88, 9 November 2004
 	- Everything from MAME 0.88 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.88 (http://x.mame.net/changes-mess.html).
 	- The xml2info utility can now link against the system's libexpat, and 
@@ -156,15 +156,21 @@ Release 0.88, 7 November 2004
 	  * Completely rewrote the SDL driver.  It's now much faster than 
 	    before -- just as fast as the native X11 driver -- and has 100% 
 	    support for fullscreen, effects, scaling, etc.
+	  * A number of games should no longer segfault on AMD x86-64 systems.
 	- Added an ALSA mixer plugin, which can be enabled with 
 	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
 	  option accepts the name of a "simple mixer control", which you can 
 	  find by executing "amixer".  (Shyouzou Sugitani)
-	- MAME validity checks are now enabled for debug builds.  (Christopher 
-	  Stone)
-	- Update the CFLAGS for IRIX MIPSpro in the makefile.  (Brandon Corey)
+	- Updated the CFLAGS for IRIX MIPSpro in the makefile.  (Brandon 
+	  Corey)
 	- Fixed the IRIX AL sound driver's 8-bit output and updated rate setup 
 	  to deal with unsupported audio hardware rates.  (Brandon Corey)
+	- Enhanced joystick support a bit:
+	  * Changed JOY_I386 in the makefile to JOY_STANDARD.
+	  * Removed support for the X11 joystick driver, which was broken 
+	    anyway.
+	  * The "-joytype (-jt)" list now only displays drivers that are 
+	    compiled in.
 
 Release 0.87, 3 October 2004
 	- Everything from MAME 0.87 and MESS 0.87.  Christopher Stone's 
