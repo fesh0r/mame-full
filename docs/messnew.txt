@@ -26,6 +26,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
+- [Windows] Created a new Windows GUI for Imgtool.  [Nate Woods]
+
 - Added an 'identify' command that can be used to attempt to identify the
   type of any given image.  [Nate Woods]
 

@@ -313,7 +313,6 @@ static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, imgtool_
 
 enum
 {
-	mess_hd_createopts_version   = 'A',
 	mess_hd_createopts_blocksize = 'B',
 	mess_hd_createopts_cylinders = 'C',
 	mess_hd_createopts_heads     = 'D',
@@ -322,66 +321,14 @@ enum
 };
 
 OPTION_GUIDE_START( mess_hd_create_optionguide )
-	OPTION_INT(mess_hd_createopts_version, "version", "Image format version (v1 only supports seclen = 512)" )
-	OPTION_INT(mess_hd_createopts_blocksize, "blocksize", "Sectors per block" )
-	OPTION_INT(mess_hd_createopts_cylinders, "cylinders", "Number of cylinders on hard disk" )
-	OPTION_INT(mess_hd_createopts_heads, "heads",	"Number of heads on hard disk" )
-	OPTION_INT(mess_hd_createopts_sectors, "sectors", "Number of sectors on hard disk" )
-	OPTION_INT(mess_hd_createopts_seclen, "seclen", "Number of bytes per sectors" )
+	OPTION_INT(mess_hd_createopts_blocksize, "blocksize", "Sectors Per Block" )
+	OPTION_INT(mess_hd_createopts_cylinders, "cylinders", "Cylinders" )
+	OPTION_INT(mess_hd_createopts_heads, "heads",	"Heads" )
+	OPTION_INT(mess_hd_createopts_sectors, "sectors", "Total Sectors" )
+	OPTION_INT(mess_hd_createopts_seclen, "seclen", "Sector Bytes" )
 OPTION_GUIDE_END
 
-#define mess_hd_create_optionspecs "A1-[2];B[1]-2048;C1-65536;D1-64;E1-4096;F1-[512]-65536"
-
-
-#if 0
-static struct OptionTemplate mess_hd_createopts[] =
-{
-	{ "version",	"Image format version (v1 only supports seclen = 512)",	IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2"},
-	{ "blocksize",	"Sectors per block",	IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2048,	"1"},
-	{ "cylinders",	"Number of cylinders on hard disk",	IMGOPTION_FLAG_TYPE_INTEGER,	1,	65536,	NULL},
-	{ "heads",		"Number of heads on hard disk",	IMGOPTION_FLAG_TYPE_INTEGER,	1,	64,	NULL},
-	{ "sectors",	"Number of sectors on hard disk",	IMGOPTION_FLAG_TYPE_INTEGER,	1,	4096,	NULL},
-	{ "seclen",		"Number of bytes per sectors",	IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	65536,	"512"},
-	{ NULL, NULL, 0, 0, 0, 0 }
-};
-
-enum
-{
-	mess_hd_createopts_version = 0,
-	mess_hd_createopts_blocksize = 1,
-	mess_hd_createopts_cylinders = 2,
-	mess_hd_createopts_heads = 3,
-	mess_hd_createopts_sectors = 4,
-	mess_hd_createopts_seclen = 5
-};
-
-
-IMAGEMODULE(
-	mess_hd,
-	"MESS hard disk image",			/* human readable name */
-	"hd",							/* file extension */
-	NULL,							/* crcfile */
-	NULL,							/* crc system name */
-	0,								/* eoln */
-	0,								/* flags */
-	NULL,							/* init function */
-	NULL,							/* exit function */
-	NULL,							/* info function */
-	NULL,							/* begin enumeration */
-	NULL,							/* enumerate next */
-	NULL,							/* close enumeration */
-	NULL,							/* free space on image */
-	NULL,							/* read file */
-	NULL,							/* write file */
-	NULL,							/* delete file */
-	mess_hd_image_create,			/* create image */
-	NULL,							/* read sector */
-	NULL,							/* write sector */
-	NULL,							/* file options */
-	mess_hd_createopts				/* create options */
-)
-#endif
-
+#define mess_hd_create_optionspecs "B[1]-2048;C1-65536;D1-64;E1-4096;F128/256/[512]/1024/2048/4096/8192/16384/32768/65536"
 
 
 imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
@@ -410,16 +357,13 @@ static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, imgtool_
 {
 	UINT32  version, blocksize, cylinders, heads, sectors, seclen;
 
-
-	(void) mod;
-
 	/* read options */
-	version = option_resolution_lookup_int(createoptions, mess_hd_createopts_version);
 	blocksize = option_resolution_lookup_int(createoptions, mess_hd_createopts_blocksize);
 	cylinders = option_resolution_lookup_int(createoptions, mess_hd_createopts_cylinders);
 	heads = option_resolution_lookup_int(createoptions, mess_hd_createopts_heads);
 	sectors = option_resolution_lookup_int(createoptions, mess_hd_createopts_sectors);
 	seclen = option_resolution_lookup_int(createoptions, mess_hd_createopts_seclen);
 
+	version = (seclen == 512) ? 1 : 2;
 	return imghd_create_base_v1_v2(f, version, blocksize, cylinders, heads, sectors, seclen);
 }
