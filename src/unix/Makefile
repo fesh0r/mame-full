@@ -28,8 +28,9 @@ VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
 VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o \
 		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o \
+		  $(VID_DIR)/gldirty.o $(VID_DIR)/glexport.o \
 		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
-		  $(VID_DIR)/xinput.o $(VID_DIR)/vectorgen.o
+		  $(VID_DIR)/xinput.o 
 VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o $(VID_DIR)/xinput.o \
 	$(VID_DIR)/vectorgen.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
@@ -124,8 +125,26 @@ $(OBJDIR)/%.o: %.m xmame.h
 	$(CC_COMMENT) @echo 'Compiling src/unix/$< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
+$(OBJDIR)/video.o: video-drivers/glmame.h
+
 $(VID_DIR)/x11_window.o: video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/svgalib.o: video-drivers/blit.h video-drivers/blit_core.h video-drivers/twkmodes.h video-drivers/twkuser.c
 $(VID_DIR)/xf86_dga1.o: video-drivers/xf86_dga1.c video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/xf86_dga2.o: video-drivers/xf86_dga2.c video-drivers/blit.h video-drivers/blit_core.h
-$(VID_DIR)/xinput.o: video-drivers/xkeyboard.h
+$(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
+$(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
+$(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h
+$(VID_DIR)/glgen.o:   video-drivers/glmame.h video-drivers/gltool.h \
+	              video-drivers/glxtool.h video-drivers/gldirty.h
+$(VID_DIR)/glvec.o:   video-drivers/glmame.h video-drivers/gltool.h \
+	              video-drivers/glxtool.h
+$(VID_DIR)/glcab.o:   video-drivers/glmame.h video-drivers/gltool.h \
+	              video-drivers/glxtool.h
+$(VID_DIR)/gltool.o:  video-drivers/glmame.h video-drivers/gltool.h \
+	              video-drivers/glxtool.h
+$(VID_DIR)/glxtool.o: video-drivers/glmame.h video-drivers/gltool.h \
+	              video-drivers/glxtool.h
+$(VID_DIR)/xgl.o:     video-drivers/glmame.h video-drivers/gltool.h \
+	              video-drivers/glxtool.h
+$(VID_DIR)/gltool.h:  video-drivers/gl-disp-var.h video-drivers/glu-disp-var.h
+
