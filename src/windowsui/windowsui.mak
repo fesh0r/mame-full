@@ -49,7 +49,7 @@ OSOBJS += \
         #$(OBJ)/windowsui/options.o \		<<--- included from MESS' version
 
 # add resource file
-OSOBJS += $(OBJ)/mess/windowsui/mess32.res
+RESFILE = $(OBJ)/mess/windowsui/mess32.res
 
 #####################################################################
 # compiler
@@ -95,9 +95,6 @@ LIBS += -lkernel32 \
         -lcomdlg32 \
         -ladvapi32 \
         -lhtmlhelp
-
-# use -mconsole for romcmp
-LDFLAGS += -mwindows -mconsole
 endif
 
 #####################################################################

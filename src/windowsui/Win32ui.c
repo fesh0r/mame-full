@@ -776,7 +776,7 @@ static int RunMAME(int nGameIndex, HANDLE hErrorWrite)
 
 #endif /* INPROCESS_MAME */
 
-int WINAPI WinMain(HINSTANCE    hInstance,
+int __declspec(dllexport) WINAPI GuiMain(HINSTANCE    hInstance,
                    HINSTANCE    hPrevInstance,
                    LPSTR        lpCmdLine,
                    int          nCmdShow)
@@ -785,14 +785,12 @@ int WINAPI WinMain(HINSTANCE    hInstance,
 
 	options.gui_host = 1;
 
-	if (__argc != 1 || nCmdShow == SW_SHOWDEFAULT)
+	if (__argc != 1)
 	{
 		/* Rename main because gcc will use it instead of WinMain even with -mwindows */
 		extern int DECL_SPEC main_(int, char**);
 		exit(main_(__argc, __argv));
 	}
-
-    FreeConsole();
 
 	if (!Win32UI_init(hInstance, lpCmdLine, nCmdShow))
 		return 1;
@@ -1394,6 +1392,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	strcpy(last_directory, GetInpDir());
 
 	hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
+	assert(hMain);
 
 	/* Load the pic for the default screenshot. */
 	SendMessage(GetDlgItem(hMain, IDC_SSDEFPIC),

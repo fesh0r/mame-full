@@ -35,7 +35,7 @@
 #ifdef UNDER_CE
 #include "mamece.h"
 #include "resource.h"
-static HMENU wince_menubar;
+static HWND wince_menubar;
 #endif
 
 #ifndef WMSZ_LEFT

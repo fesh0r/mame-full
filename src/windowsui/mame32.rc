@@ -274,7 +274,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 #ifdef MESS
-IDI_MAME32_ICON         ICON    DISCARDABLE     "res/mess32.ico"
+IDI_MAME32_ICON         ICON    DISCARDABLE     "res/mess.ico"
 #else
 IDI_MAME32_ICON         ICON    DISCARDABLE     "res/mame32.ico"
 #endif
@@ -318,27 +318,21 @@ FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "&OK",IDOK,200,109,50,14,WS_GROUP
 #ifdef MESS
-    CTEXT           "Multi Emulator Super System for Win32",IDC_STATIC,
-                    153,7,142,11,NOT WS_GROUP
-    CTEXT           "Version 0.35 BETA",IDC_VERSION,153,18,142,11,NOT
+    CTEXT           "Multi Emulator Super System",IDC_STATIC,147,7,142,
+                    11,NOT WS_GROUP
+    CTEXT           "Version 0",IDC_VERSION,147,18,142,11,NOT WS_GROUP
+    CTEXT           "Copyright (C) 1998-2001 The MESS Team",IDC_STATIC,147,
+                    29,142,10,NOT WS_GROUP
+    CTEXT           "MESS GUI based on MAME32 version by",IDC_STATIC,147,51,142,10,NOT
                     WS_GROUP
-    CTEXT           "Copyright (C) 1998-2001",IDC_STATIC,153,29,142,10,NOT
-                    WS_GROUP
-    CTEXT           "Win32 version based on MAME32 by",IDC_STATIC,153,62,142,10,NOT WS_GROUP
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,55,142,1
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,87,142,1
-    CONTROL         "",IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,7,7,135,124
-    CTEXT           "Additional Win32 code by",IDC_STATIC,153,93,142,9
-    CTEXT           "Mohammad Rezaei, Robert Schlabbach",IDC_STATIC,153,115,
-                    142,9
-    CTEXT           "by the MESS team",IDC_STATIC,153,40,
-                    142,10,NOT WS_GROUP
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,147,44,142,1
+    CTEXT           "Additional MAME32 code by",IDC_STATIC,147,74,142,9
+    CTEXT           "Robert Schlabbach, Dan Miller (Help file)",IDC_STATIC,
+                    147,96,142,9
     CTEXT           "Michael Soderstrom and Christopher Kirmse",IDC_STATIC,
-                    153,73,142,9,NOT WS_GROUP
+                    147,62,142,9,NOT WS_GROUP
     CTEXT           "Mike Haaland, Andrew Kirmse, Jeff Miller",IDC_STATIC,
-                    153,104,142,9
-    CTEXT           "John Zissopoulos, Dan Miller (Help file)",IDC_STATIC,
-                    153,127,142,9
+                    147,85,142,9
 #else
     CTEXT           "Multiple Arcade Machine Emulator",IDC_STATIC,147,7,142,
                     11,NOT WS_GROUP
@@ -355,8 +349,8 @@ BEGIN
                     147,62,142,9,NOT WS_GROUP
     CTEXT           "Mike Haaland, Andrew Kirmse, Jeff Miller",IDC_STATIC,
                     147,85,142,9
-    CONTROL         "",IDC_ABOUT,"Static",SS_BITMAP | SS_SUNKEN,7,7,16,14
 #endif
+    CONTROL         "",IDC_ABOUT,"Static",SS_BITMAP | SS_SUNKEN,7,7,16,14
 END
 
 IDD_HELP DIALOG DISCARDABLE  0, 0, 336, 178

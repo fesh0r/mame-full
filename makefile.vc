@@ -24,6 +24,9 @@ BSCMAKE = @-bscmake.exe
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
 
+# set this the operating system you're building for
+MAMEOS = windows
+
 # if MAME_NET is defined, network support will be compiled in
 # MAME_NET = -DMAME_NET
 
@@ -33,9 +36,6 @@ USE_FASTCALL = -DFASTCALL
 # uncomment next line to generate help files
 # HELP = 1
 
-# set this the operating system you're building for
-OS = windows
-# OS = wince
 
 # extension for executables
 EXE = .exe
@@ -65,20 +65,34 @@ MSVC = 1
 WINDOWS_PROGRAM = -subsystem:windows
 CONSOLE_PROGRAM = -subsystem:console
 
+SUFFIX = vc
+
 ifdef DEBUG
-VCSUFFIX = vcd
+NAME = $(TARGET)$(SUFFIX)d
+GUINAME = $(TARGET)gui$(SUFFIX)d
 else
-VCSUFFIX = vc
+ifdef K6
+NAME = $(TARGET)$(SUFFIX)k6
+GUINAME = $(TARGET)gui$(SUFFIX)k6
+else
+ifdef I686
+NAME = $(TARGET)$(SUFFIX)pp
+GUINAME = $(TARGET)gui$(SUFFIX)pp
+else
+NAME = $(TARGET)$(SUFFIX)
+GUINAME = $(TARGET)gui$(SUFFIX)
+ARCH = -march=pentium
+endif
+endif
 endif
 
 # build the targets in different object dirs, since mess changes
 # some structures and thus they can't be linked against each other.
-# cleantiny isn't needed anymore, because the tiny build has its
-# own object directory too.
-
-NAME = $(TARGET)$(VCSUFFIX)
 OBJ = obj/$(NAME)
-EMULATOR = $(TARGET)$(VCSUFFIX)$(EXE)
+
+EMULATORDLL = lib$(NAME).dll
+EMULATORCLI = $(NAME)$(EXE)
+EMULATORGUI = $(GUINAME)$(EXE)
 
 #####################################################################
 # compiler
@@ -150,8 +164,6 @@ CFLAGS += -Zi -Od
 else
 CFLAGS += -Ox -G5 -Ob2
 endif
-
-MAMEOS = $(OS)
 
 #####################################################################
 # Resources
@@ -245,17 +257,14 @@ endif
 
 #####################################################################
 
-all: maketree $(EMULATOR) extra
+all: maketree $(EMULATORCLI) $(EMULATORGUI) extra
 
 # include the various .mak files
 include src/core.mak
 include mess/$(TARGET).mak
 include src/rules.mak
-ifdef MESS
-include mess/rules_ms.mak
-else
-endif
 include src/$(MAMEOS)/$(MAMEOS).mak
+include mess/rules_ms.mak
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
@@ -271,14 +280,34 @@ extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
 
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RES)
+$(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -Fr$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RES)
+	$(LD) /dll $(LDFLAGS) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS)
 ifdef BSCMAKE
 	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr)
 endif
+ifndef DEBUG
+ifdef UPX
+	$(UPX) $@
+endif
+endif
+
+# gui target
+$(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/windowsui/guimain.o $(RESFILE)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $(EMULATORDLL:%.dll=%.lib) $(OBJ)/mess/windowsui/guimain.o $(RESFILE) -out:$@
+ifndef DEBUG
+ifdef UPX
+	$(UPX) $@
+endif
+endif
+
+# cli target
+$(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(EMULATORDLL:%.dll=%.lib) $(OBJ)/mess/windows/climain.o -out:$@
 ifndef DEBUG
 ifdef UPX
 	$(UPX) $@
