@@ -22,6 +22,13 @@ standard 512-byte-long sectors. */
 /* I chose a limit of 512.  No need to use more until someone write CD-ROMs
 for TI990. */
 #define MAX_SECTOR_SIZE 512
+#define MIN_SECTOR_SIZE 256
+
+#define MAX_CYLINDERS 2047
+#define MAX_HEADS 31
+#define MAX_SECTORS_PER_TRACK 256	/* 255 for 512-byte-long sector, so that the total number of words that can be recorded on a track may fit in one 16-bit word (store registers command) */
+
+
 
 typedef struct UINT16BE
 {
@@ -253,7 +260,7 @@ typedef struct ti990_adr
 	UINT16BE	fill04;			/* *** secondary allocation size */
 	UINT16BE	fill05;			/* *** secondary allocation address */
 	UINT16BE	rna;			/* record number of next ADR */
-	UINT16BE	raf;			/* record # of actual FDR */
+	UINT16BE	raf;			/* record # of actual FDR (from 1 through dor.nrc) */
 } ti990_adr;
 
 /*
@@ -391,24 +398,24 @@ static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const Re
 static int ti990_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
 static int ti990_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
 
-/*static struct OptionTemplate ti99_createopts[] =
+static struct OptionTemplate ti990_createopts[] =
 {
-	{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},
-	{ "density",	"1 for single (FM), 2 for double (MFM)", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
-	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
-	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	40,	"40" },
-	{ "sectors",	"1->9 for FM, 1->18 for MFM", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	18,	"18" },
+	//{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},
+	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	MAX_CYLINDERS,	"145" },
+	{ "heads",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	MAX_HEADS,	"4" },
+	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	MAX_SECTORS_PER_TRACK,	"32" },
+	{ "bytes per sector", "(typically 256)", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	MIN_SECTOR_SIZE,	MAX_SECTOR_SIZE,	"256" },
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
 enum
 {
-	ti99_createopts_volname = 0,
-	ti99_createopts_density = 1,
-	ti99_createopts_sides = 2,
-	ti99_createopts_tracks = 3,
-	ti99_createopts_sectors = 4
-};*/
+	//ti990_createopts_volname = 0,
+	ti990_createopts_cylinders = 0,//1,
+	ti990_createopts_heads = 1,//2,
+	ti990_createopts_sectors = 2,//3,
+	ti990_createopts_sectorsize = 3//4
+};
 
 IMAGEMODULE(
 	ti990dsk,
@@ -428,11 +435,11 @@ IMAGEMODULE(
 	/*ti990_image_readfile*/NULL,			/* read file */
 	/*ti990_image_writefile*/NULL,			/* write file */
 	/*ti990_image_deletefile*/NULL,			/* delete file */
-	/*ti990_image_create*/NULL,				/* create image */
+	ti990_image_create,				/* create image */
 	/*ti990_read_sector*/NULL,
 	/*ti990_write_sector*/NULL,
 	NULL,							/* file options */
-	/*ti990_createopts*/NULL				/* create options */
+	ti990_createopts				/* create options */
 )
 
 /*
@@ -531,7 +538,6 @@ static int read_sector_physical_len(STREAM *file_handle, const ti990_phys_sec_ad
 	return 0;
 }
 
-#if 0
 /*
 	Read one sector from a disk image
 
@@ -540,18 +546,42 @@ static int read_sector_physical_len(STREAM *file_handle, const ti990_phys_sec_ad
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	dest: pointer to destination buffer
 */
-static int read_sector_physical(STREAM *file_handle, const ti99_phys_sec_address *address, const ti99_geometry *geometry, void *dest)
+static int read_sector_physical(STREAM *file_handle, const ti990_phys_sec_address *address, const ti990_geometry *geometry, void *dest)
+{
+	return read_sector_physical_len(file_handle, address, geometry, dest, geometry->bytes_per_sector);
+}
+
+/*
+	Write one sector to a disk image
+
+	file_handle: imgtool file handle
+	address: physical sector address
+	geometry: disk geometry (sectors per track, tracks per side, sides)
+	src: pointer to 256-byte source buffer
+*/
+static int write_sector_physical_len(STREAM *file_handle, const ti990_phys_sec_address *address, const ti990_geometry *geometry, const void *src, int len)
 {
 	int reply;
+
+	if (len > geometry->bytes_per_sector)
+		return 1;
 
 	/* seek to sector */
 	reply = stream_seek(file_handle, phys_address_to_offset(address, geometry), SEEK_SET);
 	if (reply)
 		return 1;
-	/* read it */
-	reply = stream_read(file_handle, dest, 256);
-	if (reply != 256)
+	/* write it */
+	reply = stream_write(file_handle, src, len);
+	if (reply != len)
 		return 1;
+	/* pad with 0s if needed */
+	if (len < geometry->bytes_per_sector)
+	{
+		reply = stream_fill(file_handle, 0, geometry->bytes_per_sector - len);
+
+		if (reply != geometry->bytes_per_sector - len)
+			return 1;
+	}
 
 	return 0;
 }
@@ -564,22 +594,10 @@ static int read_sector_physical(STREAM *file_handle, const ti99_phys_sec_address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	src: pointer to 256-byte source buffer
 */
-static int write_sector_physical(STREAM *file_handle, const ti99_phys_sec_address *address, const ti99_geometry *geometry, const void *src)
+static int write_sector_physical(STREAM *file_handle, const ti990_phys_sec_address *address, const ti990_geometry *geometry, const void *src)
 {
-	int reply;
-
-	/* seek to sector */
-	reply = stream_seek(file_handle, phys_address_to_offset(address, geometry), SEEK_SET);
-	if (reply)
-		return 1;
-	/* write it */
-	reply = stream_write(file_handle, src, 256);
-	if (reply != 256)
-		return 1;
-
-	return 0;
+	return write_sector_physical_len(file_handle, address, geometry, src, geometry->bytes_per_sector);
 }
-#endif
 
 /*
 	Convert logical sector address to physical sector address
@@ -623,7 +641,6 @@ static int read_sector_logical(STREAM *file_handle, int secnum, const ti990_geom
 	return read_sector_logical_len(file_handle, secnum, geometry, dest, geometry->bytes_per_sector);
 }
 
-#if 0
 /*
 	Write one sector to a disk image
 
@@ -632,16 +649,30 @@ static int read_sector_logical(STREAM *file_handle, int secnum, const ti990_geom
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	src: pointer to 256-byte source buffer
 */
-static int write_sector_logical(STREAM *file_handle, int secnum, const ti99_geometry *geometry, const void *src)
+static int write_sector_logical_len(STREAM *file_handle, int secnum, const ti990_geometry *geometry, const void *src, int len)
 {
-	ti99_phys_sec_address address;
+	ti990_phys_sec_address address;
 
 
 	log_address_to_phys_address(secnum, geometry, &address);
 
-	return write_sector_physical(file_handle, &address, geometry, src);
+	return write_sector_physical_len(file_handle, &address, geometry, src, len);
 }
 
+/*
+	Write one sector to a disk image
+
+	file_handle: imgtool file handle
+	secnum: logical sector address
+	geometry: disk geometry (sectors per track, tracks per side, sides)
+	src: pointer to 256-byte source buffer
+*/
+static int write_sector_logical(STREAM *file_handle, int secnum, const ti990_geometry *geometry, const void *src)
+{
+	return write_sector_logical_len(file_handle, secnum, geometry, src, geometry->bytes_per_sector);
+}
+
+#if 0
 /*
 	Find the catalog entry and fdr record associated with a file name
 
@@ -955,9 +986,6 @@ static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 	disk_image_header header;
 	int reply;
 	unsigned totsecs;
-	/*UINT8 buf[256];
-	ti990_fdr fdr;
-	int i;*/
 
 
 	image = malloc(sizeof(ti990_image));
@@ -982,11 +1010,11 @@ static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 
 	totsecs = image->geometry.cylinders*image->geometry.heads*image->geometry.sectors_per_track;
 
-	if ((image->geometry.bytes_per_sector < 256)
+	if ((image->geometry.bytes_per_sector < MIN_SECTOR_SIZE)
 		|| (image->geometry.bytes_per_sector > MAX_SECTOR_SIZE)
-		|| (image->geometry.sectors_per_track > 256)
-		|| (image->geometry.heads > 64)
-		|| (image->geometry.sectors_per_track > 65536)
+		|| (image->geometry.sectors_per_track > MAX_SECTORS_PER_TRACK)
+		|| (image->geometry.heads > MAX_HEADS)
+		|| (image->geometry.cylinders > MAX_CYLINDERS)
 		|| (totsecs < 1)
 		|| (stream_size(f) != header_len + totsecs*image->geometry.bytes_per_sector))
 	{
@@ -1020,75 +1048,6 @@ static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 		*outimg = NULL;
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
-
-#if 0
-	if (((image->sec0.secspertrack * image->sec0.tracksperside * image->sec0.sides) != totsecs)
-		|| (totsecs < 2) || (totsecs > 1600) || memcmp(image->sec0.id, "DSK", 3)
-		|| (stream_size(f) != totsecs*256))
-	{
-		free(image);
-		*outimg = NULL;
-		return IMGTOOLERR_CORRUPTIMAGE;
-	}
-
-	/* read catalog */
-	reply = read_sector_logical(f, 1, & image->geometry, buf);
-	if (reply)
-	{
-		free(image);
-		*outimg = NULL;
-		return IMGTOOLERR_READERROR;
-	}
-
-	for (i=0; i<128; i++)
-		image->catalog[i].fdr_secnum = (buf[i*2] << 8) | buf[i*2+1];
-
-	for (i=0; i<128; i++)
-	{
-		if (image->catalog[i].fdr_secnum >= totsecs)
-		{
-			free(image);
-			*outimg = NULL;
-			return IMGTOOLERR_CORRUPTIMAGE;
-		}
-		else if (image->catalog[i].fdr_secnum)
-		{
-			reply = read_sector_logical(f, image->catalog[i].fdr_secnum, & image->geometry, &fdr);
-			if (reply)
-			{
-				free(image);
-				*outimg = NULL;
-				return IMGTOOLERR_READERROR;
-			}
-			memcpy(image->catalog[i].fname, fdr.name, 10);
-		}
-	}
-
-	/* check catalog */
-	i = 0;
-	if ((image->catalog[0].fdr_secnum == 0) && (image->catalog[1].fdr_secnum != 0))
-		i = 1;	/* skip empty entry 0 (it must be a non-listable catalog) */
-
-	for (; i<127; i++)
-	{
-		if (((! image->catalog[i].fdr_secnum) && image->catalog[i+1].fdr_secnum)
-			|| ((image->catalog[i].fdr_secnum && image->catalog[i+1].fdr_secnum) && (memcmp(image->catalog[i].fname, image->catalog[i+1].fname, 10) >= 0)))
-		{
-			/* we should repair the catalog instead */
-			#if 0
-				free(image);
-				*outimg = NULL;
-				return IMGTOOLERR_CORRUPTIMAGE;
-			#else
-				qsort(image->catalog, sizeof(image->catalog)/sizeof(image->catalog[0]),
-						sizeof(image->catalog[0]), qsort_catalog_compare);
-				break;
-			#endif
-		}
-	}
-
-	image->data_offset = 32+2;
-#endif
 
 	return 0;
 }
@@ -1170,8 +1129,8 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 
 	while ((iter->level >= 0)
 			&& (! (reply = read_sector_logical_len(iter->image->file_handle,
-													iter->level ? get_UINT16BE(iter->xdr[iter->level-1].fdr.paa) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1)
-																: get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1),
+													iter->level ? (unsigned) get_UINT16BE(iter->xdr[iter->level-1].fdr.paa) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1)
+																: (unsigned) get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1),
 													& iter->image->geometry, &iter->xdr[iter->level],
 													iter->level ? get_UINT16BE(iter->xdr[iter->level-1].fdr.prs)
 																: get_UINT16BE(iter->image->sec0.vpl))))
@@ -1191,7 +1150,7 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	else
 	{
 #if 0
-		fname_to_str(ent->fname, iter->fdr[iter->level].fnm, ent->fname_len);
+		fname_to_str(ent->fname, iter->xdr[iter->level].fdr.fnm, ent->fname_len);
 #else
 		{
 			int i;
@@ -1216,47 +1175,81 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 		flag = get_UINT16BE(iter->xdr[iter->level].fdr.flg);
 		if (flag & fdr_flg_cdr)
 		{
-			snprintf(ent->attr, ent->attr_len, "CDR");
+			snprintf(ent->attr, ent->attr_len, "CHANNEL");
 
 			ent->filesize = 0;
 		}
 		else if (flag & fdr_flg_ali)
 		{
-			snprintf(ent->attr, ent->attr_len, "ALIAS");
+			ti990_fdr target_fdr;
+			char buf[9];
+
+			reply = read_sector_logical_len(iter->image->file_handle,
+												iter->level ? ((unsigned) get_UINT16BE(iter->xdr[iter->level-1].fdr.paa) * get_UINT16BE(iter->image->sec0.spa) + get_UINT16BE(iter->xdr[iter->level].adr.raf))
+															: ((unsigned) get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa) + get_UINT16BE(iter->xdr[iter->level].adr.raf)),
+												& iter->image->geometry, &target_fdr,
+												iter->level ? get_UINT16BE(iter->xdr[iter->level-1].fdr.prs)
+															: get_UINT16BE(iter->image->sec0.vpl));
+
+			fname_to_str(buf, target_fdr.fnm, 9);
+
+			snprintf(ent->attr, ent->attr_len, "ALIAS OF %s", buf);
 
 			ent->filesize = 0;
 		}
 		else
 		{
+			const char *fmt, *type;
+
+			switch ((flag >> fdr_flg_fmt_shift) & 3)
+			{
+			case 0:
+				fmt = "NBS";
+				break;
+			case 1:
+				fmt = "BS ";
+				break;
+			case 2:
+			case 3:
+				fmt = "???";
+				break;
+			}
+
 			switch ((flag >> fdr_flg_fu_shift) & 3)
 			{
 			case 0:
 				switch ((flag >> fdr_flg_ft_shift) & 3)
 				{
 				case 0:
-					snprintf(ent->attr, ent->attr_len, "???");
+					type = "???";
 					break;
 				case 1:
-					snprintf(ent->attr, ent->attr_len, "SEQ");
+					type = "SEQ";
 					break;
 				case 2:
-					snprintf(ent->attr, ent->attr_len, "REL");
+					type = "REL";
 					break;
 				case 3:
-					snprintf(ent->attr, ent->attr_len, "KIF");
+					type = "KIF";
 					break;
 				}
 				break;
 			case 1:
-				snprintf(ent->attr, ent->attr_len, "DIR");
+				type = "DIR";
 				break;
 			case 2:
-				snprintf(ent->attr, ent->attr_len, "PGM");
+				type = "PRO";
 				break;
 			case 3:
-				snprintf(ent->attr, ent->attr_len, "IMG");
+				type = "IMG";
 				break;
 			}
+			snprintf(ent->attr, ent->attr_len,
+						"%s %c %s%s%s%s%s", fmt, (flag & fdr_flg_all) ? 'N' : 'C', type,
+							(flag & fdr_flg_blb) ? "" : " BLK",
+							(flag & fdr_flg_tmp) ? " TMP" : "",
+							(flag & fdr_flg_wpb) ? " WPT" : "",
+							(flag & fdr_flg_dpb) ? " DPT" : "");
 
 			/* len in blocks */
 			ent->filesize = get_UINT32BE(iter->xdr[iter->level].fdr.bkm);
@@ -1273,8 +1266,23 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 		}
 		iter->index[iter->level]++;
 
+		if (get_UINT16BE(iter->xdr[iter->level].fdr.saa) != 0)
+			printf("roupoupou");
+		else
+		{
+			int i;
+			for (i=0; i<64; i++)
+				if (iter->xdr[iter->level].fdr.sat[i])
+				{
+					printf("roupoupou");
+					break;
+				}
+		}
+
 		/* recurse subdirectory if applicable */
 		if ((((flag >> fdr_flg_fu_shift) & 3) == 1)
+			&& (! (flag & fdr_flg_ali))
+			&& (! (flag & fdr_flg_cdr))
 			&& (iter->level < MAX_DIR_LEVEL)
 			&& ! ((iter->level == 0) && ! memcmp(iter->xdr[iter->level].fdr.fnm, "VCATALOG", 8)))
 		{
@@ -1618,76 +1626,44 @@ static int ti990_image_deletefile(IMAGE *img, const char *fname)
 */
 static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
 {
-#if 0
-	const char *volname;
-	int density;
-	ti99_geometry geometry;
-
-	int totsecs;
-
-	ti99_sc0 sec0;
-	UINT8 empty_sec[256];
-
+	//const char *volname;
+	ti990_geometry geometry;
+	unsigned totsecs;
+	disk_image_header header;
+	ti990_sc0 sec0;
+	UINT8 empty_sec[MAX_SECTOR_SIZE];
+	int reply;
 	int i;
 
 
 	(void) mod;
 
 	/* read options */
-	volname = in_options[ti99_createopts_volname].s;
-	density = in_options[ti99_createopts_density].i;
-	geometry.sides = in_options[ti99_createopts_sides].i;
-	geometry.tracksperside = in_options[ti99_createopts_tracks].i;
-	geometry.secspertrack = in_options[ti99_createopts_sectors].i;
+	//volname = in_options[ti990_createopts_volname].s;
+	geometry.cylinders = in_options[ti990_createopts_cylinders].i;
+	geometry.heads = in_options[ti990_createopts_heads].i;
+	geometry.sectors_per_track = in_options[ti990_createopts_sectors].i;
+	geometry.bytes_per_sector = in_options[ti990_createopts_sectorsize].i;
 
-	totsecs = geometry.secspertrack * geometry.tracksperside * geometry.sides;
+	totsecs = geometry.cylinders * geometry.heads * geometry.sectors_per_track;
 
-	/* FM disks can hold fewer sector per track than MFM disks */
-	if ((density == 1) && (geometry.secspertrack > 9))
-		return IMGTOOLERR_PARAMTOOLARGE;
+	/* write header */
+	set_UINT32BE(& header.cylinders, geometry.cylinders);
+	set_UINT32BE(& header.heads, geometry.heads);
+	set_UINT32BE(& header.sectors_per_track, geometry.sectors_per_track);
+	set_UINT32BE(& header.bytes_per_sector, geometry.bytes_per_sector);
 
-	/* check total disk size */
-	if (totsecs < 2)
-		return IMGTOOLERR_PARAMTOOSMALL;
-	if (totsecs > 1600)
-		return IMGTOOLERR_PARAMTOOLARGE;
-
-	/* initialize sector 0 */
-
-	/* set volume name */
-	str_to_fname(sec0.name, volname);
-
-	/* set every header field */
-	sec0.totsecsMSB = totsecs >> 8;
-	sec0.totsecsLSB = totsecs & 0xff;
-	sec0.secspertrack = geometry.secspertrack;
-	sec0.id[0] = 'D';
-	sec0.id[1] = 'S';
-	sec0.id[2] = 'K';
-	sec0.id[3] = ' ';
-	sec0.tracksperside = geometry.tracksperside;
-	sec0.sides = geometry.sides;
-	sec0.density = density;
-
-	/* clear reserved field */
-	for (i=0; i<36; i++)
-		sec0.res[i] = 0;
-
-	/* clear bitmap */
-	for (i=0; i < (totsecs>>3); i++)
-		sec0.abm[i] = 0;
-
-	if (totsecs & 7)
+	reply = stream_write(f, &header, sizeof(header));
+	if (reply != sizeof(header))
 	{
-		sec0.abm[i] = 0xff << (totsecs & 7);
-		i++;
+		return IMGTOOLERR_WRITEERROR;
 	}
 
-	for (; i < 200; i++)
-		sec0.abm[i] = 0xff;
 
-	/* mark first 2 sectors (header bitmap, and catalog) as used */
-	sec0.abm[0] |= 3;
+	/* initialize sector 0 */
+	/* mark disk as uninitialized */
+	set_UINT16BE(& sec0.sta, 2);
+
 
 	/* write sector 0 */
 	if (write_sector_logical(f, 0, & geometry, &sec0))
@@ -1695,13 +1671,12 @@ static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const Re
 
 
 	/* now clear every other sector, including catalog */
-	memset(empty_sec, 0, 256);
+	memset(empty_sec, 0, geometry.bytes_per_sector);
 
 	for (i=1; i<totsecs; i++)
 		if (write_sector_logical(f, i, & geometry, empty_sec))
 			return IMGTOOLERR_WRITEERROR;
 
-#endif
 	return 0;
 }
 
