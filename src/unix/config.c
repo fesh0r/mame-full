@@ -581,6 +581,7 @@ int config_init (int argc, char *argv[])
       {
          char *ext;
          char name[BUF_SIZE];
+	 const struct IODevice *dev;
          
          /* make a copy of the name */
          strncpy(name, options.image_files[i].name, BUF_SIZE);
@@ -589,20 +590,18 @@ int config_init (int argc, char *argv[])
          
          /* get ext, skip .gz */
          ext = strrchr(name, '.');
-         if( ext && !strcmp(ext, ".gz") )
+         if (ext && !strcmp(ext, ".gz"))
          {
             *ext = 0;
             ext = strrchr(name, '.');
          }
          
          /* Look up the filename extension in the drivers device list */
-         if(ext && drivers[game_index]->dev)
+         if (ext && (dev = device_first(drivers[game_index])))
          {
-            const struct IODevice *dev = drivers[game_index]->dev;
-            
             ext++; /* skip the "." */
             
-            while (dev->type != IO_END)
+            while (dev)
             {
                const char *dst = dev->file_extensions;
                /* scan supported extensions for this device */
@@ -619,7 +618,7 @@ int config_init (int argc, char *argv[])
                   /* skip '\0' once in the list of extensions */
                   dst += strlen(dst) + 1;
                }
-               dev++;
+               dev = device_next(drivers[game_index], dev); 
             }
          }
          if(!options.image_files[i].type)

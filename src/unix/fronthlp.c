@@ -557,15 +557,15 @@ int frontend_list(char *gamename)
                   break;
 #ifdef MESS
                case LIST_DEVICES: /* list devices */
-                   if(drivers[i]->dev && (drivers[i]->dev->type != IO_END))
+                   if(device_first(drivers[i]))
                    {
-                      const struct IODevice *dev = drivers[i]->dev;
+                      const struct IODevice *dev = device_first(drivers[i]);
                       
                       j = 0;
                       
                       fprintf(stdout_file, "%-8s  ", drivers[i]->name);
                       
-                      while (dev->type != IO_END)
+                      while (dev)
                       {
                          const char *src = dev->file_extensions;
                          
@@ -583,7 +583,7 @@ int frontend_list(char *gamename)
                          }
                          fprintf(stdout_file, "\n");
                          j++;
-                         dev++;
+                         dev = device_next(drivers[i], dev);
                       }
                    }
                    else
