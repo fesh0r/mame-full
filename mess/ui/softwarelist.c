@@ -1006,7 +1006,7 @@ BOOL SoftwarePicker_OnIdle(HWND hwndSoftware)
     ImageData *pImageData;
 
 	if (!mess_images_index)
-		return mess_idle_work;
+		return FALSE;
 
     if (s_nIdleImageNum == 0)
         SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
