@@ -228,8 +228,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	       xf86ctx.device->mode.bytesPerScanline;
           
 	  /* top */
-	  memset(page_start, 0,
-	       starty * xf86ctx.device->mode.bytesPerScanline);
+	  memset(page_start, 0, starty*xf86ctx.device->mode.bytesPerScanline);
 	  for(y=starty; y < (starty+scaled_height); y++)
 	  {
 	    /* left */

@@ -60,6 +60,7 @@ int sysdep_display_driver_open(int reopen)
 	int score, best_score = 0;
 	int depth, bpp;
 	vga_modeinfo *my_modeinfo;
+	unsigned char *video_start;
 	static int firsttime = 1;
 	
 	if (reopen)
@@ -190,8 +191,7 @@ int sysdep_display_driver_open(int reopen)
 	{
           video_mem  = vga_getgraphmem();
           video_mem += startx * video_modeinfo.bytesperpixel;
-          video_mem += starty * video_modeinfo.width *
-                  video_modeinfo.bytesperpixel;
+          video_mem += starty * video_modeinfo.linewidth;
           video_update_type=0;
           fprintf(stderr, "Svgalib: Info: Using a linear framebuffer to speed up\n");
 	}
@@ -214,6 +214,48 @@ int sysdep_display_driver_open(int reopen)
 	  else
 	    video_update_type=1;
 	}
+
+	/* clear the unused area of the screen */
+        switch(video_update_type)
+        {
+          case 0: /* linear */
+            video_start = vga_getgraphmem();
+
+            /* top */
+            memset(video_start, 0, starty*video_modeinfo.linewidth);
+            /* left and right */
+            for (i=starty; i<(scaled_height+starty); i++)
+            {
+              /* left */
+              memset(video_start + i*video_modeinfo.linewidth, 0,
+                startx * video_modeinfo.bytesperpixel);
+              /* right */
+              memset(video_start + i*video_modeinfo.linewidth +
+                ((startx + scaled_width) & ~3) * video_modeinfo.bytesperpixel,
+                0, (video_modeinfo.width - ((startx + scaled_width) & ~3)) *
+                video_modeinfo.bytesperpixel);
+	    }
+	    /* bottom */
+	    memset(video_start + (starty + scaled_height) *
+	      video_modeinfo.linewidth, 0,
+	      (video_modeinfo.height - (starty + scaled_height)) *
+	      video_modeinfo.linewidth);
+            break;
+          case 1: /* gl bitmap equals framebuffer */
+          case 2: /* gl bitmap needs conversion before it can be blitted */
+            /* top */
+            gl_fillbox(0, 0, video_modeinfo.width, starty, 0);
+            /* left */
+            gl_fillbox(0, starty, startx, scaled_height, 0);
+            /* right */
+            gl_fillbox((startx + scaled_width) & ~3, starty,
+               video_modeinfo.width - ((startx + scaled_width) & ~3),
+               scaled_height, 0);
+            /* bottom */
+            gl_fillbox(0, starty + scaled_height, video_modeinfo.width,
+               video_modeinfo.height - (starty + scaled_height), 0);
+            break;
+        }
 
 	/* init input */
 	if (!reopen)
@@ -296,9 +338,8 @@ void sysdep_display_driver_clear_buffer(void)
   {
     case 0: /* linear */
       for (line=0; line<scaled_height; line++)
-        memset(video_mem +
-          line*video_modeinfo.linewidth/video_modeinfo.bytesperpixel, 0,
-          video_modeinfo.linewidth/video_modeinfo.bytesperpixel);
+        memset(video_mem + line*video_modeinfo.linewidth, 0,
+          scaled_width*video_modeinfo.bytesperpixel);
       break;
     case 1: /* gl bitmap equals framebuffer */
       gl_fillbox(startx, starty, scaled_width, scaled_height, 0);

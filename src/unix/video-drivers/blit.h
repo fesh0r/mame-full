@@ -158,7 +158,7 @@ LOOP()
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
-      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int *dst = (unsigned int *)DST; \
       unsigned int r,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
@@ -176,7 +176,7 @@ LOOP()
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
-      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int *dst = (unsigned int *)DST; \
       unsigned int r,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
@@ -285,7 +285,7 @@ case 2:
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
-      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int *dst = (unsigned int *)DST; \
       for(;src<end;) \
       { \
          *dst++=GETPIXEL(*src++); \
