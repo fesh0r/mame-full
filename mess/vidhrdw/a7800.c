@@ -98,7 +98,9 @@ int ind_bytes;
 	UINT8 *ROM = memory_region(REGION_CPU1);
     /* Process this DLL entry */
     dl = maria_dl;
-    for (d=0; d<320; d++) maria_bitmap->line[maria_scanline][d] = maria_backcolor;
+    for (d=0; d<320; d++)
+		plot_pixel(maria_bitmap, d, maria_scanline, maria_backcolor);
+
     /* Step through DL's */
     while (READ_MEM(dl + 1) != 0) {
 
@@ -148,9 +150,9 @@ int ind_bytes;
           d = READ_MEM(data_addr++);
 		  c = (d & 0xC0) >> 6;
 		  if (c) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 		      hpos+=2;
@@ -159,9 +161,9 @@ int ind_bytes;
 		  if (hpos > 510) hpos=0;
 		  c = (d & 0x30) >> 4;
 		  if (c) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 
@@ -171,9 +173,9 @@ int ind_bytes;
 		  if (hpos > 510) hpos=0;
 		  c = (d & 0x0C) >> 2;
 		  if (c) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 
@@ -183,9 +185,9 @@ int ind_bytes;
 		  if (hpos > 510) hpos=0;
 		  c = (d & 0x03);
 		  if (c) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 
@@ -214,14 +216,14 @@ int ind_bytes;
 		  }
 
 		  if (d & 0x80) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		      hpos+=1;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x40) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 
@@ -229,42 +231,42 @@ int ind_bytes;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x20) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		      hpos+=1;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x10) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		      hpos+=1;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x08) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		      hpos+=1;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x04) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		      hpos+=1;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x02) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		      hpos+=1;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x01) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][2]);
 		  }
 		  else {
 		     hpos+=1;
@@ -297,9 +299,9 @@ int ind_bytes;
           c = (d & 0x0C) | ((d & 0xC0) >> 6);
           if (c == 4 || c == 8 || c == 12) c=0;
           if (c) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 		      hpos+=2;
@@ -309,9 +311,9 @@ int ind_bytes;
           c = ((d & 0x03) << 2) | ((d & 0x30) >> 4);
           if (c == 4 || c == 8 || c == 12) c=0;
 		  if (c) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 
@@ -341,7 +343,7 @@ int ind_bytes;
 
           c = ((d & 0x80) >> 6) | ((d & 0x08) >> 3);
           if (c) {
-              maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+              plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 		      hpos+=1;
@@ -350,7 +352,7 @@ int ind_bytes;
 
           c = ((d & 0x40) >> 5) | ((d & 0x04) >> 2);
           if (c) {
-              maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+              plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 		      hpos+=1;
@@ -359,7 +361,7 @@ int ind_bytes;
 
           c = ((d & 0x20) >> 4) | ((d & 0x02) >> 1);
           if (c) {
-              maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+              plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 		      hpos+=1;
@@ -368,7 +370,7 @@ int ind_bytes;
 
           c = ((d & 0x10) >> 3) | (d & 0x01);
           if (c) {
-              maria_bitmap->line[maria_scanline][hpos++]=maria_palette[pal][c];
+              plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[pal][c]);
 		  }
 		  else {
 		      hpos+=1;
@@ -396,18 +398,18 @@ int ind_bytes;
 		  }
 		  c = ((d & 0x0C) >> 2) | (pal & 0x04);
 		  if (d & 0x80) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		  }
 		  else {
 		     hpos+=2;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x40) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		  }
 		  else {
 		     hpos+=2;
@@ -415,18 +417,18 @@ int ind_bytes;
 		  if (hpos > 510) hpos=0;
 		  c = (d & 0x03) | (pal & 0x04);
 		  if (d & 0x20) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		  }
 		  else {
 		      hpos+=2;
 		  }
 		  if (hpos > 510) hpos=0;
 		  if (d & 0x10) {
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		      if (hpos > 510) hpos=0;
-		      maria_bitmap->line[maria_scanline][hpos++]=maria_palette[c][2];
+		      plot_pixel(maria_bitmap, hpos++, maria_scanline, maria_palette[c][2]);
 		  }
 		  else {
 		      hpos+=2;
@@ -491,7 +493,7 @@ int a7800_interrupt(void)
 	return M6502_INT_NMI;
     }
     else {
-	return M6502_INT_NONE;
+	return 0;
     }
 }
 

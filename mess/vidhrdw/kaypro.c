@@ -222,9 +222,6 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 	if (palette_used_colors)
 		memset(palette_used_colors, PALETTE_COLOR_USED, 4);
 
-	if( palette_recalc() )
-		full_refresh = 1;
-
 	cursor_count++;
 	if (cursor)
 		j = cur_y * KAYPRO_SCREEN_W + cur_x;

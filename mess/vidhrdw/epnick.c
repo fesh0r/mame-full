@@ -97,9 +97,6 @@ void nick_init_palette(unsigned char *palette, unsigned short *colortable,const 
     memcpy(palette, nick_colour_palette , sizeof(nick_colour_palette));
         memcpy(colortable, nick_colour_table, sizeof(nick_colour_table));
         //color_prom=malloc(0*sizeof(char));
-
-        //palette_recalc();
-
 }
 
 /* first clock visible on left hand side */

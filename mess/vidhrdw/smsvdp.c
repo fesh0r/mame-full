@@ -437,7 +437,6 @@ void sms_cache_tiles(void)
 void sms_vdp_refresh(struct osd_bitmap *bitmap, int full_refresh)
 {
     sms_update_palette();
-	palette_recalc();
     copybitmap (bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 

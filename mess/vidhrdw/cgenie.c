@@ -399,7 +399,6 @@ static void cgenie_refresh_monitor(struct osd_bitmap * bitmap, int full_refresh)
 			}
 		}
 	}
-	palette_recalc();
 	update_all = 0;
 }
 
@@ -516,9 +515,6 @@ static void cgenie_refresh_tv_set(struct osd_bitmap * bitmap, int full_refresh)
 ***************************************************************************/
 void cgenie_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 {
-	if( palette_recalc() )
-        full_refresh = 1;
-
     if( cgenie_tv_mode )
 		cgenie_refresh_tv_set(bitmap,full_refresh);
 	else

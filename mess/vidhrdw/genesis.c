@@ -1390,7 +1390,6 @@ void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 
 genesis_modify_display(0);
-palette_recalc();
 copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
 }
 

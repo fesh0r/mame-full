@@ -193,13 +193,13 @@ static void vic3_drawlines (int first, int last)
 
 	if (!SCREENON)
 	{
-		if (Machine->color_depth == 8)
+/*		if (Machine->color_depth == 8)
 		{
 			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
 				memset (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
 		}
 		else
-		{
+*/		{
 			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
 				memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
 		}
@@ -214,14 +214,14 @@ static void vic3_drawlines (int first, int last)
 		end = last;
 	else
 		end = vic2.y_begin + YPOS;
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (line = first; line < end; line++)
 			memset (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
 					vic2.bitmap->width);
 	}
 	else
-	{
+*/	{
 		for (line = first; line < end; line++)
 			memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
 					  vic2.bitmap->width);
@@ -348,7 +348,7 @@ static void vic3_drawlines (int first, int last)
 				memset (vic2.sprites[i].paintedline, 0, sizeof (vic2.sprites[i].paintedline));
 			}
 		}
-		if (Machine->color_depth == 8)
+/*		if (Machine->color_depth == 8)
 		{
 			for (i = ybegin; i <= yend; i++)
 			{
@@ -358,7 +358,7 @@ static void vic3_drawlines (int first, int last)
 			}
 		}
 		else
-		{
+*/		{
 			for (i = ybegin; i <= yend; i++)
 			{
 				memset16 (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
@@ -372,14 +372,14 @@ static void vic3_drawlines (int first, int last)
 		end = last;
 	else
 		end = vic2.bitmap->height;
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (; line < end; line++)
 			memset (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
 					vic2.bitmap->width);
 	}
 	else
-	{
+*/	{
 		for (; line < end; line++)
 			memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
 					  vic2.bitmap->width);
@@ -543,8 +543,7 @@ INLINE void vic3_draw_block(int x, int y, UINT8 colors[8])
                 p |= colors[7] & 0x80;                      \
                 colors[7] >>= 1;                                \
             }                                                   \
-            vic2.bitmap->line[YPOS+y][XPOS+x+i] =               \
-                Machine->pens[p];                               \
+            plot_pixel(vic2.bitmap, XPOS+x+i, YPOS+y, Machine->pens[p]);  \
         }                                                       \
     }
 
@@ -599,11 +598,11 @@ void vic3_interlace_draw_block(int x, int y, int offset)
 			colors[7]=c64_memory[VIC3_BITPLANE_IADDR(7)+offset]<<7;
 		}
 		for (i=7;i>=0;i--) {
-			vic2.bitmap->line[YPOS+y][XPOS+x+i]=
+			plot_pixel(vic2.bitmap, XPOS+x+i, YPOS+y,
 				Machine->pens[(colors[0]&1)|(colors[1]&2)
 							 |(colors[2]&4)|(colors[3]&8)
 							 |(colors[4]&0x10)|(colors[5]&0x20)
-							 |(colors[6]&0x40)|(colors[7]&0x80)];
+							 |(colors[6]&0x40)|(colors[7]&0x80)]);
 			colors[0]>>=1;
 			colors[1]>>=1;
 			colors[2]>>=1;
@@ -668,11 +667,11 @@ void vic3_draw_block(int x, int y, int offset)
 			colors[7]=c64_memory[VIC3_BITPLANE_ADDR(7)+offset]<<7;
 		}
 		for (i=7;i>=0;i--) {
-			vic2.bitmap->line[YPOS+y][XPOS+x+i]=
+			plot_pixel(vic2.bitmap, XPOS+x+i, YPOS+y,
 				Machine->pens[(colors[0]&1)|(colors[1]&2)
 							 |(colors[2]&4)|(colors[3]&8)
 							 |(colors[4]&0x10)|(colors[5]&0x20)
-							 |(colors[6]&0x40)|(colors[7]&0x80)];
+							 |(colors[6]&0x40)|(colors[7]&0x80)]);
 			colors[0]>>=1;
 			colors[1]>>=1;
 			colors[2]>>=1;
@@ -778,7 +777,6 @@ int vic3_raster_irq (void)
 									 vic3.palette[i].blue<<4);
 			}
 		}
-		palette_recalc();
 		if (vic3.palette_dirty) {
 			vic2.spritemulti[1] = Machine->pens[SPRITE_MULTICOLOR1];
 			vic2.spritemulti[3] = Machine->pens[SPRITE_MULTICOLOR2];

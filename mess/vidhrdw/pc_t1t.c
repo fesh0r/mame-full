@@ -732,9 +732,6 @@ void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if (!pcjr.displayram) return;
 
-	if( palette_recalc() )
-		full_refresh = 1;
-
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
 	if( crtc6845_do_full_refresh(pcjr.crtc)||pcjr.full_refresh||full_refresh )

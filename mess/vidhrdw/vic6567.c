@@ -749,7 +749,7 @@ static void vic2_draw_character (int ybegin, int yend, int ch,
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -766,7 +766,7 @@ static void vic2_draw_character (int ybegin, int yend, int ch,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
@@ -788,7 +788,7 @@ static void vic2_draw_character_multi (int ybegin, int yend, int ch,
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -805,7 +805,7 @@ static void vic2_draw_character_multi (int ybegin, int yend, int ch,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = vic2.dma_read (vic2.chargenaddr + ch * 8 + y);
@@ -827,7 +827,7 @@ static void vic2_draw_bitmap (int ybegin, int yend,
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -844,7 +844,7 @@ static void vic2_draw_bitmap (int ybegin, int yend,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
@@ -866,7 +866,7 @@ static void vic2_draw_bitmap_multi (int ybegin, int yend,
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -883,7 +883,7 @@ static void vic2_draw_bitmap_multi (int ybegin, int yend,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = vic2.dma_read ((vic2.chargenaddr&0x2000) + ch * 8 + y);
@@ -907,7 +907,7 @@ static void vic2_draw_sprite_code_multi (int y, int xbegin,
 
 	if ((y < YPOS) || (y >= 208) || (xbegin <= 1) || (xbegin >= 328))
 		return;
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (x = 0, mask = 0xc0, shift = 6; x < 8; x += 2, mask >>= 2, shift -= 2)
 		{
@@ -933,7 +933,7 @@ static void vic2_draw_sprite_code_multi (int y, int xbegin,
 		}
 	}
 	else
-	{
+*/	{
 		for (x = 0, mask = 0xc0, shift = 6; x < 8; x += 2, mask >>= 2, shift -= 2)
 		{
 			if (code & mask)
@@ -965,7 +965,7 @@ static void vic2_draw_sprite_code (int y, int xbegin, int code, int color)
 
 	if ((y < YPOS) || (y >= 208) || (xbegin <= 1) || (xbegin >= 328))
 		return;
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (x = 0, mask = 0x80; x < 8; x++, mask >>= 1)
 		{
@@ -976,7 +976,7 @@ static void vic2_draw_sprite_code (int y, int xbegin, int code, int color)
 		}
 	}
 	else
-	{
+*/	{
 		for (x = 0, mask = 0x80; x < 8; x++, mask >>= 1)
 		{
 			if (code & mask)
@@ -1265,13 +1265,13 @@ static void vic2_drawlines (int first, int last)
 
 	if (!SCREENON)
 	{
-		if (Machine->color_depth == 8)
+/*		if (Machine->color_depth == 8)
 		{
 			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
 				memset (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
 		}
 		else
-		{
+*/		{
 			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
 				memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
 		}

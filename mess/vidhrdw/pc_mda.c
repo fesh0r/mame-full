@@ -469,9 +469,6 @@ void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	static int width=0, height=0;
 	int w,h;
 
-	if( palette_recalc() )
-		full_refresh = 1;
-
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
 	if( crtc6845_do_full_refresh(mda.crtc)||full_refresh||mda.full_refresh )

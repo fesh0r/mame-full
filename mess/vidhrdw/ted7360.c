@@ -948,7 +948,7 @@ static void ted7360_draw_character (int ybegin, int yend, int ch, int yoff, int 
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -967,7 +967,7 @@ static void ted7360_draw_character (int ybegin, int yend, int ch, int yoff, int 
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			if (INROM)
@@ -991,7 +991,7 @@ static void ted7360_draw_character_multi (int ybegin, int yend, int ch, int yoff
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -1010,7 +1010,7 @@ static void ted7360_draw_character_multi (int ybegin, int yend, int ch, int yoff
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			if (INROM)
@@ -1034,7 +1034,7 @@ static void ted7360_draw_bitmap (int ybegin, int yend,
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -1050,7 +1050,7 @@ static void ted7360_draw_bitmap (int ybegin, int yend,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = vic_dma_read (bitmapaddr + ch * 8 + y);
@@ -1071,7 +1071,7 @@ static void ted7360_draw_bitmap_multi (int ybegin, int yend,
 {
 	int y, code;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -1087,7 +1087,7 @@ static void ted7360_draw_bitmap_multi (int ybegin, int yend,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = vic_dma_read (bitmapaddr + ch * 8 + y);
@@ -1108,7 +1108,7 @@ static void ted7360_draw_cursor (int ybegin, int yend, int yoff, int xoff,
 {
 	int y;
 
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 		for (y = ybegin; y <= yend; y++)
 		{
@@ -1116,7 +1116,7 @@ static void ted7360_draw_cursor (int ybegin, int yend, int yoff, int xoff,
 		}
 	}
 	else
-	{
+*/	{
 		for (y = ybegin; y <= yend; y++)
 		{
 			memset16 ((short *) ted7360_bitmap->line[yoff + y] + xoff, color, 8);
@@ -1146,13 +1146,13 @@ static void ted7360_drawlines (int first, int last)
     
     if (!SCREENON)
     {
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 	    for (line = first; (line < last) && (line < ted7360_bitmap->height); line++)
 		memset (ted7360_bitmap->line[line], Machine->pens[0], ted7360_bitmap->width);
 	}
 	else
-	{
+*/	{
 	    for (line = first; (line < last) && (line < ted7360_bitmap->height); line++)
 		memset16 (ted7360_bitmap->line[line], Machine->pens[0], ted7360_bitmap->width);
 	}
@@ -1168,14 +1168,14 @@ static void ted7360_drawlines (int first, int last)
 	end = last;
     else
 	end = y_begin + YPOS;
-    if (Machine->color_depth == 8)
+/*    if (Machine->color_depth == 8)
     {
 	for (line = first; line < end; line++)
 	    memset (ted7360_bitmap->line[line], Machine->pens[FRAMECOLOR],
 		    ted7360_bitmap->width);
     }
     else
-    {
+*/   {
 	for (line = first; line < end; line++)
 	    memset16 (ted7360_bitmap->line[line], Machine->pens[FRAMECOLOR],
 		      ted7360_bitmap->width);
@@ -1267,7 +1267,7 @@ static void ted7360_drawlines (int first, int last)
 		}
 	    }
 	}
-	if (Machine->color_depth == 8)
+/*	if (Machine->color_depth == 8)
 	{
 	    for (i = ybegin; i <= yend; i++)
 	    {
@@ -1277,7 +1277,7 @@ static void ted7360_drawlines (int first, int last)
 	    }
 	}
 	else
-	{
+*/	{
 	    for (i = ybegin; i <= yend; i++)
 	    {
 		memset16 (ted7360_bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
@@ -1291,14 +1291,14 @@ static void ted7360_drawlines (int first, int last)
 	end = last;
     else
 	end = ted7360_bitmap->height;
-    if (Machine->color_depth == 8)
+/*    if (Machine->color_depth == 8)
     {
 	for (; line < end; line++)
 	    memset (ted7360_bitmap->line[line], Machine->pens[FRAMECOLOR],
 		    ted7360_bitmap->width);
     }
     else
-    {
+*/    {
 	for (; line < end; line++)
 	    memset16 (ted7360_bitmap->line[line], Machine->pens[FRAMECOLOR],
 		      ted7360_bitmap->width);

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.4 2001/05/25 07:06:17 PeT Exp $
+  $Id: pc8801.c,v 1.5 2001/08/31 22:37:34 npwoods Exp $
 
 ***************************************************************************/
 
@@ -365,7 +365,6 @@ void pc8801_vh_refresh(struct osd_bitmap *bitmap,int full_refresh)
   int x,y,attr_new,text_new,i,a,tx,ty,oy,gx,gy,ct,cg;
   static int blink_count;
 
-  full_refresh = full_refresh || palette_recalc();
   blink_count=(blink_count+1)%(blink_period*4);
   /* attribute expand */
   for(y=0;y<25;y++) {

@@ -1220,7 +1220,6 @@ void vga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			vga.dac.dirty=0;
 			full_refresh=1;
 		}
-		palette_recalc();
 		if (vga.attribute.data[0x10]&0x80) {
 			for (i=0; i<16;i++) {
 				vga.pens[i]=Machine->pens[(vga.attribute.data[i]&0x0f)

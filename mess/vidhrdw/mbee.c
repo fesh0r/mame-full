@@ -527,9 +527,6 @@ void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
     }
 
-    if( palette_recalc() )
-		full_refresh = 1;
-
     if( full_refresh )
 	{
 		memset(dirtybuffer, 1, videoram_size);

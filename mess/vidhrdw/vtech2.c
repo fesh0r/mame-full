@@ -137,9 +137,6 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs, x, y;
 
-	if( palette_recalc() )
-		full_refresh = 1;
-
     if( full_refresh )
 	{
 		fillbitmap(Machine->scrbitmap, Machine->pens[(laser_bg_mode >> 4) & 15], &Machine->visible_area);
