@@ -10,17 +10,19 @@
 #define EXTERN extern
 #endif
 
-enum { X11_WINDOW, X11_XV, X11_GLIDE, X11_DGA, X11_MODE_COUNT };
+enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_DGA, X11_MODE_COUNT };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
 extern struct rc_option	fx_opts[];
+extern struct rc_option	xgl_opts[];
 
 EXTERN Display 		*display;
 EXTERN Window		window;
 EXTERN Screen 		*screen;
 EXTERN unsigned int	window_width;
 EXTERN unsigned int	window_height;
+EXTERN int		custom_windowsize;
 EXTERN unsigned char	*scaled_buffer_ptr;
 EXTERN int		x11_video_mode;
 EXTERN int		run_in_root_window;
@@ -102,6 +104,15 @@ void xfx_exit(void);
 int  xfx_open_display(void);
 void xfx_close_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
+#endif
+/* OpenGL functions */
+#ifdef USE_OPENGL
+int  xgl_open_display(void);
+void xgl_close_display(void);
+void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);

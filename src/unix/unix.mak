@@ -53,7 +53,6 @@ endif
 LIBS.x11        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext
 LIBS.svgalib    = $(X11LIB) -lvga -lvgagl
 LIBS.ggi        = $(X11LIB) -lggi
-LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
 ifdef GLIDE2
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
 else
@@ -64,7 +63,6 @@ LIBS.SDL	= $(X11LIB) `$(SDL_CONFIG) --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS)
-CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS) $(GLCFLAGS)
 ifdef GLIDE2
 CFLAGS.svgafx   = -I/usr/include/glide
 else
@@ -73,19 +71,14 @@ endif
 CFLAGS.SDL      = $(X11INC) `$(SDL_CONFIG) --cflags` -D_REENTRANT
 CFLAGS.photon2	=
 
-ifdef X11_DGA
-INST.x11        = doinstallsuid
-else
 INST.x11	= doinstall
-endif
 INST.ggi        = doinstall
 INST.svgalib    = doinstallsuid
-INST.xgl        = doinstallsuid copycab
 INST.svgafx     = doinstallsuid
 INST.SDL	= doinstall
 INST.photon2	= doinstall
 
-# handle X11 display method additonal settings
+# handle X11 display method additonal settings, override INST if nescesarry
 ifdef X11_MITSHM
 CFLAGS.x11 += -DUSE_MITSHM
 endif
@@ -96,18 +89,25 @@ endif
 ifdef X11_DGA
 CFLAGS.x11 += -DUSE_DGA
 LIBS.x11   += -lXxf86dga -lXxf86vm
-endif
+INST.x11    = doinstallsuid
 ifdef TDFX_DGA_WORKAROUND
-CFLAGS.x11 +=  -DTDFX_DGA_WORKAROUND 
+CFLAGS.x11 += -DTDFX_DGA_WORKAROUND 
+endif
 endif
 ifdef X11_GLIDE
 ifdef GLIDE2
-CFLAGS.x11     += -DUSE_GLIDE -I/usr/include/glide
-LIBS.x11       += -lglide2x
+CFLAGS.x11 += -DUSE_GLIDE -I/usr/include/glide
+LIBS.x11   += -lglide2x
 else
-CFLAGS.x11     += -DUSE_GLIDE -I/usr/include/glide3
-LIBS.x11       += -lglide3
+CFLAGS.x11 += -DUSE_GLIDE -I/usr/include/glide3
+LIBS.x11   += -lglide3
 endif
+INST.x11    = doinstallsuid
+endif
+ifdef X11_OPENGL
+CFLAGS.x11 += -DUSE_OPENGL $(GLCFLAGS)
+LIBS.x11   += $(GLLIBS) -ljpeg
+INST.x11   += copycab
 endif
 ifdef X11_XIL
 CFLAGS.x11 += -DUSE_XIL
@@ -309,10 +309,11 @@ VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 ifdef X11_GLIDE
 VID_OBJS.x11   += $(VID_DIR)/fxgen.o $(VID_DIR)/xfx.o $(VID_DIR)/fxvec.o
 endif
-VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
+ifdef X11_OPENGL
+VID_OBJS.x11   += $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
 		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/glexport.o \
-		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
-		  $(VID_DIR)/xinput.o
+		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o $(VID_DIR)/xgl.o
+endif
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
 VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o

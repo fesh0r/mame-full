@@ -1758,7 +1758,7 @@ void UpdateCabDisplay (struct mame_bitmap *bitmap)
             SetupOrtho ();
   }
 
-  if (doublebuffer)
+  if (glCaps.buffer)
   {
 #ifdef WIN32
     BOOL ret = SwapBuffers (glHDC);

@@ -47,14 +47,13 @@ static void XInputClearDeltas(void);
 static int XInputProcessEvent(XEvent *);
 #endif
 
-/* options */
-static int xinput_use_winkeys = 0;
-static int xinput_grab_mouse = 0;
-static int xinput_grab_keyboard = 0;
-static int xinput_show_cursor = 1;
-static int xinput_always_use_mouse = 0;
-static XSizeHints x11_init_hints = { 0, 0,0, 0,0, 0,0, 0,0, 0,0, {},{}, 0,0,
-  NorthWestGravity };
+/* options, these get initialised by the rc-code */
+static int xinput_use_winkeys;
+static int xinput_grab_mouse;
+static int xinput_grab_keyboard;
+static int xinput_show_cursor;
+static int xinput_always_use_mouse;
+static XSizeHints x11_init_hints;
 /* not static because xgl needs these for its own window creation */
 int root_window_id; /* root window id (for swallowing the mame window) */
 
@@ -79,7 +78,7 @@ static void xinput_set_leds(int leds);
 
 struct rc_option x11_input_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the location of the window" },
+	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
 	{ "root_window_id", "rid", rc_int, &root_window_id,
  "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
 	{ "X11-input related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -304,17 +303,17 @@ static int xinput_mapkey(struct rc_option *option, const char *arg, int priority
 
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority)
 {
-	int i,x,y;
-	unsigned int u;
+	int i,x,y,ok = 0;
 	
 	if (strlen(arg) == 0)
 	{
 	   memset(&x11_init_hints, 0, sizeof(x11_init_hints));
 	   x11_init_hints.win_gravity = NorthWestGravity;
+	   custom_windowsize = 0;
 	}
 	else
 	{
-		i = XParseGeometry(arg, &x, &y, &u, &u);
+		i = XParseGeometry(arg, &x, &y, &window_width, &window_height);
 		if (i & (XValue|YValue))
 		{
 		  x11_init_hints.x = x;
@@ -335,8 +334,14 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 		        break;
 		  }
 		  x11_init_hints.flags = PPosition | PWinGravity;
+		  ok = 1;
 		}
-		else
+		if (i & (WidthValue|HeightValue))
+		{
+		  custom_windowsize = 1;
+		  ok = 1;
+		}
+		if (!ok)
 		{
 		  /* stderr isn't defined yet when we're called. */
 		  fprintf(stderr,"Invalid geometry: %s.\n", arg);

@@ -695,6 +695,9 @@ X11_XV = 1
 # mode from being restored when leaving DGA2 mode.
 # TDFX_DGA_WORKAROUND = 1
 
+# Build support for OpenGl rendering into the X-Window version
+# X11_OPENGL = 1
+
 # Build support for rendering through Glide into the X-Window version
 # X11_GLIDE = 1
 

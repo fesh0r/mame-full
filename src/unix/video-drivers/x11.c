@@ -26,6 +26,9 @@ struct rc_option sysdep_display_opts[] = {
 #ifdef USE_DGA
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 #endif
+#ifdef USE_OPENGL
+	{ NULL, NULL, rc_link, xgl_opts, NULL, 0, 0, NULL, NULL },
+#endif
 #ifdef USE_GLIDE
 	{ NULL, NULL, rc_link, fx_opts, NULL, 0, 0, NULL, NULL },
 #endif
@@ -51,6 +54,14 @@ static struct x_func_struct x_func[X11_MODE_COUNT] = {
   x11_window_open_display,
   x11_window_close_display,
   x11_window_update_display },
+#else
+{ NULL, NULL, NULL, NULL },
+#endif
+#ifdef USE_OPENGL
+{ NULL,
+  xgl_open_display,
+  xgl_close_display,
+  xgl_update_display },
 #else
 { NULL, NULL, NULL, NULL },
 #endif
@@ -169,6 +180,9 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 
 	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE1)
 		new_video_mode = X11_XV;
+
+	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE2)
+		new_video_mode = X11_OPENGL;
 
 	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE3)
 		new_video_mode = X11_GLIDE;

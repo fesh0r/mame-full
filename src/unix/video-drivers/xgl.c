@@ -12,9 +12,6 @@
   Mame license
 
 *****************************************************************/
-/* pretend we're x11.c otherwise display and a few other crucial things don't
-   get declared */
-#define __X11_C_   
 #define __XOPENGL_C_
 
 #define RRand(range) (random()%range)
@@ -24,28 +21,18 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xmd.h>
-#include <X11/cursorfont.h>
 
 #include "glxtool.h"
 
-#include "xmame.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "glmame.h"
 #include "x11.h"
-
-#include "driver.h"
-#include "xmame.h"
-#include "sysdep/sysdep_display.h"
 
 /* from xinput.c */
 extern int root_window_id;
 
-static Cursor        cursor;
-static XVisualInfo   *myvisual;
 
-int winwidth = 0;
-int winheight = 0;
 int bilinear=1; /* Do binlinear filtering? */
-int alphablending=0; /* alphablending */
 int antialias=0;
 int translucency = 0;
 int force_text_width_height = 0;
@@ -53,32 +40,23 @@ int force_text_width_height = 0;
 XSetWindowAttributes window_attr;
 GLXContext glContext=NULL;
 
-const GLCapabilities glCapsDef = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
-			           1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1,
-			           -1
-			         };
-
-GLCapabilities glCaps;
-
+GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
+			           1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, -1 };
 char * libGLName=0;
 char * libGLUName=0;
 
-static int fullscreen = 0;
-static int customSize=0;
+static int window_type;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 static int xgl_glres(struct rc_option *option, const char *arg, int priority);
 
-struct rc_option display_opts[] = {
+struct rc_option xgl_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "OpenGL Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "fullscreen",   NULL,    rc_bool,       &fullscreen,
-      "0",           0,       0,             NULL,
-      "Start at fullscreen (default: false)" },
-   { "gldblbuffer",	NULL,			rc_bool,	&doublebuffer,
+   { "gldblbuffer",	NULL,			rc_bool,	&(glCaps.buffer),
      "1",		0,			0,		NULL,
      "Enable/disable double buffering (default: true)" },
    { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
@@ -90,9 +68,6 @@ struct rc_option display_opts[] = {
    { "glbeam",		NULL,			rc_float,	&gl_beam,
      "1.0",		1.0,			16.0,		NULL,
      "Set the beam size for vector games (default: 1.0)" },
-   { "glalphablending",	"glalpha",		rc_bool,	&alphablending,
-     "1",		0,			0,		NULL,
-     "Enable/disable alphablending if available (default: true)" },
    { "glantialias",	"glaa",			rc_bool,	&antialias,
      "0",		0,			0,		NULL,
      "Enable/disable antialiasing (default: true)" },
@@ -108,9 +83,6 @@ struct rc_option display_opts[] = {
    { "cabinet",		NULL,			rc_string,	&cabname,
      "glmamejau",	0,			0,		NULL,
      "Specify which cabinet model to use (default: glmamejau)" },
-   { "glres",	        NULL,			rc_use_function, NULL,
-     NULL,		0,			0,		xgl_glres,
-     "Always scale games to XresxYres, keeping their aspect ratio. This overrides the scale options" },
    { NULL,		NULL,			rc_link,	x11_input_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -118,26 +90,6 @@ struct rc_option display_opts[] = {
      NULL,		0,			0,		NULL,
      NULL }
 };
-
-struct sysdep_display_prop_struct sysdep_display_properties = { glvec_renderer, 1 };
-
-static int xgl_glres(struct rc_option *option, const char *arg, int priority)
-{
-  /* check priority */
-  if(priority < option->priority)
-     return 0;
-  
-  option->priority = priority;
-  
-  if( sscanf(arg, "%dx%d", &winwidth, &winheight) != 2)
-  {
-    fprintf(stderr, "error: invalid value for glres: %s\n", arg);
-    return 1;
-  }
-
-  customSize=1;
-  return 0;
-}
 
 int sysdep_init(void)
 {
@@ -171,57 +123,69 @@ void sysdep_close(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_create_display(int depth)
+int xgl_open_display(void)
 {
-  int 		myscreen;
-  XEvent	event;
+  XEvent event;
   unsigned long winmask;
   char *glxfx;
   VisualGC vgc;
   int vw, vh;
   int ownwin = 1;
-  int force_grab = 0;
+  int force_grab;
+  XVisualInfo *myvisual;
+  int myscreen=DefaultScreen(display);
+  
+  sysdep_display_check_params();
+  mode_check_params((double)screen->width/screen->height);
+
+  fprintf(stderr, xgl_version_str);
     
   /* If using 3Dfx */
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
   {
-    if(!customSize)
+    winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+    if(!custom_windowsize)
     {
-      winwidth   = 640;
-      winheight  = 480;
-      customSize = 1;
+      window_width  = 640;
+      window_height = 480;
     }
-    antialias  = 0;
-    force_grab = 2;
-    fullscreen = 0;
+    force_grab  = 2; /* grab mouse and keyb */
+    window_type = 0; /* non resizable */
+    sysdep_display_params.fullscreen  = 1; /* don't allow resizing */
   }
-
-  fprintf(stderr, xgl_version_str);
-  
-  screen=DefaultScreenOfDisplay(display);
-  myscreen=DefaultScreen(display);
-  cursor=XCreateFontCursor(display,XC_trek);
-  
-  if(fullscreen)
+  else if(sysdep_display_params.fullscreen)
   {
-	winwidth      = screen->width;
-	winheight     = screen->height;
-	winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
-	                CWColormap | CWDontPropagate | CWCursor;
-  	force_grab    = 1;
-  } else {
-        winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-        if(!customSize)
-        {
-          if( ! blit_swapxy )
-          {
-                    winwidth  = visual_width*widthscale;
-                    winheight = visual_height*heightscale;
-          } else {
-                    winwidth  = visual_height*heightscale;
-                    winheight = visual_width*widthscale;
-          }
-        }
+    winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
+                    CWColormap | CWDontPropagate | CWCursor;
+    window_width  = screen->width;
+    window_height = screen->height;
+    force_grab    = 1; /* grab mouse */
+    window_type   = 2; /* sysdep_display_params.fullscreen */
+  }
+  else
+  {
+    winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+    if(cabview)
+    {
+      if(!custom_winsize)
+      {
+        window_width  = 640;
+        window_height = 480;
+      }
+    }
+    else
+    {
+      if(!custom_winsize)
+      {
+        window_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
+        window_height = sysdep_display_params.yarbsize;
+        mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
+      }
+      else
+        mode_clip_aspect(window_width, window_height, &window_width, &window_height);
+    }
+    force_grab    = 0; /* no grab */
+    window_type   = 1; /* resizable window */
   }
 
   window_attr.background_pixel=0;
@@ -238,18 +202,12 @@ int sysdep_create_display(int depth)
 
   fetch_GL_FUNCS (libGLName, libGLUName, 1 /* force refetch ... */);
 
-  glCaps = glCapsDef;
-
-  glCaps.alphaBits=(alphablending>0)?1:0;
-  glCaps.buffer   =(doublebuffer>0)?BUFFER_DOUBLE:BUFFER_SINGLE;
-  glCaps.gl_supported = 1;
-
   if (root_window_id)
     window = root_window_id;
   else
     window = DefaultRootWindow(display);
   vgc = findVisualGlX( display, window,
-                       &window, winwidth, winheight, &glCaps, 
+                       &window, window_width, window_height, &glCaps, 
 		       &ownwin, &window_attr, winmask,
 		       NULL, 0, NULL, 
 #ifndef NDEBUG
@@ -278,12 +236,10 @@ int sysdep_create_display(int depth)
   }
   
   setGLCapabilities ( display, myvisual, &glCaps);
-
-  alphablending= (glCaps.alphaBits>0)?1:0;
-  doublebuffer = (glCaps.buffer==BUFFER_DOUBLE)?1:0;
+  doublebuffer = glCaps.buffer;
   
   /* set the hints */
-  x11_set_window_hints(winwidth, winheight, fullscreen? 2:(customSize? 0:1));
+  x11_set_window_hints(window_width, window_height, window_type);
 	
   /* Map and expose the window. */
   XSelectInput(display, window, ExposureMask);
@@ -292,16 +248,7 @@ int sysdep_create_display(int depth)
   XWindowEvent(display,window,ExposureMask,&event);
   
   xinput_open(force_grab, 0);
-  
-  if (!fullscreen && !cabview && !customSize)
-  {
-     mode_stretch_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
-     XResizeWindow(display, window, vw, vh);
-     winwidth  = vw;
-     winheight = vh;
-  }
-  else
-     mode_clip_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
+  mode_clip_aspect(window_width, window_height, &vw, &vh);
 
   if (InitVScreen(vw, vh))
 	return OSD_NOT_OK; 
@@ -355,19 +302,19 @@ sysdep_update_display (struct mame_bitmap *bitmap)
   
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
   
-  if ( (w != winwidth) || (h != winheight) )
+  if ( (w != window_width) || (h != window_height) )
   {
     int vw, vh;
     
     mode_clip_aspect(w, h, &vw, &vh, (double)screen->width/screen->height);
-    if (!fullscreen && !cabview && !customSize)
+    if ((window_type == 1) && !cabview)
     {
        XResizeWindow(display, window, vw, vh);
        w = vw;
        h = vh;
     }
     
-    /* this sets winwidth to w and winheight to h for us, amongst other
+    /* this sets window_width to w and window_height to h for us, amongst other
        important stuff */
     gl_resize(w, h, vw, vh);
   }

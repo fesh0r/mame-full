@@ -526,13 +526,25 @@ void osd_close_display(void)
 	}
 }
 
-static int change_display_settings(struct sysdep_display_open_params *new_params, int force)
+static void display_settings_changed(void)
+{
+	xmame_keyboard_clear();
+	osd_free_colors();
+	vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
+
+	/* we could have switched between hw and sw drawn vectors,
+	   so clear Machine->scrbitmap */
+	if (normal_params.vec_bounds)
+		schedule_full_refresh();
+
+	sysdep_display_set_keybleds(led_state);
+}
+
+static void change_display_settings(struct sysdep_display_open_params *new_params, int force)
 {
 	if (force || memcmp(new_params, &current_params, sizeof(current_params)))
 	{
 		sysdep_display_close();
-		xmame_keyboard_clear();
-		osd_free_colors();
 		/* Close sound, my guess is DGA somehow (perhaps fork/exec?) makes
 		   the filehandle open twice, so closing it here and re-openeing after
 		   the transition should fix that.  Fixed it for me anyways.
@@ -555,16 +567,10 @@ static int change_display_settings(struct sysdep_display_open_params *new_params
 		else
 			current_params = *new_params;
 
-		vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
-		/* we could have switched between hw and sw drawn vectors,
-		   so clear Machine->scrbitmap */
-		if (normal_params.vec_bounds)
-			schedule_full_refresh();
+		display_settings_changed();
 		/* Re-enable sound */
 		osd_sound_enable( 1 );
-		return 1;
 	}
-	return 0;
 }
 
 static void update_visible_area(struct mame_display *display)
@@ -580,10 +586,7 @@ static void update_visible_area(struct mame_display *display)
 	if (((normal_params.width  != old_width) ||
 	     (normal_params.height != old_height)) &&
 	    !debugger_has_focus)
-	{
 		change_display_settings(&normal_params, 1);
-		sysdep_display_set_keybleds(led_state);
-	}
 
 	set_ui_visarea(display->game_visible_area.min_x,
 			display->game_visible_area.min_y,
@@ -649,10 +652,7 @@ static void update_debug_display(struct mame_display *display)
 	}
 	if(sysdep_display_update(display->debug_bitmap, &debug_bounds,
 	   &debug_bounds, debug_palette, 0))
-	{
-	  xmame_keyboard_clear();
-	  osd_free_colors();
-	}
+		display_settings_changed();	
 }
 
 static void osd_free_colors(void)
@@ -698,18 +698,12 @@ int osd_get_frameskip(void)
 
 void change_debugger_focus(int new_debugger_focus)
 {
-	if ((!debugger_has_focus && new_debugger_focus)
-			|| (debugger_has_focus && !new_debugger_focus))
+	if (debugger_has_focus != new_debugger_focus)
 	{
 		if (new_debugger_focus)
-		{
 			change_display_settings(&debug_params, 1);
-		}
 		else
-		{
 			change_display_settings(&normal_params, 1);
-			sysdep_display_set_keybleds(led_state);
-		}
 		debugger_has_focus = new_debugger_focus;
 	}
 }
@@ -885,12 +879,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 	}
 	if (normal_params_changed)
-	{
-		if (change_display_settings(&normal_params, 0))
-		{
-			sysdep_display_set_keybleds(led_state);
-		}
-	}
+		change_display_settings(&normal_params, 0);
 
 	/*** STEP 5 update sound,fps and leds ***/
 	if (sound_stream)
@@ -905,8 +894,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	if (display->changed_flags & LED_STATE_CHANGED)
 	{
 		led_state = display->led_state;
-		if (!debugger_has_focus)
-			sysdep_display_set_keybleds(led_state);
+		sysdep_display_set_keybleds(led_state);
 	}
 	
 	/*** STEP 6 update the palette ***/
@@ -977,16 +965,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		   &(display->game_visible_area),
 		   &(display->game_bitmap_update),
 		   normal_palette, flags))
-		{
-		  xmame_keyboard_clear();
-		  osd_free_colors();
-		  sysdep_display_set_keybleds(led_state);
-		  vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
-		  /* we could have switched between hw and sw drawn vectors,
-		     so clear Machine->scrbitmap */
-		  if (normal_params.vec_bounds)
-		    schedule_full_refresh();
-		}
+			display_settings_changed();
 		profiler_mark(PROFILER_END);
 	}
 

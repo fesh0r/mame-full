@@ -298,6 +298,7 @@ int x11_window_open_display(void)
 	int event_mask = ExposureMask;
 	int dest_bpp;
 	int orig_widthscale, orig_yarbsize;
+	unsigned int my_window_width, my_window_height;
 
 	/* set all the default values */
 	window = 0;
@@ -316,9 +317,9 @@ int x11_window_open_display(void)
 
 	orig_widthscale  = sysdep_display_params.widthscale;
 	orig_yarbsize    = sysdep_display_params.yarbsize;
-	window_width     = sysdep_display_params.widthscale * 
+	my_window_width  = sysdep_display_params.widthscale * 
 	  sysdep_display_params.width;
-	window_height    = sysdep_display_params.yarbsize;
+	my_window_height = sysdep_display_params.yarbsize;
 	image_width      = sysdep_display_params.widthscale *
 	  sysdep_display_params.aligned_width;
 	image_height     = sysdep_display_params.yarbsize;
@@ -421,23 +422,23 @@ int x11_window_open_display(void)
 	{
 		int width  = screen->width;
 		int height = screen->height;
-		if (window_width > width || window_height > height)
+		if (my_window_width > width || my_window_height > height)
 		{
 			fprintf (stderr, "OSD ERROR: Root window is to small: %dx%d, needed %dx%d\n",
-					width, height, window_width, window_height);
+					width, height, my_window_width, my_window_height);
 			return 1;
 		}
 
-		startx        = ((width  - window_width)  / 2) & ~0x07;
-		starty        = ((height - window_height) / 2) & ~0x07;
-		window        = RootWindowOfScreen (screen);
-		window_width  = width;
-		window_height = height;
+		startx           = ((width  - my_window_width)  / 2) & ~0x07;
+		starty           = ((height - my_window_height) / 2) & ~0x07;
+		window           = RootWindowOfScreen (screen);
+		my_window_width  = width;
+		my_window_height = height;
 	}
 	else
 	{
                 /* create the actual window */
-                if (x11_create_window(&window_width, &window_height, 0))
+                if (x11_create_window(&my_window_width, &my_window_height, 0))
                         return 1;
 	}
 
@@ -611,7 +612,7 @@ int x11_window_open_display(void)
                                     
                                   XvShmPutImage (display, xv_port, window, gc, xvimage,
                                     0, 0, xvimage->width, xvimage->height,
-                                    0, 0, window_width, window_height, True);
+                                    0, 0, my_window_width, my_window_height, True);
                                     
                                   XSync (display, False);  /* be sure to get request processed */
                                   /* sleep (1);          enought time to notify error if any */
@@ -758,7 +759,7 @@ int x11_window_open_display(void)
 		if (use_xil)
 		{
 			event_mask |= StructureNotifyMask;
-			x11_set_window_hints(window_width, window_height, 1);
+			x11_set_window_hints(my_window_width, my_window_height, 1);
 		}
 #endif
 #ifdef USE_HWSCALE
@@ -766,9 +767,12 @@ int x11_window_open_display(void)
 		{
 			if(!sysdep_display_params.fullscreen)
 			{
-			        x11_set_window_hints(window_width, window_height, 1);
-                                mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
-                                XResizeWindow(display, window, window_width, window_height);
+				if (custom_windowsize)
+				  mode_clip_aspect(window_width, window_height, &my_window_width, &my_window_height);
+				else
+                                  mode_stretch_aspect(my_window_width, my_window_height, &my_window_width, &my_window_height);
+			        x11_set_window_hints(my_window_width, my_window_height, 1);
+                                XResizeWindow(display, window, my_window_width, my_window_height);
                         }
                         else    
                         {
@@ -777,12 +781,16 @@ int x11_window_open_display(void)
 				   allow switching to fullscreen after
 				   the window has been mapped */
 				XDestroyWindow(display,window);
-				if (x11_create_window(&window_width, &window_height, 2))
+				if (x11_create_window(&my_window_width, &my_window_height, 2))
 				       return 1;
 			}
 		}
 #endif
 	}
+	
+	/* store the definitive window width & height */
+	window_width  = my_window_width;
+	window_height = my_window_height;
 
 	/* verify the number of bits per pixel and choose the correct update method */
 #ifdef USE_HWSCALE
@@ -981,7 +989,15 @@ void x11_window_update_display (struct mame_bitmap *bitmap,
             int pw,ph;
 
             XGetGeometry(display, window, &_dw, &_dint, &_dint, &window_width, &window_height, &_duint, &_duint);
-            mode_clip_aspect(window_width, window_height, &pw, &ph);
+            if (sysdep_display_params.fullscreen)
+            {
+              mode_clip_aspect(window_width, window_height, &pw, &ph);
+            }
+            else
+            {
+              pw = window_width;
+              ph = window_height;
+            }
             XvShmPutImage (display, xv_port, window, gc, xvimage, 0, 0,
               sysdep_display_params.width*sysdep_display_params.widthscale,
               sysdep_display_params.yarbsize,
