@@ -266,6 +266,13 @@ static void MessUpdateSoftwareList(void)
 	MyFillSoftwareList(GetSelectedPickItem(), TRUE);
 }
 
+static BOOL IsSoftwarePaneDevice(int devtype)
+{
+	assert(devtype >= 0);
+	assert(devtype < IO_COUNT);
+	return devtype != IO_PRINTER;
+}
+
 static void MessReadMountedSoftware(int nGame)
 {
 	const char *selected_software_const;
@@ -279,8 +286,9 @@ static void MessReadMountedSoftware(int nGame)
 
 	for (devtype = 0; devtype < IO_COUNT; devtype++)
 	{
-		if (devtype == IO_PRINTER)
+		if (!IsSoftwarePaneDevice(devtype))
 			continue;
+
 		selected_software_const = GetSelectedSoftware(nGame, devtype);
 		if (selected_software_const && selected_software_const[0])
 		{
@@ -349,6 +357,9 @@ static void MessWriteMountedSoftware(int nGame)
 
 	for (devtype = 0; devtype < IO_COUNT; devtype++)
 	{
+		if (!IsSoftwarePaneDevice(devtype))
+			continue;
+
 		softwarename = newsoftware[devtype] ? newsoftware[devtype] : "";
 		if (strcmp(GetSelectedSoftware(nGame, devtype), softwarename))
 		{
