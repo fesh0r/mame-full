@@ -27,6 +27,8 @@ Other Changes:
 
 - Genesis/Megadrive now gets correct CRC info for .smd and .md files [Cowering]
 
+- new function osd_select_file() added [Brad Oliver]
+
 - CRC and sysinfo updates will now be appearing at the official MESS homepage:
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 
