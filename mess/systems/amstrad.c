@@ -2725,7 +2725,7 @@ ROM_START(cpc6128)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
 
 	/* optional Multiface hardware */
-        ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x02000, 0x00000000)
+        ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x02000, 0xf36086de)
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0100,REGION_GFX1) */
