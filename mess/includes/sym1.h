@@ -2,7 +2,6 @@ extern void init_sym1(void);
 extern void sym1_init_machine(void);
 
 #if 0
-extern int kim1_cassette_id(int id);
 extern int kim1_cassette_init(int id);
 extern void kim1_cassette_exit(int id);
 #endif

@@ -658,6 +658,7 @@ void kim1_cassette_exit(int id)
 	/* nothing yet */
 }
 
+#ifdef IMAGE_VERIFY
 int kim1_cassette_id(int id)
 {
 	const char magic[] = "KIM1";
@@ -676,6 +677,7 @@ int kim1_cassette_id(int id)
 	}
 	return 0;
 }
+#endif
 
 static void m6530_timer_cb(int chip)
 {

@@ -19,7 +19,6 @@ void init_svi318(void);
 void svi318_ch_reset (void);
 void svi318_ch_stop (void);
 int svi318_load_rom (int id);
-int svi318_id_rom (int id);
 void svi318_exit_rom (int id);
 int svi318_interrupt (void);
 
@@ -45,7 +44,7 @@ int svi318_cassette_present (int id);
 WRITE_HANDLER (fdc_disk_motor_w);
 WRITE_HANDLER (fdc_density_side_w);
 READ_HANDLER (fdc_status_r);
-#endif 
+#endif
 
 int svi318_floppy_init(int id);
 

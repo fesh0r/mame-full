@@ -19,7 +19,7 @@
 			Snemul
 			Nlksnes
 			and the others....
-  		The original SNEeSe team members (other than myself ;-)) - 
+  		The original SNEeSe team members (other than myself ;-)) -
 			Charles Bilyue - Your continued work on SNEeSe is fantastic!
 			Santeri Saarimaa - Who'd have thought I'd come back to emulation ;-)
 
@@ -30,7 +30,6 @@
 //#define EMULATE_SPC700												// If commented out the core will use skipper emulation
 
 int snes_load_rom (int id);
-int snes_id_rom (int id);
 void snes_exit_rom (int id);
 void snes_init_machine(void);
 void snes_shutdown_machine(void);

@@ -395,11 +395,6 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 	return result;
 }
 
-int dmkdsk_floppy_id(int id)
-{
-        return 1;
-}
-
 static int CheckIDCRC( packedIDData_P pSector )
 {
 	UINT16	crc;

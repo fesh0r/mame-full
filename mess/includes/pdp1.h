@@ -8,7 +8,6 @@
 
 /* From machine/pdp1.c */
 int pdp1_load_rom (int id);
-int pdp1_id_rom (int id);
 void pdp1_init_machine(void);
 READ18_HANDLER ( pdp1_read_mem );
 WRITE18_HANDLER ( pdp1_write_mem );

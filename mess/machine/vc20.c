@@ -603,6 +603,51 @@ void vc20_shutdown_machine (void)
 {
 }
 
+static int vc20_rom_id (int id)
+{
+	FILE *romfile;
+	unsigned char magic[] =
+	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
+	unsigned char buffer[sizeof (magic)];
+	char *cp;
+	int retval;
+
+	logerror("vc20_rom_id %s\n", device_filename(IO_CARTSLOT,id));
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	{
+		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
+		return 0;
+	}
+
+	retval = 0;
+
+	osd_fseek (romfile, 4, SEEK_SET);
+	osd_fread (romfile, buffer, sizeof (magic));
+	osd_fclose (romfile);
+
+	if (!memcmp (buffer, magic, sizeof (magic)))
+		retval = 1;
+
+	if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
+	{
+		if ((stricmp (cp + 1, "a0") == 0)
+			|| (stricmp (cp + 1, "20") == 0)
+			|| (stricmp (cp + 1, "40") == 0)
+			|| (stricmp (cp + 1, "60") == 0)
+			|| (stricmp (cp + 1, "bin") == 0)
+			|| (stricmp (cp + 1, "rom") == 0)
+			|| (stricmp (cp + 1, "prg") == 0))
+			retval = 1;
+	}
+
+		if (retval)
+			logerror("rom %s recognized\n", device_filename(IO_CARTSLOT,id));
+		else
+			logerror("rom %s not recognized\n", device_filename(IO_CARTSLOT,id));
+
+	return retval;
+}
+
 int vc20_rom_load (int id)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
@@ -679,50 +724,6 @@ int vc20_rom_load (int id)
 	return 0;
 }
 
-int vc20_rom_id (int id)
-{
-	FILE *romfile;
-	unsigned char magic[] =
-	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
-	unsigned char buffer[sizeof (magic)];
-	char *cp;
-	int retval;
-
-	logerror("vc20_rom_id %s\n", device_filename(IO_CARTSLOT,id));
-	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-	{
-		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
-		return 0;
-	}
-
-	retval = 0;
-
-	osd_fseek (romfile, 4, SEEK_SET);
-	osd_fread (romfile, buffer, sizeof (magic));
-	osd_fclose (romfile);
-
-	if (!memcmp (buffer, magic, sizeof (magic)))
-		retval = 1;
-
-	if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
-	{
-		if ((stricmp (cp + 1, "a0") == 0)
-			|| (stricmp (cp + 1, "20") == 0)
-			|| (stricmp (cp + 1, "40") == 0)
-			|| (stricmp (cp + 1, "60") == 0)
-			|| (stricmp (cp + 1, "bin") == 0)
-			|| (stricmp (cp + 1, "rom") == 0)
-			|| (stricmp (cp + 1, "prg") == 0))
-			retval = 1;
-	}
-
-		if (retval)
-			logerror("rom %s recognized\n", device_filename(IO_CARTSLOT,id));
-		else
-			logerror("rom %s not recognized\n", device_filename(IO_CARTSLOT,id));
-
-	return retval;
-}
 
 int vc20_frame_interrupt (void)
 {

@@ -1,7 +1,7 @@
 /*
-** svi318.c : driver for Spectravideo SVI-318 and SVI-328 
-** 
-** Sean Young, 2000 
+** svi318.c : driver for Spectravideo SVI-318 and SVI-328
+**
+** Sean Young, 2000
 */
 
 #include "driver.h"
@@ -196,7 +196,7 @@ Line:     |     |     |     |     |     |     |     |     |
   PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "SELECT", KEYCODE_PAUSE, IP_JOY_NONE)  \
   PORT_BITX (0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "PRINT", KEYCODE_PRTSCR, IP_JOY_NONE)  \
   PORT_BITX (0x40, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)   \
-  PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, IP_JOY_NONE) 
+  PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, IP_JOY_NONE)
 
 
 INPUT_PORTS_START (svi318)
@@ -204,13 +204,13 @@ INPUT_PORTS_START (svi318)
 SVI_318_KEYS
 
  PORT_START /* 9 */
-  PORT_BITX (0xff, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)  
+  PORT_BITX (0xff, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
  PORT_START /* 10 */
-  PORT_BITX (0xff, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)  
+  PORT_BITX (0xff, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
- PORT_START /* 11 */    
-  PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP) 
+ PORT_START /* 11 */
+  PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP)
   PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN)
   PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT)
   PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
@@ -220,25 +220,25 @@ SVI_318_KEYS
   PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2)
 
  PORT_START /* 12 */
-  PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_BUTTON1) 
+  PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_BUTTON1)
   PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
 
  PORT_START /* 13 */
-  PORT_DIPNAME( 0x20, 0x20, "Enforce 4 sprites/line") 
-  PORT_DIPSETTING( 0, DEF_STR( No ) ) 
-  PORT_DIPSETTING( 0x20, DEF_STR( Yes ) ) 
-  PORT_DIPNAME( 0x01, 0x00, "Bank 21 RAM") 
-  PORT_DIPSETTING( 0, DEF_STR( Off ) ) 
-  PORT_DIPSETTING( 0x01, DEF_STR( On ) ) 
-  PORT_DIPNAME( 0x02, 0x00, "Bank 22 RAM") 
-  PORT_DIPSETTING( 0, DEF_STR( Off ) ) 
-  PORT_DIPSETTING( 0x02, DEF_STR( On ) ) 
-  PORT_DIPNAME( 0x04, 0x00, "Bank 31 RAM") 
-  PORT_DIPSETTING( 0, DEF_STR( Off ) ) 
-  PORT_DIPSETTING( 0x04, DEF_STR( On ) ) 
-  PORT_DIPNAME( 0x08, 0x00, "Bank 32 RAM") 
-  PORT_DIPSETTING( 0, DEF_STR( Off ) ) 
-  PORT_DIPSETTING( 0x08, DEF_STR( On ) ) 
+  PORT_DIPNAME( 0x20, 0x20, "Enforce 4 sprites/line")
+  PORT_DIPSETTING( 0, DEF_STR( No ) )
+  PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )
+  PORT_DIPNAME( 0x01, 0x00, "Bank 21 RAM")
+  PORT_DIPSETTING( 0, DEF_STR( Off ) )
+  PORT_DIPSETTING( 0x01, DEF_STR( On ) )
+  PORT_DIPNAME( 0x02, 0x00, "Bank 22 RAM")
+  PORT_DIPSETTING( 0, DEF_STR( Off ) )
+  PORT_DIPSETTING( 0x02, DEF_STR( On ) )
+  PORT_DIPNAME( 0x04, 0x00, "Bank 31 RAM")
+  PORT_DIPSETTING( 0, DEF_STR( Off ) )
+  PORT_DIPSETTING( 0x04, DEF_STR( On ) )
+  PORT_DIPNAME( 0x08, 0x00, "Bank 32 RAM")
+  PORT_DIPSETTING( 0, DEF_STR( Off ) )
+  PORT_DIPSETTING( 0x08, DEF_STR( On ) )
 
 INPUT_PORTS_END
 
@@ -270,7 +270,7 @@ SVI_318_KEYS
  PORT_START /* 11 */
   PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP)
   PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN)
-  PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT)    
+  PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT)
   PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
   PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2)
   PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2)
@@ -278,7 +278,7 @@ SVI_318_KEYS
   PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2)
 
  PORT_START /* 12 */
-  PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_BUTTON1)    
+  PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_BUTTON1)
   PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
 
  PORT_START /* 13 */
@@ -399,7 +399,7 @@ static const struct IODevice io_svi318[] = {
         2,                      /* count */
         "dsk\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-        basicdsk_floppy_id,     /* id */
+        0,
         svi318_floppy_init,     /* init */
         basicdsk_floppy_exit,   /* exit */
         NULL,                   /* info */
@@ -419,7 +419,7 @@ static const struct IODevice io_svi318[] = {
     	1,              			/* count */
     	"rom\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
-    	svi318_id_rom,              /* id */
+    	0,
     	svi318_load_rom,            /* init */
     	svi318_exit_rom,            /* exit */
     	NULL,                       /* info */

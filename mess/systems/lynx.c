@@ -90,7 +90,7 @@ void lynx_draw_lines(int newline)
     int x, yend;
     UINT16 j; // clipping needed!
     UINT8 *mem=memory_region(REGION_CPU1);
-    
+
     if (osd_skip_this_frame()) newline=-1;
 
     if (newline==-1) yend=102;
@@ -160,7 +160,7 @@ void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     if( palette_recalc() ) full_refresh = 1;
 
     lynx_audio_debug(bitmap);
-    
+
     for (j=0; j<debug_pos; j++) {
 	ui_text(bitmap, debug_strings[j], 0, j*8);
     }
@@ -321,6 +321,7 @@ UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
 	return (UINT32)crc;
 }
 
+#ifdef IMAGE_VERIFY
 int lynx_id_rom (int id)
 {
 	FILE *romfile;
@@ -348,6 +349,7 @@ int lynx_id_rom (int id)
 	logerror("returning ID_OK\n");
 	return ID_OK;
 }
+#endif
 
 static void lynx_crc_keyword(int io_device, int id)
 {
@@ -459,7 +461,7 @@ static const struct IODevice io_lynx[] = {
 		1,								/* count */
 		"lnx\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
-		lynx_id_rom,					/* id */
+		0,
 		lynx_load_rom, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */
@@ -479,7 +481,7 @@ static const struct IODevice io_lynx[] = {
 		1,								/* count */
 		"o\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
-		lynx_id_rom,					/* id */
+		0,
 		lynx_quickload, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */

@@ -350,12 +350,6 @@ static void mwa_bank(int bank, int offs, int data)
     }
 }
 
-int laser_rom_id(int id)
-{
-	/* Hmmm.. if I only had a single ROM to identify it ;) */
-	return 1;
-}
-
 int laser_rom_init(int id)
 {
 	int size = 0;
@@ -388,6 +382,7 @@ void laser_rom_exit(int id)
 	memset(&mem[0x30000], 0xff, 0x10000);
 }
 
+#ifdef IMAGE_VERIFY
 int laser_cassette_id(int id)
 {
 	UINT8 buff[256];
@@ -426,6 +421,7 @@ int laser_cassette_id(int id)
     }
     return 1;
 }
+#endif
 
 #define LO	-20000
 #define HI	+20000
@@ -567,6 +563,7 @@ void laser_cassette_exit(int id)
 	cassette_image = NULL;
 }
 
+#ifdef IMAGE_VERIFY
 int laser_floppy_id(int id)
 {
 	void *file;
@@ -582,6 +579,7 @@ int laser_floppy_id(int id)
 	}
 	return 0;
 }
+#endif
 
 int laser_floppy_init(int id)
 {

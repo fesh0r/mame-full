@@ -86,6 +86,7 @@ logerror("A7800 Partial CRC: %08lx %d [%s]\n",crc,size,&buf[1]);
 return crc;
 }
 
+#ifdef IMAGE_VERIFY
 int a7800_id_rom (int id)
 {
     FILE *romfile;
@@ -114,6 +115,7 @@ int a7800_id_rom (int id)
 	logerror("returning ID_OK\n");
     return ID_OK;
 }
+#endif
 
 void a7800_exit_rom (int id)
 {

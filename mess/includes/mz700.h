@@ -20,7 +20,6 @@ extern void init_mz700(void);
 extern void mz700_init_machine(void);
 extern void mz700_stop_machine(void);
 
-extern int mz700_cassette_id(int id);
 extern int mz700_cassette_init(int id);
 extern void mz700_cassette_exit(int id);
 

@@ -4,7 +4,6 @@ extern int advision_framestart;
 extern int advision_videobank;
 
 extern void advision_init_machine(void);
-extern int advision_id_rom (int id);
 extern int advision_load_rom (int id);
 extern READ_HANDLER ( advision_MAINRAM_r);
 extern WRITE_HANDLER( advision_MAINRAM_w );

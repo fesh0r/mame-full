@@ -640,7 +640,7 @@ static const struct IODevice io_ep128[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		enterprise_floppy_init, /* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
@@ -660,7 +660,7 @@ static const struct IODevice io_ep128[] = {
 		4,							/* count */
 		"dsk\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
-		dsk_floppy_id,				/* id */
+		0,
 		dsk_floppy_load,			/* init */
 		dsk_floppy_exit,			/* exit */
 		NULL,						/* info */

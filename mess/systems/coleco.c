@@ -134,8 +134,8 @@ static struct SN76496interface sn76496_interface =
 /***************************************************************************
 
   The interrupts come from the vdp. The vdp (tms9928a) interrupt can go up
-  and down; the Coleco only uses nmi interrupts (which is just a pulse). They 
-  are edge-triggered: as soon as the vdp interrupt line goes up, an interrupt 
+  and down; the Coleco only uses nmi interrupts (which is just a pulse). They
+  are edge-triggered: as soon as the vdp interrupt line goes up, an interrupt
   is generated. Nothing happens when the line stays up or goes down.
 
   To emulate this correctly, we set a callback in the tms9928a (they
@@ -144,7 +144,7 @@ static struct SN76496interface sn76496_interface =
   return an interrupt.
 
 ***************************************************************************/
- 
+
 static int coleco_interrupt(void)
 {
     TMS9928A_interrupt();
@@ -242,7 +242,7 @@ static const struct IODevice io_coleco[] = {
         1,                  /* count */
         "rom\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
-        coleco_id_rom,      /* id */
+        0,
         coleco_load_rom,    /* init */
         NULL,               /* exit */
         NULL,               /* info */

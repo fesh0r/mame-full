@@ -664,7 +664,7 @@ static const struct IODevice io_ti99_4[] =
 		3,					/* count */
 		"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		ti99_id_rom,		/* id */
+		0,
 		ti99_load_rom,		/* init */
 		ti99_rom_cleanup,	/* exit */
 		NULL,				/* info */
@@ -684,7 +684,7 @@ static const struct IODevice io_ti99_4[] =
 		3,						/* count */
 		"dsk\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id,		/* id */
+		0,
 		ti99_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */

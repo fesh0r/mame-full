@@ -277,7 +277,6 @@ extern int c64_frame_interrupt (void);
 
 void c64_rom_load(void);
 void c64_rom_recognition (void);
-extern int c64_rom_id (int id);
 
 void c64_state(void);
 

@@ -914,11 +914,6 @@ int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	return 0;
 }
 
-int spectrum_snap_id(int id)
-{
-	return 1;
-}
-
 /*-----------------27/02/00 10:54-------------------
  SPECTRUM WAVE CASSETTE SUPPORT
 --------------------------------------------------*/
@@ -1064,11 +1059,6 @@ int spec_quick_open(int id, int mode, void *arg)
 			 device_filename(IO_QUICKLOAD, id), quick.addr, quick.length);
 
 	return 0;
-}
-
-int spectrum_cart_id(int id)
-{
-	return 1;
 }
 
 int spectrum_cart_load(int id)

@@ -477,7 +477,7 @@ static const struct IODevice io_cgenie[] = {
 		1,						/* count */
 		"rom\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
-		cgenie_rom_id,			/* id */
+		0,
 		cgenie_rom_load,		/* init */
 		NULL,					/* exit */
 		NULL,					/* info */
@@ -536,7 +536,7 @@ static const struct IODevice io_cgenie[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		cgenie_floppy_init, 	/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */

@@ -126,7 +126,7 @@ static struct GfxLayout vc4000_charlayout =
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 
+        {
 	    0,
 	    1,
 	    2,
@@ -242,12 +242,6 @@ ROM_START(vc4000)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int vc4000_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
-
-}
-
 static int vc4000_load_rom(int id)
 {
 	FILE *cartfile;
@@ -259,12 +253,12 @@ static int vc4000_load_rom(int id)
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
 	}
-	
+
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return 1;
-	}	
+	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom, size)!=size) {
@@ -282,7 +276,7 @@ static const struct IODevice io_vc4000[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
-		vc4000_id_rom,					/* id */
+		0,
 		vc4000_load_rom, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */

@@ -999,12 +999,6 @@ void a2600_stop_machine(void)
 	msize1 = 0;
 }
 
-int a2600_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
-
-}
-
 int a2600_load_rom(int id)
 {
 	FILE *cartfile;

@@ -253,7 +253,7 @@ static const struct IODevice io_sms[] = {
 		1,					/* count */
 		"sms\0",            /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		sms_id_rom, 		/* id */
+		0,
 		sms_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
@@ -275,7 +275,7 @@ static const struct IODevice io_gamegear[] = {
 		1,					/* count */
 		"gg\0",             /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		gamegear_id_rom,	/* id */
+		0,
 		sms_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

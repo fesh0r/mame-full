@@ -604,6 +604,7 @@ int mekd2_rom_load(int id)
 	return 0;
 }
 
+#ifdef IMAGE_VERIFY
 int mekd2_rom_id(int id)
 {
 	const char magic[] = "MEK6800D2";
@@ -622,6 +623,7 @@ int mekd2_rom_id(int id)
 	}
 	return 0;
 }
+#endif
 
 int mekd2_interrupt(void)
 {

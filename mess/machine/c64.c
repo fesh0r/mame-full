@@ -226,7 +226,7 @@ int c64_cia0_port_a_r (int offset)
 int c64_cia0_port_b_r (int offset)
 {
     int value = 0xff;
-    
+
     if (!(cia0porta & 0x80)) value &= c64_keyline[7];
     if (!(cia0porta & 0x40)) value &= c64_keyline[6];
     if (!(cia0porta & 0x20)) value &= c64_keyline[5];
@@ -235,10 +235,10 @@ int c64_cia0_port_b_r (int offset)
     if (!(cia0porta & 4)) value &= c64_keyline[2];
     if (!(cia0porta & 2)) value &= c64_keyline[1];
     if (!(cia0porta & 1)) value &= c64_keyline[0];
-    
+
     if (JOYSTICK_SWAP) value &= c64_keyline[9];
     else value &= c64_keyline[8];
-    
+
     if (c128)
     {
 	if (!vic2e_k0_r ())
@@ -932,6 +932,7 @@ void c64_shutdown_machine (void)
 {
 }
 
+#ifdef IMAGE_VERIFY
 int c64_rom_id (int id)
 {
 	/* magic lowrom at offset 0x8003: $c3 $c2 $cd $38 $30 */
@@ -979,6 +980,7 @@ int c64_rom_id (int id)
 		logerror("rom %s not recognized\n", device_filename(IO_CARTSLOT,id));
 	return retval;
 }
+#endif
 
 #define BETWEEN(value1,value2,bottom,top) \
     ( ((value2)>=(bottom))&&((value1)<(top)) )
@@ -1005,7 +1007,7 @@ void c64_rom_recognition (void)
 void c64_rom_load(void)
 {
     int i;
-    
+
     c64_exrom = 1;
     c64_game = 1;
     if (cartridge)

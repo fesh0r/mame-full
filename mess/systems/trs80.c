@@ -500,7 +500,7 @@ ROM_START(lnw80)
 	ROM_LOAD("lnw_b1.bin", 0x1800, 0x0800, 0x3a5ea239)
 	ROM_LOAD("lnw_c.bin",  0x2000, 0x0800, 0x2ba025d7)
 	ROM_LOAD("lnw_c1.bin", 0x2800, 0x0800, 0xed547445)
-	
+
 	ROM_REGION(0x01000, REGION_GFX1,0)
 	ROM_LOAD("lnw_chr.bin",0x0800, 0x0800, 0xc89b27df)
 ROM_END
@@ -520,7 +520,7 @@ static const struct IODevice io_trs80[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		trs80_cas_id,			/* id */
+		0,
 		trs80_cas_init, 		/* init */
 		trs80_cas_exit, 		/* exit */
 		NULL,					/* info */
@@ -539,7 +539,7 @@ static const struct IODevice io_trs80[] = {
 		1,						/* count */
 		"cmd\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
-		trs80_cmd_id,			/* id */
+		0,
 		trs80_cmd_init, 		/* init */
 		trs80_cmd_exit, 		/* exit */
 		NULL,					/* info */
@@ -563,7 +563,7 @@ static const struct IODevice io_trs80l2[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		trs80_cas_id,			/* id */
+		0,
 		trs80_cas_init, 		/* init */
 		trs80_cas_exit, 		/* exit */
 		NULL,					/* info */
@@ -582,7 +582,7 @@ static const struct IODevice io_trs80l2[] = {
 		1,						/* count */
 		"cmd\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
-		trs80_cmd_id,			/* id */
+		0,
 		trs80_cmd_init, 		/* init */
 		trs80_cmd_exit, 		/* exit */
 		NULL,					/* info */
@@ -601,7 +601,7 @@ static const struct IODevice io_trs80l2[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		trs80_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */

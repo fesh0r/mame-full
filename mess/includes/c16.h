@@ -184,6 +184,5 @@ extern int c16_frame_interrupt (void);
 
 extern int c16_rom_init (int id);
 extern int c16_rom_load (int id);
-extern int c16_rom_id (int id);
 
 #endif

@@ -148,6 +148,7 @@ void vtech1_shutdown_machine(void)
  * CASSETTE HANDLING
  ***************************************************************************/
 
+#ifdef IMAGE_VERIFY
 int vtech1_cassette_id(int id)
 {
 	UINT8 buff[256];
@@ -186,6 +187,7 @@ int vtech1_cassette_id(int id)
     }
 	return ID_FAILED;
 }
+#endif
 
 #define LO	-32768
 #define HI	+32767
@@ -351,6 +353,7 @@ static void vtech1_snapshot_copy(void)
 	}
 }
 
+#ifdef IMAGE_VERIFY
 int vtech1_snapshot_id(int id)
 {
 	UINT8 buff[256];
@@ -375,6 +378,7 @@ int vtech1_snapshot_id(int id)
     }
 	return ID_FAILED;
 }
+#endif
 
 int vtech1_snapshot_init(int id)
 {
@@ -408,6 +412,7 @@ void vtech1_snapshot_exit(int id)
 	vtech1_snapshot_size = 0;
 }
 
+#ifdef IMAGE_VERIFY
 int vtech1_floppy_id(int id)
 {
     void *file;
@@ -423,6 +428,7 @@ int vtech1_floppy_id(int id)
     }
     return 0;
 }
+#endif
 
 int vtech1_floppy_init(int id)
 {

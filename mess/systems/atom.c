@@ -388,7 +388,7 @@ static const struct IODevice io_atom[] =
 		2,						/* count */
 		"ssd\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		atom_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */

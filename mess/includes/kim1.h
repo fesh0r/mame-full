@@ -2,7 +2,6 @@
 extern void init_kim1(void);
 extern void kim1_init_machine(void);
 
-extern int kim1_cassette_id(int id);
 extern int kim1_cassette_init(int id);
 extern void kim1_cassette_exit(int id);
 

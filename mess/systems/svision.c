@@ -55,7 +55,7 @@ cartridge connector (look at the cartridge)
 		a3  5  36 nc
 		a4  6  35 nc in crystball
 		a5  7  34 d0
-		a6  8  33 d1 
+		a6  8  33 d1
 		a7  9  32 d2
 		a8  10 31 d3
 		a9  11 30 d4
@@ -170,7 +170,7 @@ static READ_HANDLER(svision_r)
 	logerror("%.6f svision read %04x %02x\n",timer_get_time(),offset,data);
 	break;
     }
-    
+
     return data;
 }
 
@@ -210,7 +210,7 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA_RAM }, 
+	{ 0x0000, 0x1fff, MWA_RAM },
     { 0x2000, 0x3fff, svision_w, &svision_reg },
 	{ 0x4000, 0x5fff, MWA_RAM },
 	{ 0x6000, 0xffff, MWA_ROM },
@@ -248,10 +248,10 @@ static struct GfxLayout svision_charlayout =
 };
 
 static struct GfxDecodeInfo svision_gfxdecodeinfo[] = {
-	{ 
+	{
 		REGION_GFX1, /* memory region */
 		0x0000, /* offset in memory region */
-		&svision_charlayout,                     
+		&svision_charlayout,
 		0, /* index in the color lookup table where color codes start */
 		1  /* total number of color codes */
 	},
@@ -374,17 +374,11 @@ ROM_END
 
  nmi c053 ?
  irq c109
-      e3f7 
-      def4 
+      e3f7
+      def4
  routines:
  dd6a clear 0x2000 at ($57/58) (0x4000)
  */
-
-static int svision_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
-
-}
 
 static int svision_load_rom(int id)
 {
@@ -397,7 +391,7 @@ static int svision_load_rom(int id)
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
 	}
-	
+
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
@@ -421,7 +415,7 @@ static const struct IODevice io_svision[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
-		svision_id_rom,					/* id */
+		0,
 		svision_load_rom, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */
@@ -438,7 +432,7 @@ static const struct IODevice io_svision[] = {
     { IO_END }
 };
 
-/*    YEAR      NAME            PARENT  MACHINE   INPUT     INIT                
+/*    YEAR      NAME            PARENT  MACHINE   INPUT     INIT
 	  COMPANY                 FULLNAME */
 CONSX( 1992, svision,       0,          svision,  svision,    svision,   "Watara", "Super Vision", GAME_IMPERFECT_SOUND)
 // marketed under a ton of firms and names

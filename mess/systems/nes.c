@@ -399,7 +399,7 @@ static const struct IODevice io_famicom[] = {
         1,                  /* count */
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
-        nes_id_rom,         /* id */
+        0,
         nes_load_rom,       /* init */
         NULL,               /* exit */
         NULL,               /* info */
@@ -442,7 +442,7 @@ static const struct IODevice io_nes[] = {
         1,                  /* count */
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
-        nes_id_rom,         /* id */
+        0,
         nes_load_rom,       /* init */
         NULL,               /* exit */
         NULL,               /* info */
@@ -466,7 +466,7 @@ static const struct IODevice io_nespal[] = {
         1,                  /* count */
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
-        nes_id_rom,         /* id */
+        0,
         nes_load_rom,       /* init */
         NULL,               /* exit */
         NULL,               /* info */

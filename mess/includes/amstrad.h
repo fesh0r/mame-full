@@ -9,11 +9,9 @@ int amstrad_floppy_init(int);
 
 
 int amstrad_snapshot_load(int);
-int amstrad_snapshot_id(int);
 void amstrad_snapshot_exit(int);
 
 int amstrad_floppy_load(int);
-int amstrad_floppy_id(int);
 void amstrad_floppy_exit(int);
 
 void Amstrad_Reset(void);

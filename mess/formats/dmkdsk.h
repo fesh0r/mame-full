@@ -3,7 +3,7 @@
 	dmkdsk.h
 
 	David M. Keil disk format.
-	
+
 	tim lindner, 2001
 	tlindner@ix.netcom.com
 
@@ -53,7 +53,7 @@ typedef struct
 #pragma options align=reset
 #pragma warn_padding reset
 
-typedef struct 
+typedef struct
 {
 	const char	*image_name; 		/* file name for disc image					*/
 	void		*image_file;		/* file handle for disc image */
@@ -77,7 +77,7 @@ typedef union
 								/* Bit 13-0: Offset from begining of track
 									         header to 'FE' byte of IDAM
 									         Note these are always sorted
-									         from first to last. All empty 
+									         from first to last. All empty
 									         entires are 0x00				*/
 	UINT8		trackData[];	/* Actual track data (including header)		*/
 } dmkTrack, *dmkTrack_p;
@@ -88,8 +88,6 @@ typedef union
 int     dmkdsk_floppy_init(int id);
 /* exit and free up data */
 void    dmkdsk_floppy_exit(int id);
-/* id */
-int     dmkdsk_floppy_id(int id);
 
 #ifdef __cplusplus
 }

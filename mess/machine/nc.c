@@ -149,14 +149,6 @@ int nc_pcmcia_card_load(int id)
 	return INIT_FAIL;
 }
 
-/* check if pcmcia card is valid  */
-/* TODO: Check valid card sizes?? */
-int nc_pcmcia_card_id(int id)
-{
-	/* for now it's valid */
-	return 1;
-}
-
 void nc_pcmcia_card_exit(int id)
 {
 	/* save card data if there is any */

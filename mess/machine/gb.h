@@ -65,7 +65,6 @@ extern READ_HANDLER  ( gb_r_divreg );
 extern READ_HANDLER  ( gb_ser_regs );
 extern READ_HANDLER  ( gb_r_timer_cnt );
 extern int gb_load_rom (int id);
-extern int gb_id_rom (int id);
 extern int gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode2(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);

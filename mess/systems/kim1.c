@@ -244,7 +244,7 @@ static const struct IODevice io_kim1[] = {
         1,                  /* count */
 		"kim\0",            /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        kim1_cassette_id,   /* id */
+        0,
 		kim1_cassette_init, /* init */
 		kim1_cassette_exit, /* exit */
         NULL,               /* info */

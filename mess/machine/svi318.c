@@ -29,6 +29,7 @@ static void svi318_set_banks (void);
 ** Cartridge stuff
 */
 
+#ifdef IMAGE_VERIFY
 int svi318_id_rom (int id)
 	{
     void *f;
@@ -50,6 +51,8 @@ int svi318_id_rom (int id)
 
     return ret;
 	}
+#endif
+
 
 int svi318_load_rom (int id)
 	{

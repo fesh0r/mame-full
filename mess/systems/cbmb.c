@@ -1022,7 +1022,7 @@ static struct MachineDriver machine_driver_cbm500 =
 			cbm500_readmem, cbm500_writemem,
 			0, 0,
 			0, 0,
-			vic2_raster_irq, VIC2_HRETRACERATE,		
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1056,7 +1056,7 @@ static struct MachineDriver machine_driver_cbm500 =
 static const struct IODevice io_cbmb[] =
 {
 	IODEVICE_CBMB_QUICK,
-	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0", NULL),
+	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0"),
 	/* monitor OR tape routine in kernal */
 #ifdef PET_TEST_CODE
 	IODEVICE_CBM_DRIVE,
@@ -1067,7 +1067,7 @@ static const struct IODevice io_cbmb[] =
 static const struct IODevice io_cbm500[] =
 {
 	IODEVICE_CBM500_QUICK,
-	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0", NULL),
+	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0"),
 #ifdef PET_TEST_CODE
 	IODEVICE_CBM_DRIVE,
 #endif

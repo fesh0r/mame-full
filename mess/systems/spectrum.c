@@ -2551,7 +2551,7 @@ static const struct IODevice io_spectrum[] = {
 		1,					/* count */
 		"sna\0z80\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		spectrum_snap_id,	/* id */
+		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
 		NULL,				/* info */
@@ -2571,7 +2571,7 @@ static const struct IODevice io_spectrum[] = {
 		1,					/* count */
 		"rom\0",			/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		spectrum_cart_id,	/* id */
+		0,
 		spectrum_cart_load,	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
@@ -2593,7 +2593,7 @@ static const struct IODevice io_specpls3[] = {
 		1,					/* count */
 		"sna\0z80\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		spectrum_snap_id,	/* id */
+		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
 		NULL,				/* info */
@@ -2613,7 +2613,7 @@ static const struct IODevice io_specpls3[] = {
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		dsk_floppy_id,		/* id */
+		0,
 		dsk_floppy_load,	/* init */
 		dsk_floppy_exit,	/* exit */
 		NULL,				/* info */
@@ -2635,7 +2635,7 @@ static const struct IODevice io_ts2068[] = {
 		1,					/* count */
 		"sna\0z80\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		spectrum_snap_id,	/* id */
+		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
 		NULL,				/* info */

@@ -13,15 +13,12 @@ extern void laser210_init_machine(void);
 extern void laser310_init_machine(void);
 extern void vtech1_shutdown_machine(void);
 
-extern int vtech1_cassette_id(int id);
 extern int vtech1_cassette_init(int id);
 extern void vtech1_cassette_exit(int id);
 
-extern int vtech1_snapshot_id(int id);
 extern int vtech1_snapshot_init(int id);
 extern void vtech1_snapshot_exit(int id);
 
-extern int vtech1_floppy_id(int id);
 extern int vtech1_floppy_init(int id);
 extern void vtech1_floppy_exit(int id);
 

@@ -333,11 +333,6 @@ WRITE16_HANDLER( intv_ram16_w )
 	intv_ram16[offset] = data&0xffff;
 }
 
-int intv_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
-}
-
 int intv_load_rom(int id)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
@@ -455,11 +450,6 @@ int intv_interrupt(void)
 
 void init_intvkbd(void)
 {
-}
-
-int intvkbd_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
 }
 
 int intvkbd_load_rom (int id)

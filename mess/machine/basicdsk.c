@@ -576,7 +576,3 @@ void basicdsk_read_sector_data_into_buffer(int drive, int side, int index1, char
 }
 
 
-int    basicdsk_floppy_id(int id)
-{
-        return 1;
-}

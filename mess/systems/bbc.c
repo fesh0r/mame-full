@@ -1095,7 +1095,7 @@ static const struct IODevice io_bbcb[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
@@ -1137,7 +1137,7 @@ static const struct IODevice io_bbcb1770[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
@@ -1179,7 +1179,7 @@ static const struct IODevice io_bbcbp[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
@@ -1220,7 +1220,7 @@ static const struct IODevice io_bbcbp128[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */

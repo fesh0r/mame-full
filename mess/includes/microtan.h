@@ -29,15 +29,13 @@ extern void init_microtan(void);
 extern void microtan_init_machine(void);
 extern void microtan_exit_machine(void);
 
-extern int microtan_cassette_id(int id);
 extern int microtan_cassette_init(int id);
 extern void microtan_cassette_exit(int id);
 
-extern int microtan_snapshot_id(int id);
+
 extern int microtan_snapshot_init(int id);
 extern void microtan_snapshot_exit(int id);
 
-extern int microtan_hexfile_id(int id);
 extern int microtan_hexfile_init(int id);
 extern void microtan_hexfile_exit(int id);
 

@@ -112,7 +112,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		4,\
 		"dsk\0",\
 		IO_RESET_NONE,\
-		basicdsk_floppy_id,\
+		0,\
 		dragon_floppy_init,\
 		basicdsk_floppy_exit,\
         NULL,\

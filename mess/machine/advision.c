@@ -27,12 +27,6 @@ void advision_init_machine(void) {
     advision_videoenable = 0;
 }
 
-int advision_id_rom (int id)
-{
-    return ID_OK;  /* no id possible */
-}
-
-
 int advision_load_rom (int id)
 {
     FILE *cartfile;

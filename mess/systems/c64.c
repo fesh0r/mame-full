@@ -1055,7 +1055,7 @@ static struct MachineDriver machine_driver_sx64 =
 static const struct IODevice io_c64[] =
 {
 	IODEVICE_CBM_QUICK,
-	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
+	IODEVICE_CBM_ROM("crt\080\0"),
 	IODEVICE_VC20TAPE,
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
@@ -1064,7 +1064,7 @@ static const struct IODevice io_c64[] =
 static const struct IODevice io_sx64[] =
 {
 	IODEVICE_CBM_QUICK,
-	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
+	IODEVICE_CBM_ROM("crt\080\0"),
 	IODEVICE_VC1541,
 	{IO_END}
 };
@@ -1072,14 +1072,14 @@ static const struct IODevice io_sx64[] =
 static const struct IODevice io_ultimax[] =
 {
 	IODEVICE_CBM_QUICK,
-	IODEVICE_CBM_ROM("crt\0e0\0f0\0", c64_rom_id),
+	IODEVICE_CBM_ROM("crt\0e0\0f0\0"),
 	IODEVICE_VC20TAPE,
 	{IO_END}
 };
 
 static const struct IODevice io_c64gs[] =
 {
-	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
+	IODEVICE_CBM_ROM("crt\080\0"),
 	{IO_END}
 };
 

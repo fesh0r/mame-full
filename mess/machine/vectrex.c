@@ -83,6 +83,7 @@ int vectrex_load_rom (int id)
 	return INIT_PASS;
 }
 
+#ifdef IMAGE_VERIFY
 int vectrex_id_rom (int id)
 {
 	const char *gamename = device_filename(IO_CARTSLOT,id);
@@ -105,6 +106,7 @@ int vectrex_id_rom (int id)
 	else
 		return ID_FAILED;
 }
+#endif
 
 /*********************************************************************
   Vectrex memory handler

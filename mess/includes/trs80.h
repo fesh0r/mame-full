@@ -12,11 +12,10 @@
 
 extern UINT8 trs80_port_ff;
 
-extern int trs80_cas_id(int id);
+
 extern int trs80_cas_init(int id);
 extern void trs80_cas_exit(int id);
 
-extern int trs80_cmd_id(int id);
 extern int trs80_cmd_init(int id);
 extern void trs80_cmd_exit(int id);
 

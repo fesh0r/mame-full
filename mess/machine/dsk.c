@@ -142,6 +142,7 @@ int dsk_save(int type, int id, unsigned char **ptr)
 }
 
 
+#ifdef IMAGE_VERIFY
 int dsk_floppy_id(int id)
 {
 	int valid;
@@ -173,6 +174,8 @@ int dsk_floppy_id(int id)
 
 	return valid;
 }
+#endif
+
 
 void dsk_floppy_exit(int id)
 {

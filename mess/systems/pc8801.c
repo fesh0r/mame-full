@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.6 2001/06/11 17:14:06 PeT Exp $
+  $Id: pc8801.c,v 1.7 2001/08/03 12:24:59 ben Exp $
 
 ***************************************************************************/
 
@@ -19,7 +19,7 @@ static const struct IODevice io_pc88srl[] = {
     2,                      /* count */
     "d88\0",                /* file extensions */
     IO_RESET_NONE,          /* reset if file changed */
-    d88image_floppy_id,     /* id */
+    0,
     d88image_floppy_init,   /* init */
     d88image_floppy_exit,   /* exit */
     NULL,                   /* info */

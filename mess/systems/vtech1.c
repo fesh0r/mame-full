@@ -100,7 +100,7 @@ MEMORY_WRITE_START( writemem_laser110 )
     { 0x6800, 0x6fff, vtech1_latch_w },
     { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
 //	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
- 
+
    { 0x7800, 0x7fff, MWA_RAM },
 //  { 0x8000, 0xbfff, MWA_RAM },    /* opt. installed */
     { 0xc000, 0xffff, MWA_NOP },
@@ -618,13 +618,13 @@ ROM_END
 ***************************************************************************/
 
 static const struct IODevice io_laser[] = {
-    IO_CASSETTE_WAVE(1,"wav\0cas\0",vtech1_cassette_id,vtech1_cassette_init,vtech1_cassette_exit),
+    IO_CASSETTE_WAVE(1,"wav\0cas\0",0,vtech1_cassette_init,vtech1_cassette_exit),
     {
         IO_SNAPSHOT,            /* type */
         1,                      /* count */
         "vz\0",                 /* file extensions */
         IO_RESET_ALL,           /* reset if file changed */
-        vtech1_snapshot_id,     /* id */
+        0,
         vtech1_snapshot_init,   /* init */
         vtech1_snapshot_exit,   /* exit */
         NULL,                   /* info */
@@ -643,7 +643,7 @@ static const struct IODevice io_laser[] = {
         2,                      /* count */
         "dsk\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-        vtech1_floppy_id,       /* id */
+        0,
         vtech1_floppy_init,     /* init */
         vtech1_floppy_exit,     /* exit */
         NULL,                   /* info */

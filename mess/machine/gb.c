@@ -674,11 +674,6 @@ int gb_load_rom (int id)
 	return 0;
 }
 
-int gb_id_rom (int id)
-{
-	return 1;
-}
-
 int gb_scanline_interrupt (void)
 {
 	/* test ! */

@@ -495,13 +495,6 @@ int cgenie_rom_load(int id)
 	return result;
 }
 
-int cgenie_rom_id(int id)
-{
-	/* This driver cannot ID ROMs */
-	return 0;
-}
-
-
 /*************************************
  *
  *				Tape emulation.

@@ -154,7 +154,7 @@ static const struct IODevice io_gameboy[] = {
 		1,					/* count */
 		"gb\0",				/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        gb_id_rom,          /* id */
+        0,
 		gb_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

@@ -52,7 +52,7 @@
            - complete serial (xmodem protocol!)
 		   - overlay would be nice!
 		   - finish NC200 disc drive emulation (closer!)
-		   - add NC150 driver - ROM needed!!! 
+		   - add NC150 driver - ROM needed!!!
 			- on/off control
 			- check values read from other ports that are not described!
 			- what is read from unmapped ports?
@@ -72,10 +72,10 @@
 		Interrupt system of NC100:
 
 		The IRQ mask is used to control the interrupt sources that can interrupt.
-		
+
 		The IRQ status can be read to determine which devices are interrupting.
 		Some devices, e.g. serial, cannot be cleared by writing to the irq status
-		register. These can only be cleared by performing an operation on the 
+		register. These can only be cleared by performing an operation on the
 		device (e.g. reading a data register).
 
 		Self Test:
@@ -201,8 +201,8 @@ int nc_membank_card_ram_mask;
 					101 = 4800
 					110 = 9600
 					111 = 19200
-				
-	
+
+
 	Port 0x0a0:
 	===========
 
@@ -303,7 +303,7 @@ static void nc_update_interrupts(void)
                 (((nc_irq_status & nc_irq_mask) & 0x3f)!=0)
                 )
         {
-				
+
 				logerror("int set %02x\n",nc_irq_status & nc_irq_mask);
                 /* set int */
                 cpu_set_irq_line(0,0, HOLD_LINE);
@@ -453,7 +453,7 @@ static void nc_common_restore_memory_from_stream(void)
     {
 		unsigned long stored_size;
 		unsigned long restore_size;
-		
+
 #ifdef VERBOSE
 		logerror("restoring nc memory\n");
 #endif
@@ -470,7 +470,7 @@ static void nc_common_restore_memory_from_stream(void)
 		}
 		/* read as much as will fit into memory */
 		osd_fread(file, nc_memory, restore_size);
-		/* seek over remaining data */    
+		/* seek over remaining data */
 		osd_fseek(file, SEEK_CUR,stored_size - restore_size);
 	}
 }
@@ -551,7 +551,7 @@ static void dummy_timer_callback(int dummy)
 				    cpu_set_nmi_line(0, PULSE_LINE);
 				}
 				break;
-				
+
 				case NC_TYPE_200:
 				{
 					nc_irq_status |=(1<<4);
@@ -591,7 +591,7 @@ void nc_common_init_machine(void)
     /* setup reset state no ints wanting servicing */
     nc_irq_status = 0;
     /* at reset set to 0x0ffff */
-    
+
 	nc_irq_latch = 0;
 	nc_irq_latch_mask = 0;
 
@@ -951,7 +951,7 @@ WRITE_HANDLER(nc100_uart_control_w)
 
 //	/* is this correct?? */
 //	if (data & (1<<3))
-//	{	
+//	{
 //		/* clear latched irq's */
 //		nc_irq_latch &= ~3;
 //		nc_update_interrupts();
@@ -1009,7 +1009,7 @@ static void nc100_rxrdy_callback(int state)
 		{
 //#ifdef VERBOSE
 			logerror("rx ready\n");
-//#endif	
+//#endif
 			nc_irq_latch |= (1<<0);
 		}
 	}
@@ -1138,7 +1138,7 @@ READ_HANDLER(nc100_card_battery_status_r)
  	nc_card_battery_status |= (1<<5);
 	nc_card_battery_status &= ~((1<<2) | (1<<3));
 
-	
+
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 
@@ -1216,7 +1216,7 @@ INPUT_PORTS_START(nc100)
         PORT_BIT (0x080, 0x00, IPT_UNUSED)
         /* 1 */
         PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_RALT, IP_JOY_NONE) 
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_RALT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE/STOP", KEYCODE_ESC, IP_JOY_NONE)
@@ -1228,7 +1228,7 @@ INPUT_PORTS_START(nc100)
         /* 2 */
         PORT_START
 		PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
-        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE) 
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
 	    PORT_BIT (0x010, 0x00, IPT_UNUSED)
@@ -1575,7 +1575,7 @@ READ_HANDLER(nc200_printer_status_r)
 	unsigned char nc200_printer_status = 0x0ff;
 
 	int printer_handshake;
-	
+
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 
@@ -1604,7 +1604,7 @@ WRITE_HANDLER(nc200_uart_control_w)
 	if (data & (1<<3))
 	{
 		nc200_uart_interrupt_irq &=~3;
-	
+
 		nc200_refresh_uart_interrupt();
 	}
 
@@ -1741,7 +1741,7 @@ INPUT_PORTS_START(nc200)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
         /* 6 */
-        PORT_START        
+        PORT_START
 		PORT_BIT (0x001, 0x00, IPT_UNUSED)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DOWN/BLUE", KEYCODE_DOWN, IP_JOY_NONE)
         PORT_BIT (0x004, 0x00, IPT_UNUSED)
@@ -1788,7 +1788,7 @@ INPUT_PORTS_START(nc200)
 		PORT_BITX(0x002, 0x002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "PCMCIA Memory card write enable", IP_KEY_NONE, IP_JOY_NONE)
 		PORT_DIPSETTING(0x000, DEF_STR( Off) )
 		PORT_DIPSETTING(0x002, DEF_STR( On) )
-		
+
 INPUT_PORTS_END
 
 
@@ -1936,7 +1936,7 @@ static const struct IODevice io_nc100[] =
 			1,                     /* count */
 			"crd\0card\0",               /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			nc_pcmcia_card_id,   /* id */
+			0,
 			nc_pcmcia_card_load, /* load */
 			nc_pcmcia_card_exit, /* exit */
 			NULL,                   /* info */
@@ -1968,7 +1968,7 @@ static const struct IODevice io_nc100[] =
 			NULL,                   /* output */
 			NULL,                   /* input chunk */
 			NULL,                   /* output chunk */
-	},		
+	},
 	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
@@ -1980,7 +1980,7 @@ static const struct IODevice io_nc200[] =
 			1,                     /* count */
 			"crd\0card\0",               /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			nc_pcmcia_card_id,   /* id */
+			0,
 			nc_pcmcia_card_load, /* load */
 			nc_pcmcia_card_exit, /* exit */
 			NULL,                   /* info */
@@ -2031,7 +2031,7 @@ static const struct IODevice io_nc200[] =
 			NULL,                   /* output */
 			NULL,                   /* input chunk */
 			NULL,                   /* output chunk */
-	},	
+	},
 	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };

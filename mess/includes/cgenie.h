@@ -3,7 +3,6 @@ extern UINT8 *cgenie_fontram;
 extern int cgenie_cassette_init(int id);
 extern int cgenie_floppy_init(int id);
 extern int cgenie_rom_load(int id);
-extern int cgenie_rom_id(int id);
 
 extern int cgenie_vh_start(void);
 extern void cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);

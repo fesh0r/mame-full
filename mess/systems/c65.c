@@ -374,7 +374,7 @@ static SID6581_interface ntsc_sound_interface =
 			985248,
 			NULL
 		}
-	}		
+	}
 };
 
 static SID6581_interface pal_sound_interface =
@@ -398,7 +398,7 @@ static SID6581_interface pal_sound_interface =
 			1022727,
 			NULL
 		}
-	}		
+	}
 };
 
 static struct MachineDriver machine_driver_c65 =
@@ -485,9 +485,6 @@ static struct MachineDriver machine_driver_c65pal =
 static const struct IODevice io_c65[] =
 {
 	IODEVICE_CBM_C65_QUICK,
-#if 0
-	IODEVICE_CBM_ROM(c64_rom_id),
-#endif
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };

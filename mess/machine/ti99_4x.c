@@ -466,11 +466,6 @@ void ti99_stop_machine(void)
 
 	Actually, TI ROM header starts with a >AA.  Unfortunately, header-less ROMs do exist.
 */
-int ti99_id_rom(int id)
-{
-	return 1;
-}
-
 /*
 	video initialization.
 */

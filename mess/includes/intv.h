@@ -18,7 +18,6 @@ extern UINT8 intv_gramdirty[];
 extern UINT16 intv_ram16[];
 
 void init_intv(void);
-int intv_id_rom(int id);
 int intv_load_rom (int id);
 
 void intv_machine_init(void);
@@ -36,7 +35,6 @@ WRITE16_HANDLER( intv_ram16_w );
 extern int intvkbd_text_blanked;
 
 void init_intvkbd(void);
-int intvkbd_id_rom(int id);
 int intvkbd_load_rom (int id);
 
 READ16_HANDLER ( intvkbd_dualport16_r );

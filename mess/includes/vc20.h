@@ -165,7 +165,6 @@ extern int vic6560_dma_read (int offset);
 
 extern int vc20_rom_init (int id);
 extern int vc20_rom_load (int id);
-extern int vc20_rom_id (int id);
 
 extern void vc20_driver_init (void);
 extern void vic20_driver_init (void);

@@ -139,14 +139,14 @@ ROM_START(sym1)
 ROM_END
 
 static const struct IODevice io_sym1[] = {
-	IODEVICE_CBM_ROM("60\00080\0c0\0", NULL),
+	IODEVICE_CBM_ROM("60\00080\0c0\0"),
 #if 0
     {
 		IO_CASSETTE,		/* type */
         1,                  /* count */
 		"kim\0",            /* file extensions */
         NULL,               /* private */
-		kim1_cassette_id,	/* id */
+		0,
 		kim1_cassette_init, /* init */
 		kim1_cassette_exit, /* exit */
         NULL,               /* info */

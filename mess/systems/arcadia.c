@@ -185,7 +185,7 @@ static struct GfxLayout arcadia_charlayout =
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 
+        {
 	    0,
 	    1,
 	    2,
@@ -290,12 +290,6 @@ ROM_START(paladium)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int arcadia_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
-
-}
-
 static int arcadia_load_rom(int id)
 {
 	FILE *cartfile;
@@ -307,13 +301,13 @@ static int arcadia_load_rom(int id)
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
 	}
-	
+
 	memset(rom, 0, 0x8000);
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return 1;
-	}	
+	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom, size)!=size) {
@@ -361,7 +355,7 @@ static const struct IODevice io_arcadia[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
-		arcadia_id_rom,					/* id */
+		0,
 		arcadia_load_rom, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */
@@ -415,7 +409,7 @@ void init_arcadia(void)
 		0xcc, 0x18, 0xfd, // stra,0 $18fd
 		0x04, 0x07, // lodi,0 7
 		0xcc, 0x19, 0xf9, // stra,0 $19f9
-				
+
 		0x04, 0x00, // lodi,0 7
 		0xcc, 0x19, 0xbe, // stra,0 $19bf
 		0x04, 0x00, // lodi,0 7
@@ -435,7 +429,7 @@ void init_arcadia(void)
 
 		// cycle colors
 		0x0c|1, 0x19, 0x00, //ldra,1 1900
-		0x44|1, 0xf, //andi,0 0f		
+		0x44|1, 0xf, //andi,0 0f
 		0xe4|1, 1, //comi,1 1
 		0x98, +10, //bcfr,0 c
 		0x0c, 0x19, 0xbf,//ldra,0 19f9,0
@@ -509,7 +503,7 @@ void init_arcadia(void)
 	    fclose(f);
 #endif
 	    for (i=0; i<ARRAY_LENGTH(prog); i++) rom[i]=prog[i];
-	    
+
 	}
 #endif
 }

@@ -87,14 +87,14 @@ static struct GfxLayout studio2_charlayout =
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 
+        {
 			0, 0, 0, 0,
-			1, 1, 1, 1, 
-			2, 2, 2, 2, 
-			3, 3, 3, 3, 
-			4, 4, 4, 4, 
-			5, 5, 5, 5, 
-			6, 6, 6, 6, 
+			1, 1, 1, 1,
+			2, 2, 2, 2,
+			3, 3, 3, 3,
+			4, 4, 4, 4,
+			5, 5, 5, 5,
+			6, 6, 6, 6,
 			7, 7, 7, 7
         },
         /* y offsets */
@@ -159,7 +159,7 @@ static int studio2_in_ef(void)
 
 	if (readinputport(0)&(1<<studio2_keyboard_select)) a|=4;
 	if (readinputport(1)&(1<<studio2_keyboard_select)) a|=8;
-	
+
 	return a;
 }
 
@@ -169,7 +169,7 @@ static int vip_in_ef(void)
 	if (studio2_get_vsync()) a|=1;
 
 	if (readinputport(0)&(1<<studio2_keyboard_select)) a|=4;
-	
+
 	return a;
 }
 
@@ -325,12 +325,6 @@ ROM_START(vip)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int studio2_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
-
-}
-
 static int studio2_load_rom(int id)
 {
 	FILE *cartfile;
@@ -342,12 +336,12 @@ static int studio2_load_rom(int id)
 /* A cartridge isn't strictly mandatory, but it's recommended */
 		return 0;
 	}
-	
+
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return 1;
-	}	
+	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom+0x400, size)!=size) {
@@ -366,7 +360,7 @@ static const struct IODevice io_studio2[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
-		studio2_id_rom,					/* id */
+		0,
 		studio2_load_rom, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */

@@ -13,7 +13,7 @@ typedef struct {
 	UINT8	 status;
 }	SECMAP;
 
-typedef struct 
+typedef struct
 {
 	const char *image_name; 		/* file name for disc image */
 	void	*image_file;			/* file handle for disc image */
@@ -34,7 +34,7 @@ typedef struct
 	UINT8	head;					/* current head # */
 	UINT8	track;					/* current track # */
 
-    UINT8   N; 
+    UINT8   N;
 	UINT16	sector_length;			/* sector length (byte) */
 
 	/* a bit for each sector in the image. If the bit is set, this sector
@@ -48,8 +48,6 @@ typedef struct
 int     basicdsk_floppy_init(int id);
 /* exit and free up data */
 void basicdsk_floppy_exit(int id);
-/* id */
-int     basicdsk_floppy_id(int id);
 
 /* set the disk image geometry for the specified drive */
 /* this is required to read the disc image correct */

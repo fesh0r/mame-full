@@ -397,6 +397,7 @@ UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
 	return crc;
 }
 
+#ifdef IMAGE_VERIFY
 int genesis_id_rom(int id)
 {
 	FILE *romfile;
@@ -431,6 +432,7 @@ int genesis_id_rom(int id)
 	osd_fclose(romfile);
 	return retval;
 }
+#endif
 
 int genesis_interrupt(void)
 {

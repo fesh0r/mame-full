@@ -226,7 +226,7 @@ static const struct IODevice io_mekd2[] = {
 		1,					/* count */
 		"d2\0",             /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		mekd2_rom_id,		/* id */
+		0,
 		mekd2_rom_load, 	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

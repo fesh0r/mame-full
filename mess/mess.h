@@ -78,11 +78,6 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 enum { INIT_PASS, INIT_FAIL };
 
 
-/* IODevice ID return values.  Use these to determine if */
-/* the emulation can continue if image cannot be positively IDed */
-enum { ID_FAILED, ID_OK, ID_UNKNOWN };
-
-
 /* possible values for osd_fopen() last argument
  * OSD_FOPEN_READ
  *	open existing file in read only mode.
@@ -147,7 +142,7 @@ struct IODevice {
 	int count;
 	const char *file_extensions;
 	int reset_depth;
-	int (*verify_image)(int id);
+	char *dummy;
 	int (*init)(int id);
 	void (*exit)(int id);
 	const void *(*info)(int id, int whatinfo);
@@ -161,7 +156,6 @@ struct IODevice {
 	int (*input_chunk)(int id, void *dst, int chunks);
 	int (*output_chunk)(int id, void *src, int chunks);
 	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
-
 };
 
 

@@ -729,7 +729,7 @@ READ_HANDLER(pcw_expansion_r)
 		{
 			return 0x0fe;
 		}
-		
+
 		case 0x087:
 		{
 
@@ -1316,7 +1316,7 @@ static const struct IODevice io_pcw[] =
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		dsk_floppy_id,		/* id */
+		0,
 		dsk_floppy_load,	/* init */
 		dsk_floppy_exit,	/* exit */
 		NULL,				/* info */

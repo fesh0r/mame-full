@@ -14,7 +14,6 @@ extern READ_HANDLER  ( a2600_bs_r );
 
 extern void a2600_init_machine(void);
 extern void a2600_stop_machine(void);
-extern int  a2600_id_rom (int id);
 extern int  a2600_load_rom(int id);
 extern READ_HANDLER ( a2600_ROM_r );
 

@@ -1,5 +1,5 @@
 
-/* 
+/*
 	Systems supported by this driver:
 
 	Oric 1,
@@ -8,7 +8,7 @@
 	Pravetz 8D
 
 	Pravetz is a Bulgarian copy of the Oric Atmos and uses
-	Apple 2 disc drives for storage. 
+	Apple 2 disc drives for storage.
 
 	This driver originally by Paul Cook, rewritten by Kevin Thacker.
 */
@@ -24,7 +24,7 @@
 extern int apple2_floppy_init(int id);
 extern void apple2_floppy_exit(int id);
 
-/* 
+/*
 	Explaination of memory regions:
 
 	I have split the memory region &c000-&ffff in this way because:
@@ -36,7 +36,7 @@ extern void apple2_floppy_exit(int id);
 	There is also 16k of ram at &c000-&ffff which is normally masked
 	by the os rom, but when the microdisc or jasmin interfaces are used,
 	this ram can be accessed. For the microdisc and jasmin, the ram not
-	covered by the roms for these interfaces, can be accessed 
+	covered by the roms for these interfaces, can be accessed
 	if it is enabled.
 
 	MRA_BANK1,MRA_BANK2 and MRA_BANK3 are used for a 16k rom.
@@ -45,7 +45,7 @@ extern void apple2_floppy_exit(int id);
 
 	0x0300-0x03ff is I/O access. It is not defined below because the
 	memory is setup dynamically depending on hardware that has been selected (microdisc, jasmin, apple2) etc.
-	
+
 */
 
 
@@ -56,8 +56,8 @@ static MEMORY_READ_START(oric_readmem)
     { 0x0400, 0xBFFF, MRA_RAM },
 
     { 0xc000, 0xdFFF, MRA_BANK1 },
-	{ 0xe000, 0xf7ff, MRA_BANK2 },	
-	{ 0xf800, 0xffff, MRA_BANK3 },	
+	{ 0xe000, 0xf7ff, MRA_BANK2 },
+	{ 0xf800, 0xffff, MRA_BANK3 },
 MEMORY_END
 
 static MEMORY_WRITE_START(oric_writemem)
@@ -69,7 +69,7 @@ static MEMORY_WRITE_START(oric_writemem)
 	{ 0xf800, 0xffff, MWA_BANK7 },
 MEMORY_END
 
-/* 
+/*
 The telestrat has the memory regions split into 16k blocks.
 Memory region &c000-&ffff can be ram or rom. */
 static MEMORY_READ_START(telestrat_readmem)
@@ -419,7 +419,7 @@ static const struct IODevice io_oric1[] =
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		oric_floppy_id, 	/* id */
+		0,
 		oric_floppy_init, /* init */
 		oric_floppy_exit,	/* exit */
 		NULL,					/* info */

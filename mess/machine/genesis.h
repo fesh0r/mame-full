@@ -5,7 +5,6 @@ extern unsigned char * genesis_soundram;
 
 void genesis_init_machine (void);
 int genesis_load_rom (int id);
-int genesis_id_rom (int id);
 
 int genesis_interrupt (void);
 WRITE16_HANDLER ( genesis_io_w );

@@ -166,6 +166,7 @@ void kim1_cassette_exit(int id)
 	/* nothing yet */
 }
 
+#ifdef VERIFY_IMAGE
 int kim1_cassette_id(int id)
 {
 	const char magic[] = "KIM1";
@@ -184,6 +185,7 @@ int kim1_cassette_id(int id)
 	}
 	return 0;
 }
+#endif
 #endif
 
 int sym1_interrupt(void)

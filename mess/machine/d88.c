@@ -254,7 +254,3 @@ void d88image_read_sector_data_into_buffer(int drive, int side, int index1, char
 }
 
 
-int    d88image_floppy_id(int id)
-{
-        return 1;
-}

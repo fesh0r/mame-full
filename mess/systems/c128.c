@@ -1471,7 +1471,7 @@ static const struct IODevice io_c128[] =
 	IODEVICE_CBM_QUICK,
 #if 0
 	IODEVICE_ROM_SOCKET,
-	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
+	IODEVICE_CBM_ROM("crt\080\0"),
 	IODEVICE_VC20TAPE, // needs 2 megahertz in c128 mode!
 #endif
 	IODEVICE_CBM_DRIVE,
@@ -1483,7 +1483,7 @@ static const struct IODevice io_c128d[] =
 	IODEVICE_CBM_QUICK,
 #if 0
 	IODEVICE_ROM_SOCKET,
-	IODEVICE_CBM_ROM(c64_rom_id),
+	IODEVICE_CBM_ROM(),
 	IODEVICE_VC20TAPE,
 #endif
 	IODEVICE_C1571,

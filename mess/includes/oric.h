@@ -14,7 +14,6 @@ void oric_vh_stop(void);
 extern WRITE_HANDLER(oric_psg_porta_write);
 
 int	oric_floppy_init(int id);
-int oric_floppy_id(int id);
 void oric_floppy_exit(int id);
 
 void oric_vh_stop(void);

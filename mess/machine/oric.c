@@ -1200,6 +1200,7 @@ void	oric_floppy_exit(int id)
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
+#ifdef IMAGE_VERIFY
 int		oric_floppy_id(int id)
 {
 	int result;
@@ -1210,8 +1211,9 @@ int		oric_floppy_id(int id)
 	if (result==1)
 		return 1;
 
-	return basicdsk_floppy_id(id);
+	return 1;
 }
+#endif
 
 void oric_common_init_machine(void)
 {

@@ -315,13 +315,13 @@ ROM_END
 
 
 static const struct IODevice io_microtan[] = {
-    IO_CASSETTE_WAVE(1,"tap\0",microtan_cassette_id,microtan_cassette_init,microtan_cassette_exit),
+    IO_CASSETTE_WAVE(1,"tap\0",0,microtan_cassette_init,microtan_cassette_exit),
     {
         IO_SNAPSHOT,        /* type */
         1,                  /* count */
         "m65\0",            /* file extensions */
         IO_RESET_ALL,       /* reset if file changed */
-        microtan_snapshot_id,   /* id */
+        0,
         microtan_snapshot_init, /* init */
         microtan_snapshot_exit, /* exit */
         NULL,               /* info */
@@ -340,7 +340,7 @@ static const struct IODevice io_microtan[] = {
         1,                  /* count */
         "hex\0",            /* file extensions */
         IO_RESET_ALL,       /* reset if file changed */
-        microtan_hexfile_id,    /* id */
+        0,
         microtan_hexfile_init,  /* init */
         microtan_hexfile_exit,  /* exit */
         NULL,               /* info */

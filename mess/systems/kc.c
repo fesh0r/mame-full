@@ -65,11 +65,11 @@ static READ_HANDLER(kc85_4_port_r)
 	{
 		case 0x080:
 			return kc85_module_r(offset);
-		
+
 		case 0x085:
 		case 0x084:
 			return kc85_4_84_r(offset);
-	
+
 
 		case 0x086:
 		case 0x087:
@@ -91,7 +91,7 @@ static READ_HANDLER(kc85_4_port_r)
 		case 0x0f2:
 		case 0x0f3:
 			return kc85_disc_interface_ram_r(offset);
-	
+
 	}
 
 	logerror("unhandled port r: %04x\n",offset);
@@ -142,7 +142,7 @@ static WRITE_HANDLER(kc85_4_port_w)
 		case 0x0f2:
 		case 0x0f3:
 			kc85_disc_interface_ram_w(offset,data);
-			return;	
+			return;
 	}
 
 	logerror("unhandled port w: %04x\n",offset);
@@ -216,29 +216,29 @@ INPUT_PORTS_END
 /********************/
 /** DISC INTERFACE **/
 
-MEMORY_READ_START( readmem_kc85_disc_hw ) 
+MEMORY_READ_START( readmem_kc85_disc_hw )
 	{0x0000, 0x0ffff, MRA_RAM},
-MEMORY_END 
+MEMORY_END
 
-MEMORY_WRITE_START( writemem_kc85_disc_hw ) 
+MEMORY_WRITE_START( writemem_kc85_disc_hw )
 	{0x0000, 0x0ffff, MWA_RAM},
 MEMORY_END
 
-PORT_READ_START( readport_kc85_disc_hw ) 
+PORT_READ_START( readport_kc85_disc_hw )
 	{0x0f0, 0x0f0, nec765_status_r},
 	{0x0f1, 0x0f1, nec765_data_r},
-	{0x0f2, 0x0f3, nec765_dack_r},			
+	{0x0f2, 0x0f3, nec765_dack_r},
 	{0x0f4, 0x0f5, kc85_disc_hw_input_gate_r},
 	/*{0x0f6, 0x0f7, MRA_NOP},*/			/* for controller */
-	{0x0fc, 0x0ff, kc85_disk_hw_ctc_r}, 
-PORT_END 
+	{0x0fc, 0x0ff, kc85_disk_hw_ctc_r},
+PORT_END
 
-PORT_WRITE_START( writeport_kc85_disc_hw ) 
+PORT_WRITE_START( writeport_kc85_disc_hw )
 	{0x0f1, 0x0f1, nec765_data_w},
 	{0x0f2, 0x0f3, nec765_dack_w},
 	{0x0f8, 0x0f9, kc85_disc_hw_terminal_count_w}, /* terminal count */
 	{0x0fc, 0x0ff, kc85_disk_hw_ctc_w},
-PORT_END 
+PORT_END
 
 
 
@@ -305,7 +305,7 @@ static struct MachineDriver machine_driver_kc85_4 =
 		{
 				SOUND_WAVE,
 				&kc_wave_interface,
-		}	
+		}
 	}
 };
 
@@ -361,7 +361,7 @@ static struct MachineDriver machine_driver_kc85_4d =
 		{
 				SOUND_WAVE,
 				&kc_wave_interface,
-		}	
+		}
 	}
 };
 
@@ -429,7 +429,7 @@ ROM_START(kc85_4d)
     ROM_LOAD("basic_c0.854", 0x10000, 0x2000, 0xdfe34b08)
     ROM_LOAD("caos__c0.854", 0x12000, 0x1000, 0x57d9ab02)
     ROM_LOAD("caos__e0.854", 0x13000, 0x2000, 0xd64cd50b)
-	
+
 	ROM_REGION(0x010000, REGION_CPU2,0)
 ROM_END
 
@@ -478,7 +478,7 @@ static const struct IODevice io_kc85_4d[] =
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		basicdsk_floppy_id, 	/* id */
+		0,
 		kc85_floppy_init, /* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */

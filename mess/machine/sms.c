@@ -208,6 +208,7 @@ void sms_init_machine (void)
     sms_fm_detect = 0;
 }
 
+#ifdef IMAGE_VERIFY
 int sms_id_rom (int id)
 {
 	FILE *romfile;
@@ -295,5 +296,5 @@ int gamegear_id_rom (int id)
 
 	return retval;
 }
-
+#endif
 

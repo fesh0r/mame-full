@@ -479,11 +479,6 @@ void microtan_cassette_exit(int id)
     device_close(IO_CASSETTE,id);
 }
 
-int microtan_cassette_id(int id)
-{
-    return 0;
-}
-
 int microtan_snapshot_init(int id)
 {
     void *file;
@@ -514,6 +509,7 @@ void microtan_snapshot_exit(int id)
     snapshot_size = 0;
 }
 
+#ifdef IMAGE_VERIFY
 int microtan_snapshot_id(int id)
 {
     UINT8 buff[4];
@@ -543,6 +539,7 @@ int microtan_snapshot_id(int id)
     }
     return 0;
 }
+#endif
 
 int parse_intel_hex(char *src)
 {
@@ -751,11 +748,6 @@ void microtan_hexfile_exit(int id)
         free(snapshot_buff);
     snapshot_buff = NULL;
     snapshot_size = 0;
-}
-
-int microtan_hexfile_id(int id)
-{
-    return 0;
 }
 
 static void store_key(int key)

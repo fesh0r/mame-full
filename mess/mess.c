@@ -585,41 +585,7 @@ int init_devices(const void *game)
 		{
 			mess_printf("***Initialising %s\n",device_typename(dev->type));
 			/********************************************************************
-			 * VALIDATE IMAGE
-			 ********************************************************************/
-			/* Is there an image specified? */
-			if(images[dev->type][id].name)
-			{
-				/* Verify it! */
-				if( dev->verify_image )
-				{
-					int result;
-
-					/* initialize */
-					result = (*dev->verify_image)(id);
-					if( result != ID_OK)
-					{
-						mess_printf(" Driver Reports Invalid Image\n");
-						return 1;
-					}
-					else
-					{
-						mess_printf(" Driver Reports Image ok\n");
-					}
-
-				}
-				else
-				{
-					mess_printf(" Note: Image [%s] for device [%s] cannot be verified!\n", images[dev->type][id].name, device_typename(dev->type));
-				}
-			}
-			else
-			{
-				mess_printf(" Note: No image specified - skipping image_verify\n");
-			}
-
-			/********************************************************************
-			 * INITIALISE DEVICE WITH IMAGE
+			 * CALL INITIALISE DEVICE
 			 ********************************************************************/
 			/* if this device supports initialize (it should!) */
 			if( dev->init )

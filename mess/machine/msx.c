@@ -44,6 +44,7 @@ static ppi8255_interface msx_ppi8255_interface = {
 static char PAC_HEADER[] = "PAC2 BACKUP DATA";
 #define PAC_HEADER_LEN (16)
 
+#ifdef IMAGE_VERIFY
 int msx_id_rom (int id)
 {
     FILE *F;
@@ -58,6 +59,7 @@ int msx_id_rom (int id)
     /* first to bytes must be 'AB' */
     return ( (magic[0] == 'A') && (magic[1] == 'B') );
 }
+#endif
 
 static int msx_probe_type (UINT8* pmem, int size)
 {
@@ -943,6 +945,7 @@ WRITE_HANDLER (msx_disk_w)
 		}
 	}
 
+#ifdef IMAGE_VERIFY
 int msx_floppy_id (int id)
 	{
 	void *f;
@@ -964,6 +967,7 @@ int msx_floppy_id (int id)
 
 	return INIT_FAIL;
 	}
+#endif
 
 int msx_floppy_init (int id)
 	{

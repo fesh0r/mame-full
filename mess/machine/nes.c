@@ -1307,6 +1307,7 @@ logerror("NES Partial CRC: %08lx %d\n",crc,size);
 return crc;
 }
 
+#ifdef IMAGE_VERIFY
 int nes_id_rom (int id)
 {
     FILE *romfile;
@@ -1326,6 +1327,7 @@ int nes_id_rom (int id)
 	osd_fclose (romfile);
 	return retval;
 }
+#endif
 
 int nes_load_disk (int id)
 {

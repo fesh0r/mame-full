@@ -248,7 +248,6 @@ int cbm_rom_init(int id)
 	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return INIT_FAIL;
 
 	dev=cbm_rom_find_device();
-	if ( (dev->verify_image!=NULL) && !dev->verify_image(id) ) return INIT_FAIL;
 
 	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)

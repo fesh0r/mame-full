@@ -242,7 +242,7 @@ PORT_END
   PORT_BITX (0x0010, IP_ACTIVE_LOW, IPT_KEYBOARD, "o O", KEYCODE_O, IP_JOY_NONE)	\
   PORT_BITX (0x0020, IP_ACTIVE_LOW, IPT_KEYBOARD, "p P", KEYCODE_P, IP_JOY_NONE)	\
   PORT_BITX (0x0040, IP_ACTIVE_LOW, IPT_KEYBOARD, "q Q", KEYCODE_Q, IP_JOY_NONE)	\
-  PORT_BITX (0x0080, IP_ACTIVE_LOW, IPT_KEYBOARD, "r R", KEYCODE_R, IP_JOY_NONE)	
+  PORT_BITX (0x0080, IP_ACTIVE_LOW, IPT_KEYBOARD, "r R", KEYCODE_R, IP_JOY_NONE)
 
 #define KEYB_ROW5	\
   PORT_BITX (0x0100, IP_ACTIVE_LOW, IPT_KEYBOARD, "s S", KEYCODE_S, IP_JOY_NONE)	\
@@ -302,7 +302,7 @@ PORT_END
   PORT_BITX (0x1000, IP_ACTIVE_LOW, IPT_KEYBOARD, "NUM 1", KEYCODE_1_PAD, IP_JOY_NONE)	\
   PORT_BITX (0x2000, IP_ACTIVE_LOW, IPT_KEYBOARD, "NUM 2", KEYCODE_2_PAD, IP_JOY_NONE)	\
   PORT_BITX (0x4000, IP_ACTIVE_LOW, IPT_KEYBOARD, "NUM 3", KEYCODE_3_PAD, IP_JOY_NONE)	\
-  PORT_BITX (0x8000, IP_ACTIVE_LOW, IPT_KEYBOARD, "NUM 4", KEYCODE_4_PAD, IP_JOY_NONE)	
+  PORT_BITX (0x8000, IP_ACTIVE_LOW, IPT_KEYBOARD, "NUM 4", KEYCODE_4_PAD, IP_JOY_NONE)
 
 #define KEYB_ROW10	\
   PORT_BITX (0x0001, IP_ACTIVE_LOW, IPT_KEYBOARD, "NUM 5", KEYCODE_5_PAD, IP_JOY_NONE)	\
@@ -335,10 +335,10 @@ INPUT_PORTS_START( msx )
  PORT_START /* 4 */
   KEYB_ROW8
   PORT_BITX (0xff00, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)    \
- 
+
  PORT_START /* 5 */
   PORT_BITX (0xffff, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)    \
-	
+
  MSX_DIPS
 
 INPUT_PORTS_END
@@ -374,7 +374,7 @@ INPUT_PORTS_START( msxuk )
 
  PORT_START /* 5 */
   PORT_BITX (0xffff, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)    \
-   
+
  MSX_DIPS
 
 INPUT_PORTS_END
@@ -407,7 +407,7 @@ INPUT_PORTS_END
   PORT_BITX (0x1000, IP_ACTIVE_LOW, IPT_KEYBOARD, "WON |", KEYCODE_BACKSLASH, IP_JOY_NONE) \
   PORT_BITX (0x2000, IP_ACTIVE_LOW, IPT_KEYBOARD, "@ `", KEYCODE_OPENBRACE, IP_JOY_NONE)    \
   PORT_BITX (0x4000, IP_ACTIVE_LOW, IPT_KEYBOARD, "[ }", KEYCODE_CLOSEBRACE, IP_JOY_NONE)   \
-  PORT_BITX (0x8000, IP_ACTIVE_LOW, IPT_KEYBOARD, "; +", KEYCODE_COLON, IP_JOY_NONE)    
+  PORT_BITX (0x8000, IP_ACTIVE_LOW, IPT_KEYBOARD, "; +", KEYCODE_COLON, IP_JOY_NONE)
 
 #define KEYB_JAP_ROW2	\
   PORT_BITX (0x0001, IP_ACTIVE_LOW, IPT_KEYBOARD, ": *", KEYCODE_QUOTE, IP_JOY_NONE)	\
@@ -691,7 +691,7 @@ int msx_vh_start(void)
 
 	i = TMS9928A_start(TMS99x8A, 0x4000);
 	if (!i) TMS9928A_int_callback(msx_vdp_interrupt);
-	
+
 	return i;
 }
 
@@ -827,7 +827,7 @@ static struct MachineDriver machine_driver_msx2 =
     /* video hardware */
     512 + 32, (212 + 16) * 2, { 0, 512 + 32 - 1, 0, (212 + 16) * 2 - 1 },
     0,
-    512, 
+    512,
 	512,
     v9938_init_palette,
 
@@ -942,7 +942,7 @@ static const struct IODevice io_msx[] = {
     MSX_MAX_CARTS,              /* count */
     "rom\0",                    /* file extensions */
 	IO_RESET_NONE,				/* reset if file changed */
-    msx_id_rom,                 /* id */
+    0,
     msx_load_rom,               /* init */
     msx_exit_rom,               /* exit */
     NULL,                       /* info */
@@ -961,7 +961,7 @@ static const struct IODevice io_msx[] = {
         2,                      /* count */
         "dsk\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-        msx_floppy_id,    	/* id */
+        0,
         msx_floppy_init,   	/* init */
         basicdsk_floppy_exit,   /* exit */
         NULL,                   /* info */

@@ -597,7 +597,7 @@ static struct GfxLayout pet80_charlayout =
         /* x offsets */
         { 0,1,2,3,4,5,6,7 },
         /* y offsets */
-        { 
+        {
 			0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
         },
@@ -1133,7 +1133,7 @@ static struct MachineDriver machine_driver_superpet =
 static const struct IODevice io_pet[] =
 {
 	IODEVICE_CBM_PET1_QUICK,
-	IODEVICE_CBM_ROM("crt\0a0\0b0\0", NULL),
+	IODEVICE_CBM_ROM("crt\0a0\0b0\0"),
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
@@ -1141,7 +1141,7 @@ static const struct IODevice io_pet[] =
 static const struct IODevice io_pet2[] =
 {
 	IODEVICE_CBM_PET_QUICK,
-	IODEVICE_CBM_ROM("crt\0a0\0b0\0", NULL),
+	IODEVICE_CBM_ROM("crt\0a0\0b0\0"),
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
@@ -1149,7 +1149,7 @@ static const struct IODevice io_pet2[] =
 static const struct IODevice io_pet4[] =
 {
 	IODEVICE_CBM_PET_QUICK,
-	IODEVICE_CBM_ROM("crt\0a0\0", NULL),
+	IODEVICE_CBM_ROM("crt\0a0\0"),
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };

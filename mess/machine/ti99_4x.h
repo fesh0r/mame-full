@@ -24,7 +24,6 @@ void ti99_cassette_exit(int id);
 
 int ti99_load_rom(int id);
 void ti99_rom_cleanup(int id);
-int ti99_id_rom(int id);
 
 int ti99_4_vh_start(void);
 int ti99_4a_vh_start(void);

@@ -421,7 +421,7 @@ ROM_END
 
 
 static const struct IODevice io_mz700[] = {
-	IO_CASSETTE_WAVE(1,"m12\0wav\0",mz700_cassette_id,mz700_cassette_init,mz700_cassette_exit),
+	IO_CASSETTE_WAVE(1,"m12\0wav\0",0,mz700_cassette_init,mz700_cassette_exit),
     { IO_END }
 };
 

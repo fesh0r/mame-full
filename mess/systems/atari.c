@@ -1114,7 +1114,7 @@ static const struct IODevice io_a400[] = {
 		1,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        a800_id_rom,        /* id */
+        0,
 		a800_rom_init,		/* init */
 		a800_rom_exit,		/* exit */
 		NULL,				/* info */
@@ -1157,7 +1157,7 @@ static const struct IODevice io_a800[] = {
 		2,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        a800_id_rom,        /* id */
+        0,
 		a800_rom_init,		/* init */
         a800_rom_exit,      /* exit */
         NULL,               /* info */
@@ -1201,7 +1201,7 @@ static const struct IODevice io_a5200[] = {
 		1,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        a5200_id_rom,       /* id */
+        0,
 		a5200_rom_init, 	/* init */
 		a5200_rom_exit, 	/* exit */
 		NULL,				/* info */

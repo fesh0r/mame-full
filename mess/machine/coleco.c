@@ -14,6 +14,7 @@
 
 static int JoyMode=0;
 
+#ifdef IMAGE_VERIFY
 int coleco_id_rom (int id)
 {
 	void *romfile;
@@ -42,6 +43,7 @@ int coleco_id_rom (int id)
 	osd_fclose (romfile);
 	return retval;
 }
+#endif
 
 int coleco_load_rom (int id)
 {

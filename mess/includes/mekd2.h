@@ -3,7 +3,6 @@ extern void init_mekd2(void);
 extern void mekd2_init_machine(void);
 
 extern int mekd2_rom_load (int id);
-extern int mekd2_rom_id (int id);
 
 extern int mekd2_interrupt(void);
 

@@ -10,15 +10,12 @@ extern void laser500_init_machine(void);
 extern void laser700_init_machine(void);
 extern void laser_shutdown_machine(void);
 
-extern int laser_rom_id(int id);
 extern int laser_rom_init(int id);
 extern void laser_rom_exit(int id);
 
-extern int laser_floppy_id(int id);
 extern int laser_floppy_init(int id);
 extern void laser_floppy_exit(int id);
 
-extern int laser_cassette_id(int id);
 extern int laser_cassette_init(int id);
 extern void laser_cassette_exit(int id);
 

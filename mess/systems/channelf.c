@@ -37,11 +37,6 @@ void init_channelf(void)
 		mem[i] = i;
 }
 
-int channelf_id_rom(int id)
-{
-    return ID_OK;
-}
-
 int channelf_load_rom(int id)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
@@ -269,7 +264,7 @@ static const struct IODevice io_channelf[] = {
 		1,					/* count */
 		"bin\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		channelf_id_rom,	/* id */
+		0,
 		channelf_load_rom,	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

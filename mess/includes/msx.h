@@ -40,7 +40,6 @@ void msx2_ch_reset (void);
 void msx_ch_stop (void);
 void msx2_ch_stop (void);
 int msx_load_rom (int id);
-int msx_id_rom (int id);
 void msx_exit_rom (int id);
 int msx_interrupt (void);
 int msx2_interrupt (void);
@@ -76,5 +75,5 @@ void msx_cassette_exit (int id);
 
 /* disk functions */
 int msx_floppy_init (int id);
-int msx_floppy_id (int id);
+
 

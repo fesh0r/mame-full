@@ -2904,7 +2904,7 @@ static const struct IODevice io_cpc6128[] =
 		1,							/* count */
 		"sna\0",                    /* file extensions */
 		IO_RESET_ALL,				/* reset if file changed */
-		amstrad_snapshot_id,		/* id */
+		0,
 		amstrad_snapshot_load,		/* init */
 		amstrad_snapshot_exit,		/* exit */
 		NULL,						/* info */
@@ -2923,7 +2923,7 @@ static const struct IODevice io_cpc6128[] =
 		2,							/* count */
 		"dsk\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
-		dsk_floppy_id,				/* id */
+		0,
 		dsk_floppy_load,			/* init */
 		dsk_floppy_exit,			/* exit */
 		NULL,						/* info */

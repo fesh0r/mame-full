@@ -697,6 +697,47 @@ void c16_shutdown_machine (void)
 {
 }
 
+int c16_rom_id (int id)
+{
+    /* magic lowrom at offset 7: $43 $42 $4d */
+	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
+	int retval = 0;
+	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
+	const char *name = device_filename(IO_CARTSLOT,id);
+	FILE *romfile;
+	char *cp;
+
+	logerror("c16_rom_id %s\n", name);
+	retval = 0;
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	{
+		logerror("rom %s not found\n", name);
+		return 0;
+	}
+
+	osd_fseek (romfile, 7, SEEK_SET);
+	osd_fread (romfile, buffer, sizeof (magic));
+	osd_fclose (romfile);
+
+	if (memcmp (magic, buffer, sizeof (magic)) == 0)
+	{
+		retval = 1;
+	}
+	else if ((cp = strrchr (name, '.')) != NULL)
+	{
+		if ((stricmp (cp + 1, "rom") == 0) || (stricmp (cp + 1, "prg") == 0)
+			|| (stricmp (cp + 1, "bin") == 0)
+			|| (stricmp (cp + 1, "lo") == 0) || (stricmp (cp + 1, "hi") == 0))
+			retval = 1;
+	}
+
+		if (retval)
+			logerror("rom %s recognized\n", name);
+		else
+			logerror("rom %s not recognized\n", name);
+	return retval;
+}
+
 int c16_rom_init (int id)
 {
 	rom_specified[id] = device_filename(IO_CARTSLOT,id) != NULL;
@@ -750,46 +791,6 @@ int c16_rom_load (int id)
 	return 0;
 }
 
-int c16_rom_id (int id)
-{
-    /* magic lowrom at offset 7: $43 $42 $4d */
-	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
-	int retval = 0;
-	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
-	const char *name = device_filename(IO_CARTSLOT,id);
-	FILE *romfile;
-	char *cp;
-
-	logerror("c16_rom_id %s\n", name);
-	retval = 0;
-	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-	{
-		logerror("rom %s not found\n", name);
-		return 0;
-	}
-
-	osd_fseek (romfile, 7, SEEK_SET);
-	osd_fread (romfile, buffer, sizeof (magic));
-	osd_fclose (romfile);
-
-	if (memcmp (magic, buffer, sizeof (magic)) == 0)
-	{
-		retval = 1;
-	}
-	else if ((cp = strrchr (name, '.')) != NULL)
-	{
-		if ((stricmp (cp + 1, "rom") == 0) || (stricmp (cp + 1, "prg") == 0)
-			|| (stricmp (cp + 1, "bin") == 0)
-			|| (stricmp (cp + 1, "lo") == 0) || (stricmp (cp + 1, "hi") == 0))
-			retval = 1;
-	}
-
-		if (retval)
-			logerror("rom %s recognized\n", name);
-		else
-			logerror("rom %s not recognized\n", name);
-	return retval;
-}
 
 int c16_frame_interrupt (void)
 {

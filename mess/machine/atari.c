@@ -204,11 +204,6 @@ void a800_rom_exit(int id)
     }
 }
 
-int a800_id_rom(int id)
-{
-	return 1;
-}
-
 /**************************************************************
  *
  * Atari 800-XL
@@ -333,11 +328,6 @@ void a5200_rom_exit(int id)
 	UINT8 *mem = memory_region(REGION_CPU1);
     /* zap the cartridge memory (again) */
 	memset(&mem[0x4000], 0x00, 0x8000);
-}
-
-int a5200_id_rom(int id)
-{
-	return 1;
 }
 
 void pokey_reset(void)

@@ -320,6 +320,7 @@ int amstrad_snapshot_load(int id)
 	return INIT_FAIL;
 }
 
+#ifdef IMAGE_VERIFY
 /* check if a snapshot file is valid to load */
 int amstrad_snapshot_id(int id)
 {
@@ -345,6 +346,7 @@ int amstrad_snapshot_id(int id)
 	return valid;
 
 }
+#endif
 
 void amstrad_snapshot_exit(int id)
 {

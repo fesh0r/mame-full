@@ -208,6 +208,7 @@ int mbee_rom_load(int id)
 	return INIT_PASS;
 }
 
+#ifdef IMAGE_VERIFY
 int mbee_rom_id(int id)
 {
     void *file;
@@ -219,5 +220,5 @@ int mbee_rom_id(int id)
     }
     return 1;
 }
-
+#endif
 
