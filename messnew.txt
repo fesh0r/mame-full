@@ -20,6 +20,8 @@ System Driver Changes:
 - [APPLE2] Fixed keyboard and aspect ratio, and also added color, joystick, and
   natural keyboard support. (bug #291) [Nate Woods]
 
+- [SVI318] Enhanced disk drive support. [Tomas Karlsson]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.62.  This incorporates all features of the 
