@@ -147,7 +147,8 @@ ifdef ZLIB
 ZLIB = src/unix/contrib/cutzlib-1.2.1/libz.a
 endif
 
-all: objdirs osdepend-objdirs $(NAME).$(DISPLAY_METHOD)
+all: objdirs osdepend-objdirs
+	$(MAKE) -f $(CURMAKEFILE) $(MAKEFLAGS) $(NAME).$(DISPLAY_METHOD)
 
 # CPU core include paths
 VPATH = src $(wildcard src/cpu/*)
