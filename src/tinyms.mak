@@ -31,6 +31,5 @@ COREOBJS += \
 	$(OBJ)/mess/utils.o	       \
 	$(OBJ)/mess/bcd.o	       \
 	$(OBJ)/mess/gregoria.o	       \
-	$(OBJ)/mess/diskctrl.o	       \
 	$(OBJ)/mess/machine/flopdrv.o  \
 
