@@ -47,7 +47,8 @@ PALETTE_INIT( tmc2000e )	// TODO: incorrect colors?
 
 void cdp1864_set_background_color_sequence_w(int color[])
 {
-	for (int i = 0; i < 4; i++)
+	int i;
+	for (i = 0; i < 4; i++)
 		cdp1864.bgcolseq[i] = color[i];
 }
 
