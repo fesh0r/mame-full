@@ -29,9 +29,9 @@
 
 /* timer used to refresh via cb input, which will trigger ints on pulses
 from tape */
-static void *oric_tape_timer;
+static void *oric_tape_timer = NULL;
 /* ==0 if oric1 or oric atmos, !=0 if telestrat */
-static int oric_is_telestrat;
+static int oric_is_telestrat = 1;
 
 /* This does not exist in the real hardware. I have used it to
 know which sources are interrupting */
@@ -70,7 +70,7 @@ static void oric_refresh_ints(void)
 
 static int oric_floppy_type[4] = {ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE};
 
-static	char *oric_ram_0x0c000;
+static	char *oric_ram_0x0c000 = NULL;
 
 
 /* index of keyboard line to scan */
@@ -607,7 +607,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	/* /ROMDIS */
 	if ((port_314_w & (1<<1))==0)
 	{
-/*		logerror("&c000-&dfff is ram\n"); */
+		logerror("&c000-&dfff is ram\n"); 
 		/* rom disabled enable ram */
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
@@ -617,7 +617,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	else
 	{
 		unsigned char *rom_ptr;
-/*		logerror("&c000-&dfff is os rom\n"); */
+		logerror("&c000-&dfff is os rom\n"); 
 		/* basic rom */
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
 		memory_set_bankhandler_w(5, 0, MWA_NOP);
@@ -631,7 +631,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	if ((port_314_w & (1<<1))!=0)
 	{
 		unsigned char *rom_ptr;
-/*		logerror("&e000-&ffff is os rom\n"); */
+		logerror("&e000-&ffff is os rom\n"); 
 		/* basic rom */
 		memory_set_bankhandler_r(2, 0, MRA_BANK2);
 		memory_set_bankhandler_w(6, 0, MWA_NOP);
@@ -645,7 +645,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		if ((port_314_w & (1<<7))==0)
 		{
 			unsigned char *rom_ptr;
-/*			logerror("&e000-&ffff is disk rom\n"); */
+			logerror("&e000-&ffff is disk rom\n"); 
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_w(6, 0, MWA_NOP);
 
@@ -655,7 +655,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		}
 		else
 		{
-/*			logerror("&e000-&ffff is ram\n"); */
+			logerror("&e000-&ffff is ram\n"); 
 			/* rom disabled enable ram */
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
@@ -669,7 +669,8 @@ void oric_common_init_machine(void)
 {
     /* clear all irqs */
 	oric_irqs = 0;
-
+	/* prevent initial interrupt from initialising wd179x */
+	oric_is_telestrat = 1;
 	oric_ram_0x0c000 = NULL;
 
     oric_tape_timer = timer_pulse(TIME_IN_HZ(11025), 0, oric_refresh_tape);
