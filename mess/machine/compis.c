@@ -455,7 +455,8 @@ WRITE8_HANDLER ( compis_ppi_w )
 /*  PIT 8253                                                               */
 /*-------------------------------------------------------------------------*/
 
-static struct pit8253_config compis_pit_config =
+static struct pit8253_config compis_pit_config[2] =
+{
 {
 	TYPE8253,
 	{
@@ -466,6 +467,18 @@ static struct pit8253_config compis_pit_config =
 		/* Timer2 */
 		{4770000/4, NULL, NULL }
 	}
+},
+{
+	TYPE8254,
+	{
+		/* Timer0 */
+		{4770000/4, NULL, NULL },
+		/* Timer1 */
+		{4770000/4, NULL, NULL },
+		/* Timer2 */
+		{4770000/4, NULL, NULL }
+	}
+}
 };
 
  READ8_HANDLER ( compis_pit_r )
@@ -482,20 +495,7 @@ WRITE8_HANDLER ( compis_pit_w )
 /*  OSP PIT 8254                                                           */
 /*-------------------------------------------------------------------------*/
 
-static struct pit8253_config compis_osp_pit_config =
-{
-	TYPE8254,
-	{
-		/* Timer0 */
-		{4770000/4, NULL, NULL },
-		/* Timer1 */
-		{4770000/4, NULL, NULL },
-		/* Timer2 */
-		{4770000/4, NULL, NULL }
-	}
-};
-
- READ8_HANDLER ( compis_osp_pit_r )
+READ8_HANDLER ( compis_osp_pit_r )
 {
 	return pit8253_1_r (offset >> 1);
 }
@@ -1591,9 +1591,7 @@ MACHINE_INIT( compis )
 	compis_cpu_init();
 
 	/* OSP PIT 8254 */
-	pit8253_init(2);
-	pit8253_config(0, &compis_pit_config);
-	pit8253_config(1, &compis_osp_pit_config);
+	pit8253_init(2, compis_pit_config);
 		
 	/* PPI */
 	ppi8255_init(&compis_ppi_interface);

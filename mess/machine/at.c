@@ -23,26 +23,6 @@
 
 static SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };
 
-static struct pit8253_config at_pit8253_config =
-{
-	TYPE8254,
-	{
-		{
-			4770000/4,				/* heartbeat IRQ */
-			pic8259_0_issue_irq,
-			NULL
-		}, {
-			4770000/4,				/* dram refresh */
-			NULL,
-			NULL
-		}, {
-			4770000/4,				/* pio port c pin 4, and speaker polling enough */
-			NULL,
-			pc_sh_speaker_change_clock
-		}
-	}
-};
-
 
 
 static void at286_set_gate_a20(int a20)
@@ -89,8 +69,7 @@ static void at386_set_gate_a20(int a20)
 
 static void init_at_common(AT8042_CONFIG *at8042)
 {
-	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
-	pit8253_config(0, &at_pit8253_config);
+	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT | PCCOMMON_TIMER_8254);
 	mc146818_init(MC146818_STANDARD);
 	soundblaster_config(&soundblaster);
 	at_8042_init(at8042);

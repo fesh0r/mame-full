@@ -169,6 +169,26 @@ static struct pit8253_config pc_pit8253_config =
 	}
 };
 
+static struct pit8253_config pc_pit8254_config =
+{
+	TYPE8254,
+	{
+		{
+			4770000/4,				/* heartbeat IRQ */
+			pc_timer0_w,
+			NULL
+		}, {
+			4770000/4,				/* dram refresh */
+			NULL,
+			NULL
+		}, {
+			4770000/4,				/* pio port c pin 4, and speaker polling enough */
+			NULL,
+			pc_sh_speaker_change_clock
+		}
+	}
+};
+
 
 
 static PC_LPT_CONFIG lpt_config[3]={
@@ -348,8 +368,10 @@ void init_pc_common(UINT32 flags)
 		cpu_setbank(10, mess_ram);
 
 	/* PIT */
-	pit8253_init(1);
-	pit8253_config(0, &pc_pit8253_config);
+	if (flags & PCCOMMON_TIMER_8254)
+		pit8253_init(1, &pc_pit8254_config);
+	else
+		pit8253_init(1, &pc_pit8253_config);
 
 	/* FDC/HDC hardware */
 	pc_fdc_setup();

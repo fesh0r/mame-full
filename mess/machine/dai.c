@@ -129,8 +129,7 @@ static struct pit8253_config dai_pit8253_intf =
 
 DRIVER_INIT( dai )
 {
-	pit8253_init(1);
-	pit8253_config(0, &dai_pit8253_intf);
+	pit8253_init(1, &dai_pit8253_intf);
 }
 
 MACHINE_INIT( dai )

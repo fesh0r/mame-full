@@ -15,15 +15,14 @@ struct pit8253_config
 	struct
 	{
 		double clockin;
-		void (*irq_callback)(int state);
+		void (*output_callback)(int state);
 		void (*clock_callback)(double clockout);
 	} timer[3];
 };
 
 
 
-int pit8253_init(int count);
-void pit8253_config(int which, struct pit8253_config *config);
+int pit8253_init(int count, struct pit8253_config *config);
 void pit8253_reset(int which);
 
 READ8_HANDLER ( pit8253_0_r );

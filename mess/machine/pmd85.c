@@ -777,8 +777,7 @@ void pmd85_common_driver_init (void)
 {
 	memory_set_opbase_handler(0, pmd85_opbaseoverride);
 
-	pit8253_init(1);
-	pit8253_config(0, &pmd85_pit8253_interface);
+	pit8253_init(1, &pmd85_pit8253_interface);
 	pit8253_0_gate_w(0, 1);
 	pit8253_0_gate_w(1, 1);
 	pit8253_0_gate_w(2, 1);

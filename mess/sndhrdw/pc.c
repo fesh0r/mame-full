@@ -54,6 +54,8 @@ int pc_sh_custom_start(const struct MachineSound* driver)
 void pc_sh_speaker(int data)
 {
 	int mode = 0;
+	pit8253_0_gate_w(2, data & 1);
+
 	switch( data )
 	{
 		case 0: mode=0; break;

@@ -45,7 +45,7 @@
 
 DRIVER_INIT( pccga )
 {
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	ppi8255_init(&pc_ppi8255_interface);
 	pc_rtc_init();
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
@@ -53,7 +53,7 @@ DRIVER_INIT( pccga )
 
 DRIVER_INIT( bondwell )
 {
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	ppi8255_init(&pc_ppi8255_interface);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
 }
@@ -61,7 +61,7 @@ DRIVER_INIT( bondwell )
 DRIVER_INIT( pcmda )
 {
 	pc_mda_init();
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	ppi8255_init(&pc_ppi8255_interface);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
 }
@@ -87,7 +87,7 @@ DRIVER_INIT( europc )
 		rom[0xfffff]=256-a;
 	}
 
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 
 	europc_rtc_init();
 //	europc_rtc_set_time();
@@ -100,7 +100,7 @@ DRIVER_INIT( t1000hx )
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
 }
 
@@ -127,7 +127,7 @@ DRIVER_INIT( pc200 )
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc200_port378_r );
 
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 }
 
 DRIVER_INIT( pc1512 )
@@ -148,7 +148,7 @@ DRIVER_INIT( pc1512 )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc_parallelport2_r );
 
 
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	mc146818_init(MC146818_IGNORE_CENTURY);
 }
 
@@ -174,14 +174,14 @@ DRIVER_INIT( pc1640 )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc1640_port278_r );
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x4278, 0x427b, 0, 0, pc1640_port4278_r );
 
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 
 	mc146818_init(MC146818_IGNORE_CENTURY);
 }
 
 DRIVER_INIT( pc_vga )
 {
-	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
 	ppi8255_init(&pc_ppi8255_interface);
 
 	vga_init(input_port_0_r);

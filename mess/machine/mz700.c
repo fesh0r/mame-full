@@ -75,14 +75,13 @@ static void ne556_callback(int param)
 
 DRIVER_INIT(mz700)
 {
-    ppi8255_init(&ppi8255);
+	ppi8255_init(&ppi8255);
 
-	pit8253_init(1);
-    pit8253_config(0, &pit8253);
+	pit8253_init(1, &pit8253);
 
 	videoram = memory_region(REGION_CPU1)+0x12000;videoram_size=0x800;
 	colorram = memory_region(REGION_CPU1)+0x12800;
-    mz700_bank_w(4, 0);
+	mz700_bank_w(4, 0);
 }
 
 

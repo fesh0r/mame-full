@@ -5,6 +5,8 @@
 #define PCCOMMON_KEYBOARD_AT	1
 #define PCCOMMON_DMA8237_PC		0
 #define PCCOMMON_DMA8237_AT		2
+#define PCCOMMON_TIMER_8253     0
+#define PCCOMMON_TIMER_8254     4
 
 void init_pc_common(UINT32 flags);
 
