@@ -18,6 +18,8 @@ endif
 
 OBJDIRS += $(OBJ)/ui
 
+$(OBJ)/mess/ui/mess32ui.o: src/ui/win32ui.c mess/ui/mess32ui.c
+
 # only OS specific output files and rules
 OSOBJS += \
         $(OBJ)/ui/m32util.o \
