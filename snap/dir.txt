@@ -1,1 +1,1 @@
-screenshots will be stored here.
+Screen snapshots will be saved here
