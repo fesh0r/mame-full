@@ -249,6 +249,8 @@ void ti85_init_machine(void)
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 
+	logerror ("Reset\n");
+
 	if (ti85_snap_data)
 	{
 		memory_set_opbase_handler(0, ti85_opbaseoverride);
@@ -609,6 +611,8 @@ static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
 	unsigned char * reg = data + 0x40;
 	unsigned char * hdw = data + 0x8000 + 0x94;
 
+	logerror ("Snapshot setup\n");
+	
 	/* Set registers */
 	lo = reg[0x00] & 0x0ff;
 	hi = reg[0x01] & 0x0ff;
@@ -684,6 +688,9 @@ static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
 	ti85_ON_interrupt_mask = !ti85_LCD_status && ti85_timer_interrupt_status;
 	ti85_ON_interrupt_status = 0;
 	ti85_ON_pressed = 0;
+
+	ti85_video_buffer_width = 0x02;
+	ti85_interrupt_speed = 0x03;
 }
 
 static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
@@ -769,6 +776,9 @@ static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
 	ti85_ON_interrupt_mask = !ti85_LCD_status && ti85_timer_interrupt_status;
 	ti85_ON_interrupt_status = 0;
 	ti85_ON_pressed = 0;
+
+	ti85_video_buffer_width = 0x02;
+	ti85_interrupt_speed = 0x03;
 }
 
 /* TI calculator serial link transmission functions */
