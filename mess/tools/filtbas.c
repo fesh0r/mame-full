@@ -2483,8 +2483,8 @@ static const char *basic_100[] = /* "BASIC 10.0" - supported by c65 & clones */
 static void *filter_cocobas_calcparam(const struct ImageModule *imgmod)
 {
 	static const struct basictoken_tableent cocobas_tokenents[] = {
-		0x00,	0x80,	cocobas_statements,	sizeof(cocobas_statements) / sizeof(cocobas_statements[0]),
-		0xff,	0x80,	cocobas_functions,	sizeof(cocobas_functions) / sizeof(cocobas_functions[0])
+		{ 0x00,	0x80,	cocobas_statements,	sizeof(cocobas_statements) / sizeof(cocobas_statements[0]) },
+		{ 0xff,	0x80,	cocobas_functions,	sizeof(cocobas_functions) / sizeof(cocobas_functions[0]) }
 	};
 
 	static const struct basictokens cocobas_tokens = {
@@ -2499,8 +2499,8 @@ static void *filter_cocobas_calcparam(const struct ImageModule *imgmod)
 static void *filter_dragonbas_calcparam(const struct ImageModule *imgmod)
 {
 	static const struct basictoken_tableent dragonbas_tokenents[] = {
-		0x00,	0x80,	dragonbas_statements,	sizeof(dragonbas_statements) / sizeof(dragonbas_statements[0]),
-		0xff,	0x80,	dragonbas_functions,	sizeof(dragonbas_functions) / sizeof(dragonbas_functions[0])
+		{ 0x00,	0x80,	dragonbas_statements,	sizeof(dragonbas_statements) / sizeof(dragonbas_statements[0]) },
+		{ 0xff,	0x80,	dragonbas_functions,	sizeof(dragonbas_functions) / sizeof(dragonbas_functions[0]) }
 	};
 
 	static const struct basictokens dragonbas_tokens = {
