@@ -45,8 +45,9 @@ int _CRT_glob = 0;
 static FILE *logfile;
 
 static char mapfile_name[MAX_PATH];
+#ifndef USE_DRMINGW
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
-
+#endif
 static int original_leds;
 
 
@@ -180,7 +181,7 @@ void CLIB_DECL logerror(const char *text,...)
 //============================================================
 //	exception_filter
 //============================================================
-
+#ifndef USE_DRMINGW
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 {
 	static const struct
@@ -257,7 +258,7 @@ fprintf(stderr, "esp = %08x  ebp = %08x\n", esp, ebp);
 	// exit
 	return EXCEPTION_EXECUTE_HANDLER;
 }
-
+#endif
 
 
 //============================================================
