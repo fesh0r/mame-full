@@ -43,8 +43,9 @@ int _CRT_glob = 0;
 //============================================================
 
 static char mapfile_name[MAX_PATH];
+#ifndef USE_DRMINGW
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
-
+#endif
 static int original_leds;
 
 
@@ -52,10 +53,10 @@ static int original_leds;
 //============================================================
 //	PROTOTYPES
 //============================================================
-
+#ifndef USE_DRMINGW
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
-
+#endif
 
 
 //============================================================
@@ -79,8 +80,9 @@ int main(int argc, char **argv)
 		strcpy(ext, ".map");
 	else
 		strcat(mapfile_name, ".map");
+#ifndef USE_DRMINGW
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
-
+#endif
 	// remember the initial LED states
 	original_leds = osd_get_leds();
 
@@ -135,7 +137,7 @@ void osd_exit(void)
 //============================================================
 //	exception_filter
 //============================================================
-
+#ifndef USE_DRMINGW
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 {
 	static const struct
@@ -251,3 +253,4 @@ static const char *lookup_symbol(UINT32 address)
 	sprintf(buffer, " (%s+0x%04x)", best_symbol, address - best_addr);
 	return buffer;
 }
+#endif
