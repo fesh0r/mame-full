@@ -193,7 +193,7 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 	}
 }
 
-#ifdef __POWERPC__
+#if defined(__POWERPC__) && defined(__MWERKS__)
 
 // setst_add_32_laeco :
 // - computes a+b
