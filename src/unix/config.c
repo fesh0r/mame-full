@@ -42,7 +42,6 @@ char *rompath_extra = NULL;
 static char *defaultgamename;
 #else
 static const char *mess_opts;
-void build_crc_database_filename(int game_index);
 #endif
 
 static int config_handle_arg(char *arg);
@@ -552,9 +551,7 @@ int config_init (int argc, char *argv[])
 	}
 
 #ifdef MESS
-	build_crc_database_filename(game_index);
-
-	/* set the image type if nescesarry */
+	/* set the image type if necessary */
 	for(i=0; i<options.image_count; i++)
 	{
 		if(options.image_files[i].type)
@@ -633,10 +630,10 @@ int config_init (int argc, char *argv[])
 	}
 
 	if (statename)
-		options.savegame = *statename;
+		options.savegame = statename;
 
-	if(language)
-		options.language_file = mame_fopen(0,language,FILETYPE_LANGUAGE,0);
+	if (language)
+		options.language_file = mame_fopen(0, language, FILETYPE_LANGUAGE,0);
 
 	return 1234;
 }

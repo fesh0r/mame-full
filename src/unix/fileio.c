@@ -79,14 +79,6 @@ static osd_file openfile[MAX_OPEN_FILES];
 
 FILE *errorlog = NULL;
 
-#ifdef MESS
-static char crcfilename[256] = "";
-const char *crcfile = crcfilename;
-static char pcrcfilename[256] = "";
-const char *pcrcfile = pcrcfilename;
-char crcdir[256];
-#endif
-
 char *playbackname;
 char *recordname;
 
@@ -107,7 +99,7 @@ struct rc_option fileio_opts[] =
 #else
 	{ "biospath", "bp", rc_string, &pathlist[FILETYPE_ROM].rawpath, XMAMEROOT"/bios", 0, 0, NULL, "Search path for BIOS sets" },
 	{ "softwarepath", "swp", rc_string, &pathlist[FILETYPE_IMAGE].rawpath, XMAMEROOT"/software", 0, 0, NULL,  "Search path for software" },
-	{ "CRC_directory", "crc", rc_string, &pathlist[FILETYPE_CRC].rawpath, XMAMEROOT"/crc", 0, 0, NULL, "Directory containing CRC files" },
+	{ "hash_directory", "hash", rc_string, &pathlist[FILETYPE_HASH].rawpath, XMAMEROOT"/hash", 0, 0, NULL, "Directory containing hash files" },
 #endif
 	{ "samplepath", "sp", rc_string, &pathlist[FILETYPE_SAMPLE].rawpath, XMAMEROOT"/samples", 0, 0, NULL, "Search path for sample files" },
 	{ "inipath", NULL, rc_string, &pathlist[FILETYPE_INI].rawpath, XMAMEROOT"/ini", 0, 0, NULL, "Search path for ini files" },
@@ -739,20 +731,6 @@ int osd_display_loading_rom_message(const char *name,
 
 
 #ifdef MESS
-/*============================================================ */
-/*	build_crc_database_filename */
-/*============================================================ */
-
-void build_crc_database_filename(int game_index)
-{
-	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
-}
-
 int osd_select_file(mess_image *img, char *filename)
 {
 	return 0;

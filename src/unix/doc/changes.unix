@@ -3,21 +3,23 @@ Xmame history:
 Last Modified by Lawrence Gold (gold@aros.net)
 
 Release 0.80.2
-	- Tweaked the support for GNU make's -j option so that it doesn't 
-	  crash on an SMP machine and also supports the -f option for an 
-	  alternate makefile.  (Arnaud G. Gibert)
+	- Everything from MAME 0.81 (http://x.mame.net/changes-mame.html) and 
+	  MESS 0.81 (http://x.mame.net/changes-mess.html).
 	- Fixed a problem with the lightgun offscreen reloading that caused a 
 	  random shot every fourth or fifth shot.  (Joe Inkenbrandt)
+	- The prep-new-mame and prep-new-mess scripts now support dos2unix 
+	  instead of just d2u.
+	- Restructured the makefiles a bit so that object directories are 
+	  created before compilation begins.  This should take care of the 
+	  problems with parallel compilation.
 
 Release 0.80.1, 13 March 2004
-	- Everything from MAME 0.80 (http://x.mame.net/changes-mame.html) and 
-	  MESS 0.80 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.80 and MESS 0.80.
 	- Improved support for GNU make's -j option, which can especially 
 	  benefit SMP and SMT machines.  (Arnaud G. Gibert)
 
 Release 0.79.1, 19 February 2004
-	- Everything from MAME 0.79 (http://x.mame.net/changes-mame.html) and 
-	  MESS 0.79 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.79 and MESS 0.79.
 	- Added a missing osd_die() definition.  Without this, OpenVMS was 
 	  reporting a compile error.
 	- More changes to support OpenVMS.  (Robert Alan Byer)

@@ -4956,17 +4956,20 @@ ML-FX2: 64kB RAM, built in software
 
 
 
-National (Japan)
+National/Matsushita (Japan)
 
-CF-1200: 16kB RAM
-CF-2000: 16kB RAM
-CF-2700: 32kB RAM
-CF-3000: 64kB RAM
-CF-3300: 64kB RAM
-CF-4000: ??kB RAM
-FS-1300: 64kB RAM
-FS-4000: 64kB RAM
-
+CF-2000: 16kB RAM (MSX1)
+CF-1200: 16kB RAM (MSX1)
+CF-2700: 32kB RAM (MSX1)
+CF-3000: 64kB RAM (MSX1)
+CF-3300: 64kB RAM (MSX1 / 1 or 2 FDD)
+FS-4000: 64kB RAM (MSX1)
+FS-1300: 64kB RAM (MSX1)
+FS-5500F1/F2: 64kB RAM (MSX2 / 1 or 2 FDD)
+FS-4500: 64kB RAM (MSX2)
+FS-4700F: 64kB RAM (MSX2)
+FS-5000F2: 128kB Mapper RAM (MSX2 / 2 FDD)
+FS-4600F: 128kB Mapper RAM (MSX2)
 
 
 Olympia (France)
@@ -4976,13 +4979,24 @@ PHC-28: 32kB RAM, same as Sanyo's PHC-28S
 
 
 
-Panasonic/Matsushita (Japan)
+Panasonic (Europe)
 
 CF-2000: 16kB RAM
 CF-2700: 64kB RAM, same as Sanyo MPC-64
-CF-3000: ??kB RAM
-CF-3300: ??kB RAM
+CF-3000: 64kB RAM
+CF-3300: 64kB RAM
 
+Panasonic/Matsushita (Japan)
+
+FS-A1: 64kB RAM (MSX2)
+FS-A1MK2: 64kB Mapper RAM (MSX2)
+FS-A1F: 64kB Mapper RAM (MSX2)
+FS-A1FM: 64kB Mapper RAM (MSX2)
+FS-A1FX: 64kB Mapper RAM (MSX2+)
+FS-A1WX: 64kB Mapper RAM (MSX2+)
+FS-A1WX: 64kB Mapper RAM (MSX2+)
+FS-A1GT: 256kB Mapper RAM (MSXturboR)
+FS-A1GT: 512kB Mapper RAM (MSXturboR)
 
 
 Perfect (Daewoo in Kuwait)
@@ -8963,6 +8977,30 @@ $info=ti990_4
 $bio
 Texas Instruments Model 990/4 Minicomputer System (1976)
 
+Known Issues:
+
+The controller panel is not emulated yet.
+
+
+Usage:
+
+This driver emulates a TI990/4 CPU with 32kbytes of RAM, a FD800 disk
+controller at CRU base >0040 (>0080), and a 733 ASR at CRU base >0000.
+
+This in enough to run various floppy-based programs that have been dumped by
+Dave Pitts.  Please refer to <http://www.cozx.com/~dpitts/ti990.html> if you
+are interested in getting a copy of these programs or seeing another ti990
+emulator.
+
+
+History and Trivia:
+
+The TI990/4 board was released in 1976.  It is built around a tms9900.  While
+not as powerful as the high-end 990/10 and 990/12 boards, it was a lot cheaper.
+It was used as a terminal concentrator in large TI990 systems, and also as the
+base of various development systems.
+
+See the entry for TI990/10 for a short rundown of the TI990 series.
 
 $end
 
