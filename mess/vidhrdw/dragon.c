@@ -133,7 +133,12 @@ static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 
 int dragon_vh_start(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL_PAL, dragon_charproc);
+	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL_PAL, dragon_charproc );
+}
+
+int coco_vh_start(void)
+{
+	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL_NTSC, dragon_charproc );
 }
 
 int coco2b_vh_start(void)

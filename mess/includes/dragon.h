@@ -45,6 +45,7 @@ extern void coco3_ram_b8_w (offs_t offset, data8_t data);
 extern void coco3_ram_b9_w (offs_t offset, data8_t data);
 extern void coco3_vh_sethires(int hires);
 extern int dragon_vh_start(void);
+extern int coco_vh_start(void);
 extern int coco2b_vh_start(void);
 extern int coco3_vh_start(void);
 extern void coco3_vh_stop(void);
