@@ -46,7 +46,7 @@ static struct
 	
 struct rc_option xf86_dga2_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
-  { "vsync-pagelimit", "vspl", rc_int, &(xf86ctx.max_page_limit), "2", 0, 16, NULL, "Maximum number of pages (frames) to queue in videomemory for display after vsync" },
+  { "vsync-pagelimit", "vspl", rc_int, &(xf86ctx.max_page_limit), "2", 0, 16, NULL, "Maximum number of pages (frames) to queue in video memory for display after vsync" },
   { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 

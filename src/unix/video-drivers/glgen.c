@@ -189,7 +189,7 @@ GLdouble vecx, vecy, vecscalex, vecscaley;
 #define RETURN_IF_GL_ERROR() \
       if((err = disp__glGetError ())) \
       { \
-        print_gl_error("GLEROR", __FILE__, __LINE__, err); \
+        print_gl_error("GLERROR", __FILE__, __LINE__, err); \
         return 1; \
       }
 

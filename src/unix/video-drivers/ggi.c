@@ -107,7 +107,7 @@ int sysdep_display_driver_open(int reopen)
     vis = ggiOpen(NULL);
     if (!vis)
     {
-      fprintf(stderr, "GGI Error: couldnot open display\n");
+      fprintf(stderr, "GGI Error: could not open display\n");
       return 1;
     }
     ggiSetFlags(vis, GGIFLAG_ASYNC);
