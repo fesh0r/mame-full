@@ -896,19 +896,19 @@ ROM_END
 /*	c000- ffff	OS rom and memory mapped hardware at fc00-feff */
 /* 10000-4ffff	16 paged rom banks mapped back into 8000-bfff by the page rom select */
 
-/* I have only plugged a few roms in */
+
 ROM_START(bbcb)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("os12.rom", 0x40000,0x4000, 0x3c14fc70)
 
-#ifdef MAME_DEBUG
-	ROM_LOAD("advromm.rom", 0x00000, 0x4000, 0xe7e2a294 ) /* rom page 0  00000 */
-	ROM_LOAD("exmon.rom",   0x04000, 0x4000, 0x9a50231f ) /* rom page 1  04000 */
-	ROM_LOAD("help.rom",    0x08000, 0x4000, 0xc1505821 ) /* rom page 2  08000 */
-	ROM_LOAD("toolkit.rom", 0x0c000, 0x4000, 0x557ce483 ) /* rom page 3  0c000 */
-	ROM_LOAD("view.rom",    0x10000, 0x4000, 0x4345359f ) /* rom page 4  10000 */
+
+	                                                      /* rom page 0  00000 */
+	                                                      /* rom page 1  04000 */
+	                                                      /* rom page 2  08000 */
+	                                                      /* rom page 3  0c000 */
+	                                                      /* rom page 4  10000 */
 	                                                      /* rom page 5  14000 */
 			  											  /* rom page 6  18000 */
 	                                                      /* rom page 7  1c000 */
@@ -918,7 +918,7 @@ ROM_START(bbcb)
 														  /* rom page 11 2c000 */
 														  /* rom page 12 30000 */
 														  /* rom page 13 34000 */
-#endif
+
 
 	/* just use one of the following DFS roms */
 
@@ -945,12 +945,11 @@ ROM_START(bbcb1770)
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("os12.rom", 0x40000,0x4000, 0x3c14fc70)
 
-#ifdef MAME_DEBUG
-	ROM_LOAD("advromm.rom", 0x00000, 0x4000, 0xe7e2a294 ) /* rom page 0  00000 */
-	ROM_LOAD("exmon.rom",   0x04000, 0x4000, 0x9a50231f ) /* rom page 1  04000 */
-	ROM_LOAD("help.rom",    0x08000, 0x4000, 0xc1505821 ) /* rom page 2  08000 */
-	ROM_LOAD("toolkit.rom", 0x0c000, 0x4000, 0x557ce483 ) /* rom page 3  0c000 */
-	ROM_LOAD("view.rom",    0x10000, 0x4000, 0x4345359f ) /* rom page 4  10000 */
+	                                                      /* rom page 0  00000 */
+	                                                      /* rom page 1  04000 */
+	                                                      /* rom page 2  08000 */
+	                                                      /* rom page 3  0c000 */
+	                                                      /* rom page 4  10000 */
 	                                                      /* rom page 5  14000 */
 			  											  /* rom page 6  18000 */
 	                                                      /* rom page 7  1c000 */
@@ -960,7 +959,7 @@ ROM_START(bbcb1770)
 														  /* rom page 11 2c000 */
 														  /* rom page 12 30000 */
 														  /* rom page 13 34000 */
-#endif
+
 /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
     ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, 0x7891f9b7 ) /* rom page 14 38000 */
 
@@ -978,12 +977,11 @@ ROM_START(bbcbp)
 	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, 0x9f356396 )  /* basic rom */
 	ROM_CONTINUE(           0x40000, 0x4000)  /* OS */
 
-#ifdef MAME_DEBUG
-	ROM_LOAD("advromm.rom", 0x00000, 0x4000, 0xe7e2a294 ) /* rom page 0  00000 */
-	ROM_LOAD("exmon.rom",   0x04000, 0x4000, 0x9a50231f ) /* rom page 1  04000 */
-	ROM_LOAD("help.rom",    0x08000, 0x4000, 0xc1505821 ) /* rom page 2  08000 */
-	ROM_LOAD("toolkit.rom", 0x0c000, 0x4000, 0x557ce483 ) /* rom page 3  0c000 */
-	ROM_LOAD("view.rom",    0x10000, 0x4000, 0x4345359f ) /* rom page 4  10000 */
+	                                                      /* rom page 0  00000 */
+	                                                      /* rom page 1  04000 */
+	                                                      /* rom page 2  08000 */
+	                                                      /* rom page 3  0c000 */
+	                                                      /* rom page 4  10000 */
 	                                                      /* rom page 5  14000 */
 			  											  /* rom page 6  18000 */
 	                                                      /* rom page 7  1c000 */
@@ -993,7 +991,6 @@ ROM_START(bbcbp)
 														  /* rom page 11 2c000 */
 														  /* rom page 12 30000 */
 														  /* rom page 13 34000 */
-#endif
 
     /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
     ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, 0x7891f9b7 ) /* rom page 14 38000 */
@@ -1008,12 +1005,11 @@ ROM_START(bbcbp128)
 	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, 0x9f356396 )  /* basic rom */
 	ROM_CONTINUE(           0x40000, 0x4000)  /* OS */
 
-#ifdef MAME_DEBUG
-	ROM_LOAD("advromm.rom", 0x00000, 0x4000, 0xe7e2a294 ) /* rom page 0  00000 */
-	ROM_LOAD("exmon.rom",   0x04000, 0x4000, 0x9a50231f ) /* rom page 1  04000 */
-	ROM_LOAD("help.rom",    0x08000, 0x4000, 0xc1505821 ) /* rom page 2  08000 */
-	ROM_LOAD("toolkit.rom", 0x0c000, 0x4000, 0x557ce483 ) /* rom page 3  0c000 */
-	ROM_LOAD("view.rom",    0x10000, 0x4000, 0x4345359f ) /* rom page 4  10000 */
+	                                                      /* rom page 0  00000 */
+	                                                      /* rom page 1  04000 */
+	                                                      /* rom page 2  08000 */
+	                                                      /* rom page 3  0c000 */
+	                                                      /* rom page 4  10000 */
 	                                                      /* rom page 5  14000 */
 			  											  /* rom page 6  18000 */
 	                                                      /* rom page 7  1c000 */
@@ -1023,7 +1019,6 @@ ROM_START(bbcbp128)
 														  /* rom page 11 2c000 */
 														  /* rom page 12 30000 */
 														  /* rom page 13 34000 */
-#endif
 
     /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
     ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, 0x7891f9b7 ) /* rom page 14 38000 */
@@ -1038,12 +1033,11 @@ ROM_START(bbcb6502)
 	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("os12.rom", 0x40000,0x4000, 0x3c14fc70)
 
-#ifdef MAME_DEBUG
-	ROM_LOAD("advromm.rom", 0x00000, 0x4000, 0xe7e2a294 ) /* rom page 0  00000 */
-	ROM_LOAD("exmon.rom",   0x04000, 0x4000, 0x9a50231f ) /* rom page 1  04000 */
-	ROM_LOAD("help.rom",    0x08000, 0x4000, 0xc1505821 ) /* rom page 2  08000 */
-	ROM_LOAD("toolkit.rom", 0x0c000, 0x4000, 0x557ce483 ) /* rom page 3  0c000 */
-	ROM_LOAD("view.rom",    0x10000, 0x4000, 0x4345359f ) /* rom page 4  10000 */
+	                                                      /* rom page 0  00000 */
+	                                                      /* rom page 1  04000 */
+	                                                      /* rom page 2  08000 */
+	                                                      /* rom page 3  0c000 */
+	                                                      /* rom page 4  10000 */
 	                                                      /* rom page 5  14000 */
 			  											  /* rom page 6  18000 */
 	                                                      /* rom page 7  1c000 */
@@ -1053,7 +1047,7 @@ ROM_START(bbcb6502)
 														  /* rom page 11 2c000 */
 														  /* rom page 12 30000 */
 														  /* rom page 13 34000 */
-#endif
+
 /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
     ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, 0x7891f9b7 ) /* rom page 14 38000 */
 
@@ -1381,24 +1375,6 @@ static const struct IODevice io_bbca[] = {
 
 static const struct IODevice io_bbcb[] = {
 	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"wav\0",                /* File extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		NULL,					/* id */
-		NULL,					/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
@@ -1416,31 +1392,31 @@ static const struct IODevice io_bbcb[] = {
 		NULL,					/* output */
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
-	},
+	},    {
+        IO_CARTSLOT,            /* type */
+        8,                      /* count */
+        "rom\0",                /* file extensions */
+        IO_RESET_NONE,          /* reset if file changed */
+        0,
+        bbcb_load_rom,          /* init */
+        NULL,                   /* exit */
+        NULL,                   /* info */
+        NULL,                   /* open */
+        NULL,                   /* close */
+        NULL,                   /* status */
+        NULL,                   /* seek */
+        NULL,                   /* tell */
+        NULL,                   /* input */
+        NULL,                   /* output */
+        NULL,                   /* input_chunk */
+        NULL                    /* output_chunk */
+    },
 	{ IO_END }
 };
 
 
 static const struct IODevice io_bbcb1770[] = {
 	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"wav\0",                /* File extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		NULL,					/* id */
-		NULL,					/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
@@ -1458,31 +1434,31 @@ static const struct IODevice io_bbcb1770[] = {
 		NULL,					/* output */
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
-	},
+	},    {
+        IO_CARTSLOT,            /* type */
+        8,                      /* count */
+        "rom\0",                /* file extensions */
+        IO_RESET_NONE,          /* reset if file changed */
+        0,
+        bbcb_load_rom,          /* init */
+        NULL,                   /* exit */
+        NULL,                   /* info */
+        NULL,                   /* open */
+        NULL,                   /* close */
+        NULL,                   /* status */
+        NULL,                   /* seek */
+        NULL,                   /* tell */
+        NULL,                   /* input */
+        NULL,                   /* output */
+        NULL,                   /* input_chunk */
+        NULL                    /* output_chunk */
+    },
 	{ IO_END }
 };
 
 
 static const struct IODevice io_bbcbp[] = {
 	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"wav\0",                /* File extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		NULL,					/* id */
-		NULL,					/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
@@ -1500,30 +1476,30 @@ static const struct IODevice io_bbcbp[] = {
 		NULL,					/* output */
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
-	},
+	},    {
+        IO_CARTSLOT,            /* type */
+        8,                      /* count */
+        "rom\0",                /* file extensions */
+        IO_RESET_NONE,          /* reset if file changed */
+        0,
+        bbcb_load_rom,          /* init */
+        NULL,                   /* exit */
+        NULL,                   /* info */
+        NULL,                   /* open */
+        NULL,                   /* close */
+        NULL,                   /* status */
+        NULL,                   /* seek */
+        NULL,                   /* tell */
+        NULL,                   /* input */
+        NULL,                   /* output */
+        NULL,                   /* input_chunk */
+        NULL                    /* output_chunk */
+    },
 	{ IO_END }
 };
 
 static const struct IODevice io_bbcbp128[] = {
 	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"wav\0",                /* File extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		NULL,					/* id */
-		NULL,					/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
@@ -1541,7 +1517,25 @@ static const struct IODevice io_bbcbp128[] = {
 		NULL,					/* output */
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
-	},
+	},    {
+        IO_CARTSLOT,            /* type */
+        8,                      /* count */
+        "rom\0",                /* file extensions */
+        IO_RESET_NONE,          /* reset if file changed */
+        0,
+        bbcb_load_rom,          /* init */
+        NULL,                   /* exit */
+        NULL,                   /* info */
+        NULL,                   /* open */
+        NULL,                   /* close */
+        NULL,                   /* status */
+        NULL,                   /* seek */
+        NULL,                   /* tell */
+        NULL,                   /* input */
+        NULL,                   /* output */
+        NULL,                   /* input_chunk */
+        NULL                    /* output_chunk */
+    },
 	{ IO_END }
 };
 
@@ -1549,24 +1543,6 @@ static const struct IODevice io_bbcbp128[] = {
 
 static const struct IODevice io_bbcb6502[] = {
 	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"wav\0",                /* File extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		NULL,					/* id */
-		NULL,					/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */

@@ -1068,6 +1068,60 @@ WRITE_HANDLER ( bbc_wd1770_write )
 
 
 /**************************************
+   BBC B Rom loading functions
+***************************************/
+
+int bbcb_load_rom(int id)
+{
+	UINT8 *mem = memory_region (REGION_USER1);
+	FILE *fp;
+	int size, read;
+	int addr = 0;
+
+
+	if (device_filename(IO_CARTSLOT,id)==NULL) return 0;
+
+	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+
+	if (!fp)
+	{
+		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
+		return 1;
+	}
+
+	size = osd_fsize (fp);
+
+    addr= 0x8000+(0x4000*id);
+
+
+	logerror("loading rom %s at %.4x size:%.4x\n",device_filename(IO_CARTSLOT,id), addr, size);
+
+
+	switch (size)
+	{
+	case 0x2000:
+		read = osd_fread (fp, mem + addr, size);
+		read = osd_fread (fp, mem + addr + 0x2000, size);
+		break;
+	case 0x4000:
+		read = osd_fread (fp, mem + addr, size);
+		break;
+	default:
+		read=0;
+		logerror("bad rom file size of %.4x\n",size);
+		break;
+	}
+
+	osd_fclose (fp);
+	if (read != size)
+		return 1;
+	return 0;
+}
+
+
+
+
+/**************************************
    Machine Initialisation functions
 ***************************************/
 

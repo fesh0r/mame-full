@@ -32,6 +32,7 @@ WRITE_HANDLER ( memorybp3_w );
 WRITE_HANDLER ( memorybp3_128_w );
 WRITE_HANDLER ( memorybp4_128_w );
 
+int bbcb_load_rom(int id);
 
 void init_machine_bbca(void);
 
