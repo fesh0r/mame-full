@@ -824,7 +824,7 @@ struct snd_interface sndintf[] =
 #endif
 #if (HAS_BEEP)
 	{
-		SOUND_WAVE,
+		SOUND_BEEP,
 		"Beep",
 		beep_num,
 		0,
@@ -848,8 +848,11 @@ int sound_start(void)
 	{
 		if (sndintf[i].sound_num != i)
 		{
+            int j;
 logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sndintf[i].sound_num);
-			return 1;
+			for (j = 0; j < i; j++)
+				logerror("ID %2d: %s\n", j, sndintf[j].name);
+            return 1;
 		}
 	}
 

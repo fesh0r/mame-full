@@ -149,10 +149,7 @@ enum
 #if (HAS_YM2203)
 	SOUND_YM2203,
 #endif
-#if (HAS_YM2151)
-	SOUND_YM2151,
-#endif
-#if (HAS_YM2151_ALT)
+#if (HAS_YM2151 || HAS_YM2151_ALT)
 	SOUND_YM2151,
 #endif
 #if (HAS_YM2608)
