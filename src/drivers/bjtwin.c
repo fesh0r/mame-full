@@ -1,5 +1,6 @@
 /********************************************************************
 
+Hacha Mecha Fighter     NMK        68000 <unknown cpu> YM2203 2xOKIM6295
 Macross                 Banpresto  68000 <unknown cpu> YM2203 2xOKIM6295
 Macross II              Banpresto  68000 Z80           YM2203 2xOKIM6295
 Bombjack Twin           NMK        68000               2xOKIM6295
@@ -15,7 +16,20 @@ tilemap), and the games rely on mirror addresses to access the tilemap
 sequentially.
 
 TODO:
-- Sound in Macross is driven by an unknown CPU.
+- Both hachamf and macross use an unknown (custom?) CPU to drive sound and
+  for protection. In macross it's just checked on startup and easy to work
+  around. hachamf is more complex, it seems that the two CPUs share some RAM
+  (fe000-fefff), and the main CPU fetches pointers from that shared RAM to
+  do important operations like reading the input ports. Some of them are
+  easily deduced checking for similarities in macross and bjtwin; however
+  another protection check involves (see the routine at 01429a) writing data
+  to the fe100-fe1ff range, and then jumping to subroutines in that range (most
+  likely function pointers since each one is only 0x10 bytes long), and heaven
+  knows what those should do.
+  On startup, hachamf does a RAM test, then copies some stuff and jumps to
+  RAM at 0xfef00, where it sits in a loop. Maybe the RAM is shared with the
+  sound CPU, and used as a protection. We patch around that by replacing the
+  reset vector with the "real" one.
 - Cocktail mode is supported, but tilemap.c has problems with asymmetrical
   visible areas.
 - Macross2 is overflowing the palette, but this might be just a problem
@@ -36,6 +50,11 @@ IRQ4 controls DSW reads and vblank.
 IRQ2 points to RTE (not used).
 
 ----
+
+hachamf test mode:
+
+1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
+2)	Press player 1 button 2 14 (!) times
 
 bjtwin test mode:
 
@@ -144,9 +163,48 @@ static WRITE_HANDLER( bjtwin_oki6295_bankswitch_w )
 
 
 
+static READ_HANDLER( hachamf_protection_hack_r )
+{
+	/* adresses for the input ports */
+	static int pap[] = { 0x0008, 0x0000, 0x0008, 0x0002, 0x0008, 0x0008 };
+
+	return pap[offset/2];
+}
+
+static struct MemoryReadAddress hachamf_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x080000, 0x080001, input_port_0_r },
+	{ 0x080002, 0x080003, input_port_1_r },
+	{ 0x080008, 0x080009, input_port_2_r },
+	{ 0x088000, 0x0887ff, paletteram_word_r },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA_BANK1 },
+	{ 0x0f8000, 0x0f8fff, MRA_BANK2 },
+	{ 0x0fe000, 0x0fe00b, hachamf_protection_hack_r },
+	{ 0x0f9000, 0x0fffff, MRA_BANK3 },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress hachamf_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA_BANK3 },	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
+	{ -1 }
+};
+
 static struct MemoryReadAddress macross_readmem[] =
 {
-	{ 0x000000, 0x07ffff, MRA_ROM },
+	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x080000, 0x080001, input_port_0_r },
 	{ 0x080002, 0x080003, input_port_1_r },
 	{ 0x080008, 0x080009, input_port_2_r },
@@ -290,6 +348,86 @@ static struct MemoryWriteAddress bjtwin_writemem[] =
 };
 
 
+
+INPUT_PORTS_START( hachamf )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* I think coin inputs come from */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* the second cpu */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( macross )
 	PORT_START		/* IN0 */
@@ -618,6 +756,44 @@ static struct YM2203interface ym2203_interface =
 
 
 
+static const struct MachineDriver machine_driver_hachamf =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			hachamf_readmem,hachamf_writemem,0,0,
+			m68_level4_irq,1,
+			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM2203 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
 static const struct MachineDriver machine_driver_macross =
 {
 	/* basic machine hardware */
@@ -627,7 +803,7 @@ static const struct MachineDriver machine_driver_macross =
 			10000000, /* 10 MHz ? */
 			macross_readmem,macross_writemem,0,0,
 			m68_level4_irq,1,
-			m68_level1_irq,112
+			m68_level1_irq,112	/* ???????? */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -665,7 +841,7 @@ static const struct MachineDriver machine_driver_macross2 =
 			10000000, /* 10 MHz ? */
 			macross2_readmem,macross2_writemem,0,0,
 			m68_level4_irq,1,
-			m68_level1_irq,112
+			m68_level1_irq,112	/* ???????? */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -742,6 +918,30 @@ static const struct MachineDriver machine_driver_bjtwin =
 
 
 
+ROM_START( hachamf )
+	ROM_REGION( 0x40000, REGION_CPU1 )		/* 68000 code */
+	ROM_LOAD_EVEN( "hmf_07.rom",  0x00000, 0x20000, 0x9d847c31 )
+	ROM_LOAD_ODD ( "hmf_06.rom",  0x00000, 0x20000, 0xde6408a0 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* unknown  - sound cpu ?????? */
+	ROM_LOAD( "hmf_01.rom",  0x00000, 0x10000, 0x9e6f48fc )
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hmf_05.rom",  0x000000, 0x020000, 0x29fb04a2 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hmf_04.rom",  0x000000, 0x080000, 0x05a624e3 )	/* 16x16 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_SWAP( "hmf_08.rom",  0x000000, 0x100000, 0x7fd0f556 )	/* Sprites */
+
+	ROM_REGION( 0x080000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "hmf_02.rom",  0x000000, 0x080000, 0x3f1e67f2 )
+
+	ROM_REGION( 0x080000, REGION_SOUND2 )	/* OKIM6295 samples */
+	ROM_LOAD( "hmf_03.rom",  0x000000, 0x080000, 0xb25ed93b )
+ROM_END
+
 ROM_START( macross )
 	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "921a03",        0x00000, 0x80000, 0x33318d55 )
@@ -801,8 +1001,8 @@ ROM_END
 
 ROM_START( bjtwin )
 	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
-	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830a465 )	/* 68000 code */
-	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7cd4e72a )	/* 68000 code */
+	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830a465 )
+	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7cd4e72a )
 
 	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bjt.35",		0x000000, 0x010000, 0xaa13df7c )	/* 8x8 tiles */
@@ -822,8 +1022,8 @@ ROM_END
 
 ROM_START( nouryoku )
 	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
-	ROM_LOAD_EVEN( "ic76.1",  0x00000, 0x40000, 0x26075988 )	/* 68000 code */
-	ROM_LOAD_ODD ( "ic75.2",  0x00000, 0x40000, 0x75ab82cd )	/* 68000 code */
+	ROM_LOAD_EVEN( "ic76.1",  0x00000, 0x40000, 0x26075988 )
+	ROM_LOAD_ODD ( "ic75.2",  0x00000, 0x40000, 0x75ab82cd )
 
 	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic35.3",		0x000000, 0x010000, 0x03d0c3b1 )	/* 8x8 tiles */
@@ -934,6 +1134,13 @@ static void init_nmk(void)
 	decode_gfx();
 }
 
+static void init_hachamf(void)
+{
+	const UINT8 *rom = memory_region(REGION_CPU1);
+
+	WRITE_WORD(&rom[0x0006], 0x7dc2);	/* replace reset vector with the "real" one */
+}
+
 static void init_bjtwin(void)
 {
 	init_nmk();
@@ -961,6 +1168,7 @@ static void init_bjtwin(void)
 
 
 
+GAMEX( 1991, hachamf,  0, hachamf,  hachamf,  hachamf,  ROT0,   "NMK", "Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1992, macross,  0, macross,  macross,  nmk,      ROT270, "Banpresto", "Macross", GAME_NO_SOUND )
 GAMEX( 1993, macross2, 0, macross2, macross,  0,        ROT0,   "Banpresto", "Macross II", GAME_NO_COCKTAIL )
 GAMEX( 1993, bjtwin,   0, bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK", "Bombjack Twin", GAME_NO_COCKTAIL )
