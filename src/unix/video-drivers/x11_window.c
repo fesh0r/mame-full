@@ -853,6 +853,21 @@ int x11_window_create_display (int bitmap_depth)
 					}
 				}
 
+				{
+					int i;
+					int count;
+					XvAttribute *attr;
+
+					attr = XvQueryPortAttributes(display, xv_port, &count);
+					for (i = 0; i < count; i++)
+					    if (!strcmp(attr[i].name, "XV_AUTOPAINT_COLORKEY"))
+					    {
+							Atom atom = XInternAtom(display, "XV_AUTOPAINT_COLORKEY", False);
+							XvSetPortAttribute(display, xv_port, atom, 1);
+							break;
+					    }
+				}
+
 				xvimage = XvShmCreateImage (display,
 						xv_port,
 						hwscale_format,

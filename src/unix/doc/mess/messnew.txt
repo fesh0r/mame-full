@@ -1,3 +1,91 @@
+0.82
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- AT 386 (Not yet working) [Nate Woods]
+
+- MSX2+ and variants [Jirou Kaneda]
+	- FS-A1FX
+	- FS-A1WSX
+	- FS-A1WX (two versions)
+	- HB-F1XDJ
+	- HB-F1XV
+	- WAVY PHC-35J
+	- WAVY PHC-70FD
+	- WAVY PHC-70FD2
+
+- Telmac TMC-600 (Series I/II) [Curt Coder]
+
+
+
+System Driver Changes:
+----------------------
+- [A2600] Updated to support most games above 4 KB.  [Stefan Jokisch]
+
+- [A7800] Changed Atari 7800 (NTSC) BIOS set. (Thanks to Mitch) [Christopher Stone]
+
+- [C64] Implemented natural keyboard support.  [Nate Woods]
+
+- [C128] Fixed a regression introduced in MESS 0.79.  (bug #544) [Nate Woods]
+
+- [GENESIS] Almost complete rewrite.  [Anonymous]
+
+- [MPF1] Changed MPF-1 BIOS set.  [Curt Coder]
+
+- [ORIC] Fixed fatal regression crash on startup.  (bug #538) [Nate Woods]
+
+- [PC] Cleanups; code simplified and CGA video slightly faster now.  [Nate
+  Woods]
+
+- [STUDIO2] Modified to use io_write_byte/io_read_byte for I/O ports, moved
+  registers enum to cdp1802.h for access needed by a future driver, and changed
+  studio2/vip drivers to work on the modified core.  [Curt Coder]
+
+- [PMD85.1] Tape emulation with support for .pmd format files added. [Krzysztof
+  Strzecha]
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Fixed a bug in which if the "About MESS" menu item was selected, 
+  the help file would come up but be set to an invalid page.  (bug #537) [Nate
+  Woods]
+  
+- [Windows] Fixed a bug in the new UI input dialogs that could cause the
+  scrolling to malfunction if the mouse wheel was used.  (bug #539) [Nate
+  Woods]
+
+- [Windows] Fixed a bug that caused input items with ampersands in them to
+  have the ampersands dropped.  (bug #541) [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.82.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- [Windows] Fixed a very subtle bug in Win32 file handling that caused a very
+  serious disk corruption bug in the CoCo driver (bug #500) [Nate Woods and
+  Tim Lindner]
+  
+- CDP1802 CPU improvements:  [Curt Coder]
+	- Fixed "Subtract with Borrow" opcode
+	- Fixed reset
+	- Fixed mnemonic IMP -> INP
+	- Added registers N and I
+	- Cleaned up 1802tbl.c with macros
+	- Clock divider -> 8
+	- Added interrupt handling 
+
+
+
 0.81
 
 New System Drivers Supported (in no particular order):

@@ -2,12 +2,25 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.81.2
-	- The romcmp tool should now build on Solaris.
+Release 0.82.2
+	- The Xv driver now turns on XV_AUTOPAINT_COLORKEY, in case it was 
+	  turned off by, for example, by the xine movie player.  This prevents 
+	  the display from being blank in this case.  (Shyouzou Sugitani)
+
+Release 0.82.1, 15 May 2004
+	- Everything from MAME 0.82 (http://x.mame.net/changes-mame.html) and 
+	  MESS 0.82 (http://x.mame.net/changes-mess.html).
+	- The romcmp tool now builds on Solaris.
+	- Improved the message that is displayed when a suitable X11 visual 
+	  cannot be found.  Fixes Bugzilla bug 219.  (Christopher Stone)
+	- Fixed the most egregious formatting errors in the xmame.6 manpage.  
+	  (André Majorel)
+	- Converted the documentation from LinuxDoc to a more modern DocBook 
+	  format.
+	- Added x86 SIMD options to the makefile.  (Patrick Roberts)
 
 Release 0.81.1, 11 April 2004
-	- Everything from MAME 0.81 (http://x.mame.net/changes-mame.html) and 
-	  MESS 0.81 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.81 and MESS 0.81.
 	- Fixed a problem with the lightgun offscreen reloading that caused a 
 	  random shot every fourth or fifth shot.  (Joe Inkenbrandt)
 	- The prep-new-mame and prep-new-mess scripts now support dos2unix 

@@ -703,5 +703,4 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 
 	return check_and_create_dir(fullpath) ? 0 : 1;
 }
-
 #endif

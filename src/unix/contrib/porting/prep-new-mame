@@ -29,8 +29,8 @@ if [ -n "$D2U" ]; then
 	$D2U `find . -name "*.mak" -print` 2> /dev/null
 	$D2U `find . -name "*.ini" -print` 2> /dev/null
 	$D2U `find . -name "*.pl" -print` 2> /dev/null
+	$D2U makefile 2> /dev/null
 fi
-
 
 # Change // comments to /* */ pairs.  Some C compilers don't like //.
 fix-comments `find . -name "*.[ch]" -print`
@@ -67,9 +67,8 @@ if [ -d docs ]; then
 	rm -r docs
 fi
 
-# Rename the MAME makefile and fix its line endings.
+# Rename the MAME makefile.
 mv makefile makefile.mame
-d2u makefile.mame 2> /dev/null
 
 # Copy makefile.unix from the old xmame directory.
 cp $1/makefile.unix .

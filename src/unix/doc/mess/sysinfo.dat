@@ -141,7 +141,7 @@ Usage/Known Issues:
 
 Keyboard input is a little difficult, using a joystick or mouse is recommended.
 
-Most games are playable. See a5200.crc for a fairly exhaustive compatibility list.
+Most games are playable. See a5200.hsi for a fairly exhaustive compatibility list.
 
 
 History and Trivia:
@@ -179,7 +179,7 @@ The Reset key "R" and Select key "S" are hard-mapped to the same location as the
 Player 2 up and fire two, respectively. You will need to remap these manually to avoid
 control conflicts in some games.
 
-Most games work fine, but a few have graphic and playability issues. See a7800.crc for a 
+Most games work fine, but a few have graphic and playability issues. See a7800.hsi for a 
 full compatibility list.
 
 
@@ -1250,7 +1250,7 @@ MESS Emulation State:
 
 Based on info by Paul Robson, Ward Shrake
 
-Look into crc/arcadia.crc for some issues
+Look in hash/arcadia.hsi for some issues
 
 Bad analog joystick emulation
 
@@ -3639,7 +3639,7 @@ to be checking for. This may not be 100% accurate, however.
 MESS Emulation State:
 
 Most games tend to run fairly well. Some have slight graphic glitches; incorrect colours part
-way down the screen or other bizarre effects. See genesis.crc for a partial list.
+way down the screen or other bizarre effects. See genesis.hsi for a partial list.
 
 
 Cartridges up to 32MBit (4MByte) are supported.
@@ -4037,11 +4037,51 @@ $info=intv
 $bio
 Mattel Intellivision (1979)
 
+History and Trivia:
+
+At the end of 1979, Mattel Electronics released a video game system known as Intellivision 
+along with 12 video game cartridges.  Poised as a competitor to the then king of the hill 
+Atari 2600, Mattel Electronics called their new product "Intelligent Television", stemming 
+largely from their marketing plans to release a compatible computer keyboard for their video 
+games console.
+
+Mattel fiercely battled with Atari but the Intellivision suffered greatly from the video game 
+market crash of 1984.  After Mattel sold the rights to the system soon afterwards, the 
+Intellivision was kept alive through their new owners, INTV Corp.  Another 35 games were 
+released from 1985 to 1990, mostly through mail order service.  The system was generally very 
+successful in the end, with over 3 million units sold and 125 games released before the system 
+was finally discontinued in 1990.
+
+During its lifetime, several models of the base system were released, as well as some 
+interesting peripherals including a full computer adaptor, music keyboard, Intellivoice 
+speech synthesis module, system changer to play Atari VCS games and PlayCable (an accessory 
+to download games from your cable provider).
+
+
+Features:
+
+CPU: General Instruments 16 bit microprocessor (1 Mhz)
+Memory: 4K internal ROM operating system, 2K RAM
+Controls: 12 button numeric key pad, four action keys, 16 direction disk, overlay support
+Sound: Sound generator capable of 3 part harmony with programmable ASDR envelopes
+Color: 16 colors
+Resolution: 192v x 160h pixels
+
+
+Links:
+
+Bluesky Rangers -- http://www.intellivisionlives.com
+
+
+FAQ:
+
+http://www.intellivision.ca/intellivisionfaq.pdf 
+
 
 Usage/Known Issues:
 
 This driver is almost complete.
- 
+
 
 Still TBD are:
 
@@ -4056,6 +4096,26 @@ $end
 $info=intvkbd
 $bio
 Mattel Intellivision + Keyboard Component (1981)
+
+
+History and Trivia:
+
+The original keyboard component only saw a limited test marketing run of less than one thousand 
+units in late 1981. It was color-keyed to match the original Intellivision, and the entire game 
+console fit into the top of the unit. It sported a full-stroke 60-key keyboard, built in 
+cassette recorder, and brought the total memory capacity of the Intellivision to 64K.
+
+Spurred on by the increasingly popular home computer market, Mattel introduced the 
+Entertainment Computer System (which replaced the original expansion keyboard) along with the 
+INTV II in 1983. This unit plugs into the cartridge port of the INTV II, and has its own
+cartridge slot, two additional controller ports, a cassette interface, music keyboard, and a 
+balance dial for controlling the output level of the ECS's three additional voices.
+
+The ECS came packaged with a 49-key chiclet-style keyboard, power supply, and a well-written 
+manual describing INTV BASIC. Upon returning the registration card, users would receive "The 
+Step-By-Step Guide To Home Computing", which included a very detailed BASIC Tutorial, and some 
+more in-depth study of the ECS's abilities. The unit sported an additional voice chip, 10K of 
+ROM and 2K of RAM for programming purposes.  
 
 
 Usage/Known Issues:
@@ -4077,7 +4137,15 @@ $end
 
 $info=intvsrs
 $bio
-Mattel Intellivision - Sears version (19??)
+Mattel Intellivision - Sears version (1981)
+
+
+History and Trivia:
+
+Functionally identical to the original Mattel Intellivision, the Sears Tele-Games Super Video 
+Arcade Console has a cream-colored case with a wood-grain front, and removable controllers that 
+rest in the center of the console. The power and reset switches are circular in shape and about 
+an inch in diameter.
 
 
 Usage/Known Issues:
@@ -4781,8 +4849,8 @@ cartridges are allowed: the first in slot 1 and the second in slot 2. So subslot
 emulated (yet). 
 
 
-The msx.crc file is important. The last field on every line specifies the type of ROM mapper. 
-See msx.crc for more information.
+The msx.hsi file is important. The <extrainfo> tag specifies the type of ROM mapper. 
+See msx.hsi for more information.
 
 
 Sound emulation:
@@ -5193,10 +5261,8 @@ The required bios dumps are available at:
 Cartridges:
 
 The ROM mapper (which is specified with -rom x in fMSX) is autodetected but
-isn't perfect. So you should also install the crc files, which can be 
-downloaded from the official mess site. With the CRC files, cartridges with
-SRAM or a DAC (like Synthesizer or Majutsushi from Konami) are detected
-properly.
+isn't perfect. With the hsi files in the hash directory, cartridges with SRAM
+or a DAC (like Synthesizer or Majutsushi from Konami) are detected properly.
 
 
 Tape emulation:
@@ -5297,7 +5363,7 @@ Philips and Sony diskroms are supported; the Panasonic machines use the
 tc8566af diskcontroller (unemulated) and the Brazillian machines are 
 port-based (not memory-mapped).
 
-You need a proper diskrom dump, and the msx.crc file in place. The diskrom 
+You need a proper diskrom dump, and the msx.hsi file in place. The diskrom 
 should be recognized as type 15 otherwise the driver doesn't know it's
 a diskrom. 
 
@@ -8153,6 +8219,54 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=tmc600
+$bio
+Telmac TMC-600
+
+
+History and Trivia:
+
+Telmac TMC-600 is the only microcomputer ever designed and manufactured in Finland. Only 600 units were produced, hence the model name. The computer casing was available in both black and brown. The computer is believed to be designed by T.V. and H.P. Two versions were released, the new version improved peripheral handling.
+
+The TMC-700 expansion added support for Centronics printers, an RF modulator and a real-time clock. Also a 5.25" floppy disk drive was available. Other add-ons included memory expansions (both RAM and ROM), I/O and A/D cards, an RS-232C controller, a B/W 132-character display controller, and a parallel/serial slave computer. The TMC-600 was designed to be used also in process control, so BASIC ROMs with user-customized keywords were sold.
+
+The manufacturer, Telercas Oy, was the Finnish distributor of RCA semiconductors. Telercas Oy was merged with the Finnish electronics retailer Yleiselektroniikka Oy in the early 1990s. The original documentation and hardware have disappeared and cannot be located as of autumn 2003.
+
+
+Features:
+
+CPU: 8-bit CDP1802 3.58 MHz
+Memory: 20-28K internal ROM operating system, 8K RAM
+Sound: 8 octaves, white noise generator
+Color: 8 colors
+Resolution: 240 x 216 pixels (40 x 24 / 20 x 24 characters)
+
+Connectors: Tape recorder (DIN), EURO connector, composite video
+with TMC-700: Centronics printer, RF modulator, RTC
+
+
+Known Issues:
+
+- keyboard repeat delay is very small, use natural keyboard as a workaround
+- color RAM is not emulated
+- sound is not emulated
+- real-time clock is not emulated
+- printer output is not emulated
+
+
+Links:
+
+Pelikonepeijoonit - http://www.pelikonepeijoonit.net/cgi-bin/page.cgi?pkpcode=telmac
+
+
+MESS Emulation State:
+
+preliminary
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=telstrat
 $bio
 Oric Telestrat
@@ -9373,7 +9487,7 @@ Known Issues:
 No light pen support.
 
 
-Almost every cartridge is playable, except those requiring the light pen. See vectrex.crc for 
+Almost every cartridge is playable, except those requiring the light pen. See vectrex.hsi for 
 a current compatibility list. Overlays are supported in .png format, using the same name as 
 the cartridge image being loaded. Place overlays in the artwork directory. The overlay for
 the built in minestorm game must be named "mine.png" to load when no image is selected.
@@ -9543,7 +9657,7 @@ No userport, no rs232/v.24 interface.
 No special expansion modules like ieee488 interface are supported in the expansion port.
 
 
-Image compatibility is quite high, see vic20.crc for a partial list. The emulation features a
+Image compatibility is quite high, see vic20.hsi for a partial list. The emulation features a
 rasterline based video system which should be enough for all vic20 games and programs. The 
 emulation supports the keyboard, as well as joysticks, paddles and lightpen, via the emulated
 gameport, and simple Disk and Tape support. The expansion slot supports RAM and ROM 

@@ -1,6 +1,7 @@
 #LyX 1.3 created this file. For more info see http://www.lyx.org/
 \lyxformat 221
-\textclass linuxdoc
+\textclass docbook
+\options id="xmame-doc"
 \language english
 \inputencoding default
 \fontscheme default
@@ -27,18 +28,25 @@
 \layout Title
 
 XMAME/XMESS DOCUMENTATION
-\layout Author
+\layout Date
 
-Juan Antonio Martinez 
-\family typewriter 
+6 May 2004
+\layout SGML
 
+<authorgroup>
+\newline 
+<author><firstname>Juan Antonio</firstname><surname>Martinez</surname>
+\newline 
+<affiliation><orgname>
 \begin_inset LatexCommand \url[jantonio@dit.upm.es]{mailto:jantonio@dit.upm.es}
 
 \end_inset 
 
-
-\family default 
- and Hans de Goede 
+</orgname></affiliation></author>
+\newline 
+<author><firstname>Hans</firstname><surname>de Goede</surname>
+\newline 
+<affiliation><orgname>
 \family typewriter 
 
 \begin_inset LatexCommand \url[hans@highrise.nl]{mailto:hans@highrise.nl}
@@ -47,7 +55,11 @@ Juan Antonio Martinez
 
 
 \family default 
- and Rene' Herrmann (4 doc/sgml) 
+</orgname></affiliation></author>
+\newline 
+<author><firstname>Rene'</firstname><surname>Herrmann</surname>
+\newline 
+<affiliation><orgname>
 \family typewriter 
 
 \begin_inset LatexCommand \url[rene.herrmann@berlin.de]{mailto:rene.herrmann@berlin.de}
@@ -56,31 +68,33 @@ Juan Antonio Martinez
 
 
 \family default 
- and Lawrence Gold (minor editing) 
+</orgname></affiliation></author>
+\newline 
+<author><firstname>Lawrence</firstname><surname>Gold</surname>
+\newline 
+<affiliation><orgname>
 \family typewriter 
 
 \begin_inset LatexCommand \url[gold@aros.net]{mailto:gold@aros.net}
 
 \end_inset 
 
- and David Heremans (minor editing)
-\layout Date
 
-v2.1.39, 11 April 2004
+\family default 
+</orgname></affiliation></author>
+\newline 
+</authorgroup>
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
  asked questions), hints, tips and tricks, the changes to the code, and
  much more!
-\layout Standard
+\layout Section
 
 
-\begin_inset LatexCommand \tableofcontents{}
+\begin_inset LatexCommand \label{xmame-doc-1}
 
 \end_inset 
-
-
-\layout Section
 
 Introduction
 \begin_inset LatexCommand \label{Introduction}
@@ -93,24 +107,24 @@ Introduction
 Welcome to XMAME
 \layout Standard
 
-This the the *nix port of the almost legendary mame.
- Mame is an arcade machine emulator, started in 1997 by Nicola Salmoria.
+This the the *nix port of the legendary MAME.
+ MAME is an arcade machine emulator, started in 1997 by Nicola Salmoria.
  It started out as a series of emulators for  individual games.
- This series of emulators was combined into a  simgle multi-game emulator.
- This is the current form of mame; no longer a one-man show, there are over
+ This series of emulators was combined into a  single multi-game emulator.
+ This is the current form of MAME; no longer a one-man show, there are over
  100 contributors to the project.
 \layout Subsection
 
 Keep everything up-to-date!
 \layout Standard
 
-The most recent copy of this guide, the xmame-sources and many more can
- be found on the xmame project homepage at 
+The most recent copy of this guide, the xmame/xmess sources and much more
+ can be found on the xmame/xmess project homepage at 
 \begin_inset LatexCommand \url[http://x.mame.net/]{http://x.mame.net/}
 
 \end_inset 
 
-
+.
 \layout Subsection
 
 Pending Jobs - or TODO
@@ -133,9 +147,6 @@ Remove osd_input_init_post, add display ready flag.
 \layout Itemize
 
 Updating of fps is off (dirty marking problem) with vector games.
-\layout Itemize
-
-Update porting.txt.
 \layout Itemize
 
 Convert all remaining sound drivers to plugins.
@@ -163,25 +174,30 @@ Network:
 \begin_deeper 
 \layout Itemize
 
-Fix since the dos team broke it, find out if the dosnet team is still alive.
+Add support for more than 2 players.
 \layout Itemize
 
-Add mouse/joystick support to network play
+Explore P2P as an alternative to the existing server-based method.
 \layout Itemize
 
-Try converting network support to tcp, currently we have no error correction.
+Add mouse/joystick support to network play.
+ [Is this already in place?]
 \layout Itemize
 
 Make network code more robust, version check, input settings check, etc.
+\layout Itemize
+
+Split off the OS-specific portions of the network code and submit the rest
+ for inclusion in the MAME core.
 \end_deeper 
 \layout Itemize
 
-Check x11-joystick.
+Check X11 joystick support.
  Rumor has it it's broken, but then again there's only one bug-report, so
  it seems no one is using it.
 \layout Itemize
 
-fm soundhack for linux-i386.
+FM soundhack for linux-i386.
 \layout Itemize
 
 Make which messages are emitted and when configurable (log-type's and log-level)
@@ -189,7 +205,7 @@ Make which messages are emitted and when configurable (log-type's and log-level)
  debug rom-loading problems, and walk through all messages xmame emits giving
  them all a standard format like:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 OSD:        Info:    bla
 \newline 
@@ -212,6 +228,11 @@ Also see the text todo file, kept around to quickly enter stuff while hacking:
 .
 \layout Section
 
+
+\begin_inset LatexCommand \label{xmame-doc-2}
+
+\end_inset 
+
 Compiling, Setting Up and Starting Xmame/Xmess
 \layout Standard
 
@@ -229,19 +250,19 @@ GNU make is MANDATORY in ALL Systems, even if you use a different  compiler.
 On all platforms zlib is now needed since the core uses it.
  If you don't have zlib, a stripped version is included with xmame.
  See: 
-\begin_inset LatexCommand \ref[FAQ: Why do I get gz_open symbol not while compiling?]{FAQ: Why do I get gz_open symbol not found while compiling?}
+\begin_inset LatexCommand \ref[FAQ: Why do I get gz_open symbol not while compiling?]{gzopen}
 
 \end_inset 
 
  and 
-\begin_inset LatexCommand \ref[FAQ: Why do I get zlib.h not found?]{FAQ: Why do I get zlib.h not found?}
+\begin_inset LatexCommand \ref[FAQ: Why do I get zlib.h not found?]{zlib}
 
 \end_inset 
 
 
 \layout Itemize
 
-You are encouraged to use a GNU development environment: gcc, gmake, gnu-
+You are encouraged to use a GNU development environment: gcc, gmake, GNU
  ar.
  Lots of problems are found due to the very permissive syntax in gcc, so
  if you use a strictly ANSI C compiler, you'll get lots of warnings, and
@@ -291,7 +312,7 @@ Follow these steps to compile xmame/xmess
 \layout Enumerate
 
 See 
-\begin_inset LatexCommand \ref[Compile Notes for Specific Operating Systems]{Compile Notes for Specific Operating Systems}
+\begin_inset LatexCommand \ref[Compile Notes for Specific Operating Systems]{compilenotes}
 
 \end_inset 
 
@@ -299,7 +320,7 @@ See
 \layout Enumerate
 
 See 
-\begin_inset LatexCommand \ref[Display subsystem specific comments and notes]{Display subsystem specific comments and notes}
+\begin_inset LatexCommand \ref[Display subsystem specific comments and notes]{displaysubsystem}
 
 \end_inset 
 
@@ -314,69 +335,55 @@ Move the xmame/xmess source files archive to a suitable work directory.
   work directory.
 \layout Enumerate
 
-Rename the source files archive so its extension is .gz, so that gzip doesn't
- complain.
- For example, change 
-\family typewriter 
-xmame-0.34b1.1.tgz
-\family default 
- to 
-\family typewriter 
-xmame-0.34b1.1.tar.gz
-\layout Enumerate
-
-Use gzip -d to uncompress the archive.
- For example, type:
+Use bzcat and tar to decompress the archive.
+ For example:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
-gzip -d xmame-0.34b1.1.tar.gz
-\end_deeper 
-\layout Enumerate
+bzcat xmame-0.81.1.tar.bz2 | tar xv
+\layout Standard
 
-Extract the files with tar.
- For example, type:
-\begin_deeper 
-\layout Verbatim
+There are other ways to extract the archive, such as the great 
+\begin_inset Quotes eld
+\end_inset 
 
-tar xvf xmame-0.34b1.1.tar
+atool
+\begin_inset Quotes erd
+\end_inset 
+
+ script.
 \end_deeper 
 \layout Enumerate
 
 After extracting the archive, change to the subdirectory created by  the
  extraction process.
- For example, after extracting the xmame-0.34b1.1.tar archive, a directory
+ For example, after extracting the xmame-0.81.1.tar.bz2 archive, a directory
  named 
 \family typewriter 
-xmame-0.34b1.1
+xmame-0.81.1
 \family default 
- is created.
- Change to it.
+ is created; change to it.
  This directory is the top of the source tree.
 \layout Enumerate
 
-Copy makefile.unix to Makefile, the distributed Makefile is used for development
- and is not a good starting point!
-\layout Enumerate
-
-Edit the 
+Edit 
 \family typewriter 
-Makefile
+the Makefile
 \family default 
- and change the settings according to your system.
+ (a link to makefile.unix) and change the settings according to your system.
  The default 
 \family typewriter 
 makefile.unix
 \family default 
  is preconfigured to run under X11/Linux.
- Be careful editing this file.
+ Be careful when you edit this file.
 \begin_deeper 
 \layout Itemize
 
 If you intend to compile in X11 joystick support, type the following to
  see the available Xdevice list:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 make xlistdev; ./xlistdev
 \end_deeper 
@@ -389,7 +396,7 @@ Choose the desired device and re-edit Makefile, setting the option X11_JOYNAME
 
 Compile xmame/xmess by typing:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 make
 \end_deeper 
@@ -407,7 +414,7 @@ If the compile fails, report the problem to the author.
 \lang english
 To install xmame/xmess, type:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 make install
 \end_deeper 
@@ -456,7 +463,7 @@ TARGET=<target>
 \family default 
  to the make command for example:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 make TARGET=mess
 \newline 
@@ -502,7 +509,7 @@ DISPLAY_METHOD=<method>
 \family default 
  to the make command for example:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 make DISPLAY_METHOD=svgalib
 \newline 
@@ -512,7 +519,7 @@ make install
 
 You can also combine the 2 above for example:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
 make TARGET=mess DISPLAY_METHOD=svgalib
 \newline 
@@ -552,9 +559,9 @@ Start the X-Window System.
 Start xmame/xmess.
  For example:
 \begin_deeper 
-\layout Verbatim
+\layout Code
 
-/usr/games/xmame.x11 dkong
+/usr/local/bin/xmame.x11 dkong
 \end_deeper 
 \layout Subsection
 
@@ -563,7 +570,7 @@ If you have problems compiling, installing and starting xmame/xmess...
 \layout Itemize
 
 Read  
-\begin_inset LatexCommand \ref[Xmame frequently asked questions]{Xmame frequently asked questions}
+\begin_inset LatexCommand \ref[Xmame frequently asked questions]{xmamefaq}
 
 \end_inset 
 
@@ -581,7 +588,7 @@ d yet.
 \layout Itemize
 
 Check 
-\begin_inset LatexCommand \ref[Compile Notes for Specific Operating Systems]{Compile Notes for Specific Operating Systems}
+\begin_inset LatexCommand \ref[Compile Notes for Specific Operating Systems]{compilenotes}
 
 \end_inset 
 
@@ -590,7 +597,7 @@ Check
 \layout Itemize
 
 Check 
-\begin_inset LatexCommand \ref[Display subsystem specific comments and notes]{Display subsystem specific comments and notes}
+\begin_inset LatexCommand \ref[Display subsystem specific comments and notes]{displaysubsystem}
 
 \end_inset 
 
@@ -600,12 +607,12 @@ Check
 
 If you get an error about gz_open and a bunch of other functions not found
  during linking, read: 
-\begin_inset LatexCommand \ref[FAQ: Why do I get gz_open symbol not while compiling?]{FAQ: Why do I get gz_open symbol not found while compiling?}
+\begin_inset LatexCommand \ref[FAQ: Why do I get gz_open symbol not while compiling?]{gzopen}
 
 \end_inset 
 
  and 
-\begin_inset LatexCommand \ref[FAQ: Why do I get zlib.h not found?]{FAQ: Why do I get zlib.h not found?}
+\begin_inset LatexCommand \ref[FAQ: Why do I get zlib.h not found?]{zlib}
 
 \end_inset 
 
@@ -613,7 +620,7 @@ If you get an error about gz_open and a bunch of other functions not found
 \layout Itemize
 
 Be sure that the rompath in your xmamerc/xmessrc is correct; see 
-\begin_inset LatexCommand \ref[FAQ: Where do roms.images.etc go?]{FAQ: Where do roms, images, samples, highscores, configfiles, etc go?}
+\begin_inset LatexCommand \ref[FAQ: Where do roms.images.etc go?]{filelocations}
 
 \end_inset 
 
@@ -625,12 +632,12 @@ Check xmamerc/xmessrc: Is it configured correctly?
 
 Are you getting messages that you are missing files? Maybe you are missing
  PROMs; see 
-\begin_inset LatexCommand \ref[FAQ: Why doesn't a game work?]{FAQ: Why doesn't a game work?}
+\begin_inset LatexCommand \ref[FAQ: Why doesn't a game work?]{gamenotworking}
 
 \end_inset 
 
  and 
-\begin_inset LatexCommand \ref[FAQ: What are PROMs?]{FAQ: What are PROMs?}
+\begin_inset LatexCommand \ref[FAQ: What are PROMs?]{PROMs}
 
 \end_inset 
 
@@ -667,7 +674,7 @@ If all else fails, send email to the current maintainer of the xmame/xmess
 \layout Subsection
 
 Compile Notes for Specific Operating Systems 
-\begin_inset LatexCommand \label{Compile Notes for Specific Operating Systems}
+\begin_inset LatexCommand \label{compilenotes}
 
 \end_inset 
 
@@ -917,7 +924,7 @@ SunOS & Solaris
 \layout Standard
 
 There are 2 relevant architecture options available in the makefile: 
-\layout Verbatim
+\layout Code
 
     ARCH = generic : use this for old SunOs running on Sparcs,
 \newline 
@@ -948,7 +955,7 @@ Of course, if you are compiling for X11 then you need to set these variables
 
 If you are using Sun's SunPro cc compiler, then the following optimisation
  flags have been reported to be good:
-\layout Verbatim
+\layout Code
 
     OPTFLAGS    = -fast -xO4 -native
 \layout Standard
@@ -999,8 +1006,13 @@ On an OpenStep keyboard the functions keys do not all operate as expected.
  useful to remap this globally the first time you run xmame.
 \layout Section
 
+
+\begin_inset LatexCommand \label{xmame-doc-3}
+
+\end_inset 
+
 Xmame Frequently Asked Questions
-\begin_inset LatexCommand \label{Xmame frequently asked questions}
+\begin_inset LatexCommand \label{xmamefaq}
 
 \end_inset 
 
@@ -1010,7 +1022,7 @@ Xmame Frequently Asked Questions
 What is mame?
 \layout Standard
 
-Mame is an arcade machine emulator.
+MAME is an arcade machine emulator.
  Started in 1997 by Nicola  Salmoria, mame started out as a series of emulators
  for  individual games.
  This series of emulators was combined into a  simgle multi-game emulator.
@@ -1018,7 +1030,7 @@ Mame is an arcade machine emulator.
  100 contributors to the project.
 \layout Standard
 
-Mame was created by Nicola Salmoria.
+MAME was created by Nicola Salmoria.
 \layout Standard
 
 Also see 
@@ -1052,7 +1064,7 @@ Xmame/xmess are the Unix/X11 ports of the mame and mess projects.
  (and SVGAlib/ggi/XF86-DGA/OpenGL/SDL too).
 \layout Standard
 
-Mame was orginally ported by Allard Van Der Bas, Dick the Ridder, Juan Antonio
+MAME was orginally ported by Allard Van Der Bas, Dick the Ridder, Juan Antonio
  Martinez, and Hans de Goede.
 \layout Standard
 
@@ -1197,10 +1209,11 @@ The following is a list of arch/os/display combinations, with maintainers,
 i386/linux/x11 (+DGA)
 \hfill 
  -> Lawrence 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
 
@@ -1209,10 +1222,11 @@ i386/linux/x11 (+DGA)
 i386/linux/svgalib
 \hfill 
  -> Lawrence 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
 
@@ -1221,10 +1235,11 @@ i386/linux/svgalib
 i386/linux/xgl
 \hfill 
  -> Sven Goethel 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<sgoethel@jausoft.com>]{mailto:sgoethel@jausoft.com}
-
+\layout Standard
+<email>sgoethel@jausoft.com</email>
 \end_inset 
 
 
@@ -1233,10 +1248,11 @@ i386/linux/xgl
 i386/linux/xfx
 \hfill 
  -> Lawrence 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
 
@@ -1245,10 +1261,11 @@ i386/linux/xfx
 i386/linux/svgafx
 \hfill 
  -> Lawrence 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
 
@@ -1257,10 +1274,11 @@ i386/linux/svgafx
 i386/linux/ggi
 \hfill 
  -> Christian 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<cpg@aladdin.de>]{mailto:cpg@aladdin.de}
-
+\layout Standard
+<email>cpg@aladdin.de</email>
 \end_inset 
 
 
@@ -1269,10 +1287,11 @@ i386/linux/ggi
 alpha/linux/x11
 \hfill 
  -> Christian 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<cpg@aladdin.de>]{mailto:cpg@aladdin.de}
-
+\layout Standard
+<email>cpg@aladdin.de</email>
 \end_inset 
 
 
@@ -1280,11 +1299,12 @@ alpha/linux/x11
 
 alpha/digital unix/x11 *
 \hfill 
- -> Leandro 
-\family typewriter 
+ -> Lawrence 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
 
@@ -1295,8 +1315,11 @@ powerpc/linux/x11
  -> Andreas 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<sid@skater.htu.tuwien.ac.at>]{mailto:sid@skater.htu.tuwien.ac.at}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>sid@skater.htu.tuwien.ac.at</email>
 \end_inset 
 
 
@@ -1307,8 +1330,11 @@ powerpc/linux/svgalib
  -> Andreas 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<sid@skater.htu.tuwien.ac.at>]{mailto:sid@skater.htu.tuwien.ac.at}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>sid@skater.htu.tuwien.ac.at</email>
 \end_inset 
 
 
@@ -1320,8 +1346,11 @@ i386/freebsd/x11
  Hart 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<c9710216@studentmail.newcastle.edu.au>]{mailto:c9710216@studentmail.newcastle.edu.au}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>c9710216@studentmail.newcastle.edu.au</email>
 \end_inset 
 
 
@@ -1332,8 +1361,11 @@ i386/netbsd/x11
  -> Dave 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<dave@dtsp.co.nz>]{mailto:dave@dtsp.co.nz}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>dave@dtsp.co.nz</email>
 \end_inset 
 
 
@@ -1342,10 +1374,11 @@ i386/netbsd/x11
 alpha/netbsd/x11
 \hfill 
  -> Christian 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<cpg@aladdin.de>]{mailto:cpg@aladdin.de}
-
+\layout Standard
+<email>cpg@aladdin.de</email>
 \end_inset 
 
 
@@ -1354,10 +1387,11 @@ alpha/netbsd/x11
 Sparc/Solaris/x11
 \hfill 
  -> Lawrence 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
 
@@ -1368,8 +1402,11 @@ i386/Unixware7/x11 *
  -> Richard 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<xmame@frogface.ddns.org>]{mailto:xmame@frogface.ddns.org}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>xmame@frogface.ddns.org</email>
 \end_inset 
 
 
@@ -1380,8 +1417,11 @@ i386/openstep
  -> Pete French 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<pete@toybox.twisted.org.uk>]{mailto:pete@toybox.twisted.org.uk}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>pete@toybox.twisted.org.uk</email>
 \end_inset 
 
 
@@ -1392,8 +1432,11 @@ Sparc/SunOs
  -> Saga 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<jolletx@cybercable.fr>]{mailto:jolletx@cybercable.fr}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>jolletx@cybercable.fr</email>
 \end_inset 
 
 
@@ -1404,29 +1447,27 @@ mips/irix/x11
  -> Dingus Family 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<ddingus@uswest.net>]{mailto:ddingus@uswest.net}
+\begin_inset ERT
+status Collapsed
 
+\layout Standard
+<email>ddingus@uswest.net</email>
 \end_inset 
 
 
-\layout Standard
-
-* These are supported using the generic unix entry of the makefile, and
- thus lack sound.
 \layout Standard
 
 We are always looking for people willing to test and answer questions about
  xmame on a new arch/os/display.
  This takes very little work and could help other people tremendously.
  If you're interested, mail Lawrence 
-\family typewriter 
+\begin_inset ERT
+status Collapsed
 
-\begin_inset LatexCommand \url[gold@aros.net]{mailto:gold@aros.net}
-
+\layout Standard
+<email>gold@aros.net</email>
 \end_inset 
 
-
-\family default 
 .
 \layout Subsection
 
@@ -1449,7 +1490,7 @@ What is the role of the xmamerc/xmessrc file?
 \layout Standard
 
 A normal xmame/xmess invocation looks like:
-\layout Verbatim
+\layout Code
 
     xmame pacman -sound -nojoy -frameskip 2 -heightscale 3 
 \backslash 
@@ -1476,7 +1517,7 @@ What is the syntax of the xmamerc/xmessrc file.
 \layout Standard
 
 The syntax is quite simple:
-\layout Verbatim
+\layout Code
 
    "keyword value"
 \layout Standard
@@ -1495,13 +1536,13 @@ See
 
 You can also generate a configfile with all the current settings to use
  as a template by typing:
-\layout Verbatim
+\layout Code
 
    xmame -showconfig > ~/.xmame/xmamerc
 \layout Subsection
 
 Where do roms, images, samples, highscores, configfiles, etc go? 
-\begin_inset LatexCommand \label{FAQ: Where do roms, images, samples, highscores, configfiles, etc go?}
+\begin_inset LatexCommand \label{filelocations}
 
 \end_inset 
 
@@ -1524,7 +1565,7 @@ This is overwritten by any rompath in xmamerc/xmessrc, which can be overwritten
 
 Xmame/xmess searches every dir in this path for roms/samples in the following
  way:
-\layout Verbatim
+\layout Code
 
     <dir>/gamename.zip             (containing filename.ext)
 \newline 
@@ -1537,7 +1578,7 @@ Xmame/xmess searches every dir in this path for roms/samples in the following
 
 So let's say that we are searching for rom0001.1, which is part of pacman.
  Then xmame/xmess would search every dir in your rompath for
-\layout Verbatim
+\layout Code
 
     <dir>/pacman.zip               (containing rom0001.1)
 \newline 
@@ -1562,7 +1603,7 @@ This section only applies to xmess emulations which support read/write diskette
 
 Xmess first searches for read/write images with the name specified on the
  commandline:
-\layout Verbatim
+\layout Code
 
     <path>/image.ext
 \layout Standard
@@ -1574,7 +1615,7 @@ ne for an image which is not in the rompath.
 
 Then xmess searches every dir in the rompath for roms/samples in the following
  way:
-\layout Verbatim
+\layout Code
 
     <dir>/image.ext
 \layout Standard
@@ -1587,7 +1628,7 @@ Rom Cartridges/Read Only Diskette Images
 
 Xmess begins by searching for cartdriges/disks from the current dir in the
  following way:
-\layout Verbatim
+\layout Code
 
     <path>/image.ext
 \newline 
@@ -1603,7 +1644,7 @@ ne for an image which is not in the rompath.
 
 Then xmess searches every dir in the rompath for carts/images in the following
  way:
-\layout Verbatim
+\layout Code
 
     <dir>/image.ext
 \newline 
@@ -1619,7 +1660,7 @@ Finally, xmess searches the rompath as desribed above using the systemtype
 So let's say we want to play mario.nes on the nes emulation of xmess.
  We would then type: "xmess nes mario.nes".
  Xmess then begins by searching the current dir for
-\layout Verbatim
+\layout Code
 
     mario.nes
 \newline 
@@ -1629,7 +1670,7 @@ So let's say we want to play mario.nes on the nes emulation of xmess.
 \layout Standard
 
 After that, xmess searches each dir in your rompath for
-\layout Verbatim
+\layout Code
 
     <dir>/mario.nes
 \newline 
@@ -1639,7 +1680,7 @@ After that, xmess searches each dir in your rompath for
 \layout Standard
 
 And finally, xmess searches each dir in your rompath for
-\layout Verbatim
+\layout Code
 
     <dir>/nes.zip                  (containing mario.nes)
 \newline 
@@ -1653,13 +1694,13 @@ And finally, xmess searches each dir in your rompath for
 Since xmess first searches for cartridges/disks from the current dir you
  can also specify cartridges/disks not in your rompath.
  For example:
-\layout Verbatim
+\layout Code
 
     "xmess nes ../mario.nes"
 \layout Standard
 
 Xmess then searches for
-\layout Verbatim
+\layout Code
 
     ../mario.nes
 \newline 
@@ -1677,7 +1718,7 @@ Artwork
 
 Xmame/xmess searches every dir in the rompath for artwork in the following
  way:
-\layout Verbatim
+\layout Code
 
     <dir>/artwork.png
 \newline 
@@ -1691,7 +1732,7 @@ Then xmame/xmess searches the rompath as in roms/samples.
 
 So let's say we want to play foo which uses bar.png.
  Xmame/xmess then begins searching each dir in your rompath for
-\layout Verbatim
+\layout Code
 
     <dir>/bar.png
 \newline 
@@ -1701,7 +1742,7 @@ So let's say we want to play foo which uses bar.png.
 \layout Standard
 
 And then xmame/xmess searches each dir in your rompath for
-\layout Verbatim
+\layout Code
 
     <dir>/foo.zip                  (containing bar.png)
 \newline 
@@ -1717,7 +1758,7 @@ Xmame configuration
 
 Xmame looks for the following configuration files and parses each one found.
  Files parsed later can overwrite options in previously parsed files:
-\layout Verbatim
+\layout Code
 
     XMAMEROOT/xmamerc
 \newline 
@@ -1757,7 +1798,7 @@ Game configuration
 \layout Standard
 
 Game configuration files are kept on a per-user base in:
-\layout Verbatim
+\layout Code
 
     ${HOME}/.xmame/cfg/<game>.cfg resp
 \newline 
@@ -1768,7 +1809,7 @@ Game state
 \layout Standard
 
 Game state files are kept on a per-user base in:
-\layout Verbatim
+\layout Code
 
     ${HOME}/.xmame/sta/<game>.sta resp
 \newline 
@@ -1779,7 +1820,7 @@ NVram
 \layout Standard
 
 NVram files are kept on a per-user base in:
-\layout Verbatim
+\layout Code
 
     ${HOME}/.xmame/nvram/<game>.nv resp
 \newline 
@@ -1790,7 +1831,7 @@ Mem cards
 \layout Standard
 
 Mem cards files are kept on a per-user base in:
-\layout Verbatim
+\layout Code
 
     ${HOME}/.xmame/mem/<filename>.mem resp
 \newline 
@@ -1817,7 +1858,7 @@ This can be overidden by the screenshotdir entry in xmamerc/xmessrc, which
 \layout Standard
 
 They are saved as:
-\layout Verbatim
+\layout Code
 
     <screenshotdir>/<game>xxxx.png
 \newline 
@@ -1837,7 +1878,7 @@ Highscores are stored in XMAMEROOT as defined in Makefile when building.
 \layout Standard
 
 So only give a 
-\layout Verbatim
+\layout Code
 
     drwxrwsr-x root games <spooldir>
 \layout Standard
@@ -1977,13 +2018,13 @@ How do I start xmess/xmame ?
 \layout Standard
 
 To start xmame, type
-\layout Verbatim
+\layout Code
 
     xmame [options] <gamename> [more options]
 \layout Standard
 
 For xmess, type
-\layout Verbatim
+\layout Code
 
     xmess [options] <systemname> [more options] 
 \backslash 
@@ -2007,7 +2048,7 @@ What are the command line parameters for xmame/xmess?
 \layout Standard
 
 To see a list of available parameters, type:
-\layout Verbatim
+\layout Code
 
     /usr/games/xmame -help | more
 \layout Standard
@@ -2021,7 +2062,7 @@ See the file readme.mame / readme.mess for more information about the command
 \layout Subsection
 
 What keys does xmame/xmess use?
-\begin_inset LatexCommand \label{FAQ: What keys does xmame/xmess use?}
+\begin_inset LatexCommand \label{keybindings}
 
 \end_inset 
 
@@ -2030,7 +2071,7 @@ What keys does xmame/xmess use?
 
 Xmame/xmess uses the same key-bindings as the DOS version of mame: The following
  keys work in all emulators:
-\layout Verbatim
+\layout Code
 
     `  or ~      Enter On screen display to change volume, brightness etc.
 \newline 
@@ -2067,7 +2108,7 @@ Xmame/xmess uses the same key-bindings as the DOS version of mame: The following
 
 Xmame has 2 different auto frameskipping algorithms.
  These can be selected with the -frameskipper option and with key combos:
-\layout Verbatim
+\layout Code
 
     Key combo:             Gives you the:
 \newline 
@@ -2078,7 +2119,7 @@ Xmame has 2 different auto frameskipping algorithms.
 
 Xmame's display scaling can be controlled on the fly with the following
  key combos:
-\layout Verbatim
+\layout Code
 
     Key combo:             Result:
 \newline 
@@ -2097,7 +2138,7 @@ Xmame's display scaling can be controlled on the fly with the following
 
 Under X11, xmame can switch to and from different modes during runtime:
  
-\layout Verbatim
+\layout Code
 
     Key combo:             Warps you to:
 \newline 
@@ -2107,13 +2148,13 @@ Under X11, xmame can switch to and from different modes during runtime:
 \layout Standard
 
 Under SDL, xmame can switch to and from different modes during runtime:
-\layout Verbatim
+\layout Code
 
     Key combo:             Result:
-\layout Verbatim
+\layout Code
 
     left-alt + enter       Toggles between windowed and
-\layout Verbatim
+\layout Code
 
                            fullscreen modes.
 \layout Standard
@@ -2179,7 +2220,7 @@ Please let me know if you need to change this setting, since I'm planning
 \layout Subsection
 
 Why doesn't a game work? 
-\begin_inset LatexCommand \label{FAQ: Why doesn't a game work?}
+\begin_inset LatexCommand \label{gamenotworking}
 
 \end_inset 
 
@@ -2212,7 +2253,7 @@ Some games require sound support.
 \layout Subsection
 
 What are PROMs? 
-\begin_inset LatexCommand \label{FAQ: What are PROMs?}
+\begin_inset LatexCommand \label{PROMs}
 
 \end_inset 
 
@@ -2269,7 +2310,7 @@ You can also try recompiling xmame/xmess with more optimal settings.
 These "enhancements" simply require editing the Makefile that is distributed
  with xmame, and then recompiling the source.
   If you are compiling the source for the second time you will need to do:
-\layout Verbatim
+\layout Code
 
     make clean
 \newline 
@@ -2286,7 +2327,7 @@ SPEEDUP # 1 - Inline compiling
 
 Try enabling inline compiling by commenting and uncommenting the following
  lines:
-\layout Verbatim
+\layout Code
 
     # IL    = '-DINLINE=static inline'
 \newline 
@@ -2297,7 +2338,7 @@ SPEEDUP # 2 - Direct Graphics Access
 \layout Standard
 
 For a big boost, try enabling DGA by uncommenting the following line:
-\layout Verbatim
+\layout Code
 
     DGA = 1
 \layout Standard
@@ -2333,7 +2374,7 @@ Don't forget that you still need to set up the Modes line of the   "Display"
  subsection of the "Screen" section in your X11 config file if you want
  the games to fill the screen in DGA mode.
  Xmame will pick the best mode it can find, so if you have a line like
-\layout Verbatim
+\layout Code
 
     Modes  "1024x768" "800x600" "640x480" "320x240" "256x224"
 \layout Standard
@@ -2434,7 +2475,7 @@ Easy.
 \layout Subsection
 
 Why do I get gz_open symbol not found while compiling? 
-\begin_inset LatexCommand \label{FAQ: Why do I get gz_open symbol not found while compiling?}
+\begin_inset LatexCommand \label{gzopen}
 
 \end_inset 
 
@@ -2454,7 +2495,7 @@ Removing or just moving /usr/X11R6/lib/libz.a should fix this problem.
 \layout Standard
 
 Also see: 
-\begin_inset LatexCommand \ref[FAQ: Why do I get zlib.h not found?]{FAQ: Why do I get zlib.h not found?}
+\begin_inset LatexCommand \ref[FAQ: Why do I get zlib.h not found?]{zlib}
 
 \end_inset 
 
@@ -2462,7 +2503,7 @@ Also see:
 \layout Subsection
 
 Why do I get zlib.h not found? 
-\begin_inset LatexCommand \label{FAQ: Why do I get zlib.h not found?}
+\begin_inset LatexCommand \label{zlib}
 
 \end_inset 
 
@@ -2487,7 +2528,7 @@ Are you running a recent version of KDE, such as 2.1.1? It appears that there's
  up their main window.
  You can either run the SDL version of xmame, or try the following workaround,
  which several people have reported as being successful:
-\layout Verbatim
+\layout Code
 
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`
 \layout Subsection
@@ -2556,7 +2597,7 @@ If you want to start immediately in fullscreen mode, start xmame.x11 with
 
 During play you can switch between windowed and fullscreen mode.
  See 
-\begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{FAQ: What keys does xmame/xmess use?}
+\begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{keybindings}
 
 \end_inset 
 
@@ -2575,7 +2616,7 @@ Xv is the X Window System video extension.
 
 To determine if your video card supports the Xv extension, you may use this
  command:
-\layout Verbatim
+\layout Code
 
 xvinfo
 \layout Standard
@@ -2675,7 +2716,7 @@ fullscreen 1
 
 Most problems experienced by people who are trying to use SDL for fullscreen
  are related to the section 
-\begin_inset LatexCommand \ref[fullscreen has a large border]{FAQ: xmame.sdl / xmame.x11 fullscreen has a large border around the game.}
+\begin_inset LatexCommand \ref[fullscreen has a large border]{screenborder}
 
 \end_inset 
 
@@ -2684,7 +2725,7 @@ Most problems experienced by people who are trying to use SDL for fullscreen
 
 During play you can switch between windowed and fullscreen mode.
  See 
-\begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{FAQ: What keys does xmame/xmess use?}
+\begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{keybindings}
 
 \end_inset 
 
@@ -2693,7 +2734,7 @@ During play you can switch between windowed and fullscreen mode.
 
 xmame.SDL / fullscreen has a large border around the game.
  
-\begin_inset LatexCommand \label{FAQ: xmame.sdl / xmame.x11 fullscreen has a large border around the game.}
+\begin_inset LatexCommand \label{screenborder}
 
 \end_inset 
 
@@ -2725,8 +2766,8 @@ If you don't want to alter your XF86config file, another solution is to
  The scaling uses cpu and the games will run more slowly.
 \layout Standard
 
-However, if your cpu is fast enough, a better option is to use the effects
- 
+However, if your cpu is fast enough, a better option is to use the effects,
+ e.g., 
 \begin_inset Quotes erd
 \end_inset 
 
@@ -2749,31 +2790,30 @@ I only use some of the emulation parts (Neo Geo / CPS-2 /...).
  Do I need the entire xmame? 
 \layout Standard
 
-If you are interested in compiling only some of the games you, can compile
- xmame with an alternate target.
- Edit the makefile.unix and change the target line to accomplish the desired
- effect.
- Using this approach, only the CPUs, sound devices, and other chips needed
- for that particular target are compiled, resulting in a much smaller executable.
-\layout Itemize
+There used to be targets such as 
+\begin_inset Quotes eld
+\end_inset 
 
-'TARGET = cpmame' makes a mame version that will only emulate the CPS-1
- and CPS-2 games
-\layout Itemize
+cpmame
+\begin_inset Quotes erd
+\end_inset 
 
-'TARGET = neomame' makes a mame version that will only emulate the Neo Geo
- system
-\layout Standard
+ and 
+\begin_inset Quotes eld
+\end_inset 
 
-There are some other targets but they are really only useful for the mame
- developers who create new drivers.
+neomame
+\begin_inset Quotes erd
+\end_inset 
+
+, but these have been removed from the core.
 \layout Subsection
 
 Why does xmame freeze and lock up when I hit <ESC> to exit the game or P
  to pause the game?
 \layout Standard
 
-There appears to be a bug in the "timer based audio" code that xmame/oss
+There appears to be a bug in the "timer-based audio" code that xmame/oss
  uses on at least one motherboard that we are aware of.
  Specifically, the ATX 845Pro (Intel Pentium 4 processor) with an integrated
  i810 soundchip.
@@ -2790,8 +2830,15 @@ Compile ESOUND support into the xmame executable by uncommenting the appropriate
  Also see the next section below.
 \layout Subsection
 
-Why does xmame report "can't resolve host name '/dev/dsp' when trying to
- use esound?
+Why does xmame report 
+\begin_inset Quotes eld
+\end_inset 
+
+can't resolve host name '/dev/dsp'
+\begin_inset Quotes erd
+\end_inset 
+
+ when trying to use esound?
 \layout Standard
 
 Remove the words "/dev/dsp" from the "audiodevice" line in xmamerc.
@@ -2915,8 +2962,13 @@ If that doesn't help, then ask your question on the mailing list or send
  for contact information.
 \layout Section
 
+
+\begin_inset LatexCommand \label{xmame-doc-4}
+
+\end_inset 
+
 Display Subsystem-Specific Comments and Notes 
-\begin_inset LatexCommand \label{Display subsystem specific comments and notes}
+\begin_inset LatexCommand \label{displaysubsystem}
 
 \end_inset 
 
@@ -2989,7 +3041,7 @@ RIGHTCTRL-B -- toggle bilinear filtering
 \layout Standard
 
 The glide driver also adds several command-line options:
-\layout Verbatim
+\layout Code
 
     -fxgama <value> 3Dfx gamma correction value
 \layout Standard
@@ -3092,9 +3144,9 @@ first public release
 Author
 \layout Standard
 
-Mike Oliphant 
+Mike Oliphant
 \family typewriter 
-
+<
 \begin_inset LatexCommand \url[(oliphant@ling.ed.ac.uk)]{mailto:oliphant@ling.ed.ac.uk}
 
 \end_inset 
@@ -3230,161 +3282,161 @@ RIGHT_ALT-MINUS_PAD -- decr.
 \layout Standard
 
 The OpenGL driver also adds several command-line options:
-\layout Verbatim
+\layout Code
 
     -[no]fullscreen         Start in fullscreen mode
-\layout Verbatim
+\layout Code
 
                             (default: disabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]gldblbuffer        Disable/enable double buffering
-\layout Verbatim
+\layout Code
 
                             (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -gltexture_size <int>   Force the max width and height of one 
-\layout Verbatim
+\layout Code
 
                             texture segment (default: autosize)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]glforceblitmode /  Force blitter for true color modes 15/32bpp
-\layout Verbatim
+\layout Code
 
     -[no]glblit             (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]glext78 /          Force the usage of GL extension number 78,
-\layout Verbatim
+\layout Code
 
     -[no]glext              if available (palletted texture)
-\layout Verbatim
+\layout Code
 
                             (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]glbilinear /       Disable/enable bilinear filtering
-\layout Verbatim
+\layout Code
 
     -[no]glbilin            (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]gldrawbitmap /     Disable/enable drawing the bitmap; e.g., 
-\layout Verbatim
+\layout Code
 
     -[no]glbitmap           disable within vector games for a speedup
-\layout Verbatim
+\layout Code
 
                             (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]glcolormod         Disable/enable color modulation (intensity,
-\layout Verbatim
+\layout Code
 
     -[no]glcmod             gamma)
-\layout Verbatim
+\layout Code
 
                             (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -glbeam <float>         Set the beam size for vector games
-\layout Verbatim
+\layout Code
 
                             (default: 1.0)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]glalphablending /  Disable/enable alpha blending if available
-\layout Verbatim
+\layout Code
 
     -[no]glalpha            (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]glantialias /      Disable/enable antialiasing
-\layout Verbatim
+\layout Code
 
     -[no]glaa               (default: enabled)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -gllibname /            Choose the dynamically loaded OpenGL
-\layout Verbatim
+\layout Code
 
     -gllib <string>         library
-\layout Verbatim
+\layout Code
 
                             (default: libGL.so)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -glulibname /           Choose the dynamically loaded GLU library
-\layout Verbatim
+\layout Code
 
     -glulib <string>        (default: libGLU.so)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -[no]cabview            Don't start/start in cabinet view mode
-\layout Verbatim
+\layout Code
 
                             (default: don't start in this mode)
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
     -cabinet <cabname>      Specify which cabinet model to use
-\layout Verbatim
+\layout Code
 
                             (default: glmamejau)
-\layout Verbatim
+\layout Code
 
  
-\layout Verbatim
+\layout Code
 
    -glres <string>          Always scale games to <Xres>x<Yres>, 
-\layout Verbatim
+\layout Code
 
                             keeping their aspect ratio.
  
-\layout Verbatim
+\layout Code
 
                             This overrides the scale options.
-\layout Verbatim
+\layout Code
 
                             Use this e.g.
  for the Vodoo1 gfx cards
-\layout Verbatim
+\layout Code
 
                             with: "-glres 640x480"
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
-\layout Verbatim
+\layout Code
 
 \layout Standard
 
@@ -3440,19 +3492,19 @@ A cabinet model directory must contain a geometry file <modelname>.cab, and
  The format of the .cab file will be familiar if you have ever programmed
  using OpenGL -- it looks much like an OpenGL display list.
  The format is as follows:
-\layout Verbatim
+\layout Code
 
     cabv1.1
 \layout Standard
 
 This header must be the first 7 characters of the file.
-\layout Verbatim
+\layout Code
 
     #<text>
 \layout Standard
 
 Comment lines begin with '#'
-\layout Verbatim
+\layout Code
 
     begin <type>
 \layout Standard
@@ -3470,13 +3522,13 @@ Begins a geometry object, where type is one of (points, polygon, quads,
  game will be displayed.
  only one of these should be defined.
  For more info, look at any description of OpenGL geometry.
-\layout Verbatim
+\layout Code
 
     end
 \layout Standard
 
 Ends the geometry object begun with "begin".
-\layout Verbatim
+\layout Code
 
     pointsize <s>
 \layout Standard
@@ -3484,21 +3536,21 @@ Ends the geometry object begun with "begin".
 Changes the current pointsize to the corresponding size value (specified
  as a floating point number between 0.0 and, e.g., 20.0).
  Note: You cannot use this statement between begin and end!
-\layout Verbatim
+\layout Code
 
     color4 <r> <g> <b>
 \layout Standard
 
 Changes the current color to the corresponding rgb value (specified as floating
  point numbers between 0 and 1).
-\layout Verbatim
+\layout Code
 
     color4 <r> <g> <b> <a>
 \layout Standard
 
 Changes the current color to the corresponding rgba value (specified as
  floating point numbers between 0 and 1).
-\layout Verbatim
+\layout Code
 
     shading <type>
 \layout Standard
@@ -3506,20 +3558,20 @@ Changes the current color to the corresponding rgba value (specified as
 Sets the shading type.
  available types are "smooth" (which blends colors from one vertex to the
  next) or "flat" (which doesn't).
-\layout Verbatim
+\layout Code
 
     vertex <x> <y> <z>
 \layout Standard
 
 Specifies a vertex for the current geometry object as a point in 3-space.
-\layout Verbatim
+\layout Code
 
     numtex <num>
 \layout Standard
 
 Specifies the number of different textures to be loaded.
  This declaration must precede any "loadtex" call.
-\layout Verbatim
+\layout Code
 
     loadtex <num> <width> <height> <filename>
 \layout Standard
@@ -3528,33 +3580,33 @@ Loads texture number <num> from .jpg file <filename>.
  The .jpg file *must* be <width> by <height> pixels, and both <width> and
  <height> must be powers of two (and must conform to the hardware requirements
  of any 3D card you want the cabinet to work with -- 256x256 for 3Dfx).
-\layout Verbatim
+\layout Code
 
     texcoord <xcoord> <ycoord>
 \layout Standard
 
 Sets the texture coordinate of the next vertex.
  This specifies where in 2D texture space the vertex lies.
-\layout Verbatim
+\layout Code
 
     enable texture
 \layout Standard
 
 Enables texture mapping (using the currently-selected texture).
-\layout Verbatim
+\layout Code
 
     disable texture
 \layout Standard
 
 Turns off texture mapping.
-\layout Verbatim
+\layout Code
 
     settex <num>
 \layout Standard
 
 Select texture <num> for doing texturing.
  The texture must previously have been loaded using "loadtex".
-\layout Verbatim
+\layout Code
 
     camerapan <num>
 \layout Standard
@@ -3563,7 +3615,7 @@ Starts the camera pan definition that will be followed by <num> camera transisti
 ons.
  After the last transision definition, the pan sequence must be ended with
  an "end" statement.
-\layout Verbatim
+\layout Code
 
     goto <lx> <ly> <lz> <px> <py> <pz> <nx> <ny> <nz>
 \layout Standard
@@ -3572,7 +3624,7 @@ Relocates and reorients the camera.
  The arguments are the same as are used by the OpenGL command "gluLookAt()".
  The camera is positioned at point <lx,ly,lz>, pointing along vector <px,py,pz>,
  with "up" normal (the direction that is "up" for the camera) <nx,ny,nz>.
-\layout Verbatim
+\layout Code
 
     moveto <lx> <ly> <lz> <px> <py> <pz> <nx> <ny> <nz> <frames>
 \layout Standard
@@ -3872,6 +3924,11 @@ Till GLmame version 0.6: Mike Oliphant
 
 \layout Section
 
+
+\begin_inset LatexCommand \label{xmame-doc-5}
+
+\end_inset 
+
 Contact Information and Credits
 \layout Subsection
 
@@ -3991,16 +4048,16 @@ Other proper keywords currently recognized as commands by
 \end_inset 
 
  are:
-\layout Verbatim
+\layout Code
 
     who             - see everyone who is on the list
-\layout Verbatim
+\layout Code
 
     info            - view the introductory information for this list
-\layout Verbatim
+\layout Code
 
     help            - list all recognized commands
-\layout Verbatim
+\layout Code
 
     
 \layout Standard
@@ -4041,7 +4098,8 @@ Don't use the list to ask about ROMs.
 
 
 \series bold 
-Don't ask about non-UNIX ports of MAME, just about MAME and xmame.
+Don't ask about non-UNIX ports of MAME or MESS, just about MAME and MESS,
+ xmame and xmess.
 \layout Itemize
 
 
@@ -4065,15 +4123,6 @@ Copyright notice: NEVER, I repeat NEVER send ROM images to the  list.
 \series default 
  (But you can tell us where to retrieve them...
  ;-) )
-\layout Itemize
-
-At this moment, the xmame list is 
-\series bold 
-unmoderated
-\series default 
-; that is, everyone subscribed will receive everything sent to the list.
- We foresee a need to change this policy since the list starts to suffer
- from spam :-(.
 \layout Standard
 
 If you want to send a personal mail to the xmame/xmess coordinator, send
@@ -4384,6 +4433,11 @@ Sean Young
 \end_deeper 
 \layout Section
 
+
+\begin_inset LatexCommand \label{xmame-doc-6}
+
+\end_inset 
+
 Legal Issues and Copyrights Concerning MAME/MESS
 \layout Itemize
 
@@ -4421,6 +4475,11 @@ XInputExtensions-based Joystick support.
  Use it under terms of GNU General Public License.
 \layout Section
 
+
+\begin_inset LatexCommand \label{xmame-doc-7}
+
+\end_inset 
+
 Some Links
 \layout Subsection
 
@@ -4432,7 +4491,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \htmlurl[xmame/xmess-0.81.1 sources]{download/xmame-0.81.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.82.1 sources]{download/xmame-0.82.1.tar.bz2}
 
 \end_inset 
 
@@ -4495,6 +4554,22 @@ Unix binaries
 
 
 \begin_inset LatexCommand \url[AMD-optimized builds for various targets]{http://www.kwyxz.org/linux/xmame/index.html}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[xmame RPMs for several display targets]{ftp://ftp.rx3.net/pub/arc/xmame/0.80.1/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Slackware packages]{http://www.syntheticsw.com/~wizard/projects/slackware/}
 
 \end_inset 
 
@@ -4664,7 +4739,7 @@ Xmame/xmess download mirrors
 
 \end_inset 
 
-, a new front-end for arcade cabinets
+, a front-end for arcade cabinets
 \layout Itemize
 
 
@@ -4673,6 +4748,14 @@ Xmame/xmess download mirrors
 \end_inset 
 
  (perl-based menu makers)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[ppfe2]{http://plusplus.free.fr/frontend/}
+
+\end_inset 
+
+, a gtk2-perl-based front-end
 \layout Itemize
 
 
@@ -4705,6 +4788,14 @@ Xmame/xmess download mirrors
 \end_inset 
 
 , a Qt-based front-end
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[xik]{http://dinogen.hacknight.org/xik/}
+
+\end_inset 
+
+, an icon-based front-end for KDE
 \layout Itemize
 
 
@@ -4844,6 +4935,11 @@ And, of course, don't forget our project homepage at
 
 
 \layout Section
+
+
+\begin_inset LatexCommand \label{xmame-doc-8}
+
+\end_inset 
 
 ChangeLogs
 \begin_inset LatexCommand \label{ChangeLogs}

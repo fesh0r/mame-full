@@ -71,13 +71,9 @@ mouse                   1
 ### Fileio Related ###
 biospath                /usr/local/share/xmess/bios
 softwarepath            /usr/local/share/xmess/software
-CRC_directory           /usr/local/share/xmess/crc
+hash_directory          /usr/local/share/xmess/hash
 snapshot_directory      .
-cheat_directory         /usr/local/share/xmess/cheat
-cheatfile               cheat.cdb
 hiscore_file            /usr/local/share/xmess/hiscore.dat
-history_file            /usr/local/share/xmess/history.dat
-mameinfo_file           /usr/local/share/xmess/mameinfo.dat
 
 ### Mess Related ###
 language                english
