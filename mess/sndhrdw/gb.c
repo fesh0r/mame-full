@@ -327,7 +327,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 1 - Wave with Envelope and Sweep */
 		if( snd_1.on )
 		{
-			sample = snd_1.signal & snd_1.env_value;
+			sample = snd_1.signal * snd_1.env_value;
 			snd_1.pos++;
 			if( snd_1.pos == (UINT32)(snd_1.period / wave_duty_table[snd_1.duty]) >> FIXED_POINT)
 			{
@@ -400,7 +400,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 2 - Wave with Envelope */
 		if( snd_2.on )
 		{
-			sample = snd_2.signal & snd_2.env_value;
+			sample = snd_2.signal * snd_2.env_value;
 			snd_2.pos++;
 			if( snd_2.pos == (UINT32)(snd_2.period / wave_duty_table[snd_2.duty]) >> FIXED_POINT)
 			{
