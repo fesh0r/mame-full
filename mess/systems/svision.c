@@ -28,12 +28,24 @@ integrated speaker
 stereo phone jack
 40 pin connector for cartridges
 com port (9 pol dsub) pc at rs232?
+looked at
+5 4 3 2 1
+ 9 8 7 6
+2 black -->vlsi
+3 brown -->vlsi
+4 yellow -->vlsi
+5 red vlsi
+7 violett
+9 white
 
 port for 6V power supply
 
 on/off switch
 volume control analog
 contrast control analog
+
+
+
 
 cartridge connector (look at the cartridge)
  /oe or /ce	1  40 +5v (picture side)

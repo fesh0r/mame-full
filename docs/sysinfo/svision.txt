@@ -9,8 +9,8 @@ Hartung SV-100
 ...
 
 There are several designs, but all have the same functionality.
-(knickable screen)
-GB2000 (gameboy style)
+*(knickable screen)
+*GB2000 (gameboy style, no comm port)
 
 Features
 --------
@@ -40,8 +40,8 @@ Emulators
 
 Mess Emulation State
 --------------------
-very preliminary support (plays Crypt Ball and Delta Hero)
-no sound support
+very preliminary support
+preliminary sound support
 no serial port
 no tv adapter support
 work stopped until more cartridges are available
