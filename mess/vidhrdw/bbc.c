@@ -383,13 +383,6 @@ WRITE_HANDLER ( videoULA_w )
 	video_refresh=1;
 }
 
-READ_HANDLER ( videoULA_r )
-{
-	//logerror("video ULA read register %02x\n",offset);
-	return 0;
-}
-
-
 
 /* this is a quick lookup array that puts bits 0,2,4,6 into bits 0,1,2,3
    this is used by the pallette lookup in the video ULA */
