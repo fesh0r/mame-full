@@ -18,11 +18,10 @@
 #include "machine/genesis.h"
 //#include "sound/psgintf.h"
 
-int genesis_s_interrupt(void)
+void genesis_s_interrupt(void)
 {
 	// if (errorlog) fprintf(errorlog, "Z80 interrupt ");
-	return 0xff;
-
+	cpu_set_irq_line(1, 0xff, HOLD_LINE);
 }
 
 WRITE16_HANDLER ( YM2612_68000_w )

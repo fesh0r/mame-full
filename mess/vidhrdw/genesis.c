@@ -167,18 +167,16 @@ typedef struct
 
 
 
-void genesis_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( genesis )
 {
 	int i;
 
 	/* the palette will be initialized by the game. We just set it to some */
 	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
+		palette_set_color(i, ((i & 1) >> 0) * 0xff,
+							 ((i & 2) >> 1) * 0xff,
+							 ((i & 4) >> 2) * 0xff);
 }
 
 
@@ -188,7 +186,7 @@ WRITE16_HANDLER ( genesis_videoram1_w )
 	//offset = data;
 }
 
-int genesis_vh_start (void)
+VIDEO_START( genesis )
 {
 	if (video_start_generic() != 0)
 		return 1;
@@ -326,7 +324,7 @@ int genesis_vh_start (void)
 }
 
 
-void genesis_vh_stop (void)
+VIDEO_STOP( genesis )
 {
 	/* Free everything */
  //	bitmap_free(scroll_a);
@@ -479,7 +477,7 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 	 		//bitmap_vram->line[sy][sx + 1] = (data >>  8) & 0x0f;
 			//bitmap_vram->line[sy][sx + 2] = (data >>  4) & 0x0f;
 	 		//bitmap_vram->line[sy][sx + 3] = (data      ) & 0x0f;
-	 		printf("SY:%d\n",sy);
+/*	 		printf("SY:%d\n",sy); */
 			if (sy < 16384) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
 
 			}
@@ -1376,11 +1374,10 @@ static void plot_sprites(int priority)
   the main emulation engine.
 
 ***************************************************************************/
-void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( genesis )
 {
-
-genesis_modify_display(0);
-copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
+	genesis_modify_display(0);
+	copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
 }
 
 void genesis_modify_display(int inter)
@@ -1448,11 +1445,8 @@ void genesis_modify_display(int inter)
 		if (dirty_colour[pom])
 		{
 			int colour = vdp_cram[pom];
-	   		osd_modify_pen(Machine->pens[pom],
-			((colour<<4) & 0xe0) DIM,
-	   		((colour   ) & 0xe0) DIM,
-	   		((colour>>4) & 0xe0) DIM);
-	   		colours[pom] = (pom & 0x0f) ? Machine->pens[pom] : Machine->pens[0];
+			palette_set_color(Machine->pens[pom],((colour<<4) & 0xe0) DIM,((colour) & 0xe0) DIM,((colour>>4) & 0xe0) DIM);
+			colours[pom] = (pom & 0x0f) ? Machine->pens[pom] : Machine->pens[0];
 			dirty_colour[pom] = 0;
 		}
 	}
@@ -1460,11 +1454,8 @@ void genesis_modify_display(int inter)
 	if (dirty_colour[0])
 	{
 		int colour = vdp_cram[vdp_background_colour];
-	  	osd_modify_pen(Machine->pens[0],
-		((colour<<4) & 0xe0) DIM,
-	   	((colour   ) & 0xe0) DIM,
-	   	((colour>>4) & 0xe0) DIM);  /* quick background colour set */
-	   	colours[0] = Machine->pens[0];
+		palette_set_color(Machine->pens[0],((colour<<4) & 0xe0) DIM,((colour) & 0xe0) DIM,((colour>>4) & 0xe0) DIM);  /* quick background colour set */
+		colours[0] = Machine->pens[0];
 		dirty_colour[0] = 0;
 	}
 
@@ -3181,13 +3172,10 @@ void plot_sprites(int priority)
   the main emulation engine.
 
 ***************************************************************************/
-void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( genesis )
 {
-
-genesis_modify_display(0);
-//copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
-copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
-
+	genesis_modify_display(0);
+	copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
 }
 
 void genesis_modify_display(int inter)

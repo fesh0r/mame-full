@@ -29,7 +29,7 @@ unsigned char *genesis_soundram;
 
 static unsigned char *ROM;
 
-void genesis_init_machine(void)
+MACHINE_INIT( genesis )
 {
     genesis_soundram = memory_region(REGION_CPU2);
 	if( !genesis_soundram )
@@ -109,7 +109,8 @@ int genesis_init_cart (int id)
     }
 
     length = osd_fread(romfile, rawROM + 0x2000, 0x400200);
-	logerror("image length = 0x%x", length);
+	logerror("image length = 0x%x\n", length);
+
 	if (length < 1024 + 512)
 		goto bad;						/* smallest known rom is 1.7K */
 
@@ -182,7 +183,6 @@ int genesis_init_cart (int id)
 		ROM[ptr + 1] = ROM[relocate + ptr + 1];
 #endif
 	}
-
 
 	osd_fclose(romfile);
 	return INIT_PASS;
@@ -422,7 +422,7 @@ UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
 	return crc;
 }
 
-int genesis_interrupt(void)
+void genesis_interrupt(void)
 {
 	static int inter = 0;
 
@@ -437,23 +437,21 @@ int genesis_interrupt(void)
 		if (vdp_v_interrupt /* && vdp_display_enable */ )
 		{
 			logerror("Interrupt\n");
-			return 6;					/*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
+			cpu_set_irq_line(0, 6, HOLD_LINE);
 		}
 		if (vdp_h_interrupt /* && vdp_display_enable */ )
 		{
 			logerror("H Interrupt\n");
-			return 4;					/*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
+			cpu_set_irq_line(0, 4, HOLD_LINE);
 		}
 /*
 	else
 	{
         printf("denied\n");
-		return 4;
+		cpu_set_irq_line(0, 4, HOLD_LINE);
 	}
 */
-		return 0;
 	}
-	return 0;
 }
 
 WRITE16_HANDLER(genesis_io_w)

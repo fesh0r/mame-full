@@ -3,10 +3,10 @@ extern int genesis_soundram_size;
 extern unsigned char genesis_sharedram[];
 extern unsigned char * genesis_soundram;
 
-void genesis_init_machine (void);
+extern MACHINE_INIT( genesis );
 int genesis_init_cart (int id);
 
-int genesis_interrupt (void);
+void genesis_interrupt (void);
 WRITE16_HANDLER ( genesis_io_w );
 READ16_HANDLER  ( genesis_io_r );
 READ16_HANDLER  ( genesis_ctrl_r );
@@ -25,8 +25,7 @@ WRITE_HANDLER ( cartridge_ram_w );*/
 #endif
 
 /* machine/genesis.c */
-void genesis_init_machine (void);
-int genesis_interrupt (void);
+void genesis_interrupt (void);
 UINT32 genesis_partialcrc(const unsigned char *,unsigned int);
 
 void genesis_background_w(int offset,int data);
@@ -36,7 +35,7 @@ extern int z80running;
 
 /* sndhrdw/genesis.c */
 
-int genesis_s_interrupt(void);
+void genesis_s_interrupt(void);
 
 WRITE16_HANDLER ( YM2612_68000_w );
 READ16_HANDLER  ( YM2612_68000_r );

@@ -258,11 +258,9 @@ INPUT_PORTS_START( genesis )
 
 	PORT_START	/* IN1 playter 1 controller, part 2 */
 	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1,	"Player 1 A",       KEYCODE_Z,      JOYCODE_1_BUTTON4 )
-
 	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1,	"Player 1 Start",   KEYCODE_LSHIFT, JOYCODE_1_BUTTON1 )
 
 	PORT_START	/* IN2 player 2 controller */
-
 	PORT_BIT(	0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	| IPF_PLAYER2 )
 	PORT_BIT(	0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	| IPF_PLAYER2 )
 	PORT_BIT(	0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	| IPF_PLAYER2 )
@@ -272,25 +270,15 @@ INPUT_PORTS_START( genesis )
 
 	PORT_START	/* IN3 player 2 controller, part 2 */
 	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1		| IPF_PLAYER2,	"Player 2 A",       KEYCODE_I,      JOYCODE_2_BUTTON4 )
-
 	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1 		| IPF_PLAYER2,	"Player 2 Start",   KEYCODE_U,      JOYCODE_2_BUTTON1 )
 
-
-
-
 	PORT_START	/* IN4 - finternal switches, and fake 'Auto' */
-
 	PORT_DIPNAME( 0x03, 0x00, "Country")
-
 	PORT_DIPSETTING(    0x00, "Auto" )
-
 	PORT_DIPSETTING(    0x01, "USA" )
-
 	PORT_DIPSETTING(    0x02, "Japan" )
-
 	PORT_DIPSETTING(    0x03, "Europe" )
 INPUT_PORTS_END
-
 
 
 /* Genesis doesn't have a color PROM, it uses VDP 'CRAM' to generate colours */
@@ -305,60 +293,47 @@ static struct SN76496interface sn76496_interface =
 
 static struct YM2612interface ym2612_interface =
 {
-	1,			/* 1 chip */
+	1,	/* 1 chip */
 	53693100 / 7,
 	{ 0x7fffffff,0x7fffffff },
 	{ 0 },
 };
 
+static MACHINE_DRIVER_START( genesis )
+	/*basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 53693100 / 7) /* 8Mhz..ish */
+	MDRV_CPU_MEMORY(genesis_readmem, genesis_writemem)
+	MDRV_CPU_VBLANK_INT(genesis_interrupt, 1) /* upto 224 int's per frame */
 
-static struct MachineDriver machine_driver_genesis =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			53693100 /7 ,	/* 8 Mhz..ish */
-			genesis_readmem,genesis_writemem,0,0, /* zeros are ioport read/write */
-			genesis_interrupt,1	/* up to 224 interrupts per frame */
-		},
-	 	{
-	 		CPU_Z80 | CPU_AUDIO_CPU,
-	 		53693100 / 15, /* 4 Mhz..ish */
-	 		genesis_s_readmem,genesis_s_writemem,0,writeport,
-	 		genesis_s_interrupt,1
-	 	}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 80 CPU slices per frame */
-	genesis_init_machine,
-	0,
+	MDRV_CPU_ADD_TAG("sound", Z80, 53693100 / 15) /* 4Mhz..ish */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(genesis_s_readmem, genesis_s_writemem)
+	MDRV_CPU_PORTS(0, writeport)
+	MDRV_CPU_VBLANK_INT(genesis_s_interrupt, 1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10) /* 80 CPU slices per frame */
+
+	MDRV_MACHINE_INIT(genesis)
+
 	/* video hardware */
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	0,/*gfxdecodeinfo,*/
-	64,64/sizeof(unsigned short), /* genesis uses 4 color schemes of 16 colors each, 0 of each bank is transparent*/
-	genesis_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER /*| VIDEO_MODIFIES_PALETTE*/)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(0)
+	MDRV_PALETTE_LENGTH(64) /* 4 color schemes of 16 colors each, 0 of each bank is transparent*/
+	MDRV_COLORTABLE_LENGTH(64 / sizeof(unsigned short))
 
-	VIDEO_TYPE_RASTER /*| VIDEO_MODIFIES_PALETTE*/,
-	0,
-	genesis_vh_start,
-	genesis_vh_stop,
-	genesis_vh_screenrefresh,
+	MDRV_PALETTE_INIT(genesis)
+	MDRV_VIDEO_START(genesis)
+	MDRV_VIDEO_STOP(genesis)
+	MDRV_VIDEO_UPDATE(genesis)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
- 			SOUND_YM2612,
-			&ym2612_interface
-		},
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
-
+	MDRV_SOUND_ADD(YM2612, ym2612_interface)
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 ROM_START(genesis)
 	ROM_REGION(0x415000,REGION_CPU1,0)
