@@ -274,32 +274,6 @@ void sc61860_set_irq_callback(int (*callback)(int))
 {
 }
 
-void sc61860_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file,"sc61860",cpu,"PC",&sc61860.pc,2);
-	state_save_UINT16(file,"sc61860",cpu,"DP",&sc61860.dp,2);
-	state_save_UINT8(file,"sc61860",cpu,"P",&sc61860.p,1);
-	state_save_UINT8(file,"sc61860",cpu,"Q",&sc61860.q,1);
-	state_save_UINT8(file,"sc61860",cpu,"R",&sc61860.r,1);
-//	state_save_UINT8(file,"sc61860",cpu,"C",&sc61860.carry,1);
-//	state_save_UINT8(file,"sc61860",cpu,"Z",&sc61860.zero,1);
-	// internal ram
-}
-
-void sc61860_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file,"sc61860",cpu,"PC",&sc61860.pc,2);
-	state_load_UINT16(file,"sc61860",cpu,"DP",&sc61860.dp,2);
-	state_load_UINT8(file,"sc61860",cpu,"P",&sc61860.p,1);
-	state_load_UINT8(file,"sc61860",cpu,"Q",&sc61860.q,1);
-	state_load_UINT8(file,"sc61860",cpu,"R",&sc61860.r,1);
-//	state_load_UINT8(file,"sc61860",cpu,"C",&sc61860.carry,1);
-//	state_load_UINT8(file,"sc61860",cpu,"Z",&sc61860.zero,1);
-	// internal ram
-}
-
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/

@@ -37,7 +37,7 @@
  *	REGISTER ENUMERATION
  ***************************************************************************************************/
 
-enum 
+enum
 {
 	ARM_OP=1, ARM_Q1, ARM_Q2, ARM_PSW,
 	ARM_R0, ARM_R1, ARM_R2, ARM_R3, ARM_R4, ARM_R5, ARM_R6, ARM_R7,
@@ -45,7 +45,7 @@ enum
 	ARM_FR8, ARM_FR9, ARM_FR10, ARM_FR11, ARM_FR12, ARM_FR13, ARM_FR14,
 	ARM_IR13, ARM_IR14, ARM_SR13, ARM_SR14
 };
-	
+
 
 /****************************************************************************************************
  *	INTERRUPT CONSTANTS
@@ -66,6 +66,7 @@ extern int arm_ICount;
  *	PUBLIC FUNCTIONS
  ***************************************************************************************************/
 
+extern void arm_init(void);
 extern void arm_reset(void *param);
 extern void arm_exit(void);
 extern int arm_execute(int cycles);

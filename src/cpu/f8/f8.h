@@ -35,6 +35,7 @@ enum {
 
 extern int f8_icount;				 /* cycle count */
 
+extern void f8_init(void);
 extern void f8_reset (void *param); 		 /* Reset registers to the initial values */
 extern void f8_exit  (void);				 /* Shut down CPU core */
 extern int	f8_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */

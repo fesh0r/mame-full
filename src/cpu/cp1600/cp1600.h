@@ -36,6 +36,7 @@ enum {
 
 extern int cp1600_icount;				 /* cycle count */
 
+extern void cp1600_init(void);
 extern void cp1600_reset (void *param); 		 /* Reset registers to the initial values */
 extern void cp1600_exit  (void);				 /* Shut down CPU core */
 extern int	cp1600_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */
