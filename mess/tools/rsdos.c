@@ -237,7 +237,7 @@ static int rsdos_diskimage_init(STREAM *f, IMAGE **outimg)
 	}
 
 	img->granule_count = (tracks - 1) * 2;
-	img->granulemap = malloc(img->granule_count * sizeof(unsigned char));
+	img->granulemap = malloc(img->granule_count);
 	if (!img->granulemap) {
 		err = IMGTOOLERR_OUTOFMEMORY;
 		goto error;
@@ -249,7 +249,7 @@ static int rsdos_diskimage_init(STREAM *f, IMAGE **outimg)
 	}
 
 
-	if (stream_read(f, img->granulemap, sizeof(img->granulemap)) != sizeof(img->granulemap)) {
+	if (stream_read(f, img->granulemap, img->granule_count) != img->granule_count) {
 		err = IMGTOOLERR_READERROR;
 		goto error;
 	}

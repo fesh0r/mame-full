@@ -50,11 +50,6 @@ static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
 			lastunnamed = i + 1;
 		}
 		else {
-			if (i < minunnamed)
-				goto error; /* Too few unnamed */
-			if (optpos >= optcount)
-				goto error; /* Too many */
-
 			/* Named */
 			name = argv[i] + 2;
 			s = strchr(name, '=');
@@ -75,6 +70,11 @@ static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
 			}
 			else {
 				/* Other named option */
+				if (i < minunnamed)
+					goto error; /* Too few unnamed */
+				if (optpos >= optcount)
+					goto error; /* Too many */
+
 				opts[optpos].name = name;
 				opts[optpos].value = value;
 				optpos++;
@@ -237,12 +237,20 @@ static int cmd_get(struct command *c, int argc, char *argv[])
 {
 	int err;
 	IMAGE *img;
+	char *newfname;
+	int unnamedargs;
+	FILTERMODULE filter;
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto error;
 
-	err = img_getfile(img, argv[2], (argc == 4) ? argv[3] : NULL, NULL);
+	unnamedargs = parse_options(argc, argv, 3, 4, NULL, 0, &filter);
+	if (unnamedargs < 0)
+		return -1;
+	newfname = (unnamedargs == 4) ? argv[3] : NULL;
+
+	err = img_getfile(img, argv[2], newfname, filter);
 	img_close(img);
 	if (err)
 		goto error;
@@ -290,12 +298,17 @@ static int cmd_getall(struct command *c, int argc, char *argv[])
 	IMAGE *img;
 	IMAGEENUM *imgenum;
 	imgtool_dirent ent;
-	FILTERMODULE filter = NULL;
+	FILTERMODULE filter;
+	int unnamedargs;
 	char buf[128];
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto error;
+
+	unnamedargs = parse_options(argc, argv, 2, 2, NULL, 0, &filter);
+	if (unnamedargs < 0)
+		return -1;
 
 	err = img_beginenum(img, &imgenum);
 	if (err) {
@@ -324,7 +337,7 @@ static int cmd_getall(struct command *c, int argc, char *argv[])
 	return 0;
 
 error:
-	reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
+	reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
 	return -1;
 }
 

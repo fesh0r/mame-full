@@ -115,7 +115,8 @@ struct filter_module {
 	const char *longname;
 	void *(*calcreadparam)(const struct ImageModule *imgmod);
 	void *(*calcwriteparam)(const struct ImageModule *imgmod);
-	int (*filterproc)(struct filter_info *fi, void *buf, int buflen);
+	int (*filterreadproc)(struct filter_info *fi, void *buf, int buflen);
+	int (*filterwriteproc)(struct filter_info *fi, void *buf, int buflen);
 	int statesize;
 };
 

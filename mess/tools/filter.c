@@ -4,6 +4,7 @@
 
 struct filter_instance {
 	FILTERMODULE module;
+	int (*filterproc)(struct filter_info *fi, void *buf, int buflen);
 	void *filterparam;
 	void *bufferbase;
 	UINT8 *buffer;
@@ -16,7 +17,6 @@ struct filter_instance {
 FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose)
 {
 	int instancesize;
-	void *param;
 	struct filter_instance *instance;
 
 	instancesize = sizeof(struct filter_instance) - sizeof(int) + filter->statesize;
@@ -24,24 +24,27 @@ FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int p
 	if (!instance)
 		return NULL;
 
+	memset(instance, 0, instancesize);
+
 	switch(purpose) {
 	case PURPOSE_READ:
-		param = filter->calcreadparam(imgmod);
+		instance->filterparam = filter->calcreadparam(imgmod);
+		instance->filterproc = filter->filterreadproc;
 		break;
 
 	case PURPOSE_WRITE:
-		param = filter->calcwriteparam(imgmod);
+		instance->filterparam = filter->calcwriteparam(imgmod);
+		instance->filterproc = filter->filterwriteproc;
 		break;
 
 	default:
 		assert(0);
-		param = NULL;
 		break;
 	};
 
-	memset(instance, 0, instancesize);
+	assert(instance->filterproc);
+
 	instance->module = filter;
-	instance->filterparam = param;
 	return (FILTER *) instance;
 }
 
@@ -67,7 +70,7 @@ int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen)
 	fi.filterparam = instance->filterparam;
 	fi.internalparam = (void *) s;
 
-	return instance->module->filterproc(&fi, buf, buflen);
+	return instance->filterproc(&fi, buf, buflen);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -155,7 +158,7 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 
 	while (sz && (buflen > 0)) {
 		sz = stream_read(s, localbuffer, MIN(buflen, sizeof(localbuffer) / sizeof(localbuffer[0])));
-		instance->module->filterproc(&fi, localbuffer, sz);
+		instance->filterproc(&fi, localbuffer, sz);
 		buflen -= sz;
 	}
 
@@ -197,7 +200,7 @@ int filter_readintobuffer(FILTER *f, STREAM *s)
 
 	do {
 		sz = stream_read(s, localbuffer, sizeof(localbuffer) / sizeof(localbuffer[0]));
-		instance->module->filterproc(&fi, localbuffer, sz);
+		instance->filterproc(&fi, localbuffer, sz);
 	}
 	while(sz > 0);
 
@@ -213,10 +216,14 @@ int filter_readintobuffer(FILTER *f, STREAM *s)
 /* ----------------------------------------------------------------------- */
 
 extern struct filter_module filter_eoln;
+extern struct filter_module filter_cocobas;
+extern struct filter_module filter_dragonbas;
 
 const struct filter_module *filters[] =
 {
 	&filter_eoln,
+	&filter_cocobas,
+	&filter_dragonbas,
 	NULL
 };
 

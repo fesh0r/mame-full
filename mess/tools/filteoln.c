@@ -63,5 +63,6 @@ struct filter_module filter_eoln =
 	filter_eoln_calcreadparam,
 	filter_eoln_calcwriteparam,
 	filter_eoln_proc,
+	filter_eoln_proc,
 	sizeof(struct filter_eoln_state)
 };
