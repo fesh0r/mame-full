@@ -1563,6 +1563,8 @@ dtype name##_dword(offs_t address)														\
 
 /* weird handler for pdp 1 */
 READBYTE(data8_t, cpu_readmem16_18,	TYPE_8BIT,	   18)
+#define cpu_readmem16_18_word(offset)	((data16_t) 0)	/* never used, so we use this to silently \
+												save the trouble of compiling this function */
 READLONG(data32_t, cpu_readmem16_18,	TYPE_32BIT_BE,	   18, ALWAYS_ALIGNED)
 
 
@@ -1854,6 +1856,8 @@ void name##_dword(offs_t address,dtype data)											\
 
 /* weird handler for pdp 1 */
 WRITEBYTE(data8_t, cpu_writemem16_18,	TYPE_8BIT,	   18)
+#define cpu_writemem16_18_word(offset, data)	/* never used, so we use this to silently \
+												save the trouble of compiling this function */
 WRITELONG(data32_t, cpu_writemem16_18,	TYPE_32BIT_BE,	   18, ALWAYS_ALIGNED)
 
 
