@@ -1,6 +1,8 @@
 #ifndef __SVISION_H_
 #define __SVISION_H_
 
+#include "driver.h"
+
 /*
   this shows the interface that your files offer
   (the only exception is your GAME/CONS/COMP structure!)
