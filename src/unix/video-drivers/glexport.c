@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "png.h"
+#include "../../png.h"
 #include "glmame.h"
 #include <stdarg.h>
 
