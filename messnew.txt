@@ -32,7 +32,7 @@ System Driver Changes:
 - [TI99] Several behind-the-scenes changes to support ti-99/8 emulation
   (which is not 100% working and disabled in MESS builds but implemented
   in source code).  Hopefully, there will be no change in functionality in
-  the various TI-99/4(a) drivers.
+  the various TI-99/4(a) drivers. [Raphael Nabet]
   
 - [VECTREX] Fixed a bug that prevented the default mine.art file from being
   loaded if no other artwork was found. [Nate Woods]
@@ -48,7 +48,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-- [TI99] Added preliminay support for HD images. [Raphael Nabet]
+- [TI99] Added support for HD images. [Raphael Nabet]
+- [MAC] Added preliminary support for MFS images. [Raphael Nabet]
 
 Source Changes:
 ---------------
