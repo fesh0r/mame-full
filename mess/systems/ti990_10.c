@@ -7,9 +7,9 @@
 TODO :
 * emulate TILINE fully: timings, tiline timeout, possibly memory error
 * finish tape emulation (write support)
-* finish disk emulation (support other disk geometries)
 * add additionnal devices as need appears (931 VDT, FD800, card reader, ASR/KSR, printer)
 * emulate 990/10A and 990/12 CPUs?
+* find out why the computer locks when executing ALGS and BASIC/COBOL/PASCAL installation
 */
 
 /*
