@@ -6,7 +6,7 @@ TARGET = mame
 # TARGET = tiny
 
 # uncomment next line to include the debugger
-DEBUG = 1
+# DEBUG = 1
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -113,7 +113,7 @@ endif
 all:	$(EMULATOR) extra
 
 IMGTOOL_OBJS = $(OBJ)/mess/$(OS)/dirio.o
-INCLUDE_PATH = -Isrc -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 # include the various .mak files
 include src/core.mak
