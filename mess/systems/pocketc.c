@@ -268,6 +268,15 @@ INPUT_PORTS_START( pc1401 )
 	PORT_DIPSETTING( 0x00, "2KB" )
 	PORT_DIPSETTING( 0x40, "PC1401(4KB)" )
 	PORT_DIPSETTING( 0x80, "PC1402(10KB)" )
+    PORT_DIPNAME   ( 7, 2, "Contrast")
+	PORT_DIPSETTING( 0, "0/Low" )
+	PORT_DIPSETTING( 1, "1" )
+	PORT_DIPSETTING( 2, "2" )
+	PORT_DIPSETTING( 3, "3" )
+	PORT_DIPSETTING( 4, "4" )
+	PORT_DIPSETTING( 5, "5" )
+	PORT_DIPSETTING( 6, "6" )
+	PORT_DIPSETTING( 7, "7/High" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pc1350 )
@@ -344,26 +353,33 @@ INPUT_PORTS_START( pc1350 )
 	DIPS_HELPER( 0x10, "N", KEYCODE_N, CODE_NONE)
 	DIPS_HELPER( 0x08, "M", KEYCODE_M, CODE_NONE)
 	DIPS_HELPER( 0x04, "SPC", KEYCODE_SPACE, CODE_NONE)
-	DIPS_HELPER( 0x02, "ENTER P<>NP", KEYCODE_ENTER, KEYCODE_ENTER_PAD)
-	PORT_START
-	PORT_START
+	DIPS_HELPER( 0x02, "ENTER P<->NP", KEYCODE_ENTER, KEYCODE_ENTER_PAD)
 	PORT_START
     PORT_DIPNAME   ( 0xc0, 0x80, "RAM")
 	PORT_DIPSETTING( 0x00, "4KB" )
 	PORT_DIPSETTING( 0x40, "12KB" )
 	PORT_DIPSETTING( 0x80, "20KB" )
+    PORT_DIPNAME   ( 7, 2, "Contrast")
+	PORT_DIPSETTING( 0, "0/Low" )
+	PORT_DIPSETTING( 1, "1" )
+	PORT_DIPSETTING( 2, "2" )
+	PORT_DIPSETTING( 3, "3" )
+	PORT_DIPSETTING( 4, "4" )
+	PORT_DIPSETTING( 5, "5" )
+	PORT_DIPSETTING( 6, "6" )
+	PORT_DIPSETTING( 7, "7/High" )
 INPUT_PORTS_END
 
 static struct GfxLayout pc1401_charlayout =
 {
-        2,14,
+        2,21,
         128,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0,0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 0 },
+        { 0,0 },
         /* y offsets */
-        { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7
+        { 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7
         },
         1*8
 };
@@ -385,12 +401,24 @@ static struct GfxLayout pc1350_charlayout =
 static struct GfxDecodeInfo pc1401_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     0, 2 },
 	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     2, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     4, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     6, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     8, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     10, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     12, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     14, 2 },
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo pc1350_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     0, 2 },
 	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     2, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     4, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     6, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     8, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     10, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     12, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     14, 2 },
     { -1 } /* end of array */
 };
 
@@ -428,7 +456,7 @@ static struct MachineDriver machine_driver_pc1401 =
         }
 	},
 	/* frames per second, VBL duration */
-	64, DEFAULT_60HZ_VBLANK_DURATION,
+	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
 	1,				/* single CPU */
 	pc1401_machine_init,
 	pc1401_machine_stop,
@@ -438,7 +466,7 @@ static struct MachineDriver machine_driver_pc1401 =
 	   resolution depends on the dots of the lcd
 	   (lcd dot displayed as 2x2 pixel) */
 
-	592, 252, { 0, 592 - 1, 0, 252 - 1},
+	594, 273, { 0, 592 - 1, 0, 273 - 1},
 //	640, 273, { 0, 640 - 1, 0, 273 - 1},
 	pc1401_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,
@@ -479,7 +507,7 @@ static struct MachineDriver machine_driver_pc1350 =
         }
 	},
 	/* frames per second, VBL duration */
-	64, DEFAULT_60HZ_VBLANK_DURATION,
+	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
 	1,				/* single CPU */
 	pc1350_machine_init,
 	pc1350_machine_stop,
@@ -489,7 +517,7 @@ static struct MachineDriver machine_driver_pc1350 =
 	   resolution depends on the dots of the lcd
 	   (lcd dot displayed as 2x2 pixel) */
 
-	592, 252, { 0, 592 - 1, 0, 252 - 1},
+	640, 252, { 0, 640 - 1, 0, 252 - 1},
 //	640, 255, { 0, 640 - 1, 0, 255 - 1},
 	pc1350_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,

@@ -21,7 +21,7 @@ extern WRITE_HANDLER(pc1350_lcd_write);
 
 int pc1350_keyboard_line_r(void);
 unsigned char pc1401_palette[248][3];
-unsigned short pc1401_colortable[2][2];
+unsigned short pc1401_colortable[8][2];
 void pocketc_init_colors (unsigned char *sys_palette,
 						  unsigned short *sys_colortable,
 						  const unsigned char *color_prom);
@@ -121,6 +121,7 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
 #define RAM4K (input_port_10_r(0)&0x80)==0x40
 #define RAM10K (input_port_10_r(0)&0x80)==0x80
+#define CONTRAST (input_port_10_r(0)&7)
 
 #define PC1350_KEY_OFF input_port_0_r(0)&0x80
 #define PC1350_KEY_DOWN input_port_0_r(0)&0x40
@@ -193,5 +194,6 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 #define PC1350_KEY_SPACE input_port_7_r(0)&4
 #define PC1350_KEY_ENTER input_port_7_r(0)&2
 
-#define PC1350_RAM12K (input_port_10_r(0)&0x80)==0x40
-#define PC1350_RAM20K (input_port_10_r(0)&0x80)==0x80
+#define PC1350_RAM12K (input_port_8_r(0)&0x80)==0x40
+#define PC1350_RAM20K (input_port_8_r(0)&0x80)==0x80
+#define PC1350_CONTRAST (input_port_8_r(0)&7)
