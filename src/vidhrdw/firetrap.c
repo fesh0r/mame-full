@@ -46,8 +46,6 @@ static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < 256;i++)
@@ -73,33 +71,6 @@ void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 		color_prom++;
 	}
-
-	/* reserve the last color for the transparent pen (none of the game colors can have */
-	/* these RGB components) */
-	*(palette++) = 1;
-	*(palette++) = 1;
-	*(palette++) = 1;
-
-
-	/* characters use colors 0-63 */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
-
-	/* background #1 tiles use colors 128-191 */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-	{
-		if (i % Machine->gfx[1]->color_granularity == 0)
-			COLOR(1,i) = 256;	/* transparent */
-		else COLOR(1,i) = i + 128;
-	}
-
-	/* background #2 tiles use colors 192-255 */
-	for (i = 0;i < TOTAL_COLORS(5);i++)
-		COLOR(5,i) = i + 192;
-
-	/* sprites use colors 64-127 */
-	for (i = 0;i < TOTAL_COLORS(9);i++)
-		COLOR(9,i) = i + 64;
 }
 
 
@@ -111,19 +82,12 @@ void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 UINT32 get_fg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
-	return col * num_rows + (num_rows - 1 - row);
+	return (row ^ 0x1f) + (col << 5);
 }
 
 UINT32 get_bg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
-	int offset;
-
-	offset = (col & 0x0f) * 16 + (15 - (row & 0x0f));
-
-	if (row & 0x10)  offset |= 0x200;
-	if (col & 0x10)  offset |= 0x400;
-
-	return offset;
+	return ((row & 0x0f) ^ 0x0f) | ((col & 0x0f) << 4) | ((row & 0x10) << 4) | ((col & 0x10) << 5);
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -139,9 +103,10 @@ INLINE void get_bg_tile_info(int tile_index, unsigned char *bgvideoram, int gfx_
 {
 	int code, color;
 
+	tile_index = (tile_index & 0x0ff) | ((tile_index & 0x300) << 1);
 	code = bgvideoram[tile_index];
 	color = bgvideoram[tile_index + 0x100];
-	SET_TILE_INFO(gfx_region + (color & 0x03), code, (color & 0x30) >> 4);
+	SET_TILE_INFO(gfx_region, code + ((color & 0x03) << 8), (color & 0x30) >> 4);
 	tile_info.flags = TILE_FLIPXY((color & 0x0c) >> 2);
 }
 
@@ -152,7 +117,7 @@ static void get_bg1_tile_info(int tile_index)
 
 static void get_bg2_tile_info(int tile_index)
 {
-	get_bg_tile_info(tile_index, firetrap_bg2videoram, 5);
+	get_bg_tile_info(tile_index, firetrap_bg2videoram, 2);
 }
 
 
@@ -164,15 +129,15 @@ static void get_bg2_tile_info(int tile_index)
 
 int firetrap_vh_start(void)
 {
-	fg_tilemap  = tilemap_create(get_fg_tile_info, get_fg_memory_offset,TILEMAP_TRANSPARENT,       8, 8,32,32);
-	bg1_tilemap = tilemap_create(get_bg1_tile_info,get_bg_memory_offset,TILEMAP_TRANSPARENT_COLOR,16,16,32,32);
-	bg2_tilemap = tilemap_create(get_bg2_tile_info,get_bg_memory_offset,TILEMAP_OPAQUE,           16,16,32,32);
+	fg_tilemap  = tilemap_create(get_fg_tile_info, get_fg_memory_offset,TILEMAP_TRANSPARENT, 8, 8,32,32);
+	bg1_tilemap = tilemap_create(get_bg1_tile_info,get_bg_memory_offset,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg2_tilemap = tilemap_create(get_bg2_tile_info,get_bg_memory_offset,TILEMAP_OPAQUE,     16,16,32,32);
 
 	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
 		return 1;
 
 	fg_tilemap->transparent_pen = 0;
-	bg1_tilemap->transparent_pen = 256;
+	bg1_tilemap->transparent_pen = 0;
 
 	return 0;
 }
@@ -193,13 +158,13 @@ WRITE_HANDLER( firetrap_fgvideoram_w )
 WRITE_HANDLER( firetrap_bg1videoram_w )
 {
 	firetrap_bg1videoram[offset] = data;
-	tilemap_mark_tile_dirty(bg1_tilemap,offset & 0x6ff);
+	tilemap_mark_tile_dirty(bg1_tilemap,(offset & 0x0ff) | ((offset & 0x600) >> 1));
 }
 
 WRITE_HANDLER( firetrap_bg2videoram_w )
 {
 	firetrap_bg2videoram[offset] = data;
-	tilemap_mark_tile_dirty(bg2_tilemap,offset & 0x6ff);
+	tilemap_mark_tile_dirty(bg2_tilemap,(offset & 0x0ff) | ((offset & 0x600) >> 1));
 }
 
 
@@ -272,13 +237,13 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		{
 			if (flip_screen) sy -= 16;
 
-			drawgfx(bitmap,Machine->gfx[9],
+			drawgfx(bitmap,Machine->gfx[3],
 					code & ~1,
 					color,
 					flipx,flipy,
 					sx,flipy ? sy : sy + 16,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
-			drawgfx(bitmap,Machine->gfx[9],
+			drawgfx(bitmap,Machine->gfx[3],
 					code | 1,
 					color,
 					flipx,flipy,
@@ -286,13 +251,13 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			/* redraw with wraparound */
-			drawgfx(bitmap,Machine->gfx[9],
+			drawgfx(bitmap,Machine->gfx[3],
 					code & ~1,
 					color,
 					flipx,flipy,
 					sx - 256,flipy ? sy : sy + 16,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
-			drawgfx(bitmap,Machine->gfx[9],
+			drawgfx(bitmap,Machine->gfx[3],
 					code | 1,
 					color,
 					flipx,flipy,
@@ -301,7 +266,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		}
 		else
 		{
-			drawgfx(bitmap,Machine->gfx[9],
+			drawgfx(bitmap,Machine->gfx[3],
 					code,
 					color,
 					flipx,flipy,
@@ -309,7 +274,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			/* redraw with wraparound */
-			drawgfx(bitmap,Machine->gfx[9],
+			drawgfx(bitmap,Machine->gfx[3],
 					code,
 					color,
 					flipx,flipy,

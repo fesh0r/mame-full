@@ -299,51 +299,45 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 3, 2, 1, 0, 0x1000*8+3, 0x1000*8+2, 0x1000*8+1, 0x1000*8+0 },
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ 0, 4 },
+	{ 3, 2, 1, 0, RGN_FRAC(1,2)+3, RGN_FRAC(1,2)+2, RGN_FRAC(1,2)+1, RGN_FRAC(1,2)+0 },
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8
 };
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 characters */
-	256,	/* 256 characters */
-	4,	/* 4 bits per pixel */
-	{ 0, 4, 0x8000*8+0, 0x8000*8+4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 3, 2, 1, 0, 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0,
-			16*8+3, 16*8+2, 16*8+1, 16*8+0, 16*8+0x2000*8+3, 16*8+0x2000*8+2, 16*8+0x2000*8+1, 16*8+0x2000*8+0 },
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+	{ 3, 2, 1, 0, RGN_FRAC(1,4)+3, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+0,
+			16*8+3, 16*8+2, 16*8+1, 16*8+0, RGN_FRAC(1,4)+16*8+3, RGN_FRAC(1,4)+16*8+2, RGN_FRAC(1,4)+16*8+1, RGN_FRAC(1,4)+16*8+0 },
 	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
 			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	1024,	/* 1024 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1024*16*16, 2*1024*16*16, 3*1024*16*16 },	/* the bitplanes are separated */
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
 			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
 			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &charlayout,                0, 16 },
-	{ REGION_GFX2, 0x00000, &tilelayout,             16*4,  4 },
-	{ REGION_GFX2, 0x04000, &tilelayout,             16*4,  4 },
-	{ REGION_GFX2, 0x10000, &tilelayout,             16*4,  4 },
-	{ REGION_GFX2, 0x14000, &tilelayout,             16*4,  4 },
-	{ REGION_GFX3, 0x00000, &tilelayout,        16*4+4*16,  4 },
-	{ REGION_GFX3, 0x04000, &tilelayout,        16*4+4*16,  4 },
-	{ REGION_GFX3, 0x10000, &tilelayout,        16*4+4*16,  4 },
-	{ REGION_GFX3, 0x14000, &tilelayout,        16*4+4*16,  4 },
-	{ REGION_GFX4, 0x00000, &spritelayout, 16*4+4*16+4*16,  4 },
+	{ REGION_GFX1, 0, &charlayout,   0x00, 16 },	/* colors 0x00-0x3f */
+	{ REGION_GFX2, 0, &tilelayout,   0x80,  4 },	/* colors 0x80-0xbf */
+	{ REGION_GFX3, 0, &tilelayout,   0xc0,  4 },	/* colors 0xc0-0xff */
+	{ REGION_GFX4, 0, &spritelayout, 0x40,  4 },	/* colors 0x40-0x7f */
 	{ -1 } /* end of array */
 };
 
@@ -393,7 +387,7 @@ static struct MachineDriver machine_driver_firetrap =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256+1,16*4+4*16+4*16+4*16,
+	256,256,
 	firetrap_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -436,23 +430,47 @@ ROM_START( firetrap )
 
 	/* there's also a protected 8751 microcontroller with ROM onboard */
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x46721930 )	/* characters */
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x46721930 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di06.bin",     0x00000, 0x8000, 0x441d9154 )	/* tiles */
-	ROM_LOAD( "di07.bin",     0x08000, 0x8000, 0xef0a7e23 )
-	ROM_LOAD( "di04.bin",     0x10000, 0x8000, 0x8e6e7eec )
-	ROM_LOAD( "di05.bin",     0x18000, 0x8000, 0xec080082 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "di06.bin",     0x00000, 0x2000, 0x441d9154 )
+	ROM_CONTINUE(             0x08000, 0x2000 )
+	ROM_CONTINUE(             0x02000, 0x2000 )
+	ROM_CONTINUE(             0x0a000, 0x2000 )
+	ROM_LOAD( "di04.bin",     0x04000, 0x2000, 0x8e6e7eec )
+	ROM_CONTINUE(             0x0c000, 0x2000 )
+	ROM_CONTINUE(             0x06000, 0x2000 )
+	ROM_CONTINUE(             0x0e000, 0x2000 )
+	ROM_LOAD( "di07.bin",     0x10000, 0x2000, 0xef0a7e23 )
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_CONTINUE(             0x12000, 0x2000 )
+	ROM_CONTINUE(             0x1a000, 0x2000 )
+	ROM_LOAD( "di05.bin",     0x14000, 0x2000, 0xec080082 )
+	ROM_CONTINUE(             0x1c000, 0x2000 )
+	ROM_CONTINUE(             0x16000, 0x2000 )
+	ROM_CONTINUE(             0x1e000, 0x2000 )
 
 	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di09.bin",     0x00000, 0x8000, 0xd11e28e8 )
-	ROM_LOAD( "di11.bin",     0x08000, 0x8000, 0x6424d5c3 )
-	ROM_LOAD( "di08.bin",     0x10000, 0x8000, 0xc32a21d8 )
-	ROM_LOAD( "di10.bin",     0x18000, 0x8000, 0x9b89300a )
+	ROM_LOAD( "di09.bin",     0x00000, 0x2000, 0xd11e28e8 )
+	ROM_CONTINUE(             0x08000, 0x2000 )
+	ROM_CONTINUE(             0x02000, 0x2000 )
+	ROM_CONTINUE(             0x0a000, 0x2000 )
+	ROM_LOAD( "di08.bin",     0x04000, 0x2000, 0xc32a21d8 )
+	ROM_CONTINUE(             0x0c000, 0x2000 )
+	ROM_CONTINUE(             0x06000, 0x2000 )
+	ROM_CONTINUE(             0x0e000, 0x2000 )
+	ROM_LOAD( "di11.bin",     0x10000, 0x2000, 0x6424d5c3 )
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_CONTINUE(             0x12000, 0x2000 )
+	ROM_CONTINUE(             0x1a000, 0x2000 )
+	ROM_LOAD( "di10.bin",     0x14000, 0x2000, 0x9b89300a )
+	ROM_CONTINUE(             0x1c000, 0x2000 )
+	ROM_CONTINUE(             0x16000, 0x2000 )
+	ROM_CONTINUE(             0x1e000, 0x2000 )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )	/* sprites */
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )
 	ROM_LOAD( "di13.bin",     0x08000, 0x8000, 0x869219da )
 	ROM_LOAD( "di14.bin",     0x10000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
@@ -473,23 +491,47 @@ ROM_START( firetpbl )
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
 	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ft0e.bin",     0x00000, 0x2000, 0xa584fc16 )	/* characters */
+	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "ft0e.bin",     0x00000, 0x2000, 0xa584fc16 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di06.bin",     0x00000, 0x8000, 0x441d9154 )	/* tiles */
-	ROM_LOAD( "di07.bin",     0x08000, 0x8000, 0xef0a7e23 )
-	ROM_LOAD( "di04.bin",     0x10000, 0x8000, 0x8e6e7eec )
-	ROM_LOAD( "di05.bin",     0x18000, 0x8000, 0xec080082 )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "di06.bin",     0x00000, 0x2000, 0x441d9154 )
+	ROM_CONTINUE(             0x08000, 0x2000 )
+	ROM_CONTINUE(             0x02000, 0x2000 )
+	ROM_CONTINUE(             0x0a000, 0x2000 )
+	ROM_LOAD( "di04.bin",     0x04000, 0x2000, 0x8e6e7eec )
+	ROM_CONTINUE(             0x0c000, 0x2000 )
+	ROM_CONTINUE(             0x06000, 0x2000 )
+	ROM_CONTINUE(             0x0e000, 0x2000 )
+	ROM_LOAD( "di07.bin",     0x10000, 0x2000, 0xef0a7e23 )
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_CONTINUE(             0x12000, 0x2000 )
+	ROM_CONTINUE(             0x1a000, 0x2000 )
+	ROM_LOAD( "di05.bin",     0x14000, 0x2000, 0xec080082 )
+	ROM_CONTINUE(             0x1c000, 0x2000 )
+	ROM_CONTINUE(             0x16000, 0x2000 )
+	ROM_CONTINUE(             0x1e000, 0x2000 )
 
 	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di09.bin",     0x00000, 0x8000, 0xd11e28e8 )
-	ROM_LOAD( "di11.bin",     0x08000, 0x8000, 0x6424d5c3 )
-	ROM_LOAD( "di08.bin",     0x10000, 0x8000, 0xc32a21d8 )
-	ROM_LOAD( "di10.bin",     0x18000, 0x8000, 0x9b89300a )
+	ROM_LOAD( "di09.bin",     0x00000, 0x2000, 0xd11e28e8 )
+	ROM_CONTINUE(             0x08000, 0x2000 )
+	ROM_CONTINUE(             0x02000, 0x2000 )
+	ROM_CONTINUE(             0x0a000, 0x2000 )
+	ROM_LOAD( "di08.bin",     0x04000, 0x2000, 0xc32a21d8 )
+	ROM_CONTINUE(             0x0c000, 0x2000 )
+	ROM_CONTINUE(             0x06000, 0x2000 )
+	ROM_CONTINUE(             0x0e000, 0x2000 )
+	ROM_LOAD( "di11.bin",     0x10000, 0x2000, 0x6424d5c3 )
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_CONTINUE(             0x12000, 0x2000 )
+	ROM_CONTINUE(             0x1a000, 0x2000 )
+	ROM_LOAD( "di10.bin",     0x14000, 0x2000, 0x9b89300a )
+	ROM_CONTINUE(             0x1c000, 0x2000 )
+	ROM_CONTINUE(             0x16000, 0x2000 )
+	ROM_CONTINUE(             0x1e000, 0x2000 )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )	/* sprites */
+	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )
 	ROM_LOAD( "di13.bin",     0x08000, 0x8000, 0x869219da )
 	ROM_LOAD( "di14.bin",     0x10000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
@@ -501,5 +543,5 @@ ROM_END
 
 
 
-GAMEX(1986, firetrap, 0,        firetrap, firetrap, 0, ROT90, "Data East USA", "Fire Trap", GAME_NOT_WORKING )
+GAMEX(1986, firetrap, 0,        firetrap, firetrap, 0, ROT90, "Data East USA", "Fire Trap", GAME_UNEMULATED_PROTECTION )
 GAME( 1986, firetpbl, firetrap, firetrap, firetrap, 0, ROT90, "bootleg", "Fire Trap (Japan bootleg)" )
