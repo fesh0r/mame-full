@@ -60,29 +60,29 @@ int twincobr_vh_start(void)
 void twincobr_vh_stop(void)
 {
 }
-void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap)
+void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 static int base = 0;
 static int bose = 0;
 if (osd_key_pressed(OSD_KEY_Z))
 {
-	while (osd_key_pressed(OSD_KEY_Z));
+	while (osd_key_pressed(OSD_KEY_Z)) ;
 	base -= 0x400;
 }
 if (osd_key_pressed(OSD_KEY_X))
 {
-	while (osd_key_pressed(OSD_KEY_X));
+	while (osd_key_pressed(OSD_KEY_X)) ;
 	base += 0x400;
 }
 if (osd_key_pressed(OSD_KEY_C))
 {
-	while (osd_key_pressed(OSD_KEY_C));
+	while (osd_key_pressed(OSD_KEY_C)) ;
 	bose -= 256;
 }
 if (osd_key_pressed(OSD_KEY_V))
 {
-	while (osd_key_pressed(OSD_KEY_V));
+	while (osd_key_pressed(OSD_KEY_V)) ;
 	bose += 256;
 }
 
@@ -382,7 +382,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -473,9 +473,14 @@ ROM_END
 
 struct GameDriver twincobr_driver =
 {
-	"Twin Cobra",
+	__FILE__,
+	0,
 	"twincobr",
+	"Twin Cobra",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	twincobr_rom,

@@ -20,7 +20,6 @@ short layer_dirty_maxx,layer_dirty_maxy;
 				/* coordinates of the top-left corner of the bottom-right block */
 
 
-
 static int readbit(const unsigned char *src,int bitnum)
 {
 	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
@@ -522,7 +521,6 @@ loop1:
 		else
 		{
 			/* totally unaligned case */
-loop2:
 			while (layer->dirty[block] == TILE_DIRTY ||
 					layer->dirty[block + (1 << layer_dirty_shift)] == TILE_DIRTY)
 			{
@@ -572,7 +570,7 @@ int layer_is_line_dirty(struct GfxLayer *layer,int miny)
 
 
 /* check if the given tile is totally covered by tiles in the above layers */
-static inline int is_tile_obscured(int layer_num,int minx,int miny)
+INLINE int is_tile_obscured(int layer_num,int minx,int miny)
 {
 	int i;
 
@@ -656,7 +654,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	DATA_SIZE *bm,*ebm,*eebm;
 	int flipx,flipy;
 	struct GfxLayer *layer = Machine->layer[layer_num];
-	int cols_to_copy;
+	int lines_to_copy,cols_to_copy;
 	int minx,maxx,miny,maxy;
 
 
@@ -721,6 +719,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 
 
 	cols_to_copy = (maxx - minx) / 8;
+	lines_to_copy = maxy - miny;
 
 	dy = (DATA_SIZE *)bitmap->line[1] - (DATA_SIZE *)bitmap->line[0];
 	bm = (DATA_SIZE *)bitmap->line[0] + dy * miny + minx;
@@ -738,7 +737,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	}
 
 	ebm = bm + cols_to_copy * dx;
-	eebm = ebm + (maxy - miny) * dy;
+	eebm = ebm + lines_to_copy * dy;
 
 	while (ebm != eebm)
 	{
@@ -1005,7 +1004,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	DATA_SIZE *bm,*ebm,*eebm;
 	int flipx,flipy;
 	struct GfxLayer *layer = Machine->layer[layer_num];
-	int cols_to_copy;
+	int lines_to_copy,cols_to_copy;
 	int minx,maxx,miny,maxy;
 
 
@@ -1070,6 +1069,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 
 
 	cols_to_copy = (maxx - minx) / 8;
+	lines_to_copy = maxy - miny;
 
 	dy = (DATA_SIZE *)bitmap->line[1] - (DATA_SIZE *)bitmap->line[0];
 	bm = (DATA_SIZE *)bitmap->line[0] + dy * miny + minx;
@@ -1087,7 +1087,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	}
 
 	ebm = bm + cols_to_copy * dx;
-	eebm = ebm + (maxy - miny) * dy;
+	eebm = ebm + lines_to_copy * dy;
 
 	while (ebm != eebm)
 	{
@@ -1910,14 +1910,17 @@ void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int max
 
 	for (y = miny & ~0x07;y <= maxy;y += 8)
 	{
-		layer_mark_blocks_dirty(layer,minx,y,(((maxx + 7) & 0x07) - (minx & 0x07)) / 8 + 1);
+		layer_mark_blocks_dirty(layer,minx,y,(((maxx + 7) & ~0x07) - (minx & ~0x07)) / 8 + 1);
 	}
 }
 
 void layer_mark_full_screen_dirty(void)
 {
 	int i;
+	extern int bitmap_dirty;	/* in mame.c */
 
+	/* mame.c passes this to the drivers (*vh_update)() */
+	bitmap_dirty = 1;
 
 	i = MAX_LAYERS - 1;
 	while (i >= 0 && Machine->layer[i] == 0) i--;	/* find the bottom layer */

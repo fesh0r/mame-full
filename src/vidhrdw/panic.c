@@ -113,6 +113,10 @@ void panic_vh_stop(void)
 
 void panic_videoram_w(int offset,int data)
 {
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if ((panic_videoram[offset] != data))
 	{
 	    panic_videoram[offset] = data;
@@ -297,7 +301,7 @@ void panic_videoram_w(int offset,int data)
 
 ***************************************************************************/
 
-void panic_vh_screenrefresh(struct osd_bitmap *bitmap)
+void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs, Sprite, Bank, Rotate;
 

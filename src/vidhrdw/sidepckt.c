@@ -32,10 +32,9 @@ static void sidepocket_drawsprites( struct osd_bitmap *bitmap ) {
 	}
 }
 
-void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-	static int base;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

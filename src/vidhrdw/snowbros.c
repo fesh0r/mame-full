@@ -9,66 +9,32 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *snowbros_paletteram;
+
 unsigned char *snowbros_spriteram;
 
 int snowbros_spriteram_size;
-int palettechanged;
-
-
-void snowbros_paletteram_w (int offset, int data)
-{
-	COMBINE_WORD_MEM (&snowbros_paletteram[offset], data);
-    palettechanged = 1;
-}
-
-int  snowbros_paletteram_r (int offset)
-{
-	return READ_WORD (&snowbros_paletteram[offset]);
-}
 
 
 /* Put in case screen can be optimised later */
 
 void snowbros_spriteram_w (int offset, int data)
 {
-  	COMBINE_WORD_MEM (&snowbros_spriteram[offset], data);
+  	COMBINE_WORD_MEM(&snowbros_spriteram[offset], data);
 }
 
 int  snowbros_spriteram_r (int offset)
 {
-	return READ_WORD (&snowbros_spriteram[offset]);
+	return READ_WORD(&snowbros_spriteram[offset]);
 }
 
-void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap)
+void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int x=0,y=0,offs;
 
-    /* Colour maps */
 
-	int pom,i;
+	/* recalc the palette if necessary */
+	palette_recalc ();
 
-    if (palettechanged)
-    {
-    	palettechanged = 0;
-
-	    for (pom = 0; pom < 16; pom++)
-	    {
-	        Machine->gfx[0]->colortable[pom*16] = Machine->pens[0];
-	        for (i = 1; i < 16; i++)
-	        {
-		        int palette = READ_WORD(&snowbros_paletteram[pom*32+i*2]);
-		        int red = palette & 31;
-		        int green = (palette >> 5) & 31;
-		        int blue = (palette >> 10) & 31;
-
-		        red = (red << 3) + (red >> 2);
-		        green = (green << 3) + (green >> 2);
-		        blue = (blue << 3) + (blue >> 2);
-		        setgfxcolorentry (Machine->gfx[0], pom*16+i, red, green, blue);
-	        }
-        }
-    }
 
     /*
      * Sprite Tile Format
@@ -127,7 +93,7 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(bitmap,Machine->gfx[0],
 				tile,
-				tilecolour >> 4,
+				(tilecolour & 0xf0) >> 4,
 				flip & 0x80, flip & 0x40,
 				x,y,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

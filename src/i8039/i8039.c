@@ -12,7 +12,7 @@
 #include "stdlib.h"
 #include "osd_dbg.h"
 #include "I8039.h"
-#include "mame.h"
+#include "driver.h"
 
 
 #define M_RDMEM(A)      I8039_RDMEM(A)
@@ -73,8 +73,8 @@ typedef void (*opcode_fn) (void);
 #define R7	intRAM[regPTR+7]
 
 
-inline void CLR (byte flag) { R.PSW &= ~flag; }
-inline void SET (byte flag) { R.PSW |= flag;  }
+INLINE void CLR (byte flag) { R.PSW &= ~flag; }
+INLINE void SET (byte flag) { R.PSW |= flag;  }
 
 
 /* Get next opcode argument and increment program counter */
@@ -307,7 +307,7 @@ static void jf0(void)        { byte i=M_RDMEM_OPCODE(); if (M_F0y) { R.PC.W = (R
 static void jf_1(void)       { byte i=M_RDMEM_OPCODE(); if (R.f1)  { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jnc(void)        { byte i=M_RDMEM_OPCODE(); if (M_Cn)  { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jc(void)         { byte i=M_RDMEM_OPCODE(); if (M_Cy)  { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jni(void)        { M_UNDEFINED(); }
+static void jni(void)        { byte i=M_RDMEM_OPCODE(); if (R.pending_irq == I8039_EXT_INT) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jnt_0(void)      { byte i=M_RDMEM_OPCODE(); if (!test_r(0))	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jt_0(void)       { byte i=M_RDMEM_OPCODE(); if (test_r(0))	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
 static void jnt_1(void)      { byte i=M_RDMEM_OPCODE(); if (!test_r(1))	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
@@ -386,7 +386,7 @@ static void orld_p7_a(void)  { port_w(7, port_r(7) | R.A ); }
 static void outl_bus_a(void) { bus_w(R.A); }
 static void outl_p1_a(void)  { port_w(1, R.A ); }
 static void outl_p2_a(void)  { port_w(2, R.A ); }
-static void ret(void)        { R.PC.W = ((pull() & 0x0f) << 8) | pull(); /*change_pc(R.PC.W);*/ }
+static void ret(void)        { R.PC.W = ((pull() & 0x0f) << 8); R.PC.W |= pull(); /*change_pc(R.PC.W);*/ }
 static void retr(void)
 {
 	byte i=pull();
@@ -529,7 +529,8 @@ void I8039_Reset (void)
 	R.A11ff   = R.A11     = 0;
 	R.timerON = R.countON = 0;
 	R.tirq_en = R.xirq_en = 0;
-	R.timerON = 1;
+	R.xirq_en=1;
+	R.timerON = 1;	/* Mario Bros. doesn't work without this */
 	R.masterClock = 0;
 }
 
@@ -605,18 +606,16 @@ int I8039_Execute(int cycles)
 	}
         R.pending_irq = I8039_IGNORE_INT;
 
-/*
 	#ifdef MAME_DEBUG
 	{
 	  extern int mame_debug;
 	  if (mame_debug) MAME_Debug();
 	}
 	#endif
-*/
 
 	opcode=M_RDOP(R.PC.W);
 
-//        if (errorlog) fprintf(errorlog, "I8039:  PC = %04x,  opcode = %02x\n", R.PC.W, opcode);
+/*        if (errorlog) fprintf(errorlog, "I8039:  PC = %04x,  opcode = %02x\n", R.PC.W, opcode); */
 
 	{	/* NS 971024 */
 		extern int previouspc;

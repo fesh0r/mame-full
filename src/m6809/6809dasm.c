@@ -15,7 +15,7 @@
 /* sriddle@ionet.net */
 #include <stdio.h>
 #include <strings.h>
-#include "m6809.h"
+#include "M6809.h"
 
 #ifndef TRUE
 #define TRUE         -1
@@ -375,7 +375,7 @@ int Dasm6809 (char *buffer, int pc)
 {
 	int i, j, k, page, opcode, numoperands, mode;
 	unsigned char operandarray[4];
-	unsigned char *opname;
+	char *opname;
 	int p = 0;
 
 	buffer[0] = 0;
@@ -432,7 +432,7 @@ int Dasm6809 (char *buffer, int pc)
 printoperands:
 	pc += p;
 {
-   int i, rel, pb, offset=0, reg, pb2;
+   int rel, pb, offset=0, reg, pb2;
    int comma;
    int printdollar;                  /* print a leading $? before address */
 
@@ -457,12 +457,12 @@ printoperands:
    {
       case REL:                                          /* 8-bit relative */
          rel = operandarray[0];
-         sprintf (buffer + strlen (buffer), hexstring ((short) (pc + ((rel < 128) ? rel : rel - 256))));
+         strcpy (buffer + strlen (buffer), hexstring ((short) (pc + ((rel < 128) ? rel : rel - 256))));
          break;
 
       case LREL:                                   /* 16-bit long relative */
          rel = (operandarray[0] << 8) + operandarray[1];
-         sprintf (buffer + strlen (buffer), hexstring (pc + ((rel < 32768) ? rel : rel - 65536)));
+         strcpy (buffer + strlen (buffer), hexstring (pc + ((rel < 32768) ? rel : rel - 65536)));
          break;
 
       case IND:                                  /* indirect- many flavors */
@@ -471,7 +471,16 @@ printoperands:
          pb2 = pb & 0x8f;
          if ((pb2 == 0x88) || (pb2 == 0x8c))
          {                    /* 8-bit offset */
-            offset = M6809_RDOP_ARG(pc+(p++));
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
+            /*  offset = M6809_RDOP_ARG(pc+(p++));      */
+
+            offset = M6809_RDOP_ARG(pc);
+            p++;
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
             if (offset > 127)                            /* convert to signed */
                offset = offset - 256;
             if (pb == 0x8c)
@@ -490,8 +499,18 @@ printoperands:
          }
          else if ((pb2 == 0x89) || (pb2 == 0x8d) || (pb2 == 0x8f))
          { /* 16-bit */
-            offset = M6809_RDOP_ARG(pc+(p++)) << 8;
-            offset += M6809_RDOP_ARG(pc+(p++));
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
+            /*  offset = M6809_RDOP_ARG(pc+(p++)) << 8; */
+            /*  offset += M6809_RDOP_ARG(pc+(p++));     */
+
+            offset = M6809_RDOP_ARG(pc) << 8;
+            offset += M6809_RDOP_ARG(pc+1);
+            p+=2;
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
             if ((pb != 0x8f) && (offset > 32767))
                offset = offset - 65536;
             offset &= 0xffff;

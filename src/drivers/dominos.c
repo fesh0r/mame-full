@@ -31,7 +31,7 @@ extern void dominos_lamp2_w(int offset, int data);
 extern void dominos_lamp1_w(int offset, int data);
 
 /* vidhrdw/dominos.c */
-extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -132,7 +132,7 @@ static unsigned char palette[] =
 	0x55,0x55,0x55, /* DK GREY */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0x00, 0x01,
 	0x00, 0x02
@@ -158,7 +158,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -208,9 +208,14 @@ ROM_END
 
 struct GameDriver dominos_driver =
 {
-	"Dominos",
+	__FILE__,
+	0,
 	"dominos",
+	"Dominos",
+	"1977",
+	"Atari",
 	"Mike Balfour",
+	0,
 	&machine_driver,
 
 	dominos_rom,

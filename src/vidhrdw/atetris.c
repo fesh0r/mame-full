@@ -12,8 +12,6 @@
 // Uncomment this if you want to see all slapstic accesses
 //#define LOG_SLAPSTICK
 
-unsigned char *atetris_paletteram;
-
 
 static int slapstic_primed   = 0;
 static int slapstic_bank     = 0x4000;
@@ -37,6 +35,9 @@ static int slapstic_last75xx = 0;
 
 int atetris_slapstic_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
     if (slapstic_nextbank != -1)
     {
         slapstic_bank = slapstic_nextbank;
@@ -143,31 +144,6 @@ int atetris_slapstic_r(int offset)
 
 
 
-void atetris_palette_w(int offset,int data)
-{
-	int r,g,b;
-	int bit0,bit1,bit2;
-
-
-	atetris_paletteram[offset] = data;
-
-	bit0 = (data >> 5) & 0x01;
-	bit1 = (data >> 6) & 0x01;
-	bit2 = (data >> 7) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	bit0 = (data >> 2) & 0x01;
-	bit1 = (data >> 3) & 0x01;
-	bit2 = (data >> 4) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	bit0 = 0;
-	bit1 = (data >> 0) & 0x01;
-	bit2 = (data >> 1) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_change_color(offset,r,g,b);
-}
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -175,9 +151,14 @@ void atetris_palette_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void atetris_vh_screenrefresh(struct osd_bitmap *bitmap)
+void atetris_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (dirtybuffer,1,videoram_size);
 
 
 	/* for every character in the backround RAM, check if it has been modified */

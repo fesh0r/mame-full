@@ -9,13 +9,14 @@ extern int cps1_gfxram_size;
 extern int cps1_output_size;
 
 extern int cps1_input_r(int offset);    /* Input ports */
+extern int cps1_player_input_r(int offset);    /* Input ports */
 
 extern int cps1_interrupt(void);       /* Ghouls and Ghosts */
 extern int cps1_interrupt2(void);      /* Everything else */
 
 extern int  cps1_vh_start(void);
 extern void cps1_vh_stop(void);
-extern void cps1_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Game specific data */
 struct CPS1config
@@ -25,11 +26,14 @@ struct CPS1config
         int   base_obj;         /* Index of first obj object */
         int   base_scroll2;     /* Index of first scroll 2 object */
         int   base_scroll3;     /* Index of first scroll 3 object */
-        int   code_start;       /* Start address to skip ROM self test */
         int   alternative;      /* KLUDGE */
         int   space_scroll1;    /* Space character code for scroll 1 */
         int   space_scroll2;    /* Space character code for scroll 2 */
         int   space_scroll3;    /* Space character code for scroll 3 */
+        int   cpsb_addr;        /* CPS board B test register address */
+        int   cpsb_value;       /* CPS board B test register expected value */
+        int   size_obj;         /* Size of obj RAM */
+        int   gng_sprite_kludge;  /* Ghouls n Ghosts sprite kludge */
 };
 
 extern struct CPS1config *cps1_game_config;

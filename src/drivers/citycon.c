@@ -8,12 +8,11 @@
 
 
 extern unsigned char *citycon_scroll;
-extern unsigned char *citycon_paletteram,*citycon_charlookup;
-void citycon_paletteram_w(int offset,int data);
+extern unsigned char *citycon_charlookup;
 void citycon_charlookup_w(int offset,int data);
 void citycon_background_w(int offset,int data);
 
-void citycon_vh_screenrefresh(struct osd_bitmap *bitmap);
+void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  citycon_vh_start(void);
 void citycon_vh_stop(void);
 
@@ -40,7 +39,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3001, 0x3001, soundlatch_w },
 	{ 0x3002, 0x3002, soundlatch2_w },
 	{ 0x3004, 0x3005, MWA_RAM, &citycon_scroll },
-	{ 0x3800, 0x3cff, citycon_paletteram_w, &citycon_paletteram },
+	{ 0x3800, 0x3cff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -69,7 +68,6 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	/* this port is correct. The other two are completely made up */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -169,21 +167,21 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout, 2*16*16, 32 },
-	{ 1, 0x02000, &spritelayout,     0, 16 },
-	{ 1, 0x03000, &spritelayout,     0, 16 },
-	{ 1, 0x06000, &tilelayout,   16*16, 16 },
-	{ 1, 0x07000, &tilelayout,   16*16, 16 },
-	{ 1, 0x08000, &tilelayout,   16*16, 16 },
-	{ 1, 0x09000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0a000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0b000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0c000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0d000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0e000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0f000, &tilelayout,   16*16, 16 },
-	{ 1, 0x10000, &tilelayout,   16*16, 16 },
-	{ 1, 0x11000, &tilelayout,   16*16, 16 },
+	{ 1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
+	{ 1, 0x02000, &spritelayout, 0, 16 },	/* colors 0-255 */
+	{ 1, 0x03000, &spritelayout, 0, 16 },
+	{ 1, 0x06000, &tilelayout, 256, 16 },	/* colors 256-511 */
+	{ 1, 0x07000, &tilelayout, 256, 16 },
+	{ 1, 0x08000, &tilelayout, 256, 16 },
+	{ 1, 0x09000, &tilelayout, 256, 16 },
+	{ 1, 0x0a000, &tilelayout, 256, 16 },
+	{ 1, 0x0b000, &tilelayout, 256, 16 },
+	{ 1, 0x0c000, &tilelayout, 256, 16 },
+	{ 1, 0x0d000, &tilelayout, 256, 16 },
+	{ 1, 0x0e000, &tilelayout, 256, 16 },
+	{ 1, 0x0f000, &tilelayout, 256, 16 },
+	{ 1, 0x10000, &tilelayout, 256, 16 },
+	{ 1, 0x11000, &tilelayout, 256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -228,10 +226,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16+16*16+32*4,
+	640, 640,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	citycon_vh_start,
 	citycon_vh_stop,
@@ -280,11 +278,57 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0900],"\x53\x48\x4f",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0900],24*10);
+			osd_fread(f,&RAM[0x0043],3);
+			osd_fread(f,&RAM[0x0055],3);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0900],24*10);
+		osd_fwrite(f,&RAM[0x0043],3);
+		osd_fwrite(f,&RAM[0x0055],3);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver citycon_driver =
 {
-	"City Connection",
+	__FILE__,
+	0,
 	"citycon",
+	"City Connection",
+	"1985",
+	"Jaleco",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	0,
 	&machine_driver,
 
 	citycon_rom,
@@ -298,5 +342,5 @@ struct GameDriver citycon_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

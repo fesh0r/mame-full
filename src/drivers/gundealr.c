@@ -12,8 +12,8 @@ d000-dfff RAM
 e000-ffff RAM
 
 read:
-c000      DSW ?
-c001      DSW
+c000      DSW0
+c001      DSW1
 c004      COIN
 c005      IN1
 c006      IN0
@@ -41,28 +41,27 @@ Runs in interrupt mode 0, the interrupt vectors are 0xcf (RST 08h) and
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *gundealr_paletteram;
-extern int gundealr_paletteram_size;
 extern unsigned char *gundealr_bsvideoram;
 extern unsigned char *gundealr_bigspriteram;
 
 void gundealr_paletteram_w(int offset,int data);
-void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
 static int gundealr_interrupt(void)
 {
-	if (cpu_getiloops() == 0) return 0xd7;
-	else return 0xcf;
+	if (cpu_getiloops() == 0) return 0xd7;	/* vblank */
+	if ((cpu_getiloops() & 1) == 1) return 0xcf;	/* sound (hand tuned) */
+	else return ignore_interrupt();
 }
 
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc000, input_port_0_r },	/* DSW? */
-	{ 0xc001, 0xc001, input_port_1_r },	/* DSW */
+	{ 0xc000, 0xc000, input_port_0_r },	/* DSW0 */
+	{ 0xc001, 0xc001, input_port_1_r },	/* DSW1 */
 	{ 0xc004, 0xc004, input_port_2_r },	/* COIN */
 	{ 0xc005, 0xc005, input_port_3_r },	/* IN1 */
 	{ 0xc006, 0xc006, input_port_4_r },	/* IN0 */
@@ -75,7 +74,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc020, 0xc023, MWA_RAM, &gundealr_bigspriteram },
 	{ 0xd000, 0xd1ff, MWA_RAM, &gundealr_bsvideoram },
-	{ 0xc400, 0xc7ff, gundealr_paletteram_w, &gundealr_paletteram, &gundealr_paletteram_size },
+	{ 0xc400, 0xc7ff, gundealr_paletteram_w, &paletteram },
 	{ 0xc800, 0xcfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
@@ -97,20 +96,19 @@ static struct IOWritePort writeport[] =
 
 
 INPUT_PORTS_START( input_ports )
-	PORT_START	/* DSW ? */
+	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
@@ -123,7 +121,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-	PORT_START	/* DSW */
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "5 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "4 Coins/1 Credit" )
@@ -159,22 +157,22 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
@@ -207,8 +205,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,       0, 16 },
-	{ 1, 0x10000, &spritelayout, 16*16, 16 },
+	{ 1, 0x00000, &charlayout,     0, 16 },	/* colors 0-255 */
+	{ 1, 0x10000, &spritelayout, 256, 16 },	/* colors 256-511 */
 	{ -1 } /* end of array */
 };
 
@@ -218,7 +216,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
 	1500000,	/* 1.5 MHz ?????? */
-	{ YM2203_VOL(255,0xff) },
+	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -236,7 +234,7 @@ static struct MachineDriver machine_driver =
 			8000000,	/* 8 Mhz ??? */
 			0,
 			readmem,writemem,readport,writeport,
-			gundealr_interrupt,2
+			gundealr_interrupt,4	/* ? */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -246,10 +244,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16+16*16,
+	512, 512,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -286,9 +284,14 @@ ROM_END
 
 struct GameDriver gundealr_driver =
 {
-	"Gun Dealer",
+	__FILE__,
+	0,
 	"gundealr",
+	"Gun Dealer",
+	"1990",
+	"Dooyong",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	gundealr_rom,

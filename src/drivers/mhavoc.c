@@ -273,7 +273,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 - gamma */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 0, 0, 0 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 0, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 8 )
 
 	PORT_START /* DIP Switch at position 13/14S */
 	PORT_DIPNAME( 0xc0, 0x00, "Lives", IP_KEY_NONE )
@@ -380,8 +380,7 @@ static struct MachineDriver machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			0, 0, /* no vblank interrupt */
-			interrupt, 407 /* 2.4576 ms period */
+			interrupt,8 /* 2.4576 ms period */
 		},
 		{
 			CPU_M6502,
@@ -392,7 +391,7 @@ static struct MachineDriver machine_driver =
 			interrupt, 305 /* 3.2768 ms period */
 		}
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	50, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 			/* fps should be 30, but MH draws "empty" frames */
 	1,		/* 1 CPU slice. see machine.c */
 	mhavoc_init_machine,
@@ -543,14 +542,19 @@ void hisave(void)
 	"Bernd Wiebelt (MAME driver)\n" \
 	"Frank Palazzolo (technical info)\n" \
 	"Jess Askey (technical info)\n" \
+	"Owen Rubin (technical info)\n" \
 	VECTOR_TEAM
 
 struct GameDriver mhavoc_driver =
 {
-	"Major Havoc",
+	__FILE__,
+	0,
 	"mhavoc",
+	"Major Havoc (rev 3)",
+	"1983",
+	"Atari",
 	CREDITS,
-
+	0,
 	&machine_driver,
 
 	mhavoc_rom,
@@ -568,10 +572,14 @@ struct GameDriver mhavoc_driver =
 
 struct GameDriver mhavoc2_driver =
 {
-	"Major Havoc (alternate version)",
+	__FILE__,
+	&mhavoc_driver,
 	"mhavoc2",
+	"Major Havoc (rev 2)",
+	"1983",
+	"Atari",
 	CREDITS,
-
+	0,
 	&machine_driver,
 
 	mhavoc2_rom,
@@ -589,10 +597,14 @@ struct GameDriver mhavoc2_driver =
 
 struct GameDriver mhavocrv_driver =
 {
-	"Major Havoc (Return to Vax)",
+	__FILE__,
+	&mhavoc_driver,
 	"mhavocrv",
+	"Major Havoc (Return to Vax)",
+	"1983",
+	"hack",
 	CREDITS,
-
+	0,
 	&machine_driver,
 
 	mhavoc_rv_rom,

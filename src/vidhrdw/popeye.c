@@ -50,8 +50,6 @@ static struct osd_bitmap *tmpbitmap2;
         -- 680 ohm resistor  -- RED
   bit 0 -- 1.2kohm resistor  -- RED
 
-TODO: properly implement the above values. The current palette is an approximation.
-
 ***************************************************************************/
 void popeye_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -239,7 +237,7 @@ void popeye_palettebank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
+void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

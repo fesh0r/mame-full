@@ -64,14 +64,18 @@ static pia6821_interface csd_pia_intf =
 {
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
-	{ 0 },            /* input port A */
-	{ 0 },            /* input port B */
+	{ 0 },            /* input port A  */
+	{ 0 },            /* input bit CA1 */
+	{ 0 },            /* input bit CA2 */
+	{ 0 },            /* input port B  */
+	{ 0 },            /* input bit CB1 */
+	{ 0 },            /* input bit CB2 */
 	{ csd_porta_w },  /* output port A */
 	{ csd_portb_w },  /* output port B */
-	{ 0 },            /* output CA2 */
-	{ 0 },            /* output CB2 */
-	{ csd_irq },      /* IRQ A */
-	{ csd_irq },      /* IRQ B */
+	{ 0 },            /* output CA2    */
+	{ 0 },            /* output CB2    */
+	{ csd_irq },      /* IRQ A         */
+	{ csd_irq },      /* IRQ B         */
 };
 
 
@@ -84,14 +88,18 @@ static pia6821_interface sg_pia_intf =
 {
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
-	{ 0 },            /* input port A */
-	{ 0 },         	/* input port B */
+	{ 0 },            /* input port A  */
+	{ 0 },            /* input bit CA1 */
+	{ 0 },            /* input bit CA2 */
+	{ 0 },            /* input port B  */
+	{ 0 },            /* input bit CB1 */
+	{ 0 },            /* input bit CB2 */
 	{ sg_porta_w },   /* output port A */
 	{ sg_portb_w },   /* output port B */
-	{ 0 },            /* output CA2 */
-	{ 0 },            /* output CB2 */
-	{ sg_irq },       /* IRQ A */
-	{ sg_irq },       /* IRQ B */
+	{ 0 },            /* output CA2    */
+	{ 0 },            /* output CB2    */
+	{ sg_irq },       /* IRQ A         */
+	{ sg_irq },       /* IRQ B         */
 };
 
 
@@ -102,14 +110,18 @@ static pia6821_interface tcs_pia_intf =
 {
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_DDRB, PIA_CTLA, PIA_CTLB }, /* offsets */
-	{ 0 },            /* input port A */
-	{ 0 },         	/* input port B */
+	{ 0 },            /* input port A  */
+	{ 0 },            /* input bit CA1 */
+	{ 0 },            /* input bit CA2 */
+	{ 0 },            /* input port B  */
+	{ 0 },            /* input bit CB1 */
+	{ 0 },            /* input bit CB2 */
 	{ DAC_data_w },   /* output port A */
 	{ 0 },            /* output port B */
-	{ 0 },            /* output CA2 */
-	{ 0 },            /* output CB2 */
-	{ tcs_irq },      /* IRQ A */
-	{ tcs_irq },      /* IRQ B */
+	{ 0 },            /* output CA2    */
+	{ 0 },            /* output CB2    */
+	{ tcs_irq },      /* IRQ A         */
+	{ tcs_irq },      /* IRQ B         */
 };
 
 
@@ -123,14 +135,18 @@ static pia6821_interface snt_pia_intf =
 {
 	2,                              /* 2 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB }, /* offsets */
-	{ 0, 0 },                       /* input port A */
-	{ 0, 0 },                       /* input port B */
+	{ 0, 0 },                       /* input port A  */
+	{ 0, 0 },                       /* input bit CA1 */
+	{ 0, 0 },                       /* input bit CA2 */
+	{ 0, 0 },                       /* input port B  */
+	{ 0, 0 },                       /* input bit CB1 */
+	{ 0, 0 },                       /* input bit CB2 */
 	{ snt_porta1_w, snt_porta2_w }, /* output port A */
 	{ 0, snt_portb2_w },            /* output port B */
-	{ 0, 0 },                       /* output CA2 */
-	{ 0, 0 },                       /* output CB2 */
-	{ snt_irq, snt_irq },           /* IRQ A */
-	{ snt_irq, snt_irq },           /* IRQ B */
+	{ 0, 0 },                       /* output CA2    */
+	{ 0, 0 },                       /* output CB2    */
+	{ snt_irq, snt_irq },           /* IRQ A         */
+	{ snt_irq, snt_irq },           /* IRQ B         */
 };
 
 
@@ -531,37 +547,21 @@ int spyhunt_port_1_r(int offset)
 /* Spy Hunter -- multiplexed steering wheel/gas pedal */
 int spyhunt_port_2_r(int offset)
 {
-        int weighting = 0;
-	int port = readinputport (6);
+	int accel = readinputport (6);
+	int steer = readinputport (7);
 
 	/* mux high bit on means return steering wheel */
 	if (spyhunt_mux & 0x80)
 	{
-		if (port & 8)
-			return 0x94;
-		else if (port & 4)
-			return 0x54;
-		else
-			return 0x74;
+		if (errorlog) fprintf(errorlog, "return steer = %d", steer);
+	   return steer;
 	}
 
 	/* mux high bit off means return gas pedal */
 	else
 	{
-		static int val = 0x30;
-		if (port & 1)
-		{
-                        if (weighting_factor != 0) weighting = val/((0xff-0x30)/weighting_factor);
-			val += (pedal_sensitivity + weighting);
-			if (val > 0xff) val = 0xff;
-		}
-		else if (port & 2)
-		{
-                        if (weighting_factor != 0) weighting = weighting_factor - (val/((0xff-0x30)/weighting_factor));
-			val -= (pedal_sensitivity + weighting);
-			if (val < 0x30) val = 0x30;
-		}
-		return val;
+		if (errorlog) fprintf(errorlog, "return accel = %d", accel);
+	   return accel;
 	}
 }
 

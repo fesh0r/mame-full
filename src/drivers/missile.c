@@ -22,8 +22,8 @@
 
 	  0640-3FFF  R/W   D  D  D	D  D  D  D	D	2-color bit region of
 												screen ram.
-												Writes to 4 bytes each
-												and mapped to $1900-$FFFF
+												Writes to 4 bytes each to effectively
+												address $1900-$ffff.
 
 	  1900-FFFF  R/W   D  D 					2-color bit region of
 												screen ram
@@ -136,33 +136,36 @@ Off Off 						1 coin 2 plays
 
 
 ******************************************************************************************/
-
-
-
 #include "driver.h"
 
 void missile_init_machine(void);
 int  missile_r(int offset);
 void missile_w(int offset, int data);
 
-int missile_trakball_r(int data);
-
 int  missile_vh_start(void);
 void missile_vh_stop(void);
-void missile_vh_update(struct osd_bitmap *bitmap);
+void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+void missile_video_3rd_bit_w (int offset, int data);
+void missile_video2_w (int offset, int data);
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0xFFFF, missile_r },
+	{ 0x0000, 0x18ff, MRA_RAM },
+	{ 0x1900, 0xfff9, missile_r }, /* shared region */
+	{ 0xfffa, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0xFFFF, missile_w },
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0400, 0x05ff, missile_video_3rd_bit_w },
+	{ 0x0600, 0x063f, MWA_RAM },
+	{ 0x0640, 0x4fff, missile_w }, /* shared region */
+	{ 0x5000, 0xffff, missile_video2_w },
 	{ -1 }	/* end of table */
 };
 
@@ -237,10 +240,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (	0x80, "Cocktail" )
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_REVERSE, 50, 7, 0, 0)
+	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_X, 50, 7, 0, 0)
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_X | IPF_CENTER, 50, 7, 0, 0)
+	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 7, 0, 0)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( suprmatk_input_ports )
@@ -309,27 +312,11 @@ INPUT_PORTS_START( suprmatk_input_ports )
 	PORT_DIPSETTING (	0x80, "Cocktail" )
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_REVERSE, 50, 7, 0, 0)
+	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_X, 50, 7, 0, 0)
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_X | IPF_CENTER, 50, 7, 0, 0)
+	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 7, 0, 0)
 INPUT_PORTS_END
-
-
-
-
-static unsigned char palette[] =
-{
-	0, 0, 0,					/* extra black for Macs */
-	0xFF,0xFF,0xFF,   /* white	 */
-	0xFF,0xFF,0x00,   /* yellow  */
-	0xFF,0x00,0xFF,   /* magenta  */
-	0xFF,0x00,0x00,   /* red	*/
-	0x00,0xFF,0xFF,   /* cyan	 */
-	0x00,0xFF,0x00,   /* green	 */
-	0x00,0x00,0xFF,   /* blue  */
-	0x00,0x00,0x00	  /* black */
-};
 
 
 
@@ -372,18 +359,16 @@ static struct MachineDriver machine_driver =
 	missile_init_machine,
 
 	/* video hardware */
-										/* RG - 4/11/98 - for flips and rotates... */
-										/* 256, 231, { 0, 255, 0, 230 }, */
-	256, 256, { 0, 255, 0, 255 },
+	256, 231, { 0, 255, 0, 230 },
 	0,
-	sizeof(palette)/3, 0,
+	8, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
 	0,
 	missile_vh_start,
 	missile_vh_stop,
-	missile_vh_update,
+	missile_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -417,12 +402,12 @@ ROM_END
 
 ROM_START( suprmatk_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "035820.02", 0x5000, 0x0800, 0xbb306b5e )
-	ROM_LOAD( "035821.02", 0x5800, 0x0800, 0x8fb48b0a )
-	ROM_LOAD( "035822.02", 0x6000, 0x0800, 0x0ac4e004 )
-	ROM_LOAD( "035823.02", 0x6800, 0x0800, 0x0bcb03b7 )
-	ROM_LOAD( "035824.02", 0x7000, 0x0800, 0xbdc91101 )
-	ROM_LOAD( "035825.02", 0x7800, 0x0800, 0x43836d2d )
+	ROM_LOAD( "035820.SMA", 0x5000, 0x0800, 0xbb306b5e )
+	ROM_LOAD( "035821.SMA", 0x5800, 0x0800, 0x8fb48b0a )
+	ROM_LOAD( "035822.SMA", 0x6000, 0x0800, 0x0ac4e004 )
+	ROM_LOAD( "035823.SMA", 0x6800, 0x0800, 0x0bcb03b7 )
+	ROM_LOAD( "035824.SMA", 0x7000, 0x0800, 0xbdc91101 )
+	ROM_LOAD( "035825.SMA", 0x7800, 0x0800, 0x43836d2d )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
 
@@ -431,6 +416,9 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x002C],"\x47\x4A\x4C", 3) == 0 &&
 		memcmp(&RAM[0x0044],"\x50\x69\x00", 3) == 0){
@@ -449,6 +437,8 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0){
 		osd_fwrite(f,&RAM[0x002C],6*8);
@@ -460,9 +450,14 @@ static void hisave(void)
 
 struct GameDriver missile_driver =
 {
-	"Missile Command",
+	__FILE__,
+	0,
 	"missile",
+	"Missile Command",
+	"1980",
+	"Atari",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
+	0,
 	&machine_driver,
 
 	missile_rom,
@@ -472,7 +467,7 @@ struct GameDriver missile_driver =
 
 	input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -480,9 +475,14 @@ struct GameDriver missile_driver =
 
 struct GameDriver suprmatk_driver =
 {
-	"Super Missile Attack",
+	__FILE__,
+	&missile_driver,
 	"suprmatk",
+	"Super Missile Attack",
+	"1981",
+	"Atari + Gencomp",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
+	0,
 	&machine_driver,
 
 	suprmatk_rom,
@@ -492,9 +492,8 @@ struct GameDriver suprmatk_driver =
 
 	suprmatk_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
-

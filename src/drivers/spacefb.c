@@ -3,7 +3,7 @@
 Space Firebird memory map (preliminary)
 
   Memory Map figured out by Chris Hardy (chrish@kcbbs.gen.nz), Paul Johnson and Andy Clark
-  Mame driver by Chris Hardy
+  MAME driver by Chris Hardy
 
   Schematics scanned and provided by James Twine
   Thanks to Gary Walton for lending me his REAL Space Firebird
@@ -32,6 +32,15 @@ Port 3 - Dipswitch
 OUT:
 Port 0 - RV,VREF and CREF
 Port 1 - Comms to the Sound card (-> 8212)
+    bit 0 = discrete sound
+    bit 1 = INT to 8035
+    bit 2 = T1 input to 8035
+    bit 3 = PB4 input to 8035
+    bit 4 = PB5 input to 8035
+    bit 5 = T0 input to 8035
+    bit 6 = discrete sound
+    bit 7 = discrete sound
+
 Port 2 - Video contrast values (used by sound board only)
 Port 3 - Unused
 
@@ -115,9 +124,14 @@ red flash effect when you die.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "I8039/I8039.h"
 
+void spacefb_sh_putp1(int offset, int data);
+int  spacefb_sh_gett0(int offset);
+int  spacefb_sh_gett1(int offset);
+int  spacefb_sh_getp2(int offset);
 
-void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void spacefb_port_0_w(int offset,int data);
@@ -161,6 +175,31 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress readmem_sound[] =
+{
+    { 0x0000, 0x03ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress writemem_sound[] =
+{
+    { 0x0000, 0x03ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort readport_sound[] =
+{
+    { I8039_p2, I8039_p2, spacefb_sh_getp2 },
+    { I8039_t0, I8039_t0, spacefb_sh_gett0 },
+    { I8039_t1, I8039_t1, spacefb_sh_gett1 },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort writeport_sound[] =
+{
+    { I8039_p1, I8039_p1, spacefb_sh_putp1 },
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( input_ports )
@@ -169,20 +208,20 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* Coin - Start */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -230,6 +269,7 @@ static struct GfxLayout charlayout =
  * The bullests are stored in a 256x4bit PROM but the .bin file is
  * 256*8bit
  */
+
 static struct GfxLayout bulletlayout =
 {
 	4,8,	/* 4*4 characters */
@@ -255,20 +295,35 @@ static unsigned char colorprom[] =
 	0x00,0x3B,0xC0,0x16,0x00,0xDB,0xC0,0xC7,0x00,0x07,0xC7,0x37,0x00,0x3F,0xD8,0x07
 };
 
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
+};
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
+        {
+            CPU_Z80,
+            4000000,    /* 4 Mhz? */
+            0,
+            readmem,writemem,readport,writeport,
+            spacefb_interrupt,2 /* two int's per frame */
+        },
 		{
-			CPU_Z80,
-			4000000,	/* 4 Mhz? */
-			0,
-			readmem,writemem,readport,writeport,
-			spacefb_interrupt,2 /* two int's per frame */
-		}
+            CPU_I8035 | CPU_AUDIO_CPU,
+            6000000/15,
+            2,
+			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+            ignore_interrupt,0
+        }
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
+    3,
 	0,
 
 	/* video hardware */
@@ -285,10 +340,13 @@ static struct MachineDriver machine_driver =
 	spacefb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+            &dac_interface
+        }
+	}
 };
 
 
@@ -305,20 +363,23 @@ ROM_START( spacefb_rom )
 	ROM_LOAD( "5n.cpu", 0x3800, 0x0800, 0x79e64f86 )
 
 	ROM_REGION(0x1100)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6k.vid", 0x0000, 0x0800, 0x5076d18e )
-	ROM_LOAD( "5k.vid", 0x0800, 0x0800, 0xe945e879 )
+	ROM_LOAD( "5k.vid", 0x0000, 0x0800, 0xe945e879 )
+	ROM_LOAD( "6k.vid", 0x0800, 0x0800, 0x5076d18e )
 	ROM_LOAD( "4i.vid", 0x1000, 0x0100, 0x75c90c07 )
+
+	ROM_REGION(0x1000)	/* sound */
+    ROM_LOAD( "IC20.SND",  0x0000, 0x0400, 0x3ee4a80c )
+
 ROM_END
 
 
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	unsigned char *from, *to;
-	int i, index, digit, started;
+	int i, j, digit, started;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (RAM[0xc0db] == 0xc1 &&	/* check that the scores have been zeroed */
@@ -342,37 +403,37 @@ static int hiload(void)
 			osd_fclose(f);
 
 			from = &RAM[0xc0a0];
-			index = 0x299;
+			j = 0x299;
 
 			for (i = 0; i < 10; i++)
 			{
 				started = 0;
 
 				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = ((*from++ & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 			}
 
 			from = &RAM[0xc0a0];
 			to = &RAM[0xc773];
-			index = 0x251;
+			j = 0x251;
 
-			videoram_w(index++, *to++ = ((*from & 0xf0) >> 4) + 5);
-			videoram_w(index++, *to++ = (*from++ & 0x0f) + 5);
-			videoram_w(index++, *to++ = ((*from & 0xf0) >> 4) + 5);
-			videoram_w(index++, *to++ = (*from++ & 0x0f) + 5);
-			videoram_w(index++, *to++ = ((*from++ & 0xf0) >> 4) + 5);
+			videoram_w(j++, *to++ = ((*from & 0xf0) >> 4) + 5);
+			videoram_w(j++, *to++ = (*from++ & 0x0f) + 5);
+			videoram_w(j++, *to++ = ((*from & 0xf0) >> 4) + 5);
+			videoram_w(j++, *to++ = (*from++ & 0x0f) + 5);
+			videoram_w(j++, *to++ = ((*from++ & 0xf0) >> 4) + 5);
 		}
 
 		return 1;
@@ -382,10 +443,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name, 0,
 					   OSD_FILETYPE_HIGHSCORE, 1)) != 0)
@@ -399,9 +459,14 @@ static void hisave(void)
 
 struct GameDriver spacefb_driver =
 {
-	"Space Firebird",
+	__FILE__,
+	0,
 	"spacefb",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili",
+	"Space Firebird",
+	"1980",
+	"Nintendo",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
+	0,
 	&machine_driver,
 
 	spacefb_rom,

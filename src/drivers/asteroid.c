@@ -153,6 +153,10 @@ void asteroid_thump_w(int offset,int data);
 void asteroid_sounds_w(int offset,int data);
 void astdelux_sounds_w(int offset,int data);
 void llander_sounds_w(int offset,int data);
+void llander_snd_reset_w(int offset,int data);
+int llander_sh_start(void);
+void llander_sh_stop(void);
+void llander_sh_update(void);
 
 int asteroid_IN0_r(int offset);
 int asteroid_IN1_r(int offset);
@@ -232,9 +236,9 @@ static struct MemoryWriteAddress astdelux_writemem[] =
    It only seems to affect the selftest */
 static struct MemoryReadAddress llander_readmem[] =
 {
-	{ 0x0000, 0x01ff, MRA_RAM },
-/*	{ 0x0000, 0x00ff, llander_zeropage_r },*/
-/*	{ 0x0100, 0x01ff, MRA_RAM },*/
+/*	{ 0x0000, 0x01ff, MRA_RAM }, */
+	{ 0x0000, 0x00ff, llander_zeropage_r },
+	{ 0x0100, 0x01ff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_ROM },
 	{ 0x4800, 0x5fff, MRA_ROM }, /* vector rom */
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
@@ -248,15 +252,15 @@ static struct MemoryReadAddress llander_readmem[] =
 
 static struct MemoryWriteAddress llander_writemem[] =
 {
-	{ 0x0000, 0x01ff, MWA_RAM },
-/*	{ 0x0000, 0x00ff, llander_zeropage_w },*/
-/*	{ 0x0100, 0x01ff, MWA_RAM },*/
+/*	{ 0x0000, 0x01ff, MWA_RAM }, */
+	{ 0x0000, 0x00ff, llander_zeropage_w },
+	{ 0x0100, 0x01ff, MWA_RAM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x3000, 0x3000, avgdvg_go },
 	{ 0x3200, 0x3200, llander_led_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3c00, 0x3c00, llander_sounds_w },
-/*	{ 0x3e00, 0x3e00, llander_snd_reset }, */
+	{ 0x3e00, 0x3e00, llander_snd_reset_w },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x4800, 0x5fff, MWA_ROM }, /* vector rom */
 	{ -1 }  /* end of table */
@@ -399,8 +403,8 @@ INPUT_PORTS_START ( llander_input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", OSD_KEY_A, OSD_JOY_FIRE, 0 )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 
@@ -433,6 +437,53 @@ INPUT_PORTS_START ( llander_input_ports )
 	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
 INPUT_PORTS_END
 
+INPUT_PORTS_START ( llander1_input_ports )
+	PORT_START /* IN0 */
+	/* Bit 0 is VG_HALT, handled in the machine dependant part */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX ( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING ( 0x02, "Off" )
+	PORT_DIPSETTING ( 0x00, "On" )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	/* Of the rest, Bit 6 is the 3KHz source. 3,4 and 5 are unknown */
+	PORT_BIT ( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+
+	PORT_START /* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME ( 0x03, 0x01, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "*1" )
+	PORT_DIPSETTING (    0x01, "*4" )
+	PORT_DIPSETTING (    0x02, "*5" )
+	PORT_DIPSETTING (    0x03, "*6" )
+	PORT_DIPNAME ( 0x0c, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "English" )
+	PORT_DIPSETTING (    0x04, "French" )
+	PORT_DIPSETTING (    0x08, "Spanish" )
+	PORT_DIPSETTING (    0x0c, "German" )
+	PORT_DIPNAME ( 0x10, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "Normal" )
+	PORT_DIPSETTING (    0x10, "Free Play" )
+	PORT_DIPNAME ( 0xc0, 0x80, "Fuel units", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "450" )
+	PORT_DIPSETTING (    0x40, "600" )
+	PORT_DIPSETTING (    0x80, "750" )
+	PORT_DIPSETTING (    0xc0, "900" )
+
+	/* The next one is a potentiometer */
+	PORT_START /* IN3 */
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
+INPUT_PORTS_END
+
 static struct GfxLayout fakelayout =
 {
 	1,1,
@@ -459,6 +510,9 @@ static unsigned char astdelux_color_prom[] = { VEC_PAL_MONO_AQUA };
 
 static int asteroid1_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x001c],"\x00\x00",2) == 0 &&
 			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
@@ -478,8 +532,11 @@ static int asteroid1_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-static int asteroid2_hiload(void)
+static int asteroid_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x001d],"\x00\x00",2) == 0 &&
 			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
@@ -504,6 +561,7 @@ static int asteroid2_hiload(void)
 static void asteroid1_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -513,9 +571,10 @@ static void asteroid1_hisave(void)
 	}
 }
 
-static void asteroid2_hisave(void)
+static void asteroid_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -546,8 +605,7 @@ static struct MachineDriver asteroid_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			asteroid_readmem,asteroid_writemem,0,0,
-			0, 0, /* no vblank based interrupt */
-			asteroid_interrupt, 250 /* 250Hz? */
+			asteroid_interrupt,4	/* 250 Hz */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -613,8 +671,7 @@ static struct MachineDriver astdelux_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			astdelux_readmem,astdelux_writemem,0,0,
-			0, 0, /* no vblank based interrupt */
-			asteroid_interrupt, 250 /* 250Hz? */
+			asteroid_interrupt,4	/* 250 Hz */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -648,11 +705,13 @@ static struct MachineDriver astdelux_machine_driver =
 };
 
 
-
-static struct Samplesinterface llander_samples_interface =
+static struct CustomSound_interface llander_custom_interface =
 {
-	3	/* 3 channels */
+	llander_sh_start,
+	llander_sh_stop,
+	llander_sh_update
 };
+
 
 static struct MachineDriver llander_machine_driver =
 {
@@ -660,11 +719,10 @@ static struct MachineDriver llander_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,			/* 1.5 Mhz */
 			0,
 			llander_readmem, llander_writemem,0,0,
-			0, 0, /* no vblank based interrupt */
-			llander_interrupt, 250 /* 250Hz? */
+			llander_interrupt,6	/* 250 Hz */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -687,8 +745,8 @@ static struct MachineDriver llander_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_SAMPLES,
-			&llander_samples_interface
+			SOUND_CUSTOM,
+			&llander_custom_interface
 		}
 	}
 };
@@ -716,17 +774,17 @@ static const char *asteroid_sample_names[] =
     0	/* end of array */
 };
 
-ROM_START( asteroid_rom )
+ROM_START( asteroi1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0xd84a7878 )
-	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0x15f39999 )
-	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x93d25050 )
+	ROM_LOAD( "035145.01", 0x6800, 0x0800, 0xd84a7878 )
+	ROM_LOAD( "035144.01", 0x7000, 0x0800, 0x15f39999 )
+	ROM_LOAD( "035143.01", 0x7800, 0x0800, 0x93d25050 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xa144e0e0 )
+	ROM_LOAD( "035127.01", 0x5000, 0x0800, 0xa144e0e0 )
 ROM_END
 
-ROM_START( asteroi2_rom )
+ROM_START( asteroid_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0x8de50d0d )
 	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0xa0dbd7d7 )
@@ -740,11 +798,14 @@ ROM_END
 
 struct GameDriver asteroid_driver =
 {
-	"Asteroids (rev 1)",
+	__FILE__,
+	0,
 	"asteroid",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids (rev 2)",
+	"1979",
+	"Atari",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&asteroid_machine_driver,
 
 	asteroid_rom,
@@ -757,19 +818,22 @@ struct GameDriver asteroid_driver =
 	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	asteroid1_hiload, asteroid1_hisave
+	asteroid_hiload, asteroid_hisave
 };
 
-struct GameDriver asteroi2_driver =
+struct GameDriver asteroi1_driver =
 {
-	"Asteroids (rev 2)",
-	"asteroi2",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	__FILE__,
+	&asteroid_driver,
+	"asteroi1",
+	"Asteroids (rev 1)",
+	"1979",
+	"Atari",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&asteroid_machine_driver,
 
-	asteroi2_rom,
+	asteroi1_rom,
 	0, 0,
 	asteroid_sample_names,
 	0,	/* sound_prom */
@@ -779,7 +843,7 @@ struct GameDriver asteroi2_driver =
 	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	asteroid2_hiload, asteroid2_hisave
+	asteroid1_hiload, asteroid1_hisave
 };
 
 ROM_START( astdelux_rom )
@@ -794,7 +858,8 @@ ROM_START( astdelux_rom )
 	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
 
-#if 0 /* anyone have a correct romset? */
+/* 036433.02 with the checksum below is _broken_! */
+/* Anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036430.01", 0x6000, 0x0800, 0x4bca4e5e )
@@ -806,7 +871,6 @@ ROM_START( astdelu1_rom )
 	ROM_LOAD( "036800.01", 0x4800, 0x0800, 0xc05aa9d8 )
 	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
-#endif
 
 
 
@@ -821,11 +885,14 @@ static const char *astdelux_sample_names[] =
 
 struct GameDriver astdelux_driver =
 {
-	"Asteroids Deluxe",
+	__FILE__,
+	0,
 	"astdelux",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids Deluxe (rev 2)",
+	"1980",
+	"Atari",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&astdelux_machine_driver,
 
 	astdelux_rom,
@@ -841,14 +908,17 @@ struct GameDriver astdelux_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-#if 0 /* the romset floating around is probably broken */
+/* the REV 1 romset floating around is broken */
 struct GameDriver astdelu1_driver =
 {
-	"Asteroids Deluxe (alternate version)",
+	__FILE__,
+	&astdelux_driver,
 	"astdelu1",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids Deluxe (rev 1)",
+	"1980",
+	"Atari",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&astdelux_machine_driver,
 
 	astdelu1_rom,
@@ -863,15 +933,6 @@ struct GameDriver astdelu1_driver =
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
-#endif
-
-static const char *llander_sample_names[] =
-{
-	"thrust.sam",
-	"beep.sam",
-	"explode1.sam",
-	0	/* end of array */
-};
 
 ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -883,24 +944,71 @@ ROM_START( llander_rom )
 	/* Vector ROM */
 	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
 	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	/* This _should_ be the rom for international versions. */
+	/* Unfortunately, is it not currently available. We use */
+	/* a fake one. */
+	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
+ROM_END
+
+ROM_START( llander1_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "034572.01", 0x6000, 0x0800, 0x7b348ab6 )
+	ROM_LOAD( "034571.01", 0x6800, 0x0800, 0xc0ffbbb7 )
+	ROM_LOAD( "034570.01", 0x7000, 0x0800, 0xfe8b233f )
+	ROM_LOAD( "034569.01", 0x7800, 0x0800, 0xac0dcbc7 )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Vector ROM */
+	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
+	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	/* This _should_ be the rom for international versions. */
+	/* Unfortunately, is it not currently available. We use */
+	/* a fake one. */
 	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
 ROM_END
 
 struct GameDriver llander_driver =
 {
-	"Lunar Lander",
+	__FILE__,
+	0,
 	"llander",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Lunar Lander (rev 2)",
+	"1979",
+	"Atari",
+	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
+	0,
 	&llander_machine_driver,
 
 	llander_rom,
 	0, 0,
-	llander_sample_names,
+	0,
 	0,	/* sound_prom */
 
 	llander_input_ports,
+
+	asteroid_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver llander1_driver =
+{
+	__FILE__,
+	&llander_driver,
+	"llander1",
+	"Lunar Lander (rev 1)",
+	"1979",
+	"Atari",
+	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
+	0,
+	&llander_machine_driver,
+
+	llander1_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	llander1_input_ports,
 
 	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

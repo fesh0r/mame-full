@@ -1,6 +1,7 @@
+#include <stdio.h>
+
 #ifdef MAME_DEBUG
 
-#include <stdio.h>
 #include <string.h>
 
 #include "osdepend.h"
@@ -72,7 +73,7 @@ FILE *asg_TraceFile (void)
 		return NULL;
 }
 
-void asg_TraceSelect(int index)
+void asg_TraceSelect(int indx)
 {
 	if (traceon && traceFile[current])
 	{
@@ -84,8 +85,8 @@ void asg_TraceSelect(int index)
 	}
 	else if (!traceon && osd_key_pressed (OSD_KEY_5_PAD))
 		traceon = 1;
-	if (index<total)
-		current=index;
+	if (indx<total)
+		current=indx;
 }
 
 void asg_Z80Trace(unsigned char *RAM, int PC)
@@ -230,6 +231,35 @@ void asg_6502Trace(unsigned char *RAM, int PC)
 }
 
 
+void asg_T11Trace(unsigned char *RAM, int PC)
+{
+	extern int DasmT11 (unsigned char *pBase, char *buffer, int pc);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+				fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+			DasmT11(&RAM[PC],temp,PC);
+			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
+
 void asg_68000Trace(unsigned char *RAM, int PC)
 {
 	extern int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
@@ -238,8 +268,6 @@ void asg_68000Trace(unsigned char *RAM, int PC)
 	{
 		char temp[80];
 		int count, i;
-
-		if (PC == 0x2822e) traceon=0;
 
 		// check for loops
 		for (i=count=0;i<LOOP_CHECK;i++)
@@ -254,6 +282,90 @@ void asg_68000Trace(unsigned char *RAM, int PC)
 			loops[current]=0;
 			Dasm68000 (&RAM[PC],temp,PC);
 			fprintf(traceFile[current],"%06X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
+void asg_8085Trace(unsigned char *RAM, int PC)
+{
+        extern int Dasm8085 (char *buffer, int pc);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+                                fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+                        Dasm8085(temp,PC);
+                        fprintf(traceFile[current],"%04X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
+void asg_2650Trace(unsigned char *RAM, int PC)
+{
+extern int Dasm2650 (char *buffer, int pc);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+				fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+			Dasm2650(temp,PC);
+			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
+void asg_8039Trace(unsigned char *RAM, int PC)
+{
+        extern int Dasm8039 (char *buffer, unsigned char* addr);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+                                fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+			Dasm8039(temp,RAM+PC);
+			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
 			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
 			lastPC[current][LOOP_CHECK-1]=PC;
 		}

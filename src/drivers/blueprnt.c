@@ -73,7 +73,7 @@ write:
 
 
 void blueprnt_flipscreen_w(int offset,int data);
-void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -98,7 +98,7 @@ void blueprnt_sound_command_w(int offset,int data)
 static void blueprnt_coin_w (int offset, int data)
 {
 	static int lastval;
-	
+
 	if (lastval == data) return;
 	coin_counter_w (0, data & 0x01);
 	coin_counter_w (1, data & 0x02);
@@ -294,7 +294,7 @@ static unsigned char palette[] =
 };
 
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0,0,0,0,
 	0,7,1,4,
@@ -314,7 +314,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1250000,	/* 1.25 MHz? (hand tuned) */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{            0, input_port_2_r },
 	{ soundlatch_r, input_port_3_r },
 	{ dipsw_w },
@@ -349,7 +349,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -400,9 +400,8 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x8100],"\x00\x00\x00",3) == 0) &&
@@ -427,10 +426,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -445,9 +441,14 @@ static void hisave(void)
 
 struct GameDriver blueprnt_driver =
 {
-	"Blue Print",
+	__FILE__,
+	0,
 	"blueprnt",
+	"Blue Print",
+	"1982",
+	"Bally Midway",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
 	&machine_driver,
 
 	blueprnt_rom,

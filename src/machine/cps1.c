@@ -26,7 +26,15 @@ void cps1_dump_driver(void)
         fp=fopen("ROM.DMP", "w+b");
         if (fp)
         {
-                fwrite(RAM, 0x80000, 1, fp);
+                int i;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+                unsigned char *p=RAM;
+                for (i=0; i<0x80000; i++)
+                {
+                        fwrite(p+1, 1, 1, fp);
+                        fwrite(p, 1, 1, fp);
+                        p+=2;
+                }
                 fclose(fp);
         }
 
@@ -35,9 +43,14 @@ void cps1_dump_driver(void)
 
 int cps1_input_r(int offset)
 {
-       return (readinputport (offset) << 8) + readinputport (offset+1);
+       return (readinputport (offset/2) << 8);
 }
 
+int cps1_player_input_r(int offset)
+{
+       return (readinputport (offset + 4 )+
+                (readinputport (offset+1 + 4 )<<8));
+}
 
 int cps1_interrupt(void)
 {

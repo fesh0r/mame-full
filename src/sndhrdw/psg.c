@@ -21,7 +21,7 @@
 	#define MAX_OUTPUT 0xffff
 #endif
 
-#define STEP 0x10000
+#define STEP 0x8000
 
 struct AY8910
 {
@@ -79,7 +79,7 @@ static int sample_16bit;
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer )
+int AYInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
 {
 	int i;
 
@@ -95,7 +95,7 @@ int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer 
 	for ( i = 0 ; i < AYNumChips; i++ )
 	{
 		memset(&AYPSG[i],0,sizeof(struct AY8910));
-		AYSetClock(i,clock,rate);
+		AYSetClock(i,clk,rate);
 		AYPSG[i].Buf = buffer[i];
 		AYSetGain(i,0x00);
 		AYResetChip(i);
@@ -313,12 +313,13 @@ if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port B set as output
 void AYUpdateOne(int chip,int endp)
 {
 	struct AY8910 *PSG = &AYPSG[chip];
-	void *buffer;
+	unsigned char  *buffer_8;
+	unsigned short *buffer_16;
 	int length;
 	int outn;
 
-	if( sample_16bit ) buffer = &((unsigned short *)PSG->Buf)[PSG->bufp];
-	else               buffer = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_8  = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_16 = &((unsigned short *)PSG->Buf)[PSG->bufp];
 
 	if( endp > AYBufSize ) endp = AYBufSize;
 	length = endp - PSG->bufp;
@@ -379,7 +380,6 @@ void AYUpdateOne(int chip,int endp)
 	while (length)
 	{
 		int vola,volb,volc;
-		int output;
 		int left;
 
 
@@ -571,9 +571,20 @@ void AYUpdateOne(int chip,int endp)
 			}
 		}
 
-		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
-		if( sample_16bit ) *((unsigned short *)buffer)++ = output / STEP;
-		else               *((unsigned char  *)buffer)++ = output / (STEP*256);
+		if (sample_16bit)
+		{
+			buffer_16[0]           = vola*PSG->VolA / STEP;
+			buffer_16[AYBufSize]   = volb*PSG->VolB / STEP;
+			buffer_16[2*AYBufSize] = volc*PSG->VolC / STEP;
+			buffer_16++;
+		}
+		else
+		{
+			buffer_8[0]           = vola*PSG->VolA / (STEP*256);
+			buffer_8[AYBufSize]   = volb*PSG->VolB / (STEP*256);
+			buffer_8[2*AYBufSize] = volc*PSG->VolC / (STEP*256);
+			buffer_8++;
+		}
 
 		length--;
 	}
@@ -600,7 +611,7 @@ void AYUpdate(void)
 
 
 
-void AYSetClock(int n,int clock,int rate)
+void AYSetClock(int n,int clk,int rate)
 {
 	/* the step clock for the tone and noise generators is the chip clock */
 	/* divided by 8; for the envelope generator of the AY-3-8910, it is half */
@@ -610,7 +621,7 @@ void AYSetClock(int n,int clock,int rate)
 	/* at the given sample rate. No. of events = sample rate / (clock/8). */
 	/* STEP is a multiplier used to turn the fraction into a fixed point */
 	/* number. */
-	AYPSG[n].UpdateStep = ((double)STEP * rate * 8) / clock;
+	AYPSG[n].UpdateStep = ((double)STEP * rate * 8) / clk;
 }
 
 
@@ -635,7 +646,7 @@ void AYSetGain(int n,int gain)
 	gain &= 0xff;
 
 	/* increase max output basing on gain (0.2 dB per step) */
-	out = MAX_OUTPUT/3;
+	out = MAX_OUTPUT;
 	while (gain-- > 0)
 		out *= 1.023292992;	/* = (10 ^ (0.2/20)) */
 
@@ -646,7 +657,7 @@ void AYSetGain(int n,int gain)
 	for (i = 31;i > 0;i--)
 	{
 		/* limit volume to avoid clipping */
-		if (out > MAX_OUTPUT/3) PSG->VolTable[i] = MAX_OUTPUT/3;
+		if (out > MAX_OUTPUT) PSG->VolTable[i] = MAX_OUTPUT;
 		else PSG->VolTable[i] = out;
 
 		out /= 1.188502227;	/* = 10 ^ (1.5/20) */

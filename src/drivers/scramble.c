@@ -70,7 +70,7 @@ void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
 int scramble_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
 
@@ -474,15 +474,6 @@ static unsigned char scramble_color_prom[] =
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
 };
 
-/* these colors are nowhere near the real Frogger, but they match the actual ones */
-/* of the bootleg the ROMs come from. */
-static unsigned char froggers_color_prom[] =
-{
-	/* palette */
-	0x00,0xF6,0x79,0x4F,0x00,0xC0,0x3F,0x17,0x00,0x87,0xF8,0x7F,0x00,0xC1,0x7F,0x38,
-	0x00,0x7F,0xCF,0xF9,0x00,0x57,0xB7,0xC3,0x00,0xFF,0x7F,0x87,0x00,0x79,0x4F,0xFF
-};
-
 static unsigned char amidars_color_prom[] =
 {
 	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
@@ -494,8 +485,8 @@ static unsigned char amidars_color_prom[] =
 static struct AY8910interface scramble_ay8910_interface =
 {
 	2,	/* 2 chips */
-	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	14318000/8,	/* 1.78975 MHz */
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -505,8 +496,8 @@ static struct AY8910interface scramble_ay8910_interface =
 static struct AY8910interface frogger_ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff },
+	14318000/8,	/* 1.78975 MHz */
+	{ 0x30ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -521,14 +512,14 @@ static struct MachineDriver scramble_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			0,
 			scramble_readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -567,14 +558,14 @@ static struct MachineDriver theend_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			0,
 			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -612,15 +603,15 @@ static struct MachineDriver froggers_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			0,
 			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
-			2,	/* memory region #2 */
+			14318000/8,	/* 1.78975 MHz */
+			3,	/* memory region #3 */
 			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -732,6 +723,9 @@ ROM_START( froggers_rom )
 	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800, 0x38a71739 )
 	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800, 0xb474d87c )
 
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "vid_e6.bin", 0x0000, 0x0020, 0x8cab8983 )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_c5.bin", 0x0000, 0x0800, 0x57851ff5 )
 	ROM_LOAD( "snd_d5.bin", 0x0800, 0x0800, 0xd77b3859 )
@@ -776,9 +770,8 @@ static void froggers_decode(void)
 
 static int scramble_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
@@ -805,10 +798,7 @@ static int scramble_hiload(void)
 static void scramble_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -822,9 +812,8 @@ static void scramble_hisave(void)
 
 static int atlantis_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x403D],"\x00\x00\x00",3) == 0)
@@ -848,10 +837,7 @@ static int atlantis_hiload(void)
 static void atlantis_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -864,12 +850,22 @@ static void atlantis_hisave(void)
 
 static int theend_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	static int loop = 0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x43C0],"\x00\x00\x00",3) == 0)
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (loop == 0)
+	{
+		memset(&RAM[0x43c0],0xff,3*5);
+		loop = 1;
+	}
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x43c0],"\x00\x00\x00",3) == 0 &&
+			memcmp(&RAM[0x43cc],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -879,12 +875,13 @@ static int theend_hiload(void)
 			/* This seems to have more than 5 scores in memory. */
 			/* If this DISPLAYS more than 5 scores, change 3*5 to 3*10 or */
 			/* however many it should be. */
-			osd_fread(f,&RAM[0x43C0],3*5);
+			osd_fread(f,&RAM[0x43c0],3*5);
 			/* copy high score */
-			memcpy(&RAM[0x40A8],&RAM[0x43C0],3);
+			memcpy(&RAM[0x40a8],&RAM[0x43c0],3);
 			osd_fclose(f);
 		}
 
+		loop = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -895,10 +892,7 @@ static int theend_hiload(void)
 static void theend_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -915,9 +909,7 @@ static void theend_hisave(void)
 
 static int froggers_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -945,9 +937,7 @@ static int froggers_hiload(void)
 static void froggers_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -961,9 +951,14 @@ static void froggers_hisave(void)
 
 struct GameDriver scramble_driver =
 {
-	"Scramble",
+	__FILE__,
+	0,
 	"scramble",
+	"Scramble",
+	"1981",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
 	&scramble_machine_driver,
 
 	scramble_rom,
@@ -981,9 +976,14 @@ struct GameDriver scramble_driver =
 
 struct GameDriver atlantis_driver =
 {
-	"Battle of Atlantis",
+	__FILE__,
+	0,
 	"atlantis",
-	"NICOLA SALMORIA\nMIKE BALFOUR",
+	"Battle of Atlantis",
+	"1981",
+	"Comsoft",
+	"Nicola Salmoria\nMike Balfour",
+	0,
 	&scramble_machine_driver,
 
 	atlantis_rom,
@@ -1001,9 +1001,14 @@ struct GameDriver atlantis_driver =
 
 struct GameDriver theend_driver =
 {
-	"The End",
+	__FILE__,
+	0,
 	"theend",
-	"NICOLA SALMORIA\nVILLE LAITINEN\nMIKE BALFOUR",
+	"The End",
+	"1980",
+	"Stern",
+	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
+	0,
 	&theend_machine_driver,
 
 	theend_rom,
@@ -1019,11 +1024,17 @@ struct GameDriver theend_driver =
 	theend_hiload, theend_hisave
 };
 
+extern struct GameDriver frogger_driver;
 struct GameDriver froggers_driver =
 {
-	"Frog",
+	__FILE__,
+	&frogger_driver,
 	"froggers",
-	"NICOLA SALMORIA",
+	"Frog",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria",
+	0,
 	&froggers_machine_driver,
 
 	froggers_rom,
@@ -1033,17 +1044,23 @@ struct GameDriver froggers_driver =
 
 	froggers_input_ports,
 
-	froggers_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	froggers_hiload, froggers_hisave
 };
 
+extern struct GameDriver amidar_driver;
 struct GameDriver amidars_driver =
 {
-	"Amidars",
+	__FILE__,
+	&amidar_driver,
 	"amidars",
+	"Amidar (Scramble hardware)",
+	"1982",
+	"Konami",
 	"Nicola Salmoria\nMike Coates",
+	0,
 	&scramble_machine_driver,
 
 	amidars_rom,
@@ -1186,7 +1203,7 @@ static struct AY8910interface triplep_ay8910_interface =
 {
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz? */
-	{ 0x30ff },
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1248,9 +1265,14 @@ ROM_END
 
 struct GameDriver triplep_driver =
 {
-	"Triple Punch",
+	__FILE__,
+	0,
 	"triplep",
-	"NICOLA SALMORIA",
+	"Triple Punch",
+	"1982",
+	"KKI",
+	"Nicola Salmoria",
+	0,
 	&triplep_machine_driver,
 
 	triplep_rom,

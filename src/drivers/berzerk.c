@@ -41,7 +41,7 @@ void berzerk_sound_control_b_w(int offset, int data);
 int berzerk_sh_start(void);
 void berzerk_sh_update(void);
 
-void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap);
+void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -320,7 +320,7 @@ static struct MachineDriver berzerk_machine_driver =
 	{
 			{
 					CPU_Z80,
-					2500000,        /* 2.5 MHz ? */
+					2500000,        /* 2.5 MHz */
 					0,
 					readmem,writemem,readport,writeport,
 					berzerk_interrupt,8
@@ -362,7 +362,7 @@ static struct MachineDriver frenzy_machine_driver =
 	{
 		{
 			CPU_Z80,
-			2500000,        /* 2.5 MHz ? */
+			2500000,        /* 2.5 MHz */
 			0,
 			frenzy_readmem,frenzy_writemem,readport,writeport,
 			berzerk_interrupt,8
@@ -517,9 +517,14 @@ static const char *berzerk_sample_names[] =
 
 struct GameDriver berzerk_driver =
 {
-	"Berzerk",
+	__FILE__,
+	0,
 	"berzerk",
+	"Berzerk",
+	"1980",
+	"Stern",
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	0,
 	&berzerk_machine_driver,
 
 	berzerk_rom,
@@ -539,9 +544,14 @@ struct GameDriver berzerk_driver =
 
 struct GameDriver berzerk1_driver =
 {
-	"Berzerk (version 1)",
+	__FILE__,
+	&berzerk_driver,
 	"berzerk1",
+	"Berzerk (version 1)",
+	"1980",
+	"Stern",
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	0,
 	&berzerk_machine_driver,
 
 	berzerk1_rom,
@@ -561,9 +571,14 @@ struct GameDriver berzerk1_driver =
 
 struct GameDriver frenzy_driver =
 {
-	"Frenzy",
+	__FILE__,
+	0,
 	"frenzy",
+	"Frenzy",
+	"1982",
+	"Stern",
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	0,
 	&frenzy_machine_driver,
 
 	frenzy_rom,
@@ -582,9 +597,14 @@ struct GameDriver frenzy_driver =
 
 struct GameDriver frenzy1_driver =
 {
-	"Frenzy (version 1)",
+	__FILE__,
+	&frenzy_driver,
 	"frenzy1",
+	"Frenzy (version 1)",
+	"1982",
+	"Stern",
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	0,
 	&frenzy_machine_driver,
 
 	frenzy1_rom,

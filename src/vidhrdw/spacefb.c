@@ -73,7 +73,7 @@ void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
+void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int spriteno;
@@ -100,9 +100,11 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 			if (cnt & 0x20) {
 			/* Draw bullets */
 				unsigned char charnum = chr & 63;
+				unsigned char pal = 7-(cnt & 0x7);
+
 				drawgfx(bitmap,Machine->gfx[1],
 						charnum,
-						2,
+						pal,
 						0,0,v,h,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 

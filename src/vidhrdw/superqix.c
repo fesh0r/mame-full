@@ -12,45 +12,7 @@
 
 
 static int gfxbank;
-static unsigned char *superqix_palette;
 static unsigned char *superqix_bitmapram,*superqix_bitmapram2;
-
-
-
-/***************************************************************************
-
-  Super Qix doesn't have colors PROMs, it uses RAM. The meaning of the bits are
-  bit 7 -- Blue
-        -- Blue
-        -- Green
-        -- Green
-        -- Red
-        -- Red
-        -- Intensity
-  bit 0 -- Intensity
-
-***************************************************************************/
-void superqix_palette_w(int offset,int data)
-{
-	int bits,intensity,r,g,b;
-
-
-	superqix_palette[offset] = data;
-
-	intensity = (data >> 0) & 0x03;
-	/* red component */
-	bits = (data >> 2) & 0x03;
-	r = 0x44 * bits + 0x11 * intensity;
-	/* green component */
-	bits = (data >> 4) & 0x03;
-	g = 0x44 * bits + 0x11 * intensity;
-	/* blue component */
-	bits = (data >> 6) & 0x03;
-	b = 0x44 * bits + 0x11 * intensity;
-
-	palette_change_color(offset,r,g,b);
-}
-
 
 
 
@@ -64,7 +26,9 @@ int superqix_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((superqix_palette = malloc(256 * sizeof(unsigned char))) == 0)
+	/* palette RAM is accessed thorough I/O ports, so we have to */
+	/* allocate it ourselves */
+	if ((paletteram = malloc(256 * sizeof(unsigned char))) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -72,7 +36,7 @@ int superqix_vh_start(void)
 
 	if ((superqix_bitmapram = malloc(0x7000 * sizeof(unsigned char))) == 0)
 	{
-		free(superqix_palette);
+		free(paletteram);
 		generic_vh_stop();
 		return 1;
 	}
@@ -80,7 +44,7 @@ int superqix_vh_start(void)
 	if ((superqix_bitmapram2 = malloc(0x7000 * sizeof(unsigned char))) == 0)
 	{
 		free(superqix_bitmapram);
-		free(superqix_palette);
+		free(paletteram);
 		generic_vh_stop();
 		return 1;
 	}
@@ -99,15 +63,8 @@ void superqix_vh_stop(void)
 {
 	free(superqix_bitmapram2);
 	free(superqix_bitmapram);
-	free(superqix_palette);
+	free(paletteram);
 	generic_vh_stop();
-}
-
-
-
-int superqix_palette_r(int offset)
-{
-	return superqix_palette[offset];
 }
 
 
@@ -137,6 +94,7 @@ void superqix_bitmapram2_w(int offset,int data)
 void superqix_0410_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* bits 0-1 select the tile bank */
@@ -163,9 +121,14 @@ void superqix_0410_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void superqix_vh_screenrefresh(struct osd_bitmap *bitmap)
+void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+
+	/* recalc the palette if necessary */
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -264,7 +227,7 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[5],
 				spriteram[offs] + 256 * (spriteram[offs + 3] & 0x01),
 				(spriteram[offs + 3] & 0xf0) >> 4,
-				0,0,
+				0,0,	/* TODO: add flip */
 				spriteram[offs + 1],spriteram[offs + 2],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

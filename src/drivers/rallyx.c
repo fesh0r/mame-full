@@ -101,7 +101,7 @@ void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
-void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap);
+void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static void rallyx_play_sound_w(int offset, int data)
@@ -481,6 +481,9 @@ static const char *rallyx_sample_names[] =
 
 static int hiload(void)     /* V.V */
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8060],"\x00\x00\x00\x30\x40\x40\x40\x02",8) == 0)
 	{
@@ -502,6 +505,8 @@ static int hiload(void)     /* V.V */
 static void hisave(void)    /* V.V */
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -514,9 +519,14 @@ static void hisave(void)    /* V.V */
 
 struct GameDriver rallyx_driver =
 {
-	"Rally X",
+	__FILE__,
+	0,
 	"rallyx",
+	"Rally X",
+	"1980",
+	"[Namco] (Midway license)",
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
 	&machine_driver,
 
 	rallyx_rom,
@@ -534,9 +544,14 @@ struct GameDriver rallyx_driver =
 
 struct GameDriver nrallyx_driver =
 {
-	"New Rally X",
+	__FILE__,
+	0,
 	"nrallyx",
+	"New Rally X",
+	"1981",
+	"Namco",
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	nrallyx_rom,

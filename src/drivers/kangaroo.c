@@ -111,7 +111,7 @@ extern unsigned char *kangaroo_blitter;
 void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  kangaroo_vh_start(void);
 void kangaroo_vh_stop(void);
-void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void kangaroo_blitter_w(int offset, int val);
 void kangaroo_videoram_w(int offset, int val);
 void kangaroo_color_mask_w(int offset,int data);
@@ -138,6 +138,9 @@ static void kangaroo_init_machine(void)
 
 void kangaroo_bank_select_w(int offset,int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* this is a VERY crude way to handle the banked ROMs - but it's */
 	/* correct enough to pass the self test */
 	if (data & 0x05) { cpu_setbank(1,&RAM[0x10000]); }
@@ -391,9 +394,7 @@ ROM_END
 
 static int kangaroo_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -414,9 +415,7 @@ static int kangaroo_hiload(void)
 static void kangaroo_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -430,9 +429,14 @@ static void kangaroo_hisave(void)
 
 struct GameDriver kangaroo_driver =
 {
-	"Kangaroo",
+	__FILE__,
+	0,
 	"kangaroo",
+	"Kangaroo",
+	"1982",
+	"Atari",
 	"Ville Laitinen (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	kangaroo_rom,

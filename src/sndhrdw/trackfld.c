@@ -4,11 +4,7 @@ struct VLM5030interface konami_vlm5030_interface =
 {
     3580000,    /* master clock  */
     255,        /* volume        */
-#if 0
     3,         /* memory region  */
-#else
-    -1,        /* sampling mode  */
-#endif
     0,         /* VCU            */
 };
 
@@ -16,7 +12,7 @@ struct SN76496interface konami_sn76496_interface =
 {
 	1,	/* 1 chip */
 	14318180/8,	/*  1.7897725 Mhz */
-	{ 255*2, 255*2 }
+	{ 255 }
 };
 
 struct DACinterface konami_dac_interface =

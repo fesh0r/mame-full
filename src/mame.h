@@ -4,16 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "osdepend.h"
-#include "common.h"
 
 extern char messversion[];
 extern FILE *errorlog;
 
-extern int framecount; /* MESS */
-extern int frameskip; /* MESS */
-
-#define MAX_GFX_ELEMENTS 32 /* MESS */
+#define MAX_GFX_ELEMENTS 24
 #define MAX_MEMORY_REGIONS 10
 
 #define MAX_LAYERS 4	/* MAX_LAYERS is the maximum number of gfx layers */

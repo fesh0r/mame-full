@@ -9,7 +9,61 @@ Warlords Driver by Lee Taylor and John Clegg
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *warlord_paletteram;
+
+
+/***************************************************************************
+
+  Convert the color PROM into a more useable format.
+
+  The palette PROM are connected to the RGB output this way:
+
+  bit 2 -- RED
+        -- GREEN
+  bit 0 -- BLUE
+
+***************************************************************************/
+void warlord_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i, j;
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int r,g,b;
+
+		r = ((*color_prom >> 2) & 0x01) * 0xff;
+		g = ((*color_prom >> 1) & 0x01) * 0xff;
+		b = ((*color_prom >> 0) & 0x01) * 0xff;
+
+		/* Colors 0x40-0x7f are converted to grey scale as it's used on the
+		   upright version that had an overlay */
+		if (i >= Machine->drv->total_colors / 2)
+		{
+			int grey;
+
+			/* Use the standard ratios: r = 30%, g = 59%, b = 11% */
+			grey = ((r != 0) * 0x4d) + ((g != 0) * 0x96) + ((b != 0) * 0x1c);
+
+			r = g = b = grey;
+		}
+
+		*(palette++) = r;
+		*(palette++) = g;
+		*(palette++) = b;
+
+		color_prom++;
+	}
+
+	for (i = 0; i < 8; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			COLOR(0,i*4+j) = i*16+j;
+			COLOR(1,i*4+j) = i*16+j*4;
+		}
+	}
+}
 
 
 /***************************************************************************
@@ -19,26 +73,42 @@ unsigned char *warlord_paletteram;
   the main emulation engine.
 
 ***************************************************************************/
-void warlord_vh_screenrefresh(struct osd_bitmap *bitmap)
+void warlord_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	int offs, upright_mode, palette;
 
+	/* Cocktail mode uses colors 0-3, upright 4-7 */
+
+	upright_mode = input_port_0_r(0) & 0x80;
+	palette = ( upright_mode ? 4 : 0);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,color,flipx,flipy;
 
 			dirtybuffer[offs] = 0;
 
 			sy = (offs / 32);
 			sx = (offs % 32);
 
+			flipx = !(videoram [offs] & 0x40);
+			flipy =   videoram [offs] & 0x80;
+
+			if (upright_mode)
+			{
+				sx = 31 - sx;
+				flipx = !flipx;
+			}
+
+			/* The four quadrants have different colors */
+			color = ((sy & 0x10) >> 3) | ((sx & 0x10) >> 4) | palette;
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram [offs] & 0x3f,
-					0,
-					videoram [offs] & 0x40, videoram [offs] & 0x80 ,
+					color,
+					flipx, flipy,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -52,31 +122,32 @@ void warlord_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites */
 	for (offs = 0;offs < 0x10;offs++)
 	{
-		int spritenum, color;
+		int sx, sy, flipx, flipy, spritenum, color;
 
-		spritenum = (spriteram[offs] & 0x3f) + 0x40;
+		sx = spriteram [offs + 0x20];
+        sy = 248 - spriteram[offs + 0x10];
 
-		/* LBO - borrowed this from Centipede. It really adds a psychedelic touch. */
-		/* Warlords is unusual because the sprite color code specifies the */
-		/* colors to use one by one, instead of a combination code. */
-		/* bit 5-4 = color to use for pen 11 */
-		/* bit 3-2 = color to use for pen 10 */
-		/* bit 1-0 = color to use for pen 01 */
-		/* pen 00 is transparent */
-		color = spriteram[offs+0x30];
-#if 0
-		Machine->gfx[1]->colortable[3] =
-				Machine->pens[12 + ((color >> 4) & 3)];
-		Machine->gfx[1]->colortable[2] =
-				Machine->pens[12 + ((color >> 2) & 3)];
-		Machine->gfx[1]->colortable[1] =
-				Machine->pens[12 + ((color >> 0) & 3)];
-#endif
+		flipx = !(spriteram [offs] & 0x40);
+		flipy =   spriteram [offs] & 0x80;
+
+		if (upright_mode)
+		{
+			sx = 248 - sx;
+			flipx = !flipx;
+		}
+
+		spritenum = (spriteram[offs] & 0x3f);
+
+		/* The four quadrants have different colors. This is not 100% accurate,
+		   because right on the middle the sprite could actually have two or more
+		   different color, but this is not noticable, as the color that
+		   changes between the quadrants is mostly used on the paddle sprites */
+		color = ((sy & 0x80) >> 6) | ((sx & 0x80) >> 7) | palette;
 
 		drawgfx(bitmap,Machine->gfx[1],
-				spritenum, 0,
-				spriteram [offs] & 0x40, spriteram [offs] & 0x80 ,
-				spriteram [offs + 0x20], 248 - spriteram[offs + 0x10],
+				spritenum, color,
+				flipx, flipy,
+				sx, sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

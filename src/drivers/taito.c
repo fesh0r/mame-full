@@ -155,7 +155,7 @@ extern unsigned char *taito_characterram;
 extern unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
 extern unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
 extern unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
-extern unsigned char *taito_gfxpointer,*taito_paletteram;
+extern unsigned char *taito_gfxpointer;
 extern unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
 void taito_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int taito_gfxrom_r(int offset);
@@ -167,7 +167,7 @@ void taito_videoenable_w(int offset,int data);
 void taito_characterram_w(int offset,int data);
 int taito_vh_start(void);
 void taito_vh_stop(void);
-void taito_vh_screenrefresh(struct osd_bitmap *bitmap);
+void taito_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -218,7 +218,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd020, 0xd03f, MWA_RAM, &taito_colscrolly2 },
 	{ 0xd040, 0xd05f, MWA_RAM, &taito_colscrolly3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd200, 0xd27f, taito_paletteram_w, &taito_paletteram },
+	{ 0xd200, 0xd27f, taito_paletteram_w, &paletteram },
 	{ 0xd300, 0xd300, MWA_RAM, &taito_video_priority },
 	{ 0xd40e, 0xd40e, AY8910_control_port_0_w },
 	{ 0xd40f, 0xd40f, AY8910_write_port_0_w },
@@ -450,7 +450,7 @@ INPUT_PORTS_START( junglek_input_ports )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x20, 0x20, "Test Mode", IP_KEY_NONE )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
@@ -545,7 +545,7 @@ INPUT_PORTS_START( frontlin_input_ports )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -577,7 +577,7 @@ INPUT_PORTS_START( frontlin_input_ports )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x20, 0x20, "Test Mode", IP_KEY_NONE )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x40, 0x00, "Flip Screen", IP_KEY_NONE )
@@ -651,6 +651,137 @@ INPUT_PORTS_START( frontlin_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( spaceskr_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* Service */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x18, 0x18, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x18, "6" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+
+	PORT_START      /* DSW2 Coinage */
+	PORT_DIPNAME( 0x0f, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0f, "9 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "8 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0d, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x09, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/8 Credits" )
+	PORT_DIPNAME( 0xf0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xf0, "9 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "8 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x90, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x70, "1 Coin/8 Credits" )
+
+	PORT_START      /* DSW3 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Year Display", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x20, "Yes" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "A and B" )
+	PORT_DIPSETTING(    0x00, "A only" )
+INPUT_PORTS_END
+
+
+
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -691,7 +822,7 @@ static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
 	6000000/4,	/* 1.5 MHz */
-	{ 255, 255, 255, 0x40ff },
+	{ 255, 255, 255, 0x20ff },
 	{ input_port_5_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_6_r, 0, 0, 0 },		/* port Bread */
 	{ 0, taito_digital_out, 0, 0 },		/* port Awrite */
@@ -702,7 +833,7 @@ static struct DACinterface dac_interface =
 {
 	1,
 	441000,
-	{ 128, 128 },
+	{ 255, 255 },
 	{  1,  1 }
 };
 
@@ -788,65 +919,64 @@ ROM_START( elevator_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea-ic1.bin",  0x0000, 0x1000, 0xec7c455a )
-	ROM_LOAD( "ea-ic2.bin",  0x1000, 0x1000, 0x19bc841c )
-	ROM_LOAD( "ea-ic3.bin",  0x2000, 0x1000, 0x06828c76 )
-	ROM_LOAD( "ea-ic4.bin",  0x3000, 0x1000, 0x39ef916b )
-	ROM_LOAD( "ea-ic5.bin",  0x4000, 0x1000, 0x9aed5295 )
-	ROM_LOAD( "ea-ic6.bin",  0x5000, 0x1000, 0x19108d2c )
-	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000, 0x61d8fe9a )
-	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000, 0x5d924ce0 )
+	ROM_LOAD( "ea-ic1.bin", 0x0000, 0x1000, 0xec7c455a )
+	ROM_LOAD( "ea-ic2.bin", 0x1000, 0x1000, 0x19bc841c )
+	ROM_LOAD( "ea-ic3.bin", 0x2000, 0x1000, 0x06828c76 )
+	ROM_LOAD( "ea-ic4.bin", 0x3000, 0x1000, 0x39ef916b )
+	ROM_LOAD( "ea-ic5.bin", 0x4000, 0x1000, 0x9aed5295 )
+	ROM_LOAD( "ea-ic6.bin", 0x5000, 0x1000, 0x19108d2c )
+	ROM_LOAD( "ea-ic7.bin", 0x6000, 0x1000, 0x61d8fe9a )
+	ROM_LOAD( "ea-ic8.bin", 0x7000, 0x1000, 0x5d924ce0 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
 	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000, 0x34e16eb3 )
-/*	ROM_LOAD( "ee_ea10.bin", , 0x1000 ) ??? */
 ROM_END
 
 ROM_START( elevatob_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "ea69.bin", 0x0000, 0x1000, 0x9575392d )
-	ROM_LOAD( "ea68.bin", 0x1000, 0x1000, 0x885e9cac )
-	ROM_LOAD( "ea67.bin", 0x2000, 0x1000, 0x0f3f24e5 )
-	ROM_LOAD( "ea66.bin", 0x3000, 0x1000, 0x2ac3f1f9 )
-	ROM_LOAD( "ea65.bin", 0x4000, 0x1000, 0xe15c6fcc )
-	ROM_LOAD( "ea64.bin", 0x5000, 0x1000, 0x23ed29b1 )
-	ROM_LOAD( "ea55.bin", 0x6000, 0x1000, 0x04dbd855 )
-	ROM_LOAD( "ea54.bin", 0x7000, 0x1000, 0x4d791e41 )
+	ROM_LOAD( "ea69.bin",    0x0000, 0x1000, 0x9575392d )
+	ROM_LOAD( "ea-ic68.bin", 0x1000, 0x1000, 0x885e9cac )
+	ROM_LOAD( "ea-ic67.bin", 0x2000, 0x1000, 0x0f3f24e5 )
+	ROM_LOAD( "ea66.bin",    0x3000, 0x1000, 0x2ac3f1f9 )
+	ROM_LOAD( "ea-ic65.bin", 0x4000, 0x1000, 0xe15c6fcc )
+	ROM_LOAD( "ea-ic64.bin", 0x5000, 0x1000, 0x23ed29b1 )
+	ROM_LOAD( "ea55.bin",    0x6000, 0x1000, 0x04dbd855 )
+	ROM_LOAD( "ea54.bin",    0x7000, 0x1000, 0x4d791e41 )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "ea52.bin", 0x11000, 0x1000, 0xde40e7e6 )	/* protection crack, bank switched at 7000 */
+	ROM_LOAD( "ea52.bin",    0x11000, 0x1000, 0xde40e7e6 )	/* protection crack, bank switched at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea01.bin", 0x0000, 0x1000, 0xe97f45a5 )
-	ROM_LOAD( "ea02.bin", 0x1000, 0x1000, 0x19bc841c )
-	ROM_LOAD( "ea03.bin", 0x2000, 0x1000, 0x06828c76 )
-	ROM_LOAD( "ea04.bin", 0x3000, 0x1000, 0x39ef916b )
-	ROM_LOAD( "ea05.bin", 0x4000, 0x1000, 0x9aed5295 )
-	ROM_LOAD( "ea06.bin", 0x5000, 0x1000, 0x30ddb2e3 )
-	ROM_LOAD( "ea07.bin", 0x6000, 0x1000, 0x61d8fe9a )
-	ROM_LOAD( "ea08.bin", 0x7000, 0x1000, 0xd6d24ce0 )
+	ROM_LOAD( "ea-ic1.bin", 0x0000, 0x1000, 0xec7c455a )
+	ROM_LOAD( "ea-ic2.bin", 0x1000, 0x1000, 0x19bc841c )
+	ROM_LOAD( "ea-ic3.bin", 0x2000, 0x1000, 0x06828c76 )
+	ROM_LOAD( "ea-ic4.bin", 0x3000, 0x1000, 0x39ef916b )
+	ROM_LOAD( "ea-ic5.bin", 0x4000, 0x1000, 0x9aed5295 )
+	ROM_LOAD( "ea-ic6.bin", 0x5000, 0x1000, 0x19108d2c )
+	ROM_LOAD( "ea-ic7.bin", 0x6000, 0x1000, 0x61d8fe9a )
+	ROM_LOAD( "ea08.bin",   0x7000, 0x1000, 0xd6d24ce0 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ea70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
-	ROM_LOAD( "ea71.bin", 0x1000, 0x1000, 0x34e16eb3 )
+	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
+	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000, 0x34e16eb3 )
 ROM_END
 
 ROM_START( junglek_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "kn41.bin",   0x00000, 0x1000, 0xac5442b8 )
-	ROM_LOAD( "kn42.bin",   0x01000, 0x1000, 0xa3a182b5 )
-	ROM_LOAD( "kn43.bin",   0x02000, 0x1000, 0xcbb13a65 )
-	ROM_LOAD( "kn44.bin",   0x03000, 0x1000, 0x883222ca )
-	ROM_LOAD( "kn45.bin",   0x04000, 0x1000, 0x9911012d )
-	ROM_LOAD( "kn46.bin",   0x05000, 0x1000, 0xc040e8ac )
-	ROM_LOAD( "kn47.bin",   0x06000, 0x1000, 0xf361abd9 )
-	ROM_LOAD( "kn48.bin",   0x07000, 0x1000, 0x45072f4d )
+	ROM_LOAD( "kn41.bin", 0x00000, 0x1000, 0xac5442b8 )
+	ROM_LOAD( "kn42.bin", 0x01000, 0x1000, 0xa3a182b5 )
+	ROM_LOAD( "kn43.bin", 0x02000, 0x1000, 0xcbb13a65 )
+	ROM_LOAD( "kn44.bin", 0x03000, 0x1000, 0x883222ca )
+	ROM_LOAD( "kn45.bin", 0x04000, 0x1000, 0x9911012d )
+	ROM_LOAD( "kn46.bin", 0x05000, 0x1000, 0xc040e8ac )
+	ROM_LOAD( "kn47.bin", 0x06000, 0x1000, 0xf361abd9 )
+	ROM_LOAD( "kn48.bin", 0x07000, 0x1000, 0x45072f4d )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "kn60.bin",   0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
+	ROM_LOAD( "kn60.bin", 0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -870,35 +1000,35 @@ ROM_END
 
 ROM_START( jhunt_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "kn41a",  0x00000, 0x1000, 0x9174a276 )
-	ROM_LOAD( "kn42",   0x01000, 0x1000, 0xa3a182b5 )
-	ROM_LOAD( "kn43",   0x02000, 0x1000, 0xcbb13a65 )
-	ROM_LOAD( "kn44",   0x03000, 0x1000, 0x883222ca )
-	ROM_LOAD( "kn45",   0x04000, 0x1000, 0x9911012d )
-	ROM_LOAD( "kn46a",  0x05000, 0x1000, 0xe4bcd3ec )
-	ROM_LOAD( "kn47",   0x06000, 0x1000, 0xf361abd9 )
-	ROM_LOAD( "kn48a",  0x07000, 0x1000, 0xed94461e )
+	ROM_LOAD( "kn41a",    0x00000, 0x1000, 0x9174a276 )
+	ROM_LOAD( "kn42.bin", 0x01000, 0x1000, 0xa3a182b5 )
+	ROM_LOAD( "kn43.bin", 0x02000, 0x1000, 0xcbb13a65 )
+	ROM_LOAD( "kn44.bin", 0x03000, 0x1000, 0x883222ca )
+	ROM_LOAD( "kn45.bin", 0x04000, 0x1000, 0x9911012d )
+	ROM_LOAD( "kn46a",    0x05000, 0x1000, 0xe4bcd3ec )
+	ROM_LOAD( "kn47.bin", 0x06000, 0x1000, 0xf361abd9 )
+	ROM_LOAD( "kn48a",    0x07000, 0x1000, 0xed94461e )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "kn60",   0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
+	ROM_LOAD( "kn60.bin", 0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "kn49a", 0x0000, 0x1000, 0x1bf1ccb5 )
-	ROM_LOAD( "kn50a", 0x1000, 0x1000, 0xa02514d7 )
-	ROM_LOAD( "kn51a", 0x2000, 0x1000, 0xdfdc6430 )
-	ROM_LOAD( "kn52a", 0x3000, 0x1000, 0x07daf09a )
-	ROM_LOAD( "kn53a", 0x4000, 0x1000, 0xb8e50809 )
-	ROM_LOAD( "kn54a", 0x5000, 0x1000, 0x32dab8ac )
-	ROM_LOAD( "kn55",  0x6000, 0x1000, 0x9ddcccc6 )
-	ROM_LOAD( "kn56a", 0x7000, 0x1000, 0x5e1a9162 )
+	ROM_LOAD( "kn49a",    0x0000, 0x1000, 0x1bf1ccb5 )
+	ROM_LOAD( "kn50a",    0x1000, 0x1000, 0xa02514d7 )
+	ROM_LOAD( "kn51a",    0x2000, 0x1000, 0xdfdc6430 )
+	ROM_LOAD( "kn52a",    0x3000, 0x1000, 0x07daf09a )
+	ROM_LOAD( "kn53a",    0x4000, 0x1000, 0xb8e50809 )
+	ROM_LOAD( "kn54a",    0x5000, 0x1000, 0x32dab8ac )
+	ROM_LOAD( "kn55.bin", 0x6000, 0x1000, 0x9ddcccc6 )
+	ROM_LOAD( "kn56a",    0x7000, 0x1000, 0x5e1a9162 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "kn57-1", 0x0000, 0x1000, 0x66c38ff9 )
-	ROM_LOAD( "kn58-1", 0x1000, 0x1000, 0xea9154bd )
-	ROM_LOAD( "kn59-1", 0x2000, 0x1000, 0xd3d4d7fe )
+	ROM_LOAD( "kn57-1.bin", 0x0000, 0x1000, 0x66c38ff9 )
+	ROM_LOAD( "kn58-1.bin", 0x1000, 0x1000, 0xea9154bd )
+	ROM_LOAD( "kn59-1.bin", 0x2000, 0x1000, 0xd3d4d7fe )
 ROM_END
 
 ROM_START( wwestern_rom )
@@ -978,13 +1108,40 @@ ROM_START( alpine_rom )
 	ROM_LOAD( "rh13.070", 0x0000, 0x1000, 0xf53a66fe )
 ROM_END
 
+ROM_START( spaceskr_rom )
+	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_LOAD( "eb01", 0x0000, 0x1000, 0x01a01ff6 )
+	ROM_LOAD( "eb02", 0x1000, 0x1000, 0x2e605918 )
+	ROM_LOAD( "eb03", 0x2000, 0x1000, 0x63ddc52f )
+	ROM_LOAD( "eb04", 0x3000, 0x1000, 0x6fd9ed97 )
+	ROM_LOAD( "eb05", 0x4000, 0x1000, 0x5c61da87 )
+	ROM_LOAD( "eb06", 0x5000, 0x1000, 0xa9c054d2 )
+	ROM_LOAD( "eb07", 0x6000, 0x1000, 0x0a53cfe3 )
+	ROM_LOAD( "eb08", 0x7000, 0x1000, 0xe402b0f6 )
+	/* 10000-11fff space for banked ROMs (not used) */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x8000)	/* graphic ROMs */
+	ROM_LOAD( "eb09",  0x0000, 0x1000, 0x470e0e2a )
+	ROM_LOAD( "eb10",  0x1000, 0x1000, 0xc926dc3e )
+	ROM_LOAD( "eb11",  0x2000, 0x1000, 0x232de4ad )
+	ROM_LOAD( "eb12",  0x3000, 0x1000, 0x9658e886 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "eb13", 0x0000, 0x1000, 0x009f6a83 )
+	ROM_LOAD( "eb14", 0x1000, 0x1000, 0x2d007f12 )
+	ROM_LOAD( "eb15", 0x2000, 0x1000, 0x6da3eefb )
+ROM_END
+
 
 
 static int elevator_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* wait for the high score to initialize */
 	if (memcmp(&RAM[0x8350],"\x00\x00\x01",3) == 0)
@@ -1005,11 +1162,8 @@ static int elevator_hiload(void)
 
 static void elevator_hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1021,9 +1175,8 @@ static void elevator_hisave(void)
 
 static int junglek_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x816B],"\x00\x50\x00",3) == 0)
@@ -1045,27 +1198,72 @@ static int junglek_hiload(void)
 static void junglek_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x816B],3);
+		osd_fwrite(f,&RAM[0x816B],3);
 		osd_fclose(f);
 	}
 
 }
 
 
+static int frontlin_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8640],"\x01\x00\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8640],3);
+			osd_fclose(f);
+
+			/* WE MUST ALSO COPY THE SCORE TO THE SCREEN*/
+			RAM[0xc5be]=(RAM[0x8640] >> 4);
+			RAM[0xc5de]=(RAM[0x8640] & 0x0f);
+			RAM[0xc5fe]=(RAM[0x8641] >> 4);
+			RAM[0xc61e]=(RAM[0x8641] & 0x0f);
+			RAM[0xc63e]=(RAM[0x8642] >> 4);
+			RAM[0xc65e]=(RAM[0x8642] & 0x0f);
+		}
+
+		return 1;
+	 }
+	 else return 0; /* we can't load the hi scores yet */
+}
+
+static void frontlin_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8640],3);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver elevator_driver =
 {
-	"Elevator Action",
+	__FILE__,
+	0,
 	"elevator",
+	"Elevator Action",
+	"1983",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	elevator_rom,
@@ -1083,9 +1281,14 @@ struct GameDriver elevator_driver =
 
 struct GameDriver elevatob_driver =
 {
-	"Elevator Action (bootleg)",
+	__FILE__,
+	&elevator_driver,
 	"elevatob",
+	"Elevator Action (bootleg)",
+	"1983",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	elevatob_rom,
@@ -1103,9 +1306,14 @@ struct GameDriver elevatob_driver =
 
 struct GameDriver junglek_driver =
 {
-	"Jungle King",
+	__FILE__,
+	0,
 	"junglek",
+	"Jungle King",
+	"1982",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	junglek_rom,
@@ -1123,9 +1331,14 @@ struct GameDriver junglek_driver =
 
 struct GameDriver jhunt_driver =
 {
-	"Jungle Hunt",
+	__FILE__,
+	&junglek_driver,
 	"jhunt",
+	"Jungle Hunt",
+	"1982",
+	"Taito of America",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jhunt_rom,
@@ -1143,9 +1356,14 @@ struct GameDriver jhunt_driver =
 
 struct GameDriver frontlin_driver =
 {
-	"Front Line",
+	__FILE__,
+	0,
 	"frontlin",
+	"Front Line",
+	"1982",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMarco Cassili",
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	frontlin_rom,
@@ -1158,15 +1376,20 @@ struct GameDriver frontlin_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	frontlin_hiload, frontlin_hisave
 };
 
 
 struct GameDriver wwestern_driver =
 {
-	"Wild Western",
+	__FILE__,
+	0,
 	"wwestern",
+	"Wild Western",
+	"1982",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	wwestern_rom,
@@ -1184,9 +1407,14 @@ struct GameDriver wwestern_driver =
 
 struct GameDriver alpine_driver =
 {
-	"Alpine Ski",
+	__FILE__,
+	0,
 	"alpine",
+	"Alpine Ski",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	alpine_rom,
@@ -1198,6 +1426,31 @@ struct GameDriver alpine_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver spaceskr_driver =
+{
+	__FILE__,
+	0,
+	"spaceskr",
+	"Space Seeker",
+	"1981",
+	"Taito",
+	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	0,
+	&machine_driver,
+
+	spaceskr_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	spaceskr_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_180,
 
 	0, 0
 };

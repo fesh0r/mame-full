@@ -146,9 +146,12 @@ void c1943_vh_stop(void)
 void c1943_c804_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* bits 0 and 1 are for coin counters - we ignore them */
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
 
 	/* bits 2, 3 and 4 select the ROM bank */
 	bankaddress = 0x10000 + (data & 0x1c) * 0x1000;
@@ -190,7 +193,7 @@ void c1943_d806_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
+void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
@@ -200,7 +203,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 /* TODO: support flipscreen */
 	if (sc2on)
 	{
-		p=Machine->memory_region[3]+0x8000;
+		p=Machine->memory_region[4]+0x8000;
 		bg_scrolly = c1943_bgscrolly[0] + 256 * c1943_bgscrolly[1];
 		offs = 16 * ((bg_scrolly>>5)+8);
 
@@ -284,7 +287,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 /* TODO: support flipscreen */
 	if (sc1on)
 	{
-		p=Machine->memory_region[3];
+		p=Machine->memory_region[4];
 
 		bg_scrolly = c1943_scrolly[0] + 256 * c1943_scrolly[1];
 		bg_scrollx = c1943_scrollx[0];
@@ -375,9 +378,6 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			int sx,sy;
-
-
 			sx = offs / 32;
 			sy = 31 - offs % 32;
 			if (flipscreen)

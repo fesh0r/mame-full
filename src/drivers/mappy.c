@@ -75,8 +75,9 @@ int todruaga_customio_r_2(int offset);
 
 /* video driver data & functions */
 int mappy_vh_start(void);
+int motos_vh_start(void);
 void mappy_vh_stop(void);
-void mappy_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void mappy_videoram_w(int offset,int data);
 void mappy_colorram_w(int offset,int data);
 void mappy_scroll_w(int offset,int data);
@@ -216,7 +217,7 @@ INPUT_PORTS_START( mappy_input_ports )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_BIT( 0x1c, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x20, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
@@ -374,7 +375,7 @@ INPUT_PORTS_START( motos_input_ports )
 	PORT_DIPSETTING(    0x20, "20k --  50k" )
 	PORT_DIPSETTING(    0x40, "30k --  70k" )
 	PORT_DIPSETTING(    0x60, "20k 70k" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -983,7 +984,7 @@ static struct MachineDriver motos_machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	mappy_vh_start,
+	motos_vh_start,
 	mappy_vh_stop,
 	mappy_vh_screenrefresh,
 
@@ -1064,16 +1065,16 @@ ROM_END
 ROM_START( mappyjp_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy3.bin", 0xa000, 0x2000, 0x6e7011fc )
-	ROM_LOAD( "mappy2.bin", 0xc000, 0x2000, 0x860ad848 )
+	ROM_LOAD( "mappy1c.64", 0xc000, 0x2000, 0x860ad848 )
 	ROM_LOAD( "mappy1.bin", 0xe000, 0x2000, 0xeaa05b74 )
 
 	ROM_REGION(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mappy5.bin", 0x0000, 0x1000, 0x28f0a190 )
-	ROM_LOAD( "mappy6.bin", 0x1000, 0x2000, 0xd22dfbf1 )
-	ROM_LOAD( "mappy7.bin", 0x3000, 0x2000, 0x7289055d )
+	ROM_LOAD( "mappy3b.32", 0x0000, 0x1000, 0x28f0a190 )
+	ROM_LOAD( "mappy3m.64", 0x1000, 0x2000, 0xd22dfbf1 )
+	ROM_LOAD( "mappy3n.64", 0x3000, 0x2000, 0x7289055d )
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "mappy4.bin", 0xe000, 0x2000, 0x8ad60a6c )
+	ROM_LOAD( "mappy1k.64", 0xe000, 0x2000, 0x8ad60a6c )
 ROM_END
 
 ROM_START( digdug2_rom )
@@ -1125,10 +1126,8 @@ static int mappy_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x1465],"BEH",3) == 0 &&          /* check for high score initials */
@@ -1171,10 +1170,8 @@ static int mappy_hiload(void)
 static void mappy_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1189,10 +1186,8 @@ static int digdug2_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x11b6]," KAZU ",6) == 0 &&         /* check for high score initials */
@@ -1235,10 +1230,8 @@ static int digdug2_hiload(void)
 static void digdug2_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1252,10 +1245,8 @@ static void digdug2_hisave(void)
 static int motos_hiload(void)  /* preliminary, does not copy top high score */
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x2412],"\x4d\x4f\x52",3) == 0)
@@ -1276,10 +1267,8 @@ static int motos_hiload(void)  /* preliminary, does not copy top high score */
 static void motos_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1291,10 +1280,8 @@ static void motos_hisave(void)
 static int todruaga_hiload(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x1031],"END",3) == 0)
@@ -1319,10 +1306,8 @@ static int todruaga_hiload(void)
 static void todruaga_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1335,9 +1320,14 @@ static void todruaga_hisave(void)
 /* the core game driver */
 struct GameDriver mappy_driver =
 {
-	"Mappy (US version)",
+	__FILE__,
+	0,
 	"mappy",
+	"Mappy (US)",
+	"1983",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
 	&mappy_machine_driver,
 
 	mappy_rom,
@@ -1355,9 +1345,14 @@ struct GameDriver mappy_driver =
 
 struct GameDriver mappyjp_driver =
 {
-	"Mappy (Japanese version)",
+	__FILE__,
+	&mappy_driver,
 	"mappyjp",
+	"Mappy (Japan)",
+	"1983",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
 	&mappy_machine_driver,
 
 	mappyjp_rom,
@@ -1375,9 +1370,14 @@ struct GameDriver mappyjp_driver =
 
 struct GameDriver digdug2_driver =
 {
-	"Dig Dug 2",
+	__FILE__,
+	0,
 	"digdug2",
+	"Dig Dug 2",
+	"1985",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
 	&digdug2_machine_driver,
 
 	digdug2_rom,
@@ -1395,9 +1395,14 @@ struct GameDriver digdug2_driver =
 
 struct GameDriver motos_driver =
 {
-	"Motos",
+	__FILE__,
+	0,
 	"motos",
+	"Motos",
+	"1985",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
+	0,
 	&motos_machine_driver,
 
 	motos_rom,
@@ -1415,9 +1420,14 @@ struct GameDriver motos_driver =
 
 struct GameDriver todruaga_driver =
 {
-	"Tower of Druaga",
+	__FILE__,
+	0,
 	"todruaga",
+	"Tower of Druaga",
+	"1984",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
+	0,
 	&todruaga_machine_driver,
 
 	todruaga_rom,

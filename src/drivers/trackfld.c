@@ -25,12 +25,12 @@ MAIN BOARD:
 
 void trackfld_flipscreen_w(int offset,int data);
 void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap);
+void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int trackfld_vh_start(void);
 void trackfld_vh_stop(void);
 int konami_IN1_r(int offset);
 
-void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *konami_dac;
 void konami_sh_irqtrigger_w(int offset,int data);
@@ -395,37 +395,42 @@ ROM_START( trackfld_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
 	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
 ROM_END
 
 ROM_START( hyprolym_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "a01_e01.bin", 0x6000, 0x2000, 0x16be0b86 )
-	ROM_LOAD( "a02_e02.bin", 0x8000, 0x2000, 0x05052d7f )
-	ROM_LOAD( "a03_k03.bin", 0xA000, 0x2000, 0x32591b7b )
-	ROM_LOAD( "a04_e04.bin", 0xC000, 0x2000, 0x1af45818 )
-	ROM_LOAD( "a05_e05.bin", 0xE000, 0x2000, 0x29a7d3c1 )
+	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x16be0b86 )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f )
+	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0x32591b7b )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 )
 
 	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "h16_e12.bin", 0x0000, 0x2000, 0xddca2c0c )
-	ROM_LOAD( "h15_e11.bin", 0x2000, 0x2000, 0x9b4721b5 )
-	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 )
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0x36c0fa04 )
 
-	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd )
-	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 )
-	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 )
-	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0xca2da5bd )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x9a7b57d9 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xed0cac48 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x0e569456 )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
 	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
 ROM_END
 
+
+
 static void trackfld_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -444,10 +449,8 @@ static int we_flipped_the_switch;
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -487,10 +490,8 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -529,9 +530,14 @@ static void hisave(void)
 
 struct GameDriver trackfld_driver =
 {
-	"Track'n'Field",
+	__FILE__,
+	0,
 	"trackfld",
+	"Track & Field",
+	"1983",
+	"Konami",
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
 	&machine_driver,
 
 	trackfld_rom,
@@ -550,9 +556,14 @@ struct GameDriver trackfld_driver =
 
 struct GameDriver hyprolym_driver =
 {
-	"Hyper Olympics",
+	__FILE__,
+	&trackfld_driver,
 	"hyprolym",
+	"Hyper Olympic",
+	"1983",
+	"Konami",
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
 	&machine_driver,
 
 	hyprolym_rom,

@@ -12,7 +12,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 
 void rocnrope_flipscreen_w(int offset,int data);
 void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap);
+void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
@@ -26,6 +26,9 @@ void rocnrope_init_machine(void)
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
 void rocnrope_interrupt_vector_w(int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	RAM[0xFFF2+offset] = data;
 }
 
@@ -347,7 +350,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x38ff, 0x38ff },
+	{ 0x20ff, 0x20ff },
 	{ soundlatch_r },
 	{ rocnrope_portB_r },
 	{ 0 },
@@ -434,24 +437,27 @@ ROM_START( ropeman_rom )
 	ROM_LOAD( "j02_rm02.bin", 0x8000, 0x2000, 0xfebda671 )
 	ROM_LOAD( "j03_rm03.bin", 0xA000, 0x2000, 0xbb34d17a )
 	ROM_LOAD( "j04_rm04.bin", 0xC000, 0x2000, 0x0d68c368 )
-	ROM_LOAD( "j05_rm05.bin", 0xE000, 0x2000, 0x474255f6 )
+	ROM_LOAD( "rnr_h5.vid",   0xE000, 0x2000, 0x474255f6 )
 
 	ROM_REGION(0xc000)    /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "j12_rm07.bin", 0x0000, 0x2000, 0x9dd6694a )
 	ROM_LOAD( "j11_rm06.bin", 0x2000, 0x2000, 0x60afcded )
-	ROM_LOAD( "a11_rm10.bin", 0x4000, 0x2000, 0xccd353a1 )
-	ROM_LOAD( "a12_rm11.bin", 0x6000, 0x2000, 0x7918ecd6 )
-	ROM_LOAD( "a09_rm08.bin", 0x8000, 0x2000, 0xbbdb0eef )
-	ROM_LOAD( "a10_rm09.bin", 0xa000, 0x2000, 0xa087b117 )
+	ROM_LOAD( "rnr_a11.vid",  0x4000, 0x2000, 0xccd353a1 )
+	ROM_LOAD( "rnr_a12.vid",  0x6000, 0x2000, 0x7918ecd6 )
+	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0xbbdb0eef )
+	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xa087b117 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "a07_rm12.bin", 0x0000, 0x1000, 0x2c7ea8d8 )
-	ROM_LOAD( "a08_rm13.bin", 0x1000, 0x1000, 0x172f0eab )
+	ROM_LOAD( "rnr_7a.snd", 0x0000, 0x1000, 0x2c7ea8d8 )
+	ROM_LOAD( "rnr_8a.snd", 0x1000, 0x1000, 0x172f0eab )
 ROM_END
+
+
 
 static void rocnrope_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -464,9 +470,8 @@ static void rocnrope_decode(void)
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if (memcmp(&RAM[0x5160],"\x01\x00\x00",3) == 0 &&
 		memcmp(&RAM[0x50A6],"\x01\x00\x00",3) == 0)
@@ -490,10 +495,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -506,9 +510,14 @@ static void hisave(void)
 
 struct GameDriver rocnrope_driver =
 {
-	"Rock'n'Rope",
+	__FILE__,
+	0,
 	"rocnrope",
+	"Roc'n Rope",
+	"1983",
+	"Konami + Kosuka",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	rocnrope_rom,
@@ -526,9 +535,14 @@ struct GameDriver rocnrope_driver =
 
 struct GameDriver ropeman_driver =
 {
-	"Rope Man",
+	__FILE__,
+	&rocnrope_driver,
 	"ropeman",
+	"Rope Man",
+	"1983",
+	"bootleg",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	ropeman_rom,

@@ -106,7 +106,7 @@ void punchout_palettebank_w(int offset,int data);
 int punchout_vh_start(void);
 void punchout_vh_stop(void);
 void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void punchout_vh_screenrefresh(struct osd_bitmap *bitmap);
+void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int punchout_input_3_r(int offset);
 void punchout_speech_reset(int offset,int data);
@@ -145,8 +145,10 @@ static void spunchout_prot_0_w( int offset, int data ) {
 	prot[0] = data;
 }
 
-static int spunchout_prot_2_r( int offset ) {
-	return prot[2];
+static int spunchout_prot_2_r( int offset )
+{
+	if( cpu_getpc() == 0x0615 ) return 0x09; /*write "JMP (HL)"code to 0d79fh*/
+	else return prot[2];
 }
 
 static void spunchout_prot_2_w( int offset, int data ) {
@@ -186,14 +188,14 @@ static void spunchout_prot_6_w( int offset, int data ) {
 }
 
 /* test handlers */
-static int prot_t;
+static int punchout_prot_t;
 
 static int spunchout_prot_t_r( int offset ) {
-	return prot_t;
+	return punchout_prot_t;
 }
 
 static void spunchout_prot_t_w( int offset, int data ) {
-	prot_t = data;
+	punchout_prot_t = data;
 }
 
 
@@ -231,7 +233,7 @@ static struct IOReadPort readport[] =
 	{ 0x27, 0x27, spunchout_prot_2_r },
 	{ 0x37, 0x37, spunchout_prot_3_r },
 	{ 0x67, 0x67, spunchout_prot_4_r },
-	{ 0x97, 0x97, spunchout_prot_5_r }, // $d7
+	{ 0x97, 0x97, spunchout_prot_5_r }, /* $d7*/
 	{ 0xa7, 0xa7, spunchout_prot_6_r },
 	{ -1 }	/* end of table */
 };
@@ -842,11 +844,7 @@ static struct VLM5030interface vlm5030_interface =
 {
     3580000,    /* master clock */
     255,        /* volume       */
-#if 0
     3,          /* memory region of speech rom */
-#else
-    -1,         /* use sampling sound          */
-#endif
     0           /* VCU pin level (default)     */
 };
 
@@ -879,7 +877,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },
 	gfxdecodeinfo,
-	256,128*4+128*4+64*8+128*4,
+	1024+1, 128*4+128*4+64*8+128*4,
 	punchout_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -967,8 +965,9 @@ ROM_START( spnchout_rom )
 	ROM_LOAD( "chs1-v.8f",  0x8000, 0x4000, 0x440a5850 )
 
 	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chs1-b.4c",  0x00000, 0x2000, 0x00000000 )	/* chars #1 */
-	ROM_LOAD( "chs1-b.4d",  0x02000, 0x2000, 0x00000000 )
+	/* the following two ROMs are BAD! */
+	ROM_LOAD( "chs1-b.4c",  0x00000, 0x2000, 0xf0000000 )	/* chars #1 */
+	ROM_LOAD( "chs1-b.4d",  0x02000, 0x2000, 0x6a808080 )
 	ROM_LOAD( "chs1-b.4a",  0x04000, 0x2000, 0xe4db3e1f )	/* chars #2 */
 	ROM_LOAD( "chs1-b.4b",  0x06000, 0x2000, 0x7d8ace36 )
 	ROM_LOAD( "chs1-v.2r",  0x08000, 0x4000, 0x24fa739e )	/* chars #3 */
@@ -1015,9 +1014,7 @@ static void punchout_decode(void)
 static int hiload(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* Try loading static RAM */
@@ -1033,9 +1030,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1049,10 +1044,14 @@ static void hisave(void)
 
 struct GameDriver punchout_driver =
 {
-	"Punch Out",
+	__FILE__,
+	0,
 	"punchout",
+	"Punch Out",
+	"1984",
+	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
-
+	0,
 	&machine_driver,
 
 	punchout_rom,
@@ -1070,9 +1069,14 @@ struct GameDriver punchout_driver =
 
 struct GameDriver spnchout_driver =
 {
-	"Super Punch Out",
+	__FILE__,
+	0,
 	"spnchout",
+	"Super Punch Out",
+	"1984",
+	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)",
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	spnchout_rom,

@@ -113,7 +113,7 @@ void naughtyb_videoreg_w (int offset,int data);
 int naughtyb_vh_start(void);
 void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 // Let's skip the sound for now.. ;)
 // void naughtyb_sound_control_a_w(int offset, int data);
@@ -424,10 +424,7 @@ ROM_END
 static int naughtyb_hiload(void)
 {
    void *f;
-
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
    /* check if the hi score has already been written to screen */
@@ -501,10 +498,7 @@ static void naughtyb_hisave(void)
 static int popflame_hiload (void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score has already been written to screen */
@@ -557,9 +551,14 @@ static void popflame_hisave (void)
 
 struct GameDriver naughtyb_driver =
 {
-	"Naughty Boy",
+	__FILE__,
+	0,
 	"naughtyb",
+	"Naughty Boy",
+	"1982",
+	"Jaleco (Cinematronics license)",
 	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nAlan J. McCormick (color info)",
+	0,
 	&machine_driver,
 
 	naughtyb_rom,
@@ -577,9 +576,14 @@ struct GameDriver naughtyb_driver =
 
 struct GameDriver popflame_driver =
 {
-	"Pop Flamer",
+	__FILE__,
+	0,
 	"popflame",
+	"Pop Flamer",
+	"1982",
+	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
+	0,
 	&machine_driver,
 
 	popflame_rom,

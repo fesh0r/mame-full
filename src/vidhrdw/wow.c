@@ -270,6 +270,8 @@ void wow_pattern_board_w(int offset,int data)
 	static int dest;
 	static int length;	/* row length */
 	static int loops;	/* rows to copy - 1 */
+	extern unsigned char *RAM;
+
 
 	switch (offset)
 	{
@@ -559,13 +561,15 @@ void Gorf_CopyLine(int Line)
 	}
 }
 
-void gorf_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     static int Speed=0;
 	int offs;
     int Sparkle=0;
     int SparkleLow=0;
     int SparkleHigh=0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* copy the character mapped graphics */
 
@@ -638,12 +642,14 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap)
  * Seawolf specific routines
  ****************************************************************************/
 
-void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	extern int Controller1;
 	extern int Controller2;
 
     int x,y,centre,middle;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* copy the character mapped graphics */
 
@@ -809,7 +815,7 @@ int wow_vh_start(void)
 }
 
 
-void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap)
+void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh)
 {
     static int Speed=0;
 	int offs;
@@ -919,7 +925,7 @@ void CopyLine(int Line)
     }
 }
 
-void wow_vh_screenrefresh(struct osd_bitmap *bitmap)
+void wow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* copy the character mapped graphics */
 

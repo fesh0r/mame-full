@@ -56,7 +56,7 @@ void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 void pengo_updatehook0(int offset);
 void pengo_gfxbank_w(int offset,int data);
 int pengo_vh_start(void);
-void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
@@ -319,7 +319,23 @@ ROM_START( pengo_rom )
 	ROM_LOAD( "ic105", 0x2000, 0x2000, 0xbb009a64 )
 ROM_END
 
-ROM_START( pengoa_rom )
+ROM_START( pengo2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic8.2",  0x0000, 0x1000, 0x187001be )
+	ROM_LOAD( "ic7.2",  0x1000, 0x1000, 0x970ec410 )
+	ROM_LOAD( "ic15.2", 0x2000, 0x1000, 0x31f2d554 )
+	ROM_LOAD( "ic14.2", 0x3000, 0x1000, 0xc44e3394 )
+	ROM_LOAD( "ic21",   0x4000, 0x1000, 0xe766e256 )
+	ROM_LOAD( "ic20.2", 0x5000, 0x1000, 0x24764044 )
+	ROM_LOAD( "ic32",   0x6000, 0x1000, 0x4f9816ba )
+	ROM_LOAD( "ic31.2", 0x7000, 0x1000, 0x2f5ee39e )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic92",  0x0000, 0x2000, 0x6865b315 )
+	ROM_LOAD( "ic105", 0x2000, 0x2000, 0xbb009a64 )
+ROM_END
+
+ROM_START( pengo2u_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pengo.u8",  0x0000, 0x1000, 0x63680136 )
 	ROM_LOAD( "pengo.u7",  0x1000, 0x1000, 0xe9ee4c30 )
@@ -331,8 +347,8 @@ ROM_START( pengoa_rom )
 	ROM_LOAD( "pengo.u31", 0x7000, 0x1000, 0x4f0eeb9e )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pengo.u92", 0x0000, 0x2000, 0x6865b315 )
-	ROM_LOAD( "pengo.105", 0x2000, 0x2000, 0xbb009a64 )
+	ROM_LOAD( "ic92",  0x0000, 0x2000, 0x6865b315 )
+	ROM_LOAD( "ic105", 0x2000, 0x2000, 0xbb009a64 )
 ROM_END
 
 ROM_START( penta_rom )
@@ -348,7 +364,7 @@ ROM_START( penta_rom )
 
 	ROM_REGION(0x4000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "092_PN09.BIN", 0x0000, 0x2000, 0x7aa4e020 )
-	ROM_LOAD( "105_PN10.BIN", 0x2000, 0x2000, 0xbb009a64 )
+	ROM_LOAD( "ic105",        0x2000, 0x2000, 0xbb009a64 )
 ROM_END
 
 
@@ -467,6 +483,7 @@ static void pengo_decode(void)
 		{ 0x08,0x08,0xa8,0xa8 }		/* ...1...1...1...1 */
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -536,6 +553,7 @@ static void penta_decode(void)
 		{ 0x88,0x0a,0x82,0x00,0xa0,0x22,0xaa,0x28 }		/* ...1...1...1.... */
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -568,6 +586,9 @@ static void penta_decode(void)
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8840],"\xd0\x07",2) == 0 &&
 			memcmp(&RAM[0x8858],"\xd0\x07",2) == 0 &&
@@ -589,8 +610,11 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-static int pengoa_hiload(void)
+static int pengo2_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8840],"\x00\x00\x01\x55\x55\x55",6) == 0 &&
 			memcmp(&RAM[0x8858],"\x00\x00",2) == 0 &&
@@ -615,6 +639,7 @@ static int pengoa_hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -628,9 +653,14 @@ static void hisave(void)
 
 struct GameDriver pengo_driver =
 {
-	"Pengo",
+	__FILE__,
+	0,
 	"pengo",
+	"Pengo (set 1)",
+	"1982",
+	"Sega",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
+	0,
 	&machine_driver,
 
 	pengo_rom,
@@ -646,14 +676,44 @@ struct GameDriver pengo_driver =
 	hiload, hisave
 };
 
-struct GameDriver pengoa_driver =
+struct GameDriver pengo2_driver =
 {
-	"Pengo (alternate)",
-	"pengoa",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)\nGerrit Van Goethem (high score fix)",
+	__FILE__,
+	&pengo_driver,
+	"pengo2",
+	"Pengo (set 2)",
+	"1982",
+	"Sega",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
+	0,
 	&machine_driver,
 
-	pengoa_rom,
+	pengo2_rom,
+	0, pengo_decode,
+	0,
+	sound_prom,	/* sound_prom */
+
+	input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pengo2_hiload, hisave
+};
+
+struct GameDriver pengo2u_driver =
+{
+	__FILE__,
+	&pengo_driver,
+	"pengo2u",
+	"Pengo (set 2 unencrypted)",
+	"1982",
+	"Sega",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)\nGerrit Van Goethem (high score fix)",
+	0,
+	&machine_driver,
+
+	pengo2u_rom,
 	0, 0,
 	0,
 	sound_prom,	/* sound_prom */
@@ -663,14 +723,19 @@ struct GameDriver pengoa_driver =
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	pengoa_hiload, hisave
+	pengo2_hiload, hisave
 };
 
 struct GameDriver penta_driver =
 {
-	"Penta",
+	__FILE__,
+	&pengo_driver,
 	"penta",
+	"Penta",
+	"1982",
+	"bootleg",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
+	0,
 	&machine_driver,
 
 	penta_rom,

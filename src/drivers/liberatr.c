@@ -137,9 +137,8 @@ int  liberator_port_r(int offset) ;
 int  liberator_interrupt(void) ;
 
 /* from vidhrdw */
-void liberator_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  liberator_vh_start(void);
-void liberator_vh_update(struct osd_bitmap *bitmap);
+void liberator_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void liberator_vh_stop(void);
 void liberator_startlg_w(int offset,int data) ;
 void liberator_basram_w(int address, int data) ;
@@ -307,15 +306,15 @@ static struct MachineDriver machine_driver =
 	{ 0, 512-1, 0, 384-1 },	/* visible area {minx, maxx, miny, maxy}	*/
 #endif
 	0, 						/* GfxDecodeInfo			*/
-	0x100, 					/* total_colors				*/
+	32, 					/* total_colors				*/
 	0,						/* length in bytes of the color lookup table (3*total_colors bytes)	*/
-	liberator_vh_convert_color_prom,	/* vh_convert_color_prom()	*/
+	0,	/* vh_convert_color_prom()	*/
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	/* video_attributes	*/
 	0,						/* vh_init()	*/
 	liberator_vh_start,		/* vh_start()	*/
 	liberator_vh_stop,		/* vh_stop()	*/
-	liberator_vh_update,	/* vh_update()	*/
+	liberator_vh_screenrefresh,	/* vh_update()	*/
 
 	/* sound hardware */
 	0,0,0,0,
@@ -358,9 +357,14 @@ ROM_END
 
 struct GameDriver liberatr_driver =
 {
-	"Liberator",		/* description			*/
+	__FILE__,
+	0,
 	"liberatr",			/* name					*/
+	"Liberator",		/* description			*/
+	"1982",
+	"Atari",
 	"Paul Winkler",		/* credits				*/
+	0,
 	&machine_driver,	/* MachineDriver		*/
 
 	liberator_rom,		/* RomModule			*/

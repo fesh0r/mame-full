@@ -124,7 +124,7 @@ void wiz_flipy_w (int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void wiz_vh_screenrefresh(struct osd_bitmap *bitmap)
+void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs,bank;
 
@@ -247,7 +247,7 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	for (offs = spriteram_2_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy,spritecode,bank;
+		int sx,sy,spritecode;
 
 		sx = spriteram_2[offs + 3];
 		sy = 240 - spriteram_2[offs];

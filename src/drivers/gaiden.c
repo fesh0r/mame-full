@@ -22,8 +22,12 @@ read:
 see the input_ports definition below for details on the input bits
 
 write:
-07a200-07a211 Scrolling - right now I have these both mapped identically
-07a300-07a311 Scrolling - but that wil change when I implement backgrounds
+07a104-07a105 text layer Y scroll
+07a10c-07a10d text layer X scroll
+07a204-07a205 front layer Y scroll
+07a20c-07a20d front layer X scroll
+07a304-07a305 back layer Y scroll
+07a30c-07a30d back layer Xscroll
 
 ***************************************************************************/
 
@@ -34,35 +38,40 @@ write:
 
 extern unsigned char *gaiden_videoram;
 extern unsigned char *gaiden_spriteram;
-extern unsigned char *gaiden_paletteram;
+extern unsigned char *gaiden_videoram2;
 extern unsigned char *gaiden_videoram3;
-extern unsigned char *gaiden_scrolla;
-extern unsigned char *gaiden_scrollb;
+extern unsigned char *gaiden_txscrollx,*gaiden_txscrolly;
+extern unsigned char *gaiden_fgscrollx,*gaiden_fgscrolly;
+extern unsigned char *gaiden_bgscrollx,*gaiden_bgscrolly;
 
 extern int gaiden_videoram_size;
+extern int gaiden_videoram2_size;
 extern int gaiden_videoram3_size;
-extern int gaiden_paletteram_size;
 extern int gaiden_spriteram_size;
 
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gaiden_unknownram_w(int offset,int data);
 int gaiden_unknownram_r(int offset);
 void gaiden_videoram_w(int offset,int data);
 int gaiden_videoram_r(int offset);
-void gaiden_paletteram_w(int offset,int data);
-int gaiden_paletteram_r(int offset);
+void gaiden_videoram2_w(int offset,int data);
+int gaiden_videoram2_r(int offset);
 void gaiden_videoram3_w(int offset,int data);
 int gaiden_videoram3_r(int offset);
 void gaiden_spriteram_w(int offset,int data);
 int gaiden_spriteram_r(int offset);
 
-void gaiden_scrolla_w(int offset,int data);
-void gaiden_scrollb_w(int offset,int data);
+void gaiden_txscrollx_w(int offset,int data);
+void gaiden_txscrolly_w(int offset,int data);
+void gaiden_fgscrollx_w(int offset,int data);
+void gaiden_fgscrolly_w(int offset,int data);
+void gaiden_bgscrollx_w(int offset,int data);
+void gaiden_bgscrolly_w(int offset,int data);
 
 
 void gaiden_background_w(int offset,int data);
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int  gaiden_vh_start(void);
 void gaiden_vh_stop(void);
@@ -109,9 +118,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x060000, 0x063fff, MRA_BANK1 },   /* RAM */
 	{ 0x070000, 0x070fff, gaiden_videoram_r },
-	{ 0x072000, 0x075fff, gaiden_videoram3_r },
+	{ 0x072000, 0x073fff, gaiden_videoram2_r },
+	{ 0x074000, 0x075fff, gaiden_videoram3_r },
 	{ 0x076000, 0x077fff, gaiden_spriteram_r },
-	{ 0x078000, 0x079fff, gaiden_paletteram_r },
+	{ 0x078000, 0x0787ff, paletteram_word_r },
+	{ 0x078800, 0x079fff, MRA_NOP },   /* extra portion of palette RAM, not really used */
 	{ 0x07a000, 0x07a007, gaiden_input_r },
 	{ 0x07a100, 0x07a1ff, MRA_BANK2 },
 	{ -1 }  /* end of table */
@@ -123,13 +134,19 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x060000, 0x063fff, MWA_BANK1 },
 	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram, &gaiden_videoram_size },
 //	{ 0x071000, 0x071fff, MWA_NOP },   /* I'm not sure */
-	{ 0x072000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
+	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2, &gaiden_videoram2_size },
+	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
 	{ 0x076000, 0x077fff, gaiden_spriteram_w, &gaiden_spriteram, &gaiden_spriteram_size },
-	{ 0x078000, 0x079fff, gaiden_paletteram_w, &gaiden_paletteram, &gaiden_paletteram_size },
+	{ 0x078000, 0x0787ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
 //	{ 0x07a000, 0x07a00f, MWA_NOP },   /* I'm not sure */
 //	{ 0x07a100, 0x07a111, MWA_BANK2 },  /* video? */
-	{ 0x07a200, 0x07a20f, gaiden_scrolla_w, &gaiden_scrolla },
-	{ 0x07a300, 0x07a30f, gaiden_scrollb_w, &gaiden_scrollb },
+	{ 0x07a104, 0x07a105, gaiden_txscrolly_w, &gaiden_txscrolly },
+	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w, &gaiden_txscrollx },
+	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w, &gaiden_fgscrolly },
+	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w, &gaiden_fgscrollx },
+	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w, &gaiden_bgscrolly },
+	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w, &gaiden_bgscrollx },
 //	{ 0x07a400, 0x07a809, MWA_NOP },   /* I'm not sure */
 	{ 0x07a800, 0x07a803, gaiden_sound_command_w },
 	{ 0x07a804, 0x07a807, MWA_NOP },	/* ??? */
@@ -305,17 +322,17 @@ static struct GfxLayout spritelayout16x16 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,  0, 0x1000*+16 },	/* tiles 8x8*/
-	{ 1, 0x110000, &tile2layout,  0, 0x1000+16 },	/* tiles 16x16*/
-	{ 1, 0x190000, &tile2layout,  0, 0x1000+16 },	/* tiles 16x16*/
-	{ 1, 0x10000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0x50000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0x90000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0xd0000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0x10000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
-	{ 1, 0x50000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
-	{ 1, 0x90000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
-	{ 1, 0xd0000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
+	{ 1, 0x000000, &tilelayout,        256, 16 },	/* tiles 8x8*/
+	{ 1, 0x110000, &tile2layout,       768, 16 },	/* tiles 16x16*/
+	{ 1, 0x190000, &tile2layout,       512, 16 },	/* tiles 16x16*/
+	{ 1, 0x010000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x050000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x090000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x0d0000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x010000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x050000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x090000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x0d0000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
 	{ -1 } /* end of array */
 };
 
@@ -331,7 +348,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	2000000,	/* 2 MHz ? (hand tuned) */
-	{ YM2203_VOL(255,0x20ff), YM2203_VOL(255,0x20ff) },
+	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -376,10 +393,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,256*16+16,
-        0,
+	1024, 1024,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	gaiden_vh_start,
 	gaiden_vh_stop,
@@ -412,15 +429,15 @@ ROM_START( gaiden_rom )
 	ROM_LOAD_ODD ( "gaiden.2", 0x00000, 0x20000, 0xb0a2e242 )
 
 	ROM_REGION(0x210000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gaiden.5",  0x000000, 0x10000, 0xf3653a0f )        /* 8x8 tiles */
-	ROM_LOAD( "gaiden.6",  0x010000, 0x20000, 0xde50047a )        /* sprites A1 */
-	ROM_LOAD( "gaiden.7",  0x030000, 0x20000, 0x9f40c78e )        /* sprites A2 */
-	ROM_LOAD( "gaiden.8",  0x050000, 0x20000, 0xc0d813a6 )        /* sprites B1 */
-	ROM_LOAD( "gaiden.9",  0x070000, 0x20000, 0xdeea0a22 )        /* sprites B2 */
-	ROM_LOAD( "gaiden.10", 0x090000, 0x20000, 0xfc2e2818 )        /* sprites C1 */
-	ROM_LOAD( "gaiden.11", 0x0b0000, 0x20000, 0xfb2d2641 )        /* sprites C2 */
-	ROM_LOAD( "gaiden.12", 0x0D0000, 0x20000, 0xe7739fed )        /* sprites D1 */
-	ROM_LOAD( "gaiden.13", 0x0f0000, 0x20000, 0xbd928520 )        /* sprites D2 */
+	ROM_LOAD( "gaiden.5",  0x000000, 0x10000, 0xf3653a0f )	/* 8x8 tiles */
+	ROM_LOAD( "gaiden.6",  0x010000, 0x20000, 0xde50047a )	/* sprites A1 */
+	ROM_LOAD( "gaiden.7",  0x030000, 0x20000, 0x9f40c78e )	/* sprites A2 */
+	ROM_LOAD( "gaiden.8",  0x050000, 0x20000, 0xc0d813a6 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.9",  0x070000, 0x20000, 0xdeea0a22 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.10", 0x090000, 0x20000, 0xfc2e2818 )	/* sprites C1 */
+	ROM_LOAD( "gaiden.11", 0x0b0000, 0x20000, 0xfb2d2641 )	/* sprites C2 */
+	ROM_LOAD( "gaiden.12", 0x0D0000, 0x20000, 0xe7739fed )	/* sprites D1 */
+	ROM_LOAD( "gaiden.13", 0x0f0000, 0x20000, 0xbd928520 )	/* sprites D2 */
 	ROM_LOAD( "14.bin",    0x110000, 0x20000, 0x00d6531c )
 	ROM_LOAD( "15.bin",    0x130000, 0x20000, 0xae21271b )
 	ROM_LOAD( "16.bin",    0x150000, 0x20000, 0x4dee5eec )
@@ -439,43 +456,48 @@ ROM_END
 
 ROM_START( shadoww_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
-   ROM_LOAD_EVEN( "shadoww.1", 0x00000, 0x20000, 0x5e4e90c2 )
-   ROM_LOAD_ODD ( "shadoww.2", 0x00000, 0x20000, 0x33f84e7e )
+	ROM_LOAD_EVEN( "shadoww.1", 0x00000, 0x20000, 0x5e4e90c2 )
+	ROM_LOAD_ODD ( "shadoww.2", 0x00000, 0x20000, 0x33f84e7e )
 
 	ROM_REGION(0x210000)     /* temporary space for graphics (disposed after conversion) */
-   ROM_LOAD( "shadoww.5",  0x000000, 0x10000, 0xf3653a0f )        /* 8x8 tiles */
-   ROM_LOAD( "shadoww.6",  0x010000, 0x20000, 0xde50047a )        /* sprites A1 */
-   ROM_LOAD( "shadoww.7",  0x030000, 0x20000, 0x9f40c78e )        /* sprites A2 */
-   ROM_LOAD( "shadoww.8",  0x050000, 0x20000, 0xc0d813a6 )        /* sprites B1 */
-   ROM_LOAD( "shadoww.9",  0x070000, 0x20000, 0xdeea0a22 )        /* sprites B2 */
-   ROM_LOAD( "shadoww.10", 0x090000, 0x20000, 0xfc2e2818 )        /* sprites C1 */
-   ROM_LOAD( "shadoww.11", 0x0b0000, 0x20000, 0xfb2d2641 )        /* sprites C2 */
-   ROM_LOAD( "shadoww.12a", 0x0D0000, 0x10000, 0xb9da7f3c )       /* sprites D1 */
-   ROM_LOAD( "shadoww.12b", 0x0E0000, 0x10000, 0xe2915fb7 )       /* sprites D1 */
-   ROM_LOAD( "shadoww.13a", 0x0f0000, 0x10000, 0x5e66bed4 )        /* sprites D2 */
-   ROM_LOAD( "shadoww.13b", 0x100000, 0x10000, 0x8a0508d7 )        /* sprites D2 */
-   ROM_LOAD( "shadoww.14",    0x110000, 0x20000, 0x00d6531c )
-   ROM_LOAD( "shadoww.15",    0x130000, 0x20000, 0xae21271b )
-   ROM_LOAD( "shadoww.16",    0x150000, 0x20000, 0x4dee5eec )
-   ROM_LOAD( "shadoww.17",    0x170000, 0x20000, 0x9e0c7684 )
-   ROM_LOAD( "shadoww.18",    0x190000, 0x20000, 0xc76c8d20 )
-   ROM_LOAD( "shadoww.19",    0x1b0000, 0x20000, 0xc3845b96 )
-   ROM_LOAD( "shadoww.20",    0x1d0000, 0x20000, 0x40e78ca5 )
-   ROM_LOAD( "shadoww.21",    0x1f0000, 0x20000, 0xccdcbd02 )
+	ROM_LOAD( "gaiden.5",    0x000000, 0x10000, 0xf3653a0f )	/* 8x8 tiles */
+	ROM_LOAD( "gaiden.6",    0x010000, 0x20000, 0xde50047a )	/* sprites A1 */
+	ROM_LOAD( "gaiden.7",    0x030000, 0x20000, 0x9f40c78e )	/* sprites A2 */
+	ROM_LOAD( "gaiden.8",    0x050000, 0x20000, 0xc0d813a6 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.9",    0x070000, 0x20000, 0xdeea0a22 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.10",   0x090000, 0x20000, 0xfc2e2818 )	/* sprites C1 */
+	ROM_LOAD( "gaiden.11",   0x0b0000, 0x20000, 0xfb2d2641 )	/* sprites C2 */
+	ROM_LOAD( "shadoww.12a", 0x0D0000, 0x10000, 0xb9da7f3c )	/* sprites D1 */
+	ROM_LOAD( "shadoww.12b", 0x0E0000, 0x10000, 0xe2915fb7 )	/* sprites D1 */
+	ROM_LOAD( "shadoww.13a", 0x0f0000, 0x10000, 0x5e66bed4 )	/* sprites D2 */
+	ROM_LOAD( "shadoww.13b", 0x100000, 0x10000, 0x8a0508d7 )	/* sprites D2 */
+	ROM_LOAD( "14.bin",      0x110000, 0x20000, 0x00d6531c )
+	ROM_LOAD( "15.bin",      0x130000, 0x20000, 0xae21271b )
+	ROM_LOAD( "16.bin",      0x150000, 0x20000, 0x4dee5eec )
+	ROM_LOAD( "17.bin",      0x170000, 0x20000, 0x9e0c7684 )
+	ROM_LOAD( "18.bin",      0x190000, 0x20000, 0xc76c8d20 )
+	ROM_LOAD( "19.bin",      0x1b0000, 0x20000, 0xc3845b96 )
+	ROM_LOAD( "20.bin",      0x1d0000, 0x20000, 0x40e78ca5 )
+	ROM_LOAD( "21.bin",      0x1f0000, 0x20000, 0xccdcbd02 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-   ROM_LOAD( "shadoww.3", 0x0000, 0x10000, 0x1db13fc3 )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "gaiden.3", 0x0000, 0x10000, 0x1db13fc3 )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-   ROM_LOAD( "shadoww.4", 0x0000, 0x20000, 0xb8e72ccf ) /* samples */
+	ROM_LOAD( "gaiden.4", 0x0000, 0x20000, 0xb8e72ccf ) /* samples */
 ROM_END
 
 
 struct GameDriver gaiden_driver =
 {
-	"Ninja Gaiden",
+	__FILE__,
+	0,
 	"gaiden",
+	"Ninja Gaiden",
+	"1988",
+	"Tecmo",
 	"Alex Pasadyn",
+	0,
 	&machine_driver,
 
 	gaiden_rom,
@@ -492,9 +514,14 @@ struct GameDriver gaiden_driver =
 
 struct GameDriver shadoww_driver =
 {
-	"Shadow Warriors",
+	__FILE__,
+	&gaiden_driver,
 	"shadoww",
+	"Shadow Warriors",
+	"1988",
+	"Tecmo",
 	"Alex Pasadyn",
+	0,
 	&machine_driver,
 
 	shadoww_rom,

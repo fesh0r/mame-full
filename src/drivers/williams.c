@@ -13,6 +13,11 @@ Changes:
 Do to:  Mystic Marathon
 Not sure of the board: Turkey shoot, Joust 2
 
+Note: the visible area (according to the service mode) seems to be
+	{ 6, 297-1, 7, 246-1 },
+however I use
+	{ 6, 298-1, 7, 247-1 },
+because the DOS port doesn't support well screen widths which are not multiple of 4.
 
 ------- Blaster Bubbles Joust Robotron Sinistar Splat Stargate -------------
 
@@ -420,17 +425,14 @@ int splat_catch_loop_r(int offset);
 
 
 /**** from vidhrdw/williams.h ****/
-extern unsigned char *williams_paletteram;
 extern unsigned char *williams_blitterram;
 extern unsigned char *williams_remap_select;
 
-extern int williams_paletteram_size;
 void williams_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int williams_vh_start(void);
 int williams_vh_start_sc2(void);
 void williams_vh_stop(void);
-void williams_vh_screenrefresh(struct osd_bitmap *bitmap);
-void williams_palette_w(int offset,int data);
+void williams_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void williams_videoram_w(int offset,int data);
 void williams_blitter_w(int offset,int data);
 void williams_remap_select_w(int offset, int data);
@@ -439,7 +441,7 @@ extern unsigned char *blaster_color_zero_table;
 extern unsigned char *blaster_color_zero_flags;
 extern unsigned char *blaster_video_bits;
 void blaster_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blaster_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void blaster_video_bits_w(int offset, int data);
 
 int sinistar_vh_start(void);
@@ -512,7 +514,7 @@ static struct MemoryWriteAddress williams_writemem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
+	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xc804, 0xc807, pia_1_w },
 	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },           /* bank  */
@@ -546,7 +548,7 @@ static struct MemoryWriteAddress splat_writemem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
+	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xc804, 0xc807, pia_1_w },
 	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },         /* bank  */
@@ -580,7 +582,7 @@ static struct MemoryWriteAddress sinistar_writemem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
+	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xc804, 0xc807, pia_1_w },
 	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },             /* bank  */
@@ -619,7 +621,7 @@ static struct MemoryWriteAddress blaster_writemem[] =
 	{ 0xbb00, 0xbbff, MWA_RAM, &blaster_color_zero_table },     /* Color 0 for each line */
 	{ 0xbc00, 0xbcff, MWA_RAM, &blaster_color_zero_flags },     /* Color 0 flags, latch color only if bit 0 = 1 */
 	{ 0xbd00, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
+	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xc804, 0xc807, pia_1_w },
 	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, blaster_vram_select_w },          			 /* VRAM bank  */
@@ -653,7 +655,7 @@ static struct MemoryWriteAddress defender_writemem[] =
 	{ 0x0000, 0x97ff, defender_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xcfff, MWA_BANK1, &defender_bank_base }, /* non map */
-	{ 0xc000, 0xc00f, MWA_RAM, &williams_paletteram, &williams_paletteram_size },   /* here only to initialize the pointers */
+	{ 0xc000, 0xc00f, MWA_RAM, &paletteram },   /* here only to initialize the pointers */
 	{ 0xd000, 0xd000, defender_bank_select_w },       /* Bank Select */
 	{ 0xd001, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -678,7 +680,7 @@ static struct MemoryWriteAddress colony7_writemem[] =
 	{ 0x0000, 0x97ff, defender_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xcfff, MWA_BANK1, &defender_bank_base }, /* non map */
-	{ 0xc000, 0xc00f, MWA_RAM, &williams_paletteram, &williams_paletteram_size },	/* here only to initialize the pointers */
+	{ 0xc000, 0xc00f, MWA_RAM, &paletteram },	/* here only to initialize the pointers */
 	{ 0xd000, 0xd000, colony7_bank_select_w },       /* Bank Select */
 	{ 0xd001, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -1120,7 +1122,7 @@ static struct MachineDriver robotron_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1176,7 +1178,7 @@ static struct MachineDriver joust_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1233,7 +1235,7 @@ static struct MachineDriver stargate_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1289,7 +1291,7 @@ static struct MachineDriver bubbles_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1350,7 +1352,7 @@ static struct MachineDriver sinistar_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1410,7 +1412,7 @@ static struct MachineDriver defender_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1466,7 +1468,7 @@ static struct MachineDriver splat_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1522,7 +1524,7 @@ static struct MachineDriver blaster_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	256,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1578,7 +1580,7 @@ static struct MachineDriver colony7_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1634,7 +1636,7 @@ static struct MachineDriver lottofun_machine_driver =
 
 	/* video hardware */
 	304, 256,								/* screen_width, screen_height */
-	{ 0, 304-1, 8, 256-8-1 }, 				/* struct rectangle visible_area */
+	{ 6, 298-1, 7, 247-1 },                 /* struct rectangle visible_area */
 	0,							/* GfxDecodeInfo * */
 	16, 								 /* total colors */
 	0,										/* color table length */
@@ -1665,10 +1667,8 @@ static struct MachineDriver lottofun_machine_driver =
 
 static int cmos_load(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -1682,10 +1682,8 @@ static int cmos_load(void)
 
 static void cmos_save(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1698,10 +1696,8 @@ static void cmos_save(void)
 
 static int defender_cmos_load(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -1715,10 +1711,9 @@ static int defender_cmos_load(void)
 
 static void defender_cmos_save(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1889,9 +1884,9 @@ ROM_START( robotron_rom )
 	ROM_LOAD( "ROBOTRON.SB7", 0x6000, 0x1000, 0x746ecd96 )
 	ROM_LOAD( "ROBOTRON.SB8", 0x7000, 0x1000, 0x5e442b24 )
 	ROM_LOAD( "ROBOTRON.SB9", 0x8000, 0x1000, 0x294d9c17 )
-	ROM_LOAD( "ROBOTRON.SBa", 0xd000, 0x1000, 0x17b8fc1e )
-	ROM_LOAD( "ROBOTRON.SBb", 0xe000, 0x1000, 0xe816f8e6 )
-	ROM_LOAD( "ROBOTRON.SBc", 0xf000, 0x1000, 0xcfc2d9aa )
+	ROM_LOAD( "ROBOTRON.SBA", 0xd000, 0x1000, 0x17b8fc1e )
+	ROM_LOAD( "ROBOTRON.SBB", 0xe000, 0x1000, 0xe816f8e6 )
+	ROM_LOAD( "ROBOTRON.SBC", 0xf000, 0x1000, 0xcfc2d9aa )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -1912,9 +1907,9 @@ ROM_START( robotryo_rom )
 	ROM_LOAD( "ROBOTRON.YO7", 0x6000, 0x1000, 0x8f8cbcee )
 	ROM_LOAD( "ROBOTRON.YO8", 0x7000, 0x1000, 0x5e442b24 )
 	ROM_LOAD( "ROBOTRON.YO9", 0x8000, 0x1000, 0x294d9c17 )
-	ROM_LOAD( "ROBOTRON.YOa", 0xd000, 0x1000, 0x1ac7fceb )
-	ROM_LOAD( "ROBOTRON.YOb", 0xe000, 0x1000, 0xe615fee7 )
-	ROM_LOAD( "ROBOTRON.YOc", 0xf000, 0x1000, 0xd4bdec59 )
+	ROM_LOAD( "ROBOTRON.YOA", 0xd000, 0x1000, 0x1ac7fceb )
+	ROM_LOAD( "ROBOTRON.YOB", 0xe000, 0x1000, 0xe615fee7 )
+	ROM_LOAD( "ROBOTRON.YOC", 0xf000, 0x1000, 0xd4bdec59 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -1927,9 +1922,14 @@ ROM_END
 
 struct GameDriver robotron_driver =
 {
-	"Robotron",
+	__FILE__,
+	0,
 	"robotron",
+	"Robotron (Solid Blue label)",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&robotron_machine_driver,       /* MachineDriver * */
 
 	robotron_rom,                   /* RomModule * */
@@ -1948,9 +1948,14 @@ struct GameDriver robotron_driver =
 
 struct GameDriver robotryo_driver =
 {
-	"Robotron (Yellow/Orange label)",
+	__FILE__,
+	&robotron_driver,
 	"robotryo",
+	"Robotron (Yellow/Orange label)",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	0,
 	&robotron_machine_driver,       /* MachineDriver * */
 
 	robotryo_rom,                   /* RomModule * */
@@ -2018,29 +2023,6 @@ ROM_START( joustr_rom )
 	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
 ROM_END
 
-ROM_START( joustg_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "JOUST.SG1", 0x0000, 0x1000, 0x56ea72c8 )
-	ROM_LOAD( "JOUST.SG2", 0x1000, 0x1000, 0xe32af9c4 )
-	ROM_LOAD( "JOUST.SG3", 0x2000, 0x1000, 0x21ec9c8e )
-	ROM_LOAD( "JOUST.SG4", 0x3000, 0x1000, 0xad230361 )
-	ROM_LOAD( "JOUST.SG5", 0x4000, 0x1000, 0xd37f04e9 )
-	ROM_LOAD( "JOUST.SG6", 0x5000, 0x1000, 0x727b5c05 )
-	ROM_LOAD( "JOUST.SG7", 0x6000, 0x1000, 0x81aa3756 )
-	ROM_LOAD( "JOUST.SG8", 0x7000, 0x1000, 0x8d1829b6 )
-	ROM_LOAD( "JOUST.SG9", 0x8000, 0x1000, 0xcbfcd9a6 )
-	ROM_LOAD( "JOUST.SGa", 0xd000, 0x1000, 0xf102016a )
-	ROM_LOAD( "JOUST.SGb", 0xe000, 0x1000, 0x11b3700d )
-	ROM_LOAD( "JOUST.SGc", 0xf000, 0x1000, 0x0cd46bb8 )
-
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
-ROM_END
-
 ROM_START( joustwr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "JOUST.WR1", 0x0000, 0x1000, 0x56ea72c8 )
@@ -2067,9 +2049,14 @@ ROM_END
 
 struct GameDriver joust_driver =
 {
-	"Joust (White/Green label)",
+	__FILE__,
+	0,
 	"joust",
+	"Joust (White/Green label)",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joust_rom,                      /* White/Green version, latest */
@@ -2087,9 +2074,14 @@ struct GameDriver joust_driver =
 
 struct GameDriver joustr_driver =
 {
-	"Joust (Red label)",
+	__FILE__,
+	&joust_driver,
 	"joustr",
+	"Joust (Solid Red label)",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joustr_rom,                     /* Solid Red version, has pterodactyl bug */
@@ -2105,34 +2097,19 @@ struct GameDriver joustr_driver =
 	cmos_load, cmos_save
 };
 
-struct GameDriver joustg_driver =
-{
-	"Joust (Green label)",
-	"joustg",
-	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
-	&joust_machine_driver,          /* MachineDriver * */
-
-	joustg_rom,                     /* Solid Red version, has pterodactyl bug */
-	0, 0,                           /* ROM decrypt routines */
-	0,          /* samplenames */
-	0,      /* sound_prom */
-
-	joust_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	cmos_load, cmos_save
-};
-
 struct GameDriver joustwr_driver =
 {
-	"Joust (White/Red label)",
+	__FILE__,
+	&joust_driver,
 	"joustwr",
+	"Joust (White/Red label)",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
-	joustwr_rom,                     /* Solid Red version, has pterodactyl bug */
+	joustwr_rom,
 	0, 0,                           /* ROM decrypt routines */
 	0,          /* samplenames */
 	0,      /* sound_prom */
@@ -2174,6 +2151,28 @@ ROM_START( sinistar_rom )
 	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
 ROM_END
 
+ROM_START( oldsin_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "SINOLD01.ROM", 0x0000, 0x1000, 0xebf346e5 )
+	ROM_LOAD( "SINOLD02.ROM", 0x1000, 0x1000, 0x4be17573 )
+	ROM_LOAD( "SINOLD03.ROM", 0x2000, 0x1000, 0x9ec1fddb )
+	ROM_LOAD( "SINOLD04.ROM", 0x3000, 0x1000, 0x8b9a77d2 )
+	ROM_LOAD( "SINOLD05.ROM", 0x4000, 0x1000, 0x46289976 )
+	ROM_LOAD( "SINOLD06.ROM", 0x5000, 0x1000, 0xe6e4b9b6 )
+	ROM_LOAD( "SINOLD07.ROM", 0x6000, 0x1000, 0x0c0bee55 )
+	ROM_LOAD( "SINOLD08.ROM", 0x7000, 0x1000, 0xba851ef5 )
+	ROM_LOAD( "SINOLD09.ROM", 0x8000, 0x1000, 0x2e4ff0b9 )
+	ROM_LOAD( "SINOLD10.ROM", 0xe000, 0x1000, 0xd9a9f2fb )
+	ROM_LOAD( "SINOLD11.ROM", 0xf000, 0x1000, 0xa5ea8a3e )
+
+	ROM_REGION(0x1000) /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
+ROM_END
+
 /* Sinistar speech samples */
 const char *sinistar_sample_names[]=
 {
@@ -2191,15 +2190,45 @@ const char *sinistar_sample_names[]=
 
 struct GameDriver sinistar_driver =
 {
-	"Sinistar",
+	__FILE__,
+	0,
 	"sinistar",
+	"Sinistar",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence",
+	0,
 	&sinistar_machine_driver,       /* MachineDriver * */
 
 	sinistar_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	sinistar_sample_names,          /* samplenames */
 	0,      /* sound_prom */
+
+	sinistar_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver oldsin_driver =
+{
+	__FILE__,
+	&sinistar_driver,
+	"oldsin",
+	"Sinistar (prototype version)",
+	"1982",
+	"Williams",
+	"\nSinistar team:\nMarc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence\nBrian Deuel (prototype driver)\n\nSpecial thanks to Peter Freeman",
+	0,
+	&sinistar_machine_driver, /* MachineDriver * */
+
+	oldsin_rom, /* RomModule * */
+	0, 0, /* ROM decrypt routines; not sure if these are needed here */
+	sinistar_sample_names, /* samplenames */
+	0, /* sound_prom */
 
 	sinistar_input_ports,
 
@@ -2241,18 +2270,18 @@ ROM_END
 
 ROM_START( bubblesr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "BUBBLES.1B",  0x0000, 0x1000, 0x90409106 )
-	ROM_LOAD( "BUBBLES.2B",  0x1000, 0x1000, 0x2eae0950 )
-	ROM_LOAD( "BUBBLES.3B",  0x2000, 0x1000, 0xf6ad9f95 )
-	ROM_LOAD( "BUBBLES.4B",  0x3000, 0x1000, 0x945d4b73 )
-	ROM_LOAD( "BUBBLES.5B",  0x4000, 0x1000, 0xb002076e )
-	ROM_LOAD( "BUBBLES.6B",  0x5000, 0x1000, 0x4617e675 )
-	ROM_LOAD( "BUBBLES.7B",  0x6000, 0x1000, 0x16d20c98 )
-	ROM_LOAD( "BUBBLES.8B",  0x7000, 0x1000, 0xfb8bad59 )
-	ROM_LOAD( "BUBBLES.9B",  0x8000, 0x1000, 0xc5ca8ce2 )
-	ROM_LOAD( "BUBBLES.10B", 0xd000, 0x1000, 0x8cc42496 )
-	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000, 0xfd0252a2 )
-	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfcb24da2 )
+	ROM_LOAD( "BUBBLESR.1B",  0x0000, 0x1000, 0x90409106 )
+	ROM_LOAD( "BUBBLESR.2B",  0x1000, 0x1000, 0x2eae0950 )
+	ROM_LOAD( "BUBBLESR.3B",  0x2000, 0x1000, 0xf6ad9f95 )
+	ROM_LOAD( "BUBBLESR.4B",  0x3000, 0x1000, 0x945d4b73 )
+	ROM_LOAD( "BUBBLESR.5B",  0x4000, 0x1000, 0xb002076e )
+	ROM_LOAD( "BUBBLESR.6B",  0x5000, 0x1000, 0x4617e675 )
+	ROM_LOAD( "BUBBLESR.7B",  0x6000, 0x1000, 0x16d20c98 )
+	ROM_LOAD( "BUBBLESR.8B",  0x7000, 0x1000, 0xfb8bad59 )
+	ROM_LOAD( "BUBBLESR.9B",  0x8000, 0x1000, 0xc5ca8ce2 )
+	ROM_LOAD( "BUBBLESR.10B", 0xd000, 0x1000, 0x8cc42496 )
+	ROM_LOAD( "BUBBLESR.11B", 0xe000, 0x1000, 0xfd0252a2 )
+	ROM_LOAD( "BUBBLESR.12B", 0xf000, 0x1000, 0xfcb24da2 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -2265,9 +2294,14 @@ ROM_END
 
 struct GameDriver bubbles_driver =
 {
-	"Bubbles",
+	__FILE__,
+	0,
 	"bubbles",
+	"Bubbles",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&bubbles_machine_driver,        /* MachineDriver * */
 
 	bubbles_rom,                    /* RomModule * */
@@ -2286,9 +2320,14 @@ struct GameDriver bubbles_driver =
 
 struct GameDriver bubblesr_driver =
 {
-	"Bubbles (Red Label)",
+	__FILE__,
+	&bubbles_driver,
 	"bubblesr",
+	"Bubbles (Solid Red label)",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	0,
 	&bubbles_machine_driver,        /* MachineDriver * */
 
 	bubblesr_rom,                   /* RomModule * */
@@ -2336,9 +2375,14 @@ ROM_END
 
 struct GameDriver stargate_driver =
 {
-	"Stargate",
+	__FILE__,
+	0,
 	"stargate",
+	"Stargate",
+	"1981",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&stargate_machine_driver,       /* MachineDriver * */
 
 	stargate_rom,                   /* RomModule * */
@@ -2387,9 +2431,14 @@ ROM_END
 
 struct GameDriver defender_driver =
 {
-	"Defender",
+	__FILE__,
+	0,
 	"defender",
+	"Defender",
+	"1980",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&defender_machine_driver,       /* MachineDriver * */
 
 	defender_rom,                   /* RomModule * */
@@ -2438,9 +2487,14 @@ ROM_END
 
 struct GameDriver splat_driver =
 {
-	"Splat",
+	__FILE__,
+	0,
 	"splat",
+	"Splat",
+	"1982",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&splat_machine_driver,          /* MachineDriver * */
 
 	splat_rom,                      /* RomModule * */
@@ -2495,9 +2549,14 @@ ROM_END
 
 struct GameDriver blaster_driver =
 {
-	"Blaster",
+	__FILE__,
+	0,
 	"blaster",
+	"Blaster",
+	"1983",
+	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&blaster_machine_driver,        /* MachineDriver * */
 
 	blaster_rom,                    /* RomModule * */
@@ -2522,19 +2581,20 @@ struct GameDriver blaster_driver =
 
 ROM_START( colony7_rom )
 	ROM_REGION(0x14000)
+	ROM_LOAD( "cs03.bin", 0x0d000, 0x1000, 0xd3fcbf64 )
+	ROM_LOAD( "cs02.bin", 0x0e000, 0x1000, 0x741ecfe4 )
+	ROM_LOAD( "cs01.bin", 0x0f000, 0x1000, 0xdfb0181c )
 	/* bank 0 is the place for CMOS ram */
 	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 )
 	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 )
 	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da )
 	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 )
 	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 )
-	ROM_LOAD( "cs08.bin", 0x12800, 0x0800, 0x7838bc72 )
-	ROM_LOAD( "cs03.bin", 0xd000,  0x1000, 0xd3fcbf64 )
-	ROM_LOAD( "cs02.bin", 0xe000,  0x1000, 0x741ecfe4 )
-	ROM_LOAD( "cs01.bin", 0xf000,  0x1000, 0xdfb0181c )
+	ROM_RELOAD(           0x12800, 0x0800 )
 
-	ROM_REGION(0x1000)
-	ROM_LOAD( "cs11.bin", 0x0000, 0x0800, 0x54ba49bc )
+	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc ) /* Sound ROM */
@@ -2542,19 +2602,20 @@ ROM_END
 
 ROM_START( colony7a_rom )
 	ROM_REGION(0x14000)
+	ROM_LOAD( "cs03a.bin", 0x0d000, 0x1000, 0x124fcfb1 )
+	ROM_LOAD( "cs02a.bin", 0x0e000, 0x1000, 0x9acb45f3 )
+	ROM_LOAD( "cs01a.bin", 0x0f000, 0x1000, 0xe3508de4 )
 	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 )
-	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 )
-	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da )
-	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 )
-	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 )
-	ROM_LOAD( "cs08.bin", 0x12800, 0x0800, 0x7838bc72 )
-	ROM_LOAD( "cs03a.bin", 0xd000,  0x1000, 0x124fcfb1 )
-	ROM_LOAD( "cs02a.bin", 0xe000,  0x1000, 0x9acb45f3 )
-	ROM_LOAD( "cs01a.bin", 0xf000,  0x1000, 0xe3508de4 )
+	ROM_LOAD( "cs06.bin",  0x10000, 0x0800, 0xb4d158c1 )
+	ROM_LOAD( "cs04.bin",  0x10800, 0x0800, 0x69594a21 )
+	ROM_LOAD( "cs07.bin",  0x11000, 0x0800, 0xc168b5da )
+	ROM_LOAD( "cs05.bin",  0x11800, 0x0800, 0x49741fe0 )
+	ROM_LOAD( "cs08.bin",  0x12000, 0x0800, 0x7838bc72 )
+	ROM_RELOAD(            0x12800, 0x0800 )
 
-	ROM_REGION(0x1000)
-	ROM_LOAD( "cs11.bin", 0x0000, 0x0800, 0x54ba49bc )
+	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc ) /* Sound ROM */
@@ -2562,9 +2623,14 @@ ROM_END
 
 struct GameDriver colony7_driver =
 {
-	"Colony 7",
+	__FILE__,
+	0,
 	"colony7",
+	"Colony 7 (set 1)",
+	"1981",
+	"Taito",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
+	0,
 	&colony7_machine_driver,       /* MachineDriver * */
 
 	colony7_rom,                   /* RomModule * */
@@ -2582,9 +2648,14 @@ struct GameDriver colony7_driver =
 
 struct GameDriver colony7a_driver =
 {
-	"Colony 7 (Alternate)",
+	__FILE__,
+	&colony7_driver,
 	"colony7a",
+	"Colony 7 (set 2)",
+	"1981",
+	"Taito",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
+	0,
 	&colony7_machine_driver,       /* MachineDriver * */
 
 	colony7a_rom,                   /* RomModule * */
@@ -2634,9 +2705,14 @@ ROM_END
 
 struct GameDriver lottofun_driver =
 {
-	"Lotto Fun",
+	__FILE__,
+	0,
 	"lottofun",
+	"Lotto Fun",
+	"1987",
+	"H.A.R. Management",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour (Ticket Dispenser)",
+	0,
 	&lottofun_machine_driver,		/* MachineDriver * */
 
 	lottofun_rom,					 /* RomModule * */

@@ -76,6 +76,9 @@ int todruaga_sharedram_r2(int offset)
 
 int mappy_cpu1ram_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
 	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
 	if (offset == 0x1382 && RAM[offset] == 0)
@@ -85,6 +88,9 @@ int mappy_cpu1ram_r(int offset)
 
 int digdug2_cpu1ram_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
 	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
 	if (offset == 0x1000 && RAM[offset] == 0 && cpu_getpc () == 0x80c4)
@@ -94,11 +100,17 @@ int digdug2_cpu1ram_r(int offset)
 
 int motos_cpu1ram_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
 	return RAM[offset];
 }
 
 int todruaga_cpu1ram_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
 	return RAM[offset];
 }
 
@@ -162,10 +174,16 @@ int mappy_customio_r_1(int offset)
 
 				/* bit 0 is a trigger for the 1 player start */
 				if ((val & 1) && ((val ^ lastval) & 1))
+				{
 					if (credits >= credden[temp]) credits -= credden[temp];
+					else val &= ~1;	/* otherwise you can start with no credits! */
+				}
 				/* bit 1 is a trigger for the 2 player start */
 				if ((val & 2) && ((val ^ lastval) & 2))
+				{
 					if (credits >= 2 * credden[temp]) credits -= 2 * credden[temp];
+					else val &= ~2;	/* otherwise you can start with no credits! */
+				}
 
 				return lastval = val;
 			}

@@ -57,7 +57,7 @@ void gberet_e044_w(int offset,int data);
 void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gberet_vh_start(void);
 void gberet_vh_stop(void);
-void gberet_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int gberet_interrupt(void);
 
@@ -210,7 +210,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
+	512,	/* 512 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -226,7 +226,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,   16*16, 16 },
 	{ 1, 0x04000, &spritelayout,     0, 16 },
-	{ 1, 0x0c000, &spritelayout,     0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -352,17 +351,20 @@ ROM_START( rushatck_rom )
 	ROM_LOAD( "rush_h01.7c",  0x8000, 0x4000, 0x9579d71f )
 
 	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rush_h07.3f",  0x00000, 0x4000, 0x42cc0d1a )
-	ROM_LOAD( "rush_h06.5e",  0x04000, 0x4000, 0x023e4fbc )
-	ROM_LOAD( "rush_h05.4e",  0x08000, 0x4000, 0x4b711f89 )
-	ROM_LOAD( "rush_h08.4f",  0x0c000, 0x4000, 0x69b3d78b )
-	ROM_LOAD( "rush_h04.3e",  0x10000, 0x4000, 0x6f1e4796 )
+	ROM_LOAD( "rush_h07.3f", 0x00000, 0x4000, 0x42cc0d1a )
+	ROM_LOAD( "e05_l06.bin", 0x04000, 0x4000, 0x023e4fbc )
+	ROM_LOAD( "rush_h05.4e", 0x08000, 0x4000, 0x4b711f89 )
+	ROM_LOAD( "f04_l08.bin", 0x0c000, 0x4000, 0x69b3d78b )
+	ROM_LOAD( "e03_l04.bin", 0x10000, 0x4000, 0x6f1e4796 )
 ROM_END
 
 
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xd900],"\x03\x30\x00",3) == 0 &&
 			memcmp(&RAM[0xd91b],"\x01\x00\x00",3) == 0)
@@ -389,6 +391,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -402,9 +405,14 @@ static void hisave(void)
 
 struct GameDriver gberet_driver =
 {
-	"Green Beret",
+	__FILE__,
+	0,
 	"gberet",
+	"Green Beret",
+	"1985",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gberet_rom,
@@ -422,9 +430,14 @@ struct GameDriver gberet_driver =
 
 struct GameDriver rushatck_driver =
 {
-	"Rush'n Attack",
+	__FILE__,
+	&gberet_driver,
 	"rushatck",
+	"Rush'n Attack",
+	"1985",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	rushatck_rom,

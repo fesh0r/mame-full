@@ -13,7 +13,6 @@ unsigned char *xain_videoram;
 unsigned char *xain_videoram2;
 int xain_videoram_size;
 int xain_videoram2_size;
-unsigned char *xain_paletteram;
 
 static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
@@ -25,6 +24,8 @@ static unsigned char xain_scrollxP3[2];
 static unsigned char xain_scrollyP3[2];
 
 void xain_vh_stop(void);
+
+
 
 void xain_scrollxP2_w(int offset,int data)
 {
@@ -52,6 +53,8 @@ void videoram2_w(int offset,int data)
         {  dirtybuffer2[offset] = 1;
            xain_videoram2[offset] = data;}
 }
+
+
 
 /***************************************************************************
 
@@ -102,40 +105,7 @@ void xain_vh_stop(void)
 	generic_vh_stop();
 }
 
-/***************************************************************************
 
-  Update 512 Pallete.
-
-***************************************************************************/
-void xain_refresh_palette( void );
-void xain_refresh_palette( void ){
-	unsigned char *source = xain_paletteram;
-	int index;
-	for( index=0; index<128*4; index++ ){
-		int greenred = source[index];
-		int blue = source[index+0x200]&0xf;
-		int red = greenred&0xf;
-		int green = greenred>>4;
-
-		red	= (red << 4) + red;
-		green	= (green << 4) + green;
-		blue	= (blue << 4) + blue;
-
-		if( index<128 ){ /* text */
-			setgfxcolorentry( Machine->gfx[0], index, red, green, blue );
-		}
-		else if( index<256 ){ /* sprites */
-			setgfxcolorentry( Machine->gfx[9], index - 128, red, green, blue );
-		}
-		else if( index<384 ){ /* bg2 */
-			setgfxcolorentry (Machine->gfx[1], index - 256, red, green, blue);
-		}
-		else { /* bg3 */
-			setgfxcolorentry (Machine->gfx[5], index - 384, red, green, blue);
-		}
-
-	}
-}
 
 /***************************************************************************
 
@@ -145,12 +115,16 @@ void xain_refresh_palette( void ){
 
 ***************************************************************************/
 
-void xain_vh_screenrefresh(struct osd_bitmap *bitmap)
+void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
         struct rectangle *r = malloc(sizeof(int)*4);
 
-        xain_refresh_palette();
+	if (palette_recalc())
+	{
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,xain_videoram2_size);
+	}
 
         /* background Plane 3 & Plane 2*/
 	for (offs = (videoram_size/2)-1;offs >= 0;offs--)

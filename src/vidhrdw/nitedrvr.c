@@ -49,7 +49,7 @@ static void nitedrvr_draw_block(struct osd_bitmap *bitmap, int bx, int by, int e
   the main emulation engine.
 
 ***************************************************************************/
-void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap)
+void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,roadway;
 	char gear_buf[] =  {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
@@ -90,7 +90,7 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap)
 		bx = nitedrvr_hvc[roadway];
 		by = nitedrvr_hvc[roadway + 16];
 		ex = bx + ((nitedrvr_hvc[roadway + 32] & 0xF0) >> 4);
-		ey = by + (nitedrvr_hvc[roadway + 32] & 0x0F);
+		ey = by + (16 - (nitedrvr_hvc[roadway + 32] & 0x0F));
 
 		nitedrvr_draw_block(bitmap,bx,by,ex,ey);
 	}

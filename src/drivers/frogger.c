@@ -84,8 +84,8 @@ interrupt mode 1 triggered by the main CPU
 extern unsigned char *frogger_attributesram;
 void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void frogger_attributes_w(int offset,int data);
-void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
-void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap);
+void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int frogger_portB_r(int offset);
 void frogger_sh_irqtrigger_w(int offset,int data);
@@ -299,19 +299,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	0x00,0x07,0xC0,0xF6,0x00,0xF6,0x5E,0x5C,0x00,0xF0,0x3C,0xD7,0x00,0xC0,0xC4,0x07,
-	0x00,0x31,0x17,0xF0,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0x31,0x00,0x3F,0x07,0xC4
-};
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff },
+	{ 0x50ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -334,7 +326,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -379,7 +371,7 @@ static struct MachineDriver frogger2_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -429,6 +421,9 @@ ROM_START( frogger_rom )
 	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
 	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
 
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
 	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
@@ -437,13 +432,16 @@ ROM_END
 
 ROM_START( frogsega_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000, 0x65a3e115 )
-	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000, 0x039a96c8 )
-	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000, 0xb48737eb )
+	ROM_LOAD( "frogger.26", 0x0000, 0x1000, 0x65a3e115 )
+	ROM_LOAD( "frogger.27", 0x1000, 0x1000, 0x039a96c8 )
+	ROM_LOAD( "frogger.34", 0x2000, 0x1000, 0xb48737eb )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
 	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
+
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
@@ -461,6 +459,9 @@ ROM_START( frogger2_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "epr-1036.1k", 0x0000, 0x0800, 0xf8175729 )
 	ROM_LOAD( "epr-1037.1h", 0x0800, 0x0800, 0xb474d87c )
+
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "epr-1082.42", 0x0000, 0x1000, 0x4aeb27b7 )
@@ -502,9 +503,7 @@ static void frogger2_decode(void)
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -530,9 +529,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -546,9 +543,14 @@ static void hisave(void)
 
 struct GameDriver frogger_driver =
 {
-	"Frogger",
+	__FILE__,
+	0,
 	"frogger",
+	"Frogger (set 1)",
+	"1981",
+	"Sega",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	frogger_rom,
@@ -558,7 +560,7 @@ struct GameDriver frogger_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -566,9 +568,14 @@ struct GameDriver frogger_driver =
 
 struct GameDriver frogsega_driver =
 {
-	"Frogger (alternate version)",
+	__FILE__,
+	&frogger_driver,
 	"frogsega",
+	"Frogger (set 2)",
+	"1981",
+	"Sega",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	frogsega_rom,
@@ -578,17 +585,23 @@ struct GameDriver frogsega_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
+/* this version runs on modiifed Moon Cresta hardware */
 struct GameDriver frogger2_driver =
 {
-	"Frogger (alternate version #2)",
+	__FILE__,
+	&frogger_driver,
 	"frogger2",
+	"Frogger (modified Moon Cresta hardware)",
+	"1981",
+	"bootleg?",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
 	&frogger2_machine_driver,
 
 	frogger2_rom,
@@ -598,7 +611,7 @@ struct GameDriver frogger2_driver =
 
 	frogger2_input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

@@ -4,17 +4,16 @@
 
 *************************************************************************/
 
+#include "atarigen.h"
 #include "sndhrdw/5220intf.h"
 #include "vidhrdw/generic.h"
 #include "m6502/m6502.h"
 #include "m68000/m68000.h"
 
 
-void atarisys1_begin_frame (int param);
-
-void slapstic_init (int chip);
-int slapstic_bank (void);
 int slapstic_tweak (int offset);
+
+void atarisys1_update_display_list (int scanline);
 
 
 
@@ -23,9 +22,6 @@ int slapstic_tweak (int offset);
  *		Globals we own
  *
  *************************************/
-
-unsigned char *atarisys1_eeprom;
-unsigned char *atarisys1_slapstic_base;
 
 unsigned char *marble_speedcheck;
 
@@ -36,13 +32,6 @@ unsigned char *marble_speedcheck;
  *		Statics
  *
  *************************************/
-
-static int cpu_to_sound, cpu_to_sound_ready;
-static int sound_to_cpu, sound_to_cpu_ready;
-static int unlocked;
-
-static void *comm_timer;
-static void *stop_comm_timer;
 
 static int joystick_value;
 static int joystick_type;
@@ -66,45 +55,24 @@ static int indytemp_setopbase (int pc);
  *
  *************************************/
 
-void atarisys1_init_machine(void)
+static void atarisys1_soundint (void)
 {
-	unlocked = 0;
-	cpu_to_sound = cpu_to_sound_ready = 0;
-	sound_to_cpu = sound_to_cpu_ready = 0;
+	cpu_cause_interrupt (0, 6);
+}
+
+
+void atarisys1_init_machine (int slapstic)
+{
+	atarigen_init_machine (atarisys1_soundint, slapstic);
 
 	joystick_value = joystick_type = trackball_type = 0;
 	joystick_timer = NULL;
-
-	comm_timer = stop_comm_timer = NULL;
 
 	m6522_ddra = m6522_ddrb = 0xff;
 	m6522_dra = m6522_drb = 0xff;
 	memset (m6522_regs, 0xff, sizeof (m6522_regs));
 
 	speedcheck_time1 = speedcheck_time2 = 0;
-
-	/* Diassemble slapstic */
-	#if 0
-	{
-		int pc = 0x80000;
-		FILE *f = fopen ("slapstic.asm", "w");
-		while (pc < 0x88000)
-		{
-			char buf[100];
-			int i = Dasm68000 (&RAM[pc],buf,pc), j;
-			for (j=strlen(buf);j<49;++j)
-				buf[j]=' ';
-			buf[49]='\0';
-			fprintf (f,"%06x: %s ; ",pc,buf);
-			// print out the hex code for the assembly
-			for (j=0;j<i;++j)
-				fprintf (f,"%02X ",RAM[pc+j]);
-			fprintf (f,"\n");
-			pc+=i;
-		}
-		fclose (f);
-	}
-	#endif
 }
 
 
@@ -115,79 +83,45 @@ void atarisys1_init_machine(void)
  *
  *************************************/
 
-void marble_init_machine(void)
+void marble_init_machine (void)
 {
-	atarisys1_init_machine ();
-	slapstic_init (103);
+	atarisys1_init_machine (103);
 	joystick_type = 0;
 	trackball_type = 1;
 }
 
 
-void peterpak_init_machine(void)
+void peterpak_init_machine (void)
 {
-	atarisys1_init_machine ();
-	slapstic_init (107);
+	atarisys1_init_machine (107);
 	joystick_type = 1;
 	trackball_type = 0;
 }
 
 
-void indytemp_init_machine(void)
+void indytemp_init_machine (void)
 {
-	atarisys1_init_machine ();
-	slapstic_init (105);
+	atarisys1_init_machine (105);
 	cpu_setOPbaseoverride (indytemp_setopbase);
 	joystick_type = 1;
 	trackball_type = 0;
 }
 
 
-void roadrunn_init_machine(void)
+void roadrunn_init_machine (void)
 {
-	atarisys1_init_machine ();
-	slapstic_init (108);
+	atarisys1_init_machine (108);
 	joystick_type = 2;
 	trackball_type = 0;
 }
 
 
-void roadblst_init_machine(void)
+void roadblst_init_machine (void)
 {
-	atarisys1_init_machine ();
-	slapstic_init (110);
+	atarisys1_init_machine (110);
 	joystick_type = 3;
 	trackball_type = 2;
 	pedal_value = 0;
-}
-
-
-
-/*************************************
- *
- *		EEPROM read/write/enable.
- *
- *************************************/
-
-void atarisys1_eeprom_enable_w (int offset, int data)
-{
-	unlocked = 1;
-}
-
-
-int atarisys1_eeprom_r (int offset)
-{
-	return READ_WORD (&atarisys1_eeprom[offset]) & 0xff;
-}
-
-
-void atarisys1_eeprom_w (int offset, int data)
-{
-	if (!unlocked)
-		return;
-
-	COMBINE_WORD_MEM (&atarisys1_eeprom[offset], data);
-	unlocked = 0;
 }
 
 
@@ -245,26 +179,6 @@ static int indytemp_setopbase (int pc)
 
 /*************************************
  *
- *		Slapstic ROM read/write.
- *
- *************************************/
-
-int atarisys1_slapstic_r (int offset)
-{
-	int bank = slapstic_tweak (offset / 2) * 0x2000;
-	return READ_WORD (&atarisys1_slapstic_base[bank + (offset & 0x1fff)]);
-}
-
-
-void atarisys1_slapstic_w (int offset, int data)
-{
-	slapstic_tweak (offset / 2);
-}
-
-
-
-/*************************************
- *
  *		Interrupt handlers.
  *
  *************************************/
@@ -272,7 +186,7 @@ void atarisys1_slapstic_w (int offset, int data)
 int atarisys1_interrupt (void)
 {
 	/* set a timer to reset the video parameters just before the end of VBLANK */
-	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration - 10), 0, atarisys1_begin_frame);
+	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration - 10), 0, atarisys1_update_display_list);
 
 	/* update the gas pedal for RoadBlasters */
 	if (joystick_type == 3)
@@ -403,7 +317,7 @@ int atarisys1_trakball_r (int offset)
 int atarisys1_io_r (int offset)
 {
 	int temp = input_port_5_r (offset);
-	if (cpu_to_sound_ready) temp |= 0x80;
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x80;
 	return temp | 0xff00;
 }
 
@@ -412,106 +326,11 @@ int atarisys1_6502_switch_r (int offset)
 {
 	int temp = input_port_4_r (offset);
 
-	if (cpu_to_sound_ready) temp |= 0x08;
-	if (sound_to_cpu_ready) temp |= 0x10;
-	temp |= 0x80;
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x08;
+	if (atarigen_sound_to_cpu_ready) temp ^= 0x10;
+	if (!(input_port_5_r (offset) & 0x40)) temp ^= 0x80;
 
 	return temp;
-}
-
-
-
-/*************************************
- *
- *		Main CPU to sound CPU communications
- *
- *************************************/
-
-void atarisys1_sound_reset (void)
-{
-	cpu_reset (1);
-	cpu_halt (1, 1);
-
-	cpu_to_sound = sound_to_cpu = 0;
-	cpu_to_sound_ready = sound_to_cpu_ready = 0;
-}
-
-
-void atarisys1_stop_comm_timer (int param)
-{
-	if (comm_timer)
-		timer_remove (comm_timer);
-	comm_timer = stop_comm_timer = NULL;
-}
-
-
-void atarisys1_delayed_sound_w (int param)
-{
-	if (cpu_to_sound_ready)
-		if (errorlog) fprintf (errorlog, "Missed command from 68010\n");
-
-	cpu_to_sound = param;
-	cpu_to_sound_ready = 1;
-	cpu_cause_interrupt (1, INT_NMI);
-
-	/* allocate a high frequency timer until a response is generated */
-	/* the main CPU is *very* sensistive to the timing of the response */
-	if (!comm_timer)
-		comm_timer = timer_pulse (TIME_IN_USEC (50), 0, 0);
-	if (stop_comm_timer)
-		timer_remove (stop_comm_timer);
-	stop_comm_timer = timer_set (TIME_IN_USEC (1000), 0, atarisys1_stop_comm_timer);
-}
-
-
-void atarisys1_sound_w (int offset, int data)
-{
-	/* use a timer to force a resynchronization */
-	timer_set (TIME_NOW, data & 0xff, atarisys1_delayed_sound_w);
-}
-
-
-int atarisys1_6502_sound_r (int offset)
-{
-	cpu_to_sound_ready = 0;
-	return cpu_to_sound;
-}
-
-
-
-/*************************************
- *
- *		Sound CPU to main CPU communications
- *
- *************************************/
-
-void atarisys1_delayed_6502_sound_w (int param)
-{
-	if (sound_to_cpu_ready)
-		if (errorlog) fprintf (errorlog, "Missed result from 6502\n");
-
-	sound_to_cpu = param;
-	sound_to_cpu_ready = 1;
-	cpu_cause_interrupt (0, 6);
-
-	/* remove the high frequency timer if there is one */
-	if (comm_timer)
-		timer_remove (comm_timer);
-	comm_timer = NULL;
-}
-
-
-void atarisys1_6502_sound_w (int offset, int data)
-{
-	/* use a timer to force a resynchronization */
-	timer_set (TIME_NOW, data, atarisys1_delayed_6502_sound_w);
-}
-
-
-int atarisys1_sound_r (int offset)
-{
-	sound_to_cpu_ready = 0;
-	return sound_to_cpu;
 }
 
 

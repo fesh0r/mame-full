@@ -65,11 +65,9 @@ NMI interrupts for music timing
 
 
 
-extern unsigned char *bombjack_paletteram;
-void bombjack_paletteram_w(int offset,int data);
 void bombjack_background_w(int offset,int data);
 void bombjack_updatehook0(int offset);
-void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -132,7 +130,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9400, 0x97ff, videoram01_w, &videoram01 },
 	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9a00, 0x9a00, MWA_NOP },
-	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
+	{ 0x9c00, 0x9cff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0x9e00, 0x9e00, bombjack_background_w },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb004, 0xb004, MWA_RAM, &flip_screen },
@@ -145,7 +143,7 @@ static struct MemoryReadAddress bombjack_sound_readmem[] =
 {
 	{ 0x4390, 0x4390, bombjack_sh_intflag_r, &bombjack_sh_intflag },	/* kludge to speed up the emulation */
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x43ff, MRA_RAM },
+	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, bombjack_soundlatch_r },
 	{ -1 }  /* end of table */
 };
@@ -153,7 +151,7 @@ static struct MemoryReadAddress bombjack_sound_readmem[] =
 static struct MemoryWriteAddress bombjack_sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x43ff, MWA_RAM },
+	{ 0x4000, 0x43ff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
 
@@ -353,7 +351,7 @@ static struct AY8910interface ay8910_interface =
 {
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 255, 255, 255 },
+	{ 100, 100, 100 },	/* with 255 the SEAL audio library distorts */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -445,9 +443,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -504,9 +500,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -520,9 +514,14 @@ static void hisave(void)
 
 struct GameDriver bombjack_driver =
 {
-	"Bomb Jack",
+	__FILE__,
+	0,
 	"bombjack",
+	"Bomb Jack",
+	"1984",
+	"Tehkan",
 	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	bombjack_rom,

@@ -11,7 +11,6 @@
 
 
 
-unsigned char *centiped_paletteram;
 static int flipscreen;
 
 static struct rectangle spritevisiblearea =
@@ -59,7 +58,7 @@ static void setcolor(int pen,int data)
 
 void centiped_paletteram_w(int offset,int data)
 {
-	centiped_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	/* the char palette will be effectively updated by the next interrupt handler */
 
@@ -81,7 +80,7 @@ int centiped_interrupt(void)
 	/* set the palette for the previous screen slice to properly support */
 	/* midframe palette changes in test mode */
 	for (offset = 4;offset < 8;offset++)
-		setcolor(4 * slice + start + (offset - 4),centiped_paletteram[offset]);
+		setcolor(4 * slice + start + (offset - 4),paletteram[offset]);
 
 	return interrupt();
 }
@@ -106,10 +105,12 @@ void centiped_vh_flipscreen_w (int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
+void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+	if (full_refresh)
+		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
@@ -123,7 +124,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[0],
 					(videoram[offs] & 0x3f) + 0x40,
 					(sy + 1) / 8,	/* support midframe palette changes in test mode */
 					flipscreen,flipscreen,
@@ -132,16 +133,13 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
 	/* Draw the sprites */
 	for (offs = 0;offs < 0x10;offs++)
 	{
 		int spritenum,color;
 		int flipx;
+		int x, y;
+		int sx, sy;
 
 
 		spritenum = spriteram[offs] & 0x3f;
@@ -149,6 +147,8 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 		else spritenum = spritenum / 2;
 
 		flipx = (spriteram[offs] & 0x80) ^ flipscreen;
+		x = spriteram[offs + 0x20];
+		y = 240 - spriteram[offs + 0x10];
 
 		/* Centipede is unusual because the sprite color code specifies the */
 		/* colors to use one by one, instead of a combination code. */
@@ -167,7 +167,30 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[1],
 				spritenum,0,
 				flipscreen,flipx,
-				spriteram[offs + 0x20],240 - spriteram[offs + 0x10],
+				x,y,
 				&spritevisiblearea,TRANSPARENCY_PEN,0);
+
+		/* mark tiles underneath as dirty */
+		sx = x >> 3;
+		sy = y >> 3;
+
+		{
+			int max_x = 1;
+			int max_y = 2;
+			int x2, y2;
+
+			if (x & 0x07) max_x ++;
+			if (y & 0x0f) max_y ++;
+
+			for (y2 = sy; y2 < sy + max_y; y2 ++)
+			{
+				for (x2 = sx; x2 < sx + max_x; x2 ++)
+				{
+					if ((x2 < 32) && (y2 < 30) && (x2 >= 0) && (y2 >= 0))
+						dirtybuffer[x2 + 32*y2] = 1;
+				}
+			}
+		}
+
 	}
 }

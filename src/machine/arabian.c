@@ -10,26 +10,26 @@
 #include "driver.h"
 #include "Z80/Z80.h"
 
-static int clock=0;
+static int arabian_clock=0;
 static int port0f=0;
 
 int arabian_d7f6(int offset)
 {
   int pom;
-  pom = ( (clock & 0xf0) >> 4) ;
+  pom = ( (arabian_clock & 0xf0) >> 4) ;
   return pom;
 }
 
 int arabian_d7f8(int offset)
 {
   int pom;
-  pom = clock & 0x0f ;
+  pom = arabian_clock & 0x0f ;
   return pom;
 }
 
 int arabian_interrupt(void)
 {
-  clock = (clock+1) & 0xff;
+  arabian_clock = (arabian_clock+1) & 0xff;
   return 0;
 }
 
@@ -42,6 +42,8 @@ void arabian_portB_w(int offset,int data)
 int arabian_input_port(int offset)
 {
   int pom;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
   if (port0f & 0x10)  /* if 1 read the switches */
   {

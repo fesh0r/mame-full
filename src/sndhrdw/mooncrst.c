@@ -2,24 +2,28 @@
 #include <math.h>
 
 
-#define SOUND_CLOCK 1536000 /* 1.536 Mhz */
+#ifdef SIGNED_SAMPLES
+	#define AUDIO_CONV(A) (A-0x80)
+#else
+	#define AUDIO_CONV(A) (A)
+#endif
 
-#define TONE_LENGTH 2000
-#define TONE_PERIOD 4
+#define SOUND_CLOCK (18432000/6/2) /* 1.536 Mhz */
+
 #define NOISE_LENGTH 8000
 #define NOISE_RATE 1000
+#define TOOTHSAW_LENGTH 16
+#define TOOTHSAW_VOLUME 180
 #define WAVE_AMPLITUDE 70
 #define MAXFREQ 200
 #define MINFREQ 80
 
 #define STEP 1
 
-static char *tone;
-static char *noise;
+static signed char *noise;
 
 static int shootsampleloaded = 0;
 static int deathsampleloaded = 0;
-static int F=2;
 static int t=0;
 static int LastPort1=0;
 static int LastPort2=0;
@@ -31,32 +35,46 @@ static int lforate1=0;
 static int lforate2=0;
 static int lforate3=0;
 
-static unsigned char waveform1[32] =
+static signed char waveform1[4][TOOTHSAW_LENGTH];
+static int pitch,vol;
+
+static signed char waveform2[32] =
 {
-   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
-   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
-   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
-};
-static unsigned char waveform2[32] =
-{
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
+   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+  -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
+  -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
 };
 
 static int channel;
 
 
 
-void mooncrst_sound_freq_w(int offset,int data)
+void mooncrst_pitch_w(int offset,int data)
 {
+	if (data != 0xff) pitch = SOUND_CLOCK*TOOTHSAW_LENGTH/(256-data)/16;
+	else pitch = 0;
 
-	if (data && data != 0xff) osd_adjust_sample(channel+0,(SOUND_CLOCK/16)/(256-data)*32*F,128);
+	if (pitch) osd_adjust_sample(channel+0,pitch,TOOTHSAW_VOLUME);
 	else osd_adjust_sample(channel+0,1000,0);
-
 }
+
+void mooncrst_vol_w(int offset,int data)
+{
+	int newvol;
+
+
+	/* offset 0 = bit 0, offset 1 = bit 1 */
+	newvol = (vol & ~(1 << offset)) | ((data & 1) << offset);
+
+	if (newvol != vol)
+	{
+		vol = newvol;
+		if (pitch) osd_play_sample(channel+0,waveform1[vol],TOOTHSAW_LENGTH,pitch,TOOTHSAW_VOLUME,1);
+		else osd_play_sample(channel+0,waveform1[vol],TOOTHSAW_LENGTH,1000,0,1);
+	}
+}
+
 
 
 void mooncrst_noise_w(int offset,int data)
@@ -114,25 +132,39 @@ int mooncrst_sh_start(void)
 	else
 	  deathsampleloaded = 0;
 
-	if ((tone = malloc(TONE_LENGTH)) == 0)
-		return 1;
 	if ((noise = malloc(NOISE_LENGTH)) == 0)
 	{
-		free(tone);
 		return 1;
 	}
 
 	for (i = 0;i < NOISE_LENGTH;i++)
 		noise[i] = (rand() % (2*WAVE_AMPLITUDE)) - WAVE_AMPLITUDE;
-	for (i = 0;i < TONE_LENGTH;i++)
-		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
+	for (i = 0;i < TOOTHSAW_LENGTH;i++)
+	{
+		int bit0,bit2,bit3;
 
-        osd_play_sample(channel+0,waveform1,32,1000,0,1);
-        if (!deathsampleloaded)
-	   	    osd_play_sample(channel+1,noise,NOISE_LENGTH,NOISE_RATE,0,1);
+		bit0 = (i >> 0) & 1;
+		bit2 = (i >> 2) & 1;
+		bit3 = (i >> 3) & 1;
 
-        osd_play_sample(channel+3,waveform2,32,1000,0,1);
-        osd_play_sample(channel+4,waveform2,32,1000,0,1);
+		/* relative weigths derived from the schematics. There are 4 possible */
+		/* "volume" settings which also affect the pitch. */
+		waveform1[0][i] = AUDIO_CONV(0x20 * bit0 + 0x30 * bit2);
+		waveform1[1][i] = AUDIO_CONV(0x20 * bit0 + 0x99 * bit2);
+		waveform1[2][i] = AUDIO_CONV(0x20 * bit0 + 0x30 * bit2 + 0x46 * bit3);
+		waveform1[3][i] = AUDIO_CONV(0x20 * bit0 + 0x99 * bit2 + 0x46 * bit3);
+	}
+
+	pitch = 0;
+	vol = 0;
+
+	osd_play_sample(channel+0,waveform1[vol],TOOTHSAW_LENGTH,1000,0,1);
+
+	if (!deathsampleloaded)
+		osd_play_sample(channel+1,noise,NOISE_LENGTH,NOISE_RATE,0,1);
+
+	osd_play_sample(channel+3,waveform2,32,1000,0,1);
+	osd_play_sample(channel+4,waveform2,32,1000,0,1);
 
 	return 0;
 }
@@ -142,20 +174,11 @@ int mooncrst_sh_start(void)
 void mooncrst_sh_stop(void)
 {
 	free(noise);
-	free(tone);
 	osd_stop_sample(channel+0);
 	osd_stop_sample(channel+1);
 	osd_stop_sample(channel+2);
 	osd_stop_sample(channel+3);
 	osd_stop_sample(channel+4);
-}
-
-void mooncrst_sound_freq_sel_w(int offset,int data)
-{
-        if (offset==1 && (data & 1))
-            F=1;
-        else
-            F=2;
 }
 
 void mooncrst_lfo_freq_w(int offset,int data)

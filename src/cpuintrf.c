@@ -11,12 +11,15 @@
 #include "driver.h"
 #include "Z80/Z80.h"
 #include "I8039/I8039.h"
+#include "I8085/I8085.h"
 #include "M6502/M6502.h"
 #include "M6809/M6809.h"
 #include "M6808/M6808.h"
 #include "M6805/M6805.h"
 #include "M68000/M68000.h"
-#include "I86/i86intrf.h"
+#include "S2650/s2650.h"
+#include "T11/t11.h"
+#include "I86/I86intrf.h"
 #include "timer.h"
 
 
@@ -39,7 +42,11 @@ struct cpuinfo
 	void *timedint_timer;                      /* reference to this CPU's timer */
 	double timedint_period;                    /* timing period of the timed interrupt */
 	int save_context;                          /* need to context switch this CPU? yes or no */
+#ifdef linux_alpha
+	unsigned char context[CPU_CONTEXT_SIZE] __attribute__ ((__aligned__ (8)));
+#else
 	unsigned char context[CPU_CONTEXT_SIZE];   /* this CPU's context */
+#endif
 };
 
 static struct cpuinfo cpu[MAX_CPU];
@@ -57,7 +64,7 @@ static int interrupt_enable[MAX_CPU];
 static int interrupt_vector[MAX_CPU];
 
 
-static void *watchdog_timer;
+static int watchdog_counter;
 
 static void *vblank_timer;
 static int vblank_countdown;
@@ -77,7 +84,7 @@ static double scanline_period_inv;
 static int usres; /* removed from cpu_run and made global */
 static int vblank;
 
-static void cpu_generate_interrupt (int cpu, int (*func)(void), int num);
+static void cpu_generate_interrupt (int _cpu, int (*func)(void), int num);
 static void cpu_vblankintcallback (int param);
 static void cpu_timedintcallback (int param);
 static void cpu_manualintcallback (int param);
@@ -159,7 +166,24 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6502  2 */
+	/* #define CPU_8085A 2 */
+	{
+		I8085_Reset,                        /* Reset CPU */
+		I8085_Execute,                      /* Execute a number of cycles */
+		(void (*)(void *))I8085_SetRegs,    /* Set the contents of the registers */
+		(void (*)(void *))I8085_GetRegs,    /* Get the contents of the registers */
+		(unsigned int (*)(void))I8085_GetPC,/* Return the current PC */
+		I8085_Cause_Interrupt,              /* Generate an interrupt */
+		I8085_Clear_Pending_Interrupts,     /* Clear pending interrupts */
+		&I8085_ICount,                      /* Pointer to the instruction count */
+		I8085_NONE,I8085_INTR,I8085_TRAP,   /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                      /* Memory read */
+		cpu_writemem16,                     /* Memory write */
+		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16,                                 /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+	},
+	/* #define CPU_M6502  3 */
 	{
 		m6502_Reset,                       /* Reset CPU */
 		m6502_Execute,                     /* Execute a number of cycles */
@@ -176,7 +200,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_I86    3 */
+	/* #define CPU_I86    4 */
 	{
 		i86_Reset,                         /* Reset CPU */
 		i86_Execute,                       /* Execute a number of cycles */
@@ -193,7 +217,7 @@ struct cpu_interface cpuintf[] =
 		20,                                /* CPU address bits */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20   /* Address bits, for the memory system */
 	},
-	/* #define CPU_I8039  4 */
+	/* #define CPU_I8039  5 */
 	{
 		I8039_Reset,                       /* Reset CPU */
 		I8039_Execute,                     /* Execute a number of cycles */
@@ -210,7 +234,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6808  5 */
+	/* #define CPU_M6808  6 */
 	{
 		m6808_reset,                       /* Reset CPU */
 		m6808_execute,                     /* Execute a number of cycles */
@@ -227,7 +251,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6805  6 */
+	/* #define CPU_M6805  7 */
 	{
 		m6805_reset,                       /* Reset CPU */
 		m6805_execute,                     /* Execute a number of cycles */
@@ -244,7 +268,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6809  7 */
+	/* #define CPU_M6809  8 */
 	{
 		m6809_reset,                       /* Reset CPU */
 		m6809_execute,                     /* Execute a number of cycles */
@@ -261,7 +285,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M68000 8 */
+	/* #define CPU_M68000 9 */
 	{
 		MC68000_Reset,                     /* Reset CPU */
 		MC68000_Execute,                   /* Execute a number of cycles */
@@ -277,6 +301,40 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase24,                   /* Update CPU opcode base */
 		24,                                /* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24   /* Address bits, for the memory system */
+	},
+	/* #define CPU_T11  10 */
+	{
+		t11_reset,                       /* Reset CPU */
+		t11_execute,                     /* Execute a number of cycles */
+		(void (*)(void *))t11_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))t11_GetRegs,             /* Get the contents of the registers */
+		t11_GetPC,                       /* Return the current PC */
+		t11_Cause_Interrupt,             /* Generate an interrupt */
+		t11_Clear_Pending_Interrupts,    /* Clear pending interrupts */
+		&t11_ICount,                     /* Pointer to the instruction count */
+		T11_INT_NONE,-1,-1,                /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16lew,                  /* Memory read */
+		cpu_writemem16lew,                 /* Memory write */
+		cpu_setOPbase16lew,                /* Update CPU opcode base */
+		16,                                /* CPU address bits */
+		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW /* Address bits, for the memory system */
+	},
+	/* #define CPU_S2650 11 */
+	{
+		S2650_Reset,						/* Reset CPU */
+		S2650_Execute,						/* Execute a number of cycles */
+		(void (*)(void *))S2650_SetRegs,	/* Set the contents of the registers */
+		(void (*)(void *))S2650_GetRegs,	/* Get the contents of the registers */
+		(unsigned int (*)(void))S2650_GetPC,/* Return the current PC */
+		S2650_Cause_Interrupt,				/* Generate an interrupt */
+		S2650_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
+		&S2650_ICount,						/* Pointer to the instruction count */
+		S2650_INT_NONE,-1,-1,				/* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                      /* Memory read */
+		cpu_writemem16,                     /* Memory write */
+		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	}
 };
 
@@ -322,7 +380,7 @@ void cpu_init(void)
 
 	/* reset the timer system */
 	timer_init ();
-	timeslice_timer = refresh_timer = watchdog_timer = vblank_timer = NULL;
+	timeslice_timer = refresh_timer = vblank_timer = NULL;
 }
 
 
@@ -356,6 +414,7 @@ void cpu_run(void)
 reset:
 	/* initialize the various timers (suspends all CPUs at startup) */
 	cpu_inittimers ();
+	watchdog_counter = -1;
 
 	/* enable all CPUs (except for audio CPUs if the sound is off) */
 	for (i = 0; i < totalcpu; i++)
@@ -455,22 +514,14 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
   machine will be reset.
 
 ***************************************************************************/
-static void watchdog_callback (int param)
-{
-	watchdog_timer = 0;
-
-	if (errorlog) fprintf(errorlog,"warning: reset caused by the watchdog\n");
-	machine_reset ();
-}
-
 void watchdog_reset_w(int offset,int data)
 {
-	timer_reset (watchdog_timer, TIME_IN_SEC (1));
+	watchdog_counter = Machine->drv->frames_per_second;
 }
 
 int watchdog_reset_r(int offset)
 {
-	timer_reset (watchdog_timer, TIME_IN_SEC (1));
+	watchdog_counter = Machine->drv->frames_per_second;
 	return 0;
 }
 
@@ -512,11 +563,11 @@ void cpu_reset(int cpunum)
   Use this function to stop and restart CPUs
 
 ***************************************************************************/
-void cpu_halt(int cpunum,int running)
+void cpu_halt(int cpunum,int _running)
 {
 	if (cpunum >= MAX_CPU) return;
 
-	timer_suspendcpu (cpunum, !running);
+	timer_suspendcpu (cpunum, !_running);
 }
 
 
@@ -606,11 +657,12 @@ int cpu_getreturnpc(void)
 	{
 		case CPU_Z80:
 			{
-				Z80_Regs regs;
+				Z80_Regs _regs;
+				extern unsigned char *RAM;
 
 
-				Z80_GetRegs(&regs);
-				return RAM[regs.SP.D] + (RAM[regs.SP.D+1] << 8);
+				Z80_GetRegs(&_regs);
+				return RAM[_regs.SP.D] + (RAM[_regs.SP.D+1] << 8);
 			}
 			break;
 
@@ -730,7 +782,7 @@ int cpu_getscanline(void)
 double cpu_getscanlinetime(int scanline)
 {
 	double scantime = timer_starttime (refresh_timer) + (double)scanline * scanline_period;
-	double time = timer_gettime ();
+	double time = timer_get_time ();
 	if (time >= scantime) scantime += TIME_IN_HZ (Machine->drv->frames_per_second);
 	return scantime - time;
 }
@@ -1160,6 +1212,11 @@ static void cpu_updatecallback (int param)
 	/* update IPT_VBLANK input ports */
 	inputport_vblank_end();
 
+	/* check the watchdog */
+	if (watchdog_counter > 0)
+		if (--watchdog_counter == 0)
+			machine_reset ();
+
 	/* reset the refresh timer */
 	timer_reset (refresh_timer, TIME_NEVER);
 }
@@ -1212,8 +1269,6 @@ static void cpu_inittimers (void)
 		timer_remove (timeslice_timer);
 	if (refresh_timer)
 		timer_remove (refresh_timer);
-	if (watchdog_timer)
-		timer_remove (watchdog_timer);
 	if (vblank_timer)
 		timer_remove (vblank_timer);
 
@@ -1231,13 +1286,11 @@ static void cpu_inittimers (void)
 
 	/* while we're at it, compute the scanline times */
 	if (Machine->drv->vblank_duration)
-		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) / (double)(Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
+		scanline_period = (refresh_period - TIME_IN_USEC (Machine->drv->vblank_duration)) /
+				(double)(Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
 	else
 		scanline_period = refresh_period / (double)Machine->drv->screen_height;
 	scanline_period_inv = 1.0 / scanline_period;
-
-	/* allocate an infinite watchdog timer; it will be set to a sane value on a read/write */
-	watchdog_timer = timer_set (TIME_NEVER, 0, watchdog_callback);
 
 	/*
 	 *		The following code finds all the CPUs that are interrupting in sync with the VBLANK
@@ -1320,14 +1373,14 @@ static void cpu_inittimers (void)
 
 #ifdef MAME_DEBUG
 /* JB 971019 */
-void cpu_getcontext (int activecpu, unsigned char *buf)
+void cpu_getcontext (int _activecpu, unsigned char *buf)
 {
-    memcpy (buf, cpu[activecpu].context, CPU_CONTEXT_SIZE);
+    memcpy (buf, cpu[_activecpu].context, CPU_CONTEXT_SIZE);
 }
 
-void cpu_setcontext (int activecpu, const unsigned char *buf)
+void cpu_setcontext (int _activecpu, const unsigned char *buf)
 {
-    memcpy (cpu[activecpu].context, buf, CPU_CONTEXT_SIZE);
+    memcpy (cpu[_activecpu].context, buf, CPU_CONTEXT_SIZE);
 }
 #endif
 

@@ -1,7 +1,16 @@
 #ifndef OSDEPEND_H
 #define OSDEPEND_H
 
-#define MESS /* MESS, also added OSD_FILETYPE_ROM_CART */
+/** suggested by  Scott Trent */
+#ifdef aix
+#include <sys/time.h>
+#endif
+
+#ifdef linux_alpha
+#define FPTR long   /* 64bit: sizeof(void *) is sizeof(long)  */
+#else
+#define FPTR int
+#endif
 
 struct osd_bitmap
 {
@@ -187,9 +196,6 @@ struct osd_bitmap
 
 #define X_AXIS          1
 #define Y_AXIS          2
-#define NO_TRAK         1000000
-#define NO_ANALOGJOY    1000000
-
 
 extern int video_sync;
 
@@ -230,8 +236,6 @@ void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
 void osd_ym2203_write(int n, int r, int v);
 void osd_ym2203_update(void);
-int osd_ym3812_status(void);
-int osd_ym3812_read(void);
 void osd_ym3812_control(int reg);
 void osd_ym3812_write(int data);
 void osd_set_mastervolume(int volume);
@@ -245,8 +249,8 @@ int osd_joy_pressed(int joycode);
 
 void osd_trak_read(int *deltax,int *deltay);
 
-/* return a value in the range -128 .. 128 (yes, 128, not 127) */
-int osd_analogjoy_read(int axis);
+/* return values in the range -128 .. 128 (yes, 128, not 127) */
+void osd_analogjoy_read(int *analog_x, int *analog_y);
 
 /* handle events during emulation (menu, volume etc.)
    return true if the emulation shall exit */

@@ -61,7 +61,7 @@ int pacnpal_interrupt_2(void);
 void pacnpal_interrupt_enable_2_w(int offset,int data);
 
 int superpac_vh_start(void);
-void superpac_vh_screenrefresh(struct osd_bitmap *bitmap);
+void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void superpac_init_machine(void);
 void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
@@ -147,27 +147,27 @@ INPUT_PORTS_START( superpac_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x0f, 0x00, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Rank 0-Normal" )
-	PORT_DIPSETTING(    0x01, "Rank 1-Easy" )
+	PORT_DIPSETTING(    0x01, "Rank 1-Easiest" )
 	PORT_DIPSETTING(    0x02, "Rank 2" )
 	PORT_DIPSETTING(    0x03, "Rank 3" )
 	PORT_DIPSETTING(    0x04, "Rank 4" )
 	PORT_DIPSETTING(    0x05, "Rank 5" )
-	PORT_DIPSETTING(    0x06, "Rank 6" )
+	PORT_DIPSETTING(    0x06, "Rank 6-Medium" )
 	PORT_DIPSETTING(    0x07, "Rank 7" )
 	PORT_DIPSETTING(    0x08, "Rank 8-Default" )
 	PORT_DIPSETTING(    0x09, "Rank 9" )
 	PORT_DIPSETTING(    0x0a, "Rank A" )
-	PORT_DIPSETTING(    0x0b, "Rank B-Hard" )
+	PORT_DIPSETTING(    0x0b, "Rank B-Hardest" )
 	PORT_DIPSETTING(    0x0c, "Rank C-Easy Auto" )
 	PORT_DIPSETTING(    0x0d, "Rank D-Auto" )
 	PORT_DIPSETTING(    0x0e, "Rank E-Auto" )
 	PORT_DIPSETTING(    0x0f, "Rank F-Hard Auto" )
-	PORT_DIPNAME( 0x30, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x30, 0x00, "Coin B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x30, "2 Coins/3 Credits" )
-	PORT_DIPNAME( 0x40, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x80, 0x00, "Freeze", IP_KEY_NONE )
@@ -175,25 +175,34 @@ INPUT_PORTS_START( superpac_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x07, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
-	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x38, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x38, "None" )
 	PORT_DIPSETTING(    0x30, "30k" )
 	PORT_DIPSETTING(    0x08, "30k 80k" )
 	PORT_DIPSETTING(    0x00, "30k 100k" )
-	PORT_DIPSETTING(    0x20, "30k 120k" )
-	PORT_DIPSETTING(    0x10, "30k 80k 80k" )
-	PORT_DIPSETTING(    0x18, "30k 100k 100k" )
+	PORT_DIPSETTING(    0x10, "30k 120k" )
+	PORT_DIPSETTING(    0x18, "30k 80k 80k" )
+	PORT_DIPSETTING(    0x20, "30k 100k 100k" )
 	PORT_DIPSETTING(    0x28, "30k 120k 120k" )
+/* TODO: bonus scores for 5 lives */
+/* 	PORT_DIPNAME( 0x38, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x38, "None" )
+	PORT_DIPSETTING(    0x28, "30k" )
+	PORT_DIPSETTING(    0x30, "40k" )
+	PORT_DIPSETTING(    0x00, "30k 100k" )
+	PORT_DIPSETTING(    0x08, "30k 120k" )
+	PORT_DIPSETTING(    0x10, "40k 120k" )
+	PORT_DIPSETTING(    0x18, "30k 100k 100k" )
+	PORT_DIPSETTING(    0x20, "40k 120k 120k" ) */
 	PORT_DIPNAME( 0xc0, 0x00, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
@@ -207,8 +216,7 @@ INPUT_PORTS_START( superpac_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -222,7 +230,7 @@ INPUT_PORTS_START( superpac_input_ports )
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_START2 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_DIPNAME( 0x40, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x40, "Cocktail" )
 	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
@@ -233,11 +241,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( pacnpal_input_ports )
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x03, 0x00, "Coin B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
 	PORT_DIPNAME( 0x0c, 0x00, "Rank", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "A" )
 	PORT_DIPSETTING(    0x04, "B" )
@@ -246,16 +254,15 @@ INPUT_PORTS_START( pacnpal_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x07, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
-	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x38, 0x18, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x38, "30k" )
@@ -265,6 +272,16 @@ INPUT_PORTS_START( pacnpal_input_ports )
 	PORT_DIPSETTING(    0x30, "30k 100k" )
 	PORT_DIPSETTING(    0x08, "20k 70k 70k" )
 	PORT_DIPSETTING(    0x10, "30k 80k 80k" )
+	/* TODO: bonus scores are different for 5 lives */
+/* 	PORT_DIPNAME( 0x38, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x30, "30k" )
+	PORT_DIPSETTING(    0x38, "40k" )
+	PORT_DIPSETTING(    0x18, "30k 80k" )
+	PORT_DIPSETTING(    0x20, "30k 100k" )
+	PORT_DIPSETTING(    0x28, "40k 120k" )
+	PORT_DIPSETTING(    0x08, "30k 80k 80k" )
+	PORT_DIPSETTING(    0x10, "40k 100k 100k" ) */
 	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
@@ -293,7 +310,7 @@ INPUT_PORTS_START( pacnpal_input_ports )
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_START2 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
-	PORT_DIPNAME( 0x40, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x40, "Cocktail" )
 	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
@@ -609,11 +626,11 @@ ROM_START( superpcn_rom )
 	ROM_LOAD( "SP1.1", 0xe000, 0x2000, 0x181e2450 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SP1.6", 0x0000, 0x1000, 0xcb510929 )
-	ROM_LOAD( "SP1.5", 0x1000, 0x2000, 0x19a3fd43 )
+	ROM_LOAD( "SP1.6",    0x0000, 0x1000, 0xcb510929 )
+	ROM_LOAD( "SPV-2.3F", 0x1000, 0x2000, 0x19a3fd43 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "SP1.4", 0xf000, 0x1000, 0x6d32e9fa )
+	ROM_LOAD( "SPC-3.1K", 0xf000, 0x1000, 0x6d32e9fa )
 ROM_END
 
 ROM_START( pacnpal_rom )
@@ -636,10 +653,8 @@ static int superpac_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x113c],"N@N",3) == 0 &&        /* check for high score initials */
@@ -682,10 +697,8 @@ static int superpac_hiload(void)
 static void superpac_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -700,10 +713,8 @@ static int pacnpal_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x1051],"\x1a\x25\x1a",3) == 0 &&        /* check for high score initials */
@@ -746,10 +757,8 @@ static int pacnpal_hiload(void)
 static void pacnpal_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -761,9 +770,14 @@ static void pacnpal_hisave(void)
 
 struct GameDriver superpac_driver =
 {
-	"Super Pac-Man (Midway)",
+	__FILE__,
+	0,
 	"superpac",
+	"Super Pac-Man (Midway)",
+	"1982",
+	"[Namco] (Bally Midway license)",
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
+	0,
 	&superpac_machine_driver, /* MachineDriver * */
 
 	superpac_rom,             /* RomModule * */
@@ -783,9 +797,14 @@ struct GameDriver superpac_driver =
 
 struct GameDriver superpcn_driver =
 {
-	"Super Pac-Man (Namco)",
+	__FILE__,
+	&superpac_driver,
 	"superpcn",
+	"Super Pac-Man (Namco)",
+	"1982",
+	"Namco",
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
+	0,
 	&superpac_machine_driver, /* MachineDriver * */
 
 	superpcn_rom,             /* RomModule * */
@@ -805,9 +824,14 @@ struct GameDriver superpcn_driver =
 
 struct GameDriver pacnpal_driver =
 {
-	"Pac & Pal",
+	__FILE__,
+	0,
 	"pacnpal",
+	"Pac & Pal",
+	"1983",
+	"Namco",
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
+	0,
 	&pacnpal_machine_driver,  /* MachineDriver * */
 
 	pacnpal_rom,              /* RomModule * */

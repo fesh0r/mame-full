@@ -42,7 +42,7 @@ void bankp_scroll_w(int offset,int data);
 void bankp_out_w(int offset,int data);
 int bankp_vh_start(void);
 void bankp_vh_stop(void);
-void bankp_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bankp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -292,8 +292,20 @@ ROM_END
 
 static int hiload(void)
 {
+	static int loop = 0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
-	/* this check is really stupid and almost useless, but better than nothing */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (loop == 0)
+	{
+		memset(&RAM[0x0e590],0xff,16*10);
+		memset(&RAM[0xe018],0xff,7);	/* high score */
+		loop = 1;
+	}
+
 	if (memcmp(&RAM[0xe590],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
 			memcmp(&RAM[0xe620],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
 			memcmp(&RAM[0xe018],"\x00\x00\x00\x00\x00\x00\x00",7) == 0)	/* high score */
@@ -308,9 +320,10 @@ static int hiload(void)
 			osd_fclose(f);
 		}
 
+		loop = 0;
 		return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;   /* we can't load the hi scores yet */
 }
 
 
@@ -318,6 +331,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -331,9 +345,14 @@ static void hisave(void)
 
 struct GameDriver bankp_driver =
 {
-	"Bank Panic",
+	__FILE__,
+	0,
 	"bankp",
+	"Bank Panic",
+	"1984",
+	"Sega",
 	"Nicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
 	&machine_driver,
 
 	bankp_rom,

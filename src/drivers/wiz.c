@@ -73,7 +73,7 @@ extern unsigned char *wiz_sprite_bank;
 
 void wiz_background_bank_select_w (int offset, int data);
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void wiz_vh_screenrefresh(struct osd_bitmap *bitmap);
+void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void wiz_flipx_w(int offset,int data);
 void wiz_flipy_w(int offset,int data);
 
@@ -345,7 +345,7 @@ static struct AY8910interface ay8910_interface =
 {
 	3,      /* 3 chips */
 	14318000/8,	/* ? */
-	{ 0x60ff, 0x60ff, 0x60ff }, /* ? */
+	{ 100, 100, 100 },	/* with 255 the SEAL audio library distorts */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -429,9 +429,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -456,9 +454,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -472,9 +468,14 @@ static void hisave(void)
 
 struct GameDriver wiz_driver =
 {
-	"Wiz",
+	__FILE__,
+	0,
 	"wiz",
+	"Wiz",
+	"1985",
+	"Seibu Kaihatsu",
 	"Zsolt Vasvari",
+	0,
 	&machine_driver,
 
 	wiz_rom,

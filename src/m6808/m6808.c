@@ -54,10 +54,10 @@ static void (*wr_s_handler_wd)(int,int);
 #define IMMBYTE(b) {b=M_RDOP_ARG(pcreg++);}
 #define IMMWORD(w) {w = (M_RDOP_ARG(pcreg)<<8) + M_RDOP_ARG(pcreg+1); pcreg+=2;}
 
-#define PUSHBYTE(b) {--sreg;(*wr_s_handler)(sreg,b);}
-#define PUSHWORD(w) {sreg-=2;(*wr_s_handler_wd)(sreg,w);}
-#define PULLBYTE(b) {b=(*rd_s_handler)(sreg);sreg++;}
-#define PULLWORD(w) {w=(*rd_s_handler_wd)(sreg);sreg+=2;}
+#define PUSHBYTE(b) {(*wr_s_handler)(sreg,b);sreg--;}
+#define PUSHWORD(w) {sreg--;(*wr_s_handler_wd)(sreg,w);sreg--;}
+#define PULLBYTE(b) {sreg++;b=(*rd_s_handler)(sreg);}
+#define PULLWORD(w) {sreg++;w=(*rd_s_handler_wd)(sreg);sreg++;}
 
 /* CC masks						  HI NZVC
 								7654 3210	*/
@@ -205,11 +205,15 @@ static int rd_slow_wd( int addr )
 
 static int rd_fast( int addr )
 {
+	extern unsigned char *RAM;
+
 	return RAM[addr];
 }
 
 static int rd_fast_wd( int addr )
 {
+	extern unsigned char *RAM;
+
 	return( (RAM[addr]<<8) | (RAM[(addr+1)&0xffff]) );
 }
 
@@ -226,11 +230,15 @@ static void wr_slow_wd( int addr, int v )
 
 static void wr_fast( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr] = v;
 }
 
 static void wr_fast_wd( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr] = v>>8;
 	RAM[(addr+1)&0xffff] = v&255;
 }
@@ -420,7 +428,7 @@ int m6808_execute(int cycles)
 		switch( ireg )
 		{
 			case 0x00: illegal(); break;
-			case 0x01: illegal(); break;
+			case 0x01: nop(); break;
 			case 0x02: illegal(); break;
 			case 0x03: illegal(); break;
 			case 0x04: lsrd(); /* 6803 only */; break;

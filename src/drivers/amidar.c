@@ -57,7 +57,7 @@ interrupt mode 1 triggered by the main CPU
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void amidar_updatehook00(int offset);
 void amidar_updatehook01(int offset);
-void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
+void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
@@ -456,7 +456,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -586,19 +586,19 @@ ROM_END
 
 ROM_START( turpin_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "M1", 0x0000, 0x1000, 0x805f1577 )
-	ROM_LOAD( "M2", 0x1000, 0x1000, 0x694f9789 )
-	ROM_LOAD( "M3", 0x2000, 0x1000, 0x1b08134e )
-	ROM_LOAD( "M4", 0x3000, 0x1000, 0xb71c1118 )
-	ROM_LOAD( "M5", 0x4000, 0x1000, 0x112be471 )
+	ROM_LOAD( "M1",          0x0000, 0x1000, 0x805f1577 )
+	ROM_LOAD( "M2",          0x1000, 0x1000, 0x694f9789 )
+	ROM_LOAD( "M3",          0x2000, 0x1000, 0x1b08134e )
+	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000, 0xb71c1118 )
+	ROM_LOAD( "M5",          0x4000, 0x1000, 0x112be471 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "C1", 0x0000, 0x0800, 0x077a3a46 )
-	ROM_LOAD( "C2", 0x0800, 0x0800, 0xd1107d84 )
+	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
+	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "D1", 0x0000, 0x1000, 0x90ecc748 )
-	ROM_LOAD( "D2", 0x1000, 0x1000, 0xad8bffad )
+	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
+	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
 ROM_END
 
 
@@ -621,9 +621,7 @@ static unsigned char turtles_color_prom[] =
 
 static int amidar_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -651,10 +649,8 @@ static int amidar_hiload(void)
 
 static int turtles_hiload(void) /* V.V */
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	/* same as Amidar, but the high score table is initialized with zeros */
 	/* a working quick-and-dirty solution is to update the top high score */
@@ -705,9 +701,7 @@ static int turtles_hiload(void) /* V.V */
 static void amidar_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -721,9 +715,14 @@ static void amidar_hisave(void)
 
 struct GameDriver amidar_driver =
 {
-	"Amidar (US version)",
+	__FILE__,
+	0,
 	"amidar",
+	"Amidar (US)",
+	"1982",
+	"Konami (Stern license)",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
 	&machine_driver,
 
 	amidar_rom,
@@ -741,9 +740,14 @@ struct GameDriver amidar_driver =
 
 struct GameDriver amidarjp_driver =
 {
-	"Amidar (Japanese version)",
+	__FILE__,
+	&amidar_driver,
 	"amidarjp",
+	"Amidar (Japan)",
+	"1981",
+	"Konami",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
 	&machine_driver,
 
 	amidarjp_rom,
@@ -761,9 +765,14 @@ struct GameDriver amidarjp_driver =
 
 struct GameDriver amigo_driver =
 {
-	"Amigo (Amidar US bootleg)",
+	__FILE__,
+	&amidar_driver,
 	"amigo",
+	"Amigo",
+	"1982",
+	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nDavid Winter (game driver)",
+	0,
 	&machine_driver,
 
 	amigo_rom,
@@ -781,9 +790,14 @@ struct GameDriver amigo_driver =
 
 struct GameDriver turtles_driver =
 {
-	"Turtles",
+	__FILE__,
+	0,
 	"turtles",
+	"Turtles",
+	"1981",
+	"Stern",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	turtles_rom,
@@ -801,9 +815,14 @@ struct GameDriver turtles_driver =
 
 struct GameDriver turpin_driver =
 {
-	"Turpin",
+	__FILE__,
+	&turtles_driver,
 	"turpin",
+	"Turpin",
+	"1981",
+	"Sega",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	turpin_rom,

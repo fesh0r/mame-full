@@ -47,7 +47,7 @@ same as Pooyan
 void timeplt_flipscreen_w(int offset,int data);
 int timeplt_scanline_r(int offset);
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /* I am not 100% sure that this timer is correct, but */
@@ -247,7 +247,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x20, "6" )
 	PORT_DIPSETTING(    0x10, "7" )
 	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -287,7 +287,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* these are NOT the original color PROMs */
 static unsigned char color_prom[] =
 {
 	/* B4 - palette */
@@ -338,7 +337,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x40ff, 0x40ff },
+	{ 0x20ff, 0x20ff },
 	{ soundlatch_r },
 	{ timeplt_portB_r },
 	{ 0 },
@@ -417,13 +416,13 @@ ROM_END
 
 ROM_START( spaceplt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "tm1", 0x0000, 0x2000, 0xfe1e8a6c )
-	ROM_LOAD( "tm2", 0x2000, 0x2000, 0xa4bcaa6c )
-	ROM_LOAD( "tm3", 0x4000, 0x2000, 0xf83edd76 )
+	ROM_LOAD( "sp1", 0x0000, 0x2000, 0xfe1e8a6c )
+	ROM_LOAD( "sp2", 0x2000, 0x2000, 0xa4bcaa6c )
+	ROM_LOAD( "sp3", 0x4000, 0x2000, 0xf83edd76 )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tm6", 0x0000, 0x2000, 0x539af2ba )
-	ROM_LOAD( "tm4", 0x2000, 0x2000, 0x67f96215 )
+	ROM_LOAD( "sp6", 0x0000, 0x2000, 0x539af2ba )
+	ROM_LOAD( "sp4", 0x2000, 0x2000, 0x67f96215 )
 	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -434,9 +433,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -465,9 +462,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -481,9 +476,14 @@ static void hisave(void)
 
 struct GameDriver timeplt_driver =
 {
-	"Time Pilot",
+	__FILE__,
+	0,
 	"timeplt",
+	"Time Pilot",
+	"1982",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	timeplt_rom,
@@ -501,9 +501,14 @@ struct GameDriver timeplt_driver =
 
 struct GameDriver spaceplt_driver =
 {
-	"Space Pilot (bootleg Time Pilot)",
+	__FILE__,
+	&timeplt_driver,
 	"spaceplt",
+	"Space Pilot",
+	"1982",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	spaceplt_rom,

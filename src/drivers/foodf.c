@@ -61,7 +61,6 @@ int foodf_nvram_size;
 
 extern unsigned char *foodf_spriteram;
 extern unsigned char *foodf_playfieldram;
-extern unsigned char *foodf_paletteram;
 extern unsigned char *foodf_nvram;
 
 int foodf_playfieldram_r (int offset);
@@ -87,7 +86,7 @@ int foodf_vh_start(void);
 void foodf_vh_stop(void);
 
 void foodf_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void foodf_vh_screenrefresh(struct osd_bitmap *bitmap);
+void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -127,7 +126,7 @@ static struct MemoryWriteAddress foodf_writemem[] =
 	{ 0x900000, 0x9001ff, foodf_nvram_w },
 	{ 0x944000, 0x944007, foodf_analog_w },
 	{ 0x948000, 0x948003, foodf_digital_w },
-	{ 0x950000, 0x9503ff, foodf_paletteram_w, &foodf_paletteram },
+	{ 0x950000, 0x9501ff, foodf_paletteram_w, &paletteram },
 	{ 0x954000, 0x954003, MWA_NOP },
 	{ 0x958000, 0x958003, MWA_NOP },
 	{ 0xa40000, 0xa4001f, foodf_pokey1_w },
@@ -237,9 +236,9 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,4*64,
+	256, 256,
 	foodf_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
@@ -340,9 +339,14 @@ ROM_END
 
 struct GameDriver foodf_driver =
 {
-	"Food Fight",
+	__FILE__,
+	0,
 	"foodf",
+	"Food Fight",
+	"1982",
+	"Atari",
 	"Aaron Giles (MAME driver)\nMike Balfour (Hardware info)\nAlan J. McCormick (Sound info)",
+	0,
 	&machine_driver,
 
 	foodf_rom,

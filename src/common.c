@@ -14,7 +14,7 @@
 #include "driver.h"
 
 /* These globals are only kept on a machine basis - LBO 042898 */
-unsigned int dispensed_tickets;
+extern unsigned int dispensed_tickets;
 unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 
@@ -41,28 +41,41 @@ unsigned int lastcoin[COIN_COUNTERS];
 
 #ifdef ACORN /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
-static inline int read_dword(int *address)
+INLINE int read_dword(int *address)
 {
 	if ((int)address & 3)
 	{
-
-  		return (    *((char *)address) +
-  			   (*((char *)address+1) << 8)  +
-  		   	   (*((char *)address+2) << 16) +
-  		           (*((char *)address+3) << 24) );
+#ifdef LSB_FIRST  /* little endian version */
+  		return (    *((unsigned char *)address) +
+  			   (*((unsigned char *)address+1) << 8)  +
+  		   	   (*((unsigned char *)address+2) << 16) +
+  		           (*((unsigned char *)address+3) << 24) );
+#else             /* big endian version */
+  		return (    *((unsigned char *)address+3) +
+  			   (*((unsigned char *)address+2) << 8)  +
+  		   	   (*((unsigned char *)address+1) << 16) +
+  		           (*((unsigned char *)address)   << 24) );
+#endif
 	}
 	else
 		return *(int *)address;
 }
 
-static inline void write_dword(int *address, int data)
+INLINE void write_dword(int *address, int data)
 {
   	if ((int)address & 3)
 	{
-    		*((char *)address) =    data;
-    		*((char *)address+1) = (data >> 8);
-    		*((char *)address+2) = (data >> 16);
-    		*((char *)address+3) = (data >> 24);
+#ifdef LSB_FIRST
+    		*((unsigned char *)address) =    data;
+    		*((unsigned char *)address+1) = (data >> 8);
+    		*((unsigned char *)address+2) = (data >> 16);
+    		*((unsigned char *)address+3) = (data >> 24);
+#else
+    		*((unsigned char *)address+3) =  data;
+    		*((unsigned char *)address+2) = (data >> 8);
+    		*((unsigned char *)address+1) = (data >> 16);
+    		*((unsigned char *)address)   = (data >> 24);
+#endif
 		return;
   	}
   	else
@@ -101,7 +114,7 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
                          stored.
 
 ***************************************************************************/
-int readroms(const struct RomModule *rommodule,const char *basename)
+int readroms(void)
 {
 	int region;
 	const struct RomModule *romp;
@@ -109,7 +122,7 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 
 
 	checksumwarning = 0;
-	romp = rommodule;
+	romp = Machine->gamedrv->rom;
 
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
 		Machine->memory_region[region] = 0;
@@ -158,7 +171,14 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 			}
 
 			name = romp->name;
-			if ((f = osd_fopen(basename,name,OSD_FILETYPE_ROM,0)) == 0)
+			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
+			if (f == 0 && Machine->gamedrv->clone_of)
+			{
+				/* if the game is a clone, try loading the ROM from the main version */
+				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+			}
+
+			if (f == 0)
 			{
 				#ifdef macintosh	/* JB 971005 */
 					printf ("Unable to open ROM %s\n", name);
@@ -322,7 +342,7 @@ printromlist:
 	printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
 	getchar();
 
-	printromlist(rommodule,basename);
+	printromlist(Machine->gamedrv->rom,Machine->gamedrv->name);
 	#endif
 
 
@@ -348,11 +368,11 @@ void printromlist(const struct RomModule *romp,const char *basename)
 
 		while (romp->length)
 		{
-			char name[100];
+			const char *name;
 			int length,expchecksum;
 
 
-			sprintf(name,romp->name,basename);
+			name = romp->name;
 			expchecksum = romp->checksum;
 
 			length = 0;
@@ -690,7 +710,7 @@ void freegfx(struct GfxElement *gfx)
   									 transparent pens.
   transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == Machine->pens[transparent_color]
                                      are transparent. This is used by e.g. Pac Man.
-  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == Machine->pens[transparent_color],
+  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == transparent_color,
                                      the source pixel is drawn over it. This is used by
 									 e.g. Jr. Pac Man to draw the sprites when the background
 									 has priority over them.
@@ -717,7 +737,7 @@ static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	color %= gfx->total_colors;
 
 	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR || transparency == TRANSPARENCY_THROUGH)
+	if (transparency == TRANSPARENCY_COLOR)
 		transparent_color = Machine->pens[transparent_color];
 
 	if (gfx->pen_usage)
@@ -1286,7 +1306,7 @@ static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	color %= gfx->total_colors;
 
 	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR || transparency == TRANSPARENCY_THROUGH)
+	if (transparency == TRANSPARENCY_COLOR)
 		transparent_color = Machine->pens[transparent_color];
 
 	if (gfx->pen_usage)
@@ -2330,7 +2350,7 @@ int i;
 	mygfx.gfxdata = src;
 mygfx.colortable = hacktable;
 for (i = 0;i < 256;i++) hacktable[i] = i;
-	drawgfxzoom(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,/*transparency,transparent_color,*/scalex,scaley);	/* ASG 971011 */
+	drawgfxzoom(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,scalex,scaley);	/* ASG 971011 */
 }
 
 
@@ -2657,9 +2677,18 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int scalex, int scaley )
+		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley)
 {
 	struct rectangle myclip;
+
+
+	/* only support TRANSPARENCY_PEN and TRANSPARENCY_COLOR */
+	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_COLOR)
+		return;
+
+	if (transparency == TRANSPARENCY_COLOR)
+		transparent_color = Machine->pens[transparent_color];
+
 
 	/*
 	scalex and scaley are 16.16 fixed point numbers
@@ -2805,21 +2834,45 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			if( ex>sx )
 			{ /* skip if inner loop doesn't draw anything */
 				int y;
-				int col = Machine->pens[0];
-				for( y=sy; y<ey; y++ )
+
+				/* case 1: TRANSPARENCY_PEN */
+				if (transparency == TRANSPARENCY_PEN)
 				{
-					unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
-					unsigned char *dest = dest_bmp->line[y];
-
-					int x, x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
+					for( y=sy; y<ey; y++ )
 					{
-						int c = source[x_index>>16];
-						if( c != col ) dest[x] = pal[c];
-						x_index += dx;
-					}
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned char *dest = dest_bmp->line[y];
 
-					y_index += dy;
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = source[x_index>>16];
+							if( c != transparent_color ) dest[x] = pal[c];
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
+				}
+
+				/* case 2: TRANSPARENCY_COLOR */
+				else if (transparency == TRANSPARENCY_COLOR)
+				{
+					for( y=sy; y<ey; y++ )
+					{
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned char *dest = dest_bmp->line[y];
+
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = pal[source[x_index>>16]];
+							if( c != transparent_color ) dest[x] = c;
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
 				}
 			}
 
@@ -2898,20 +2951,45 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			if( ex>sx )
 			{ /* skip if inner loop doesn't draw anything */
 				int y;
-				for( y=sy; y<ey; y++ )
+
+				/* case 1: TRANSPARENCY_PEN */
+				if (transparency == TRANSPARENCY_PEN)
 				{
-					unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
-					unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-
-					int x, x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
+					for( y=sy; y<ey; y++ )
 					{
-						int c = source[x_index>>16];
-						if( c ) dest[x] = pal[c];
-						x_index += dx;
-					}
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
 
-					y_index += dy;
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = source[x_index>>16];
+							if( c != transparent_color ) dest[x] = pal[c];
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
+				}
+
+				/* case 2: TRANSPARENCY_COLOR */
+				else if (transparency == TRANSPARENCY_COLOR)
+				{
+					for( y=sy; y<ey; y++ )
+					{
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = pal[source[x_index>>16]];
+							if( c != transparent_color ) dest[x] = c;
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
 				}
 			}
 		}

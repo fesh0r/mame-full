@@ -16,9 +16,9 @@
 extern int ignorecfg;
 
 /* from video.c */
-extern int scanlines, use_double, video_sync, use_synced, ntsc;
-extern int vgafreq, color_depth, skiplines, skipcolumns;
-extern int vesa;
+extern int scanlines, use_double, video_sync, antialias, ntsc;
+extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
+extern int beam, flicker;
 extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
@@ -26,7 +26,7 @@ extern int gfx_mode, gfx_width, gfx_height;
 extern int usefm, soundcard;
 
 /* from input.c */
-extern int joy_type, use_mouse;
+extern int use_mouse, joystick;
 
 /* from fileio.c */
 void decompose_rom_path (char *rompath);
@@ -225,8 +225,10 @@ void get_rom_path (int argc, char **argv, int game_index)
 
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
 {
-	static int vesa;
+	static float f_beam, f_flicker;
+	static int _vesa;
 	static char *resolution;
+	static char *vesamode;
 	char tmpres[10];
 	int i;
 
@@ -238,14 +240,18 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
-	use_synced  = get_bool   ("config", "syncedtweak",  NULL,  1);
-	vesa        = get_bool   ("config", "vesa",         NULL,  0);
+	antialias   = get_bool   ("config", "antialias",    NULL,  1);
+	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
+	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
-	vgafreq     = get_int    ("config", "vgafreq",      NULL,  0);
+	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
+	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
-	gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
+	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
+	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
+	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
 
 	options->frameskip = get_int  ("config", "frameskip", NULL, 0);
 
@@ -257,7 +263,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 
 	/* read input configuration */
 	use_mouse = get_bool ("config", "mouse",   NULL,  1);
-	joy_type  = get_int  ("config", "joytype", "joy", -1);
+	joystick  = get_int  ("config", "joystick", "joy", 0);
 
 	/* misc configuration */
 	options->cheat      = get_bool ("config", "cheat", NULL, 0);
@@ -276,8 +282,27 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	get_rom_path (argc, argv, game_index);
 
 	/* process some parameters */
-	if (vesa == 1)
-		gfx_mode = GFX_VESA2L;
+	beam = (int)(f_beam * 0x00010000);
+	if (beam < 0x00010000)
+		beam = 0x00010000;
+	if (beam > 0x00100000)
+		beam = 0x00100000;
+
+	flicker = (int)(f_flicker * 2.55);
+	if (flicker < 0)
+		flicker = 0;
+	if (flicker > 255)
+		flicker = 255;
+
+	if (_vesa == 1)
+	{
+		if (stricmp (vesamode, "vesa1") == 0)
+			gfx_mode = GFX_VESA1;
+		else if (stricmp (vesamode, "vesa2b") == 0)
+			gfx_mode = GFX_VESA2B;
+		else
+			gfx_mode = GFX_VESA2L;
+	}
 //	else
 //		gfx_mode = GFX_VGA;
 
@@ -285,7 +310,9 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	/* this is to handle the old "-wxh" commandline option. */
 	for (i = 1; i < argc; i++)
 	{
-		if ((argv[i][0] == '-') && (isdigit (argv[i][1])))
+		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
+	/* additional kludge to handle negative arguments to -skiplines and -skipcolumns */
+				(i == 1 || (strcmp(argv[i-1],"-skiplines") && strcmp(argv[i-1],"-skipcolumns"))))
 			resolution = &argv[i][1];
 	}
 

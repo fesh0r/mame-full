@@ -74,7 +74,7 @@ static void DAC_update(int num , int newpos )
 void DAC_data_w(int num , int data)
 {
 	/* check current data */
-	if( data == amplitude_DAC[num] ) return;
+	if( AUDIO_CONV(data) == amplitude_DAC[num] ) return;
 	/* update */
 	DAC_update(num,cpu_scalebyfcount(buffer_step) );
 	/* set new data */
@@ -137,7 +137,7 @@ void DAC_sh_update(void)
 		sample_pos[num] = sample_step[num] = current_count[num] = 0;
 		/* play sound */
 		if( Machine->sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+num,dac_buffer[num],buffer_len,emulation_rate,volume[num]);
+			osd_play_streamed_sample_16(channel+num,dac_buffer[num],2*buffer_len,emulation_rate,volume[num]);
 		else
 			osd_play_streamed_sample(channel+num,dac_buffer[num],buffer_len,emulation_rate,volume[num]);
 

@@ -46,7 +46,7 @@ void jumpbug_attributes_w(int offset,int data);
 void jumpbug_gfxbank_w(int offset,int data);
 void jumpbug_stars_w(int offset,int data);
 int jumpbug_vh_start(void);
-void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -263,13 +263,21 @@ ROM_START( jbugsega_rom )
 	ROM_LOAD( "jb2.prg", 0x8000, 0x2800, 0x14302ed6 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jb3.gfx", 0x0000, 0x3000, 0xa798658a )
+	ROM_LOAD( "jbi", 0x0000, 0x0800, 0x5857c05d )
+	ROM_LOAD( "jbj", 0x0800, 0x0800, 0xdd2b5d5b )
+	ROM_LOAD( "jbk", 0x1000, 0x0800, 0x53ddcbb5 )
+	ROM_LOAD( "jbl", 0x1800, 0x0800, 0x66b19093 )
+	ROM_LOAD( "jbm", 0x2000, 0x0800, 0x7bac88f8 )
+	ROM_LOAD( "jbn", 0x2800, 0x0800, 0x3bdc2b52 )
 ROM_END
 
 
 
 static void jumpbug_decode(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* this is not a "decryption", it is just a protection removal */
 	RAM[0x265a] = 0xc9;
 	RAM[0x8a16] = 0xc9;
@@ -284,47 +292,55 @@ static void jumpbug_decode(void)
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
-            memcmp(&RAM[0x4233],"\x97\x97\x97\x97",4) ==0)
 
-        {
+	if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
+		memcmp(&RAM[0x4233],"\x97\x97\x97\x97",4) ==0)
 
-                void *f;
+	{
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0x4208],6);
-                        osd_fread(f,&RAM[0x4222],3*7);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
+			void *f;
 
-        else return 0;  /* we can't load the hi scores yet */
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x4208],6);
+					osd_fread(f,&RAM[0x4222],3*7);
+					osd_fclose(f);
+			}
+			return 1;
+	}
 
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x4208],6);
-                osd_fwrite(f,&RAM[0x4222],3*7);
-                osd_fclose(f);
-        }
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x4208],6);
+			osd_fwrite(f,&RAM[0x4222],3*7);
+			osd_fclose(f);
+	}
 }
 
 
 
 struct GameDriver jumpbug_driver =
 {
-	"Jump Bug",
+	__FILE__,
+	0,
 	"jumpbug",
+	"Jump Bug",
+	"1981",
+	"Rock-ola",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jumpbug_rom,
@@ -342,9 +358,14 @@ struct GameDriver jumpbug_driver =
 
 struct GameDriver jbugsega_driver =
 {
-	"Jump Bug (bootleg)",
+	__FILE__,
+	&jumpbug_driver,
 	"jbugsega",
+	"Jump Bug (bootleg)",
+	"1981",
+	"bootleg",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jbugsega_rom,

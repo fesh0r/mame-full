@@ -40,7 +40,7 @@ extern void nitedrvr_ram_w(int offset, int data);
 /* vidhrdw/nitedrvr.c */
 extern unsigned char *nitedrvr_hvc;
 extern void nitedrvr_hvc_w(int offset, int data);
-extern void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -157,7 +157,7 @@ static unsigned char palette[] =
 	0x80,0x80,0x80, /* LT GREY - for MAME text only */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0x00, 0x01,
 	0x01, 0x00,
@@ -183,7 +183,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -209,13 +209,12 @@ static struct MachineDriver machine_driver =
 
 ROM_START( nitedrvr_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-		ROM_LOAD( "6569-01.D2", 0x9000, 0x0800, 0x456431b6 )
-		ROM_LOAD( "6570-01.F2", 0x9800, 0x0800, 0xa868be6c )
-		ROM_RELOAD( 			0xF800, 0x0800 )
+	ROM_LOAD( "6569-01.D2", 0x9000, 0x0800, 0x456431b6 )
+	ROM_LOAD( "6570-01.F2", 0x9800, 0x0800, 0xa868be6c )
+	ROM_RELOAD( 			0xF800, 0x0800 )
 
-		ROM_REGION(0x200)	  /* 0.5k for graphics */
-		ROM_LOAD( "6568-01.P2", 0x0000, 0x0200, 0x2ef2021e )
-
+	ROM_REGION(0x200)	  /* 0.5k for graphics */
+	ROM_LOAD( "6568-01.P2", 0x0000, 0x0200, 0x2ef2021e )
 ROM_END
 
 /***************************************************************************
@@ -232,9 +231,14 @@ ROM_END
 
 struct GameDriver nitedrvr_driver =
 {
-	"Night Driver",
+	__FILE__,
+	0,
 	"nitedrvr",
+	"Night Driver",
+	"1976",
+	"Atari",
 	"Mike Balfour",
+	0,
 	&machine_driver,
 
 	nitedrvr_rom,

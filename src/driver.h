@@ -120,6 +120,8 @@ enum { IPT_END=1,IPT_PORT,
 									/* it is the responsibility of the driver to call */
 									/* update_analog_port(int port). */
 
+#define IPF_RESETCPU   0x02000000	/* when the key is pressed, reset the first CPU */
+
 
 /* LBO - These 4 byte values are packed into the arg field and are typically used with analog ports */
 #define IPF_SENSITIVITY(percent)	(percent&0xff)
@@ -187,18 +189,22 @@ struct MachineCPU
 };
 
 #define CPU_Z80    1
-#define CPU_8080   CPU_Z80
-#define CPU_M6502  2
-#define CPU_I86    3
-#define CPU_I8039  4
+#define CPU_8085A  2
+#define CPU_8080   CPU_8085A
+#define CPU_M6502  3
+#define CPU_I86    4
+#define CPU_I8039  5
 #define CPU_I8035  CPU_I8039
-#define CPU_M6803  5
+#define CPU_M6803  6
 #define CPU_M6802  CPU_M6803
 #define CPU_M6808  CPU_M6803
 #define CPU_HD63701  CPU_M6803	/* 6808 with some additional opcodes */
-#define CPU_M6805  6
-#define CPU_M6809  7
-#define CPU_M68000 8
+#define CPU_M6805  7
+#define CPU_M6809  8
+#define CPU_M6309  CPU_M6809	/* actually it's not 100% compatible */
+#define CPU_M68000 9
+#define CPU_T11    10	/* ASG 030598 */
+#define CPU_S2650  11	/* HJB 070598 */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -237,8 +243,9 @@ struct MachineSound
 #define SOUND_TMS5220  13
 #define SOUND_VLM5030  14
 #define SOUND_ADPCM    15
-#define SOUND_OKIM6295 16  /* ROM-based ADPCM system */
-#define SOUND_MSM5205  17  /* CPU-based ADPCM system */
+#define SOUND_OKIM6295 16	/* ROM-based ADPCM system */
+#define SOUND_MSM5205  17	/* CPU-based ADPCM system */
+#define	SOUND_HC55516  18	/* Harris family of CVSD CODECs */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
@@ -263,7 +270,7 @@ struct MachineDriver
 	struct rectangle visible_area;
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
-	unsigned int color_table_len;	/* length in bytes of the color lookup table */
+	unsigned int color_table_len;	/* length in shorts of the color lookup table */
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
@@ -271,7 +278,7 @@ struct MachineDriver
 								/* order is front to back: layer[0] is the frontmost layer, */
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
-	void (*vh_update)(struct osd_bitmap *bitmap);
+	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);
 
 	/* sound hardware */
 	int (*sh_init)(const char *gamename);
@@ -330,9 +337,15 @@ struct MachineDriver
 
 struct GameDriver
 {
-	const char *description;
+	const char *source_file;	/* set this to __FILE__ */
+	const struct GameDriver *clone_of;	/* if this is a clone, point to */
+										/* the main version of the game */
 	const char *name;
+	const char *description;
+	const char *year;
+	const char *manufacturer;
 	const char *credits;
+	int flags;	/* see defines below */
 	const struct MachineDriver *drv;
 
 #ifndef MESS
@@ -354,11 +367,11 @@ struct GameDriver
 
 	struct InputPort *new_input_ports;
 
-		/* if they are available, provide a dump of the color proms (there is no */
-		/* copyright infringement in that, since you can't copyright a color scheme) */
-		/* and a function to convert them to a usable palette and colortable (the */
-		/* function pointer is in the MachineDriver, not here) */
-		/* Otherwise, leave this field null and provide palette and colortable. */
+	/* if they are available, provide a dump of the color proms, or even */
+	/* better load them from disk like the other ROMs. */
+	/* If you load them from disk, you must place them in a memory region by */
+	/* itself, and use the PROM_MEMORY_REGION macro below to say in which */
+	/* region they are. */
 	const unsigned char *color_prom;
 	const unsigned char *palette;
 	const unsigned short *colortable;
@@ -369,6 +382,13 @@ struct GameDriver
 	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
 };
+
+
+/* values for the flags field */
+#define GAME_NOT_WORKING	0x0001
+
+
+#define PROM_MEMORY_REGION(region) ((const unsigned char *)-region-1)
 
 
 #define	ORIENTATION_DEFAULT		0x00
@@ -382,7 +402,6 @@ struct GameDriver
 /* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
 /* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X*/
 /* Always remember that FLIP is performed *after* SWAP_XY. */
-
 
 
 extern const struct GameDriver *drivers[];

@@ -14,7 +14,7 @@ extern unsigned char *lrunner_scroll_high;
 void lrunner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int lrunner_vh_start(void);
 void lrunner_vh_stop(void);
-void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap);
+void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
@@ -37,7 +37,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xa000, 0xa000, MWA_RAM, &lrunner_scroll_low },
 	{ 0xb000, 0xb000, MWA_RAM, &lrunner_scroll_high },
-	{ 0xc020, 0xc0df, MWA_RAM, &spriteram, &spriteram_size },
+{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
+//	{ 0xc020, 0xc0df, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
@@ -161,12 +162,13 @@ INPUT_PORTS_START( input_ports )
 	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "SW 6B", IP_KEY_NONE )
+	/* In level selection mode, press 1 to select and 2 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX   ( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Hit Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x40, "Hit" )
-	PORT_DIPSETTING(    0x00, "No Hit" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -317,7 +319,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	910000,	/* .91 MHZ ?? */
-	{ 160, 160 },
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -414,9 +416,14 @@ ROM_END
 
 struct GameDriver lrunner_driver =
 {
-	"Lode Runner",
+	__FILE__,
+	0,
 	"lrunner",
+	"Lode Runner",
+	"1984",
+	"Irem (Broderbund license)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)",
+	0,
 	&machine_driver,
 
 	lrunner_rom,

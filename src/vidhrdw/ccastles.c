@@ -124,6 +124,8 @@ void ccastles_vh_stop(void)
 
 int ccastles_bitmode_r(int offset) {
   int addr;
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
   addr = (ycoor<<7) | (xcoor>>1);
 
@@ -151,6 +153,9 @@ int ccastles_bitmode_r(int offset) {
 }
 
 void ccastles_xy_w(int offset, int data) {
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
   RAM[offset] = data;
 
   if(offset == 0x0000) {
@@ -161,6 +166,10 @@ void ccastles_xy_w(int offset, int data) {
 }
 
 void ccastles_axy_w(int offset, int data) {
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
   RAM[0x9F00+offset] = data;
 
   if(offset == 0x0000) {
@@ -181,6 +190,9 @@ void ccastles_axy_w(int offset, int data) {
 void ccastles_bitmode_w(int offset, int data) {
   int addr;
   int mode;
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
   RAM[0x0002] = data;
   if(xcoor & 0x01) {
@@ -269,13 +281,15 @@ void ccastles_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap)
+void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int i,j;
 	int x,y;
 	int spriteaddr;
 	int scrollx,scrolly;
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	scrollx = 256 - RAM[0x9c80];

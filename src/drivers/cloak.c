@@ -103,7 +103,7 @@ extern void graph_processor_w(int offset, int data);
 extern void cloak_clearbmp_w(int offset, int data);
 extern int  cloak_vh_start(void);
 extern void cloak_vh_stop(void);
-extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -366,9 +366,14 @@ ROM_END
 
 struct GameDriver cloak_driver =
 {
-	"Cloak & Dagger",
+	__FILE__,
+	0,
 	"cloak",
+	"Cloak & Dagger",
+	"1983",
+	"Atari",
 	"Dan Boris        (hardware info)\nMirko Buffoni      (MAME driver)",
+	0,
 	&machine_driver,
 
 	cloak_rom,

@@ -15,19 +15,15 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *srumbler_paletteram;
 unsigned char *srumbler_backgroundram;
 unsigned char *srumbler_scrolly;
 unsigned char *srumbler_scrollx;
 
-int srumbler_paletteram_size;
 int srumbler_backgroundram_size;
 
 static unsigned char *bkgnd_dirty;
-static unsigned char *dirtybufferpal;
 static struct osd_bitmap *tmpbitmap2;
 
-static unsigned char scrollpalette_dirty[0x40];
 
 
 /* Unknown video control register */
@@ -49,35 +45,59 @@ static int chon=1,objon=1,scrollon=1;
 
 int srumbler_vh_start(void)
 {
-if (generic_vh_start() != 0)
-return 1;
+	int i;
 
-	 if ((bkgnd_dirty = malloc(srumbler_backgroundram_size)) == 0)
-{
-generic_vh_stop();
-return 1;
+
+	if (generic_vh_start() != 0)
+	return 1;
+
+	if ((bkgnd_dirty = malloc(srumbler_backgroundram_size)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+	memset(bkgnd_dirty,1,srumbler_backgroundram_size);
+
+
+	if ((tmpbitmap2 = osd_new_bitmap(0x40*16, 0x40*16, Machine->scrbitmap->depth )) == 0)
+	{
+		free(bkgnd_dirty);
+		generic_vh_stop();
+		return 1;
+	}
+
+#define COLORTABLE_START(gfxn,color_code) Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + \
+				color_code * Machine->gfx[gfxn]->color_granularity
+#define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
+#define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
+
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	/* chars */
+	for (i = 0;i < GFX_COLOR_CODES(0);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(0,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(0));
+	}
+	/* bg tiles */
+	for (i = 0;i < GFX_COLOR_CODES(1);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(1,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(1));
+	}
+	/* sprites */
+	for (i = 0;i < GFX_COLOR_CODES(2);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(2,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(2));
+	}
+
+	return 0;
 }
-	 memset(bkgnd_dirty,1,srumbler_backgroundram_size);
 
 
-	 /* Palette RAM dirty buffer */
-	 if ((dirtybufferpal = malloc(srumbler_paletteram_size)) == 0)
-{
-generic_vh_stop();
-return 1;
-}
-	 memset(dirtybufferpal,1,srumbler_paletteram_size);
-
-
-	 if ((tmpbitmap2 = osd_new_bitmap(0x40*16, 0x40*16, Machine->scrbitmap->depth )) == 0)
-{
-		 free(bkgnd_dirty);
-generic_vh_stop();
-return 1;
-}
-return 0;
-
-}
 
 /***************************************************************************
 
@@ -88,7 +108,6 @@ void srumbler_vh_stop(void)
 {
 osd_free_bitmap(tmpbitmap2);
 	 free(bkgnd_dirty);
-	 free(dirtybufferpal);
 generic_vh_stop();
 }
 
@@ -107,20 +126,6 @@ void srumbler_background_w(int offset,int data)
 }
 }
 
-void srumbler_paletteram_w(int offset,int data)
-{
-	 if (srumbler_paletteram[offset] != data)
-{
-		 dirtybufferpal[offset]=1;
-		 srumbler_paletteram[offset] = data;
-		 /*
-		    Mark palettes as dirty.
-		    We are only interested in whether tiles have changed.
-		    This is done by colour code.
-		 */
-		 scrollpalette_dirty[(offset>>5)&0x3f]=1;
-}
-}
 
 /***************************************************************************
 
@@ -130,62 +135,23 @@ void srumbler_paletteram_w(int offset,int data)
 
 ***************************************************************************/
 
-void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap)
+void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-int scrollx, scrolly;
-int offs;
-int j, i;
-int sx, sy, x, y;
+	int scrollx, scrolly;
+	int offs;
+	int sx, sy, x, y;
 
 
-/* rebuild the colour lookup table from RAM palette */
-for (j=0; j<3; j++)
-{
-	/* CHARS  TILES   SPRITES */
-static int start[3]={0x0280, 0x0000, 0x0100};
-static int count[3]={0x0040, 0x0080, 0x0080};
-int base=start[j];
-int bluebase=base+1;
-int max=count[j];
+	if (palette_recalc())
+		memset(bkgnd_dirty,1,srumbler_backgroundram_size);
 
-for (i=0; i<max; i++)
-{
-if (dirtybufferpal[base] || dirtybufferpal[bluebase])
-{
-int red, green, blue, redgreen;
-
-redgreen=srumbler_paletteram[base];
-red=redgreen >>4;
-green=redgreen & 0x0f ;
-blue=srumbler_paletteram[bluebase]>>4;
-
-red = (red << 4) + red;
-green = (green << 4) + green;
-blue = (blue << 4) + blue;
-
-dirtybufferpal[base] = dirtybufferpal[bluebase] = 0;
-
-setgfxcolorentry (Machine->gfx[j], i, red, green, blue);
-}
-base+=2;
-bluebase+=2;
-}
-}
 
 	 scrollx = srumbler_scrollx[0]+256*srumbler_scrollx[1];
-	 scrollx += 0x50;
 	 scrollx &= 0x03ff;
 	 scrolly = (srumbler_scrolly[0]+256*srumbler_scrolly[1]);
 
 	 if (scrollon)
 	 {
-	    /* Dirty all touched tile colours */
-	    for (j=srumbler_backgroundram_size-2; j>=0; j-=2)
-	    {
-		  if (scrollpalette_dirty[srumbler_backgroundram[j] >> 5])
-		       bkgnd_dirty[j]=1;
-	    }
-
 	    offs=0;
 	    for (sx=0; sx<0x40; sx++)
 	    {
@@ -225,7 +191,6 @@ bluebase+=2;
 		  }
 	     }
 
-	     memset(scrollpalette_dirty, 0, sizeof(scrollpalette_dirty));
 
 	     /* copy the background graphics */
 	     {
@@ -257,13 +222,13 @@ bluebase+=2;
 			 */
 
 
-			 int code,colour,sx,sy;
+			 int code,colour;
 			 int attr=spriteram[offs+1];
 			 code = spriteram[offs];
 			 code += ( (attr&0xe0) << 3 );
 			 colour = (attr & 0x1c)>>2;
 			 sy = spriteram[offs + 2];
-			 sx = spriteram[offs + 3] + 0x100 * ( attr & 0x01) - 0x50;
+			 sx = spriteram[offs + 3] + 0x100 * ( attr & 0x01);
 
 			 drawgfx(bitmap,Machine->gfx[2],
 					 code,
@@ -291,13 +256,13 @@ bluebase+=2;
 			 */
 
 
-			 int code,colour,sx,sy;
+			 int code,colour;
 			 int attr=spriteram[offs+1];
 			 code = spriteram[offs];
 			 code += ( (attr&0xe0) << 3 );
 			 colour = (attr & 0x1c)>>2;
 			 sy = spriteram[offs + 2];
-			 sx = spriteram[offs + 3] + 0x100 * ( attr & 0x01) - 0x50;
+			 sx = spriteram[offs + 3] + 0x100 * ( attr & 0x01);
 
 			 drawgfx(bitmap,Machine->gfx[2],
 					 code,
@@ -316,7 +281,7 @@ bluebase+=2;
 
 		 for (sx=0; sx<0x18; sx++)
 		 {
-		       int offs=(scrollx >>4)*0x80;
+		       offs=(scrollx >>4)*0x80;
 		       offs+=(scrolly>>4)*2;
 		       offs+=sx*0x80;
 		       offs&=0x1fff;
@@ -346,41 +311,21 @@ bluebase+=2;
 		 }
 	 }
 
-	 if (chon)
-	 {
-		 /* Draw the frontmost playfield. They are characters, but draw them as sprites */
-		 offs=0x0280;
-		 for (i=0; i<0x40; i++)
-		 {
-			 for (j=0; j<0x20; j++)
-			 {
-				 int transparency;
-				 int colour=videoram[offs];
-				 int code=colour&0x03;
-				 code <<= 8;
-				 code|=videoram[offs+1];
+	if (chon)
+	{
+		/* draw the frontmost playfield. They are characters, but draw them as sprites */
+		for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+		{
+			sx = (offs/2) / 32;
+			sy = (offs/2) % 32;
 
-				 if (colour & 0x40)
-				 {
-					 transparency=TRANSPARENCY_NONE;
-				 }
-				 else
-				 {
-					 transparency=TRANSPARENCY_PEN;
-				 }
-
-				 colour >>=2;
-				 colour &= 0x0f;
-				 drawgfx(bitmap,Machine->gfx[0],
-					    code,
-					   colour,
-					   0,0,8*i,8*j,
-					   &Machine->drv->visible_area,transparency,3);
-				 offs+=2;
-			 }
-		 }
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs + 1] + ((videoram[offs] & 0x03) << 8),
+					(videoram[offs] & 0x3c) >> 2,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,
+					(videoram[offs] & 0x40) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,3);
+		}
+	}
 }
-}
-
-
-

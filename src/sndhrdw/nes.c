@@ -322,7 +322,7 @@ static int sample_16bit;
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int NESInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer )
+int NESInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
 {
 	int i;
 
@@ -338,7 +338,7 @@ int NESInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer
 	for ( i = 0 ; i < NESNumChips; i++ )
 	{
 		memset(&NESPSG[i],0,sizeof(struct NESPSG));
-		NESSetClock(i,clock,rate);
+		NESSetClock(i,clk,rate);
 		NESPSG[i].Buf = buffer[i];
 		NESSetGain(i,0x00);
 		NESResetChip(i);
@@ -447,11 +447,12 @@ if (errorlog) fprintf(errorlog,"error: read from NES PSG #%d register #%d\n",n,r
 void NESUpdateOne(int chip,int endp)
 {
 	struct NESPSG *PSG = &NESPSG[chip];
-	void *buffer;
+	unsigned char  *buffer_8;
+	unsigned short *buffer_16;
 	int length;
 
-	if( sample_16bit ) buffer = &((unsigned short *)PSG->Buf)[PSG->bufp];
-	else               buffer = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_8  = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_16 = &((unsigned short *)PSG->Buf)[PSG->bufp];
 
 	if( endp > NESBufSize ) endp = NESBufSize;
 	length = endp - PSG->bufp;
@@ -535,7 +536,7 @@ void NESUpdateOne(int chip,int endp)
 			left -= nextevent;
 		} while (left > 0);
 
-//		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
+/*		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;*/
 		output = 0;
 		if (PSG->ActiveTimeA > 0)
 		{
@@ -552,8 +553,8 @@ void NESUpdateOne(int chip,int endp)
 			PSG->ActiveTimeC--;
 			output += volc*0x2aaa;
 		}
-		if( sample_16bit ) *((unsigned short *)buffer)++ = output / STEP;
-		else               *((unsigned char  *)buffer)++ = output / (STEP*256);
+		if( sample_16bit ) *buffer_16++ = output / STEP;
+		else               *buffer_8++  = output / (STEP*256);
 
 		length--;
 	}
@@ -579,9 +580,9 @@ void NESUpdate(void)
 
 
 
-void NESSetClock(int n,int clock,int rate)
+void NESSetClock(int n,int clk,int rate)
 {
-	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clock;
+	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clk;
 }
 
 

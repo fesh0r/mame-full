@@ -26,9 +26,9 @@ void circus_clown_y_w(int offset, int data);
 void circus_clown_z_w(int offset, int data);
 
 
-void crash_vh_screenrefresh(struct osd_bitmap *bitmap);
-void circus_vh_screenrefresh(struct osd_bitmap *bitmap);
-void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap);
+void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int crash_interrupt(void);
 
@@ -95,7 +95,7 @@ static unsigned char palette[] = /* Smoothed pure colors, overlays are not so co
 	0xff,0x20,0x20, /* RED */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0,0,
 	0,1,
@@ -166,7 +166,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -216,6 +216,9 @@ ROM_END
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0036],"\x00\x00",2) == 0))
 	{
@@ -237,6 +240,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -249,9 +253,14 @@ static void hisave(void)
 
 struct GameDriver circus_driver =
 {
-	"Circus",
+	__FILE__,
+	0,
 	"circus",
+	"Circus",
+	"1977",
+	"Exidy",
 	"Mike Coates (MAME driver)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	circus_rom,
@@ -368,7 +377,7 @@ static struct MachineDriver robotbowl_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	robotbowl_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -389,9 +398,14 @@ static struct MachineDriver robotbowl_machine_driver =
 
 struct GameDriver robotbwl_driver =
 {
-	"Robot Bowl",
+	__FILE__,
+	0,
 	"robotbwl",
+	"Robot Bowl",
+	"1977",
+	"Exidy",
 	"Mike Coates",
+	0,
 	&robotbowl_machine_driver,
 
 	robotbowl_rom,
@@ -463,6 +477,9 @@ INPUT_PORTS_END
 
 static int crash_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (RAM[0x004B] != 0)
 	{
@@ -484,6 +501,7 @@ static int crash_hiload(void)
 static void crash_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -512,7 +530,7 @@ static struct MachineDriver crash_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -533,9 +551,14 @@ static struct MachineDriver crash_machine_driver =
 
 struct GameDriver crash_driver =
 {
-	"Crash",
+	__FILE__,
+	0,
 	"crash",
+	"Crash",
+	"1979",
+	"Exidy",
 	"Mike Coates",
+	0,
 	&crash_machine_driver,
 
 	crash_rom,

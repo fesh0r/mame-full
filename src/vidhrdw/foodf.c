@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define PALETTE_SIZE 256
 
 
 /*
@@ -20,7 +19,6 @@ int foodf_playfieldram_size;
 int foodf_spriteram_size;
 
 unsigned char *foodf_playfieldram;
-unsigned char *foodf_paletteram;
 unsigned char *foodf_spriteram;
 
 
@@ -136,31 +134,34 @@ void foodf_playfieldram_w (int offset, int data)
  *   palette RAM read/write handlers
  */
 
-int foodf_paletteram_r (int offset)
+void foodf_paletteram_w (int offset,int data)
 {
-	offset = (offset / 2) % PALETTE_SIZE;
-	return foodf_paletteram[offset];
-}
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+	int bit0,bit1,bit2;
+	int r,g,b;
 
-void foodf_paletteram_w (int offset, int data)
-{
-	int red, green, blue;
 
-	offset = (offset / 2) % PALETTE_SIZE;
+	WRITE_WORD(&paletteram[offset],newword);
 
-	foodf_paletteram[offset] = data;
+	/* only the bottom 8 bits are used */
+	/* red component */
+	bit0 = (newword >> 0) & 0x01;
+	bit1 = (newword >> 1) & 0x01;
+	bit2 = (newword >> 2) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* green component */
+	bit0 = (newword >> 3) & 0x01;
+	bit1 = (newword >> 4) & 0x01;
+	bit2 = (newword >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* blue component */
+	bit0 = 0;
+	bit1 = (newword >> 6) & 0x01;
+	bit2 = (newword >> 7) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	/* extract RGB */
-	red = (data >> 0) & 7;
-	green = (data >> 3) & 7;
-	blue = (data >> 6) & 3;
-
-	/* up to 8 bits */
-	red = (red << 5) | (red << 2) | (red >> 1);
-	green = (green << 5) | (green << 2) | (green >> 1);
-	blue = (blue << 6) | (blue << 4) | (blue << 2) | blue;
-
-	osd_modify_pen (Machine->gfx[0]->colortable[offset], red, green, blue);
+	palette_change_color(offset / 2,r,g,b);
 }
 
 
@@ -172,9 +173,14 @@ void foodf_paletteram_w (int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void foodf_vh_screenrefresh (struct osd_bitmap *bitmap)
+void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (playfielddirty,1,foodf_playfieldram_size / 2);
+
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -206,8 +212,8 @@ void foodf_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/* walk the motion object list. */
 	for (offs = 0; offs < foodf_spriteram_size; offs += 4)
 	{
-		int data1 = READ_WORD (&foodf_spriteram[offs + 0x0000]);
-		int data2 = READ_WORD (&foodf_spriteram[offs + 0x0002]);
+		int data1 = READ_WORD (&foodf_spriteram[offs]);
+		int data2 = READ_WORD (&foodf_spriteram[offs + 2]);
 
 		int pict = data1 & 0xff;
 		int color = (data1 >> 8) & 0x1f;
@@ -216,11 +222,19 @@ void foodf_vh_screenrefresh (struct osd_bitmap *bitmap)
 		int hflip = (data1 >> 15) & 1;
 		int vflip = (data1 >> 14) & 1;
 
-		drawgfx (bitmap, Machine->gfx[1],
-				pict, color,
-				hflip, vflip,
-				xpos, ypos,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap,Machine->gfx[1],
+				pict,
+				color,
+				hflip,vflip,
+				xpos,ypos,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+		/* draw again with wraparound (needed to get the end of level animation right) */
+		drawgfx(bitmap,Machine->gfx[1],
+				pict,
+				color,
+				hflip,vflip,
+				xpos-256,ypos,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *mcr3_paletteram;
 
 static char sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
 
@@ -26,26 +25,11 @@ static int draw_lamps;
 void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {
       struct GfxElement *gfx;
-      int i,x,y;
+      int x,y;
       unsigned char *dp;
 
       gfx = Machine->gfx[1];
@@ -69,25 +53,24 @@ void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 }
 
 
-void mcr3_palette_w(int offset,int data)
+void mcr3_paletteram_w(int offset,int data)
 {
-   int r;
-   int g;
-   int b;
+	int r,g,b;
 
-   mcr3_paletteram[offset] = data;
+
+	paletteram[offset] = data;
 	offset &= 0x7f;
 
-   r = ((offset & 1) << 2) + (data >> 6);
-   g = (data >> 0) & 7;
-   b = (data >> 3) & 7;
+	r = ((offset & 1) << 2) + (data >> 6);
+	g = (data >> 0) & 7;
+	b = (data >> 3) & 7;
 
-   /* up to 8 bits */
-   r = (r << 5) | (r << 2) | (r >> 1);
-   g = (g << 5) | (g << 2) | (g >> 1);
-   b = (b << 5) | (b << 2) | (b >> 1);
+	/* up to 8 bits */
+	r = (r << 5) | (r << 2) | (r >> 1);
+	g = (g << 5) | (g << 2) | (g >> 1);
+	b = (b << 5) | (b << 2) | (b >> 1);
 
-   osd_modify_pen(Machine->gfx[0]->colortable[offset/2], r, g, b);
+	palette_change_color(offset/2,r,g,b);
 }
 
 
@@ -101,7 +84,7 @@ void mcr3_videoram_w(int offset,int data)
 }
 
 
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;
@@ -134,7 +117,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,color,flipx,flipy,sx,sy,flags;
+      int code,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			continue;
@@ -164,7 +147,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16));
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+(color*16)]);
       }
    }
 }
@@ -176,22 +159,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void rampage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	struct osd_bitmap *bitmap = Machine->gfx[0]->gfxdata;
-	int y, x;
-
-	/* standard init */
-	mcr3_vh_convert_color_prom (palette, colortable, color_prom);
-
-	/* the tile graphics for Rampage are reverse colors; we preswap them here */
-	for (y = bitmap->height - 1; y >= 0; y--)
-		for (x = bitmap->width - 1; x >= 0; x--)
-			bitmap->line[y][x] ^= 15;
-}
-
-
-void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
+void rampage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;
@@ -224,7 +192,7 @@ void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,color,flipx,flipy,sx,sy,flags;
+      int code,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			 continue;
@@ -255,7 +223,7 @@ void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16));
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+(color*16)]);
       }
    }
 }
@@ -341,7 +309,7 @@ void spyhunt_vh_stop(void)
 }
 
 
-void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
+void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	static struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
    int offs;
@@ -364,12 +332,12 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(backbitmap,Machine->gfx[0],
 				(code & 0x3f) | ((code & 0x80) >> 1),
-				1,0,(code & 0x40),64*mx,32*my,
+				0,0,(code & 0x40),64*mx,32*my,
 				NULL,TRANSPARENCY_NONE,0);
 
 			drawgfx(backbitmap,Machine->gfx[1],
 				(code & 0x3f) | ((code & 0x80) >> 1),
-				1,0,(code & 0x40),64*mx + 32,32*my,
+				0,0,(code & 0x40),64*mx + 32,32*my,
 				NULL,TRANSPARENCY_NONE,0);
 		}
    }
@@ -387,21 +355,25 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,flipx,flipy,sx,sy,flags;
+      int code,color,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			 continue;
 
       code = spriteram[offs+2] ^ 0x80;
       flags = spriteram[offs+1];
+      color = 3 - (flags & 0x03);	/* Crater Raider only, Spy Hunter has only one color combination */
       flipx = flags & 0x10;
       flipy = flags & 0x20;
       sx = (spriteram[offs+3])*2;
       sy = (241-spriteram[offs])*2;
 
       drawgfx(bitmap,Machine->gfx[2],
-	      code,0,flipx,flipy,sx-16,sy+4,
-	      &clip,TRANSPARENCY_PEN,0);
+			  code,
+			  color,
+			  flipx,flipy,
+			  sx-16,sy+4,
+			  &clip,TRANSPARENCY_PEN,0);
 
       /* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites.
@@ -409,14 +381,14 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 			at least one pixel of color 8, so we only need to worry about these few. */
       if (sprite_transparency[code])
       {
-			struct rectangle clip;
+			struct rectangle sclip;
 
-			clip.min_x = sx;
-			clip.max_x = sx+31;
-			clip.min_y = sy;
-			clip.max_y = sy+31;
+			sclip.min_x = sx;
+			sclip.max_x = sx+31;
+			sclip.min_y = sy;
+			sclip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+16);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&sclip,TRANSPARENCY_THROUGH,Machine->pens[8+16]);
       }
    }
 

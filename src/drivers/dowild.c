@@ -53,7 +53,7 @@ void docastle_nmitrigger(int offset,int data);
 void dowild_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
-void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
+void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -639,7 +639,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
-	256, 96*16,
+	258, 96*16,
 	dowild_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -684,7 +684,6 @@ ROM_START( dowild_rom )
 	ROM_LOAD( "W10", 0x0000, 0x4000, 0x431c3ca4 )
 ROM_END
 
-
 ROM_START( jjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "j1.bin",  0x0000, 0x2000, 0xcd2da76d )
@@ -702,7 +701,6 @@ ROM_START( jjack_rom )
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "j0.bin",  0x0000, 0x4000, 0x25a030a6 )
 ROM_END
-
 
 ROM_START( dorunrun_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -722,7 +720,6 @@ ROM_START( dorunrun_rom )
 	ROM_LOAD( "27128.P7", 0x0000, 0x4000, 0x0f9be91f )
 ROM_END
 
-
 ROM_START( spiero_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "SP1.BIN",  0x0000, 0x2000, 0xcc3428ee )
@@ -740,7 +737,6 @@ ROM_START( spiero_rom )
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "SP0.BIN",  0x0000, 0x4000, 0x0f9be91f )
 ROM_END
-
 
 ROM_START( kickridr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -764,9 +760,7 @@ ROM_END
 
 static int dowild_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -787,14 +781,10 @@ static int dowild_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void dowild_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -808,9 +798,7 @@ static void dowild_hisave(void)
 
 static int dorunrun_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -831,14 +819,10 @@ static int dorunrun_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void dorunrun_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -852,9 +836,14 @@ static void dorunrun_hisave(void)
 
 struct GameDriver dowild_driver =
 {
-	"Mr. Do! Wild Ride",
+	__FILE__,
+	0,
 	"dowild",
+	"Mr. Do's Wild Ride",
+	"1984",
+	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	dowild_rom,
@@ -872,9 +861,14 @@ struct GameDriver dowild_driver =
 
 struct GameDriver jjack_driver =
 {
-	"Jumping Jack (Japanese)",
+	__FILE__,
+	0,
 	"jjack",
+	"Jumping Jack",
+	"1984",
+	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jjack_rom,
@@ -892,9 +886,14 @@ struct GameDriver jjack_driver =
 
 struct GameDriver dorunrun_driver =
 {
-	"Mr. Do! Run Run",
+	__FILE__,
+	0,
 	"dorunrun",
+	"Mr. Do! Run Run",
+	"1984",
+	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	dorunrun_rom,
@@ -912,9 +911,14 @@ struct GameDriver dorunrun_driver =
 
 struct GameDriver spiero_driver =
 {
-	"Super Piero (Japanese Do! Run Run)",
+	__FILE__,
+	&dorunrun_driver,
 	"spiero",
+	"Super Piero (Japan)",
+	"1987",
+	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	spiero_rom,
@@ -932,9 +936,14 @@ struct GameDriver spiero_driver =
 
 struct GameDriver kickridr_driver =
 {
-	"Kick Rider",
+	__FILE__,
+	0,
 	"kickridr",
+	"Kick Rider",
+	"1984",
+	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	kickridr_rom,

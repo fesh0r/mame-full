@@ -8,6 +8,8 @@
  *        anti-alias code by Andrew Caldwell
  *        (still more to add)
  *
+ * 980611 use translucent vectors. Thanks to Peter Hirschberg
+ *        and Neil Bradley for the inspiration. BW
  * 980307 added cleverer dirty handling. BW, ASG
  *        fixed antialias table .ac
  * 980221 rewrote anti-alias line draw routine
@@ -93,7 +95,7 @@ static int vector_runs;	/* vector runs per refresh */
  * can be be replaced by an assembly routine in osinline.h
  */
 #ifndef vec_mult
-inline int vec_mult(int parm1, int parm2)
+INLINE int vec_mult(int parm1, int parm2)
 {
 	int temp,result;
 
@@ -114,7 +116,7 @@ inline int vec_mult(int parm1, int parm2)
 
 /* can be be replaced by an assembly routine in osinline.h */
 #ifndef vec_div
-inline int vec_div(int parm1, int parm2)
+INLINE int vec_div(int parm1, int parm2)
 {
 	if( (parm2>>12) )
 	{
@@ -231,15 +233,26 @@ int vector_vh_start (void)
 			unsigned char rgb1[3],rgb2[3];
 			osd_get_pen(i,&rgb1[0],&rgb1[1],&rgb1[2]);
 			osd_get_pen(j,&rgb2[0],&rgb2[1],&rgb2[2]);
-			for( k=0; k<3 ;k++ )
+
+			for (k=0; k<3; k++)
+
+#if TRANSLUCENCY /* add gun values */
 			{
-				if( rgb1[k] > rgb2[k] )         /* choose highest gun value */
-				{
-					c[k] = rgb1[k];
-				} else {
-					c[k] = rgb2[k];
-				}
+				int tmp;
+				tmp = rgb1[k] + rgb2[k];
+				if (tmp > 255)
+					c[k] = 255;
+				else
+					c[k] = tmp;
 			}
+#else /* choose highest gun value */
+			{
+				if (rgb1[k] > rgb2[k])
+					c[k] = rgb1[k];
+				else
+					c[k] = rgb2[k];
+			}
+#endif
 			Tmerge(i,j) = Tmerge(j,i) = find_color(c[0],c[1],c[2]);
 		}
 	}
@@ -313,9 +326,9 @@ void vector_vh_stop (void)
 /*
  * draws an anti-aliased pixel (blends pixel with background)
  */
-inline void vector_draw_aa_pixel (int x, int y, int col, int dirty)
+INLINE void vector_draw_aa_pixel (int x, int y, int col, int dirty)
 {
-	char *address;
+	unsigned char *address;
 
 	if (x < xmin || x >= xmax)
 		return;
@@ -323,7 +336,7 @@ inline void vector_draw_aa_pixel (int x, int y, int col, int dirty)
 		return;
 
 	address=&(vecbitmap->line[y][x]);
-	*address=(unsigned char)Tmerge((unsigned char)(*address),(unsigned char)(col));
+	*address=(unsigned char)Tmerge(*address,(unsigned char)(col));
 
 	if (p_index<MAX_PIXELS)
 	{
@@ -665,7 +678,7 @@ void vector_clear_list (void)
 static void clever_mark_dirty (void)
 {
 	int i, j, min_index, last_match = 0;
-	int *coords;
+	unsigned int *coords;
 	point *new, *old;
 	point newclip, oldclip;
 	int clips_match = 1;
@@ -745,7 +758,7 @@ static void clever_mark_dirty (void)
 }
 
 
-void vector_vh_update (struct osd_bitmap *bitmap)
+void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
 	int temp_x, temp_y;

@@ -77,7 +77,7 @@ void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 int scramble_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
 
@@ -362,27 +362,82 @@ INPUT_PORTS_START( losttomb_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 1/1 B 1/1" )
+	PORT_DIPSETTING(    0x00, "A 1/2 B 2/1" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 7", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( superbon_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "Free Play" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown 5", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Coin A 1/1 Coin B 1/1" )
-	PORT_DIPSETTING(    0x00, "Coin A 1/2 Coin B 2/1" )
-	PORT_DIPSETTING(    0x04, "Coin A 1/3 Coin B 3/1" )
-	PORT_DIPSETTING(    0x06, "Coin A 1/4 Coin B 4/1" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 1/1 B 1/1" )
+	PORT_DIPSETTING(    0x00, "A 1/2 B 2/1" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 6", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 7", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 8", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 7", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 9", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 8", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -815,9 +870,9 @@ static struct GfxLayout bulletlayout =
 	7,1,	/* it's just 1 pixel, but we use 7*1 to position it correctly */
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 2, 0, 0, 0, 0, 0, 0 },	/* I "know" that this bit of the */
-	{ 8 },						/* graphics ROMs is 1 */
+	{ 17*8*8 },	/* point to letter "A" */
+	{ 3, 0, 0, 0, 0, 0, 0 },	/* I "know" that this bit of the */
+	{ 1*8 },						/* graphics ROMs is 1 */
 	0	/* no use */
 };
 static struct GfxLayout armorcar_bulletlayout =
@@ -906,7 +961,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -917,7 +972,7 @@ static struct AY8910interface hustler_ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -1224,6 +1279,7 @@ ROM_START( scobra_rom )
 	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	/* the ROMs were bad - I took the ones from the Konami version */
 	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800, 0x5b7ffd15 )
 	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800, 0xc1522792 )
 	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800, 0xc4b1e3e7 )
@@ -1290,6 +1346,25 @@ ROM_START( losttomb_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",      0x0000, 0x0800, 0xa28e0d60 )
 	ROM_LOAD( "5d",      0x0800, 0x0800, 0x70ea19ea )
+ROM_END
+
+ROM_START( superbon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2d.cpu", 0x0000, 0x1000, 0x00028b0e )
+	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0x83c736e7 )
+	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0xb4e5df69 )
+	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0x71e68756 )
+	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0xbc7207b8 )
+	ROM_LOAD( "2l.cpu", 0x5000, 0x1000, 0x2fae95f2 )
+	ROM_LOAD( "2m.cpu", 0x6000, 0x1000, 0x84791ba5 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0xfd44d404 )
+	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0x177c7dfc )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c.snd", 0x0000, 0x0800, 0xa28e0d60 )
+	ROM_LOAD( "5d.snd", 0x0800, 0x0800, 0x70e419ec )
 ROM_END
 
 ROM_START( anteater_rom )
@@ -1409,8 +1484,8 @@ ROM_START( stratgyb_rom )
 	ROM_LOAD( "st10", 0x0800, 0x0800, 0xc939da93 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "st1", 0x0000, 0x1000, 0xac5c8db8 )
-	ROM_LOAD( "st2", 0x1000, 0x1000, 0x03f78e87 )
+	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xac5c8db8 )
+	ROM_LOAD( "5d.snd", 0x1000, 0x1000, 0x03f78e87 )
 ROM_END
 
 ROM_START( darkplnt_rom )
@@ -1492,6 +1567,52 @@ static void losttomb_decode(void)
 		j |= ( (bit(i,1) & bit(i,7)) | ((1 ^ bit(i,1)) & (bit(i,8)))) << 10;
 		j |= ( (bit(i,1) & bit(i,8)) | ((1 ^ bit(i,1)) & (bit(i,10)))) << 7;
 		RAM[i] = RAM[j + 0x1000];
+	}
+}
+
+static void superbon_decode(void)
+{
+	/*
+	*   Code rom deryption worked out by hand by Chris Hardy.
+	*/
+	int i;
+	unsigned char *RAM;
+
+
+#define INVERTBIT(v,bit) v ^= (1<<bit)
+
+
+	RAM = Machine->memory_region[0];
+
+	for (i = 0;i < 0x1000;i++)
+	{
+		int a9;
+		int a7;
+		int v;
+
+		/* Code is encrypted depending on bit 7 and 9 of the address */
+
+    	a7 = i & 0x080 ? 1 : 0;
+		a9 = i & 0x200 ? 1 : 0;
+
+		v = RAM[i];
+
+		if			((a9==0) && (a7==0)) {
+			INVERTBIT(v,1);
+			INVERTBIT(v,4);
+			INVERTBIT(v,7);
+		} else if	((a9==0) && (a7==1)) {
+			INVERTBIT(v,1);
+			INVERTBIT(v,7);
+		} else if	((a9==1) && (a7==0)) {
+			INVERTBIT(v,1);
+			INVERTBIT(v,4);
+		} else if	((a9==1) && (a7==1)) {
+			INVERTBIT(v,4);
+		}
+
+		RAM[i] = v;
+
 	}
 }
 
@@ -1577,6 +1698,7 @@ static void hustler_decode(void)
 		unsigned char xormask;
 		int adr[8];
 		int i;
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 		for (i = 0;i < 8;i++)
@@ -1597,9 +1719,9 @@ static void hustler_decode(void)
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM;
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-		RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
 		for (A = 0;A < 0x0800;A++)
 			RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 	}
@@ -1643,9 +1765,7 @@ static void scobra_hisave(void)
 
 static int anteater_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -1668,10 +1788,8 @@ static int anteater_hiload(void)
 
 static void anteater_hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1720,9 +1838,14 @@ static void armorcar_hisave(void)
 
 struct GameDriver scobra_driver =
 {
-	"Super Cobra (Stern)",
+	__FILE__,
+	0,
 	"scobra",
+	"Super Cobra (Stern)",
+	"1981",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	scobra_rom,
@@ -1740,9 +1863,14 @@ struct GameDriver scobra_driver =
 
 struct GameDriver scobrak_driver =
 {
-	"Super Cobra (Konami)",
+	__FILE__,
+	&scobra_driver,
 	"scobrak",
+	"Super Cobra (Konami)",
+	"1981",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	scobrak_rom,
@@ -1760,9 +1888,14 @@ struct GameDriver scobrak_driver =
 
 struct GameDriver scobrab_driver =
 {
-	"Super Cobra (bootleg)",
+	__FILE__,
+	&scobra_driver,
 	"scobrab",
+	"Super Cobra (bootleg)",
+	"1981",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	scobrab_rom,
@@ -1780,9 +1913,14 @@ struct GameDriver scobrab_driver =
 
 struct GameDriver losttomb_driver =
 {
-	"Lost Tomb",
+	__FILE__,
+	0,
 	"losttomb",
+	"Lost Tomb",
+	"1982",
+	"Stern",
 	"Nicola Salmoria\nJamer R. Twine\nMirko Buffoni\nFabio Buffoni",
+	0,
 	&machine_driver,
 
 	losttomb_rom,
@@ -1798,11 +1936,41 @@ struct GameDriver losttomb_driver =
 	0, 0
 };
 
+struct GameDriver superbon_driver =
+{
+	__FILE__,
+	0,
+	"superbon",
+	"Super Bond",
+	"1982?",
+	"Alpha?",
+	"Chris Hardy",
+	0,
+	&machine_driver,
+
+	superbon_rom,
+	superbon_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	superbon_input_ports,
+
+	wrong_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0,
+};
+
 struct GameDriver rescue_driver =
 {
-	"Rescue",
+	__FILE__,
+	0,
 	"rescue",
+	"Rescue",
+	"1982",
+	"Stern",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni\nAlan J. McCormick\nMike Coates (Background)",
+	0,
 	&rescue_machine_driver,
 
 	rescue_rom,
@@ -1820,9 +1988,14 @@ struct GameDriver rescue_driver =
 
 struct GameDriver minefld_driver =
 {
-	"Minefield",
+	__FILE__,
+	0,
 	"minefld",
+	"Minefield",
+	"1983",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nAl Kossow (color info)\nMike Coates (Background)",
+	0,
 	&minefield_machine_driver,
 
 	minefld_rom,
@@ -1840,9 +2013,14 @@ struct GameDriver minefld_driver =
 
 struct GameDriver anteater_driver =
 {
-	"Ant Eater",
+	__FILE__,
+	0,
 	"anteater",
+	"Ant Eater",
+	"1982",
+	"Tago",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni",
+	0,
 	&machine_driver,
 
 	anteater_rom,
@@ -1860,9 +2038,14 @@ struct GameDriver anteater_driver =
 
 struct GameDriver armorcar_driver =
 {
-	"Armored Car",
+	__FILE__,
+	0,
 	"armorcar",
+	"Armored Car",
+	"1981",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
 	&armorcar_machine_driver,
 
 	armorcar_rom,
@@ -1880,9 +2063,14 @@ struct GameDriver armorcar_driver =
 
 struct GameDriver tazmania_driver =
 {
-	"Tazz-Mania",
+	__FILE__,
+	0,
 	"tazmania",
+	"Tazz-Mania",
+	"1982",
+	"Stern",
 	"Chris Hardy\nChris Moore (high score save)",
+	0,
 	&machine_driver,
 
 	tazmania_rom,
@@ -1900,9 +2088,14 @@ struct GameDriver tazmania_driver =
 
 struct GameDriver stratgyx_driver =
 {
-	"Strategy X (Stern)",
+	__FILE__,
+	0,
 	"stratgyx",
+	"Strategy X",
+	"1981",
+	"Stern",
 	"Lee Taylor",
+	0,
 	&stratgyx_machine_driver,
 
 	stratgyx_rom,
@@ -1912,16 +2105,21 @@ struct GameDriver stratgyx_driver =
 
 	stratgyx_input_ports,
 
-	scobra_color_prom, 0, 0,	/* wrong */
+	wrong_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
 
 struct GameDriver stratgyb_driver =
 {
-	"Strategy X (bootleg)",
+	__FILE__,
+	&stratgyx_driver,
 	"stratgyb",
+	"Strong X",
+	"1982",
+	"bootleg",
 	"Lee Taylor",
+	0,
 	&stratgyx_machine_driver,
 
 	stratgyb_rom,
@@ -1931,16 +2129,21 @@ struct GameDriver stratgyb_driver =
 
 	stratgyx_input_ports,
 
-	scobra_color_prom, 0, 0,	/* wrong */
+	wrong_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
 
 struct GameDriver darkplnt_driver =
 {
-	"Dark Planet",
+	__FILE__,
+	0,
 	"darkplnt",
+	"Dark Planet",
+	"1982",
+	"Stern",
 	"Mike Balfour",
+	GAME_NOT_WORKING,
 	&stratgyx_machine_driver,
 
 	darkplnt_rom,
@@ -1958,9 +2161,14 @@ struct GameDriver darkplnt_driver =
 
 struct GameDriver hustler_driver =
 {
-	"Video Hustler",
+	__FILE__,
+	0,
 	"hustler",
+	"Video Hustler",
+	"1981",
+	"Konami",
 	"Nicola Salmoria",
+	0,
 	&hustler_machine_driver,
 
 	hustler_rom,
@@ -1979,9 +2187,14 @@ struct GameDriver hustler_driver =
 /* not working due to different encryption */
 struct GameDriver pool_driver =
 {
-	"Pool",
+	__FILE__,
+	0,
 	"pool",
+	"Pool",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	GAME_NOT_WORKING,
 	&hustler_machine_driver,
 
 	pool_rom,

@@ -65,7 +65,7 @@ static int tankbatt_nmi_enable; /* No need to init this - the game will set it o
 static int tankbatt_sound_enable;
 
 void tankbatt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void tankbatt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tankbatt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void tankbatt_led_w(int offset,int data)
 {
@@ -362,6 +362,9 @@ ROM_END
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for the checkerboard pattern to be on screen */
 	if (memcmp(&RAM[0x840],"\xda\xdb",2) == 0)
 	{
@@ -384,6 +387,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -396,9 +400,14 @@ static void hisave(void)
 
 struct GameDriver tankbatt_driver =
 {
-	"Tank Battalion",
+	__FILE__,
+	0,
 	"tankbatt",
+	"Tank Battalion",
+	"1980",
+	"Namco",
 	"Brad Oliver",
+	0,
 	&machine_driver,
 
 	tankbatt_rom,

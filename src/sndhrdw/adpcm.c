@@ -81,7 +81,7 @@ static void ComputeTables (void)
 	int step, nib;
 
 	/* loop over all possible steps */
-	for (step = 0.0; step <= 48; step++)
+	for (step = 0; step <= 48; step++)
 	{
 		/* compute the step value */
 		int stepval = floor (16.0 * pow (11.0 / 10.0, (double)step));
@@ -200,7 +200,7 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 			int count = voice->count;
 			int step = voice->step;
 			int mask = voice->mask;
-			int val, s;
+			int val;
 
 			/* 16-bit case */
 			if (Machine->sample_bits == 16)
@@ -212,15 +212,14 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 					/* compute the new amplitude and update the current step */
 					val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
 					signal += diff_lookup[step * 16 + (val & 15)];
+					if (signal > 2047) signal = 2047;
+					else if (signal < -2048) signal = -2048;
 					step += index_shift[val & 7];
-					if (step < 0) step = 0;
 					if (step > 48) step = 48;
+					else if (step < 0) step = 0;
 
 					/* convert that to a sample */
-					s = signal * 16;
-					if (s < -32767) s = -32767;
-					if (s > 32767) s = 32767;
-					*buffer++ = s;
+					*buffer++ = signal * 16;
 
 					/* next! */
 					if (++sample > count)
@@ -255,15 +254,14 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 					/* compute the new amplitude and update the current step */
 					val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
 					signal += diff_lookup[step * 16 + (val & 15)];
+					if (signal > 2047) signal = 2047;
+					else if (signal < -2048) signal = -2048;
 					step += index_shift[val & 7];
-					if (step < 0) step = 0;
 					if (step > 48) step = 48;
+					else if (step < 0) step = 0;
 
 					/* convert that to a sample */
-					s = signal / 16;
-					if (s < -128) s = -128;
-					if (s > 127) s = 127;
-					*buffer++ = AUDIO_CONV (s);
+					*buffer++ = AUDIO_CONV(signal / 16);
 
 					/* next! */
 					if (++sample > count)
@@ -332,7 +330,7 @@ void ADPCM_sh_update (void)
 
 		/* play the result */
 		if (Machine->sample_bits == 16)
-			osd_play_streamed_sample_16 (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume);
+			osd_play_streamed_sample_16 (voice->channel, voice->buffer, 2*buffer_len, emulation_rate, voice->volume);
 		else
 			osd_play_streamed_sample (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume);
 
@@ -390,6 +388,38 @@ if (errorlog) fprintf(errorlog,"warning: ADPCM_trigger() called with unknown tri
 
 
 
+void ADPCM_play (int num, int offset, int length)
+{
+	struct ADPCMVoice *voice = adpcm + num;
+
+
+	/* bail if we're not playing anything */
+	if (Machine->sample_rate == 0)
+		return;
+
+	/* range check the numbers */
+	if (num >= adpcm_intf->num)
+	{
+		if (errorlog) fprintf(errorlog,"error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, adpcm_intf->num);
+		return;
+	}
+
+	/* update the ADPCM voice */
+	ADPCM_update (voice, cpu_scalebyfcount (buffer_len));
+
+	/* set up the voice to play this sample */
+	voice->playing = 1;
+	voice->base = &Machine->memory_region[adpcm_intf->region][offset];
+	voice->sample = 0;
+	voice->count = length;
+
+	/* also reset the ADPCM parameters */
+	voice->signal = -2;
+	voice->step = 0;
+}
+
+
+
 /*
  *   Stop playback on an ADPCM data channel
  */
@@ -416,6 +446,30 @@ void ADPCM_stop (int num)
 	voice->playing = 0;
 }
 
+/*
+ *   Change volume on an ADPCM data channel
+ */
+
+void ADPCM_setvol (int num, int vol)
+{
+	struct ADPCMVoice *voice = adpcm + num;
+
+	/* bail if we're not playing anything */
+	if (Machine->sample_rate == 0)
+		return;
+
+	/* range check the numbers */
+	if (num >= adpcm_intf->num)
+	{
+		if (errorlog) fprintf(errorlog,"error: ADPCM_setvol() called with channel = %d, but only %d channels allocated\n", num, adpcm_intf->num);
+		return;
+	}
+
+	voice->volume = vol;
+
+	/* update the ADPCM voice */
+	ADPCM_update(voice, cpu_scalebyfcount (buffer_len));
+}
 
 
 /*
@@ -605,7 +659,7 @@ void OKIM6295_data_w (int num, int data)
 				voice->playing = 1;
 				voice->base = &Machine->memory_region[okim6295_interface->region][start];
 				voice->sample = 0;
-				voice->count = 2 * (stop - start);
+				voice->count = 2 * (stop - start + 1);
 
 				/* also reset the ADPCM parameters */
 				voice->signal = -2;

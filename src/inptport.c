@@ -4,7 +4,10 @@
 
   Input ports handling
 
-TODO: remove the 1 analog device per port limitation
+TODO:	remove the 1 analog device per port limitation
+		support more than 1 "real" analog device
+		support for inputports producing interrupts
+		support for extra "real" hardware (PC throttle's, spinners etc)
 
 	MESS Changes
 	. Some of the default keys are changed - COIN changed to START, 1p & 2p start changed
@@ -14,6 +17,9 @@ TODO: remove the 1 analog device per port limitation
 
 #include "driver.h"
 #include <math.h>
+
+/* Use the MRU code for 4way joysticks */
+#define MRU_JOYSTICK
 
 /* header identifying the version of the game.cfg file */
 /* MESS */
@@ -38,6 +44,8 @@ static char input_analog_init[MAX_INPUT_PORTS];
 static int mouse_last_x,mouse_last_y;
 static int mouse_current_x,mouse_current_y;
 static int mouse_previous_x,mouse_previous_y;
+static int analog_current_x, analog_current_y;
+static int analog_previous_x, analog_previous_y;
 
 #ifdef MAME_DEBUG
 int debug_key_pressed;	/* JB 980505 */
@@ -116,7 +124,7 @@ static void writeip(void *f,struct InputPort *in)
 
 
 
-void load_input_port_settings(void)
+int load_input_port_settings(void)
 {
 	void *f;
 
@@ -127,6 +135,7 @@ void load_input_port_settings(void)
 		int total,savedtotal;
 		char buf[8];
 		int i;
+
 
 		in = Machine->gamedrv->new_input_ports;
 
@@ -188,10 +197,10 @@ void load_input_port_settings(void)
 		/* read in the coin/ticket counters */
 		for (i = 0; i < COIN_COUNTERS; i ++)
 		{
-			if (readint(f, &coins[i]) != 0)
+			if (readint(f, (int *)&coins[i]) != 0)
 				goto getout;
 		}
-		if (readint (f, &dispensed_tickets) != 0)
+		if (readint (f, (int *)&dispensed_tickets) != 0)
 			goto getout;
 
 getout:
@@ -204,6 +213,13 @@ getout:
 		for (i = 0; i < MAX_INPUT_PORTS; i++)
 			input_analog_init[i] = 1;
 	}
+
+	update_input_ports();
+
+	/* if we didn't find a saved config, return 0 so the main core knows that it */
+	/* is the first time the game is run and it should diplay the disclaimer. */
+	if (f) return 1;
+	else return 0;
 }
 
 
@@ -322,15 +338,15 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON2 | IPF_PLAYER4, "4 Button 2",        0,               0 },
 	{ IPT_BUTTON3 | IPF_PLAYER4, "4 Button 3",        0,               0 },
 	{ IPT_BUTTON4 | IPF_PLAYER4, "4 Button 4",        0,               0 },
-	{ IPT_SELECT1,               "P1 Select",          OSD_KEY_1,       IP_JOY_NONE },
-	{ IPT_SELECT2,               "P2 Select",          OSD_KEY_2,       IP_JOY_NONE },
-	{ IPT_SELECT3,               "P3 Select",          OSD_KEY_3,       IP_JOY_NONE },
-	{ IPT_SELECT4,               "P4 Select",          OSD_KEY_4,       IP_JOY_NONE },
+	{ IPT_COIN1,               "Coin A",          OSD_KEY_3,           0 },
+	{ IPT_COIN2,               "Coin B",          OSD_KEY_4,           0 },
+	{ IPT_COIN3,               "Coin C",          OSD_KEY_5,           0 },
+	{ IPT_COIN4,               "Coin D",          OSD_KEY_6,           0 },
 	{ IPT_TILT,                "Tilt",            OSD_KEY_T,       IP_JOY_NONE },
-	{ IPT_START1,              "1 Player Start",  OSD_KEY_ENTER,   IP_JOY_NONE },
-	{ IPT_START2,              "2 Players Start", OSD_KEY_6,       IP_JOY_NONE },
-	{ IPT_START3,              "3 Players Start", OSD_KEY_7,       IP_JOY_NONE },
-	{ IPT_START4,              "4 Players Start", OSD_KEY_8,       IP_JOY_NONE },
+	{ IPT_START1,              "1 Player Start",  OSD_KEY_1,           0 },
+	{ IPT_START2,              "2 Players Start", OSD_KEY_2,           0 },
+	{ IPT_START3,              "3 Players Start", OSD_KEY_7,           0 },
+	{ IPT_START4,              "4 Players Start", OSD_KEY_8,           0 },
 	{ IPT_PADDLE,              "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
 	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",          IPF_DELTA(4), IPF_DELTA(4) },
@@ -419,7 +435,7 @@ void update_analog_port(int port)
 {
 	struct InputPort *in;
 	int current, delta, type, sensitivity, clip, min, max, default_value;
-	int axis, is_stick, check_bounds, anajoy;
+	int axis, is_stick, check_bounds;
 	int inckey, deckey, keydelta, incjoy, decjoy, joydelta;
 	int key,joy;
 
@@ -427,6 +443,7 @@ void update_analog_port(int port)
 	in=input_analog[port];
 	if (nocheat && (in->type & IPF_CHEAT)) return;
 	type=(in->type & ~IPF_MASK);
+
 
 	key = default_key(in);
 	joy = default_joy(in);
@@ -470,29 +487,36 @@ void update_analog_port(int port)
 	/* extremes can be either signed or unsigned */
 	if (min > max) min = min - 256;
 
-	/* if IPF_CENTER go back to the default position, but without throwing away */
-	/* sub-precision movements which might have been done. */
-	if (((in->type & IPF_CENTER) && (!is_stick)))
+	/* if IPF_CENTER go back to the default position, but without */
+	/* throwing away sub-precision movements which might have been done. */
+	/* sticks are handled later... */
+	if ((in->type & IPF_CENTER) && (!is_stick))
 		input_analog_value[port] -=
 				(input_analog_value[port] * sensitivity / 100 - in->default_value) * 100 / sensitivity;
 
 	current = input_analog_value[port];
 
-	if (axis == X_AXIS)
-	{
-		int now;
+	delta = 0;
 
-		now = cpu_scalebyfcount(mouse_current_x - mouse_previous_x) + mouse_previous_x;
-		delta = now - mouse_last_x;
-		mouse_last_x = now;
-	}
-	else
+	/* we can't support more than one analog input for now */
+	if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER1)
 	{
-		int now;
+		if (axis == X_AXIS)
+		{
+			int now;
 
-		now = cpu_scalebyfcount(mouse_current_y - mouse_previous_y) + mouse_previous_y;
-		delta = now - mouse_last_y;
-		mouse_last_y = now;
+			now = cpu_scalebyfcount(mouse_current_x - mouse_previous_x) + mouse_previous_x;
+			delta = now - mouse_last_x;
+			mouse_last_x = now;
+		}
+		else
+		{
+			int now;
+
+			now = cpu_scalebyfcount(mouse_current_y - mouse_previous_y) + mouse_previous_y;
+			delta = now - mouse_last_y;
+			mouse_last_y = now;
+		}
 	}
 
 	if (osd_key_pressed(deckey)) delta -= keydelta;
@@ -510,41 +534,67 @@ void update_analog_port(int port)
 
 	if (in->type & IPF_REVERSE) delta = -delta;
 
-	if (is_stick)
+	/* we can't support more than one analog input for now */
+	if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER1)
 	{
-		if ((delta == 0) && (in->type & IPF_CENTER))
+		if (is_stick)
 		{
-			if (current > default_value)
-				delta = -100 / sensitivity;
-			if (current < default_value)
-				delta =  100 / sensitivity;
-		}
+			int new, prev;
 
-		/* perhaps there's a real analog joystick present? */
-		/* osd_analog_joyread() returns values from -128 to 128 (yes, 128, not 127) */
-		anajoy=osd_analogjoy_read(axis);
-
-		if (anajoy != NO_ANALOGJOY)
-		{
-			if (in->type & IPF_REVERSE) anajoy=-anajoy;
-			delta=0;
-
-#if 1 /* why use logarithmic scaling? BW */
-			if (anajoy > 0)
+			/* center stick */
+			if ((delta == 0) && (in->type & IPF_CENTER))
 			{
-				current = (pow(anajoy / 128.0, 100.0 / sensitivity) * (max-in->default_value)
-						+ in->default_value) * 100 / sensitivity;
+				if (current > default_value)
+					delta = -100 / sensitivity;
+				if (current < default_value)
+					delta =  100 / sensitivity;
+			}
+
+			/* An analog joystick which is not at zero position (or has just */
+			/* moved there) takes precedence over all other computations */
+			/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
+
+			if (axis == X_AXIS)
+			{
+				new  = analog_current_x;
+				prev = analog_previous_x;
 			}
 			else
 			{
-				current = (pow(-anajoy / 128.0, 100.0 / sensitivity) * (min-in->default_value)
-						+ in->default_value) * 100 / sensitivity;
+				new  = analog_current_y;
+				prev = analog_previous_y;
 			}
-#else /* use linear scaling BW */
 
-			current = default_value + (anajoy * (max-min) * 100) / (256 * sensitivity);
+			if ((new != 0) || (new-prev != 0))
+			{
+				delta=0;
+
+				if (in->type & IPF_REVERSE)
+				{
+					new  = -new;
+					prev = -prev;
+				}
+
+				/* scale by time */
+
+				new = cpu_scalebyfcount(new - prev) + prev;
+
+#if 1 /* logarithmic scale */
+				if (new > 0)
+				{
+					current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
+				}
+				else
+				{
+					current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
+				}
+#else
+				current = default_value + (new * (max-min) * 100) / (256 * sensitivity);
 #endif
 
+			}
 		}
 	}
 
@@ -572,14 +622,19 @@ void update_analog_port(int port)
 
 void update_input_ports(void)
 {
-	int i,port,ib;
+	int port,ib;
 	struct InputPort *in;
 #define MAX_INPUT_BITS 1024
 static int impulsecount[MAX_INPUT_BITS];
 static int waspressed[MAX_INPUT_BITS];
 #define MAX_JOYSTICKS 3
 #define MAX_PLAYERS 4
+#ifdef MRU_JOYSTICK
+static int update_serial_number = 1;
+static int joyserial[MAX_JOYSTICKS*MAX_PLAYERS][4];
+#else
 int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
+#endif
 
 
 	/* clear all the values before proceeding */
@@ -590,8 +645,10 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 		input_analog[port] = 0;
 	}
 
+#ifndef MRU_JOYSTICK
 	for (i = 0;i < 4*MAX_JOYSTICKS*MAX_PLAYERS;i++)
 		joystick[i/4][i%4] = 0;
+#endif
 
 	in = Machine->input_ports;
 
@@ -604,6 +661,63 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 		return;
 	}
 	else in++;
+
+#ifdef MRU_JOYSTICK
+	/* scan all the joystick ports */
+	port = 0;
+	while (in->type != IPT_END && port < MAX_INPUT_PORTS)
+	{
+		while (in->type != IPT_END && in->type != IPT_PORT)
+		{
+			if ((in->type & ~IPF_MASK) >= IPT_JOYSTICK_UP &&
+				(in->type & ~IPF_MASK) <= IPT_JOYSTICKLEFT_RIGHT)
+			{
+				int key,joy;
+
+				key = default_key(in);
+				joy = default_joy(in);
+
+				if ((key != 0 && key != IP_KEY_NONE) ||
+					(joy != 0 && joy != IP_JOY_NONE))
+				{
+					int joynum,joydir,player;
+
+					player = 0;
+					if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2)
+						player = 1;
+					else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3)
+						player = 2;
+					else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4)
+						player = 3;
+
+					joynum = player * MAX_JOYSTICKS +
+							 ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
+					joydir = ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) % 4;
+
+					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
+						(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
+					{
+						if (joyserial[joynum][joydir] == 0)
+							joyserial[joynum][joydir] = update_serial_number;
+					}
+					else
+						joyserial[joynum][joydir] = 0;
+				}
+			}
+			in++;
+		}
+
+		port++;
+		if (in->type == IPT_PORT) in++;
+	}
+	update_serial_number += 1;
+
+	in = Machine->input_ports;
+
+	/* already made sure the InputPort definition is correct */
+	in++;
+#endif
+
 
 	/* scan all the input ports */
 	port = 0;
@@ -668,6 +782,10 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
 							(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
 					{
+						/* if IPF_RESET set, reset the first CPU */
+						if (in->type & IPF_RESETCPU && waspressed[ib] == 0)
+							cpu_reset(0);
+
 						if (in->type & IPF_IMPULSE)
 						{
 if (errorlog && in->arg == 0)
@@ -701,11 +819,11 @@ if (errorlog && in->arg == 0)
 
 							mask = in->mask;
 
+#ifndef MRU_JOYSTICK
 							/* avoid movement in two opposite directions */
 							if (joystick[joynum][joydir ^ 1] != 0)
 								mask = 0;
-
-							if (in->type & IPF_4WAY)
+							else if (in->type & IPF_4WAY)
 							{
 								int dir;
 
@@ -719,6 +837,31 @@ if (errorlog && in->arg == 0)
 							}
 
 							joystick[joynum][joydir] = 1;
+#else
+							/* avoid movement in two opposite directions */
+							if (joyserial[joynum][joydir ^ 1] != 0)
+								mask = 0;
+							else if (in->type & IPF_4WAY)
+							{
+								int mru_dir = joydir;
+								int mru_serial = 0;
+								int dir;
+
+
+								/* avoid diagonal movements, use mru button */
+								for (dir = 0;dir < 4;dir++)
+								{
+									if (joyserial[joynum][dir] > mru_serial)
+									{
+										mru_serial = joyserial[joynum][dir];
+										mru_dir = dir;
+									}
+								}
+
+								if (mru_dir != joydir)
+									mask = 0;
+							}
+#endif
 
 							input_port_value[port] ^= mask;
 						}
@@ -775,6 +918,12 @@ void inputport_vblank_end(void)
 			input_vblank[port] = 0;
 		}
 	}
+
+	/* update joysticks */
+	analog_previous_x = analog_current_x;
+	analog_previous_y = analog_current_y;
+	osd_poll_joystick();
+	osd_analogjoy_read(&analog_current_x, &analog_current_y);
 
 	/* update mouse position */
 	mouse_previous_x = mouse_current_x;

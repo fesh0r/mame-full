@@ -52,24 +52,26 @@ static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
 	mindist = 200000;
 	best = 0;
 
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
-		return rgbpen (r, g, b);
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		unsigned char r1,g1,b1;
 		int d1,d2,d3,dist;
 
 		osd_get_pen(Machine->pens[i],&r1,&g1,&b1);
-		d1 = (int)r1 - r;
-		d2 = (int)g1 - g;
-		d3 = (int)b1 - b;
-		dist = d1*d1 + d2*d2 + d3*d3;
 
-		if (dist < mindist)
+		/* don't pick black for non-black colors */
+		if (r1+g1+b1 > 0 || r+g+b == 0)
 		{
-			best = i;
-			mindist = dist;
+			d1 = (int)r1 - r;
+			d2 = (int)g1 - g;
+			d3 = (int)b1 - b;
+			dist = d1*d1 + d2*d2 + d3*d3;
+
+			if (dist < mindist)
+			{
+				best = i;
+				mindist = dist;
+			}
 		}
 	}
 
@@ -259,7 +261,7 @@ void displaytext(const struct DisplayText *dt,int erase)
 	int i,j,trueorientation;
 
 	/*             blac blue whit    blac red  yelw    blac blac red  */
-	int dt_r[] = { 0x00,0x00,0xff,-1,0x00,0xff,0xff,-1,0x00,0x00,0xff };
+	int dt_r[] = { 0x00,0x00,0xff,-1,0x00,0xff,0x7f,-1,0x00,0x00,0xff };
 	int dt_g[] = { 0x00,0x00,0xff,-1,0x00,0x00,0xff,-1,0x00,0x00,0x00 };
 	int dt_b[] = { 0x00,0xff,0xff,-1,0x00,0x00,0x00,-1,0x00,0x00,0x00 };
 
@@ -271,14 +273,11 @@ void displaytext(const struct DisplayText *dt,int erase)
 	/* look for appropriate colors and update the colortable. This is necessary */
 	/* for dynamic palette games */
 
-	/* modified to get better results with limited palettes .ac JAN2498 */
-	for( i=0; i<=10; i++ ) {
-		if( dt_r[i] >= 0 ) {
+	for( i=0; i<=10; i++ )
+	{
+		if( dt_r[i] >= 0 )
+		{
 			j = findbestcolor(dt_r[i],dt_g[i],dt_b[i]);
-			if( !j && (dt_r[i]>0 || dt_g[i]>0 || dt_b[i]>0) ) {
-				j = (dt_r[i]*30 + dt_g[i]*59 + dt_b[i]*11) / 100;
-				j = findbestcolor(j,j,j);
-			}
 			Machine->uifont->colortable[i] = j;
 		}
 	}
@@ -426,7 +425,7 @@ int showcharset(void)
 				0,TRANSPARENCY_NONE,0);
 		}
 
-		sprintf(buf,"GFXSET %d  COLOR %d  LINE %d ",bank,color,line);
+		sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
 		dt[0].text = buf;
 		dt[0].color = DT_COLOR_RED;
 		dt[0].x = 0;
@@ -473,7 +472,7 @@ int showcharset(void)
 		}
         } while (key != UI_KEY_CHARSET && key != UI_KEY_ESCAPE);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -549,7 +548,7 @@ static int setdipswitches(void)
 			}
 		}
 
-		displaytext(dt,1);
+		displayset(dt,total,s);
 
 		key = osd_read_keyrepeat();
 
@@ -616,7 +615,7 @@ static int setdipswitches(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 
 	/* clear the screen before returning */
@@ -738,7 +737,7 @@ static int setkeysettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -881,7 +880,7 @@ static int setjoysettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1213,7 +1212,7 @@ static int settraksettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(pkey));	/* wait for key release */
+	while (osd_key_pressed(pkey)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1273,7 +1272,37 @@ void mame_stats (void)
 	displaytext(dt,1);
 
 	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
+}
+
+int showcopyright(void)
+{
+#ifndef macintosh /* LBO - This text is displayed in a dialog box. */
+	int key;
+	struct DisplayText dt[2];
+
+
+	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
+			"APPLICATION WITH ANY ROM IMAGES.\n"
+			"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
+			"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
+			"OF ANY ROM IMAGES.";
+
+	dt[0].color = DT_COLOR_RED;
+	dt[0].x = 0;
+	dt[0].y = 0;
+	dt[1].text = 0;
+	displaytext(dt,1);
+
+	key = osd_read_key();
+	while (osd_key_pressed(key)) ;	/* wait for key release */
+	if (key == OSD_KEY_ESC) return 1;
+#endif
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
+
+	return 0;
 }
 
 int showcredits(void)
@@ -1293,7 +1322,10 @@ int showcredits(void)
 	displaytext(dt,1);
 
 	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
 
 	return 0;
 }
@@ -1308,13 +1340,16 @@ int showgameinfo(void)
 	{
 		"",
 		"Z80",
+		"I8085",
 		"6502",
 		"8086",
 		"8035",
 		"6803",
 		"6805",
 		"6809",
-		"68000"
+		"68000",
+		"T-11",
+		"S2650"
 	};
 	static char *soundnames[] =
 	{
@@ -1335,18 +1370,68 @@ int showgameinfo(void)
 		"VLM5030",
 		"ADPCM samples",
 		"OKIM6295 ADPCM",
-		"MSM5205 ADPCM"
+		"MSM5205 ADPCM",
+		"HC-55516 CVSD"
 	};
 
 
-	sprintf(buf,"%s\n\nCPU:\n",Machine->gamedrv->description);
+	if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+	{
+		const struct GameDriver *main;
+		int foundworking;
+
+
+		strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+		if (Machine->gamedrv->clone_of) main = Machine->gamedrv->clone_of;
+		else main = Machine->gamedrv;
+
+		foundworking = 0;
+		i = 0;
+		while (drivers[i])
+		{
+			if (drivers[i] == main || drivers[i]->clone_of == main)
+			{
+				if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
+				{
+					if (foundworking == 0)
+						strcat(buf,"\n\n\nThere are clones of this game which work. They are:\n\n");
+					foundworking = 1;
+
+					sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
+				}
+			}
+			i++;
+		}
+
+		strcat(buf,"\n\n\nType OK to continue");
+
+		dt[0].text = buf;
+		dt[0].color = DT_COLOR_RED;
+		dt[0].x = 0;
+		dt[0].y = 0;
+		dt[1].text = 0;
+		displaytext(dt,1);
+
+		while (!osd_key_pressed(OSD_KEY_O)) ;
+		while (!osd_key_pressed(OSD_KEY_K)) ;
+		while (osd_key_pressed(OSD_KEY_K)) ;
+	}
+
+
+	sprintf(buf,"%s\n%s %s\n\nCPU:\n",Machine->gamedrv->description,Machine->gamedrv->year,Machine->gamedrv->manufacturer);
 	i = 0;
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
-		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz\n",
+		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
 				cpunames[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK],
 				Machine->drv->cpu[i].cpu_clock / 1000000,
 				Machine->drv->cpu[i].cpu_clock % 1000000);
+
+		if (Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
+			strcat(buf," (sound)");
+
+		strcat(buf,"\n");
+
 		i++;
 	}
 
@@ -1387,10 +1472,12 @@ int showgameinfo(void)
 					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
 					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
 					Machine->drv->frames_per_second);
+		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
 		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
-			sprintf(&buf[strlen(buf)],">256 colors (16-bit required)\n");
-		else
-			sprintf(&buf[strlen(buf)],"%d colors\n",Machine->drv->total_colors);
+			strcat(buf,"(16-bit required)\n");
+		else if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+			strcat(buf,"(dynamic)\n");
+		else strcat(buf,"(static)\n");
 	}
 
 	dt[0].text = buf;
@@ -1401,7 +1488,10 @@ int showgameinfo(void)
 	displaytext(dt,1);
 
 	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
 
 	return 0;
 }
@@ -1537,7 +1627,7 @@ int setup_menu (void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);

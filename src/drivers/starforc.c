@@ -63,7 +63,6 @@ I/O read/write
 
 extern unsigned char *starforc_scrollx2,*starforc_scrolly2;
 extern unsigned char *starforc_scrollx3,*starforc_scrolly3;
-extern unsigned char *starforc_paletteram;
 extern unsigned char *starforc_tilebackground2;
 extern unsigned char *starforc_tilebackground3;
 extern unsigned char *starforc_tilebackground4;
@@ -71,13 +70,11 @@ extern int starforc_bgvideoram_size;
 void starforc_tiles2_w(int offset,int data);
 void starforc_tiles3_w(int offset,int data);
 void starforc_tiles4_w(int offset,int data);
-void starforc_paletteram_w(int offset,int data);
 
 int starforc_vh_start(void);
 void starforc_vh_stop(void);
 
-void starforc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
+void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int starforc_sh_start(void);
 void starforc_sh_stop(void);
@@ -116,7 +113,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
 	{ 0x9800, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9c00, 0x9d7f, starforc_paletteram_w, &starforc_paletteram },
+	{ 0x9c00, 0x9d7f, paletteram_IIBBGGRR_w, &paletteram },
 	{ 0x9e20, 0x9e21, MWA_RAM, &starforc_scrollx2 },
 	{ 0x9e25, 0x9e25, MWA_RAM, &starforc_scrolly2 },
 //	{ 0x9e28, 0x9e29, MWA_RAM, &starforc_scrollx? },
@@ -318,12 +315,12 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout1,      0, 8 },	/* characters */
-	{ 1, 0x03000, &charlayout2,   16*8, 8 },	/* background #1 */
-	{ 1, 0x09000, &charlayout2,    8*8, 8 },	/* background #2 */
-	{ 1, 0x0f000, &charlayout3,   24*8, 8 },	/* star background */
-	{ 1, 0x12000, &spritelayout1, 40*8, 8 },	/* normal sprites */
-	{ 1, 0x14000, &spritelayout2, 40*8, 8 },	/* large sprites */
+	{ 1, 0x00000, &charlayout1,     0, 8 },	/*   0- 63 characters */
+	{ 1, 0x03000, &charlayout2,   128, 8 },	/* 128-191 background #1 */
+	{ 1, 0x09000, &charlayout2,    64, 8 },	/*  64-127 background #2 */
+	{ 1, 0x0f000, &charlayout3,   192, 8 },	/* 192-255 star background */
+	{ 1, 0x12000, &spritelayout1, 320, 8 },	/* 320-383 normal sprites */
+	{ 1, 0x14000, &spritelayout2, 320, 8 },	/* 320-383 large sprites */
 	{ -1 } /* end of array */
 };
 
@@ -356,10 +353,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
 	gfxdecodeinfo,
-	256, 48*8,
-	starforc_vh_convert_color_prom,
+	384, 384,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	starforc_vh_start,
 	starforc_vh_stop,
@@ -412,33 +409,32 @@ ROM_START( megaforc_rom )
 	ROM_LOAD( "mf2.bin", 0x4000, 0x4000, 0xf112ba16 )
 
 	ROM_REGION(0x1e000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mf7.bin",  0x00000, 0x1000, 0xebe46dfc )
-	ROM_LOAD( "mf8.bin",  0x01000, 0x1000, 0xc23d186b )
-	ROM_LOAD( "mf9.bin",  0x02000, 0x1000, 0x77586a06 )
-	ROM_LOAD( "mf10.bin", 0x03000, 0x2000, 0x8ff8c55c )
-	ROM_LOAD( "mf11.bin", 0x05000, 0x2000, 0x647d74eb )
-	ROM_LOAD( "mf12.bin", 0x07000, 0x2000, 0x451c5ffc )
-	ROM_LOAD( "mf13.bin", 0x09000, 0x2000, 0x0be64664 )
-	ROM_LOAD( "mf14.bin", 0x0b000, 0x2000, 0xff8c2118 )
-	ROM_LOAD( "mf15.bin", 0x0d000, 0x2000, 0x44f6e3f8 )
-	ROM_LOAD( "mf16.bin", 0x0f000, 0x1000, 0x111fb9ed )
-	ROM_LOAD( "mf17.bin", 0x10000, 0x1000, 0xb62c8e7a )
-	ROM_LOAD( "mf18.bin", 0x11000, 0x1000, 0x4185c335 )
-	ROM_LOAD( "mf4.bin",  0x12000, 0x4000, 0xbe304630 )
-	ROM_LOAD( "mf5.bin",  0x16000, 0x4000, 0x178f15e9 )
-	ROM_LOAD( "mf6.bin",  0x1a000, 0x4000, 0x1cd03e28 )
+	ROM_LOAD( "mf7.bin",     0x00000, 0x1000, 0xebe46dfc )
+	ROM_LOAD( "mf8.bin",     0x01000, 0x1000, 0xc23d186b )
+	ROM_LOAD( "mf9.bin",     0x02000, 0x1000, 0x77586a06 )
+	ROM_LOAD( "starforc.10", 0x03000, 0x2000, 0x8ff8c55c )
+	ROM_LOAD( "starforc.11", 0x05000, 0x2000, 0x647d74eb )
+	ROM_LOAD( "starforc.12", 0x07000, 0x2000, 0x451c5ffc )
+	ROM_LOAD( "starforc.13", 0x09000, 0x2000, 0x0be64664 )
+	ROM_LOAD( "starforc.14", 0x0b000, 0x2000, 0xff8c2118 )
+	ROM_LOAD( "starforc.15", 0x0d000, 0x2000, 0x44f6e3f8 )
+	ROM_LOAD( "starforc.16", 0x0f000, 0x1000, 0x111fb9ed )
+	ROM_LOAD( "starforc.17", 0x10000, 0x1000, 0xb62c8e7a )
+	ROM_LOAD( "starforc.18", 0x11000, 0x1000, 0x4185c335 )
+	ROM_LOAD( "starforc.4",  0x12000, 0x4000, 0xbe304630 )
+	ROM_LOAD( "starforc.5",  0x16000, 0x4000, 0x178f15e9 )
+	ROM_LOAD( "starforc.6",  0x1a000, 0x4000, 0x1cd03e28 )
 
 	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "mf1.bin", 0x0000, 0x2000, 0xfb4a6b5a )
+	ROM_LOAD( "starforc.1", 0x0000, 0x2000, 0xfb4a6b5a )
 ROM_END
 
 
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
 	memcmp(&RAM[0x9181],"\x18",1) == 0 &&
@@ -522,10 +518,8 @@ static void hisave(void)
 {
 	void *f;
 	int i;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Bug to solve the problem about resetting in the hi-score screen */
 	for (i = 0x8039; i < 0x80a0; i+=0x0b)
@@ -543,9 +537,14 @@ static void hisave(void)
 
 struct GameDriver starforc_driver =
 {
-	"Star Force",
+	__FILE__,
+	0,
 	"starforc",
+	"Star Force",
+	"1984",
+	"Tehkan",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	starforc_rom,
@@ -563,9 +562,14 @@ struct GameDriver starforc_driver =
 
 struct GameDriver megaforc_driver =
 {
-	"Mega Force",
+	__FILE__,
+	&starforc_driver,
 	"megaforc",
+	"Mega Force",
+	"1985",
+	"Tehkan (Video Ware license)",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	megaforc_rom,

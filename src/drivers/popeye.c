@@ -61,7 +61,7 @@ void popeye_videoram_w(int offset,int data);
 void popeye_colorram_w(int offset,int data);
 void popeye_palettebank_w(int offset,int data);
 void popeye_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void popeye_vh_screenrefresh(struct osd_bitmap *bitmap);
+void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  popeye_vh_start(void);
 void popeye_vh_stop(void);
 
@@ -383,17 +383,20 @@ ROM_START( popeyebl_rom )
 	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020, 0x64007604 )	/* protection PROM */
 
 	ROM_REGION(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "po5", 0x0000, 0x1000, 0x4e800000 )
-	ROM_LOAD( "po6", 0x1000, 0x2000, 0x034f71a7 )
-	ROM_LOAD( "po7", 0x3000, 0x2000, 0x0d9053e2 )
-	ROM_LOAD( "po8", 0x5000, 0x2000, 0x8568d90c )
-	ROM_LOAD( "po9", 0x7000, 0x2000, 0xe2b9685f )
+	ROM_LOAD( "v-5n", 0x0000, 0x1000, 0x27406a96 )
+	ROM_LOAD( "v-1e", 0x1000, 0x2000, 0x034f71a7 )
+	ROM_LOAD( "v-1f", 0x3000, 0x2000, 0x0d9053e2 )
+	ROM_LOAD( "v-1j", 0x5000, 0x2000, 0x8568d90c )
+	ROM_LOAD( "v-1k", 0x7000, 0x2000, 0xe2b9685f )
 ROM_END
 
 
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8209],"\x00\x26\x03",3) == 0 &&
 			memcmp(&RAM[0x8221],"\x50\x11\x02",3) == 0 &&
@@ -438,6 +441,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -455,9 +459,14 @@ static void hisave(void)
 /* an opcode for the ALU and the others contain the data. */
 struct GameDriver popeye_driver =
 {
-	"Popeye",
+	__FILE__,
+	0,
 	"popeye",
+	"Popeye",
+	"1982?",
+	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	popeye_rom,
@@ -475,9 +484,14 @@ struct GameDriver popeye_driver =
 
 struct GameDriver popeyebl_driver =
 {
-	"Popeye (bootleg)",
+	__FILE__,
+	&popeye_driver,
 	"popeyebl",
+	"Popeye (bootleg)",
+	"1982?",
+	"bootleg",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	popeyebl_rom,

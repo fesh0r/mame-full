@@ -79,7 +79,7 @@ int pacman_interrupt(void);
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
 int pacman_vh_start(void);
-void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
@@ -143,6 +143,9 @@ int maketrax_special_r(int offset)
 
 static void maketrax_rom_decode(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	memcpy(ROM,RAM,0x10000);
 
 	ROM[0x0415]=0xC9;
@@ -161,6 +164,7 @@ static int maketrax_hiload(void)
 {
 	static int resetcount;
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -192,6 +196,7 @@ static int maketrax_hiload(void)
 static void maketrax_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -227,13 +232,13 @@ static struct MemoryWriteAddress maketrax_writemem[] =
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, MWA_RAM, &flip_screen },
-        { 0x5007, 0x5007, MWA_NOP }, /* ??? */
+	{ 0x5007, 0x5007, MWA_NOP }, /* ??? */
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x8000, 0x9fff, MWA_ROM },    /* Ms. Pac Man only */
-	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
+	{ 0xc000, 0xc3ff, videoram00_w }, /* mirror address for video ram, */
+	{ 0xc400, 0xc7ef, videoram01_w }, /* used to display HIGH SCORE and CREDITS */
 	{ -1 }  /* end of table */
 };
 
@@ -318,7 +323,7 @@ static struct GfxTileLayout tilelayout =
 {
 	256,    /* 256 characters */
 	2,      /* 2 bits per pixel */
-	{ 0, 4},        /* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4 },        /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8    /* every char takes 16 bytes */
@@ -374,10 +379,10 @@ static struct MachineDriver maketrax_machine_driver =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	16,4*32,
+	16, 4*32,
 	pengo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	machine_layers,
 	pacman_vh_start,
 	generic_vh_stop,
@@ -457,13 +462,18 @@ static unsigned char maketrax_color_prom[] =
 
 struct GameDriver maketrax_driver =
 {
-	"Make Trax",
+	__FILE__,
+	0,
 	"maketrax",
-        "Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour\nValerio Verrando (high score saving)",
+	"Make Trax",
+	"1981",
+	"Williams",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour\nValerio Verrando (high score saving)",
+	0,
 	&maketrax_machine_driver,
 
 	maketrax_rom,
-        0, maketrax_rom_decode,
+	0, maketrax_rom_decode,
 	0,
 	sound_prom,     /* sound_prom */
 

@@ -76,7 +76,7 @@ standart IM 1 interrupt mode (rst #38 every vblank)
 
 int arabian_vh_start(void);
 void arabian_vh_stop(void);
-void arabian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void arabian_spriteramw(int offset, int val);
 void arabian_videoramw(int offset, int val);
 
@@ -273,7 +273,7 @@ static unsigned char palette[] =
 
 enum {BLACK,BLUE1,BLUE2,BLUE3,YELLOW };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	/* characters and sprites */
 	BLACK,BLUE1,BLACK,YELLOW,
@@ -313,7 +313,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0x0b, 0xf2, 0, 32*8-1 },
         0,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -399,9 +399,14 @@ static void arabian_hisave(void)
 
 struct GameDriver arabian_driver =
 {
-	"Arabian",
+	__FILE__,
+	0,
 	"arabian",
+	"Arabian",
+	"1983",
+	"Atari",
 	"Jarek Burczynski (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	arabian_rom,

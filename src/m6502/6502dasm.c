@@ -12,10 +12,11 @@
 /**     commercially. Please, notify me, if you make any    **/
 /**     changes to this file.                               **/
 /*************************************************************/
+#include <stdio.h>
+
 #if defined (DEBUG) || defined (MAME_DEBUG)
 
 #include "M6502.h"
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -23,7 +24,7 @@
 
 enum Addressing_Modes { Ac=0,Il,Im,Ab,Zp,Zx,Zy,Ax,Ay,Rl,Ix,Iy,In,No };
 
-static byte *mn[]=
+static char *mn[]=
 {
   "adc ","and ","asl ","bcc ","bcs ","beq ","bit ","bmi ",
   "bne ","bpl ","brk","bvc ","bvs ","clc","cld","cli",
@@ -103,7 +104,7 @@ int Dasm6502(char *S,word A)
 
     default: sprintf(S,".db $%02X; <Invalid OPcode>",OP/2);
   }
-  return(B-A);
+  return (word)(B-A);
 }
 
 /** Debug6502() **********************************************/

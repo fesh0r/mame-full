@@ -19,7 +19,7 @@ extern unsigned char *trace_scroll_x_high;
 void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int trace_vh_start(void);
 void trace_vh_stop(void);
-void trace_vh_screenrefresh(struct osd_bitmap *bitmap);
+void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
@@ -326,43 +326,89 @@ ROM_START( travrusa_rom )
 
 	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ZIPPYRAC.001", 0x00000, 0x2000, 0x080c2eea )
-	ROM_LOAD( "ZIPPYRAC.002", 0x02000, 0x2000, 0x822f3c4d )
-	ROM_LOAD( "ZIPPYRAC.003", 0x04000, 0x2000, 0x4dff1a15 )
+	ROM_LOAD( "mr8.3c",       0x02000, 0x2000, 0x822f3c4d )
+	ROM_LOAD( "mr9.3a",       0x04000, 0x2000, 0x4dff1a15 )
 	ROM_LOAD( "ZIPPYRAC.008", 0x06000, 0x2000, 0xd6c5bd0d )
 	ROM_LOAD( "ZIPPYRAC.009", 0x08000, 0x2000, 0x6372812a )
 	ROM_LOAD( "ZIPPYRAC.010", 0x0a000, 0x2000, 0x76e982c9 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "ZIPPYRAC.004", 0xf000, 0x1000, 0x91c75683 )
+	ROM_LOAD( "mr10.1a", 0xf000, 0x1000, 0x91c75683 )
 ROM_END
 
-#if 0
 ROM_START( motorace_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-//	ROM_LOAD( "ZIPPYRAC.000", 0x0000, 0x2000, 0x25468936 )
-	ROM_LOAD( "mr13l", 0x2000, 0x2000, 0x33a87d00 )
-	ROM_LOAD( "mr23k", 0x4000, 0x2000, 0x7897130f )
-	ROM_LOAD( "mr33j", 0x6000, 0x2000, 0x78dfc871 )
+	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_LOAD( "mr.cpu", 0x10000, 0x2000, 0xa0e6631c )	/* we load the ROM at 10000-11fff, */
+														/* it will be decrypted at 0000 */
+	ROM_LOAD( "mr1.3l", 0x2000, 0x2000, 0x33a87d00 )
+	ROM_LOAD( "mr2.3k", 0x4000, 0x2000, 0x7897130f )
+	ROM_LOAD( "mr3.3j", 0x6000, 0x2000, 0x78dfc871 )
 
 	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mr73e", 0x00000, 0x2000, 0x78bc5e5a )
-	ROM_LOAD( "mr83c", 0x02000, 0x2000, 0x822f3c4d )
-	ROM_LOAD( "mr93a", 0x04000, 0x2000, 0x4dff1a15 )
-	ROM_LOAD( "mr43n", 0x06000, 0x2000, 0x9227b5d3 )
-	ROM_LOAD( "mr53m", 0x08000, 0x2000, 0x46da07c2 )
-	ROM_LOAD( "mr63k", 0x0a000, 0x2000, 0xe3678ca5 )
+	ROM_LOAD( "mr7.3e", 0x00000, 0x2000, 0x78bc5e5a )
+	ROM_LOAD( "mr8.3c", 0x02000, 0x2000, 0x822f3c4d )
+	ROM_LOAD( "mr9.3a", 0x04000, 0x2000, 0x4dff1a15 )
+	ROM_LOAD( "mr4.3n", 0x06000, 0x2000, 0x9227b5d3 )
+	ROM_LOAD( "mr5.3m", 0x08000, 0x2000, 0x46da07c2 )
+	ROM_LOAD( "mr6.3k", 0x0a000, 0x2000, 0xe3678ca5 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "mr101a", 0xf000, 0x1000, 0x91c75683 )
+	ROM_LOAD( "mr10.1a", 0xf000, 0x1000, 0x91c75683 )
 ROM_END
-#endif
+
+
+
+void motorace_decode(void)
+{
+	int A,i,j;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* The first CPU ROM has the address and data lines scrambled */
+	for (A = 0;A < 0x2000;A++)
+	{
+		int bit[13];
+
+
+		for (i = 0;i < 13;i++)
+			bit[i] = (A >> i) & 1;
+
+		j =
+			(bit[11] <<  0) +
+			(bit[ 0] <<  1) +
+			(bit[ 2] <<  2) +
+			(bit[ 4] <<  3) +
+			(bit[ 6] <<  4) +
+			(bit[ 8] <<  5) +
+			(bit[10] <<  6) +
+			(bit[12] <<  7) +
+			(bit[ 1] <<  8) +
+			(bit[ 3] <<  9) +
+			(bit[ 5] << 10) +
+			(bit[ 7] << 11) +
+			(bit[ 9] << 12);
+
+		for (i = 0;i < 8;i++)
+			bit[i] = (RAM[A + 0x10000] >> i) & 1;
+
+		RAM[j] =
+			(bit[5] << 0) +
+			(bit[0] << 1) +
+			(bit[3] << 2) +
+			(bit[6] << 3) +
+			(bit[1] << 4) +
+			(bit[4] << 5) +
+			(bit[7] << 6) +
+			(bit[2] << 7);
+	}
+}
+
 
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe080],"\x49\x45\x4f",3) == 0)
@@ -381,10 +427,10 @@ static int hiload(void)
 }
 
 static void hisave(void)
-{	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -398,9 +444,14 @@ static void hisave(void)
 
 struct GameDriver travrusa_driver =
 {
-	"Traverse USA",
+	__FILE__,
+	0,
 	"travrusa",
+	"Traverse USA",
+	"1983",
+	"Irem",
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)",
+	0,
 	&machine_driver,
 
 	travrusa_rom,
@@ -416,16 +467,20 @@ struct GameDriver travrusa_driver =
 	hiload, hisave
 };
 
-#if 0
 struct GameDriver motorace_driver =
 {
-	"Motorace USA",
+	__FILE__,
+	&travrusa_driver,
 	"motorace",
+	"MotoRace USA",
+	"1983",
+	"Irem (Williams license)",
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)\nGerald Vanderick (color info)",
+	0,
 	&machine_driver,
 
 	motorace_rom,
-	0, 0,
+	motorace_decode, 0,
 	0,
 	0,
 
@@ -436,4 +491,3 @@ struct GameDriver motorace_driver =
 
 	hiload, hisave
 };
-#endif

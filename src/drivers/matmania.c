@@ -38,20 +38,19 @@ extern int matmania_videoram2_size;
 extern unsigned char *matmania_videoram3,*matmania_colorram3;
 extern int matmania_videoram3_size;
 extern unsigned char *matmania_scroll;
-extern unsigned char *matmania_paletteram;
 extern unsigned char *matmania_pageselect;
 
 int mystston_interrupt(void);
 
 void matmania_paletteram_w(int offset,int data);
 void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void matmania_vh_screenrefresh(struct osd_bitmap *bitmap);
-void maniach_vh_screenrefresh(struct osd_bitmap *bitmap);
+void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void maniach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void matmania_videoram3_w(int offset,int data);
 void matmania_colorram3_w(int offset,int data);
 int matmania_vh_start(void);
 void matmania_vh_stop(void);
-void matmania_vh_screenrefresh(struct osd_bitmap *bitmap);
+void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -118,7 +117,7 @@ static struct MemoryWriteAddress matmania_writemem[] =
 	{ 0x3010, 0x3010, matmania_sh_command_w },
 	{ 0x3020, 0x3020, MWA_RAM, &matmania_scroll },
 	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
-	{ 0x3050, 0x307f, matmania_paletteram_w, &matmania_paletteram },
+	{ 0x3050, 0x307f, matmania_paletteram_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -138,7 +137,7 @@ static struct MemoryWriteAddress maniach_writemem[] =
 	{ 0x3020, 0x3020, MWA_RAM, &matmania_scroll },
 	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
 	{ 0x3040, 0x3040, maniach_3040_w },	/* ??? */
-	{ 0x3050, 0x307f, matmania_paletteram_w, &matmania_paletteram },
+	{ 0x3050, 0x307f, matmania_paletteram_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -471,36 +470,33 @@ ROM_START( matmania_rom )
 	ROM_LOAD( "k2-03", 0xc000, 0x4000, 0x48f096d0 )
 
 	ROM_REGION(0x66000)	/* temporary space for graphics (disposed after conversion) */
-	/* Character ROMs - 1024 chars, 3 bpp */
-	ROM_LOAD( "ku-02",  0x00000, 0x2000, 0xd8c27456 )
-	ROM_LOAD( "kv-02",  0x02000, 0x2000, 0xea2bd99f )
-	ROM_LOAD( "kw-02",  0x04000, 0x2000, 0x1bfe7c88 )
-	/* tile set */
-	ROM_LOAD( "kt-02",  0x06000, 0x4000, 0x37bbe291 )
-	ROM_LOAD( "ks-02",  0x0a000, 0x4000, 0x716bd393 )
-	ROM_LOAD( "kr-02",  0x0e000, 0x4000, 0x388a1238 )
-	/* sprites */
-	ROM_LOAD( "k6-00",  0x12000, 0x4000, 0xe63b9ca9 )
-	ROM_LOAD( "k7-00",  0x16000, 0x4000, 0xa8d5e8d7 )
-	ROM_LOAD( "k8-00",  0x1a000, 0x4000, 0x975ae136 )
-	ROM_LOAD( "k9-00",  0x1e000, 0x4000, 0x65aaaea8 )
-	ROM_LOAD( "ka-00",  0x22000, 0x4000, 0x37fb0e09 )
-	ROM_LOAD( "kb-00",  0x26000, 0x4000, 0xc474d040 )
-	ROM_LOAD( "kc-00",  0x2a000, 0x4000, 0x55a8420a )
-	ROM_LOAD( "kd-00",  0x2e000, 0x4000, 0x23b32cbd )
-	ROM_LOAD( "ke-00",  0x32000, 0x4000, 0xdba47f90 )
-	ROM_LOAD( "kf-00",  0x36000, 0x4000, 0x1634b750 )
-	ROM_LOAD( "kg-00",  0x3a000, 0x4000, 0xd21c3f64 )
-	ROM_LOAD( "kh-00",  0x3e000, 0x4000, 0xe88f63a9 )
-	ROM_LOAD( "ki-00",  0x42000, 0x4000, 0x3278b6ac )
-	ROM_LOAD( "kj-00",  0x46000, 0x4000, 0xc3ff1da1 )
-	ROM_LOAD( "kk-00",  0x4a000, 0x4000, 0x65219221 )
-	ROM_LOAD( "kl-00",  0x4e000, 0x4000, 0x5ff211bc )
-	ROM_LOAD( "km-00",  0x52000, 0x4000, 0x388a2acc )
-	ROM_LOAD( "kn-00",  0x56000, 0x4000, 0x9c9eaba6 )
-	ROM_LOAD( "ko-00",  0x5a000, 0x4000, 0x8b4989ad )
-	ROM_LOAD( "kp-00",  0x5e000, 0x4000, 0x04ae3d8a )
-	ROM_LOAD( "kq-00",  0x62000, 0x4000, 0x824b4449 )
+	ROM_LOAD( "ku-02", 0x00000, 0x2000, 0xd8c27456 )	/* Character ROMs - 1024 chars, 3 bpp */
+	ROM_LOAD( "kv-02", 0x02000, 0x2000, 0xea2bd99f )
+	ROM_LOAD( "kw-02", 0x04000, 0x2000, 0x1bfe7c88 )
+	ROM_LOAD( "kt-02", 0x06000, 0x4000, 0x37bbe291 )	/* tile set */
+	ROM_LOAD( "ks-02", 0x0a000, 0x4000, 0x716bd393 )
+	ROM_LOAD( "kr-02", 0x0e000, 0x4000, 0x388a1238 )
+	ROM_LOAD( "k6-00", 0x12000, 0x4000, 0xe63b9ca9 )	/* sprites */
+	ROM_LOAD( "k7-00", 0x16000, 0x4000, 0xa8d5e8d7 )
+	ROM_LOAD( "k8-00", 0x1a000, 0x4000, 0x975ae136 )
+	ROM_LOAD( "k9-00", 0x1e000, 0x4000, 0x63aaaca8 )
+	ROM_LOAD( "ka-00", 0x22000, 0x4000, 0x37fb0e09 )
+	ROM_LOAD( "kb-00", 0x26000, 0x4000, 0xc474d040 )
+	ROM_LOAD( "kc-00", 0x2a000, 0x4000, 0x55a8420a )
+	ROM_LOAD( "kd-00", 0x2e000, 0x4000, 0x23b32cbd )
+	ROM_LOAD( "ke-00", 0x32000, 0x4000, 0xdba47f90 )
+	ROM_LOAD( "kf-00", 0x36000, 0x4000, 0x1634b750 )
+	ROM_LOAD( "kg-00", 0x3a000, 0x4000, 0xd21c3f64 )
+	ROM_LOAD( "kh-00", 0x3e000, 0x4000, 0xe88f63a9 )
+	ROM_LOAD( "ki-00", 0x42000, 0x4000, 0x3278b6ac )
+	ROM_LOAD( "kj-00", 0x46000, 0x4000, 0xc3ff1da1 )
+	ROM_LOAD( "kk-00", 0x4a000, 0x4000, 0x65219221 )
+	ROM_LOAD( "kl-00", 0x4e000, 0x4000, 0x5ff211bc )
+	ROM_LOAD( "km-00", 0x52000, 0x4000, 0x388a2acc )
+	ROM_LOAD( "kn-00", 0x56000, 0x4000, 0x9c9eaba6 )
+	ROM_LOAD( "ko-00", 0x5a000, 0x4000, 0x8b4989ad )
+	ROM_LOAD( "kp-00", 0x5e000, 0x4000, 0x04ae3d8a )
+	ROM_LOAD( "kq-00", 0x62000, 0x4000, 0x824b4449 )
 
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "k4-0", 0x8000, 0x4000, 0x3ad35dff )
@@ -510,45 +506,42 @@ ROM_END
 
 ROM_START( excthour_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "E29",  0x04000, 0x4000, 0xe9f18bdf )
-	ROM_LOAD( "E28",  0x08000, 0x4000, 0x1884e41c )
-	ROM_LOAD( "E27",  0x0c000, 0x4000, 0x0456e8ea )
+	ROM_LOAD( "E29", 0x04000, 0x4000, 0xe9f18bdf )
+	ROM_LOAD( "E28", 0x08000, 0x4000, 0x1884e41c )
+	ROM_LOAD( "E27", 0x0c000, 0x4000, 0x0456e8ea )
 
 	ROM_REGION(0x66000)	/* temporary space for graphics (disposed after conversion) */
-	/* Character ROMs - 1024 chars, 3 bpp */
-	ROM_LOAD( "E30",  0x00000, 0x2000, 0x19224262 )
-	ROM_LOAD( "E31",  0x02000, 0x2000, 0x9a1121fd )
-	ROM_LOAD( "E32",  0x04000, 0x2000, 0xee0cfdfa )
-	/* tile set */
-	ROM_LOAD( "E5",   0x06000, 0x4000, 0x269c2d5e )
-	ROM_LOAD( "E4",   0x0a000, 0x4000, 0x716bd393 )
-	ROM_LOAD( "E3",   0x0e000, 0x4000, 0x276bddf7 )
-	/* sprites */
-	ROM_LOAD( "E6",   0x12000, 0x4000, 0xe63b9ca9 )
-	ROM_LOAD( "E7",   0x16000, 0x4000, 0xa8d5e8d7 )
-	ROM_LOAD( "E8",   0x1a000, 0x4000, 0x975ae136 )
-	ROM_LOAD( "E9",   0x1e000, 0x4000, 0x63aaaca8 )
-	ROM_LOAD( "E10",  0x22000, 0x4000, 0x37fb0e09 )
-	ROM_LOAD( "E11",  0x26000, 0x4000, 0xc474d040 )
-	ROM_LOAD( "E12",  0x2a000, 0x4000, 0x55a8420a )
-	ROM_LOAD( "E13",  0x2e000, 0x4000, 0x23b32cbd )
-	ROM_LOAD( "E14",  0x32000, 0x4000, 0xdba47f90 )
-	ROM_LOAD( "E15",  0x36000, 0x4000, 0x1634b750 )
-	ROM_LOAD( "E16",  0x3a000, 0x4000, 0xd21c3f64 )
-	ROM_LOAD( "E17",  0x3e000, 0x4000, 0xe88f63a9 )
-	ROM_LOAD( "E18",  0x42000, 0x4000, 0x3278b6ac )
-	ROM_LOAD( "E19",  0x46000, 0x4000, 0xc3ff1da1 )
-	ROM_LOAD( "E20",  0x4a000, 0x4000, 0x65219221 )
-	ROM_LOAD( "E21",  0x4e000, 0x4000, 0x5ff211bc )
-	ROM_LOAD( "E22",  0x52000, 0x4000, 0x388a2acc )
-	ROM_LOAD( "E23",  0x56000, 0x4000, 0x9c9eaba6 )
-	ROM_LOAD( "E24",  0x5a000, 0x4000, 0x8b4989ad )
-	ROM_LOAD( "E25",  0x5e000, 0x4000, 0x04ae3d8a )
-	ROM_LOAD( "E26",  0x62000, 0x4000, 0x824b4449 )
+	ROM_LOAD( "E30",   0x00000, 0x2000, 0x19224262 )	/* Character ROMs - 1024 chars, 3 bpp */
+	ROM_LOAD( "E31",   0x02000, 0x2000, 0x9a1121fd )
+	ROM_LOAD( "E32",   0x04000, 0x2000, 0xee0cfdfa )
+	ROM_LOAD( "E5",    0x06000, 0x4000, 0x269c2d5e )	/* tile set */
+	ROM_LOAD( "ks-02", 0x0a000, 0x4000, 0x716bd393 )
+	ROM_LOAD( "E3",    0x0e000, 0x4000, 0x276bddf7 )
+	ROM_LOAD( "k6-00", 0x12000, 0x4000, 0xe63b9ca9 )	/* sprites */
+	ROM_LOAD( "k7-00", 0x16000, 0x4000, 0xa8d5e8d7 )
+	ROM_LOAD( "k8-00", 0x1a000, 0x4000, 0x975ae136 )
+	ROM_LOAD( "k9-00", 0x1e000, 0x4000, 0x63aaaca8 )
+	ROM_LOAD( "ka-00", 0x22000, 0x4000, 0x37fb0e09 )
+	ROM_LOAD( "kb-00", 0x26000, 0x4000, 0xc474d040 )
+	ROM_LOAD( "kc-00", 0x2a000, 0x4000, 0x55a8420a )
+	ROM_LOAD( "kd-00", 0x2e000, 0x4000, 0x23b32cbd )
+	ROM_LOAD( "ke-00", 0x32000, 0x4000, 0xdba47f90 )
+	ROM_LOAD( "kf-00", 0x36000, 0x4000, 0x1634b750 )
+	ROM_LOAD( "kg-00", 0x3a000, 0x4000, 0xd21c3f64 )
+	ROM_LOAD( "kh-00", 0x3e000, 0x4000, 0xe88f63a9 )
+	ROM_LOAD( "ki-00", 0x42000, 0x4000, 0x3278b6ac )
+	ROM_LOAD( "kj-00", 0x46000, 0x4000, 0xc3ff1da1 )
+	ROM_LOAD( "kk-00", 0x4a000, 0x4000, 0x65219221 )
+	ROM_LOAD( "kl-00", 0x4e000, 0x4000, 0x5ff211bc )
+	ROM_LOAD( "km-00", 0x52000, 0x4000, 0x388a2acc )
+	ROM_LOAD( "kn-00", 0x56000, 0x4000, 0x9c9eaba6 )
+	ROM_LOAD( "ko-00", 0x5a000, 0x4000, 0x8b4989ad )
+	ROM_LOAD( "kp-00", 0x5e000, 0x4000, 0x04ae3d8a )
+	ROM_LOAD( "kq-00", 0x62000, 0x4000, 0x824b4449 )
 
 	ROM_REGION(0x10000)	/* 64k for audio code */
-	ROM_LOAD( "E1",   0x8000, 0x4000, 0x3ad35dff )
-	ROM_LOAD( "E2",   0xc000, 0x4000, 0x1ebde7cb )
+	ROM_LOAD( "k4-0", 0x8000, 0x4000, 0x3ad35dff )
+	ROM_LOAD( "k5-0", 0xc000, 0x4000, 0x1ebde7cb )
 ROM_END
 
 ROM_START( maniach_rom )
@@ -596,11 +589,11 @@ ROM_START( maniach_rom )
 ROM_END
 
 
+
 static int matmania_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
@@ -612,6 +605,9 @@ static int matmania_hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x0700],16*5);
+			RAM[0x0028] = RAM[0x0700];
+			RAM[0x0029] = RAM[0x0701];
+			RAM[0x002a] = RAM[0x0702];
 			osd_fclose(f);
 		}
 
@@ -620,15 +616,36 @@ static int matmania_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
+static int excthour_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
+		(memcmp(&RAM[0x074d],"\xc9\xcd\xb0",3) == 0))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0700],16*5);
+			RAM[0x0028] = RAM[0x0700];
+			RAM[0x0029] = RAM[0x0701];
+			RAM[0x002a] = RAM[0x0702];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
 
 static void matmania_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -636,15 +653,19 @@ static void matmania_hisave(void)
 		osd_fwrite(f,&RAM[0x0700],16*5);
 		osd_fclose(f);
 	}
-
 }
 
 
 struct GameDriver matmania_driver =
 {
-	"Mat Mania",
+	__FILE__,
+	0,
 	"matmania",
+	"Mat Mania",
+	"1985",
+	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
+	0,
 	&matmania_machine_driver,
 
 	matmania_rom,
@@ -663,9 +684,14 @@ struct GameDriver matmania_driver =
 
 struct GameDriver excthour_driver =
 {
-	"Exciting Hour",
+	__FILE__,
+	&matmania_driver,
 	"excthour",
+	"Exciting Hour",
+	"1985",
+	"Technos (Taito license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
+	0,
 	&matmania_machine_driver,
 
 	excthour_rom,
@@ -678,14 +704,19 @@ struct GameDriver excthour_driver =
 	matmania_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	matmania_hiload, matmania_hisave
+	excthour_hiload, matmania_hisave
 };
 
 struct GameDriver maniach_driver =
 {
-	"Mania Challenge",
+	__FILE__,
+	0,
 	"maniach",
-	"Brad Oliver (MAME driver)\nTim Lindquist (color info)\n\nWARNING: This driver is still PRELIMINARY. Do not complain that it  doesn't work; we know that already!",
+	"Mania Challenge",
+	"1986",
+	"Technos (Taito America license)",
+	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
+	GAME_NOT_WORKING,
 	&maniach_machine_driver,
 
 	maniach_rom,

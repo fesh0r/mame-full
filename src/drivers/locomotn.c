@@ -55,8 +55,9 @@ void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
-void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap);
-void jungler_vh_screenrefresh(struct osd_bitmap *bitmap);
+void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -460,7 +461,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x38ff, 0x38ff },
+	{ 0x20ff, 0x20ff },
 	{ soundlatch_r },
 	{ locomotn_portB_r },
 	{ 0 },
@@ -469,98 +470,56 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,64*4+4*2,
-	rallyx_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	rallyx_vh_start,
-	rallyx_vh_stop,
-	locomotn_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
+#define MACHINE_DRIVER(GAMENAME)   \
+																	\
+static struct MachineDriver GAMENAME##_machine_driver =             \
+{                                                                   \
+	/* basic machine hardware */                                    \
+	{                                                               \
+		{                                                           \
+			CPU_Z80,                                                \
+			3072000,	/* 3.072 Mhz ? */                           \
+			0,                                                      \
+			readmem,writemem,0,0,                                   \
+			nmi_interrupt,1                                         \
+		},                                                          \
+		{                                                           \
+			CPU_Z80 | CPU_AUDIO_CPU,                                \
+			14318180/4,	/* ???? same as other Konami games */       \
+			2,	/* memory region #2 */                              \
+			sound_readmem,sound_writemem,0,0,                       \
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
+		}                                                           \
+	},                                                              \
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */ \
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	0,                                                              \
+                                                                    \
+	/* video hardware */                                            \
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },                       \
+	gfxdecodeinfo,                                                  \
+	32,64*4+4*2,                                                    \
+	rallyx_vh_convert_color_prom,                                   \
+                                                                    \
+	VIDEO_TYPE_RASTER,                                              \
+	0,                                                              \
+	rallyx_vh_start,                                                \
+	rallyx_vh_stop,                                                 \
+	GAMENAME##_vh_screenrefresh,                                    \
+                                                                    \
+	/* sound hardware */                                            \
+	0,0,0,0,                                                        \
+	{                                                               \
+		{                                                           \
+			SOUND_AY8910,                                           \
+			&ay8910_interface                                       \
+		}                                                           \
+	}                                                               \
 };
 
-/* same as the above, but we use a different vh_screenrefresh() */
-/* to properly place sprites and bullets */
-static struct MachineDriver jungler_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,64*4+4*2,
-	rallyx_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	rallyx_vh_start,
-	rallyx_vh_stop,
-	jungler_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
-
+MACHINE_DRIVER(locomotn)
+MACHINE_DRIVER(jungler)
+MACHINE_DRIVER(commsega)
 
 
 /***************************************************************************
@@ -618,58 +577,133 @@ ROM_END
 
 
 
-#if 0
-static int hiload(void)
+static int locomotn_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x9f00],"\x00\x00\x01",3) == 0 &&
-			memcmp(&RAM[0x9f6c],"\x10\x24\x00",3) == 0)
+					memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
 	{
-		void *f;
+			void *f;
 
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9f00],12*10);
-			osd_fclose(f);
-		}
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x9f00],12*10);
+					RAM[0x99c6] = RAM[0x9f00];
+					RAM[0x99c7] = RAM[0x9f01];
+					RAM[0x99c8] = RAM[0x9f02];
+					osd_fclose(f);
+			}
 
-		return 1;
+			return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 
 
-static void hisave(void)
+static void locomotn_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x9f00],12*10);
-		osd_fclose(f);
+			osd_fwrite(f,&RAM[0x9f00],12*10);
+			osd_fclose(f);
 	}
-
 }
-#endif
+
+static int jungler_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x991c],"\x00\x00\x02",3) == 0)
+	{
+			void *f;
+
+
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x9940],16*10);
+					RAM[0x991c] = RAM[0x9940];
+					RAM[0x991d] = RAM[0x9941];
+					RAM[0x991e] = RAM[0x9942];
+					osd_fclose(f);
+			}
+
+			return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void jungler_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x9940],16*10);
+			osd_fclose(f);
+	}
+}
+
+static int commsega_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x9c60],"\x1d\x1c",2) == 0)
+	{
+			void *f;
+
+
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x9c6d],6);
+					osd_fclose(f);
+			}
+
+			return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void commsega_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x9c6d],6);
+			osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver locomotn_driver =
 {
-	"Loco-Motion",
+	__FILE__,
+	0,
 	"locomotn",
+	"Loco-Motion",
+	"1982",
+	"Konami (Centuri license)",
 	"Nicola Salmoria\nMike Balfour (high score save)\nKevin Klopp (color info)",
-	&machine_driver,
+	0,
+	&locomotn_machine_driver,
 
 	locomotn_rom,
 	0, 0,
@@ -681,14 +715,19 @@ struct GameDriver locomotn_driver =
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0,0,//hiload, hisave
+	locomotn_hiload, locomotn_hisave
 };
 
 struct GameDriver jungler_driver =
 {
-	"Jungler",
+	__FILE__,
+	0,
 	"jungler",
+	"Jungler",
+	"1981",
+	"Konami",
 	"Nicola Salmoria",
+	0,
 	&jungler_machine_driver,
 
 	jungler_rom,
@@ -701,15 +740,20 @@ struct GameDriver jungler_driver =
 	color_prom, 0, 0,	/* wrong */
 	ORIENTATION_ROTATE_90,
 
-	0, 0,
+	jungler_hiload, jungler_hisave
 };
 
 struct GameDriver commsega_driver =
 {
-	"Commando (Sega)",
+	__FILE__,
+	0,
 	"commsega",
+	"Commando (Sega)",
+	"1983",
+	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
-	&machine_driver,
+	0,
+	&commsega_machine_driver,
 
 	commsega_rom,
 	0, 0,
@@ -720,5 +764,5 @@ struct GameDriver commsega_driver =
 	color_prom, 0, 0,	/* wrong */
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	commsega_hiload, commsega_hisave
 };

@@ -48,7 +48,7 @@ extern unsigned char *panic_videoram;
 
 int panic_vh_start(void);
 void panic_vh_stop(void);
-void panic_vh_screenrefresh(struct osd_bitmap *bitmap);
+void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -182,7 +182,7 @@ enum
 	black, blue, red, purple, green, cyan, yellow, white, orange
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	black, yellow,    red,        white,        /* 1 Drop Monster */
 	black, green,     purple,     white,        /* 3 Drop Monster */
@@ -217,7 +217,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
   	32*8, 32*8, { 6*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -243,6 +243,9 @@ static struct MachineDriver machine_driver =
 
 static int panic_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for default to be copied */
 	if (RAM[0x40c1] == 0x00 && RAM[0x40c2] == 0x03 && RAM[0x40c3] == 0x04)
 	{
@@ -267,6 +270,7 @@ static int panic_hiload(void)
 static void panic_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -297,13 +301,13 @@ ROM_END
 
 ROM_START( panica_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800, 0x49cd1801 )         /* Code */
+	ROM_LOAD( "panica.1",   0x0000, 0x0800, 0x49cd1801 )         /* Code */
 	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800, 0x0ed18545 )
 	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800, 0x44a22274 )
 	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800, 0x633ea97e )
 	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800, 0xf16ac644 )
 	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800, 0xd0aaa828 )
-	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800, 0x04fe6428 )
+	ROM_LOAD( "panica.7",   0x3000, 0x0800, 0x04fe6428 )
 	ROM_LOAD( "spcpanic.8", 0x3800, 0x0800, 0xc6f90207 )         /* Colour Table */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
@@ -317,9 +321,14 @@ ROM_END
 
 struct GameDriver panic_driver =
 {
-	"Space Panic",
+	__FILE__,
+	0,
 	"panic",
+	"Space Panic (set 1)",
+	"1980",
+	"Universal",
 	"Mike Coates (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	panic_rom,
@@ -337,9 +346,14 @@ struct GameDriver panic_driver =
 
 struct GameDriver panica_driver =
 {
-	"Space Panic (alternate version)",
+	__FILE__,
+	&panic_driver,
 	"panica",
+	"Space Panic (set 2)",
+	"1980",
+	"Universal",
 	"Mike Coates (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	panica_rom,

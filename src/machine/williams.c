@@ -8,9 +8,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "M6808/M6808.h"
 #include "M6809/M6809.h"
 #include "6821pia.h"
+#include "machine/ticket.h"
 
 
 /* defined in vidhrdw/williams.c */
@@ -65,17 +67,8 @@ static void williams_snd_cmd_w (int offset, int cmd);
 static void williams_port_select_w (int offset, int data);
 static void sinistar_snd_cmd_w (int offset, int cmd);
 
-/* external code to modify the palette */
-void williams_palette_w (int offset, int data);
-
 /* external code to update part of the screen */
 void williams_vh_update (int counter);
-
-/* external code for ticket dispenser */
-extern void ticket_dispenser_init(int msec);
-extern int ticket_dispenser_r(int offset);
-extern void ticket_dispenser_w(int offset, int data);
-
 
 
 /***************************************************************************
@@ -89,7 +82,11 @@ static pia6821_interface robotron_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -103,7 +100,11 @@ static pia6821_interface joust_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ williams_input_port_0_3, input_port_2_r, 0 }, /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -117,7 +118,11 @@ static pia6821_interface stargate_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ stargate_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -131,7 +136,11 @@ static pia6821_interface bubbles_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -145,7 +154,11 @@ static pia6821_interface splat_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ williams_input_port_0_3, input_port_2_r, 0 }, /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ williams_input_port_1_4, 0, 0 },              /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -159,7 +172,11 @@ static pia6821_interface sinistar_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ sinistar_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, sinistar_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -173,7 +190,11 @@ static pia6821_interface blaster_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ blaster_input_port_0_r, input_port_2_r, 0 },  /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -187,7 +208,11 @@ static pia6821_interface defender_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ defender_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -201,7 +226,11 @@ static pia6821_interface colony7_pia_intf =
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
 	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
@@ -214,10 +243,14 @@ static pia6821_interface lottofun_pia_intf =
 {
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-    { lottofun_input_port_0_r, input_port_2_r, 0 }, /* input port A */
-    { input_port_1_r, 0, 0 },                       /* input port B */
-    { 0, 0, DAC_data_w },                           /* output port A */
-    { ticket_dispenser_w, williams_snd_cmd_w, 0 },  /* output port B */
+	{ lottofun_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ ticket_dispenser_w, williams_snd_cmd_w, 0 },  /* output port B */
 	{ 0, 0, 0 },                                    /* output CA2 */
 	{ 0, 0, 0 },                                    /* output CB2 */
 	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
@@ -305,7 +338,7 @@ void lottofun_init_machine (void)
 
 	/* Initialize the ticket dispenser to 70 milliseconds */
 	/* (I'm not sure what the correct value really is) */
-	ticket_dispenser_init(70);
+	ticket_dispenser_init(70, TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH);
 }
 
 
@@ -504,6 +537,8 @@ int stargate_catch_loop_r (int offset)
 void defender_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* set bank address */
 	cpu_setbank (1, &RAM[bank[data & 7]]);
@@ -580,7 +615,7 @@ void defender_io_w (int offset,int data)
 
 	/* Palette */
 	else if (offset < 0x10)
-		williams_palette_w (offset, data);
+		paletteram_BBGGGRRR_w(offset,data);
 
 	/* PIAs */
 	else if (offset >= 0x0c00 && offset < 0x0c04)
@@ -616,6 +651,7 @@ int defender_catch_loop_r(int offset)
 void colony7_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0xc000 };
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	/* set bank address */
 	cpu_setbank (1, &RAM[bank[data & 7]]);
@@ -768,6 +804,9 @@ static int bank[16] = { 0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x
 
 void blaster_vram_select_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	vram_bank = data;
 	if (vram_bank)
 	{
@@ -784,6 +823,9 @@ void blaster_vram_select_w (int offset, int data)
 
 void blaster_bank_select_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	blaster_bank = data & 15;
 	if (vram_bank)
 	{

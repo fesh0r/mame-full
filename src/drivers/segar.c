@@ -75,8 +75,8 @@ extern void spaceod_backshift_w(int offset,int data);
 extern void spaceod_backshift_clear_w(int offset,int data);
 extern void spaceod_backfill_w(int offset,int data);
 extern void spaceod_nobackfill_w(int offset,int data);
-extern void segar_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* drivers/segar.c */
 
@@ -274,8 +274,8 @@ INPUT_PORTS_START( astrob_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN3 */
-        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2, "Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-        PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2, "Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -284,10 +284,10 @@ INPUT_PORTS_START( astrob_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-        PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL, "Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-        PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-        PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
-        PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL, "Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -295,54 +295,53 @@ INPUT_PORTS_START( astrob_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x20, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
-        PORT_DIPNAME( 0xC0, 0xC0, "Number of Ships", IP_KEY_NONE )
-        PORT_DIPSETTING(    0xC0, "5 Ships" )
-        PORT_DIPSETTING(    0x40, "4 Ships" )
-        PORT_DIPSETTING(    0x80, "3 Ships" )
-        PORT_DIPSETTING(    0x00, "2 Ships" )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0xC0, 0xC0, "Number of Ships", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xC0, "5 Ships" )
+	PORT_DIPSETTING(    0x40, "4 Ships" )
+	PORT_DIPSETTING(    0x80, "3 Ships" )
+	PORT_DIPSETTING(    0x00, "2 Ships" )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
+	/* This fake input port is used for DIP Switch 2 */
+	PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x08, "3 / 1" )
+	PORT_DIPSETTING(    0x04, "2 / 1" )
+	PORT_DIPSETTING(    0x0C, "1 / 1" )
+	PORT_DIPSETTING(    0x02, "1 / 2" )
+	PORT_DIPSETTING(    0x0A, "1 / 3" )
+	PORT_DIPSETTING(    0x06, "1 / 4" )
+	PORT_DIPSETTING(    0x0E, "1 / 5" )
+	PORT_DIPSETTING(    0x01, "1 / 6" )
+	PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
-
+	PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x80, "3 / 1" )
+	PORT_DIPSETTING(    0x40, "2 / 1" )
+	PORT_DIPSETTING(    0xC0, "1 / 1" )
+	PORT_DIPSETTING(    0x20, "1 / 2" )
+	PORT_DIPSETTING(    0xA0, "1 / 3" )
+	PORT_DIPSETTING(    0x60, "1 / 4" )
+	PORT_DIPSETTING(    0xE0, "1 / 5" )
+	PORT_DIPSETTING(    0x10, "1 / 6" )
+	PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( s005_input_ports )
@@ -350,9 +349,9 @@ INPUT_PORTS_START( s005_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -376,11 +375,11 @@ INPUT_PORTS_START( s005_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL)
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -388,55 +387,53 @@ INPUT_PORTS_START( s005_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x20, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
-        PORT_DIPNAME( 0xC0, 0x40, "Lives", IP_KEY_NONE )
-        PORT_DIPSETTING(    0xC0, "6 Men" )
-        PORT_DIPSETTING(    0x80, "5 Men" )
-        PORT_DIPSETTING(    0x40, "4 Men" )
-        PORT_DIPSETTING(    0x00, "3 Men" )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0xC0, 0x40, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xC0, "6 Men" )
+	PORT_DIPSETTING(    0x80, "5 Men" )
+	PORT_DIPSETTING(    0x40, "4 Men" )
+	PORT_DIPSETTING(    0x00, "3 Men" )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
+	/* This fake input port is used for DIP Switch 2 */
+	PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x08, "3 / 1" )
+	PORT_DIPSETTING(    0x04, "2 / 1" )
+	PORT_DIPSETTING(    0x0C, "1 / 1" )
+	PORT_DIPSETTING(    0x02, "1 / 2" )
+	PORT_DIPSETTING(    0x0A, "1 / 3" )
+	PORT_DIPSETTING(    0x06, "1 / 4" )
+	PORT_DIPSETTING(    0x0E, "1 / 5" )
+	PORT_DIPSETTING(    0x01, "1 / 6" )
+	PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
-
-
+	PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x80, "3 / 1" )
+	PORT_DIPSETTING(    0x40, "2 / 1" )
+	PORT_DIPSETTING(    0xC0, "1 / 1" )
+	PORT_DIPSETTING(    0x20, "1 / 2" )
+	PORT_DIPSETTING(    0xA0, "1 / 3" )
+	PORT_DIPSETTING(    0x60, "1 / 4" )
+	PORT_DIPSETTING(    0xE0, "1 / 5" )
+	PORT_DIPSETTING(    0x10, "1 / 6" )
+	PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( monsterb_input_ports )
@@ -444,9 +441,9 @@ INPUT_PORTS_START( monsterb_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -462,7 +459,7 @@ INPUT_PORTS_START( monsterb_input_ports )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-        PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Zap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Zap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -470,11 +467,11 @@ INPUT_PORTS_START( monsterb_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL)
-        PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, "Zap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL)
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, "Zap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -482,68 +479,66 @@ INPUT_PORTS_START( monsterb_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x01, 0x01, "Game Mode", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x01, "Normal" )
-        PORT_DIPSETTING(    0x00, "Endless" )
-        PORT_DIPNAME( 0x06, 0x02, "Bonus Points", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x04, "10,000 Points" )
-        PORT_DIPSETTING(    0x02, "20,000 Points" )
-        PORT_DIPSETTING(    0x06, "40,000 Points" )
-        PORT_DIPSETTING(    0x00, "No Bonus Points" )
-        PORT_DIPNAME( 0x18, 0x08, "Difficulty", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x18, "Hardest" )
-        PORT_DIPSETTING(    0x10, "Hard" )
-        PORT_DIPSETTING(    0x08, "Medium" )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x20, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
-        PORT_DIPNAME( 0xC0, 0x40, "Lives", IP_KEY_NONE )
-        PORT_DIPSETTING(    0xC0, "6 Men" )
-        PORT_DIPSETTING(    0x80, "5 Men" )
-        PORT_DIPSETTING(    0x40, "4 Men" )
-        PORT_DIPSETTING(    0x00, "3 Men" )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x01, 0x01, "Game Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Normal" )
+	PORT_DIPSETTING(    0x00, "Endless" )
+	PORT_DIPNAME( 0x06, 0x02, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_DIPSETTING(    0x06, "40000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x18, 0x08, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x18, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x20, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0xC0, 0x40, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x80, "5" )
+	PORT_DIPSETTING(    0xC0, "6" )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
+	/* This fake input port is used for DIP Switch 2 */
+	PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x08, "3 / 1" )
+	PORT_DIPSETTING(    0x04, "2 / 1" )
+	PORT_DIPSETTING(    0x0C, "1 / 1" )
+	PORT_DIPSETTING(    0x02, "1 / 2" )
+	PORT_DIPSETTING(    0x0A, "1 / 3" )
+	PORT_DIPSETTING(    0x06, "1 / 4" )
+	PORT_DIPSETTING(    0x0E, "1 / 5" )
+	PORT_DIPSETTING(    0x01, "1 / 6" )
+	PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
-
-
+	PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x80, "3 / 1" )
+	PORT_DIPSETTING(    0x40, "2 / 1" )
+	PORT_DIPSETTING(    0xC0, "1 / 1" )
+	PORT_DIPSETTING(    0x20, "1 / 2" )
+	PORT_DIPSETTING(    0xA0, "1 / 3" )
+	PORT_DIPSETTING(    0x60, "1 / 4" )
+	PORT_DIPSETTING(    0xE0, "1 / 5" )
+	PORT_DIPSETTING(    0x10, "1 / 6" )
+	PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spaceod_input_ports )
@@ -551,9 +546,9 @@ INPUT_PORTS_START( spaceod_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -563,7 +558,7 @@ INPUT_PORTS_START( spaceod_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON2, "Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON2, "Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -577,11 +572,11 @@ INPUT_PORTS_START( spaceod_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL)
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -589,63 +584,61 @@ INPUT_PORTS_START( spaceod_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x01, 0x01, "Game Mode", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x01, "Normal" )
-        PORT_DIPSETTING(    0x00, "Endless" )
-        PORT_DIPNAME( 0x18, 0x08, "Extra Ship @", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x18, "80,000 Points" )
-        PORT_DIPSETTING(    0x10, "60,000 Points" )
-        PORT_DIPSETTING(    0x08, "40,000 Points" )
-        PORT_DIPSETTING(    0x00, "20,000 Points" )
-        PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x20, "Upright" )
-        PORT_DIPSETTING(    0x00, "Cocktail" )
-        PORT_DIPNAME( 0xC0, 0x40, "Lives", IP_KEY_NONE )
-        PORT_DIPSETTING(    0xC0, "6 Ships" )
-        PORT_DIPSETTING(    0x80, "5 Ships" )
-        PORT_DIPSETTING(    0x40, "4 Ships" )
-        PORT_DIPSETTING(    0x00, "3 Ships" )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x01, 0x01, "Game Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Normal" )
+	PORT_DIPSETTING(    0x00, "Endless" )
+	PORT_DIPNAME( 0x18, 0x08, "Extra Ship @", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "80,000 Points" )
+	PORT_DIPSETTING(    0x10, "60,000 Points" )
+	PORT_DIPSETTING(    0x08, "40,000 Points" )
+	PORT_DIPSETTING(    0x00, "20,000 Points" )
+	PORT_DIPNAME( 0x20, 0x20, "Orientation", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0xC0, 0x40, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xC0, "6 Ships" )
+	PORT_DIPSETTING(    0x80, "5 Ships" )
+	PORT_DIPSETTING(    0x40, "4 Ships" )
+	PORT_DIPSETTING(    0x00, "3 Ships" )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x08, "3 / 1" )
-        PORT_DIPSETTING(    0x04, "2 / 1" )
-        PORT_DIPSETTING(    0x0C, "1 / 1" )
-        PORT_DIPSETTING(    0x02, "1 / 2" )
-        PORT_DIPSETTING(    0x0A, "1 / 3" )
-        PORT_DIPSETTING(    0x06, "1 / 4" )
-        PORT_DIPSETTING(    0x0E, "1 / 5" )
-        PORT_DIPSETTING(    0x01, "1 / 6" )
-        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
+	/* This fake input port is used for DIP Switch 2 */
+	PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x08, "3 / 1" )
+	PORT_DIPSETTING(    0x04, "2 / 1" )
+	PORT_DIPSETTING(    0x0C, "1 / 1" )
+	PORT_DIPSETTING(    0x02, "1 / 2" )
+	PORT_DIPSETTING(    0x0A, "1 / 3" )
+	PORT_DIPSETTING(    0x06, "1 / 4" )
+	PORT_DIPSETTING(    0x0E, "1 / 5" )
+	PORT_DIPSETTING(    0x01, "1 / 6" )
+	PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
 
-        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 / 1" )
-        PORT_DIPSETTING(    0x80, "3 / 1" )
-        PORT_DIPSETTING(    0x40, "2 / 1" )
-        PORT_DIPSETTING(    0xC0, "1 / 1" )
-        PORT_DIPSETTING(    0x20, "1 / 2" )
-        PORT_DIPSETTING(    0xA0, "1 / 3" )
-        PORT_DIPSETTING(    0x60, "1 / 4" )
-        PORT_DIPSETTING(    0xE0, "1 / 5" )
-        PORT_DIPSETTING(    0x10, "1 / 6" )
-        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
-        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
-        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
-        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
-        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
-        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
-        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
-
-
+	PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 / 1" )
+	PORT_DIPSETTING(    0x80, "3 / 1" )
+	PORT_DIPSETTING(    0x40, "2 / 1" )
+	PORT_DIPSETTING(    0xC0, "1 / 1" )
+	PORT_DIPSETTING(    0x20, "1 / 2" )
+	PORT_DIPSETTING(    0xA0, "1 / 3" )
+	PORT_DIPSETTING(    0x60, "1 / 4" )
+	PORT_DIPSETTING(    0xE0, "1 / 5" )
+	PORT_DIPSETTING(    0x10, "1 / 6" )
+	PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
+	PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
+	PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
+	PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
+	PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
+	PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
+	PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 INPUT_PORTS_END
 
 
@@ -919,6 +912,9 @@ void spaceod_decode(void)
 
 static int astrob_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0xCC0E],"KUV",3) == 0) &&
 		(memcmp(&RAM[0xCC16],"PS\\",3) == 0))
@@ -942,6 +938,8 @@ static int astrob_hiload(void)
 static void astrob_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xCB3F],"\xFF\xFF\xFF\xFF",4)==0)
@@ -957,6 +955,9 @@ static void astrob_hisave(void)
 
 static int monsterb_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
         /* check if memory has already been initialized */
         if (memcmp(&RAM[0xC8E8],"\x22\x0e\xd5\x0a",4) == 0)
 	{
@@ -978,6 +979,8 @@ static int monsterb_hiload(void)
 static void monsterb_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xC913],"\xFF\xFF\xFF\xFF",4)==0)
@@ -993,6 +996,9 @@ static void monsterb_hisave(void)
 
 static int s005_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
         /* check if memory has already been initialized */
         if (memcmp(&RAM[0xC8ED],"\x10\x1B\x17",3) == 0)
 	{
@@ -1015,6 +1021,8 @@ static int s005_hiload(void)
 static void s005_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xC911],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1030,6 +1038,9 @@ static void s005_hisave(void)
 
 static int spaceod_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
         /* check if memory has already been initialized */
         if (memcmp(&RAM[0xC8F1],"\xE2\x00\x04\x03",4) == 0)
 	{
@@ -1051,6 +1062,8 @@ static int spaceod_hiload(void)
 static void spaceod_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xC906],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1074,9 +1087,9 @@ static struct MachineDriver astrob_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        readmem,writemem,readport,astrob_writeport,
+			readmem,writemem,readport,astrob_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1109,9 +1122,9 @@ static struct MachineDriver spaceod_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        spaceod_readmem,writemem,readport,spaceod_writeport,
+			spaceod_readmem,writemem,readport,spaceod_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1144,9 +1157,9 @@ static struct MachineDriver s005_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        readmem,writemem,readport,s005_writeport,
+			readmem,writemem,readport,s005_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1180,9 +1193,9 @@ static struct MachineDriver monsterb_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        monsterb_readmem,writemem,readport,monsterb_writeport,
+			monsterb_readmem,writemem,readport,monsterb_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1213,9 +1226,14 @@ static struct MachineDriver monsterb_machine_driver =
 
 struct GameDriver astrob_driver =
 {
-	"Astro Blaster (version 2)",
+	__FILE__,
+	0,
 	"astrob",
+	"Astro Blaster (version 2)",
+	"1981",
+	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&astrob_machine_driver,
 
 	astrob_rom,
@@ -1233,9 +1251,14 @@ struct GameDriver astrob_driver =
 
 struct GameDriver astrob1_driver =
 {
-	"Astro Blaster (version 1)",
+	__FILE__,
+	&astrob_driver,
 	"astrob1",
+	"Astro Blaster (version 1)",
+	"1981",
+	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&astrob_machine_driver,
 
 	astrob1_rom,
@@ -1253,9 +1276,14 @@ struct GameDriver astrob1_driver =
 
 struct GameDriver s005_driver =
 {
+	__FILE__,
+	0,
 	"005",
 	"005",
+	"1981",
+	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&s005_machine_driver,
 
 	s005_rom,
@@ -1273,9 +1301,14 @@ struct GameDriver s005_driver =
 
 struct GameDriver monsterb_driver =
 {
-	"Monster Bash",
+	__FILE__,
+	0,
 	"monsterb",
+	"Monster Bash",
+	"1982",
+	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&monsterb_machine_driver,
 
 	monsterb_rom,
@@ -1293,9 +1326,14 @@ struct GameDriver monsterb_driver =
 
 struct GameDriver spaceod_driver =
 {
-	"Space Odyssey",
+	__FILE__,
+	0,
 	"spaceod",
+	"Space Odyssey",
+	"1981",
+	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&spaceod_machine_driver,
 
 	spaceod_rom,

@@ -57,10 +57,10 @@ static void (*wr_s_handler_wd)(int,int);
 #define IMMBYTE(b) {b=M_RDOP_ARG(pcreg++);}
 #define IMMWORD(w) {w = (M_RDOP_ARG(pcreg)<<8) + M_RDOP_ARG(pcreg+1); pcreg+=2;}
 
-#define PUSHBYTE(b) {--sreg;SP_ADJUST(sreg);(*wr_s_handler)(sreg,b);}
-#define PUSHWORD(w) {sreg-=2;SP_ADJUST(sreg);(*wr_s_handler_wd)(sreg,w);}
-#define PULLBYTE(b) {b=(*rd_s_handler)(sreg);sreg++;SP_ADJUST(sreg);}
-#define PULLWORD(w) {w=(*rd_s_handler_wd)(sreg);sreg+=2;SP_ADJUST(sreg);}
+#define PUSHBYTE(b) {(*wr_s_handler)(sreg,b);sreg--;SP_ADJUST(sreg);}
+#define PUSHWORD(w) {sreg--;(*wr_s_handler_wd)(sreg,w);sreg--;SP_ADJUST(sreg);}
+#define PULLBYTE(b) {sreg++;SP_ADJUST(sreg);b=(*rd_s_handler)(sreg);}
+#define PULLWORD(w) {sreg++;SP_ADJUST(sreg);w=(*rd_s_handler_wd)(sreg);sreg++;}
 
 /* CC masks      H INZC
               7654 3210	*/
@@ -195,11 +195,15 @@ static int rd_slow_wd( int addr )
 
 static int rd_fast( int addr )
 {
+	extern unsigned char *RAM;
+
 	return RAM[addr&0x7ff];
 }
 
 static int rd_fast_wd( int addr )
 {
+	extern unsigned char *RAM;
+
 	return( (RAM[addr&0x7ff]<<8) | (RAM[(addr+1)&0x7ff]) );
 }
 
@@ -216,11 +220,15 @@ static void wr_slow_wd( int addr, int v )
 
 static void wr_fast( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr&0x7ff] = v;
 }
 
 static void wr_fast_wd( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr&0x7ff] = v>>8;
 	RAM[(addr+1)&0x7ff] = v&255;
 }

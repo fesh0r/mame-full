@@ -48,7 +48,7 @@ Other than that, everything else seems to be complete.
 #include "vidhrdw/generic.h"
 #include "Z80/Z80.h"
 
-extern unsigned char *wc90_shared, *wc90_palette;
+extern unsigned char *wc90_shared;
 
 extern unsigned char *wc90_tile_colorram, *wc90_tile_videoram;
 extern unsigned char *wc90_tile_colorram2, *wc90_tile_videoram2;
@@ -77,20 +77,24 @@ int wc90_tile_colorram2_r( int offset );
 void wc90_tile_colorram2_w( int offset, int v );
 int wc90_shared_r ( int offset );
 void wc90_shared_w( int offset, int v );
-int wc90_palette_r ( int offset );
-void wc90_palette_w( int offset, int v );
-void wc90_vh_screenrefresh(struct osd_bitmap *bitmap);
+void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static void wc90_bankswitch_w( int offset,int data ) {
+static void wc90_bankswitch_w( int offset,int data )
+{
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
 	cpu_setbank( 1,&RAM[bankaddress] );
 }
 
-static void wc90_bankswitch1_w( int offset,int data ) {
+static void wc90_bankswitch1_w( int offset,int data )
+{
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
 	cpu_setbank( 2,&RAM[bankaddress] );
@@ -130,7 +134,7 @@ static struct MemoryReadAddress wc90_readmem2[] =
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, wc90_palette_r },
+	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_BANK2 },
 	{ 0xf800, 0xfbff, wc90_shared_r },
 	{ -1 }	/* end of table */
@@ -174,7 +178,7 @@ static struct MemoryWriteAddress wc90_writemem2[] =
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd800, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, wc90_palette_w, &wc90_palette },
+	{ 0xe000, 0xe7ff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xfbff, wc90_shared_w },
 	{ 0xfc00, 0xfc00, wc90_bankswitch1_w },
@@ -403,16 +407,16 @@ static struct MachineDriver wc90_machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 4*16*16,
+	4*16*16, 4*16*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	wc90_vh_start,
 	wc90_vh_stop,
@@ -428,6 +432,46 @@ static struct MachineDriver wc90_machine_driver =
 	}
 };
 
+static int wc90_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+        /* the color RAM is initialized when the startup reset is finished */
+        if (RAM[0xc200] == 0x69)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x800F],6*5);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+
+        else
+                return 0;  /* we can't load the hi scores yet */
+}
+
+static void wc90_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+        /* for avoiding problems when we reset the game by pressing the F3 key */
+        RAM[0xc200] = 0x00;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x800F],6*5);
+		osd_fclose(f);
+	}
+
+}
 
 
 ROM_START( wc90_rom )
@@ -459,9 +503,14 @@ ROM_END
 
 struct GameDriver wc90_driver =
 {
-	"World Cup 90",
+	__FILE__,
+	0,
 	"wc90",
-    "Ernesto Corvi",
+	"World Cup 90",
+	"1989",
+	"Tecmo",
+	"Ernesto Corvi",
+	0,
 	&wc90_machine_driver,
 
 	wc90_rom,
@@ -474,5 +523,5 @@ struct GameDriver wc90_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	wc90_hiload, wc90_hisave
 };

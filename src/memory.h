@@ -113,11 +113,11 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 #define MH_ELEMAX  64			/* sub elements       limit */
 #define MH_HARDMAX 64			/* hardware functions limit */
 
-/* 24 bits address */
-#define ABITS1_24    14
+/* 24 bits address (word access) */
+#define ABITS1_24    15
 #define ABITS2_24     8
 #define ABITS3_24     0
-#define ABITS_MIN_24  2      /* minimum memory block is 4 bytes */
+#define ABITS_MIN_24  1      /* minimum memory block is 2 bytes */
 /* 20 bits address */
 #define ABITS1_20    12
 #define ABITS2_20     8
@@ -128,6 +128,11 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 #define ABITS2_16     4
 #define ABITS3_16     0
 #define ABITS_MIN_16  0      /* minimum memory block is 1 byte */
+/* 16 bits address (little endian word access) */
+#define ABITS1_16LEW   12
+#define ABITS2_16LEW    3
+#define ABITS3_16LEW    0
+#define ABITS_MIN_16LEW 1      /* minimum memory block is 2 bytes */
 /* mask bits */
 #define MHMASK(abits)    (0xffffffff>>(32-abits))
 
@@ -138,15 +143,16 @@ extern MHELE *cur_mrhard;
 extern MHELE *cur_mwhard;
 extern MHELE curhw;
 
-extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
+//extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
 extern unsigned char *ROM;
 extern unsigned char *OP_RAM;	/* op_code used */
 extern unsigned char *OP_ROM;	/* op_code used */
 
 /* ----- memory setting subroutine ---- */
-void cpu_setOPbase16(int pc );
-void cpu_setOPbase20(int pc );
-void cpu_setOPbase24(int pc );
+void cpu_setOPbase16(int pc);
+void cpu_setOPbase16lew(int pc);
+void cpu_setOPbase20(int pc);
+void cpu_setOPbase24(int pc);
 void cpu_setOPbaseoverride (int (*f)(int));
 
 /* ----- memory setup function ----- */
@@ -158,19 +164,31 @@ void updatememorybase(int activecpu);
 
 /* ----- memory read /write function ----- */
 int cpu_readmem16(int address);
+int cpu_readmem16lew(int address);
+int cpu_readmem16lew_word(int address);
 int cpu_readmem20(int address);
 int cpu_readmem24(int address);
 int cpu_readmem24_word(int address);
 int cpu_readmem24_dword(int address);
 void cpu_writemem16(int address,int data);
+void cpu_writemem16lew(int address,int data);
+void cpu_writemem16lew_word(int address,int data);
 void cpu_writemem20(int address,int data);
 void cpu_writemem24(int address,int data);
 void cpu_writemem24_word(int address,int data);
 void cpu_writemem24_dword(int address,int data);
 
 /* ----- 16-bit memory access macros ----- */
+
+#ifdef ACORN
+/* Use these to avoid alignment problems on non-x86 hardware. */
+extern int READ_WORD(void *dst);
+extern int WRITE_WORD(void *dst, int d);
+#else
 #define READ_WORD(a)          (*(unsigned short *)(a))
 #define WRITE_WORD(a,d)       (*(unsigned short *)(a) = (d))
+#endif
+
 #define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
 #define COMBINE_WORD_MEM(a,d) (WRITE_WORD ((a), (READ_WORD (a) & ((d) >> 16)) | (d)))
 
@@ -187,6 +205,7 @@ extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 
 /* ----- op-code region set function ----- */
 #define change_pc16(pc) {if(cur_mrhard[(pc)>>(ABITS2_16+ABITS_MIN_16)]!=ophw)cpu_setOPbase16(pc);}
+#define change_pc16lew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16LEW+ABITS_MIN_16LEW)]!=ophw)cpu_setOPbase16lew(pc);}
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
 
@@ -198,8 +217,8 @@ extern MHELE ophw;
 extern unsigned char *cpu_bankbase[];
 
 #define cpu_readop(A) 		(OP_ROM[A])
-#define cpu_readop16(A)    (*(unsigned short *)&OP_ROM[A])
+#define cpu_readop16(A)         READ_WORD(&OP_ROM[A])
 #define cpu_readop_arg(A)	(OP_RAM[A])
-#define cpu_readop_arg16(A) (*(unsigned short *)&OP_RAM[A])
+#define cpu_readop_arg16(A)     READ_WORD(&OP_RAM[A])
 
 #endif

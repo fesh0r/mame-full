@@ -500,6 +500,9 @@ static unsigned char redbaron_color_prom[] = { VEC_PAL_MONO_AQUA };
 
 static int bzone_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0300],"\x05\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x0339],"\x22\x28\x38",3) == 0)
@@ -523,6 +526,7 @@ static int bzone_hiload(void)
 static void bzone_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -569,8 +573,7 @@ static struct MachineDriver bzone_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bzone_readmem,bzone_writemem,0,0,
-			0, 0, /* no vblank interrupt */
-			bzone_interrupt, 244 /* 4.1ms */
+			bzone_interrupt,6 /* 4.1ms */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -639,28 +642,30 @@ ROM_END
 
 ROM_START( bzone2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036414.01", 0x5000, 0x0800, 0x1fe91ce3 )
-	ROM_LOAD( "036413.01", 0x5800, 0x0800, 0x9f3aa956 )
-	ROM_LOAD( "036412.01", 0x6000, 0x0800, 0x5c3bda25 )
-	ROM_LOAD( "036411.01", 0x6800, 0x0800, 0xa40bfa05 )
-	ROM_LOAD( "036410.01", 0x7000, 0x0800, 0x364b14eb )
-	ROM_LOAD( "036409.01", 0x7800, 0x0800, 0x7a21b649 )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x1fe91ce3 )
+	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x9f3aa956 )
+	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0x5c3bda25 )
+	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xa40bfa05 )
+	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x364b14eb )
+	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x7a21b649 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01", 0x3000, 0x0800, 0x5c8342bd )
-	ROM_LOAD( "036421.01", 0x3800, 0x0800, 0x16a742bd )
+	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x5c8342bd )
+	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x16a742bd )
 ROM_END
 
 
 
 struct GameDriver bzone_driver =
 {
-	"Battle Zone",
+	__FILE__,
+	0,
 	"bzone",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Mauro Minenna (one-stick mode)",
-
+	"Battle Zone",
+	"1980",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
+	0,
 	&bzone_machine_driver,
 
 	bzone_rom,
@@ -678,14 +683,16 @@ struct GameDriver bzone_driver =
 
 struct GameDriver bzone2_driver =
 {
-	"Battle Zone (alternate version)",
+	__FILE__,
+	&bzone_driver,
 	"bzone2",
-
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Mauro Minenna (one-stick mode)",
-
+	"Battle Zone (alternate version)",
+	"1980",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
+	0,
 	&bzone_machine_driver,
+
 	bzone2_rom,
 	0, 0,
 	bzone_sample_names,
@@ -735,8 +742,7 @@ static struct MachineDriver redbaron_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			redbaron_readmem,redbaron_writemem,0,0,
-			0, 0, /* no vblank interrupts */
-			bzone_interrupt, 185 /* 5.4ms */
+			bzone_interrupt,4 /* 5.4ms */
 		}
 	},
 	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -802,12 +808,14 @@ ROM_END
 
 struct GameDriver redbaron_driver =
 {
-	"Red Baron",
+	__FILE__,
+	0,
 	"redbaron",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Baloo (stick support)",
-
+	"Red Baron",
+	"1980",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Baloo (stick support)",
+	0,
 	&redbaron_machine_driver,
 
 	redbaron_rom,

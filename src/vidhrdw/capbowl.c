@@ -8,46 +8,83 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/tms34061.h"
+#include "M6809/M6809.h"
 
-
-
-unsigned char *capbowl_scanline;
+unsigned char *capbowl_rowaddress;
 
 static unsigned char *raw_video_ram;
-static unsigned short *line_pens;
-static unsigned char *dirtypalette;
+static unsigned int  color_count[4096];
+static unsigned char dirty_row[256];
 
+static int max_col, max_row, max_col_offset;
 
+static int  capbowl_tms34061_getfunction(int offset);
+static int  capbowl_tms34061_getrowaddress(int offset);
+static int  capbowl_tms34061_getcoladdress(int offset);
+static int  capbowl_tms34061_getpixel(int col, int row);
+static void capbowl_tms34061_setpixel(int col, int row, int pixel);
+
+#define PAL_SIZE  0x20
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+static int capbowl_vertical_interrupt(void)
+{
+	return M6809_INT_FIRQ;
+}
+
+static struct TMS34061interface tms34061_interface =
+{
+	capbowl_tms34061_getfunction,
+	capbowl_tms34061_getrowaddress,
+	capbowl_tms34061_getcoladdress,
+	capbowl_tms34061_getpixel,
+	capbowl_tms34061_setpixel,
+	0,
+    capbowl_vertical_interrupt,  /* Vertical interrupt causes a FIRQ */
+};
+
 int capbowl_vh_start(void)
 {
-	if ((dirtypalette = malloc(256)) == 0)
-		return 1;
-	memset(dirtypalette,1,256);
+	int i;
 
 	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
 	{
-		free(dirtypalette);
 		return 1;
 	}
 
 	if ((raw_video_ram = malloc(256 * 256)) == 0)
 	{
 		osd_free_bitmap(tmpbitmap);
-		free(dirtypalette);
 		return 1;
 	}
-	if ((line_pens = malloc(256 * 16 * 2)) == 0)
+
+	// Initialize TMS34061 emulation
+    if (TMS34061_start(&tms34061_interface))
 	{
 		free(raw_video_ram);
 		osd_free_bitmap(tmpbitmap);
-		free(dirtypalette);
 		return 1;
+	}
+
+	max_row = Machine->drv->visible_area.max_y;
+	max_col = Machine->drv->visible_area.max_x;
+	max_col_offset = (max_col + 1) / 2 + PAL_SIZE;
+
+	// Initialize color areas. The screen is blank
+	memset(raw_video_ram, 0, 256*256);
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	memset(color_count, 0, sizeof(color_count));
+	memset(dirty_row, 1, sizeof(dirty_row));
+
+	for (i = 0; i < max_row * 16; i+=16)
+	{
+		palette_used_colors[i] = PALETTE_COLOR_USED;
+		color_count[i] = max_col + 1;  // All the pixels are pen 0
 	}
 
 	return 0;
@@ -62,51 +99,114 @@ int capbowl_vh_start(void)
 ***************************************************************************/
 void capbowl_vh_stop(void)
 {
-	free(line_pens);
 	free(raw_video_ram);
 	osd_free_bitmap(tmpbitmap);
-	free(dirtypalette);
+
+	TMS34061_stop();
 }
 
 
-void capbowl_videoram_w(int offset,int data)
-{
-	if (raw_video_ram[*capbowl_scanline * 256 + offset] != data)
-	{
-		raw_video_ram[*capbowl_scanline * 256 + offset] = data;
+/***************************************************************************
 
-		if (offset >= 0x20)
+  TMS34061 callbacks
+
+***************************************************************************/
+
+static int capbowl_tms34061_getfunction(int offset)
+{
+	/* The function inputs (FS0-FS2) are hooked up the following way:
+
+	   FS0 = A8
+	   FS1 = A9
+	   FS2 = grounded
+	 */
+
+	return (offset >> 8) & 0x03;
+}
+
+
+static int capbowl_tms34061_getrowaddress(int offset)
+{
+	/* Row address (RA0-RA8) is not dependent on the offset */
+	return *capbowl_rowaddress;
+}
+
+
+static int capbowl_tms34061_getcoladdress(int offset)
+{
+	/* Column address (CA0-CA8) is hooked up the A0-A7, with A1 being inverted
+	   during register access. CA8 is ignored */
+	int col = (offset & 0xff);
+
+	if (!(offset & 0x300))
+	{
+		col ^= 0x02;
+	}
+
+	return col;
+}
+
+
+static void capbowl_tms34061_setpixel(int col, int row, int pixel)
+{
+	int off = ((row << 8) | col);
+	int penstart = row << 4;
+
+	int oldpixel = raw_video_ram[off];
+
+	raw_video_ram[off] = pixel;
+
+	if (row > max_row || col >= max_col_offset) return;
+
+	if (col >= PAL_SIZE)
+	{
+		int oldpen1 = penstart | (oldpixel >> 4);
+		int oldpen2 = penstart | (oldpixel & 0x0f);
+		int newpen1 = penstart | (pixel >> 4);
+		int newpen2 = penstart | (pixel & 0x0f);
+
+		if (oldpen1 != newpen1)
 		{
-			if (dirtypalette[*capbowl_scanline] == 0 && offset < 212)
-			{
-				if (tmpbitmap->depth == 16)
-				{
-					*(unsigned short *)&tmpbitmap->line[359 - ((offset-0x20) << 1)][*capbowl_scanline*2] = line_pens[*capbowl_scanline * 16 + (data >> 4)  ];
-					*(unsigned short *)&tmpbitmap->line[358 - ((offset-0x20) << 1)][*capbowl_scanline*2] = line_pens[*capbowl_scanline * 16 + (data & 0x0f)];
-				}
-				else
-				{
-					tmpbitmap->line[359 - ((offset-0x20) << 1)][*capbowl_scanline] = line_pens[*capbowl_scanline * 16 + (data >> 4)  ];
-					tmpbitmap->line[358 - ((offset-0x20) << 1)][*capbowl_scanline] = line_pens[*capbowl_scanline * 16 + (data & 0x0f)];
-				}
-			}
+			dirty_row[row] = 1;
+
+			color_count[oldpen1]--;
+			if (!color_count[oldpen1]) palette_used_colors[oldpen1] = PALETTE_COLOR_UNUSED;
+
+			color_count[newpen1]++;
+			palette_used_colors[newpen1] = PALETTE_COLOR_USED;
 		}
-		else
+
+		if (oldpen2 != newpen2)
 		{
-			/* Offsets 0-1f are the palette */
-			dirtypalette[*capbowl_scanline] = 1;
+			dirty_row[row] = 1;
+
+			color_count[oldpen2]--;
+			if (!color_count[oldpen2]) palette_used_colors[oldpen2] = PALETTE_COLOR_UNUSED;
+
+			color_count[newpen2]++;
+			palette_used_colors[newpen2] = PALETTE_COLOR_USED;
 		}
+	}
+	else
+	{
+		/* Offsets 0-1f are the palette */
+
+		int r = (raw_video_ram[off & ~1] & 0x0f);
+		int g = (raw_video_ram[off |  1] >> 4);
+		int b = (raw_video_ram[off |  1] & 0x0f);
+		r = (r << 4) + r;
+		g = (g << 4) + g;
+		b = (b << 4) + b;
+
+		palette_change_color(penstart | (col >> 1),r,g,b);
 	}
 }
 
 
-int capbowl_videoram_r(int offset)
+static int capbowl_tms34061_getpixel(int col, int row)
 {
-	return raw_video_ram[*capbowl_scanline * 256 + offset];
+	return raw_video_ram[row << 8 | col];
 }
-
-
-
 
 /***************************************************************************
 
@@ -115,57 +215,80 @@ int capbowl_videoram_r(int offset)
   the main emulation engine.
 
 ***************************************************************************/
-void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
+INLINE void plotpixel(int col,int row,int pen)
 {
-	int line;
-
-
-	/* Remap colors */
-	for (line = 0;line < 256;line++)
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		if (dirtypalette[line])
+		int temp;
+
+		temp = col;
+		col = row;
+		row = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		col = tmpbitmap->width - col - 1;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		row = tmpbitmap->height - row - 1;
+
+	if (tmpbitmap->depth == 16)
+		((unsigned short *)Machine->scrbitmap->line[row])[col] = ((unsigned short *)tmpbitmap->line[row])[col] = pen;
+	else
+		Machine->scrbitmap->line[row][col] = tmpbitmap->line[row][col] = pen;
+}
+
+void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int col, row;
+	const unsigned char *remapped;
+
+
+	if (TMS34061_display_blanked())
+	{
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+
+		return;
+	}
+
+	if ((remapped = palette_recalc()) != 0)
+	{
+		for (row = 0; row <= max_row; row++)
 		{
-			int i;
-			unsigned short *pens = &line_pens[line * 16];
-			int r,g,b;
-
-
-			dirtypalette[line] = 0;
-
-			for (i = 0;i < 0x20;i += 2)
+			if (dirty_row[row] == 0)
 			{
-				r = (raw_video_ram[line * 256 + i] & 0x0f);
-				g = (raw_video_ram[line * 256 + i + 1] & 0xf0) >> 4;
-				b = (raw_video_ram[line * 256 + i + 1] & 0x0f);
-				r = (r << 4) + r;
-				g = (g << 4) + g;
-				b = (b << 4) + b;
+				int i;
 
-				pens[i / 2] = rgbpen (r,g,b);
-			}
-
-			if (tmpbitmap->depth == 16)
-			{
-				for (i = 0x20; i < 212; i++)
+				for (i = 0;i < 16;i++)
 				{
-					int data2 = raw_video_ram[line * 256 + i];
-	
-					*(unsigned short *)&tmpbitmap->line[359 - ((i-0x20) << 1)][line*2] = pens[data2 >> 4  ];
-					*(unsigned short *)&tmpbitmap->line[358 - ((i-0x20) << 1)][line*2] = pens[data2 & 0x0f];
-				}
-			}
-			else
-			{
-				for (i = 0x20; i < 212; i++)
-				{
-					int data2 = raw_video_ram[line * 256 + i];
-	
-					tmpbitmap->line[359 - ((i-0x20) << 1)][line] = pens[data2 >> 4  ];
-					tmpbitmap->line[358 - ((i-0x20) << 1)][line] = pens[data2 & 0x0f];
+					if (remapped[16 * row + i] != 0)
+					{
+						dirty_row[row] = 1;
+						break;
+					}
 				}
 			}
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	for (row = 0; row <= max_row; row++)
+	{
+		if (dirty_row[row])
+		{
+			int col1 = 0;
+			int row1 = (row << 8 | PAL_SIZE);
+			int row2 =  row << 4;
+
+			dirty_row[row] = 0;
+
+			for (col = PAL_SIZE; col < max_col_offset; col++)
+			{
+				int pixel = raw_video_ram[row1++];
+
+				plotpixel(col1++,row,Machine->pens[row2 | (pixel >> 4)  ]);
+				plotpixel(col1++,row,Machine->pens[row2 | (pixel & 0x0f)]);
+			}
+		}
+	}
+
+	if (full_refresh)
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

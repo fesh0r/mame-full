@@ -64,14 +64,12 @@ extern int mystston_videoram2_size;
 extern unsigned char *mystston_videoram3,*mystston_colorram3;
 extern int mystston_videoram3_size;
 extern unsigned char *mystston_scroll;
-extern unsigned char *mystston_paletteram;
 
-void mystston_paletteram_w(int offset,int data);
 void mystston_videoram3_w(int offset,int data);
 void mystston_colorram3_w(int offset,int data);
 int mystston_vh_start(void);
 void mystston_vh_stop(void);
-void mystston_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* extern unsigned char *mystston_pageselect; */
 
@@ -101,7 +99,7 @@ static struct MemoryWriteAddress writemem[] =
 /*	{ 0x2000, 0x2000, MWA_RAM, &mystston_pageselect }, */
 /*	{ 0x2010, 0x2010, soundlatch_w }, */
 	{ 0x2020, 0x2020, MWA_RAM, &mystston_scroll },
-	{ 0x2060, 0x2077, mystston_paletteram_w, &mystston_paletteram },
+	{ 0x2060, 0x2077, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -281,9 +279,8 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0308],"\x00\x00\x21",3) == 0) &&
@@ -308,10 +305,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -326,9 +320,14 @@ static void hisave(void)
 
 struct GameDriver mystston_driver =
 {
-	"Mysterious Stones",
+	__FILE__,
+	0,
 	"mystston",
+	"Mysterious Stones",
+	"1984",
+	"Technos",
 	"Nicola Salmoria\nMike Balfour\nBrad Oliver",
+	0,
 	&machine_driver,
 
 	mystston_rom,

@@ -132,7 +132,7 @@ void digdug_cpu_reset_w(int offset, int data);
 void digdug_vh_latch_w(int offset, int data);
 int digdug_vh_start(void);
 void digdug_vh_stop(void);
-void digdug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
@@ -210,24 +210,24 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 INPUT_PORTS_START( digdug_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x01, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x05, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/6 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x38, 0x18, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPSETTING(    0x38, "10k" )
-	PORT_DIPSETTING(    0x28, "10k 40k" )
-	PORT_DIPSETTING(    0x18, "20k 60k" )
 	PORT_DIPSETTING(    0x20, "10k 40k 40k" )
 	PORT_DIPSETTING(    0x10, "10k 50k 50k" )
 	PORT_DIPSETTING(    0x30, "20k 60k 60k" )
 	PORT_DIPSETTING(    0x08, "20k 70k 70k" )
+	PORT_DIPSETTING(    0x28, "10k 40k" )
+	PORT_DIPSETTING(    0x18, "20k 60k" )
+	PORT_DIPSETTING(    0x38, "10k" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
@@ -236,27 +236,27 @@ INPUT_PORTS_START( digdug_input_ports )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0xc0, 0x00, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0xc0, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 	PORT_DIPNAME( 0x20, 0x20, "Freeze", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Continuation", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x04, 0x04, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 	PORT_DIPNAME( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "A-Easy" )
-	PORT_DIPSETTING(    0x02, "B-Medium" )
-	PORT_DIPSETTING(    0x01, "C-Hard" )
-	PORT_DIPSETTING(    0x03, "D-Expert" )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
 
 	PORT_START	/* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
@@ -469,34 +469,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( digdugnm_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
-	ROM_LOAD( "dd1.1b", 0x0000, 0x1000, 0x530a8d1c )
-	ROM_LOAD( "dd1.2",  0x1000, 0x1000, 0x3e4a1cb6 )
-	ROM_LOAD( "dd1.3",  0x2000, 0x1000, 0x2a1e5ce2 )
-	ROM_LOAD( "dd1.4b", 0x3000, 0x1000, 0xaaddfff7 )
-
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dd1.9",  0x0000, 0x0800, 0x81dba5a5 )
-	ROM_LOAD( "dd1.11", 0x1000, 0x1000, 0xd6a41d2e )
-	ROM_LOAD( "dd1.15", 0x2000, 0x1000, 0xff914d75 )
-	ROM_LOAD( "dd1.14", 0x3000, 0x1000, 0xa3d074d0 )
-	ROM_LOAD( "dd1.13", 0x4000, 0x1000, 0x494d7f6d )
-	ROM_LOAD( "dd1.12", 0x5000, 0x1000, 0xfd468dcc )
-
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "dd1.5b", 0x0000, 0x1000, 0xe09b56bb )
-	ROM_LOAD( "dd1.6b", 0x1000, 0x1000, 0xee615c91 )
-
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "dd1.7", 0x0000, 0x1000, 0xc7bdef23 )
-
-	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
-	ROM_LOAD( "dd1.10b", 0x0000, 0x1000, 0x581d2bb7 )
-ROM_END
-
-
-ROM_START( digdugat_rom )
+ROM_START( digdug_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c )
 	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 )
@@ -522,14 +495,39 @@ ROM_START( digdugat_rom )
 	ROM_LOAD( "136007.114", 0x0000, 0x1000, 0xcce929b7 )
 ROM_END
 
+ROM_START( digdugnm_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c )
+	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 )
+	ROM_LOAD( "136007.103", 0x2000, 0x1000, 0x2a1e5ce2 )
+	ROM_LOAD( "dd1.4b",     0x3000, 0x1000, 0xaaddfff7 )
+
+	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dd1.9",      0x0000, 0x0800, 0x81dba5a5 )
+	ROM_LOAD( "dd1.11",     0x1000, 0x1000, 0xd6a41d2e )
+	ROM_LOAD( "136007.116", 0x2000, 0x1000, 0xff914d75 )
+	ROM_LOAD( "dd1.14",     0x3000, 0x1000, 0xa3d074d0 )
+	ROM_LOAD( "136007.118", 0x4000, 0x1000, 0x494d7f6d )
+	ROM_LOAD( "136007.119", 0x5000, 0x1000, 0xfd468dcc )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "dd1.5b", 0x0000, 0x1000, 0xe09b56bb )
+	ROM_LOAD( "dd1.6b", 0x1000, 0x1000, 0xee615c91 )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "136007.107", 0x0000, 0x1000, 0xc7bdef23 )
+
+	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
+	ROM_LOAD( "dd1.10b", 0x0000, 0x1000, 0x581d2bb7 )
+ROM_END
+
+
 
 static int hiload(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized (works for Namco & Atari) */
    if (RAM[0x89b1] == 0x35 && RAM[0x89b4] == 0x35)
@@ -551,10 +549,8 @@ static int hiload(void)
 static void hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -564,11 +560,41 @@ static void hisave(void)
 }
 
 
+struct GameDriver digdug_driver =
+{
+	__FILE__,
+	0,
+	"digdug",
+	"Dig Dug (Atari)",
+	"1982",
+	"[Namco] (Atari license)",
+	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
+	0,
+	&machine_driver,
+
+	digdug_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	digdug_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
 struct GameDriver digdugnm_driver =
 {
-	"Dig Dug (Namco)",
+	__FILE__,
+	&digdug_driver,
 	"digdugnm",
+	"Dig Dug (Namco)",
+	"1982",
+	"Namco",
 	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
+	0,
 	&machine_driver,
 
 	digdugnm_rom,
@@ -583,25 +609,3 @@ struct GameDriver digdugnm_driver =
 
 	hiload, hisave
 };
-
-
-struct GameDriver digdugat_driver =
-{
-	"Dig Dug (Atari)",
-	"digdugat",
-	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
-	&machine_driver,
-
-	digdugat_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	digdug_input_ports,
-
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-

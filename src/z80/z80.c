@@ -1266,7 +1266,7 @@ static void ret_z(void) { if (M_Z) { M_RET; } else { M_SKIP_RET; } }
 
 /* search highest interrupt request device (next interrupt device) */
 /*    and highest interrupt service device (next reti      device) */
-static inline void check_daisy_chain( void )
+INLINE void check_daisy_chain( void )
 {
 	int device;
 
@@ -1985,9 +1985,6 @@ static unsigned cycles_ed[256]=
   0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0
 };
-
-static void no_op_xx(void) {
-++R.PC.W.l; }
 
 static opcode_fn opcode_dd_cb[256]=
 {

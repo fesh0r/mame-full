@@ -170,8 +170,8 @@ INLINE void lbra( void )
 	IMMWORD(eaddr);
 
 	pcreg+=eaddr;change_pc(pcreg);/* ASG 971005 */
-	
-	if ( eaddr == 0xfffd ) /* EHC 980508 */
+
+	if ( eaddr == 0xfffd ) /* EHC 980508 speed up busy loop */
 		m6809_ICount = 0;
 }
 
