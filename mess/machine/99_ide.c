@@ -1,20 +1,24 @@
 /*
 	Thierry Nouspikel's IDE card emulation
 
-	This card is just a prototype, and it has been designed by Thierry Nouspikel
-	in 2000-2001.
+	This card is just a prototype.  It has been designed by Thierry Nouspikel,
+	and its description was published in 2001.
 
 	The specs have been published in <http://www.nouspikel.com/ti99/ide.html>.
 
-	The card is very simple, since it only implements PIO transfer.  The only 
-	thing that makes the design a little more complex is the clock chip and the
-	SRAM.
+	The IDE interface is quite simple, since it only implements PIO transfer.
+	The card includes a clock chip to timestamp files, and an SRAM for the DSR.
+	It should be possible to use a battery backed DSR SRAM, but since the clock
+	chip includes 4kb of battery-backed RAM, a bootstrap loader can be saved in
+	the clock SRAM in order to load the DSR from the HD when the computer
+	starts.
 
 	Raphael Nabet, 2002-2003.
 */
 
-/*#include "harddisk.h" */
-#include "machine/idectrl.h"
+/*#include "harddisk.h"
+#include "machine/idectrl.h"*/
+#include "devices/idedrive.h"
 #include "ti99_4x.h"
 #include "99_ide.h"
 
@@ -63,77 +67,12 @@ enum
 };
 static int input_latch, output_latch;
 
-static mame_file *ide_fp;
-static int ide_fp_wp;
-
 static int ide_irq;
 
 struct ide_interface ti99_ide_interface =
 {
 	ide_interrupt_callback
 };
-
-
-/*
-	MAME hard disk interface
-*/
-
-static void *mess_hard_disk_open(const char *filename, const char *mode);
-static void mess_hard_disk_close(void *file);
-static UINT32 mess_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mess_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer);
-
-struct hard_disk_interface mess_hard_disk_interface =
-{
-	mess_hard_disk_open,
-	mess_hard_disk_close,
-	mess_hard_disk_read,
-	mess_hard_disk_write
-};
-
-/*
-	mess_hard_disk_open - interface for opening a hard disk image
-*/
-static void *mess_hard_disk_open(const char *filename, const char *mode)
-{
-	/* read-only fp? */
-	if (ide_fp_wp && ! (mode[0] == 'r' && !strchr(mode, '+')))
-		return NULL;
-
-	/* otherwise return file pointer */
-	return ide_fp;
-}
-
-/*
-	mess_hard_disk_close - interface for closing a hard disk image
-*/
-static void mess_hard_disk_close(void *file)
-{
-	//mame_fclose((mame_file *)file);
-}
-
-/*
-	mess_hard_disk_read - interface for reading from a hard disk image
-*/
-static UINT32 mess_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
-{
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fread((mame_file *)file, buffer, count);
-}
-
-/*
-	mess_hard_disk_write - interface for writing to a hard disk image
-*/
-static UINT32 mess_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
-{
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fwrite((mame_file *)file, buffer, count);
-}
-
-
-/*
-	MAME IDE core interface
-*/
 
 /*
 	ide_interrupt_callback()
@@ -146,12 +85,12 @@ static void ide_interrupt_callback(int state)
 }
 
 /*
-	ide_controller_unfucked_0_r()
+	ide_bus_0_r()
 
-	Read a 16-bit word from the IDE controller, working around the incredible
-	fuck-up that some genius has programmed in idectrl.c.
+	Read a 16-bit word from the IDE bus, working around the 'intelligent' code
+	in idectrl.c.
 */
-static int ide_controller_unfucked_0_r(int group_select, int offset)
+static int ide_bus_0_r(int group_select, int offset)
 {
 	int shift;
 
@@ -168,12 +107,12 @@ static int ide_controller_unfucked_0_r(int group_select, int offset)
 }
 
 /*
-	ide_controller_unfucked_0_w()
+	ide_bus_0_w()
 
-	Write a 16-bit word to the IDE controller, working around the incredible
-	fuck-up that some genius has programmed in idectrl.c.
+	Write a 16-bit word to the IDE bus, working around the 'intelligent' code
+	in idectrl.c.
 */
-static void ide_controller_unfucked_0_w(int group_select, int offset, int data)
+static void ide_bus_0_w(int group_select, int offset, int data)
 {
 	int shift;
 
@@ -194,22 +133,7 @@ static void ide_controller_unfucked_0_w(int group_select, int offset, int data)
 */
 int ti99_ide_load(int id, mame_file *fp, int open_mode)
 {
-	void *handle;
-
-	hard_disk_set_interface(& mess_hard_disk_interface);
-
-	ide_fp = fp;
-	ide_fp_wp = ! is_effective_mode_writable(open_mode);
-
-	handle = hard_disk_open(image_filename(IO_HARDDISK, id), is_effective_mode_writable(open_mode), NULL);
-	if (handle != NULL)
-	{
-		ide_controller_init_custom(0, & ti99_ide_interface, handle);
-		ide_controller_reset(0);
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
+	return ide_hd_load(id, fp, open_mode, 0, 0, & ti99_ide_interface);
 }
 
 /*
@@ -217,10 +141,7 @@ int ti99_ide_load(int id, mame_file *fp, int open_mode)
 */
 void ti99_ide_unload(int id)
 {
-	hard_disk_close(get_disk_handle(0));
-	ide_fp = NULL;
-	ide_controller_init_custom(0, & ti99_ide_interface, NULL);
-	ide_controller_reset(0);
+	ide_hd_unload(id, 0, 0, & ti99_ide_interface);
 }
 
 /*
@@ -233,8 +154,7 @@ void ti99_ide_init(void)
 
 	ti99_exp_set_card_handlers(0x1000, & ide_handlers);
 
-	ide_controller_init_custom(0, & ti99_ide_interface, NULL);
-	ide_controller_reset(0);
+	ide_hd_machine_init(0, 0, & ti99_ide_interface);
 
 	cur_page = 0;
 	cur_rtc_page = 0;
@@ -320,17 +240,17 @@ static READ_HANDLER(ide_mem_r)
 			break;
 		case 1:		/* RTC registers */
 			if (offset & 0x10)
-				/* register select */
-				reply = cur_rtc_reg;
-			else
 				/* register data */
 				reply = ti99_ide_rtc_regs[cur_rtc_reg];
+			else
+				/* register select */
+				reply = cur_rtc_reg;
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
 			if (offset & 1)
 			{
 				if (! (offset & 0x10))
-					reply = ide_controller_unfucked_0_r(0, (offset >> 1) & 0x7);
+					reply = ide_bus_0_r(0, (offset >> 1) & 0x7);
 
 				input_latch = (reply >> 8) & 0xff;
 				reply &= 0xff;
@@ -342,7 +262,7 @@ static READ_HANDLER(ide_mem_r)
 			if (offset & 1)
 			{
 				if (! (offset & 0x10))
-					reply = ide_controller_unfucked_0_r(1, (offset >> 1) & 0x7);
+					reply = ide_bus_0_r(1, (offset >> 1) & 0x7);
 
 				input_latch = (reply >> 8) & 0xff;
 				reply &= 0xff;
@@ -387,23 +307,23 @@ static WRITE_HANDLER(ide_mem_w)
 			break;
 		case 1:		/* RTC registers */
 			if (offset & 0x10)
-				/* register select */
-				cur_rtc_reg = data & 0x3f;
-			else
 				/* register data */
 				ti99_ide_rtc_regs[cur_rtc_reg] = data;
+			else
+				/* register select */
+				cur_rtc_reg = data & 0x3f;
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
 			if (offset & 1)
 				output_latch = data;
 			else
-				ide_controller_unfucked_0_w(0, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+				ide_bus_0_w(0, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
 			break;
 		case 3:		/* IDE registers set 2 (CS3Fx) */
 			if (offset & 1)
 				output_latch = data;
 			else
-				ide_controller_unfucked_0_w(1, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+				ide_bus_0_w(1, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
 			break;
 		}
 	}
