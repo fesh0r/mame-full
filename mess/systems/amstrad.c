@@ -24,6 +24,9 @@ static WRITE_HANDLER(multiface_io_write);
 void multiface_init(void);
 void multiface_exit(void);
 void multiface_stop(void);
+int multiface_hardware_enabled(void);
+void multiface_reset(void);
+
 /*-------------------------------------------*/
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
@@ -291,7 +294,7 @@ void Amstrad_RethinkMemory(void)
 		cpu_setbank(16, AmstradCPC_RamBanks[3]+0x02000);
 
 		/* multiface hardware enabled? */
-		if (readinputport(11) & 0x01)
+                if (multiface_hardware_enabled())
 		{
 			multiface_rethink_memory();
 		}
@@ -367,9 +370,9 @@ void AmstradCPC_GA_Write(int Data)
 			/* colour changed? */
 			if (PreviousColour!=AmstradCPC_PenColours[PenIndex])
 			{
-                                logerror("%d\r\n",Machine->drv->cpu[0].cpu_clock);
-                                logerror("%d\r\n",Machine->drv->frames_per_second);
-                                logerror("%d\r\n",cpu_getcurrentcycles());
+            //                    logerror("%d\r\n",Machine->drv->cpu[0].cpu_clock);
+              //                  logerror("%d\r\n",Machine->drv->frames_per_second);
+                //                logerror("%d\r\n",cpu_getcurrentcycles());
 
                                 EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cpu_getcurrentcycles());
 			}
@@ -623,36 +626,47 @@ This address has a RET and so executes no code.
 
 It is believed that it is used to make multiface invisible to programs */
 
-#define MULTIFACE_0065_TOGGLE			0x0008
+/*#define MULTIFACE_0065_TOGGLE                   0x0008*/
 
 
 /* used to setup computer if a snapshot was specified */
 OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
 {
-	if (cpu_get_pc()==0x065)
-	{
-		/* first call? */
-		if ((multiface_flags & MULTIFACE_0065_TOGGLE)==0)
-		{
-			/* yes */
-			multiface_flags |= MULTIFACE_VISIBLE;
-			
-			/* set flag */
-			multiface_flags |= MULTIFACE_0065_TOGGLE;
-		}
-		else
-		{
-			/* no, second call */
-			
-			/* no longer visible */
-			multiface_flags &= ~MULTIFACE_VISIBLE;
+        int pc;
 
-			/* clear op base override */
-			cpu_setOPbaseoverride(0,0);
-		}
-	}
+        pc = cpu_get_pc();
 
-	return (cpu_get_pc() & 0x0ffff);
+        /* there are two places where CALL &0065 can be found
+        in the multiface rom. At this address there is a RET.
+
+        To disable the multiface from being detected, the multiface
+        stop button must be pressed, then the program that was stopped
+        must be returned to. When this is done, the multiface cannot
+        be detected and the out operations to page the multiface
+        ram/rom into the address space will not work! */
+
+        /* I assume that the hardware in the multiface detects
+        the PC set to 0x065 and uses this to enable/disable the multiface
+        */
+
+        /* I also use this to allow the stop button to be pressed again */
+        if (pc==0x0164)
+        {
+            /* first call? */
+            multiface_flags |= MULTIFACE_VISIBLE;
+        }                 
+        else if (pc==0x0c98)
+        {
+          /* second call */
+        
+          /* no longer visible */
+          multiface_flags &= ~(MULTIFACE_VISIBLE|MULTIFACE_STOP_BUTTON_PRESSED);
+        
+         /* clear op base override */
+                cpu_setOPbaseoverride(0,0);
+        }
+
+        return pc;
 }
 
 void    multiface_init(void)
@@ -674,12 +688,35 @@ void    multiface_exit(void)
 	}
 }
 
+/* call when a system reset is done */
+void multiface_reset(void)
+{
+        /* stop button not pressed and ram/rom disabled */
+        multiface_flags &= ~(MULTIFACE_STOP_BUTTON_PRESSED |
+                        MULTIFACE_RAM_ROM_ENABLED);
+        /* as on the real hardware the multiface is visible after
+        a reset! */
+        multiface_flags |= MULTIFACE_VISIBLE;
+}
+
+int multiface_hardware_enabled(void)
+{
+        if (multiface_ram!=NULL)
+        {
+                if ((readinputport(11) & 0x01)!=0)
+                {
+                        return 1;
+                }
+        }
+
+        return 0;
+}
 
 /* simulate the stop button has been pressed */
 void    multiface_stop(void)
 {
 	/* multiface hardware enabled? */
-	if ((readinputport(11) & 0x01)==0)
+        if (!multiface_hardware_enabled())
 		return;
 
 	/* if stop button not already pressed, do press action */
@@ -687,7 +724,7 @@ void    multiface_stop(void)
 	if ((multiface_flags & MULTIFACE_STOP_BUTTON_PRESSED)==0)
 	{
 		/* initialise 0065 toggle */
-		multiface_flags &= ~MULTIFACE_0065_TOGGLE;
+                /*multiface_flags &= ~MULTIFACE_0065_TOGGLE;*/
 
 		multiface_flags |= MULTIFACE_RAM_ROM_ENABLED;
 
@@ -713,7 +750,7 @@ static void multiface_rethink_memory(void)
         unsigned char *multiface_rom;
 
 	/* multiface hardware enabled? */
-	if ((readinputport(11) & 0x01)==0)
+        if (!multiface_hardware_enabled())
 		return;
 
         multiface_rom = &memory_region(REGION_CPU1)[0x01C000];
@@ -736,7 +773,7 @@ static void multiface_rethink_memory(void)
 static WRITE_HANDLER(multiface_io_write)
 {
 	/* multiface hardware enabled? */
-	if ((readinputport(11) & 0x01)==0)
+        if (!multiface_hardware_enabled())
 		return;
 
         /* visible? */
@@ -757,12 +794,12 @@ static WRITE_HANDLER(multiface_io_write)
 
 	/* update multiface ram with data */
         /* these are decoded fully! */
-        switch (offset>>8)
+        switch ((offset>>8) & 0x0ff)
         {
                 /* gate array */
                 case 0x07f:
                 {
-                        switch ((data>>6) & 0x03)
+                        switch (data & 0x0c0)
                         {
                                 /* pen index */
                                 case 0x00:
@@ -782,7 +819,7 @@ static WRITE_HANDLER(multiface_io_write)
                                     if (multiface_ram[0x01fcf] & 0x010)
                                     {
 
-                                        multiface_ram[0x01fdf + pen_index] = data & 0x01f;
+                                        multiface_ram[0x01fdf + pen_index] = data;
                                     }
                                     else
                                     {
@@ -896,6 +933,7 @@ void    amstrad_interrupt_timer_callback(int dummy)
 
         if (amstrad_52_divider == 52)
         {
+                /* block counter is temporary! */
                 block_counter++;
 
                 crtc_vsync_output = 0;
@@ -916,6 +954,15 @@ void    amstrad_interrupt_timer_callback(int dummy)
         }
 }
 
+/* called when cpu acknowledges int */
+int     amstrad_cpu_acknowledge_int(int cpu)
+{
+        /* clear bit 5 of counter - next int will not be closer than
+        32 lines */
+        amstrad_52_divider &=31;
+
+        return 0x0ff;
+}
 
 
 void amstrad_common_init(void)
@@ -966,6 +1013,8 @@ void amstrad_common_init(void)
 
         /* more accurate but won't be perfect yet */
         amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
+
+        cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
 
         timer_set_overclock(0, (double)4000000/(double)(AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS));
 
@@ -1021,6 +1070,8 @@ void Amstrad_Reset(void)
 
 	/* set ram config 0 */
 	AmstradCPC_GA_Write(0x0c0);
+
+        multiface_reset();
 }
 
 
