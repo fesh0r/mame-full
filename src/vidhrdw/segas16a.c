@@ -82,8 +82,9 @@ static void get_tile_info(int tile_index)
 {
 /*
 	MSB          LSB
-	??-?------------ Unknown
+	??-------------- Unknown
 	--b------------- Bank
+	---p------------ Priority
 	----ccccccc----- Palette (0-127)
 	----nnnnnnnnnnnn Tile index (0-4095)
 */
@@ -93,7 +94,7 @@ static void get_tile_info(int tile_index)
 	int code = data & 0xfff;
 
 	SET_TILE_INFO(0, bank * 0x1000 + code, color, 0);
-	tile_info.priority = (data >> 15) & 1;
+	tile_info.priority = (data >> 12) & 1;
 }
 
 
@@ -238,8 +239,8 @@ static void system16a_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 				effyscroll = segaic16_textram[0xf30/2 + (x/16) * 2 + which] & 0x0ff;
 
 				/* draw the chunk */
-				effxscroll = (-312 - effxscroll) & 0x3ff;
-				effyscroll = (-256 + effyscroll) & 0x1ff;
+				effxscroll = (0xc8 - effxscroll) & 0x3ff;
+				effyscroll = effyscroll & 0x1ff;
 				segaic16_draw_virtual_tilemap(bitmap, &rowcolclip, pages, effxscroll, effyscroll, flags, priority);
 			}
 		}
@@ -262,8 +263,8 @@ static void system16a_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 			effyscroll = segaic16_textram[0xf30/2 + (x/16) * 2 + which] & 0x0ff;
 
 			/* draw the chunk */
-			effxscroll = (-312 - xscroll) & 0x3ff;
-			effyscroll = (-256 + effyscroll) & 0x1ff;
+			effxscroll = (0xc8 - xscroll) & 0x3ff;
+			effyscroll = effyscroll & 0x1ff;
 			segaic16_draw_virtual_tilemap(bitmap, &colclip, pages, effxscroll, effyscroll, flags, priority);
 		}
 	}
@@ -286,15 +287,15 @@ static void system16a_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 			effyscroll = yscroll;
 
 			/* draw the chunk */
-			effxscroll = (-312 - effxscroll) & 0x3ff;
-			effyscroll = (-256 + effyscroll) & 0x1ff;
+			effxscroll = (0xc8 - effxscroll) & 0x3ff;
+			effyscroll = effyscroll & 0x1ff;
 			segaic16_draw_virtual_tilemap(bitmap, &rowclip, pages, effxscroll, effyscroll, flags, priority);
 		}
 	}
 	else
 	{
-		xscroll = (-312 - xscroll) & 0x3ff;
-		yscroll = (-256 + yscroll) & 0x1ff;
+		xscroll = (0xc8 - xscroll) & 0x3ff;
+		yscroll = yscroll & 0x1ff;
 
 		/* adjust the xscroll for flipped screen -- note that this is not good enough for */
 		/* fantzone, but keeps things aligned in mjleague */
@@ -496,7 +497,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 	/* first scan forward to find the end of the list */
 	for (cursprite = segaic16_spriteram; cursprite < segaic16_spriteram + 0x7ff/2; cursprite += 8)
-		if ((cursprite[0] >> 16) > 0xf0)
+		if ((cursprite[0] >> 8) > 0xf0)
 			break;
 
 	/* now scan backwards and render the sprites in order */

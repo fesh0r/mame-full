@@ -5,11 +5,10 @@
 ****************************************************************************
 
 	Known bugs:
-		* Glitches in high score scrolling in Quartet
 		* Major League controls not hooked up
 		* Screen flip only sort of works
 		* Need to revisit/clean up 7751 sound banking
-		* shinobia sprites get left on the screen
+		* mirroring code can't handle the proper mirroring
 
 ***************************************************************************
 
@@ -147,12 +146,14 @@ Tetris         -         -         -         -         EPR12169  EPR12170  -    
  *
  *************************************/
 
+static data16_t *workram;
+
 static UINT8 has_n7759;
 
 static read16_handler custom_io_r;
 static write16_handler custom_io_w;
 
-static void (*i8751_callback)(void);
+static void (*i8751_vblank_hook)(void);
 
 
 
@@ -210,15 +211,13 @@ static void system16a_generic_init(void)
 	/* reset the custom handlers and other pointers */
 	custom_io_r = NULL;
 	custom_io_w = NULL;
+	i8751_vblank_hook = NULL;
 
 	/* see if we have an N7759 chip */
 	has_n7759 = (mame_find_cpu_index("n7751") != -1);
 
 	/* configure the 8255 interface */
 	ppi8255_init(&single_ppi_intf);
-
-	/* reset globals */
-	i8751_callback = NULL;
 }
 
 
@@ -229,20 +228,13 @@ static void system16a_generic_init(void)
  *
  *************************************/
 
-static void generic_i8751_callback(int param)
-{
-	(*i8751_callback)();
-	timer_set(cpu_getscanlinetime(260), 0, generic_i8751_callback);
-}
-
-
 MACHINE_INIT( system16a )
 {
 	fd1094_machine_init();
 
-	/* set up any i8751 hacks */
-	if (i8751_callback)
-		timer_set(cpu_getscanlinetime(260), 0, generic_i8751_callback);
+	/* if we have a fake i8751 handler, disable the actual 8751 */
+	if (i8751_vblank_hook != NULL)
+		cpunum_suspend(mame_find_cpu_index("mcu"), SUSPEND_REASON_DISABLE, 1);
 }
 
 
@@ -465,17 +457,35 @@ WRITE8_HANDLER( n7751_rom_select_w )
 
 /*************************************
  *
- *	8751 simulators
+ *	I8751 interrupt generation
+ *
+ *************************************/
+
+static INTERRUPT_GEN( i8751_main_cpu_vblank )
+{
+	/* if we have a fake 8751 handler, call it on VBLANK */
+	if (i8751_vblank_hook != NULL)
+		(*i8751_vblank_hook)();
+}
+
+
+
+/*************************************
+ *
+ *	Per-game I8751 workarounds
  *
  *************************************/
 
 static void bodyslam_i8751_sim(void)
 {
-	UINT8 flag = sys16_workingram[0x200/2] >> 8;
-	UINT8 tick = sys16_workingram[0x200/2] & 0xff;
-	UINT8 sec = sys16_workingram[0x202/2] >> 8;
-	UINT8 min = sys16_workingram[0x202/2] & 0xff;
+	UINT8 flag = workram[0x200/2] >> 8;
+	UINT8 tick = workram[0x200/2] & 0xff;
+	UINT8 sec = workram[0x202/2] >> 8;
+	UINT8 min = workram[0x202/2] & 0xff;
 
+	/* signal a VBLANK to the main CPU */
+	cpunum_set_input_line(0, 4, HOLD_LINE);
+	
 	/* out of time? set the flag */
 	if (tick == 0 && sec == 0 && min == 0)
 		flag = 1;
@@ -506,20 +516,39 @@ static void bodyslam_i8751_sim(void)
 			}
 		}
 	}
-	sys16_workingram[0x200/2] = (flag << 8) + tick;
-	sys16_workingram[0x202/2] = (sec << 8) + min;
+	workram[0x200/2] = (flag << 8) + tick;
+	workram[0x202/2] = (sec << 8) + min;
 }
 
 
 static void quartet_i8751_sim(void)
 {
+	/* signal a VBLANK to the main CPU */
+	cpunum_set_input_line(0, 4, HOLD_LINE);
+	
 	/* X scroll values */
-	system16a_textram_w(0xff8/2, sys16_workingram[0x0d14/2], 0);
-	system16a_textram_w(0xffa/2, sys16_workingram[0x0d18/2], 0);
+	system16a_textram_w(0xff8/2, workram[0x0d14/2], 0);
+	system16a_textram_w(0xffa/2, workram[0x0d18/2], 0);
 
 	/* page values */
-	system16a_textram_w(0xe9e/2, sys16_workingram[0x0d1c/2], 0);
-	system16a_textram_w(0xe9c/2, sys16_workingram[0x0d1e/2], 0);
+	system16a_textram_w(0xe9e/2, workram[0x0d1c/2], 0);
+	system16a_textram_w(0xe9c/2, workram[0x0d1e/2], 0);
+}
+
+
+
+/*************************************
+ *
+ *	Capacitor-backed RAM
+ *
+ *************************************/
+
+static NVRAM_HANDLER( system16a )
+{
+	if (read_or_write)
+		mame_fwrite(file, workram, 0x4000);
+	else if (file)
+		mame_fread(file, workram, 0x4000);
 }
 
 
@@ -538,7 +567,7 @@ static ADDRESS_MAP_START( system16a_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x440000, 0x4407ff) AM_RAM AM_BASE(&segaic16_spriteram)
 	AM_RANGE(0x840000, 0x840fff) AM_READWRITE(paletteram16_word_r, segaic16_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xc40000, 0xc43fff) AM_READWRITE(misc_io_r, misc_io_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_BASE(&sys16_workingram)
+	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_BASE(&workram)
 
 //	AM_RANGE(0x000000, 0x05ffff) AM_MIRROR(0x380000) AM_ROM
 //	AM_RANGE(0x400000, 0x407fff) AM_MIRROR(0xb88000) AM_READWRITE(MRA16_RAM, segaic16_tileram_w) AM_BASE(&segaic16_tileram)
@@ -546,7 +575,7 @@ static ADDRESS_MAP_START( system16a_map, ADDRESS_SPACE_PROGRAM, 16 )
 //	AM_RANGE(0x440000, 0x4407ff) AM_MIRROR(0x3bf800) AM_RAM AM_BASE(&segaic16_spriteram)
 //	AM_RANGE(0x840000, 0x840fff) AM_MIRROR(0x3bf000) AM_READWRITE(paletteram16_word_r, segaic16_paletteram_w) AM_BASE(&paletteram16)
 //	AM_RANGE(0xc40000, 0xc43fff) AM_MIRROR(0x39c000) AM_READWRITE(misc_io_r, misc_io_w)
-//	AM_RANGE(0xc70000, 0xc73fff) AM_MIRROR(0x38c000) AM_RAM AM_BASE(&sys16_workingram)
+//	AM_RANGE(0xc70000, 0xc73fff) AM_MIRROR(0x38c000) AM_RAM AM_BASE(&workram)
 ADDRESS_MAP_END
 
 
@@ -596,6 +625,23 @@ static ADDRESS_MAP_START( n7751_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(I8039_p5, I8039_p5)  AM_WRITE(n7751_offset_a4_a7_w)
 	AM_RANGE(I8039_p6, I8039_p6)  AM_WRITE(n7751_offset_a8_a11_w)
 	AM_RANGE(I8039_p7, I8039_p7)  AM_WRITE(n7751_rom_select_w)
+ADDRESS_MAP_END
+
+
+
+/*************************************
+ *
+ *	i8751 MCU memory handlers
+ *
+ *************************************/
+
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_data_map, ADDRESS_SPACE_DATA, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 ADDRESS_MAP_END
 
 
@@ -1142,18 +1188,24 @@ static MACHINE_DRIVER_START( system16a )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
-	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 	MDRV_CPU_PROGRAM_MAP(system16a_map,0)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
 
+	MDRV_CPU_ADD_TAG("n7751", N7751, 6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(n7751_map,0)
+	MDRV_CPU_IO_MAP(n7751_portmap,0)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
 	MDRV_MACHINE_INIT(system16a)
+	MDRV_NVRAM_HANDLER(system16a)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1168,20 +1220,26 @@ static MACHINE_DRIVER_START( system16a )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
+	MDRV_SOUND_ADD_TAG("dac", DAC, n7751_dac_interface)
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( system16a_7751 )
+static MACHINE_DRIVER_START( system16a_no7751 )
 	MDRV_IMPORT_FROM(system16a)
+	MDRV_CPU_REMOVE("n7751")
+	MDRV_SOUND_REMOVE("dac")
+MACHINE_DRIVER_END
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("n7751", N7751, 6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(n7751_map,0)
-	MDRV_CPU_IO_MAP(n7751_portmap,0)
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, n7751_dac_interface)
+static MACHINE_DRIVER_START( system16a_8751 )
+	MDRV_IMPORT_FROM(system16a)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(i8751_main_cpu_vblank,1)
+
+	MDRV_CPU_ADD_TAG("mcu", I8751, 8000000)
+	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
+	MDRV_CPU_DATA_MAP(mcu_data_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
 MACHINE_DRIVER_END
 
 
@@ -1434,6 +1492,9 @@ ROM_START( bodyslam )
 	ROM_LOAD( "epr10030.c2", 0x08000, 0x8000, CRC(dcc1df0b) SHA1(a82a557fa48f4b3e1ab38f61b84d749cd417e80f) )
 	ROM_LOAD( "epr10031.c3", 0x10000, 0x8000, CRC(ea3c4472) SHA1(ad8eac2d3d14fd6aba713f4d624861c17aabf757) )
 	ROM_LOAD( "epr10032.c4", 0x18000, 0x8000, CRC(0aabebce) SHA1(fab12df8f4eab270be491c6c025d832c338e1e83) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1475,6 +1536,9 @@ ROM_START( dumpmtmt )
 	ROM_LOAD( "7712.bin", 0x08000, 0x8000, CRC(7bcd85cf) SHA1(9acba6998327e1074d7311a9b6d06da9baf69aa0) )
 	ROM_LOAD( "7713.bin", 0x10000, 0x8000, CRC(33f292e7) SHA1(4358cd3922a0dcbf109d2d697c7b8c4e090c3d52) )
 	ROM_LOAD( "7714.bin", 0x18000, 0x8000, CRC(8fd48c47) SHA1(1cba63a9e7e0b477683b7758d124f4949558ba7a) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 
@@ -1626,6 +1690,9 @@ ROM_START( quartet )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1667,6 +1734,9 @@ ROM_START( quartetj )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 
@@ -1711,6 +1781,9 @@ ROM_START( quartet2 )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1752,6 +1825,9 @@ ROM_START( quartt2j )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 
@@ -2104,7 +2180,7 @@ static DRIVER_INIT( generic_16a )
 static DRIVER_INIT( bodyslam )
 {
 	system16a_generic_init();
-	i8751_callback = bodyslam_i8751_sim;
+	i8751_vblank_hook = bodyslam_i8751_sim;
 }
 
 
@@ -2119,7 +2195,7 @@ static DRIVER_INIT( mjleague )
 static DRIVER_INIT( quartet )
 {
 	system16a_generic_init();
-	i8751_callback = quartet_i8751_sim;
+	i8751_vblank_hook = quartet_i8751_sim;
 }
 
 
@@ -2131,25 +2207,25 @@ static DRIVER_INIT( quartet )
  *************************************/
 
 /* "Pre-System 16" */
-GAMEX(1987, aliensyj, aliensyn, system16a_7751, aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (Japan)", GAME_NOT_WORKING )
-GAMEX(1987, aliensya, aliensyn, system16a_7751, aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (set 2)", GAME_NOT_WORKING )
-GAME( 1986, bodyslam, 0,        system16a_7751, bodyslam, bodyslam,    ROT0,   "Sega",           "Body Slam (8751 317-unknown)" )
-GAME( 1986, dumpmtmt, bodyslam, system16a_7751, bodyslam, bodyslam,    ROT0,   "Sega",           "Dump Matsumoto (Japan, 8751 317-unknown))" )
-GAME( 1985, mjleague, 0,        system16a_7751, mjleague, mjleague,    ROT270, "Sega",           "Major League" )
-GAME( 1986, quartet,  0,        system16a_7751, quartet,  quartet,     ROT0,   "Sega",           "Quartet (8751 317-unknown)" )
-GAME( 1986, quartetj, quartet,  system16a_7751, quartet,  quartet,     ROT0,   "Sega",           "Quartet (Japan, 8751 317-unknown))" )
-GAME( 1986, quartet2, quartet,  system16a_7751, quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (8751 317-unknown)" )
-GAME( 1986, quartt2j, quartet,  system16a_7751, quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (Japan, 8751 317-unknown)" )
+GAMEX(1987, aliensyj, aliensyn, system16a,        aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (Japan)", GAME_NOT_WORKING )
+GAMEX(1987, aliensya, aliensyn, system16a,        aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (set 2)", GAME_NOT_WORKING )
+GAME( 1986, bodyslam, 0,        system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Body Slam (8751 317-unknown)" )
+GAME( 1986, dumpmtmt, bodyslam, system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Dump Matsumoto (Japan, 8751 317-unknown))" )
+GAME( 1985, mjleague, 0,        system16a,        mjleague, mjleague,    ROT270, "Sega",           "Major League" )
+GAME( 1986, quartet,  0,        system16a_8751,   quartet,  quartet,     ROT0,   "Sega",           "Quartet (8751 317-unknown)" )
+GAME( 1986, quartetj, quartet,  system16a_8751,   quartet,  quartet,     ROT0,   "Sega",           "Quartet (Japan, 8751 317-unknown))" )
+GAME( 1986, quartet2, quartet,  system16a_8751,   quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (8751 317-unknown)" )
+GAME( 1986, quartt2j, quartet,  system16a_8751,   quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (Japan, 8751 317-unknown)" )
 
 /* System 16A */
-GAMEX(19??, afighter, 0,        system16a,      generic,  generic_16a, ROT270, "Sega",           "Action Fighter, FD1089A 317-0018", GAME_NOT_WORKING )
-GAMEX(1986, alexkidd, 0,        system16a_7751, alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1094? 317-unknown)", GAME_NOT_WORKING )
-GAME( 1986, alexkida, alexkidd, system16a_7751, alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 2, unprotected)" )
-GAME( 1986, fantzone, 0,        system16a,      fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Japan New Ver., unprotected)" )
-GAME( 1986, fantzono, fantzone, system16a,      fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Old Ver., unprotected)" )
-GAMEX(1987, sdioj,    sdi,      system16a,      sdi,      generic_16a, ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Japan, System 16A, FD1094 317-0027)", GAME_NOT_WORKING )
-GAMEX(1987, shinobia, shinobi,  system16a_7751, shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1987, sjryukoa, sjryuko,  system16a_7751, shinobi,  generic_16a, ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1094 317-5021)", GAME_NOT_WORKING )
-GAME( 1988, tetris,   0,        system16a,      tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
-GAMEX(1987, timescna, timescn,  system16a_7751, shinobi,  generic_16a, ROT270, "Sega",           "Time Scanner (System 16A, FD1089a 317-0024)", GAME_NOT_WORKING )
-GAME( 1988, wb3a,     wb3b,     system16a,      wb3,      generic_16a, ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (System 16A, FD1094 317-0084)" )
+GAMEX(19??, afighter, 0,        system16a_no7751, generic,  generic_16a, ROT270, "Sega",           "Action Fighter, FD1089A 317-0018", GAME_NOT_WORKING )
+GAMEX(1986, alexkidd, 0,        system16a,        alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1094? 317-unknown)", GAME_NOT_WORKING )
+GAME( 1986, alexkida, alexkidd, system16a,        alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 2, unprotected)" )
+GAME( 1986, fantzone, 0,        system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Japan New Ver., unprotected)" )
+GAME( 1986, fantzono, fantzone, system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Old Ver., unprotected)" )
+GAMEX(1987, sdioj,    sdi,      system16a_no7751, sdi,      generic_16a, ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Japan, System 16A, FD1094 317-0027)", GAME_NOT_WORKING )
+GAME( 1987, shinobia, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)" )
+GAMEX(1987, sjryukoa, sjryuko,  system16a,        shinobi,  generic_16a, ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1094 317-5021)", GAME_NOT_WORKING )
+GAME( 1988, tetris,   0,        system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
+GAMEX(1987, timescna, timescn,  system16a,        shinobi,  generic_16a, ROT270, "Sega",           "Time Scanner (System 16A, FD1089a 317-0024)", GAME_NOT_WORKING )
+GAME( 1988, wb3a,     wb3b,     system16a_no7751, wb3,      generic_16a, ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (System 16A, FD1094 317-0084)" )

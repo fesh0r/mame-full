@@ -170,14 +170,14 @@ typedef struct {
 	int (*irq_callback)(int irqline);
 
 
-	// STUFF added for the 6xx series 
+	// STUFF added for the 6xx series
 	UINT32 dec;
 	UINT32 fpscr;
-	
+
 	FPR	fpr[32];
 	UINT32 sr[16];
 
-	int is603;	
+	int is603;
 } PPC_REGS;
 
 
@@ -290,7 +290,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			if((value & 0x80000000) && !(ppc.spr[SPR_DEC] & 0x80000000))
 			{
 				/* trigger interrupt */
-		
+
 				printf("ERROR: set_spr to DEC triggers IRQ\n");
 				exit(1);
 			}
@@ -356,7 +356,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 		{
 			case SPR_TBLO: return (ppc.tb & 0xffffffff); break;
 			case SPR_TBHI: return ((ppc.tb >> 32) & 0xffffff); break;
-			default: 
+			default:
 				return(ppc.spr[spr]);
 				break;
 		}
@@ -384,12 +384,13 @@ INLINE UINT32 ppc_get_spr(int spr)
 				osd_die("ppc: get_spr: TBU_W \n");
 				break;
 
-			default: 
+			default:
 				return(ppc.spr[spr]);
 				break;
 		}
 	}
 #endif
+	return 0;
 }
 
 INLINE void ppc_set_msr(UINT32 value)
@@ -599,7 +600,7 @@ void ppc_init(void)
 
 		switch(ppc_opcode_common[i].code)
 		{
-			case 19:	
+			case 19:
 				optable19[ppc_opcode_common[i].subcode] = ppc_opcode_common[i].handler;
 				break;
 
@@ -624,7 +625,7 @@ void ppc_init(void)
 			int mb = i;
 			int me = j;
 			mask = ((UINT32)0xFFFFFFFF >> mb) ^ ((me >= 31) ? 0 : ((UINT32)0xFFFFFFFF >> (me + 1)));
-			if( mb > me ) 
+			if( mb > me )
 				mask = ~mask;
 
 			ppc_rotate_mask[i][j] = mask;
@@ -664,7 +665,7 @@ static void ppc403_exit(void)
 static void ppc603_init(void)
 {
 	int i ;
-	
+
 	ppc_init() ;
 
 	optable[48] = ppc_lfs;
@@ -934,7 +935,7 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -1065,7 +1066,7 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_LINES:					info->i = 5;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc403_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
@@ -1092,7 +1093,7 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
 		case CPUINFO_PTR_INIT:						info->init = ppc603_init;				break;

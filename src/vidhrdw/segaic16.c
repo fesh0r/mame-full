@@ -318,7 +318,7 @@ void segaic16_draw_virtual_tilemap(struct mame_bitmap *bitmap, const struct rect
 		pageclip.max_y = (topmax > cliprect->max_y) ? cliprect->max_y : topmax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			segaic16_tilemap_page = (pages >> 12) & 0xf;
+			segaic16_tilemap_page = (pages >> 0) & 0xf;
 			tilemap_set_scrollx(segaic16_tilemaps[segaic16_tilemap_page], 0, xscroll);
 			tilemap_set_scrolly(segaic16_tilemaps[segaic16_tilemap_page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, segaic16_tilemaps[segaic16_tilemap_page], flags, priority);
@@ -334,7 +334,7 @@ void segaic16_draw_virtual_tilemap(struct mame_bitmap *bitmap, const struct rect
 		pageclip.max_y = (topmax > cliprect->max_y) ? cliprect->max_y : topmax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			segaic16_tilemap_page = (pages >> 8) & 0xf;
+			segaic16_tilemap_page = (pages >> 4) & 0xf;
 			tilemap_set_scrollx(segaic16_tilemaps[segaic16_tilemap_page], 0, xscroll);
 			tilemap_set_scrolly(segaic16_tilemaps[segaic16_tilemap_page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, segaic16_tilemaps[segaic16_tilemap_page], flags, priority);
@@ -350,7 +350,7 @@ void segaic16_draw_virtual_tilemap(struct mame_bitmap *bitmap, const struct rect
 		pageclip.max_y = (bottommax > cliprect->max_y) ? cliprect->max_y : bottommax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			segaic16_tilemap_page = (pages >> 4) & 0xf;
+			segaic16_tilemap_page = (pages >> 8) & 0xf;
 			tilemap_set_scrollx(segaic16_tilemaps[segaic16_tilemap_page], 0, xscroll);
 			tilemap_set_scrolly(segaic16_tilemaps[segaic16_tilemap_page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, segaic16_tilemaps[segaic16_tilemap_page], flags, priority);
@@ -366,7 +366,7 @@ void segaic16_draw_virtual_tilemap(struct mame_bitmap *bitmap, const struct rect
 		pageclip.max_y = (bottommax > cliprect->max_y) ? cliprect->max_y : bottommax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			segaic16_tilemap_page = (pages >> 0) & 0xf;
+			segaic16_tilemap_page = (pages >> 12) & 0xf;
 			tilemap_set_scrollx(segaic16_tilemaps[segaic16_tilemap_page], 0, xscroll);
 			tilemap_set_scrolly(segaic16_tilemaps[segaic16_tilemap_page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, segaic16_tilemaps[segaic16_tilemap_page], flags, priority);

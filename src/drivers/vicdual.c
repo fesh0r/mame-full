@@ -280,27 +280,23 @@ INPUT_PORTS_START( frogs )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(30) /* PORT_RESETCPU */
 
-#if !FROGS_USE_SAMPLES
+//	PORT_START_TAG("IN2")
+//	PORT_ADJUSTER( 25, "Boing Volume" )
+
+//	PORT_START_TAG("IN3")
+//	PORT_ADJUSTER( 25, "Buzzz Volume" )
+
+//	PORT_START_TAG("IN4")
+//	PORT_ADJUSTER( 25, "Croak Volume" )
+
+//	PORT_START_TAG("IN5")
+//	PORT_ADJUSTER( 25, "Hop Volume" )
+
+//	PORT_START_TAG("IN6")
+//	PORT_ADJUSTER( 50, "Splash Volume" )
 
 	PORT_START_TAG("IN2")
-	PORT_ADJUSTER( 25, "Boing Volume" )
-
-	PORT_START_TAG("IN3")
-	PORT_ADJUSTER( 25, "Buzzz Volume" )
-
-	PORT_START_TAG("IN4")
-	PORT_ADJUSTER( 25, "Croak Volume" )
-
-	PORT_START_TAG("IN5")
-	PORT_ADJUSTER( 25, "Hop Volume" )
-
-	PORT_START_TAG("IN6")
-	PORT_ADJUSTER( 50, "Splash Volume" )
-
-	PORT_START_TAG("IN7")
-	PORT_ADJUSTER( 25, "Zip Volume" )
-
-#endif
+	PORT_ADJUSTER( 50, "Zip Volume" )
 
 INPUT_PORTS_END
 
@@ -1208,9 +1204,6 @@ static MACHINE_DRIVER_START( depthch )
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_depthch)
 MACHINE_DRIVER_END
 
-
-#if FROGS_USE_SAMPLES
-
 mame_timer *croak_timer;
 
 static MACHINE_INIT( frogs )
@@ -1218,21 +1211,15 @@ static MACHINE_INIT( frogs )
 	croak_timer = timer_alloc(croak_callback);
 }
 
-#endif
-
 static MACHINE_DRIVER_START( frogs )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(2ports)
+	MDRV_MACHINE_INIT(frogs)
 
 	/* sound hardware */
-// defined in src\includes\vicdual.h
-#if FROGS_USE_SAMPLES
-	MDRV_MACHINE_INIT(frogs)
 	MDRV_SOUND_ADD(SAMPLES, frogs_samples_interface)
-#else
 	MDRV_SOUND_ADD(DISCRETE, frogs_discrete_interface)
-#endif
 MACHINE_DRIVER_END
 
 

@@ -1212,6 +1212,7 @@
  *   & - Pop two values from stack, binary AND and push result to stack
  *   | - Pop two values from stack, binary OR and push result to stack
  *   ^ - Pop two values from stack, binary XOR and push result to stack
+ *   P - Push a duplicate of the last stack value back on the stack
  *
  * EXAMPLES: see Polaris
  *

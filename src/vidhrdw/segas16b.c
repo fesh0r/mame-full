@@ -29,6 +29,8 @@ static const UINT8 *banklist;
 static UINT8 draw_enable;
 static UINT8 screen_flip;
 
+static UINT16 latched_xscroll[4], latched_yscroll[4], latched_pageselect[4];
+
 
 
 /*************************************
@@ -37,6 +39,7 @@ static UINT8 screen_flip;
  *
  *************************************/
 
+static void latch_tilemap_values(int param);
 static void get_tile_info(int tile_index);
 static void get_tile_info_timscanr(int tile_index);
 static void get_text_info(int tile_index);
@@ -76,6 +79,9 @@ static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 
 	/* compute palette info */
 	segaic16_init_palette();
+	
+	/* set a timer to latch values on scanline 261 */
+	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
 	return 0;
 }
 
@@ -244,12 +250,36 @@ void system16b_set_tile_bank(int which, int bank)
 
 WRITE16_HANDLER( system16b_textram_w )
 {
-	/* certain ranges need immediate updates */
-	if (offset >= 0xe80/2)
+	/* column/rowscroll need immediate updates */
+	if (offset >= 0xf00/2)
 		force_partial_update(cpu_getscanline());
 
 	COMBINE_DATA(&segaic16_textram[offset]);
 	tilemap_mark_tile_dirty(textmap, offset);
+}
+
+
+
+/*************************************
+ *
+ *	Latch screen-wide tilemap values
+ *
+ *************************************/
+
+static void latch_tilemap_values(int param)
+{
+	int i;
+
+	/* latch the scroll and page select values */
+	for (i = 0; i < 4; i++)
+	{
+		latched_pageselect[i] = segaic16_textram[0xe80/2 + i];
+		latched_yscroll[i] = segaic16_textram[0xe90/2 + i];
+		latched_xscroll[i] = segaic16_textram[0xe98/2 + i];
+	}
+	
+	/* set a timer to do this again next frame */
+	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
 }
 
 
@@ -266,12 +296,12 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 	int x, y;
 
 	/* get global values */
-	xscroll = segaic16_textram[0xe98/2 + which];
-	yscroll = segaic16_textram[0xe90/2 + which];
-	pages = segaic16_textram[0xe80/2 + which];
+	xscroll = latched_xscroll[which];
+	yscroll = latched_yscroll[which];
+	pages = latched_pageselect[which];
 
-	/* column AND row scroll */
-	if ((xscroll & 0x8000) && (yscroll & 0x8000))
+	/* column scroll? */
+	if (yscroll & 0x8000)
 	{
 		if (PRINT_UNUSUAL_MODES) printf("Column AND row scroll\n");
 
@@ -285,9 +315,9 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 			rowcolclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* loop over column chunks */
-			for (x = ((cliprect->min_x + 8) & ~15) - 8; x <= cliprect->max_x; x += 16)
+			for (x = ((cliprect->min_x + 9) & ~15) - 9; x <= cliprect->max_x; x += 16)
 			{
-				UINT16 effxscroll, effyscroll;
+				UINT16 effxscroll, effyscroll, rowscroll;
 				UINT16 effpages = pages;
 
 				/* adjust to clip this column only */
@@ -295,48 +325,26 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 				rowcolclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 				/* get the effective scroll values */
-				effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
-				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+8)/16];
+				rowscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+				effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
+				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+9)/16];
 
 				/* are we using an alternate? */
-				if (effxscroll & 0x8000)
+				if (rowscroll & 0x8000)
 				{
-					effxscroll = segaic16_textram[0xe9c/2 + which];
-					effyscroll = segaic16_textram[0xe94/2 + which];
-					effpages = segaic16_textram[0xe84/2 + which];
+					effxscroll = latched_xscroll[which + 2];
+					effyscroll = latched_yscroll[which + 2];
+					effpages = latched_pageselect[which + 2];
 				}
 
 				/* draw the chunk */
-				effxscroll = (-320 - effxscroll) & 0x3ff;
-				effyscroll = (-256 + effyscroll) & 0x1ff;
+				effxscroll = (0xc0 - effxscroll) & 0x3ff;
+				effyscroll = effyscroll & 0x1ff;
 				segaic16_draw_virtual_tilemap(bitmap, &rowcolclip, effpages, effxscroll, effyscroll, flags, priority);
 			}
 		}
 	}
-	else if (yscroll & 0x8000)
-	{
-		if (PRINT_UNUSUAL_MODES) printf("Column scroll\n");
-
-		/* loop over column chunks */
-		for (x = ((cliprect->min_x + 8) & ~15) - 8; x <= cliprect->max_x; x += 16)
-		{
-			struct rectangle colclip = *cliprect;
-			UINT16 effxscroll, effyscroll;
-
-			/* adjust to clip this row only */
-			colclip.min_x = (x < cliprect->min_x) ? cliprect->min_x : x;
-			colclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
-
-			/* get the effective scroll values */
-			effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+8)/16];
-
-			/* draw the chunk */
-			effxscroll = (-320 - xscroll) & 0x3ff;
-			effyscroll = (-256 + effyscroll) & 0x1ff;
-			segaic16_draw_virtual_tilemap(bitmap, &colclip, pages, effxscroll, effyscroll, flags, priority);
-		}
-	}
-	else if (xscroll & 0x8000)
+	else
 	{
 		if (PRINT_UNUSUAL_MODES) printf("Row scroll\n");
 
@@ -344,7 +352,7 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
 		{
 			struct rectangle rowclip = *cliprect;
-			UINT16 effxscroll, effyscroll;
+			UINT16 effxscroll, effyscroll, rowscroll;
 			UINT16 effpages = pages;
 
 			/* adjust to clip this row only */
@@ -352,28 +360,23 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 			rowclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* get the effective scroll values */
-			effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+			rowscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+			effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
 			effyscroll = yscroll;
 
 			/* are we using an alternate? */
-			if (effxscroll & 0x8000)
+			if (rowscroll & 0x8000)
 			{
-				effxscroll = segaic16_textram[0xe9c/2 + which];
-				effyscroll = segaic16_textram[0xe94/2 + which];
-				effpages = segaic16_textram[0xe84/2 + which];
+				effxscroll = latched_xscroll[which + 2];
+				effyscroll = latched_yscroll[which + 2];
+				effpages = latched_pageselect[which + 2];
 			}
 
 			/* draw the chunk */
-			effxscroll = (-320 - effxscroll) & 0x3ff;
-			effyscroll = (-256 + effyscroll) & 0x1ff;
+			effxscroll = (0xc0 - effxscroll) & 0x3ff;
+			effyscroll = effyscroll & 0x1ff;
 			segaic16_draw_virtual_tilemap(bitmap, &rowclip, effpages, effxscroll, effyscroll, flags, priority);
 		}
-	}
-	else
-	{
-		xscroll = (-320 - xscroll) & 0x3ff;
-		yscroll = (-256 + yscroll) & 0x1ff;
-		segaic16_draw_virtual_tilemap(bitmap, cliprect, pages, xscroll, yscroll, flags, priority);
 	}
 }
 

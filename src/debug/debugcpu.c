@@ -719,9 +719,11 @@ void MAME_Debug(void)
 		debug_view_update_all();
 		debug_refresh_display();
 		
-		/* wait for the debugger */
+		/* wait for the debugger; during this time, disable sound output */
+		osd_sound_enable(0);
 		while (execution_state == EXECUTION_STATE_STOPPED)
 			osd_wait_for_debugger();
+		osd_sound_enable(1);
 		
 		/* remember the last cpunum where we stopped */
 		last_stopped_cpunum = cpunum;

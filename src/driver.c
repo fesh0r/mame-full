@@ -260,6 +260,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( hotshock )	/* (c) 1982 E.G. Felaco */
 	DRIVER( conquer )	/* (c) 1982 ???? */
 	DRIVER( hunchbks )	/* (c) 1983 Century */
+	DRIVER( hncholms )
 	DRIVER( cavelon )	/* (c) 1983 Jetsoft */
 	DRIVER( sfx )		/* (c) 1983 Nichibutsu */
 	DRIVER( skelagon )	/* (c) 1983 Nichibutsu USA */
@@ -310,6 +311,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( boggy84 )	/* bootleg, original is (c)1983 Taito/Kaneko */
 	DRIVER( redrobin )	/* (c) 1986 Elettronolo */
 	DRIVER( imago )
+	DRIVER( scorpion )	/* (c) 1982 Zaccaria */
+	DRIVER( scrpiona )	/* (c) 1982 Zaccaria */
 
 	/* "Crazy Climber hardware" games */
 	DRIVER( cclimber )	/* (c) 1980 Nichibutsu */
@@ -681,7 +684,9 @@ const struct GameDriver *drivers[] =
 	DRIVER( assaultj )	/* (c) 1988 (Japan) */
 	DRIVER( assaultp )	/* (c) 1988 (Japan) */
 	DRIVER( metlhawk )	/* (c) 1988 */
+	DRIVER( metlhwkj )	/* (c) 1988 */
 	DRIVER( ordyne )	/* (c) 1988 */
+	DRIVER( ordynej )	/* (c) 1988 */
 	DRIVER( mirninja )	/* (c) 1988 (Japan) */
 	DRIVER( phelios )	/* (c) 1988 (Japan) */
 	DRIVER( dirtfoxj )	/* (c) 1989 (Japan) */
@@ -701,6 +706,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( rthun2 )	/* (c) 1990 */
 	DRIVER( rthun2j )	/* (c) 1990 (Japan) */
 	DRIVER( sgunner )	/* (c) 1990 */
+	DRIVER( sgunnerj )	/* (c) 1990 */
 	/* 91.9  Super World Stadium */
 	DRIVER( sgunner2 )	/* (c) 1991 (US) */
 	DRIVER( sgunnr2j )	/* (c) 1991 (Japan) */
@@ -709,6 +715,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( finalap3 )	/* 92.9  Final Lap 3 */
 	DRIVER( finalp3a )	/* 92.9  Final Lap 3 */
 	DRIVER( luckywld )	/* (c) 1992 */
+	DRIVER( lckywldj )	/* (c) 1992 */
 	DRIVER( suzuka8h )
 	DRIVER( suzuk8hj )
 	/* 92.8  Bubble Trouble */
@@ -2605,6 +2612,7 @@ V-V                           TP-027
 	DRIVER( arlingtn )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( peggle )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( pegglet )	/* (c) 1991 Strata/Incredible Technologies */
+	DRIVER( pokrdice )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( rimrockn )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( rimrck20 )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( rimrck16 )	/* (c) 1991 Strata/Incredible Technologies */
@@ -2993,6 +3001,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( smgpc )
 	DRIVER( smgpd )
 	DRIVER( smgpe )
+	DRIVER( smgpf )
 
 	/* Y-Board */
 	DRIVER( gforce2 )
@@ -3061,6 +3070,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( spidey )	/* (c) 1991 */
 	DRIVER( spideyj )	/* (c) 1991 (Japan) */
 	DRIVER( arabfgt )	/* (c) 1991 */
+	DRIVER( arabfgtj )	/* (c) 1991 */
 	DRIVER( arescue )	/* (c) 1992 */
 	DRIVER( f1lap )
 	DRIVER( dbzvrvs )

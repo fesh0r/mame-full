@@ -5,9 +5,7 @@
 ****************************************************************************
 
 	Known bugs:
-		* wwally level after running/dragon level has huge black sprites
-		  over display, currently avoided with a hack.
-		* bloxeed background color is wrong in several places.
+		* lghost sprites seem to be slightly out of sync
 
 ****************************************************************************
 
@@ -79,6 +77,8 @@ struct region_info
  *
  *************************************/
 
+static data16_t *workram;
+
 static UINT8 rom_board;
 static UINT8 memory_control[0x20];
 static UINT8 misc_io_data[0x10];
@@ -124,43 +124,43 @@ static WRITE16_HANDLER( unknown_rgn2_w );
 
 static struct region_info rom_171_shad_info[] =
 {
-	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,               "I/O space" },
-	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,      "color RAM" },
-	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,  "tile RAM" },
-	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,  "text RAM" },
-	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram,"object RAM" },
-	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &sys16_workingram,  "work RAM" },
-	{ 0x29/2, 0x00000, 0x10000, 0xff0000,      ~0, NULL,                  NULL,                  NULL,               "????" },
-	{ 0x25/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,               "VDP" },
-	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,               "ROM 0" },
+	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                "I/O space" },
+	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,       "color RAM" },
+	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,   "tile RAM" },
+	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,   "text RAM" },
+	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram, "object RAM" },
+	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &workram,            "work RAM" },
+	{ 0x29/2, 0x00000, 0x10000, 0xff0000,      ~0, NULL,                  NULL,                  NULL,                "????" },
+	{ 0x25/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                "VDP" },
+	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,                "ROM 0" },
 	{ 0 }
 };
 
 static struct region_info rom_171_5874_info[] =
 {
-	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,               "I/O space" },
-	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,      "color RAM" },
-	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,  "tile RAM" },
-	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,  "text RAM" },
-	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram,"object RAM" },
-	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &sys16_workingram,  "work RAM" },
-	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,               "VDP" },
-	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK15,          MWA16_ROM,             NULL,               "ROM 1" },
-	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,               "ROM 0" },
+	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                "I/O space" },
+	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,       "color RAM" },
+	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,   "tile RAM" },
+	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,   "text RAM" },
+	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram, "object RAM" },
+	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &workram,            "work RAM" },
+	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                "VDP" },
+	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK15,          MWA16_ROM,             NULL,                "ROM 1" },
+	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,                "ROM 0" },
 	{ 0 }
 };
 
 static struct region_info rom_171_5987_info[] =
 {
-	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,               "I/O space" },
-	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,      "color RAM" },
-	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,  "tile RAM" },
-	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,  "text RAM" },
-	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram,"object RAM" },
-	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &sys16_workingram,  "work RAM" },
-	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,               "VDP" },
-	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK15,          rom_5987_bank_w,       NULL,               "ROM 1/banking" },
-	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,               "ROM 0" },
+	{ 0x3d/2, 0x00000, 0x04000, 0xffc000,      ~0, misc_io_r,             misc_io_w,             NULL,                "I/O space" },
+	{ 0x39/2, 0x00000, 0x04000, 0xfff000,      ~0, paletteram16_word_r,   segaic16_paletteram_w, &paletteram16,       "color RAM" },
+	{ 0x35/2, 0x00000, 0x10000, 0xfe0000,      ~0, MRA16_BANK10,          segaic16_tileram_w,    &segaic16_tileram,   "tile RAM" },
+	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system18_textram_w,    &segaic16_textram,   "text RAM" },
+	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram, "object RAM" },
+	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &workram,            "work RAM" },
+	{ 0x29/2, 0x00000, 0x00010, 0xfffff0,      ~0, segac2_vdp_r,          segac2_vdp_w,          NULL,                "VDP" },
+	{ 0x25/2, 0x00000, 0x80000, 0xf80000, 0x80000, MRA16_BANK15,          rom_5987_bank_w,       NULL,                "ROM 1/banking" },
+	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,                "ROM 0" },
 	{ 0 }
 };
 
@@ -853,6 +853,22 @@ static WRITE8_HANDLER( mcu_data_w )
 
 /*************************************
  *
+ *	Capacitor-backed RAM
+ *
+ *************************************/
+
+static NVRAM_HANDLER( system18 )
+{
+	if (read_or_write)
+		mame_fwrite(file, workram, 0x4000);
+	else if (file)
+		mame_fread(file, workram, 0x4000);
+}
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -1102,6 +1118,34 @@ static INPUT_PORTS_START( bloxeed )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 	/* Switches 3 & 7 are listed as "NOT USED" */
+INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( cltchitr )
+	PORT_INCLUDE( system18_generic )
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Game time P1" )
+	PORT_DIPSETTING(    0x04, "2 Credits 18 Outcounts 14 Min." )
+	PORT_DIPSETTING(    0x00, "1 Credit 6 Outcounts 7 Min." )
+	PORT_DIPSETTING(    0x08, "1 Credit 12 Outcounts 12 Min." )
+	PORT_DIPSETTING(    0x0c, "1Credit 6 Outcounts 8M./2Credits 18 Outcounts 14M." )
+	PORT_DIPNAME( 0x30, 0x30, "Game time P2" )
+	PORT_DIPSETTING(    0x10, "4 Credits 18 Outcounts 16 Min." )
+	PORT_DIPSETTING(    0x00, "2 Credits 6 Outcounts 8 Min." )
+	PORT_DIPSETTING(    0x20, "2 Credits 12 Outcounts 14 Min." )
+	PORT_DIPSETTING(    0x30, "2Credits 6 Outcounts 8M./4Credits 18 Outcounts 16M." )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easiest" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 INPUT_PORTS_END
 
 
@@ -1421,6 +1465,7 @@ static MACHINE_DRIVER_START( system18 )
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
 	MDRV_MACHINE_INIT(system18)
+	MDRV_NVRAM_HANDLER(system18)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2255,8 +2300,8 @@ GAME( 1990, astorm,   0,        system18,      astorm,   generic_5874, ROT0, "Se
 GAME( 1990, astorma,  astorm,   system18,      astorm,   generic_5874, ROT0, "Sega",    "Alien Storm (World, 3 Players, FD1094 317-0148)" ) // decrypted
 GAMEX(1990, astorm2p, astorm,   system18,      astorm,   generic_5874, ROT0, "Sega",    "Alien Storm (2 Players, FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
 GAME( 1990, bloxeed,  0,        system18,      bloxeed,  generic_5874, ROT0, "Sega",    "Bloxeed (Japan, FD1094 317-0139)" ) // decrypted
-GAME( 1991, cltchitr, 0,        system18,      generic,  generic_5987, ROT0, "Sega",    "Clutch Hitter (US, FD1094 317-176)" ) // decrypted
-GAME( 1991, cltchtrj, cltchitr, system18,      generic,  generic_5987, ROT0, "Sega",    "Clutch Hitter (Japan, FD1094 317-0175)" ) // decrypted
+GAME( 1991, cltchitr, 0,        system18,      cltchitr, generic_5987, ROT0, "Sega",    "Clutch Hitter (US, FD1094 317-176)" ) // decrypted
+GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0, "Sega",    "Clutch Hitter (Japan, FD1094 317-0175)" ) // decrypted
 GAME( 1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (US, 4 Player, FD1094 317-0186)" ) // decrypted
 GAME( 1991, ddcrewa,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (World, 4 Player, FD1094 317-?)" ) // decrypted
 GAMEX(1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)", GAME_NOT_WORKING ) // not decrypted
@@ -2269,5 +2314,5 @@ GAME( 1990, mwalkb,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0, "Se
 GAME( 1989, shdancer, 0,        system18,      shdancer, generic_shad, ROT0, "Sega",    "Shadow Dancer (US)"  ) // not encrypted
 GAME( 1989, shdancrj, shdancer, system18,      shdancer, generic_shad, ROT0, "Sega",    "Shadow Dancer (Japan)" ) // not encrypted
 GAME( 1989, shdancrb, shdancer, system18,      shdancer, generic_shad, ROT0, "Sega",    "Shadow Dancer (Rev.B)" ) // not encrypted
-GAMEX(1992, wwally,   0,        system18,      wwally,   wwally,       ROT0, "Sega",    "Where's Wally? (Japan, FD1094 317-0197a)", GAME_IMPERFECT_GRAPHICS ) // decrypted
+GAME( 1992, wwally,   0,        system18,      wwally,   wwally,       ROT0, "Sega",    "Where's Wally? (Japan, FD1094 317-0197a)" ) // decrypted
 GAMEX(1992, wwallyb,  wwally,   system18,      wwally,   wwally,       ROT0, "Sega",    "Where's Wally? (FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted

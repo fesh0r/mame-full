@@ -9,8 +9,15 @@
 
 
 
+/*************************************
+ *
+ *	Debugging
+ *
+ *************************************/
+
 #define PRINT_UNUSUAL_MODES		(0)
 #define DEBUG_VDP				(0)
+
 
 
 /*************************************
@@ -31,6 +38,8 @@ static UINT8 grayscale_enable;
 static UINT8 vdp_enable;
 static UINT8 vdp_mixing;
 
+static UINT16 latched_xscroll[4], latched_yscroll[4], latched_pageselect[4];
+
 
 
 /*************************************
@@ -42,6 +51,7 @@ static UINT8 vdp_mixing;
 extern int start_system18_vdp(void);
 extern void update_system18_vdp(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 
+static void latch_tilemap_values(int param);
 static void get_tile_info(int tile_index);
 static void get_text_info(int tile_index);
 
@@ -90,6 +100,9 @@ VIDEO_START( system18 )
 
 	/* compute palette info */
 	segaic16_init_palette();
+	
+	/* set a timer to latch values on scanline 261 */
+	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
 	return 0;
 }
 
@@ -248,12 +261,36 @@ void system18_set_sprite_bank(int which, int bank)
 
 WRITE16_HANDLER( system18_textram_w )
 {
-	/* certain ranges need immediate updates */
-	if (offset >= 0xe80/2)
+	/* column/rowscroll need immediate updates */
+	if (offset >= 0xf00/2)
 		force_partial_update(cpu_getscanline());
 
 	COMBINE_DATA(&segaic16_textram[offset]);
 	tilemap_mark_tile_dirty(textmap, offset);
+}
+
+
+
+/*************************************
+ *
+ *	Latch screen-wide tilemap values
+ *
+ *************************************/
+
+static void latch_tilemap_values(int param)
+{
+	int i;
+
+	/* latch the scroll and page select values */
+	for (i = 0; i < 4; i++)
+	{
+		latched_pageselect[i] = segaic16_textram[0xe80/2 + i];
+		latched_yscroll[i] = segaic16_textram[0xe90/2 + i];
+		latched_xscroll[i] = segaic16_textram[0xe98/2 + i];
+	}
+	
+	/* set a timer to do this again next frame */
+	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
 }
 
 
@@ -270,12 +307,12 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	int x, y;
 
 	/* get global values */
-	xscroll = segaic16_textram[0xe98/2 + which];
-	yscroll = segaic16_textram[0xe90/2 + which];
-	pages = segaic16_textram[0xe80/2 + which];
+	xscroll = latched_xscroll[which];
+	yscroll = latched_yscroll[which];
+	pages = latched_pageselect[which];
 
-	/* column AND row scroll */
-	if ((xscroll & 0x8000) && (yscroll & 0x8000))
+	/* column scroll? */
+	if (yscroll & 0x8000)
 	{
 		if (PRINT_UNUSUAL_MODES) printf("Column AND row scroll\n");
 
@@ -291,7 +328,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			/* loop over column chunks */
 			for (x = ((cliprect->min_x + 9) & ~15) - 9; x <= cliprect->max_x; x += 16)
 			{
-				UINT16 effxscroll, effyscroll;
+				UINT16 effxscroll, effyscroll, rowscroll;
 				UINT16 effpages = pages;
 
 				/* adjust to clip this column only */
@@ -299,48 +336,26 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 				rowcolclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 				/* get the effective scroll values */
-				effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+				rowscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+				effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
 				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+9)/16];
 
 				/* are we using an alternate? */
-				if (effxscroll & 0x8000)
+				if (rowscroll & 0x8000)
 				{
-					effxscroll = segaic16_textram[0xe9c/2 + which];
-					effyscroll = segaic16_textram[0xe94/2 + which];
-					effpages = segaic16_textram[0xe84/2 + which];
+					effxscroll = latched_xscroll[which + 2];
+					effyscroll = latched_yscroll[which + 2];
+					effpages = latched_pageselect[which + 2];
 				}
 
 				/* draw the chunk */
-				effxscroll = (-320 - effxscroll) & 0x3ff;
-				effyscroll = (-256 + effyscroll) & 0x1ff;
+				effxscroll = (0xc0 - effxscroll) & 0x3ff;
+				effyscroll = effyscroll & 0x1ff;
 				segaic16_draw_virtual_tilemap(bitmap, &rowcolclip, effpages, effxscroll, effyscroll, flags, priority);
 			}
 		}
 	}
-	else if (yscroll & 0x8000)
-	{
-		if (PRINT_UNUSUAL_MODES) printf("Column scroll\n");
-
-		/* loop over column chunks */
-		for (x = ((cliprect->min_x + 9) & ~15) - 9; x <= cliprect->max_x; x += 16)
-		{
-			struct rectangle colclip = *cliprect;
-			UINT16 effxscroll, effyscroll;
-
-			/* adjust to clip this row only */
-			colclip.min_x = (x < cliprect->min_x) ? cliprect->min_x : x;
-			colclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
-
-			/* get the effective scroll values */
-			effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+9)/16];
-
-			/* draw the chunk */
-			effxscroll = (-320 - xscroll) & 0x3ff;
-			effyscroll = (-256 + effyscroll) & 0x1ff;
-			segaic16_draw_virtual_tilemap(bitmap, &colclip, pages, effxscroll, effyscroll, flags, priority);
-		}
-	}
-	else if (xscroll & 0x8000)
+	else
 	{
 		if (PRINT_UNUSUAL_MODES) printf("Row scroll\n");
 
@@ -348,7 +363,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
 		{
 			struct rectangle rowclip = *cliprect;
-			UINT16 effxscroll, effyscroll;
+			UINT16 effxscroll, effyscroll, rowscroll;
 			UINT16 effpages = pages;
 
 			/* adjust to clip this row only */
@@ -356,28 +371,23 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			rowclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* get the effective scroll values */
-			effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+			rowscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+			effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
 			effyscroll = yscroll;
 
 			/* are we using an alternate? */
-			if (effxscroll & 0x8000)
+			if (rowscroll & 0x8000)
 			{
-				effxscroll = segaic16_textram[0xe9c/2 + which];
-				effyscroll = segaic16_textram[0xe94/2 + which];
-				effpages = segaic16_textram[0xe84/2 + which];
+				effxscroll = latched_xscroll[which + 2];
+				effyscroll = latched_yscroll[which + 2];
+				effpages = latched_pageselect[which + 2];
 			}
 
 			/* draw the chunk */
-			effxscroll = (-320 - effxscroll) & 0x3ff;
-			effyscroll = (-256 + effyscroll) & 0x1ff;
+			effxscroll = (0xc0 - effxscroll) & 0x3ff;
+			effyscroll = effyscroll & 0x1ff;
 			segaic16_draw_virtual_tilemap(bitmap, &rowclip, effpages, effxscroll, effyscroll, flags, priority);
 		}
-	}
-	else
-	{
-		xscroll = (-320 - xscroll) & 0x3ff;
-		yscroll = (-256 + yscroll) & 0x1ff;
-		segaic16_draw_virtual_tilemap(bitmap, cliprect, pages, xscroll, yscroll, flags, priority);
 	}
 }
 
@@ -584,67 +594,47 @@ static void draw_vdp(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 VIDEO_UPDATE( system18 )
 {
-	int vdppri = 0x00;
-	int vdplayer = 0;
-	
-	switch (vdp_mixing)
-	{
-		case 0x00:
-			/* astorm: layer = 0, pri = 0x00 or 0x01 */
-			/* lghost: layer = 0, pri = 0x00 or 0x01 */
-			vdplayer = 0;
-			vdppri = 0x01;
-			break;
-			
-		case 0x01:
-			/* ddcrew: layer = 0, pri = 0x00 or 0x01 or 0x02 or 0x04 */
-			vdplayer = 0;
-			vdppri = 0x04;
-			break;
-			
-		case 0x02:
-			/* never seen */
-			break;
-			
-		case 0x03:
-			/* ddcrew: layer = 1, pri = 0x00 or 0x01 or 0x02 */
-			vdplayer = 1;
-			vdppri = 0x02;
-			break;
-			
-		case 0x04:
-			/* astorm: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02 */
-			/* mwalk: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02 */
-			vdplayer = 2;
-			vdppri = 0x02;
-			break;
-			
-		case 0x05:
-			/* ddcrew: layer = 2, pri = 0x04 */
-			/* wwally: layer = 2, pri = 0x04 */
-			vdplayer = 2;
-			vdppri = 0x04;
-			break;
-			
-		case 0x06:
-			/* never seen */
-			break;
-			
-		case 0x07:
-			/* cltchitr: layer = 1 or 2 or 3, pri = 0x02 or 0x04 or 0x08 */
-			vdplayer = 3;
-			vdppri = 0x02;
-			break;
-	}
+	int vdppri, vdplayer;
 
+/*
+	Current understanding of VDP mixing:
+
+	mixing = 0x00:
+		astorm: layer = 0, pri = 0x00 or 0x01
+		lghost: layer = 0, pri = 0x00 or 0x01
+		
+	mixing = 0x01:
+		ddcrew: layer = 0, pri = 0x00 or 0x01 or 0x02
+
+	mixing = 0x02:
+		never seen
+
+	mixing = 0x03:
+		ddcrew: layer = 1, pri = 0x00 or 0x01 or 0x02
+
+	mixing = 0x04:
+		astorm: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02
+		mwalk:  layer = 2 or 3, pri = 0x00 or 0x01 or 0x02
+
+	mixing = 0x05:
+		ddcrew: layer = 2, pri = 0x04
+		wwally: layer = 2, pri = 0x04
+
+	mixing = 0x06:
+		never seen
+
+	mixing = 0x07:
+		cltchitr: layer = 1 or 2 or 3, pri = 0x02 or 0x04 or 0x08
+		mwalk:    layer = 3, pri = 0x04 or 0x08
+*/
+	vdplayer = (vdp_mixing >> 1) & 3;
+	vdppri = (vdp_mixing & 1) ? (1 << vdplayer) : 0;
+	
 #if DEBUG_VDP
 	if (code_pressed(KEYCODE_Q)) vdplayer = 0;
 	if (code_pressed(KEYCODE_W)) vdplayer = 1;
 	if (code_pressed(KEYCODE_E)) vdplayer = 2;
 	if (code_pressed(KEYCODE_R)) vdplayer = 3;
-	if (code_pressed(KEYCODE_T)) vdplayer = 4;
-	if (code_pressed(KEYCODE_Y)) vdplayer = 5;
-	if (code_pressed(KEYCODE_U)) vdplayer = 6;
 	if (code_pressed(KEYCODE_A)) vdppri = 0x00;
 	if (code_pressed(KEYCODE_S)) vdppri = 0x01;
 	if (code_pressed(KEYCODE_D)) vdppri = 0x02;

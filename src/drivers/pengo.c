@@ -624,4 +624,4 @@ GAME( 1982, pengo3u,  pengo, pengo, pengo, 0,        ROT90, "Sega", "Pengo (set 
 GAME( 1982, pengo4,   pengo, pengo, pengo, pengo,    ROT90, "Sega", "Pengo (set 4)" )
 GAME( 1982, pengob,   pengo, pengo, pengo, penta,    ROT90, "bootleg", "Pengo (bootleg)" )
 GAME( 1982, penta,    pengo, pengo, pengo, penta,    ROT90, "bootleg", "Penta" )
-GAME( 1983, jrpacmbl, pengo, pengo, pengo, jrpacmbl, ROT90, "bootleg", "Jr. Pac-Man (Pengo hardware)" )
+GAMEX(1983, jrpacmbl, jrpacman, pengo, pengo, jrpacmbl, ROT90, "bootleg", "Jr. Pac-Man (Pengo hardware)", GAME_NOT_WORKING )
