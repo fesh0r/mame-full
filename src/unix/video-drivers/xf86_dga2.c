@@ -38,10 +38,11 @@ static struct
 	int max_page;
 	int max_page_limit;
 	int page_dirty;
+	struct rectangle dest_area;
 #ifdef TDFX_DGA_WORKAROUND
 	int current_X11_mode;
 #endif
-} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,-1,0,0,0,2,-1};
+} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,-1,0,0,0,2,0,{0,0,0,0}};
 	
 struct rc_option xf86_dga2_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -229,9 +230,6 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	else
 	  xf86ctx.max_page = 0;
 	
-	/* force a full update the first number of pages updates */
-	xf86ctx.page_dirty = xf86ctx.max_page + 1;
-	
 	/* clear the not used area of the display */
 	for(page=0; page<=xf86ctx.max_page; page++)
 	{
@@ -261,6 +259,9 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	       xf86ctx.device->mode.bytesPerScanline);
 	}
 
+	/* reset dest_area */
+	memset(&xf86ctx.dest_area, 0, sizeof(xf86ctx.dest_area));
+	
 	return 0;
 }
 
@@ -383,7 +384,7 @@ static int xf86_dga2_set_mode(void)
 }
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags,
 	  const char **status_msg)
 {
@@ -392,7 +393,7 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
     /* force a full screen update */
     if (xf86ctx.page_dirty)
     {
-      *dirty_area = *vis_area;
+      *dirty_area = *vis_in_dest_out;
       xf86ctx.page_dirty--;
     }
     while(XDGAGetViewportStatus(display, xf86ctx.screen) & (0x01 <<
@@ -402,20 +403,25 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
   }
 
   xf86ctx.page = (xf86ctx.page + 1) % (xf86ctx.max_page + 1);
-  xf86ctx.update_display_func(bitmap, vis_area, dirty_area,
+  xf86ctx.update_display_func(bitmap, vis_in_dest_out, dirty_area,
         palette, xf86ctx.addr + xf86ctx.aligned_viewport_height *
 	xf86ctx.page * xf86ctx.device->mode.bytesPerScanline, xf86ctx.width);
 
   if (xf86ctx.max_page)
+  {
     XDGASetViewport(display, xf86ctx. screen, 0, xf86ctx.page *
       xf86ctx.aligned_viewport_height, XDGAFlipRetrace);
 
-  XDGASync(display,xf86ctx.screen);
+    /* If the dest area has changed force a fullscreen update the next
+       max_page updates, so that it gets updated in all pages */
+    if (memcmp(&xf86ctx.dest_area, vis_in_dest_out, sizeof(xf86ctx.dest_area)))
+    {
+      xf86ctx.dest_area  = *vis_in_dest_out;
+      xf86ctx.page_dirty = xf86ctx.max_page;
+    }
+  }
 
-  /* If the ui is dirty force a fullscreen update the next number of pages
-     updates, so that it gets updated in all pages */
-  if(flags & SYSDEP_DISPLAY_UI_DIRTY)
-    xf86ctx.page_dirty = xf86ctx.max_page + 1;
+  XDGASync(display,xf86ctx.screen);
 }
 
 void xf86_dga2_close_display(void)

@@ -35,16 +35,20 @@ static void xv_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
+/* options initialiased through the rc_option struct */
+static int hwscale_force_yuv;
+static int hwscale_perfect_yuv;
+
+/* local vars */
+static GC gc;
+static int xv_format;
+static XShmSegmentInfo shm_info;
 static blit_func_p xv_update_display_func;
-static int hwscale_force_yuv=0;
-static int hwscale_perfect_yuv=1;
 static char *hwscale_yv12_rotate_buf0=NULL;
 static char *hwscale_yv12_rotate_buf1=NULL;
 static XvImage *xvimage = NULL;
 static int xv_port=-1;
-static GC gc;
 static int mit_shm_attached = 0;
-static XShmSegmentInfo shm_info;
 
 struct rc_option xv_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -87,6 +91,7 @@ static int FindXvPort(long format)
 					if(XvGrabPort(display,p,CurrentTime)==Success)
 					{
 						xv_port=p;
+						xv_format=format;
 						sysdep_display_properties.palette_info.fourcc_format=format;
 						sysdep_display_properties.palette_info.bpp=fo[j].bits_per_pixel;
 						XFree(fo);
@@ -132,7 +137,8 @@ static int FindRGBXvFormat(void)
 					if(XvGrabPort(display,p,CurrentTime)==Success)
 					{
 						xv_port=p;
-						sysdep_display_properties.palette_info.fourcc_format=fo[j].id;
+						xv_format=fo[j].id;
+						sysdep_display_properties.palette_info.fourcc_format=0;
 						sysdep_display_properties.palette_info.red_mask  =fo[j].red_mask;
 						sysdep_display_properties.palette_info.green_mask=fo[j].green_mask;
 						sysdep_display_properties.palette_info.blue_mask =fo[j].blue_mask;
@@ -336,7 +342,7 @@ int xv_open_display(int reopen)
               break;
             }
             /* fall through: non perfect blit case is identical to RGB */
-          default: /* RGB */
+          case 0: /* RGB */
             switch(sysdep_display_params.effect)
             {
               case SYSDEP_DISPLAY_EFFECT_NONE:
@@ -369,7 +375,7 @@ int xv_open_display(int reopen)
           XSetErrorHandler (x11_test_mit_shm);
           xvimage = XvShmCreateImage (display,
                   xv_port,
-                  sysdep_display_properties.palette_info.fourcc_format,
+                  xv_format,
                   0,
                   width,
                   height,
@@ -442,8 +448,6 @@ int xv_open_display(int reopen)
             case FOURCC_YV12:
               ClearYV12();
               break;
-            default:
-              sysdep_display_properties.palette_info.fourcc_format = 0;
           }
             
           mode_clip_aspect(window_width, window_height, &width, &height);

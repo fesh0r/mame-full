@@ -49,8 +49,9 @@ These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
 #ifdef DFB
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
-   int i = scanlines, reps = REPS_FOR_Y(1, YV, YMAX); \
+   int i = 0, reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps > 0) { \
+     reps -= scanlines; \
      do { COPY_LINE2(SRC, END, (DST)+(i*(CORRECTED_DEST_WIDTH))); \
      } while (++i < reps); \
    } \
@@ -58,11 +59,12 @@ These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
 #else
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
-   int reps = REPS_FOR_Y(1, YV, YMAX); \
-   if (reps >0) { \
+   int i = 0, reps = REPS_FOR_Y(1, YV, YMAX); \
+   if (reps > 0) { \
+     reps -= scanlines; \
      COPY_LINE2(SRC, END, DST); \
-     while (--reps > scanlines) \
-       memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
+     while (++i < reps) \
+       memcpy((DST)+(i*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
   } \
 }
 #endif
