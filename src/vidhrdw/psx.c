@@ -670,6 +670,7 @@ VIDEO_UPDATE( psx )
 	UINT32 n_y;
 	int n_top;
 	int n_lines;
+	int n_overscantop;
 
 #if defined( MAME_DEBUG )
 	if( DebugMeshDisplay( bitmap, cliprect ) )
@@ -750,9 +751,18 @@ VIDEO_UPDATE( psx )
 			n_x = m_n_displaystartx;
 		}
 
-#define OVERSCAN_TOP ( 16 )
+		if( ( m_n_gpustatus & ( 1 << 0x14 ) ) != 0 )
+		{
+			/* pal */
+			n_overscantop = 0x23;
+		}
+		else
+		{
+			/* ntsc */
+			n_overscantop = 0x10;
+		}
 
-		n_top = m_n_vert_disstart - OVERSCAN_TOP;
+		n_top = m_n_vert_disstart - n_overscantop;
 		if( n_top < 0 )
 		{
 			n_y = -n_top;
@@ -763,19 +773,19 @@ VIDEO_UPDATE( psx )
 		{
 			n_y = 0;
 		}
-		n_lines = ( m_n_vert_disend - OVERSCAN_TOP ) - n_top;
+		n_lines = ( m_n_vert_disend - n_overscantop ) - n_top;
 		if( ( m_n_gpustatus & ( 1 << 0x16 ) ) != 0 )
 		{
 			/* interlaced */
 			n_lines *= 2;
 		}
-		if( n_lines < m_n_screenheight - n_y )
+		if( n_lines < m_n_screenheight - n_y - n_top )
 		{
 			/* todo: draw bottom border */
 		}
 		else
 		{
-			n_lines = m_n_screenheight - n_y;
+			n_lines = m_n_screenheight - n_y - n_top;
 		}
 
 		if( ( m_n_gpustatus & ( 1 << 0x15 ) ) != 0 )
