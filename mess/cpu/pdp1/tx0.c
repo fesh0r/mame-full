@@ -583,7 +583,7 @@ void tx0_64kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__);	break;
 	case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Raphael Nabet");	break;
 
-    case CPUINFO_STR_FLAGS:							sprintf(info->s = cpuintrf_temp_str(), "");	break;
+    case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), "");	break;
 
 	case CPUINFO_STR_REGISTER + TX0_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:0%06o", PC); break;
 	case CPUINFO_STR_REGISTER + TX0_IR:				sprintf(info->s = cpuintrf_temp_str(), "IR:0%02o", IR); break;
@@ -713,7 +713,7 @@ void tx0_8kw_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__);	break;
 	case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Raphael Nabet");	break;
 
-    case CPUINFO_STR_FLAGS:							sprintf(info->s = cpuintrf_temp_str(), "");	break;
+    case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), "");	break;
 
 	case CPUINFO_STR_REGISTER + TX0_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:0%06o", PC); break;
 	case CPUINFO_STR_REGISTER + TX0_IR:				sprintf(info->s = cpuintrf_temp_str(), "IR:0%02o", IR); break;

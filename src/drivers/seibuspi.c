@@ -840,6 +840,12 @@ READ32_HANDLER ( senkyu_speedup_r )
  return spimainram[(0x0018cb4-0x800)/4];
 }
 
+READ32_HANDLER( senkyua_speedup_r )
+{
+	if (activecpu_get_pc()== 0x30582e) cpu_spinuntil_int(); // idle
+	return spimainram[(0x0018c9c-0x800)/4];
+}
+
 READ32_HANDLER ( batlball_speedup_r )
 {
  if (activecpu_get_pc()==0x003058aa) cpu_spinuntil_int(); // idle
@@ -895,6 +901,15 @@ static DRIVER_INIT( raidnfgt )
 static DRIVER_INIT( senkyu )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018cb4, 0x0018cb7, 0, 0, senkyu_speedup_r );
+
+	init_spi();
+	old_vidhw = 1;
+	bg_size = 0;
+}
+
+static DRIVER_INIT( senkyua )
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018c9c, 0x0018c9f, 0, 0, senkyua_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -1026,6 +1041,34 @@ ROM_START(senkyu)
 	ROM_LOAD32_BYTE("fb_2.212", 0x100001, 0x40000, CRC(38e90619) SHA1(451ab5f4a5935bb779f9c245c1c4358e80d93c15) )
 	ROM_LOAD32_BYTE("fb_3.210", 0x100002, 0x40000, CRC(226f0429) SHA1(69d0fe6671278d7fe215e455bb50abf631cdb484) )
 	ROM_LOAD32_BYTE("fb_4.29",  0x100003, 0x40000, CRC(b46d66b7) SHA1(1acd0fea9384e1488b44661e0c99b9672a3f9803) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
+	ROM_LOAD24_BYTE("fb_5.48",	0x000002, 0x10000, CRC(440a9ae3) SHA1(3f57e6da91f0dac2d816c873759f1e1d3259caf1) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("fb_bg-1d.415", 0x000000, 0x200000, CRC(eae7a1fc) SHA1(26d8a9f4e554848977ec1f6a8aad8751b558a8d4) )
+	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("fb_obj-1.322", 0x000000, 0x400000, CRC(29f86f68) SHA1(1afe809ce00a25f8b27543e4188edc3e3e604951) )
+	ROM_LOAD("fb_obj-2.324", 0x400000, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
+	ROM_LOAD("fb_obj-3.323", 0x800000, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
+	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
+	ROM_LOAD("fb_7.216",      0x100000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
+ROM_END
+
+ROM_START(senkyua)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("1.bin", 0x100000, 0x40000, CRC(6102c3fb) SHA1(4a55b41d916768f9601513db973b82077bca47c5) )
+	ROM_LOAD32_BYTE("2.bin", 0x100001, 0x40000, CRC(d5b8ce46) SHA1(f6e4b8f51146179efb52ecb2b72fdeaee10b7282) )
+	ROM_LOAD32_BYTE("3.bin", 0x100002, 0x40000, CRC(e27ceccd) SHA1(3d6b8e97e89939c72d1a5a4a3856025b5f548645) )
+	ROM_LOAD32_BYTE("4.bin", 0x100003, 0x40000, CRC(7c6d4549) SHA1(efc6920a2e518afe849fb6fe191e7cd0bc483be5) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)
 	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
@@ -1342,6 +1385,7 @@ ROM_END
 
 /* SPI */
 GAMEX( 1995, senkyu,    0,	     spi, spi_3button, senkyu,		ROT0,	"Seibu Kaihatsu",	"Senkyu (Japan)", GAME_NOT_WORKING )
+GAMEX( 1995, senkyua,   senkyu,  spi, spi_3button, senkyua, 	ROT0,	"Seibu Kaihatsu",	"Senkyu (Japan, set 2)", GAME_NOT_WORKING )
 GAMEX( 1995, batlball,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls (Germany, Tuning License)", GAME_NOT_WORKING )
 GAMEX( 1995, batlbala,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls (Asia, Metrotainment License)", GAME_NOT_WORKING )
 GAMEX( 1995, viperp1,	0,	     spi, spi_3button, viperp1,		ROT270,	"Seibu Kaihatsu",	"Viper Phase 1 (New Version)", GAME_NOT_WORKING )

@@ -2100,10 +2100,10 @@ V-V                           TP-027
 	DRIVER( bktigerb )	/* bootleg */
 	DRIVER( blkdrgon )	/*  8/1987 (c) 1987 (Japan) */
 	DRIVER( blkdrgnb )	/* bootleg, hacked to say Black Tiger */
-	DRIVER( sf1 )		/*  8/1987 (c) 1987 (World) */
-	DRIVER( sf1us )		/*  8/1987 (c) 1987 (US) */
-	DRIVER( sf1jp )		/*  8/1987 (c) 1987 (Japan) */
-	DRIVER( sf1p )		/*  8/1987 (c) 1987 */
+	DRIVER( sf )		/*  8/1987 (c) 1987 (World) */
+	DRIVER( sfus )		/*  8/1987 (c) 1987 (US) */
+	DRIVER( sfjp )		/*  8/1987 (c) 1987 (Japan) */
+	DRIVER( sfp )		/*  8/1987 (c) 1987 */
 	DRIVER( tigeroad )	/* 11/1987 (c) 1987 + Romstar (US) */
 	DRIVER( toramich )	/* 11/1987 (c) 1987 (Japan) */
 	DRIVER( f1dream )	/*  4/1988 (c) 1988 + Romstar */
@@ -2847,13 +2847,12 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( enduror )	/* (c) 1985 (protected) */
-	DRIVER( fpoint )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
-	DRIVER( goldnaxc )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxj )	/* (c) 1989 (protected. Japan) */
 	DRIVER( jyuohki )	/* (c) 1988 (protected. Altered Beast Japan) */
 	DRIVER( moonwalk )	/* (c) 1990 (protected) */
 	DRIVER( moonwlka )	/* (c) 1990 (protected) */
+	DRIVER( moonwlkc )	/* (c) 1990 (protected) */
 	DRIVER( passsht )	/* (protected) */
 	DRIVER( sdioj )		/* (c) 1987 (protected. Japan) */
 	DRIVER( shinobia )	/* (c) 1987 (protected) */
@@ -2862,12 +2861,14 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( aceattac )	/* (protected) */
 	DRIVER( afighter )	/* (protected) */
 	DRIVER( bloxeed )	/* (protected) */
-	DRIVER( cltchitr )	/* (protected) */
+	DRIVER( cltchtrj )	/* (protected) */
 	DRIVER( cotton )	/* (protected) */
 	DRIVER( cottona )	/* (protected) */
 	DRIVER( dunkshot )	/* (protected) */
 	DRIVER( exctleag )  /* (protected) */
 	DRIVER( lghost )	/* (protected) */
+	DRIVER( lghosta )   /* (protected) */
+	DRIVER( lghostb )	/* (protected) */
 	DRIVER( loffire )	/* (protected) */
 	DRIVER( mvp )		/* (protected) */
 	DRIVER( ryukyu )	/* (protected) */
@@ -2880,7 +2881,6 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( ddcrewa )	/* (protected) */
 	DRIVER( ddcrewb )	/* (protected) */
 	DRIVER( ddcrewc )	/* (protected) */
-	DRIVER( eswatu )	/* (protected) */
 
 	/* decrypted */
 	DRIVER( tetris )	/* (c) 1988 (protected) */
@@ -2893,6 +2893,10 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( astorm )	/* (c) 1990 (protected) */
 	DRIVER( eswat )		/* (c) 1989 (protected) */
 	DRIVER( ddux )		/* (c) 1989 */
+	DRIVER( cltchitr )	/* (protected) */
+	DRIVER( eswatu )	/* (protected) */
+	DRIVER( goldnaxc )	/* (c) 1989 (protected) */
+	DRIVER( fpoint )	/* (c) 1989 (protected) */
 
 
 	// Working
@@ -3026,7 +3030,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( scross )	/* (c) 1992 (World) */
 
 	/* Model 1 Games */
-	DRIVER( vf1 )
+	DRIVER( vf )
 	DRIVER( vr )
 	DRIVER( vformula )
 	DRIVER( swa )
@@ -4897,6 +4901,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 */
 	DRIVER( senkyu )
+	DRIVER( senkyua )
 	DRIVER( batlball )
 	DRIVER( batlbala )
 	DRIVER( viperp1 )

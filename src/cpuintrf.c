@@ -224,7 +224,7 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #include "cpu/sc61860/sc61860.h"
 #endif
 #if (HAS_TX0_64KW || HAS_TX0_8KW)
-#include "cpu/tx0/tx0.h"
+#include "cpu/pdp1/tx0.h"
 #endif
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"

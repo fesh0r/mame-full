@@ -512,7 +512,7 @@ void tx0_io_dis(void)
 
 static void schedule_select(void)
 {
-	double delay;
+	double delay = 0.0;
 
 	switch (magtape.command)
 	{
@@ -534,7 +534,7 @@ static void schedule_select(void)
 
 static void schedule_unselect(void)
 {
-	double delay;
+	double delay = 0.0;
 
 	switch (magtape.command)
 	{

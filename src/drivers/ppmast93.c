@@ -144,14 +144,37 @@ WRITE8_HANDLER( ppmast93_bgram_w )
 
 READ8_HANDLER( ppmast93_rand )
 {
-	return rand();
+	return 0;
+}
+
+
+WRITE8_HANDLER( ppmast93_port0_w )
+{
+	/* sound? */
+//	printf("port0w %02x\n",data);
+}
+
+WRITE8_HANDLER( ppmast93_port4_w )
+{
+//	printf("port4w %02x\n",data);
+
+
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int bank;
+
+	bank = (data & 0x07);
+
+//	cpu_setbank(1,&rom[0x28000]);
+	cpu_setbank(1,&rom[0x10000+(bank*0x4000)]);
+
 }
 
 
 static ADDRESS_MAP_START( ppmast93_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xd000, 0xd7ff) AM_RAM AM_WRITE( ppmast93_fgram_w ) AM_BASE( &ppmast93_fgram )
+	AM_RANGE(0xd800, 0xdfff) AM_RAM
 	AM_RANGE(0xf000, 0xf7ff) AM_RAM AM_WRITE( ppmast93_bgram_w ) AM_BASE( &ppmast93_bgram )
 	AM_RANGE(0xf800, 0xffff) AM_RAM
 ADDRESS_MAP_END
@@ -163,8 +186,15 @@ static ADDRESS_MAP_START( ppmast93_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x06, 0x06) AM_READ(input_port_3_r)
 	AM_RANGE(0x08, 0x08) AM_READ(input_port_4_r)
 
-	AM_RANGE(0x0e, 0x0e) AM_READ(ppmast93_rand)
-	AM_RANGE(0x0f, 0x0f) AM_READ(ppmast93_rand)
+
+
+//	AM_RANGE(0x0e, 0x0e) AM_READ(ppmast93_rand)
+//	AM_RANGE(0x0f, 0x0f) AM_READ(ppmast93_rand)
+
+	AM_RANGE(0x00, 0x00) AM_WRITE(ppmast93_port0_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(ppmast93_port4_w)
+
+
 ADDRESS_MAP_END
 
 
@@ -191,7 +221,7 @@ static void get_ppmast93_bg_tile_info(int tile_index)
 	int code = (ppmast93_bgram[tile_index*2+1] << 8) | ppmast93_bgram[tile_index*2];
 	SET_TILE_INFO(
 			0,
-			code & 0x0fff,
+			(code & 0x0fff)+0x1000,
 			(code & 0xf000) >> 12,
 			0)
 }
@@ -224,7 +254,7 @@ INPUT_PORTS_START( ppmast93 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL ) // or it always goes to test mode?
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* 8bit */
@@ -305,10 +335,10 @@ VIDEO_START(ppmast93)
 {
 	int i;
 
-	ppmast93_fg_tilemap = tilemap_create(get_ppmast93_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32, 32);
-	tilemap_set_transparent_pen(ppmast93_fg_tilemap,0);
+	ppmast93_fg_tilemap = tilemap_create(get_ppmast93_fg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32, 32);
 
-	ppmast93_bg_tilemap = tilemap_create(get_ppmast93_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32, 32);
+	ppmast93_bg_tilemap = tilemap_create(get_ppmast93_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32, 32);
+	tilemap_set_transparent_pen(ppmast93_bg_tilemap,0);
 
 	/* palette init */
 	for (i=0;i<0x100;i++)
@@ -333,8 +363,8 @@ VIDEO_START(ppmast93)
 
 VIDEO_UPDATE(ppmast93)
 {
-	tilemap_draw(bitmap,cliprect,ppmast93_bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,ppmast93_fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,ppmast93_bg_tilemap,0,0);
 }
 
 
@@ -344,10 +374,11 @@ static MACHINE_DRIVER_START( ppmast93 )
 	MDRV_CPU_PROGRAM_MAP(ppmast93_map,0)
 	MDRV_CPU_IO_MAP(ppmast93_io,0)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,5000000)		 /* 5 MHz */
 	MDRV_CPU_PROGRAM_MAP(ppmast93_map2,0)
-
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -355,7 +386,7 @@ static MACHINE_DRIVER_START( ppmast93 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-16-1)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x100)
 
@@ -367,7 +398,8 @@ MACHINE_DRIVER_END
 DRIVER_INIT( ppmast93 )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
-	cpu_setbank(1,&rom[0x10000]);
+	cpu_setbank(1,&rom[0x18000]);
+
 }
 
 ROM_START( ppmast93 )
@@ -390,4 +422,4 @@ ROM_START( ppmast93 )
 
 ROM_END
 
-GAMEX( 1993, ppmast93, 0, ppmast93, ppmast93, ppmast93, ROT0, "Electronic Devices", "Ping Pong Masters '93",GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1993, ppmast93, 0, ppmast93, ppmast93, ppmast93, ROT0, "Electronic Devices", "Ping Pong Masters '93",GAME_NO_SOUND )

@@ -368,7 +368,7 @@ VIDEO_UPDATE( mwarr )
 	if(vidattrram[6] & 1)
 	{
 		for(i=0;i<256;i++)
-			tilemap_set_scrollx(bg_tilemap, i, bg_scrollram[i]+21);
+			tilemap_set_scrollx(bg_tilemap, i, bg_scrollram[i]+20);
 	}
 	else
 	{
@@ -405,10 +405,10 @@ VIDEO_UPDATE( mwarr )
 	tilemap_set_scrollx(tx_tilemap, 0, vidattrram[0]+19);
 	tilemap_set_scrolly(tx_tilemap, 0, vidattrram[4]+1);
 
-	tilemap_draw(bitmap,cliprect,bg_tilemap,   0,1);
-	tilemap_draw(bitmap,cliprect,mlow_tilemap, 0,2);
-	tilemap_draw(bitmap,cliprect,mhigh_tilemap,0,4);
-	tilemap_draw(bitmap,cliprect,tx_tilemap,   0,8);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,   0,0x01);
+	tilemap_draw(bitmap,cliprect,mlow_tilemap, 0,0x02);
+	tilemap_draw(bitmap,cliprect,mhigh_tilemap,0,0x04);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,   0,0x10);
 	draw_sprites(bitmap,cliprect);
 }
 

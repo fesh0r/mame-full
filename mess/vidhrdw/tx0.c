@@ -262,7 +262,7 @@ static void tx0_draw_panel_backdrop(struct mame_bitmap *bitmap)
 	tx0_draw_string(bitmap, "lr", x_panel_col1a_offset+168, y_panel_tss_offset, color_panel_caption);
 	for (i=0; i<16; i++)
 	{
-		sprintf(buf, "% 2o", i);
+		sprintf(buf, "%2o", i);
 		tx0_draw_string(bitmap, buf, x_panel_col1a_offset, y_panel_tss_offset+8+i*8, color_panel_caption);
 	}
 

@@ -454,7 +454,7 @@ $(OBJ)/capcom.a: \
 	$(OBJ)/vidhrdw/blktiger.o $(OBJ)/drivers/blktiger.o \
 	$(OBJ)/vidhrdw/tigeroad.o $(OBJ)/drivers/tigeroad.o \
 	$(OBJ)/vidhrdw/lastduel.o $(OBJ)/drivers/lastduel.o \
-	$(OBJ)/vidhrdw/sf1.o $(OBJ)/drivers/sf1.o \
+	$(OBJ)/vidhrdw/sf.o $(OBJ)/drivers/sf.o \
 	$(OBJ)/machine/kabuki.o \
 	$(OBJ)/vidhrdw/mitchell.o $(OBJ)/drivers/mitchell.o \
 	$(OBJ)/vidhrdw/cbasebal.o $(OBJ)/drivers/cbasebal.o \
@@ -1105,7 +1105,6 @@ $(OBJ)/edevices.a: \
 	$(OBJ)/vidhrdw/diverboy.o $(OBJ)/drivers/diverboy.o \
 	$(OBJ)/vidhrdw/fantland.o $(OBJ)/drivers/fantland.o \
 	$(OBJ)/drivers/ppmast93.o \
-	$(OBJ)/drivers/twinbrat.o \
 	$(OBJ)/drivers/twins.o \
 	$(OBJ)/drivers/mwarr.o \
 

@@ -1783,6 +1783,14 @@ static DRIVER_INIT( eswat ){
 	fd1094_driver_init(0x0130);
 }
 
+static DRIVER_INIT( eswatu ){
+	machine_init_sys16_onetime();
+	sys16_rowscroll_scroll=0x8000;
+	sys18_splittab_fg_x=&sys16_textram[0x0f80];
+
+	fd1094_driver_init(0x0129);
+}
+
 static DRIVER_INIT( eswatbl ){
 	machine_init_sys16_onetime();
 	sys16_rowscroll_scroll=0x8000;
@@ -2030,6 +2038,23 @@ static READ16_HANDLER( fp_io_service_dummy_r ){
 static ADDRESS_MAP_START( fpoint_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x02002e, 0x020049) AM_READ(fp_io_service_dummy_r)
+	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
+	AM_RANGE(0xc41004, 0xc41005) AM_READ(input_port_1_word_r) // player2
+	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
+	AM_RANGE(0xC42000, 0xC42001) AM_READ(input_port_4_word_r) // dip2
+	AM_RANGE(0xC42002, 0xC42003) AM_READ(input_port_3_word_r) // dip1
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
+	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
+	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
+	AM_RANGE(0x44302a, 0x44304d) AM_READ(fp_io_service_dummy_r)
+	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
+	AM_RANGE(0xfe003e, 0xfe003f) AM_READ(fp_io_service_dummy_r)
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( fpointbl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x02002e, 0x020049) AM_READ(fp_io_service_dummy_r)
 	AM_RANGE(0x601002, 0x601003) AM_READ(input_port_0_word_r) // player1
 	AM_RANGE(0x601004, 0x601005) AM_READ(input_port_1_word_r) // player2
 	AM_RANGE(0x601000, 0x601001) AM_READ(input_port_2_word_r) // service
@@ -2051,6 +2076,7 @@ static ADDRESS_MAP_START( fpoint_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
 	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
 	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
+	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w) // original
 	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
 ADDRESS_MAP_END
 
@@ -2066,6 +2092,13 @@ static void fpoint_update_proc( void ){
 }
 
 static MACHINE_INIT( fpoint ){
+
+	fd1094_machine_init();
+
+	sys16_update_proc = fpoint_update_proc;
+}
+
+static MACHINE_INIT( fpointbl ){
 
 	sys16_patch_code( 0x454, 0x33 );
 	sys16_patch_code( 0x455, 0xf8 );
@@ -2096,6 +2129,8 @@ static MACHINE_INIT( fpoint ){
 
 static DRIVER_INIT( fpoint ){
 	machine_init_sys16_onetime();
+
+	fd1094_driver_init(0x0127A);
 }
 
 static DRIVER_INIT( fpointbl ){
@@ -2238,12 +2273,12 @@ static MACHINE_DRIVER_START( fpointbl )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(fpoint_readmem,fpoint_writemem)
+	MDRV_CPU_PROGRAM_MAP(fpointbl_readmem,fpoint_writemem)
 
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_PROGRAM_MAP(fpointbl_sound_readmem,sound_writemem)
 
-	MDRV_MACHINE_INIT(fpoint)
+	MDRV_MACHINE_INIT(fpointbl)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -2494,6 +2529,29 @@ static MACHINE_INIT( goldnaxa ){
 	sys16_update_proc = goldnaxa_update_proc;
 }
 
+static MACHINE_INIT( goldnaxc )
+{
+	static int bank[16] = {
+		0,1,4,5,
+		8,9,0,0,
+		2,3,6,7,
+		10,11,0,0
+	};
+	sys16_obj_bank = bank;
+
+	fd1094_machine_init();
+
+	sys16_sprxoffset = -0xb8;
+	sys16_update_proc = goldnaxa_update_proc;
+}
+
+static DRIVER_INIT( goldnaxc )
+{
+	machine_init_sys16_onetime();
+
+	fd1094_driver_init(0x0122);
+}
+
 /***************************************************************************/
 
 static MACHINE_DRIVER_START( goldnaxa )
@@ -2504,6 +2562,16 @@ static MACHINE_DRIVER_START( goldnaxa )
 	MDRV_CPU_PROGRAM_MAP(goldnaxa_readmem,goldnaxa_writemem)
 
 	MDRV_MACHINE_INIT(goldnaxa)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( goldnaxc )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(goldnaxa_readmem,goldnaxa_writemem)
+
+	MDRV_MACHINE_INIT(goldnaxc)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -4653,7 +4721,8 @@ static ADDRESS_MAP_START( wb3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
 	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
 	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
-	AM_RANGE(0xffc008, 0xffc009) AM_WRITE(wb3_sound_command_w)
+ 	AM_RANGE(0xdf0006, 0xdf0007) AM_WRITE(sound_command_w) // original encrypted
+//	AM_RANGE(0xffc008, 0xffc009) AM_WRITE(wb3_sound_command_w) // protected set with mcu
 	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
 ADDRESS_MAP_END
 
@@ -4694,6 +4763,11 @@ static MACHINE_INIT( wb3a )
 static DRIVER_INIT( wb3 )
 {
 	machine_init_sys16_onetime();
+
+	/* mcu grabs sound command direct from ram! */
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc008, 0xffc009, 0, 0, wb3_sound_command_w );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xfe0006, 0xfe0007, 0, 0, MWA16_NOP );
+
 }
 
 static DRIVER_INIT( wb3a )
@@ -5945,9 +6019,9 @@ ROM_START( fpoint )
 	ROM_LOAD16_BYTE( "epr12590b.a5", 0x000001, 0x10000, CRC(75256e3d) SHA1(87a7d9952f29e49958c135906ac2fd19bdc29b67) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "opr12595.a16", 0x00000, 0x10000, CRC(5b18d60b) SHA1(8e9c81635dcefa52d1cf53c2937ae560191b5202) )
+	ROM_LOAD( "opr12593.a14", 0x00000, 0x10000, CRC(cc0582d8) SHA1(92c7d125a6dcb9c5e6e7bd92a5bf3008385ed487) )
 	ROM_LOAD( "opr12594.a15", 0x10000, 0x10000, CRC(8bfc4815) SHA1(08d28b65e5024c592a9a289b270774ef5c553cbf) )
-	ROM_LOAD( "opr12593.a14", 0x20000, 0x10000, CRC(cc0582d8) SHA1(92c7d125a6dcb9c5e6e7bd92a5bf3008385ed487) )
+	ROM_LOAD( "opr12595.a16", 0x20000, 0x10000, CRC(5b18d60b) SHA1(8e9c81635dcefa52d1cf53c2937ae560191b5202) )
 
 	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "opr12596.b1", 0x00001, 0x10000, CRC(4a4041f3) SHA1(4c52b30223d8aa80ccdbb196098cb17e64ad6583) )
@@ -7610,11 +7684,11 @@ GAMEX(19??, dunkshot, 0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",   
 GAMEX(1989, ddux,   0,          ddux,     dduxbl,   ddux,     ROT0,   "Sega",    "Dynamite Dux (317-0096)", GAME_NOT_WORKING )
 GAME( 1989, dduxbl,   ddux,     dduxbl,   dduxbl,   dduxbl,   ROT0,   "bootleg", "Dynamite Dux (bootleg)" )
 GAMEX(1989, eswat,    0,        eswat,    eswat,    eswat,    ROT0,   "Sega",    "E-Swat - Cyber Police (World)", GAME_NOT_WORKING )
-GAMEX(1989, eswatu,   eswat,    eswat,    eswat,    eswat,    ROT0,   "Sega",    "E-Swat - Cyber Police (US)", GAME_NOT_WORKING )
+GAMEX(1989, eswatu,   eswat,    eswat,    eswat,    eswatu,   ROT0,   "Sega",    "E-Swat - Cyber Police (US)", GAME_NOT_WORKING )
 GAME( 1989, eswatbl,  eswat,    eswatbl,  eswat,    eswatbl,  ROT0,   "bootleg", "E-Swat - Cyber Police (bootleg)" )
 GAMEX(19??, exctleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Excite League", GAME_NOT_WORKING )
 
-GAMEX(1989, fpoint,   0,        fpoint,   fpoint,   fpoint,   ROT0,   "Sega",    "Flash Point", GAME_NOT_WORKING )
+GAME (1989, fpoint,   0,        fpoint,   fpoint,   fpoint,   ROT0,   "Sega",    "Flash Point (Japan, 317-0127A)" )
 GAME( 1989, fpointbl, fpoint,   fpointbl, fpoint,   fpointbl, ROT0,   "bootleg", "Flash Point (World, bootleg)" )
 GAME( 1989, fpointbj, fpoint,   fpointbl, fpointbj, fpointbl, ROT0,   "bootleg", "Flash Point (Japan, bootleg)" )
 
@@ -7623,7 +7697,7 @@ GAMEX(1989, goldnaxj, goldnaxe, goldnaxe, goldnaxe, goldnaxe, ROT0,   "Sega",   
 GAMEX(1989, goldnabl, goldnaxe, goldnaxe, goldnaxe, goldnabl, ROT0,   "bootleg", "Golden Axe (bootleg)", GAME_NOT_WORKING )
 GAME( 1989, goldnaxa, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,   "Sega",    "Golden Axe (Version 2)" )
 GAMEX(1989, goldnaxb, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,   "Sega",    "Golden Axe (Version 2 317-0110)", GAME_NOT_WORKING )
-GAMEX(1989, goldnaxc, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,   "Sega",    "Golden Axe (Version 2 317-0122)", GAME_NOT_WORKING )
+GAMEX(1989, goldnaxc, goldnaxe, goldnaxc, goldnaxe, goldnaxc, ROT0,   "Sega",    "Golden Axe (Version 2 317-0122)", GAME_NOT_WORKING )
 GAME( 1987, hwchamp,  0,        hwchamp,  hwchamp,  hwchamp,  ROT0,   "Sega",    "Heavyweight Champ" )
 GAMEX(19??, mvp,      0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "MVP", GAME_NOT_WORKING )
 GAMEX(1988, passsht,  0,        passsht,  passsht,  passsht,  ROT270, "Sega",    "Passing Shot (2 Players)", GAME_NOT_WORKING )

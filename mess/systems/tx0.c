@@ -4,6 +4,7 @@
 	Raphael Nabet, 2004
 */
 
+#include <math.h>
 #include "driver.h"
 
 #include "cpu/pdp1/tx0.h"

@@ -114,7 +114,7 @@ void fd1094_kludge_reset_values(void)
 /* function, to be called from MACHINE_INIT (every reset) */
 void fd1094_machine_init(void)
 {
-	fd1904_setstate_and_decrypt(FD1094_STATE_RESET);
+	fd1904_setstate_and_decrypt(FD1094_STATE_NORMAL);
 	fd1094_kludge_reset_values();
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_CMPILD_CALLBACK, (genf *)fd1094_cmp_callback);
@@ -130,18 +130,12 @@ void fd1094_driver_init(UINT16 cpunum)
 	fd1094_cpuregion = (data16_t*)memory_region(REGION_CPU1);
 	fd1094_cpuregionsize = memory_region_length(REGION_CPU1);
 
-//	fd1094_userregion = auto_malloc(fd1094_cpuregionsize);
-
 	for (i=0;i<S16_NUMCACHE;i++)
 	{
 		fd1094_cacheregion[i]=auto_malloc(fd1094_cpuregionsize);
 	}
 
 	fd1094_init(cpunum);
-
-	/* can this be done in driver_init? */
-	memory_set_opcode_base(0,fd1094_userregion);
-	m68k_set_encrypted_opcode_range(0,0,fd1094_cpuregionsize);
 
 	/* flush the cached state array */
 	for (i=0;i<S16_NUMCACHE;i++)
