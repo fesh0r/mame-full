@@ -611,7 +611,7 @@ WRITE_HANDLER(genesis_ctrl_w)
 #if 0
 READ_HANDLER(cartridge_ram_r)
 {
-/*	logerror("cartridge ram read.. %x\n", offset);* /
+/*	logerror("cartridge ram read.. %x\n", offset); */
 	return cartridge_ram[offset];
 }
 WRITE_HANDLER(cartridge_ram_w)
