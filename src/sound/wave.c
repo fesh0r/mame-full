@@ -429,7 +429,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 	int count = w->counter;
 	INT16 sample = w->play_sample;
 
-    if( !w->timer )
+    if( !w->timer || w->mute )
 	{
 		while( length-- > 0 )
 			*buffer++ = sample;
