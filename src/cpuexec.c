@@ -221,6 +221,9 @@ int cpu_init(void)
 {
 	int cpunum;
 
+	/* clear static cpu array */
+	memset(cpu, 0, sizeof(struct cpuinfo)*MAX_CPU);
+
 	/* initialize the interfaces first */
 	if (cpuintrf_init())
 		return 1;
