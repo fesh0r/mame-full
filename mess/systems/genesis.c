@@ -49,165 +49,337 @@ In Memory Of Haruki Ikeda
 #include "driver.h"
 #include "sound/2612intf.h"
 #include "vidhrdw/generic.h"
-#include "machine/genesis.h"
-#include "vidhrdw/genesis.h"
+#include "includes/genesis.h"
 #include "devices/cartslot.h"
+#include "inputx.h"
 
-#define ARMLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
-
-int deb = 0;
-
-
-unsigned int	z80_68000_latch			= 0;
-unsigned int	z80_latch_bitcount		= 0;
-
-#define EASPORTS_HACK
-UINT16 cartridge_ram[0x10000]; /* any cartridge RAM */
-
-
-#ifdef LSB_FIRST
-	#define BYTE_XOR(a) ((a) ^ 1)
-#else
-	#define BYTE_XOR(a) (a)
-#endif
-
-
-static READ_HANDLER ( genesis_vdp_76489_r )
+/* code taken directly from GoodGEN by Cowering */
+static int genesis_isfunkySMD(unsigned char *buf,unsigned int len)
 {
+	/* aq quiz */
+	if (!strncmp("UZ(-01  ", (const char *) &buf[0xf0], 8))
+		return 1;
+
+    /* Phelios USA redump */
+	/* target earth */
+	/* klax (namcot) */
+	if (buf[0x2080] == ' ' && buf[0x0080] == 'S' && buf[0x2081] == 'E' && buf[0x0081] == 'G')
+		return 1;
+
+    /* jap baseball 94 */
+	if (!strncmp("OL R-AEAL", (const char *) &buf[0xf0], 9))
+		return 1;
+
+    /* devilish Mahjonng Tower */
+    if (!strncmp("optrEtranet", (const char *) &buf[0xf3], 11))
+		return 1;
+
+	/* golden axe 2 beta */
+	if (buf[0x0100] == 0x3c && buf[0x0101] == 0 && buf[0x0102] == 0 && buf[0x0103] == 0x3c)
+		return 1;
+
+    /* omega race */
+	if (!strncmp("OEARC   ", (const char *) &buf[0x90], 8))
+		return 1;
+
+    /* budokan beta */
+	if ((len >= 0x6708+8) && !strncmp(" NTEBDKN", (const char *) &buf[0x6708], 8))
+		return 1;
+
+    /* cdx pro 1.8 bios */
+	if (!strncmp("so fCXP", (const char *) &buf[0x2c0], 7))
+		return 1;
+
+    /* ishido (hacked) */
+	if (!strncmp("sio-Wyo ", (const char *) &buf[0x0090], 8))
+		return 1;
+
+    /* onslaught */
+	if (!strncmp("SS  CAL ", (const char *) &buf[0x0088], 8))
+		return 1;
+
+    /* tram terror pirate */
+	if ((len >= 0x3648 + 8) && !strncmp("SG NEPIE", (const char *) &buf[0x3648], 8))
+		return 1;
+
+    /* breath of fire 3 chinese */
+	if (buf[0x0007] == 0x1c && buf[0x0008] == 0x0a && buf[0x0009] == 0xb8 && buf[0x000a] == 0x0a)
+		return 1;
+
+    /*tetris pirate */
+	if ((len >= 0x1cbe + 5) && !strncmp("@TTI>", (const char *) &buf[0x1cbe], 5))
+		return 1;
+
 	return 0;
 }
-static WRITE16_HANDLER (genesis_vdp_76489_w )
+
+
+
+/* code taken directly from GoodGEN by Cowering */
+static int genesis_isSMD(unsigned char *buf,unsigned int len)
 {
-	SN76496_0_w(0, data);
+	if (buf[0x2080] == 'S' && buf[0x80] == 'E' && buf[0x2081] == 'G' && buf[0x81] == 'A')
+		return 1;
+	return genesis_isfunkySMD(buf,len);
 }
 
-static WRITE_HANDLER ( genesis_ramlatch_w ) /* note value will be meaningless unless all bits are correctly set in */
+
+
+static int genesis_isfunkyBIN(unsigned char *buf,unsigned int len)
 {
-	if (offset !=0 ) return;
-	if (!z80running) logerror("undead Z80 latch write!\n");
-//	cpu_halt(0,0);
-	if (z80_latch_bitcount == 0) z80_68000_latch = 0;
-/*	logerror("latch update\n");*/
-	z80_68000_latch = z80_68000_latch | ((( ((unsigned char)data) & 0x01) << (15+z80_latch_bitcount)));
- 	logerror("value %x written to latch\n", data);
-	z80_latch_bitcount++;
-	if (z80_latch_bitcount == 9)
+	/* all the special cases for crappy headered roms */
+	/* aq quiz */
+	if (!strncmp("QUIZ (G-3051", (const char *) &buf[0x1e0], 12))
+		return 1;
+
+	/* phelios USA redump */
+	/* target earth */
+	/* klax namcot */
+	if (buf[0x0104] == 'A' && buf[0x0101] == 'S' && buf[0x0102] == 'E' && buf[0x0103] == 'G')
+		return 1;
+
+    /* jap baseball 94 */
+	if (!strncmp("WORLD PRO-B", (const char *) &buf[0x1e0], 11))
+		return 1;
+
+    /* devlish mahj tower */
+	if (!strncmp("DEVILISH MAH", (const char *) &buf[0x120], 12))
+		return 1;
+
+    /* golden axe 2 beta */
+	if ((len >= 0xe40a+4) && !strncmp("SEGA", (const char *) &buf[0xe40a], 4))
+		return 1;
+
+    /* omega race */
+	if (!strncmp(" OMEGA RAC", (const char *) &buf[0x120], 10))
+		return 1;
+
+    /* budokan beta */
+	if ((len >= 0x4e18+8) && !strncmp("BUDOKAN.", (const char *) &buf[0x4e18], 8))
+		return 1;
+
+    /* cdx 1.8 bios */
+	if ((len >= 0x588+8) && !strncmp(" CDX PRO", (const char *) &buf[0x588], 8))
+		return 1;
+
+    /* ishido (hacked) */
+	if (!strncmp("Ishido - ", (const char *) &buf[0x120], 9))
+		return 1;
+
+    /* onslaught */
+	if (!strncmp("(C)ACLD 1991", (const char *) &buf[0x118], 12))
+		return 1;
+
+    /* trampoline terror pirate */
+	if ((len >= 0x2c70+9) && !strncmp("DREAMWORK", (const char *) &buf[0x2c70], 9))
+		return 1;
+
+    /* breath of fire 3 chinese */
+	if (buf[0x000f] == 0x1c && buf[0x0010] == 0x00 && buf[0x0011] == 0x0a && buf[0x0012] == 0x5c)
+		return 1;
+
+    /* tetris pirate */
+	if ((len >= 0x397f+6) && !strncmp("TETRIS", (const char *) &buf[0x397f], 6))
+		return 1;
+
+    return 0;
+}
+
+
+
+static int genesis_isBIN(unsigned char *buf,unsigned int len)
+{
+	if (buf[0x0100] == 'S' && buf[0x0101] == 'E' && buf[0x0102] == 'G' && buf[0x0103] == 'A')
+		return 1;
+	return genesis_isfunkyBIN(buf,len);
+}
+
+
+
+static int genesis_verify_cart(unsigned char *temp,unsigned int len)
+{
+	int retval = IMAGE_VERIFY_FAIL;
+
+	/* is this an SMD file..? */
+	if (genesis_isSMD(&temp[0x200],len))
+		retval = IMAGE_VERIFY_PASS;
+
+	/* How about a BIN file..? */
+	if ((retval == IMAGE_VERIFY_FAIL) && genesis_isBIN(&temp[0],len))
+		retval = IMAGE_VERIFY_PASS;
+
+	/* maybe a .md file? (rare) */
+	if ((retval == IMAGE_VERIFY_FAIL) && (temp[0x080] == 'E') && (temp[0x081] == 'A') && (temp[0x082] == 'M' || temp[0x082] == 'G'))
+		retval = IMAGE_VERIFY_PASS;
+
+	if (retval == IMAGE_VERIFY_FAIL)
+		logerror("Invalid Image!\n");
+
+	return retval;
+}
+
+DEVICE_LOAD(genesis_cart)
+{
+	unsigned char *tmpROMnew, *tmpROM;
+	unsigned char *secondhalf;
+	unsigned char *rawROM;
+	int relocate;
+	int length;
+	int ptr, x;
+	unsigned char *ROM;
+
+	rawROM = memory_region(REGION_USER1);
+    ROM = rawROM /*+ 512 */;
+
+//	genesis_soundram = memory_region(REGION_CPU2);
+
+    length = mame_fread(file, rawROM + 0x2000, 0x400200);
+	logerror("image length = 0x%x\n", length);
+
+	if (length < 1024 + 512)
+		goto bad;						/* smallest known rom is 1.7K */
+
+	if (genesis_verify_cart(&rawROM[0x2000],(unsigned)length) == IMAGE_VERIFY_FAIL)
+		goto bad;
+
+	if (genesis_isSMD(&rawROM[0x2200],(unsigned)length))	/* is this a SMD file..? */
 	{
-	//	cpu_halt(0,1);
-		z80_latch_bitcount = 0;
-		logerror("latch set, value %x\n", z80_68000_latch);
+
+		tmpROMnew = ROM;
+		tmpROM = ROM + 0x2000 + 512;
+
+		for (ptr = 0; ptr < (0x400000) / (8192); ptr += 2)
+		{
+			for (x = 0; x < 8192; x++)
+			{
+				*tmpROMnew++ = *(tmpROM + ((ptr + 1) * 8192) + x);
+				*tmpROMnew++ = *(tmpROM + ((ptr + 0) * 8192) + x);
+			}
+		}
+
+		relocate = 0;
+
 	}
-}
+	else
+	/* check if it's a MD file */
+	if ((rawROM[0x2080] == 'E') &&
+		(rawROM[0x2081] == 'A') &&
+		(rawROM[0x2082] == 'M' || rawROM[0x2082] == 'G'))  /* is this a MD file..? */
+	{
 
-static WRITE16_HANDLER ( genesis_ramlatch_68000_w )
-{
-	genesis_ramlatch_w(offset, data);
-}
+		tmpROMnew = malloc(length);
+		secondhalf = &tmpROMnew[length >> 1];
 
-static WRITE_HANDLER ( genesis_s_68000_ram_w )
-{
-	unsigned int address = (z80_68000_latch) + (offset & 0x7fff);
-	if (!z80running) logerror("undead Z80->68000 write!\n");
-	if (z80_latch_bitcount != 0) logerror("writing whilst latch being set!\n");
+		if (!tmpROMnew)
+		{
+			printf("Memory allocation failed reading roms!\n");
+			goto bad;
+		}
 
-	if (address > 0xff0000) genesis_sharedram[BYTE_XOR(offset)] = data;
-	logerror("z80 poke to address %x\n", address);
-}
+		memcpy(tmpROMnew, ROM + 0x2000, length);
 
-static READ_HANDLER ( genesis_s_68000_ram_r )
-{
-	int address = (z80_68000_latch) + (offset & 0x7fff);
+		for (ptr = 0; ptr < length; ptr += 2)
+		{
 
-	if (!z80running) logerror("undead Z80->68000 read!\n");
+			ROM[ptr] = secondhalf[ptr >> 1];
+			ROM[ptr + 1] = tmpROMnew[ptr >> 1];
+		}
+		free(tmpROMnew);
+		relocate = 0;
 
-	if (z80_latch_bitcount != 0) logerror("reading whilst latch being set!\n");
+	}
+	else
+	/* BIN it is, then */
+	{
+		relocate = 0x2000;
+	}
 
-	logerror("z80 read from address %x\n", address);
+	ROM = memory_region(REGION_USER1);	/* 68000 ROM region */
 
-	/* Read the data out of the 68k ROM */
-	if (address < 0x400000) return memory_region(REGION_CPU1)[BYTE_XOR(address)];
-	/* else read the data out of the 68k RAM */
- 	else if (address > 0xff0000) return genesis_sharedram[BYTE_XOR(offset)];
+	for (ptr = 0; ptr < 0x402000; ptr += 2)		/* mangle bytes for littleendian machines */
+	{
+#ifdef LSB_FIRST
+		int temp = ROM[relocate + ptr];
 
-	return -1;
-}
-
-static WRITE16_HANDLER ( genesis_soundram_w )
-{
-	if (z80running) logerror("Z80 written whilst running!\n");
-	logerror("68000->z80 sound write, %x to %x\n", data, offset);
-
-	if (ACCESSING_LSB) genesis_soundram[(offset<<1)+1] = data & 0xff;
-	if (ACCESSING_MSB) genesis_soundram[offset<<1] = (data >> 8) & 0xff;
-}
-
-static READ16_HANDLER ( genesis_soundram_r )
-{
-	if (z80running) logerror("Z80 read whilst running!\n");
-	logerror("soundram_r returning %x\n",(genesis_soundram[offset<<1] << 8) + genesis_soundram[(offset<<1)+1]);
-	return (genesis_soundram[offset<<1] << 8) + genesis_soundram[(offset<<1)+1];
-}
-
-/*static void genesis_sharedram_w (int offset,int data)
-{
- 	COMBINE_WORD_MEM(&genesis_sharedram[offset], data);
-}
-
-static int genesis_sharedram_r (int offset)
-{
-	return READ_WORD(&genesis_sharedram[offset]);
-}*/
-
-
-#ifdef EASPORTS_HACK
-#if 0
-static READ16_HANDLER(cartridge_ram_r)
-{
-	logerror("cartridge ram read.. %x\n", offset);
-	return cartridge_ram[(offset&0xffff)>>1];
-}
-static WRITE16_HANDLER(cartridge_ram_w)
-{
-	logerror("cartridge ram write.. %x to %x\n", data, offset);
-	cartridge_ram[offset] = data;
-}
+		ROM[ptr] = ROM[relocate + ptr + 1];
+		ROM[ptr + 1] = temp;
+#else
+		ROM[ptr] = ROM[relocate + ptr];
+		ROM[ptr + 1] = ROM[relocate + ptr + 1];
 #endif
-#endif
+	}
 
-static ADDRESS_MAP_START(genesis_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_ROM
-#ifdef EASPORTS_HACK
-	AM_RANGE(0x200000, 0x20ffff) AM_RAM
-#endif
-	AM_RANGE(0xa00000, 0xa01fff) AM_READWRITE(genesis_soundram_r, genesis_soundram_w)
-	AM_RANGE(0xa04000, 0xa04003) AM_READWRITE(YM2612_68000_r, YM2612_68000_w)
-	AM_RANGE(0xa06000, 0xa06003) AM_WRITE(genesis_ramlatch_68000_w)
-	AM_RANGE(0xa07f10, 0xa07f13) AM_WRITE(genesis_vdp_76489_w)
-	AM_RANGE(0xa10000, 0xa1001f) AM_READWRITE(genesis_io_r, genesis_io_w)
-	AM_RANGE(0xa11000, 0xa11203) AM_READWRITE(genesis_ctrl_r, genesis_ctrl_w)
-	AM_RANGE(0xc00000, 0xc00003) AM_READWRITE(genesis_vdp_data_r, genesis_vdp_data_w)
-	AM_RANGE(0xc00004, 0xc00007) AM_READWRITE(genesis_vdp_ctrl_r, genesis_vdp_ctrl_w)
-	AM_RANGE(0xc00008, 0xc0000b) AM_READWRITE(genesis_vdp_hv_r, genesis_vdp_hv_w)
-	AM_RANGE(0xc00010, 0xc00013) AM_WRITE(genesis_vdp_76489_w)	/* would also be genesis_vdp_76489_r*/
-	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(genesis_videoram1_w) AM_BASE((data16_t **) &videoram) AM_SIZE(&videoram_size) /*this is just a fake */
-	AM_RANGE(0xff0000, 0xffffff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)
+	return INIT_PASS;
+
+bad:
+	return INIT_FAIL;
+}
+
+
+
+/* Main Genesis 68k */
+
+static ADDRESS_MAP_START( genesis_68000_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)  // cartridge area
+	AM_RANGE(0xa00000, 0xa07fff) AM_READ(genesis_68000_z80_read) AM_MIRROR(0x8000) // z80 area
+	      /* 0xa08000, 0xa0ffff mirrors above */
+	AM_RANGE(0xa10000, 0xa1001f) AM_READ(genesis_68000_io_r)
+	AM_RANGE(0xa11100, 0xa11101) AM_READ(genesis_68000_z80_busreq_r)
+
+	AM_RANGE(0xc00000, 0xdfffff) AM_READ(genesis_68000_vdp_r) /* 0x20 in size, masked in handler */
+
+	AM_RANGE(0xe00000, 0xe0ffff) AM_READ(MRA16_BANK2) AM_MIRROR(0x1f0000)
+	      /* 0xe10000, 0xffffff mirrors above */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( genesis_68000_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM) AM_BASE(&genesis_cartridge) // cartridge area
+	AM_RANGE(0xa00000, 0xa07fff) AM_WRITE(genesis_68000_z80_write) AM_MIRROR(0x8000) // z80 area
+	      /* 0xa08000, 0xa0ffff mirrors above */
+
+	AM_RANGE(0xa10000, 0xa1001f) AM_WRITE(genesis_68000_io_w)
+
+	AM_RANGE(0xa11100, 0xa11101) AM_WRITE(genesis_68000_z80_busreq_w)
+	AM_RANGE(0xa11200, 0xa11201) AM_WRITE(genesis_68000_z80_reset_w)
+
+	AM_RANGE(0xc00000, 0xdfffff) AM_WRITE(genesis_68000_vdp_w) /* 0x20 in size, masked in handler */
+
+	AM_RANGE(0xe00000, 0xe0ffff) AM_WRITE(MWA16_BANK2) AM_MIRROR(0x1f0000)
+	      /* 0xe10000, 0xffffff mirrors above */
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START(sound_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1,				MWA8_BANK1)
-	AM_RANGE(0x4000, 0x4000) AM_READWRITE(YM2612_status_port_0_A_r,	YM2612_control_port_0_A_w)
-	AM_RANGE(0x4001, 0x4001) AM_READWRITE(YM2612_read_port_0_r,		YM2612_data_port_0_A_w)
-	AM_RANGE(0x4002, 0x4002) AM_READWRITE(YM2612_status_port_0_B_r,	YM2612_control_port_0_B_w)
-	AM_RANGE(0x4003, 0x4003) AM_WRITE(								YM2612_data_port_0_B_w) /*YM2612_3_r*/
-	AM_RANGE(0x6000, 0x6000) AM_WRITE(								genesis_ramlatch_w)
-	AM_RANGE(0x7f11, 0x7f11) AM_READWRITE(genesis_vdp_76489_r,		SN76496_0_w)
-	AM_RANGE(0x8000, 0xffff) AM_READWRITE(genesis_s_68000_ram_r,	genesis_s_68000_ram_w)
+
+static ADDRESS_MAP_START( genesis_z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)// AM_MIRROR(0x2000)
+	      /* 0x2000, 0x3fff mirrors above */
+//	AM_RANGE(0x4000, 0x5fff) AM_READ(z80_ym2612_r)
+	AM_RANGE(0x4000, 0x4000) AM_READ(YM2612_status_port_0_A_r)
+
+//	AM_RANGE(0x7f00, 0x7fff) AM_READ(genesis_z80_vdp_r)
+
+	AM_RANGE(0x8000, 0xffff) AM_READ(genesis_banked_68k_r)
+
+//	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)
+
+
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( genesis_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)// AM_MIRROR(0x2000)
+	      /* 0x2000, 0x3fff mirrors above */
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(z80_ym2612_w)
+//	AM_RANGE(0x4000, 0x4000) AM_WRITE(YM2612_control_port_0_A_w)
+//	AM_RANGE(0x4001, 0x4001) AM_WRITE(YM2612_data_port_0_A_w)
+//	AM_RANGE(0x4002, 0x4002) AM_WRITE(YM2612_control_port_0_B_w)
+//	AM_RANGE(0x4003, 0x4003) AM_WRITE(YM2612_data_port_0_B_w)
 
-static ADDRESS_MAP_START(sound_io, ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x7f, 0x7f) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x6000, 0x60ff) AM_WRITE(genesis_z80_bank_sel_w)
+
+	AM_RANGE(0x7f00, 0x7fff) AM_WRITE(genesis_z80_vdp_w)
+
+//	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_RAM)
+
 ADDRESS_MAP_END
 
 
@@ -217,91 +389,91 @@ INPUT_PORTS_START( genesis )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3   | IPF_PLAYER1, "P1 Button C" )
-	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2   | IPF_PLAYER1, "P1 Button B" )
-	PORT_START	/* IN1 player 1 controller, part 2 */
-	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1   | IPF_PLAYER1, "P1 Button A" )
+	PORT_BIT_NAME( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1   | IPF_PLAYER1, "P1 Button A" )
+	PORT_BIT_NAME( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2   | IPF_PLAYER1, "P1 Button B" )
+	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3   | IPF_PLAYER1, "P1 Button C" )
 	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_START     | IPF_PLAYER1, "P1 Start" )
 
-	PORT_START	/* IN2 player 2 controller */
+	PORT_START	/* IN1 player 2 controller */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3   | IPF_PLAYER2, "P2 Button C" )
-	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2   | IPF_PLAYER2, "P2 Button B" )
-	PORT_START	/* IN3 player 2 controller, part 2 */
-	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1   | IPF_PLAYER2, "P2 Button A" )
+	PORT_BIT_NAME( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1   | IPF_PLAYER2, "P2 Button A" )
+	PORT_BIT_NAME( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2   | IPF_PLAYER2, "P2 Button B" )
+	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3   | IPF_PLAYER2, "P2 Button C" )
 	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_START     | IPF_PLAYER2, "P2 Start" )
 
-	PORT_START	/* IN4 - internal switches, and fake 'Auto' */
-	PORT_DIPNAME( 0x03, 0x00, "Country")
-	PORT_DIPSETTING(    0x00, "Auto" )
-	PORT_DIPSETTING(    0x01, "USA" )
-	PORT_DIPSETTING(    0x02, "Japan" )
-	PORT_DIPSETTING(    0x03, "Europe" )
+	PORT_START	/* IN2 - internal switches, and fake 'Auto' */
+	PORT_CONFNAME( 0x03, 0x00, "Country")
+	PORT_CONFSETTING(    0x00, "Auto" )
+	PORT_CONFSETTING(    0x01, "USA" )
+	PORT_CONFSETTING(    0x02, "Japan" )
+	PORT_CONFSETTING(    0x03, "Europe" )
 INPUT_PORTS_END
 
 
-/* Genesis doesn't have a color PROM, it uses VDP 'CRAM' to generate colours */
-/* and change them during the game. */
 
-static struct SN76496interface sn76496_interface =
+static struct YM2612interface ym3438_interface =
 {
-	1,	/* 1 chip */
-	{53693100/10.40},
-	{ 255*2, 255*2 }
+	1,			/* 1 chip */
+	7670000,	/* 8 MHz ?? */
+	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* Volume */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+//	{ ym3438_interrupt }
 };
 
-static struct YM2612interface ym2612_interface =
+static struct SN76496interface sn76489_intf =
 {
-	1,	/* 1 chip */
-	53693100 / 7,
-	{ 0x7fffffff,0x7fffffff },
-	{ 0 },
+	2,		/* Two chips, one in the Genesis VDP and one in the SMS VDP */
+	{ 3580000, 3580000 },			/* Clock: 3.58 MHz */
+	{ 50, 50 }							/* Volume */
 };
 
 static MACHINE_DRIVER_START( genesis )
-	/*basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 53693100 / 7) /* 8Mhz..ish */
-	MDRV_CPU_PROGRAM_MAP(genesis_map, 0)
-	MDRV_CPU_VBLANK_INT(genesis_interrupt, 1) /* upto 224 int's per frame */
+	MDRV_CPU_ADD(M68000, 7670000)
+	MDRV_CPU_PROGRAM_MAP(genesis_68000_readmem,genesis_68000_writemem)
+	MDRV_CPU_VBLANK_INT(genesis_interrupt,262) // use timers instead?
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 53693100 / 15) /* 4Mhz..ish */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
-	MDRV_CPU_IO_MAP(sound_io, 0)
-	MDRV_CPU_VBLANK_INT(genesis_s_interrupt, 1)
+	MDRV_CPU_ADD(Z80, 3580000)
+	MDRV_CPU_PROGRAM_MAP(genesis_z80_readmem,genesis_z80_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(10) /* 80 CPU slices per frame */
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER| VIDEO_RGB_DIRECT|VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(128*8, 128*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+//	MDRV_VISIBLE_AREA(0*8, 128*8-1, 0*8, 128*8-1)
+
+	MDRV_PALETTE_LENGTH(0x200)
+
+	MDRV_INTERLEAVE(100)
+
 
 	MDRV_MACHINE_INIT(genesis)
 
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER /*| VIDEO_MODIFIES_PALETTE*/)
-	MDRV_SCREEN_SIZE(40*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
-	MDRV_GFXDECODE(0)
-	MDRV_PALETTE_LENGTH(64) /* 4 color schemes of 16 colors each, 0 of each bank is transparent*/
-	MDRV_COLORTABLE_LENGTH(64 / sizeof(unsigned short))
-
-	MDRV_PALETTE_INIT(genesis)
 	MDRV_VIDEO_START(genesis)
 	MDRV_VIDEO_UPDATE(genesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2612, ym2612_interface)
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2612, ym3438_interface)
+	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+
 MACHINE_DRIVER_END
 
 ROM_START(genesis)
-	ROM_REGION(0x415000,REGION_CPU1,0)
+	ROM_REGION(0x415000, REGION_CPU1, 0)
+	ROM_REGION(0x405000, REGION_USER1, 0)
+	ROM_REGION( 0x10000, REGION_CPU2, 0)
 ROM_END
 
 SYSTEM_CONFIG_START(genesis)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "smd\0bin\0md\0", NULL, NULL, device_load_genesis_cart, NULL, NULL, genesis_partialhash)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "smd\0bin\0md\0", NULL, NULL, device_load_genesis_cart, NULL, NULL, NULL /*genesis_partialhash*/)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
@@ -310,6 +482,6 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
-CONS( 1988, genesis,  0,		0,		genesis,  genesis,	0,		genesis,	"Sega",   "Megadrive / Genesis" )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT		CONFIG		COMPANY	FULLNAME */
+CONS( 1988, genesis,  0,		0,		genesis,  genesis,	genesis,	genesis,	"Sega",   "Megadrive / Genesis" )
 
