@@ -389,34 +389,6 @@ static pdp1_Regs pdp1;
 /* public globals */
 signed int pdp1_ICount = 50000;
 
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned pdp1_get_pc (void)
-{
-	return PC;
-}
-
-void pdp1_set_pc (UINT32 newpc)
-{
-	PC = newpc;
-}
-
-unsigned pdp1_get_sp (void)
-{
-	/* nothing to do */
-	return 0;
-}
-
-void pdp1_set_sp (UINT32 newsp)
-{
-	/* nothing to do */
-}
-
-void pdp1_set_nmi_line (int state)
-{
-	/* no NMI line */
-}
 
 void pdp1_set_irq_line (int irqline, int state)
 {
@@ -428,6 +400,10 @@ void pdp1_set_irq_callback (int (*callback) (int irqline))
 	/* no IRQ line */
 }
 
+void pdp1_init(void)
+{
+	/* nothing to do */
+}
 
 void pdp1_reset (void *param)
 {
@@ -458,6 +434,7 @@ unsigned pdp1_get_reg (int regnum)
 {
 	switch (regnum)
 	{
+	case REG_PC:
 	case PDP1_PC: return PC;
 	case PDP1_AC: return AC;
 	case PDP1_IO: return IO;
@@ -477,6 +454,7 @@ unsigned pdp1_get_reg (int regnum)
 	case PDP1_S4: return S4;
 	case PDP1_S5: return S5;
 	case PDP1_S6: return S6;
+	case REG_SP:  return 0;
 	}
 	return 0;
 }
@@ -485,6 +463,7 @@ void pdp1_set_reg (int regnum, unsigned val)
 {
 	switch (regnum)
 	{
+	case REG_PC:
 	case PDP1_PC: PC = val; break;
 	case PDP1_AC: AC = val; break;
 	case PDP1_IO: IO = val; break;
@@ -504,6 +483,7 @@ void pdp1_set_reg (int regnum, unsigned val)
 	case PDP1_S4: S4 = val; break;
 	case PDP1_S5: S5 = val; break;
 	case PDP1_S6: S6 = val; break;
+	case REG_SP:  break;
 	}
 }
 
@@ -983,4 +963,3 @@ int intern_iot (int *iio, int md)
 	return 1;
 }
 
-void pdp1_init(void){ return; }

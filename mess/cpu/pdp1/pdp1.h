@@ -16,15 +16,10 @@ enum {
 
 /* PUBLIC FUNCTIONS */
 extern void pdp1_init(void);
-extern unsigned pdp1_get_pc(void);
-extern void pdp1_set_pc(UINT32 newpc);
-extern unsigned pdp1_get_sp(void);
-extern void pdp1_set_sp(UINT32 newsp);
 extern unsigned pdp1_get_context (void *dst);
 extern void pdp1_set_context (void *src);
 extern unsigned pdp1_get_reg (int regnum);
 extern void pdp1_set_reg (int regnum, unsigned val);
-extern void pdp1_set_nmi_line(int state);
 extern void pdp1_set_irq_line(int irqline, int state);
 extern void pdp1_set_irq_callback(int (*callback)(int irqline));
 extern void pdp1_reset(void *param);
