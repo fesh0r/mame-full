@@ -21,6 +21,7 @@
 #include "includes/basicdsk.h"
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80_msx.h"
 #include "vidhrdw/v9938.h"
 #include "formats/fmsx_cas.h"
 #include "printer.h"
@@ -587,12 +588,12 @@ void init_msx (void)
 		{
         for (i=0;i<5;i++)
 			{
-			old_z80_tables[i] = activecpu_get_cycle_table (z80_table_num[i]);
+			old_z80_tables[i] = z80_msx_get_cycle_table (z80_table_num[i]);
 			for (n=0;n<256;n++)
 				{
 				z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
 				}
-			activecpu_set_cycle_tbl (i, z80_table + i*0x100);
+			z80_msx_set_cycle_table (i, z80_table + i*0x100);
 			}
 		}
     }
@@ -615,7 +616,7 @@ void msx_ch_stop (void)
 	if (z80_table)
 		{
 		for (i=0;i<5;i++)
-			activecpu_set_cycle_tbl (i, old_z80_tables[i]);
+			z80_msx_set_cycle_table (i, old_z80_tables[i]);
 
 		free (z80_table);
 		}

@@ -678,7 +678,6 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( superbrd )	/* 1979 Superboard II							  */
 
 	/* ASCII & MICROSOFT */
-#if 0
 	DRIVER( msx )		/* 1983 MSX 									  */
 	DRIVER( msxj )		/* 1983 MSX Jap 								  */
 	DRIVER( msxkr ) 	/* 1983 MSX Korean								  */
@@ -690,7 +689,6 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( msx2 ) 		/* 1985 MSX2									  */
 	DRIVER( msx2a )		/* 1985 MSX2									  */
 	DRIVER( msx2j ) 	/* 1983 MSX2 Jap								  */
-#endif
 
 	/* NASCOM MICROCOMPUTERS */
 	DRIVER( nascom1 )	/* 1978 Nascom 1								  */

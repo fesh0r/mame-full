@@ -630,7 +630,7 @@ static void v9938_register_write (int reg, int data)
 
 READ_HANDLER (v9938_status_r)
 	{
-	int reg;
+	int reg, n;
 	UINT8 ret;
 
 	vdp.cmd_write_first = 0;
@@ -651,7 +651,8 @@ READ_HANDLER (v9938_status_r)
 			break;
 		case 2:
 			/*v9938_update_command ();*/
-			if ( (cpu_getcurrentcycles () % 227) > 170) vdp.statReg[2] |= 0x20;
+			n = cycles_currently_ran ();
+			if ( (n < 57) || (n > 256) ) vdp.statReg[2] |= 0x20;
 			else vdp.statReg[2] &= ~0x20;
 			ret = vdp.statReg[2];
 			break;
