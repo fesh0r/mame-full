@@ -669,4 +669,13 @@ gamelist.txt: $(EMULATOR)
 	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
 	@$(EMULATOR) -gamelistfooter >> gamelist.txt
 
+makedep/makedep$(EXE):
+	make -Cmakedep
 
+depend src/$(TARGET).dep: makedep/makedep$(EXE)
+	echo # $(TARGET) dependencies >src/$(TARGET).dep
+	makedep/makedep$(EXE) -fsrc/$(TARGET).dep -p$(TARGET).obj/ -- $(CFLAGS) -- src/*.c \
+	src/cpu/*/*.c src/sound/*.c src/drivers/*.c src/machine/*.c src/vidhrdw/*.c src/sndhrdw/*.c
+
+# uncomment the following line to include dependencies
+# include src/$(TARGET).dep
