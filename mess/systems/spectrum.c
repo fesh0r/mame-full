@@ -57,6 +57,7 @@ Changes:
 09/5/2000       DJR - Spectrum +2 (France, Spain), +3 (Spain).
 17/5/2000       DJR - Dipswitch to enable/disable disk drives on +3 and clones.
 27/6/2000       DJR - Changed 128K/+3 port decoding (sound now works in Zub 128K).
+06/8/2000       DJR - Fixed +3 Floppy support
 
 Notes:
 
@@ -200,6 +201,8 @@ void spectrum_plus3_init_machine(void)
 
 		floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 		floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
+        floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
+        floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
 
         /* Initial configuration */
         spectrum_128_port_7ffd_data = 0;
@@ -1962,4 +1965,4 @@ COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstra
 COMPX( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2 (France)" ,GAME_NOT_WORKING)
 COMPX( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
-COMPX( 2000, specpl3e, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3e" , GAME_COMPUTER_MODIFIED )
+COMPX( 2000, specpl3e, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3e" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
