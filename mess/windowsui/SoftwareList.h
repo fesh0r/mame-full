@@ -41,7 +41,7 @@ LPCTSTR GetImageName(int nItem);
 LPCTSTR GetImageFullName(int nItem);
 
 #ifdef MAME_DEBUG
-void MessTestsFlex(struct SmartListView *pListView);
+void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *drv);
 #endif
 
 #endif /* SOFTWARELIST_H */

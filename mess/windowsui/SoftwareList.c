@@ -888,9 +888,13 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 #define T2A(str)	str
 #endif
 
-void MessTestsFlex(struct SmartListView *pListView)
+void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gamedrv)
 {
-	/* We get called here when we are done idling */
+	/* We get called here when we are done idling
+	 *
+	 * The first thing we do is we select a few arbitrary items from the list,
+	 * and add them again to test item adding with MessIntroduceItem()
+	 */
 	int i;
 	int nItem;
 	int nItemsToAdd = 5;		/* Arbitrary constant */
@@ -912,6 +916,12 @@ void MessTestsFlex(struct SmartListView *pListView)
 	for (i = 0; i < mess_images_count; i++) {
 		img = mess_images_index[i];
 		assert(img->type != IO_UNKNOWN);
+	}
+
+	/* Now lets try to see if we can load everything */
+	for (i = 0; i < mess_images_count; i++) {
+		SmartListView_SelectItem(pListView, i, FALSE);
+		messtestdriver(gamedrv);
 	}
 }
 

@@ -785,7 +785,7 @@ static void MessTestsDoneIdle(void)
 			MessTestsCompleted();
 		}
 		else {
-			MessTestsFlex(s_pSoftwareListView);
+			MessTestsFlex(s_pSoftwareListView, drivers[GetSelectedPickItem()]);
 			SetSelectedPick(nNewGame);
 		}
 	}

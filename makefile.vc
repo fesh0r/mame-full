@@ -1,6 +1,6 @@
 #####################################################################
 
-MAME_VERSION = -DMAME_VERSION=54
+MAME_VERSION = -DMAME_VERSION=57
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
@@ -47,7 +47,7 @@ VPATH=src $(wildcard src/cpu/*)
 AR = @lib
 CC = @cl
 LD = @link
-RC = @rc
+RC = rc
 ASM = @nasmw
 ASMFLAGS = -f win32
 RM = rm
@@ -171,6 +171,10 @@ endif
 RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
 RCFLAGS = -l 0x409 -I./windowsui $(MAME_DEBUG)
+
+ifdef DEBUG
+RCFLAGS += -DMAME_DEBUG
+endif
 
 ifdef MESS
 RCFLAGS += -DMESS -Imess/windowsui -Isrc/windowsui

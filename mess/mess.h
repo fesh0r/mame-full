@@ -172,6 +172,7 @@ struct IODevice {
 /* these are called from mame.c*/
 #ifdef MAME_DEBUG
 int messvaliditychecks(void);
+void messtestdriver(const struct GameDriver *gamedrv);
 #endif
 extern int get_filenames(void);
 extern int init_devices(const void *game);

@@ -476,6 +476,13 @@ static int distribute_images(void)
 
 		if (type < IO_COUNT)
 		{
+			/* Do we have too many devices? */
+			if( count[type] >= MAX_INSTANCES )
+			{
+				mess_printf(" Too many devices of type %d\n", type);
+				return 1;
+			}
+
 			/* Add a filename to the arrays of names */
 			if( options.image_files[i].name )
 			{
@@ -710,8 +717,8 @@ int device_filename_change(int type, int id, const char *name)
 			/* Check the name */
 			if( !img->name )
 				return 1;
-			/* check the count - if it was 0, add new! */
-			if (!device_count(type))
+			/* check the count - if it equals id, add new! */
+			if (device_count(type) == id)
 				count[type]++;
 		}
 
@@ -748,6 +755,7 @@ int device_filename_change(int type, int id, const char *name)
 
 
 #ifdef MAME_DEBUG
+
 int messvaliditychecks(void)
 {
 	int i;
@@ -771,6 +779,21 @@ int messvaliditychecks(void)
 	}
 	return error;
 }
+
+void messtestdriver(const struct GameDriver *gamedrv)
+{
+#if 0
+	Machine->gamedrv = gamedrv;
+	Machine->drv = gamedrv->drv;
+	memset(&Machine->memory_region, 0, sizeof(Machine->memory_region));
+	if (readroms() != 0)
+		return;
+	if (init_devices(gamedrv) != 0)
+		continue;
+	exit_devices();
+#endif
+}
+
 #endif
 
 
