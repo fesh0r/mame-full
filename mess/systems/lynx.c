@@ -69,6 +69,8 @@ void lynx_vh_stop(void)
 {
 }
 
+char debug_strings[16][30];
+int debug_pos=0;
 /*
 DISPCTL EQU $FD92       ; set to $D by INITMIKEY
 
@@ -130,6 +132,11 @@ void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		osd_set_visible_area(0,width-1,0, height-1);
 	}
 	lynx_audio_debug(bitmap);
+
+	for (j=0; j<debug_pos; j++) {
+	    ui_text(bitmap, debug_strings[j], 0, j*8);
+	}
+	debug_pos=0;
 }
 
 static void lynx_init_colors (unsigned char *sys_palette,
