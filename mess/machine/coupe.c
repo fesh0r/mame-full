@@ -11,6 +11,8 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/coupe.h"
+#include "includes/basicdsk.h"
+#include "includes/wd179x.h"
 
 #define COUPE_256
 
@@ -31,29 +33,19 @@ unsigned char LPEN,HPEN;									// ???
 unsigned char CURLINE;										// Current scanline
 unsigned char STAT;											// returned when port 249 read
 
-struct sCoupe_fdc1772 coupe_fdc1772[2];						// Holds the floppy controller vars for each drive
-
 extern unsigned char *sam_screen;
 
-int coupe_fdc_init(int id)
+int coupe_floppy_init(int id)
 {
-	coupe_fdc1772[id].Dsk_Command=0x00;		// not needed to be set really (just done for consistency)
-	coupe_fdc1772[id].Dsk_Status=0x80;		// not ready - incase someone tries to read when a dsk image is not present
-	coupe_fdc1772[id].Dsk_Data=0x00;
-	coupe_fdc1772[id].Dsk_Track=0x00;
-	coupe_fdc1772[id].Dsk_Sector=0x00;
+        if (basicdsk_floppy_init(id)==INIT_OK)
+        {
 
-	coupe_fdc1772[id].f = image_fopen(IO_FLOPPY,id,OSD_FILETYPE_IMAGE_RW,0);	// attempt to open requested file
+                basicdsk_set_geometry(id, 80, 2, 9, 512, 10, 3, 1);
 
-	if ( coupe_fdc1772[id].f == NULL )
-	{
-		logerror("Could not open image %s on floppy %d\n", device_filename(IO_FLOPPY,id),id);
-		return INIT_FAILED;
-	}
+                return INIT_OK;
+        }
 
-	coupe_fdc1772[id].Dsk_Status=0x00;		// disk inserted so drive is now ready!
-
-	return INIT_OK;
+        return INIT_FAILED;
 }
 
 void coupe_update_memory(void)
@@ -164,6 +156,11 @@ void coupe_init_machine(void)
 	CURLINE = 0x00;
 
 	coupe_update_memory();
+
+        /* KT */
+        /* how are DRQ and IRQ from WD177X handled by Coupe? */
+        floppy_drives_init();
+        wd179x_init(NULL);
 }
 
 void coupe_shutdown_machine(void)

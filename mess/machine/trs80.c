@@ -7,6 +7,7 @@
 
 ***************************************************************************/
 #include "includes/trs80.h"
+#include "includes/basicdsk.h"
 
 #define VERBOSE 1
 
@@ -28,23 +29,20 @@ static	UINT8			irq_status = 0;
 #define MAX_SECTORS     5       /* and granules of sectors */
 
 /* this indicates whether the floppy images geometry shall be calculated */
-static UINT8 first_fdc_access = 1;
 static UINT8 motor_drive = 0;				/* currently running drive */
 static short motor_count = 0;				/* time out for motor in frames */
-static int flop_specified[4] = {0,};		/* filenames specified for the images? */
-static UINT8 tracks[4] = {0, }; 			/* total tracks count per drive */
-static UINT8 heads[4] = {0, };				/* total heads count per drive */
-static UINT8 spt[4] = {0, };				/* sector per track count per drive */
+static UINT8 tracks[4] = {0, };                         /* total tracks count per drive */
+static UINT8 heads[4] = {0, };                          /* total heads count per drive */
+static UINT8 spt[4] = {0, };                            /* sector per track count per drive */
 #if USE_TRACK
 static UINT8 track[4] = {0, };				/* current track per drive */
 #endif
-static UINT8 head[4] = {0, };				/* current head per drive */
+static UINT8 head;                           /* current head per drive */
 #if USE_SECTOR
 static UINT8 sector[4] = {0, }; 			/* current sector per drive */
 #endif
 static short dir_sector[4] = {0, }; 		/* first directory sector (aka DDSL) */
 static short dir_length[4] = {0, }; 		/* length of directory in sectors (aka DDGA) */
-
 static UINT8 irq_mask = 0;
 
 static UINT8 *cas_buff = NULL;
@@ -305,27 +303,73 @@ void trs80_cmd_exit(int id)
 
 int trs80_floppy_init(int id)
 {
-	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
-	return 0;
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		void *file;
+
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+
+		if (file)
+		{
+			int n;
+			int buff[16];
+
+
+            /* KT:: I'm scared, what is happening here?? */
+
+            /* read first bytes from boot sector */
+            for (n = 0; n < 4; n++)
+            {
+#if 0
+		if (file1 == REAL_FDD)
+		{
+			osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
+			osd_fread(file0, buff, 16);
+			tracks[n] = buff[3] + 1;
+			heads[n] = (buff[7] & 0x40) ? 2 : 1;
+			spt[n] = buff[4] / heads[n];
+			dir_sector[n] = 5 * buff[0] * buff[5];
+			dir_length[n] = 5 * buff[9];
+		}
+		else
+#endif
+				osd_fseek(file, 0, SEEK_SET);
+				osd_fread(file, buff, 2);
+
+				if (buff[0] != 0x00 || buff[1] != 0xfe)
+				{
+					//                basicdsk_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
+				}
+				else
+				{
+					osd_fseek(file, 2 * 256 + n * 16, SEEK_SET);
+					osd_fread(file, buff, 16);
+					tracks[n] = buff[3] + 1;
+					heads[n] = (buff[7] & 0x40) ? 2 : 1;
+					spt[n] = buff[4] / heads[n];
+					dir_sector[n] = 5 * buff[0] * buff[5];
+					dir_length[n] = 5 * buff[9];
+				}
+            }
+
+            basicdsk_set_geometry(id, tracks[id], heads[id], spt[id], 256, dir_sector[id], dir_length[id], 0);
+        
+			osd_fclose(file);
+			return INIT_OK;
+		}
+	}
+
+	return INIT_FAILED;
 }
 
-void trs80_floppy_exit(int id)
-{
-	wd179x_stop_drive();
-	flop_specified[id] = 0;
-    first_fdc_access = 1;
-}
+static void trs80_fdc_callback(int);
 
 void trs80_init_machine(void)
 {
-	if( flop_specified[0] )
-		wd179x_init(1);
-	else
-		wd179x_init(0);
+    floppy_drives_init();
+	wd179x_init(trs80_fdc_callback);
 
-    first_fdc_access = 1;
-
-	if (cas_size)
+    if (cas_size)
 	{
 		LOG(("trs80_init_machine: schedule cas_copy_callback (%d)\n", cas_size));
 		timer_set(0.5, 0, cas_copy_callback);
@@ -702,10 +746,10 @@ WRITE_HANDLER( trs80_irq_mask_w )
 
 WRITE_HANDLER( trs80_motor_w )
 {
-	UINT8 buff[16];
+        /*UINT8 buff[16];*/
 	UINT8 drive = 255;
-	int n;
-	void *file0, *file1;
+        /*int n;*/
+        /*void *file0, *file1;*/
 
 	LOG(("trs80 motor_w $%02X\n", data));
 
@@ -713,39 +757,35 @@ WRITE_HANDLER( trs80_motor_w )
 	{
 		case 1:
 			drive = 0;
-			head[drive] = 0;
+                        head = 0;
 			break;
 		case 2:
 			drive = 1;
-			head[drive] = 0;
+                        head = 0;
 			break;
 		case 4:
 			drive = 2;
-			head[drive] = 0;
+                        head = 0;
 			break;
 		case 8:
 			drive = 3;
-			head[drive] = 0;
+                        head = 0;
 			break;
 		case 9:
 			drive = 0;
-			head[drive] = 1;
+                        head = 1;
 			break;
 		case 10:
 			drive = 1;
-			head[drive] = 1;
+                        head = 1;
 			break;
 		case 12:
 			drive = 2;
-			head[drive] = 1;
+                        head = 1;
 			break;
 	}
 
 	if (drive > 3)
-		return;
-
-	/* no image name given for that drive ? */
-	if (!flop_specified[drive])
 		return;
 
 	/* currently selected drive */
@@ -754,58 +794,9 @@ WRITE_HANDLER( trs80_motor_w )
 	/* let it run about 5 seconds */
 	motor_count = 5 * 60;
 
-	/* select the drive / head */
-	file0 = wd179x_select_drive(drive, head[drive], trs80_fdc_callback, device_filename(IO_FLOPPY,drive));
+	wd179x_set_drive(drive);
+        wd179x_set_side(head);
 
-	if (!file0)
-		return;
-	/* first drive selected first time ? */
-	if (!first_fdc_access)
-		return;
-
-	first_fdc_access = 0;
-
-	if (file0 == REAL_FDD)
-		return;
-
-	/* read first bytes from boot sector */
-	for (n = 0; n < 4; n++)
-	{
-		file1 = wd179x_select_drive(n, head[n], trs80_fdc_callback, device_filename(IO_FLOPPY,n));
-		if (!file1)
-			continue;
-		if (file1 == REAL_FDD)
-		{
-			osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
-			osd_fread(file0, buff, 16);
-			tracks[n] = buff[3] + 1;
-			heads[n] = (buff[7] & 0x40) ? 2 : 1;
-			spt[n] = buff[4] / heads[n];
-			dir_sector[n] = 5 * buff[0] * buff[5];
-			dir_length[n] = 5 * buff[9];
-		}
-		else
-		{
-			osd_fseek(file1, 0, SEEK_SET);
-			osd_fread(file1, buff, 2);
-			if (buff[0] != 0x00 || buff[1] != 0xfe)
-			{
-				wd179x_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
-			}
-			else
-			{
-				osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
-				osd_fread(file0, buff, 16);
-				tracks[n] = buff[3] + 1;
-				heads[n] = (buff[7] & 0x40) ? 2 : 1;
-				spt[n] = buff[4] / heads[n];
-				dir_sector[n] = 5 * buff[0] * buff[5];
-				dir_length[n] = 5 * buff[9];
-			}
-        }
-		wd179x_set_geometry(n, tracks[n], heads[n], spt[n], 256, dir_sector[n], dir_length[n], 0);
-	}
-	wd179x_select_drive(drive, head[drive], trs80_fdc_callback, device_filename(IO_FLOPPY,drive));
 }
 
 /*************************************
