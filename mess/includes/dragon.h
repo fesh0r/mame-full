@@ -46,7 +46,7 @@ void internal_video_update_m6847(struct mame_bitmap *bitmap, const struct rectan
  * from vidhrdw/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
-int coco3_gimevhreg[8];
+extern int coco3_gimevhreg[8];
 
 void coco3_ram_b1_w (offs_t offset, data8_t data);
 void coco3_ram_b2_w (offs_t offset, data8_t data);
