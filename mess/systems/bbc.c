@@ -126,7 +126,7 @@ static ADDRESS_MAP_START(bbcb_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK3		, memoryb3_w      	)	/*    4000-7fff                 Repeat of the Regular Ram		*/
 
 
-	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK4    	, bbc_bank4_w      	)	/*    8000-bfff 			 	Paged ROM						*/
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK4    	, memoryb4_w      	)	/*    8000-bfff 			 	Paged ROM						*/
 
 	AM_RANGE(0xc000, 0xfbff) AM_READWRITE(MRA8_BANK7    	, MWA8_ROM       	)	/*    c000-fbff 			 	OS ROM							*/
 
@@ -157,7 +157,7 @@ static ADDRESS_MAP_START(bbcbp_mem, ADDRESS_SPACE_PROGRAM, 8)
 
 	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_BANK1		, memorybp1_w		)	/*    0000-2fff 			 	Regular Ram						*/
 
-	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybp2_r		, memorybp2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
+	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(MRA8_BANK2		, memorybp2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
 
 	AM_RANGE(0x8000, 0xafff) AM_READWRITE(MRA8_BANK4		, memorybp4_w		)	/*    8000-afff					Paged ROM or 12K of RAM			*/
 	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK6		, MWA8_ROM			)	/*    b000-bfff					Rest of paged ROM area			*/
@@ -192,7 +192,7 @@ static ADDRESS_MAP_START(bbcbp128_mem, ADDRESS_SPACE_PROGRAM, 8)
 
 	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_BANK1		, memorybp1_w		)	/*    0000-2fff 			 	Regular Ram						*/
 
-	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybp2_r		, memorybp2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
+	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(MRA8_BANK2		, memorybp2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
 
 	AM_RANGE(0x8000, 0xafff) AM_READWRITE(MRA8_BANK4		, memorybp4_128_w	)	/*    8000-afff					Paged ROM or 12K of RAM			*/
 	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK6		, memorybp6_128_w	)	/*    b000-bfff					Rest of paged ROM area			*/
@@ -246,12 +246,12 @@ ADDRESS_MAP_END
 &E0-&FF Tube ULA		Tube system interface	Tube system interface	32 (32 bytes x  1 ) 2Mhz
 ******************************************************************************/
 
+
 static ADDRESS_MAP_START(bbcm_mem, ADDRESS_SPACE_PROGRAM, 8)
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0) )
 
 	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_BANK1		, memorybm1_w		)	/*    0000-2fff 			 	Regular Ram						*/
 
-	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybm2_r		, memorybm2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
+	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(MRA8_BANK2		, memorybm2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
 
 	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK4		, memorybm4_w		)	/*    8000-8fff					Paged ROM/RAM or 4K of RAM ANDY	*/
 	AM_RANGE(0x9000, 0xbfff) AM_READWRITE(MRA8_BANK5		, memorybm5_w		)	/*    9000-bfff					Rest of paged ROM/RAM area		*/
@@ -284,6 +284,7 @@ static ADDRESS_MAP_START(bbcm_mem, ADDRESS_SPACE_PROGRAM, 8)
 
 	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
+
 
 
 unsigned short bbc_colour_table[8]=
@@ -522,7 +523,7 @@ ROM_START(bbcb)
 	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
 	ROM_LOAD("basic2.rom",  0x00000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
-	ROM_LOAD("speech-1.0.rom",  0x08000, 0x2000, CRC(e63f7fb7) )
+	//ROM_LOAD("speech-1.0.rom",  0x08000, 0x2000, CRC(e63f7fb7) )
 	ROM_RELOAD(                 0x0a000, 0x2000                )
 	//ROM_LOAD("dfs144.rom",  0x04000, 0x4000, CRC(9fb8d13f) SHA1(387d2468c6e1360f5b531784ce95d5f71a50c2b5)) /* rom page 14 38000 */
 	                                                      /* rom page 0  00000 */

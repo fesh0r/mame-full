@@ -127,7 +127,7 @@ WRITE8_HANDLER ( memoryb3_w )
 static unsigned short bbc_SWRAMtype0[16]={0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1};
 static unsigned short bbc_SWRAMtype1[16]={0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0};
 
-WRITE8_HANDLER ( bbc_bank4_w )
+WRITE8_HANDLER ( memoryb4_w )
 {
 	if (bbc_rombank==1)
 	{
@@ -206,6 +206,8 @@ WRITE8_HANDLER ( page_selectbp_w )
 		vdusel=(data&0x80)>>7;
 		bbcbp_setvideoshadow(vdusel);
 		//need to make the video display do a full screen refresh for the new memory area
+		cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
+
 	}
 }
 
@@ -223,7 +225,27 @@ WRITE8_HANDLER ( memorybp1_w )
 }
 
 
+static OPBASE_HANDLER( bbcbp_opbase_handler )
+{
+	if (vdusel==0)
+	{
+		// not in shadow ram mode so just read normal ram
+		cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
+	} else {
+		if (vdudriverset())
+		{
+			// if VDUDriver set then read from shadow ram
+			cpu_setbank(2, memory_region(REGION_CPU1)+0xb000);
+		} else {
+			// else read from normal ram
+			cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
+		}
+	}
+	return address;
+}
 
+
+/* not used */
 READ8_HANDLER ( memorybp2_r )
 {
 	if (vdusel==0)
@@ -413,6 +435,14 @@ WRITE8_HANDLER ( bbcm_ACCCON_write )
 
 	bbcbp_setvideoshadow(ACCCON_D);
 
+
+	if (ACCCON_X)
+	{
+		cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
+	} else {
+		cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0x3000 );
+	}
+
 }
 
 
@@ -448,6 +478,21 @@ WRITE8_HANDLER ( memorybm1_w )
 	vidmem[offset]=1;
 }
 
+
+static OPBASE_HANDLER( bbcm_opbase_handler )
+{
+
+	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
+		{
+			cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
+		} else {
+			cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0x3000 );
+	}
+
+	return address;
+}
+
+/* this is now not used, replaced with above OPBASE_HANDLER */
 READ8_HANDLER ( memorybm2_r )
 {
 	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
@@ -510,26 +555,6 @@ WRITE8_HANDLER ( memorybm7_w )
 }
 
 
-WRITE8_HANDLER ( bbcm_wd1770_write )
-{
-
-}
-
-
-READ8_HANDLER ( bbcm_wd1770l_read )
-{
-	return 0;
-}
-
-WRITE8_HANDLER ( bbcm_wd1770l_write )
-{
-
-}
-
-READ8_HANDLER ( bbcm_wd1770_read )
-{
-	return 0;
-}
 
 /******************************************************************************
 &FC00-&FCFF FRED
@@ -738,15 +763,15 @@ static int b7_shift_lock_led;
 
 
 
-static int MC146818_WR=0;	// FE30 bit 1
-static int MC146818_DS=0;	// FE30 bit 2
+static int MC146818_WR=0;	// FE30 bit 1 replaces  b1_speech_read
+static int MC146818_DS=0;	// FE30 bit 2 replaces  b2_speech_write
 static int MC146818_AS=0;	// 6522 port b bit 7
 static int MC146818_CE=0;	// 6522 port b bit 6
 
 static int via_system_porta;
 
 
-
+// this is a counter on the keyboard
 static int column=0;
 
 
@@ -1572,6 +1597,7 @@ At some point we need to check the size of the disc image to work out if it is a
 density disc image
 */
 
+static int bbc_1770_IntEnabled;
 
 static void bbc_wd177x_callback(int event)
 {
@@ -1587,6 +1613,9 @@ static void bbc_wd177x_callback(int event)
 	  The nmi_enable decides if interrupts are actually triggered.
 	  The nmi is edge triggered, and triggers on a +ve edge.
 	*/
+
+	logerror("callback $%02X\n", event);
+
 
 	/* update bbc_wd177x_drq_irq_state depending on event */
 	switch (event)
@@ -1617,7 +1646,7 @@ static void bbc_wd177x_callback(int event)
 	}
 
 	/* if drq or irq is set, and interrupt is enabled */
-	if (((bbc_wd177x_drq_irq_state & 3)!=0) && ((drive_control & (1<<4))==0))
+	if (((bbc_wd177x_drq_irq_state & 3)!=0) && (bbc_1770_IntEnabled))
 	{
 		/* int trigger */
 		state = 1;
@@ -1644,42 +1673,31 @@ static void bbc_wd177x_callback(int event)
 
 }
 
-
-static void bbc_wd177x_status_w(int offset,int data)
+WRITE8_HANDLER(bbc_wd177x_status_w)
 {
-	int drive;
-	int density;
-
 	drive_control = data;
 
-	drive = 0;
-	if ((data & 0x03)==1)
-	{
-		drive = 0;
-	}
-
-	if ((data & 0x03)==2)
-	{
-		drive = 1;
-	}
-
 	/* set drive */
-	wd179x_set_drive(drive);
+	if ((data>>0) & 0x01) wd179x_set_drive(0);
+	if ((data>>1) & 0x01) wd179x_set_drive(1);
+
 	/* set side */
 	wd179x_set_side((data>>2) & 0x01);
 
-    if ((data & (1<<3))!=0)
+	/* set density */
+	if ((data>>3) & 0x01)
 	{
-		/* low-density */
-		density = DEN_FM_HI;
+		/* single density */
+		wd179x_set_density(DEN_FM_HI);
 	}
 	else
 	{
 		/* double density */
-		density = DEN_MFM_LO;
+		wd179x_set_density(DEN_MFM_LO);
 	}
 
-	wd179x_set_density(density);
+	bbc_1770_IntEnabled=(((data>>4) & 0x01)==0);
+
 }
 
 
@@ -1704,14 +1722,14 @@ READ8_HANDLER ( bbc_wd1770_read )
 	default:
 		break;
 	}
-	//logerror("wd177x read: $%02X  $%02X\n", offset,retval);
+	logerror("wd177x read: $%02X  $%02X\n", offset,retval);
 
 	return retval;
 }
 
 WRITE8_HANDLER ( bbc_wd1770_write )
 {
-	//logerror("wd177x write: $%02X  $%02X\n", offset,data);
+	logerror("wd177x write: $%02X  $%02X\n", offset,data);
 	switch (offset)
 	{
 	case 0:
@@ -1774,43 +1792,35 @@ static int opusbank;
 
 WRITE8_HANDLER( bbc_opus_status_w )
 {
-	int drive;
-	int density;
-
 	drive_control = data;
 
-	drive = 0;
-	if ((data & 0x06)==2)
-	{
-		drive = 0;
-	}
-
-	if ((data & 0x06)==4)
-	{
-		drive = 1;
-	}
-
 	/* set drive */
-	wd179x_set_drive(drive);
-	/* set side */
-	wd179x_set_side(data & 0x01);
+	if ((data>>1) & 0x01) wd179x_set_drive(0);
+	if ((data>>2) & 0x01) wd179x_set_drive(1);
 
-    if ((data & (1<<5))!=0)
+	/* set side */
+	wd179x_set_side((data>>0) & 0x01);
+
+	/* set density */
+	if ((data>>5) & 0x01)
 	{
-		/* low-density */
-		density = DEN_FM_HI;
+		/* single density */
+		wd179x_set_density(DEN_FM_HI);
 	}
 	else
 	{
 		/* double density */
-		density = DEN_MFM_LO;
+		wd179x_set_density(DEN_MFM_LO);
 	}
 
-	wd179x_set_density(density);
+	bbc_1770_IntEnabled=(data>>4) & 0x01;
+
 }
 
 READ8_HANDLER( bbc_opus_read )
 {
+	logerror("wd177x read: $%02X\n", offset);
+
 	if (bbc_DFSType==6)
 	{
 		if (offset<0x100)
@@ -1840,6 +1850,8 @@ READ8_HANDLER( bbc_opus_read )
 
 WRITE8_HANDLER (bbc_opus_write)
 {
+	logerror("wd177x write: $%02X  $%02X\n", offset,data);
+
 	if (bbc_DFSType==6)
 	{
 		if (offset<0x100)
@@ -1875,6 +1887,91 @@ WRITE8_HANDLER (bbc_opus_write)
 }
 
 
+/***************************************
+BBC MASTER DISC SUPPORT
+***************************************/
+
+
+READ8_HANDLER ( bbcm_wd1770_read )
+{
+	int retval=0xff;
+	switch (offset)
+	{
+	case 0:
+		retval=wd179x_status_r(0);
+		break;
+	case 1:
+		retval=wd179x_track_r(0);
+		break;
+	case 2:
+		retval=wd179x_sector_r(0);
+		break;
+	case 3:
+		retval=wd179x_data_r(0);
+		break;
+	default:
+		break;
+	}
+	return retval;
+}
+
+
+WRITE8_HANDLER ( bbcm_wd1770_write )
+{
+	//logerror("wd177x write: $%02X  $%02X\n", offset,data);
+	switch (offset)
+	{
+	case 0:
+		wd179x_command_w(0, data);
+		break;
+	case 1:
+		wd179x_track_w(0, data);
+		break;
+	case 2:
+		wd179x_sector_w(0, data);
+		break;
+	case 3:
+		wd179x_data_w(0, data);
+		break;
+	default:
+		break;
+	}
+}
+
+
+READ8_HANDLER ( bbcm_wd1770l_read )
+{
+	return drive_control;
+}
+
+WRITE8_HANDLER ( bbcm_wd1770l_write )
+{
+	drive_control = data;
+
+	/* set drive */
+	if ((data>>0) & 0x01) wd179x_set_drive(0);
+	if ((data>>1) & 0x01) wd179x_set_drive(1);
+
+	/* set side */
+	wd179x_set_side((data>>4) & 0x01);
+
+	/* set density */
+	if ((data>>5) & 0x01)
+	{
+		/* single density */
+		wd179x_set_density(DEN_FM_HI);
+	}
+	else
+	{
+		/* double density */
+		wd179x_set_density(DEN_MFM_LO);
+	}
+
+//	bbc_1770_IntEnabled=(((data>>4) & 0x01)==0);
+	bbc_1770_IntEnabled=1;
+
+}
+
 
 /**************************************
 DFS Hardware mapping for different Disc Controller types
@@ -1893,6 +1990,7 @@ READ8_HANDLER( bbc_disc_r )
 		break;
 	/* case 5 is the watford 1770 interface */
 	case 5:
+		return bbc_wd1770_read(offset);
 		break;
 	/* case 6 is the Opus challenger interface */
 	case 6:
@@ -1918,6 +2016,7 @@ WRITE8_HANDLER ( bbc_disc_w )
 		break;
 	/* case 5 is the watford 1770 interface */
 	case 5:
+		bbc_wd1770_write(offset,data);
 		break;
 	/* case 6 is the Opus challenger interface */
 	case 6:
@@ -1993,7 +2092,7 @@ MACHINE_INIT( bbca )
 
 	cpu_setbank(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
 	cpu_setbank(7,memory_region(REGION_USER1)+0x10000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x13f00);  /* bank 8 points at the OS rom  from c000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x13f00);  /* bank 9 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -2025,7 +2124,7 @@ MACHINE_INIT( bbcb )
 
 	cpu_setbank(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
 	cpu_setbank(7,memory_region(REGION_USER1)+0x40000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00);  /* bank 8 points at the OS rom  from c000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00);  /* bank 9 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -2063,11 +2162,13 @@ MACHINE_INIT( bbcb )
 MACHINE_INIT( bbcbp )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1));
-	//bank 2 is not used it is all done by hand
-	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
-	cpu_setbank(6,memory_region(REGION_USER1)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
-	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
-	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 8 points at the OS rom  from c000 to ffff */
+	cpu_setbank(2,memory_region(REGION_CPU1)+0x03000);  /* bank 2 screen/shadow ram     from 3000 to 7fff */
+	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to afff */
+	cpu_setbank(6,memory_region(REGION_USER1)+0x03000); /* bank 6 is the paged ROMs     from b000 to bfff */
+	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 7 points at the OS rom  from c000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 points at the OS rom  from c000 to ffff */
+
+	memory_set_opbase_handler(0, bbcbp_opbase_handler);
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -2088,15 +2189,18 @@ MACHINE_INIT( bbcbp )
 }
 
 
+
 MACHINE_INIT( bbcm )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1));			/* bank 0 regular lower ram		from 0000 to 2fff */
-	//bank 2 not used it is all done by hand			/* bank 1 screen/shadow ram		from 3000 to 7fff */
+	cpu_setbank(1,memory_region(REGION_CPU1));			/* bank 1 regular lower ram		from 0000 to 2fff */
+	cpu_setbank(2,memory_region(REGION_CPU1)+0x3000);	/* bank 2 screen/shadow ram		from 3000 to 7fff */
 	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to 8fff */
 	cpu_setbank(5,memory_region(REGION_USER1)+0x01000); /* bank 5 is the paged ROMs     from 9000 to bfff */
 	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 6 OS rom of RAM			from c000 to dfff */
 	cpu_setbank(8,memory_region(REGION_USER1)+0x42000); /* bank 8 OS rom  				from e000 to ffff */
 	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 is the top of the OS  from ff00 to ffff */
+
+	memory_set_opbase_handler(0, bbcm_opbase_handler);
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
