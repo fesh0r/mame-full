@@ -422,3 +422,5 @@ unsigned z80gb_dasm( char *buffer, unsigned pc )
 }
 
 
+extern void z80gb_init(void){ return; }
+

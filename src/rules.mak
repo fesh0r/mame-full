@@ -11,28 +11,6 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
-CPU=$(strip $(findstring Z80GB@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/z80gb
-CPUDEFS += -DHAS_Z80GB=1
-CPUOBJS += $(OBJ)/cpu/z80gb/z80gb.o
-DBGOBJS += $(OBJ)/cpu/z80gb/z80gbd.o
-$(OBJ)/cpu/z80gb/z80gb.o: z80gb.c z80gb.h daa_tab.h opc_cb.h opc_main.h
-else
-CPUDEFS += -DHAS_Z80GB=0
-endif
-
-CPU=$(strip $(findstring CDP1802@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/cdp1802
-CPUDEFS += -DHAS_CDP1802=1
-CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
-DBGOBJS += $(OBJ)/cpu/cdp1802/1802dasm.o
-$(OBJ)/cpu/cdp1802/cdp1802.o: 1802tbl.c
-else
-CPUDEFS += -DHAS_CDP1802=0
-endif
-
 CPU=$(strip $(findstring 8080@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8085
@@ -570,17 +548,6 @@ DBGOBJS += $(OBJ)/cpu/s2650/2650dasm.o
 $(OBJ)/cpu/s2650/s2650.o: s2650.c s2650.h s2650cpu.h
 else
 CPUDEFS += -DHAS_S2650=0
-endif
-
-CPU=$(strip $(findstring F8@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/f8
-CPUDEFS += -DHAS_F8=1
-CPUOBJS += $(OBJ)/cpu/f8/f8.o
-DBGOBJS += $(OBJ)/cpu/f8/f8dasm.o
-$(OBJ)/cpu/f8/f8.o: f8.c f8.h
-else
-CPUDEFS += -DHAS_F8=0
 endif
 
 CPU=$(strip $(findstring TMS34010@,$(CPUS)))

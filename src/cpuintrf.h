@@ -36,12 +36,6 @@ enum
 #if (HAS_Z80)
 	CPU_Z80,
 #endif
-#if (HAS_Z80GB)
-	CPU_Z80GB,
-#endif
-#if (HAS_CDP1802)
-	CPU_CDP1802,
-#endif
 #if (HAS_8080)
 	CPU_8080,
 #endif
@@ -180,9 +174,6 @@ enum
 #if (HAS_S2650)
 	CPU_S2650,
 #endif
-#if (HAS_F8)
-	CPU_F8,
-#endif
 #if (HAS_TMS34010)
 	CPU_TMS34010,
 #endif
@@ -254,8 +245,14 @@ enum
 #if (HAS_ARM)
 	CPU_ARM,
 #endif
+#if (HAS_CDP1802)
+	CPU_CDP1802,
+#endif
 #if (HAS_CP1600)
 	CPU_CP1600,
+#endif
+#if (HAS_F8)
+	CPU_F8,
 #endif
 #if (HAS_G65816)
 	CPU_G65816,
@@ -268,6 +265,9 @@ enum
 #endif
 #if (HAS_SH2)
 	CPU_SH2,
+#endif
+#if (HAS_Z80GB)
+	CPU_Z80GB,
 #endif
 #endif
     CPU_COUNT

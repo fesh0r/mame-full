@@ -2129,3 +2129,4 @@ unsigned f8_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+extern void f8_init(void){ return; }

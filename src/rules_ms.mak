@@ -26,6 +26,19 @@ CPUDEFS += -DHAS_ARM=0
 endif
 
 
+CPU=$(strip $(findstring CDP1802@,$(CPUS)))
+ifneq ($(CPU),)
+CDPD = mess/cpu/cdp1802
+OBJDIRS += $(OBJ)/$(CDPD)
+CPUDEFS += -DHAS_CDP1802=1
+CPUOBJS += $(OBJ)/$(CDPD)/cdp1802.o
+DBGOBJS += $(OBJ)/$(CDPD)/1802dasm.o
+$(OBJ)/$(CDPD)/cdp1802.o: $(CDPD)/1802tbl.c
+else
+CPUDEFS += -DHAS_CDP1802=0
+endif
+
+
 CPU=$(strip $(findstring CP1600@,$(CPUS)))
 ifneq ($(CPU),)
 CPD = mess/cpu/cp1600
@@ -36,6 +49,19 @@ DBGOBJS += $(OBJ)/$(CPD)/1600dasm.o
 $(OBJ)/$(CPD)/cp1600.o: $(CPD)/cp1600.c $(CPD)/cp1600.h
 else
 CPUDEFS += -DHAS_CP1600=0
+endif
+
+
+CPU=$(strip $(findstring F8@,$(CPUS)))
+ifneq ($(CPU),)
+F8D = mess/cpu/f8
+OBJDIRS += $(OBJ)/$(F8D)
+CPUDEFS += -DHAS_F8=1
+CPUOBJS += $(OBJ)/$(F8D)/f8.o
+DBGOBJS += $(OBJ)/$(F8D)/f8dasm.o
+$(OBJ)/$(F8D)/f8.o: $(F8D)/f8.c $(F8D)/f8.h
+else
+CPUDEFS += -DHAS_F8=0
 endif
 
 
@@ -100,4 +126,16 @@ else
 CPUDEFS += -DHAS_SH2=0
 endif
 
+
+CPU=$(strip $(findstring Z80GB@,$(CPUS)))
+ifneq ($(CPU),)
+GBD = mess/cpu/z80gb
+OBJDIRS += $(OBJ)/$(GBD)
+CPUDEFS += -DHAS_Z80GB=1
+CPUOBJS += $(OBJ)/$(GBD)/z80gb.o
+DBGOBJS += $(OBJ)/$(GBD)/z80gbd.o
+$(OBJ)/$(GBD)/z80gb.o: $(GBD)/z80gb.c $(GBD)/z80gb.h $(GBD)/daa_tab.h $(GBD)/opc_cb.h $(GBD)/opc_main.h
+else
+CPUDEFS += -DHAS_Z80GB=0
+endif
 

@@ -18,12 +18,6 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
-#if (HAS_Z80GB)
-#include "cpu/z80gb/z80gb.h"
-#endif
-#if (HAS_CDP1802)
-#include "cpu/cdp1802/cdp1802.h"
-#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -90,9 +84,6 @@
 #if (HAS_S2650)
 #include "cpu/s2650/s2650.h"
 #endif
-#if (HAS_F8)
-#include "cpu/f8/f8.h"
-#endif
 #if (HAS_TMS34010 || HAS_TMS34020)
 #include "cpu/tms34010/tms34010.h"
 #endif
@@ -139,8 +130,14 @@
 #if (HAS_ARM)
 #include "mess/cpu/arm/arm.h"
 #endif
+#if (HAS_CDP1802)
+#include "mess/cpu/cdp1802/cdp1802.h"
+#endif
 #if (HAS_CP1600)
 #include "mess/cpu/cp1600/cp1600.h"
+#endif
+#if (HAS_F8)
+#include "mess/cpu/f8/f8.h"
 #endif
 #if (HAS_G65816)
 #include "mess/cpu/g65816/g65816.h"
@@ -153,6 +150,9 @@
 #endif
 #if (HAS_SH2)
 #include "mess/cpu/sh2/sh2.h"
+#endif
+#if (HAS_Z80GB)
+#include "mess/cpu/z80gb/z80gb.h"
 #endif
 
 #endif
@@ -432,13 +432,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
-#if (HAS_Z80GB)
-	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
-#endif
-#if (HAS_CDP1802)
-#define cdp1802_ICount cdp1802_icount
-	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   8, 16,	  0,16,BE,1, 3	),
-#endif
 #if (HAS_8080)
 	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   8, 16,	  0,16,LE,1, 3	),
 #endif
@@ -577,10 +570,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_S2650)
 	CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   8, 16,	  0,15,LE,1, 3	),
 #endif
-#if (HAS_F8)
-#define f8_ICount f8_icount
-	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   8, 16,	  0,16,LE,1, 3	),
-#endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   16,29lew,  3,29,LE,2,10	),
 #endif
@@ -656,9 +645,17 @@ struct cpu_interface cpuintf[] =
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   32,26ledw, 0,26,LE,4, 4	),
 #endif
+#if (HAS_CDP1802)
+#define cdp1802_ICount cdp1802_icount
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   8, 16,	  0,16,BE,1, 3	),
+#endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
 	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
+#endif
+#if (HAS_F8)
+#define f8_ICount f8_icount
+	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_G65816)
 	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
@@ -672,6 +669,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_SH2)
 	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
+#endif
+#if (HAS_Z80GB)
+	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
 #endif
 #endif
 };
