@@ -58,6 +58,12 @@ System Driver Changes:
   Simulation of CRT remanence. WARNING: .rim files must be run pressing
   LCTRL+ENTER to switch into read-in mode! [Raphael Nabet]
 
+- [APPLE1] Snapshot support added - memory dumps loaded via the image MESS 
+  loading interface.  The images need a header, using the following 
+  format - "LOAD:xxyyDATA:".  This header enables the emulation to load the 
+  data to the correct location.  [Ben Bruscella, Stefano Priore]
+
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 
