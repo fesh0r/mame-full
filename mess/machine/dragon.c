@@ -1106,8 +1106,8 @@ void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	typedef mem_write_handler writehandler;
-	static writehandler handlers[] = {
+
+	static mem_write_handler handlers[] = {
 		coco3_ram_b1_w, coco3_ram_b2_w,
 		coco3_ram_b3_w, coco3_ram_b4_w,
 		coco3_ram_b5_w, coco3_ram_b6_w,
@@ -1416,7 +1416,6 @@ void coco_cassette_exit(int id)
 
 static int haltenable;
 static int dskreg;
-static int raise_nmi;
 static void coco_fdc_callback(int event);
 
 enum {
@@ -1428,7 +1427,11 @@ static void coco_fdc_init(void)
 {
     wd179x_init(coco_fdc_callback);
 	dskreg = -1;
-	raise_nmi = 0;
+}
+
+static void raise_nmi(int dummy)
+{
+	cpu_set_nmi_line(0, ASSERT_LINE);
 }
 
 static void coco_fdc_callback(int event)
@@ -1444,7 +1447,7 @@ static void coco_fdc_callback(int event)
 		cpu_set_nmi_line(0, CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
-		raise_nmi = 1;
+		timer_set(COCO_CPU_SPEED * 11 / timer_get_overclock(0), 0, raise_nmi);
 		break;
 	case WD179X_DRQ_CLR:
 		cpu_set_halt_line(0, CLEAR_LINE);
@@ -1573,10 +1576,6 @@ static void dc_floppy_w(int offset, int data, int hardware)
 	case 5:
 	case 6:
 	case 7:
-		if (raise_nmi) {
-			cpu_set_nmi_line(0, ASSERT_LINE);
-			raise_nmi = 0;
-		}
 		set_dskreg(data, hardware);
 		break;
 	case 8:
