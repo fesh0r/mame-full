@@ -23,9 +23,6 @@
 #include "fxcompat.h"
 #include "sysdep/sysdep_display_priv.h"
 
-/* FIXME */
-extern UINT8 ui_dirty;
-
 void CalcPoint(GrVertex *vert,int x,int y);
 int  InitTextures(void);
 int  InitVScreen(void);
@@ -36,7 +33,9 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 void DrawFlatBitmap(void);
 void UpdateFXDisplay(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette, unsigned int flags);
+int fxvec_renderer(point *pt, int num_points);
+
 static int SetResolution(struct rc_option *option, const char *arg,
    int priority);
 
@@ -53,6 +52,7 @@ static GrTexInfo texinfo;
 static int bilinear=1; /* Do binlinear filtering? */
 static const int texsize=256;
 static GrContext_t context=0;
+static int ui_was_dirty=1;
 
 /* The squares that are tiled to make up the game screen polygon */
 
@@ -180,7 +180,7 @@ int InitTextures(void)
 
   texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
 
-  if(sysdep_display_params.vecgame)
+  if(sysdep_display_params.vec_bounds)
   {
     grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
                                        GR_COMBINE_FACTOR_LOCAL,
@@ -461,27 +461,29 @@ int InitVScreen(void)
   grBufferClear(0,0,0);
   
   /* calculate the vscreen boundaries */
-  sysdep_display_check_params();
-  mode_check_params((double)fxwidth/fxheight);
   mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
   vscrntlx=(fxwidth -vscrnwidth )/2;
   vscrntly=(fxheight-vscrnheight)/2;
   
-  /* fill the sysdep_display_palette_info struct */
-  memset(&sysdep_display_palette_info, 0, sizeof(struct sysdep_palette_info));
+  /* fill the sysdep_display_properties struct */
+  memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
   switch(sysdep_display_params.depth) {
     case 15:
     case 16:
-      sysdep_display_palette_info.red_mask   = 0x7C00;
-      sysdep_display_palette_info.green_mask = 0x03E0;
-      sysdep_display_palette_info.blue_mask  = 0x001F;
+      sysdep_display_properties.palette_info.red_mask   = 0x7C00;
+      sysdep_display_properties.palette_info.green_mask = 0x03E0;
+      sysdep_display_properties.palette_info.blue_mask  = 0x001F;
       break;
     case 32:
-      sysdep_display_palette_info.red_mask   = 0xFF0000;
-      sysdep_display_palette_info.green_mask = 0x00FF00;
-      sysdep_display_palette_info.blue_mask  = 0x0000FF;
+      sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
+      sysdep_display_properties.palette_info.green_mask = 0x00FF00;
+      sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
       break;
   }
+  sysdep_display_properties.vector_renderer = fxvec_renderer;
+  
+  /* force an update of the bitmap for the first frame */
+  ui_was_dirty = 1;
    
   return InitTextures();
 }
@@ -630,40 +632,30 @@ void DrawFlatBitmap(void)
 
 void UpdateFXDisplay(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette)
+	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-  static int ui_was_dirty=0;
   
-  if(bitmap && (!sysdep_display_params.vecgame || ui_dirty || ui_was_dirty))
+  if(flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
+  {
+    bilinear=1-bilinear;
+
+    if(bilinear)
+          grTexFilterMode(GR_TMU0,
+                                          GR_TEXTUREFILTER_BILINEAR,
+                                          GR_TEXTUREFILTER_BILINEAR);
+    else
+          grTexFilterMode(GR_TMU0,
+                                          GR_TEXTUREFILTER_POINT_SAMPLED,
+                                          GR_TEXTUREFILTER_POINT_SAMPLED);
+  }
+  
+  if(bitmap && (!sysdep_display_params.vec_bounds || 
+     (flags & SYSDEP_DISPLAY_UI_DIRTY) || ui_was_dirty))
     UpdateTexture(bitmap, dirty_area, vis_area, palette);
 
   DrawFlatBitmap();
   grBufferSwap(1);
   grBufferClear(0,0,0);
 
-  ui_was_dirty=ui_dirty;
+  ui_was_dirty=flags & SYSDEP_DISPLAY_UI_DIRTY;
 }
-
-#if 0
-/* invoked by main tree code to update bitmap into screen */
-void sysdep_update_display(struct mame_bitmap *bitmap)
-{
-  if(code_pressed(KEYCODE_RCONTROL)) {
-	if(code_pressed_memory(KEYCODE_B)) {
-	  bilinear=1-bilinear;
-
-	  if(bilinear)
-		grTexFilterMode(GR_TMU0,
-						GR_TEXTUREFILTER_BILINEAR,
-						GR_TEXTUREFILTER_BILINEAR);
-	  else
-		grTexFilterMode(GR_TMU0,
-						GR_TEXTUREFILTER_POINT_SAMPLED,
-						GR_TEXTUREFILTER_POINT_SAMPLED);
-
-	}
-  }
-
-  UpdateFXDisplay(bitmap);
-}
-#endif

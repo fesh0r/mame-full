@@ -53,7 +53,8 @@ static int xinput_grab_mouse = 0;
 static int xinput_grab_keyboard = 0;
 static int xinput_show_cursor = 1;
 static int xinput_always_use_mouse = 0;
-static XSizeHints x11_init_hints;
+static XSizeHints x11_init_hints = { 0, 0,0, 0,0, 0,0, 0,0, 0,0, {},{}, 0,0,
+  NorthWestGravity };
 /* not static because xgl needs these for its own window creation */
 int root_window_id; /* root window id (for swallowing the mame window) */
 
@@ -309,6 +310,7 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 	if (strlen(arg) == 0)
 	{
 	   memset(&x11_init_hints, 0, sizeof(x11_init_hints));
+	   x11_init_hints.win_gravity = NorthWestGravity;
 	}
 	else
 	{
@@ -555,9 +557,9 @@ void xinput_close(void)
   }
 }
 
-void xinput_check_hotkeys(unsigned int hotkeys)
+void xinput_check_hotkeys(unsigned int flags)
 {
-  if (!xinput_force_grab && (hotkeys & SYSDEP_DISPLAY_HOTKEY_GRABMOUSE))
+  if (!xinput_force_grab && (flags & SYSDEP_DISPLAY_HOTKEY_GRABMOUSE))
   {
      if (xinput_mouse_grabbed)
      {
@@ -581,7 +583,7 @@ void xinput_check_hotkeys(unsigned int hotkeys)
   }
 
   /* toggle keyboard grabbing */
-  if ((xinput_force_grab!=2) && (hotkeys & SYSDEP_DISPLAY_HOTKEY_GRABKEYB))
+  if ((xinput_force_grab!=2) && (flags & SYSDEP_DISPLAY_HOTKEY_GRABKEYB))
   {
     if (xinput_keyboard_grabbed)
     {
@@ -608,7 +610,7 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
 	XEvent event;
-	int x=0,y=0;
+	int x=0,y=0,win_gravity = NorthWestGravity;
 	Window root = RootWindowOfScreen (screen);
 	
 	switch (type)
@@ -617,6 +619,7 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 	    case 1: /* resizable */
 	        x = x11_init_hints.x;
 	        y = x11_init_hints.y;
+	        win_gravity = x11_init_hints.win_gravity;
 	        if (root_window_id)
 	           root = root_window_id;
 		break;
@@ -630,7 +633,7 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
         winattr.background_pixel  = BlackPixelOfScreen (screen);
         winattr.border_pixel      = WhitePixelOfScreen (screen);
         winattr.bit_gravity       = ForgetGravity;
-        winattr.win_gravity       = x11_init_hints.win_gravity;
+        winattr.win_gravity       = win_gravity;
         winattr.backing_store     = NotUseful;
         winattr.override_redirect = False;
         winattr.save_under        = False;
@@ -671,6 +674,8 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 {
         XWMHints wm_hints;
 	XSizeHints hints = x11_init_hints;
+	int x = 1024;
+	int y = 1024;
 
 	/* WM hints */
         wm_hints.input    = True;
@@ -684,15 +689,20 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 		hints.flags |= PSize | PMinSize | PMaxSize;
 		break;
 	    case 1: /* resizable */
-		hints.flags |= PSize;
+	    	mode_clip_aspect(x, y, &x, &y);
+	    	hints.min_aspect.x = x;
+	    	hints.min_aspect.y = y;
+	    	hints.max_aspect.x = x;
+	    	hints.max_aspect.y = y;
+		hints.flags |= PSize | PAspect;
 		break;
 	    case 2: /* fullscreen */
 		hints.x = hints.y = 0;
 		hints.flags = PMinSize|PMaxSize|USPosition|USSize;
 		break;
 	}
-        hints.min_width  = hints.max_width  = hints.base_width  = width;
-        hints.min_height = hints.max_height = hints.base_height = height;
+	hints.min_width  = hints.max_width  = hints.base_width  = width;
+	hints.min_height = hints.max_height = hints.base_height = height;
         
         XSetWMNormalHints (display, window, &hints);
         

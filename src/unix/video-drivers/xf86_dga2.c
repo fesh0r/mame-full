@@ -290,7 +290,7 @@ int xf86_dga2_open_display(void)
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette)
+	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
 	xf86ctx.update_display_func(bitmap, src_bounds, dest_bounds,
 		palette, xf86ctx.addr, xf86ctx.width);

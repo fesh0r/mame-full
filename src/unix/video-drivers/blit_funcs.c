@@ -166,7 +166,7 @@ blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(int dest_bpp)
 {
   if (sysdep_display_params.depth == 32)
   {
-    switch(sysdep_display_palette_info.fourcc_format)
+    switch(sysdep_display_properties.palette_info.fourcc_format)
     {
       case FOURCC_YUY2:
         return FUNC_NAME(blit_32_to_YUY2_direct);
@@ -174,13 +174,13 @@ blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(int dest_bpp)
         switch(dest_bpp)
         {
           case 16:
-            if ((sysdep_display_palette_info.red_mask   == (0x1F << 11)) &&
-                (sysdep_display_palette_info.green_mask == (0x3F <<  5)) &&
-                (sysdep_display_palette_info.blue_mask  == (0x1F      )))
+            if ((sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
+                (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
+                (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
               return FUNC_NAME(blit_32_to_16);
-            if ((sysdep_display_palette_info.red_mask   == (0x1F << 10)) &&
-                (sysdep_display_palette_info.green_mask == (0x1F <<  5)) &&
-                (sysdep_display_palette_info.blue_mask  == (0x1F      )))
+            if ((sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
+                (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
+                (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
               return FUNC_NAME(blit_32_to_15);
             /* this is slow ! */ 
             fprintf(stderr, "\n Using generic (slow) 32 bpp to 16 bpp downsampling... ");
@@ -194,7 +194,7 @@ blit_func_p FUNC_NAME(sysdep_display_get_blitfunc)(int dest_bpp)
   }
   else
   {
-    switch(sysdep_display_palette_info.fourcc_format)
+    switch(sysdep_display_properties.palette_info.fourcc_format)
     {
       case FOURCC_YUY2:
         return FUNC_NAME(blit_16_to_YUY2);

@@ -34,62 +34,20 @@
 #define SYSDEP_DISPLAY_MOUSE_BUTTONS	8
 #define SYSDEP_DISPLAY_MOUSE_AXES	8
 
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE0  0x01
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE1  0x02
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE2  0x04
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE3  0x08
-#define SYSDEP_DISPLAY_HOTKEY_VIDMODE4  0x10
+/* sysdep_display_update flags */
+#define SYSDEP_DISPLAY_HOTKEY_VIDMODE0  0x00000001
+#define SYSDEP_DISPLAY_HOTKEY_VIDMODE1  0x00000002
+#define SYSDEP_DISPLAY_HOTKEY_VIDMODE2  0x00000004
+#define SYSDEP_DISPLAY_HOTKEY_VIDMODE3  0x00000008
+#define SYSDEP_DISPLAY_HOTKEY_VIDMODE4  0x00000010
 
-#define SYSDEP_DISPLAY_HOTKEY_GRABMOUSE 0x20
-#define SYSDEP_DISPLAY_HOTKEY_GRABKEYB  0x40
+#define SYSDEP_DISPLAY_HOTKEY_GRABMOUSE 0x00000100
+#define SYSDEP_DISPLAY_HOTKEY_GRABKEYB  0x00000200
 
-
-struct sysdep_display_mousedata
-{
-	int buttons[SYSDEP_DISPLAY_MOUSE_BUTTONS];
-	int deltas[SYSDEP_DISPLAY_MOUSE_AXES];
-};
-
-struct sysdep_display_keyboard_event
-{
-	unsigned char press;
-	unsigned char scancode;
-	unsigned short unicode;
-};
-
-struct sysdep_display_open_params {
-  /* width and height before scaling of the bitmap to be displayed */  
-  int width;
-  int height;
-  /* depth of the bitmap to be displayed (15/32 direct or 16 palettised) */
-  int depth;
-  /* should we rotate and or flip ? */
-  int orientation;
-  /* vector game? (only used by drivers which have special vector code) */
-  int vecgame;
-  /* title of the window */
-  const char *title;
-  /* scaling and effect options */
-  int widthscale;
-  int heightscale;
-  int yarbsize;
-  int scanlines;
-  int effect;
-  int fullscreen;
-  /* aspect ratio of the bitmap, or 0 if the aspect ratio should not be taken
-     into account */
-  double aspect_ratio;
-  /* keyboard event handler */
-  void (*keyboard_handler)(struct sysdep_display_keyboard_event *event);
-  /* Everything below is for private display driver use, any values asigned
-     to these members are ignored */
-  /* X-alignment stuff.  */
-  int aligned_width;
-  int x_align;
-  /* original (not corrected for orientation) width and height */
-  int orig_width;
-  int orig_height;
-};
+#define SYSDEP_DISPLAY_HOTKEY_OPTION1   0x00000400
+#define SYSDEP_DISPLAY_HOTKEY_OPTION2   0x00000800
+/* these are used by display drivers with special vector support */
+#define SYSDEP_DISPLAY_UI_DIRTY         0x00010000
 
 /* orientation flags */
 #define SYSDEP_DISPLAY_FLIPX  1
@@ -100,6 +58,7 @@ struct sysdep_display_open_params {
 #ifndef PALETTE_H
 #include "osd_cpu.h"
 typedef UINT32 pen_t;
+typedef UINT32 rgb_t;
 #endif
 
 /* from mame's common.h */
@@ -131,6 +90,71 @@ struct rectangle
 };
 #endif
 
+/* from mame's vidhrdw/vector.h */
+#ifndef __VECTOR__
+typedef struct
+{
+	int x; int y;
+	rgb_t col;
+	int intensity;
+	int arg1; int arg2; /* start/end in pixel array or clipping info */
+	int status;         /* for dirty and clipping handling */
+	rgb_t (*callback)(void);
+} point;
+#endif
+
+struct sysdep_display_mousedata
+{
+	int buttons[SYSDEP_DISPLAY_MOUSE_BUTTONS];
+	int deltas[SYSDEP_DISPLAY_MOUSE_AXES];
+};
+
+struct sysdep_display_keyboard_event
+{
+	unsigned char press;
+	unsigned char scancode;
+	unsigned short unicode;
+};
+
+struct sysdep_display_open_params {
+  /* width and height before scaling of the bitmap to be displayed */  
+  int width;
+  int height;
+  /* depth of the bitmap to be displayed (15/32 direct or 16 palettised) */
+  int depth;
+  /* should we rotate and or flip ? */
+  int orientation;
+  /* title of the window */
+  const char *title;
+  /* scaling and effect options */
+  int widthscale;
+  int heightscale;
+  int yarbsize;
+  int scanlines;
+  int effect;
+  int fullscreen;
+  /* aspect ratio of the bitmap, or 0 if the aspect ratio should not be taken
+     into account */
+  double aspect_ratio;
+  /* keyboard event handler */
+  void (*keyboard_handler)(struct sysdep_display_keyboard_event *event);
+  /* vectorgame bounds (only used by drivers which have special vector code) */
+  struct rectangle *vec_bounds;
+  /* Everything below is for private display driver use, any values asigned
+     to these members are ignored */
+  /* X-alignment stuff.  */
+  int aligned_width;
+  int x_align;
+  /* original (not corrected for orientation) width and height */
+  int orig_width;
+  int orig_height;
+};
+
+struct sysdep_display_properties_struct {
+  struct sysdep_palette_info palette_info;
+  int (*vector_renderer)(point *pt, int num_points);
+};
+
 /* init / exit */
 int sysdep_display_init(void);
 void sysdep_display_exit(void);
@@ -142,7 +166,7 @@ void sysdep_display_close(void);
 /* update */
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int hotkeys);
+  struct sysdep_palette_struct *palette, unsigned int flags);
 
 /* input */
 int  sysdep_display_update_keyboard(void);
@@ -150,8 +174,8 @@ void sysdep_display_update_mouse(void);
 void sysdep_display_set_keybleds(int leds);
 
 extern struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_MAX];
-extern struct sysdep_palette_info sysdep_display_palette_info;
 extern struct rc_option sysdep_display_opts[];
+extern struct sysdep_display_properties_struct sysdep_display_properties;
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_H */

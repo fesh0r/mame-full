@@ -555,7 +555,6 @@ int x11_window_open_display(void)
                         if (xvimage)
                         {
                         	/* this might differ from what we requested! */
-                        	printf("ximage size: %dx%d\n", xvimage->width, xvimage->height);
                         	image_width = xvimage->width;
                         	
                                 shm_info.shmid = shmget (IPC_PRIVATE,
@@ -811,7 +810,7 @@ int x11_window_open_display(void)
 	fprintf(stderr, "Bits per pixel = %d... ", dest_bpp);
 #ifdef USE_HWSCALE
 	if(use_hwscale && hwscale_yuv)
-		sysdep_display_palette_info.fourcc_format = hwscale_format;
+		sysdep_display_properties.palette_info.fourcc_format = hwscale_format;
 	if(use_hwscale && hwscale_yv12)
 	{
 	    if (sysdep_display_params.orientation)
@@ -948,7 +947,7 @@ void x11_window_close_display (void)
 /* invoked by main tree code to update bitmap into screen */
 void x11_window_update_display (struct mame_bitmap *bitmap,
   struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-  struct sysdep_palette_struct *palette)
+  struct sysdep_palette_struct *palette, unsigned int flags)
 {
    if(x11_exposed)
    {
@@ -983,13 +982,6 @@ void x11_window_update_display (struct mame_bitmap *bitmap,
 
             XGetGeometry(display, window, &_dw, &_dint, &_dint, &window_width, &window_height, &_duint, &_duint);
             mode_clip_aspect(window_width, window_height, &pw, &ph);
-            if (!sysdep_display_params.fullscreen && (pw!=window_width || ph!=window_height))
-            {
-               XResizeWindow(display, window, pw, ph);
-               window_width  = pw;
-               window_height = ph;
-            }
-            /* Xv can't do partial updates! */
             XvShmPutImage (display, xv_port, window, gc, xvimage, 0, 0,
               sysdep_display_params.width*sysdep_display_params.widthscale,
               sysdep_display_params.yarbsize,

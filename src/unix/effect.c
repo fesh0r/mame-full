@@ -377,7 +377,7 @@ int effect_open(void)
     return 1;
   memset(effect_dbbuf, sysdep_display_params.aligned_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
 
-  switch(sysdep_display_palette_info.fourcc_format)
+  switch(sysdep_display_properties.palette_info.fourcc_format)
   {
     case FOURCC_YUY2:
       i = 3;
@@ -386,17 +386,17 @@ int effect_open(void)
       i = 4;
       break;
     default:
-      if ( (sysdep_display_palette_info.red_mask   == (0x1F << 10)) &&
-           (sysdep_display_palette_info.green_mask == (0x1F <<  5)) &&
-           (sysdep_display_palette_info.blue_mask  == (0x1F      )))
+      if ( (sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
+           (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
         i = 0;
-      if ( (sysdep_display_palette_info.red_mask   == (0x1F << 11)) &&
-           (sysdep_display_palette_info.green_mask == (0x3F <<  5)) &&
-           (sysdep_display_palette_info.blue_mask  == (0x1F      )))
+      if ( (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
+           (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
         i = 1;
-      if ( (sysdep_display_palette_info.red_mask   == (0xFF << 16)) &&
-           (sysdep_display_palette_info.green_mask == (0xFF <<  8)) &&
-           (sysdep_display_palette_info.blue_mask  == (0xFF      )))
+      if ( (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
+           (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
+           (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
         i = 2;
   }
 
@@ -526,10 +526,10 @@ int effect_open(void)
        /* HACK: we need the palette lookup table to be 888 rgb, this means
           that the lookup table won't be usable for normal blitting anymore
           but that is not a problem, since we're not doing normal blitting */
-       sysdep_display_palette_info.fourcc_format = 0;
-       sysdep_display_palette_info.red_mask   = 0x00FF0000;
-       sysdep_display_palette_info.green_mask = 0x0000FF00;
-       sysdep_display_palette_info.blue_mask  = 0x000000FF;
+       sysdep_display_properties.palette_info.fourcc_format = 0;
+       sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
+       sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
+       sysdep_display_properties.palette_info.blue_mask  = 0x000000FF;
     }
   }
   return 0;

@@ -26,7 +26,7 @@ static int  (*p_xf86_dga_open_display)(void);
 static void (*p_xf86_dga_close_display)(void);
 static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette, unsigned int flags);
 
 int xf86_dga_init(void)
 {
@@ -74,10 +74,10 @@ void xf86_dga_close_display(void)
 
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette)
+	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
 	(*p_xf86_dga_update_display)(bitmap, src_bounds, dest_bounds,
-		palette);
+		palette, flags);
 }
 
 #endif /*def USE_DGA*/

@@ -38,7 +38,7 @@ struct x_func_struct {
 	void (*close_display)(void);
 	void (*update_display)(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette, unsigned int flags);
 };
 
 static struct x_func_struct x_func[X11_MODE_COUNT] = {
@@ -143,33 +143,34 @@ void sysdep_display_close(void)
 
 int x11_init_palette_info(Visual *xvisual)
 {
-	memset(&sysdep_display_palette_info, 0, sizeof(struct sysdep_palette_info));
-
 	if (xvisual->class != TrueColor)
 	{
 		fprintf(stderr, "X11-Error: only TrueColor visuals are supported\n");
 		return 1;
 	}
-	sysdep_display_palette_info.red_mask   = xvisual->red_mask;
-	sysdep_display_palette_info.green_mask = xvisual->green_mask;
-	sysdep_display_palette_info.blue_mask  = xvisual->blue_mask;
+
+	/* fill the sysdep_display_properties struct */
+	memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
+	sysdep_display_properties.palette_info.red_mask   = xvisual->red_mask;
+	sysdep_display_properties.palette_info.green_mask = xvisual->green_mask;
+	sysdep_display_properties.palette_info.blue_mask  = xvisual->blue_mask;
 
 	return 0;
 }
 
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int hotkeys)
+  struct sysdep_palette_struct *palette, unsigned int flags)
 {
 	int new_video_mode = x11_video_mode;
 
-	if (hotkeys & SYSDEP_DISPLAY_HOTKEY_VIDMODE0)
+	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE0)
 		new_video_mode = X11_WINDOW;
 
-	if (hotkeys & SYSDEP_DISPLAY_HOTKEY_VIDMODE1)
+	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE1)
 		new_video_mode = X11_XV;
 
-	if (hotkeys & SYSDEP_DISPLAY_HOTKEY_VIDMODE3)
+	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE3)
 		new_video_mode = X11_GLIDE;
 
 	x11_check_mode(&new_video_mode);
@@ -201,8 +202,8 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 	
 	/* dirty_area gives the src_bounds and sysdep_display_check_params
 	   will convert vis_area to the dest bounds */
-	(*x_func[x11_video_mode].update_display) (bitmap, dirty_area, vis_area, palette);
-	xinput_check_hotkeys(hotkeys);
+	(*x_func[x11_video_mode].update_display) (bitmap, dirty_area, vis_area, palette, flags);
+	xinput_check_hotkeys(flags);
 	return 0;
 }
 

@@ -48,7 +48,7 @@ void process_x11_joy_event(XEvent *event);
 /* xinput functions */
 int xinput_open(int force_grab, int event_mask);
 void xinput_close(void);
-void xinput_check_hotkeys(unsigned int hotkeys);
+void xinput_check_hotkeys(unsigned int flags);
 /* Create a window, type can be:
    0: Fixed size of width and height
    1: Resizable initial size is width and height
@@ -68,7 +68,8 @@ int  x11_window_open_display(void);
 void x11_window_close_display(void);
 void x11_window_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 
 /* Xf86_dga functions */
 #ifdef USE_DGA
@@ -77,19 +78,22 @@ int  xf86_dga_open_display(void);
 void xf86_dga_close_display(void);
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 int  xf86_dga1_init(void);
 int  xf86_dga1_open_display(void);
 void xf86_dga1_close_display(void);
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 int  xf86_dga2_init(void);
 int  xf86_dga2_open_display(void);
 void xf86_dga2_close_display(void);
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 #endif
 /* Glide functions */
 #ifdef USE_GLIDE
@@ -99,7 +103,8 @@ int  xfx_open_display(void);
 void xfx_close_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 #endif
 /* XIL functions */
 #ifdef USE_XIL

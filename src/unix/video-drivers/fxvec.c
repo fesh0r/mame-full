@@ -12,25 +12,24 @@
 
 *****************************************************************/
 
-#if defined xfx || defined svgafx
-
-#include "fxcompat.h"
-#include "xmame.h"
-#include "driver.h"
-#include "artwork.h"
-#include "vidhrdw/vector.h"
 #include <math.h>
+#include "fxcompat.h"
+#include "sysdep/sysdep_display_priv.h"
 
 extern int fxheight;
 extern int vscrntlx;
 extern int vscrntly;
 extern int vscrnwidth;
 extern int vscrnheight;
+
+/* from mame's vidhrdw/vector.h */
+#define VCLEAN  0
+#define VDIRTY  1
+#define VCLIP   2
+
 static int vecwidth, vecheight;
 
-
 /* Convert an xy point to xyz in the 3D scene */
-
 static void PointConvert(int x,int y,float *sx,float *sy)
 {
   float dx,dy,tmp;
@@ -38,17 +37,17 @@ static void PointConvert(int x,int y,float *sx,float *sy)
   dx=(float)((x+0x8000)>>16)/vecwidth;
   dy=(float)((y+0x8000)>>16)/vecheight;
   
-  if (blit_swapxy)
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
     tmp = dx;
     dx = dy;
     dy = tmp;
   }
 
-  if (blit_flipx)
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX)
     dx = 1.0 - dx;
 
-  if (blit_flipy)
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY)
     dy = 1.0 - dy;
     
   *sx=vscrntlx + dx*vscrnwidth;
@@ -78,9 +77,11 @@ int fxvec_renderer(point *pt, int num_points)
   {
     GrVertex v1,v2;
     int vertexcount = 0;
-
-    vecwidth  =Machine->visible_area.max_x-Machine->visible_area.min_x;
-    vecheight =Machine->visible_area.max_y-Machine->visible_area.min_y;
+    
+    vecwidth  = (sysdep_display_params.vec_bounds->max_x + 1) -
+      sysdep_display_params.vec_bounds->min_x;
+    vecheight = (sysdep_display_params.vec_bounds->max_y + 1) -
+      sysdep_display_params.vec_bounds->min_y;
 
     grColorCombine(GR_COMBINE_FUNCTION_LOCAL,
                                    GR_COMBINE_FACTOR_NONE,
@@ -164,5 +165,3 @@ int fxvec_renderer(point *pt, int num_points)
   }
   return 0;
 }
-
-#endif

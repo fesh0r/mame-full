@@ -29,7 +29,7 @@ void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);
 void UpdateFXDisplay(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette);
+	  struct sysdep_palette_struct *palette, unsigned int flags);
 
 extern int fxwidth;
 extern int fxheight;
@@ -52,6 +52,9 @@ void xfx_exit(void)
    mouse and keyboard can't be setup before the display has. */
 int xfx_open_display(void)
 {
+  sysdep_display_check_params();
+  mode_check_params((double)fxwidth/fxheight);
+
   if (x11_create_window(&fxwidth, &fxheight, 0))
     return 1;
     
@@ -88,7 +91,7 @@ void xfx_close_display (void)
 
 void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
-	  struct sysdep_palette_struct *palette)
+	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-   UpdateFXDisplay(bitmap, dirty_area, vis_area, palette);
+   UpdateFXDisplay(bitmap, dirty_area, vis_area, palette, flags);
 }

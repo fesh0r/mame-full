@@ -29,7 +29,7 @@ struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_M
   { { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 } }
 };
 
-struct sysdep_palette_info sysdep_display_palette_info;
+struct sysdep_display_properties_struct sysdep_display_properties;
 struct sysdep_display_open_params sysdep_display_params;
 
 void sysdep_display_check_params(void)

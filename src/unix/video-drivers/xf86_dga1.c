@@ -318,7 +318,7 @@ int xf86_dga1_open_display(void)
 
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette)
+	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
 	if(xf86_dga_fix_viewport)
 	{

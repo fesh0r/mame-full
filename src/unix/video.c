@@ -4,19 +4,18 @@
  */
 #define __VIDEO_C_
 #include <math.h>
-#include "xmame.h"
-
-#ifdef xgl
-#include "video-drivers/glmame.h"
-#endif
 #include <stdio.h>
+
 #include "driver.h"
 #include "profiler.h"
-#include "devices.h"
 #include "artwork.h"
-/* for uclock */
-#include "sysdep/misc.h"
+#include "usrintrf.h"
+#include "vidhrdw/vector.h"
+
+#include "xmame.h"
 #include "effect.h"
+#include "devices.h"
+#include "sysdep/misc.h"
 #include "sysdep/sysdep_display.h"
 
 #define FRAMESKIP_DRIVER_COUNT 2
@@ -48,7 +47,8 @@ static struct sysdep_palette_struct *debug_palette  = NULL;
 static struct sysdep_display_open_params current_params;
 static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
-  0, 0, 16, 0, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0, xmame_keyboard_register_event };
+  0, 0, 16, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0,
+  xmame_keyboard_register_event, NULL };
 
 static struct rectangle debug_bounds;
 
@@ -451,7 +451,11 @@ int osd_create_display(const struct osd_create_params *params,
 	normal_params.aspect_ratio = (double)params->aspect_x / (double)params->aspect_y;
 	normal_params.title  = title;
 	normal_params.keyboard_handler = xmame_keyboard_register_event;
-	normal_params.vecgame = params->video_attributes & VIDEO_TYPE_VECTOR;
+	
+	if (params->video_attributes & VIDEO_TYPE_VECTOR)
+		normal_params.vec_bounds = &(Machine->visible_area);
+	else
+		normal_params.vec_bounds = NULL;
 	
 	if (use_auto_double)
 	{
@@ -478,9 +482,11 @@ int osd_create_display(const struct osd_create_params *params,
 		return -1;
 
 	current_params = normal_params;
+	vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 
-	if (!(normal_palette = sysdep_palette_create(&sysdep_display_palette_info, normal_params.depth)))
+	if (!(normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth)))
 		return -1;
+		
 	
 	/* a lot of display_targets need to have the display initialised before
 	   initialising any input devices */
@@ -533,21 +539,27 @@ static int change_display_settings(struct sysdep_display_open_params *new_params
 		   -- Steve bpk@hoopajoo.net */
 		osd_sound_enable( 0 );
 
-		if (sysdep_display_open(new_params) != OSD_OK)
+		if (sysdep_display_open(new_params))
 		{
+			sysdep_display_close();
 			/* try again with old settings */
-			if (!force && (sysdep_display_open(&current_params) == OSD_OK))
+			if (force || sysdep_display_open(&current_params))
 			{
-				*new_params = current_params;
-				/* Re-enable sound */
-				osd_sound_enable( 1 );
-				return 1;
+				sysdep_display_close();
+				/* oops this sorta sucks */
+				fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
+				exit(1);
 			}
-			/* oops this sorta sucks */
-			fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
-			exit(1);
+			*new_params = current_params;
 		}
-		current_params = *new_params;
+		else
+			current_params = *new_params;
+
+		vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
+		/* we could have switched between hw and sw drawn vectors,
+		   so clear Machine->scrbitmap */
+		if (normal_params.vec_bounds)
+			schedule_full_refresh();
 		/* Re-enable sound */
 		osd_sound_enable( 1 );
 		return 1;
@@ -613,7 +625,7 @@ static void update_debug_display(struct mame_display *display)
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
-		debug_palette = sysdep_palette_create(&sysdep_display_palette_info, 16);
+		debug_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, 16);
 		if (!debug_palette)
 		{
 			/* oops this sorta sucks */
@@ -707,12 +719,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 {
 	int skip_this_frame;
 	cycles_t curr;
-	/* lsbyte contains one bit set starting with the lsbit for each of
-	   insert, home, page up, delete, end and page down when pressed in
-	   combination with left-alt. The second byte identical when pressed
-	   in combination with left-control, except for locally used keys,
-	   the third the same for left-shift. */
-	unsigned int hotkeys = 0;
+	unsigned int flags = 0;
 	int normal_params_changed = 0;
 	
 	/*** STEP 1: handle frameskip ***/
@@ -809,15 +816,15 @@ void osd_update_video_and_audio(struct mame_display *display)
 	if (!debugger_has_focus && code_pressed(KEYCODE_LALT))
 	{
 		if (code_pressed_memory(KEYCODE_INSERT))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE0;
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE0;
 		if (code_pressed_memory(KEYCODE_HOME))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE1;
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE1;
 		if (code_pressed_memory(KEYCODE_PGUP))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE2;
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE2;
 		if (code_pressed_memory(KEYCODE_DEL))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE3;
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE3;
 		if (code_pressed_memory(KEYCODE_END))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE4;
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE4;
 		if (code_pressed_memory(KEYCODE_PGDN))
 		{
 			normal_params.fullscreen = 1 - normal_params.fullscreen;
@@ -827,9 +834,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 	if (!debugger_has_focus && code_pressed(KEYCODE_LCONTROL))
 	{
 		if (code_pressed_memory(KEYCODE_PGUP))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
+			flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
 		if (code_pressed_memory(KEYCODE_PGDN))
-			hotkeys |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
+			flags |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
+		if (code_pressed_memory(KEYCODE_DEL))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
+		if (code_pressed_memory(KEYCODE_END))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
 	}
 	if (!debugger_has_focus && !normal_params.effect && 
 	     code_pressed(KEYCODE_LSHIFT))
@@ -902,7 +913,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	if (!normal_palette)
 	{
 		/* the palette had been destroyed because of display changes */
-		normal_palette = sysdep_palette_create(&sysdep_display_palette_info, normal_params.depth);
+		normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth);
 		if (!normal_palette)
 		{
 			/* oops this sorta sucks */
@@ -924,6 +935,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 	else if ((skip_this_frame == 0) &&
 		 (display->changed_flags & GAME_BITMAP_CHANGED))
 	{
+		/* determine non hotkey flags */
+		if (ui_dirty)
+			flags |= SYSDEP_DISPLAY_UI_DIRTY;
+		
 		/* at the end, we need the current time */
 		curr = osd_cycles();
 
@@ -961,10 +976,16 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if(sysdep_display_update(display->game_bitmap,
 		   &(display->game_visible_area),
 		   &(display->game_bitmap_update),
-		   normal_palette, hotkeys))
+		   normal_palette, flags))
 		{
 		  xmame_keyboard_clear();
 		  osd_free_colors();
+		  sysdep_display_set_keybleds(led_state);
+		  vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
+		  /* we could have switched between hw and sw drawn vectors,
+		     so clear Machine->scrbitmap */
+		  if (normal_params.vec_bounds)
+		    schedule_full_refresh();
 		}
 		profiler_mark(PROFILER_END);
 	}
