@@ -1048,6 +1048,9 @@ VIDEO_START( vga )
 	return 0;
 }
 
+#define myMIN(a, b) ((a) < (b) ? (a) : (b))
+#define myMAX(a, b) ((a) > (b) ? (a) : (b))
+
 static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 {
 	UINT8 ch, attr;
@@ -1076,13 +1079,12 @@ static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 			attr = vga.memory[(pos<<2) + 1];
 			font = vga.memory+2+(ch<<(5+2))+FONT1;
 
-			for (h=0; (h<height)&&(line+h<TEXT_LINES); h++)
+			for (h = myMAX(-line, 0); (h < height) && (line+h < myMIN(TEXT_LINES, bitmap->height)); h++)
 			{
-				if (line+h < 0)
-					continue;
-
 				bitmapline = (UINT16 *) bitmap->line[line+h];
 				bits = font[h<<2];
+
+				assert(bitmapline);
 
 				for (mask=0x80, w=0; (w<width)&&(w<8); w++, mask>>=1)
 				{
@@ -1193,8 +1195,8 @@ static void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
 
 VIDEO_UPDATE( ega )
 {
-	static int columns=720, raws=480;
-	int new_columns, new_raws;
+	static int columns=720, rows=480;
+	int new_columns, new_rows;
 	int i;
 
 	if (CRTC_ON)
@@ -1206,30 +1208,30 @@ VIDEO_UPDATE( ega )
 		if (!GRAPHIC_MODE)
 		{
 			vga_vh_text(bitmap, 1);
-			new_raws=TEXT_LINES;
+			new_rows=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
 		}
 		else
 		{
 			vga_vh_ega(bitmap, 1);
-			new_raws=LINES;
+			new_rows=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
-		if ((new_columns!=columns)||(new_raws!=raws))
+		if ((new_columns!=columns)||(new_rows!=rows))
 		{
-			raws=new_raws;
+			rows=new_rows;
 			columns=new_columns;
-			if ((columns>100)&&(raws>100))
-				set_visible_area(0,columns-1,0, raws-1);
-			else logerror("video %d %d\n",columns, raws);
+			if ((columns>100)&&(rows>100))
+				set_visible_area(0,columns-1,0, rows-1);
+			else logerror("video %d %d\n",columns, rows);
 		}
 	}
 }
 
 VIDEO_UPDATE( vga )
 {
-	static int columns=720, raws=480;
-	int new_columns, new_raws;
+	static int columns=720, rows=480;
+	int new_columns, new_rows;
 	int i;
 
 	if (CRTC_ON)
@@ -1265,29 +1267,40 @@ VIDEO_UPDATE( vga )
 		if (!GRAPHIC_MODE)
 		{
 			vga_vh_text(bitmap, 1);
-			new_raws=TEXT_LINES;
+			new_rows=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
 		}
 		else if (vga.gc.data[5]&0x40)
 		{
 			vga_vh_vga(bitmap, 1);
-			new_raws=LINES;
+			new_rows=LINES;
 			new_columns=VGA_COLUMNS*8;
 		}
 		else
 		{
 			vga_vh_ega(bitmap, 1);
-			new_raws=LINES;
+			new_rows=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
 
-		if ((new_columns!=columns)||(new_raws!=raws))
+		if ((new_columns!=columns)||(new_rows!=rows))
 		{
-			raws=new_raws;
-			columns=new_columns;
-			if ((columns>100)&&(raws>100))
-				set_visible_area(0,columns-1,0, raws-1);
-			else logerror("video %d %d\n",columns, raws);
+			rows = new_rows;
+			columns = new_columns;
+
+			if (columns > Machine->scrbitmap->width)
+				columns = Machine->scrbitmap->width;
+			if (rows > Machine->scrbitmap->height)
+				rows = Machine->scrbitmap->height;
+
+			if ((columns > 100) && (rows > 100))
+			{
+				set_visible_area(0,columns-1,0, rows-1);
+			}
+			else
+			{
+				logerror("video %d %d\n",columns, rows);
+			}
 		}
 	}
 }

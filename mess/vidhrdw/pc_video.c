@@ -47,10 +47,10 @@ VIDEO_UPDATE( pc_video )
 			width = w;
 			height = h;
 
-			if (width>Machine->visible_area.max_x)
-				width = Machine->visible_area.max_x+1;
-			if (height>Machine->visible_area.max_y)
-				height = Machine->visible_area.max_y+1;
+			if (width > Machine->scrbitmap->width)
+				width = Machine->scrbitmap->width;
+			if (height > Machine->scrbitmap->height)
+				height = Machine->scrbitmap->height;
 
 			if ((width > 100) && (height > 100))
 				set_visible_area(0,width-1,0, height-1);
