@@ -3857,69 +3857,52 @@ $bio
 DEC PDP-1
 
 
-Currently emulates one image - SPACEWAR!
+Currently supports two images: Spacewar! and Munching Squares.  LISP almost works, but not quite.
+
+
+Usage Notes:
+
+
+PDP-1 currently supports a perforated tape reader (punchtape unit #1) and a puncher (punchtape
+unit #2).
+
+The simplest way to load and run software is to insert a read-in mode tape (.rim files) in
+the perforated tape reader and press the read-in switch once (mapped to the Return kay on
+the main keyboard).
 
 
 History and Trivia :
 
-Note : I borrowed most details from an article by J. M. Graetz called "The origin of Spacewar".
-This article can be found at <http://www.enteract.com/~enf/lore/spacewar/spacewar.html>,
-and was originally printed in the August 1981 issue of Creative Computing magazine.
+
+In 1957, Kenneth Olsen and Harlan Anderson founded a society called Digital Equipment
+Corporation (DEC).
 
 
-Early computers, particularly mainframes, were Complex Devices to be operated by Competent People
-helped by dozens of Servants who typed the Data and fed it to the Computer. Outsiders who visited to
-see computers were often disappointed : there was nothing to SEE, these machine were just crunching
-numbers on paper tape, and printing further numbers on another tape.
-
-In the fall of 1961, Digital started production of its PDP-1. This machine was quite friendly
-for its time : it was compact enough to be located in the corner of a room, and you did not need to
-know hundreds of pages of procedures to switch it on and off. Additionally, it supported
-an optional CRT screen, which was a rare device at this time.
-
-PDP-1 may be regarded as one of the first minicomputers, although it did not include and integrated
-circuit (which hardly existed at this time). It may be regarded as one of the first personal
-computers, too, since one person was quite enough to run and operate it (although, needless to say,
-its price was not the kind of price you would expect from a personal computer today).
+In 1960, they started selling the pdp-1. This was a very interesting computer for its time.
 
 
-One of the first PDP-1 was installed at the MIT. Needless to say, the various hackers of the MIT
-immediately felt attracted to this machine. And this is how the adventure of Spacewar! began.
+First of all it was cheap and fast for its time: about 100,000 dollars, and a theorical maximum
+of 0.1 MIPS. It included 4 kWords of RAM, expandable to 64 kWord (as word size is 18 bits,
+it makes from 9 to 144 kBytes, which is HUGE for this time): this is an important detail, since,
+at this time, cheap computers (e.g. IBM 650) often had no RAM, and used a magnetic drum instead,
+which implied extremely long memory access times.
 
-Let it be clear that there were already computers games : a game of Tic-Tac-Toe and simple games
-of cards existed as early as in 1955. Attempts at implementing a game of chess can be traced back
-to the early 1950s.
 
-Yet, the use of CRT enabled the development of a new breed of real-time, action games. Several
-real-time, funny demonstration programs had already written for earlier machines : the Bouncing
-Ball, in which a ball fell from the top of the screen and bounced ; the Mouse in the Maze which
-enabled the user to draw a maze and place a piece of cheese with a lightpen : a mouse would enter
-the maze, search the cheese and eat it. However, these were no "real" video games as far as there
-was no real-time action.
+What made it even more interesting was that it was designed to be operated interactively.
+It featured an on-line typewriter (i.e. keyboard and printer), and a CRT (which was a little-used
+device at this time). You could even buy an optional light-pen (this device was the closest
+equivalent to today's mouse). Along with its simplicity, this made the pdp-1 quite user-friendly
+for its time.
 
-There were three fellows who came with the initial idea of Spacewar! : Wayne Witanen,
-J. Martin Graetz, and Stephen R. (Slug) Russell. They were about 25-year-old. They wanted to devise
-an attractive demonstration program, which used as much the computer resources as possible,
-so they came out with the idea of a video game. The basic idea was to have two players fly
-a spaceship and fight each other with torpedoes. It was somewhat inspired by Science-Fiction
-novels and films these fellow had read and watched. Soon, most hackers at the MIT knew about
-this project.
 
-Since there was no development tool, they had to wait for a text editor, assembler and debugger
-to be ported to PDP-1.
+The pdp-1 may be regarded as one of the first personal computers, too, since one person was quite
+enough to run and operate it (although, needless to say, its price was not the kind of price
+you would expect from a personal computer today).
 
-Eventually, in January 1962, the development started, and by February, a crude version of the game
-was already running. The development continued, as they added a star background, a big central star
-with the associated gravitic effects, and an hyperspace jump device. The game was essentially
-complete by the end of April 1962, so that it was shown MIT's annual Science Open House in May.
-Needless to say, it was a hit. Soon, program tapes with Spacewar! were circulating in the
-universities around the USA.
 
-What else can we say ? These people thought that computer games would make computers more popular :
-the least we can say is they were right. Spacewar! is the first video game, and as such it is
-the ancestor of thousands of arcade, console or computer games with hairy aliens, missiles,
-and action. Although it took about 10 additional years for video games to go commercial,
-we can say that it all started with Spacewar!.
+The pdp-1 attracted the attention of various hackers in MIT. This resulted into the creation
+of Spacewar!, which was the first computer-based videogame, but this is another story.
+
 
 $end
 
