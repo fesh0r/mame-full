@@ -884,7 +884,6 @@ READ_HANDLER ( ted7360_port_r )
 		break;
 	case 9:
 		val = ted7360[offset] | 1;
-		val |= 4; //rasterirq, lone07 seams to need this
 		break;
 	case 0xa:
 		val = ted7360[offset];
