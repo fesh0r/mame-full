@@ -18,6 +18,7 @@
 #include "mess.h"
 #include "utils.h"
 #include "propertiesms.h"
+#include "optionsms.h"
 
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem);
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
@@ -217,6 +218,7 @@ INT_PTR CALLBACK GameMessOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 struct component_param_block
 {
 	options_type *o;
+	int nGame;
 	WORD wID;
 	WORD wNotifyCode;
 	BOOL *changed;
@@ -243,7 +245,6 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
     LV_ITEM Item;
 	int iCount, i;
 	int iBufLen;
-	options_type *o = params->o;
 
 	hList = GetDlgItem(hWnd, IDC_DIR_LIST);
 	if (!hList)
@@ -259,11 +260,7 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 		LVCol.cx      = rectClient.right - rectClient.left - GetSystemMetrics(SM_CXHSCROLL);
 		ListView_InsertColumn(hList, 0, &LVCol);
 
-#ifdef MAME_DEBUG
-		dprintf("CMSG_OPTIONSTOPROP: o->extra_software_paths='%s'\n", o->extra_software_paths ? o->extra_software_paths : "<null>");
-#endif
-
-		lpList = o->extra_software_paths;
+		lpList = (params->nGame >= 0) ? GetExtraSoftwarePaths(params->nGame) : NULL;
 
 		nItem = 0;
 		while(lpList && *lpList)
@@ -309,12 +306,9 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 			Item.cchTextMax = iBufLen - strlen(lpBuf);
 			ListView_GetItem(hList, &Item);
 		}
-		FreeIfAllocated(&o->extra_software_paths);
-		o->extra_software_paths = strdup(buf);
 
-#ifdef MAME_DEBUG
-		dprintf("CMSG_PROPTOOPTIONS: o->extra_software_paths='%s'\n", o->extra_software_paths);
-#endif
+		if (params->nGame >= 0)
+			SetExtraSoftwarePaths(params->nGame, buf);
 		break;
 
 	case CMSG_COMMAND:
@@ -530,6 +524,7 @@ void MessOptionsToProp(int nGame, HWND hWnd, options_type *o)
 	struct component_param_block params;
 	memset(&params, 0, sizeof(params));
 	params.o = o;
+	params.nGame = nGame;
 	InvokeComponentProcs(nGame, CMSG_OPTIONSTOPROP, hWnd, &params);
 }
 
@@ -538,6 +533,7 @@ void MessPropToOptions(int nGame, HWND hWnd, options_type *o)
 	struct component_param_block params;
 	memset(&params, 0, sizeof(params));
 	params.o = o;
+	params.nGame = nGame;
 	InvokeComponentProcs(nGame, CMSG_PROPTOOPTIONS, hWnd, &params);
 }
 

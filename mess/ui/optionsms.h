@@ -21,5 +21,8 @@ const char *GetCrcDir(void);
 void SetSelectedSoftware(int driver_index, int devtype, const char *software);
 const char *GetSelectedSoftware(int driver_index, int devtype);
 
+void SetExtraSoftwarePaths(int driver_index, const char *extra_paths);
+const char *GetExtraSoftwarePaths(int driver_index);
+
 #endif /* OPTIONSMS_H */
 

@@ -126,3 +126,32 @@ const char *GetSelectedSoftware(int driver_index, int devtype)
 	return software ? software : "";
 }
 
+void SetExtraSoftwarePaths(int driver_index, const char *extra_paths)
+{
+	char *new_extra_paths = NULL;
+
+	assert(driver_index >= 0);
+	assert(driver_index < num_games);
+
+	if (extra_paths && *extra_paths)
+	{
+		new_extra_paths = strdup(extra_paths);
+		if (!new_extra_paths)
+			return;
+	}
+	FreeIfAllocated(&game_variables[driver_index].extra_software_paths);
+	game_variables[driver_index].extra_software_paths = new_extra_paths;
+}
+
+const char *GetExtraSoftwarePaths(int driver_index)
+{
+	const char *paths;
+
+	assert(driver_index >= 0);
+	assert(driver_index < num_games);
+
+	paths = game_variables[driver_index].extra_software_paths;
+	return paths ? paths : "";
+}
+
+

@@ -191,7 +191,6 @@ typedef struct
 #ifdef MESS
 	BOOL   use_new_ui;
 	UINT32 ram_size;
-	char   *extra_software_paths;
 	char   *software[IO_COUNT];
 #endif
 } options_type;
@@ -206,6 +205,9 @@ typedef struct
 	BOOL options_loaded; // whether or not we've loaded the game options yet
 	BOOL use_default; // whether or not we should just use default options
 
+#ifdef MESS
+	char *extra_software_paths;
+#endif
 } game_variables_type;
 
 typedef struct

@@ -564,7 +564,6 @@ void OptionsInit()
 	global.old_timing        = TRUE;
 	global.leds				 = FALSE;
 #ifdef MESS
-	global.extra_software_paths = NULL;
 	global.use_new_ui = TRUE;
 	for (i = 0; i < IO_COUNT; i++)
 		global.software[i] = strdup("");
@@ -1816,7 +1815,7 @@ static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 
 		strcpy(fake_option.ini_name,"drivername_extra_software");
 		fake_option.m_iType = RO_STRING;
-		fake_option.m_vpData = &GetGameOptions(driver_index)->extra_software_paths;
+		fake_option.m_vpData = &game_variables[driver_index].extra_software_paths;
 		LoadOption(&fake_option, value);
 		SetGameUsesDefaults(driver_index, FALSE);
 		return TRUE;
@@ -2472,10 +2471,10 @@ static void SaveSettings(void)
 						drivers[driver_index]->name,game_variables[driver_index].has_samples);
 			}
 #ifdef MESS
-			if (game_options[driver_index].extra_software_paths && game_options[driver_index].extra_software_paths[0])
+			if (game_variables[driver_index].extra_software_paths && game_variables[driver_index].extra_software_paths[0])
 			{
 				fprintf(fptr,"%s_extra_software %s\n",
-						drivers[driver_index]->name,game_options[driver_index].extra_software_paths);
+						drivers[driver_index]->name,game_variables[driver_index].extra_software_paths);
 			}
 #endif
 		}

@@ -235,7 +235,7 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 
 	drv = drivers[nGame];
 	software_dirs = GetSoftwareDirs();
-	extra_path = GetGameOptions(nGame)->extra_software_paths;
+	extra_path = GetExtraSoftwarePaths(nGame);
 
 	software_dirs_length = strlen(software_dirs);
 	paths = alloca(software_dirs_length + 1);
