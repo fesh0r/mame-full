@@ -8,7 +8,7 @@ Note: .inp record/playback does still not work currently.
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Amstrad NC100 [Kev Thacker]
-- CoCo 3 (with 6309 processor) [Tim Linder, Nate Woods]
+- CoCo 3 (with a preliminary 6309 CPU core) [Tim Linder, Nate Woods]
 - SNES (preliminary) [Lee Hammerton]
 - ChannelF [Frank Palazzolo, Juergen Buchmueller]
 
