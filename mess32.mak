@@ -554,23 +554,24 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/nascom1.o  \
           $(OBJ)/mess/machine/nascom1.o  \
           $(OBJ)/mess/systems/nascom1.o	\
-          $(OBJ)/mess/machine/i8271.o    \
           $(OBJ)/mess/vidhrdw/m6845.o    \
-          $(OBJ)/mess/vidhrdw/bbc.o      \
-          $(OBJ)/mess/machine/bbc.o      \
-          $(OBJ)/mess/systems/bbc.o	\
 	  $(OBJ)/vidhrdw/cps1.o 	 \
 	  $(OBJ)/mess/systems/cpschngr.o	\
           $(OBJ)/mess/systems/mtx.o	\
           $(OBJ)/mess/machine/iwm_lisa.o     \
           $(OBJ)/mess/machine/lisa.o     \
           $(OBJ)/mess/systems/lisa.o	\
-          $(OBJ)/mess/machine/atom.o     \
-          $(OBJ)/mess/vidhrdw/atom.o     \
+	  $(OBJ)/mess/machine/atom.o	 \
+	  $(OBJ)/mess/vidhrdw/atom.o	 \
 	  $(OBJ)/mess/systems/atom.o	 \
-          $(OBJ)/mess/systems/a310.o     \
-          $(OBJ)/mess/systems/z88.o      \
-          $(OBJ)/mess/vidhrdw/z88.o      \
+	  $(OBJ)/mess/machine/i8271.o	 \
+	  $(OBJ)/mess/machine/upd7002.o  \
+	  $(OBJ)/mess/vidhrdw/bbc.o	 \
+	  $(OBJ)/mess/machine/bbc.o	 \
+	  $(OBJ)/mess/systems/bbc.o \
+	  $(OBJ)/mess/systems/a310.o	 \
+	  $(OBJ)/mess/systems/z88.o	 \
+	  $(OBJ)/mess/vidhrdw/z88.o	\
           $(OBJ)/mess/machine/coupe.o    \
           $(OBJ)/mess/vidhrdw/coupe.o    \
           $(OBJ)/mess/systems/coupe.o	\

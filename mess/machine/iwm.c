@@ -650,8 +650,11 @@ static int iwm_put_track(void)
 	unsigned int oldpos;
 	int i, j, sum, side;
 	int imgpos;
-	unsigned char sector_found[12] = {};
+	unsigned char sector_found[12];
 	UINT8 val;
+
+	/* NPW 10-Nov-2000 - Removed ={} and added memset(); Win32 doesn't like what you just did */
+	memset(sector_found, '\0', sizeof(sector_found));
 
 	f = &iwm_floppy[iwm_floppy_select];
 	len = iwm_tracklen_800kb[f->loadedtrack_num];
