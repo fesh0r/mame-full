@@ -661,36 +661,35 @@ COREOBJS += \
 		$(OBJ)/mess/config.o           \
 		$(OBJ)/mess/filemngr.o         \
 		$(OBJ)/mess/tapectrl.o         \
-		$(OBJ)/mess/menu.o \
-		$(OBJ)/mess/printer.o \
-		$(OBJ)/mess/menuentr.o \
-		$(OBJ)/mess/utils.o \
-		$(OBJ)/mess/bcd.o \
-		$(OBJ)/mess/vidhrdw/state.o \
-		$(OBJ)/mess/vidhrdw/m6847.o	 \
-		$(OBJ)/mess/vidhrdw/m6845.o	 \
+		$(OBJ)/mess/menu.o             \
+		$(OBJ)/mess/printer.o          \
+		$(OBJ)/mess/menuentr.o         \
+		$(OBJ)/mess/utils.o            \
+		$(OBJ)/mess/bcd.o              \
+		$(OBJ)/mess/vidhrdw/state.o    \
+		$(OBJ)/mess/vidhrdw/m6847.o    \
+		$(OBJ)/mess/vidhrdw/m6845.o    \
 		$(OBJ)/mess/vidhrdw/tms9928a.o \
 		$(OBJ)/mess/machine/28f008sa.o \
-		$(OBJ)/mess/machine/rriot.o	 \
-		$(OBJ)/mess/machine/riot6532.o	 \
+		$(OBJ)/mess/machine/rriot.o    \
+		$(OBJ)/mess/machine/riot6532.o \
 		$(OBJ)/mess/machine/pit8253.o  \
 		$(OBJ)/mess/machine/mc146818.o \
 		$(OBJ)/mess/machine/uart8250.o \
 		$(OBJ)/mess/machine/pc_mouse.o \
-		$(OBJ)/mess/machine/pclpt.o	 \
+		$(OBJ)/mess/machine/pclpt.o    \
 		$(OBJ)/mess/machine/centroni.o \
 		$(OBJ)/mess/machine/pckeybrd.o \
 		$(OBJ)/mess/machine/pc_fdc_h.o \
 		$(OBJ)/mess/machine/pc_flopp.o \
 		$(OBJ)/mess/machine/basicdsk.o \
 		$(OBJ)/mess/machine/wd179x.o   \
-		$(OBJ)/mess/diskctrl.o \
-		$(OBJ)/mess/machine/dsk.o \
-		$(OBJ)/mess/machine/flopdrv.o \
-		$(OBJ)/mess/machine/nec765.o \
+		$(OBJ)/mess/diskctrl.o         \
+		$(OBJ)/mess/machine/dsk.o      \
+		$(OBJ)/mess/machine/flopdrv.o  \
+		$(OBJ)/mess/machine/nec765.o   \
 		$(OBJ)/mess/vidhrdw/rstrbits.o
 
-#8255ppi, 6821pia, 6522via  already in mame core
 
 # additional tools
 TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) messroms$(EXE)
@@ -740,13 +739,6 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/fs.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
-
-#transdsk$(EXE):       \
-#      $(TRANSDISK_OBJS) \
-#      $(OBJ)/mess/tools/stubs.o   \
-#      $(OBJ)/mess/tools/transdsk/nec765.o   
-#    @echo Linking $@...
-#    $(LD) $(LDFLAGS) $(LIBS) $^ -o $@
 
 
 # text files
