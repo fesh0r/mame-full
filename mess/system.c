@@ -75,7 +75,7 @@ const struct GameDriver *drivers[] =
 /****************CONSOLES****************************************************/
 
 	/* ATARI */
-  TESTDRIVER( a2600 )		/* Atari 2600                                     */
+    DRIVER( a2600 )		/* Atari 2600                                     */
 	DRIVER( a5200 )		/* Atari 5200                                     */
 	DRIVER( a7800 )		/* Atari 7800                                     */
 
