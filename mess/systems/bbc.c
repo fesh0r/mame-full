@@ -1080,8 +1080,6 @@ COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,     0,        bbc,		"Acorn"
 COMP ( 198?, bbcm,     0,        0,		bbcm,     bbcm,     0,        bbc,		"Acorn","BBC Master" )
 */
 
-
-
 // This bbc6502 is the BBC second processor upgrade
 // I have just added the second processor on its own right now until I work out how it works.
 // then it will get connected up to another BBC driver
