@@ -246,7 +246,7 @@ static MEMORY_WRITE_START( c16_writemem )
 	{0xff3f, 0xff3f, c16_switch_to_ram},
 #if 0
 	{0xff40, 0xffff, c16_write_ff40},  /*configure in c16_common_init */
-	{0x10000, 0x3ffff, MWA_ROM},
+//	{0x10000, 0x3ffff, MWA_ROM},
 #endif
 MEMORY_END
 
@@ -288,7 +288,7 @@ static MEMORY_WRITE_START( plus4_writemem )
 	{0xff3e, 0xff3e, c16_switch_to_rom},
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
 	{0xff40, 0xffff, MWA_RAM},
-	{0x10000, 0x3ffff, MWA_ROM},
+//	{0x10000, 0x3ffff, MWA_ROM},
 MEMORY_END
 
 static MEMORY_READ_START( c364_readmem )
@@ -331,7 +331,7 @@ static MEMORY_WRITE_START( c364_writemem )
 	{0xff3e, 0xff3e, c16_switch_to_rom},
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
 	{0xff40, 0xffff, MWA_RAM},
-	{0x10000, 0x3ffff, MWA_ROM},
+//	{0x10000, 0x3ffff, MWA_ROM},
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
@@ -657,33 +657,33 @@ static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 #endif
 
 ROM_START (c16)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
 ROM_END
 
 ROM_START (c16hun)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD("hungary.bin",    0x14000, 0x4000, 0x775f60c5)
 ROM_END
 
 ROM_START (c16c)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
 	 C1551_ROM (REGION_CPU2)
 ROM_END
 
 ROM_START (c16v)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
 	 VC1541_ROM (REGION_CPU2)
 ROM_END
 
 ROM_START (plus4)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
 	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
@@ -691,7 +691,7 @@ ROM_START (plus4)
 ROM_END
 
 ROM_START (plus4c)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
 	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
@@ -700,7 +700,7 @@ ROM_START (plus4c)
 ROM_END
 
 ROM_START (plus4v)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
 	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
@@ -709,7 +709,7 @@ ROM_START (plus4v)
 ROM_END
 
 ROM_START (c364)
-	 ROM_REGION (0x40000, REGION_CPU1,0)
+	 ROM_REGION (0x40000, REGION_CPU1, 0)
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD ("kern364p.bin", 0x14000, 0x4000, 0x84fd4f7a)
 	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)

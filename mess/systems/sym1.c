@@ -131,55 +131,9 @@ static struct MachineDriver machine_driver_sym1 =
     }
 };
 
-static struct MachineDriver machine_driver_sym1term =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 MHz */
-			readmem,writemem,0,0,
-			sym1_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	sym1_init_machine,
-	NULL,			/* stop machine */
-
-	/* video hardware (well, actually there was no video ;) */
-	800, 600, { 0, 800 - 1, 0, 600 - 1},
-	0,
-	256*3,
-	256,
-	sym1_init_colors,		/* convert color prom */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-	sym1_vh_start,
-	sym1_vh_stop,
-	sym1_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
-
 ROM_START(sym1)
-	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("sym1", 0x8000, 0x1000, 0x7a4b1e12)
-	ROM_RELOAD(0xf000, 0x1000)
-ROM_END
-
-ROM_START(sym1basic)
-	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("basicv11", 0xc000, 0x2000, 0x075b0bbd)
+	ROM_REGION(0x10000,REGION_CPU1, 0)
+//	ROM_LOAD("basicv11", 0xc000, 0x2000, 0x075b0bbd)
 	ROM_LOAD("sym1", 0x8000, 0x1000, 0x7a4b1e12)
 	ROM_RELOAD(0xf000, 0x1000)
 ROM_END
@@ -210,13 +164,8 @@ static const struct IODevice io_sym1[] = {
     { IO_END }
 };
 
-#define rom_sym1term rom_sym1basic
-#define io_sym1term io_sym1
-
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-// please leave them as testdriver
 COMPX( 1978, sym1,	  0, 		sym1,	  sym1, 	sym1,	  "Synertek Systems Corp",  "SYM-1/SY-VIM-1", GAME_NOT_WORKING)
-COMPX( 1978, sym1term, sym1, 	sym1term, sym1, 	sym1,	  "Synertek Systems Corp",  "SYM-1/SY-VIM-1 with Terminal and Basic", GAME_NOT_WORKING)
 
 
 #ifdef RUNTIME_LOADER
@@ -225,7 +174,6 @@ extern void sym1_runtime_loader_init(void)
 	int i;
 	for (i=0; drivers[i]; i++) {
 		if ( strcmp(drivers[i]->name,"sym1")==0) drivers[i]=&driver_sym1;
-		if ( strcmp(drivers[i]->name,"sym1term")==0) drivers[i]=&driver_sym1term;
 	}
 }
 #endif

@@ -242,10 +242,6 @@ static MEMORY_READ_START( c64_readmem )
 	{0xdf00, 0xdfff, MRA_BANK15},		   /* csline expansion port */
 #endif
 	{0xe000, 0xffff, MRA_BANK7},	   /* ram or kernel rom or external romh */
-	{0x10000, 0x11fff, MRA_ROM},	   /* basic at 0xa000 */
-	{0x12000, 0x13fff, MRA_ROM},	   /* kernal at 0xe000 */
-	{0x14000, 0x14fff, MRA_ROM},	   /* charrom at 0xd000 */
-	{0x15000, 0x153ff, MRA_RAM},	   /* colorram at 0xd800 */
 MEMORY_END
 
 static MEMORY_WRITE_START( c64_writemem )
@@ -266,12 +262,6 @@ static MEMORY_WRITE_START( c64_writemem )
 	{0xdf00, 0xdfff, MWA_NOP},		   /* csline expansion port */
 #endif
 	{0xe000, 0xffff, MWA_BANK8},
-	{0x10000, 0x11fff, MWA_ROM, &c64_basic},	/* basic at 0xa000 */
-	{0x12000, 0x13fff, MWA_ROM, &c64_kernal},	/* kernal at 0xe000 */
-	{0x14000, 0x14fff, MWA_ROM, &c64_chargen},	/* charrom at 0xd000 */
-	{0x15000, 0x153ff, MWA_RAM, &c64_colorram},		/* colorram at 0xd800 */
-	{0x15400, 0x173ff, MWA_ROM, &c64_roml},	/* basic at 0xa000 */
-	{0x17400, 0x193ff, MWA_ROM, &c64_romh},	/* kernal at 0xe000 */
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
@@ -620,39 +610,39 @@ static void pet64_init_palette (unsigned char *sys_palette, unsigned short *sys_
 }
 
 ROM_START (ultimax)
-	ROM_REGION (0x10000, REGION_CPU1,0)
+	ROM_REGION (0x10000, REGION_CPU1, 0)
 ROM_END
 
 ROM_START (c64gs)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	/* standard basic, modified kernel */
 	ROM_LOAD ("390852.01", 0x10000, 0x4000, 0xb0a9c2da)
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 ROM_END
 
 ROM_START (c64)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
 	ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 ROM_END
 
 ROM_START (c64pal)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
 	ROM_LOAD( "901227.03",   0x12000, 0x2000, 0xdbe3e7c7 )
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 ROM_END
 
 ROM_START (vic64s)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
 	ROM_LOAD( "kernel.swe",   0x12000, 0x2000, 0xf10c2c25 )
 	ROM_LOAD ("charswe.bin", 0x14000, 0x1000, 0xbee9b3fd)
 ROM_END
 
 ROM_START (sx64)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
 	ROM_LOAD( "251104.04",     0x12000, 0x2000, 0x2c5965d4 )
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
@@ -660,7 +650,7 @@ ROM_START (sx64)
 ROM_END
 
 ROM_START (vip64)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
 	ROM_LOAD( "kernel.swe",   0x12000, 0x2000, 0x7858d3d7 )
 	ROM_LOAD ("charswe.bin", 0x14000, 0x1000, 0xbee9b3fd)
@@ -668,7 +658,7 @@ ROM_START (vip64)
 ROM_END
 
 ROM_START (pet64)
-	ROM_REGION (0x19400, REGION_CPU1,0)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
 	ROM_LOAD( "901246.01", 0x12000, 0x2000, 0x789c8cc5)
 	ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)

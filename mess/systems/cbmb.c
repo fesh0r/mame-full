@@ -307,7 +307,6 @@ static MEMORY_WRITE_START( cbmb_writemem )
 	{0xfde00, 0xfdeff, tpi6525_0_port_w},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
-	{0x100000, 0x101fff, MWA_ROM, &cbmb_chargen },
 MEMORY_END
 
 static MEMORY_READ_START( cbm500_readmem )
@@ -446,7 +445,6 @@ static MEMORY_WRITE_START( cbm500_writemem )
 	{0xfde00, 0xfdeff, tpi6525_0_port_w},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
-	{0x100000, 0x100fff, MWA_ROM, &cbmb_chargen },
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
@@ -742,61 +740,61 @@ static void cbm700_init_palette (unsigned char *sys_palette, unsigned short *sys
 }
 
 ROM_START (cbm610)
-	ROM_REGION (0x100000, REGION_CPU1,0)
+	ROM_REGION (0x100000, REGION_CPU1, 0)
 	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
 	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
 	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1,0)
+	ROM_REGION (0x2000, REGION_GFX1, 0)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
 ROM_START (cbm620)
-	ROM_REGION (0x100000, REGION_CPU1,0)
+	ROM_REGION (0x100000, REGION_CPU1, 0)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1,0)
+	ROM_REGION (0x2000, REGION_GFX1, 0)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
 ROM_START (cbm620hu)
-	ROM_REGION (0x100000, REGION_CPU1,0)
+	ROM_REGION (0x100000, REGION_CPU1, 0)
 	ROM_LOAD ("610u60.bin", 0xf8000, 0x4000, 0x8eed0d7e)
 	ROM_LOAD ("kernhun.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
-	ROM_REGION (0x2000, REGION_GFX1,0)
+	ROM_REGION (0x2000, REGION_GFX1, 0)
 	ROM_LOAD ("charhun.bin", 0x0000, 0x2000, 0x1fb5e596)
 ROM_END
 
 ROM_START (cbm710)
-	ROM_REGION (0x100000, REGION_CPU1,0)
+	ROM_REGION (0x100000, REGION_CPU1, 0)
 	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
 	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
 	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1,0)
+	ROM_REGION (0x2000, REGION_GFX1, 0)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
 
 ROM_START (cbm720)
-	ROM_REGION (0x100000, REGION_CPU1,0)
+	ROM_REGION (0x100000, REGION_CPU1, 0)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1,0)
+	ROM_REGION (0x2000, REGION_GFX1, 0)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
 
 ROM_START (cbm720se)
-	ROM_REGION (0x100000, REGION_CPU1,0)
+	ROM_REGION (0x100000, REGION_CPU1, 0)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.03", 0xfe000, 0x2000, 0x87bc142b)
-	ROM_REGION (0x2000, REGION_GFX1,0)
+	ROM_REGION (0x2000, REGION_GFX1, 0)
     ROM_LOAD ("901233.03", 0x0000, 0x1000, 0x09518b19)
 ROM_END
 
 
 ROM_START (cbm500)
-	ROM_REGION (0x101000, REGION_CPU1,0)
+	ROM_REGION (0x101000, REGION_CPU1, 0)
 	ROM_LOAD ("901236.02", 0xf8000, 0x2000, 0xc62ab16f)
 	ROM_LOAD ("901235.02", 0xfa000, 0x2000, 0x20b7df33)
 	ROM_LOAD ("901234.02", 0xfe000, 0x2000, 0xf46bbd2b)
@@ -915,9 +913,9 @@ static struct MachineDriver machine_driver_cbm600 =
 	sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]),
 	cbm700_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
 	generic_vh_start,
@@ -1024,7 +1022,7 @@ static struct MachineDriver machine_driver_cbm500 =
 			cbm500_readmem, cbm500_writemem,
 			0, 0,
 			0, 0,
-			vic2_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,		
 		},
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
