@@ -26,7 +26,7 @@ void osd_exit(void);
 
 /******************************************************************************
 
-  Display
+	Display
 
 ******************************************************************************/
 
@@ -56,8 +56,8 @@ struct osd_create_params
   Create a display screen, or window, of the given dimensions (or larger). It is
   acceptable to create a smaller display if necessary, in that case the user must
   have a way to move the visibility window around.
-  
-  The params contains all the information the 
+
+  The params contains all the information the
   Attributes are the ones defined in driver.h, they can be used to perform
   optimizations, e.g. dirty rectangle handling if the game supports it, or faster
   blitting routines with fixed palette if the game doesn't change the palette at
@@ -130,7 +130,7 @@ const char *osd_get_fps_text(const struct performance_info *performance);
 
 /******************************************************************************
 
-  Sound
+	Sound
 
 ******************************************************************************/
 
@@ -174,7 +174,7 @@ void osd_sound_enable(int enable);
 
 /******************************************************************************
 
-  Keyboard
+	Keyboard
 
 ******************************************************************************/
 
@@ -204,7 +204,7 @@ int osd_readkey_unicode(int flush);
 
 /******************************************************************************
 
-  Joystick & Mouse/Trackball
+	Joystick & Mouse/Trackball
 
 ******************************************************************************/
 
@@ -234,19 +234,19 @@ int osd_is_joystick_axis_code(int joycode);
 
 /* Joystick calibration routines BW 19981216 */
 /* Do we need to calibrate the joystick at all? */
-int osd_joystick_needs_calibration (void);
+int osd_joystick_needs_calibration(void);
 /* Preprocessing for joystick calibration. Returns 0 on success */
-void osd_joystick_start_calibration (void);
+void osd_joystick_start_calibration(void);
 /* Prepare the next calibration step. Return a description of this step. */
 /* (e.g. "move to upper left") */
-const char *osd_joystick_calibrate_next (void);
+const char *osd_joystick_calibrate_next(void);
 /* Get the actual joystick calibration data for the current position */
-void osd_joystick_calibrate (void);
+void osd_joystick_calibrate(void);
 /* Postprocessing (e.g. saving joystick data to config) */
-void osd_joystick_end_calibration (void);
+void osd_joystick_end_calibration(void);
 
 void osd_lightgun_read(int player, int *deltax, int *deltay);
-void osd_trak_read(int player,int *deltax,int *deltay);
+void osd_trak_read(int player, int *deltax, int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
 void osd_analogjoy_read(int player,int analog_axis[MAX_ANALOG_AXES], InputCode analogjoy_input[MAX_ANALOG_AXES]);
@@ -267,7 +267,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults);
 
 /******************************************************************************
 
-  File I/O
+	File I/O
 
 ******************************************************************************/
 
@@ -310,11 +310,11 @@ enum
 /* it is opened for read. */
 
 int osd_faccess(const char *filename, int filetype);
-void *osd_fopen(const char *gamename,const char *filename,int filetype,int read_or_write);
-int osd_fread(void *file,void *buffer,int length);
-int osd_fwrite(void *file,const void *buffer,int length);
-int osd_fread_swap(void *file,void *buffer,int length);
-int osd_fwrite_swap(void *file,const void *buffer,int length);
+void *osd_fopen(const char *gamename, const char *filename, int filetype, int read_or_write);
+int osd_fread(void *file, void *buffer, int length);
+int osd_fwrite(void *file, const void *buffer, int length);
+int osd_fread_swap(void *file, void *buffer, int length);
+int osd_fwrite_swap(void *file, const void *buffer, int length);
 #ifdef LSB_FIRST
 #define osd_fread_msbfirst osd_fread_swap
 #define osd_fwrite_msbfirst osd_fwrite_swap
@@ -326,7 +326,7 @@ int osd_fwrite_swap(void *file,const void *buffer,int length);
 #define osd_fread_lsbfirst osd_fread_swap
 #define osd_fwrite_lsbfirst osd_fwrite_swap
 #endif
-int osd_fseek(void *file,int offset,int whence);
+int osd_fseek(void *file, int offset, int whence);
 void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
 int osd_fsize(void *file);
@@ -339,9 +339,9 @@ int osd_ftell(void *file);
 /* strip directory part from a filename, does _not_ malloc */
 char *osd_basename(char *filename);
 /* get directory part of a filename in malloced buffer */
-char *osd_dirname(char *filename);
+char *osd_dirname(const char *filename);
 /* strip extension from a filename, copy to malloced buffer */
-char *osd_strip_extension(char *filename);
+char *osd_strip_extension(const char *filename);
 
 
 
@@ -363,7 +363,7 @@ cycles_t osd_cycles_per_second(void);
 
 /******************************************************************************
 
-  Miscellaneous
+	Miscellaneous
 
 ******************************************************************************/
 
