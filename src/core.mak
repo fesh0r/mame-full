@@ -22,6 +22,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/vidhrdw/tlc34076.o \
 	$(OBJ)/machine/ticket.o $(OBJ)/machine/eeprom.o \
 	$(OBJ)/machine/6522via.o $(OBJ)/machine/mb87078.o \
+	$(OBJ)/machine/6532riot.o \
 	$(OBJ)/machine/random.o \
 	$(OBJ)/mamedbg.o $(OBJ)/window.o \
 	$(OBJ)/profiler.o \

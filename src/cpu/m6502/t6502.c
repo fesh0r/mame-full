@@ -174,10 +174,10 @@ OP(b7) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(d7) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(f7) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 
-OP(08) {		  m6502_ICount -= 2;		 PHP;		  } /* 2 PHP */
-OP(28) {		  m6502_ICount -= 2;		 PLP;		  } /* 2 PLP */
-OP(48) {		  m6502_ICount -= 2;		 PHA;		  } /* 2 PHA */
-OP(68) {		  m6502_ICount -= 2;		 PLA;		  } /* 2 PLA */
+OP(08) {		  m6502_ICount -= 3;		 PHP;		  } /* 2 PHP */
+OP(28) {		  m6502_ICount -= 4;		 PLP;		  } /* 2 PLP */
+OP(48) {		  m6502_ICount -= 3;		 PHA;		  } /* 2 PHA */
+OP(68) {		  m6502_ICount -= 4;		 PLA;		  } /* 2 PLA */
 OP(88) {		  m6502_ICount -= 2;		 DEY;		  } /* 2 DEY */
 OP(a8) {		  m6502_ICount -= 2;		 TAY;		  } /* 2 TAY */
 OP(c8) {		  m6502_ICount -= 2;		 INY;		  } /* 2 INY */

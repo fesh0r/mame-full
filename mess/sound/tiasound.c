@@ -144,7 +144,7 @@ static UINT16 Samp_n_cnt;               /* Sample cnt. */
 static int oversampling;				/* Added oversampling for sample_rate > clock_rate */
 
 /*****************************************************************************/
-/* Module:  tia_w()                                                          */
+/* Module:  tia_sound_w()                                                    */
 /* Purpose: To process the latest control values stored in the AUDF, AUDC,   */
 /*          and AUDV registers.  It pre-calculates as much information as    */
 /*          possible for better performance.  This routine has not been      */
@@ -160,7 +160,7 @@ static int oversampling;				/* Added oversampling for sample_rate > clock_rate *
 /*                                                                           */
 /*****************************************************************************/
 
-WRITE_HANDLER( tia_w )
+WRITE_HANDLER( tia_sound_w )
 {
     UINT16 new_val = 0;
     UINT8 chan;

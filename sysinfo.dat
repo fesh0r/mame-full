@@ -71,9 +71,13 @@ Atari Historical Society - www.atari-history.com/a2600.html
 
 MESS Emulation State:
 
-This driver is highly preliminary. It will load most 2k, 4k, and 8k Game Program images, but will 
-only display graphics for some of them. The games themselves are not currently playable. Work 
-is continuing on the driver however. 
+Current known limitations of the driver:
+
+1) Restricted to 2KB and 4KB carts
+2) supports NTSC games only
+3) Limited compatibility
+4) no support for keypad controls
+5) Dip switch used to select joystick or paddles.. 
 
 $end
 

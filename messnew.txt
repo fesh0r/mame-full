@@ -30,6 +30,11 @@ System Driver Changes:
   incomplete but working support for the HFDC disk controller card and 80-track
   drives. Added support for a fourth floppy drive with non-TI floppy
   controllers. Fixed Super AMS memory card emulation. [Raphael Nabet]
+  
+- [A2600] Complete driver rewrite, including emulation of the 6532 RIOT (RAM, 
+  INPUT, OUTPUT, TIMER) chip, cycle count correction in the t6502 core (fixes 
+  games like Space Invaders) and a new tia core.  [Stefan Jokisch]
+
 
 Source Changes:
 ---------------

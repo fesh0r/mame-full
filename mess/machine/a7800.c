@@ -358,7 +358,7 @@ WRITE_HANDLER( a7800_TIA_w )
 			}
 		break;
 	}
-	tia_w(offset,data);
+	tia_sound_w(offset,data);
 	ROM[offset] = data;
 }
 

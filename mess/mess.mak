@@ -262,8 +262,8 @@ $(OBJ)/atari.a:                      \
 	  $(OBJ)/mess/machine/a7800.o	 \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
-	  $(OBJ)/mess/machine/a2600.o	 \
 	  $(OBJ)/mess/systems/a2600.o    \
+	  $(OBJ)/mess/vidhrdw/tia.o      \
 #	  $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	                     \
@@ -795,7 +795,7 @@ else
 OUTOPT = -o $@
 endif
 
-dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
+dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o 
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
