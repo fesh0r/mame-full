@@ -29,6 +29,7 @@ NMI
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/cgenie.h"
+#include "includes/basicdsk.h"
 
 extern UINT8 *cgenie_fontram;
 
@@ -541,7 +542,7 @@ static const struct IODevice io_cgenie[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
+        NULL,               /* private */
 		cgenie_rom_id,		/* id */
 		cgenie_rom_load,	/* init */
 		NULL,				/* exit */
@@ -560,7 +561,7 @@ static const struct IODevice io_cgenie[] = {
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"cas\0cmd\0",       /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
+        NULL,               /* private */
         NULL,               /* id */
 		cgenie_cassette_init,/* init */
 		NULL,				/* exit */
@@ -579,14 +580,14 @@ static const struct IODevice io_cgenie[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-		cgenie_floppy_init, /* init */
-		NULL,				/* exit */
+        NULL,               /* private */
+        basicdsk_floppy_id,               /* id */
+                cgenie_floppy_init, /* init */
+                basicdsk_floppy_exit,                               /* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
-        NULL,               /* status */
+        floppy_status,               /* status */
         NULL,               /* seek */
 		NULL,				/* tell */
         NULL,               /* input */
