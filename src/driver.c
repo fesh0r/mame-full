@@ -5136,19 +5136,31 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( thegrid )	/* (c) 2001 Midway */
 
 	/* Midway / Atari  Voodoo based Hardware (Seattle, Flagstaff) */
-	DRIVER ( wg3dh )	/* (c) 1996 Atari Games */
-	DRIVER ( mace )		/* (c) 1996 Atari Games */
-	DRIVER ( sfrush )	/* (c) 1996 Atari Games */
-	DRIVER ( sfrushrk )	/* (c) 1996 Atari Games */
-	DRIVER ( calspeed )	/* (c) 1996 Atari Games */
-	DRIVER ( vaportrx )	/* (c) 1998 Atari Games */
-	DRIVER ( vaportrp )	/* (c) 1998 Atari Games */
-	DRIVER ( carnevil )	/* (c) 1998 Midway Games */
-	DRIVER ( biofreak )	/* (c) 1997 Midway Games */
-	DRIVER ( blitz )	/* (c) 1997 Midway Games */
-	DRIVER ( blitz99 )	/* (c) 1998 Midway Games */
-	DRIVER ( blitz2k )	/* (c) 1999 Midway Games */
-	DRIVER ( hyprdriv )	/* (c) 1998 Midway Games */
+	DRIVER( wg3dh )	/* (c) 1996 Atari Games */
+	DRIVER( mace )		/* (c) 1996 Atari Games */
+	DRIVER( sfrush )	/* (c) 1996 Atari Games */
+	DRIVER( sfrushrk )	/* (c) 1996 Atari Games */
+	DRIVER( calspeed )	/* (c) 1996 Atari Games */
+	DRIVER( vaportrx )	/* (c) 1998 Atari Games */
+	DRIVER( vaportrp )	/* (c) 1998 Atari Games */
+	DRIVER( carnevil )	/* (c) 1998 Midway Games */
+	DRIVER( biofreak )	/* (c) 1997 Midway Games */
+	DRIVER( blitz )		/* (c) 1997 Midway Games */
+	DRIVER( blitz99 )	/* (c) 1998 Midway Games */
+	DRIVER( blitz2k )	/* (c) 1999 Midway Games */
+	DRIVER( hyprdriv )	/* (c) 1998 Midway Games */
+
+	/* Midway / Atari  Voodoo 2 & 3 - based Hardware (Vegas, Denver, Durango) */
+	DRIVER( gauntleg )	/* (c) 1998 Atari Games */
+	DRIVER( gauntl12 )	/* (c) 1998 Atari Games */
+	DRIVER( tenthdeg )	/* (c) 1998 Atari Games (prototype) */
+	DRIVER( roadburn )	/* (c) 1999 Atari Games */
+	DRIVER( sfru2049 )	/* (c) 1999 Atari Games */
+	DRIVER( warfa )		/* (c) 1999 Atari Games */
+	DRIVER( nbashowt )	/* (c) 1998 Midway Games */
+	DRIVER( nbanfl )	/* (c) 1999 Midway Games */
+	DRIVER( gauntdl )	/* (c) 1999 Midway Games */
+	DRIVER( cartfury )	/* (c) 2000 Midway Games */
 
 	/* Cinematronics raster games */
 	DRIVER( embargo )
@@ -6346,6 +6358,7 @@ Other Sun games
 	DRIVER( trucocl )	/* (c) 1991 Caloi Miky SRL */
 	DRIVER( ertictac )	/* (c) 1992 Sisteme */
 	DRIVER( ssfindo )	/* (c) 1999 Icarus */
+	DRIVER( monzagp )
 
 #endif	/* DRIVER_RECURSIVE */
 

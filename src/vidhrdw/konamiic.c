@@ -5750,7 +5750,15 @@ static void K056832_change_rambank(void)
 	 * ---xx--- page row
 	 */
 	int bank = K056832_regs[0x19];
-	K056832_SelectedPage = ((bank>>1)&0xc)|(bank&3);
+
+	if (K056832_regs[0] & 0x02)	// external linescroll enable
+	{
+		K056832_SelectedPage = K056832_PAGE_COUNT + 1;
+	}
+	else
+	{
+		K056832_SelectedPage = ((bank>>1)&0xc)|(bank&3);
+	}
 	K056832_SelectedPagex4096 = K056832_SelectedPage << 12;
 }
 
@@ -5928,7 +5936,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		K056832_PageTileMode[i] = 1;
 	}
 
-	if (!(K056832_videoram = auto_malloc(0x2000 * K056832_PAGE_COUNT))) return 1;
+	if (!(K056832_videoram = auto_malloc(0x2000 * (K056832_PAGE_COUNT+1)))) return 1;
 
 	K056832_tilemap[0x0] = tilemap_create(K056832_get_tile_info0, K056832_scan, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
 	K056832_tilemap[0x1] = tilemap_create(K056832_get_tile_info1, K056832_scan, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
@@ -6162,7 +6170,14 @@ READ8_HANDLER( K056832_ram_code_hi_r )
 	return *adr>>8;
 }
 
-READ8_HANDLER( K056832_ram_attr_r )
+READ8_HANDLER( K056832_ram_attr_lo_r )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)];
+
+	return *adr & 0xff;
+}
+
+READ8_HANDLER( K056832_ram_attr_hi_r )
 {
 	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)];
 
@@ -6176,10 +6191,13 @@ WRITE8_HANDLER( K056832_ram_code_lo_w )
 	*adr &= 0xff00;
 	*adr |= data;
 
-	if (K056832_PageTileMode[K056832_SelectedPage])
-		tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
-	else
-		K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	if (!(K056832_regs[0] & 0x02))	// external linescroll enable
+	{
+		if (K056832_PageTileMode[K056832_SelectedPage])
+			tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+		else
+			K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	}
 }
 
 WRITE8_HANDLER( K056832_ram_code_hi_w )
@@ -6189,23 +6207,45 @@ WRITE8_HANDLER( K056832_ram_code_hi_w )
 	*adr &= 0x00ff;
 	*adr |= data<<8;
 
-	if (K056832_PageTileMode[K056832_SelectedPage])
-		tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
-	else
-		K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	if (!(K056832_regs[0] & 0x02))	// external linescroll enable
+	{
+		if (K056832_PageTileMode[K056832_SelectedPage])
+			tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+		else
+			K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	}
 }
 
-WRITE8_HANDLER( K056832_ram_attr_w )
+WRITE8_HANDLER( K056832_ram_attr_lo_w )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)];
+
+	*adr &= 0xff00;
+	*adr |= data;
+
+	if (!(K056832_regs[0] & 0x02))	// external linescroll enable
+	{
+		if (K056832_PageTileMode[K056832_SelectedPage])
+			tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+		else
+			K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	}
+}
+
+WRITE8_HANDLER( K056832_ram_attr_hi_w )
 {
 	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(offset*2)];
 
 	*adr &= 0x00ff;
 	*adr |= data<<8;
 
-	if (K056832_PageTileMode[K056832_SelectedPage])
-		tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
-	else
-		K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	if (!(K056832_regs[0] & 0x02))	// external linescroll enable
+	{
+		if (K056832_PageTileMode[K056832_SelectedPage])
+			tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
+		else
+			K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	}
 }
 
 WRITE16_HANDLER( K056832_ram_word_w )
@@ -6270,6 +6310,7 @@ WRITE16_HANDLER( K056832_word_w )
 			/* -x-- ---- dotclock select: 0=8Mhz, 1=6Mhz (not used by GX)
 			 * --x- ---- screen flip y
 			 * ---x ---- screen flip x
+			 * ---- --x- external linescroll RAM page enable
 			 */
 			case 0x00/2:
 				if ((new_data & 0x30) != (old_data & 0x30))
@@ -6281,6 +6322,11 @@ WRITE16_HANDLER( K056832_word_w )
 					{
 						tilemap_set_flip(K056832_tilemap[i], flip);
 					}
+				}
+
+				if ((new_data & 0x02) != (old_data & 0x02))
+				{
+					K056832_change_rambank();
 				}
 			break;
 

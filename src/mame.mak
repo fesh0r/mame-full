@@ -345,7 +345,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/vidhrdw/mcr68.o $(OBJ)/drivers/mcr68.o \
 	$(OBJ)/vidhrdw/balsente.o $(OBJ)/machine/balsente.o $(OBJ)/drivers/balsente.o \
 	$(OBJ)/vidhrdw/gridlee.o $(OBJ)/sndhrdw/gridlee.o $(OBJ)/drivers/gridlee.o \
-	$(OBJ)/drivers/seattle.o $(OBJ)/vidhrdw/voodoo.o $(OBJ)/machine/smc91c9x.o \
+	$(OBJ)/drivers/seattle.o $(OBJ)/drivers/vegas.o $(OBJ)/vidhrdw/voodoo.o $(OBJ)/machine/smc91c9x.o \
 	$(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
 	$(OBJ)/machine/midwayic.o $(OBJ)/sndhrdw/dcs.o \
 	$(OBJ)/machine/midyunit.o $(OBJ)/vidhrdw/midyunit.o $(OBJ)/drivers/midyunit.o \
@@ -379,7 +379,8 @@ $(OBJ)/gottlieb.a: \
 $(OBJ)/taito.a: \
 	$(OBJ)/drivers/sbowling.o \
 	$(OBJ)/machine/chaknpop.o $(OBJ)/vidhrdw/chaknpop.o $(OBJ)/drivers/chaknpop.o \
-	$(OBJ)/machine/qix.o $(OBJ)/vidhrdw/qix.o $(OBJ)/drivers/qix.o \
+	$(OBJ)/machine/qix.o $(OBJ)/vidhrdw/qix.o \
+	$(OBJ)/drivers/qix.o $(OBJ)/sndhrdw/qix.o \
 	$(OBJ)/machine/taitosj.o $(OBJ)/vidhrdw/taitosj.o $(OBJ)/drivers/taitosj.o \
 	$(OBJ)/machine/grchamp.o $(OBJ)/vidhrdw/grchamp.o $(OBJ)/drivers/grchamp.o \
 	$(OBJ)/machine/pitnrun.o $(OBJ)/vidhrdw/pitnrun.o $(OBJ)/drivers/pitnrun.o \
@@ -1220,6 +1221,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/suprgolf.o \
 	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
 	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
+	$(OBJ)/drivers/monzagp.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

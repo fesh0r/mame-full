@@ -278,10 +278,12 @@ WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );
 READ8_HANDLER( K056832_ram_code_lo_r );
 READ8_HANDLER( K056832_ram_code_hi_r );
-READ8_HANDLER( K056832_ram_attr_r );
+READ8_HANDLER( K056832_ram_attr_lo_r );
+READ8_HANDLER( K056832_ram_attr_hi_r );
 WRITE8_HANDLER( K056832_ram_code_lo_w );
 WRITE8_HANDLER( K056832_ram_code_hi_w );
-WRITE8_HANDLER( K056832_ram_attr_w );
+WRITE8_HANDLER( K056832_ram_attr_lo_w );
+WRITE8_HANDLER( K056832_ram_attr_hi_w );
 WRITE8_HANDLER( K056832_w );
 WRITE8_HANDLER( K056832_b_w );
 void K056832_mark_plane_dirty(int num);

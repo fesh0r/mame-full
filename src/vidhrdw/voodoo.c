@@ -1597,6 +1597,9 @@ READ32_HANDLER( voodoo_regs_r )
 #pragma mark VOODOO 2 COMMAND FIFO
 #endif
 
+static void voodoo2_handle_register_w(offs_t offset, data32_t data);
+
+
 /*************************************
  *
  *	MMIO register writes
@@ -1718,7 +1721,7 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 1: count=%d inc=%d reg=%04X\n", count, inc, target);
 			for (i = 0; i < count; i++, target += inc)
-				voodoo_regs_w(target, *src++, 0);
+				voodoo2_handle_register_w(target, *src++);
 			break;
 		
 		/* packet type 2 */
@@ -1726,7 +1729,7 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 2: mask=%X\n", (command >> 3) & 0x1ffffff);
 			for (i = 3; i <= 31; i++)
 				if (command & (1 << i))
-					voodoo_regs_w(bltSrcBaseAddr + (i - 3), *src++, 0);
+					voodoo2_handle_register_w(bltSrcBaseAddr + (i - 3), *src++);
 			break;
 		
 		/* packet type 3 */
@@ -1812,7 +1815,7 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 4: mask=%X reg=%04X pad=%d\n", (command >> 15) & 0x3fff, target, command >> 29);
 			for (i = 15; i <= 28; i++)
 				if (command & (1 << i))
-					voodoo_regs_w(target + (i - 15), *src++, 0);
+					voodoo2_handle_register_w(target + (i - 15), *src++);
 			src += command >> 29;
 			break;
 		

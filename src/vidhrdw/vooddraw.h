@@ -820,7 +820,7 @@ static void (*update_texel_lookup[16])(int which) =
  *************************************/
 
 #if 0
-#include "voodbx86.h"
+#include "voodrx86.h"
 #endif
 
 /* 

@@ -120,7 +120,7 @@ VIDEO_UPDATE(lethalen);
 
 static int init_eeprom_count;
 static int cur_control2;
-static data8_t *le_workram, le_paletteram[0x800*16];
+static data8_t le_ram48[0x800];
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -161,6 +161,7 @@ static WRITE8_HANDLER( control2_w )
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
+	/* bit 4  bankswitches the 4800-4fff region: 0 = registers, 1 = RAM */
 
 	cur_control2 = data;
 
@@ -201,25 +202,70 @@ static WRITE8_HANDLER( le_bankswitch_w )
 	cpu_setbank(1, &prgrom[data * 0x2000]);
 }
 
-static READ8_HANDLER( workram_r )
+static READ8_HANDLER( le_4800_r )
 {
-	// patch (POST failure?) temporarily
-	// US version
-	if (offset == 0x1500 && activecpu_get_pc() == 0x8695)
+	if (cur_control2 & 0x10)	// RAM enable
 	{
-		return 0;
+		return le_ram48[offset];
 	}
-	// japan version
-	if (offset == 0x1500 && activecpu_get_pc() == 0x86a3)
+
+	switch (offset)
 	{
-		return 0;
+		case 0x40:
+		case 0x41:
+		case 0x42:
+		case 0x43:
+		case 0x44:
+		case 0x45:
+		case 0x46:
+			return K053244_r(offset-0x40);
+			break;
+
+		case 0xca:
+			return sound_status_r(0);
+			break;
 	}
-	return le_workram[offset];
+
+	return 0;
+}
+
+static WRITE8_HANDLER( le_4800_w )
+{
+	if (cur_control2 & 0x10)	// RAM enable
+	{
+		le_ram48[offset] = data;
+		return;
+	}
+
+	switch (offset)
+	{
+		case 0xc6:
+			sound_cmd_w(0, data);
+			break;
+
+		case 0xc7:
+			sound_irq_w(0, data);
+			break;
+
+		case 0x40:
+		case 0x41:
+		case 0x42:
+		case 0x43:
+		case 0x44:
+		case 0x45:
+		case 0x46:
+			K053244_w(offset-0x40, data);
+			break;
+
+		default:
+			logerror("Unknown LE 48xx register write: %x to %x\n", data, offset);
+			break;
+	}
 }
 
 static ADDRESS_MAP_START( le_main, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(workram_r) AM_WRITE(MWA8_RAM) AM_BASE(&le_workram)
+	AM_RANGE(0x2000, 0x3fff) AM_RAM				// work RAM
 	AM_RANGE(0x4000, 0x403f) AM_WRITE(K056832_w)
 	AM_RANGE(0x4040, 0x404f) AM_WRITE(K056832_b_w)
 	AM_RANGE(0x4080, 0x4080) AM_READ(MRA8_NOP)		// watchdog
@@ -230,16 +276,12 @@ static ADDRESS_MAP_START( le_main, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x40d9, 0x40d9) AM_READ(input_port_0_r)
 	AM_RANGE(0x40db, 0x40db) AM_READNOP			// gun input related?
 	AM_RANGE(0x40dc, 0x40dc) AM_WRITE(le_bankswitch_w)
-	AM_RANGE(0x4840, 0x4846) AM_READWRITE(K053244_r, K053244_w)
-	AM_RANGE(0x48c6, 0x48c6) AM_WRITE(sound_cmd_w)
-	AM_RANGE(0x48c7, 0x48c7) AM_WRITE(sound_irq_w)
-	AM_RANGE(0x48ca, 0x48ca) AM_READ(sound_status_r)
-	AM_RANGE(0x5800, 0x5fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
-	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(K053245_r, K053245_w)
+	AM_RANGE(0x4800, 0x4fff) AM_READWRITE(le_4800_r, le_4800_w)	// bankswitched: RAM and registers
+	AM_RANGE(0x5800, 0x5fff) AM_READWRITE(paletteram_r, paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(K053245_r, K053245_w)
 	AM_RANGE(0x6000, 0x67ff) AM_READWRITE(K056832_ram_code_lo_r, K056832_ram_code_lo_w)
 	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(K056832_ram_code_hi_r, K056832_ram_code_hi_w)
-	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(K056832_ram_attr_r, K056832_ram_attr_w)
-	AM_RANGE(0x7800, 0x7fff) AM_RAM
+	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(K056832_ram_attr_lo_r, K056832_ram_attr_lo_w)
+	AM_RANGE(0x7800, 0x7fff) AM_READWRITE(K056832_ram_attr_hi_r, K056832_ram_attr_hi_w)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK2) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
@@ -269,9 +311,9 @@ INPUT_PORTS_START( lethalen )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR(Language) )
-	PORT_DIPSETTING(    0x10, DEF_STR(English) )
-	PORT_DIPSETTING(    0x00, DEF_STR(Spanish) )
+        PORT_DIPNAME( 0x10, 0x10, DEF_STR(Language) )
+        PORT_DIPSETTING(    0x10, DEF_STR(English) )
+        PORT_DIPSETTING(    0x00, DEF_STR(Spanish) )
 	PORT_DIPNAME( 0x20, 0x00, "Game Type" )
 	PORT_DIPSETTING(    0x20, "Street" )
 	PORT_DIPSETTING(    0x00, "Arcade" )
@@ -390,6 +432,9 @@ ROM_END
 static DRIVER_INIT( lethalen )
 {
 	konami_rom_deinterleave_2(REGION_GFX2);
+
+	state_save_register_int("LE", 0, "control2", &cur_control2);
+	state_save_register_UINT8("LE", 0, "Ram48", le_ram48, 0x800);
 }
 
 GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_NOT_WORKING)
