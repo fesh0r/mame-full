@@ -80,7 +80,34 @@ int DECL_SPEC mess_printf(char *fmt, ...)
 	return length;
 }
 
-static int read_crc_config (const char *, struct image_info *, const char*);
+static int read_crc_config (const char *file, struct image_info *img, const char* sysname)
+{
+	int retval;
+	void *config = config_open (file);
+
+	retval = 1;
+	if( config )
+	{
+		char line[1024];
+		char crc[9+1];
+
+		sprintf(crc, "%08x", img->crc);
+		config_load_string(config,sysname,0,crc,line,sizeof(line));
+		if( line[0] )
+		{
+			logerror("found CRC %s= %s\n", crc, line);
+			img->longname = dupe(stripspace(strtok(line, "|")));
+			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
+			img->year = dupe(stripspace(strtok(NULL, "|")));
+			img->playable = dupe(stripspace(strtok(NULL, "|")));
+			img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
+			retval = 0;
+		}
+		config_close(config);
+	}
+	return retval;
+}
+
 
 void *image_fopen(int type, int id, int filetype, int read_or_write)
 {
@@ -243,35 +270,6 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	}
 
 	return file;
-}
-
-
-static int read_crc_config (const char *file, struct image_info *img, const char* sysname)
-{
-	int retval;
-	void *config = config_open (file);
-
-	retval = 1;
-	if( config )
-	{
-		char line[1024];
-		char crc[9+1];
-
-		sprintf(crc, "%08x", img->crc);
-		config_load_string(config,sysname,0,crc,line,sizeof(line));
-		if( line[0] )
-		{
-			logerror("found CRC %s= %s\n", crc, line);
-			img->longname = dupe(stripspace(strtok(line, "|")));
-			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
-			img->year = dupe(stripspace(strtok(NULL, "|")));
-			img->playable = dupe(stripspace(strtok(NULL, "|")));
-			img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
-			retval = 0;
-		}
-		config_close(config);
-	}
-	return retval;
 }
 
 
@@ -1008,7 +1006,7 @@ void showmessdisclaimer(void)
 void showmessinfo(void)
 {
 	mess_printf(
-		"M.E.S.S. v%s %s\n"
+		"M.E.S.S. v%s\n"
 		"Multiple Emulation Super System - Copyright (C) 1997-2001 by the MESS Team\n"
 		"M.E.S.S. is based on the ever excellent M.A.M.E. Source code\n"
 		"Copyright (C) 1997-2001 by Nicola Salmoria and the MAME Team\n\n",
