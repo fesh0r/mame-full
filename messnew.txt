@@ -22,6 +22,10 @@ System Driver Changes:
 
 - [COCO] Converted CoCo drivers to use configurable RAM sizes. [Nate Woods]
 
+- [PC] Fixed a bug that caused the keyboard buffer to get flooded and the
+  emulated system to get paralyzed in beeping under certain situations (bug
+  #151). [Nate Woods]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 

@@ -15,7 +15,7 @@
 #endif
 
 #if VERBOSE_PIO
-#define PIO_LOG(N,M,N) \
+#define PIO_LOG(N,M,A) \
 	if(VERBOSE_PIO>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
 #else
 #define PIO_LOG(n,m,a)
@@ -106,6 +106,7 @@ ppi8255_interface pc_ppi8255_interface =
 static struct {
 	int portc_switch_high;
 	int speaker;
+	int keyboard_disabled;
 } pc_ppi={ 0 };
 
 READ_HANDLER (pc_ppi_porta_r)
@@ -113,7 +114,23 @@ READ_HANDLER (pc_ppi_porta_r)
 	int data;
 
 	/* KB port A */
-	data = pc_keyb_read();
+	if (pc_ppi.keyboard_disabled)
+	{
+		/*   0  0 - no floppy drives  
+		 *   1  Not used  
+		 * 2-3  The number of memory banks on the system board  
+		 * 4-5  Display mode
+		 *	    11 = monochrome
+		 *      10 - color 80x25
+		 *      01 - color 40x25  
+		 * 6-7  The number of floppy disk drives  
+		 */
+		data = 0;	/* TODO: need to return real value */
+	}
+	else
+	{
+		data = pc_keyb_read();
+	}
     PIO_LOG(1,"PIO_A_r",("$%02x\n", data));
     return data;
 }
@@ -162,6 +179,7 @@ WRITE_HANDLER ( pc_ppi_portb_w )
 	/* KB controller port B */
 	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
 	pc_ppi.portc_switch_high=data&0x8;
+	pc_ppi.keyboard_disabled=data&0x80;
 	pc_sh_speaker(data&3);
 	pc_keyb_set_clock(data&0x40);
 }

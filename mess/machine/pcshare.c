@@ -790,7 +790,8 @@ void pc_keyb_set_clock(int on)
 		timer_set(1/200.0, 0, pc_keyb_timer);
 	}
 	pc_keyb.on=on;
-	pc_keyboard();
+	// NPW 2-Feb-2001 - Disabling this because it appears to cause problems
+	//pc_keyboard();
 }
 
 void pc_keyboard(void)
