@@ -860,7 +860,9 @@ WRITE_HANDLER(tms9995_internal2_w)
 		}
 	}
 
+#ifdef MAME_DEBUG
 	#define dasm_readop cpu_readmem24bew_word
+#endif
 
 #elif (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9940_ID)
 	/*16-bit data bus, 16-bit address bus (internal bus in the case of TMS9940)*/
@@ -875,7 +877,9 @@ WRITE_HANDLER(tms9995_internal2_w)
 	#define readbyte(addr)        cpu_readmem16bew(addr)
 	#define writebyte(addr,data)  cpu_writemem16bew((addr), (data))
 
+#ifdef MAME_DEBUG
 	#define dasm_readop cpu_readmem16bew_word
+#endif
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 	/*8-bit data bus, 14-bit address*/
@@ -929,10 +933,12 @@ WRITE_HANDLER(tms9995_internal2_w)
 	}
 #endif
 
+#ifdef MAME_DEBUG
 	static data16_t dasm_readop(offs_t addr)
 	{
 		return (cpu_readmem14(addr) << 8) | cpu_readmem14(addr+1);
 	}
+#endif
 
 #elif (TMS99XX_MODEL == TMS9985_ID)
 	/*Note that every writebyte must match a readbyte (which is indeed the case)*/
@@ -1010,10 +1016,12 @@ WRITE_HANDLER(tms9995_internal2_w)
 		}
 	}
 
+#ifdef MAME_DEBUG
 	static data16_t dasm_readop(offs_t addr)
 	{
 		return readword(addr);
 	}
+#endif
 
 #elif (TMS99XX_MODEL == TMS9995_ID)
 	/*8-bit external data bus, with on-chip 16-bit RAM, and 16-bit address bus*/
@@ -1155,10 +1163,12 @@ WRITE_HANDLER(tms9995_internal2_w)
 		}
 	}
 
+#ifdef MAME_DEBUG
 	static data16_t dasm_readop(offs_t addr)
 	{
 		return readword(addr);
 	}
+#endif
 
 #else
 
