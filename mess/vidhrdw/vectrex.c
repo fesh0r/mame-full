@@ -2,6 +2,7 @@
 #include "vidhrdw/vector.h"
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
+#include "led.h"
 
 #include "includes/vectrex.h"
 
@@ -18,6 +19,10 @@
 
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 0.70710678118654752440
+#endif
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
 /*********************************************************************
@@ -97,7 +102,7 @@ VIDEO_UPDATE( vectrex )
 /*********************************************************************
   Vector functions
  *********************************************************************/
-void vector_add_point_stereo (int x, int y, int color, int intensity)
+void vector_add_point_stereo (int x, int y, rgb_t color, int intensity)
 {
 	if (vectrex_imager_status == 1) /* left = 2, right = 1 */
 		vector_add_point ((int)(y*M_SQRT1_2), (int)(((x_max-x)*M_SQRT1_2)+y_center), color, intensity);
@@ -352,31 +357,23 @@ static struct via6522_interface spectrum1_via6522_interface =
 	vectrex_shift_reg_w, vectrex_screen_update
 };
 
-static struct artwork_info *buttons, *led;
-static int transparent_pen;
-
-#if 0
-void raaspec_init_artwork (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	vectrex_refresh_with_T2=1;
-
-	/* artwork */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		artwork_load_size(&buttons, "spec_bt.png", 0, 
-						  (int)(Machine->scrbitmap->height * 0.1151961), Machine->scrbitmap->height);
-		if (buttons)
-			artwork_load_size(&led, "led.png", 0, buttons->artwork->width, buttons->artwork->height / 8);
-	}
-	else
-	{
-		artwork_load_size(&buttons, "spec_bt.png", 0, 
-						  Machine->scrbitmap->width, (int)(Machine->scrbitmap->width * 0.1151961));
-		if (buttons)
-			artwork_load_size(&led, "led.png", 0, buttons->artwork->width / 8, buttons->artwork->height);
-	}
-}
-#endif
+static const char *radius_8_led =
+	"     111111     \r"
+	"   1111111111   \r"
+	"  111111111111  \r"
+	" 11111111111111 \r"
+	" 11111111111111 \r"
+	"1111111111111111\r"
+	"1111111111111111\r"
+	"1111111111111111\r"
+	"1111111111111111\r"
+	"1111111111111111\r"
+	"1111111111111111\r"
+	" 11111111111111 \r"
+	" 11111111111111 \r"
+	"  111111111111  \r"
+	"   1111111111   \r"
+	"     111111     \r";
 
 WRITE_HANDLER( raaspec_led_w )
 {
@@ -388,34 +385,31 @@ WRITE_HANDLER( raaspec_led_w )
 				 (data>>7)&0x1, (data>>6)&0x1, (data>>5)&0x1, (data>>4)&0x1,
 				 (data>>3)&0x1, (data>>2)&0x1, (data>>1)&0x1, data&0x1);
 
-	if (led && buttons)
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			y = clip.min_y = tmpbitmap->width - led->artwork->width-1;
-			width = led->artwork->height;
-			clip.max_y = tmpbitmap->width -1;
-		}
-		else
-		{
-			y = clip.min_y = tmpbitmap->height - led->artwork->height-1;
-			width = led->artwork->width;
-			clip.max_y = tmpbitmap->height -1;
-		}
-
-		for (i=0; i<8; i++)
-			if (((data^old_data) >> i) & 0x1)
-			{
-				clip.min_x = i*width;
-				clip.max_x = (i+1)*width-1;
-
-				if ((data >> i) & 0x1)
-					copybitmap(tmpbitmap, buttons->artwork, 0, 0, 0, y, &clip, TRANSPARENCY_NONE, 0);
-				else
-					copybitmap(tmpbitmap, led->artwork, 0,0,i*width, y,&clip,TRANSPARENCY_PEN, Machine->pens[transparent_pen]);
-			}
-		old_data=data;
+		y = clip.min_y = tmpbitmap->width - 16;
+		width = 16;
+		clip.max_y = tmpbitmap->width -1;
 	}
+	else
+	{
+		y = clip.min_y = tmpbitmap->height - 16;
+		width = 16;
+		clip.max_y = tmpbitmap->height -1;
+	}
+
+	for (i=0; i<8; i++)
+	{
+		if (((data^old_data) >> i) & 0x1)
+		{
+			clip.min_x = i*width;
+			clip.max_x = (i+1)*width-1;
+
+			if (((data >> i) & 0x1) == 0)
+				draw_led(tmpbitmap, radius_8_led, 1, i*width, y);
+		}
+	}
+	old_data=data;
 }
 
 VIDEO_START( raaspec )
@@ -451,9 +445,7 @@ VIDEO_START( raaspec )
 	if (!(tmpbitmap = auto_bitmap_alloc(width,height)))
 		return 1;
 
-	if (led && buttons)
-		raaspec_led_w (0, 0xff);
-
+	raaspec_led_w (0, 0xff);
 	return 0;
 }
 

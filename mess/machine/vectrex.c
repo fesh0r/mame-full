@@ -116,9 +116,6 @@ int vectrex_init_cart (int id)
 	if (!memcmp(memory_region(REGION_CPU1)+0x11,"3D MINE STORM",13))
 		vectrex_imager_angles = minestorm_3d_angles;
 
-	if (Machine->scrbitmap)
-		vectrex_init_overlay ();
-
 	return INIT_PASS;
 }
 

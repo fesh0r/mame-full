@@ -27,5 +27,5 @@ extern VIDEO_UPDATE( raaspec );
 extern WRITE_HANDLER  ( raaspec_led_w );
 
 /* from vidhrdw/vectrex.c */
-extern void vector_add_point_stereo (int x, int y, int color, int intensity);
+extern void vector_add_point_stereo (int x, int y, rgb_t color, int intensity);
 extern void (*vector_add_point_function) (int, int, rgb_t, int);

@@ -220,50 +220,6 @@ static MACHINE_DRIVER_START( raaspec )
 MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_raaspec =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,	/* 1.5 Mhz */
-			raaspec_readmem, raaspec_writemem,0,0,
-			0, 0, /* no vblank interrupt */
-			0, 0 /* no interrupts */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
-	0,
-
-	/* video hardware */
-	380, 480, { 0, 500, 0, 600 },
-	0,
-	254, 0,
-	raaspec_init_artwork,
-
-	VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT,
-	0,
-	raaspec_start,
-	vectrex_stop,
-	raaspec_vh_update,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
- 			&dac_interface
-		}
-	}
-
-};
-
 static const struct IODevice io_raaspec[] = {
 	{ IO_END }
 };
@@ -277,14 +233,3 @@ ROM_END
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
 CONS( 1982, vectrex,  0, 		vectrex,  vectrex,	0,		  "General Consumer Electronics",   "Vectrex" )
 CONS( 1984, raaspec,  vectrex,	raaspec,  raaspec,	0,		  "Roy Abel & Associates",   "Spectrum I+" )
-
-#ifdef RUNTIME_LOADER
-extern void vectrex_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"vectrex")==0) drivers[i]=&driver_vectrex;
-		if ( strcmp(drivers[i]->name,"raaspec")==0) drivers[i]=&driver_raaspec;
-	}
-}
-#endif
