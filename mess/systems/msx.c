@@ -683,11 +683,13 @@ ROM_START (msxkr)
     ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
 ROM_END
 
+/*
 ROM_START (msxkra)
     ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("msxkra.rom", 0x0000, 0x8000, 0xa781f7ca)
     ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
 ROM_END
+*/
 
 static const struct IODevice io_msx[] = {
 {
@@ -735,12 +737,12 @@ static const struct IODevice io_msx[] = {
 
 #define io_msxj io_msx
 #define io_msxkr io_msx
-#define io_msxkra io_msx
+/* #define io_msxkra io_msx */
 #define io_msxuk io_msx
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMP( 1983, msx, 0, msx_pal, msx, msx, "ASCII & Microsoft", "MSX1" )
 COMP( 1983, msxj, msx, msx, msxj, msx, "ASCII & Microsoft", "MSX1 (Japan)" )
 COMP( 1983, msxkr, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX1 (Korean)" )
-COMP( 1983, msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX1 (Korean ALT)" )
+/* COMP( 1983, msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX1 (Korean ALT)" ) */
 COMP( 1983, msxuk, msx, msx_pal, msxuk, msx, "ASCII & Microsoft", "MSX1 (UK)" )
