@@ -1,15 +1,15 @@
 /*
-	Experimental ti990/10 driver
+	TI990/10 driver
 
-	This driver boots the DX10 build tape.  However, this will not help much until a terminal is
-	emulated.
+	This driver boots the DX10 build tape.  However, it appears I do not have a correct backup tape
+	for step 3 of build process to complete successfully.
 
 TODO :
-* finish CPU emulation
-* finish tape emulation
-* write disk emulation
-* emulate a 911 or 913 VDT terminal
-* add additionnal bells and whistles as need appears
+* emulate TILINE fully: timings, tiline timeout, possibly memory error
+* finish tape emulation (write support)
+* finish disk emulation (support other disk geometries)
+* add additionnal devices as need appears (931 VDT, FD800, card reader, ASR/KSR, printer)
+* emulate 990/10A and 990/12 CPUs?
 */
 
 /*
@@ -29,25 +29,36 @@ TODO :
 	00c0-00ee: 913 VDT
 	0100-013e: 913 VDT #2
 	0140-017e: 913 VDT #3
+	1700-177e (0b00-0b7e, 0f00-0f7e): CI402 serial controller #0 (#1, #2) (for 931/940 VDT)
+		(note that CRU base 1700 is used by the integrated serial controller in newer S300,
+		S300A, 990/10A (and 990/5?) systems)
 	1f00-1f1e: CRU expander #1 interrupt register
 	1f20-1f3e: CRU expander #2 interrupt register
+	1f40-1f5e: TILINE coupler interrupt control #1-8
 
 
 	TPCS map:
-	1ff800: hard disk
-	(1ff810: FD1000 floppy)
-	1ff880: tape unit
+	1ff800: disk controller #1 (system disk)
+	1ff810->1ff870: extra disk controllers #2 through #8
+	1ff880 (1ff890): tape controller #1 (#2)
+	1ff900->1ff950: communication controllers #1 through #6
+	1ff980 (1ff990, 1ff9A0): CI403/404 serial controller #1 (#2, #3) (for 931/940 VDT)
+	1ffb00, 1ffb04, etc: ECC memory controller #1, #2, etc, diagnostic
+	1ffb10, 1ffb14, etc: cache memory controller #1, #2, etc, diagnostic
 
 
 	interrupt map (default configuration):
 	0,1,2: CPU board
+	3: free
 	4: card reader
 	5: line clock
-	6: 733 ASR
+	6: 733 ASR/KSR
 	7: FD800 floppy (or FD1000 floppy)
+	8: free
 	9: 913 VDT #3
 	10: 913 VDT #2
 	11: 913 VDT
+	12: free
 	13: hard disk
 	14 line printer
 	15: PROM programmer (actually not used)
@@ -465,5 +476,5 @@ INPUT_PORTS_START(ti990_10)
 
 INPUT_PORTS_END
 
-/*		YEAR			NAME			PARENT	MACHINE		INPUT	INIT	COMPANY	FULLNAME */
-COMP( circa 1975,	ti990_10,	0,			ti990_10,	ti990_10,	ti990_10,	"Texas Instruments",	"TI990/10" )
+/*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		COMPANY					FULLNAME */
+COMP( 1975,	ti990_10,	0,		ti990_10,	ti990_10,	ti990_10,	"Texas Instruments",	"TI Model 990/10 Minicomputer System" )

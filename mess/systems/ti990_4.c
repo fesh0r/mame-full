@@ -11,8 +11,8 @@
 
 TODO :
 * programmer panel
-* disk, tape, 911 vdt
-* 990/10
+* use the 911 vdt core (already used by 990/10)
+* emulate other devices: FD800, card reader, ASR/KSR, printer
 
 */
 
@@ -251,8 +251,8 @@ static const struct IODevice io_ti990_4[] =
 INPUT_PORTS_START(ti990_4)
 INPUT_PORTS_END
 
-/*		YEAR				NAME			PARENT	MACHINE		INPUT	INIT	COMPANY	FULLNAME */
-COMP( circa 1975,	ti990_4,	0,			ti990_4,	ti990_4,	ti990_4,	"Texas Instruments",	"TI990/4" )
+/*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		COMPANY					FULLNAME */
+COMP( 1976,	ti990_4,	0,		ti990_4,	ti990_4,	ti990_4,	"Texas Instruments",	"TI Model 990/4 Microcomputer System" )
 
 
 
