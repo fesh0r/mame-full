@@ -71,9 +71,13 @@ Atari Historical Society - www.atari-history.com/a2600.html
 
 MESS Emulation State:
 
-This driver is highly preliminary. It will load most 2k, 4k, and 8k Game Program images, but will 
-only display graphics for some of them. The games themselves are not currently playable. Work 
-is continuing on the driver however. 
+Current known limitations of the driver:
+
+1) Restricted to 2KB and 4KB carts
+2) supports NTSC games only
+3) Limited compatibility
+4) no support for keypad controls
+5) Dip switch used to select joystick or paddles.. 
 
 $end
 
@@ -904,49 +908,72 @@ in bargain bins in toy stores for many years following.
 
 $end
 
+
 #---------------------------------------------------------------------------------------------#
 
 $info=arcadia
 $bio
-Emerson Arcadia 2001
+Emerson Arcadia 2001 (1982)
 
 
-Console
+8-bit Console system
+
+
+Sold from several firms with different names:
 
 Hanimex mpt-03 (first variant?) with large cartridge slot
+
 Palladium Video - Computer - Game with different cartridge slot, Controllers
 
 Emerson Arcadia 2001
-Schmid TVG2000 / Tele Fever
+
+Schmid TVG2000 / Tele Fever (Germany)
+
 Hanimex hmg 2650
-? leisure vision
 
-sold from several firms with different names
+LeisureVision (Canada)
 
-Features
---------
+Leonardo (Italy)
+
+Advision Home Arcade (France)
+
+
+Features:
+
 128x208 in 8 colors
+
 4 8x8 single color sprites
+
 single channel sound
+
 2 controller with analog joystick and keypad
 
-controller layout
------------------
+
+Controller Layout:
+
   1   2   3
+
   4   5   6
+
   7   8   9
+
  Del  0 Enter
 
-Emulator
---------
+
+Links:
+
+
 r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
 
 
-Known issues:
+MESS Emulation State:
 
-* Based on info by Paul Robson, Ward Shrake
-* Look into crc/arcadia.crc for some issues
-* Bad analog joystick emulation
+Based on info by Paul Robson, Ward Shrake
+
+Look into crc/arcadia.crc for some issues
+
+Bad analog joystick emulation
+
 
 $end
 
@@ -1082,7 +1109,7 @@ $end
 
 $info=c128
 $bio
-commodore c128
+Commodore c128
 
 
 Sequel of to the c64.
@@ -2382,6 +2409,67 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=concept
+$bio
+Corvus Concept
+
+
+Known Issues:
+
+The keyboard is not emulated fully.
+
+Hard disks, serial ports, and Omninet are not emulated.
+
+Only the original floppy controller (8" SSSD disks) is emulated.
+
+
+Usage:
+
+The driver can boot from a 8" SSSD floppy image.  Start the computer and press
+'F' when the computer asks for a boot device.
+
+You may invoke the MACSbug debugger as well by pressing the key 'D'.  However,
+this version of MACSbug requires a terminal to be connected to the serial port
+to do anything useful, so you are out of luck.
+
+
+History and Trivia:
+
+The Concept was announced in the spring of 1982.
+
+This computer uses a state-of-art (at the time) MC68000 CPU.  Its CCOS
+operating system is a variant of the Merlin operating system by Silicon Valley
+Software: it is a mono-tasking OS, with source-level compatibility with the
+UCSD p-system, and vague reminiscences of UNIX.
+
+The Concept has a bitmapped screen, which enables to mix text in any style and
+size with graphics, and some programs were reportedly WYSIWYG (which was still
+relatively uncommon at the time).  The system includes a primitive window
+manager, but don't delude yourself: it is no GUI.  The most original feature is
+probably the rotatable screen that can be used either in horizontal or vertical
+position: however you need to reboot the computer after flipping the screen. 
+Another feature of interest is the integrated network support: the Concept can
+be used either as a disk-less network computer or as a full-featured personal
+computer, and you could connect Concepts, Apple IIs and IBM PCs in an
+heterogeneous Omninet LAN.
+
+Available programs were mostly business applications: word processor,
+spreadsheet, grapher, database, accounting...  Thanks to its large screen, its
+WYSIWYG capability and to the use of various hierarchical menus, the Concept is
+relatively user-friendly for a 1982 business computer.  There were also Pascal
+and FORTRAN compilers, a BASIC, a UCSD runtime, an 8080 simulator, a port of
+the CP/M OS, a version of SPICE to simulate discrete ICs, and even a paint
+program that could take advantage of a mouse.
+
+The price was about 4000$ for a bare 256-kbyte system in 1984 (1000$ for extra
+256kbytes, $750 for floppy, from 2000$ to 4000$ for hard disk according to
+size).
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=coupe
 $bio
 Sam Coupe (1989)
@@ -2943,27 +3031,40 @@ Awakening and Tetris proved that quality games could be developed for portable u
 Nintendo later released the “Play it Loud” Game Boy series in 5 colors, and the redesigned 
 slimmed down Game Boy pocket version was released in 1996.
 
+
 Features:
 
 CPU: 8-bit (Similar to the Z80 processor) at 4.194304MHz
+
 Main RAM: 8k Byte internal
+
 Video RAM: 8k Byte internal
 
 Video Display: Reflective LCD 160 x 144 dots (20 x 18 Tiles)
+
 Video Colors: 4 shades of gray
+
 Screen Size: 2.6"
+
 Max # of sprites: 40
+
 Max # sprites/line: 10
+
 Max sprite size: 8x16
+
 Min sprite size: 8x8
+
 Sound: 4 channels each of which can be mapped either to the left or to the right or to
 both speakers
 
 Communications: Serial port. Up to 4 Game boys can be connected together using this port.
+
 Baud rate and protocol: (?)
 
 Power: 6 VDC, 0.7 Watts (3 VDC 0.7W for Game Boy Pocket)
+
 4 AA Batteries ~ 35 hours 
+
 Rechargeable battery (NAKI) ~ 12 hours
 
 
@@ -3010,7 +3111,48 @@ EIdolons inn - www.eidolons-inn.de
 
 MESS Emulation State:
 
-(?)
+???
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=gbcolor
+$bio
+Nintendo Gameboy Color (1998)
+
+
+This is an update to the original Gameboy system that adds color capabilities as well as backwards
+compatibility.
+
+
+Features:
+
+Processor:  8 MHz Z80 work alike by Sharp with two processor modes: Single (4MHz) and double (8MHz)
+
+Video: 10, 32, or 56 on screen colors from a palette of 32000, Screen made by Sharp
+
+Sound: 4 Channel FM stereo
+
+Controls:  8 directional D-Pad, A, B, select, and start buttons. 
+ 
+Resolution: 160x144x56 colors
+
+Sprites: 40 - 8x16, 8x8 (four color sprites-4 colors- 1 being a transparent)
+
+Tiles:  512 on screen making use of the 16K of VRAM
+
+Cart Size: 256KBit - 16MBit for GB compatible games. Up to 64 MBit ROM & 128 KBytes RAM for CGB 
+cartridges, although 32Mbit ROM / 64K RAM carts are the largest currently manufactured.
+
+Serial port speed: 512 Kbps
+
+Power:  ~13 hours on 2 AA batteries or AC adapter.
+
+
+MESS Emulation State:
+
+???
 
 $end
 
@@ -3113,6 +3255,55 @@ Wanted: Any Sega Megadrive information specifically, some of the finer points of
  and access of the 68K memory map by the Z80! Information is extremely sparse; typically the
  same three-four documents, with parts incomplete, conflicting, and corrupted. Generally, points
  which conflict with themselves in the documentation available on the net...
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=geneve
+$bio
+Myarc Geneve 9640
+
+
+Known Issues:
+
+Wait states are not emulated (except for the speech synthesizer), so the Geneve
+will always run at full speed.
+
+The keyboard does not seem to work properly in BHDMV.
+
+
+Usage:
+
+This driver emulates a Geneve with (almost) 2Mbytes of RAM, 4 floppy drives,
+and a mouse.  3 Hard Disk are supported by the HFDC disk controller.
+
+You need an MDOS disk image to boot the Geneve.  Insert the image and run the
+computer.
+
+
+History and Trivia:
+
+Myarc is known as the builder of several fine extension cards for the TI99.
+They managed to remain in business for several years after TI abandonned its
+TI99 series of computers in 1983, and, in 1987, they even introduced their
+Geneve 9640 computer.  The computer is a single card to be inserted in the TI
+PEB as a replacement of the TI99 console.  The card has standard connectors to
+attach a PC-XT keyboard and a monitor, but no other I/O ports, as the Geneve
+relies on expansion cards in the PEB to provide disk and RS232 interfaces.  The
+Geneve features a TMS9995 at 12MHz, a V9938 VDP, an SN76496 sound generator
+(compatible with TMS9919), a MM58274 RTC, 512 kbytes of 1-wait-state CPU RAM
+(expandable to almost 2 Mbytes), 32 kbytes of 0-wait-state CPU RAM (expandable
+to 64 kbytes), and 128 kbytes of VRAM (expandable to 192 kbytes).  Thanks to
+the GenMod modification, the 512 kbytes of on-board RAM can be disabled so that
+0-wait-state RAM may be used instead, but this breaks the TI99 emulation mode.
+
+Although the Geneve is compatible with the TI99, it is a different machine.  It
+has a disk-based Operating System that looks like MS-DOS.  It has two operating
+modes: a native mode, and a TI99-compatible mode.  The TI99 mode is normally
+entered by running the GPL program: the Geneve can run most TI99 programs in
+this mode, which uses some special areas of CPU RAM to emulate GROMs and
+cartridge ROMs.
 
 $end
 
@@ -3481,7 +3672,7 @@ The base unit can connect to a TV through a aerial or scart lead.
 Not many of these systems were produced and they are rare.
 
 The Amstrad CPC had a gate array chip which contained the logic for the
-palette, mode display, rom paging,ram paging and interrupt
+palette, mode display, rom paging, ram paging and interrupt
 system. This is emulated in the KC Compact using a lot of TTL logic chips
 and a Zilog 8536 chip.
 
@@ -3914,7 +4105,9 @@ $info=mbee
 $bio
 Applied Technologies Microbee
 
+
 Features:
+
 
 MESS Emulation State:
 
@@ -3925,6 +4118,7 @@ $end
 $info=mc10
 $bio
 Tandy Radio Shack MC-10 (1983)
+
 
 Features:
 
@@ -4960,9 +5154,10 @@ $bio
 Magnavox(?) Odyssey2
 
 
-Console for tv connection
+Console for TV connection
 
 Philips G7000 videopac
+
 
 Features:
 
@@ -4977,7 +5172,7 @@ Dan Boris o2em for DOS
 
 MESS Emulation State:
 
-based on info by Dan Boris
+Based on info by Dan Boris.
 
 
 $end
@@ -5011,15 +5206,16 @@ Oric Atmos
 The emulation supports Microdisc and Jasmin floppy disc controller emulation, this
 can be chosen using a Dipswitch. 
 
-Oric Atmos
 
 Known issues:
+
 - The disc controller emulation is not exact and some programs may fail to load.
 - The cassette emulation is not exact and some programs may fail to load
 - Screen display should be accurate, but there might be some small bugs.
 - Tape programs are found but not loaded.
 - there are bugs in the Microdisc and Jasmin floppy disc controller emulation so some
 programs will not boot.
+
 
 History and Trivia:
 
@@ -5028,6 +5224,7 @@ main difference with the Oric 1 was it's enhanced RAM (48 KB instead of 16 KB), 
 and the debugged ROM (the ORIC 1 had several bugs). Several peripherals were available: 
 3" floppy disk drive, a small 4 colour plotter, a speech synthesizer and a Digital/Analogue 
 converter. An external interface was needed to use joysticks. 
+
 
 $end
 
@@ -5618,10 +5815,11 @@ $end
 
 $info=pcd85
 $bio
-PMD-85
+Tesla PMD-85 (1985)
 
 
-homecomputer for tv connection in czechoslovakia?
+homecomputer for TV connection in Czechoslovakia.
+
 
 Features:
 
@@ -5629,7 +5827,7 @@ Features:
 288x256 dots resolution
 (version 1 and 2 mono)
 (version 3 with 4 colors)
-integrated beeper or beep generation for tv
+integrated beeper or beep generation for TV
 centronics port?
 something like user port?
 
@@ -5643,8 +5841,12 @@ $bio
 NEC PC Engine/TurboGrafx-16 (1987)
 
 
-
-The PC Engine (called TurboGrafx - 16 in the US)  was the first 16-Bit graphics home entertainment system to be released. The PC Engine was created by NEC of Japan. Supporting over 1000 software titles with such popular titles as Bonk's Adventure, Bomberman, Dracula X and Ys IV . The PC Engine was embraced by millions of Japanese gamers, and because of this, the system will be remembered as the starting of a legacy. This system was the first of it's kind to use credit card size game cartridges and later supported CD-ROMs and portable models with built in TV tuners.
+The PC Engine (called TurboGrafx - 16 in the US)  was the first 16-Bit graphics home entertainment 
+system to be released. The PC Engine was created by NEC of Japan. Supporting over 1000 software 
+titles with such popular titles as Bonk's Adventure, Bomberman, Dracula X and Ys IV . The PC Engine
+was embraced by millions of Japanese gamers, and because of this, the system will be remembered as
+the starting of a legacy. This system was the first of it's kind to use credit card size game cartridges
+and later supported CD-ROMs and portable models with built in TV tuners.
 
 
 Features:
@@ -6702,8 +6904,7 @@ The floppy disc interface:
 - 16k ROM
 - RAM
 - NEC765 compatible disc controller
-- internally the disc interface uses interrupts to transfer data into it's own
-ram.
+- internally the disc interface uses interrupts to transfer data into it's own ram.
 
 The floppy disc drives are 3" and are believed to use 40 track, double density, double sided discs,
 giving 360K per disc.
@@ -6846,6 +7047,40 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=supergb
+$bio
+Nintendo Super Game Boy (1994)
+
+
+The Super Game Boy is an adapter for the SNES that let you play Game Boy games on your TV. It 
+also had some extended features like backgrounds around the game and primitive color, although
+not all games take advantage of this. It possible for Super Game Boy games to make use of the 
+SNES sound hardware for extra effects. Try compairing Astroids/Missle Commmand, Space invadors
+or Donkey Kong to see some excellent use of the of enhancments. In 1994 the Super Game Boy sold
+for under $60.
+
+There was a Super Game Boy 2 released in 199?. It has the same features of the original Super 
+Game Boy but adds a green game link LED, red power LED and a Game link port.
+
+
+Features:
+
+Supports 256 colors in static screens (i.e the title screen) and 12 colors in the normal game.
+
+
+Links:
+
+http://www.gamersgraveyard.com/repository/snes/peripherals/sgbfaq.txt
+
+
+MESS Emulation State:
+
+???
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=svi318
 $bio
 Spectravideo SVI-318 (1983)
@@ -6890,7 +7125,7 @@ Connector for external power supply
 
 Optional features:
 
-tv adapter
+TV adapter
 
 
 Notes:
@@ -6904,7 +7139,7 @@ MESS Emulation State:
 very preliminary support
 preliminary sound support
 no serial port
-no tv adapter support
+no TV adapter support
 work stopped until more cartridges are available
 
 
@@ -7000,7 +7235,7 @@ This system is a update to the Atmos.
 
 Known Issues:
 
-- disc emulation is not correct so it fails to boot! 
+Disc emulation is not correct so it fails to boot! 
 
 
 $end
@@ -7095,10 +7330,10 @@ Notes:
 
 To do:
 
-- port 3 and 4
-- nvram
-- better artworks
-- drivers for other rom versions
+port 3 and 4
+nvram
+better artworks
+drivers for other rom versions
 
 Needed:
 
@@ -7178,9 +7413,9 @@ Notes:
 
 To do:
 
-- port 3 and 4
-- better artworks
-- drivers for rom versions: 1.0, 2.0, 7.0
+port 3 and 4
+better artworks
+drivers for rom versions: 1.0, 2.0, 7.0
 
 
 Needed:
@@ -7261,10 +7496,10 @@ Notes:
 
 To do:
 
-- many corrections of existing code
-- port 3 and 4
-- better artworks
-- driver for rom version 1.2
+many corrections of existing code
+port 3 and 4
+better artworks
+driver for rom version 1.2
 
 
 Needed:
@@ -7330,8 +7565,8 @@ enabled by default.  Whilst in full keyboard emulation mode, some key
 associated functionality may be disabled (like the ESC key for EXIT).
 The keyboard emulation mode is toggled using the scroll_lock key.
 
-A TI99/4 is not a TI99/4a.  Most programs are compatible with both /4 and /4a,
-but some programs require a /4a.
+A TI-99/4 is not a TI-99/4a.  Most programs are compatible with both /4 and
+/4a, but some programs require a /4a.
 
 The BwG disk controller has display bug which causes it to change the character
 definitions for no appearent reason, but, out of this, it seems to work fine.
@@ -7340,7 +7575,16 @@ If this is an issue, you may revert to the TI disk controller.
 
 Usage:
 
-See sysinfo for the ti99/4a driver.
+See the sysinfo entry for the ti-99/4a driver.
+
+The only extra feature is the IR remote handsets.  This feature was abandoned
+by TI at the last minute, but the support was seemingly not deleted from the
+ti99/4 ROMs until the release of the ti99/4a.  This feature is disabled by
+default because some programs are incompatible with it, but it can be enabled
+by setting the IR remote handsets dip-switch on and resetting the emulator
+(press F3 in so-called partial keyboard emulation mode to reset the emulator).
+A few programs can use the improved joysticks (TI-Invaders seems to be one of
+them).
 
 
 History and Trivia:
@@ -7390,7 +7634,9 @@ $bio
 Texas Instruments TI-99/4a Home Computer
 
 
+
 Known Issues:
+
 
 Requires full keyboard emulation.  At startup, full keyboard emulation mode is
 enabled by default.  Whilst in full keyboard emulation mode, some key
@@ -7398,20 +7644,87 @@ associated functionality may be disabled (like the ESC key for EXIT).
 The keyboard emulation mode is toggled using the scroll_lock key.
 
 
+
 Usage:
 
-This TI99/4a driver offers a high level of compatibility.  It currently
-supports V9t9-format cartridge images, sampled tapes in wave format
-(CS1 and CS2), and up to 3 SSSD or DSDD disk images.  Speech synthesis should
-now emulated completely.  Both TI and BwG disk controllers are supported.
-TI, Super AMS and Foundation memory expansion cards are supported.  Serial port
-and PIO emulation is incomplete, but it enables you to redirect PIO output to a
-file and save listings to this file by "printing" them to PIO.
+
+This TI-99/4a driver offers a high level of compatibility, and implements
+several optional extensions:
+
+
+* Image cartridges are in V9t9 format (see below for instructions).
+
+
+* Speech synthesis is emulated completely.  The speech synthesizer occasionally
+generates some weird noises instead of the expected phonemes.  I think the
+actual reason for this issue is the original ti-99/4(a) speech synthesizer did
+not use the tms5220 chip that is used under emulation: I think I have read
+somewhere that TI 99/8, which did use a tms5220, was affected by similar bugs.
+
+
+* Three types of memory expansion cards are emulated: the original TI 32kbyte
+card, and the Super AMS card, and the Foundation card.
+
+
+* Any of three different floppy disk controllers can be emulated: TI's original
+SD disk controller, SNUG's BwG disk controller, and Myarc's HFDC disk
+controller.  Note that neither the hard disk nor tape interface of the HFDC
+card are emulated.  These disk controllers have different abilities: TI's
+controller only supports single density disks with 9 sectors per track and 40
+tracks per sides; the BwG controller supports double density, and it uses no
+VDP RAM at all; the HFDC controller supports 80-track disks as well (high
+density support is incomplete and non-functional because of TI99 bugs).  Four
+floppy disk drives are emulated, but the TI controller only supports three of
+them (the fourth disk drive will be ignored if the TI controller is selected).
+Floppy disk images are in a MESS-specific format that is compatible with
+single-sided V9T9 disk images (but not double-sided ones).
+
+
+* Thierry Nouspickel's IDE card prototype is emulated.  A description can be
+found on Thierry's page along with the required disk-based DSR.  Note that
+there are two minor errors in the DSR disk image: the byte at offset >12 must
+be edited from >02 to >01, and the byte at offset >7601 must be edited from >21
+to >20; the byte at offset >13 should be edited from >02 to >01, too, but this
+is not a critical issue at present.  Note that the disk image does not work
+very well with the BwG disk controller, though I cannot figure out why (it
+works fine with both the TI controller and the HFDC controller).  The hard disk
+image is a standard MAME disk image; since MESS does not support image diff
+file currently, only un-compressed images can be written to (compressed images
+ARE supported, but only as read-only disks).
+
+
+* Serial port and PIO emulation is incomplete.  On the one hand, nothing useful
+can be done with the RS232 interface, but, on the other hand, the PIO interface
+enables you to redirect PIO output to a file and save listings to this file by
+"printing" them to PIO.
+
+
+* SNUG's HSGPL support is incomplete, but you can already play with it if you
+want to.  You will need the HSGPL DSR (and probably the software manual, too)
+from the SNUG web site to do anything useful.  The FEEPROM is saved to a file
+called "hsgpl.mem", in the memcard folder.  Its format is relatively simple:
+byte 0 is always 0, and the rest of the file is made of four similar sections
+for each Flash EEPROM (DSR, GROM0, GROM1, and ROM6); the first byte of each
+section is 0, the second should be 1, and the next 512kbytes is the raw FEEPROM
+data.   The DSR and system GROM0 needs to be loaded into the FEEPROM: to do so,
+you can use a hex editor to create a hsgpl.mem file in correct format.
+Afterwards, you may write extra GROM using the HSGPL DSR.  Note that Supercart
+and MBX paging are not emulated correctly, and there must be other issues.
+
+
+* The tape interface is emulated.  The CS1 unit is read/write, whereas CS2 is
+write-only.   Tapes are stored as sampled wave files.  You may find that the
+emulated tape interface is a relatively simple way to exchange files with
+real-world TI99s.
+
+
 
 Loading a cartridge:
 
+
 You do not need a cartridge image to run the computer, since TI99/4a has
 a small built-in basic interpreter.
+
 
 V9t9-format cart images are typically split into up to 3 files.  You MUST load
 all individual files.  Loading a single zip archive containing all the
@@ -7419,19 +7732,48 @@ cartridge files will NOT work, you must uncompress the archive and select every
 file instead.  These files can be loaded in any order, as long as all necessary
 files are loaded.
 
+
+The following file name extensions are recognized for cartridges dumps:
+
+* "g.bin", ".grom" or ".g": GROM dump
+
+* "c.bin", ".crom" or ".c": CPU ROM dump
+
+* "d.bin", ".drom" or ".d": CPU ROM dump for second page (pages cartridges
+	only), to be loaded alongside a CPU ROM dump
+
+The following two types are supported as alternatives to the CPU ROM type
+(these extensions are only found in MESS, not V9T9):
+
+* "m.bin", ".mrom" or ".m": minimemory CPU ROM dump; similar to CPU ROM dump,
+	but the address range >7000->7fff is set up as RAM (paging is not
+	supporting); unfortunately, there is no way you can save the contents of
+	minimemory to disk
+
+* "b.bin", ".brom" or ".b": MBX CPU ROM dump; similar to CPU ROM dump, but the
+	address range >6c00->6ffd is set up as RAM, and the paging scheme is
+	different; unfortunately, I do not have any correct dump of a MBX cart to
+	test emulation with
+
+
+
 Setting up the system configuration:
 
-A few dip switches enable or disable computer extensions. These switches are
-only read at reset. Therefore, if you edit them, you must reset the emulator
+
+A few dip switches enable or disable computer extensions.  These switches are
+only read at reset.  Therefore, if you edit them, you must reset the emulator
 (press F3 in partial keyboard emulation mode) for the changes to be taken
 into account.
 
 
+
 History and Trivia:
 
-The TI99/4a Home Computer was a TI99/4 with improved keyboard, revised
+
+The TI-99/4a Home Computer was a TI-99/4 with improved keyboard, revised
 ROMs, and an additional graphics mode.  It was officially introduced in
 June 1981, and was retired in late 1983.
+
 
 TI99/4a was quite successful in Europe and US (possibly hundreds of
 thousand units built).  In 1983, though, competition on the home computer
@@ -7455,22 +7797,27 @@ See the TI99/4a driver for non-EVPC information.
 Known Issues:
 
 EVPC emulation is not complete.  The palette chip is not emulated.
-Also, TI BASIC will not run under this driver, though it might be normal
-(I know there are some bugs in the TI's system ROMs which prevent them
-from running with a v9938).
+The computer may crash on soft reset, though I have no idea why.
 
 
 History and Trivia:
 
 A common hack on the ti99/4a is replacing the old tms9918/9928/9929a with
-a higher-end, upward-compatible v9938. This enhanced vdp supports true 16-
+an improved, upward-compatible v9938.  This enhanced vdp supports true 16-
 and 256-color graphic modes, high-res 512*192 graphic and 80-column text
-modes, accelerated 2D graphics, etc. The only drawback is that some programs
-(including TI's system ROMs) will not run with the v9938.
+modes, accelerated 2D graphics, etc.  The only drawback is that some programs
+(including TI's own TI BASIC) will not run with the v9938.  Also, only
+specially designed programs can take advantage of the improved graphic modes.
 
 The EVPC card does just that: it includes a v9938 with 128kb of VRAM, 64kb of
 extended RAM, an additional palette chip to program the palette in 256-color
 mode, and a DSR ROM with various useful subroutines.
+
+Also, this driver uses a hacked TI BASIC GROM so that TI BASIC will work
+normally with the v9938.  Only two bytes were modified to derive file
+"994agr38.bin" from file "994agrom.bin": the bytes >F0 >0C >F8 at offset >216C
+of the file were changed to >00 >0C >00.  (This fix was contributed by Tony
+Knerr, but I have no idea who invented it first.)
 
 
 $end
@@ -7546,6 +7893,81 @@ DNOS (released around 1981) was similar to DX10 and mostly compatible with it:
 it supported extra features but it was bigger and slower. Neither OS could run
 on the lower-end 990/4 and /5 systems, but a kernel and various OS utilities
 were available as static-link libraries for embedded applications.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=tutor
+$bio
+Tomy Tutor (a.k.a. Grandstand Tutor)
+
+
+Known Issues:
+
+
+Cassette emulation does not work.
+
+
+
+Usage:
+
+
+The Tutor has three built-in programs:
+
+* Graphic is a Picture drawing program.  It enables you to create 256*192
+pictures in 16 colors, but the interface is awkward and I don't think the
+pictures drawn in this program can be saved.
+
+* Basic is a Basic interpreter derived from the TI99 Extended Basic.  Quite
+unfortunately, Basic lacks I/O routines and a serious graphic library.
+
+* GBasic is another Basic interpreter that is hidden in Graphic.  It is
+probably faster than Basic and has better graphic capabilities, but the
+language itself is unfortunately lacking.  And the editor simply sucks.
+
+
+A few cartridges were released: almost 40 games and a few educational programs.
+9 cartridges are known to have been dumped (8 games and an educational title).
+
+
+
+History and Trivia:
+
+
+This computer is known as Tomy Tutor in US, and as Grandstand Tutor in UK.  It
+was initially released in Japan in 1982 or 1983 under the name of Pyuuta
+(Pi-yu-u-ta, with a Kanji for the "ta").  The Japanese versions are different
+from the English-language versions, as they have different ROMs with Japanese
+messages and support for the katakana syllabus.  There are at least 4 versions:
+
+* original Pyuuta (1982 or 1983) with title screens in Japanese but no Basic
+(only the toy-like Gbasic interpreter is available)
+
+* Pyuuta Jr. (1983?) which is a console with a simplified keyboard
+
+* Tomy/Grandstand Tutor (circa October 1983?) with title screens in English and
+integrated Basic
+
+* Pyuuta Mk. 2 (1984?) with a better-looking keyboard and integrated Basic
+
+
+The Tutor was not extremely successful, probably due to the fact that little
+software was available (and that the software that was available was not varied
+enough).
+
+
+One question that remains open is the relationship between the Tutor and the
+TI-99 series.  From a hardware point of view, the Tutor has a lot in common
+with TI-99/4(a) (though the two computers are NOT compatible).  From a
+software point of view, the Tutor Basic is directly derived from TI Extended
+Basic (there is even a GPL interpreter in ROM, though the Tutor variant of GPL
+is quite different from TI GPL).  However, other Tutor software do not seem to
+be derived from TI-99 software.  It is therefore likely that Matsushita
+designed the Tutor independently from TI and licenced the TI Basic from TI as
+an afterthought; OTOH, the whole design might have originated from TI, as the
+computer really looks like a "TI-99/3" (the hardware is similar to the TI-99/4
+series, whereas the concept is very close to the TI-99/2).
 
 $end
 
@@ -7628,6 +8050,7 @@ Features:
 
 MESS Emulation State:
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -7637,7 +8060,7 @@ $bio
 Interton VC4000
 
 
-Console for tv connection (PAL only?)
+Console for TV connection (PAL only?)
 
 seams to be prequel of the arcadia 2001
 technical something between channel f and odyssey2
@@ -7650,6 +8073,7 @@ radofin 1201?
 fountain 1392?
 hanimex?
 
+
 Features:
 
 grid 
@@ -7659,6 +8083,7 @@ special << load/reset button (must be pressed after power up)
 special > select button
 special start button
 2 controller with analog joystick and 14 key keypad
+
 
 controller keypad:
 
@@ -7937,16 +8362,16 @@ $end
 
 $info=vip
 $bio
-RCA Cosmac VIP
+RCA Cosmac VIP (1977)
 
 
-very early computer for tv connection
+very early home computer for TV connection
 
 
 Features:
 
 tape interface
-tv output
+TV output
 integrated speaker
 
 
@@ -7974,7 +8399,10 @@ $end
 
 $info=zx80
 $bio
-Sinclair ZX 80
+Sinclair ZX 80 (1980)
+
+
+A home computer built in the United Kingdom.
 
 
 History and Trivia:
@@ -7989,7 +8417,10 @@ $end
 
 $info=zx81
 $bio
-Sinclair ZX 81 / Timex Sinclair 1000
+Sinclair ZX 81 / Timex Sinclair 1000 (1981)
+
+
+A home computer built in the United Kingdom.
 
 
 History and Trivia:

@@ -1,0 +1,78 @@
+0.70
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Corvus Concept [Raphael Nabet]
+- Tomy Tutor [Raphael Nabet]
+
+System Driver Changes:
+----------------------
+- [A2600] Fixed bug #405 and corrected some dipswitches. [Stefano Priore]
+
+- [A7800] Reset and Start buttons now appear in the Input menu. Added
+  console's own Pause button. [Stefano Priore]
+
+- [ASTROCADE] Fixed some Input menu descriptions and corrected paddles'
+  sensitivities. [Stefano Priore]
+
+- [COCO] Implemented cocodmk_sector_count() and cocodmk_sector_info() in
+  coco_dsk.c, allowing DMK images with weird sector sizes to load properly
+  (bug #378). [tim lindner]
+
+- [EINSTEIN/EP128] Fixed crashes on startup (bug #407). [Nate Woods]
+
+- [GENEVE] Fixed sound in native mode and a mirror of the VDP ports that is
+  used by the converted Tomy carts.  Enabled access to the RTC in ti99 mode.
+  Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
+  [Raphael Nabet]
+
+- [IBMPC] Fixed a bug in the DAA instruction that prevented the driver from
+  starting up (bugs #423, #425). [Colin Howell]
+
+- [LISA] Implemented some missing MMU feature.  The Lisa OS still won't boot,
+  though. [Raphael Nabet]
+
+- [PC] Added support for natural keyboard handling.  Also fixed a bug in hard
+  disk handling (bug #403). [Nate Woods]
+
+- [PC200] Fixed a bug causing corrupted characters (bug #398) and a bug
+  affecting floppies at startup. [John Elliott]
+
+- [PCMDA] Fixed a bug whereby the screen wouldn't fully refresh all the time
+  (bug #419).  [Nate Woods, John Elliott]
+
+- [SNES] Fixed negative increment in GDMA. [Anthony Kruize]
+
+- [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael
+  Nabet]
+
+- [TI99 EVPC card] Implemented missing VDP ports.
+
+- [TI99, GENEVE] Added hfdc HD support.  Changed floppy disk image format
+  from the previous MESS-specific format to the more universal v9t9 format.
+  This does make any difference for single-sided images, but you will need to
+  convert existing double-sided image to the new format. [Raphael Nabet]
+
+User Interface Changes:
+-----------------------
+- [WIN32 FE] The emulation will not be started up if any required devices are
+  not specified with an image, like cartridges on a console system.  (bug #415)
+  [Nate Woods]
+
+Imgtool Changes:
+----------------
+- Renamed the ti99 module to ti99_old, since the format it handles has been
+  obsoleted by changes in the ti99 driver. [Raphael Nabet]
+
+- Added support for Corvus Concept disk images. [Raphael Nabet]
+
+Source Changes:
+---------------
+- The core is based on MAME 0.70.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Modified flopdrv.c to reset pDrive->id_index to zero when head is moved
+  from track to track. [tim lindner]
+
+- CRC calculation of read/write images has been disabled (bug #416).
+  [Raphael Nabet, Nate Woods]
