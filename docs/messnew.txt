@@ -58,7 +58,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- [Windows] Fixed a very subtle bug in Win32 file handling that caused a very
+  serious disk corruption bug in the CoCo driver (bug #500) [Nate Woods and
+  Tim Lindner]
 
 
 

@@ -692,7 +692,7 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 
 	// do the write
 	WriteFile(file->handle, buffer, length, &result, NULL);
-	file->filepos += result;
+	file->filepos = file->offset + result;
 
 	// adjust the pointers
 	file->offset += result;
