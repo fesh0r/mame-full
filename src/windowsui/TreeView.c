@@ -57,27 +57,34 @@
     public structures
  ***************************************************************************/
 
-#define ICON_MAX ICON_SOURCE
+#define ICON_MAX (sizeof(treeIconNames) / sizeof(treeIconNames[0]))
 
 /* Name used for user-defined custom icons */
 /* external *.ico file to look for. */
-static char treeIconNames[][15] =
+
+typedef struct
 {
-	"foldopen",
-	"folder",
-	"foldavail",
-	"foldmanu",
-	"foldunav",
-	"foldyear",
-    "foldsrc",
-	"manufact",
-	"working",
-	"nonwork",
-	"year",
-	"sound",
-    "cpu",
-	"harddisk",
-    "source",
+	int		nResourceID;
+	LPCSTR	lpName;
+} TREEICON;
+
+static TREEICON treeIconNames[] =
+{
+	{ IDI_FOLDER_OPEN,         "foldopen" },
+	{ IDI_FOLDER,              "folder" },
+	{ IDI_FOLDER_AVAILABLE,    "foldavail" },
+	{ IDI_FOLDER_MANUFACTURER, "foldmanu" },
+	{ IDI_FOLDER_UNAVAILABLE,  "foldunav" },
+	{ IDI_FOLDER_YEAR,         "foldyear" },
+    { IDI_FOLDER_SOURCE,       "foldsrc" },
+	{ IDI_MANUFACTURER,        "manufact" },
+	{ IDI_WORKING,             "working" },
+	{ IDI_NONWORKING,          "nonwork" },
+	{ IDI_YEAR,                "year" },
+	{ IDI_SOUND,               "sound" },
+    { IDI_CPU,                 "cpu" },
+	{ IDI_HARDDISK,            "harddisk" },
+    { IDI_SOURCE,              "source" }
 };
 
 /***************************************************************************
@@ -128,9 +135,11 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 static int InitExtraFolders(void);
 static void FreeExtraFolders(void);
 static void SetExtraIcons(char *name, int *id);
-BOOL TryAddExtraFolderAndChildren(int parent_index);
+static BOOL TryAddExtraFolderAndChildren(int parent_index);
 
-BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder);
+static BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder);
+
+static int FindIconIndex(int nResourceID);
 
 /***************************************************************************
     public functions
@@ -471,8 +480,8 @@ void CreateSourceFolders(int parent_index)
 		if (i == start_folder-1)
 		{
 			// nope, it's a source file we haven't seen before, make it.
-			LPTREEFOLDER lpTemp =
-				NewFolder(s,next_folder_id++,parent_index,ICON_SOURCE,0);
+			LPTREEFOLDER lpTemp;
+			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_SOURCE,0);
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
@@ -487,8 +496,8 @@ void CreateManufacturerFolders(int parent_index)
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 
 	// not sure why this is added separately
-	LPTREEFOLDER lpTemp =
-		NewFolder("Romstar",next_folder_id++,parent_index,ICON_MANUFACTURER,0);
+	LPTREEFOLDER lpTemp;
+	lpTemp = NewFolder("Romstar", next_folder_id++, parent_index, IDI_MANUFACTURER, 0);
 	AddFolder(lpTemp);
 
 	// no games in top level folder
@@ -515,8 +524,7 @@ void CreateManufacturerFolders(int parent_index)
 		if (i == start_folder-1)
 		{
 			// nope, it's a manufacturer we haven't seen before, make it.
-			lpTemp = 
-				NewFolder(s,next_folder_id++,parent_index,ICON_MANUFACTURER,0);
+			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_MANUFACTURER, 0);
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
@@ -535,8 +543,8 @@ void CreateCPUFolders(int parent_index)
 
 	for (i=1;i<CPU_COUNT;i++)
 	{
-		LPTREEFOLDER lpTemp =
-			NewFolder(cputype_name(i),next_folder_id++,parent_index,ICON_CPU,0);
+		LPTREEFOLDER lpTemp;
+		lpTemp = NewFolder(cputype_name(i), next_folder_id++, parent_index, IDI_CPU, 0);
 		AddFolder(lpTemp);
 	}
 
@@ -581,8 +589,8 @@ void CreateSoundFolders(int parent_index)
 		};
 		extern struct snd_interface sndintf[];
 
-		LPTREEFOLDER lpTemp =
-			NewFolder(sndintf[i].name,next_folder_id++,parent_index,ICON_CPU,0);
+		LPTREEFOLDER lpTemp;
+		lpTemp = NewFolder(sndintf[i].name, next_folder_id++, parent_index, IDI_CPU, 0);
 		AddFolder(lpTemp);
 	}
 
@@ -635,7 +643,8 @@ void CreateYearFolders(int parent_index)
 		if (i == start_folder-1)
 		{
 			// nope, it's a year we haven't seen before, make it.
-			LPTREEFOLDER lpTemp = NewFolder(s,next_folder_id++,parent_index,ICON_YEAR,0);
+			LPTREEFOLDER lpTemp;
+			lpTemp = NewFolder(s, next_folder_id++, parent_index, IDI_YEAR, 0);
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
@@ -783,7 +792,7 @@ static void AddTreeFolders(int start_index,int end_index)
 			tvs.hParent = TVI_ROOT;
 			tvi.pszText = lpFolder->m_lpTitle;
 			tvi.lParam	= (LPARAM)lpFolder;
-			tvi.iImage	= lpFolder->m_nIconId;
+			tvi.iImage	= FindIconIndex(lpFolder->m_nIconId);
 			tvi.iSelectedImage = 0;
 
 #if defined(__GNUC__) /* bug in commctrl.h */
@@ -823,7 +832,7 @@ static void AddTreeFolders(int start_index,int end_index)
 
 		tvi.mask	= TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		tvs.hParent = hti_parent;
-		tvi.iImage	= treeFolders[i]->m_nIconId;
+		tvi.iImage	= FindIconIndex(treeFolders[i]->m_nIconId);
 		tvi.iSelectedImage = 0;
 		tvi.pszText = treeFolders[i]->m_lpTitle;
 		tvi.lParam	= (LPARAM)treeFolders[i];
@@ -1046,10 +1055,11 @@ static BOOL CreateTreeIcons()
 
 	hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, numIcons, numIcons);
 
-	for (i = IDI_FOLDER_OPEN; i <= IDI_SOURCE; i++)
+	for (i = 0; i < sizeof(treeIconNames) / sizeof(treeIconNames[0]); i++)
 	{
-		if ((hIcon = LoadIconFromFile(treeIconNames[i - IDI_FOLDER_OPEN])) == NULL)
-			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
+		hIcon = LoadIconFromFile(treeIconNames[i].lpName);
+		if (!hIcon)
+			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(treeIconNames[i].nResourceID));
 
 		if (ImageList_AddIcon (hTreeSmall, hIcon) == -1)
 		{
@@ -1063,7 +1073,7 @@ static BOOL CreateTreeIcons()
 		if ((hIcon = LoadIconFromFile(ExtraFolderIcons[i])) == 0)
 			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(IDI_FOLDER));
 
-		if (ImageList_AddIcon (hTreeSmall, hIcon) == -1)
+		if (ImageList_AddIcon(hTreeSmall, hIcon) == -1)
 		{
 			ErrorMsg("Error creating icon on extra folder, %i %i",i,hIcon != NULL);
 			return FALSE;
@@ -1071,7 +1081,7 @@ static BOOL CreateTreeIcons()
 	}
 
 	// Be sure that all the small icons were added.
-	if (ImageList_GetImageCount (hTreeSmall) < numIcons)
+	if (ImageList_GetImageCount(hTreeSmall) < numIcons)
 	{
 		ErrorMsg("Error with icon list--too few images.  %i %i",
 				ImageList_GetImageCount(hTreeSmall),numIcons);
@@ -1582,8 +1592,8 @@ static int InitExtraFolders(void)
 						ExtraFolderData[count]->m_nFolderId   = next_folder_id++;
 						ExtraFolderData[count]->m_nParent	  = -1;
 						ExtraFolderData[count]->m_dwFlags	  = F_CUSTOM;
-						ExtraFolderData[count]->m_nIconId	  = icon[0] ? icon[0] : ICON_FOLDER;
-						ExtraFolderData[count]->m_nSubIconId  = icon[1] ? icon[1] : ICON_FOLDER;
+						ExtraFolderData[count]->m_nIconId	  = icon[0] ? icon[0] : IDI_FOLDER;
+						ExtraFolderData[count]->m_nSubIconId  = icon[1] ? icon[1] : IDI_FOLDER;
 						count++;
 					}
 				}
@@ -1628,7 +1638,7 @@ static void SetExtraIcons(char *name, int *id)
 	ExtraFolderIcons[numExtraIcons] = malloc(strlen(name) + 1);
 	if (ExtraFolderIcons[numExtraIcons])
 	{
-		*id = (ICON_MAX + 1) + numExtraIcons;
+		*id = (sizeof(treeIconNames) / sizeof(treeIconNames[0])) + 1 + numExtraIcons;
 		strcpy(ExtraFolderIcons[numExtraIcons], name);
 		numExtraIcons++;
 	}
@@ -1879,11 +1889,11 @@ BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder)
 
 
 	   fprintf(fp,"[FOLDER_SETTINGS]\n");
-	   if (extra_folder->m_nIconId != ICON_FOLDER)
+	   if (extra_folder->m_nIconId != IDI_FOLDER)
 	   {
-		   fprintf(fp,"RootFolderIcon %s\n",ExtraFolderIcons[extra_folder->m_nIconId-ICON_MAX-1]);
+		   fprintf(fp, "RootFolderIcon %s\n", ExtraFolderIcons[extra_folder->m_nIconId-ICON_MAX-1]);
 	   }
-	   if (extra_folder->m_nSubIconId != ICON_FOLDER)
+	   if (extra_folder->m_nSubIconId != IDI_FOLDER)
 	   {
 		   fprintf(fp,"SubFolderIcon %s\n",ExtraFolderIcons[extra_folder->m_nSubIconId-ICON_MAX-1]);
 	   }
@@ -1939,6 +1949,18 @@ HIMAGELIST GetTreeViewIconList(void)
 {
     return hTreeSmall;
 }
+
+static int FindIconIndex(int nResourceID)
+{
+	int i;
+	for (i = 0; i < sizeof(treeIconNames) / sizeof(treeIconNames[0]); i++)
+	{
+		if (nResourceID == treeIconNames[i].nResourceID)
+			return i;
+	}
+	return -1;
+}
+
 
 /* End of source file */
 

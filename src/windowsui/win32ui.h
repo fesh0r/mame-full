@@ -32,8 +32,7 @@ extern HWND GetMainWindow(void);
 extern HWND GetTreeView(void);
 extern int GetNumGames(void);
 extern void GetRealColumnOrder(int order[]);
-extern HICON LoadIconFromFile(char *iconname);
-extern BOOL GameUsesTrackball(int game);
+extern HICON LoadIconFromFile(const char *iconname);
 extern void UpdateScreenShot(void);
 extern void ResizePickerControls(HWND hWnd);
 

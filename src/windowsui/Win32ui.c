@@ -919,49 +919,6 @@ void GetRealColumnOrder(int order[])
 	}
 }
 
-BOOL GameUsesTrackball(int game)
-{
-    const struct InputPortTiny* input_ports;
-
-	/* new trackball support */
-
-	if ( drivers[game]->input_ports == 0 )
-    {
-        /* no input ports, so no trackball */
-
-        return FALSE;
-    }
-
-    input_ports = drivers[game]->input_ports;
-
-    for ( ; ; )
-    {
-        UINT32  type;
-
-        type = (*input_ports).type;
-        if ( type == IPT_END )
-        {
-            break;
-        }
-
-        type &= ~IPF_MASK;
-        
-        if (type == IPT_DIAL
-            ||	type == IPT_PADDLE
-            ||	type == IPT_TRACKBALL_X
-            ||	type == IPT_TRACKBALL_Y
-            ||	type == IPT_AD_STICK_X
-            ||	type == IPT_AD_STICK_Y)
-        {
-            return TRUE;
-        }
-        
-        ++input_ports;
-    }
-
-	return FALSE;
-}
-
 /*
  * PURPOSE: Format raw data read from an ICO file to an HICON
  * PARAMS:  PBYTE ptrBuffer  - Raw data from an ICO file
@@ -1068,7 +1025,7 @@ HICON FormatICOInMemoryToHICON(PBYTE ptrBuffer, UINT nBufferSize)
 	return hIcon;
 }
 
-HICON LoadIconFromFile(char *iconname)
+HICON LoadIconFromFile(const char *iconname)
 {
 	HICON       hIcon = 0;
 	struct stat file_stat;

@@ -59,7 +59,6 @@
  * Imported function prototypes
  ***************************************************************/
 
-extern BOOL GameUsesTrackball(int game);
 extern int load_driver_history(const struct GameDriver *drv, char *buffer, int bufsize);
 
 /**************************************************************

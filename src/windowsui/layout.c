@@ -33,25 +33,25 @@
 
 FOLDERDATA g_folderData[] =
 {
-	{"All Games",       FOLDER_ALLGAMES,     ICON_FOLDER,				0,             0,            NULL,                       NULL,              TRUE },
-	{"Available",       FOLDER_AVAILABLE,    ICON_FOLDER_AVAILABLE,     F_AVAILABLE,   0,            NULL,                       NULL,              TRUE },
+	{"All Games",       FOLDER_ALLGAMES,     IDI_FOLDER,				0,             0,            NULL,                       NULL,              TRUE },
+	{"Available",       FOLDER_AVAILABLE,    IDI_FOLDER_AVAILABLE,     F_AVAILABLE,   0,            NULL,                       NULL,              TRUE },
 #ifdef SHOW_UNAVAILABLE_FOLDER
-	{"Unavailable",     FOLDER_UNAVAILABLE,  ICON_FOLDER_UNAVAILABLE,	0,             F_AVAILABLE,  NULL,                       NULL,              FALSE },
+	{"Unavailable",     FOLDER_UNAVAILABLE,  IDI_FOLDER_UNAVAILABLE,	0,             F_AVAILABLE,  NULL,                       NULL,              FALSE },
 #endif
-	{"Manufacturer",    FOLDER_MANUFACTURER, ICON_FOLDER_MANUFACTURER,  0,             0,            CreateManufacturerFolders },
-	{"Year",            FOLDER_YEAR,         ICON_FOLDER_YEAR,          0,             0,            CreateYearFolders },
-	{"Source",          FOLDER_SOURCE,       ICON_FOLDER_SOURCE,        0,             0,            CreateSourceFolders },
-	{"CPU",             FOLDER_CPU,          ICON_FOLDER,               0,             0,            CreateCPUFolders },
-	{"SND",             FOLDER_SND,          ICON_FOLDER,               0,             0,            CreateSoundFolders },
-	{"Working",         FOLDER_WORKING,      ICON_WORKING,				F_WORKING,     F_NONWORKING, NULL,                       DriverIsBroken,    FALSE },
-	{"Non-Working",     FOLDER_NONWORKING,   ICON_NONWORKING,			F_NONWORKING,  F_WORKING,    NULL,                       DriverIsBroken,    TRUE },
-	{"Originals",       FOLDER_ORIGINAL,     ICON_FOLDER,				F_ORIGINALS,   F_CLONES,     NULL,                       DriverIsClone,     FALSE },
-	{"Clones",          FOLDER_CLONES,       ICON_FOLDER,				F_CLONES,      F_ORIGINALS,  NULL,                       DriverIsClone,     TRUE },
-	{"Raster",          FOLDER_RASTER,       ICON_FOLDER,				F_RASTER,      F_VECTOR,     NULL,                       DriverIsVector,    FALSE },
-	{"Vector",          FOLDER_VECTOR,       ICON_FOLDER,				F_VECTOR,      F_RASTER,     NULL,                       DriverIsVector,    TRUE },
-	{"Trackball",       FOLDER_TRACKBALL,    ICON_FOLDER,				0,             0,            NULL,                       DriverUsesTrackball,	TRUE },
-	{"Stereo",          FOLDER_STEREO,       ICON_STEREO,				0,             0,            NULL,                       DriverIsStereo,    TRUE },
-	{"Hard Disk",       FOLDER_HARDDISK,     ICON_HARDDISK,             0,             0,            NULL,                       DriverIsHarddisk,  TRUE },
+	{"Manufacturer",    FOLDER_MANUFACTURER, IDI_FOLDER_MANUFACTURER,  0,             0,            CreateManufacturerFolders },
+	{"Year",            FOLDER_YEAR,         IDI_FOLDER_YEAR,          0,             0,            CreateYearFolders },
+	{"Source",          FOLDER_SOURCE,       IDI_FOLDER_SOURCE,        0,             0,            CreateSourceFolders },
+	{"CPU",             FOLDER_CPU,          IDI_FOLDER,               0,             0,            CreateCPUFolders },
+	{"SND",             FOLDER_SND,          IDI_FOLDER,               0,             0,            CreateSoundFolders },
+	{"Working",         FOLDER_WORKING,      IDI_WORKING,              F_WORKING,     F_NONWORKING, NULL,                       DriverIsBroken,    FALSE },
+	{"Non-Working",     FOLDER_NONWORKING,   IDI_NONWORKING,           F_NONWORKING,  F_WORKING,    NULL,                       DriverIsBroken,    TRUE },
+	{"Originals",       FOLDER_ORIGINAL,     IDI_FOLDER,               F_ORIGINALS,   F_CLONES,     NULL,                       DriverIsClone,     FALSE },
+	{"Clones",          FOLDER_CLONES,       IDI_FOLDER,               F_CLONES,      F_ORIGINALS,  NULL,                       DriverIsClone,     TRUE },
+	{"Raster",          FOLDER_RASTER,       IDI_FOLDER,               F_RASTER,      F_VECTOR,     NULL,                       DriverIsVector,    FALSE },
+	{"Vector",          FOLDER_VECTOR,       IDI_FOLDER,               F_VECTOR,      F_RASTER,     NULL,                       DriverIsVector,    TRUE },
+	{"Trackball",       FOLDER_TRACKBALL,    IDI_FOLDER,               0,             0,            NULL,                       DriverUsesTrackball,	TRUE },
+	{"Stereo",          FOLDER_STEREO,       IDI_SOUND,                0,             0,            NULL,                       DriverIsStereo,    TRUE },
+	{"Hard Disk",       FOLDER_HARDDISK,     IDI_HARDDISK,             0,             0,            NULL,                       DriverIsHarddisk,  TRUE },
 	{ NULL }
 };
 

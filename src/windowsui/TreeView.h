@@ -59,26 +59,6 @@ typedef struct
 	BOOL        m_bExpectedResult;                       /* Expected query result */
 } FOLDERDATA, *LPFOLDERDATA;
 
-/* these must be in the same sequence as IDI_FOLDER_OPEN ... IDI_SOURCE in resource.h */
-enum
-{
-	ICON_FOLDER_OPEN = 0,
-	ICON_FOLDER,
-	ICON_FOLDER_AVAILABLE,
-	ICON_FOLDER_MANUFACTURER,
-	ICON_FOLDER_UNAVAILABLE,
-	ICON_FOLDER_YEAR,
-	ICON_FOLDER_SOURCE,
-	ICON_MANUFACTURER,
-	ICON_WORKING,
-	ICON_NONWORKING,
-	ICON_YEAR,
-	ICON_STEREO,
-	ICON_CPU,
-	ICON_HARDDISK,
-	ICON_SOURCE,
-};
-
 typedef struct
 {
 	DWORD m_dwFilterType;				/* Filter value */
