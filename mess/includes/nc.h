@@ -20,7 +20,7 @@ void    nc_set_card_write_protect_state(int);
 int     nc_pcmcia_card_id(int);
 int    nc_pcmcia_card_load(int);
 void    nc_pcmcia_card_exit(int);
-
+int		nc_serial_init(int);
 enum
 {
         NC_TYPE_1xx, /* nc100/nc150 */

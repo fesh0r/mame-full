@@ -60,7 +60,8 @@
 #include "includes/nec765.h"
 /* for NC200 disk image */
 #include "includes/pc_flopp.h"
-
+/* for serial data transfers */
+#include "includes/serial.h"
 /* uncomment for verbose debugging information */
 //#define VERBOSE
 
@@ -1235,7 +1236,26 @@ static const struct IODevice io_nc100[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },
-	{IO_END}
+		{
+                IO_SERIAL,           /* type */
+                1,                     /* count */
+                "txt\0",               /* file extensions */
+				IO_RESET_NONE,			/* reset if file changed */
+                NULL,   /* id */
+                nc_serial_init, /* load */
+                serial_device_exit, /* exit */
+                NULL,                   /* info */
+                NULL,                   /* open */
+                NULL,                   /* close */
+                NULL,                   /* status */
+                NULL,                   /* seek */
+                NULL,                   /* tell */
+                NULL,                   /* input */
+                NULL,                   /* output */
+                NULL,                   /* input chunk */
+                NULL,                   /* output chunk */
+        },		
+		{IO_END}
 };
 
 static const struct IODevice io_nc200[] =
@@ -1278,7 +1298,25 @@ static const struct IODevice io_nc200[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },
-
+      {
+                IO_SERIAL,           /* type */
+                1,                     /* count */
+                "txt\0",               /* file extensions */
+				IO_RESET_NONE,			/* reset if file changed */
+                NULL,   /* id */
+                nc_serial_init, /* load */
+                serial_device_exit, /* exit */
+                NULL,                   /* info */
+                NULL,                   /* open */
+                NULL,                   /* close */
+                NULL,                   /* status */
+                NULL,                   /* seek */
+                NULL,                   /* tell */
+                NULL,                   /* input */
+                NULL,                   /* output */
+                NULL,                   /* input chunk */
+                NULL,                   /* output chunk */
+        },	
 	{IO_END}
 };
 
