@@ -605,6 +605,10 @@ IMGTOOL_OBJS= \
 	  $(OBJ)/mess/tools/imgwave.o \
 	  $(OBJ)/mess/tools/cococas.o   \
 	  $(OBJ)/mess/tools/vmsx_tap.o   \
+	  $(OBJ)/mess/tools/msx_dsk.o  \
+	  $(OBJ)/mess/formats/msx_dsk.o  \
+	  $(OBJ)/mess/tools/xsa.o  \
+	  $(OBJ)/mess/formats/xsa.o  \
 	  $(OBJ)/mess/tools/vmsx_gm2.o   \
 	  $(OBJ)/mess/formats/fmsx_cas.o  \
 	  $(OBJ)/mess/tools/fmsx_cas.o  \

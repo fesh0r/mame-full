@@ -27,7 +27,7 @@ int msx_dsk_convert (UINT8 *indata, int inlen, const char *fname,
 			offset = 0;
 			break;
 		case (720*1024): /* .msx image */
-			if (fname && !strcasecmp (fname + strlen (fname) - 4, ".msx") )
+			if (fname && !strcmpi (fname + strlen (fname) - 4, ".msx") )
 				{
 				/* special case */
 				*outlen = inlen;

@@ -96,8 +96,9 @@ int crtc6845_do_full_refresh(struct _CRTC6845 *crtc)
 void crtc6845_time(CRTC6845 *crtc)
 {
 	double neu, ftime;
-	neu=timer_get_time();
 	CRTC6845_CURSOR cursor;
+
+	neu=timer_get_time();
 
 	if (crtc6845_clocks_in_frame(crtc)==0.0) return;
 	ftime=crtc6845_clocks_in_frame(crtc)*16.0/crtc6845->config.freq;
