@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.1 2001/05/14 16:28:01 PeT Exp $
+  $Id: pc8801.c,v 1.2 2001/05/14 22:53:18 JoJo Exp $
 
 ***************************************************************************/
 
@@ -297,6 +297,7 @@ static void select_extmem(char **r,char **w,UINT8 *ret_ctrl)
   if(ret_ctrl!=NULL) {
     ret_ctrl[0]=ret_ctrl[1]=0xff;	/* port 0xe2/0xe3 input value */
   }
+
 #define SET_RADDR(x) \
   do { \
     if(r!=NULL) { \
@@ -307,6 +308,7 @@ static void select_extmem(char **r,char **w,UINT8 *ret_ctrl)
       } \
     } \
   } while(0);
+
 #define SET_WADDR(x) \
   do { \
     if(w!=NULL) { \
@@ -317,6 +319,7 @@ static void select_extmem(char **r,char **w,UINT8 *ret_ctrl)
       } \
     } \
   } while(0);
+
 #define SET_RET(n,x) \
   do { \
     if(ret_ctrl!=NULL) { \
@@ -331,7 +334,7 @@ static void select_extmem(char **r,char **w,UINT8 *ret_ctrl)
   if(ext_bank_88[extmem_ctrl[1]]!=NULL) {
     if(extmem_ctrl[0]&0x01) SET_RADDR(ext_bank_88[extmem_ctrl[1]]);
     if(extmem_ctrl[0]&0x10) SET_WADDR(ext_bank_88[extmem_ctrl[1]]);
-    SET_RET(0,(~extmem_ctrl[0])&0x11);
+    SET_RET(0,(~extmem_ctrl[0])&0x11)
     if(ext_bank_88[extmem_ctrl[1]]==ext_bank_88[extmem_ctrl[1]&0x0f]) {
       /* PC-8801-N02 */
       SET_RET(1,extmem_ctrl[1]&0x0f);
