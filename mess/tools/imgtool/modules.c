@@ -49,6 +49,10 @@ error:
 
 #else /* MODULES_RECURSIVE */
 
+MODULE(concept)
+MODULE(mac)
+MODULE(mess_hd)
 MODULE(rsdos)
+MODULE(ti99)
 
 #endif /* MODULES_RECURSIVE */
