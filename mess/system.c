@@ -678,8 +678,6 @@ TESTDRIVER( psxe41 )
 	/* DAI */
 TESTDRIVER(dai)			/* DAI												*/
 
-	DRIVER(neocd)
-
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/

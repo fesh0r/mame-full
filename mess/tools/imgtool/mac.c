@@ -1331,7 +1331,7 @@ static int mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 f
 static int mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 {
 	UINT32 block;
-	int errorcode;
+	int errorcode = 0;
 	int run_len;
 
 	if ((fileref->crPs + len) > fileref->eof)
@@ -2030,7 +2030,7 @@ static int hfs_open_cat_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_file
 	fileref->l2_img = l2_img;
 
 	fileref->u.hfs.forkType = 0x00;
-	&fileref->u.hfs.fileID, 4;
+	//&fileref->u.hfs.fileID, 4;
 
 	fileref->eof = fileref->pLen = get_UINT32BE(mdb->ctFlSize);
 	memcpy(fileref->u.hfs.extents, mdb->ctExtRec, sizeof(hfs_extent_3));
@@ -2924,12 +2924,12 @@ static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
 	void *cur_rec;
 	int cur_rec_len;
 	void *last_rec;
-	int last_rec_len;
+	int last_rec_len = 0;
 	void *rec_data;
 	int rec_data_len;
 	int depth;
 	UINT16 node_numRecords;
-	int compare_result;
+	int compare_result = 0;
 
 	/* start with root node */
 	if ((BTref->rootNode == 0) || (BTref->treeDepth == 0))

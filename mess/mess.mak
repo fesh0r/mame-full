@@ -236,7 +236,6 @@ DRVLIBS = \
 	$(OBJ)/sony.a     \
 	$(OBJ)/concept.a  \
 	$(OBJ)/dai.a      \
-	$(OBJ)/neocd.a    \
 
 
 $(OBJ)/neocd.a:		\
