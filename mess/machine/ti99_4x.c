@@ -4,22 +4,26 @@
 	Some code was originally derived from Ed Swartz's V9T9.
 
 	References:
-	* The TI-99/4A Tech Pages <http://www.nouspikel.com/ti99/titech.htm>.  Great site.
-	* ftp.whtech.com has schematics and hardware documentations.  The documents of most general
-	  interest are:
+	* The TI-99/4A Tech Pages.  Great site with complete technical description
+	  of the TI99/4a.
+		<http://www.nouspikel.com/ti99/titech.htm>
+	* ftp.whtech.com has schematics and hardware documentations.  The documents
+	  of most general interest are:
 		<ftp://ftp.whtech.com//datasheets/Hardware manuals/99-4  console specification and schematic.pdf>
 		<ftp://ftp.whtech.com//datasheets/Hardware manuals/99-4A Console and peripheral Expansion System Technical Data.pdf>
 	  Schematics for various extension cards are available in the same directory.
-	* V9T9 source code.
-	* Harald Glaab's site has software and documentation for the TI99/4P (nicknamed "SGCPU").
+	* V9T9 source code.  This older emulator was often fairly accurate.
+	* Harald Glaab's site has software and documentation for the various SNUG
+	  cards: 99/4P (nicknamed "SGCPU"), EVPC, BwG.
 		<http://home.t-online.de/home/harald.glaab/snug/>
 
 Emulated:
 	* All TI99 basic console hardware, except a few tricks in TMS9901 emulation.
-	* Cartridge with ROM (either non-paged or paged) and GROM (GRAM or extra
-	  GPL ports are possible, but not effectively supported yet).
+	* Cartridges with ROM (either non-paged or paged), RAM (minimemory) and
+	  GROM (GRAM or extra GPL ports are possible, but not effectively supported yet).
 	* Speech Synthesizer, with standard speech ROM (no speech ROM expansion).
-	* Disk emulation (only SSSD disk images, and timings are completely wrong).
+	* Disk emulation (SSSD disk images with TI fdc, both SSSD and DSDD with
+	  SNUG's BwG fdc).
 
 	Compatibility looks quite good.
 
@@ -29,14 +33,16 @@ Issues:
 	  double-sided ones.
 		DS image (V9T9): side0 Trk0, side0 Trk1,... side0 Trk39, side1 Trk0,... side1 Trk39
 		DS image (MESS): side0 Trk0, side1 Trk0, side0 Trk1,... side0 Trk39, side1 Trk39
+	* floppy disk timings are not emulated (general issue)
 
 TODO:
 	* DUMP THIS BLOODY TI99/4 ROM
 	* Submit speech improvements to Nicola again
 	* support for other peripherals and DSRs as documentation permits
-	* find programs which use super AMS or any other extended memory card
+	* find programs that use super AMS or any other extended memory card
 	* find specs for the EVPC palette chip
 	* finish 99/4p support: ROM6, HSGPL
+	* save minimemory contents
 */
 
 #include <math.h>
@@ -156,21 +162,23 @@ static int AlphaLockLine;
 
 In short:
 
-	TI99/4x hardware supports GROMs.  GROMs are slow, which are interfaced via a 8-bit data
-	bus, and include an internal address pointer which is incremented after each read.
-	This implies that accesses are faster when reading consecutive bytes, although
-	the address pointer can be read and written at any time.
+	TI99/4x hardware supports GROMs.  GROMs are slow ROM devices, which are
+	interfaced via a 8-bit data bus, and include an internal address pointer
+	which is incremented after each read.  This implies that accesses are
+	faster when reading consecutive bytes, although the address pointer can be
+	read and written at any time.
 
 	They are generally used to store programs in GPL (a proprietary, interpreted language -
 	the interpreter take most of a TI99/4(a) CPU ROMs).  They can used to store large pieces
 	of data, too.
 
-	Both TI99/4 and TI99/4a include three GROMs, with some start-up code, system routines and
-	TI-Basic.  TI99/4 reportedly includes an additionnal Equation Editor.  Maybe a part of
-	the Hand Held Unit DSR lurks there, too (this is only a supposition).  TI99/8 includes
-	the three standard GROMs and 16 GROMs for the UCSD p-system.  TI99/2 does not include GROMs
-	at all, and was not designed to support any, although would be relatively easy to create
-	an expansion card with the GPL interpreter and a /4a cartridge port.
+	Both TI99/4 and TI99/4a include three GROMs, with some start-up code,
+	system routines and TI-Basic.  TI99/4 reportedly includes an additionnal
+	Equation Editor.  Maybe a part of the Hand Held Unit DSR lurks there, too
+	(this is only a supposition).  TI99/8 includes the three standard GROMs and
+	16 GROMs for the UCSD p-system.  TI99/2 does not include GROMs at all, and
+	was not designed to support any, although it should be relatively easy to
+	create an expansion card with the GPL interpreter and a /4a cartridge port.
 
 The simple way:
 
@@ -200,11 +208,13 @@ Some details:
 
 GPL ports:
 
-	When accessing the GROMs registers, 8 address bits (cpu_addr & 0x03FC) may be used as a port
-	number, which permits the use of up to 256 independant GROM ports, with 64kb of address
-	space in each.  TI99/4(a) ROMs can take advantage of the first 16 ports: it will look for
-	GPL programs in every ROM of the 16 first ports.  On the other hand, the other ports cannot
-	contain standard GROMs, but they may still contain custom GROMs with data.
+	When accessing the GROMs registers, 8 address bits (cpu_addr & 0x03FC) may
+	be used as a port number, which permits the use of up to 256 independant
+	GROM ports, with 64kb of address space in each.  TI99/4(a) ROMs can take
+	advantage of the first 16 ports: it will look for GPL programs in every
+	GROM of the 16 first ports.  Additionally, while the other 240 ports cannot
+	contain standard GROMs with GPL code, they may still contain custom GROMs
+	with data.
 
 	Note, however, that the TI99/4(a) console does not decode the page number, so console GROMs
 	occupy the first 24kb of EVERY port, and cartridge GROMs occupy the next 40kb of EVERY port.
@@ -219,7 +229,7 @@ GPL ports:
 
 	The p-code card (-> UCSD Pascal system) contains 8 GROMs, all in port 16.  This port is not
 	in the range recognized by the TI ROMs (0-15), and therefore it is used by the p-code DSR ROMs
-	as custom data.  Additonnally, some hackers used the extra ports to implement "GRAM" devices.
+	as custom data.  Additionally, some hackers used the extra ports to implement "GRAM" devices.
 */
 /* defines for GROM_flags */
 enum
@@ -607,8 +617,8 @@ int video_start_ti99_4ev(void)
 }
 
 /*
-	VBL interrupt  (mmm... actually, it happens when the beam enters the lower border, so it is not
-	a genuine VBI, but who cares ?)
+	VBL interrupt  (mmm...  actually, it happens when the beam enters the lower
+	border, so it is not a genuine VBI, but who cares ?)
 */
 void ti99_vblank_interrupt(void)
 {
@@ -2780,8 +2790,14 @@ static void ide_cru_w(int offset, int data);
 static READ_HANDLER(ide_mem_r);
 static WRITE_HANDLER(ide_mem_w);
 
-/* pointer to the IDE SRAM area */
-/*static UINT8 *ti99_ide_SRAM;*/
+/* pointer to the IDE RAM area */
+static UINT8 *ti99_ide_RAM;
+
+static int cur_page;
+enum
+{	/* 0xff for 2 mbytes, 0x3f for 512kbytes, 0x03 for 32 kbytes */
+	page_mask = /*0xff*/0x3f
+};
 
 static const expansion_port_t ide_handlers =
 {
@@ -2793,21 +2809,27 @@ static const expansion_port_t ide_handlers =
 
 static int sram_enable;
 static int sram_enable_dip = 0;
-static int cru_bits;
-/*enum
+static int cru_register;
+enum
 {
-};*/
+	cru_reg_page_switching = 0x04,
+	cru_reg_page_0 = 0x08,
+	/*cru_reg_rambo = 0x10,*/	/* not emulated */
+	cru_reg_wp = 0x20,
+	/*cru_reg_unused = 0x40,*/
+	cru_reg_reset = 0x80
+};
 static int input_latch, output_latch;
 
 /*
 	Reset ide card, set up handlers
 */
-/*static void ti99_ide_init(void)
+static void ti99_ide_init(void)
 {
-	ti99_ide_SRAM = memory_region(region_dsr) + offset_ide_ram;
+	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
 
 	ti99_set_expansion_card_handlers(0x1000, & ide_handlers);
-}*/
+}
 
 /*
 	Read ide CRU interface
@@ -2819,7 +2841,11 @@ static int ide_cru_r(int offset)
 	switch (offset)
 	{
 	default:
-		reply = 0;
+		reply = cru_register;
+		if (sram_enable_dip)
+			reply |= 2;
+		/*if (! ide_irq)
+			reply |= 1;*/
 		break;
 	}
 
@@ -2845,18 +2871,17 @@ static void ide_cru_w(int offset, int data)
 
 	case 2:			/* enable SRAM page switching */
 	case 3:			/* force SRAM page 0 */
-	case 4:			/* enable SRAM in 0x6000-0x7000 */
+	case 4:			/* enable SRAM in 0x6000-0x7000 ("RAMBO" mode) */
 	case 5:			/* write-protect RAM */
 	case 6:			/* not used */
 	case 7:			/* reset drive */
 		if (data)
-			cru_bits |= 1 << offset;
+			cru_register |= 1 << offset;
 		else
-			cru_bits &= ~ (1 << offset);
+			cru_register &= ~ (1 << offset);
 
 		if ((offset == 7) && data)
-			/* TODO: reset IDE drive */
-			;
+			/*ide_reset()*/;
 		break;
 	}
 }
@@ -2918,6 +2943,10 @@ static READ_HANDLER(ide_mem_r)
 	}
 	else
 	{	/* sram */
+		if (! (cru_register & cru_reg_page_0))
+			reply = ti99_ide_RAM[offset+0x2000*cur_page];
+		else
+			reply = ti99_ide_RAM[offset];
 	}
 
 	return reply;
@@ -2928,6 +2957,11 @@ static READ_HANDLER(ide_mem_r)
 */
 static WRITE_HANDLER(ide_mem_w)
 {
+	if (cru_register & cru_reg_page_switching)
+	{
+		cur_page = (offset >> 1) & page_mask;//0xff
+	}
+
 	if ((offset <= 0xff) && (sram_enable == sram_enable_dip))
 	{	/* registers */
 		switch ((offset >> 5) & 0x3)
@@ -2964,6 +2998,13 @@ static WRITE_HANDLER(ide_mem_w)
 	}
 	else
 	{	/* sram */
+		if (! (cru_register & cru_reg_wp))
+		{
+			if (! (cru_register & cru_reg_page_0))
+				ti99_ide_RAM[offset+0x2000*cur_page] = data;
+			else
+				ti99_ide_RAM[offset] = data;
+		}
 	}
 }
 
