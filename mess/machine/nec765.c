@@ -890,7 +890,9 @@ static void     nec765_read_data(void)
 		nec765_setup_result_phase(7);
 		return;
 	}
-
+#ifdef VERBOSE
+	logerror("sector c: %02x h: %02x r: %02x n: %02x\n",fdc.nec765_command_bytes[2], fdc.nec765_command_bytes[3],fdc.nec765_command_bytes[4], fdc.nec765_command_bytes[5]);
+#endif
 	/* find a sector to read data from */
 	{
 		int found_sector_to_read;
@@ -1022,6 +1024,28 @@ static int              nec765_just_read_last_sector_on_track(void)
 
 static void nec765_write_complete(void)
 {
+
+/* causes problems!!! - need to fix */
+#ifdef NO_END_OF_CYLINDER
+        /* set end of cylinder */
+        fdc.nec765_status[1] &= ~NEC765_ST1_END_OF_CYLINDER;
+#else
+	/* completed read command */
+
+	/* end of cylinder is set when:
+	 - a whole sector has been read
+	 - terminal count input is not set
+	 - AND the the sector specified by EOT was read
+	 */
+	
+	/* if end of cylinder is set, and we did receive a terminal count, then clear it */
+	if ((fdc.nec765_flags & NEC765_TC)!=0)
+	{
+		/* set end of cylinder */
+		fdc.nec765_status[1] &= ~NEC765_ST1_END_OF_CYLINDER;
+	}
+#endif
+
 	nec765_setup_st0();
 
     fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
@@ -1402,7 +1426,7 @@ static void     nec765_continue_command(void)
 					nec765_read_complete();
 				}
 				else
-				{
+				{	
 					nec765_increment_sector();
 					nec765_read_data();
 				}
@@ -1538,9 +1562,9 @@ void	nec765_update_state(void)
              fdc.nec765_transfer_bytes_count++;
              fdc.nec765_transfer_bytes_remaining--;
 
-#ifdef SUPER_VERBOSE
+//#ifdef SUPER_VERBOSE
 			logerror("EXECUTION PHASE READ: %02x\n", fdc.nec765_data_reg);
-#endif
+//#endif
 
             if ((fdc.nec765_transfer_bytes_remaining==0) || (fdc.nec765_flags & NEC765_TC))
             {
@@ -1766,27 +1790,82 @@ static void     nec765_setup_command(void)
 
 		case 0x0a:      /* read id */
 		{
-				/* improve so that unformatted discs are not recognised */
-                chrn_id id;
+			chrn_id id;
 
-				nec765_setup_drive_and_side();
+			nec765_setup_drive_and_side();
 
 			fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
 			fdc.nec765_status[1] = 0;
 			fdc.nec765_status[2] = 0;
 
-			floppy_drive_get_next_id(fdc.drive, fdc.side, &id);
+			/* drive ready? */
+			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
+			{
+				/* is disk inserted? */
+				if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_DISK_INSERTED))
+				{
+					int index_count = 0;
 
-			fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-			fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
-			fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
-			fdc.nec765_result_bytes[3] = id.C; /* C */
-			fdc.nec765_result_bytes[4] = id.H; /* H */
-			fdc.nec765_result_bytes[5] = id.R; /* R */
-			fdc.nec765_result_bytes[6] = id.N; /* N */
+					/* floppy drive is ready and disc is inserted */
 
+					/* this is the id that appears when a disc is not formatted */
+					/* to be checked on Amstrad */
+					id.C = 0;
+					id.H = 0;
+					id.R = 0x01;
+					id.N = 0x02;
 
-			nec765_setup_result_phase(7);
+					/* repeat for two index counts before quitting */
+					do
+					{
+						/* get next id from disc */
+						if (floppy_drive_get_next_id(fdc.drive, fdc.side,&id))
+						{
+							/* got an id - quit */
+							break;
+						}
+
+						if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))
+						{
+							/* update index count */
+							index_count++;
+						}
+					}
+					while (index_count!=2);
+						
+					/* at this point, we have seen a id or two index pulses have occured! */
+					fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+					fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+					fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+					fdc.nec765_result_bytes[3] = id.C; /* C */
+					fdc.nec765_result_bytes[4] = id.H; /* H */
+					fdc.nec765_result_bytes[5] = id.R; /* R */
+					fdc.nec765_result_bytes[6] = id.N; /* N */
+
+					nec765_setup_result_phase(7);
+				}
+				else
+				{
+					/* floppy drive is ready, but no disc is inserted */
+					/* this occurs on the PC */
+					/* in this case, the command never quits! */
+					/* there are no index pulses to stop the command! */
+				}
+			}
+			else
+			{
+				/* what are id values when drive not ready? */
+
+				/* not ready, abnormal termination */
+				fdc.nec765_status[0] |= (1<<3) | (1<<6);
+				fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+				fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+				fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+				fdc.nec765_result_bytes[3] = 0; /* C */
+				fdc.nec765_result_bytes[4] = 0; /* H */
+				fdc.nec765_result_bytes[5] = 0; /* R */
+				fdc.nec765_result_bytes[6] = 0; /* N */
+			}
 		}
 		break;
 
