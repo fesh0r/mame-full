@@ -1,4 +1,4 @@
-0.84.1
+0.85
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -43,6 +43,9 @@ User Interface Changes:
 -----------------------
 - [Windows] Fixed a bug when creating disk images in which default extensions
   were not spcified.  (bug #576)  [Nate Woods]
+  
+- [Windows] Modified the new UI input dialogs so that they behave like the
+  MAME UI input dialogs, allowing for multiple input sequences.  [Nate Woods]
 
 - [Windows GUI] Fixed some miscellaneous bugs having to do with the software
   picker settings.  (bug #568, bug #571)  [Nate Woods]
@@ -60,7 +63,8 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- The core is based on MAME 0.85.  This incorporates all features of the
+  update to this core.  [MAME team]
 
 
 

@@ -694,24 +694,26 @@ void inputx_update(UINT32 *ports)
 	if (inputx_can_post())
 	{
 		keybuf = get_buffer();
+
+		/* is the key down right now? */
 		if ((keybuf->status & STATUS_KEYDOWN) && (keybuf->begin_pos != keybuf->end_pos))
 		{
+			/* identify the character that is down right now, and its component codes */
 			ch = keybuf->buffer[keybuf->begin_pos];
 			code = &codes[ch];
 
+			/* loop through this character's component codes */
 			for (i = 0; code->ipt[i] && (i < sizeof(code->ipt) / sizeof(code->ipt[0])); i++)
 			{
 				ipt = code->ipt[i];
 				value = ports[code->port[i]];
 
-				switch(ipt->default_value) {
-				case IP_ACTIVE_LOW:
+				/* toggle this value */
+				if (ipt->default_value & ipt->mask)
 					value &= ~ipt->mask;
-					break;
-				case IP_ACTIVE_HIGH:
+				else
 					value |= ipt->mask;
-					break;
-				}
+
 				ports[code->port[i]] = value;
 			}
 		}

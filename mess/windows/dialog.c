@@ -42,7 +42,7 @@
 #ifndef GWLP_WNDPROC
 #define GWLP_WNDPROC						GWL_WNDPROC
 #endif
-#endif /* _WIN64 */
+#endif // _WIN64
 
 //============================================================
 
@@ -96,6 +96,20 @@ struct _dialog_box
 	dialog_notification notify_callback;
 	void *notify_param;
 };
+
+// this is the structure that gets associated with each input_seq_t edit box
+struct seqselect_stuff
+{
+	WNDPROC oldwndproc;
+	input_seq_t *code;		// pointer to the input_seq_t
+	input_seq_t newcode;	// the new input_seq_t; committed to *code when we are done
+	UINT_PTR timer;
+	WORD pos;
+	BOOL is_analog;
+	int record_first_insert; 
+};
+
+
 
 //============================================================
 //	IMPORTS
@@ -287,7 +301,7 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 		switch(command) {
 		case IDOK:
 			dialog_trigger(dlgwnd, TRIGGER_APPLY);
-			/* fall through */
+			// fall through
 
 		case IDCANCEL:
 			EndDialog(dlgwnd, 0);
@@ -694,7 +708,7 @@ static void dialog_finish_control(struct _dialog_box *di, short x, short y)
 {
 	di->pos_y = y;
 
-	/* update dialog size */
+	// update dialog size
 	if (x > di->size_x)
 		di->size_x = x;
 	if (y > di->size_y)
@@ -812,17 +826,29 @@ int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int
 
 
 //============================================================
-//	seqselect_wndproc
+//	seqselect_settext
 //============================================================
 
-struct seqselect_stuff
+static void seqselect_settext(HWND editwnd)
 {
-	WNDPROC oldwndproc;
-	input_seq_t *code;
-	input_seq_t newcode;
-	UINT_PTR timer;
-	WORD pos;
-};
+	struct seqselect_stuff *stuff;
+	LONG_PTR lp;
+	char buf[512];
+
+	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	stuff = (struct seqselect_stuff *) lp;
+	seq_name(&stuff->newcode, buf, sizeof(buf) / sizeof(buf[0]));
+	SetWindowText(editwnd, A2T(buf));
+
+	if (GetFocus() == editwnd)
+		SendMessage(editwnd, EM_SETSEL, 0, -1);
+}
+
+
+
+//============================================================
+//	seqselect_wndproc
+//============================================================
 
 static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -833,6 +859,8 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	HWND dlgitemwnd;
 	input_code_t code;
 	LONG_PTR lp;
+	BOOL call_baseclass = TRUE;
+	int ret;
 
 	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
 	stuff = (struct seqselect_stuff *) lp;
@@ -844,74 +872,65 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		result = 1;
+		call_baseclass = FALSE;
 		break;
 
 	case WM_TIMER:
 		if (wparam == TIMER_ID)
 		{
+			// we are in the middle of selecting a seq; we need to poll
 			win_poll_input();
-			code = code_read_async();
-			if (code != CODE_NONE)
+
+			ret = seq_read_async(&stuff->newcode, stuff->record_first_insert);
+			if (ret >= 0)
 			{
-				seq_set_1(&stuff->newcode, code);
-				SetWindowText(editwnd, A2T(code_name(code)));
-
-				dlgwnd = GetParent(editwnd);
-
-				dlgitem = stuff->pos;
-				do
-				{
-					dlgitem++;
-					dlgitemwnd = GetDlgItem(dlgwnd, dlgitem);
-				}
-				while(dlgitemwnd && (GetWindowLongPtr(dlgitemwnd, GWLP_WNDPROC) != (LONG_PTR) seqselect_wndproc));
-				if (dlgitemwnd)
-				{
-					SetFocus(dlgitemwnd);
-					SendMessage(dlgitemwnd, EM_SETSEL, 0, -1);
-				}
-				else
-				{
-					SetFocus(dlgwnd);
-				}
+				stuff->record_first_insert = ret != 0;
+				seqselect_settext(editwnd);
+				seq_read_async_start(stuff->is_analog);
 			}
 			result = 0;
-		}
-		else
-		{
-			result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
+			call_baseclass = FALSE;
 		}
 		break;
 
 	case WM_SETFOCUS:
-		if (stuff->timer)
-			KillTimer(editwnd, stuff->timer);
-		stuff->timer = SetTimer(editwnd, TIMER_ID, 100, (TIMERPROC) NULL);
-		result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
-		break;
-
 	case WM_KILLFOCUS:
+		// unselect the current seq; if appropriate
 		if (stuff->timer)
 		{
 			KillTimer(editwnd, stuff->timer);
 			stuff->timer = 0;
 		}
-		result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
+
+		if (msg == WM_SETFOCUS)
+		{
+			// we are selecting a seq; begin a timer
+			seq_read_async_start(stuff->is_analog);
+			stuff->record_first_insert = 1;
+			stuff->timer = SetTimer(editwnd, TIMER_ID, 100, (TIMERPROC) NULL);
+		}
 		break;
 
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 		SetFocus(editwnd);
 		SendMessage(editwnd, EM_SETSEL, 0, -1);
+		call_baseclass = FALSE;
 		result = 0;
 		break;
+	}
 
-	default:
-		result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
-		break;
+	if (call_baseclass)
+	{
+		if (IsWindowUnicode(editwnd))
+			result = CallWindowProcW(stuff->oldwndproc, editwnd, msg, wparam, lparam);
+		else
+			result = CallWindowProcA(stuff->oldwndproc, editwnd, msg, wparam, lparam);
 	}
 	return result;
 }
+
+
 
 //============================================================
 //	seqselect_setup
@@ -919,18 +938,18 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 
 static LRESULT seqselect_setup(dialog_box *dialog, HWND editwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	char buf[256];
 	struct seqselect_stuff *stuff = (struct seqselect_stuff *) lparam;
 	LONG_PTR lp;
 
 	memcpy(&stuff->newcode, stuff->code, sizeof(stuff->newcode));
-	seq_name(stuff->code, buf, sizeof(buf) / sizeof(buf[0]));
-	SetWindowText(editwnd, A2T(buf));
 	lp = SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG_PTR) seqselect_wndproc);
 	stuff->oldwndproc = (WNDPROC) lp;
 	SetWindowLongPtr(editwnd, GWLP_USERDATA, lparam);
+	seqselect_settext(editwnd);
 	return 0;
 }
+
+
 
 //============================================================
 //	seqselect_apply
@@ -952,7 +971,7 @@ static LRESULT seqselect_apply(dialog_box *dialog, HWND editwnd, UINT message, W
 //============================================================
 
 static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
-	short cx, short cy, struct InputPort *port, int seq)
+	short cx, short cy, struct InputPort *port, int is_analog, int seq)
 {
 	struct seqselect_stuff *stuff;
 	input_seq_t *code;
@@ -965,9 +984,11 @@ static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
 	stuff = (struct seqselect_stuff *) pool_malloc(&di->mempool, sizeof(struct seqselect_stuff));
 	if (!stuff)
 		return 1;
+	memset(stuff, 0, sizeof(*stuff));
 	stuff->code = code;
 	stuff->pos = di->item_count;
 	stuff->timer = 0;
+	stuff->is_analog = is_analog;
 	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, 0, seqselect_setup, di->item_count, (LPARAM) stuff, NULL, NULL))
 		return 1;
 	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, seqselect_apply, 0, 0, NULL, NULL))
@@ -989,35 +1010,69 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 	short height;
 	short width;
 	const char *port_name;
+	const char *this_port_name;
+	char *s;
 	int seq;
 	int seq_count = 0;
-	int seq_types[2];
+	const char *port_suffix[3];
+	int seq_types[3];
+	int is_analog[3];
 
 	port_name = input_port_name(port);
 	
 	if (port_type_is_analog(port->type))
 	{
-		seq_types[seq_count++] = SEQ_TYPE_DECREMENT;
-		seq_types[seq_count++] = SEQ_TYPE_INCREMENT;
+		seq_types[seq_count] = SEQ_TYPE_STANDARD;
+		port_suffix[seq_count] = " Analog";
+		is_analog[seq_count] = TRUE;
+		seq_count++;
+
+		seq_types[seq_count] = SEQ_TYPE_DECREMENT;
+		port_suffix[seq_count] = " Dec";
+		is_analog[seq_count] = FALSE;
+		seq_count++;
+
+		seq_types[seq_count] = SEQ_TYPE_INCREMENT;
+		port_suffix[seq_count] = " Inc";
+		is_analog[seq_count] = FALSE;
+		seq_count++;
 	}
 	else
 	{
-		seq_types[seq_count++] = SEQ_TYPE_STANDARD;
+		seq_types[seq_count] = SEQ_TYPE_STANDARD;
+		port_suffix[seq_count] = NULL;
+		is_analog[seq_count] = FALSE;
+		seq_count++;
 	}
 
 	for (seq = 0; seq < seq_count; seq++)
 	{
+		// create our local name for this entry
+		if (port_suffix[seq])
+		{
+			s = (char *) alloca((strlen(port_name) + strlen(port_suffix[seq]) + 1)
+				* sizeof(char));
+			strcpy(s, port_name);
+			strcat(s, port_suffix[seq]);
+			this_port_name = s;
+		}
+		else
+		{
+			this_port_name = port_name;
+		}
+
 		if (!r)
 		{
-			/* no positions specified */
+			// no positions specified
 			dialog_new_control(di, &x, &y);
 
 			if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, x, y, 
-					dialog->layout->label_width, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
+					dialog->layout->label_width, DIM_NORMAL_ROW_HEIGHT, this_port_name, DLGITEM_STATIC, NULL))
 				return 1;
 			x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 
-			if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT, port, seq_types[seq]))
+			if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT,
+					port, is_analog[seq], seq_types[seq]))
 				return 1;
 			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
 			x += DIM_EDIT_WIDTH + DIM_HORIZONTAL_SPACING;
@@ -1026,7 +1081,7 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 		}
 		else
 		{
-			/* positions specified */
+			// positions specified
 			x = r[seq].left;
 			y = r[seq].top;
 			width = r[seq].right - r[seq].left;
@@ -1038,7 +1093,8 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 			width	/= pixels_to_xdlgunits;
 			height	/= pixels_to_ydlgunits;
 
-			if (dialog_add_single_seqselect(di, x, y, width, height, port, seq))
+			if (dialog_add_single_seqselect(di, x, y, width, height, 
+					port, is_analog[seq], seq_types[seq]))
 				return 1;
 		}
 	}
