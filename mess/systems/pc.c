@@ -80,7 +80,7 @@
 // IO Expansion, only a little bit for ibm bios self tests
 //#define EXP_ON
 
-READ_HANDLER( return_0xff ) { return 0xff; }
+static READ_HANDLER( return_0xff ) { return 0xff; }
 
 static MEMORY_READ_START( pc_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
@@ -1686,7 +1686,7 @@ static const struct IODevice io_ibmpc[] = {
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
         NULL,               /* id */
 		pc_floppy_init, 	/* init */
 		pc_floppy_exit, 	/* exit */

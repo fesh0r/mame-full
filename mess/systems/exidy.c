@@ -71,7 +71,7 @@
 #include "includes/basicdsk.h"
 
 
-int exidy_floppy_init(int id)
+static int exidy_floppy_init(int id)
 {
 	if (device_filename(IO_FLOPPY, id)==NULL)
 		return INIT_PASS;
@@ -829,10 +829,10 @@ static const struct IODevice io_exidy[] =
 		4,							/* count */
 		"dsk\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
-		OSD_FOPEN_DUMMY,			/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		exidy_floppy_init,			/* init */
-		basicdsk_floppy_exit,			/* exit */
+		basicdsk_floppy_exit,		/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */

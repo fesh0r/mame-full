@@ -181,7 +181,7 @@ void pcw16_dump_cpu_ram(void)
 }
 #endif
 
-void pcw16_refresh_ints(void)
+static void pcw16_refresh_ints(void)
 {
 	/* any bits set excluding vsync */
 	if ((pcw16_system_status & (~0x04))!=0)
@@ -195,7 +195,7 @@ void pcw16_refresh_ints(void)
 }
 
 
-void pcw16_timer_callback(int dummy)
+static void pcw16_timer_callback(int dummy)
 {
 	/* do not increment past 15 */
 	if (pcw16_interrupt_counter!=15)
@@ -220,7 +220,7 @@ MEMORY_END
 
 extern int pcw16_colour_palette[16];
 
-WRITE_HANDLER(pcw16_palette_w)
+static WRITE_HANDLER(pcw16_palette_w)
 {
 	pcw16_colour_palette[offset & 0x0f] = data & 31;
 }
@@ -339,46 +339,46 @@ static void pcw16_flash1_bank_handler_w(int bank, int offset, int data)
 }
 
 /* flash 0 */
-WRITE_HANDLER(pcw16_flash0_bank_handler0_w)
+static WRITE_HANDLER(pcw16_flash0_bank_handler0_w)
 {
 	pcw16_flash0_bank_handler_w(0, offset, data);
 }
 
 
-WRITE_HANDLER(pcw16_flash0_bank_handler1_w)
+static WRITE_HANDLER(pcw16_flash0_bank_handler1_w)
 {
 	pcw16_flash0_bank_handler_w(1, offset, data);
 }
 
-WRITE_HANDLER(pcw16_flash0_bank_handler2_w)
+static WRITE_HANDLER(pcw16_flash0_bank_handler2_w)
 {
 	pcw16_flash0_bank_handler_w(2, offset, data);
 }
 
-WRITE_HANDLER(pcw16_flash0_bank_handler3_w)
+static WRITE_HANDLER(pcw16_flash0_bank_handler3_w)
 {
 	pcw16_flash0_bank_handler_w(3, offset, data);
 }
 
 
 /* flash 1 */
-WRITE_HANDLER(pcw16_flash1_bank_handler0_w)
+static WRITE_HANDLER(pcw16_flash1_bank_handler0_w)
 {
 	pcw16_flash1_bank_handler_w(0, offset, data);
 }
 
 
-WRITE_HANDLER(pcw16_flash1_bank_handler1_w)
+static WRITE_HANDLER(pcw16_flash1_bank_handler1_w)
 {
 	pcw16_flash1_bank_handler_w(1, offset, data);
 }
 
-WRITE_HANDLER(pcw16_flash1_bank_handler2_w)
+static WRITE_HANDLER(pcw16_flash1_bank_handler2_w)
 {
 	pcw16_flash1_bank_handler_w(2, offset, data);
 }
 
-WRITE_HANDLER(pcw16_flash1_bank_handler3_w)
+static WRITE_HANDLER(pcw16_flash1_bank_handler3_w)
 {
 	pcw16_flash1_bank_handler_w(3, offset, data);
 }
@@ -413,7 +413,7 @@ typedef enum
 	PCW16_MEM_NONE
 } PCW16_RAM_TYPE;
 
-READ_HANDLER(pcw16_no_mem_r)
+static READ_HANDLER(pcw16_no_mem_r)
 {
 	return 0x0ff;
 }
@@ -558,14 +558,14 @@ static void pcw16_update_memory(void)
 
 }
 
-READ_HANDLER(pcw16_bankhw_r)
+static READ_HANDLER(pcw16_bankhw_r)
 {
 //	logerror("bank r: %d \n", offset);
 
 	return pcw16_banks[offset];
 }
 
-WRITE_HANDLER(pcw16_bankhw_w)
+static WRITE_HANDLER(pcw16_bankhw_w)
 {
 	//logerror("bank w: %d block: %02x\n", offset, data);
 
@@ -574,7 +574,7 @@ WRITE_HANDLER(pcw16_bankhw_w)
 	pcw16_update_memory();
 }
 
-WRITE_HANDLER(pcw16_video_control_w)
+static WRITE_HANDLER(pcw16_video_control_w)
 {
 	//logerror("video control w: %02x\n", data);
 
@@ -688,7 +688,7 @@ static void pcw16_keyboard_reset(void)
 }
 
 /* interfaces to a pc-at keyboard */
-READ_HANDLER(pcw16_keyboard_data_shift_r)
+static READ_HANDLER(pcw16_keyboard_data_shift_r)
 {
 	//logerror("keyboard data shift r: %02x\n", pcw16_keyboard_data_shift);
 	pcw16_keyboard_state &= ~(PCW16_KEYBOARD_BUSY_STATUS);
@@ -702,7 +702,7 @@ READ_HANDLER(pcw16_keyboard_data_shift_r)
 }
 
 /* if force keyboard clock is low it is safe to send */
-int		pcw16_keyboard_can_transmit(void)
+static int		pcw16_keyboard_can_transmit(void)
 {
 	/* clock is not forced low */
 	/* and not busy - i.e. not already sent a char */
@@ -710,13 +710,13 @@ int		pcw16_keyboard_can_transmit(void)
 }
 
 /* issue a begin byte transfer */
-void	pcw16_begin_byte_transfer(void)
+static void	pcw16_begin_byte_transfer(void)
 {
 }
 
 
 /* signal a code has been received */
-void	pcw16_keyboard_signal_byte_received(int data)
+static void	pcw16_keyboard_signal_byte_received(int data)
 {
 
 	/* clear clock */
@@ -745,7 +745,7 @@ void	pcw16_keyboard_signal_byte_received(int data)
 }
 
 
-WRITE_HANDLER(pcw16_keyboard_data_shift_w)
+static WRITE_HANDLER(pcw16_keyboard_data_shift_w)
 {
 	//logerror("Keyboard Data Shift: %02x\n", data);
 	/* writing to shift register clears parity */
@@ -761,7 +761,7 @@ WRITE_HANDLER(pcw16_keyboard_data_shift_w)
 
 }
 
-READ_HANDLER(pcw16_keyboard_status_r)
+static READ_HANDLER(pcw16_keyboard_status_r)
 {
 	/* bit 2,3 are bits 8 and 9 of vdu pointer */
 	return (pcw16_keyboard_state &
@@ -773,7 +773,7 @@ READ_HANDLER(pcw16_keyboard_status_r)
 		 PCW16_KEYBOARD_TRANSMIT_MODE));
 }
 
-WRITE_HANDLER(pcw16_keyboard_control_w)
+static WRITE_HANDLER(pcw16_keyboard_control_w)
 {
 	//logerror("Keyboard control w: %02x\n",data);
 
@@ -969,74 +969,74 @@ static void rtc_timer_callback(int dummy)
 	}
 }
 
-READ_HANDLER(rtc_year_invalid_r)
+static READ_HANDLER(rtc_year_invalid_r)
 {
 	/* year in lower 7 bits. RTC Invalid status is rtc_control bit 0
 	inverted */
 	return (rtc_years & 0x07f) | (((rtc_control & 0x01)<<7)^0x080);
 }
 
-READ_HANDLER(rtc_month_r)
+static READ_HANDLER(rtc_month_r)
 {
 	return rtc_months;
 }
 
-READ_HANDLER(rtc_days_r)
+static READ_HANDLER(rtc_days_r)
 {
 	return rtc_days;
 }
 
-READ_HANDLER(rtc_hours_r)
+static READ_HANDLER(rtc_hours_r)
 {
 	return rtc_hours;
 }
 
-READ_HANDLER(rtc_minutes_r)
+static READ_HANDLER(rtc_minutes_r)
 {
 	return rtc_minutes;
 }
 
-READ_HANDLER(rtc_seconds_r)
+static READ_HANDLER(rtc_seconds_r)
 {
 	return rtc_seconds;
 }
 
-READ_HANDLER(rtc_256ths_seconds_r)
+static READ_HANDLER(rtc_256ths_seconds_r)
 {
 	return rtc_256ths_seconds;
 }
 
-WRITE_HANDLER(rtc_control_w)
+static WRITE_HANDLER(rtc_control_w)
 {
 	/* write control */
 	rtc_control = data;
 }
 
-WRITE_HANDLER(rtc_seconds_w)
+static WRITE_HANDLER(rtc_seconds_w)
 {
 	/* TODO: Writing register could cause next to increment! */
 	rtc_seconds = data;
 }
 
-WRITE_HANDLER(rtc_minutes_w)
+static WRITE_HANDLER(rtc_minutes_w)
 {
 	/* TODO: Writing register could cause next to increment! */
 	rtc_minutes = data;
 }
 
-WRITE_HANDLER(rtc_hours_w)
+static WRITE_HANDLER(rtc_hours_w)
 {
 	/* TODO: Writing register could cause next to increment! */
 	rtc_hours = data;
 }
 
-WRITE_HANDLER(rtc_days_w)
+static WRITE_HANDLER(rtc_days_w)
 {
 	/* TODO: Writing register could cause next to increment! */
 	rtc_days = data;
 }
 
-WRITE_HANDLER(rtc_month_w)
+static WRITE_HANDLER(rtc_month_w)
 {
 	/* TODO: Writing register could cause next to increment! */
 	rtc_months = data;
@@ -1045,7 +1045,7 @@ WRITE_HANDLER(rtc_month_w)
 }
 
 
-WRITE_HANDLER(rtc_year_w)
+static WRITE_HANDLER(rtc_year_w)
 {
 	/* TODO: Writing register could cause next to increment! */
 	rtc_hours = data;
@@ -1099,14 +1099,14 @@ static void pcw16_trigger_fdc_int(void)
 	previous_fdc_int_state = state;
 }
 
-READ_HANDLER(pcw16_system_status_r)
+static READ_HANDLER(pcw16_system_status_r)
 {
 //	logerror("system status r: \n");
 
 	return pcw16_system_status | (readinputport(0) & 0x04);
 }
 
-READ_HANDLER(pcw16_timer_interrupt_counter_r)
+static READ_HANDLER(pcw16_timer_interrupt_counter_r)
 {
 	int data;
 
@@ -1122,7 +1122,7 @@ READ_HANDLER(pcw16_timer_interrupt_counter_r)
 }
 
 
-WRITE_HANDLER(pcw16_system_control_w)
+static WRITE_HANDLER(pcw16_system_control_w)
 {
 	//logerror("0x0f8: function: %d\n",data);
 
@@ -1221,41 +1221,41 @@ WRITE_HANDLER(pcw16_system_control_w)
 /**** SUPER I/O connections */
 
 /* write to Super I/O chip. FDC Data Rate. */
-WRITE_HANDLER(pcw16_superio_fdc_datarate_w)
+static WRITE_HANDLER(pcw16_superio_fdc_datarate_w)
 {
 	pc_fdc_w(PC_FDC_DATA_RATE_REGISTER,data);
 }
 
 /* write to Super I/O chip. FDC Digital output register */
-WRITE_HANDLER(pcw16_superio_fdc_digital_output_register_w)
+static WRITE_HANDLER(pcw16_superio_fdc_digital_output_register_w)
 {
 	pc_fdc_w(PC_FDC_DIGITAL_OUTPUT_REGISTER, data);
 }
 
 /* write to Super I/O chip. FDC Data Register */
-WRITE_HANDLER(pcw16_superio_fdc_data_w)
+static WRITE_HANDLER(pcw16_superio_fdc_data_w)
 {
 	pc_fdc_w(PC_FDC_DATA_REGISTER, data);
 }
 
 /* write to Super I/O chip. FDC Data Register */
-READ_HANDLER(pcw16_superio_fdc_data_r)
+static READ_HANDLER(pcw16_superio_fdc_data_r)
 {
 	return pc_fdc_r(PC_FDC_DATA_REGISTER);
 }
 
 /* write to Super I/O chip. FDC Main Status Register */
-READ_HANDLER(pcw16_superio_fdc_main_status_register_r)
+static READ_HANDLER(pcw16_superio_fdc_main_status_register_r)
 {
 	return pc_fdc_r(PC_FDC_MAIN_STATUS_REGISTER);
 }
 
-READ_HANDLER(pcw16_superio_fdc_digital_input_register_r)
+static READ_HANDLER(pcw16_superio_fdc_digital_input_register_r)
 {
 	return pc_fdc_r(PC_FDC_DIGITIAL_INPUT_REGISTER);
 }
 
-void	pcw16_fdc_interrupt(int state)
+static void	pcw16_fdc_interrupt(int state)
 {
 	/* IRQ6 */
 	/* bit 6 of PCW16 system status indicates floppy ints */
@@ -1387,7 +1387,7 @@ PORT_WRITE_START( writeport_pcw16 )
 	{0x0ff, 0x0ff, rtc_year_w},
 PORT_END
 
-void pcw16_reset(void)
+static void pcw16_reset(void)
 {
 	/* initialise defaults */
 	pcw16_fdc_int_code = 2;
@@ -1563,7 +1563,7 @@ static const struct IODevice io_pcw16[] =
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
         NULL,               /* id */
 		pc_floppy_init, 	/* init */
 		pc_floppy_exit, 	/* exit */

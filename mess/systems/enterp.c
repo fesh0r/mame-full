@@ -67,7 +67,7 @@ static unsigned char * Enterprise_Pages_Write[256];
 static int Enterprise_KeyboardLine = 0;
 
 /* set read/write pointers for CPU page */
-void	Enterprise_SetMemoryPage(int CPU_Page, int EP_Page)
+static void	Enterprise_SetMemoryPage(int CPU_Page, int EP_Page)
 {
 	cpu_setbank((CPU_Page+1), Enterprise_Pages_Read[EP_Page & 0x0ff]);
 	cpu_setbank((CPU_Page+5), Enterprise_Pages_Write[EP_Page & 0x0ff]);
@@ -154,7 +154,7 @@ static void enterprise_dave_reg_read(int RegIndex)
 	}
 }
 
-void enterprise_dave_interrupt(int state)
+static void enterprise_dave_interrupt(int state)
 {
 	if (state)
 		cpu_set_irq_line(0,0,HOLD_LINE);
@@ -314,7 +314,7 @@ MEMORY_END
    bit 7 - in use
 */
 
-int EXDOS_GetDriveSelection(int data)
+static int EXDOS_GetDriveSelection(int data)
 {
 	 if (data & 0x01)
 	 {
@@ -553,7 +553,7 @@ INPUT_PORTS_START( ep128 )
 
 INPUT_PORTS_END
 
-int	enterprise_dsk_floppy_init(int id)
+static int	enterprise_dsk_floppy_init(int id)
 {
 	 if (device_filename(IO_FLOPPY,id)==NULL)
 		 return INIT_PASS;
@@ -625,7 +625,7 @@ static const struct IODevice io_ep128[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		enterprise_floppy_init, /* init */
 		basicdsk_floppy_exit,	/* exit */

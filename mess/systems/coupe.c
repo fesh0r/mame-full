@@ -46,7 +46,7 @@ MEMORY_WRITE_START( coupe_writemem )	 {
 	{ 0xC000, 0xFFFF, MWA_BANK4 },
 MEMORY_END
 
-INTERRUPT_GEN( coupe_line_interrupt )
+static INTERRUPT_GEN( coupe_line_interrupt )
 {
 	struct mame_bitmap *bitmap = tmpbitmap;
 	int interrupted=0;	/* This is used to allow me to clear the STAT flag (easiest way I can do it!) */
@@ -101,7 +101,7 @@ INTERRUPT_GEN( coupe_line_interrupt )
 		STAT=0x1F;
 }
 
-unsigned char getSamKey1(unsigned char hi)
+static unsigned char getSamKey1(unsigned char hi)
 {
 	unsigned char result;
 
@@ -125,7 +125,7 @@ unsigned char getSamKey1(unsigned char hi)
 	return result;
 }
 
-unsigned char getSamKey2(unsigned char hi)
+static unsigned char getSamKey2(unsigned char hi)
 {
 	unsigned char result;
 
@@ -152,7 +152,7 @@ unsigned char getSamKey2(unsigned char hi)
 }
 
 
-READ_HANDLER( coupe_port_r )
+static READ_HANDLER( coupe_port_r )
 {
     if (offset==SSND_ADDR)  /* Sound address request */
 		return SOUND_ADDR;
@@ -201,7 +201,7 @@ READ_HANDLER( coupe_port_r )
 }
 
 
-WRITE_HANDLER( coupe_port_w )
+static WRITE_HANDLER( coupe_port_w )
 {
 	if (offset==SSND_ADDR)						// Set sound address
 	{
@@ -473,7 +473,7 @@ static const struct IODevice io_coupe[] =
 /* Only .DSK (raw dump images) are supported at present */
         "dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		NULL,					/* id */
 		coupe_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */

@@ -32,14 +32,14 @@ text screen in the superior part of the graphical screen.
 static unsigned char keyboard_data;
 static unsigned char pad_data;
 
-READ_HANDLER(apf_m1000_pia_in_a_func)
+static READ_HANDLER(apf_m1000_pia_in_a_func)
 {
 	logerror("pia 0 a r: %04x\n",offset);
 
 	return pad_data;
 }
 
-READ_HANDLER(apf_m1000_pia_in_b_func)
+static READ_HANDLER(apf_m1000_pia_in_b_func)
 {
 	
 	logerror("pia 0 b r: %04x\n",offset);
@@ -47,28 +47,28 @@ READ_HANDLER(apf_m1000_pia_in_b_func)
 	return 0x0ff;
 }
 
-READ_HANDLER(apf_m1000_pia_in_ca1_func)
+static READ_HANDLER(apf_m1000_pia_in_ca1_func)
 {
 	logerror("pia 0 ca1 r: %04x\n",offset);
 
 	return 0;
 }
 
-READ_HANDLER(apf_m1000_pia_in_cb1_func)
+static READ_HANDLER(apf_m1000_pia_in_cb1_func)
 {
 	logerror("pia 0 cb1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-READ_HANDLER(apf_m1000_pia_in_ca2_func)
+static READ_HANDLER(apf_m1000_pia_in_ca2_func)
 {
 	logerror("pia 0 ca2 r: %04x\n",offset);
 
 	return 0;
 }
 
-READ_HANDLER(apf_m1000_pia_in_cb2_func)
+static READ_HANDLER(apf_m1000_pia_in_cb2_func)
 {
 	logerror("pia 0 cb2 r: %04x\n",offset);
 
@@ -76,14 +76,14 @@ READ_HANDLER(apf_m1000_pia_in_cb2_func)
 }
 
 
-WRITE_HANDLER(apf_m1000_pia_out_a_func)
+static WRITE_HANDLER(apf_m1000_pia_out_a_func)
 {
 	logerror("pia 0 a w: %04x %02x\n",offset,data);
 }
 
 unsigned char previous_mode;
 
-WRITE_HANDLER(apf_m1000_pia_out_b_func)
+static WRITE_HANDLER(apf_m1000_pia_out_b_func)
 {
 	pad_data = 0x0ff;
 
@@ -121,12 +121,12 @@ WRITE_HANDLER(apf_m1000_pia_out_b_func)
 	logerror("pia 0 b w: %04x %02x\n",offset,data);
 }
 
-WRITE_HANDLER(apf_m1000_pia_out_ca2_func)
+static WRITE_HANDLER(apf_m1000_pia_out_ca2_func)
 {
 	logerror("pia 0 ca2 w: %04x %02x\n",offset,data);
 }
 
-WRITE_HANDLER(apf_m1000_pia_out_cb2_func)
+static WRITE_HANDLER(apf_m1000_pia_out_cb2_func)
 {
 	speaker_level_w(0, data);
 }
@@ -153,7 +153,7 @@ void apf_update_ints(void)
 	}
 }
 
-void	apf_m1000_irq_a_func(int state)
+static void	apf_m1000_irq_a_func(int state)
 {
 	//logerror("pia 0 irq a %d\n",state);
 
@@ -170,7 +170,7 @@ void	apf_m1000_irq_a_func(int state)
 }
 
 
-void	apf_m1000_irq_b_func(int state)
+static void	apf_m1000_irq_b_func(int state)
 {
 	//logerror("pia 0 irq b %d\n",state);
 
@@ -204,14 +204,14 @@ struct pia6821_interface apf_m1000_pia_interface=
 };
 
 
-READ_HANDLER(apf_imagination_pia_in_a_func)
+static READ_HANDLER(apf_imagination_pia_in_a_func)
 {
 	logerror("pia 1 a r: %04x\n",offset);
 
 	return keyboard_data;
 }
 
-READ_HANDLER(apf_imagination_pia_in_b_func)
+static READ_HANDLER(apf_imagination_pia_in_b_func)
 {
 //	logerror("pia 1 b r: %04x\n",offset);
 	unsigned char data;
@@ -225,28 +225,28 @@ READ_HANDLER(apf_imagination_pia_in_b_func)
 //	return 0x0ff;
 }
 
-READ_HANDLER(apf_imagination_pia_in_ca1_func)
+static READ_HANDLER(apf_imagination_pia_in_ca1_func)
 {
 	logerror("pia 1 ca1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-READ_HANDLER(apf_imagination_pia_in_cb1_func)
+static READ_HANDLER(apf_imagination_pia_in_cb1_func)
 {
 	logerror("pia 1 cb1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-READ_HANDLER(apf_imagination_pia_in_ca2_func)
+static READ_HANDLER(apf_imagination_pia_in_ca2_func)
 {
 	logerror("pia 1 ca2 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-READ_HANDLER(apf_imagination_pia_in_cb2_func)
+static READ_HANDLER(apf_imagination_pia_in_cb2_func)
 {
 	logerror("pia 1 cb2 r: %04x\n",offset);
 
@@ -254,12 +254,12 @@ READ_HANDLER(apf_imagination_pia_in_cb2_func)
 }
 
 
-WRITE_HANDLER(apf_imagination_pia_out_a_func)
+static WRITE_HANDLER(apf_imagination_pia_out_a_func)
 {
 	logerror("pia 1 a w: %04x %02x\n",offset,data);
 }
 
-WRITE_HANDLER(apf_imagination_pia_out_b_func)
+static WRITE_HANDLER(apf_imagination_pia_out_b_func)
 {
 	/* bits 2..0 = keyboard line */
 	/* bit 3 = ??? */
@@ -283,17 +283,17 @@ WRITE_HANDLER(apf_imagination_pia_out_b_func)
 	logerror("pia 1 b w: %04x %02x\n",offset,data);
 }
 
-WRITE_HANDLER(apf_imagination_pia_out_ca2_func)
+static WRITE_HANDLER(apf_imagination_pia_out_ca2_func)
 {
 	//logerror("pia 1 ca2 w: %04x %02x\n",offset,data);
 }
 
-WRITE_HANDLER(apf_imagination_pia_out_cb2_func)
+static WRITE_HANDLER(apf_imagination_pia_out_cb2_func)
 {
 	//logerror("pia 1 cb2 w: %04x %02x\n",offset,data);
 }
 
-void	apf_imagination_irq_a_func(int state)
+static void	apf_imagination_irq_a_func(int state)
 {
 	//logerror("pia 1 irq a %d\n",state);
 	if (state)
@@ -309,7 +309,7 @@ void	apf_imagination_irq_a_func(int state)
 
 }
 
-void	apf_imagination_irq_b_func(int state)
+static void	apf_imagination_irq_b_func(int state)
 {
 	//logerror("pia 1 irq b %d\n",state);
 
@@ -345,7 +345,7 @@ struct pia6821_interface apf_imagination_pia_interface=
 
 extern unsigned char *apf_video_ram;
 
-void apf_common_init(void)
+static void apf_common_init(void)
 {
 	unsigned char *rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 
@@ -366,27 +366,27 @@ void apf_common_init(void)
 
 }
 
-READ_HANDLER(apf_pia_0_r)
+static READ_HANDLER(apf_pia_0_r)
 {
 	return pia_0_r(offset & 0x03);
 }
 
-WRITE_HANDLER(apf_pia_0_w)
+static WRITE_HANDLER(apf_pia_0_w)
 {
 	pia_0_w(offset & 0x03, data);
 }
 
-READ_HANDLER(apf_pia_1_r)
+static READ_HANDLER(apf_pia_1_r)
 {
 	return pia_1_r(offset & 0x03);
 }
 
-WRITE_HANDLER(apf_pia_1_w)
+static WRITE_HANDLER(apf_pia_1_w)
 {
 	pia_1_w(offset & 0x03, data);
 }
 
-MACHINE_INIT( apf_imagination )
+static MACHINE_INIT( apf_imagination )
 {
 	pia_config(1, PIA_STANDARD_ORDERING,&apf_imagination_pia_interface);
 
@@ -395,7 +395,7 @@ MACHINE_INIT( apf_imagination )
 	wd179x_init(WD_TYPE_179X,NULL);
 }
 
-MACHINE_INIT( apf_m1000 )
+static MACHINE_INIT( apf_m1000 )
 {
 	apf_common_init();
 }
@@ -412,13 +412,13 @@ static WRITE_HANDLER(apf_dischw_w)
 	logerror("disc w %04x %04x\n",offset,data);
 }
 
-READ_HANDLER(serial_r)
+static READ_HANDLER(serial_r)
 {
 	logerror("serial r %04x\n",offset);
 	return 0x00;
 }
 
-WRITE_HANDLER(serial_w)
+static WRITE_HANDLER(serial_w)
 {
 	logerror("serial w %04x %04x\n",offset,data);
 }
@@ -791,7 +791,7 @@ static const struct IODevice io_apfimag[] =
 		2,							/* count */
 		"apd\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
-		/*OSD_FOPEN_DUMMY*/OSD_FOPEN_RW_CREATE_OR_READ,			/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		apfimag_floppy_init,			/* init */
 		basicdsk_floppy_exit,			/* exit */

@@ -61,7 +61,7 @@ static int obfa,ibfa, intra;
 static int fd5_port_0x020_data;
 
 /* stb and ack automatically set on read/write? */
-WRITE_HANDLER(fd5_communication_w)
+static WRITE_HANDLER(fd5_communication_w)
 {
 	cpu_yield();
 
@@ -71,7 +71,7 @@ WRITE_HANDLER(fd5_communication_w)
 #endif
 }
 
-READ_HANDLER(fd5_communication_r)
+static READ_HANDLER(fd5_communication_r)
 {
 	int data;
 
@@ -85,7 +85,7 @@ READ_HANDLER(fd5_communication_r)
 	return data;
 }
 
-READ_HANDLER(fd5_data_r)
+static READ_HANDLER(fd5_data_r)
 {
 	cpu_yield();
 
@@ -100,7 +100,7 @@ READ_HANDLER(fd5_data_r)
 	return fd5_databus;
 }
 
-WRITE_HANDLER(fd5_data_w)
+static WRITE_HANDLER(fd5_data_w)
 {
 #ifdef SORD_DEBUG
 	logerror("fd5 0x010 w: %02x %04x\n",data,activecpu_get_pc());
@@ -116,7 +116,7 @@ WRITE_HANDLER(fd5_data_w)
 	cpu_yield();
 }
 
-WRITE_HANDLER(fd5_drive_control_w)
+static WRITE_HANDLER(fd5_drive_control_w)
 {
 	int state;
 	
@@ -135,7 +135,7 @@ WRITE_HANDLER(fd5_drive_control_w)
 	floppy_drive_set_ready_state(1,1,1);
 }
 
-WRITE_HANDLER(fd5_tc_w)
+static WRITE_HANDLER(fd5_tc_w)
 {
 	nec765_set_tc_state(1);
 	nec765_set_tc_state(0);
@@ -201,14 +201,14 @@ static MACHINE_INIT( sord_m5_fd5 )
 /*********************************************************************************************/
 /* PI-5 */
 
-READ_HANDLER(sord_ppi_porta_r)
+static READ_HANDLER(sord_ppi_porta_r)
 {
 	cpu_yield(); 
 
 	return fd5_databus;
 }
 
-READ_HANDLER(sord_ppi_portb_r)
+static READ_HANDLER(sord_ppi_portb_r)
 {
 	cpu_yield();
 
@@ -219,7 +219,7 @@ READ_HANDLER(sord_ppi_portb_r)
 	return 0x0ff;
 }
 
-READ_HANDLER(sord_ppi_portc_r)
+static READ_HANDLER(sord_ppi_portc_r)
 {
 	cpu_yield();
 
@@ -252,14 +252,14 @@ READ_HANDLER(sord_ppi_portc_r)
 			);
 }
 
-WRITE_HANDLER(sord_ppi_porta_w)
+static WRITE_HANDLER(sord_ppi_porta_w)
 {
 	cpu_yield(); 
 
 	fd5_databus = data;
 }
 
-WRITE_HANDLER(sord_ppi_portb_w)
+static WRITE_HANDLER(sord_ppi_portb_w)
 {
 	cpu_yield();
 
@@ -283,7 +283,7 @@ WRITE_HANDLER(sord_ppi_portb_w)
 /* C,H,N */
 
 
-WRITE_HANDLER(sord_ppi_portc_w)
+static WRITE_HANDLER(sord_ppi_portc_w)
 {
 	cpu_yield();
 #ifdef SORD_DEBUG
@@ -291,21 +291,21 @@ WRITE_HANDLER(sord_ppi_portc_w)
 #endif
 }
 
-WRITE_HANDLER(sord_ppi_obfa_write)
+static WRITE_HANDLER(sord_ppi_obfa_write)
 {
 //	logerror("ppi obfa write %02x %04x\n",data,activecpu_get_pc());
 	obfa = data & 0x01;
 	cpu_yield();
 }
 
-WRITE_HANDLER(sord_ppi_intra_write)
+static WRITE_HANDLER(sord_ppi_intra_write)
 {
 //	logerror("ppi intra write %02x %04x\n",data,activecpu_get_pc());
 	intra = data & 0x01;
 	cpu_yield();
 }
 
-WRITE_HANDLER(sord_ppi_ibfa_write)
+static WRITE_HANDLER(sord_ppi_ibfa_write)
 {
 //	logerror("ppi ibfa write %02x %04x\n",data,activecpu_get_pc());
 	ibfa = data & 0x01;
@@ -335,7 +335,7 @@ static ppi8255_interface sord_ppi8255_interface =
 
 static char cart_data[0x06fff-0x02000];
 
-int		sord_cartslot_init(int id)
+static int		sord_cartslot_init(int id)
 {
 	void *file;
 
@@ -367,11 +367,11 @@ int		sord_cartslot_init(int id)
 	return INIT_FAIL;
 }
 
-void	sord_cartslot_exit(int id)
+static void	sord_cartslot_exit(int id)
 {
 }
 
-int sord_floppy_init(int id)
+static int sord_floppy_init(int id)
 {
 	if (device_filename(IO_FLOPPY,id)==NULL)
 		return INIT_PASS;
@@ -388,7 +388,7 @@ int sord_floppy_init(int id)
 
 
 
-int sord_cassette_init(int id)
+static int sord_cassette_init(int id)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -396,7 +396,7 @@ int sord_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-void sord_cassette_exit(int id)
+static void sord_cassette_exit(int id)
 {
 	device_close(IO_CASSETTE, id);
 }
@@ -629,7 +629,7 @@ static MACHINE_INIT( sord_m5 )
 #define SORD_DUMP_RAM
 
 #ifdef SORD_DUMP_RAM
-void sord_dump_ram(void)
+static void sord_dump_ram(void)
 {
 	void *file;
 
@@ -653,7 +653,7 @@ void sord_dump_ram(void)
 	}
 }
 
-void sordfd5_dump_ram(void)
+static void sordfd5_dump_ram(void)
 {
 	void *file;
 
@@ -925,8 +925,8 @@ static const struct IODevice io_srdm5fd5[] =
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
-		NULL, /*basicdsk_floppy_id,*/ 	/* id */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
+		NULL,
 		sord_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
