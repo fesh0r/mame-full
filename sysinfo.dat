@@ -1075,7 +1075,7 @@ CPDRead   http://www.classicgaming.com/caprice/
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
-Others can be found in the FAQ at http://www.multimania.com/genesis8/
+Others can be found in the FAQ at http://genesis8.free.fr/
 
 
 
@@ -1151,7 +1151,7 @@ CPDRead   http://www.classicgaming.com/caprice/
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
-Others can be found in the FAQ at http://www.multimania.com/genesis8/
+Others can be found in the FAQ at http://genesis8.free.fr/
 
 
 
@@ -1197,8 +1197,8 @@ Amstrad/Schneider CPC 664
 
 Usage:
 
-With a disk image loaded, the emulation starts from the BASIC "Ready" prompt. 
-From here you can enter commands to access the disk image: 
+The the emulation starts from the BASIC "Ready" prompt. 
+From here you can enter commands to access a disk image: 
  
 
 A directory listing can be obtained with: "CAT"
@@ -1243,7 +1243,7 @@ CPDRead   http://www.classicgaming.com/caprice/
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
-Others can be found in the FAQ at http://www.multimania.com/genesis8/
+Others can be found in the FAQ at http://genesis8.free.fr
 
 
 
@@ -1606,7 +1606,7 @@ Not all graphic modes are emulated.
 
 Interrupts are not emulated correctly.
 
-Sound is not supported.
+Samples and simple tone is supported, complex effects using ring modulation and filtering are not supported.
 
 Tapes are not supported.
 
@@ -1733,56 +1733,47 @@ $end
 $info=kccomp
 $bio
 KC Compact
-
+----------
 
 Usage:
+------
 
 Image loading is the same as for the Amstrad CPC series.
 
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
+- Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
 default. Whilst in full keyboard emulation mode, some key associated functionality may be 
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
 
+- Z8536 CIO is not emulated
 
 History and Trivia:
+-------------------
 
-The KC Compact is a copy of the Amstrad CPC series, made in East Germany
-around 1985 just before the Berlin wall came down.
+The KC Compact is a clone of the Amstrad CPC series, made in East Germany
+by VEB Mikroelektronik. It was made in 1989 to celebrate 30 years of the GDR
+(German Democratic Republic). Soon after the Berlin wall came down, east and west
+merged, and production stopped.
+
 The system contains a hacked Amstrad CPC 6128 Operating System and the
-Amstrad CPC 6128 BASIC. Unlike the CPC, this
-system didn't come with a built in disc drive or cassette unit, and did not
-require a special monitor. Not many of these systems were produced.
+Amstrad CPC 6128 BASIC. Unlike the CPC, this system didn't come with a built in 
+disc drive or cassette unit, and did not require a special monitor. 
 
+The base unit can connect to a TV through a aerial or scart lead. 
+
+Not many of these systems were produced and they are rare.
 
 The Amstrad CPC had a gate array chip which contained the logic for the
 palette, mode display, rom paging,ram paging and interrupt
 system. This is emulated in the KC Compact using a lot of TTL logic chips
 and a Zilog 8536 chip.
 
-
 Hardware that was designed for the CPC systems should work on the KC
 Compact, however, since the KC Compact has a different
 expansion port layout, a adaptor must be made.
-
-
-The KC Compact interrupt system is driven by a counter inside the Zilog
-8536. This counts HSYNC transitions and decrements a counter.
-The count is reset by a VSYNC. What this means is that the interrupt system
-is slightly different to the CPC, and so any programs which
-rely on exact interrupt behavior will not work as expected.
-
-
-What is interesting though, is that since the counter in the 8536 can be
-re-programmed, interrupt frequency can be changed. The KC
-therefore has a superior interrupt system compared to the CPC. The 8536 has
-two other counters, which from the schematics, appear
-to be connected to the video hardware. This could mean that different
-resolutions could be generated, but this is not confirmed yet.
-
 
 $end
 
@@ -2415,6 +2406,179 @@ monitor.
 $end
 
 #---------------------------------------------------------------------------------------------#
+$info=nc100
+$bio
+Amstrad NC100 Notepad computer
+------------------------------
+
+The Amstrad NC100 Notepad computer is a portable computer.
+
+This system has a LCD screen and nice keyboard. The memory is
+protected by a lithium battery which is charged when the computer
+is connected to a mains supply.
+
+PCMCIA ram cards can be used to store programs and documents.
+
+The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
+Calculator, Diary and more. The whole system is a personal organiser with lots
+of extras.
+
+Mess Emulation State
+--------------------
+
+a. ACCURACY
+-----------
+
+The emulation is reasonably accurate. I have used NCIOSPEC.TXT published by Cliff
+Lawson at Amstrad to write the driver. Unfortunatly this document does not describe
+undocumented hardware features, so at this time, any programs relying on undocumented
+behaviour will not work well. I am currently looking for NC owners (especially NC150
+owners) to run some tests for me.
+
+a. PRINTER
+----------
+
+Printer emulation is working. All data is saved out to a file on the host filesystem.
+The data is not processed in any way, so the file will contain the raw bytes output
+to the printer port.
+
+b. PCMCIA RAM CARD
+------------------
+
+The NC100 supports a PCMCIA Ram card up to 1mb in size. 
+
+The emulator supports all ram card operations: reading, writing, formatting
+and write enable/write protect.
+
+It also supports ram cards of all sizes (128k, 256k, 512k and 1mb).
+
+The file format of a ram card is a simple memory dump; there are no headers or 
+other information stored in the file.
+
+If files have been saved onto the ram card by the emulation, then the file
+on the host filesystem will be updated (the update will happen when MESS is exited,
+or a new card is inserted).
+
+Use imgtool to create blank cards, and to put/get files to the card image.
+At this time, only 1mb cards can be created and there is no support to create unformatted
+or executable cards.
+
+Do not forget to insert memory card (as "Cartridge"), and if you want to write files
+to it make sure it is write enabled (see dipswitches in UI).
+
+imgtool create nccard <card name>
+	Create a blank formatted memory card. The NC100 can write files to this.
+
+	You can view the files by:
+		1. Pressing FUNCTION + B to enter BASIC, then typeing "*." at the ">"
+		prompt.
+		2. Enter wordprocessor menu and select list files.
+	
+imgtool put nccard <card name> <host filesystem name> <nc100 name>
+	Put a file from the host filesystem (e.g. PC harddrive) to the nc memory card.
+	The file will be cut if it is larger than 64k (64k is the maximum file size
+	supported by the nc100 filesystem).
+
+	At this time, all files are assumed to be ASCII. There is no support to put binary
+	or BASIC files.
+
+imgtool get nccard <card name> <nc100 name> <host filesystem name>
+	Get a file from the nc memory card to the host filesystem. Files are always
+	saved as binary regardless of file type on memory card.
+
+imgtool dir nccard <card name>
+	Show a directory listing of the memory card.
+
+imgtool del nccard <card name> <nc100 name>
+	Delete a file from the memory card
+
+
+c. SERIAL
+---------
+
+Serial is mostly working. 
+
+MESS does not have a UI to change the serial device transmit/receive properties, so at 
+this time it is fixed to: 9600 baud, 8 data bits, 1 stop bit, no parity for the NC100
+driver.
+
+At this time, the serial device only supports a simple protocol. (Each byte is transmitted
+in a basic serial form, with start bits, data bits, parity and stop bits).
+
+In the future the serial device will support xmodem and xmodem send/receive will then
+work in the emulation.
+
+Notes
+=====
+
+Links:
+
+http://genesis8.free.fr/
+http://www.ncus.org.uk/
+$end
+#---------------------------------------------------------------------------------------------#
+$info=nc200
+$bio
+Amstrad NC200 Notebook computer
+-------------------------------
+
+The Amstrad NC200 Notebook computer is a portable computer.
+
+This system has a fold-down LCD screen, nice keyboard and disc drive.
+(The disc format is 720k PC Double Density DOS compatible).
+
+The memory is  protected by a lithium battery which is charged when the computer
+is connected to a mains supply.
+
+PCMCIA ram cards can be used to store programs and documents.
+
+The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
+Calculator, Diary and more. The whole system is a personal organiser with lots
+of extras.
+
+Mess Emulation State
+--------------------
+
+a. ACCURACY
+-----------
+
+The emulation is reasonably accurate. There are no documents about the hardware
+of the NC200. Originally Cliff Lawson published details but these have been lost
+when his WWW site went down. Since then he has been unable to write up the details
+of the hardware (Cliff is a very busy man).
+
+So I have worked out much of the NC200 hardware by dissassembling the ROM and I have
+also had much help from Russel Marks.
+
+a. PRINTER
+----------
+
+Same state as NC100, please see nc.txt for details.
+
+b. PCMCIA RAM CARD
+------------------
+
+Same state as NC100, please see nc.txt for details.
+
+c. SERIAL
+---------
+
+Serial is not working properly. It is almost at the same state as the NC100.
+
+d. DISK DRIVE
+-------------
+
+Not working. I am trying to find out the details of the disc interface by looking
+at lots of dissassemblys!
+
+Notes
+=====
+
+Links:
+
+http://genesis8.free.fr/
+http://www.ncus.org.uk/
+#---------------------------------------------------------------------------------------------#
 
 $info=nes
 $bio
@@ -2473,6 +2637,10 @@ $info=orica
 $bio
 Oric Atmos
 
+Known issues:
+- The disc controller emulation is not exact and some programs may fail to load.
+- The cassette emulation is not exact and some programs may fail to load
+- Screen display should be accurate, but there might be some small bugs.
 
 History and Trivia:
 
@@ -2486,6 +2654,35 @@ converter. An external interface was needed to use joysticks.
 $end
 
 #---------------------------------------------------------------------------------------------#
+$info=telstrat
+$bio
+Oric Telestrat
+--------------
+
+This system is a update to the Atmos.
+
+Known Issues:
+-------------
+- disc emulation is not correct so it fails to boot! 
+
+
+
+
+$end
+#---------------------------------------------------------------------------------------------#
+$info=prav8d
+$bio
+Pravetz 8D
+----------
+
+The Pravetz 8D is a Hungarian clone of the Oric Atmos.
+
+The Pravetz 8D has a disc interface that connects to Apple2 disc drives, and these
+are emulated in the driver (a optional disk rom is required).
+
+$end
+#---------------------------------------------------------------------------------------------#
+
 
 $info=pc
 $bio
@@ -2740,9 +2937,8 @@ $end
 
 $info=pcw8256
 $bio
-PCW8256/8512/9512/9512+/10
-
-(Information and Driver by Kev Thacker)
+Amstrad PCW8256/8512/9512/9512+/10
+----------------------------------
 
 These machines were designed primiarly for wordprocessing (hence the name
 "Personal Computer Wordprocessor"), but are capable of a lot more.
@@ -2786,11 +2982,10 @@ $end
 
 $info=pcw16
 $bio
-PCW16
+Amstrad PCW16
+-------------
 
-(Information and Driver by Kev Thacker)
-
-This is a successor to the PCW 8256 series.
+This is a successor to the PCW 8xxx and PCW9xxx series.
 
 It is a re-designed machine, with a 16Mhz Z80 CPU, improved graphics and improved hardware, 
 and a nice GUI system.
@@ -2799,8 +2994,10 @@ This system takes advantage of a Super I/O chip, as used in many PCs, which prov
 Floppy Disc Controller, Serial and Parallel port hardware. As a result, the system uses 
 a PC-AT keyboard and PC Serial Mouse.
 
-The OS comes on a rescue disc and is installed into flash-file memory. This is also used 
-for storing documents and files. The main purpose of this machine, like the original is 
+The PCW16 has a high-density floppy disc drive which uses the MSDOS filesystem.
+
+The OS comes on a rescue disc and is installed into 2MB flash-file memory. This is also used 
+for storing documents, files and user details. The main purpose of this machine, like the original is 
 wordprocessing, spreadsheet and other business tasks.
 
 Other programs have been written for it, including a CP/M "shell" by John Elliot 
@@ -2813,6 +3010,56 @@ Amstrad computer support site at: http://web.ukonline.co.uk/cliff.lawson/ (the d
 listed in the files section). Cliff works at Amstrad plc, and has worked on the many 
 projects from the Amstrad CPC to the latest e-mail phone.
 
+Mess Emulation State
+--------------------
+
+All major functions are working and the computer is useable, however there
+are some accuracy problems.
+
+
+a. SCREEN DISPLAY
+-----------------
+
+The screen emulation does not support mid-frame or mid-line changes.
+I don't think any programs do this yet?
+
+
+b. PRINTER
+----------
+
+Not working. The printer emulation assumes a ECP/EPP compatible parallel port
+which is not yet emulated. Therefore you cannot print out documents :(
+
+c. HARD DRIVE
+-------------
+
+Not emulated. Has anyone used a hard-drive on their PCW16? Please let me know
+and I will add support for it.
+
+d. ANALOGUE JOYSTICKS
+---------------------
+
+Not emulated. Are there any programs which use the joysticks?
+
+
+Notes
+-----
+
+To use the PCW16 you will need the OS rescue disc, when this has been inserted,
+and the on/off switch has been toggled (see UI for the dipswitch to do this),
+then the OS will be installed.
+When the OS is installed the computer is now useable and you can write documents
+and perform tasks.
+
+The emulation will run the CP/M implementation by John Elliot. It should run
+almost all software provided it is in a disc image.
+
+Development has been halted because this computer is in a working state.
+I plan to go back to it to fix the remaining problems at a later date when I
+have more time and more information.
+
+If you want to see more added to this driver, please contact me and I will
+try and fix it.
 
 $end
 
@@ -3752,4 +3999,14 @@ RS232 or Centronics interfaces, and RAM extensions. The ZX 81 was sold as the Ti
 
 $end
 
+#---------------------------------------------------------------------------------------------#
+
+$info=avigo
+$bio
+TI Avigo 
+
+This system does not work properly.
+There is no documentation on the hardware available and more is required.
+
+$end
 #---------------------------------------------------------------------------------------------#
