@@ -52,17 +52,17 @@ static WRITE_HANDLER ( mtx_psg_w )
 static READ_HANDLER ( mtx_vdp_r )
 {
 	if (offset & 0x01)
-		return TMS9928A_register_r();
+		return TMS9928A_register_r(0);
 	else
-		return TMS9928A_vram_r();
+		return TMS9928A_vram_r(0);
 }
 
 static WRITE_HANDLER ( mtx_vdp_w )
 {
 	if (offset & 0x01)
-		TMS9928A_register_w(data);
+		TMS9928A_register_w(0, data);
 	else
-		TMS9928A_vram_w(data);
+		TMS9928A_vram_w(0, data);
 }
 
 static WRITE_HANDLER ( mtx_sense_w )

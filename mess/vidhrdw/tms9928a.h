@@ -5,12 +5,14 @@
 */
 
 extern unsigned char TMS9928A_palette[];
-extern unsigned short TMS9928A_colortable[];
-/* initialise palette function */
+
+/*
+** initialise palette function 
+*/
 void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 #define TMS9928A_PALETTE_SIZE           16
-#define TMS9928A_COLORTABLE_SIZE        32
+#define TMS9928A_COLORTABLE_SIZE        16
 
 /*
 ** The different models
@@ -48,10 +50,10 @@ void TMS9928A_stop (void);
 /*
 ** The I/O functions
 */
-UINT8 TMS9928A_vram_r (void);
-void TMS9928A_vram_w (UINT8 val);
-UINT8 TMS9928A_register_r (void);
-void TMS9928A_register_w (UINT8 val);
+READ_HANDLER (TMS9928A_vram_r);
+WRITE_HANDLER (TMS9928A_vram_w);
+READ_HANDLER (TMS9928A_register_r);
+WRITE_HANDLER (TMS9928A_register_w);
 
 /*
 ** Call this function to render the screen.

@@ -4,7 +4,6 @@
 ** By Sean Young 1999
 */
 
-#define MSX_MAX_ROMSIZE (512*1024)
 #define MSX_MAX_CARTS   (2)
 
 typedef struct {
@@ -41,8 +40,6 @@ int msx_interrupt (void);
 /* I/O functions */
 WRITE_HANDLER ( msx_printer_w );
 READ_HANDLER ( msx_printer_r );
-WRITE_HANDLER ( msx_vdp_w );
-READ_HANDLER ( msx_vdp_r );
 WRITE_HANDLER ( msx_psg_w );
 WRITE_HANDLER ( msx_dsk_w );
 READ_HANDLER ( msx_psg_r );

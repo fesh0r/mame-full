@@ -37,7 +37,8 @@ static PORT_READ_START (readport)
     { 0x90, 0x91, msx_printer_r },
     { 0xa0, 0xa7, msx_psg_r },
     { 0xa8, 0xab, ppi8255_0_r },
-    { 0x98, 0x99, msx_vdp_r },
+    { 0x98, 0x98, TMS9928A_vram_r },
+    { 0x99, 0x99, TMS9928A_register_r },
 PORT_END
 
 static PORT_WRITE_START (writeport)
@@ -45,7 +46,8 @@ static PORT_WRITE_START (writeport)
     { 0x90, 0x91, msx_printer_w },
     { 0xa0, 0xa7, msx_psg_w },
     { 0xa8, 0xab, ppi8255_0_w },
-    { 0x98, 0x99, msx_vdp_w },
+    { 0x98, 0x98, TMS9928A_vram_w },
+    { 0x99, 0x99, TMS9928A_register_w },
 	{ 0xd0, 0xd0, msx_dsk_w },
 PORT_END
 
@@ -501,12 +503,6 @@ MSX_DIPS
 
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { -1 } /* end of array */
-};
-extern READ_HANDLER ( msx_psg_read_port_a );
-
 static struct AY8910interface ay8910_interface =
 {
     1,  /* 1 chip */
@@ -543,8 +539,7 @@ static struct Wave_interface wave_interface = {
     { 25 }          /* mixing levels */
 };
 
-int msx_vh_start(void)
-{
+int msx_vh_start (void) {
     return TMS9928A_start(TMS99x8A, 0x4000);
 }
 
@@ -566,8 +561,8 @@ static struct MachineDriver machine_driver_msx =
 
     /* video hardware */
     32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    gfxdecodeinfo,
-    TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
+    0,
+    TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
     tms9928A_init_palette,
 
     VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
@@ -620,8 +615,8 @@ static struct MachineDriver machine_driver_msx_pal =
 
     /* video hardware */
     32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    gfxdecodeinfo,
-    TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
+    0,
+    TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
     tms9928A_init_palette,
 
     VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,

@@ -25,8 +25,15 @@
 ** - fixed bug in tms.patternmask
 **
 ** 3 nov 2000, Raphael Nabet:
-** - fixed a nasty bug in _TMS9928A_sprites. A transparent sprite caused sprites at lower levels
-** not to be displayed, which is wrong.
+** - fixed a nasty bug in _TMS9928A_sprites. A transparent sprite caused 
+**   sprites at lower levels not to be displayed, which is wrong.
+**
+** 3 jan 2001, Sean Young:
+** - A few minor cleanups
+** - Changed TMS9928A_vram_[rw] and  TMS9928A_register_[rw] to READ_HANDLER 
+**   and WRITE_HANDLER.
+** - Got rid of the color table, unused. Also got rid of the old colors,
+**   which where commented out anyways.
 ** 
 **
 ** Todo:
@@ -42,27 +49,6 @@
 #include "vidhrdw/generic.h"
 #include "tms9928a.h"
 
-#if 0
-unsigned char TMS9928A_palette[] =
-{
-        0x00, 0x00, 0x00, /* Transparent */
-        0x00, 0x00, 0x00, /* Black */
-        0x20, 0xC0, 0x20, /* Medium Green */
-        0x60, 0xE0, 0x60, /* Light Green */
-        0x20, 0x20, 0xE0, /* Dark Blue */
-        0x40, 0x60, 0xE0, /* Light Blue */
-        0xA0, 0x20, 0x20, /* Dark Red */
-        0x40, 0xC0, 0xE0, /* Cyan */
-        0xE0, 0x20, 0x20, /* Medium Red */
-        0xE0, 0x60, 0x60, /* Light Red */
-        0xC0, 0xC0, 0x20, /* Dark Yellow */
-        0xC0, 0xC0, 0x80, /* Light Yellow */
-        0x20, 0x80, 0x20, /* Dark Green */
-        0xC0, 0x40, 0xA0, /* Magenta */
-        0xA0, 0xA0, 0xA0, /* Gray */
-        0xE0, 0xE0, 0xE0, /* White */
-};
-#else
 /*
 	New palette (R. Nabet).
 
@@ -110,8 +96,8 @@ unsigned char TMS9928A_palette[16*3] =
 	204, 204, 204,
 	255, 255, 255
 };
-#endif
 
+#if 0
 unsigned short TMS9928A_colortable[] =
 {
         0,1,
@@ -130,6 +116,7 @@ unsigned short TMS9928A_colortable[] =
         0,14,
         0,15,
 };
+#endif
 
 /*
 ** Defines for `dirty' optimization
@@ -170,11 +157,9 @@ static TMS9928A tms;
 
 
 /* initial the palette */
-void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-    memcpy(palette, & TMS9928A_palette, sizeof(TMS9928A_palette));
-	memcpy(colortable, & TMS9928A_colortable, sizeof(TMS9928A_colortable));
-	color_prom=malloc(1*sizeof(char));
+void tms9928A_init_palette (unsigned char *palette, 
+	unsigned short *colortable,const unsigned char *color_prom) {
+    memcpy (palette, &TMS9928A_palette, sizeof(TMS9928A_palette));
 }
 
 
@@ -280,7 +265,7 @@ static void _TMS9928A_set_dirty (char dirty) {
 /*
 ** The I/O functions.
 */
-UINT8 TMS9928A_vram_r () {
+READ_HANDLER (TMS9928A_vram_r) {
     UINT8 b;
     b = tms.ReadAhead;
     tms.ReadAhead = tms.vMem[tms.Addr];
@@ -289,11 +274,11 @@ UINT8 TMS9928A_vram_r () {
     return b;
 }
 
-void TMS9928A_vram_w (UINT8 val) {
+WRITE_HANDLER (TMS9928A_vram_w) {
     int i;
 
-    if (tms.vMem[tms.Addr] != val) {
-        tms.vMem[tms.Addr] = val;
+    if (tms.vMem[tms.Addr] != data) {
+        tms.vMem[tms.Addr] = data;
         tms.Change = 1;
         /* dirty optimization */
         if ( (tms.Addr >= tms.nametbl) &&
@@ -315,11 +300,11 @@ void TMS9928A_vram_w (UINT8 val) {
         }
     }
     tms.Addr = (tms.Addr + 1) & (tms.vramsize - 1);
-    tms.ReadAhead = val;
+    tms.ReadAhead = data;
     tms.FirstByte = -1;
 }
 
-UINT8 TMS9928A_register_r () {
+READ_HANDLER (TMS9928A_register_r) {
     UINT8 b;
     b = tms.StatusReg;
     tms.StatusReg &= 0x5f;
@@ -331,22 +316,22 @@ UINT8 TMS9928A_register_r () {
     return b;
 }
 
-void TMS9928A_register_w (UINT8 val) {
+WRITE_HANDLER (TMS9928A_register_w) {
     if (tms.FirstByte >= 0) {
-        if (val & 0x80) {
+        if (data & 0x80) {
             /* register write */
-            _TMS9928A_change_register ((int)(val & 7), (UINT8)tms.FirstByte);
+            _TMS9928A_change_register ((int)(data & 7), (UINT8)tms.FirstByte);
         } else {
             /* set read/write address */
-            tms.Addr = ((UINT16)val << 8 | tms.FirstByte) & (tms.vramsize - 1);
-            if ( !(val & 0x40) ) {
-                tms.ReadAhead = tms.vMem[tms.Addr];
-                tms.Addr = (tms.Addr + 1) & (tms.vramsize - 1);
+            tms.Addr = ((UINT16)data << 8 | tms.FirstByte) & (tms.vramsize - 1);
+            if ( !(data & 0x40) ) {
+				/* read ahead */
+				TMS9928A_vram_r	(0);
             }
         }
         tms.FirstByte = -1;
     } else {
-        tms.FirstByte = val;
+        tms.FirstByte = data;
     }
 }
 
@@ -468,8 +453,7 @@ void TMS9928A_refresh (struct osd_bitmap *bmp, int full_refresh) {
         }
     }
 
-	if (palette_recalc())
-	{
+	if (palette_recalc() ) {
 		_TMS9928A_set_dirty (1);
 		tms.Change = 1;
 	}
@@ -487,7 +471,7 @@ void TMS9928A_refresh (struct osd_bitmap *bmp, int full_refresh) {
             }
         }
     } else {
-	tms.StatusReg = tms.oldStatusReg;
+		tms.StatusReg = tms.oldStatusReg;
     }
 
     /* store Status register, so it can be restored at the next frame
@@ -501,14 +485,14 @@ int TMS9928A_interrupt () {
     int b;
 
     /* when skipping frames, calculate sprite collision */
-    if (osd_skip_this_frame()) {
+    if (osd_skip_this_frame() ) {
         if (tms.Change) {
             if (TMS_SPRITES_ENABLED) {
                 _TMS9928A_sprites (NULL);
             }
         } else {
-	    tms.StatusReg = tms.oldStatusReg;
-	}
+	    	tms.StatusReg = tms.oldStatusReg;
+		}
     }
 
     tms.StatusReg |= 0x80;
@@ -524,6 +508,7 @@ int TMS9928A_interrupt () {
 static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
     int pattern,x,y,yy,xx,name,charcode;
     UINT8 fg,bg,*patternptr;
+	struct rectangle rt;
 
     if ( !(tms.anyDirtyColour || tms.anyDirtyName || tms.anyDirtyPattern) )
          return;
@@ -532,11 +517,13 @@ static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
     bg = Machine->pens[tms.Regs[7] & 15];
 
     if (tms.anyDirtyColour) {
-	/* colours at sides must be reset */
-	for (y=0;y<192;y++) {
-	    for (x=0;x<8;x++) plot_pixel (bmp, x, y, bg);
-	    for (x=248;x<256;x++) plot_pixel (bmp, x, y, bg);
-	}
+		/* colours at sides must be reset */
+		rt.min_y = 0; rt.max_y = 191;
+		rt.min_x = 0; rt.max_x = 7;
+		fillbitmap (bmp, bg, &rt);
+		rt.min_y = 0; rt.max_y = 191;
+		rt.min_x = 248; rt.max_x = 255;
+		fillbitmap (bmp, bg, &rt);
     }
 
     name = 0;
@@ -544,14 +531,14 @@ static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
         for (x=0;x<40;x++) {
             charcode = tms.vMem[tms.nametbl+name];
             if ( !(tms.DirtyName[name++] || tms.DirtyPattern[charcode]) &&
-		!tms.anyDirtyColour)
+				!tms.anyDirtyColour)
                 continue;
             patternptr = tms.vMem + tms.pattern + (charcode*8);
             for (yy=0;yy<8;yy++) {
                 pattern = *patternptr++;
                 for (xx=0;xx<6;xx++) {
-		    plot_pixel (bmp, 8+x*6+xx, y*8+yy,
-			(pattern & 0x80) ? fg : bg);
+		    		plot_pixel (bmp, 8+x*6+xx, y*8+yy,
+						(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -563,6 +550,7 @@ static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
 static void _TMS9928A_mode12 (struct osd_bitmap *bmp) {
     int pattern,x,y,yy,xx,name,charcode;
     UINT8 fg,bg,*patternptr;
+	struct rectangle rt;
 
     if ( !(tms.anyDirtyColour || tms.anyDirtyName || tms.anyDirtyPattern) )
          return;
@@ -571,11 +559,13 @@ static void _TMS9928A_mode12 (struct osd_bitmap *bmp) {
     bg = Machine->pens[tms.Regs[7] & 15];
 
     if (tms.anyDirtyColour) {
-	/* colours at sides must be reset */
-	for (y=0;y<192;y++) {
-	    for (x=0;x<8;x++) plot_pixel (bmp, x, y, bg);
-	    for (x=248;x<256;x++) plot_pixel (bmp, x, y, bg);
-	}
+		/* colours at sides must be reset */
+		rt.min_y = 0; rt.max_y = 191;
+		rt.min_x = 0; rt.max_x = 7;
+		fillbitmap (bmp, bg, &rt);
+		rt.min_y = 0; rt.max_y = 191;
+		rt.min_x = 248; rt.max_x = 255;
+		fillbitmap (bmp, bg, &rt);
     }
 
     name = 0;
@@ -583,13 +573,13 @@ static void _TMS9928A_mode12 (struct osd_bitmap *bmp) {
         for (x=0;x<40;x++) {
             charcode = (tms.vMem[tms.nametbl+name]+(y/8)*256)&tms.patternmask;
             if ( !(tms.DirtyName[name++] || tms.DirtyPattern[charcode]) &&
-		!tms.anyDirtyColour)
+					!tms.anyDirtyColour)
                 continue;
             patternptr = tms.vMem + tms.pattern + (charcode*8);
             for (yy=0;yy<8;yy++) {
                 pattern = *patternptr++;
                 for (xx=0;xx<6;xx++) {
-		    plot_pixel (bmp, 8+x*6+xx, y*8+yy,
+		    		plot_pixel (bmp, 8+x*6+xx, y*8+yy,
                         (pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
@@ -617,8 +607,8 @@ static void _TMS9928A_mode0 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern=*patternptr++;
                 for (xx=0;xx<8;xx++) {
-		    plot_pixel (bmp, x*8+xx, y*8+yy,
-			(pattern & 0x80) ? fg : bg);
+		    		plot_pixel (bmp, x*8+xx, y*8+yy,
+						(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -652,8 +642,8 @@ static void _TMS9928A_mode2 (struct osd_bitmap *bmp) {
                 fg = Machine->pens[colour / 16];
                 bg = Machine->pens[colour & 15];
                 for (xx=0;xx<8;xx++) {
-		    plot_pixel (bmp, x*8+xx, y*8+yy,
-			(pattern & 0x80) ? fg : bg);
+		    		plot_pixel (bmp, x*8+xx, y*8+yy,
+						(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -674,7 +664,7 @@ static void _TMS9928A_mode3 (struct osd_bitmap *bmp) {
         for (x=0;x<32;x++) {
             charcode = tms.vMem[tms.nametbl+name];
             if ( !(tms.DirtyName[name++] || tms.DirtyPattern[charcode]) &&
-		!tms.anyDirtyColour)
+					!tms.anyDirtyColour)
                 continue;
             patternptr = tms.vMem+tms.pattern+charcode*8+(y&3)*2;
             for (yy=0;yy<2;yy++) {

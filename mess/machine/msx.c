@@ -621,22 +621,6 @@ int msx_interrupt()
 ** The I/O funtions
 */
 
-READ_HANDLER ( msx_vdp_r )
-{
-    if (offset & 0x01)
-        return TMS9928A_register_r();
-    else
-        return TMS9928A_vram_r();
-}
-
-WRITE_HANDLER ( msx_vdp_w )
-{
-    if (offset & 0x01)
-        TMS9928A_register_w(data);
-    else
-        TMS9928A_vram_w(data);
-}
-
 READ_HANDLER ( msx_psg_r )
 {
     return AY8910_read_port_0_r (offset);
