@@ -936,7 +936,7 @@ void Picker_Sort(HWND hwndPicker)
 int Picker_InsertItemSorted(HWND hwndPicker, int nParam)
 {
 	struct PickerInfo *pPickerInfo;
-	int nCount, nHigh, nLow, nMid;
+	int nHigh, nLow, nMid;
 	struct CompareProcParams params;
 	int nCompareResult;
 	LVITEM lvi;

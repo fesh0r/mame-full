@@ -23,6 +23,12 @@
   Nov/Dec 1998 - Mike Haaland
 
 ***************************************************************************/
+#ifdef MESS
+#define MULTISESSION 0
+#else
+#define MULTISESSION 1
+#endif
+
 #ifdef _MSC_VER
 #ifndef NONAMELESSUNION
 #define NONAMELESSUNION 
@@ -72,6 +78,8 @@
 #include "dialogs.h"
 #include "state.h"
 #include "windows/input.h"
+#include "windows/config.h"
+#include "windows/window.h"
 
 #include "DirectDraw.h"
 #include "DirectInput.h"
@@ -885,7 +893,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (pOpts->offscreen_reload)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sreload",pOpts->offscreen_reload ? "" : "no");
 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr \"%s\"",              pOpts->ctrlr);
+	if (strlen(pOpts->ctrlr) > 0)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr \"%s\"",              pOpts->ctrlr);
 	
 	/* core video */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -bright %f",                 pOpts->f_bright_correct); 
@@ -998,6 +1007,35 @@ static BOOL WaitWithMessageLoop(HANDLE hEvent)
 
 static int RunMAME(int nGameIndex)
 {
+#if MULTISESSION
+	int argc = 0;
+	char *argv[100];
+	char pModule[_MAX_PATH];
+	char game_name[500];
+		
+	ShowWindow(hMain, SW_HIDE);
+
+	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
+	argv[0] = pModule;
+	strcpy(game_name,drivers[nGameIndex]->name);
+	argv[1] = game_name;
+	argc = 2;
+
+	extern int DECL_SPEC main_(int, char**);
+	main_(argc, argv);
+
+	// recover windows cursor and our main window
+	while (1)
+	{
+		if (ShowCursor(TRUE) >= 0)
+			break;
+	}
+	ShowWindow(hMain, SW_SHOW);
+
+	return 0;
+
+#else
+
 	DWORD               dwExitCode = 0;
 	STARTUPINFO         si;
 	PROCESS_INFORMATION pi;
@@ -1064,7 +1102,6 @@ static int RunMAME(int nGameIndex)
 		}
 
 		ShowWindow(hMain, SW_SHOW);
-
 		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
@@ -1076,6 +1113,7 @@ static int RunMAME(int nGameIndex)
 	}
 
 	return dwExitCode;
+#endif
 }
 
 int Mame32Main(HINSTANCE    hInstance,
@@ -1888,8 +1926,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	hTreeView = GetDlgItem(hMain, IDC_TREE);
 	hwndList  = GetDlgItem(hMain, IDC_LIST);
 
-	history_filename = g_szHistoryFileName;
-	mameinfo_filename = g_szMameInfoFileName;
+	history_filename = strdup(g_szHistoryFileName);
+	mameinfo_filename = strdup(g_szMameInfoFileName);
 
 	if (!InitSplitters())
 		return FALSE;
@@ -3304,7 +3342,7 @@ char* ConvertAmpersandString(const char *s)
 	return buf;
 }
 
-static int GUI_seq_pressed(input_seq_t* code)
+static int GUI_seq_pressed(input_code_t* code)
 {
 	int j;
 	int res = 1;
@@ -3313,7 +3351,7 @@ static int GUI_seq_pressed(input_seq_t* code)
 
 	for(j=0;j<SEQ_MAX;++j)
 	{
-		switch (code->code[j])
+		switch (code[j])
 		{
 			case CODE_NONE :
 				return res && count;
@@ -3329,7 +3367,7 @@ static int GUI_seq_pressed(input_seq_t* code)
 			default:
 				if (res)
 				{
-					int pressed = keyboard_state[code->code[j]];
+					int pressed = keyboard_state[code[j]];
 					if ((pressed != 0) == invert)
 						res = 0;
 				}
@@ -3348,7 +3386,7 @@ static void check_for_GUI_action(void)
 	{
 		input_seq_t *is = &(GUISequenceControl[i].is);
 
-		if (GUI_seq_pressed(is))
+		if (GUI_seq_pressed(is->code))
 		{
 			dprintf("seq =%s pressed\n", GUISequenceControl[i].name);
 			switch (GUISequenceControl[i].func_id)
@@ -3764,7 +3802,6 @@ static void UpdateGameList()
 	// Let REFRESH also load new background if found
 	LoadBackgroundBitmap();
 	InvalidateRect(hMain,NULL,TRUE);
-	ResetListView();
 	Picker_ResetIdle(hwndList);
 }
 
@@ -4161,7 +4198,20 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 	/* View Menu */
 	case ID_VIEW_LINEUPICONS:
-		ResetListView();
+		if( codeNotify == FALSE)
+			ResetListView();
+		else
+		{
+			/*it was sent after a refresh (F5) was done, we only reset the View if "available" is the selected folder
+			  as it doesn't affect the others*/
+			folder = GetSelectedFolder();
+			if( folder )
+			{
+				if (folder->m_nFolderId == FOLDER_AVAILABLE )
+					ResetListView();
+
+			}
+		}
 		break;
 
 	case ID_GAME_PROPERTIES:
@@ -4267,7 +4317,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 			// these may have been changed
 			// WTF?
 			SaveDefaultOptions();
-            DestroyWindow( hwnd );
+			DestroyWindow( hwnd );
 			PostQuitMessage(0);
         }
 		return TRUE;
@@ -6219,6 +6269,8 @@ int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata)
 	int current = romdata->romsloaded;
 	int total = romdata->romstotal;
 
+	//dprintf("updateloadprogress %s %u %u %08x\n",name,current,total,hWndLoad);
+
 	if (hWndLoad == NULL)
 	{
 		hWndLoad = CreateDialog(GetModuleHandle(NULL),
@@ -6285,7 +6337,10 @@ int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata)
 	}
 
 	if (name == NULL)
+	{
 		DestroyWindow(hWndLoad);
+		hWndLoad = NULL;
+	}
 
 	// take care of any pending messages
 	while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))

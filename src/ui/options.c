@@ -336,7 +336,7 @@ static REG_OPTION regGameOpts[] =
 	{ "lightgun",               RO_BOOL,    &gOpts.lightgun,                        "0" },
 	{ "dual_lightgun",          RO_BOOL,    &gOpts.dual_lightgun,                   "0" },
 	{ "offscreen_reload",       RO_BOOL,    &gOpts.offscreen_reload,                "0" },
-	{ "ctrlr",                  RO_STRING,  &gOpts.ctrlr,                           "Standard" },
+	{ "ctrlr",                  RO_STRING,  &gOpts.ctrlr,                           "" },
 
 	// core video
 	{ "brightness",             RO_DOUBLE,  &gOpts.f_bright_correct,                "1.0" }, 
@@ -3788,7 +3788,7 @@ static void WriteOptionToFile(FILE *fptr,REG_OPTION *regOpt)
 
 	case RO_STRING:
 		pString = *((char **)regOpt->m_vpData);
-		if (pString)
+		if (pString != NULL && pString[0] != 0)
 		    WriteStringOptionToFile(fptr, key, pString);
 		break;
 

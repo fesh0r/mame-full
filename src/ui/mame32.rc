@@ -564,7 +564,7 @@ BEGIN
     LTEXT           "Colors:",IDC_STATIC,18,198,47,8
     LTEXT           "Static",IDC_PROP_COLORS,75,198,139,8
     LTEXT           "Clone of:",IDC_PROP_CLONEOF_TEXT,18,218,50,8
-    LTEXT           "Static",IDC_PROP_CLONEOF,75,218,130,8
+    LTEXT           "Static",IDC_PROP_CLONEOF,75,218,130,18
     LTEXT           "Source:",IDC_STATIC,18,208,47,8
     LTEXT           "Static",IDC_PROP_SOURCE,75,208,139,8
 END

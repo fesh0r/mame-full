@@ -2042,6 +2042,13 @@ static void AssignInput(HWND hWnd)
 	}
 	pGameOpts->ctrlr = (char *)malloc(new_length + 1);
 	ComboBox_GetLBText(hWnd, g_nInputIndex, pGameOpts->ctrlr);
+	if (strcmp(pGameOpts->ctrlr,"Standard") == 0)
+	{
+		// we display Standard, but keep it blank internally
+		FreeIfAllocated(&pGameOpts->ctrlr);
+		pGameOpts->ctrlr = strdup("");
+	}
+
 }
 
 static void AssignEffect(HWND hWnd)
@@ -2086,7 +2093,7 @@ static void ResetDataMap(void)
 	if (pGameOpts->ctrlr == NULL || stricmp(pGameOpts->ctrlr,"Standard") == 0)
 	{
 		FreeIfAllocated(&pGameOpts->ctrlr);
-		pGameOpts->ctrlr = strdup("Standard");
+		pGameOpts->ctrlr = strdup("");
 	}
 
 	g_nRotateIndex = 0;
@@ -3075,7 +3082,6 @@ static void InitializeDefaultInputUI(HWND hwnd)
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
 	char *ext;
-	int isZipFile;
 	char root[256];
 	char path[256];
 
@@ -3087,35 +3093,24 @@ static void InitializeDefaultInputUI(HWND hwnd)
 
 		hFind = FindFirstFile(path, &FindFileData);
 
-	    if (hFind != INVALID_HANDLE_VALUE)
+		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			do 
 			{
-				if (strcmp (FindFileData.cFileName,".") != 0 && 
-					strcmp (FindFileData.cFileName,"..") != 0)
+				// copy the filename
+				strcpy (root,FindFileData.cFileName);
+
+				// find the extension
+				ext = strrchr (root,'.');
+				if (ext)
 				{
-					// copy the filename
-					strcpy (root,FindFileData.cFileName);
-
-					// assume it's not a zip file
-					isZipFile = 0;
-
-					// find the extension
-					ext = strrchr (root,'.');
-					if (ext)
+					// check if it's a cfg file
+					if (strcmp (ext, ".cfg") == 0)
 					{
-						// check if it's a zip file
-						if (strcmp (ext, ".zip") == 0)
-						{
-							isZipFile = 1;
-						}
-
 						// and strip off the extension
 						*ext = 0;
-					}
 
-					if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || isZipFile)
-					{
+						// add it as an option
 						ComboBox_AddString(hCtrl, root);
 					}
 				}

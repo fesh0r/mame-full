@@ -37,17 +37,17 @@ OSOBJS += \
         $(OBJ)/ui/bitmask.o \
         $(OBJ)/ui/datamap.o \
         $(OBJ)/ui/dxdecode.o \
-		$(OBJ)/ui/picker.o \
-		$(OBJ)/ui/tabview.o \
-		$(OBJ)/ui/properties.o \
-		$(OBJ)/ui/help.o \
-		$(OBJ)/ui/history.o \
-		$(OBJ)/ui/dialogs.o \
- 		$(OBJ)/mess/ui/ms32main.o \
- 		$(OBJ)/mess/ui/layoutms.o \
-		$(OBJ)/mess/ui/mess32ui.o \
-		$(OBJ)/mess/ui/ms32util.o \
-		$(OBJ)/mess/ui/optionsms.o \
+	$(OBJ)/ui/picker.o \
+	$(OBJ)/ui/properties.o \
+	$(OBJ)/ui/tabview.o \
+	$(OBJ)/ui/help.o \
+	$(OBJ)/ui/history.o \
+	$(OBJ)/ui/dialogs.o \
+	$(OBJ)/mess/ui/mess32ui.o \
+	$(OBJ)/mess/ui/optionsms.o \
+ 	$(OBJ)/mess/ui/layoutms.o \
+		$(OBJ)/mess/ui/ms32main.o \
+ 		$(OBJ)/mess/ui/ms32util.o \
 		$(OBJ)/mess/ui/propertiesms.o \
 		$(OBJ)/mess/ui/softwarepicker.o \
 		$(OBJ)/mess/ui/devview.o
@@ -73,6 +73,8 @@ DEFS += -DDIRECTSOUND_VERSION=0x0300 \
         -DCLIB_DECL=__cdecl \
 	-DDECL_SPEC= \
         -DZEXTERN=extern \
+
+#	-DSHOW_UNAVAILABLE_FOLDER
 
 
 #####################################################################
