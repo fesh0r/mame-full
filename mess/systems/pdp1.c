@@ -421,4 +421,4 @@ ROM_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1961, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	  "Digital Equipment Company",  "PDP-1" )
+COMP( 1961, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	  "Digital Equipment Corporation",  "PDP-1" )
