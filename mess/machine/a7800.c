@@ -144,13 +144,13 @@ int a7800_init_cart (int id)
     a7800_bios_f000 = (UINT8*)malloc(0x1000);
     if (!a7800_bios_f000) {
         logerror("Could not allocate ROM memory\n");
-        return 1;
+        return INIT_FAIL;
     }
     a7800_cart_f000 = (UINT8*)malloc(0x1000);
     if (!a7800_cart_f000) {
         logerror("Could not allocate ROM memory\n");
         free(a7800_bios_f000);
-        return 1;
+        return INIT_FAIL;
     }
 
     /* save the BIOS so we can switch it in and out */
