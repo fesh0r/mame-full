@@ -435,13 +435,7 @@ int osd_faccess (const char *newfilename, int filetype)
 	else
 		indx++;
 
-#ifdef MESS
-	if( filetype == OSD_FILETYPE_ROM ||
-		filetype == OSD_FILETYPE_IMAGE_R ||
-		filetype == OSD_FILETYPE_IMAGE_RW )
-#else
 	if( filetype == OSD_FILETYPE_ROM )
-#endif
 	{
 		pathv = rompathv;
 		pathc = rompathc;
@@ -451,6 +445,12 @@ int osd_faccess (const char *newfilename, int filetype)
 	{
 		pathv = samplepathv;
 		pathc = samplepathc;
+	}
+	if (filetype == OSD_FILETYPE_IMAGE_R ||
+		filetype == OSD_FILETYPE_IMAGE_RW)
+	{
+		pathv = swpathv;
+		pathc = swpathc;
 	}
 	else
 	if( filetype == OSD_FILETYPE_SCREENSHOT )
@@ -705,8 +705,8 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 		else
 		{
 			LOG(("osd_fopen: using rompath\n"));
-			pathc = rompathc;
-			pathv = rompathv;
+			pathc = swpathc;
+			pathv = swpathv;
 		}
 
 		LOG(("Open IMAGE_R '%s' for %s\n", filename, game));
@@ -825,8 +825,8 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 		LOG(("Open IMAGE_RW '%s' for %s mode '%s'\n", filename, game, write_modes[openforwrite]));
 		strcpy (file, filename);
 
-		pathc = rompathc;
-		pathv = rompathv;
+		pathc = swpathc;
+		pathv = swpathv;
 
 		/* NPW 30-Aug-2001 - adding path support for images */
 		if ( !found && is_direct_path(filename) )
