@@ -238,7 +238,7 @@ INPUT_PORTS_START(geneve)
 	AT_KEYB_HELPER( 0x0800, "0 )",			KEYCODE_0			) /* 0							0B	8B */
 	AT_KEYB_HELPER( 0x1000, "- _",			KEYCODE_MINUS		) /* -							0C	8C */
 	AT_KEYB_HELPER( 0x2000, "= +",			KEYCODE_EQUALS		) /* =							0D	8D */
-	AT_KEYB_HELPER( 0x4000, "<--",			KEYCODE_BACKSPACE	) /* Backspace					0E	8E */
+	AT_KEYB_HELPER( 0x4000, "Backspace",	KEYCODE_BACKSPACE	) /* Backspace					0E	8E */
 	AT_KEYB_HELPER( 0x8000, "Tab",			KEYCODE_TAB			) /* Tab						0F	8F */
 
 	PORT_START	/* IN4 */
@@ -302,7 +302,7 @@ INPUT_PORTS_START(geneve)
 	AT_KEYB_HELPER( 0x0008, "F9",			KEYCODE_F9			) /* F9							43	C3 */
 	AT_KEYB_HELPER( 0x0010, "F10",			KEYCODE_F10			) /* F10						44	C4 */
 	AT_KEYB_HELPER( 0x0020, "NumLock",		KEYCODE_NUMLOCK		) /* Num Lock					45	C5 */
-	AT_KEYB_HELPER( 0x0040, "ScrLock",		KEYCODE_SCRLOCK		) /* Scroll Lock				46	C6 */
+	AT_KEYB_HELPER( 0x0040, "ScrLock (F14)",KEYCODE_SCRLOCK		) /* Scroll Lock				46	C6 */
 	AT_KEYB_HELPER( 0x0080, "KP 7 (Home)",	KEYCODE_7_PAD		) /* Keypad 7  (Home)			47	C7 */
 	AT_KEYB_HELPER( 0x0100, "KP 8 (Up)",	KEYCODE_8_PAD		) /* Keypad 8  (Up arrow)		48	C8 */
 	AT_KEYB_HELPER( 0x0200, "KP 9 (PgUp)",	KEYCODE_9_PAD		) /* Keypad 9  (PgUp)			49	C9 */
@@ -320,27 +320,30 @@ INPUT_PORTS_START(geneve)
 	AT_KEYB_HELPER( 0x0008, "KP . (Del)",	KEYCODE_DEL_PAD		) /* Keypad .  (Del)			53	D3 */
 	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )
 	AT_KEYB_HELPER( 0x0040, "(84/102)\\",	KEYCODE_BACKSLASH2	) /* Backslash 2				56	D6 */
-	AT_KEYB_HELPER( 0x0080, "(MF2)F11",		KEYCODE_F11			) /* F11						57	D7 */
-	AT_KEYB_HELPER( 0x0100, "(MF2)F12",		KEYCODE_F12			) /* F12						58	D8 */
+	AT_KEYB_HELPER( 0x0080, "(101)F11",		KEYCODE_F11			) /* F11						57	D7 */
+	AT_KEYB_HELPER( 0x0100, "(101)F12",		KEYCODE_F12			) /* F12						58	D8 */
 	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )
 
 	PORT_START	/* IN9 */
-	AT_KEYB_HELPER( 0x0001, "(MF2)KP Enter",	KEYCODE_ENTER_PAD	) /* PAD Enter					60	e0 */
-	AT_KEYB_HELPER( 0x0002, "(MF2)R-Control",	KEYCODE_RCONTROL	) /* Right Control				61	e1 */
-	AT_KEYB_HELPER( 0x0004, "(MF2)KP /",		KEYCODE_SLASH_PAD	) /* PAD Slash					62	e2 */
-	AT_KEYB_HELPER( 0x0008, "(MF2)PRTSCR",		KEYCODE_PRTSCR		) /* Print Screen				63	e3 */
-	AT_KEYB_HELPER( 0x0010, "(MF2)ALTGR",		KEYCODE_RALT		) /* ALTGR						64	e4 */
-	AT_KEYB_HELPER( 0x0020, "(MF2)Home",		KEYCODE_HOME		) /* Home						66	e6 */
-	AT_KEYB_HELPER( 0x0040, "(MF2)Cursor Up",	KEYCODE_UP			) /* Up							67	e7 */
-	AT_KEYB_HELPER( 0x0080, "(MF2)Page Up",		KEYCODE_PGUP		) /* Page Up					68	e8 */
-	AT_KEYB_HELPER( 0x0100, "(MF2)Cursor Left",	KEYCODE_LEFT		) /* Left						69	e9 */
-	AT_KEYB_HELPER( 0x0200, "(MF2)Cursor Right",KEYCODE_RIGHT		) /* Right						6a	ea */
-	AT_KEYB_HELPER( 0x0400, "(MF2)End",			KEYCODE_END			) /* End						6b	eb */
-	AT_KEYB_HELPER( 0x0800, "(MF2)Cursor Down",	KEYCODE_DOWN		) /* Down						6c	ec */
-	AT_KEYB_HELPER( 0x1000, "(MF2)Page Down",	KEYCODE_PGDN		) /* Page Down					6d	ed */
-	AT_KEYB_HELPER( 0x2000, "(MF2)Insert",		KEYCODE_INSERT		) /* Insert						6e	ee */
-	AT_KEYB_HELPER( 0x4000, "(MF2)Delete",		KEYCODE_DEL			) /* Delete						6f	ef */
-	AT_KEYB_HELPER( 0x8000, "(MF2)Pause",		KEYCODE_PAUSE		) /* Pause						65	e5 */
+	AT_KEYB_HELPER( 0x0001, "(101)KP Enter",	KEYCODE_ENTER_PAD	) /* PAD Enter					60	e0 */
+	AT_KEYB_HELPER( 0x0002, "(101)R-Control",	KEYCODE_RCONTROL	) /* Right Control				61	e1 */
+	AT_KEYB_HELPER( 0x0004, "(101)ALTGR",		KEYCODE_RALT		) /* ALTGR						64	e4 */
+
+	AT_KEYB_HELPER( 0x0008, "(101)KP /",		KEYCODE_SLASH_PAD	) /* PAD Slash					62	e2 */
+
+	AT_KEYB_HELPER( 0x0010, "(101)Home",		KEYCODE_HOME		) /* Home						66	e6 */
+	AT_KEYB_HELPER( 0x0020, "(101)Cursor Up",	KEYCODE_UP			) /* Up							67	e7 */
+	AT_KEYB_HELPER( 0x0040, "(101)Page Up",		KEYCODE_PGUP		) /* Page Up					68	e8 */
+	AT_KEYB_HELPER( 0x0080, "(101)Cursor Left",	KEYCODE_LEFT		) /* Left						69	e9 */
+	AT_KEYB_HELPER( 0x0100, "(101)Cursor Right",KEYCODE_RIGHT		) /* Right						6a	ea */
+	AT_KEYB_HELPER( 0x0200, "(101)End",			KEYCODE_END			) /* End						6b	eb */
+	AT_KEYB_HELPER( 0x0400, "(101)Cursor Down",	KEYCODE_DOWN		) /* Down						6c	ec */
+	AT_KEYB_HELPER( 0x0800, "(101)Page Down",	KEYCODE_PGDN		) /* Page Down					6d	ed */
+	AT_KEYB_HELPER( 0x1000, "(101)Insert",		KEYCODE_INSERT		) /* Insert						6e	ee */
+	AT_KEYB_HELPER( 0x2000, "(101)Delete",		KEYCODE_DEL			) /* Delete						6f	ef */
+
+	AT_KEYB_HELPER( 0x4000, "(101)PrtScr (F13)",KEYCODE_PRTSCR		) /* Print Screen				63	e3 */
+	AT_KEYB_HELPER( 0x8000, "(101)Pause (F15)",	KEYCODE_PAUSE		) /* Pause						65	e5 */
 
 	PORT_START	/* IN10 */
 	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )

@@ -106,7 +106,9 @@ static int JoySel;
 enum
 {
 	KeyQueueSize = 256,
-	MaxKeyMessageLen = 10
+	MaxKeyMessageLen = 10,
+	KeyAutoRepeatDelay = 30,
+	KeyAutoRepeatRate = 6
 };
 static UINT8 KeyQueue[KeyQueueSize];
 static int KeyQueueHead;
@@ -114,6 +116,14 @@ static int KeyQueueLen;
 static int KeyInBuf;
 static int KeyReset;
 static UINT32 KeyStateSave[4];
+static int KeyNumLockState;
+static int KeyCtrlState;
+static int KeyAltState;
+static int KeyRealShiftState;
+static int KeyFakeShiftState;
+static int KeyFakeUnshiftState;
+static int KeyAutoRepeatKey;
+static int KeyAutoRepeatTimer;
 
 /*
 	GROM support.
@@ -210,6 +220,13 @@ void machine_init_geneve(void)
 	JoySel = 0;
 	KeyQueueHead = KeyQueueLen = 0;
 	memset(KeyStateSave, 0, sizeof(KeyStateSave));
+	KeyNumLockState = 0;
+	KeyCtrlState = 0;
+	KeyAltState = 0;
+	KeyRealShiftState = 0;
+	KeyFakeShiftState = 0;
+	KeyFakeUnshiftState = 0;
+	KeyAutoRepeatKey = 0;
 	KeyInBuf = 0;
 	KeyReset = 1;
 
@@ -963,9 +980,39 @@ static void poll_keyboard(void)
 	int keycode;
 	int pressed;
 
+	static const UINT8 keyboard_mf1_code[0xe] =
+	{
+		/* extended keys that are equivalent to non-extended keys */
+		0x1c,	/* keypad enter */
+		0x1d,	/* right control */
+		0x38,	/* alt gr */
+		/* extra codes are 0x5b for Left Windows, 0x5c for Right Windows, 0x5d
+		for Menu, 0x5e for power, 0x5f for sleep, 0x63 for wake, but I doubt
+		any Genev program wuold take advantage of these. */
+
+		/* extended key that is equivalent to a non-extended key
+		with shift off */
+		0x35,	/* pad slash */
+
+		/* extended keys that are equivalent to non-extended keys
+		with numlock off */
+		0x47,	/* home */
+		0x48,	/* up */
+		0x49,	/* page up */
+		0x4b,	/* left */
+		0x4d,	/* right */
+		0x4f,	/* end */
+		0x50,	/* down */
+		0x51,	/* page down */
+		0x52,	/* insert */
+		0x53	/* delete */
+	};
+
+
 	if (KeyReset)
 		return;
 
+	/* Poll keyboard */
 	for (i=0; (i<4) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); i++)
 	{
 		keystate = readinputport(input_port_keyboard_geneve + i*2)
@@ -983,74 +1030,140 @@ static void poll_keyboard(void)
 						KeyStateSave[i] |= (1 << j);
 					else
 						KeyStateSave[i] &= ~ (1 << j);
-					if ((keycode >= 0x60) && (keycode < 0x70))
+
+					/* Update auto-repeat */
+					if (pressed)
 					{
-						/* these keycodes are emulated */
-						static UINT8 keyboard_mf2_code[0x10-1] =
+						KeyAutoRepeatKey = keycode;
+						KeyAutoRepeatTimer = KeyAutoRepeatDelay+1;
+					}
+					else /*if (keycode == KeyAutoRepeatKey)*/
+						KeyAutoRepeatKey = 0;
+
+					/* Release Fake Shift/Unshift if another key is pressed */
+					/* We do so if a key is released, though it is actually
+					required only if it is a modifier key */
+					/*if (pressed)*/
+					{
+						if (KeyFakeShiftState)
 						{
-							0x1c,	/* keypad enter */
-							0x1d,	/* right control */
-							0x35,	/* pad slash */
-							0x37,	/* print screen (F13) */
-							0x38,	/* alt gr */
+							/* Fake shift release */
+							post_in_KeyQueue(0xe0);
+							post_in_KeyQueue(0xaa);
+							KeyFakeShiftState = 0;
+						}
+						if (KeyFakeUnshiftState)
+						{
+							/* Fake shift press */
+							post_in_KeyQueue(0xe0);
+							post_in_KeyQueue(0x2a);
+							KeyFakeUnshiftState = 0;
+						}
+					}
 
-							0x47,	/* home */
-							0x48,	/* up */
-							0x49,	/* page up */
-							0x4b,	/* left */
-							0x4d,	/* right */
-							0x4f,	/* end */
-							0x50,	/* down */
-							0x51,	/* page down */
-							0x52,	/* insert */
-							0x53	/* delete */
-						};
+					/* update shift and numlock state */
+					if ((keycode == 0x2a) || (keycode == 0x36))
+						KeyRealShiftState = KeyRealShiftState + (pressed ? +1 : -1);
+					if ((keycode == 0x1d) || (keycode == 0x61))
+						KeyCtrlState = KeyCtrlState + (pressed ? +1 : -1);
+					if ((keycode == 0x38) || (keycode == 0x62))
+						KeyAltState = KeyAltState + (pressed ? +1 : -1);
+					if ((keycode == 0x45) && pressed)
+						KeyNumLockState = ! KeyNumLockState;
 
-						if (keycode < 0x65)
-						{	/* emulate basic key */
-							keycode = keyboard_mf2_code[keycode-0x60];
+					if ((keycode >= 0x60) && (keycode < 0x6e))
+					{	/* simpler extended keys */
+						/* these keys are emulated */
+
+						if ((keycode >= 0x63) && pressed)
+						{
+							/* Handle shift state */
+							if (keycode == 0x63)
+							{	/* non-shifted key */
+								if (KeyRealShiftState)
+									/* Fake shift unpress */
+									KeyFakeUnshiftState = 1;
+							}
+							else /*if (keycode >= 0x64)*/
+							{	/* non-numlock mode key */
+								if (KeyNumLockState & ! KeyRealShiftState)
+									/* Fake shift press if numlock is active */
+									KeyFakeShiftState = 1;
+								else if ((! KeyNumLockState) & KeyRealShiftState)
+									/* Fake shift unpress if shift is down */
+									KeyFakeUnshiftState = 1;
+							}
+
+							if (KeyFakeShiftState)
+							{
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0x2a);
+							}
+
+							if (KeyFakeUnshiftState)
+							{
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0xaa);
+							}
+						}
+
+						keycode = keyboard_mf1_code[keycode-0x60];
+						if (! pressed)
+							keycode |= 0x80;
+						post_in_KeyQueue(0xe0);
+						post_in_KeyQueue(keycode);
+					}
+					else if (keycode == 0x6e)
+					{	/* emulate Print Screen / System Request (F13) key */
+						/* this is a bit complex, as Alt+PrtScr -> SysRq */
+						/* Additionally, Ctrl+PrtScr involves no fake shift press */
+						if (KeyAltState)
+						{
+							/* SysRq */
+							keycode = 0x54;
+							if (! pressed)
+								keycode |= 0x80;
+							post_in_KeyQueue(keycode);
+						}
+						else
+						{
+							/* Handle shift state */
+							if (pressed && (! KeyRealShiftState) && (! KeyCtrlState))
+							{	/* Fake shift press */
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0x2a);
+								KeyFakeShiftState = 1;
+							}
+
+							keycode = 0x37;
 							if (! pressed)
 								keycode |= 0x80;
 							post_in_KeyQueue(0xe0);
 							post_in_KeyQueue(keycode);
 						}
-						if (keycode < 0x6f)
-						{	/* emulate non-numlock mode key */
-							keycode = keyboard_mf2_code[keycode-0x60];
-							if (! pressed)
-								keycode |= 0x80;
-							if (pressed)
+					}
+					else if (keycode == 0x6f)
+					{	/* emulate pause (F15) key */
+						/* this is a bit complex, as Pause -> Ctrl+NumLock and
+						Ctrl+Pause -> Ctrl+ScrLock.  Furthermore, there is no
+						repeat or release. */
+						if (pressed)
+						{
+							if (KeyCtrlState)
 							{
-								/* simulate left shift press in case numlock is active */
 								post_in_KeyQueue(0xe0);
-								post_in_KeyQueue(0x2a);
+								post_in_KeyQueue(0x46);
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0xc6);
 							}
-							post_in_KeyQueue(0xe0);
-							post_in_KeyQueue(keycode);
-							if (! pressed)
+							else
 							{
-								/* simulate left shift release in case numlock is active */
-								post_in_KeyQueue(0xe0);
-								post_in_KeyQueue(0xaa);
-							}
-						}
-						else /*if (keycode == 0x6f)*/
-						{	/* emulate pause (F15) key */
-							if (pressed)
-							{
-								/* simulate left shift press in case numlock is active */
-								post_in_KeyQueue(0xe0);
-								post_in_KeyQueue(0x2a);
-							}
-							/* simulate control+numlock */
-							post_in_KeyQueue(0xe1);
-							post_in_KeyQueue(pressed ? 0x1d : 0xc5);
-							post_in_KeyQueue(pressed ? 0x45 : 0x9d);
-							if (! pressed)
-							{
-								/* simulate left shift release in case numlock is active */
-								post_in_KeyQueue(0xe0);
-								post_in_KeyQueue(0xaa);
+								post_in_KeyQueue(0xe1);
+								post_in_KeyQueue(0x1d);
+								post_in_KeyQueue(0x45);
+								post_in_KeyQueue(0xe1);
+								post_in_KeyQueue(0x9d);
+								post_in_KeyQueue(0xc5);
 							}
 						}
 					}
@@ -1064,6 +1177,34 @@ static void poll_keyboard(void)
 				}
 			}
 		}
+	}
+
+	/* Handle auto-repeat */
+	if ((KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)) && KeyAutoRepeatKey && (--KeyAutoRepeatTimer == 0))
+	{
+		if ((KeyAutoRepeatKey >= 0x60) && (KeyAutoRepeatKey < 0x6e))
+		{
+			post_in_KeyQueue(0xe0);
+			post_in_KeyQueue(keyboard_mf1_code[KeyAutoRepeatKey-0x60]);
+		}
+		else if (KeyAutoRepeatKey == 0x6e)
+		{
+			if (KeyAltState)
+				post_in_KeyQueue(0x54);
+			else
+			{
+				post_in_KeyQueue(0xe0);
+				post_in_KeyQueue(0x37);
+			}
+		}
+		else if (KeyAutoRepeatKey == 0x6f)
+			;
+		else
+		{
+			post_in_KeyQueue(KeyAutoRepeatKey);
+		}
+		read_key_if_possible();
+		KeyAutoRepeatTimer = KeyAutoRepeatRate;
 	}
 }
 
@@ -1235,6 +1376,13 @@ static void W9901_KeyboardReset(int offset, int data)
 		/* reset -> clear keyboard key queue, but not geneve key buffer */
 		KeyQueueLen = KeyInBuf ? 1 : 0;
 		memset(KeyStateSave, 0, sizeof(KeyStateSave));
+		KeyNumLockState = 0;
+		KeyCtrlState = 0;
+		KeyAltState = 0;
+		KeyRealShiftState = 0;
+		KeyFakeShiftState = 0;
+		KeyFakeUnshiftState = 0;
+		KeyAutoRepeatKey = 0;
 	}
 	/*else
 		poll_keyboard();*/
