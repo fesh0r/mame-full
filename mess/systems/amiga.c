@@ -12,25 +12,21 @@ ernesto@imagina.com
 #include "vidhrdw/generic.h"
 #include "includes/amiga.h"
 
-static struct MemoryReadAddress readmem[] =
-{
-    { 0x000000, 0x07ffff, MRA_RAM },            /* Chip Ram - 1Mb / 512k */
+static MEMORY_READ16_START(readmem)
+    { 0x000000, 0x07ffff, MRA16_RAM },            /* Chip Ram - 1Mb / 512k */
     { 0xbfd000, 0xbfefff, amiga_cia_r },        /* 8510's CIA A and CIA B */
 //  { 0xc00000, 0xd7ffff, MRA_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
     { 0xdbf000, 0xdfffff, amiga_custom_r },     /* Custom Chips */
-    { 0xf00000, 0xffffff, MRA_BANK2 },          /* System ROM - mirror */
-    { -1 }  /* end of table */
-};
+    { 0xf00000, 0xffffff, MRA16_BANK2 },          /* System ROM - mirror */
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
-    { 0x000000, 0x07ffff, MWA_RAM },            /* Chip Ram - 1Mb / 512k */
+static MEMORY_WRITE16_START(writemem)
+    { 0x000000, 0x07ffff, MWA16_RAM },            /* Chip Ram - 1Mb / 512k */
     { 0xbfd000, 0xbfefff, amiga_cia_w },        /* 8510's CIA A and CIA B */
-//  { 0xc00000, 0xd7ffff, MWA_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
+//  { 0xc00000, 0xd7ffff, MWA16_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
     { 0xdbf000, 0xdfffff, amiga_custom_w },     /* Custom Chips */
-    { 0xf00000, 0xffffff, MWA_ROM },            /* System ROM */
-    { -1 }  /* end of table */
-};
+    { 0xf00000, 0xffffff, MWA16_ROM },            /* System ROM */
+MEMORY_END
 
 /**************************************************************************
 ***************************************************************************/
@@ -119,8 +115,8 @@ static struct MachineDriver machine_driver_ntsc =
 ***************************************************************************/
 
 ROM_START( amiga )
-    ROM_REGION(0x200000,REGION_CPU1,0) /* for ram, etc */
-    ROM_LOAD_WIDE( "kick13.rom",  0x180000, 0x80000, 0xf6290043)
+    ROM_REGION(0x200000,REGION_CPU1,ROMREGION_16BIT) /* for ram, etc */
+    ROM_LOAD ( "kick13.rom",  0x180000, 0x80000, 0xf6290043)
 ROM_END
 
 static const struct IODevice io_amiga[] = {
@@ -150,8 +146,8 @@ static const struct IODevice io_amiga[] = {
 COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,        "Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
 
 ROM_START( cdtv )
-    ROM_REGION(0x200000,REGION_CPU1,0) /* for ram, etc */
-    ROM_LOAD_WIDE( "cdtv13.rom",  0x180000, 0x80000, 0x42BAA124)
+    ROM_REGION(0x200000,REGION_CPU1,ROMREGION_16BIT) /* for ram, etc */
+    ROM_LOAD ( "cdtv13.rom",  0x180000, 0x80000, 0x42BAA124)
 ROM_END
 
 static const struct IODevice io_cdtv[] = {

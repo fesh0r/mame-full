@@ -90,10 +90,10 @@ extern void amiga_reload_sprite_info( int spritenum );
 ***************************************************************************/
 
 /* from machine/amiga.c */
-extern READ_HANDLER  ( amiga_cia_r );
-extern WRITE_HANDLER ( amiga_cia_w );
-extern READ_HANDLER  ( amiga_custom_r );
-extern WRITE_HANDLER ( amiga_custom_w );
+extern READ16_HANDLER  ( amiga_cia_r );
+extern WRITE16_HANDLER ( amiga_cia_w );
+extern READ16_HANDLER  ( amiga_custom_r );
+extern WRITE16_HANDLER ( amiga_custom_w );
 extern void amiga_init_machine( void );
 extern int amiga_vblank_irq( void );
 extern int amiga_fdc_init( int id );

@@ -142,7 +142,9 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 			copper.pc += 4;
 
 			if ( inst >= min )	/* If not invalid, go at it */
-				amiga_custom_w( inst, param );
+				/* KT - I've no idea what the memory mask should be so
+				added -1 for now! */
+				amiga_custom_w( inst, param ,-1);
 			else {
 				/* stop the copper until the next frame */
 				copper.waiting = 1;
@@ -262,8 +264,8 @@ static void amiga_sprite_set_ctrl( int spritenum, unsigned short data ) {
 
 void amiga_reload_sprite_info( int spritenum ) {
 
-	unsigned char *RAM = Machine->memory_region[0];
-
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	
 	amiga_sprite_set_pos( spritenum, READ_WORD( &RAM[custom_regs.SPRxPT[spritenum]] ) );
 
 	amiga_sprite_set_ctrl( spritenum, READ_WORD( &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
@@ -790,8 +792,8 @@ int amiga_vh_start( void ) {
 	update_regs.old_DIWSTRT = -1;
 	update_regs.old_DIWSTOP = -1;
 	update_regs.old_DDFSTRT = -1;
-	update_regs.RAM = Machine->memory_region[0];
-
+	update_regs.RAM = memory_region(REGION_CPU1);
+	
 	update_regs.sprite_in_scanline = malloc( Machine->drv->screen_height * sizeof( int ) );
 	if ( update_regs.sprite_in_scanline == 0 )
 		return 1;
