@@ -151,9 +151,9 @@ static game_variables_type *game_variables;  // Array of game specific extra dat
 static REG_OPTION regSettings[] =
 {
 #ifdef MESS
-	{ "default_system",             RO_STRING,  &settings.default_game,              "pacman" },
+	{ "default_system",             RO_STRING,  &settings.default_game,              "nes" },
 #else
-	{ "default_game",               RO_STRING,  &settings.default_game,              "nes" },
+	{ "default_game",               RO_STRING,  &settings.default_game,              "puckman" },
 #endif
 	{ "default_folder_id",          RO_INT,     &settings.folder_id,		         "0" },
 	{ "show_image_section",         RO_BOOL,    &settings.show_screenshot,           "1" },
@@ -248,7 +248,9 @@ static REG_OPTION regSettings[] =
 	{ "hide_mouse",                 RO_BOOL,    &settings.hide_mouse,                 "0" },
 	{ "full_screen",                RO_BOOL,    &settings.full_screen,                "0" },
 	{ "cycle_screenshot",           RO_INT,     &settings.cycle_screenshot,           "0" },
-	{ "stretch_screenshot_larger",  RO_BOOL,    &settings.stretch_screenshot_larger,  "1" },
+	{ "stretch_screenshot_larger",  RO_BOOL,    &settings.stretch_screenshot_larger,  "0" },
+ 	{ "screenshot_bordersize",      RO_INT,     &settings.screenshot_bordersize,      "11" },
+ 	{ "screenshot_bordercolor",	  RO_COLOR,   &settings.screenshot_bordercolor,     "-1",	FALSE },
 	{ "inherit_filter",             RO_BOOL,    &settings.inherit_filter,             "0" },
 	{ "offset_clones",              RO_BOOL,    &settings.offset_clones,              "0" },
 	{ "game_caption",               RO_BOOL,    &settings.game_caption,               "1" },
@@ -1123,6 +1125,33 @@ BOOL GetStretchScreenShotLarger(void)
 {
 	return settings.stretch_screenshot_larger;
 }
+
+void SetScreenshotBorderSize(int size)
+{
+	settings.screenshot_bordersize = size;
+}
+
+int GetScreenshotBorderSize(void)
+{
+	return settings.screenshot_bordersize;
+}
+
+void SetScreenshotBorderColor(COLORREF uColor)
+{
+	if (settings.screenshot_bordercolor == GetSysColor(COLOR_3DFACE))
+		settings.screenshot_bordercolor = (COLORREF)-1;
+	else
+		settings.screenshot_bordercolor = uColor;
+}
+
+COLORREF GetScreenshotBorderColor(void)
+{
+	if (settings.screenshot_bordercolor == (COLORREF)-1)
+		return (GetSysColor(COLOR_3DFACE));
+
+	return settings.screenshot_bordercolor;
+}
+
 void SetFilterInherit(BOOL inherit)
 {
 	settings.inherit_filter = inherit;
@@ -1318,6 +1347,19 @@ void SetWindowState(UINT state)
 UINT GetWindowState(void)
 {
 	return settings.windowstate;
+}
+
+void SetCustomColor(int iIndex, COLORREF uColor)
+{
+	settings.custom_color[iIndex] = uColor;
+}
+
+COLORREF GetCustomColor(int iIndex)
+{
+	if (settings.custom_color[iIndex] == (COLORREF)-1)
+		return (COLORREF)RGB(0,0,0);
+
+	return settings.custom_color[iIndex];
 }
 
 void SetListFont(LOGFONT *font)

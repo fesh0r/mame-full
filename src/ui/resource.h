@@ -298,6 +298,9 @@
 #define IDC_NOOFFSET_CLONES             1221
 #define IDC_LEDMODE                     1222
 #define IDC_HISTORY_TAB                 1223
+#define IDC_GAME_CAPTION                1224
+#define IDC_SCREENSHOT_BORDERSIZE       1225
+#define IDC_SCREENSHOT_BORDERCOLOR      1226
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
@@ -318,6 +321,7 @@
 #define ID_FILE_AUDIT                   40018
 #define ID_FILE_PLAY_RECORD             40019
 #define ID_FILE_PLAY_BACK               40020
+#define ID_FILE_PLAY_RECORD_WAVE        40021
 #define ID_VIEW_PICTURE_AREA            40023
 #define ID_HELP_CONTENTS                40025
 #define ID_HELP_WHATS_NEW32             40026
@@ -389,8 +393,8 @@
 #define _APS_NO_MFC                     1
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        185
-#define _APS_NEXT_COMMAND_VALUE         40096
-#define _APS_NEXT_CONTROL_VALUE         1224
+#define _APS_NEXT_COMMAND_VALUE         40097
+#define _APS_NEXT_CONTROL_VALUE         1227
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

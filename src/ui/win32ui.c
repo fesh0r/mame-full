@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <commctrl.h>
 #include <commdlg.h>
+#include <dlgs.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <wingdi.h>
@@ -208,8 +209,9 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 static BOOL             SelectLanguageFile(HWND hWnd, TCHAR* filename);
 static void             MamePlayRecordGame(void);
 static void             MamePlayBackGame(void);
+static void             MamePlayRecordWave(void);
 static void				MameLoadState(void);
-static BOOL             CommonFileDialog(common_file_dialog_proc cfd,char *filename, BOOL bZip, BOOL bInp);
+static BOOL             CommonFileDialog(common_file_dialog_proc cfd,char *filename, int filetype);
 static void             MamePlayGame(void);
 static void             MamePlayGameWithOptions(int nGame);
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -716,6 +718,7 @@ static driver_data_type *sorted_drivers;
 static char * g_pRecordName = NULL;
 static char * g_pPlayBkName = NULL;
 static char * g_pSaveStateName = NULL;
+static char * g_pRecordWaveName = NULL;
 static char * override_playback_directory = NULL;
 static char * override_savestate_directory = NULL;
 
@@ -793,7 +796,7 @@ extern struct GameDriver driver_neogeo;
     External functions
  ***************************************************************************/
 
-static void CreateCommandLine(int nGameIndex, char* pCmdLine, BOOL *pbIsWindowed)
+static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 {
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
@@ -879,10 +882,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine, BOOL *pbIsWindowed
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cs %s",                     GetCleanStretchShortName(pOpts->clean_stretch));
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -zoom %i", pOpts->zoom);
-	if( pOpts->maximize )
-		*pbIsWindowed = FALSE;
-	else
-		*pbIsWindowed = TRUE;
 
 	// d3d
 	if (pOpts->use_d3d)
@@ -976,6 +975,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine, BOOL *pbIsWindowed
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -pb \"%s\"",             g_pPlayBkName);
 	if (g_pRecordName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -rec \"%s\"",            g_pRecordName);
+	if (g_pRecordWaveName != NULL)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -wavwrite \"%s\"",       g_pRecordWaveName);
 	if (g_pSaveStateName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -state \"%s\"",          g_pSaveStateName);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%slog",                     pOpts->errorlog        ? "" : "no");
@@ -1032,11 +1033,13 @@ static int RunMAME(int nGameIndex)
 	char pCmdLine[2048];
 	time_t start, end;
 	double elapsedtime;
-	BOOL bIsWindowed = FALSE;
 	HWND hGameWnd = NULL;
 	long lGameWndStyle = 0;
 	
-	CreateCommandLine(nGameIndex, pCmdLine, &bIsWindowed);
+#ifdef MESS
+	SaveGameOptions(nGameIndex);
+#endif
+	CreateCommandLine(nGameIndex, pCmdLine );
 
 	ZeroMemory(&si, sizeof(si));
 	ZeroMemory(&pi, sizeof(pi));
@@ -1061,7 +1064,7 @@ static int RunMAME(int nGameIndex)
 
 		ShowWindow(hMain, SW_HIDE);
 		SendIconToProcess(&pi, nGameIndex);
-		if( ! GetGameCaption() && bIsWindowed )
+		if( ! GetGameCaption() )
 		{
 			hGameWnd = GetGameWindow(&pi);
 			if( hGameWnd )
@@ -3845,6 +3848,69 @@ static void UpdateGameList()
 	Picker_ResetIdle(hwndList);
 }
 
+UINT_PTR CALLBACK CFHookProc(
+  HWND hdlg,      // handle to dialog box
+  UINT uiMsg,     // message identifier
+  WPARAM wParam,  // message parameter
+  LPARAM lParam   // message parameter
+)
+{
+	int iIndex, i;
+	COLORREF cCombo, cList;
+	switch (uiMsg)
+	{
+		case WM_INITDIALOG:
+			SendDlgItemMessage(hdlg, cmb4, CB_ADDSTRING, 0, (LPARAM)"Custom");
+			iIndex = SendDlgItemMessage(hdlg, cmb4, CB_GETCOUNT, 0, 0);
+			cList = GetListFontColor();
+			SendDlgItemMessage(hdlg, cmb4, CB_SETITEMDATA,(WPARAM)iIndex-1,(LPARAM)cList );
+			for( i = 0; i< iIndex; i++)
+			{
+				cCombo = SendDlgItemMessage(hdlg, cmb4, CB_GETITEMDATA,(WPARAM)i,0 );
+				if( cList == cCombo)
+				{
+					SendDlgItemMessage(hdlg, cmb4, CB_SETCURSEL,(WPARAM)i,0 );
+					break;
+				}
+			}
+			break;
+		case WM_COMMAND:
+			if( LOWORD(wParam) == cmb4)
+			{
+				switch (HIWORD(wParam))
+				{
+					case CBN_SELCHANGE:  // The color ComboBox changed selection
+						iIndex = (int)SendDlgItemMessage(hdlg, cmb4,
+													  CB_GETCURSEL, 0, 0L);
+						if( iIndex == SendDlgItemMessage(hdlg, cmb4, CB_GETCOUNT, 0, 0)-1)
+						{
+							//Custom color selected
+							CHOOSECOLOR cc;
+							COLORREF choice_colors[16];
+
+							for (i=0;i<16;i++)
+								choice_colors[i] = RGB(0,0,0);
+
+							cc.lStructSize = sizeof(CHOOSECOLOR);
+							cc.hwndOwner   = hMain;
+							cc.rgbResult   = GetListFontColor();
+							cc.lpCustColors = choice_colors;
+							cc.Flags       = CC_ANYCOLOR | CC_RGBINIT | CC_SOLIDCOLOR;
+							if (!ChooseColor(&cc))
+								break;
+							SendDlgItemMessage(hdlg, cmb4, CB_DELETESTRING, iIndex, 0);
+							SendDlgItemMessage(hdlg, cmb4, CB_ADDSTRING, 0, (LPARAM)"Custom");
+							SendDlgItemMessage(hdlg, cmb4, CB_SETITEMDATA,(WPARAM)iIndex,(LPARAM)cc.rgbResult );
+							SendDlgItemMessage(hdlg, cmb4, CB_SETCURSEL,(WPARAM)iIndex,0 );
+							return TRUE;
+						}
+				}
+			}
+			break;
+	}
+	return FALSE;
+}
+
 static void PickFont(void)
 {
 	LOGFONT font;
@@ -3858,8 +3924,9 @@ static void PickFont(void)
 	cf.lStructSize = sizeof(CHOOSEFONT);
 	cf.hwndOwner   = hMain;
 	cf.lpLogFont   = &font;
+	cf.lpfnHook = &CFHookProc;
 	cf.rgbColors   = GetListFontColor();
-	cf.Flags	   = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_EFFECTS;
+	cf.Flags	   = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_EFFECTS | CF_ENABLEHOOK;
 	if (!ChooseFont(&cf))
 		return;
 
@@ -3894,30 +3961,38 @@ static void PickFont(void)
 			}
 			hWnd = GetWindow(hWnd, GW_HWNDNEXT);
 		}
-
 		SetListFontColor(cf.rgbColors);
 		ResetListView();
 	}
 }
 
-static void PickCloneColor(void)
+static void PickColor(COLORREF *cDefault)
 {
 	CHOOSECOLOR cc;
 	COLORREF choice_colors[16];
 	int i;
 
 	for (i=0;i<16;i++)
-		choice_colors[i] = RGB(0,0,0);
+ 		choice_colors[i] = GetCustomColor(i);
 
 	cc.lStructSize = sizeof(CHOOSECOLOR);
 	cc.hwndOwner   = hMain;
-	cc.rgbResult   = GetListCloneColor();
+ 	cc.rgbResult   = *cDefault;
 	cc.lpCustColors = choice_colors;
 	cc.Flags       = CC_ANYCOLOR | CC_RGBINIT | CC_SOLIDCOLOR;
 	if (!ChooseColor(&cc))
 		return;
+ 	for (i=0;i<16;i++)
+ 		SetCustomColor(i,choice_colors[i]);
+ 	*cDefault = cc.rgbResult;
+ }
 
-	SetListCloneColor(cc.rgbResult);
+static void PickCloneColor(void)
+{
+ 	COLORREF cClonecolor;
+ 	cClonecolor = GetListCloneColor();
+ 	PickColor( &cClonecolor);
+ 	SetListCloneColor(cClonecolor);
 	InvalidateRect(hwndList,NULL,FALSE);
 }
 
@@ -3937,6 +4012,10 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 	case ID_FILE_PLAY_BACK:
 		MamePlayBackGame();
+		return TRUE;
+
+	case ID_FILE_PLAY_RECORD_WAVE:
+		MamePlayRecordWave();
 		return TRUE;
 
 	case ID_FILE_LOADSTATE :
@@ -5091,7 +5170,13 @@ static void SetRandomPickItem()
 	}
 }
 
-static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, BOOL bZip, BOOL bInp)
+enum
+{
+	FILETYPE_INPUT_FILES = 1,
+	FILETYPE_SAVESTATE_FILES = 2,
+	FILETYPE_WAVE_FILES = 3,
+};
+static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, int filetype)
 {
 	BOOL success;
 	OPENFILENAME of;
@@ -5099,16 +5184,19 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, BOOL b
 	of.lStructSize       = sizeof(of);
 	of.hwndOwner         = hMain;
 	of.hInstance         = NULL;
-	if( bInp )
+	switch (filetype)
 	{
-		if (bZip == TRUE)
-			of.lpstrFilter   = MAMENAME " input files (*.inp,*.zip)\0*.inp;*.zip\0All files (*.*)\0*.*\0";
-		else
-			of.lpstrFilter   = MAMENAME " input files (*.inp)\0*.inp;\0All files (*.*)\0*.*\0";
+	case FILETYPE_INPUT_FILES :
+	{
+		of.lpstrFilter   = MAMENAME " input files (*.inp,*.zip)\0*.inp;*.zip\0All files (*.*)\0*.*\0";
+		break;
 	}
-	else
-	{
+	case FILETYPE_SAVESTATE_FILES :
 		of.lpstrFilter   = MAMENAME " savestate files (*.sta)\0*.sta;\0All files (*.*)\0*.*\0";
+		break;
+	case FILETYPE_WAVE_FILES :
+		of.lpstrFilter   = "Sounds (*.wav)\0*.wav;\0All files (*.*)\0*.*\0";
+		break;
 	}
 	of.lpstrCustomFilter = NULL;
 	of.nMaxCustFilter    = 0;
@@ -5117,19 +5205,26 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, BOOL b
 	of.nMaxFile          = MAX_PATH;
 	of.lpstrFileTitle    = NULL;
 	of.nMaxFileTitle     = 0;
-	if( bInp )
-		of.lpstrInitialDir   = last_directory;
-	else
+	if (filetype == FILETYPE_SAVESTATE_FILES)
 		of.lpstrInitialDir = GetStateDir();
+	else
+		of.lpstrInitialDir   = last_directory;
 	of.lpstrTitle        = NULL;
 	of.Flags             = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 	of.nFileOffset       = 0;
 	of.nFileExtension    = 0;
-	if( bInp )
+	switch (filetype)
+	{
+	case FILETYPE_INPUT_FILES :
 		of.lpstrDefExt       = "inp";
-	else
+		break;
+	case FILETYPE_SAVESTATE_FILES :
 		of.lpstrDefExt       = "sta";
-	of.lpstrDefExt       = NULL;
+		break;
+	case FILETYPE_WAVE_FILES :
+		of.lpstrDefExt       = "wav";
+		break;
+	}
 	of.lCustData         = 0;
 	of.lpfnHook          = NULL;
 	of.lpTemplateName    = NULL;
@@ -5137,6 +5232,7 @@ static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, BOOL b
 	success = cfd(&of);
 	if (success)
 	{
+		//dprintf("got filename %s nFileExtension %u\n",filename,of.nFileExtension);
 		/*GetDirectory(filename,last_directory,sizeof(last_directory));*/
 	}
 
@@ -5280,7 +5376,7 @@ static void MamePlayBackGame()
 	if (nGame != -1)
 		strcpy(filename, drivers[nGame]->name);
 
-	if (CommonFileDialog(GetOpenFileName, filename, TRUE, TRUE))
+	if (CommonFileDialog(GetOpenFileName, filename, FILETYPE_INPUT_FILES))
 	{
 		mame_file* pPlayBack;
 		char drive[_MAX_DRIVE];
@@ -5353,7 +5449,7 @@ static void MameLoadState()
 		strcpy(filename, drivers[nGame]->name);
 		strcpy(selected_filename, drivers[nGame]->name);
 	}
-	if (CommonFileDialog(GetOpenFileName, filename, FALSE, FALSE))
+	if (CommonFileDialog(GetOpenFileName, filename, FILETYPE_SAVESTATE_FILES))
 	{
 		mame_file* pSaveState;
 		char drive[_MAX_DRIVE];
@@ -5441,7 +5537,7 @@ static void MamePlayRecordGame()
 	nGame = Picker_GetSelectedItem(hwndList);
 	strcpy(filename, drivers[nGame]->name);
 
-	if (CommonFileDialog(GetSaveFileName, filename, FALSE, TRUE))
+	if (CommonFileDialog(GetSaveFileName, filename, FILETYPE_INPUT_FILES))
 	{
 		char drive[_MAX_DRIVE];
 		char dir[_MAX_DIR];
@@ -5473,6 +5569,23 @@ static void MamePlayGame()
 	g_pRecordName = NULL;
 
 	MamePlayGameWithOptions(nGame);
+}
+
+static void MamePlayRecordWave()
+{
+	int  nGame;
+	char filename[MAX_PATH];
+	*filename = 0;
+
+	nGame = Picker_GetSelectedItem(hwndList);
+	strcpy(filename, drivers[nGame]->name);
+
+	if (CommonFileDialog(GetSaveFileName, filename, FILETYPE_WAVE_FILES))
+	{
+		g_pRecordWaveName = filename;
+		MamePlayGameWithOptions(nGame);
+		g_pRecordWaveName = NULL;
+	}	
 }
 
 static void MamePlayGameWithOptions(int nGame)
@@ -6047,6 +6160,14 @@ static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 		int width,height;
 
+		RECT rect2;
+		HBRUSH hBrush;
+		HBRUSH holdBrush;
+		HRGN region1, region2;
+		int nBordersize;
+		nBordersize = GetScreenshotBorderSize();
+		hBrush = CreateSolidBrush(GetScreenshotBorderColor());
+
 		hdc = BeginPaint(hWnd,&ps);
 
 		hdc_temp = CreateCompatibleDC(hdc);
@@ -6069,8 +6190,32 @@ static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		}
 
 		GetClientRect(hWnd,&rect);
+
+		rect2 = rect;
+		//Configurable Borders around images
+		rect.bottom -= nBordersize;
+		if( rect.bottom < 0)
+			rect.bottom = rect2.bottom;
+		rect.right -= nBordersize;
+		if( rect.right < 0)
+			rect.right = rect2.right;
+		rect.top += nBordersize;
+		if( rect.top > rect.bottom )
+			rect.top = rect2.top;
+		rect.left += nBordersize;
+		if( rect.left > rect.right )
+			rect.left = rect2.left;
+		region1 = CreateRectRgnIndirect(&rect);
+		region2 = CreateRectRgnIndirect(&rect2);
+		CombineRgn(region2,region2,region1,RGN_DIFF);
+		holdBrush = SelectObject(hdc, hBrush); 
+
+		FillRgn(hdc,region2, hBrush );
+		SelectObject(hdc, holdBrush); 
+		DeleteObject(hBrush); 
+
 		SetStretchBltMode(hdc,STRETCH_HALFTONE);
-		StretchBlt(hdc,0,0,rect.right-rect.left,rect.bottom-rect.top,
+		StretchBlt(hdc,nBordersize,nBordersize,rect.right-rect.left,rect.bottom-rect.top,
 				   hdc_temp,0,0,width,height,SRCCOPY);
 		SelectObject(hdc_temp,old_bitmap);
 		DeleteDC(hdc_temp);
@@ -6469,6 +6614,7 @@ void CalculateBestScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict_height)
 {
 	int 	destX, destY;
 	int 	destW, destH;
+	int		nBorder;
 	RECT	rect;
 	/* for scaling */		 
 	int x, y;
@@ -6492,7 +6638,6 @@ void CalculateBestScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict_height)
 		x = bmp.bmWidth;
 		y = bmp.bmHeight;
 	}
-
 	rWidth	= (rect.right  - rect.left);
 	rHeight = (rect.bottom - rect.top);
 
@@ -6582,11 +6727,23 @@ void CalculateBestScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict_height)
 		destX += 5;
 		destY += 5;
 	}
-
-	pRect->left   = destX;
-	pRect->top	  = destY;
-	pRect->right  = destX + destW;
-	pRect->bottom = destY + destH;
+	nBorder = GetScreenshotBorderSize();
+	if( destX > nBorder+1)
+		pRect->left   = destX - nBorder;
+	else
+		pRect->left   = 2;
+	if( destY > nBorder+1)
+		pRect->top	  = destY - nBorder;
+	else
+		pRect->top	  = 2;
+	if( rWidth >= destX + destW + nBorder)
+		pRect->right  = destX + destW + nBorder;
+	else
+		pRect->right  = rWidth - pRect->left;
+	if( rHeight >= destY + destH + nBorder)
+		pRect->bottom = destY + destH + nBorder;
+	else
+		pRect->bottom = rHeight - pRect->top;
 }
 
 /*

@@ -25,6 +25,7 @@
 #include <commctrl.h>
 #include <stdio.h>  /* for sprintf */
 #include <stdlib.h> /* For malloc and free */
+#include <ctype.h> /* For tolower */
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -50,11 +51,6 @@
 #define HAS_DUMMYUNIONNAME
 #endif
 #endif
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
-
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -130,6 +126,7 @@ static void         TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 static const char * FixString(const char *s);
 static const char * LicenseManufacturer(const char *s);
 static const char* ParseManufacturer(const char *s, int *pParsedChars );
+static const char* TrimManufacturer(const char *s);
 static void CreateAllChildFolders(void);
 static BOOL         AddFolder(LPTREEFOLDER lpFolder);
 static BOOL         RemoveFolder(LPTREEFOLDER lpFolder);
@@ -152,6 +149,33 @@ LPTREEFOLDER GetFolderByName(int iParentIndex, char *cFolderName);
 /***************************************************************************
     public functions
  ***************************************************************************/
+
+/**************************************************************************
+ *      ci_strncmp - case insensitive character array compare
+ *
+ *      Returns zero if the first n characters of s1 and s2 are equal,
+ *      ignoring case.
+ *		stolen from datafile.c
+ **************************************************************************/
+static int ci_strncmp (const char *s1, const char *s2, int n)
+{
+        int c1, c2;
+
+        while (n)
+        {
+                if ((c1 = tolower (*s1)) != (c2 = tolower (*s2)))
+                        return (c1 - c2);
+                else if (!c1)
+                        break;
+                --n;
+
+                s1++;
+                s2++;
+        }
+        return 0;
+}
+
+
 
 /* De-allocate all folder memory */
 void FreeFolders(void)
@@ -441,9 +465,11 @@ void CreateManufacturerFolders(int parent_index)
 			//shift to next start char
 			if( s != NULL && strlen(s) > 0 )
  			{
+				const char *t = TrimManufacturer(s);
 				for (i=numFolders-1;i>=start_folder;i--)
 				{
-					if (strncmp(treeFolders[i]->m_lpTitle,s,20) == 0 )
+					//RS Made it case insensitive
+					if (ci_strncmp(treeFolders[i]->m_lpTitle,t,20) == 0 )
 					{
 						AddGame(treeFolders[i],jj);
 						break;
@@ -452,7 +478,7 @@ void CreateManufacturerFolders(int parent_index)
 				if (i == start_folder-1)
 				{
 					// nope, it's a manufacturer we haven't seen before, make it.
-					lpTemp = NewFolder(s, next_folder_id, parent_index, IDI_MANUFACTURER,
+					lpTemp = NewFolder(t, next_folder_id, parent_index, IDI_MANUFACTURER,
 									   GetFolderFlags(numFolders));
 					ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
 					memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
@@ -543,11 +569,11 @@ static const char* ParseManufacturer(const char *s, int *pParsedChars )
 				//parse the new "supported by" and "distributed by"
 				ptmp++;
 
-				if (strncmp(ptmp, " supported by", 13) == 0)
+				if (ci_strncmp(ptmp, " supported by", 13) == 0)
 				{
 					ptmp += 13;
 				}
-				else if (strncmp(ptmp, " distributed by", 15) == 0)
+				else if (ci_strncmp(ptmp, " distributed by", 15) == 0)
 				{
 					ptmp += 15;
 				}
@@ -569,31 +595,23 @@ static const char* ParseManufacturer(const char *s, int *pParsedChars )
 		{
 			ptmp++;
 		}
-		if (strncmp(ptmp, "licensed from ", 14) == 0)
+		if (ci_strncmp(ptmp, "licensed from ", 14) == 0)
 		{
 			ptmp += 14;
 		}
 		// for the licenced from case
-		if (strncmp(ptmp, "licenced from ", 14) == 0)
+		if (ci_strncmp(ptmp, "licenced from ", 14) == 0)
 		{
 			ptmp += 14;
 		}
 		
 		while ( (*ptmp != ')' ) && (*ptmp != '/' ) && *ptmp != '\0')
 		{
-			if (*ptmp == ' ' && strncmp(ptmp, " license", 8) == 0)
+			if (*ptmp == ' ' && ci_strncmp(ptmp, " license", 8) == 0)
 			{
 				break;
 			}
-			if (*ptmp == ' ' && strncmp(ptmp, " License", 8) == 0)
-			{
-				break;
-			}
-			if (*ptmp == ' ' && strncmp(ptmp, " licence", 8) == 0)
-			{
-				break;
-			}
-			if (*ptmp == ' ' && strncmp(ptmp, " Licence", 8) == 0)
+			if (*ptmp == ' ' && ci_strncmp(ptmp, " licence", 8) == 0)
 			{
 				break;
 			}
@@ -606,6 +624,174 @@ static const char* ParseManufacturer(const char *s, int *pParsedChars )
 	*ptmp = '\0';
 	return tmp;
 }
+
+/* Analyze Manufacturer Names for typical patterns, that don't distinguish between companies (e.g. Co., Ltd., Inc., etc. */
+static const char* TrimManufacturer(const char *s)
+{
+	int i=0;
+	char strTemp[256];
+	static char strTemp2[256];
+	int j=0;
+	int k=0;
+	int l = 0;
+	memset(strTemp, '\0', 256 );
+	memset(strTemp2, '\0', 256 );
+	//start analyzing from the back, as these are usually suffixes
+	for(i=strlen(s)-1; i>=0;i-- )
+	{
+		
+		l = strlen(strTemp);
+		for(k=l;k>=0; k--)
+			strTemp[k+1] = strTemp[k];
+		strTemp[0] = s[i];
+		strTemp[++l] = '\0';
+		switch (l)
+		{
+			case 2:
+				if( ci_strncmp(strTemp, "co", 2) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 3:
+				if( ci_strncmp(strTemp, "co.", 3) == 0 || ci_strncmp(strTemp, "ltd", 3) == 0 || ci_strncmp(strTemp, "inc", 3) == 0)
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 4:
+				if( ci_strncmp(strTemp, "inc.", 4) == 0 || ci_strncmp(strTemp, "ltd.", 4) == 0 || ci_strncmp(strTemp, "corp", 4) == 0)
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 5:
+				if( ci_strncmp(strTemp, "corp.", 5) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 6:
+				if( ci_strncmp(strTemp, "co-ltd", 6) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 7:
+				if( ci_strncmp(strTemp, "co. ltd", 7) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 9:
+				if( ci_strncmp(strTemp, "co., ltd.", 9) == 0 || ci_strncmp(strTemp, "gmbh & co", 9) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 10:
+				if( ci_strncmp(strTemp, "corp, ltd.", 9) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			case 11:
+				if( ci_strncmp(strTemp, "corporation", 11) == 0 )
+				{
+					j=l;
+					while( s[strlen(s)-j-1] == ' ' || s[strlen(s)-j-1] == ',' )
+					{
+						j++;
+					}
+					if( j!=l)
+					{
+						memset(strTemp2, '\0', 256 );
+						strncpy(strTemp2, s, strlen(s)-j );	
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	if( strlen(strTemp2) == 0 )
+		return s;
+	return strTemp2;
+}
+
+
 
 void CreateCPUFolders(int parent_index)
 {
@@ -911,6 +1097,80 @@ void CreateDeficiencyFolders(int parent_index)
 		if (drivers[jj]->flags & GAME_NO_COCKTAIL)
 		{
 			AddGame(lpFlip,jj);
+		}
+	}
+}
+
+void CreateDumpingFolders(int parent_index)
+{
+	int jj;
+	BOOL bBadDump  = FALSE;
+	BOOL bNoDump = FALSE;
+	int nGames = GetNumGames();
+	LPTREEFOLDER lpFolder = treeFolders[parent_index];
+	const struct RomModule *region, *rom;
+	const char *name;
+	const struct GameDriver *gamedrv;
+
+	// create our two subfolders
+	LPTREEFOLDER lpBad, lpNo;
+	lpBad = NewFolder("Bad Dump", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Bad Dump" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpBad);
+	lpNo = NewFolder("No Dump", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "No Dump" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpNo);
+
+	// no games in top level folder
+	SetAllBits(lpFolder->m_lpGameBits,FALSE);
+
+	for (jj = 0; jj < nGames; jj++)
+	{
+		gamedrv = drivers[jj];
+
+		if (!gamedrv->rom) 
+			continue;
+		bBadDump = FALSE;
+		bNoDump = FALSE;
+		for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+		{
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			{
+				if (ROMREGION_ISROMDATA(region) || ROMREGION_ISDISKDATA(region) )
+				{
+					name = ROM_GETNAME(rom);
+					if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))				
+						bBadDump = TRUE;
+					if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))				
+						bNoDump = TRUE;
+				}
+			}
+		}
+		if (bBadDump)
+		{
+			AddGame(lpBad,jj);
+		}
+		if (bNoDump)
+		{
+			AddGame(lpNo,jj);
 		}
 	}
 }

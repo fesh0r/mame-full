@@ -287,6 +287,8 @@ typedef struct
     BOOL     random_bg;
     int      cycle_screenshot;
 	BOOL     stretch_screenshot_larger;
+    int      screenshot_bordersize;
+    COLORREF screenshot_bordercolor;
 	BOOL     inherit_filter;
 	BOOL     offset_clones;
 	BOOL	 game_caption;
@@ -300,6 +302,7 @@ typedef struct
     AREA     area;
     UINT     windowstate;
     int      splitter[4];		/* NPW 5-Feb-2003 - I don't like hard coding this, but I don't have a choice */
+    COLORREF custom_color[16]; /* This is how many custom colors can be shown on the standard ColorPicker */
     LOGFONT  list_font;
     COLORREF list_font_color;
     COLORREF list_clone_color;
@@ -461,6 +464,12 @@ int GetCycleScreenshot(void);
 void SetStretchScreenShotLarger(BOOL stretch);
 BOOL GetStretchScreenShotLarger(void);
 
+void SetScreenshotBorderSize(int size);
+int GetScreenshotBorderSize(void);
+
+void SetScreenshotBorderColor(COLORREF uColor);
+COLORREF GetScreenshotBorderColor(void);
+
 void SetFilterInherit(BOOL inherit);
 BOOL GetFilterInherit(void);
 
@@ -530,6 +539,9 @@ void GetColumnShown(int shown[]);
 
 void SetSplitterPos(int splitterId, int pos);
 int  GetSplitterPos(int splitterId);
+
+void SetCustomColor(int iIndex, COLORREF uColor);
+COLORREF GetCustomColor(int iIndex);
 
 void SetListFont(LOGFONT *font);
 void GetListFont(LOGFONT *font);

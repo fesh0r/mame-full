@@ -119,6 +119,12 @@ static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
 	HBITMAP 	hOldBitmap;
 	HBITMAP		hBackground = GetBackgroundBitmap();
 	HPALETTE	hPALbg = GetBackgroundPalette();
+	struct PickerInfo *pPickerInfo;
+
+	if (!hBackground)
+		return 1;
+
+	pPickerInfo = GetPickerInfo(hWnd);
 
 	hDC = BeginPaint(hWnd, &ps);
 	rcClient = ps.rcPaint;
@@ -137,7 +143,7 @@ static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
 		   hDC, rcClip.left, rcClip.top, SRCCOPY);
 
 	// First let the control do its default drawing.
-	CallParentWndProc(NULL, hWnd, uMsg, (WPARAM)memDC, 0);
+	CallParentWndProc(pPickerInfo->pfnParentWndProc, hWnd, uMsg, (WPARAM)memDC, 0);
 
 	// Draw bitmap in the background
 	if( hBackground )

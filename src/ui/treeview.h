@@ -76,6 +76,7 @@ void CreateCPUFolders(int parent_index);
 void CreateSoundFolders(int parent_index);
 void CreateOrientationFolders(int parent_index);
 void CreateDeficiencyFolders(int parent_index);
+void CreateDumpingFolders(int parent_index);
 
 /***************************************************************************/
 
@@ -115,6 +116,7 @@ enum
  	FOLDER_MULTIMON,
 	FOLDER_HARDDISK,
 	FOLDER_SAMPLES,
+	FOLDER_DUMPING,
 	MAX_FOLDERS,
 };
 
