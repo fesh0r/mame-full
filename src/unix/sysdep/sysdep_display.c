@@ -49,7 +49,7 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
       (params->height > params->max_height))
   {
     fprintf(stderr,
-      "Error requested size (%dx%d) bigger then max size (%dx%d)\n",
+      "Error: requested size (%dx%d) bigger than max size (%dx%d)\n",
       params->width, params->height, params->max_width, params->max_height);
     return 1;
   }
@@ -60,7 +60,7 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
     case 32:
       break;
     default:
-      fprintf(stderr, "Error unsupported depth: %d\n",
+      fprintf(stderr, "Error: unsupported depth: %d\n",
         params->depth);
       return 1;
   }
@@ -81,7 +81,7 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
         SYSDEP_DISPLAY_FULLSCREEN))
     params->fullscreen = 0;
   
-  /* lett the effect code do its magic */
+  /* let the effect code do its magic */
   sysdep_display_check_effect_params(params);
   
   return 0;

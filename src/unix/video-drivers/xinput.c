@@ -74,8 +74,8 @@ static void xinput_set_leds(int leds);
 struct rc_option x11_input_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11-input related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "grabmouse", "gm", rc_bool, &xinput_grab_mouse, "0", 0, 0, NULL, "Select mousegrabbing (left-ctrl + delete)" },
-	{ "grabkeyboard", "gkb", rc_bool, &xinput_grab_keyboard, "0", 0, 0, NULL, "Select keyboardgrabbing (left-ctrl + end)" },
+	{ "grabmouse", "gm", rc_bool, &xinput_grab_mouse, "0", 0, 0, NULL, "Select mouse grabbing (left-ctrl + delete)" },
+	{ "grabkeyboard", "gkb", rc_bool, &xinput_grab_keyboard, "0", 0, 0, NULL, "Select keyboard grabbing (left-ctrl + end)" },
 	{ "alwaysusemouse", "aum", rc_bool, &xinput_always_use_mouse, "0", 0, 0, NULL, "Always use mouse movements as input, even when not grabbed and not fullscreen (default disabled)" },
 	{ "cursor", "cu", rc_bool, &xinput_show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
 	{ "winkeys", "wk", rc_bool, &xinput_use_winkeys, "0", 0, 0, NULL, "Enable/disable mapping of windowskeys under X" },
