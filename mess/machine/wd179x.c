@@ -19,7 +19,7 @@
 #include "includes/wd179x.h"
 #include "includes/flopdrv.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 #define VERBOSE_DATA 0		/* This turns on and off the recording of each byte during read and write */
 
 /* structure describing a double density track */
