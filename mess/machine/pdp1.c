@@ -22,7 +22,7 @@ typed on the typewriter keyboard.  It is useful in order to test sequence break,
 to build a connection box in which we can connect each wire to any interrupt line.  Also,
 we need to determine the exact relationship between the status register and the sequence break
 system (both standard and type 20). */
-#define USE_SBS 1
+#define USE_SBS 0
 
 #define LOG_IOT 0
 #define LOG_IOT_EXTRA 0
@@ -456,7 +456,7 @@ static void puncher_callback(int nac)
 }
 
 /*
-	Intite read of a 18-bit word in binary format from tape (used in read-in mode)
+	Initiate read of a 18-bit word in binary format from tape (used in read-in mode)
 */
 void pdp1_tape_read_binary(void)
 {
