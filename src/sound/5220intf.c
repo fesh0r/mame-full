@@ -293,9 +293,11 @@ void tms5220_set_frequency(int frequency)
 
 static void tms5220_set_info(void *token, UINT32 state, union sndinfo *info)
 {
+	struct tms5220_info *ti = token;
+
 	switch (state)
 	{
-		/* no parameters to set */
+		case SNDINFO_INT_TMS5220_VARIANT:				tms5220_set_variant(ti->chip, (tms5220_variant) info->i); break;
 	}
 }
 

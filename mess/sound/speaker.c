@@ -15,7 +15,6 @@ struct speaker
 	INT16 *levels;
 	int num_levels;
 	int level;
-	int mixing_level;
 };
 
 //static struct Speaker_interface *intf;
@@ -24,7 +23,7 @@ static void speaker_sound_update(void *param,stream_sample_t **inputs, stream_sa
 {
 	struct speaker *sp = (struct speaker *) param;
 	stream_sample_t *buffer = _buffer[0];
-	int volume = sp->levels[sp->level] * sp->mixing_level / 100;
+	int volume = sp->levels[sp->level];
 
     while( length-- > 0 )
 		*buffer++ = volume;
@@ -36,8 +35,7 @@ static void *speaker_start(int sndindex, int clock, const void *config)
 {
 	struct speaker *sp = auto_malloc(sizeof(*sp));
 
-//	sp->mixing_level = intf->mixing_level[i];
-	sp->channel = stream_create(0, 1, Machine->sample_rate, 0, speaker_sound_update);
+	sp->channel = stream_create(0, 1, Machine->sample_rate, sp, speaker_sound_update);
 	sp->num_levels = 2;
 	sp->levels = default_levels;
 	sp->level = 0;

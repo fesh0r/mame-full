@@ -116,7 +116,7 @@ static void *NESPSG_sh_start(int sndindex, int clock, const void *config)
 
 	if (sample_rate != 0)
 	{
-		info->stream = stream_create(0, 1, Machine->sample_rate, NULL, process);
+		info->stream = stream_create(0, 1, Machine->sample_rate, info, process);
 	}
 
 	return (void *) info;
