@@ -159,13 +159,16 @@ static struct QSound_interface qsound_interface =
 	{ 100,100 }
 };
 
-static unsigned char *qsound_sharedram;
+static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
 int cps1_qsound_interrupt(void)
 {
+#if 0
+I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 	/* kludge to pass the sound board test with sound disabled */
 	if (Machine->sample_rate == 0)
-		qsound_sharedram[0xfff] = 0x77;
+		qsound_sharedram1[0xfff] = 0x77;
+#endif
 
 	return 2;
 }
@@ -183,14 +186,24 @@ READ_HANDLER( qsound_rom_r )
 	}
 }
 
-static READ_HANDLER( qsound_sharedram_r )
+static READ_HANDLER( qsound_sharedram1_r )
 {
-	return qsound_sharedram[offset / 2] | 0xff00;
+	return qsound_sharedram1[offset / 2] | 0xff00;
 }
 
-static WRITE_HANDLER( qsound_sharedram_w )
+static WRITE_HANDLER( qsound_sharedram1_w )
 {
-	qsound_sharedram[offset / 2] = data;
+	qsound_sharedram1[offset / 2] = data;
+}
+
+static READ_HANDLER( qsound_sharedram2_r )
+{
+	return qsound_sharedram2[offset / 2] | 0xff00;
+}
+
+static WRITE_HANDLER( qsound_sharedram2_w )
+{
+	qsound_sharedram2[offset / 2] = data;
 }
 
 static WRITE_HANDLER( qsound_banksw_w )
@@ -297,10 +310,11 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
 	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
-	{ 0xf18000, 0xf19fff, qsound_sharedram_r },	/* Q RAM */
+	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
 	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
 	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
+	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_r },	/* Q RAM */
 	{ 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
 	{ -1 }  /* end of table */
 };
@@ -315,9 +329,10 @@ static struct MemoryWriteAddress cps1_writemem[] =
 	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
 	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xf18000, 0xf19fff, qsound_sharedram_w }, /* Q RAM */
+	{ 0xf18000, 0xf19fff, qsound_sharedram1_w }, /* Q RAM */
 	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
+	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_w }, /* Q RAM */
 	{ 0xff0000, 0xffffff, MWA_BANK2 },        /* RAM */
 	{ -1 }  /* end of table */
 };
@@ -360,12 +375,12 @@ static struct MemoryReadAddress qsound_readmem[] =
 static struct MemoryWriteAddress qsound_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram },
+	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
 	{ 0xd000, 0xd000, qsound_data_h_w },
 	{ 0xd001, 0xd001, qsound_data_l_w },
 	{ 0xd002, 0xd002, qsound_cmd_w },
 	{ 0xd003, 0xd003, qsound_banksw_w },
-	{ 0xf000, 0xffff, MWA_RAM },
+	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
 	{ -1 }  /* end of table */
 };
 
@@ -1847,6 +1862,123 @@ INPUT_PORTS_START( sf2 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSWC */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START      /* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* Extra buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sf2j )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START      /* DSWA */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, "2 Coins to Start, 1 to Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSWB */
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "Easier" )
+	PORT_DIPSETTING(    0x06, "Very Easy" )
+	PORT_DIPSETTING(    0x05, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x03, "Difficult" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x01, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+    PORT_DIPNAME( 0x08, 0x00, "2 Players Game" )
+    PORT_DIPSETTING(    0x08, "1 Credit/No Continue" )
+    PORT_DIPSETTING(    0x00, "2 Credits/Winner Continue" )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
@@ -3516,48 +3648,48 @@ static struct OKIM6295interface okim6295_interface_7576 =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(DRVNAME,CPU,CPU_FRQ,OKI_FREQ,NVRAM) \
-static struct MachineDriver machine_driver_##DRVNAME =           \
-{                                                                        \
-	/* basic machine hardware */                                     \
-	{                                                                \
-		{                                                        \
-			CPU,                                      \
-			CPU_FRQ,                                    \
-			cps1_readmem,cps1_writemem,0,0,                  \
-			cps1_interrupt, 1										\
-		},                                                       \
-		{                                                        \
-			CPU_Z80 | CPU_AUDIO_CPU,                         \
-			4000000,  /* 4 Mhz ??? TODO: find real FRQ */    \
-			sound_readmem,sound_writemem,0,0,                \
-			ignore_interrupt,0                               \
-		}                                                        \
-	},                                                               \
-    60, 3000,                      \
-	1,                                                               \
-	0,                                                               \
-									 \
-	/* video hardware */                                             \
-	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 }, \
-									 \
-	cps1_gfxdecodeinfo,                                              \
-	32*16+32*16+32*16+32*16,   /* lotsa colours */                   \
-	32*16+32*16+32*16+32*16,   /* Colour table length */             \
-	0,                                                               \
-									 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                      \
-	cps1_eof_callback,                                               \
-	cps1_vh_start,                                                   \
-	cps1_vh_stop,                                                    \
-	cps1_vh_screenrefresh,                                           \
-									 \
-	/* sound hardware */                                             \
-	0,0,0,0,                                     \
-	{ { SOUND_YM2151,  &ym2151_interface },                          \
-	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }                       \
-	},                            \
-	NVRAM							\
+#define MACHINE_DRIVER(DRVNAME,CPU,CPU_FRQ,OKI_FREQ,NVRAM)					\
+static struct MachineDriver machine_driver_##DRVNAME =						\
+{																			\
+	/* basic machine hardware */											\
+	{																		\
+		{																	\
+			CPU,															\
+			CPU_FRQ,														\
+			cps1_readmem,cps1_writemem,0,0,									\
+			cps1_interrupt, 1												\
+		},																	\
+		{																	\
+			CPU_Z80 | CPU_AUDIO_CPU,										\
+			4000000,  /* 4 MHz ??? TODO: find real FRQ */					\
+			sound_readmem,sound_writemem,0,0,								\
+			ignore_interrupt,0												\
+		}																	\
+	},																		\
+	60, DEFAULT_60HZ_VBLANK_DURATION,										\
+	1,																		\
+	0,																		\
+																			\
+	/* video hardware */													\
+	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },	\
+																			\
+	cps1_gfxdecodeinfo,														\
+	32*16+32*16+32*16+32*16,   /* lotsa colours */							\
+	32*16+32*16+32*16+32*16,   /* Colour table length */					\
+	0,																		\
+																			\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,								\
+	cps1_eof_callback,														\
+	cps1_vh_start,															\
+	cps1_vh_stop,															\
+	cps1_vh_screenrefresh,													\
+																			\
+	/* sound hardware */													\
+	0,0,0,0,																\
+	{ { SOUND_YM2151,  &ym2151_interface },									\
+	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }					\
+	},																		\
+	NVRAM																	\
 };
 
 static struct MachineDriver machine_driver_qsound =
@@ -3570,13 +3702,13 @@ static struct MachineDriver machine_driver_qsound =
 			cps1_qsound_interrupt, 1  /* ??? interrupts per frame */
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000,  /* 6 Mhz ??? TODO: find real FRQ */
+			CPU_Z80,	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
+			6000000,  /* 6 MHz ??? TODO: find real FRQ */
 			qsound_readmem,qsound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60, 3000,
+	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
 	0,
 
@@ -6032,8 +6164,8 @@ GAME( 1991, sf2,      0,        sf2,      sf2,      0,        ROT0,       "Capco
 GAME( 1991, sf2a,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910206)" )
 GAME( 1991, sf2b,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910214)" )
 GAME( 1991, sf2e,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (US 910228)" )
-GAME( 1991, sf2j,     sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (Japan 911210)" )
-GAME( 1991, sf2jb,    sf2,      sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (Japan 910214)" )
+GAME( 1991, sf2j,     sf2,      sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (Japan 911210)" )
+GAME( 1991, sf2jb,    sf2,      sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II - The World Warrior (Japan 910214)" )
 GAME( 1991, 3wonders, 0,        cps1,     3wonders, 0,        ROT0,       "Capcom", "Three Wonders (US)" )
 GAME( 1991, wonder3,  3wonders, cps1,     3wonders, 0,        ROT0,       "Capcom", "Wonder 3 (Japan)" )
 GAME( 1991, kod,      0,        cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (World)" )
@@ -6047,7 +6179,7 @@ GAME( 1991, knightsj, knights,  cps1,     knights,  0,        ROT0_16BIT, "Capco
 GAME( 1992, sf2ce,    0,        sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (World)" )
 GAME( 1992, sf2cea,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (US rev A)" )
 GAME( 1992, sf2ceb,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (US rev B)" )
-GAME( 1992, sf2cej,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (Japan)" )
+GAME( 1992, sf2cej,   sf2ce,    sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (Japan)" )
 GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Rainbow)" )
 GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
 GAME( 1992, sf2accp2, sf2ce,    sf2accp2, sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
@@ -6056,7 +6188,7 @@ GAME( 1992, varthu,   varth,    cps1,     varth,    0,        ROT270,     "Capco
 GAME( 1992, varthj,   varth,    cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (Japan)" )
 GAME( 1992, cworld2j, 0,        cps1,     cworld2j, 0,        ROT0_16BIT, "Capcom", "Capcom World 2 (Japan)" )
 GAME( 1992, sf2t,     sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Hyper Fighting (US)" )
-GAME( 1992, sf2tj,    sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' Turbo - Hyper Fighting (Japan)" )
+GAME( 1992, sf2tj,    sf2ce,    sf2,      sf2j,     0,        ROT0,       "Capcom", "Street Fighter II' Turbo - Hyper Fighting (Japan)" )
 GAME( 1994, pnickj,   0,        cps1,     pnickj,   0,        ROT0,       "Capcom (licensed from Compile)", "Pnickies (Japan)" )
 GAME( 1992, qad,      0,        cps1,     qad,      0,        ROT0,       "Capcom", "Quiz & Dragons (US)" )
 GAME( 1994, qadj,     qad,      cps1,     qadj,     0,        ROT0,       "Capcom", "Quiz & Dragons (Japan)" )
