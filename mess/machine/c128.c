@@ -57,6 +57,15 @@ static int c64mode = 0, c128_write_io;
 static int c128_ram_bottom, c128_ram_top;
 static UINT8 *c128_ram;
 
+static void c128_set_m8502_read_handler(UINT16 start, UINT16 end, read8_handler rh)
+{
+	int cpunum;
+	cpunum = mame_find_cpu_index("m8502");
+	memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, start, end, 0, rh);
+}
+
+
+
 int c128_capslock_r (void)
 {
 	return !KEY_DIN;
@@ -117,6 +126,8 @@ WRITE_HANDLER( c128_write_d000 )
 		}
 	}
 }
+
+
 
 static READ_HANDLER( c128_read_io )
 {
@@ -200,7 +211,7 @@ void c128_bankswitch_64 (int reset)
 		else
 			cpu_setbank (13, c64_memory + 0xd000);
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, rh);
+	c128_set_m8502_read_handler(0xd000, 0xdfff, rh);
 
 	if (!c64_game && c64_exrom)
 	{
@@ -396,7 +407,7 @@ static void c128_bankswitch_128 (int reset)
 		else
 			c128_ram_top = 0x10000;
 
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xff00, 0xff04, 0, c128_mmu8722_ff00_r);
+		c128_set_m8502_read_handler(0xff00, 0xff04, c128_mmu8722_ff00_r);
 
 		if (MMU_IO_ON)
 		{
@@ -408,7 +419,7 @@ static void c128_bankswitch_128 (int reset)
 			c128_write_io = 0;
 			rh = MRA8_BANK13;
 		}
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, rh);
+		c128_set_m8502_read_handler(0xd000, 0xdfff, rh);
 
 		if (MMU_RAM_HI)
 		{
@@ -518,26 +529,7 @@ static void c128_bankswitch (int reset)
 
 static void c128_mmu8722_reset (void)
 {
-#if 0
-	cpu_setbank (1, c64_memory);
-	cpu_setbank (2, c64_memory + 0x100);
-
-	cpu_setbank (3, c64_memory + 0x200);
-	cpu_setbank (4, c64_memory + 0x400);
-	cpu_setbank (5, c64_memory + 0x1000);
-	cpu_setbank (6, c64_memory + 0x2000);
-	cpu_setbank (7, c64_memory + 0x4000);
-
-	c128_mmu[0] &= ~1;
-	c128_mmu[1] = c128_mmu[2] = c128_mmu[3] = c128_mmu[4] = 0;
-	c128_mmu[5] &= ~9;
-	c128_mmu[6] &= ~3;
-	c128_mmu[7] = c128_mmu[8] = c128_mmu[9] = 0;
-	c128_mmu[10] = 1;
-	c128_va1617 = 0;
-#else
 	memset (c128_mmu, 0, sizeof (c128_mmu));
-#endif
 	c128_mmu[5] |= 0x38;
 	c128_mmu[10] = 1;
 	mmu_cpu=0;
@@ -738,34 +730,21 @@ static void c128_common_driver_init (void)
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	int i;
 
-#if 0
-	{0x100000, 0x107fff, MWA8_ROM, &c128_basic},	/* maps to 0x4000 */
-	{0x108000, 0x109fff, MWA8_ROM, &c64_basic},	/* maps to 0xa000 */
-	{0x10a000, 0x10bfff, MWA8_ROM, &c64_kernal},	/* maps to 0xe000 */
-	{0x10c000, 0x10cfff, MWA8_ROM, &c128_editor},
-	{0x10d000, 0x10dfff, MWA8_ROM, &c128_z80},		/* maps to z80 0 */
-	{0x10e000, 0x10ffff, MWA8_ROM, &c128_kernal},
-	{0x110000, 0x117fff, MWA8_ROM, &c128_internal_function},
-	{0x118000, 0x11ffff, MWA8_ROM, &c128_external_function},
-	{0x120000, 0x120fff, MWA8_ROM, &c64_chargen},
-	{0x121000, 0x121fff, MWA8_ROM, &c128_chargen},
-	{0x122000, 0x1227ff, MWA8_RAM, &c64_colorram},
-	{0x122800, 0x1327ff, MWA8_RAM, &c128_vdcram},
-#endif
-		c128_basic=memory_region(REGION_CPU1)+0x100000;
-		c64_basic=memory_region(REGION_CPU1)+0x108000;
-		c64_kernal=memory_region(REGION_CPU1)+0x10a000;
-		c128_editor=memory_region(REGION_CPU1)+0x10c000;
-		c128_z80=memory_region(REGION_CPU1)+0x10d000;
-		c128_kernal=memory_region(REGION_CPU1)+0x10e000;
-		c128_internal_function=memory_region(REGION_CPU1)+0x110000;
-		c128_external_function=memory_region(REGION_CPU1)+0x118000;
-		c64_chargen=memory_region(REGION_CPU1)+0x120000;
-		c128_chargen=memory_region(REGION_CPU1)+0x121000;
-		c64_colorram=memory_region(REGION_CPU1)+0x122000;
-		c128_vdcram=memory_region(REGION_CPU1)+0x122800;
+	c128_basic = memory_region(REGION_CPU1)+0x100000;
+	c64_basic = memory_region(REGION_CPU1)+0x108000;
+	c64_kernal = memory_region(REGION_CPU1)+0x10a000;
+	c128_editor = memory_region(REGION_CPU1)+0x10c000;
+	c128_z80 = memory_region(REGION_CPU1)+0x10d000;
+	c128_kernal = memory_region(REGION_CPU1)+0x10e000;
+	c128_internal_function = memory_region(REGION_CPU1)+0x110000;
+	c128_external_function = memory_region(REGION_CPU1)+0x118000;
+	c64_chargen = memory_region(REGION_CPU1)+0x120000;
+	c128_chargen = memory_region(REGION_CPU1)+0x121000;
+	c64_colorram = memory_region(REGION_CPU1)+0x122000;
+	c128_vdcram = memory_region(REGION_CPU1)+0x122800;
 
-	for (i=0; i<0x100; i++) gfx[i]=i;
+	for (i=0; i<0x100; i++)
+		gfx[i]=i;
 
 	memset(c64_memory, 0xff, 0x100000);
 	c128 = 1;
@@ -821,11 +800,7 @@ MACHINE_INIT( c128 )
 	c64_rom_recognition ();
 	c64_rom_load();
 
-#if 1
 	c64mode = 0;
-#else
-	c64mode = 1;
-#endif
 	c128_mmu8722_reset ();
 	cpu_set_halt_line (0, 0);
 	cpu_set_halt_line (1, 1);

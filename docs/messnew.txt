@@ -22,13 +22,15 @@ System Driver Changes:
 ----------------------
 - [A2600] Updated to support most games above 4 KB.  [Stefan Jokisch]
 
+- [A7800] Changed Atari 7800 (NTSC) BIOS set. (Thanks to Mitch) [Christopher Stone]
+
 - [C64] Implemented natural keyboard support.  [Nate Woods]
+
+- [C128] Fixed a regression introduced in MESS 0.79.  (bug #544) [Nate Woods]
 
 - [ORIC] Fixed fatal regression crash on startup.  (bug #538) [Nate Woods]
 
 - [MPF1] Changed MPF-1 BIOS set.  [Curt Coder]
-
-- [A7800] Changed Atari 7800 (NTSC) BIOS set. (Thanks to Mitch) [Christopher Stone]
 
 - [PC] Cleanups; code simplified and CGA video slightly faster now.  [Nate
   Woods]
