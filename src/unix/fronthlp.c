@@ -280,7 +280,7 @@ char *get_description(int driver)
    char copy[BUF_SIZE];
    static char description[BUF_SIZE];
    
-   snprintf(copy, BUF_SIZE, drivers[driver]->description);
+   strncpy(copy, drivers[driver]->description, BUF_SIZE);
    
    /* Remove the additonal description if any */
    if ((p = strstr(copy, " (")))
@@ -292,7 +292,7 @@ char *get_description(int driver)
    else if (strncmp(copy, "Le ", 3) == 0)
       snprintf(description, BUF_SIZE, "%s, Le", copy+3);
    else
-      snprintf(description, BUF_SIZE, copy);
+      strncpy(description, copy, BUF_SIZE);
    
    /* Print the additional description only if we are listing clones */
    if (showclones && p)
