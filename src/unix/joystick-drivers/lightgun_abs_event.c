@@ -97,22 +97,22 @@ void lightgun_event_abs_init(void)
 			continue;
 
 		if ((lg_devices[i].fd = open(lg_devices[i].device, O_RDONLY)) < 0) {
-			fprintf(stderr_file, "Lightgun%d: %s[open]: %m\n",
-				i + 1, lg_devices[i].device);
+			fprintf(stderr_file, "Lightgun%d: %s[open]: %s",
+				i + 1, lg_devices[i].device, strerror(errno));
 			continue;
 		}
 
 		if (ioctl(lg_devices[i].fd, EVIOCGNAME(sizeof(name)), name) < 0) {
-			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGNAME]: %m\n",
-				i + 1, lg_devices[i].device);
+			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGNAME]: %s\n",
+				i + 1, lg_devices[i].device, strerror(errno));
 			lg_devices[i].device = NULL;
 			continue;
 		}
 
 		memset(abs_bitmask, 0, sizeof(abs_bitmask));
 		if (ioctl(lg_devices[i].fd, EVIOCGBIT(EV_ABS, sizeof(abs_bitmask)), abs_bitmask) < 0) {
-			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGNAME]: %m\n",
-				i + 1, lg_devices[i].device);
+			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGNAME]: %s\n",
+				i + 1, lg_devices[i].device, strerror(errno));
 			lg_devices[i].device = NULL;
 			continue;
 		}
@@ -127,8 +127,8 @@ void lightgun_event_abs_init(void)
 		}
 
 		if (ioctl(lg_devices[i].fd, EVIOCGABS(ABS_X), &abs_features)) {
-			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGABS(ABX_X)]: %m\n",
-				i + 1, lg_devices[i].device);
+			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGABS(ABX_X)]: %s\n",
+				i + 1, lg_devices[i].device, strerror(errno));
 			lg_devices[i].device = NULL;
 			continue;
 		}
@@ -137,8 +137,8 @@ void lightgun_event_abs_init(void)
 		lg_devices[i].range[LG_X_AXIS] = abs_features.maximum - abs_features.minimum;
 
 		if (ioctl(lg_devices[i].fd, EVIOCGABS(ABS_Y), &abs_features)) {
-			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGABS(ABX_Y)]: %m\n",
-				i + 1, lg_devices[i].device);
+			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGABS(ABX_Y)]: %s\n",
+				i + 1, lg_devices[i].device, strerror(errno));
 			lg_devices[i].device = NULL;
 			continue;
 		}
