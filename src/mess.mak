@@ -626,14 +626,16 @@ mess.txt: $(EMULATOR)
 	@$(EMULATOR) -listtext > mess.txt
 	@$(EMULATOR) -listdevices >> mess.txt
 
-makedep/makedep$(EXE):
-	make -Cmakedep
+mess/makedep/makedep$(EXE):
+	make -Cmess/makedep
 
-depend $(TARGET).dep: makedep/makedep$(EXE)
-	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(INCLUDE_PATH) -- src/*.c \
+src/$(TARGET).dep depend: mess/makedep/makedep$(EXE)
+	mess/makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(INCLUDE_PATH) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
-	mess/tools/*.c mess/formats/*.c >$(TARGET).dep
+	mess/tools/*.c mess/formats/*.c >src/$(TARGET).dep
 
 ## uncomment the following line to include dependencies
-include $(TARGET).dep
+ifeq (src/$TARGET.dep,$(wildcard src/$TARGET.dep))
+include src/$(TARGET).dep
+endif
 
