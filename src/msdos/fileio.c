@@ -478,22 +478,13 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				if( cache_stat(name,&stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
 				{
 					sprintf(name,"%s/%s",dir_name,filename);
-					if( filetype == OSD_FILETYPE_ROM )
-					{
-						if( checksum_file (name, &f->data, &f->length, &f->crc) == 0 )
-						{
-							f->type = kRAMFile;
-							f->offset = 0;
-							found = 1;
-						}
-					}
-					else
-					{
-						f->type = kPlainFile;
-						f->file = fopen(name,"rb");
-						found = f->file!=0;
-					}
-				}
+                    if( checksum_file (name, &f->data, &f->length, &f->crc) == 0 )
+                    {
+                        f->type = kRAMFile;
+                        f->offset = 0;
+                        found = 1;
+                    }
+                }
 			}
 
 			if( !found )
