@@ -99,13 +99,13 @@ OBJDIRS = $(OBJ) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
 	$(OBJ)/cpu $(OBJ)/sound $(OBJ)/cpu/i8039 $(OBJ)/cpu/i8085 \
 	$(OBJ)/cpu/i86 $(OBJ)/cpu/m6502 $(OBJ)/cpu/m68000 $(OBJ)/cpu/m6805 \
-	$(OBJ)/cpu/m6800 $(OBJ)/cpu/m6809 $(OBJ)/cpu/s2650 $(OBJ)/cpu/t11 \
+	$(OBJ)/cpu/m6800 $(OBJ)/cpu/m6809 $(OBJ)/cpu/hd6309 $(OBJ)/cpu/f8 \
+	$(OBJ)/cpu/s2650 $(OBJ)/cpu/t11 \
 	$(OBJ)/cpu/z80 $(OBJ)/cpu/tms34010 $(OBJ)/cpu/tms9900 \
 	$(OBJ)/cpu/z8000 $(OBJ)/cpu/tms32010 $(OBJ)/cpu/h6280 \
 	$(OBJ)/cpu/ccpu $(OBJ)/cpu/pdp1 $(OBJ)/cpu/konami $(OBJ)/cpu/nec \
 	$(OBJ)/cpu/gensync $(OBJ)/cpu/adsp2100 $(OBJ)/cpu/z80gb $(OBJ)/cpu/arm \
-	$(OBJ)/cpu/mips $(OBJ)/cpu/sc61860 $(OBJ)/cpu/f8 $(OBJ)/cpu/g65816 \
-	$(OBJ)/cpu/cdp1802 \
+	$(OBJ)/cpu/mips $(OBJ)/cpu/sc61860 $(OBJ)/cpu/g65816 $(OBJ)/cpu/cdp1802 \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 
