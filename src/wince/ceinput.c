@@ -22,6 +22,7 @@
 #include "inptport.h"
 #include "window.h"
 #include "rc.h"
+#include "mamece.h"
 
 #define NUMKEYSTATES    256
 
@@ -56,17 +57,6 @@
 #define VK_HP_B4				0xC4
 
 /***************************************************************************
-    function prototypes
- ***************************************************************************/
-
-static void         Keyboard_customize_inputport_defaults(struct ipd *defaults);
-static int          Keyboard_wait_keypress(void);
-
-static BOOL         Keyboard_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
-static void         Keyboard_AdjustKeylist(void);
-static void Keyboard_CustomizeInputportDefaults(int DefaultInput, struct ipd *defaults);
-
-/***************************************************************************
     External variables
  ***************************************************************************/
 
@@ -88,6 +78,8 @@ struct tKeyboard_private
     Internal variables
  ***************************************************************************/
 
+static char pressed_char;
+static DWORD pressed_char_expire;
 static struct tKeyboard_private This;
 
 /***************************************************************************
@@ -100,23 +92,8 @@ static struct tKeyboard_private This;
 */
 int win32_init_input(void)
 {
-    int     i;
-    BYTE    KeyState[NUMKEYSTATES];
-
     memset(&This, 0, sizeof(struct tKeyboard_private));
-
-//	This.m_DefaultInput = INPUT_LAYOUT_HR;
-
-    /* Clear keyboard state. */
-//    GetKeyboardState(KeyState);
-
-   for (i = 0; i < NUMKEYSTATES; i++)
-        KeyState[i] &= 0x01;
-
-//    SetKeyboardState(KeyState);
-
-
-    return 0;
+    return gx_open_input() ? 0 : -1;
 }
 
 /*
@@ -124,41 +101,16 @@ int win32_init_input(void)
 */
 void win32_shutdown_input(void)
 {
+	gx_close_input();
 }
 
 // Keyboard Definitions
 static struct KeyboardInfo keylist[] =
 {
-
-#if defined(CASSIOPEIA_E10x)
-	{ "Button 1",	VK_CASSIOPEIA_B1,			JOYCODE_1_BUTTON1 },
-	{ "Button 2",	VK_CASSIOPEIA_B2,			JOYCODE_1_BUTTON2 },
-	{ "Button 3",	VK_CASSIOPEIA_B3,			JOYCODE_1_BUTTON3 },
-	{ "Slider",		VK_CASSIOPEIA_SLIDER,			JOYCODE_1_BUTTON4 },
-	{ "Escape",		VK_CASSIOPEIA_ESC,			JOYCODE_1_BUTTON5 },
-	{ "Record",		VK_CASSIOPEIA_REC,			JOYCODE_1_BUTTON6 },
-#elif defined(CASSIOPEIA_E115) || defined(MIPS)
-	{ "Button 1",	VK_CASIO_E115_B1,			JOYCODE_1_BUTTON1 },
-	{ "Button 2",	VK_CASIO_E115_B2,			JOYCODE_1_BUTTON2 },
-	{ "Button 3",	VK_CASIO_E115_B3,			JOYCODE_1_BUTTON3 },
-	{ "Slider",		VK_CASIO_E115_SLIDER,			JOYCODE_1_BUTTON4 },
-	{ "Escape",		VK_CASIO_E115_ESC,			JOYCODE_1_BUTTON5 },
-	{ "Record",		VK_CASIO_E115_REC,			JOYCODE_1_BUTTON6 },
-#elif defined(ARM)
-	{ "Button 1",	VK_IPAQ_B1,				JOYCODE_1_BUTTON1 },
-	{ "Button 2",	VK_IPAQ_B2,				JOYCODE_1_BUTTON2 },
-	{ "Button 3",	VK_IPAQ_B3,				JOYCODE_1_BUTTON3 },
-	{ "Button 4",	VK_IPAQ_B4,				JOYCODE_1_BUTTON4 },
-	{ "Action",		VK_IPAQ_ACTION,			JOYCODE_1_BUTTON5 },
-	{ "Record",		VK_IPAQ_REC,			JOYCODE_1_BUTTON6 },
-#elif defined(SHx)
-	{ "Button 1",	VK_HP_B1,				JOYCODE_1_BUTTON1 },
-	{ "Button 2",	VK_HP_B2,				JOYCODE_1_BUTTON2 },
-	{ "Button 3",	VK_HP_B3,				JOYCODE_1_BUTTON3 },
-	{ "Button 4",	VK_HP_B4,				JOYCODE_1_BUTTON4 },
-	{ "Action",		VK_HP_ACTION,				JOYCODE_1_BUTTON5 },
-	{ "Record",		VK_IPAQ_REC,				JOYCODE_1_BUTTON6 },
-#elif defined(X86)
+	{ "Button 1",	0,					JOYCODE_1_BUTTON1 },
+	{ "Button 2",	0,					JOYCODE_1_BUTTON2 },
+	{ "Button 3",	0,					KEYCODE_5 },
+	{ "Button 4",	0,					KEYCODE_1 },
     { "A",          'A',                KEYCODE_A },
     { "B",          'B',                KEYCODE_B },
     { "C",          'C',                KEYCODE_C },
@@ -265,9 +217,6 @@ static struct KeyboardInfo keylist[] =
     { "SCRLOCK",    VK_SCROLL,          KEYCODE_SCRLOCK },
     { "NUMLOCK",    VK_NUMLOCK,         KEYCODE_NUMLOCK },
     { "CAPSLOCK",   VK_CAPITAL,         KEYCODE_CAPSLOCK },
-#else
-#error Unknown input layout!
-#endif
     { 0, 0, 0 } /* end of table */
 };
 
@@ -276,6 +225,15 @@ static struct KeyboardInfo keylist[] =
 */
 const struct KeyboardInfo* osd_get_key_list(void)
 {
+	struct gx_keylist gxkeylist;
+	
+	gx_get_default_keys(&gxkeylist);
+
+	keylist[0].code = gxkeylist.vkA;
+	keylist[1].code = gxkeylist.vkB;
+	keylist[2].code = gxkeylist.vkC;
+	keylist[3].code = gxkeylist.vkStart;
+
     return keylist;
 }
 
@@ -290,57 +248,7 @@ const struct KeyboardInfo* osd_get_key_list(void)
 */
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
-    Keyboard_CustomizeInputportDefaults(This.m_DefaultInput, defaults);
-}
-
-/*
-  tell whether the specified key is pressed or not. keycode is the OS dependant
-  code specified in the list returned by osd_customize_inputport_defaults().
-*/
-int osd_is_key_pressed(int keycode)
-{
-    SHORT state;
-
-	// special case: if we're trying to quit, fake up/down/up/down
-	if (keycode == VK_ESCAPE && trying_to_quit)
-	{
-		static int dummy_state = 1;
-		return dummy_state ^= 1;
-	}
-
-    process_events_periodic();
-
-	state = GetAsyncKeyState(keycode);
-
-    /* If the high-order bit is 1, the key is down; otherwise, it is up */
-    if (state & 0x8000)
-        return 1;
-
-    return 0;
-}
-
-/*
-  wait for the user to press a key and return its code. This function is not
-  required to do anything, it is here so we can avoid bogging down multitasking
-  systems while using the debugger. If you don't want to or can't support this
-  function you can just return OSD_KEY_NONE.
-*/
-int osd_wait_keypress(void)
-{
-    This.m_key_pressed = FALSE;
-    while (1)
-    {
-       Sleep(1);
-       process_events_periodic();
-
-       if (This.m_key_pressed)
-          break;
-    }
-    return 0;
-}
-
-static void Keyboard_CustomizeInputportDefaults(int DefaultInput, struct ipd *defaults)
-{
+    int DefaultInfput = This.m_DefaultInput;
 	while (defaults->type != IPT_END)
 	{
 		if (defaults->type == IPT_UI_SELECT)                           seq_set_1(&defaults->seq, KEYCODE_ENTER);
@@ -407,6 +315,66 @@ static void Keyboard_CustomizeInputportDefaults(int DefaultInput, struct ipd *de
 */
 		defaults++;
 	}
+}
+
+/*
+  tell whether the specified key is pressed or not. keycode is the OS dependant
+  code specified in the list returned by osd_customize_inputport_defaults().
+*/
+int osd_is_key_pressed(int keycode)
+{
+    SHORT state;
+
+	// special case: if we're trying to quit, fake up/down/up/down
+	if (keycode == VK_ESCAPE && trying_to_quit) {
+		static int dummy_state = 1;
+		return dummy_state ^= 1;
+	}
+
+    process_events_periodic();
+
+	/* Are we pressing a char received by WM_KEYDOWN? */
+	if (keycode == pressed_char) {
+		if (pressed_char_expire > GetTickCount())
+			return 1;
+		/* Ooops... we're expired */
+		pressed_char = 0;
+	}
+	
+	state = GetAsyncKeyState(keycode);
+
+    /* If the high-order bit is 1, the key is down; otherwise, it is up */
+    if (state & 0x8000)
+        return 1;
+
+    return 0;
+}
+
+
+void press_char(char c)
+{
+	pressed_char = c;
+	pressed_char_expire = GetTickCount() + 100;
+}
+
+/*
+  wait for the user to press a key and return its code. This function is not
+  required to do anything, it is here so we can avoid bogging down multitasking
+  systems while using the debugger. If you don't want to or can't support this
+  function you can just return OSD_KEY_NONE.
+*/
+int osd_wait_keypress(void)
+{
+    This.m_key_pressed = FALSE;
+    while (1)
+    {
+       Sleep(1);
+       process_events_periodic();
+
+       if (This.m_key_pressed)
+          break;
+    }
+    return 0;
 }
 
 const struct JoystickInfo *osd_get_joy_list(void)

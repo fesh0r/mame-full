@@ -568,64 +568,117 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int openfo
 
 		strcpy(file, filename);
 
-		pathc = softpathc;
-		pathv = softpathv;
-		LOG(("osd_fopen: using softwarepath (%d directories)\n", pathc));
-
-		LOG(("Open IMAGE_R '%s' for '%s'\n", filename, game));
-		do
+		/* NPW 26-Aug-2001 - Adding support for absolute paths */
+		if ((filename[0] == '\\') || (filename[1] == ':'))
 		{
-			for (indx = 0; indx < pathc && !found; indx++)
-			{
-				if (!found)
-					found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 1, 0, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 1, 1, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 1, 0, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 1, 1, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 0, 0, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 0, 1, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 0, 0, 0);
-				if (!found)
-					found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 0, 1, 0);
+			char *s;
+			char *ext;
+			int is_zip;
+			ZIP *z;
+			struct zipent *ent;
 
-				extension = strrchr(filename, '.');
-				if (extension &&
-					strlen(extension) < sizeof(extd) &&
-					strchr(extension, '/') == NULL &&
-					strchr(extension,'\\') == NULL)
+			s = strrchr(file, '\\');
+			if (s)
+				*(s++) = '\0';
+			else
+				s = file;
+
+			ext = strrchr(s, '.');
+			is_zip = (ext) ? !stricmp(ext, ".zip") : 0;
+			if (is_zip)
+			{
+				if (cache_stat(filename, &stat_buffer) == 0)
 				{
-					/* copy extension */
-					strcpy(extd, extension+1);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, game, filename, filename, 1, 0, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, game, filename, filename, 1, 1, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 1, 0, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 1, 1, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, game, filename, filename, 0, 0, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, game, filename, filename, 0, 1, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 0, 0, 0);
-					if (!found)
-						found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 0, 1, 0);
+					z = openzip(filename);
+					if (z)
+					{
+						ent = readzip(z);
+						if (ent)
+						{
+							if (load_zipped_file(filename, ent->name, &f->data, &f->length) == 0)
+							{
+								f->type = kZippedFile;
+								f->offset = 0;
+								f->crc = crc32(0L, f->data, f->length);
+								found = 1;
+							}
+						}
+					}
 				}
 			}
+			else
+			{
+				if (!found)
+					found = try_fopen(f, file, NULL, NULL, s, s, 1, 0, 0);
+				if (!found)
+					found = try_fopen(f, file, NULL, NULL, s, s, 1, 1, 0);
+				if (!found)
+					found = try_fopen(f, file, NULL, NULL, s, s, 0, 0, 0);
+				if (!found)
+					found = try_fopen(f, file, NULL, NULL, s, s, 0, 1, 0);
+			}
+		}
+		else
+		{
+			pathc = softpathc;
+			pathv = softpathv;
+			LOG(("osd_fopen: using softwarepath (%d directories)\n", pathc));
 
-			extension = strrchr(file, '.');
-			if (extension)
-				*extension = '\0';
+			LOG(("Open IMAGE_R '%s' for '%s'\n", filename, game));
+			do
+			{
+				for (indx = 0; indx < pathc && !found; indx++)
+				{
+					if (!found)
+						found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 1, 0, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 1, 1, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 1, 0, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 1, 1, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 0, 0, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], game, NULL, filename, filename, 0, 1, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 0, 0, 0);
+					if (!found)
+						found = try_fopen(f, pathv[indx], NULL, NULL, filename, filename, 0, 1, 0);
 
-		} while (!found && extension);
+					extension = strrchr(filename, '.');
+					if (extension &&
+						strlen(extension) < sizeof(extd) &&
+						strchr(extension, '/') == NULL &&
+						strchr(extension,'\\') == NULL)
+					{
+						/* copy extension */
+						strcpy(extd, extension+1);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, game, filename, filename, 1, 0, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, game, filename, filename, 1, 1, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 1, 0, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 1, 1, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, game, filename, filename, 0, 0, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, game, filename, filename, 0, 1, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 0, 0, 0);
+						if (!found)
+							found = try_fopen(f, pathv[indx], extd, NULL, filename, filename, 0, 1, 0);
+					}
+				}
+
+				extension = strrchr(file, '.');
+				if (extension)
+					*extension = '\0';
+
+			} while (!found && extension);
+		}
 
 		if (!found)
 			LOG(("IMAGE_R '%s' NOT FOUND!\n", filename));

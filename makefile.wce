@@ -8,9 +8,10 @@ BETA_VERSION = -DBETA_VERSION=15
 TARGET = mess
 # TARGET = neomame
 # TARGET = tiny
+# TARGET=tinyms
 
 # uncomment next line to make a debug version
-DEBUG = 1
+# DEBUG = 1
 
 # build a version for debugging games
 # MAME_DEBUG = -DMAME_DEBUG
@@ -46,6 +47,13 @@ USE_FASTCALL = -DFASTCALL
 # OS = win32
 OS = wince
 # OS = windows
+
+ifeq "$(TARGET)" "mess"
+MESS = 1
+endif
+ifeq "$(TARGET)" "tinyms"
+MESS = 1
+endif
 
 # Windows CE platform (x86em | arm | mips | sh3)
 ifeq "$(TARGETCPU)" "ARM"
@@ -168,7 +176,7 @@ ifndef DEBUG
 DEFS += -DNDEBUG
 endif
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
 endif
 
@@ -185,7 +193,7 @@ INCLUDES = \
         -Isrc/cpu/m68000 \
         -I$(OBJ)/cpu/m68000
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 INCLUDES += \
         -Imess \
         -Imess/includes \
@@ -205,6 +213,10 @@ ifdef MIDAS
 ifdef MIDAS_INCPATH
 INCLUDES += -I$(subst \,\\,$(MIDAS_INCPATH))
 endif
+endif
+
+ifdef GX_PATH
+INCLUDES += -I$(subst \,\\,$(GX_PATH))\\inc
 endif
 
 #
@@ -234,7 +246,7 @@ RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
 RCFLAGS = -l 0x409 -I./Win32 $(MAME_DEBUG)
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 RCFLAGS += -DMESS -Imess/Win32 -Isrc/Win32
 endif
 
@@ -247,6 +259,10 @@ LIBS = \
 	aygshell.lib \
 	uuid.lib
 	
+ifneq "$(WCEPLAT)" "x86em"
+LIBS += gx.lib
+endif
+
 ifdef MAME_NET
 LIBS += wsock32.lib
 endif
@@ -264,6 +280,10 @@ endif
 
 ifdef ZLIB_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(ZLIB_LIBPATH))
+endif
+
+ifdef GX_PATH
+LDFLAGS += -LIBPATH:$(subst \,\\,$(GX_PATH))\\$(WCEPLAT)
 endif
 
 ifeq "$(OS)" "wince"
@@ -308,7 +328,7 @@ OBJDIRS = \
         $(OBJ)/Win32/hlp \
 	$(OBJ)/zlib
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 # MESS object directories
 OBJDIRS += \
         $(OBJ)/mess \
@@ -381,7 +401,7 @@ $(OBJ)/%.o: src/%.asm
 $(OBJ)/%.o: src/%.c
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
-$(OBJ)/wince/%.o: src/wince/gapi/x86em/%.cpp
+$(OBJ)/wince/%.o: src/wince/%.cpp
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
 $(OBJ)/zlib/%.o: zlib/%.c

@@ -1,17 +1,5 @@
 #include <windows.h>
 #include <commctrl.h>
-// I don't understand why this is necessary when building for x86em
-#define SHCreateMenuBar         dummy_SHCreateMenuBar   
-#define SHInitDialog            dummy_SHInitDialog   
-#define SHHandleWMSettingChange	dummy_SHHandleWMSettingChange
-#include <aygshell.h>
-#undef SHCreateMenuBar   
-#undef SHInitDialog 
-#undef SHHandleWMSettingChange
-
-WINSHELLAPI BOOL WINAPI SHCreateMenuBar(SHMENUBARINFO *pmbi);   
-BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi); 
-WINSHELLAPI BOOL WINAPI SHHandleWMSettingChange(HWND hwnd, WPARAM wParam, LPARAM lParam, SHACTIVATEINFO* psai);
 
 #include "resource.h"
 #include "driver.h"
