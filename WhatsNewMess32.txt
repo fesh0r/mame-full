@@ -13,6 +13,10 @@ Whats new:
 - Added "Open Other Software..." menu item so that software not in the software
   directory can be used (similar to the pre 37b5 mechanism) [Nate Woods]
 
+- Fixed a bug that caused the software picker to only see software under a
+  directory for its driver and its parent driver, but not its grandparent's
+  driver and so on [Nate Woods]
+
 ----------
 0.37 BETA 5
 ------------

@@ -573,19 +573,16 @@ static void FillSoftwareList(int nGame)
 	pimgd = &mess_images;
 	olddir = strdup(osd_get_cwd());
 	if (olddir) {
-		const struct GameDriver *drv = drivers[nGame];
-
 		for (i = 0; i < GetMessSoftwarePathCount(); i++) {
 			const char *dir = GetMessSoftwarePath(i);
+			const struct GameDriver *drv = drivers[nGame];
 
-			osd_change_directory(dir);
-			AddImagesFromDirectory(drv->name, TRUE, buffer, sizeof(buffer), &pimgd);
-			if (drv->clone_of) {
-				osd_change_directory(olddir);
+			while(drv) {
 				osd_change_directory(dir);
-				AddImagesFromDirectory(drv->clone_of->name, TRUE, buffer, sizeof(buffer), &pimgd);
+				AddImagesFromDirectory(drv->name, TRUE, buffer, sizeof(buffer), &pimgd);
+				osd_change_directory(olddir);
+				drv = drv->clone_of;
 			}
-			osd_change_directory(olddir);
 		}
 		free(olddir);
 	}
