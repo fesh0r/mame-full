@@ -470,11 +470,13 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 
 
 static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
-	UINT32 *lsn, creation_policy_t create, struct os9_fileinfo *file_info)
+	creation_policy_t create, struct os9_fileinfo *file_info, UINT32 *dirent_lsn, UINT32 *dirent_index)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct os9_fileinfo dir_info;
-	UINT32 index, entry_index, entry_lsn, current_lsn, dir_size;
+	UINT32 index, current_lsn, dir_size;
+	UINT32 entry_index = 0;
+	UINT32 entry_lsn = 0;
 	UINT32 allocated_lsn = 0;
 	UINT8 entry[32];
 	UINT8 block[64];
@@ -558,15 +560,17 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
 		path += strlen(path) + 1;
 	}
 
-	if (lsn)
-		*lsn = current_lsn;
-
 	if (file_info)
 	{
 		err = os9_decode_file_header(img, current_lsn, file_info);
 		if (err)
 			goto done;
 	}
+
+	if (dirent_lsn)
+		*dirent_lsn = entry_lsn;
+	if (dirent_index)
+		*dirent_index = entry_index;
 
 done:
 	if (allocated_lsn != 0)
@@ -792,7 +796,7 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 	image = img_enum_image(enumeration);
 	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
 
-	err = os9_lookup_path(image, path, NULL, CREATE_NONE, &os9enum->dir_info);
+	err = os9_lookup_path(image, path, CREATE_NONE, &os9enum->dir_info, NULL, NULL);
 	if (err)
 		goto done;
 
@@ -839,9 +843,12 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 		if (err)
 			return err;
 
-		pick_string(dir_entry, 0, 28, filename);
+		if (dir_entry[0])
+			pick_string(dir_entry, 0, 28, filename);
+		else
+			filename[0] = '\0';
 	}
-	while(!strcmp(filename, ".") || !strcmp(filename, ".."));
+	while(!filename[0] || !strcmp(filename, ".") || !strcmp(filename, ".."));
 
 	/* read file attributes */
 	lsn = pick_integer(dir_entry, 29, 3);
@@ -900,7 +907,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(img);
 
-	err = os9_lookup_path(img, filename, NULL, CREATE_NONE, &file_info);
+	err = os9_lookup_path(img, filename, CREATE_NONE, &file_info, NULL, NULL);
 	if (err)
 		return err;
 	if (file_info.directory)
@@ -958,7 +965,7 @@ static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *pa
 		goto done;
 	}
 
-	err = os9_lookup_path(image, path, NULL, CREATE_FILE, &file_info);
+	err = os9_lookup_path(image, path, CREATE_FILE, &file_info, NULL, NULL);
 	if (err)
 		goto done;
 
@@ -996,6 +1003,67 @@ done:
 
 
 
+static imgtoolerr_t os9_diskimage_deletefile(imgtool_image *image, const char *path)
+{
+	imgtoolerr_t err;
+	const struct os9_diskinfo *disk_info;
+	struct os9_fileinfo file_info;
+	UINT32 dirent_lsn, dirent_index, j, lsn;
+	UINT8 b;
+	int i;
+
+	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	err = os9_lookup_path(image, path, CREATE_NONE, &file_info, &dirent_lsn, &dirent_index);
+	if (err)
+		return err;
+	if (file_info.directory)
+		return IMGTOOLERR_FILENOTFOUND;
+
+	/* zero out the file entry */
+	b = '\0';
+	err = os9_write_lsn(image, dirent_lsn, dirent_index, &b, 1);
+	if (err)
+		return err;
+
+	/* get the link count */
+	err = os9_read_lsn(image, file_info.lsn, 8, &b, 1);
+	if (err)
+		return err;
+
+	if (b > 0)
+		b--;
+	if (b > 0)
+	{
+		/* link count is greater than zero */
+		err = os9_write_lsn(image, file_info.lsn, 8, &b, 1);
+		if (err)
+			return err;
+	}
+	else
+	{
+		/* no more links; outright delete the file */
+		err = os9_deallocate_lsn(image, file_info.lsn);
+		if (err)
+			return err;
+
+		for (i = 0; (i < sizeof(file_info.sector_map) / sizeof(file_info.sector_map[0])) && file_info.sector_map[i].count; i++)
+		{
+			lsn = file_info.sector_map[i].lsn;
+			for (j = 0;  j < file_info.sector_map[i].count; j++)
+			{
+				err = os9_deallocate_lsn(image, lsn + j);
+				if (err)
+					return err;
+			}
+		}
+	}
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
@@ -1010,6 +1078,7 @@ static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct Im
 	module->free_space				= os9_diskimage_freespace;
 	module->read_file				= os9_diskimage_readfile;
 	module->write_file				= os9_diskimage_writefile;
+	module->delete_file				= os9_diskimage_deletefile;
 	return IMGTOOLERR_SUCCESS;
 }
 

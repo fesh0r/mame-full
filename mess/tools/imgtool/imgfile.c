@@ -621,15 +621,33 @@ imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *s
 imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname)
 {
 	imgtoolerr_t err;
+	char *alloc_path = NULL;
 
 	if (!img->module->delete_file)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	if (img->module->path_separator)
+	{
+		err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
+		if (err)
+			goto done;
+	}
 
 	err = img->module->delete_file(img, fname);
 	if (err)
-		return markerrorsource(err);
+	{
+		err = markerrorsource(err);
+		goto done;
+	}
 
-	return IMGTOOLERR_SUCCESS;
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
 }
 
 

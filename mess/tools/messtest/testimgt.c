@@ -114,7 +114,7 @@ static void checkfile_end_handler(const void *buffer, size_t size)
 	UINT64 stream_sz;
 	const void *stream_ptr;
 
-	stream = stream_open_mem((void *) buffer, size);
+	stream = stream_open_mem(NULL, 0);
 	if (!stream)
 	{
 		error_outofmemory();
@@ -135,6 +135,28 @@ static void checkfile_end_handler(const void *buffer, size_t size)
 	{
 		failed = TRUE;
 		report_message(MSG_FAILURE, "Failed file verification");
+		return;
+	}
+}
+
+
+
+static void deletefile_start_handler(const char **attributes)
+{
+	imgtoolerr_t err;
+	const char *filename;
+
+	filename = find_attribute(attributes, "name");
+	if (!filename)
+	{
+		error_missingattribute("name");
+		return;
+	}
+
+	err = img_deletefile(image, filename);
+	if (err)
+	{
+		report_imgtoolerr(err);
 		return;
 	}
 }
@@ -310,6 +332,7 @@ const struct messtest_tagdispatch testimgtool_dispatch[] =
 	{ "checkfile",		DATA_BINARY,	file_start_handler,				checkfile_end_handler },
 	{ "checkdirectory",	DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
 	{ "putfile",		DATA_BINARY,	file_start_handler,				putfile_end_handler },
+	{ "deletefile",		DATA_BINARY,	deletefile_start_handler,		NULL },
 	{ NULL }
 };
 

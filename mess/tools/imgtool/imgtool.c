@@ -209,15 +209,6 @@ int imgtool_validitychecks(void)
 			error = 1;
 		}
 
-		if (features.supports_directories)
-		{
-			if (module->delete_file)
-			{
-				printf("imgtool module %s supports directories and delete_file without core support\n", module->name);
-				error = 1;
-			}
-		}
-
 		/* sanity checks on creation options */
 		if (module->createimage_optguide || module->createimage_optspec)
 		{

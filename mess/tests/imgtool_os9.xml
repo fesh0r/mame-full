@@ -23,22 +23,37 @@
 <imgtooltest name="coco_os9_001">
 	<createimage driver="coco_jvc_os9"/>
 	<checkdirectory/>
-<!--
+
 	<putfile name="FOO.TXT"/>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="0"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT"/>
 
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
 
-	<putfile name="FOO.TXT">'Hello'</putfile>
+	<putfile name="FOO.TXT">'Party'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="5"/>
 	</checkdirectory>
--->
+	<checkfile name="FOO.TXT">'Party'</checkfile>
+
+	<putfile name="BAR.TXT">'Lame'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="5"/>
+		<entry name="BAR.TXT" size="4"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Party'</checkfile>
+	<checkfile name="BAR.TXT">'Lame'</checkfile>
+	
+	<deletefile name="BAR.TXT"/>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="5"/>
+	</checkdirectory>
 </imgtooltest>
 
 </tests>
