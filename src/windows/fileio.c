@@ -1792,4 +1792,9 @@ void build_crc_database_filename(int game_index)
 	else
 		pcrcfilename[0] = 0;
 }
+
+void osd_device_eject(int type, int id)
+{
+	device_filename_change(type, id, NULL);
+}
 #endif
