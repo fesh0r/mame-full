@@ -7840,6 +7840,82 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=tutor
+$bio
+Tomy Tutor (a.k.a. Grandstand Tutor)
+
+
+Known Issues:
+
+
+Cassette emulation does not work.  Carttridge and Joysticks are not supported.
+
+
+
+Usage:
+
+
+The Tutor has three built-in programs:
+
+* Graphic is a Picture drawing program.  It enables you to create 256*192
+pictures in 16 colors, but the interface is awkward and I don't think the
+pictures drawn in this program can be saved.
+
+* Basic is a Basic interpreter derived from the TI99 Extended Basic.  Quite
+unfortunately, Basic lacks I/O routines and a serious graphic library.
+
+* GBasic is another Basic interpreter that is hidden in Graphic.  It is
+probably faster than Basic and has better graphic capabilities, but the
+language itself is unfortunately lacking.  And the editor simply sucks.
+
+
+A few cartridges were released: almost 40 games and a few educational programs.
+9 cartridges are known to have been dumped (8 games and an educational title).
+
+
+
+History and Trivia:
+
+
+This computer is known as Tomy Tutor in US, and as Grandstand Tutor in UK.  It
+was initially released in Japan in 1982 or 1983 under the name of Pyuuta
+(Pi-yu-u-ta, with a Kanji for the "ta").  The Japanese versions are different
+from the English-language versions, as they have different ROMs with Japanese
+messages and support for the katakana syllabus.  There are at least 4 versions:
+
+* original Pyuuta (1982 or 1983) with title screens in Japanese but no Basic
+(only the toy-like Gbasic interpreter is available)
+
+* Pyuuta Jr. (1983?) which is a console with a simplified keyboard
+
+* Tomy/Grandstand Tutor (circa October 1983?) with title screens in English and
+integrated Basic
+
+* Pyuuta Mk. 2 (1984?) with a better-looking keyboard and integrated Basic
+
+
+The Tutor was not extremely successful, probably due to the fact that little
+software was available (and that the software that was available was not varied
+enough).
+
+
+One question that remains open is the relationship between the Tutor and the
+TI-99 series.  From a hardware point of view, the Tutor has a lot in common
+with TI-99/4(a) (though the two computers are NOT compatible).  From a
+software point of view, it is remarkable that the Tutor Basic is directly
+derived from TI Extended Basic (there is even a GPL interpreter in ROM, though
+the Tutor variant of GPL is quite different from TI GPL).  However, the
+remaining Tutor software does not seem to be derived from TI-99 software.
+It is therefore likely be that Matsushita designed the Tutor independently from
+TI and licenced the TI Basic from TI on afterthought; OTOH, the whole design
+could have originated from TI, as the computer is really looks like a "TI-99/3"
+(the hardware looks like the TI-99/4 series, whereas the concept reminds the
+TI-99/2).
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=trs80
 $bio
 Tandy/Radio Shack TRS-80 Model I
