@@ -73,8 +73,7 @@ MEMORY_READ_START( readmem_pow3000 )
 	{0x0000, 0x1fff, MRA_ROM},
 	{0x4000, 0x7fff, MRA_RAM},		   /* Power 3000 comes with 16K RAM */
 	{0x8000, 0xffff, MRA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 MEMORY_WRITE_START( writemem_pow3000 )
 	{0x0000, 0x3fff, MWA_ROM},
