@@ -458,6 +458,7 @@ $(OBJ)/ti99.a:	   \
 	$(OBJ)/mess/systems/geneve.o   \
 	$(OBJ)/mess/machine/geneve.o   \
 	$(OBJ)/mess/systems/tm990189.o \
+	$(OBJ)/mess/systems/ti99_8.o	\
 #	$(OBJ)/mess/systems/ti99_2.o	 \
 #	$(OBJ)/mess/systems/ti990_4.o  \
 
