@@ -16,10 +16,8 @@
 #ifndef _GLMAME_H
 #define _GLMAME_H
 
-#define NDEBUG
-
-#ifdef NDEBUG
-	#undef NDEBUG
+#ifndef GLDEBUG
+	#define NDEBUG
 #endif
 
 #ifdef WIN32
@@ -34,11 +32,11 @@
 #else
 #include <ctype.h>
 #include <math.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
 #include <dlfcn.h>
+#define CALLBACK
 #endif
+
+#include "gltool.h"
 
 /* Camera panning stuff */
 
@@ -58,6 +56,8 @@ extern float gamma_correction;
 /* xgl.c */
 extern GLXContext glContext;
 extern int antialias;
+extern int fullscreen_width;
+extern int fullscreen_height;
 extern int winwidth;
 extern int winheight;
 extern int doublebuffer;
@@ -71,7 +71,10 @@ extern float gl_beam;
 extern float gl_translucency;
 
 /* glgen.c */
+extern int totalcolors;
+extern int palette_dirty;
 extern GLubyte *ctable;
+extern unsigned char *ctable_orig;	/* for original return 2 game values */
 extern GLushort *rcolmap, *gcolmap, *bcolmap, *acolmap;
 extern int ctable_size; /* the true color table size */
 extern GLenum gl_bitmap_format;
@@ -86,6 +89,7 @@ extern int cabview;
 extern int cabload_err;
 extern int drawbitmap;
 extern int dopersist;
+extern GLboolean useGlEXT;
 
 extern char *cabname; /* 512 bytes reserved ... */
 extern int cabspecified;
@@ -98,17 +102,27 @@ extern GLuint cablist;
 #endif
 extern int gl_is_initialized;
 
+/* xgl.c */
+void switch2Fullscreen();
+
+/* glvec.c */
+extern void set_gl_beam(float new_value);
+extern float get_gl_beam();
+
 /* glcab.c */
 void InitCabGlobals();
 
 /* glgen.c */
-int glHasEXT(void);
-void glSetUseEXT(int val);
-int glGetUseEXT(void);
+void gl_bootstrap_resources();
+void gl_reset_resources();
+GLboolean glHasEXT(void);
+void glSetUseEXT(GLboolean val);
+GLboolean glGetUseEXT(void);
 void  gl_set_bilinear(int new_value);
 void  gl_set_cabview(int new_value);
 void  gl_set_antialias(int new_value);
 void  gl_set_alphablending(int new_value);
-void xgl_resize(int w, int h);
+void  xgl_fixaspectratio(int *w, int *h);
+void  xgl_resize(int w, int h);
 
 #endif /* _GLMAME_H */
