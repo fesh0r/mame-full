@@ -439,7 +439,7 @@ VIDEO_UPDATE( megatech )
 	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
 	int y;
 
-#ifdef MAME_DEBUG
+#if 0
 if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
 if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
 if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
@@ -462,15 +462,16 @@ if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 
 	/* generate the final screen */
-	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y);
+	for (y = cliprect->min_y+192; y <= cliprect->max_y; y++)
+		drawline((UINT16 *)bitmap->line[y], y-192);
 
 	segac2_bg_palbase = old_bg;
 	segac2_sp_palbase = old_sp;
 
 	/* sms display should be on second monitor, for now we control it with a fake dipswitch while
 	   the driver is in development */
-	if (readinputport(5)&0x01)	update_megatech_video_normal(bitmap, cliprect);
+	/*if (readinputport(5)&0x01)*/	
+		update_megatech_video_normal(bitmap, cliprect);
 
 }
 

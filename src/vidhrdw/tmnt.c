@@ -82,6 +82,23 @@ static void tmnt_tile_callback(int layer,int bank,int *code,int *color)
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
 }
 
+static void ssbl_tile_callback(int layer,int bank,int *code,int *color)
+{
+	if (layer == 0)
+	{
+		*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) | ((*color & 0x0c) << 9)
+				| (bank << 13);
+	}
+	else
+	{
+		*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) | ((*color & 0x0c) << 9)
+				| (bank << 13);
+//		printf("L%d: bank %d code %x color %x\n", layer, bank, *code, *color);
+	}
+
+	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
+}
+
 static int detatwin_rombank;
 
 static void detatwin_tile_callback(int layer,int bank,int *code,int *color)
@@ -244,6 +261,17 @@ VIDEO_START( lgtnfght )	/* also tmnt2, ssriders */
 	K053251_vh_start();
 
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+		return 1;
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+		return 1;
+	return 0;
+}
+
+VIDEO_START( sunsetbl )
+{
+	K053251_vh_start();
+
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,ssbl_tile_callback))
 		return 1;
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 		return 1;

@@ -834,16 +834,16 @@ static MEMORY_READ16_START( pwrinst2_readmem )
 	{ 0x400000, 0x40ffff, MRA16_RAM					},	// RAM
 	{ 0x500000, 0x500001, input_port_0_word_r		},	// Inputs
 	{ 0x500002, 0x500003, input_port_1_word_r		},	//
-	{ 0x800000, 0x807fff, MRA16_RAM					},	// Layer 0
-	{ 0x880000, 0x887fff, MRA16_RAM					},	// Layer 1
-	{ 0x900000, 0x907fff, MRA16_RAM					},	// Layer 2
+	{ 0x800000, 0x807fff, MRA16_RAM					},	// Layer 2
+	{ 0x880000, 0x887fff, MRA16_RAM					},	// Layer 0
+	{ 0x900000, 0x907fff, MRA16_RAM					},	// Layer 1
 	{ 0x980000, 0x987fff, MRA16_RAM					},	// Layer 3
 	{ 0xa00000, 0xa07fff, MRA16_RAM					},	// Sprites
 	{ 0xa08000, 0xa0ffff, MRA16_RAM					},	// Sprites?
 	{ 0xa10000, 0xa1ffff, MRA16_RAM					},	// Sprites?
-/**/{ 0xb00000, 0xb00005, MRA16_RAM					},	// Layer 0 Control
-/**/{ 0xb80000, 0xb80005, MRA16_RAM					},	// Layer 1 Control
-/**/{ 0xc00000, 0xc00005, MRA16_RAM					},	// Layer 2 Control
+/**/{ 0xb00000, 0xb00005, MRA16_RAM					},	// Layer 2 Control
+/**/{ 0xb80000, 0xb80005, MRA16_RAM					},	// Layer 0 Control
+/**/{ 0xc00000, 0xc00005, MRA16_RAM					},	// Layer 1 Control
 /**/{ 0xc80000, 0xc80005, MRA16_RAM					},	// Layer 3 Control
 	{ 0xa80000, 0xa8007f, donpachi_videoregs_r		},	// Video Regs
 	{ 0xd80000, 0xd80001, MRA16_NOP					},	// ? From Sound CPU
@@ -855,17 +855,17 @@ static MEMORY_WRITE16_START( pwrinst2_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM							},	// ROM
 	{ 0x400000, 0x40ffff, MWA16_RAM							},	// RAM
 	{ 0x700000, 0x700001, cave_eeprom_msb_w					},	// EEPROM
-	{ 0x800000, 0x807fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
-	{ 0x880000, 0x887fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
-	{ 0x900000, 0x907fff, cave_vram_2_w,     &cave_vram_2	},	// Layer 2
+	{ 0x800000, 0x807fff, cave_vram_2_w,     &cave_vram_2	},	// Layer 2
+	{ 0x880000, 0x887fff, cave_vram_0_w,     &cave_vram_0	},	// Layer 0
+	{ 0x900000, 0x907fff, cave_vram_1_w,     &cave_vram_1	},	// Layer 1
 	{ 0x980000, 0x987fff, cave_vram_3_8x8_w, &cave_vram_3	},	// Layer 3
 	{ 0xa00000, 0xa07fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0xa08000, 0xa0ffff, MWA16_RAM							},	// Sprites?
 	{ 0xa10000, 0xa1ffff, MWA16_RAM							},	// Sprites?
 	{ 0xa80000, 0xa8007f, MWA16_RAM, &cave_videoregs		},	// Video Regs
-	{ 0xb00000, 0xb00005, pwrinst2_vctrl_0_w, &cave_vctrl_0			},	// Layer 0 Control
-	{ 0xb80000, 0xb80005, pwrinst2_vctrl_1_w, &cave_vctrl_1			},	// Layer 1 Control
-	{ 0xc00000, 0xc00005, pwrinst2_vctrl_2_w, &cave_vctrl_2			},	// Layer 2 Control
+	{ 0xb00000, 0xb00005, pwrinst2_vctrl_2_w, &cave_vctrl_2			},	// Layer 2 Control
+	{ 0xb80000, 0xb80005, pwrinst2_vctrl_0_w, &cave_vctrl_0			},	// Layer 0 Control
+	{ 0xc00000, 0xc00005, pwrinst2_vctrl_1_w, &cave_vctrl_1			},	// Layer 1 Control
 	{ 0xc80000, 0xc80005, pwrinst2_vctrl_3_w, &cave_vctrl_3			},	// Layer 3 Control
 	{ 0xe00000, 0xe00001, sound_cmd_w						},	// To Sound CPU
 	{ 0xf00000, 0xf04fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
@@ -1724,10 +1724,10 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
 {
 //    REGION_GFX1										// Sprites
-	{ REGION_GFX2, 0, &layout_8x8x4,	0x1800, 0x40 }, // [0] Layer 0
-	{ REGION_GFX3, 0, &layout_8x8x4,	0x0800, 0x40 }, // [1] Layer 1
-	{ REGION_GFX4, 0, &layout_8x8x4,	0x1000, 0x40 }, // [2] Layer 2
-	{ REGION_GFX5, 0, &layout_8x8x4,	0x2000, 0x40 }, // [3] Layer 3
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x0800+0x8000, 0x40 }, // [0] Layer 0
+	{ REGION_GFX3, 0, &layout_8x8x4,	0x1000+0x8000, 0x40 }, // [1] Layer 1
+	{ REGION_GFX4, 0, &layout_8x8x4,	0x1800+0x8000, 0x40 }, // [2] Layer 2
+	{ REGION_GFX5, 0, &layout_8x8x4,	0x2000+0x8000, 0x40 }, // [3] Layer 3
 	{ -1 }
 };
 
@@ -2197,11 +2197,12 @@ static MACHINE_DRIVER_START( pwrinst2 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(0x200, 240)
-	MDRV_VISIBLE_AREA(0x72, 0x72 + 0x140-1, 0, 240-1)
+	MDRV_VISIBLE_AREA(0x70, 0x70 + 0x140-1, 0, 240-1)
 	MDRV_GFXDECODE(pwrinst2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x5000/2)
-	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+	MDRV_COLORTABLE_LENGTH(0x8000+0x2800)
 
+	MDRV_PALETTE_INIT(pwrinst2)
 	MDRV_VIDEO_START(cave_4_layers)
 	MDRV_VIDEO_UPDATE(cave)
 
@@ -3001,14 +3002,14 @@ ROM_START( pwrinst2 )
 	ROM_LOAD( "g02.u66", 0xa00000, 0x200000, CRC(becf2a36) )
 	ROM_LOAD( "g02.u67", 0xc00000, 0x200000, CRC(52fe2b8b) )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "g02.u89", 0x000000, 0x100000, CRC(373e1f73) )
-
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "g02.u78", 0x000000, 0x200000, CRC(1eca63d2) )
 
-	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
 	ROM_LOAD( "g02.u81", 0x000000, 0x100000, CRC(8a3ff685) )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "g02.u89", 0x000000, 0x100000, CRC(373e1f73) )
 
 	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
 	ROM_LOAD( "g02.82a", 0x000000, 0x080000, CRC(4b3567d6) )
@@ -3350,12 +3351,35 @@ DRIVER_INIT( pwrinst2 )
 	cave_default_eeprom_length = 0;
 	cave_region_byte = -1;
 
-//	To do: Decrypt sprites
+	unsigned char *buffer;
+	data8_t *src = memory_region(REGION_GFX1);
+	int len = memory_region_length(REGION_GFX1);
+	int i, j;
+
+	if ((buffer = malloc(len)))
+	{
+		 for(i=0; i<len/2; i++) 		{
+			j = BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7, 2,4,6,1,5,3, 0);
+			if(((j & 6) == 0) || ((j & 6) == 6))
+				j ^= 6;
+			buffer[j ^ 7] = (src[i] >> 4) | (src[i] << 4);
+		}
+
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
 
 	unpack_sprites();
-	cave_spritetype = 1;	// "different" sprites (no zooming?)
-	cave_kludge = 0;
+	cave_spritetype = 3;
+	cave_kludge = 4;
 	time_vblank_irq = 2000;	/**/
+
+#if 1		//ROM PATCH
+	{
+		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+		rom[0xD46C/2] = 0xD482;			// kurara dash fix  0xd400 -> 0xd482
+	}
+#endif
 }
 
 DRIVER_INIT( sailormn )
@@ -3407,6 +3431,7 @@ DRIVER_INIT( uopoko )
 
 ***************************************************************************/
 
+GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)" )
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"              )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
@@ -3424,6 +3449,3 @@ GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cav
 GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )
 GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"            )
 GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"            )
-
-/* Games not working properly: */
-GAMEX(1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)", GAME_NOT_WORKING )

@@ -598,6 +598,21 @@ READ_HANDLER( snes_r_io )
 		case DMAP7: case BBAD7: case A1T7L: case A1T7H: case A1B7: case DAS7L:
 		case DAS7H: case DSAB7: case A2A7L: case A2A7H: case NTRL7:
 			return snes_ram[offset];
+
+#ifndef MESS
+		case 0x4100: // NSS Dip-Switches
+#ifdef MAME_DEBUG
+			return readinputport(12);
+#else
+			return readinputport(9);
+#endif
+//		case 0x4101: //PC: a104 - a10e - a12a	//only nss_actr
+//		case 0x420c: //PC: 9c7d - 8fab			//only nss_ssoc
+
+		default:
+			printf("offset = %x pc = %x\n",offset,activecpu_get_pc());
+#endif
+
 	}
 
 	/* Unsupported reads return 0xff */
@@ -1325,6 +1340,8 @@ DRIVER_INIT( snes )
 	snes_ram = memory_region( REGION_CPU1 );
 	memset( snes_ram, 0, 0x1000000 );
 
+	/* all NSS games seem to use MODE 20 */
+	cart.mode = SNES_MODE_20;
 	cart.sram_max = 0x40000;
 
 	/* Find the number of blocks in this ROM */
@@ -1388,11 +1405,11 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	/* Let's draw the current line */
 	if( snes_ppu.beam.current_vert < snes_ppu.beam.last_visible_line )
 	{
-		snes_refresh_scanline( snes_ppu.beam.current_vert );
-
 		/* Do HDMA */
 		if( snes_ram[HDMAEN] )
 			snes_hdma();
+
+		snes_refresh_scanline( snes_ppu.beam.current_vert );
 	}
 
 	/* Vertical IRQ timer */

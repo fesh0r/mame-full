@@ -28,8 +28,7 @@
     Nintendo Super System
 
   There is a second processor and Menu system for selecting the games
-  controlling timer etc.? which still needs emulating  there should also be
-  dipswitches
+  controlling timer etc.? which still needs emulating there are dipswitches too
 
 ***************************************************************************/
 #include "driver.h"
@@ -170,6 +169,27 @@ INPUT_PORTS_START( snes )
 	PORT_BIT_NAME( 0x2, IP_ACTIVE_HIGH, IPT_BUTTON10, "Pal next" )
 	PORT_BIT_NAME( 0x4, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER4, "Toggle Transparency" )
 #endif
+
+	PORT_START	/* IN 12 : dip-switches */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x03, "Hard"  )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x00, "Time limit per level?" ) // taken from the scan of nss_adam
+	PORT_DIPSETTING(    0x10, "104 sec." )
+	PORT_DIPSETTING(    0x20, "112 sec." )
+	PORT_DIPSETTING(    0x00, "120 sec." )
+	PORT_DIPSETTING(    0x30, "? sec." )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct CustomSound_interface snes_sound_interface =
@@ -382,16 +402,16 @@ ROM_START( nss_sten )
 	ROM_LOAD( "st.ic3", 0x0000, 0x8000, CRC(8880596e) SHA1(ec6d68fc2f51f7d94f496cd72cf898db65324542) )
 ROM_END
 
-GAMEX( 199?, nss,       0,		  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: BIOS", NOT_A_DRIVER )
-GAMEX( 199?, nss_actr,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Act Raiser", GAME_NO_SOUND | GAME_NOT_WORKING ) // time broken
-GAMEX( 199?, nss_con3,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Contra 3", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, nss_adam,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: The Addams Family", GAME_NO_SOUND | GAME_NOT_WORKING ) // crashes mame
-GAMEX( 199?, nss_aten,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: David Crane's Amazing Dennis", GAME_NO_SOUND | GAME_NOT_WORKING ) // gfx problems with net
-GAMEX( 199?, nss_rob3,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Robocop 3", GAME_NO_SOUND | GAME_NOT_WORKING ) // invisible enemy? gameplay prob?
-GAMEX( 199?, nss_ncaa,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: NCAA Basketball", GAME_NO_SOUND | GAME_NOT_WORKING ) // severe gfx problems, no inputs
-GAMEX( 199?, nss_skin,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Skins Game", GAME_NO_SOUND | GAME_NOT_WORKING ) // doesn't boot
-GAMEX( 199?, nss_lwep,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Lethal Weapon", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, nss_ssoc,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Super Soccer", GAME_NO_SOUND | GAME_NOT_WORKING ) // can't start game
-GAMEX( 199?, nss_smw,   nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Super Mario World", GAME_NO_SOUND | GAME_NOT_WORKING ) // bad rom
-GAMEX( 199?, nss_fzer,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: F-Zero", GAME_NO_SOUND | GAME_NOT_WORKING ) // doesn't boot, bad rom?
-GAMEX( 199?, nss_sten,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",	"Nintendo Super System: Super Tennis", GAME_NO_SOUND | GAME_NOT_WORKING ) // doesn't boot, bad rom?
+GAMEX( 199?, nss,       0,		  snes,	     snes,    snes,		ROT0, "Nintendo",					"Nintendo Super System: BIOS", NOT_A_DRIVER )
+GAMEX( 1992, nss_actr,  nss,	  snes,	     snes,    snes,		ROT0, "Enix",						"Nintendo Super System: Act Raiser", GAME_NO_SOUND | GAME_NOT_WORKING ) // time broken
+GAMEX( 1992, nss_adam,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Nintendo Super System: The Addams Family", GAME_NO_SOUND | GAME_NOT_WORKING ) // crashes mame
+GAMEX( 1992, nss_aten,  nss,	  snes,	     snes,    snes,		ROT0, "Absolute Entertainment Inc.","Nintendo Super System: David Crane's Amazing Dennis", GAME_NO_SOUND | GAME_NOT_WORKING ) // gfx problems with net
+GAMEX( 1992, nss_con3,  nss,	  snes,	     snes,    snes,		ROT0, "Konami",						"Nintendo Super System: Contra 3: The Alien Wars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1992, nss_lwep,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Nintendo Super System: Lethal Weapon", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1992, nss_ncaa,  nss,	  snes,	     snes,    snes,		ROT0, "Sculptured Software Inc.",	"Nintendo Super System: NCAA Basketball", GAME_NO_SOUND | GAME_NOT_WORKING ) // severe gfx problems, no inputs
+GAMEX( 1992, nss_rob3,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Nintendo Super System: Robocop 3", GAME_NO_SOUND | GAME_NOT_WORKING ) // invisible enemy? gameplay prob?
+GAMEX( 1992, nss_skin,  nss,	  snes,	     snes,    snes,		ROT0, "Irem",						"Nintendo Super System: Skins Game", GAME_NO_SOUND | GAME_NOT_WORKING ) // uses some gfx modes not implemented
+GAMEX( 1992, nss_ssoc,  nss,	  snes,	     snes,    snes,		ROT0, "Human Inc.",					"Nintendo Super System: Super Soccer", GAME_NO_SOUND | GAME_NOT_WORKING ) // lots of gfx problems
+GAMEX( 199?, nss_smw,   nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Nintendo Super System: Super Mario World", GAME_NO_SOUND | GAME_NOT_WORKING ) // bad rom
+GAMEX( 199?, nss_fzer,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Nintendo Super System: F-Zero", GAME_NO_SOUND | GAME_NOT_WORKING ) // bad rom
+GAMEX( 199?, nss_sten,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Nintendo Super System: Super Tennis", GAME_NO_SOUND | GAME_NOT_WORKING ) // bad rom

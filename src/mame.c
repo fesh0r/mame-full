@@ -1790,6 +1790,7 @@ static int validitychecks(void)
 				if (ROMENTRY_ISFILE(romp))
 				{
 					int pre,post;
+					const char *hash;
 
 					last_name = c = ROM_GETNAME(romp);
 					while (*c)
@@ -1818,6 +1819,13 @@ static int validitychecks(void)
 					if (pre > 8 || post > 4)
 					{
 						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,ROM_GETNAME(romp));
+						error = 1;
+					}
+
+					hash = ROM_GETHASHDATA(romp);
+					if (!hash_verify_string(hash))
+					{
+						printf("%s: rom '%s' has an invalid hash string '%s'\n", drivers[i]->name, ROM_GETNAME(romp), hash);
 						error = 1;
 					}
 				}

@@ -22,15 +22,17 @@ static struct mame_bitmap *tmp_bitmap[4];
 
 WRITE_HANDLER(beg_palette_w)
 {
+	int color;
+
 	paletteram[offset] = data;
-	int color = paletteram[offset&0x3ff] | (paletteram[0x400+(offset&0x3ff)] << 8);
+	color = paletteram[offset&0x3ff] | (paletteram[0x400+(offset&0x3ff)] << 8);
 	palette_set_color(offset&0x3ff, color&0xf0, (color&0xf)<<4, (color&0xf00)>>4);
 }
 
 WRITE_HANDLER( beg_gfxcontrol_w )
 {
 /* bits used: 0,1,2,3
- 0 and 2 select plane,  
+ 0 and 2 select plane,
  1 and 3 select visible plane,
 */
 	plane_selected=((data & 4)>>1) | (data&1);
@@ -54,7 +56,7 @@ WRITE_HANDLER( bigevglf_vidram_w )
 
 READ_HANDLER( bigevglf_vidram_r )
 {
-	return vidram[ 0x10000 * plane_selected + vidram_bank + offset]; 
+	return vidram[ 0x10000 * plane_selected + vidram_bank + offset];
 }
 
 VIDEO_START( bigevglf )

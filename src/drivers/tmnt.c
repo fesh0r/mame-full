@@ -56,6 +56,7 @@ WRITE16_HANDLER( ssriders_1c0300_w );
 WRITE16_HANDLER( prmrsocr_122000_w );
 WRITE16_HANDLER( tmnt_priority_w );
 READ16_HANDLER( glfgreat_ball_r );
+VIDEO_START( sunsetbl );
 VIDEO_START( cuebrckj );
 VIDEO_START( mia );
 VIDEO_START( tmnt );
@@ -524,6 +525,25 @@ static READ16_HANDLER( ssriders_eeprom_r )
 	{
 		init_eeprom_count--;
 		res &= 0x7f;
+	}
+	toggle ^= 0x04;
+	return res ^ toggle;
+}
+
+static READ16_HANDLER( ssridersbl_eeprom_r )
+{
+	int res;
+	static int toggle;
+
+	/* bit 0 is EEPROM data */
+	/* bit 1 is EEPROM ready */
+	/* bit 2 is VBLANK (???) */
+	/* bit 3 is service button */
+	res = EEPROM_read_bit() | input_port_3_word_r(0,0);
+	if (init_eeprom_count)
+	{
+		init_eeprom_count--;
+		res &= 0xf7;
 	}
 	toggle ^= 0x04;
 	return res ^ toggle;
@@ -1116,6 +1136,41 @@ static MEMORY_WRITE16_START( ssriders_writemem )
 	{ 0x600000, 0x603fff, K052109_word_w },
 MEMORY_END
 
+static MEMORY_READ16_START( ssridersbl_readmem )
+	{ 0x000000, 0x0bffff, MRA16_ROM },
+	{ 0x104000, 0x107fff, MRA16_RAM },	/* main RAM */
+	{ 0x14c000, 0x14cfff, MRA16_RAM },
+	{ 0x180000, 0x183fff, K053245_scattered_word_r },
+	{ 0x184000, 0x18ffff, MRA16_RAM },
+	{ 0x5a0000, 0x5a001f, K053244_word_noA1_r },
+	{ 0x600000, 0x603fff, K052109_word_r },
+	{ 0xc00000, 0xc00001, input_port_0_word_r },
+	{ 0xc00002, 0xc00003, input_port_1_word_r },
+	{ 0xc00004, 0xc00005, input_port_4_word_r },
+	{ 0xc00006, 0xc00007, input_port_5_word_r },
+	{ 0xc00404, 0xc00405, input_port_2_word_r },
+	{ 0xc00406, 0xc00407, ssridersbl_eeprom_r },
+	{ 0xc00600, 0xc00601, OKIM6295_status_0_lsb_r },
+	{ 0x75d288, 0x75d289, MRA16_NOP },	// read repeatedly in some test menus (PC=181f2)
+MEMORY_END
+
+static MEMORY_WRITE16_START( ssridersbl_writemem )
+	{ 0x000000, 0x0bffff, MWA16_ROM },
+	{ 0x104000, 0x107fff, MWA16_RAM },	/* main RAM */
+	{ 0x14c000, 0x14cfff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x14e700, 0x14e71f, K053251_lsb_w },
+	{ 0x180000, 0x183fff, K053245_scattered_word_w, &spriteram16 },
+	{ 0x184000, 0x18ffff, MWA16_RAM },
+	{ 0x1c0300, 0x1c0301, ssriders_1c0300_w },
+	{ 0x1c0400, 0x1c0401, MWA16_NOP },
+	{ 0x5a0000, 0x5a001f, K053244_word_noA1_w },
+	{ 0x600000, 0x603fff, K052109_word_w },
+	{ 0x604020, 0x60402f, MWA16_NOP },	/* written every frame */
+	{ 0x604200, 0x604201, MWA16_NOP },	/* watchdog */
+	{ 0x6119e2, 0x6119e3, MWA16_NOP },	/* written a lot in some test menus (PC=18204) */
+	{ 0xc00200, 0xc00201, ssriders_eeprom_w },	/* EEPROM and gfx control */
+	{ 0xc00600, 0xc00601, OKIM6295_data_0_lsb_w },
+MEMORY_END
 
 static MEMORY_READ16_START( thndrx2_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
@@ -2048,6 +2103,40 @@ INPUT_PORTS_START( ssrid4ps )
 	KONAMI_PLAYERS_INPUT_LSB( IPF_PLAYER4, IPT_UNKNOWN, IPT_START4 )
 INPUT_PORTS_END
 
+/* Version for the bootleg, which has the service switch a little different */
+INPUT_PORTS_START( ssridbl )
+	PORT_START	/* IN0 */
+	KONAMI_PLAYERS_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1 )
+
+	PORT_START	/* IN1 */
+	KONAMI_PLAYERS_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2 )
+
+	PORT_START	/* COIN */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE4 )
+
+	PORT_START	/* EEPROM and service */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM status? - always 1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START	/* IN2 */
+	KONAMI_PLAYERS_INPUT_LSB( IPF_PLAYER3, IPT_UNKNOWN, IPT_START3 )
+
+	PORT_START	/* IN3 */
+	KONAMI_PLAYERS_INPUT_LSB( IPF_PLAYER4, IPT_UNKNOWN, IPT_START4 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( qgakumon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	// Joystick control : Left
@@ -2231,6 +2320,13 @@ static struct K053260_interface glfgreat_k053260_interface =
 //	{ sound_nmi_callback },
 };
 
+static struct OKIM6295interface okim6295_interface =
+{
+	1,			/* 1 chip */
+	{ 8000 },
+	{ REGION_SOUND1 },
+	{ 100 }
+};
 
 static MACHINE_DRIVER_START( cuebrckj )
 
@@ -2573,6 +2669,32 @@ static MACHINE_DRIVER_START( ssriders )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( ssridersbl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(ssridersbl_readmem,ssridersbl_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(eeprom)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(sunsetbl)
+	MDRV_VIDEO_UPDATE(tmnt2)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( thndrx2 )
 
 	/* basic machine hardware */
@@ -2614,10 +2736,6 @@ MACHINE_DRIVER_END
 
 ROM_START( cuebrckj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD16_BYTE( "903d25.g12",   0x00000, 0x10000, CRC(8d575663) SHA1(0e308e04936efa80351bf808ac304d3fcc82f19a) )
-	ROM_LOAD16_BYTE( "903d24.f12",   0x00001, 0x10000, CRC(2973625d) SHA1(e2496704390930761204624d4bf6b0b68d3133ab) )
-
-	ROM_REGION( 0x40000, REGION_USER1, 0 )	/* 2*128k and 2*64k for 68000 code */
 	ROM_LOAD16_BYTE( "903d25.g12",   0x00000, 0x10000, CRC(8d575663) SHA1(0e308e04936efa80351bf808ac304d3fcc82f19a) )
 	ROM_LOAD16_BYTE( "903d24.f12",   0x00001, 0x10000, CRC(2973625d) SHA1(e2496704390930761204624d4bf6b0b68d3133ab) )
 
@@ -3402,6 +3520,27 @@ ROM_START( ssrdrjbd )
 	ROM_LOAD( "sr_1d.rom",    0x0000, 0x100000, CRC(59810df9) SHA1(a0affc6330bdbfab1447dc0cf13c20ff708c2c71) )
 ROM_END
 
+ROM_START( sunsetbl )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "sunsetb.03",   0x000000, 0x080000, CRC(37ffe90b) SHA1(3f8542243f2a0c0718056672a906b70af5894a86) )
+	ROM_LOAD16_WORD_SWAP( "sunsetb.04",   0x080000, 0x080000, CRC(8ff647b7) SHA1(75144ce928fc4e7d24d9dd50a93e11ea41903bc4) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	// should be sunsetb.09 and .10 from the bootleg, but .09 is a bad dump and .10 matches the parent's sr_12k, so we just use the parent's roms
+	ROM_LOAD( "sr_16k.rom",   0x000000, 0x080000, CRC(e2bdc619) SHA1(04449deb267b0beacfa33640b593eb16194aa0d9) )	/* tiles */
+	ROM_LOAD( "sr_12k.rom",   0x080000, 0x080000, CRC(2d8ca8b0) SHA1(7c882f79c2402cf75979c681071007d76e4db9ae) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "sunsetb.05",   0x000000, 0x080000, CRC(8a0ff31a) SHA1(fee21d787d1cddd04713e10b1622f3fa231ebc4e) )
+	ROM_LOAD( "sunsetb.06",   0x080000, 0x080000, CRC(fdf2c887) SHA1(a165c7e6495d870324f59262ad4175a039e199a5) )
+	ROM_LOAD( "sunsetb.07",   0x100000, 0x080000, CRC(a545b1ed) SHA1(249f1f1a992f05c0dc23bd52785a355a402a0d10) )
+	ROM_LOAD( "sunsetb.08",   0x180000, 0x080000, CRC(f867cd38) SHA1(633703474010364dc47176965daa873d548da074) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "sunsetb.01",   0x000000, 0x080000, CRC(1a8b5ca2) SHA1(4101686c7bf3243273a52fca046b252fc3c78721) )
+	ROM_LOAD( "sunsetb.02",   0x080000, 0x080000, CRC(5d485523) SHA1(478119cb6273d870ca04a66e9b964ca0424f6fbd) )
+ROM_END
+
 ROM_START( thndrx2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "073-k02.11c", 0x000000, 0x20000, CRC(0c8b2d3f) SHA1(44ca5d96d8f85ae2760df4e1c339916e0a76143f) )
@@ -3722,7 +3861,7 @@ static DRIVER_INIT( cuebrckj )
 	shuffle(memory_region(REGION_GFX2),memory_region_length(REGION_GFX2));
 }
 
-GAMEX( 1989, cuebrckj, cuebrick, cuebrckj, mia,      cuebrckj, ROT0,  "Konami", "Cue Brick (Japan version D)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1989, cuebrckj, cuebrick, cuebrckj, mia,      cuebrckj, ROT0,  "Konami", "Cue Brick (Japan version D)" )
 
 GAME( 1989, mia,      0,        mia,      mia,      mia,      ROT0,  "Konami", "Missing in Action (version T)" )
 GAME( 1989, mia2,     mia,      mia,      mia,      mia,      ROT0,  "Konami", "Missing in Action (version S)" )
@@ -3762,6 +3901,7 @@ GAMEX(1991, ssrdruac, ssriders, ssriders, ssridr4p, gfx,      ROT0,  "Konami", "
 GAMEX(1991, ssrdrubc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 2 Players ver. UBC)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 2 Players ver. ABD)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, sunsetbl, ssriders, ssridersbl, ssridbl, gfx,     ROT0,  "Konami", "Sunset Riders (bootleg 4 Players ver. ADD)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1991, thndrx2,  0,        thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Japan)" )
 GAME( 1991, thndrx2a, thndrx2,  thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Asia)" )

@@ -135,7 +135,7 @@
 #include "cpu/m68000/m68000.h"
 #include "state.h"
 #include "segac2.h"
-
+#include "machine/random.h"
 
 #define LOG_PROTECTION		0
 #define LOG_PALETTE			0
@@ -183,6 +183,10 @@ unsigned int	z80_latch_bitcount		= 0;
 static int z80running;
 static data16_t *genesis_68k_ram;
 static unsigned char *genesis_z80_ram;
+
+/* Megatech BIOS specific */
+unsigned int bios_port_ctrl;
+unsigned int bios_ctrl_inputs;
 
 
 /******************************************************************************
@@ -1178,28 +1182,48 @@ READ16_HANDLER ( genesis_io_r )
 
 		case 1: /* port A data (joypad 1) */
 
-			if (genesis_io_ram[offset] & 0x40) return_value = readinputport(1) & 0x7f;
-			else return_value = readinputport(2) & 0x7f;
+			if (genesis_io_ram[offset] & 0x40) 
+			{
+				int iport = readinputport(9);
+				return_value = iport & 0x3f;
+			}
+			else 
+			{
+				int iport1 = readinputport(12);
+				int iport2 = readinputport(7) >> 1;
+				return_value = (iport1 & 0x10) + (iport2 & 0x20);
+			}
 
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
 			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
 			break;
 
 		case 2: /* port B data (joypad 1) */
 
-			if (genesis_io_ram[offset] & 0x40) return_value = readinputport(3) & 0x7f;
-			else return_value = readinputport(4) & 0x7f;
+			if (genesis_io_ram[offset] & 0x40) 
+			{
+				int iport1 = (readinputport(9) & 0xc0) >> 6;
+				int iport2 = (readinputport(8) & 0x0f) << 2;
+				return_value = (iport1 + iport2) & 0x3f;
+			}
+			else
+			{
+				int iport1 = readinputport(12) << 2;
+				int iport2 = readinputport(7) >> 2;
+				return_value = (iport1 & 0x10) + (iport2 & 0x20);
+			}
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
 			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
-
+			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
 			break;
 
 		default:
 			return_value = 0x00;
 
 	}
-
 	return return_value | return_value << 8;
+
 
 
 }
@@ -1411,12 +1435,54 @@ MEMORY_END
 
 /* MEGATECH specific */
 
+static READ_HANDLER( instr_r )
+{
+	unsigned char* instr = memory_region(REGION_USER1);
+	unsigned char* ram = memory_region(REGION_CPU3);
+
+	if(ram[0x6404] == 0)
+		return instr[offset/2];
+	else 
+		return 0xFF;
+}
+
+unsigned char bios_ctrl[6];
+
+static READ_HANDLER( bios_ctrl_r )
+{
+	if(offset == 0)
+		return 0;
+	if(offset == 2)
+		return bios_ctrl[offset] & 0xfe;
+
+	return bios_ctrl[offset];
+}
+
+static WRITE_HANDLER( bios_ctrl_w )
+{
+	if(offset == 1)
+	{
+		bios_ctrl_inputs = data & 0x04;  // Genesis/SMS input ports disable bit
+	}
+	bios_ctrl[offset] = data;
+}
+
+
 static MEMORY_READ_START(megatech_bios_readmem)
  	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x4fff, MRA_RAM },
 	{ 0x5000, 0x5fff, MRA_RAM },
-	{ 0x7000, 0x77ff, MRA_ROM },
+	{ 0x6000, 0x63ff, MRA_RAM },
+	{ 0x6400, 0x6400, input_port_10_r },
+	{ 0x6401, 0x6401, input_port_11_r },
+	{ 0x6800, 0x6800, input_port_6_r },
+	{ 0x6801, 0x6801, input_port_7_r },
+	{ 0x6802, 0x6807, bios_ctrl_r },
+//	{ 0x6805, 0x6805, input_port_8_r },
+	{ 0x6808, 0x6fff, MRA_RAM },
+	{ 0x7000, 0x77ff, MRA_RAM },
+	{ 0x8000, 0xffff, instr_r },
 MEMORY_END
 
 static MEMORY_WRITE_START(megatech_bios_writemem)
@@ -1424,8 +1490,12 @@ static MEMORY_WRITE_START(megatech_bios_writemem)
 	{ 0x3000, 0x3fff, MWA_RAM },
 	{ 0x4000, 0x4fff, MWA_RAM },
 	{ 0x5000, 0x5fff, MWA_RAM },
-	{ 0x7000, 0x77ff, MWA_ROM },
+	{ 0x6000, 0x63ff, MWA_RAM },
+	{ 0x6802, 0x6807, bios_ctrl_w },
+	{ 0x6808, 0x6fff, MWA_RAM },
+	{ 0x7000, 0x77ff, MWA_RAM },
 MEMORY_END
+
 
 /* basically from src/drivers/segasyse.c */
 unsigned char segae_vdp_ctrl_r ( UINT8 chip );
@@ -1457,13 +1527,91 @@ static WRITE_HANDLER (megatech_bios_port_be_bf_w)
 	}
 }
 
+static WRITE_HANDLER (megatech_bios_port_ctrl_w)
+{
+	bios_port_ctrl = data;
+}
+
+static READ_HANDLER (megatech_bios_port_dc_r)
+{
+	if(bios_port_ctrl == 0x55)
+		return readinputport(12);
+	else
+		return readinputport(9);
+}
+
+static READ_HANDLER (megatech_bios_port_dd_r)
+{
+	if(bios_port_ctrl == 0x55)
+		return readinputport(12);
+	else
+		return readinputport(8);
+}
+
+static WRITE_HANDLER (megatech_bios_port_7f_w)
+{
+//	usrintf_showmessage("CPU #3: I/O port 0x7F write, data %02x",data);
+}
+
+
 static PORT_READ_START( megatech_bios_readport )
+	{ 0xdc, 0xdc, megatech_bios_port_dc_r },  // player inputs
+	{ 0xdd, 0xdd, megatech_bios_port_dd_r },  // other player 2 inputs
 	{ 0xbe, 0xbf, megatech_bios_port_be_bf_r },			/* VDP */
 PORT_END
 
 static PORT_WRITE_START( megatech_bios_writeport )
+	{ 0x3f, 0x3f, megatech_bios_port_ctrl_w },
+	{ 0x7f, 0x7f, megatech_bios_port_7f_w },
 	{ 0xbe, 0xbf, megatech_bios_port_be_bf_w },			/* VDP */
 PORT_END
+
+static UINT8 hintcount;			/* line interrupt counter, decreased each scanline */
+extern UINT8 vintpending;
+extern UINT8 hintpending;
+extern UINT8 *segae_vdp_regs[];		/* pointer to vdp's registers */
+
+// Interrupt handler - from drivers/segasyse.c
+INTERRUPT_GEN (megatech_irq)
+{
+	int sline;
+	sline = 261 - cpu_getiloops();
+
+	if (sline ==0) {
+		hintcount = segae_vdp_regs[0][10];
+	}
+
+	if (sline <= 192) {
+
+//		if (sline != 192) segae_drawscanline(sline,1,1);
+
+		if (sline == 192)
+			vintpending = 1;
+
+		if (hintcount == 0) {
+			hintcount = segae_vdp_regs[0][10];
+			hintpending = 1;
+
+			if  ((segae_vdp_regs[0][0] & 0x10)) {
+				cpu_set_irq_line(2, 0, HOLD_LINE);
+				return;
+			}
+
+		} else {
+			hintcount--;
+		}
+	}
+
+	if (sline > 192) {
+		hintcount = segae_vdp_regs[0][10];
+
+		if ( (sline<0xe0) && (vintpending) ) {
+			cpu_set_irq_line(2, 0, HOLD_LINE);
+		}
+	}
+
+}
+
 
 /******************************************************************************
 	Input Ports
@@ -2336,50 +2484,148 @@ INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 
 
 	PORT_START	/* Player 1 Controls - part 2 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+//	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+//	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+//	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Player 1 Controls - part 1 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT(  0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 )
 
 
 	PORT_START	/* Player 2 Controls - part 2 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+//	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+//	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+//	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Player 2 Controls - part 1 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT(  0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER2 )
 
 	PORT_START	/* Temp - Fake dipswitch to turn on / off sms vdp display */
-    PORT_DIPNAME( 0x01, 0x01, "SMS VDP Display (fake)" )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+//	PORT_DIPNAME( 0x01, 0x01, "SMS VDP Display (fake)" )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+
+	PORT_START
+    PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2, "Select", KEYCODE_0, JOYCODE_NONE ) 
+    PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN , "0x6800 bit 1", KEYCODE_Y, JOYCODE_NONE ) 
+    PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "0x6800 bit 2", KEYCODE_U, JOYCODE_NONE ) 
+    PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "0x6800 bit 3", KEYCODE_I, JOYCODE_NONE ) 
+    PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL, "Door 1", KEYCODE_K, JOYCODE_NONE ) 
+    PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL, "Door 2", KEYCODE_L, JOYCODE_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN, "0x6800 bit 6", KEYCODE_O, JOYCODE_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Test mode", KEYCODE_F2, JOYCODE_NONE )
+
+	PORT_START	 
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1 )  // a few coin inputs here
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1, "Service coin", KEYCODE_9, JOYCODE_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE3,"Enter", KEYCODE_MINUS, JOYCODE_NONE )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	 
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2) 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2) 
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2) 
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 4", KEYCODE_NONE, JOYCODE_NONE ) 
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 5", KEYCODE_NONE, JOYCODE_NONE ) 
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 6", KEYCODE_NONE, JOYCODE_NONE ) 
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 7", KEYCODE_NONE, JOYCODE_NONE ) 
+
+	PORT_START	 // up, down, left, right, button 2,3, 2P up, down.
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) 	
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) 	
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) 	
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) 	
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 ) 	
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 ) 	
+
+    PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x02, 0x02, "Coin slot 3" )
+	PORT_DIPSETTING (   0x00, "Inhibit" )
+	PORT_DIPSETTING (   0x02, "Accept" )
+	PORT_DIPNAME( 0x01, 0x01, "Coin slot 4" )
+	PORT_DIPSETTING (   0x00, "Inhibit" )
+	PORT_DIPSETTING (   0x01, "Accept" )
+	PORT_DIPNAME( 0x1c, 0x1c, "Coin slot 3/4 value" )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_8C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 credits" )
+	PORT_DIPNAME( 0xe0, 0x60, "Coin slot 2 value" )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, "Inhibit" )
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0x0f, 0x01, "Coin Slot 1 value" )
+	PORT_DIPSETTING(    0x00, "Inhibit" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_8C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_9C ) )
+	PORT_DIPSETTING(    0x0a, "1 coin/10 credits" )
+	PORT_DIPSETTING(    0x0b, "1 coin/11 credits" )
+	PORT_DIPSETTING(    0x0c, "1 coin/12 credits" )
+	PORT_DIPSETTING(    0x0d, "1 coin/13 credits" )
+	PORT_DIPSETTING(    0x0e, "1 coin/14 credits" )
+	PORT_DIPSETTING(    0x0f, "1 coin/15 credits" )
+	PORT_DIPNAME( 0xf0, 0xa0, "Time per credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, "7:30" )
+	PORT_DIPSETTING(    0x20, "7:00" )
+	PORT_DIPSETTING(    0x30, "6:30" )
+	PORT_DIPSETTING(    0x40, "6:00" )
+	PORT_DIPSETTING(    0x50, "5:30" )
+	PORT_DIPSETTING(    0x60, "5:00" )
+	PORT_DIPSETTING(    0x70, "4:30" )
+	PORT_DIPSETTING(    0x80, "4:00" )
+	PORT_DIPSETTING(    0x90, "3:30" )
+	PORT_DIPSETTING(    0xa0, "3:00" )
+	PORT_DIPSETTING(    0xb0, "2:30" )
+	PORT_DIPSETTING(    0xc0, "2:00" )
+	PORT_DIPSETTING(    0xd0, "1:30" )
+	PORT_DIPSETTING(    0xe0, "1:00" )
+	PORT_DIPSETTING(    0xf0, "0:30" )
+
+	PORT_START	 // BIOS input ports extra
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2) 
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1) 
+//	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 4", KEYCODE_NONE, JOYCODE_NONE ) 
+//	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 5", KEYCODE_NONE, JOYCODE_NONE ) 
+//	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 6", KEYCODE_NONE, JOYCODE_NONE ) 
+//	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN , "port DD bit 7", KEYCODE_NONE, JOYCODE_NONE ) 
 
 INPUT_PORTS_END
 
@@ -2542,12 +2788,15 @@ static MACHINE_DRIVER_START( megatech )
 	MDRV_VIDEO_START(megatech)
 	MDRV_VIDEO_UPDATE(megatech)
 
+	MDRV_ASPECT_RATIO(4,6)
+	MDRV_SCREEN_SIZE(320,224+192) /* +192 for megatech BIOS screen/menu */
+	MDRV_VISIBLE_AREA(0, 319, 0, 223+192)
 	MDRV_PALETTE_LENGTH(2048+32) /* +32 for megatech bios vdp part */
 
 	MDRV_CPU_ADD_TAG("megatech_bios", Z80, 53693100 / 15) /* ?? */
 	MDRV_CPU_MEMORY(megatech_bios_readmem, megatech_bios_writemem)
 	MDRV_CPU_PORTS(megatech_bios_readport,megatech_bios_writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
+	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
 MACHINE_DRIVER_END
 
 /******************************************************************************
@@ -3039,7 +3288,7 @@ ROM_START( mt_sonic ) /* Sonic */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
-	ROM_LOAD( "12368-52.ic2", 0x000000, 0x08000,  CRC(6a69d20c) SHA1(e483b39ff6eca37dc192dc296d004049e220554a) )
+	ROM_LOAD( "12368-52.ic2", 0x0000, 0x8000,  CRC(6a69d20c) SHA1(e483b39ff6eca37dc192dc296d004049e220554a) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
@@ -3402,7 +3651,7 @@ static DRIVER_INIT( stkclmns )
 	{
 		int i;
 		for (i = 0; i < 0x10000/2; i++)
-			main_ram[i] = rand();
+			main_ram[i] = mame_rand();
 	}
 	init_saves();
 }

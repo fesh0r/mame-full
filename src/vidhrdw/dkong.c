@@ -164,7 +164,7 @@ VIDEO_START( dkong )
 	gfx_bank = 0;
 	palette_bank = 0;
 
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -191,8 +191,6 @@ WRITE_HANDLER( dkong3_gfxbank_w )
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
-
-
 
 WRITE_HANDLER( dkong_palettebank_w )
 {
@@ -241,7 +239,7 @@ WRITE_HANDLER( dkong_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, unsigned int mask_bank, unsigned int shift_bits)
 {
 	int offs;
 
@@ -267,7 +265,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				y = 240 - y;
 
 				drawgfx(bitmap,Machine->gfx[1],
-						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 1] & 0x7f) + ((spriteram[offs + 2] & mask_bank) << shift_bits),
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						!(spriteram[offs + 2] & 0x80),!(spriteram[offs + 1] & 0x80),
 						x,y,
@@ -275,7 +273,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 				/* draw with wrap around - this fixes the 'beheading' bug */
 				drawgfx(bitmap,Machine->gfx[1],
-						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 1] & 0x7f) + ((spriteram[offs + 2] & mask_bank) << shift_bits),
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x-256,y,
@@ -284,7 +282,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 			else
 			{
 				drawgfx(bitmap,Machine->gfx[1],
-						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 1] & 0x7f) + ((spriteram[offs + 2] & mask_bank) << shift_bits),
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x,y,
@@ -292,7 +290,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 				/* draw with wrap around - this fixes the 'beheading' bug */
 				drawgfx(bitmap,Machine->gfx[1],
-						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 1] & 0x7f) + ((spriteram[offs + 2] & mask_bank) << shift_bits),
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x+256,y,
@@ -339,13 +337,13 @@ VIDEO_UPDATE( radarscp )
 
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	draw_grid(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, 0x40, 1);
 }
 
 VIDEO_UPDATE( dkong )
 {
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, 0x40, 1);
 }
 
 VIDEO_UPDATE( pestplce )
@@ -367,4 +365,12 @@ VIDEO_UPDATE( pestplce )
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+}
+
+VIDEO_UPDATE( spclforc )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+
+	/* it uses spriteram[offs + 2] & 0x10 for sprite bank */
+	draw_sprites(bitmap, 0x10, 3);
 }

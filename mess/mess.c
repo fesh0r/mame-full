@@ -381,40 +381,6 @@ void machine_hard_reset(void)
 ***************************************************************************/
 
 #ifdef MAME_DEBUG
-static int hash_verify_string(const char *hash)
-{
-	int len, i;
-
-	if (!hash)
-		return FALSE;
-
-	switch(*hash){
-	case '$':
-		if (memcmp(hash, NO_DUMP, 4) && memcmp(hash, BAD_DUMP, 4))
-			return FALSE;
-		hash += 4;
-		break;
-
-	case 'c':
-	case 's':
-		if (hash[1] != ':')
-			return FALSE;
-		len = (*hash == 'c') ? 8 : 40;
-		hash += 2;
-		
-		for (i = 0; (hash[i] != '#') && (i < len); i++)
-		{
-			if (!strchr("0123456789abcdefABCDEF", hash[i]))
-				return FALSE;
-		}
-		if (hash[i] != '#')
-			return FALSE;
-		hash += i+1;
-		break;
-	}
-	return TRUE;
-}
-
 int messvaliditychecks(void)
 {
 	int i, j;
@@ -505,25 +471,6 @@ int messvaliditychecks(void)
 					error = 1;
 				}
 				break;
-			}
-		}
-
-		/* this detects some inconsistencies in the ROM structures */
-		for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
-		{
-			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-			{
-				const char *hash;
-				char name[100];
-				snprintf(name, sizeof(name) / sizeof(name[0]), "%s", ROM_GETNAME(rom));
-
-				hash = ROM_GETHASHDATA(rom);
-
-				if (!hash_verify_string(hash))
-				{
-					printf("%s: rom '%s' has an invalid hash string '%s'\n", drivers[i]->name, ROM_GETNAME(rom), hash);
-					error = 1;
-				}
 			}
 		}
 

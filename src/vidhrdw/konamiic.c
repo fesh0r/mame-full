@@ -1207,7 +1207,7 @@ void konami_rom_deinterleave_4(int mem_region)
 /***************************************************************************/
 
 /*static*/ unsigned char K007121_ctrlram[MAX_K007121][8];
-static int K007121_flipscreen[MAX_K007121];
+/*static*/ int K007121_flipscreen[MAX_K007121];
 
 
 void K007121_ctrl_w(int chip,int offset,int data)
@@ -5598,7 +5598,8 @@ static void K056832_UpdatePageLayout(void)
 			for (c=0; c<colspan; c++)
 			{
 				pageIndex = (((rowstart + r) & 3) << 2) + ((colstart + c) & 3);
-				K056832_LayerAssociatedWithPage[pageIndex] = setlayer;
+if (stricmp(Machine->gamedrv->source_file+12, "djmain.c") || K056832_LayerAssociatedWithPage[pageIndex] == -1)
+					K056832_LayerAssociatedWithPage[pageIndex] = setlayer;
 			}
 		}
 	}
@@ -5735,6 +5736,16 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4 },
 		8*8*4
 	};
+	static struct GfxLayout charlayout4dj =
+	{
+		8, 8,
+		0,				/* filled in later */
+		4,
+		{ 8*3,8*1,8*2,8*0 },
+		{ 0, 1, 2, 3, 4, 5, 6, 7 },
+		{ 0, 8*4, 8*4*2, 8*4*3, 8*4*4, 8*4*5, 8*4*6, 8*4*7 },
+		8*8*4
+	};
 
 	K056832_bpp = bpp;
 
@@ -5779,6 +5790,13 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 
 			/* decode the graphics */
 			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout8);
+			break;
+
+		case K056832_BPP_4dj:
+			charlayout4dj.total = memory_region_length(gfx_memory_region) / (i*4);
+
+			/* decode the graphics */
+			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout4dj);
 			break;
 	}
 
@@ -6509,6 +6527,263 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 	for (c=0; c<colspan; c++)
 	{
 		pageIndex = (((rowstart + r) & 3) << 2) + ((colstart + c) & 3);
+
+		if (K056832_LayerAssociation)
+		{
+			if (K056832_LayerAssociatedWithPage[pageIndex] != layer) continue;
+		}
+		else
+		{
+			if (K056832_LayerAssociatedWithPage[pageIndex] == -1) continue;
+			K056832_ActiveLayer = layer;
+		}
+
+		if (K056832_UpdateMode)
+		{
+			if (last_colorbase[pageIndex] != new_colorbase)
+			{
+				last_colorbase[pageIndex] = new_colorbase;
+				K056832_mark_page_dirty(pageIndex);
+			}
+		}
+		else
+			if (!pageIndex) K056832_ActiveLayer = 0;
+
+		if (K056832_update_linemap(bitmap, pageIndex, flags)) continue;
+
+		tilemap = K056832_tilemap[pageIndex];
+		tilemap_set_scrolly(tilemap, 0, ay);
+
+		last_dx = 0x100000;
+		last_visible = 0;
+
+		for (sdat_walk=sdat_start, line_y=line_starty; line_y<line_endy; sdat_walk+=sdat_adv, line_y+=line_height)
+		{
+			dminy = line_y;
+			dmaxy = line_y + line_height - 1;
+
+			if (dminy < clipy) dminy = clipy;
+			if (dmaxy > clipmaxy) dmaxy = clipmaxy;
+			if (dminy > cmaxy || dmaxy < cminy) continue;
+
+			sdat_offs = sdat_walk & sdat_wrapmask;
+
+			drawrect.min_y = (dminy < cminy ) ? cminy : dminy;
+			drawrect.max_y = (dmaxy > cmaxy ) ? cmaxy : dmaxy;
+
+			dx = ((int)pScrollData[sdat_offs]<<16 | (int)pScrollData[sdat_offs+1]) + corr;
+
+			if (last_dx == dx) { if (last_visible) goto LINE_SHORTCIRCUIT; continue; }
+			last_dx = dx;
+
+			if (colspan > 1)
+			{
+				//sx = (unsigned)dx % width;
+				sx = (unsigned)dx & (width-1);
+
+				//tx = c * K056832_PAGE_WIDTH;
+				tx = c << 9;
+
+				if (!flipx)
+				{
+					// handle right-edge wraparoundness and cull off-screen tilemaps
+					if ((c == 0) && (sx > width - K056832_PAGE_WIDTH)) sx -= width;
+					if ((sx + K056832_PAGE_WIDTH <= tx) || (sx - K056832_PAGE_WIDTH >= tx))
+						{ last_visible = 0; continue; }
+
+					// switch frame of reference and clip x
+					if ((tx -= sx) <= 0) { clipw = K056832_PAGE_WIDTH + tx; clipx = 0; }
+					else { clipw = K056832_PAGE_WIDTH - tx; clipx = tx; }
+				}
+				else
+				{
+					tx += K056832_PAGE_WIDTH;
+
+					// handle left-edge wraparoundness and cull off-screen tilemaps
+					if ((c == colspan-1) && (sx < K056832_PAGE_WIDTH)) sx += width;
+					if ((sx + K056832_PAGE_WIDTH <= tx) || (sx - K056832_PAGE_WIDTH >= tx))
+						{ last_visible = 0; continue; }
+
+					// switch frame of reference and clip y
+					if ((tx -= sx) >= 0) { clipw = K056832_PAGE_WIDTH - tx; clipx = 0; }
+					else { clipw = K056832_PAGE_WIDTH + tx; clipx = -tx; }
+				}
+			}
+			else { clipw = K056832_PAGE_WIDTH; clipx = 0; }
+
+			last_visible = 1;
+
+			dminx = clipx;
+			dmaxx = clipx + clipw - 1;
+
+			drawrect.min_x = (dminx < cminx ) ? cminx : dminx;
+			drawrect.max_x = (dmaxx > cmaxx ) ? cmaxx : dmaxx;
+
+			tilemap_set_scrollx(tilemap, 0, dx);
+
+			LINE_SHORTCIRCUIT:
+			tilemap_draw(bitmap, &drawrect, tilemap, flags, priority);
+
+		} // end of line loop
+	} // end of column loop
+  } // end of row loop
+
+	K056832_ActiveLayer = last_active;
+
+} // end of function
+
+void K056832_tilemap_draw_dj(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int flags, UINT32 priority)
+{
+	static int last_colorbase[K056832_PAGE_COUNT];
+
+	UINT32 last_dx, last_visible, new_colorbase, last_active;
+	int sx, sy, ay, tx, ty, width, height;
+	int clipw, clipx, cliph, clipy, clipmaxy;
+	int line_height, line_endy, line_starty, line_y;
+	int sdat_start, sdat_walk, sdat_adv, sdat_wrapmask, sdat_offs;
+	int pageIndex, flipx, flipy, corr, r, c;
+	int cminy, cmaxy, cminx, cmaxx;
+	int dminy, dmaxy, dminx, dmaxx;
+	struct rectangle drawrect;
+	struct tilemap *tilemap;
+	data16_t *pScrollData;
+	data16_t ram16[2];
+
+	int rowstart = K056832_Y[layer];
+	int colstart = K056832_X[layer];
+	int rowspan  = K056832_H[layer]+1;
+	int colspan  = K056832_W[layer]+1;
+	int dy = K056832_dy[layer];
+	int dx = K056832_dx[layer];
+	int scrollbank = ((K056832_regs[0x18]>>1) & 0xc) | (K056832_regs[0x18] & 3);
+	int scrollmode = K056832_regs[0x05]>>(K056832_LSRAMPage[layer][0]<<1) & 3;
+	int need_wrap = -1;
+
+	height = rowspan * K056832_PAGE_HEIGHT;
+	width  = colspan * K056832_PAGE_WIDTH;
+
+	cminx = cliprect->min_x;
+	cmaxx = cliprect->max_x;
+	cminy = cliprect->min_y;
+	cmaxy = cliprect->max_y;
+
+	// flip correction registers
+	if ((flipy = K056832_regs[0] & 0x20))
+	{
+		corr = K056832_regs[0x3c/2];
+		if (corr & 0x400)
+			corr |= 0xfffff800;
+	} else corr = 0;
+	dy += corr;
+	ay = (unsigned)(dy - K056832_LayerOffset[layer][1]) % height;
+
+	if ((flipx = K056832_regs[0] & 0x10))
+	{
+		corr = K056832_regs[0x3a/2];
+		if (corr & 0x800)
+			corr |= 0xfffff000;
+	} else corr = 0;
+	corr -= K056832_LayerOffset[layer][0];
+
+	if (scrollmode == 0 && (flags & TILE_LINE_DISABLED))
+	{
+		scrollmode = 3;
+		flags &= ~TILE_LINE_DISABLED;
+	}
+
+	switch( scrollmode )
+	{
+		case 0: // linescroll
+			pScrollData = &K056832_videoram[scrollbank<<12] + (K056832_LSRAMPage[layer][1]>>1);
+			line_height = 1;
+			sdat_wrapmask = 0x3ff;
+			sdat_adv = 2;
+		break;
+		case 2: // rowscroll
+			pScrollData = &K056832_videoram[scrollbank<<12] + (K056832_LSRAMPage[layer][1]>>1);
+			line_height = 8;
+			sdat_wrapmask = 0x3ff;
+			sdat_adv = 16;
+		break;
+		default: // xyscroll
+			pScrollData = ram16;
+			line_height = K056832_PAGE_HEIGHT;
+			sdat_wrapmask = 0;
+			sdat_adv = 0;
+			ram16[0] = 0;
+			ram16[1] = dx;
+	}
+	if (flipy) sdat_adv = -sdat_adv;
+
+	last_active = K056832_ActiveLayer;
+	new_colorbase = (K056832_UpdateMode) ? K055555_get_palette_index(layer) : 0;
+
+  for (r=0; r<=rowspan; r++)
+  {
+		sy = ay;
+		if (r == rowspan)
+		{
+			if (need_wrap < 0)
+				continue;
+
+			ty = need_wrap * K056832_PAGE_HEIGHT;
+		}
+		else
+		{
+			ty = r * K056832_PAGE_HEIGHT;
+		}
+
+		// cull off-screen tilemaps
+		if ((sy + height <= ty) || (sy - height >= ty)) continue;
+
+		// switch frame of reference
+		ty -= sy;
+
+			// handle top-edge wraparoundness
+			if (r == rowspan)
+			{
+				cliph = K056832_PAGE_HEIGHT + ty;
+				clipy = line_starty = 0;
+				line_endy = cliph;
+				ty = -ty;
+				sdat_start = ty;
+				if (scrollmode == 2) { sdat_start &= ~7; line_starty -= ty & 7; }
+			}
+
+			// clip y
+			else
+			{
+				if (ty < 0)
+					ty += height;
+
+				clipy = ty;
+				cliph = K056832_PAGE_HEIGHT;
+
+				if (clipy + cliph > height)
+				{
+					cliph = height - clipy;
+					need_wrap =r;
+				}
+
+				line_starty = ty;
+				line_endy = line_starty + cliph;
+				sdat_start = 0;
+			}
+
+	if (r == rowspan)
+		sdat_start += need_wrap * K056832_PAGE_HEIGHT;
+	else
+		sdat_start += r * K056832_PAGE_HEIGHT;
+	sdat_start <<= 1;
+
+	clipmaxy = clipy + cliph - 1;
+
+	for (c=0; c<colspan; c++)
+	{
+		if (r == rowspan)
+			pageIndex = (((rowstart + need_wrap) & 3) << 2) + ((colstart + c) & 3);
+		else
+			pageIndex = (((rowstart + r) & 3) << 2) + ((colstart + c) & 3);
 
 		if (K056832_LayerAssociation)
 		{

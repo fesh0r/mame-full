@@ -231,8 +231,6 @@ VIDEO_START( vectrex )
 		  -Machine->visible_area.min_y) / 2 - 10) << VEC_SHIFT;
 	x_max = Machine->visible_area.max_x << VEC_SHIFT;
 
-	vector_set_shift (VEC_SHIFT);
-
 	via_config(0, &vectrex_via6522_interface);
 	via_reset();
 	z_factor =  translucency? 1.5: 2;
@@ -441,8 +439,6 @@ VIDEO_START( raaspec )
 	y_center=((Machine->visible_area.max_y
 		  -Machine->visible_area.min_y)/2-10) << VEC_SHIFT;
 	x_max = Machine->visible_area.max_x << VEC_SHIFT;
-
-	vector_set_shift (VEC_SHIFT);
 
 	via_config(0, &spectrum1_via6522_interface);
 	via_reset();

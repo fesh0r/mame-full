@@ -638,10 +638,15 @@ INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
 #define OP_ADC(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
 			SRC    = OPER_8_##MODE();										\
-			FLAG_C = REGISTER_A + SRC + CFLAG_AS_1();							\
+			FLAG_C = REGISTER_A + SRC + CFLAG_AS_1();						\
 			if(FLAG_D)														\
-				FLAG_C = g65816i_adc_tbl[FLAG_C | ((((REGISTER_A&15)+(SRC&15)+CFLAG_AS_1())<<5)&0x200)];	\
-			FLAG_V = VFLAG_ADD_8(SRC, REGISTER_A, FLAG_C);						\
+			{																\
+				if((FLAG_C & 0xf) > 9)										\
+					FLAG_C+=6;												\
+				if((FLAG_C & 0xf0) > 0x90)									\
+					FLAG_C+=0x60;											\
+			}																\
+			FLAG_V = VFLAG_ADD_8(SRC, REGISTER_A, FLAG_C);					\
 			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C)
 #else
 #define OP_ADC(MODE)														\
@@ -657,14 +662,20 @@ INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
 				BREAKOUT;													\
 			}																\
 			FLAG_C = MAKE_UINT_8(REGISTER_A) + MAKE_UINT_8(SRC) + CFLAG_AS_1();	\
-			FLAG_C = g65816i_adc_tbl[FLAG_C | ((((REGISTER_A&15)+(SRC&15)+CFLAG_AS_1())<<5)&0x200)];	\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C+=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C+=0x60;												\
 			FLAG_Z = MAKE_UINT_8(FLAG_C);									\
 																			\
 			FLAG_C = MAKE_UINT_8(REGISTER_A>>8) + MAKE_UINT_8(SRC>>8) + CFLAG_AS_1();	\
-			FLAG_C = g65816i_adc_tbl[FLAG_C | (((((REGISTER_A>>8)&15)+((SRC>>8)&15)+CFLAG_AS_1())<<5)&0x200)];	\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C+=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C+=0x60;												\
 			FLAG_Z |= MAKE_UINT_8(FLAG_C) << 8;								\
 			FLAG_N = NFLAG_16(FLAG_Z);										\
-			FLAG_V = VFLAG_ADD_16(SRC, REGISTER_A, FLAG_C);						\
+			FLAG_V = VFLAG_ADD_16(SRC, REGISTER_A, FLAG_C);					\
 			REGISTER_A  = FLAG_Z
 #endif
 
@@ -1400,7 +1411,10 @@ INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
 			DST = CFLAG_AS_1();												\
 			FLAG_C = REGISTER_A - SRC - DST;										\
 			FLAG_V = VFLAG_SUB_8(SRC, REGISTER_A, FLAG_C);						\
-			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | ((((REGISTER_A&15)-(SRC&15)-DST)<<5)&0x200)];	\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C-=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C-=0x60;												\
 			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C);					\
 			FLAG_C = ~FLAG_C
 #else
@@ -1419,11 +1433,17 @@ INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
 			}																\
 			DST    = CFLAG_AS_1();											\
 			FLAG_C = MAKE_UINT_8(REGISTER_A) - MAKE_UINT_8(SRC) - DST;			\
-			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | ((((REGISTER_A&15)-(SRC&15)-DST)<<5)&0x200)];	\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C-=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C-=0x60;												\
 			FLAG_Z = MAKE_UINT_8(FLAG_C);									\
 			DST    = CFLAG_AS_1();											\
 			FLAG_C = MAKE_UINT_8(REGISTER_A>>8) - MAKE_UINT_8(SRC>>8) - DST;		\
-			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | (((((REGISTER_A>>8)&15)-((SRC>>8)&15)-DST)<<5)&0x200)];	\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C-=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C-=0x60;												\
 			FLAG_Z |= MAKE_UINT_8(FLAG_C) << 8;								\
 			FLAG_N = NFLAG_16(FLAG_Z);										\
 			FLAG_V = VFLAG_SUB_16(SRC, REGISTER_A, FLAG_Z);						\

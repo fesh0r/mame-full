@@ -99,8 +99,6 @@ extern g65816i_cpu_struct g65816i_cpu;
 extern int g65816_ICount;
 extern uint g65816i_source;
 extern uint g65816i_destination;
-extern uint g65816i_adc_tbl[];
-extern uint g65816i_sbc_tbl[];
 
 extern void (**g65816i_opcodes[])(void);
 extern uint (*g65816i_get_reg[])(int regnum);
