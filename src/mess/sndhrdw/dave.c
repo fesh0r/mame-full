@@ -10,6 +10,7 @@ static DAVE_INTERFACE *dave_iface;
 
 static unsigned char Dave_IntRegRead(void);
 static void Dave_IntRegWrite(unsigned char);
+static void     Dave_SetInterruptWanted(void);
 
 int Dave_sh_start(void)
 {
@@ -61,7 +62,6 @@ int	Dave_reg_r(int RegIndex)
 
 	if (RegIndex==0x14)
 	{
-              dave.int_input ^=0x055;
 
                dave.Regs[RegIndex & 0x01f] = Dave_IntRegRead();
 	}
@@ -114,112 +114,47 @@ static void	Dave_IntRegWrite(unsigned char Data)
         dave.int_latch &= ~(Data & (0x080|0x020|0x08|0x02));
         /* int enables */
 	dave.int_enable = Data & 0x055;
+
+        Dave_SetInterruptWanted();
 }
-
-
-
 
 static void	Dave_SetInterruptWanted(void)
 {
-	if (dave.int_latch & 0x0aa)
-	{
-		dave.int_wanted = 1;
-	}
+        int int_wanted;
+
+        int_wanted = (((dave.int_enable<<1) & dave.int_latch)!=0);
+
+        if (dave_iface->int_callback)
+        {
+            dave_iface->int_callback(int_wanted);
+        }
 }
 
-/* change int state*/
-
-/* interrupt inputs are negative edge triggered.
-If new state is 0, then previous state is 1, and a negative edge
-has occured. */
-void	Dave_SetInt(int IntID)
+void    Dave_UpdateInterruptLatches(int input_mask)
 {
-	switch (IntID)
-	{
-                case DAVE_INT_SELECTABLE:
+        if (((dave.previous_int_input^dave.int_input)&(input_mask))!=0)
+        {
+                /* it changed */
+
+                if ((dave.int_input & (input_mask))==0)
                 {
-                        /* change state */
-                        dave.int_input ^=0x01;
-
-                        if ((dave.int_input & 0x01)==0)
-                        {
-                                dave.int_latch |= 0x02;
-                        }
+                        /* negative edge */
+                        dave.int_latch |= (input_mask<<1);
                 }
-                break;
-
-		case DAVE_INT_1HZ:
-		{
-                        /* change state */
-                        dave.int_input^=0x04;
-
-                        if ((dave.int_input & 0x04)==0)
-                        {
-                          /* negative edge - set int latch */
-                          dave.int_latch |= 0x08;
-                        }
-		}
-		break;
-
-		case DAVE_INT_INT1:
-		{
-                        /* change state */
-                        dave.int_input^=0x010;
-
-                        /* negative edge? */
-                        if ((dave.int_input & 0x010)==0)
-                        {
-                                /* set latch */
-                                dave.int_latch |= 0x020;
-                        }
-		}
-		break;
-
-		case DAVE_INT_INT2:
-		{
-                        /* change state */
-                        dave.int_input^=0x040;
-
-                        /* negative edge? */
-                        if ((dave.int_input & 0x040)==0)
-			{
-                                /* set latch */
-				dave.int_latch |= 0x80;
-			}
-
-			dave.int_input^=0x040;
-		}
-		break;
-
-	}
-
-	Dave_SetInterruptWanted();
+        }
 }
 
-int	Dave_Interrupt(void)
+void    Dave_Interrupt(void)
 {
-	int IntWanted = dave.int_wanted;
+      dave.int_input ^=0x055;
 
-	dave.int_wanted = 0;
+      Dave_UpdateInterruptLatches(0x01);
+      Dave_UpdateInterruptLatches(0x04);
+      Dave_UpdateInterruptLatches(0x10);
+      Dave_UpdateInterruptLatches(0x40);
 
-	return IntWanted;
-}
+      Dave_SetInterruptWanted();
 
-void	Dave_UpdateTimers(void)
-{
-	dave.fiftyhertz++;
+      dave.previous_int_input = dave.int_input;
 
-	if (dave.fiftyhertz == (1000/50))
-	{
-		dave.fiftyhertz = 0;
-
-		dave.onehz++;
-
-		if (dave.onehz == 50)
-		{
-			dave.onehz = 0;
-
-			Dave_SetInt(DAVE_INT_1HZ);
-		}
-	}
 }

@@ -98,7 +98,8 @@ static int validitychecks(void)
 				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
-			if (drivers[i]->rom == drivers[j]->rom && drivers[i]->rom!=NULL)
+			if (drivers[i]->rom == drivers[j]->rom && drivers[i]->rom!=NULL
+			                                       && (drivers[j]->flags & NOT_A_DRIVER)==0)
 			{
 				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
 				error = 1;

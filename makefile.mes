@@ -24,8 +24,12 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_gradius3
-TINY_OBJS = obj/drivers/gradius3.o obj/vidhrdw/tmnt.o obj/vidhrdw/konamiic.o
+TINY_NAME = driver_msx
+TINY_OBJS = obj/mess/sndhrdw/scc.o      \
+            obj/mess/vidhrdw/msx.o      \
+            obj/mess/machine/msx.o      \
+            obj/mess/systems/msx.o      
+
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -60,8 +64,8 @@ CPUS+=I86@
 #CPUS+=V30@
 #CPUS+=V33@
 #CPUS+=I8035@
-#CPUS+=I8039@
-#CPUS+=I8048@
+CPUS+=I8039@
+CPUS+=I8048@
 #CPUS+=N7751@
 #CPUS+=M6800@
 #CPUS+=M6801@
@@ -849,6 +853,7 @@ DRVLIBS = obj/coleco.a   \
           obj/cgenie.a   \
           obj/pdp1.a     \
           obj/sinclair.a \
+          obj/apple1.a   \
           obj/apple2.a   \
           obj/ti99.a     \
           obj/bally.a    \
@@ -857,7 +862,13 @@ DRVLIBS = obj/coleco.a   \
           obj/nec.a      \
           obj/ep128.a    \
 	  obj/ascii.a    \
-          obj/other.a    \
+          obj/kim1.a     \
+          obj/oric.a     \
+          obj/vtech.a    \
+          obj/jupiter.a  \
+          obj/mbee.a     \
+          obj/advision.a  \
+          obj/nascom1.a
 
 
 NEOLIBS = obj/neogeo.a \
@@ -867,7 +878,7 @@ MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/vecto
          obj/msdos/fronthlp.o \
          obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
 
-MSDOSOBJS += obj/msdos/nec765.o 
+MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o 
 
 ifdef TINY_COMPILE
 	OBJS = $(TINY_OBJS)
@@ -887,7 +898,7 @@ else
 	endif
 endif
 
-all: $(EMULATOR_EXE) romcmp.exe  dat2html.exe 
+all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
 
 $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
@@ -918,7 +929,7 @@ obj/%.og: obj/%.c
 # generate asm source files for the 68000 emulator
 obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o obj/cpu/m68000/make68k.exe $<
-	obj/cpu/m68000/make68k $@
+	obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
 
 # generated asm files for the 68000 emulator
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
@@ -935,16 +946,16 @@ obj/coleco.a:   \
                 obj/mess/vidhrdw/tms9928a.o \
                 obj/mess/machine/coleco.o   \
                 obj/mess/vidhrdw/coleco.o   \
-                obj/mess/systems/coleco.o   \
+                obj/mess/systems/coleco.o   
 
 obj/sega.a:     \
                 obj/mess/vidhrdw/smsvdp.o   \
                 obj/mess/machine/sms.o      \
                 obj/mess/systems/sms.o      \
-                obj/mess/sndhrdw/genesis.o  \
                 obj/mess/vidhrdw/genesis.o  \
                 obj/mess/machine/genesis.o  \
-                obj/mess/systems/genesis.o  \
+		obj/mess/sndhrdw/genesis.o  \
+                obj/mess/systems/genesis.o  
 
 obj/atari.a:    \
                 obj/mess/machine/atari.o    \
@@ -958,7 +969,7 @@ obj/atari.a:    \
                 obj/mess/machine/riot.o     \
                 obj/mess/vidhrdw/a2600.o    \
                 obj/mess/machine/a2600.o    \
-                obj/mess/systems/a2600.o    \
+                obj/mess/systems/a2600.o    
 
 obj/gce.a:      \
                 obj/mess/machine/6522via.o  \
@@ -990,7 +1001,15 @@ obj/cbm.a:      \
 		obj/mess/sndhrdw/ted7360.o  \
 		obj/mess/machine/c1551.o    \
 		obj/mess/machine/c16.o      \
-		obj/mess/systems/c16.o	    
+		obj/mess/systems/c16.o	    \
+                obj/mess/machine/cbm.o      \
+                obj/mess/machine/cbmdrive.o \
+		obj/mess/systems/c64.o      \
+		obj/mess/machine/cia6526.o  \
+		obj/mess/machine/c64.o      \
+		obj/mess/vidhrdw/vic6567.o  \
+		obj/mess/sndhrdw/sid6581.o  
+
 
 
 obj/dragon.a:   \
@@ -1007,7 +1026,7 @@ obj/trs80.a:    \
 obj/cgenie.a:   \
                 obj/mess/machine/cgenie.o   \
                 obj/mess/machine/wd179x.o   \
-                obj/mess/vidhrdw/cgenie.o    \
+                obj/mess/vidhrdw/cgenie.o   \
                 obj/mess/sndhrdw/cgenie.o   \
                 obj/mess/systems/cgenie.o   
 
@@ -1027,10 +1046,16 @@ obj/sinclair.a: \
                 obj/mess/vidhrdw/spectrum.o \
                 obj/mess/machine/spectrum.o \
                 obj/mess/systems/spectrum.o \
-                obj/mess/vidhrdw/zx.o \
-                obj/mess/machine/zx.o \
-                obj/mess/systems/zx.o \
+                obj/mess/vidhrdw/zx.o       \
+                obj/mess/machine/zx.o       \
+                obj/mess/systems/zx.o       \
 
+
+obj/apple1.a:   \
+                obj/machine/6821pia.o       \
+                obj/mess/vidhrdw/apple1.o   \
+                obj/mess/machine/apple1.o   \
+                obj/mess/systems/apple1.o   \
 
 
 obj/apple2.a:   \
@@ -1041,6 +1066,7 @@ obj/apple2.a:   \
                 obj/mess/systems/apple2.o   \
 
 obj/ti99.a:     \
+                obj/mess/machine/tms9901.o  \
                 obj/mess/machine/ti99_4x.o  \
                 obj/mess/systems/ti99_4x.o  \
                 #obj/mess/systems/ti99_2.o   \
@@ -1049,7 +1075,7 @@ obj/bally.a:    \
                 obj/sound/astrocde.o        \
                 obj/mess/vidhrdw/astrocde.o \
                 obj/mess/machine/astrocde.o \
-                obj/mess/systems/astrocde.o \
+                obj/mess/systems/astrocde.o 
 
 obj/pc.a:       \
                 obj/mess/sndhrdw/pc.o       \
@@ -1060,20 +1086,22 @@ obj/pc.a:       \
                 obj/mess/machine/pc_fdc.o   \
                 obj/mess/machine/pc_hdc.o   \
                 obj/mess/machine/pc_ide.o   \
-                obj/mess/systems/pc.o       \
+                obj/mess/systems/pc.o       
 
 obj/amstrad.a:  \
                 obj/machine/8255ppi.o       \
                 obj/mess/vidhrdw/hd6845s.o  \
                 obj/mess/vidhrdw/amstrad.o  \
+                obj/mess/vidhrdw/kc.o       \
 		obj/mess/machine/nec765.o   \
                 obj/mess/machine/amstrad.o  \
-		obj/mess/systems/amstrad.o  \
+                obj/mess/machine/kc.o       \
+		obj/mess/systems/amstrad.o  
 
 obj/nec.a:  \
 		obj/mess/vidhrdw/vdc.o      \
                 obj/mess/machine/pce.o      \
-                obj/mess/systems/pce.o      \
+                obj/mess/systems/pce.o      
 
 
 obj/ep128.a :   \
@@ -1081,28 +1109,62 @@ obj/ep128.a :   \
                 obj/mess/vidhrdw/epnick.o   \
                 obj/mess/vidhrdw/enterp.o   \
                 obj/mess/machine/enterp.o   \
-                obj/mess/systems/enterp.o   \
+                obj/mess/systems/enterp.o   
 
 
 obj/ascii.a :   \
                 obj/mess/sndhrdw/scc.o      \
                 obj/mess/vidhrdw/msx.o      \
                 obj/mess/machine/msx.o      \
-                obj/mess/systems/msx.o      \
+                obj/mess/systems/msx.o      
 
-obj/other.a :   \
+
+obj/kim1.a :    \
                 obj/mess/vidhrdw/kim1.o     \
                 obj/mess/machine/kim1.o     \
-                obj/mess/systems/kim1.o     \
+                obj/mess/systems/kim1.o     
+
+
+obj/oric.a :    \
 		obj/mess/vidhrdw/oric.o     \
                 obj/mess/machine/oric.o     \
-                obj/mess/systems/oric.o     \
-                obj/mess/vidhrdw/vz.o       \
-                obj/mess/machine/vz.o       \
-                obj/mess/systems/vz.o       \
+                obj/mess/systems/oric.o     
+
+
+obj/vtech.a :   \
+                obj/mess/vidhrdw/vtech1.o   \
+                obj/mess/machine/vtech1.o   \
+                obj/mess/systems/vtech1.o   \
+                obj/mess/vidhrdw/vtech2.o   \
+                obj/mess/machine/vtech2.o   \
+                obj/mess/systems/vtech2.o   
+
+
+
+obj/jupiter.a : \
+                obj/mess/sndhrdw/buzzer.o   \
                 obj/mess/vidhrdw/jupiter.o  \
                 obj/mess/machine/jupiter.o  \
-                obj/mess/systems/jupiter.o  \
+                obj/mess/systems/jupiter.o  
+
+
+obj/mbee.a :    \
+		obj/mess/vidhrdw/mbee.o     \
+		obj/mess/machine/mbee.o     \
+                obj/mess/systems/mbee.o     
+
+
+obj/advision.a: \
+		obj/mess/vidhrdw/advision.o \
+		obj/mess/machine/advision.o \
+                obj/mess/systems/advision.o 
+
+
+obj/nascom1.a: \
+		obj/mess/vidhrdw/nascom1.o  \
+		obj/mess/machine/nascom1.o  \
+                obj/mess/systems/nascom1.o
+
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
@@ -1162,7 +1224,7 @@ maketree:
 	md obj\vidhrdw
 	md obj\sndhrdw
 	md obj\msdos
-	make messdir 
+	make messdir
 
 clean:
 	deltree /Y obj

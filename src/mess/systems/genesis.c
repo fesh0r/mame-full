@@ -34,6 +34,9 @@ $7f11         : psg 76489
 $8000 - $ffff : shared RAM w/68k
 
 
+Gareth S. Long
+
+In Memory Of Haruki Ikeda
 
 ***************************************************************************/
 #ifndef FALSE
@@ -324,16 +327,7 @@ static struct YM2612interface ym2612_interface =
 
 
 
-/* list of file extensions */
-static const char *genesis_file_extensions[] =
-{
-	"smd",
-	"bin",
-	0       /* end of array */
-};
-
-
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_genesis =
 {
 	/* basic machine hardware */
 	{
@@ -381,41 +375,38 @@ static struct MachineDriver machine_driver =
 };
 
 
+ROM_START(genesis)
+	ROM_REGIONX(0x405000,REGION_CPU1)
+ROM_END
+
+static const struct IODevice io_genesis[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"smd\0bin\0",       /* file extensions */
+		NULL,				/* private */
+		genesis_id_rom, 	/* id */
+		genesis_load_rom,	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+	{ IO_END }
+};
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-struct GameDriver genesis_driver =
-{
-	__FILE__,
-	0,
-	"genesis",
-	"Sega Megadrive/Genesis",
-	"1988",
-	"Sega",
-	"Gareth S. Long\n\n\nIn Memory Of Haruki Ikeda",
-	0,
-	&machine_driver,
-	0,
-
-	0,
-	genesis_load_rom,
-	genesis_id_rom,
-	genesis_file_extensions,
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,
-
-	input_ports_genesis,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	0, 0,
-};
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+CONS( 1988, genesis,  0,		genesis,  genesis,	0,		  "Sega",   "Sega Megadrive / Genesis" )
 

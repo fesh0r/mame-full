@@ -6,32 +6,31 @@
 #include "mess/machine/6522via.h"
 #include "driver.h"
 
-// test with preliminary VC1541 emulation
-//#define VC1541
+/* test with preliminary VC1541 emulation */
+/*#define VC1541*/
 
 extern struct MemoryReadAddress vc1541_readmem[];
 extern struct MemoryWriteAddress vc1541_writemem[];
 
 #define VC1541_CPU(cpu) \
-		{\
+          {\
 			CPU_M6502,\
 			1000000,\
-			cpu,\
 			vc1541_readmem,vc1541_writemem,\
 			0,0,\
 			0,0,\
-		  },
+       	  },
 
 #define VC1541_ROM(cpu) \
 	ROM_REGIONX(0x10000,cpu) \
 	ROM_LOAD("vc1541.c0",  0xc000, 0x2000, 0x29ae9752) \
 	ROM_LOAD("vc1541.e0",  0xe000, 0x2000, 0x361c9f37)
 
-
-//	ROM_LOAD("dos1541",  0xc000, 0x4000, 0x899fa3c5)
+/*	ROM_LOAD("dos1541",  0xc000, 0x4000, 0x899fa3c5) */
 
 void vc1541_driver_init(void);
 void vc1541_machine_init(void);
+void vc1541_drive_status(char *text, int size);
 
 /* serial bus vc20/c64/c16/vc1541 and some printer */
 

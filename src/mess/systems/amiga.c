@@ -24,6 +24,7 @@ extern int amiga_custom_r( int offs );
 extern void amiga_custom_w( int offs, int data );
 extern void amiga_init_machine( void );
 extern int amiga_vblank_irq( void );
+extern int amiga_fdc_init( int id, const char *floppy_name );
 
 /* from vidhrdw/amiga.c */
 extern void amiga_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
@@ -121,48 +122,28 @@ static void amiga_rom_decode(void)
 }
 
 
-/* list of file extensions */
-static const char *amiga_file_extensions[] =
-{
-	"rom",
-	0       /* end of array */
+static const struct IODevice io_amiga[] = {
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"adf\0",            /* file extensions */
+		NULL,				/* private */
+		NULL,				/* id */
+		amiga_fdc_init, 	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+    { IO_END }
 };
 
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
+COMPX( 1984, amiga,    0,		 ntsc,	   amiga,	 0, 	   "Commodore Business Machines Co.",  "Amiga (NTSC)", GAME_NOT_WORKING )
 
-struct GameDriver amiga_driver =
-{
-	__FILE__,
-	0,
-	"amiga",
-	"Amiga (NTSC)",
-	"1984",
-	"Commodore Busines Machines Co.",
-	"Ernesto Corvi",
-	0,
-	&machine_driver_ntsc,
-	0,
-
-	rom_amiga,
-	0,						/* load rom_file images */
-	0,						/* identify rom images */
-	amiga_file_extensions,	/* default extensions */
-	0,						/* number of ROM slots - in this case, a CMD binary */
-	4,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,/*amiga_rom_decode,*/		/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_amiga,
-
-	0,						/* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0						/* hiscore save */
-};

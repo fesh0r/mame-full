@@ -13,126 +13,9 @@ a617e188 = TUTOR.HI
 a059fccb = atomicmi.rom
 6b624fec = jackatta.rom
 
-## programs
-
-## must be started with system call
-# must be loaded at their address (loading as roms works with most)
-3f72ae5b = aren9708 (sys9708)
-c5e4e1b4 = sky8192 (sys8192)
-bcd4fb81 =  DIA12888.PRG !(sys12888) blinking attribut
-cb93bfc8 =  FIRE6915.PRG !(sys6915) ijkl how to play?
-cfa2c1d5 =  KAN15868.PRG !(sys15868)
-c276efd9 =  FURY4120.PRG !(sys4120)
-46b3da05 = PUL16304.PRG  (sys16304)blinking attribut
-a9d4d592 =  KIKS8192.PRG !(sys8192)
-
-# multipart tape
-185d9ebf = aard4992 (sys4992) ,1,1 intro
-1b5d6249 = aard9458 (sys9458)
-f75fa86e =  OO1L4100.PRG !(sys4100) must be loaded as rom
-86377a40 =  OO2L4100.PRG !(sys4100) must be loaded as rom
-cde22c53 =  OO3L4100.PRG !(sys4100) must be loaded as rom
-
-63baf46b = PACMANIC.PRG problems also in plus4 emu
-cb712948 = SKRAMBLE.PRG
-3256e61b = SARGON2.PRG
-4287454d = DANGERWI.PRG
-48022ca2 = INVADERS.PRG
-e959d6d9 =  PHeENIX.PRG two fast (cursorblink value)
-324e23a0 =  KAZIK.PRG
-5ffdf742 = SQUIRM.PRG blinking attribut
-2d06240a = REFLEX.PRG
-450c921d = SIRKNIGH.PRG
-5cef0065 = SPIKYHAR.PRG
-217392fe = SPIKYHA2.PRG
-42ada415 = LEGIONAR.PRG
-95511ed2 = OVERLOAD.PRG
-
-## 32k ram
-2ede8121 =  FINDERSK.PRG
-66bcb18a =  FUTUREKN.PRG intro graphics?
-ad78cdd9 =  ATOMIX.PRG pal ?
-a7e90cb4 =  GIANASIS.PRG graphics correct!
-1df02cf8 = AWMONTY.PRG blinking attribut
-38db5520 = PUZZNIC.PRG intro graphics??
-4f3ae334 = SOKOBAN.PRG
-308feaab = SNOWBALL.PRG
-b3744c56 = RENAISSA.PRG blinking attribut?
-9a4d2fd4 = EOROIDPR.PRG graphic
-4d7f54e1 = WILDFIRE.PRG graphics
-2933f99d = TOM16.PRG no quickload, graphics need exact rasterline 
-
 ## 64k ram
 
 ##moduls
 4fd1d8cb = 3plus1lo.rom plus 4 build in rom
 aab61387 = 3plus1hi.rom
-
-# programs
-8128bad =  MATRIX.PRG how to play!?
-151957c8 =  DOC.PRG
-de72806e =  PENGO.PRG cursorcolumn
-5871386b =  ELITE.PRG how to play?
-5b5c9339 =  FLASHGOR.PRG
-f3945ad3 =  boulder.prg intro graphics size
-# fixed startaddress for plus4 emu, so other crc
-# DYNAMOID.PRG
-57b25fb2 =  PARATROO.PRG keys/how to play
-c1448849 =  PINKPANT.PRG how to play?
-196797ab =  PIPEMANI.PRG
-33b195c4 =  PUZZLENO.PRG
-7d3e5f28 =  SABOTEUR.PRG
-ec1982cf =  SECRETMI.PRG
-17397e4c =  SCUMMPLU.PRG intro graphics
-27498929 =  DAVIDSMM.PRG
-bfbfeda9 =  GODZILLA.PRG graphics ok!?, how to play?
-65272dbe =  GREMLINS.PRG
-2b1da24  =RUBIKKOC.PRG
-19b95c36 = REVSTUNE.PRG
-6f581af4 = STONEAGE.PRG
-23b59e02 = ZOMBIE.PRG how to play?
-dab82f4b = HEXENKUC.PRG
-
-## diskimages
-# simple disk emulation enough
-#strippok dload"* works
-#stormacr dload"* seems to work
-#sargon23
-# sargon ii /+4 hangs (not floppy related?)
-# sargon iii/+4 works
-#scapegh1 dload"loader" vc1541 works, c1551 hangs
-
-# nearly all games want to do more than
-# the simple simulation can offer
-#gpc load"*",8,1 hangs (sequential files, error channel reading)
-
-# real (M6502 emulation) floppy drive neccessary (vc1541?)
-#hitchhik dload"* multiple channels open U1 B-P
-# open channel f command I0, open channel 2 #, 
-# write command stream f
-#starcros dload"* like hitchhiker
-#suspect dload"* like hitchhiker
-#suspende dload"* like hitchhiker
-#thejet dload"* flickers M-E
-#atomino.d64 load"*",8:run M-E
-#escapepr load"*",8:run M-E
-#speedbal dload"* M-E
-#supremac dload"* M-E
-#uninvit1 load"*",8,1 M-E
-#goonies load"*",8:run M-W M-E
-#cm2000 load"*",8:run M-W
-#btale31a load"*",8,1 command stream B-E 2 0 1  18
-#bch51_a c1551 load"*",8:run command stream B-E 0 19 18
-
-# real (M6502 emulation) vc1541 (device 8!?) neccessary
-#bch41_a vc1541 load"*",8,1 B-E vc1541 turbo loader!?
-
-## pal versions
-
-## 16k ram
-# multipart floppy 
-#trailblazer 
-
-## 64k ram 
-c937d1e4 =  KRAKOUT.PRG start sound intro
  

@@ -1,27 +1,17 @@
 #ifndef MESS_H
 #define MESS_H
 
-//#include "driver.h"
-
-
-//extern char messversion[];
-
 #define ORIENTATION_DEFAULT ROT0 /* hack till we change to the driver macro */
 
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 void showmessinfo(void);
-
-
-/* common.h - begin */
-#define MAX_ROM 3         /* MAX_ROM is the maximum number of cartridge slots a driver supports */
-#define MAX_FLOPPY 4      /* MAX_FLOPPY is the maximum number of floppy drives a driver supports */
-#define MAX_HARD 2        /* MAX_HARD is the maximum number of hard drives a driver supports */
-#define MAX_CASSETTE 2    /* MAX_CASSETTE is the maximum number of cassette drives a driver supports */
-#define MAX_PATHLEN 2048  /* Maximum Number of char for the path length */
-
-extern char rom_name[MAX_ROM][MAX_PATHLEN];
-extern char floppy_name[MAX_FLOPPY][MAX_PATHLEN];
-extern char hard_name[MAX_HARD][MAX_PATHLEN];
-extern char cassette_name[MAX_CASSETTE][MAX_PATHLEN];
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1
@@ -63,12 +53,9 @@ typedef struct
  */
 enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE };
 
-char * get_alias(char *driver_name, char *argv);
-int check_crc(int crc, int length, char * driver);
 
 /* mess.c functions [for external use] */
 int parse_image_types(char *arg);
-int load_image(int argc, char **argv, char *driver, int j);
 
 
 
@@ -129,5 +116,180 @@ unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsign
  #define MAX_KEYS	128 /* for MESS but already done in INPUT.C*/
 #endif
 #endif
+
+/******************************************************************************
+ * This is a start at the proposed peripheral structure.
+ * It will be filled with live starting with the next release (I hope).
+ * For now it gets us rid of the several lines MESS specific code
+ * in the GameDriver struct and replaces it by only one pointer.
+ *	type				type of device (from above enum)
+ *	count				maximum number of instances
+ *	file_extensions;	supported file extensions
+ *	_private;			to be used by the peripheral driver code
+ *	id					identify file
+ *	init				initialize device
+ *	info				get info for device instance
+ *	open				open device (with specific args)
+ *	close				close device
+ *	status				get device status
+ *	seek				seek to file position
+ *	input				input character
+ *	output				output character
+ *	input_chunk 		input chunk of data
+ *	output_chunk		output chunk of data
+ ******************************************************************************/
+
+enum {
+	IO_END = 0,
+	IO_CARTSLOT,
+	IO_FLOPPY,
+	IO_HARDDISK,
+	IO_CASSETTE,
+	IO_PRINTER,
+	IO_SERIAL
+};
+
+struct IODevice {
+	int type;
+	int count;
+	const char *file_extensions;
+	void *_private;
+	int (*id)(const char *filename, const char *gamename);
+	int (*init)(int id, const char *filename);
+	void (*exit)(int id);
+	const void *(*info)(int id, int whatinfo);
+	int (*open)(int id, void *args);
+	void (*close)(int id);
+	int (*status)(int id);
+	int (*seek)(int id, int offset, int whence);
+	int (*input)(int id);
+	void (*output)(int id, int data);
+	int (*input_chunk)(int id, void *dst, int size);
+	int (*output_chunk)(int id, void *src, int size);
+};
+
+/* these are called from mame.c run_game() */
+
+/* retrieve the filenames from options.image_files */
+extern int get_filenames(void);
+
+/* initialize devices, ie. let the driver open/check the image files */
+extern int init_devices(const void *game);
+
+/* shutdown devices */
+extern void exit_devices(void);
+
+/* Return the number of installed filenames for a device of type 'type'. */
+extern int device_count(int type);
+
+/* Return the name for a device of type 'type'. */
+extern const char *device_typename(int type);
+
+/* Return the id'th filename for a device of type 'type',
+   NULL if not enough image names of that type are available. */
+extern const char *device_filename(int type, int id);
+
+/* This is the dummy GameDriver with flag NOT_A_DRIVER set
+ * It allows us to use an empty PARENT field in the macros.
+ */
+extern struct GameDriver driver_0;
+
+
+//#define init_0	NULL
+
+
+/******************************************************************************
+ * MESS' version of the GAME() and GAMEX() macros of MAME
+ * CONS and CONSX are for consoles
+ * COMP and COMPX are for computers
+ ******************************************************************************/
+#define CONS(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+	io_##NAME, 					\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	ROT0,									\
+0,0\
+};
+
+#define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+	io_##NAME, 					\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	ROT0|(FLAGS),							\
+0,0\
+};
+
+#define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+	io_##NAME, 					\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	ROT0|GAME_COMPUTER, 					\
+0,0\
+};
+
+#define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+	io_##NAME, 					\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	ROT0|GAME_COMPUTER|(FLAGS), 			\
+0,0\
+};
+
 
 #endif

@@ -18,7 +18,7 @@
 
 static struct osd_bitmap *maria_bitmap;
 
-unsigned char *ROM;
+//static unsigned char *ROM;
 
 /********** Maria ***********/
 
@@ -64,7 +64,7 @@ int a7800_vh_start(void)
     maria_write_mode=0;
     maria_scanline=0;
     maria_dmaon=0;
-    maria_vblank=1;
+    maria_vblank=0x80;
     maria_dll=0;
     maria_dmaon_pending=0;
     maria_wsync=0;
@@ -90,6 +90,7 @@ unsigned int dl;
 int x,d,c;
 int ind_bytes;
 
+	UINT8 *ROM = memory_region(REGION_CPU1);
     /* Process this DLL entry */
     dl = maria_dl;
     for (d=0; d<320; d++) maria_bitmap->line[maria_scanline][d] = maria_backcolor;
@@ -333,6 +334,7 @@ int ind_bytes;
 int a7800_interrupt(void)
 {
     int frame_scanline;
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
     maria_scanline++;
     frame_scanline = maria_scanline % 263;
@@ -372,7 +374,7 @@ int a7800_interrupt(void)
 	  }
        }
     if (frame_scanline == 258) {
-       maria_vblank = 1;
+       maria_vblank = 0x80;
     }
 
     if (maria_dli) {
@@ -391,7 +393,6 @@ int a7800_interrupt(void)
 ***************************************************************************/
 /* This routine is called at the start of vblank to refresh the screen */
 void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-//void a7800_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
     maria_scanline=0;
     copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -401,10 +402,11 @@ void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 /****** MARIA ***************************************/
 
 int a7800_MARIA_r(int offset) {
+	UINT8 *ROM = memory_region(REGION_CPU1);
     switch (offset) {
 
 	case 0x08:
-          return input_port_2_r(0x00);
+          return maria_vblank;
 	default:
 	    if (errorlog) fprintf(errorlog,"undefined MARIA read %x\n",offset);
 	    return ROM[0x20 + offset];
@@ -412,6 +414,7 @@ int a7800_MARIA_r(int offset) {
 }
 
 void a7800_MARIA_w(int offset, int data) {
+	UINT8 *ROM = memory_region(REGION_CPU1);
     switch (offset) {
 
 	case 0x00:

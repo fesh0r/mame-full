@@ -405,6 +405,12 @@ void TMS9928A_refresh (struct osd_bitmap *bmp, int full_refresh) {
         }
     }
 
+	if (palette_recalc())
+	{
+		_TMS9928A_set_dirty (1);
+		tms.Change = 1;
+	}
+
     if (tms.Change || full_refresh) {
         if (! (tms.Regs[1] & 0x40) ) {
             fillbitmap (bmp, Machine->pens[tms.BackColour],
@@ -425,8 +431,7 @@ void TMS9928A_refresh (struct osd_bitmap *bmp, int full_refresh) {
        if there are no changes (sprite collision bit is lost) */
     tms.oldStatusReg = tms.StatusReg;
     tms.Change = 0;
-	palette_recalc();
-    return;
+	return;
 }
 
 int TMS9928A_interrupt () {

@@ -117,7 +117,7 @@ extern void a2600_TIA_w(int offset, int data);
 extern void a2600_init_machine(void);
 extern void a2600_stop_machine(void);
 extern int  a2600_id_rom (const char *name, const char *gamename);
-extern int  a2600_load_rom(void);
+extern int	a2600_load_rom(int id, const char *rom_name);
 extern int  a2600_ROM_r (int offset);
 
 
@@ -297,7 +297,7 @@ static struct TIAinterface tia_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_a2600 =
 {
 	/* basic machine hardware */
 	{
@@ -339,14 +339,6 @@ static struct MachineDriver machine_driver =
 };
 
 
-/* list of file extensions */
-static const char *a2600_file_extensions[] =
-{
-	"bin",
-	0       /* end of array */
-};
-
-
 /***************************************************************************
 
   Game driver
@@ -354,7 +346,7 @@ static const char *a2600_file_extensions[] =
 ***************************************************************************/
 
 /* setup a 8bit pattern from 0x00 to 0xff into the REGION_GFX1 memory */
-static void a2600_rom_decode(void)
+static void init_a2600(void)
 {
 	UINT8 *gfx = memory_region(REGION_GFX1);
 	int i;
@@ -367,37 +359,28 @@ ROM_START( a2600 )
 	ROM_REGIONX( 0x00100, REGION_GFX1 ) /* memory for bit patterns */
 ROM_END
 
-
-struct GameDriver a2600_driver =
-{
-	__FILE__,
-	0,
-	"a2600",
-	"Atari 2600 - VCS",
-	"19??",
-	"Atari",
-	"Ben Bruscella, Dan Boris",
-	0,
-	&machine_driver,
-	0,
-
-    rom_a2600,
-    a2600_load_rom,
-    a2600_id_rom,
-	a2600_file_extensions,
-	1,      /* number of ROM slots */
-	0,      /* number of floppy drives supported */
-	0,      /* number of hard drives supported */
-	0,      /* number of cassette drives supported */
-	0,/*a2600_rom_decode,*/
-	0,
-	0,
-	0,      /* sound_prom */
-
-	input_ports_a2600,
-
-    0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_a2600[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"bin\0",            /* file extensions */
+		NULL,				/* private */
+		a2600_id_rom,		/* id */
+		a2600_load_rom, 	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+    { IO_END }
 };
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+CONS( 19??, a2600,	  0,		a2600,	  a2600,	a2600,	  "Atari",  "Atari 2600 - VCS" )
+

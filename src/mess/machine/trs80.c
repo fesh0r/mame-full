@@ -34,20 +34,23 @@ static	UINT8			irq_status = 0;
 
 /* this indicates whether the floppy images geometry shall be calculated */
 static UINT8 first_fdc_access = 1;
-static UINT8 motor_drive = 0;				 /* currently running drive */
-static short motor_count = 0;				 /* time out for motor in frames */
-static UINT8 tracks[4] = {0, }; 			 /* total tracks count per drive */
-static UINT8 heads[4] = {0, };				 /* total heads count per drive */
-static UINT8 s_p_t[4] = {0, };				 /* sector per track count per drive */
+static UINT8 motor_drive = 0;				/* currently running drive */
+static short motor_count = 0;				/* time out for motor in frames */
+static const char *floppy_name[4] = {0,};	/* filenames of the images */
+static UINT8 tracks[4] = {0, }; 			/* total tracks count per drive */
+static UINT8 heads[4] = {0, };				/* total heads count per drive */
+static UINT8 spt[4] = {0, };				/* sector per track count per drive */
 #if USE_TRACK
-static UINT8 track[4] = {0, };				 /* current track per drive */
+static UINT8 track[4] = {0, };				/* current track per drive */
 #endif
-static UINT8 head[4] = {0, };				 /* current head per drive */
+static UINT8 head[4] = {0, };				/* current head per drive */
 #if USE_SECTOR
-static UINT8 sector[4] = {0, }; 			 /* current sector per drive */
+static UINT8 sector[4] = {0, }; 			/* current sector per drive */
 #endif
-static short dir_sector[4] = {0, }; 		 /* first directory sector (aka DDSL) */
-static short dir_length[4] = {0, }; 		 /* length of directory in sectors (aka DDGA) */
+static short dir_sector[4] = {0, }; 		/* first directory sector (aka DDSL) */
+static short dir_length[4] = {0, }; 		/* length of directory in sectors (aka DDGA) */
+
+static const char *tape_name = NULL;
 
 /* current tape file handles */
 static void *tape_put_file = NULL;
@@ -75,7 +78,7 @@ static void tape_put_close(void);
 #define FW TRS80_FONT_W
 #define FH TRS80_FONT_H
 
-void trs80_init_driver(void)
+void init_trs80(void)
 {
 	UINT8 *FNT = memory_region(REGION_GFX1);
     int i, y;
@@ -110,80 +113,94 @@ static int opbaseoverride(int PC)
 	UINT8 *ram = memory_region(REGION_CPU1);
 	if( trs80_load_cas && ram[0x3c00+3*64] == 0x3e )
     {
-		int i;
 		trs80_load_cas = 0;
-        for( i = 0; i < Machine->gamedrv->num_of_cassette_drives; i++ )
-        {
-			if( cassette_name[i][0] )
-            {
-				UINT8 *buff = malloc(65536), *s;
-				unsigned size, entry = 0, block_len, block_ofs = 0;
-                UINT8 data;
-                void *cmd;
+		if( tape_name )
+		{
+			UINT8 *buff = malloc(65536), *s;
+			unsigned size, entry = 0, block_len, block_ofs = 0;
+			UINT8 data;
+			void *cmd;
 
-				if( !buff )
-                    continue;
-				cmd = osd_fopen(Machine->gamedrv->name, cassette_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-				if( !cmd )
-                    continue;
-                size = osd_fread(cmd, buff, 65536);
-                s = buff;
-				while( size > 3 )
+			if( !buff )
+			{
+				if( errorlog ) fprintf(errorlog, "failed to allocate 64K buffer\n");
+				return 1;
+			}
+			cmd = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			if( !cmd )
+			{
+				if( errorlog ) fprintf(errorlog, "failed to open '%s'\n", tape_name);
+                return 1;
+			}
+			size = osd_fread(cmd, buff, 65536);
+			s = buff;
+			while( size > 3 )
+			{
+				data = *s++;
+				switch( data )
 				{
-					data = *s++;
-					switch( data )
+				case 0x01:		   /* CMD file header */
+				case 0x07:		   /* another type of CMD file header */
+				case 0x3c:		   /* CAS file header */
+					block_len = *s++;
+					/* on CMD files size zero means size 256 */
+					if( block_len == 0 )
+						block_len += 256;
+					block_ofs = *s++;
+					block_ofs += 256 * *s++;
+					if( data != 0x3c )
 					{
-					case 0x01:		   /* CMD file header */
-					case 0x07:		   /* another type of CMD file header */
-					case 0x3c:		   /* CAS file header */
-						block_len = *s++;
-						/* on CMD files size zero means size 256 */
+						block_len -= 2;
 						if( block_len == 0 )
-							block_len += 256;
-						block_ofs = *s++;
-						block_ofs += 256 * *s++;
-						if( data != 0x3c )
-						{
-							block_len -= 2;
-							if( block_len == 0 )
-								block_len = 256;
-						}
-						size -= 4;
-						LOG((errorlog, "trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
-						while( block_len && size )
-						{
-							cpu_writemem16(block_ofs, *s);
-							s++;
-							block_ofs++;
-							block_len--;
-							size--;
-						}
-						if( data == 0x3c )
-							s++;
-						break;
-					case 0x02:
-						block_len = *s++;
-						size -= 1;
-					case 0x78:
-						entry = *s++;
-						entry += 256 * *s++;
-						LOG((errorlog, "trs80_cmd_load entry ($%02X) at $%04X\n", data, entry));
-						size -= 3;
-						if( size <= 3 )
-							LOG((errorlog,"starting program at $%04X\n", block_ofs));
-						break;
-					default:
+							block_len = 256;
+					}
+					size -= 4;
+					LOG((errorlog, "trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+					while( block_len && size )
+					{
+						cpu_writemem16(block_ofs, *s);
+						s++;
+						block_ofs++;
+						block_len--;
 						size--;
 					}
+					if( data == 0x3c )
+						s++;
+					break;
+				case 0x02:
+					block_len = *s++;
+					size -= 1;
+				case 0x78:
+					entry = *s++;
+					entry += 256 * *s++;
+					LOG((errorlog, "trs80_cmd_load entry ($%02X) at $%04X\n", data, entry));
+					size -= 3;
+					if( size <= 3 )
+						LOG((errorlog,"starting program at $%04X\n", block_ofs));
+					break;
+				default:
+					size--;
 				}
-                free(buff);
-                osd_fclose(cmd);
-				cpu_set_pc(entry);
-            }
-        }
+			}
+			free(buff);
+			osd_fclose(cmd);
+			cpu_set_pc(entry);
+		}
         cpu_setOPbaseoverride(0,NULL);
     }
 	return PC;
+}
+
+int trs80_cassette_init(int id, const char *name)
+{
+	tape_name = name;
+	return 0;
+}
+
+int trs80_floppy_init(int id, const char *name)
+{
+	floppy_name[id] = name;
+	return 0;
 }
 
 void trs80_init_machine(void)
@@ -194,7 +211,7 @@ void trs80_init_machine(void)
 		wd179x_init(0);
 
     first_fdc_access = 1;
-	if( cassette_name[0][0] )
+	if( tape_name[0] )
 	{
 		trs80_load_cas = 1;
 		cpu_setOPbaseoverride(0, opbaseoverride);
@@ -207,25 +224,17 @@ void trs80_shutdown_machine(void)
 	wd179x_stop_drive();
 }
 
-int trs80_rom_load(void)
+int trs80_rom_load(int id, const char *name)
 {
-	int result = 0;
-	if( rom_name[0][0] )
+	if( name[0] )
 	{
 		/* copy rom name to cassette name (same loader) */
-		strcpy(cassette_name[0], rom_name[0]);
+		tape_name = name;
 		trs80_load_cas = 1;
 		cpu_setOPbaseoverride(0, opbaseoverride);
     }
-    return result;
-}
-
-int trs80_rom_id(const char *name, const char *gamename)
-{
-	/* This driver cannot ID ROMs */
 	return 0;
 }
-
 
 /*************************************
  *
@@ -705,7 +714,7 @@ void trs80_motor_w(int offset, int data)
 			osd_fread(file0, buff, 16);
 			tracks[n] = buff[3] + 1;
 			heads[n] = (buff[7] & 0x40) ? 2 : 1;
-			s_p_t[n] = buff[4] / heads[n];
+			spt[n] = buff[4] / heads[n];
 			dir_sector[n] = 5 * buff[0] * buff[5];
 			dir_length[n] = 5 * buff[9];
 		}
@@ -715,7 +724,7 @@ void trs80_motor_w(int offset, int data)
 			osd_fread(file1, buff, 2);
 			if (buff[0] != 0x00 || buff[1] != 0xfe)
 			{
-				wd179x_read_sectormap(n, &tracks[n], &heads[n], &s_p_t[n]);
+				wd179x_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
 			}
 			else
 			{
@@ -723,12 +732,12 @@ void trs80_motor_w(int offset, int data)
 				osd_fread(file0, buff, 16);
 				tracks[n] = buff[3] + 1;
 				heads[n] = (buff[7] & 0x40) ? 2 : 1;
-				s_p_t[n] = buff[4] / heads[n];
+				spt[n] = buff[4] / heads[n];
 				dir_sector[n] = 5 * buff[0] * buff[5];
 				dir_length[n] = 5 * buff[9];
 			}
         }
-		wd179x_set_geometry(n, tracks[n], heads[n], s_p_t[n], 256, dir_sector[n], dir_length[n]);
+		wd179x_set_geometry(n, tracks[n], heads[n], spt[n], 256, dir_sector[n], dir_length[n]);
 	}
 	wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
 }

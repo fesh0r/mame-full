@@ -278,7 +278,7 @@ static unsigned char palette[] = {
     0x00,0x00,0x00
 };
 
-INPUT_PORTS_START( pc_mda )
+INPUT_PORTS_START( pcmda )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0x80, 0x80,	 IPT_VBLANK )
 	PORT_BIT ( 0x7f, 0x7f,	 IPT_UNUSED )
@@ -300,37 +300,37 @@ INPUT_PORTS_START( pc_mda )
 	PORT_DIPSETTING(	0x08, "3 - 48/192/576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64/256/640K" )
 	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x02, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR(No) )
+	PORT_DIPSETTING(	0x02, DEF_STR(Yes) )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Any floppy drive installed", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x01, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR(No) )
+	PORT_DIPSETTING(	0x01, DEF_STR(Yes) )
 
     PORT_START /* IN2 */
 	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x80, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR(No) )
+	PORT_DIPSETTING(	0x80, DEF_STR(Yes) )
 	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x40, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR(No) )
+	PORT_DIPSETTING(	0x40, DEF_STR(Yes) )
 	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x20, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR(No) )
+	PORT_DIPSETTING(	0x20, DEF_STR(Yes) )
 	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x10, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
 	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x08, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x04, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x02, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x01, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
 	PORT_START /* IN3 */
 	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", 0, IP_JOY_NONE )
@@ -340,11 +340,11 @@ INPUT_PORTS_START( pc_mda )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
 	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x08, "yes" )
-	PORT_DIPSETTING(	0x00, "no" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x04, "yes" )
-	PORT_DIPSETTING(	0x00, "no" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
 
     PORT_START  /* IN4 */
@@ -451,7 +451,7 @@ INPUT_PORTS_START( pc_mda )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pc_cga )
+INPUT_PORTS_START( pccga )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
@@ -474,36 +474,36 @@ INPUT_PORTS_START( pc_cga )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
 	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x02, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x01, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 	PORT_START /* IN2 */
 	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x80, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
 	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x40, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
 	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x20, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
 	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x10, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
 	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x08, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x04, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x02, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-    PORT_DIPSETTING(    0x01, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
 	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", 0, IP_JOY_NONE )
@@ -513,15 +513,14 @@ INPUT_PORTS_START( pc_cga )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
 	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x08, "yes" )
-	PORT_DIPSETTING(	0x00, "no" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x04, "yes" )
-    PORT_DIPSETTING(    0x00, "no" )
-	PORT_BIT( 0x02, 0x02,	IPT_UNUSED )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Fill odd scanlines", 0, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, "no" )
-	PORT_DIPSETTING(	0x01, "yes" )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
 	PORT_START	/* IN4 */
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
@@ -627,7 +626,7 @@ INPUT_PORTS_START( pc_cga )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pc_t1t )
+INPUT_PORTS_START( tandy1t )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
@@ -650,27 +649,27 @@ INPUT_PORTS_START( pc_t1t )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
 	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x02, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x01, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN2 */
 	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x80, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
 	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x40, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
 	PORT_BIT ( 0x30, 0x00,	 IPT_UNUSED )
 	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-	PORT_DIPSETTING(	0x08, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BIT ( 0x06, 0x00,	 IPT_UNUSED )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "no" )
-    PORT_DIPSETTING(    0x01, "yes" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
 	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", 0, IP_JOY_NONE )
@@ -680,15 +679,14 @@ INPUT_PORTS_START( pc_t1t )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
 	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x08, "yes" )
-	PORT_DIPSETTING(	0x00, "no" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", 0, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x04, "yes" )
-    PORT_DIPSETTING(    0x00, "no" )
-	PORT_BIT( 0x02, 0x02,	IPT_UNUSED )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Fill odd scanlines", 0, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, "no" )
-    PORT_DIPSETTING(    0x01, "yes" )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
 	PORT_START	/* IN4 */
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
@@ -883,58 +881,6 @@ static unsigned short mda_colortable[] = {
 };
 
 
-/* Initialise the mda palette */
-static void mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
-{
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,mda_colortable,sizeof(mda_colortable));
-}
-
-
-static struct MachineDriver mda_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_I86,
-			4772720,	/* 4,77 Mhz */
-			mda_readmem,mda_writemem,
-			mda_readport,mda_writeport,
-			pc_frame_interrupt,4,
-			0,0,
-			&i86_address_mask
-        },
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
-	0,
-	pc_mda_init_machine,
-	pc_shutdown_machine,
-
-	/* video hardware */
-	80*9,										/* screen width */
-	25*14,										/* screen height */
-	{ 0,80*9-1, 0,25*14-1 },					/* visible_area */
-	pc_mda_gfxdecodeinfo,						/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(mda_colortable) / sizeof(mda_colortable[0]),
-	mda_init_palette,							/* init palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	pc_mda_vh_start,
-	pc_mda_vh_stop,
-	pc_mda_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
-#endif
-	}
-};
-
 static struct GfxLayout CGA_charlayout =
 {
 	8,32,					/* 8 x 32 characters */
@@ -1111,8 +1057,56 @@ static struct GfxDecodeInfo t1t_gfxdecodeinfo[] =
 };
 
 
+/* Initialise the mda palette */
+static void mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+    memcpy(sys_palette,palette,sizeof(palette));
+    memcpy(sys_colortable,mda_colortable,sizeof(mda_colortable));
+}
 
+static struct MachineDriver machine_driver_pcmda =
+{
+    /* basic machine hardware */
+    {
+        {
+            CPU_I86,
+            4772720,    /* 4,77 Mhz */
+            mda_readmem,mda_writemem,
+            mda_readport,mda_writeport,
+            pc_frame_interrupt,4,
+            0,0,
+            &i86_address_mask
+        },
+    },
+    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+    0,
+    pc_mda_init_machine,
+    pc_shutdown_machine,
 
+    /* video hardware */
+    80*9,                                       /* screen width */
+    25*14,                                      /* screen height */
+    { 0,80*9-1, 0,25*14-1 },                    /* visible_area */
+    pc_mda_gfxdecodeinfo,                       /* graphics decode info */
+    sizeof(palette) / sizeof(palette[0]) / 3,
+    sizeof(mda_colortable) / sizeof(mda_colortable[0]),
+    mda_init_palette,                           /* init palette */
+
+    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+    0,
+    pc_mda_vh_start,
+    pc_mda_vh_stop,
+    pc_mda_vh_screenrefresh,
+
+    /* sound hardware */
+    0,0,0,0,
+    {
+        { SOUND_CUSTOM, &pc_sound_interface },
+#if defined(ADLIB)
+        { SOUND_YM3812, &ym3812_interface },
+#endif
+    }
+};
 
 /* Initialise the cga palette */
 static void cga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
@@ -1120,15 +1114,8 @@ static void cga_init_palette(unsigned char *sys_palette, unsigned short *sys_col
 	memcpy(sys_palette,palette,sizeof(palette));
 	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
 }
-/* Initialise the t1t palette */
-static void t1t_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
-{
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,t1t_colortable,sizeof(t1t_colortable));
-}
 
-
-static struct MachineDriver cga_machine_driver =
+static struct MachineDriver machine_driver_pccga =
 {
     /* basic machine hardware */
     {
@@ -1172,7 +1159,14 @@ static struct MachineDriver cga_machine_driver =
 	}
 };
 
-static struct MachineDriver t1t_machine_driver =
+/* Initialise the t1t palette */
+static void t1t_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+    memcpy(sys_palette,palette,sizeof(palette));
+    memcpy(sys_colortable,t1t_colortable,sizeof(t1t_colortable));
+}
+
+static struct MachineDriver machine_driver_tandy1t =
 {
     /* basic machine hardware */
     {
@@ -1217,193 +1211,95 @@ static struct MachineDriver t1t_machine_driver =
 	}
 };
 
+ROM_START( pc )
+	ROM_REGIONX(0x100000,REGION_CPU1)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+ROM_END
+
+ROM_START( pcmda )
+    ROM_REGIONX(0x100000,REGION_CPU1)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+
+	ROM_REGIONX(0x01100,REGION_GFX1)
+    ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
+ROM_END
+
+ROM_START( pccga )
+    ROM_REGIONX(0x100000,REGION_CPU1)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+
+	ROM_REGIONX(0x01100,REGION_GFX1)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+ROM_END
+
+
+ROM_START( tandy1t )
+    ROM_REGIONX(0x100000,REGION_CPU1)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
+
+	ROM_REGIONX(0x01100,REGION_GFX1)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+ROM_END
+
+static const struct IODevice io_pc[] = {
+	{
+		IO_FLOPPY,			/* type */
+		2,					/* count */
+		"dsk\0",            /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		pc_floppy_init, 	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_HARDDISK,		/* type */
+		4,					/* count */
+		"img\0",            /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		pc_harddisk_init,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
+};
+
+#define io_pcmda io_pc
+#define io_pccga io_pc
+#define io_tandy1t io_pc
+
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-
-
-struct GameDriver pc_driver =
-{
-    __FILE__,
-    0,
-    "pc",
-    "IBM PC/XT - parent driver",
-	"1983",
-    "IBM",
-    "Juergen Buchmueller",
-	0,
-    &mda_machine_driver,
-	0,
-
-	NULL,						/* rom module */
-	NULL,						/* load rom_file images */
-	NULL,						/* identify rom images */
-	0,						/* default file extensions */
-    1,                          /* number of ROM slots */
-    4,                          /* number of floppy drives supported */
-    0,                          /* number of hard drives supported */
-    1,                          /* number of cassette drives supported */
-	NULL,						/* rom decoder */
-	NULL,						/* opcode decoder */
-	NULL,						/* pointer to sample names */
-	NULL,						/* sound_prom */
-
-	NULL,						/* input ports */
-
-    0,                          /* color_prom */
-    0,                          /* color palette */
-    0,                          /* color lookup table */
-
-    GAME_COMPUTER|ORIENTATION_DEFAULT,        /* orientation */
-
-    0,                          /* hiscore load */
-    0,                          /* hiscore save */
-};
-
-ROM_START(pc_mda)
-	ROM_REGIONX(0x100000,REGION_CPU1)
-	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-	ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
-
-	ROM_REGIONX(0x1100,REGION_GFX1)
-	ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
-ROM_END
-
-struct GameDriver pcmda_driver =
-{
-	__FILE__,
-	&pc_driver,
-	"pcmda",
-	"IBM PC/XT - MDA",
-	"1983",
-	"IBM",
-	0,
-	0,
-	&mda_machine_driver,
-	pc_init_driver,
-
-	rom_pc_mda, 			/* rom module */
-	pc_rom_load,			/* load rom_file images */
-	pc_rom_id,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	4,						/* number of floppy drives supported */
-	2,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_pc_mda, 	/* input ports */
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0, 		/* color lookup table */
-
-	GAME_COMPUTER|ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
-
-ROM_START(CGA)
-	ROM_REGIONX(0x100000,REGION_CPU1)
-	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-	ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
-
-	ROM_REGIONX(0x1100,REGION_GFX1)
-	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
-ROM_END
-
-struct GameDriver pccga_driver =
-{
-	__FILE__,
-	&pc_driver,
-	"pccga",
-	"IBM PC/XT - CGA",
-	"1983",
-	"IBM",
-	0,
-	0,
-    &cga_machine_driver,
-	pc_init_driver,
-
-	rom_CGA,				/* rom module */
-	pc_rom_load,			/* load rom_file images */
-	pc_rom_id,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	4,						/* number of floppy drives supported */
-	2,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_pc_cga,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0, 		/* color lookup table */
-
-	GAME_COMPUTER|ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
-ROM_START(t1t)
-	ROM_REGIONX(0x100000,REGION_CPU1)
-	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
-
-	ROM_REGIONX(0x1100,REGION_GFX1)
-	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
-ROM_END
-
-struct GameDriver tandy1t_driver =
-{
-	__FILE__,
-	&pc_driver,
-	"tandy1t",
-	"Tandy 1000TX",
-	"1987",
-	"Tandy Radio Shack",
-	0,
-	0,
-	&t1t_machine_driver,
-	pc_init_driver,
-
-	rom_t1t,				/* rom module */
-	pc_rom_load,			/* load rom_file images */
-	pc_rom_id,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	4,						/* number of floppy drives supported */
-	2,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-    0,                      /* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_pc_t1t,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0, 		/* color lookup table */
-
-	GAME_COMPUTER|GAME_NOT_WORKING|GAME_IMPERFECT_COLORS|ORIENTATION_DEFAULT,	 /* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
+COMP ( 1983, pc,	   0,		 pcmda,    pcmda,	 pc,	   "International Business Machines",  "IBM PC" )
+COMP ( 1983, pcmda,    pc,		 pcmda,    pcmda,	 pc,	   "International Business Machines",  "IBM PC-XT MDA" )
+COMP ( 1983, pccga,    pc,		 pccga,    pccga,	 pc,	   "International Business Machines",  "IBM PC-XT CGA" )
+COMPX( 1987, tandy1t,  pc,		 tandy1t,  tandy1t,  pc,	   "Tandy Radio Shack",  "Tandy 1000TX", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS )
 
 

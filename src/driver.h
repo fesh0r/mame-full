@@ -394,6 +394,7 @@ struct GameDriver
 										/* e.g. driver_neogeo. */
 #ifdef MESS
  #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
+ #define GAME_ALIAS NOT_A_DRIVER        /* Driver is only an alias for an existing model */
 #endif
 
 

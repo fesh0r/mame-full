@@ -30,9 +30,11 @@ NMI
 #include "vidhrdw/generic.h"
 #include "mess/vidhrdw/cgenie.h"
 
-extern  UINT8    *fontram;
+extern UINT8 *cgenie_fontram;
 
-extern int cgenie_rom_load(void);
+extern int cgenie_cassette_init(int id, const char *name);
+extern int cgenie_floppy_init(int id, const char *name);
+extern int cgenie_rom_load(int id, const char *name);
 extern int cgenie_rom_id(const char *name, const char * gamename);
 
 extern int cgenie_vh_start(void);
@@ -49,7 +51,7 @@ extern int cgenie_psg_port_b_r(int port);
 extern void cgenie_psg_port_a_w(int port, int val);
 extern void cgenie_psg_port_b_w(int port, int val);
 
-extern void cgenie_init_driver(void);
+extern void init_cgenie(void);
 extern void cgenie_init_machine(void);
 extern void cgenie_stop_machine(void);
 
@@ -116,7 +118,7 @@ static struct MemoryWriteAddress writemem[] =
 //	{ 0xc000, 0xdfff, MWA_ROM },	// installed in cgenie_init_machine
 //	{ 0xe000, 0xefff, MWA_ROM },	// installed in cgenie_init_machine
 	{ 0xf000, 0xf3ff, cgenie_colorram_w, &colorram },
-	{ 0xf400, 0xf7ff, cgenie_fontram_w, &fontram },
+	{ 0xf400, 0xf7ff, cgenie_fontram_w, &cgenie_fontram },
 	{ 0xf800, 0xf8ff, MWA_NOP },
 	{ 0xf900, 0xffdf, MWA_NOP },
 	{ 0xffe0, 0xffe3, cgenie_motor_w },
@@ -152,20 +154,20 @@ static struct IOWritePort writeport[] =
 INPUT_PORTS_START( cgenie )
 	PORT_START /* IN0 */
 	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "On" )
-	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "CG-DOS ROM C000-DFFF", IP_KEY_NONE, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x40, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Extension  E000-EFFF", IP_KEY_NONE, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x20, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( On ) )
     PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video Display accuracy", KEYCODE_F5, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x10, "TV set" )
 	PORT_DIPSETTING(	0x00, "RGB monitor" )
 	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Virtual tape support", KEYCODE_F6, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x08, "On" )
-	PORT_DIPSETTING(	0x00, "Off" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
 	PORT_BITX(	  0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Memory Size", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x04, "32K" )
 	PORT_DIPSETTING(	0x00, "16K" )
@@ -456,7 +458,6 @@ static struct AY8910interface ay8910_interface =
 	1,						/* 1 chip */
 	2000000,				/* 2 MHz */
 	{ 75 }, 				/* mixing level */
-	AY8910_DEFAULT_GAIN,	/* gain */
 	{ cgenie_psg_port_a_r },
 	{ cgenie_psg_port_b_r },
 	{ cgenie_psg_port_a_w },
@@ -469,7 +470,7 @@ static struct DACinterface DAC_interface =
 	{ 25 }		/* volume */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cgenie =
 {
 	/* basic machine hardware */
 	{
@@ -535,41 +536,64 @@ ROM_START (cgenie)
 
 ROM_END
 
-struct GameDriver cgenie_driver =
-{
-	__FILE__,
-	0,
-	"cgenie",
-	"EACA Colour Genie EG 2000",
-	"1982",
-	"EACA Computers Ltd. Hong-Kong",
-	"Juergen Buchmueller",
-	0,
-	&machine_driver,
-	cgenie_init_driver,
-
-	rom_cgenie,
-	cgenie_rom_load,        /* load rom_file images */
-	cgenie_rom_id,          /* identify rom images */
-	0,						/* default file extensions */
-	1,                      /* number of ROM slots - in this case, a CMD binary */
-	4,                      /* number of floppy drives supported */
-	0,                      /* number of hard drives supported */
-	1,                      /* number of cassette drives supported */
-	0,                      /* rom decoder */
-	0,                      /* opcode decoder */
-	0,                      /* pointer to sample names */
-	0,                      /* sound_prom */
-
-	input_ports_cgenie,
-
-	0,
-	0,
-	0,
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
-
-	0,                      /* hiscore load */
-	0,                      /* hiscore save */
+static const struct IODevice io_cgenie[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"rom\0",            /* file extensions */
+        NULL,               /* private */
+		cgenie_rom_id,		/* id */
+		cgenie_rom_load,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0cmd\0",       /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		cgenie_cassette_init,/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"dsk\0",            /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		cgenie_floppy_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   "EACA Computers Ltd. Hongkong",  "Colour Genie EG2000" )
 

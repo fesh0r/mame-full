@@ -1,3 +1,13 @@
+/*****************************************************************
+
+GCE Vectrex
+
+Mathis Rosenhauer
+Christopher Salomon (technical advice)
+Bruce Tomlin (hardware info)
+
+*****************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "mess/machine/6522via.h"
@@ -6,7 +16,7 @@
 extern unsigned char *vectrex_ram;
 extern int vectrex_ram_r (int offset);
 extern void vectrex_ram_w (int offset, int data);
-extern int vectrex_load_rom (void);
+extern int vectrex_load_rom (int id, const char *rom_name);
 extern int vectrex_id_rom (const char *name, const char *gamename);
 
 /* From vidhrdw/vectrex.c */
@@ -15,16 +25,10 @@ extern void vectrex_stop (void);
 extern void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh);
 
-extern int spectrum1_start(void);
-extern void spectrum1_led_w (int offset, int data);
-extern void spectrum1_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void spectrum1_vh_update (struct osd_bitmap *bitmap, int full_refresh);
-
-/*****************************************************************
-
-GCE Vectrex
-
-*****************************************************************/
+extern int raaspec_start(void);
+extern void raaspec_led_w (int offset, int data);
+extern void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void raaspec_vh_update (struct osd_bitmap *bitmap, int full_refresh);
 
 static struct MemoryReadAddress vectrex_readmem[] =
 {
@@ -70,12 +74,12 @@ INPUT_PORTS_START( vectrex )
 	PORT_START
 	//PORT_DIPNAME( 0x01, 0x00, "3D Imager", IP_KEY_NONE )
 	PORT_DIPNAME( 0x01, 0x00, "3D Imager")
-	PORT_DIPSETTING(0x01, DEF_STR ( On ))
 	PORT_DIPSETTING(0x00, DEF_STR ( Off ))
+	PORT_DIPSETTING(0x01, DEF_STR ( On ))
 	//PORT_DIPNAME( 0x02, 0x00, "Separate images", IP_KEY_NONE )
 	PORT_DIPNAME( 0x02, 0x00, "Separate images")
-	PORT_DIPSETTING(0x02, DEF_STR ( Yes ))
 	PORT_DIPSETTING(0x00, DEF_STR ( No ))
+	PORT_DIPSETTING(0x02, DEF_STR ( Yes ))
 	//PORT_DIPNAME( 0x1c, 0x10, "Left eye", IP_KEY_NONE )
 	PORT_DIPNAME( 0x1c, 0x10, "Left eye")
 	PORT_DIPSETTING(0x00, "Black")
@@ -94,8 +98,8 @@ INPUT_PORTS_START( vectrex )
 	PORT_START
 	//PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh", IP_KEY_NONE )
 	PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh")
-	PORT_DIPSETTING(0x01, DEF_STR ( Yes ))
 	PORT_DIPSETTING(0x00, DEF_STR ( No ))
+	PORT_DIPSETTING(0x01, DEF_STR ( Yes ))
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -126,7 +130,7 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz */
 	{ 20 },
-    AY8910_DEFAULT_GAIN,
+    /*AY8910_DEFAULT_GAIN,*/
 	{ input_port_0_r },
 	{ 0 },
 	{ 0 },
@@ -134,15 +138,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-/* list of file extensions */
-static const char *vectrex_file_extensions[] =
-{
-	"bin",
-	0       /* end of array */
-};
-
-
-static struct MachineDriver vectrex_machine_driver =
+static struct MachineDriver machine_driver_vectrex =
 {
 	/* basic machine hardware */
 	{
@@ -186,45 +182,34 @@ static struct MachineDriver vectrex_machine_driver =
 
 };
 
+static const struct IODevice io_vectrex[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"bin\0",            /* file extensions */
+		NULL,				/* private */
+		vectrex_id_rom, 	/* id */
+		vectrex_load_rom,	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+	{ IO_END }
+};
+
+
 ROM_START(vectrex)
-	ROM_REGIONX(0x10000,REGION_CPU1)
-	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
+    ROM_REGIONX(0x10000,REGION_CPU1)
+    ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END
 
-
-struct GameDriver vectrex_driver =
-{
-	__FILE__,
-	0,
-	"vectrex",
-	"GCE Vectrex",
-	"1982",
-	"General Consumer Electronics",
-	"Mathis Rosenhauer\n"
-	"Christopher Salomon (technical advice)\n"
-	VECTOR_TEAM,
-	0,
-	&vectrex_machine_driver,
-	0,
-	rom_vectrex,
-	vectrex_load_rom,
-	vectrex_id_rom,
-	vectrex_file_extensions,
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_vectrex,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
-};
 
 /*****************************************************************
 
@@ -243,7 +228,7 @@ struct GameDriver vectrex_driver =
 
 *****************************************************************/
 
-static struct MemoryReadAddress spectrum1_readmem[] =
+static struct MemoryReadAddress raaspec_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM }, /* Battery backed RAM for the Spectrum I+ */
@@ -254,11 +239,11 @@ static struct MemoryReadAddress spectrum1_readmem[] =
 	{ -1 }
 };
 
-static struct MemoryWriteAddress spectrum1_writemem[] =
+static struct MemoryWriteAddress raaspec_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa000, spectrum1_led_w },
+	{ 0xa000, 0xa000, raaspec_led_w },
 	{ 0xc800, 0xcbff, vectrex_ram_w, &vectrex_ram },
 	{ 0xcc00, 0xcfff, vectrex_ram_w },
 	{ 0xd000, 0xd7ff, via_0_w },
@@ -266,7 +251,7 @@ static struct MemoryWriteAddress spectrum1_writemem[] =
 	{ -1 }
 };
 
-INPUT_PORTS_START( spectrum1 )
+INPUT_PORTS_START( raaspec )
 	PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -282,14 +267,14 @@ INPUT_PORTS_START( spectrum1 )
 
 INPUT_PORTS_END
 
-static struct MachineDriver raaspec_machine_driver =
+static struct MachineDriver machine_driver_raaspec =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			1500000,	/* 1.5 Mhz */
-			spectrum1_readmem, spectrum1_writemem,0,0,
+			raaspec_readmem, raaspec_writemem,0,0,
 			0, 0, /* no vblank interrupt */
 			0, 0 /* no interrupts */
 		}
@@ -303,13 +288,13 @@ static struct MachineDriver raaspec_machine_driver =
 	380, 480, { 0, 500, 0, 600 },
 	gfxdecodeinfo,
 	254, 0,
-	spectrum1_init_colors,
+	raaspec_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	spectrum1_start,
+	raaspec_start,
 	vectrex_stop,
-	spectrum1_vh_update,
+	raaspec_vh_update,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -326,44 +311,16 @@ static struct MachineDriver raaspec_machine_driver =
 
 };
 
-ROM_START(spectrum1)
+static const struct IODevice io_raaspec[] = {
+	{ IO_END }
+};
+
+ROM_START(raaspec)
 	ROM_REGIONX(0x10000,REGION_CPU1)
 	ROM_LOAD("spectrum.bin", 0x0000, 0x8000, 0x20af7f3f)
 	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END
 
-
-struct GameDriver raaspec_driver =
-{
-	__FILE__,
-	0,
-	"raaspec",
-	"RA+A Spectrum I+",
-	"1984",
-	"Roy Abel & Associates",
-	"Mathis Rosenhauer\n"
-	"Bruce Tomlin (hardware info)\n"
-	VECTOR_TEAM,
-	0,
-	&raaspec_machine_driver,
-	0,
-
-	rom_spectrum1,
-	0,
-	0,
-	0,	/* file extensions */
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_spectrum1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
-};
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+CONS( 1982, vectrex,  0, 		vectrex,  vectrex,	0,		  "General Consumer Electronics",   "GCE Vectrex" )
+CONS( 1984, raaspec,  vectrex,	raaspec,  raaspec,	0,		  "Roy Abel & Associates",   "RA+A Spectrum I+" )

@@ -1,7 +1,5 @@
 /*
 This file is a set of function calls and defs required for MESS.
-It doesnt do much at the moment, but its here in case anyone
-needs it ;-)
 */
 
 #include <ctype.h>
@@ -9,23 +7,230 @@ needs it ;-)
 #include "mame.h"
 #include "mess/mess.h"
 
-
-char rom_name[MAX_ROM][MAX_PATHLEN]; /* MESS */
-char floppy_name[MAX_FLOPPY][MAX_PATHLEN]; /* MESS */
-char hard_name[MAX_HARD][MAX_PATHLEN]; /* MESS */
-char cassette_name[MAX_CASSETTE][MAX_PATHLEN]; /* MESS */
-
-
 extern struct GameOptions options;
-static int num_roms = 0;
-static int num_floppies = 0;
-static int num_harddisks = 0;
-static int num_cassettes = 0;
+
+static const char **cartslot_names = NULL;
+static const char **floppy_names = NULL;
+static const char **harddisk_names = NULL;
+static const char **cassette_names = NULL;
+static const char **printer_names = NULL;
+static const char **serial_names = NULL;
+
+static int cartslot_count = 0;
+static int floppy_count = 0;
+static int harddisk_count = 0;
+static int cassette_count = 0;
+static int printer_count = 0;
+static int serial_count = 0;
 
 static char *mess_alpha = "";
 
 
+/* Add a filename from the GameOptions to the arrays of names */
+#define ADD_DEVICE_FILE(dbgmsg,type,name)					\
+	if (type##_names)										\
+		type##_names = realloc(type##_names,(type##_count+1)*sizeof(char *));  \
+	else													\
+		type##_names = malloc(sizeof(char *));				\
+	if (!type##_names)										\
+		return 1;											\
+	type##_names[type##_count] = name;						\
+	if (errorlog)											\
+		fprintf(errorlog, dbgmsg, type##_count, type##_names[type##_count]); \
+	type##_count++
 
+/* Zap the array of filenames and the count for a device type */
+#define ZAP_DEVICE_FILES(type)								\
+	if (type##_names) free(type##_names);					\
+	type##_names = NULL;									\
+	type##_count = 0;
+
+/*
+ * Return a name for the device type (to be used for UI functions)
+ */
+const char *device_typename(int type)
+{
+    switch( type )
+    {
+    case IO_CARTSLOT: return "Cartridge";
+    case IO_FLOPPY:   return "Floppydisk";
+    case IO_HARDDISK: return "Harddisk";
+    case IO_CASSETTE: return "Cassette";
+    case IO_PRINTER:  return "Printer";
+    case IO_SERIAL:   return "Serial";
+    }
+    return "UNKNOWN";
+}
+
+/*
+ * Return the id'th filename for a device of type 'type',
+ * NULL if not enough image names of that type are available.
+ */
+const char *device_filename(int type, int id)
+{
+    switch( type )
+    {
+    case IO_CARTSLOT:
+		if (id < cartslot_count)
+            return cartslot_names[id];
+        return NULL;
+    case IO_FLOPPY:
+		if (id < floppy_count)
+            return floppy_names[id];
+        return NULL;
+    case IO_HARDDISK:
+		if (id < harddisk_count)
+            return harddisk_names[id];
+        return NULL;
+    case IO_CASSETTE:
+		if (id < cassette_count)
+            return cassette_names[id];
+        return NULL;
+    case IO_PRINTER:
+		if (id < printer_count)
+            return printer_names[id];
+        return NULL;
+    case IO_SERIAL:
+		if (id < serial_count)
+            return serial_names[id];
+        return NULL;
+    }
+    return NULL;
+}
+
+/*
+ * Return the number of filenames for a device of type 'type'.
+ */
+int device_count(int type)
+{
+    switch( type )
+    {
+    case IO_CARTSLOT: return cartslot_count;
+    case IO_FLOPPY:   return floppy_count;
+    case IO_HARDDISK: return harddisk_count;
+    case IO_CASSETTE: return cassette_count;
+    case IO_PRINTER:  return printer_count;
+    case IO_SERIAL:   return serial_count;
+    }
+    return 0;
+}
+
+/*
+ * Copy the image names from options.image_files[] to
+ * the array of filenames we keep here, depending on the
+ * type identifier of each image.
+ */
+int get_filenames(void)
+{
+	int i;
+	for( i = 0; i < options.image_count; i++ )
+	{
+		const char *name = options.image_files[i].name;
+        int type = options.image_files[i].type;
+
+		switch( type )
+		{
+		case IO_CARTSLOT:
+			ADD_DEVICE_FILE("IO_CARTSLOT #%d %s\n", cartslot, name);
+            break;
+		case IO_FLOPPY:
+			ADD_DEVICE_FILE("IO_FLOPPY   #%d %s\n", floppy, name);
+			break;
+		case IO_HARDDISK:
+			ADD_DEVICE_FILE("IO_HARDDISK #%d %s\n", harddisk, name);
+			break;
+		case IO_CASSETTE:
+			ADD_DEVICE_FILE("IO_CASSETTE #%d %s\n", cassette, name);
+			break;
+		case IO_PRINTER:
+			ADD_DEVICE_FILE("IO_PRINTER  #%d %s\n", printer, name);
+			break;
+        case IO_SERIAL:
+			ADD_DEVICE_FILE("IO_SERIAL   #%d %s\n", serial, name);
+			break;
+		default:
+			if(errorlog)
+				fprintf(errorlog, "Invalid IO_ type %d for %s\n", type, name);
+			return 1;
+        }
+	}
+
+    /* everything was fine */
+    return 0;
+}
+
+/*
+ * Call the init() functions for all devices of a driver
+ * with all user specified image names.
+ */
+int init_devices(const void *game)
+{
+	const struct GameDriver *gamedrv = game;
+    const struct IODevice *dev = gamedrv->dev;
+    int id;
+
+    /* initialize all devices */
+	while( dev->count )
+	{
+		/* if this device supports initialize (it should!) */
+        if( dev->init )
+		{
+			/* all instances */
+			for( id = 0; id < dev->count; id++ )
+			{
+				const char *filename = device_filename(dev->type,id);
+				if( filename )
+				{
+					/* initialize */
+					if( (*dev->init)(id,filename) != 0 )
+					{
+						printf("%s #%d init failed (%s).\n", device_typename(dev->type), id, filename);
+						return 1;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (errorlog) fprintf(errorlog, "%s does not support init!\n", device_typename(dev->type));
+		}
+		dev++;
+	}
+	return 0;
+}
+
+/*
+ * Call the exit() functions for all devices of a
+ * driver for all images.
+ */
+void exit_devices(void)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+    int id;
+
+    /* shutdown all devices */
+    while( dev->count )
+    {
+        /* all instances */
+        if( dev->exit)
+        {
+            /* shutdown */
+            for( id = 0; id < device_count(dev->type); id++ )
+                (*dev->exit)(id);
+        }
+        else
+        {
+            if (errorlog) fprintf(errorlog, "%s does not support exit!\n", device_typename(dev->type));
+        }
+        dev++;
+    }
+	ZAP_DEVICE_FILES(cartslot)
+	ZAP_DEVICE_FILES(floppy)
+	ZAP_DEVICE_FILES(harddisk)
+	ZAP_DEVICE_FILES(cassette)
+	ZAP_DEVICE_FILES(printer)
+	ZAP_DEVICE_FILES(serial)
+}
 
 void showmessdisclaimer(void)
 {
@@ -56,195 +261,4 @@ void showmessinfo(void)
 }
 
 
-
-/**********************************************************/
-/* Functions called from MSDOS.C by MAME for running MESS */
-/**********************************************************/
-
-/* HJB 12/11/99
- * this will go away, once we have a cleaner definition of the extensions
- * in the proposed PERIPHERAL struct.
- */
-
-static int slot = -1;
-
-int parse_image_types(char *arg)
-{
-    char e1 = 0, e2 = 0, e3 = 0;
-	char *ext = strrchr(arg, '.');
-
-    if( ext )
-	{
-		e1 = toupper(ext[1]);
-		e2 = toupper(ext[2]);
-		e3 = toupper(ext[3]);
-    }
-
-    /* cassette images */
-	if( slot == 3 ||
-		( slot < 0 &&
-			(
-				(e1=='C' && e2=='A' && e3=='S') ||
-				(e1=='C' && e2=='M' && e3=='D') ||
-				(e1=='T' && e2=='A' && e3=='P') ||
-				(e1=='T' && e2=='6' && e3=='4') ||
-				(e1=='V' && e2=='Z' && e3==  0)
-			)
-		  )
-	  )
-	{
-		if( num_cassettes >= MAX_CASSETTE )
-		{
-			printf("Too many cassette image names specified!\n");
-			return 1;
-		}
-		strcpy(options.cassette_name[num_cassettes++], arg);
-		printf("Using cassette image #%d %s\n", num_cassettes, arg);
-		return 0;
-	}
-	else
-	/* harddisk images */
-	if( slot == 2 ||
-		( slot < 0 &&
-			(
-				(e1=='I' && e2=='M' && e3=='G')
-			)
-		)
-	)
-    {
-        if( num_harddisks >= MAX_HARD )
-        {
-            printf("Too many hard disk image names specified!\n");
-            return 1;
-        }
-        strcpy(options.hard_name[num_harddisks++], arg);
-		printf("Using hard disk image #%d %s\n", num_harddisks, arg);
-        return 0;
-    }
-    else
-	/* are floppy disk images */
-	if( slot == 1 ||
-		( slot < 0 &&
-			(
-				(e1=='D' && e2=='6' && e3=='4') ||
-				(e1=='D' && e2=='S' && e3=='K') ||
-				(e1=='A' && e2=='D' && e3=='F') ||
-				(e1=='A' && e2=='T' && e3=='R') ||
-				(e1=='X' && e2=='F' && e3=='D') ||
-				(e1=='V' && e2=='Z' && e3=='D')
-			)
-		)
-	)
-	{
-		if (num_floppies >= MAX_FLOPPY)
-		{
-			printf("Too many floppy image names specified!\n");
-			return 1;
-		}
-		strcpy(options.floppy_name[num_floppies++], arg);
-		printf("Using floppy image #%d %s\n", num_floppies, arg);
-		return 0;
-	}
-	else
-	{
-		if( num_roms >= MAX_ROM )
-		{
-			printf("Too many ROM image names specified!\n");
-			return 1;
-		}
-		strcpy(options.rom_name[num_roms++], arg);
-		printf("Using ROM image #%d %s\n", num_roms, arg);
-	}
-	return 0;
-}
-
-
-
-
-
-
-int load_image(int argc, char **argv, char *driver, int j)
-{
-
-	/*
-	* Take all additional commandline arguments without "-" as image
-	* names. This is an ugly hack that will hopefully eventually be
-	* replaced with an online version that lets you "hot-swap" images.
-	* HJB 08/13/98 for now the hack is extended even more :-/
-	* Skip arguments to options starting with "-" too and accept
-	* aliases for a set of ROMs/images.
-    */
-    int i;
-    int res=0;
-	char *alias;
-
-	/* unknown image type specified */
-    slot = -1;
-
-    for (i = j+1; i < argc; i++)
-    {
-        /* skip options and their additional arguments */
-		if (argv[i][0] == '-')
-        {
-         	/* Need to skip all options which are not followed by a "-" */
-			if( !stricmp(argv[i],"-vgafreq")     ||
-				!stricmp(argv[i],"-depth")       ||
-				!stricmp(argv[i],"-skiplines")   ||
-				!stricmp(argv[i],"-skipcolumns") ||
-				!stricmp(argv[i],"-beam")        ||
-				!stricmp(argv[i],"-flicker")     ||
-				!stricmp(argv[i],"-gamma")       ||
-				!stricmp(argv[i],"-frameskip")   ||
-				!stricmp(argv[i],"-soundcard")   ||
-				!stricmp(argv[i],"-samplerate")  ||
-				!stricmp(argv[i],"-sr")          ||
-				!stricmp(argv[i],"-samplebits")  ||
-				!stricmp(argv[i],"-sb")          ||
-				!stricmp(argv[i],"-joystick")    ||
-				!stricmp(argv[i],"-joy")         ||
-				!stricmp(argv[i],"-resolution") ) i++;
-			/* check for explicit slots for the image names following */
-			if( !stricmp(argv[i], "-rom") )
-                slot = 0;
-            else
-			if( !stricmp(argv[i], "-floppy") )
-				slot = 1;
-			else
-			if( !stricmp(argv[i], "-harddisk") )
-				slot = 2;
-            else
-			if( !stricmp(argv[i], "-cassette") )
-				slot = 3;
-        }
-        else
-        {
-			/* check if this is an alias for a set of images */
-
-			alias = get_alias(driver,argv[i]);
-
-			if( alias && strlen(alias) )
-            {
-				char *arg;
-				if( errorlog )
-					fprintf(errorlog,"Using alias %s (%s) for driver %s\n", argv[i],alias, driver);
-				arg = strtok (alias, ",");
-				while (arg)
-            	{
-					res = parse_image_types(arg);
-					arg = strtok(0, ",");
-				}
-			}
-            else
-            {
-				if (errorlog)
-					fprintf(errorlog,"NOTE: No alias found\n");
-				res = parse_image_types(argv[i]);
-			}
-		}
-		/* If we had an error leave now */
-		if (res)
-			return res;
-	}
-    return res;
-}
 

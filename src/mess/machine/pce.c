@@ -18,15 +18,15 @@ unsigned char *pce_save_ram;    /* battery backed RAM at F7 */
 static int joystick_port_select;        /* internal index of joystick ports */
 static int joystick_data_select;        /* which nibble of joystick data we want */
 
-int pce_load_rom(void)
+int pce_load_rom(int id, const char *name)
 {
 	int size;
     FILE *fp = NULL;
 	unsigned char *ROM;
-    if(errorlog) fprintf(errorlog, "*** pce_load_rom : %s\n", rom_name[0]);
+	if(errorlog) fprintf(errorlog, "*** pce_load_rom : %s\n", name);
 
     /* open file to get size */
-    fp = osd_fopen(Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0);
+	fp = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
     if(!fp) return 1;
 	if( new_memory_region(REGION_CPU1,PCE_ROM_MAXSIZE) )
 		return 1;

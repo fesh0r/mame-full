@@ -1,6 +1,7 @@
 /*
   MESS Driver for TI-99/4 and TI-99/4A Home Computers.
   Raphael Nabet, 1999.
+  based on Ed Swartz's V9T9.
 
   see machine/ti99_4x.c for some details and references
 
@@ -26,8 +27,8 @@ References :
 Similar to TI99/4a, except for the following :
   * tms9918/9928 has no bitmap mode
   * smaller, 40-key keyboard
-  * system ROMs are 5kb larger (I guess it has an extra GROM).  There are many small differences in
-    the contents.
+  * system ROMs are 5kb (?) larger (i.e. it has an extra GROM).  There are many small differences in
+    the contents.  I suspect an extra GPL port is used (see /machine/ti99_4x.c).
 
 Historical notes : TI made several last minute design changes.
   * TI99/4 prototypes had an extra port for an I/R joystick and keypad interface.
@@ -37,65 +38,8 @@ Historical notes : TI made several last minute design changes.
 #include "driver.h"
 #include "mess/vidhrdw/tms9928a.h"
 
-
-/* protos for support code in machine/ti99.c */
-
-void ti99_init_machine(void);
-void ti99_stop_machine(void);
-
-int ti99_load_rom (void);
-int ti99_id_rom (const char *name, const char *gamename);
-int ti99_vh_start(void);
-int ti99_vblank_interrupt(void);
-
-int ti99_rw_null8bits(int offset);
-void ti99_ww_null8bits(int offset, int data);
-
-int ti99_rw_xramlow(int offset);
-void ti99_ww_xramlow(int offset, int data);
-int ti99_rw_xramhigh(int offset);
-void ti99_ww_xramhigh(int offset, int data);
-
-int ti99_rw_cartmem(int offset);
-void ti99_ww_cartmem(int offset, int data);
-
-int ti99_rw_scratchpad(int offset);
-void ti99_ww_scratchpad(int offset, int data);
-
-void ti99_ww_wsnd(int offset, int data);
-int ti99_rw_rvdp(int offset);
-void ti99_ww_wvdp(int offset, int data);
-int ti99_rw_rspeech(int offset);
-void ti99_ww_wspeech(int offset, int data);
-int ti99_rw_rgpl(int addr);
-void ti99_ww_wgpl(int offset, int data);
-
-int ti99_R9901_0(int offset);
-int ti99_R9901_1(int offset);
-void ti99_W9901_0(int offset, int data);
-void ti99_W9901_S(int offset, int data);
-void ti99_W9901_F(int offset, int data);
-
-int ti99_R9901_2(int offset);
-int ti99_R9901_3(int offset);
-void ti99_KeyC2(int offset, int data);
-void ti99_KeyC1(int offset, int data);
-void ti99_KeyC0(int offset, int data);
-void ti99_AlphaW(int offset, int data);
-void ti99_CS1_motor(int offset, int data);
-void ti99_CS2_motor(int offset, int data);
-void ti99_audio_gate(int offset, int data);
-void ti99_CS_output(int offset, int data);
-
-int ti99_rw_disk(int offset);
-void ti99_ww_disk(int offset, int data);
-int ti99_DSKget(int offset);
-void ti99_DSKROM(int offset, int data);
-void ti99_DSKhold(int offset, int data);
-void ti99_DSKheads(int offset, int data);
-void ti99_DSKsel(int offset, int data);
-void ti99_DSKside(int offset, int data);
-
+#include "mess/machine/ti99_4x.h"
+#include "mess/machine/tms9901.h"
 
 /*
   memory map
@@ -103,39 +47,39 @@ void ti99_DSKside(int offset, int data);
 
 static struct MemoryReadAddress readmem[] =
 {
-  { 0x0000, 0x1fff, MRA_ROM },          /*system ROM*/
-  { 0x2000, 0x3fff, ti99_rw_xramlow },  /*lower 8kb of RAM extension*/
-  { 0x4000, 0x5fff, ti99_rw_disk },     /*DSR ROM... only disk is emulated */
-  { 0x6000, 0x7fff, ti99_rw_cartmem },  /*cartidge memory... some RAM is actually possible*/
+  { 0x0000, 0x1fff, MRA_ROM },              /*system ROM*/
+  { 0x2000, 0x3fff, ti99_rw_xramlow },      /*lower 8kb of RAM extension*/
+  { 0x4000, 0x5fff, ti99_rw_disk },         /*DSR ROM... only disk is emulated */
+  { 0x6000, 0x7fff, ti99_rw_cartmem },      /*cartidge memory... some RAM is actually possible*/
   { 0x8000, 0x82ff, ti99_rw_scratchpad },   /*RAM PAD, mapped to 0x8300-0x83ff*/
-  { 0x8300, 0x83ff, MRA_RAM },          /*RAM PAD*/
-  { 0x8400, 0x87ff, ti99_rw_null8bits },/*soundchip write*/
-  { 0x8800, 0x8bff, ti99_rw_rvdp },     /*vdp read*/
-  { 0x8C00, 0x8fff, ti99_rw_null8bits },/*vdp write*/
-  { 0x9000, 0x93ff, ti99_rw_rspeech },  /*speech read*/
-  { 0x9400, 0x97ff, ti99_rw_null8bits },/*speech write*/
-  { 0x9800, 0x9bff, ti99_rw_rgpl },     /*GPL read*/
-  { 0x9c00, 0x9fff, ti99_rw_null8bits },/*GPL write*/
-  { 0xa000, 0xffff, ti99_rw_xramhigh }, /*upper 24kb of RAM extension*/
+  { 0x8300, 0x83ff, MRA_RAM },              /*RAM PAD*/
+  { 0x8400, 0x87ff, ti99_rw_null8bits },    /*soundchip write*/
+  { 0x8800, 0x8bff, ti99_rw_rvdp },         /*vdp read*/
+  { 0x8C00, 0x8fff, ti99_rw_null8bits },    /*vdp write*/
+  { 0x9000, 0x93ff, ti99_rw_rspeech },      /*speech read*/
+  { 0x9400, 0x97ff, ti99_rw_null8bits },    /*speech write*/
+  { 0x9800, 0x9bff, ti99_rw_rgpl },         /*GPL read*/
+  { 0x9c00, 0x9fff, ti99_rw_null8bits },    /*GPL write*/
+  { 0xa000, 0xffff, ti99_rw_xramhigh },     /*upper 24kb of RAM extension*/
   { -1 }    /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-  { 0x0000, 0x1fff, MWA_ROM },          /*system ROM*/
-  { 0x2000, 0x3fff, ti99_ww_xramlow },  /*lower 8kb of memory expansion card*/
-  { 0x4000, 0x5fff, ti99_ww_disk },     /*DSR ROM... only disk is emulated ! */
-  { 0x6000, 0x7fff, ti99_ww_cartmem },  /*cartidge memory... some RAM or paging system is possible*/
-  { 0x8000, 0x82ff, ti99_ww_scratchpad },   /*RAM PAD, mapped to 0x8300-0x83ff*/
-  { 0x8300, 0x83ff, MWA_RAM },          /*RAM PAD*/
-  { 0x8400, 0x87ff, ti99_ww_wsnd },     /*soundchip write*/
-  { 0x8800, 0x8bff, ti99_ww_null8bits },/*vdp read*/
-  { 0x8C00, 0x8fff, ti99_ww_wvdp },     /*vdp write*/
-  { 0x9000, 0x93ff, ti99_ww_null8bits },/*speech read*/
-  { 0x9400, 0x97ff, ti99_ww_wspeech },  /*speech write*/
-  { 0x9800, 0x9bff, ti99_ww_null8bits },/*GPL read*/
-  { 0x9c00, 0x9fff, ti99_ww_wgpl },     /*GPL write*/
-  { 0xa000, 0xffff, ti99_ww_xramhigh }, /*upper 24kb of RAM extension*/
+  { 0x0000, 0x1fff, MWA_ROM },                      /*system ROM*/
+  { 0x2000, 0x3fff, ti99_ww_xramlow, &ti99_xRAM_low },  /*lower 8kb of memory expansion card*/
+  { 0x4000, 0x5fff, ti99_ww_disk, &ti99_DSR_mem },  /*DSR ROM... only disk is emulated ! */
+  { 0x6000, 0x7fff, ti99_ww_cartmem, & ti99_cart_mem }, /*cartidge memory... some RAM or paging system is possible*/
+  { 0x8000, 0x82ff, ti99_ww_scratchpad },           /*RAM PAD, mapped to 0x8300-0x83ff*/
+  { 0x8300, 0x83ff, MWA_RAM, &ti99_scratch_RAM },   /*RAM PAD*/
+  { 0x8400, 0x87ff, ti99_ww_wsnd },                 /*soundchip write*/
+  { 0x8800, 0x8bff, ti99_ww_null8bits },            /*vdp read*/
+  { 0x8C00, 0x8fff, ti99_ww_wvdp },                 /*vdp write*/
+  { 0x9000, 0x93ff, ti99_ww_null8bits },            /*speech read*/
+  { 0x9400, 0x97ff, ti99_ww_wspeech },              /*speech write*/
+  { 0x9800, 0x9bff, ti99_ww_null8bits },            /*GPL read*/
+  { 0x9c00, 0x9fff, ti99_ww_wgpl },                 /*GPL write*/
+  { 0xa000, 0xffff, ti99_ww_xramhigh, &ti99_xRAM_high },    /*upper 24kb of RAM extension*/
   { -1 }    /* end of table */
 };
 
@@ -146,20 +90,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOWritePort writeport[] =
 {
-  {0x0000, 0x0000, ti99_W9901_0},
-  {0x0001, 0x000e, ti99_W9901_S},
-  {0x000f, 0x000f, ti99_W9901_F},
-
-  {0x0012, 0x0012, ti99_KeyC2},
-  {0x0013, 0x0013, ti99_KeyC1},
-  {0x0014, 0x0014, ti99_KeyC0},
-  {0x0015, 0x0015, ti99_AlphaW},
-  {0x0016, 0x0016, ti99_CS1_motor},
-  {0x0017, 0x0017, ti99_CS2_motor},
-  {0x0018, 0x0018, ti99_audio_gate},
-  {0x0019, 0x0019, ti99_CS_output},
-
-  /*{0x0F01, 0x0F0e, ti99_W9901_S},*/ /* this mirror is used by a system routine */
+  {0x0000, 0x07ff, tms9901_CRU_write},
 
   {0x0880, 0x0880, ti99_DSKROM},
   /*{0x0881, 0x0881, ti99_DSKmotor},*/
@@ -167,16 +98,13 @@ static struct IOWritePort writeport[] =
   {0x0883, 0x0883, ti99_DSKheads},
   {0x0884, 0x0886, ti99_DSKsel},
   {0x0887, 0x0887, ti99_DSKside},
+
   { -1 }    /* end of table */
 };
 
 static struct IOReadPort readport[] =
 {
-  {0x0000, 0x0000, ti99_R9901_0},
-  {0x0001, 0x0001, ti99_R9901_1},
-
-  {0x0002, 0x0002, ti99_R9901_2},
-  {0x0003, 0x0003, ti99_R9901_3},
+  {0x0000, 0x00ff, tms9901_CRU_read},
 
   {0x0110, 0x0110, ti99_DSKget},
 
@@ -192,7 +120,7 @@ static struct IOReadPort readport[] =
 INPUT_PORTS_START(ti99_4a)
 
   PORT_START    /* col 0 */
-    PORT_BITX(0x88, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x88, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_LCONTROL, IP_JOY_NONE)
     PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
     /* TI99/4a has a second shift key which maps the same */
@@ -253,7 +181,7 @@ INPUT_PORTS_START(ti99_4a)
     PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "/ -", KEYCODE_SLASH, IP_JOY_NONE)
 
   PORT_START    /* col 6 : "wired handset 1" (= joystick 1) */
-    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1/*, "(1UP)", IP_KEY_NONE, OSD_JOY_UP*/)
     PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1/*, "(1DOWN)", IP_KEY_NONE, OSD_JOY_DOWN, 0*/)
     PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1/*, "(1RIGHT)", IP_KEY_NONE, OSD_JOY_RIGHT, 0*/)
@@ -261,7 +189,7 @@ INPUT_PORTS_START(ti99_4a)
     PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1/*, "(1FIRE)", IP_KEY_NONE, OSD_JOY_FIRE, 0*/)
 
   PORT_START    /* col 7 : "wired handset 2" (= joystick 2) */
-    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2/*, "(2UP)", IP_KEY_NONE, OSD_JOY2_UP, 0*/)
     PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2/*, "(2DOWN)", IP_KEY_NONE, OSD_JOY2_DOWN, 0*/)
     PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2/*, "(2RIGHT)", IP_KEY_NONE, OSD_JOY2_RIGHT, 0*/)
@@ -279,9 +207,9 @@ INPUT_PORTS_END
 INPUT_PORTS_START(ti99_4)
 
   PORT_START    /* col 0 */
-    PORT_BITX(0xD9, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0xD9, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
-    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "(SPACE)", KEYCODE_SPACE, IP_JOY_NONE)
 
@@ -303,7 +231,7 @@ INPUT_PORTS_START(ti99_4)
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "8 * REDO", KEYCODE_8, IP_JOY_NONE)
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "i I ?", KEYCODE_I, IP_JOY_NONE)
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "k K", KEYCODE_K, IP_JOY_NONE)
-    PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
   PORT_START    /* col 3 */
     PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "v V", KEYCODE_V, IP_JOY_NONE)
@@ -332,10 +260,10 @@ INPUT_PORTS_START(ti99_4)
     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "1 ! DEL", KEYCODE_1, IP_JOY_NONE)
     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "0 )", KEYCODE_0, IP_JOY_NONE)
     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "p P \"", KEYCODE_P, IP_JOY_NONE)
-    PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
   PORT_START    /* col 6 : "wired handset 1" (= joystick 1) */
-    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1/*, "(1UP)", IP_KEY_NONE, OSD_JOY_UP*/)
     PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1/*, "(1DOWN)", IP_KEY_NONE, OSD_JOY_DOWN, 0*/)
     PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1/*, "(1RIGHT)", IP_KEY_NONE, OSD_JOY_RIGHT, 0*/)
@@ -343,7 +271,7 @@ INPUT_PORTS_START(ti99_4)
     PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1/*, "(1FIRE)", IP_KEY_NONE, OSD_JOY_FIRE, 0*/)
 
   PORT_START    /* col 7 : "wired handset 2" (= joystick 2) */
-    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
     PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2/*, "(2UP)", IP_KEY_NONE, OSD_JOY2_UP, 0*/)
     PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2/*, "(2DOWN)", IP_KEY_NONE, OSD_JOY2_DOWN, 0*/)
     PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2/*, "(2RIGHT)", IP_KEY_NONE, OSD_JOY2_RIGHT, 0*/)
@@ -529,68 +457,6 @@ static struct MachineDriver machine_driver_ti99_4 =
 };
 
 
-/*
-  ROM loading
-*/
-ROM_START(ti99_4)
-	/*CPU memory space*/
-	ROM_REGIONX(0x10000,REGION_CPU1)
-	ROM_LOAD_WIDE("994rom.bin", 0x0000, 0x2000, 0x00000000)      /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin", 0x4000, 0x2000, 0x00000000)        /* disk DSR ROM */
-
-	/*GPL memory space*/
-	ROM_REGIONX(0x10000,REGION_GFX1)
-	ROM_LOAD("994grom.bin", 0x0000, 0x8000, 0x00000000)     /* system GROMs */
-
-	/*TMS5220 ROM space*/
-	ROM_REGIONX(0x8000,REGION_GFX2)
-	ROM_LOAD("spchrom.bin", 0x0000, 0x8000, 0x00000000)     /* system speech ROM */
-ROM_END
-
-struct GameDriver ti99_4_driver =
-{
-	__FILE__,
-	0,
-	"ti99_4",
-	"TI99/4 Home Computer",
-	"1978 (prototypes), oct. 1979-1981",
-	"Texas Instrument",
-	"R Nabet, based on Ed Swartz's V9T9.",
-	0,
-	&machine_driver_ti99_4,
-	0,  /* optional function to be called during initialization */
-
-	rom_ti99_4,
-	ti99_load_rom,  /* load rom_file images */
-	ti99_id_rom,    /* identify rom images */
-	0,
-	3,              /* number of ROM slots */
-	/* a TI99 console only had one cartidge slot, but cutting the ROMs in 3 files seems to be
-	the only way to handle cartidge until I use a header format.
-	Note that there sometimes was a speech ROM slot in the speech synthesizer, and you could plug
-	up to 16 additonnal DSR roms and quite a lot of GROMs in the side port.  None of these is
-	emulated. */
-	3,            /* number of floppy drives supported */
-	0,            /* number of hard drives supported */
-	0/*2*/,       /* number of cassette drives supported */
-	0,            /* rom decoder */
-	0,            /* opcode decoder */
-	0,            /* pointer to sample names */
-	0,            /* sound_prom */
-
-	input_ports_ti99_4,
-
-	0,            /* color_prom */
-	0,            /* color palette - obsolete */
-	0,            /* color lookup table - obsolete */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,  /* orientation */
-
-	0,            /* hiscore load */
-	0,            /* hiscore save */
-};
-
-
 
 /*
   machine description.
@@ -651,9 +517,27 @@ static struct MachineDriver machine_driver_ti99_4a =
 /*
   ROM loading
 */
+
+ROM_START(ti99_4)
+    /*CPU memory space*/
+    /* 0x4000 extra RAM for paged cartidges */
+    ROM_REGIONX(0x14000,REGION_CPU1)
+    ROM_LOAD_WIDE("994rom.bin", 0x0000, 0x2000, 0x00000000)      /* system ROMs */
+    ROM_LOAD_WIDE("disk.bin", 0x4000, 0x2000, 0x00000000)        /* disk DSR ROM */
+
+    /*GPL memory space*/
+    ROM_REGIONX(0x10000,REGION_GFX1)
+    ROM_LOAD("994grom.bin", 0x0000, 0x8000, 0x00000000)     /* system GROMs */
+
+    /*TMS5220 ROM space*/
+    ROM_REGIONX(0x8000,REGION_GFX2)
+    ROM_LOAD("spchrom.bin", 0x0000, 0x8000, 0x00000000)     /* system speech ROM */
+ROM_END
+
 ROM_START(ti99_4a)
 	/*CPU memory space*/
-	ROM_REGIONX(0x10000,REGION_CPU1)
+    /* 0x4000 extra RAM for paged cartidges */
+	ROM_REGIONX(0x14000,REGION_CPU1)
 	ROM_LOAD_WIDE("994arom.bin", 0x0000, 0x2000, 0xdb8f33e5)     /* system ROMs */
 	ROM_LOAD_WIDE("disk.bin", 0x4000, 0x2000, 0x8f7df93f)        /* disk DSR ROM */
 
@@ -666,45 +550,57 @@ ROM_START(ti99_4a)
 	ROM_LOAD("spchrom.bin", 0x0000, 0x8000, 0x58b155f7)     /* system speech ROM */
 ROM_END
 
-struct GameDriver ti99_4a_driver =
-{
-	__FILE__,
-	0,
-	"ti99_4a",
-	"TI99/4A Home Computer",
-	"1981-1983",
-	"Texas Instrument",
-	"R Nabet, based on Ed Swartz's V9T9.",
-	0,
-	&machine_driver_ti99_4a,
-	0,  /* optional function to be called during initialization */
+/* a TI99 console only had one cartidge slot, but cutting the ROMs
+ * in 3 files seems to be the only way to handle cartidge until I use
+ * a header format.
+ * Note that there sometimes was a speech ROM slot in the speech synthesizer,
+ * and you could plug up to 16 additonnal DSR roms and quite a lot of GROMs
+ * in the side port.  None of these is emulated.
+ */
 
-	rom_ti99_4a,
-	ti99_load_rom,  /* load rom_file images */
-	ti99_id_rom,    /* identify rom images */
-	0,
-	3,              /* number of ROM slots */
-	/* a TI99 console only had one cartidge slot, but cutting the ROMs in 3 files seems to be
-	the only way to handle cartidge until I use a header format.
-	Note that there sometimes was a speech ROM slot in the speech synthesizer, and you could plug
-	up to 16 additonnal DSR roms and quite a lot of GROMs in the side port.  None of these is
-	emulated. */
-	3,            /* number of floppy drives supported */
-	0,            /* number of hard drives supported */
-	0/*2*/,       /* number of cassette drives supported */
-	0,            /* rom decoder */
-	0,            /* opcode decoder */
-	0,            /* pointer to sample names */
-	0,            /* sound_prom */
-
-	input_ports_ti99_4a,
-
-	0,            /* color_prom */
-	0,            /* color palette - obsolete */
-	0,            /* color lookup table - obsolete */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,  /* orientation */
-
-	0,            /* hiscore load */
-	0,            /* hiscore save */
+static const struct IODevice io_ti99_4[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		3,					/* count */
+		"???\0",			/* file extensions */
+        NULL,               /* private */
+		ti99_id_rom,		/* id */
+		ti99_load_rom,		/* init */
+		ti99_rom_cleanup,	/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		3,					/* count */
+		"???\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		ti99_floppy_init,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
+
+#define io_ti99_4a io_ti99_4
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+COMP( 1978, ti99_4,   0, 		ti99_4,   ti99_4,	0,		  "Texas Instruments",  "TI99/4 Home Computer" )
+COMP( 1981, ti99_4a,  ti99_4,	ti99_4a,  ti99_4a,	0,		  "Texas Instruments",  "TI99/4A Home Computer" )
+

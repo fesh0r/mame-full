@@ -41,16 +41,31 @@ static UINT8 m_queue[256];
 static UINT8 m_head = 0, m_tail = 0, mb = 0;
 static void *mouse_timer = NULL;
 
+static const char *floppy_name[2] = {NULL,};
+static const char *harddisk_name[4] = {NULL,};
+
 static void pc_mouse_scan(int n);
 static void pc_mouse_poll(int n);
 
-void pc_init_driver(void)
+void init_pc(void)
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
 	int i;
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
+}
+
+int pc_floppy_init(int id, const char *name)
+{
+	floppy_name[id] = name;
+	return 0;
+}
+
+int pc_harddisk_init(int id, const char *name)
+{
+	harddisk_name[id] = name;
+    return 0;
 }
 
 static void pc_common_init_machine(void)
@@ -68,10 +83,10 @@ static void pc_common_init_machine(void)
 
 	int i, j;
 
-	for( i = 0; i < Machine->gamedrv->num_of_floppy_drives; i++ )
+	for( i = 0; i < 2; i++ )
 	{
 		/* no floppy name given for that drive ? */
-		if( !floppy_name[i][0] )
+		if( !floppy_name[i] )
 			continue;
 		pc_fdc_file[i] = osd_fopen(Machine->gamedrv->name, floppy_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 		/* find the sectors/track and bytes/sector values in the boot sector */
@@ -111,14 +126,14 @@ static void pc_common_init_machine(void)
 		}
     }
 
-	for( i = 0; i < Machine->gamedrv->num_of_hard_drives; i++ )
+	for( i = 0; i < 4; i++ )
 	{
 		/* no hard disk name given for that drive ? */
-		if( !hard_name[i][0] )
+		if( !harddisk_name[i] )
 			continue;
-		pc_hdc_file[i] = osd_fopen(Machine->gamedrv->name, hard_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+		pc_hdc_file[i] = osd_fopen(Machine->gamedrv->name, harddisk_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 		if( !pc_hdc_file[i] && Machine->gamedrv->clone_of )
-			pc_hdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, hard_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+			pc_hdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, harddisk_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
     }
 
 }
@@ -158,30 +173,17 @@ void pc_shutdown_machine(void)
 {
 	int i;
 
-	for (i = 0; i < Machine->gamedrv->num_of_floppy_drives; i++)
+	for (i = 0; i < 2; i++)
 	{
 		if (pc_fdc_file[i]) osd_fclose(pc_fdc_file[i]);
 		pc_fdc_file[i] = 0;
     }
-	for (i = 0; i < Machine->gamedrv->num_of_hard_drives; i++)
+	for (i = 0; i < 4; i++)
 	{
 		if (pc_hdc_file[i]) osd_fclose(pc_hdc_file[i]);
 		pc_hdc_file[i] = 0;
     }
 }
-
-int pc_rom_load(void)
-{
-	int result	= 0;
-    return result;
-}
-
-int 	pc_rom_id(const char *name, const char *gamename)
-{
-	/* This driver cannot ID ROMs */
-	return 0;
-}
-
 
 /*************************************
  *
@@ -1291,8 +1293,7 @@ int pc_FDC_r(int offset)
  *************************************************************************/
 void pc_HDC_w(int chip, int offset, int data)
 {
-	if( !(input_port_3_r(0) & (0x08>>chip)) ||
-		!hard_name[chip][0] )
+	if( !(input_port_3_r(0) & (0x08>>chip)) || !harddisk_name[chip] )
 		return;
 	switch( offset )
 	{
@@ -1309,7 +1310,7 @@ int pc_HDC_r(int chip, int offset)
 {
 	int data = 0xff;
 	if( !(input_port_3_r(0) & (0x08>>chip)) ||
-		!hard_name[chip][0] )
+		!harddisk_name[chip][0] )
 		return data;
 	switch( offset )
 	{

@@ -4,11 +4,15 @@
 
   Driver file to handle emulation of the Colecovision.
 
+  Marat Fayzullin (ColEm source)
+  Mike Balfour
+
   TODO:
 	- Verify correctness of SN76496 sound emulation
 	- Abstract TMS9928A a little better
 	- Finish TMS9928A emulation
 	- Clean up code
+
 ***************************************************************************/
 
 
@@ -27,7 +31,7 @@ extern unsigned char *coleco_ram;
 extern unsigned char *coleco_cartridge_rom;
 
 extern int coleco_id_rom (const char *name, const char *gamename);
-extern int coleco_load_rom (void);
+extern int coleco_load_rom (int id, const char *rom_name);
 extern int coleco_ram_r(int offset);
 extern void coleco_ram_w(int offset, int data);
 extern int coleco_paddle_r(int offset);
@@ -163,7 +167,7 @@ static int coleco_interrupt(void)
 	return 0;
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_coleco =
 {
 	/* basic machine hardware */
 	{
@@ -224,119 +228,33 @@ ROM_END
 //	ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, 0x66cda476) /* no screen */
 //ROM_END
 
-
-
-
-
-
-/* list of file extensions */
-static const char *coleco_file_extensions[] =
-{
-	"rom",
-	0       /* end of array */
+static const struct IODevice io_coleco[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"rom\0",            /* file extensions */
+		NULL,				/* private */
+		coleco_id_rom,		/* id */
+		coleco_load_rom,	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+	{ IO_END }
 };
 
-
-struct GameDriver coleco_driver =
-{
-	__FILE__,
-	0,
-	"coleco",
-	"Colecovision",
-	"1982",
-	"Coleco",
-	"Marat Fayzullin (ColEm source)\nMike Balfour",
-	0,
-	&machine_driver,
-	0,
-    rom_coleco,
-	coleco_load_rom,
-	coleco_id_rom,
-	coleco_file_extensions,  /* Default file extension */
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0,
-   0,
-	0,
-	0,	/* sound_prom */
-   input_ports_coleco,
-   0,
-   /*TMS9928A_palette*/0,
-   /*TMS9928A_colortable*/0,
-	ORIENTATION_DEFAULT,
-   0,
-   0,
-};
-
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+CONS( 1982, coleco,   0,		coleco,   coleco,	0,		  "Coleco", "Colecovision" )
 
 #ifdef COLECO_HACKS
-struct GameDriver colecofb_driver =
-{
-	__FILE__,
-	&coleco_driver,
-	"colecofb",
-	"Colecovision (Fast BIOS Hack)",
-	"1982",
-	"Coleco",
-	"Marat Fayzullin (ColEm source)\nMike Balfour",
-	0,
-	&machine_driver,
-	0,
-   colecofb_rom,
-	coleco_load_rom,
-	coleco_id_rom,
-	coleco_file_extensions,  /* Default file extension */
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0,
-   0,
-	0,
-	0,	/* sound_prom */
-   input_ports,
-   0,
-   TMS9928A_palette,
-   TMS9928A_colortable,
-	ORIENTATION_DEFAULT,
-   0,
-   0,
-};
-
-
-struct GameDriver coleconb_driver =
-{
-	__FILE__,
-	&coleco_driver,
-	"coleconb",
-	"Colecovision (NO BIOS Hack)",
-	"1982",
-	"Coleco",
-	"Marat Fayzullin (ColEm source)\nMike Balfour",
-	0,
-	&machine_driver,
-	0,
-   coleconb_rom,
-	coleco_load_rom,
-	coleco_id_rom,
-	coleco_file_extensions,  /* Default file extension */
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0,
-   0,
-	0,
-	0,	/* sound_prom */
-   input_ports,
-   0,
-   TMS9928A_palette,
-   TMS9928A_colortable,
-	ORIENTATION_DEFAULT,
-   0,
-   0,
-};
-
+CONS( 1982, colecofb, coleco,	coleco,   coleco,	0,		  "Coleco", "Colecovision (Fast BIOS Hack)" )
+CONS( 1982, coleconb, coleco,	coleco,   coleco,	0,		  "Coleco", "Colecovision (NO BIOS Hack)" )
 #endif
+

@@ -1532,7 +1532,7 @@ void atari_steal_cycles_done(VIDEO *video)
 	/* but immediately hold the CPU again for TRIGGER_HSYNC if wsync was accessed */
 	if( antic.w.wsync )
 	{
-		cpu_yielduntil_trigger(TRIGGER_HSYNC);
+		cpu_spinuntil_trigger(TRIGGER_HSYNC);
 #if VERBOSE
 		if (errorlog) fprintf(errorlog, "ANTIC #%3d steal cycles: wsync active @ cycle #%d\n", antic.scanline, cycle());
 #endif
@@ -1598,7 +1598,7 @@ void atari_scanline_render(VIDEO *video)
 #if VERBOSE
 	if (errorlog) fprintf(errorlog, "ANTIC #%3d steal %d cycles \n", antic.scanline, antic.steal_cycles);
 #endif
-	cpu_yielduntil_trigger(TRIGGER_STEAL);
+	cpu_spinuntil_trigger(TRIGGER_STEAL);
 	after(antic.steal_cycles, video, atari_steal_cycles_done);
 }
 

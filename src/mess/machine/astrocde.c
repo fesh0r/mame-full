@@ -23,23 +23,22 @@ static int screen_interrupt_mode;
 static int lightpen_interrupts_enabled;
 static int lightpen_interrupt_mode;
 
-int astrocade_load_rom(void)
+int astrocade_load_rom(int id, const char *name)
 {
-	static char filename[200];
 	void *file;
-	int size;
+	int size = 0;
 
 	/* load a cartidge  */
-	if (strlen(rom_name[0]))
+	if (strlen(name))
 	{
-		strcpy(filename, rom_name[0]);
-		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
+		file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
 		if (file)
 		{
 			size = osd_fread(file, memory_region(REGION_CPU1) + 0x2000, 0x8000);
 			osd_fclose(file);
         }
-	}	return 0;
+	}
+	return 0;
 }
 
 int astrocade_id_rom(const char *name, const char *gamename)

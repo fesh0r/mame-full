@@ -5,6 +5,10 @@
 #include <unistd.h>
 #include <signal.h>
 
+#ifdef MESS
+#include "mess/msdos.h"
+#endif
+
 /* Verbose outputs to error.log ? */
 #define VERBOSE 	0
 
@@ -1341,7 +1345,6 @@ int check_crc(int crc, int length, char * driver)
     if( !crcdir ) return 0;
 
 	/* create filename from driver (.crc) */
-	if( !crcdir ) return 0;
 	sprintf(crc_file_name,"%s/%s.crc",crcdir,driver);
 
 	/* Match CRC and length from file */

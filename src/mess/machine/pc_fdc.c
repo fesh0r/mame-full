@@ -17,28 +17,28 @@
 #define WRITE_PROTECT	0x40
 #define FAULT			0x80
 
-#define FDC_DMA 	2						/* DMA channel number for the FDC */
+#define FDC_DMA 	2			   /* DMA channel number for the FDC */
 
-void *pc_fdc_file[MAX_FLOPPY];				/* up to four floppy disk images */
-UINT8 pc_fdc_heads[MAX_FLOPPY] = {2,2,2,2}; 	/* 2 heads */
-UINT8 pc_fdc_spt[MAX_FLOPPY] = {9,9,9,9};	/* 9 sectors per track */
-UINT8 pc_gpl[MAX_FLOPPY] = {42,42,42,42};	/* gap III length */
-UINT8 pc_fill[MAX_FLOPPY] = {0xf6,0xf6,0xf6,0xf6}; /* filler byte */
-UINT8 pc_fdc_scl[MAX_FLOPPY] = {2,2,2,2};	/* 512 bytes per sector */
+void *pc_fdc_file[2];			   /* up to two floppy disk images */
+UINT8 pc_fdc_heads[2] = {2,2};	   /* 2 heads */
+UINT8 pc_fdc_spt[2] = {9,9};	   /* 9 sectors per track */
+UINT8 pc_gpl[2] = {42,42};		   /* gap III length */
+UINT8 pc_fill[2] = {0xf6,0xf6};    /* filler byte */
+UINT8 pc_fdc_scl[2] = {2,2};	   /* 512 bytes per sector */
 
 static void *FDC_timer = 0;
 
-static UINT8 drv;							/* drive number (0..3) */
-static UINT8 FDC_enable;					/* enable/reset flag */
-static UINT8 FDC_dma;						/* DMA mode flag */
-static UINT8 FDC_motor; 					/* motor running flags */
-static UINT8 track[MAX_FLOPPY] = {0,0,0,0}; /* floppy current track numbers */
-static UINT8 head[MAX_FLOPPY] = {0,0,0,0};	/* floppy current head numbers */
-static UINT8 sector[MAX_FLOPPY] = {0,0,0,0};/* floppy current sector numbers */
-static int offset[MAX_FLOPPY];              /* current seek() offset into disk images */
+static UINT8 drv;				   /* drive number (0..3) */
+static UINT8 FDC_enable;		   /* enable/reset flag */
+static UINT8 FDC_dma;			   /* DMA mode flag */
+static UINT8 FDC_motor; 		   /* motor running flags */
+static UINT8 track[2] = {0,0};	   /* floppy current track numbers */
+static UINT8 head[2] = {0,0};	   /* floppy current head numbers */
+static UINT8 sector[2] = {0,0};    /* floppy current sector numbers */
+static int offset[2];			   /* current seek() offset into disk images */
 
-static int FDC_floppy[MAX_FLOPPY] = {		/* floppy drive status flags */
-	READY, FAULT, FAULT, FAULT };
+static int FDC_floppy[2] =			/* floppy drive status flags */
+	{ FAULT, FAULT };
 
 static int FDC_drq;                     /* data request count */
 

@@ -1,14 +1,25 @@
+/******************************************************************************
+
+ Mathis Rosenhauer
+ Nate Woods
+
+ ******************************************************************************/
 #include "driver.h"
 #include "machine/6821pia.h"
 
 /* from machine/dragon.c */
 extern void dragon32_init_machine(void);
 extern void dragon64_init_machine(void);
+extern void coco_init_machine(void);
 extern void coco3_init_machine(void);
 extern void dragon_stop_machine(void);
-extern int dragon32_rom_load(void);
-extern int dragon64_rom_load(void);
-extern int coco3_rom_load(void);
+extern int coco_cassette_init(int id, const char *name);
+extern int coco_floppy_init(int id, const char *name);
+extern void coco_floppy_exit(int id);
+extern int dragon32_rom_load(int id, const char *name);
+extern int dragon64_rom_load(int id, const char *name);
+extern int coco3_rom_load(int id, const char *name);
+
 extern int dragon_mapped_irq_r(int offset);
 extern int coco3_mapped_irq_r(int offset);
 extern int dragon_disk_r(int offset);
@@ -22,7 +33,7 @@ extern void coco3_gime_w(int offset, int data);
 extern void dragon_speedctrl_w(int offset, int data);
 
 /* from vidhrdw/dragon.c */
-extern UINT8 *dragon_ram;
+extern UINT8 *coco_ram;
 extern int dragon_vh_start(void);
 extern int coco_vh_start(void);
 extern int coco3_vh_start(void);
@@ -33,12 +44,12 @@ extern void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern void dragon_sam_display_offset(int offset, int data);
 extern void dragon_sam_vdg_mode(int offset, int data);
 extern int dragon_interrupt(void);
-extern void dragon_ram_w (int offset, int data);
+extern void coco_ram_w (int offset, int data);
 extern int coco3_gimevh_r(int offset);
 extern void coco3_gimevh_w(int offset, int data);
 extern void coco3_palette_w(int offset, int data);
 
-static struct MemoryReadAddress d32_readmem[] =
+static struct MemoryReadAddress dragon32_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xbfff, MRA_ROM },
@@ -50,9 +61,9 @@ static struct MemoryReadAddress d32_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress d32_writemem[] =
+static struct MemoryWriteAddress dragon32_writemem[] =
 {
-	{ 0x0000, 0x7fff, dragon_ram_w, &dragon_ram },
+	{ 0x0000, 0x7fff, coco_ram_w, &coco_ram },
 	{ 0x8000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xfeff, MWA_ROM }, /* cart area */
 	{ 0xff00, 0xff1f, pia_0_w },
@@ -77,7 +88,7 @@ static struct MemoryReadAddress d64_readmem[] =
 
 static struct MemoryWriteAddress d64_writemem[] =
 {
-	{ 0x0000, 0x7fff, dragon_ram_w, &dragon_ram },
+	{ 0x0000, 0x7fff, coco_ram_w, &coco_ram },
 	{ 0x8000, 0xfeff, MWA_BANK1 },
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
@@ -163,7 +174,7 @@ static void init_palette(unsigned char *sys_palette, unsigned short *sys_colorta
   PA1: 8   9   :   ;   ,   -   .   /
   PA0: 0   1   2   3   4   5   6   7
  */
-INPUT_PORTS_START( dragon )
+INPUT_PORTS_START( dragon32 )
 	PORT_START /* KEY ROW 0 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "0	  ", KEYCODE_0, IP_JOY_NONE)
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "1	 !", KEYCODE_1, IP_JOY_NONE)
@@ -338,14 +349,14 @@ static struct DACinterface d_dac_interface =
 	{ 100 }
 };
 
-static struct MachineDriver d32_machine_driver =
+static struct MachineDriver machine_driver_dragon32 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
 			894886,	/* 0,894886 Mhz */
-			d32_readmem,d32_writemem,
+			dragon32_readmem,dragon32_writemem,
 			0, 0,
 			dragon_interrupt, 1,
 			0, 0,
@@ -381,7 +392,7 @@ static struct MachineDriver d32_machine_driver =
 	}
 };
 
-static struct MachineDriver coco_machine_driver =
+static struct MachineDriver machine_driver_coco =
 {
 	/* basic machine hardware */
 	{
@@ -396,7 +407,7 @@ static struct MachineDriver coco_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
 	0,
-	dragon64_init_machine,
+	coco_init_machine,
 	dragon_stop_machine,
 
 	/* video hardware */
@@ -424,7 +435,7 @@ static struct MachineDriver coco_machine_driver =
 	}
 };
 
-static struct MachineDriver coco3_machine_driver =
+static struct MachineDriver machine_driver_coco3 =
 {
 	/* basic machine hardware */
 	{
@@ -473,49 +484,10 @@ static struct MachineDriver coco3_machine_driver =
 
 ***************************************************************************/
 
-ROM_START(d32)
+ROM_START(dragon32)
 	ROM_REGIONX(0x10000,REGION_CPU1)
-	ROM_LOAD("d32.rom",	 0x8000, 0x4000, 0xe3879310)
+	ROM_LOAD("d32.rom",    0x8000,  0x4000, 0xe3879310)
 ROM_END
-
-struct GameDriver dragon32_driver =
-{
-	__FILE__,
-	0,
-	"dragon32",
-	"Dragon 32",
-	"1982",
-	"Dragon Data Ltd",
-	"Mathis Rosenhauer",
-	0,
-	&d32_machine_driver,
-	0,
-
-	rom_d32,				/* rom module */
-	dragon32_rom_load,			/* load rom_file images */
-	0,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	0,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	1,						/* number of cassette drives supported */
-	0,
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_dragon,
-
-	0,						/* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	ORIENTATION_DEFAULT | GAME_COMPUTER,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
 
 ROM_START(coco)
      ROM_REGIONX(0x18000,REGION_CPU1)
@@ -529,121 +501,228 @@ ROM_START(coco3)
      ROM_LOAD("disk.rom",  0x8C000, 0x2000, 0x7d48ba8e)
 ROM_END
 
-struct GameDriver coco_driver =
-{
-	__FILE__,
-	0,
-	"coco",
-	"Color Computer",
-	"1982",
-	"Radio Shack",
-	"Mathis Rosenhauer",
-	0,
-	&coco_machine_driver,
-	0,
-
-	rom_coco,				/* rom module */
-	dragon64_rom_load,			/* load rom_file images */
-	0,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	4,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	1,						/* number of cassette drives supported */
-	0,
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_coco,
-
-	0,						/* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	ORIENTATION_DEFAULT| GAME_COMPUTER,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
-struct GameDriver coco3_driver =
-{
-	__FILE__,
-	0,
-	"coco3",
-	"Color Computer 3",
-	"1986",
-	"Radio Shack",
-	"Nate Woods",
-	0,
-	&coco3_machine_driver,
-	0,
-
-	rom_coco3,				/* rom module */
-	coco3_rom_load,			/* load rom_file images */
-	0,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	4,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	1,						/* number of cassette drives supported */
-	0,
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_coco,
-
-	0,						/* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	ORIENTATION_DEFAULT | GAME_COMPUTER,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
 ROM_START(cp400)
      ROM_REGIONX(0x18000,REGION_CPU1)
      ROM_LOAD("cp400.rom",  0x10000, 0x60fe, 0xea9acb1e)
 ROM_END
 
-struct GameDriver cp400_driver =
-{
-	__FILE__,
-	0,
-	"cp400",
-	"Prologica CP400",
-	"1984",
-	"Prologica",
-	"Nate Woods",
-	0,
-	&coco_machine_driver,
-	0,
-
-	rom_cp400,				/* rom module */
-	dragon64_rom_load,			/* load rom_file images */
-	0,				/* identify rom images */
-	0,						/* default file extensions */
-	1,						/* number of ROM slots */
-	4,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	1,						/* number of cassette drives supported */
-	0,
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_coco,
-
-	0,						/* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	ORIENTATION_DEFAULT| GAME_COMPUTER,	/* orientation */
-
-	0,						/* hiscore load */
-	0						/* hiscore save */
+static const struct IODevice io_coco[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		2,					/* count */
+		"pak\0", 		    /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		dragon64_rom_load,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_cassette_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"dsk\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_floppy_init,	/* init */
+		coco_floppy_exit,	/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
+
+static const struct IODevice io_dragon32[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		2,					/* count */
+		"pak\0",		    /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		dragon32_rom_load,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_cassette_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
+};
+
+static const struct IODevice io_cp400[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		2,					/* count */
+		"pak\0",		    /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		dragon64_rom_load,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_cassette_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"dsk\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_floppy_init,	/* init */
+		coco_floppy_exit,	/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
+};
+
+static const struct IODevice io_coco3[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		2,					/* count */
+		"pak\0",		    /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		coco3_rom_load, 	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_cassette_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"dsk\0",			/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		coco_floppy_init,	/* init */
+		coco_floppy_exit,	/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
+};
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+COMP( 1982, coco,	  0,		coco,	  coco, 	0,		  "Tandy Radio Shack",  "Color Computer" )
+COMP( 1986, coco3,	  coco, 	coco3,	  coco, 	0,		  "Tandy Radio Shack",  "Color Computer 3" )
+COMP( 1982, dragon32, coco, 	dragon32, dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
+COMP( 1984, cp400,	  coco, 	coco,	  coco, 	0,		  "Prologica",          "Prologica CP400" )
+

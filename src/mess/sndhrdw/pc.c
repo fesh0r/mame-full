@@ -9,6 +9,7 @@
 	It most probably is on port 0xc0, but I'm not sure...
 
 ****************************************************************************/
+#include "osd_cpu.h"
 #include "sound/streams.h"
 #include "mess/machine/pc.h"
 
@@ -25,12 +26,12 @@ static int speaker_gate = 0;
 int pc_sh_start(void)
 {
 	if (errorlog) fprintf(errorlog, "pc_sh_start\n");
-	channel = stream_init("PC speaker", 50, Machine->sample_rate, 8, 0, pc_sh_update);
+	channel = stream_init("PC speaker", 50, Machine->sample_rate, 0, pc_sh_update);
     return 0;
 }
 
 int pc_sh_custom_start(const struct MachineSound* driver)
-{ 
+{
 	return pc_sh_start();
 }
 
@@ -71,11 +72,11 @@ void pc_sh_custom_update(void) {}
 /************************************/
 /* Sound handler update 			*/
 /************************************/
-void pc_sh_update(int param, void *buffer, int length)
+void pc_sh_update(int param, INT16 *buffer, int length)
 {
-	static INT8 signal = 127;
+	static INT16 signal = 0x7fff;
     static int incr = 0;
-    INT8 *sample = buffer;
+	INT16 *sample = buffer;
 	int baseclock, rate = Machine->sample_rate / 2;
 
 	if( PIT_clock[2] )
@@ -91,7 +92,7 @@ void pc_sh_update(int param, void *buffer, int length)
 		break;
 	case 1: /* speaker on */
 		while( length-- > 0 )
-			*sample++ = 127;
+			*sample++ = 0x7fff;
         break;
 	case 2: /* speaker gate tone from PIT channel #2 */
 		while( length-- > 0 )

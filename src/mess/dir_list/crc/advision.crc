@@ -1,0 +1,11 @@
+# Entex AdventureVision Cartridge CRC List
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+
+
+[advision]
+b6045c9e = Super Cobra
+3e280096 = Defender
+c70d4028 = Space Force
+33a23eba = Turtles

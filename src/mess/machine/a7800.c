@@ -25,7 +25,7 @@ int maria_flag;
 unsigned char *a7800_ram;
 unsigned char *a7800_cartridge_rom;
 unsigned char a7800_cart_type;
-UINT8 *ROM;
+static UINT8 *ROM;
 
 void a7800_init_machine(void) {
 	a7800_ctrl_lock = 0;
@@ -79,14 +79,15 @@ int a7800_id_rom (const char *name, const char *gamename)
 }
 
 
-int a7800_load_rom (void)
+int a7800_load_rom (int id, const char *rom_name)
 {
     FILE *cartfile;
 	long len,start;
     unsigned char header[128];
 
 	ROM = memory_region(REGION_CPU1);
-    a7800_bios_f000 = malloc(0x1000);
+
+	a7800_bios_f000 = malloc(0x1000);
     a7800_cart_f000 = malloc(0x1000);
 
     /* save the BIOS so we can switch it in and out */
@@ -94,13 +95,13 @@ int a7800_load_rom (void)
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
-	if (strlen(rom_name[0])==0)
+	if (strlen(rom_name)==0)
     {
         if (errorlog) fprintf(errorlog,"A7800 - warning: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
+	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-        if (errorlog) fprintf(errorlog,"A7800 - Unable to locate cartridge: %s\n",rom_name[0]);
+		if (errorlog) fprintf(errorlog,"A7800 - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
 	}
 
@@ -170,7 +171,7 @@ int a7800_TIA_r(int offset) {
 }
 
 void a7800_TIA_w(int offset, int data) {
-    switch(offset) {
+	switch(offset) {
         case 0x01:
             if (data & 0x01) {
                 maria_flag=1;
@@ -221,9 +222,15 @@ int a7800_RAM0_r(int offset) {
 	return ROM[0x2040 + offset];
 }
 
+
+void a7800_RAM0_w(int offset, int data) {
+    ROM[0x2040 + offset] = data;
+    ROM[0x40 + offset] = data;
+}
+/*
 void a7800_RAM0_w(int offset, int data) {
 	ROM[0x2040 + offset] = data;
-}
+}	*/
 
 int a7800_RAM1_r(int offset) {
 	return ROM[0x2140 + offset];

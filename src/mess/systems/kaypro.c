@@ -245,7 +245,7 @@ static void kaypro_init_palette(unsigned char *sys_palette, unsigned short *sys_
 	memcpy(sys_colortable,colortable,sizeof(colortable));
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_kaypro =
 {
 	/* basic machine hardware */
 	{
@@ -283,51 +283,38 @@ static struct MachineDriver machine_driver =
 };
 
 ROM_START (kaypro)
-	ROM_REGIONX(0x11600,REGION_CPU1)	/* 64K for the Z80 + 5,5K for CP/M */
+	ROM_REGIONX(0x10000,REGION_CPU1)	/* 64K for the Z80 */
 	/* totally empty :) */
 
-	ROM_REGIONX(0x4000,REGION_GFX1) 	/* 4 * 4K font ram */
+	ROM_REGIONX(0x04000,REGION_GFX1)	 /* 4 * 4K font ram */
 	ROM_LOAD ("kaypro2x.fnt", 0x0000, 0x1000, 0x5f72da5b)
 
-	ROM_REGIONX(0x1600,REGION_CPU2) 	/* 5,5K for CCP and BDOS buffer */
+	ROM_REGIONX(0x01600,REGION_CPU2)	 /* 5,5K for CCP and BDOS buffer */
 	ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, 0xd10cd036)
 ROM_END
 
 
-struct GameDriver kaypro_driver =
-{
-	__FILE__,
-	0,
-	"kaypro",
-	"Kaypro 2x",
-	"19??",
-	"Non Linear Systems Kaypro",
-	0,
-	0,
-	&machine_driver,
-	kaypro_init_driver,
-
-	rom_kaypro,
-	kaypro_rom_load,		/* load rom_file images */
-	kaypro_rom_id,			/* identify rom images */
-	0,						/* default file extensions */
-	1,                      /* number of ROM slots - in this case, a CMD binary */
-	4,                      /* number of floppy drives supported */
-	0,                      /* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,                      /* opcode decoder */
-	0,                      /* pointer to sample names */
-	0,                      /* sound_prom */
-
-	input_ports_kaypro, 	/* input ports */
-
-	0,                      /* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
-
-	0,                      /* hiscore load */
-	0,                      /* hiscore save */
+static const struct IODevice io_kaypro[] = {
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"dsk\0",            /* file extensions */
+		NULL,				/* private */
+		NULL,				/* id */
+		kaypro_floppy_init, /* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+    { IO_END }
 };
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+COMP( 19??, kaypro,   0, 		kaypro,   kaypro,	kaypro,   "Non Linear Systems Kaypro",  "Kaypro 2x" )

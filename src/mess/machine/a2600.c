@@ -4,7 +4,7 @@
 #include "mess/machine/riot.h"
 #include "sound/tiaintf.h"
 
-unsigned char *ROM;
+//unsigned char *ROM;
 
 static int a2600_riot_a_r(int chip);
 static int a2600_riot_b_r(int chip);
@@ -27,13 +27,13 @@ static struct RIOTinterface a2600_riot = {
 unsigned char *a2600_cartridge_rom;
 
 
-int  a2600_ROM_r (int offset)
-{
+//int  a2600_ROM_r (int offset)
+//{
  //if(errorlog) fprintf(errorlog, "offset is %04X\n", offset);
  //if(errorlog) fprintf(errorlog, "opcode at ROM[0x1000 + offset] is %04X\n", ROM[0x1000 + offset]);
  //exit(1);
- return ROM[0x1000 + offset];
-}
+// return ROM[0x1000 + offset];
+//}
 
 
 static int a2600_riot_a_r(int chip)
@@ -164,23 +164,23 @@ int a2600_id_rom (const char *name, const char *gamename)
 
 
 
-int a2600_load_rom (void)
+int a2600_load_rom (int id, const char *rom_name)
 {
     FILE *cartfile;
-	ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
-	if (strlen(rom_name[0])==0)
+	if (strlen(rom_name)==0)
     {
         if (errorlog) fprintf(errorlog,"A2600 - warning: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
+	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-        if (errorlog) fprintf(errorlog,"A2600 - Unable to locate cartridge: %s\n",rom_name[0]);
+		if (errorlog) fprintf(errorlog,"A2600 - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
 	}
-    if (errorlog) fprintf(errorlog,"A2600 - loading Cart - %s \n",rom_name[0]);
+	if (errorlog) fprintf(errorlog,"A2600 - loading Cart - %s \n",rom_name);
 
     a2600_cartridge_rom = &(ROM[0x1000]);		/* 'plug' cart into 0x1000 */
 

@@ -4,6 +4,9 @@
 
 ***************************************************************************/
 #include "cpu/m6502/m6502.h"
+
+#define VERBOSE_DBG 0
+#include "cbm.h"
 #include "mess/machine/vc1541.h"
 #include "mess/machine/6522via.h"
 #include "driver.h"
@@ -41,7 +44,7 @@
  */
 
 #if 0
-static int gcr[]= {
+static int gcr[]= { 
    0xa, 0xb,0x12,0x13,  0xe, 0xf,0x16,0x17,
      9,0x19,0x1a,0x1b,  0xd,0x1d,0x1e,0x15
 };
@@ -61,7 +64,7 @@ static struct {
 struct MemoryReadAddress vc1541_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1800, 0x180f, via_2_r }, // 0 and 1 used in vc20
+	{ 0x1800, 0x180f, via_2_r }, /* 0 and 1 used in vc20 */
 	{ 0x1c00, 0x1c0f, via_3_r },
 	{ 0xc000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -78,7 +81,7 @@ struct MemoryWriteAddress vc1541_writemem[] =
 
 #if 0
 INPUT_PORTS_START( vc1541 )
-	PORT_START
+	PORT_START 
 	PORT_DIPNAME   ( 0x60, 0x00, "Device #", IP_KEY_NONE)
 	PORT_DIPSETTING( 0x00, "8" )
 	PORT_DIPSETTING( 0x40, "9" )
@@ -89,7 +92,7 @@ INPUT_PORTS_END
 
 /*
  via 6522 at 0x1800
- port b
+ port b 
   0 inverted serial data in
   1 inverted serial data out
   2 inverted serial clock in
@@ -119,9 +122,9 @@ static int vc1541_via0_read_portb(int offset)
   case 8: value&=~0x60;break;
   case 9: value&=~0x20;break;
   case 10: value&=~0x40;break;
-  /*case 11:*/
+  case 11: break;
   }
-
+  
   return value;
 }
 
@@ -140,7 +143,7 @@ static void vc1541_via0_write_portb(int offset, int data)
 #endif
 }
 
-/*
+/* 
  via 6522 at 0x1c00
  port b
   0 output steppermotor for drive 1 (not connected)
@@ -183,28 +186,28 @@ static void vc1541_via1_write_portb(int offset, int data)
 }
 
 static struct via6522_interface via2= {
-  0,//vc1541_via0_read_porta,
+  0,/*vc1541_via0_read_porta, */
   vc1541_via0_read_portb,
-  0,//via2_read_ca1,
-  0,//via2_read_cb1,
-  0,//via2_read_ca2,
-  0,//via2_read_cb2,
-  0,//via2_write_porta,
+  0,/*via2_read_ca1, */
+  0,/*via2_read_cb1, */
+  0,/*via2_read_ca2, */
+  0,/*via2_read_cb2, */
+  0,/*via2_write_porta, */
   vc1541_via0_write_portb,
-  0,//via2_write_ca2,
-  0,//via2_write_cb2,
+  0,/*via2_write_ca2, */
+  0,/*via2_write_cb2, */
   vc1541_via0_irq
 }, via3= {
-  0,//via3_read_porta,
+  0,/*via3_read_porta, */
   vc1541_via1_read_portb,
-  0,//via3_read_ca1,
-  0,//via3_read_cb1,
-  0,//via3_read_ca2,
-  0,//via3_read_cb2,
-  0,//via3_write_porta,
+  0,/*via3_read_ca1, */
+  0,/*via3_read_cb1, */
+  0,/*via3_read_ca2, */
+  0,/*via3_read_cb2, */
+  0,/*via3_write_porta, */
   vc1541_via1_write_portb,
-  0,//via3_write_ca2,
-  0,//via3_write_cb2,
+  0,/*via3_write_ca2, */
+  0,/*via3_write_cb2, */
   vc1541_via1_irq
 };
 
@@ -224,13 +227,16 @@ void vc1541_machine_init(void)
   via_reset();
 }
 
-// delivers status for displaying
+/* delivers status for displaying */
 extern void vc1541_drive_status(char *text, int size)
 {
-  text[0]=0;
-  /*snprintf(text,size,"%s %s %s %.2x",vc1541->led?"LED":"led",
+#if VERBOSE_DBG
+  snprintf(text,size,"%s %s %s %.2x",vc1541->led?"LED":"led",
 	   vc1541->stepper?"STEPPER":"stepper",vc1541->motor?"MOTOR":"motor",
-	   vc1541->timer);*/
+	   vc1541->timer);
+#else
+  text[0]=0;
+#endif
   return;
 }
 

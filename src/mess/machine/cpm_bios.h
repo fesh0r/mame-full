@@ -144,7 +144,8 @@ typedef struct {
 extern dsk_fmt formats[];
 
 /* these are in cpm_bios.c */
-extern int	cpm_init(int n, const char *ids[]);
+extern int cpm_floppy_init(int id, const char *name);
+extern int  cpm_init(int n, const char *ids[]);
 extern void cpm_exit(void);
 
 extern int	cpm_bios_command_r(int offset);

@@ -54,8 +54,6 @@ static unsigned char r_skewing6[0x10] =
 	0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
 };
 
-static void prepare_disk (int drive);
-
 /***************************************************************************
   apple2_slot6_init
 ***************************************************************************/
@@ -74,8 +72,8 @@ void apple2_slot6_init(void)
 	read_state    = 1;
 
 	/* Allocate memory for the nibbilized images */
-	prepare_disk (0);
-	prepare_disk (1);
+//	apple2_floppy_init(0, floppy_name[0]);
+//	apple2_floppy_init(1, floppy_name[1]);
 
 	return;
 }
@@ -86,7 +84,7 @@ void apple2_slot6_stop (void)
 	free (a2_drives[1].data);
 }
 
-static void prepare_disk (int drive)
+void apple2_floppy_init(int id, const char *name)
 {
 	void *f;
 	int t, s;
@@ -94,19 +92,19 @@ static void prepare_disk (int drive)
 	int volume;
 	int i;
 
-	a2_drives[drive].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
+	a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
 	/* Default everything to sync byte 0xFF */
-	memset(a2_drives[drive].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
+	memset(a2_drives[id].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
 
 	/* TODO: support .nib and .po images */
-	a2_drives[drive].image_type = A2_DISK_DO;
-	a2_drives[drive].write_protect = 1;
-	a2_drives[drive].track = TOTAL_TRACKS; /* middle of the disk */
-	a2_drives[drive].volume = volume = 254;
-	a2_drives[drive].bytepos = 0;
-	a2_drives[drive].trackpos = 0;
+	a2_drives[id].image_type = A2_DISK_DO;
+	a2_drives[id].write_protect = 1;
+	a2_drives[id].track = TOTAL_TRACKS; /* middle of the disk */
+	a2_drives[id].volume = volume = 254;
+	a2_drives[id].bytepos = 0;
+	a2_drives[id].trackpos = 0;
 
-	f = osd_fopen(Machine->gamedrv->name,floppy_name[drive],OSD_FILETYPE_IMAGE_RW,0);
+	f = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (f==NULL)
 	{
 		if (errorlog) fprintf(errorlog,"Couldn't open image.\n");
@@ -148,26 +146,26 @@ static void prepare_disk (int drive)
 			/* Setup header values */
 			checksum = volume ^ t ^ s;
 
-			a2_drives[drive].data[pos+7]=0xD5;
-			a2_drives[drive].data[pos+8]=0xAA;
-			a2_drives[drive].data[pos+9]=0x96;
-			a2_drives[drive].data[pos+10]=(volume >> 1) | 0xAA;
-			a2_drives[drive].data[pos+11]= volume | 0xAA;
-			a2_drives[drive].data[pos+12]=(t >> 1) | 0xAA;
-			a2_drives[drive].data[pos+13]= t | 0xAA;
-			a2_drives[drive].data[pos+14]=(s >> 1) | 0xAA;
-			a2_drives[drive].data[pos+15]= s | 0xAA;
-			a2_drives[drive].data[pos+16]=(checksum >> 1) | 0xAA;
-			a2_drives[drive].data[pos+17]=(checksum) | 0xAA;
-			a2_drives[drive].data[pos+18]=0xDE;
-			a2_drives[drive].data[pos+19]=0xAA;
-			a2_drives[drive].data[pos+20]=0xEB;
-			a2_drives[drive].data[pos+25]=0xD5;
-			a2_drives[drive].data[pos+26]=0xAA;
-			a2_drives[drive].data[pos+27]=0xAD;
-			a2_drives[drive].data[pos+27+344]=0xDE;
-			a2_drives[drive].data[pos+27+345]=0xAA;
-			a2_drives[drive].data[pos+27+346]=0xEB;
+			a2_drives[id].data[pos+7]=0xD5;
+			a2_drives[id].data[pos+8]=0xAA;
+			a2_drives[id].data[pos+9]=0x96;
+			a2_drives[id].data[pos+10]=(volume >> 1) | 0xAA;
+			a2_drives[id].data[pos+11]= volume | 0xAA;
+			a2_drives[id].data[pos+12]=(t >> 1) | 0xAA;
+			a2_drives[id].data[pos+13]= t | 0xAA;
+			a2_drives[id].data[pos+14]=(s >> 1) | 0xAA;
+			a2_drives[id].data[pos+15]= s | 0xAA;
+			a2_drives[id].data[pos+16]=(checksum >> 1) | 0xAA;
+			a2_drives[id].data[pos+17]=(checksum) | 0xAA;
+			a2_drives[id].data[pos+18]=0xDE;
+			a2_drives[id].data[pos+19]=0xAA;
+			a2_drives[id].data[pos+20]=0xEB;
+			a2_drives[id].data[pos+25]=0xD5;
+			a2_drives[id].data[pos+26]=0xAA;
+			a2_drives[id].data[pos+27]=0xAD;
+			a2_drives[id].data[pos+27+344]=0xDE;
+			a2_drives[id].data[pos+27+345]=0xAA;
+			a2_drives[id].data[pos+27+346]=0xEB;
 			xorvalue = 0;
 
 			for(i=0;i<342;i++)
@@ -178,7 +176,7 @@ static void prepare_disk (int drive)
 					oldvalue=data[i - 0x56];
 					oldvalue=oldvalue>>2;
 					xorvalue ^= oldvalue;
-					a2_drives[drive].data[pos+28+i] = translate6[xorvalue & 0x3F];
+					a2_drives[id].data[pos+28+i] = translate6[xorvalue & 0x3F];
 					xorvalue = oldvalue;
 				}
 				else
@@ -192,12 +190,12 @@ static void prepare_disk (int drive)
 					oldvalue |= (data[i+0xAC] & 0x01) << 5;
 					oldvalue |= (data[i+0xAC] & 0x02) << 3;
 					xorvalue ^= oldvalue;
-					a2_drives[drive].data[pos+28+i] = translate6[xorvalue & 0x3F];
+					a2_drives[id].data[pos+28+i] = translate6[xorvalue & 0x3F];
 					xorvalue = oldvalue;
 				}
 			}
 
-			a2_drives[drive].data[pos+27+343] = translate6[xorvalue & 0x3F];
+			a2_drives[id].data[pos+27+343] = translate6[xorvalue & 0x3F];
 		}
 	}
 
@@ -209,7 +207,7 @@ static void prepare_disk (int drive)
 
 		dump = fopen ("a2_disk.dmp", "w");
 
-		fwrite (a2_drives[drive].data, 1, NIBBLE_SIZE*16*35, dump);
+		fwrite (a2_drives[id].data, 1, NIBBLE_SIZE*16*35, dump);
 		fclose (dump);
 	}
 #endif
@@ -225,8 +223,8 @@ static int ReadByte(int drive)
 {
 	int value;
 
-	/* no image name given for that drive ? */
-	if (!floppy_name[drive])
+	/* no image initialized for that drive ? */
+	if (!a2_drives[drive].data)
 		return 0xFF;
 
 	/* Our drives are always turned on baby, yeah!

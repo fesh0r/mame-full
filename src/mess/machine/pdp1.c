@@ -18,18 +18,18 @@
  *
  */
 
-unsigned char *ROM;
+static unsigned char *ROM;
 
 int pdp1_iot(int *io, int md);
-int pdp1_load_rom (void);
+int pdp1_load_rom (int id, const char *name);
 int pdp1_id_rom (const char *name, const char *gamename);
 void pdp1_plot(int x, int y);
 
 int *pdp1_memory;
 
-int pdp1_load_rom (void)
+int pdp1_load_rom (int id, const char *name)
 {
-	FILE *romfile;
+	void *romfile;
 	int i;
 
 	/* The spacewar! is mandatory for now. */
@@ -39,13 +39,13 @@ int pdp1_load_rom (void)
 		return 1;
 	}
 
-	if (strlen(rom_name[0])==0)
+	if (strlen(name)==0)
 	{
 		if (errorlog)
 			fprintf(errorlog,"PDP1: no file specified (doesn't matter, not used anyway)!\n");
 	}
 	else
-	/* if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0))) */
+	/* if (!(cartfile = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_ROM_CART, 0))) */
 	{
 		if (errorlog)
 			fprintf(errorlog,"PDP1: file specified, but ignored");

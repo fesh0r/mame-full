@@ -30,7 +30,7 @@ static struct MemoryReadAddress readmem[] =
     { 0xa000, 0xbfff, MRA_BANK6 },
     { 0xc000, 0xdfff, MRA_BANK7 },
     { 0xe000, 0xffff, MRA_BANK8 },
-        { -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -39,7 +39,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x4000, 0x7fff, msx_writemem1 },
     { 0x8000, 0xbfff, msx_writemem2 },
     { 0xc000, 0xffff, msx_writemem3 },
-        { -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport[] =
@@ -59,7 +59,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START (msx)
+INPUT_PORTS_START( msx )
  PORT_START /* 0 */
   PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "0", KEYCODE_0, IP_JOY_DEFAULT)
   PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "1", KEYCODE_1, IP_JOY_DEFAULT)
@@ -181,7 +181,7 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1789773,	/* 1.7897725 MHz */
 	{ 10, 10 },
-	AY8910_DEFAULT_GAIN,
+	/*AY8910_DEFAULT_GAIN,*/
 	{ msx_psg_port_a_r },
 	{ msx_psg_port_b_r },
 	{ msx_psg_port_a_w },
@@ -200,7 +200,7 @@ static int msx_interrupt(void)
 	return 0;
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_msx =
 {
 	/* basic machine hardware */
 	{
@@ -255,39 +255,28 @@ ROM_START (msx)
 	ROM_LOAD ("msx.rom", 0x0000, 0x8000, 0x94ee12f3)
 ROM_END
 
-static const char *msx_file_extensions[] = {
-	"rom",
-	0
+static const struct IODevice io_msx[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		MSX_MAX_CARTS,		/* count */
+		"???\0",			/* file extensions */
+        NULL,               /* private */
+		msx_id_rom, 		/* id */
+		msx_load_rom,		/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
 
-struct GameDriver msx_driver =
-{
-	__FILE__,
-	0,
-	"msx",
-	"MSX1",
-	"1983",
-	"ASCII & Microsoft",
-	NULL,
-	NULL,
-	&machine_driver,
-	msx_init,
-	rom_msx,
-	msx_load_rom,
-	msx_id_rom,
-	msx_file_extensions,
-	MSX_MAX_CARTS,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,	/* sound_prom */
 
-	input_ports_msx,
-
-	0, /* TMS9928A_palette */ 0, /* TMS9928A_colortable */ 0,
-	GAME_COMPUTER | ORIENTATION_DEFAULT,
-
-	0, 0
-};
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+COMP( 1983, msx,	  0, 		msx,	  msx,		msx,	  "ASCII & Microsoft",  "MSX1" )

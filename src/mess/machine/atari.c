@@ -22,10 +22,11 @@
 POKEY   pokey;
 PIA 	pia;
 
-unsigned char *ROM;
+static unsigned char *ROM;
 
 typedef struct {
 	UINT8 *image;		/* malloc'd image */
+	const char *name;	/* filename */
 	int type;			/* type of image (XFD, ATR, DSK) */
 	int mode;			/* 0 read only, != 0 read/write */
 	int density;		/* 0 SD, 1 MD, 2 DD */
@@ -99,16 +100,22 @@ void a800_init_machine(void)
 		drv[i].image = NULL;
 }
 
-int a800_load_rom(void)
+int a800_floppy_init(int id, const char *name)
 {
-	static char filename[200];
-	void *file;
+	drv[id].name = name;
+	return 0;
+}
+
+int a800_load_rom(int id, const char *name)
+{
+	const char *filename;
+    void *file;
 	int size;
 	ROM = memory_region(REGION_CPU1);
 
 	/* load an optional monitor.rom */
-	sprintf(filename, "monitor.rom");
-	file = osd_fopen(Machine->gamedrv->name, "monitor.rom", OSD_FILETYPE_IMAGE_R, 0);
+	filename = "monitor.rom";
+	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 	if (file)
 	{
 		LOG((errorlog,"%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename));
@@ -121,38 +128,27 @@ int a800_load_rom(void)
 	}
 
     /* load an optional (dual) cartidge (e.g. basic.rom) */
-	if( strlen(rom_name[0]) )
+	if( strlen(name) )
 	{
-		strcpy(filename, rom_name[0]);
+		filename = name;
 		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 		if( file )
 		{
-			size = osd_fread(file, ROM + 0x10000, 0x2000);
-            a800_cart_loaded = size / 0x2000;
-			size = osd_fread(file, ROM + 0x12000, 0x2000);
-			a800_cart_16k = size / 0x2000;
-			osd_fclose(file);
-			LOG((errorlog,"%s loaded left cartridge '%s' size %s\n",
-				Machine->gamedrv->name,
-				filename,
-				(a800_cart_16k) ? "16K":"8K"));
-			if( strlen(rom_name[1]) )
+			if( id )
 			{
-				strcpy(filename, rom_name[1]);
-				file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
-				if( file )
-				{
-					size = osd_fread(file, ROM + 0x12000, 0x2000);
-					a800_cart_16k = (size == 0x2000);
-					osd_fclose(file);
-					LOG((errorlog,"%s loaded right cartridge '%s' size 16K\n",
-						Machine->gamedrv->name,
-						filename));
-				}
-				else
-				{
-					LOG((errorlog,"%s cartridge '%s' not found\n", Machine->gamedrv->name, filename));
-				}
+				size = osd_fread(file, ROM + 0x12000, 0x2000);
+				a800_cart_16k = (size == 0x2000);
+				osd_fclose(file);
+				LOG((errorlog,"%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, filename));
+            }
+			else
+			{
+				size = osd_fread(file, ROM + 0x10000, 0x2000);
+				a800_cart_loaded = size / 0x2000;
+				size = osd_fread(file, ROM + 0x12000, 0x2000);
+				a800_cart_16k = size / 0x2000;
+				osd_fclose(file);
+				LOG((errorlog,"%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, filename, (a800_cart_16k) ? "16K":"8K"));
 			}
 			if( a800_cart_loaded )
 				a800_setbank( 1 );
@@ -192,7 +188,7 @@ void a800xl_init_machine(void)
 }
 
 
-int a800xl_load_rom(void)
+int a800xl_load_rom(int id, const char *rom_name)
 {
     static char filename[200];
     void *file;
@@ -216,9 +212,9 @@ int a800xl_load_rom(void)
 	}
 
     /* load an optional (dual) cartidge (e.g. basic.rom) */
-	if( strlen(rom_name[0]) )
+	if( strlen(rom_name) )
     {
-        strcpy(filename, rom_name[0]);
+		strcpy(filename, rom_name);
         file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
         if( file )
         {
@@ -259,7 +255,7 @@ void a5200_init_machine(void)
 	antic_reset();
 }
 
-int a5200_load_rom(void)
+int a5200_load_rom(int id, const char *rom_name)
 {
 	static char filename[200];
 	void *file;
@@ -267,9 +263,9 @@ int a5200_load_rom(void)
 	ROM = memory_region(REGION_CPU1);
 
 	/* load an optional (dual) cartidge */
-	if( strlen(rom_name[0]) )
+	if( strlen(rom_name) )
 	{
-		strcpy(filename, rom_name[0]);
+		strcpy(filename, rom_name);
 		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 		if (file)
 		{
@@ -393,7 +389,7 @@ static  xfd_format xfd_formats[] = {
  * type of image and store the results into the global drv[] structure
  *
  *****************************************************************************/
-static  void open_floppy(int drive)
+static void open_floppy(int drive)
 {
 #define MAXSIZE 2880 * 256 + 80
 	char * ext;
@@ -403,9 +399,9 @@ static  void open_floppy(int drive)
 
 	if( !drv[drive].image )
     {
-        if (!strlen(floppy_name[drive]))
+		if (!strlen(drv[drive].name))
             return;
-        ext = strrchr(floppy_name[drive], '.');
+		ext = strrchr(drv[drive].name, '.');
         /* no extension: assume XFD format (no header) */
         if (!ext)
         {
@@ -443,19 +439,19 @@ static  void open_floppy(int drive)
             return;
         /* try to open the image read/write */
 		drv[drive].mode = 1;
-		file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+		file = osd_fopen(Machine->gamedrv->name, drv[drive].name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
         if (!file)
         {
             /* if this fails, try to open it read only */
 			drv[drive].mode = 0;
-            file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			file = osd_fopen(Machine->gamedrv->name, drv[drive].name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
         }
 		/* still failed, so create a new image */
         if (!file)
         {
 			/* if this fails, try to open it read only */
 			drv[drive].mode = 1;
-			file = osd_fopen(Machine->gamedrv->name, floppy_name[drive], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+			file = osd_fopen(Machine->gamedrv->name, drv[drive].name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
 			if( file )
 			{
 				int sector;
@@ -587,7 +583,7 @@ static  void open_floppy(int drive)
         }
 		LOG((errorlog,"atari opened image #%d '%s', %d sectors (%d %s%s) %d bytes/sector\n",
                 drive+1,
-                floppy_name[drive],
+				drv[drive].name,
 				drv[drive].sectors,
 				drv[drive].tracks,
 				(drv[drive].heads == 1) ? "SS" : "DS",

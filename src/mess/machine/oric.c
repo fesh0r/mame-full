@@ -37,7 +37,7 @@ void oric_set_flash_show (int mode);
 int oric_extract_file_from_tape (int filenum);
 
 unsigned char *oric_ram;
-int oric_load_rom (void);
+int oric_load_rom (int id, const char *name);
 
 unsigned char *oric_IO;
 unsigned char *oric_tape_data;
@@ -77,6 +77,8 @@ int oric_tape_from_rom_patch;
 int oric_tape_position;
 
 char oric_rom_version[40];
+
+static const char *rom_name = NULL;
 
 void oric_init_machine (void)
 {
@@ -302,14 +304,14 @@ void oric_IO_w (int offset, int data)
 
 			if (!oric_extract_file_from_tape (0))
 			{
-				if (!oric_load_rom ())
+				if (!oric_load_rom(0,oric_checkfor_filename))
 				{
 					oric_checkfor_filename[i++] = '.';
 					oric_checkfor_filename[i++] = 't';
 					oric_checkfor_filename[i++] = 'a';
 					oric_checkfor_filename[i++] = 'p';
 					oric_checkfor_filename[i++] = 0;
-					oric_load_rom ();
+					oric_load_rom(0,oric_checkfor_filename);
 				}
 			}
 			// if (oric_runadd != 0) cpu_set_pc(oric_runadd);
@@ -437,14 +439,13 @@ int oric_interrupt (void)
 			if (oric_countdown_1 == 0)
 			{
 				// Try to load tape image and execute it ...
-				if (!oric_load_rom ())
+				if (!oric_load_rom (0,rom_name))
 				{
 					if (oric_runadd == 0x5555)
 						oric_runadd = 0;
 					if (oric_runadd != 0)
 						cpu_set_pc (oric_runadd);
 				}
-				//oric_load_rom();
 			}
 		}
 
@@ -597,15 +598,19 @@ int oric_extract_file_from_tape (int filenum)
 	return 1;
 }
 
-int oric_load_rom (void)
+int oric_load_rom(int id, const char *name)
 {
 	void *file;
 
-	if (oric_tape_from_rom_patch == 0)
+	/* HJB: save name for loading the rom later in the timer code.. ugly :( */
+    if( !rom_name )
+		rom_name = name;
+
+    if (oric_tape_from_rom_patch == 0)
 	{
-		if ((unsigned char) rom_name[0] == (unsigned char) 0)
+		if (!name)
 			return 1;
-		file = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_RW, 0);
+		file = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
 	}
 	else
 	{

@@ -23,11 +23,11 @@ typedef struct {
 } MSX;
 
 /* start/stop functions */
-void msx_init (void);
+void init_msx(void);
 void msx_ch_reset (void);
 void msx_ch_stop (void);
+int msx_load_rom (int id, const char *name);
 int msx_id_rom (const char *name, const char *gamename);
-int msx_load_rom (void);
 
 /* I/O functions */
 void msx_ppi_w (int offset, int data);

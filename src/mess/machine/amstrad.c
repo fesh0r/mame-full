@@ -31,7 +31,7 @@ void    AmstradCPC_SetUpperRom(int);
 void    Amstrad_RethinkMemory(void);
 void    Amstrad_Init(void);
 void    amstrad_handle_snapshot(unsigned char *);
-void     amstrad_disk_image_init(void);
+void     amstrad_disk_image_init(int id, unsigned char *pDiskImage);
 
 
 /* hd6845s functions */
@@ -41,11 +41,21 @@ void    hd6845s_index_w(int data);
 void    hd6845s_register_w(int data);
 int 	hd6845s_getreg(int);
 
-
-static unsigned char *file_loaded = NULL;
-static int snapshot_loaded = 0;
+static unsigned char *snapshot = NULL;
+static unsigned char *amstrad_floppy[2] = {NULL, NULL};
+static unsigned char *file_loaded;
 
 extern unsigned char *Amstrad_Memory;
+static int snapshot_loaded;
+
+typedef struct
+{
+        unsigned char *data;
+        int track_offsets[84*2];
+        int sector_offsets[20];
+} amstrad_drive;
+
+//static amstrad_drive drives[2];
 
 int amstrad_disk_image_type;
 
@@ -58,44 +68,24 @@ int amstrad_opbaseoverride(int pc)
   if (snapshot_loaded)
   {
         /* its a snapshot file - setup hardware state */
-        amstrad_handle_snapshot(file_loaded);
+        amstrad_handle_snapshot(snapshot);
   }
 
   return (cpu_get_pc() & 0x0ffff);
 }
 
-void    amstrad_init_machine(void)
+void    amstrad_setup_machine(void)
 {
-        //int i;
-//        unsigned char *gfx = memory_region(REGION_GFX1);
-
         /* allocate ram - I control how it is accessed so I must
         allocate it somewhere - here will do */
         Amstrad_Memory = malloc(128*1024);
 
-  //      for (i=0; i<256; i++)
-    //    {
-      //          gfx[i] = i;
-        //}
-
-
-        Amstrad_Init();
-
-        if (file_loaded!=NULL)
+        if (snapshot_loaded)
         {
-                /* snapshot? */
-                if (memcmp(&file_loaded[0],"MV - SNA",8)==0)
-                {
-                   /* setup for snapshot */
-                   snapshot_loaded = 1;
-                   cpu_setOPbaseoverride(0,amstrad_opbaseoverride);
-                }
-                else
-                {
-                   /* must be a disk image */
-                   amstrad_disk_image_init();
-                }
+           /* setup for snapshot */
+           cpu_setOPbaseoverride(0,amstrad_opbaseoverride);
         }
+
 
         if (!snapshot_loaded)
         {
@@ -109,11 +99,6 @@ void    amstrad_shutdown_machine(void)
 		free(Amstrad_Memory);
 
 	Amstrad_Memory = NULL;
-
-        if (file_loaded!=NULL)
-                free(file_loaded);
-
-
 }
 
 /* load CPCEMU style snapshots */
@@ -256,105 +241,143 @@ void    amstrad_handle_snapshot(unsigned char *pSnapshot)
 
 }
 
-/* load image, either snapshot or disk image */
-int	amstrad_rom_load()
+/* load image */
+int amstrad_load(const char *name, unsigned char **ptr)
 {
-        void *file;
+	void *file;
+	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
 
-        char *filename_source = NULL;
+	if (file)
+	{
+		int datasize;
+		unsigned char *data;
 
-        /* rom_name for .sna etc */
-        if (rom_name[0]!=0)
+		/* get file size */
+		datasize = osd_fsize(file);
+
+		if (datasize!=0)
+		{
+			/* malloc memory for this data */
+			data = malloc(datasize);
+
+			if (data!=NULL)
+			{
+				/* read whole file */
+				osd_fread(file, data, datasize);
+
+                                *ptr = data;
+
+				/* close file */
+				osd_fclose(file);
+
+				if (errorlog) fprintf(errorlog,"File loaded!\r\n");
+
+				/* ok! */
+                                return 1;
+			}
+			osd_fclose(file);
+
+		}
+	}
+
+    return 0;
+}
+
+/* load snapshot */
+int amstrad_snapshot_load(int id, const char *name)
+{
+        snapshot_loaded = 0;
+
+        if (amstrad_load(name,&snapshot))
         {
-                filename_source = (char *)&rom_name[0];
+                snapshot_loaded = 1;
+                return 0;
         }
 
-        /* floppy_name for .dsk etc */
-        if (floppy_name[0]!=0)
-        {
-                filename_source = (char *)&floppy_name[0];
-        }
+        return 1;
+}
 
-        if (filename_source!=NULL)
-        {
-                file = osd_fopen(Machine->gamedrv->name, filename_source, OSD_FILETYPE_IMAGE_RW, 0);
+/* check if a snapshot file is valid to load */
+int amstrad_snapshot_id(const char *name, const char *gamename)
+{
+        int valid;
+        unsigned char *snapshot_data;
 
-                if (file)
+        valid = 0;
+
+        /* load snapshot */
+        if (amstrad_load(gamename, &snapshot_data))
+        {
+                /* snapshot loaded, check it is valid */
+
+                if (memcmp(snapshot_data, "MV - SNA", 8)==0)
                 {
-                        int datasize;
-                        unsigned char *data;
-
-                        /* get file size */
-                        datasize = osd_fsize(file);
-
-                        if (datasize!=0)
-                        {
-                                /* malloc memory for this data */
-                                data = malloc(datasize);
-
-                                if (data!=NULL)
-                                {
-                                        /* read whole file */
-                                        osd_fread(file, data, datasize);
-
-                                        file_loaded = data;
-
-                                        /* close file */
-                                        osd_fclose(file);
-
-                                        if (errorlog) fprintf(errorlog,"File loaded!\r\n");
-
-                                        /* ok! */
-                                        return 0;
-                                }
-                                osd_fclose(file);
-
-                        }
-
-
-                        return 1;
+                        valid = 1;
                 }
+
+                /* free the file */
+                free(snapshot_data);
         }
-        return 0;
+       
+        return valid;
+
 }
 
-/* simple check to see if image file is supported */
-int	amstrad_rom_id(const char *name, const char *gamename)
+void    amstrad_snapshot_exit(int id)
 {
-#if 0
-        int return_value;
-        FILE *romfile;
-        unsigned char header_data[8];
-
-        return_value = 0;
-
-        /* load file */
-        if (!(romfile=osd_fopen(name, gamename, OSD_FILETYPE_IMAGE_R,0))) return 0;
-
-        /* read 8 bytes of the file */
-        osd_fread(romfile, header_data, 8);
-
-        /* check header */
-        if (
-                /* CPCEMU style snapshot? */
-                (memcmp(header_data, "MV - SNA", 8)==0) ||
-                /* CPCEMU style standard disk image? */
-                (memcmp(header_data, "MV - CPC", 8)==0) ||
-                /* CPCEMU style extended disk image? */
-                (memcmp(header_data, "EXTENDED", 8)==0)
-            )
-        {
-                return_value = 1;
-        }
-
-        osd_fclose(romfile);
-
-        return return_value;
-#endif
-
-return 1;
+        if (snapshot!=NULL)
+                free(snapshot);
 }
 
+/* load floppy */
+int amstrad_floppy_load(int id, const char *name)
+{
+        /* load disk image */
+        if (amstrad_load(name,&amstrad_floppy[id]))
+        {
+            amstrad_disk_image_init(id,amstrad_floppy[0]);
+
+            return 0;
+        }
+
+        return 1;
+}
+
+int amstrad_floppy_id(const char *name, const char *gamename)
+{
+        int valid;
+        unsigned char *diskimage_data;
+
+        valid = 0;
+
+        /* load disk image */
+        if (amstrad_load(gamename, &diskimage_data))
+        {
+                /* disk image loaded */
+
+                if (
+                        /* standard disk image? */
+                        (memcmp(diskimage_data, "MV - CPC", 8)==0) ||
+                        /* extended disk image? */
+                        (memcmp(diskimage_data, "EXTENDED", 8)==0)
+                   )
+                   {
+                        valid = 1;
+
+                   }
+
+                   /* free the file */
+                   free(diskimage_data);
+        }
+
+        return valid;
+}
+
+void    amstrad_floppy_exit(int id)
+{
+        if (amstrad_floppy[id]!=NULL)
+                free(amstrad_floppy[id]);
+}
 
 /* disk image and extended disk image support code */
 /* supports up to 84 tracks and 2 sides */
@@ -537,10 +560,10 @@ void    amstrad_extended_dsk_init_sector_offsets(int track,int side)
 
 
 
-void     amstrad_disk_image_init(void)
+void     amstrad_disk_image_init(int id, unsigned char *pDiskImage)
 {
 
-        if (memcmp(&file_loaded[0],"MV - CPC",8)==0)
+        if (memcmp(pDiskImage,"MV - CPC",8)==0)
         {
                 amstrad_disk_image_type = 0;
 
@@ -549,7 +572,7 @@ void     amstrad_disk_image_init(void)
 
                 nec765_setup_drive_status(0);
         }
-        else if (memcmp(&file_loaded[0],"EXTENDED",8)==0)
+        else if (memcmp(pDiskImage,"EXTENDED",8)==0)
         {
                 amstrad_disk_image_type = 1;
 
@@ -558,12 +581,6 @@ void     amstrad_disk_image_init(void)
 
                 nec765_setup_drive_status(0);
 
-        }
-        else
-        {
-                amstrad_disk_image_type = -1;
-
-                if (errorlog) fprintf(errorlog,"CPC6128 driver: Unsupported disk image format\r\n");
         }
 }
 

@@ -14,24 +14,27 @@
 
 extern unsigned char *Enterprise_RAM;
 
-void    Enterprise_SetupPalette(void);
+void Enterprise_SetupPalette(void);
 
-void    enterprise_init_machine(void)
+//static const char *floppy_name[4];
+
+void enterprise_init_machine(void)
 {
-        /* allocate memory. */
-        /* I am allocating it because I control how the ram is
-        accessed. Mame will not allocate any memory because all
-        the memory regions have been defined as MRA_BANK? */
-        /* 128k memory, 32k for dummy read/write operations
-        where memory bank is not defined */
-        Enterprise_RAM = malloc((128*1024)+32768);
+	/* allocate memory. */
+	/* I am allocating it because I control how the ram is
+	 * accessed. Mame will not allocate any memory because all
+	 * the memory regions have been defined as MRA_BANK?
+	*/
+	/* 128k memory, 32k for dummy read/write operations
+	 * where memory bank is not defined
+	 */
+	Enterprise_RAM = malloc((128*1024)+32768);
 
-        /* initialise the hardware */
+	/* initialise the hardware */
 	Enterprise_Initialise();
-
 }
 
-void    enterprise_shutdown_machine(void)
+void enterprise_shutdown_machine(void)
 {
 	if (Enterprise_RAM != NULL)
 		free(Enterprise_RAM);
@@ -39,13 +42,9 @@ void    enterprise_shutdown_machine(void)
 	Enterprise_RAM = NULL;
 }
 
-int	enterprise_rom_load()
+int enterprise_floppy_init(int id, const char *name)
 {
-	return 0;
-}
+    //floppy_name[id] = name;
 
-int	enterprise_rom_id(const char *name, const char *gamename)
-{
-	return 1;
+    return 0;
 }
-

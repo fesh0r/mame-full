@@ -122,10 +122,10 @@ extern UINT8 pc_port[0x400];
 
 /* from machine/pc.c */
 extern int	pc_framecnt;
-extern int  pc_rom_load(void);
-extern int  pc_rom_id(const char *name, const char *gamename);
+extern int	pc_floppy_init(int id, const char *name);
+extern int	pc_harddisk_init(int id, const char *name);
 
-extern void pc_init_driver(void);
+extern void init_pc(void);
 extern void pc_mda_init_machine(void);
 extern void pc_cga_init_machine(void);
 extern void pc_t1t_init_machine(void);
@@ -277,7 +277,7 @@ extern int  pc_sh_custom_start(const struct MachineSound *driver);
 extern void pc_sh_custom_update(void);
 #endif
 extern void pc_sh_stop(void);
-extern void pc_sh_update(int param, void *buff, int length);
+extern void pc_sh_update(int param, INT16 *buff, int length);
 extern void pc_sh_speaker(int mode);
 
 /* from machine/pc_fdc.c */
@@ -289,10 +289,10 @@ extern int	pc_fdc_data_r(void);
 extern int	pc_fdc_status_r(void);
 extern int	pc_fdc_DIR_r(void);
 
-extern void *pc_fdc_file[MAX_FLOPPY];
-extern UINT8 pc_fdc_spt[MAX_FLOPPY];
-extern UINT8 pc_fdc_heads[MAX_FLOPPY];
-extern UINT8 pc_fdc_scl[MAX_FLOPPY];
+extern void *pc_fdc_file[2];
+extern UINT8 pc_fdc_spt[2];
+extern UINT8 pc_fdc_heads[2];
+extern UINT8 pc_fdc_scl[2];
 
 #if 0
 /* from machine/pc_ide.c */
@@ -316,7 +316,7 @@ extern int	pc_ide_status_r(void);
 #endif
 
 /* from machine/pc_hdc.c */
-extern void *pc_hdc_file[MAX_HARD];
+extern void *pc_hdc_file[4];
 
 extern void pc_hdc_data_w(int n, int data);
 extern void pc_hdc_reset_w(int n, int data);

@@ -13,8 +13,6 @@
 #define PORTB 0
 #define PORTA 1
 
-//unsigned char *ROM;
-
 /* from vidhrdw/vectrex.c */
 extern void vector_add_point_stereo (int x, int y, int color, int intensity);
 extern void (*vector_add_point_function) (int, int, int, int);
@@ -23,7 +21,7 @@ extern void (*vector_add_point_function) (int, int, int, int);
   Global variables
  *********************************************************************/
 unsigned char *vectrex_ram;        /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 -- 0xcfff */
-unsigned char vectrex_via_pinlevel[2];
+unsigned char vectrex_via_out[2];
 int vectrex_beam_color = WHITE;    /* the color of the vectrex beam */
 int vectrex_imager_status = 0;     /* 0 = off, 1 = right eye, 2 = left eye */
 int vectrex_refresh_with_T2;       /* For all known games it's OK to do the screen refresh when T2 expires.
@@ -49,36 +47,30 @@ static double imager_wheel_time = 0;
 /*********************************************************************
   ROM load and id functions
  *********************************************************************/
-int vectrex_load_rom (void)
+int vectrex_load_rom (int id, const char *name)
 {
-	FILE *cartfile;
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	unsigned char *vectrex_cartridge_rom;
-
-	cartfile = NULL;
+	FILE *cartfile = 0;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
 	 * in Minestorm where the exec-rom attempts to access a vector list here.
 	 * 1 signals the end of the vector list.
 	 */
-	memset (ROM, 1, 0x8000);
+	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
 	/* If no cartridge is given, the built in game is started (minestorm) */
-	if (strlen(rom_name[0])==0)
+	if (strlen(name)==0)
 	{
 		if (errorlog) fprintf(errorlog,"Vectrex: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
+	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog) fprintf(errorlog,"Vectrex - Unable to locate cartridge: %s\n",rom_name[0]);
+		if (errorlog) fprintf(errorlog,"Vectrex - Unable to locate cartridge: %s\n",name);
 		return 1;
 	}
 
-	vectrex_cartridge_rom = &(ROM[0x0000]);
-
-	if (cartfile!=NULL)
+	if (cartfile)
 	{
-		osd_fread (cartfile, vectrex_cartridge_rom, 0x8000);
+		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);
 		osd_fclose (cartfile);
 	}
 
@@ -86,11 +78,11 @@ int vectrex_load_rom (void)
 
 	/* A bit ugly but somehow we need to know which 3D game is running */
 	/* A better way would be to do this by CRC */
-	if (!strcmp(rom_name[0],"narrow.bin"))
+	if (!strcmp(name,"narrow.bin"))
 		vectrex_imager_angles = narrow_escape_angles;
-	if (!strcmp(rom_name[0],"crazy.bin"))
+	if (!strcmp(name,"crazy.bin"))
 		vectrex_imager_angles = crazy_coaster_angles;
-	if (!strcmp(rom_name[0],"mine3.bin"))
+	if (!strcmp(name,"mine3.bin"))
 		vectrex_imager_angles = minestorm_3d_angles;
 
 	return 0;
@@ -98,25 +90,24 @@ int vectrex_load_rom (void)
 
 int vectrex_id_rom (const char *name, const char *gamename)
 {
-	FILE *romfile;
+	void *romfile;
 	char magic[5];
-	int retval;
 
 	/* If no file was specified, don't bother */
-	if (strlen(gamename)==0) return 1;
+	if (strlen(gamename)==0)
+		return 1;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
-
-	retval = 0;
+	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0)))
+		return 0;
 
 	/* Verify the file is accepted by the Vectrex bios */
 	osd_fread (romfile, magic, 5);
-	if (!memcmp(magic,"g GCE", 5))
-		retval = 1;
-
 	osd_fclose (romfile);
 
-	return retval;
+	if (!memcmp(magic,"g GCE", 5))
+		return 1;
+	else
+		return 0;
 }
 
 /*********************************************************************
@@ -235,38 +226,38 @@ void v_via_irq (int level)
 int v_via_pb_r (int offset)
 {
 	/* Joystick */
-	if (vectrex_via_pinlevel[PORTA] & 0x80)
+	if (vectrex_via_out[PORTA] & 0x80)
 	{
-		if ( input_port_1_r(0) & (0x02<<(vectrex_via_pinlevel[PORTB] & 0x6)))
-			vectrex_via_pinlevel[PORTB] &= ~0x20;
+		if ( input_port_1_r(0) & (0x02<<(vectrex_via_out[PORTB] & 0x6)))
+			vectrex_via_out[PORTB] &= ~0x20;
 		else
-			vectrex_via_pinlevel[PORTB] |= 0x20;
+			vectrex_via_out[PORTB] |= 0x20;
 	}
 	else
 	{
-		if ( input_port_1_r(0) & (0x01<<(vectrex_via_pinlevel[PORTB] & 0x6)))
-			vectrex_via_pinlevel[PORTB] |= 0x20;
+		if ( input_port_1_r(0) & (0x01<<(vectrex_via_out[PORTB] & 0x6)))
+			vectrex_via_out[PORTB] |= 0x20;
 		else
-			vectrex_via_pinlevel[PORTB] &= ~0x20;
+			vectrex_via_out[PORTB] &= ~0x20;
 	}
-	return vectrex_via_pinlevel[PORTB];
+	return vectrex_via_out[PORTB];
 }
 
 int v_via_pa_r (int offset)
 {
-	if ((!(vectrex_via_pinlevel[PORTB] & 0x10)) && (vectrex_via_pinlevel[PORTB] & 0x08))
+	if ((!(vectrex_via_out[PORTB] & 0x10)) && (vectrex_via_out[PORTB] & 0x08))
 		/* BDIR inactive, we can read the PSG. BC1 has to be active. */
 	{
-		vectrex_via_pinlevel[PORTA] = AY8910_read_port_0_r (0)
+		vectrex_via_out[PORTA] = AY8910_read_port_0_r (0)
 			& ~(vectrex_imager_pinlevel & 0x80);
 		vectrex_imager_pinlevel &= ~0x80;
 	}
-	return vectrex_via_pinlevel[PORTA];
+	return vectrex_via_out[PORTA];
 }
 
 int s1_via_pb_r (int offset)
 {
-	return (vectrex_via_pinlevel[PORTB] & ~0x40) | ((input_port_1_r(0) & 0x1)<<6);
+	return (vectrex_via_out[PORTB] & ~0x40) | ((input_port_1_r(0) & 0x1)<<6);
 }
 
 /*********************************************************************

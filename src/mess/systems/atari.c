@@ -292,8 +292,8 @@ INPUT_PORTS_START( a800 )
     PORT_DIPSETTING(0x80, "Joystick")
     PORT_DIPSETTING(0x00, "Cursor")
 	PORT_BITX(0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Television Artifacts", KEYCODE_F6, IP_JOY_NONE )
-    PORT_DIPSETTING(0x40, "On")
-	PORT_DIPSETTING(0x00, "Off")
+	PORT_DIPSETTING(0x00, DEF_STR( Off ))
+    PORT_DIPSETTING(0x40, DEF_STR( On ))
 	PORT_BITX(0x20, 0x00, IPT_DIPSWITCH_NAME,			   "Turn/Swap floppy images", KEYCODE_F7, IP_JOY_NONE )
     PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(0x08, 0x08, IPT_KEYBOARD, "cons.3: Reset",  KEYCODE_F4, IP_JOY_NONE )
@@ -375,8 +375,8 @@ INPUT_PORTS_START( a800xl )
     PORT_DIPSETTING(0x80, "Joystick")
     PORT_DIPSETTING(0x00, "Cursor")
 	PORT_BITX(0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Television Artifacts", KEYCODE_F6, IP_JOY_NONE )
-    PORT_DIPSETTING(0x40, "On")
-	PORT_DIPSETTING(0x00, "Off")
+	PORT_DIPSETTING(0x00, DEF_STR( Off ))
+    PORT_DIPSETTING(0x40, DEF_STR( On ))
 	PORT_BITX(0x20, 0x00, IPT_DIPSWITCH_NAME,			   "Turn/Swap floppy images", KEYCODE_F7, IP_JOY_NONE )
     PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(0x08, 0x08, IPT_KEYBOARD, "cons.3: Reset",  KEYCODE_F4, IP_JOY_NONE )
@@ -445,13 +445,13 @@ INPUT_PORTS_START( a800xl )
 INPUT_PORTS_END
 
 /* !!! this is partially wrong !!! */
-INPUT_PORTS_START( 5200 )
+INPUT_PORTS_START( a5200 )
 
 	PORT_START	/* IN0 switch settings */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED)
 	PORT_BITX(0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Television Artifacts", KEYCODE_F6, IP_JOY_NONE )
-    PORT_DIPSETTING(0x40, "On")
-    PORT_DIPSETTING(0x00, "Off")
+    PORT_DIPSETTING(0x00, DEF_STR( Off ))
+    PORT_DIPSETTING(0x40, DEF_STR( On ))
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START	/* IN1 keypad # 1 */
@@ -642,7 +642,7 @@ static struct DACinterface dac_interface =
 	{ 50 }				/* volume */
 };
 
-static struct MachineDriver a800_machine_driver =
+static struct MachineDriver machine_driver_a800 =
 {
 	/* basic machine hardware */
 	{
@@ -690,7 +690,7 @@ static struct MachineDriver a800_machine_driver =
     }
 };
 
-static struct MachineDriver a800xl_machine_driver =
+static struct MachineDriver machine_driver_a800xl =
 {
 	/* basic machine hardware */
 	{
@@ -738,7 +738,7 @@ static struct MachineDriver a800xl_machine_driver =
     }
 };
 
-static struct MachineDriver a5200_machine_driver =
+static struct MachineDriver machine_driver_a5200 =
 {
 	/* basic machine hardware */
 	{
@@ -788,129 +788,81 @@ ROM_START(a800)
 ROM_END
 
 
-
-/* list of file extensions */
-static const char *a800_file_extensions[] =
-{
-	"atr",
-	0       /* end of array */
-};
-
-/* list of file extensions */
-static const char *a5200_file_extensions[] =
-{
-	"bin",
-	0       /* end of array */
-};
-
-
-struct GameDriver a800_driver =
-{
-	__FILE__,
-	0,
-	"a800",
-	"Atari 800",
-	"1979",
-	"Atari",
-	0,
-	0,
-	&a800_machine_driver,
-	0,
-
-	rom_a800,	/* ROM_LOAD structures */
-	a800_load_rom,
-	a800_id_rom,
-	a800_file_extensions,
-	2,	/* number of ROM slots */
-	4,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_a800,
-
-	0, 0, 0,
-	GAME_COMPUTER | ORIENTATION_DEFAULT,
-
-	0, 0,
-};
-
 ROM_START(a800xl)
 	ROM_REGIONX(0x18000,REGION_CPU1) /* 64K for the CPU + 16K + 2 * 8K for cartridges */
 	ROM_LOAD("atarixl.rom", 0xc000, 0x4000, 0x1f9cd270)
 ROM_END
-
-struct GameDriver a800xl_driver =
-{
-	__FILE__,
-	&a800_driver,
-	"a800xl",
-	"Atari 800-XL",
-	"19??",
-	"Atari",
-	0,
-	0,
-	&a800xl_machine_driver,
-	0,
-
-	rom_a800xl, 	/* ROM_LOAD structures */
-	a800xl_load_rom,
-	a800xl_id_rom,
-	a800_file_extensions,
-	1,				/* number of ROM slots */
-	4,				/* number of floppy drives supported */
-	0,				/* number of hard drives supported */
-	0,				/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,				/* sound_prom */
-
-	input_ports_a800xl,
-
-	0, 0, 0,
-	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,
-
-	0, 0,
-};
 
 ROM_START(a5200)
 	ROM_REGIONX(0x14000,REGION_CPU1) /* 64K for the CPU + 16K for cartridges */
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, 0x4248d3e3)
 ROM_END
 
-struct GameDriver a5200_driver =
-{
-	__FILE__,
-	0,
-	"a5200",
-	"Atari 5200",
-	"1982",
-	"Atari",
-	0,
-	0,
-	&a5200_machine_driver,
-	0,
-
-	rom_a5200,		/* ROM_LOAD structures */
-    a5200_load_rom,
-	a5200_id_rom,
-	a5200_file_extensions,
-	1,				/* number of ROM slots */
-	4,				/* number of floppy drives supported */
-	0,				/* number of hard drives supported */
-	0,				/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,				/* sound_prom */
-
-	input_ports_5200,
-
-	0, 0, 0,
-	GAME_NOT_WORKING | ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_a800[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		2,					/* count */
+		"rom\0bin\0",       /* file extensions */
+		NULL,				/* private */
+		a800_id_rom,		/* id */
+		a800_load_rom,		/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"atr\0dsk\0xfd\0",  /* file extensions */
+		NULL,				/* private */
+		NULL,				/* id */
+		a800_floppy_init,	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+    { IO_END }
 };
 
+#define io_a800xl	io_a800
+
+static const struct IODevice io_a5200[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"rom\0bin\0",       /* file extensions */
+		NULL,				/* private */
+		a5200_id_rom,		/* id */
+		a5200_load_rom, 	/* init */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+    { IO_END }
+};
+
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+COMP ( 1979, a800,	   0,		 a800,	   a800,	 0, 	   "Atari",  "Atari 800" )
+COMPX( 19??, a800xl,   a800,	 a800xl,   a800xl,	 0, 	   "Atari",  "Atari 800XL", GAME_NOT_WORKING )
+CONS ( 1982, a5200,    0,		 a5200,    a5200,	 0, 	   "Atari",  "Atari 5200")
 

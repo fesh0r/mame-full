@@ -67,7 +67,7 @@ UINT8 is_cram_dirty;        /* 1= color was modified */
 UINT8 cram_dirty[32];       /* Table of altered colors */
 UINT8 cache[64*512*4];      /* Converted tile cache */
 
-struct osd_bitmap *tmpbitmap = NULL;
+//struct osd_bitmap *tmpbitmap = NULL;
 static int irq_state = 0;
 
 int GameGear;

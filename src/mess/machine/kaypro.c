@@ -116,7 +116,7 @@ static char keyboard[8][10][8] = {
 	},
 };
 
-void kaypro_init_driver(void)
+void init_kaypro(void)
 {
 	UINT8 * gfx = memory_region(REGION_GFX1);
     int i;
@@ -144,14 +144,9 @@ void kaypro_stop_machine(void)
 	cpm_exit();
 }
 
-int kaypro_rom_load(void)
+int kaypro_floppy_init(int id, const char *name)
 {
-	return 0;
-}
-
-int kaypro_rom_id(const char * name, const char * gamename)
-{
-	return 0;
+	return cpm_floppy_init(id,name);
 }
 
 /******************************************************

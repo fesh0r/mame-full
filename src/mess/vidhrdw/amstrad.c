@@ -202,8 +202,6 @@ byte2)
 
                                 plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
                                 amstrad_render_x++;
-                                plot_pixel(bitmap, amstrad_render_x, amstrad_render_y, messpen);
-                                amstrad_render_x++;
 
 				Data = Data<<1;
 

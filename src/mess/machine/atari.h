@@ -39,15 +39,16 @@ typedef struct {
 extern	PIA 	pia;
 
 extern void a800_init_machine(void);
-extern int	a800_load_rom(void);
+extern int	a800_floppy_init(int id, const char *rom_name);
+extern int  a800_load_rom(int id, const char *rom_name);
 extern int	a800_id_rom(const char *name, const char *gamename);
 
 extern void a800xl_init_machine(void);
-extern int	a800xl_load_rom(void);
+extern int	a800xl_load_rom(int id, const char *rom_name);
 extern int	a800xl_id_rom(const char *name, const char *gamename);
 
 extern void a5200_init_machine(void);
-extern int	a5200_load_rom(void);
+extern int	a5200_load_rom(int id, const char *rom_name);
 extern int	a5200_id_rom(const char *name, const char *gamename);
 
 extern void a800_close_floppy(void);

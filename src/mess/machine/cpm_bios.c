@@ -40,6 +40,7 @@ static int mode[NDSK] = {0,};		/* 0 read only, !0 read/write */
 static int bdos_trk[NDSK] = {0,};	/* BDOS track number */
 static int bdos_sec[NDSK] = {0,};	/* BDOS sector number */
 static void *fp[NDSK] = {NULL, };	/* image file pointer */
+static const char *fn[NDSK] = {NULL, }; /* image filenames */
 static void *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
 //static void *pp = NULL; 			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
 //static void *rp = NULL; 			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
@@ -356,6 +357,12 @@ void cpm_jumptable(void)
 	RAM[BIOS_EXEC + 2] = 0xc9;			/* RET */
 }
 
+int cpm_floppy_init(int id, const char *name)
+{
+	fn[id] = name;
+	return 0;
+}
+
 /*****************************************************************************
  *	cpm_init
  *	Initialize the BIOS simulation for 'n' drives of types stored in 'ids'
@@ -501,18 +508,18 @@ int cpm_init(int n, const char *ids[])
 		RAM[DPH0 + d * DPHL + 14] = dph[d].alv & 0xff;
 		RAM[DPH0 + d * DPHL + 15] = dph[d].alv >> 8;
 
-		/* now try to open the image if a floppy_name is given */
-		if( strlen(floppy_name[d]) )
+		/* now try to open the image if a filename is given */
+		if( fn[d] && strlen(fn[d]) )
 		{
 			/* fake name to access the real floppy disk drive A: */
-			if( !stricmp(floppy_name[d], "fd0.dsk") )
+			if( !stricmp(fn[d], "fd0.dsk") )
 			{
 				fp[d] = REAL_FDD;
 				dsk[d].unit = 0;
 			}
 			else
 			/* fake name to access the real floppy disk drive B: */
-			if( !stricmp(floppy_name[d], "fd1.dsk") )
+			if( !stricmp(fn[d], "fd1.dsk") )
 			{
 				fp[d] = REAL_FDD;
 				dsk[d].unit = 1;
@@ -520,20 +527,20 @@ int cpm_init(int n, const char *ids[])
 			else
 			{
 				mode[d] = 1;
-				fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+				fp[d] = osd_fopen(Machine->gamedrv->name, fn[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 				if( !fp[d] )
 				{
 					mode[d] = 0;
-					fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+					fp[d] = osd_fopen(Machine->gamedrv->name, fn[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 				}
 				if( !fp[d] )
 				{
 					mode[d] = 1;
-					fp[d] = osd_fopen(Machine->gamedrv->name, floppy_name[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+					fp[d] = osd_fopen(Machine->gamedrv->name, fn[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
 				}
 				if( !fp[d] )
 				{
-					floppy_name[d][0] = '\0';
+					fn[d] = NULL;
 				}
 			}
 		}

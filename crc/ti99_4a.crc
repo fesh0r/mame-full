@@ -1,0 +1,57 @@
+# Texas Instruments TI-99/4A Command Module CRC List
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+# Notes for this System: Images of Command Modules (TI99 cartridges) are frequently 
+# split into a GROM (image name ending in G), a ROM (Ending in C), and a Banked 
+# Image (Ending in d). Generally, only those modules with only a GROM image are 
+# loadable as a single image under MESS. This list only contains modules that can be 
+# loaded as a single image (i.e. requiring no C or D images, and/or no data disk).
+
+# Thanks to JoJo for many submissions to this list. :-)
+
+
+[ti99]
+872738d4 = Addition and Subtraction I
+bae92e8f = Addition and Subtraction II
+9e2f66e3 = Milliken Addition Sequence
+b890076f = A-maze-ing
+46a115d4 = The Attack
+285954b4 = Blackjack and Poker
+2a5882d7 = Blasto
+a19f5140 = Car Wars
+1e8fecb7 = Demonstration
+e3ce581e = Diagnotics
+67aaf792 = Division I
+b05871e9 = Milliken Division Sequence
+de8de84d = Editor Assembler
+b1ba3c6c = Early Learning Fun
+e423f735 = Football
+15b29e69 = Home Financial Decisions
+6a5a3f97 = Hunt the Wumpus
+8e7d5b68 = Hustle
+6ba9d602 = Multiplication I
+a40fa3b7 = Milliken Multiplication Sequence
+50400a10 = Mind Challengers
+f362f861 = Music Maker
+8910b4df = Number Magic
+c37e0373 = Numeration 2: At the Carnival
+4868b7d1 = Personal Real Estate Investment
+d16853ee = Personal Record Keeping
+d9ba4b60 = Soccer
+6a24d715 = Speech Editor
+16369f1f = Statistics
+7a24106a = Milliken Subtraction Sequence
+ a7cdd26 = TI Logo
+8489b5c7 = Video Games 1
+a8e6b0f7 = Video Games 2
+d974cd5a = Video Graphs
+
+#[not_working]
+
+
+#[known_bad_dumps]
+
+

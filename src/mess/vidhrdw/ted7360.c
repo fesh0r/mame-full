@@ -4,13 +4,20 @@
 
 ***************************************************************************/
 #include <math.h>
+#include <stdio.h>
+#include "osd_cpu.h"
+#include "driver.h"
+
+#define VERBOSE_DBG 0
+#include "mess/machine/cbm.h"
 #include "mess/machine/c16.h"
-#include "mess/vidhrdw/ted7360.h"
 #include "mess/machine/vc20tape.h"
 #include "mess/machine/c1551.h"
 #include "mess/machine/vc1541.h"
 
-//#define GFX
+#include "ted7360.h"
+
+/*#define GFX */
 
 #define VREFRESHINLINES 28
 
@@ -37,12 +44,12 @@
 #define HIRESON (ted7360[6]&0x20)
 #define MULTICOLORON (ted7360[7]&0x10)
 #define REVERSEON (!(ted7360[7]&0x80))
-// hardware inverts character when bit 7 set (character taken &0x7f)
-// instead of fetching character with higher number!
-#define LINES25 (ted7360[6]&8) // else 24 Lines
+/* hardware inverts character when bit 7 set (character taken &0x7f) */
+/* instead of fetching character with higher number! */
+#define LINES25 (ted7360[6]&8) /* else 24 Lines */
 #define LINES (LINES25?25:24)
 #define YSIZE (LINES*8)
-#define COLUMNS40 (ted7360[7]&8) // else 38 Columns
+#define COLUMNS40 (ted7360[7]&8) /* else 38 Columns */
 #define COLUMNS (COLUMNS40?40:38)
 #define XSIZE (COLUMNS*8)
 
@@ -65,12 +72,12 @@
 #define FRAMECOLOR (ted7360[0x19]&0x7f)
 
 unsigned char ted7360_palette[] = {
-// black, white, red, cyan
-// purple, green, blue, yellow
-// orange, light orange, pink, light cyan,
-// light violett, light green, light blue, light yellow
-// these 16 colors are 8 times here in different luminance (dark..light)
-// taken from digitized tv screenshot
+/* black, white, red, cyan */
+/* purple, green, blue, yellow */
+/* orange, light orange, pink, light cyan, */
+/* light violett, light green, light blue, light yellow */
+/* these 16 colors are 8 times here in different luminance (dark..light) */
+/* taken from digitized tv screenshot */
 0x06,0x01,0x03, 0x2b,0x2b,0x2b, 0x67,0x0e,0x0f, 0x00,0x3f,0x42,
 0x57,0x00,0x6d, 0x00,0x4e,0x00, 0x19,0x1c,0x94, 0x38,0x38,0x00,
 0x56,0x20,0x00, 0x4b,0x28,0x00, 0x16,0x48,0x00, 0x69,0x07,0x2f,
@@ -124,8 +131,7 @@ bool ted7360_pal;
 bool ted7360_rom;
 
 static int lines;
-static void *timer1=0, *timer2=0, *timer3=0, *rastertimer;
-static double refreshtime;
+static void *timer1=0, *timer2=0, *timer3=0;
 static bool cursor1=false;
 static int(*vic_dma_read)(int);
 static int(*vic_dma_read_rom)(int);
@@ -137,7 +143,9 @@ static int y_begin, y_end;
 static UINT16 c16_bitmap[2], bitmapmulti[4],
   mono[2], monoinversed[2], multi[4], ecmcolor[2], colors[5];
 
-static int lastline=0;
+static struct osd_bitmap *ted7360_bitmap; /* Machine->scrbitmap for speedup */
+static int rasterline=0,lastline=0;
+static double rastertime;
 static void ted7360_drawlines(int first, int last);
 
 static unsigned short cursorcolortable[2]={0};
@@ -158,7 +166,6 @@ void ted7360_init(int pal)
 {
   ted7360_pal=pal;
   lines=TED7360_LINES;
-  refreshtime=timer_get_time();
   chargenaddr=bitmapaddr=videoaddr=0;
 }
 
@@ -175,7 +182,7 @@ static void ted7360_set_interrupt(int mask)
   ted7360[9]|=mask;
   if ( (ted7360[0xa]&ted7360[9]&0x5e) ) {
     if (!(ted7360[9]&0x80) ) {
-      VIC_LOG(1,"ted7360",(errorlog,"irq start %.2x\n",mask));
+      DBG_LOG(1,"ted7360",(errorlog,"irq start %.2x\n",mask));
       ted7360[9]|=0x80;
       c16_interrupt(1);
     }
@@ -187,55 +194,21 @@ static void ted7360_clear_interrupt(int mask)
 {
   ted7360[9]&=~mask;
   if ((ted7360[9]&0x80)&&!(ted7360[9]&ted7360[0xa]&0x5e)) {
-    VIC_LOG(1,"ted7360",(errorlog,"irq end %.2x\n",mask));
+    DBG_LOG(1,"ted7360",(errorlog,"irq end %.2x\n",mask));
     ted7360[9]&=~0x80;
     c16_interrupt(0);
   }
 }
 
-static int ted7360_rasterline(void)
-{
-  /* 1e-8 because fo the rounding of the timer system */
-  return (int)((timer_get_time()-refreshtime)
-	       *TED7360_VRETRACERATE*lines+0.5)%lines;
-}
-
 static int ted7360_rastercolumn(void)
 {
-  return (int)((timer_get_time()-refreshtime)
-	       *TED7360_VRETRACERATE*lines*57*8+0.5)%(57*8);
-}
-
-static void ted7360_timer_timeout(int which);
-static void ted7360_set_rasterline(void)
-{
-  if (C16_2_RASTERLINE(RASTERLINE)>=lines) {
-    if (rastertimer) {
-      timer_remove(rastertimer);rastertimer=0;
-    }
-  } else {
-    double diff,time2;
-    double time=(double)((int)((timer_get_time()-refreshtime)
-			       *TED7360_VRETRACERATE))/TED7360_VRETRACERATE;
-    if (C16_2_RASTERLINE(RASTERLINE)-ted7360_rasterline()>0) {
-      diff=(double)C16_2_RASTERLINE(RASTERLINE)
-	/(lines*TED7360_VRETRACERATE);
-    } else {
-      diff=(double)(C16_2_RASTERLINE(RASTERLINE)+lines)
-	/(lines*TED7360_VRETRACERATE);
-    }
-    time2=time+diff+refreshtime-timer_get_time();
-    if (rastertimer) {
-      timer_reset(rastertimer,time2);
-    } else {
-      rastertimer=timer_set(time2, 4, ted7360_timer_timeout);
-    }
-  }
+  return (int)((timer_get_time()-rastertime)
+	       *TED7360_VRETRACERATE*lines*57*8+0.5);
 }
 
 static void ted7360_timer_timeout(int which)
 {
-  VIC_LOG(3,"ted7360 ",(errorlog,"timer %d timeout\n",which));
+  DBG_LOG(3,"ted7360 ",(errorlog,"timer %d timeout\n",which));
   switch (which) {
   case 1:
     timer1=timer_set(TEDTIME_IN_CYCLES(0x10000),1, ted7360_timer_timeout );
@@ -249,31 +222,26 @@ static void ted7360_timer_timeout(int which)
     timer3=timer_set(TEDTIME_IN_CYCLES(0x10000),3, ted7360_timer_timeout );
     ted7360_set_interrupt(0x40);
     break;
-  case 4:
-    ted7360_set_rasterline();
-    ted7360_drawlines(lastline,ted7360_rasterline());
-    ted7360_set_interrupt(2);
-    break;
   }
 }
 
-void ted7360_frame_interrupt(void)
+int ted7360_frame_interrupt(void)
 {
   static int count;
   if ((ted7360[0x1f]&0xf)>=0x0f) {
-//	if (count>=CURSORRATE) {
-    if (CURSOR1POS<videoram_size) dirtybuffer[CURSOR1POS]=1;
+/*	if (count>=CURSORRATE) { */
     cursor1^=true;
     ted7360[0x1f]&=~0xf;
     count=0;
   } else ted7360[0x1f]++;
+  return ignore_interrupt();
 }
 
 void ted7360_port_w(int offset, int data)
 {
   int old;
   if ((offset!=8)&&((offset<0x15)||(offset>0x19))) {
-    VIC_LOG(1,"ted7360_port_w",(errorlog,"%.2x:%.2x\n",offset,data));
+    DBG_LOG(1,"ted7360_port_w",(errorlog,"%.2x:%.2x\n",offset,data));
   }
   switch (offset) {
   case 0xe:case 0xf:case 0x10:case 0x11:case 0x12:
@@ -281,40 +249,40 @@ void ted7360_port_w(int offset, int data)
     break;
   }
   switch (offset) {
-  case 0: // stop timer 1
+  case 0: /* stop timer 1 */
     ted7360[offset]=data;
     if (timer1) {
       ted7360[1]=TEDTIME_TO_CYCLES(timer_timeleft(timer1))>>8;
       timer_remove(timer1);timer1=0;
     }
     break;
-  case 1: // start timer 1
+  case 1: /* start timer 1 */
     ted7360[offset]=data;
     if (!timer1)
       timer1=timer_set(TEDTIME_IN_CYCLES(TIMER1),1, ted7360_timer_timeout );
     else timer_reset(timer1,TEDTIME_IN_CYCLES(TIMER1) );
     break;
-  case 2: // stop timer 2
+  case 2: /* stop timer 2 */
     ted7360[offset]=data;
     if (timer2) {
       ted7360[3]=TEDTIME_TO_CYCLES(timer_timeleft(timer2))>>8;
       timer_remove(timer2);timer2=0;
     }
     break;
-  case 3: // start timer 2
+  case 3: /* start timer 2 */
     ted7360[offset]=data;
     if (!timer2)
       timer2=timer_set(TEDTIME_IN_CYCLES(TIMER2),2, ted7360_timer_timeout );
     else timer_reset(timer2,TEDTIME_IN_CYCLES(TIMER2) );
     break;
-  case 4: // stop timer 3
+  case 4: /* stop timer 3 */
     ted7360[offset]=data;
     if (timer3) {
       ted7360[5]=TEDTIME_TO_CYCLES(timer_timeleft(timer3))>>8;
       timer_remove(timer3);timer3=0;
     }
     break;
-  case 5: // start timer 3
+  case 5: /* start timer 3 */
     ted7360[offset]=data;
     if (!timer3)
       timer3=timer_set(TEDTIME_IN_CYCLES(TIMER3),3, ted7360_timer_timeout );
@@ -322,7 +290,7 @@ void ted7360_port_w(int offset, int data)
     break;
   case 6:
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       if (LINES25) { y_begin=0; y_end=y_begin+200; }
       else { y_begin=4; y_end=y_begin+192; }
@@ -331,11 +299,11 @@ void ted7360_port_w(int offset, int data)
     break;
   case 7:
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       if (COLUMNS40) { x_begin=0; x_end=x_begin+320; }
       else { x_begin=HORICONTALPOS; x_end=x_begin+320; }
-      VIC_LOG(3,"ted7360_port_w",(errorlog,"%s %s\n",data&0x40?"ntsc":"pal",
+      DBG_LOG(3,"ted7360_port_w",(errorlog,"%s %s\n",data&0x40?"ntsc":"pal",
 				  data&0x20?"hori freeze":""));
       chargenaddr=CHARGENADDR;
     }
@@ -357,97 +325,95 @@ void ted7360_port_w(int offset, int data)
     if (ted7360[9]&0x80) ted7360_clear_interrupt(0);
 #endif
     if ((data^old)&1) {
-      ted7360_set_rasterline();
-//    DBG_LOG(1,"set rasterline hi",(errorlog,"soll:%d\n",RASTERLINE));
+/*    DBG_LOG(1,"set rasterline hi",(errorlog,"soll:%d\n",RASTERLINE)); */
     }
     break;
   case 0xb:
     if (data!=ted7360[offset]) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
-      ted7360_set_rasterline();
-      //  DBG_LOG(1,"set rasterline lo",(errorlog,"soll:%d\n",RASTERLINE));
+      /*  DBG_LOG(1,"set rasterline lo",(errorlog,"soll:%d\n",RASTERLINE)); */
     }
     break;
   case 0xc:case 0xd:
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
     }
     break;
   case 0x12:
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       bitmapaddr=BITMAPADDR;
       chargenaddr=CHARGENADDR;
-      VIC_LOG(3,"ted7360_port_w",(errorlog,"bitmap %.4x %s\n",
+      DBG_LOG(3,"ted7360_port_w",(errorlog,"bitmap %.4x %s\n",
 				  BITMAPADDR,INROM?"rom":"ram"));
     }
     break;
   case 0x13:
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       chargenaddr=CHARGENADDR;
-      VIC_LOG(3,"ted7360_port_w",(errorlog,"chargen %.4x %s %d\n",
+      DBG_LOG(3,"ted7360_port_w",(errorlog,"chargen %.4x %s %d\n",
 				  CHARGENADDR,data&2?"":"doubleclock",
 				  data &1));
     }
     break;
   case 0x14:
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       videoaddr=VIDEOADDR;
-      VIC_LOG(3,"ted7360_port_w",(errorlog,"videoram %.4x\n",
+      DBG_LOG(3,"ted7360_port_w",(errorlog,"videoram %.4x\n",
 				  VIDEOADDR));
     }
     break;
-  case 0x15: // backgroundcolor
+  case 0x15: /* backgroundcolor */
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       monoinversed[1]=mono[0]=bitmapmulti[0]=multi[0]=colors[0]=
 	Machine->pens[BACKGROUNDCOLOR];
     }
     break;
-  case 0x16: // foregroundcolor
+  case 0x16: /* foregroundcolor */
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       bitmapmulti[3]=multi[1]=colors[1]=Machine->pens[FOREGROUNDCOLOR];
     }
     break;
-  case 0x17: // multicolor 1
+  case 0x17: /* multicolor 1 */
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       multi[2]=colors[2]=Machine->pens[MULTICOLOR1];
     }
     break;
-  case 0x18: // multicolor 2
+  case 0x18: /* multicolor 2 */
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       colors[3]=Machine->pens[MULTICOLOR2];
     }
     break;
-  case 0x19: // framecolor
+  case 0x19: /* framecolor */
     if (ted7360[offset]!=data) {
-      ted7360_drawlines(lastline, ted7360_rasterline());
+      ted7360_drawlines(lastline, rasterline);
       ted7360[offset]=data;
       colors[4]=Machine->pens[FRAMECOLOR];
     }
     break;
   case 0x1c:
-      ted7360[offset]=data; //?
-      VIC_LOG(1,"ted7360_port_w",(errorlog,"write to rasterline high %.2x\n",
+      ted7360[offset]=data; /*? */
+      DBG_LOG(1,"ted7360_port_w",(errorlog,"write to rasterline high %.2x\n",
 				  data));
       break;
   case 0x1f:
     ted7360[offset]=data;
-    VIC_LOG(1,"ted7360_port_w",(errorlog,"write to cursorblink %.2x\n",data));
+    DBG_LOG(1,"ted7360_port_w",(errorlog,"write to cursorblink %.2x\n",data));
     break;
   default:
     ted7360[offset]=data;
@@ -504,20 +470,20 @@ int ted7360_port_r(int offset)
     val=ted7360[offset]&~1;
     if (ted7360_rom) val|=1;
     break;
-  case 0x1c: //rasterline
-    ted7360_drawlines(lastline, ted7360_rasterline());
-    val=((RASTERLINE_2_C16(ted7360_rasterline())&0x100)>>8)|0xfe; // expected by matrix
+  case 0x1c: /*rasterline */
+    ted7360_drawlines(lastline, rasterline);
+    val=((RASTERLINE_2_C16(rasterline)&0x100)>>8)|0xfe; /* expected by matrix */
     break;
-  case 0x1d: //rasterline
-    ted7360_drawlines(lastline, ted7360_rasterline());
-    val=RASTERLINE_2_C16(ted7360_rasterline())&0xff;
+  case 0x1d: /*rasterline */
+    ted7360_drawlines(lastline, rasterline);
+    val=RASTERLINE_2_C16(rasterline)&0xff;
     break;
-  case 0x1e: //rastercolumn
-    val=ted7360_rastercolumn()/2; // pengo >=0x99
+  case 0x1e: /*rastercolumn */
+    val=ted7360_rastercolumn()/2; /* pengo >=0x99 */
     break;
   case 0x1f:
-    val=((ted7360_rasterline()&7)<<4)|(ted7360[offset]&0x0f);
-    VIC_LOG(1,"ted7360_port_w",(errorlog,"read from cursorblink %.2x\n",val));
+    val=((rasterline&7)<<4)|(ted7360[offset]&0x0f);
+    DBG_LOG(1,"ted7360_port_w",(errorlog,"read from cursorblink %.2x\n",val));
     break;
   default:
     val=ted7360[offset];
@@ -525,7 +491,7 @@ int ted7360_port_r(int offset)
   }
   if ((offset!=8)&&(offset>=6)&&(offset!=0x1c)&&(offset!=0x1d)&&(offset!=9)
       &&((offset<0x15)||(offset>0x19)) ){
-    VIC_LOG(1,"ted7360_port_r",(errorlog,"%.2x:%.2x\n",offset,val));
+    DBG_LOG(1,"ted7360_port_r",(errorlog,"%.2x:%.2x\n",offset,val));
   }
   return val;
 }
@@ -536,13 +502,12 @@ int ted7360_vh_start(void)
   cursorelement->colortable= cursorcolortable;
   cursorcolortable[1]=Machine->pens[1];
   cursorelement->total_colors= 2;
-
-  return generic_bitmapped_vh_start();
+  ted7360_bitmap=Machine->scrbitmap;
+  return 0;
 }
 
 void ted7360_vh_stop(void)
 {
-  generic_bitmapped_vh_stop();
   freegfx(cursorelement);
 }
 
@@ -555,27 +520,27 @@ static void ted7360_draw_character(int ybegin, int yend,int ch, int yoff, int xo
     for (y=ybegin; y<=yend; y++) {
       if (INROM) code=vic_dma_read_rom(chargenaddr+ch*8+y);
       else code=vic_dma_read(chargenaddr+ch*8+y);
-      tmpbitmap->line[y+yoff][xoff]=color[code>>7];
-      tmpbitmap->line[y+yoff][1+xoff]=color[(code>>6)&1];
-      tmpbitmap->line[y+yoff][2+xoff]=color[(code>>5)&1];
-      tmpbitmap->line[y+yoff][3+xoff]=color[(code>>4)&1];
-      tmpbitmap->line[y+yoff][4+xoff]=color[(code>>3)&1];
-      tmpbitmap->line[y+yoff][5+xoff]=color[(code>>2)&1];
-      tmpbitmap->line[y+yoff][6+xoff]=color[(code>>1)&1];
-      tmpbitmap->line[y+yoff][7+xoff]=color[code&1];
+      ted7360_bitmap->line[y+yoff][xoff]=color[code>>7];
+      ted7360_bitmap->line[y+yoff][1+xoff]=color[(code>>6)&1];
+      ted7360_bitmap->line[y+yoff][2+xoff]=color[(code>>5)&1];
+      ted7360_bitmap->line[y+yoff][3+xoff]=color[(code>>4)&1];
+      ted7360_bitmap->line[y+yoff][4+xoff]=color[(code>>3)&1];
+      ted7360_bitmap->line[y+yoff][5+xoff]=color[(code>>2)&1];
+      ted7360_bitmap->line[y+yoff][6+xoff]=color[(code>>1)&1];
+      ted7360_bitmap->line[y+yoff][7+xoff]=color[code&1];
     }
   } else {
     for (y=ybegin; y<=yend; y++) {
       if (INROM) code=vic_dma_read_rom(chargenaddr+ch*8+y);
       else code=vic_dma_read(chargenaddr+ch*8+y);
-      *((short*)tmpbitmap->line[y+yoff]+xoff)=color[code>>7];
-      *((short*)tmpbitmap->line[y+yoff]+1+xoff)=color[(code>>6)&1];
-      *((short*)tmpbitmap->line[y+yoff]+2+xoff)=color[(code>>5)&1];
-      *((short*)tmpbitmap->line[y+yoff]+3+xoff)=color[(code>>4)&1];
-      *((short*)tmpbitmap->line[y+yoff]+4+xoff)=color[(code>>3)&1];
-      *((short*)tmpbitmap->line[y+yoff]+5+xoff)=color[(code>>2)&1];
-      *((short*)tmpbitmap->line[y+yoff]+6+xoff)=color[(code>>1)&1];
-      *((short*)tmpbitmap->line[y+yoff]+7+xoff)=color[code&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff)=color[code>>7];
+      *((short*)ted7360_bitmap->line[y+yoff]+1+xoff)=color[(code>>6)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+2+xoff)=color[(code>>5)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+3+xoff)=color[(code>>4)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+4+xoff)=color[(code>>3)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+5+xoff)=color[(code>>2)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+6+xoff)=color[(code>>1)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+7+xoff)=color[code&1];
     }
   }
 }
@@ -589,27 +554,27 @@ static void ted7360_draw_character_multi(int ybegin, int yend, int ch, int yoff,
     for (y=ybegin; y<=yend; y++) {
       if (INROM) code=vic_dma_read_rom(chargenaddr+ch*8+y);
       else code=vic_dma_read(chargenaddr+ch*8+y);
-      tmpbitmap->line[y+yoff][xoff]=
-	tmpbitmap->line[y+yoff][xoff+1]=multi[code>>6];
-      tmpbitmap->line[y+yoff][xoff+2]=
-	tmpbitmap->line[y+yoff][xoff+3]=multi[(code>>4)&3];
-      tmpbitmap->line[y+yoff][xoff+4]=
-	tmpbitmap->line[y+yoff][xoff+5]=multi[(code>>2)&3];
-      tmpbitmap->line[y+yoff][xoff+6]=
-	tmpbitmap->line[y+yoff][xoff+7]=multi[code&3];
+      ted7360_bitmap->line[y+yoff][xoff]=
+	ted7360_bitmap->line[y+yoff][xoff+1]=multi[code>>6];
+      ted7360_bitmap->line[y+yoff][xoff+2]=
+	ted7360_bitmap->line[y+yoff][xoff+3]=multi[(code>>4)&3];
+      ted7360_bitmap->line[y+yoff][xoff+4]=
+	ted7360_bitmap->line[y+yoff][xoff+5]=multi[(code>>2)&3];
+      ted7360_bitmap->line[y+yoff][xoff+6]=
+	ted7360_bitmap->line[y+yoff][xoff+7]=multi[code&3];
     }
   } else {
     for (y=ybegin; y<=yend; y++) {
       if (INROM) code=vic_dma_read_rom(chargenaddr+ch*8+y);
       else code=vic_dma_read(chargenaddr+ch*8+y);
-      *((short*)tmpbitmap->line[y+yoff]+xoff)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+1)=multi[code>>6];
-      *((short*)tmpbitmap->line[y+yoff]+xoff+2)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+3)=multi[(code>>4)&3];
-      *((short*)tmpbitmap->line[y+yoff]+xoff+4)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+5)=multi[(code>>2)&3];
-      *((short*)tmpbitmap->line[y+yoff]+xoff+6)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+7)=multi[code&3];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+1)=multi[code>>6];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff+2)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+3)=multi[(code>>4)&3];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff+4)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+5)=multi[(code>>2)&3];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff+6)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+7)=multi[code&3];
     }
   }
 }
@@ -622,26 +587,26 @@ static void ted7360_draw_bitmap(int ybegin, int yend,
   if (Machine->color_depth==8) {
     for (y=ybegin; y<=yend; y++) {
       code=vic_dma_read(bitmapaddr+ch*8+y);
-      tmpbitmap->line[y+yoff][xoff]=c16_bitmap[code>>7];
-      tmpbitmap->line[y+yoff][1+xoff]=c16_bitmap[(code>>6)&1];
-      tmpbitmap->line[y+yoff][2+xoff]=c16_bitmap[(code>>5)&1];
-      tmpbitmap->line[y+yoff][3+xoff]=c16_bitmap[(code>>4)&1];
-      tmpbitmap->line[y+yoff][4+xoff]=c16_bitmap[(code>>3)&1];
-      tmpbitmap->line[y+yoff][5+xoff]=c16_bitmap[(code>>2)&1];
-      tmpbitmap->line[y+yoff][6+xoff]=c16_bitmap[(code>>1)&1];
-      tmpbitmap->line[y+yoff][7+xoff]=c16_bitmap[code&1];
+      ted7360_bitmap->line[y+yoff][xoff]=c16_bitmap[code>>7];
+      ted7360_bitmap->line[y+yoff][1+xoff]=c16_bitmap[(code>>6)&1];
+      ted7360_bitmap->line[y+yoff][2+xoff]=c16_bitmap[(code>>5)&1];
+      ted7360_bitmap->line[y+yoff][3+xoff]=c16_bitmap[(code>>4)&1];
+      ted7360_bitmap->line[y+yoff][4+xoff]=c16_bitmap[(code>>3)&1];
+      ted7360_bitmap->line[y+yoff][5+xoff]=c16_bitmap[(code>>2)&1];
+      ted7360_bitmap->line[y+yoff][6+xoff]=c16_bitmap[(code>>1)&1];
+      ted7360_bitmap->line[y+yoff][7+xoff]=c16_bitmap[code&1];
     }
   } else {
     for (y=ybegin; y<=yend; y++) {
       code=vic_dma_read(bitmapaddr+ch*8+y);
-      *((short*)tmpbitmap->line[y+yoff]+xoff)=c16_bitmap[code>>7];
-      *((short*)tmpbitmap->line[y+yoff]+1+xoff)=c16_bitmap[(code>>6)&1];
-      *((short*)tmpbitmap->line[y+yoff]+2+xoff)=c16_bitmap[(code>>5)&1];
-      *((short*)tmpbitmap->line[y+yoff]+3+xoff)=c16_bitmap[(code>>4)&1];
-      *((short*)tmpbitmap->line[y+yoff]+4+xoff)=c16_bitmap[(code>>3)&1];
-      *((short*)tmpbitmap->line[y+yoff]+5+xoff)=c16_bitmap[(code>>2)&1];
-      *((short*)tmpbitmap->line[y+yoff]+6+xoff)=c16_bitmap[(code>>1)&1];
-      *((short*)tmpbitmap->line[y+yoff]+7+xoff)=c16_bitmap[code&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff)=c16_bitmap[code>>7];
+      *((short*)ted7360_bitmap->line[y+yoff]+1+xoff)=c16_bitmap[(code>>6)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+2+xoff)=c16_bitmap[(code>>5)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+3+xoff)=c16_bitmap[(code>>4)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+4+xoff)=c16_bitmap[(code>>3)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+5+xoff)=c16_bitmap[(code>>2)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+6+xoff)=c16_bitmap[(code>>1)&1];
+      *((short*)ted7360_bitmap->line[y+yoff]+7+xoff)=c16_bitmap[code&1];
     }
   }
 }
@@ -654,34 +619,28 @@ static void ted7360_draw_bitmap_multi(int ybegin, int yend,
   if (Machine->color_depth==8) {
     for (y=ybegin; y<=yend; y++) {
       code=vic_dma_read(bitmapaddr+ch*8+y);
-      tmpbitmap->line[y+yoff][xoff]=
-	tmpbitmap->line[y+yoff][xoff+1]=bitmapmulti[code>>6];
-      tmpbitmap->line[y+yoff][xoff+2]=
-	tmpbitmap->line[y+yoff][xoff+3]=bitmapmulti[(code>>4)&3];
-      tmpbitmap->line[y+yoff][xoff+4]=
-	tmpbitmap->line[y+yoff][xoff+5]=bitmapmulti[(code>>2)&3];
-      tmpbitmap->line[y+yoff][xoff+6]=
-	tmpbitmap->line[y+yoff][xoff+7]=bitmapmulti[code&3];
+      ted7360_bitmap->line[y+yoff][xoff]=
+	ted7360_bitmap->line[y+yoff][xoff+1]=bitmapmulti[code>>6];
+      ted7360_bitmap->line[y+yoff][xoff+2]=
+	ted7360_bitmap->line[y+yoff][xoff+3]=bitmapmulti[(code>>4)&3];
+      ted7360_bitmap->line[y+yoff][xoff+4]=
+	ted7360_bitmap->line[y+yoff][xoff+5]=bitmapmulti[(code>>2)&3];
+      ted7360_bitmap->line[y+yoff][xoff+6]=
+	ted7360_bitmap->line[y+yoff][xoff+7]=bitmapmulti[code&3];
     }
   } else {
     for (y=ybegin; y<=yend; y++) {
       code=vic_dma_read(bitmapaddr+ch*8+y);
-      *((short*)tmpbitmap->line[y+yoff]+xoff)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+1)=bitmapmulti[code>>6];
-      *((short*)tmpbitmap->line[y+yoff]+xoff+2)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+3)=bitmapmulti[(code>>4)&3];
-      *((short*)tmpbitmap->line[y+yoff]+xoff+4)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+5)=bitmapmulti[(code>>2)&3];
-      *((short*)tmpbitmap->line[y+yoff]+xoff+6)=
-	*((short*)tmpbitmap->line[y+yoff]+xoff+7)=bitmapmulti[code&3];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+1)=bitmapmulti[code>>6];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff+2)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+3)=bitmapmulti[(code>>4)&3];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff+4)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+5)=bitmapmulti[(code>>2)&3];
+      *((short*)ted7360_bitmap->line[y+yoff]+xoff+6)=
+	*((short*)ted7360_bitmap->line[y+yoff]+xoff+7)=bitmapmulti[code&3];
     }
   }
-}
-
-static void ted7360_memset16(void *dest,UINT16 value, int size)
-{
-  register int i;
-  for (i=0;i<size;i++) ((UINT16*)dest)[i]=value;
 }
 
 static void ted7360_draw_cursor(int ybegin, int yend, int yoff, int xoff,
@@ -690,11 +649,11 @@ static void ted7360_draw_cursor(int ybegin, int yend, int yoff, int xoff,
   int y;
   if (Machine->color_depth==8) {
     for (y=ybegin; y<=yend; y++) {
-      memset(tmpbitmap->line[yoff+y]+xoff,color,8);
+      memset(ted7360_bitmap->line[yoff+y]+xoff,color,8);
     }
   } else {
     for (y=ybegin; y<=yend; y++) {
-      ted7360_memset16((short*)tmpbitmap->line[yoff+y]+xoff,color,8);
+      memset16((short*)ted7360_bitmap->line[yoff+y]+xoff,color,8);
     }
   }
 }
@@ -708,6 +667,8 @@ static void ted7360_drawlines(int first, int last)
 
   lastline=last;
 
+  if (osd_skip_this_frame()) return;
+
   /* top part of display not rastered */
   first-=TED7360_YPOS;
   last-=TED7360_YPOS;
@@ -716,11 +677,11 @@ static void ted7360_drawlines(int first, int last)
 
   if (!SCREENON) {
     if (Machine->color_depth==8) {
-      for (line=first;(line<last)&&(line<tmpbitmap->height);line++)
-	memset(tmpbitmap->line[line],Machine->pens[0],tmpbitmap->width);
+      for (line=first;(line<last)&&(line<ted7360_bitmap->height);line++)
+	memset(ted7360_bitmap->line[line],Machine->pens[0],ted7360_bitmap->width);
     } else {
-      for (line=first;(line<last)&&(line<tmpbitmap->height);line++)
-	ted7360_memset16(tmpbitmap->line[line],Machine->pens[0],tmpbitmap->width);
+      for (line=first;(line<last)&&(line<ted7360_bitmap->height);line++)
+	memset16(ted7360_bitmap->line[line],Machine->pens[0],ted7360_bitmap->width);
     }
     return;
   }
@@ -732,12 +693,12 @@ static void ted7360_drawlines(int first, int last)
   else end=y_begin+YPOS;
   if (Machine->color_depth==8) {
     for (line=first;line<end;line++)
-      memset(tmpbitmap->line[line],Machine->pens[FRAMECOLOR],
-	     tmpbitmap->width);
+      memset(ted7360_bitmap->line[line],Machine->pens[FRAMECOLOR],
+	     ted7360_bitmap->width);
   } else {
     for (line=first;line<end;line++)
-      ted7360_memset16(tmpbitmap->line[line],Machine->pens[FRAMECOLOR],
-	       tmpbitmap->width);
+      memset16(ted7360_bitmap->line[line],Machine->pens[FRAMECOLOR],
+	       ted7360_bitmap->width);
   }
   if (LINES25) {
     vline=line-y_begin-YPOS;
@@ -751,8 +712,8 @@ static void ted7360_drawlines(int first, int last)
     ybegin=vline&7;
     yoff=line-ybegin;
     yend=(yoff+7<end)?7:(end-yoff-1);
-    // rendering 39 characters
-    // left and right borders are overwritten later
+    /* rendering 39 characters */
+    /* left and right borders are overwritten later */
 
     for (xoff=x_begin+XPOS;xoff<x_end+XPOS; xoff+=8,offs++) {
       if (HIRESON) {
@@ -776,7 +737,7 @@ static void ted7360_drawlines(int first, int last)
 	  ted7360_draw_cursor(ybegin, yend, yoff,xoff,
 			      Machine->pens[attr&0x7f]);
 #else
-	  drawgfx(tmpbitmap,cursorelement,0,Machine->pens[attr&0x7f],0,0,
+	  drawgfx(ted7360_bitmap,cursorelement,0,Machine->pens[attr&0x7f],0,0,
 		  xoff, yoff, 0, TRANSPARENCY_NONE,0);
 #endif
 	} else if (ECMON) {
@@ -788,7 +749,7 @@ static void ted7360_drawlines(int first, int last)
 	  if (MULTICOLORON&&(attr&8)) {
 	    multi[3]=Machine->pens[attr&0x77];
 	    ted7360_draw_character_multi(ybegin, yend,ch&~0x80, yoff,xoff);
-	  } else { // multicolor and hardware reverse?
+	  } else { /* multicolor and hardware reverse? */
 	    monoinversed[0]=Machine->pens[attr&0x7f];
 	    ted7360_draw_character(ybegin, yend,ch&~0x80, yoff,xoff,
 				   monoinversed);
@@ -811,78 +772,88 @@ static void ted7360_drawlines(int first, int last)
     }
     if (Machine->color_depth==8) {
       for (i=ybegin;i<=yend;i++) {
-	memset(tmpbitmap->line[yoff+i],Machine->pens[FRAMECOLOR],xbegin);
-	memset(tmpbitmap->line[yoff+i]+xend,Machine->pens[FRAMECOLOR],
-	       tmpbitmap->width-xend);
+	memset(ted7360_bitmap->line[yoff+i],Machine->pens[FRAMECOLOR],xbegin);
+	memset(ted7360_bitmap->line[yoff+i]+xend,Machine->pens[FRAMECOLOR],
+	       ted7360_bitmap->width-xend);
       }
     } else {
       for (i=ybegin;i<=yend;i++) {
-	ted7360_memset16(tmpbitmap->line[yoff+i],Machine->pens[FRAMECOLOR],
+	memset16(ted7360_bitmap->line[yoff+i],Machine->pens[FRAMECOLOR],
 			 xbegin);
-	ted7360_memset16((short*)tmpbitmap->line[yoff+i]+xend,
-			 Machine->pens[FRAMECOLOR], tmpbitmap->width-xend);
+	memset16((short*)ted7360_bitmap->line[yoff+i]+xend,
+			 Machine->pens[FRAMECOLOR], ted7360_bitmap->width-xend);
       }
     }
   }
-  if (last<tmpbitmap->height) end=last;
-  else end=tmpbitmap->height;
+  if (last<ted7360_bitmap->height) end=last;
+  else end=ted7360_bitmap->height;
   if (Machine->color_depth==8) {
     for (;line<end;line++)
-      memset(tmpbitmap->line[line],Machine->pens[FRAMECOLOR],
-	     tmpbitmap->width);
+      memset(ted7360_bitmap->line[line],Machine->pens[FRAMECOLOR],
+	     ted7360_bitmap->width);
   } else {
     for (;line<end;line++)
-      ted7360_memset16(tmpbitmap->line[line],Machine->pens[FRAMECOLOR],
-		       tmpbitmap->width);
+      memset16(ted7360_bitmap->line[line],Machine->pens[FRAMECOLOR],
+	       ted7360_bitmap->width);
   }
 }
 
 static void ted7360_draw_text(struct osd_bitmap *bitmap, char *text, int *y)
 {
-  int x, x0, y00,
+  int x, x0, y1t,
     width=(Machine->gamedrv->drv->visible_area.max_x-
 	   Machine->gamedrv->drv->visible_area.min_x)/Machine->uifont->width;
   if (text[0]!=0) {
     x=strlen(text);
     *y-=Machine->uifont->height*((x+width-1)/width);
-    y00= *y+Machine->uifont->height;
+    y1t= *y+Machine->uifont->height;
     x=0;
     while (text[x]) {
       for( x0=Machine->gamedrv->drv->visible_area.min_x;
 	   text[x]&&(x0<Machine->gamedrv->drv->visible_area.max_x-
 		     Machine->uifont->width);
 	   x++, x0+=Machine->uifont->width ) {
-	drawgfx(bitmap,Machine->uifont,text[x],0,0,0, x0,y00,0,
+	drawgfx(bitmap,Machine->uifont,text[x],0,0,0, x0,y1t,0,
 		TRANSPARENCY_NONE,0);
       }
-      y00 += Machine->uifont->height;
+      y1t += Machine->uifont->height;
     }
   }
 }
 
-void ted7360_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+int ted7360_raster_interrupt(void)
 {
   int y;
+  char text[70];
 
-  ted7360_drawlines(lastline, TED7360_LINES);
-  lastline=0;
-  refreshtime=timer_get_time();
-  generic_bitmapped_vh_screenrefresh(bitmap,1);
+  rasterline++;
+  rastertime=timer_get_time();
+  if (rasterline>=lines) {
+    rasterline=0;
+    ted7360_drawlines(lastline, TED7360_LINES);
+    lastline=0;
 
-  {
-    char text[70];
     y = Machine->gamedrv->drv->visible_area.max_y+1-Machine->uifont->height;
 
     vc20_tape_status(text, sizeof(text));
-    ted7360_draw_text(bitmap, text, &y);
+    ted7360_draw_text(ted7360_bitmap, text, &y);
 #ifdef VC1541
     vc1541_drive_status(text,sizeof(text));
 #else
-    cbm_drive_status(&c16_drive8,text,sizeof(text));
+    cbm_drive_0_status(text,sizeof(text));
 #endif
-    ted7360_draw_text(bitmap, text, &y);
+    ted7360_draw_text(ted7360_bitmap, text, &y);
 
-    cbm_drive_status(&c16_drive9,text,sizeof(text));
-    ted7360_draw_text(bitmap, text, &y);
+    cbm_drive_1_status(text,sizeof(text));
+    ted7360_draw_text(ted7360_bitmap, text, &y);
   }
+  if (rasterline==C16_2_RASTERLINE(RASTERLINE)) {
+    ted7360_drawlines(lastline,rasterline);
+    ted7360_set_interrupt(2);
+  }
+  return ignore_interrupt();
+}
+
+void ted7360_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
 }

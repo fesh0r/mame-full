@@ -1,40 +1,67 @@
 /***************************************************************************
-	vz.c
+	vtech1.c
+
+	Video Technology Models (series 1)
+	Laser 110 monochrome
+	Laser 210
+		Laser 200 (same hardware?)
+		aka VZ 200 (Australia)
+		aka Salora Fellow (Finland)
+		aka Texet8000 (UK)
+	Laser 310
+        aka VZ 300 (Australia)
 
     video hardware
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
 
 	Thanks go to:
-	Guy Thomason, Jason Oakley, Bushy Maunder and anybody else
-	on the vzemu list :)
+	- Guy Thomason
+	- Jason Oakley
+	- Bushy Maunder
+	- and anybody else on the vzemu list :)
+    - Davide Moretti for the detailed description of the colors.
 
 ****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+/* from mame.c */
+extern int bitmap_dirty;
+
 /* from machine/vz.c */
-extern int vz_latch;
+extern int vtech1_latch;
 
-char vz_frame_message[64+1];
-int vz_frame_time = 0;
+char vtech1_frame_message[64+1];
+int vtech1_frame_time = 0;
 
-void vz_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
     int offs;
 
+	if( palette_recalc() )
+		full_refresh = 1;
+
     if( full_refresh )
 	{
-		if( vz_latch & 0x08 )
-            fillbitmap(Machine->scrbitmap, Machine->pens[1], &Machine->drv->visible_area);
+		if( vtech1_latch & 0x08 )
+		{
+			if( vtech1_latch & 0x10 )
+				fillbitmap(Machine->scrbitmap, Machine->pens[5], &Machine->drv->visible_area);
+			else
+				fillbitmap(Machine->scrbitmap, Machine->pens[1], &Machine->drv->visible_area);
+		}
         else
-            fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->drv->visible_area);
+		{
+			fillbitmap(Machine->scrbitmap, Machine->pens[16], &Machine->drv->visible_area);
+		}
         memset(dirtybuffer, 0xff, videoram_size);
     }
 
-    if( vz_latch & 0x08 )
+	if( vtech1_latch & 0x08 )
     {
-		int color = (vz_latch & 0x10) ? 1 : 0;
+        /* graphics mode */
+		int color = (vtech1_latch & 0x10) ? 1 : 0;
         for( offs = 0; offs < videoram_size; offs++ )
         {
             if( dirtybuffer[offs] )
@@ -53,6 +80,7 @@ void vz_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     }
     else
     {
+        /* text mode */
         for( offs = 0; offs < 32*16; offs++ )
         {
 			if( dirtybuffer[offs] )
@@ -61,10 +89,10 @@ void vz_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				sy = 20 + (offs / 32) * 12;
 				sx = 16 + (offs % 32) * 8;
                 code = videoram[offs];
-				if( vz_latch & 0x10 )
-					color = (code & 0x80) ? ((code >> 4) & 7) + 4 : 9;
+				if( vtech1_latch & 0x10 )
+					color = (code & 0x80) ? ((code >> 4) & 7) : 9;
                 else
-					color = (code & 0x80) ? ((code >> 4) & 7) : 0;
+					color = (code & 0x80) ? ((code >> 4) & 7) : 8;
                 drawgfx(
 					bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
                     &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -73,13 +101,12 @@ void vz_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
             }
         }
     }
-	if( vz_frame_time > 0 )
+	if( vtech1_frame_time > 0 )
 	{
-		ui_text(vz_frame_message, 2, Machine->drv->visible_area.max_y - 9);
+		ui_text(vtech1_frame_message, 2, Machine->drv->visible_area.max_y - 9);
 		/* if the message timed out, clear it on the next frame */
-		if( --vz_frame_time == 0 )
-			memset(dirtybuffer, 1, videoram_size);
+		if( --vtech1_frame_time == 0 )
+			bitmap_dirty = 1;
 	}
 }
-
 

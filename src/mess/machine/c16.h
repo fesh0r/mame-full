@@ -1,48 +1,8 @@
 #ifndef __C16_H_
 #define __C16_H_
 
-#include <stdio.h>
-#include "osd_cpu.h"
 #include "driver.h"
-#include "vidhrdw/generic.h"
-#include "mess/vidhrdw/ted7360.h"
-#include "mess/machine/c1551.h"
-
-/* enable and set level for verbosity of the various parts of emulation */
-
-#define VERBOSE_DBG 0      /* general debug messages */
-/**************************************************************************
- * Logging
- * call the XXX_LOG with XXX_LOG("info",(errorlog,"%fmt\n",args));
- * where "info" can also be 0 to append .."%fmt",args to a line.
- **************************************************************************/
-#define LOG(LEVEL,N,M,A)  \
-	if( errorlog && (LEVEL>=N) ){ if( M )fprintf( errorlog,"%11.6f: %-24s",timer_get_time(),(char*)M ); fprintf##A; }
-
-#if VERBOSE_DBG
-#define DBG_LOG(n,m,a) LOG(VERBOSE_DBG,n,m,a)
-#else
-#define DBG_LOG(n,m,a)
-#endif
-
-#if VERBOSE_DBG
-#define VIC_LOG(n,m,a) LOG(VERBOSE_DBG,n,m,a)
-#else
-#define VIC_LOG(n,m,a)
-#endif
-
-#if VERBOSE_DBG
-#define VIA_LOG(n,m,a) LOG(VERBOSE_DBG,n,m,a)
-#else
-#define VIA_LOG(n,m,a)
-#endif
-
-#if VERBOSE_DBG
-#define SND_LOG(n,m,a) LOG(VERBOSE_DBG,n,m,a)
-#else
-#define SND_LOG(n,m,a)
-#endif
-
+#include "c1551.h"
 
 /* damned c16 joystick
  * connected to the keyboard latch
@@ -134,6 +94,8 @@
 #define KEY_F3 (input_port_6_r(0)&0x8000)
 #define KEY_HELP (input_port_6_r(0)&0x4000)
 
+#define JOYSTICK_SWAP (input_port_6_r(0)&0x2000)
+
 #define DATASSETTE_PLAY		(input_port_6_r(6)&4)
 #define DATASSETTE_RECORD	(input_port_6_r(6)&2)
 #define DATASSETTE_STOP		(input_port_6_r(6)&1)
@@ -155,7 +117,6 @@
 #define MEMORY64K (3)
 
 extern UINT8 *c16_memory;
-extern CBM_Drive c16_drive8, c16_drive9;
 
 extern void c16_m7501_port_w(int offset, int data);
 extern int c16_m7501_port_r(int offset);
@@ -164,31 +125,39 @@ extern void c16_6551_port_w(int offset, int data);
 extern int c16_6551_port_r(int offset);
 
 extern int c16_fd1x_r(int offset);
+extern void plus4_6529_port_w(int offset, int data);
+extern int plus4_6529_port_r(int offset);
 
 extern void c16_6529_port_w(int offset, int data);
 extern int c16_6529_port_r(int offset);
 
+
+#if 0
 extern void c16_iec9_port_w(int offset, int data);
 extern int c16_iec9_port_r(int offset);
 
 extern void c16_iec8_port_w(int offset, int data);
 extern int c16_iec8_port_r(int offset);
+#endif
 
 extern void c16_select_roms(int offset, int data);
 extern void c16_switch_to_rom(int offset, int data);
 extern void c16_switch_to_ram(int offset, int data);
+extern void plus4_switch_to_ram(int offset, int data);
 
-// ted reads
+/* ted reads */
 extern int c16_read_keyboard(int databus);
 extern void c16_interrupt(int);
 
 extern void c16_driver_init(void);
 extern void plus4_driver_init(void);
 extern void c16_driver_shutdown(void);
-extern int  c16_rom_load(void);
-extern int  c16_rom_id(const char *name, const char *gamename);
 extern void c16_init_machine(void);
 extern void c16_shutdown_machine(void);
 extern int  c16_frame_interrupt(void);
+
+extern int  c16_rom_init(int id, const char *name);
+extern int  c16_rom_load(int id, const char *name);
+extern int  c16_rom_id(const char *name, const char *gamename);
 
 #endif

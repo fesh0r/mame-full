@@ -17,7 +17,7 @@
 
 extern unsigned char *pce_user_ram; /* scratch RAM at F8 */
 extern unsigned char *pce_save_ram; /* battery backed RAM at F7 */
-extern int pce_load_rom(void);
+extern int pce_load_rom(int id, const char *name);
 extern int pce_id_rom (const char *name, const char *gamename);
 extern void pce_init_machine(void);
 extern void pce_stop_machine(void);
@@ -209,7 +209,7 @@ static struct GfxDecodeInfo pce_gfxdecodeinfo[] =
 };
 #endif
 
-static struct MachineDriver pce_machine_driver =
+static struct MachineDriver machine_driver_pce =
 {
     {
         {
@@ -237,31 +237,36 @@ static struct MachineDriver pce_machine_driver =
     0, 0, 0, 0
 };
 
-struct GameDriver pce_driver =
-{
-    __FILE__,
-    0,
-    "pce",
-    "PC-Engine",
-    "1987",
-    "NEC",
-    "Charles Mac Donald (MESS driver and code)\nDavid Shadoff (info and code)",
-    0,
-    &pce_machine_driver,
-    0,
-    0,
-    pce_load_rom,
-    pce_id_rom,
-	0,	/* default file extensions */
-    1,
-    0,
-    0,
-    0,
-    0, 0,
-    0,
-    0,
-    input_ports_pce,
-    0, 0, 0,
-    GAME_NOT_WORKING|ORIENTATION_DEFAULT,
-    0, 0,
+static const struct IODevice io_pce[] = {
+    {
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"pce\0",            /* file extensions */
+		NULL,               /* private */
+		pce_id_rom, 		/* id */
+		pce_load_rom,		/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,               /* open */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,               /* input */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL                /* output_chunk */
+	},
+	{ IO_END }
 };
+
+#define rom_pce NULL
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
+CONSX( 1987, pce,	   0,		 pce,	   pce, 	 0,		   "Nippon Electronic Company", "PC-Engine", GAME_NOT_WORKING )
+

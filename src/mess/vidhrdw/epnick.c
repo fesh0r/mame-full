@@ -8,7 +8,7 @@ Nick has 256 colours, 3 bits for R and G, with 2 bits for Blue.
 It's a nice and flexible graphics processor..........
  */
 
-#include "nick.h"
+//#include "nick.h"
 #include "epnick.h"
 
 /*************************************************************/
@@ -241,6 +241,35 @@ static void Nick_WritePixels2Colour(unsigned char Pen0, unsigned char Pen1, unsi
 	}
 }
 
+static void Nick_WritePixels2Colour2(unsigned char Pen0, unsigned char Pen1, unsigned char DataByte)
+{
+	int i;
+	int ColIndex;
+	int PenIndex;
+	unsigned char Data;
+
+	Data = DataByte;
+
+	for (i=0; i<8; i++)
+	{
+		if (Data & 0x080)
+		{
+			PenIndex = Pen1;
+		}
+		else
+		{
+			PenIndex = Pen0;
+		}
+
+		ColIndex = Nick.LPT.COL[PenIndex];
+
+		NICK_WRITE_PIXEL(ColIndex, Nick.dest);
+		NICK_WRITE_PIXEL(ColIndex, Nick.dest);
+
+		Data = Data<<1;
+	}
+}
+
 
 static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 {
@@ -366,7 +395,7 @@ static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
 				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
 				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
-//				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                                NICK_WRITE_PIXEL(PalIndex, Nick.dest);
 
 				Data = Data<<1;
 			}
@@ -393,16 +422,194 @@ static void Nick_WritePixels(unsigned char DataByte, unsigned char CharIndex)
 			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
 			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
 			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
-//			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
-//			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
-//			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
-//			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
 
 
 		}
 		break;
 	}
 }
+
+static void Nick_WritePixels2(unsigned char DataByte, unsigned char CharIndex)
+{
+	int i;
+
+	/* pen index colour 2-C (0,1), 4-C (0..3) 16-C (0..16) */
+	int PenIndex;
+	/* Col index = EP colour value */
+	int PalIndex;
+	unsigned char	ColourMode = NICK_GET_COLOUR_MODE(Nick.LPT.MB);
+	unsigned char Data = DataByte;
+
+	switch (ColourMode)
+	{
+		case NICK_2_COLOUR_MODE:
+		{
+			int PenOffset = 0;
+
+			/* do before displaying byte */
+
+			/* left margin attributes */
+			if (Nick.LPT.LM & NICK_LM_MSBALT)
+			{
+				if (Data & 0x080)
+				{
+					PenOffset |= 2;
+				}
+
+				Data &=~0x080;
+			}
+
+			if (Nick.LPT.LM & NICK_LM_LSBALT)
+			{
+				if (Data & 0x001)
+				{
+					PenOffset |= 4;
+				}
+
+				Data &=~0x01;
+			}
+
+			if (Nick.LPT.RM & NICK_RM_ALTIND1)
+			{
+				if (CharIndex & 0x080)
+				{
+					PenOffset|=0x02;
+				}
+			}
+
+//			if (Nick.LPT.RM & NICK_RM_ALTIND0)
+//			{
+//				if (Data & 0x040)
+//				{
+//					PenOffset|=0x04;
+//				}
+//			}
+
+
+
+                        Nick_WritePixels2Colour2(PenOffset,
+				(PenOffset|0x01), Data);
+		}
+		break;
+
+		case NICK_4_COLOUR_MODE:
+		{
+			//printf("4 colour\r\n");
+
+			/* left margin attributes */
+			if (Nick.LPT.LM & NICK_LM_MSBALT)
+			{
+				Data &= ~0x080;
+			}
+
+			if (Nick.LPT.LM & NICK_LM_LSBALT)
+			{
+				Data &= ~0x01;
+			}
+
+
+			for (i=0; i<4; i++)
+			{
+				PenIndex = Nick_PenIndexLookup_4Colour[Data];
+				PalIndex = Nick.LPT.COL[PenIndex & 0x03];
+
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+
+				Data = Data<<1;
+ 			}
+		}
+		break;
+
+		case NICK_16_COLOUR_MODE:
+		{
+			//printf("16 colour\r\n");
+
+			/* left margin attributes */
+			if (Nick.LPT.LM & NICK_LM_MSBALT)
+			{
+				Data &= ~0x080;
+			}
+
+			if (Nick.LPT.LM & NICK_LM_LSBALT)
+			{
+				Data &= ~0x01;
+			}
+
+
+			for (i=0; i<2; i++)
+			{
+				PenIndex = Nick_PenIndexLookup_16Colour[Data];
+
+				if (PenIndex & 0x08)
+				{
+					PalIndex = ((Nick.FIXBIAS & 0x01f)<<3) | (PenIndex & 0x07);
+				}
+				else
+				{
+					PalIndex = Nick.LPT.COL[PenIndex & 0x07];
+				}
+
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                                NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+				NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                                NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+
+				Data = Data<<1;
+			}
+		}
+		break;
+
+		case NICK_256_COLOUR_MODE:
+		{
+			/* left margin attributes */
+			if (Nick.LPT.LM & NICK_LM_MSBALT)
+			{
+				Data &= ~0x080;
+			}
+
+			if (Nick.LPT.LM & NICK_LM_LSBALT)
+			{
+				Data &= ~0x01;
+			}
+
+
+			PalIndex = Data;
+
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+			NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+                        NICK_WRITE_PIXEL(PalIndex, Nick.dest);
+
+
+		}
+		break;
+	}
+}
+
 
 static void Nick_DoPixel(int ClocksVisible)
 {
@@ -434,8 +641,8 @@ static void Nick_DoLPixel(int ClocksVisible)
 		Buf1 =  Nick_FetchByte(Nick.LD1);
 		Nick.LD1++;
 
-		Nick_WritePixels(Buf1,Buf1);
-		Nick_WritePixels(Buf1,Buf1);
+                Nick_WritePixels2(Buf1,Buf1);
+                Nick_WritePixels2(Buf1,Buf1);
 	}
 }
 
@@ -456,7 +663,7 @@ static void Nick_DoAttr(int ClocksVisible)
 			unsigned char BackgroundColour = ((Buf1>>4) & 0x0f);
 			unsigned char ForegroundColour = (Buf1 & 0x0f);
 
-			Nick_WritePixels2Colour(BackgroundColour, ForegroundColour, Buf2);
+                        Nick_WritePixels2Colour2(BackgroundColour, ForegroundColour, Buf2);
 		}
 	}
 }
@@ -472,7 +679,7 @@ static void Nick_DoCh256(int ClocksVisible)
 		Nick.LD1++;
 		Buf2 = Nick_FetchByte(ADDR_CH256(Nick.LD2, Buf1));
 
-		Nick_WritePixels(Buf2,Buf1);
+                Nick_WritePixels2(Buf2,Buf1);
 	}
 }
 
@@ -487,7 +694,7 @@ static void Nick_DoCh128(int ClocksVisible)
 		Nick.LD1++;
 		Buf2 = Nick_FetchByte(ADDR_CH128(Nick.LD2, Buf1));
 
-		Nick_WritePixels(Buf2,Buf1);
+                Nick_WritePixels2(Buf2,Buf1);
 	}
 }
 
@@ -502,7 +709,7 @@ static void Nick_DoCh64(int ClocksVisible)
 		Nick.LD1++;
 		Buf2 = Nick_FetchByte(ADDR_CH64(Nick.LD2, Buf1));
 
-		Nick_WritePixels(Buf2,Buf1);
+                Nick_WritePixels2(Buf2,Buf1);
 	}
 }
 
@@ -573,14 +780,14 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 		{
 			case NICK_PIXEL_MODE:
 			{
-				Nick_DoPixel(ClocksVisible);
+                            Nick_DoPixel(ClocksVisible);
 			}
 			break;
 
 			case NICK_ATTR_MODE:
 			{
 				//printf("attr mode\r\n");
-				Nick_DoAttr(ClocksVisible);
+                            Nick_DoAttr(ClocksVisible);
 			}
 			break;
 

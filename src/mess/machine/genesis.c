@@ -24,7 +24,7 @@ int genesis_soundram_size = 0x10000;
 unsigned char genesis_sharedram[0x10000];
 unsigned char *genesis_soundram;
 
-unsigned char *ROM;
+static unsigned char *ROM;
 
 void genesis_init_machine (void)
 {
@@ -43,7 +43,7 @@ void genesis_init_machine (void)
 }
 
 
-int genesis_load_rom (void)
+int genesis_load_rom (int id, const char *rom_name)
 {
 	FILE *romfile;
 	unsigned char *tmpROMnew, *tmpROM;
@@ -56,7 +56,7 @@ int genesis_load_rom (void)
 if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
 
 
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
 		return 1;
 	/* Allocate memory and set up memory regions */
 	if( new_memory_region(REGION_CPU1,0x405000) )

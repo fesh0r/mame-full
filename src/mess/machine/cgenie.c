@@ -29,7 +29,7 @@
 
 #define TAPE_HEADER "Colour Genie - Virtual Tape File"
 
-UINT8 *fontram;
+UINT8 *cgenie_fontram;
 
 
 extern char cgenie_frame_message[64];
@@ -84,6 +84,7 @@ static PDRIVE pd_list[12] = {
 #define IRQ_FDC         0x40
 static UINT8 irq_status = 0;
 
+static const char *floppy_name[4] = {0,};
 static UINT8 first_fdc_access[4] = {1, 1, 1, 1};
 static UINT8 motor_drive = 0;
 static short motor_count = 0;
@@ -95,6 +96,7 @@ static UINT8 head[4] = {0,};
 static short dir_sector[4] = {0,};
 static short dir_length[4] = {0,};
 
+static const char *cassette_name = NULL;
 /* current tape file handles */
 static char tape_name[12+1];
 static void *tape_put_file = 0;
@@ -137,106 +139,106 @@ static int opbaseoverride(int PC)
 	/* check if the BASIC prompt is visible on the screen */
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
     {
-		int i;
 		cgenie_load_cas = 0;
-        for( i = 0; i < Machine->gamedrv->num_of_cassette_drives; i++ )
-        {
-			if( cassette_name[i][0] )
-            {
-				UINT8 *buff = malloc(65536), *s, data;
-				UINT16 size, entry = 0, block_len, block_ofs = 0;
-                void *cmd;
+		if( cassette_name[0] )
+		{
+			UINT8 *buff = malloc(65536), *s, data;
+			UINT16 size, entry = 0, block_len, block_ofs = 0;
+			void *cmd;
 
-				if( !buff )
-                    continue;
-				cmd = osd_fopen(Machine->gamedrv->name, cassette_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-				if( !cmd )
+			if( !buff )
+			{
+				if( errorlog ) fprintf(errorlog, "failed to allocate 64K buff\n");
+				return PC;
+			}
+			cmd = osd_fopen(Machine->gamedrv->name, cassette_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			if( !cmd )
+			{
+				free(buff);
+				if( errorlog ) fprintf(errorlog, "failed to open '%s'\n", cassette_name);
+                return PC;
+            }
+			size = osd_fread(cmd, buff, 65536);
+			s = buff;
+			if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
+			{
+				s = memchr(s, 26, size);
+				if( s )
 				{
-					free(buff);
-                    continue;
+					*s++ = '\n';
+					*s++ = '\0';
+					LOG((errorlog,"%s",s));
 				}
-                size = osd_fread(cmd, buff, 65536);
-                s = buff;
-				if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
+				size -= s - buff;
+			}
+			if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
+			{
+				LOG((errorlog,"image name: [%-6.6s]\n",s+1));
+				s += 8;
+				size -= 8;
+				while( size > 3 )
 				{
-                    s = memchr(s, 26, size);
-					if( s )
+					data = *s++;
+					switch( data )
 					{
-						*s++ = '\n';
-						*s++ = '\0';
-						LOG((errorlog,"%s",s));
-					}
-					size -= s - buff;
-				}
-				if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
-				{
-					LOG((errorlog,"image name: [%-6.6s]\n",s+1));
-                    s += 8;
-					size -= 8;
-					while( size > 3 )
-					{
-						data = *s++;
-						switch( data )
+					case 0x01:		   /* CMD file header */
+					case 0x07:		   /* another type of CMD file header */
+					case 0x3c:		   /* CAS file header */
+						block_len = *s++;
+						/* on CMD files size zero means size 256 */
+						if( block_len == 0 )
+							block_len = 256;
+						block_ofs = *s++;
+						block_ofs += 256 * *s++;
+						if( data != 0x3c )
 						{
-						case 0x01:		   /* CMD file header */
-						case 0x07:		   /* another type of CMD file header */
-						case 0x3c:		   /* CAS file header */
-							block_len = *s++;
-							/* on CMD files size zero means size 256 */
+							block_len -= 2;
 							if( block_len == 0 )
 								block_len = 256;
-							block_ofs = *s++;
-							block_ofs += 256 * *s++;
-							if( data != 0x3c )
-							{
-								block_len -= 2;
-								if( block_len == 0 )
-									block_len = 256;
-							}
-							size -= 4;
-							LOG((errorlog, "cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
-							while( block_len && size )
-							{
-								cpu_writemem16(block_ofs, *s);
-								s++;
-								block_ofs++;
-								block_len--;
-								size--;
-							}
-							if( data == 0x3c )
-								s++;
-							break;
-						case 0x02:
-							block_len = *s++;
-							size -= 1;
-						case 0x78:
-							block_ofs = *s++;
-							block_ofs += 256 * *s++;
-							if( !entry )
-								entry = block_ofs;
-							LOG((errorlog, "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry));
-                            size -= 3;
-							if( size <= 3 )
-							{
-								LOG((errorlog,"starting program at $%04X\n", block_ofs));
-							}
-							break;
-						default:
+						}
+						size -= 4;
+						LOG((errorlog, "cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+						while( block_len && size )
+						{
+							cpu_writemem16(block_ofs, *s);
+							s++;
+							block_ofs++;
+							block_len--;
 							size--;
 						}
+						if( data == 0x3c )
+							s++;
+						break;
+					case 0x02:
+						block_len = *s++;
+						size -= 1;
+					case 0x78:
+						block_ofs = *s++;
+						block_ofs += 256 * *s++;
+						if( !entry )
+							entry = block_ofs;
+						LOG((errorlog, "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry));
+						size -= 3;
+						if( size <= 3 )
+						{
+							LOG((errorlog,"starting program at $%04X\n", block_ofs));
+						}
+						break;
+					default:
+						size--;
 					}
 				}
-                free(buff);
-                osd_fclose(cmd);
-				cpu_set_pc(entry);
-            }
-        }
+			}
+			free(buff);
+			osd_fclose(cmd);
+			cpu_set_pc(entry);
+		}
         cpu_setOPbaseoverride(0,NULL);
     }
 	return PC;
 }
 
-void cgenie_init_driver(void)
+void init_cgenie(void)
 {
 	UINT8 *gfx = memory_region(REGION_GFX2);
 	int i;
@@ -361,7 +363,19 @@ void cgenie_stop_machine(void)
 	tape_put_close();
 }
 
-int cgenie_rom_load(void)
+int cgenie_cassette_init(int id, const char *name)
+{
+	cassette_name = name;
+	return 0;
+}
+
+int cgenie_floppy_init(int id, const char *name)
+{
+	floppy_name[id] = name;
+	return 0;
+}
+
+int cgenie_rom_load(int id, const char *name)
 {
 	int result = 0;
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -1189,7 +1203,7 @@ void cgenie_colorram_w(int offset, int data)
 
 int cgenie_fontram_r(int offset)
 {
-	return fontram[offset];
+	return cgenie_fontram[offset];
 }
 
 void cgenie_fontram_w(int offset, int data)
@@ -1197,11 +1211,11 @@ void cgenie_fontram_w(int offset, int data)
 	UINT8 *dp;
 	int code;
 
-	if( data == fontram[offset] )
+	if( data == cgenie_fontram[offset] )
 		return;				   /* no change */
 
 	/* store data */
-	fontram[offset] = data;
+	cgenie_fontram[offset] = data;
 
 	/* convert eight pixels */
 	dp = &Machine->gfx[0]->gfxdata[(256 * 8 + offset) * Machine->gfx[0]->width];

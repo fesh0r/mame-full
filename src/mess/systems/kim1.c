@@ -76,10 +76,10 @@
 #endif
 
 /* from src/mess/machine/kim1.c */
-extern void kim1_init_driver(void);
+extern void init_kim1(void);
 extern void kim1_init_machine(void);
 
-extern int kim1_rom_load (void);
+extern int kim1_rom_load (int id, const char *name);
 extern int kim1_rom_id (const char *name, const char *gamename);
 
 extern int kim1_interrupt(void);
@@ -213,7 +213,7 @@ static struct DACinterface dac_interface =
 	{ 100 } 	/* volume */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_kim1 =
 {
 	/* basic machine hardware */
 	{
@@ -263,39 +263,30 @@ ROM_START(kim1)
 		/* space filled with key icons by kim1_init_driver */
 ROM_END
 
-static const char *kim1_file_extensions[] = { "kim",0 };
 
-struct GameDriver kim1_driver =
-{
-	__FILE__,
-	0,
-	"kim1",
-	"KIM-1",
-	"1975",
-	"Commodore/MOS",
-	0,
-	0,
-	&machine_driver,
-	kim1_init_driver,
 
-	rom_kim1,				/* ROM_LOAD structures */
-	kim1_rom_load,
-	kim1_rom_id,
-	kim1_file_extensions,	/*	default file extensions */
-	1,						/* number of ROM slots */
-	0,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,
-	0,
-	0,
-	0,						/* sound_prom */
-
-	input_ports_kim1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_kim1[] = {
+    {
+        IO_CARTSLOT,        /* type */
+        1,                  /* count */
+		"kim\0",            /* file extensions */
+        NULL,               /* private */
+		kim1_rom_id,		/* id */
+		kim1_rom_load,		/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+CONS( 1975, kim1,	  0, 		kim1,	  kim1, 	kim1,	  "Commodore Business Machines",  "KIM-1" )
 

@@ -14,6 +14,31 @@
 
 #include "driver.h"
 
+#ifndef DRIVER_RECURSIVE
+
+/* The "root" driver, defined so we can have &driver_##NAME in macros. */
+struct GameDriver driver_0 =
+{
+	__FILE__,
+	0,
+	"root",
+	0,
+	0,
+	0,
+	0, 0,
+	0,
+	0,
+	0,
+	0,
+	0, 0, 0, 0,
+	0,
+	0, 0, 0,
+	NOT_A_DRIVER,
+	0,0
+};
+
+#endif
+
 #ifdef TINY_COMPILE
 extern struct GameDriver TINY_NAME;
 
@@ -30,14 +55,14 @@ const struct GameDriver *drivers[] =
 #define DRIVER_RECURSIVE
 
 /* step 1: declare all external references */
-#define DRIVER(NAME) extern struct GameDriver NAME##_driver;
-#define TESTDRIVER(NAME) extern struct GameDriver NAME##_driver;
+#define DRIVER(NAME) extern struct GameDriver driver_##NAME;
+#define TESTDRIVER(NAME) extern struct GameDriver driver_##NAME;
 #include "system.c"
 
 /* step 2: define the drivers[] array */
 #undef DRIVER
 #undef TESTDRIVER
-#define DRIVER(NAME) &NAME##_driver,
+#define DRIVER(NAME) &driver_##NAME,
 #define TESTDRIVER(NAME)
 const struct GameDriver *drivers[] =
 {
@@ -85,7 +110,8 @@ const struct GameDriver *drivers[] =
                             /* aka Milton-Bradley Vectrex)                    */
       DRIVER( raaspec )     /* RA+A Spectrum - Modified Vectrex               */
 
-
+      /* Other */
+	  DRIVER( advision )
 
 
 
@@ -95,6 +121,7 @@ const struct GameDriver *drivers[] =
   /****************COMPUTERS****************************************************/
 
       /* APPLE */
+      DRIVER( apple1 )      /* APPLE                                          */
       DRIVER( apple2c )     /* APPLE                                          */
       DRIVER( apple2c0 )    /* APPLE                                          */
       DRIVER( apple2cp )    /* APPLE                                          */
@@ -107,23 +134,33 @@ const struct GameDriver *drivers[] =
   TESTDRIVER( a800xl )      /* Atari 800 XL                                   */
 
       /* COMMODORE */
-      DRIVER( amiga )       /* Commodore Amiga                                */
-      DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
-	  DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
+
       DRIVER( c16 )         /* Commodore 16                                   */
       DRIVER( plus4 )       /* Commodore +4                                   */
-  TESTDRIVER( c64 )         /* Commodore 64                                   */
-  TESTDRIVER( c128 )        /* Commodore 128                                  */
+  TESTDRIVER( c364 )        /* Commodore ??                                   */
+
+      DRIVER( c64 )         /* Commodore 64 - NTSC                            */
+      DRIVER( c64pal )      /* Commodore 64 - PAL                             */
+      DRIVER( max )         /* Ulitimax                                       */
+
+      DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
+      DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
+
+      DRIVER( amiga )       /* Commodore Amiga                                */
+
+
+
 
       /* AMSTRAD */
-  TESTDRIVER( cpc464 )      /* Amstrad (Schneider in Germany) 1984            */
-  TESTDRIVER( cpc664 )      /* Amstrad (Schneider in Germany) 1985            */
+      DRIVER( cpc464 )      /* Amstrad (Schneider in Germany) 1984            */
+      DRIVER( cpc664 )      /* Amstrad (Schneider in Germany) 1985            */
       DRIVER( cpc6128 )     /* Amstrad (Schneider in Germany) 1985                                    */
   TESTDRIVER( cpc464p )     /* Amstrad CPC464  Plus - 1987                    */
   TESTDRIVER( cpc6128p )    /* Amstrad CPC6128 Plus - 1987                    */
 
       /* VEB MIKROELEKTRONIK */
       DRIVER( kccomp )      /* KC compact                                     */
+      DRIVER( kc85_4 )      /*                                                */
 
 	  /* CANTAB */
       DRIVER( jupiter )     /*                                                */
@@ -134,7 +171,11 @@ const struct GameDriver *drivers[] =
       /* Non Linear Systems */
       DRIVER( kaypro )      /*   KAYPRO                                       */
 
-	  /* Tandy */
+	  /* Microbee Systems */
+	  DRIVER( mbee )		/*	 Microbee									  */
+	  DRIVER( mbee56k ) 	/*	 Microbee 56K (CP/M)						  */
+
+      /* Tandy */
       DRIVER( coco )        /* Color Computer                                 */
 	  DRIVER( coco3 )       /* Color Computer 3                               */
       DRIVER( cp400 )       /* Prologica CP400                                */
@@ -148,8 +189,17 @@ const struct GameDriver *drivers[] =
       DRIVER( cgenie )      /* Color Genie                                    */
 
       /* VideoTech */
-	  DRIVER( vz200 )       /* Video Tech 200                                 */
-	  DRIVER( vz300 )       /* Video Tech 300                                 */
+      DRIVER( laser110 )
+      DRIVER( laser210 )
+      DRIVER( laser200 )
+	  DRIVER( vz200 )       /* laser210?                                      */
+	  DRIVER( fellow )
+      DRIVER( tx8000 )
+      DRIVER( laser310 )
+      DRIVER( vz300 )
+      DRIVER( laser350 )    /* Video Tech Laser 350                           */
+      DRIVER( laser500 )    /* Video Tech Laser 500                           */
+      DRIVER( laser700 )    /* Video Tech Laser 700                           */
 
       /* Tangerine */
 	  DRIVER( oric1 )       /* ORIC 1                                         */
@@ -168,16 +218,19 @@ const struct GameDriver *drivers[] =
       DRIVER( tandy1t )     /* Tandy                                          */
 
 	  /* Sinclair */
-  TESTDRIVER( zx80 )        /*                                                */
-  TESTDRIVER( zx81 )        /*                                                */
-  TESTDRIVER( ts1000 )      /*                                                */
-  TESTDRIVER( aszmic )      /*                                                */
+	  DRIVER( zx80 )		/*												  */
+	  DRIVER( zx81 )		/*												  */
+	  DRIVER( ts1000 )		/*												  */
+	  DRIVER( aszmic )		/*												  */
+      DRIVER( pc8300 )
+	  DRIVER( pow3000 )
+
       DRIVER( spectrum )    /* Sinclair 48k                                   */
 
 
 	  /* Other */
       DRIVER( msx )         /* MSX                                            */
-
+      DRIVER( nascom1 )     /*                                                */
 
 
 
@@ -195,7 +248,7 @@ const struct GameDriver *drivers[] =
 
 
 
-    //DRIVER( apple )       /* Apple - 1976                                   */
+
     //DRIVER( applemac )    /* Apple Macintosh                                */
     //DRIVER( arcadia )     /* Arcadia 2001                                   */
     //DRIVER( atarist )     /* Atari ST                                       */
@@ -205,7 +258,7 @@ const struct GameDriver *drivers[] =
     //DRIVER( channelf )    /* Fairchild Channel F VES - 1976                 */
     //DRIVER( coco2 )       /* Color Computer 2                               */
 
-
+    //DRIVER( c128 )        /* Commodore 128                                  */
 
   							/* AkA Phillips Videopac                          */
     //DRIVER( intv )        /* Mattel Intellivision - 1979 AKA INTV           */

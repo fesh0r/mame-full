@@ -10,7 +10,7 @@ MESS misc info
 4.  uncomment all the required CPU cores (use all is ok) see below
 5.  COREOBJS firstline is obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
 6.  DRVLIBS replace with MESS ones
-7.  MSDOSOBJS += obj/msdos/nec765.o
+7.  MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o
 8.  version....  after $(TINYFLAGS) -DMESS
 9.  next #(TINYFLAGS) -DMESS
 10. all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
@@ -20,17 +20,23 @@ MESS misc info
 12. replace archive definitions
 13. add MAKE MESSDIR to the bottom of MAKETREE
 14. add messdir:
+15. add del dat2html.exe to make clean
 
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
+CPUS+=Z80GB@
 CPUS+=M6502@
 CPUS+=M65C02@
 CPUS+=M6510@
+CPUS+=N2A03@
 CPUS+=H6280@
 CPUS+=I86@
+CPUS+=I8039@
+CPUS+=I8048@
 CPUS+=M6809@
 CPUS+=M68000@
 CPUS+=TMS9900@
+CPUS+=TMS9995@
 CPUS+=PDP1@
 
 # uncomment the following lines to include a sound core

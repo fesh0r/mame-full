@@ -102,7 +102,7 @@ int i;
 	}
 }
 
-void *wd179x_select_drive(UINT8 drive, UINT8 head, void (*callback) (int), char *name)
+void *wd179x_select_drive(UINT8 drive, UINT8 head, void (*callback) (int), const char *name)
 {
 WD179X *w = wd[drive];
 
@@ -493,7 +493,7 @@ UINT16 crc = 0xffff;
 	if (w->callback)
 		(*w->callback) (WD179X_DRQ_SET);
 	w->status = STA_2_DRQ | STA_2_BUSY;
-	w->busy_count = 0;
+	w->busy_count = 50;
 }
 
 /* read a sector */

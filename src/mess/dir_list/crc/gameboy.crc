@@ -1,0 +1,49 @@
+# Nintendo Gameboy Cartridge CRC List
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections and submissions to: battlepriest@hotmail.com
+
+[gameboy]
+d9334ddf = !Sqrxz! [Version 1.1; Unlicensed] (Icarus Productions, 1998)
+3d0bac10 = A Boy and His Blob - Fushingina Bulobi [Japan] (Jaleco/Imagineering, 1990)
+7ff546df = Ace Striker [Japan] (Jaleco, 1994)
+64f4fa44 = Adventure Island [USA] (Hudson Soft, 1991)
+f1071e08 = Adventure Island 2: Bikkuri Nekketou [Japan] (Hudson Soft, 1992)
+c0049d77 = Afterburst [Japan] (NCS, 1990)
+8259ac54 = Asteroids/Missile Command [USA; Version 43779] (Accolade, 1995)
+8bc985b5 = Asteroids/Missile Command [USA; Version 43907] (Accolade, 1995)
+
+
+#[not_working]
+cafe0d2b = 3 Punyosoumaban Club [Japan] (NOT PLAYABLE)
+ e0216e6 = 4 in 1 Funpack [USA] (NOT PLAYABLE)
+c170a732 = The Addams Family [USA] (Ocean, 1991) (NOT PLAYABLE)
+7e054a88 = The Addams Family: Pugsley's Scavenger Hunt [USA] (NOT PLAYABLE)
+783066cf = Adventure Island 2 [USA] (Hudson Soft, 1993) (NOT PLAYABLE)
+176d2eeb = Adventures of Lolo [USA] (Hal Loboratory, 1995) (NOT PLAYABLE)
+5d461374 = The Adventures of Star Saver [USA] (NOT PLAYABLE)
+dfa3b28a = Aerostar [Japan] (NOT PLAYABLE)
+f6fd275e = Aerostar [USA] (NOT PLAYABLE)
+898609b4 = Akazukin Cha Cha [Super Gameboy; Japan] (NOT PLAYABLE)
+283c58b7 = Aladdin [USA] (NOT PLAYABLE)
+1089098f = Alfred Chicken [Super Gameboy; Japan] (NOT PLAYABLE)
+3b2b904a = Alfred Chicken [USA] (NOT PLAYABLE)
+effb960b = Alien 3 [USA; Version 54867] (LJN, 1992) (NOT PLAYABLE)
+8362d3de = Alien 3 [USA; Version 54995] (LJN, 1992) (NOT PLAYABLE)
+583c0e4e = Alien Olympics 2044 AD [USA; Version 29973] (Ocean, 19??) (NOT PLAYABLE)
+1b7c8697 = Alien Olympics 2044 AD [USA; Version 30101] (Ocean, 19??) (NOT PLAYABLE)
+e884682b = Alien Vs. Predator: The Last of His Clan [Japan] (Activision, 1993) (NOT PLAYABLE)
+4bbcf652 = Alien Vs. Predator: The Last of His Clan [USA] (Activision, 1993) (NOT PLAYABLE)
+d229ac62 = Amazing Tater [US] (Atlus, 1991) (NOT PLAYABLE)
+2c27ec70 = Super Mario Land [Ver. 1.1; Japan] (Nintendo, 1988) (NOT PLAYABLE)
+46df91ad = Tetris [Ver. 1.1; Japan] (Nintendo, 1989) (NOT PLAYABLE)
+
+
+#[known_bad_dumps]
+75004583 = 55 Game Hong Kong Pirate Cart (BAD DUMP?)
+e6a136db = Ace Striker [Japan] (BAD DUMP)
+cac3ae13 = Ace Striker [Japan] (BAD DUMP)
+38762263 = The Adventures of Star Saver [USA](BAD DUMP)
+dfd9efd6 = Aerostar [Japan] (BAD DUMP)
+

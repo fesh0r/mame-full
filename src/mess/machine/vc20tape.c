@@ -6,10 +6,13 @@
 
 ***************************************************************************/
 #include <ctype.h>
+
 #include "driver.h"
 #include "unzip.h"
-#include "cpu/m6502/m6502.h"
-#include "mess/machine/vc20tape.h"
+
+#define VERBOSE_DBG 0
+#include "cbm.h"
+#include "vc20tape.h"
 
 struct DACinterface vc20tape_sound_interface={
 	1,
@@ -18,219 +21,236 @@ struct DACinterface vc20tape_sound_interface={
 
 #define TONE_ON_VALUE 0xff
 
-// write line high active,
-// read line low active!?
+/* write line high active, */
+/* read line low active!? */
 
-static int tape_on, tape_noise;
-static int tape_play, tape_record;
+static struct {
+  int on, noise;
+  int play, record;
+
+  int data;
+  int motor;
+  void (*read_callback)(int,int);
 
 #define TAPE_WAV 1
 #define TAPE_PRG 2
 #define TAPE_ZIP 3
-static int tape_type; // 0 nothing
-static int tape_data;
-static void (*tape_read_callback)(int,int);
-static int tape_motor;
+  int type; /* 0 nothing */
+} tape;
+  
+/* these are the values for wav files */
+struct {
+  int state;
+  void *timer;
+  const char *imagename;
+  int pos;
+  struct GameSample *sample;
+} wav;
 
-static int state=0;
-static void *tape_timer;
-static char *tape_imagename;
-static int tape_pos;
+/* these are the values for prg files */
+struct {
+  int state;
 
-// these are the values for wav files
-static struct GameSample *tape_sample;
+  /* these values are shared with the zip driver */
+  void *timer;
+  const char *imagename;
+  int pos;
 
-// these are the values for prg files
 #define VC20_SHORT		(176e-6)
 #define VC20_MIDDLE		(256e-6)
 #define VC20_LONG		(336e-6)
-#define C16_SHORT	(246e-6) // messured
+#define C16_SHORT	(246e-6) /* messured */
 #define C16_MIDDLE	(483e-6)
 #define C16_LONG	(965e-6)
-#define PCM_SHORT	(prg_c16?C16_SHORT:VC20_SHORT)
-#define PCM_MIDDLE	(prg_c16?C16_MIDDLE:VC20_MIDDLE)
-#define PCM_LONG	(prg_c16?C16_LONG:VC20_LONG)
-static int prg_c16;
-static UINT8 *tape_prg;
-static int tape_length;
-static int tape_stateblock, tape_stateheader, tape_statebyte, tape_statebit;
-static int tape_prgdata;
-static char tape_name[16]; //name for cbm
-static UINT8 tape_chksum;
-static double tape_lasttime;
+#define PCM_SHORT	(prg.c16?C16_SHORT:VC20_SHORT)
+#define PCM_MIDDLE	(prg.c16?C16_MIDDLE:VC20_MIDDLE)
+#define PCM_LONG	(prg.c16?C16_LONG:VC20_LONG)
+  int c16;
+  UINT8 *prg;
+  int length;
+  int stateblock, stateheader, statebyte, statebit;
+  int prgdata;
+  char name[16]; /*name for cbm */
+  UINT8 chksum;
+  double lasttime;
+} prg;
 
-// these are values for zip files
-static ZIP *tape_zip;
-static struct zipent* tape_zipentry;
+/* these are values for zip files */
+struct {
+  int state;
+  ZIP *zip;
+  struct zipent* zipentry;
+} zip;
 
-// from sound/samples.c no changes (static declared)
-// readsamples not useable (loads files only from sample or game directory)
-// and doesn't search the rompath
+/* from sound/samples.c no changes (static declared) */
+/* readsamples not useable (loads files only from sample or game directory) */
+/* and doesn't search the rompath */
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
 #else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
+#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | \
+                       (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #endif
 static struct GameSample *vc20_read_wav_sample(void *f)
 {
-	unsigned long offset = 0;
-	UINT32 length, rate, filesize, temp32;
-	UINT16 bits, temp16;
-	char buf[32];
-	struct GameSample *result;
-
+  unsigned long offset = 0;
+  UINT32 length, rate, filesize, temp32;
+  UINT16 bits, temp16;
+  char buf[32];
+  struct GameSample *result;
+  
 	/* read the core header and make sure it's a WAVE file */
-	offset += osd_fread(f, buf, 4);
-	if (offset < 4)
-		return NULL;
-	if (memcmp(&buf[0], "RIFF", 4) != 0)
-		return NULL;
-
-	/* get the total size */
-	offset += osd_fread(f, &filesize, 4);
-	if (offset < 8)
-		return NULL;
-	filesize = intelLong(filesize);
-
-	/* read the RIFF file type and make sure it's a WAVE file */
-	offset += osd_fread(f, buf, 4);
-	if (offset < 12)
-		return NULL;
-	if (memcmp(&buf[0], "WAVE", 4) != 0)
-		return NULL;
-
-	/* seek until we find a format tag */
-	while (1)
-	{
-		offset += osd_fread(f, buf, 4);
-		offset += osd_fread(f, &length, 4);
-		length = intelLong(length);
-		if (memcmp(&buf[0], "fmt ", 4) == 0)
-			break;
-
-		/* seek to the next block */
-		osd_fseek(f, length, SEEK_CUR);
-		offset += length;
-		if (offset >= filesize)
-			return NULL;
-	}
-
-	/* read the format -- make sure it is PCM */
-	offset += osd_fread_lsbfirst(f, &temp16, 2);
-	if (temp16 != 1)
-		return NULL;
-
-	/* number of channels -- only mono is supported */
-	offset += osd_fread_lsbfirst(f, &temp16, 2);
-	if (temp16 != 1)
-		return NULL;
-
-	/* sample rate */
-	offset += osd_fread(f, &rate, 4);
-	rate = intelLong(rate);
-
-	/* bytes/second and block alignment are ignored */
-	offset += osd_fread(f, buf, 6);
-
-	/* bits/sample */
-	offset += osd_fread_lsbfirst(f, &bits, 2);
-	if (bits != 8 && bits != 16)
-		return NULL;
-
-	/* seek past any extra data */
-	osd_fseek(f, length - 16, SEEK_CUR);
-	offset += length - 16;
-
-	/* seek until we find a data tag */
-	while (1)
-	{
-		offset += osd_fread(f, buf, 4);
-		offset += osd_fread(f, &length, 4);
-		length = intelLong(length);
-		if (memcmp(&buf[0], "data", 4) == 0)
-			break;
-
-		/* seek to the next block */
-		osd_fseek(f, length, SEEK_CUR);
-		offset += length;
-		if (offset >= filesize)
-			return NULL;
-	}
-
-	/* allocate the game sample */
-	result = malloc(sizeof(struct GameSample) + length);
-	if (result == NULL)
-		return NULL;
-
-	/* fill in the sample data */
-	result->length = length;
-	result->smpfreq = rate;
-	result->resolution = bits;
-
-	/* read the data in */
-	if (bits == 8)
-	{
-		osd_fread(f, result->data, length);
-
-		/* convert 8-bit data to signed samples */
-		for (temp32 = 0; temp32 < length; temp32++)
-			result->data[temp32] ^= 0x80;
-	}
-	else
-	{
-		/* 16-bit data is fine as-is */
-		osd_fread_lsbfirst(f, result->data, length);
-	}
-
-	return result;
+  offset += osd_fread(f, buf, 4);
+  if (offset < 4)
+    return NULL;
+  if (memcmp(&buf[0], "RIFF", 4) != 0)
+    return NULL;
+  
+  /* get the total size */
+  offset += osd_fread(f, &filesize, 4);
+  if (offset < 8)
+    return NULL;
+  filesize = intelLong(filesize);
+  
+  /* read the RIFF file type and make sure it's a WAVE file */
+  offset += osd_fread(f, buf, 4);
+  if (offset < 12)
+    return NULL;
+  if (memcmp(&buf[0], "WAVE", 4) != 0)
+    return NULL;
+  
+  /* seek until we find a format tag */
+  while (1)
+    {
+      offset += osd_fread(f, buf, 4);
+      offset += osd_fread(f, &length, 4);
+      length = intelLong(length);
+      if (memcmp(&buf[0], "fmt ", 4) == 0)
+	break;
+      
+      /* seek to the next block */
+      osd_fseek(f, length, SEEK_CUR);
+      offset += length;
+      if (offset >= filesize)
+	return NULL;
+    }
+  
+  /* read the format -- make sure it is PCM */
+  offset += osd_fread_lsbfirst(f, &temp16, 2);
+  if (temp16 != 1)
+    return NULL;
+  
+  /* number of channels -- only mono is supported */
+  offset += osd_fread_lsbfirst(f, &temp16, 2);
+  if (temp16 != 1)
+    return NULL;
+  
+  /* sample rate */
+  offset += osd_fread(f, &rate, 4);
+  rate = intelLong(rate);
+  
+  /* bytes/second and block alignment are ignored */
+  offset += osd_fread(f, buf, 6);
+  
+  /* bits/sample */
+  offset += osd_fread_lsbfirst(f, &bits, 2);
+  if (bits != 8 && bits != 16)
+    return NULL;
+  
+  /* seek past any extra data */
+  osd_fseek(f, length - 16, SEEK_CUR);
+  offset += length - 16;
+  
+  /* seek until we find a data tag */
+  while (1)
+    {
+      offset += osd_fread(f, buf, 4);
+      offset += osd_fread(f, &length, 4);
+      length = intelLong(length);
+      if (memcmp(&buf[0], "data", 4) == 0)
+	break;
+      
+      /* seek to the next block */
+      osd_fseek(f, length, SEEK_CUR);
+      offset += length;
+      if (offset >= filesize)
+	return NULL;
+    }
+  
+  /* allocate the game sample */
+  result = malloc(sizeof(struct GameSample) + length);
+  if (result == NULL)
+    return NULL;
+  
+  /* fill in the sample data */
+  result->length = length;
+  result->smpfreq = rate;
+  result->resolution = bits;
+  
+  /* read the data in */
+  if (bits == 8)
+    {
+      osd_fread(f, result->data, length);
+      
+      /* convert 8-bit data to signed samples */
+      for (temp32 = 0; temp32 < length; temp32++)
+	result->data[temp32] ^= 0x80;
+    }
+  else
+    {
+      /* 16-bit data is fine as-is */
+      osd_fread_lsbfirst(f, result->data, length);
+    }
+  
+  return result;
 }
 
 static void vc20_wav_timer(int data);
 static void vc20_wav_state(void)
 {
-  switch (state) {
-  case 0: break; // not inited
-  case 1: // off
-    if (tape_on) { state=2;break; }
+  switch (wav.state) {
+  case 0: break; /* not inited */
+  case 1: /* off */
+    if (tape.on) { wav.state=2;break; }
     break;
-  case 2: // on
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
+  case 2: /* on */
+    if (!tape.on) {
+      wav.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
       break;
     }
-    if (tape_motor&&tape_play) {
-      state=3;
-      tape_timer=timer_pulse(1.0/tape_sample->smpfreq, 0, vc20_wav_timer);
+    if (tape.motor&&tape.play) {
+      wav.state=3;
+      wav.timer=timer_pulse(1.0/wav.sample->smpfreq, 0, vc20_wav_timer);
       break;
     }
-    if (tape_motor&&tape_record) {
-      state=4;
+    if (tape.motor&&tape.record) {
+      wav.state=4;
       break;
     }
     break;
-  case 3: // reading
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
-      if (tape_timer) timer_remove(tape_timer);
+  case 3: /* reading */
+    if (!tape.on) {
+      wav.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
+      if (wav.timer) timer_remove(wav.timer);
       break;
     }
-    if (!tape_motor||!tape_play) {
-      state=2;
-      if (tape_timer) timer_remove(tape_timer);
+    if (!tape.motor||!tape.play) {
+      wav.state=2;
+      if (wav.timer) timer_remove(wav.timer);
       DAC_data_w(0,0);
       break;
     }
     break;
-  case 4: // saving
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
+  case 4: /* saving */
+    if (!tape.on) {
+      wav.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
       break;
     }
-    if (!tape_motor||!tape_record) {
-      state=2;
+    if (!tape.motor||!tape.record) {
+      wav.state=2;
       DAC_data_w(0,0);
       break;
     }
@@ -238,7 +258,7 @@ static void vc20_wav_state(void)
   }
 }
 
-static void vc20_wav_open(char *name)
+static void vc20_wav_open(const char *name)
 {
   FILE *fp;
 
@@ -247,88 +267,88 @@ static void vc20_wav_open(char *name)
     if (errorlog) fprintf(errorlog,"tape %s file not found\n",name);
     return;
   }
-  if ((tape_sample=vc20_read_wav_sample(fp))==NULL) {
+  if ((wav.sample=vc20_read_wav_sample(fp))==NULL) {
     if (errorlog) fprintf(errorlog,"tape %s could not be loaded\n",name);
     osd_fclose(fp);
     return;
   }
   if (errorlog) fprintf(errorlog,"tape %s loaded\n", name);
   osd_fclose(fp);
-
-  strcpy(tape_imagename,name);
-  tape_type=TAPE_WAV;
-  tape_pos=0;
-  tape_on=1;
-  state=2;
+  
+  wav.imagename=name;
+  tape.type=TAPE_WAV;
+  wav.pos=0;
+  tape.on=1;
+  wav.state=2;
 }
 
 static void vc20_wav_write(int data)
 {
-  if (tape_noise) DAC_data_w(0,data);
+  if (tape.noise) DAC_data_w(0,data);
 }
 
 static void vc20_wav_timer(int data)
 {
-  if (tape_sample->resolution==8) {
-    tape_data=tape_sample->data[tape_pos]>0x0;
-    tape_pos++;
-    if (tape_pos>=tape_sample->length) { tape_pos=0;tape_play=0; }
+  if (wav.sample->resolution==8) {
+    tape.data=wav.sample->data[wav.pos]>0x0;
+    wav.pos++;
+    if (wav.pos>=wav.sample->length) { wav.pos=0;tape.play=0; }
   } else {
-    tape_data=((short*)(tape_sample->data))[tape_pos]>0x0;
-    tape_pos++;
-    if (tape_pos*2>=tape_sample->length) { tape_pos=0;tape_play=0; }
+    tape.data=((short*)(wav.sample->data))[wav.pos]>0x0;
+    wav.pos++;
+    if (wav.pos*2>=wav.sample->length) { wav.pos=0;tape.play=0; }
   }
-  if (tape_noise) DAC_data_w(0,tape_data?TONE_ON_VALUE:0);
-  if (tape_read_callback) tape_read_callback(0,tape_data);
-  //	vc20_wav_state(); // removing timer in timer puls itself hangs
+  if (tape.noise) DAC_data_w(0,tape.data?TONE_ON_VALUE:0);
+  if (tape.read_callback) tape.read_callback(0,tape.data);
+  /*	vc20_wav_state(); // removing timer in timer puls itself hangs */
 }
 
 static void vc20_prg_timer(int data);
 static void vc20_prg_state(void)
 {
-  switch (state) {
-  case 0: break; // not inited
-  case 1: // off
-    if (tape_on) { state=2;break; }
+  switch (prg.state) {
+  case 0: break; /* not inited */
+  case 1: /* off */
+    if (tape.on) { prg.state=2;break; }
     break;
-  case 2: // on
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
+  case 2: /* on */
+    if (!tape.on) {
+      prg.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
       break;
     }
-    if (tape_motor&&tape_play) {
-      state=3;
-      tape_timer=timer_set(0.0, 0, vc20_prg_timer);
+    if (tape.motor&&tape.play) {
+      prg.state=3;
+      prg.timer=timer_set(0.0, 0, vc20_prg_timer);
       break;
     }
-    if (tape_motor&&tape_record) {
-      state=4;
+    if (tape.motor&&tape.record) {
+      prg.state=4;
       break;
     }
     break;
-  case 3: // reading
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
-      if (tape_timer) timer_remove(tape_timer);
+  case 3: /* reading */
+    if (!tape.on) {
+      prg.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
+      if (prg.timer) timer_remove(prg.timer);
       break;
     }
-    if (!tape_motor||!tape_play) {
-      state=2;
-      if (tape_timer) timer_remove(tape_timer);
+    if (!tape.motor||!tape.play) {
+      prg.state=2;
+      if (prg.timer) timer_remove(prg.timer);
       DAC_data_w(0,0);
       break;
     }
     break;
-  case 4: // saving
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
+  case 4: /* saving */
+    if (!tape.on) {
+      prg.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
       break;
     }
-    if (!tape_motor||!tape_record) {
-      state=2;
+    if (!tape.motor||!tape.record) {
+      prg.state=2;
       DAC_data_w(0,0);
       break;
     }
@@ -336,95 +356,96 @@ static void vc20_prg_state(void)
   }
 }
 
-static void vc20_prg_open(char *name)
+static void vc20_prg_open(const char *name)
 {
   FILE *fp;
   int i;
-
+  
   fp = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
   if (!fp) {
     if (errorlog) fprintf(errorlog,"tape %s file not found\n",name);
     return;
   }
-  tape_length=osd_fsize(fp);
-  if ( (tape_prg=(UINT8*)malloc(tape_length))==NULL ) {
+  prg.length=osd_fsize(fp);
+  if ( (prg.prg=(UINT8*)malloc(prg.length))==NULL ) {
     if (errorlog) fprintf(errorlog,"tape %s could not be loaded\n",name);
     osd_fclose(fp);
     return;
   }
-  osd_fread(fp,tape_prg,tape_length);
+  osd_fread(fp,prg.prg,prg.length);
   if (errorlog) fprintf(errorlog,"tape %s loaded\n", name);
   osd_fclose(fp);
-
-  for (i=0; name[i]!=0; i++) tape_name[i]=toupper(name[i]);
-  for (;i<16;i++) tape_name[i]=' ';
-
-  tape_stateblock=0;
-  tape_stateheader=0;
-  tape_statebyte=0;
-  tape_statebit=0;
-  tape_type=TAPE_PRG;
-  prg_c16=0;
-  tape_on=1;
-  state=2;
-  tape_pos=0;
+  
+  for (i=0; name[i]!=0; i++) prg.name[i]=toupper(name[i]);
+  for (;i<16;i++) prg.name[i]=' ';
+  
+  prg.stateblock=0;
+  prg.stateheader=0;
+  prg.statebyte=0;
+  prg.statebit=0;
+  tape.type=TAPE_PRG;
+  tape.on=1;
+  prg.state=2;
+  prg.pos=0;
 }
 
 static void vc20_prg_write(int data)
 {
 #if 0
-  // this was used to decode cbms tape format, but could
-  // be converted to a real program writer
-  // c16: be sure the cpu clock is about 1.8 MHz (when screen is off)
+  /* this was used to decode cbms tape format, but could */
+  /* be converted to a real program writer */
+  /* c16: be sure the cpu clock is about 1.8 MHz (when screen is off) */
   static int count=0;
   static int old=0;
   static double time=0;
   static int bytecount=0, byte;
-
+  
   if (old!=data) {
     double neu=timer_get_time();
     int diff=(neu-time)*1000000;
     count++;
-    if (errorlog) fprintf(errorlog,"%s %d\n",old?"high":"low", diff);
+    if (errorlog) fprintf(errorlog,"%f %d %s %d\n",(PCM_LONG+PCM_MIDDLE)/2,
+			  bytecount, old?"high":"low", 
+			  diff);
     if (old) {
       if (count>0/*27000*/) {
 	switch (bytecount) {
 	case 0:
-	  if (diff>(PCM_LONG+PCM_MIDDLE)/2) { bytecount++;byte=0; }
+	  if (diff>(PCM_LONG+PCM_MIDDLE)*1e6/2) { bytecount++;byte=0; }
 	  break;
 	case 1:case 3:case 5:case 7:case 9:case 11:
 	case 13:case 15:case 17:
 	  bytecount++;break;
 	case 2:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=1;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=1;
 	  bytecount++;
 	  break;
 	case 4:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=2;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=2;
 	  bytecount++;
 	  break;
 	case 6:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=4;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=4;
 	  bytecount++;
 	  break;
 	case 8:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=8;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=8;
 	  bytecount++;
 	  break;
 	case 10:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=0x10;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=0x10;
 	  bytecount++;
 	  break;
 	case 12:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=0x20;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=0x20;
 	  bytecount++;
 	  break;
 	case 14:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=0x40;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=0x40;
 	  bytecount++;
 	  break;
 	case 16:
-	  if (diff>(PCM_MIDDLE+PCM_SHORT)/2) byte|=0x80;
+	  if (diff>(PCM_MIDDLE+PCM_SHORT)*1e6/2) byte|=0x80;
 	  if (errorlog) fprintf(errorlog,"byte %.2x\n",byte);
 	  bytecount=0;
 	  break;
@@ -435,28 +456,28 @@ static void vc20_prg_write(int data)
     time=timer_get_time();
   }
 #endif
-  if (tape_noise) DAC_data_w(0,data?TONE_ON_VALUE:0);
+  if (tape.noise) DAC_data_w(0,data?TONE_ON_VALUE:0);
 }
 
 static void vc20_tape_bit(int bit)
 {
-  switch (tape_statebit) {
+  switch (prg.statebit) {
   case 0:
     if (bit) {
-      timer_reset(tape_timer,tape_lasttime=PCM_MIDDLE);
-      tape_statebit=2;
+      timer_reset(prg.timer,prg.lasttime=PCM_MIDDLE);
+      prg.statebit=2;
     } else {
-      tape_statebit++;
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+      prg.statebit++;
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
     }
     break;
   case 1:
-    timer_reset(tape_timer,tape_lasttime=PCM_MIDDLE);
-    tape_statebit=0;
+    timer_reset(prg.timer,prg.lasttime=PCM_MIDDLE);
+    prg.statebit=0;
     break;
   case 2:
-    timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
-    tape_statebit=0;
+    timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
+    prg.statebit=0;
     break;
   }
 }
@@ -464,7 +485,7 @@ static void vc20_tape_bit(int bit)
 static void vc20_tape_byte(void)
 {
   static int bit=0, parity=0;
-
+  
   /* convert one byte to vc20 tape data
      puls wide modulation
      3 type of pulses (quadratic on/off pulse)
@@ -475,28 +496,28 @@ static void vc20_tape_byte(void)
      0 coded as KM, 1 as MK
      gives 8.96 milliseconds for 1 byte
      */
-  switch (tape_statebyte) {
+  switch (prg.statebyte) {
   case 0:
-    timer_reset(tape_timer,tape_lasttime=PCM_LONG);
-    tape_statebyte++;
+    timer_reset(prg.timer,prg.lasttime=PCM_LONG);
+    prg.statebyte++;
     break;
   case 1:
-    timer_reset(tape_timer,tape_lasttime=PCM_MIDDLE);
-    tape_statebyte++;
+    timer_reset(prg.timer,prg.lasttime=PCM_MIDDLE);
+    prg.statebyte++;
     bit=1;
     parity=0;
     break;
   case 2:case 3:case 4:case 5:case 6:case 7:case 8:case 9:
-    vc20_tape_bit(tape_prgdata&bit);
-    if (tape_prgdata&bit) parity=!parity;
+    vc20_tape_bit(prg.prgdata&bit);
+    if (prg.prgdata&bit) parity=!parity;
     bit<<=1;
-    tape_statebyte++;
+    prg.statebyte++;
     break;
   case 10:
     vc20_tape_bit(!parity);
-    tape_chksum^=tape_prgdata;
-    tape_statebyte=0;
-    tape_pos--;
+    prg.chksum^=prg.prgdata;
+    prg.statebyte=0;
+    prg.pos--;
     break;
   }
 }
@@ -509,49 +530,49 @@ static void vc20_tape_byte(void)
 static void vc20_tape_prgheader(void)
 {
   static int i=0;
-  switch (tape_stateheader) {
+  switch (prg.stateheader) {
   case 0:
-    tape_chksum=0;
-    tape_prgdata=1;
-    tape_stateheader++;
+    prg.chksum=0;
+    prg.prgdata=1;
+    prg.stateheader++;
     vc20_tape_byte();
     break;
   case 1:
-    tape_prgdata=tape_prg[0];
-    tape_stateheader++;
+    prg.prgdata=prg.prg[0];
+    prg.stateheader++;
     vc20_tape_byte();
     break;
   case 2:
-    tape_prgdata=tape_prg[1];
-    tape_stateheader++;
+    prg.prgdata=prg.prg[1];
+    prg.stateheader++;
     vc20_tape_byte();
     break;
   case 3:
-    tape_prgdata=(tape_prg[0]+tape_length-2)&0xff;
-    tape_stateheader++;
+    prg.prgdata=(prg.prg[0]+prg.length-2)&0xff;
+    prg.stateheader++;
     vc20_tape_byte();
     break;
   case 4:
-    tape_prgdata=((tape_prg[0]+(tape_prg[1]<<8))+tape_length-2)>>8;
-    tape_stateheader++;i=0;
+    prg.prgdata=((prg.prg[0]+(prg.prg[1]<<8))+prg.length-2)>>8;
+    prg.stateheader++;i=0;
     vc20_tape_byte();
     break;
   case 5:
-    if ((i!=16)&&(tape_name[i]!=0)) {
-      tape_prgdata=tape_name[i];
+    if ((i!=16)&&(prg.name[i]!=0)) {
+      prg.prgdata=prg.name[i];
       i++;
       vc20_tape_byte();
       break;
     }
-    tape_prgdata=0x20;
-    tape_stateheader++;
+    prg.prgdata=0x20;
+    prg.stateheader++;
     vc20_tape_byte();
     break;
   case 6:
     if (i!=192-5-1) { vc20_tape_byte();i++;break; }
-    tape_prgdata=tape_chksum;
+    prg.prgdata=prg.chksum;
     vc20_tape_byte();
-    tape_stateheader=0;
+    prg.stateheader=0;
     break;
   }
 }
@@ -559,236 +580,236 @@ static void vc20_tape_prgheader(void)
 static void vc20_tape_program(void)
 {
   static int i=0;
-  switch (tape_stateblock) {
+  switch (prg.stateblock) {
   case 0:
-    tape_pos=(9+192+1)*2+(9+tape_length-2+1)*2;
+    prg.pos=(9+192+1)*2+(9+prg.length-2+1)*2;
     i=0;
-    tape_stateblock++;
-    timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+    prg.stateblock++;
+    timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
     break;
   case 1:
-    i++;if (i<4000/*27136*/) { // this time is not so important
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+    i++;if (i<12000/*27136*/) { /* this time is not so important */
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
       break;
     }
-    // writing countdown $89 ... $80
-    tape_stateblock++;
-    tape_prgdata=0x89;
+    /* writing countdown $89 ... $80 */
+    prg.stateblock++;
+    prg.prgdata=0x89;
     vc20_tape_byte();
     break;
   case 2:
-    if (tape_prgdata!=0x81) {
-      tape_prgdata--;
+    if (prg.prgdata!=0x81) {
+      prg.prgdata--;
       vc20_tape_byte();
       break;
     }
-    tape_stateblock++;
+    prg.stateblock++;
     vc20_tape_prgheader();
     break;
   case 3:
-    timer_reset(tape_timer,tape_lasttime=PCM_LONG);
-    tape_stateblock++;
+    timer_reset(prg.timer,prg.lasttime=PCM_LONG);
+    prg.stateblock++;
     i=0;
     break;
   case 4:
     if (i<80) {
       i++;
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
       break;
     }
-    // writing countdown $09 ... $00
-    tape_prgdata=9;
-    tape_stateblock++;
+    /* writing countdown $09 ... $00 */
+    prg.prgdata=9;
+    prg.stateblock++;
     vc20_tape_byte();
     break;
   case 5:
-    if (tape_prgdata!=1) {
-      tape_prgdata--;
+    if (prg.prgdata!=1) {
+      prg.prgdata--;
       vc20_tape_byte();
       break;
     }
-    tape_stateblock++;
+    prg.stateblock++;
     vc20_tape_prgheader();
     break;
   case 6:
-    timer_reset(tape_timer,tape_lasttime=PCM_LONG);
-    tape_stateblock++;
+    timer_reset(prg.timer,prg.lasttime=PCM_LONG);
+    prg.stateblock++;
     i=0;
     break;
   case 7:
     if (i<80) {
       i++;
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
       break;
     }
     i=0;
-    tape_stateblock++;
-    timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+    prg.stateblock++;
+    timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
     break;
   case 8:
     if (i<3000/*5376*/) {
       i++;
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
       break;
     }
-    tape_prgdata=0x89;
-    tape_stateblock++;
+    prg.prgdata=0x89;
+    prg.stateblock++;
     vc20_tape_byte();
     break;
   case 9:
-    if (tape_prgdata!=0x81) {
-      tape_prgdata--;
+    if (prg.prgdata!=0x81) {
+      prg.prgdata--;
       vc20_tape_byte();
       break;
     }
     i=2;
-    tape_chksum=0;
-    tape_prgdata=tape_prg[i];i++;
+    prg.chksum=0;
+    prg.prgdata=prg.prg[i];i++;
     vc20_tape_byte();
-    tape_stateblock++;
+    prg.stateblock++;
     break;
   case 10:
-    if (i<tape_length) {
-      tape_prgdata=tape_prg[i];
+    if (i<prg.length) {
+      prg.prgdata=prg.prg[i];
       i++;
       vc20_tape_byte();
       break;
     }
-    tape_prgdata=tape_chksum;
+    prg.prgdata=prg.chksum;
     vc20_tape_byte();
-    tape_stateblock++;
+    prg.stateblock++;
     break;
   case 11:
-    timer_reset(tape_timer,tape_lasttime=PCM_LONG);
-    tape_stateblock++;
+    timer_reset(prg.timer,prg.lasttime=PCM_LONG);
+    prg.stateblock++;
     i=0;
     break;
   case 12:
     if (i<80) {
       i++;
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
       break;
     }
-    // writing countdown $09 ... $00
-    tape_prgdata=9;
-    tape_stateblock++;
+    /* writing countdown $09 ... $00 */
+    prg.prgdata=9;
+    prg.stateblock++;
     vc20_tape_byte();
     break;
   case 13:
-    if (tape_prgdata!=1) {
-      tape_prgdata--;
+    if (prg.prgdata!=1) {
+      prg.prgdata--;
       vc20_tape_byte();
       break;
     }
-    tape_chksum=0;
+    prg.chksum=0;
     i=2;
-    tape_prgdata=tape_prg[i];i++;
+    prg.prgdata=prg.prg[i];i++;
     vc20_tape_byte();
-    tape_stateblock++;
+    prg.stateblock++;
     break;
   case 14:
-    if (i<tape_length) {
-      tape_prgdata=tape_prg[i];
+    if (i<prg.length) {
+      prg.prgdata=prg.prg[i];
       i++;
       vc20_tape_byte();
       break;
     }
-    tape_prgdata=tape_chksum;
+    prg.prgdata=prg.chksum;
     vc20_tape_byte();
-    tape_stateblock++;
+    prg.stateblock++;
     break;
   case 15:
-    timer_reset(tape_timer,tape_lasttime=PCM_LONG);
-    tape_stateblock++;
+    timer_reset(prg.timer,prg.lasttime=PCM_LONG);
+    prg.stateblock++;
     i=0;
     break;
   case 16:
     if (i<80) {
       i++;
-      timer_reset(tape_timer,tape_lasttime=PCM_SHORT);
+      timer_reset(prg.timer,prg.lasttime=PCM_SHORT);
       break;
     }
-    tape_stateblock=0;
+    prg.stateblock=0;
     break;
   }
-
+  
 }
 
 static void vc20_prg_timer(int data)
 {
-  if (!tape_data) { // send the same low phase
-    if (tape_noise) DAC_data_w(0,0);
-    tape_data=1;
-    timer_reset(tape_timer, tape_lasttime);
+  if (!tape.data) { /* send the same low phase */
+    if (tape.noise) DAC_data_w(0,0);
+    tape.data=1;
+    timer_reset(prg.timer, prg.lasttime);
   } else {
-    if (tape_noise) DAC_data_w(0,TONE_ON_VALUE);
-    tape_data=0;
-    if (tape_statebit) {
+    if (tape.noise) DAC_data_w(0,TONE_ON_VALUE);
+    tape.data=0;
+    if (prg.statebit) {
       vc20_tape_bit(0);
-    } else if (tape_statebyte) { // send the rest of the byte
+    } else if (prg.statebyte) { /* send the rest of the byte */
       vc20_tape_byte();
-    } else if (tape_stateheader) {
+    } else if (prg.stateheader) {
       vc20_tape_prgheader();
     } else {
       vc20_tape_program();
-      if (!tape_stateblock) {
-	tape_timer=0;
-	tape_play=0;
+      if (!prg.stateblock) {
+	prg.timer=0;
+	tape.play=0;
       }
     }
   }
-  if (tape_read_callback) tape_read_callback(0,tape_data);
+  if (tape.read_callback) tape.read_callback(0,tape.data);
   vc20_prg_state();
 }
 
 static void vc20_zip_timer(int data);
 static void vc20_zip_state(void)
 {
-  switch (state) {
-  case 0: break; // not inited
-  case 1: // off
-    if (tape_on) { state=2;break; }
+  switch (zip.state) {
+  case 0: break; /* not inited */
+  case 1: /* off */
+    if (tape.on) { zip.state=2;break; }
     break;
-  case 2: // on
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
+  case 2: /* on */
+    if (!tape.on) {
+      zip.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
       break;
     }
-    if (tape_motor&&tape_play) {
-      state=3;
-      tape_timer=timer_set(0.0, 0, vc20_zip_timer);
+    if (tape.motor&&tape.play) {
+      zip.state=3;
+      prg.timer=timer_set(0.0, 0, vc20_zip_timer);
       break;
     }
-    if (tape_motor&&tape_record) {
-      state=4;
+    if (tape.motor&&tape.record) {
+      zip.state=4;
       break;
     }
     break;
-  case 3: // reading
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
-      if (tape_timer) timer_remove(tape_timer);
+  case 3: /* reading */
+    if (!tape.on) {
+      zip.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
+      if (prg.timer) timer_remove(prg.timer);
       break;
     }
-    if (!tape_motor||!tape_play) {
-      state=2;
-      if (tape_timer) timer_remove(tape_timer);
+    if (!tape.motor||!tape.play) {
+      zip.state=2;
+      if (prg.timer) timer_remove(prg.timer);
       DAC_data_w(0,0);
       break;
     }
     break;
-  case 4: // saving
-    if (!tape_on) {
-      state=1;
-      tape_play=0;tape_record=0;DAC_data_w(0,0);
-      timer_remove(tape_timer);
+  case 4: /* saving */
+    if (!tape.on) {
+      zip.state=1;
+      tape.play=0;tape.record=0;DAC_data_w(0,0);
+      timer_remove(prg.timer);
       break;
     }
-    if (!tape_motor||!tape_record) {
-      state=2;
-      timer_remove(tape_timer);
+    if (!tape.motor||!tape.record) {
+      zip.state=2;
+      timer_remove(prg.timer);
       DAC_data_w(0,0);
       break;
     }
@@ -800,143 +821,134 @@ static void vc20_zip_readfile(void)
 {
   int i;
   char *cp;
-
+  
   for (i=0; i<2; i++) {
-    tape_zipentry=readzip(tape_zip);
-    if (tape_zipentry==NULL) {
-      i++;rewindzip(tape_zip);continue;
+    zip.zipentry=readzip(zip.zip);
+    if (zip.zipentry==NULL) {
+      i++;rewindzip(zip.zip);continue;
     }
-    if ((cp=strrchr(tape_zipentry->name,'.'))==NULL) continue;
+    if ((cp=strrchr(zip.zipentry->name,'.'))==NULL) continue;
     if (stricmp(cp,".prg")==0) break;
   }
-
-  if (i==2) { state=0;return; }
-  for (i=0; tape_zipentry->name[i]!=0; i++)
-    tape_name[i]=toupper(tape_zipentry->name[i]);
-  for (;i<16;i++) tape_name[i]=' ';
-
-  tape_length=tape_zipentry->uncompressed_size;
-  if ( (tape_prg=(UINT8*)malloc(tape_length))==NULL ) {
+  
+  if (i==2) { zip.state=0;return; }
+  for (i=0; zip.zipentry->name[i]!=0; i++)
+    prg.name[i]=toupper(zip.zipentry->name[i]);
+  for (;i<16;i++) prg.name[i]=' ';
+  
+  prg.length=zip.zipentry->uncompressed_size;
+  if ( (prg.prg=(UINT8*)malloc(prg.length))==NULL ) {
     if (errorlog) fprintf(errorlog,"out of memory\n");
-    state=0;
+    zip.state=0;
   }
-  readuncompresszip(tape_zip,tape_zipentry,(char*)tape_prg);
+  readuncompresszip(zip.zip,zip.zipentry,(char*)prg.prg);
 }
 
-static void vc20_zip_open(char *name)
+static void vc20_zip_open(const char *name)
 {
-  if (!(tape_zip=openzip(name))) {
+  if (!(zip.zip=openzip(name))) {
     if (errorlog) fprintf(errorlog,"tape %s not found\n",name);
     return;
   }
-
+  
   if (errorlog) fprintf(errorlog,"tape %s linked\n", name);
-
-  tape_stateblock=0;
-  tape_stateheader=0;
-  tape_statebyte=0;
-  tape_statebit=0;
-  tape_type=TAPE_ZIP;
-  tape_on=1;
-  state=2;
-  tape_pos=0;
-  prg_c16=0;
-
+  
+  tape.type=TAPE_ZIP;
+  tape.on=1;
+  zip.state=2;
+  prg.stateblock=0;
+  prg.stateheader=0;
+  prg.statebyte=0;
+  prg.statebit=0;
+  prg.pos=0;
   vc20_zip_readfile();
 }
 
 static void vc20_zip_timer(int data)
 {
-  if (!tape_data) { // send the same low phase
-    if (tape_noise) DAC_data_w(0,0);
-    tape_data=1;
-    timer_reset(tape_timer, tape_lasttime);
+  if (!tape.data) { /* send the same low phase */
+    if (tape.noise) DAC_data_w(0,0);
+    tape.data=1;
+    timer_reset(prg.timer, prg.lasttime);
   } else {
-    if (tape_noise) DAC_data_w(0,TONE_ON_VALUE);
-    tape_data=0;
-    if (tape_statebit) {
+    if (tape.noise) DAC_data_w(0,TONE_ON_VALUE);
+    tape.data=0;
+    if (prg.statebit) {
       vc20_tape_bit(0);
-    } else if (tape_statebyte) { // send the rest of the byte
+    } else if (prg.statebyte) { /* send the rest of the byte */
       vc20_tape_byte();
-    } else if (tape_stateheader) {
+    } else if (prg.stateheader) {
       vc20_tape_prgheader();
     } else {
       vc20_tape_program();
-      if (!tape_stateblock) {
-	// loading next file of zip
-	timer_reset(tape_timer,0.0);
-	free(tape_prg);
+      if (!prg.stateblock) {
+	/* loading next file of zip */
+	timer_reset(prg.timer,0.0);
+	free(prg.prg);
 	vc20_zip_readfile();
       }
     }
   }
-  if (tape_read_callback) tape_read_callback(0,tape_data);
+  if (tape.read_callback) tape.read_callback(0,tape.data);
   vc20_prg_state();
 }
 
-void vc20_tape_open(char *name, void (*read_callback)(int,int) )
+void vc20_tape_open(void (*read_callback)(int,int) )
 {
-  char *cp;
-
-  tape_read_callback=read_callback;
-  tape_type=0;state=0;
-  tape_on=0; tape_noise=0;
-  tape_play=0;tape_record=0;
-  tape_motor=0;tape_data=0;
-  tape_imagename=name;
-
-  if ((cp=strrchr(name,'.'))==NULL) return;
-  if (stricmp(cp,".wav")==0) {
-    vc20_wav_open(name);
-  } else if (stricmp(cp,".prg")==0) {
-    vc20_prg_open(name);
-  } else if (stricmp(cp,".zip")==0) {
-    vc20_zip_open(name);
-  } else return;
+  tape.read_callback=read_callback;
+#ifndef NEW_GAMEDRIVER
+  tape.type=0;
+  tape.on=0; tape.noise=0;
+  tape.play=0;tape.record=0;
+  tape.motor=0;tape.data=0;
+#endif
+  prg.c16=0;
 }
 
-void c16_tape_open(char *name)
+void c16_tape_open(void)
+{
+  vc20_tape_open(NULL);
+  prg.c16=1;  
+}
+
+int vc20_tape_attach_image(int id, const char *name)
 {
   char *cp;
+  tape.type=0;
+  tape.on=0; tape.noise=0;
+  tape.play=0;tape.record=0;
+  tape.motor=0;tape.data=0;
 
-  tape_read_callback=NULL;
-  tape_type=0;state=0;
-  tape_on=0;tape_noise=0;
-  tape_play=0;tape_record=0;
-  tape_motor=0;tape_data=0;
-  tape_imagename=name;
-
-  if ((cp=strrchr(name,'.'))==NULL) return;
+  if ((cp=strrchr(name,'.'))==NULL) return 1;
   if (stricmp(cp,".wav")==0) {
     vc20_wav_open(name);
   } else if (stricmp(cp,".prg")==0) {
     vc20_prg_open(name);
-    prg_c16=1;
   } else if (stricmp(cp,".zip")==0) {
     vc20_zip_open(name);
-    prg_c16=1;
-  } else return;
+  } else return 1;
+  return 0;
 }
 
 void vc20_tape_close()
 {
-  switch (tape_type) {
+  switch (tape.type) {
   case TAPE_WAV:
-    free(tape_sample);
+    free(wav.sample);
     break;
   case TAPE_PRG:
-    free(tape_prg);
+    free(prg.prg);
     break;
   case TAPE_ZIP:
-    free(tape_prg);
-    closezip(tape_zip);
+    free(prg.prg);
+    closezip(zip.zip);
     break;
   }
 }
 
 static void vc20_state(void)
 {
-  switch (tape_type) {
+  switch (tape.type) {
   case TAPE_WAV: vc20_wav_state();break;
   case TAPE_PRG: vc20_prg_state();break;
   case TAPE_ZIP: vc20_zip_state();break;
@@ -945,68 +957,115 @@ static void vc20_state(void)
 
 int vc20_tape_switch(void)
 {
-  int data=!((state>1)&&(tape_play||tape_record));
+  int data=1;
+  switch (tape.type) {
+  case TAPE_WAV:
+    data=!((wav.state>1)&&(tape.play||tape.record));
+    break;
+  case TAPE_PRG:
+    data=!((prg.state>1)&&(tape.play||tape.record));
+    break;
+  case TAPE_ZIP:
+    data=!((zip.state>1)&&(tape.play||tape.record));
+    break;
+  }
   return data;
 }
 
 int vc20_tape_read(void)
 {
-  if (state==3) return tape_data;
+  switch (tape.type) {
+  case TAPE_WAV:
+    if (wav.state==3) return tape.data;
+    break;
+  case TAPE_PRG:
+    if (zip.state==3) return tape.data;
+    break;
+  case TAPE_ZIP:
+    if (zip.state==3) return tape.data;
+    break;
+  }
   return 0;
 }
 
-// here for decoding tape formats
+/* here for decoding tape formats */
 void vc20_tape_write(int data)
 {
-  if (state==4) {
-    if (tape_type==TAPE_WAV) vc20_wav_write(data);
-    if (tape_type==TAPE_PRG) vc20_prg_write(data);
-    if (tape_type==TAPE_ZIP) vc20_prg_write(data);
+  switch (tape.type) {
+  case TAPE_WAV:
+    if (wav.state==4) vc20_wav_write(data);
+    break;
+  case TAPE_PRG:
+    if (prg.state==4) vc20_prg_write(data);
+    break;
+  case TAPE_ZIP:
+    if (zip.state==4) vc20_prg_write(data);
+    break;
   }
 }
 
 void vc20_tape_config(int on, int noise)
 {
-  tape_on=(state!=0)&&on;
-  tape_noise=tape_on&&noise;
+  switch (tape.type) {
+  case TAPE_WAV:
+    tape.on=(wav.state!=0)&&on;
+    break;
+  case TAPE_PRG:
+    tape.on=(prg.state!=0)&&on;
+    break;
+  case TAPE_ZIP:
+    tape.on=(zip.state!=0)&&on;
+    break;
+  }
+  tape.noise=tape.on&&noise;
   vc20_state();
 }
 
 void vc20_tape_buttons(int play, int record, int stop)
 {
   if (stop) {
-    tape_play=0, tape_record=0;
-  } else if (play&&!tape_record) {
-    tape_play=tape_on;
-  } else if (record&&!tape_play) {
-    tape_record=tape_on;
+    tape.play=0, tape.record=0;
+  } else if (play&&!tape.record) {
+    tape.play=tape.on;
+  } else if (record&&!tape.play) {
+    tape.record=tape.on;
   }
   vc20_state();
 }
 
 void vc20_tape_motor(int data)
 {
-  tape_motor=!data;
+  tape.motor=!data;
   vc20_state();
 }
 
 void vc20_tape_status(char *text, int size)
 {
   text[0]=0;
-  switch (state) {
-  case 4: strncpy(text,"Tape saving",size);break;
-  case 3:
-    switch (tape_type) {
-    case TAPE_WAV:
-      /*snprintf(text,size,"Tape (%s) loading %d/%dsec",
-	       tape_imagename,tape_pos/tape_sample->smpfreq,
-	       tape_sample->length/tape_sample->smpfreq);*/
+  switch (tape.type) {
+  case TAPE_WAV:
+    switch (wav.state) {
+    case 4: snprintf(text,size,"Tape saving");break;
+    case 3:
+      snprintf(text,size,"Tape (%s) loading %d/%dsec",
+	       wav.imagename,wav.pos/wav.sample->smpfreq,
+	       wav.sample->length/wav.sample->smpfreq);
       break;
-    case TAPE_PRG:
-      /*snprintf(text,size,"Tape (%s) loading %d", tape_imagename,tape_pos);*/
+    }    
+    break;
+  case TAPE_PRG:
+    switch (prg.state) {
+    case 4: snprintf(text,size,"Tape saving");break;
+    case 3:
+      snprintf(text,size,"Tape (%s) loading %d", prg.imagename,prg.pos);
       break;
-    case TAPE_ZIP:
-      /*snprintf(text,size,"Tape (%s) loading %d", tape_imagename,tape_pos);*/
+    }
+    break;
+  case TAPE_ZIP:
+    switch (zip.state) {
+    case 4: snprintf(text,size,"Tape saving");break;
+    case 3:
+      snprintf(text,size,"Tape (%s) loading %d", prg.imagename,prg.pos);
       break;
     }
     break;

@@ -18,8 +18,10 @@
 #include "mess/machine/pc.h"
 
 #define MAX_BOARD	2				/* two boards supported */
+#define MAX_HARD	4				/* up to four had disks */
 #define HDC_DMA 	3				/* DMA channel */
-void *pc_hdc_file[MAX_HARD];		/* up to four hard disk images */
+
+void *pc_hdc_file[MAX_HARD];        /* up to four hard disk images */
 
 #define CMD_TESTREADY   0x00
 #define CMD_RECALIBRATE 0x01

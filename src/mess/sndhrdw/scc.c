@@ -121,7 +121,7 @@ void SCCWriteReg (int n, int r, int v, int t)
     }
 }
 
-void SCCUpdate16 (int n, void *buffer, int length) {
+void SCCUpdate16 (int n, INT16 *buffer, int length) {
 #define DATATYPE UINT16
 #define DATACONV(A) ( (A) * 3)
 #include "scc-u.c"
@@ -129,7 +129,7 @@ void SCCUpdate16 (int n, void *buffer, int length) {
 #undef DATATYPE
 }
 
-void SCCUpdate8 (int n, void *buffer, int length) {
+void SCCUpdate8 (int n, INT16 *buffer, int length) {
 #define DATATYPE UINT8
 #define DATACONV(A) ( (A) / 75)
 #include "scc-u.c"
@@ -152,8 +152,10 @@ static int SCCInit(const struct MachineSound *msound,int chip,
 
     sprintf (name, "Konami SCC/SCC+ #%d",chip);
 
-    SCC[chip].Channel = stream_init (name,volume,sample_rate,sample_bits,chip,
-	(sample_bits == 16) ? SCCUpdate16 : SCCUpdate8);
+    /*SCC[chip].Channel = stream_init (name,volume,sample_rate,sample_bits,chip,
+	(sample_bits == 16) ? SCCUpdate16 : SCCUpdate8);*/
+
+	SCC[chip].Channel = stream_init (name,volume,sample_rate,chip,SCCUpdate16);
 
     if (SCC[chip].Channel == -1) return 1;
 

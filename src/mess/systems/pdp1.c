@@ -2,6 +2,19 @@
 
 Driver for a PDP1 emulator.
 
+	Digital Equipment Corporation
+	Spacewar! was conceived in 1961 by Martin Graetz,
+	Stephen Russell, and Wayne Wiitanen. It was first
+	realized on the PDP-1 in 1962 by Stephen Russell,
+	Peter Samson, Dan Edwards, and Martin Graetz, together
+	with Alan Kotok, Steve Piner, and Robert A Saunders.
+	Spacewar! is in the public domain, but this credit
+	paragraph must accompany all distributed versions
+	of the program.
+	Brian Silverman (original Java Source)
+	Vadim Gerasimov (original Java Source)
+	Chris Salomon (MESS driver)
+
 Preliminary, this is a conversion of a JAVA emulator.
 I have tried contacting the author, but heard as yet nothing of him,
 so I don't know if it all right with him, but after all -> he did
@@ -87,7 +100,7 @@ binary form plus a makro assembler for PDP1 programs.
  */
 
 /* From machine/pdp1.c */
-int pdp1_load_rom (void);
+int pdp1_load_rom (int id, const char *name);
 int pdp1_id_rom (const char *name, const char *gamename);
 void pdp1_init_machine(void);
 int pdp1_read_mem(int offset);
@@ -126,23 +139,23 @@ INPUT_PORTS_START( pdp1 )
 
     PORT_START /* IN1 */
 	PORT_BITX(	  0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 1", KEYCODE_1, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x80, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( On )	 )
 	PORT_BITX(	  0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 2", KEYCODE_2, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x40, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 3", KEYCODE_3, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x20, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BITX(	  0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 4", KEYCODE_4, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x10, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 5", KEYCODE_5, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x08, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BITX(	  0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 6", KEYCODE_6, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x04, "On" )
-    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( On ) )
     INPUT_PORTS_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -178,7 +191,7 @@ static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_co
  * below speed should therefore also be read in something like
  * microseconds of instructions
  */
-static struct MachineDriver pdp1_machine_driver =
+static struct MachineDriver machine_driver_pdp1 =
 {
 	/* basic machine hardware */
 	{
@@ -213,6 +226,29 @@ static struct MachineDriver pdp1_machine_driver =
 	0,0,0,0
 };
 
+static const struct IODevice io_pdp1[] = {
+    {
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"bin\0",			/* file extensions */
+		NULL,               /* private */
+		pdp1_id_rom,		/* id */
+		pdp1_load_rom,		/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,               /* open */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,               /* input */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL                /* output_chunk */
+	},
+	{ IO_END }
+};
+
+#define rom_pdp1    NULL
 
 /***************************************************************************
 
@@ -220,46 +256,5 @@ static struct MachineDriver pdp1_machine_driver =
 
 ***************************************************************************/
 
-struct GameDriver pdp1_driver =
-{
-	__FILE__,
-	0,
-	"pdp1",
-	"pdp1 SPACEWAR!",
-	"1962",
-	"Digital Equipment Corporation",
-	"Spacewar! was conceived in 1961 by Martin Graetz,\n"
-	"Stephen Russell, and Wayne Wiitanen. It was first\n"
-	"realized on the PDP-1 in 1962 by Stephen Russell,\n"
-	"Peter Samson, Dan Edwards, and Martin Graetz, together\n"
-	"with Alan Kotok, Steve Piner, and Robert A Saunders.\n"
-	"Spacewar! is in the public domain, but this credit\n"
-	"paragraph must accompany all distributed versions\n"
-	"of the program.\n"
-	"\n"
-	"Brian Silverman (original Java Source)\n"
-	"Vadim Gerasimov (original Java Source)\n"
-	"Chris Salomon (MESS driver)\n",
-	0,
-	&pdp1_machine_driver,
-	0,
-
-	0,
-	pdp1_load_rom,
-	pdp1_id_rom,
-	0,		/* defualt file extensions */
-	0,      /* number of ROM slots */
-	0,      /* number of floppy drives supported */
-	0,      /* number of hard drives supported */
-	0,      /* number of cassette drives supported */
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	input_ports_pdp1,
-
-	0, /*palette*/0, /*colortable*/0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
-};
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+COMP( 1962, pdp1,	  0, 		pdp1,	  pdp1, 	0,		  "Digital Equipment Company",  "PDP1 Spacewar!" )

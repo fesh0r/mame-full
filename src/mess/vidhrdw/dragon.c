@@ -5,56 +5,15 @@
 #define MAX_VRAM 6144
 #define MAX_HIRES_VRAM	57600
 
-extern int dragon_cart_inserted;
-extern UINT8 *dragon_tape;
-extern int dragon_tapesize;
-extern UINT8 *dragon_rom;
-//extern unsigned char *RAM;
-UINT8 *dragon_ram;
-int coco3_hires;
-int coco3_gimevhreg[8];
-int coco3_bordercolor;
+extern UINT8 *coco_rom;
+extern UINT8 *coco_ram;
 
-static void d_pia1_pb_w(int offset, int data);
-static void d_pia1_pa_w(int offset, int data);
-static int d_pia1_cb1_r(int offset);
-static int d_pia0_ca1_r(int offset);
-static int d_pia0_pa_r(int offset);
-static int d_pia1_pa_r(int offset);
-static void d_pia0_pb_w(int offset, int data);
-static void d_pia1_cb2_w(int offset, int data);
-static void d_pia0_cb2_w(int offset, int data);
-static void d_pia1_ca2_w(int offset, int data);
-static void d_pia0_ca2_w(int offset, int data);
-static void d_pia0_irq_b(int state);
+static int coco3_hires;
+static int coco3_gimevhreg[8];
+static int coco3_bordercolor;
 
-static void coco_pia1_ca2_w(int offset, int data);
-
-static struct pia6821_interface dragon_pia_0_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, 0, 0, 0,
-	/*outputs: A/B,CA/B2	   */ 0, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
-	/*irqs	 : A/B			   */ 0, d_pia0_irq_b
-};
-
-static struct pia6821_interface dragon_pia_1_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, 0, 0, d_pia1_cb1_r, 0, 0,
-	/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
-	/*irqs	 : A/B			   */ 0, 0
-};
-
-static struct pia6821_interface coco_pia_1_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, 0, 0, d_pia1_cb1_r, 0, 0,
-	/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, coco_pia1_ca2_w, d_pia1_cb2_w,
-	/*irqs	 : A/B			   */ 0, 0
-};
-
-static UINT8 pia1_pb, sound_mux, tape_motor;
-static UINT8 joystick_axis, joystick;
-static int display_offset, d_dac;
-static UINT8 *dirtybuffer, *ptape;
+static int display_offset;
+static UINT8 *dirtybuffer;
 static int sam_vdg_mode, pia_vdg_mode;
 static struct GfxElement *dfont;
 static struct GfxElement *coco3font;
@@ -259,7 +218,7 @@ struct GfxElement *build_coco3_font(void)
 	/* We don't have a font for the low 32 characters */
 	memset(buf, 0, 8*32);
 
-	memcpy(&buf[8*32], &dragon_rom[0xf09d - 0x8000], 96 * 8);
+	memcpy(&buf[8*32], &memory_region(REGION_CPU1)[0x80000 + 0xf09d - 0x8000], 96 * 8);
 	buf[8 * 128 + 0] = 0;
 	buf[8 * 128 + 1] = 0;
 	buf[8 * 128 + 2] = 0;
@@ -283,7 +242,6 @@ struct GfxElement *build_coco3_font(void)
 static int generic_vh_start(size_t maxvram)
 {
 	display_offset = 0;
-	ptape = dragon_tape;
 	if ((dfont = build_dragon_font())==NULL)
 		return 1;
 
@@ -291,54 +249,29 @@ static int generic_vh_start(size_t maxvram)
 		return 1;
 	memset(dirtybuffer,1,maxvram);
 
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &dragon_pia_0_intf);
 	return 0;
 }
 
 int dragon_vh_start(void)
 {
-	if (generic_vh_start(MAX_VRAM))
-		return 1;
-
-	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &dragon_pia_1_intf);
-	pia_reset();
-
-	/* allow short tape leader */
-	dragon_rom[0xbdfc - 0x8000] = 4;
-
-	return 0;
-}
-
-static int generic_coco_vh_start(size_t maxvram)
-{
-	if (generic_vh_start(maxvram))
-		return 1;
-
-	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &coco_pia_1_intf);
-	pia_reset();
-	return 0;
+	return generic_vh_start(MAX_VRAM);
 }
 
 int cp400_vh_start(void)
 {
-	return generic_coco_vh_start(MAX_VRAM);
+	return generic_vh_start(MAX_VRAM);
 }
 
 int coco_vh_start(void)
 {
-	if (generic_coco_vh_start(MAX_VRAM))
-		return 1;
-
-	/* allow short tape leader */
-	dragon_rom[0xa791 - 0x8000] = 0xff;
-	return 0;
+	return generic_vh_start(MAX_VRAM);
 }
 
 int coco3_vh_start(void)
 {
     int i;
 
-	if (generic_coco_vh_start(MAX_HIRES_VRAM)) {
+	if (generic_vh_start(MAX_HIRES_VRAM)) {
 		paletteram = NULL;
 		return 1;
 	}
@@ -347,9 +280,6 @@ int coco3_vh_start(void)
 		paletteram = NULL;
 		return 1;
 	}
-
-	/* allow short tape leader */
-	dragon_rom[0xa791 - 0x8000] = 0xff;
 
 	paletteram = malloc(16 * sizeof(int));
 	if (!paletteram)
@@ -367,7 +297,6 @@ int coco3_vh_start(void)
 void dragon_vh_stop(void)
 {
 	free (dirtybuffer);
-	if (dragon_tape) free(dragon_tape);
 }
 
 void coco3_vh_stop(void)
@@ -412,10 +341,10 @@ static void coco3_vh_setborder(struct osd_bitmap *bitmap, int coco3color, int sc
 			for (y = bottom; y < 225; y++)
 				bitmap->line[y][x] = borderpen;
 		}
-		osd_mark_dirty(0, 0, 639, top-1, 0);
-		osd_mark_dirty(0, bottom, 639, 224, 0);
-		osd_mark_dirty(left, 0, right-1, top-1, 0);
-		osd_mark_dirty(left, bottom, right-1, 224, 0);
+        osd_mark_dirty(0, 0, 639, top-1, 0);
+        osd_mark_dirty(0, bottom, 639, 224, 0);
+        osd_mark_dirty(0, top, left-1, bottom-1, 0);
+        osd_mark_dirty(right, top, 639, bottom-1, 0);
 
 		coco3_bordercolor = coco3color;
 		coco3_vh_palette_change_color(16, coco3color);
@@ -683,7 +612,7 @@ void dragon_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if (full_refresh)
 		memset(dirtybuffer,1,MAX_VRAM);
 
-	generic_vh_screenrefresh(bitmap, dragon_metapalette, dragon_ram, 0, 0, 1);
+	generic_vh_screenrefresh(bitmap, dragon_metapalette, coco_ram, 0, 0, 1);
 }
 
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -938,150 +867,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-int dragon_interrupt(void)
-{
-	pia_0_cb1_w (0, 1);
-	return ignore_interrupt();
-}
-
-static void d_pia1_pb_w(int offset, int data)
-{
-	if ((data >> 3) != pia_vdg_mode)
-	{
-		pia_vdg_mode = data >> 3;
-		memset(dirtybuffer,1,MAX_VRAM);
-	}
-
-}
-
-static void d_pia1_pa_w(int offset, int data)
-{
-	d_dac = data & 0xfa;
-	if (sound_mux)
-		DAC_data_w(0,d_dac);
-}
-
-static int d_pia0_ca1_r(int offset)
-{
-	return 0;
-}
-
-static int d_pia1_cb1_r(int offset)
-{
-	return dragon_cart_inserted;
-}
-
-static void d_pia1_cb2_w(int offset, int data)
-{
-	sound_mux = data;
-}
-
-static void d_pia0_cb2_w(int offset, int data)
-{
-	joystick = data;
-}
-
-static void d_pia1_ca2_w(int offset, int data)
-{
-	if (tape_motor ^ data)
-	{
-		/* speed up tape reading */
-		dragon_ram[0x0093] = 2;
-		dragon_ram[0x0092] = 3;
-
-		if (data == 0)
-		{
-			ptape--;
-			ptape[0] = 0x55; /* insert sync byte */
-		}
-		tape_motor = data;
-	}
-}
-
-static void coco_pia1_ca2_w(int offset, int data)
-{
-	if (tape_motor ^ data)
-	{
-		/* speed up tape reading */
-		dragon_ram[0x008f] = 3;
-		dragon_ram[0x0091] = 2;
-
-		if (data == 0)
-		{
-			ptape--;
-			ptape[0] = 0x55; /* insert sync byte */
-		}
-		tape_motor = data;
-	}
-}
-
-static void d_pia0_ca2_w(int offset, int data)
-{
-	joystick_axis = data;
-}
-
-static int d_pia0_pa_r(int offset)
-{
-	int porta=0x7f;
-
-	if ((input_port_0_r(0) | pia1_pb) != 0xff) porta &= ~0x01;
-	if ((input_port_1_r(0) | pia1_pb) != 0xff) porta &= ~0x02;
-	if ((input_port_2_r(0) | pia1_pb) != 0xff) porta &= ~0x04;
-	if ((input_port_3_r(0) | pia1_pb) != 0xff) porta &= ~0x08;
-	if ((input_port_4_r(0) | pia1_pb) != 0xff) porta &= ~0x10;
-	if ((input_port_5_r(0) | pia1_pb) != 0xff) porta &= ~0x20;
-	if ((input_port_6_r(0) | pia1_pb) != 0xff) porta &= ~0x40;
-	if (d_dac <= (joystick_axis? input_port_8_r(0): input_port_7_r(0)))
-		porta |= 0x80;
-	porta &= ~input_port_9_r(0);
-
-	return porta;
-}
-
-static int d_pia1_pa_r(int offset)
-{
-	static int bit=7, bitc=0, *state;
-	static int lo[]={1,1,0,0};
-	static int hi[]={1,0};
-
-	if (ptape && tape_motor)
-	{
-		if (bitc == 0)
-		{
-			if (bit < 0)
-			{
-				bit = 7;
-				if (ptape - dragon_tape < dragon_tapesize)
-					ptape++;
-			}
-
-			if ((*ptape >> (7-bit)) & 0x01)
-			{
-				state = hi;
-				bitc = 2;
-			}
-			else
-			{
-				state = lo;
-				bitc = 4;
-			}
-			bit--;
-		}
-		bitc--;
-		return (state[bitc]);
-	}
-	return 1;
-}
-
-static void d_pia0_pb_w(int offset, int data)
-{
-	pia1_pb = data;
-}
-
-static void d_pia0_irq_b(int state)
-{
-	cpu_set_irq_line(0, M6809_IRQ_LINE, state);
-}
 
 void dragon_sam_display_offset(int offset, int data)
 {
@@ -1114,10 +899,10 @@ static void generic_ram_w(int offset, int data, UINT8 *vrambase)
 			dirtybuffer[offset - display_offset] = 1;
 }
 
-void dragon_ram_w (int offset, int data)
+void coco_ram_w (int offset, int data)
 {
-	generic_ram_w(offset, data, dragon_ram);
-	dragon_ram[offset] = data;
+	generic_ram_w(offset, data, coco_ram);
+	coco_ram[offset] = data;
 }
 
 static void coco3_ram_w(int offset, int data, int block)
@@ -1247,5 +1032,19 @@ void coco3_vh_sethires(int hires)
 	if (hires != coco3_hires) {
 		coco3_hires = hires;
 	}
+}
+
+/***************************************************************************
+  PIA
+***************************************************************************/
+
+void d_pia1_pb_w(int offset, int data)
+{
+	if ((data >> 3) != pia_vdg_mode)
+	{
+		pia_vdg_mode = data >> 3;
+		memset(dirtybuffer,1,MAX_VRAM);
+	}
+
 }
 

@@ -292,7 +292,7 @@ int gb_r_timer_cnt (int offset)
 	return (gb_timer_count >> gb_timer_shift);
 }
 
-int gb_load_rom (void)
+int gb_load_rom (int id, const char *rom_name)
 {
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -407,7 +407,7 @@ int gb_load_rom (void)
 	memset (ROM, 0, 0x10000);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
+	if (!(F = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
 	{
 		if(errorlog) fprintf(errorlog,"osd_fopen failed in gb_load_rom.\n");
 		return 1;
@@ -424,7 +424,7 @@ int gb_load_rom (void)
 	osd_fclose (F);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
+	if (!(F = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
 	{
 		if(errorlog) fprintf(errorlog,"osd_fopen failed in gb_load_rom.\n");
         return 1;
@@ -438,7 +438,7 @@ int gb_load_rom (void)
 
 	if (osd_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
-		if(errorlog) fprintf(errorlog,"Error while reading from file: %s\n", rom_name[0]);
+		if(errorlog) fprintf(errorlog,"Error while reading from file: %s\n", rom_name);
 		osd_fclose (F);
 		return 1;
 	}
@@ -500,7 +500,7 @@ int gb_load_rom (void)
 			}
 			else
 			{
-				if( errorlog ) fprintf (errorlog, "Error while reading from file: %s\n", rom_name[0]);
+				if( errorlog ) fprintf (errorlog, "Error while reading from file: %s\n", rom_name);
 				break;
 			}
 		}

@@ -63,7 +63,7 @@ extern void gb_ram_bank_select(int offset, int data);
 extern void gb_w_io (int offset, int data);
 extern int gb_r_divreg (int offset);
 extern int gb_r_timer_cnt (int offset);
-extern int gb_load_rom (void);
+extern int gb_load_rom (int id, const char *rom_name);
 extern int gb_id_rom (const char *name, const char *gamename);
 extern int gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode2(int param);

@@ -70,7 +70,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-INPUT_PORTS_START( gb )
+INPUT_PORTS_START( gameboy )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -86,10 +86,10 @@ INPUT_PORTS_END
 
 static unsigned char palette[] =
 {
-  0xFF,0xFF,0xFF,        /* Background colours */
-  0xB0,0xB0,0xB0,
-  0x60,0x60,0x60,
-  0x00,0x00,0x00,
+	0xFF,0xFF,0xFF, 	   /* Background colours */
+	0xB0,0xB0,0xB0,
+	0x60,0x60,0x60,
+	0x00,0x00,0x00,
 };
 
 static unsigned short colortable[] = {
@@ -106,7 +106,7 @@ static void gb_init_palette(unsigned char *sys_palette, unsigned short *sys_colo
 	memcpy(sys_colortable,colortable,sizeof(colortable));
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gameboy =
 {
 	/* basic machine hardware */
 	{
@@ -140,42 +140,36 @@ static struct MachineDriver machine_driver =
 	0,0,0,0,
 };
 
-static const char *gb_file_extensions[] = {
-	"gb", NULL
+static const struct IODevice io_gameboy[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"gb\0",				/* file extensions */
+		NULL,				/* private */
+		gb_id_rom,			/* id */
+		gb_load_rom,		/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,               /* open */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,               /* input */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL                /* output_chunk */
+	},
+	{ IO_END }
 };
 
-struct GameDriver gameboy_driver =
-{
-	__FILE__,
-	NULL,
-	"gameboy",
-	"GameBoy",
-	"198?",
-	"Nintendo",
-	NULL,
-	0,
-	&machine_driver,
-	NULL,				/* init driver */
+/***************************************************************************
 
-	NULL,				/* ROM structure */
-    gb_load_rom,
-	gb_id_rom,
-	gb_file_extensions,
-	1,					/* number of ROM slots */
-	0,					/* number of floppy drives supported */
-	0,					/* number of hard drives supported */
-	0,					/* number of cassette drives supported */
-	0,					/* rom decoder */
-	0,					/* opcode decoder */
-	0,					/* pointer to sample names */
-	0,					/* sound_prom */
+  Game driver(s)
 
-	input_ports_gb,
+***************************************************************************/
 
-	0,					/* color_prom */
-	0,					/* color palette */
-	0,					/* color lookup table */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING | GAME_NO_SOUND,
-	0,
-	0
-};
+#define rom_gameboy NULL
+
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+CONSX( 198?, gameboy,  0,		 gameboy,  gameboy,  0,		   "Nintendo", "GameBoy", GAME_NOT_WORKING | GAME_NO_SOUND )
+

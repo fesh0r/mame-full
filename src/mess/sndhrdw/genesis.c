@@ -11,7 +11,7 @@
  *	 03-Aug-98	GSL	   Tidied.. at last!
  *
  */
-
+#include "osd_cpu.h"
 #include "sndintrf.h"
 #include "mess/machine/genesis.h"
 //#include "sound/psgintf.h"

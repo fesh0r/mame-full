@@ -274,18 +274,33 @@ void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                            }
                            if (_ORIC_HIRES[i+1].attr == 1) b = 0;
                         }
-                        if (b & 32) o1 += Machine->pens[ink_colour];
-                        else        o1 += Machine->pens[paper_colour];
-                        if (b & 16) o1 += ( Machine->pens[ink_colour] * 0x100 );
-                        else        o1 += ( Machine->pens[paper_colour] * 0x100 );
-                        if (b & 8 ) o2 += Machine->pens[ink_colour];
-                        else        o2 += Machine->pens[paper_colour];
-                        if (b & 4 ) o2 += ( Machine->pens[ink_colour] * 0x100 );
-                        else        o2 += ( Machine->pens[paper_colour] * 0x100 );
-                        if (b & 2 ) o3 += Machine->pens[ink_colour];
-                        else        o3 += Machine->pens[paper_colour];
-                        if (b & 1 ) o3 += ( Machine->pens[ink_colour] * 0x100 );
-                        else        o3 += ( Machine->pens[paper_colour] * 0x100 );
+                        #ifdef LSB_FIRST
+							if (b & 32) o1 += Machine->pens[ink_colour];
+						    else        o1 += Machine->pens[paper_colour];
+						    if (b & 16) o1 += ( Machine->pens[ink_colour] *	0x100 );
+						    else        o1 += ( Machine->pens[paper_colour] * 0x100 );
+						    if (b & 8 ) o2 += Machine->pens[ink_colour];
+						    else        o2 += Machine->pens[paper_colour];
+							if (b & 4 ) o2 += ( Machine->pens[ink_colour] * 0x100 );
+							else        o2 += ( Machine->pens[paper_colour] * 0x100 );
+							if (b & 2 ) o3 += Machine->pens[ink_colour];
+							else        o3 += Machine->pens[paper_colour];
+						    if (b & 1 ) o3 += ( Machine->pens[ink_colour] * 0x100 );
+						    else        o3 += ( Machine->pens[paper_colour] * 0x100 );
+						#else
+							if (b & 32) o1 += Machine->pens[ink_colour] * 0x100;
+							else        o1 += Machine->pens[paper_colour] * 0x100;
+							if (b & 16) o1 += Machine->pens[ink_colour];
+							else        o1 += Machine->pens[paper_colour];
+							if (b & 8 ) o2 += Machine->pens[ink_colour] * 0x100;
+							else        o2 += Machine->pens[paper_colour] * 0x100;
+							if (b & 4 ) o2 += Machine->pens[ink_colour];
+							else        o2 += Machine->pens[paper_colour];
+							if (b & 2 ) o3 += Machine->pens[ink_colour] * 0x100;
+							else        o3 += Machine->pens[paper_colour] * 0x100;
+							if (b & 1 ) o3 += Machine->pens[ink_colour];
+							else        o3 += Machine->pens[paper_colour];
+						#endif
                         cdst[i][x+0] = o1;
                         cdst[i][x+1] = o2;
                         cdst[i][x+2] = o3;

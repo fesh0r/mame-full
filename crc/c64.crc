@@ -1,0 +1,21 @@
+[C64]
+# normal moduls
+69f5cc2d  = ccsmon.crt monitor
+71701c5b  = defiersc.crt tool
+666ae711 =  paintbru.crt tool
+87c243fd  = atotmcus.crt works
+5178fb21 =  gorf.crt player vanishes level 1
+225f9de2 =  jackatta.crt works
+c69054e8 =  junglehu.crt black screen, 
+            pal version as bad as vice (jump gives restart)
+6500fe32 =  lazarian.crt how to play?
+
+#ultimax moduls
+#look into max.crc
+
+# special moduls
+557752ef =  kcspowec.crt special hardware at 0xdfxx
+671a2b58 =  robocop2.crt special hardware at 0xde00
+2eb7d286 =  supergam.crt special hardware at 0xdf00
+
+

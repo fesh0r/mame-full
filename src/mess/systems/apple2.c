@@ -34,10 +34,12 @@ extern unsigned char *apple2_slot5;
 extern unsigned char *apple2_slot6;
 extern unsigned char *apple2_slot7;
 
-extern int	apple2_id_rom(const char *name, const char * gamename);
+extern int	apple2_floppy_init(int id, const char *name);
 
-extern int	apple2e_load_rom(void);
-extern int	apple2ee_load_rom(void);
+extern int  apple2_id_rom(const char *name, const char * gamename);
+
+extern int	apple2e_load_rom(int id, const char *name);
+extern int	apple2ee_load_rom(int id, const char *name);
 
 extern void apple2e_init_machine(void);
 
@@ -346,7 +348,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_standard =
 {
 	/* basic machine hardware */
 	{
@@ -392,7 +394,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver enhanced_machine_driver =
+static struct MachineDriver machine_driver_enhanced =
 {
 	/* basic machine hardware */
 	{
@@ -456,44 +458,6 @@ ROM_START(apple2e)
 	ROM_LOAD ( "a2e.vid", 0x0000, 0x1000, 0x816a86f1 )
 ROM_END
 
-struct GameDriver apple2e_driver =
-{
-	__FILE__,
-	0,
-	"apple2e",
-	"Apple IIe",
-	"1982",
-	"Apple Computer",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_apple2e,
-	apple2e_load_rom, 		/* load rom_file images */
-	apple2_id_rom,			/* identify rom images */
-	0,						/* default extensions */
-	1,						/* number of ROM slots - in this case, a CMD binary */
-	2,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_apple2,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0,				/* color lookup table */
-
-	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
 ROM_START(apple2ee)
 	ROM_REGIONX(0x24700,REGION_CPU1)
 	ROM_LOAD ( "a2ee.cd", 0x20000, 0x2000, 0x443aa7c4 )
@@ -506,44 +470,6 @@ ROM_START(apple2ee)
 	ROM_LOAD ( "a2ee.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
-struct GameDriver apple2ee_driver =
-{
-	__FILE__,
-	&apple2e_driver,
-	"apple2ee",
-	"Apple IIe (enhanced)",
-	"19??",
-	"Apple Computer",
-	"Mike Balfour",
-	0,
-	&enhanced_machine_driver,
-	0,
-
-	rom_apple2ee,
-	apple2ee_load_rom, 		/* load rom_file images */
-	apple2_id_rom,			/* identify rom images */
-	0,						/* default extensions */
-	1,						/* number of ROM slots - in this case, a CMD binary */
-	2,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_apple2,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0,				/* color lookup table */
-
-	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,	/* flags */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
 ROM_START(apple2ep)
 	ROM_REGIONX(0x24700,REGION_CPU1)
 	ROM_LOAD ("a2ept.cf", 0x20000, 0x4000, 0x02b648c8)
@@ -555,44 +481,6 @@ ROM_START(apple2ep)
 	ROM_LOAD("a2ept.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
-struct GameDriver apple2ep_driver =
-{
-	__FILE__,
-	&apple2e_driver,
-	"apple2ep",
-	"Apple IIe (Platinum)",
-	"19??",
-	"Apple Computer",
-	"Mike Balfour",
-	0,
-	&enhanced_machine_driver,
-	0,
-
-	rom_apple2ep,
-	apple2ee_load_rom, 		/* load rom_file images */
-	apple2_id_rom,			/* identify rom images */
-	0,						/* default extensions */
-	1,						/* number of ROM slots - in this case, a CMD binary */
-	2,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_apple2,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0,				/* color lookup table */
-
-	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,	/* flags */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
 ROM_START(apple2c)
 	ROM_REGIONX(0x24700,REGION_CPU1)
 	ROM_LOAD ( "a2c.128", 0x20000, 0x4000, 0xf0edaa1b )
@@ -600,44 +488,6 @@ ROM_START(apple2c)
 	ROM_REGIONX(0x2000,REGION_GFX1)
 	ROM_LOAD ( "a2c.vid", 0x0000, 0x1000, 0x2651014d )
 ROM_END
-
-struct GameDriver apple2c_driver =
-{
-	__FILE__,
-	0,
-	"apple2c",
-	"Apple IIc",
-	"1984",
-	"Apple Computer",
-	"Mike Balfour",
-	0,
-	&enhanced_machine_driver,
-	0,
-
-	rom_apple2c,
-	apple2ee_load_rom, 		/* load rom_file images */
-	apple2_id_rom,			/* identify rom images */
-	0,						/* default extensions */
-	1,						/* number of ROM slots - in this case, a CMD binary */
-	2,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_apple2,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0,				/* color lookup table */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
 
 ROM_START(apple2c0)
 	ROM_REGIONX(0x28000,REGION_CPU1)
@@ -647,87 +497,103 @@ ROM_START(apple2c0)
 	ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
-struct GameDriver apple2c0_driver =
-{
-	__FILE__,
-	&apple2c_driver,
-	"apple2c0",
-	"Apple IIc (3.5 ROM)",
-	"19??",
-	"Apple Computer",
-	"Mike Balfour",
-	0,
-	&enhanced_machine_driver,
-	0,
-
-	rom_apple2c0,
-	apple2ee_load_rom, 		/* load rom_file images */
-	apple2_id_rom,			/* identify rom images */
-	0,						/* default extensions */
-	1,						/* number of ROM slots - in this case, a CMD binary */
-	2,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_apple2,
-
-	0,						/* color_prom */
-	0,				/* color palette */
-	0,				/* color lookup table */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
-};
-
 ROM_START(apple2cp)
-	ROM_REGIONX(0x28000,REGION_CPU1)
-	ROM_LOAD("a2cplus.mon", 0x20000, 0x8000, 0x0b996420)
+    ROM_REGIONX(0x28000,REGION_CPU1)
+    ROM_LOAD("a2cplus.mon", 0x20000, 0x8000, 0x0b996420)
 
-	ROM_REGIONX(0x2000,REGION_GFX1)
-	ROM_LOAD("a2cplus.vid", 0x0000, 0x1000, 0x2651014d)
+    ROM_REGIONX(0x2000,REGION_GFX1)
+    ROM_LOAD("a2cplus.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
-struct GameDriver apple2cp_driver =
-{
-	__FILE__,
-	&apple2c_driver,
-	"apple2cp",
-	"Apple IIc Plus",
-	"19??",
-	"Apple Computer",
-	"Mike Balfour",
-	0,
-	&enhanced_machine_driver,
-	0,
-
-	rom_apple2cp,
-	apple2ee_load_rom, 		/* load rom_file images */
-	apple2_id_rom,			/* identify rom images */
-	0,						/* default extensions */
-	1,						/* number of ROM slots - in this case, a CMD binary */
-	2,						/* number of floppy drives supported */
-	0,						/* number of hard drives supported */
-	0,						/* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,						/* opcode decoder */
-	0,						/* pointer to sample names */
-	0,						/* sound_prom */
-
-	input_ports_apple2,
-
-	0,						/* color_prom */
-    0,				/* color palette */
-	0,				/* color lookup table */
-
-	GAME_NOT_WORKING | GAME_COMPUTER | ORIENTATION_DEFAULT,	/* orientation */
-
-	0,						/* hiscore load */
-	0,						/* hiscore save */
+static const struct IODevice io_apple2c[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"???\0",				/* file extensions */
+        NULL,               /* private */
+		apple2_id_rom,		/* id */
+		apple2e_load_rom,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		2,					/* count */
+		"???\0",				/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		apple2_floppy_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
+
+static const struct IODevice io_apple2e[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"???\0",				/* file extensions */
+        NULL,               /* private */
+		apple2_id_rom,		/* id */
+		apple2ee_load_rom,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		2,					/* count */
+		"???\0",				/* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		apple2_floppy_init, /* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
+};
+#define io_apple2c0 io_apple2e
+#define io_apple2cp io_apple2e
+#define io_apple2ee io_apple2e
+#define io_apple2ep io_apple2e
+
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY			  FULLNAME */
+COMPX( 1982, apple2e,  0,		 standard, apple2,	 0, 	   "Apple Computers", "Apple IIe", GAME_NOT_WORKING )
+COMPX( 19??, apple2ee, apple2e,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIe (enhanced)", GAME_NOT_WORKING  )
+COMPX( 19??, apple2ep, apple2e,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIe (Platinum)", GAME_NOT_WORKING  )
+COMP ( 1984, apple2c,  0,		 enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIc" )
+COMP ( 19??, apple2c0, apple2c,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIc (3.5 ROM)" )
+COMP ( 19??, apple2cp, apple2c,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIc Plus" )
 

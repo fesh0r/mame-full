@@ -10,10 +10,9 @@
 
 #include "mess/machine/cpm_bios.h"
 
-extern void kaypro_init_driver(void);
+extern int kaypro_floppy_init(int id, const char *name);
+extern void init_kaypro(void);
 extern void kaypro_init_machine(void);
 extern void kaypro_stop_machine(void);
-extern int	kaypro_rom_load(void);
-extern int	kaypro_rom_id(const char * name, const char * gamename);
 
 extern int kaypro_interrupt(void);

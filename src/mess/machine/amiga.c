@@ -595,36 +595,34 @@ typedef struct {
 
 static fdc_def fdc_status[4];
 
-static void fdc_init( void ) {
-	int i;
+int amiga_fdc_init( int id, const char *floppy_name ) {
 
-	for ( i = 0; i < 4; i++ ) {
-		fdc_status[i].motor_on = 0;
-		fdc_status[i].sel = 0;
-		fdc_status[i].side = 0;
-		fdc_status[i].dir = 0;
-		fdc_status[i].step = 0;
-		fdc_status[i].ready = 0;
-		fdc_status[i].track0 = 1;
-		fdc_status[i].wprot = 1;
-		fdc_status[i].cyl = 0;
-		fdc_status[i].rev_timer = 0;
-		fdc_status[i].spin_timer = 0;
-		fdc_status[i].pos = 0;
+	fdc_status[id].motor_on = 0;
+	fdc_status[id].sel = 0;
+	fdc_status[id].side = 0;
+	fdc_status[id].dir = 0;
+	fdc_status[id].step = 0;
+	fdc_status[id].ready = 0;
+	fdc_status[id].track0 = 1;
+	fdc_status[id].wprot = 1;
+	fdc_status[id].cyl = 0;
+	fdc_status[id].rev_timer = 0;
+	fdc_status[id].spin_timer = 0;
+	fdc_status[id].pos = 0;
 
-		memset( fdc_status[i].mfm, 0xaa, 544*2*11 );
+	memset( fdc_status[id].mfm, 0xaa, 544*2*11 );
 
-		fdc_status[i].disk_changed = 1;
-		if ( floppy_name[i] && floppy_name[i][0] ) {
-			fdc_status[i].f = osd_fopen(Machine->gamedrv->name,floppy_name[i],OSD_FILETYPE_IMAGE_RW,0);
-			if ( fdc_status[i].f == NULL ) {
-				if ( errorlog )
-					fprintf( errorlog, "Could not open image %s\n", floppy_name[i] );
-				continue;
-			}
-			fdc_status[i].disk_changed = 0;
+	fdc_status[id].disk_changed = 1;
+	if ( floppy_name[0] ) {
+		fdc_status[id].f = osd_fopen(Machine->gamedrv->name,floppy_name,OSD_FILETYPE_IMAGE_RW,0);
+		if ( fdc_status[id].f == NULL ) {
+			if ( errorlog )
+				fprintf( errorlog, "Could not open image %s\n", floppy_name );
+			return 1;
 		}
+		fdc_status[id].disk_changed = 0;
 	}
+	return 0;
 }
 
 static int fdc_get_curpos( int drive ) {
@@ -1891,9 +1889,6 @@ void amiga_init_machine( void ) {
 
 	/* Initialize the CIA's */
 	cia_init();
-
-	/* Initialize the Floppy */
-	fdc_init();
 
 	/* Initialize the Custom chips */
 	amiga_custom_init();

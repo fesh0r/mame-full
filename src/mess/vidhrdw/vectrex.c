@@ -27,11 +27,11 @@
 #define M_SQRT1_2 0.70710678118654752440
 #endif
 
-/* From machine/vectrex.c */ 
+/* From machine/vectrex.c */
 extern int vectrex_refresh_with_T2;
 extern int vectrex_imager_status;
 extern int vectrex_beam_color;
-extern unsigned char vectrex_via_pinlevel[2];
+extern unsigned char vectrex_via_out[2];
 
 extern void vectrex_imager_left_eye (double time);
 extern void vectrex_configuration(void);
@@ -128,7 +128,7 @@ void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 		if (overlay)
 			copybitmap(tmpbitmap, overlay->artwork,0,0,0,0,0,TRANSPARENCY_NONE,0);
 	}
-}	
+}
 
 /*********************************************************************
   Vector functions
@@ -148,7 +148,7 @@ INLINE void vectrex_zero_integrators(void)
 					   MIN(last_point_z*((timer_get_time()-last_point_starttime)*3E4),255));
 	last_point = 0;
 
-	x_int=x_center-(analog_sig[2]*INT_PER_CLOCK);    
+	x_int=x_center-(analog_sig[2]*INT_PER_CLOCK);
 	y_int=y_center+(analog_sig[2]*INT_PER_CLOCK);
 	vector_add_point_function (x_int, y_int, vectrex_beam_color, 0);
 }
@@ -164,7 +164,7 @@ INLINE void vectrex_dot(void)
 
 INLINE void vectrex_shift_out(int shift, int pattern)
 {
-	int x = (analog_sig[0] - analog_sig[2]) * INT_PER_CLOCK * 2; 
+	int x = (analog_sig[0] - analog_sig[2]) * INT_PER_CLOCK * 2;
 	int y = (analog_sig[1] + analog_sig[2]) * INT_PER_CLOCK * 2;
 	int z = analog_sig[3] > 0? analog_sig[3] * z_factor: 0;
 
@@ -172,7 +172,7 @@ INLINE void vectrex_shift_out(int shift, int pattern)
 		vector_add_point_function(last_point_x, last_point_y, vectrex_beam_color,
 				  MIN(last_point_z*((timer_get_time()-last_point_starttime)*3E4),255));
 	last_point = 0;
-		
+
 	while (shift)
 	{
 		while (shift)
@@ -210,7 +210,7 @@ INLINE void vectrex_solid_line(double time, int pattern)
 		vector_add_point_function(last_point_x, last_point_y, vectrex_beam_color,
 				  MIN(last_point_z*((timer_get_time()-last_point_starttime)*3E4),255));
 	last_point = 0;
-		
+
 	x_int += (int)(length * (analog_sig[0] - analog_sig[2]));
 	y_int -= (int)(length * (analog_sig[1] + analog_sig[2]));
 	vector_add_point_function(x_int, y_int, vectrex_beam_color, z * (pattern & 0x1));
@@ -238,6 +238,7 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 {
 	int i, nextfree;
 	char overlay_name[1024];
+	const struct IODevice *dev = Machine->gamedrv->dev;
 
 	/* initialize the first 8 colors with the basic colors */
 	for (i = 0; i < 8; i++)
@@ -253,13 +254,13 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 	nextfree +=16;
 
 	/* try to load an overlay for game.bin named game.png */
-	if (strlen(rom_name[0])==0)
-		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
-	else
+	if (device_count(dev->type))
 	{
-		sprintf(overlay_name,"%s",rom_name[0]);
-		sprintf(strchr(overlay_name,'.'),".png"); /* this may not be a good idea */
+		sprintf(overlay_name,"%s", device_filename(dev->type,0));
+		sprintf(strchr(overlay_name,'.'),".png");
 	}
+	else
+		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
 
 
 	if ((overlay=artwork_load(overlay_name, nextfree, Machine->drv->total_colors-nextfree))!=NULL)
@@ -275,12 +276,12 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 		/* Dark red for red/blue glasses mode */
 		palette[3 * 8 + 0] = 160;
 		palette[3 * 8 + 1] = palette[3 * 8 + 2] = 0;
-		
+
 		/* some more white */
 		nextfree -=15;
 		shade_fill (palette, WHITE, nextfree, nextfree + 31, 0, 255);
 		nextfree +=32;
-		
+
 		/* No overlay, so we just put shades of '3D colors' into the palette */
 		shade_fill (palette, RED, nextfree, nextfree + 31, 0, 255);
 		nextfree += 32;
@@ -305,7 +306,7 @@ int vectrex_start (void)
 
 	if (vector_vh_start())
 		return 1;
-	
+
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		width = Machine->scrbitmap->height;
@@ -331,7 +332,7 @@ int vectrex_start (void)
 	y_center=((Machine->drv->visible_area.max_y
 		  -Machine->drv->visible_area.min_y) / 2 - 10) << VEC_SHIFT;
 	x_max = Machine->drv->visible_area.max_x << VEC_SHIFT;
-	
+
 	vector_set_shift (VEC_SHIFT);
 
 	/* Init. the refresh timer to the BIOS default refresh rate.
@@ -366,10 +367,10 @@ void vectrex_stop(void)
  *********************************************************************/
 INLINE void vectrex_multiplexer (int mux)
 {
-	analog_sig[mux + 1]=(signed char)vectrex_via_pinlevel[PORTA];
+	analog_sig[mux + 1]=(signed char)vectrex_via_out[PORTA];
 	if (mux == 3)
 		/* the DAC driver expects unsigned samples */
-		DAC_data_w(0,(signed char)vectrex_via_pinlevel[PORTA]+0x80);
+		DAC_data_w(0,(signed char)vectrex_via_out[PORTA]+0x80);
 }
 
 static void v_via_pb_w (int offset, int data)
@@ -377,10 +378,10 @@ static void v_via_pb_w (int offset, int data)
 	if (!(data & 0x80))
 	{
 		/* RAMP is active */
-		if ((vectrex_via_pinlevel[PORTB] & 0x80))
+		if ((vectrex_via_out[PORTB] & 0x80))
 			/* RAMP was inactive before */
 			start_time = timer_get_time()+RAMP_DELAY;
-		if (!(data & 0x1) && (vectrex_via_pinlevel[PORTB] & 0x1)) 
+		if (!(data & 0x1) && (vectrex_via_out[PORTB] & 0x1))
 			/* MUX has been enabled */
 			/* This is a rare case used by some new games */
 		{
@@ -392,7 +393,7 @@ static void v_via_pb_w (int offset, int data)
 	else
 		/* RAMP is inactive */
 	{
-		if (!(vectrex_via_pinlevel[PORTB] & 0x80))
+		if (!(vectrex_via_out[PORTB] & 0x80))
 			/* RAMP was active before - we can draw the line */
 			vectrex_solid_line(timer_get_time()-start_time+RAMP_DELAY, old_via_sr);
 	}
@@ -402,24 +403,24 @@ static void v_via_pb_w (int offset, int data)
 	{
 		/* BDIR active, PSG latches */
 		if (data & 0x08) /* BC1 (do we select a reg or write it ?) */
-			AY8910_control_port_0_w (0, vectrex_via_pinlevel[PORTA]);
+			AY8910_control_port_0_w (0, vectrex_via_out[PORTA]);
 		else
-			AY8910_write_port_0_w (0, vectrex_via_pinlevel[PORTA]);
+			AY8910_write_port_0_w (0, vectrex_via_out[PORTA]);
 	}
-	
-	if (!(data & 0x1) && (vectrex_via_pinlevel[PORTB] & 0x1))
-		/* MUX has been enabled, so check with which signal the MUX 
+
+	if (!(data & 0x1) && (vectrex_via_out[PORTB] & 0x1))
+		/* MUX has been enabled, so check with which signal the MUX
 		 * coulpes the DAC output.  */
 		vectrex_multiplexer ((data >> 1) & 0x3);
 
-	vectrex_via_pinlevel[PORTB] = data;
+	vectrex_via_out[PORTB] = data;
 }
 
 static void v_via_pa_w (int offset, int data)
 {
 	double time;
 
-	if (!(vectrex_via_pinlevel[PORTB] & 0x80))  /* RAMP active (low) ? */
+	if (!(vectrex_via_out[PORTB] & 0x80))  /* RAMP active (low) ? */
 	{
 		/* The game changes the sample and hold ICs (X/Y axis)
 		 * during line draw (curved vectors)
@@ -431,19 +432,19 @@ static void v_via_pa_w (int offset, int data)
 		start_time = time;
 	}
 	/* DAC output always goes into X integrator */
-	vectrex_via_pinlevel[PORTA] = analog_sig[0] = (signed char)data;
+	vectrex_via_out[PORTA] = analog_sig[0] = (signed char)data;
 
-	if (!(vectrex_via_pinlevel[PORTB] & 0x1))
-		/* MUX is enabled, so check with which signal the MUX 
+	if (!(vectrex_via_out[PORTB] & 0x1))
+		/* MUX is enabled, so check with which signal the MUX
 		 * coulpes the DAC output.  */
-		vectrex_multiplexer ((vectrex_via_pinlevel[PORTB] >> 1) & 0x3);
+		vectrex_multiplexer ((vectrex_via_out[PORTB] >> 1) & 0x3);
 }
 
 static void vectrex_shift_reg_w (int via_sr)
 {
 	double time;
 
-	if (vectrex_via_pinlevel[PORTB] & 0x80)
+	if (vectrex_via_out[PORTB] & 0x80)
 	{
 		/* RAMP inactive */
 		if (via_sr & 0x01)
@@ -488,7 +489,7 @@ static struct via6522_interface spectrum1_via6522_interface =
 static struct artwork *buttons, *led;
 static int transparent_pen;
 
-void spectrum1_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -503,7 +504,7 @@ void spectrum1_init_colors (unsigned char *palette, unsigned short *colortable,c
 	/* 16 shades of gray for the vector functions */
 	shade_fill (palette, WHITE, 8, 63, 0, 255);
 	vectrex_refresh_with_T2=1;
-	
+
 	/* artwork */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -520,15 +521,15 @@ void spectrum1_init_colors (unsigned char *palette, unsigned short *colortable,c
 
 	if (buttons && led)
 	{
-		memcpy (palette+(buttons->start_pen * 3), buttons->orig_palette, 3 * buttons->num_pens_used); 
-		memcpy (palette+(led->start_pen * 3), led->orig_palette, 3 * led->num_pens_used); 
+		memcpy (palette+(buttons->start_pen * 3), buttons->orig_palette, 3 * buttons->num_pens_used);
+		memcpy (palette+(led->start_pen * 3), led->orig_palette, 3 * led->num_pens_used);
 		for (i = 0; i < led->num_pens_used; i++)
 			if (led->orig_palette[i*3]+led->orig_palette[i*3+1]+led->orig_palette[i*3+2] == 0)
 				transparent_pen = buttons->start_pen + buttons->num_pens_used + i;
 		}
 }
 
-void spectrum1_led_w (int offset, int data)
+void raaspec_led_w (int offset, int data)
 {
 	int i, y, width;
 	struct rectangle clip;
@@ -553,13 +554,13 @@ void spectrum1_led_w (int offset, int data)
 			width = led->artwork->width;
 			clip.max_y = tmpbitmap->height -1;
 		}
-		
+
 		for (i=0; i<8; i++)
 			if (((data^old_data) >> i) & 0x1)
 			{
 				clip.min_x = i*width;
 				clip.max_x = (i+1)*width-1;
-				
+
 				if ((data >> i) & 0x1)
 					copybitmap(tmpbitmap, buttons->artwork, 0, 0, 0, y, &clip, TRANSPARENCY_NONE, 0);
 				else
@@ -570,19 +571,19 @@ void spectrum1_led_w (int offset, int data)
 	}
 }
 
-int spectrum1_start (void)
+int raaspec_start (void)
 {
 	int width, height;
 
 	if (vector_vh_start())
 		return 1;
-	
+
 	x_center=((Machine->drv->visible_area.max_x
 		  -Machine->drv->visible_area.min_x)/2) << VEC_SHIFT;
 	y_center=((Machine->drv->visible_area.max_y
 		  -Machine->drv->visible_area.min_y)/2-10) << VEC_SHIFT;
 	x_max = Machine->drv->visible_area.max_x << VEC_SHIFT;
-	
+
 	vector_set_shift (VEC_SHIFT);
 
 	via_config(0, &spectrum1_via6522_interface);
@@ -607,12 +608,12 @@ int spectrum1_start (void)
 	{
 		backdrop_refresh(buttons);
 		backdrop_refresh(led);
-		spectrum1_led_w (0, 0xff);
+		raaspec_led_w (0, 0xff);
 	}
 	return 0;
 }
 
-void spectrum1_vh_update (struct osd_bitmap *bitmap, int full_refresh)
+void raaspec_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 {
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
-}	
+}

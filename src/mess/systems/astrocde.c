@@ -40,7 +40,7 @@
 
 extern unsigned char *astrocade_videoram;
 
-int astrocade_load_rom(void);
+int astrocade_load_rom(int id, const char *name);
 int astrocade_id_rom(const char *name, const char *gamename);
 
 void astrocade_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
@@ -124,12 +124,7 @@ static struct IOWritePort astrocade_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-ROM_START( astrocade )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )
-	ROM_LOAD( "astro.bin",  0x0000, 0x2000, 0xebc77f3a )
-ROM_END
-
-INPUT_PORTS_START( astrocade )
+INPUT_PORTS_START( astrocde )
 	PORT_START /* IN0 */	/* Player 1 Handle */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
@@ -214,7 +209,7 @@ static struct astrocade_interface astrocade_1chip_interface =
 };
 
 
-static struct MachineDriver astrocade_machine_driver =
+static struct MachineDriver machine_driver_astrocde =
 {
 	/* basic machine hardware */
 	{
@@ -255,38 +250,39 @@ static struct MachineDriver astrocade_machine_driver =
  	}
 };
 
-struct GameDriver astrocde_driver =
-{
-	__FILE__,
-	0,
-	"astrocde",
-	"Bally Arcade/Astrocade",
-	"1978",
-	"Bally/Astrocade Inc.",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nFrank Palazzolo",
-	0,
-	&astrocade_machine_driver,
-	0,
+ROM_START( astrocde )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )
+    ROM_LOAD( "astro.bin",  0x0000, 0x2000, 0xebc77f3a )
+ROM_END
 
-	rom_astrocade,
-	astrocade_load_rom,
-	astrocade_id_rom,
-
-	0,	/* default file extensions */
-
-	1,	/* number of ROM slots */
-	0,	/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,	/* number of cassette drives supported */
-
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_astrocade,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_astrocde[] = {
+    {
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"bin\0",            /* file extensions */
+		NULL,               /* private */
+		astrocade_id_rom,	/* id */
+		astrocade_load_rom, /* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,               /* open */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,               /* input */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL                /* output_chunk */
+	},
+	{ IO_END }
 };
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+CONS( 1978, astrocde, 0,		astrocde, astrocde, 0,		  "Bally/Astrocade Inc.", "Bally Arcade/Astrocade")
+

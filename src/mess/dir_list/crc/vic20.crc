@@ -21,6 +21,8 @@ be701896 =  ROBOTRON.60
 3710f99e =  ROBOTRON.A0
 8817b702 =  SUBMARIN.60
 e402fb1d =  SUBMARIN.A0 (how to play?)
+18d44576 =  cosmiccr.prg
+e5878f34 =  cbmartis.prg (lightpen)
 
 # MODULES not booting
 5acb7ab = AD1.40 (sys32592)
@@ -69,7 +71,7 @@ c1114c57 =  JUNGLE.A0
 5a0b7e5d =  MOON_PAT.60
 b47f9971 =  MOON_PAT.A0
 62efe05d =  MOUNTAIN.60
-ad3ff0a4 =  MOUNTAIN.A0 flickers, I thinks this is right
+ad3ff0a4 =  MOUNTAIN.A0 flickers, I think this is right
 45af030c =  MS_PAC.60
 ffd1ab54 =  MS_PAC.A0
 5a6d36e0 =  PINBALL2.60
@@ -79,28 +81,8 @@ e0c6b380 =  POLE_POS.60
 07cbdd86 =  SKY_BLAZ.60
 c9c0b743 =  SKY_BLAZ.A0
 
-#program
-#earth invaders
-#meteor blaster
-#amok
-#hopper
-#alienattack
-
-#program multipart disk
-#vicmen 
-#vic panic
-#galaxions not working (also not working in vice)
-
-# program 8k
-93aa9d10 = Psycho Shopper
-
-#program 16k
-#perils
-
-# program with ram at 0xa000 
-b86fed2f = smon.a0 (sys40960) monitor 
-# load absolute, then press restore 
+#[bad dumps/conversion]
 # converted to modules (without init of video chip)  
-b5ce2d3a =  FLIPPER1.PRG
-43e45c34 =  SCRAM20.PRG 
+b5ce2d3a =  FLIPPER1.PRG load program at 0xa000 ram, press restore
+43e45c34 =  SCRAM20.PRG load program at 0xa000 ram, press restore
 

@@ -4,6 +4,13 @@
 
   Driver file to handle emulation of the Nintendo Entertainment System (Famicom).
 
+  Brad Oliver
+  Chuck Mason
+  Richard Bannister
+  Nicolas Hamel
+  Jeff Mitchell
+  Nicola Salmoria (sound)
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -12,7 +19,7 @@
 #include "cpu/m6502/m6502.h"
 
 /* machine/nes.c */
-int nes_load_rom (void);
+int nes_load_rom (int id, const char *rom_name);
 int nes_id_rom (const char *name, const char *gamename);
 void nes_init_machine (void);
 int nes_interrupt (void);
@@ -64,7 +71,7 @@ void battery_ram_w (int offset, int data)
 			switch (offset)
 			{
 				case 0x1ffd:
-					/* Switch 32k ROM banks */
+					/* Switch 32k NES_ROM banks */
 					data &= ((PRG_Rom >> 1) - 1);
 					cpu_setbank (1, &RAM[data * 0x8000 + 0x10000]);
 					cpu_setbank (2, &RAM[data * 0x8000 + 0x12000]);
@@ -72,13 +79,13 @@ void battery_ram_w (int offset, int data)
 					cpu_setbank (4, &RAM[data * 0x8000 + 0x16000]);
 					break;
 				case 0x1ffe:
-					/* Switch 4k VROM at 0x0000 */
+					/* Switch 4k VNES_ROM at 0x0000 */
 					data &= ((CHR_Rom << 1) - 1);
 					for (i = 0; i < 4; i ++)
 						nes_vram[i] = (data) * 256 + 64*i;
 					break;
 				case 0x1fff:
-					/* Switch 4k VROM at 0x1000 */
+					/* Switch 4k VNES_ROM at 0x1000 */
 					data &= ((CHR_Rom << 1) - 1);
 					for (i = 4; i < 8; i ++)
 						nes_vram[i] = (data) * 256 + 64*(i-4);
@@ -88,7 +95,7 @@ void battery_ram_w (int offset, int data)
 		case 79:
 			if (errorlog) fprintf (errorlog, "Mapper 79 (trainer) w, offset: %04x, data: %02x\n", offset, data);
 			if (offset & 0x0100)
-			/* Select 8k VROM bank */
+			/* Select 8k VNES_ROM bank */
 			{
 				data &= (CHR_Rom - 1);
 				for (i = 0; i < 8; i ++)
@@ -113,7 +120,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0xe000, 0xffff, MRA_BANK4 },
 	{ 0xc000, 0xdfff, MRA_BANK3 },
-	{ 0x8000, 0x9fff, MRA_BANK1 }, /* 4 16k ROM banks */
+	{ 0x8000, 0x9fff, MRA_BANK1 }, /* 4 16k NES_ROM banks */
 	{ 0xa000, 0xbfff, MRA_BANK2 },
 	{ 0x0000, 0x07ff, MRA_RAM   },   /* RAM */
 	{ 0x2000, 0x3fff, nes_ppu_r }, /* PPU registers */
@@ -174,8 +181,8 @@ INPUT_PORTS_START( nes )
 	PORT_START	/* IN3 - fake */
 	//PORT_DIPNAME( 0x01, 0x00, "Split-Screen Fix", IP_KEY_NONE )
 	PORT_DIPNAME( 0x01, 0x00, "Split-Screen Fix")
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* !! Warning: the charlayout is changed by nes_load_rom !! */
@@ -331,15 +338,15 @@ static struct DACinterface nes_dac_interface =
 };
 
 
+ROM_START( nes )
+	ROM_REGIONX( 0x410000, REGION_CPU1 )
+	ROM_REGIONX( 0x200000, REGION_GFX1 )
+	ROM_REGIONX( 0x2000,  REGION_GFX2 )
+ROM_END
 
-/* list of file extensions */
-static const char *nes_file_extensions[] =
-{
-	"nes",
-	0       /* end of array */
-};
 
-static struct MachineDriver machine_driver =
+
+static struct MachineDriver machine_driver_nes =
 {
 	/* basic machine hardware */
 	{
@@ -382,6 +389,29 @@ static struct MachineDriver machine_driver =
 };
 
 
+static const struct IODevice io_nes[] = {
+    {
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"nes\0",            /* file extensions */
+		NULL,               /* private */
+		nes_id_rom, 		/* id */
+		nes_load_rom,		/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,               /* open */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,               /* input */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL                /* output_chunk */
+	},
+	{ IO_END }
+};
+
+//#define rom_nes NULL
 
 /***************************************************************************
 
@@ -389,38 +419,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-struct GameDriver nes_driver =
-{
-	__FILE__,
-	0,
-	"nes",
-	"Nintendo Entertainment System/Famicom",
-	"1983",
-	"Nintendo",
-	"Brad Oliver\nChuck Mason\nRichard Bannister\nNicolas Hamel\nJeff Mitchell\nNicola Salmoria (sound)\n",
-	0,
-	&machine_driver,
-	0,
-	NULL,
-	nes_load_rom,
-	nes_id_rom,
-	nes_file_extensions,
-
-
-	/* IO support */
-	1, 0, 0, 0,
-
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_nes,
-
-	0, 0, 0,
-	GAME_IMPERFECT_SOUND | ORIENTATION_DEFAULT,
-
-	0, 0,
-};
-
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
+CONS( 1983, nes,	   0,		 nes,	   nes, 	 0,		   "Nintendo", "Nintendo Entertainment System/Famicon" )
 
 

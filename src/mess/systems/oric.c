@@ -7,19 +7,17 @@
 
 void oric_init_machine (void);
 void oric_shutdown_machine (void);
-int oric_load_rom (void);
+int oric_load_rom (int id, const char *name);
 int oric_interrupt(void);
-int oric_id_rom (const char *name, const char *gamename);
 int oric_IO_r (int offset);
 void oric_IO_w (int offset, int data);
-
 
 /* from vidhrdw/oric.c */
 void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int oric_vh_start(void);
 void oric_vh_stop(void);
 
-unsigned char *oric_IO;
+extern unsigned char *oric_IO;
 
 // int oric_ram_r (int offset);
 // void oric_ram_w (int offset, int data);
@@ -131,8 +129,6 @@ INPUT_PORTS_START( oric )
 	PORT_BITX(0x01, 0x00, IPT_KEYBOARD, "7.0: 8 *",      KEYCODE_8,          IP_JOY_NONE)
 INPUT_PORTS_END
 
-static const char *oric_file_extensions[] = { "tap",0 };
-
 static unsigned char oric_palette[16*3] = {
 	0x00, 0x00, 0x00, 0xcf, 0x00, 0x00,
 	0x00, 0xcf, 0x00, 0xcf, 0xcf, 0x00,
@@ -184,7 +180,6 @@ static struct AY8910interface oric_ay_interface =
 	1,	/* 1 chips */
 	1000000,	/* 1.0 MHz  */
 	{ 25,25},
-	AY8910_DEFAULT_GAIN,/* ???????? */
 	{ oric_psg_porta_read },
 	{ 0 },
 	{ 0 },
@@ -192,7 +187,7 @@ static struct AY8910interface oric_ay_interface =
 };
 
 
-static struct MachineDriver oric_machine_driver =
+static struct MachineDriver machine_driver_oric =
 {
 	/* basic machine hardware */
 	{
@@ -246,82 +241,51 @@ ROM_START(orica)
 	ROM_LOAD ("orica.rom", 0xc000, 0x4000, 0xc3a92bef)
 ROM_END
 
-struct GameDriver oric1_driver =
-{
-	__FILE__,
-	0,
-	"oric1",
-	"Oric 1",
-	"1983",
-	"Tangerine?",
-    "Paul Cook",
-    0,
-	&oric_machine_driver,
-	0,
-
-	rom_oric1,
-	0, // oric_load_rom,
-	0, // oric_id_rom,
-	oric_file_extensions,
-	0,		/* number of ROM slots */
-	0,		/* number of floppy drives supported */
-	0,		/* number of hard drives supported */
-	0,		/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_oric,
-
-	0,	// changed for port to 36b10 source ...
-
-	0, // oric_palette,
-	0, // oric_colortable,
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_oric1[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"tap\0",            /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		oric_load_rom,		/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
 
-struct GameDriver orica_driver =
-{
-	__FILE__,
-	0,
-	"orica",
-	"Oric Atmos",
-	"1984?",
-	"Tangerine?",
-    "Paul Cook",
-    0,
-	&oric_machine_driver,
-	0,
-
-	rom_orica,
-	0, // oric_load_rom,
-	0, // oric_id_rom,
-	oric_file_extensions,
-	0,		/* number of ROM slots */
-	0,		/* number of floppy drives supported */
-	0,	/* number of hard drives supported */
-	0,		/* number of cassette drives supported */
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_oric,
-
-	0,	// changed for port to 36b10 source ...
-	0,	// oric_palette,
-	0,	// oric_colortable,
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_orica[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"tap\0",            /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		oric_load_rom,		/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
 
-
-
-
-
-
+/*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
+COMP( 1983,  oric1,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric 1" )
+COMP( 1984?, orica,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric Atmos" )
 

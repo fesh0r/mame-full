@@ -47,12 +47,6 @@ void jupiter_vh_charram_w (int offset, int data)
 	}
 }
 
-int jupiter_vh_charram_r (int offset)
-{
-	return jupiter_charram[offset];
-}
-
-
 void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 

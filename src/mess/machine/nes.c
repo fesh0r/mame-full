@@ -22,7 +22,7 @@ int current_drawline;
 int dirty_char;
 char use_vram[512];
 
-unsigned char *ROM;
+unsigned char *NES_ROM;
 unsigned char *VROM;
 unsigned char *VRAM;
 unsigned char CHR_Rom;
@@ -807,7 +807,7 @@ static void Write_PPU (int data)
 
 extern struct GfxLayout nes_charlayout;
 
-int nes_load_rom (void)
+int nes_load_rom (int id, const char *rom_name)
 {
 	FILE *romfile;
 	char magic[4];
@@ -820,11 +820,10 @@ int nes_load_rom (void)
 	int i;
 
 	if(errorlog) fprintf (errorlog,"Beginning nes_load_rom\n");
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-
 		if(errorlog) fprintf (errorlog,"osd_fopen failed in nes_load_rom.\n");
-      return 1;
+			return 1;
 	}
 	if(errorlog) fprintf (errorlog,"Finished osd_Fopen for ROM\n");
 
@@ -918,7 +917,7 @@ int nes_load_rom (void)
         printf ("Memory allocation failed reading roms!\n");
         goto bad;
     }
-	ROM = memory_region(REGION_CPU1);
+	NES_ROM = memory_region(REGION_CPU1);
 	VROM = memory_region(REGION_GFX1);
 	VRAM = memory_region(REGION_GFX2);
 
@@ -928,7 +927,7 @@ int nes_load_rom (void)
 	/* Load the 0x200 byte trainer at 0x7000 if it exists */
 	if (trainer)
 	{
-		osd_fread (romfile, &ROM[0x7000], 0x200);
+		osd_fread (romfile, &NES_ROM[0x7000], 0x200);
 		if (errorlog) fprintf (errorlog, "-- Trainer found\n");
 	}
 
@@ -936,12 +935,12 @@ int nes_load_rom (void)
 
 	if (PRG_Rom == 1)
 	{
-		osd_fread (romfile, &ROM[0x14000], 0x4000);
+		osd_fread (romfile, &NES_ROM[0x14000], 0x4000);
 		/* Mirror this bank into $8000 */
-		memcpy (&ROM[0x10000], &ROM [0x14000], 0x4000);
+		memcpy (&NES_ROM[0x10000], &NES_ROM [0x14000], 0x4000);
 	}
 	else
-		osd_fread (romfile, &ROM[0x10000], 0x4000 * PRG_Rom);
+		osd_fread (romfile, &NES_ROM[0x10000], 0x4000 * PRG_Rom);
 
 	if (errorlog) fprintf (errorlog, "**\n");
 	if (errorlog) fprintf (errorlog, "Mapper: %d\n", Mapper);

@@ -17,27 +17,29 @@
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
 #else
-#define LOG(x)	/* x */
+#define LOG(x)						   /* x */
 #endif
 
-typedef struct {
-    UINT8   dria;           /* Data register A input */
-    UINT8   droa;           /* Data register A output */
-    UINT8   ddra;           /* Data direction register A; 1 bits = output */
-    UINT8   drib;           /* Data register B input */
-    UINT8   drob;           /* Data register B output */
-    UINT8   ddrb;           /* Data direction register B; 1 bits = output */
-    UINT8   irqen;          /* IRQ enabled ? */
-    UINT8   state;          /* current timer state (bit 7) */
-    double  clock;          /* 100000/1(,8,64,1024) */
-    void    *timer;         /* timer callback */
-}   M6530;
+typedef struct
+{
+	UINT8 dria; 	/* Data register A input */
+	UINT8 droa; 	/* Data register A output */
+	UINT8 ddra; 	/* Data direction register A; 1 bits = output */
+	UINT8 drib; 	/* Data register B input */
+	UINT8 drob; 	/* Data register B output */
+	UINT8 ddrb; 	/* Data direction register B; 1 bits = output */
+	UINT8 irqen;	/* IRQ enabled ? */
+	UINT8 state;	/* current timer state (bit 7) */
+	double clock;	/* 100000/1(,8,64,1024) */
+	void *timer;	/* timer callback */
+}
+M6530;
 
 static M6530 m6530[2];
 
-static void m6530_timer_cb (int chip);
+static void m6530_timer_cb(int chip);
 
-void kim1_init_driver (void)
+void init_kim1(void)
 {
 	UINT8 *dst;
 	int x, y, i;
@@ -527,8 +529,8 @@ void kim1_init_driver (void)
 		".bbbbbbbbbbbbbbbbbbbbbb." \
 		"........................"};
 
-	dst = memory_region (REGION_GFX1);
-	memset (dst, 0, 128 * 24 * 24 / 8);
+	dst = memory_region(REGION_GFX1);
+	memset(dst, 0, 128 * 24 * 24 / 8);
 	for (i = 0; i < 128; i++)
 	{
 		for (y = 0; y < 24; y++)
@@ -573,8 +575,8 @@ void kim1_init_driver (void)
 		}
 	}
 
-	dst = memory_region (2);
-	memset (dst, 0, 24 * 18 * 24 / 8);
+	dst = memory_region(2);
+	memset(dst, 0, 24 * 18 * 24 / 8);
 	for (i = 0; i < 24; i++)
 	{
 		for (y = 0; y < 18; y++)
@@ -600,9 +602,9 @@ void kim1_init_driver (void)
 	}
 }
 
-void kim1_init_machine (void)
+void kim1_init_machine(void)
 {
-	UINT8 *RAM = memory_region (REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/* setup RAM IRQ vector */
 	if (RAM[0x17fa] == 0x00 && RAM[0x17fb] == 0x00)
@@ -618,102 +620,100 @@ void kim1_init_machine (void)
 	}
 
 	/* reset the 6530 */
-	memset (&m6530, 0, sizeof (m6530));
+	memset(&m6530, 0, sizeof (m6530));
 
 	m6530[0].dria = 0xff;
 	m6530[0].drib = 0xff;
 	m6530[0].clock = (double) 1000000 / 1;
-	m6530[0].timer = timer_pulse (TIME_IN_HZ (256 * m6530[0].clock / 256 / 256), 0, m6530_timer_cb);
+	m6530[0].timer = timer_pulse(TIME_IN_HZ(256 * m6530[0].clock / 256 / 256), 0, m6530_timer_cb);
 
 	m6530[1].dria = 0xff;
 	m6530[1].drib = 0xff;
 	m6530[1].clock = (double) 1000000 / 1;
-	m6530[1].timer = timer_pulse (TIME_IN_HZ (256 * m6530[1].clock / 256 / 256), 1, m6530_timer_cb);
+	m6530[1].timer = timer_pulse(TIME_IN_HZ(256 * m6530[1].clock / 256 / 256), 1, m6530_timer_cb);
 }
 
-int kim1_rom_load (void)
+int kim1_rom_load(int id, const char *name)
 {
 	const char magic[] = "KIM1";
 	char buff[4];
 	void *file;
-	int i;
 
-	for (i = 0; i < MAX_CASSETTE; i++)
+	if (name && name[0])
 	{
-		if (rom_name[i] == NULL)
-			continue;
-		file = osd_fopen (Machine->gamedrv->name, rom_name[i], OSD_FILETYPE_IMAGE_RW, 0);
+		file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
 		if (file)
 		{
 			UINT16 addr, size;
-			UINT8 id, *RAM = memory_region (REGION_CPU1);
+			UINT8 ident, *RAM = memory_region(REGION_CPU1);
 
-			osd_fread (file, buff, sizeof (buff));
-			if (memcmp (buff, magic, sizeof (buff)))
+			osd_fread(file, buff, sizeof (buff));
+			if (memcmp(buff, magic, sizeof (buff)))
 			{
-				LOG ((errorlog, "kim1_rom_load: magic '%s' not found\n", magic));
+				LOG((errorlog, "kim1_rom_load: magic '%s' not found\n", magic));
 				return 1;
 			}
-			osd_fread_lsbfirst (file, &addr, 2);
-			osd_fread_lsbfirst (file, &size, 2);
-			osd_fread (file, &id, 1);
-			LOG ((errorlog, "kim1_rom_load: $%04X $%04X $%02X\n", addr, size, id));
+			osd_fread_lsbfirst(file, &addr, 2);
+			osd_fread_lsbfirst(file, &size, 2);
+			osd_fread(file, &ident, 1);
+			LOG((errorlog, "kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident));
 			while (size-- > 0)
-				osd_fread (file, &RAM[addr++], 1);
-			osd_fclose (file);
+				osd_fread(file, &RAM[addr++], 1);
+			osd_fclose(file);
+		}
+	}
+
+	return 0;
+}
+
+int kim1_rom_id(const char *name, const char *gamename)
+{
+	const char magic[] = "KIM1";
+	char buff[4];
+	void *file;
+
+	file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, 0);
+	if (file)
+	{
+		osd_fread(file, buff, sizeof (buff));
+		if (memcmp(buff, magic, sizeof (buff)) == 0)
+		{
+			LOG((errorlog, "kim1_rom_id: magic '%s' found\n", magic));
+			return 1;
 		}
 	}
 	return 0;
 }
 
-int kim1_rom_id (const char *name, const char *gamename)
+static void m6530_timer_cb(int chip)
 {
-	const char magic[] = "KIM1";
-	char buff[4];
-	void *file;
-
-	file = osd_fopen (gamename, name, OSD_FILETYPE_IMAGE_RW, 0);
-	if (file)
-	{
-		osd_fread (file, buff, sizeof (buff));
-		if (memcmp (buff, magic, sizeof (buff)) == 0)
-		{
-			LOG ((errorlog, "kim1_rom_id: magic '%s' found\n", magic));
-			return 0;
-		}
-	}
-	return 1;
+	LOG((errorlog, "m6530(%d) timer expired\n", chip));
+	m6530[chip].state |= 0x80;
+	if (m6530[chip].irqen)			   /* with IRQ? */
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-static void m6530_timer_cb (int chip)
-{
-    LOG ((errorlog, "m6530(%d) timer expired\n", chip));
-    m6530[chip].state |= 0x80;
-    if (m6530[chip].irqen)             /* with IRQ? */
-        cpu_set_irq_line (0, 0, HOLD_LINE);
-}
-
-int kim1_interrupt (void)
+int kim1_interrupt(void)
 {
 	int i;
 
 	/* decrease the brightness of the six 7segment LEDs */
-    for (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 	{
 		if (videoram[i * 2 + 1] > 0)
 			videoram[i * 2 + 1] -= 1;
 	}
-	return ignore_interrupt ();
+	return ignore_interrupt();
 }
 
-INLINE int m6530_r (int chip, int offset)
+INLINE int m6530_r(int chip, int offset)
 {
 	int data = 0xff;
 
 	switch (offset)
 	{
 	case 0x00:
-	case 0x08: /* Data register A */
+	case 0x08:						   /* Data register A */
 		if (chip == 1)
 		{
 			int which = ((m6530[1].drob & m6530[1].ddrb) >> 1) & 0x0f;
@@ -721,117 +721,117 @@ INLINE int m6530_r (int chip, int offset)
 			switch (which)
 			{
 			case 0:				   /* key row 1 */
-				m6530[1].dria = input_port_0_r (0);
-				LOG ((errorlog, "read keybd(%d): %c%c%c%c%c%c%c\n",
-					  which,
-					  (m6530[1].dria & 0x40) ? '.' : '0',
-					  (m6530[1].dria & 0x20) ? '.' : '1',
-					  (m6530[1].dria & 0x10) ? '.' : '2',
-					  (m6530[1].dria & 0x08) ? '.' : '3',
-					  (m6530[1].dria & 0x04) ? '.' : '4',
-					  (m6530[1].dria & 0x02) ? '.' : '5',
-					  (m6530[1].dria & 0x01) ? '.' : '6'));
+				m6530[1].dria = input_port_0_r(0);
+				LOG((errorlog, "read keybd(%d): %c%c%c%c%c%c%c\n",
+					 which,
+					 (m6530[1].dria & 0x40) ? '.' : '0',
+					 (m6530[1].dria & 0x20) ? '.' : '1',
+					 (m6530[1].dria & 0x10) ? '.' : '2',
+					 (m6530[1].dria & 0x08) ? '.' : '3',
+					 (m6530[1].dria & 0x04) ? '.' : '4',
+					 (m6530[1].dria & 0x02) ? '.' : '5',
+					 (m6530[1].dria & 0x01) ? '.' : '6'));
 				break;
 			case 1:				   /* key row 2 */
-				m6530[1].dria = input_port_1_r (0);
-				LOG ((errorlog, "read keybd(%d): %c%c%c%c%c%c%c\n",
-					  which,
-					  (m6530[1].dria & 0x40) ? '.' : '7',
-					  (m6530[1].dria & 0x20) ? '.' : '8',
-					  (m6530[1].dria & 0x10) ? '.' : '9',
-					  (m6530[1].dria & 0x08) ? '.' : 'A',
-					  (m6530[1].dria & 0x04) ? '.' : 'B',
-					  (m6530[1].dria & 0x02) ? '.' : 'C',
-					  (m6530[1].dria & 0x01) ? '.' : 'D'));
+				m6530[1].dria = input_port_1_r(0);
+				LOG((errorlog, "read keybd(%d): %c%c%c%c%c%c%c\n",
+					 which,
+					 (m6530[1].dria & 0x40) ? '.' : '7',
+					 (m6530[1].dria & 0x20) ? '.' : '8',
+					 (m6530[1].dria & 0x10) ? '.' : '9',
+					 (m6530[1].dria & 0x08) ? '.' : 'A',
+					 (m6530[1].dria & 0x04) ? '.' : 'B',
+					 (m6530[1].dria & 0x02) ? '.' : 'C',
+					 (m6530[1].dria & 0x01) ? '.' : 'D'));
 				break;
 			case 2:				   /* key row 3 */
-				m6530[1].dria = input_port_2_r (0);
-				LOG ((errorlog, "read keybd(%d): %c%c%c%c%c%c%c\n",
-					  which,
-					  (m6530[1].dria & 0x40) ? '.' : 'E',
-					  (m6530[1].dria & 0x20) ? '.' : 'F',
-					  (m6530[1].dria & 0x10) ? '.' : 'a',
-					  (m6530[1].dria & 0x08) ? '.' : 'd',
-					  (m6530[1].dria & 0x04) ? '.' : '+',
-					  (m6530[1].dria & 0x02) ? '.' : 'g',
-					  (m6530[1].dria & 0x01) ? '.' : 'p'));
+				m6530[1].dria = input_port_2_r(0);
+				LOG((errorlog, "read keybd(%d): %c%c%c%c%c%c%c\n",
+					 which,
+					 (m6530[1].dria & 0x40) ? '.' : 'E',
+					 (m6530[1].dria & 0x20) ? '.' : 'F',
+					 (m6530[1].dria & 0x10) ? '.' : 'a',
+					 (m6530[1].dria & 0x08) ? '.' : 'd',
+					 (m6530[1].dria & 0x04) ? '.' : '+',
+					 (m6530[1].dria & 0x02) ? '.' : 'g',
+					 (m6530[1].dria & 0x01) ? '.' : 'p'));
 				break;
 			case 3:				   /* WR4?? */
 				m6530[1].dria = 0xff;
 				break;
 			default:
 				m6530[1].dria = 0xff;
-				LOG ((errorlog, "read DRA(%d) $ff\n", which));
+				LOG((errorlog, "read DRA(%d) $ff\n", which));
 			}
 		}
 		data = (m6530[chip].dria & ~m6530[chip].ddra) | (m6530[chip].droa & m6530[chip].ddra);
-		LOG ((errorlog, "m6530(%d) DRA   read : $%02x\n", chip, data));
+		LOG((errorlog, "m6530(%d) DRA   read : $%02x\n", chip, data));
 		break;
 	case 0x01:
-	case 0x09: /* Data direction register A */
+	case 0x09:						   /* Data direction register A */
 		data = m6530[chip].ddra;
-		LOG ((errorlog, "m6530(%d) DDRA  read : $%02x\n", chip, data));
+		LOG((errorlog, "m6530(%d) DDRA  read : $%02x\n", chip, data));
 		break;
 	case 0x02:
-	case 0x0a: /* Data register B */
+	case 0x0a:						   /* Data register B */
 		data = (m6530[chip].drib & ~m6530[chip].ddrb) | (m6530[chip].drob & m6530[chip].ddrb);
-		LOG ((errorlog, "m6530(%d) DRB   read : $%02x\n", chip, data));
+		LOG((errorlog, "m6530(%d) DRB   read : $%02x\n", chip, data));
 		break;
 	case 0x03:
-	case 0x0b: /* Data direction register B */
+	case 0x0b:						   /* Data direction register B */
 		data = m6530[chip].ddrb;
-		LOG ((errorlog, "m6530(%d) DDRB  read : $%02x\n", chip, data));
+		LOG((errorlog, "m6530(%d) DDRB  read : $%02x\n", chip, data));
 		break;
 	case 0x04:
-	case 0x0c: /* Timer count read (not supported?) */
-		data = (int) (256 * timer_timeleft (m6530[chip].timer) / TIME_IN_HZ (m6530[chip].clock));
+	case 0x0c:						   /* Timer count read (not supported?) */
+		data = (int) (256 * timer_timeleft(m6530[chip].timer) / TIME_IN_HZ(m6530[chip].clock));
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG ((errorlog, "m6530(%d) TIMR  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+		LOG((errorlog, "m6530(%d) TIMR  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		break;
 	case 0x05:
-	case 0x0d: /* Timer count read (not supported?) */
-		data = (int) (256 * timer_timeleft (m6530[chip].timer) / TIME_IN_HZ (m6530[chip].clock));
+	case 0x0d:						   /* Timer count read (not supported?) */
+		data = (int) (256 * timer_timeleft(m6530[chip].timer) / TIME_IN_HZ(m6530[chip].clock));
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG ((errorlog, "m6530(%d) TIMR  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+		LOG((errorlog, "m6530(%d) TIMR  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		break;
 	case 0x06:
-	case 0x0e: /* Timer count read */
-		data = (int) (256 * timer_timeleft (m6530[chip].timer) / TIME_IN_HZ (m6530[chip].clock));
+	case 0x0e:						   /* Timer count read */
+		data = (int) (256 * timer_timeleft(m6530[chip].timer) / TIME_IN_HZ(m6530[chip].clock));
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG ((errorlog, "m6530(%d) TIMR  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+		LOG((errorlog, "m6530(%d) TIMR  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		break;
 	case 0x07:
-	case 0x0f: /* Timer status read */
+	case 0x0f:						   /* Timer status read */
 		data = m6530[chip].state;
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG ((errorlog, "m6530(%d) STAT  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+		LOG((errorlog, "m6530(%d) STAT  read : $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		break;
 	}
 	return data;
 }
 
-int m6530_003_r (int offset)
+int m6530_003_r(int offset)
 {
-	return m6530_r (0, offset);
+	return m6530_r(0, offset);
 }
-int m6530_002_r (int offset)
+int m6530_002_r(int offset)
 {
-	return m6530_r (1, offset);
-}
-
-int kim1_mirror_r (int offset)
-{
-	return cpu_readmem16 (offset & 0x1fff);
+	return m6530_r(1, offset);
 }
 
-void m6530_w (int chip, int offset, int data)
+int kim1_mirror_r(int offset)
+{
+	return cpu_readmem16(offset & 0x1fff);
+}
+
+void m6530_w(int chip, int offset, int data)
 {
 	switch (offset)
 	{
 	case 0x00:
-	case 0x08: /* Data register A */
-		LOG ((errorlog, "m6530(%d) DRA  write: $%02x\n", chip, data));
+	case 0x08:						   /* Data register A */
+		LOG((errorlog, "m6530(%d) DRA  write: $%02x\n", chip, data));
 		m6530[chip].droa = data;
 		if (chip == 1)
 		{
@@ -856,15 +856,15 @@ void m6530_w (int chip, int offset, int data)
 			case 9:
 				if (data & 0x80)
 				{
-					LOG ((errorlog, "write 7seg(%d): %c%c%c%c%c%c%c\n",
-						  which + 1 - 4,
-						  (data & 0x01) ? 'a' : '.',
-						  (data & 0x02) ? 'b' : '.',
-						  (data & 0x04) ? 'c' : '.',
-						  (data & 0x08) ? 'd' : '.',
-						  (data & 0x10) ? 'e' : '.',
-						  (data & 0x20) ? 'f' : '.',
-						  (data & 0x40) ? 'g' : '.'));
+					LOG((errorlog, "write 7seg(%d): %c%c%c%c%c%c%c\n",
+						 which + 1 - 4,
+						 (data & 0x01) ? 'a' : '.',
+						 (data & 0x02) ? 'b' : '.',
+						 (data & 0x04) ? 'c' : '.',
+						 (data & 0x08) ? 'd' : '.',
+						 (data & 0x10) ? 'e' : '.',
+						 (data & 0x20) ? 'f' : '.',
+						 (data & 0x40) ? 'g' : '.'));
 					videoram[(which - 4) * 2 + 0] = data & 0x7f;
 					videoram[(which - 4) * 2 + 1] = 15;
 				}
@@ -872,13 +872,13 @@ void m6530_w (int chip, int offset, int data)
 		}
 		break;
 	case 0x01:
-	case 0x09: /* Data direction register A */
-		LOG ((errorlog, "m6530(%d) DDRA  write: $%02x\n", chip, data));
+	case 0x09:						   /* Data direction register A */
+		LOG((errorlog, "m6530(%d) DDRA  write: $%02x\n", chip, data));
 		m6530[chip].ddra = data;
 		break;
 	case 0x02:
-	case 0x0a: /* Data register B */
-		LOG ((errorlog, "m6530(%d) DRB   write: $%02x\n", chip, data));
+	case 0x0a:						   /* Data register B */
+		LOG((errorlog, "m6530(%d) DRB   write: $%02x\n", chip, data));
 		m6530[chip].drob = data;
 		if (chip == 1)
 		{
@@ -887,69 +887,69 @@ void m6530_w (int chip, int offset, int data)
 			if ((which & 0x3f) == 0x27)
 			{
 				/* This is the cassette output port */
-				LOG ((errorlog, "write cassette port: %d\n", (which & 0x80) ? 1 : 0));
-				DAC_signed_data_w (0, (which & 0x80) ? 255 : 0);
+				LOG((errorlog, "write cassette port: %d\n", (which & 0x80) ? 1 : 0));
+				DAC_signed_data_w(0, (which & 0x80) ? 255 : 0);
 			}
 		}
 		break;
 	case 0x03:
-	case 0x0b: /* Data direction register B */
-		LOG ((errorlog, "m6530(%d) DDRB  write: $%02x\n", chip, data));
+	case 0x0b:						   /* Data direction register B */
+		LOG((errorlog, "m6530(%d) DDRB  write: $%02x\n", chip, data));
 		m6530[chip].ddrb = data;
 		break;
 	case 0x04:
-	case 0x0c: /* Timer 1 start */
-		LOG ((errorlog, "m6530(%d) TMR1  write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+	case 0x0c:						   /* Timer 1 start */
+		LOG((errorlog, "m6530(%d) TMR1  write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
 		if (m6530[chip].timer)
-			timer_remove (m6530[chip].timer);
+			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 1;
-		m6530[chip].timer = timer_pulse (TIME_IN_HZ ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
 		break;
 	case 0x05:
-	case 0x0d: /* Timer 8 start */
-		LOG ((errorlog, "m6530(%d) TMR8  write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+	case 0x0d:						   /* Timer 8 start */
+		LOG((errorlog, "m6530(%d) TMR8  write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
 		if (m6530[chip].timer)
-			timer_remove (m6530[chip].timer);
+			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 8;
-		m6530[chip].timer = timer_pulse (TIME_IN_HZ ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
 		break;
 	case 0x06:
-	case 0x0e: /* Timer 64 start */
-		LOG ((errorlog, "m6530(%d) TMR64 write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+	case 0x0e:						   /* Timer 64 start */
+		LOG((errorlog, "m6530(%d) TMR64 write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
 		if (m6530[chip].timer)
-			timer_remove (m6530[chip].timer);
+			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 64;
-		m6530[chip].timer = timer_pulse (TIME_IN_HZ ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
 		break;
 	case 0x07:
-	case 0x0f: /* Timer 1024 start */
-		LOG ((errorlog, "m6530(%d) TMR1K write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
+	case 0x0f:						   /* Timer 1024 start */
+		LOG((errorlog, "m6530(%d) TMR1K write: $%02x%s\n", chip, data, (offset & 8) ? " (IRQ)" : ""));
 		m6530[chip].state &= ~0x80;
 		m6530[chip].irqen = (offset & 8) ? 1 : 0;
 		if (m6530[chip].timer)
-			timer_remove (m6530[chip].timer);
+			timer_remove(m6530[chip].timer);
 		m6530[chip].clock = (double) 1000000 / 1024;
-		m6530[chip].timer = timer_pulse (TIME_IN_HZ ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
+		m6530[chip].timer = timer_pulse(TIME_IN_HZ((data + 1) * m6530[chip].clock / 256 / 256), chip, m6530_timer_cb);
 		break;
 	}
 }
 
-void m6530_003_w (int offset, int data)
+void m6530_003_w(int offset, int data)
 {
-	m6530_w (0, offset, data);
+	m6530_w(0, offset, data);
 }
-void m6530_002_w (int offset, int data)
+void m6530_002_w(int offset, int data)
 {
-	m6530_w (1, offset, data);
+	m6530_w(1, offset, data);
 }
 
-void kim1_mirror_w (int offset, int data)
+void kim1_mirror_w(int offset, int data)
 {
-	cpu_writemem16 (offset & 0x1fff, data);
+	cpu_writemem16(offset & 0x1fff, data);
 }

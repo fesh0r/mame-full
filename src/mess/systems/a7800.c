@@ -4,6 +4,8 @@
 
   Driver file to handle emulation of the Atari 7800.
 
+  Dan Boris
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -25,7 +27,7 @@ extern unsigned char *a7800_cartridge_rom;
 extern void a7800_init_machine(void);
 extern void a7800_stop_machine(void);
 extern int a7800_id_rom (const char *name, const char *gamename);
-extern int a7800_load_rom (void);
+extern int a7800_load_rom (int id, const char *rom_name);
 extern int a7800_TIA_r(int offset);
 extern void a7800_TIA_w(int offset, int data);
 extern int a7800_RIOT_r(int offset);
@@ -105,8 +107,8 @@ INPUT_PORTS_START( a7800 )
 	PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_VBLANK)
 
 	PORT_START      /* IN3 */
-	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "Reset", KEYCODE_R, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "Start", KEYCODE_S, IP_JOY_DEFAULT)
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "Reset", KEYCODE_1, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "Select", KEYCODE_3, IP_JOY_DEFAULT)
 	PORT_BIT ( 0xFC, IP_ACTIVE_LOW, IPT_UNUSED)
 
 INPUT_PORTS_END
@@ -185,7 +187,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct TIAinterface tia_interface =
 {
 	31400,
-	255,
+	100,
     TIA_DEFAULT_GAIN,
 };
 
@@ -193,23 +195,13 @@ static struct TIAinterface tia_interface =
 static struct POKEYinterface pokey_interface = {
 	1,
     1790000,
-    { 255 },
+	{ 100 },
 	POKEY_DEFAULT_GAIN / 2,
     USE_CLIP
 };
 
 
-/* list of file extensions */
-static const char *a7800_file_extensions[] =
-{
-	"a78",
-	0       /* end of array */
-};
-
-
-
-
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_a7800 =
 {
 	/* basic machine hardware */
 	{
@@ -266,35 +258,28 @@ ROM_START (a7800)
 	ROM_LOAD ("7800.rom", 0xf000, 0x1000, 0x649913e5)
 ROM_END
 
-struct GameDriver a7800_driver =
-{
-	__FILE__,
-	0,
-	"a7800",
-	"Atari 7800",
-	"1986",
-	"Atari",
-	"Dan Boris",
-	0,
-	&machine_driver,
-	0,
-
-    rom_a7800,
-    a7800_load_rom,
-    a7800_id_rom,
-	a7800_file_extensions,
-	1,      /* number of ROM slots */
-	0,      /* number of floppy drives supported */
-	0,      /* number of hard drives supported */
-	0,      /* number of cassette drives supported */
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	input_ports_a7800,
-
-    0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0,
+static const struct IODevice io_a7800[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"a78\0",            /* file extensions */
+		NULL,				/* private */
+		a7800_id_rom,		/* id */
+		a7800_load_rom, 	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+    },
+    { IO_END }
 };
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+CONS( 1986, a7800,	  0,		a7800,	  a7800,	0,		  "Atari",  "Atari 7800" )
+

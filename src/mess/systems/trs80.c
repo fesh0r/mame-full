@@ -30,8 +30,10 @@ NMI
 #define FW  TRS80_FONT_W
 #define FH  TRS80_FONT_H
 
-extern int  trs80_rom_load(void);
-extern int  trs80_rom_id(const char *name, const char * gamename);
+extern int	trs80_cassette_init(int id, const char *name);
+extern int	trs80_floppy_init(int id, const char *name);
+extern int  trs80_rom_load(int id, const char *name);
+extern int	trs80_rom_id(const char *name, const char *gamename);
 
 extern int  trs80_vh_start(void);
 extern void trs80_vh_stop(void);
@@ -39,7 +41,7 @@ extern void trs80_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 extern void trs80_sh_sound_init(const char * gamename);
 
-extern void trs80_init_driver(void);
+extern void init_trs80(void);
 extern void trs80_init_machine(void);
 extern void trs80_shutdown_machine(void);
 
@@ -191,17 +193,17 @@ NB: row 7 contains some originally unused bits
 INPUT_PORTS_START( trs80 )
 	PORT_START /* IN0 */
 	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives",   IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "On" )
-	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video RAM",            KEYCODE_F1,  IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, "7 bit" )
 	PORT_DIPSETTING(    0x00, "8 bit" )
 	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Virtual Tape",         KEYCODE_F2,  IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BITX(	  0x10, 0x00, IPT_KEYBOARD | IPF_RESETCPU,	   "Reset",                KEYCODE_F3,  IP_JOY_NONE )
 	PORT_BITX(	  0x08, 0x00, IPT_KEYBOARD, 				   "NMI",                  KEYCODE_F4,  IP_JOY_NONE )
-	PORT_BITX(	  0x04, 0x00, IPT_KEYBOARD, 				   "unused",               KEYCODE_F5,  IP_JOY_NONE )
+	PORT_BITX(	  0x04, 0x00, IPT_KEYBOARD, 				   DEF_STR( Unused ),               KEYCODE_F5,  IP_JOY_NONE )
 	PORT_BITX(	  0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Colors",               KEYCODE_F6,  IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, "green/black" )
 	PORT_DIPSETTING(    0x01, "black/green" )
@@ -459,7 +461,7 @@ ROM_START(trs80)
 ROM_END
 
 
-ROM_START(trs80_m3)
+ROM_START(trs80m3)
 	ROM_REGIONX(0x10000, REGION_CPU1)
 	ROM_LOAD("trs80.rom",   0x0000, 0x3000, 0xd6fd9041)
 
@@ -469,79 +471,66 @@ ROM_END
 
 
 
-struct GameDriver trs80_driver =
-{
-	__FILE__,
-	0,
-	"trs80",
-	"TRS-80 Model I (Level II Basic)",
-	"1978",
-	"Tandy Radio Shack",
-	NULL,
-	0,
-	&machine_driver_model1,
-	trs80_init_driver,
-
-	rom_trs80,
-	trs80_rom_load,         /* load rom_file images */
-	trs80_rom_id,           /* identify rom images */
-	0,						/* file extensions */
-	1,						/* number of ROM slots - in this case a CMD binary */
-	4,                      /* number of floppy drives supported */
-	0,                      /* number of hard drives supported */
-	1,                      /* number of cassette drives supported */
-	0,						/* rom decoder */
-	0,                      /* opcode decoder */
-	0,                      /* pointer to sample names */
-	0,                      /* sound_prom */
-
-	input_ports_trs80,
-
-	0,                      /* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,    /* orientation */
-
-	0,                      /* hiscore load */
-	0,                      /* hiscore save */
+static const struct IODevice io_trs80[] = {
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"rom\0",            /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		trs80_rom_load, 	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"cas\0cmd\0",       /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		trs80_cassette_init,/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+	{
+		IO_FLOPPY,			/* type */
+		4,					/* count */
+		"dsk\0",            /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		trs80_floppy_init,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
 
-struct GameDriver trs80m3_driver =
-{
-	__FILE__,
-	0,
-	"trs80m3",
-	"TRS-80 Model III",
-	"19??",
-	"Tandy Radio Shack",
-	NULL,
-	0,
-	&machine_driver_model3,
-	trs80_init_driver,
+#define io_trs80m3 io_trs80
 
-	rom_trs80_m3,
-	trs80_rom_load,         /* load rom_file images */
-	trs80_rom_id,           /* identify rom images */
-	0,						/* file extensions */
-	1,						/* number of ROM slots - in this case a CMD binary */
-	4,                      /* number of floppy drives supported */
-	0,                      /* number of hard drives supported */
-	1,                      /* number of cassette drives supported */
-	0,                      /* rom decoder */
-	0,                      /* opcode decoder */
-	0,                      /* pointer to sample names */
-	0,                      /* sound_prom */
-
-	input_ports_trs80,
-
-	0,                      /* color_prom */
-	0,						/* color palette */
-	0,						/* color lookup table */
-
-	GAME_NOT_WORKING | ORIENTATION_DEFAULT,    /* orientation */
-
-	0,                      /* hiscore load */
-	0,                      /* hiscore save */
-};
-
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+COMP ( 1978, trs80,	  0, 		model1,   trs80,	trs80,	  "Tandy Radio Shack",  "TRS-80 Model I (Level II Basic)" )
+COMPX( 19??, trs80m3,  trs80,	model3,   trs80,	trs80,	  "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )

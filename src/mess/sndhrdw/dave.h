@@ -16,6 +16,7 @@ typedef struct DAVE_INTERFACE
 {
 	void (*reg_r)(int);
 	void (*reg_w)(int,int);
+        void (*int_callback)(int);
 } DAVE_INTERFACE;
 
 typedef struct DAVE
@@ -34,6 +35,8 @@ typedef struct DAVE
 	unsigned char int_enable;
 	/* int inputs */
 	unsigned char int_input;
+        /* previous int inputs */
+        unsigned char previous_int_input;
 
 	int int_wanted;
 
@@ -54,6 +57,6 @@ extern void	Dave_reg_w(int, int);
 extern void	Dave_SetInt(int);
 
 void	Dave_SetIFace(struct DAVE_INTERFACE *newInterface);
-int	Dave_Interrupt(void);
+void     Dave_Interrupt(void);
 
 #endif

@@ -117,11 +117,11 @@ typedef struct {
 	UINT8	dam_list[256][4];		/* list of data address marks while formatting */
 	int 	dam_data[256];			/* offset to data inside buffer while formatting */
 	int 	dam_cnt;				/* valid number of entries in the dam_list */
-    UINT8    *fmt_sector_data[256];  /* pointer to data after formatting a track */
+	UINT8	*fmt_sector_data[256];	/* pointer to data after formatting a track */
     int     data_offset;            /* offset into I/O buffer */
 	int 	data_count; 			/* transfer count from/into I/O buffer */
 
-	char	*image_name;			/* file name for disc image */
+	const char *image_name; 		/* file name for disc image */
 	void	*image_file;			/* file handle for disc image */
 	int 	mode;					/* open mode == 0 read only, != 0 read/write */
 	unsigned long image_size;		/* size of image file */
@@ -133,22 +133,22 @@ typedef struct {
 
 }	WD179X;
 
-extern	void	wd179x_init(int active);
+extern void wd179x_init(int active);
 
-extern  void *  wd179x_select_drive(UINT8 drive, UINT8 head, void (*callback)(int), char * name);
-extern  void    wd179x_stop_drive(void);
+extern void *wd179x_select_drive(UINT8 drive, UINT8 head, void (*callback)(int), const char *name);
+extern void wd179x_stop_drive(void);
 
-extern  void    wd179x_read_sectormap(UINT8 drive, UINT8 *tracks, UINT8 *heads, UINT8 *sec_per_track);
-extern  void    wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length);
+extern void wd179x_read_sectormap(UINT8 drive, UINT8 *tracks, UINT8 *heads, UINT8 *sec_per_track);
+extern void wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length);
 
-extern  void    wd179x_command_w(int offset, int data);
-extern  void    wd179x_track_w(int offset, int data);
-extern  void    wd179x_sector_w(int offset, int data);
-extern  void    wd179x_data_w(int offset, int data);
+extern void wd179x_command_w(int offset, int data);
+extern void wd179x_track_w(int offset, int data);
+extern void wd179x_sector_w(int offset, int data);
+extern void wd179x_data_w(int offset, int data);
 
-extern  int     wd179x_status_r(int offset);
-extern  int     wd179x_track_r(int offset);
-extern  int     wd179x_sector_r(int offset);
-extern  int     wd179x_data_r(int offset);
+extern int wd179x_status_r(int offset);
+extern int wd179x_track_r(int offset);
+extern int wd179x_sector_r(int offset);
+extern int wd179x_data_r(int offset);
 
 #endif

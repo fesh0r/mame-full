@@ -29,28 +29,26 @@ Ports:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "mess/sndhrdw/buzzer.h"
 
 /* prototypes */
 
 extern void jupiter_init_machine (void);
 extern void jupiter_stop_machine (void);
 
-extern int jupiter_rom_load (void);
-extern int jupiter_rom_id (const char *name, const char *gamename);
+extern int jupiter_load_ace(int id, const char *name);
+extern int jupiter_load_tap(int id, const char *name);
 
 extern int jupiter_vh_start (void);
 extern void jupiter_vh_stop (void);
 extern void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
-extern void jupiter_vh_scrnram_w (int offset, int data);
-extern int jupiter_vh_scrnram_r (int offset);
 extern void jupiter_vh_charram_w (int offset, int data);
-extern int jupiter_vh_charram_r (int offset);
-
-extern int jupiter_sh_start (const struct MachineSound *driver);
-extern void jupiter_sh_stop (void);
-
 extern unsigned char *jupiter_charram;
 extern int jupiter_charram_size;
+
+extern int buzzer_sh_start (const struct MachineSound *driver);
+extern void buzzer_sh_stop (void);
+extern int buzzer_sh_state;
 
 /* functions */
 
@@ -90,19 +88,20 @@ int jupiter_port_bffe_r (int offset)
 }
 
 int jupiter_port_7ffe_r (int offset)
+
 {
-	UINT16	pcreg;
-	pcreg = cpu_get_reg ( Z80_PC );
-	//fprintf (stdout, "%04X: IN (0x%X).\n", pcreg, offset);
-	return (readinputport (7));
+
+buzzer_sh_state = 0;
+return (readinputport (7));
+
 }
 
 void jupiter_port_fe_w (int offset, int data)
+
 {
-	UINT16	pcreg;
-	pcreg = cpu_get_reg ( Z80_PC );
-	//fprintf (stdout, "%04X: OUT (0x%X), %d.\n", pcreg, offset, data);
-	// play sound
+
+buzzer_sh_state = 1;
+
 }
 
 /* port i/o functions */
@@ -197,73 +196,73 @@ static void jupiter_init_palette (unsigned char *sys_palette, unsigned short *sy
 
 INPUT_PORTS_START (jupiter)
 	PORT_START							   /* 0xFEFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "SYM SHFT", KEYCODE_LSHIFT, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "Z", KEYCODE_Z, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "X", KEYCODE_X, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "C", KEYCODE_C, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "SYM SHFT", KEYCODE_LSHIFT, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
 
 	PORT_START							   /* 0xFDFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "A", KEYCODE_A, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "S", KEYCODE_S, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "D", KEYCODE_D, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "F", KEYCODE_F, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "G", KEYCODE_G, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
 
 	PORT_START							   /* 0xFBFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "Q", KEYCODE_Q, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "W", KEYCODE_W, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "E", KEYCODE_E, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "R", KEYCODE_R, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "T", KEYCODE_T, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
 
 	PORT_START							   /* 0xF7FE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "1", KEYCODE_1, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "2", KEYCODE_2, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "3", KEYCODE_3, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "4", KEYCODE_4, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "5", KEYCODE_5, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE)
 
 	PORT_START							   /* 0xEFFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "0", KEYCODE_0, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "9", KEYCODE_9, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "8", KEYCODE_8, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "7", KEYCODE_7, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "6", KEYCODE_6, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "6", KEYCODE_6, IP_JOY_NONE)
 
 	PORT_START							   /* 0xDFFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "P", KEYCODE_P, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "O", KEYCODE_O, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "I", KEYCODE_I, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "U", KEYCODE_U, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "Y", KEYCODE_Y, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
 
 	PORT_START							   /* 0xBFFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "L", KEYCODE_L, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "K", KEYCODE_K, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "J", KEYCODE_J, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "H", KEYCODE_H, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
 
 	PORT_START							   /* 0x7FFE */
-	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
-	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "M", KEYCODE_M, IP_JOY_NONE)
-	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_UNKNOWN, "N", KEYCODE_N, IP_JOY_NONE)
-	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "B", KEYCODE_B, IP_JOY_NONE)
-	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_UNKNOWN, "V", KEYCODE_V, IP_JOY_NONE)
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
+	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
+	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
+	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
+	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
 INPUT_PORTS_END
 
 /* Sound output */
 
-/* static	struct	CustomSound_interface jupiter_sh_interface = {
-	jupiter_sh_start,
-	jupiter_sh_stop,
+static	struct	CustomSound_interface jupiter_sh_interface = {
+	buzzer_sh_start,
+	buzzer_sh_stop,
 	0
-}; */
+};
 
 /* machine definition */
 
-static	struct MachineDriver jupiter_machine_driver =
+static	struct MachineDriver machine_driver_jupiter =
 {
 	/* basic machine hardware */
 	{
@@ -296,9 +295,9 @@ static	struct MachineDriver jupiter_machine_driver =
 
 	/* sound hardware */
 	0, 0, 0, 0,
-	//{
-		//{ SOUND_CUSTOM, &jupiter_sh_interface },
-	//}
+	{
+		{ SOUND_CUSTOM, &jupiter_sh_interface },
+	}
 };
 
 ROM_START (jupiter)
@@ -306,33 +305,45 @@ ROM_REGIONX (0x10000, REGION_CPU1)
 ROM_LOAD ("jupiter.rom", 0x0000, 0x2000, 0xe5b1f5f6)
 ROM_END
 
-struct GameDriver jupiter_driver =
-{
-	__FILE__,
-	0,
-	"jupiter",
-	"Jupiter Ace 49k",
-	"1981",
-	"Cantab",
-	"Paul Daniels [MESS driver]",
-	0,
-	&jupiter_machine_driver,
-	0,
-	rom_jupiter,
-	jupiter_rom_load,
-	jupiter_rom_id,
-	0,			   /* default file extensions */
-	1,			   /* number of ROM slots */
-	0,			   /* number of floppy drives supported */
-	0,			   /* number of hard drives supported */
-	0,			   /* number of cassette drives supported */
-	0, 0,
-	0,			   /* pointer to sample names */
-	0,			   /* sound_prom */
-	input_ports_jupiter,
-	0,			   /* color_prom */
-	0,			   /* color palette */
-	0,			   /* color lookup table */
-	GAME_COMPUTER | ORIENTATION_DEFAULT,	/* orientation */
-	0, 0,
+static const struct IODevice io_jupiter[] = {
+    {
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"ace\0",            /* file extensions */
+        NULL,               /* private */
+        NULL,               /* id */
+		jupiter_load_ace,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    {
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"tap\0",            /* file extensions */
+        NULL,               /* private */
+		NULL,				/* id */
+		jupiter_load_tap,	/* init */
+		NULL,				/* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
+    { IO_END }
 };
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+COMP( 1981, jupiter,  0,		jupiter,  jupiter,	0,		  "Cantab",  "Jupiter Ace 49k" )

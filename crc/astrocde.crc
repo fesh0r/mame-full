@@ -5,31 +5,32 @@
 # Send corrections and submissions to: battlepriest@hotmail.com
 
 [astrocde]
-e4d285e5 = 280ZZZap - Dodgem
-cd57c485 = Amazing Maze - Tic Tac Toe
+e4d285e5 = 280ZZZap/Dodgem
+cd57c485 = Amazing Maze/Tic-Tac-Toe
 4f372019 = Artillery Duel
 1a050094 = Astro Battle
-70514687 = Astrocade Basic
-90e276aa = Bally Basic
-fb652bac = Bally Pin 1 - Bally Pin 2
-78d45a11 = BlackJack - Acey Deucy - Poker
+70514687 = Bally Basic
+fb652bac = Bally Pinball
+78d45a11 = BlackJack/Poker/Acey Deucey
 79fe386b = Blast Droids
-28f9e502 = Brickyard - Clowns
+28f9e502 = Brickyard/Clowns
 2a77b3fb = Cosmic Raider
 77bed6ba = Dog Patch
-fc8998a9 = Football - 2 or 4 players
+fc8998a9 = Football
 d75e9672 = Galactic Invasion
-7b3b7b70 = Grand Prix 1, 2, 3 - Demolition Derby
+7b3b7b70 = Grand Prix/Demolition Derby
 1395b130 = The Incredible Wizard
-2cf68f93 = Letter Match - Spell n Score - Crosswords
+2cf68f93 = Letter Match/Spell 'n Score/Crosswords
 5393f920 = Machine Language Manager
 e4726657 = Muncher
-a1c7e129 = Red Baron - Panzer Attack
-ee3489ea = SeaWolf - Missile
+a1c7e129 = Red Baron/Panzer Attack
+ee3489ea = SeaWolf/Missile
 3e9f4f0d = Sneaky Snake
 519cc707 = Space Fortress
-7d30312a = Speed Math, Bingo Math
+7d30312a = Elementary Math/Bingo Math
 ce15563b = Star Battle
-5be548cc = Tornado Baseball - Handball - Hockey - Tennis 
+5be548cc = Tornado Baseball, Tennis, Hockey and Handball
 
 
+#Unconfirmed
+90e276aa = Bally Basic (Alternate?)
