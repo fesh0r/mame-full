@@ -62,7 +62,7 @@ extern const char *ti990_10_info(void *context, int regnum);
 extern unsigned ti990_10_dasm(char *buffer, unsigned pc);
 
 /*
-  structure with the parameters tms9995_reset wants.
+  structure with the parameters ti990_10_reset wants.
 */
 typedef struct ti990_10reset_param
 {
@@ -70,6 +70,8 @@ typedef struct ti990_10reset_param
 	void (*rset_callback)(void);
 	void (*lrex_callback)(void);
 	void (*ckon_ckof_callback)(int state);
+
+	void (*error_interrupt_callback)(int state);
 } ti990_10reset_param;
 
 /* accessor for the internal ROM */
@@ -78,6 +80,9 @@ extern READ16_HANDLER(ti990_10_internal_r);
 /* CRU accessor for the mapper registers (R12 base 0x1fa0) */
 extern READ16_HANDLER(ti990_10_mapper_cru_r);
 extern WRITE16_HANDLER(ti990_10_mapper_cru_w);
+/* CRU accessor for the error interrupt register (R12 base 0x1fc0) */
+extern READ16_HANDLER(ti990_10_eir_cru_r);
+extern WRITE16_HANDLER(ti990_10_eir_cru_w);
 
 #endif
 
