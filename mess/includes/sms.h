@@ -85,7 +85,7 @@ READ_HANDLER(gg_dummy_r);
 READ_HANDLER(gg_input_port_2_r);
 
 void setup_rom(void);
-int sms_cart_load(int id, mame_file *fp, int open_mode);
+int sms_cart_load(mess_image *img, mame_file *fp, int open_mode);
 
 MACHINE_INIT(sms);
 MACHINE_STOP(sms);

@@ -124,15 +124,17 @@ void osd_begin_final_unloading(void)
 	int count, id;
 	size_t blocksize;
 	char *s;
+	mess_image *img;
+	size_t len;
 
 	memset(dev_opts, 0, sizeof(dev_opts));
 	pool_init(&devfilenames_pool);
 
 	for (devtype = 0; devtype < IO_COUNT; devtype++)
 	{
-		for (count = MAX_DEV_INSTANCES; count > 0; count--)
+		for (count = device_count(devtype); count > 0; count--)
 		{
-			if (image_exists(devtype, count-1))
+			if (image_exists(image_instance(devtype, count-1)))
 				break;
 		}
 
@@ -141,8 +143,10 @@ void osd_begin_final_unloading(void)
 			blocksize = 0;
 			for (id = 0; id < count; id++)
 			{
-				if (image_exists(devtype, id))
-					blocksize += strlen(image_filename(devtype, id));
+				img = image_instance(devtype, id);
+
+				if (image_exists(img))
+					blocksize += strlen(image_filename(img));
 				blocksize++;
 			}
 
@@ -153,10 +157,16 @@ void osd_begin_final_unloading(void)
 
 			for (id = 0; id < count; id++)
 			{
-				if (image_exists(devtype, id))
-					strcat(s, image_filename(devtype, id));
+				img = image_instance(devtype, id);
+
+				if (image_exists(img))
+					strcat(s, image_filename(img));
 				if (id+1 < count)
-					strcat(s, ",");
+				{
+					len = strlen(s);
+					s[len+0] = IMAGE_SEPARATOR;
+					s[len+1] = '\0';
+				}
 			}
 
 			dev_opts[devtype] = s;
@@ -186,8 +196,8 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 	/* A match!  we now know the ID of the device */
 	option->priority = priority;
 
-	/* device registrations can be comma delimited */
-	while((s = strchr(arg, ',')) != NULL)
+	/* device registrations can be delimited */
+	while((s = strchr(arg, IMAGE_SEPARATOR)) != NULL)
 	{
 		if (arg == s)
 		{
@@ -310,7 +320,7 @@ int messopts_valididty_checks(void)
 				error = 1;
 			}
 
-			if ((((const char **) mess_opts[i].dest) - dev_dirs) != id_fromlongname)
+			if ((((char **) mess_opts[i].dest) - dev_dirs) != id_fromlongname)
 			{
 				printf("option -%s is pointed at the wrong dev_dir\n", mess_opts[i].name);
 				error = 1;

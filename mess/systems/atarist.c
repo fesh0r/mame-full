@@ -2256,7 +2256,7 @@ void msa_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr
 	memcpy(ptr, pDataPtr, length);
 }
 
-int atarist_msa_floppy_init(int id, mame_file *file, int open_mode)
+int atarist_msa_floppy_init(mess_image *img, mame_file *file, int open_mode)
 {
 	/* load whole file into memory */
 	if (atarist_load(file, &msa_images_data[id])!=NULL)
@@ -2270,7 +2270,7 @@ int atarist_msa_floppy_init(int id, mame_file *file, int open_mode)
 		atari_st_image_type[id] = ATARI_ST_IMAGE_TYPE_MSA;
 
 		/* tell floppy drive code to use these functions for accessing disk image in this drive */
-		floppy_drive_set_disk_image_interface(id,&msa_floppy_interface);
+		floppy_drive_set_disk_image_interface(img,&msa_floppy_interface);
 
 		return INIT_PASS;
 	}

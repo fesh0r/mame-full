@@ -76,9 +76,9 @@ QUICKLOAD_LOAD( cbm_c65 );
 
 /* use to functions to parse, load the rom images into memory
    and then use the cbm_rom var */
-int cbm_rom_init(int id);
-int cbm_rom_load(int id, mame_file *fp, int open_mode);
-void cbm_rom_unload(int id);
+int cbm_rom_init(mess_image *img);
+int cbm_rom_load(mess_image *img, mame_file *fp, int open_mode);
+void cbm_rom_unload(mess_image *img);
 
 typedef struct {
 #define CBM_ROM_ADDR_UNKNOWN 0

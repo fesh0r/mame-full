@@ -274,7 +274,7 @@ MACHINE_STOP( gb )
 			memcpy( ptr, RAMMap[I], 0x2000 );
 			ptr += 0x2000;
 		}
-		battery_save( image_filename(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
+		image_battery_save(image_instance(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
 
 		free( battery_ram );
 	}
@@ -1105,7 +1105,7 @@ READ_HANDLER ( gb_io_r )
 	}
 }
 
-int gb_cart_load(int id, mame_file *F, int open_mode)
+int gb_cart_load(mess_image *img, mame_file *F, int open_mode)
 {
 	static const char *CartTypes[] =
 	{
@@ -1248,7 +1248,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 	gb_ram = memory_region(REGION_CPU1);
 	memset (gb_ram, 0, 0x10000);
 
-	J = image_length(IO_CARTSLOT, id) % 0x4000;
+	J = image_length(img) % 0x4000;
 
 	if (J == 512)
 	{
@@ -1258,7 +1258,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 
 	if (mame_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
-		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(IO_CARTSLOT,id));
+		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(img));
 		return INIT_FAIL;
 	}
 
@@ -1409,7 +1409,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 			}
 			else
 			{
-				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(IO_CARTSLOT,id));
+				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(img));
 				break;
 			}
 		}
@@ -1454,7 +1454,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 		battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
 		if( battery_ram )
 		{
-			battery_load( image_filename(IO_CARTSLOT,id), battery_ram, RAMBanks * 0x2000 );
+			image_battery_load( img, battery_ram, RAMBanks * 0x2000 );
 			ptr = battery_ram;
 			for( I = 0; I < RAMBanks; I++ )
 			{

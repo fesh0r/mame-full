@@ -4,6 +4,7 @@
 #include "vidhrdw/m6847.h"
 #include "videomap.h"
 #include "devices/snapquik.h"
+#include "osdepend.h"
 
 #define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
 #define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 263)
@@ -87,13 +88,13 @@ MACHINE_STOP( coco );
 
 INTERRUPT_GEN( coco3_vh_interrupt );
 
-int coco_cassette_init(int id, mame_file *fp, int open_mode);
-int coco3_cassette_init(int id);
+int coco_cassette_init(mess_image *img, mame_file *fp, int open_mode);
+int coco3_cassette_init(mess_image *img);
 
-int coco_rom_load(int id, mame_file *fp, int open_mode);
-int coco3_rom_load(int id, mame_file *fp, int open_mode);
-void coco_rom_unload(int id);
-void coco3_rom_unload(int id);
+int coco_rom_load(mess_image *img, mame_file *fp, int open_mode);
+int coco3_rom_load(mess_image *img, mame_file *fp, int open_mode);
+void coco_rom_unload(mess_image *img);
+void coco3_rom_unload(mess_image *img);
 
 SNAPSHOT_LOAD ( coco_pak );
 SNAPSHOT_LOAD ( coco3_pak );

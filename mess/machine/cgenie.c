@@ -339,7 +339,7 @@ MACHINE_STOP( cgenie )
 	tape_put_close();
 }
 
-int cgenie_cassette_load(int id, mame_file *fp, int open_mode)
+int cgenie_cassette_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	return INIT_PASS;
 }
@@ -369,7 +369,7 @@ int cgenie_cassette_load(int id, mame_file *fp, int open_mode)
  * of tracks, number of sides, number of sectors etc, so we need to
  * set that up here
  */
-int cgenie_floppy_init(int id, mame_file *fp, int open_mode)
+int cgenie_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	/* A Floppy Isnt manditory, so return if none */
 	if (fp == NULL)
@@ -471,7 +471,7 @@ int cgenie_floppy_init(int id, mame_file *fp, int open_mode)
 	return INIT_FAIL;
 }
 
-int cgenie_rom_load(int id, mame_file *fp, int open_mode)
+int cgenie_rom_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 

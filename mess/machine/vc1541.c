@@ -169,8 +169,6 @@ typedef struct
 	struct {
 		int pos; /* position  in sector */
 		int sector;
-		int image_type;
-		int image_id;
 		UINT8 *data;
 	} d64;
 } CBM_Drive_Emu;
@@ -625,31 +623,27 @@ static struct via6522_interface via2 =
 	vc1541_via1_irq
 };
 
-int vc1541_init (int id, mame_file *in, int open_mode)
+int vc1541_init (mess_image *img, mame_file *in, int open_mode)
 {
 	int size;
 
 	size = mame_fsize (in);
-	if (!(vc1541->d64.data = (UINT8*) image_malloc(IO_FLOPPY, id, size)))
+	if (!(vc1541->d64.data = (UINT8*) image_malloc(img, size)))
 		return INIT_FAIL;
 
 	if (size != mame_fread (in, vc1541->d64.data, size))
 		return INIT_FAIL;
 
-	logerror("floppy image %s loaded\n", image_filename(IO_FLOPPY, id));
+	logerror("floppy image %s loaded\n", image_filename(img));
 
 	vc1541->timer = timer_alloc(vc1541_timer);
-
-	/*vc1541->drive = ; */
-	vc1541->d64.image_type = IO_FLOPPY;
-	vc1541->d64.image_id = id;
 	return INIT_PASS;
 }
 
-void vc1541_exit(int id)
+void vc1541_exit(mess_image *img)
 {
 	/* writeback of image data */
-	vc1541->d64.data=NULL;
+	vc1541->d64.data = NULL;
 	timer_remove(vc1541->timer);
 }
 

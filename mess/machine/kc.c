@@ -155,7 +155,7 @@ QUICKLOAD_LOAD(kc)
 /* bit 4: Index pulse from disc */
 static unsigned char kc85_disc_hw_input_gate;
 
-int kc85_floppy_init(int id, mame_file *fp, int open_mode)
+int kc85_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (fp == NULL)
 		return INIT_PASS;
@@ -269,13 +269,6 @@ static void kc_disc_interface_init(void)
 	/* hold cpu at reset */
 	cpu_set_reset_line(1,ASSERT_LINE);
 }
-
-
-static void kc_disc_interface_exit(void)
-{
-	nec765_stop();
-}
-
 
 /*****************/
 /* MODULE SYSTEM */
@@ -2025,12 +2018,6 @@ MACHINE_INIT( kc85_4d )
 	machine_init_kc85_4();
 	kc_disc_interface_init();
 }
-
-MACHINE_STOP( kc85_4d )
-{
-	kc_disc_interface_exit();
-}
-
 
 MACHINE_INIT( kc85_3 )
 {

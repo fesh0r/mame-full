@@ -55,9 +55,6 @@ void	nec765_reset(int);
 /* reset pin of nec765 */
 void	nec765_set_reset_state(int);
 
-/* stop emulation and clean-up */
-void	nec765_stop(void);
-
 /*********************/
 /* STATUS REGISTER 1 */
 

@@ -1210,7 +1210,7 @@ static void oric_wd179x_callback(int State)
 	}
 }
 
-int oric_floppy_load(int id, mame_file *fp, int open_mode)
+int oric_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/* attempt to open mfm disk */
 	if (mfm_disk_load(id, fp, open_mode) == INIT_PASS)

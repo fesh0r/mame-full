@@ -908,7 +908,7 @@ static WRITE_HANDLER (msx_disk_w)
 		}
 	}
 
-int msx_floppy_init (int id, mame_file *fp, int open_mode)
+int msx_floppy_init (mess_image *img, mame_file *fp, int open_mode)
 	{
 	int size, heads = 2;
 

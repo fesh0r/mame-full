@@ -24,7 +24,7 @@ MACHINE_INIT( enterprise )
 	Enterprise_Initialise();
 }
 
-int enterprise_floppy_init(int id, mame_file *fp, int open_mode)
+int enterprise_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (fp == NULL)
 		return INIT_PASS;

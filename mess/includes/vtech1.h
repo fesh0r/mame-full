@@ -13,11 +13,11 @@ extern MACHINE_INIT( laser110 );
 extern MACHINE_INIT( laser210 );
 extern MACHINE_INIT( laser310 );
 
-extern int vtech1_cassette_init(int id, mame_file *fp, int open_mode);
+extern int vtech1_cassette_init(mess_image *img, mame_file *fp, int open_mode);
 
 extern SNAPSHOT_LOAD( vtech1 );
 
-int vtech1_floppy_load(int id, mame_file *fp, int open_mode);
+int vtech1_floppy_load(mess_image *img, mame_file *fp, int open_mode);
 
 extern READ_HANDLER ( vtech1_fdc_r );
 extern WRITE_HANDLER ( vtech1_fdc_w );

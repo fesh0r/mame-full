@@ -48,10 +48,9 @@ struct
 {
 	int state;
 	void *timer;
-	int image_type;
-    int image_id;
 	int pos;
 	struct GameSample *sample;
+	mess_image *img;
 } wav;
 
 /* these are the values for prg files */
@@ -60,8 +59,6 @@ struct
 	int state;
 	void *prg_timer;
 	void *timer;
-	int image_type;
-    int image_id;
 	int pos;
 
 #define VC20_SHORT		(176e-6)
@@ -81,6 +78,7 @@ struct
 	char name[16];					   /*name for cbm */
 	UINT8 chksum;
 	double lasttime;
+	mess_image *img;
 } prg;
 
 /* from sound/samples.c no changes (static declared) */
@@ -273,28 +271,17 @@ static void vc20_wav_state (void)
 	}
 }
 
-static void vc20_wav_open (int image_type, int image_id)
+static void vc20_wav_open(mess_image *img, mame_file *fp)
 {
-	mame_file *fp;
-
-	fp = mame_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), FILETYPE_IMAGE, 0);
-	if (!fp)
-	{
-		logerror("tape %s file not found\n", image_filename(image_type,image_id));
-		return;
-	}
 	if ((wav.sample = vc20_read_wav_sample (fp)) == NULL)
 	{
-		logerror("tape %s could not be loaded\n", image_filename(image_type,image_id));
-		mame_fclose (fp);
+		logerror("tape %s could not be loaded\n", image_filename(img));
 		return;
 	}
-	logerror("tape %s loaded\n", image_filename(image_type,image_id));
-	mame_fclose (fp);
+	logerror("tape %s loaded\n", image_filename(img));
 
-	wav.image_type = image_type;
-    wav.image_id = image_id;
 	tape.type = TAPE_WAV;
+	wav.img = img;
 	wav.pos = 0;
 	tape.on = 1;
 	wav.state = 2;
@@ -407,37 +394,27 @@ static void vc20_prg_state (void)
 	}
 }
 
-static void vc20_prg_open (int image_type, int image_id)
+static void vc20_prg_open(mess_image *img, mame_file *fp)
 {
 	const char *name;
-    mame_file *fp;
 	int i;
 
-	fp = mame_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), FILETYPE_IMAGE, 0);
-	if (!fp)
-	{
-		logerror("tape %s file not found\n", image_filename(image_type,image_id));
-		return;
-	}
 	prg.length = mame_fsize (fp);
 	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
 	{
-		logerror("tape %s could not be loaded\n", image_filename(image_type,image_id));
-		mame_fclose (fp);
+		logerror("tape %s could not be loaded\n", image_filename(img));
 		return;
 	}
 	mame_fread (fp, prg.prg, prg.length);
-	logerror("tape %s loaded\n", image_filename(image_type,image_id));
-	mame_fclose (fp);
+	logerror("tape %s loaded\n", image_filename(img));
 
-	name = image_filename(image_type,image_id);
+	name = image_filename(img);
     for (i = 0; name[i] != 0; i++)
 		prg.name[i] = toupper (name[i]);
 	for (; i < 16; i++)
 		prg.name[i] = ' ';
 
-	prg.image_type = image_type;
-    prg.image_id = image_id;
+	prg.img = img;
 	prg.stateblock = 0;
 	prg.stateheader = 0;
 	prg.statebyte = 0;
@@ -923,7 +900,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-int vc20_tape_attach_image (int id, mame_file *fp, int open_mode)
+int vc20_tape_attach_image (mess_image *img, mame_file *fp, int open_mode)
 {
 	const char *cp;
 
@@ -938,20 +915,20 @@ int vc20_tape_attach_image (int id, mame_file *fp, int open_mode)
 	if (!fp)
 		return INIT_PASS;
 
-	cp = image_filetype(IO_CASSETTE, id);
+	cp = image_filetype(img);
 	if (!cp)
 		return INIT_FAIL;
 
 	if (stricmp (cp, "wav") == 0)
-		vc20_wav_open(IO_CASSETTE,id);
+		vc20_wav_open(img, fp);
 	else if (stricmp (cp, "prg") == 0)
-		vc20_prg_open(IO_CASSETTE,id);
+		vc20_prg_open(img, fp);
 	else
 		return INIT_FAIL;
 	return INIT_PASS;
 }
 
-void vc20_tape_detach_image (int id)
+void vc20_tape_detach_image (mess_image *img)
 {
 	vc20_tape_close();
 }
@@ -1083,7 +1060,7 @@ void vc20_tape_status (char *text, int size)
 			break;
 		case 3:
 			snprintf (text, size, "Tape (%s) loading %d/%dsec",
-					  image_filename(wav.image_type, wav.image_id),
+					  image_filename(wav.img),
 					  wav.pos / wav.sample->smpfreq,
 					  wav.sample->length / wav.sample->smpfreq);
 			break;
@@ -1097,7 +1074,7 @@ void vc20_tape_status (char *text, int size)
 			break;
 		case 3:
 			snprintf (text, size, "Tape (%s) loading %d",
-				image_filename(prg.image_type, prg.image_id), prg.pos);
+				image_filename(prg.img), prg.pos);
 			break;
 		}
 		break;

@@ -146,6 +146,12 @@ static int sony_enable2(void)
 	return (sony_lines & SONY_CA1) && (sony_lines & SONY_LSTRB);
 }
 
+static floppy *get_sony_floppy(mess_image *img)
+{
+	int id = image_index(img);
+	return &sony_floppy[id];
+}
+
 /* compute the sector index for the current track */
 static int sony_indextrack(int track, const UINT8 *tracklen)
 {
@@ -1295,7 +1301,7 @@ static void sony_doaction(void)
 				memset(f, 0, sizeof(*f));
 			}*/
 			/* somewhat hackish, but better method (?) */
-			image_unload(IO_FLOPPY, sony_floppy_select);
+			image_unload(image_instance(IO_FLOPPY, sony_floppy_select));
 			break;
 		default:
 			#if LOG_SONY
@@ -1312,13 +1318,12 @@ static void sony_doaction(void)
 	the allowablesizes tells which formats should be supported
 	(single-sided and double-sided 3.5'' GCR)
 */
-int sony_floppy_load(int id, mame_file *fp, int open_mode, int allowablesizes)
+int sony_floppy_load(mess_image *img, mame_file *fp, int open_mode, int allowablesizes)
 {
 	floppy *f;
 	long image_len=0;
 
-
-	f = &sony_floppy[id];
+	f = get_sony_floppy(img);
 
 	memset(f, 0, sizeof(*f));
 
@@ -1409,8 +1414,8 @@ int sony_floppy_load(int id, mame_file *fp, int open_mode, int allowablesizes)
 	f->disk_switched = 1;
 
 #if LOG_SONY
-	logerror("macplus_floppy_init(): Loaded %s-sided floppy; id=%i name='%s' wp=%i\n",
-		(f->disk_sides ? "double" : "single"), (int) id, image_filename(IO_FLOPPY,id), (int) f->wp);
+	logerror("macplus_floppy_init(): Loaded %s-sided floppy; name='%s' wp=%i\n",
+		(f->disk_sides ? "double" : "single"), image_filename(img), (int) f->wp);
 #endif
 
 	return INIT_PASS;
@@ -1419,10 +1424,11 @@ error:
 	return INIT_FAIL;
 }
 
-void sony_floppy_unload(int id)
+void sony_floppy_unload(mess_image *img)
 {
 	floppy *f;
-	f = &sony_floppy[id];
+
+	f = get_sony_floppy(img);
 
 	if (f->fd)
 	{

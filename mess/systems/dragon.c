@@ -685,7 +685,7 @@ ROM_END
   Bitbanger port
 ***************************************************************************/
 
-static int coco_bitbanger_filter(int id, const int *pulses, int total_pulses, int total_duration)
+static int coco_bitbanger_filter(mess_image *img, const int *pulses, int total_pulses, int total_duration)
 {
 	int i;
 	int result = 0;
@@ -710,7 +710,7 @@ static int coco_bitbanger_filter(int id, const int *pulses, int total_pulses, in
 		}
 
 		c = (word >> 1) & 0xff;
-		printer_output(id, c);
+		printer_output(img, c);
 	}
 	return result;
 }
@@ -731,14 +731,14 @@ static const struct bitbanger_config coco_bitbanger_config =
 static GET_CUSTOM_DEVICENAME( coco )
 {
 	const char *name = NULL;
-	switch(type) {
+	switch(image_type(img)) {
 	case IO_VHD:
 		name = "Virtual Hard Disk";
 		break;
 
 	case IO_FLOPPY:
 		/* CoCo people like their floppy drives zero counted */
-		snprintf(buf, bufsize, "Floppy #%d", id);
+		snprintf(buf, bufsize, "Floppy #%d", image_index(img));
 		name = buf;
 		break;
 	}

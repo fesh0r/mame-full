@@ -597,7 +597,7 @@ MACHINE_INIT( vc20 )
 	via_0_ca1_w (0, vc20_via0_read_ca1(0) );
 }
 
-static int vc20_rom_id (int id, mame_file *romfile)
+static int vc20_rom_id(mess_image *img, mame_file *romfile)
 {
 	unsigned char magic[] =
 	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
@@ -605,7 +605,7 @@ static int vc20_rom_id (int id, mame_file *romfile)
 	const char *cp;
 	int retval;
 
-	logerror("vc20_rom_id %s\n", image_filename(IO_CARTSLOT,id));
+	logerror("vc20_rom_id %s\n", image_filename(img));
 
 	retval = 0;
 
@@ -615,7 +615,7 @@ static int vc20_rom_id (int id, mame_file *romfile)
 	if (!memcmp (buffer, magic, sizeof (magic)))
 		retval = 1;
 
-	cp = image_filetype(IO_CARTSLOT, id);
+	cp = image_filetype(img);
 	if (cp)
 	{
 		if ((stricmp (cp, "a0") == 0)
@@ -629,33 +629,33 @@ static int vc20_rom_id (int id, mame_file *romfile)
 	}
 
 		if (retval)
-			logerror("rom %s recognized\n", image_filename(IO_CARTSLOT,id));
+			logerror("rom %s recognized\n", image_filename(img));
 		else
-			logerror("rom %s not recognized\n", image_filename(IO_CARTSLOT,id));
+			logerror("rom %s not recognized\n", image_filename(img));
 
 	return retval;
 }
 
-int vc20_rom_init(int id)
+int vc20_rom_init(mess_image *img)
 {
 	vc20_memory_init();
 	return INIT_PASS;
 }
 
-int vc20_rom_load(int id, mame_file *fp, int open_mode)
+int vc20_rom_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
 	int size, read_;
 	const char *cp;
 	int addr = 0;
 
-	if (!vc20_rom_id (id, fp))
+	if (!vc20_rom_id(img, fp))
 		return 1;
 	mame_fseek (fp, 0, SEEK_SET);
 
 	size = mame_fsize (fp);
 
-	cp = image_filetype(IO_CARTSLOT, id);
+	cp = image_filetype(img);
 	if (cp)
 	{
 		if ((cp[0] != 0) && (cp[1] == '0') && (cp[2] == 0))
@@ -701,7 +701,7 @@ int vc20_rom_load(int id, mame_file *fp, int open_mode)
 		}
 	}
 
-	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(IO_CARTSLOT,id), addr, size);
+	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(img), addr, size);
 	read_ = mame_fread (fp, mem + addr, size);
 	if (read_ != size)
 		return 1;

@@ -810,7 +810,7 @@ static struct cassette_args mz700_cassette_args =
 	0												/* create_smpfreq */
 };
 
-int mz700_cassette_init(int id, mame_file *fp, int open_mode)
+int mz700_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	return cassette_init(id, fp, open_mode, &mz700_cassette_args);
 }

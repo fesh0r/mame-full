@@ -9,13 +9,13 @@
 #define VERBOSE 1
 static d88image     d88image_drives[d88image_MAX_DRIVES];
 
-static void d88image_seek_callback(int,int);
-static int d88image_get_sectors_per_track(int,int);
-static void d88image_get_id_callback(int, chrn_id *, int, int);
-static void d88image_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length);
-static void d88image_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length,int ddam);
+static void d88image_seek_callback(mess_image *img,int);
+static int d88image_get_sectors_per_track(mess_image *img,int);
+static void d88image_get_id_callback(mess_image *img, chrn_id *, int, int);
+static void d88image_read_sector_data_into_buffer(mess_image *img, int side, int index1, char *ptr, int length);
+static void d88image_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length,int ddam);
 
-floppy_interface d88image_floppy_interface=
+static floppy_interface d88image_floppy_interface=
 {
 	d88image_seek_callback,
 	d88image_get_sectors_per_track,             /* done */
@@ -26,13 +26,18 @@ floppy_interface d88image_floppy_interface=
 	NULL
 };
 
-int d88image_floppy_init(int id)
+d88image *get_d88image(mess_image *img)
 {
-	return floppy_drive_init(id, &d88image_floppy_interface);
+	return &d88image_drives[image_index(img)];
+}
+
+int d88image_floppy_init(mess_image *img)
+{
+	return floppy_drive_init(img, &d88image_floppy_interface);
 }
 
 /* attempt to insert a disk into the drive specified with id */
-int d88image_floppy_load(int id, mame_file *fp, int open_mode)
+int d88image_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 tmp8;
 	UINT16 tmp16;
@@ -40,6 +45,7 @@ int d88image_floppy_load(int id, mame_file *fp, int open_mode)
 	int i,j,k;
 	unsigned long toffset;
 	d88image *w;
+	int id = image_index(img);
 
 	assert(id < d88image_MAX_DRIVES);
 
@@ -61,7 +67,7 @@ int d88image_floppy_load(int id, mame_file *fp, int open_mode)
 	mame_fread_lsbfirst(w->image_file, &tmp32, 4);
 	w->image_size=tmp32;
 
-	for(i=0;i<D88_NUM_TRACK;i++)
+	for(i = 0; i<D88_NUM_TRACK; i++)
 	{
 		mame_fseek(w->image_file, 0x20 + i*4, SEEK_SET);
 		mame_fread_lsbfirst(w->image_file, &tmp32, 4);
@@ -71,7 +77,7 @@ int d88image_floppy_load(int id, mame_file *fp, int open_mode)
 			mame_fseek(w->image_file, toffset + 4, SEEK_SET);
 			mame_fread_lsbfirst(w->image_file, &tmp16, 2);
 			w->num_sects[i] = tmp16;
-			w->sects[i] = image_malloc(IO_FLOPPY, id, sizeof(d88sect)*w->num_sects[i]);
+			w->sects[i] = image_malloc(img, sizeof(d88sect)*w->num_sects[i]);
 			mame_fseek(w->image_file, toffset, SEEK_SET);
 
 			for(j=0;j<w->num_sects[i];j++)
@@ -159,9 +165,9 @@ static int d88image_seek(d88image * w, UINT8 t, UINT8 h, UINT8 s)
 	return 1;
 }
 
-void    d88image_get_id_callback(int drive, chrn_id *id, int id_index, int side)
+static void d88image_get_id_callback(mess_image *img, chrn_id *id, int id_index, int side)
 {
-	d88image *w = &d88image_drives[drive];
+	d88image *w = get_d88image(img);
 	d88sect *s = &(w->sects[w->track*2+side][id_index]);
 
 	/* construct a id value */
@@ -173,9 +179,9 @@ void    d88image_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	id->flags = s->flags;
 }
 
-int  d88image_get_sectors_per_track(int drive, int side)
+static int d88image_get_sectors_per_track(mess_image *img, int side)
 {
-	d88image *w = &d88image_drives[drive];
+	d88image *w = get_d88image(img);
 
 	/* attempting to access an invalid side or track? */
 	if ((side>=2) || (w->track>=D88_NUM_TRACK/2))
@@ -187,16 +193,15 @@ int  d88image_get_sectors_per_track(int drive, int side)
 	return w->num_sects[w->track*2+side];
 }
 
-void    d88image_seek_callback(int drive, int physical_track)
+static void d88image_seek_callback(mess_image *img, int physical_track)
 {
-	d88image *w = &d88image_drives[drive];
-
+	d88image *w = get_d88image(img);
 	w->track = physical_track;
 }
 
-void d88image_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length, int ddam)
+static void d88image_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length, int ddam)
 {
-	d88image *w = &d88image_drives[drive];
+	d88image *w = get_d88image(img);
 	d88sect *s = &(w->sects[w->track*2+side][index1]);
 
 	if (d88image_seek(w, w->track, side, index1))
@@ -207,9 +212,9 @@ void d88image_write_sector_data_from_buffer(int drive, int side, int index1, cha
 	s->flags = ddam ? ID_FLAG_DELETED_DATA : 0;
 }
 
-void d88image_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length)
+static void d88image_read_sector_data_into_buffer(mess_image *img, int side, int index1, char *ptr, int length)
 {
-	d88image *w = &d88image_drives[drive];
+	d88image *w = get_d88image(img);
 
 	if (d88image_seek(w, w->track, side, index1))
 	{

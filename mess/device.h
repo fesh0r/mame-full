@@ -1,6 +1,8 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#include "osdepend.h"
+
 enum
 {	/* List of all supported devices.  Refer to the device by these names only							*/
 	IO_CARTSLOT,	/*  0 - Cartidge Port, as found on most console and on some computers 				*/
@@ -22,12 +24,12 @@ enum
 int register_device (const int type, const char *arg);
 
 /* Device handlers */
-extern int device_open(int type, int id, int mode, void *args);
-extern void device_close(int type, int id);
-extern int device_seek(int type, int id, int offset, int whence);
-extern int device_tell(int type, int id);
-extern int device_status(int type, int id, int newstatus);
-extern int device_input(int type, int id);
-extern void device_output(int type, int id, int data);
+int device_open(mess_image *img, int mode, void *args);
+void device_close(mess_image *img);
+int device_seek(mess_image *img, int offset, int whence);
+int device_tell(mess_image *img);
+int device_status(mess_image *img, int newstatus);
+int device_input(mess_image *img);
+void device_output(mess_image *img, int data);
 
 #endif

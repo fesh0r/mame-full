@@ -44,14 +44,18 @@ static UINT8 vhdStatus;
 #define LOG(x)
 #endif
 
-int coco_vhd_init(int id)
+static mess_image *vhd_image(void)
 {
-	assert(id == 0);
+	return image_instance(IO_VHD, 0);
+}
+
+int coco_vhd_init(mess_image *img)
+{
 	vhdStatus = 2;	/* No VHD attached */
 	return INIT_PASS;
 }
 
-int coco_vhd_load(int id, mame_file *fp, int open_mode)
+int coco_vhd_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	vhdStatus = 0xff; /* -1, Power on state */
 	logicalRecordNumber = 0;
@@ -67,7 +71,7 @@ static void coco_vhd_readwrite(UINT8 data)
 	int phyOffset;
 	long nBA = bufferAddress;
 
-	vhdfile = image_fp(IO_VHD, 0);
+	vhdfile = image_fp(vhd_image());
 	if (!vhdfile)
 	{
 		vhdStatus = 2; /* No VHD attached */

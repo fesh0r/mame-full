@@ -294,7 +294,7 @@ int	mfm_disk_id(int id)
 
 
 /* load image */
-int mfm_disk_load(int id, mame_file *fp, int open_mode)
+int mfm_disk_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT64 datasize;
 
@@ -316,7 +316,7 @@ int mfm_disk_load(int id, mame_file *fp, int open_mode)
 	mfm_disks[id].CachedSide = -1;
 	mfm_disks[id].NumSectors = 0;
 
-	floppy_drive_set_disk_image_interface(id, &mfm_disk_floppy_interface);
+	floppy_drive_set_disk_image_interface(img, &mfm_disk_floppy_interface);
 
 	logerror("mfm disk inserted!\n");
 	return INIT_PASS;

@@ -2341,8 +2341,6 @@ static void amstrad_common_init(void)
 
 static MACHINE_STOP( amstrad )
 {
-	nec765_stop();
-
 	/* restore previous tables */
 	cpunum_set_cycle_tbl(0,Z80_TABLE_op, (void *) previous_op_table);
 	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, (void *) previous_cb_table);

@@ -31,7 +31,16 @@ typedef struct
 	int disk_image_type;  /* image type: standard or extended */
 } dsk_drive;
 
-floppy_interface dsk_floppy_interface=
+static void dsk_disk_image_init(dsk_drive *);
+
+static void dsk_seek_callback(mess_image *img, int physical_track);
+static void dsk_get_id_callback(mess_image *img, struct chrn_id *id, int id_index, int side);
+static int dsk_get_sectors_per_track(mess_image *img, int side);
+
+static void dsk_write_sector_data_from_buffer(mess_image *img, int sector_index, int side, char *ptr, int length, int ddam);
+static void dsk_read_sector_data_into_buffer(mess_image *img, int sector_index, int side, char *ptr, int length);
+
+static floppy_interface dsk_floppy_interface =
 {
 	dsk_seek_callback,
 	dsk_get_sectors_per_track,
@@ -42,12 +51,15 @@ floppy_interface dsk_floppy_interface=
 	NULL
 };
 
-static void dsk_disk_image_init(dsk_drive *);
-
 static dsk_drive drives[dsk_NUM_DRIVES]; /* the drives */
 
+static dsk_drive *get_drive(mess_image *img)
+{
+	return &drives[image_index(img)];
+}
+
 /* load image */
-static int dsk_load(mame_file *file, int id, unsigned char **ptr)
+static int dsk_load(mame_file *file, mess_image *img, unsigned char **ptr)
 {
 	int datasize;
 	unsigned char *data;
@@ -58,7 +70,7 @@ static int dsk_load(mame_file *file, int id, unsigned char **ptr)
 	if (datasize!=0)
 	{
 		/* malloc memory for this data */
-		data = image_malloc(IO_FLOPPY, id, datasize);
+		data = image_malloc(img, datasize);
 
 		if (data!=NULL)
 		{
@@ -86,17 +98,18 @@ static int dsk_floppy_verify(UINT8 *diskimage_data)
 
 
 /* load floppy */
-int dsk_floppy_load(int id, mame_file *fp, int open_mode)
+int dsk_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
+	int id = image_index(img);
 	dsk_drive *thedrive = &drives[id];
 
 	/* load disk image */
-	if (dsk_load(fp, id, &thedrive->data))
+	if (dsk_load(fp, img, &thedrive->data))
 	{
 		if (thedrive->data)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
-			floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
+			floppy_drive_set_disk_image_interface(img, &dsk_floppy_interface);
 			if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
             	return INIT_PASS;
 			else
@@ -106,11 +119,11 @@ int dsk_floppy_load(int id, mame_file *fp, int open_mode)
 	return INIT_PASS;
 }
 
-static int dsk_save(int id, unsigned char **ptr)
+static int dsk_save(mess_image *img, unsigned char **ptr)
 {
 	mame_file *file;
 
-	file = image_fp(IO_FLOPPY, id);
+	file = image_fp(img);
 
 	if (file)
 	{
@@ -137,12 +150,13 @@ static int dsk_save(int id, unsigned char **ptr)
 }
 
 
-void dsk_floppy_unload(int id)
+void dsk_floppy_unload(mess_image *img)
 {
+	int id = image_index(img);
 	dsk_drive *thedrive = &drives[id];
 
-	if (thedrive->data!=NULL)
-		dsk_save(id, &thedrive->data);
+	if (thedrive->data)
+		dsk_save(img, &thedrive->data);
 	thedrive->data = NULL;
 }
 
@@ -347,49 +361,41 @@ void dsk_disk_image_init(dsk_drive *thedrive)
 }
 
 
-void dsk_seek_callback(int drive, int physical_track)
+static void dsk_seek_callback(mess_image *img, int physical_track)
 {
-	drive = drive & 0x03;
-	drives[drive].current_track = physical_track;
+	get_drive(img)->current_track = physical_track;
 }
 
-static int get_track_offset(int drive, int side)
+static int get_track_offset(mess_image *img, int side)
 {
-	dsk_drive *thedrive;
-
-	drive = drive & 0x03;
+	dsk_drive *thedrive = get_drive(img);
 	side = side & 0x01;
-
-	thedrive = &drives[drive];
-
 	return thedrive->track_offsets[(thedrive->current_track<<1) + side];
 }
 
-static unsigned char *get_floppy_data(int drive)
+static unsigned char *get_floppy_data(mess_image *img)
 {
-	drive = drive & 0x03;
-	return drives[drive].data;
+	return get_drive(img)->data;
 }
 
-void dsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
+static void dsk_get_id_callback(mess_image *img, chrn_id *id, int id_index, int side)
 {
 	int id_offset;
 	int track_offset;
 	unsigned char *track_header;
 	unsigned char *data;
 
-	drive = drive & 0x03;
 	side = side & 0x01;
 
 	/* get offset to track header in image */
-	track_offset = get_track_offset(drive, side);
+	track_offset = get_track_offset(img, side);
 
 	/* track exists? */
 	if (track_offset==0)
 		return;
 
 	/* yes */
-	data = get_floppy_data(drive);
+	data = get_floppy_data(img);
 
 	if (data==0)
 		return;
@@ -419,25 +425,24 @@ void dsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 }
 
 
-static void dsk_set_ddam(int drive, int id_index, int side, int ddam)
+static void dsk_set_ddam(mess_image *img, int id_index, int side, int ddam)
 {
 	int id_offset;
 	int track_offset;
 	unsigned char *track_header;
 	unsigned char *data;
 
-	drive = drive & 0x03;
 	side = side & 0x01;
 
 	/* get offset to track header in image */
-	track_offset = get_track_offset(drive, side);
+	track_offset = get_track_offset(img, side);
 
 	/* track exists? */
 	if (track_offset==0)
 		return;
 
 	/* yes */
-	data = get_floppy_data(drive);
+	data = get_floppy_data(img);
 
 	if (data==0)
 		return;
@@ -455,7 +460,7 @@ static void dsk_set_ddam(int drive, int id_index, int side, int ddam)
 }
 
 
-static char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
+static char * dsk_get_sector_ptr_callback(mess_image *img, int sector_index, int side)
 {
 	int track_offset;
 	int sector_offset;
@@ -463,15 +468,14 @@ static char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
 	dsk_drive *thedrive;
 	unsigned char *data;
 
-	drive = drive & 0x03;
 	side = side & 0x01;
 
-	thedrive = &drives[drive];
+	thedrive = get_drive(img);
 
 	track = thedrive->current_track;
 
 	/* offset to track header in image */
-	track_offset = get_track_offset(drive, side);
+	track_offset = get_track_offset(img, side);
 
 	/* track exists? */
 	if (track_offset==0)
@@ -496,7 +500,7 @@ static char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
 
 	sector_offset = thedrive->sector_offsets[sector_index];
 
-	data = get_floppy_data(drive);
+	data = get_floppy_data(img);
 
 	if (data==0)
 		return NULL;
@@ -504,11 +508,11 @@ static char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
 	return (char *)(data + track_offset + sector_offset);
 }
 
-void dsk_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length, int ddam)
+static void dsk_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length, int ddam)
 {
 	char * pSectorData;
 
-	pSectorData = dsk_get_sector_ptr_callback(drive, index1, side);
+	pSectorData = dsk_get_sector_ptr_callback(img, index1, side);
 
 	if (pSectorData!=NULL)
 	{
@@ -516,39 +520,35 @@ void dsk_write_sector_data_from_buffer(int drive, int side, int index1, char *pt
 	}
 
 	/* set ddam */
-	dsk_set_ddam(drive, index1, side,ddam);
+	dsk_set_ddam(img, index1, side,ddam);
 }
 
-void dsk_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length)
+static void dsk_read_sector_data_into_buffer(mess_image *img, int side, int index1, char *ptr, int length)
 {
 	char *pSectorData;
 
-	pSectorData = dsk_get_sector_ptr_callback(drive, index1, side);
+	pSectorData = dsk_get_sector_ptr_callback(img, index1, side);
 
 	if (pSectorData!=NULL)
-	{
 		memcpy(ptr, pSectorData, length);
-
-	}
 }
 
-int    dsk_get_sectors_per_track(int drive, int side)
+static int dsk_get_sectors_per_track(mess_image *img, int side)
 {
 	int track_offset;
 	unsigned char *track_header;
 	unsigned char *data;
 
-	drive = drive & 0x03;
 	side = side & 0x01;
 
 	/* get offset to track header in image */
-	track_offset = get_track_offset(drive, side);
+	track_offset = get_track_offset(img, side);
 
 	/* track exists? */
 	if (track_offset==0)
 		return 0;
 
-	data = get_floppy_data(drive);
+	data = get_floppy_data(img);
 
 	if (data==0)
 		return 0;

@@ -100,9 +100,10 @@ void cbm_drive_1_config (int interface, int serialnr)
 	cbm_drive_config (cbm_drive + 1, interface, serialnr);
 }
 
-static int d64_open (int id, mame_file *in)
+static int d64_open (mess_image *img, mame_file *in)
 {
 	int size;
+	int id = image_index(img);
 
 	cbm_drive[id].drive = 0;
 	cbm_drive[id].image = NULL;
@@ -124,17 +125,16 @@ static int d64_open (int id, mame_file *in)
 		return INIT_FAIL;
 	}
 
-	logerror("floppy image %s loaded\n",
-				 image_filename(IO_FLOPPY,id));
+	logerror("floppy image %s loaded\n", image_filename(img));
 
 	cbm_drive[id].drive = D64_IMAGE;
 	return 0;
 }
 
 /* open an d64 image */
-int cbm_drive_attach_image (int id, mame_file *fp, int open_mode)
+int cbm_drive_attach_image (mess_image *img, mame_file *fp, int open_mode)
 {
-	return d64_open (id, fp);
+	return d64_open(img, fp);
 }
 
 

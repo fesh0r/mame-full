@@ -259,7 +259,7 @@ static struct cassette_args lviv_cassette_args =
 	44100											/* create_smpfreq */
 };
 
-int lviv_cassette_init(int id, mame_file *fp, int open_mode)
+int lviv_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	return cassette_init(id, fp, open_mode, &lviv_cassette_args);
 }

@@ -375,7 +375,7 @@ int vtech1_floppy_id(int id)
 }
 */
 
-int vtech1_floppy_load(int id, mame_file *fp, int open_mode)
+int vtech1_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (is_effective_mode_writable(open_mode))
 		vtech1_fdc_wrprot[id] = 0x00;

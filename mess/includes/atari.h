@@ -50,15 +50,15 @@ MACHINE_INIT( a800 );
 MACHINE_INIT( a800xl );
 MACHINE_INIT( a5200 );
 
-int a800_floppy_load(int id, mame_file *fp, int open_mode);
+int a800_floppy_load(mess_image *img, mame_file *fp, int open_mode);
 
-int a800_rom_load(int id, mame_file *fp, int open_mode);
+int a800_rom_load(mess_image *img, mame_file *fp, int open_mode);
 void a800_rom_unload(int id);
 
-int a800xl_load_rom(int id, mame_file *fp, int open_mode);
+int a800xl_load_rom(mess_image *img, mame_file *fp, int open_mode);
 int a800xl_id_rom(int id);
 
-int a5200_rom_load(int id, mame_file *fp, int open_mode);
+int a5200_rom_load(mess_image *img, mame_file *fp, int open_mode);
 void a5200_rom_unload(int id);
 
 READ_HANDLER ( MRA_GTIA );

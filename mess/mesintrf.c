@@ -15,7 +15,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 
 	char buf[2048];
 	int trying_to_quit;
-	int type, id;
+	int id;
 	const struct IODevice *dev;
 
 	trying_to_quit = osd_trying_to_quit();
@@ -98,13 +98,18 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 		}
 
 		/* run display routine for device */
-		for (type = 0; type < IO_COUNT; type++)
+		if (devices_inited)
 		{
-			dev = device_find(Machine->gamedrv, type);
-			if (dev && dev->display)
+			for (dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 			{
-				for (id = 0; id < MAX_DEV_INSTANCES; id++)
-					dev->display(bitmap, id);
+				if (dev->display)
+				{
+					for (id = 0; id < device_count(dev->type); id++)
+					{
+						mess_image *img = image_instance(dev->type, id);
+						dev->display(img, bitmap);
+					}
+				}
 			}
 		}
 	}
@@ -128,37 +133,38 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 	{
 		for( id = 0; id < device_count(type); id++ )
 		{
-			const char *name = image_filename(type,id);
+			mess_image *img = image_instance(type, id);
+			const char *name = image_filename(img);
 			if( name )
 			{
 				const char *base_filename;
 				const char *info;
 				char *base_filename_noextension;
 
-				base_filename = image_basename(type, id);
+				base_filename = image_basename(img);
 				base_filename_noextension = strip_extension((char *) base_filename);
 
 				/* display device type and filename */
-				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), base_filename);
+				dst += sprintf(dst,"%s: %s\n", device_typename_id(img), base_filename);
 
 				/* display long filename, if present and doesn't correspond to name */
-				info = image_longname(type,id);
+				info = image_longname(img);
 				if (info && (!base_filename_noextension || strcmpi(info, base_filename_noextension)))
 					dst += sprintf(dst,"%s\n", info);
 
 				/* display manufacturer, if available */
-				info = image_manufacturer(type,id);
+				info = image_manufacturer(img);
 				if (info)
 				{
 					dst += sprintf(dst,"%s", info);
-					info = stripspace(image_year(type,id));
+					info = stripspace(image_year(img));
 					if (info && *info)
 						dst += sprintf(dst,", %s", info);
 					dst += sprintf(dst,"\n");
 				}
 
 				/* display playable information, if available */
-				info = image_playable(type,id);
+				info = image_playable(img);
 				if (info)
 					dst += sprintf(dst,"%s\n", info);
 
@@ -172,7 +178,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 			}
 			else
 			{
-				dst += sprintf(dst,"%s: ---\n", device_typename_id(type,id));
+				dst += sprintf(dst,"%s: ---\n", device_typename_id(img));
 			}
 		}
 	}

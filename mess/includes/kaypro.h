@@ -11,7 +11,7 @@
 #include "includes/wd179x.h"
 #include "machine/cpm_bios.h"
 
-extern int kaypro_floppy_init(int id, mame_file *fp, int open_mode);
+extern int kaypro_floppy_init(mess_image *img, mame_file *fp, int open_mode);
 extern void init_kaypro(void);
 extern MACHINE_INIT( kaypro );
 extern MACHINE_STOP( kaypro );

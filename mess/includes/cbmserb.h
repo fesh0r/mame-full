@@ -17,7 +17,7 @@ void cbm_drive_0_config (int interface, int serialnr);
 void cbm_drive_1_config (int interface, int serialnr);
 
 /* open an d64 image */
-int cbm_drive_attach_image(int id, mame_file *fp, int open_mode);
+int cbm_drive_attach_image(mess_image *img, mame_file *fp, int open_mode);
 
 /* delivers status for displaying */
 extern void cbm_drive_0_status (char *text, int size);

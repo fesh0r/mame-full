@@ -155,8 +155,8 @@ int vic6560_dma_read_color (int offset);
 /* VIC reads bits 0 till 7 */
 int vic6560_dma_read (int offset);
 
-int vc20_rom_init(int id);
-int vc20_rom_load(int id, mame_file *fp, int open_mode);
+int vc20_rom_init(mess_image *img);
+int vc20_rom_load(mess_image *img, mame_file *fp, int open_mode);
 
 void vc20_driver_init (void);
 void vic20_driver_init (void);

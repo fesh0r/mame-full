@@ -1983,13 +1983,13 @@ static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const r
 #ifdef MESS
 static char *override_artfile;
 
-void artwork_use_device_art(int device_type, int device_id, const char *defaultartfile)
+void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 {
 	const char *fname;
 	const char *ext;
 	int len = -1;
 
-	fname = image_filename(device_type, device_id);
+	fname = image_filename(img);
 	if (fname)
 	{
 		ext = strrchr(fname, '.');

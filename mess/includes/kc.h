@@ -23,10 +23,9 @@ extern VIDEO_UPDATE( kc85_4 );
 extern MACHINE_INIT( kc85_3 );
 extern MACHINE_INIT( kc85_4 );
 extern MACHINE_INIT( kc85_4d );
-extern MACHINE_STOP( kc85_4d );
 
 /* cassette */
-int kc_cassette_device_init(int id, mame_file *fp, int open_mode);
+int kc_cassette_device_init(mess_image *img, mame_file *fp, int open_mode);
 
 READ_HANDLER(kc85_4_84_r);
 WRITE_HANDLER(kc85_4_84_w);
@@ -164,7 +163,7 @@ WRITE_HANDLER(kc85_module_w);
 /* IO_FLOPPY device */
 
 /* for IO_ device init */
-int kc85_floppy_init(int id, mame_file *fp, int open_mode);
+int kc85_floppy_init(mess_image *img, mame_file *fp, int open_mode);
 
 /* used to setup machine */
 

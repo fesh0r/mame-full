@@ -58,6 +58,8 @@ static UINT8 *c16_memory_24000;
 static UINT8 *c16_memory_28000;
 static UINT8 *c16_memory_2c000;
 
+static int c16_rom_load(mess_image *img);
+
 /**
   ddr bit 1 port line is output
   port bit 1 port line is high
@@ -689,17 +691,16 @@ MACHINE_INIT( c16 )
 	cbm_serial_reset_write (0);
 
 	for (i = 0;  (i < sizeof (rom_fp) / sizeof (rom_fp[0])) && rom_fp[i]; i++)
-		c16_rom_load(i);
-
+		c16_rom_load(image_instance(IO_CARTSLOT, i));
 }
 
-static int c16_rom_id (int id, mame_file *romfile)
+static int c16_rom_id(mess_image *img, mame_file *romfile)
 {
     /* magic lowrom at offset 7: $43 $42 $4d */
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
 	int retval = 0;
 	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
-	const char *name = image_filename(IO_CARTSLOT,id);
+	const char *name = image_filename(img);
 	char *cp;
 
 	logerror("c16_rom_id %s\n", name);
@@ -727,38 +728,40 @@ static int c16_rom_id (int id, mame_file *romfile)
 	return retval;
 }
 
-int c16_rom_init (int id, mame_file *fp, int open_mode)
+int c16_rom_init(mess_image *img, mame_file *fp, int open_mode)
 {
+	int id = image_index(img);
 	rom_fp[id] = fp;
-	return (rom_fp[id] && !c16_rom_id(id, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
+	return (rom_fp[id] && !c16_rom_id(img, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
 }
 
-void c16_rom_exit (int id)
+void c16_rom_exit(mess_image *img)
 {
+	int id = image_index(img);
 	rom_fp[id] = NULL;
 }
 
-int c16_rom_load (int id)
+static int c16_rom_load(mess_image *img)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
-	mame_file *fp = rom_fp[id];
+	mame_file *fp = image_fp(img);
 	int size, read_;
 	const char *filetype;
 	static unsigned int addr = 0;
 
-	if (rom_fp[id] == NULL)
+	if (fp == NULL)
 		return INIT_FAIL;
-	if (!c16_rom_id (id, fp))
+	if (!c16_rom_id(img, fp))
 		return 1;
 
 	size = mame_fsize (fp);
 
-	filetype = image_filetype(IO_CARTSLOT, id);	
+	filetype = image_filetype(img);	
 	if (filetype && !stricmp (filetype, "prg"))
 	{
 		unsigned short in;
 
-		mame_fread_lsbfirst (fp, &in, 2);
+		mame_fread_lsbfirst(fp, &in, 2);
 		logerror("rom prg %.4x\n", in);
 		addr = in + 0x20000;
 		size -= 2;

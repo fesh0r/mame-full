@@ -1007,23 +1007,23 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 }
 
 
-int lisa_floppy_load(int id, mame_file *fp, int open_mode)
+int lisa_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/*if (lisa_features.lisa_floppy_hardware == twiggy)
 		return twiggy_floppy_load(id);
 	else*/
-		return sony_floppy_load(id, fp, open_mode,
+		return sony_floppy_load(img, fp, open_mode,
 									(lisa_features.has_double_sided_floppy)
 										? SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K
 										: SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_EXT_SPEED_CONTROL);
 }
 
-void lisa_floppy_unload(int id)
+void lisa_floppy_unload(mess_image *img)
 {
 	/*if (lisa_features.lisa_floppy_hardware == twiggy)
 		return twiggy_floppy_unload(id);
 	else*/
-		sony_floppy_unload(id);
+		sony_floppy_unload(img);
 }
 
 /* should save PRAM to file */

@@ -75,20 +75,22 @@ static void *busy_timer = NULL;
 
 /* one wd controlling multiple drives */
 static WD179X wd;
+
 /* this is the drive currently selected */
-static UINT8 drv = 0;
+static UINT8 current_drive;
+
 /* this is the head currently selected */
 static UINT8 hd = 0;
+
+static mess_image *wd179x_current_image(void)
+{
+	return image_instance(IO_FLOPPY, current_drive);
+}
 
 /* use this to determine which drive is controlled by WD */
 void wd179x_set_drive(UINT8 drive)
 {
-#if VERBOSE
-	if( drive != drv )
-	logerror("wd179x_set_drive: $%02x\n", drive);
-#endif
-
-	drv = drive;
+	current_drive = drive;
 }
 
 void wd179x_set_side(UINT8 head)
@@ -149,11 +151,11 @@ static void wd179x_restore(WD179X *w)
 		w->busy_count = 0;
 
 		/* keep stepping until track 0 is received or 255 steps have been done */
-		while (!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
+		while (!(floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
 		{
 			/* update time to simulate seek time busy signal */
 			w->busy_count++;
-			floppy_drive_seek(drv, w->direction);
+			floppy_drive_seek(wd179x_current_image(), w->direction);
 			step_counter--;
 		}
 
@@ -373,7 +375,7 @@ static void read_track(WD179X * w)
 
 	w->data_count = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
 
-	floppy_drive_read_track_data_info_buffer( drv, hd, (char *)w->buffer, &(w->data_count) );
+	floppy_drive_read_track_data_info_buffer( wd179x_current_image(), hd, (char *)w->buffer, &(w->data_count) );
 	
 	w->data_offset = 0;
 
@@ -427,7 +429,7 @@ static void wd179x_read_id(WD179X * w)
 	w->status &= ~(STA_2_CRC_ERR | STA_2_REC_N_FND);
 
 	/* get next id from disc */
-	if (floppy_drive_get_next_id(drv, hd, &id))
+	if (floppy_drive_get_next_id(wd179x_current_image(), hd, &id))
 	{
 		UINT16 crc = 0xffff;
 
@@ -484,7 +486,7 @@ static int wd179x_find_sector(WD179X *w)
 
 	while (revolution_count!=4)
 	{
-		if (floppy_drive_get_next_id(drv, hd, &id))
+		if (floppy_drive_get_next_id(wd179x_current_image(), hd, &id))
 		{
 			/* compare track */
 			if (id.C == w->track_reg)
@@ -506,7 +508,7 @@ static int wd179x_find_sector(WD179X *w)
 		}
 
 		 /* index set? */
-		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_INDEX))
+		if (floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_INDEX))
 		{
 			/* update revolution count */
 			revolution_count++;
@@ -534,7 +536,7 @@ static void wd179x_read_sector(WD179X *w)
 		w->data_count = w->sector_length;
 
 		/* read data */
-		floppy_drive_read_sector_data(drv, hd, w->sector_data_id, (char *)w->buffer, w->sector_length);
+		floppy_drive_read_sector_data(wd179x_current_image(), hd, w->sector_data_id, (char *)w->buffer, w->sector_length);
 
 		wd179x_timed_data_request();
 
@@ -615,7 +617,7 @@ static void wd179x_write_sector(WD179X *w)
 		w->data_count = w->sector_length;
 
 		/* write data */
-		floppy_drive_write_sector_data(drv, hd, w->sector_data_id, (char *)w->buffer, w->sector_length,w->write_cmd & 0x01);
+		floppy_drive_write_sector_data(wd179x_current_image(), hd, w->sector_data_id, (char *)w->buffer, w->sector_length,w->write_cmd & 0x01);
 	}
 }
 
@@ -635,7 +637,7 @@ static void wd179x_verify_seek(WD179X *w)
 	/* must be found within 5 revolutions otherwise error */
 	while (revolution_count!=5)
 	{
-		if (floppy_drive_get_next_id(drv, hd, &id))
+		if (floppy_drive_get_next_id(wd179x_current_image(), hd, &id))
 		{
 			/* compare track */
 			if (id.C == w->track_reg)
@@ -646,7 +648,7 @@ static void wd179x_verify_seek(WD179X *w)
 		}
 
 		 /* index set? */
-		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_INDEX))
+		if (floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_INDEX))
 		{
 			/* update revolution count */
 			revolution_count++;
@@ -699,7 +701,7 @@ static void	wd179x_read_sector_callback(int code)
 	logerror("wd179x: Read Sector callback.\n");
 #endif
 
-	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+	if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 		wd179x_complete_command(w, 1);
 	else
 		wd179x_read_sector(w);
@@ -720,13 +722,13 @@ static void	wd179x_write_sector_callback(int code)
 	logerror("wd179x: Write Sector callback.\n");
 #endif
 
-	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+	if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 		wd179x_complete_command(w, 1);
 	else
 	{
 
 		/* drive write protected? */
-		if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+		if (floppy_drive_get_flag_state(wd179x_current_image(),FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 		{
 			w->status |= STA_2_WRITE_PRO;
 
@@ -809,7 +811,7 @@ READ_HANDLER ( wd179x_status_r )
 	{
 
 		/* if disc present toggle index pulse */
-		if (image_exists(IO_FLOPPY, drv))
+		if (image_exists(wd179x_current_image()))
 		{
 			/* eventually toggle index pulse bit */
 			w->status ^= STA_1_IPL;
@@ -817,20 +819,20 @@ READ_HANDLER ( wd179x_status_r )
 
 		/* set track 0 state */
 		result &=~STA_1_TRACK0;
-		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+		if (floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_HEAD_AT_TRACK_0))
 			result |= STA_1_TRACK0;
 
-	//	floppy_drive_set_ready_state(drv, 1,1);
+	//	floppy_drive_set_ready_state(wd179x_current_image(), 1,1);
 		w->status &= ~STA_1_NOT_READY;
 		
 		if (w->type == WD_TYPE_179X)
 		{
-			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 				w->status |= STA_1_NOT_READY;
 		}
 		else
 		{
-			if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
 				w->status |= STA_1_NOT_READY;
 		}
 	}
@@ -925,8 +927,8 @@ WRITE_HANDLER ( wd179x_command_w )
 {
 	WD179X *w = &wd;
 
-	floppy_drive_set_motor_state(drv, 1);
-	floppy_drive_set_ready_state(drv, 1,0);
+	floppy_drive_set_motor_state(wd179x_current_image(), 1);
+	floppy_drive_set_ready_state(wd179x_current_image(), 1,0);
 	/* also cleared by writing command */
 	if (w->callback)
 			(*w->callback) (WD179X_IRQ_CLR);
@@ -1023,7 +1025,7 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->status &= ~STA_2_LOST_DAT;
 			wd179x_clear_data_request();
 
-			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
             {
 				wd179x_complete_command(w, 1);
             }
@@ -1031,7 +1033,7 @@ WRITE_HANDLER ( wd179x_command_w )
             {
     
                 /* drive write protected? */
-                if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+                if (floppy_drive_get_flag_state(wd179x_current_image(),FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
                 {
                     /* yes */
                     w->status |= STA_2_WRITE_PRO;
@@ -1061,7 +1063,7 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->status &= ~STA_2_LOST_DAT;
   			wd179x_clear_data_request();
 
-			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
             {
 				wd179x_complete_command(w, 1);
             }
@@ -1133,7 +1135,7 @@ WRITE_HANDLER ( wd179x_command_w )
 			/* update track reg */
 			w->track_reg += w->direction;
 
-			floppy_drive_seek(drv, w->direction);
+			floppy_drive_seek(wd179x_current_image(), w->direction);
 		}
 
 		/* simulate seek time busy signal */
@@ -1155,7 +1157,7 @@ WRITE_HANDLER ( wd179x_command_w )
 		/* simulate seek time busy signal */
 		w->busy_count = 0;	//((data & FDC_STEP_RATE) + 1);
 
-		floppy_drive_seek(drv, w->direction);
+		floppy_drive_seek(wd179x_current_image(), w->direction);
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
@@ -1178,7 +1180,7 @@ WRITE_HANDLER ( wd179x_command_w )
 		/* simulate seek time busy signal */
 		w->busy_count = 0;	//((data & FDC_STEP_RATE) + 1);
 
-		floppy_drive_seek(drv, w->direction);
+		floppy_drive_seek(wd179x_current_image(), w->direction);
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
@@ -1200,7 +1202,7 @@ WRITE_HANDLER ( wd179x_command_w )
 		w->busy_count = 0;	//((data & FDC_STEP_RATE) + 1);
 
 		/* for now only allows a single drive to be selected */
-		floppy_drive_seek(drv, w->direction);
+		floppy_drive_seek(wd179x_current_image(), w->direction);
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;

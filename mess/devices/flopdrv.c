@@ -19,21 +19,25 @@
 #include "devices/flopdrv.h"
 #include "image.h"
 
-#define MAX_DRIVES 4
+#define FLOPDRVTAG	"flopdrv"
 
-static struct floppy_drive	drives[MAX_DRIVES];
+static struct floppy_drive *get_drive(mess_image *img)
+{
+	return image_lookuptag(img, FLOPDRVTAG);
+}
 
 static void	floppy_drive_index_callback(int id);
 
 /* this is called on device init */
-int floppy_drive_init(int id, const floppy_interface *iface)
+int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 {
-	struct floppy_drive *pDrive = &drives[id];
+	struct floppy_drive *pDrive;
 
-	assert(id >= 0);
-	assert(id < device_count(IO_FLOPPY));
+	assert(image_slotexists(img));
 
-	memset(pDrive, 0, sizeof(*pDrive));
+	pDrive = image_alloctag(img, FLOPDRVTAG, sizeof(struct floppy_drive));
+	if (!pDrive)
+		return INIT_FAIL;
 
 	/* initialise flags */
 	pDrive->flags = 0;
@@ -42,9 +46,9 @@ int floppy_drive_init(int id, const floppy_interface *iface)
 	pDrive->index_timer = timer_alloc(floppy_drive_index_callback);
 
 	/* all drives are double-sided 80 track - can be overriden in driver! */
-	floppy_drive_set_geometry(id, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(img, FLOPPY_DRIVE_DS_80);
 
-	pDrive->fdd_unit = id;
+	pDrive->fdd_unit = image_index(img);
 
 	/* initialise id index - not so important */
 	pDrive->id_index = 0;
@@ -52,7 +56,7 @@ int floppy_drive_init(int id, const floppy_interface *iface)
 	pDrive->current_track = 1;
 
 	if (iface)
-		memcpy(&drives[id].interface, iface, sizeof(floppy_interface));
+		memcpy(&pDrive->interface, iface, sizeof(floppy_interface));
 	return INIT_PASS;
 }
 
@@ -60,44 +64,25 @@ int floppy_drive_init(int id, const floppy_interface *iface)
 pulse. What is the length of the index pulse?? */
 static void	floppy_drive_index_callback(int id)
 {
-	/* check it's in range */
-	if ((id>=0) && (id<MAX_DRIVES))
-	{
-		struct floppy_drive *pDrive;
+	mess_image *img = image_instance(IO_FLOPPY, id);
+	struct floppy_drive *pDrive = get_drive(img);
 
-		pDrive = &drives[id];
-
-		if (pDrive->index_pulse_callback)
-			pDrive->index_pulse_callback(id);
-	}
+	if (pDrive->index_pulse_callback)
+		pDrive->index_pulse_callback(img);
 }
 
 
 /* set the callback for the index pulse */
-void floppy_drive_set_index_pulse_callback(int id, void (*callback)(int id))
+void floppy_drive_set_index_pulse_callback(mess_image *img, void (*callback)(mess_image *img))
 {
-	struct floppy_drive *pDrive;
-
-	/* check it's in range */
-	if ((id<0) || (id>=MAX_DRIVES))
-		return;
-
-	pDrive = &drives[id];
-
+	struct floppy_drive *pDrive = get_drive(img);
 	pDrive->index_pulse_callback = callback;
 }
 
 
-void floppy_drive_set_ready_state_change_callback(int id, void (*callback)(int drive, int state))
+void floppy_drive_set_ready_state_change_callback(mess_image *img, void (*callback)(mess_image *img, int state))
 {
-	struct floppy_drive *pDrive;
-
-	/* check it's in range */
-	if ((id<0) || (id>=MAX_DRIVES))
-		return;
-
-	pDrive = &drives[id];
-
+	struct floppy_drive *pDrive = get_drive(img);
 	pDrive->ready_state_change_callback = callback;
 }
 
@@ -110,16 +95,8 @@ void floppy_drive_set_ready_state_change_callback(int id, void (*callback)(int d
   2) drive present/missing
 */
 
-int	floppy_status(int id, int new_status)
+int	floppy_status(mess_image *img, int new_status)
 {
-	struct floppy_drive *pDrive;
-
-	/* check it's in range */
-	if ((id<0) || (id>=MAX_DRIVES))
-		return 0;
-
-	pDrive = &drives[id];
-
 	/* return current status only? */
 	if (new_status!=-1)
 	{
@@ -128,78 +105,70 @@ int	floppy_status(int id, int new_status)
 		if drive is connected etc. So if we wrote the flags back it would
 		corrupt this information. Therefore we update the flags depending on new_status */
 
-		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED, (new_status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED));
+		floppy_drive_set_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED, (new_status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED));
 	}
 
 	/* return current status */
-	return floppy_drive_get_flag_state(id,0x0ff);
+	return floppy_drive_get_flag_state(img,0x0ff);
 }
 
-void floppy_drive_set_real_fdd_unit(int id, UINT8 unit_id)
+void floppy_drive_set_real_fdd_unit(mess_image *img, UINT8 unit_id)
 {
-	if ((id<0) || (id>=MAX_DRIVES))
-		return;
-
-	drives[id].fdd_unit = unit_id;
+	get_drive(img)->fdd_unit = unit_id;
 }
 
 /* set interface for image interface */
-void floppy_drive_set_disk_image_interface(int id, floppy_interface *iface)
+void floppy_drive_set_disk_image_interface(mess_image *img, floppy_interface *iface)
 {
-	assert(id >= 0);
-	assert(id < MAX_DRIVES);
-	assert(iface);
-	memcpy(&drives[id].interface, iface, sizeof(floppy_interface));
+	memcpy(&get_drive(img)->interface, iface, sizeof(floppy_interface));
 }
 
 /* set flag state */
-void floppy_drive_set_flag_state(int id, int flag, int state)
+void floppy_drive_set_flag_state(mess_image *img, int flag, int state)
 {
+	struct floppy_drive *drv = get_drive(img);
 	int prev_state;
 	int new_state;
 
-	if ((id<0) || (id>=MAX_DRIVES))
-		return;
-
 	/* get old state */
-	prev_state = drives[id].flags & flag;
+	prev_state = drv->flags & flag;
 
 	/* set new state */
-	drives[id].flags &= ~flag;
+	drv->flags &= ~flag;
 	if (state)
-		drives[id].flags |= flag;
+		drv->flags |= flag;
 
 	/* get new state */
-	new_state = drives[id].flags & flag;
+	new_state = drv->flags & flag;
 
 	/* changed state? */
-	if ((prev_state^new_state)!=0)
+	if (prev_state ^ new_state)
 	{
 		if (flag & FLOPPY_DRIVE_READY)
 		{
 			/* trigger state change callback */
-			if (drives[id].ready_state_change_callback)
-				drives[id].ready_state_change_callback(id, new_state);
+			if (drv->ready_state_change_callback)
+				drv->ready_state_change_callback(img, new_state);
 		}
 	}
 }
 
-void floppy_drive_set_motor_state(int drive, int state)
+void floppy_drive_set_motor_state(mess_image *img, int state)
 {
 	int new_motor_state = 0;
 	int previous_state = 0;
 
 	/* previous state */
-	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON))
+	if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_MOTOR_ON))
 		previous_state = 1;
 
 	/* calc new state */
 
 	/* drive present? */
-	if (device_count(IO_FLOPPY) > drive)
+	if (image_slotexists(img))
 	{
 		/* disk inserted? */
-		if (image_exists(IO_FLOPPY, drive))
+		if (image_exists(img))
 		{
 			/* drive present and disc inserted */
 
@@ -214,36 +183,39 @@ void floppy_drive_set_motor_state(int drive, int state)
 	if ((new_motor_state^previous_state)!=0)
 	{
 		/* if timer already setup remove it */
-		if ((drive>=0) && (drive<MAX_DRIVES))
+		if (image_slotexists(img))
 		{
-			struct floppy_drive *pDrive;
+			struct floppy_drive *pDrive = get_drive(img);
+			double newpulse;
 
-			pDrive = &drives[drive];
-
-			if (new_motor_state)
+			if (pDrive->index_timer)
 			{
-				/* off->on */
-				/* check it's in range */
+				if (new_motor_state)
+				{
+					/* off->on */
+					/* check it's in range */
 
-				/* setup timer to trigger at 300 times a second = 300rpm */
-				timer_adjust(pDrive->index_timer, 0, drive, TIME_IN_HZ(300));
-			}
-			else
-			{
-				/* on->off */
-				timer_adjust(pDrive->index_timer, 0, drive, 0);
+					/* setup timer to trigger at 300 times a second = 300rpm */
+					newpulse = TIME_IN_HZ(300);
+				}
+				else
+				{
+					/* on->off */
+					newpulse = 0;
+				}
+				timer_adjust(pDrive->index_timer, 0, image_index(img), newpulse);
 			}
 		}
 	}
 
-	floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON, new_motor_state);
+	floppy_drive_set_flag_state(img, FLOPPY_DRIVE_MOTOR_ON, new_motor_state);
 
 }
 
 /* for pc, drive is always ready, for amstrad,pcw,spectrum it is only ready under
 a fixed set of circumstances */
 /* use this to set ready state of drive */
-void floppy_drive_set_ready_state(int drive, int state, int flag)
+void floppy_drive_set_ready_state(mess_image *img, int state, int flag)
 {
 	if (flag)
 	{
@@ -251,45 +223,42 @@ void floppy_drive_set_ready_state(int drive, int state, int flag)
 		and disk motor is on - for Amstrad, Spectrum and PCW*/
 
 		/* drive present? */
-		if (device_count(IO_FLOPPY) > drive)
+		if (image_slotexists(img))
 		{
 			/* disk inserted? */
-			if (image_exists(IO_FLOPPY, drive))
+			if (image_exists(img))
 			{
-				if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON))
+				if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_MOTOR_ON))
 				{
 
 					/* set state */
-					floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_READY, state);
+					floppy_drive_set_flag_state(img, FLOPPY_DRIVE_READY, state);
                     return;
 				}
 			}
 		}
 
-		floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_READY, 0);
+		floppy_drive_set_flag_state(img, FLOPPY_DRIVE_READY, 0);
 	}
 	else
 	{
 		/* force ready state - for PC driver */
-		floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_READY, state);
+		floppy_drive_set_flag_state(img, FLOPPY_DRIVE_READY, state);
 	}
 
 }
 
 
 /* get flag state */
-int	floppy_drive_get_flag_state(int id, int flag)
+int	floppy_drive_get_flag_state(mess_image *img, int flag)
 {
+	struct floppy_drive *drv = get_drive(img);
 	int drive_flags;
 	int flags;
 
 	flags = 0;
 
-	/* check it is within range */
-	if ((id<0) || (id>=MAX_DRIVES))
-		return flags;
-
-	drive_flags = drives[id].flags;
+	drive_flags = drv->flags;
 
 	/* these flags are independant of a real drive/disk image */
     flags |= drive_flags & (FLOPPY_DRIVE_READY | FLOPPY_DRIVE_MOTOR_ON | FLOPPY_DRIVE_INDEX);
@@ -308,7 +277,7 @@ int	floppy_drive_get_flag_state(int id, int flag)
 	}
 
 	/* drive present not */
-	if (device_count(IO_FLOPPY) < id)
+	if (!image_slotexists(img))
 	{
 		/* adjust some flags if drive is not present */
 		flags &= ~FLOPPY_DRIVE_HEAD_AT_TRACK_0;
@@ -321,44 +290,40 @@ int	floppy_drive_get_flag_state(int id, int flag)
 }
 
 
-void	floppy_drive_set_geometry(int id, floppy_type type)
+void floppy_drive_set_geometry(mess_image *img, floppy_type type)
 {
-	if ((id<0) || (id>=MAX_DRIVES))
+	int max_track, num_sides;
+
+	switch (type) {
+	case FLOPPY_DRIVE_SS_40:	/* single sided, 40 track drive e.g. Amstrad CPC internal 3" drive */
+		max_track = 42;
+		num_sides = 1;
+		break;
+
+	case FLOPPY_DRIVE_DS_80:
+		max_track = 83;
+		num_sides = 2;
+		break;
+
+	default:
+		assert(0);
 		return;
-
-	switch (type)
-	{
-		/* single sided, 40 track drive e.g. Amstrad CPC internal 3" drive */
-		case FLOPPY_DRIVE_SS_40:
-		{
-			drives[id].max_track = 42;
-			drives[id].num_sides = 1;
-		}
-		break;
-
-		case FLOPPY_DRIVE_DS_80:
-		{
-			drives[id].max_track = 83;
-			drives[id].num_sides = 2;
-		}
-		break;
 	}
+	floppy_drive_set_geometry_absolute(img, max_track, num_sides);
 }
 
-void	floppy_drive_set_geometry_absolute(int id, int tracks, int sides)
+void floppy_drive_set_geometry_absolute(mess_image *img, int tracks, int sides)
 {
-	drives[id].max_track = tracks;
-	drives[id].num_sides = sides;
+	struct floppy_drive *pDrive = get_drive(img);
+	pDrive->max_track = tracks;
+	pDrive->num_sides = sides;
 }
 
-void    floppy_drive_seek(int id, signed int signed_tracks)
+void floppy_drive_seek(mess_image *img, signed int signed_tracks)
 {
 	struct floppy_drive *pDrive;
 
-	if ((id<0) || (id>=MAX_DRIVES))
-		return;
-
-	pDrive = &drives[id];
+	pDrive = get_drive(img);
 
 	logerror("seek from: %d delta: %d\n",pDrive->current_track, signed_tracks);
 
@@ -385,83 +350,82 @@ void    floppy_drive_seek(int id, signed int signed_tracks)
 
 	/* inform disk image of step operation so it can cache information */
 	if (pDrive->interface.seek_callback)
-		pDrive->interface.seek_callback(id, pDrive->current_track);
+		pDrive->interface.seek_callback(img, pDrive->current_track);
 
 }
 
 
 /* this is not accurate. But it will do for now */
-int	floppy_drive_get_next_id(int drive, int side, chrn_id *id)
+int	floppy_drive_get_next_id(mess_image *img, int side, chrn_id *id)
 {
+	struct floppy_drive *pDrive;
 	int spt;
+
+	pDrive = get_drive(img);
 
 	/* get sectors per track */
 	spt = 0;
-	if (drives[drive].interface.get_sectors_per_track)
-		spt = drives[drive].interface.get_sectors_per_track(drive, side);
+	if (pDrive->interface.get_sectors_per_track)
+		spt = pDrive->interface.get_sectors_per_track(img, side);
 
 	/* set index */
-	if ((drives[drive].id_index==(spt-1)) || (spt==0))
+	if ((pDrive->id_index==(spt-1)) || (spt==0))
 	{
-		floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_INDEX, 1);
+		floppy_drive_set_flag_state(img, FLOPPY_DRIVE_INDEX, 1);
 	}
 	else
 	{
-		floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_INDEX, 0);
+		floppy_drive_set_flag_state(img, FLOPPY_DRIVE_INDEX, 0);
 	}
 
 	/* get id */
 	if (spt!=0)
 	{
-		if (drives[drive].interface.get_id_callback)
-		{
-			drives[drive].interface.get_id_callback(drive, id, drives[drive].id_index, side);
-		}
+		if (pDrive->interface.get_id_callback)
+			pDrive->interface.get_id_callback(img, id, pDrive->id_index, side);
 	}
 
-	drives[drive].id_index++;
+	pDrive->id_index++;
 	if (spt!=0)
-	{
-		drives[drive].id_index %= spt;
-	}
+		pDrive->id_index %= spt;
 	else
-	{
-		drives[drive].id_index = 0;
-	}
+		pDrive->id_index = 0;
 
-	if (spt==0)
-		return 0;
-
-	return 1;
+	return (spt == 0) ? 0 : 1;
 }
 
-int	floppy_drive_get_current_track(int drive)
+int	floppy_drive_get_current_track(mess_image *img)
 {
-	return drives[drive].current_track;
+	struct floppy_drive *drv = get_drive(img);
+	return drv->current_track;
 }
 
-void	floppy_drive_read_track_data_info_buffer(int drive, int side, char *ptr, int *length )
+void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, char *ptr, int *length )
 {
-	if (drives[drive].interface.read_track_data_info_buffer)
-		drives[drive].interface.read_track_data_info_buffer(drive, side, ptr, length);
+	struct floppy_drive *drv = get_drive(img);
+	if (drv->interface.read_track_data_info_buffer)
+		drv->interface.read_track_data_info_buffer(img, side, ptr, length);
 }
 
-void	floppy_drive_format_sector(int drive, int side, int sector_index,int c,int h, int r, int n, int filler)
+void floppy_drive_format_sector(mess_image *img, int side, int sector_index,int c,int h, int r, int n, int filler)
 {
-	if (drives[drive].interface.format_sector)
-		drives[drive].interface.format_sector(drive, side, sector_index,c, h, r, n, filler);
+	struct floppy_drive *drv = get_drive(img);
+	if (drv->interface.format_sector)
+		drv->interface.format_sector(img, side, sector_index,c, h, r, n, filler);
 }
 
-void    floppy_drive_read_sector_data(int drive, int side, int index1, char *pBuffer, int length)
+void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length)
 {
-	if (drives[drive].interface.read_sector_data_into_buffer)
-		drives[drive].interface.read_sector_data_into_buffer(drive, side, index1, pBuffer,length);
+	struct floppy_drive *drv = get_drive(img);
+	if (drv->interface.read_sector_data_into_buffer)
+		drv->interface.read_sector_data_into_buffer(img, side, index1, pBuffer,length);
 }
 
-void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pBuffer,int length, int ddam)
+void floppy_drive_write_sector_data(mess_image *img, int side, int index1, char *pBuffer,int length, int ddam)
 {
-	if (drives[drive].interface.write_sector_data_from_buffer)
-		drives[drive].interface.write_sector_data_from_buffer(drive, side, index1, pBuffer,length,ddam);
+	struct floppy_drive *drv = get_drive(img);
+	if (drv->interface.write_sector_data_from_buffer)
+		drv->interface.write_sector_data_from_buffer(img, side, index1, pBuffer,length,ddam);
 }
 
 int floppy_drive_get_datarate_in_us(DENSITY density)

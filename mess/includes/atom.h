@@ -17,7 +17,7 @@ extern VIDEO_START( atom );
 extern READ_HANDLER (atom_8271_r);
 extern WRITE_HANDLER (atom_8271_w);
 
-extern int atom_floppy_init(int id, mame_file *fp, int open_mode);
+extern int atom_floppy_init(mess_image *img, mame_file *fp, int open_mode);
 
 extern READ_HANDLER(atom_via_r);
 extern WRITE_HANDLER(atom_via_w);

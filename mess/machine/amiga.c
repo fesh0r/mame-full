@@ -656,7 +656,7 @@ int amiga_fdc_init(int id)
 	return INIT_PASS;
 }
 
-int amiga_fdc_load(int id, mame_file *fp, int open_mode)
+int amiga_fdc_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	fdc_status[id].disk_changed = 1;
 	fdc_status[id].f = fp;

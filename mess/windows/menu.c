@@ -325,7 +325,7 @@ static void loadsave(int type)
 //	change_device
 //============================================================
 
-static void change_device(const struct IODevice *dev, int id)
+static void change_device(mess_image *img)
 {
 	OPENFILENAME ofn;
 	char filter[2048];
@@ -333,6 +333,7 @@ static void change_device(const struct IODevice *dev, int id)
 	char *s;
 	const char *ext;
 	const char *newfilename;
+	const struct IODevice *dev = image_device(img);
 
 	assert(dev);
 
@@ -365,14 +366,14 @@ static void change_device(const struct IODevice *dev, int id)
 
 	*(s++) = '\0';
 
-	if (image_exists(dev->type, id))
+	if (image_exists(img))
 	{
-		const char *img;
-		img = image_basename(dev->type, id);
+		const char *imgname;
+		imgname = image_basename(img);
 #ifdef UNICODE
-		mbstowcs(filename, img, strlen(img) + 1);
+		mbstowcs(filename, imgname, strlen(img) + 1);
 #else
-		strncpyz(filename, img, sizeof(filename) / sizeof(filename[0]));
+		strncpyz(filename, imgname, sizeof(filename) / sizeof(filename[0]));
 #endif
 	}
 	else
@@ -386,8 +387,8 @@ static void change_device(const struct IODevice *dev, int id)
 	ofn.lpstrFilter = A2T(filter);
 	ofn.lpstrFile = filename;
 
-	if (image_exists(dev->type, id))
-		ofn.lpstrInitialDir = A2T(image_filedir(dev->type, id));
+	if (image_exists(img))
+		ofn.lpstrInitialDir = A2T(image_filedir(img));
 	if (!ofn.lpstrInitialDir)
 		ofn.lpstrInitialDir = A2T(get_devicedirectory(dev->type));
 
@@ -421,7 +422,7 @@ static void change_device(const struct IODevice *dev, int id)
 		free(s);
 	}
 
-	image_load(dev->type, id, newfilename);
+	image_load(img, newfilename);
 }
 
 //============================================================
@@ -577,6 +578,7 @@ static void prepare_menus(void)
 	HMENU sub_menu;
 	UINT_PTR new_item;
 	UINT flags_for_exists;
+	mess_image *img;
 
 	if (!win_menu_bar)
 		return;
@@ -612,9 +614,12 @@ static void prepare_menus(void)
 	{
 		for (i = 0; i < dev->count; i++)
 		{
+			img = image_instance(dev->type, i);
+
 			new_item = ID_DEVICE_0 + ((dev->type * MAX_DEV_INSTANCES) + i) * DEVOPTION_MAX;
 			flags_for_exists = MF_STRING;
-			if (!image_exists(dev->type, i))
+
+			if (!image_exists(img))
 				flags_for_exists |= MF_GRAYED;
 
 			sub_menu = CreateMenu();
@@ -625,7 +630,7 @@ static void prepare_menus(void)
 			if (dev->type == IO_CASSETTE)
 			{
 				int status;
-				status = device_status(IO_CASSETTE, i, -1);
+				status = device_status(img, -1);
 				append_menu(sub_menu, MF_SEPARATOR, 0, -1);
 				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? 0 : MF_CHECKED,	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
 				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? MF_CHECKED : 0,	new_item + DEVOPTION_CASSETTE_PLAYRECORD,	(status & WAVE_STATUS_WRITE_ONLY) ? UI_record : UI_play);
@@ -637,9 +642,9 @@ static void prepare_menus(void)
 #endif
 			}
 #endif /* HAS_WAVE */
-			s = image_exists(dev->type, i) ? image_filename(dev->type, i) : ui_getstring(UI_emptyslot);
+			s = image_exists(img) ? image_filename(img) : ui_getstring(UI_emptyslot);
 
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", device_typename_id(dev->type, i), s);
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", device_typename_id(img), s);
 			AppendMenu(device_menu, MF_POPUP, (UINT_PTR) sub_menu, A2T(buf));
 		}
 	}
@@ -700,33 +705,33 @@ static void toggle_fps(void)
 //	device_command
 //============================================================
 
-static void device_command(const struct IODevice *dev, int id, int devoption)
+static void device_command(mess_image *img, int devoption)
 {
 	switch(devoption) {
 	case DEVOPTION_MOUNT:
-		change_device(dev, id);
+		change_device(img);
 		break;
 
 	case DEVOPTION_UNMOUNT:
-		image_unload(dev->type, id);
+		image_unload(img);
 		break;
 
 	default:
-		switch(dev->type) {
+		switch(image_type(img)) {
 #if HAS_WAVE
 		case IO_CASSETTE:
 		{
 			int status;
-			status = device_status(IO_CASSETTE, id, -1);
+			status = device_status(img, -1);
 			switch(devoption) {
 			case DEVOPTION_CASSETTE_PLAYRECORD:
-				device_status(IO_CASSETTE, id, status | WAVE_STATUS_MOTOR_ENABLE);
+				device_status(img, status | WAVE_STATUS_MOTOR_ENABLE);
 				break;
 
 			case DEVOPTION_CASSETTE_STOPPAUSE:
 				if ((status & 1) == 0)
-					device_seek(IO_CASSETTE,id,0,SEEK_SET);
-				device_status(IO_CASSETTE, id, status & ~WAVE_STATUS_MOTOR_ENABLE);
+					device_seek(img, 0, SEEK_SET);
+				device_status(img, status & ~WAVE_STATUS_MOTOR_ENABLE);
 				break;
 
 #if USE_TAPEDLG
@@ -735,11 +740,11 @@ static void device_command(const struct IODevice *dev, int id, int devoption)
 				break;
 #else
 			case DEVOPTION_CASSETTE_REWIND:
-				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
+				device_seek(img, +11025, SEEK_CUR);
 				break;
 
 			case DEVOPTION_CASSETTE_FASTFORWARD:
-				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
+				device_seek(img, +11025, SEEK_CUR);
 				break;
 #endif
 			}
@@ -802,14 +807,32 @@ static void help_about_thissystem(void)
 }
 
 //============================================================
+//	decode_deviceoption
+//============================================================
+
+static mess_image *decode_deviceoption(int command, int *devoption)
+{
+	int type, id;
+	
+	command -= ID_DEVICE_0;
+	type = command / MAX_DEV_INSTANCES / DEVOPTION_MAX;
+	id = (command / DEVOPTION_MAX) % MAX_DEV_INSTANCES;
+
+	if (devoption)
+		*devoption = command % DEVOPTION_MAX;
+
+	return image_instance(type, id);
+}
+
+//============================================================
 //	invoke_command
 //============================================================
 
 static int invoke_command(UINT command)
 {
-	const struct IODevice *dev;
 	int handled = 1;
-	int dev_id, dev_command;
+	int dev_command;
+	mess_image *img;
 
 	switch(command) {
 	case ID_FILE_LOADSTATE:
@@ -909,11 +932,8 @@ static int invoke_command(UINT command)
 		}
 		else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
 		{
-			command -= ID_DEVICE_0;
-			dev = device_find(Machine->gamedrv, command / MAX_DEV_INSTANCES / DEVOPTION_MAX);
-			dev_id = (command / DEVOPTION_MAX) % MAX_DEV_INSTANCES;
-			dev_command = command % DEVOPTION_MAX;
-			device_command(dev, dev_id, dev_command);
+			img = decode_deviceoption(command, &dev_command);
+			device_command(img, dev_command);
 		}
 		else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
 		{

@@ -109,7 +109,7 @@ static tpc_t tpc;
 /*
 	Open a tape image
 */
-int ti990_tape_load(int id, mame_file *fp, int open_mode)
+int ti990_tape_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	tape_unit_t *t;
 

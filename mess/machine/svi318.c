@@ -354,7 +354,7 @@ READ_HANDLER (svi318_fdc_status_r)
 }
 
 
-int svi318_floppy_init(int id, mame_file *fp, int open_mode)
+int svi318_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	int size;
 

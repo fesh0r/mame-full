@@ -32,7 +32,7 @@ WRITE_HANDLER ( memorybp3_w );
 WRITE_HANDLER ( memorybp3_128_w );
 WRITE_HANDLER ( memorybp4_128_w );
 
-int bbcb_load_rom(int id, mame_file *fp, int open_mode);
+int bbcb_load_rom(mess_image *img, mame_file *fp, int open_mode);
 
 extern MACHINE_INIT( bbca );
 extern MACHINE_INIT( bbcb );

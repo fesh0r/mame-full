@@ -9,7 +9,7 @@
 #include "ui/mame32.h"
 #include "ui/resourcems.h"
 #include "mess.h"
-#include "config.h"
+#include "configms.h"
 #include "SmartListView.h"
 #include "SoftwareList.h"
 #include "windows/window.h"
@@ -300,7 +300,7 @@ static void MessReadMountedSoftware(int nGame)
 			this_software = selected_software;
 			while(this_software && *this_software)
 			{
-				s = strchr(this_software, ',');
+				s = strchr(this_software, IMAGE_SEPARATOR);
 				if (s)
 					*(s++) = '\0';
 				else
@@ -354,7 +354,7 @@ static void MessWriteMountedSoftware(int nGame)
 			continue;
 
 		if (pos > 0)
-			s[pos++] = ',';
+			s[pos++] = IMAGE_SEPARATOR;
 
 		strcpy(&s[pos], softwarename);
 		newsoftware[devtype] = s;

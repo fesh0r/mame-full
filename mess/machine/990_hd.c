@@ -159,7 +159,7 @@ static hdc_t hdc;
 /*
 	Initialize hard disk unit and open a hard disk image
 */
-int ti990_hd_load(int id, mame_file *fp, int open_mode)
+int ti990_hd_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	hd_unit_t *d;
 	disk_image_header header;

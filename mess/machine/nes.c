@@ -66,6 +66,11 @@ static void init_nes_core (void);
 static void ppu_reset (struct ppu_struct *ppu_);
 static void Write_PPU (int data);
 
+static mess_image *cartslot_image(void)
+{
+	return image_instance(IO_CARTSLOT, 0);
+}
+
 static void init_nes_core (void)
 {
 	/* We set these here in case they weren't set in the cart loader */
@@ -188,7 +193,7 @@ MACHINE_STOP( nes )
 {
 	/* Write out the battery file if necessary */
 	if (nes.battery)
-		battery_save(image_filename(IO_CARTSLOT, 0), battery_ram, BATTERY_SIZE);
+		image_battery_save(cartslot_image(), battery_ram, BATTERY_SIZE);
 }
 
 static void ppu_reset (struct ppu_struct *_ppu)
@@ -1081,7 +1086,7 @@ end:
 	PPU_address += PPU_add;
 }
 
-int nes_cart_load(int id, mame_file *romfile, int open_mode)
+int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 {
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
@@ -1099,7 +1104,7 @@ int nes_cart_load(int id, mame_file *romfile, int open_mode)
 		(magic[2] != 'S'))
 		goto bad;
 
-	mapinfo = image_extrainfo(IO_CARTSLOT,id);
+	mapinfo = image_extrainfo(img);
 	if (mapinfo)
 	{
 		if (4 == sscanf(mapinfo,"%d %d %d %d",&mapint1,&mapint2,&mapint3,&mapint4))
@@ -1249,7 +1254,7 @@ int nes_cart_load(int id, mame_file *romfile, int open_mode)
 	/* Attempt to load a battery file for this ROM. If successful, we */
 	/* must wait until later to move it to the system memory. */
 	if (nes.battery)
-		battery_load(image_filename(IO_CARTSLOT,id), battery_data, BATTERY_SIZE);
+		image_battery_load(img, battery_data, BATTERY_SIZE);
 
 	famicom_image_registered = 1;
 	return INIT_PASS;
@@ -1271,7 +1276,7 @@ UINT32 nes_partialcrc(const unsigned char *buf, size_t size)
 	return crc;
 }
 
-int nes_disk_load(int id, mame_file *diskfile, int open_mode)
+int nes_disk_load(mess_image *img, mame_file *diskfile, int open_mode)
 {
 	unsigned char magic[4];
 
@@ -1304,7 +1309,7 @@ int nes_disk_load(int id, mame_file *diskfile, int open_mode)
 	while (!mame_feof (diskfile))
 	{
 		nes_fds.sides ++;
-		nes_fds.data = image_realloc(IO_FLOPPY, id, nes_fds.data, nes_fds.sides * 65500);
+		nes_fds.data = image_realloc(img, nes_fds.data, nes_fds.sides * 65500);
 		if (!nes_fds.data)
 			return INIT_FAIL;
 		mame_fread (diskfile, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
@@ -1312,7 +1317,7 @@ int nes_disk_load(int id, mame_file *diskfile, int open_mode)
 
 	/* adjust for eof */
 	nes_fds.sides --;
-	nes_fds.data = image_realloc(IO_FLOPPY, id, nes_fds.data, nes_fds.sides * 65500);
+	nes_fds.data = image_realloc(img, nes_fds.data, nes_fds.sides * 65500);
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);
 
@@ -1324,7 +1329,7 @@ int nes_disk_load(int id, mame_file *diskfile, int open_mode)
 	return 1;
 }
 
-void nes_disk_unload (int id)
+void nes_disk_unload(mess_image *img)
 {
 	/* TODO: should write out changes here as well */
 	nes_fds.data = NULL;

@@ -25,7 +25,7 @@ UINT8 STAT; 			/* returned when port 249 read */
 
 extern UINT8 *sam_screen;
 
-int coupe_floppy_init(int id, mame_file *fp, int open_mode)
+int coupe_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{

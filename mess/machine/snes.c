@@ -83,7 +83,7 @@ static void snes_load_sram(void)
 
 	battery_ram = (UINT8 *)malloc( cart.sram_max );
 	ptr = battery_ram;
-	battery_load( image_filename(IO_CARTSLOT,0), battery_ram, cart.sram_max );
+	image_battery_load( image_instance(IO_CARTSLOT,0), battery_ram, cart.sram_max );
 
 	if( cart.mode == SNES_MODE_20 )
 	{
@@ -131,7 +131,7 @@ static void snes_save_sram(void)
 		}
 	}
 
-	battery_save( image_filename(IO_CARTSLOT,0), battery_ram, cart.sram_max );
+	image_battery_save( image_instance(IO_CARTSLOT,0), battery_ram, cart.sram_max );
 
 	free( battery_ram );
 }
@@ -1073,7 +1073,7 @@ static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 	return valid;
 }
 
-int snes_cart_load(int id, mame_file *file, int open_mode)
+int snes_cart_load(mess_image *img, mame_file *file, int open_mode)
 {
 	int i;
 	UINT16 totalblocks, readblocks;
@@ -1147,7 +1147,7 @@ int snes_cart_load(int id, mame_file *file, int open_mode)
 		 * actual rom size, we probably have a header */
 		logerror( "Found header(size) - Skipped\n" );
 	}
-	else if( (image_length( IO_CARTSLOT, id ) % 0x8000) == 512 )
+	else if( (image_length(img) % 0x8000) == 512 )
 	{
 		/* As a last check we'll see if there's exactly 512 bytes extra to this
 		 * image. */

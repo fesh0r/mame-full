@@ -6,7 +6,7 @@
 struct bitbanger_config
 {
 	/* filter function; returns non-zero if input accepted */
-	int (*filter)(int id, const int *pulses, int total_pulses, int total_duration);
+	int (*filter)(mess_image *img, const int *pulses, int total_pulses, int total_duration);
 	double pulse_threshhold;			/* the maximum duration pulse that we will consider */
 	double pulse_tolerance;				/* deviation tolerance for pulses */
 	int minimum_pulses;					/* the minimum amount of pulses before we start analyzing */

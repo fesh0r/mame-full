@@ -87,7 +87,7 @@ void artwork_set_overlay(const struct overlay_piece *overlist);
 void artwork_show(const char *tag, int show);
 
 #ifdef MESS
-void artwork_use_device_art(int device_type, int device_id, const char *defaultartfile);
+void artwork_use_device_art(mess_image *img, const char *defaultartfile);
 #endif /* MESS */
 
 #endif

@@ -88,7 +88,7 @@ static UINT32 mess_hard_disk_write(void *file, UINT64 offset, UINT32 count, cons
 		master is supported now)
 	intf: ide_interface required by the idectrl.c core
 */
-int ide_hd_load(int id, mame_file *fp, int open_mode, int which_bus, int which_address, struct ide_interface *intf)
+int ide_hd_load(mess_image *img, mame_file *fp, int open_mode, int which_bus, int which_address, struct ide_interface *intf)
 {
 	assert(which_address == 0);
 
@@ -97,7 +97,7 @@ int ide_hd_load(int id, mame_file *fp, int open_mode, int which_bus, int which_a
 	ide_fp = fp;
 	ide_fp_wp = ! is_effective_mode_writable(open_mode);
 
-	ide_hard_disk_handle = hard_disk_open(image_filename(IO_HARDDISK, id), is_effective_mode_writable(open_mode), NULL);
+	ide_hard_disk_handle = hard_disk_open(image_filename(img), is_effective_mode_writable(open_mode), NULL);
 	if (ide_hard_disk_handle != NULL)
 	{
 		ide_controller_init_custom(which_bus, intf, ide_hard_disk_handle);
@@ -119,7 +119,7 @@ int ide_hd_load(int id, mame_file *fp, int open_mode, int which_bus, int which_a
 		master is supported now)
 	intf: ide_interface required by the idectrl.c core
 */
-void ide_hd_unload(int id, int which_bus, int which_address, struct ide_interface *intf)
+void ide_hd_unload(mess_image *img, int which_bus, int which_address, struct ide_interface *intf)
 {
 	assert(which_address == 0);
 

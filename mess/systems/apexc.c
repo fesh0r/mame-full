@@ -46,7 +46,7 @@ cylinder apexc_cylinder;
 /*
 	Open cylinder image and read RAM
 */
-static int apexc_cylinder_load(int id, mame_file *fp, int open_mode)
+static int apexc_cylinder_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/* open file */
 	apexc_cylinder.fd = fp;
@@ -154,7 +154,7 @@ tape apexc_tapes[2];
 /*
 	Open a tape image
 */
-static int apexc_tape_load(int id, mame_file *fp, int open_mode)
+static int apexc_tape_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	tape *t = &apexc_tapes[id];
 

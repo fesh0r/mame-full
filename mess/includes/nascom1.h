@@ -1,6 +1,6 @@
 /* machine/nascom1.c */
 extern MACHINE_INIT( nascom1 );
-extern int nascom1_cassette_load (int id, mame_file *fp, int open_mode);
+extern int nascom1_cassette_load (mess_image *img, mame_file *fp, int open_mode);
 extern void nascom1_cassette_unload (int id);
 extern int nascom1_read_cassette (void);
 extern int nascom1_init_cartridge (int id, mame_file *fp);

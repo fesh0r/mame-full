@@ -5,51 +5,50 @@
 #include "image.h"
 #include "utils.h"
 
+#define BDFTAG		"mess_bdf"
+
 struct mess_bdf
 {
 	void *bdf;
 	int track, sector;
 };
 
-struct mess_bdf bdfs[5];
-
 /* ----------------------------------------------------------------------- */
 
-static struct mess_bdf *get_messbdf(int drive)
+static struct mess_bdf *get_messbdf(mess_image *img)
 {
-	if ((drive >= (sizeof(bdfs) / sizeof(bdfs[0]))) || !bdfs[drive].bdf)
-		return NULL;
-	else
-		return &bdfs[drive];
+	struct mess_bdf *bdf;
+	bdf = image_lookuptag(img, BDFTAG);
+	return bdf->bdf ? bdf : NULL;
 }
 
-static void bdf_seek_callback(int drive, int physical_track)
+static void bdf_seek_callback(mess_image *img, int physical_track)
 {
 	struct mess_bdf *messbdf;
 	
-	messbdf = get_messbdf(drive);
+	messbdf = get_messbdf(img);
 	if (messbdf)
 		messbdf->track = physical_track;
 }
 
-static int bdf_get_sectors_per_track(int drive, int side)
+static int bdf_get_sectors_per_track(mess_image *img, int side)
 {
 	struct mess_bdf *messbdf;
 	
-	messbdf = get_messbdf(drive);
+	messbdf = get_messbdf(img);
 	if (!messbdf)
 		return 0;
 	
 	return bdf_get_sector_count(messbdf->bdf, messbdf->track, side);
 }
 
-static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
+static void bdf_get_id_callback(mess_image *img, chrn_id *id, int id_index, int side)
 {
 	struct mess_bdf *messbdf;
 	UINT16 sector_size;
 	UINT8 sector;
 	
-	messbdf = get_messbdf(drive);
+	messbdf = get_messbdf(img);
 
 	bdf_get_sector_info(messbdf->bdf, messbdf->track, side, id_index, &sector, &sector_size);
 	id->C = messbdf->track;
@@ -81,17 +80,17 @@ static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	}
 }
 
-static void bdf_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length)
+static void bdf_read_sector_data_into_buffer(mess_image *img, int side, int index1, char *ptr, int length)
 {
 	struct mess_bdf *messbdf;
-	messbdf = get_messbdf(drive);
+	messbdf = get_messbdf(img);
 	bdf_read_sector(messbdf->bdf, messbdf->track, side, index1, 0, ptr, length);
 }
 
-static void bdf_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length,int ddam)
+static void bdf_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length,int ddam)
 {
 	struct mess_bdf *messbdf;
-	messbdf = get_messbdf(drive);
+	messbdf = get_messbdf(img);
 	bdf_write_sector(messbdf->bdf, messbdf->track, side, index1, 0, ptr, length);
 }
 
@@ -139,27 +138,30 @@ static floppy_interface bdf_floppy_interface =
 	NULL
 };
 
-static int bdf_floppy_init(int id)
+static int bdf_floppy_init(mess_image *img)
 {
-	return floppy_drive_init(id, &bdf_floppy_interface);
+	if (!image_alloctag(img, BDFTAG, sizeof(struct mess_bdf)))
+		return INIT_FAIL;
+	return floppy_drive_init(img, &bdf_floppy_interface);
 }
 
-static int bdf_floppy_load_internal(int id, void *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, mame_file *fp, int open_mode)
+static int bdf_floppy_load_internal(mess_image *img, mame_file *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, mame_file *fp, int open_mode)
 {
 	const char *name;
 	const char *ext;
 	formatdriver_ctor fmts[2];
-	int device_type = IO_FLOPPY;
 	int err;
-	
-	assert(id < (sizeof(bdfs) / sizeof(bdfs[0])));
-	memset(&bdfs[id], 0, sizeof(bdfs[id]));
+	struct mess_bdf *messbdf;
 
-	name = image_filename(device_type, id);
+	messbdf = image_lookuptag(img, BDFTAG);
+
+	memset(messbdf, 0, sizeof(*messbdf));
+
+	name = image_filename(img);
 
 	if (mode == OSD_FOPEN_RW_CREATE)
 	{
-		err = bdf_create(&mess_bdf_procs, create_format, file, NULL, &bdfs[id].bdf);
+		err = bdf_create(&mess_bdf_procs, create_format, file, NULL, &messbdf->bdf);
 	}
 	else
 	{
@@ -169,8 +171,8 @@ static int bdf_floppy_load_internal(int id, void *file, int mode, const formatdr
 			fmts[1] = NULL;
 			open_formats = fmts;				
 		}
-		ext = image_filetype(device_type, id);
-		err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &bdfs[id].bdf);
+		ext = image_filetype(img);
+		err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &messbdf->bdf);
 	}
 	if (err)
 		return INIT_FAIL;
@@ -178,7 +180,7 @@ static int bdf_floppy_load_internal(int id, void *file, int mode, const formatdr
 	return INIT_PASS;
 }
 
-static int bdf_floppy_load(int id, mame_file *fp, int open_mode)
+static int bdf_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	const struct IODevice *dev;
 	const formatdriver_ctor *open_formats;
@@ -190,15 +192,18 @@ static int bdf_floppy_load(int id, mame_file *fp, int open_mode)
 	open_formats = (const formatdriver_ctor *) dev->user1;
 	create_format = (formatdriver_ctor) dev->user2;
 
-	return bdf_floppy_load_internal(id, fp, open_mode, open_formats, create_format, fp, open_mode);
+	return bdf_floppy_load_internal(img, fp, open_mode, open_formats, create_format, fp, open_mode);
 }
 
-static void bdf_floppy_unload(int id)
+static void bdf_floppy_unload(mess_image *img)
 {
-	if (bdfs[id].bdf)
+	struct mess_bdf *messbdf;
+	messbdf = image_lookuptag(img, BDFTAG);
+
+	if (messbdf->bdf)
 	{
-		bdf_close(bdfs[id].bdf);
-		memset(&bdfs[id], 0, sizeof(bdfs[id]));
+		bdf_close(messbdf->bdf);
+		memset(messbdf, 0, sizeof(*messbdf));
 	}
 }
 

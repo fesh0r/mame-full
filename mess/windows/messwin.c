@@ -379,11 +379,11 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 
 }
 
-int osd_select_file(int type, int id, char *filename)
+int osd_select_file(mess_image *img, char *filename)
 {
 	return 0;
 }
 
-void osd_image_load_status_changed(int type, int id, int is_final_unload)
+void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }

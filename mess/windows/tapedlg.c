@@ -61,12 +61,15 @@ static void CALLBACK tapedialog_timerproc(HWND dialog, UINT msg, UINT_PTR ideven
 	int id;
 	int curpos, endpos;
 	char tapestatus[32];
+	mess_image *img;
 
 	dlg = get_tapedialog(dialog);
 	id = dlg - tape_dialogs;
 
+	img = image_instance(IO_CASSETTE, id);
+
 	tapecontrol_gettime(tapestatus, sizeof(tapestatus) / sizeof(tapestatus[0]),
-		id, &curpos, &endpos);
+		img, &curpos, &endpos);
 
 	SendMessage(dlg->slider, TBM_SETRANGEMIN, FALSE, 0);
 	SendMessage(dlg->slider, TBM_SETRANGEMAX, FALSE, endpos);

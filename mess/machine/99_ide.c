@@ -83,9 +83,9 @@ static void ide_interrupt_callback(int state)
 /*
 	Load an IDE image
 */
-int ti99_ide_load(int id, mame_file *fp, int open_mode)
+int ti99_ide_load(mess_image *img, mame_file *fp, int open_mode)
 {
-	return ide_hd_load(id, fp, open_mode, 0, 0, & ti99_ide_interface);
+	return ide_hd_load(img, fp, open_mode, 0, 0, &ti99_ide_interface);
 }
 
 /*

@@ -36,8 +36,8 @@ typedef struct
 } d88image;
 
 
-int d88image_floppy_init(int id);
-int d88image_floppy_load(int id, mame_file *fp, int open_mode);
+int d88image_floppy_init(mess_image *img);
+int d88image_floppy_load(mess_image *img, mame_file *fp, int open_mode);
 
 /* check write protect */
 void d88image_get_write_protect(int id);

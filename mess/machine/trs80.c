@@ -246,7 +246,7 @@ extern QUICKLOAD_LOAD( trs80_cmd )
 	return INIT_PASS;
 }
 
-int trs80_floppy_init(int id, mame_file *fp, int open_mode)
+int trs80_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	static UINT8 pdrive[4*16];
 	int i;

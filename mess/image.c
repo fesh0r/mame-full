@@ -8,7 +8,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-static mame_file *image_fopen_new(int type, int id, int *effective_mode);
+static mame_file *image_fopen_new(mess_image *img, int *effective_mode);
 
 enum
 {
@@ -16,8 +16,12 @@ enum
 	IMAGE_STATUS_ISLOADED	= 2
 };
 
-struct image_info
+struct _mess_image
 {
+	/* variables that persist across image mounts */
+	tag_pool tagpool;
+
+	/* variables that are only non-zero when an image is mounted */
 	mame_file *fp;
 	UINT32 status;
 	char *name;
@@ -32,111 +36,98 @@ struct image_info
 	memory_pool mempool;
 };
 
-static struct image_info images[IO_COUNT][MAX_DEV_INSTANCES];
+static struct _mess_image images[IO_COUNT][MAX_DEV_INSTANCES];
 
 /* ----------------------------------------------------------------------- */
 
-static struct image_info *get_image(int type, int id)
-{
-	assert((type >= 0) && (type < IO_COUNT));
-	assert((id >= 0) && (id < MAX_DEV_INSTANCES));
-	return &images[type][id];
-}
-
-/* ----------------------------------------------------------------------- */
-
-int image_init(int type, int id)
+int image_init(mess_image *img)
 {
 	int err;
 	const struct IODevice *iodev;
 	
-	iodev = device_find(Machine->gamedrv, type);
+	memset(img, 0, sizeof(*img));
 
+	tagpool_init(&img->tagpool);
+
+	iodev = image_device(img);
 	if (iodev->init)
 	{
-		err = iodev->init(id);
+		err = iodev->init(img);
 		if (err != INIT_PASS)
 			return err;
 	}
 	return INIT_PASS;
 }
 
-void image_exit(int type, int id)
+void image_exit(mess_image *img)
 {
 	const struct IODevice *iodev;	
-	iodev = device_find(Machine->gamedrv, type);
+
+	iodev = image_device(img);
 	if (iodev->exit)
-		iodev->exit(id);
+		iodev->exit(img);
+
+	tagpool_exit(&img->tagpool);
 }
 
 /* ----------------------------------------------------------------------- */
 
-void *image_malloc(int type, int id, size_t size)
+void *image_malloc(mess_image *img, size_t size)
 {
-	struct image_info *img;
-	img = get_image(type, id);
 	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
 	return pool_malloc(&img->mempool, size);
 }
 
-void *image_realloc(int type, int id, void *ptr, size_t size)
+void *image_realloc(mess_image *img, void *ptr, size_t size)
 {
-	struct image_info *img;
-	img = get_image(type, id);
 	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
 	return pool_realloc(&img->mempool, ptr, size);
 }
 
-char *image_strdup(int type, int id, const char *src)
+char *image_strdup(mess_image *img, const char *src)
 {
-	struct image_info *img;
-	img = get_image(type, id);
 	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
 	return pool_strdup(&img->mempool, src);
 }
 
-void image_freeptr(int type, int id, void *ptr)
+void image_freeptr(mess_image *img, void *ptr)
 {
-	struct image_info *img;
-	img = get_image(type, id);
 	pool_freeptr(&img->mempool, ptr);
 }
 
-static void image_free_resources(struct image_info *img)
+void *image_alloctag(mess_image *img, const char *tag, size_t size)
 {
-	if (img->fp)
-	{
-		mame_fclose(img->fp);
-		img->fp = NULL;
-	}
-	pool_exit(&img->mempool);
+	return tagpool_alloc(&img->tagpool, tag, size);
+}
+
+void *image_lookuptag(mess_image *img, const char *tag)
+{
+	return tagpool_lookup(&img->tagpool, tag);
 }
 
 /* ----------------------------------------------------------------------- */
 
-int image_load(int type, int id, const char *name)
+int image_load(mess_image *img, const char *name)
 {
 	const struct IODevice *dev;
 	char *newname;
-	struct image_info *img;
 	int err = INIT_PASS;
 	int effective_mode;
 	mame_file *fp = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
-
-	img = get_image(type, id);
+	int type = image_type(img);
 
 	dev = device_find(Machine->gamedrv, type);
 	assert(dev);
 
 	if (img->status & IMAGE_STATUS_ISLOADED)
-		image_unload(type, id);
+		image_unload(img);
 	img->status |= IMAGE_STATUS_ISLOADING;
 
 	if (name && *name)
 	{
-		newname = image_strdup(type, id, name);
+		newname = image_strdup(img, name);
 		if (!newname)
 			goto error;
 	}
@@ -146,21 +137,18 @@ int image_load(int type, int id, const char *name)
 	img->name = newname;
 	img->dir = NULL;
 
-	osd_image_load_status_changed(type, id, 0);
-
-	if (!dev->load)
-		goto error;
+	osd_image_load_status_changed(img, 0);
 
 	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
-	if ((dev->open_mode == OSD_FOPEN_NONE) || !image_exists(type, id))
+	if ((dev->open_mode == OSD_FOPEN_NONE) || !image_exists(img))
 	{
 		fp = NULL;
 	}
 	else
 	{
-		fp = image_fopen_new(type, id, &effective_mode);
+		fp = image_fopen_new(img, &effective_mode);
 		if (fp == NULL)
 			goto error;
 	}
@@ -187,9 +175,12 @@ int image_load(int type, int id, const char *name)
 	}
 
 	/* call device load */
-	err = dev->load(id, fp, effective_mode);
-	if (err)
-		goto error;
+	if (dev->load)
+	{
+		err = dev->load(img, fp, effective_mode);
+		if (err)
+			goto error;
+	}
 
 	img->status &= ~IMAGE_STATUS_ISLOADING;
 	img->status |= IMAGE_STATUS_ISLOADED;
@@ -207,17 +198,16 @@ error:
 		img->status &= ~IMAGE_STATUS_ISLOADING|IMAGE_STATUS_ISLOADED;
 	}
 
-	osd_image_load_status_changed(type, id, 0);
+	osd_image_load_status_changed(img, 0);
 
 	return INIT_FAIL;
 }
 
-static void image_unload_internal(int type, int id, int is_final_unload)
+static void image_unload_internal(mess_image *img, int is_final_unload)
 {
 	const struct IODevice *dev;
-	struct image_info *img;
+	int type = image_type(img);
 
-	img = get_image(type, id);
 	if ((img->status & IMAGE_STATUS_ISLOADED) == 0)
 		return;
 
@@ -225,24 +215,40 @@ static void image_unload_internal(int type, int id, int is_final_unload)
 	assert(dev);
 
 	if (dev->unload)
-		dev->unload(id);
+		dev->unload(img);
 
-	image_free_resources(img);
-	memset(img, 0, sizeof(*img));
+	if (img->fp)
+	{
+		mame_fclose(img->fp);
+		img->fp = NULL;
+	}
+	pool_exit(&img->mempool);
 
-	osd_image_load_status_changed(type, id, is_final_unload);
+	img->status = 0;
+	img->name = NULL;
+	img->dir = NULL;
+	img->crc = 0;
+	img->length = 0;
+	img->longname = NULL;
+	img->manufacturer = NULL;
+	img->year = NULL;
+	img->playable = NULL;
+	img->extrainfo = NULL;
+
+	osd_image_load_status_changed(img, is_final_unload);
 }
 
 
-void image_unload(int type, int id)
+void image_unload(mess_image *img)
 {
-	image_unload_internal(type, id, FALSE);
+	image_unload_internal(img, FALSE);
 }
 
 void image_unload_all(int ispreload)
 {
 	int id;
 	const struct IODevice *dev;
+	mess_image *img;
 
 	if (!ispreload)
 		osd_begin_final_unloading();
@@ -258,8 +264,10 @@ void image_unload_all(int ispreload)
 			/* all instances */
 			for( id = 0; id < dev->count; id++ )
 			{
+				img = image_instance(dev->type, id);
+
 				/* unload this image */
-				image_unload_internal(dev->type, id, TRUE);
+				image_unload_internal(img, TRUE);
 			}
 		}
 	}
@@ -267,11 +275,10 @@ void image_unload_all(int ispreload)
 
 /* ----------------------------------------------------------------------- */
 
-static int read_crc_config(const char *sysname, int type, int id)
+static int read_crc_config(const char *sysname, mess_image *img)
 {
 	int rc = 1;
 	config_file *config;
-	struct image_info *img;
 	char line[1024];
 	char crc[9+1];
 
@@ -279,7 +286,6 @@ static int read_crc_config(const char *sysname, int type, int id)
 	if (!config)
 		goto done;
 
-	img = get_image(type, id);
 	snprintf(crc, sizeof(crc) / sizeof(crc[0]), "%08x", img->crc);
 	config_load_string(config, sysname, 0, crc, line, sizeof(line));
 
@@ -287,11 +293,11 @@ static int read_crc_config(const char *sysname, int type, int id)
 		goto done;
 
 	logerror("found CRC %s= %s\n", crc, line);
-	img->longname		= image_strdup(type, id, stripspace(strtok(line, "|")));
-	img->manufacturer	= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-	img->year			= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-	img->playable		= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-	img->extrainfo		= image_strdup(type, id, stripspace(strtok(NULL, "|")));
+	img->longname		= image_strdup(img, stripspace(strtok(line, "|")));
+	img->manufacturer	= image_strdup(img, stripspace(strtok(NULL, "|")));
+	img->year			= image_strdup(img, stripspace(strtok(NULL, "|")));
+	img->playable		= image_strdup(img, stripspace(strtok(NULL, "|")));
+	img->extrainfo		= image_strdup(img, stripspace(strtok(NULL, "|")));
 	rc = 0;
 
 done:
@@ -301,14 +307,12 @@ done:
 }
 
 
-mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
+mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 {
-	struct image_info *img;
 	const char *sysname;
 	mame_file *file;
 	char buffer[512];
 
-	img = get_image(type, id);
 	assert(img);
 
 	if (!img->name)
@@ -324,8 +328,6 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 
 	if (file)
 	{
-		const struct IODevice *pc_dev = device_first(Machine->gamedrv);
-
 		/* is this file actually a zip file? */
 		if ((mame_fread(file, buffer, 4) == 4) && (buffer[0] == 0x50)
 			&& (buffer[1] == 0x4B) && (buffer[2] == 0x03) && (buffer[3] == 0x04))
@@ -343,7 +345,7 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 
 				buffer[fname_length] = '\0';
 
-				newname = image_malloc(type, id, strlen(img->name) + 1 + fname_length + 1);
+				newname = image_malloc(img, strlen(img->name) + 1 + fname_length + 1);
 				if (!newname)
 					return NULL;
 
@@ -354,7 +356,7 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 				if (!file)
 					return NULL;
 
-				image_freeptr(type, id, img->name);
+				image_freeptr(img, img->name);
 				img->name = newname;
 			}
 		}
@@ -364,10 +366,13 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 		img->length = mame_fsize(file);
 /* Cowering, partial crcs for NES/A7800/others */
 		img->crc = 0;
-		while( pc_dev && pc_dev->count && !img->crc)
+
+		if (!img->crc)
 		{
-			logerror("partialcrc() -> %08lx\n", (long) pc_dev->partialcrc);
-			if( type == pc_dev->type && pc_dev->partialcrc )
+			const struct IODevice *pc_dev;
+
+			pc_dev = device_find(Machine->gamedrv, image_type(img));
+			if (pc_dev && pc_dev->partialcrc)
 			{
 				unsigned char *pc_buf = (unsigned char *)malloc(img->length);
 				if( pc_buf )
@@ -384,7 +389,6 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 					logerror("failed to malloc(%d)\n", img->length);
 				}
 			}
-			pc_dev = device_next(Machine->gamedrv, pc_dev);
 		}
 
 		if (!img->crc) img->crc = mame_fcrc(file);
@@ -395,21 +399,19 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 			logerror("image_fopen: CRC is %08x\n", img->crc);
 		}
 
-		read_crc_config(sysname, type, id);
+		read_crc_config(sysname, img);
 	}
 
 	return file;
 }
 
-static mame_file *image_fopen_new(int type, int id, int *effective_mode)
+static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
 {
 	mame_file *fref;
 	int effective_mode_local;
 	const struct IODevice *dev;
 
-	dev = device_find(Machine->gamedrv, type);
-	assert(dev);
-	assert(id < dev->count);
+	dev = image_device(img);
 
 	switch (dev->open_mode) {
 	case OSD_FOPEN_NONE:
@@ -425,35 +427,35 @@ static mame_file *image_fopen_new(int type, int id, int *effective_mode)
 	case OSD_FOPEN_RW:
 	case OSD_FOPEN_RW_CREATE:
 		/* supported modes */
-		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, dev->open_mode);
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, dev->open_mode);
 		effective_mode_local = dev->open_mode;
 		break;
 
 	case OSD_FOPEN_RW_OR_READ:
 		/* R/W or read-only: emulated mode */
-		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_RW);
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_RW;
 		else
 		{
-			fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
+			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
 			effective_mode_local = OSD_FOPEN_READ;
 		}
 		break;
 
 	case OSD_FOPEN_RW_CREATE_OR_READ:
 		/* R/W, read-only, or create new R/W image: emulated mode */
-		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_RW);
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_RW;
 		else
 		{
-			fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
+			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if (fref)
 				effective_mode_local = OSD_FOPEN_READ;
 			else
 			{
-				fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				effective_mode_local = OSD_FOPEN_RW_CREATE;
 			}
 		}
@@ -461,12 +463,12 @@ static mame_file *image_fopen_new(int type, int id, int *effective_mode)
 
 	case OSD_FOPEN_READ_OR_WRITE:
 		/* read or write: emulated mode */
-		fref = image_fopen_custom(type, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_READ;
 		else
 		{
-			fref = image_fopen_custom(type, id, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
+			fref = image_fopen_custom(img, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
 			effective_mode_local = OSD_FOPEN_WRITE;
 		}
 		break;
@@ -480,92 +482,187 @@ static mame_file *image_fopen_new(int type, int id, int *effective_mode)
 
 /* ----------------------------------------------------------------------- */
 
-const char *image_filename(int type, int id)
+const char *image_filename(mess_image *img)
 {
-	return get_image(type, id)->name;
+	return img->name;
 }
 
-const char *image_basename(int type, int id)
+const char *image_basename(mess_image *img)
 {
-	return osd_basename((char *) image_filename(type, id));
+	return osd_basename((char *) image_filename(img));
 }
 
-const char *image_filetype(int type, int id)
+const char *image_filetype(mess_image *img)
 {
 	const char *s;
-	s = image_filename(type, id);
+	s = image_filename(img);
 	if (s)
 		s = strrchr(s, '.');
 	return s ? s+1 : NULL;
 }
 
-const char *image_filedir(int type, int id)
+const char *image_filedir(mess_image *img)
 {
-	struct image_info *info;
 	char *s;
 
-	info = get_image(type, id);
-	if (!info->dir)
+	if (!img->dir)
 	{
-		info->dir = image_strdup(type, id, info->name);
-		if (info->dir)
+		img->dir = image_strdup(img, img->name);
+		if (img->dir)
 		{
-			s = info->dir + strlen(info->dir);
-			while(--s > info->dir)
+			s = img->dir + strlen(img->dir);
+			while(--s > img->dir)
 			{
 				if (strchr("\\/:", *s))
 				{
 					*s = '\0';
-					if (osd_get_path_info(FILETYPE_IMAGE, 0, info->dir) == PATH_IS_DIRECTORY)
+					if (osd_get_path_info(FILETYPE_IMAGE, 0, img->dir) == PATH_IS_DIRECTORY)
 						break;
 				}
 			}
 		}
 	}
-	return info->dir;
+	return img->dir;
 }
 
-int image_exists(int type, int id)
+int image_exists(mess_image *img)
 {
-	return image_filename(type, id) != NULL;
+	return image_filename(img) != NULL;
 }
 
-unsigned int image_length(int type, int id)
+unsigned int image_length(mess_image *img)
 {
-	return get_image(type, id)->length;
+	return img->length;
 }
 
-unsigned int image_crc(int type, int id)
+unsigned int image_crc(mess_image *img)
 {
-	return get_image(type, id)->crc;
+	return img->crc;
 }
 
-const char *image_longname(int type, int id)
+const char *image_longname(mess_image *img)
 {
-	return get_image(type, id)->longname;
+	return img->longname;
 }
 
-const char *image_manufacturer(int type, int id)
+const char *image_manufacturer(mess_image *img)
 {
-	return get_image(type, id)->manufacturer;
+	return img->manufacturer;
 }
 
-const char *image_year(int type, int id)
+const char *image_year(mess_image *img)
 {
-	return get_image(type, id)->year;
+	return img->year;
 }
 
-const char *image_playable(int type, int id)
+const char *image_playable(mess_image *img)
 {
-	return get_image(type, id)->playable;
+	return img->playable;
 }
 
-const char *image_extrainfo(int type, int id)
+const char *image_extrainfo(mess_image *img)
 {
-	return get_image(type, id)->extrainfo;
+	return img->extrainfo;
 }
 
-mame_file *image_fp(int type, int id)
+mame_file *image_fp(mess_image *img)
 {
-	return get_image(type, id)->fp;
+	return img->fp;
 }
+
+int image_type(mess_image *img)
+{
+	return (img - &images[0][0]) / MAX_DEV_INSTANCES;
+}
+
+int image_index(mess_image *img)
+{
+	assert(img);
+	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
+}
+
+mess_image *image_instance(int type, int id)
+{
+	assert(id < device_count(type));
+	return &images[type][id];
+}
+
+const struct IODevice *image_device(mess_image *img)
+{
+	return device_find(Machine->gamedrv, image_type(img));
+}
+
+int image_slotexists(mess_image *img)
+{
+	return image_index(img) < device_count(image_type(img));
+}
+
+/***************************************************************************
+
+	Battery code
+
+***************************************************************************/
+
+static char *battery_nvramfilename(mess_image *img)
+{
+	const char *filename;
+	filename = image_filename(img);
+	return strip_extension(osd_basename((char *) filename));
+}
+
+/* load battery backed nvram from a driver subdir. in the nvram dir. */
+int image_battery_load(mess_image *img, void *buffer, int length)
+{
+	mame_file *f;
+	int bytes_read = 0;
+	int result = FALSE;
+	char *nvram_filename;
+
+	/* some sanity checking */
+	if( buffer != NULL && length > 0 )
+	{
+		nvram_filename = battery_nvramfilename(img);
+		if (nvram_filename)
+		{
+			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 0);
+			if (f)
+			{
+				bytes_read = mame_fread(f, buffer, length);
+				mame_fclose(f);
+				result = TRUE;
+			}
+			free(nvram_filename);
+		}
+
+		/* fill remaining bytes (if necessary) */
+		memset(((char *) buffer) + bytes_read, '\0', length - bytes_read);
+	}
+	return result;
+}
+
+/* save battery backed nvram to a driver subdir. in the nvram dir. */
+int image_battery_save(mess_image *img, const void *buffer, int length)
+{
+	mame_file *f;
+	char *nvram_filename;
+
+	/* some sanity checking */
+	if( buffer != NULL && length > 0 )
+	{
+		nvram_filename = battery_nvramfilename(img);
+		if (nvram_filename)
+		{
+			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
+			if (f)
+			{
+				mame_fwrite(f, buffer, length);
+				mame_fclose(f);
+				return TRUE;
+			}
+			free(nvram_filename);
+		}
+	}
+	return FALSE;
+}
+
+

@@ -440,7 +440,7 @@ WRITE_HANDLER ( microtan_bffx_w )
     }
 }
 
-int microtan_cassette_init(int id, mame_file *fp, int open_mode)
+int microtan_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));

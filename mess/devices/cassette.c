@@ -4,7 +4,7 @@
 
 #if HAS_WAVE
 
-int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_args *args)
+int cassette_init(mess_image *img, mame_file *file, int open_mode, const struct cassette_args *args)
 {
 	struct wave_args_legacy wa;
 
@@ -12,10 +12,10 @@ int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_
 	{	/* no cassette */
 		memset(&wa, 0, sizeof(&wa));
 
-		if (device_open(IO_CASSETTE, id, 0, &wa))
+		if (device_open(img, 0, &wa))
 			return INIT_FAIL;
 
-        device_status(IO_CASSETTE, id, args->initial_status);
+        device_status(img, args->initial_status);
 		return INIT_PASS;
 	}
 
@@ -39,10 +39,10 @@ int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_
 			wa.header_samples = args->header_samples;
 			wa.trailer_samples = args->trailer_samples;
 
-			if (device_open(IO_CASSETTE, id, 0, &wa))
+			if (device_open(img, 0, &wa))
 				return INIT_FAIL;
 
-	        device_status(IO_CASSETTE, id, args->initial_status);
+	        device_status(img, args->initial_status);
 			return INIT_PASS;
 		}
 		else
@@ -51,10 +51,10 @@ int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_
 
 			wa.file = file;
 			wa.smpfreq = args->create_smpfreq ? args->create_smpfreq : Machine->sample_rate;
-			if (device_open(IO_CASSETTE, id, 1, &wa))
+			if (device_open(img, 1, &wa))
 				return INIT_FAIL;
 
-	        device_status(IO_CASSETTE, id, args->initial_status);
+	        device_status(img, args->initial_status);
 			return INIT_PASS;
 		}
 	}
@@ -62,9 +62,9 @@ int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_
 	return INIT_FAIL;
 }
 
-void cassette_exit(int id)
+void cassette_exit(mess_image *img)
 {
-	device_close(IO_CASSETTE, id);
+	device_close(img);
 }
 
 #endif /* HAS_WAVE */

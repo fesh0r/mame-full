@@ -20,9 +20,9 @@ static int common_length_spt_heads[][3] = {
     {36*2*80*512, 36, 2}};  /* 3 1/2 inch enhanced density */
 
 
-int pc_floppy_load(int id, mame_file *fp, int open_mode)
+int pc_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
-	if (basicdsk_floppy_load(id, fp, open_mode) == INIT_PASS)
+	if (basicdsk_floppy_load(img, fp, open_mode) == INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;
@@ -80,7 +80,7 @@ int pc_floppy_load(int id, mame_file *fp, int open_mode)
 				}
 			}
 
-			basicdsk_set_geometry(id, 80, heads, spt, 512, 01, 0, FALSE);
+			basicdsk_set_geometry(img, 80, heads, spt, 512, 01, 0, FALSE);
 
 			return INIT_PASS;
 		}

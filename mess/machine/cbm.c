@@ -154,8 +154,9 @@ INT8 cbm_c64_game;
 INT8 cbm_c64_exrom;
 CBM_ROM cbm_rom[0x20]= { {0} };
 
-void cbm_rom_unload(int id)
+void cbm_rom_unload(mess_image *img)
 {
+	int id = image_index(img);
 	cbm_rom[id].size = 0;
 	cbm_rom[id].chip = 0;
 }
@@ -165,8 +166,9 @@ static const struct IODevice *cbm_rom_find_device(void)
 	return device_find(Machine->gamedrv, IO_CARTSLOT);
 }
 
-int cbm_rom_init(int id)
+int cbm_rom_init(mess_image *img)
 {
+	int id = image_index(img);
 	if (id == 0)
 	{
 		cbm_c64_game = -1;
@@ -175,7 +177,7 @@ int cbm_rom_init(int id)
 	return INIT_PASS;
 }
 
-int cbm_rom_load(int id, mame_file *fp, int open_mode)
+int cbm_rom_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	int i;
 	int size, j, read_;
@@ -197,7 +199,7 @@ int cbm_rom_load(int id, mame_file *fp, int open_mode)
 
 	size = mame_fsize (fp);
 
-	filetype = image_filetype(IO_CARTSLOT, id);
+	filetype = image_filetype(img);
 	if (filetype && !stricmp(filetype, "prg"))
 	{
 		unsigned short in;
@@ -205,11 +207,13 @@ int cbm_rom_load(int id, mame_file *fp, int open_mode)
 		mame_fread_lsbfirst (fp, &in, 2);
 		logerror("rom prg %.4x\n", in);
 		size -= 2;
-		logerror("loading rom %s at %.4x size:%.4x\n",
-				image_filename(IO_CARTSLOT,id), in, size);
-		cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
+
+		logerror("loading rom %s at %.4x size:%.4x\n", image_filename(img), in, size);
+
+		cbm_rom[i].chip = (UINT8 *) image_malloc(img, size);
 		if (!cbm_rom[i].chip)
 			return INIT_FAIL;
+
 		cbm_rom[i].addr=in;
 		cbm_rom[i].size=size;
 		read_ = mame_fread (fp, cbm_rom[i].chip, size);
@@ -224,8 +228,9 @@ int cbm_rom_load(int id, mame_file *fp, int open_mode)
 		mame_fread( fp, &cbm_c64_game, 1);
 		mame_fseek (fp, 64, SEEK_SET);
 		j = 64;
-		logerror("loading rom %s size:%.4x\n",
-			image_filename(IO_CARTSLOT,id), size);
+
+		logerror("loading rom %s size:%.4x\n", image_filename(img), size);
+
 		while (j < size)
 		{
 			unsigned short segsize;
@@ -243,7 +248,7 @@ int cbm_rom_load(int id, mame_file *fp, int open_mode)
 				adr, in);
 			logerror("loading chip at %.4x size:%.4x\n", adr, in);
 
-			cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
+			cbm_rom[i].chip = (UINT8*) image_malloc(img, size);
 			if (!cbm_rom[i].chip)
 				return INIT_FAIL;
 
@@ -293,9 +298,9 @@ int cbm_rom_load(int id, mame_file *fp, int open_mode)
 			adr = CBM_ROM_ADDR_UNKNOWN;
 
 		logerror("loading %s rom at %.4x size:%.4x\n",
-				image_filename(IO_CARTSLOT,id), adr, size);
+				image_filename(img), adr, size);
 
-		cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
+		cbm_rom[i].chip = (UINT8*) image_malloc(img, size);
 		if (!cbm_rom[i].chip)
 			return INIT_FAIL;
 

@@ -80,7 +80,7 @@ static const tms9902reset_param tms9902_params =
 /*
 	Initialize pio unit and open image
 */
-int ti99_4_pio_load(int id, mame_file *fp, int open_mode)
+int ti99_4_pio_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	if ((id < 0) || (id >= MAX_RS232_CARDS))
 		return INIT_FAIL;
@@ -115,7 +115,7 @@ void ti99_4_pio_unload(int id)
 /*
 	Initialize rs232 unit and open image
 */
-int ti99_4_rs232_load(int id, mame_file *fp, int open_mode)
+int ti99_4_rs232_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
 		return INIT_FAIL;*/

@@ -37,8 +37,11 @@ static void pc_fdc_reset(void)
 	nec765_set_reset_state(1);
 }
 
-void	pc_fdc_init(pc_fdc_hw_interface *iface)
+void pc_fdc_init(pc_fdc_hw_interface *iface)
 {
+	int i;
+	mess_image *img;
+
 	/* copy specified interface */
 	memcpy(&fdc.fdc_interface, iface, sizeof(pc_fdc_hw_interface));
 
@@ -47,17 +50,12 @@ void	pc_fdc_init(pc_fdc_hw_interface *iface)
 
 	pc_fdc_reset();
 
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-	floppy_drive_set_geometry(1, FLOPPY_DRIVE_DS_80);
-	floppy_drive_set_geometry(2, FLOPPY_DRIVE_DS_80);
-	floppy_drive_set_geometry(3, FLOPPY_DRIVE_DS_80);
+	for (i = 0; i < device_count(IO_FLOPPY); i++)
+	{
+		img = image_instance(IO_FLOPPY, i);
+		floppy_drive_set_geometry(img, FLOPPY_DRIVE_DS_80);
+	}
 }
-
-void	pc_fdc_exit(void)
-{
-	nec765_stop();
-}
-
 
 void	pc_fdc_set_tc_state(int state)
 {
@@ -166,27 +164,34 @@ static READ_HANDLER(pc_fdc_dir_r)
 
 static WRITE_HANDLER(pc_fdc_dor_w)
 {
-
-        int selected_drive;
+	int selected_drive;
+	int floppy_count;
 
 	logerror("FDC DOR: %02x\r\n",data);
+	floppy_count = device_count(IO_FLOPPY);
 
-        floppy_drive_set_ready_state(fdc.digital_output_register & 0x03, 1, 0);
+	if (floppy_count > (fdc.digital_output_register & 0x03))
+		floppy_drive_set_ready_state(image_instance(IO_FLOPPY, fdc.digital_output_register & 0x03), 1, 0);
 
-        fdc.digital_output_register = data;
+	fdc.digital_output_register = data;
 
-        selected_drive = data & 0x03;
+	selected_drive = data & 0x03;
 
 	/* set floppy drive motor state */
-        floppy_drive_set_motor_state(0,(data>>4) & 0x0f);
-        floppy_drive_set_motor_state(1,(data>>5) & 0x01);
-        floppy_drive_set_motor_state(2,(data>>6) & 0x01);
-        floppy_drive_set_motor_state(3,(data>>7) & 0x01);
+	if (floppy_count > 0)
+		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0),	(data>>4) & 0x0f);
+	if (floppy_count > 1)
+		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1),	(data>>5) & 0x01);
+	if (floppy_count > 2)
+		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 2),	(data>>6) & 0x01);
+	if (floppy_count > 3)
+		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 3),	(data>>7) & 0x01);
 
-        if ((data>>4) & (1<<selected_drive))
-        {
-           floppy_drive_set_ready_state(selected_drive, 1, 0);
-        }
+	if ((data>>4) & (1<<selected_drive))
+	{
+		if (floppy_count > selected_drive)
+			floppy_drive_set_ready_state(image_instance(IO_FLOPPY, selected_drive), 1, 0);
+	}
 
 	/* changing the DMA enable bit, will affect the terminal count state
 	from reaching the fdc - if dma is enabled this will send it through
@@ -214,9 +219,9 @@ static WRITE_HANDLER(pc_fdc_dor_w)
 			be generated if READY input is true when the
 			fdc is reset. 
 			
-			 It also states, that outputs to drive are set to 0.
-			 Maybe this causes the drive motor to go on, and therefore
-			 the ready line is set. 
+				It also states, that outputs to drive are set to 0.
+				Maybe this causes the drive motor to go on, and therefore
+				the ready line is set. 
 
 			This in return causes a int?? ---
 		
@@ -228,7 +233,7 @@ static WRITE_HANDLER(pc_fdc_dor_w)
 
 		/* set FDC at reset */
 		nec765_set_reset_state(1);
-    }
+	}
 	else
 	{
 		pc_fdc_set_tc_state(0);

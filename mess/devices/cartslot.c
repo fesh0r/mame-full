@@ -7,10 +7,10 @@
 
 const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
 	const char *file_extensions,
-	int (*initproc)(int id),
-	void (*exitproc)(int id),
-	int (*loadproc)(int id, mame_file *fp, int open_mode),
-	void (*unloadproc)(int id),
+	int (*initproc)(mess_image *img),
+	void (*exitproc)(mess_image *img),
+	int (*loadproc)(mess_image *img, mame_file *fp, int open_mode),
+	void (*unloadproc)(mess_image *img),
 	int (*verify)(const UINT8 *buf, size_t size),
 	UINT32 (*partialcrc)(const UINT8 *buf, size_t size))
 {

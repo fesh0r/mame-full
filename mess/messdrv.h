@@ -4,6 +4,9 @@
 #include <assert.h>
 #include "formats.h"
 #include "fileio.h"
+#include "osdepend.h"
+
+#define MAX_DEV_INSTANCES 5
 
 /******************************************************************************
  * This is a start at the proposed peripheral structure.
@@ -37,21 +40,21 @@ struct IODevice
 	const char *file_extensions;
 	int flags;
 	int open_mode;
-	int (*init)(int id);
-	void (*exit)(int id);
-	int (*load)(int id, mame_file *fp, int open_mode);
-	void (*unload)(int id);
+	int (*init)(mess_image *img);
+	void (*exit)(mess_image *img);
+	int (*load)(mess_image *img, mame_file *fp, int open_mode);
+	void (*unload)(mess_image *img);
 	int (*verify)(const UINT8 *buf, size_t size);
-	const void *(*info)(int id, int whatinfo);
-	int (*open)(int id, int mode, void *args);
-	void (*close)(int id);
-	int (*status)(int id, int newstatus);
-    int (*seek)(int id, int offset, int whence);
-    int (*tell)(int id);
-	int (*input)(int id);
-	void (*output)(int id, int data);
+	const void *(*info)(mess_image *img, int whatinfo);
+	int (*open)(mess_image *img, int mode, void *args);
+	void (*close)(mess_image *img);
+	int (*status)(mess_image *img, int newstatus);
+    int (*seek)(mess_image *img, int offset, int whence);
+    int (*tell)(mess_image *img);
+	int (*input)(mess_image *img);
+	void (*output)(mess_image *img, int data);
 	UINT32 (*partialcrc)(const UINT8 *buf, size_t size);
-	void (*display)(struct mame_bitmap *bitmap, int id);
+	void (*display)(mess_image *img, struct mame_bitmap *bitmap);
 	void *user1;
 	void *user2;
 };
@@ -64,7 +67,7 @@ struct SystemConfigurationParamBlock
 	UINT32 *ram_options;
 	int device_num;
 	const struct IODevice *dev;
-	const char *(*get_custom_devicename)(int type, int id, char *buf, size_t bufsize);
+	const char *(*get_custom_devicename)(mess_image *img, char *buf, size_t bufsize);
 };
 
 #define SYSTEM_CONFIG_START(name)															\
@@ -121,7 +124,7 @@ struct SystemConfigurationParamBlock
 /*****************************************************************************/
 
 #define GET_CUSTOM_DEVICENAME(name)															\
-	const char *get_custom_devicename_##name(int type, int id, char *buf, size_t bufsize)	\
+	const char *get_custom_devicename_##name(mess_image *img, char *buf, size_t bufsize)	\
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME

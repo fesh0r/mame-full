@@ -78,6 +78,23 @@ void pool_freeptr(memory_pool *pool, void *ptr);
 
 /***************************************************************************
 
+	Tagpool code
+
+***************************************************************************/
+
+typedef struct
+{
+	memory_pool mempool;
+	struct tag_pool_header *header;
+} tag_pool;
+
+void tagpool_init(tag_pool *tpool);
+void tagpool_exit(tag_pool *tpool);
+void *tagpool_alloc(tag_pool *tpool, const char *tag, size_t size);
+void *tagpool_lookup(tag_pool *tpool, const char *tag);
+
+/***************************************************************************
+
 	Binary coded decimal
 
 ***************************************************************************/

@@ -33,11 +33,9 @@
 #endif
 
 
+#define MAX_HARD	2
 #define MAX_BOARD	2				/* two boards supported */
-#define MAX_HARD	4				/* up to four had disks */
 #define HDC_DMA 	3				/* DMA channel */
-
-mame_file *pc_hdc_file[MAX_HARD];        /* up to four hard disk images */
 
 #define CMD_TESTREADY   0x00
 #define CMD_RECALIBRATE 0x01
@@ -108,6 +106,13 @@ static UINT8 *ptr = 0;					/* data pointer */
 
 static int display[4]= { 0 };
 
+static mame_file *pc_hdc_file(int id)
+{
+	mess_image *img;
+	img = image_instance(IO_HARDDISK, id);
+	return image_fp(img);
+}
+
 static void pc_hdc_result(int n)
 {
 	/* dip switch selected INT 5 or 2 */
@@ -139,7 +144,7 @@ static void pc_hdc_result(int n)
 
 static void execute_read(void)
 {
-	mame_file *f = pc_hdc_file[idx];
+	mame_file *f = pc_hdc_file(idx);
 	UINT8 data[512], *src = data;
 	int size = sector_cnt[idx] * 512;
 	int read_ = 0, first = 1;
@@ -248,7 +253,7 @@ static void execute_read(void)
 
 static void execute_write(void)
 {
-	mame_file *f = pc_hdc_file[idx];
+	mame_file *f = pc_hdc_file(idx);
 	UINT8 data[512], *dst = data;
 	int size = sector_cnt[idx] * 512;
 	int write_ = 512, first = 1;
@@ -362,7 +367,7 @@ static void get_chsn(int n)
 
 static int test_ready(int n)
 {
-	if( !pc_hdc_file[idx] )
+	if( !pc_hdc_file(idx) )
 	{
 		csb[n] |= CSB_ERROR;
 		error[n] |= 0x04;	/* drive not ready */
@@ -463,7 +468,7 @@ static void pc_hdc_command(int n)
 			HDC_LOG(1,"hdc set param",("INDEX #%d D:%d C:%d H:%d RW:%d WP:%d ECC:%d\n",
 				idx, drv, cylinders[idx], heads[idx], rwc[idx], wp[idx], ecc[idx]));
 #if 0
-			if (pc_hdc_file[idx])
+			if (pc_hdc_file(idx))
 			{
                 /* write the drive geometry to the image */
 				buffer[ 0] = cylinders[idx]&0xff;		/* cylinders lsb */
@@ -483,8 +488,8 @@ static void pc_hdc_command(int n)
 				buffer[14] = 0x00;
 				buffer[15] = 0x00;
 				buffer[16] = dip[idx];					/* a non zero value is expected */
-				mame_fseek(pc_hdc_file[idx], 0x1ad, SEEK_SET);
-				mame_fwrite(pc_hdc_file[idx], buffer, 16);
+				mame_fseek(pc_hdc_file(idx), 0x1ad, SEEK_SET);
+				mame_fwrite(pc_hdc_file(idx), buffer, 16);
             }
 #endif
             break;
@@ -735,7 +740,7 @@ static int  pc_hdc_dipswitch_r(int n)
  *************************************************************************/
 static void pc_HDC_w(int chip, int offs, int data)
 {
-	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
+	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file(chip<<1) )
 		return;
 
 	switch( offs )
@@ -752,7 +757,7 @@ WRITE_HANDLER ( pc_HDC2_w ) { pc_HDC_w(1, offset, data); }
 static int pc_HDC_r(int chip, int offs)
 {
 	int data = 0xff;
-	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
+	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file(chip<<1) )
 		return data;
 	switch( offs )
 	{
@@ -771,16 +776,6 @@ READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
  *		Port handlers.
  *
  *************************************/
-int pc_harddisk_load(int id, mame_file *fp, int open_mode)
-{
-	pc_hdc_file[id] = fp;
-	return INIT_PASS;
-}
-
-void pc_harddisk_unload(int id)
-{
-    pc_hdc_file[id] = NULL;
-}
 
 void pc_harddisk_state(void)
 {

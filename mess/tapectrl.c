@@ -5,13 +5,13 @@
 
 #if HAS_WAVE
 
-void tapecontrol_gettime(char *timepos, size_t timepos_size, int id, int *curpos, int *endpos)
+void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos)
 {
 	int t0, t1;
 
-	t0 = device_tell(IO_CASSETTE, id);
-	t1 = device_seek(IO_CASSETTE, id, 0, SEEK_END);
-	device_seek(IO_CASSETTE, id, t0, SEEK_SET);
+	t0 = device_tell(img);
+	t1 = device_seek(img, 0, SEEK_END);
+	device_seek(img, t0, SEEK_SET);
 
 	if (t1)
 		snprintf(timepos, timepos_size, "%04d/%04d", t0/11025, t1/11025);
@@ -31,6 +31,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	const char *menu_item[40];
 	const char *menu_subitem[40];
 	char flag[40];
+	mess_image *img;
 
 	int sel;
 	int total;
@@ -43,14 +44,15 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	total = 0;
 	sel = selected - 1;
 
-	menu_item[total] = device_typename_id(IO_CASSETTE,id);
-	menu_subitem[total] = image_filename(IO_CASSETTE,id) ? image_filename(IO_CASSETTE,id) : "---";
+	img = image_instance(IO_CASSETTE, id);
+	menu_item[total] = device_typename_id(img);
+	menu_subitem[total] = image_filename(img) ? image_filename(img) : "---";
 	flag[total] = 0;
 	total++;
 
-	tapecontrol_gettime(timepos, sizeof(timepos) / sizeof(timepos[0]), id, NULL, NULL);
+	tapecontrol_gettime(timepos, sizeof(timepos) / sizeof(timepos[0]), img, NULL, NULL);
 
-	status = device_status(IO_CASSETTE,id,-1);
+	status = device_status(img, -1);
 	menu_item[total] = ui_getstring((status & WAVE_STATUS_MOTOR_ENABLE)
 							? (status & WAVE_STATUS_MOTOR_INHIBIT)
 								? ((status & WAVE_STATUS_WRITE_ONLY) ? UI_recording_inhibited : UI_playing_inhibited)
@@ -147,7 +149,8 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 			sel = -1;
 		else
 		{
-			status = device_status(IO_CASSETTE,id,-1);
+			img = image_instance(IO_CASSETTE, id);
+			status = device_status(img, -1);
 			switch (sel)
 			{
 			case 0:
@@ -156,20 +159,20 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 			case 2:
 				/* Pause/stop */
 				if ((status & 1) == 0)
-					device_seek(IO_CASSETTE,id,0,SEEK_SET);
-				device_status(IO_CASSETTE,id,status & ~WAVE_STATUS_MOTOR_ENABLE);
+					device_seek(img,0,SEEK_SET);
+				device_status(img,status & ~WAVE_STATUS_MOTOR_ENABLE);
 				break;
 			case 3:
 				/* Play/Record */
-				device_status(IO_CASSETTE,id,status | WAVE_STATUS_MOTOR_ENABLE);
+				device_status(img,status | WAVE_STATUS_MOTOR_ENABLE);
 				break;
 			case 4:
 				/* Rewind */
-				device_seek(IO_CASSETTE,id,-11025,SEEK_CUR);
+				device_seek(img, -11025, SEEK_CUR);
 				break;
 			case 5:
 				/* Fast forward */
-				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
+				device_seek(img, +11025, SEEK_CUR);
 				break;
 			}
 			/* tell updatescreen() to clean after us (in case the window changes size) */

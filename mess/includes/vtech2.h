@@ -9,12 +9,12 @@ extern MACHINE_INIT( laser350 );
 extern MACHINE_INIT( laser500 );
 extern MACHINE_INIT( laser700 );
 
-int laser_cart_load(int id, mame_file *fp, int open_mode);
+int laser_cart_load(mess_image *img, mame_file *fp, int open_mode);
 void laser_cart_unload(int id);
 
 int laser_floppy_load(int id, mame_file *file, int open_mode);
 
-extern int laser_cassette_init(int id, mame_file *fp, int open_mode);
+extern int laser_cassette_init(mess_image *img, mame_file *fp, int open_mode);
 
 extern READ_HANDLER ( laser_fdc_r );
 extern WRITE_HANDLER ( laser_fdc_w );

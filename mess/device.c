@@ -70,92 +70,77 @@ int register_device (const int type, const char *arg)
 
 }
 
-int device_open(int type, int id, int mode, void *args)
+int device_open(mess_image *img, int mode, void *args)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->open )
-			return (*dev->open)(id,mode,args);
-	}
+	dev = image_device(img);
+	if (dev->open)
+		return dev->open(img, mode, args);
+
 	return 1;
 }
 
-void device_close(int type, int id)
+void device_close(mess_image *img)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->close )
-		{
-			(*dev->close)(id);
-			return;
-		}
-	}
+	dev = image_device(img);
+	if (dev->close)
+		dev->close(img);
 }
 
-int device_seek(int type, int id, int offset, int whence)
+int device_seek(mess_image *img, int offset, int whence)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->seek )
-			return (*dev->seek)(id,offset,whence);
-	}
+	dev = image_device(img);
+	if (dev->seek)
+		return dev->seek(img, offset, whence);
+
 	return 0;
 }
 
-int device_tell(int type, int id)
+int device_tell(mess_image *img)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->tell )
-			return (*dev->tell)(id);
-	}
+	dev = image_device(img);
+	if (dev->tell)
+		return dev->tell(img);
+
 	return 0;
 }
 
-int device_status(int type, int id, int newstatus)
+int device_status(mess_image *img, int newstatus)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->status )
-			return (*dev->status)(id,newstatus);
-	}
+	dev = image_device(img);
+	if (dev->status)
+		return dev->status(img, newstatus);
+
 	return 0;
 }
 
-int device_input(int type, int id)
+int device_input(mess_image *img)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->input )
-			return (*dev->input)(id);
-	}
+	dev = image_device(img);
+	if (dev->input)
+		return dev->input(img);
+
 	return 0;
 }
 
-void device_output(int type, int id, int data)
+void device_output(mess_image *img, int data)
 {
 	const struct IODevice *dev;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		if( type == dev->type && dev->output )
-		{
-			(*dev->output)(id,data);
-			return;
-		}
-	}
+	dev = image_device(img);
+	if (dev->output)
+		dev->output(img, data);
 }
 
 static const struct IODevice *get_sysconfig_device(const struct GameDriver *gamedrv, int device_num)
@@ -240,7 +225,7 @@ const char *device_brieftypename(int type)
 }
 
 /* Return a name for a device of type 'type' with id 'id' */
-const char *device_typename_id(int type, int id)
+const char *device_typename_id(mess_image *img)
 {
 	static char typename_id[40][31+1];
 	static int which = 0;
@@ -249,8 +234,8 @@ const char *device_typename_id(int type, int id)
 	const char *newname;
 	struct SystemConfigurationParamBlock cfg;
 
- 	dev = device_find(Machine->gamedrv, type);
-	if (dev && (id < dev->count))
+ 	dev = image_device(img);
+	if (dev)
 	{
 		newname = NULL;
 		memset(&cfg, 0, sizeof(cfg));
@@ -258,17 +243,17 @@ const char *device_typename_id(int type, int id)
 		if (cfg.get_custom_devicename)
 		{
 			/* use a custom devicename */
-			newname = cfg.get_custom_devicename(type, id, typename_id[which], sizeof(typename_id[which]) / sizeof(typename_id[which][0]));
+			newname = cfg.get_custom_devicename(img, typename_id[which], sizeof(typename_id[which]) / sizeof(typename_id[which][0]));
 			if (newname)
 				name = newname;
 		}
 		if (!newname)
 		{
-			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + type);
+			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + image_type(img));
 			if (dev->count > 1)
 			{
 				/* for the average user counting starts at #1 ;-) */
-				sprintf(typename_id[which], "%s #%d", name, id+1);
+				sprintf(typename_id[which], "%s #%d", name, image_index(img)+1);
 				name = typename_id[which];
 			}
 		}

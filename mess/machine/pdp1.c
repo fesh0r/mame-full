@@ -641,7 +641,7 @@ void iot_ppb(int op2, int nac, int mb, int *io, int ac)
 /*
 	Open a file for typewriter output
 */
-int pdp1_typewriter_load(int id, mame_file *fp, int open_mode)
+int pdp1_typewriter_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/* open file */
 	typewriter.fd = fp;

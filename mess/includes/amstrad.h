@@ -20,7 +20,7 @@ void Amstrad_Init(void);
 void amstrad_handle_snapshot(unsigned char *);
 void AmstradCPC_PALWrite(int);
 
-extern int amstrad_cassette_init(int id, mame_file *fp, int open_mode);
+extern int amstrad_cassette_init(mess_image *img, mame_file *fp, int open_mode);
 
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
@@ -97,6 +97,6 @@ extern PALETTE_INIT( kccomp );
 /* initialise palette for 464plus, 6128plus */
 extern PALETTE_INIT( amstrad_plus );
 
-int amstrad_plus_cartridge_load(int id, mame_file *fp, int open_mode);
+int amstrad_plus_cartridge_load(mess_image *img, mame_file *fp, int open_mode);
 
 

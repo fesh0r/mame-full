@@ -1079,7 +1079,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
  SPECTRUM WAVE CASSETTE SUPPORT
 --------------------------------------------------*/
 
-int spectrum_cassette_init(int id, mame_file *fp, int open_mode)
+int spectrum_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 

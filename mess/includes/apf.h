@@ -9,5 +9,5 @@ extern void apf_cassette_exit(int);
 
 void	apf_update_ints(void);
 
-extern int apfimag_floppy_init(int id, mame_file *fp, int open_mode);
+extern int apfimag_floppy_init(mess_image *img, mame_file *fp, int open_mode);
 

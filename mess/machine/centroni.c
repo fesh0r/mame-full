@@ -70,9 +70,11 @@ void centronics_write_handshake(int nr, int data, int mask)
 	
 	int neu=(data&mask)|(This->control&(~mask));
 	
-	if (neu&CENTRONICS_NO_RESET) {
-		if ( !(This->control&CENTRONICS_STROBE) && (neu&CENTRONICS_STROBE) ) {
-			printer_output(nr, This->data);
+	if (neu & CENTRONICS_NO_RESET)
+	{
+		if ( !(This->control&CENTRONICS_STROBE) && (neu&CENTRONICS_STROBE) )
+		{
+			printer_output(image_instance(IO_PRINTER, nr), This->data);
 			
 			/* setup timer for data acknowledge */
 
@@ -93,15 +95,19 @@ int centronics_read_handshake(int nr)
 	CENTRONICS *This=cent+nr;
 	UINT8 data=0;
 
-	data|=CENTRONICS_NOT_BUSY;
-	if (This->config->type==PRINTER_IBM) {
-		data|=CENTRONICS_ONLINE;
-	} else {
-		if (This->control&CENTRONICS_SELECT) 
+	data |= CENTRONICS_NOT_BUSY;
+	if (This->config->type == PRINTER_IBM)
+	{
+		data |= CENTRONICS_ONLINE;
+	}
+	else
+	{
+		if (This->control & CENTRONICS_SELECT) 
 			data|=CENTRONICS_ONLINE;
 	}
-	data|=CENTRONICS_NO_ERROR;
-	if (!printer_status(nr, 0)) data|=CENTRONICS_NO_PAPER;
+	data |= CENTRONICS_NO_ERROR;
+	if (!printer_status(image_instance(IO_PRINTER, nr), 0))
+		data |= CENTRONICS_NO_PAPER;
 
 	/* state of acknowledge */
 	data|=(This->control & CENTRONICS_ACKNOWLEDGE);

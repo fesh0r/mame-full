@@ -8,7 +8,7 @@
 #include "driver.h"
 #include "image.h"
 
-#define MAX_DEV_INSTANCES 5
+extern int devices_inited;
 
 #define LCD_FRAMES_PER_SECOND	30
 
@@ -56,7 +56,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected);
 
 #if HAS_WAVE
 int tapecontrol(struct mame_bitmap *bitmap, int selected);
-void tapecontrol_gettime(char *timepos, size_t timepos_size, int id, int *curpos, int *endpos);
+void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos);
 #endif
 
 /* driver.h - begin */
@@ -149,7 +149,7 @@ extern int			device_count(int type);
 extern const char  *device_typename(int type);
 extern const char  *device_brieftypename(int type);
 extern int          device_typeid(const char *name);
-extern const char  *device_typename_id(int type, int id);
+extern const char  *device_typename_id(mess_image *img);
 extern const char  *device_file_extension(int type, int extnum);
 
 /* access functions from the struct IODevice arrays of a driver */
@@ -158,10 +158,6 @@ extern const void *device_info(int type, int id);
 const struct IODevice *device_first(const struct GameDriver *gamedrv);
 const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev);
 const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
-
-/* functions to load and save battery backed NVRAM */
-int battery_load(const char *filename, void *buffer, int length);
-int battery_save(const char *filename, void *buffer, int length);
 
 /* handy wrapper for palette_set_color */
 void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count);

@@ -36,7 +36,7 @@ int svi318dsk_floppy_init(int id)
 }
 
 /* attempt to insert a disk into the drive specified with id */
-int svi318dsk_floppy_load(int id, mame_file *fp, int open_mode)
+int svi318dsk_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	svi318dsk *w = &svi318dsk_drives[id];
 

@@ -2,9 +2,9 @@
 MACHINE_INIT( mbee );
 
 void mbee_interrupt(void);
-int mbee_cassette_init(int id, mame_file *fp, int open_mode);
+int mbee_cassette_init(mess_image *img, mame_file *fp, int open_mode);
 int mbee_floppy_init(int id);
-int mbee_cart_load(int id, mame_file *fp, int open_mode);
+int mbee_cart_load(mess_image *img, mame_file *fp, int open_mode);
 
 READ_HANDLER ( mbee_pio_r );
 WRITE_HANDLER ( mbee_pio_w );

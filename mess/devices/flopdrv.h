@@ -22,7 +22,7 @@ typedef enum {
 /* CRC error in data field */
 #define ID_FLAG_CRC_ERROR_IN_DATA_FIELD 0x0004
 
-int 	floppy_status(int id, int new_status);
+int	floppy_status(mess_image *img, int new_status);
 
 typedef struct chrn_id
 {
@@ -51,7 +51,7 @@ typedef struct chrn_id
 typedef struct floppy_interface
 {
 	/* seek to physical track */
-	void (*seek_callback)(int drive, int physical_track);
+	void (*seek_callback)(mess_image *img, int physical_track);
 
 	/* the following are not strictly floppy drive operations, but are used by the
 	nec765 to get data from the track - really the whole track should be constructed
@@ -60,18 +60,18 @@ typedef struct floppy_interface
 	with the data */
 
 	/* get number of sectors per track on side specified */
-	int (*get_sectors_per_track)(int drive, int physical_side);
+	int (*get_sectors_per_track)(mess_image *img, int physical_side);
 	/* get id from current track and specified side */
-	void (*get_id_callback)(int drive, chrn_id *, int id_index, int physical_side);
+	void (*get_id_callback)(mess_image *img, chrn_id *, int id_index, int physical_side);
 
 	/* read sector data into buffer, length = number of bytes to read */
-	void	(*read_sector_data_into_buffer)(int drive, int side,int data_id,char *, int length);
+	void	(*read_sector_data_into_buffer)(mess_image *img, int side,int data_id,char *, int length);
 	/* write sector data from buffer, length = number of bytes to read  */
-	void	(*write_sector_data_from_buffer)(int drive, int side,int data_id, char *, int length, int ddam);
+	void	(*write_sector_data_from_buffer)(mess_image *img, int side,int data_id, char *, int length, int ddam);
 	/* Read track in buffer, length = number of bytes to read */
-	void	(*read_track_data_info_buffer)(int drive, int side, char *ptr, int *length );
+	void	(*read_track_data_info_buffer)(mess_image *img, int side, char *ptr, int *length );
 	/* format */
-	void (*format_sector)(int drive, int side, int sector_index,int c, int h, int r, int n, int filler);
+	void (*format_sector)(mess_image *img, int side, int sector_index,int c, int h, int r, int n, int filler);
 } floppy_interface;
 
 struct floppy_drive
@@ -89,9 +89,9 @@ struct floppy_drive
 	/* index pulse timer */
 	void	*index_timer;
 	/* index pulse callback */
-	void	(*index_pulse_callback)(int id);
+	void	(*index_pulse_callback)(mess_image *img);
 
-	void	(*ready_state_change_callback)(int drive, int state);
+	void	(*ready_state_change_callback)(mess_image *img, int state);
     /* physical real drive unit */
     int fdd_unit;
 
@@ -104,7 +104,7 @@ struct floppy_drive
 };
 
 /* a callback which will be executed if the ready state of the drive changes e.g. not ready->ready, ready->not ready */
-void floppy_drive_set_ready_state_change_callback(int drive, void (*callback)(int drive, int state));
+void floppy_drive_set_ready_state_change_callback(mess_image *img, void (*callback)(mess_image *img, int state));
 
 /* floppy drive types */
 typedef enum
@@ -113,42 +113,42 @@ typedef enum
 	FLOPPY_DRIVE_DS_80
 } floppy_type;
 
-void floppy_drive_set_index_pulse_callback(int drive, void (*callback)(int id));
+void floppy_drive_set_index_pulse_callback(mess_image *img, void (*callback)(mess_image *img));
 
 /* set flag state */
-int floppy_drive_get_flag_state(int drive, int flag);
+int floppy_drive_get_flag_state(mess_image *img, int flag);
 /* get flag state */
-void floppy_drive_set_flag_state(int drive, int flag, int state);
+void floppy_drive_set_flag_state(mess_image *img, int flag, int state);
 /* get current physical track drive is on */
-int floppy_drive_get_current_track(int drive);
+int floppy_drive_get_current_track(mess_image *img);
 
-void floppy_drive_set_geometry(int,floppy_type type);
-void floppy_drive_set_geometry_absolute(int id, int tracks, int sides);
+void floppy_drive_set_geometry(mess_image *img, floppy_type type);
+void floppy_drive_set_geometry_absolute(mess_image *img, int tracks, int sides);
 
 /* called in device init/exit functions */
-int floppy_drive_init(int id, const floppy_interface *iface);
+int floppy_drive_init(mess_image *img, const floppy_interface *iface);
 
 /* get next id from track, 1 if got a id, 0 if no id was got */
-int floppy_drive_get_next_id(int drive, int side, chrn_id *);
+int floppy_drive_get_next_id(mess_image *img, int side, chrn_id *);
 /* set ready state of drive. If flag == 1, set ready state only if drive present,
 disk is in drive, and motor is on. Otherwise set ready state to the state passed */
-void floppy_drive_set_ready_state(int drive, int state, int flag);
+void floppy_drive_set_ready_state(mess_image *img, int state, int flag);
 
-void floppy_drive_set_motor_state(int drive, int state);
+void floppy_drive_set_motor_state(mess_image *img, int state);
 
 /* set interface for disk image functions */
-void floppy_drive_set_disk_image_interface(int, floppy_interface *);
+void floppy_drive_set_disk_image_interface(mess_image *img, floppy_interface *);
 
 /* set real fdd unit */
-void floppy_drive_set_real_fdd_unit(int, unsigned char);
+void floppy_drive_set_real_fdd_unit(mess_image *img, unsigned char);
 
 /* seek up or down */
-void floppy_drive_seek(int drive, signed int signed_tracks);
+void floppy_drive_seek(mess_image *img, signed int signed_tracks);
 
-void	floppy_drive_read_track_data_info_buffer(int drive, int side, char *ptr, int *length );
-void	floppy_drive_format_sector(int drive, int side, int sector_index, int c, int h, int r, int n, int filler);
-void    floppy_drive_read_sector_data(int drive, int side, int index1, char *pBuffer, int length);
-void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pBuffer, int length, int ddam);
+void	floppy_drive_read_track_data_info_buffer(mess_image *img, int side, char *ptr, int *length );
+void	floppy_drive_format_sector(mess_image *img, int side, int sector_index, int c, int h, int r, int n, int filler);
+void    floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length);
+void    floppy_drive_write_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length, int ddam);
 int		floppy_drive_get_datarate_in_us(DENSITY density);
 
 #ifdef __cplusplus

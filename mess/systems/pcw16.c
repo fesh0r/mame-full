@@ -1471,8 +1471,6 @@ static MACHINE_INIT( pcw16 )
 
 static MACHINE_STOP( pcw16 )
 {
-	pc_fdc_exit();
-
 	/* flash 0 */
 	flash_store(0,"pcw16f1.nv");
 	flash_finish(0);

@@ -472,7 +472,7 @@ SNAPSHOT_LOAD ( coco3_pak )
   be used in place of PAK files, when possible
 ***************************************************************************/
 
-static int generic_rom_load(int id, mame_file *fp, UINT8 *dest, UINT16 destlength)
+static int generic_rom_load(mess_image *img, mame_file *fp, UINT8 *dest, UINT16 destlength)
 {
 	UINT8 *rombase;
 	int   romsize;
@@ -490,7 +490,7 @@ static int generic_rom_load(int id, mame_file *fp, UINT8 *dest, UINT16 destlengt
 		   from a CoCo2. Thus we need to skip ahead in the ROM file. On
 		   the CoCo3 the entire 32K ROM is accessable. */
 
-		if (image_crc(IO_CARTSLOT, 0) == 0x25C3AA70)     /* Test for Arkanoid  */
+		if (image_crc(img) == 0x25C3AA70)     /* Test for Arkanoid  */
 		{
 			if ( destlength == 0x4000 )						/* Test if CoCo2      */
 			{
@@ -522,19 +522,19 @@ static int generic_rom_load(int id, mame_file *fp, UINT8 *dest, UINT16 destlengt
 	return INIT_PASS;
 }
 
-int coco_rom_load(int id, mame_file *fp, int open_mode)
+int coco_rom_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, fp, &ROM[0x4000], 0x4000);
+	return generic_rom_load(img, fp, &ROM[0x4000], 0x4000);
 }
 
-void coco_rom_unload(int id)
+void coco_rom_unload(mess_image *img)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	memset(&ROM[0x4000], 0, 0x4000);
 }
 
-int coco3_rom_load(int id, mame_file *fp, int open_mode)
+int coco3_rom_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 	*ROM = memory_region(REGION_CPU1);
 	int		count;
@@ -547,17 +547,17 @@ int coco3_rom_load(int id, mame_file *fp, int open_mode)
 	{
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM size is 32K max */
-		return generic_rom_load(id, fp, &ROM[0x8000], 0x8000);
+		return generic_rom_load(img, fp, &ROM[0x8000], 0x8000);
 	}
 	else
 	{
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM bank is 16K max */
-		return generic_rom_load(id, fp, &ROM[0x8000], 0x4000);
+		return generic_rom_load(img, fp, &ROM[0x8000], 0x4000);
 	}
 }
 
-void coco3_rom_unload(int id)
+void coco3_rom_unload(mess_image *img)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	memset(&ROM[0x8000], 0, 0x8000);
@@ -895,6 +895,21 @@ static int coco_hiresjoy_ry(void)
 #define SOUNDMUX_STATUS_SEL2	2
 #define SOUNDMUX_STATUS_SEL1	1
 
+static mess_image *cartslot_image(void)
+{
+	return image_instance(IO_CARTSLOT, 0);
+}
+
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
+static mess_image *bitbanger_image(void)
+{
+	return image_instance(IO_BITBANGER, 0);
+}
+
 static void soundmux_update(void)
 {
 	/* This function is called whenever the MUX (selector switch) is changed
@@ -905,7 +920,7 @@ static void soundmux_update(void)
 
 	int casstatus, new_casstatus;
 
-	casstatus = device_status(IO_CASSETTE, 0, -1);
+	casstatus = device_status(cassette_image(), -1);
 	new_casstatus = casstatus | WAVE_STATUS_MUTED;
 
 	switch(soundmux_status) {
@@ -919,11 +934,12 @@ static void soundmux_update(void)
 
 	coco_cartridge_enablesound(soundmux_status == (SOUNDMUX_STATUS_ENABLE|SOUNDMUX_STATUS_SEL2));
 
-	if (casstatus != new_casstatus) {
+	if (casstatus != new_casstatus)
+	{
 #if LOG_CASSETTE
 		logerror("CoCo: Turning cassette speaker %s\n", new_casstatus ? "on" : "off");
 #endif
-		device_status(IO_CASSETTE, 0, new_casstatus);
+		device_status(cassette_image(), new_casstatus);
 	}
 }
 
@@ -1142,9 +1158,9 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(d_dac >= 0x80);
 	else
-		device_output(IO_CASSETTE, 0, ((int) d_dac - 0x80) * 0x100);
+		device_output(cassette_image(), ((int) d_dac - 0x80) * 0x100);
 
-	device_output(IO_BITBANGER, 0, (data & 2) >> 1);
+	device_output(bitbanger_image(), (data & 2) >> 1);
 }
 
 /*
@@ -1203,18 +1219,18 @@ static WRITE_HANDLER ( d_pia1_ca2_w )
 
 	if (tape_motor ^ data)
 	{
-		status = device_status(IO_CASSETTE, 0, -1);
+		status = device_status(cassette_image(), -1);
 		status &= ~WAVE_STATUS_MOTOR_INHIBIT;
 		if (!data)
 			status |= WAVE_STATUS_MOTOR_INHIBIT;
-		device_status(IO_CASSETTE, 0, status);
+		device_status(cassette_image(), status);
 		tape_motor = data;
 	}
 }
 
 static READ_HANDLER ( d_pia1_pa_r )
 {
-	return (device_input(IO_CASSETTE, 0) >= 0) ? 1 : 0;
+	return (device_input(cassette_image()) >= 0) ? 1 : 0;
 }
 
 static READ_HANDLER ( d_pia1_pb_r_coco )
@@ -1945,9 +1961,9 @@ static struct cassette_args coco_cassette_args =
 	19200											/* create_smpfreq */
 };
 
-int coco_cassette_init(int id, mame_file *fp, int open_mode)
+int coco_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
-	return cassette_init(id, fp, open_mode, &coco_cassette_args);
+	return cassette_init(img, fp, open_mode, &coco_cassette_args);
 }
 
 /***************************************************************************
@@ -2015,7 +2031,7 @@ static int count_bank(void)
 	unsigned int	crc;
 	/* This function, and all calls of it, are hacks for bankswitched games */
 
-	crc = image_crc(IO_CARTSLOT, 0);
+	crc = image_crc(cartslot_image());
 
 	switch( crc )
 	{
@@ -2042,7 +2058,7 @@ static int is_Orch90(void)
 	unsigned int	crc;
 	/* This function, and all calls of it, are hacks for bankswitched games */
 
-	crc = image_crc(IO_CARTSLOT, 0);
+	crc = image_crc(cartslot_image());
 
 	return crc == 0x15FB39AF;
 }
@@ -2051,11 +2067,13 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
 	mame_file *fp;
 
-	if (count_bank() > 0) {
+	if (count_bank() > 0)
+	{
 		/* Pin variable to proper bit width */
 		bank &= count_bank();
-		fp = image_fopen_custom(IO_CARTSLOT, 0, FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (fp) {
+		fp = image_fopen_custom(cartslot_image(), FILETYPE_IMAGE, OSD_FOPEN_READ);
+		if (fp)
+		{
 			if (bank)
 				mame_fseek(fp, 0x4000 * bank, SEEK_SET);
 			mame_fread(fp, cartpos, 0x4000);

@@ -781,7 +781,7 @@ BBC_uPD7002= {
    load floppy disc
 ***************************************/
 
-int bbc_floppy_init(int id, mame_file *fp, int open_mode)
+int bbc_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
@@ -1070,7 +1070,7 @@ WRITE_HANDLER ( bbc_wd1770_write )
    BBC B Rom loading functions
 ***************************************/
 
-int bbcb_load_rom(int id, mame_file *fp, int open_mode)
+int bbcb_load_rom(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_USER1);
 	int size, read_;

@@ -93,7 +93,7 @@ extern WRITE_HANDLER( gb_ram_enable );
 extern WRITE_HANDLER( gb_io_w );
 extern READ_HANDLER ( gb_io_r );
 extern WRITE_HANDLER( gb_ie_w );
-extern int gb_cart_load(int id, mame_file *F, int open_mode);
+extern int gb_cart_load(mess_image *img, mame_file *F, int open_mode);
 extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);

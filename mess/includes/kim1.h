@@ -5,7 +5,7 @@
 DRIVER_INIT( kim1 );
 MACHINE_INIT( kim1 );
 
-int kim1_cassette_load(int id, mame_file *fp, int open_mode);
+int kim1_cassette_load(mess_image *img, mame_file *fp, int open_mode);
 
 #define CONFIG_DEVICE_KIM1_CASSETTE \
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "kim\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, kim1_cassette_load, NULL, NULL)

@@ -346,7 +346,7 @@ void init_ti99_4p(void)
 	has_evpc = TRUE;
 }
 
-int ti99_cassette_load(int id, mame_file *fp, int open_mode)
+int ti99_cassette_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));

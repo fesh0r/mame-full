@@ -1,8 +1,13 @@
+#ifndef LISA_H
+#define LISA_H
+
+#include "osdepend.h"
+
 extern VIDEO_START( lisa );
 extern VIDEO_UPDATE( lisa );
 
-int lisa_floppy_load(int id, mame_file *fp, int open_mode);
-void lisa_floppy_unload(int id);
+int lisa_floppy_load(mess_image *img, mame_file *fp, int open_mode);
+void lisa_floppy_unload(mess_image *img);
 extern NVRAM_HANDLER(lisa);
 
 void init_lisa2(void);
@@ -22,4 +27,5 @@ WRITE_HANDLER ( lisa210_fdc_w );
 READ16_HANDLER ( lisa_r );
 WRITE16_HANDLER ( lisa_w );
 
+#endif /* LISA_H */
 

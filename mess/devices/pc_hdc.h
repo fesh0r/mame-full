@@ -3,11 +3,8 @@
 
 #include "driver.h"
 
-int	pc_harddisk_load(int id, mame_file *fp, int open_mode);
-void pc_harddisk_unload(int id);
-
 #define CONFIG_DEVICE_PC_HARDDISK(count) \
-	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW, NULL, NULL, pc_harddisk_load, pc_harddisk_unload, NULL)
+	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW, NULL, NULL, NULL, NULL, NULL)
 
 
 #if 0

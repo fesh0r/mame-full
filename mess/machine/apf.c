@@ -15,7 +15,7 @@
 #include "image.h"
 
 #if 0
-int apf_cassette_init(int id, mame_file *fp, int open_mode)
+int apf_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -115,7 +115,7 @@ int apf_cassette_init(int id, mame_file *file, int effective_mode)
 }
 
 /* 256 bytes per sector, single sided, single density, 40 track  */
-int apfimag_floppy_init(int id, mame_file *fp, int open_mode)
+int apfimag_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (fp == NULL)
 		return INIT_PASS;

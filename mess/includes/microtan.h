@@ -29,7 +29,7 @@ extern UINT8 *microtan_chunky_buffer;
 extern void init_microtan(void);
 extern MACHINE_INIT( microtan );
 
-extern int microtan_cassette_init(int id, mame_file *fp, int open_mode);
+extern int microtan_cassette_init(mess_image *img, mame_file *fp, int open_mode);
 
 extern SNAPSHOT_LOAD( microtan );
 extern QUICKLOAD_LOAD( microtan_hexfile );

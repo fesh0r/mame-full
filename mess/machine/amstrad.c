@@ -34,7 +34,7 @@ void amstrad_setup_machine(void)
 	Amstrad_Reset();
 }
 
-int amstrad_cassette_init(int id, mame_file *fp, int open_mode)
+int amstrad_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -206,7 +206,7 @@ SNAPSHOT_LOAD(amstrad)
 	return INIT_PASS;
 }
 
-int	amstrad_plus_cartridge_load(int id, mame_file *fp, int open_mode)
+int	amstrad_plus_cartridge_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	return INIT_PASS;
 }

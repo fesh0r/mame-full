@@ -14,12 +14,12 @@
 extern UINT8 trs80_port_ff;
 
 
-int trs80_cas_load(int id, mame_file *fp, int open_mode);
+int trs80_cas_load(mess_image *img, mame_file *fp, int open_mode);
 void trs80_cas_unload(int id);
 
 QUICKLOAD_LOAD( trs80_cmd );
 
-int trs80_floppy_init(int id, mame_file *fp, int open_mode);
+int trs80_floppy_init(mess_image *img, mame_file *fp, int open_mode);
 
 VIDEO_START( trs80 );
 VIDEO_UPDATE( trs80 );

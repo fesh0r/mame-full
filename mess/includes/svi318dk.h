@@ -74,7 +74,7 @@ void	svi318dsk_set_ddam(UINT8 physical_drive, UINT8 physical_track, UINT8 physic
 
 /* floppy disk */
 int svi318dsk_floppy_init(int id);
-int svi318dsk_floppy_load(int id, mame_file *fp, int open_mode);
+int svi318dsk_floppy_load(mess_image *img, mame_file *fp, int open_mode);
 void svi318dsk_floppy_unload(int id);
 
 #define CONFIG_DEVICE_FLOPPY_SVI318DSK(count, file_extensions)		\

@@ -26,8 +26,8 @@ typedef struct {
 	int devicenr;
 } VC1541_CONFIG;
 
-int vc1541_init(int id, mame_file *fp, int open_mode);
-void vc1541_exit(int id);
+int vc1541_init(mess_image *img, mame_file *fp, int open_mode);
+void vc1541_exit(mess_image *img);
 
 int vc1541_config(int id, int mode, VC1541_CONFIG*config);
 void vc1541_reset(void);
@@ -42,13 +42,13 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
 
 #define CONFIG_DEVICE_VC1541	\
 	CONFIG_DEVICE_LEGACYX(IO_FLOPPY, 1, "d64\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, vc1541_init, vc1541_exit,	\
-		((int(*)(int,int,void*))vc1541_config), NULL)
+		((int(*)(mess_image*,int,void*))vc1541_config), NULL)
 
 #define CONFIG_DEVICE_C2031	CONFIG_DEVICE_VC1541
 
 #define CONFIG_DEVICE_C1551		\
 	CONFIG_DEVICE_LEGACYX(IO_FLOPPY, 1, "d64\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, vc1541_init, vc1541_exit,	\
-		((int(*)(int,int,void*))c1551_config), NULL)
+		((int(*)(mess_image*,int,void*))c1551_config), NULL)
 
 #define CONFIG_DEVICE_C1571	CONFIG_DEVICE_VC1541
 

@@ -22,8 +22,9 @@ struct bitbanger_info
 
 static struct bitbanger_info *bitbangers[MAX_PRINTER];
 
-static int bitbanger_init(int id)
+static int bitbanger_init(mess_image *img)
 {
+	int id = image_index(img);
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;
 
@@ -88,7 +89,7 @@ static void bitbanger_analyze(int id, struct bitbanger_info *bi)
 		return;
 
 	/* filter the output */
-	if (bi->config->filter(id, bi->factored_pulses, bi->recorded_pulses, total_duration))
+	if (bi->config->filter(image_instance(IO_BITBANGER, id), bi->factored_pulses, bi->recorded_pulses, total_duration))
 		bi->recorded_pulses = 0;
 }
 
@@ -114,8 +115,9 @@ static void bitbanger_overthreshhold(int id)
 	bi->recorded_pulses = 0;
 }
 
-static void bitbanger_output(int id, int value)
+static void bitbanger_output(mess_image *img, int value)
 {
+	int id = image_index(img);
 	struct bitbanger_info *bi = bitbangers[id];
 	double current_time;
 	double pulse_width;
@@ -153,7 +155,6 @@ void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger
 	iodev->flags = DEVICE_LOAD_RESETS_NONE;
 	iodev->open_mode = OSD_FOPEN_WRITE;
 	iodev->init = bitbanger_init;
-	iodev->load = printer_load;
 	iodev->status = printer_status;
 	iodev->output = bitbanger_output;
 	iodev->user1 = (char *) config;

@@ -699,6 +699,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	char flag[40];
 	int sel, total, arrowize, type, id;
 	const struct IODevice *dev;
+	mess_image *img;
 
 	sel = selected - 1;
 	total = 0;
@@ -709,12 +710,10 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		type = dev->type;
 		for (id = 0; id < dev->count; id++)
 		{
-			name = device_typename_id(type, id);
-
+			img = image_instance(type, id);
+			name = device_typename_id(img);
 			menu_item[total] = (name) ? name : "---";
-
-			name = image_filename(type, id);
-
+			name = image_filename(img);
 			menu_subitem[total] = (name) ? name : "---";
 
 			flag[total] = 0;
@@ -729,7 +728,8 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
-		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS), image_filename(types[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]));
+		img = image_instance(types[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
+		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS), image_filename(img));
 		if (sel != 0 && sel != -1 && sel!=-2)
 			return sel | (2 << SEL_BITS);
 
@@ -741,7 +741,8 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			previous_sel = previous_sel & SEL_MASK;
 
 			/* attempt a filename change */
-			image_load(types[previous_sel], ids[previous_sel], entered_filename[0] ? entered_filename : NULL);
+			img = image_instance(types[sel], ids[sel]);
+			image_load(img, entered_filename[0] ? entered_filename : NULL);
 		}
 
 		sel = previous_sel;
@@ -779,7 +780,8 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		{
 			/* yes */
 			sel &= SEL_MASK;
-			image_load(types[sel], ids[sel], NULL);
+			img = image_instance(types[sel], ids[sel]);
+			image_load(img, NULL);
 		}
 
 		schedule_full_refresh();
@@ -797,6 +799,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		int os_sel;
+		img = image_instance(types[sel], ids[sel]);
 
 		/* Return to main menu? */
 		if (sel == total-1)
@@ -805,14 +808,14 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			os_sel = -1;
 		}
 		/* no, let the osd code have a crack at changing files */
-		else os_sel = osd_select_file(types[sel], ids[sel], entered_filename);
+		else os_sel = osd_select_file(img, entered_filename);
 
 		if (os_sel != 0)
 		{
 			if (os_sel == 1)
 			{
 				/* attempt a filename change */
-				image_load(types[sel], ids[sel], entered_filename);
+				image_load(img, entered_filename);
 			}
 		}
 		/* osd code won't handle it, lets use our clunky interface */

@@ -336,7 +336,7 @@ QUICKLOAD_LOAD(atom)
 
 
 /* load floppy */
-int atom_floppy_init(int id, mame_file *fp, int open_mode)
+int atom_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
@@ -475,7 +475,7 @@ WRITE_HANDLER(atom_8271_w)
 }
 
 
-int atom_cassette_init(int id, mame_file *fp, int open_mode)
+int atom_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));

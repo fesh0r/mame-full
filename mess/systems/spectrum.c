@@ -900,12 +900,6 @@ static MACHINE_INIT( spectrum_plus3 )
 	}
 }
 
-static MACHINE_STOP( spectrum_plus3 )
-{
-	nec765_stop();
-}
-
-
 
 /****************************************************************************************************/
 /* TS2048 specific functions */
@@ -2222,7 +2216,6 @@ static MACHINE_DRIVER_START( spectrum_plus3 )
 	MDRV_FRAMES_PER_SECOND(50.01)
 
 	MDRV_MACHINE_INIT( spectrum_plus3 )
-	MDRV_MACHINE_STOP( spectrum_plus3 )
 MACHINE_DRIVER_END
 
 

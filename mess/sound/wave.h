@@ -1,8 +1,6 @@
 #ifndef WAVE_H_INCLUDED
 #define WAVE_H_INCLUDED
 
-#define MAX_WAVE 4
-
 /*****************************************************************************
  *	CassetteWave interface
  *****************************************************************************/
@@ -13,9 +11,10 @@ extern "C" {
 
 #include "messdrv.h"
 
-struct Wave_interface {
+struct Wave_interface
+{
 	int num;
-	int mixing_level[MAX_WAVE];
+	int mixing_level[MAX_DEV_INSTANCES];
 };
 
 extern int wave_sh_start(const struct MachineSound *msound);
@@ -27,21 +26,10 @@ extern void wave_sh_update(void);
  * IO_CASSETTE_WAVE(1,"wav\0cas\0",mycas_id,mycas_init,mycas_exit)
  *****************************************************************************/
 
-int wave_load(int id, const char *name);
-void wave_unload(int id);
-const void *wave_info(int id, int whatinfo);
-int wave_open(int id, int mode, void *args);
-void wave_close(int id);
-int wave_status(int id, int newstatus);
-int wave_seek(int id, int offset, int whence);
-int wave_tell(int id);
-int wave_input(int id);
-void wave_output(int id, int data);
-
-void cassette_exit(int id);
+void cassette_exit(mess_image *img);
 
 void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*loadproc)(int id, mame_file *fp, int open_mode), void (*unloadproc)(int id));
+	int (*loadproc)(mess_image *img, mame_file *fp, int open_mode), void (*unloadproc)(mess_image *img));
 
 #define CONFIG_DEVICE_CASSETTEX(count, fileext, loadproc, unloadproc)		\
 	if (cfg->device_num-- == 0)												\

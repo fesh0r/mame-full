@@ -21,6 +21,7 @@ extern struct GameOptions options;
 const char *mess_path;
 UINT32 mess_ram_size;
 UINT8 *mess_ram;
+int devices_inited;
 
 int DECL_SPEC mess_printf(const char *fmt, ...)
 {
@@ -222,8 +223,12 @@ int devices_init(const struct GameDriver *gamedrv)
 	{
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
-			image_init(dev->type, id);
+		{
+			mess_image *img = image_instance(dev->type, id);
+			image_init(img);
+		}
 	}
+	devices_inited = TRUE;
 
 	return 0;
 }
@@ -236,6 +241,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 	struct distributed_images images;
 	const struct IODevice *dev;
 	const char *imagename;
+	mess_image *img;
 
 	/* normalize ispreload */
 	ispreload = ispreload ? DEVICE_LOAD_AT_INIT : 0;
@@ -264,8 +270,10 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 				imagename = images.names[dev->type][id];
 				if (imagename)
 				{
+					img = image_instance(dev->type, id);
+
 					/* load this image */
-					result = image_load(dev->type, id, images.names[dev->type][id]);
+					result = image_load(img, images.names[dev->type][id]);
 
 					if (result != INIT_PASS)
 					{
@@ -288,6 +296,7 @@ void devices_exit(void)
 {
 	const struct IODevice *dev;
 	int id;
+	mess_image *img;
 
 	/* unload all devices */
 	image_unload_all(FALSE);
@@ -298,8 +307,13 @@ void devices_exit(void)
 	{
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
-			image_exit(dev->type, id);
+		{
+			img = image_instance(dev->type, id);
+			image_exit(img);
+		}
 	}
+
+	devices_inited = FALSE;
 }
 
 void showmessdisclaimer(void)
@@ -332,66 +346,6 @@ void showmessinfo(void)
 		"        MESS -showusage   to see usage instructions\n"
 		"See mess.txt for help, readme.txt for options.\n");
 
-}
-
-static char *battery_nvramfilename(const char *filename)
-{
-	return strip_extension(osd_basename((char *) filename));
-}
-
-/* load battery backed nvram from a driver subdir. in the nvram dir. */
-int battery_load(const char *filename, void *buffer, int length)
-{
-	mame_file *f;
-	int bytes_read = 0;
-	int result = FALSE;
-	char *nvram_filename;
-
-	/* some sanity checking */
-	if( buffer != NULL && length > 0 )
-	{
-		nvram_filename = battery_nvramfilename(filename);
-		if (nvram_filename)
-		{
-			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 0);
-			if (f)
-			{
-				bytes_read = mame_fread(f, buffer, length);
-				mame_fclose(f);
-				result = TRUE;
-			}
-			free(nvram_filename);
-		}
-
-		/* fill remaining bytes (if necessary) */
-		memset(((char *) buffer) + bytes_read, '\0', length - bytes_read);
-	}
-	return result;
-}
-
-/* save battery backed nvram to a driver subdir. in the nvram dir. */
-int battery_save(const char *filename, void *buffer, int length)
-{
-	mame_file *f;
-	char *nvram_filename;
-
-	/* some sanity checking */
-	if( buffer != NULL && length > 0 )
-	{
-		nvram_filename = battery_nvramfilename(filename);
-		if (nvram_filename)
-		{
-			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
-			if (f)
-			{
-				mame_fwrite(f, buffer, length);
-				mame_fclose(f);
-				return TRUE;
-			}
-			free(nvram_filename);
-		}
-	}
-	return FALSE;
 }
 
 void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)

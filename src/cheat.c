@@ -10439,7 +10439,8 @@ static void BuildCRCTable(void)
 	{
 		for(deviceID = 0; deviceID < device_count(deviceType); deviceID++)
 		{
-			UINT32	crc = image_crc(deviceType, deviceID);
+			mess_image *img = image_instance(deviceType, deviceID);
+			UINT32	crc = image_crc(img);
 			int		isUnique = 1;
 
 			for(listIdx = 0; listIdx < deviceCRCListLength; listIdx++)

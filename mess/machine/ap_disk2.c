@@ -33,7 +33,29 @@
 #define TOTAL_TRACKS		35 /* total number of tracks we support, can be 40 */
 #define NIBBLE_SIZE			374
 
-static APPLE_DISKII_STRUCT a2_drives[2];
+typedef struct
+{
+	/* Drive stepper motor phase magnets */
+	char phase[4];
+
+	char Q6;
+	char Q7;
+	
+	unsigned char *data;
+	
+	int track;
+	int sector; /* not needed? */
+	int volume;
+	int bytepos;
+	int trackpos;
+	int write_protect;
+	int image_type;
+
+	/* Misc controller latches */
+	char drive_num;
+	char motor;
+
+} apple2_disk;
 
 /* TODO: remove ugly hacked-in code */
 static int track6[2];		/* current track #? */
@@ -63,6 +85,13 @@ static unsigned char r_skewing6[0x10] =
 	0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
 };
 
+#define APDISKTAG	"ap2disk"
+
+static apple2_disk *get_disk(mess_image *img)
+{
+	return image_lookuptag(img, APDISKTAG);
+}
+
 /***************************************************************************
   apple2_slot6_init
 ***************************************************************************/
@@ -81,31 +110,41 @@ void apple2_slot6_init(void)
 	read_state    = 1;
 }
 
-int apple2_floppy_load(int id, mame_file *f, int open_mode)
+int apple2_floppy_init(mess_image *img)
+{
+	if (image_alloctag(img, APDISKTAG, sizeof(apple2_disk)))
+		return INIT_FAIL;
+	return INIT_PASS;
+}
+
+int apple2_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	int t, s;
 	int pos;
 	int volume;
 	int i;
+	apple2_disk *disk;
 
-    a2_drives[id].data = image_malloc(IO_FLOPPY, id, NIBBLE_SIZE*16*TOTAL_TRACKS);
-	if (!a2_drives[id].data)
+	disk = get_disk(img);
+
+    disk->data = image_malloc(img, NIBBLE_SIZE*16*TOTAL_TRACKS);
+	if (!disk->data)
 		return INIT_FAIL;
 
 	/* Default everything to sync byte 0xFF */
-	memset(a2_drives[id].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
+	memset(disk->data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
 
 	/* TODO: support .nib and .po images */
-	a2_drives[id].image_type = A2_DISK_DO;
-	a2_drives[id].write_protect = 1;
-	a2_drives[id].track = TOTAL_TRACKS; /* middle of the disk */
-	a2_drives[id].volume = volume = 254;
-	a2_drives[id].bytepos = 0;
-	a2_drives[id].trackpos = 0;
+	disk->image_type = A2_DISK_DO;
+	disk->write_protect = 1;
+	disk->track = TOTAL_TRACKS; /* middle of the disk */
+	disk->volume = volume = 254;
+	disk->bytepos = 0;
+	disk->trackpos = 0;
 
 	for (t = 0; t < TOTAL_TRACKS; t ++)
 	{
-		if (mame_fseek(f,256*16*t,SEEK_CUR)!=0)
+		if (mame_fseek(fp, 256*16*t, SEEK_CUR)!=0)
 		{
 			LOG(("Couldn't find track %d.\n", t));
 			return INIT_FAIL;
@@ -120,13 +159,13 @@ int apple2_floppy_load(int id, mame_file *f, int open_mode)
 			int oldvalue;
 
 			sec_pos = 256*r_skewing6[s] + t*256*16;
-			if (mame_fseek(f,sec_pos,SEEK_SET)!=0)
+			if (mame_fseek(fp, sec_pos, SEEK_SET)!=0)
 			{
 				LOG(("Couldn't find sector %d.\n", s));
 				return INIT_FAIL;
 			}
 
-			if (mame_fread(f,data,256)<256)
+			if (mame_fread(fp, data, 256)<256)
 			{
 				LOG(("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos));
 				return INIT_FAIL;
@@ -138,26 +177,26 @@ int apple2_floppy_load(int id, mame_file *f, int open_mode)
 			/* Setup header values */
 			checksum = volume ^ t ^ s;
 
-			a2_drives[id].data[pos+7]=0xD5;
-			a2_drives[id].data[pos+8]=0xAA;
-			a2_drives[id].data[pos+9]=0x96;
-			a2_drives[id].data[pos+10]=(volume >> 1) | 0xAA;
-			a2_drives[id].data[pos+11]= volume | 0xAA;
-			a2_drives[id].data[pos+12]=(t >> 1) | 0xAA;
-			a2_drives[id].data[pos+13]= t | 0xAA;
-			a2_drives[id].data[pos+14]=(s >> 1) | 0xAA;
-			a2_drives[id].data[pos+15]= s | 0xAA;
-			a2_drives[id].data[pos+16]=(checksum >> 1) | 0xAA;
-			a2_drives[id].data[pos+17]=(checksum) | 0xAA;
-			a2_drives[id].data[pos+18]=0xDE;
-			a2_drives[id].data[pos+19]=0xAA;
-			a2_drives[id].data[pos+20]=0xEB;
-			a2_drives[id].data[pos+25]=0xD5;
-			a2_drives[id].data[pos+26]=0xAA;
-			a2_drives[id].data[pos+27]=0xAD;
-			a2_drives[id].data[pos+27+344]=0xDE;
-			a2_drives[id].data[pos+27+345]=0xAA;
-			a2_drives[id].data[pos+27+346]=0xEB;
+			disk->data[pos+7]=0xD5;
+			disk->data[pos+8]=0xAA;
+			disk->data[pos+9]=0x96;
+			disk->data[pos+10]=(volume >> 1) | 0xAA;
+			disk->data[pos+11]= volume | 0xAA;
+			disk->data[pos+12]=(t >> 1) | 0xAA;
+			disk->data[pos+13]= t | 0xAA;
+			disk->data[pos+14]=(s >> 1) | 0xAA;
+			disk->data[pos+15]= s | 0xAA;
+			disk->data[pos+16]=(checksum >> 1) | 0xAA;
+			disk->data[pos+17]=(checksum) | 0xAA;
+			disk->data[pos+18]=0xDE;
+			disk->data[pos+19]=0xAA;
+			disk->data[pos+20]=0xEB;
+			disk->data[pos+25]=0xD5;
+			disk->data[pos+26]=0xAA;
+			disk->data[pos+27]=0xAD;
+			disk->data[pos+27+344]=0xDE;
+			disk->data[pos+27+345]=0xAA;
+			disk->data[pos+27+346]=0xEB;
 			xorvalue = 0;
 
 			for(i=0;i<342;i++)
@@ -168,7 +207,7 @@ int apple2_floppy_load(int id, mame_file *f, int open_mode)
 					oldvalue=data[i - 0x56];
 					oldvalue=oldvalue>>2;
 					xorvalue ^= oldvalue;
-					a2_drives[id].data[pos+28+i] = translate6[xorvalue & 0x3F];
+					disk->data[pos+28+i] = translate6[xorvalue & 0x3F];
 					xorvalue = oldvalue;
 				}
 				else
@@ -182,12 +221,12 @@ int apple2_floppy_load(int id, mame_file *f, int open_mode)
 					oldvalue |= (data[i+0xAC] & 0x01) << 5;
 					oldvalue |= (data[i+0xAC] & 0x02) << 3;
 					xorvalue ^= oldvalue;
-					a2_drives[id].data[pos+28+i] = translate6[xorvalue & 0x3F];
+					disk->data[pos+28+i] = translate6[xorvalue & 0x3F];
 					xorvalue = oldvalue;
 				}
 			}
 
-			a2_drives[id].data[pos+27+343] = translate6[xorvalue & 0x3F];
+			disk->data[pos+27+343] = translate6[xorvalue & 0x3F];
 		}
 	}
 	return INIT_PASS;
@@ -195,18 +234,20 @@ int apple2_floppy_load(int id, mame_file *f, int open_mode)
 
 
 /* For now, make disks read-only!!! */
-static void WriteByte(int drive, int theByte)
+static void WriteByte(mess_image *img, int theByte)
 {
-	return;
 }
 
-static int ReadByte(int drive)
+static int ReadByte(mess_image *img)
 {
 	int value;
+	apple2_disk *disk;
 
 	/* no image initialized for that drive ? */
-	if (!image_exists(IO_FLOPPY, drive))
+	if (!image_exists(img))
 		return 0xFF;
+
+	disk = get_disk(img);
 
 	/* Our drives are always turned on baby, yeah!
 
@@ -215,21 +256,17 @@ static int ReadByte(int drive)
 	   never really off between them. For a perfect emulation, we should turn it off
 	   via a timer around a second after the command to turn it off is sent. */
 #if 0
-	if (a2_drives[drive].motor == SWITCH_OFF)
+	if (disk->motor == SWITCH_OFF)
 	{
 		return 0x00;
 	}
 #endif
 
-	value = a2_drives[drive].data[a2_drives[drive].trackpos + a2_drives[drive].bytepos];
+	value = disk->data[disk->trackpos + disk->bytepos];
 
-	a2_drives[drive].bytepos ++;
-	if (a2_drives[drive].bytepos >= NIBBLE_SIZE*16)
-	{
-		a2_drives[drive].bytepos = 0;
-	}
-
-//	LOG(("pos: %d (track %d sector %d)\n", a2_drives[drive].bytepos, a2_drives[drive].track / 2, a2_drives[drive].bytepos / NIBBLE_SIZE));
+	disk->bytepos ++;
+	if (disk->bytepos >= NIBBLE_SIZE*16)
+		disk->bytepos = 0;
 	return value;
 }
 
@@ -238,13 +275,15 @@ static int ReadByte(int drive)
 ***************************************************************************/
 READ_HANDLER ( apple2_c0xx_slot6_r )
 {
-	int cur_drive;
+	apple2_disk *cur_drive;
+	mess_image *cur_image;
 	int phase;
 	data8_t result = 0x00;
 
 	profiler_mark(PROFILER_SLOT6);
 
-	cur_drive = a2_drives_num;
+	cur_image = image_instance(IO_FLOPPY, a2_drives_num);
+	cur_drive = get_disk(cur_image);
 
 	switch (offset)
 	{
@@ -253,39 +292,39 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 		case 0x04:		/* PHASE2OFF */
 		case 0x06:		/* PHASE3OFF */
 			phase = (offset >> 1);
-			a2_drives[cur_drive].phase[phase] = SWITCH_OFF;
+			cur_drive->phase[phase] = SWITCH_OFF;
 			break;
 		case 0x01:		/* PHASE0ON */
 		case 0x03:		/* PHASE1ON */
 		case 0x05:		/* PHASE2ON */
 		case 0x07:		/* PHASE3ON */
 			phase = (offset >> 1);
-			a2_drives[cur_drive].phase[phase] = SWITCH_ON;
+			cur_drive->phase[phase] = SWITCH_ON;
 			/* TODO: remove following ugly hacked-in code */
-			phase -= (a2_drives[cur_drive].track % 4);
+			phase -= (cur_drive->track % 4);
 			if (phase < 0)				        phase += 4;
-			if (phase==1)				        a2_drives[cur_drive].track++;
-			if (phase==3)				        a2_drives[cur_drive].track--;
-			if (a2_drives[cur_drive].track<0)	a2_drives[cur_drive].track=0;
-			a2_drives[cur_drive].trackpos = (a2_drives[cur_drive].track/2) * NIBBLE_SIZE*16;
-			LOG(("new track: %02x\n", a2_drives[cur_drive].track / 2));
+			if (phase==1)				        cur_drive->track++;
+			if (phase==3)				        cur_drive->track--;
+			if (cur_drive->track<0)	cur_drive->track=0;
+			cur_drive->trackpos = (cur_drive->track/2) * NIBBLE_SIZE*16;
+			LOG(("new track: %02x\n", cur_drive->track / 2));
 			break;
 		/* MOTOROFF */
 		case 0x08:
-			a2_drives[cur_drive].motor = SWITCH_OFF;
+			cur_drive->motor = SWITCH_OFF;
 			set_led_status(0,0);	 /* We use 0 and 2 for drives */
 			set_led_status(2,0);	 /* We use 0 and 2 for drives */
 			break;
 		/* MOTORON */
 		case 0x09:
-			a2_drives[cur_drive].motor = SWITCH_ON;
-			set_led_status(cur_drive*2,1);		 /* We use 0 and 2 for drives */
+			cur_drive->motor = SWITCH_ON;
+			set_led_status(a2_drives_num*2,1);		 /* We use 0 and 2 for drives */
 			break;
 		/* DRIVE1 */
 		case 0x0A:
 			a2_drives_num = 0;
 			/* Only one drive can be "on" at a time */
-			if (a2_drives[cur_drive].motor == SWITCH_ON)
+			if (cur_drive->motor == SWITCH_ON)
 			{
 				set_led_status(0,1);
 				set_led_status(2,0);
@@ -295,7 +334,7 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 		case 0x0B:
 			a2_drives_num = 1;
 			/* Only one drive can be "on" at a time */
-			if (a2_drives[cur_drive].motor == SWITCH_ON)
+			if (cur_drive->motor == SWITCH_ON)
 			{
 				set_led_status(0,0);
 				set_led_status(2,1);
@@ -303,31 +342,31 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			break;
 		/* Q6L - set transistor Q6 low */
 		case 0x0C:
-			a2_drives[cur_drive].Q6 = SWITCH_OFF;
+			cur_drive->Q6 = SWITCH_OFF;
 			/* TODO: remove following ugly hacked-in code */
 			if (read_state)
-				result = ReadByte(cur_drive);
+				result = ReadByte(cur_image);
 			else
-				WriteByte(cur_drive,disk6byte);
+				WriteByte(cur_image, disk6byte);
 			break;
 		/* Q6H - set transistor Q6 high */
 		case 0x0D:
-			a2_drives[cur_drive].Q6 = SWITCH_ON;
+			cur_drive->Q6 = SWITCH_ON;
 			/* TODO: remove following ugly hacked-in code */
-			if (a2_drives[cur_drive].write_protect)
+			if (cur_drive->write_protect)
 				result = 0x80;
 			break;
 		/* Q7L - set transistor Q7 low */
 		case 0x0E:
-			a2_drives[cur_drive].Q7 = SWITCH_OFF;
+			cur_drive->Q7 = SWITCH_OFF;
 			/* TODO: remove following ugly hacked-in code */
 			read_state = 1;
-			if (a2_drives[cur_drive].write_protect)
+			if (cur_drive->write_protect)
 				result = 0x80;
 			break;
 		/* Q7H - set transistor Q7 high */
 		case 0x0F:
-			a2_drives[cur_drive].Q7 = SWITCH_ON;
+			cur_drive->Q7 = SWITCH_ON;
 			/* TODO: remove following ugly hacked-in code */
 			read_state = 0;
 			break;

@@ -117,7 +117,7 @@ MACHINE_INIT( a800 )
 	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
-int a800_rom_load(int id, mame_file *fp, int open_mode)
+int a800_rom_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	int size;
@@ -169,7 +169,7 @@ MACHINE_INIT( a800xl)
 }
 
 
-int a800xl_load_rom(int id, mame_file *fp, int open_mode)
+int a800xl_load_rom(mess_image *img, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;

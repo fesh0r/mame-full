@@ -17,7 +17,7 @@ extern PALETTE_INIT( nc );
 void nc_set_card_present_state(int);
 
 int nc_pcmcia_card_init(int id);
-int nc_pcmcia_card_load(int id, mame_file *fp, int open_mode);
+int nc_pcmcia_card_load(mess_image *img, mame_file *fp, int open_mode);
 void nc_pcmcia_card_exit(int id);
 
 int nc_serial_load(int, mame_file *fp, int open_mode);

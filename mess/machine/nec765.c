@@ -134,6 +134,11 @@ static int nec765_cmd_size[32] = {
 	1,9,1,1,1,1,9,1,1,9,1,1,1,9,1,1
 };
 
+static mess_image *current_image(void)
+{
+	return image_instance(IO_FLOPPY, fdc.drive);
+}
+
 static void nec765_setup_drive_and_side(void)
 {
 	// drive index nec765 sees
@@ -181,48 +186,48 @@ static void nec765_clear_data_request(void)
 
 static void nec765_seek_complete(void)
 {
-		/* tested on Amstrad CPC */
+	/* tested on Amstrad CPC */
 
-		/* if a seek is done without drive connected: */
-		/*  abnormal termination of command,
-			seek complete, 
-			not ready
+	/* if a seek is done without drive connected: */
+	/*  abnormal termination of command,
+		seek complete, 
+		not ready
+	*/
+
+	/* if a seek is done with drive connected, but disc missing: */
+	/* abnormal termination of command,
+		seek complete,
+		not ready */
+
+	/* if a seek is done with drive connected and disc in drive */
+	/* seek complete */
+
+
+	/* On the PC however, it appears that recalibrates and seeks can be performed without
+	a disc in the drive. */
+
+	/* Therefore, the above output is dependant on the state of the drive */
+
+	/* In the Amstrad CPC, the drive select is provided by the NEC765. A single port is also
+	assigned for setting the drive motor state. The motor state controls the motor of the selected
+	drive */
+
+	/* On the PC the drive can be selected with the DIGITAL OUTPUT REGISTER, and the motor of each
+	of the 4 possible drives is also settable using the same register */
+
+	/* Assumption for PC: (NOT TESTED - NEEDS VERIFICATION) */
+
+	/* If a seek is done without drive connected: */
+	/* abnormal termination of command,
+		seek complete,
+		fault
 		*/
 
-		/* if a seek is done with drive connected, but disc missing: */
-		/* abnormal termination of command,
-			seek complete,
-			not ready */
-
-		/* if a seek is done with drive connected and disc in drive */
-		/* seek complete */
-
-
-		/* On the PC however, it appears that recalibrates and seeks can be performed without
-		a disc in the drive. */
-
-		/* Therefore, the above output is dependant on the state of the drive */
-
-		/* In the Amstrad CPC, the drive select is provided by the NEC765. A single port is also
-		assigned for setting the drive motor state. The motor state controls the motor of the selected
-		drive */
-
-		/* On the PC the drive can be selected with the DIGITAL OUTPUT REGISTER, and the motor of each
-		of the 4 possible drives is also settable using the same register */
+	/* if a seek is done with drive connected, but disc missing: */
+	/* seek complete */
 	
-		/* Assumption for PC: (NOT TESTED - NEEDS VERIFICATION) */
-
-		/* If a seek is done without drive connected: */
-		/* abnormal termination of command,
-			seek complete,
-			fault
-			*/
-
-		/* if a seek is done with drive connected, but disc missing: */
-		/* seek complete */
-		
-		/* if a seek is done with drive connected and disc in drive: */
-		/* seek complete */
+	/* if a seek is done with drive connected and disc in drive: */
+	/* seek complete */
 
 	/* On Amstrad CPC:
 		If drive not connected, or drive connected but disc not in drive, not ready! 
@@ -230,14 +235,16 @@ static void nec765_seek_complete(void)
 	   On PC:
 	    Drive is always ready!
 
-	In 37c78 docs, the ready bits of the nec765 are marked as unused.
-	This indicates it is always ready!!!!!
+		In 37c78 docs, the ready bits of the nec765 are marked as unused.
+		This indicates it is always ready!!!!!
 	*/
+
+	mess_image *img = current_image();
 
 	fdc.pcn[fdc.drive] = fdc.ncn;
 
 	/* drive ready? */
-	if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
+	if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 	{
 		/* yes */
 
@@ -247,7 +254,7 @@ static void nec765_seek_complete(void)
 			/* yes */
 
 			/* at track 0? */
-			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
 			{
 				/* yes. Seek complete */
 				fdc.nec765_status[0] = 0x020;
@@ -413,8 +420,11 @@ static void nec765_setup_timed_int(int signed_tracks)
 
 static void nec765_seek_setup(int is_recalibrate)
 {
+	mess_image *img;
 	int signed_tracks;
-	
+
+	img = current_image();
+
 	fdc.nec765_flags |= NEC765_SEEK_ACTIVE;
 
 	if (is_recalibrate)
@@ -436,8 +446,8 @@ static void nec765_seek_setup(int is_recalibrate)
 
 		/* if drive is already at track 0, or drive is not ready */
 		if (
-			floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0) || 
-			(!floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
+			floppy_drive_get_flag_state(img, FLOPPY_DRIVE_HEAD_AT_TRACK_0) || 
+			(!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			)
 		{
 			/* seek completed */
@@ -446,14 +456,14 @@ static void nec765_seek_setup(int is_recalibrate)
 		else
 		{
 			/* is drive present? */
-			if (device_count(IO_FLOPPY) < fdc.drive)
+			if (image_slotexists(img))
 			{
 				/* yes - calculate real number of tracks to seek */
 
 				int current_track;
 	
 				/* get current track */
-				current_track = floppy_drive_get_current_track(fdc.drive);
+				current_track = floppy_drive_get_current_track(img);
 
 				/* get number of tracks to seek */
 				signed_tracks = -current_track;
@@ -468,7 +478,7 @@ static void nec765_seek_setup(int is_recalibrate)
 			if (signed_tracks!=0)
 			{
 				/* perform seek - if drive isn't present it will not do anything */
-				floppy_drive_seek(fdc.drive, signed_tracks);
+				floppy_drive_seek(img, signed_tracks);
 			
 				nec765_setup_timed_int(signed_tracks);
 			}
@@ -489,14 +499,14 @@ static void nec765_seek_setup(int is_recalibrate)
 		signed_tracks = fdc.ncn - fdc.pcn[fdc.drive];
 
 		/* if no tracks to seek, or drive is not ready, seek is complete */
-		if ((signed_tracks==0) || (!floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY)))
+		if ((signed_tracks==0) || (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY)))
 		{
 			nec765_seek_complete();
 		}
 		else
 		{
 			/* perform seek - if drive isn't present it will not do anything */
-			floppy_drive_seek(fdc.drive, signed_tracks);
+			floppy_drive_seek(img, signed_tracks);
 
 			/* seek complete - issue an interrupt */
 			nec765_setup_timed_int(signed_tracks);
@@ -613,8 +623,10 @@ is not ready.
 /* done when ready state of drive changes */
 /* this ignores if command is active, in which case command should terminate immediatly
 with error */
-static void nec765_set_ready_change_callback(int drive, int state)
+static void nec765_set_ready_change_callback(mess_image *img, int state)
 {
+	int drive = image_index(img);
+
 	logerror("nec765: ready state change\n");
 
 	/* drive that changed state */
@@ -631,8 +643,10 @@ static void nec765_set_ready_change_callback(int drive, int state)
 
 
 
-void    nec765_init(nec765_interface *iface, int version)
+void nec765_init(nec765_interface *iface, int version)
 {
+	int i;
+
 	fdc.version = version;
 	fdc.timer = timer_alloc(nec765_timer_callback);
 	fdc.seek_timer = timer_alloc(nec765_seek_timer_callback);
@@ -647,25 +661,8 @@ void    nec765_init(nec765_interface *iface, int version)
 
 	nec765_reset(0);
 
-	floppy_drive_set_ready_state_change_callback(0, nec765_set_ready_change_callback);
-	floppy_drive_set_ready_state_change_callback(1, nec765_set_ready_change_callback);
-	floppy_drive_set_ready_state_change_callback(2, nec765_set_ready_change_callback);
-	floppy_drive_set_ready_state_change_callback(3, nec765_set_ready_change_callback);
-}
-
-void	nec765_stop(void)
-{
-	if (fdc.timer!=NULL)
-	{
-		timer_remove(fdc.timer);
-		fdc.timer = NULL;
-	}
-
-	if (fdc.seek_timer!=NULL)
-	{
-		timer_remove(fdc.seek_timer);
-		fdc.seek_timer = NULL;
-	}
+	for (i = 0; i < device_count(IO_FLOPPY); i++)
+		floppy_drive_set_ready_state_change_callback(image_instance(IO_FLOPPY, i), nec765_set_ready_change_callback);
 }
 
 
@@ -771,8 +768,10 @@ static int nec765_read_skip_sector(void)
 
 static void nec765_get_next_id(chrn_id *id)
 {
+	mess_image *img = current_image();
+
 	/* get next id from disc */
-	floppy_drive_get_next_id(fdc.drive, fdc.side,id);
+	floppy_drive_get_next_id(img, fdc.side,id);
 
 	fdc.sector_id = id->data_id;
 
@@ -786,6 +785,8 @@ static void nec765_get_next_id(chrn_id *id)
 
 static int nec765_get_matching_sector(void)
 {
+	mess_image *img = current_image();
+
 	/* number of times we have seen index hole */
 	int index_count = 0;
 
@@ -843,7 +844,7 @@ static int nec765_get_matching_sector(void)
 		}
 
 		 /* index set? */
-		if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))
+		if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_INDEX))
 		{
 			index_count++;
 		}
@@ -894,10 +895,11 @@ static void nec765_read_complete(void)
 	nec765_setup_result_phase(7);
 }
 
-static void     nec765_read_data(void)
+static void nec765_read_data(void)
 {
+	mess_image *img = current_image();
 
-	if (!(floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY)))
+	if (!(floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY)))
 	{
 		fdc.nec765_status[0] = 0x0c0 | (1<<4) | fdc.drive | (fdc.side<<2);
 		fdc.nec765_status[1] = 0x00;
@@ -967,17 +969,19 @@ static void     nec765_read_data(void)
 
 		data_size = nec765_n_to_bytes(fdc.nec765_command_bytes[5]);
 
-		floppy_drive_read_sector_data(fdc.drive, fdc.side, fdc.sector_id,nec765_data_buffer,data_size);
+		floppy_drive_read_sector_data(img, fdc.side, fdc.sector_id,nec765_data_buffer,data_size);
 
         nec765_setup_execution_phase_read(nec765_data_buffer, data_size);
 	}
 }
 
 
-static void     nec765_format_track(void)
+static void nec765_format_track(void)
 {
+	mess_image *img = current_image();
+
 	/* write protected? */
-	if (floppy_drive_get_flag_state(fdc.drive,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+	if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 	{
 		fdc.nec765_status[1] |= NEC765_ST1_NOT_WRITEABLE;
 
@@ -1009,40 +1013,37 @@ static void     nec765_read_a_track(void)
 
 	nec765_get_next_id(&id);
 
-        /* TO BE CONFIRMED! */
-        /* check id from disc */
-        if (id.C==fdc.nec765_command_bytes[2])
-        {
-            if (id.H==fdc.nec765_command_bytes[3])
-            {
-                if (id.R==fdc.nec765_command_bytes[4])
-                {
-                    if (id.N==fdc.nec765_command_bytes[5])
-                    {
-                        /* if ID found, then no data is not set */
-                        /* otherwise no data will remain set */
-                        fdc.nec765_status[1] &=~NEC765_ST1_NO_DATA;
-                    }
-                }
-            }
-        }
+	/* TO BE CONFIRMED! */
+	/* check id from disc */
+	if (id.C==fdc.nec765_command_bytes[2])
+	{
+		if (id.H==fdc.nec765_command_bytes[3])
+		{
+			if (id.R==fdc.nec765_command_bytes[4])
+			{
+				if (id.N==fdc.nec765_command_bytes[5])
+				{
+					/* if ID found, then no data is not set */
+					/* otherwise no data will remain set */
+					fdc.nec765_status[1] &=~NEC765_ST1_NO_DATA;
+				}
+			}
+		}
+	}
 
 
-        data_size = nec765_n_to_bytes(id.N);
+	data_size = nec765_n_to_bytes(id.N);
 	
-	floppy_drive_read_sector_data(fdc.drive, fdc.side, fdc.sector_id,nec765_data_buffer,data_size);
+	floppy_drive_read_sector_data(current_image(), fdc.side, fdc.sector_id,nec765_data_buffer,data_size);
 
 	nec765_setup_execution_phase_read(nec765_data_buffer, data_size);
 }
 
-static int              nec765_just_read_last_sector_on_track(void)
+static int nec765_just_read_last_sector_on_track(void)
 {
-	if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))
+	if (floppy_drive_get_flag_state(current_image(), FLOPPY_DRIVE_INDEX))
 		return 1;
-
 	return 0;
-
-
 }
 
 static void nec765_write_complete(void)
@@ -1083,9 +1084,9 @@ static void nec765_write_complete(void)
 }
 
 
-static void     nec765_write_data(void)
+static void nec765_write_data(void)
 {
-	if (!(floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY)))
+	if (!(floppy_drive_get_flag_state(current_image(), FLOPPY_DRIVE_READY)))
 	{
 		fdc.nec765_status[0] = 0x0c0 | (1<<4) | fdc.drive | (fdc.side<<2);
         fdc.nec765_status[1] = 0x00;
@@ -1103,7 +1104,7 @@ static void     nec765_write_data(void)
 	}
 
 	/* write protected? */
-	if (floppy_drive_get_flag_state(fdc.drive,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+	if (floppy_drive_get_flag_state(current_image(), FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 	{
 		fdc.nec765_status[1] |= NEC765_ST1_NOT_WRITEABLE;
 
@@ -1380,7 +1381,7 @@ static void     nec765_continue_command(void)
 			/* format track */
 			case 0x0d:
 			{
-				floppy_drive_format_sector(fdc.drive, fdc.side, fdc.sector_counter,
+				floppy_drive_format_sector(current_image(), fdc.side, fdc.sector_counter,
 					fdc.format_data[0], fdc.format_data[1],
 					fdc.format_data[2], fdc.format_data[3],
 					fdc.nec765_command_bytes[5]);
@@ -1421,7 +1422,7 @@ static void     nec765_continue_command(void)
 				}
 
 				/* write data to disc */
-				floppy_drive_write_sector_data(fdc.drive, fdc.side, fdc.sector_id,nec765_data_buffer,nec765_n_to_bytes(fdc.nec765_command_bytes[5]),ddam);
+				floppy_drive_write_sector_data(current_image(), fdc.side, fdc.sector_id,nec765_data_buffer,nec765_n_to_bytes(fdc.nec765_command_bytes[5]),ddam);
 
 				if (nec765_sector_count_complete())
 				{
@@ -1747,8 +1748,10 @@ static void nec765_setup_invalid(void)
 	nec765_setup_result_phase(1);
 }
 
-static void     nec765_setup_command(void)
+static void nec765_setup_command(void)
 {
+	mess_image *img = current_image();
+
 	/* if not in dma mode set execution phase bit */
 	if (!(fdc.nec765_flags & NEC765_DMA_MODE))
 	{
@@ -1779,17 +1782,17 @@ static void     nec765_setup_command(void)
 
 			fdc.nec765_status[3] = fdc.drive | (fdc.side<<2);
 
-			if (floppy_drive_get_flag_state(fdc.drive,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 			{
 				fdc.nec765_status[3] |= 0x040;
 			}
 
-			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				fdc.nec765_status[3] |= 0x020;
 			}
 
-			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
 			{
 				fdc.nec765_status[3] |= 0x010;
 			}
@@ -1822,10 +1825,10 @@ static void     nec765_setup_command(void)
 			fdc.nec765_status[2] = 0;
 
 			/* drive ready? */
-			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				/* is disk inserted? */
-				if (image_exists(IO_FLOPPY, fdc.drive))
+				if (image_exists(img))
 				{
 					int index_count = 0;
 
@@ -1842,13 +1845,13 @@ static void     nec765_setup_command(void)
 					do
 					{
 						/* get next id from disc */
-						if (floppy_drive_get_next_id(fdc.drive, fdc.side,&id))
+						if (floppy_drive_get_next_id(img, fdc.side, &id))
 						{
 							/* got an id - quit */
 							break;
 						}
 
-						if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))
+						if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_INDEX))
 						{
 							/* update index count */
 							index_count++;
@@ -1979,9 +1982,9 @@ static void     nec765_setup_command(void)
 			do
 			{
 				/* get next id from disc */
-				floppy_drive_get_next_id(fdc.drive, fdc.side,&id);
+				floppy_drive_get_next_id(img, fdc.side,&id);
 			}
-			while ((floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))==0);
+			while ((floppy_drive_get_flag_state(img, FLOPPY_DRIVE_INDEX))==0);
 
 
 			fdc.sector_counter = 0;
@@ -2121,7 +2124,7 @@ READ_HANDLER(nec765_dack_r)
 }
 
 
-void	nec765_reset(int offset)
+void nec765_reset(int offset)
 {
 	/* nec765 in idle state - ready to accept commands */
 	nec765_idle();
@@ -2149,7 +2152,7 @@ void	nec765_reset(int offset)
 		a_drive_is_ready = 0;
 		for (i=0; i<4; i++)
 		{
-			if (image_exists(IO_FLOPPY, i))
+			if (image_exists(image_instance(IO_FLOPPY, i)))
 			{
 				a_drive_is_ready = 1;
 				break;

@@ -352,7 +352,7 @@ static int sord_cartslot_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-static int sord_floppy_init(int id, mame_file *fp, int open_mode)
+static int sord_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
@@ -369,7 +369,7 @@ static int sord_floppy_init(int id, mame_file *fp, int open_mode)
 
 
 
-static int sord_cassette_init(int id, mame_file *fp, int open_mode)
+static int sord_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));

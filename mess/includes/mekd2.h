@@ -3,7 +3,7 @@
 
 /* from mess/machine/mekd2.c */
 DRIVER_INIT( mekd2 );
-int mekd2_cart_load (int id, mame_file *fp, int open_mode);
+int mekd2_cart_load (mess_image *img, mame_file *fp, int open_mode);
 
 /* from mess/vidhrdw/mekd2.c */
 PALETTE_INIT( mekd2 );

@@ -41,33 +41,6 @@
 
 extern UINT32 a2;
 
-typedef struct
-{
-	/* Drive stepper motor phase magnets */
-	char phase[4];
-
-	char Q6;
-	char Q7;
-	
-	unsigned char *data;
-	
-	int track;
-	int sector; /* not needed? */
-	int volume;
-	int bytepos;
-	int trackpos;
-	int write_protect;
-	int image_type;
-
-	/* Misc controller latches */
-	char drive_num;
-	char motor;
-
-} APPLE_DISKII_STRUCT;
-
-
-
-
 /* machine/apple2.c */
 extern DRIVER_INIT( apple2 );
 extern MACHINE_INIT( apple2 );
@@ -131,7 +104,9 @@ extern READ_HANDLER ( apple2_slot7_r );
 
 /* machine/ap_disk2.c */
 extern void apple2_slot6_init(void);
-extern int apple2_floppy_load(int id, mame_file *fp, int open_mode);
+
+extern int apple2_floppy_init(mess_image *img);
+extern int apple2_floppy_load(mess_image *img, mame_file *fp, int open_mode);
 
 extern READ_HANDLER ( apple2_c0xx_slot6_r );
 extern WRITE_HANDLER ( apple2_c0xx_slot6_w );

@@ -13,8 +13,8 @@ extern void c16_tape_open (void);
 extern void vc20_tape_close (void);
 
 /* call this with the name of the tape image */
-int vc20_tape_attach_image(int id, mame_file *fp, int open_mode);
-void vc20_tape_detach_image (int id);
+int vc20_tape_attach_image(mess_image *img, mame_file *fp, int open_mode);
+void vc20_tape_detach_image(mess_image *img);
 
 /* must be high active keys */
 /* set it frequently */

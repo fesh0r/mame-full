@@ -121,7 +121,7 @@ int nc_pcmcia_card_init(int id)
 }
 
 /* load pcmcia card */
-int nc_pcmcia_card_load(int id, mame_file *fp, int open_mode)
+int nc_pcmcia_card_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/* filename specified */
 
@@ -164,7 +164,7 @@ void nc_pcmcia_card_exit(int id)
 /*************************************************************************************************/
 /* Serial */
 
-int	nc_serial_load(int id, mame_file *fp, int open_mode)
+int	nc_serial_load(mess_image *img, mame_file *fp, int open_mode)
 {
 	/* filename specified */
 	if (serial_device_load(id, fp)==INIT_PASS)

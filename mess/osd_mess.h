@@ -1,11 +1,13 @@
 #ifndef OSD_MESS_H
 #define OSD_MESS_H
 
+typedef struct _mess_image mess_image;
+
 /* called by the filemanager code to allow the OS to override the file		*/
 /* selecting with it's own code. Return 0 if the MESS core should handle	*/
 /* file selection, -1 if the OS code does nothing or 1 if the OS code		*/
 /* changed a file.															*/
-int osd_select_file(int type, int id, char *filename);
+int osd_select_file(mess_image *img, char *filename);
 
 /* returns 1 if input of type IPT_KEYBOARD should be supressed */
 int osd_keyboard_disabled(void);
@@ -70,7 +72,7 @@ const char *osd_get_cwd(void);
 void osd_begin_final_unloading(void);
 
 /* used to notify osd code of the load status of an image */
-void osd_image_load_status_changed(int type, int id, int is_final_unload);
+void osd_image_load_status_changed(mess_image *img, int is_final_unload);
 
 char *osd_dirname(const char *filename);
 char *osd_basename(char *filename);

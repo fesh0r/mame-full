@@ -18,7 +18,7 @@ extern UINT16 intv_ram16[];
 extern DRIVER_INIT( intv );
 
 int intv_cart_init(int id);
-int intv_cart_load(int id, mame_file *fp, int open_mode);
+int intv_cart_load(mess_image *img, mame_file *fp, int open_mode);
 
 extern MACHINE_INIT( intv );
 extern INTERRUPT_GEN( intv_interrupt );
@@ -40,7 +40,7 @@ READ_HANDLER( intv_left_control_r );
 extern int intvkbd_text_blanked;
 
 extern DRIVER_INIT( intvkbd );
-int intvkbd_cart_load (int id, mame_file *fp, int open_mode);
+int intvkbd_cart_load (mess_image *img, mame_file *fp, int open_mode);
 
 READ16_HANDLER ( intvkbd_dualport16_r );
 WRITE16_HANDLER ( intvkbd_dualport16_w );

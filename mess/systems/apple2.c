@@ -432,9 +432,9 @@ static PALETTE_INIT( apple2 )
 static GET_CUSTOM_DEVICENAME( apple2 )
 {
 	const char *name = NULL;
-	switch(type) {
+	switch(image_type(img)) {
 	case IO_FLOPPY:
-		snprintf(buf, bufsize, "Slot 6 Disk #%d", id + 1);
+		snprintf(buf, bufsize, "Slot 6 Disk #%d", image_index(img) + 1);
 		name = buf;
 		break;
 	}
@@ -547,7 +547,7 @@ ROM_START(apple2cp)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0do\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, apple2_floppy_load, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0do\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, apple2_floppy_init, NULL, apple2_floppy_load, NULL, NULL)
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
 	CONFIG_RAM_DEFAULT			(128 * 1024)
 SYSTEM_CONFIG_END
