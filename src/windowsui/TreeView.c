@@ -45,6 +45,7 @@
 
 #ifdef MESS
 #include "windowsui/MessResource.h"
+#include "windowsui/ms32util.h"
 #endif
 
 #ifdef _MSC_VER
@@ -70,15 +71,15 @@ enum
 	ICON_FOLDER_MANUFACTURER,
 	ICON_FOLDER_UNAVAILABLE,
 	ICON_FOLDER_YEAR,
-    ICON_FOLDER_SOURCE,
+	ICON_FOLDER_SOURCE,
 	ICON_MANUFACTURER,
 	ICON_WORKING,
 	ICON_NONWORKING,
 	ICON_YEAR,
 	ICON_STEREO,
-    ICON_CPU,
+	ICON_CPU,
 	ICON_HARDDISK,
-    ICON_SOURCE,
+	ICON_SOURCE,
 };
 
 #define ICON_MAX ICON_SOURCE
@@ -107,45 +108,79 @@ static char treeIconNames[][15] =
 
 typedef struct
 {
-	const char *m_lpTitle;      /* Folder Title */
-	UINT        m_nFolderId;    /* ID */
-	UINT        m_nIconId;      /* Icon index into the ImageList */
+	const char *m_lpTitle;					/* Folder Title */
+	UINT        m_nFolderId;				/* ID */
+	UINT        m_nIconId;					/* Icon index into the ImageList */
+	BOOL		(*m_pfnQuery)(int nDriver);	/* Query function */
+	BOOL		m_bExpectedResult;			/* Expected query result */
 } FOLDERDATA, *LPFOLDERDATA;
+
+static BOOL AlwaysTrue(int driver_index)
+{
+	return TRUE;
+}
 
 FOLDERDATA folderData[] =
 {
 #ifdef MESS
-	{"All Systems",   FOLDER_ALLGAMES,    ICON_FOLDER},
+	{"All Systems",     FOLDER_ALLGAMES,    ICON_FOLDER,				AlwaysTrue,			TRUE },
 #else
-	{"All Games",     FOLDER_ALLGAMES,    ICON_FOLDER},
+	{"All Games",       FOLDER_ALLGAMES,    ICON_FOLDER,				AlwaysTrue,			TRUE },
 #endif
-	{"Available",     FOLDER_AVAILABLE,   ICON_FOLDER_AVAILABLE},
+	{"Available",       FOLDER_AVAILABLE,   ICON_FOLDER_AVAILABLE,      GetHasRoms,			TRUE },
 #ifdef SHOW_UNAVAILABLE_FOLDER
-	{"Unavailable",   FOLDER_UNAVAILABLE, ICON_FOLDER_UNAVAILABLE},
+	{"Unavailable",     FOLDER_UNAVAILABLE, ICON_FOLDER_UNAVAILABLE,	GetHasRoms,			FALSE },
 #endif
 #ifdef MESS
-	{"Console",       FOLDER_CONSOLE,     ICON_FOLDER},
-	{"Computer",      FOLDER_COMPUTER,    ICON_FOLDER},
-	{"Modified/Hacked",FOLDER_MODIFIED,   ICON_FOLDER},
+	{"Console",         FOLDER_CONSOLE,     ICON_FOLDER,				DriverIsComputer,	FALSE },
+	{"Computer",        FOLDER_COMPUTER,    ICON_FOLDER,				DriverIsComputer,	TRUE },
+	{"Modified/Hacked", FOLDER_MODIFIED,    ICON_FOLDER,				DriverIsModified,	TRUE },
 #endif
-	{"Manufacturer",  FOLDER_MANUFACTURER,ICON_FOLDER_MANUFACTURER},
-	{"Year",          FOLDER_YEAR,        ICON_FOLDER_YEAR},
-    {"Source",        FOLDER_SOURCE,      ICON_FOLDER_SOURCE},
-	{"CPU",           FOLDER_CPU,         ICON_FOLDER},
-	{"SND",           FOLDER_SND,         ICON_FOLDER},
-	{"Working",       FOLDER_WORKING,     ICON_WORKING},
-	{"Non-Working",   FOLDER_NONWORKING,  ICON_NONWORKING},
-	{"Originals",     FOLDER_ORIGINAL,    ICON_FOLDER},
-	{"Clones",        FOLDER_CLONES,      ICON_FOLDER},
-	{"Raster",        FOLDER_RASTER,      ICON_FOLDER},
-	{"Vector",        FOLDER_VECTOR,      ICON_FOLDER},
-	{"Trackball",     FOLDER_TRACKBALL,   ICON_FOLDER},
-	{"Stereo",        FOLDER_STEREO,      ICON_STEREO},
-	{"Hard Disk",     FOLDER_HARDDISK,    ICON_HARDDISK}
-
+	{"Manufacturer",    FOLDER_MANUFACTURER,ICON_FOLDER_MANUFACTURER},
+	{"Year",            FOLDER_YEAR,        ICON_FOLDER_YEAR},
+    {"Source",          FOLDER_SOURCE,      ICON_FOLDER_SOURCE},
+	{"CPU",             FOLDER_CPU,         ICON_FOLDER},
+	{"SND",             FOLDER_SND,         ICON_FOLDER},
+	{"Working",         FOLDER_WORKING,     ICON_WORKING,				DriverIsBroken,		FALSE },
+	{"Non-Working",     FOLDER_NONWORKING,  ICON_NONWORKING,			DriverIsBroken,		TRUE },
+	{"Originals",       FOLDER_ORIGINAL,    ICON_FOLDER,				DriverIsClone,		FALSE },
+	{"Clones",          FOLDER_CLONES,      ICON_FOLDER,				DriverIsClone,		TRUE },
+	{"Raster",          FOLDER_RASTER,      ICON_FOLDER,				DriverIsVector,		FALSE },
+	{"Vector",          FOLDER_VECTOR,      ICON_FOLDER,				DriverIsVector,		TRUE },
+	{"Trackball",       FOLDER_TRACKBALL,   ICON_FOLDER,				GameUsesTrackball,	TRUE },
+	{"Stereo",          FOLDER_STEREO,      ICON_STEREO,				DriverIsStereo,		TRUE },
+#ifndef MESS
+	{"Hard Disk",       FOLDER_HARDDISK,    ICON_HARDDISK,			DriverIsHarddisk,	TRUE }
+#endif
 };
 
 #define NUM_FOLDERS (sizeof(folderData) / sizeof(FOLDERDATA))
+
+typedef struct
+{
+	DWORD m_dwFilterType;				/* Filter value */
+	DWORD m_dwCtrlID;					/* Control ID that represents it */
+	BOOL (*m_pfnQuery)(int nDriver);	/* Query function */
+	BOOL m_bExpectedResult;				/* Expected query result */
+} FILTER_ITEM, *LPFILTER_ITEM;
+
+/* list of filter/control Id pairs */
+static FILTER_ITEM filterList[F_NUM_FILTERS] =
+{
+#ifdef MESS
+	{ F_COMPUTER,     IDC_FILTER_COMPUTER,    DriverIsComputer, TRUE },
+	{ F_CONSOLE,      IDC_FILTER_CONSOLE,     DriverIsComputer, FALSE },
+	{ F_MODIFIED,     IDC_FILTER_MODIFIED,    DriverIsModified, TRUE },
+#endif
+	{ F_CLONES,       IDC_FILTER_CLONES,      DriverIsClone, TRUE },
+	{ F_NONWORKING,   IDC_FILTER_NONWORKING,  DriverIsBroken, TRUE },
+	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE, GetHasRoms, FALSE },
+	{ F_RASTER,       IDC_FILTER_RASTER,      DriverIsVector, FALSE },
+	{ F_VECTOR,       IDC_FILTER_VECTOR,      DriverIsVector, TRUE },
+	{ F_ORIGINALS,    IDC_FILTER_ORIGINALS,   DriverIsClone, FALSE },
+	{ F_WORKING,      IDC_FILTER_WORKING,     DriverIsBroken, FALSE },
+	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   GetHasRoms, TRUE }
+};
 
 /***************************************************************************
     private variables
@@ -315,7 +350,8 @@ int FindGame(LPTREEFOLDER lpFolder, int nGame)
 // Called to re-associate games with folders
 void ResetWhichGamesInFolders(void)
 {
-	UINT	i, jj;
+	UINT	i, jj, k;
+	BOOL b;
 	int nGames = GetNumGames();
 
 	for (i = 0; i < numFolders; i++)
@@ -323,143 +359,33 @@ void ResetWhichGamesInFolders(void)
 		LPTREEFOLDER lpFolder = treeFolders[i];
 
 		// setup the games in our built-in folders
-
-		switch( lpFolder->m_nFolderId )
+		for (k = 0; k < sizeof(folderData) / sizeof(folderData[0]); k++)
 		{
-		case FOLDER_ALLGAMES:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_AVAILABLE:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (GetHasRoms(jj) == TRUE)
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_UNAVAILABLE:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (GetHasRoms(jj) == FALSE)
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_WORKING:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (DriverIsBroken(jj) == FALSE)
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_NONWORKING:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (DriverIsBroken(jj))
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_ORIGINAL:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (drivers[jj]->clone_of->flags & NOT_A_DRIVER)
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_CLONES:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (!(drivers[jj]->clone_of->flags & NOT_A_DRIVER))
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_RASTER:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
+			if (lpFolder->m_nFolderId == folderData[k].m_nFolderId)
 			{
-                struct InternalMachineDriver drv;
-                expand_machine_driver(drivers[jj]->drv,&drv);
-                if ((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0)
-					AddGame(lpFolder, jj);
+				if (folderData[k].m_pfnQuery)
+				{
+					SetAllBits(lpFolder->m_lpGameBits, FALSE);
+					for (jj = 0; jj < nGames; jj++)
+					{
+						b = folderData[k].m_pfnQuery(jj);
+						if (!folderData[k].m_bExpectedResult)
+							b = !b;
+						if (b)
+							AddGame(lpFolder, jj);
+					}
+				}
+				break;
 			}
-			break;
-
-		case FOLDER_VECTOR:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-                struct InternalMachineDriver drv;
-                expand_machine_driver(drivers[jj]->drv,&drv);
-				if (drv.video_attributes & VIDEO_TYPE_VECTOR)
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_TRACKBALL:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (GameUsesTrackball(jj))
-					AddGame(lpFolder, jj);
-			break;
-
-		case FOLDER_STEREO:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-                struct InternalMachineDriver drv;
-                expand_machine_driver(drivers[jj]->drv,&drv);
-				if (drv.sound_attributes & SOUND_SUPPORTS_STEREO)
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_HARDDISK :
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-				if (DriverIsHarddisk(jj))
-					AddGame(lpFolder,jj);
-			break;
-			
-#ifdef MESS
-		case FOLDER_COMPUTER:
-			SetAllBits( lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if (drivers[jj]->flags & GAME_COMPUTER)
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_CONSOLE:
-			SetAllBits( lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if (!(drivers[jj]->flags & GAME_COMPUTER))
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_MODIFIED:
-			SetAllBits( lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if (drivers[jj]->flags & GAME_COMPUTER_MODIFIED)
-					AddGame(lpFolder, jj);
-			}
-			break;
-#endif
 		}
 	}
-	
 }
 
 
 /* Used to build the GameList */
 BOOL GameFiltered(int nGame, DWORD dwMask)
 {
-	BOOL vector;
-	struct InternalMachineDriver drv;
+	int i;
 
 	/* Filter games */
 	if (g_FilterText[0] != '\0')
@@ -477,49 +403,14 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	&&	!(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
 		return TRUE;
 
-	/* Filter non working games */
-	if (dwMask & F_NONWORKING
-		&& (DriverIsBroken(nGame)))
-		return TRUE;
-
-#ifdef MESS
-	/* Filter computer games */
-	if (dwMask & F_COMPUTER && drivers[nGame]->flags & GAME_COMPUTER)
-		return TRUE;
-
-	/* Filter console games */
-	if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
-		return TRUE;
-
-	/* Filter modified games */
-	if (dwMask & F_MODIFIED && !(drivers[nGame]->flags & GAME_COMPUTER_MODIFIED))
-		return TRUE;
-#endif
-
-	/* Filter unavailable games */
-	if (dwMask & F_UNAVAILABLE && GetHasRoms(nGame) == FALSE)
-		return TRUE;
-
-    expand_machine_driver(drivers[nGame]->drv,&drv);
-	vector = drv.video_attributes & VIDEO_TYPE_VECTOR;
-
-	/* Filter vector games */
-	if (dwMask & F_VECTOR && vector)
-		return TRUE;
-
-	/* Filter Raster games */
-	if (dwMask & F_RASTER && !vector)
-		return TRUE;
-
-	/* FIlter original games */
-	if (dwMask & F_ORIGINALS
-	&&	(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
-		return TRUE;
-
-	/* Filter working games */
-	if (dwMask & F_WORKING && (DriverIsBroken(nGame) == FALSE))
-		return TRUE;
-
+	for (i = 0; i < sizeof(filterList) / sizeof(filterList[0]); i++)
+	{
+		if (dwMask & filterList[i].m_dwFilterType)
+		{
+			if (filterList[i].m_pfnQuery(nGame) == filterList[i].m_bExpectedResult)
+				return TRUE;
+		}
+	}
 	return FALSE;
 }
 
@@ -1488,20 +1379,14 @@ typedef struct
 	DWORD m_dwSet;          /* Implied filters */
 } FILTER_RECORD, * LPFILTER_RECORD;
 
-typedef struct
-{
-	DWORD m_dwFilterType;   /* Filter value */
-	DWORD m_dwCtrlID;       /* Control ID that represents it */
-} FILTER_ITEM, *LPFILTER_ITEM;
-
 /* List of folders with implied and excluded filters */
 static FILTER_RECORD filterRecord[NUM_FOLDERS] =
 {
 	{FOLDER_ALLGAMES,    0,             0               },
 	{FOLDER_AVAILABLE,   F_AVAILABLE,   0               },
 #ifdef MESS
-	{FOLDER_CONSOLE,     0,             0               },
-	{FOLDER_COMPUTER,    0,             0               },
+	{FOLDER_CONSOLE,     F_CONSOLE,     F_COMPUTER      },
+	{FOLDER_COMPUTER,    F_COMPUTER,    F_CONSOLE       },
 #endif
 	{FOLDER_MANUFACTURER,0,             0               },
 	{FOLDER_YEAR,        0,             0               },
@@ -1525,24 +1410,6 @@ DWORD filterExclusion[NUM_EXCLUSIONS] =
 	IDC_FILTER_NONWORKING,  IDC_FILTER_WORKING,
 	IDC_FILTER_UNAVAILABLE, IDC_FILTER_AVAILABLE,
 	IDC_FILTER_RASTER,      IDC_FILTER_VECTOR
-};
-
-/* list of filter/control Id pairs */
-FILTER_ITEM filterList[F_NUM_FILTERS] =
-{
-#ifdef MESS
-	{F_COMPUTER,     IDC_FILTER_COMPUTER},
-	{F_CONSOLE,      IDC_FILTER_CONSOLE},
-	{F_MODIFIED,     IDC_FILTER_MODIFIED},
-#endif
-	{ F_CLONES,       IDC_FILTER_CLONES      },
-	{ F_NONWORKING,   IDC_FILTER_NONWORKING  },
-	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE },
-	{ F_RASTER,       IDC_FILTER_RASTER      },
-	{ F_VECTOR,       IDC_FILTER_VECTOR      },
-	{ F_ORIGINALS,    IDC_FILTER_ORIGINALS   },
-	{ F_WORKING,      IDC_FILTER_WORKING     },
-	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE   }
 };
 
 /***************************************************************************

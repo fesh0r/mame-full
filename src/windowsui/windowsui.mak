@@ -36,6 +36,7 @@ OSOBJS += \
 	$(OBJ)/windowsui/dxdecode.o \
 	$(OBJ)/windowsui/help.o \
 	$(OBJ)/mess/windowsui/mess32ui.o \
+	$(OBJ)/mess/windowsui/ms32util.o \
 	$(OBJ)/mess/windowsui/MessOptions.o \
 	$(OBJ)/mess/windowsui/MessProperties.o \
 	$(OBJ)/mess/windowsui/SmartListView.o \

@@ -313,6 +313,20 @@ BOOL DriverIsHarddisk(int driver_index)
 	return FALSE;	
 }
 
+BOOL DriverIsStereo(int driver_index)
+{
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[driver_index]->drv, &drv);
+	return (drv.sound_attributes & SOUND_SUPPORTS_STEREO) != 0;
+}
+
+BOOL DriverIsVector(int driver_index)
+{
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[driver_index]->drv, &drv);
+	return (drv.video_attributes & VIDEO_TYPE_VECTOR) != 0;
+}
+
 void FlushFileCaches(void)
 {
 	unzip_cache_clear();

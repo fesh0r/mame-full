@@ -36,6 +36,8 @@ extern const char * GetDriverFilename(int nIndex);
 BOOL DriverIsClone(int driver_index);
 BOOL DriverIsBroken(int driver_index);
 BOOL DriverIsHarddisk(int driver_index);
+BOOL DriverIsStereo(int driver_index);
+BOOL DriverIsVector(int driver_index);
 
 void FlushFileCaches(void);
 
