@@ -222,4 +222,7 @@ clean:
 	$(RM) $(MAKELIST)
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
+	@echo Deleting $(TOOLS)...
+	$(RM) $(TOOLS)
+
 
