@@ -61,6 +61,14 @@ if [ -f docs/windows.txt ]; then
   mv docs/windows.txt doc
 fi
 
+if [ -f docs/ctrlr.txt ]; then
+  mv docs/ctrlr.txt doc
+fi
+
+if [ -f docs/listinfo.txt ]; then
+  mv docs/listinfo.txt doc
+fi
+
 if [ -d docs ]; then
   mv docs/* doc
   rm -r docs
