@@ -2,6 +2,9 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
 
+/* glvec.c, ... */
+extern void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh);
+
 static float intensity_correction = 1.0;
 
 void vector_set_gamma(float gamma)

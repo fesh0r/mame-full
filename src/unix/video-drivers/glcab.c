@@ -1,8 +1,5 @@
 #ifdef xgl
 
-#include <ctype.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include "xmame.h"
 #include "glmame.h"
 
@@ -334,12 +331,49 @@ void ParseLine(char *buf)
   }
 }
 
+void InitCabGlobals()
+{
+  int i;
+
+  for(i=0; cabimg!=0 && i<numtex; i++)
+  {
+	    if(cabimg[i]!=0)
+		{
+			free(cabimg[i]);
+			cabimg[i]=0;
+		}
+  }
+  if(cabimg!=0) 
+		free(cabimg);
+  cabimg=0;
+
+  if(cabtex!=0) 
+		free(cabtex);
+  cabtex=0;
+
+  if(cpan!=0) 
+		free(cpan);
+  cpan=0;
+
+  numtex=0;
+  cablist=0;
+  inlist=0;
+  numpans=0;
+  pannum=0;
+  inpan=0;
+  inscreen=0;
+  scrvert=0;
+  inlist=0;
+}
+
 /* Load the cabinet */
 
 int LoadCabinet(char *cabname)
 {
   FILE *cfp;
   char buf[256];
+
+  InitCabGlobals();
 
   sprintf(buf,"%s/cab/%s/%s.cab",XMAMEROOT,cabname,cabname);
 
