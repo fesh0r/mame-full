@@ -50,7 +50,7 @@ static I8271 i8271;
 
 static mess_image *current_image(void)
 {
-	return image_instance(IO_FLOPPY, i8271.drive);
+	return image_from_devtype_and_index(IO_FLOPPY, i8271.drive);
 }
 
 void i8271_init(i8271_interface *iface)
@@ -964,12 +964,12 @@ static void i8271_command_execute(void)
 			status |= (1<<2) | (1<<6);
 
 			/* these two do not appear to be set at all! ?? */
-			if (floppy_drive_get_flag_state(image_instance(IO_FLOPPY, 0), FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_READY))
 			{
 				status |= (1<<2);
 			}
 
-			if (floppy_drive_get_flag_state(image_instance(IO_FLOPPY, 1), FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_READY))
 			{
 				status |= (1<<6);
 			}

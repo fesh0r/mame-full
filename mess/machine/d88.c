@@ -28,7 +28,7 @@ static floppy_interface d88image_floppy_interface=
 
 d88image *get_d88image(mess_image *img)
 {
-	return &d88image_drives[image_index(img)];
+	return &d88image_drives[image_index_in_device(img)];
 }
 
 int d88image_floppy_init(mess_image *img)
@@ -45,7 +45,7 @@ int d88image_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	int i,j,k;
 	unsigned long toffset;
 	d88image *w;
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 
 	assert(id < d88image_MAX_DRIVES);
 

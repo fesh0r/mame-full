@@ -108,7 +108,7 @@ static struct serial_protocol_interface serial_protocol_xmodem_interface=
 /***** SERIAL DEVICE ******/
 void serial_device_setup(mess_image *image, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code)
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	/* check id is valid */
 	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
@@ -163,7 +163,7 @@ const char *serial_device_get_protocol_name(int protocol_id)
 
 void serial_device_set_protocol(mess_image *image, int protocol_id)
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
 		return;
@@ -191,7 +191,7 @@ void serial_device_set_protocol(mess_image *image, int protocol_id)
 void serial_device_set_transmit_state(mess_image *image, int state)
 {
 	int previous_state;
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
 		return;
@@ -562,7 +562,7 @@ static void	serial_device_baud_rate_callback(int id)
 /* connect the specified connection to this serial device */
 void serial_device_connect(mess_image *image, struct serial_connection *connection)
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	/* check id is valid */
 	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
@@ -636,14 +636,14 @@ static void data_stream_init(struct data_stream *stream, unsigned char *pData, u
 
 int serial_device_init(mess_image *image)
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	memset(&serial_devices[id], 0, sizeof(serial_devices[id]));
 	return INIT_PASS;
 }
 
 int serial_device_load(mess_image *image)
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	mame_file *fp = image_fp(image);
 	int data_length;
 	unsigned char *data;
@@ -665,7 +665,7 @@ int serial_device_load(mess_image *image)
 
 void serial_device_unload(mess_image *image)
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	/* stop transmit */
 	serial_device_set_transmit_state(image, 0);

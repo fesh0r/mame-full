@@ -691,7 +691,7 @@ MACHINE_INIT( c16 )
 	cbm_serial_reset_write (0);
 
 	for (i = 0;  (i < sizeof (rom_fp) / sizeof (rom_fp[0])) && rom_fp[i]; i++)
-		c16_rom_load(image_instance(IO_CARTSLOT, i));
+		c16_rom_load(image_from_devtype_and_index(IO_CARTSLOT, i));
 }
 
 static int c16_rom_id(mess_image *img, mame_file *romfile)
@@ -730,14 +730,14 @@ static int c16_rom_id(mess_image *img, mame_file *romfile)
 
 int c16_rom_init(mess_image *img, mame_file *fp, int open_mode)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	rom_fp[id] = fp;
 	return (rom_fp[id] && !c16_rom_id(img, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
 }
 
 void c16_rom_exit(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	rom_fp[id] = NULL;
 }
 

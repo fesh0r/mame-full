@@ -87,7 +87,7 @@ int image_load(mess_image *img, const char *name)
 	mame_file *fp = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
-	int type = image_type(img);
+	int type = image_devtype(img);
 
 	dev = device_find(Machine->gamedrv, type);
 	assert(dev);
@@ -125,7 +125,7 @@ int image_load(mess_image *img, const char *name)
 	}
 
 	/* if applicable, call device verify */
-	if (dev->verify)
+	if (dev->imgverify)
 	{
 		size = mame_fsize(fp);
 		buffer = malloc(size);
@@ -135,7 +135,7 @@ int image_load(mess_image *img, const char *name)
 		if (mame_fread(fp, buffer, (UINT32) size) != size)
 			goto error;
 
-		err = dev->verify(buffer, size);
+		err = dev->imgverify(buffer, size);
 		if (err)
 			goto error;
 
@@ -177,7 +177,7 @@ error:
 static void image_unload_internal(mess_image *img, int is_final_unload)
 {
 	const struct IODevice *dev;
-	int type = image_type(img);
+	int type = image_devtype(img);
 
 	if ((img->status & IMAGE_STATUS_ISLOADED) == 0)
 		return;
@@ -235,7 +235,7 @@ void image_unload_all(int ispreload)
 			/* all instances */
 			for( id = 0; id < dev->count; id++ )
 			{
-				img = image_instance(dev->type, id);
+				img = image_from_devtype_and_index(dev->type, id);
 
 				/* unload this image */
 				image_unload_internal(img, TRUE);
@@ -389,7 +389,7 @@ mame_file *image_fp(mess_image *img)
 
 const struct IODevice *image_device(mess_image *img)
 {
-	return device_find(Machine->gamedrv, image_type(img));
+	return device_find(Machine->gamedrv, image_devtype(img));
 }
 
 int image_exists(mess_image *img)
@@ -399,7 +399,7 @@ int image_exists(mess_image *img)
 
 int image_slotexists(mess_image *img)
 {
-	return image_index(img) < device_count(image_type(img));
+	return image_index_in_devtype(img) < device_count(image_devtype(img));
 }
 
 const char *image_filename(mess_image *img)
@@ -611,23 +611,28 @@ mess_image *image_from_absolute_index(int absolute_index)
   type/id.
 ****************************************************************************/
 
-mess_image *image_instance_dev(const struct IODevice *dev, int id)
+int image_index_in_device(mess_image *img)
 {
-	return image_instance(dev->type, id);
+	return image_index_in_devtype(img);
 }
 
-mess_image *image_instance(int type, int id)
+mess_image *image_from_device_and_index(const struct IODevice *dev, int id)
+{
+	return image_from_devtype_and_index(dev->type, id);
+}
+
+mess_image *image_from_devtype_and_index(int type, int id)
 {
 	assert(id < device_count(type));
 	return &images[type][id];
 }
 
-int image_type(mess_image *img)
+int image_devtype(mess_image *img)
 {
 	return (img - &images[0][0]) / MAX_DEV_INSTANCES;
 }
 
-int image_index(mess_image *img)
+int image_index_in_devtype(mess_image *img)
 {
 	assert(img);
 	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
@@ -697,7 +702,7 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 		{
 			const struct IODevice *pc_dev;
 
-			pc_dev = device_find(Machine->gamedrv, image_type(img));
+			pc_dev = device_find(Machine->gamedrv, image_devtype(img));
 			if (pc_dev && pc_dev->partialcrc)
 			{
 				unsigned char *pc_buf = (unsigned char *)malloc(img->length);

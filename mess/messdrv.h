@@ -44,7 +44,7 @@ struct IODevice
 	void (*exit)(mess_image *img);
 	int (*load)(mess_image *img, mame_file *fp, int open_mode);
 	void (*unload)(mess_image *img);
-	int (*verify)(const UINT8 *buf, size_t size);
+	int (*imgverify)(const UINT8 *buf, size_t size);
 	const void *(*info)(mess_image *img, int whatinfo);
 	int (*open)(mess_image *img, int mode, void *args);
 	void (*close)(mess_image *img);
@@ -99,12 +99,12 @@ struct SystemConfigurationParamBlock
 	cfg->get_custom_devicename = get_custom_devicename_##get_custom_devicename__;			\
 
 #define CONFIG_DEVICE_BASE(type, count, file_extensions, flags, open_mode, init, exit,		\
-		load, unload, verify, info, open, close, status, seek, tell, input, output,			\
+		load, unload, imgverify, info, open, close, status, seek, tell, input, output,			\
 		partialcrc, display)																\
 	if (cfg->device_num-- == 0)																\
 	{																						\
 		static struct IODevice device = { (type), (count), (file_extensions), (flags),		\
-			(open_mode), (init), (exit), (load), (unload), (verify), (info), (open),		\
+			(open_mode), (init), (exit), (load), (unload), (imgverify), (info), (open),		\
 			(close), (status), (seek), (tell), (input), (output), (partialcrc), (display),	\
 			NULL, NULL };																	\
 		cfg->dev = &device;																	\

@@ -48,7 +48,7 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 	/* all drives are double-sided 80 track - can be overriden in driver! */
 	floppy_drive_set_geometry(img, FLOPPY_DRIVE_DS_80);
 
-	pDrive->fdd_unit = image_index(img);
+	pDrive->fdd_unit = image_index_in_device(img);
 
 	/* initialise id index - not so important */
 	pDrive->id_index = 0;
@@ -64,7 +64,7 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 pulse. What is the length of the index pulse?? */
 static void	floppy_drive_index_callback(int id)
 {
-	mess_image *img = image_instance(IO_FLOPPY, id);
+	mess_image *img = image_from_devtype_and_index(IO_FLOPPY, id);
 	struct floppy_drive *pDrive = get_drive(img);
 
 	if (pDrive->index_pulse_callback)
@@ -203,7 +203,7 @@ void floppy_drive_set_motor_state(mess_image *img, int state)
 					/* on->off */
 					newpulse = 0;
 				}
-				timer_adjust(pDrive->index_timer, 0, image_index(img), newpulse);
+				timer_adjust(pDrive->index_timer, 0, image_index_in_device(img), newpulse);
 			}
 		}
 	}

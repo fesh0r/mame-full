@@ -46,7 +46,7 @@ static UINT8 vhdStatus;
 
 static mess_image *vhd_image(void)
 {
-	return image_instance(IO_VHD, 0);
+	return image_from_devtype_and_index(IO_VHD, 0);
 }
 
 int coco_vhd_init(mess_image *img)

@@ -123,7 +123,7 @@ MACHINE_INIT( laser310 )
  ***************************************************************************/
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 /*
@@ -370,7 +370,7 @@ static mame_file *vtech1_file(void)
 	if (vtech1_drive < 0)
 		return NULL;
 
-	img = image_instance(IO_FLOPPY, vtech1_drive);
+	img = image_from_devtype_and_index(IO_FLOPPY, vtech1_drive);
 	file = image_fp(img);
 	return file;
 }
@@ -395,7 +395,7 @@ int vtech1_floppy_id(int id)
 
 DEVICE_LOAD( vtech1_floppy )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	if (is_effective_mode_writable(open_mode))
 		vtech1_fdc_wrprot[id] = 0x00;

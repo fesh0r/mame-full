@@ -156,7 +156,7 @@ tape apexc_tapes[2];
 */
 static int apexc_tape_load(mess_image *img, mame_file *fp, int open_mode)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	tape *t = &apexc_tapes[id];
 
 	/* open file */

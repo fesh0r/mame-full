@@ -460,9 +460,9 @@ static PALETTE_INIT( apple2 )
 static GET_CUSTOM_DEVICENAME( apple2 )
 {
 	const char *name = NULL;
-	switch(image_type(img)) {
+	switch(image_devtype(img)) {
 	case IO_FLOPPY:
-		snprintf(buf, bufsize, "Slot 6 Disk #%d", image_index(img) + 1);
+		snprintf(buf, bufsize, "Slot 6 Disk #%d", image_index_in_devtype(img) + 1);
 		name = buf;
 		break;
 	}

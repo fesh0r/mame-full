@@ -202,7 +202,7 @@ static WRITE_HANDLER(spectrum_port_fe_w)
 	if ((Changed & (1<<3))!=0)
 	{
 		/* write cassette data */
-		device_output(image_instance(IO_CASSETTE, 0), (data & (1<<3)) ? -32768: 32767);
+		device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & (1<<3)) ? -32768: 32767);
 	}
 
 	PreviousFE = data;
@@ -283,7 +283,7 @@ static READ_HANDLER(spectrum_port_fe_r)
 	data |= (0xe0); /* Set bits 5-7 - as reset above */
 
 	/* cassette input from wav */
-	if (device_input(image_instance(IO_CASSETTE, 0))>255 )
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0))>255 )
 	{
 		data &= ~0x40;
 	}
@@ -734,10 +734,10 @@ static WRITE_HANDLER(spectrum_plus3_port_1ffd_w)
 		/* D3 - Disk motor on/off */
 		/* D4 - parallel port strobe */
 
-		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), data & (1<<3));
-		floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1), data & (1<<3));
-		floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 0), 1, 1);
-		floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1, 1);
+		floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), data & (1<<3));
+		floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 1), data & (1<<3));
+		floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1, 1);
+		floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1, 1);
 
 		spectrum_plus3_port_1ffd_data = data;
 
@@ -888,8 +888,8 @@ static MACHINE_INIT( spectrum_plus3 )
 
 		nec765_init(&spectrum_plus3_nec765_interface, NEC765A);
 
-		floppy_drive_set_geometry(image_instance(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
-		floppy_drive_set_geometry(image_instance(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
+		floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
+		floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 
 		/* Initial configuration */
 		spectrum_128_port_7ffd_data = 0;

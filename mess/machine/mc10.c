@@ -101,7 +101,7 @@ READ_HANDLER ( mc10_port2_r )
 	 *   BIT 4 CASSETTE TAPE INPUT
 	 */
 
-	mess_image *img = image_instance(IO_CASSETTE, 0);
+	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
 	int val = 0xed;
 
 	if ((input_port_6_r(0) | mc10_keyboard_strobe) == 0xff)
@@ -115,7 +115,7 @@ READ_HANDLER ( mc10_port2_r )
 
 WRITE_HANDLER ( mc10_port2_w )
 {
-	mess_image *img = image_instance(IO_CASSETTE, 0);
+	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
 
 	/*   BIT 0 PRINTER OUTFUT & CASS OUTPUT
 	 */

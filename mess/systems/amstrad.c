@@ -230,11 +230,11 @@ static READ_HANDLER (amstrad_ppi_portb_r)
 	data = 0x0;
 
 	/* cassette read */
-	if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
 		data |=0x080;
 
 	/* printer busy */
-	if (device_status(image_instance(IO_PRINTER, 0), 0)==0 )
+	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 )
 		data |=0x040;
 
 	/* vsync state from CRTC */
@@ -270,13 +270,13 @@ static WRITE_HANDLER ( amstrad_ppi_portc_w )
 	if ((changed_data & (1<<4))!=0)
 	{
 		/* cassette motor control */
-		device_status(image_instance(IO_CASSETTE, 0), ((data>>4) & 0x01));
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), ((data>>4) & 0x01));
 	}
 
 	/* cassette write data changed state */
 	if ((changed_data & (1<<5))!=0)
 	{
-		device_output(image_instance(IO_CASSETTE, 0), (data & (1<<5)) ? -32768 : 32767);
+		device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & (1<<5)) ? -32768 : 32767);
 	}
 
 	/* psg operation */
@@ -715,7 +715,7 @@ static WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 			if ((data & 0x080)==0)
 			{
 				/* output data to printer */
-				device_output(image_instance(IO_PRINTER, 0), data & 0x07f);
+				device_output(image_from_devtype_and_index(IO_PRINTER, 0), data & 0x07f);
 			}
 		}
 		previous_printer_data_byte = data;
@@ -748,10 +748,10 @@ static WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 			case 0:
 				{
 					/* fdc motor on */
-					floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), data & 0x01);
-					floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1), data & 0x01);
-					floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 0), 1,1);
-					floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
+					floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), data & 0x01);
+					floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 1), data & 0x01);
+					floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1,1);
+					floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
 				}
 				break;
 
@@ -2308,8 +2308,8 @@ static void amstrad_common_init(void)
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
 
-	floppy_drive_set_geometry(image_instance(IO_FLOPPY, 0),  FLOPPY_DRIVE_SS_40);
-	floppy_drive_set_geometry(image_instance(IO_FLOPPY, 1),  FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0),  FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1),  FLOPPY_DRIVE_SS_40);
 
 	/* Juergen is a cool dude! */
 	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);

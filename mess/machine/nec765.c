@@ -136,7 +136,7 @@ static int nec765_cmd_size[32] = {
 
 static mess_image *current_image(void)
 {
-	return image_instance(IO_FLOPPY, fdc.drive);
+	return image_from_devtype_and_index(IO_FLOPPY, fdc.drive);
 }
 
 static void nec765_setup_drive_and_side(void)
@@ -625,7 +625,7 @@ is not ready.
 with error */
 static void nec765_set_ready_change_callback(mess_image *img, int state)
 {
-	int drive = image_index(img);
+	int drive = image_index_in_device(img);
 
 	logerror("nec765: ready state change\n");
 
@@ -662,7 +662,7 @@ void nec765_init(nec765_interface *iface, int version)
 	nec765_reset(0);
 
 	for (i = 0; i < device_count(IO_FLOPPY); i++)
-		floppy_drive_set_ready_state_change_callback(image_instance(IO_FLOPPY, i), nec765_set_ready_change_callback);
+		floppy_drive_set_ready_state_change_callback(image_from_devtype_and_index(IO_FLOPPY, i), nec765_set_ready_change_callback);
 }
 
 
@@ -2152,7 +2152,7 @@ void nec765_reset(int offset)
 		a_drive_is_ready = 0;
 		for (i=0; i<4; i++)
 		{
-			if (image_exists(image_instance(IO_FLOPPY, i)))
+			if (image_exists(image_from_devtype_and_index(IO_FLOPPY, i)))
 			{
 				a_drive_is_ready = 1;
 				break;

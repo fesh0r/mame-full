@@ -70,18 +70,18 @@ INTERRUPT_GEN(mz700_interrupt)
 	if (readinputport(12) & 0x20)
 	{
 		mz700_motor_on = 0;
-		device_status(image_instance(IO_CASSETTE, 0), mz700_motor_ff && mz700_motor_on);
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), mz700_motor_ff && mz700_motor_on);
 	}
 
 	if (readinputport(12) & 0x40)
 	{
 		mz700_motor_on = 1;
-		device_status(image_instance(IO_CASSETTE, 0), mz700_motor_ff && mz700_motor_on);
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), mz700_motor_ff && mz700_motor_on);
 	}
 
 
 	if (readinputport(12) & 0x80)
-		device_seek(image_instance(IO_CASSETTE, 0), 0, SEEK_SET);
+		device_seek(image_from_devtype_and_index(IO_CASSETTE, 0), 0, SEEK_SET);
 }
 
 static void ne556_callback(int param)
@@ -179,7 +179,7 @@ static READ_HANDLER (pio_port_c_r )
     if (mz700_motor_on)
         data |= 0x10;
 
-    if (device_input(image_instance(IO_CASSETTE,0)) > 255)
+    if (device_input(image_from_devtype_and_index(IO_CASSETTE,0)) > 255)
         data |= 0x20;       /* set the RDATA status */
 
 	if (ne556_out[0])
@@ -228,9 +228,9 @@ static WRITE_HANDLER ( pio_port_c_w )
 	pio_port_c_output = data;
 
 	mz700_motor_ff = (data & 0x08) ? 1 : 0;
-	device_status(image_instance(IO_CASSETTE, 0), mz700_motor_ff & mz700_motor_on);
+	device_status(image_from_devtype_and_index(IO_CASSETTE, 0), mz700_motor_ff & mz700_motor_on);
 
-    device_output(image_instance(IO_CASSETTE, 0), (data & 0x02) ? 32767 : -32768);
+    device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x02) ? 32767 : -32768);
 }
 
 /************************ MMIO ***********************************************/

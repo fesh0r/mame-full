@@ -24,7 +24,7 @@ const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
 	iodev->exit = exitproc;
 	iodev->load = loadproc;
 	iodev->unload = unloadproc;
-	iodev->verify = verify;
+	iodev->imgverify = verify;
 	iodev->partialcrc = partialcrc;
 	return iodev;
 }

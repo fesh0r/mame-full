@@ -103,7 +103,7 @@ void cbm_drive_1_config (int interface, int serialnr)
 static int d64_open (mess_image *img, mame_file *in)
 {
 	int size;
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 
 	cbm_drive[id].drive = 0;
 	cbm_drive[id].image = NULL;

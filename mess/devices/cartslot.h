@@ -22,24 +22,24 @@ const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
 	UINT32 (*partialcrc)(const UINT8 *buf, size_t size));
 
 /* required cartridge slot */
-#define CONFIG_DEVICE_CARTSLOT_REQ(count, file_extensions, init, exit, load, unload, verify, partialcrc)	\
+#define CONFIG_DEVICE_CARTSLOT_REQ(count, file_extensions, init, exit, load, unload, imgverify, partialcrc)	\
 	if (cfg->device_num-- == 0)											\
 	{																	\
 		static struct IODevice iodev;									\
 		cfg->dev = cartslot_specify(&iodev, (count),					\
 			(file_extensions), (init), (exit), (load), (unload),		\
-			(verify), (partialcrc));									\
+			(imgverify), (partialcrc));									\
 		iodev.flags |= DEVICE_MUST_BE_LOADED;							\
 	}																	\
 
 /* optional cartridge slot */
-#define CONFIG_DEVICE_CARTSLOT_OPT(count, file_extensions, init, exit, load, unload, verify, partialcrc)	\
+#define CONFIG_DEVICE_CARTSLOT_OPT(count, file_extensions, init, exit, load, unload, imgverify, partialcrc)	\
 	if (cfg->device_num-- == 0)											\
 	{																	\
 		static struct IODevice iodev;									\
 		cfg->dev = cartslot_specify(&iodev, (count),					\
 			(file_extensions), (init), (exit), (load), (unload),		\
-			(verify), (partialcrc));									\
+			(imgverify), (partialcrc));									\
 	}																	\
 
 #endif /* CARTSLOT_H */

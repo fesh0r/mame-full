@@ -156,7 +156,7 @@ CBM_ROM cbm_rom[0x20]= { {0} };
 
 void cbm_rom_unload(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	cbm_rom[id].size = 0;
 	cbm_rom[id].chip = 0;
 }
@@ -168,7 +168,7 @@ static const struct IODevice *cbm_rom_find_device(void)
 
 int cbm_rom_init(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	if (id == 0)
 	{
 		cbm_c64_game = -1;

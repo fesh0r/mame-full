@@ -173,12 +173,12 @@ static void exidy_cassette_timer_callback(int dummy)
 
 			/* detect level */
 			bit = 1;
-			if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
+			if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
 				bit = 0;
 			cassette_input_ff[0] = bit;
 			/* detect level */
 			bit = 1;
-			if (device_input(image_instance(IO_CASSETTE, 1)) > 255)
+			if (device_input(image_from_devtype_and_index(IO_CASSETTE, 1)) > 255)
 				bit = 0;
 
 			cassette_input_ff[1] = bit;
@@ -285,6 +285,7 @@ static MACHINE_INIT( exidy )
 
 }
 
+#if 0
 static READ_HANDLER(exidy_unmapped_r)
 {
 	logerror("unmapped r: %04x\r\n",offset);
@@ -295,6 +296,7 @@ static WRITE_HANDLER(exidy_unmapped_w)
 {
 	logerror("unmapped r: %04x %d\r\n", offset, data);
 }
+#endif
 
 
 
@@ -442,9 +444,9 @@ static WRITE_HANDLER(exidy_fe_port_w)
 	if ((changed_bits & EXIDY_CASSETTE_MOTOR_MASK)!=0)
 	{
 		/* cassette 1 motor */
-		device_status(image_instance(IO_CASSETTE, 0), ((data>>4) & 0x01));
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), ((data>>4) & 0x01));
 		/* cassette 2 motor */
-		device_status(image_instance(IO_CASSETTE, 1), ((data>>5) & 0x01));
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 1), ((data>>5) & 0x01));
 
 		if ((data & EXIDY_CASSETTE_MOTOR_MASK)==0)
 		{
@@ -601,7 +603,7 @@ static READ_HANDLER(exidy_ff_port_r)
 	/* bit 7 = printer busy */
 	/* 0 = printer is not busy */
 
-	if (device_status(image_instance(IO_PRINTER, 0), 0)==0 )
+	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 )
 		data |= 0x080;
 	
 	logerror("exidy ff r: %04x %02x\n",offset,data);

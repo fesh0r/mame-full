@@ -224,7 +224,7 @@ int devices_init(const struct GameDriver *gamedrv)
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
 		{
-			mess_image *img = image_instance(dev->type, id);
+			mess_image *img = image_from_devtype_and_index(dev->type, id);
 			image_init(img);
 		}
 	}
@@ -270,7 +270,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 				imagename = images.names[dev->type][id];
 				if (imagename)
 				{
-					img = image_instance(dev->type, id);
+					img = image_from_devtype_and_index(dev->type, id);
 
 					/* load this image */
 					result = image_load(img, images.names[dev->type][id]);
@@ -308,7 +308,7 @@ void devices_exit(void)
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
 		{
-			img = image_instance(dev->type, id);
+			img = image_from_devtype_and_index(dev->type, id);
 			image_exit(img);
 		}
 	}

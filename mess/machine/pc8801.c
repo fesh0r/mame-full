@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.12 2003/05/08 17:42:32 npwoods Exp $
+  $Id: pc8801.c,v 1.13 2003/05/10 14:53:32 rnabet Exp $
 
 ***************************************************************************/
 
@@ -776,10 +776,10 @@ void pc8801_init_5fd(void)
 	timer_suspendcpu(1, !use_5FD, SUSPEND_REASON_DISABLE);
 	nec765_init(&pc8801_fdc_interface,NEC765A);
 	cpu_irq_line_vector_w(1,0,0);
-	floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), 1);
-	floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1), 1);
-	floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 0), 1,0);
-	floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,0);
+	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1);
+	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1);
+	floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1,0);
+	floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,0);
 }
 
 /*

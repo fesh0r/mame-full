@@ -282,7 +282,7 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 
 	profiler_mark(PROFILER_SLOT6);
 
-	cur_image = image_instance(IO_FLOPPY, a2_drives_num);
+	cur_image = image_from_devtype_and_index(IO_FLOPPY, a2_drives_num);
 	cur_drive = get_disk(cur_image);
 
 	switch (offset)

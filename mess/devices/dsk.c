@@ -55,7 +55,7 @@ static dsk_drive drives[dsk_NUM_DRIVES]; /* the drives */
 
 static dsk_drive *get_drive(mess_image *img)
 {
-	return &drives[image_index(img)];
+	return &drives[image_index_in_device(img)];
 }
 
 /* load image */
@@ -100,7 +100,7 @@ static int dsk_floppy_verify(UINT8 *diskimage_data)
 /* load floppy */
 int dsk_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	dsk_drive *thedrive = &drives[id];
 
 	/* load disk image */
@@ -152,7 +152,7 @@ static int dsk_save(mess_image *img, unsigned char **ptr)
 
 void dsk_floppy_unload(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	dsk_drive *thedrive = &drives[id];
 
 	if (thedrive->data)

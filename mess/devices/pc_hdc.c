@@ -109,7 +109,7 @@ static int display[4]= { 0 };
 static mame_file *pc_hdc_file(int id)
 {
 	mess_image *img;
-	img = image_instance(IO_HARDDISK, id);
+	img = image_from_devtype_and_index(IO_HARDDISK, id);
 	return image_fp(img);
 }
 

@@ -1116,10 +1116,12 @@ DEVICE_UNLOAD( spectrum_cassette )
  *
  *************************************/
 
+#if 0
 static void spectrum_nmi_generate(int param)
 {
 	cpu_set_irq_line(0, 0, IRQ_LINE_NMI);
 }
+#endif
 
 QUICKLOAD_LOAD(spectrum)
 {

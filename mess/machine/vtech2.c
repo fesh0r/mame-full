@@ -195,7 +195,7 @@ WRITE_HANDLER( laser_bank_select_w )
 
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 /*************************************************
@@ -540,7 +540,7 @@ static mame_file *laser_file(void)
 	mess_image *image;
 	mame_file *file;
 
-	image = image_instance(IO_FLOPPY, laser_drive);
+	image = image_from_devtype_and_index(IO_FLOPPY, laser_drive);
 	file = image_fp(image);
 	return file;
 }

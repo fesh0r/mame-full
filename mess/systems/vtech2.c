@@ -484,7 +484,7 @@ static struct Wave_interface wave_interface = {
 
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 static INTERRUPT_GEN( vtech2_interrupt )

@@ -44,8 +44,12 @@ void image_exit(mess_image *img);
   Mac floppy drives) may call this from within a driver.
 ****************************************************************************/
 
+/* can be called by front ends */
 int image_load(mess_image *img, const char *name);
 void image_unload(mess_image *img);
+/* used for driver init and machine init */
+int image_set_initial_filename(int type, int id, const char *name);
+int image_load_all(const struct GameDriver *gamedrv, int ispreload);
 void image_unload_all(int ispreload);
 
 /****************************************************************************
@@ -137,13 +141,16 @@ mess_image *image_from_absolute_index(int absolute_index);
   type/id.
 ****************************************************************************/
 
-/* given a choice between image_instance_dev() and image_instance(),
- * image_instance_dev() is preferred
+/* given a choice between image_from_device_and_index() and
+ * image_from_devtype_and_index(), image_from_device_and_index() is preferred
  */
-mess_image *image_instance_dev(const struct IODevice *dev, int id);
-mess_image *image_instance(int type, int id);
-int image_type(mess_image *img);
-int image_index(mess_image *img);
+/* image_device is defined above */
+int image_index_in_device(mess_image *img);
+mess_image *image_from_device_and_index(const struct IODevice *dev, int id);
+
+int image_devtype(mess_image *img);
+int image_index_in_devtype(mess_image *img);
+mess_image *image_from_devtype_and_index(int type, int id);
 
 mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write);
 

@@ -642,7 +642,7 @@ static void fdc_rev_proc( int drive );
 
 int amiga_fdc_init(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	fdc_status[id].motor_on = 0;
 	fdc_status[id].side = 0;
 	fdc_status[id].dir = 0;
@@ -659,7 +659,7 @@ int amiga_fdc_init(mess_image *img)
 
 int amiga_fdc_load(mess_image *img, mame_file *fp, int open_mode)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 
 	fdc_status[id].disk_changed = 1;
 	fdc_status[id].f = fp;

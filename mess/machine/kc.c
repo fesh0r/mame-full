@@ -166,10 +166,12 @@ DEVICE_LOAD( kc85_floppy )
 	return INIT_FAIL;
 }
 
+#if 0
 static void kc85_disc_hw_ctc_interrupt(int state)
 {
 	cpu_set_irq_line(1, 0, state);
 }
+#endif
 
 READ_HANDLER(kc85_disk_hw_ctc_r)
 {
@@ -449,7 +451,7 @@ static void kc_cassette_timer_callback(int dummy)
 	bit = 0;
 
 	/* get data from cassette */
-	if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
 		bit = 1;
 
 	/* update astb with bit */
@@ -467,7 +469,7 @@ static void	kc_cassette_set_motor(int motor_state)
 	if (((kc_cassette_motor_state^motor_state)&0x01)!=0)
 	{
 		/* set new motor state in cassette device */
-		device_status(image_instance(IO_CASSETTE, 0), motor_state);
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), motor_state);
 
 		if (motor_state)
 		{

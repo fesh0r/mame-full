@@ -24,7 +24,7 @@ static struct bitbanger_info *bitbangers[MAX_PRINTER];
 
 static int bitbanger_init(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;
 
@@ -89,7 +89,7 @@ static void bitbanger_analyze(int id, struct bitbanger_info *bi)
 		return;
 
 	/* filter the output */
-	if (bi->config->filter(image_instance(IO_BITBANGER, id), bi->factored_pulses, bi->recorded_pulses, total_duration))
+	if (bi->config->filter(image_from_devtype_and_index(IO_BITBANGER, id), bi->factored_pulses, bi->recorded_pulses, total_duration))
 		bi->recorded_pulses = 0;
 }
 
@@ -117,7 +117,7 @@ static void bitbanger_overthreshhold(int id)
 
 static void bitbanger_output(mess_image *img, int value)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	struct bitbanger_info *bi = bitbangers[id];
 	double current_time;
 	double pulse_width;

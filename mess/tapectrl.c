@@ -44,7 +44,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	total = 0;
 	sel = selected - 1;
 
-	img = image_instance(IO_CASSETTE, id);
+	img = image_from_devtype_and_index(IO_CASSETTE, id);
 	menu_item[total] = device_typename_id(img);
 	menu_subitem[total] = image_filename(img) ? image_filename(img) : "---";
 	flag[total] = 0;
@@ -149,7 +149,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 			sel = -1;
 		else
 		{
-			img = image_instance(IO_CASSETTE, id);
+			img = image_from_devtype_and_index(IO_CASSETTE, id);
 			status = device_status(img, -1);
 			switch (sel)
 			{

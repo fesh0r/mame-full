@@ -274,7 +274,7 @@ MACHINE_STOP( gb )
 			memcpy( ptr, RAMMap[I], 0x2000 );
 			ptr += 0x2000;
 		}
-		image_battery_save(image_instance(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
+		image_battery_save(image_from_devtype_and_index(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
 
 		free( battery_ram );
 	}
@@ -433,7 +433,7 @@ WRITE_HANDLER( gb_mem_mode_select_mbc3 )
 	}
 }
 
-READ_HANDLER( gb_echoram_r )
+/*READ_HANDLER( gb_echoram_r )
 {
 	return cpu_readmem16( 0xc000 + offset );
 }
@@ -441,7 +441,7 @@ READ_HANDLER( gb_echoram_r )
 WRITE_HANDLER( gb_echoram_w )
 {
 	cpu_writemem16( 0xc000 + offset, data );
-}
+}*/
 
 WRITE_HANDLER ( gb_io_w )
 {

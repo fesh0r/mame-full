@@ -249,11 +249,11 @@ const char *device_typename_id(mess_image *img)
 		}
 		if (!newname)
 		{
-			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + image_type(img));
+			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + image_devtype(img));
 			if (dev->count > 1)
 			{
 				/* for the average user counting starts at #1 ;-) */
-				sprintf(typename_id[which], "%s #%d", name, image_index(img)+1);
+				sprintf(typename_id[which], "%s #%d", name, image_index_in_device(img)+1);
 				name = typename_id[which];
 			}
 		}

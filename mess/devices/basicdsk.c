@@ -77,7 +77,7 @@ static floppy_interface basicdsk_floppy_interface =
 
 static basicdsk *get_basicdsk(mess_image *img)
 {
-	int drive = image_index(img);
+	int drive = image_index_in_device(img);
 	assert(drive >= 0);
 	assert(drive < (sizeof(basicdsk_drives) / sizeof(basicdsk_drives[0])));
 	return &basicdsk_drives[drive];
@@ -206,12 +206,6 @@ void basicdsk_set_geometry(mess_image *img, UINT16 tracks, UINT8 heads, UINT8 se
 	
 	pDisk->image_size = pDisk->tracks * pDisk->heads * pDisk->sec_per_track * pDisk->sector_length;
 
-	/* if a ddam map was already set up clear it */
-	if (pDisk->ddam_map!=NULL)
-	{
-		free(pDisk->ddam_map);
-		pDisk->ddam_map = NULL;
-	}
 	/* setup a new ddam map */
 	pDisk->ddam_map_size = ((pDisk->tracks * pDisk->heads * pDisk->sec_per_track)+7)>>3;
 	pDisk->ddam_map = (UINT8 *) image_realloc(img, pDisk->ddam_map, pDisk->ddam_map_size);

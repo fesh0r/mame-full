@@ -131,10 +131,10 @@ static WRITE_HANDLER(fd5_drive_control_w)
 	logerror("fd5 drive state w: %02x\n",state);
 #endif
 	
-	floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), state);
-	floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), state);
-	floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
-	floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
+	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), state);
+	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), state);
+	floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
+	floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
 }
 
 static WRITE_HANDLER(fd5_tc_w)
@@ -190,8 +190,8 @@ static void sord_fd5_init(void)
 
 static MACHINE_INIT( sord_m5_fd5 )
 {
-	floppy_drive_set_geometry(image_instance(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
-	floppy_drive_set_geometry(image_instance(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 	sord_fd5_init();
 	machine_init_sord_m5();
 	ppi8255_set_input_acka(0,1);
@@ -201,7 +201,7 @@ static MACHINE_INIT( sord_m5_fd5 )
 
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 /*********************************************************************************************/
@@ -602,7 +602,7 @@ static MACHINE_INIT( sord_m5 )
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 }
 
-#define SORD_DUMP_RAM
+/*#define SORD_DUMP_RAM*/
 
 #ifdef SORD_DUMP_RAM
 static void sord_dump_ram(void)

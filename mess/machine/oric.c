@@ -337,7 +337,7 @@ PB7
 
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 /* not called yet - this will update the via with the state of the tape data.
@@ -1218,7 +1218,7 @@ static void oric_wd179x_callback(int State)
 
 DEVICE_LOAD( oric_floppy )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	/* attempt to open mfm disk */
 	if (device_load_mfm_disk(image, file, open_mode) == INIT_PASS)
@@ -1240,7 +1240,7 @@ DEVICE_LOAD( oric_floppy )
 
 DEVICE_UNLOAD( oric_floppy )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
@@ -1739,6 +1739,7 @@ struct via6522_interface telestrat_via2_interface=
 	NULL
 };
 
+#if 0
 /* interrupt state from acia6551 */
 static void telestrat_acia_callback(int irq_state)
 {
@@ -1751,6 +1752,7 @@ static void telestrat_acia_callback(int irq_state)
 
 	oric_refresh_ints();
 }
+#endif
 
 MACHINE_INIT( telestrat )
 {

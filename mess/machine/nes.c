@@ -68,7 +68,7 @@ static void Write_PPU (int data);
 
 static mess_image *cartslot_image(void)
 {
-	return image_instance(IO_CARTSLOT, 0);
+	return image_from_devtype_and_index(IO_CARTSLOT, 0);
 }
 
 static void init_nes_core (void)

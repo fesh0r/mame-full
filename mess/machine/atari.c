@@ -123,7 +123,7 @@ DEVICE_LOAD( a800_cart )
 	int size;
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if( image_index(image) > 0 )
+	if( image_index_in_device(image) > 0 )
 	{
 		size = mame_fread(file, &mem[0x12000], 0x2000);
 		a800_cart_is_16k = (size == 0x2000);
@@ -144,7 +144,7 @@ DEVICE_LOAD( a800_cart )
 
 DEVICE_UNLOAD( a800_cart )
 {
-	if( image_index(image) > 0 )
+	if( image_index_in_device(image) > 0 )
 	{
 		a800_cart_is_16k = 0;
 		a800_setbank(1);
@@ -328,7 +328,7 @@ DEVICE_LOAD( a800_floppy )
 {
 	int size, i;
 	const char *ext;
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	drv[id].image = image_malloc(image, MAXSIZE);
 	if (!drv[id].image)

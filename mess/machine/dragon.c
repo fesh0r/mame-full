@@ -897,17 +897,17 @@ static int coco_hiresjoy_ry(void)
 
 static mess_image *cartslot_image(void)
 {
-	return image_instance(IO_CARTSLOT, 0);
+	return image_from_devtype_and_index(IO_CARTSLOT, 0);
 }
 
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 static mess_image *bitbanger_image(void)
 {
-	return image_instance(IO_BITBANGER, 0);
+	return image_from_devtype_and_index(IO_BITBANGER, 0);
 }
 
 static void soundmux_update(void)

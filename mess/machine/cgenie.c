@@ -130,7 +130,7 @@ static OPBASE_HANDLER (opbaseoverride)
 	{
 		cgenie_load_cas = 0;
 
-		img = image_instance(IO_CASSETTE, 0);
+		img = image_from_devtype_and_index(IO_CASSETTE, 0);
 
 		if (image_exists(img))
 		{
@@ -393,7 +393,7 @@ DEVICE_LOAD( cgenie_floppy )
 				spt = pd_list[i].SPT / heads;
 				dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
 				dir_length = pd_list[i].DDGA * pd_list[i].GPL;
-				memcpy(memory_region(REGION_CPU1) + 0x5A71 + image_index(image) * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
+				memcpy(memory_region(REGION_CPU1) + 0x5A71 + image_index_in_device(image) * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
 				break;
 			}
 		}
@@ -1168,8 +1168,10 @@ INTERRUPT_GEN( cgenie_frame_interrupt )
 	}
 }
 
+#if 0
 static void cgenie_nmi_generate(int param)
 {
 	cpu_set_nmi_line(0, PULSE_LINE);
 }
+#endif
 

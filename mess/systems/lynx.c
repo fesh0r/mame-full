@@ -354,7 +354,7 @@ static QUICKLOAD_LOAD( lynx )
 	rom[0xfffc+0x200] = start&0xff;
 	rom[0xfffd+0x200] = start>>8;
 
-	lynx_crc_keyword(image_instance(IO_QUICKLOAD, 0));
+	lynx_crc_keyword(image_from_devtype_and_index(IO_QUICKLOAD, 0));
 	return 0;
 }
 

@@ -111,7 +111,7 @@ DEVICE_LOAD( msx_cart )
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
 
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
     /* try to load it */
     size = mame_fsize (file);
@@ -465,7 +465,7 @@ static int save_sram (int id, char *filename, UINT8* pmem, int size)
 
 DEVICE_UNLOAD( msx_cart )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
     mame_file *F;
     int size,res;
 
@@ -646,12 +646,12 @@ WRITE_HANDLER ( msx_psg_w )
 
 static mess_image *cassette_image(void)
 {
-	return image_instance(IO_CASSETTE, 0);
+	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
 static mess_image *printer_image(void)
 {
-	return image_instance(IO_PRINTER, 0);
+	return image_from_devtype_and_index(IO_PRINTER, 0);
 }
 
 READ_HANDLER ( msx_psg_port_a_r )

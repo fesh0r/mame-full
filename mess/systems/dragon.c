@@ -731,14 +731,14 @@ static const struct bitbanger_config coco_bitbanger_config =
 static GET_CUSTOM_DEVICENAME( coco )
 {
 	const char *name = NULL;
-	switch(image_type(img)) {
+	switch(image_devtype(img)) {
 	case IO_VHD:
 		name = "Virtual Hard Disk";
 		break;
 
 	case IO_FLOPPY:
 		/* CoCo people like their floppy drives zero counted */
-		snprintf(buf, bufsize, "Floppy #%d", image_index(img));
+		snprintf(buf, bufsize, "Floppy #%d", image_index_in_devtype(img));
 		name = buf;
 		break;
 	}

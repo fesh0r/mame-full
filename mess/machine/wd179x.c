@@ -84,7 +84,7 @@ static UINT8 hd = 0;
 
 static mess_image *wd179x_current_image(void)
 {
-	return image_instance(IO_FLOPPY, current_drive);
+	return image_from_devtype_and_index(IO_FLOPPY, current_drive);
 }
 
 /* use this to determine which drive is controlled by WD */

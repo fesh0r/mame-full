@@ -710,7 +710,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		type = dev->type;
 		for (id = 0; id < dev->count; id++)
 		{
-			img = image_instance(type, id);
+			img = image_from_devtype_and_index(type, id);
 			name = device_typename_id(img);
 			menu_item[total] = (name) ? name : "---";
 			name = image_filename(img);
@@ -728,7 +728,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
-		img = image_instance(types[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
+		img = image_from_devtype_and_index(types[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
 		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS), image_filename(img));
 		if (sel != 0 && sel != -1 && sel!=-2)
 			return sel | (2 << SEL_BITS);
@@ -741,7 +741,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			previous_sel = previous_sel & SEL_MASK;
 
 			/* attempt a filename change */
-			img = image_instance(types[sel], ids[sel]);
+			img = image_from_devtype_and_index(types[sel], ids[sel]);
 			image_load(img, entered_filename[0] ? entered_filename : NULL);
 		}
 
@@ -780,7 +780,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		{
 			/* yes */
 			sel &= SEL_MASK;
-			img = image_instance(types[sel], ids[sel]);
+			img = image_from_devtype_and_index(types[sel], ids[sel]);
 			image_load(img, NULL);
 		}
 
@@ -799,7 +799,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		int os_sel;
-		img = image_instance(types[sel], ids[sel]);
+		img = image_from_devtype_and_index(types[sel], ids[sel]);
 
 		/* Return to main menu? */
 		if (sel == total-1)

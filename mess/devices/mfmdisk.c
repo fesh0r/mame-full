@@ -102,7 +102,7 @@ static struct mfm_disk_info	mfm_disks[MAX_MFM_DISK];
 
 static struct mfm_disk_info *get_disk(mess_image *image)
 {
-	int disk = image_index(image);
+	int disk = image_index_in_device(image);
 	return &mfm_disks[disk];
 }
 

@@ -519,7 +519,7 @@ void init_intvkbd(void)
 
 DEVICE_LOAD( intvkbd_cart )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	if (id == 0) /* Legacy cartridge slot */
 	{
 		/* First, initialize these as empty so that the intellivision

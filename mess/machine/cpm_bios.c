@@ -111,7 +111,7 @@ static void cpm_jumptable(void)
 
 DEVICE_LOAD( cpm_floppy )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	ff[id] = (file != NULL);
 

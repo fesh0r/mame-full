@@ -332,7 +332,7 @@ WRITE18_HANDLER(pdp1_write_mem)
 */
 DEVICE_LOAD( pdp1_tape )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	switch (id)
 	{
 	case 0:

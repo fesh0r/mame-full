@@ -415,7 +415,7 @@ static void wave_display(mess_image *img, struct mame_bitmap *bitmap)
 				char buf[32];
 				int x, y, n, t0, t1;
 
-				x = image_index(img) * Machine->uifontwidth * 16 + 1;
+				x = image_index_in_devtype(img) * Machine->uifontwidth * 16 + 1;
 				y = Machine->uiheight - 9;
 				n = (w->play_pos * 4 / w->smpfreq) & 3;
 				t0 = w->play_pos / w->smpfreq;
@@ -440,7 +440,7 @@ TODO:
 */
 static void wave_sound_update(int id, INT16 *buffer, int length)
 {
-	struct wave_file *w = get_wave(image_instance(IO_CASSETTE, id));
+	struct wave_file *w = get_wave(image_from_devtype_and_index(IO_CASSETTE, id));
 	int pos = w->play_pos;
 	int count = w->counter;
 	INT16 sample = w->play_sample;
@@ -501,7 +501,7 @@ int wave_sh_start(const struct MachineSound *msound)
 
     for( i = 0; i < intf->num; i++ )
 	{
-		struct wave_file *w = get_wave(image_instance(IO_CASSETTE, i));
+		struct wave_file *w = get_wave(image_from_devtype_and_index(IO_CASSETTE, i));
 		char buf[32];
 
         if( intf->num > 1 )
@@ -523,7 +523,7 @@ void wave_sh_stop(void)
 	int i;
 
     for( i = 0; i < intf->num; i++ )
-		get_wave(image_instance(IO_CASSETTE, i))->channel = -1;
+		get_wave(image_from_devtype_and_index(IO_CASSETTE, i))->channel = -1;
 }
 
 void wave_sh_update(void)
@@ -533,7 +533,7 @@ void wave_sh_update(void)
 
 	for( i = 0; i < intf->num; i++ )
 	{
-		w = get_wave(image_instance(IO_CASSETTE, i));
+		w = get_wave(image_from_devtype_and_index(IO_CASSETTE, i));
 		if( w->channel != -1 )
 			stream_update(w->channel, 0);
 	}

@@ -74,7 +74,7 @@ void centronics_write_handshake(int nr, int data, int mask)
 	{
 		if ( !(This->control&CENTRONICS_STROBE) && (neu&CENTRONICS_STROBE) )
 		{
-			printer_output(image_instance(IO_PRINTER, nr), This->data);
+			printer_output(image_from_devtype_and_index(IO_PRINTER, nr), This->data);
 			
 			/* setup timer for data acknowledge */
 
@@ -106,7 +106,7 @@ int centronics_read_handshake(int nr)
 			data|=CENTRONICS_ONLINE;
 	}
 	data |= CENTRONICS_NO_ERROR;
-	if (!printer_status(image_instance(IO_PRINTER, nr), 0))
+	if (!printer_status(image_from_devtype_and_index(IO_PRINTER, nr), 0))
 		data |= CENTRONICS_NO_PAPER;
 
 	/* state of acknowledge */

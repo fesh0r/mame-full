@@ -218,7 +218,7 @@ static READ_HANDLER(apf_imagination_pia_in_b_func)
 
 	data = 0x000;
 
-	if (device_input(image_instance(IO_CASSETTE,0)) > 255)
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE,0)) > 255)
 		data =(1<<7);
 
 	return data;
@@ -275,9 +275,9 @@ static WRITE_HANDLER(apf_imagination_pia_out_b_func)
 	keyboard_data = readinputport(keyboard_line+4);
 
 	/* bit 4: cassette motor control */
-	device_status(image_instance(IO_CASSETTE,0), ((data>>4) & 0x01));
+	device_status(image_from_devtype_and_index(IO_CASSETTE,0), ((data>>4) & 0x01));
 	/* bit 6: cassette write */
-	device_output(image_instance(IO_CASSETTE,0), (data & (1<<6)) ? -32768 : 32767);
+	device_output(image_from_devtype_and_index(IO_CASSETTE,0), (data & (1<<6)) ? -32768 : 32767);
 
 
 	logerror("pia 1 b w: %04x %02x\n",offset,data);

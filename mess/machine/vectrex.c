@@ -68,7 +68,7 @@ DEVICE_LOAD( vectrex_cart )
 	 */
 	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
-	if (image_index(image) == 0)
+	if (image_index_in_device(image) == 0)
 		artwork_use_device_art(image, "mine");
 
 	if (file)

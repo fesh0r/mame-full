@@ -93,7 +93,7 @@ static READ_HANDLER ( svi318_ppi_port_a_r )
 {
     int data = 0x0f;
 
-	if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
 		data |= 0x80;
 	if (!svi318_cassette_present (0) )
 		data |= 0x40;
@@ -152,10 +152,10 @@ static WRITE_HANDLER ( svi318_ppi_port_c_w )
 		}
     /* cassette motor on/off */
     if (svi318_cassette_present (0) )
-        device_status(image_instance(IO_CASSETTE, 0), (data & 0x10) ? 0 : 1);
+        device_status(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x10) ? 0 : 1);
     /* cassette signal write */
     if ( (old_val ^ data) & 0x20)
-        device_output(image_instance(IO_CASSETTE, 0), (data & 0x20) ? -32767 : 32767);
+        device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x20) ? -32767 : 32767);
 
 	old_val = data;
 }
@@ -192,7 +192,7 @@ WRITE_HANDLER (svi318_printer_w)
 	else
 	{
 		if ( (svi.prn_strobe & 1) && !(data & 1) )
-            device_output(image_instance(IO_PRINTER, 0), svi.prn_data);
+            device_output(image_from_devtype_and_index(IO_PRINTER, 0), svi.prn_data);
 
         svi.prn_strobe = data;
 	}
@@ -200,7 +200,7 @@ WRITE_HANDLER (svi318_printer_w)
 
 READ_HANDLER (svi318_printer_r)
 {
-	if (device_status(image_instance(IO_PRINTER, 0), 0) )
+	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0) )
         return 0xfe;
 
     return 0xff;
@@ -343,7 +343,7 @@ WRITE_HANDLER (fdc_density_side_w)
 		sector_size = 256;
     }
     
-    basicdsk_set_geometry(image_instance(IO_FLOPPY, svi318_fdc_status.seldrive), 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0, 0);
+    basicdsk_set_geometry(image_from_devtype_and_index(IO_FLOPPY, svi318_fdc_status.seldrive), 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0, 0);
 }
 
 READ_HANDLER (svi318_fdc_status_r)
@@ -367,7 +367,7 @@ static unsigned long svi318_calcoffset(UINT8 t, UINT8 h, UINT8 s,
 DEVICE_LOAD( svi318_floppy )
 {
 	int size;
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	if (file && ! is_effective_mode_create(open_mode))
 	{
@@ -697,6 +697,6 @@ DEVICE_LOAD( svi318_cassette )
 
 int svi318_cassette_present (int id)
 {
-	return image_exists(image_instance(IO_CASSETTE, id));
+	return image_exists(image_from_devtype_and_index(IO_CASSETTE, id));
 }
 

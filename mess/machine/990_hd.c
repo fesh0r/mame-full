@@ -73,6 +73,7 @@ enum
 /* disk drive unit descriptor */
 typedef struct hd_unit_t
 {
+	mess_image *img;			/* image descriptor */
 	mame_file *fd;				/* file descriptor */
 	unsigned int wp : 1;		/* TRUE if disk is write-protected */
 	unsigned int unsafe : 1;	/* TRUE when a disk has just been connected */
@@ -155,6 +156,33 @@ static const UINT16 w_mask[8] =
 static hdc_t hdc;
 
 
+DEVICE_INIT( ti990_hd )
+{
+	hd_unit_t *d;
+	int id = image_index_in_device(image);
+
+
+	if ((id < 0) || (id >= MAX_DISK_UNIT))
+		return INIT_FAIL;
+
+	d = &hdc.d[id];
+	memset(d, 0, sizeof(*d));
+
+	d->img = image;
+	d->fd = NULL;
+	d->wp = 1;
+	d->unsafe = 1;
+
+	/* clear attention line */
+	/*hdc.w[0] &= ~ (0x80 >> id);*/
+
+	return INIT_PASS;
+}
+
+/*DEVICE_EXIT( ti990_hd )
+{
+	d->img = NULL;
+}*/
 
 /*
 	Initialize hard disk unit and open a hard disk image
@@ -164,19 +192,18 @@ DEVICE_LOAD( ti990_hd )
 	hd_unit_t *d;
 	disk_image_header header;
 	int bytes_read;
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
 		return INIT_FAIL;
 
 	d = &hdc.d[id];
-	memset(d, 0, sizeof(*d));
 
 	/* open file */
 	d->fd = file;
 	/* tell whether the image is writable */
-	d->wp = ! ((d->fd) && is_effective_mode_writable(open_mode));
+	d->wp = ! is_effective_mode_writable(open_mode);
 
 	d->unsafe = 1;
 	/* set attention line */
@@ -211,7 +238,7 @@ DEVICE_LOAD( ti990_hd )
 */
 DEVICE_UNLOAD( ti990_hd )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	hd_unit_t *d;
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
@@ -222,8 +249,8 @@ DEVICE_UNLOAD( ti990_hd )
 	if (d->fd)
 	{
 		d->fd = NULL;
-		d->wp = 0;
-		d->unsafe = /*1*/0;
+		d->wp = 1;
+		d->unsafe = 1;
 
 		/* clear attention line */
 		hdc.w[0] &= ~ (0x80 >> id);

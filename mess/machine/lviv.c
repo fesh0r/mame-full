@@ -62,7 +62,7 @@ static READ_HANDLER ( lviv_ppi_0_portb_r )
 static READ_HANDLER ( lviv_ppi_0_portc_r )
 {
 	UINT8 data = lviv_ppi_port_outputs[0][2] & 0x0f;
-	if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
 		data |= 0x10;
 	if (lviv_ppi_port_outputs[0][0] & readinputport(13))
 		data |= 0x80;
@@ -85,7 +85,7 @@ static WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off 
 	lviv_ppi_port_outputs[0][2] = data;
 	if (lviv_ppi_port_outputs[0][1]&0x80)
 		speaker_level_w(0, data&0x01);
-	device_output(image_instance(IO_CASSETTE, 0), (data & 0x01) ? -32768 : 32767);
+	device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -32768 : 32767);
 	lviv_update_memory();
 }
 

@@ -148,7 +148,7 @@ static int sony_enable2(void)
 
 static floppy *get_sony_floppy(mess_image *img)
 {
-	int id = image_index(img);
+	int id = image_index_in_device(img);
 	return &sony_floppy[id];
 }
 
@@ -1301,7 +1301,7 @@ static void sony_doaction(void)
 				memset(f, 0, sizeof(*f));
 			}*/
 			/* somewhat hackish, but better method (?) */
-			image_unload(image_instance(IO_FLOPPY, sony_floppy_select));
+			image_unload(image_from_devtype_and_index(IO_FLOPPY, sony_floppy_select));
 			break;
 		default:
 			#if LOG_SONY
