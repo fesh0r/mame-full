@@ -355,6 +355,12 @@ void	floppy_drive_set_geometry(int id, floppy_type type)
 	}
 }
 
+void	floppy_drive_set_geometry_absolute(int id, int tracks, int sides)
+{
+	drives[id].max_track = tracks;
+	drives[id].num_sides = sides;
+}
+
 void    floppy_drive_seek(int id, signed int signed_tracks)
 {
 	struct floppy_drive *pDrive;
