@@ -1,5 +1,5 @@
 /******************************************************************************
- Peter.Trauner@jk.uni-linz.ac.at September 2000
+ PeT mess@utanet.at 2000,2001
 ******************************************************************************/
 
 #include "driver.h"
@@ -25,8 +25,11 @@ MOSTEK MK 3850N-3 7917 Philipines (fairchild f8 cpu)
 
 16 keys (4x4 matrix)
 
-switch s/l
+switch s/l (dark, light) pure hardware?
 (power on switch)
+
+speaker?
+
  */
 
 static UINT8 mk1_f8[2];
@@ -34,7 +37,7 @@ static UINT8 mk1_f8[2];
 READ_HANDLER(mk1_f8_r)
 {
     UINT8 data=mk1_f8[offset];
-    logerror ("f8 %.6f r %x %x\n", timer_get_time(), offset, data);
+//    logerror ("f8 %.6f r %x %x\n", timer_get_time(), offset, data);
     if (offset==0) {
 	if (data&1) data|=readinputport(1);
 	if (data&2) data|=readinputport(2);
@@ -74,7 +77,7 @@ WRITE_HANDLER(mk1_f8_w)
 {
 /* 0 is high and allows also input */
     mk1_f8[offset]=data;
-    logerror("f8 %.6f w %x %x\n", timer_get_time(), offset, data);
+//    logerror("f8 %.6f w %x %x\n", timer_get_time(), offset, data);
     if (offset==0) {	
     } else {
     }
@@ -86,18 +89,16 @@ WRITE_HANDLER(mk1_f8_w)
 
 static MEMORY_READ_START( mk1_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x0800, 0x08ff, MRA_RAM },
+	{ 0x1800, 0x18ff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( mk1_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x0800, 0x08ff, MWA_RAM },
+	{ 0x1800, 0x18ff, MWA_RAM },
 MEMORY_END
 
 
 static PORT_READ_START( mk1_readport )
-	// 0, 1 integrated io
-	// c,d,e,f timer in 3853? (position mask programmed)
 { 0x0, 0x1, mk1_f8_r },
 { 0xc, 0xf, f3853_r },
 PORT_END
@@ -164,7 +165,7 @@ static struct MachineDriver machine_driver_mk1 =
         }
 	},
 	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION, // lcd!
+	30, DEFAULT_60HZ_VBLANK_DURATION, // led!
 	1,				/* single CPU */
 	mk1_machine_init,
 	0,//pc1401_machine_stop,
