@@ -54,6 +54,8 @@ INLINE data8_t RDSPC(int space, offs_t addr)
 			return (*address_space[space].accessors->read_word)(addr) >> (8 * ((addr & 1) ^ (ENDIAN == CPU_IS_BE ? 1 : 0)));
 		case 4:
 			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 3) ^ (ENDIAN == CPU_IS_BE ? 3 : 0)));
+		case 8:
+			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 7) ^ (ENDIAN == CPU_IS_BE ? 7 : 0)));
 	}
 	return 0;
 }

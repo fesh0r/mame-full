@@ -770,6 +770,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      OSD_15,				NULL,					SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      OSD_16,				NULL,					SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_INVALID, UNKNOWN,			NULL,					SEQ_DEF_0 )
+	INPUT_PORT_DIGITAL_DEF( 0, IPG_INVALID, SPECIAL,			NULL,					SEQ_DEF_0 )
+	INPUT_PORT_DIGITAL_DEF( 0, IPG_INVALID, OTHER,				NULL,					SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_INVALID, DIPSWITCH_NAME,		NULL,					SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_INVALID, END,				NULL,					SEQ_DEF_0 )
 };
@@ -808,17 +810,17 @@ int load_input_port_settings(void)
 	memcpy(inputport_list_backup, inputport_list_defaults, sizeof(inputport_list_backup));
 	osd_customize_inputport_list(inputport_list_backup);
 	
-	/* propogate that forward to the live list and apply the config on top of that */
-	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
-	config_load_default(inputport_list_backup, inputport_list);
-	
 	/* load the controller-specific info */
 	if (options.controller != NULL)
 	{
-		loaded = config_load_controller(options.controller, inputport_list);
-		if (!loaded && strcmp(options.controller, "Standard"))
+		loaded = config_load_controller(options.controller, inputport_list_backup);
+		if (!loaded)
 			osd_die("Could not load controller file %s.cfg\n", options.controller);
 	}
+
+	/* propogate that forward to the live list and apply the config on top of that */
+	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
+	config_load_default(inputport_list_backup, inputport_list);
 
 	/* now load the game-specific info */
 	loaded = config_load(Machine->input_ports_default, Machine->input_ports);
@@ -1298,7 +1300,7 @@ int input_port_type_pressed(int type, int player)
 	int listnum;
 
 	/* search the defaults for the type */
-	for (listnum = 0; inputport_list_defaults[listnum].type != IPT_END; listnum++)
+	for (listnum = 0; inputport_list[listnum].type != IPT_END; listnum++)
 		if (inputport_list[listnum].type == type && inputport_list[listnum].player == player)
 			return seq_pressed(&inputport_list[listnum].defaultseq);
 	

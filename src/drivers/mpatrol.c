@@ -32,6 +32,8 @@ write:
 a0        background #2 y position
 c0        background control
 
+NOTE: It may be possible to remove the fake port now that conditional DIPS
+are supported. What should really be filled in for each mode?
 ***************************************************************************/
 
 #include "driver.h"

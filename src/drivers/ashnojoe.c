@@ -44,7 +44,7 @@ Dips:
                                     1   2   3   4   5   6   7   8
    Game Style      * Table          ON                      OFF OFF
                    Upright          OFF                     OFF OFF
-   Secreen Reverse * Usual              OFF                 OFF OFF
+   Screen Reverse  * Usual              OFF                 OFF OFF
                    Reverse              ON                  OFF OFF
    Test Mode       * Game mode              OFF             OFF OFF
                    Test Mode                ON              OFF OFF
@@ -179,7 +179,7 @@ static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( ashnojoe )
-	PORT_START	/* player 1 16-bit */
+	PORT_START_TAG("IN0")	/* player 1 16-bit */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_PLAYER(1)
@@ -198,7 +198,7 @@ INPUT_PORTS_START( ashnojoe )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* player 2 16-bit */
+	PORT_START_TAG("IN1")	/* player 2 16-bit */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_PLAYER(2)
@@ -218,7 +218,7 @@ INPUT_PORTS_START( ashnojoe )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* 16-bit */
+	PORT_START_TAG("IN2")	/* 16-bit */
 	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Cocktail ) )

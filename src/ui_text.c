@@ -125,17 +125,17 @@ static const char *mame_default_text[] =
 	"Sensitivity",
 	
 	/* input groups */
-	"User interface",
-	"Player 1 controls",
-	"Player 2 controls",
-	"Player 3 controls",
-	"Player 4 controls",
-	"Player 5 controls",
-	"Player 6 controls",
-	"Player 7 controls",
-	"Player 8 controls",
-	"Other controls",
-	"Return to groups",
+	"User Interface",
+	"Player 1 Controls",
+	"Player 2 Controls",
+	"Player 3 Controls",
+	"Player 4 Controls",
+	"Player 5 Controls",
+	"Player 6 Controls",
+	"Player 7 Controls",
+	"Player 8 Controls",
+	"Other Controls",
+	"Return to Groups",
 
 	/* stats */
 	"Tickets dispensed",

@@ -1415,9 +1415,6 @@ ROM_START( faxa )
 	ROM_LOAD( "fxdb1-6a.bin", 0x3a000, 0x2000, CRC(ff949367) SHA1(fb3d9c0abe3c915eaea983d9b429eb5227688532) )
 	ROM_LOAD( "fxdb1-7a.bin", 0x3c000, 0x2000, CRC(0f97b874) SHA1(5790d3ed9eed2ce05947bc28cc252f720a7f3aeb) )
 	ROM_LOAD( "fxdb1-8a.bin", 0x3e000, 0x2000, CRC(1d055bea) SHA1(96531db0a3a36319bc0a28096e601302eb2eb115) )
-	/* The last two ROM sockets were apparently never populated */
-//	ROM_LOAD( "fxd-7a.64",  0x3C000, 0x2000, NO_DUMP )
-//	ROM_LOAD( "fxd-8a.64",  0x3E000, 0x2000, NO_DUMP )
 	
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, CRC(7c525aec) SHA1(f3afd3bfc0ba4265106e6ca217d113d23ad66016) )

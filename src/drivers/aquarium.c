@@ -72,7 +72,7 @@ VIDEO_UPDATE(aquarium);
 static MACHINE_INIT( aquarium )
 {
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
-	int data = readinputport(3);
+	int data = readinputportbytag("FAKE");
 
 	/* Language : 0x0000 = Japanese - Other value = English */
 
@@ -193,7 +193,7 @@ static ADDRESS_MAP_START( snd_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( aquarium )
-	PORT_START	/* DSW */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
@@ -240,7 +240,7 @@ INPUT_PORTS_START( aquarium )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -258,7 +258,7 @@ INPUT_PORTS_START( aquarium )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* untested */
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -270,7 +270,7 @@ INPUT_PORTS_START( aquarium )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* sound status */
 
 #if AQUARIUS_HACK
-	PORT_START	/* FAKE DSW to support language */
+	PORT_START_TAG("FAKE")	/* FAKE DSW to support language */
 	PORT_DIPNAME( 0xffff, 0x0001, DEF_STR( Language ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Japanese ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( English ) )		// This is a guess of what should be the value

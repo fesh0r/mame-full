@@ -754,10 +754,18 @@ static void print_game_device(FILE* out, const struct GameDriver* game)
 static void print_game_info(FILE* out, const struct GameDriver* game)
 {
 	extern struct GameDriver driver_0;
+	const char *start;
 
 	fprintf(out, "\t<" XML_TOP);
 
 	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
+
+	start = strrchr(game->source_file, '/');
+	if (!start)
+		start = strrchr(game->source_file, '\\');
+	if (!start)
+		start = game->source_file - 1;
+	fprintf(out, " sourcefile=\"%s\"", normalize_string(start + 1));
 
 	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER))
 		fprintf(out, " cloneof=\"%s\"", normalize_string(game->clone_of->name));
@@ -894,6 +902,7 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
 #endif
 		"\t\t<!ATTLIST " XML_TOP " name CDATA #REQUIRED>\n"
+		"\t\t<!ATTLIST " XML_TOP " sourcefile CDATA #IMPLIED>\n"
 		"\t\t<!ATTLIST " XML_TOP " runnable (yes|no) \"yes\">\n"
 		"\t\t<!ATTLIST " XML_TOP " cloneof CDATA #IMPLIED>\n"
 		"\t\t<!ATTLIST " XML_TOP " romof CDATA #IMPLIED>\n"

@@ -1724,14 +1724,16 @@ static char menu_subitem_buffer[MAX_PORT_ENTRIES][96];
 
 static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 {
+	static input_seq_t starting_seq;
 	static int menugroup = -1;
 	const char *menu_item[MAX_PORT_ENTRIES];
 	const char *menu_subitem[MAX_PORT_ENTRIES];
 	input_seq_t *entry[MAX_PORT_ENTRIES];
+	input_seq_t *defentry[MAX_PORT_ENTRIES];
 	UINT8 analog[MAX_PORT_ENTRIES];
 	char flag[MAX_PORT_ENTRIES];
 	int i,sel;
-	struct InputPortDefinition *in;
+	struct InputPortDefinition *in, *indef;
 	int total;
 
 	sel = selected - 1;
@@ -1752,6 +1754,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	else
 	{
 		in = get_input_port_list();
+		indef = get_input_port_list_backup();
 
 		total = 0;
 		
@@ -1763,24 +1766,28 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 				if (!analog[total])
 				{
 					entry[total] = &in->defaultseq;
+					defentry[total] = &indef->defaultseq;
 					menu_item[total] = in->name;
 					total++;
 				}
 				else
 				{
 					entry[total] = &in->defaultseq;
+					defentry[total] = &indef->defaultseq;
 					sprintf(menu_item_buffer[total], "%s Analog", in->name);
 					menu_item[total] = menu_item_buffer[total];
 					total++;
 
 					analog[total] = 0;
 					entry[total] = &in->defaultdecseq;
+					defentry[total] = &indef->defaultdecseq;
 					sprintf(menu_item_buffer[total], "%s Dec", in->name);
 					menu_item[total] = menu_item_buffer[total];
 					total++;
 
 					analog[total] = 0;
 					entry[total] = &in->defaultincseq;
+					defentry[total] = &indef->defaultincseq;
 					sprintf(menu_item_buffer[total], "%s Inc", in->name);
 					menu_item[total] = menu_item_buffer[total];
 					total++;
@@ -1788,6 +1795,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 			}
 
 			in++;
+			indef++;
 		}
 
 		if (total == 0) return 0;
@@ -1822,7 +1830,10 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 
 				if (ret > 0 || seq_get_1(entry[sel]) == CODE_NONE)
 				{
-					seq_set_1(entry[sel],CODE_NONE);
+					if (seq_get_1(&starting_seq) == CODE_NONE)
+						seq_copy(entry[sel], defentry[sel]);
+					else
+						seq_set_1(entry[sel],CODE_NONE);
 					ret = 1;
 				}
 
@@ -1871,6 +1882,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 		else
 		{
 			seq_read_async_start(analog[sel]);
+			seq_copy(&starting_seq,entry[sel]);
 
 			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 
@@ -1934,7 +1946,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 #ifdef MESS
 			(in->category == 0 || input_category_active(in->category)) &&
 #endif /* MESS */
-			port_type_to_group(in->type, in->player) != IPG_INVALID)
+			((in->type == IPT_OTHER && in->name != IP_NAME_DEFAULT) || port_type_to_group(in->type, in->player) != IPG_INVALID))
 		{
 			analog[total] = port_type_is_analog(in->type);
 			if (!analog[total])

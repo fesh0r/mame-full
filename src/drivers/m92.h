@@ -84,7 +84,7 @@
 	PORT_DIPSETTING(    0x00, "4 Players" ) \
 	PORT_DIPNAME( 0x04, 0x04, "Coin Slots" ) \
 	PORT_DIPSETTING(    0x04, "Common" ) \
-	PORT_DIPSETTING(    0x00, "Seperate" ) \
+	PORT_DIPSETTING(    0x00, "Separate" ) \
 	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" ) /* Default 1 */ \
 	PORT_DIPSETTING(    0x08, "1" ) \
 	PORT_DIPSETTING(    0x00, "2" ) \
@@ -100,7 +100,7 @@
 	PORT_DIPSETTING(    0x00, "3 Players" ) \
 	PORT_DIPNAME( 0x04, 0x04, "Coin Slots" ) \
 	PORT_DIPSETTING(    0x04, "Common" ) \
-	PORT_DIPSETTING(    0x00, "Seperate" ) \
+	PORT_DIPSETTING(    0x00, "Separate" ) \
 	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" ) /* Default 1 */ \
 	PORT_DIPSETTING(    0x08, "1" ) \
 	PORT_DIPSETTING(    0x00, "2" ) \
@@ -116,7 +116,7 @@
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
 	PORT_DIPNAME( 0x04, 0x04, "Coin Slots" ) \
 	PORT_DIPSETTING(    0x04, "Common" ) \
-	PORT_DIPSETTING(    0x00, "Seperate" ) \
+	PORT_DIPSETTING(    0x00, "Separate" ) \
 	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" ) /* Default 1 */ \
 	PORT_DIPSETTING(    0x08, "1" ) \
 	PORT_DIPSETTING(    0x00, "2" ) \

@@ -244,7 +244,7 @@ static DRIVER_INIT( namcos12 )
 	psx_dma_install_read_handler( 5, namcos12_rom_read );
 										
 	state_save_register_UINT32( "namcos12", 0, "m_n_dmaoffset", &m_n_dmaoffset, 1 );
-	state_save_register_UINT32( "namcos12", 0, "m_n_dmaoffset", &m_n_dmabias, 1 );
+	state_save_register_UINT32( "namcos12", 0, "m_n_dmabias", &m_n_dmabias, 1 );
 	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
 	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffseth", &m_n_bankoffseth, 1 );
 	state_save_register_func_postload( s12_resetbank );
@@ -521,7 +521,7 @@ INPUT_PORTS_START( namcos12 )
 	/* IN 2 */
 	PORT_START
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, 0 ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
@@ -566,7 +566,7 @@ INPUT_PORTS_START( golgo13 )
 	/* IN 2 */
 	PORT_START
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, 0 ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)

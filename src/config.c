@@ -75,6 +75,7 @@ struct config_data
 	int						version;			/* from the <mameconfig> field */
 	UINT8					ignore_game;		/* are we ignoring this game entry? */
 	UINT8					loaded_count;		/* number of systems we loaded */
+	input_code_t			remap[__code_max];	/* remap table */
 	struct config_port *	port;				/* from the <port> field */
 	struct config_counters  counters;			/* from the <counters> field */
 	struct config_mixer		mixer;				/* from the <mixer> field */
@@ -455,8 +456,8 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 			else if (!stricmp(attributes[attr], "newcode"))
 				newcode = token_to_code(attributes[attr + 1]);
 		}
-		if (origcode != CODE_NONE && newcode != CODE_NONE)
-			code_remap(origcode, newcode);
+		if (origcode != CODE_NONE && origcode < __code_max && newcode != CODE_NONE)
+			curfile.data.remap[origcode] = newcode;
 	}
 	
 	/* look for third-level defseq or newseq tag */
@@ -560,7 +561,7 @@ static int config_load_xml(void)
 {
 	struct config_port *port, *next;
 	XML_Parser parser;
-	int done, mixernum;
+	int done, mixernum, remapnum;
 	int first = 1;
 	
 	/* initialize the defaults */
@@ -569,6 +570,8 @@ static int config_load_xml(void)
 		curfile.data.mixer.deflevel[mixernum] = 0xff;
 		curfile.data.mixer.newlevel[mixernum] = 0xff;
 	}
+	for (remapnum = 0; remapnum < __code_max; remapnum++)
+		curfile.data.remap[remapnum] = remapnum;
 	
 	/* reset our parse data */
 	curfile.parse.tag[0] = 0;
@@ -853,7 +856,27 @@ static int apply_ports(const struct InputPort *input_ports_default, struct Input
 static int apply_default_ports(const struct InputPortDefinition *input_ports_default_backup, struct InputPortDefinition *input_ports_default)
 {
 	struct config_port *port;
-	int portnum;
+	int portnum, remapnum, seqnum;
+	
+	/* apply any remapping first */
+	for (remapnum = 0; remapnum < __code_max; remapnum++)
+		if (curfile.data.remap[remapnum] != remapnum)
+			for (portnum = 0; input_ports_default[portnum].type != IPT_END; portnum++)
+			{
+				for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
+					if (input_ports_default[portnum].defaultseq.code[seqnum] == remapnum)
+						input_ports_default[portnum].defaultseq.code[seqnum] = curfile.data.remap[remapnum];
+				
+				if (port_type_is_analog(input_ports_default[portnum].type))
+				{
+					for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
+						if (input_ports_default[portnum].defaultdecseq.code[seqnum] == remapnum)
+							input_ports_default[portnum].defaultdecseq.code[seqnum] = curfile.data.remap[remapnum];
+					for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
+						if (input_ports_default[portnum].defaultincseq.code[seqnum] == remapnum)
+							input_ports_default[portnum].defaultincseq.code[seqnum] = curfile.data.remap[remapnum];
+				}
+			}
 
 	/* loop over the ports */
 	for (port = curfile.data.port; port != NULL; port = port->next)
@@ -868,12 +891,7 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 				if (!port_type_is_analog(port->type))
 				{
 					if (input_ports_default_backup == NULL || seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0)
-					{
-						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[0]) != CODE_NONE)
-							seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
-						else
-							seq_copy(&input_ports_default[portnum].defaultseq, &input_ports_default_backup[portnum].defaultseq);
-					}
+						seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
 				}
 				
 				/* analog case */
@@ -884,20 +902,9 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 						 seq_cmp(&input_ports_default_backup[portnum].defaultdecseq, &port->defseq[1]) == 0 &&
 						 seq_cmp(&input_ports_default_backup[portnum].defaultincseq, &port->defseq[2]) == 0))
 					{
-						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[0]) != CODE_NONE)
-							seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
-						else
-							seq_copy(&input_ports_default[portnum].defaultseq, &input_ports_default_backup[portnum].defaultseq);
-							
-						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[1]) != CODE_NONE)
-							seq_copy(&input_ports_default[portnum].defaultdecseq, &port->newseq[1]);
-						else
-							seq_copy(&input_ports_default[portnum].defaultdecseq, &input_ports_default_backup[portnum].defaultdecseq);
-							
-						if (input_ports_default_backup == NULL || seq_get_1(&port->newseq[2]) != CODE_NONE)
-							seq_copy(&input_ports_default[portnum].defaultincseq, &port->newseq[2]);
-						else
-							seq_copy(&input_ports_default[portnum].defaultincseq, &input_ports_default_backup[portnum].defaultincseq);
+						seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
+						seq_copy(&input_ports_default[portnum].defaultdecseq, &port->newseq[1]);
+						seq_copy(&input_ports_default[portnum].defaultincseq, &port->newseq[2]);
 					}
 				}
 			}

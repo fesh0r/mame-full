@@ -93,6 +93,7 @@
 #include "cpu/m6809/m6809.h"
 #include "capbowl.h"
 
+#define MASTER_CLOCK		8000000		/* 8MHz crystal */
 
 static UINT8 last_trackball_val[2];
 
@@ -305,9 +306,9 @@ INPUT_PORTS_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz */
-	{ YM2203_VOL(40,40) },
+	1,				/* 1 chip */
+	MASTER_CLOCK/2,	/* 4 MHz */
+	{ YM2203_VOL(75,7) },
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },
@@ -333,11 +334,11 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( capbowl )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6809, 2000000)
+	MDRV_CPU_ADD_TAG("main", M6809E, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(capbowl_map,0)
 	MDRV_CPU_VBLANK_INT(capbowl_interrupt,1)
 
-	MDRV_CPU_ADD(M6809,2000000)
+	MDRV_CPU_ADD(M6809E, MASTER_CLOCK/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 

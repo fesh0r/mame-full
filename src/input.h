@@ -493,7 +493,6 @@ int code_analog_type(input_code_t code);
 const char *code_name(input_code_t code);
 input_code_t token_to_code(const char *token);
 void code_to_token(input_code_t code, char *token);
-void code_remap(input_code_t origcode, input_code_t newcode);
 
 /* Sequence code funtions */
 void seq_set_0(input_seq_t *seq);

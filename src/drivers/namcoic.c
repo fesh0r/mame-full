@@ -255,7 +255,7 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 
 	case NAMCOFL_SPEED_RACER:
 	case NAMCOFL_FINAL_LAP_R:
-		if( pri != ((palette>>4)&0x7) ) return;
+		if( pri != ((palette>>5)&0x7) ) return;
 		break;
 
 	default:
@@ -293,9 +293,15 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 		}
 	}
 	else
-	{ /* Namco NB1, Namco System 2 */
-		xscroll += 0x26;
-		yscroll += 0x19;
+	{ 
+		if ((namcos2_gametype == NAMCOFL_SPEED_RACER) || (namcos2_gametype == NAMCOFL_FINAL_LAP_R))
+		{ /* Namco FL: don't adjust and things line up fine */
+		}
+		else
+		{ /* Namco NB1, Namco System 2 */ 
+			xscroll += 0x26;
+			yscroll += 0x19;
+		}
 	}
 	
 	hpos -= xscroll;

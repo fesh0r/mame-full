@@ -549,6 +549,7 @@ struct conversion_t {
 } CONV[] = {
 	{ 1, { "mame", "game", 0, 0, 0 }, process_game },
 	{ 2, { "mame", "game", "name", 0, 0 }, process_gamename },
+	{ 2, { "mame", "game", "sourcefile", 0, 0 }, process_string2 },
 	{ 2, { "mame", "game", "description", 0, 0 }, process_string2 },
 	{ 2, { "mame", "game", "year", 0, 0 }, process_item2 },
 	{ 2, { "mame", "game", "history", 0, 0 }, process_string2 },

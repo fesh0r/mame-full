@@ -3027,6 +3027,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( columns )	/* (c) 1990 Sega */
 	DRIVER( columnsj )	/* (c) 1990 Sega */
 	DRIVER( columns2 )	/* (c) 1990 Sega */
+	DRIVER( column2j )	/* (c) 1990 Sega */
 
 	/* System C-2 games */
 	DRIVER( borench )	/* (c) 1990 Sega */

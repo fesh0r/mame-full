@@ -75,8 +75,9 @@ enum
 enum
 {
 	/* pseudo-port types */
-	IPT_UNUSED = 0,
-	IPT_END = 1,
+	IPT_INVALID = 0,
+	IPT_UNUSED,
+	IPT_END,
 	IPT_UNKNOWN,
 	IPT_PORT,
 	IPT_DIPSWITCH_NAME,
@@ -229,10 +230,13 @@ enum
 	IPT_OSD_15,
 	IPT_OSD_16,
 
-	__ipt_max,
+	/* other meaning not mapped to standard defaults */
+	IPT_OTHER,
 
-	/* special meaning handled by custom functions */
-	IPT_SPECIAL = IPT_UNUSED
+	/* special meaning handled by custom code */
+	IPT_SPECIAL,
+
+	__ipt_max
 };
 
 

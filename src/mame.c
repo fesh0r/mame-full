@@ -2055,7 +2055,12 @@ int mame_validitychecks(void)
 
 			while (inp->type != IPT_END)
 			{
-				if (inp->name && inp->name != IP_NAME_DEFAULT)
+				if (inp->type == IPT_INVALID)
+				{
+					printf("%s: %s has an input port with an invalid type (0); use IPT_OTHER instead\n",drivers[i]->source_file,drivers[i]->name);
+					error = 1;
+				}
+				else if (inp->name && inp->name != IP_NAME_DEFAULT)
 				{
 					j = 0;
 
@@ -2114,7 +2119,7 @@ int mame_validitychecks(void)
 
 					if (inp->name >= DEF_STR( 9C_1C ) && inp->name <= DEF_STR( Free_Play )
 							&& (inp+1)->name >= DEF_STR( 9C_1C ) && (inp+1)->name <= DEF_STR( Free_Play )
-							&& inp->name >= (inp+1)->name)
+							&& inp->name >= (inp+1)->name && !memcmp(&inp->dipsetting.condition, &(inp+1)->dipsetting.condition, sizeof(inp->dipsetting.condition)))
 					{
 						printf("%s: %s has unsorted coinage %s > %s\n",drivers[i]->source_file,drivers[i]->name,inp->name,(inp+1)->name);
 						error = 1;
