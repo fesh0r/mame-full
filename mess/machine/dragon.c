@@ -2021,7 +2021,14 @@ void log_os9call(int call)
 	if (!mnemonic)
 		mnemonic = "(unknown)";
 
-	logerror("Logged OS9 Call Through SWI2 $%02x: %s\n", (void *) call, mnemonic);
+	logerror("Logged OS9 Call Through SWI2 $%02x (%s): pc=$%04x\n", (void *) call, mnemonic, cpu_get_pc());
+}
+
+void os9_in_swi2(void)
+{
+	unsigned pc;
+	pc = cpu_get_pc();
+	log_os9call(cpu_readmem16(pc));
 }
 
 #endif /* LOG_OS9 */
