@@ -32,7 +32,7 @@ int coupe_floppy_init(int id)
 	if (basicdsk_floppy_init(id)==INIT_OK)
 	{
 
-		basicdsk_set_geometry(id, 80, 2, 10, 512, 0, 0, 1);
+		basicdsk_set_geometry(id, 80, 2, 10, 512, 1);
 
 		return INIT_OK;
 	}
