@@ -817,6 +817,7 @@ static struct {
 	{ 0xe585879d , 0x10000, "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit)" },
 
 /* homebrew roms replacemts ****************************************************/
+	{ 0xea8c760b , 0x4000 , "Mr Gluk Reset Service v5.1 128K (Edit)" },
 	{ 0xfe44b86a , 0x4000 , "Mr Gluk Reset Service v5.2i 128K (Edit)" },
 	{ 0x479515ef , 0x4000 , "Mr Gluk Reset Service v5.3 128K (Edit)" },
 
@@ -841,6 +842,7 @@ static struct {
 
 /* clones */
 	{ 0x8ff7a4d1 , 0x4000 , "INVES Spectrum 48K+ (spanish)" },
+	{ 0x1a401bbc , 0x4000 , "Halley Computaction SP v4.1" },
 
 	{ 0x3e785f6f , 0x4000 , "Micro Digital TK-90x Color Computer" },
 	{ 0x17368e07 , 0x4000 , "Micro Digital TK-95 Color Computer" },
