@@ -800,6 +800,9 @@ static void do_read(int which, int physical_flag, int mode)
 		goto cleanup;
 	}
 
+#if 0
+	/* if we enable write-protect test in read operations, the ti99 HFDC DSR is
+	unable to read write-protected floppies! */
 	if ((hfdc[which].regs[hfdc_reg_term] & TC_TWPROT)
 			&& (get_disk_status(which, select_mode, disk_unit) & DS_WRPROT))
 	{
@@ -807,7 +810,7 @@ static void do_read(int which, int physical_flag, int mode)
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
 		goto cleanup;
 	}
-
+#endif
 
 	read_id(which, select_mode, disk_unit, head, ! (mode & 0x02), cylinder);
 
