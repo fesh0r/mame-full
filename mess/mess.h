@@ -37,6 +37,11 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 enum { INIT_OK, INIT_FAILED, INIT_UNKNOWN };
 
 
+/* IODevice ID return values.  Use these to determine if */
+/* the emulation can continue if image cannot be positively IDed */
+enum { ID_OK, ID_FAILED, ID_UNKNOWN };
+
+
 /* fileio.c */
 typedef struct
 {
