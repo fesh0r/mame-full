@@ -32,7 +32,7 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, x11_verify_mode, "Select x11 video mode: (if compiled in)\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
+	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, x11_verify_mode, "Select X11 video mode (if compiled in):\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
 	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "root_window_id", "rid", rc_int, &root_window_id, "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
@@ -143,8 +143,8 @@ static int x11_verify_mode(struct rc_option *option, const char *arg,
 {
   if(!mode_available[x11_video_mode])
   {
-    fprintf(stderr, "Error x11-mode %d is not available\n", x11_video_mode);
-    return 1;
+    fprintf(stderr, "Error: x11-mode %d is not available\n", x11_video_mode);
+    exit(1);
   }
 
   option->priority = priority;
