@@ -1,8 +1,6 @@
 #ifndef OSD_MESS_H
 #define OSD_MESS_H
 
-typedef UINT16 utf16_char_t;
-typedef UINT32 unicode_char_t;
 typedef struct _mess_image mess_image;
 
 /* called by the filemanager code to allow the OS to override the file		*/

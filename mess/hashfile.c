@@ -25,6 +25,7 @@ struct _hash_file
 
 	struct hash_info **preloaded_hashes;
 	int preloaded_hash_count;
+	void (*error_proc)(const char *message);
 };
 
 
@@ -301,13 +302,6 @@ done:
 
 /* ----------------------------------------------------------------------- */
 
-static void error_proc(const char *message)
-{
-	logerror("%s", message);
-}
-
-
-
 static void preload_use_proc(hash_file *hashfile, void *param, struct hash_info *hi)
 {
 	struct hash_info **new_preloaded_hashes;
@@ -323,7 +317,8 @@ static void preload_use_proc(hash_file *hashfile, void *param, struct hash_info 
 
 
 
-hash_file *hashfile_open(const char *sysname, int is_preload)
+hash_file *hashfile_open(const char *sysname, int is_preload,
+	void (*error_proc)(const char *message))
 {
 	hash_file *hashfile;
 	
@@ -332,6 +327,7 @@ hash_file *hashfile_open(const char *sysname, int is_preload)
 		goto error;
 	memset(hashfile, 0, sizeof(*hashfile));
 	pool_init(&hashfile->pool);
+	hashfile->error_proc = error_proc;
 
 	/* open a file */
 	hashfile->file = mame_fopen(sysname, sysname, FILETYPE_HASH, 0);
@@ -339,7 +335,7 @@ hash_file *hashfile_open(const char *sysname, int is_preload)
 		goto error;
 
 	if (is_preload)
-		hashfile_parse(hashfile, NULL, preload_use_proc, error_proc, NULL);
+		hashfile_parse(hashfile, NULL, preload_use_proc, hashfile->error_proc, NULL);
 
 	return hashfile;
 
@@ -401,7 +397,7 @@ const struct hash_info *hashfile_lookup(hash_file *hashfile, const char *hash)
 	}
 
 	hashfile_parse(hashfile, singular_selector_proc, singular_use_proc,
-		error_proc, (void *) &param);
+		hashfile->error_proc, (void *) &param);
 	return param.hi;
 }
 
@@ -418,7 +414,7 @@ int hashfile_verify(const char *sysname, void (*my_error_proc)(const char *messa
 {
 	hash_file *hashfile;
 	
-	hashfile = hashfile_open(sysname, FALSE);
+	hashfile = hashfile_open(sysname, FALSE, my_error_proc);
 	if (!hashfile)
 		return -1;
 

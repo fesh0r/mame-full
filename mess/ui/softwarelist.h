@@ -31,7 +31,8 @@ void SoftwareList_Idle(struct SmartListView *pListView);
 
 /* External calls */
 void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, int type);
-void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths, LPCSTR *plpBasePaths, LPCSTR lpExtraPath);
+void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths,
+	LPCSTR *plpBasePaths, LPCSTR lpExtraPath, void (*hash_error_proc)(const char *message));
 int MessLookupByFilename(const TCHAR *filename);
 int MessImageCount(void);
 void MessIntroduceItem(struct SmartListView *pListView, const char *filename, mess_image_type *imagetypes);

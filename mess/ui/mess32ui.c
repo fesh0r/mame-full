@@ -223,6 +223,15 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     return nIconPos;
 }
 
+
+
+static void MessHashErrorProc(const char *message)
+{
+	SetStatusBarTextF(0, "Hash file: %s", message);
+}
+
+
+
 static void MyFillSoftwareList(int nGame, BOOL bForce)
 {
 	int i;
@@ -265,13 +274,18 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 		}
 	}
 
-	FillSoftwareList(s_pSoftwareListView, nGame, path_count, pathsv, extra_path);
+	FillSoftwareList(s_pSoftwareListView, nGame, path_count, pathsv, extra_path,
+		MessHashErrorProc);
 }
+
+
 
 static void MessUpdateSoftwareList(void)
 {
 	MyFillSoftwareList(GetSelectedPickItem(), TRUE);
 }
+
+
 
 static BOOL IsSoftwarePaneDevice(int devtype)
 {
@@ -279,6 +293,8 @@ static BOOL IsSoftwarePaneDevice(int devtype)
 	assert(devtype < IO_COUNT);
 	return devtype != IO_PRINTER;
 }
+
+
 
 static void MessReadMountedSoftware(int nGame)
 {

@@ -837,9 +837,8 @@ void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate)
 {
 	size_t len = 0;
 	unicode_char_t buf[256];
-	unicode_char_t minchar;
-	unicode_char_t c, auxchar;
-	size_t auxlen;
+	unicode_char_t c;
+	int rc;
 
 	while(text_len > 0)
 	{
@@ -849,69 +848,14 @@ void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate)
 			len = 0;
 		}
 
-		c = (unsigned char) *text;
-		text_len--;
-		text++;
-
-		if (c < 0x80)
+		rc = uchar_from_utf8(&c, text, text_len);
+		if (rc < 0)
 		{
-			c &= 0x7f;
-			auxlen = 0;
-			minchar = 0x00000000;
-		}
-		else if ((c >= 0xc0) & (c < 0xe0))
-		{
-			c &= 0x1f;
-			auxlen = 1;
-			minchar = 0x00000080;
-		}
-		else if ((c >= 0xe0) & (c < 0xf0))
-		{
-			c &= 0x0f;
-			auxlen = 2;
-			minchar = 0x00000800;
-		}
-		else if ((c >= 0xf0) & (c < 0xf8))
-		{
-			c &= 0x07;
-			auxlen = 3;
-			minchar = 0x00010000;
-		}
-		else if ((c >= 0xf8) & (c < 0xfc))
-		{
-			c &= 0x03;
-			auxlen = 4;
-			minchar = 0x00200000;
-		}
-		else if ((c >= 0xfc) & (c < 0xfe))
-		{
-			c &= 0x01;
-			auxlen = 5;
-			minchar = 0x04000000;
-		}
-		else
-		{
+			rc = 1;
 			c = INVALID_CHAR;
-			auxlen = 0;
-			minchar = 0x00000000;
 		}
-
-		while(auxlen && text_len)
-		{
-			auxchar = *text;
-			if ((auxchar & 0xc0) != 0x80)
-				break;
-
-			c = c << 6;
-			c |= auxchar & 0x3f;
-
-			text++;
-			text_len--;
-			auxlen--;
-		}
-		if (auxlen || (c < minchar))
-			c = INVALID_CHAR;
-
+		text += rc;
+		text_len -= rc;
 		buf[len++] = c;
 	}
 	inputx_postn_rate(buf, len, rate);

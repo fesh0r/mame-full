@@ -826,6 +826,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/device.o			\
 	$(OBJ)/mess/hashfile.o			\
 	$(OBJ)/mess/inputx.o			\
+	$(OBJ)/mess/unicode.o			\
 	$(OBJ)/mess/artworkx.o			\
 	$(OBJ)/mess/mesintrf.o			\
 	$(OBJ)/mess/filemngr.o			\

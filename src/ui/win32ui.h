@@ -57,6 +57,10 @@ int GetDriverIndex(const struct GameDriver *driver);
 int GetGameNameIndex(const char *name);
 int GetIndexFromSortedIndex(int sorted_index);
 
+// sets text in part of the status bar on the main window
+void SetStatusBarText(int part_index, const char *message);
+void SetStatusBarTextF(int part_index, const char *fmt, ...);
+
 int Mame32Main(HINSTANCE    hInstance,
                    LPSTR        lpCmdLine,
                    int          nCmdShow);

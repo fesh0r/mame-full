@@ -2644,7 +2644,7 @@ static BOOL FolderCheck(void)
 	}
 	ProgressBarHide();
 	pDescription = ModifyThe(drivers[GetSelectedPickItem()]->description);
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)pDescription);
+	SetStatusBarText(0, pDescription);
 	UpdateStatusBar();
 	return TRUE;
 }
@@ -2719,7 +2719,7 @@ static void OnIdle()
 	driver_index = GetSelectedPickItem();
 
 	pDescription = ModifyThe(drivers[driver_index]->description);
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)pDescription);
+	SetStatusBarText(0, pDescription);
 	idle_work = FALSE;
 	UpdateStatusBar();
 	bFirstTime = TRUE;
@@ -2895,26 +2895,18 @@ static void ResizeProgressBar()
 	}
 }
 
-static void ProgressBarStep()
+static void ProgressBarStepParam(int iGameIndex, int nGameCount)
 {
-	char tmp[80];
-	sprintf(tmp, "Game search %d%% complete",
-			((game_index + 1) * 100) / game_count);
-	SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)tmp);
-	if (game_index == 0)
+	SetStatusBarTextF(0, "Game search %d%% complete",
+			((iGameIndex + 1) * 100) / nGameCount);
+	if (iGameIndex == 0)
 		ShowWindow(hProgWnd, SW_SHOW);
 	SendMessage(hProgWnd, PBM_STEPIT, 0, 0);
 }
 
-static void ProgressBarStepParam(int iGameIndex, int nGameCount)
+static void ProgressBarStep()
 {
-	char tmp[80];
-	sprintf(tmp, "Game search %d%% complete",
-			((iGameIndex + 1) * 100) / nGameCount);
-	SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)tmp);
-	if (iGameIndex == 0)
-		ShowWindow(hProgWnd, SW_SHOW);
-	SendMessage(hProgWnd, PBM_STEPIT, 0, 0);
+	ProgressBarStepParam(game_index, game_count);
 }
 
 static HWND InitProgressBar(HWND hParent)
@@ -3063,7 +3055,6 @@ static void UpdateStatusBar()
 {
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
 	int 		 games_shown = 0;
-	char		 game_text[20];
 	int 		 i = -1;
 
 	if (!lpFolder)
@@ -3080,8 +3071,7 @@ static void UpdateStatusBar()
 	}
 
 	/* Show number of games in the current 'View' in the status bar */
-	snprintf(game_text, sizeof(game_text) / sizeof(game_text[0]), g_szGameCountString, games_shown);
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)2, (LPARAM)game_text);
+	SetStatusBarTextF(2, g_szGameCountString, games_shown);
 
 	i = GetSelectedPickItem();
 
@@ -3090,7 +3080,7 @@ static void UpdateStatusBar()
 	else
 	{
 		const char* pStatus = GameInfoStatus(i);
-		SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)1, (LPARAM)pStatus);
+		SetStatusBarText(1, pStatus);
 	}
 }
 
@@ -3158,9 +3148,9 @@ static void DisableSelection()
 	EnableMenuItem(hMenu, ID_FILE_PLAY_RECORD,	   MF_GRAYED);
 	EnableMenuItem(hMenu, ID_GAME_PROPERTIES,	   MF_GRAYED);
 
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)"No Selection");
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)1, (LPARAM)"");
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)3, (LPARAM)"");
+	SetStatusBarText(0, "No Selection");
+	SetStatusBarText(1, "");
+	SetStatusBarText(3, "");
 
 	have_selection = FALSE;
 
@@ -3188,11 +3178,11 @@ static void EnableSelection(int nGame)
 	SetMenuItemInfo(hMenu, ID_FILE_PLAY, FALSE, &mmi);
 
 	pText = ModifyThe(drivers[nGame]->description);
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)pText);
+	SetStatusBarText(0, pText);
 	/* Add this game's status to the status bar */
 	pText = GameInfoStatus(nGame);
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)1, (LPARAM)pText);
-	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)3, (LPARAM)"");
+	SetStatusBarText(1, pText);
+	SetStatusBarText(3, "");
 
 	/* If doing updating game status and the game name is NOT pacman.... */
 
@@ -5599,6 +5589,23 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 		break;
 	}
 	return 0;
+}
+
+void SetStatusBarText(int part_index, const char *message)
+{
+	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM) part_index, (LPARAM) message);
+}
+
+void SetStatusBarTextF(int part_index, const char *fmt, ...)
+{
+	char buf[256];
+	va_list va;
+
+	va_start(va, fmt);
+	vsprintf(buf, fmt, va);
+	va_end(va);
+
+	SetStatusBarText(part_index, buf);
 }
 
 static void MameMessageBox(const char *fmt, ...)

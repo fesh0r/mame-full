@@ -491,7 +491,10 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
     }
 }
 
-static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nPaths, LPCSTR *plpPaths)
+
+
+static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, int nGame,
+	int nPaths, LPCSTR *plpPaths, void (*error_proc)(const char *message))
 {
     int i;
     ImageData *imgd;
@@ -513,7 +516,7 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 
 	for (drv = drivers[nGame]; !mess_hash_file && drv; drv = mess_next_compatible_driver(drv))
 	{
-		mess_hash_file = hashfile_open(drv->name, TRUE);
+		mess_hash_file = hashfile_open(drv->name, TRUE, error_proc);
 	}
 #endif /* HAS_HASH */
 
@@ -589,7 +592,10 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 #endif /* HAS_IDLING */
 }
 
-void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths, LPCSTR *plpBasePaths, LPCSTR lpExtraPath)
+
+
+void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths,
+	LPCSTR *plpBasePaths, LPCSTR lpExtraPath, void (*error_proc)(const char *message))
 {
 	LPCSTR s;
 	LPSTR *plpPaths;
@@ -604,7 +610,8 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 	assert(pSoftwareListView);
 
 	/* Count the number of extra paths */
-	if (lpExtraPath && *lpExtraPath) {
+	if (lpExtraPath && *lpExtraPath)
+	{
 		s = lpExtraPath;
 		while(s) {
 			nExtraPaths++;
@@ -641,15 +648,19 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 	}
 
 	s = lpExtraPath;
-	for (i = 0; i < nExtraPaths; i++) {
+	for (i = 0; i < nExtraPaths; i++)
+	{
 		plpPaths[nPath++] = (LPSTR) s;
 		s = strchr(s, ';') + 1;
 	}
 
 	assert(nPath == nTotalPaths);
 
-	InternalFillSoftwareList(pSoftwareListView, nGame, nTotalPaths, (LPCSTR*)plpPaths);
+	InternalFillSoftwareList(pSoftwareListView, nGame, nTotalPaths, (LPCSTR*)plpPaths,
+		error_proc);
 }
+
+
 
 int MessLookupByFilename(const TCHAR *filename)
 {
@@ -802,6 +813,46 @@ LPCTSTR GetImageFullName(int nItem)
 
 
 
+static void TstringFromUtf8(TCHAR *buf, size_t bufsize, const char *utf8string)
+{
+	unicode_char_t c;
+	utf16_char_t wc[UTF16_CHAR_MAX];
+	int wclen, rc;
+
+	if (!utf8string)
+	{
+		buf[0] = 0;
+		return;
+	}
+
+	while(*utf8string)
+	{
+		rc = uchar_from_utf8(&c, utf8string, UTF8_CHAR_MAX);
+		if (rc < 0)
+		{
+			c = '?';
+			rc = 1;
+		}
+		utf8string += rc;
+
+		wclen = utf16_from_uchar(wc, sizeof(wc) / sizeof(wc[0]), c);
+
+		rc = WideCharToMultiByte(CP_ACP, 0, wc, wclen, buf, bufsize, NULL, NULL);
+		buf += rc;
+		bufsize -= rc;
+	}
+
+	/* terminate the string */
+	if (bufsize == 0)
+	{
+		buf--;
+		bufsize++;
+	}
+	*buf = 0;
+}
+
+
+
 /* ************************************************************************ *
  * SoftwareListView class code                                              *
  * ************************************************************************ */
@@ -811,8 +862,8 @@ LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nCol
 	LPCTSTR s = NULL;
 	ImageData *imgd;
 #if HAS_HASH
+	static TCHAR buf[128];
 	unsigned int hash_function = 0;
-	static char buf[128];
 #endif /* HAS_HASH */
 
 	imgd = mess_images_index[nRow];
@@ -824,19 +875,23 @@ LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nCol
 
 #if HAS_HASH
 	case MESS_COLUMN_GOODNAME:
-		s = imgd->hashinfo ? imgd->hashinfo->longname : NULL;
+		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->longname : NULL);
+		s = buf[0] ? buf : NULL;
 		break;
 
 	case MESS_COLUMN_MANUFACTURER:
-		s = imgd->hashinfo ? imgd->hashinfo->manufacturer : NULL;
+		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->manufacturer : NULL);
+		s = buf[0] ? buf : NULL;
 		break;
 
 	case MESS_COLUMN_YEAR:
-		s = imgd->hashinfo ? imgd->hashinfo->year : NULL;
+		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->year : NULL);
+		s = buf[0] ? buf : NULL;
 		break;
 
 	case MESS_COLUMN_PLAYABLE:
-		s = imgd->hashinfo ? imgd->hashinfo->playable : NULL;
+		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->playable : NULL);
+		s = buf[0] ? buf : NULL;
 		break;
 
 	case MESS_COLUMN_CRC:
