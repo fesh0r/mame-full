@@ -58,6 +58,10 @@ int basicdsk_floppy_init(int id)
 		/* this will be setup in the set_geometry function */
 		w->ddam_map = NULL;
 
+		/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
+		so we need to reflect this */
+		w->track = 0;
+
 		floppy_drive_set_disk_image_interface(id,&basicdsk_floppy_interface);
 
 		return  INIT_OK;
