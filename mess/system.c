@@ -41,7 +41,7 @@ extern const struct GameDriver TINY_NAME;
 
 const struct GameDriver * drivers[] =
 {
-  &TINY_NAME,
+  TINY_POINTER,
   0             /* end of array */
 };
 
@@ -79,7 +79,6 @@ const struct GameDriver *drivers[] =
 
 /* for pong style games look into docs/pong.txt */
 
-#ifndef MESS_EXCLUDE_ATARI
 	/* ATARI */
 	DRIVER( a2600 ) 	/* Atari 2600									  */
 	DRIVER( a5200 ) 	/* Atari 5200									  */
@@ -88,9 +87,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		  */
 	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions*/
 /*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
-#endif
 
-#ifndef MESS_EXCLUDE_NINTENDO
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System				  */
 	DRIVER( nespal )	/* Nintendo Entertainment System				  */
@@ -98,17 +95,13 @@ const struct GameDriver *drivers[] =
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld					  */
 	DRIVER (snes)		/* Nintendo Super Nintendo						  */
 /*	DRIVER (vboy)	*/	/* Nintendo Virtual Boy 						  */
-#endif
 
-#ifndef MESS_EXCLUDE_SEGA
 	/* SEGA */
 	DRIVER( gamegear )	/* Sega Game Gear Handheld						  */
 	DRIVER( sms )		/* Sega Sega Master System						  */
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
 TESTDRIVER( saturn )	/* Sega Saturn									  */
-#endif
 
-#ifndef MESS_EXCLUDE_MISC_CONSOLES
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								  */
 
@@ -130,10 +123,9 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
 	DRIVER( colecoa )	/* ColecoVision (Thick Characters)				  */
-#if 0					/* Please dont include these next 2 in a distribution, they are Hacks	*/
-	DRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
-	DRIVER( coleconb )	/* ColecoVision (No BIOS load)					  */
-#endif
+	/* Please dont include these next 2 in a distribution, they are Hacks */
+/*	DRIVER( colecofb )	   ColecoVision (Fast BIOS load)				  */
+/*	DRIVER( coleconb )	   ColecoVision (No BIOS load)					  */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
@@ -176,11 +168,9 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	/* bandai wonderswan handheld*/
 
 	/* 1979 mb microvision handheld*/
-#endif
 
 /****************COMPUTERS****************************************************/
     /* ACORN */
-#ifndef MESS_EXCLUDE_ACORN
     DRIVER( atom )      /* 1979 Acorn Atom                                */
     DRIVER( atomeb )    /* 1979 Acorn Atom                                */
     DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
@@ -193,9 +183,7 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
 TESTDRIVER( z88 )		/*												  */
-#endif
 
-#ifndef MESS_EXCLUDE_AMSTRAD
 	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
 	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
 	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
@@ -218,9 +206,7 @@ TESTDRIVER( z88 )		/*												  */
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
 	DRIVER( nc100a ) 	/* 19?? NC100									  */
 	DRIVER( nc200 )     /* 19?? NC200									  */
-#endif
 
-#ifndef MESS_EXCLUDE_APPLE
 	/* APPLE */
 /*
  * CPU Model			 Month				 Year
@@ -270,9 +256,7 @@ TESTDRIVER( z88 )		/*												  */
 	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
 /*	DRIVER( mac2 )*/	/* 1987 Apple Macintosh II						  */
-#endif
 
-#ifndef MESS_EXCLUDE_ATARI
 	/* ATARI */
 /*
 400/800 10kB OS roms
@@ -296,10 +280,8 @@ XL/XE 16kB OS roms
 	DRIVER( a800pal )	/* 1979 Atari 800 PAL							  */
 	DRIVER( a800xl )	/* 1983 Atari 800 XL							  */
 
-//!!TESTDRIVER( atarist )	/* Atari ST 									  */
-#endif
+//!!TESTDRIVER( atarist )	/* Atari ST 								  */
 
-#ifndef MESS_EXCLUDE_CBM
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
 TESTDRIVER( sym1 )		/* Synertek SYM1								  */
@@ -375,9 +357,7 @@ TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 	DRIVER( c65c )		/* C65 / C64DX (Prototype, NTSC, 910523)		  */
 	DRIVER( c65ger )	/* C65 / C64DX (Prototype, German PAL, 910429)	  */
 	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)		  */
-#endif
 
-#ifndef MESS_EXCLUDE_IBMPC
 	/* IBM PC & Clones */
 	DRIVER( ibmpc )		/* 1982	IBM PC									  */
 	DRIVER( ibmpca )	/* 1982 IBM PC									  */
@@ -414,9 +394,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 /*	DRIVER( ibm8550 )*/	/* 1987 IBM PS2 Model 50 (80826)					*/
 
 /*	DRIVER( ibm8580 )*/	/* 1987 IBM PS2 Model 80 (80386)					*/
-#endif
 
-#ifndef MESS_EXCLUDE_SINCLAIR
 	/* SINCLAIR */
 	DRIVER( zx80 )		/* Sinclair ZX-80								  */
 	DRIVER( zx81 )		/* Sinclair ZX-81								  */
@@ -449,9 +427,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( specpl3e )	/* 2000 ZX Spectrum +3e 						  */
 
 	/* sinclair pc200 professional series ibmxt compatible*/
-#endif
 
-#ifndef MESS_EXCLUDE_SHARP
 	/* SHARP */
 #if 0
 TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
@@ -473,9 +449,7 @@ TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 
 /*	DRIVER( x68000 )*/	/* X68000										  */
-#endif
 
-#ifndef MESS_EXCLUDE_TI
 	/* TEXAS INSTRUMENTS */
 TESTDRIVER( ti990_4 )	/* 197? TI 990/4								  */
 TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 								  */
@@ -493,9 +467,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti85v80 )	/*TI 85 rom ver. 8.0 */
 	DRIVER( ti85v90 )	/*TI 85 rom ver. 9.0 */
 	DRIVER( ti85v100 )	/*TI 85 rom ver. 10.0 */
-#endif
 
-#ifndef MESS_EXCLUDE_MISC_COMPUTERS
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
 
@@ -527,7 +499,7 @@ TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
 	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
 	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC				  */
 	DRIVER( sys80 ) 	/* EACA System 80								  */
-	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */	
+	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
@@ -642,11 +614,8 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	/* Booth (this is the builder, not a company) */
 	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
 
-#endif
-
 /****************Games*******************************************************/
 
-#ifndef MESS_EXCLUDE_MISC_GAMES
 	/* The Ideal Game Corp. */
 	/* distributed by ARXON in Germany/Austria */
 	/* PIC1655A (NMOS, not CMOS 16C55) dumping problems */
@@ -662,7 +631,6 @@ TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
 	/* tchibo */
 	/* single chip with ram, rom, io without label, how to dump? */
 /*	DRIVER( partner3)*/	/* Chess Partner 3 - Kasparov					  */
-#endif
 
 #endif /* NEOMAME */
 
