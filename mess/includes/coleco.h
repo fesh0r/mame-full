@@ -1,17 +1,18 @@
-/* machine/coleco.c */
-extern unsigned char *coleco_ram;
-extern unsigned char *coleco_cartridge_rom;
+#include "driver.h"
 
+/* machine/coleco.c */
 extern int coleco_id_rom (int id);
 extern int coleco_load_rom (int id);
-extern READ_HANDLER  ( coleco_ram_r );
-extern WRITE_HANDLER ( coleco_ram_w );
-extern READ_HANDLER  ( coleco_paddle_r );
-extern WRITE_HANDLER ( coleco_paddle_toggle_1_w );
-extern WRITE_HANDLER ( coleco_paddle_toggle_2_w );
-extern READ_HANDLER  ( coleco_VDP_r );
-extern WRITE_HANDLER ( coleco_VDP_w );
 
+extern READ_HANDLER  ( coleco_paddle_1_r );
+extern READ_HANDLER  ( coleco_paddle_2_r );
+extern WRITE_HANDLER ( coleco_paddle_toggle_off );
+extern WRITE_HANDLER ( coleco_paddle_toggle_on );
+
+extern READ_HANDLER  ( coleco_VDP_reg_r );
+extern WRITE_HANDLER ( coleco_VDP_reg_w );
+extern READ_HANDLER  ( coleco_VDP_ram_r );
+extern WRITE_HANDLER ( coleco_VDP_ram_w );
 
 /* vidhrdw/coleco.c */
 extern int coleco_vh_start(void);

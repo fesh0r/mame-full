@@ -5,59 +5,65 @@
   Driver file to handle emulation of the Colecovision.
 
   Marat Fayzullin (ColEm source)
+  Marcel de Kogel (AdamEm source)
   Mike Balfour
+  Ben Bruscella
+  Sean Young
 
   TODO:
-    - Verify correctness of SN76496 sound emulation
-    - Abstract TMS9928A a little better
-    - Finish TMS9928A emulation
-    - Clean up code
+    - Extra Controller Support
 
 ***************************************************************************/
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
 #include "vidhrdw/tms9928a.h"
 #include "includes/coleco.h"
 
 MEMORY_READ_START( coleco_readmem )
-    { 0x0000, 0x1fff, MRA_ROM },  /* COLECO.ROM */
-    { 0x7000, 0x73ff, coleco_ram_r },
-    { 0x7400, 0x77ff, coleco_ram_r },
-    { 0x7800, 0x7bff, coleco_ram_r },
-    { 0x7c00, 0x7fff, coleco_ram_r },
-    { 0x8000, 0xffff, MRA_ROM },  /* Cartridge */
+    { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM */
+    { 0x6C00, 0x6FFF, MRA_RAM },
+    { 0x7000, 0x73ff, MRA_RAM },
+    { 0x7400, 0x77ff, MRA_RAM },
+    { 0x7800, 0x7bff, MRA_RAM },
+    { 0x7c00, 0x7fff, MRA_RAM },
+    { 0x8000, 0xFFFF, MRA_ROM },  /* Cartridge */
 MEMORY_END
 
-
 MEMORY_WRITE_START( coleco_writemem )
-    { 0x0000, 0x1fff, MWA_ROM }, /* COLECO.ROM */
-    { 0x7000, 0x73ff, coleco_ram_w, &coleco_ram },
-    { 0x7400, 0x77ff, coleco_ram_w },
-    { 0x7800, 0x7bff, coleco_ram_w },
-    { 0x7c00, 0x7fff, coleco_ram_w },
-    { 0x8000, 0xffff, MWA_ROM, &coleco_cartridge_rom }, /* Cartridge */
+    { 0x0000, 0x1FFF, MWA_ROM }, /* COLECO.ROM */
+    { 0x6C00, 0x6FFF, MWA_RAM },
+    { 0x7000, 0x73ff, MWA_RAM },
+    { 0x7400, 0x77ff, MWA_RAM },
+    { 0x7800, 0x7bff, MWA_RAM },
+    { 0x7c00, 0x7fff, MWA_RAM },
+    { 0x8000, 0xFFFF, MWA_ROM }, /* Cartridge */
 MEMORY_END
 
 static PORT_READ_START (coleco_readport)
-    { 0xA0, 0xBF, coleco_VDP_r },
-    { 0xE0, 0xFF, coleco_paddle_r },
+    { 0xA0, 0xA0, coleco_VDP_ram_r },
+    { 0xBE, 0xBE, coleco_VDP_ram_r },
+    { 0xA1, 0xA1, coleco_VDP_reg_r },
+    { 0xBF, 0xBF, coleco_VDP_reg_r },
+    { 0xFC, 0xFC, coleco_paddle_1_r },
+	{ 0xE0, 0xE0, coleco_paddle_2_r },
+	{ 0xFF, 0xFF, coleco_paddle_2_r },
 PORT_END
 
 static PORT_WRITE_START (coleco_writeport)
-    { 0x80, 0x9F, coleco_paddle_toggle_1_w },
-    { 0xA0, 0xBF, coleco_VDP_w },
-    { 0xC0, 0xDF, coleco_paddle_toggle_2_w },
+    { 0x80, 0x80, coleco_paddle_toggle_off },
+    { 0xA0, 0xA0, coleco_VDP_ram_w },
+    { 0xBE, 0xBE, coleco_VDP_ram_w },
+    { 0xA1, 0xA1, coleco_VDP_reg_w },
+    { 0xBF, 0xBF, coleco_VDP_reg_w },
+    { 0xC0, 0xC0, coleco_paddle_toggle_on },
     { 0xE0, 0xFF, SN76496_0_w },
 PORT_END
 
-
-/* Steph 2000-10-27	I renamed the description of the 'keys' for both pads */
-
 INPUT_PORTS_START( coleco )
     PORT_START  /* IN0 */
+
     PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_TILT, "0 (pad 1)", KEYCODE_0, IP_JOY_DEFAULT)
     PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_TILT, "1 (pad 1)", KEYCODE_1, IP_JOY_DEFAULT)
     PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_TILT, "2 (pad 1)", KEYCODE_2, IP_JOY_DEFAULT)
@@ -66,7 +72,6 @@ INPUT_PORTS_START( coleco )
     PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_TILT, "5 (pad 1)", KEYCODE_5, IP_JOY_DEFAULT)
     PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_TILT, "6 (pad 1)", KEYCODE_6, IP_JOY_DEFAULT)
     PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_TILT, "7 (pad 1)", KEYCODE_7, IP_JOY_DEFAULT)
-
 
     PORT_START  /* IN1 */
     PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_TILT, "8 (pad 1)", KEYCODE_8, IP_JOY_DEFAULT)
@@ -97,8 +102,8 @@ INPUT_PORTS_START( coleco )
     PORT_START  /* IN4 */
     PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_TILT, "8 (pad 2)", KEYCODE_8_PAD, IP_JOY_DEFAULT )
     PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_TILT, "9 (pad 2)", KEYCODE_9_PAD, IP_JOY_DEFAULT )
-    PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_TILT, "# (pad 2)", KEYCODE_PLUS_PAD, IP_JOY_DEFAULT )
-    PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_TILT, ". (pad 2)", KEYCODE_MINUS_PAD, IP_JOY_DEFAULT )
+    PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_TILT, "# (pad 2)", KEYCODE_MINUS_PAD, IP_JOY_DEFAULT )
+    PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_TILT, ". (pad 2)", KEYCODE_PLUS_PAD, IP_JOY_DEFAULT )
     PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
     PORT_BIT ( 0xB0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -112,14 +117,9 @@ INPUT_PORTS_START( coleco )
 
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-    { -1 } /* end of array */
-};
-
 static struct SN76496interface sn76496_interface =
 {
-    1,  /* 1 chip */
+    1,  		/* 1 chip 		*/
     {3579545},  /* 3.579545 MHz */
     { 100 }
 };
@@ -127,7 +127,6 @@ static struct SN76496interface sn76496_interface =
 static int coleco_interrupt(void)
 {
     TMS9928A_interrupt();
-
     return ignore_interrupt ();
 }
 
@@ -145,12 +144,12 @@ static struct MachineDriver machine_driver_coleco =
     60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
     1,
     0, /* init_machine */
-    0, /* stop_machine */
+	0, /* stop_machine */
 
-    /* video hardware */
     32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    gfxdecodeinfo,
-    TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
+    0, /* gfxdecodeinfo */
+    TMS9928A_PALETTE_SIZE,
+    TMS9928A_COLORTABLE_SIZE,
     tms9928A_init_palette,
 
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,

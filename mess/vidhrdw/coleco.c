@@ -12,13 +12,11 @@
 #include "vidhrdw/tms9928a.h"
 #include "includes/coleco.h"
 
+
 /***************************************************************************
-
-  Start the video hardware emulation.
-
+  Interrupts are managed by the TMS9928 core.
 ***************************************************************************/
-
-static void coleco_vdp_interrupt (int state) 
+static void coleco_vdp_interrupt (int state)
 {
 	static int last_state = 0;
 
@@ -27,18 +25,19 @@ static void coleco_vdp_interrupt (int state)
 	last_state = state;
 }
 
+/***************************************************************************
+  Start the video hardware emulation.
+***************************************************************************/
 int coleco_vh_start(void)
 {
-    if (TMS9928A_start(TMS99x8A, 0x4000)) return 1;
-	TMS9928A_int_callback(coleco_vdp_interrupt);
+	if (TMS9928A_start(TMS99x8A, 0x4000)) return 1;
 
+	TMS9928A_int_callback(coleco_vdp_interrupt);
 	return 0;
 }
 
 /***************************************************************************
-
   Stop the video hardware emulation.
-
 ***************************************************************************/
 void coleco_vh_stop(void)
 {
@@ -48,9 +47,7 @@ void coleco_vh_stop(void)
 
 
 /***************************************************************************
-
   Refresh the video screen
-
 ***************************************************************************/
 
 /* This routine is called at the start of vblank to refresh the screen */
