@@ -84,7 +84,7 @@ static int mode_disable(struct rc_option *option, const char *s, int priority)
    return 0;
 }
 
-void mode_check_params(double _display_resolution_aspect_ratio)
+void mode_set_aspect_ratio(double _display_resolution_aspect_ratio)
 {
   display_resolution_aspect_ratio = _display_resolution_aspect_ratio;
 

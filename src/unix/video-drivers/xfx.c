@@ -80,5 +80,5 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-   UpdateFXDisplay(bitmap, dirty_area, vis_area, palette, flags);
+   UpdateFXDisplay(bitmap, vis_area, dirty_area, palette, flags);
 }

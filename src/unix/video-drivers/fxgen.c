@@ -165,7 +165,7 @@ int InitTextures(void)
 
   texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
 
-  if(sysdep_display_params.vec_bounds)
+  if(sysdep_display_params.vec_src_bounds)
   {
     grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
                                        GR_COMBINE_FACTOR_LOCAL,
@@ -431,9 +431,6 @@ int InitParams(void)
     window_height = 480;
   }
 
-  sysdep_display_check_params();
-  mode_check_params((double)window_width/window_height);
-
   return 0;
 }
 
@@ -442,6 +439,8 @@ int InitVScreen(void)
 {
   grGlideGetVersion(version);
   fprintf(stderr, "info: using Glide version %s\n", version);
+
+  mode_set_aspect_ratio((double)window_width/window_height);
   
   grSstSelect(0);
   if(!(context = grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
@@ -460,10 +459,26 @@ int InitVScreen(void)
   mode_clip_aspect(window_width, window_height, &vscrnwidth, &vscrnheight);
   vscrntlx=(window_width -vscrnwidth )/2;
   vscrntly=(window_height-vscrnheight)/2;
-  vecvscrnwidth  = vscrnwidth;
-  vecvscrnheight = vscrnheight;
-  vecvscrntlx    = vscrntlx;
-  vecvscrntly    = vscrntly;
+  if(sysdep_display_params.vec_dest_bounds)
+  {
+    vecvscrnwidth  = ((sysdep_display_params.vec_dest_bounds->max_x+1)-sysdep_display_params.vec_dest_bounds->min_x) *
+      ((double)vscrnwidth/sysdep_display_params.width);
+    vecvscrnheight = ((sysdep_display_params.vec_dest_bounds->max_y+1)-sysdep_display_params.vec_dest_bounds->min_y) *
+      ((double)vscrnheight/sysdep_display_params.height);
+    vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
+      * sysdep_display_params.vec_dest_bounds->min_x;
+    vecvscrntly = vscrntly + ((double)vscrnheight/sysdep_display_params.height)
+      * sysdep_display_params.vec_dest_bounds->min_y;
+    fprintf(stderr, "vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
+      vecvscrnwidth, vecvscrnheight);
+  }
+  else
+  {
+    vecvscrnwidth  = vscrnwidth;
+    vecvscrnheight = vscrnheight;
+    vecvscrntlx    = vscrntlx;
+    vecvscrntly    = vscrntly;
+  }
   
   /* fill the sysdep_display_properties struct */
   memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
@@ -489,13 +504,11 @@ int InitVScreen(void)
 }
 
 /* Close down the virtual screen */
-
 void CloseVScreen(void)
 {
   int x,y;
 
   /* Free Texture stuff */
-
   if(texgrid) {
 	for(y=0;y<texnumy;y++) {
 	  for(x=0;x<texnumx;x++) {
@@ -515,11 +528,10 @@ void CloseVScreen(void)
   }
 }
 
-
 /* Update the texture with the contents of the game screen */
 /* FIXME: do partial updates */
 void UpdateTexture(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette)
 {
 	int y,rline,texline,xsquare,ysquare,ofs,width, i;
@@ -529,7 +541,6 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 	else width=texsize;
 
 	switch (sysdep_display_params.depth) {
-
 
 	case 15:
 		for(y=vis_area->min_y;y<=vis_area->max_y;y++) {
@@ -554,7 +565,6 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 		break;
 
 	case 16:
-		
 		for(y=vis_area->min_y;y<=vis_area->max_y;y++) {
 			rline=y-vis_area->min_y;
 			ysquare=rline/texsize;
@@ -631,33 +641,12 @@ void DrawFlatBitmap(void)
 }
 
 void UpdateFXDisplay(struct mame_bitmap *bitmap,
-	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-  if(!sysdep_display_params.vec_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
+  if(!sysdep_display_params.vec_src_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
     bitmap_dirty=2;
 
-  /* mame artwork is the only case where partial updates are used,
-     so we want to constrain vector drawing to the dirty area which
-     equals the game area */
-  if(memcmp(dirty_area, vis_area, sizeof(struct rectangle)))
-  {
-    vecvscrnwidth  = ((dirty_area->max_x+1)-dirty_area->min_x) *
-      ((double)vscrnwidth/sysdep_display_params.width);
-    vecvscrnheight = ((dirty_area->max_y+1)-dirty_area->min_y) *
-      ((double)vscrnheight/sysdep_display_params.height);
-    vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
-      * (dirty_area->min_x - vis_area->min_x);
-    vecvscrntly = vscrntly + ((double)vscrnheight/sysdep_display_params.height)
-      * (dirty_area->min_y - vis_area->min_y);
-/*  printf("vis: %dx%d, %dx%d\n", vis_area->min_x, vis_area->min_y,
-      vis_area->max_x, vis_area->max_y);
-    printf("dirty: %dx%d, %dx%d\n", dirty_area->min_x, dirty_area->min_y,
-      dirty_area->max_x, dirty_area->max_y);
-    printf("vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
-      vecvscrnwidth, vecvscrnwidht); */
-  }
-  
   if(flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
   {
     bilinear=1-bilinear;
@@ -673,12 +662,12 @@ void UpdateFXDisplay(struct mame_bitmap *bitmap,
   }
   
   if(bitmap_dirty)
-    UpdateTexture(bitmap, dirty_area, vis_area, palette);
+  {
+    UpdateTexture(bitmap, vis_area, dirty_area, palette);
+    bitmap_dirty--;
+  }
 
   DrawFlatBitmap();
   grBufferSwap(1);
   grBufferClear(0,0,0);
-
-  if(bitmap_dirty)
-    bitmap_dirty--;
 }

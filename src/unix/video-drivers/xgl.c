@@ -28,10 +28,6 @@
 #include "glmame.h"
 #include "x11.h"
 
-/* from xinput.c */
-extern int root_window_id;
-
-
 int bilinear=1; /* Do binlinear filtering? */
 int antialias=0;
 int translucency = 0;
@@ -135,8 +131,7 @@ int xgl_open_display(void)
   XVisualInfo *myvisual;
   int myscreen=DefaultScreen(display);
   
-  sysdep_display_check_params();
-  mode_check_params((double)screen->width/screen->height);
+  mode_set_aspect_ratio((double)screen->width/screen->height);
 
   fprintf(stderr, xgl_version_str);
     

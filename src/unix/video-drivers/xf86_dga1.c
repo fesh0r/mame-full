@@ -210,8 +210,6 @@ int xf86_dga1_open_display(void)
 	xf86_dga_fix_viewport  = 0;
 	xf86_dga_first_click   = 1;
 	
-	sysdep_display_check_params();
-
 	window  = RootWindow(display,xf86ctx.screen);
 	/* detect dest_bpp */
 	pixmaps = XListPixmapFormats(display, &count);
@@ -252,7 +250,7 @@ int xf86_dga1_open_display(void)
 		fprintf(stderr,"no suitable mode found\n");
 		return 1;
 	}
-	mode_check_params((double)bestmode->hdisplay/bestmode->vdisplay);
+	mode_set_aspect_ratio((double)bestmode->hdisplay/bestmode->vdisplay);
 
 	/* HACK HACK HACK, keys get stuck when they are pressed when
 	   XDGASetMode is called, so wait for all keys to be released */

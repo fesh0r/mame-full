@@ -12,48 +12,62 @@
 #define __SVGAFX_C
 
 #include <vga.h>
+#include "fxgen.h"
 #include "fxcompat.h"
-#include "xmame.h"
 #include "svgainput.h"
+#include "sysdep/sysdep_display_priv.h"
 
-int  InitVScreen(void);
-void CloseVScreen(void);
-void VScreenCatchSignals(void);
-void VScreenRestoreSignals(void);
-int  InitGlide(void);
-void ExitGlide(void);
+const int custom_windowsize=1; /* we always specify a window size */
+unsigned int window_width;
+unsigned int window_height;
 
-extern struct rc_option fx_opts[];
+static int svgafx_set_resolution(struct rc_option *option, const char *arg,
+   int priority);
 
-struct rc_option display_opts[] = {
+struct rc_option sysdep_display_opts[] =
+{
    /* name, shortname, type, dest, deflt, min, max, func, help */
-   { NULL, 		NULL,			rc_link,	fx_opts,
+   { "FX (Glide) Related", NULL,		rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
+   { "resolution",	"res",			rc_use_function, NULL,
+     "640x480",		0,			0,		svgafx_set_resolution,
+     "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
 };
 
-int sysdep_init(void)
+static int svgafx_set_resolution(struct rc_option *option, const char *arg,
+   int priority)
+{
+   if (sscanf(arg, "%ux%u", &window_width, &window_height) != 2)
+      return 1;
+   if (InitParams())
+      return 1;
+   option->priority = priority;
+   return 0;
+}
+
+int sysdep_display_init(void)
 {
    fprintf(stderr,
       "info: using FXmame v0.5 driver for xmame, written by Mike Oliphant\n");
    
    /* do this before calling vga_init, since this might need root rights */
-   if (InitGlide()!=OSD_OK)
-      return OSD_NOT_OK;
+   if (InitGlide()!=0)
+      return 1;
    
    if (vga_init())
-      return OSD_NOT_OK;
+      return 1;
    
    if (svga_input_init())
-      return OSD_NOT_OK;
+      return 1;
    
-   return OSD_OK;
+   return 0;
 }
 
-void sysdep_close(void)
+void sysdep_display_exit(void)
 {
    svga_input_exit();
    ExitGlide();
@@ -72,12 +86,14 @@ static void acquire_function(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_create_display(int depth)
+int sysdep_display_open(const struct sysdep_display_open_params *params)
 {
+  sysdep_display_set_params(params);
+
   /* do this first since it seems todo some stuff which messes up svgalib
      when called after vga_setmode */
-  if (InitVScreen() != OSD_OK)
-     return OSD_NOT_OK;
+  if (InitVScreen() != 0)
+     return 1;
    
   /* with newer svgalib's the console switch signals are only active if a
      graphics mode is set, so we set one which each card should support */
@@ -85,13 +101,13 @@ int sysdep_create_display(int depth)
   
   /* init input */
   if(svga_input_open(release_function, acquire_function))
-     return OSD_NOT_OK;
+     return 1;
 
   /* call this one last since it needs to catch some signals
      which are also catched by svgalib */
   VScreenCatchSignals();
   
-  return OSD_OK;
+  return 0;
 }
 
 
@@ -110,4 +126,12 @@ void sysdep_display_close(void)
    /* do this last since it seems todo some stuff which messes up svgalib
       when done before vga_setmode(TEXT) */
    CloseVScreen();
+}
+
+int sysdep_display_update(struct mame_bitmap *bitmap,
+  struct rectangle *vis_area, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned int flags)
+{
+   UpdateFXDisplay(bitmap, vis_area, dirty_area, palette, flags);
+   return 0;
 }

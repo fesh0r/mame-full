@@ -310,10 +310,9 @@ int x11_window_open_display(void)
 #ifdef USE_MITSHM
 	mit_shm_attached = 0;
 #endif
-        /* check the params, do this here since
-           this can change width and height settings */
-        sysdep_display_check_params();
-        mode_check_params((double)screen->width/screen->height);
+        /* set the aspect_ratio, do this here since
+           this can change yarbsize */
+        mode_set_aspect_ratio((double)screen->width/screen->height);
 
 	orig_widthscale  = sysdep_display_params.widthscale;
 	orig_yarbsize    = sysdep_display_params.yarbsize;

@@ -4,7 +4,7 @@
 #include "sysdep/rc.h"
 
 /* mode handling functions */
-void mode_check_params(double display_resolution_aspect_ratio);
+void mode_set_aspect_ratio(double display_resolution_aspect_ratio);
 int mode_match(int width, int height, int depth, int dga);
 void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height);
 void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_height);

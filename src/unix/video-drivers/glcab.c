@@ -3,35 +3,30 @@
 #include "xmame.h"
 #include "glmame.h"
 
-GLubyte *read_JPEG_file(char *);
-
 GLuint cablist;
-int numtex;
 GLuint *cabtex=NULL;
 GLubyte **cabimg=NULL;
+struct CameraPan *cpan=NULL;
+int numpans;
 
 #ifndef NDEBUG
 static int wirecabinet = 1;
 #else
 static int wirecabinet = 0;
 #endif
-
-struct CameraPan *cpan=NULL;
-int numpans;
-int pannum;
-int inpan=0;
-
+static int numtex;
+static int pannum;
+static int inpan=0;
 static int inscreen=0;
 static int scrvert;
 static int inlist=0;
 static int ingeom=0;
-
 static int inbegin=0;
 
 
 /* Skip until we hit whitespace */
 
-char *SkipToSpace(char *buf)
+static char *SkipToSpace(char *buf)
 {
   while(*buf&&!(isspace(*buf)||*buf==',')) buf++;
 
@@ -40,7 +35,7 @@ char *SkipToSpace(char *buf)
 
 /* Skip whitespace and commas */
 
-char *SkipSpace(char *buf)
+static char *SkipSpace(char *buf)
 {
   while(*buf&&(isspace(*buf)||*buf==',')) buf++;
 
@@ -49,7 +44,7 @@ char *SkipSpace(char *buf)
 
 /* Parse a string for a 4-component vector */
 
-char *ParseVec4(char *buf,GLdouble *x,GLdouble *y,GLdouble *z,GLdouble *a)
+static char *ParseVec4(char *buf,GLdouble *x,GLdouble *y,GLdouble *z,GLdouble *a)
 {
   *x=atof(buf);
 
@@ -79,7 +74,7 @@ char *ParseVec4(char *buf,GLdouble *x,GLdouble *y,GLdouble *z,GLdouble *a)
 
 /* Parse a string for a 3-component vector */
 
-char *ParseVec3(char *buf,GLdouble *x,GLdouble *y,GLdouble *z)
+static char *ParseVec3(char *buf,GLdouble *x,GLdouble *y,GLdouble *z)
 {
   *x=atof(buf);
 
@@ -103,7 +98,7 @@ char *ParseVec3(char *buf,GLdouble *x,GLdouble *y,GLdouble *z)
 
 /* Parse a string for a 2-component vector */
 
-char  *ParseVec2(char *buf,GLdouble *x,GLdouble *y)
+static char  *ParseVec2(char *buf,GLdouble *x,GLdouble *y)
 {
   *x=atof(buf);
 
@@ -119,7 +114,7 @@ char  *ParseVec2(char *buf,GLdouble *x,GLdouble *y)
   return buf;
 }
 
-char  *ParseArg(char *buf,GLdouble *a)
+static char  *ParseArg(char *buf,GLdouble *a)
 {
   *a=atof(buf);
 
@@ -131,7 +126,7 @@ char  *ParseArg(char *buf,GLdouble *a)
 
 /* Null-terminate a string after the text is done */
 
-void MakeString(char *buf)
+static void MakeString(char *buf)
 {
   while(*buf&&!isspace(*buf)) buf++;
 
@@ -140,7 +135,7 @@ void MakeString(char *buf)
 
 /* Parse a camera pan */
 
-void ParsePan(char *buf,PanType type)
+static void ParsePan(char *buf,PanType type)
 {
   if(pannum==numpans) {
 	printf("GLError (cab): too many camera pans specified\n");
@@ -159,11 +154,13 @@ void ParsePan(char *buf,PanType type)
 
 /* Parse a line of the .cab file */
 
-void ParseLine(char *buf)
+static void ParseLine(char *buf)
 {
   GLdouble x,y,z,a;
   int texnum;
   int xdim,ydim;
+  char filename[256];
+
 
   buf=SkipSpace(buf);
 
@@ -232,9 +229,10 @@ void ParseLine(char *buf)
 			  disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
 		  }
 		  
-		  cabimg[texnum]=read_JPEG_file(buf);
+		  snprintf(filename, 256, "%s/cab/%s/%s",XMAMEROOT,cabname, buf);
+		  cabimg[texnum]=read_JPEG_file(filename);
 		  if(!cabimg[texnum])
-			printf("GLError (cab): Unable to read %s\n",buf);
+			fprintf(stderr, "GLError (cab): Unable to read %s\n", filename);
 		  
 		  if(!wirecabinet)
 		  	disp__glTexImage2D(GL_TEXTURE_2D,0,3,xdim,ydim,0,
@@ -393,7 +391,7 @@ void ParseLine(char *buf)
   }
 }
 
-void InitCabGlobals()
+void InitCabGlobals(void)
 {
   int i;
 

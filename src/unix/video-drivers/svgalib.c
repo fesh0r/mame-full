@@ -8,51 +8,35 @@
 #include <math.h>
 #include <vga.h>
 #include <vgagl.h>
-#include "xmame.h"
 #include "svgainput.h"
-#include "effect.h"
-#include "sysdep/sysdep_display.h"
+#include "sysdep/sysdep_display_priv.h"
 
 static int startx, starty;
 static int scaled_visual_width, scaled_visual_height;
-static int update_function;
+static int update_type;
+static blit_func_p blit_func;
 static unsigned char *video_mem;
 static unsigned char *doublebuffer_buffer = NULL;
 static int use_linear = 1;
 static vga_modeinfo video_modeinfo;
-static void svgalib_update_linear_16bpp(struct mame_bitmap *bitmap);
-static void svgalib_update_gl_16bpp(struct mame_bitmap *bitmap);
-static void svgalib_update_gl_doublebuf_16bpp(struct mame_bitmap *bitmap);
 
 struct rc_option display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Svgalib Related", NULL, rc_seperator, NULL, NULL, 0,	0, NULL, NULL },
 	{ "linear", NULL, rc_bool, &use_linear, "1", 0, 0, NULL, "Enable/disable use of linear framebuffer (fast)" },
+	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
-struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
-
-typedef void (*update_func)(struct mame_bitmap *bitmap);
-
-static update_func update_functions[3] = {
-	svgalib_update_linear_16bpp,
-	svgalib_update_gl_16bpp,
-	svgalib_update_gl_doublebuf_16bpp
-};
-
-int sysdep_init(void)
+int sysdep_display_init(void)
 {
 	vga_init();
 
-	if(svga_input_init())
-		return OSD_NOT_OK;
-
-	return OSD_OK;
+	return svga_input_init();
 }
 
-void sysdep_close(void)
+void sysdep_display_exit(void)
 {
 	svga_input_exit();
 
@@ -63,49 +47,57 @@ void sysdep_close(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_create_display(int depth)
+int sysdep_display_open(const struct sysdep_display_open_params *params)
 {
 	int i;
 	int video_mode = -1;
 	int score, best_score = 0;
 	vga_modeinfo *my_modeinfo;
 
+	sysdep_display_set_params(params);
+
 	for (i=1; (my_modeinfo=vga_getmodeinfo(i)); i++)
 	{
-		if(my_modeinfo->colors != 32768 &&
-		   my_modeinfo->colors != 65536)
-			continue;
 		if (!vga_hasmode(i))
 			continue;
-		/* we only want modes which are a multiple of 8 width, due to alignment
-		   issues */
-		if (my_modeinfo->width & 7)
-			continue;
-		if (mode_disabled(my_modeinfo->width, my_modeinfo->height, depth))
-			continue;
-		score = mode_match(my_modeinfo->width, my_modeinfo->height);
+			
+		switch(my_modeinfo->colors)
+		{
+		  case 32768:
+		    i = 15;
+		    break;
+		  case 65536:
+		    i = 16;
+		    break;
+		  case 16777216:
+		    i = 32;
+		    break;
+		  default:
+		    continue;
+		}
+		score = mode_match(my_modeinfo->width, my_modeinfo->height, i);
 		if (score && score >= best_score)
 		{
 			best_score = score;
 			video_mode = i;
 			video_modeinfo = *my_modeinfo;
 		}
-		fprintf(stderr_file, "Svgalib: Info: Found videomode %dx%dx%d\n",
+		fprintf(stderr, "Svgalib: Info: Found videomode %dx%dx%d\n",
 				my_modeinfo->width, my_modeinfo->height, my_modeinfo->colors);
 	}
 
 	if (best_score == 0)
 	{
-		fprintf(stderr_file, "Svgalib: Couldn't find a suitable mode\n");
-		return OSD_NOT_OK;
+		fprintf(stderr, "Svgalib: Couldn't find a suitable mode\n");
+		return 1;
 	}
 
-	fprintf(stderr_file, "Svgalib: Info: Choose videomode %dx%dx%d\n",
+	fprintf(stderr, "Svgalib: Info: Choose videomode %dx%dx%d\n",
 			video_modeinfo.width, video_modeinfo.height, video_modeinfo.colors);
 
-	mode_fix_aspect((double)(video_modeinfo.width)/video_modeinfo.height);
-	scaled_visual_width  = visual_width  * widthscale;
-	scaled_visual_height = yarbsize ? yarbsize : visual_height * heightscale;
+	mode_set_aspect_ratio((double)(video_modeinfo.width)/video_modeinfo.height);
+	scaled_visual_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
+	scaled_visual_height = sysdep_display_params.yarbsize;
 	startx = ((video_modeinfo.width  - scaled_visual_width ) / 2) & ~7;
 	starty =  (video_modeinfo.height - scaled_visual_height) / 2;
 
@@ -123,57 +115,66 @@ int sysdep_create_display(int depth)
 		video_mem += startx * video_modeinfo.bytesperpixel;
 		video_mem += starty * video_modeinfo.width *
 			video_modeinfo.bytesperpixel;
-		update_function=0;
-		fprintf(stderr_file, "Svgalib: Info: Using a linear framebuffer to speed up\n");
+		update_type=0;
+		fprintf(stderr, "Svgalib: Info: Using a linear framebuffer to speed up\n");
 	}
 	else /* use gl funcs todo the updating */
 	{
 		gl_setcontextvga(video_mode);
 
-		/* we might need the doublebuffer_buffer for 1x1 in 16bpp, since it
-		   could be paletised */
-		if((widthscale > 1) || (heightscale > 1) || yarbsize ||
-		   effect || (video_real_depth==16))
+			scaled_visual_height*video_modeinfo.bytesperpixel);
+		if (!doublebuffer_buffer)
 		{
-			update_function=2;
-			doublebuffer_buffer = malloc(scaled_visual_width*scaled_visual_height*
-					video_modeinfo.bytesperpixel);
-			if (!doublebuffer_buffer)
-			{
-				fprintf(stderr_file, "Svgalib: Error: Couldn't allocate doublebuffer buffer\n");
-				return OSD_NOT_OK;
-			}
+			fprintf(stderr, "Svgalib: Error: Couldn't allocate doublebuffer buffer\n");
+			return 1;
 		}
+		
+		/* do we need to blit to a doublebuffer buffer when using
+		   effects or scaling */
+		if(effect || (sysdep_display_params.widthscale > 1) ||
+		   (sysdep_display_params.yarbsize!=sysdep_display_params.height))
+			update_type=2;
 		else
-			update_function=1;
+			update_type=1;
 	}
 
-	fprintf(stderr_file, "Using a mode with a resolution of %d x %d, starting at %d x %d\n",
+	fprintf(stderr, "Using a mode with a resolution of %d x %d, starting at %d x %d\n",
 			video_modeinfo.width, video_modeinfo.height, startx, starty);
 
-	/* fill the display_palette_info struct */
-	memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-	if (video_modeinfo.colors == 32768)
+	/* fill the sysdep_display_properties struct */
+	memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
+	switch(video_modeinfo.colors)
 	{
-		display_palette_info.red_mask   = 0x001F;
-		display_palette_info.green_mask = 0x03E0;
-		display_palette_info.blue_mask  = 0xEC00;
+	  case 32768:
+	    sysdep_display_properties.palette_info.red_mask   = 0x001F;
+            sysdep_display_properties.palette_info.green_mask = 0x03E0;
+            sysdep_display_properties.palette_info.blue_mask  = 0xEC00;
+            break;
+          case 65536:
+            sysdep_display_properties.palette_info.red_mask   = 0xF800;
+            sysdep_display_properties.palette_info.green_mask = 0x07E0;
+            sysdep_display_properties.palette_info.blue_mask  = 0x001F;
+            break;
+          case 16777216:
+            sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
+            sysdep_display_properties.palette_info.green_mask = 0x00FF00;
+            sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
+            break;
 	}
-	else
+
+	/* get a blit func */
+	blit_func = sysdep_display_get_blitfunc_doublebuffer(video_modeinfo.bytesperpixel*8);
+	if (blit_func == NULL)
 	{
-		display_palette_info.red_mask   = 0xF800;
-		display_palette_info.green_mask = 0x07E0;
-		display_palette_info.blue_mask  = 0x001F;
+		fprintf(stderr, "unsupported bpp: %dbpp\n", video_modeinfo.bytesperpixel*8);
+		return 1;
 	}
 
 	/* init input */
 	if(svga_input_open(NULL, NULL))
-		return OSD_NOT_OK;
+		return 1;
 
-	if (effect_open())
-		return OSD_NOT_OK;
-
-	return OSD_OK;
+	return effect_open();
 }
 
 /* shut up the display */
@@ -196,9 +197,19 @@ void sysdep_display_close(void)
 }
 
 /* Update the display. */
-void sysdep_update_display(struct mame_bitmap *bitmap)
+int sysdep_display_update(struct mame_bitmap *bitmap,
+  struct rectangle *vis_area, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-	update_functions[update_function](bitmap);
+  switch(video_update_type)
+  {
+    case 0: /* linear */
+      break;
+    case 1: /* gl no scaling/effect/palette lookup/depthconversion */
+      break;
+    case 2: /* gl scaling/effect/palette lookup/depthconversion */
+      break;
+  }
 }
 
 static void svgalib_update_linear_16bpp(struct mame_bitmap *bitmap)

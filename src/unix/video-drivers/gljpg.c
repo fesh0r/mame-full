@@ -7,16 +7,12 @@
 
 *****************************************************************/
 
-#ifdef xgl
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "jpeglib.h"
+#include <jpeglib.h>
 #include <setjmp.h>
 #include <GL/glu.h>
-
-extern char *cabname;
 
 struct my_error_mgr {
   struct jpeg_error_mgr pub;    /* "public" fields */
@@ -26,7 +22,7 @@ struct my_error_mgr {
 
 typedef struct my_error_mgr * my_error_ptr;
 
-METHODDEF(void)
+METHODDEF(static void)
 my_error_exit (j_common_ptr cinfo)
 {
   my_error_ptr myerr = (my_error_ptr) cinfo->err;
@@ -45,12 +41,8 @@ GLubyte *read_JPEG_file (char * fname)
   int row_stride;		/* physical row width in output buffer */
   long cont;
   JSAMPLE *image_buffer;
-  char filename[256];
-
-  sprintf(filename,"%s/cab/%s/%s",XMAMEROOT,cabname,fname);
-
-  if ((infile = fopen(filename, "rb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
+  if ((infile = fopen(fname, "rb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", fname);
     return NULL;
   }
 
@@ -74,7 +66,7 @@ GLubyte *read_JPEG_file (char * fname)
   buffer = (*cinfo.mem->alloc_sarray)
 		((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
 
- image_buffer=(JSAMPLE *) malloc(cinfo.image_width*cinfo.image_height*3);
+  image_buffer=(JSAMPLE *) malloc(cinfo.image_width*cinfo.image_height*3);
 
   cont=(long)cinfo.output_height-1;
   while (cinfo.output_scanline < cinfo.output_height) {
@@ -91,6 +83,3 @@ GLubyte *read_JPEG_file (char * fname)
 
   return image_buffer;
 }
-
-
-#endif /* ifdef xgl */

@@ -8,10 +8,7 @@
 #include <linux/kd.h>
 #include <sys/ioctl.h>
 #include <sys/vt.h>
-#include "svgainput.h"
-#include "xmame.h"
-#include "devices.h"
-#include "keycodes.h"
+#include "sysdep/sysdep_display_priv.h"
 
 static int console_fd       = -1;
 static int mouse_fd         = -1;
@@ -24,6 +21,7 @@ static struct sigaction acquire_sa;
 static struct sigaction oldacquire_sa;
 static void (*release_function)(void) = NULL;
 static void (*acquire_function)(void) = NULL;
+static int keyboard_dirty = 0;
 
 static const char scancode_to_unicode[128][2] = {
 	{ 0,   0   }, /* 0 */
@@ -171,7 +169,7 @@ void acquire_handler(int n)
 	sigaction(release_signal, &release_sa, NULL);
 	sigaction(acquire_signal, &acquire_sa, NULL);
 	keyboard_clearstate();
-	xmame_keyboard_clear();
+	keyboard_dirty = 1;
 	if (console_fd >= 0)
 		ioctl(console_fd, KDSETLED, leds);
 	if (acquire_function)
@@ -182,14 +180,14 @@ void keyboard_handler(int scancode, int press)
 {
 	static int shift = 0;
 	int shift_mask = 0;
-	struct xmame_keyboard_event event;
+	struct sysdep_display_keyboard_event event;
 
 	switch (scancode)
 	{
-		case KEY_LSHIFT:
+		case SCANCODE_LEFTSHIFT:
 			shift_mask = 0x01;
 			break;
-		case KEY_RSHIFT:
+		case SCANCODE_RIGHTSHIFT:
 			shift_mask = 0x02;
 			break;
 	}
@@ -202,7 +200,7 @@ void keyboard_handler(int scancode, int press)
 	event.press = press;   
 	event.scancode = scancode;
 	event.unicode = scancode_to_unicode[scancode][shift? 1:0];
-	xmame_keyboard_register_event(&event);
+	sysdep_display_params.keyboard_handler(&event);
 }
 
 int svga_input_init(void)
@@ -261,7 +259,7 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 	/* init the keyboard */
 	if ((console_fd = keyboard_init_return_fd()) < 0)
 	{
-		fprintf(stderr_file, "Svgalib: Error: Couldn't open keyboard\n");
+		fprintf(stderr, "Svgalib: Error: Couldn't open keyboard\n");
 		return -1;
 	}
 	keyboard_seteventhandler(keyboard_handler);
@@ -292,7 +290,7 @@ void svga_input_close(void)
 	}
 }
 
-void sysdep_mouse_poll (void)
+void sysdep_display_update_mouse (void)
 {
 	int i, mouse_buttons;
 
@@ -301,28 +299,28 @@ void sysdep_mouse_poll (void)
 
 	mouse_update();
 
-	mouse_getposition_6d(&mouse_data[0].deltas[0],
-			&mouse_data[0].deltas[1],
-			&mouse_data[0].deltas[2],
-			&mouse_data[0].deltas[3],
-			&mouse_data[0].deltas[4],
-			&mouse_data[0].deltas[5]);
+	mouse_getposition_6d(&sysdep_display_mouse_data[0].deltas[0],
+			&sysdep_display_mouse_data[0].deltas[1],
+			&sysdep_display_mouse_data[0].deltas[2],
+			&sysdep_display_mouse_data[0].deltas[3],
+			&sysdep_display_mouse_data[0].deltas[4],
+			&sysdep_display_mouse_data[0].deltas[5]);
 
 	/* scale down the delta's to some more sane values */
 	for(i=0; i<6; i++)
-		mouse_data[0].deltas[i] /= 20;
+		sysdep_display_mouse_data[0].deltas[i] /= 20;
 
 	mouse_buttons = mouse_getbutton();
 
-	for(i=0; i<MOUSE_BUTTONS; i++)
+	for(i=0; i<SYSDEP_DISPLAY_MOUSE_BUTTONS; i++)
 	{
-		mouse_data[0].buttons[i] = mouse_buttons & (0x01 << i);
+		sysdep_display_mouse_data[0].buttons[i] = mouse_buttons & (0x01 << i);
 	}
 
 	mouse_setposition_6d(0, 0, 0, 0, 0, 0, MOUSE_6DIM);
 }
 
-void sysdep_set_leds(int new_leds)
+void sysdep_display_set_keybleds(int new_leds)
 {
 	static int old_leds = 0;
 
@@ -344,7 +342,13 @@ void sysdep_set_leds(int new_leds)
 	}
 }
 
-void sysdep_update_keyboard(void)
+int sysdep_display_update_keyboard(void)
 {
 	keyboard_update();
+	if (keyboard_dirty)
+	{
+		keyboard_dirty = 0;
+		return 1;
+	}
+	return 0;
 }

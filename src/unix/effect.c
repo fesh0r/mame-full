@@ -123,9 +123,12 @@ static void init_rgb2yuv(int display_mode)
 }
 
 
-/* called from sysdep_display_open to update scale parameters */
+/* called from sysdep_display_open through sysdep_display_check_params to
+   update scale parameters */
 void effect_check_params(void)
 {
+  /* warn only once about disabling yarbsize */
+  static int firsttime = 1;
   int disable_arbscale = 0;
 
   switch (sysdep_display_params.effect) {
@@ -155,9 +158,10 @@ void effect_check_params(void)
       break;
   }
 
-  if (sysdep_display_params.yarbsize && disable_arbscale) {
+  if (sysdep_display_params.yarbsize && disable_arbscale && firsttime) {
     printf("Using effects -- disabling arbitrary scaling\n");
     sysdep_display_params.yarbsize = 0;
+    firsttime = 0;
   }
 }
 
@@ -167,7 +171,9 @@ void effect_check_params(void)
 
 /* for effects which have 2 steps, most have 3 addline functions
    for 15, 16 and 32 bpp src's and 5 render functions for
-   15, 16, 32, YUY2 and YV12 dest's */
+   15, 16, 32, YUY2 and YV12 dest's, the templates for these functions are
+   in effect_renderers.h, where the addline functions are
+   surrounded by a #if DEST_DEPTH != YUY2  */
 #define DEST_DEPTH 15
 #include "effect_renderers.h"
 
@@ -180,7 +186,9 @@ void effect_check_params(void)
 #define DEST_DEPTH YUY2
 #include "effect_renderers.h"
 
-/* Now the normal effect, first the indirect versions */
+/* Now the normal effect for which the templates are in
+   effect_funcs.h, the YUY2 versions are handcoded and are
+   in effect_funcs.c. First the indirect versions */
 #define INDIRECT
 #define GETPIXEL(p) u32lookup[p]
 

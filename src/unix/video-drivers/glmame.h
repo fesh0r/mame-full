@@ -133,4 +133,7 @@ void gl_save_screen_snapshot();
 int gl_png_write_bitmap(void *fp);
 void ppm_save_snapshot (void *fp);
 
+/* gljpeg */
+GLubyte *read_JPEG_file(char *);
+
 #endif /* _GLMAME_H */

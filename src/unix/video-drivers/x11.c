@@ -131,7 +131,8 @@ static void x11_check_mode(int *mode)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_display_open (const struct sysdep_display_open_params *params)
 {
-	orig_params = sysdep_display_params = *params;
+	orig_params = *params;
+	sysdep_display_set_params(params);
 
 	if (!mode_available[x11_video_mode])
 	{
@@ -191,7 +192,7 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 
 		(*x_func[x11_video_mode].close_display)();
 		x11_video_mode = new_video_mode;
-		sysdep_display_params = orig_params;
+		sysdep_display_set_params(&orig_params);
 		if ((*x_func[x11_video_mode].open_display)())
 		{
 			fprintf(stderr,
@@ -199,7 +200,7 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 					"   Trying again with the old x11-mode\n");
 			(*x_func[x11_video_mode].close_display)();
 			x11_video_mode = old_video_mode;
-			sysdep_display_params = orig_params;
+			sysdep_display_set_params(&orig_params);
 			if ((*x_func[x11_video_mode].open_display)())
 			{
 				(*x_func[x11_video_mode].close_display)();

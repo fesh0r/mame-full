@@ -195,8 +195,6 @@ int xf86_dga2_open_display(void)
 	static int first_time  = 1;
 	xf86_dga_first_click   = 0;
 	
-	sysdep_display_check_params();
-
 	window  = RootWindow(display,xf86ctx.screen);
 	
 	if (first_time)
@@ -248,7 +246,7 @@ int xf86_dga2_open_display(void)
 	if (x11_init_palette_info(&dga_xvisual) != 0)
 	    return 1;
         
-	mode_check_params((double)xf86ctx.device->mode.viewportWidth/
+	mode_set_aspect_ratio((double)xf86ctx.device->mode.viewportWidth/
 		xf86ctx.device->mode.viewportHeight);
 
 	if(xf86_dga_setup_graphics(xf86ctx.device->mode))

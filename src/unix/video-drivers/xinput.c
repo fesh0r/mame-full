@@ -54,8 +54,6 @@ static int xinput_grab_keyboard;
 static int xinput_show_cursor;
 static int xinput_always_use_mouse;
 static XSizeHints x11_init_hints;
-/* not static because xgl needs these for its own window creation */
-int root_window_id; /* root window id (for swallowing the mame window) */
 
 /* private variables */
 static int xinput_force_grab = 0;

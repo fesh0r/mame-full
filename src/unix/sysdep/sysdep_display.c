@@ -32,8 +32,9 @@ struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_M
 struct sysdep_display_properties_struct sysdep_display_properties;
 struct sysdep_display_open_params sysdep_display_params;
 
-void sysdep_display_check_params(void)
+void sysdep_display_set_params(const struct sysdep_display_open_params *params)
 {
+  sysdep_display_params = *params;
   /* The blit code sometimes needs width and x offsets to be aligned:
     -YUY2 blits blit 2 pixels at a time and thus needs an X-alignment of 2
     -packed_pixel blits blit 4 pixels to 3 longs, thus an X-alignment of 4 

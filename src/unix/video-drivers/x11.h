@@ -24,6 +24,7 @@ EXTERN unsigned int	window_height;
 EXTERN int		custom_windowsize;
 EXTERN unsigned char	*scaled_buffer_ptr;
 EXTERN int		x11_video_mode;
+EXTERN int		root_window_id; /* root window id (for swallowing the mame window) */
 EXTERN int		run_in_root_window;
 EXTERN int		x11_exposed;
 #ifdef USE_XIL

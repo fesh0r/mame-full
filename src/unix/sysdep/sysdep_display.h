@@ -139,7 +139,8 @@ struct sysdep_display_open_params {
   /* keyboard event handler */
   void (*keyboard_handler)(struct sysdep_display_keyboard_event *event);
   /* vectorgame bounds (only used by drivers which have special vector code) */
-  struct rectangle *vec_bounds;
+  const struct rectangle *vec_src_bounds;
+  const struct rectangle *vec_dest_bounds;
   /* Everything below is for private display driver use, any values asigned
      to these members are ignored */
   /* X-alignment stuff.  */

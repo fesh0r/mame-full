@@ -19,27 +19,27 @@
 #include "sysdep/sysdep_display.h"
 
 #define FRAMESKIP_DRIVER_COUNT 2
-static int use_auto_double = 1;
 static int frameskipper = 0;
 static int debugger_has_focus = 0;
 static int led_state = 0;
 
+/* options these are initialised through the rc_option struct */
 static float f_beam;
 static float f_flicker;
 static float f_intensity;
-
-static int use_artwork = 1;
-static int use_backdrops = -1;
-static int use_overlays = -1;
-static int use_bezels = -1;
-
-static int video_norotate = 0;
-static int video_flipy = 0;
-static int video_flipx = 0;
-static int video_ror = 0;
-static int video_rol = 0;
-static int video_autoror = 0;
-static int video_autorol = 0;
+static int use_auto_double;
+static int use_hw_vectors;
+static int use_artwork;
+static int use_backdrops;
+static int use_overlays;
+static int use_bezels;
+static int video_norotate;
+static int video_flipy;
+static int video_flipx;
+static int video_ror;
+static int video_rol;
+static int video_autoror;
+static int video_autorol;
 
 static struct sysdep_palette_struct *normal_palette = NULL;
 static struct sysdep_palette_struct *debug_palette  = NULL;
@@ -48,7 +48,7 @@ static struct sysdep_display_open_params current_params;
 static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
   0, 0, 16, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0,
-  xmame_keyboard_register_event, NULL };
+  xmame_keyboard_register_event, NULL, NULL };
 
 static struct rectangle debug_bounds;
 
@@ -84,18 +84,18 @@ struct rc_option video_opts[] = {
      "Start in fullscreen mode (default: false)" },
    { "arbheight",	"ah",			rc_int,		&normal_params.yarbsize,
      "0",		0,			4096,		NULL,
-     "Scale video to exactly this height (0 = disable)" },
+     "Scale video to exactly this height (0 = disable), this overrides the heightscale and scale options" },
    { "heightscale",	"hs",			rc_int,		&normal_params.heightscale,
      "1",		1,			8,		NULL,
-     "Set Y-Scale aspect ratio" },
+     "Set Y-Scale factor" },
    { "widthscale",	"ws",			rc_int,		&normal_params.widthscale,
      "1",		1,			8,		NULL,
-     "Set X-Scale aspect ratio" },
+     "Set X-Scale factor" },
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
-     "Set X-Y Scale to the same aspect ratio. For vector games scale (and also width- and heightscale) may have value's like 1.5 and even 0.5. For scaling of regular games this will be rounded to an int" },
+     "Set X- and Y-Scale to the same factor." },
    { "effect",		"ef",			rc_int,		&normal_params.effect,
-     EFFECT_NONE,	EFFECT_NONE,		EFFECT_LAST,	NULL,
+     "0",		EFFECT_NONE,		EFFECT_LAST,	NULL,
      "Video effect:\n"
 	     "0 = none (default)\n"
 	     "1 = scale2x (smooth scaling effect)\n"
@@ -196,6 +196,9 @@ struct rc_option video_opts[] = {
    { "translucency",	"t",			rc_bool,	&options.translucency,
      "1",		0,			0,		NULL,
      "Enable/disable tranlucency" },
+   { "hardware-vectors", "hwvec",		rc_int,		&use_hw_vectors,
+     "1",		0,			2,		NULL,
+     "Use the videocard todo the drawing of vectors in vector games:\n0 never\n1 auto\n2 always" },
    { NULL,		NULL,			rc_link,	sysdep_display_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -376,7 +379,7 @@ void osd_video_initpre()
 		options.vector_height = 480;
 	}
 
-#if 0 /* FIXME */	
+#if 0   /* obsolete */	
 	if (sysdep_display_properties.vector_aux_renderer)
 	{
 		/* HACK to find out if this is a vector game before calling
@@ -423,14 +426,11 @@ int osd_create_display(const struct osd_create_params *params,
 	normal_params.width  = params->width;
 	normal_params.height = params->height;
 	normal_params.depth  = params->depth;
-	normal_params.aspect_ratio = (double)params->aspect_x / (double)params->aspect_y;
 	normal_params.title  = title;
+	normal_params.aspect_ratio     = (double)params->aspect_x / (double)params->aspect_y;
 	normal_params.keyboard_handler = xmame_keyboard_register_event;
-	
-	if (params->video_attributes & VIDEO_TYPE_VECTOR)
-		normal_params.vec_bounds = &(Machine->visible_area);
-	else
-		normal_params.vec_bounds = NULL;
+	normal_params.vec_src_bounds   = NULL;
+	normal_params.vec_dest_bounds  = NULL;
 	
 	if (use_auto_double)
 	{
@@ -453,15 +453,30 @@ int osd_create_display(const struct osd_create_params *params,
 		}
 	}
 
+	switch (use_hw_vectors)
+	{
+	  case 0: /* disabled */
+	    break;
+	  case 1: /* auto */
+	    if (artwork_overlay_active())
+	      break;
+	  case 2: /* always on */
+	    if (params->video_attributes & VIDEO_TYPE_VECTOR)
+	    {
+	      normal_params.vec_src_bounds  = &(Machine->visible_area);
+	      normal_params.vec_dest_bounds = artwork_get_game_rect();
+	    }
+	}
+	
 	if (sysdep_display_open(&normal_params) != OSD_OK)
 		return -1;
 
 	current_params = normal_params;
-	vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
+	if (normal_params.vec_src_bounds)
+	      vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 
 	if (!(normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth)))
 		return -1;
-		
 	
 	/* a lot of display_targets need to have the display initialised before
 	   initialising any input devices */
@@ -505,18 +520,17 @@ static void display_settings_changed(void)
 {
 	xmame_keyboard_clear();
 	osd_free_colors();
-	vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
+	sysdep_display_set_keybleds(led_state);
 
-	/* we could have switched between hw and sw drawn vectors,
-	   so clear Machine->scrbitmap and don't use vector_dirty_pixels
-	   for the next (not skipped) frame */
-	if (normal_params.vec_bounds)
+	if (!debugger_has_focus && normal_params.vec_src_bounds)
 	{
+		/* we could have switched between hw and sw drawn vectors,
+		   so clear Machine->scrbitmap and don't use vector_dirty_pixels
+		   for the next (not skipped) frame */
 		schedule_full_refresh();
 		ui_dirty = FRAMESKIP_LEVELS + 1;
+		vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 	}
-
-	sysdep_display_set_keybleds(led_state);
 }
 
 static void change_display_settings(struct sysdep_display_open_params *new_params, int force)
@@ -679,11 +693,11 @@ void change_debugger_focus(int new_debugger_focus)
 {
 	if (debugger_has_focus != new_debugger_focus)
 	{
+		debugger_has_focus = new_debugger_focus;
 		if (new_debugger_focus)
 			change_display_settings(&debug_params, 1);
 		else
 			change_display_settings(&normal_params, 1);
-		debugger_has_focus = new_debugger_focus;
 	}
 }
 
