@@ -297,7 +297,7 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 		return OSD_NOT_OK;
 	}
 	
-	fprintf(stderr_file, "XF86-DGA running at: %dbpp\n", depth);
+	fprintf(stderr_file, "XF86-DGA1 running at: %dbpp\n", depth);
 	
 	sizeof_pixel  = depth / 8;
 
