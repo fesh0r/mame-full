@@ -52,14 +52,82 @@ static int is_paused;
 
 
 //============================================================
+//	is_controller_input_type
+//============================================================
+
+int is_controller_input_type(UINT32 type)
+{
+	int result;
+	switch(type & ~IPF_MASK) {
+	case IPT_JOYSTICK_UP:
+	case IPT_JOYSTICK_DOWN:
+	case IPT_JOYSTICK_LEFT:
+	case IPT_JOYSTICK_RIGHT:
+	case IPT_JOYSTICKLEFT_UP:
+	case IPT_JOYSTICKLEFT_DOWN:
+	case IPT_JOYSTICKLEFT_LEFT:
+	case IPT_JOYSTICKLEFT_RIGHT:
+	case IPT_JOYSTICKRIGHT_UP:
+	case IPT_JOYSTICKRIGHT_DOWN:
+	case IPT_JOYSTICKRIGHT_LEFT:
+	case IPT_JOYSTICKRIGHT_RIGHT:
+	case IPT_BUTTON1:
+	case IPT_BUTTON2:
+	case IPT_BUTTON3:
+	case IPT_BUTTON4:
+	case IPT_BUTTON5:
+	case IPT_BUTTON6:
+	case IPT_BUTTON7:
+	case IPT_BUTTON8:
+	case IPT_BUTTON9:
+	case IPT_BUTTON10:
+	case IPT_AD_STICK_X:
+	case IPT_AD_STICK_Y:
+		result = 1;
+		break;
+
+	default:
+		result = 0;
+		break;
+	}
+	return result;
+}
+
+//============================================================
 //	setjoystick
 //============================================================
 
 static void setjoystick(int joystick_num)
 {
-	char buf[32];
-	sprintf(buf, "Joystick %d", joystick_num);
-	MessageBox(win_video_window, "Not Yet Implemented", buf, MB_OK);
+	void *dlg;
+	int player;
+	struct InputPort *in;
+	const char *input_name;
+
+	player = joystick_num * IPF_PLAYER2;
+	
+	dlg = win_dialog_init("Joysticks/Controllers");
+	if (!dlg)
+		goto done;
+
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if (((in->type & IPF_PLAYERMASK) == player) && is_controller_input_type(in->type))
+		{
+			input_name = input_port_name(in);
+			if (win_dialog_add_seqselect(dlg, input_name, &in->seq))
+				goto done;
+		}
+	}
+
+	if (win_dialog_add_standard_buttons(dlg))
+		goto done;
+
+	win_dialog_runmodal(dlg);
+
+done:
+	if (dlg)
+		win_dialog_exit(dlg);
 }
 
 //============================================================
@@ -510,34 +578,10 @@ static int count_joysticks(void)
 	joystick_count = 0;
 	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
 	{
-		switch(in->type & ~IPF_MASK) {
-		case IPT_JOYSTICK_UP:
-		case IPT_JOYSTICK_DOWN:
-		case IPT_JOYSTICK_LEFT:
-		case IPT_JOYSTICK_RIGHT:
-		case IPT_JOYSTICKLEFT_UP:
-		case IPT_JOYSTICKLEFT_DOWN:
-		case IPT_JOYSTICKLEFT_LEFT:
-		case IPT_JOYSTICKLEFT_RIGHT:
-		case IPT_JOYSTICKRIGHT_UP:
-		case IPT_JOYSTICKRIGHT_DOWN:
-		case IPT_JOYSTICKRIGHT_LEFT:
-		case IPT_JOYSTICKRIGHT_RIGHT:
-		case IPT_BUTTON1:
-		case IPT_BUTTON2:
-		case IPT_BUTTON3:
-		case IPT_BUTTON4:
-		case IPT_BUTTON5:
-		case IPT_BUTTON6:
-		case IPT_BUTTON7:
-		case IPT_BUTTON8:
-		case IPT_BUTTON9:
-		case IPT_BUTTON10:
-		case IPT_AD_STICK_X:
-		case IPT_AD_STICK_Y:
+		if (is_controller_input_type(in->type))
+		{
 			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
 				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;
-			break;
 		}
 	}
 	return joystick_count;

@@ -83,7 +83,7 @@ EMULATORGUI = $(GUINAME)$(EXE)
 EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
 EMULATOR    = $(EMULATORCLI)
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
+DEFS = -Dindex=__index -Dalloca=__builtin_alloca -Drestrict=restrict__ -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 
 ifdef SYMBOLS
 CFLAGS = -Imess -Imess/includes -Imess/$(MAMEOS) -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \

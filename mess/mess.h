@@ -90,6 +90,12 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
 #define IMAGE_VERIFY_PASS 0
 #define IMAGE_VERIFY_FAIL 1
 
+/* handy functions for memory pools */
+void pool_init(void **pool);
+void pool_exit(void **pool);
+void *pool_malloc(void **pool, size_t size);
+char *pool_strdup(void **pool, const char *src);
+
 /* possible values for osd_fopen() last argument:
  * OSD_FOPEN_READ
  *	open existing file in read only mode.

@@ -16,11 +16,19 @@
 //	not have the latest definitions
 //============================================================
 
-#ifdef __GNUC__
+#ifndef _WIN64
+#ifndef GetWindowLongPtr
 #define GetWindowLongPtr(hwnd, idx)			((LONG_PTR) GetWindowLong((hwnd), (idx)))
+#endif
+
+#ifndef SetWindowLongPtr
 #define SetWindowLongPtr(hwnd, idx, val)	((LONG_PTR) SetWindowLong((hwnd), (idx), (val)))
+#endif
+
+#ifndef GWLP_USERDATA
 #define GWLP_USERDATA						GWL_USERDATA
 #endif
+#endif /* _WIN64 */
 
 //============================================================
 
@@ -53,6 +61,7 @@ struct dialog_info
 	WORD cx, cy;
 	int combo_string_count;
 	int combo_default_value;
+	void *memory_pool;
 };
 
 //============================================================
@@ -89,8 +98,10 @@ static void dialog_trigger(HWND dlgwnd, WORD trigger_flags)
 	HWND dialog_item;
 	struct dialog_info *di;
 	struct dialog_info_trigger *trigger;
+	LONG l;
 
-	di = (struct dialog_info *) GetWindowLongPtr(dlgwnd, WNDLONG_DIALOG);
+	l = GetWindowLongPtr(dlgwnd, WNDLONG_DIALOG);
+	di = (struct dialog_info *) l;
 	assert(di);
 	for (trigger = di->trigger_first; trigger; trigger = trigger->next)
 	{
@@ -137,7 +148,7 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 			command = IDOK;
 		else if (!strcmp(str, DLGTEXT_CANCEL))
 			command = IDCANCEL;
-		else if (!strcmp(str, "Standard"))
+		else
 			command = 0;
 
 		switch(command) {
@@ -275,7 +286,7 @@ static int dialog_add_trigger(struct dialog_info *di, WORD dialog_item,
 	assert(di);
 	assert(trigger_flags);
 
-	trigger = (struct dialog_info_trigger *) malloc(sizeof(struct dialog_info_trigger));
+	trigger = (struct dialog_info_trigger *) pool_malloc(&di->memory_pool, sizeof(struct dialog_info_trigger));
 	if (!trigger)
 		return 1;
 
@@ -340,6 +351,8 @@ void *win_dialog_init(const char *title)
 		goto error;
 	memset(di, 0, sizeof(*di));
 
+	pool_init(&di->memory_pool);
+
 	di->cx = 0;
 	di->cy = 0;
 
@@ -371,17 +384,19 @@ error:
 //	win_dialog_add_combobox
 //============================================================
 
-int win_dialog_add_combobox(void *dialog, const char *label, UINT16 *value)
+int win_dialog_add_combobox(void *dialog, const char *item_label, UINT16 *value)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
 	short x;
 	short y;
 
+	assert(item_label);
+
 	x = DIM_HORIZONTAL_SPACING;
 	y = di->cy + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, label, DLGITEM_STATIC))
+			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, item_label, DLGITEM_STATIC))
 		return 1;
 
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
@@ -422,6 +437,46 @@ int win_dialog_add_combobox_item(void *dialog, const char *item_label, int item_
 	return 0;
 }
 
+
+//============================================================
+//	win_dialog_add_seqselect
+//============================================================
+
+int win_dialog_add_seqselect(void *dialog, const char *item_label, InputSeq *code)
+{
+	struct dialog_info *di = (struct dialog_info *) dialog;
+	short x;
+	short y;
+	char buf[256];
+	char *seq_n;
+
+	assert(item_label);
+
+	x = DIM_HORIZONTAL_SPACING;
+	y = di->cy + DIM_VERTICAL_SPACING;
+
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, item_label, DLGITEM_STATIC))
+		return 1;
+
+	seq_name(code, buf, sizeof(buf) / sizeof(buf[0]));
+	seq_n = pool_strdup(&di->memory_pool, buf);
+
+	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, seq_n, DLGITEM_STATIC))
+		return 1;
+
+
+	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
+
+	if (x > di->cx)
+		di->cx = x;
+	di->cy += DIM_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+
+	return 0;
+}
+
 //============================================================
 //	win_dialog_add_standard_buttons
 //============================================================
@@ -454,20 +509,12 @@ int win_dialog_add_standard_buttons(void *dialog)
 void win_dialog_exit(void *dialog)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
-	struct dialog_info_trigger *trigger;
-	struct dialog_info_trigger *next;
 
 	assert(di);
 	if (di->handle)
 		GlobalFree(di->handle);
 
-	trigger = di->trigger_first;
-	while(trigger)
-	{
-		next = trigger->next;
-		free(trigger);
-		trigger = next;
-	}
+	pool_exit(&di->memory_pool);
 	free(di);
 }
 

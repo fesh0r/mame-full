@@ -8,18 +8,6 @@
 
 static void *image_fopen_new(int type, int id, int *effective_mode);
 
-#ifdef DEBUG
-#define GUARD_BYTES
-#endif
-
-struct image_memory_header
-{
-	struct image_memory_header *next;
-#ifdef GUARD_BYTES
-	size_t size;
-	UINT32 canary;
-#endif
-};
 
 struct image_info
 {
@@ -33,7 +21,7 @@ struct image_info
 	char *year;
 	char *playable;
 	char *extrainfo;
-	struct image_memory_header *memory;
+	void *memory_pool;
 };
 
 static struct image_info images[IO_COUNT][MAX_DEV_INSTANCES];
@@ -57,61 +45,21 @@ static struct image_info *get_image(int type, int id)
 
 void *image_malloc(int type, int id, size_t size)
 {
-	struct image_memory_header *block;
 	struct image_info *img;
-	size_t actual_size;
-
-	actual_size = sizeof(struct image_memory_header) + size;
-#ifdef GUARD_BYTES
-	actual_size += sizeof(block->canary);
-#endif
-
-	block = malloc(actual_size);
-	if (!block)
-		return NULL;
-
 	img = get_image(type, id);
-
-	block->next = img->memory;
-#ifdef GUARD_BYTES
-	block->size = size;
-	block->canary = 0xdeadbeef;
-	memcpy(((char *) (block+1)) + size, &block->canary, sizeof(block->canary));
-#endif
-
-	img->memory = block;
-	return (void *) (block+1);
+	return pool_malloc(&img->memory_pool, size);
 }
 
 char *image_strdup(int type, int id, const char *src)
 {
-	char *dst;
-	if (!src)
-		return NULL;
-	dst = image_malloc(type, id, strlen(src) + 1);
-	if (!dst)
-		return NULL;
-	strcpy(dst, src);
-	return dst;
+	struct image_info *img;
+	img = get_image(type, id);
+	return pool_strdup(&img->memory_pool, src);
 }
 
 static void image_free_resources(struct image_info *img)
 {
-	struct image_memory_header *mem;
-	struct image_memory_header *next;
-
-	mem = img->memory;
-	while(mem)
-	{
-#ifdef GUARD_BYTES
-		assert(mem->canary == 0xdeadbeef);
-		assert(!memcmp(&mem->canary, ((char *) (mem+1)) + mem->size, sizeof(mem->canary)));
-#endif
-		next = mem->next;
-		free(mem);
-		mem = next;
-	}
-	img->memory = NULL;
+	pool_exit(&img->memory_pool);
 }
 
 /* ----------------------------------------------------------------------- */
