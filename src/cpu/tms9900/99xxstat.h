@@ -189,7 +189,7 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 		if ( ((INT16) val) > ((INT16) to) )
 			I.STATUS |= ST_AGT;
 		if ( ((UINT16) val) > ((UINT16) to) )
-		I.STATUS |= ST_LGT;
+			I.STATUS |= ST_LGT;
 	}
 }
 
