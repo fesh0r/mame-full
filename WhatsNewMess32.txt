@@ -14,6 +14,8 @@ Whats new:
   just systems.  These screenshots must be placed in subdirectories with names
   matching the system off of the snapshots directory, and be named the same as
   the software item.  [Nate Woods]
+- Worked around optimization bugs in the tms9900 so the TI99 system finally
+  works properly. [Nate Woods]
 
 ----------
 0.37 BETA 13
