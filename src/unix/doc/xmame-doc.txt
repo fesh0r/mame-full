@@ -8,13 +8,13 @@ and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@b
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
 and David Heremans (minor editing)
 
-v2.1.9, 20 December 2001
+v2.1.15, 17 April 2002
 
 Abstract
 
 xmame/xmess documentation with an installation guide, the
 FAQ (frequently asked questions), hints, tips and tricks,
-the changes on the code and many more!
+the changes to the code, and much more!
 
 Table of Contents
 
@@ -84,10 +84,12 @@ Table of Contents
         3.25.2 xmame.sdl
     3.26 xmame.SDL / fullscreen has a large border around the game. 
     3.27 I only use some of the emulation parts (Neo Geo / CPS-2 /...). Do I need the entire xmame? 
-    3.28 Where can I get the latest version of xmame/xmess?
-    3.29 I upgraded xmame and now some games do not work anymore.
-    3.30 Where can I send fixes, bug reports, suggestions, or money?  :-)
-    3.31 What if my question is still not answered?
+    3.28 Why does xmame freeze and lock up when I hit <ESC> to exit the game or P to pause the game?
+    3.29 Why does xmame report "can't resolve host name '/dev/dsp' when trying to use esound?
+    3.30 Where can I get the latest version of xmame/xmess?
+    3.31 I upgraded xmame and now some games do not work anymore.
+    3.32 Where can I send fixes, bug reports, suggestions, or money?  :-)
+    3.33 What if my question is still not answered?
 4 Display Subsystem-Specific Comments and Notes 
     4.1 FXmame, a glide driver for xmame
         4.1.1 Requirements
@@ -112,7 +114,8 @@ Table of Contents
         4.2.10 Authors
 5 Contact Information and Credits
     5.1 Mail 
-    5.2 Credits
+    5.2 Bugzilla
+    5.3 Credits
 6 Legal Issues and Copyrights Concerning MAME/MESS
 7 Some Links
     7.1 Unix sources and docs
@@ -1587,14 +1590,39 @@ are compiled, resulting in a much smaller executable.
 There are some other targets but they are really only useful
 for the mame developers who create new drivers.
 
-3.28 Where can I get the latest version of xmame/xmess?
+3.28 Why does xmame freeze and lock up when I hit <ESC> to exit
+  the game or P to pause the game?
+
+There appears to be a bug in the "timer based audio" code
+that xmame/oss uses on at least one motherboard that we
+are aware of. Specifically, the ATX 845Pro (Intel Pentium
+4 processor) with an integrated i810 soundchip.
+
+To get around this bug use EsounD (Enlightened Sound Daemon),
+found as esd with Gnome distributions, instead of the oss
+sound drivers.
+
+Compile ESOUND support into the xmame executable by uncommenting
+the appropriate line in makefile.unix. Tell xmame to use
+esound by specifying "esound" on the "dsp-plugin" line in
+xmamerc, or use the -dp command line parameter to select
+esound. Also see the next section below.
+
+3.29 Why does xmame report "can't resolve host name '/dev/dsp'
+  when trying to use esound?
+
+Remove the words "/dev/dsp" from the "audiodevice" line in
+xmamerc. In other words, you want to have the word "audiodevice"
+on a line all by itself, with no audiodevice specified.
+
+3.30 Where can I get the latest version of xmame/xmess?
 
 The xmame/xmess Home Page always has the most up-to-date
 version. The address is
 
 [http://x.mame.net/||http://x.mame.net/]
 
-3.29 I upgraded xmame and now some games do not work anymore.
+3.31 I upgraded xmame and now some games do not work anymore.
 
 This can happen, especially if the drivers are in full development
 or some internal core routines have changed and the drivers
@@ -1640,12 +1668,12 @@ If none of these fixes the problem, then try using the older
 version of xmame you have backed up somewhere to play the
 game. (You did back-up, didn't you?)
 
-3.30 Where can I send fixes, bug reports, suggestions, or money?
+3.32 Where can I send fixes, bug reports, suggestions, or money?
    :-)
 
 See [Mail] of this document.
 
-3.31 What if my question is still not answered?
+3.33 What if my question is still not answered?
 
 Please check the offical mame and mess readme files to see
 if that answers your question:
@@ -2281,7 +2309,10 @@ related to this list are performed via email to [mailto:Xmame-request@toybox.twi
   with the keyword "subscribe" in the body. 
 
 * To unsubscribe, send a mail to: [mailto:Xmame-request@toybox.twisted.org.uk||Xmame-request@toybox.twisted.org.uk]
-  with the keyword "unsubscribe" in the body. 
+  with the keyword "unsubscribe" in the body.
+
+* To change your subscription, get a password reminder, etc.,
+  go to [http://toybox.twisted.org.uk/mailman/listinfo/xmame||http://toybox.twisted.org.uk/mailman/listinfo/xmame].
 
 * To send mail to the list, use: [mailto:xmame@toybox.twisted.org.uk||xmame@toybox.twisted.org.uk] 
 
@@ -2290,7 +2321,9 @@ related to this list are performed via email to [mailto:Xmame-request@toybox.twi
 
 If you're just curious, and only want to take a look into
 the mailing list without subscribing, you can use the web-based
-archive at: [http://www.mail-archive.com||http://www.mail-archive.com] 
+archive at [http://www.mail-archive.com/index.php3?hunt=xmame||http://www.mail-archive.com/index.php3?hunt=xmame]
+or [http://toybox.twisted.org.uk/pipermail/xmame/||http://toybox.twisted.org.uk/pipermail/xmame/].
+(The latter was activated on 5 January 2002.)
 
 To ask UNIX-specific xmame/xmess questions, you could send
 mail to: [mailto:gold@aros.net||Lawrence's folder],
@@ -2309,7 +2342,7 @@ are:
 
     who             - see everyone who is on the list
 
-    info           - view the introductory information for
+    info            - view the introductory information for
 this list
 
     help            - list all recognized commands
@@ -2363,7 +2396,14 @@ should subscribe to the xmame/xmess mailing list.
 
 That's all. Enjoy xmame!
 
-5.2 Credits
+5.2 Bugzilla
+
+In addition to/instead of posting bugs to the mailing list,
+you can report them to the MESS Bugzilla database at [http://bugzilla.mess.org/||http://bugzilla.mess.org/],
+under the "XMAME/XMESS"
+category.
+
+5.3 Credits
 
 Lots and lots and lots of thanks to everyone for their great
 help on the xmame project. I would like to thank the following
@@ -2407,49 +2447,55 @@ Gold)
 
   * Hans de Goede
 
-5. Alpha specific issues
+5. Alpha-specific issues
 
   * Christian Groessler
 
-6. Sun specific issues
+6. Sun-specific issues
 
   * Keith Hargrove
 
   * Mathis Rosenhau
 
-7. Irix specific issues
+7. Irix-specific issues
 
   * Tristram Scott
 
-8. GGI maintainance
+8. QNX-specific issues
+
+  * Travis Coady
+
+9. GGI maintainance
 
   * Gabriele Boccone (original port)
 
   * Christian Groessler (current maintainer)
 
-9. OpenGL code & maintainance
+10. OpenGL code & maintainance
 
   * Mike Oliphant (original creator)
 
   * Sven Goethel (from GLmame 0.7 to the present)
 
-10. Network code
+11. Network code
 
   * Eric Totel
 
-11. Perl scripts for automation of some porting issues
+12. Perl scripts for automation of some porting issues
 
   * Bill Adams
 
-12. Xmame RPMs
+13. Xmame RPMs
 
   * Jeremy Hansen
 
-13. Mailing list maintainer
+14. Mailing list maintainer
 
-  * Chris McCraw
+  * Chris McCraw (retired)
 
-14. Bits and pieces
+  * Pete French
+
+15. Bits and pieces
 
   * Christian Groessler
 
@@ -2459,21 +2505,25 @@ Gold)
 
   * David Black
 
-15. AIX Sound code
+16. AIX Sound code
 
   * Chris Sharpp
 
-16. IRIX Sound code
+17. IRIX Sound code
 
   * [mailto:entropy@zippy.bernstein.com||entropy@zippy.bernstein.com] 
 
-17. German readme
+18. German readme
 
   * Robert Hamberger
 
-18. Documentation (SGML, HTML, MAN)
+19. Documentation (SGML, HTML, MAN)
 
   * Rene Herrmann
+
+20. Bugzilla bug database
+
+  * Sean Young
 
 6 Legal Issues and Copyrights Concerning MAME/MESS
 
@@ -2501,11 +2551,9 @@ Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.36.1.tgz||xmame 0.36.1 sources (xmame & xmess)]
-
-  [download/xmame-0.57.1.tar.bz2||xmame 0.57.1 sources (xmame only)]
-
   [download/xmame-0.56.2.tar.bz2||xmame 0.56.2 sources (xmame & xmess)]
+
+  [download/xmame-0.59.2.tar.bz2||xmame 0.59.2 sources (xmame only)]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2522,6 +2570,8 @@ Gold)
 * [http://www.beimborn.com/cps2/linux/rpms||xmame+CPS2 RPMs]
 
 * [http://come.to/georgie||Source and binary for Solaris UltraSPARC]
+
+* [http://kwyxz.nerim.net/klinux/xmame.html||AMD-optimized builds for various targets]
 
 7.3 Xmame/xmess download mirrors
 
@@ -2572,6 +2622,9 @@ Gold)
 * [http://www.foxbox.org/adam/code/flynn/index.html||Flynn](primarily
   for converted arcade cabinets)
 
+* [http://www.swentelomania.be/swentel/module.php?boxcontent=35&page=40||Playmame & Playmess]
+  (perl-based menu makers)
+
 7.5 Some other links
 
 * The official M.A.M.E home is at [http://www.mame.net||http://www.mame.net]
@@ -2589,7 +2642,7 @@ Gold)
 * MAME Action Replay Page for those who want to have a  look
   at other monitors at [http://marp.retrogames.com/||http://marp.retrogames.com/]
 
-* and of course don't forget our project homepage at [http://x.mame.net/||http://x.mame.net/]
+* And, of course, don't forget our project homepage at [http://x.mame.net/||http://x.mame.net/]
 
 8 ChangeLogs<ChangeLogs>
 

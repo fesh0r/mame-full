@@ -2,6 +2,34 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.59.2 (xmame only)
+	- Updated the included zlib library to 1.1.4, which fixes a "double 
+	  free" security vulnerability.
+	- Applied a fix for the fromance video driver.  (Takahiro Nogi)
+	- Updated romalizer to the latest release, 0.7pre3.  (Christopher 
+	  Stone)
+	- Fixed a potential crash and a linear interpolation bug in the ES550x 
+	  sound driver.  (Aaron Giles)
+	- Fixed a crash in the renegade driver caused by a sound effect reading 
+	  past the end of the ADPCM memory region.  (Phil Stroffolino)
+	- Fixed the following MAME testers bugs: blmbycar059red, uopoko059red,
+	  gcpinbal059red, jitsupro059red, metroc059red, phelios059red, 
+	  paclandc059red, ncv1058red, av2mj059red, fromancec058red.  (Aaron 
+	  Giles)
+
+Release 0.59.1 (xmame only)
+	- Everything from MAME 0.59.
+	- Set some more sensible defaults for the various path settings in 
+	  fileio.c (e.g., XMAMEROOT/samples for samplepath).
+	- Fixed a segfault in psikyosh games.  (David Haywood)
+	- The NetBSD USB joystick code now compiles on newer NetBSD 
+	  installations.  (Krister Walfridsson)
+	- DGA 2.0 support now works on NetBSD PowerPC machines.  It was broken 
+	  due to an issue with using memset() on mapped video buffers.  
+	  (Charles M. Hannum)
+	- The GLmame driver now compiles and runs on the OpenGL 1.1 shipped 
+	  with IRIX, but still doesn't work as it should.  (Andrea Suatoni)
+
 Release 0.58.3 (xmame only)
 	- Cleaned up src/unix/effect.c a bit.  It should now be able to compile 
 	  better with non-GCC compilers.  (Inspiration by Marcus Herbert.)
@@ -14,6 +42,16 @@ Release 0.58.3 (xmame only)
 	  Sussner)
 	- Updated NetMAME to 0.4.1, which fixes several problems that prevented 
 	  3+ player sessions from working.  (Steve Freeland)
+	- Changed the XIL support to use 16bpp instead of 8bpp.  (Carson Gaspar)
+	- Applied a fix for a crash in Vulgus.  (Stefan Jokisch)
+	- Added the latest romulan.pl to src/unix/contrib/tools.  This release 
+	  adds support for finding roms that are in the wrong zipfiles and also 
+	  has new options to disable strict merged sets.  (Nathan Hand)
+	- Added a workaround for the XFree86 tdfx DGA2 driver which can prevent 
+	  the original mode from being restored when leaving fullscreen mode.  
+	  To enable, uncomment TDFX_DGA_WORKAROUND = 1 in the makefile.
+	  (Gilles Hamel)
+	- 'make xlistdev' should work again.  (Bugzilla #189)
 
 Release 0.58.2 (xmame only)
 	- Applied a tilemap fix needed for Numan Athletics.  (Phil Stroffolino)
@@ -66,9 +104,11 @@ Release 0.57.1 (xmame only)
 	  (Steve Freeland)
 
 Release 0.56.2
+	- Added the MESS 0.56 core.
 	- Added contrib/kxmame.  This script launches xmame.x11 in builds of KDE
 	  which have problems with the window not opening.  (Sylvain Trosset and
 	  Hoonis)
+	- Updated dga2.txt to mention Radeon DGA2 fixes that are in the XFree86
 	  cvs tree.  (Shyouzou Sugitani)
 	- Updated GLmame to v0.92--see src/unix/doc/changes.opengl.  (Sven
 	  Goethel)
@@ -79,7 +119,20 @@ Release 0.56.2
 	- Added the ability for xmame to interpret file names as game names,
 	  e.g., 'xmame.x11 /path/to/mspacman.zip' should now work.  (Peter
 	  Trauner)
+	- Renamed several xmame-specific keyboard functions to prevent a clash 
+	  with svgalib and to avoid future clashes.  (Bugzilla #123)
+        - Added rapid-fire support for joysticks: Use -rapidfire or -rapidf.
+          (Shyouzou Sugitani)
+	- Added an SDL azerty keymap to doc/xmamerc.dist.  (Luc Saillard)
+	- The xfx target can now compile, though it still won't run.  (Viet)
+	- Upgraded to romalizer 0.7pre2; fixed a problem that caused '-listfull 
+	  mokomo' to break romalizer.  (Christopher Stone)
+	- The svgafx target compiles again.
+	- Added some notes to makefile.unix regarding known problems with gcc
+	  optimization flags on IA32 platforms.
+	- Added src/unix/doc/AIX-install-notes.  (Greg Peter)
 
+Release 0.56.1 (xmame only)
 	- Everything from MAME 0.56.
 	- The svgafx driver is working again--it was broken by the removal of
 	  8bpp support from the core.  (Henri and Jason)
@@ -101,6 +154,7 @@ Release 0.56.2
 	  using -warn-common.
 	- Added DGA2 documentation: src/unix/doc/dga2.txt.  (Shyouzou Sugitani)
 
+Release 0.55.2 (xmame only)
 	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
 	  Moss)
 	- Added several AdvanceMAME effects, available via -effect/-ef.  Note
@@ -110,6 +164,7 @@ Release 0.56.2
 	- Fixed compilation errors reported in snprintf.c on some platforms,
 	  e.g. HP-UX 10.20 with GCC 3.0.  (Stefan Becker)
 
+Release 0.55.1 (xmame only)
         - Everything from MAME 0.55.
 	- Removed the romcheck script until its author considers it far enough
 	  along for public consumption.
@@ -119,6 +174,7 @@ Release 0.56.2
 	  -alsapcm(-pcm) to -alsa-pcm(-apcm); changed the default value of
 	  -alsa-pcm.  (Shyouzou Sugitani)
 
+Release 0.54.2 (xmame only)
 	- Applied a fix for the Bubble Bobble driver.  (Haze)
 	- Added a couple words to the makefile to indicate that the 68020 asm
 	  core is broken.
@@ -132,6 +188,7 @@ Release 0.56.2
 	- Added mame-cd to contrib/tools.  (Mario J.Barchéin Molina)
 	- Added romcheck to contrib/tools.  (David Griffith)
 
+Release 0.54.1 (xmame only)
 	- Everything from MAME 0.54.
 	- Fixed a compile error in the xgl target caused by a change in the
 	  core.  (Sven Goethel)

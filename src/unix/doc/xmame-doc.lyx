@@ -64,12 +64,12 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.9, 20 December 2001
+v2.1.15, 17 April 2002
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
- asked questions), hints, tips and tricks, the changes on the code and many
- more!
+ asked questions), hints, tips and tricks, the changes to the code, and
+ much more!
 \layout Standard
 
 
@@ -2696,6 +2696,36 @@ There are some other targets but they are really only useful for the mame
  developers who create new drivers.
 \layout Subsection
 
+Why does xmame freeze and lock up when I hit <ESC> to exit the game or P
+ to pause the game?
+\layout Standard
+
+There appears to be a bug in the "timer based audio" code that xmame/oss
+ uses on at least one motherboard that we are aware of.
+ Specifically, the ATX 845Pro (Intel Pentium 4 processor) with an integrated
+ i810 soundchip.
+\layout Standard
+
+To get around this bug use EsounD (Enlightened Sound Daemon), found as esd
+ with Gnome distributions, instead of the oss sound drivers.
+\layout Standard
+
+Compile ESOUND support into the xmame executable by uncommenting the appropriate
+ line in makefile.unix.
+ Tell xmame to use esound by specifying "esound" on the "dsp-plugin" line
+ in xmamerc, or use the -dp command line parameter to select esound.
+ Also see the next section below.
+\layout Subsection
+
+Why does xmame report "can't resolve host name '/dev/dsp' when trying to
+ use esound?
+\layout Standard
+
+Remove the words "/dev/dsp" from the "audiodevice" line in xmamerc.
+ In other words, you want to have the word "audiodevice" on a line all by
+ itself, with no audiodevice specified.
+\layout Subsection
+
 Where can I get the latest version of xmame/xmess?
 \layout Standard
 
@@ -3806,7 +3836,14 @@ To unsubscribe, send a mail to:
 \end_inset 
 
  with the keyword "unsubscribe" in the body.
- 
+\layout Itemize
+
+To change your subscription, get a password reminder, etc., go to 
+\begin_inset LatexCommand \url[http://toybox.twisted.org.uk/mailman/listinfo/xmame]{http://toybox.twisted.org.uk/mailman/listinfo/xmame}
+
+\end_inset 
+
+.
 \layout Itemize
 
 To send mail to the list, use: 
@@ -3826,12 +3863,18 @@ To ask specific questions about the xmame mailing list, send mail to:
 \layout Standard
 
 If you're just curious, and only want to take a look into the mailing list
- without subscribing, you can use the web-based archive at: 
-\begin_inset LatexCommand \url[http://www.mail-archive.com]{http://www.mail-archive.com}
+ without subscribing, you can use the web-based archive at 
+\begin_inset LatexCommand \url[http://www.mail-archive.com/index.php3?hunt=xmame]{http://www.mail-archive.com/index.php3?hunt=xmame}
 
 \end_inset 
 
- 
+ or 
+\begin_inset LatexCommand \url[http://toybox.twisted.org.uk/pipermail/xmame/]{http://toybox.twisted.org.uk/pipermail/xmame/}
+
+\end_inset 
+
+.
+ (The latter was activated on 5 January 2002.)
 \layout Standard
 
 To ask UNIX-specific xmame/xmess questions, you could send mail to: 
@@ -3874,7 +3917,7 @@ Other proper keywords currently recognized as commands by
     who             - see everyone who is on the list
 \layout Verbatim
 
-    info           - view the introductory information for this list
+    info            - view the introductory information for this list
 \layout Verbatim
 
     help            - list all recognized commands
@@ -3984,6 +4027,26 @@ That's all.
  Enjoy xmame!
 \layout Subsection
 
+Bugzilla
+\layout Standard
+
+In addition to/instead of posting bugs to the mailing list, you can report
+ them to the MESS Bugzilla database at 
+\begin_inset LatexCommand \url[http://bugzilla.mess.org/]{http://bugzilla.mess.org/}
+
+\end_inset 
+
+, under the 
+\begin_inset Quotes eld
+\end_inset 
+
+XMAME/XMESS
+\begin_inset Quotes erd
+\end_inset 
+
+ category.
+\layout Subsection
+
 Credits
 \layout Standard
 
@@ -4054,7 +4117,7 @@ Hans de Goede
 \end_deeper 
 \layout Enumerate
 
-Alpha specific issues
+Alpha-specific issues
 \begin_deeper 
 \layout Itemize
 
@@ -4062,7 +4125,7 @@ Christian Groessler
 \end_deeper 
 \layout Enumerate
 
-Sun specific issues
+Sun-specific issues
 \begin_deeper 
 \layout Itemize
 
@@ -4073,11 +4136,19 @@ Mathis Rosenhau
 \end_deeper 
 \layout Enumerate
 
-Irix specific issues
+Irix-specific issues
 \begin_deeper 
 \layout Itemize
 
 Tristram Scott
+\end_deeper 
+\layout Enumerate
+
+QNX-specific issues
+\begin_deeper 
+\layout Itemize
+
+Travis Coady
 \end_deeper 
 \layout Enumerate
 
@@ -4131,7 +4202,10 @@ Mailing list maintainer
 \begin_deeper 
 \layout Itemize
 
-Chris McCraw
+Chris McCraw (retired)
+\layout Itemize
+
+Pete French
 \end_deeper 
 \layout Enumerate
 
@@ -4191,6 +4265,14 @@ Documentation (SGML, HTML, MAN)
 
 Rene Herrmann
 \end_deeper 
+\layout Enumerate
+
+Bugzilla bug database
+\begin_deeper 
+\layout Itemize
+
+Sean Young
+\end_deeper 
 \layout Section
 
 Legal Issues and Copyrights Concerning MAME/MESS
@@ -4241,7 +4323,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \htmlurl[xmame 0.36.1 sources (xmame & xmess)]{download/xmame-0.36.1.tgz}
+\begin_inset LatexCommand \url[xmame 0.56.2 sources (xmame & xmess)]{download/xmame-0.56.2.tar.bz2}
 
 \end_inset 
 
@@ -4249,15 +4331,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \htmlurl[xmame 0.57.1 sources (xmame only)]{download/xmame-0.57.1.tar.bz2}
-
-\end_inset 
-
-
-\layout Standard
-
-
-\begin_inset LatexCommand \htmlurl[xmame 0.56.2 sources (xmame & xmess)]{download/xmame-0.56.2.tar.bz2}
+\begin_inset LatexCommand \url[xmame 0.59.2 sources (xmame only)]{download/xmame-0.59.2.tar.bz2}
 
 \end_inset 
 
@@ -4312,6 +4386,14 @@ Unix binaries
 
 
 \begin_inset LatexCommand \url[Source and binary for Solaris UltraSPARC]{http://come.to/georgie}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[AMD-optimized builds for various targets]{http://kwyxz.nerim.net/klinux/xmame.html}
 
 \end_inset 
 
@@ -4486,6 +4568,14 @@ very good
 \end_inset 
 
 (primarily for converted arcade cabinets)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Playmame & Playmess]{http://www.swentelomania.be/swentel/module.php?boxcontent=35&page=40}
+
+\end_inset 
+
+ (perl-based menu makers)
 \layout Subsection
 
 Some other links
@@ -4565,7 +4655,7 @@ age for those who want to have a  look at other monitors at
 
 \layout Itemize
 
-and of course don't forget our project homepage at 
+And, of course, don't forget our project homepage at 
 \series bold 
 
 \begin_inset LatexCommand \url[http://x.mame.net/]{http://x.mame.net/}
