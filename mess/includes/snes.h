@@ -24,7 +24,7 @@
 #define SNES_PAL			0x10
 #define SNES_VRAM_SIZE		0x20000	/* 128kb of video ram */
 #define SNES_CGRAM_SIZE		0x202	/* 256 16-bit colours + 1 tacked on 16-bit colour for fixed colour */
-#define SNES_OAM_SIZE		0x440	/* ??? */
+#define SNES_OAM_SIZE		0x440	/* 1088 bytes of Object Attribute Memory */
 #define FIXED_COLOUR		256		/* Position in cgram for fixed colour */
 /* Defines for Memory-Mapped registers */
 #define INIDISP			0x2100
@@ -224,9 +224,9 @@
 #define DSP_V0_VOLR		0x01
 #define DSP_V0_PITCHL	0x02
 #define DSP_V0_PITCHH	0x03
-#define DSP_V0_SOURCE	0x04
-#define DSP_V0_ADSR1	0x05
-#define DSP_V0_ADSR2	0x06
+#define DSP_V0_SRCN		0x04
+#define DSP_V0_ADSR1	0x05	/* gdddaaaa = g:gain enable | d:decay | a:attack */
+#define DSP_V0_ADSR2	0x06	/* llllrrrr = l:sustain left | r:sustain right */
 #define DSP_V0_GAIN		0x07
 #define DSP_V0_ENVX		0x08
 #define DSP_V0_OUTX		0x09
@@ -234,7 +234,7 @@
 #define DSP_V1_VOLR		0x11
 #define DSP_V1_PITCHL	0x12
 #define DSP_V1_PITCHH	0x13
-#define DSP_V1_SOURCE	0x14
+#define DSP_V1_SRCN		0x14
 #define DSP_V1_ADSR1	0x15
 #define DSP_V1_ADSR2	0x16
 #define DSP_V1_GAIN		0x17
@@ -244,7 +244,7 @@
 #define DSP_V2_VOLR		0x21
 #define DSP_V2_PITCHL	0x22
 #define DSP_V2_PITCHH	0x23
-#define DSP_V2_SOURCE	0x24
+#define DSP_V2_SRCN		0x24
 #define DSP_V2_ADSR1	0x25
 #define DSP_V2_ADSR2	0x26
 #define DSP_V2_GAIN		0x27
@@ -254,7 +254,7 @@
 #define DSP_V3_VOLR		0x31
 #define DSP_V3_PITCHL	0x32
 #define DSP_V3_PITCHH	0x33
-#define DSP_V3_SOURCE	0x34
+#define DSP_V3_SRCN		0x34
 #define DSP_V3_ADSR1	0x35
 #define DSP_V3_ADSR2	0x36
 #define DSP_V3_GAIN		0x37
@@ -264,7 +264,7 @@
 #define DSP_V4_VOLR		0x41
 #define DSP_V4_PITCHL	0x42
 #define DSP_V4_PITCHH	0x43
-#define DSP_V4_SOURCE	0x44
+#define DSP_V4_SRCN		0x44
 #define DSP_V4_ADSR1	0x45
 #define DSP_V4_ADSR2	0x46
 #define DSP_V4_GAIN		0x47
@@ -274,7 +274,7 @@
 #define DSP_V5_VOLR		0x51
 #define DSP_V5_PITCHL	0x52
 #define DSP_V5_PITCHH	0x53
-#define DSP_V5_SOURCE	0x54
+#define DSP_V5_SRCN		0x54
 #define DSP_V5_ADSR1	0x55
 #define DSP_V5_ADSR2	0x56
 #define DSP_V5_GAIN		0x57
@@ -284,7 +284,7 @@
 #define DSP_V6_VOLR		0x61
 #define DSP_V6_PITCHL	0x62
 #define DSP_V6_PITCHH	0x63
-#define DSP_V6_SOURCE	0x64
+#define DSP_V6_SRCN		0x64
 #define DSP_V6_ADSR1	0x65
 #define DSP_V6_ADSR2	0x66
 #define DSP_V6_GAIN		0x67
@@ -294,7 +294,7 @@
 #define DSP_V7_VOLR		0x71
 #define DSP_V7_PITCHL	0x72
 #define DSP_V7_PITCHH	0x73
-#define DSP_V7_SOURCE	0x74
+#define DSP_V7_SRCN		0x74
 #define DSP_V7_ADSR1	0x75
 #define DSP_V7_ADSR2	0x76
 #define DSP_V7_GAIN		0x77
@@ -308,10 +308,10 @@
 #define DSP_KOF			0x5C	/* 01234567 = Key off for voices 0-7 */
 #define DSP_FLG			0x6C	/* rme--n-- = r:Soft reset | m:Mute | e:External memory through echo | n:Clock of noise generator */
 #define DSP_ENDX		0x7C
-#define DSP_EFB			0x0D
-#define DSP_PMON		0x2D
-#define DSP_NOV			0x3D
-#define DSP_EOV			0x4D
+#define DSP_EFB			0x0D	/* sfffffff = s: sign bit | f: feedback */
+#define DSP_PMOD		0x2D
+#define DSP_NON			0x3D
+#define DSP_EON			0x4D
 #define DSP_DIR			0x5D
 #define DSP_ESA			0x6D
 #define DSP_EDL			0x7D	/* ----dddd = d: echo delay */
@@ -338,7 +338,7 @@ extern WRITE_HANDLER( snes_w_bank2 );
 extern WRITE_HANDLER( snes_w_bank4 );
 extern WRITE_HANDLER( snes_w_io );
 extern int snes_cart_load(int id, mame_file *fp, int open_mode);
-extern void snes_scanline_interrupt(void);
+extern INTERRUPT_GEN(snes_scanline_interrupt);
 extern void snes_gdma( UINT8 channels );
 extern void snes_hdma_init(void);
 extern void snes_hdma(void);
@@ -380,10 +380,13 @@ struct SNES_PPU_STRUCT
 		UINT16 latch_vert;
 		UINT16 current_horz;
 		UINT16 current_vert;
+		UINT8 last_visible_line;
+		UINT8 interlace_count;
 	} beam;
 	UINT8 clipmasks[6][SNES_SCR_WIDTH + 8];
 	UINT8 update_windows;
 	UINT8 update_palette;
+	UINT8 mode;
 };
 extern struct SNES_PPU_STRUCT snes_ppu;
 
