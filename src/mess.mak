@@ -6,11 +6,11 @@ COREDEFS += -DNEOFREE -DMESS
 
 # to split the mess into parts
 # (problem with tinymess is to only compile for 1 system)
-#MESS_AMSTRAD = 1
+MESS_AMSTRAD = 1
 MESS_CBM = 1
-#MESS_IBMPC = 1
-MESS_SHARP = 1
-#MESS_SINCLAIR = 1
+MESS_IBMPC = 1
+ESS_SHARP = 1
+MESS_SINCLAIR = 1
 
 # CPU cores used in MESS
 CPUS+=Z80@
@@ -489,8 +489,9 @@ mkhdimg$(EXE):  $(OBJ)/mess/tools/mkhdimg.o
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 imgtool$(EXE):       \
-		  $(IMGTOOL_OBJS) \
+	  $(IMGTOOL_OBJS) \
           $(OBJ)/mess/tools/stubs.o   \
+	  $(OBJ)/mess/$(OS)/dirio.o   \
           $(OBJ)/mess/config.o        \
           $(OBJ)/unzip.o              \
           $(OBJ)/mess/tools/main.o    \
@@ -519,11 +520,11 @@ mess.txt: $(EMULATOR)
 makedep/makedep$(EXE):
 	make -Cmakedep
 
-depend src/$(TARGET).dep: makedep/makedep$(EXE)
-	echo "#" $(TARGET) dependencies >src/$(TARGET).dep
-	makedep/makedep$(EXE) -fsrc/$(TARGET).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) -- src/*.c \
+depend $(NAME).obj/$(NAME).dep: makedep/makedep$(EXE)
+	echo "#" $(TARGET) dependencies >$(NAME).obj/$(NAME).dep
+	makedep/makedep$(EXE) -f$(NAME).obj/$(NAME).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
 	mess/tools/*.c mess/formats/*.c
 
 ## uncomment the following line to include dependencies
-include src/$(TARGET).dep
+include $(NAME).obj/$(NAME).dep
