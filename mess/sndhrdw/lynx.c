@@ -1,8 +1,4 @@
 /***************************************************************************
-
-  MOS ted 7360 (and sound interface)
-
-  main part in vidhrdw
 ***************************************************************************/
 #include <math.h>
 #include "osd_cpu.h"
@@ -242,7 +238,7 @@ void lynx_update (int param, INT16 **buffer, int length)
 /************************************/
 int lynx_custom_start (const struct MachineSound *driver)
 {
-    const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_LEFT) };
+    const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) };
     const char *names[2]= { "lynx", "lynx" };
 	
     if (!options.samplerate) return 0;
