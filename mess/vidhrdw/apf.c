@@ -54,7 +54,7 @@ int apf_vh_start(void)
 
 	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_ORIGINAL;
-	p.ram = apf_video_ram;	//+0x0200;
+	p.ram = apf_video_ram+0x0200;
 	p.ramsize = 0x0400;
 	p.charproc = apf_charproc;
 

@@ -99,7 +99,7 @@ WRITE_HANDLER(apf_m1000_pia_out_b_func)
 		pad_data &= readinputport(0);
 
 
-	if (((previous_mode^data) & 0x0f0)!=0)
+//	if (((previous_mode^data) & 0x0f0)!=0)
 	{
 		/* not sure if this is correct - need to check */
 		m6847_ag_w(0,	data & 0x80);
