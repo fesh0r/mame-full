@@ -278,8 +278,6 @@ MEMORY_READ_START( readmem_pcw )
 
 	{0xC000, 0x0ffef, MRA_BANK7},
 	{0xfff0, 0x0ffff, MRA_BANK8},
-
-	{0x010000, 0x013fff, MRA_ROM},	   /* OS */
 MEMORY_END
 
 /* AFAIK the keyboard data is not writeable. So we don't need
@@ -868,7 +866,7 @@ void pcw_init_machine(void)
 
 	pcw_boot = 1;
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+/*	memory_set_bankhandler_r(1, 0, MRA_BANK1);
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
 	memory_set_bankhandler_r(3, 0, MRA_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
@@ -881,7 +879,7 @@ void pcw_init_machine(void)
 	memory_set_bankhandler_w(10, 0, MWA_BANK10);
 	memory_set_bankhandler_w(11, 0, MWA_BANK11);
 	memory_set_bankhandler_w(12, 0, MWA_BANK12);
-
+*/
 
 	cpu_irq_line_vector_w(0, 0,0x0ff);
 
@@ -919,6 +917,7 @@ void pcw_init_memory(int size)
 {
 	switch (size)
 	{
+		default:
 		case 256:
 		{
 			/* 256k ram */
@@ -938,6 +937,7 @@ void pcw_init_memory(int size)
 
 void	init_pcw8256(void)
 {
+	logerror("init pcw8256\n");
 	pcw_init_memory(256);
 	pcw_init_machine();
 }
@@ -1201,7 +1201,7 @@ static struct MachineDriver machine_driver_pcw =
 			readport_pcw,		   /* IOReadPort */
 			writeport_pcw,		   /* IOWritePort */
 			0,
-			1,
+			0,
 			0, 0,
 		},
 	},
@@ -1250,7 +1250,7 @@ static struct MachineDriver machine_driver_pcw9512 =
 			readport_pcw9512,		   /* IOReadPort */
 			writeport_pcw9512,		   /* IOWritePort */
 			0,
-			1,
+			0,
 			0, 0,
 		},
 	},
@@ -1309,6 +1309,14 @@ ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
 
+int pcw_floppy_init(int id)
+{
+	if (device_filename(IO_FLOPPY, id)==NULL)
+		return INIT_PASS;
+
+	return dsk_floppy_load(id);
+}
+
 static const struct IODevice io_pcw[] =
 {
 	{
@@ -1317,7 +1325,7 @@ static const struct IODevice io_pcw[] =
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
 		0,
-		dsk_floppy_load,	/* init */
+		pcw_floppy_init,	/* init */
 		dsk_floppy_exit,	/* exit */
 		NULL,				/* info */
 		NULL,				/* open */
