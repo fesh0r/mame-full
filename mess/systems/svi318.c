@@ -10,7 +10,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "includes/svi318.h"
 #include "includes/wd179x.h"
-#include "includes/basicdsk.h"
+#include "includes/svi318dsk.h"
 #include "printer.h"
 
 
@@ -39,7 +39,7 @@ static PORT_READ_START (readport)
 	{ 0x31, 0x31, wd179x_track_r },
 	{ 0x32, 0x32, wd179x_sector_r },
 	{ 0x33, 0x33, wd179x_data_r },
-	{ 0x34, 0x34, fdc_status_r },
+	{ 0x34, 0x34, svi318_fdc_status_r },
 #endif
     { 0x35, 0x83, svi318_null_r },
     { 0x84, 0x84, TMS9928A_vram_r },
@@ -376,7 +376,7 @@ SYSTEM_CONFIG_START(svi318)
 	CONFIG_DEVICE_CASSETTE			(1,	"cas\0",	svi318_cassette_init)
 	CONFIG_DEVICE_CARTSLOT			(1,	"rom\0",	svi318_load_rom, svi318_exit_rom, NULL)
 #ifdef SVI_DISK
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2,	"dsk\0",	svi318_floppy_init)
+	CONFIG_DEVICE_FLOPPY_SVI318DSK	(2,	"dsk\0",	svi318_floppy_init)
 #endif
 SYSTEM_CONFIG_END
 

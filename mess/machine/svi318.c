@@ -14,6 +14,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
+#include "includes/svi318dsk.h"
 #include "includes/svi318.h"
 #include "formats/svi_cas.h"
 #include "machine/8255ppi.h"
@@ -270,67 +271,137 @@ READ_HANDLER (svi318_psg_port_a_r)
 */
 
 #ifdef SVI_DISK
-static UINT8 fdc_status;
 
+// SVI-801 Floppy disk controller
+typedef struct
+{
+	UINT8 seldrive;
+	UINT8 irq_drq;
+} SVI318_FDC_STRUCT;
+
+
+static SVI318_FDC_STRUCT svi318_fdc_status;
+static UINT8 svi318_dsk_heads[2];
+
+/*************************************************************/
+/* Function: svi801_FDC_Callback                             */
+/* Purpose:  Callback routine for the FDC.                   */
+/*************************************************************/
 static void svi_fdc_callback(int param)
-	{
+{
     switch( param )
     	{
         case WD179X_IRQ_CLR:
-            fdc_status &= ~0x80;
+            svi318_fdc_status.irq_drq &= ~0x80;
             break;
         case WD179X_IRQ_SET:
-            fdc_status |= 0x80;
+            svi318_fdc_status.irq_drq |= 0x80;
             break;
         case WD179X_DRQ_CLR:
-            fdc_status &= ~0x40;
+            svi318_fdc_status.irq_drq &= ~0x40;
             break;
         case WD179X_DRQ_SET:
-            fdc_status |= 0x40;
+            svi318_fdc_status.irq_drq |= 0x40;
             break;
     	}
-	}
+}
 
+/*************************************************************/
+/* Function: svi801_Select_DriveMotor                        */
+/* Purpose:  Floppy drive and motor select.                  */
+/*************************************************************/
 WRITE_HANDLER (fdc_disk_motor_w)
-	{
+{
     UINT8 seldrive = 255;
 
     if (data == 0)
-    	{
+    {
 //        wd179x_stop_drive();
         return;
-    	}
+    }
     if (data & 2) seldrive=1;
 
     if (data & 1) seldrive=0;
 
-	if (seldrive > 3) return;
-	wd179x_set_drive (seldrive);
-	}
+    if (seldrive > 3) return;
 
+    svi318_fdc_status.seldrive = seldrive;
+    wd179x_set_drive (seldrive);
+}
+
+/*************************************************************/
+/* Function: svi801_Select_SideDensity                       */
+/* Purpose:  Floppy density and head select.                 */
+/*************************************************************/
 WRITE_HANDLER (fdc_density_side_w)
-	{
+{
+    UINT8 sec_per_track;
+    UINT16 sector_size;
+		
     if (data & 2)
         wd179x_set_side (1);
     else
         wd179x_set_side (0);
 
     if (data & 1)
-		wd179x_set_density (DEN_FM_LO);
+    {
+	wd179x_set_density (DEN_FM_LO);
+	sec_per_track =  18;
+	sector_size = 128;
+    }
+    else
+    {
+	wd179x_set_density (DEN_MFM_LO);
+	sec_per_track =  17;
+	sector_size = 256;
+    }
+    
+//  svi318dsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
+    svi318dsk_set_geometry(svi318_fdc_status.seldrive, 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0);
+
+//wd179x_set_geometry(UINT8 density, UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length, UINT8 first_sector_id);
+//	wd179x_set_geometry(svi801_FDC.Density, svi801_FDC.DriveSelect, TRACKS_DISK, svi801_DiskImage[svi801_FDC.DriveSelect].Heads, bytSectorsTrack, sector_size, 0, 0, 1);
+}
+
+READ_HANDLER (svi318_fdc_status_r)
+{
+	return svi318_fdc_status.irq_drq;
+}
+
+
+int svi318_floppy_init(int id, void *fp, int open_mode)
+{
+	int size;
+
+	if (fp == NULL)
+		return INIT_PASS;
+
+	if (fp && ! is_effective_mode_create(open_mode))
+		{
+		size = osd_fsize (fp);
+
+		switch (size)
+			{
+			case 172032:	// Single sided
+				svi318_dsk_heads[id] = 1;
+				break;
+			case 346112:	// Double sided
+				svi318_dsk_heads[id] = 2;
+				break;
+			default:
+				return INIT_FAIL;
+			}
+		}
 	else
-		wd179x_set_density (DEN_MFM_LO);
-	}
+		return INIT_FAIL;
 
-READ_HANDLER (fdc_status_r)
-	{
-	return fdc_status;
-	}
+	if (svi318dsk_floppy_init (id, fp, open_mode) != INIT_PASS)
+		return INIT_FAIL;
 
-int svi318_floppy_init (int id)
-	{
-	return 0;
-	}
+	svi318dsk_set_geometry (id, 40, svi318_dsk_heads[id], 17, 256, 1, 0);
 
+	return INIT_PASS;
+}
 #endif
 
 /*

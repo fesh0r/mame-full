@@ -3,7 +3,7 @@
 */
 
 /* disk emulation doesn't work yet! */
-/* #define SVI_DISK */
+#define SVI_DISK */
 
 typedef struct {
 	/* general */
@@ -43,8 +43,8 @@ int svi318_cassette_present (int id);
 #ifdef SVI_DISK
 WRITE_HANDLER (fdc_disk_motor_w);
 WRITE_HANDLER (fdc_density_side_w);
-READ_HANDLER (fdc_status_r);
+READ_HANDLER (svi318_fdc_status_r);
 #endif
 
-int svi318_floppy_init(int id);
+int svi318_floppy_init(int id, void *fp, int open_mode);
 
