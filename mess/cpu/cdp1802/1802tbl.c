@@ -313,6 +313,24 @@ static void cdp1802_instruction(void)
 				cdp1802_out_n(oper & 7);
 			break;
 		case 0x68:
+			/*
+
+				A note about INP 0 (0x68) from Tom Pittman's "A Short Course in Programming":
+
+				If you look carefully, you will notice that we never studied the opcode "68". 
+				That's because it is not a defined 1802 instruction. It has the form of an INP 
+				instruction, but 0 is not a defined input port, so if you execute it (try it!) 
+				nothing is input. "Nothing" is the answer to a question; it is data, and something 
+				will be put in the accumulator and memory (so now you know what the computer uses 
+				to mean "nothing"). 
+				
+				However, since the result of the "68" opcode is unpredictable, it should not be 
+				used in your programs. In fact, "68" is the first byte of a series of additional 
+				instructions for the 1804 and 1805 microprocessors. 
+
+				http://www.ittybittycomputers.com/IttyBitty/ShortCor.htm
+
+			*/
 			cdp1802_in_n(oper & 7);
 			break;
 		default:
@@ -362,7 +380,6 @@ static void cdp1802_instruction(void)
 				MW(R(2), T);
 				X = P;
 				R(2)--;
-				//logerror("cpu cdp1802 unsure mark(0x79) at %.4x PC=%x\n",oper, PC-1);
 				break;
 
 			case 0x7a: cdp1802_q(0);					break;
@@ -380,10 +397,10 @@ static void cdp1802_instruction(void)
 
 			case 0x7f: cdp1802_sub_carry(D, M(PC++));	break;
 
-			case 0xc0: cdp1802_long_branch(1);			break;
-			case 0xc1: cdp1802_long_branch(Q);			break;
-			case 0xc2: cdp1802_long_branch(D == 0);		break;
-			case 0xc3: cdp1802_long_branch(DF);			break;
+			case 0xc0: cdp1802_long_branch(1);		cdp1802_ICount -= 1; break;
+			case 0xc1: cdp1802_long_branch(Q);		cdp1802_ICount -= 1; break;
+			case 0xc2: cdp1802_long_branch(D == 0);	cdp1802_ICount -= 1; break;
+			case 0xc3: cdp1802_long_branch(DF);		cdp1802_ICount -= 1; break;
 
 			case 0xc4: /* NOP */ cdp1802_ICount -= 1;	break;
 
