@@ -25,39 +25,30 @@ T1	Mirror sync pulse
 #include "vidhrdw/generic.h"
 #include "includes/advision.h"
 
-static struct Memory_ReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
     { 0x0000, 0x03FF,  MRA_BANK1 },
     { 0x0400, 0x0fff,  MRA_ROM },
 	{ 0x2000, 0x23ff,  MRA_RAM },	/* MAINRAM four banks */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct Memory_WriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x0fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },	/* MAINRAM four banks */
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IO_ReadPort readport[] =
-{
+static PORT_READ_START( readport )
     { 0x00,     0xff,     advision_MAINRAM_r},
     { I8039_p1, I8039_p1, advision_getp1 },
     { I8039_p2, I8039_p2, advision_getp2 },
     { I8039_t0, I8039_t0, advision_gett0 },
     { I8039_t1, I8039_t1, advision_gett1 },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IO_WritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
     { 0x00,     0xff,     advision_MAINRAM_w },
     { I8039_p1, I8039_p1, advision_putp1 },
     { I8039_p2, I8039_p2, advision_putp2 },
-	{ -1 }	/* end of table */
-};
-
+PORT_END
 
 INPUT_PORTS_START( advision )
 	PORT_START      /* IN0 */

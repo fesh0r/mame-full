@@ -30,31 +30,26 @@
 #include "machine/sms.h"
 
 
-static struct Memory_ReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3FFF, MRA_RAM }, /* ROM bank #1 */
 	{ 0x4000, 0x7FFF, MRA_RAM }, /* ROM bank #2 */
 	{ 0x8000, 0xBFFF, MRA_RAM }, /* ROM bank #3 / On-cart RAM */
 	{ 0xC000, 0xDFFF, MRA_RAM }, /* RAM */
 	{ 0xE000, 0xFFFF, MRA_RAM }, /* RAM (mirror) */
-	{ -1 }
-};
+MEMORY_END
 
 extern void sms_system_w(int offset, int data);
 
-static struct Memory_WriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3FFF, MWA_NOP		}, /* ROM bank #1 */
 	{ 0x4000, 0x7FFF, MWA_NOP		}, /* ROM bank #2 */
 	{ 0x8000, 0xBFFF, sms_cartram_w }, /* ROM bank #3 / On-cart RAM */
 	{ 0xC000, 0xDFFF, sms_ram_w 	}, /* RAM */
 	{ 0xE000, 0xFFFB, sms_ram_w 	}, /* RAM (mirror) */
 	{ 0xFFFC, 0xFFFF, sms_mapper_w	}, /* Bankswitch control */
-	{ -1 }
-};
+MEMORY_END
 
-static struct IO_ReadPort sms_readport[] =
-{
+static PORT_READ_START( sms_readport )
 	{ 0xBE, 0xBE, sms_vdp_data_r },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_r },
 	{ 0xBF, 0xBF, sms_vdp_ctrl_r },
@@ -64,11 +59,9 @@ static struct IO_ReadPort sms_readport[] =
 	{ 0xC0, 0xC0, input_port_0_r },
 	{ 0xDD, 0xDD, sms_version_r },
 	{ 0xC1, 0xC1, sms_version_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IO_WritePort sms_writeport[] =
-{
+static PORT_WRITE_START( sms_writeport )
 	{ 0xBE, 0xBE, sms_vdp_data_w },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_w },
 	{ 0xBF, 0xBF, sms_vdp_ctrl_w },
@@ -80,11 +73,9 @@ static struct IO_WritePort sms_writeport[] =
 	{ 0xF1, 0xF1, YM2413_data_port_0_w	},
 	{ 0x3E, 0x3E, IOWP_NOP }, /* Unknown */
 	{ 0xDE, 0xDF, IOWP_NOP }, /* Unknown */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IO_ReadPort gg_readport[] =
-{
+static PORT_READ_START( gg_readport )
 	{ 0xBE, 0xBE, sms_vdp_data_r },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_r },
 	{ 0xBF, 0xBF, sms_vdp_ctrl_r },
@@ -95,19 +86,16 @@ static struct IO_ReadPort gg_readport[] =
 	{ 0xC1, 0xC1, input_port_1_r },
 	{ 0x00, 0x00, input_port_2_r },
 	{ 0x01, 0x05, gg_sio_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IO_WritePort gg_writeport[] =
-{
+static PORT_WRITE_START( gg_writeport )
 	{ 0xBE, 0xBE, sms_vdp_data_w },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_w },
 	{ 0xBF, 0xBF, sms_vdp_ctrl_w },
 	{ 0x7F, 0x7F, SN76496_0_w },
 	{ 0x00, 0x05, gg_sio_w },
 	{ 0x06, 0x06, gg_psg_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( sms )
 
