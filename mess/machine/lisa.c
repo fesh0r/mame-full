@@ -5,14 +5,14 @@
 	afterwards.
 
 	TODO :
+	* fix floppy write bug
 	* *** Boot and run LisaTest !!! ***
 	* finish MMU (does not switch to bank 0 on 68k trap)
 	* support hard disk to boot office system
-	* fix COPS support (what I assumed to be COPS reset line is NO reset line)
 	* finish keyboard/mouse support
 	* finish clock support
 	* write SCC support
-	* finish sound support (involves adding new features to the 6522 VIA core)
+	* finalize sound support (involves adding new features to the 6522 VIA core)
 	* fix warm-reset (I think I need to use a callback when 68k RESET instruction is called)
 	* write support for additionnal hardware (hard disk, etc...)
 	* emulate LISA1 (?)
@@ -38,6 +38,8 @@
 #include "machine/sonydriv.h"
 #include "machine/lisa.h"
 #include "m68k.h"
+
+#include <time.h>
 
 
 /*
@@ -304,11 +306,13 @@ static int fifo_head;
 static int fifo_tail;
 static int mouse_data_offset;	/* current offset for mouse data in FIFO (!) */
 
-static int COPS_reset_line;		/* RESET line for COPS (comes from VIA) */
+static int COPS_force_unplug;		/* force unplug keyboard/mouse line for COPS (comes from VIA) */
 
 static void *mouse_timer = NULL;	/* timer called for mouse setup */
 
 static int hold_COPS_data;	/* mirrors the state of CA2 - COPS does not send data until it is low */
+
+static int NMIcode;
 
 /* clock registers */
 static struct
@@ -325,10 +329,19 @@ static struct
 	int seconds1;	/* seconds (BCD : 0-59) */
 	int seconds2;
 	int tenths;		/* tenths of second (BCD : 0-9) */
+
+	int clock_write_ptr;	/* clock byte to be written next (-1 if clock write disabled) */
+	enum
+	{
+		clock_timer_disable = 0,
+		timer_disable = 1,
+		timer_interrupt = 2,	/* timer underflow generates interrupt */
+		timer_power_on = 3		/* timer underflow turns system on if it is off and gens interrupt */
+	} clock_mode;			/* clock mode */
 } clock_regs;
 
 
-/* sends data from the FIFO if possible */
+
 INLINE void COPS_send_data_if_possible(void)
 {
 	if ((! hold_COPS_data) && fifo_size && (! COPS_Ready))
@@ -392,32 +405,40 @@ static void scan_keyboard( void )
 	int keybuf;
 	UINT8 keycode;
 
-	for (i=0; i<8; i++)
-	{
-		keybuf = readinputport(i+2);
+	if (! COPS_force_unplug)
+		for (i=0; i<8; i++)
+		{
+			keybuf = readinputport(i+2);
 
-		if (keybuf != key_matrix[i])
-		{	/* if state has changed, find first bit which has changed */
-			/*logerror("keyboard state changed, %d %X\n", i, keybuf);*/
+			if (keybuf != key_matrix[i])
+			{	/* if state has changed, find first bit which has changed */
+				/*logerror("keyboard state changed, %d %X\n", i, keybuf);*/
 
-			for (j=0; j<16; j++)
-			{
-				if (((keybuf ^ key_matrix[i]) >> j) & 1)
+				for (j=0; j<16; j++)
 				{
-					/* update key_matrix */
-					key_matrix[i] = (key_matrix[i] & ~ (1 << j)) | (keybuf & (1 << j));
+					if (((keybuf ^ key_matrix[i]) >> j) & 1)
+					{
+						/* update key_matrix */
+						key_matrix[i] = (key_matrix[i] & ~ (1 << j)) | (keybuf & (1 << j));
 
-					/* create key code */
-					keycode = (i << 4) | j;
-					if (keybuf & (1 << j))
-					{	/* key down */
-						keycode |= 0x80;
+						/* create key code */
+						keycode = (i << 4) | j;
+						if (keybuf & (1 << j))
+						{	/* key down */
+							keycode |= 0x80;
+						}
+#if 0
+						if (keycode == NMIcode)
+						{	/* generate NMI interrupt */
+							cpu_set_irq_line(0, M68K_IRQ_7, PULSE_LINE);
+							cpu_irq_line_vector_w(0, M68K_IRQ_7, M68K_INT_ACK_AUTOVECTOR);
+						}
+#endif
+						COPS_queue_data(& keycode, 1);
 					}
-					COPS_queue_data(& keycode, 1);
 				}
 			}
 		}
-	}
 }
 
 /* handle mouse moves */
@@ -428,6 +449,9 @@ static void handle_mouse(int unused)
 
 	int diff_x = 0, diff_y = 0;
 	int new_mx, new_my;
+
+	/*if (COPS_force_unplug)
+		return;*/	/* ???? */
 
 	new_mx = readinputport(0);
 	new_my = readinputport(1);
@@ -530,57 +554,110 @@ static void read_COPS_command(int unused)
 		switch ((command & 0xF0) >> 4)
 		{
 		case 0x1:	/* write clock data */
+			if (clock_regs.clock_write_ptr != -1)
+			{
+				switch (clock_regs.clock_write_ptr)
+				{
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+					/* alarm */
+					clock_regs.alarm &= ~ (0xf << (4 * (4 - clock_regs.clock_write_ptr)));
+					clock_regs.alarm |= immediate << (4 * (4 - clock_regs.clock_write_ptr));
+					break;
+				case 5:
+					/* year */
+					clock_regs.years = immediate;
+					break;
+				case 6:
+					/* day */
+					clock_regs.days1 = immediate;
+					break;
+				case 7:
+					/* day */
+					clock_regs.days2 = immediate;
+					break;
+				case 8:
+					/* day */
+					clock_regs.days3 = immediate;
+					break;
+				case 9:
+					/* hours */
+					clock_regs.hours1 = immediate;
+					break;
+				case 10:
+					/* hours */
+					clock_regs.hours2 = immediate;
+					break;
+				case 11:
+					/* minutes */
+					clock_regs.minutes1 = immediate;
+					break;
+				case 12:
+					/* minutes */
+					clock_regs.minutes1 = immediate;
+					break;
+				case 13:
+					/* seconds */
+					clock_regs.seconds1 = immediate;
+					break;
+				case 14:
+					/* seconds */
+					clock_regs.seconds2 = immediate;
+					break;
+				case 15:
+					/* tenth */
+					clock_regs.tenths = immediate;
+					break;
+				}
+				clock_regs.clock_write_ptr++;
+				if (clock_regs.clock_write_ptr == 16)
+					clock_regs.clock_write_ptr = -1;
+			}
 
 			break;
 
 		case 0x2:	/* set clock mode */
-#if 0
 			if (immediate & 0x8)
 			{	/* start setting the clock */
+				clock_regs.clock_write_ptr = 0;
+			}
+			else
+			{	/* clock write disabled */
+				clock_regs.clock_write_ptr = -1;
 			}
 
 			if (! (immediate & 0x4))
 			{	/* enter sleep mode */
+				/* ... */
 			}
 			else
 			{	/* wake up */
+				/* should never happen */
 			}
 
-			switch (immediate & 0x3)
-			{
-			case 0x0:	/* clock/timer disable */
-
-				break;
-
-			case 0x1:	/* timer disable */
-
-				break;
-
-			case 0x2:	/* timer underflow generates interrupt */
-
-				break;
-
-			case 0x3:	/* timer underflow turns system on if it is off and gens interrupt */
-
-				break;
-			}
-#endif
+			clock_regs.clock_mode = immediate & 0x3;
 			break;
 
+#if 0
+		/* LED commands - not implemented in production LISAs */
 		case 0x3:	/* write 4 keyboard LEDs */
-
+			keyboard_leds = (keyboard_leds & 0x0f) | (immediate << 4);
 			break;
 
 		case 0x4:	/* write next 4 keyboard LEDs */
-
+			keyboard_leds = (keyboard_leds & 0xf0) | immediate;
 			break;
+#endif
 
 		case 0x5:	/* set high nibble of NMI character to nnnn */
-
+			NMIcode = (NMIcode & 0x0f) | (immediate << 4);
 			break;
 
 		case 0x6:	/* set low nibble of NMI character to nnnn */
-
+			NMIcode = (NMIcode & 0xf0) | immediate;
 			break;
 
 		case 0x7:	/* send mouse command */
@@ -657,42 +734,47 @@ static void reset_COPS(void)
 		timer_remove(mouse_timer);
 		mouse_timer = NULL;
 	}
+}
 
+static void unplug_keyboard(void)
+{
+	UINT8 cmd[2] =
 	{
-		UINT8 cmd1[2] =
-		{
-			0x80,	/* RESET code */
-			0xFD	/* keyboard unplugged */
-		};
+		0x80,	/* RESET code */
+		0xFD	/* keyboard unplugged */
+	};
 
-		COPS_queue_data(cmd1, 2);
-	}
+	COPS_queue_data(cmd, 2);
+}
 
-	{
-		UINT8 cmd2[2] =
-		{
-			0x80,	/* RESET code */
-			0x30	/* keyboard ID - US for now */
-		};
 
-		COPS_queue_data(cmd2, 2);
-	}
-
+static void plug_keyboard(void)
+{
 	/*
-		keyboard ID according to ROMs
+		possible keyboard IDs according to Lisa Hardware Manual and boot ROM source code
 
-		2 MSBs : "mfg code"
+		2 MSBs : "mfg code" (-> 0x80 for Keytronics, 0x00 for "APD")
 		6 LSBs :
 			0x0x : "old US keyboard"
+			0x3f : US keyboard
 			0x3d : Canadian keyboard
-			0x3x : US keyboard
 			0x2f : UK
 			0x2e : German
 			0x2d : French
 			0x27 : Swiss-French
 			0x26 : Swiss-German
+			unknown : spanish, US dvorak, italian & swedish
 	*/
+
+	UINT8 cmd[2] =
+	{
+		0x80,	/* RESET code */
+		0x3f	/* keyboard ID - US for now */
+	};
+
+	COPS_queue_data(cmd, 2);
 }
+
 
 /* called at power-up */
 static void init_COPS(void)
@@ -701,19 +783,6 @@ static void init_COPS(void)
 
 	/* read command every ms (don't know the real value) */
 	timer_pulse(TIME_IN_MSEC(1), 0, set_COPS_ready);
-
-	clock_regs.alarm = 0xfffffL;
-	clock_regs.years = 0;
-	clock_regs.days1 = 0;
-	clock_regs.days2 = 0;
-	clock_regs.days3 = 1;
-	clock_regs.hours1 = 0;
-	clock_regs.hours2 = 0;
-	clock_regs.minutes1 = 0;
-	clock_regs.minutes2 = 0;
-	clock_regs.seconds1 = 0;
-	clock_regs.seconds2 = 0;
-	clock_regs.tenths = 0;
 
 	reset_COPS();
 }
@@ -771,12 +840,25 @@ static READ_HANDLER(COPS_via_in_b)
 
 static WRITE_HANDLER(COPS_via_out_b)
 {
+	/* pull-up */
+	data |= (~ via_read(0, VIA_DDRA)) & 0x01;
+
 	if (data & 0x01)
-		COPS_reset_line = FALSE;
-	else if (! COPS_reset_line)
 	{
-		COPS_reset_line = TRUE;
-		reset_COPS();
+		if (COPS_force_unplug)
+		{
+			COPS_force_unplug = FALSE;
+			plug_keyboard();
+		}
+	}
+	else
+	{
+		if (! COPS_force_unplug)
+		{
+			COPS_force_unplug = TRUE;
+			unplug_keyboard();
+			//reset_COPS();
+		}
 	}
 }
 
@@ -1001,6 +1083,81 @@ void lisa_floppy_exit(int id)
 		sony_floppy_exit(id);
 }
 
+/* should save PRAM to file */
+/* TODO : save time difference with host clock, set default date, etc */
+void lisa_nvram_handler(void *file, int read_or_write)
+{
+	UINT8 *l_fdc_ram = memory_region(REGION_CPU2) + FDC_RAM_OFFSET;	/* fdc_ram is not necessarily set yet */
+
+
+	if (read_or_write)
+	{
+		if (file)
+		{
+#if 0
+			logerror("Writing PRAM to file\n");
+#endif
+			osd_fwrite(file, l_fdc_ram, 1024);
+		}
+	}
+	else
+	{
+		if (file)
+		{
+#if 0
+			logerror("Reading PRAM from file\n");
+#endif
+			osd_fread(file, l_fdc_ram, 1024);
+		}
+		else
+		{
+#if 0
+			logerror("trashing PRAM\n");
+#endif
+			memset(l_fdc_ram, 0, 1024);
+		}
+
+		{
+			/* Now we copy the host clock into the Lisa clock */
+			/* All these functions should be ANSI */
+			time_t cur_time = time(NULL);
+			struct tm expanded_time = *localtime(& cur_time);
+
+			clock_regs.alarm = 0xfffffL;
+			/* The clock count starts on 1st January 1980 */
+			clock_regs.years = (expanded_time.tm_year - 1980) & 0xf;
+			clock_regs.days1 = (expanded_time.tm_yday + 1) / 100;
+			clock_regs.days2 = ((expanded_time.tm_yday + 1) / 10) % 10;
+			clock_regs.days3 = (expanded_time.tm_yday + 1) % 10;
+			clock_regs.hours1 = expanded_time.tm_hour / 10;
+			clock_regs.hours2 = expanded_time.tm_hour % 10;
+			clock_regs.minutes1 = expanded_time.tm_min / 10;
+			clock_regs.minutes2 = expanded_time.tm_min % 10;
+			clock_regs.seconds1 = expanded_time.tm_sec / 10;
+			clock_regs.seconds2 = expanded_time.tm_sec % 10;
+			clock_regs.tenths = 0;
+		}
+		clock_regs.clock_mode = timer_disable;
+		clock_regs.clock_write_ptr = -1;
+	}
+
+
+#if 0
+	UINT32 temp32;
+	SINT8 temp8;
+	temp32 = (clock_regs.alarm << 12) | (clock_regs.years << 8) | (clock_regs.days1 << 4)
+	        | clock_regs.days2;
+
+	temp32 = (clock_regs.days3 << 28) | (clock_regs.hours1 << 24) | (clock_regs.hours2 << 20)
+	        | (clock_regs.minutes1 << 16) | (clock_regs.minutes2 << 12)
+	        | (clock_regs.seconds1 << 8) | (clock_regs.seconds2 << 4) | clock_regs.tenths;
+
+	temp8 = clock_mode;			/* clock mode */
+
+	temp8 = clock_regs.clock_write_ptr;	/* clock byte to be written next (-1 if clock write disabled) */
+#endif
+}
+
 /*void init_lisa1(void)
 {
 	lisa_model = lisa1;
@@ -1127,6 +1284,16 @@ void lisa_init_machine(void)
 	}
 }
 
+void lisa_exit_machine(void)
+{
+	if (mouse_timer)
+	{
+		/* disable mouse timer -> disable mouse */
+		timer_remove(mouse_timer);
+		mouse_timer = NULL;
+	}
+}
+
 int lisa_interrupt(void)
 {
 	static int frame_count = 0;
@@ -1135,65 +1302,76 @@ int lisa_interrupt(void)
 	{	/* increment clock every 1/10s */
 		frame_count = 0;
 
-		if ((++clock_regs.tenths) == 10)
+		if (clock_regs.clock_mode != clock_timer_disable)
 		{
-			clock_regs.tenths = 0;
-
-			if (clock_regs.alarm == 0)
+			if ((++clock_regs.tenths) == 10)
 			{
-				/* interrupt... */
-				clock_regs.alarm = 0xfffffL;
-			}
-			else
-			{
-				clock_regs.alarm--;
-			}
+				clock_regs.tenths = 0;
 
-			if ((++clock_regs.seconds2) == 10)
-			{
-				clock_regs.seconds2 = 0;
-
-				if ((++clock_regs.seconds1) == 6)
-				{
-					clock_regs.seconds1 = 0;
-
-					if ((++clock_regs.minutes2) == 10)
+				if (clock_regs.clock_mode != timer_disable)
+					if (clock_regs.alarm == 0)
 					{
-						clock_regs.minutes2 = 0;
-
-						if ((++clock_regs.minutes1) == 6)
+						/* generate reset (should cause a VIA interrupt...) */
+						UINT8 cmd[2] =
 						{
-							clock_regs.minutes1 = 0;
+							0x80,	/* RESET code */
+							0xFC	/* timer time-out */
+						};
+						COPS_queue_data(cmd, 2);
 
-							if ((++clock_regs.hours2) == 10)
+						clock_regs.alarm = 0xfffffL;
+					}
+					else
+					{
+						clock_regs.alarm--;
+					}
+
+				if ((++clock_regs.seconds2) == 10)
+				{
+					clock_regs.seconds2 = 0;
+
+					if ((++clock_regs.seconds1) == 6)
+					{
+						clock_regs.seconds1 = 0;
+
+						if ((++clock_regs.minutes2) == 10)
+						{
+							clock_regs.minutes2 = 0;
+
+							if ((++clock_regs.minutes1) == 6)
 							{
-								clock_regs.hours2 = 0;
+								clock_regs.minutes1 = 0;
 
-								clock_regs.hours1++;
-							}
-
-							if ((clock_regs.hours1*10 + clock_regs.hours2) == 24)
-							{
-								clock_regs.hours1 = clock_regs.hours2 = 0;
-
-								if ((++clock_regs.days3) == 10)
+								if ((++clock_regs.hours2) == 10)
 								{
-									clock_regs.days3 = 0;
+									clock_regs.hours2 = 0;
 
-									if ((++clock_regs.days2) == 10)
-									{
-										clock_regs.days2 = 0;
-
-										clock_regs.days1++;
-									}
+									clock_regs.hours1++;
 								}
 
-								if ((clock_regs.days1*100 + clock_regs.days2*10 + clock_regs.days3) ==
-									((clock_regs.years % 4) ? 366 : 367))
+								if ((clock_regs.hours1*10 + clock_regs.hours2) == 24)
 								{
-									clock_regs.days1 = clock_regs.days2 = clock_regs.days3 = 0;
+									clock_regs.hours1 = clock_regs.hours2 = 0;
 
-									clock_regs.years = (clock_regs.years + 1) & 0xf;
+									if ((++clock_regs.days3) == 10)
+									{
+										clock_regs.days3 = 0;
+
+										if ((++clock_regs.days2) == 10)
+										{
+											clock_regs.days2 = 0;
+
+											clock_regs.days1++;
+										}
+									}
+
+									if ((clock_regs.days1*100 + clock_regs.days2*10 + clock_regs.days3) ==
+										((clock_regs.years % 4) ? 366 : 367))
+									{
+										clock_regs.days1 = clock_regs.days2 = clock_regs.days3 = 0;
+
+										clock_regs.years = (clock_regs.years + 1) & 0xf;
+									}
 								}
 							}
 						}

@@ -4,12 +4,14 @@ void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 int lisa_floppy_init(int id);
 void lisa_floppy_exit(int id);
+extern void lisa_nvram_handler(void *file, int read_or_write);
 
 void init_lisa2(void);
 void init_lisa210(void);
 void init_mac_xl(void);
 
 void lisa_init_machine(void);
+void lisa_exit_machine(void);
 
 int lisa_interrupt(void);
 
