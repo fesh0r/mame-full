@@ -90,6 +90,7 @@ static WRITE_HANDLER ( coco3_pia1_pb_w );
 static WRITE_HANDLER ( d_pia1_pa_w );
 static READ_HANDLER (  d_pia1_cb1_r );
 static READ_HANDLER (  d_pia0_ca1_r );
+static READ_HANDLER (  d_pia0_cb1_r );
 static READ_HANDLER (  d_pia0_pa_r );
 static READ_HANDLER (  d_pia1_pa_r );
 static WRITE_HANDLER ( d_pia0_pa_w );
@@ -129,7 +130,7 @@ static struct pia6821_interface dragon_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, 0, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
@@ -146,7 +147,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, 0, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
@@ -681,6 +682,11 @@ int dragon_interrupt(void)
 static READ_HANDLER ( d_pia0_ca1_r )
 {
 	return 0;
+}
+
+static READ_HANDLER ( d_pia0_cb1_r )
+{
+	return rastertrack_scanline() == 262;
 }
 
 static READ_HANDLER ( d_pia1_cb1_r )
