@@ -792,7 +792,6 @@ void change_debugger_focus(int new_debugger_focus)
 /* Update the display. */
 void osd_update_video_and_audio(struct mame_display *display)
 {
-/*	static int showfps = 0, showfpstemp = 0; */
 	int skip_this_frame;
 	cycles_t curr;
 
@@ -1123,7 +1122,85 @@ int osd_get_brightness(void)
 void osd_save_snapshot(struct mame_bitmap *bitmap, 
 		const struct rectangle *bounds)
 {
-   save_screen_snapshot(bitmap, bounds);
+	struct rectangle newbounds;
+	struct mame_bitmap *copy;
+	int x, y, w, h, t;
+
+	/* if we can send it in raw, do it */
+	if (!blit_swapxy && !blit_flipx && !blit_flipy)
+	{
+		save_screen_snapshot(bitmap, bounds);
+		return;
+	}
+
+	/* allocate a copy */
+	w = blit_swapxy ? bitmap->height : bitmap->width;
+	h = blit_swapxy ? bitmap->width : bitmap->height;
+	copy = bitmap_alloc_depth(w, h, bitmap->depth);
+	if (!copy)
+		return;
+	
+	/* populate the copy */
+	for (y = bounds->min_y; y <= bounds->max_y; y++)
+		for (x = bounds->min_x; x <= bounds->max_x; x++)
+		{
+			int tx = x, ty = y;
+			
+			/* apply the rotation/flipping */
+			if (blit_swapxy)
+			{
+				t = tx; tx = ty; ty = t;
+			}
+			if (blit_flipx)
+				tx = copy->width - tx - 1;
+			if (blit_flipy)
+				ty = copy->height - ty - 1;
+			
+			/* read the old pixel and copy to the new location */
+			switch (copy->depth)
+			{
+				case 15:
+				case 16:
+					*((UINT16 *)copy->base + ty * copy->rowpixels + tx) =
+							*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
+					break;
+				
+				case 32:
+					*((UINT32 *)copy->base + ty * copy->rowpixels + tx) =
+							*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
+					break;
+			}
+		}
+	
+	/* compute the oriented bounds */
+	newbounds = *bounds;
+
+	/* apply X/Y swap first */
+	if (blit_swapxy)
+	{
+		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
+		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
+	}
+	
+	/* apply X flip */
+	if (blit_flipx)
+	{
+		t = copy->width - newbounds.min_x - 1;
+		newbounds.min_x = copy->width - newbounds.max_x - 1;
+		newbounds.max_x = t;
+	}
+	
+	/* apply Y flip */
+	if (blit_flipy)
+	{
+		t = copy->height - newbounds.min_y - 1;
+		newbounds.min_y = copy->height - newbounds.max_y - 1;
+		newbounds.max_y = t;
+	}
+	
+	/* now save the copy and nuke it when done */
+	save_screen_snapshot(copy, &newbounds);
+	bitmap_free(copy);
 }
 #endif
 
