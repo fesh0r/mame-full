@@ -1907,23 +1907,179 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=lisa2
+$bio
+Apple Lisa
+
+
+Usage :
+
+This driver is still buggy. Neither the hard drive nor the serial port are supported. There are
+many other bugs remaining with MMU emulation. Only Macworks will boot.
+
+When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail :
+you must discard the error message by selecting the 'Ignore' or 'Start-up from...' button. Then,
+you get a boot device menu. Select the floppy drive unit, since it is the only available device.
+If the mouse temporarily refuses to work, you may use the keyboard shortcuts Apple+2 and Apple+3
+(the Apple key should be mapped to Control ; you must use the numeric keys on the main keyboard, not
+on the numeric keypad). If the computer does boot, you will see an icon representing a weird floppy
+disk with a cross (maybe it actually represents a twiggy disk).
+
+
+History and Trivia :
+
+The Lisa project started in the summer of 1979. At the time, the idea was merely designing
+a powerful business computer, with scheduled release in march 1981. After his legendary visit
+to the Xerox PARC research center, Steve Jobs realized the GUI was the future of computing.
+So, in March 1980, a GUI was added to the Lisa specs.
+
+Despite huge support from Apple, the project got behind schedule, and Lisa was introduced
+on January, 19th, 1983.
+
+
+The Lisa was an impressive computer for its time. It had TONS of memory (1Mb on Lisa 1),
+a high-resolution graphic display, and it was fairly expandable. Its OS (weirdly called
+"Lisa 7/7 Office System") featured a complete GUI, and full preemptive multitasking
+with memory protection (something neither Windows 98 nor MacOS offer !).
+Its 68000 CPU was one of the fastest microprocessor in its time.
+
+Unfortunately, Lisa was never too successful. It was quite expensive, and relatively few units were
+sold (possibly about 10,000 Lisa 1 and 80,000 Lisa 2). Little software was developped for it.
+Also, it was extremely ressource hungry : it was reportedly slow, and its memory requirements were
+the major cause for its high price.
+
+
+On 24th January 1984, Lisa 1 was replaced by Lisa 2, with 3.5" floppies and several small
+hardware changes. In January 1985, Lisa 2 was replaced by Macintosh XL, which had a modified video
+hardware, and used a variant of the Macintosh system instead of the 7/7 Lisa OS. Mac XL was
+discontinued in May 1985 (although it was still available at much later dates). Rumor has it that
+an enhanced, 68020-based, Lisa was in development when Apple discontinued the Lisa.
+
+Note that, contrary to a common belief, the Macintosh is not a mere offspring of the Lisa, since
+both projects were led parallelly. While the Macintosh borrowed many ideas from the Lisa project
+(which had more financial resources), the reverse is often true, too : for instance, the Macintosh
+included a GUI from the beginning.
+
+
+The significance of Lisa :
+
+Lisa is a milestone in the history of computing. Arguably, the Xerox PARC research center invented
+most GUI concepts (along with Object-Oriented programming and Ethernet) 10 years before Lisa was
+introduced. However, although Xerox research was public, and some Xerox Altos were actually sold,
+or given to universities, these experiments remained little known, and raised little interest.
+I guess this was because computing was mostly the field of highly-trained professionnals who did
+not care about ease of use (you know, the same kind of guys who laughed at Macintosh and worshipped
+the early IBM-PCs). So, Lisa made the world aware that GUI could exist, all the more since Apple
+was a major computer maker. Also, Lisa (along with Macintosh, Atari ST and Commodore Amiga)
+introduced GUI to hobbyists and home computer users, which enabled GUI to live.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mac512ke
+$bio
+Apple Macintosh 512ke
+
+
+History and Trivia :
+
+Introduced on 14th April 1986, the Macintosh 512ke was essentially a Macintosh 512k with
+the same 128k ROMs and double-sided 800 KB internal floppy drive as the Mac Plus.
+
+It was sold as a poor man's Macintosh. Also, any existing Macintosh 512k could be upgraded to 512ke.
+(They could be upgraded to a Mac Plus, too, but this involved changing the motherbord.)
+
+Since this model was discontinued a few months later (in August 1986), it may have just been
+a way for Apple to get rid of its excess Macintosh 512 motherboard. Or maybe they realized that
+512 kb of RAM were not enough to run real-world Macintosh programs.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=macplus
 $bio
 Apple Macintosh Plus
 
 
-History and Trivia:
+History and Trivia :
 
-The Macintosh Plus was the first real improvement of the Macintosh 128 (The Macintosh 512 was 
-only a Mac 128 with 512 KB RAM). It had a lot of new features: the extended ROM held the new 
-version of MAC OS : enhanced graphic libraries, drivers for hard disk and external floppy disk 
-units, SCSI bus and AppleTalk network and the new files manager: HFS (Hierarchical File System).
+Introduced on 16th January 1986, the Macintosh Plus was the first real improvement of
+the original Macintosh 128k (The Macintosh 512k was just a Mac 128k with 512 kb of RAM). It had
+several new features.
 
-The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 
-KB for the 128). It has an enhanced keyboard with a numeric pad and last but not least, it 
-had a SCSI 1 (1.5 MB/s) interface. This computer was replaced in 1988 by the new Macintosh 
-series: the Macintosh SE and the Macintosh II.
+The extended ROM held the new version of operating system : it supported hard disk units,
+the SCSI bus, and the new file system : HFS (Hierarchical File System), along with many other
+new features (Time Manager...). Additionnally, various routines and managers previously located
+in RAM (Appletalk manager, RAM Serial Driver, Standard File Package...) had been moved to ROM.
 
+The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 KB
+for the Macintosh 128k). It came with 1 Mb of RAM, and could easily be expanded to 4 Mb, using
+standard 1Mb SIMMs. It had an enhanced keyboard with a numeric pad and last but not least, it had
+a SCSI 1 interface which allowed to connect several high speed peripherals (maximal transfer rate of
+312 kbyte/s on Mac Plus - which is incredibly inefficient) such as hard disks and scanners.
+
+Although the Mac Plus was made obsolete in march 1987 by the new Macintosh series (Macintosh SE
+and the Macintosh II), it remained in production as a cheaper alternative until the introduction
+of Macintosh Classic on 15th october 1990. This makes Macintosh Plus the longest lived Macintosh
+ever produced.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=macxl
+$bio
+Apple Macintosh XL
+
+
+Usage :
+
+This driver is still buggy. Neither the hard drive nor the serial port are supported. There are
+many other bugs remaining with MMU emulation. Only Macworks will boot.
+
+When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail :
+you must discard the error message by selecting the 'Ignore' or 'Start-up from...' button. Then,
+you get a boot device menu. Select the floppy drive unit, since it is the only available device.
+If the mouse temporarily refuses to work, you may use the keyboard shortcuts Apple+2 and Apple+3
+(the Apple key should be mapped to Control ; you must use the numeric keys on the main keyboard, not
+on the numeric keypad). If the computer does boot, you will see an icon representing a weird floppy
+disk with a cross (maybe it actually represents a twiggy disk).
+
+If you boot MacWorks, you should eventually see a floppy disk icon with a question mark. At this
+point, it is time to insert a bootable Macintosh image : to do so, use the file manager or whatever
+osd equivalent you may have.
+
+
+History and Trivia :
+
+In late 1984, Apple's financial health was questionable, and Apple came to the conclusion that
+it did not make sense to support both Lisa and Macintosh.
+
+Therefore, on 1st January 1985, Apple discontinued the Lisa. However, they released
+a program named MacWorks, which enabled a Lisa to run the Macintosh operating system.
+
+The same day, they introduced a new variation of the Lisa hardware, named Macintosh XL,
+which was a Lisa 2 whose video hardware was modified in order for it to display square pixels.
+Additionnally, existing Lisas could be upgraded to Macintosh XL. This modification improved
+the appearance of Macintosh programs ; however, it prevented the Macintosh XL from running
+the Lisa operating system, or any Lisa program, for that matter. Needless to say, it would have
+been very easy to patch the Lisa OS to support the new video resolution : this was simply not done,
+since Apple had discontinued the Lisa OS.
+
+Macintosh XL was not very successful : Apple discontinued it in May 1985, and the remaining
+stocks were sold to another company (Sun Remarketing) which did manage to sell them.
+
+Though ill-fated, the Macintosh XL was an interesting machine. It was slow, slower than even
+the original Macintosh, but it supported up to 2 Megabytes of RAM (while the original Macintosh
+came with 128kb or 512kb only), had a larger screen, supported hard drives units (which
+the original Macintosh could not do until the Hard Disk 20 was introduced), and it had three
+expansion ports (it was thus the first expandable Macintosh, more than 2 years before Macintosh II
+and Macintosh SE were introduced). A number of these was bought by developpers who needed
+the hard drive and appreciated the larger screen (anyway, Macintosh development was originally done
+on Lisa, so the transition from Lisa Workshop on Lisa to Macintosh Programmer Workshop on
+Macintosh XL was a natural one).
 
 $end
 
