@@ -996,7 +996,7 @@ static LPCTSTR DevView_GetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 		if (s)
 		{
 			// extract the filename, minus the comma
-			nBufferLength = MIN(nBufferLength, (s - pszSelection + 1));
+			nBufferLength = MIN(nBufferLength, s - pszSelection);
 			memcpy(pszBuffer, pszSelection, nBufferLength * sizeof(*pszSelection));
 			if (nBufferLength)
 				pszBuffer[nBufferLength] = '\0';

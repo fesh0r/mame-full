@@ -25,6 +25,9 @@ User Interface Changes:
 - [Windows GUI] Fixed a bug that could caused file filters to contain garbled
   text.  (bug #680) [Nick Westgate, Nate Woods]
 
+- [Windows GUI] Fixed a bug that could cause trailing '|' characters in the
+  device view.  [Nate Woods]
+
 
 
 Imgtool Changes:
