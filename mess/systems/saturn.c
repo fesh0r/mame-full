@@ -1,5 +1,6 @@
 /*
-   Sega Saturn Driver - Copyright James Forshaw (TyRaNiD) July 2001
+   Sega Saturn Driver
+   Copyright James Forshaw (TyRaNiD@totalise.net) July 2001
 
    Almost total rewrite. Uses the basic memory model from
    old saturn driver by Juergen Buchmueller <pullmoll@t-online.de>,
@@ -87,6 +88,7 @@
 
    -= UPDATES =-
 
+   01/07/2001 - Added priliminary vdp2 drawing code.
    25/06/2001 - Added register names for vdp1/2. Not included yet. Added support for vdp2 reg
    read/write. Added all my bios images.
    23/06/2001 - Had to modify sh2.c to get interrupts working. Bios starts resquesting pad data
@@ -108,7 +110,8 @@
 #define VERBOSE 0
 #endif
 
-#define DISP_MEM 1 /* define to log memory access to all non work ram areas */
+#define DISP_MEM 0 /* define to log memory access to all non work ram areas */
+#define DISP_VDP1 0 /* define to log vdp1 command execution */
 
 #if VERBOSE
 #define LOG(x)  logerror x
@@ -156,7 +159,7 @@ static UINT32 *mem; /* Base memory pointer */
 #endif
 
 /* Memory handlers */
-/* Read handler get offset (byte offset / 4) and mem_mask (all bytes required are 0) */
+/* Read handler get offset (byte offset / 4) and mem_mask (all bits required are 0) */
 /* Write handler get data, offset and mem_mask */
 
 READ32_HANDLER( saturn_rom_r )	  /* ROM UNUSED */
@@ -258,7 +261,7 @@ READ32_HANDLER( saturn_vdp2_ram_r )
   offs_t ea;
 
 #if DISP_MEM
-  logerror("vdp2ram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
+  logerror("vdp2ram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
   ea = (SATURN_VDP2_RAM_BASE / 4) + offset;
@@ -270,7 +273,7 @@ WRITE32_HANDLER( saturn_vdp2_ram_w )
   offs_t ea;
 
 #if DISP_MEM
-  logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
+  logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
   ea = (SATURN_VDP2_RAM_BASE / 4) + offset;
@@ -334,7 +337,7 @@ READ32_HANDLER( saturn_color_ram_r )
   offs_t ea;
 
 #if DISP_MEM
-  logerror("colorram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
+  logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
   ea = (SATURN_COLOR_RAM_BASE / 4) + offset;
@@ -346,7 +349,7 @@ WRITE32_HANDLER( saturn_color_ram_w )
   offs_t ea;
 
 #if DISP_MEM
-  logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
+  logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
   ea = (SATURN_COLOR_RAM_BASE / 4) + offset;
@@ -462,6 +465,11 @@ void smpc_execcomm(int commcode)
 	case 0x6 :
 	  logerror("smpc - Sound ON (0x6)\n");
 	  break;
+	case 0xD :
+	  logerror("smpc - Reset System (0xD)\n");
+	  cpu_set_reset_line(0,PULSE_LINE);
+	  cpu_set_reset_line(1,PULSE_LINE);
+	  break;
 	}
       smpc_state.smpc_regs[OREG(31)] = commcode;
       smpc_state.smpc_regs[STATUSF]  = 0;
@@ -511,21 +519,21 @@ READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 		  {
 		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSR : logerror("smpc_r SR - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSR : logerror("smpc_r SR      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSF : logerror("smpc_r SF - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSF : logerror("smpc_r SF      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case PDR1    : logerror("smpc_r PDR1 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR1    : logerror("smpc_r PDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case DDR1    : logerror("smpc_r DDR1 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR1    : logerror("smpc_r DDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case PDR2    : logerror("smpc_r PDR2 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR2    : logerror("smpc_r PDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case DDR2    : logerror("smpc_r DDR2 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR2    : logerror("smpc_r DDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case IOSEL   : logerror("smpc_r IOSEL - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case IOSEL   : logerror("smpc_r IOSEL   - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case EXEL    : logerror("smpc_r EXEL - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case EXEL    : logerror("smpc_r EXEL    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
 		  default      : logerror("smpc_r offset=%08lX data=%02lX - PC=%08lX\n",ea,d,cpu_get_reg(SH2_PC));
 		  }
@@ -581,21 +589,21 @@ WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 		  {
 		  case COMMREG : logerror("smpc_w COMMREG - command = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSR : logerror("smpc_w SR - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSR : logerror("smpc_w SR      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSF : logerror("smpc_w SF - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSF : logerror("smpc_w SF      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case PDR1    : logerror("smpc_w PDR1 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR1    : logerror("smpc_w PDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case DDR1    : logerror("smpc_w DDR1 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR1    : logerror("smpc_w DDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case PDR2    : logerror("smpc_w PDR2 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR2    : logerror("smpc_w PDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case DDR2    : logerror("smpc_w DDR2 - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR2    : logerror("smpc_w DDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case IOSEL   : logerror("smpc_w IOSEL - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case IOSEL   : logerror("smpc_w IOSEL   - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
-		  case EXEL    : logerror("smpc_w EXEL - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
 		  default      : logerror("smpc_w offset=%08lX data=%02lX - Pc=%08lX\n",ea,d,cpu_get_reg(SH2_PC));
 		  }
@@ -636,68 +644,67 @@ WRITE32_HANDLER( saturn_cs2_w )   /* CS2 */
 
 /* SCU Handler */
 
-static const char *scu_regnames[0x34] = {"DMA0 Read",     /* 0x00 */
-					 "DMA0 Write",    /* 0x04 */
-					 "DMA0 Count",    /* 0x08 */
-					 "DMA0 Addr add", /* 0x0C */
-					 "DMA0 Enable",   /* 0x10 */
-					 "DMA0 Mode",     /* 0x14 */
-					 "X18",           /* 0x18 */
-					 "X1C",           /* 0x1C */
-					 "DMA1 Read",     /* 0x20 */
-					 "DMA1 Write",    /* 0x24 */
-					 "DMA1 Count",    /* 0x28 */
-					 "DMA1 Addr add", /* 0x2C */
-					 "DMA1 Enable",   /* 0x30 */
-					 "DMA1 Mode",     /* 0x34 */
-					 "X38",           /* 0x38 */
-					 "X3C",           /* 0x3C */
-					 "DMA2 Read",     /* 0x40 */
-					 "DMA2 Write",    /* 0x44 */
-					 "DMA2 Count",    /* 0x48 */
-					 "DMA2 Addr add", /* 0x4C */
-					 "DMA2 Enable",   /* 0x50 */
-					 "DMA2 Mode",     /* 0x54 */
-					 "X58",           /* 0x58 */
-					 "X5C",           /* 0x5C */
-					 "X60",           /* DMA force stop. Doesn't exist */
-					 "X64",
-					 "X68",
-					 "X6C",
-					 "X70",
-					 "X74",
-					 "X78",
-					 "X7C",
-					 "DSP Ctrl Port",
-					 "DSP Prog RAM",
-					 "DSP Data Addr",
-					 "DSP Data Data",
+static const char *scu_regnames[0x34] = {"DMA0 Read     ",     /* 0x00 */
+					 "DMA0 Write    ",     /* 0x04 */
+					 "DMA0 Count    ",     /* 0x08 */
+					 "DMA0 Addr add ",     /* 0x0C */
+					 "DMA0 Enable   ",     /* 0x10 */
+					 "DMA0 Mode     ",     /* 0x14 */
+					 "X18           ",     /* 0x18 */
+					 "X1C           ",     /* 0x1C */
+					 "DMA1 Read     ",     /* 0x20 */
+					 "DMA1 Write    ",     /* 0x24 */
+					 "DMA1 Count    ",     /* 0x28 */
+					 "DMA1 Addr add ",     /* 0x2C */
+					 "DMA1 Enable   ",     /* 0x30 */
+					 "DMA1 Mode     ",     /* 0x34 */
+					 "X38           ",     /* 0x38 */
+					 "X3C           ",     /* 0x3C */
+					 "DMA2 Read     ",     /* 0x40 */
+					 "DMA2 Write    ",     /* 0x44 */
+					 "DMA2 Count    ",     /* 0x48 */
+					 "DMA2 Addr add ",     /* 0x4C */
+					 "DMA2 Enable   ",     /* 0x50 */
+					 "DMA2 Mode     ",     /* 0x54 */
+					 "X58           ",     /* 0x58 */
+					 "X5C           ",     /* 0x5C */
+					 "X60           ",     /* DMA force stop. Doesn't exist */
+					 "X64           ",
+					 "X68           ",
+					 "X6C           ",
+					 "X70           ",
+					 "X74           ",
+					 "X78           ",
+					 "X7C           ",
+					 "DSP Ctrl Port ",
+					 "DSP Prog RAM  ",
+					 "DSP Data Addr ",
+					 "DSP Data Data ",
 					 "Timer0 Compare",
-					 "Timer1 Set",
-					 "Timer1 Mode",
-					 "X9C",
-					 "Int Mask",
-					 "Int Stat",
-					 "A-Bus IntAck",
-					 "XAC",
-					 "A-Bus Set 0",
-					 "A-Bus Set 1",
-					 "A-Bus Refresh",
-					 "XBC",
-					 "XC0",
-					 "SDRAM select",
-					 "SCU Version",
-					 "XCC"};
+					 "Timer1 Set    ",
+					 "Timer1 Mode   ",
+					 "X9C           ",
+					 "Int Mask      ",
+					 "Int Stat      ",
+					 "A-Bus IntAck  ",
+					 "XAC           ",
+					 "A-Bus Set 0   ",
+					 "A-Bus Set 1   ",
+					 "A-Bus Refresh ",
+					 "XBC           ",
+					 "XC0           ",
+					 "SDRAM select  ",
+					 "SCU Version   ",
+					 "XCC           "};
 
 
 UINT32 scu_regs[0x34]; /* SCU register block */
-/*
 static const char *int_names[16] = {
   "VBlank-IN", "VBlank-OUT", "HBlank-IN", "Timer 0",
   "Timer 1", "DSP", "Sound", "SMPC", "PAD",
   "DMA Level 2", "DMA Level 1", "DMA Level 0",
   "DMA Illegal", "Sprite END", "Illegal", "A-Bus" };
-*/
+
 enum
 
 {
@@ -729,11 +736,11 @@ void reset_scu(void)
 READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
 
 {
-  logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],cpu_get_reg(SH2_PC));
+  // logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],cpu_get_reg(SH2_PC));
   return scu_regs[offset] & ~mem_mask;
 }
 
-/*
+
 static int scu_irq_levels[32] =
 {
     15, 14, 13, 12, 11, 10,  9,  8,
@@ -741,7 +748,7 @@ static int scu_irq_levels[32] =
      7,  7,  7,  7,  4,  4,  4,  4,
      1,  1,  1,  1,  1,  1,  1,  1
 };
-*/
+
 
 static void scu_set_imask(void)
 {
@@ -770,8 +777,8 @@ void scu_pulse_interrupt(int irq)
         if ((scu_regs[0x28] & (1 << irq)) == 0)
         {
             LOG((" - pulsed"));
-            cpu_irq_line_vector_w(0, /*scu_irq_levels[irq]*/ irq, 0x40 + irq); /* The fact that this works is amazing */
-            cpu_set_irq_line(0, /*scu_irq_levels[irq]*/ irq, HOLD_LINE);
+            cpu_irq_line_vector_w(0, irq, 0x40 + irq); /* The fact that this works is amazing */
+            cpu_set_irq_line(0, irq, HOLD_LINE);
         }
         else
         {
@@ -783,7 +790,7 @@ void scu_pulse_interrupt(int irq)
 
 WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-  logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
+  //logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
   if(offset == 0x28)
     scu_set_imask();
@@ -950,33 +957,147 @@ WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
   logerror("dsp_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
 }
 
+/********************************************************
+ *  VDP1                                                *
+ ********************************************************/
+
+static struct osd_bitmap *saturn_bitmap[2];
+int video_w; /* indicates which bitmap is currently displayed and which is drawn */
+
 struct _vdp1_state
 
 {
   UINT16 vdp1_regs[0xC];
+  UINT32 localx,localy;  /* Local x and y coordinates */
 } vdp1_state;
-/*
+
 static const char *vdp1_regnames[] =
 
 {
-  "TV Mode Selection",
-  "Frame Buffer Switch",
-  "Plot Trigger",
-  "Erase/Write Data",
-  "Erase/Write Upper Left coord",
+  "TV Mode Selection            ",
+  "Frame Buffer Switch          ",
+  "Plot Trigger                 ",
+  "Erase/Write Data             ",
+  "Erase/Write Upper Left coord ",
   "Erase/Write Lower Right coord",
-  "Plot Abnormal End",
-  "Reserved",
-  "Transfer End Status",
-  "Last Operation Addr",
-  "Current Operation Addr",
-  "Mode Status"
+  "Plot Abnormal End            ",
+  "Reserved                     ",
+  "Transfer End Status          ",
+  "Last Operation Addr          ",
+  "Current Operation Addr       ",
+  "Mode Status                  "
 };
-*/
+
 void reset_vdp1(void)
 
 {
   memset(vdp1_state.vdp1_regs,0,0xC<<1);
+}
+
+void cmd0(int comm, unsigned short *fb)
+
+{
+  UINT32 *vram;
+  UINT32 temp;
+  short x,y;
+  UINT32 color_mode;
+  UINT32 color_bank;
+  UINT32 char_addr;
+  UINT32 width,height;
+  int loopx,loopy;
+
+  vram = &mem[SATURN_VDP1_RAM_BASE/4];
+
+  color_mode = (vram[comm*8 + 1] >> 19) & 0x7; /* Pull out paramter infomation */
+  color_bank = (vram[comm*8 + 1] & 0xFFFF);
+  char_addr  = (vram[comm*8 + 2] >> 16) * 8;
+  width      = ((vram[comm*8 + 2] & 0xFFFF) >> 8) * 8;
+  height     = ((vram[comm*8 + 2] & 0xFFFF) & 0xFF);
+  temp       = vram[comm*8 + 3];
+  x = (short) (temp >> 16); /* Cast as short to preserve sign */
+  y = (short) (temp & 0xFFFF);
+
+  logerror("Colour Mode  = %d\n",color_mode);
+  logerror("Colour Bank  = %08lX\n",color_bank);
+  logerror("Char Addr    = %08lX\n",char_addr);
+  logerror("Width,Height = %ld,%ld\n",width,height);
+  logerror("X,Y = %d,%d\n",x,y);
+
+  vram = vram + (char_addr / 4);
+
+  if(color_mode == 5)
+    {
+      for(loopy = 0;loopy < height;loopy++)
+	{
+	  for(loopx = 0;loopx < width;loopx+=2)
+	    {
+	      UINT32 colour;
+
+	      colour = *vram++;
+	      if(colour >> 16)
+		{
+		  plot_pixel(saturn_bitmap[video_w],loopx+vdp1_state.localx+x,
+			     loopy+vdp1_state.localy+y,Machine->pens[(colour>>16) & 0x7FFF]);
+		}
+	      if(colour & 0xFFFF)
+		{
+		  plot_pixel(saturn_bitmap[video_w],loopx+vdp1_state.localx+x+1,
+			     loopy+vdp1_state.localy+y,Machine->pens[colour&0x7FFF]);
+		}
+	    }
+	}
+    }
+}
+
+void execute_vdp1(void)
+
+     /* Execute the vdp1 command set */
+
+{
+  UINT32 *base;
+  UINT32 command;
+  UINT32 temp;
+  unsigned short fb[512*256];
+
+  logerror("vdp1 execute command\n");
+
+  base = &mem[SATURN_VDP1_RAM_BASE/4];
+  command = 0;
+
+  while(!(*base & 0x80000000))
+    {
+      switch((*base >> 16) & 0xF) /* Select command code */
+	{
+	case 0 : logerror("%08lX - Normal Sprite Draw\n",command);
+	  cmd0(command,fb);
+	  break;
+	case 1 : logerror("%08lX - Scaled Sprite Draw\n",command);
+	  break;
+	case 2 : logerror("%08lX - Distorted Sprite Draw\n",command);
+	  break;
+	case 4 : logerror("%08lX - Polygon Draw\n",command);
+	  break;
+	case 5 : logerror("%08lX - Polyline Draw\n",command);
+	  break;
+	case 6 : logerror("%08lX - Line Draw\n",command);
+	  break;
+	case 8 : logerror("%08lX - Set User Clip\n",command);
+	  break;
+	case 9 :
+	  temp = *(base + 5);
+	  logerror("%08lX - Set System Clip (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
+	  break;
+	case 10:
+	  temp = *(base + 3);
+	  logerror("%08lX - Local Coordinates (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
+	  vdp1_state.localx = temp >> 16;
+	  vdp1_state.localy = temp & 0xFFFF;
+	  break;
+	}
+      base += (0x20/4);
+      command++;
+    }
+  logerror("vdp1 execute end\n");
 }
 
 READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
@@ -986,7 +1107,15 @@ READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
   ret_val = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
   ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
 
-  logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);
+  /* logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
+  if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
+    {
+      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],ret_val & 0xFFFF,cpu_get_reg(SH2_PC));
+    }
+  if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
+    {
+      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],ret_val >> 16,cpu_get_reg(SH2_PC));
+    }
 
   return SWAP_WORDS(ret_val);
 }
@@ -995,7 +1124,15 @@ WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
 {
   UINT32 olddata;
 
-  logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
+  /*  logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
+  if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
+    {
+      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],data >> 16,cpu_get_reg(SH2_PC));
+    }
+  if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
+    {
+      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],data & 0xFFFF,cpu_get_reg(SH2_PC));
+    }
 
   olddata = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
   olddata &= SWAP_WORDS(mem_mask);
@@ -1004,12 +1141,14 @@ WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
   *(((UINT32 *) vdp1_state.vdp1_regs) + offset) = olddata;
 }
 
+/********************************************************
+ *  VDP2                                                *
+ ********************************************************/
+
 #define SCREEN_LINES 224 /* How many lines are actually displayed */
 #define MAX_LINES 256 /* Max lines including blanked - NTSC res - PAL higher*/
 #define FRAME_TIME 477273 /* Clock cycles per frame (~60Hz) */
 #define LINE_TIME  (FRAME_TIME/MAX_LINES)   /* Approx cycles per line (~FRAME_TIME / 512) */
-
-/* Video Display Processor 2 */
 
 struct _vdp2_state
 
@@ -1021,156 +1160,155 @@ void *HBlankTimer;
 UINT32 HBlankCount;
 UINT32 InVBlank;   /* Are we in vertical blanking ? */
 void timer_hblank(int param);
-/*
+
 static const char *vdp2_regnames[] =
 
 {
-  "TV Screen Mode",
-  "Ext Signal Enable",
-  "Screen Status",
-  "VRAM Size",
-  "H-Counter",
-  "V-Counter",
-  "Reserved",
-  "RAM Control",
-  "VRAM Cycle (BANK A0) L",
-  "VRAM Cycle (BANK A0) U",
-  "VRAM Cycle (BANK A1) L",
-  "VRAM Cycle (BANK A1) U",
-  "VRAM Cycle (BANK B0) L",
-  "VRAM Cycle (BANK B0) U",
-  "VRAM Cycle (BANK B1) L",
-  "VRAM Cycle (BANK B1) U",
-  "Screen Display Enable",
-  "Mosaic Control",
-  "Special Func Code Sel",
-  "Special Func Code",
-  "Char Control (NBG0, NBG1)",
-  "Char Control (NBG2, NBG3, RBG0)",
-  "Bitmap Pal No (NBG0, NBG1)",
-  "Bitmap Pal No (RBG0)",
-  "Pattern Name Ctrl (NBG0)",
-  "Pattern Name Ctrl (NBG1)",
-  "Pattern Name Ctrl (NBG2)",
-  "Pattern Name Ctrl (NBG3)",
-  "Pattern Name Ctrl (RGB0)",
-  "Plane Size",
-  "Map Offs (NBG0-NBG3)",
-  "Map Offs (Rotation Param A,B)",
-  "Map (NBG0, Plane A,B)",
-  "Map (NBG0, Plane C,D)",
-  "Map (NBG1, Plane A,B)",
-  "Map (NBG1, Plane C,D)",
-  "Map (NBG2, Plane A,B)",
-  "Map (NBG2, Plane C,D)",
-  "Map (NBG3, Plane A,B)",
-  "Map (NBG3, Plane C,D)",
-  "Map (Rotation Param A, Plane A,B)",
-  "Map (Rotation Param A, Plane C,D)",
-  "Map (Rotation Param A, Plane E,F)",
-  "Map (Rotation Param A, Plane G,H)",
-  "Map (Rotation Param A, Plane I,J)",
-  "Map (Rotation Param A, Plane K,L)",
-  "Map (Rotation Param A, Plane M,N)",
-  "Map (Rotation Param A, Plane O,P)",
-  "Map (Rotation Param B, Plane A,B)",
-  "Map (Rotation Param B, Plane C,D)",
-  "Map (Rotation Param B, Plane E,F)",
-  "Map (Rotation Param B, Plane G,H)",
-  "Map (Rotation Param B, Plane I,J)",
-  "Map (Rotation Param B, Plane K,L)",
-  "Map (Rotation Param B, Plane M,N)",
-  "Map (Rotation Param B, Plane O,P)",
-  "Scr Scrl Val (NBG0, Horiz Integer Part)",
-  "Scr Scrl Val (NBG0, Horiz Fraction Part)",
-  "Scr Scrl Val (NBG0, Vert Integer Part)",
-  "Scr Scrl Val (NBG0, Vert Fraction Part)",
-  "Coord Inc (NBG0, Horiz Integer Part)",
-  "Coord Inc (NBG0, Horiz Fraction Part)",
-  "Coord Inc (NBG0, Vert Integer Part)",
-  "Coord Inc (NBG0, Vert Fraction Part)",
-  "Scr Scrl Val (NBG1, Horiz Integer Part)",
-  "Scr Scrl Val (NBG1, Horiz Fraction Part)",
-  "Scr Scrl Val (NBG1, Vert Integer Part)",
-  "Scr Scrl Val (NBG1, Vert Fraction Part)",
-  "Coord Inc (NBG1, Horiz Integer Part)",
-  "Coord Inc (NBG1, Horiz Fraction Part)",
-  "Coord Inc (NBG1, Vert Integer Part)",
-  "Coord Inc (NBG1, Vert Fraction Part)",
-  "Scr Scrl Val (NBG2, Horizontal)",
-  "Scr Scrl Val (NBG2, Vertical)",
-  "Scr Scrl Val (NBG3, Horizontal)",
-  "Scr Scrl Val (NBG3, Vertical)",
-  "Reduction Enable",
-  "Line, Vert Cell Scroll (NBG0, NBG1)",
-  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) U",
-  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) L",
-  "Line Scrl Tbl Addr (NBG0) U",
-  "Line Scrl Tbl Addr (NBG0) L",
-  "Line Scrl Tbl Addr (NBG1) U",
-  "Line Scrl Tbl Addr (NBG1) L",
-  "Line Colour Scr Table Addr U",
-  "Line Colour Scr Table Addr L",
-  "Back Scr Tbl Addr U",
-  "Back Scr Tbl Addr L",
-  "Rotation Param Mode",
-  "Rotation Param Read Ctrl",
-  "Co-efficient Tbl Ctrl",
-  "Co-efficient Tbl Addr Offs (Rot Param A,B)",
-  "Screen Over Pattern Name (Rot Param A)",
-  "Screen Over Pattern Name (Rot Param B)",
-  "Rot Param Tbl Addr (Rot Param A,B) U"
-  "Rot Param Tbl Addr (Rot Param A,B) L",
-  "Window Pos (W0, Horiz Start)",
-  "Window Pos (W0, Vert Start)",
-  "Window Pos (W0, Horiz End)",
-  "Window Pos (W0, Vert End)",
-  "Window Pos (W1, Horiz Start)",
-  "Window Pos (W1, Vert Start)",
-  "Window Pos (W1, Horiz End)",
-  "Window Pos (W1, Vert End)",
-  "Window Ctrl (NBG0, NBG1)",
-  "Window Ctrl (NBG2, NBG3)",
-  "Window Ctrl (RBG0, SPRITE)",
-  "Window Ctrl (Param Win, Colour Calc Win)",
-  "Line Win Tbl Addr (W0) U",
-  "Line Win Tbl Addr (W0) L",
-  "Line Win Tbl Addr (W1) U",
-  "Line Win Tbl Addr (W1) L",
-  "Sprite Ctrl",
-  "Shadow Ctrl",
-  "Colour RAM Addr Offs (NBG0-NBG3)",
-  "Colour RAM Addr Offs (RBG0, SPRITE)",
-  "Line Colour Scr Enable",
-  "Special Priority Mode",
-  "Colour Calc Ctrl",
-  "Special Colour Calc Mode",
-  "Priority No (SPRITE 0,1)",
-  "Priority No (SPRITE 2,3)",
-  "Priority No (SPRITE 4,5)",
-  "Priority No (SPRITE 6,7)",
-  "Priority No (NBG0, NBG1)",
-  "Priority No (NBG2, NBG3)",
-  "Priority No (RGB0)",
-  "Reserved",
-  "Colour Calc Ratio (SPRITE 0,1)",
-  "Colour Calc Ratio (SPRITE 2,3)",
-  "Colour Calc Ratio (SPRITE 4,5)",
-  "Colour Calc Ratio (SPRITE 6,7)",
-  "Colour Calc Ratio (NBG0, NBG1)",
-  "Colour Calc Ratio (NBG2, NBG3)",
-  "Colour Calc Ratio (RBG0)",
+  "TV Screen Mode                                  ",
+  "Ext Signal Enable                               ",
+  "Screen Status                                   ",
+  "VRAM Size                                       ",
+  "H-Counter                                       ",
+  "V-Counter                                       ",
+  "Reserved                                        ",
+  "RAM Control                                     ",
+  "VRAM Cycle (BANK A0) L                          ",
+  "VRAM Cycle (BANK A0) U                          ",
+  "VRAM Cycle (BANK A1) L                          ",
+  "VRAM Cycle (BANK A1) U                          ",
+  "VRAM Cycle (BANK B0) L                          ",
+  "VRAM Cycle (BANK B0) U                          ",
+  "VRAM Cycle (BANK B1) L                          ",
+  "VRAM Cycle (BANK B1) U                          ",
+  "Screen Display Enable                           ",
+  "Mosaic Control                                  ",
+  "Special Func Code Sel                           ",
+  "Special Func Code                               ",
+  "Char Control (NBG0, NBG1)                       ",
+  "Char Control (NBG2, NBG3, RBG0)                 ",
+  "Bitmap Pal No (NBG0, NBG1)                      ",
+  "Bitmap Pal No (RBG0)                            ",
+  "Pattern Name Ctrl (NBG0)                        ",
+  "Pattern Name Ctrl (NBG1)                        ",
+  "Pattern Name Ctrl (NBG2)                        ",
+  "Pattern Name Ctrl (NBG3)                        ",
+  "Pattern Name Ctrl (RGB0)                        ",
+  "Plane Size                                      ",
+  "Map Offs (NBG0-NBG3)                            ",
+  "Map Offs (Rotation Param A,B)                   ",
+  "Map (NBG0, Plane A,B)                           ",
+  "Map (NBG0, Plane C,D)                           ",
+  "Map (NBG1, Plane A,B)                           ",
+  "Map (NBG1, Plane C,D)                           ",
+  "Map (NBG2, Plane A,B)                           ",
+  "Map (NBG2, Plane C,D)                           ",
+  "Map (NBG3, Plane A,B)                           ",
+  "Map (NBG3, Plane C,D)                           ",
+  "Map (Rotation Param A, Plane A,B)               ",
+  "Map (Rotation Param A, Plane C,D)               ",
+  "Map (Rotation Param A, Plane E,F)               ",
+  "Map (Rotation Param A, Plane G,H)               ",
+  "Map (Rotation Param A, Plane I,J)               ",
+  "Map (Rotation Param A, Plane K,L)               ",
+  "Map (Rotation Param A, Plane M,N)               ",
+  "Map (Rotation Param A, Plane O,P)               ",
+  "Map (Rotation Param B, Plane A,B)               ",
+  "Map (Rotation Param B, Plane C,D)               ",
+  "Map (Rotation Param B, Plane E,F)               ",
+  "Map (Rotation Param B, Plane G,H)               ",
+  "Map (Rotation Param B, Plane I,J)               ",
+  "Map (Rotation Param B, Plane K,L)               ",
+  "Map (Rotation Param B, Plane M,N)               ",
+  "Map (Rotation Param B, Plane O,P)               ",
+  "Scr Scrl Val (NBG0, Horiz Integer Part)         ",
+  "Scr Scrl Val (NBG0, Horiz Fraction Part)        ",
+  "Scr Scrl Val (NBG0, Vert Integer Part)          ",
+  "Scr Scrl Val (NBG0, Vert Fraction Part)         ",
+  "Coord Inc (NBG0, Horiz Integer Part)            ",
+  "Coord Inc (NBG0, Horiz Fraction Part)           ",
+  "Coord Inc (NBG0, Vert Integer Part)             ",
+  "Coord Inc (NBG0, Vert Fraction Part)            ",
+  "Scr Scrl Val (NBG1, Horiz Integer Part)         ",
+  "Scr Scrl Val (NBG1, Horiz Fraction Part)        ",
+  "Scr Scrl Val (NBG1, Vert Integer Part)          ",
+  "Scr Scrl Val (NBG1, Vert Fraction Part)         ",
+  "Coord Inc (NBG1, Horiz Integer Part)            ",
+  "Coord Inc (NBG1, Horiz Fraction Part)           ",
+  "Coord Inc (NBG1, Vert Integer Part)             ",
+  "Coord Inc (NBG1, Vert Fraction Part)            ",
+  "Scr Scrl Val (NBG2, Horizontal)                 ",
+  "Scr Scrl Val (NBG2, Vertical)                   ",
+  "Scr Scrl Val (NBG3, Horizontal)                 ",
+  "Scr Scrl Val (NBG3, Vertical)                   ",
+  "Reduction Enable                                ",
+  "Line, Vert Cell Scroll (NBG0, NBG1)             ",
+  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) U         ",
+  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) L         ",
+  "Line Scrl Tbl Addr (NBG0) U                     ",
+  "Line Scrl Tbl Addr (NBG0) L                     ",
+  "Line Scrl Tbl Addr (NBG1) U                     ",
+  "Line Scrl Tbl Addr (NBG1) L                     ",
+  "Line Colour Scr Table Addr U                    ",
+  "Line Colour Scr Table Addr L                    ",
+  "Back Scr Tbl Addr U                             ",
+  "Back Scr Tbl Addr L                             ",
+  "Rotation Param Mode                             ",
+  "Rotation Param Read Ctrl                        ",
+  "Co-efficient Tbl Ctrl                           ",
+  "Co-efficient Tbl Addr Offs (Rot Param A,B)      ",
+  "Screen Over Pattern Name (Rot Param A)          ",
+  "Screen Over Pattern Name (Rot Param B)          ",
+  "Rot Param Tbl Addr (Rot Param A,B) U            ",
+  "Rot Param Tbl Addr (Rot Param A,B) L            ",
+  "Window Pos (W0, Horiz Start)                    ",
+  "Window Pos (W0, Vert Start)                     ",
+  "Window Pos (W0, Horiz End)                      ",
+  "Window Pos (W0, Vert End)                       ",
+  "Window Pos (W1, Horiz Start)                    ",
+  "Window Pos (W1, Vert Start)                     ",
+  "Window Pos (W1, Horiz End)                      ",
+  "Window Pos (W1, Vert End)                       ",
+  "Window Ctrl (NBG0, NBG1)                        ",
+  "Window Ctrl (NBG2, NBG3)                        ",
+  "Window Ctrl (RBG0, SPRITE)                      ",
+  "Window Ctrl (Param Win, Colour Calc Win)        ",
+  "Line Win Tbl Addr (W0) U                        ",
+  "Line Win Tbl Addr (W0) L                        ",
+  "Line Win Tbl Addr (W1) U                        ",
+  "Line Win Tbl Addr (W1) L                        ",
+  "Sprite Ctrl                                     ",
+  "Shadow Ctrl                                     ",
+  "Colour RAM Addr Offs (NBG0-NBG3)                ",
+  "Colour RAM Addr Offs (RBG0, SPRITE)             ",
+  "Line Colour Scr Enable                          ",
+  "Special Priority Mode                           ",
+  "Colour Calc Ctrl                                ",
+  "Special Colour Calc Mode                        ",
+  "Priority No (SPRITE 0,1)                        ",
+  "Priority No (SPRITE 2,3)                        ",
+  "Priority No (SPRITE 4,5)                        ",
+  "Priority No (SPRITE 6,7)                        ",
+  "Priority No (NBG0, NBG1)                        ",
+  "Priority No (NBG2, NBG3)                        ",
+  "Priority No (RGB0)                              ",
+  "Reserved                                        ",
+  "Colour Calc Ratio (SPRITE 0,1)                  ",
+  "Colour Calc Ratio (SPRITE 2,3)                  ",
+  "Colour Calc Ratio (SPRITE 4,5)                  ",
+  "Colour Calc Ratio (SPRITE 6,7)                  ",
+  "Colour Calc Ratio (NBG0, NBG1)                  ",
+  "Colour Calc Ratio (NBG2, NBG3)                  ",
+  "Colour Calc Ratio (RBG0)                        ",
   "Colour Calc Ratio (Line Colour Scr, Back Screen)",
-  "Colour Offs Enable",
-  "Colour Offs Select",
-  "Colour Offs A (RED)",
-  "Colour Offs A (GREEN)",
-  "Colour Offs A (BLUE)",
-  "Colour Offs B (RED)",
-  "Colour Offs B (GREEN)",
-  "Colour Offs B (BLUE)"
+  "Colour Offs Enable                              ",
+  "Colour Offs Select                              ",
+  "Colour Offs A (RED)                             ",
+  "Colour Offs A (GREEN)                           ",
+  "Colour Offs A (BLUE)                            ",
+  "Colour Offs B (RED)                             ",
+  "Colour Offs B (GREEN)                           ",
+  "Colour Offs B (BLUE)                            "
 };
-*/
 
 void reset_vdp2(void)
 
@@ -1179,6 +1317,165 @@ void reset_vdp2(void)
   HBlankTimer = timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank);
   InVBlank = 0;
   memset(vdp2_state.vdp2_regs,0,0x90*2);
+}
+
+void draw_1s8(UINT32 *vram_base,unsigned char *disp_base,UINT32 pitch)
+
+     /* Draws a 1Hx1V cell in 8bit colour */
+
+{
+  int loop;
+  unsigned char *display;
+
+  display = disp_base;
+
+  for(loop = 0;loop < 16;loop++)
+    {
+      *display++ = (vram_base[loop] >> 24) & 0xFF;
+      *display++ = (vram_base[loop] >> 16) & 0xFF;
+      *display++ = (vram_base[loop] >> 8) & 0xFF;
+      *display++ = (vram_base[loop]) & 0xFF;
+      if(loop & 0x1)
+	display += (pitch-8);
+    }
+}
+
+void render_plane(unsigned char *buffer,int pal,int trans)
+
+{
+  struct osd_bitmap *bitmap = saturn_bitmap[video_w];
+  int loopx,loopy;
+  int col;
+
+  if(!trans)
+    {
+      for(loopy = 0;loopy < 512;loopy++)
+	{
+	  for(loopx = 0;loopx < 512;loopx++)
+	    {
+	      col = *buffer++;
+	      if(col & 1)
+		{
+		  col = mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] & 0x7FFF;
+		}
+	      else
+		{
+		  col = (mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] >> 16) & 0x7FFF;
+		}
+	      plot_pixel(bitmap,loopx,loopy,Machine->pens[col]);
+	    }
+	}
+    }
+  else
+    {
+      for(loopy = 0;loopy < 512;loopy++)
+	{
+	  for(loopx = 0;loopx < 512;loopx++)
+	    {
+	      col = *buffer++;
+	      if(col)
+		{
+		  if(col & 1)
+		    {
+		      col = mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] & 0x7FFF;
+		    }
+		  else
+		    {
+		      col = (mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] >> 16) & 0x7FFF;
+		    }
+		  plot_pixel(bitmap,loopx,loopy,Machine->pens[col]);
+		}
+	    }
+	}
+    }
+}
+
+void draw_nbg3(void)
+
+{
+  UINT32 planea_addr,planeb_addr,planec_addr,planed_addr;
+  UINT16 *regs;
+  unsigned char frame[512*512]; /* Temporary frame display */
+  int loopx,loopy;
+  UINT32 *pattern;
+
+  regs = vdp2_state.vdp2_regs;
+
+  planea_addr = (regs[0x4C>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0); /* Get plane start addresses */
+  planeb_addr = ((regs[0x4C>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
+  planec_addr = (regs[0x4E>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
+  planed_addr = ((regs[0x4E>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
+
+  planea_addr <<= 14; /* *= 0x4000 */
+  planeb_addr <<= 14;
+  planec_addr <<= 14;
+  planed_addr <<= 14;
+
+  logerror("NBG3 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",planea_addr,planeb_addr,planec_addr,planed_addr);
+
+  pattern = &mem[(SATURN_VDP2_RAM_BASE/4) + (planea_addr/4)];
+
+  for(loopy = 0;loopy < 64;loopy++)
+    {
+      for(loopx = 0;loopx < 64;loopx++)
+	{
+	  UINT32 pat_no;
+
+	  pat_no = *pattern++;
+	  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
+	}
+    }
+  render_plane(frame,3,0);
+  /*  {
+    FILE *fp;
+    fp = fopen("nbg3.bin","wb");
+    fwrite(frame,512,512,fp);
+    fclose(fp);
+    }*/
+}
+
+void draw_nbg2(void)
+
+{
+  UINT32 planea_addr,planeb_addr,planec_addr,planed_addr;
+  UINT16 *regs;
+  unsigned char frame[512*512];
+  int loopx,loopy;
+  UINT32 *pattern;
+
+  regs = vdp2_state.vdp2_regs;
+
+  planea_addr = (regs[0x48>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0); /* Get plane start addresses */
+  planeb_addr = ((regs[0x48>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
+  planec_addr = (regs[0x4A>>1] & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
+  planed_addr = ((regs[0x4A>>1] >> 8) & 0x3F) | ((regs[0x3C>>1]>>6) & 0x1C0);
+
+  planea_addr <<= 14; /* *= 0x4000 */
+  planeb_addr <<= 14;
+  planec_addr <<= 14;
+  planed_addr <<= 14;
+
+  logerror("NBG2 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",planea_addr,planeb_addr,planec_addr,planed_addr);
+
+  pattern = &mem[(SATURN_VDP2_RAM_BASE/4) + (planea_addr/4)];
+
+  for(loopy = 0;loopy < 64;loopy++)
+    {
+      for(loopx = 0;loopx < 64;loopx++)
+	{
+	  UINT32 pat_no;
+
+	  pat_no = *pattern++;
+	  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
+	}
+    }
+  render_plane(frame,2,1);
+  /*  {
+    FILE *fp;
+    fp = fopen("nbg2.bin","wb");
+    fwrite(frame,512,512,fp);
+    fclose(fp);
+    }*/
 }
 
 void timer_hblank(int param)
@@ -1197,7 +1494,8 @@ void timer_hblank(int param)
       /* We are going into vertical blanking area */
       /* Execute VBlank-IN interrupt */
       InVBlank = 1;
-      //      logerror("VBlankIN\n");
+      scu_pulse_interrupt(VBLANK_IN_INT);
+      //logerror("VBlankIN\n");
     }
   else
     {
@@ -1208,13 +1506,99 @@ void timer_hblank(int param)
 	  InVBlank = 0;
 	  HBlankCount = 0; /* Reset hblank counter */
 	  scu_pulse_interrupt(VBLANK_OUT_INT);
-	  //  logerror("VBlankOUT\n");
+
+	  /* Draw display */
+	  if(vdp2_state.vdp2_regs[0] & 0x8000)
+	    {
+	      draw_nbg3();
+	      draw_nbg2();
+	      execute_vdp1();
+	      //  logerror("Drawing screen\n");
+	    }
+	  else
+	    {
+	      fillbitmap(saturn_bitmap[video_w & 1],Machine->pens[0],NULL);
+	      //	      logerror("Clearing bitmap\n");
+	    }
+	  video_w ^= 1; /* Flip write buffers over */
+	  //	  logerror("VBlankOUT %08lX %01X\n",vdp2_state.vdp2_regs[0],video_w);
 	}
       else
 	{
 	  /* Issue H-Blank (bit of a hack :P) */
 	}
     }
+}
+
+void dump_vdp2(void)
+
+{
+  FILE *fp;
+  int loop;
+
+  fp = fopen("vdp2.bin","wb");
+  if(fp != NULL)
+    {
+      for(loop = 0;loop < 0x20000;loop++)
+	{
+	  putc((mem[loop + (SATURN_VDP2_RAM_BASE/4)] >> 24) & 0xFF,fp);
+	  putc((mem[loop + (SATURN_VDP2_RAM_BASE/4)] >> 16) & 0xFF,fp);
+	  putc((mem[loop + (SATURN_VDP2_RAM_BASE/4)] >> 8) & 0xFF,fp);
+	  putc(mem[loop + (SATURN_VDP2_RAM_BASE/4)] & 0xFF,fp);
+	}
+      fclose(fp);
+    }
+
+  fp = fopen("colorram.bin","wb");
+  if(fp != NULL)
+    {
+      for(loop = 0;loop < (0x1000/4);loop++)
+	{
+	  putc((mem[loop + (SATURN_COLOR_RAM_BASE/4)] >> 24) & 0xFF,fp);
+	  putc((mem[loop + (SATURN_COLOR_RAM_BASE/4)] >> 16) & 0xFF,fp);
+	  putc((mem[loop + (SATURN_COLOR_RAM_BASE/4)] >> 8) & 0xFF,fp);
+	  putc(mem[loop + (SATURN_COLOR_RAM_BASE/4)] & 0xFF,fp);
+	}
+      fclose(fp);
+    }
+  fp = fopen("vdp1.bin","wb");
+  if(fp != NULL)
+    {
+      for(loop = 0;loop < 0x20000;loop++)
+	{
+	  putc((mem[loop + (SATURN_VDP1_RAM_BASE/4)] >> 24) & 0xFF,fp);
+	  putc((mem[loop + (SATURN_VDP1_RAM_BASE/4)] >> 16) & 0xFF,fp);
+	  putc((mem[loop + (SATURN_VDP1_RAM_BASE/4)] >> 8) & 0xFF,fp);
+	  putc(mem[loop + (SATURN_VDP1_RAM_BASE/4)] & 0xFF,fp);
+	}
+      fclose(fp);
+    }
+}
+
+void draw_pal(void)
+
+{
+  UINT32 loopx,loopy,col;
+  int rectx,recty;
+
+  for(loopy = 0;loopy < 32;loopy++)
+    for(loopx = 0;loopx < 32;loopx++)
+      {
+	col = loopy * 32 + loopx;
+	if(col & 1)
+	  {
+	    col = mem[(SATURN_COLOR_RAM_BASE/4) + (col/2)] & 0x7FFF;
+	  }
+	else
+	  {
+	    col = (mem[(SATURN_COLOR_RAM_BASE/4) + (col/2)] >> 16) & 0x7FFF;
+	  }
+
+	logerror("pal %08lX = %08lX\n",loopy*32 + loopx,col);
+	for(recty = 0;recty < 16;recty++)
+	  for(rectx = 0;rectx < 16;rectx++)
+	    plot_pixel(saturn_bitmap[video_w],loopx*16 + rectx,loopy*16 + recty,Machine->pens[col]);
+      }
 }
 
 READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
@@ -1232,7 +1616,15 @@ READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
 
   ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
 
-  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);
+  /*  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
+  if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
+    {
+      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],ret_val & 0xFFFF,cpu_get_reg(SH2_PC));
+    }
+  if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
+    {
+      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],ret_val >> 16,cpu_get_reg(SH2_PC));
+    }
 
   return SWAP_WORDS(ret_val);
 }
@@ -1241,14 +1633,44 @@ WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 {
   UINT32 olddata;
 
-  logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
+  /* logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
+  if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
+    {
+      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],data >> 16,cpu_get_reg(SH2_PC));
+    }
+  if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
+    {
+      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],data & 0xFFFF,cpu_get_reg(SH2_PC));
+    }
 
   olddata = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
   olddata &= SWAP_WORDS(mem_mask);
   olddata |= SWAP_WORDS(data);
 
   *(((UINT32 *) vdp2_state.vdp2_regs) + offset) = olddata;
+
+  if(offset == 0)
+    {
+      if(data & 0x80000000)
+	{
+	  logerror("vdp_w Screen Enabled\n");
+	  /*	  dump_vdp2();
+	  video_w = 0;
+	  draw_nbg3();
+	  draw_nbg2();
+	  execute_vdp1();
+	  video_w = 1;
+	  draw_nbg3();
+	  draw_nbg2();
+	  execute_vdp1();*/
+	  //draw_pal();
+	}
+    }
 }
+
+/********************************************************
+ *  Main Machine Code                                   *
+ ********************************************************/
 
 void saturn_init_machine(void)
 {
@@ -1361,17 +1783,39 @@ void init_saturn(void)
 int saturn_vh_start(void)
 {
   logerror("saturn_vh_start\n");
+  saturn_bitmap[0] = osd_alloc_bitmap(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+  saturn_bitmap[1] = osd_alloc_bitmap(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+
+  if((!saturn_bitmap[0]) || (!saturn_bitmap[1]))
+    return 1;
+
+  fillbitmap(saturn_bitmap[0],Machine->pens[0x7FFF],NULL);
+  fillbitmap(saturn_bitmap[1],Machine->pens[0],NULL);
+  video_w = 0;
+
   return 0;
 }
 
 void saturn_vh_stop(void)
 {
+  if(saturn_bitmap[0])
+    osd_free_bitmap(saturn_bitmap[0]);
+  saturn_bitmap[0] = NULL;
+
+  if(saturn_bitmap[1])
+    osd_free_bitmap(saturn_bitmap[1]);
+  saturn_bitmap[1] = NULL;
+
   logerror("saturn_vh_stop\n");
 }
 
 void saturn_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
   //  logerror("saturn_vh_screenrefresh\n");
+  if(saturn_bitmap[video_w])
+    {
+      copybitmap(bitmap, saturn_bitmap[video_w], 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
+    }
 }
 
 /*
@@ -1407,9 +1851,9 @@ void saturn_init_palette(unsigned char *palette, unsigned short *colortable,cons
       g = (( i >> 5 ) & 0x1f) << 3;
       b = (i & 0x1f) << 3;
 
-      *palette++ = r;
-      *palette++ = g;
       *palette++ = b;
+      *palette++ = g;
+      *palette++ = r;
 
       colortable[i] = i;
     }
@@ -1462,12 +1906,12 @@ static struct MachineDriver machine_driver_saturn =
 ROM_START(saturn)
      ROM_REGION(0x00491000, REGION_CPU1,0)
      /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000, 0x2ABA43C2) */
-     ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c)
+     /*ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c) */
      /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000, 0x4AFCF0FA) */
      /*Make sure you set the PAL define to 1 otherwise euro bios will lock badly */
 
      /* STV Bios Note these are in correct endian order. not byte swapped versions */
-     /*ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, 0x574FD2C3) */
+     ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, 0x574FD2C3)
      /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000, 0xBF7DBDD7) */
      ROM_REGION(0x00080000, REGION_CPU2,0)
 ROM_END
