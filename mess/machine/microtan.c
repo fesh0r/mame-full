@@ -847,7 +847,7 @@ int microtan_interrupt(void)
 		lastrow = row;
 		/* CapsLock LED */
 		if( row == 3 && chg == 0x80 )
-			osd_led_w(1, (keyrows[3] & 0x80) ? 0 : 1);
+			set_led_status(1, (keyrows[3] & 0x80) ? 0 : 1);
 
 		if (new & chg)	/* key(s) pressed ? */
 		{
@@ -1081,7 +1081,7 @@ void microtan_init_machine(void)
 
 	for (i = 1; i < 10;  i++)
 		keyrows[i] = readinputport(1+i);
-	osd_led_w(1, (keyrows[3] & 0x80) ? 0 : 1);
+	set_led_status(1, (keyrows[3] & 0x80) ? 0 : 1);
 
 	if (snapshot_size)
 	{
