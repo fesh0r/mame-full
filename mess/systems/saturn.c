@@ -231,8 +231,8 @@ READ32_HANDLER( saturn_sound_ram_r )
 WRITE32_HANDLER( saturn_sound_ram_w )
 {
   offs_t ea;
-static UINT32 oldmask= 0xa5a5a5a5;
 #if DISP_MEM
+static UINT32 oldmask= 0xa5a5a5a5;
   if (1 || (oldmask != mem_mask)) {
    oldmask = mem_mask;
   printf("soundram_w offset=%08X data=%08X mem_mask=%08X PC=%08X\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
