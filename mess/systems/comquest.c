@@ -189,7 +189,7 @@ static struct GfxLayout comquest_charlayout =
 			7,
         },
         /* y offsets */
-        { 
+        {
 			0,
 			8,
 			16,
@@ -365,8 +365,8 @@ static const struct IODevice io_comquest[] = {
 
 void init_comquest(void)
 {
-	int i;
-	UINT8 *gfx=memory_region(REGION_GFX1);
+//	int i;
+//	UINT8 *gfx=memory_region(REGION_GFX1);
 //	for (i=0; i<256; i++) gfx[i]=i;
 }
 
