@@ -310,55 +310,52 @@ INPUT_PORTS_START( intvkbd )
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "", KEYCODE_7_PAD, IP_JOY_NONE )
 INPUT_PORTS_END
 
-#define MEM16(A,B,C) { A<<1, (B<<1)+1, C }
-//#define MEM16M(A,B,C,D,E) { A<<1, (B<<1)+1, C, D, E }
-
 static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 16)
-	MEM16( 0x0000, 0x003f, stic_r ),
-    MEM16( 0x0100, 0x01ef, intv_ram8_r ),
-    MEM16( 0x01f0, 0x01ff, AY8914_directread_port_0_lsb_r ),
- 	MEM16( 0x0200, 0x035f, intv_ram16_r ),
-	MEM16( 0x1000, 0x1fff, MRA16_ROM ),		/* Exec ROM, 10-bits wide */
-	MEM16( 0x3000, 0x37ff, MRA16_ROM ), 	/* GROM,     8-bits wide */
-	MEM16( 0x3800, 0x39ff, intv_gram_r ),	/* GRAM,     8-bits wide */
-	MEM16( 0x4800, 0x7fff, MRA16_ROM ),		/* Cartridges? */
+	AM_RANGE(0x0000, 0x003f) AM_READ( stic_r )
+    AM_RANGE(0x0100, 0x01ef) AM_READ( intv_ram8_r )
+    AM_RANGE(0x01f0, 0x01ff) AM_READ( AY8914_directread_port_0_lsb_r )
+ 	AM_RANGE(0x0200, 0x035f) AM_READ( intv_ram16_r )
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA16_ROM )		/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_READ( MRA16_ROM ) 		/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_READ( intv_gram_r )		/* GRAM,     8-bits wide */
+	AM_RANGE(0x4800, 0x7fff) AM_READ( MRA16_ROM )		/* Cartridges? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 16)
-	MEM16( 0x0000, 0x003f, stic_w ),
-    MEM16( 0x0100, 0x01ef, intv_ram8_w ),
-    MEM16( 0x01f0, 0x01ff, AY8914_directwrite_port_0_lsb_w ),
-	MEM16( 0x0200, 0x035f, intv_ram16_w ),
-	MEM16( 0x1000, 0x1fff, MWA16_ROM ), 	/* Exec ROM, 10-bits wide */
-	MEM16( 0x3000, 0x37ff, MWA16_ROM ),		/* GROM,     8-bits wide */
-	MEM16( 0x3800, 0x39ff, intv_gram_w ),	/* GRAM,     8-bits wide */
-	MEM16( 0x4800, 0x7fff, MWA16_ROM ),		/* Cartridges? */
+	AM_RANGE(0x0000, 0x003f) AM_WRITE( stic_w )
+    AM_RANGE(0x0100, 0x01ef) AM_WRITE( intv_ram8_w )
+    AM_RANGE(0x01f0, 0x01ff) AM_WRITE( AY8914_directwrite_port_0_lsb_w )
+	AM_RANGE(0x0200, 0x035f) AM_WRITE( intv_ram16_w )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA16_ROM ) 		/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE( MWA16_ROM )		/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE( intv_gram_w )	/* GRAM,     8-bits wide */
+	AM_RANGE(0x4800, 0x7fff) AM_WRITE( MWA16_ROM )		/* Cartridges? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readmem_kbd , ADDRESS_SPACE_PROGRAM, 16)
-	MEM16( 0x0000, 0x003f, stic_r ),
-    MEM16( 0x0100, 0x01ef, intv_ram8_r ),
-    MEM16( 0x01f0, 0x01ff, AY8914_directread_port_0_lsb_r ),
- 	MEM16( 0x0200, 0x035f, intv_ram16_r ),
-	MEM16( 0x1000, 0x1fff, MRA16_ROM ),		/* Exec ROM, 10-bits wide */
-	MEM16( 0x3000, 0x37ff, MRA16_ROM ), 	/* GROM,     8-bits wide */
-	MEM16( 0x3800, 0x39ff, intv_gram_r ),	/* GRAM,     8-bits wide */
-	MEM16( 0x4800, 0x6fff, MRA16_ROM ),		/* Cartridges? */
-	MEM16( 0x7000, 0x7fff, MRA16_ROM ),		/* Keyboard ROM */
-	MEM16( 0x8000, 0xbfff, intvkbd_dualport16_r ),	/* Dual-port RAM */
+	AM_RANGE(0x0000, 0x003f) AM_READ( stic_r )
+    AM_RANGE(0x0100, 0x01ef) AM_READ( intv_ram8_r )
+    AM_RANGE(0x01f0, 0x01ff) AM_READ( AY8914_directread_port_0_lsb_r )
+ 	AM_RANGE(0x0200, 0x035f) AM_READ( intv_ram16_r )
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA16_ROM )		/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_READ( MRA16_ROM ) 		/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_READ( intv_gram_r )		/* GRAM,     8-bits wide */
+	AM_RANGE(0x4800, 0x6fff) AM_READ( MRA16_ROM )		/* Cartridges? */
+	AM_RANGE(0x7000, 0x7fff) AM_READ( MRA16_ROM )		/* Keyboard ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_READ( intvkbd_dualport16_r )	/* Dual-port RAM */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_kbd , ADDRESS_SPACE_PROGRAM, 16)
-	MEM16( 0x0000, 0x003f, stic_w ),
-    MEM16( 0x0100, 0x01ef, intv_ram8_w ),
-    MEM16( 0x01f0, 0x01ff, AY8914_directwrite_port_0_lsb_w ),
-	MEM16( 0x0200, 0x035f, intv_ram16_w ),
-	MEM16( 0x1000, 0x1fff, MWA16_ROM ), 	/* Exec ROM, 10-bits wide */
-	MEM16( 0x3000, 0x37ff, MWA16_ROM ),		/* GROM,     8-bits wide */
-	MEM16( 0x3800, 0x39ff, intv_gram_w ),	/* GRAM,     8-bits wide */
-	MEM16( 0x4800, 0x6fff, MWA16_ROM ),		/* Cartridges? */
-	MEM16( 0x7000, 0x7fff, MWA16_ROM ),		/* Keyboard ROM */
-	MEM16( 0x8000, 0xbfff, intvkbd_dualport16_w ),	/* Dual-port RAM */
+	AM_RANGE(0x0000, 0x003f) AM_WRITE( stic_w )
+    AM_RANGE(0x0100, 0x01ef) AM_WRITE( intv_ram8_w )
+    AM_RANGE(0x01f0, 0x01ff) AM_WRITE( AY8914_directwrite_port_0_lsb_w )
+	AM_RANGE(0x0200, 0x035f) AM_WRITE( intv_ram16_w )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA16_ROM ) 		/* Exec ROM, 10-bits wide */
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE( MWA16_ROM )		/* GROM,     8-bits wide */
+	AM_RANGE(0x3800, 0x39ff) AM_WRITE( intv_gram_w )	/* GRAM,     8-bits wide */
+	AM_RANGE(0x4800, 0x6fff) AM_WRITE( MWA16_ROM )		/* Cartridges? */
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE( MWA16_ROM )		/* Keyboard ROM */
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE( intvkbd_dualport16_w )	/* Dual-port RAM */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readmem2 , ADDRESS_SPACE_PROGRAM, 8)

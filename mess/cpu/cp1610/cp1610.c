@@ -3,7 +3,7 @@
  *	 cp1610.c
  *	 Portable CP1610 emulator (General Instrument CP1610)
  *
- *	 Copyright (c) 2000 Frank Palazzolo, all rights reserved.
+ *	 Copyright (c) 2004 Frank Palazzolo, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -12,7 +12,7 @@
  *	   source file that it has been changed.  If you're a nice person, you
  *	   will clearly mark each change too.  :)
  *	 - If you wish to use this for commercial purposes, please contact me at
- *	   palazzol@home.com
+ *	   palazzol@comcast.net
  *   - This entire notice must remain in the source code.
  *
  *	This work is based on Juergen Buchmueller's F8 emulation,
@@ -43,11 +43,11 @@ typedef struct {
 	int		intr_pending;
 	int		intrm_pending;
 	int		mask_interrupts;
-}	CP1610;
+}	cp1610_Regs;
 
 int cp1610_icount;
 
-static CP1610 cp1610;
+static cp1610_Regs cp1610;
 
 /* Layout of the registers in the debugger */
 static UINT8 cp1610_reg_layout[] = {
@@ -3390,19 +3390,29 @@ int cp1610_execute(int cycles)
 	return cycles - cp1610_icount;
 }
 
+#if 0
 /* Get registers, return context size */
 unsigned cp1610_get_context(void *dst)
 {
 	if( dst )
-		memcpy(dst, &cp1610, sizeof(CP1610));
-	return sizeof(CP1610);
+		memcpy(dst, &cp1610, sizeof(cp1610_Regs));
+	return sizeof(cp1610_Regs);
 }
 
 /* Set registers */
 void cp1610_set_context(void *src)
 {
 	if( src )
-		memcpy(&cp1610, src, sizeof(CP1610));
+		memcpy(&cp1610, src, sizeof(cp1610_Regs));
+}
+#endif
+
+static void cp1610_get_context (void *dst)
+{
+}
+
+static void cp1610_set_context (void *src)
+{
 }
 
 unsigned cp1610_get_reg(int regnum)
@@ -3477,11 +3487,12 @@ void cp1610_state_load(void *file)
 {
 }
 
+#if 0
 const char *cp1610_info(void *context, int regnum)
 {
 	static char buffer[8][15+1];
 	static int which = 0;
-	CP1610 *r = context;
+	cp1610_Regs *r = context;
 
 	which = (which + 1) % 8;
 	buffer[which][0] = '\0';
@@ -3515,6 +3526,7 @@ const char *cp1610_info(void *context, int regnum)
 	}
     return buffer[which];
 }
+#endif
 
 unsigned cp1610_dasm(char *buffer, unsigned pc)
 {
@@ -3534,6 +3546,94 @@ void cp1610_init(void)
 	cp1610.reset_pending = 0;
 	cp1610.intr_pending = 0;
 	cp1610.intrm_pending = 0;
+
+	return;
+}
+
+static void cp1610_set_info(UINT32 state, union cpuinfo *info)
+{
+}
+
+void cp1610_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(cp1610_Regs);	break;
+	case CPUINFO_INT_IRQ_LINES:						info->i = 1;			break;
+	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;			break;
+	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	break;
+	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;			break;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;			break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;			break;
+	case CPUINFO_INT_MIN_CYCLES:					info->i = 1;			break;
+	case CPUINFO_INT_MAX_CYCLES:					info->i = 7;			break;
+
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;	break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;	break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;	break;
+
+	case CPUINFO_INT_PREVIOUSPC:		info->i = 0;	/* TODO??? */		break;
+
+	///case CPUINFO_INT_IRQ_STATE:			info->i = cp1610.irq_request;			break;
+
+	case CPUINFO_INT_REGISTER + CP1610_R0: info->i = cp1610.r[0];			break;
+	case CPUINFO_INT_REGISTER + CP1610_R1: info->i = cp1610.r[1];			break;
+	case CPUINFO_INT_REGISTER + CP1610_R2: info->i = cp1610.r[2];			break;
+	case CPUINFO_INT_REGISTER + CP1610_R3: info->i = cp1610.r[3];			break;
+	case CPUINFO_INT_REGISTER + CP1610_R4: info->i = cp1610.r[4];			break;
+	case CPUINFO_INT_REGISTER + CP1610_R5: info->i = cp1610.r[5];			break;
+	case CPUINFO_INT_SP:
+	case CPUINFO_INT_REGISTER + CP1610_R6: info->i = cp1610.r[6];			break;
+	case CPUINFO_INT_PC:
+	case CPUINFO_INT_REGISTER + CP1610_R7: info->i = cp1610.r[7];			break;
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	case CPUINFO_PTR_SET_INFO:						info->setinfo = cp1610_set_info;		break;
+	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = cp1610_get_context;	break;
+	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = cp1610_set_context;	break;
+	case CPUINFO_PTR_INIT:							info->init = cp1610_init;				break;
+	case CPUINFO_PTR_RESET:							info->reset = cp1610_reset;				break;
+	case CPUINFO_PTR_EXIT:							info->exit = cp1610_exit;				break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = cp1610_execute;			break;
+	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cp1610_dasm;		break;
+	///case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = cp1610.irq_callback;	break;
+	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cp1610_icount;			break;
+	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cp1610_reg_layout;			break;
+	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cp1610_win_layout;			break;
+
+	/* --- the following bits of info are returned as NULL-terminated strings --- */
+	case CPUINFO_STR_NAME: 			strcpy(info->s = cpuintrf_temp_str(), "CP1610");		break;
+	case CPUINFO_STR_CORE_FAMILY:	strcpy(info->s = cpuintrf_temp_str(), "");				break;
+	case CPUINFO_STR_CORE_VERSION:	strcpy(info->s = cpuintrf_temp_str(), "1.0");			break;
+	case CPUINFO_STR_CORE_FILE:		strcpy(info->s = cpuintrf_temp_str(), __FILE__);		break;
+	case CPUINFO_STR_CORE_CREDITS:	strcpy(info->s = cpuintrf_temp_str(),
+									"Copyright (c) 2004 Frank Palazzolo, all rights reserved.");
+									break;
+    case CPUINFO_STR_FLAGS:
+			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c",
+				cp1610.flags & 0x80 ? 'S':'.',
+				cp1610.flags & 0x40 ? 'Z':'.',
+				cp1610.flags & 0x10 ? 'V':'.',
+				cp1610.flags & 0x10 ? 'C':'.');
+			break;
+	case CPUINFO_STR_REGISTER+CP1610_R0: sprintf(info->s = cpuintrf_temp_str(), "R0:%04X", cp1610.r[0]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R1: sprintf(info->s = cpuintrf_temp_str(), "R1:%04X", cp1610.r[1]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R2: sprintf(info->s = cpuintrf_temp_str(), "R2:%04X", cp1610.r[2]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R3: sprintf(info->s = cpuintrf_temp_str(), "R3:%04X", cp1610.r[3]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R4: sprintf(info->s = cpuintrf_temp_str(), "R4:%04X", cp1610.r[4]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R5: sprintf(info->s = cpuintrf_temp_str(), "R5:%04X", cp1610.r[5]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R6: sprintf(info->s = cpuintrf_temp_str(), "R6:%04X", cp1610.r[6]); break;
+	case CPUINFO_STR_REGISTER+CP1610_R7: sprintf(info->s = cpuintrf_temp_str(), "R7:%04X", cp1610.r[7]); break;
+	}
 
 	return;
 }

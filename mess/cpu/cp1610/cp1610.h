@@ -3,7 +3,7 @@
  *	 cp1610.h
  *	 Portable General Instruments CP1610 emulator interface
  *
- *	 Copyright (c) 2000 Frank Palazzolo, all rights reserved.
+ *	 Copyright (c) 2004 Frank Palazzolo, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -12,7 +12,7 @@
  *	   source file that it has been changed.  If you're a nice person, you
  *	   will clearly mark each change too.  :)
  *	 - If you wish to use this for commercial purposes, please contact me at
- *	   palazzol@home.com
+ *	   palazzol@comcast.net
  *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
@@ -35,6 +35,7 @@ enum {
 
 extern int cp1610_icount;				 /* cycle count */
 
+#if 0
 extern void cp1610_init (void);
 extern void cp1610_reset (void *param); 		 /* Reset registers to the initial values */
 extern void cp1610_exit  (void);				 /* Shut down CPU core */
@@ -50,16 +51,17 @@ extern void cp1610_state_save(void *file);
 extern void cp1610_state_load(void *file);
 extern const char *cp1610_info(void *context, int regnum);
 extern unsigned cp1610_dasm(char *buffer, unsigned pc);
+#endif
 
-/* WRITE_HANDLER( cp1610_internal_w ); */
-/* READ_HANDLER( cp1610_internal_r ); */
+void cp1610_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmCP1610( char *dst, unsigned pc );
 #endif
 
-#define cp1610_readop(A) cpu_readmem24bew_word(((A)<<1)&0x1fffe)
-#define cp1610_readmem16(A) cpu_readmem24bew_word(((A)<<1)&0x1fffe)
-#define cp1610_writemem16(A,B) cpu_writemem24bew_word(((A)<<1)&0x1fffe,B)
+// Temporary
+#define cp1610_readop(A) program_read_word_16be(A)
+#define cp1610_readmem16(A) program_read_word_16be(A)
+#define cp1610_writemem16(A,B) program_write_word_16be(A,B)
 
 #endif /* _CP1610_H */
