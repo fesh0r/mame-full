@@ -120,7 +120,7 @@ joysticks which offered a full 360 degrees of mobility, were both innovative and
 Other controller features included a keypad, and a ahead-of-it's-time pause button.
 
 
-The Atari 5200 suffered from it's initial incompatability with the VCS/2600 (an adapter was 
+The Atari 5200 suffered from it's initial incompatibility with the VCS/2600 (an adapter was 
 later released) and fierce competition from Coleco. When Warner Communications sold Atari 
 Corp. to the Tramiels in 1984, they quickly removed it from the market.
 
@@ -136,7 +136,7 @@ Atari 7800 ProSystem
 
 Known Issues:
 
-The Reset key "R" and Select ket "S" are hardmapped to the same location as the default 
+The Reset key "R" and Select key "S" are hardmapped to the same location as the default 
 Player 2 up and fire two, respectively. You will need to remap these manually to avoid
 control conflicts in some games.
 
@@ -147,7 +147,7 @@ full compatibility list.
 History and Trivia:
 
 Originally developed in 1984 as the Atari 3600, the Atari 7800 Prosystem was released to the 
-US market in 1986, in an attempt to compete in a revitalised home videogame market. The 7800 
+US market in 1986, in an attempt to compete in a revitalized home videogame market. The 7800 
 was actually designed by Gencomp as part of a lawsuit settlement (Gencomp had been sued for 
 releasing a speedup chipset for Atari coinop Missile Command).
 
@@ -266,7 +266,7 @@ The conceptor of the Amiga 1000 was Jay Miner, who created the Atari 800 many ye
 He wanted to make the most powerful computer ever, then he joined a little California 
 company called Amiga. He used the principle of the three coprocessors (again) to help the 
 main processor. At the beginning, the Amiga had only 64 kilobytes of RAM!, Atari wanted to 
-buy the Amiga but finally, Commodore succeded to buy it (then there was a lawsuit, which 
+buy the Amiga but finally, Commodore succeeded to buy it (then there was a lawsuit, which 
 Commodore won). It was meant to be a competitor to the Atari 520 ST. The operating system 
 was done by Metacomco, a British company who specialized in the 68000 processor (they also 
 made languages for the Sinclair QL). It is a fully multitasking system which looks like 
@@ -282,6 +282,221 @@ with its successor, the Amiga 2000) had a PAL display, the enhanced video modes
 
 
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=apexc
+$bio
+APEXC (All Purpose Electronic X-Ray Computer)
+
+
+Usage Notes:
+
+
+You should specify a cylinder image with code to run in it. Arguably, APEXC does not require such
+an image, since you may enter code in the control panel, but this would be a pain in the ass.
+
+
+If the program you run use punched tape I/O, you may specify tape image file. The first unit is
+read-only, the second unit is write-only.
+
+
+On a CLI MESS port, the resulting MESS command line may look like this :
+	mess apexc -cyln ram_image.apc -ptap input.tap output.tap
+
+
+Note that, when you quit MESS or the APEXC driver, the contents of the cylinder are saved
+to the image you specified. This simulates the behavior of the APEXC, where the cylinder image
+IS the working memory. If you don't like this behavior, you may either write-protect
+the cylinder image file, or keep a backup copy elsewhere on your hard disk (highly recommended).
+
+
+Note that the APEXC CPU is stopped on start-up, so that you may check the machine state and enter
+the start-up program address.
+
+
+On start-up, the instruction at address 0 is loaded into the Control Register, then the machine
+is stopped. To run the program starting at address 0, just press the Run/stop switch
+(the Run/stop switch is mapped to the Return key on the main keyboard).
+
+
+To start a program at another address, you need to load the first instruction into the Control
+register with the control panel. To do so, use keys 1 through 0 on the main keyboard to enter
+the 10-bit address into the 10 most significant bits of the Control Panel display, and set
+other bits to 0 with the three rows of keys under 1 through 0 (each key toggles a bit in the
+control panel display ; don't be intimidated if it sounds complicated, it should eventually
+appear straight-forward when you try, provided you know what binary scale is). You have thus
+generated a Stop instruction pointing to the first instruction of the program. Write this
+instruction into the Control Register, by holding Left Shift pressed and pressing 1 on
+the numeric keypad. You should now press the Run/stop switch twice (mapped to the Return key
+on the main keyboard). First press executes the stop order, but fetches the first
+instruction of the program into the control register. Second press starts running the program,
+starting with the first instruction.
+
+
+Control panel usage:
+
+
+This is relatively simple. The Control Panel may hold and display a 32-bit value. Display is made
+of 32 lamps, which show the current value in binary scale (each lamp represents one bit). Hence,
+the normal usage is loading the value you want to edit into the control panel, editing it,
+then saving it to the proper location.
+
+
+Default key map :
+
+ Run/stop switch : Return key on main keypad
+
+The next 6 keys may be used alone to read the register into the control panel display, or
+in combination with the Left Shift key to write the value in the control panel display into the
+register.
+
+ Read/write Control Register : 1 key on numeric keypad
+
+ Read /write Accumulator : 2 key on numeric keypad
+
+ Read/write Register : 3 key on numeric keypad
+
+ Read/write current Head Block (never used on APEXC - used for bank switching) : 4 key on numeric keypad
+
+ Read/write Memory Location : 5 key on numeric keypad
+
+ Read/write memory location pointed to by ML register : 6 key on numeric keypad
+
+ write instead of reading : Left Shift key (when you press one of the 6 keys above, the
+designated register is read into the control panel display, unless this key is being pressed,
+in which case the value in the control panel display is written into the register)
+
+ Toggle bits 1 through 10 in display : keys 1 through 0 on the main keyboard
+
+ Toggle bits 11 through 20 in display : key row directly below the former on the main keyboard
+(Q through P if your keyboard is QWERTY)
+
+ Toggle bits 21 through 30 in display : key row directly below the former on the main keyboard
+(A through ; if your keyboard is QWERTY)
+
+ Toggle bits 31 and 32 in display : key row directly below the former on the main keyboard
+(W and X if your keyboard is QWERTY)
+
+
+Known Issues:
+
+
+The driver should work correctly as of MESS .37b15. Still, it needs development tools, sample
+code and usage instructions desperately. I have tons of sample code (which was the reason for
+starting to write this driver), but still need to re-type it.  I have started work on an assembler,
+too.
+
+
+Since I have no description of the control panel of an actual APEXC, I implemented a common-place
+control panel, so this part of the emulation is not accurate. I don't even know how an actual
+APEXC was operated, and the procedures I describe above are not accurate, either.
+
+
+History and Trivia:
+
+
+The APEXC was designed by Andrew D. Booth and his team at Birkbeck College, London, in the early
+50's. Booth had designed an electromechanical computer, the ARC, in the late 40's. Along with
+his collaborator and future spouse Kathleen Booth, he spent a few months with von Neumann's team,
+which was the leading edge in computer research at the time. Later on, they built an experimental
+electronic computer, the SEC (Simple Electronic Computer), and finally the APEC (All-Purpose
+Electronic Computer) series.
+
+
+According to a 1956 document, the APEC series included the following machines :
+
+ * APE(X)C : Birkbeck College, London (before 1955)
+
+ * APE(N)C : Board of Mathematical Machines, Oslo ('N' must stand for 'Norway')
+
+ * APE(H)C : British Tabulating Machine Company (No idea what 'H' can stand for)
+
+ * APE(R)C : British Rayon Research Association ('R' must stand for 'Rayon')
+
+ * UCC : University College, London (circa january 1956)
+
+ * MAC (Magnetic Automatic Calculator) : "built by Wharf Engineering Laboratories" (february 1955)
+
+ * The HEC (H... Electronic Computer - still no idea what 'H' can stand for), built by the British
+Tabulating Machine Company (later to become International Computers and Tabulators (ICT),
+then International Computers Limited (ICL)), a commercial machine sold in at least two models
+(HEC 2M and HEC 4) (before 1955)
+
+
+Only one of each of these machines was built, with the exception of HEC (and possibly MAC)
+which were commercial machines produced in small series. They were similar in design,
+with various small differences, mostly in I/O equipment (either punched-card machines - APEXC,
+APEHC - or teletypers (keyboard and printer, and paper tape reader and puncher) - APERC, APENC).
+Also, the UCC had 8k words of storage, instead of 1k word for other machines, and the MAC
+used germanium diodes in replacement of many tubes.
+
+
+I am sorry I know little more about Booth, his team, and the history of these machines.
+
+
+Technical Description:
+
+
+The APEXC is an incredibly simple machine.
+
+
+Instruction and Data words are always 32-bit-long. The processor uses integer arithmetic with 2's
+complement representation. Addresses are 10-bit-long. The APEXC has no RAM, except a 32-bit
+accumulator and a 32-bit data register (used along with the 32-bit accumulator to implement 64-bit
+shift instructions and hold the 64-bit result of a multiplication). Instructions and data are
+stored in two magnetic drums, for a total of 32 circular magnetic tracks of 32 words. Since
+the rotation rate is 3750rpm (62.5 rotations per second), the program execution speed can go
+from as high as the theoretical maximum of 1 kIPS to lower than 100IPS if program instructions
+and data are not contiguous. Nowadays, many a pocket calculator is faster.
+
+
+One oddity is that there is no program counter : each machine instruction includes the address
+of the next instruction. This design may sound weird, but it is the only way to achieve optimal
+performance with this cylinder-based memory.
+
+
+The machine code is made of 15 instructions only, namely addition, subtraction, multiplication,
+load (3 variants), store (2 variants), conditional branch, right arithmetic bit shift,
+right bit rotation, punched-card input, punched-card output, machine stop, and bank-switching
+(which is never used on the APEXC, since it only has 1024 words of storage, and addresses are
+10-bit-long). A so-called vector mode enables to repeat the same operation 32 times with 32
+successive memory locations. Note the lack of bitwise and/or/xor and machine division. Also, note
+the lack of indirect addressing modes : dynamic modification of opcodes is the only way one may
+simulate it.
+
+
+Another oddity is that the memory bus and the ALU are 1-bit-wide. There is a 64kHz bit-clock and
+a 2kHz word-clock, and each word memory and arithmetic operation is decomposed into 32 1-bit
+memory and arithmetic operations : this takes 32 bit cycles, for a total of 1 word cycle.
+
+
+The processor is fairly efficient : most instructions take only 2 word cycles (1 for fetch,
+1 for read operand and execute), with the exception of stores, shifts and multiplications.
+Yes, the APEXC CPU is a RISC : there is no other adequate word.
+
+
+Note there is no ROM, and therefore no 'bootstrap loader' or default start-up program whatever.
+As far as I know, no executive or operating system was ever written for the APEXC, although
+there were subroutine libraries of sorts for common arithmetic, I/O and debug tasks.
+
+
+Operation of the machine is normally done through a control panel which allows the user to start,
+stop and resume the CPU, and to alter registers and memory when the CPU is stopped. When starting
+the machine, the address of the first instruction of the program to be executed must be entered
+in the control panel, then the run switch must be pressed. Most program end with a stop
+instruction, which enables to check the state of the machine, possibly run some post-mortem
+debugging procedures (a core dump routine is described in an APEXC programmation book), then enter
+the address of another program and run it.
+
+
+Two I/O devices were supported : a paper tape reader, and a paper tape puncher. The puncher output
+could be fed to a printer ('teletyper') unit when desirable. Printer output is emulated and is
+displayed on screen. Tape input was either computer-generated by the APEXC, or hand-typed with
+a special 32-key keyboard (each tape row had 5 data holes (<-> bits), which makes 32 different
+values).
 
 $end
 
@@ -332,7 +547,7 @@ default. Whilst in full keyboard emulation mode, some key associated functionali
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
 
-As of MESS .37b5, the Apple //c and clones are not working correctly; most noticably the 
+As of MESS .37b5, the Apple //c and clones are not working correctly; most noticeably the 
 keyboard emulation is not functional. This is being worked on.
 
 
@@ -345,7 +560,7 @@ Apple 2e, it has no expansion slots, so it is hard to add features to this compu
 runs either with DOS 3.3 either with ProDos and has the first version of QuickDraw in ROM. 
 The Apple IIc was originally designed to be a portable version of the Apple II, but it 
 wasn't a stand alone system, it has no batteries and no LCD screen (Apple would soon 
-release the items), it coud also be used with a small 9" monochrome green screen which 
+release the items), it could also be used with a small 9" monochrome green screen which 
 plugged into the unit. The Apple IIc was mainly used as a desktop computer. The Apple IIc 
 was replaced with the Apple IIc+ in 1988.
 
@@ -387,7 +602,7 @@ disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled usi
 scroll_lock key.
 
 
-As of MESS .37b5, the Apple //e and clones are not working correctly; most noticably the 
+As of MESS .37b5, the Apple //e and clones are not working correctly; most noticeably the 
 keyboard emulation is not functional. This is being worked on.
 
 
@@ -479,7 +694,7 @@ VAL       Ctrl[.]
 
 To break/stop a program, press Ctrl[C]
 
-To interupt the LISTing of a program, press Ctrl[S]
+To interrupt the LISTing of a program, press Ctrl[S]
 
 To repeat the entire last line you typed, press Ctrl[R]
 
@@ -590,13 +805,13 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's proccessor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
 
 
 Cartridge Usage:
 
 Cartridges may have any of the following extensions: .bin .rom .lo .hi .prg
-Files with boot-sign in it are recognised as roms. Some cartridges require more than one 
+Files with boot-sign in it are recognized as roms. Some cartridges require more than one 
 image to load (e.g., tutor.lo tutor.hi).
 
 
@@ -684,7 +899,7 @@ History and Trivia:
 
 When the first Commodore 264 prototype unofficially debuted at the Winter Consumer 
 Electronics Show (CES) in January (?) 1984, the developers had obviously not yet agreed 
-about the keyboard layout; some keys are unlabelled, the right shift key was missing, 
+about the keyboard layout; some keys are unlabeled, the right shift key was missing, 
 instead having a key which seems to be meant as a line feed key.
 
  
@@ -715,7 +930,7 @@ could only be used with cartridges for the expansion port.
  
 The official presentation of the C264 series took place on the Hannover fair in 1984. 
 Luckily, the developers didn't eliminate the right shift key in the final keyboard layout. 
-The formerly unlabelled keys bear a label now: the key that used to be the left arrow 
+The formerly unlabeled keys bear a label now: the key that used to be the left arrow 
 key on the C64 and the VC20 says 'Esc', the key between '@' and '*' bears the English pound 
 sign, and the key that was labelled 'SHIFT LOCK' on all 8-bit computers Commodore ever 
 produced now says - guess what - 'SHIFT LOCK' :-) (must have been a hard decision between 
@@ -739,11 +954,11 @@ software.
  
 The built-in software was really limited: a word processing (only with 40 columns and can 
 manage documents with only 99 lines of 77 columns), a very small spreadsheet (only 17 
-columns and 50 lines), a poor graphic software (which can display graphically datas from 
+columns and 50 lines), a poor graphic software (which can display graphically data from 
 the sheets but only in text mode) and a small database (999 record with 17 fields each 
 and only 38 characters by field). Most of these programs can only be used with a floppy 
 disk unit. The Plus 4 can use peripherals of the C64 or the Vic 20, the printer MPS801 
-and the Disk Unit 1541 run well with it but it can't use C64 softwares. This machine 
+and the Disk Unit 1541 run well with it but it can't use C64 software. This machine 
 wasn't built to be a competitor of the C64 nor to replace it. It has an improved basic 
 in relation to the C64 one with graphic and sound instructions and a built-in assembler, 
 but has lost lots of interesting C64 features like great soundchip or hardware sprites. 
@@ -804,13 +1019,13 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
  
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's proccessor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
 
 
 Cartridge Usage:
 
 Cartridges may have any of the following extensions: .prg .crt .80 .90 .a0 .b0 
-.e0 .f0   Files with boot-sign in it are recognised as roms. Some cartridges may require more 
+.e0 .f0   Files with boot-sign in it are recognized as roms. Some cartridges may require more 
 than one image.
 
  
@@ -884,7 +1099,7 @@ The restore key is not currently working.
 
 NTSC/PAL select not correct.
 
-The Gameports do not suport the mouse (Serial Protocol?).
+The Gameports do not support the mouse (Serial Protocol?).
 
 No printer or other devices support in the serial bus (apart from simple disk drives).
 
@@ -925,12 +1140,12 @@ most famous home computers of it's era. During its production from 1982 to 1993 
 to 22 million (!) of these computer would sell, to put in perspective, that's more than 
 all the Macintoshes in the world. It was one of the first to offer a high quality sound 
 chip and graphic resolution with many colors and sprites. A great range of peripherals 
-was developped for this computer and can use several of the Vic 20 peripherals. 
+was developed for this computer and can use several of the Vic 20 peripherals. 
 
 
  
 Several versions of the Commodore 64 were launched : The first one (C64-1) uses the VIC 20 
-case, it will be quiclky replaced with the C64-2 which uses the famous brown case and by 
+case, it will be quickly replaced with the C64-2 which uses the famous brown case and by 
 the C64-3 with small cosmetic changes in the keyboard. A special version called Educator 64 
 or PET64 or CBM 4064 was proposed for schools and uses the PET case.
 
@@ -1420,7 +1635,7 @@ MAME coin inputs (keys 5, 6, 7, 8) are used to select the game at the G? prompt.
 History and Trivia:
 
 Introduced in August 1976 at a suggested retail price of $170 (US), The Channel F was the 
-first programmable video game system to use replacable cartridges. The controllers, which were
+first programmable video game system to use replaceable cartridges. The controllers, which were
 often described as looking like plungers were attached directly to the system via 8 foot wires.
 The Channel F didn't fair well in the late 1970s market dominated by Atari, and Fairchild switched their efforts to developing the Spark-16 minicomputer.
 
@@ -1456,13 +1671,13 @@ one you specified.
 
 Go to file menu pick the .pak
 Should automatically start running the game.
-if it does not run, it isnt supported yet.
+if it does not run, it isn't supported yet.
 
     - Cartridge rom images (.ROM)
 
 Go to file menu and pick the .rom
 Reset to CoCo and it will start running the game.
-if it does not run it isnt supported yet.
+if it does not run it isn't supported yet.
 
 	-Diskette images (.DSK)
 
@@ -1494,7 +1709,7 @@ scroll_lock key.
 History and Trivia:
 
 The Tandy TRS-80 Color Computer was typically called 'CoCo'. It was compatible with the 
-Welsh Dragon 32: they can use same softwares and cartridges. Unlike the Dragon, though, it 
+Welsh Dragon 32: they can use same software and cartridges. Unlike the Dragon, though, it 
 used its own basic, Tandy Basic instead of the Microsoft basic. It was followed by the 
 TRS 80 color computer II. The two BASICs use different tokens so they are not binary
 compatible.
@@ -1693,7 +1908,7 @@ Sound is emulated at Z80 and PSG76489 level.
 
 I still consider the Genesis driver extremely preliminary. I have a lot of further work to do 
 before I consider it anywhere near complete. My initial goal is to make it as compatible as 
-possible. Currently there is scope within the driver to handlesplit screen colour changes/any 
+possible. Currently there is scope within the driver to handle split screen colour changes/any 
 VDP effect, interlacing, without rewriting. The graphics renderer emulates VDP at scanline 
 level, and does not use tile-based methods.
 
@@ -1944,8 +2159,8 @@ with memory protection (something neither Windows 98 nor MacOS offer !).
 Its 68000 CPU was one of the fastest microprocessor in its time.
 
 Unfortunately, Lisa was never too successful. It was quite expensive, and relatively few units were
-sold (possibly about 10,000 Lisa 1 and 80,000 Lisa 2). Little software was developped for it.
-Also, it was extremely ressource hungry : it was reportedly slow, and its memory requirements were
+sold (possibly about 10,000 Lisa 1 and 80,000 Lisa 2). Little software was developed for it.
+Also, it was extremely resource hungry : it was reportedly slow, and its memory requirements were
 the major cause for its high price.
 
 
@@ -1956,7 +2171,7 @@ discontinued in May 1985 (although it was still available at much later dates). 
 an enhanced, 68020-based, Lisa was in development when Apple discontinued the Lisa.
 
 Note that, contrary to a common belief, the Macintosh is not a mere offspring of the Lisa, since
-both projects were led parallelly. While the Macintosh borrowed many ideas from the Lisa project
+both projects were led simulteanously. While the Macintosh borrowed many ideas from the Lisa project
 (which had more financial resources), the reverse is often true, too : for instance, the Macintosh
 included a GUI from the beginning.
 
@@ -1967,7 +2182,7 @@ Lisa is a milestone in the history of computing. Arguably, the Xerox PARC resear
 most GUI concepts (along with Object-Oriented programming and Ethernet) 10 years before Lisa was
 introduced. However, although Xerox research was public, and some Xerox Altos were actually sold,
 or given to universities, these experiments remained little known, and raised little interest.
-I guess this was because computing was mostly the field of highly-trained professionnals who did
+I guess this was because computing was mostly the field of highly-trained professionals who did
 not care about ease of use (you know, the same kind of guys who laughed at Macintosh and worshipped
 the early IBM-PCs). So, Lisa made the world aware that GUI could exist, all the more since Apple
 was a major computer maker. Also, Lisa (along with Macintosh, Atari ST and Commodore Amiga)
@@ -1988,7 +2203,7 @@ Introduced on 14th April 1986, the Macintosh 512ke was essentially a Macintosh 5
 the same 128k ROMs and double-sided 800 KB internal floppy drive as the Mac Plus.
 
 It was sold as a poor man's Macintosh. Also, any existing Macintosh 512k could be upgraded to 512ke.
-(They could be upgraded to a Mac Plus, too, but this involved changing the motherbord.)
+(They could be upgraded to a Mac Plus, too, but this involved changing the motherboard.)
 
 Since this model was discontinued a few months later (in August 1986), it may have just been
 a way for Apple to get rid of its excess Macintosh 512 motherboard. Or maybe they realized that
@@ -2011,7 +2226,7 @@ several new features.
 
 The extended ROM held the new version of operating system : it supported hard disk units,
 the SCSI bus, and the new file system : HFS (Hierarchical File System), along with many other
-new features (Time Manager...). Additionnally, various routines and managers previously located
+new features (Time Manager...). Additionally, various routines and managers previously located
 in RAM (Appletalk manager, RAM Serial Driver, Standard File Package...) had been moved to ROM.
 
 The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 KB
@@ -2062,7 +2277,7 @@ a program named MacWorks, which enabled a Lisa to run the Macintosh operating sy
 
 The same day, they introduced a new variation of the Lisa hardware, named Macintosh XL,
 which was a Lisa 2 whose video hardware was modified in order for it to display square pixels.
-Additionnally, existing Lisas could be upgraded to Macintosh XL. This modification improved
+Additionally, existing Lisas could be upgraded to Macintosh XL. This modification improved
 the appearance of Macintosh programs ; however, it prevented the Macintosh XL from running
 the Lisa operating system, or any Lisa program, for that matter. Needless to say, it would have
 been very easy to patch the Lisa OS to support the new video resolution : this was simply not done,
@@ -2076,7 +2291,7 @@ the original Macintosh, but it supported up to 2 Megabytes of RAM (while the ori
 came with 128kb or 512kb only), had a larger screen, supported hard drives units (which
 the original Macintosh could not do until the Hard Disk 20 was introduced), and it had three
 expansion ports (it was thus the first expandable Macintosh, more than 2 years before Macintosh II
-and Macintosh SE were introduced). A number of these was bought by developpers who needed
+and Macintosh SE were introduced). A number of these was bought by developers who needed
 the hard drive and appreciated the larger screen (anyway, Macintosh development was originally done
 on Lisa, so the transition from Lisa Workshop on Lisa to Macintosh Programmer Workshop on
 Macintosh XL was a natural one).
@@ -2098,7 +2313,7 @@ Delivered in japan only?
 
  (all modules should work with c64)
 
- cartridges neccessary (nothing works without cartridge)
+ cartridges necessary (nothing works without cartridge)
 
  low cost c64
 
@@ -2106,7 +2321,7 @@ Delivered in japan only?
 
  only 4 kbyte sram
 
- simplier banking chip
+ simpler banking chip
 
   no portlines from cpu
 
@@ -2195,12 +2410,12 @@ first version of the OS: MSX DOS 1 (which looks like earlier versions of MS DOS)
 
 
 Almost all japanese and Korean computer companies made their own MSX computers (except 
-parhaps NEC). Bill Gates was then very confident about the future of the MSX standard. 
+perhaps NEC). Bill Gates was then very confident about the future of the MSX standard. 
 Spectravideo (one of the MSX companies) made a 80 columns card and adapted CP/M on the MSX.
 A lot of software(especially a lot of games from Sega, Konami, Taito, Ascii,...) and 
 hardware was developed for this standard. Despite all its qualities, the MSX family didn't 
 have great success in USA, however was pretty known in Europe (Netherlands and France), in 
-South Americca (Brazil) and USSR. This standard was replaced in 1985 by MSX 2. 
+South America (Brazil) and USSR. This standard was replaced in 1985 by MSX 2. 
 
 
 A list of known MSX compliant machines:
@@ -2401,10 +2616,10 @@ Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
 
 AX-100: 64kB RAM
 AX-150: 64kB RAM
-AX-170: 64kB RAM, built in special roms with arabic characters set and softwares
+AX-170: 64kB RAM, built in special roms with arabic characters set and software
 AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
 AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
-AX-990: 64kB RAM, 50 softwares built in, SEGA-MEGADRIVE board built in
+AX-990: 64kB RAM, 50 programs built in, SEGA-MEGADRIVE board built in
 SX-100: 32kB RAM, 3 slots, RGB connector
 SX-101: ??kB RAM, 3 slots
 
@@ -2497,9 +2712,9 @@ HX-10S: 16kB RAM
 HX-20: 64kB RAM, built in word processor (in total 64kB ROM), RAMdisk feature (32kB of 
 main RAM in page 0 and 1 are used, under BASIC), T6950 VDP (software compatible with 
 9929A which is normally used)
-HX-20e: 64kB RAM, built in wordprocessor, RS232C interface
+HX-20e: 64kB RAM, built in word processor, RS232C interface
 HX-21: 64kB RAM, built in software
-HX-22: 64kB RAM, RS-232C interface, RGB connector (SCART 21), built in wordprocessor (in 
+HX-22: 64kB RAM, RS-232C interface, RGB connector (SCART 21), built in word processor (in 
 total 64kB ROM)
 HX-30: ??kB RAM, built in software
 HX-31: ??kB RAM, built in software
@@ -2518,9 +2733,9 @@ Yamaha (Japan)
 
 CX5: 32kB RAM
 CX5F: 32kB RAM
-CX5M: 32kB RAM, built in FM synthetizer (SFG-01) and MIDI-Interface
-CX5MII: 64kB RAM, built in FM synthetizer (SFG-01), MIDI-interface
-CX5MII/128: 128kB RAM, built in FM synthetizer (SFG-05), (V9938 built in), built in 
+CX5M: 32kB RAM, built in FM synthesizer (SFG-01) and MIDI-Interface
+CX5MII: 64kB RAM, built in FM synthesizer (SFG-01), MIDI-interface
+CX5MII/128: 128kB RAM, built in FM synthesizer (SFG-05), (V9938 built in), built in 
 FM VOICING program II
 CX-11: 32kB RAM
 CX-100: 32kB RAM
@@ -2589,7 +2804,7 @@ the cartridges end up.
 Sound emulation
 ---------------
 The PSG, PPI (key click), SCC are emulated. The SCC isn't perfect yet, you
-can hear slight inperfections in King's Valley 2 (when you through the knife),
+can hear slight imperfections in King's Valley 2 (when you through the knife),
 F1 Spirit (when you start a race), Solid Snake (when you get to building 3).
 The SCC is called `k051649' in the volume menu.
 
@@ -2617,7 +2832,7 @@ run correctly and Aleste only runs in the Japanese version of the driver).
 Also the PAL/NTSC (50/60Hz) switch is an evil hack, the actual refresh rate
 of the screen isn't changed.
 
-Also it's not very well optimised, I'll start optimising as soons as it
+Also it's not very well optimized, I'll start optimizing as soon as it
 works alright. 
 
 The v9958 isn't emulated at all. 
@@ -2646,7 +2861,7 @@ refresh rate isn't properly adjusted. All settings are saved to disk.
 Keyboard/joystick/mouse
 -----------------------
 The keyboard layout should be properly emulated. Joysticks seem to default
-to having key-bindings aswell, so pressing <CTRL> or <ALT> will also work
+to having key-bindings as well, so pressing <CTRL> or <ALT> will also work
 for the joysticks, but might give some unexpected results.
 
 The mouse emulation doesn't work properly yet. :(
@@ -2660,7 +2875,7 @@ tc8566af diskcontroller (unemulated) and the Brazillian machines are
 port-based (not memory-mapped).
 
 You need a proper diskrom dump, and the msx.crc file in place. The diskrom 
-should be recognised as type 15 otherwise the driver doesn't know it's
+should be recognized as type 15 otherwise the driver doesn't know it's
 a diskrom. 
 
 Next specify the diskrom as one of the cartridges. That should do the 
@@ -2768,7 +2983,7 @@ is connected to a mains supply.
 PCMCIA ram cards can be used to store programs and documents.
 
 The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
-Calculator, Diary and more. The whole system is a personal organiser with lots
+Calculator, Diary and more. The whole system is a personal organizer with lots
 of extras.
 
 Mess Emulation State
@@ -2778,7 +2993,7 @@ a. ACCURACY
 -----------
 
 The emulation is reasonably accurate. I have used NCIOSPEC.TXT published by Cliff
-Lawson at Amstrad to write the driver. Unfortunatly this document does not describe
+Lawson at Amstrad to write the driver. Unfortunately this document does not describe
 undocumented hardware features, so at this time, any programs relying on undocumented
 behaviour will not work well. I am currently looking for NC owners (especially NC150
 owners) to run some tests for me.
@@ -2818,7 +3033,7 @@ imgtool create nccard <card name>
 	Create a blank formatted memory card. The NC100 can write files to this.
 
 	You can view the files by:
-		1. Pressing FUNCTION + B to enter BASIC, then typeing "*." at the ">"
+		1. Pressing FUNCTION + B to enter BASIC, then typing "*." at the ">"
 		prompt.
 		2. Enter wordprocessor menu and select list files.
 	
@@ -2880,8 +3095,8 @@ is connected to a mains supply.
 
 PCMCIA ram cards can be used to store programs and documents.
 
-The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
-Calculator, Diary and more. The whole system is a personal organiser with lots
+The computer has a built in word processor, BBC Basic, Serial Terminal,
+Calculator, Diary and more. The whole system is a personal organizer with lots
 of extras.
 
 Mess Emulation State
@@ -2895,7 +3110,7 @@ of the NC200. Originally Cliff Lawson published details but these have been lost
 when his WWW site went down. Since then he has been unable to write up the details
 of the hardware (Cliff is a very busy man).
 
-So I have worked out much of the NC200 hardware by dissassembling the ROM and I have
+So I have worked out much of the NC200 hardware by disassembling the ROM and I have
 also had much help from Russel Marks.
 
 a. PRINTER
@@ -2917,7 +3132,7 @@ d. DISK DRIVE
 -------------
 
 Not working. I am trying to find out the details of the disc interface by looking
-at lots of dissassemblys!
+at lots of disassemblies!
 
 Notes
 =====
@@ -3050,17 +3265,17 @@ M - Text file, created with Make command ( batch file:) )
 commands:
 DIR [1] [2] - not comment
 INIT [,Vv] [,Dd] - formatting Disk (in first or second Disk Drive)
-DOS [f] [,Dd], [,Vv] - writing Dos on the disk without formatting It. File f authomatically starts after booting
+DOS [f] [,Dd], [,Vv] - writing Dos on the disk without formatting It. File f automatically starts after booting
 MAP [1] [2] - show chart of the disk.
 SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - saving Basic file in Memory
 LOAD f [,Aa] [,Dd] [,Vv] - loads file in memory
 MERGE - adding program in Basic to already exists in Memory
 - -only for files B or C types. Loads file in Memory and start It. (RUN and BRUN together in Apple ][)
 DELETE f [,Dd] [,Vv] - deleting file f
-RENAME f1, f2 [,Vv] [,Dd] - ranaming last name of the file f1 with f2
+RENAME f1, f2 [,Vv] [,Dd] - renaming last name of the file f1 with f2
 * f [,Dd] [,Vv] - lock/unlock file
 
-MAXFILES m - alowing up to m open files
+MAXFILES m - allowing up to m open files
 VERIFY f [,Dd] [,Vv] - checks surface integrity of file
 EXIT - leaving Dos
 
@@ -3120,8 +3335,8 @@ History and Trivia:
 
 The Oric Atmos was the successor of the Oric 1 and had almost the same characteristics. Its 
 main difference with the Oric 1 was it's enhanced RAM (48 KB instead of 16 KB), the keyboard 
-and the debugged ROM (the ORIC 1 had several bugs). Several peripherals were availables: 
-3" floppy disk drive, a small 4 colour plotter, a speech synthesiser and a Digital/Analogue 
+and the debugged ROM (the ORIC 1 had several bugs). Several peripherals were available: 
+3" floppy disk drive, a small 4 colour plotter, a speech synthesizer and a Digital/Analogue 
 converter. An external interface was needed to use joysticks. 
 $end
 #---------------------------------------------------------------------------------------------#
@@ -3303,7 +3518,7 @@ Sharp Pocket Computer 1401
 
 Usage Notes:
 
-Holding C-CE while reseting, preserves basic programs.
+Holding C-CE while resetting, preserves basic programs.
 (simulated when starting mess)
 
 
@@ -3417,15 +3632,15 @@ $bio
 Amstrad PCW8256/8512/9512/9512+/10
 ----------------------------------
 
-These machines were designed primiarly for wordprocessing (hence the name
-"Personal Computer Wordprocessor"), but are capable of a lot more.
+These machines were designed primarily for wordprocessing (hence the name
+"Personal Computer Word processor"), but are capable of a lot more.
 
 The original PCW8256 system had a green screen monitor, with 2 3" disc
 drives mounted vertically in it, a keyboard and a special printer. (The CPU and other 
 hardware was also contained in the base of the monitor)
 
 Later models changed the case design, but also allowed the use of any printer that 
-was available. (The original 8256 had a proprietry printer and interface).
+was available. (The original 8256 had a proprietary printer and interface).
 
 The hardware is simple, a Z80 running at 4Mhz, slowed to 3.3 with wait states, an Amstrad 
 ASIC custom chip for driving the display (2 colours, 720x256 in PAL, 720x200 in NTSC), a 
@@ -3435,7 +3650,7 @@ The boot-program is contained on the printer chip, and is enabled at power-on or
 The data is passed through a Amstrad custom ASIC chip, and is executed by the Z80. The 
 program is simple, and just loads track 0, side 0,sector &01 to &f000 where it is then 
 executed at &f010. (The first 16 bytes appear to contain some format parameters which 
-are used to initialise CPM). I don't own a PCW machine so I don't know the exact display 
+are used to initialize CPM). I don't own a PCW machine so I don't know the exact display 
 that the PCW shows on boot-up.
 
 AFAIK, no dumps are available for this program. The MESS driver uses a program coded by 
@@ -3443,7 +3658,7 @@ myself. This program waits for a key to be pressed and then starts the boot proc
 an error occurs, the screen will flash 6 times, and then it will repeat the procedure. If 
 all is well, you will see some lines appear on the screen, and the boot will continue.
 
-The original computer came with CP/M and Locoscript (a special wordprocessor).
+The original computer came with CP/M and Locoscript (a special word processor).
 
 Since it was able to use CP/M there was a lot of public domain and CP/M programs available 
 that would run on it.
@@ -3548,6 +3763,68 @@ DEC PDP-1
 
 
 Currently emulates one image - SPACEWAR!
+
+
+History and Trivia :
+
+Note : I borrowed most details from an article by J. M. Graetz called "The origin of Spacewar".
+This article can be found at <http://www.enteract.com/~enf/lore/spacewar/spacewar.html>,
+and was originally printed in the August 1981 issue of Creative Computing magazine.
+
+
+Early computers, particularly mainframes, were Complex Devices to be operated by Competent People
+helped by dozens of Servants who typed the Data and fed it to the Computer. Outsiders who visited to
+see computers were often disappointed : there was nothing to SEE, these machine were just crunching
+numbers on paper tape, and printing further numbers on another tape.
+
+In the fall of 1961, Digital started production of its PDP-1. This machine was quite friendly
+for its time : it was compact enough to be located in the corner of a room, and you did not need to
+know hundreds of pages of procedures to switch it on and off. Additionally, it supported
+an optional CRT screen, which was a rare device at this time.
+
+PDP-1 may be regarded as one of the first minicomputers, although it did not include and integrated
+circuit (which hardly existed at this time). It may be regarded as one of the first personal
+computers, too, since one person was quite enough to run and operate it (although, needless to say,
+its price was not the kind of price you would expect from a personal computer today).
+
+
+One of the first PDP-1 was installed at the MIT. Needless to say, the various hackers of the MIT
+immediately felt attracted to this machine. And this is how the adventure of Spacewar! began.
+
+Let it be clear that there were already computers games : a game of Tic-Tac-Toe and simple games
+of cards existed as early as in 1955. Attempts at implementing a game of chess can be traced back
+to the early 1950s.
+
+Yet, the use of CRT enabled the development of a new breed of real-time, action games. Several
+real-time, funny demonstration programs had already written for earlier machines : the Bouncing
+Ball, in which a ball fell from the top of the screen and bounced ; the Mouse in the Maze which
+enabled the user to draw a maze and place a piece of cheese with a lightpen : a mouse would enter
+the maze, search the cheese and eat it. However, these were no "real" video games as far as there
+was no real-time action.
+
+There were three fellows who came with the initial idea of Spacewar! : Wayne Witanen,
+J. Martin Graetz, and Stephen R. (Slug) Russell. They were about 25-year-old. They wanted to devise
+an attractive demonstration program, which used as much the computer resources as possible,
+so they came out with the idea of a video game. The basic idea was to have two players fly
+a spaceship and fight each other with torpedoes. It was somewhat inspired by Science-Fiction
+novels and films these fellow had read and watched. Soon, most hackers at the MIT knew about
+this project.
+
+Since there was no development tool, they had to wait for a text editor, assembler and debugger
+to be ported to PDP-1.
+
+Eventually, in January 1962, the development started, and by February, a crude version of the game
+was already running. The development continued, as they added a star background, a big central star
+with the associated gravitic effects, and an hyperspace jump device. The game was essentially
+complete by the end of April 1962, so that it was shown MIT's annual Science Open House in May.
+Needless to say, it was a hit. Soon, program tapes with Spacewar! were circulating in the
+universities around the USA.
+
+What else can we say ? These people thought that computer games would make computers more popular :
+the least we can say is they were right. Spacewar! is the first video game, and as such it is
+the ancestor of thousands of arcade, console or computer games with hairy aliens, missiles,
+and action. Although it took about 10 additional years for video games to go commercial,
+we can say that it all started with Spacewar!.
 
 $end
 
@@ -3719,7 +3996,7 @@ may require minor modifications but should then run without problems.
 
 What are the changes?
 ---------------------
-There are so many changes that it is impossible to summarise them all.
+There are so many changes that it is impossible to summarize them all.
 Only the important changes have been detailed with the exception of
 the new NMI routine which is self explanatory.
 
@@ -3907,7 +4184,7 @@ games in console format.  The console basically served as an encased SuperGun (T
 JAMMA adapter) but was wired up so coin inputs could not be added by hackers, and only the
 special CPS Changer cartridge boards would work. The CPS Changer had outputs for Composite
 video, S-Video and 8 channel mono audio. It's joystick (named the "CPS Fighter") had the
-same connection as the Super Famicom, and was even marketed seperately for that console.
+same connection as the Super Famicom, and was even marketed separately for that console.
 
 
 The games came as PCBs in plastic casing, and were virtually identical to their CPS-1 arcade
@@ -4060,14 +4337,14 @@ early 1981.
 
 This computer was easy to use.  It displayed nice color graphics, and
 played sound.  It was highly expandable, too.  One expansion enabled the
-computer to speak.  Programs were generally on cartidges.  TI, which always
+computer to speak.  Programs were generally on cartridges.  TI, which always
 tried to keep the control of program production, put an emphasis on games,
 education, and home utilities (home finance, etc.).  Incidentally, it was
 the first 16-bit home computer.
 
 The general architecture was odd.  The computer had only 256 bytes of CPU
 RAM, the remaining 16kb of RAM were attached to the video processor.  It
-had been designed to use some slow "GROM" cartidge, written in an
+had been designed to use some slow "GROM" cartridge, written in an
 interpreted language, "GPL".
 
 Due to these poor designing and programming choices, the computer was slow.
@@ -4080,8 +4357,8 @@ dozen thousand units were sold.
 
 The design of TI99/4 caused many headaches to TI engineers.  It was first
 designed as a console, then an inexpensive home computer (which explains
-its slowness and kludgy design), then a hybride (with remote I/R joysticks
-and keypads - which were abandonned at the last minute - and a cartidge
+its slowness and kludgy design), then a hybrid (with remote I/R joysticks
+and keypads - which were abandoned at the last minute - and a cartridge
 port).  It was intended to use a TI-designed processor, tms9985, but the
 processor was never actually produced, so engineers had to use a
 software-compatible, high-end (in 1979) tms9900 with tons of glue logic.
@@ -4112,11 +4389,11 @@ Usage:
 
 This TI99/4a driver offers a high level of compatibility.  It currently
 supports V9t9-format cart images and up to SSSD disk images.  Speech
-synthesis is partially suported.
+synthesis is partially supported.
 
 Loading a cart:
 
-No cartidge is required, as TI99/4a has a built-in small basic interpreter.
+No cartridge is required, as TI99/4a has a built-in small basic interpreter.
 
 V9t9-format cart images are typically split into up to 3 files. These can be
 loaded in any order, so long as all necessary portions are loaded. 
@@ -4125,14 +4402,14 @@ loaded in any order, so long as all necessary portions are loaded.
 History and Trivia:
 
 The TI99/4a Home Computer was a TI99/4 with improved keyboard, revised
-ROMs, and an additionnal graphics mode.  It was officially introduced in
+ROMs, and an additional graphics mode.  It was officially introduced in
 June 1981, and was retired in late 1983.
 
 TI99/4a was quite successful in Europe and US (possibly hundreds of
 thousand units built).  In 1983, though, competition on the home computer
 market was so harsh that TI had to cut down the price of TI99/4a to less
 than $100, while suffering heavy losses.  So, by the end of 1983, TI had
-abandonned TI99/4a, its prototype successors, and withdrawn from the home
+abandoned TI99/4a, its prototype successors, and withdrawn from the home
 computer market.
 
 $end
@@ -4154,7 +4431,7 @@ $end
 
 #The TI99/2 BASIC Computer was an attempt at producing a cheap ($100)
 #computer.  TI started designing it in the summer of 1982, it was first
-#introduced in January 1983, and it was abandonned, before entering
+#introduced in January 1983, and it was abandoned, before entering
 #production, by April 1983.
 
 #It featured a TMS9995 microprocessor (with on-line timer and 256-byte RAM),
@@ -4233,7 +4510,7 @@ port, a floppy disk controller, a serial port and a real time clock.
 
 
 When it was connected to a floppy disk unit, the TRS 80 used the TRS DOS operating system, it 
-was pretty bugged and most of the TRS80 users prefered NEW DOS, it is an operating system 
+was pretty bugged and most of the TRS80 users preferred NEW DOS, it is an operating system 
 done by a third-party company called Apparat. This OS was the real TRS 80 operating system.
 
 
@@ -4307,7 +4584,7 @@ Commodore VIC20 and VC20
 Cartridge Usage:
 
 Cartridges may have any of the following extensions: .bin .rom .a0 .20 .40 .60 .prg
-Files with boot-sign in it are recognised as roms. Some cartridges require more than one 
+Files with boot-sign in it are recognized as roms. Some cartridges require more than one 
 image (for example, defender.60 defender.a0).
 
 
@@ -4375,7 +4652,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's proccessor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
 
 
 Quickloader Usage:
@@ -4443,7 +4720,7 @@ emulation, take a look at the very good vice emulator.
 History and Trivia:
 
 The Commodore VIC 20 was the successor of the CBM PET. It was designed by Bob Yannes at CBM, 
-he later designed the SID chip for the C64 and then went to Ensoniq to design synthesisers. 
+he later designed the SID chip for the C64 and then went to Ensoniq to design synthesizers. 
 The VIC 20 used the same microprocessor and the same Basic language as the PET. It was very 
 popular in the early 80's. Commodore sold more than 1 million of this computer! A great range 
 of peripherals were developed for this computer as well as a lot of software. When it became 
@@ -4770,7 +5047,7 @@ pressed at the same time
 
 shift-cbm switches between upper-only and normal character set
 (when wrong characters on screen this can help)
-run (shift-stop) loads pogram from type and starts it
+run (shift-stop) loads program from type and starts it
 esc-x switch between two videosystems
 
 additional keys (to c64) are in c64mode not useable
@@ -4785,7 +5062,7 @@ Paddle 6 y-axe
 Tape
 ----
 (DAC 1 volume in noise volume)
-loading of wav, prg and prg files in zip archiv
+loading of wav, prg and prg files in zip archive
 commandline -cassette image
 wav:
  8 or 16(not tested) bit, mono, 125000 Hz minimum
@@ -4825,7 +5102,7 @@ Roms
 .crt
 .80 .90 .a0 .b0 .e0 .f0
 files with boot-sign in it
-  recogniced as roms
+  recognized as roms
 
 .prg files loaded at address in its first two bytes
 .?0 files to address specified in extension
@@ -4843,7 +5120,7 @@ loads first rom when you press quickload key (numeric slash)
 
 c64 mode
 --------
-hold down commodore key while reseting or turning on
+hold down commodore key while resetting or turning on
 type go64 at the c128 command mode
 
 
@@ -4872,7 +5149,7 @@ s "0:char128",8,ed000,ee000
 *z80bios missing (funet says only 1 version!?)
 I don't know, maybe there is a cpm utility allowing saving
 the memory area 0-0xfff of bank 0.
-(I don't want to develope (and cant test) this short complicated
+(I don't want to develop (and can't test) this short complicated
 program)
 
 *c64basic and kernel (only 1 version!?)
@@ -5043,7 +5320,7 @@ pressed at the same time
 
 shift-cbm switches between upper-only and normal character set
 (when wrong characters on screen this can help)
-run (shift-stop) loads pogram from type and starts it
+run (shift-stop) loads program from type and starts it
 
 
 Lightpen
@@ -5088,7 +5365,7 @@ $bio
 Team Concept Comquest Plus German
 ---------------------------------
 
-laptop computer for childs
+laptop computer for children
 
 
 Features
@@ -5105,7 +5382,7 @@ cartridge slot
 Mess Emulation State
 --------------------
 not working (not even cpu is known)
-stopped until cpu type is recogniced or info found
+stopped until cpu type is recognized or info found
 
 $end
 
@@ -5151,7 +5428,7 @@ very early computer
 
 Features
 --------
-operation without buildin roms, you can enter your program directly with
+operation without builtin roms, you can enter your program directly with
 help of the cpu integrated dma.
 2 segment digits
 tape connector
@@ -5244,7 +5521,7 @@ Galaksija
 
 ZX81 class kit built computer from Yugoslavia (Serbia) invented by Voja Antonic.
 Also available in complete form.
-There were 7000 kit complets sold and aproximately 10.000 made computers
+There were 7000 kit complets sold and approximately 10.000 made computers
 (including kit built ones).
 
 
@@ -5278,7 +5555,7 @@ $bio
 Hewlett Packard HP48S/SX/G/GX
 -----------------------------
 
-Scientic Calculator
+Scientific Calculator
 
 S 32kb ram
 SX 128KB ram
@@ -5288,7 +5565,7 @@ GX 128kb ram
 
 Features
 --------
-131x64 monochrom lcd display
+131x64 monochrome lcd display
 memory/cartridge slot
 batterie slot
 infrared interface
@@ -5396,7 +5673,7 @@ basically an IBMPC,
 80286 processor
 16 mb memory space
 16 bit wide, 24 bit wide slots (xt downwards compatible)
-2nd programable interrupt controller
+2nd programmable interrupt controller
 16 bit direct memory access controller
 realtimeclock and setup memory
 (changed keyboard and keyboard circuits on board)
@@ -5438,7 +5715,7 @@ Features
 --------
 8088 cpu
 expanded through several slots for interface cards
-programable interrupt controller
+programmable interrupt controller
 direct memory access controller
 support for a tape drive on the motherboard of the first series
 even elementar equipment is not on the motherboard
@@ -5513,7 +5790,7 @@ color handheld
 
 developed by EPYX (2 colors, 4 colors, cassettes instead of cartridges)
 
-Lynx II is a redisign: smaller,  shorter power down timer and stereo
+Lynx II is a redesign: smaller,  shorter power down timer and stereo
 
 Features
 --------
@@ -5534,8 +5811,8 @@ Some games want to be rotated by 90 degree
 
 Emulators
 ---------
-Handy for Win32 (exzellent)
-xhandy (linux binary) (exzellent)
+Handy for Win32 (excellent)
+xhandy (linux binary) (excellent)
 
 
 Mess Emulation State
@@ -5578,7 +5855,7 @@ than you can play as white and enter your move (enter is d/play)
 
 Mess Emulation State
 --------------------
-operating intructions needed!
+operating instructions needed!
 not working (cpu core problem?)
 
 
@@ -5621,7 +5898,7 @@ Emulators
 Mess Emulation State
 --------------------
 Random number generation is not accurate (rriot6530 emulation)
-led emulation not accurate (noticable while computer is thinking)
+led emulation not accurate (noticeable while computer is thinking)
 
 
 $end
@@ -5671,7 +5948,7 @@ a. ACCURACY
 -----------
 
 The emulation is reasonably accurate. I have used NCIOSPEC.TXT published by Cliff
-Lawson at Amstrad to write the driver. Unfortunatly this document does not describe
+Lawson at Amstrad to write the driver. Unfortunately this document does not describe
 undocumented hardware features, so at this time, any programs relying on undocumented
 behaviour will not work well. I am currently looking for NC owners (especially NC150
 owners) to run some tests for me.
@@ -5711,7 +5988,7 @@ imgtool create nccard <card name>
 	Create a blank formatted memory card. The NC100 can write files to this.
 
 	You can view the files by:
-		1. Pressing FUNCTION + B to enter BASIC, then typeing "*." at the ">"
+		1. Pressing FUNCTION + B to enter BASIC, then typing "*." at the ">"
 		prompt.
 		2. Enter wordprocessor menu and select list files.
 	
@@ -5792,7 +6069,7 @@ of the NC200. Originally Cliff Lawson published details but these have been lost
 when his WWW site went down. Since then he has been unable to write up the details
 of the hardware (Cliff is a very busy man).
 
-So I have worked out much of the NC200 hardware by dissassembling the ROM and I have
+So I have worked out much of the NC200 hardware by disassembling the ROM and I have
 also had much help from Russel Marks.
 
 a. PRINTER
@@ -5814,7 +6091,7 @@ d. DISK DRIVE
 -------------
 
 Not working. I am trying to find out the details of the disc interface by looking
-at lots of dissassemblys!
+at lots of disassemblies!
 
 Notes
 =====
@@ -5831,7 +6108,7 @@ $end
 $info=neat
 $bio
 
-New Enchanced AT
+New Enhanced AT
 ----------------
 
 popular AT compatible chipset for 80286
@@ -6146,7 +6423,7 @@ socket for 8087 math coprocessor
 integrated cga/mda/hercules graphics adapter, 
 connector for CGA and MDA/Hercules monitors and TV (hf modulated; PAL?)
 integrated 102 key keyboard
-2 ibm pc comatible expansion slots (half length)
+2 ibm pc compatible expansion slots (half length)
 multi language bios
 3 1/2 inch 720 kb disk drive
  connector for external floppy disk drive
@@ -6208,7 +6485,7 @@ extended RAM
 5'2D disk drives
 Kanji ROM
 Note: Currently, each model is separated which use "High-resolution"
-      display and "Low-resolution" display. Beacause I don't know how
+      display and "Low-resolution" display. Because I don't know how
       to change display resolution and HSYNC frequency dynamically
       (when machine is running).
 
@@ -6358,7 +6635,7 @@ $bio
 pong games
 ----------
 
-first done in discret logic
+first done in discrete logic
 later pong in a chip by several firms (atari, ge, ...)
 late pongs probably signetnics 2650/2636 system in germany
 
@@ -6777,7 +7054,7 @@ To do:
 - drivers for rom versions: 1.0, 2.0, 7.0
 
 Needed:
-1. Info about ports 3 (bit 2 seems to be allways 0) and 4.
+1. Info about ports 3 (bit 2 seems to be always 0) and 4.
 2. High quality artwork.
 3. Dumps of rom versions: 1.0, 2.0, 7.0
 
@@ -6831,7 +7108,7 @@ Mess Emulation State
 drivers for rom versions: 1.3, 1.4, 1.5, 1.6
 driver for ti86grom (homebrew rom by Daniel Foesch)
 sound emulated (speaker connected to link port)
-link port preliminary emulatation
+link port preliminary emulation
 grayscale effects emulated
 nvram emulated
 200Hz timer and ON key interrupts emulated
@@ -6855,7 +7132,7 @@ To do:
 - driver for rom version 1.2
 
 Needed:
-1. Info about ports 3 (bit 2 seems to be allways 0) and 4.
+1. Info about ports 3 (bit 2 seems to be always 0) and 4.
 2. High quality artwork.
 3. Dumps of rom version 1.2
 
@@ -6974,7 +7251,7 @@ integrated speaker
 Mess Emulation State
 --------------------
 display, keyboard working
-Stopped. For me it is much to cryptic to operate and therefor not interesting.
+Stopped. For me it is much too cryptic to operate and therefore not interesting.
 ( I did it because it is the same hardware as in the studio2)
 
 
