@@ -96,6 +96,9 @@ static void z88_vh_render_6x8(struct osd_bitmap *bitmap, int x, int y, unsigned 
 		UINT8 data;
 
 		data = pData[h];
+		data = data<<2;
+		plot_pixel(bitmap,x,y+h, 0);
+
 		for (b=0; b<6; b++)
 		{
 			int pen;
@@ -112,6 +115,8 @@ static void z88_vh_render_6x8(struct osd_bitmap *bitmap, int x, int y, unsigned 
 			data = data<<1;
 
 		}
+
+		plot_pixel(bitmap,x+7,y+h, 0);
 	}
 }
 
@@ -159,17 +164,21 @@ void z88_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
     int x,y;
     unsigned char *ptr = z88_convert_address(blink.sbf);
+	unsigned char *stored_ptr = ptr;
 
 	for (y=0; y<(Z88_SCREEN_HEIGHT>>3); y++)
 	{
+		ptr = stored_ptr;
+
 		for (x=0; x<(Z88_SCREEN_WIDTH>>3); x++)
 		{
 			int ch;
 
 			UINT8 byte0, byte1;
 
-			byte0 = ptr[(x<<1)];
-			byte1 = ptr[(x<<1)+1];
+			byte0 = ptr[0];
+			byte1 = ptr[1];
+			ptr+=2;
 
 			/* hi-res? */
 			if (byte1 & Z88_SCR_HW_HRS)
@@ -183,16 +192,16 @@ void z88_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 					int ch_index;
 					unsigned char *pCharGfx;
 
-					ch = (byte0 & 0x0ff) | ((byte1 & 0x03)<<8);
+					ch = (byte0 & 0x0ff) | ((byte1 & 0x01)<<8);
 
-					if (ch & 0x0300)
+					if (ch & 0x0100)
 					{
-						ch_index =ch & (~0x0300);
+						ch_index =ch & 0x0ff;	//(~0x0100);
 						pCharGfx = z88_convert_address(blink.hires1);
 					}
 					else
 					{
-						ch_index = ch;
+						ch_index = ch & 0x0ff;
 						pCharGfx = z88_convert_address(blink.hires0);
 					}
 
@@ -225,16 +234,18 @@ void z88_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 				z88_vh_render_6x8(bitmap, (x<<3),(y<<3), pCharGfx);
 
-			}
 
-			/* underline? */
-			if (byte1 & Z88_SCR_HW_UND)
-			{
-				z88_vh_render_line(bitmap, (x<<3), (y<<3), 1);
+				/* underline? */
+				if (byte1 & Z88_SCR_HW_UND)
+				{
+					z88_vh_render_line(bitmap, (x<<3), (y<<3), 1);
+				}
+
+			
 			}
 
 		}
 
-		ptr+=((Z88_SCREEN_WIDTH>>3)<<1);
+		stored_ptr+=256;
 	}		
 }

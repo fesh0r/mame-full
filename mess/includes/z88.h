@@ -2,7 +2,7 @@
 
 #define Z88_NUM_COLOURS 2
 
-#define Z88_SCREEN_WIDTH        640
+#define Z88_SCREEN_WIDTH        856
 #define Z88_SCREEN_HEIGHT       64
 
 int z88_vh_start(void);

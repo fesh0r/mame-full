@@ -40,7 +40,7 @@ void z88_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "z88.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = osd_fopen(Machine->gamedrv->name, "z88.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -59,13 +59,13 @@ void z88_dump_ram(void)
 		osd_fclose(file);
 	}
 
-	file = osd_fopen(Machine->gamedrv->name, "z88b.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+	file = osd_fopen(Machine->gamedrv->name, "z88b.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
 		int i;
 
-		for (i=0; i<(8*16384); i++)
+/*		for (i=0; i<(8*16384); i++)
 		{
 			char data;
 
@@ -82,7 +82,7 @@ void z88_dump_ram(void)
 			
 			osd_fwrite(file, &data, 1);
 		}
-
+*/
 		for (i=0; i<(2048*1024); i++)
 		{
 			char data;
@@ -330,6 +330,8 @@ static void z88_refresh_memory_bank(int index1)
     {
        block = blink.mem[index1];
 
+	   block = block & 0x07;
+
        /* in rom area, but rom not present */
        if (block>=8)
        {
@@ -464,7 +466,7 @@ static MEMORY_WRITE_START (writemem_z88)
         {0x08000, 0x0bfff, MWA_BANK9},
         {0x0c000, 0x0ffff, MWA_BANK10},
 MEMORY_END
-
+#if 0
 unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shift)
 {
 	unsigned long offset;
@@ -488,7 +490,7 @@ unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shif
 
         return offset;
 }
-
+#endif
 static void blink_pb_w(int offset, int data, int reg_index)
 {
     unsigned short addr_written = (offset & 0x0ff00) | (data & 0x0ff);
@@ -497,27 +499,30 @@ static void blink_pb_w(int offset, int data, int reg_index)
 
     switch (reg_index)
 	{
-		case 0x00:
+	
+		/* 1c000 */
+	
+	case 0x00:
 		{
-            blink.pb[0] = addr_written;
-            blink.lores0 = blink_pb_offset(-1, addr_written, 9);
-            logerror("lores0 %04x\n",blink.lores0);
+/**/            blink.pb[0] = addr_written;
+            blink.lores0 = ((addr_written & 0x01f)<<9) | ((addr_written & 0x01fe0)<<9);	// blink_pb_offset(-1, addr_written, 9);
+            logerror("lores0 %08x\n",blink.lores0);
 		}
 		break;
 
 		case 0x01:
 		{
             blink.pb[1] = addr_written;
-            blink.lores1 = blink_pb_offset(-1, addr_written, 12);
-            logerror("lores1 %04x\n",blink.lores1);
+            blink.lores1 = ((addr_written & 0x01f)<<12) | ((addr_written & 0x01fe0)<<12);	//blink_pb_offset(-1, addr_written, 12);
+            logerror("lores1 %08x\n",blink.lores1);
 		}
 		break;
 
 		case 0x02:
 		{
             blink.pb[2] = addr_written;
-            blink.hires0 = blink_pb_offset(-1, addr_written, 13);
-            logerror("hires0 %04x\n", blink.hires0);
+/**/            blink.hires0 = ((addr_written & 0x01f)<<13) | ((addr_written & 0x01fe0)<<13);	//blink_pb_offset(-1, addr_written, 13);
+            logerror("hires0 %08x\n", blink.hires0);
 		}
 		break;
 
@@ -525,17 +530,18 @@ static void blink_pb_w(int offset, int data, int reg_index)
 		case 0x03:
 		{
             blink.pb[3] = addr_written;
-            blink.hires1 = blink_pb_offset(-1, addr_written, 11);
+            blink.hires1 = ((addr_written & 0x01f)<<11) | ((addr_written & 0x01fe0)<<11);	//blink_pb_offset(-1, addr_written, 11);
 
-            logerror("hires1 %04x\n", blink.hires1);
+            logerror("hires1 %08x\n", blink.hires1);
 		}
 		break;
 
 		case 0x04:
 		{
             blink.sbr = addr_written;
-            blink.sbf = blink_pb_offset(-1, addr_written, 11);
-            logerror("%04x\n", blink.sbf);
+
+			blink.sbf = ((addr_written & 0x01f)<<11) | ((addr_written & 0x01fe0)<<11);
+            logerror("%08x\n", blink.sbf);
 
 		}
 		break;
@@ -750,6 +756,7 @@ READ_HANDLER(z88_port_r)
 			if ((lines & 0x001)==0)
 				data &=readinputport(0);
 
+			logerror("lines: %02x\n",lines);
 			logerror("key r: %02x\n",data);
 			return data;
 		}
