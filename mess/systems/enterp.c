@@ -22,6 +22,8 @@
 #include "includes/wd179x.h"
 #include "cpuintrf.h"
 #include "includes/basicdsk.h"
+/* for CPCEMU style disk images */
+#include "includes/dsk.h"
 
 /* there are 64us per line, although in reality
    about 50 are visible. */
@@ -158,10 +160,10 @@ static void enterprise_dave_reg_read(int RegIndex)
 
 void enterprise_dave_interrupt(int state)
 {
-		if (state)
-				cpu_set_irq_line(0,0,HOLD_LINE);
-		else
-				cpu_set_irq_line(0,0,CLEAR_LINE);
+	if (state)
+		cpu_set_irq_line(0,0,HOLD_LINE);
+	else
+		cpu_set_irq_line(0,0,CLEAR_LINE);
 }
 
 /* enterprise interface to dave - ok, so Dave chip is unique
@@ -221,6 +223,9 @@ void Enterprise_Initialise()
 	Enterprise_Pages_Write[MEM_RAM_6] = Enterprise_RAM + 0x018000;
 	Enterprise_Pages_Write[MEM_RAM_7] = Enterprise_RAM + 0x01c000;
 
+
+	Dave_Init();
+
 	Dave_SetIFace(&enterprise_dave_interface);
 
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
@@ -243,13 +248,6 @@ void Enterprise_Initialise()
 	wd179x_init(enterp_wd177x_callback);
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-}
-
-int enterprise_frame_interrupt(void)
-{
-		Dave_Interrupt();
-
-		return ignore_interrupt();
 }
 
 static READ_HANDLER ( enterprise_wd177x_read )
@@ -560,31 +558,12 @@ INPUT_PORTS_START( ep128 )
 
 INPUT_PORTS_END
 
-
-									 /* TEMP! */
-void enterprise_sh_start(void)
+static struct CustomSound_interface dave_custom_sound=
 {
-
-}
-
-void	enterprise_sh_stop(void)
-{
-}
-
-void	enterprise_sh_update(void)
-{
-}
-
-/*
-static struct CustomSound_interface enterprise_custom_sound=
-{
-	NULL;
-	//enterprise_sh_start,
-	//enterprise_sh_stop,
-	//enterprise_sh_update
-
+	Dave_sh_start,
+	Dave_sh_stop,
+	Dave_sh_update
 };
-*/
 
 /* 4Mhz clock, although it can be changed to 8 Mhz! */
 
@@ -600,7 +579,7 @@ static struct MachineDriver machine_driver_ep128 =
 			writemem_enterprise,				/* MemoryWriteAddress */
 			readport_enterprise,				/* IOReadPort */
 			writeport_enterprise,				/* IOWritePort */
-						enterprise_frame_interrupt, 1,
+						0, 0,
 						0, 0,
 		},
 	},
@@ -628,11 +607,8 @@ static struct MachineDriver machine_driver_ep128 =
 	0,0,0,0,
 	{
 		/* MachineSound */
-		{
-			/* change to dave eventually */
-			0,/* SOUND_CUSTOM, */
-			0,/* &enterprise_custom_sound */
-		}
+		/* change to dave eventually */
+		{ SOUND_CUSTOM, &dave_custom_sound},
 	}
 };
 
@@ -657,6 +633,8 @@ ROM_END
 #define io_ep128a io_ep128
 
 static const struct IODevice io_ep128[] = {
+
+#if 0
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -676,6 +654,26 @@ static const struct IODevice io_ep128[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+#endif
+	{
+		IO_FLOPPY,					/* type */
+		4,							/* count */
+		"dsk\0",                    /* file extensions */
+		IO_RESET_NONE,				/* reset if file changed */
+		dsk_floppy_id,				/* id */
+		dsk_floppy_load,			/* init */
+		dsk_floppy_exit,			/* exit */
+		NULL,						/* info */
+		NULL,						/* open */
+		NULL,						/* close */
+                floppy_status,                                           /* status */
+                NULL,                                           /* seek */
+		NULL,						/* tell */
+		NULL,						/* input */
+		NULL,						/* output */
+		NULL,						/* input_chunk */
+		NULL						/* output_chunk */
+	},
 	{ IO_END }
 };
 
@@ -686,6 +684,6 @@ static const struct IODevice io_ep128[] = {
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1984, ep128,   0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128", GAME_NO_SOUND )
-COMPX( 1984, ep128a,  ep128,	ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_NO_SOUND )
+COMPX( 1984, ep128,   0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
+COMPX( 1984, ep128a,  ep128,	ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
 

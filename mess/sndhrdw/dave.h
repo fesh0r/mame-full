@@ -19,34 +19,80 @@ typedef struct DAVE_INTERFACE
         void (*int_callback)(int);
 } DAVE_INTERFACE;
 
+#define DAVE_FIFTY_HZ_COUNTER_RELOAD 20
+#define DAVE_ONE_HZ_COUNTER_RELOAD 1000
+
 typedef struct DAVE
 {
 	unsigned char Regs[32];
 
-	unsigned char Interrupts;
-	unsigned char B4_Read;
-	unsigned char B4_Write;
-	unsigned char FiftyHz;
-	unsigned char OneKhz;
 
-	/* int latches */
-	unsigned char int_latch;
+	/* int latches (used by 1hz, int1 and int2) */
+	unsigned long int_latch;
 	/* int enables */
-	unsigned char int_enable;
+	unsigned long int_enable;
 	/* int inputs */
-	unsigned char int_input;
-        /* previous int inputs */
-        unsigned char previous_int_input;
+	unsigned long int_input;
 
-	int int_wanted;
+	unsigned long int_irq;
 
-	int fiftyhertz;
-	int onehz;
+	/* INTERRUPTS */
+
+	/* internal timer */
+	/* bit 2: 1khz timer irq */
+	/* bit 1: 50khz timer irq */
+	int timer_irq;
+	/* 1khz timer - divided into 1khz, 50hz and 1hz timer */
+	void	*int_timer;
+	/* state of 1khz timer */
+	unsigned long one_khz_state;
+	/* state of 50hz timer */
+	unsigned long fifty_hz_state;
+
+	/* counter used to trigger 50hz from 1khz timer */
+	unsigned long fifty_hz_count;
+	/* counter used to trigger 1hz from 1khz timer */
+	unsigned long one_hz_count;
+
+
+	/* SOUND SYNTHESIS */
+	int Period[4];
+	int Count[4];
+	int	level[4];
+
+	/* these are used to force channels on/off */
+	/* if one of the or values is 0x0ff, this means
+	the volume will be forced on,else it is dependant on
+	the state of the wave */
+	int level_or[8];
+	/* if one of the values is 0x00, this means the 
+	volume is forced off, else it is dependant on the wave */
+	int level_and[8];
+
+	/* these are the current channel volumes in MAME form */
+	int mame_volumes[8];
+	
+	/* update step */
+	int UpdateStep;
+
+	int sound_stream;
 } DAVE;
 
-extern int	Dave_sh_start(void);
+extern int	Dave_sh_start(const struct MachineSound *msound);
 extern void	Dave_sh_stop(void);
 extern void	Dave_sh_update(void);
+
+/* id's of external ints */
+enum
+{
+	DAVE_INT1_ID,
+	DAVE_INT2_ID
+};
+
+void	Dave_Init(void);
+void	Dave_Finish(void);
+/* set external int state */
+void	Dave_SetExternalIntState(int IntID, int State);
 
 extern int	Dave_getreg(int);
 extern WRITE_HANDLER ( Dave_setreg );
