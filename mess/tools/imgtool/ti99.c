@@ -900,6 +900,118 @@ static int write_file_physrec(ti99_image *image, ti99_fdr *fdr, int physrecnum, 
 
 #if 0
 #pragma mark -
+#pragma mark LEVEL 3 DISK ROUTINES
+#endif
+
+/*
+	Level 3 implements files as a succession of logical records.
+
+	There are three types of files:
+	* program files that are not implemented at level 3 (no logical record)
+	* files with fixed-size records (random-access files)
+	* files with variable-size records (sequential-access)
+*/
+
+typedef struct ti99_file_pos
+{
+	int cur_log_rec;
+	int cur_phys_rec;
+	int cur_pos_in_phys_rec;
+} ti99_file_pos;
+
+INLINE void initialize_file_pos(ti99_file_pos *file_pos)
+{
+	memset(file_pos, 0, sizeof(*file_pos));
+
+	/*if ()*/
+}
+
+static int is_eof(/*ti99_image *image,*/ ti99_fdr *fdr, ti99_file_pos *file_pos)
+{
+	int secsused = get_UINT16BE(fdr->secsused);
+
+	if (fdr->flags & fdr99_f_var)
+	{
+		return (file_pos->cur_phys_rec >= secsused);
+	}
+	else
+	{
+		return ((file_pos->cur_phys_rec >= secsused)
+				|| ((file_pos->cur_phys_rec == (secsused-1))
+					&& (file_pos->cur_pos_in_phys_rec >= (fdr->eof ? fdr->eof : 256))));
+	}
+}
+
+static int read_next_record(ti99_image *image, ti99_fdr *fdr, ti99_file_pos *file_pos, void *dest, int *out_reclen)
+{
+	int errorcode;
+	UINT8 physrec_buf[256];
+	int reclen;
+
+	if (fdr->flags & fdr99_f_program)
+	{
+		/* program files have no level-3 record */
+		return IMGTOOLERR_UNEXPECTED;
+	}
+	else if (fdr->flags & fdr99_f_var)
+	{
+		/* variable-lenght records */
+		if (is_eof(fdr, file_pos))
+			return IMGTOOLERR_UNEXPECTED;
+		errorcode = read_file_physrec(image, fdr, file_pos->cur_phys_rec, physrec_buf);
+		if (errorcode)
+			return errorcode;
+		/* read reclen */
+		reclen = physrec_buf[file_pos->cur_pos_in_phys_rec];
+		/* check integrity */
+		if ((reclen == 0xff) || (reclen > fdr->reclen)
+				|| ((file_pos->cur_pos_in_phys_rec + 1 + reclen) > 256))
+			return IMGTOOLERR_CORRUPTIMAGE;
+		/* copy to buffer */
+		memcpy(dest, physrec_buf + file_pos->cur_pos_in_phys_rec + 1, reclen);
+		file_pos->cur_pos_in_phys_rec += reclen + 1;
+		/* skip to next physrec if needed */
+		if ((file_pos->cur_pos_in_phys_rec == 256)
+				|| (physrec_buf[file_pos->cur_pos_in_phys_rec] == 0xff))
+		{
+			file_pos->cur_pos_in_phys_rec = 0;
+			file_pos->cur_phys_rec++;
+		}
+		(* out_reclen) = reclen;
+	}
+	else
+	{
+		/* fixed len records */
+		reclen = fdr->reclen;
+		if (is_eof(fdr, file_pos))
+			return IMGTOOLERR_UNEXPECTED;
+		if ((file_pos->cur_pos_in_phys_rec + reclen) > 256)
+		{
+			file_pos->cur_pos_in_phys_rec = 0;
+			file_pos->cur_phys_rec++;
+		}
+		if ((file_pos->cur_phys_rec >= get_UINT16BE(fdr->secsused))
+				|| ((file_pos->cur_phys_rec == (get_UINT16BE(fdr->secsused)-1))
+					&& ((file_pos->cur_pos_in_phys_rec + reclen) >= (fdr->eof ? fdr->eof : 256))))
+			return IMGTOOLERR_CORRUPTIMAGE;
+		errorcode = read_file_physrec(image, fdr, file_pos->cur_phys_rec, physrec_buf);
+		if (errorcode)
+			return errorcode;
+		memcpy(dest, physrec_buf + file_pos->cur_pos_in_phys_rec, reclen);
+		file_pos->cur_pos_in_phys_rec += reclen;
+		if (file_pos->cur_pos_in_phys_rec == 256)
+		{
+			file_pos->cur_pos_in_phys_rec = 0;
+			file_pos->cur_phys_rec++;
+		}
+		(* out_reclen) = reclen;
+	}
+
+	return 0;
+}
+
+#if 0
+#pragma mark -
 #pragma mark IMGTOOL IMPLEMENTATION
 #endif
 
@@ -1268,6 +1380,7 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	if (errorcode)
 		return errorcode;
 
+#if 1
 	/* write TIFILE header */
 	dst_header.tifiles[0] = '\7';
 	dst_header.tifiles[1] = 'T';
@@ -1301,6 +1414,26 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		if (stream_write(destf, buf, 256) != 256)
 			return IMGTOOLERR_WRITEERROR;
 	}
+#else
+	/* write text data */
+	{
+		ti99_file_pos file_pos;
+		int reclen;
+		char lineend = '\n';
+
+		initialize_file_pos(& file_pos);
+		while (! is_eof(& fdr, & file_pos))
+		{
+			errorcode = read_next_record(image, & fdr, & file_pos, buf, & reclen);
+			if (errorcode)
+				return errorcode;
+			if (stream_write(destf, buf, reclen) != reclen)
+				return IMGTOOLERR_WRITEERROR;
+			if (stream_write(destf, &lineend, 1) != 1)
+				return IMGTOOLERR_WRITEERROR;
+		}
+	}
+#endif
 
 	return 0;
 }
@@ -1349,7 +1482,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 	set_UINT16BE(& fdr.xreclen, 0);
 	fdr.flags = src_header.flags;
 	fdr.recspersec = src_header.recspersec;
-	/*fdr.secsused = src_header.secsused_MSB;*/set_UINT16BE(& fdr.secsused, 0);
+	/*fdr.secsused = src_header.secsused;*/set_UINT16BE(& fdr.secsused, 0);
 	fdr.eof = src_header.eof;
 	fdr.reclen = src_header.reclen;
 	set_UINT16LE(& fdr.fixrecs, get_UINT16BE(src_header.fixrecs));
