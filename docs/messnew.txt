@@ -35,7 +35,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-- Created a new Apple ProDOS Imgtool driver.  [Nate Woods]
+- Created a new Apple ProDOS Imgtool driver (only reading supported for now.)
+  [Nate Woods]
 
 
 

@@ -608,7 +608,7 @@ static int cmd_listformats(const struct command *c, int argc, char *argv[])
 	mod = imgtool_library_findmodule(library, NULL);
 	while(mod)
 	{
-		fprintf(stdout, "  %-20s%s\n", mod->name, mod->description);
+		fprintf(stdout, "  %-25s%s\n", mod->name, mod->description);
 		mod = mod->next;
 	}
 
