@@ -56,6 +56,28 @@ void osd_exit(void)
 	msdos_shutdown_input();
 }
 
+
+
+//============================================================
+//	osd_alloc_executable
+//============================================================
+
+void *osd_alloc_executable(size_t size)
+{
+	return malloc( size );
+}
+
+
+
+//============================================================
+//	osd_free_executable
+//============================================================
+
+void osd_free_executable(void *ptr)
+{
+	free( ptr );
+}
+
 #ifdef MESS
 
 extern int strwildcmp(const char *sp1, const char *sp2);

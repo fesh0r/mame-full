@@ -1,3 +1,18 @@
+0.81
+
+- Fileio changes for MESS.
+
+
+==========================================================================
+
+
+0.80
+
+- No changes.
+
+
+==========================================================================
+
 0.79
 
 - Multiple resolutions can be specified ( seperated by semi-colons ) [smf].
