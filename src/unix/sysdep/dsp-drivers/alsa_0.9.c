@@ -484,7 +484,7 @@ static int alsa_dsp_set_params(struct alsa_dsp_priv_data *priv)
 		return 0;
 	}
 
-	if (snd_pcm_hw_params_set_rate(priv->pcm_handle, hw_params, pcm_params.rate, 0) < 0) {
+	if (snd_pcm_hw_params_set_rate_near(priv->pcm_handle, hw_params, pcm_params.rate, 0) < 0) {
 		fprintf(stderr_file,
 			"Alsa error: unsupported rate %iHz (valid range is %iHz-%iHz)\n",
 			pcm_params.rate,
