@@ -12,8 +12,6 @@ Sharp PC1403/1403H (preliminary) [PeT]
 Texas Instruments TI-86 (preliminary) [Krzysztof Strzecha]
 CoCo 3 PAL [Cowering and Nate Woods]
 Intellivision & Intellivision Kbd Component (preliminary) [Frank Palazzolo]
-APF Imagination/APF M1000 (preliminary) [Kevin Thacker]
-Sord M5 (preliminary) [Kevin Thacker]
 
 System Driver Changes:
 ----------------------
@@ -23,7 +21,8 @@ System Driver Changes:
 
 - [NC100/NC200] Changed CPU frequency to be more accurate [Kev Thacker and Russell Marks]
 
-- [PRAVETZ] Emulation of Apple2 disc controller interface (only DOS1.0->1.30 supported). 
+- [PRAVETZ] Emulation of Apple2 disc controller interface (low 8D DOS and high 8D DOS 
+  is supported. (DOS1->1.30 for low DOS and DOS 2.10 or better for high DOS)
   Disk images are ".DSK" and same as used by Apple2 driver. [Kev Thacker]
 
 - [KC Compact] colours generated from colour rom [Kev Thacker]
