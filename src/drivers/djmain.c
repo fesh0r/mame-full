@@ -1028,7 +1028,6 @@ ROM_START( bm1stmix )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
 	// There is an alternate image: MD5(260c9b72f4a03055e3abad61c6225324)
-	// service mode FAILS hd check, is this ok?
 	DISK_IMAGE( "753jaa11.chd", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) )	/* ver 1.00 JA */
 ROM_END
 

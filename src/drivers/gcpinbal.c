@@ -21,8 +21,7 @@ Understand role of bit 5 of IN1
 
 Eprom?
 
-Sound: M6295 / M6585
-
+MSM6295 banking?  (also missing in Raine)
 
 Stephh's notes (based on the game M68000 code and some tests) :
 
@@ -36,7 +35,9 @@ Stephh's notes (based on the game M68000 code and some tests) :
 #include "vidhrdw/generic.h"
 #include "gcpinbal.h"
 
+/* M6585 */
 
+static int start, end, bank;
 
 /***********************************************************
                       INTERRUPTS
@@ -49,7 +50,11 @@ void gcpinbal_interrupt1(int x)
 
 void gcpinbal_interrupt3(int x)
 {
-	cpu_set_irq_line(0,3,HOLD_LINE);
+	// IRQ3 is from the M6585
+	if (!ADPCM_playing(0))
+	{
+		cpu_set_irq_line(0,3,HOLD_LINE);
+	}
 }
 
 static INTERRUPT_GEN( gcpinbal_interrupt )
@@ -90,7 +95,7 @@ static READ16_HANDLER( ioc_r )
 
 //logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",activecpu_get_pc(),offset);
 
-	return 0; //gcpinbal_ioc_ram[offset];
+	return gcpinbal_ioc_ram[offset];
 }
 
 
@@ -121,20 +126,60 @@ static WRITE16_HANDLER( ioc_w )
 		case 0xf:
 		case 0x10:
 		case 0x47:
+			break;
+
+		// MSM6585 bank, coin LEDs, maybe others?
 		case 0x44:
-		case 0x60:
-		case 0x61:
-		case 0x62:
-		case 0x63:
-		case 0x64:
-		case 0x65:
-		case 0x66:
+			if (data & 0x10)
+			{
+				bank = 0x100000;
+			}
+			else
+			{
+				bank = 0;
+			}
+			break;
+
+		case 0x45:
 			break;
 
 		// OKIM6295
 		case 0x50:
 		case 0x51:
 			OKIM6295_data_0_w(0, data>>8);
+			break;
+
+		// MSM6585 ADPCM - mini emulation
+		case 0x60:
+			start &= 0xffff00;
+			start |= (data>>8);
+			break;
+		case 0x61:
+			start &= 0xff00ff;
+			start |= data;
+			break;
+		case 0x62:
+			start &= 0x00ffff;
+			start |= (data<<8);
+			break;
+		case 0x63:
+			end &= 0xffff00;
+			end |= (data>>8);
+			break;
+		case 0x64:
+			end &= 0xff00ff;
+			end |= data;
+			break;
+		case 0x65:
+			end &= 0x00ffff;
+			end |= (data<<8);
+			break;
+		case 0x66:
+			if (start < end)
+			{
+				ADPCM_stop(0);
+				ADPCM_play(0, start+bank, end-start);
+			}
 			break;
 
 		default:
@@ -325,7 +370,15 @@ static struct OKIM6295interface m6295_interface =
 	1,  /* 1 chip */
 	{ 1056000/132 },	/* bogus value */
 	{ REGION_SOUND1 },
-	{ 100 }
+	{ 30 }
+};
+
+static struct ADPCMinterface adpcm_interface =
+{
+	1,
+	8000,
+	REGION_SOUND2,
+	{ 100, }
 };
 
 /***********************************************************
@@ -359,8 +412,8 @@ static MACHINE_DRIVER_START( gcpinbal )
 	MDRV_VIDEO_UPDATE(gcpinbal)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
 MACHINE_DRIVER_END
 
 

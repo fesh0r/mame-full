@@ -3020,7 +3020,7 @@ INPUT_PORTS_START( checkmat )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Playera" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Players" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 to 4 Players" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )

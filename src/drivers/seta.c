@@ -2879,7 +2879,7 @@ PORT_END
 
 
 #define JOY_ROTATION(_n_, _left_, _right_ ) \
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER##_n_, 15, 15, 0, 0, KEYCODE_##_left_, KEYCODE_##_right_, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER##_n_, 15, 15, 0, 0, KEYCODE_##_left_, KEYCODE_##_right_, IP_JOY_NONE, IP_JOY_NONE )
 
 
 

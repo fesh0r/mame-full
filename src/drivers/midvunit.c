@@ -1407,6 +1407,9 @@ static DRIVER_INIT( offroadc )
 	install_mem_read32_handler(0, ADDR_RANGE(0x991030, 0x991030), offroadc_serial_status_r);
 	install_mem_read32_handler(0, ADDR_RANGE(0x996000, 0x996000), offroadc_serial_data_r);
 	install_mem_write32_handler(0, ADDR_RANGE(0x996000, 0x996000), offroadc_serial_data_w);
+
+	/* speedups */
+	generic_speedup = install_mem_read32_handler(0, ADDR_RANGE(0x195aa, 0x195aa), generic_speedup_r);
 }
 
 
