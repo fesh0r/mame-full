@@ -257,7 +257,7 @@ static int amstrad_DE=0;
 
 
 //static unsigned char *amstrad_Video_RAM;
-static unsigned char *amstrad_display;
+static UINT16 *amstrad_display;
 //static struct osd_bitmap *amstrad_bitmap;
 
 static int x_screen_pos;
@@ -570,7 +570,7 @@ void amstrad_Set_HSync(int offset, int data)
 							if ((y_screen_pos>=0) && (y_screen_pos<AMSTRAD_SCREEN_HEIGHT))
 							{
 									x_screen_pos=x_screen_offset;
-									amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+									amstrad_display=(UINT16 *)((unsigned long)(amstrad_bitmap->line[y_screen_pos])+(unsigned long)(x_screen_pos<<1));
 							}
 					}
 		}
@@ -598,7 +598,7 @@ void amstrad_Set_VSync(int offset, int data)
 
 			   if ((y_screen_pos>=0) && (y_screen_pos<=AMSTRAD_SCREEN_HEIGHT))
 			   {
-					amstrad_display=(uint16 *)((unsigned long)(amstrad_bitmap->line[y_screen_pos])+(unsigned long)(x_screen_pos<<1));
+					amstrad_display=(UINT16 *)((unsigned long)(amstrad_bitmap->line[y_screen_pos])+(unsigned long)(x_screen_pos<<1));
 				}
 	//		}
 	//		else
