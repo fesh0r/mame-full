@@ -131,7 +131,7 @@ static UINT32 *vdp2_ram_base;
 static UINT32 *color_ram_base;
 static UINT32 *workh_ram_base;
 static UINT32 *back_ram_base;
-static int saturn_video_dirty = 1;
+//static int saturn_video_dirty = 1;
 
 /*
    Define memory bases. Note these are byte locations and widths
@@ -207,7 +207,7 @@ WRITE32_HANDLER( saturn_sound_ram_w )
 #endif
 
   *sb_temp = (*sb_temp & (mem_mask >> 16)) | (data >> 16);
-  *sb_temp++;
+  sb_temp++;
   *sb_temp = (*sb_temp & mem_mask) | data;
 }
 
