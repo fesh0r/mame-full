@@ -29,7 +29,7 @@ void advision_init_machine(void) {
 
 int advision_id_rom (int id)
 {
-    return 0;
+    return ID_OK;  /* no id possible */
 }
 
 
