@@ -9,7 +9,7 @@ System Driver Changes:
 - [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
 - [C16] Improved TED7360 sound emulation. [Attila Grosz]
 - [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
-- [COCO] Scaled the joystick port to 64 quanta rather than 256 (Bug 340).
+- [COCO] Scaled the joystick port to 64 quanta rather than 256 (bug #340).
   [tim lindner]
 
 Source Changes:
@@ -17,6 +17,9 @@ Source Changes:
 - VIDEO_UPDATE() now has a do_skip parameter, which enables drivers to inform
   the core that no significant drawing has occured, and it is safe to skip
   blitting the current frame. [Nate Woods]
+
+- [Windows] New -writeconfig option, that causes the current settings to be
+  written back to an INI on exiting the emulation. [Nate Woods]
 
 - [Windows] SSE optimizations to the blitter. [Nate Woods]
 
@@ -69,4 +72,3 @@ Source Changes:
 
 - [Win32 GUI] Now uses INI files rather than the registry to store settings
   [MAME32 Team]
-

@@ -67,8 +67,10 @@ void osd_dir_close(void *dir);
 void osd_change_directory(const char *path);
 const char *osd_get_cwd(void);
 
+void osd_begin_final_unloading(void);
+
 /* used to notify osd code of the load status of an image */
-void osd_image_load_status_changed(int type, int id);
+void osd_image_load_status_changed(int type, int id, int is_final_unload);
 
 char *osd_dirname(const char *filename);
 char *osd_basename(char *filename);

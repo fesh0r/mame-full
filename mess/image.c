@@ -138,7 +138,7 @@ int image_load(int type, int id, const char *name)
 	img->name = newname;
 	img->dir = NULL;
 
-	osd_image_load_status_changed(type, id);
+	osd_image_load_status_changed(type, id, 0);
 
 	if (!dev->load)
 		goto error;
@@ -199,12 +199,12 @@ error:
 		img->status &= ~IMAGE_STATUS_ISLOADING|IMAGE_STATUS_ISLOADED;
 	}
 
-	osd_image_load_status_changed(type, id);
+	osd_image_load_status_changed(type, id, 0);
 
 	return INIT_FAIL;
 }
 
-void image_unload(int type, int id)
+static void image_unload_internal(int type, int id, int is_final_unload)
 {
 	const struct IODevice *dev;
 	struct image_info *img;
@@ -222,13 +222,22 @@ void image_unload(int type, int id)
 	image_free_resources(img);
 	memset(img, 0, sizeof(*img));
 
-	osd_image_load_status_changed(type, id);
+	osd_image_load_status_changed(type, id, is_final_unload);
+}
+
+
+void image_unload(int type, int id)
+{
+	image_unload_internal(type, id, FALSE);
 }
 
 void image_unload_all(int ispreload)
 {
 	int id;
 	const struct IODevice *dev;
+
+	if (!ispreload)
+		osd_begin_final_unloading();
 
 	/* normalize ispreload */
 	ispreload = ispreload ? DEVICE_LOAD_AT_INIT : 0;
@@ -242,7 +251,7 @@ void image_unload_all(int ispreload)
 			for( id = 0; id < dev->count; id++ )
 			{
 				/* unload this image */
-				image_unload(dev->type, id);
+				image_unload_internal(dev->type, id, TRUE);
 			}
 		}
 	}
