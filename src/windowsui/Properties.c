@@ -141,6 +141,9 @@ static DWORD dwDlgId[] =
 	IDD_PROP_SOUND,
 	IDD_PROP_INPUT,
 	IDD_PROP_MISC,
+#ifdef MESS
+	IDD_PROP_SOFTWARE,
+#endif
 	IDD_PROP_VECTOR
 };
 
@@ -553,6 +556,10 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 	pspage[4].pfnDlgProc = GameOptionsProc;
 	pspage[5].pfnDlgProc = GameOptionsProc;
 	pspage[6].pfnDlgProc = GameOptionsProc;
+    
+#ifdef MESS
+    pspage[7].pfnDlgProc = GameOptionsProc;
+#endif
 	
 	/* If this is a vector game, add the vector prop sheet */
 	if (maxPropSheets == NUM_PROPSHEETS)
@@ -926,6 +933,22 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 				}
             
 				break;
+#ifdef MESS
+			case IDC_DIR_BROWSE:
+				if (wNotifyCode == BN_CLICKED)
+					changed = SoftwareDirectories_OnInsertBrowse(hDlg, TRUE, NULL);
+				break;
+
+			case IDC_DIR_INSERT:
+				if (wNotifyCode == BN_CLICKED)
+					changed = SoftwareDirectories_OnInsertBrowse(hDlg, FALSE, NULL);
+				break;
+
+			case IDC_DIR_DELETE:
+				if (wNotifyCode == BN_CLICKED)
+					changed = SoftwareDirectories_OnDelete(hDlg);
+				break;
+#endif
 
 			default:
 				if (wNotifyCode == BN_CLICKED)
@@ -1012,6 +1035,14 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		case PSN_HELP:
 			/* User wants help for this property page */
 			break;
+
+#ifdef MESS
+        case LVN_ENDLABELEDIT:
+            return SoftwareDirectories_OnEndLabelEdit(hDlg, (NMHDR *) lParam);
+
+        case LVN_BEGINLABELEDIT:
+			return SoftwareDirectories_OnBeginLabelEdit(hDlg, (NMHDR *) lParam);
+#endif
 		}
 		break;
 
@@ -1128,6 +1159,9 @@ static void PropToOptions(HWND hWnd, options_type *o)
 
 		sprintf(o->aspect, "%d:%d", n, d);
 	}
+#ifdef MESS
+	SoftwareDirectories_GetList(hWnd, pGameOpts->extra_software_paths, sizeof(pGameOpts->extra_software_paths) / sizeof(pGameOpts->extra_software_paths[0]));
+#endif
 }
 
 /* Populate controls that are not handled in the DataMap */
@@ -1330,6 +1364,10 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 		sprintf(buf, "%ddB", o->attenuation);
 		Static_SetText(hCtrl, buf);
 	}
+
+#ifdef MESS
+	SoftwareDirectories_InitList(hWnd, pGameOpts->extra_software_paths);
+#endif
 
 	g_bInternalSet = FALSE;
 }
@@ -1623,6 +1661,9 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_CHEAT,         DM_BOOL, CT_BUTTON,   &pGameOpts->cheat,         0, 0, 0);
 /*	DataMapAdd(IDC_DEBUG,         DM_BOOL, CT_BUTTON,   &pGameOpts->mame_debug,    0, 0, 0);*/
 	DataMapAdd(IDC_LOG,           DM_BOOL, CT_BUTTON,   &pGameOpts->errorlog,      0, 0, 0);
+#ifdef MESS
+	DataMapAdd(IDC_NEW_FILEMGR,   DM_BOOL, CT_BUTTON,   &pGameOpts->use_new_filemgr, 0, 0, 0);
+#endif
 }
 
 static void SetStereoEnabled(HWND hWnd, int index)

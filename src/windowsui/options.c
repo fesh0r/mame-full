@@ -100,6 +100,9 @@ static options_type *game;  /* Array of Game specific options */
 static REG_OPTIONS regSettings[] =
 {
 	{"DefaultGame",        RO_STRING,  settings.default_game,      0, 0},
+#ifdef MESS
+    {"DefaultSoftware", RO_PSTRING, &settings.default_software, 0, 0},
+#endif
 	{"FolderID",           RO_INT,     &settings.folder_id,        0, 0},
 	{"ShowScreenShot",     RO_BOOL,    &settings.show_screenshot,  0, 0},
 	{"ShowFlyer",          RO_INT,     &settings.show_pict_type,   0, 0},
@@ -123,6 +126,10 @@ static REG_OPTIONS regSettings[] =
 	{"CabinetDir",         RO_PSTRING, &settings.cabinetdir,       0, 0},
 	{"MarqueeDir",         RO_PSTRING, &settings.marqueedir,       0, 0},
 
+#ifdef MESS
+    {"SoftwareDirs",    RO_PSTRING, &settings.softwaredirs,     0, 0},
+#endif
+
 	{"rompath",            RO_PSTRING, &settings.romdirs,          0, 0},
 	{"samplepath",         RO_PSTRING, &settings.sampledirs,       0, 0},
 	{"cfg_directory",      RO_PSTRING, &settings.cfgdir,           0, 0},
@@ -145,6 +152,11 @@ static REG_OPTIONS regSettings[] =
 	{"ColumnWidths",       RO_ENCODE,  &settings.column_width,     ColumnEncodeString,   ColumnDecodeWidths},
 	{"ColumnOrder",        RO_ENCODE,  &settings.column_order,     ColumnEncodeString,   ColumnDecodeString},
 	{"ColumnShown",        RO_ENCODE,  &settings.column_shown,     ColumnEncodeString,   ColumnDecodeString},
+#ifdef MESS
+    {"MessColumnWidths",RO_ENCODE,  &settings.mess_column_width,MessColumnEncodeString, MessColumnDecodeWidths},
+    {"MessColumnOrder", RO_ENCODE,  &settings.mess_column_order,MessColumnEncodeString, MessColumnDecodeString},
+    {"MessColumnShown", RO_ENCODE,  &settings.mess_column_shown,MessColumnEncodeString, MessColumnDecodeString}
+#endif
 };
 
 /* Game Options */
@@ -211,7 +223,6 @@ static REG_OPTIONS regGameOpts[] =
 /*	{ "playback",               RO_STRING,  &gOpts.playbackname,      0, 0},*/
 /*	{ "record",                 RO_STRING,  &gOpts.recordname,        0, 0},*/
 	{ "log",                    RO_BOOL,    &gOpts.errorlog,          0, 0},
-
 };
 
 #define NUM_SETTINGS (sizeof(regSettings) / sizeof(regSettings[0]))

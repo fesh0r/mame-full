@@ -6,6 +6,7 @@ OSOBJS = $(OBJ)/windows/winmain.o  $(OBJ)/windows/config.o \
 	 $(OBJ)/windows/input.o $(OBJ)/windows/sound.o $(OBJ)/windows/blit.o \
 	 $(OBJ)/windows/snprintf.o $(OBJ)/windows/rc.o $(OBJ)/windows/misc.o \
 	 $(OBJ)/windows/window.o $(OBJ)/windows/winddraw.o $(OBJ)/windows/asmblit.o
+
 ifndef MESS
 OSOBJS += $(OBJ)/windows/fileio.o 
 else
@@ -58,7 +59,6 @@ GUIOBJS = \
         $(OBJ)/windowsui/Bitmask.o \
         $(OBJ)/windowsui/DataMap.o \
         $(OBJ)/windowsui/dxdecode.o \
-        $(OBJ)/windowsui/Properties.o \
         $(OBJ)/windowsui/ChildOutputStream.o \
         $(OBJ)/windowsui/help.o
 
@@ -66,6 +66,7 @@ ifdef MESS
 GUIOBJS += \
 		$(OBJ)/mess/windowsui/mess32ui.o \
 		$(OBJ)/mess/windowsui/MessOptions.o \
+		$(OBJ)/mess/windowsui/MessProperties.o \
 		$(OBJ)/mess/windowsui/SmartListView.o \
 		$(OBJ)/mess/windowsui/SoftwareList.o
 
@@ -73,7 +74,8 @@ GUIRES = $(OBJ)/mess/windowsui/mess32.res
 else
 GUIOBJS += \
 		$(OBJ)/windowsui/Win32ui.o \
-		$(OBJ)/windowsui/options.o
+		$(OBJ)/windowsui/options.o \
+        $(OBJ)/windowsui/Properties.o
 
 GUIRES = $(OBJ)/windowsui/mame32.res
 endif

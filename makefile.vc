@@ -13,10 +13,10 @@ TARGET = mess
 # DEBUG = 1
 
 # build a version for debugging games
-MAME_DEBUG = -DMAME_DEBUG
+# MAME_DEBUG = -DMAME_DEBUG
 
 # build with browser information for debugging
-BSCMAKE = bscmake.exe
+BSCMAKE = -bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
 UPX = upx.exe -6 --compress-icons=0
@@ -35,9 +35,6 @@ MAME_MMX = -DMAME_MMX
 
 # use fast (register) calling convention
 USE_FASTCALL = -DFASTCALL
-
-# Define this to enable MIDAS sound
-# MIDAS = 1
 
 # uncomment next line to generate help files
 # HELP = 1
@@ -130,10 +127,6 @@ ifdef MESS
 DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
 endif
 
-ifdef MIDAS
-DEFS += -DMIDAS
-endif
-
 INCLUDES = \
         -I. \
         -Isrc \
@@ -155,12 +148,6 @@ endif
 
 ifdef ZLIB_INCPATH
 INCLUDES += -I$(subst \,\\,$(ZLIB_INCPATH)) 
-endif
-
-ifdef MIDAS
-ifdef MIDAS_INCPATH
-INCLUDES += -I$(subst \,\\,$(MIDAS_INCPATH))
-endif
 endif
 
 #
@@ -213,13 +200,6 @@ LIBS = \
 
 ifdef MAME_NET
 LIBS += wsock32.lib
-endif
-
-ifdef MIDAS
-LIBS    += MIDASDLL.lib
-ifdef MIDAS_LIBPATH
-LDFLAGS += -LIBPATH:$(subst \,\\,$(MIDAS_LIBPATH))
-endif
 endif
 
 ifdef DX_LIBPATH

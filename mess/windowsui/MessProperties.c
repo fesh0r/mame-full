@@ -15,9 +15,10 @@ static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 
 /* Include the actual Properties.c */
-#include "Properties.c"
+#include "../../src/windowsui/Properties.c"
 
 extern BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
+extern char *strncatz(char *dest, const char *source, size_t len);
 BOOL g_bModifiedSoftwarePaths = FALSE;
 
 static void AppendList(HWND hList, LPCSTR lpItem, int nItem)
@@ -34,7 +35,7 @@ static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
 {
 	HWND hList;
     LV_ITEM Item;
-	int iCount, iLen, i;
+	int iCount, i;
 
 	hList = GetDlgItem(hDlg, IDC_DIR_LIST);
 	if (!hList)
@@ -48,25 +49,17 @@ static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
 	memset(&Item, '\0', sizeof(Item));
 	Item.mask = LVIF_TEXT;
 
+	*lpBuf = '\0';
+
 	for (i = 0; i < iCount; i++) {
-		if (i > 0) {
-			if (!iLen)
-				return;
-			*(lpBuf++) = ';';
-			iLen--;
-		}
+		if (i > 0)
+			strncatz(lpBuf, ";", iBufLen);
 
 		Item.iItem = i;
-		Item.pszText = lpBuf;
-		Item.cchTextMax = iBufLen;
+		Item.pszText = lpBuf + strlen(lpBuf);
+		Item.cchTextMax = iBufLen - strlen(lpBuf);
 		ListView_GetItem(hList, &Item);
-
-		iLen = strlen(lpBuf);
-		lpBuf += iLen;
-		iBufLen -= iLen;
 	}
-
-	*lpBuf = '\0';
 }
 
 static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
@@ -119,6 +112,7 @@ static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR l
 	LPSTR lpIn;
 
 	g_bModifiedSoftwarePaths = TRUE;
+	g_bUseDefaults = FALSE;
 
     hList = GetDlgItem(hDlg, IDC_DIR_LIST);
     nItem = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
@@ -284,10 +278,10 @@ static INT_PTR CALLBACK GameSoftwareOptionsProc(HWND hDlg, UINT Msg, WPARAM wPar
     {
     case WM_INITDIALOG:
         /* Fill in the Game info at the top of the sheet */
-        Static_SetText(GetDlgItem(hDlg, IDC_PROP_TITLE), GameInfoTitle(iGame));
+        Static_SetText(GetDlgItem(hDlg, IDC_PROP_TITLE), GameInfoTitle(g_nGame));
 
 
-		SoftwareDirectories_InitList(hDlg, lpGameOpts->extra_software_paths);
+		SoftwareDirectories_InitList(hDlg, pGameOpts->extra_software_paths);
 		return 1;
 
 	case WM_COMMAND:
