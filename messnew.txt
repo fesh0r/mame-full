@@ -10,13 +10,31 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Super Vision [PeT]
 - SVI-318 and SVI-328 [Sean Young]
-
+- Pravetz,Pravetz 8D (clone of Oric) [Stefano Priore]
 
 System Driver Changes:
 ----------------------
 
+- [ATOM] Implemented colour change support of M6847. 
+Fixed eprom box emulation. [Kev Thacker]
+
+- [LASER110/LASER200/LASER310] Changed video hardware to use M6847 [Kev Thacker]
+
+- [NC100] Added MENU key and fixed problems with characters being dropped
+in serial transfer [Kev Thacker]
+
+- [NC200] Added MENU key, fixed some key assignments, fixed a memory problem.
+Blockade game now works. Fixed characters being dropped in serial transfer
+ [Kev Thacker]
+
+- [ORIC] Added VSYNC cable hardware; This can be enabled with a dipswitch 
+in the UI. Added support for Jasmin floppy disc interface; Floppy disc 
+interface can be chosen in UI: None, Microdisc or Jasmin. Improved video
+emulation; hires/text changes in the middle of a line will now work. [Kev Thacker]
+
 - [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to
   $FF95 [Nate Woods]
+
 - [COCO 3h] 6309 core completed; so NitrOS9 now runs.  GAME_NOT_WORKING flag
   removed [Tim Linder]
 
