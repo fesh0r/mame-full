@@ -931,6 +931,12 @@ void sound_stop(void)
 	
 	/* stop the OSD code */
 	osd_stop_audio_stream();
+
+	/* reset variables */
+	totalspeakers = 0;
+	totalsnd = 0;
+	memset(&speaker, 0, sizeof(speaker));
+	memset(&sound, 0, sizeof(sound));
 }
 
 
