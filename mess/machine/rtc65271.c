@@ -9,7 +9,6 @@
 		<http://www.bgmicro.com/pdf/rtc65271.pdf>
 
 	Todo:
-	* Save the config to NVRAM?
 	* Support square wave pin output?
 	* Support DSE mode?
 
