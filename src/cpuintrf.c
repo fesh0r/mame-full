@@ -135,6 +135,9 @@
 #if (HAS_ASAP)
 #include "cpu/asap/asap.h"
 #endif
+#if (HAS_APEXC)
+#include "cpu/apexc/apexc.h"
+#endif
 
 
 /* these are triggers sent to the timer system for various interrupt events */
@@ -599,7 +602,8 @@ struct cpu_interface cpuintf[] =
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,16bew,  0,15,BE,2, 3	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
+	/* hack, hack, hack : we have a 18*16 bus, not 32*18... */
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 3	),
 #endif
 #if (HAS_ADSP2100)
 	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16,17lew, -1,14,LE,2, 4	),
@@ -626,6 +630,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_ASAP)
 	#define asap_ICount asap_icount
 	CPU0(ASAP,     asap,     1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
+#endif
+#if (HAS_APEXC)
+	CPU0(APEXC,	   apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
 #endif
 };
 
