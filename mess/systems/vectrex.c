@@ -74,12 +74,6 @@ INPUT_PORTS_START( vectrex )
 	PORT_DIPSETTING(0x40, "Green")
 	PORT_DIPSETTING(0x60, "Blue")
 	PORT_DIPSETTING(0x80, "Color")
-
-	PORT_START
-	//PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh", IP_KEY_NONE )
-	PORT_DIPNAME( 0x01, 0x01, "Timer 2 refresh")
-	PORT_DIPSETTING(0x00, DEF_STR ( No ))
-	PORT_DIPSETTING(0x01, DEF_STR ( Yes ))
 INPUT_PORTS_END
 
 static struct DACinterface dac_interface =
@@ -96,7 +90,7 @@ static struct AY8910interface ay8910_interface =
     /*AY8910_DEFAULT_GAIN,*/
 	{ input_port_0_r },
 	{ 0 },
-	{ 0 },
+	{ vectrex_psg_port_w },
 	{ 0 }
 };
 
@@ -106,13 +100,11 @@ static MACHINE_DRIVER_START( vectrex )
 	MDRV_CPU_ADD_TAG("main", M6809, 1500000)        /* 1.5 Mhz */
 	MDRV_CPU_MEMORY(vectrex_readmem, vectrex_writemem)
 
-	MDRV_FRAMES_PER_SECOND(40)
-	MDRV_VBLANK_DURATION(0)
-	MDRV_INTERLEAVE(1)
+	MDRV_FRAMES_PER_SECOND(60)
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(380, 342)
+	MDRV_SCREEN_SIZE(300, 400)
 	MDRV_VISIBLE_AREA(0, 500, 0, 600)
 	MDRV_PALETTE_LENGTH(256 + 32768)
 
@@ -216,7 +208,6 @@ static MACHINE_DRIVER_START( raaspec )
 	MDRV_PALETTE_LENGTH(254)
 
 	MDRV_VIDEO_START( raaspec )
-	MDRV_VIDEO_UPDATE( raaspec )
 MACHINE_DRIVER_END
 
 

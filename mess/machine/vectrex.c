@@ -22,8 +22,8 @@ unsigned char *vectrex_ram;		   /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 --
 unsigned char vectrex_via_out[2];
 UINT32 vectrex_beam_color = WHITE;	   /* the color of the vectrex beam */
 int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
-int vectrex_refresh_with_T2;	   /* For all known games it's OK to do the screen refresh when T2 expires.
-					* This behaviour can be turned off via dipswitch settings */
+double imager_freq;
+void *imager_timer;
 
 /*********************************************************************
   Local variables
@@ -32,11 +32,17 @@ int vectrex_refresh_with_T2;	   /* For all known games it's OK to do the screen 
 /* Colors for right and left eye */
 static UINT32 imager_colors[6] = {WHITE,WHITE,WHITE,WHITE,WHITE,WHITE};
 
-/* Startpoint (in rad) of the three colors */
-/* Tanks to Chris Salomon for the values */
-static const double narrow_escape_angles[3] = {0,0.15277778, 0.34444444};
-static const double minestorm_3d_angles[3] = {0,0.16111111, 0.18888888};
-static const double crazy_coaster_angles[3] = {0,0.15277778, 0.34444444};
+/* Starting points of the three colors */
+/* Values taken from J. Nelson's drawings*/
+//static const double narrow_escape_angles[3] = {0,0.15277778, 0.34444444};
+//static const double minestorm_3d_angles[3] = {0,0.16111111, 0.18888888};
+//static const double crazy_coaster_angles[3] = {0,0.15277778, 0.34444444};
+
+static const double minestorm_3d_angles[3] = {0,0.1692, 0.2086};
+static const double narrow_escape_angles[3] = {0,0.1631, 0.3305};
+static const double crazy_coaster_angles[3] = {0,0.1631, 0.3305};
+
+
 static const double unknown_game_angles[3] = {0,0.16666666, 0.33333333};
 static const double *vectrex_imager_angles = unknown_game_angles;
 static unsigned char vectrex_imager_pinlevel=0x00;
@@ -89,32 +95,26 @@ int vectrex_init_cart (int id)
 		}
 
 	}
-	vectrex_imager_angles = unknown_game_angles;
-/*	name = device_filename(IO_CARTSLOT,id);
-	if (name)
-	{
-//		A bit ugly but somehow we need to know which 3D game is running
-//		A better way would be to do this by CRC
-		if (!strcmp(name,"narrow.bin"))
-			vectrex_imager_angles = narrow_escape_angles;
-		if (!strcmp(name,"crazy.bin"))
-			vectrex_imager_angles = crazy_coaster_angles;
-		if (!strcmp(name,"mine3.bin"))
-			vectrex_imager_angles = minestorm_3d_angles;
-	}*/
+	vectrex_imager_angles = narrow_escape_angles;
 
 	/* let's do this 3D detection with a strcmp using data inside the cart images */
 	/* slightly prettier than having to hardcode CRCs */
 
 	/* handle 3D Narrow Escape but skip the 2-d hack of it from Fred Taft */
 	if (!memcmp(memory_region(REGION_CPU1)+0x11,"NARROW",6) && (((char*)memory_region(REGION_CPU1))[0x39] == 0x0c))
+	{
 		vectrex_imager_angles = narrow_escape_angles;
+	}
 
 	if (!memcmp(memory_region(REGION_CPU1)+0x11,"CRAZY COASTER",13))
+	{
 		vectrex_imager_angles = crazy_coaster_angles;
+	}
 
 	if (!memcmp(memory_region(REGION_CPU1)+0x11,"3D MINE STORM",13))
+	{
 		vectrex_imager_angles = minestorm_3d_angles;
+	}
 
 	return INIT_PASS;
 }
@@ -140,7 +140,6 @@ void vectrex_configuration(void)
 	unsigned char in2 = input_port_2_r (0);
 
 	/* Vectrex 'dipswitch' configuration */
-	vectrex_refresh_with_T2 = input_port_3_r (0) & 0x01;
 
 	/* Imager control */
 	if (in2 & 0x01) /* Imager enabled */
@@ -148,7 +147,7 @@ void vectrex_configuration(void)
 		if (vectrex_imager_status == 0)
 			vectrex_imager_status = in2 & 0x01;
 
-		vector_add_point_function = in2 & 0x02 ? vector_add_point_stereo: vector_add_point;
+		vector_add_point_function = in2 & 0x02 ? vectrex_add_point_stereo: vectrex_add_point;
 
 		switch ((in2>>2) & 0x07)
 		{
@@ -168,13 +167,13 @@ void vectrex_configuration(void)
 			/* mine3 has a different color sequence */
 			if (vectrex_imager_angles == minestorm_3d_angles)
 			{
-				imager_colors[0]=RED;
-				imager_colors[1]=GREEN;
+				imager_colors[0]=GREEN;
+				imager_colors[1]=RED;
 			}
 			else
 			{
-				imager_colors[0]=GREEN;
-				imager_colors[1]=RED;
+				imager_colors[0]=RED;
+				imager_colors[1]=GREEN;
 			}
 			imager_colors[2]=BLUE;
 			break;
@@ -197,22 +196,21 @@ void vectrex_configuration(void)
 		case 0x04:
 			if (vectrex_imager_angles == minestorm_3d_angles)
 			{
-				imager_colors[3]=RED;
-				imager_colors[4]=GREEN;
+				imager_colors[3]=GREEN;
+				imager_colors[4]=RED;
 			}
 			else
 			{
-				imager_colors[3]=GREEN;
-				imager_colors[4]=RED;
+				imager_colors[3]=RED;
+				imager_colors[4]=GREEN;
 			}
 			imager_colors[5]=BLUE;
 			break;
 		}
-
 	}
 	else
 	{
-		vector_add_point_function = vector_add_point;
+		vector_add_point_function = vectrex_add_point;
 		vectrex_beam_color = WHITE;
 		imager_colors[0]=imager_colors[1]=imager_colors[2]=imager_colors[3]=imager_colors[4]=imager_colors[5]=WHITE;
 	}
@@ -269,28 +267,72 @@ READ_HANDLER( s1_via_pb_r )
  *********************************************************************/
 static void vectrex_imager_change_color (int i)
 {
-	vectrex_beam_color = imager_colors[i];
+	vectrex_beam_color = i;
 }
 
-static void vectrex_imager_right_eye (int param)
+void vectrex_imager_right_eye (int param)
 {
-	vectrex_imager_status = 1;
-	vectrex_beam_color = imager_colors[2];
-	timer_set (imager_wheel_time*vectrex_imager_angles[1], 0, vectrex_imager_change_color);
-	timer_set (imager_wheel_time*vectrex_imager_angles[2], 1, vectrex_imager_change_color);
+	int coffset;
+	double rtime = (1.0/imager_freq);
+
+	if (vectrex_imager_status > 0)
+	{
+		vectrex_imager_status = param;
+		coffset = param>1?3:0;
+		timer_set (rtime * vectrex_imager_angles[0], imager_colors[coffset+2], vectrex_imager_change_color);
+		timer_set (rtime * vectrex_imager_angles[1], imager_colors[coffset+1], vectrex_imager_change_color);
+		timer_set (rtime * vectrex_imager_angles[2], imager_colors[coffset], vectrex_imager_change_color);
+
+		if (param == 2)
+		{
+			timer_set (rtime * 0.50, 1, vectrex_imager_right_eye);
+
+			/* Index hole sensor is connected to IO7 which triggers also CA1 of VIA */ 
+			via_0_ca1_w (0, 1);
+			via_0_ca1_w (0, 0);
+			vectrex_imager_pinlevel |= 0x80;
+		}
+	}
 }
 
-void vectrex_imager_left_eye (double time_)
+#define DAMPC (-0.2)
+#define MMI (5.0)
+
+WRITE_HANDLER ( vectrex_psg_port_w )
 {
-	imager_wheel_time = time_;
-	via_0_ca1_w (0, 1);
-	via_0_ca1_w (0, 0);
-	vectrex_imager_pinlevel |= 0x80;
+	static int state;
+	static double sl, pwl;
+	double wavel, ang_acc, tmp;
+	int mcontrol;
 
-	vectrex_imager_status = 2;
-	vectrex_beam_color = imager_colors[5];
-	timer_set (time_*vectrex_imager_angles[1], 3, vectrex_imager_change_color);
-	timer_set (time_*vectrex_imager_angles[2], 4, vectrex_imager_change_color);
-	timer_set (time_/2, 0, vectrex_imager_right_eye);
+	mcontrol = data & 0x40; /* IO6 controls the imager motor */ 
+
+	if (!mcontrol && mcontrol ^ state)
+	{
+		state = mcontrol;
+		tmp = timer_get_time();
+		wavel = tmp - sl;
+		sl = tmp;
+
+		if (wavel < 1)
+		{
+			/* The Vectrex sends a stream of pulses which controls the speed of
+			   the motor using Pulse Width Modulation. Guessed parameters are MMI
+			   (mass moment of inertia) of the color wheel, DAMPC (damping coefficient)
+			   of the whole thing and some constants of the motor's torque/speed curve.
+			   pwl is the negative pulse width and wavel is the whole wavelength. */
+
+			ang_acc = (50.0 - 1.55 * imager_freq) / MMI;
+			imager_freq += ang_acc * pwl + DAMPC*imager_freq/MMI * wavel;
+
+//			printf ("imager_freq: %f anregung %f\n",imager_freq, 1.0/wavel);
+			if (imager_freq > 1)
+				timer_adjust (imager_timer, MIN(1.0/imager_freq, timer_timeleft(imager_timer)), 2, 1.0/imager_freq);
+		}
+	}
+	if (mcontrol && mcontrol ^ state)
+	{
+		state = mcontrol;
+		pwl = timer_get_time() - sl;
+	}
 }
-

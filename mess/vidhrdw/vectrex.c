@@ -21,16 +21,11 @@
 #define M_SQRT1_2 0.70710678118654752440
 #endif
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
 /*********************************************************************
   Local variables
  *********************************************************************/
 static WRITE_HANDLER ( v_via_pa_w );
 static WRITE_HANDLER( v_via_pb_w );
-static void vectrex_screen_update (double time_);
 static void vectrex_shift_reg_w (int via_sr);
 static WRITE_HANDLER ( v_via_ca2_w );
 
@@ -40,7 +35,7 @@ static struct via6522_interface vectrex_via6522_interface =
 	/*outputs: A/B,CA/B2       */ v_via_pa_w, v_via_pb_w, v_via_ca2_w, 0,
 	/*irq                      */ v_via_irq,
 
-	vectrex_shift_reg_w, vectrex_screen_update
+	vectrex_shift_reg_w
 };
 
 static int x_center, y_center, x_max;
@@ -60,54 +55,81 @@ static int old_via_sr = 0;
 static int last_point_x, last_point_y, last_point_z, last_point=0;
 static double last_point_starttime;
 static float z_factor;
+static int vectrex_point_index = 0;
+static double vectrex_persistance = 0.05;
 
-static int T2_running; /* This turns zero if VIA timer 2 (the refresh timer) isn't running */
+struct vectrex_point
+{
+	int x; int y;
+	rgb_t col;
+	int intensity;
+	double time;
+};
 
-void (*vector_add_point_function) (int, int, rgb_t, int) = vector_add_point;
+static struct vectrex_point vectrex_points[MAX_POINTS];
+void (*vector_add_point_function) (int, int, rgb_t, int) = vectrex_add_point;
+
+void vectrex_add_point (int x, int y, rgb_t color, int intensity)
+{
+	struct vectrex_point *newpoint;
+ 
+	vectrex_point_index = (vectrex_point_index+1) % MAX_POINTS;
+	newpoint = &vectrex_points[vectrex_point_index];
+
+	newpoint->x = x;
+	newpoint->y = y;
+	newpoint->col = color;
+	newpoint->intensity = intensity;
+	newpoint->time = timer_get_time();
+}
 
 /*********************************************************************
   Screen updating
  *********************************************************************/
-static void vectrex_screen_update (double time_)
-{
-	if (vectrex_imager_status)
-		vectrex_imager_left_eye(time_);
-
-	if (vectrex_refresh_with_T2)
-	{
-		T2_running = 3;
-		video_update_vector(tmpbitmap, &Machine->visible_area);
-		vector_clear_list();
-	}
-}
-
-static void vectrex_screen_update_backup (int param)
-{
-	if (T2_running)
-		T2_running--; /* wait some time to make sure T2 has really stopped
-			       * for a longer time. */
-	else
-	{
-		video_update_vector(tmpbitmap, &Machine->visible_area);
-		vector_clear_list();
-	}
-}
 
 VIDEO_UPDATE( vectrex )
 {
+	int i, v, intensity;
+	double starttime, correction;
+
 	vectrex_configuration();
-	video_update_generic_bitmapped(bitmap, cliprect);
+	
+	starttime = timer_get_time() - vectrex_persistance;
+	if (starttime < 0) starttime = 0;
+
+	i = vectrex_point_index;
+
+	/* Find the oldest vector we want to display */
+	for (v=0; vectrex_points[i].time > starttime && v < MAX_POINTS-1; v++)
+	{
+		i--;
+		if (i<0) i=MAX_POINTS-1;
+	}
+
+	/* start black */
+	vector_add_point(vectrex_points[i].x, vectrex_points[i].y, vectrex_points[i].col, 0);
+
+	while (i != vectrex_point_index)
+	{
+		correction = MIN(1, (vectrex_points[i].time-starttime)/(vectrex_persistance/2));
+		intensity = vectrex_points[i].intensity*correction;
+		vector_add_point(vectrex_points[i].x,vectrex_points[i].y,vectrex_points[i].col,intensity);
+		i = (i+1) % MAX_POINTS;
+	}
+
+	video_update_vector(bitmap, &Machine->visible_area);
+	vector_clear_list();
 }
 
 /*********************************************************************
   Vector functions
  *********************************************************************/
-void vector_add_point_stereo (int x, int y, rgb_t color, int intensity)
+void vectrex_add_point_stereo (int x, int y, rgb_t color, int intensity)
 {
-	if (vectrex_imager_status == 1) /* left = 2, right = 1 */
-		vector_add_point ((int)(y*M_SQRT1_2), (int)(((x_max-x)*M_SQRT1_2)+y_center), color, intensity);
+	if (vectrex_imager_status == 2) /* left = 1, right = 2 */
+		vectrex_add_point ((int)(y*M_SQRT1_2), (int)(((x_max-x)*M_SQRT1_2)+y_center), color, intensity);
 	else
-		vector_add_point ((int)(y*M_SQRT1_2), (int)((x_max-x)*M_SQRT1_2), color, intensity);
+		vectrex_add_point ((int)(y*M_SQRT1_2), (int)((x_max-x)*M_SQRT1_2), color, intensity);
 }
 
 INLINE void vectrex_zero_integrators(void)
@@ -203,9 +225,6 @@ VIDEO_START( vectrex )
 		height = Machine->scrbitmap->height;
 	}
 
-	if (!(tmpbitmap = auto_bitmap_alloc(width,height)))
-		return 1;
-
 	x_center=((Machine->visible_area.max_x
 		  -Machine->visible_area.min_x) / 2) << VEC_SHIFT;
 	y_center=((Machine->visible_area.max_y
@@ -214,17 +233,17 @@ VIDEO_START( vectrex )
 
 	vector_set_shift (VEC_SHIFT);
 
-	/* Init. the refresh timer to the BIOS default refresh rate.
-	 * In principle we could use T2 for this and actually this works
-	 * in many cases. However, sometimes the games just draw vectors
-	 * without rearming T2 once it's expired - so the screen doesn't
-	 * get redrawn. This is why we have an additional pulsing timer
-	 * which does the refresh if T2 isn't running. */
-	timer_pulse (TIME_IN_CYCLES(30000, 0), 0, vectrex_screen_update_backup);
-
 	via_config(0, &vectrex_via6522_interface);
 	via_reset();
 	z_factor =  translucency? 1.5: 2;
+
+	imager_freq = 1;
+
+	imager_timer = timer_alloc(vectrex_imager_right_eye);
+	if (!imager_timer)
+		return 1;
+	timer_adjust(imager_timer, 1.0/imager_freq, 2, 1.0/imager_freq);
+
 
 	if (video_start_vector())
 		return 1;
@@ -345,7 +364,6 @@ static WRITE_HANDLER ( v_via_ca2_w )
 
 *****************************************************************/
 
-extern int png_read_artwork(const char *file_name, struct mame_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
 extern READ_HANDLER ( s1_via_pb_r );
 
 static struct via6522_interface spectrum1_via6522_interface =
@@ -354,7 +372,7 @@ static struct via6522_interface spectrum1_via6522_interface =
 	/*outputs: A/B,CA/B2       */ v_via_pa_w, v_via_pb_w, v_via_ca2_w, 0,
 	/*irq                      */ v_via_irq,
 
-	vectrex_shift_reg_w, vectrex_screen_update
+	vectrex_shift_reg_w
 };
 
 static const char *radius_8_led =
@@ -385,6 +403,7 @@ WRITE_HANDLER( raaspec_led_w )
 				 (data>>7)&0x1, (data>>6)&0x1, (data>>5)&0x1, (data>>4)&0x1,
 				 (data>>3)&0x1, (data>>2)&0x1, (data>>1)&0x1, data&0x1);
 
+#if 0
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		y = clip.min_y = tmpbitmap->width - 16;
@@ -410,6 +429,7 @@ WRITE_HANDLER( raaspec_led_w )
 		}
 	}
 	old_data=data;
+#endif
 }
 
 VIDEO_START( raaspec )
@@ -442,14 +462,6 @@ VIDEO_START( raaspec )
 		height = Machine->scrbitmap->height;
 	}
 
-	if (!(tmpbitmap = auto_bitmap_alloc(width,height)))
-		return 1;
-
 	raaspec_led_w (0, 0xff);
 	return 0;
-}
-
-VIDEO_UPDATE( raaspec )
-{
-	video_update_generic_bitmapped(bitmap, cliprect);
 }

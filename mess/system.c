@@ -156,9 +156,9 @@ TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)						*/
 	TESTDRIVER( vcg )	/* Palladium Video-Computer-Game					*/
 
 	/* GCE */
-//	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
+	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
 						/* (aka Milton-Bradley Vectrex) 					*/
-//	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
+	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
 
 	/* MATTEL */
 	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
