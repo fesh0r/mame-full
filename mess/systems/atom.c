@@ -295,7 +295,7 @@ static struct MachineDriver machine_driver_atom =
 ROM_START (atom)
 	ROM_REGION (0x10000, REGION_CPU1,0)
 	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
-	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xe5b1f5f6)
+	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xc431a9b7)
 	ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
 	ROM_LOAD ("abasic.rom", 0xc000, 0x1000, 0x43798b9b)
 ROM_END
@@ -303,7 +303,7 @@ ROM_END
 ROM_START (atomeb)
 	ROM_REGION (0x10000+0x09000, REGION_CPU1,0)
 	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
-	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xe5b1f5f6)
+	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xc431a9b7)
 	ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
 	ROM_LOAD ("abasic.rom", 0xc000, 0x1000, 0x43798b9b)
 	/* roms from another oric emulator */
