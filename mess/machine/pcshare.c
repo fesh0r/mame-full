@@ -420,13 +420,13 @@ void pc_mda_init(void)
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
 
-	install_mem_read_handler(0, 0xb0000, 0xbffff, MRA8_RAM );
-	install_mem_write_handler(0, 0xb0000, 0xbffff, pc_video_videoram_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, MRA8_RAM );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, pc_video_videoram_w );
 	videoram = memory_region(REGION_CPU1)+0xb0000;
 	videoram_size = 0x10000;
 
-	install_port_read_handler(0, 0x3b0, 0x3bf, pc_MDA_r );
-	install_port_write_handler(0, 0x3b0, 0x3bf, pc_MDA_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_w );
 }
 
 

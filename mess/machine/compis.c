@@ -1536,14 +1536,14 @@ WRITE_HANDLER( i186_internal_port_w )
 			temp = (data16 & 0x0fff) << 8;
 			if (data16 & 0x1000)
 			{
-				install_mem_read_handler(2, temp, temp + 0xff, i186_internal_port_r);
-				install_mem_write_handler(2, temp, temp + 0xff, i186_internal_port_w);
+				memory_install_read8_handler(2, ADDRESS_SPACE_PROGRAM, temp, temp + 0xff, 0, 0, i186_internal_port_r);
+				memory_install_write8_handler(2, ADDRESS_SPACE_PROGRAM, temp, temp + 0xff, 0, 0, i186_internal_port_w);
 			}
 			else
 			{
 				temp &= 0xffff;
-				install_port_read_handler(2, temp, temp + 0xff, i186_internal_port_r);
-				install_port_write_handler(2, temp, temp + 0xff, i186_internal_port_w);
+				memory_install_read8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_r);
+				memory_install_write8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_w);
 			}
 /*			usrintf_showmessage("Sound CPU reset");*/
 			break;

@@ -664,13 +664,13 @@ static void watchdog_reset(void)
 }
 
 
-WRITE_HANDLER( watchdog_reset_w )
+WRITE8_HANDLER( watchdog_reset_w )
 {
 	watchdog_reset();
 }
 
 
-READ_HANDLER( watchdog_reset_r )
+READ8_HANDLER( watchdog_reset_r )
 {
 	watchdog_reset();
 	return 0xff;
@@ -1111,13 +1111,13 @@ int cycles_left_to_run(void)
 
 UINT32 activecpu_gettotalcycles(void)
 {
-	VERIFY_EXECUTINGCPU(0, cpu_gettotalcycles);
+	VERIFY_EXECUTINGCPU(0, activecpu_gettotalcycles);
 	return cpu[activecpu].totalcycles + cycles_currently_ran();
 }
 
-UINT32 cpu_gettotalcycles(int cpunum)
+UINT32 cpunum_gettotalcycles(int cpunum)
 {
-	VERIFY_CPUNUM(0, cpu_gettotalcycles);
+	VERIFY_CPUNUM(0, cpunum_gettotalcycles);
 	if (cpunum == cpu_getexecutingcpu())
 		return cpu[cpunum].totalcycles + cycles_currently_ran();
 	else
@@ -1127,13 +1127,13 @@ UINT32 cpu_gettotalcycles(int cpunum)
 
 UINT64 activecpu_gettotalcycles64(void)
 {
-	VERIFY_EXECUTINGCPU(0, cpu_gettotalcycles);
+	VERIFY_EXECUTINGCPU(0, activecpu_gettotalcycles64);
 	return cpu[activecpu].totalcycles + cycles_currently_ran();
 }
 
-UINT64 cpu_gettotalcycles64(int cpunum)
+UINT64 cpunum_gettotalcycles64(int cpunum)
 {
-	VERIFY_CPUNUM(0, cpu_gettotalcycles);
+	VERIFY_CPUNUM(0, cpunum_gettotalcycles64);
 	if (cpunum == cpu_getexecutingcpu())
 		return cpu[cpunum].totalcycles + cycles_currently_ran();
 	else
@@ -1652,7 +1652,7 @@ static void cpu_vblankcallback(int param)
 				if (param != -1)
 				{
 					/* if the CPU has a VBLANK handler, call it */
-					if (Machine->drv->cpu[cpunum].vblank_interrupt && cpu_getstatus(cpunum))
+					if (Machine->drv->cpu[cpunum].vblank_interrupt && !cpunum_is_suspended(cpunum, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE))
 					{
 						cpuintrf_push_context(cpunum);
 						(*Machine->drv->cpu[cpunum].vblank_interrupt)();
@@ -1740,7 +1740,7 @@ static void cpu_updatecallback(int param)
 static void cpu_timedintcallback(int param)
 {
 	/* bail if there is no routine */
-	if (Machine->drv->cpu[param].timed_interrupt && cpu_getstatus(param))
+	if (Machine->drv->cpu[param].timed_interrupt && !cpunum_is_suspended(param, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE))
 	{
 		cpuintrf_push_context(param);
 		(*Machine->drv->cpu[param].timed_interrupt)();

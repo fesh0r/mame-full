@@ -96,13 +96,13 @@ MACHINE_INIT(laser110)
 	/* install 16KB memory expansion? */
     if(readinputport(0) & 0x80)
     {
-		install_mem_read_handler(0, 0x8000, 0xbfff, MRA8_RAM);
-		install_mem_write_handler(0, 0x8000, 0xbfff, MWA8_RAM);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_RAM);
     }
     else
     {
-		install_mem_read_handler(0, 0x8000, 0xbfff, MRA8_NOP);
-		install_mem_write_handler(0, 0x8000, 0xbfff, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_NOP);
     }
 	common_init_machine();
 }
@@ -112,13 +112,13 @@ MACHINE_INIT(laser210)
 	/* install 16KB memory expansion? */
     if(readinputport(0) & 0x80)
     {
-        install_mem_read_handler(0, 0x9000, 0xcfff, MRA8_RAM);
-        install_mem_write_handler(0, 0x9000, 0xcfff, MWA8_RAM);
+        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MRA8_RAM);
+        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MWA8_RAM);
     }
     else
     {
-        install_mem_read_handler(0, 0x9000, 0xcfff, MRA8_NOP);
-        install_mem_write_handler(0, 0x9000, 0xcfff, MWA8_NOP);
+        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MRA8_NOP);
+        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xcfff, 0, 0, MWA8_NOP);
     }
 	common_init_machine();
 }
@@ -128,13 +128,13 @@ MACHINE_INIT(laser310)
 	/* install 16KB memory expansion? */
     if(readinputport(0) & 0x80)
     {
-        install_mem_read_handler(0, 0xb800, 0xf7ff, MRA8_RAM);
-        install_mem_write_handler(0, 0xb800, 0xf7ff, MWA8_RAM);
+        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MRA8_RAM);
+        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MWA8_RAM);
     }
     else
     {
-        install_mem_read_handler(0, 0xb800, 0xf7ff, MRA8_NOP);
-        install_mem_write_handler(0, 0xb800, 0xf7ff, MWA8_NOP);
+        memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MRA8_NOP);
+        memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb800, 0xf7ff, 0, 0, MWA8_NOP);
     }
 	common_init_machine();
 }

@@ -128,40 +128,40 @@ static void gb_init(void)
 	{
 		case NONE:
 		case TAMA5:	/* Definitely wrong, but don't know how this one works */
-			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA8_ROM );
-			install_mem_write_handler( 0, 0x2000, 0x3fff, MWA8_ROM );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA8_ROM );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_ROM );
 			break;
 		case MBC1:
-			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );	/* We don't emulate RAM enable yet */
-			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc1 );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc1 );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, gb_mem_mode_select_mbc1 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );	/* We don't emulate RAM enable yet */
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc1 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, gb_ram_bank_select_mbc1 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, gb_mem_mode_select_mbc1 );
 			break;
 		case MBC2:
-			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA8_ROM );
-			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc2 );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA8_ROM );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc2 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_ROM );
 			break;
 		case MBC3:
 		case HUC1:	/* Possibly wrong */
 		case HUC3:	/* Possibly wrong */
-			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );	/* We don't emulate RAM enable yet */
-			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc3 );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc3 );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, gb_mem_mode_select_mbc3 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );	/* We don't emulate RAM enable yet */
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc3 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, gb_ram_bank_select_mbc3 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, gb_mem_mode_select_mbc3 );
 			break;
 		case MBC5:
-			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );
-			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc5 );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc5 );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, gb_ram_enable );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, gb_rom_bank_select_mbc5 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, gb_ram_bank_select_mbc5 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_ROM );
 			break;
 		case MEGADUCK:
-			install_mem_write_handler( 0, 0x0001, 0x0001, megaduck_rom_bank_select_type1 );
-			install_mem_write_handler( 0, 0xB000, 0xB000, megaduck_rom_bank_select_type2 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x0001, 0x0001, 0, 0, megaduck_rom_bank_select_type1 );
+			memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0xB000, 0xB000, 0, 0, megaduck_rom_bank_select_type2 );
 			break;
 	}
 }

@@ -48,8 +48,8 @@ static void coupe_update_bank(int bank, data8_t *memory, int is_readonly)
 	rh = !memory ? MRA8_NOP :							(read8_handler) (STATIC_BANK1 + bank - 1);
 	wh = !memory ? MWA8_NOP : (is_readonly ? MWA8_ROM :	(write8_handler) (STATIC_BANK1 + bank - 1));
 
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, ((bank-1) * 0x4000), ((bank-1) * 0x4000) + 0x3FFF, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, ((bank-1) * 0x4000), ((bank-1) * 0x4000) + 0x3FFF, 0, wh);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, ((bank-1) * 0x4000), ((bank-1) * 0x4000) + 0x3FFF, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, ((bank-1) * 0x4000), ((bank-1) * 0x4000) + 0x3FFF, 0, 0, wh);
 }
 
 

@@ -38,36 +38,36 @@ MACHINE_INIT( nascom1 )
 		switch (nascom1_ramsize)
 		{
 			case 03:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_RAM);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_RAM);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_RAM);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_RAM);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_RAM);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MRA8_RAM);
 				break;
 			case 02:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_NOP);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_NOP);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_RAM);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_RAM);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_RAM);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MRA8_RAM);
 				break;
 			case 01:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_NOP);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_NOP);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_NOP);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_NOP);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_RAM);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MRA8_RAM);
 				break;
 			case 00:
-				install_mem_write_handler(0, 0x9000, 0xafff, MWA8_NOP);
-				install_mem_read_handler(0, 0x9000, 0xafff, MRA8_NOP);
-				install_mem_write_handler(0, 0x5000, 0x8fff, MWA8_NOP);
-				install_mem_read_handler(0, 0x5000, 0x8fff, MRA8_NOP);
-				install_mem_write_handler(0, 0x1400, 0x4fff, MWA8_NOP);
-				install_mem_read_handler(0, 0x1400, 0x4fff, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xafff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x8fff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x4fff, 0, 0, MRA8_NOP);
 				break;
 		}
 	}

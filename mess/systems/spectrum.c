@@ -659,7 +659,7 @@ void spectrum_plus3_update_memory(void)
 			ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
 			cpu_setbank(1, ChosenROM);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 
 			logerror("rom switch: %02x\n", ROMSelection);
 	}
@@ -679,7 +679,7 @@ void spectrum_plus3_update_memory(void)
 			cpu_setbank(1, ram_data);
 			cpu_setbank(5, ram_data);
 			/* allow writes to 0x0000-0x03fff */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_BANK5);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_BANK5);
 
 			ram_data = spectrum_ram + (memory_selection[1]<<14);
 			cpu_setbank(2, ram_data);
@@ -1044,8 +1044,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_ROM;
 		logerror("0000-1fff HOME\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, wh);
 
 	if (ts2068_port_f4_data & 0x02)
 	{
@@ -1083,8 +1083,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_ROM;
 		logerror("2000-3fff HOME\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, wh);
 
 	if (ts2068_port_f4_data & 0x04)
 	{
@@ -1122,8 +1122,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_BANK11;
 		logerror("4000-5fff RAM\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, wh);
 
 	if (ts2068_port_f4_data & 0x08)
 	{
@@ -1161,8 +1161,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_BANK12;
 		logerror("6000-7fff RAM\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, wh);
 
 	if (ts2068_port_f4_data & 0x10)
 	{
@@ -1200,8 +1200,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_BANK13;
 		logerror("8000-9fff RAM\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0,rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0,wh);
 
 	if (ts2068_port_f4_data & 0x20)
 	{
@@ -1239,8 +1239,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_BANK14;
 		logerror("a000-bfff RAM\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, wh);
 
 	if (ts2068_port_f4_data & 0x40)
 	{
@@ -1278,8 +1278,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_BANK15;
 		logerror("c000-dfff RAM\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, wh);
 
 	if (ts2068_port_f4_data & 0x80)
 	{
@@ -1317,8 +1317,8 @@ void ts2068_update_memory(void)
 		wh = MWA8_BANK16;
 		logerror("e000-ffff RAM\n");
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, wh);
 }
 
 
@@ -1631,8 +1631,8 @@ static void scorpion_update_memory(void)
 
 		logerror("rom switch: %02x\n", ROMSelection);
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, wh);
 }
 
 

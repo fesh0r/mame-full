@@ -255,13 +255,13 @@ INLINE void get_crosshair_xy(int player, int *x, int *y)
 
 void jaguar_gpu_suspend(void)
 {
-	timer_suspendcpu(1, 1, SUSPEND_REASON_SPIN);
+	cpunum_suspend(1, SUSPEND_REASON_SPIN, 1);
 }
 
 
 void jaguar_gpu_resume(void)
 {
-	timer_suspendcpu(1, 0, SUSPEND_REASON_SPIN);
+	cpunum_resume(1, SUSPEND_REASON_SPIN);
 }
 
 

@@ -307,12 +307,12 @@ WRITE_HANDLER(cbm8096_w)
 			else
 				wh = MWA8_NOP;
 		}
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, rh);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, wh);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, 0, rh);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, 0, wh);
 
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, (data & 2) == 0 ? MWA8_BANK6 : MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, (data & 2) == 0 ? MWA8_BANK8 : MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, (data & 2) == 0 ? MWA8_BANK9 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, 0, (data & 2) == 0 ? MWA8_BANK6 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, 0, (data & 2) == 0 ? MWA8_BANK8 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, 0, (data & 2) == 0 ? MWA8_BANK9 : MWA8_NOP);
 
 		if (data&0x20)
 		{
@@ -326,11 +326,11 @@ WRITE_HANDLER(cbm8096_w)
 			else
 				wh = MWA8_NOP;
 		}
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, wh);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0, wh);
 
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, (data & 1) == 0 ? MWA8_BANK2 : MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, (data & 1) == 0 ? MWA8_BANK3 : MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, (data & 1) == 0 ? MWA8_BANK4 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, 0, (data & 1) == 0 ? MWA8_BANK2 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, 0, (data & 1) == 0 ? MWA8_BANK3 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, 0, (data & 1) == 0 ? MWA8_BANK4 : MWA8_NOP);
 
 
 		if (data&4) {
@@ -367,28 +367,28 @@ WRITE_HANDLER(cbm8096_w)
 	else
 	{
 		cpu_setbank(1, pet_memory + 0x8000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, videoram_w);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0, videoram_w);
 
 		cpu_setbank(2, pet_memory + 0x9000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, 0, MWA8_ROM);
 
 		cpu_setbank(3, pet_memory + 0xa000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, 0, MWA8_ROM);
 
 		cpu_setbank(4,pet_memory+0xb000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, 0, MWA8_ROM);
 
 		cpu_setbank(6,pet_memory+0xc000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, 0, MWA8_ROM);
 
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, cbm8096_io_r);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, cbm8096_io_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, 0, cbm8096_io_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, 0, cbm8096_io_w);
 
 		cpu_setbank(8,pet_memory+0xf000);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, 0, MWA8_ROM);
 
 		cpu_setbank(9,pet_memory+0xfff1);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, 0, MWA8_ROM);
 	}
 }
 
@@ -517,32 +517,32 @@ MACHINE_INIT( pet )
 
 	switch (MEMORY) {
 	case MEMORY_4:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_NOP);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_NOP);
 		break;
 	case MEMORY_8:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_RAM);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_NOP);
 		break;
 	case MEMORY_16:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_RAM);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_RAM);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_NOP);
 		break;
 	case MEMORY_32:
-		install_mem_write_handler (0, 0x1000, 0x1fff, MWA8_RAM);
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_RAM);
-		install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_RAM);
 		break;
 	}
 
 	if (cbm8096) {
 		if (CBM8096_MEMORY) {
-			install_mem_write_handler(0, 0xfff0, 0xfff0, cbm8096_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff0, 0xfff0, 0, 0, cbm8096_w);
 		} else {
-			install_mem_write_handler(0, 0xfff0, 0xfff0, MWA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff0, 0xfff0, 0, 0, MWA8_NOP);
 		}
 		cbm8096_w(0,0);
 	}

@@ -89,9 +89,9 @@ static void a800_setbank(int n)
 			break;
 	}
 
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0,
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0,
 		read_addr ? MRA8_BANK1 : MRA8_NOP);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0,
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0,
 		write_addr ? MWA8_BANK1 : MWA8_NOP);
 	if (read_addr)
 		cpu_setbank(1, read_addr);
@@ -1079,10 +1079,10 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			wbank4 = MWA8_RAM;
 			cpu_setbank(4, memory_region(REGION_CPU1)+0x0d800);  /* 4K RAM + 8K RAM */
 		}
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, rbank3);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, wbank3);
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xffff, 0, rbank4);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xffff, 0, wbank4);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, rbank3);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, wbank3);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xffff, 0, 0, rbank4);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xffff, 0, 0, wbank4);
 	}
 	/* check if BASIC changed */
 	if( changes & 0x02 )
@@ -1101,8 +1101,8 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			wbank1 = MWA8_ROM;
 			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);  /* 8K BASIC */
 		}
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, rbank1);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, wbank1);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, rbank1);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, wbank1);
 	}
 	/* check if self-test ROM changed */
 	if( changes & 0x80 )
@@ -1121,8 +1121,8 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			wbank2 = MWA8_ROM;
 			cpu_setbank(2, memory_region(REGION_CPU1)+0x15000);  /* 0x0800 bytes */
 		}
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, rbank2);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, wbank2);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, rbank2);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, wbank2);
 	}
 }
 
@@ -1536,9 +1536,9 @@ DRIVER_INIT( atari )
 	/* install RAM */
 	ram_top = MAX(mess_ram_size, 0x8000) - 1;
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
-		0x0000, ram_top, 0, MRA8_BANK2);
+		0x0000, ram_top, 0, 0, MRA8_BANK2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
-		0x0000, ram_top, 0, MWA8_BANK2);
+		0x0000, ram_top, 0, 0, MWA8_BANK2);
 	cpu_setbank(2, mess_ram);
 
 	/* save states */

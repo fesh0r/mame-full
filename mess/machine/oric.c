@@ -580,14 +580,13 @@ static WRITE_HANDLER(apple2_interface_w)
 
 static void oric_install_apple2_interface(void)
 {
-	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
-	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
-	install_mem_read_handler(0, 0x0320, 0x03ff, MRA8_BANK4);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0320, 0x03ff, 0, 0, MRA8_BANK4);
 
-	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
-	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_w);
 	cpu_setbank(4, 	memory_region(REGION_CPU1) + 0x014000 + 0x020);
-
 }
 
 
@@ -598,16 +597,16 @@ static void oric_enable_memory(int low, int high, int rd, int wr)
 	{
 		switch(i) {
 		case 1:
-			memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, rd ? MRA8_BANK1 : MRA8_NOP);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, wr ? MWA8_BANK5 : MWA8_ROM);
+			memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, rd ? MRA8_BANK1 : MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, wr ? MWA8_BANK5 : MWA8_ROM);
 			break;
 		case 2:
-			memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xe000, 0xf7ff, 0, rd ? MRA8_BANK2 : MRA8_NOP);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xf7ff, 0, wr ? MWA8_BANK6 : MWA8_ROM);
+			memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xe000, 0xf7ff, 0, 0, rd ? MRA8_BANK2 : MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xf7ff, 0, 0, wr ? MWA8_BANK6 : MWA8_ROM);
 			break;
 		case 3:
-			memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, rd ? MRA8_BANK3 : MRA8_NOP);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, wr ? MWA8_BANK7 : MWA8_ROM);
+			memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, 0, rd ? MRA8_BANK3 : MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, 0, wr ? MWA8_BANK7 : MWA8_ROM);
 			break;
 		}
 	}
@@ -672,13 +671,13 @@ static WRITE_HANDLER(apple2_v2_interface_w)
 /* APPLE 2 INTERFACE V2 */
 static void oric_install_apple2_v2_interface(void)
 {
-	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
-	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
-	install_mem_read_handler(0, 0x0320, 0x03ff, MRA8_BANK4);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0320, 0x03ff, 0, 0, MRA8_BANK4);
 
-	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
-	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
-	install_mem_write_handler(0, 0x0380, 0x0383, apple2_v2_interface_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, apple2_interface_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0380, 0x0383, 0, 0, apple2_v2_interface_w);
 
 	apple2_v2_interface_w(0,0);
 }
@@ -887,11 +886,11 @@ static void oric_install_jasmin_interface(void)
 	port_3fb_w = 1;
 	oric_jasmin_set_mem_0x0c000();
 
-	install_mem_read_handler(0,0x0300, 0x03ef, oric_IO_r);
-	install_mem_read_handler(0,0x03f0, 0x03ff, oric_jasmin_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x03ef, 0, 0, oric_IO_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x03f0, 0x03ff, 0, 0, oric_jasmin_r);
 
-	install_mem_write_handler(0,0x0300, 0x03ef, oric_IO_w);
-	install_mem_write_handler(0,0x03f0, 0x03ff, oric_jasmin_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x03ef, 0, 0, oric_IO_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x03f0, 0x03ff, 0, 0, oric_jasmin_w);
 }
 
 /*********************************/
@@ -1126,13 +1125,13 @@ static WRITE_HANDLER(oric_microdisc_w)
 
 static void oric_install_microdisc_interface(void)
 {
-	install_mem_read_handler(0,0x0300, 0x030f, oric_IO_r);
-	install_mem_read_handler(0,0x0310, 0x031f, oric_microdisc_r);
-	install_mem_read_handler(0,0x0320, 0x03ff, oric_IO_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, oric_microdisc_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0320, 0x03ff, 0, 0, oric_IO_r);
 
-	install_mem_write_handler(0,0x0300, 0x030f, oric_IO_w);
-	install_mem_write_handler(0,0x0310, 0x031f, oric_microdisc_w);
-	install_mem_write_handler(0,0x0320, 0x03ff, oric_IO_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x030f, 0, 0, oric_IO_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0310, 0x031f, 0, 0, oric_microdisc_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0320, 0x03ff, 0, 0, oric_IO_w);
 
 	/* disable os rom, enable microdisc rom */
 	/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
@@ -1253,8 +1252,8 @@ MACHINE_INIT( oric )
 			}
 			else
 			{
-				install_mem_read_handler(0,0x0300, 0x03ff, oric_IO_r);
-				install_mem_write_handler(0,0x0300, 0x03ff, oric_IO_w);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x03ff, 0, 0, oric_IO_r);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0300, 0x03ff, 0, 0, oric_IO_w);
 			}
 		}
 		break;
@@ -1482,8 +1481,8 @@ static void	telestrat_refresh_mem(void)
 		}
 		break;
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, 0, wh);
 }
 
 static READ_HANDLER(telestrat_via2_in_a_func)

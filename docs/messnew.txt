@@ -9,7 +9,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [AMSTRAD] Refined video display and Z80 timings; the Yao demos work
-  better now.  [Yoann Courtois]
+  better now.  Also changed default joystick input definitions.  [Yoann
+  Courtois]
  
 - [PC1512] Video fixes [Andrew Jenner]
 
@@ -95,6 +96,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.83.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - Added a "variable peripherals" feature that allows drivers to identify
   which inputs pertain to a given peripheral, like a gamepad or a lightgun.
   Changed A2600 and NES drivers to use this feature.  (bug #550 was a related

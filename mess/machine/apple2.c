@@ -212,7 +212,7 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 				{
 					/* this RAM uses a handler */
 					memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
-						entry->offset_begin, entry->offset_end, 0, handler);
+						entry->offset_begin, entry->offset_end, 0, 0, handler);
 				}
 				else
 				{

@@ -267,22 +267,22 @@ WRITE_HANDLER ( mz700_mmio_w )
 static void bank1_RAM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x00000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MRA8_BANK1);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_BANK1);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MWA8_BANK1);
 }
 
 static void bank1_NOP(UINT8 *mem)
 {
     cpu_setbank(1, &mem[0x00000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MRA8_NOP);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MRA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MWA8_NOP);
 }
 
 static void bank1_ROM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x10000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MRA8_BANK1);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_ROM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, 0, MWA8_ROM);
 }
 
 
@@ -290,15 +290,15 @@ static void bank1_ROM(UINT8 *mem)
 static void bank2_RAM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x01000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, MRA8_BANK2);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, MWA8_BANK2);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MRA8_BANK2);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_BANK2);
 }
 
 static void bank2_ROM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x11000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, MRA8_BANK2);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, MWA8_ROM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MRA8_BANK2);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_ROM);
 }
 
 
@@ -306,15 +306,15 @@ static void bank2_ROM(UINT8 *mem)
 static void bank3_RAM(UINT8 *mem)
 {
 	cpu_setbank(3, &mem[0x08000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, MRA8_BANK3);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, MWA8_BANK3);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MRA8_BANK3);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_BANK3);
 }
 
 static void bank3_VID(UINT8 *mem)
 {
 	cpu_setbank(3, &mem[0x12000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, MRA8_BANK3);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, videoram0_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MRA8_BANK3);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, videoram0_w);
 }
 
 
@@ -322,15 +322,15 @@ static void bank3_VID(UINT8 *mem)
 static void bank4_RAM(UINT8 *mem)
 {
 	cpu_setbank(4, &mem[0x0a000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, MRA8_BANK4);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, MWA8_BANK4);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, 0, MRA8_BANK4);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, 0, MWA8_BANK4);
 }
 
 static void bank4_VID(UINT8 *mem)
 {
 	cpu_setbank(4, &mem[0x14000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, MRA8_BANK4);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, videoram2_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, 0, MRA8_BANK4);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xA000, 0xBFFF, 0, 0, videoram2_w);
 }
 
 
@@ -338,15 +338,15 @@ static void bank4_VID(UINT8 *mem)
 static void bank5_RAM(UINT8 *mem)
 {
 	cpu_setbank(5, &mem[0x0c000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, MRA8_BANK5);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, MWA8_BANK5);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, 0, MRA8_BANK5);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, 0, MWA8_BANK5);
 }
 
 static void bank5_VID(UINT8 *mem)
 {
 	cpu_setbank(5, &mem[0x11000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, MRA8_BANK5);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, pcgram_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, 0, MRA8_BANK5);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xCFFF, 0, 0, pcgram_w);
 }
 
 
@@ -354,22 +354,22 @@ static void bank5_VID(UINT8 *mem)
 static void bank6_NOP(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x0d000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, MRA8_NOP);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, MWA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, 0, MRA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, 0, MWA8_NOP);
 }
 
 static void bank6_RAM(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x0d000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, MRA8_BANK6);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, MWA8_BANK6);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, 0, MRA8_BANK6);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, 0, MWA8_BANK6);
 }
 
 static void bank6_VIO(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x12000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, MRA8_BANK6);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, videoram_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, 0, MRA8_BANK6);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD000, 0xD7FF, 0, 0, videoram_w);
 }
 
 
@@ -377,22 +377,22 @@ static void bank6_VIO(UINT8 *mem)
 static void bank7_NOP(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x0d800]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, MRA8_NOP);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, MWA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, 0, MRA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, 0, MWA8_NOP);
 }
 
 static void bank7_RAM(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x0d800]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, MRA8_BANK7);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, MWA8_BANK7);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, 0, MRA8_BANK7);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, 0, MWA8_BANK7);
 }
 
 static void bank7_VIO(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x12800]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, MRA8_BANK7);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, colorram_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, 0, MRA8_BANK7);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xD800, 0xDFFF, 0, 0, colorram_w);
 }
 
 
@@ -400,23 +400,23 @@ static void bank7_VIO(UINT8 *mem)
 static void bank8_NOP(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x0e000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, MRA8_NOP);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, MWA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, 0, MRA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, 0, MWA8_NOP);
 
 }
 
 static void bank8_RAM(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x0e000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, MRA8_BANK8);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, MWA8_BANK8);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, 0, MRA8_BANK8);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, 0, MWA8_BANK8);
 }
 
 static void bank8_VIO(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x16000]);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, mz700_mmio_r);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, mz700_mmio_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, 0, mz700_mmio_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xE000, 0xFFFF, 0, 0, mz700_mmio_w);
 }
 
 

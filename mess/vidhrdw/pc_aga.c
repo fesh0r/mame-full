@@ -209,10 +209,10 @@ VIDEO_START( pc_aga )
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
 	switch(buswidth) {
 	case 8:
-		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, pc_aga_mda_r );
-		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, pc_aga_mda_w );
-		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_aga_cga_r );
-		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_aga_cga_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_aga_mda_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_aga_mda_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_aga_cga_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_aga_cga_w );
 		break;
 
 	default:

@@ -327,17 +327,17 @@ static VIDEO_START( pc_cga )
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
 	switch(buswidth) {
 	case 8:
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, MRA8_RAM );
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, pc_video_videoram_w );
-		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga8_r );
-		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga8_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA8_RAM );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, pc_video_videoram_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga8_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga8_w );
 		break;
 
 	case 32:
-		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, MRA32_RAM );
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, pc_video_videoram32_w );
-		memory_install_read32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga32_r );
-		memory_install_write32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga32_w );
+		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA32_RAM );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, pc_video_videoram32_w );
+		memory_install_read32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga32_r );
+		memory_install_write32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc_cga32_w );
 		break;
 
 	default:

@@ -58,14 +58,16 @@ static void hp48_config(void)
 	int begin, end;
 
 	// lowest priority first
-	install_mem_read_handler(0, 0, 0xfffff, MRA8_ROM);
-	install_mem_write_handler(0, 0, 0xfffff, MWA8_NOP);
-	if (hp48s.mem[CARD1].adr!=-1) {
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0, 0xfffff, 0, 0, MRA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0, 0xfffff, 0, 0, MWA8_NOP);
+	if (hp48s.mem[CARD1].adr!=-1)
+	{
 		begin=hp48s.mem[CARD1].adr&hp48s.mem[CARD1].size&~0xfff;
 		end=begin|(hp48s.mem[CARD1].size^0xff000)|0xfff;
-		if (end!=begin) {
-			install_mem_read_handler(0, begin, end, MRA8_BANK1);
-			install_mem_write_handler(0, begin, end, MWA8_BANK1);
+		if (end!=begin)
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MWA8_BANK1);
 			cpu_setbank(1, hp48_card1);
 		}
 	}
@@ -73,8 +75,8 @@ static void hp48_config(void)
 		begin=hp48s.mem[CARD2].adr&hp48s.mem[CARD2].size&~0xfff;
 		end=begin|(hp48s.mem[CARD2].size^0xff000)|0xfff;
 		if (end!=begin) {
-			install_mem_read_handler(0, begin, end, MRA8_BANK2);
-			install_mem_write_handler(0, begin, end, MWA8_BANK2);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK2);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MWA8_BANK2);
 			cpu_setbank(2, hp48_card2);
 		}
 	}
@@ -82,16 +84,17 @@ static void hp48_config(void)
 		begin=hp48s.mem[RAM].adr&hp48s.mem[RAM].size&~0xfff;
 		end=begin|(hp48s.mem[RAM].size^0xff000)|0xfff;
 		if (end!=begin) {
-			install_mem_read_handler(0, begin, end, MRA8_BANK3);
-			install_mem_write_handler(0, begin, end, MWA8_BANK3);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MRA8_BANK3);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, begin, end, 0, 0, MWA8_BANK3);
 			cpu_setbank(3, hp48_ram);
 		}
 	}
-	if (hp48s.mem[HDW].adr!=-1) {
-		install_mem_read_handler(0, hp48s.mem[HDW].adr&~0x3f, 
-								 hp48s.mem[HDW].adr|0x3f, hp48_read);
-		install_mem_write_handler(0, hp48s.mem[HDW].adr&~0x3f,
-								  hp48s.mem[HDW].adr|0x3f, hp48_write);
+	if (hp48s.mem[HDW].adr!=-1)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, hp48s.mem[HDW].adr&~0x3f, 
+								 hp48s.mem[HDW].adr|0x3f, 0, 0, hp48_read);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, hp48s.mem[HDW].adr&~0x3f,
+								  hp48s.mem[HDW].adr|0x3f, 0, 0, hp48_write);
 	}
 	memory_set_context(0);
 }

@@ -190,13 +190,13 @@ static void serial_callback(int param);
 
 void jaguar_dsp_suspend(void)
 {
-	timer_suspendcpu(2, 1, SUSPEND_REASON_SPIN);
+	cpunum_suspend(2, SUSPEND_REASON_SPIN, 1);
 }
 
 
 void jaguar_dsp_resume(void)
 {
-	timer_suspendcpu(2, 0, SUSPEND_REASON_SPIN);
+	cpunum_resume(2, SUSPEND_REASON_SPIN);
 }
 
 
@@ -269,7 +269,7 @@ void cojag_sound_init(void)
 	}
 
 #if ENABLE_SPEEDUP_HACKS
-	install_mem_write32_handler(2, 0xf1a100, 0xf1a103, dsp_flags_w);
+	memory_install_write32_handler(2, ADDRESS_SPACE_PROGRAM, 0xf1a100, 0xf1a103, 0, 0, dsp_flags_w);
 #endif
 }
 

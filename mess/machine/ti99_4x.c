@@ -776,8 +776,8 @@ void machine_init_ti99(void)
 
 		if (ti99_model != model_99_8)
 		{
-			install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rspeech_r);
-			install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_wspeech_w);
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x93ff, 0, 0, ti99_rspeech_r);
+			memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9400, 0x97ff, 0, 0, ti99_wspeech_w);
 
 			tms5220_set_variant(variant_tms0285);
 		}
@@ -786,8 +786,8 @@ void machine_init_ti99(void)
 	{
 		if (ti99_model != model_99_8)
 		{
-			install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_nop_8_r);
-			install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_nop_8_w);
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x93ff, 0, 0, ti99_nop_8_r);
+			memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9400, 0x97ff, 0, 0, ti99_nop_8_w);
 		}
 	}
 
@@ -796,10 +796,10 @@ void machine_init_ti99(void)
 	case xRAM_kind_none:
 	default:
 		/* reset mem handler to none */
-		install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_nop_8_r);
-		install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_nop_8_w);
-		install_mem_read16_handler(0, 0xa000, 0xffff, ti99_nop_8_r);
-		install_mem_write16_handler(0, 0xa000, 0xffff, ti99_nop_8_w);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_nop_8_r);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_nop_8_w);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_nop_8_r);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_nop_8_w);
 		break;
 	case xRAM_kind_TI:
 		ti99_TIxram_init();
@@ -2492,10 +2492,10 @@ static WRITE16_HANDLER ( ti99_TIxramhigh_w );
 
 static void ti99_TIxram_init(void)
 {
-	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_TIxramlow_r);
-	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_TIxramlow_w);
-	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_TIxramhigh_r);
-	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_TIxramhigh_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_TIxramlow_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_TIxramlow_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_TIxramhigh_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_TIxramhigh_w);
 }
 
 /* low 8 kb: 0x2000-0x3fff */
@@ -2567,10 +2567,10 @@ static void ti99_sAMSxram_init(void)
 	int i;
 
 
-	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_sAMSxramlow_r);
-	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_sAMSxramlow_w);
-	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_sAMSxramhigh_r);
-	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_sAMSxramhigh_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_sAMSxramlow_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_sAMSxramlow_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_sAMSxramhigh_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_sAMSxramhigh_w);
 
 	ti99_peb_set_card_handlers(0x1e00, & sAMS_expansion_handlers);
 
@@ -2677,22 +2677,22 @@ static void ti99_4p_mapper_init(void)
 	int i;
 
 	/* Not required at run-time */
-	/*install_mem_read16_handler(0, 0x2000, 0x2fff, MRA16_BANK3);
-	install_mem_write16_handler(0, 0x2000, 0x2fff, MWA16_BANK3);
-	install_mem_read16_handler(0, 0x3000, 0x3fff, MRA16_BANK4);
-	install_mem_write16_handler(0, 0x3000, 0x3fff, MWA16_BANK4);
-	install_mem_read16_handler(0, 0xa000, 0xafff, MRA16_BANK5);
-	install_mem_write16_handler(0, 0xa000, 0xafff, MWA16_BANK5);
-	install_mem_read16_handler(0, 0xb000, 0xbfff, MRA16_BANK6);
-	install_mem_write16_handler(0, 0xb000, 0xbfff, MWA16_BANK6);
-	install_mem_read16_handler(0, 0xc000, 0xcfff, MRA16_BANK7);
-	install_mem_write16_handler(0, 0xc000, 0xcfff, MWA16_BANK7);
-	install_mem_read16_handler(0, 0xd000, 0xdfff, MRA16_BANK8);
-	install_mem_write16_handler(0, 0xd000, 0xdfff, MWA16_BANK8);
-	install_mem_read16_handler(0, 0xe000, 0xefff, MRA16_BANK9);
-	install_mem_write16_handler(0, 0xe000, 0xefff, MWA16_BANK9);
-	install_mem_read16_handler(0, 0xf000, 0xffff, MRA16_BANK10);
-	install_mem_write16_handler(0, 0xf000, 0xffff, MWA16_BANK10);*/
+	/*memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, MRA16_BANK3);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, MWA16_BANK3);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, MRA16_BANK4);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, MWA16_BANK4);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, MRA16_BANK5);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, MWA16_BANK5);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, MRA16_BANK6);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, MWA16_BANK6);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, MRA16_BANK7);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, MWA16_BANK7);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, MRA16_BANK8);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, MWA16_BANK8);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, MRA16_BANK9);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, MWA16_BANK9);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, MRA16_BANK10);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, MWA16_BANK10);*/
 
 	ti99_peb_set_16bit_card_handlers(0x1e00, & ti99_4p_mapper_handlers);
 
@@ -2828,10 +2828,10 @@ static int myarc_page_offset_mask;
 /* set up myarc handlers, and set initial state */
 static void ti99_myarcxram_init(void)
 {
-	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_myarcxramlow_r);
-	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_myarcxramlow_w);
-	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_myarcxramhigh_r);
-	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_myarcxramhigh_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_myarcxramlow_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, ti99_myarcxramlow_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_myarcxramhigh_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, ti99_myarcxramhigh_w);
 
 	switch (xRAM_kind)
 	{

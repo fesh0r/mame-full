@@ -94,22 +94,22 @@ MACHINE_INIT( jupiter )
 		{
 			case 03:
 			case 02:
-				install_mem_write_handler(0, 0x8800, 0xffff, MWA8_RAM);
-				install_mem_read_handler(0, 0x8800, 0xffff, MRA8_RAM);
-				install_mem_write_handler(0, 0x4800, 0x87ff, MWA8_RAM);
-				install_mem_read_handler(0, 0x4800, 0x87ff, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8800, 0xffff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8800, 0xffff, 0, 0, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x87ff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x87ff, 0, 0, MRA8_RAM);
 				break;
 			case 01:
-				install_mem_write_handler(0, 0x8800, 0xffff, MWA8_NOP);
-				install_mem_read_handler(0, 0x8800, 0xffff, MRA8_NOP);
-				install_mem_write_handler(0, 0x4800, 0x87ff, MWA8_RAM);
-				install_mem_read_handler(0, 0x4800, 0x87ff, MRA8_RAM);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8800, 0xffff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8800, 0xffff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x87ff, 0, 0, MWA8_RAM);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x87ff, 0, 0, MRA8_RAM);
 				break;
 			case 00:
-				install_mem_write_handler(0, 0x8800, 0xffff, MWA8_NOP);
-				install_mem_read_handler(0, 0x8800, 0xffff, MRA8_NOP);
-				install_mem_write_handler(0, 0x4800, 0x87ff, MWA8_NOP);
-				install_mem_read_handler(0, 0x4800, 0x87ff, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8800, 0xffff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8800, 0xffff, 0, 0, MRA8_NOP);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x87ff, 0, 0, MWA8_NOP);
+				memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x87ff, 0, 0, MRA8_NOP);
 				break;
 		}
 

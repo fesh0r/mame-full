@@ -47,13 +47,13 @@ MACHINE_INIT( zx80 )
 {
 	if (readinputport(0) & 0x80)
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_RAM);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_RAM);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_RAM);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_NOP);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_NOP);
 	}
 	common_init_machine();
 }
@@ -62,13 +62,13 @@ MACHINE_INIT( zx81 )
 {
 	if (readinputport(0) & 0x80)
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_RAM);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_RAM);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_RAM);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0x4400, 0x7fff, MRA8_NOP);
-		install_mem_write_handler(0, 0x4400, 0x7fff, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x7fff, 0, 0, MWA8_NOP);
 	}
 	common_init_machine();
 }

@@ -265,9 +265,9 @@ static void install_banks(int count, unsigned init)
 			MRA8_BANK4,
 		};
 
-		install_mem_read_handler(0,
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
 			0x1000 + (i + 0) * 0x1000 / count - 0,
-			0x1000 + (i + 1) * 0x1000 / count - 1, handler[i]);
+			0x1000 + (i + 1) * 0x1000 / count - 1, 0, 0, handler[i]);
 
 		cpu_setbank(i + 1, memory_region(REGION_USER1) + init);
 	}
@@ -283,14 +283,14 @@ static MACHINE_INIT( a2600 )
 
 	tia_init();
 
-	install_mem_write_handler(0, 0x00, 0x7f, tia_w);
-	install_mem_read_handler(0, 0x00, 0x7f, tia_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x00, 0x7f, 0, 0, tia_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x00, 0x7f, 0, 0, tia_r);
 
-	install_mem_write_handler(0, 0x200, 0x27f, MWA8_NOP);
-	install_mem_read_handler(0, 0x200, 0x27f, MRA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x200, 0x27f, 0, 0, MWA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x200, 0x27f, 0, 0, MRA8_NOP);
 
-	install_mem_write_handler(0, 0x1000, 0x1fff, MWA8_NOP);
-	install_mem_read_handler(0, 0x1000, 0x1fff, MRA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MWA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, 0, MRA8_NOP);
 
 	/* auto-detect bank mode */
 
@@ -412,7 +412,7 @@ static MACHINE_INIT( a2600 )
 
 	if (mode == modeDC)
 	{
-		install_mem_read_handler(0, 0x1fec, 0x1fec, current_bank_r);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fec, 0x1fec, 0, 0, current_bank_r);
 	}
 
 	/* set up bank switch registers */
@@ -420,48 +420,48 @@ static MACHINE_INIT( a2600 )
 	switch (mode)
 	{
 	case mode8K:
-		install_mem_write_handler(0, 0x1ff8, 0x1ff9, mode8K_switch_w);
-		install_mem_read_handler(0, 0x1ff8, 0x1ff9, mode8K_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff8, 0x1ff9, 0, 0, mode8K_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff8, 0x1ff9, 0, 0, mode8K_switch_r);
 		break;
 
 	case mode12:
-		install_mem_write_handler(0, 0x1ff8, 0x1ffa, mode12_switch_w);
-		install_mem_read_handler(0, 0x1ff8, 0x1ffa, mode12_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff8, 0x1ffa, 0, 0, mode12_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff8, 0x1ffa, 0, 0, mode12_switch_r);
 		break;
 
 	case mode16:
-		install_mem_write_handler(0, 0x1ff6, 0x1ff9, mode16_switch_w);
-		install_mem_read_handler(0, 0x1ff6, 0x1ff9, mode16_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff6, 0x1ff9, 0, 0, mode16_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff6, 0x1ff9, 0, 0, mode16_switch_r);
 		break;
 
 	case mode32:
-		install_mem_write_handler(0, 0x1ff4, 0x1ffb, mode32_switch_w);
-		install_mem_read_handler(0, 0x1ff4, 0x1ffb, mode32_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff4, 0x1ffb, 0, 0, mode32_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff4, 0x1ffb, 0, 0, mode32_switch_r);
 		break;
 
 	case modePB:
-		install_mem_write_handler(0, 0x1fe0, 0x1ff8, modePB_switch_w);
-		install_mem_read_handler(0, 0x1fe0, 0x1ff8, modePB_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fe0, 0x1ff8, 0, 0, modePB_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fe0, 0x1ff8, 0, 0, modePB_switch_r);
 		break;
 
 	case modeTV:
-		install_mem_write_handler(0, 0x00, 0x3f, modeTV_switch_w);
-		install_mem_read_handler(0, 0x00, 0x3f, modeTV_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x00, 0x3f, 0, 0, modeTV_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x00, 0x3f, 0, 0, modeTV_switch_r);
 		break;
 
 	case modeUA:
-		install_mem_write_handler(0, 0x200, 0x27f, modeUA_switch_w);
-		install_mem_read_handler(0, 0x200, 0x27f, modeUA_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x200, 0x27f, 0, 0, modeUA_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x200, 0x27f, 0, 0, modeUA_switch_r);
 		break;
 
 	case modeMN:
-		install_mem_write_handler(0, 0x1fe0, 0x1fe7, modeMN_switch_w);
-		install_mem_read_handler(0, 0x1fe0, 0x1fe7, modeMN_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fe0, 0x1fe7, 0, 0, modeMN_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fe0, 0x1fe7, 0, 0, modeMN_switch_r);
 		break;
 
 	case modeDC:
-		install_mem_write_handler(0, 0x1ff0, 0x1ff0, modeDC_switch_w);
-		install_mem_read_handler(0, 0x1ff0, 0x1ff0, modeDC_switch_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff0, 0x1ff0, 0, 0, modeDC_switch_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1ff0, 0x1ff0, 0, 0, modeDC_switch_r);
 		break;
 	}
 
@@ -469,24 +469,24 @@ static MACHINE_INIT( a2600 )
 
 	if (mode == mode12)
 	{
-		install_mem_write_handler(0, 0x1000, 0x10ff, MWA8_BANK9);
-		install_mem_read_handler(0, 0x1100, 0x11ff, MRA8_BANK9);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x10ff, 0, 0, MWA8_BANK9);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1100, 0x11ff, 0, 0, MRA8_BANK9);
 
 		cpu_setbank(9, extra_RAM);
 	}
 
 	if (mode == modeCV)
 	{
-		install_mem_write_handler(0, 0x1400, 0x17ff, MWA8_BANK9);
-		install_mem_read_handler(0, 0x1000, 0x13ff, MRA8_BANK9);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x17ff, 0, 0, MWA8_BANK9);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x13ff, 0, 0, MRA8_BANK9);
 
 		cpu_setbank(9, extra_RAM);
 	}
 
 	if (chip)
 	{
-		install_mem_write_handler(0, 0x1000, 0x107f, MWA8_BANK9);
-		install_mem_read_handler(0, 0x1080, 0x10ff, MRA8_BANK9);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x107f, 0, 0, MWA8_BANK9);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1080, 0x10ff, 0, 0, MRA8_BANK9);
 
 		cpu_setbank(9, extra_RAM);
 	}

@@ -1127,12 +1127,12 @@ WRITE_HANDLER( lynx_memory_config )
      * when these are safe in the cpu */
     memory_region(REGION_CPU1)[0xfff9]=data;
 
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, (data & 1) ? MRA8_RAM : suzy_read);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, (data & 1) ? MWA8_RAM : suzy_write);
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, (data & 2) ? MRA8_RAM : mikey_read);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, (data & 2) ? MWA8_RAM : mikey_write);
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfe00, 0xfff7, 0, (data & 4) ? MRA8_RAM : MRA8_BANK3);
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfffa, 0xffff, 0, (data & 8) ? MRA8_RAM : MRA8_BANK4);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, 0, (data & 1) ? MRA8_RAM : suzy_read);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, 0, (data & 1) ? MWA8_RAM : suzy_write);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, 0, (data & 2) ? MRA8_RAM : mikey_read);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, 0, (data & 2) ? MWA8_RAM : mikey_write);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfe00, 0xfff7, 0, 0, (data & 4) ? MRA8_RAM : MRA8_BANK3);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfffa, 0xffff, 0, 0, (data & 8) ? MRA8_RAM : MRA8_BANK4);
 
 	cpu_setbank(3, memory_region(REGION_CPU1) + 0x10000);
 	cpu_setbank(4, memory_region(REGION_CPU1) + 0x101fa);

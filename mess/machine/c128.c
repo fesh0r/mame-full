@@ -61,7 +61,7 @@ static void c128_set_m8502_read_handler(UINT16 start, UINT16 end, read8_handler 
 {
 	int cpunum;
 	cpunum = mame_find_cpu_index("m8502");
-	memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, start, end, 0, rh);
+	memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, start, end, 0, 0, rh);
 }
 
 

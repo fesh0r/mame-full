@@ -107,9 +107,9 @@ static void mac_install_memory(offs_t memory_begin, offs_t memory_end,
 	wh = is_rom ? MWA16_ROM : (write16_handler) bank;
 
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, memory_begin,
-		memory_end, memory_mask, rh);
+		memory_end, memory_mask, 0, rh);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, memory_begin,
-		memory_end, memory_mask, wh);
+		memory_end, memory_mask, 0, wh);
 
 	memory_set_bankptr(bank, memory_data);
 

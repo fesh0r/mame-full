@@ -113,19 +113,19 @@ DRIVER_INIT( pc200 )
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
 
-	install_mem_read_handler(0, 0xb0000, 0xbffff, pc200_videoram_r );
-	install_mem_write_handler(0, 0xb0000, 0xbffff, pc200_videoram_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, pc200_videoram_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, pc200_videoram_w );
 	videoram_size=0x10000;
 	videoram=memory_region(REGION_CPU1)+0xb0000;
 
 	// 0x3dd, 0x3d8, 0x3d4, 0x3de are also in mda mode present!?
-	install_port_read_handler(0, 0x3d0, 0x3df, pc200_cga_r );
-	install_port_write_handler(0, 0x3d0, 0x3df, pc200_cga_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc200_cga_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc200_cga_w );
 
-	install_port_read_handler(0, 0x3b0, 0x3bf, pc_MDA_r );
-	install_port_write_handler(0, 0x3b0, 0x3bf, pc_MDA_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_w );
 
-	install_port_read_handler(0, 0x278, 0x27b, pc200_port378_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc200_port378_r );
 
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 }
@@ -139,13 +139,13 @@ DRIVER_INIT( pc1512 )
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
 
-	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA8_BANK1 );
-	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc1512_videoram_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbbfff, 0, 0, MRA8_BANK1 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbbfff, 0, 0, pc1512_videoram_w );
 
-	install_port_read_handler(0, 0x3d0, 0x3df, pc1512_r );
-	install_port_write_handler(0, 0x3d0, 0x3df, pc1512_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc1512_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc1512_w );
 
-	install_port_read_handler(0, 0x278, 0x27b, pc_parallelport2_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc_parallelport2_r );
 
 
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
@@ -155,24 +155,24 @@ DRIVER_INIT( pc1512 )
 DRIVER_INIT( pc1640 )
 {
 	vga_init(input_port_0_r);
-	install_mem_read_handler(0, 0xa0000, 0xaffff, MRA8_BANK1 );
-	install_mem_read_handler(0, 0xb0000, 0xb7fff, MRA8_BANK2 );
-	install_mem_read_handler(0, 0xb8000, 0xbffff, MRA8_BANK3 );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xaffff, 0, 0, MRA8_BANK1 );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb7fff, 0, 0, MRA8_BANK2 );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA8_BANK3 );
 
-	install_mem_write_handler(0, 0xa0000, 0xaffff, MWA8_BANK1 );
-	install_mem_write_handler(0, 0xb0000, 0xb7fff, MWA8_BANK2 );
-	install_mem_write_handler(0, 0xb8000, 0xbffff, MWA8_BANK3 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xaffff, 0, 0, MWA8_BANK1 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb7fff, 0, 0, MWA8_BANK2 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MWA8_BANK3 );
 
-	install_port_read_handler(0, 0x3b0, 0x3bf, vga_port_03b0_r );
-	install_port_read_handler(0, 0x3c0, 0x3cf, paradise_ega_03c0_r );
-	install_port_read_handler(0, 0x3d0, 0x3df, pc1640_port3d0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, vga_port_03b0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3c0, 0x3cf, 0, 0, paradise_ega_03c0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc1640_port3d0_r );
 
-	install_port_write_handler(0, 0x3b0, 0x3bf, vga_port_03b0_w );
-	install_port_write_handler(0, 0x3c0, 0x3cf, vga_port_03c0_w );
-	install_port_write_handler(0, 0x3d0, 0x3df, vga_port_03d0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, vga_port_03b0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3c0, 0x3cf, 0, 0, vga_port_03c0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, vga_port_03d0_w );
 
-	install_port_read_handler(0, 0x278, 0x27b, pc1640_port278_r );
-	install_port_read_handler(0, 0x4278, 0x427b, pc1640_port4278_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc1640_port278_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x4278, 0x427b, 0, 0, pc1640_port4278_r );
 
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 

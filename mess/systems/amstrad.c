@@ -1241,23 +1241,23 @@ static void amstrad_common_init(void)
 	amstrad_cycles_last_write = 0;
 	previous_amstrad_UpperRom_data = 0xff;
 
-	install_mem_read_handler(0, 0x0000, 0x1fff, MRA8_BANK1);
-	install_mem_read_handler(0, 0x2000, 0x3fff, MRA8_BANK2);
-	install_mem_read_handler(0, 0x4000, 0x5fff, MRA8_BANK3);
-	install_mem_read_handler(0, 0x6000, 0x7fff, MRA8_BANK4);
-	install_mem_read_handler(0, 0x8000, 0x9fff, MRA8_BANK5);
-	install_mem_read_handler(0, 0xa000, 0xbfff, MRA8_BANK6);
-	install_mem_read_handler(0, 0xc000, 0xdfff, MRA8_BANK7);
-	install_mem_read_handler(0, 0xe000, 0xffff, MRA8_BANK8);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MRA8_BANK1);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MRA8_BANK2);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MRA8_BANK3);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MRA8_BANK4);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MRA8_BANK5);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, MRA8_BANK6);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MRA8_BANK7);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MRA8_BANK8);
 
-	install_mem_write_handler(0, 0x0000, 0x1fff, MWA8_BANK9);
-	install_mem_write_handler(0, 0x2000, 0x3fff, MWA8_BANK10);
-	install_mem_write_handler(0, 0x4000, 0x5fff, MWA8_BANK11);
-	install_mem_write_handler(0, 0x6000, 0x7fff, MWA8_BANK12);
-	install_mem_write_handler(0, 0x8000, 0x9fff, MWA8_BANK13);
-	install_mem_write_handler(0, 0xa000, 0xbfff, MWA8_BANK14);
-	install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_BANK15);
-	install_mem_write_handler(0, 0xe000, 0xffff, MWA8_BANK16);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MWA8_BANK9);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_BANK10);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_BANK11);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_BANK12);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, MWA8_BANK13);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, MWA8_BANK14);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_BANK15);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_BANK16);
 
 	cpu_irq_line_vector_w(0, 0,0x0ff);
 
@@ -1492,13 +1492,13 @@ static READ_HANDLER ( amstrad_psg_porta_read )
 \
 	/* keyboard line 9 */ \
 	PORT_START \
-	PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1) \
-	PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1) \
-	PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1) \
-	PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1) \
-	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1) \
-	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1) \
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1) \
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_UP)	\
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_DOWN)	\
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_LEFT)	\
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_RIGHT)	\
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_BUTTON1)	\
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_BUTTON2)	\
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, IP_NAME_DEFAULT, CODE_NONE, JOYCODE_1_BUTTON3)	\
 	PORT_KEY1(0x80, IP_ACTIVE_LOW, "Del", KEYCODE_BACKSPACE, IP_JOY_NONE, 8) \
 
 

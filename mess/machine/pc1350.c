@@ -179,13 +179,18 @@ DRIVER_INIT( pc1350 )
 
 MACHINE_INIT( pc1350 )
 {
-	if (PC1350_RAM20K) {
-		install_mem_write_handler (0, 0x2000, 0x5fff, MWA8_RAM);
-	} else if (PC1350_RAM12K) {
-		install_mem_write_handler (0, 0x2000, 0x3fff, MWA8_NOP);
-		install_mem_write_handler (0, 0x4000, 0x5fff, MWA8_RAM);
-	} else {
-		install_mem_write_handler (0, 0x2000, 0x5fff, MWA8_NOP);
+	if (PC1350_RAM20K)
+	{
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x5fff, 0, 0, MWA8_RAM);
+	}
+	else if (PC1350_RAM12K)
+	{
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, 0, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, MWA8_RAM);
+	}
+	else
+	{
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x5fff, 0, 0, MWA8_NOP);
 	}
 }
 

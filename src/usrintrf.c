@@ -16,7 +16,7 @@
 #include "state.h"
 
 #ifdef MESS
-#include "mess.h"
+  #include "mess.h"
 #include "mesintrf.h"
 #include "inputx.h"
 #endif
@@ -2336,10 +2336,10 @@ int showcopyright(struct mame_bitmap *bitmap)
 			setup_selected = 0;////
 			return 1;
 		}
-		if (keyboard_pressed_memory(KEYCODE_O) ||
+		if (code_pressed_memory(KEYCODE_O) ||
 				input_ui_pressed(IPT_UI_LEFT))
 			done = 1;
-		if (done == 1 && (keyboard_pressed_memory(KEYCODE_K) ||
+		if (done == 1 && (code_pressed_memory(KEYCODE_K) ||
 				input_ui_pressed(IPT_UI_RIGHT)))
 			done = 2;
 	} while (done < 2);
@@ -3631,18 +3631,18 @@ static void onscrd_overclock(struct mame_bitmap *bitmap,int increment,int arg)
 		increment *= 5;
 	if( increment )
 	{
-		overclock = timer_get_overclock(arg);
+		overclock = cpunum_get_clockscale(arg);
 		overclock += 0.01 * increment;
 		if (overclock < 0.01) overclock = 0.01;
 		if (overclock > 2.0) overclock = 2.0;
 		if( doallcpus )
 			for( cpu = 0; cpu < cpu_gettotalcpu(); cpu++ )
-				timer_set_overclock(cpu, overclock);
+				cpunum_set_clockscale(cpu, overclock);
 		else
-			timer_set_overclock(arg, overclock);
+			cpunum_set_clockscale(arg, overclock);
 	}
 
-	oc = 100 * timer_get_overclock(arg) + 0.5;
+	oc = 100 * cpunum_get_clockscale(arg) + 0.5;
 
 	if( doallcpus )
 		sprintf(buf,"%s %s %3d%%", ui_getstring (UI_allcpus), ui_getstring (UI_overclock), oc);
@@ -4004,7 +4004,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 
 #if 0
-	if (keyboard_pressed_memory(KEYCODE_BACKSPACE))
+	if (code_pressed_memory(KEYCODE_BACKSPACE))
 	{
 		if (jukebox_selected != -1)
 		{
@@ -4022,11 +4022,11 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	{
 		char buf[40];
 		watchdog_reset_w(0,0);
-		if (keyboard_pressed_memory(KEYCODE_LCONTROL))
+		if (code_pressed_memory(KEYCODE_LCONTROL))
 		{
 #include "cpu/z80/z80.h"
 			soundlatch_w(0,jukebox_selected);
-			cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+			cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 		}
 		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 		{

@@ -269,31 +269,30 @@ MACHINE_INIT( cgenie )
 	}
 	else
 	{
-				logerror("cgenie floppy discs disabled\n");
+		logerror("cgenie floppy discs disabled\n");
 	}
 
 	/* copy DOS ROM, if enabled or wipe out that memory area */
 	if( readinputport(0) & 0x40 )
 	{
-
 		if ( readinputport(0) & 0x080 )
 		{
-			install_mem_read_handler(0, 0xc000, 0xdfff, MRA8_ROM);
-			install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_ROM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MRA8_ROM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_ROM);
 			logerror("cgenie DOS enabled\n");
 			memcpy(&ROM[0x0c000],&ROM[0x10000], 0x2000);
 		}
 		else
 		{
-			install_mem_read_handler(0, 0xc000, 0xdfff, MRA8_NOP);
-			install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_NOP);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_NOP);
 			logerror("cgenie DOS disabled (no floppy image given)\n");
 		}
 	}
 	else
 	{
-		install_mem_read_handler(0, 0xc000, 0xdfff, MRA8_NOP);
-		install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_NOP);
 		logerror("cgenie DOS disabled\n");
 		memset(&memory_region(REGION_CPU1)[0x0c000], 0x00, 0x2000);
 	}
@@ -301,16 +300,16 @@ MACHINE_INIT( cgenie )
 	/* copy EXT ROM, if enabled or wipe out that memory area */
 	if( readinputport(0) & 0x20 )
 	{
-		install_mem_read_handler(0, 0xe000, 0xefff, MRA8_ROM);
-		install_mem_write_handler(0, 0xe000, 0xefff, MWA8_ROM);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, 0, 0, MRA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, 0, 0, MWA8_ROM);
 		logerror("cgenie EXT enabled\n");
 		memcpy(&memory_region(REGION_CPU1)[0x0e000],
 			   &memory_region(REGION_CPU1)[0x12000], 0x1000);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0xe000, 0xefff, MRA8_NOP);
-		install_mem_write_handler(0, 0xe000, 0xefff, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, 0, 0, MWA8_NOP);
 		logerror("cgenie EXT disabled\n");
 		memset(&memory_region(REGION_CPU1)[0x0e000], 0x00, 0x1000);
 	}
@@ -318,13 +317,13 @@ MACHINE_INIT( cgenie )
 	/* check for 32K RAM */
 	if( readinputport(0) & 0x04 )
 	{
-		install_mem_read_handler(0, 0x8000, 0xbfff, MRA8_RAM);
-		install_mem_write_handler(0, 0x8000, 0xbfff, MWA8_RAM);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_RAM);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0x8000, 0xbfff, MRA8_NOP);
-		install_mem_write_handler(0, 0x8000, 0xbfff, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_NOP);
 	}
 
 	cgenie_load_cas = 1;

@@ -91,12 +91,12 @@ static void avigo_setbank(int bank, void *address, read8_handler rh, write8_hand
 	if (rh)
 	{
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, (bank * 0x4000),
-			(bank * 0x4000) + 0x3FFF, 0, rh);
+			(bank * 0x4000) + 0x3FFF, 0, 0, rh);
 	}
 	if (wh)
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, (bank * 0x4000),
-			(bank * 0x4000) + 0x3FFF, 0, wh);
+			(bank * 0x4000) + 0x3FFF, 0, 0, wh);
 	}
 }
 

@@ -137,14 +137,14 @@ data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, off
 	cpu_setbank(bank, mess_ram + ram_offset);
 
 	memory_install_read8_handler(cpunum, spacenum, start,
-		MIN(end, start - ram_offset + mess_ram_size - 1), 0, read_bank);
+		MIN(end, start - ram_offset + mess_ram_size - 1), 0, 0, read_bank);
 	memory_install_write8_handler(cpunum, spacenum, start,
-		MIN(end, start - ram_offset + mess_ram_size - 1), 0, write_bank);
+		MIN(end, start - ram_offset + mess_ram_size - 1), 0, 0, write_bank);
 
 	if (bank_size > (mess_ram_size - ram_offset))
 	{
-		memory_install_read8_handler(cpunum, spacenum, start - ram_offset + mess_ram_size, end, 0, MRA8_ROM);
-		memory_install_write8_handler(cpunum, spacenum, start - ram_offset + mess_ram_size, end, 0, MWA8_ROM);
+		memory_install_read8_handler(cpunum, spacenum, start - ram_offset + mess_ram_size, end, 0, 0, MRA8_ROM);
+		memory_install_write8_handler(cpunum, spacenum, start - ram_offset + mess_ram_size, end, 0, 0, MWA8_ROM);
 	}
 	return mess_ram + ram_offset;
 }

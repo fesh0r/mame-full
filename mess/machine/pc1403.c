@@ -252,12 +252,15 @@ void init_pc1403(void)
 MACHINE_INIT( pc1403 )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
-	if (RAM32K) {
-		install_mem_read_handler (0, 0x8000, 0xdfff, MRA8_RAM);
-		install_mem_write_handler (0, 0x8000, 0xdfff, MWA8_RAM);
-	} else {
-		install_mem_read_handler (0, 0x8000, 0xdfff, MRA8_NOP);
-		install_mem_write_handler (0, 0x8000, 0xdfff, MWA8_NOP);
+	if (RAM32K)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MRA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MWA8_RAM);
+	}
+	else
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xdfff, 0, 0, MWA8_NOP);
 	}
 }
 

@@ -538,18 +538,18 @@ static void vga_cpu_interface(void)
 	sel = vga.gc.data[6] & 0x0c;
 	if (sel)
 	{
-		install_mem_read_handler(0,  0xa0000, 0xaffff, (sel == 0x04) ? read_handler  : MRA8_NOP);
-		install_mem_read_handler(0,  0xb0000, 0xb7fff, (sel == 0x08) ? read_handler  : MRA8_NOP);
-		install_mem_read_handler(0,  0xb8000, 0xbffff, (sel == 0x0C) ? read_handler  : MRA8_NOP);
-		install_mem_write_handler(0, 0xa0000, 0xaffff, (sel == 0x04) ? write_handler : MWA8_NOP);
-		install_mem_write_handler(0, 0xb0000, 0xb7fff, (sel == 0x08) ? write_handler : MWA8_NOP);
-		install_mem_write_handler(0, 0xb8000, 0xbffff, (sel == 0x0C) ? write_handler : MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,  0xa0000, 0xaffff, 0, 0, (sel == 0x04) ? read_handler  : MRA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,  0xb0000, 0xb7fff, 0, 0, (sel == 0x08) ? read_handler  : MRA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,  0xb8000, 0xbffff, 0, 0, (sel == 0x0C) ? read_handler  : MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xaffff, 0, 0, (sel == 0x04) ? write_handler : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb7fff, 0, 0, (sel == 0x08) ? write_handler : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, (sel == 0x0C) ? write_handler : MWA8_NOP);
 	}
 	else
 	{
 		cpu_setbank(1, vga.memory);
-		install_mem_read_handler(0,  0xa0000, 0xbffff, MRA8_BANK1 );
-		install_mem_write_handler(0, 0xa0000, 0xbffff, MWA8_BANK1 );
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,  0xa0000, 0xbffff, 0, 0, MRA8_BANK1 );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xbffff, 0, 0, MWA8_BANK1 );
 	}
 }
 
@@ -966,23 +966,23 @@ void vga_init(read8_handler read_dipswitch)
 	vga.dirty =		(UINT8*) auto_malloc(0x40000);
 	vga.fontdirty =	(UINT8*) auto_malloc(0x800);
 
-	install_mem_read_handler(0, 0xa0000, 0xaffff, MRA8_BANK1 );
-	install_mem_read_handler(0, 0xb0000, 0xb7fff, MRA8_BANK2 );
-	install_mem_read_handler(0, 0xb8000, 0xbffff, MRA8_BANK3 );
-	install_mem_read_handler(0, 0xc0000, 0xc7fff, MRA8_ROM );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xaffff, 0, 0, MRA8_BANK1 );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb7fff, 0, 0, MRA8_BANK2 );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MRA8_BANK3 );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0000, 0xc7fff, 0, 0, MRA8_ROM );
 
-	install_mem_write_handler(0, 0xa0000, 0xaffff, MWA8_BANK1 );
-	install_mem_write_handler(0, 0xb0000, 0xb7fff, MWA8_BANK2 );
-	install_mem_write_handler(0, 0xb8000, 0xbffff, MWA8_BANK3 );
-	install_mem_write_handler(0, 0xc0000, 0xc7fff, MWA8_ROM );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xaffff, 0, 0, MWA8_BANK1 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb7fff, 0, 0, MWA8_BANK2 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, 0, MWA8_BANK3 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0000, 0xc7fff, 0, 0, MWA8_ROM );
 
-	install_port_read_handler(0, 0x3b0, 0x3bf, vga_port_03b0_r );
-	install_port_read_handler(0, 0x3c0, 0x3cf, vga_port_03c0_r );
-	install_port_read_handler(0, 0x3d0, 0x3df, vga_port_03d0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, vga_port_03b0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3c0, 0x3cf, 0, 0, vga_port_03c0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, vga_port_03d0_r );
 
-	install_port_write_handler(0, 0x3b0, 0x3bf, vga_port_03b0_w );
-	install_port_write_handler(0, 0x3c0, 0x3cf, vga_port_03c0_w );
-	install_port_write_handler(0, 0x3d0, 0x3df, vga_port_03d0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, vga_port_03b0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3c0, 0x3cf, 0, 0, vga_port_03c0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, vga_port_03d0_w );
 
 	vga_reset();
 }

@@ -247,16 +247,16 @@ static WRITE_HANDLER( tmc2000_bankswitch_w )
 {
 	if (data & 0x01)
 	{
-		// enable Color RAM
-		memory_install_read8_handler(  0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, MRA8_RAM );
-		memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, MWA8_RAM );
+		/* enable Color RAM */
+		memory_install_read8_handler(  0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, 0, MRA8_RAM );
+		memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, 0, MWA8_RAM );
 		cpu_setbank(1, &colorram);
 	}
 	else
 	{
-		// enable ROM
-		memory_install_read8_handler(  0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, MRA8_ROM );
-		memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, MWA8_ROM );
+		/* enable ROM */
+		memory_install_read8_handler(  0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, 0, MRA8_ROM );
+		memory_install_write8_handler( 0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x81ff, 0, 0, MWA8_ROM );
 		cpu_setbank(1, memory_region(REGION_CPU1) + 0x8000);
 	}
 

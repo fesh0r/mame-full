@@ -55,31 +55,31 @@ static void at286_set_gate_a20(int a20)
 static void at386_set_gate_a20(int a20)
 {
 	offs_t mirror = a20 ? 0xff000000 : 0xfff00000;
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x000000, 0x09ffff, 0, mirror, MRA32_BANK10);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x09ffff, 0, mirror, MWA32_BANK10);
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x0a0000, 0x0affff, 0, mirror, MRA32_NOP);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x0a0000, 0x0affff, 0, mirror, MWA32_NOP);
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x0b0000, 0x0b7fff, 0, mirror, MRA32_NOP);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x0b0000, 0x0b7fff, 0, mirror, MWA32_NOP);
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x0b8000, 0x0bffff, 0, mirror, MRA32_RAM);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x0b8000, 0x0bffff, 0, mirror, pc_video_videoram32_w);
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x0c0000, 0x0c7fff, 0, mirror, MRA32_ROM);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x0c0000, 0x0c7fff, 0, mirror, MWA32_ROM);
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x0d0000, 0x0effff, 0, mirror, MRA32_ROM);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x0d0000, 0x0effff, 0, mirror, MWA32_ROM);
-	memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, 0, mirror, MRA32_ROM);
-	memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, 0, mirror, MWA32_ROM);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x000000, 0x09ffff, 0, mirror, MRA32_BANK10);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x09ffff, 0, mirror, MWA32_BANK10);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0a0000, 0x0affff, 0, mirror, MRA32_NOP);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0a0000, 0x0affff, 0, mirror, MWA32_NOP);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0b0000, 0x0b7fff, 0, mirror, MRA32_NOP);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0b0000, 0x0b7fff, 0, mirror, MWA32_NOP);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0b8000, 0x0bffff, 0, mirror, MRA32_RAM);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0b8000, 0x0bffff, 0, mirror, pc_video_videoram32_w);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0c0000, 0x0c7fff, 0, mirror, MRA32_ROM);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0c0000, 0x0c7fff, 0, mirror, MWA32_ROM);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0d0000, 0x0effff, 0, mirror, MRA32_ROM);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0d0000, 0x0effff, 0, mirror, MWA32_ROM);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, 0, mirror, MRA32_ROM);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, 0, mirror, MWA32_ROM);
 	cpu_setbank(10, mess_ram);
 
 	if (a20)
 	{
 		offs_t ram_limit = 0x100000 + mess_ram_size - 0x0a0000;
-		memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0x100000,  ram_limit - 1,	0, mirror, MRA32_BANK1);
-		memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0x100000,  ram_limit - 1,	0, mirror, MWA32_BANK1);
-		memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		0, mirror, MRA32_NOP);
-		memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		0, mirror, MWA32_NOP);
-		memory_install_read32_handler_mirror(0,  ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		0, mirror, MRA32_BANK2);
-		memory_install_write32_handler_mirror(0, ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		0, mirror, MWA32_ROM);
+		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x100000,  ram_limit - 1,	0, mirror, MRA32_BANK1);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000,  ram_limit - 1,	0, mirror, MWA32_BANK1);
+		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		0, mirror, MRA32_NOP);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		0, mirror, MWA32_NOP);
+		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		0, mirror, MRA32_BANK2);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		0, mirror, MWA32_ROM);
 		cpu_setbank(1, mess_ram + 0xa0000);
 		cpu_setbank(2, memory_region(REGION_CPU1) + 0x0f0000);
 	}

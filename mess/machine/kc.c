@@ -1143,15 +1143,15 @@ static void kc85_4_update_0x08000(void)
 
 		cpu_setbank(3, mem_ptr);
 		cpu_setbank(4, mem_ptr+0x02800);
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MRA8_BANK3);
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MRA8_BANK4);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MRA8_BANK3);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MRA8_BANK4);
 
 		/* write protect RAM8 ? */
 		if ((kc85_pio_data[1] & (1<<6))==0)
 		{
 			/* ram8 is enabled and write protected */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MWA8_NOP);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MWA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MWA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MWA8_NOP);
 		}
 		else
 		{
@@ -1159,8 +1159,8 @@ static void kc85_4_update_0x08000(void)
 			logerror("RAM8 write enabled\n");
 #endif
 			/* ram8 is enabled and write enabled */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MWA8_BANK9);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MWA8_BANK10);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MWA8_BANK9);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MWA8_BANK10);
 			cpu_setbank(9, mem_ptr);
 			cpu_setbank(10, mem_ptr+0x02800);
 		}
@@ -1170,10 +1170,10 @@ static void kc85_4_update_0x08000(void)
 #ifdef KC_DEBUG
 		logerror("no memory at ram8\n");
 #endif
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MRA8_NOP);
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MRA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MWA8_NOP);
     }
 
 	/* if IRM is enabled override block 3/9 settings */
@@ -1184,15 +1184,15 @@ static void kc85_4_update_0x08000(void)
 
 		cpu_setbank(3, ram_page);
 		cpu_setbank(9, ram_page);
-		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MRA8_BANK3);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, MWA8_BANK9);
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MRA8_BANK3);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xa7ff, 0, 0, MWA8_BANK9);
 
 		ram_page = kc85_4_get_video_ram_base(0, 0);
 
 		cpu_setbank( 4, ram_page + 0x2800);
 		cpu_setbank(10, ram_page + 0x2800);
-		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MRA8_BANK4);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, MWA8_BANK10);
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MRA8_BANK4);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xbfff, 0, 0, MWA8_BANK10);
 	}
 }
 
@@ -1207,7 +1207,7 @@ static void kc85_4_update_0x00000(void)
 #endif
 
 		/* yes; set address of bank */
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MRA8_BANK1);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MRA8_BANK1);
 		cpu_setbank(1, mess_ram);
 
 		/* write protect ram? */
@@ -1219,7 +1219,7 @@ static void kc85_4_update_0x00000(void)
 #endif
 
 			/* ram is enabled and write protected */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 		}
 		else
 		{
@@ -1228,7 +1228,7 @@ static void kc85_4_update_0x00000(void)
 #endif
 
 			/* ram is enabled and write enabled; and set address of bank */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_BANK7);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_BANK7);
 			cpu_setbank(7, mess_ram);
 		}
 	}
@@ -1240,8 +1240,8 @@ static void kc85_4_update_0x00000(void)
 
 //		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000);
 		/* ram is disabled */
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MRA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_NOP);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MRA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_NOP);
 	}
 }
 
@@ -1294,8 +1294,8 @@ static void kc85_4_update_0x04000(void)
 		rh = MRA8_NOP;
 		wh = MWA8_NOP;
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, wh);
 }
 
 
@@ -1341,7 +1341,7 @@ static void kc85_4_update_0x0c000(void)
 			rh = MRA8_NOP;
 		}
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, rh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, rh);
 }
 
 /* update memory address 0x0e000-0x0ffff */
@@ -1366,7 +1366,7 @@ static void kc85_4_update_0x0e000(void)
 #endif
 		rh = MRA8_NOP;
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, rh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, rh);
 }
 
 /* PIO PORT A: port 0x088:
@@ -1485,7 +1485,7 @@ static void kc85_3_update_0x0c000(void)
 #endif
 		rh = MRA8_NOP;
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, rh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, rh);
 }
 
 /* update memory address 0x0e000-0x0ffff */
@@ -1509,7 +1509,7 @@ static void kc85_3_update_0x0e000(void)
 #endif
 		rh = MRA8_NOP;
 	}
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, rh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, rh);
 }
 
 /* update status of memory area 0x0000-0x03fff */
@@ -1565,8 +1565,8 @@ static void kc85_3_update_0x00000(void)
 		wh = MWA8_NOP;
 	}
 
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, wh);
 }
 
 /* update status of memory area 0x08000-0x0ffff */
@@ -1630,8 +1630,8 @@ static void kc85_3_update_0x08000(void)
 		wh = MWA8_NOP;
     }
 
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, rh);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, wh);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, wh);
 }
 
 

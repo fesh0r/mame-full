@@ -163,10 +163,10 @@ WRITE_HANDLER ( lviv_io_w )
 	{
 		startup_mem_map = 0;
 
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_BANK1);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK2);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, MWA8_BANK3);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_BANK1);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_BANK2);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_BANK3);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, 0, MWA8_ROM);
 
 		cpu_setbank(1, mess_ram);
 		cpu_setbank(2, mess_ram + 0x4000);
@@ -215,10 +215,10 @@ MACHINE_INIT( lviv )
 
 	startup_mem_map = 1;
 
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_ROM);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, MWA8_ROM);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, 0, MWA8_ROM);
 
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000);

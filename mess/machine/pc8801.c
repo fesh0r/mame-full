@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.19 2004/06/07 23:19:17 npwoods Exp $
+  $Id: pc8801.c,v 1.20 2004/06/11 02:49:30 npwoods Exp $
 
 ***************************************************************************/
 
@@ -377,14 +377,14 @@ void pc8801_update_bank(void)
 		if(ext_w==NULL)
 		{
 			/* read only mode */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, MWA8_NOP);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MWA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, 0, MWA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_NOP);
 		}
 		else
 		{
 			/* r/w mode */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, MWA8_BANK1);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MWA8_BANK2);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, 0, MWA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_BANK2);
 			if(ext_w!=ext_r) logerror("differnt between read and write bank of extension memory.\n");
 		}
 	}
@@ -394,8 +394,8 @@ void pc8801_update_bank(void)
 		if(RAMmode)
 		{
 			/* RAM */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, MWA8_BANK1);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MWA8_BANK2);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, 0, MWA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_BANK2);
 			cpu_setbank(1, pc8801_mainRAM + 0x0000);
 			cpu_setbank(2, pc8801_mainRAM + 0x6000);
 		}
@@ -403,8 +403,8 @@ void pc8801_update_bank(void)
 		{
 			/* ROM */
 			/* write through to main RAM */
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, pc8801_writemem1);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, pc8801_writemem2);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, 0, pc8801_writemem1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, pc8801_writemem2);
 			if(ROMmode)
 			{
 				/* N-BASIC */
@@ -426,8 +426,8 @@ void pc8801_update_bank(void)
 	}
 
 	/* 0x8000 to 0xffff */
-	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0x8000, 0x83ff, 0, (RAMmode || ROMmode) ? MRA8_BANK3 : pc8801_read_textwindow);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x83ff, 0, (RAMmode || ROMmode) ? MWA8_BANK3 : pc8801_write_textwindow);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0x8000, 0x83ff, 0, 0, (RAMmode || ROMmode) ? MRA8_BANK3 : pc8801_read_textwindow);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x83ff, 0, 0, (RAMmode || ROMmode) ? MWA8_BANK3 : pc8801_write_textwindow);
 
 	cpu_setbank(4, pc8801_mainRAM + 0x8400);
 
@@ -438,10 +438,10 @@ void pc8801_update_bank(void)
 	}
 	else
 	{
-		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, MRA8_BANK5);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, MWA8_BANK5);
-		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, MRA8_BANK6);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, MWA8_BANK6);
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, 0, MRA8_BANK5);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, 0, MWA8_BANK5);
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, 0, MRA8_BANK6);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, 0, MWA8_BANK6);
 
 		cpu_setbank(5, pc8801_mainRAM + 0xc000);
 		if(maptvram)

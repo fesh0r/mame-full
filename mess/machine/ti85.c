@@ -149,7 +149,7 @@ static void update_ti86_memory (void)
 		cpu_setbank(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti85_memory_page_0x4000&0x0f));
 		wh = MWA8_ROM;
 	}
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, wh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, wh);
 
 	if (ti86_memory_page_0x8000 & 0x40)
 	{
@@ -162,7 +162,7 @@ static void update_ti86_memory (void)
 		cpu_setbank(3,memory_region(REGION_CPU1) + 0x010000 + 0x004000*(ti86_memory_page_0x8000&0x0f));
 		wh = MWA8_ROM;
 	}
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, wh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, wh);
 }
 
 /***************************************************************************
@@ -194,8 +194,8 @@ MACHINE_INIT( ti81 )
 
 	timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_ROM);
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 }
@@ -226,8 +226,8 @@ MACHINE_INIT( ti85 )
 
 	ti85_reset_serial();
 
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MWA8_ROM);
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 }
@@ -258,7 +258,7 @@ MACHINE_INIT( ti86 )
 
 	if (ti86_ram)
 	{
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MWA8_ROM);
 
 		cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
