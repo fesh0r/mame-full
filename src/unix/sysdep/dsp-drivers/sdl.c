@@ -39,15 +39,10 @@ Version 0.1, January 2002
 #include "sysdep/sysdep_dsp_priv.h"
 #include "sysdep/plugin_manager.h"
 
-#ifdef __BEOS__
-#define BUFFERSIZE 1470 * 4 /* in my experience, BeOS likes buffers to be 4x */
-#else
-#define BUFFERSIZE 1024
-#endif
-
 /* private variables */
 static struct {
-	Uint8 *data;
+    Uint8 *data;
+    int dataSize;
     int amountRemain;
     int amountWrite;
     int amountRead;
@@ -57,6 +52,8 @@ static struct {
     int sound_w_pos;
     int sound_r_pos;
 } sample; 
+
+static int sdl_dsp_bytes_per_sample[4] = SYSDEP_DSP_BYTES_PER_SAMPLE;
 
 /* callback function prototype */
 static void sdl_fill_sound(void *unused, Uint8 *stream, int len);
@@ -107,13 +104,6 @@ static void *sdl_dsp_create(const void *flags)
    }
 
    
-   if (!(sample.data = calloc(BUFFERSIZE, sizeof(Uint8))))
-   {
-   		fprintf(stderr, "error malloc failed for data\n");
-   		sdl_dsp_destroy(dsp);
-   		return NULL;
-   }
-   
    /* fill in the functions and some data */
    dsp->_priv = priv;
    dsp->write = sdl_dsp_write;
@@ -133,7 +123,7 @@ static void *sdl_dsp_create(const void *flags)
    audiospec->freq = dsp->hw_info.samplerate;
    
    /* set samples size */
-   audiospec->samples = BUFFERSIZE;
+   audiospec->samples = 2048;
    
    /* set callback funcion */
    audiospec->callback = sdl_fill_sound;
@@ -150,6 +140,15 @@ static void *sdl_dsp_create(const void *flags)
    		fprintf(stderr, "failed opening audio device\n");
    		return NULL;
    }
+
+   sample.dataSize = audiospec->size * 4;
+   if (!(sample.data = calloc(sample.dataSize, sizeof(Uint8))))
+   {
+   		fprintf(stderr, "error malloc failed for data\n");
+   		sdl_dsp_destroy(dsp);
+   		return NULL;
+   }
+
    SDL_PauseAudio(0);
    
    fprintf(stderr, "info: audiodevice %s set to %dbit linear %s %dHz\n",
@@ -174,39 +173,41 @@ static int sdl_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
 	/* sound_n_pos = normal position
 	   sound_r_pos = read position
 	   and so on.					*/
-	int result = 0;
 	Uint8 *src;
+	int bytes_written = 0;
 	SDL_LockAudio();
 	
-	sample.amountRemain = BUFFERSIZE - sample.sound_n_pos;
-	sample.amountWrite = (dsp->hw_info.type & SYSDEP_DSP_STEREO)? count * 4 : count * 2;
+	sample.amountRemain = sample.dataSize - sample.sound_n_pos;
+	sample.amountWrite = count * sdl_dsp_bytes_per_sample[dsp->hw_info.type];
 	
 	if(sample.amountRemain <= 0) {
 		SDL_UnlockAudio();
-		return(result);
+		return 0;
 	}
 	
 	if(sample.amountRemain < sample.amountWrite) sample.amountWrite = sample.amountRemain;
-		result = (int)sample.amountWrite;
 		sample.sound_n_pos += sample.amountWrite;
 		
 		src = (Uint8 *)data;
-		sample.tmp = BUFFERSIZE - sample.sound_w_pos;
+		sample.tmp = sample.dataSize - sample.sound_w_pos;
 		
 		if(sample.tmp < sample.amountWrite){
 			memcpy(sample.data + sample.sound_w_pos, src, sample.tmp);
+			bytes_written += sample.tmp;
 			sample.amountWrite -= sample.tmp;
 			src += sample.tmp;
 			memcpy(sample.data, src, sample.amountWrite);			
+			bytes_written += sample.amountWrite;
 			sample.sound_w_pos = sample.amountWrite;
 		}
 		else{
 			memcpy( sample.data + sample.sound_w_pos, src, sample.amountWrite);
+			bytes_written += sample.amountWrite;
 			sample.sound_w_pos += sample.amountWrite;
 		}
 		SDL_UnlockAudio();
 		
-	return	count;
+	return bytes_written / sdl_dsp_bytes_per_sample[dsp->hw_info.type];
 }
 
 /* Private method */
@@ -214,10 +215,9 @@ static void sdl_fill_sound(void *unused, Uint8 *stream, int len)
 {
 	int result;
 	Uint8 *dst;
-	SDL_LockAudio();
 	sample.amountRead = len;
 	if(sample.sound_n_pos <= 0)
-		SDL_UnlockAudio();
+		return;
 		
 		if(sample.sound_n_pos<sample.amountRead) sample.amountRead = sample.sound_n_pos;
 		result = (int)sample.amountRead;
@@ -225,7 +225,7 @@ static void sdl_fill_sound(void *unused, Uint8 *stream, int len)
 		
 		dst = (Uint8*)stream;
 		
-		sample.tmp = BUFFERSIZE - sample.sound_r_pos;
+		sample.tmp = sample.dataSize - sample.sound_r_pos;
 		if(sample.tmp<sample.amountRead){
 			memcpy( dst, sample.data + sample.sound_r_pos, sample.tmp);
 			sample.amountRead -= sample.tmp;
@@ -237,8 +237,6 @@ static void sdl_fill_sound(void *unused, Uint8 *stream, int len)
 			memcpy( dst, sample.data + sample.sound_r_pos, sample.amountRead);
 			sample.sound_r_pos += sample.amountRead;
 		}
-	SDL_UnlockAudio();
-
 }
 
 #endif /* ifdef SYSDEP_DSP_SDL */
