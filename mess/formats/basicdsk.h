@@ -25,4 +25,7 @@ struct basicdsk_geometry
 
 floperr_t basicdsk_construct(floppy_image *floppy, const struct basicdsk_geometry *geometry);
 
+FLOPPY_IDENTIFY(basicdsk_identify_default);
+FLOPPY_CONSTRUCT(basicdsk_construct_default);
+
 #endif /* BASICDSK_H */

@@ -16,7 +16,7 @@
 
 FLOPPY_OPTIONS_EXTERN(coco);
 
-floperr_t coco_dmk_identify(floppy_image *floppy, int *vote);
-floperr_t coco_dmk_construct(floppy_image *floppy, option_resolution *params);
+FLOPPY_IDENTIFY(coco_dmk_identify);
+FLOPPY_CONSTRUCT(coco_dmk_construct);
 
 #endif /* COCO_DSK_H */

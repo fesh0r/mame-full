@@ -139,7 +139,7 @@ static floperr_t apple2_general_construct(floppy_image *floppy, int floppy_type)
  * DOS order and ProDOS order code
  * ----------------------------------------------------------------------- */
 
-static floperr_t apple2_dsk_identify(floppy_image *floppy, int *vote)
+static FLOPPY_IDENTIFY(apple2_dsk_identify)
 {
 	UINT64 size;
 	size = floppy_image_size(floppy);
@@ -175,14 +175,14 @@ static int apple2_po_translate_sector(floppy_image *floppy, int sector)
 
 
 
-static floperr_t apple2_do_construct(floppy_image *floppy, option_resolution *params)
+static FLOPPY_CONSTRUCT(apple2_do_construct)
 {
 	return apple2_general_construct(floppy, APPLE2_IMAGE_DO);
 }
 
 
 
-static floperr_t apple2_po_construct(floppy_image *floppy, option_resolution *params)
+static FLOPPY_CONSTRUCT(apple2_po_construct)
 {
 	return apple2_general_construct(floppy, APPLE2_IMAGE_PO);
 }
@@ -236,7 +236,7 @@ static floperr_t apple2_dsk_write_track(floppy_image *floppy, int head, int trac
  * Nibble order code
  * ----------------------------------------------------------------------- */
 
-static floperr_t apple2_nib_identify(floppy_image *floppy, int *vote)
+static FLOPPY_IDENTIFY(apple2_nib_identify)
 {
 	UINT64 size;
 	size = floppy_image_size(floppy);
@@ -246,7 +246,7 @@ static floperr_t apple2_nib_identify(floppy_image *floppy, int *vote)
 
 
 
-static floperr_t apple2_nib_construct(floppy_image *floppy, option_resolution *params)
+static FLOPPY_CONSTRUCT(apple2_nib_construct)
 {
 	return apple2_general_construct(floppy, APPLE2_IMAGE_NIB);
 }

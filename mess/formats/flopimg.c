@@ -124,7 +124,7 @@ static floperr_t floppy_open_internal(void *fp, const struct io_procs *procs, co
 			if (floppy_options->identify)
 			{
 				vote = 0;
-				err = floppy_options->identify(floppy, &vote);
+				err = floppy_options->identify(floppy, floppy_options, &vote);
 				if (err)
 					goto error;
 			}
@@ -151,7 +151,7 @@ static floperr_t floppy_open_internal(void *fp, const struct io_procs *procs, co
 	}
 
 	/* call the format constructor */
-	err = best_option->construct(floppy, NULL);
+	err = best_option->construct(floppy, best_option, NULL);
 	if (err)
 		goto error;
 
@@ -242,7 +242,7 @@ floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct Flo
 	}
 
 	/* call the format constructor */
-	err = format->construct(floppy, parameters);
+	err = format->construct(floppy, format, parameters);
 	if (err)
 		goto done;
 

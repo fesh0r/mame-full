@@ -521,7 +521,7 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 			dest_value = extrapolate8(*((INT8 *) source_ptr));
 			break;
 		case 2:
-			dest_value = extrapolate16(*((INT8 *) source_ptr));
+			dest_value = extrapolate16(*((INT16 *) source_ptr));
 			break;
 		case 4:
 			dest_value = *((INT32 *) source_ptr);

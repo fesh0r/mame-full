@@ -57,7 +57,7 @@ const struct IODevice *cassette_device_specify(struct IODevice *iodev, char *ext
 		static struct IODevice iodev;										\
 		static char extbuf[33];												\
 		cfg->dev = cassette_device_specify(&iodev, extbuf, sizeof(extbuf) /	\
-			sizeof(extbuf[0]),	(count), (formats), (CASSETTE_STOPPED));	\
+			sizeof(extbuf[0]),	(count), (formats), (cassette_state) -1);	\
 	}																		\
 
 #define CONFIG_DEVICE_CASSETTEX(count, formats, default_state)				\

@@ -40,8 +40,6 @@
 #include "win32ui.h"
 #include "properties.h"
 
-#define SHOW_UNAVAILABLE_FOLDER
-
 static BOOL FilterAvailable(int driver_index);
 
 FOLDERDATA g_folderData[] =

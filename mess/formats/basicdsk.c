@@ -218,3 +218,52 @@ static floperr_t basicdsk_get_indexed_sector_info(floppy_image *floppy, int head
 
 
 
+/********************************************************************
+ * Generic Basicdsk Constructors
+ ********************************************************************/
+
+static void basicdsk_default_geometry(const struct FloppyOption *format, struct basicdsk_geometry *geometry)
+{
+	optreserr_t err;
+	int sector_length;
+	memset(geometry, 0, sizeof(*geometry));
+
+	err = option_resolution_getdefault(format->param_guidelines, PARAM_HEADS,			&geometry->heads);
+	assert(!err);
+	err = option_resolution_getdefault(format->param_guidelines, PARAM_TRACKS,			&geometry->tracks);
+	assert(!err);
+	err = option_resolution_getdefault(format->param_guidelines, PARAM_SECTORS,			&geometry->sectors);
+	assert(!err);
+	err = option_resolution_getdefault(format->param_guidelines, PARAM_FIRST_SECTOR_ID,	&geometry->first_sector_id);
+	assert(!err);
+	err = option_resolution_getdefault(format->param_guidelines, PARAM_SECTOR_LENGTH,	&sector_length);
+	assert(!err);
+	geometry->sector_length = sector_length;
+}
+
+
+
+FLOPPY_CONSTRUCT(basicdsk_construct_default)
+{
+	struct basicdsk_geometry geometry;
+	basicdsk_default_geometry(format, &geometry);
+	return basicdsk_construct(floppy, &geometry);
+}
+
+
+
+FLOPPY_IDENTIFY(basicdsk_identify_default)
+{
+	UINT64 expected_size;
+	struct basicdsk_geometry geometry;
+
+	basicdsk_default_geometry(format, &geometry);
+
+	expected_size = geometry.sector_length;
+	expected_size *= geometry.heads;
+	expected_size *= geometry.tracks;
+	expected_size *= geometry.sectors;
+	*vote = (floppy_image_size(floppy) == expected_size) ? 100 : 0;
+	return FLOPPY_ERROR_SUCCESS;
+}
+

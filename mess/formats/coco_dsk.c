@@ -188,7 +188,7 @@ static int coco_jvc_decode_header(floppy_image *floppy, UINT64 size,
 
 
 
-static floperr_t coco_jvc_identify(floppy_image *floppy, int *vote)
+static FLOPPY_IDENTIFY(coco_jvc_identify)
 {
 	UINT64 size;
 	size = floppy_image_size(floppy);
@@ -198,7 +198,7 @@ static floperr_t coco_jvc_identify(floppy_image *floppy, int *vote)
 
 
     
-static floperr_t coco_jvc_construct(floppy_image *floppy, option_resolution *params)
+static FLOPPY_CONSTRUCT(coco_jvc_construct)
 {
 	struct basicdsk_geometry geometry;
 	UINT8 header[5];
@@ -236,9 +236,9 @@ static floperr_t coco_jvc_construct(floppy_image *floppy, option_resolution *par
 		geometry.offset = header_size;
     
 		floppy_image_write(floppy, header, 0, header_size);
-}
+	}
 	else
-{
+	{
 		/* load */
 		if (coco_jvc_decode_header(floppy, floppy_image_size(floppy), &geometry))
 			return FLOPPY_ERROR_INVALIDIMAGE;
@@ -275,7 +275,7 @@ static floperr_t coco_os9_readheader(floppy_image *floppy, struct basicdsk_geome
 
 
 
-static floperr_t coco_os9_identify(floppy_image *floppy, int *vote)
+static FLOPPY_IDENTIFY(coco_os9_identify)
 {
 	struct basicdsk_geometry geometry;
 	*vote = coco_os9_readheader(floppy, &geometry) ? 0 : 100;
@@ -284,7 +284,7 @@ static floperr_t coco_os9_identify(floppy_image *floppy, int *vote)
 
 
 
-static floperr_t coco_os9_construct(floppy_image *floppy, option_resolution *params)
+static FLOPPY_CONSTRUCT(coco_os9_construct)
 {
 	floperr_t err;
 	struct basicdsk_geometry geometry;
@@ -376,7 +376,7 @@ static int coco_vdk_decode_header(floppy_image *floppy, struct basicdsk_geometry
 
 
 
-static floperr_t coco_vdk_identify(floppy_image *floppy, int *vote)
+static FLOPPY_IDENTIFY(coco_vdk_identify)
 {
 	*vote = coco_vdk_decode_header(floppy, NULL) ? 0 : 100;
 	return FLOPPY_ERROR_SUCCESS;
@@ -384,7 +384,7 @@ static floperr_t coco_vdk_identify(floppy_image *floppy, int *vote)
 
 
 
-static floperr_t coco_vdk_construct(floppy_image *floppy, option_resolution *params)
+static FLOPPY_CONSTRUCT(coco_vdk_construct)
 {
 	struct basicdsk_geometry geometry;
 	UINT8 header[12];
@@ -891,9 +891,9 @@ static void coco_dmk_interpret_header(floppy_image *floppy, int *heads, int *tra
 	
 	
 	
-floperr_t coco_dmk_construct(floppy_image *floppy, option_resolution *params)
+FLOPPY_CONSTRUCT(coco_dmk_construct)
 {
-	struct FloppyFormat *format;
+	struct FloppyFormat *format_;
 	struct dmk_tag *tag;
 	UINT8 header[DMK_HEADER_LEN];
 	int heads, tracks, track_size, sectors, sector_length;
@@ -927,24 +927,24 @@ floperr_t coco_dmk_construct(floppy_image *floppy, option_resolution *params)
 	tag->track_size = track_size;
 	tag->tracks = tracks;
     
-	format = floppy_format(floppy);
-	format->read_track = coco_dmk_read_track;
-	format->write_track = coco_dmk_write_track;
-	format->format_track = coco_dmk_format_track;
-	format->get_heads_per_disk = coco_dmk_get_heads_per_disk;
-	format->get_tracks_per_disk = coco_dmk_get_tracks_per_disk;
-	format->get_track_size = coco_dmk_get_track_size;
-	format->get_sector_length = coco_dmk_get_sector_length;
-	format->get_indexed_sector_info = coco_dmk_get_indexed_sector_info;
-	format->read_sector = coco_dmk_read_sector;
-	format->write_sector = coco_dmk_write_sector;
+	format_ = floppy_format(floppy);
+	format_->read_track = coco_dmk_read_track;
+	format_->write_track = coco_dmk_write_track;
+	format_->format_track = coco_dmk_format_track;
+	format_->get_heads_per_disk = coco_dmk_get_heads_per_disk;
+	format_->get_tracks_per_disk = coco_dmk_get_tracks_per_disk;
+	format_->get_track_size = coco_dmk_get_track_size;
+	format_->get_sector_length = coco_dmk_get_sector_length;
+	format_->get_indexed_sector_info = coco_dmk_get_indexed_sector_info;
+	format_->read_sector = coco_dmk_read_sector;
+	format_->write_sector = coco_dmk_write_sector;
 
 	return FLOPPY_ERROR_SUCCESS;
 }
 
 	
 		
-floperr_t coco_dmk_identify(floppy_image *floppy, int *vote)
+FLOPPY_IDENTIFY(coco_dmk_identify)
 {
 	int heads, tracks, track_size;
 	UINT64 size, expected_size;

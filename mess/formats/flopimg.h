@@ -69,8 +69,8 @@ struct FloppyOption
 	const char *name;
 	const char *extensions;
 	const char *description;
-	floperr_t (*identify)(floppy_image *floppy, int *vote);
-	floperr_t (*construct)(floppy_image *floppy, option_resolution *params);
+	floperr_t (*identify)(floppy_image *floppy, const struct FloppyOption *format, int *vote);
+	floperr_t (*construct)(floppy_image *floppy, const struct FloppyOption *format, option_resolution *params);
 	const char *param_guidelines;
 };
 
@@ -105,6 +105,9 @@ struct FloppyOption
 #define SECTOR_LENGTH(range)	"L" #range
 #define INTERLEAVE(range)		"I" #range
 #define FIRST_SECTOR_ID(range)	"F" #range
+
+#define FLOPPY_IDENTIFY(name)	floperr_t name(floppy_image *floppy, const struct FloppyOption *format, int *vote)
+#define FLOPPY_CONSTRUCT(name)	floperr_t name(floppy_image *floppy, const struct FloppyOption *format, option_resolution *params)
 
 /***************************************************************************
 

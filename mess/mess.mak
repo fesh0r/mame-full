@@ -239,45 +239,45 @@ DRVLIBS = \
 	$(OBJ)/bandai.a   \
 
 
-$(OBJ)/neocd.a:		\
-	$(OBJ)/mess/systems/neocd.o	\
-	$(OBJ)/machine/neogeo.o		\
-	$(OBJ)/vidhrdw/neogeo.o		\
+$(OBJ)/neocd.a:						\
+	$(OBJ)/mess/systems/neocd.o		\
+	$(OBJ)/machine/neogeo.o			\
+	$(OBJ)/vidhrdw/neogeo.o			\
 	$(OBJ)/machine/pd4990a.o		\
 
 $(OBJ)/coleco.a:   \
-	$(OBJ)/mess/machine/coleco.o	 \
+	$(OBJ)/mess/machine/coleco.o	\
 	$(OBJ)/mess/systems/coleco.o
 
 $(OBJ)/arcadia.a:  \
-	$(OBJ)/mess/sndhrdw/arcadia.o	 \
-	$(OBJ)/mess/vidhrdw/arcadia.o	 \
+	$(OBJ)/mess/sndhrdw/arcadia.o	\
+	$(OBJ)/mess/vidhrdw/arcadia.o	\
 	$(OBJ)/mess/systems/arcadia.o
 
-$(OBJ)/sega.a:                       \
-	$(OBJ)/mess/vidhrdw/genesis.o  \
-	$(OBJ)/mess/machine/genesis.o  \
-	$(OBJ)/mess/sndhrdw/genesis.o  \
-	$(OBJ)/mess/systems/genesis.o  \
-	$(OBJ)/mess/systems/saturn.o	 \
-	$(OBJ)/mess/vidhrdw/smsvdp.o	 \
-	$(OBJ)/mess/machine/sms.o      \
+$(OBJ)/sega.a:						\
+	$(OBJ)/mess/vidhrdw/genesis.o	\
+	$(OBJ)/mess/machine/genesis.o	\
+	$(OBJ)/mess/sndhrdw/genesis.o	\
+	$(OBJ)/mess/systems/genesis.o	\
+	$(OBJ)/mess/systems/saturn.o	\
+	$(OBJ)/mess/vidhrdw/smsvdp.o	\
+	$(OBJ)/mess/machine/sms.o		\
 	$(OBJ)/mess/systems/sms.o
 
-$(OBJ)/atari.a:                      \
-	$(OBJ)/vidhrdw/tia.o           \
-	$(OBJ)/mess/machine/atari.o	 \
-	$(OBJ)/mess/vidhrdw/antic.o	 \
-	$(OBJ)/mess/vidhrdw/gtia.o	 \
-	$(OBJ)/mess/systems/atari.o	 \
-	$(OBJ)/mess/vidhrdw/atari.o	 \
-	$(OBJ)/mess/machine/a7800.o	 \
-	$(OBJ)/mess/systems/a7800.o	 \
-	$(OBJ)/mess/vidhrdw/a7800.o	 \
-	$(OBJ)/mess/systems/a2600.o    \
-	$(OBJ)/mess/systems/jaguar.o   \
-	$(OBJ)/sndhrdw/jaguar.o        \
-	$(OBJ)/vidhrdw/jaguar.o        \
+$(OBJ)/atari.a:						\
+	$(OBJ)/vidhrdw/tia.o			\
+	$(OBJ)/mess/machine/atari.o		\
+	$(OBJ)/mess/vidhrdw/antic.o		\
+	$(OBJ)/mess/vidhrdw/gtia.o		\
+	$(OBJ)/mess/systems/atari.o		\
+	$(OBJ)/mess/vidhrdw/atari.o		\
+	$(OBJ)/mess/machine/a7800.o		\
+	$(OBJ)/mess/systems/a7800.o		\
+	$(OBJ)/mess/vidhrdw/a7800.o		\
+	$(OBJ)/mess/systems/a2600.o		\
+	$(OBJ)/mess/systems/jaguar.o	\
+	$(OBJ)/sndhrdw/jaguar.o			\
+	$(OBJ)/vidhrdw/jaguar.o			\
 #	$(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	                     \
@@ -877,6 +877,7 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/mess/formats/cassimg.o			\
 	  $(OBJ)/mess/formats/basicdsk.o		\
 	  $(OBJ)/mess/formats/coco_dsk.o		\
+	  $(OBJ)/mess/formats/coco_cas.o		\
 	  $(OBJ)/mess/formats/wavfile.o			\
 	  $(OBJ)/mess/tools/imgtool/stubs.o    \
 	  $(OBJ)/mess/tools/imgtool/main.o     \
@@ -900,7 +901,6 @@ tools/imgtool$(EXE):	                   \
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \
-#	  $(OBJ)/mess/formats/cococas.o        \
 #	  $(OBJ)/mess/formats/ti85_ser.o       \
 #	  $(OBJ)/mess/tools/imgtool/imgfile.o  \
 #	  $(OBJ)/mess/tools/imgtool/imgwave.o  \

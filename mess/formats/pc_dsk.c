@@ -60,7 +60,7 @@ static floperr_t pc_dsk_compute_geometry(floppy_image *floppy, struct basicdsk_g
 
 
 
-static floperr_t pc_dsk_identify(floppy_image *floppy, int *vote)
+static FLOPPY_IDENTIFY(pc_dsk_identify)
 {
 	floperr_t err;
 	struct basicdsk_geometry geometry;
@@ -75,18 +75,18 @@ static floperr_t pc_dsk_identify(floppy_image *floppy, int *vote)
 
 
 
-static floperr_t pc_dsk_construct(floppy_image *floppy, option_resolution *create_params)
+static FLOPPY_CONSTRUCT(pc_dsk_construct)
 {
 	floperr_t err;
 	struct basicdsk_geometry geometry;
 
-	if (create_params)
+	if (params)
 	{
 		/* create */
 		memset(&geometry, 0, sizeof(geometry));
-		geometry.heads = option_resolution_lookup_int(create_params, PARAM_HEADS);
-		geometry.tracks = option_resolution_lookup_int(create_params, PARAM_TRACKS);
-		geometry.sectors = option_resolution_lookup_int(create_params, PARAM_SECTORS);
+		geometry.heads = option_resolution_lookup_int(params, PARAM_HEADS);
+		geometry.tracks = option_resolution_lookup_int(params, PARAM_TRACKS);
+		geometry.sectors = option_resolution_lookup_int(params, PARAM_SECTORS);
 		geometry.first_sector_id = 0;
 		geometry.sector_length = 512;
 	}

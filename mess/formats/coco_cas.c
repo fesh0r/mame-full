@@ -34,7 +34,7 @@
 #define COCO_WAVESAMPLES_TRAILER	TIME_IN_SEC(1.0)
 
 
-static struct CassetteModulation coco_cas_modulation =
+const struct CassetteModulation coco_cas_modulation =
 {
 	CASSETTE_MODULATION_SINEWAVE,
 	600.0,	1200.0,	1500.0,

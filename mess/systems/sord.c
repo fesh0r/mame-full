@@ -19,17 +19,18 @@
  ******************************************************************************/
 
 #include "driver.h"
-#include "machine/z80fmly.h"
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "cpu/z80/z80.h"
-#include "devices/basicdsk.h"
-#include "devices/cassette.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
+#include "machine/z80fmly.h"
 #include "machine/8255ppi.h"
 #include "devices/cartslot.h"
+#include "devices/cassette.h"
+#include "devices/mflopimg.h"
 #include "formats/sord_cas.h"
+#include "formats/basicdsk.h"
 
 
 #define SORD_DEBUG
@@ -357,18 +358,6 @@ static DEVICE_LOAD( sord_cartslot )
 		mame_fread(file, cart_data, datasize);
 	}
 	return INIT_PASS;
-}
-
-static DEVICE_LOAD( sord_floppy )
-{
-	if (device_load_basicdsk_floppy(image, file)==INIT_PASS)
-	{
-		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
-		basicdsk_set_geometry(image, 40, 1, 18, 256, 1, 0, FALSE);
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
 }
 
 static void sord_m5_ctc_interrupt(int state)
@@ -851,6 +840,15 @@ ROM_START(srdm5fd5)
 	ROM_LOAD("sordfd5.rom",0x0000, 0x04000, NO_DUMP)
 ROM_END
 
+static FLOPPY_OPTIONS_START( sordm5 )
+	FLOPPY_OPTION( sordm5, "dsk\0",			"Sord M5 disk image",	basicdsk_identify_default,	basicdsk_construct_default,
+		HEADS([1])
+		TRACKS([40])
+		SECTORS([18])
+		SECTOR_LENGTH([256])
+		FIRST_SECTOR_ID([1]))
+FLOPPY_OPTIONS_END
+
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER			(1)
@@ -860,7 +858,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(srdm5fd5)
 	CONFIG_IMPORT_FROM(sordm5)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_sord_floppy)
+	CONFIG_DEVICE_FLOPPY(4, sordm5)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE			INPUT		INIT	CONFIG		COMPANY		FULLNAME */

@@ -162,6 +162,9 @@ casserr_t cassette_write_samples(cassette_image *cassette, int channels, double 
 /* modulation support */
 casserr_t cassette_modulation_identify(cassette_image *cassette, const struct CassetteModulation *modulation,
 	struct CassetteOptions *opts);
+casserr_t cassette_get_modulated_data(cassette_image *cassette, int channel, double time_index,
+	void *data, size_t data_length, const struct CassetteModulation *modulation,
+	double *time_displacement);
 casserr_t cassette_put_modulated_data(cassette_image *cassette, int channel, double time_index,
 	const void *data, size_t data_length, const struct CassetteModulation *modulation,
 	double *time_displacement);

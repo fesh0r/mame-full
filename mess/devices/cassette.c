@@ -350,6 +350,10 @@ const struct IODevice *cassette_device_specify(struct IODevice *iodev, char *ext
 	assert(count);
 	if (iodev->count == 0)
 	{
+		/* specify if default */
+		if (default_state == (cassette_state) -1)
+			default_state = CASSETTE_PLAY;
+
 		if (formats == NULL)
 			formats = cassette_default_formats;
 
