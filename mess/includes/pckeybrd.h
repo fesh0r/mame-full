@@ -22,134 +22,245 @@ void at_keyboard_set_type(AT_KEYBOARD_TYPE type);
 #define KEYBOARD_ON 1
 #define PS2_MOUSE_ON 1
 */
+#define PC_KEYB_HELPER(bit,text,key1,key2) \
+	PORT_BITX( bit, 0x0000, IPT_KEYBOARD, text, key1, key2 )
+
+#define PC_KEYBOARD \
+    PORT_START  /* IN4 */\
+	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */\
+	PC_KEYB_HELPER( 0x0002, "Esc",          KEYCODE_ESC,        CODE_NONE ) /* Esc                         01  81 */\
+	PC_KEYB_HELPER( 0x0004, "1 !",          KEYCODE_1,          CODE_NONE ) /* 1                           02  82 */\
+	PC_KEYB_HELPER( 0x0008, "2 @",          KEYCODE_2,          CODE_NONE ) /* 2                           03  83 */\
+	PC_KEYB_HELPER( 0x0010, "3 #",          KEYCODE_3,          CODE_NONE ) /* 3                           04  84 */\
+	PC_KEYB_HELPER( 0x0020, "4 $",          KEYCODE_4,          CODE_NONE ) /* 4                           05  85 */\
+	PC_KEYB_HELPER( 0x0040, "5 %",          KEYCODE_5,          CODE_NONE ) /* 5                           06  86 */\
+	PC_KEYB_HELPER( 0x0080, "6 ^",          KEYCODE_6,          CODE_NONE ) /* 6                           07  87 */\
+	PC_KEYB_HELPER( 0x0100, "7 &",          KEYCODE_7,          CODE_NONE ) /* 7                           08  88 */\
+	PC_KEYB_HELPER( 0x0200, "8 *",          KEYCODE_8,          CODE_NONE ) /* 8                           09  89 */\
+	PC_KEYB_HELPER( 0x0400, "9 (",          KEYCODE_9,          CODE_NONE ) /* 9                           0A  8A */\
+	PC_KEYB_HELPER( 0x0800, "0 )",          KEYCODE_0,          CODE_NONE ) /* 0                           0B  8B */\
+	PC_KEYB_HELPER( 0x1000, "- _",          KEYCODE_MINUS,      CODE_NONE ) /* -                           0C  8C */\
+	PC_KEYB_HELPER( 0x2000, "= +",          KEYCODE_EQUALS,     CODE_NONE ) /* =                           0D  8D */\
+	PC_KEYB_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE,  CODE_NONE ) /* Backspace                   0E  8E */\
+	PC_KEYB_HELPER( 0x8000, "Tab",          KEYCODE_TAB,        CODE_NONE ) /* Tab                         0F  8F */\
+		\
+	PORT_START	/* IN5 */\
+	PC_KEYB_HELPER( 0x0001, "Q",            KEYCODE_Q,          CODE_NONE ) /* Q                           10  90 */\
+	PC_KEYB_HELPER( 0x0002, "W",            KEYCODE_W,          CODE_NONE ) /* W                           11  91 */\
+	PC_KEYB_HELPER( 0x0004, "E",            KEYCODE_E,          CODE_NONE ) /* E                           12  92 */\
+	PC_KEYB_HELPER( 0x0008, "R",            KEYCODE_R,          CODE_NONE ) /* R                           13  93 */\
+	PC_KEYB_HELPER( 0x0010, "T",            KEYCODE_T,          CODE_NONE ) /* T                           14  94 */\
+	PC_KEYB_HELPER( 0x0020, "Y",            KEYCODE_Y,          CODE_NONE ) /* Y                           15  95 */\
+	PC_KEYB_HELPER( 0x0040, "U",            KEYCODE_U,          CODE_NONE ) /* U                           16  96 */\
+	PC_KEYB_HELPER( 0x0080, "I",            KEYCODE_I,          CODE_NONE ) /* I                           17  97 */\
+	PC_KEYB_HELPER( 0x0100, "O",            KEYCODE_O,          CODE_NONE ) /* O                           18  98 */\
+	PC_KEYB_HELPER( 0x0200, "P",            KEYCODE_P,          CODE_NONE ) /* P                           19  99 */\
+	PC_KEYB_HELPER( 0x0400, "[ {",          KEYCODE_OPENBRACE,  CODE_NONE ) /* [                           1A  9A */\
+	PC_KEYB_HELPER( 0x0800, "] }",          KEYCODE_CLOSEBRACE, CODE_NONE ) /* ]                           1B  9B */\
+	PC_KEYB_HELPER( 0x1000, "Enter",        KEYCODE_ENTER,      CODE_NONE ) /* Enter                       1C  9C */\
+	PC_KEYB_HELPER( 0x2000, "L-Ctrl",       KEYCODE_LCONTROL,   CODE_NONE ) /* Left Ctrl                   1D  9D */\
+	PC_KEYB_HELPER( 0x4000, "A",            KEYCODE_A,          CODE_NONE ) /* A                           1E  9E */\
+	PC_KEYB_HELPER( 0x8000, "S",            KEYCODE_S,          CODE_NONE ) /* S                           1F  9F */\
+		\
+	PORT_START	/* IN6 */\
+	PC_KEYB_HELPER( 0x0001, "D",            KEYCODE_D,          CODE_NONE ) /* D                           20  A0 */\
+	PC_KEYB_HELPER( 0x0002, "F",            KEYCODE_F,          CODE_NONE ) /* F                           21  A1 */\
+	PC_KEYB_HELPER( 0x0004, "G",            KEYCODE_G,          CODE_NONE ) /* G                           22  A2 */\
+	PC_KEYB_HELPER( 0x0008, "H",            KEYCODE_H,          CODE_NONE ) /* H                           23  A3 */\
+	PC_KEYB_HELPER( 0x0010, "J",            KEYCODE_J,          CODE_NONE ) /* J                           24  A4 */\
+	PC_KEYB_HELPER( 0x0020, "K",            KEYCODE_K,          CODE_NONE ) /* K                           25  A5 */\
+	PC_KEYB_HELPER( 0x0040, "L",            KEYCODE_L,          CODE_NONE ) /* L                           26  A6 */\
+	PC_KEYB_HELPER( 0x0080, "; :",          KEYCODE_COLON,      CODE_NONE ) /* ;                           27  A7 */\
+	PC_KEYB_HELPER( 0x0100, "' \"",         KEYCODE_QUOTE,      CODE_NONE ) /* '                           28  A8 */\
+	PC_KEYB_HELPER( 0x0200, "` ~",          KEYCODE_TILDE,      CODE_NONE ) /* `                           29  A9 */\
+	PC_KEYB_HELPER( 0x0400, "L-Shift",      KEYCODE_LSHIFT,     CODE_NONE ) /* Left Shift                  2A  AA */\
+	PC_KEYB_HELPER( 0x0800, "\\ |",         KEYCODE_BACKSLASH,  CODE_NONE ) /* \                           2B  AB */\
+	PC_KEYB_HELPER( 0x1000, "Z",            KEYCODE_Z,          CODE_NONE ) /* Z                           2C  AC */\
+	PC_KEYB_HELPER( 0x2000, "X",            KEYCODE_X,          CODE_NONE ) /* X                           2D  AD */\
+	PC_KEYB_HELPER( 0x4000, "C",            KEYCODE_C,          CODE_NONE ) /* C                           2E  AE */\
+	PC_KEYB_HELPER( 0x8000, "V",            KEYCODE_V,          CODE_NONE ) /* V                           2F  AF */\
+		\
+	PORT_START	/* IN7 */\
+	PC_KEYB_HELPER( 0x0001, "B",            KEYCODE_B,          CODE_NONE ) /* B                           30  B0 */\
+	PC_KEYB_HELPER( 0x0002, "N",            KEYCODE_N,          CODE_NONE ) /* N                           31  B1 */\
+	PC_KEYB_HELPER( 0x0004, "M",            KEYCODE_M,          CODE_NONE ) /* M                           32  B2 */\
+	PC_KEYB_HELPER( 0x0008, ", <",          KEYCODE_COMMA,      CODE_NONE ) /* ,                           33  B3 */\
+	PC_KEYB_HELPER( 0x0010, ". >",          KEYCODE_STOP,       CODE_NONE ) /* .                           34  B4 */\
+	PC_KEYB_HELPER( 0x0020, "/ ?",          KEYCODE_SLASH,      CODE_NONE ) /* /                           35  B5 */\
+	PC_KEYB_HELPER( 0x0040, "R-Shift",      KEYCODE_RSHIFT,     CODE_NONE ) /* Right Shift                 36  B6 */\
+	PC_KEYB_HELPER( 0x0080, "KP * (PrtScr)",KEYCODE_ASTERISK,   CODE_NONE ) /* Keypad *  (PrtSc)           37  B7 */\
+	PC_KEYB_HELPER( 0x0100, "Alt",          KEYCODE_LALT,       CODE_NONE ) /* Left Alt                    38  B8 */\
+	PC_KEYB_HELPER( 0x0200, "Space",        KEYCODE_SPACE,      CODE_NONE ) /* Space                       39  B9 */\
+	PC_KEYB_HELPER( 0x0400, "Caps",         KEYCODE_CAPSLOCK,   CODE_NONE ) /* Caps Lock                   3A  BA */\
+	PC_KEYB_HELPER( 0x0800, "F1",           KEYCODE_F1,         CODE_NONE ) /* F1                          3B  BB */\
+	PC_KEYB_HELPER( 0x1000, "F2",           KEYCODE_F2,         CODE_NONE ) /* F2                          3C  BC */\
+	PC_KEYB_HELPER( 0x2000, "F3",           KEYCODE_F3,         CODE_NONE ) /* F3                          3D  BD */\
+	PC_KEYB_HELPER( 0x4000, "F4",           KEYCODE_F4,         CODE_NONE ) /* F4                          3E  BE */\
+	PC_KEYB_HELPER( 0x8000, "F5",           KEYCODE_F5,         CODE_NONE ) /* F5                          3F  BF */\
+		\
+	PORT_START	/* IN8 */\
+	PC_KEYB_HELPER( 0x0001, "F6",           KEYCODE_F6,         CODE_NONE )     /* F6                          40  C0 */\
+	PC_KEYB_HELPER( 0x0002, "F7",           KEYCODE_F7,         CODE_NONE )     /* F7                          41  C1 */\
+	PC_KEYB_HELPER( 0x0004, "F8",           KEYCODE_F8,         CODE_NONE )     /* F8                          42  C2 */\
+	PC_KEYB_HELPER( 0x0008, "F9",           KEYCODE_F9,         CODE_NONE )     /* F9                          43  C3 */\
+	PC_KEYB_HELPER( 0x0010, "F10",          KEYCODE_F10,        CODE_NONE )     /* F10                         44  C4 */\
+	PC_KEYB_HELPER( 0x0020, "NumLock",      KEYCODE_NUMLOCK,    CODE_NONE )     /* Num Lock                    45  C5 */\
+	PC_KEYB_HELPER( 0x0040, "ScrLock",      KEYCODE_SCRLOCK,    CODE_NONE )     /* Scroll Lock                 46  C6 */\
+	PC_KEYB_HELPER( 0x0080, "KP 7 (Home)",  KEYCODE_7_PAD,      KEYCODE_HOME )  /* Keypad 7  (Home)            47  C7 */\
+	PC_KEYB_HELPER( 0x0100, "KP 8 (Up)",    KEYCODE_8_PAD,      KEYCODE_UP )    /* Keypad 8  (Up arrow)        48  C8 */\
+	PC_KEYB_HELPER( 0x0200, "KP 9 (PgUp)",  KEYCODE_9_PAD,      KEYCODE_PGUP)   /* Keypad 9  (PgUp)            49  C9 */\
+	PC_KEYB_HELPER( 0x0400, "KP -",         KEYCODE_MINUS_PAD,  CODE_NONE )     /* Keypad -                    4A  CA */\
+	PC_KEYB_HELPER( 0x0800, "KP 4 (Left)",  KEYCODE_4_PAD,      KEYCODE_LEFT )  /* Keypad 4  (Left arrow)      4B  CB */\
+	PC_KEYB_HELPER( 0x1000, "KP 5",         KEYCODE_5_PAD,      CODE_NONE )     /* Keypad 5                    4C  CC */\
+	PC_KEYB_HELPER( 0x2000, "KP 6 (Right)", KEYCODE_6_PAD,      KEYCODE_RIGHT ) /* Keypad 6  (Right arrow)     4D  CD */\
+	PC_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD,   CODE_NONE )     /* Keypad +                    4E  CE */\
+	PC_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END )   /* Keypad 1  (End)             4F  CF */\
+		\
+	PORT_START	/* IN9 */\
+	PC_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN )   /* Keypad 2  (Down arrow)      50  D0 */\
+	PC_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN )   /* Keypad 3  (PgDn)            51  D1 */\
+	PC_KEYB_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT ) /* Keypad 0  (Ins)             52  D2 */\
+	PC_KEYB_HELPER( 0x0008, "KP . (Del)",   KEYCODE_DEL_PAD,    KEYCODE_DEL )    /* Keypad .  (Del)             53  D3 */\
+	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )\
+	PC_KEYB_HELPER( 0x0040, "(84/102)\\",   KEYCODE_BACKSLASH2, CODE_NONE )      /* Backslash 2                 56  D6 */\
+	PORT_BIT ( 0xff80, 0x0000, IPT_UNUSED )\
+		\
+	PORT_START	/* IN10 */\
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+		\
+	PORT_START	/* IN11 */\
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+
+#define AT_KEYB_HELPER(bit, text, key1) \
+	PORT_BITX( bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, text, key1, CODE_NONE )
 
 #define AT_KEYBOARD \
 	PORT_START	/* IN4 */\
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Esc",          KEYCODE_ESC,        IP_JOY_NONE ) /* Esc                         01  81 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"1 !",          KEYCODE_1,          IP_JOY_NONE ) /* 1                           02  82 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"2 @",          KEYCODE_2,          IP_JOY_NONE ) /* 2                           03  83 */\
-	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"3 #",          KEYCODE_3,          IP_JOY_NONE ) /* 3                           04  84 */\
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"4 $",          KEYCODE_4,          IP_JOY_NONE ) /* 4                           05  85 */\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"5 %",          KEYCODE_5,          IP_JOY_NONE ) /* 5                           06  86 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"6 ^",          KEYCODE_6,          IP_JOY_NONE ) /* 6                           07  87 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"7 &",          KEYCODE_7,          IP_JOY_NONE ) /* 7                           08  88 */\
-	PORT_BITX( 0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"8 *",          KEYCODE_8,          IP_JOY_NONE ) /* 8                           09  89 */\
-	PORT_BITX( 0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"9 (",          KEYCODE_9,          IP_JOY_NONE ) /* 9                           0A  8A */\
-	PORT_BITX( 0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"0 )",          KEYCODE_0,          IP_JOY_NONE ) /* 0                           0B  8B */\
-	PORT_BITX( 0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"- _",          KEYCODE_MINUS,      IP_JOY_NONE ) /* -                           0C  8C */\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"= +",          KEYCODE_EQUALS,     IP_JOY_NONE ) /* =                           0D  8D */\
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"<--",          KEYCODE_BACKSPACE,  IP_JOY_NONE ) /* Backspace                   0E  8E */\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Tab",          KEYCODE_TAB,        IP_JOY_NONE ) /* Tab                         0F  8F */\
+	AT_KEYB_HELPER( 0x0002, "Esc",          KEYCODE_ESC         ) /* Esc                         01  81 */\
+	AT_KEYB_HELPER( 0x0004, "1 !",          KEYCODE_1           ) /* 1                           02  82 */\
+	AT_KEYB_HELPER( 0x0008, "2 @",          KEYCODE_2           ) /* 2                           03  83 */\
+	AT_KEYB_HELPER( 0x0010, "3 #",          KEYCODE_3           ) /* 3                           04  84 */\
+	AT_KEYB_HELPER( 0x0020, "4 $",          KEYCODE_4           ) /* 4                           05  85 */\
+	AT_KEYB_HELPER( 0x0040, "5 %",          KEYCODE_5           ) /* 5                           06  86 */\
+	AT_KEYB_HELPER( 0x0080, "6 ^",          KEYCODE_6           ) /* 6                           07  87 */\
+	AT_KEYB_HELPER( 0x0100, "7 &",          KEYCODE_7           ) /* 7                           08  88 */\
+	AT_KEYB_HELPER( 0x0200, "8 *",          KEYCODE_8           ) /* 8                           09  89 */\
+	AT_KEYB_HELPER( 0x0400, "9 (",          KEYCODE_9           ) /* 9                           0A  8A */\
+	AT_KEYB_HELPER( 0x0800, "0 )",          KEYCODE_0           ) /* 0                           0B  8B */\
+	AT_KEYB_HELPER( 0x1000, "- _",          KEYCODE_MINUS       ) /* -                           0C  8C */\
+	AT_KEYB_HELPER( 0x2000, "= +",          KEYCODE_EQUALS      ) /* =                           0D  8D */\
+	AT_KEYB_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE   ) /* Backspace                   0E  8E */\
+	AT_KEYB_HELPER( 0x8000, "Tab",          KEYCODE_TAB         ) /* Tab                         0F  8F */\
 		\
 	PORT_START	/* IN5 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Q",            KEYCODE_Q,          IP_JOY_NONE ) /* Q                           10  90 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"W",            KEYCODE_W,          IP_JOY_NONE ) /* W                           11  91 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"E",            KEYCODE_E,          IP_JOY_NONE ) /* E                           12  92 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"R",            KEYCODE_R,          IP_JOY_NONE ) /* R                           13  93 */\
-	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"T",            KEYCODE_T,          IP_JOY_NONE ) /* T                           14  94 */\
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Y",            KEYCODE_Y,          IP_JOY_NONE ) /* Y                           15  95 */\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"U",            KEYCODE_U,          IP_JOY_NONE ) /* U                           16  96 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"I",            KEYCODE_I,          IP_JOY_NONE ) /* I                           17  97 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"O",            KEYCODE_O,          IP_JOY_NONE ) /* O                           18  98 */\
-	PORT_BITX( 0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"P",            KEYCODE_P,          IP_JOY_NONE ) /* P                           19  99 */\
-	PORT_BITX( 0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"[ {",          KEYCODE_OPENBRACE,  IP_JOY_NONE ) /* [                           1A  9A */\
-	PORT_BITX( 0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"] }",          KEYCODE_CLOSEBRACE, IP_JOY_NONE ) /* ]                           1B  9B */\
-	PORT_BITX( 0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Enter",        KEYCODE_ENTER,      IP_JOY_NONE ) /* Enter                       1C  9C */\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"L-Ctrl",       KEYCODE_LCONTROL,   IP_JOY_NONE ) /* Left Ctrl                   1D  9D */\
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"A",            KEYCODE_A,          IP_JOY_NONE ) /* A                           1E  9E */\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"S",            KEYCODE_S,          IP_JOY_NONE ) /* S                           1F  9F */\
+	AT_KEYB_HELPER( 0x0001, "Q",            KEYCODE_Q           ) /* Q                           10  90 */\
+	AT_KEYB_HELPER( 0x0002, "W",            KEYCODE_W           ) /* W                           11  91 */\
+	AT_KEYB_HELPER( 0x0004, "E",            KEYCODE_E           ) /* E                           12  92 */\
+	AT_KEYB_HELPER( 0x0008, "R",            KEYCODE_R           ) /* R                           13  93 */\
+	AT_KEYB_HELPER( 0x0010, "T",            KEYCODE_T           ) /* T                           14  94 */\
+	AT_KEYB_HELPER( 0x0020, "Y",            KEYCODE_Y           ) /* Y                           15  95 */\
+	AT_KEYB_HELPER( 0x0040, "U",            KEYCODE_U           ) /* U                           16  96 */\
+	AT_KEYB_HELPER( 0x0080, "I",            KEYCODE_I           ) /* I                           17  97 */\
+	AT_KEYB_HELPER( 0x0100, "O",            KEYCODE_O           ) /* O                           18  98 */\
+	AT_KEYB_HELPER( 0x0200, "P",            KEYCODE_P           ) /* P                           19  99 */\
+	AT_KEYB_HELPER( 0x0400, "[ {",          KEYCODE_OPENBRACE   ) /* [                           1A  9A */\
+	AT_KEYB_HELPER( 0x0800, "] }",          KEYCODE_CLOSEBRACE  ) /* ]                           1B  9B */\
+	AT_KEYB_HELPER( 0x1000, "Enter",        KEYCODE_ENTER       ) /* Enter                       1C  9C */\
+	AT_KEYB_HELPER( 0x2000, "L-Ctrl",       KEYCODE_LCONTROL    ) /* Left Ctrl                   1D  9D */\
+	AT_KEYB_HELPER( 0x4000, "A",            KEYCODE_A           ) /* A                           1E  9E */\
+	AT_KEYB_HELPER( 0x8000, "S",            KEYCODE_S           ) /* S                           1F  9F */\
 		\
 	PORT_START	/* IN6 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"D",            KEYCODE_D,          IP_JOY_NONE ) /* D                           20  A0 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F",            KEYCODE_F,          IP_JOY_NONE ) /* F                           21  A1 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"G",            KEYCODE_G,          IP_JOY_NONE ) /* G                           22  A2 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"H",            KEYCODE_H,          IP_JOY_NONE ) /* H                           23  A3 */\
-	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"J",            KEYCODE_J,          IP_JOY_NONE ) /* J                           24  A4 */\
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"K",            KEYCODE_K,          IP_JOY_NONE ) /* K                           25  A5 */\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */\
-	PORT_BITX( 0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"` ~",          KEYCODE_TILDE,      IP_JOY_NONE ) /* `                           29  A9 */\
-	PORT_BITX( 0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */\
-	PORT_BITX( 0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"\\ |",         KEYCODE_BACKSLASH,  IP_JOY_NONE ) /* \                           2B  AB */\
-	PORT_BITX( 0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */\
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"V",            KEYCODE_V,          IP_JOY_NONE ) /* V                           2F  AF */\
+	AT_KEYB_HELPER( 0x0001, "D",            KEYCODE_D           ) /* D                           20  A0 */\
+	AT_KEYB_HELPER( 0x0002, "F",            KEYCODE_F           ) /* F                           21  A1 */\
+	AT_KEYB_HELPER( 0x0004, "G",            KEYCODE_G           ) /* G                           22  A2 */\
+	AT_KEYB_HELPER( 0x0008, "H",            KEYCODE_H           ) /* H                           23  A3 */\
+	AT_KEYB_HELPER( 0x0010, "J",            KEYCODE_J           ) /* J                           24  A4 */\
+	AT_KEYB_HELPER( 0x0020, "K",            KEYCODE_K           ) /* K                           25  A5 */\
+	AT_KEYB_HELPER( 0x0040, "L",            KEYCODE_L           ) /* L                           26  A6 */\
+	AT_KEYB_HELPER( 0x0080, "; :",          KEYCODE_COLON       ) /* ;                           27  A7 */\
+	AT_KEYB_HELPER( 0x0100, "' \"",         KEYCODE_QUOTE       ) /* '                           28  A8 */\
+	AT_KEYB_HELPER( 0x0200, "` ~",          KEYCODE_TILDE       ) /* `                           29  A9 */\
+	AT_KEYB_HELPER( 0x0400, "L-Shift",      KEYCODE_LSHIFT      ) /* Left Shift                  2A  AA */\
+	AT_KEYB_HELPER( 0x0800, "\\ |",         KEYCODE_BACKSLASH   ) /* \                           2B  AB */\
+	AT_KEYB_HELPER( 0x1000, "Z",            KEYCODE_Z           ) /* Z                           2C  AC */\
+	AT_KEYB_HELPER( 0x2000, "X",            KEYCODE_X           ) /* X                           2D  AD */\
+	AT_KEYB_HELPER( 0x4000, "C",            KEYCODE_C           ) /* C                           2E  AE */\
+	AT_KEYB_HELPER( 0x8000, "V",            KEYCODE_V           ) /* V                           2F  AF */\
 		\
 	PORT_START	/* IN7 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"B",            KEYCODE_B,          IP_JOY_NONE ) /* B                           30  B0 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"N",            KEYCODE_N,          IP_JOY_NONE ) /* N                           31  B1 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"M",            KEYCODE_M,          IP_JOY_NONE ) /* M                           32  B2 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	", <",          KEYCODE_COMMA,      IP_JOY_NONE ) /* ,                           33  B3 */\
-	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */\
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP * (PrtScr)",KEYCODE_ASTERISK,   IP_JOY_NONE ) /* Keypad *  (PrtSc)           37  B7 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */\
-	PORT_BITX( 0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */\
-	PORT_BITX( 0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */\
-	PORT_BITX( 0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F1",           KEYCODE_F1,         IP_JOY_NONE ) /* F1                          3B  BB */\
-	PORT_BITX( 0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F2",           KEYCODE_F2,         IP_JOY_NONE ) /* F2                          3C  BC */\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F3",           KEYCODE_F3,         IP_JOY_NONE ) /* F3                          3D  BD */\
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F4",           KEYCODE_F4,         IP_JOY_NONE ) /* F4                          3E  BE */\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F5",           KEYCODE_F5,         IP_JOY_NONE ) /* F5                          3F  BF */\
+	AT_KEYB_HELPER( 0x0001, "B",            KEYCODE_B           ) /* B                           30  B0 */\
+	AT_KEYB_HELPER( 0x0002, "N",            KEYCODE_N           ) /* N                           31  B1 */\
+	AT_KEYB_HELPER( 0x0004, "M",            KEYCODE_M           ) /* M                           32  B2 */\
+	AT_KEYB_HELPER( 0x0008, ", <",          KEYCODE_COMMA       ) /* ,                           33  B3 */\
+	AT_KEYB_HELPER( 0x0010, ". >",          KEYCODE_STOP        ) /* .                           34  B4 */\
+	AT_KEYB_HELPER( 0x0020, "/ ?",          KEYCODE_SLASH       ) /* /                           35  B5 */\
+	AT_KEYB_HELPER( 0x0040, "R-Shift",      KEYCODE_RSHIFT      ) /* Right Shift                 36  B6 */\
+	AT_KEYB_HELPER( 0x0080, "KP * (PrtScr)",KEYCODE_ASTERISK    ) /* Keypad *  (PrtSc)           37  B7 */\
+	AT_KEYB_HELPER( 0x0100, "Alt",          KEYCODE_LALT        ) /* Left Alt                    38  B8 */\
+	AT_KEYB_HELPER( 0x0200, "Space",        KEYCODE_SPACE       ) /* Space                       39  B9 */\
+	AT_KEYB_HELPER( 0x0400, "Caps",         KEYCODE_CAPSLOCK    ) /* Caps Lock                   3A  BA */\
+	AT_KEYB_HELPER( 0x0800, "F1",           KEYCODE_F1          ) /* F1                          3B  BB */\
+	AT_KEYB_HELPER( 0x1000, "F2",           KEYCODE_F2          ) /* F2                          3C  BC */\
+	AT_KEYB_HELPER( 0x2000, "F3",           KEYCODE_F3          ) /* F3                          3D  BD */\
+	AT_KEYB_HELPER( 0x4000, "F4",           KEYCODE_F4          ) /* F4                          3E  BE */\
+	AT_KEYB_HELPER( 0x8000, "F5",           KEYCODE_F5          ) /* F5                          3F  BF */\
 		\
 	PORT_START	/* IN8 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F6",           KEYCODE_F6,         IP_JOY_NONE ) /* F6                          40  C0 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F7",           KEYCODE_F7,         IP_JOY_NONE ) /* F7                          41  C1 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F8",           KEYCODE_F8,         IP_JOY_NONE ) /* F8                          42  C2 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */\
-	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */\
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_7_PAD,      IP_JOY_NONE )/* Keypad 7  (Home)            47  C7 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_8_PAD,      IP_JOY_NONE )  /* Keypad 8  (Up arrow)        48  C8 */\
-	PORT_BITX( 0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_9_PAD,      IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */\
-	PORT_BITX( 0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */\
-	PORT_BITX( 0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_4_PAD,      IP_JOY_NONE )/* Keypad 4  (Left arrow)      4B  CB */\
-	PORT_BITX( 0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_6_PAD,      IP_JOY_NONE )/* Keypad 6  (Right arrow)     4D  CD */\
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_1_PAD,      IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */\
+	AT_KEYB_HELPER( 0x0001, "F6",           KEYCODE_F6          ) /* F6                          40  C0 */\
+	AT_KEYB_HELPER( 0x0002, "F7",           KEYCODE_F7          ) /* F7                          41  C1 */\
+	AT_KEYB_HELPER( 0x0004, "F8",           KEYCODE_F8          ) /* F8                          42  C2 */\
+	AT_KEYB_HELPER( 0x0008, "F9",           KEYCODE_F9          ) /* F9                          43  C3 */\
+	AT_KEYB_HELPER( 0x0010, "F10",          KEYCODE_F10         ) /* F10                         44  C4 */\
+	AT_KEYB_HELPER( 0x0020, "NumLock",      KEYCODE_NUMLOCK     ) /* Num Lock                    45  C5 */\
+	AT_KEYB_HELPER( 0x0040, "ScrLock",      KEYCODE_SCRLOCK     ) /* Scroll Lock                 46  C6 */\
+	AT_KEYB_HELPER( 0x0080, "KP 7 (Home)",  KEYCODE_7_PAD       ) /* Keypad 7  (Home)            47  C7 */\
+	AT_KEYB_HELPER( 0x0100, "KP 8 (Up)",    KEYCODE_8_PAD       ) /* Keypad 8  (Up arrow)        48  C8 */\
+	AT_KEYB_HELPER( 0x0200, "KP 9 (PgUp)",  KEYCODE_9_PAD       ) /* Keypad 9  (PgUp)            49  C9 */\
+	AT_KEYB_HELPER( 0x0400, "KP -",         KEYCODE_MINUS_PAD   ) /* Keypad -                    4A  CA */\
+	AT_KEYB_HELPER( 0x0800, "KP 4 (Left)",  KEYCODE_4_PAD       ) /* Keypad 4  (Left arrow)      4B  CB */\
+	AT_KEYB_HELPER( 0x1000, "KP 5",         KEYCODE_5_PAD       ) /* Keypad 5                    4C  CC */\
+	AT_KEYB_HELPER( 0x2000, "KP 6 (Right)", KEYCODE_6_PAD       ) /* Keypad 6  (Right arrow)     4D  CD */\
+	AT_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD    ) /* Keypad +                    4E  CE */\
+	AT_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD       ) /* Keypad 1  (End)             4F  CF */\
 		\
 	PORT_START	/* IN9 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_2_PAD,      IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_3_PAD,      IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_0_PAD,      IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL_PAD,    IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */\
+	AT_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD       ) /* Keypad 2  (Down arrow)      50  D0 */\
+	AT_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD       ) /* Keypad 3  (PgDn)            51  D1 */\
+	AT_KEYB_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD       ) /* Keypad 0  (Ins)             52  D2 */\
+	AT_KEYB_HELPER( 0x0008, "KP . (Del)",   KEYCODE_DEL_PAD     ) /* Keypad .  (Del)             53  D3 */\
 	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(84/102)\\",   KEYCODE_BACKSLASH2, IP_JOY_NONE ) /* Backslash 2                 56  D6 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)F11",		KEYCODE_F11,        IP_JOY_NONE ) /* F11                         57  D7 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)F12",		KEYCODE_F12,        IP_JOY_NONE ) /* F12                         58  D8 */\
+	AT_KEYB_HELPER( 0x0040, "(84/102)\\",   KEYCODE_BACKSLASH2  ) /* Backslash 2                 56  D6 */\
+	AT_KEYB_HELPER( 0x0080, "(MF2)F11",		KEYCODE_F11         ) /* F11                         57  D7 */\
+	AT_KEYB_HELPER( 0x0100, "(MF2)F12",		KEYCODE_F12         ) /* F12                         58  D8 */\
 	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )\
 		\
 	PORT_START	/* IN10 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)KP Enter",		KEYCODE_ENTER_PAD,  IP_JOY_NONE ) /* PAD Enter                   60  e0 */\
-	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Right Control",	KEYCODE_RCONTROL,   IP_JOY_NONE ) /* Right Control               61  e1 */\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)KP /",			KEYCODE_SLASH_PAD,  IP_JOY_NONE ) /* PAD Slash                   62  e2 */\
-	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)PRTSCR",			KEYCODE_PRTSCR,     IP_JOY_NONE ) /* Print Screen                63  e3 */\
-	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)ALTGR",			KEYCODE_RALT,       IP_JOY_NONE ) /* ALTGR                       64  e4 */\
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Home",			KEYCODE_HOME,       IP_JOY_NONE ) /* Home                        66  e6 */\
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Cursor Up",		KEYCODE_UP,         IP_JOY_NONE ) /* Up                          67  e7 */\
-	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Page Up",			KEYCODE_PGUP,       IP_JOY_NONE ) /* Page Up                     68  e8 */\
-	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Cursor Left",		KEYCODE_LEFT,       IP_JOY_NONE ) /* Left                        69  e9 */\
-	PORT_BITX( 0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Cursor Right",	KEYCODE_RIGHT,      IP_JOY_NONE ) /* Right                       6a  ea */\
-	PORT_BITX( 0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)End",				KEYCODE_END,        IP_JOY_NONE ) /* End                         6b  eb */\
-	PORT_BITX( 0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Cursor Down",		KEYCODE_DOWN,       IP_JOY_NONE ) /* Down                        6c  ec */\
-	PORT_BITX( 0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Page Down",		KEYCODE_PGDN,       IP_JOY_NONE ) /* Page Down                   6d  ed */\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Insert",			KEYCODE_INSERT,     IP_JOY_NONE ) /* Insert                      6e  ee */\
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Delete",			KEYCODE_DEL,        IP_JOY_NONE ) /* Delete                      6f  ef */\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"(MF2)Pause",			KEYCODE_PAUSE,      IP_JOY_NONE ) /* Pause                       65  e5 */\
+	AT_KEYB_HELPER( 0x0001, "(MF2)KP Enter",		KEYCODE_ENTER_PAD   ) /* PAD Enter                   60  e0 */\
+	AT_KEYB_HELPER( 0x0002, "(MF2)Right Control",	KEYCODE_RCONTROL    ) /* Right Control               61  e1 */\
+	AT_KEYB_HELPER( 0x0004, "(MF2)KP /",			KEYCODE_SLASH_PAD   ) /* PAD Slash                   62  e2 */\
+	AT_KEYB_HELPER( 0x0008, "(MF2)PRTSCR",			KEYCODE_PRTSCR      ) /* Print Screen                63  e3 */\
+	AT_KEYB_HELPER( 0x0010, "(MF2)ALTGR",			KEYCODE_RALT        ) /* ALTGR                       64  e4 */\
+	AT_KEYB_HELPER( 0x0020, "(MF2)Home",			KEYCODE_HOME        ) /* Home                        66  e6 */\
+	AT_KEYB_HELPER( 0x0040, "(MF2)Cursor Up",		KEYCODE_UP          ) /* Up                          67  e7 */\
+	AT_KEYB_HELPER( 0x0080, "(MF2)Page Up",			KEYCODE_PGUP        ) /* Page Up                     68  e8 */\
+	AT_KEYB_HELPER( 0x0100, "(MF2)Cursor Left",		KEYCODE_LEFT        ) /* Left                        69  e9 */\
+	AT_KEYB_HELPER( 0x0200, "(MF2)Cursor Right",	KEYCODE_RIGHT       ) /* Right                       6a  ea */\
+	AT_KEYB_HELPER( 0x0400, "(MF2)End",				KEYCODE_END         ) /* End                         6b  eb */\
+	AT_KEYB_HELPER( 0x0800, "(MF2)Cursor Down",		KEYCODE_DOWN        ) /* Down                        6c  ec */\
+	AT_KEYB_HELPER( 0x1000, "(MF2)Page Down",		KEYCODE_PGDN        ) /* Page Down                   6d  ed */\
+	AT_KEYB_HELPER( 0x2000, "(MF2)Insert",			KEYCODE_INSERT      ) /* Insert                      6e  ee */\
+	AT_KEYB_HELPER( 0x4000, "(MF2)Delete",			KEYCODE_DEL         ) /* Delete                      6f  ef */\
+	AT_KEYB_HELPER( 0x8000, "(MF2)Pause",			KEYCODE_PAUSE       ) /* Pause                       65  e5 */\
 	PORT_START	/* IN11 */\
-	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Print Screen", KEYCODE_PRTSCR,          IP_JOY_NONE ) /* Print Screen alternate      77  f7 */\
+	AT_KEYB_HELPER( 0x0001, "Print Screen", KEYCODE_PRTSCR           ) /* Print Screen alternate      77  f7 */\
 	PORT_BIT ( 0xfffe, 0x0000, IPT_UNUSED )
 
 #if 0
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Left Win",     CODE_NONE,          IP_JOY_NONE ) /* Left Win                    7d  fd */
-	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Right Win",    CODE_NONE,          IP_JOY_NONE ) /* Right Win                   7e  fe */
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Menu",         CODE_NONE,          IP_JOY_NONE ) /* Menu                        7f  ff */
+	AT_KEYB_HELPER( 0x2000, "Left Win",     CODE_NONE           ) /* Left Win                    7d  fd */
+	AT_KEYB_HELPER( 0x4000, "Right Win",    CODE_NONE           ) /* Right Win                   7e  fe */
+	AT_KEYB_HELPER( 0x8000, "Menu",         CODE_NONE           ) /* Menu                        7f  ff */
 #endif
 
 #ifdef __cplusplus

@@ -185,8 +185,8 @@ typedef struct extended_keyboard_code
 
 
 static extended_keyboard_code keyboard_mf2_code[0x10][2/*numlock off, on*/]={ 
-	{	{ "\xe0\x12", "\xe0\x92" } },
-	{	{ "\xe0\x13", "\xe0\x93" } },
+	{	{ "\xe0\x1c", "\xe0\x9c" } }, // keypad enter
+	{	{ "\xe0\x1d", "\xe0\x9d" } }, // right control
 	{	{ "\xe0\x35", "\xe0\xb5" } },
 	{	{ "\xe0\x37", "\xe0\xb7" } },
 	{	{ "\xe0\x38", "\xe0\xb8" } },
@@ -314,7 +314,14 @@ static void at_keyboard_queue_insert(UINT8 data);
 
 void pc_keyboard_init(void)
 {
-	at_keyboard_init();
+	keyboard.head = keyboard.tail = 0;
+	keyboard.input_state = 0;
+	memset(&keyboard.make[0], 0, sizeof(UINT8)*128);
+	/* set default led state */
+	set_led_status(2, 0);
+	set_led_status(0, 0);
+	set_led_status(1, 0);
+
 	keyboard.scan_code_set=1;
 	at_keyboard_queue_insert(0xaa);
 }
@@ -504,45 +511,45 @@ void at_keyboard_polling(void)
 			}
 		}
 
-		/* extended scan-codes */
-		for( i = 0x60; i < 0x70; i++  )
-		{
-			if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
+			/* extended scan-codes */
+			for( i = 0x60; i < 0x70; i++  )
 			{
-				if( keyboard.make[i] == 0 )
+				if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
 				{
-					keyboard.make[i] = 1;
-
-					at_keyboard_extended_scancode_insert(i,1);
-
-				}
-				else
-				{
-					keyboard.make[i] += 1;
-					if( keyboard.make[i] == keyboard.delay )
+					if( keyboard.make[i] == 0 )
 					{
-						at_keyboard_extended_scancode_insert(i, 1);
+						keyboard.make[i] = 1;
+						
+						at_keyboard_extended_scancode_insert(i,1);
+						
 					}
 					else
 					{
-						if( keyboard.make[i] == keyboard.delay + keyboard.repeat )
+						keyboard.make[i] += 1;
+						if( keyboard.make[i] == keyboard.delay )
 						{
-							keyboard.make[i]=keyboard.delay;
-							
 							at_keyboard_extended_scancode_insert(i, 1);
+						}
+						else
+						{
+							if( keyboard.make[i] == keyboard.delay + keyboard.repeat )
+							{
+								keyboard.make[i]=keyboard.delay;
+								
+								at_keyboard_extended_scancode_insert(i, 1);
+							}
 						}
 					}
 				}
-			}
-			else
-			{
-				if( keyboard.make[i] )
+				else
 				{
-					keyboard.make[i] = 0;
-					
-					at_keyboard_extended_scancode_insert(i,0);
+					if( keyboard.make[i] )
+					{
+						keyboard.make[i] = 0;
+						
+						at_keyboard_extended_scancode_insert(i,0);
+					}
 				}
-			}
 		}
 	}
 }
