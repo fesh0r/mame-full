@@ -94,7 +94,7 @@ endif
 ##############################################################################
 # these are the object subdirectories that need to be created.
 ##############################################################################
-OBJ     = $(TARGET).obj
+OBJ     = $(NAME).obj
 
 CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
@@ -113,7 +113,7 @@ ifdef ZLIB
 ZLIB    = contrib/cutzlib-1.1.3/libz.a
 endif
 
-all: $(ZLIB) objdirs osdepend x$(TARGET).$(DISPLAY_METHOD)
+all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
 
 # CPU core include paths
 VPATH=src $(wildcard src/cpu/*)
@@ -194,7 +194,7 @@ MY_OBJDIRS = $(CORE_OBJDIRS) $(sort $(OBJDIRS))
 ##############################################################################
 # Begin of the real makefile.
 ##############################################################################
-x$(TARGET).$(DISPLAY_METHOD): $(OBJS)
+$(NAME).$(DISPLAY_METHOD): $(OBJS)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(MY_LIBS)
 
@@ -307,7 +307,7 @@ doc/x$(TARGET).6: all src/unix/xmame.6-1 src/unix/xmame.6-3
 	cat src/unix/xmame.6-3 >> doc/x$(TARGET).6
 
 install: $(INST.$(DISPLAY_METHOD)) install-man
-	@echo x$(TARGET) for $(ARCH)-$(MY_CPU) installation completed
+	@echo $(NAME) for $(ARCH)-$(MY_CPU) installation completed
 
 install-man:
 	@echo installing manual pages under $(MANDIR) ...
@@ -316,11 +316,11 @@ install-man:
 
 doinstall:
 	@echo installing binaries under $(DESTDIR)...
-	$(INSTALL) x$(TARGET).$(DISPLAY_METHOD) $(DESTDIR)
+	$(INSTALL) $(NAME).$(DISPLAY_METHOD) $(DESTDIR)
 
 doinstallsuid:
 	@echo installing binaries under $(DESTDIR)...
-	$(INSTALL) x$(TARGET).$(DISPLAY_METHOD) $(DESTDIR)
+	$(INSTALL) $(NAME).$(DISPLAY_METHOD) $(DESTDIR)
 	chmod 4755 $(DESTDIR)/$(NAME).$(DISPLAY_METHOD)
 
 copycab:
@@ -328,5 +328,5 @@ copycab:
 	$(INSTALL) -R cab $(XMAMEROOT)
 
 clean: 
-	rm -fr $(OBJ) x$(TARGET).* xlistdev contrib/cutzlib-1.1.3/libz.a contrib/cutzlib-1.1.3/*.o $(TARGET).dep
+	rm -fr $(OBJ) $(NAME).* xlistdev contrib/cutzlib-1.1.3/libz.a contrib/cutzlib-1.1.3/*.o $(TOOLS)
 #	cd makedep; make clean

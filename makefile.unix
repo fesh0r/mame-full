@@ -312,9 +312,9 @@ NASM_FMT  = -f elf
 # NASM_FMT  = -f aoutb
 
 ifdef MAME_DEBUG
-NAME=$(TARGET)d
+NAME=x$(TARGET)d
 else
-NAME=$(TARGET)
+NAME=x$(TARGET)
 endif
 
 ##############################################################################
