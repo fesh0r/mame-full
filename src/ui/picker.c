@@ -636,6 +636,7 @@ void Picker_SetViewID(HWND hwndPicker, int nViewID)
 	dwStyle &= ~LVS_TYPEMASK;
 	dwStyle |= nListViewStyle;
 	SetWindowLong(hwndPicker, GWL_STYLE, dwStyle);
+	RedrawWindow(hwndPicker, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME);
 }
 
 

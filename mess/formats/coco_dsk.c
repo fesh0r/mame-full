@@ -1139,7 +1139,7 @@ FLOPPY_OPTIONS_START( coco )
 	FLOPPY_OPTION( coco_os9, "os9\0",			"CoCo OS-9 disk image",	coco_os9_identify,	coco_os9_construct,
 		HEADS([1]-2)
 		TRACKS([35]-255)
-		SECTORS([18])
+		SECTORS(1-[18]-255)
 		SECTOR_LENGTH([256])
 		FIRST_SECTOR_ID([1]))
 	FLOPPY_OPTION( coco_vdk, "vdk\0",			"CoCo VDK disk image",	coco_vdk_identify,	coco_vdk_construct,

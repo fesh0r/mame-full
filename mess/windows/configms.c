@@ -7,6 +7,7 @@
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <ctype.h>
 
 // MESS headers
 #include "driver.h"
@@ -36,9 +37,9 @@ int win_write_config;
 //============================================================
 
 static memory_pool devfilenames_pool;
-static const char *dev_opts[IO_COUNT];
+static char *dev_opts[IO_COUNT];
 static char *dev_dirs[IO_COUNT];
-static const char *ramsize_opt;
+static char *ramsize_opt;
 
 static int add_device(struct rc_option *option, const char *arg, int priority);
 static int specify_ram(struct rc_option *option, const char *arg, int priority);
@@ -121,6 +122,21 @@ done:
 	return retval;
 }
 
+
+
+static int use_filename_quotes(const char *filename)
+{
+	while(*filename)
+	{
+		if (isspace(*filename))
+			return TRUE;
+		filename++;
+	}
+	return FALSE;
+}
+
+
+
 void osd_begin_final_unloading(void)
 {
 	int devtype;
@@ -128,6 +144,7 @@ void osd_begin_final_unloading(void)
 	size_t blocksize;
 	char *s;
 	mess_image *img;
+	const char *filename;
 	size_t len;
 
 	memset(dev_opts, 0, sizeof(dev_opts));
@@ -144,13 +161,19 @@ void osd_begin_final_unloading(void)
 
 		if (count > 0)
 		{
+			// compute length of string
 			blocksize = 0;
 			for (id = 0; id < count; id++)
 			{
 				img = image_from_devtype_and_index(devtype, id);
 
 				if (image_exists(img))
-					blocksize += strlen(image_filename(img));
+				{
+					filename = image_filename(img);
+					blocksize += strlen(filename);
+					if (use_filename_quotes(filename))
+						blocksize += 2;
+				}
 				blocksize++;
 			}
 
@@ -164,7 +187,14 @@ void osd_begin_final_unloading(void)
 				img = image_from_devtype_and_index(devtype, id);
 
 				if (image_exists(img))
-					strcat(s, image_filename(img));
+				{
+					filename = image_filename(img);
+					if (use_filename_quotes(filename))
+						strcat(s, "\"");
+					strcat(s, filename);
+					if (use_filename_quotes(filename))
+						strcat(s, "\"");
+				}
 				if (id+1 < count)
 				{
 					len = strlen(s);
