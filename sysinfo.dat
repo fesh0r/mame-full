@@ -3357,9 +3357,55 @@ $bio
 APF Imagination Machine
 -----------------------
 
-The APF Imagination is the same as an APF-M1000 with the additional keyboard unit attached.
+The APF Imagination has the same hardware as the APF-M1000, but it is a computer.
+It has a keyboard, cassette player and disc interface.
 
 
+
+In basic, pressing "FUNCTION" (currently mapped to CTRL) and a letter/number will display
+a basic keyword making it easier to enter programs.
+
+
+FUNCTION+Q = IF
+FUNCTION+W = STEP
+FUNCTION+E = STOP
+FUNCTION+R = READ
+FUNCTION+T = NEXT
+FUNCTION+Y = PRINT
+FUNCTION+U = END
+FUNCTION+I = LIST
+FUNCTION+O = REM
+FUNCTION+P = USING
+FUNCTION+1 = GOSUB
+FUNCTION+2 = LET
+FUNCTION+3 = DATA
+FUNCTION+4 = INPUT
+FUNCTION+5 = DIM
+FUNCTION+6 = FOR
+FUNCTION+7 = RETURN
+FUNCTION+8 = THEN
+FUNCTION+9 = ON
+FUNCTION+0 = GOTO
+FUNCTION+- = RESTORE
+FUNCTION+ENTER = CLOAD
+
+Use CSAVE"<filename>" to save a file, and CLOAD"" to load the file back.
+
+Emulation state:
+- cassette loading and saving is working
+
+- interrupts are not exact. I don't know enough about them, any info would
+be appreciated.
+
+- disc drive and disc interface is not emulated. I don't know anything about it,
+help would be appreciated.
+
+- keyboard is mostly working but some keys may be missing
+
+- keypad is not emulated
+
+- the M6847 emulation is very advanced *BUT* I don't think I have set it up
+correctly for the APF Imagination, therefore the graphics are wrong.
 
 $end
 #---------------------------------------------------------------------------------------------#
@@ -3368,10 +3414,12 @@ $bio
 APF M-1000
 ----------
 
-The APF M-1000 is a console.
+The APF M-1000 is a console. It has a built in game. The emulation is not exact and the
+built in game does not work.
 
-
-
+Emulation state:
+- internal game does not work
+- keypad is not emulated
 
 #---------------------------------------------------------------------------------------------#
 
