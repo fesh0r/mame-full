@@ -263,7 +263,8 @@ static int DirectSound_start_audio_stream(int stereo)
     else
     {
         memset(area1, 0, len_area1);
-        memset(area2, 0, len_area2);
+		if (area2)
+	        memset(area2, 0, len_area2);
        
         hr = IDirectSoundBuffer_Unlock(dsb, area1, len_area1, area2, len_area2);
         if (FAILED(hr))
@@ -395,7 +396,8 @@ static void DirectSound_update_audio(void)
     else
     {
         memcpy(area1, stream_cache_data, len_area1);
-        memcpy(area2, ((byte *)stream_cache_data) + len_area1, len_area2);
+		if (area2)
+	        memcpy(area2, ((byte *)stream_cache_data) + len_area1, len_area2);
        
         hr = IDirectSoundBuffer_Unlock(dsb, area1, len_area1, area2, len_area2);
         if (FAILED(hr))
