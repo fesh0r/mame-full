@@ -279,7 +279,7 @@ static void nc_refresh_memory_bank_config(int bank)
                 case 2:
                 {
                    /* card connected? */
-                   if ((nc_card_battery_status & (1<<7))==0)
+                   if (((nc_card_battery_status & (1<<7))==0) && (nc_card_ram!=NULL))
                    {
         
                            unsigned char *addr;
