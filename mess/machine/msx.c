@@ -15,6 +15,7 @@
 #include "driver.h"
 #include "includes/msx.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
 #include "sndhrdw/scc.h"
@@ -528,16 +529,49 @@ void msx_ch_reset(void) {
     return;
 }
 
+/* z80 stuff */
+static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy, 
+	Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
+static UINT8 *old_z80_tables[5], *z80_table;
+
 void init_msx (void)
     {
+    int i,n;
+
     /* this function is called at a very early stage, and not after a reset. */
     TMS9928A_int_callback(msx_vdp_interrupt);
+	
+    /* adjust z80 cycles for the M1 wait state */
+    z80_table = malloc (0x500);
+    if (!z80_table)
+		logerror ("Cannot malloc z80 cycle table, using default values\n");
+	else
+		{
+        for (i=0;i<5;i++)
+			{
+			old_z80_tables[i] = z80_get_cycle_table (z80_table_num[i]);
+			for (n=0;n<256;n++)
+				{
+				z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
+				}
+			z80_set_cycle_table (i, z80_table + i*0x100);
+			}	
+		}
     }
 
 void msx_ch_stop (void) 
 	{
+	int i;
+
     free (msx1.empty); msx1.empty = NULL;
     free (msx1.ram); msx1.ram = NULL;
+	if (z80_table)
+		{
+		for (i=0;i<5;i++)
+			z80_set_cycle_table (i, old_z80_tables[i]);
+			
+		free (z80_table);
+		}
     msx1.run = 0;
 	}
 
