@@ -301,7 +301,6 @@ $(OBJ)/p2000.a:    \
 $(OBJ)/amstrad.a:  \
           $(OBJ)/machine/8255ppi.o       \
 	  $(OBJ)/mess/machine/flopdrv.o  \
-          $(OBJ)/mess/vidhrdw/hd6845s.o  \
           $(OBJ)/mess/vidhrdw/amstrad.o  \
           $(OBJ)/mess/vidhrdw/kc.o       \
           $(OBJ)/mess/machine/amstrad.o  \
@@ -1129,7 +1128,7 @@ mess.obj/mess/machine/amstrad.o: src/cpuintrf.h src/timer.h src/sndintrf.h
 mess.obj/mess/machine/amstrad.o: src/sound/mixer.h src/sound/streams.h
 mess.obj/mess/machine/amstrad.o: src/usrintrf.h src/cheat.h src/tilemap.h
 mess.obj/mess/machine/amstrad.o: src/sprite.h src/gfxobj.h src/profiler.h
-mess.obj/mess/machine/amstrad.o: src/cpu/z80/z80.h mess/machine/amstrad.h
+mess.obj/mess/machine/amstrad.o: src/cpu/z80/z80.h 
 mess.obj/mess/machine/amstrad.o: src/machine/8255ppi.h mess/includes/nec765.h
 mess.obj/mess/machine/amstrad.o: mess/includes/flopdrv.h mess/includes/dsk.h
 mess.obj/mess/machine/ap_disk2.o: src/driver.h src/memory.h src/osdepend.h
@@ -2152,14 +2151,6 @@ mess.obj/mess/vidhrdw/gtia.o: src/usrintrf.h src/cheat.h src/tilemap.h
 mess.obj/mess/vidhrdw/gtia.o: src/sprite.h src/gfxobj.h src/profiler.h
 mess.obj/mess/vidhrdw/gtia.o: src/cpu/m6502/m6502.h mess/machine/atari.h
 mess.obj/mess/vidhrdw/gtia.o: mess/vidhrdw/atari.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/driver.h src/memory.h src/osdepend.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/inptport.h src/input.h src/mame.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/drawgfx.h src/common.h src/palette.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/cpuintrf.h src/timer.h src/sndintrf.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/sound/mixer.h src/sound/streams.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/usrintrf.h src/cheat.h src/tilemap.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/sprite.h src/gfxobj.h src/profiler.h
-mess.obj/mess/vidhrdw/hd6845s.o: src/vidhrdw/generic.h mess/vidhrdw/hd6845s.h
 mess.obj/mess/vidhrdw/jupiter.o: src/driver.h src/memory.h src/osdepend.h
 mess.obj/mess/vidhrdw/jupiter.o: src/inptport.h src/input.h src/mame.h
 mess.obj/mess/vidhrdw/jupiter.o: src/drawgfx.h src/common.h src/palette.h
