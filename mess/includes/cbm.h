@@ -19,7 +19,7 @@ extern "C" {
  * c128
  * c65*/
 
-#if 1
+#if 0
 #include "snprintf.h"
 #else
 /* quick (and unsafe as sprintf) snprintf */
