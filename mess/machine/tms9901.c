@@ -44,7 +44,7 @@ Pins:
 Interrupt handling:
 	After each clock cycle, TMS9901 latches the state of INT1*-INT15* (except
 	pins which are set as output pins).  If the clock is enabled, it replaces
-	INT3* with an internal timer with flag.  Then it inverts the value and
+	INT3* with an internal timer interrupt flag.  Then it inverts the value and
 	performs a bit-wise AND with the interrupt mask.
 
 	If there are some unmasked interrupt bits, INTREQ* is asserted and the code
