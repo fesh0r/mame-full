@@ -2167,30 +2167,16 @@ static const char *name_rdmem( unsigned base )
 				name = name_rom("ROM", REGION_CPU1+activecpu, &base, mr->start );
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
-			case (FPTR)MRA_BANK1:
-				sprintf(dst, "BANK1+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK2:
-				sprintf(dst, "BANK2+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK3:
-				sprintf(dst, "BANK3+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK4:
-				sprintf(dst, "BANK4+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK5:
-				sprintf(dst, "BANK5+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK6:
-				sprintf(dst, "BANK6+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK7:
-				sprintf(dst, "BANK7+%04X", lshift(offset) );
-				break;
-			case (FPTR)MRA_BANK8:
-				sprintf(dst, "BANK8+%04X", lshift(offset) );
-				break;
+			case (FPTR)MRA_BANK1: case (FPTR)MRA_BANK2:
+			case (FPTR)MRA_BANK3: case (FPTR)MRA_BANK4:
+			case (FPTR)MRA_BANK5: case (FPTR)MRA_BANK6:
+			case (FPTR)MRA_BANK7: case (FPTR)MRA_BANK8:
+			case (FPTR)MRA_BANK9: case (FPTR)MRA_BANK10:
+			case (FPTR)MRA_BANK11: case (FPTR)MRA_BANK12:
+			case (FPTR)MRA_BANK13: case (FPTR)MRA_BANK14:
+			case (FPTR)MRA_BANK15: case (FPTR)MRA_BANK16:
+				sprintf(dst, "BANK%d+%04X", 1 + (int)(MRA_BANK1) - (int)(mr->handler), lshift(offset) );
+                break;
 			case (FPTR)MRA_NOP:
 				sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(offset) );
 				break;
@@ -2306,29 +2292,15 @@ static const char *name_wrmem( unsigned base )
 				name = name_rom("RAMROM", REGION_CPU1+activecpu, &base, mw->start);
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
-			case (FPTR)MWA_BANK1:
-				sprintf(dst, "BANK1+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK2:
-				sprintf(dst, "BANK2+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK3:
-				sprintf(dst, "BANK3+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK4:
-				sprintf(dst, "BANK4+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK5:
-				sprintf(dst, "BANK5+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK6:
-				sprintf(dst, "BANK6+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK7:
-				sprintf(dst, "BANK7+%04X", lshift(base - mw->start) );
-				break;
-			case (FPTR)MWA_BANK8:
-				sprintf(dst, "BANK8+%04X", lshift(base - mw->start) );
+			case (FPTR)MWA_BANK1: case (FPTR)MWA_BANK2:
+			case (FPTR)MWA_BANK3: case (FPTR)MWA_BANK4:
+			case (FPTR)MWA_BANK5: case (FPTR)MWA_BANK6:
+			case (FPTR)MWA_BANK7: case (FPTR)MWA_BANK8:
+			case (FPTR)MWA_BANK9: case (FPTR)MWA_BANK10:
+			case (FPTR)MWA_BANK11: case (FPTR)MWA_BANK12:
+			case (FPTR)MWA_BANK13: case (FPTR)MWA_BANK14:
+			case (FPTR)MWA_BANK15: case (FPTR)MWA_BANK16:
+				sprintf(dst, "BANK%d+%04X", 1 + (int)(MWA_BANK1) - (int)(mw->handler), lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_NOP:
 				sprintf(dst, "NOP%d+%04X", nop_cnt, lshift(base - mw->start) );
