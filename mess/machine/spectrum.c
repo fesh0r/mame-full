@@ -239,7 +239,7 @@ static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot
 		 * Don't try to load past the end of memory */
 
 		for (i = 0; i < load_length; i++)
-			cpu_writemem16(load_addr + i, snapshot_data[TapePosition + i + 3]);
+			program_write_byte(load_addr + i, snapshot_data[TapePosition + i + 3]);
 		cpunum_set_reg(0, Z80_IX, load_addr + load_length);
 		cpunum_set_reg(0, Z80_DE, de_reg - load_length);
 		if (de_reg == (tap_block_length - 2))
@@ -523,7 +523,7 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	/* memory dump */
 	for (i = 0; i < size; i++)
-		cpu_writemem16(i + offset, pSnapshot[38 + i]);
+		program_write_byte(i + offset, pSnapshot[38 + i]);
 
 	dump_registers();
 }
@@ -638,7 +638,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	/* memory dump */
 	for (i = 0; i < 49152; i++)
 	{
-		cpu_writemem16(i + 16384, pSnapshot[27 + i]);
+		program_write_byte(i + 16384, pSnapshot[27 + i]);
 	}
 
 	if (SnapshotSize == 49179)
@@ -672,7 +672,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 				spectrum_128_port_7ffd_data += i;
 				spectrum_update_paging();
 				for (j = 0; j < 16384; j++)
-					cpu_writemem16(j + 49152, pSnapshot[bank_offset + j]);
+					program_write_byte(j + 49152, pSnapshot[bank_offset + j]);
 				bank_offset += 16384;
 			}
 		}
@@ -729,14 +729,14 @@ static void spectrum_z80_decompress_block(unsigned char *pSource, int Dest, int 
 
 				for (i = 0; i < count; i++)
 				{
-					cpu_writemem16(Dest, data);
+					program_write_byte(Dest, data);
 					Dest++;
 				}
 			}
 			else
 			{
 				/* single 0x0ed */
-				cpu_writemem16(Dest, ch);
+				program_write_byte(Dest, ch);
 				Dest++;
 				pSource++;
 				size--;
@@ -746,7 +746,7 @@ static void spectrum_z80_decompress_block(unsigned char *pSource, int Dest, int 
 		else
 		{
 			/* not 0x0ed */
-			cpu_writemem16(Dest, ch);
+			program_write_byte(Dest, ch);
 			Dest++;
 			pSource++;
 			size--;
@@ -958,7 +958,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		{
 			logerror("Not compressed\n");	/* not compressed */
 			for (i = 0; i < 49152; i++)
-				cpu_writemem16(i + 16384, pSnapshot[30 + i]);
+				program_write_byte(i + 16384, pSnapshot[30 + i]);
 		}
 		else
 		{
@@ -1037,7 +1037,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 					/* not compressed */
 					for (i = 0; i < 16384; i++)
-						cpu_writemem16(i + Dest, pSource[i]);
+						program_write_byte(i + Dest, pSource[i]);
 				}
 				else
 				{
@@ -1110,7 +1110,7 @@ QUICKLOAD_LOAD(spectrum)
 		return INIT_FAIL;
 
 	for (i = 0; i < quick_length; i++)
-		cpu_writemem16(i + quick_addr, quick_data[i]);
+		program_write_byte(i + quick_addr, quick_data[i]);
 
 	logerror("quick loading at %.4x size:%.4x\n", quick_addr, quick_length);
 	return INIT_PASS;

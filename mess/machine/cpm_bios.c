@@ -296,7 +296,7 @@ void cpm_exit(void)
  *****************************************************************************/
 static void cpm_conout_chr(int data)
 {
-	cpu_writeport16(BIOS_CONOUT, data);
+	io_write_byte_8(BIOS_CONOUT, data);
 }
 
 /*****************************************************************************
@@ -656,7 +656,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		break;
 
 	case 0x02: /* CSTAT */
-		tmp = cpu_readport16(BIOS_CONST) & 0xff;
+		tmp = io_read_byte_8(BIOS_CONST) & 0xff;
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_CONIO
 		logerror("BIOS 02 console status      A:%02X\n", tmp);
@@ -664,12 +664,12 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		break;
 
 	case 0x03: /* CONIN */
-		if ( cpu_readport16(BIOS_CONST) == 0 )
+		if ( io_read_byte_8(BIOS_CONST) == 0 )
 		{
 			activecpu_set_reg( Z80_PC, activecpu_get_reg(Z80_PC) - 2 );
 			break;
 		}
-		tmp = cpu_readport16(BIOS_CONIN) & 0xff;
+		tmp = io_read_byte_8(BIOS_CONIN) & 0xff;
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_CONIO
 		logerror("BIOS 03 console input       A:%02X\n", tmp);

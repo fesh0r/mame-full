@@ -916,5 +916,5 @@ WRITE_HANDLER ( m6530_002_w )
 
 WRITE_HANDLER ( kim1_mirror_w )
 {
-	cpu_writemem16(offset & 0x1fff, data);
+	program_write_byte(offset & 0x1fff, data);
 }

@@ -565,7 +565,7 @@ static void ti85_setup_snapshot (UINT8 * data)
 
 	/* Memory dump */
 	for (i = 0; i < 0x8000; i++)
-	   cpu_writemem16(i + 0x8000, data[i+0x94]);
+	   program_write_byte(i + 0x8000, data[i+0x94]);
 
 	ti85_keypad_mask = hdw[0x00]&0x7f;
 

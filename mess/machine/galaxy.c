@@ -50,7 +50,7 @@ static int galaxy_irq_callback (int cpu)
   Snapshot files (GAL)
 ***************************************************************************/
 
-static void galaxy_setup_snapshot (UINT8 * data)
+static void galaxy_setup_snapshot (const UINT8 * data)
 {
 	int i;
 	unsigned char lo,hi;
@@ -98,12 +98,12 @@ static void galaxy_setup_snapshot (UINT8 * data)
 	cpunum_set_reg(0, Z80_IM, data[60]&0x0ff);
 	cpunum_set_reg(0, Z80_I, data[64]&0x0ff);
 	cpunum_set_reg(0, Z80_R, (data[68]&0x7f) | (data[72]&0x80));
-	cpunum_set_reg(0, Z80_NMI_STATE, 0);
-	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
+	activecpu_set_irq_line(IRQ_LINE_NMI, 0);
+	activecpu_set_irq_line(0, 0);
 
 	/* Memory dump */
 	for (i = 0; i < GALAXY_SNAPSHOT_SIZE-76; i++)
-		cpu_writemem16(i + 0x2000, data[i+76]);
+		program_write_byte(i + 0x2000, data[i+76]);
 }
 
 SNAPSHOT_LOAD( galaxy )

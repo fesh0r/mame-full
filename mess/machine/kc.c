@@ -195,7 +195,7 @@ WRITE_HANDLER(kc85_disc_interface_ram_w)
 
 	logerror("interface ram w: %04x %02x\n",addr,data);
 
-	cpu_writemem16(addr|0x0f000,data);
+	program_write_byte(addr|0x0f000,data);
 }
 
 READ_HANDLER(kc85_disc_interface_ram_r)

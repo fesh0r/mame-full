@@ -184,7 +184,7 @@ static OPBASE_HANDLER (opbaseoverride)
 						logerror("cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs);
 						while( block_len && size )
 						{
-							cpu_writemem16(block_ofs, *s);
+							program_write_byte(block_ofs, *s);
 							s++;
 							block_ofs++;
 							block_len--;
@@ -212,7 +212,7 @@ static OPBASE_HANDLER (opbaseoverride)
 						size--;
 					}
 				}
-				cpunum_set_pc(0,entry);
+				activecpu_set_reg(REG_PC, entry);
 			}
 			free(buff);
 		}

@@ -166,9 +166,9 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 //TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 
 	/* GCE */
-//	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
+	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
 						/* (aka Milton-Bradley Vectrex) 					*/
-//	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
+	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
 
 	/* MATTEL */
 //	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
@@ -523,7 +523,7 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 //	DRIVER( ep128a )	/* Enterprise 128 k 								*/
 
 	/* NON LINEAR SYSTEMS */
-//	DRIVER( kaypro )	/* Kaypro 2X										*/
+	DRIVER( kaypro )	/* Kaypro 2X										*/
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
@@ -558,7 +558,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( mc10 )		/* MC-10											*/
 
 	/* EACA */
-//	DRIVER( cgenie )	/* Colour Genie EG2000								*/
+	DRIVER( cgenie )	/* Colour Genie EG2000								*/
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */
@@ -641,7 +641,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 //	DRIVER( exidy )		/* Sorcerer											*/
 
 	/* GALAKSIJA */
-//	DRIVER( galaxy )
+	DRIVER( galaxy )
 
 	/* PK-01 Lviv */
 //	DRIVER( lviv )		/* PK-01 Lviv										*/

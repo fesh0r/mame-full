@@ -230,6 +230,7 @@ DRVLIBS = \
 	$(OBJ)/coleco.a   \
 	$(OBJ)/apf.a      \
 	$(OBJ)/teamconc.a \
+	$(OBJ)/concept.a  \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/tutor.a    \
@@ -243,7 +244,6 @@ DRVLIBS = \
 #	$(OBJ)/cbmshare.a \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/sym1.a     \
-#	$(OBJ)/concept.a  \
 #	$(OBJ)/dai.a      \
 #	$(OBJ)/bandai.a		\
 #	$(OBJ)/compis.a		\
@@ -271,7 +271,7 @@ $(OBJ)/coleco.a:   \
 $(OBJ)/arcadia.a:  \
 	$(OBJ)/mess/systems/arcadia.o	\
 	$(OBJ)/mess/sndhrdw/arcadia.o	\
-#	$(OBJ)/mess/vidhrdw/arcadia.o	\
+	$(OBJ)/mess/vidhrdw/arcadia.o	\
 
 $(OBJ)/sega.a:						\
 	$(OBJ)/mess/vidhrdw/genesis.o	\
@@ -302,7 +302,7 @@ $(OBJ)/atari.a:						\
 $(OBJ)/gce.a:	                     \
 	$(OBJ)/mess/systems/vectrex.o	\
 	$(OBJ)/mess/vidhrdw/vectrex.o	\
-#	$(OBJ)/mess/machine/vectrex.o	\
+	$(OBJ)/mess/machine/vectrex.o	\
 
 $(OBJ)/nintendo.a:					\
 	$(OBJ)/mess/sndhrdw/gb.o		\
@@ -386,8 +386,8 @@ $(OBJ)/trs80.a:    \
 $(OBJ)/cgenie.a:   \
 	$(OBJ)/mess/systems/cgenie.o	\
 	$(OBJ)/mess/vidhrdw/cgenie.o	 \
-#	$(OBJ)/mess/sndhrdw/cgenie.o	 \
-#	$(OBJ)/mess/machine/cgenie.o	 \
+	$(OBJ)/mess/sndhrdw/cgenie.o	 \
+	$(OBJ)/mess/machine/cgenie.o	 \
 
 $(OBJ)/pdp1.a:	   \
 	$(OBJ)/mess/vidhrdw/pdp1.o	 \
@@ -399,10 +399,10 @@ $(OBJ)/apexc.a:     \
 
 $(OBJ)/kaypro.a:   \
 	$(OBJ)/mess/systems/kaypro.o	\
-#	$(OBJ)/mess/machine/cpm_bios.o	\
-#	$(OBJ)/mess/vidhrdw/kaypro.o	 \
-#	$(OBJ)/mess/sndhrdw/kaypro.o	 \
-#	$(OBJ)/mess/machine/kaypro.o	 \
+	$(OBJ)/mess/machine/cpm_bios.o	\
+	$(OBJ)/mess/vidhrdw/kaypro.o	 \
+	$(OBJ)/mess/sndhrdw/kaypro.o	 \
+	$(OBJ)/mess/machine/kaypro.o	 \
 
 $(OBJ)/sinclair.a: \
 	$(OBJ)/mess/vidhrdw/border.o	 \
@@ -692,7 +692,7 @@ $(OBJ)/exidy.a:    \
 $(OBJ)/galaxy.a:   \
 	$(OBJ)/mess/vidhrdw/galaxy.o   \
 	$(OBJ)/mess/systems/galaxy.o	\
-#	$(OBJ)/mess/machine/galaxy.o   \
+	$(OBJ)/mess/machine/galaxy.o   \
 
 $(OBJ)/lviv.a:   \
 	$(OBJ)/mess/vidhrdw/lviv.o   \
