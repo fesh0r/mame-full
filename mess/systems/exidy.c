@@ -799,7 +799,7 @@ ROM_START(exidy)
 	/* these are common to all because they are inside the machine */
 	ROM_REGION(64*1024+32, REGION_CPU1,0)
 
-	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, BAD_DUMP)
+	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, BAD_DUMP CRC(d82a40d6))
 
 	/* char rom */
 	ROM_LOAD("exchr-1.dat",0x0f800, 1024, CRC(4a7e1cdd))
