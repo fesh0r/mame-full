@@ -1,41 +1,8 @@
+#include "includes/flopdrv.h"
 
 
-#define TWO_SIDE		0x08
-#define READY			0x20
-#define WRITE_PROTECT	0x40
-#define FAULT			0x80
-
-typedef struct nec765_id
-{
-	unsigned char C;
-	unsigned char H;
-	unsigned char R;
-	unsigned char N;
-
-	/* status bits - used to hold data/deleted data type and
-	crc errors */
-	unsigned char ST0;
-	unsigned char ST1;
-} nec765_id;
-
-/* floppy drive types */
-typedef enum
-{
-	FLOPPY_DRIVE_SS_40,
-	FLOPPY_DRIVE_DS_80
-} floppy_type;
-
-typedef struct floppy_interface
-{
-	/* seek to physical track */
-	void (*seek_callback)(int drive, int physical_track);
-	/* get number of sectors per track on side specified */
-	int (*get_sectors_per_track)(int drive, int physical_side);
-	/* get id from current track and specified side */
-	void (*get_id_callback)(int drive, nec765_id *, int id_index, int physical_side);
-	/* get sector data for current track and specified side and ID */
-	void (*get_sector_data_callback)(int,int,int,char **);
-} floppy_interface;
+#define NEC765_DAM_DELETED_DATA 0x0f8
+#define NEC765_DAM_DATA 0x0fb
 
 typedef struct nec765_interface
 {
@@ -76,12 +43,6 @@ enum
 	SMC37C78=2
 } NEC765_VERSION;
 
-
-void	floppy_drive_set_geometry(int,floppy_type type);
-void    floppy_drive_setup_drive_status(int drive);
-void	floppy_drive_set_motor_state(int);
-void	floppy_set_interface(int, floppy_interface *);
-
 /* dma acknowledge with write */
 WRITE_HANDLER(nec765_dack_w);
 /* dma acknowledge with read */
@@ -92,3 +53,25 @@ void	nec765_reset(int);
 
 /* reset pin of nec765 */
 void	nec765_set_reset_state(int);
+
+
+/*********************/
+/* STATUS REGISTER 1 */
+
+/* this is set if a TC signal was not received after the sector data was read */
+#define NEC765_ST1_END_OF_CYLINDER (1<<7)
+/* this is set if the sector ID being searched for is not found */
+#define NEC765_ST1_NO_DATA (1<<2)
+/* set if disc is write protected and a write/format operation was performed */
+#define NEC765_ST1_NOT_WRITEABLE (1<<1)
+
+/*********************/
+/* STATUS REGISTER 2 */
+
+/* C parameter specified did not match C value read from disc */
+#define NEC765_ST2_WRONG_CYLINDER (1<<4)
+/* C parameter specified did not match C value read from disc, and C read from disc was 0x0ff */
+#define NEC765_ST2_BAD_CYLINDER (1<<1)
+/* this is set if the FDC encounters a Deleted Data Mark when executing a read data
+command, or FDC encounters a Data Mark when executing a read deleted data command */
+#define NEC765_ST2_CONTROL_MARK (1<<6)

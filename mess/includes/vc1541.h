@@ -3,7 +3,7 @@
        commodore vc1541 floppy disk drive
 
 ***************************************************************************/
-#include "mess/machine/6522via.h"
+#include "machine/6522via.h"
 #include "driver.h"
 
 #ifdef PET_TEST_CODE
@@ -213,7 +213,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
 
 	ROM_LOAD("1551.318008-01.bin",  0xc000, 0x4000, 0x6d16d024)
 
-	/* bug fixes introduced bugs for 1541 mode 
+	/* bug fixes introduced bugs for 1541 mode
 	 jiffydos to have fixed 1571 and working 1541 mode */
 	ROM_LOAD("1570-rom.315090-01.bin",  0x8000, 0x8000, 0x5a0c7937)
 	ROM_LOAD("1571-rom.310654-03.bin",  0x8000, 0x8000, 0x3889b8b8)

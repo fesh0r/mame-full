@@ -8,7 +8,7 @@
  *
  ******************************************************************************/
 
-#include "mess/machine/cpm_bios.h"
+#include "machine/cpm_bios.h"
 
 extern int kaypro_floppy_init(int id);
 extern void init_kaypro(void);
