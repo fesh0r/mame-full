@@ -16,7 +16,7 @@
 enum resolution_entry_state
 {
 	RESOLUTION_ENTRY_STATE_UNSPECIFIED,
-	RESOLUTION_ENTRY_STATE_SPECIFIED,
+	RESOLUTION_ENTRY_STATE_SPECIFIED
 };
 
 struct option_resolution_entry
