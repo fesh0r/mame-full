@@ -49,22 +49,10 @@ VIDEO_START( channelf )
 
 static int recalc_palette_offset(int reg1, int reg2)
 {
-	/* Note: This is based on the very strange decoding they    */
-	/*       used to determine which palette this line is using */
+	/* Note: This is based on the decoding they used to   */
+	/*       determine which palette this line is using   */
 
-	switch(reg1*4+reg2)
-	{
-		case 0:
-			return 0;
-		case 8:
-			return 4;
-		case 3:
-			return 8;
-		case 15:
-			return 12;
-		default:
-			return 0; /* This should be an error condition */
-	}
+	return ((reg2&0x2)|(reg1>>1)) << 2;
 }
 
 VIDEO_UPDATE( channelf )

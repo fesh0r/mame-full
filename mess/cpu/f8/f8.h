@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 enum {
-	F8_PC0=0, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS,
+	F8_PC0=1, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS,
         F8_J, F8_HU, F8_HL, F8_KU, F8_KL, F8_QU, F8_QL,
 
         F8_R0, F8_R1, F8_R2, F8_R3, F8_R4, F8_R5, F8_R6, F8_R7, F8_R8,
@@ -52,4 +52,5 @@ void f8_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #endif /* _F8_H */
+
 

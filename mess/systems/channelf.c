@@ -42,7 +42,7 @@
  * ...so it stays here for now.
  */
 
-static UINT8 latch[4];
+static UINT8 latch[6];	/* SKR - inc by 2 for 2102 ports */
 
 static UINT8 port_read_with_latch(UINT8 ext, UINT8 latch_state)
 {
@@ -94,6 +94,36 @@ static READ_HANDLER( channelf_port_5_r )
 	return port_read_with_latch(0xff,latch[3]);
 }
 
+struct {	/* SKR - 2102 RAM chip on carts 10 and 18 I/O ports */
+	UINT8 d; 			/* data bit:inverted logic, but reading/writing cancel out */
+	UINT8 r_w; 			/* inverted logic: 0 means read, 1 means write */
+	UINT8 a[10]; 		/* addr bits: inverted logic, but reading/writing cancel out */
+	UINT16 addr; 		/* calculated addr from addr bits */
+	UINT8 ram[1024];	/* RAM array */
+} r2102;
+
+static READ_HANDLER( channelf_2102A_r )	/* SKR */
+{
+	UINT8 pdata;
+
+	if(r2102.r_w==0) {
+		r2102.addr=(r2102.a[0]&1)+((r2102.a[1]<<1)&2)+((r2102.a[2]<<2)&4)+((r2102.a[3]<<3)&8)+((r2102.a[4]<<4)&16)+((r2102.a[5]<<5)&32)+((r2102.a[6]<<6)&64)+((r2102.a[7]<<7)&128)+((r2102.a[8]<<8)&256)+((r2102.a[9]<<9)&512);
+		r2102.d=r2102.ram[r2102.addr]&1;
+		pdata=latch[4]&0x7f;
+		pdata|=(r2102.d<<7);
+		LOG(("rhA: addr=%d, d=%d, r_w=%d, ram[%d]=%d,  a[9]=%d, a[8]=%d, a[7]=%d, a[6]=%d, a[5]=%d, a[4]=%d, a[3]=%d, a[2]=%d, a[1]=%d, a[0]=%d\n",r2102.addr,r2102.d,r2102.r_w,r2102.addr,r2102.ram[r2102.addr],r2102.a[9],r2102.a[8],r2102.a[7],r2102.a[6],r2102.a[5],r2102.a[4],r2102.a[3],r2102.a[2],r2102.a[1],r2102.a[0]));
+		return port_read_with_latch(0xff,pdata);
+	} else
+		LOG(("rhA: r_w=%d\n",r2102.r_w));
+		return port_read_with_latch(0xff,latch[4]);
+}
+
+static READ_HANDLER( channelf_2102B_r )  /* SKR */
+{
+	LOG(("rhB\n"));
+	return port_read_with_latch(0xff,latch[5]);
+}
+
 static WRITE_HANDLER( channelf_port_0_w )
 {
 	int offs;
@@ -127,9 +157,37 @@ static WRITE_HANDLER( channelf_port_5_w )
     channelf_row_reg = (data | 0xc0) ^ 0xff;
 }
 
+static WRITE_HANDLER( channelf_2102A_w )  /* SKR */
+{
+	latch[4]=data;
+	r2102.a[2]=(data>>2)&1;
+	r2102.a[3]=(data>>1)&1;
+	r2102.r_w=data&1;
+	r2102.addr=(r2102.a[0]&1)+((r2102.a[1]<<1)&2)+((r2102.a[2]<<2)&4)+((r2102.a[3]<<3)&8)+((r2102.a[4]<<4)&16)+((r2102.a[5]<<5)&32)+((r2102.a[6]<<6)&64)+((r2102.a[7]<<7)&128)+((r2102.a[8]<<8)&256)+((r2102.a[9]<<9)&512);
+	r2102.d=(data>>3)&1;
+	if(r2102.r_w==1)
+		r2102.ram[r2102.addr]=r2102.d;
+	LOG(("whA: data=%d, addr=%d, d=%d, r_w=%d, ram[%d]=%d\n",data,r2102.addr,r2102.d,r2102.r_w,r2102.addr,r2102.ram[r2102.addr]));
+}
+
+static WRITE_HANDLER( channelf_2102B_w )  /* SKR */
+{
+	latch[5]=data;
+	r2102.a[9]=(data>>7)&1;
+	r2102.a[8]=(data>>6)&1;
+	r2102.a[7]=(data>>5)&1;
+	r2102.a[1]=(data>>4)&1;
+	r2102.a[6]=(data>>3)&1;
+	r2102.a[5]=(data>>2)&1;
+	r2102.a[4]=(data>>1)&1;
+	r2102.a[0]=data&1;
+	LOG(("whB: data=%d, a[9]=%d,a[8]=%d,a[0]=%d\n",data,r2102.a[9],r2102.a[8],r2102.a[0]));
+}
+
 static ADDRESS_MAP_START( channelf_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_ROM, MWA8_ROM)
 	AM_RANGE(0x0800, 0x27ff) AM_READ(MRA8_ROM) /* Cartridge Data */
+	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(MRA8_RAM, MWA8_RAM) /* Schach RAM */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
@@ -137,6 +195,11 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x01, 0x01) AM_READ(channelf_port_1_r) /* Right controller     */
 	AM_RANGE(0x04, 0x04) AM_READ(channelf_port_4_r) /* Left controller      */
 	AM_RANGE(0x05, 0x05) AM_READ(channelf_port_5_r)
+
+	AM_RANGE(0x20, 0x20) AM_READ(channelf_2102A_r) /* SKR 2102 control and addr for cart 18 */
+	AM_RANGE(0x21, 0x21) AM_READ(channelf_2102B_r) /* SKR 2102 addr */
+	AM_RANGE(0x24, 0x24) AM_READ(channelf_2102A_r) /* SKR 2102 control and addr for cart 10 */
+	AM_RANGE(0x25, 0x25) AM_READ(channelf_2102B_r) /* SKR 2102 addr */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
@@ -144,6 +207,11 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x01, 0x01) AM_WRITE(channelf_port_1_w) /* Video Write Data */
 	AM_RANGE(0x04, 0x04) AM_WRITE(channelf_port_4_w) /* Video Horiz */
 	AM_RANGE(0x05, 0x05) AM_WRITE(channelf_port_5_w) /* Video Vert & Sound */
+
+	AM_RANGE(0x20, 0x20) AM_WRITE(channelf_2102A_w) /* SKR 2102 control and addr for cart 18 */
+	AM_RANGE(0x21, 0x21) AM_WRITE(channelf_2102B_w) /* SKR 2102 addr */
+	AM_RANGE(0x24, 0x24) AM_WRITE(channelf_2102A_w) /* SKR 2102 control and addr for cart 10 */
+	AM_RANGE(0x25, 0x25) AM_WRITE(channelf_2102B_w) /* SKR 2102 addr */
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( channelf )
@@ -152,7 +220,7 @@ INPUT_PORTS_START( channelf )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON5 )	/* HOLD  (2) */
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON6 )	/* MODE  (3) */
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON7 )	/* TIME  (4) */
-	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START /* Right controller */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
@@ -225,5 +293,6 @@ SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT		CONFIG		COMPANY		 FULLNAME */
 CONS( 1976, channelf, 0,		0,		channelf, channelf, 0,			channelf,	"Fairchild", "Channel F" )
+
 
 

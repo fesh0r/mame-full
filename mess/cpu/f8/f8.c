@@ -897,7 +897,7 @@ static void f8_ai(void)
  ***************************************************/
 static void f8_ci(void)
 {
-    UINT16 tmp =((UINT8)~f8.a)+1;
+    UINT16 tmp = ((UINT8)~f8.a) + 1;
     ROMC_03();
     CLR_OZCS;
     SET_OC(tmp,f8.dbus);
@@ -1226,14 +1226,14 @@ static void f8_xm(void)
  *	O Z C S 1000 1101
  *	0 x 0 x CM
  ***************************************************/
-static void f8_cm(void)
+static void f8_cm(void)	/* SKR changed to match f8_ci() */
 {
-	UINT8 tmp = ~f8.a + 1;
+    UINT16 tmp = ((UINT8)~f8.a) + 1;
 	ROMC_02();
 	CLR_OZCS;
 	SET_OC(tmp,f8.dbus);
 	tmp += f8.dbus;
-	SET_SZ(tmp);
+	SET_SZ((UINT8)tmp);
 }
 
 /***************************************************
@@ -2246,6 +2246,7 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 
 	return;
 }
+
 
 
 
