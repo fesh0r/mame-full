@@ -402,6 +402,7 @@ static void MessReadMountedSoftware(int nGame)
 	char *s;
 	int devtype;
 	int i;
+	LVFINDINFO lvfi;
 
 	ListView_SetItemState(hwndSoftware, -1, 0, LVIS_SELECTED);
 
@@ -425,21 +426,43 @@ static void MessReadMountedSoftware(int nGame)
 				else
 					s = NULL;
 
-				i = MessLookupByFilename(this_software);
-				if (i >= 0)
+				if (this_software && this_software[0])
 				{
-					if (this_software == selected_software)
-					{
-						ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-						ListView_EnsureVisible(hwndSoftware, i, FALSE);
-					}
-					else
-					{
-						ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
-					}
-				}
+					i = MessLookupByFilename(this_software);
 
-				this_software = s;
+					if (i < 0)
+					{
+						// if the lookup fails, then introduce the item
+						char filename[MAX_PATH];
+						mess_image_type imagetypes[64];
+						SetupImageTypes(Picker_GetSelectedItem(hwndList), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, devtype);
+						MessIntroduceItem(GetDlgItem(hMain, IDC_SWLIST), this_software, imagetypes);
+						i = MessLookupByFilename(this_software);
+					}
+
+					if (i >= 0)
+					{
+						memset(&lvfi, 0, sizeof(lvfi));
+						lvfi.flags = LVFI_PARAM;
+						lvfi.lParam = i;
+						i = ListView_FindItem(hwndSoftware, -1, &lvfi);
+
+						if (i >= 0)
+						{
+							if (this_software == selected_software)
+							{
+								ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+								ListView_EnsureVisible(hwndSoftware, i, FALSE);
+							}
+							else
+							{
+								ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
+							}
+						}
+					}
+
+					this_software = s;
+				}
 			}
 		}
 	}
@@ -726,7 +749,7 @@ static void DevView_SetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 	while(s && s[0])
 	{
 		nSelectionCount++;
-		s = strchr(s, ',');
+		s = strchr(s, IMAGE_SEPARATOR);
 		if (s)
 		{
 			*s = '\0';
@@ -751,7 +774,7 @@ static void DevView_SetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 
 		if (s)
 		{
-			s = strchr(s, ',');
+			s = strchr(s, IMAGE_SEPARATOR);
 			if (s)
 				s++;
 		}
@@ -763,7 +786,7 @@ static void DevView_SetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 	for (i = 0; i < nNewSelectionCount; i++)
 	{
 		if (i > 0)
-			*(s++) = ',';
+			*(s++) = IMAGE_SEPARATOR;
 		strcpy(s, ppszNewSelections[i]);
 		s += strlen(s);
 	}
@@ -785,7 +808,7 @@ static LPCTSTR DevView_GetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 	while(pszSelection && pszSelection[0] && (nID > 0))
 	{
 		nID--;
-		pszSelection = strchr(pszSelection, ',');
+		pszSelection = strchr(pszSelection, IMAGE_SEPARATOR);
 		if (pszSelection)
 			pszSelection++;
 
@@ -796,7 +819,7 @@ static LPCTSTR DevView_GetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
 	}
 	else
 	{
-		s = strchr(pszSelection, ',');
+		s = strchr(pszSelection, IMAGE_SEPARATOR);
 		if (s)
 		{
 			// extract the filename, minus the comma
