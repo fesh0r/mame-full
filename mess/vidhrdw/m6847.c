@@ -28,7 +28,6 @@
 #endif /* MAME_DEBUG */
 
 static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars);
-//static void m6847_rastertrack_endcontent(void);
 static void m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars);
 
 struct m6847_state {
@@ -368,11 +367,6 @@ void m6847_vh_stop(void)
 	generic_vh_stop();
 }
 
-int m6847_vh_interrupt(void)
-{
-	return rastertrack_hblank();
-}
-
 /* --------------------------------------------------
  * Timing
  *
@@ -491,16 +485,16 @@ static void fs_rise(int dummy)
 #endif
 }
 
-int m6847_rastertrack_hblank(void)
-{
-	timer_set(DHS_F, 0, hs_fall);
-	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
-	return ignore_interrupt();
-}
-
 void internal_m6847_rastertrack_endcontent(void)
 {
 	timer_set(DFS_F, 0, fs_fall);
+}
+
+int m6847_vh_interrupt(void)
+{
+	timer_set(DHS_F, 0, hs_fall);
+	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
+	return rastertrack_hblank();
 }
 
 /* --------------------------------------------------

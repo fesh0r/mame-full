@@ -124,7 +124,7 @@ static void coco3_setcartline(int data);
 #define LOG_TIMER_SET	1	/* [Sparse]   Logging when setting the timer */
 #define LOG_INT_TMR		1	/* [Frequent] Logging when timer interrupt is invoked */
 #define LOG_FLOPPY		0	/* [Frequent] Set when floppy interrupts occur */
-#define LOG_INT_COCO3	0
+#define LOG_INT_COCO3	1
 #define LOG_GIME		0
 #define LOG_MMU			0
 #define LOG_VBORD		1   /* [Frequent] Occurs when VBORD is changed */
@@ -612,7 +612,7 @@ static void coco3_pia0_irq_a(int state)
 
 static void coco3_pia0_irq_b(int state)
 {
-	pia0_irq_a = state;
+	pia0_irq_b = state;
 	coco3_recalc_irq();
 }
 
@@ -624,7 +624,7 @@ static void coco3_pia1_firq_a(int state)
 
 static void coco3_pia1_firq_b(int state)
 {
-	pia1_firq_a = state;
+	pia1_firq_b = state;
 	coco3_recalc_firq();
 }
 
@@ -666,7 +666,7 @@ WRITE_HANDLER( coco_m6847_hs_w )
 
 WRITE_HANDLER( coco_m6847_fs_w )
 {
-	pia_0_cb1_w(0, data);
+	pia_0_cb1_w(0, !data);
 }
 
 WRITE_HANDLER( coco3_m6847_hs_w )

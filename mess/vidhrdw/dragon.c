@@ -555,8 +555,8 @@ static void coco3_getcolorrgb(int color, UINT8 *red, UINT8 *green, UINT8 *blue)
  */
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-//	if (coco3_palette_recalc(0))
-//		full_refresh = 1;
+	if (coco3_palette_recalc(0))
+		full_refresh = 1;
 	rastertrack_refresh(bitmap, full_refresh);
 }
 
