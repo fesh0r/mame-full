@@ -1030,8 +1030,11 @@ static void init_keycodes(void)
 	add_keylist_entry(". PAD", KEY_DEL_PAD, KEYCODE_DEL_PAD);
 	add_keylist_entry("ENTER PAD", KEY_ENTER_PAD, KEYCODE_ENTER_PAD);
 	add_keylist_entry("PRTSCR", KEY_PRTSCR, KEYCODE_PRTSCR);
-	add_keylist_entry("PAUSE", KEY_PAUSE, KEYCODE_PAUSE);
+#ifdef PAUSE_KEY_119
 	add_keylist_entry("PAUSE", KEY_PAUSE_ALT, KEYCODE_PAUSE);
+#else
+	add_keylist_entry("PAUSE", KEY_PAUSE, KEYCODE_PAUSE);
+#endif
 	add_keylist_entry("LSHIFT", KEY_LSHIFT, KEYCODE_LSHIFT);
 	add_keylist_entry("RSHIFT", KEY_RSHIFT, KEYCODE_RSHIFT);
 	add_keylist_entry("LCTRL", KEY_LCONTROL, KEYCODE_LCONTROL);

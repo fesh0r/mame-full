@@ -496,6 +496,10 @@ HAVE_GETTIMEOFDAY = 1
 # for LF, or 3 for CR/LF.
 CRLF = 2
 
+# Most of the time, the pause key uses keycode 101, but sometimes it uses 
+# keycode 119.  Uncomment this if the pause key doesn't work for you.
+# PAUSE_KEY_119 = 1
+
 # Uncomment this if you want to link with ElectricFence (for developers 
 # only).
 # EFENCE = 1

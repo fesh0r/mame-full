@@ -281,6 +281,10 @@ ifdef CRLF
 MY_CFLAGS += -DCRLF=$(CRLF)
 endif
 
+ifdef PAUSE_KEY_119
+MY_CFLAGS += -DPAUSE_KEY_119
+endif
+
 # The SDL target automatically includes the SDL joystick and audio drivers.
 ifeq ($(DISPLAY_METHOD),SDL)
 JOY_SDL = 1

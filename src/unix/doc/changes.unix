@@ -2,11 +2,12 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.93
-	- Everything from MAME 0.93 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.93 (http://x.mame.net/changes-mess.html).
-	- Fixed another problem with itech32 on 64-bit architectures.  (R. 
-	  Belmont)
+Release 0.94
+	- Everything from MAME 0.94 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.94 (http://x.mame.net/changes-mess.html).
+	- The pause key works again in the input setup.  For keyboards that 
+	  generate 119 instead of 101, there's now a PAUSE_KEY_119 option in 
+	  the makefile.
 
 Release 0.92, 23 February 2005
 	- Everything from MAME 0.92 and MESS 0.92.
