@@ -310,7 +310,7 @@ MSX_SLOT_MAP(konami_scc)
 		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
 		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 		memory_set_bankhandler_r (5, 0, 
-				state->cart.scc.active ? konami_scc_bank5 : MRA_BANK5);
+				state->cart.scc.active ? konami_scc_bank5 : MRA8_BANK5);
 		break;
 	case 3:
 		cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
@@ -1847,10 +1847,10 @@ MSX_SLOT_MAP(soundcartridge)
 		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
 		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 	    memory_set_bankhandler_r (5, 0, 
-			state->cart.sccp.scc_active ? soundcartridge_scc : MRA_BANK5);
+			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
 
 	    memory_set_bankhandler_r (6, 0, 
-			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA_BANK6);
+			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6);
 		break;
 	case 3:
 		cpu_setbank (7, state->mem + state->banks[0] * 0x2000);

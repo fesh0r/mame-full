@@ -178,7 +178,7 @@ static MEMORY_READ_START(readmem_bbcbp)
 	{ 0x0000, 0x2fff, MRA8_RAM		   },  /* Normal Ram                                           */
 	{ 0x3000, 0x7fff, MRA8_BANK1        },  /* Video/Shadow Ram                                     */
 	{ 0x8000, 0xafff, MRA8_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
-	{ 0xb000, 0xbfff, MRA_BANK4        },  /* Rest of paged ROM area                               */
+	{ 0xb000, 0xbfff, MRA8_BANK4        },  /* Rest of paged ROM area                               */
 	{ 0xc000, 0xfbff, MRA8_BANK2		   },  /* OS                                                   */
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages                                     */
 										   /* Shiela Address Page &fe00 - &feff 				   */
@@ -226,7 +226,7 @@ static MEMORY_READ_START(readmem_bbcbp128)
 	{ 0x0000, 0x2fff, MRA8_RAM		   },  /* Normal Ram                                           */
 	{ 0x3000, 0x7fff, MRA8_BANK1        },  /* Video/Shadow Ram                                     */
 	{ 0x8000, 0xafff, MRA8_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
-	{ 0xb000, 0xbfff, MRA_BANK4        },  /* Rest of paged ROM area                               */
+	{ 0xb000, 0xbfff, MRA8_BANK4        },  /* Rest of paged ROM area                               */
 	{ 0xc000, 0xfbff, MRA8_BANK2		   },  /* OS                                                   */
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages                                     */
 										   /* Shiela Address Page &fe00 - &feff 				   */
@@ -675,9 +675,9 @@ MEMORY_END
 
 static MEMORY_READ_START(readmem_bbc6502)
 	{ 0x0000, 0xefff, MRA8_RAM       },
-	{ 0xf000, 0xfeF7, MRA_BANK5     },
+	{ 0xf000, 0xfeF7, MRA8_BANK5     },
 	{ 0xfef8, 0xfeff, bbcs_tube_r   },
-	{ 0xff00, 0xffff, MRA_BANK5     },
+	{ 0xff00, 0xffff, MRA8_BANK5     },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbc6502)

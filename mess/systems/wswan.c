@@ -22,12 +22,12 @@ static MEMORY_READ_START (wswan_readmem)
 	{ 0x10000, 0x1ffff, MRA8_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MRA8_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MRA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MRA_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MRA_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MRA_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MRA_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MRA_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MRA_BANK9 },	/* ROM bank 8 */
+	{ 0x40000, 0x4ffff, MRA8_BANK4 },	/* ROM bank 3 */
+	{ 0x50000, 0x5ffff, MRA8_BANK5 },	/* ROM bank 4 */
+	{ 0x60000, 0x6ffff, MRA8_BANK6 },	/* ROM bank 5 */
+	{ 0x70000, 0x7ffff, MRA8_BANK7 },	/* ROM bank 6 */
+	{ 0x80000, 0x8ffff, MRA8_BANK8 },	/* ROM bank 7 */
+	{ 0x90000, 0x9ffff, MRA8_BANK9 },	/* ROM bank 8 */
 	{ 0xA0000, 0xAffff, MRA_BANK10 },	/* ROM bank 9 */
 	{ 0xB0000, 0xBffff, MRA_BANK11 },	/* ROM bank 10 */
 	{ 0xC0000, 0xCffff, MRA_BANK12 },	/* ROM bank 11 */
@@ -43,14 +43,14 @@ static MEMORY_WRITE_START (wswan_writemem)
 	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
 	{ 0x40000, 0x4ffff, MWA_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MWA_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MWA_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MWA_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MWA_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MWA_BANK9 },	/* ROM bank 8 */
-	{ 0xA0000, 0xAffff, MWA_BANK10 },	/* ROM bank 9 */
-	{ 0xB0000, 0xBffff, MWA_BANK11 },	/* ROM bank 10 */
-	{ 0xC0000, 0xCffff, MWA_BANK12 },	/* ROM bank 11 */
+	{ 0x50000, 0x5ffff, MWA8_BANK5 },	/* ROM bank 4 */
+	{ 0x60000, 0x6ffff, MWA8_BANK6 },	/* ROM bank 5 */
+	{ 0x70000, 0x7ffff, MWA8_BANK7 },	/* ROM bank 6 */
+	{ 0x80000, 0x8ffff, MWA8_BANK8 },	/* ROM bank 7 */
+	{ 0x90000, 0x9ffff, MWA8_BANK9 },	/* ROM bank 8 */
+	{ 0xA0000, 0xAffff, MWA8_BANK10 },	/* ROM bank 9 */
+	{ 0xB0000, 0xBffff, MWA8_BANK11 },	/* ROM bank 10 */
+	{ 0xC0000, 0xCffff, MWA8_BANK12 },	/* ROM bank 11 */
 	{ 0xD0000, 0xDffff, MWA_BANK13 },	/* ROM bank 12 */
 	{ 0xE0000, 0xEffff, MWA_BANK14 },	/* ROM bank 13 */
 	{ 0xF0000, 0xFffff, MWA_BANK15 },	/* ROM bank 14 */
@@ -62,12 +62,12 @@ static MEMORY_READ_START (wsc_readmem)
 	{ 0x10000, 0x1ffff, MRA8_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MRA8_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MRA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MRA_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MRA_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MRA_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MRA_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MRA_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MRA_BANK9 },	/* ROM bank 8 */
+	{ 0x40000, 0x4ffff, MRA8_BANK4 },	/* ROM bank 3 */
+	{ 0x50000, 0x5ffff, MRA8_BANK5 },	/* ROM bank 4 */
+	{ 0x60000, 0x6ffff, MRA8_BANK6 },	/* ROM bank 5 */
+	{ 0x70000, 0x7ffff, MRA8_BANK7 },	/* ROM bank 6 */
+	{ 0x80000, 0x8ffff, MRA8_BANK8 },	/* ROM bank 7 */
+	{ 0x90000, 0x9ffff, MRA8_BANK9 },	/* ROM bank 8 */
 	{ 0xA0000, 0xAffff, MRA_BANK10 },	/* ROM bank 9 */
 	{ 0xB0000, 0xBffff, MRA_BANK11 },	/* ROM bank 10 */
 	{ 0xC0000, 0xCffff, MRA_BANK12 },	/* ROM bank 11 */
@@ -83,14 +83,14 @@ static MEMORY_WRITE_START (wsc_writemem)
 	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
 	{ 0x40000, 0x4ffff, MWA_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MWA_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MWA_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MWA_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MWA_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MWA_BANK9 },	/* ROM bank 8 */
-	{ 0xA0000, 0xAffff, MWA_BANK10 },	/* ROM bank 9 */
-	{ 0xB0000, 0xBffff, MWA_BANK11 },	/* ROM bank 10 */
-	{ 0xC0000, 0xCffff, MWA_BANK12 },	/* ROM bank 11 */
+	{ 0x50000, 0x5ffff, MWA8_BANK5 },	/* ROM bank 4 */
+	{ 0x60000, 0x6ffff, MWA8_BANK6 },	/* ROM bank 5 */
+	{ 0x70000, 0x7ffff, MWA8_BANK7 },	/* ROM bank 6 */
+	{ 0x80000, 0x8ffff, MWA8_BANK8 },	/* ROM bank 7 */
+	{ 0x90000, 0x9ffff, MWA8_BANK9 },	/* ROM bank 8 */
+	{ 0xA0000, 0xAffff, MWA8_BANK10 },	/* ROM bank 9 */
+	{ 0xB0000, 0xBffff, MWA8_BANK11 },	/* ROM bank 10 */
+	{ 0xC0000, 0xCffff, MWA8_BANK12 },	/* ROM bank 11 */
 	{ 0xD0000, 0xDffff, MWA_BANK13 },	/* ROM bank 12 */
 	{ 0xE0000, 0xEffff, MWA_BANK14 },	/* ROM bank 13 */
 	{ 0xF0000, 0xFffff, MWA_BANK15 },	/* ROM bank 14 */

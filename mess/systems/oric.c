@@ -68,9 +68,9 @@ static MEMORY_WRITE_START(oric_writemem)
     { 0x0000, 0x02FF, MWA8_RAM },
     /* { 0x0300, 0x03ff, oric_IO_w }, */
     { 0x0400, 0xbFFF, MWA8_RAM },
-    { 0xc000, 0xdFFF, MWA_BANK5 },
-    { 0xe000, 0xf7ff, MWA_BANK6 },
-	{ 0xf800, 0xffff, MWA_BANK7 },
+    { 0xc000, 0xdFFF, MWA8_BANK5 },
+    { 0xe000, 0xf7ff, MWA8_BANK6 },
+	{ 0xf800, 0xffff, MWA8_BANK7 },
 MEMORY_END
 
 /*

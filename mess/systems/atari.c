@@ -265,7 +265,7 @@ MEMORY_READ_START( readmem_a800xl )
     { 0xd300, 0xd3ff, MRA_PIA },
 	{ 0xd400, 0xd4ff, MRA_ANTIC },
 	{ 0xd500, 0xd7ff, MRA8_NOP },
-	{ 0xd800, 0xffff, MRA_BANK4 },
+	{ 0xd800, 0xffff, MRA8_BANK4 },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_a800xl )

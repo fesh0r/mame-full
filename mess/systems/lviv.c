@@ -306,7 +306,7 @@ MEMORY_READ_START( lviv_readmem )
 	{0x0000, 0x3fff, MRA8_BANK1},
 	{0x4000, 0x7fff, MRA8_BANK2},
 	{0x8000, 0xbfff, MRA8_BANK3},
-	{0xc000, 0xffff, MRA_BANK4},
+	{0xc000, 0xffff, MRA8_BANK4},
 MEMORY_END
 
 MEMORY_WRITE_START( lviv_writemem )

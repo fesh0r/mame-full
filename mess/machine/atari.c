@@ -1047,7 +1047,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(3, 0, MWA8_ROM);
 			cpu_setbank(3, memory_region(REGION_CPU1)+0x14000);  /* 8K lo BIOS */
-			memory_set_bankhandler_r(4, 0, MRA_BANK4);
+			memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 			memory_set_bankhandler_w(4, 0, MWA8_ROM);
 			cpu_setbank(4, memory_region(REGION_CPU1)+0x15800);  /* 4K FP ROM + 8K hi BIOS */
 		}

@@ -227,12 +227,12 @@ void Enterprise_Initialise()
 	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 
-	memory_set_bankhandler_w(5, 0, MWA_BANK5);
-	memory_set_bankhandler_w(6, 0, MWA_BANK6);
-	memory_set_bankhandler_w(7, 0, MWA_BANK7);
-	memory_set_bankhandler_w(8, 0, MWA_BANK8);
+	memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+	memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+	memory_set_bankhandler_w(7, 0, MWA8_BANK7);
+	memory_set_bankhandler_w(8, 0, MWA8_BANK8);
 
 	Dave_reg_w(0x010,0);
 	Dave_reg_w(0x011,0);
@@ -294,15 +294,15 @@ MEMORY_READ_START( readmem_enterprise )
 	{ 0x00000, 0x03fff, MRA8_BANK1 },
 	{ 0x04000, 0x07fff, MRA8_BANK2 },
 	{ 0x08000, 0x0bfff, MRA8_BANK3 },
-	{ 0x0c000, 0x0ffff, MRA_BANK4 },
+	{ 0x0c000, 0x0ffff, MRA8_BANK4 },
 MEMORY_END
 
 
 MEMORY_WRITE_START( writemem_enterprise )
-	{ 0x00000, 0x03fff, MWA_BANK5 },
-	{ 0x04000, 0x07fff, MWA_BANK6 },
-	{ 0x08000, 0x0bfff, MWA_BANK7 },
-	{ 0x0c000, 0x0ffff, MWA_BANK8 },
+	{ 0x00000, 0x03fff, MWA8_BANK5 },
+	{ 0x04000, 0x07fff, MWA8_BANK6 },
+	{ 0x08000, 0x0bfff, MWA8_BANK7 },
+	{ 0x0c000, 0x0ffff, MWA8_BANK8 },
 MEMORY_END
 
 /* bit 0 - select drive 0,

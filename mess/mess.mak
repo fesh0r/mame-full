@@ -537,13 +537,13 @@ $(OBJ)/amstrad.a:  \
 	$(OBJ)/mess/systems/amstrad.o  \
 	$(OBJ)/mess/machine/amstrad.o  \
 	$(OBJ)/mess/vidhrdw/amstrad.o  \
-#	$(OBJ)/mess/vidhrdw/pcw.o	 \
-#	$(OBJ)/mess/systems/pcw.o	 \
-#	$(OBJ)/mess/systems/pcw16.o	 \
-#	$(OBJ)/mess/vidhrdw/pcw16.o	 \
-#	$(OBJ)/mess/vidhrdw/nc.o	 \
-#	$(OBJ)/mess/systems/nc.o	 \
-#	$(OBJ)/mess/machine/nc.o	 \
+	$(OBJ)/mess/vidhrdw/pcw.o	 \
+	$(OBJ)/mess/systems/pcw.o	 \
+	$(OBJ)/mess/systems/pcw16.o	 \
+	$(OBJ)/mess/vidhrdw/pcw16.o	 \
+	$(OBJ)/mess/vidhrdw/nc.o	 \
+	$(OBJ)/mess/systems/nc.o	 \
+	$(OBJ)/mess/machine/nc.o	 \
 
 $(OBJ)/veb.a:      \
 	$(OBJ)/mess/vidhrdw/kc.o	 \

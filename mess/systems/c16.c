@@ -205,7 +205,7 @@ static MEMORY_READ_START( c16_readmem )
 	{0x4000, 0x7fff, MRA8_BANK1},	   /* only ram memory configuration */
 	{0x8000, 0xbfff, MRA8_BANK2},
 	{0xc000, 0xfbff, MRA8_BANK3},
-	{0xfc00, 0xfcff, MRA_BANK4},
+	{0xfc00, 0xfcff, MRA8_BANK4},
 	{0xfd10, 0xfd1f, c16_fd1x_r},
 	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
 #if 0
@@ -214,7 +214,7 @@ static MEMORY_READ_START( c16_readmem )
 	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
-	{0xff20, 0xffff, MRA_BANK8},
+	{0xff20, 0xffff, MRA8_BANK8},
 /*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
 MEMORY_END
 
@@ -222,9 +222,9 @@ static MEMORY_WRITE_START( c16_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
 	{0x0002, 0x3fff, MWA8_RAM},
 #ifndef NEW_BANKHANDLER
-	{0x4000, 0x7fff, MWA_BANK5},
-	{0x8000, 0xbfff, MWA_BANK6},
-	{0xc000, 0xfcff, MWA_BANK7},
+	{0x4000, 0x7fff, MWA8_BANK5},
+	{0x8000, 0xbfff, MWA8_BANK6},
+	{0xc000, 0xfcff, MWA8_BANK7},
 #endif
 #if 0
 	{0x4000, 0x7fff, c16_write_4000},  /*configured in c16_common_init */
@@ -257,7 +257,7 @@ static MEMORY_READ_START( plus4_readmem )
 	{0x0002, 0x7fff, MRA8_RAM},
 	{0x8000, 0xbfff, MRA8_BANK2},
 	{0xc000, 0xfbff, MRA8_BANK3},
-	{0xfc00, 0xfcff, MRA_BANK4},
+	{0xfc00, 0xfcff, MRA8_BANK4},
 	{0xfd00, 0xfd0f, c16_6551_port_r},
 	{0xfd10, 0xfd1f, plus4_6529_port_r},
 	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
@@ -267,7 +267,7 @@ static MEMORY_READ_START( plus4_readmem )
 	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
-	{0xff20, 0xffff, MRA_BANK8},
+	{0xff20, 0xffff, MRA8_BANK8},
 /*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
 MEMORY_END
 
@@ -298,7 +298,7 @@ static MEMORY_READ_START( c364_readmem )
 	{0x0002, 0x7fff, MRA8_RAM},
 	{0x8000, 0xbfff, MRA8_BANK2},
 	{0xc000, 0xfbff, MRA8_BANK3},
-	{0xfc00, 0xfcff, MRA_BANK4},
+	{0xfc00, 0xfcff, MRA8_BANK4},
 	{0xfd00, 0xfd0f, c16_6551_port_r},
 	{0xfd10, 0xfd1f, plus4_6529_port_r},
 	{0xfd20, 0xfd2f, c364_speech_r },
@@ -309,7 +309,7 @@ static MEMORY_READ_START( c364_readmem )
 	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
-	{0xff20, 0xffff, MRA_BANK8},
+	{0xff20, 0xffff, MRA8_BANK8},
 /*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
 MEMORY_END
 

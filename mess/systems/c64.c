@@ -230,11 +230,11 @@ static MEMORY_READ_START( c64_readmem )
 	{0xa000, 0xbfff, MRA8_BANK3},	   /* ram or basic rom or external romh */
 	{0xc000, 0xcfff, MRA8_RAM},
 #if 1
-	{0xd000, 0xdfff, MRA_BANK5},
+	{0xd000, 0xdfff, MRA8_BANK5},
 #else
 /* dram */
 /* or character rom */
-	{0xd000, 0xd3ff, MRA_BANK9},
+	{0xd000, 0xd3ff, MRA8_BANK9},
 	{0xd400, 0xd7ff, MRA_BANK10},
 	{0xd800, 0xdbff, MRA_BANK11},		   /* colorram  */
 	{0xdc00, 0xdcff, MRA_BANK12},
@@ -242,7 +242,7 @@ static MEMORY_READ_START( c64_readmem )
 	{0xde00, 0xdeff, MRA_BANK14},		   /* csline expansion port */
 	{0xdf00, 0xdfff, MRA_BANK15},		   /* csline expansion port */
 #endif
-	{0xe000, 0xffff, MRA_BANK7},	   /* ram or kernel rom or external romh */
+	{0xe000, 0xffff, MRA8_BANK7},	   /* ram or kernel rom or external romh */
 MEMORY_END
 
 static MEMORY_WRITE_START( c64_writemem )
@@ -252,7 +252,7 @@ static MEMORY_WRITE_START( c64_writemem )
 	{0xa000, 0xcfff, MWA8_RAM},
 //	{0xa000, 0xcfff, MWA_BANK16},
 #if 1
-	{0xd000, 0xdfff, MWA_BANK6},
+	{0xd000, 0xdfff, MWA8_BANK6},
 #else
 	/* or dram memory */
 	{0xd000, 0xd3ff, vic2_port_w},
@@ -263,7 +263,7 @@ static MEMORY_WRITE_START( c64_writemem )
 	{0xde00, 0xdeff, MWA8_NOP},		   /* csline expansion port */
 	{0xdf00, 0xdfff, MWA8_NOP},		   /* csline expansion port */
 #endif
-	{0xe000, 0xffff, MWA_BANK8},
+	{0xe000, 0xffff, MWA8_BANK8},
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \

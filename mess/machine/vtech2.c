@@ -59,7 +59,7 @@ static int mra_bank(int bank, int offs);
 static READ_HANDLER ( mra_bank1) { return mra_bank(0,offset); }
 static READ_HANDLER ( mra_bank2) { return mra_bank(1,offset); }
 static READ_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
-static READ_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
+static READ_HANDLER ( MRA8_BANK4) { return mra_bank(3,offset); }
 
 /* read banked memory (handle memory mapped i/o) */
 static read8_handler mra_bank_soft[4] =
@@ -67,7 +67,7 @@ static read8_handler mra_bank_soft[4] =
     mra_bank1,  /* mapped in 0000-3fff */
     mra_bank2,  /* mapped in 4000-7fff */
     mra_bank3,  /* mapped in 8000-bfff */
-    mra_bank4   /* mapped in c000-ffff */
+    MRA8_BANK4   /* mapped in c000-ffff */
 };
 
 /* write banked memory (handle memory mapped i/o and videoram) */
@@ -85,7 +85,7 @@ static read8_handler mra_bank_hard[4] =
     MRA8_BANK1,  /* mapped in 0000-3fff */
     MRA8_BANK2,  /* mapped in 4000-7fff */
     MRA8_BANK3,  /* mapped in 8000-bfff */
-    MRA_BANK4   /* mapped in c000-ffff */
+    MRA8_BANK4   /* mapped in c000-ffff */
 };
 
 /* write banked memory (plain ROM/RAM) */

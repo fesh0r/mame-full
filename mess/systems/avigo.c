@@ -351,7 +351,7 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(3, addr);
                         cpu_setbank(7, addr);
 
-                        memory_set_bankhandler_w(7, 0, MWA_BANK7);
+                        memory_set_bankhandler_w(7, 0, MWA8_BANK7);
                         memory_set_bankhandler_r(3, 0, MRA8_BANK3);
                 }
                 break;
@@ -503,12 +503,12 @@ static MACHINE_INIT( avigo )
     memory_set_bankhandler_r(1, 0, MRA8_BANK1);
     memory_set_bankhandler_r(2, 0, MRA8_BANK2);
     memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-    memory_set_bankhandler_r(4, 0, MRA_BANK4);
+    memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 
-    memory_set_bankhandler_w(5, 0, MWA_BANK5);
-    memory_set_bankhandler_w(6, 0, MWA_BANK6);
-    memory_set_bankhandler_w(7, 0, MWA_BANK7);
-    memory_set_bankhandler_w(8, 0, MWA_BANK8);
+    memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+    memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+    memory_set_bankhandler_w(7, 0, MWA8_BANK7);
+    memory_set_bankhandler_w(8, 0, MWA8_BANK8);
 
 	avigo_irq = 0;
 	avigo_rom_bank_l = 0;
@@ -573,15 +573,15 @@ MEMORY_READ_START( readmem_avigo )
 	{0x00000, 0x03fff, MRA8_BANK1},
 	{0x04000, 0x07fff, MRA8_BANK2},
 	{0x08000, 0x0bfff, MRA8_BANK3},
-	{0x0c000, 0x0ffff, MRA_BANK4},
+	{0x0c000, 0x0ffff, MRA8_BANK4},
 MEMORY_END
 
 
 MEMORY_WRITE_START( writemem_avigo )
-	{0x00000, 0x03fff, MWA_BANK5},
-	{0x04000, 0x07fff, MWA_BANK6},
-	{0x08000, 0x0bfff, MWA_BANK7},
-	{0x0c000, 0x0ffff, MWA_BANK8},
+	{0x00000, 0x03fff, MWA8_BANK5},
+	{0x04000, 0x07fff, MWA8_BANK6},
+	{0x08000, 0x0bfff, MWA8_BANK7},
+	{0x0c000, 0x0ffff, MWA8_BANK8},
 MEMORY_END
 
 static READ_HANDLER(avigo_key_data_read_r)

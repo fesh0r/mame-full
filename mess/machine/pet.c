@@ -294,17 +294,17 @@ WRITE_HANDLER(cbm8096_w)
 			memory_set_bankhandler_r(7, 0, cbm8096_io_r);
 			memory_set_bankhandler_w(7, 0, cbm8096_io_w);
 		} else {
-			memory_set_bankhandler_r(7, 0, MRA_BANK7);
+			memory_set_bankhandler_r(7, 0, MRA8_BANK7);
 			if (!(data&2)) {
-				memory_set_bankhandler_w(7, 0, MWA_BANK7);
+				memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 			} else {
 				memory_set_bankhandler_w(7, 0, MWA8_NOP);
 			}
 		}
 		if (!(data&2)) {
-			memory_set_bankhandler_w(6, 0, MWA_BANK6);
-			memory_set_bankhandler_w(8, 0, MWA_BANK8);
-			memory_set_bankhandler_w(9, 0, MWA_BANK9);
+			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+			memory_set_bankhandler_w(8, 0, MWA8_BANK8);
+			memory_set_bankhandler_w(9, 0, MWA8_BANK9);
 		} else {
 			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 			memory_set_bankhandler_w(8, 0, MWA8_NOP);

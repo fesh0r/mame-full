@@ -593,9 +593,9 @@ MACHINE_INIT( c16 )
 #ifdef NEW_BANKHANDLER
 			/* causes problems to do this */
 			/* seeable with c16 and 32k ram extension */
-			install_mem_write_handler (0, 0x8000, 0xbfff, MWA_BANK6);
-			install_mem_write_handler (0, 0x4000, 0x7fff, MWA_BANK5);
-			install_mem_write_handler (0, 0xc000, 0xfcff, MWA_BANK7);
+			install_mem_write_handler (0, 0x8000, 0xbfff, MWA8_BANK6);
+			install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_BANK5);
+			install_mem_write_handler (0, 0xc000, 0xfcff, MWA8_BANK7);
 #endif
 			install_mem_write_handler (0, 0xff20, 0xff3d, c16_write_3f20);
 			install_mem_write_handler (0, 0xff40, 0xffff, c16_write_3f40);
@@ -608,11 +608,11 @@ MACHINE_INIT( c16 )
 #ifdef NEW_BANKHANDLER
 			install_mem_write_handler (0, 0x4000, 0x7fff, MWA8_RAM);
 			cpu_setbank (5, c16_memory);
-			install_mem_write_handler (0, 0x8000, 0xfcff, MWA_BANK5);
+			install_mem_write_handler (0, 0x8000, 0xfcff, MWA8_BANK5);
 			cpu_setbank (6, (c16_memory + 0x7f20));
-			install_mem_write_handler (0, 0xff20, 0xff3d, MWA_BANK6);
+			install_mem_write_handler (0, 0xff20, 0xff3d, MWA8_BANK6);
 			cpu_setbank (7, (c16_memory + 0x7f40));
-			install_mem_write_handler (0, 0xff40, 0xffff, MWA_BANK7);
+			install_mem_write_handler (0, 0xff40, 0xffff, MWA8_BANK7);
 #else
 			cpu_setbank (5, c16_memory + 0x4000);
 			cpu_setbank (6, c16_memory);

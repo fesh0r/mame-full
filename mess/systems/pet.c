@@ -173,17 +173,17 @@ static MEMORY_READ_START( pet80_readmem )
 	{0x8000, 0x8fff, MRA8_BANK1 },
 	{0x9000, 0x9fff, MRA8_BANK2 },
 	{0xa000, 0xafff, MRA8_BANK3 },
-	{0xb000, 0xbfff, MRA_BANK4 },
-	{0xc000, 0xe7ff, MRA_BANK6 },
+	{0xb000, 0xbfff, MRA8_BANK4 },
+	{0xc000, 0xe7ff, MRA8_BANK6 },
 #if 1
-	{0xe800, 0xefff, MRA_BANK7 },
+	{0xe800, 0xefff, MRA8_BANK7 },
 #else
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
 	{0xe880, 0xe881, crtc6845_0_port_r },
 #endif
-	{0xf000, 0xffff, MRA_BANK8 },
+	{0xf000, 0xffff, MRA8_BANK8 },
 MEMORY_END
 
 static MEMORY_WRITE_START( pet80_writemem )
@@ -192,17 +192,17 @@ static MEMORY_WRITE_START( pet80_writemem )
 	{0x9000, 0x9fff, MWA8_BANK2 },
 	{0xa000, 0xafff, MWA8_BANK3 },
 	{0xb000, 0xbfff, MWA_BANK4 },
-	{0xc000, 0xe7ff, MWA_BANK6 },
+	{0xc000, 0xe7ff, MWA8_BANK6 },
 #if 1
-	{0xe800, 0xefff, MWA_BANK7 },
+	{0xe800, 0xefff, MWA8_BANK7 },
 #else
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_0_port_w },
 #endif
-	{0xf000, 0xffef, MWA_BANK8 },
-    {0xfff1, 0xffff, MWA_BANK9 },
+	{0xf000, 0xffef, MWA8_BANK8 },
+    {0xfff1, 0xffff, MWA8_BANK9 },
 MEMORY_END
 
 

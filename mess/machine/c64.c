@@ -622,8 +622,8 @@ static void c64_bankswitch (int reset)
 	}
 	else
 	{
-		memory_set_bankhandler_r (5, 0, MRA_BANK5);
-		memory_set_bankhandler_w (6, 0, MWA_BANK6);
+		memory_set_bankhandler_r (5, 0, MRA8_BANK5);
+		memory_set_bankhandler_w (6, 0, MWA8_BANK6);
 		cpu_setbank (6, c64_memory + 0xd000);
 		if (!charen && (loram || hiram))
 		{

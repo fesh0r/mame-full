@@ -37,23 +37,23 @@ static MACHINE_INIT( a310 )
 	memory_set_bankhandler_w(3,0,MWA8_ROM);
 
     cpu_setbank(4,&mem[0x00200000]);
-	memory_set_bankhandler_r(4,0,MRA_BANK4);
+	memory_set_bankhandler_r(4,0,MRA8_BANK4);
 	memory_set_bankhandler_w(4,0,MWA8_ROM);
 
     cpu_setbank(5,&mem[0x00200000]);
-	memory_set_bankhandler_r(5,0,MRA_BANK5);
+	memory_set_bankhandler_r(5,0,MRA8_BANK5);
 	memory_set_bankhandler_w(5,0,MWA8_ROM);
 
     cpu_setbank(6,&mem[0x00200000]);
-	memory_set_bankhandler_r(6,0,MRA_BANK6);
+	memory_set_bankhandler_r(6,0,MRA8_BANK6);
 	memory_set_bankhandler_w(6,0,MWA8_ROM);
 
     cpu_setbank(7,&mem[0x00200000]);
-	memory_set_bankhandler_r(7,0,MRA_BANK7);
+	memory_set_bankhandler_r(7,0,MRA8_BANK7);
 	memory_set_bankhandler_w(7,0,MWA8_ROM);
 
     cpu_setbank(8,&mem[0x00200000]);
-	memory_set_bankhandler_r(8,0,MRA_BANK8);
+	memory_set_bankhandler_r(8,0,MRA8_BANK8);
 	memory_set_bankhandler_w(8,0,MWA8_ROM);
 }
 

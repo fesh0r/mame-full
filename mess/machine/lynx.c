@@ -1171,7 +1171,7 @@ WRITE_HANDLER( lynx_memory_config )
     if (data&8) {
 	memory_set_bankhandler_r(4, 0, MRA8_RAM);
     } else {
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 	cpu_setbank(4,memory_region(REGION_CPU1)+0x101fa);
     }
 }

@@ -483,7 +483,7 @@ static MEMORY_READ_START( apf_imagination_readmem )
 	{ 0x04000, 0x047ff, MRA8_BANK1},
 	{ 0x04800, 0x04fff, MRA8_BANK2},
 	{ 0x05000, 0x057ff, MRA8_BANK3},
-	{ 0x05800, 0x05fff, MRA_BANK4},
+	{ 0x05800, 0x05fff, MRA8_BANK4},
 	{ 0x06000, 0x063ff, apf_pia_1_r},
 	{ 0x06400, 0x064ff, serial_r},
 	{ 0x06500, 0x06500, apf_wd179x_status_r},
@@ -494,10 +494,10 @@ static MEMORY_READ_START( apf_imagination_readmem )
 	{ 0x07800, 0x07fff, MRA8_NOP},
 	{ 0x08000, 0x09fff, MRA8_ROM},
 	{ 0x0a000, 0x0dfff, MRA8_RAM},
-	{ 0x0e000, 0x0e7ff, MRA_BANK5},
-	{ 0x0e800, 0x0efff, MRA_BANK6},
-	{ 0x0f000, 0x0f7ff, MRA_BANK7},
-	{ 0x0f800, 0x0ffff, MRA_BANK8},
+	{ 0x0e000, 0x0e7ff, MRA8_BANK5},
+	{ 0x0e800, 0x0efff, MRA8_BANK6},
+	{ 0x0f000, 0x0f7ff, MRA8_BANK7},
+	{ 0x0f800, 0x0ffff, MRA8_BANK8},
 MEMORY_END
 
 
@@ -538,14 +538,14 @@ static MEMORY_READ_START(apf_m1000_readmem)
 	{ 0x04000, 0x047ff, MRA8_BANK1},
 	{ 0x04800, 0x04fff, MRA8_BANK2},
 	{ 0x05000, 0x057ff, MRA8_BANK3},
-	{ 0x05800, 0x05fff, MRA_BANK4},
+	{ 0x05800, 0x05fff, MRA8_BANK4},
 	{ 0x06800, 0x077ff, MRA8_ROM},
 	{ 0x08000, 0x09fff, MRA8_ROM},
 	{ 0x0a000, 0x0dfff, MRA8_RAM},
-	{ 0x0e000, 0x0e7ff, MRA_BANK5},
-	{ 0x0e800, 0x0efff, MRA_BANK6},
-	{ 0x0f000, 0x0f7ff, MRA_BANK7},
-	{ 0x0f800, 0x0ffff, MRA_BANK8},
+	{ 0x0e000, 0x0e7ff, MRA8_BANK5},
+	{ 0x0e800, 0x0efff, MRA8_BANK6},
+	{ 0x0f000, 0x0f7ff, MRA8_BANK7},
+	{ 0x0f800, 0x0ffff, MRA8_BANK8},
 MEMORY_END
 
 static MEMORY_WRITE_START( apf_m1000_writemem )

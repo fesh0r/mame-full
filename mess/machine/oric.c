@@ -582,7 +582,7 @@ static void oric_install_apple2_interface(void)
 {
 	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
 	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
-	install_mem_read_handler(0, 0x0320, 0x03ff, MRA_BANK4);
+	install_mem_read_handler(0, 0x0320, 0x03ff, MRA8_BANK4);
 
 	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
 	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
@@ -630,9 +630,9 @@ static WRITE_HANDLER(apple2_v2_interface_w)
 		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_w(5, 0, MWA_BANK5);
-		memory_set_bankhandler_w(6, 0, MWA_BANK6);
-		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+		memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(1, rom_ptr);
@@ -650,9 +650,9 @@ static WRITE_HANDLER(apple2_v2_interface_w)
 		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_w(5, 0, MWA_BANK5);
-		memory_set_bankhandler_w(6, 0, MWA_BANK6);
-		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+		memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 
 		cpu_setbank(1, oric_ram_0x0c000);
 		cpu_setbank(2, oric_ram_0x0c000+0x02000);
@@ -669,7 +669,7 @@ static void oric_install_apple2_v2_interface(void)
 {
 	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
 	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
-	install_mem_read_handler(0, 0x0320, 0x03ff, MRA_BANK4);
+	install_mem_read_handler(0, 0x0320, 0x03ff, MRA8_BANK4);
 
 	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
 	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
@@ -740,9 +740,9 @@ static void oric_jasmin_set_mem_0x0c000(void)
 			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-			memory_set_bankhandler_w(5, 0, MWA_BANK5);
-			memory_set_bankhandler_w(6, 0, MWA_BANK6);
-			memory_set_bankhandler_w(7, 0, MWA_BANK7);
+			memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+			memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 
 			cpu_setbank(1, oric_ram_0x0c000);
 			cpu_setbank(2, oric_ram_0x0c000+0x02000);
@@ -775,8 +775,8 @@ static void oric_jasmin_set_mem_0x0c000(void)
 
 			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-			memory_set_bankhandler_w(5, 0, MWA_BANK5);
-			memory_set_bankhandler_w(6, 0, MWA_BANK6);
+			memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
 
 			cpu_setbank(1, oric_ram_0x0c000);
 			cpu_setbank(2, oric_ram_0x0c000+0x02000);
@@ -791,7 +791,7 @@ static void oric_jasmin_set_mem_0x0c000(void)
 			/*logerror("&f800-&ffff is jasmin rom\n"); */
 			/* jasmin rom enabled */
 			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-			memory_set_bankhandler_w(7, 0, MWA_BANK7);
+			memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 			rom_ptr = memory_region(REGION_CPU1) + 0x010000+0x04000+0x02000;
 			cpu_setbank(3, rom_ptr);
 			cpu_setbank(7, rom_ptr);
@@ -1001,7 +1001,7 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		/*logerror("&c000-&dfff is ram\n"); */
 		/* rom disabled enable ram */
 		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-		memory_set_bankhandler_w(5, 0, MWA_BANK5);
+		memory_set_bankhandler_w(5, 0, MWA8_BANK5);
 		cpu_setbank(1, oric_ram_0x0c000);
 		cpu_setbank(5, oric_ram_0x0c000);
 	}
@@ -1057,8 +1057,8 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 			/* rom disabled enable ram */
 			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-			memory_set_bankhandler_w(6, 0, MWA_BANK6);
-			memory_set_bankhandler_w(7, 0, MWA_BANK7);
+			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+			memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 			cpu_setbank(2, oric_ram_0x0c000+0x02000);
 			cpu_setbank(3, oric_ram_0x0c000+0x03800);
 			cpu_setbank(6, oric_ram_0x0c000+0x02000);

@@ -223,31 +223,31 @@ MEMORY_READ_START( readmem_kc85_4 )
 	{0x04000, 0x07fff, MRA8_BANK2},
 	{0x08000, 0x0a7ff, MRA8_BANK3},
 	//{0x0a800, 0x0bfff, MRA8_RAM},
-	{0x0a800, 0x0bfff, MRA_BANK4},
-	{0x0c000, 0x0dfff, MRA_BANK5},
-	{0x0e000, 0x0ffff, MRA_BANK6},
+	{0x0a800, 0x0bfff, MRA8_BANK4},
+	{0x0c000, 0x0dfff, MRA8_BANK5},
+	{0x0e000, 0x0ffff, MRA8_BANK6},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_kc85_4 )
-	{0x00000, 0x03fff, MWA_BANK7},
-	{0x04000, 0x07fff, MWA_BANK8},
-	{0x08000, 0x0a7ff, MWA_BANK9},
+	{0x00000, 0x03fff, MWA8_BANK7},
+	{0x04000, 0x07fff, MWA8_BANK8},
+	{0x08000, 0x0a7ff, MWA8_BANK9},
 	//{0x0a800, 0x0bfff, MWA8_RAM},
-	{0x0a800, 0x0bfff, MWA_BANK10},
+	{0x0a800, 0x0bfff, MWA8_BANK10},
 MEMORY_END
 
 MEMORY_READ_START( readmem_kc85_3 )
 	{0x00000, 0x03fff, MRA8_BANK1},
 	{0x04000, 0x07fff, MRA8_BANK2},
 	{0x08000, 0x0bfff, MRA8_BANK3},
-	{0x0c000, 0x0dfff, MRA_BANK4},
-	{0x0e000, 0x0ffff, MRA_BANK5},
+	{0x0c000, 0x0dfff, MRA8_BANK4},
+	{0x0e000, 0x0ffff, MRA8_BANK5},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_kc85_3 )
-	{0x00000, 0x03fff, MWA_BANK6},
-	{0x04000, 0x07fff, MWA_BANK7},
-	{0x08000, 0x0bfff, MWA_BANK8},
+	{0x00000, 0x03fff, MWA8_BANK6},
+	{0x04000, 0x07fff, MWA8_BANK7},
+	{0x08000, 0x0bfff, MWA8_BANK8},
 MEMORY_END
 
 static READ_HANDLER(kc85_3_port_r)

@@ -911,11 +911,11 @@ void msx_memory_map_page (int page)
 	switch (page) {
 	case 1:
 		memory_set_bankhandler_r (3, 0, MRA8_BANK3);
-		memory_set_bankhandler_r (4, 0, MRA_BANK4);
+		memory_set_bankhandler_r (4, 0, MRA8_BANK4);
 		break;
 	case 2:
-		memory_set_bankhandler_r (5, 0, MRA_BANK5);
-		memory_set_bankhandler_r (6, 0, MRA_BANK6);
+		memory_set_bankhandler_r (5, 0, MRA8_BANK5);
+		memory_set_bankhandler_r (6, 0, MRA8_BANK6);
 		break;
 	}
 

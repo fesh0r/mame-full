@@ -583,8 +583,8 @@ static void c65_bankswitch_interface(int value)
 		if (value&1) {
 			cpu_setbank (8, c64_colorram+0x400);
 			cpu_setbank (9, c64_colorram+0x400);
-			memory_set_bankhandler_r (8, 0, MRA_BANK8);
-			memory_set_bankhandler_w (9, 0, MWA_BANK9);
+			memory_set_bankhandler_r (8, 0, MRA8_BANK8);
+			memory_set_bankhandler_w (9, 0, MWA8_BANK9);
 		} else {
 			memory_set_bankhandler_r (8, 0, c65_read_io_dc00);
 			memory_set_bankhandler_w (9, 0, c65_write_io_dc00);
@@ -661,8 +661,8 @@ void c65_bankswitch (void)
 			memory_set_bankhandler_r (8, 0, c65_read_io_dc00);
 			memory_set_bankhandler_w (9, 0, c65_write_io_dc00);
 		} else {
-			memory_set_bankhandler_r (8, 0, MRA_BANK8);
-			memory_set_bankhandler_w (9, 0, MWA_BANK9);
+			memory_set_bankhandler_r (8, 0, MRA8_BANK8);
+			memory_set_bankhandler_w (9, 0, MWA8_BANK9);
 			cpu_setbank (8, c64_colorram+0x400);
 			cpu_setbank (9, c64_colorram+0x400);
 		}
@@ -670,8 +670,8 @@ void c65_bankswitch (void)
 	else
 	{
 		c65_io_on=0;
-		memory_set_bankhandler_r (4, 0, MRA_BANK4);
-		memory_set_bankhandler_w (5, 0, MWA_BANK5);
+		memory_set_bankhandler_r (4, 0, MRA8_BANK4);
+		memory_set_bankhandler_w (5, 0, MWA8_BANK5);
 		cpu_setbank(5, c64_memory+0xd000);
 		cpu_setbank(7, c64_memory+0xd800);
 		cpu_setbank(9, c64_memory+0xdc00);

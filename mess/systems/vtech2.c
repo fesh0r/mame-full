@@ -82,7 +82,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x03fff, MRA8_BANK1 },
 	{ 0x04000, 0x07fff, MRA8_BANK2 },
 	{ 0x08000, 0x0bfff, MRA8_BANK3 },
-	{ 0x0c000, 0x0ffff, MRA_BANK4 },
+	{ 0x0c000, 0x0ffff, MRA8_BANK4 },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )

@@ -89,7 +89,7 @@ void coupe_update_memory(void)
 	if (LMPR & LMPR_ROM1)	/* Is Rom1 paged in at bank 4 */
 	{
 		cpu_setbank(4, rom + 0x4000);
-		memory_set_bankhandler_r(4, 0, MRA_BANK4);
+		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 		memory_set_bankhandler_w(4, 0, MWA8_ROM);
 	}
 	else
@@ -97,7 +97,7 @@ void coupe_update_memory(void)
 		if (( (HMPR+1) & 0x1F) <= PAGE_MASK)
 		{
 			cpu_setbank(4,&mess_ram[((HMPR+1) & PAGE_MASK) * 0x4000]);
-			memory_set_bankhandler_r(4, 0, MRA_BANK4);
+			memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 			memory_set_bankhandler_w(4, 0, MWA_BANK4);
 		}
 		else
@@ -121,7 +121,7 @@ MACHINE_INIT( coupe )
 	memory_set_bankhandler_w(2, 0, MWA8_BANK2);
     memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-    memory_set_bankhandler_r(4, 0, MRA_BANK4);
+    memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 	memory_set_bankhandler_w(4, 0, MWA_BANK4);
 
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.16 2004/02/03 16:11:53 npwoods Exp $
+  $Id: pc8801.c,v 1.17 2004/02/04 02:14:38 npwoods Exp $
 
 ***************************************************************************/
 
@@ -425,10 +425,10 @@ void pc8801_update_bank(void)
     /* VRAM */
     /* already maped */
   } else {
-    memory_set_bankhandler_r(5, 0, MRA_BANK5);
-    memory_set_bankhandler_r(6, 0, MRA_BANK6);
-    memory_set_bankhandler_w(5, 0, MWA_BANK5);
-    memory_set_bankhandler_w(6, 0, MWA_BANK6);
+    memory_set_bankhandler_r(5, 0, MRA8_BANK5);
+    memory_set_bankhandler_r(6, 0, MRA8_BANK6);
+    memory_set_bankhandler_w(5, 0, MWA8_BANK5);
+    memory_set_bankhandler_w(6, 0, MWA8_BANK6);
     cpu_setbank(5, pc8801_mainRAM + 0xc000);
     if(maptvram) {
       cpu_setbank(6, pc88sr_textRAM);

@@ -19,7 +19,6 @@ VIDEO_START( pcw )
 	return 0;
 }
 
-extern unsigned char *pcw_ram;
 extern unsigned int roller_ram_addr;
 extern unsigned short roller_ram_offset;
 extern unsigned char pcw_vdu_video_control_register;
@@ -104,14 +103,14 @@ VIDEO_UPDATE( pcw )
 			x = PCW_BORDER_WIDTH;
 
 			roller_ram_ptr = (unsigned char *)
-				((unsigned long)pcw_ram + roller_ram_addr + roller_ram_offs);
+				((unsigned long)mess_ram + roller_ram_addr + roller_ram_offs);
 
 			/* get line address */
 			/* b16-14 control which bank the line is to be found in, b13-3 the address in the bank (in 16-byte units), and b2-0 the offset. Thus a roller RAM address bbbxxxxxxxxxxxyyy indicates bank bbb, address 00xxxxxxxxxxx0yyy. */
 			line_data = ((unsigned char *)roller_ram_ptr)[0] | (((unsigned char *)roller_ram_ptr)[1]<<8);
 
 			/* calculate address of pixel data */
-			line_ptr = pcw_ram + ((line_data & 0x0e000)<<1) + ((line_data & 0x01ff8)<<1) + (line_data & 0x07);
+			line_ptr = mess_ram + ((line_data & 0x0e000)<<1) + ((line_data & 0x01ff8)<<1) + (line_data & 0x07);
 
 			for (by=0; by<90; by++)
 			{

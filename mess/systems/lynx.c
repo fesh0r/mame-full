@@ -26,7 +26,7 @@ static MEMORY_READ_START( lynx_readmem )
 	{ 0xfd00, 0xfdff, MRA8_BANK2 },
 	{ 0xfe00, 0xfff7, MRA8_BANK3 },
 	{ 0xfff8, 0xfff9, MRA8_RAM },
-    { 0xfffa, 0xffff, MRA_BANK4 },
+    { 0xfffa, 0xffff, MRA8_BANK4 },
 MEMORY_END
 
 static MEMORY_WRITE_START( lynx_writemem )

@@ -108,9 +108,6 @@
 
 #include "includes/28f008sa.h"
 
-//#define PCW16_DUMP_RAM
-//#define PCW16_DUMP_CPU_RAM
-
 // interrupt counter
 unsigned long pcw16_interrupt_counter;
 // video control
@@ -132,42 +129,7 @@ static int pcw16_fdc_int_code;
 // bit 0: Display ints
 static int pcw16_system_status;
 
-// debugging - write whole ram
-#ifdef PCW16_DUMP_RAM
-/* write ram */
-void pcw16_dump_ram(void)
-{
-	ram_dump("pcwram.bin");
-}
-#endif
-
 // debugging - write ram as seen by cpu
-#ifdef PCW16_DUMP_CPU_RAM
-void pcw16_dump_cpu_ram(void)
-{
-	mame_file *file;
-
-	file = mame_fopen(Machine->gamedrv->name, "pcwcpuram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
-
-	if (file)
-	{
-		int i;
-		for (i=0; i<65536; i++)
-		{
-			char data;
-
-			data = cpu_readmem16(i);
-
-			mame_fwrite(file, &data, 1);
-
-		}
-
-		/* close file */
-		mame_fclose(file);
-	}
-}
-#endif
-
 static void pcw16_refresh_ints(void)
 {
 	/* any bits set excluding vsync */
@@ -198,12 +160,13 @@ static void pcw16_timer_callback(int dummy)
 	}
 }
 
-MEMORY_READ_START( readmem_pcw16 )
-	{0x0000, 0x03fff, MRA8_BANK1},
-	{0x4000, 0x07fff, MRA8_BANK2},
-	{0x8000, 0x0Bfff, MRA8_BANK3},
-	{0xC000, 0x0ffff, MRA_BANK4},
-MEMORY_END
+static ADDRESS_MAP_START(pcw16_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK5)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK6)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK3, MWA8_BANK7)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK4, MWA8_BANK8)
+ADDRESS_MAP_END
+
 
 extern int pcw16_colour_palette[16];
 
@@ -214,20 +177,20 @@ static WRITE_HANDLER(pcw16_palette_w)
 
 static char *pcw16_mem_ptr[4];
 
-const write8_handler pcw16_write_handler_dram[4] =
+static const write8_handler pcw16_write_handler_dram[4] =
 {
-	MWA_BANK5,
-	MWA_BANK6,
-	MWA_BANK7,
-	MWA_BANK8
+	MWA8_BANK5,
+	MWA8_BANK6,
+	MWA8_BANK7,
+	MWA8_BANK8
 };
 
-const read8_handler pcw16_read_handler_dram[4] =
+static const read8_handler pcw16_read_handler_dram[4] =
 {
 	MRA8_BANK1,
 	MRA8_BANK2,
 	MRA8_BANK3,
-	MRA_BANK4
+	MRA8_BANK4
 };
 /*******************************************/
 
@@ -407,49 +370,44 @@ static READ_HANDLER(pcw16_no_mem_r)
 
 static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 {
-	switch (type)
-	{
+	read8_handler read_handler;
+	write8_handler write_handler;
+
+	switch (type) {
+	case PCW16_MEM_ROM:
 		/* rom */
-		case PCW16_MEM_ROM:
-		{
-			memory_set_bankhandler_r(bank+1, 0, pcw16_read_handler_dram[bank]);
-			memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
-		}
+		read_handler = pcw16_read_handler_dram[bank];
+		write_handler = MWA8_NOP;
 		break;
 
-
+	case PCW16_MEM_FLASH_1:
 		/* sram */
-		case PCW16_MEM_FLASH_1:
-		{
-			memory_set_bankhandler_r(bank+1, 0, pcw16_flash0_bank_handlers_r[bank]);
-			memory_set_bankhandler_w(bank+5, 0, pcw16_flash0_bank_handlers_w[bank]);
-		}
+		read_handler = pcw16_flash0_bank_handlers_r[bank];
+		write_handler = pcw16_flash0_bank_handlers_w[bank];
 		break;
 
-		case PCW16_MEM_FLASH_2:
-		{
-			memory_set_bankhandler_r(bank+1, 0, pcw16_flash1_bank_handlers_r[bank]);
-			memory_set_bankhandler_w(bank+5, 0, pcw16_flash1_bank_handlers_w[bank]);
-		}
+	case PCW16_MEM_FLASH_2:
+		read_handler = pcw16_flash1_bank_handlers_r[bank];
+		write_handler = pcw16_flash1_bank_handlers_w[bank];
 		break;
 
-		case PCW16_MEM_NONE:
-		{
-			memory_set_bankhandler_r(bank+1, 0, pcw16_no_mem_r);
-			memory_set_bankhandler_w(bank+5, 0, MWA8_NOP);
-		}
+	case PCW16_MEM_NONE:
+		read_handler = pcw16_no_mem_r;
+		write_handler = MWA8_NOP;
 		break;
 
+	default:
+	case PCW16_MEM_DRAM:
 		/* dram */
-		default:
-		case PCW16_MEM_DRAM:
-		{
-			memory_set_bankhandler_r(bank+1, 0, pcw16_read_handler_dram[bank]);
-			memory_set_bankhandler_w(bank+5, 0, pcw16_write_handler_dram[bank]);
-
-		}
+		read_handler = pcw16_read_handler_dram[bank];
+		write_handler = pcw16_write_handler_dram[bank];
 		break;
 	}
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+		(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, read_handler);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+		(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, write_handler);
 }
 
 static void pcw16_update_bank(int bank)
@@ -462,13 +420,6 @@ static void pcw16_update_bank(int bank)
 	/* get memory bank */
 	bank_id = pcw16_banks[bank];
 
-
-#ifdef PCW16_DUMP_CPU_RAM
-	if (bank_id==4)
-	{
-		pcw16_dump_cpu_ram();
-	}
-#endif
 
 	if ((bank_id & 0x080)==0)
 	{
@@ -843,13 +794,6 @@ static void pcw16_keyboard_timer_callback(int dummy)
 		}
 	}
 }
-
-MEMORY_WRITE_START( writemem_pcw16 )
-	{0x00000, 0x03fff, MWA_BANK5},
-	{0x04000, 0x07fff, MWA_BANK6},
-	{0x08000, 0x0bfff, MWA_BANK7},
-	{0x0c000, 0x0ffff, MWA_BANK8},
-MEMORY_END
 
 static unsigned char rtc_seconds;
 static unsigned char rtc_minutes;
@@ -1327,52 +1271,31 @@ static uart8250_interface pcw16_com_interface[2]=
 
 
 
-PORT_READ_START( readport_pcw16 )
+static ADDRESS_MAP_START(pcw16_io, ADDRESS_SPACE_IO, 8)
 	/* super i/o chip */
-	{0x01c, 0x01c, pcw16_superio_fdc_main_status_register_r},
-	{0x01d, 0x01d, pcw16_superio_fdc_data_r},
-	{0x01f, 0x01f, pcw16_superio_fdc_digital_input_register_r},
-	{0x020, 0x027, uart8250_0_r},
-	{0x028, 0x02f, uart8250_1_r},
-	{0x038, 0x03a, pc_parallelport0_r},
+	AM_RANGE(0x01a, 0x01a) AM_WRITE(pcw16_superio_fdc_digital_output_register_w)
+    AM_RANGE(0x01c, 0x01c) AM_READ(pcw16_superio_fdc_main_status_register_r)
+	AM_RANGE(0x01d, 0x01d) AM_READWRITE(pcw16_superio_fdc_data_r, pcw16_superio_fdc_data_w)
+	AM_RANGE(0x01f, 0x01f) AM_READWRITE(pcw16_superio_fdc_digital_input_register_r, pcw16_superio_fdc_datarate_w)
+	AM_RANGE(0x020, 0x027) AM_READWRITE(uart8250_0_r, uart8250_0_w)
+	AM_RANGE(0x028, 0x02f) AM_READWRITE(uart8250_1_r, uart8250_1_w)
+	AM_RANGE(0x038, 0x03a) AM_READWRITE(pc_parallelport0_r, pc_parallelport0_w)
 	/* anne asic */
-	{0x0f0, 0x0f3, pcw16_bankhw_r},
-	{0x0f4, 0x0f4, pcw16_keyboard_data_shift_r},
-	{0x0f5, 0x0f5, pcw16_keyboard_status_r},
-	{0x0f7, 0x0f7, pcw16_timer_interrupt_counter_r},
-	{0x0f8, 0x0f8, pcw16_system_status_r},
-	{0x0f9, 0x0f9, rtc_256ths_seconds_r},
-	{0x0fa, 0x0fa, rtc_seconds_r},
-	{0x0fb, 0x0fb, rtc_minutes_r},
-	{0x0fc, 0x0fc, rtc_hours_r},
-	{0x0fd, 0x0fd, rtc_days_r},
-	{0x0fe, 0x0fe, rtc_month_r},
-	{0x0ff, 0x0ff, rtc_year_invalid_r},
-PORT_END
+	AM_RANGE(0x0e0, 0x0ef) AM_WRITE(pcw16_palette_w)
+	AM_RANGE(0x0f0, 0x0f3) AM_READWRITE(pcw16_bankhw_r, pcw16_bankhw_w)
+	AM_RANGE(0x0f4, 0x0f4) AM_READWRITE(pcw16_keyboard_data_shift_r, pcw16_keyboard_data_shift_w)
+	AM_RANGE(0x0f5, 0x0f5) AM_READWRITE(pcw16_keyboard_status_r, pcw16_keyboard_control_w)
+	AM_RANGE(0x0f7, 0x0f7) AM_READWRITE(pcw16_timer_interrupt_counter_r, pcw16_video_control_w)
+	AM_RANGE(0x0f8, 0x0f8) AM_READWRITE(pcw16_system_status_r, pcw16_system_control_w)
+	AM_RANGE(0x0f9, 0x0f9) AM_READWRITE(rtc_256ths_seconds_r, rtc_control_w)
+	AM_RANGE(0x0fa, 0x0fa) AM_READWRITE(rtc_seconds_r, rtc_seconds_w)
+	AM_RANGE(0x0fb, 0x0fb) AM_READWRITE(rtc_minutes_r, rtc_minutes_w)
+	AM_RANGE(0x0fc, 0x0fc) AM_READWRITE(rtc_hours_r, rtc_hours_w)
+	AM_RANGE(0x0fd, 0x0fd) AM_READWRITE(rtc_days_r, rtc_days_w)
+	AM_RANGE(0x0fe, 0x0fe) AM_READWRITE(rtc_month_r, rtc_month_w)
+	AM_RANGE(0x0ff, 0x0ff) AM_READWRITE(rtc_year_invalid_r, rtc_year_w)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_pcw16 )
-	/* super i/o */
-	{0x01a, 0x01a, pcw16_superio_fdc_digital_output_register_w},
-	{0x01d, 0x01d, pcw16_superio_fdc_data_w},
-	{0x01f, 0x01f, pcw16_superio_fdc_datarate_w},
-	{0x020, 0x027, uart8250_0_w},
-	{0x028, 0x02f, uart8250_1_w},
-	{0x038, 0x03a, pc_parallelport0_w},
-	/* anne asic */
-	{0x0e0, 0x0ef, pcw16_palette_w},
-	{0x0f0, 0x0f3, pcw16_bankhw_w},
-	{0x0f7, 0x0f7, pcw16_video_control_w},
-	{0x0f4, 0x0f4, pcw16_keyboard_data_shift_w},
-	{0x0f5, 0x0f5, pcw16_keyboard_control_w},
-	{0x0f8, 0x0f8, pcw16_system_control_w},
-	{0x0f9, 0x0f9, rtc_control_w},
-	{0x0fa, 0x0fa, rtc_seconds_w},
-	{0x0fb, 0x0fb, rtc_minutes_w},
-	{0x0fc, 0x0fc, rtc_hours_w},
-	{0x0fd, 0x0fd, rtc_days_w},
-	{0x0fe, 0x0fe, rtc_month_w},
-	{0x0ff, 0x0ff, rtc_year_w},
-PORT_END
 
 static void pcw16_reset(void)
 {
@@ -1403,28 +1326,21 @@ static void pcw16_reset(void)
 }
 
 
-static PC_LPT_CONFIG lpt_config={
+static PC_LPT_CONFIG lpt_config = 
+{
 	1,
 	LPT_UNIDIRECTIONAL, // more one of these epp/ecp aware ports
 	NULL
 };
-static CENTRONICS_CONFIG cent_config={
+
+static CENTRONICS_CONFIG cent_config =
+{
 	PRINTER_CENTRONICS,
 	pc_lpt_handshake_in
 };
 
 static MACHINE_INIT( pcw16 )
 {
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
-
-	memory_set_bankhandler_w(5, 0, MWA_BANK5);
-	memory_set_bankhandler_w(6, 0, MWA_BANK6);
-	memory_set_bankhandler_w(7, 0, MWA_BANK7);
-	memory_set_bankhandler_w(8, 0, MWA_BANK8);
-
 	/* flash 0 */
 	flash_init(0);
 	flash_restore(0, "pcw16f1.nv");
@@ -1502,8 +1418,8 @@ static struct beep_interface pcw16_beep_interface =
 static MACHINE_DRIVER_START( pcw16 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 16000000)
-	MDRV_CPU_MEMORY(readmem_pcw16,writemem_pcw16)
-	MDRV_CPU_PORTS(readport_pcw16,writeport_pcw16)
+	MDRV_CPU_PROGRAM_MAP(pcw16_map, 0)
+	MDRV_CPU_IO_MAP(pcw16_io, 0)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

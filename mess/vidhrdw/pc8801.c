@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.9 2002/06/13 02:51:43 npwoods Exp $
+  $Id: pc8801.c,v 1.10 2004/02/04 02:14:45 npwoods Exp $
 
 ***************************************************************************/
 
@@ -267,8 +267,8 @@ int is_pc8801_vram_select(void)
     switch(selected_vram) {
 #define XXX(n) \
     case (n+1): \
-      memory_set_bankhandler_r(5, 0, MRA_BANK5); \
-      memory_set_bankhandler_r(6, 0, MRA_BANK6); \
+      memory_set_bankhandler_r(5, 0, MRA8_BANK5); \
+      memory_set_bankhandler_r(6, 0, MRA8_BANK6); \
       memory_set_bankhandler_w(5, 0, write_gvram##n##_bank5); \
       memory_set_bankhandler_w(6, 0, write_gvram##n##_bank6); \
       cpu_setbank(5, gVRAM + 0x4000*n ); \

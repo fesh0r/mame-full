@@ -190,7 +190,7 @@ void c128_bankswitch_64 (int reset)
 	}
 	else
 	{
-		memory_set_bankhandler_r (13, 0, MRA_BANK5);
+		memory_set_bankhandler_r (13, 0, MRA8_BANK5);
 		c128_write_io = 0;
 		if ((!charen && (loram || hiram)))
 		{

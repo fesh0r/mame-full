@@ -634,17 +634,17 @@ static MACHINE_INIT( mtx512 )
 	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA_BANK5);
-	memory_set_bankhandler_r(6, 0, MRA_BANK6);
-	memory_set_bankhandler_r(7, 0, MRA_BANK7);
-	memory_set_bankhandler_r(8, 0, MRA_BANK8);
+	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA8_BANK5);
+	memory_set_bankhandler_r(6, 0, MRA8_BANK6);
+	memory_set_bankhandler_r(7, 0, MRA8_BANK7);
+	memory_set_bankhandler_r(8, 0, MRA8_BANK8);
 
 
 	memory_set_bankhandler_w(9, 0, mtx_trap_write);
 	memory_set_bankhandler_w(10, 0, MWA8_NOP);
-	memory_set_bankhandler_w(11, 0, MWA_BANK11);
-	memory_set_bankhandler_w(12, 0, MWA_BANK12);
+	memory_set_bankhandler_w(11, 0, MWA8_BANK11);
+	memory_set_bankhandler_w(12, 0, MWA8_BANK12);
 	memory_set_bankhandler_w(13, 0, MWA_BANK13);
 	memory_set_bankhandler_w(14, 0, MWA_BANK14);
 	memory_set_bankhandler_w(15, 0, MWA_BANK15);
@@ -694,18 +694,18 @@ MEMORY_READ_START( mtx_readmem )
 	{ 0x0000, 0x1fff, MRA8_BANK1 },
 	{ 0x2000, 0x3fff, MRA8_BANK2 },
 	{ 0x4000, 0x5fff, MRA8_BANK3 },
-	{ 0x6000, 0x7fff, MRA_BANK4 },
-	{ 0x8000, 0x9fff, MRA_BANK5 },
-	{ 0xa000, 0xbfff, MRA_BANK6 },
-	{ 0xc000, 0xdfff, MRA_BANK7 },
-	{ 0xe000, 0xffff, MRA_BANK8 },
+	{ 0x6000, 0x7fff, MRA8_BANK4 },
+	{ 0x8000, 0x9fff, MRA8_BANK5 },
+	{ 0xa000, 0xbfff, MRA8_BANK6 },
+	{ 0xc000, 0xdfff, MRA8_BANK7 },
+	{ 0xe000, 0xffff, MRA8_BANK8 },
 MEMORY_END
 
 MEMORY_WRITE_START( mtx_writemem )
-	{ 0x0000, 0x1fff, MWA_BANK9 },
-	{ 0x2000, 0x3fff, MWA_BANK10 },
-        { 0x4000, 0x5fff, MWA_BANK11 },
-        { 0x6000, 0x7fff, MWA_BANK12 },
+	{ 0x0000, 0x1fff, MWA8_BANK9 },
+	{ 0x2000, 0x3fff, MWA8_BANK10 },
+        { 0x4000, 0x5fff, MWA8_BANK11 },
+        { 0x6000, 0x7fff, MWA8_BANK12 },
         { 0x8000, 0x9fff, MWA_BANK13 },
         { 0xa000, 0xbfff, MWA_BANK14 },
         { 0xc000, 0xdfff, MWA_BANK15 },

@@ -103,12 +103,10 @@
 
 // uncomment for debug log output
 //#define VERBOSE
-//#define PCW_DUMP_RAM
 
 void pcw_fdc_interrupt(int);
 
 // pointer to pcw ram
-unsigned char *pcw_ram = NULL;
 unsigned int roller_ram_addr;
 // flag to indicate if boot-program is enabled/disabled
 static int 	pcw_boot;
@@ -118,37 +116,10 @@ unsigned short roller_ram_offset;
 static int fdc_interrupt_code;
 unsigned char pcw_vdu_video_control_register;
 static int pcw_interrupt_counter;
-static int pcw_ram_size = 2;
 
 static unsigned long pcw_banks[4];
 static unsigned char pcw_bank_force = 0;
 
-#ifdef PCW_DUMP_RAM
-/* load image */
-void pcw_dump_ram(void)
-{
-	mame_file *file;
-
-	file = mame_fopen(Machine->gamedrv->name, "pcwram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
-
-	if (file)
-	{
-		int i;
-		for (i=0; i<65536; i++)
-		{
-			char data;
-
-			data = cpu_readmem16(i);
-
-			mame_fwrite(file, &data, 1);
-
-		}
-
-		/* close file */
-		mame_fclose(file);
-	}
-}
-#endif
 
 static void pcw_update_interrupt_counter(void)
 {
@@ -259,34 +230,19 @@ void pcw_fdc_interrupt(int state)
 
 /* Memory is banked in 16k blocks.
 
-  The upper 16 bytes of block 3, contains the keyboard
-  state. This is updated by the hardware.
+	The upper 16 bytes of block 3, contains the keyboard
+	state. This is updated by the hardware.
 
-  block 3 could be paged into any bank, and this explains the
-  setup of the memory below.
- */
-MEMORY_READ_START( readmem_pcw )
-	{0x0000, 0x03fef, MRA8_BANK1},
-	{0x3ff0, 0x03fff, MRA8_BANK2},
+	block 3 could be paged into any bank, and this explains the
+	setup of the memory below.
+*/
+static ADDRESS_MAP_START(pcw_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK5)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK6)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK3, MWA8_BANK7)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK4, MWA8_BANK8)
+ADDRESS_MAP_END
 
-	{0x4000, 0x07fef, MRA8_BANK3},
-	{0x7ff0, 0x07fff, MRA_BANK4},
-
-	{0x8000, 0x0Bfef, MRA_BANK5},
-	{0xbff0, 0x0bfff, MRA_BANK6},
-
-	{0xC000, 0x0ffef, MRA_BANK7},
-	{0xfff0, 0x0ffff, MRA_BANK8},
-MEMORY_END
-
-/* AFAIK the keyboard data is not writeable. So we don't need
-the same memory layout as above */
-MEMORY_WRITE_START( writemem_pcw )
-	{0x00000, 0x03fff, MWA_BANK9},
-	{0x04000, 0x07fff, MWA_BANK10},
-	{0x08000, 0x0bfff, MWA_BANK11},
-	{0x0c000, 0x0ffff, MWA_BANK12},
-MEMORY_END
 
 /* PCW keyboard is mapped into memory */
 static READ_HANDLER(pcw_keyboard_r)
@@ -294,60 +250,48 @@ static READ_HANDLER(pcw_keyboard_r)
 	return readinputport(offset);
 }
 
-static void pcw_update_memory_block(int block, int bank)
-{
-	cpu_setbank((block<<1)+1,pcw_ram+(bank<<14));
-	cpu_setbank((block<<1)+2, pcw_ram+(bank<<14)+0x03ff0);
 
-	/* bank 3 ? */
-	if (bank==3)
+/* -----------------------------------------------------------------------
+ * PCW Banking
+ * ----------------------------------------------------------------------- */
+
+static void pcw_update_read_memory_block(int block, int bank)
+{
+	cpu_setbank(block + 1, mess_ram + ((bank * 0x4000) % mess_ram_size));
+
+	/* bank 3? */
+	if (bank == 3)
 	{
 		/* when upper 16 bytes are accessed use keyboard read
-		handler */
-		memory_set_bankhandler_r((block<<1)+2, 0, pcw_keyboard_r);
+		   handler */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+			block * 0x04000 + 0x3ff0, block * 0x04000 + 0x3fff, 0,
+			pcw_keyboard_r);
 	}
 	else
 	{
-		read8_handler mra=0;
-
-		switch ((block<<1)+2)
-		{
-			case 2:
-			{
-				mra = MRA8_BANK2;
-			}
-			break;
-
-			case 4:
-			{
-				mra = MRA_BANK4;
-			}
-			break;
-			case 6:
-			{
-				mra = MRA_BANK6;
-			}
-			break;
-			case 8:
-			{
-				mra = MRA_BANK8;
-			}
-			break;
-		}
-
-		memory_set_bankhandler_r((block<<1)+2, 0, mra);
+		/* restore bank handler across entire block */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+			block * 0x04000 + 0x0000, block * 0x04000 + 0x3fff, 0,
+			(read8_handler) (STATIC_BANK1 + block));
 	}
 }
+
+
+
+static void pcw_update_write_memory_block(int block, int bank)
+{
+	cpu_setbank(block + 5, mess_ram + ((bank * 0x4000) % mess_ram_size));
+}
+
+
+/* ----------------------------------------------------------------------- */
 
 /* &F4 O  b7-b4: when set, force memory reads to access the same bank as
 writes for &C000, &0000, &8000, and &4000 respectively */
 
 static void pcw_update_mem(int block, int data)
 {
-
-
-
-
 	/* expansion ram select.
 		if block is 0-7, selects internal ram instead for read/write
 		*/
@@ -358,50 +302,8 @@ static void pcw_update_mem(int block, int data)
 		/* same bank for reading and writing */
 		bank = data & 0x7f;
 
-		if ((bank & 0x078)==0)
-		{
-			/* expansion bank in range 0-7 - select standard ram for read/write */
-			pcw_update_memory_block(block, bank);
-			/* standard ram write */
-			cpu_setbank(block+9, pcw_ram+(bank<<14));
-		}
-		else
-		{
-			/* expansion bank not in range 0-7 */
-			int ram_mask;
-
-			switch (pcw_ram_size)
-			{
-				/* 128k */
-				default:
-				case 0:
-				{
-					ram_mask = 0x07;
-				}
-				break;
-
-				/* 256k */
-				case 1:
-				{
-					ram_mask = 0x0f;
-				}
-				break;
-
-				/* 512k */
-				case 2:
-				{
-					ram_mask = 0x01f;
-				}
-				break;
-			}
-
-			/* force into range */
-			bank = bank & ram_mask;
-
-			pcw_update_memory_block(block, bank);
-
-			cpu_setbank(block+9, pcw_ram+(bank<<14));
-		}
+		pcw_update_read_memory_block(block, bank);
+		pcw_update_write_memory_block(block, bank);
 	}
 	else
 	{
@@ -446,10 +348,10 @@ static void pcw_update_mem(int block, int data)
 			read_bank = (data>>4) & 0x07;
 		}
 
-		pcw_update_memory_block(block, read_bank);
+		pcw_update_read_memory_block(block, read_bank);
 
 		write_bank = data & 0x07;
-		cpu_setbank(block+9, pcw_ram+(write_bank<<14));
+		pcw_update_write_memory_block(block, write_bank);
 	}
 
 	/* if boot is active, page in fake ROM */
@@ -564,11 +466,6 @@ static WRITE_HANDLER(pcw_system_control_w)
 			}
 
 			pcw_trigger_fdc_int();
-
-//#ifdef PCW_DUMP_RAM
-//			/* load image */
-//			pcw_dump_ram();
-//#endif
 		}
 		break;
 
@@ -669,14 +566,14 @@ static WRITE_HANDLER(pcw_system_control_w)
 		/* beep on */
 		case 11:
 		{
-                        beep_set_state(0,1);
+			beep_set_state(0,1);
 		}
 		break;
 
 		/* beep off */
 		case 12:
 		{
-                        beep_set_state(0,0);
+			beep_set_state(0,0);
 		}
 		break;
 
@@ -810,80 +707,42 @@ static WRITE_HANDLER(pcw9512_parallel_w)
 }
 
 
-
-PORT_READ_START( readport_pcw )
-	{0x000, 0x07f, pcw_fdc_r},
-	{0x080, 0x0ef, pcw_expansion_r},
-	{0x0f4, 0x0f4, pcw_interrupt_counter_r},
-	{0x0f8, 0x0f8, pcw_system_status_r},
-	{0x0fc, 0x0fc, pcw_printer_data_r},
-	{0x0fd, 0x0fd, pcw_printer_status_r},
-PORT_END
-
-
-/* unused */
-PORT_READ_START( readport_pcw9512 )
-	{0x000, 0x07f, pcw_fdc_r},
-	{0x080, 0x0ef, pcw_expansion_r},
-	{0x0f4, 0x0f4, pcw_interrupt_counter_r},
-	{0x0f8, 0x0f8, pcw_system_status_r},
-	{0x0fc, 0x0fd, pcw9512_parallel_r},
-PORT_END
-
-PORT_WRITE_START( writeport_pcw )
-	{0x000, 0x07f, pcw_fdc_w},
-	{0x080, 0x0ef, pcw_expansion_w},
-	{0x0f0, 0x0f3, pcw_bank_select_w},
-	{0x0f4, 0x0f4, pcw_bank_force_selection_w},
-	{0x0f5, 0x0f5, pcw_roller_ram_addr_w},
-	{0x0f6, 0x0f6, pcw_pointer_table_top_scan_w},
-	{0x0f7, 0x0f7, pcw_vdu_video_control_register_w},
-	{0x0f8, 0x0f8, pcw_system_control_w},
-
-	{0x0fc, 0x0fd, pcw_printer_data_w},
-	{0x0fd, 0x0fd, pcw_printer_command_w},
-PORT_END
+static ADDRESS_MAP_START(pcw_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x000, 0x07f) AM_READWRITE(pcw_fdc_r,					pcw_fdc_w)
+	AM_RANGE(0x080, 0x0ef) AM_READWRITE(pcw_expansion_r,			pcw_expansion_w)
+	AM_RANGE(0x0f0, 0x0f3) AM_WRITE(								pcw_bank_select_w)
+	AM_RANGE(0x0f4, 0x0f4) AM_READWRITE(pcw_interrupt_counter_r,	pcw_bank_force_selection_w)	
+	AM_RANGE(0x0f5, 0x0f5) AM_WRITE(								pcw_roller_ram_addr_w)
+	AM_RANGE(0x0f6, 0x0f6) AM_WRITE(								pcw_pointer_table_top_scan_w)
+	AM_RANGE(0x0f7, 0x0f7) AM_WRITE(								pcw_vdu_video_control_register_w)
+	AM_RANGE(0x0f8, 0x0f8) AM_READWRITE(pcw_system_status_r,		pcw_system_control_w)
+	AM_RANGE(0x0fc, 0x0fc) AM_READWRITE(pcw_printer_data_r,			pcw_printer_data_w)
+	AM_RANGE(0x0fd, 0x0fd) AM_READWRITE(pcw_printer_status_r,		pcw_printer_command_w)
+ADDRESS_MAP_END
 
 
- /* unused */
-PORT_WRITE_START( writeport_pcw9512 )
-	{0x000, 0x07f, pcw_fdc_w},
-	{0x080, 0x0ef, pcw_expansion_w},
-	{0x0f0, 0x0f3, pcw_bank_select_w},
-	{0x0f4, 0x0f4, pcw_bank_force_selection_w},
-	{0x0f5, 0x0f5, pcw_roller_ram_addr_w},
-	{0x0f6, 0x0f6, pcw_pointer_table_top_scan_w},
-	{0x0f7, 0x0f7, pcw_vdu_video_control_register_w},
-	{0x0f8, 0x0f8, pcw_system_control_w},
 
-	{0x0fc, 0x0fd, pcw9512_parallel_w},
-PORT_END
+static ADDRESS_MAP_START(pcw9512_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x000, 0x07f) AM_READWRITE(pcw_fdc_r,					pcw_fdc_w)
+	AM_RANGE(0x080, 0x0ef) AM_READWRITE(pcw_expansion_r,			pcw_expansion_w)
+	AM_RANGE(0x0f0, 0x0f3) AM_WRITE(								pcw_bank_select_w)
+	AM_RANGE(0x0f4, 0x0f4) AM_READWRITE(pcw_interrupt_counter_r,	pcw_bank_force_selection_w)	
+	AM_RANGE(0x0f5, 0x0f5) AM_WRITE(								pcw_roller_ram_addr_w)
+	AM_RANGE(0x0f6, 0x0f6) AM_WRITE(								pcw_pointer_table_top_scan_w)
+	AM_RANGE(0x0f7, 0x0f7) AM_WRITE(								pcw_vdu_video_control_register_w)
+	AM_RANGE(0x0f8, 0x0f8) AM_READWRITE(pcw_system_status_r,		pcw_system_control_w)
+	AM_RANGE(0x0fc, 0x0fd) AM_READWRITE(pcw9512_parallel_r,			pcw9512_parallel_w)
+ADDRESS_MAP_END
 
 
-static void pcw_init_machine(void)
+
+static DRIVER_INIT(pcw)
 {
-
 	pcw_boot = 1;
-
-/*	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA_BANK5);
-	memory_set_bankhandler_r(6, 0, MRA_BANK6);
-	memory_set_bankhandler_r(7, 0, MRA_BANK7);
-	memory_set_bankhandler_r(8, 0, MRA_BANK8);
-
-	memory_set_bankhandler_w(9, 0, MWA_BANK9);
-	memory_set_bankhandler_w(10, 0, MWA_BANK10);
-	memory_set_bankhandler_w(11, 0, MWA_BANK11);
-	memory_set_bankhandler_w(12, 0, MWA_BANK12);
-*/
 
 	cpu_irq_line_vector_w(0, 0,0x0ff);
 
     nec765_init(&pcw_nec765_interface,NEC765A);
-
 
 	/* ram paging is actually undefined at power-on */
 	pcw_banks[0] = 0;
@@ -913,59 +772,6 @@ static void pcw_init_machine(void)
 	beep_set_state(0,0);
 	beep_set_frequency(0,3750);
 }
-
-static void pcw_init_memory(int size)
-{
-	switch (size)
-	{
-		default:
-		case 256:
-		{
-			/* 256k ram */
-			pcw_ram_size = 1;
-			pcw_ram = auto_malloc(256*1024);
-		}
-		break;
-
-		case 512:
-		{
-			pcw_ram_size = 2;
-			pcw_ram = auto_malloc(512*1024);
-		}
-		break;
-	}
-}
-
-static void init_pcw8256(void)
-{
-	pcw_init_memory(256);
-	pcw_init_machine();
-}
-
-static void init_pcw8512(void)
-{
-	pcw_init_memory(512);
-	pcw_init_machine();
-}
-
-static void init_pcw9256(void)
-{
-	pcw_init_memory(256);
-	pcw_init_machine();
-}
-
-static void init_pcw9512(void)
-{
-	pcw_init_memory(512);
-	pcw_init_machine();
-}
-
-static void init_pcw10(void)
-{
-	pcw_init_memory(512);
-	pcw_init_machine();
-}
-
 
 
 /*
@@ -1173,8 +979,8 @@ static struct beep_interface pcw_beep_interface =
 static MACHINE_DRIVER_START( pcw )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 4000000)       /* clock supplied to chip, but in reality it is 3.4Mhz */
-	MDRV_CPU_MEMORY(readmem_pcw,writemem_pcw)
-	MDRV_CPU_PORTS(readport_pcw,writeport_pcw)
+	MDRV_CPU_PROGRAM_MAP(pcw_map, 0)
+	MDRV_CPU_IO_MAP(pcw_io, 0)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
@@ -1199,7 +1005,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( pcw9512 )
 	MDRV_IMPORT_FROM( pcw )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PORTS( readport_pcw9512,writeport_pcw9512 )
+	MDRV_CPU_IO_MAP(pcw9512_io, 0)
 MACHINE_DRIVER_END
 
 
@@ -1225,16 +1031,26 @@ ROM_PCW(pcw9256)
 ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
-SYSTEM_CONFIG_START(pcw)
+SYSTEM_CONFIG_START(generic_pcw)
 	CONFIG_DEVICE_LEGACY_DSK(2)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(pcw_256k)
+	CONFIG_IMPORT_FROM(generic_pcw)
+	CONFIG_RAM_DEFAULT(256 * 1024)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(pcw_512k)
+	CONFIG_IMPORT_FROM(generic_pcw)
+	CONFIG_RAM_DEFAULT(512 * 1024)
 SYSTEM_CONFIG_END
 
 /* these are all variants on the pcw design */
 /* major difference is memory configuration and drive type */
-/*     YEAR	NAME	    PARENT		COMPAT	MACHINE   INPUT INIT		CONFIG	COMPANY 	   FULLNAME */
-COMPX( 1985, pcw8256,   0,			0,		pcw,	  pcw,	pcw8256,	pcw,	"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
-COMPX( 1985, pcw8512,   pcw8256,	0,		pcw,	  pcw,	pcw8512,	pcw,	"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
-COMPX( 1987, pcw9256,   pcw8256,	0,		pcw,	  pcw,	pcw9256,	pcw,	"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
-COMPX( 1987, pcw9512,   pcw8256,	0,		pcw9512,  pcw,	pcw9512,	pcw,	"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
-COMPX( 1993, pcw10,	    pcw8256,	0,		pcw9512,  pcw,	pcw10,		pcw,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
+/*     YEAR	NAME	    PARENT		COMPAT	MACHINE   INPUT INIT	CONFIG		COMPANY 	   FULLNAME */
+COMPX( 1985, pcw8256,   0,			0,		pcw,	  pcw,	pcw,	pcw_256k,	"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
+COMPX( 1985, pcw8512,   pcw8256,	0,		pcw,	  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
+COMPX( 1987, pcw9256,   pcw8256,	0,		pcw,	  pcw,	pcw,	pcw_256k,	"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
+COMPX( 1987, pcw9512,   pcw8256,	0,		pcw9512,  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
+COMPX( 1993, pcw10,	    pcw8256,	0,		pcw9512,  pcw,	pcw,	pcw_512k,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
 

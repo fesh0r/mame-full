@@ -140,7 +140,7 @@ static void update_ti86_memory (void)
 	{
 		cpu_setbank(2,ti86_ram + 0x004000*(ti85_memory_page_0x4000&0x07));
 		cpu_setbank(6,ti86_ram + 0x004000*(ti85_memory_page_0x4000&0x07));
-		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
 	}
 	else
 	{
@@ -151,7 +151,7 @@ static void update_ti86_memory (void)
 	{
 		cpu_setbank(3,ti86_ram + 0x004000*(ti86_memory_page_0x8000&0x07));
 		cpu_setbank(7,ti86_ram + 0x004000*(ti86_memory_page_0x8000&0x07));
-		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 	}
 	else
 	{
@@ -260,12 +260,12 @@ MACHINE_INIT( ti86 )
 		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_r(4, 0, MRA_BANK4);
+		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
 
 		memory_set_bankhandler_w(5, 0, MWA8_ROM);
-		memory_set_bankhandler_w(6, 0, MWA_BANK6);
-		memory_set_bankhandler_w(7, 0, MWA_BANK7);
-		memory_set_bankhandler_w(8, 0, MWA_BANK8);
+		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
+		memory_set_bankhandler_w(8, 0, MWA8_BANK8);
 
 		cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);

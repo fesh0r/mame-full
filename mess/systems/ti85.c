@@ -233,14 +233,14 @@ MEMORY_READ_START( ti86_readmem )
 	{0x0000, 0x3fff, MRA8_BANK1},
 	{0x4000, 0x7fff, MRA8_BANK2},
 	{0x8000, 0xbfff, MRA8_BANK3},
-	{0xc000, 0xffff, MRA_BANK4},
+	{0xc000, 0xffff, MRA8_BANK4},
 MEMORY_END
 
 MEMORY_WRITE_START( ti86_writemem )
-	{0x0000, 0x3fff, MWA_BANK5},
-	{0x4000, 0x7fff, MWA_BANK6},
-	{0x8000, 0xbfff, MWA_BANK7},
-	{0xc000, 0xffff, MWA_BANK8},
+	{0x0000, 0x3fff, MWA8_BANK5},
+	{0x4000, 0x7fff, MWA8_BANK6},
+	{0x8000, 0xbfff, MWA8_BANK7},
+	{0xc000, 0xffff, MWA8_BANK8},
 MEMORY_END
         
 /* keyboard input */

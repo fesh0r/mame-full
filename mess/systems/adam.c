@@ -195,15 +195,15 @@ static MEMORY_READ_START( adam_readmem )
 	{ 0x00000, 0x01fff, MRA8_BANK1 },
 	{ 0x02000, 0x03fff, MRA8_BANK2 },
 	{ 0x04000, 0x05fff, MRA8_BANK3 },
-	{ 0x06000, 0x07fff, MRA_BANK4 },
-	{ 0x08000, 0x0ffff, MRA_BANK5 },
+	{ 0x06000, 0x07fff, MRA8_BANK4 },
+	{ 0x08000, 0x0ffff, MRA8_BANK5 },
 MEMORY_END
 
 static MEMORY_WRITE_START( adam_writemem )
-	{ 0x00000, 0x01fff, MWA_BANK6 },
-	{ 0x02000, 0x03fff, MWA_BANK7 },
-	{ 0x04000, 0x05fff, MWA_BANK8 },
-	{ 0x06000, 0x07fff, MWA_BANK9 },
+	{ 0x00000, 0x01fff, MWA8_BANK6 },
+	{ 0x02000, 0x03fff, MWA8_BANK7 },
+	{ 0x04000, 0x05fff, MWA8_BANK8 },
+	{ 0x06000, 0x07fff, MWA8_BANK9 },
 	{ 0x08000, 0x0ffff, common_writes_w},
 MEMORY_END
 

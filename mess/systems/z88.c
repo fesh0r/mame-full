@@ -247,13 +247,13 @@ static void z88_rtc_timer_callback(int dummy)
 
 static read8_handler z88_read_handler[] =
 {
- MRA8_BANK1, MRA8_BANK2, MRA8_BANK3, MRA_BANK4, MRA_BANK5
+ MRA8_BANK1, MRA8_BANK2, MRA8_BANK3, MRA8_BANK4, MRA8_BANK5
 };
 
 
 static write8_handler z88_write_handler[] =
 {
- MWA_BANK6, MWA_BANK7, MWA_BANK8, MWA_BANK9, MWA_BANK10
+ MWA8_BANK6, MWA8_BANK7, MWA8_BANK8, MWA8_BANK9, MWA8_BANK10
 };
 
 /* Assumption:
@@ -393,7 +393,7 @@ static void z88_refresh_memory_bank(int index1)
 			cpu_setbank(1, addr);
 			cpu_setbank(6, addr);
 			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-			memory_set_bankhandler_w(6, 0, MWA_BANK6);
+			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
 			
 			logerror("lower 8k is ram\n");
 		}
@@ -414,14 +414,14 @@ static MACHINE_INIT( z88 )
 	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA8_BANK5);
 
-	memory_set_bankhandler_w(6, 0, MWA_BANK6);
-	memory_set_bankhandler_w(7, 0, MWA_BANK7);
-	memory_set_bankhandler_w(8, 0, MWA_BANK8);
-	memory_set_bankhandler_w(9, 0, MWA_BANK9);
-	memory_set_bankhandler_w(10, 0, MWA_BANK10);
+	memory_set_bankhandler_w(6, 0, MWA8_BANK6);
+	memory_set_bankhandler_w(7, 0, MWA8_BANK7);
+	memory_set_bankhandler_w(8, 0, MWA8_BANK8);
+	memory_set_bankhandler_w(9, 0, MWA8_BANK9);
+	memory_set_bankhandler_w(10, 0, MWA8_BANK10);
 
 	z88_refresh_memory_bank(0);
 	z88_refresh_memory_bank(1);
@@ -433,16 +433,16 @@ static MEMORY_READ_START (readmem_z88)
         {0x00000, 0x01fff, MRA8_BANK1},
         {0x02000, 0x03fff, MRA8_BANK2},
         {0x04000, 0x07fff, MRA8_BANK3},
-		{0x08000, 0x0bfff, MRA_BANK4},
-        {0x0c000, 0x0ffff, MRA_BANK5},
+		{0x08000, 0x0bfff, MRA8_BANK4},
+        {0x0c000, 0x0ffff, MRA8_BANK5},
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem_z88)
-        {0x00000, 0x01fff, MWA_BANK6},
-		{0x02000, 0x03fff, MWA_BANK7},
-        {0x04000, 0x07fff, MWA_BANK8},
-        {0x08000, 0x0bfff, MWA_BANK9},
-        {0x0c000, 0x0ffff, MWA_BANK10},
+        {0x00000, 0x01fff, MWA8_BANK6},
+		{0x02000, 0x03fff, MWA8_BANK7},
+        {0x04000, 0x07fff, MWA8_BANK8},
+        {0x08000, 0x0bfff, MWA8_BANK9},
+        {0x0c000, 0x0ffff, MWA8_BANK10},
 MEMORY_END
 #if 0
 unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shift)
