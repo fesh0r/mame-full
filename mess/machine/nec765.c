@@ -948,10 +948,26 @@ static void     nec765_read_a_track(void)
 
 	nec765_get_next_id(&id);
 
-	/* TODO: Check ID with ID from disc */
+        /* TO BE CONFIRMED! */
+        /* check id from disc */
+        if (id.C==fdc.nec765_command_bytes[2])
+        {
+            if (id.H==fdc.nec765_command_bytes[3])
+            {
+                if (id.R==fdc.nec765_command_bytes[4])
+                {
+                    if (id.N==fdc.nec765_command_bytes[5])
+                    {
+                        /* if ID found, then no data is not set */
+                        /* otherwise no data will remain set */
+                        fdc.nec765_status[1] &=~NEC765_ST1_NO_DATA;
+                    }
+                }
+            }
+        }
 
 
-	data_size = nec765_n_to_bytes(fdc.nec765_command_bytes[5]);
+        data_size = nec765_n_to_bytes(id.N);
 	
 	floppy_drive_read_sector_data(fdc.drive, fdc.side, fdc.sector_id,nec765_data_buffer,data_size);
 
@@ -1257,7 +1273,12 @@ static void     nec765_continue_command(void)
 				if (fdc.sector_counter==fdc.nec765_command_bytes[6])
 				{
 					/* TODO: Add correct info here */
-				        fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+
+                                        fdc.nec765_status[1] |= NEC765_ST1_END_OF_CYLINDER;
+
+                                        nec765_setup_st0();
+
+                                        fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
                                 fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
                                 fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
                                 fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
@@ -1818,6 +1839,8 @@ static void     nec765_setup_command(void)
                 fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
                 fdc.nec765_status[1] = 0;
                 fdc.nec765_status[2] = 0;
+
+                fdc.nec765_status[0] |= NEC765_ST1_NO_DATA;
 
 				/* wait for index */
 				do
