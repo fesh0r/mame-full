@@ -1,16 +1,17 @@
 
 #include "svi_cas.h"
 
-#define CAS_PERIOD_0        (40)
-#define CAS_PERIOD_1        (18)
+#define CAS_PERIOD_0		(40)
+#define CAS_PERIOD_1		(18)
 #define CAS_HEADER_PERIODS (1600)
 #define CAS_EMPTY_SAMPLES (11025)
-#define ALLOCATE_BLOCK    (1024*8)
-static const UINT8 CasHeader[17] = { 
-	0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 
+#define ALLOCATE_BLOCK	  (1024*8)
+static const UINT8 CasHeader[17] = {
+	0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
 	0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x7f };
 
-
+#define SMPLO	(INT16)0x8001
+#define SMPHI	(INT16)0x7fff
 
 int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 	{
@@ -28,7 +29,7 @@ int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 
 	samples_pos = 0;
 
-    while (cas_pos < caslen)
+	while (cas_pos < caslen)
 		{
 		/* check memory for entire header (silence + header itself) */
 		size = CAS_PERIOD_0 * (CAS_HEADER_PERIODS + 1) +
@@ -48,37 +49,37 @@ int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 			}
 
 		/* write CAS_EMPTY_PERIODS of silence */
-		n = CAS_EMPTY_SAMPLES; while (n--) samples[samples_pos++] = 0x7fff;
+		n = CAS_EMPTY_SAMPLES; while (n--) samples[samples_pos++] = SMPHI;
 
 		/* write CAS_HEADER_PERIODS of header */
 		for (i=0;i<CAS_HEADER_PERIODS;i++)
 			{
 			/* write a "0" */
 			n = !(i % 4) ? 21 : 18;
-			while (n--) samples[samples_pos++] = 0x7fff;
-			n = 19; while (n--) samples[samples_pos++] = 0x8001;
+			while (n--) samples[samples_pos++] = SMPHI;
+			n = 19; while (n--) samples[samples_pos++] = SMPLO;
 			/* write a "1" */
-			n = 9; while (n--) samples[samples_pos++] = 0x7fff;
-			n = 9; while (n--) samples[samples_pos++] = 0x8001;
+			n = 9; while (n--) samples[samples_pos++] = SMPHI;
+			n = 9; while (n--) samples[samples_pos++] = SMPLO;
 			}
 
 		/* write 0x7f */
 		/* write a "0" */
-		n = 21; while (n--) samples[samples_pos++] = 0x7fff;
-		n = 19; while (n--) samples[samples_pos++] = 0x8001;
+		n = 21; while (n--) samples[samples_pos++] = SMPHI;
+		n = 19; while (n--) samples[samples_pos++] = SMPLO;
 
 		for (i=0;i<7;i++)
 			{
 			/* write a "1" */
-			n = 9; while (n--) samples[samples_pos++] = 0x7fff;
-			n = 9; while (n--) samples[samples_pos++] = 0x8001;
+			n = 9; while (n--) samples[samples_pos++] = SMPHI;
+			n = 9; while (n--) samples[samples_pos++] = SMPLO;
 			}
 		while (cas_pos < caslen)
 			{
 			/* check if we've hit a new header (or end of block) */
 			if ( (cas_pos + 17) < caslen)
 				{
-				if (!memcmp (casdata + cas_pos, CasHeader, 17) ) 
+				if (!memcmp (casdata + cas_pos, CasHeader, 17) )
 					{
 					cas_pos += 17;
 					break; /* falls back to loop above; plays header again */
@@ -98,7 +99,7 @@ int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 					}
 				else samples = nsamples;
 				}
-		
+
 			for (i=-1;i<8;i++)
 				{
 				if (i < 0) bit = 0;
@@ -108,15 +109,15 @@ int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 				if (bit)
 					{
 					/* write a "1" */
-					n = 9; while (n--) samples[samples_pos++] = 0x7fff;
-					n = 9; while (n--) samples[samples_pos++] = 0x8001;
+					n = 9; while (n--) samples[samples_pos++] = SMPHI;
+					n = 9; while (n--) samples[samples_pos++] = SMPLO;
 					}
 				else
 					{
 					/* write a "0" */
-					n = (i < 0) ? 21 : 18; 
-					while (n--) samples[samples_pos++] = 0x7fff;
-					n = 19; while (n--) samples[samples_pos++] = 0x8001;
+					n = (i < 0) ? 21 : 18;
+					while (n--) samples[samples_pos++] = SMPHI;
+					n = 19; while (n--) samples[samples_pos++] = SMPLO;
 					}
 				}
 
