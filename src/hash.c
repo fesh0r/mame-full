@@ -251,7 +251,7 @@ int hash_data_has_checksum(const char* data, unsigned int function)
 	return (res - data + 2);
 }
 
-static int hash_data_add_binary_checksum(char* d, unsigned int function, UINT8* checksum)
+static int hash_data_add_binary_checksum(char* d, unsigned int function, const UINT8* checksum)
 {
 	const hash_function_desc* desc = hash_get_function_desc(function);
 	char* start = d;
@@ -457,12 +457,12 @@ int hash_data_extract_binary_checksum(const char* data, unsigned int function, u
 	
 	// Convert hex string into binary
 	if (hex_string_to_binary(checksum, data, info->size))
-	{
-		// Invalid character: the checksum is treated as zero,
-		//  and a warning is returned
-		memset(checksum, '\0', info->size);
-		return 2;
-	}
+		{
+			// Invalid character: the checksum is treated as zero,
+			//  and a warning is returned
+			memset(checksum, '\0', info->size);
+			return 2;
+		}
 
 	return 1;
 }
@@ -519,7 +519,7 @@ int hash_data_insert_printable_checksum(char* d, unsigned int function, const ch
 	return hash_data_insert_binary_checksum(d, function, binary_checksum);
 }
 
-int hash_data_insert_binary_checksum(char* d, unsigned int function, UINT8* checksum)
+int hash_data_insert_binary_checksum(char* d, unsigned int function, const UINT8* checksum)
 {
 	int offset;
 	

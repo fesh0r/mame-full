@@ -120,6 +120,9 @@ enum { IPT_END=1,IPT_PORT,
 	/* 8 player support */
 	IPT_START5, IPT_START6, IPT_START7, IPT_START8,
 	IPT_COIN5, IPT_COIN6, IPT_COIN7, IPT_COIN8,
+
+	/* Analog adjuster support */
+	IPT_ADJUSTER,
 	__ipt_max
 };
 
@@ -252,6 +255,10 @@ enum { IPT_END=1,IPT_PORT,
 
 #define PORT_DIPSETTING(default,name) \
 	PORT_BIT_NAME(0, default, IPT_DIPSWITCH_SETTING, name)
+
+/* analog adjuster definition */
+#define PORT_ADJUSTER(default,name) \
+	PORT_BIT_NAME(0x00ff, (default & 0xff) | (default << 8), IPT_ADJUSTER, name)
 
 
 #define PORT_SERVICE(mask,default)	\

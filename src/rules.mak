@@ -1126,7 +1126,7 @@ SOUNDDEFS += -DHAS_DISCRETE=1
 SOUNDOBJS += $(OBJ)/sound/discrete.o
 $(OBJ)/sound/discrete.o: src/sound/discrete.c src/sound/discrete.h \
 		src/sound/disc_dev.c src/sound/disc_flt.c src/sound/disc_inp.c \
-		src/sound/disc_mth.c src/sound/disc_out.c src/sound/disc_wav.c
+		src/sound/disc_mth.c src/sound/disc_wav.c
 else
 SOUNDDEFS += -DHAS_DISCRETE=0
 endif

@@ -2365,7 +2365,7 @@ static void dump_regs( void )
 	s_edit *pedit = regs->edit;
 	UINT32 *old = regs->backup;
 	UINT32 *val = regs->newval;
-	UINT32 width;
+	UINT32 width=0;
 	const char *name = activecpu_name(), *flags = activecpu_flags();
 	int w = win_get_w(win);
 	int h = win_get_h(win);
@@ -2378,9 +2378,14 @@ static void dump_regs( void )
 	{
 		for(i = 0; reg[i]; i++)
 		{
+			const char* result;
 			if( reg[i] == -1 )
 				continue;		/* skip row breaks */
-			width = strlen( activecpu_reg_string(reg[i]) );
+
+			result=activecpu_reg_string(reg[i]);
+			if (result)
+				width = strlen( result );
+			
 			if( width >= regs->max_width )
 				regs->max_width = width + 1;
 		}
@@ -2487,7 +2492,7 @@ static void dump_regs( void )
 		else
 		{
 			name = activecpu_reg_string(*reg);
-			if( *name == '\0' )
+			if( !name || *name == '\0' )
 				continue;
 
 			regs->id[j] = *reg;
