@@ -109,12 +109,33 @@ typedef struct catalog_entry
 } catalog_entry;
 
 /*
+	Disk geometry
+*/
+typedef struct ti99_geometry
+{
+	int secspertrack;
+	int tracksperside;
+	int sides;
+} ti99_geometry;
+
+/*
+	Physical sector address
+*/
+typedef struct ti99_phys_sec_address
+{
+	int sector;
+	int cylinder;
+	int side;
+} ti99_phys_sec_address;
+
+/*
 	ti99 disk image descriptor
 */
 typedef struct ti99_image
 {
 	IMAGE base;
 	STREAM *file_handle;		/* imgtool file handle */
+	ti99_geometry geometry;		/* geometry */
 	ti99_sc0 sec0;				/* cached copy of sector 0 */
 	catalog_entry catalog[128];	/* catalog (fdr sector ids from sector 1, and file names from fdrs) */
 	int data_offset;	/* fdr records are preferentially allocated in sectors 2 to data_offset (34)
@@ -218,18 +239,37 @@ static void str_to_fname(char dst[10], const char *src)
 }
 
 /*
+	Convert physical sector address to offset
+*/
+static int phys_address_to_offset(const ti99_phys_sec_address *address, const ti99_geometry *geometry)
+{
+	int offset;
+
+#if 1
+	/* current MESS format */
+	offset = (((address->cylinder*geometry->sides) + address->side)*geometry->secspertrack + address->sector)*256;
+#else
+	/* V9T9 format */
+	offset = (((address->side*geometry->tracksperside) + address->cylinder)*geometry->secspertrack + address->sector)*256;
+#endif
+
+	return offset;
+}
+
+/*
 	Read one sector from a disk image
 
 	file_handle: imgtool file handle
-	secnum: logical sector address
+	address: physical sector address
+	geometry: disk geometry (sectors per track, tracks per side, sides)
 	dest: pointer to 256-byte destination buffer
 */
-static int read_sector(STREAM *file_handle, int secnum, void *dest)
+static int read_sector_physical(STREAM *file_handle, const ti99_phys_sec_address *address, const ti99_geometry *geometry, void *dest)
 {
 	int reply;
 
 	/* seek to sector */
-	reply = stream_seek(file_handle, secnum*256, SEEK_SET);
+	reply = stream_seek(file_handle, phys_address_to_offset(address, geometry), SEEK_SET);
 	if (reply)
 		return 1;
 	/* read it */
@@ -244,19 +284,89 @@ static int read_sector(STREAM *file_handle, int secnum, void *dest)
 	Write one sector to a disk image
 
 	file_handle: imgtool file handle
-	secnum: logical sector address
+	address: physical sector address
+	geometry: disk geometry (sectors per track, tracks per side, sides)
 	src: pointer to 256-byte source buffer
 */
-static int write_sector(STREAM *file_handle, int secnum, void *src)
+static int write_sector_physical(STREAM *file_handle, const ti99_phys_sec_address *address, const ti99_geometry *geometry, const void *src)
 {
 	int reply;
 
 	/* seek to sector */
-	reply = stream_seek(file_handle, secnum*256, SEEK_SET);
+	reply = stream_seek(file_handle, phys_address_to_offset(address, geometry), SEEK_SET);
 	if (reply)
 		return 1;
 	/* write it */
 	reply = stream_write(file_handle, src, 256);
+	if (reply != 256)
+		return 1;
+
+	return 0;
+}
+
+/*
+	Convert logical sector address to physical sector address
+*/
+static void log_address_to_phys_address(int secnum, const ti99_geometry *geometry, ti99_phys_sec_address *address)
+{
+	address->sector = secnum % geometry->secspertrack;
+	secnum /= geometry->secspertrack;
+	address->cylinder = secnum % geometry->tracksperside;
+	address->side = secnum / geometry->tracksperside;
+}
+
+/*
+	Read one sector from a disk image
+
+	file_handle: imgtool file handle
+	secnum: logical sector address
+	geometry: disk geometry (sectors per track, tracks per side, sides)
+	dest: pointer to 256-byte destination buffer
+*/
+static int read_sector_logical(STREAM *file_handle, int secnum, const ti99_geometry *geometry, void *dest)
+{
+	ti99_phys_sec_address address;
+
+
+	log_address_to_phys_address(secnum, geometry, &address);
+
+	return read_sector_physical(file_handle, &address, geometry, dest);
+}
+
+/*
+	Write one sector to a disk image
+
+	file_handle: imgtool file handle
+	secnum: logical sector address
+	geometry: disk geometry (sectors per track, tracks per side, sides)
+	src: pointer to 256-byte source buffer
+*/
+static int write_sector_logical(STREAM *file_handle, int secnum, const ti99_geometry *geometry, const void *src)
+{
+	ti99_phys_sec_address address;
+
+
+	log_address_to_phys_address(secnum, geometry, &address);
+
+	return write_sector_physical(file_handle, &address, geometry, src);
+}
+
+/*
+	read sector 0 with no geometry information (used when opening image)
+
+	file_handle: imgtool file handle
+	dest: pointer to 256-byte destination buffer
+*/
+static int read_sector0_no_geometry(STREAM *file_handle, ti99_sc0 *dest)
+{
+	int reply;
+
+	/* seek to sector */
+	reply = stream_seek(file_handle, 0, SEEK_SET);
+	if (reply)
+		return 1;
+	/* read it */
+	reply = stream_read(file_handle, dest, 256);
 	if (reply != 256)
 		return 1;
 
@@ -289,7 +399,7 @@ static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catal
 				*catalog_index = i;
 
 			if (fdr)
-				if (read_sector(image->file_handle, fdr_secnum, fdr))
+				if (read_sector_logical(image->file_handle, fdr_secnum, & image->geometry, fdr))
 					return IMGTOOLERR_READERROR;
 
 			return 0;
@@ -587,7 +697,7 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	memset(image, 0, sizeof(ti99_image));
 	image->base.module = mod;
 	image->file_handle = f;
-	reply = read_sector(f, 0, & image->sec0);
+	reply = read_sector0_no_geometry(f, & image->sec0);
 	if (reply)
 	{
 		free(image);
@@ -605,8 +715,12 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
+	image->geometry.secspertrack = image->sec0.secspertrack;
+	image->geometry.tracksperside = image->sec0.tracksperside;
+	image->geometry.sides = image->sec0.sides;
+
 	/* read catalog */
-	reply = read_sector(f, 1, buf);
+	reply = read_sector_logical(f, 1, & image->geometry, buf);
 	if (reply)
 	{
 		free(image);
@@ -627,7 +741,7 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 		}
 		else if (image->catalog[i].fdr_secnum)
 		{
-			reply = read_sector(f, image->catalog[i].fdr_secnum, &fdr);
+			reply = read_sector_logical(f, image->catalog[i].fdr_secnum, & image->geometry, &fdr);
 			if (reply)
 			{
 				free(image);
@@ -742,7 +856,7 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 		}
 		else
 		{
-			reply = read_sector(iter->image->file_handle, fdr_secnum, & fdr);
+			reply = read_sector_logical(iter->image->file_handle, fdr_secnum, & iter->image->geometry, & fdr);
 			if (reply)
 				return IMGTOOLERR_READERROR;
 			memcpy(ent->fname, fdr.name, (ent->fname_len < 11) ? (ent->fname_len-1) : 10);
@@ -860,7 +974,7 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 			if (cur_sec >= totsecs)
 				return IMGTOOLERR_CORRUPTIMAGE;
 
-			if (read_sector(image->file_handle, cur_sec, buf))
+			if (read_sector_logical(image->file_handle, cur_sec, & image->geometry, buf))
 				return IMGTOOLERR_READERROR;
 
 			if (stream_write(destf, buf, 256) != 256)
@@ -954,7 +1068,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 			if (stream_read(sourcef, buf, 256) != 256)
 				return IMGTOOLERR_READERROR;
 
-			if (write_sector(image->file_handle, cur_sec, buf))
+			if (write_sector_logical(image->file_handle, cur_sec, & image->geometry, buf))
 				return IMGTOOLERR_WRITEERROR;
 
 			i++;
@@ -965,7 +1079,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 	}
 
 	/* write fdr */
-	if (write_sector(image->file_handle, fdr_secnum, &fdr))
+	if (write_sector_logical(image->file_handle, fdr_secnum, & image->geometry, &fdr))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update catalog */
@@ -974,11 +1088,11 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 		buf[2*i] = image->catalog[i].fdr_secnum >> 8;
 		buf[2*i+1] = image->catalog[i].fdr_secnum & 0xff;
 	}
-	if (write_sector(image->file_handle, 1, buf))
+	if (write_sector_logical(image->file_handle, 1, & image->geometry, buf))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update bitmap */
-	if (write_sector(image->file_handle, 0, &image->sec0))
+	if (write_sector_logical(image->file_handle, 0, & image->geometry, &image->sec0))
 		return IMGTOOLERR_WRITEERROR;
 
 
@@ -1048,11 +1162,11 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 		buf[2*i] = image->catalog[i].fdr_secnum >> 8;
 		buf[2*i+1] = image->catalog[i].fdr_secnum & 0xff;
 	}
-	if (write_sector(image->file_handle, 1, buf))
+	if (write_sector_logical(image->file_handle, 1, & image->geometry, buf))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update bitmap */
-	if (write_sector(image->file_handle, 0, &image->sec0))
+	if (write_sector_logical(image->file_handle, 0, & image->geometry, &image->sec0))
 		return IMGTOOLERR_WRITEERROR;
 
 
@@ -1064,13 +1178,11 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 */
 static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
 {
-	const char *volname = in_options[ti99_createopts_volname].s;
-	int density = in_options[ti99_createopts_density].i;
-	int sides = in_options[ti99_createopts_sides].i;
-	int tracksperside = in_options[ti99_createopts_tracks].i;
-	int secspertrack = in_options[ti99_createopts_sectors].i;
+	const char *volname;
+	int density;
+	ti99_geometry geometry;
 
-	int totsecs = secspertrack * tracksperside * sides;
+	int totsecs;
 
 	ti99_sc0 sec0;
 	UINT8 empty_sec[256];
@@ -1080,9 +1192,17 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 
 	(void) mod;
 
+	/* read options */
+	volname = in_options[ti99_createopts_volname].s;
+	density = in_options[ti99_createopts_density].i;
+	geometry.sides = in_options[ti99_createopts_sides].i;
+	geometry.tracksperside = in_options[ti99_createopts_tracks].i;
+	geometry.secspertrack = in_options[ti99_createopts_sectors].i;
+
+	totsecs = geometry.secspertrack * geometry.tracksperside * geometry.sides;
 
 	/* FM disks can hold fewer sector per track than MFM disks */
-	if ((density == 1) && (secspertrack > 9))
+	if ((density == 1) && (geometry.secspertrack > 9))
 		return IMGTOOLERR_PARAMTOOLARGE;
 
 	/* check total disk size */
@@ -1099,13 +1219,13 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	/* set every header field */
 	sec0.totsecsMSB = totsecs >> 8;
 	sec0.totsecsLSB = totsecs & 0xff;
-	sec0.secspertrack = secspertrack;
+	sec0.secspertrack = geometry.secspertrack;
 	sec0.id[0] = 'D';
 	sec0.id[1] = 'S';
 	sec0.id[2] = 'K';
 	sec0.id[3] = ' ';
-	sec0.tracksperside = tracksperside;
-	sec0.sides = sides;
+	sec0.tracksperside = geometry.tracksperside;
+	sec0.sides = geometry.sides;
 	sec0.density = density;
 
 	/* clear reserved field */
@@ -1129,7 +1249,7 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	sec0.abm[0] |= 3;
 
 	/* write sector 0 */
-	if (write_sector(f, 0, &sec0))
+	if (write_sector_logical(f, 0, & geometry, &sec0))
 		return IMGTOOLERR_WRITEERROR;
 
 
@@ -1137,7 +1257,7 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	memset(empty_sec, 0, 256);
 
 	for (i=1; i<totsecs; i++)
-		if (write_sector(f, i, empty_sec))
+		if (write_sector_logical(f, i, & geometry, empty_sec))
 			return IMGTOOLERR_WRITEERROR;
 
 
