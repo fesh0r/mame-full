@@ -53,11 +53,11 @@ WRITE_HANDLER(avigo_vid_memory_w)
           /* select column to read/write */
           avigo_screen_column = data;
 
+		  logerror("vid mem column write: %02x\r\n",data);
+
           if (data>=(AVIGO_SCREEN_WIDTH>>3))
           {
-            data = 0;
-
-            logerror("vid mem column write: %02x\r\n",data);
+			  logerror("error: vid mem column write: %02x\r\n",data);
           }
           return;
         }
@@ -118,8 +118,8 @@ static unsigned short avigo_colour_table[AVIGO_NUM_COLOURS] =
 /* black/white */
 static unsigned char avigo_palette[AVIGO_NUM_COLOURS * 3] =
 {
-	0x000, 0x000, 0x000,
-	0x0ff, 0x0ff, 0x0ff
+    0x0ff, 0x0ff, 0x0ff,
+    0x000, 0x000, 0x000
 };
 
 
@@ -138,6 +138,8 @@ void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortab
 	{
 		strcpy(backdrop_name, Machine->gamedrv->name);
 		strcat(backdrop_name, ".png");
+
+		logerror("%s\n",backdrop_name);
 
         artwork_load(&avigo_backdrop, backdrop_name, used,Machine->drv->total_colors-used);
 
@@ -193,12 +195,13 @@ void avigo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                                 if (byte & 0x080)
                                 {
                                         plot_pixel(bitmap,x+b, y, pen1);
-                                }
+								}
                                 else
                                 {
                                         plot_pixel(bitmap,x+b, y, pen0);
         
                                 }
+								osd_mark_dirty(x+b,y,x+b,y);
                                 byte = byte<<1;
                         }
         
