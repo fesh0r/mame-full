@@ -48,7 +48,7 @@ cylinder apexc_cylinder;
 */
 static int apexc_cylinder_init(int id)
 {
-	image_open_mode_t effective_mode;
+	int effective_mode;
 
 	/* open file */
 	apexc_cylinder.fd = image_fopen_new(IO_CYLINDER, id, & effective_mode);

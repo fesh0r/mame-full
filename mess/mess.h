@@ -119,8 +119,11 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
  *  open existing file in read-only mode if it exists.  If it does not, open
  *  the file as write-only.  (used by wave.c)
  */
-typedef enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE,
-OSD_FOPEN_RW_OR_READ, OSD_FOPEN_RW_CREATE_OR_READ, OSD_FOPEN_READ_OR_WRITE } image_open_mode_t;
+enum
+{
+	OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE,
+	OSD_FOPEN_RW_OR_READ, OSD_FOPEN_RW_CREATE_OR_READ, OSD_FOPEN_READ_OR_WRITE
+};
 
 #define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
 
@@ -132,7 +135,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 
 /* new wrapper: always use OSD_FILETYPE_IMAGE as the filetype, and take
 the read_or_write parameters from IODevice */
-void *image_fopen_new(int type, int id, image_open_mode_t *effective_mode);
+void *image_fopen_new(int type, int id, int *effective_mode);
 
 
 #ifdef MAX_KEYS

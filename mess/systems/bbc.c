@@ -1156,6 +1156,7 @@ static const struct IODevice io_bbca[] = {
 		1,						/* count */
 		"wav\0",                /* File extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		NULL,					/* id */
 		NULL,					/* init */
 		NULL,					/* exit */

@@ -8,6 +8,9 @@ System Driver Changes:
 
 Source Changes:
 ---------------
+- The MESS core will not automatically open software images in a clone system
+  drivers directory anymore, under the belief that this functionality belongs
+  in the OSD code. [Nate Woods]
 
 0.61
 

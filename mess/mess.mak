@@ -401,6 +401,7 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/990_tap.o	 \
 	  $(OBJ)/mess/vidhrdw/911_vdt.o  \
 	  $(OBJ)/mess/systems/ti990_10.o \
+	  $(OBJ)/mess/machine/ti990.o \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 

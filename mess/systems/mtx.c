@@ -894,6 +894,7 @@ static const struct IODevice io_mtx512[] = {
 		1,					/* count */
 		"bin\0",			/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_READ,		/* open mode */
         NULL,               /* id */
 		NULL,				/* init */
 		NULL,				/* exit */

@@ -29,7 +29,7 @@ struct IODevice {
 	int count;
 	const char *file_extensions;
 	int reset_depth;
-	image_open_mode_t open_mode;
+	int open_mode;
 	char *dummy;
 	int (*init)(int id);
 	void (*exit)(int id);

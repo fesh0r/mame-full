@@ -123,7 +123,6 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	const char *sysname;
 	void *file;
 
-
 	if( type >= IO_COUNT )
 	{
 		logerror("image_fopen: type out of range (%d)\n", type);
@@ -139,26 +138,9 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	if( img->name == NULL )
 		return NULL;
 
-	{
-		extern struct GameDriver driver_0;
-
-		sysname = Machine->gamedrv->name;
-		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
-		file = osd_fopen(sysname, img->name, filetype, read_or_write);
-		/* file found, break out */
-		if (!file)
-		{
-			if( Machine->gamedrv->clone_of &&
-				Machine->gamedrv->clone_of != &driver_0 )
-			{	/* R Nabet: Shouldn't this be moved to osd code? Mac osd code
-				performs such a retry whenever it makes sense, and I think
-				this is the correct way. */
-				sysname = Machine->gamedrv->clone_of->name;
-				logerror("image_fopen: now trying %s for system %s\n", img->name, sysname);
-				file = osd_fopen(sysname, img->name, filetype, read_or_write);
-			}
-		}
-	}
+	sysname = Machine->gamedrv->name;
+	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
+	file = osd_fopen(sysname, img->name, filetype, read_or_write);
 
 	if (file)
 	{
@@ -218,13 +200,11 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 }
 
 
-void *image_fopen_new(int type, int id, image_open_mode_t *effective_mode)
+void *image_fopen_new(int type, int id, int *effective_mode)
 {
-	struct image_info *img = &images[type][id];
 	void *fref;
-	image_open_mode_t requested_mode;
-	image_open_mode_t effective_mode_local;
-
+	int requested_mode;
+	int effective_mode_local;
 
 	if( type >= IO_COUNT )
 	{
@@ -287,7 +267,7 @@ void *image_fopen_new(int type, int id, image_open_mode_t *effective_mode)
 		}
 		break;
 
-	OSD_FOPEN_RW_CREATE_OR_READ:
+	case OSD_FOPEN_RW_CREATE_OR_READ:
 		/* R/W, read-only, or create new R/W image: emulated mode */
 		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)

@@ -196,9 +196,9 @@ static int wave_read(int id)
 		int channel;
 		unsigned i;
 
-		UINT8 ch;
-		/*intmax_t*/long sample_buf;
-		/*intmax_t*/long this_buf;
+		int ch;	/* NPW 07-Sep-2002 - This must be int so that it can have EOF */
+		long sample_buf;
+		long this_buf;
 
 		UINT16 *dst = w->data;
 
