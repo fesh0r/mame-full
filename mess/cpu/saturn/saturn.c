@@ -136,6 +136,8 @@ typedef struct
 
 	SaturnAdr d[2], pc, oldpc, rstk[8]; // 20 bit addresses
 
+	int stackpointer; // this is only for debugger stepover support!
+
 	SaturnNib p; // 4 bit pointer
 
 	UINT16 in;
@@ -181,6 +183,7 @@ void saturn_reset(void *param)
 	if (param) {
 		saturn.config=(SATURN_CONFIG *)param;
 	}
+	saturn.stackpointer=0;
 	saturn.pc=0;
 	change_pc20(saturn.pc);
 }
@@ -219,11 +222,12 @@ void saturn_set_pc (unsigned val)
 
 unsigned saturn_get_sp (void)
 {
-	return 0;
+	return saturn.stackpointer;
 }
 
 void saturn_set_sp (unsigned val)
 {
+	saturn.stackpointer=val;
 }
 
 unsigned saturn_get_reg (int regnum)

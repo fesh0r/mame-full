@@ -153,6 +153,7 @@ INLINE SaturnAdr saturn_pop(void)
 	SaturnAdr temp=saturn.rstk[0];
 	memmove(saturn.rstk, saturn.rstk+1, sizeof(saturn.rstk)-sizeof(saturn.rstk[0]));
 	saturn.rstk[7]=0;
+	saturn.stackpointer--;
 	return temp;
 }
 
@@ -160,6 +161,7 @@ INLINE void saturn_push(SaturnAdr adr)
 {
 	memmove(saturn.rstk+1, saturn.rstk, sizeof(saturn.rstk)-sizeof(saturn.rstk[0]));
 	saturn.rstk[0]=adr;
+	saturn.stackpointer++;
 }
 		
 INLINE void saturn_interrupt_on(void)
@@ -999,7 +1001,7 @@ INLINE void saturn_sub(int reg, int begin, int count, int right)
 			t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		}
 		t-=S64_READ_NIBBLE(right, (begin+i)&0xf );
-		S64_WRITE_NIBBLE(reg, i, t&0x0f);
+		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
 		saturn_icount-=2;
 	}
 	saturn.carry=t<0;
@@ -1012,7 +1014,7 @@ INLINE void saturn_sub_const(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t-=right;
 		right=(right>>4)+1;
-		S64_WRITE_NIBBLE(reg, i, t&0x0f);
+		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
 		saturn_icount-=2;
 		if (t>=0) break;
 	}

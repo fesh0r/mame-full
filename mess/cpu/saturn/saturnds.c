@@ -80,7 +80,7 @@ static INT16 saturn_peekop_dis16(int pc)
 static int saturn_peekop_adr(int pc)
 {
 	return cpu_readop(pc)|(cpu_readop(pc+1)<<4)|(cpu_readop(pc+2)<<8)
-		|(cpu_readop(pc+3)<<12)|(cpu_readop(pc+4));
+		|(cpu_readop(pc+3)<<12)|(cpu_readop(pc+4)<<16);
 }
 
 // don't split branch and return, source relies on this ordering
@@ -348,8 +348,8 @@ static struct {
 	
 	{ { "sethex",				"SETHEX" } },
 	{ { "setdec",				"SETDEC" } },
-	{ { "RSTK=C",				"POP.A    C" } },
-	{ { "C=RSTK",				"PUSH.A   C" } },
+	{ { "RSTK=C",				"PUSH.A   C" } },
+	{ { "C=RSTK",				"POP.A    C" } },
 
 	// load immediate
 	{ { "D0=     %02x",			"MOVE.2   %02x,D0" } },
@@ -472,10 +472,10 @@ static struct {
 	{ { "A=A!C   %s",			"OR.%-2s    C,A" } },
 	{ { "C=C!D   %s",			"OR.%-2s    D,C" } },
 
-	{ { "Asrb    %s,%x",		"SRB.%-2s   %x,A" } },
-	{ { "Bsrb    %s,%x",		"SRB.%-2s   %x,B" } },
-	{ { "Csrb    %s,%x",		"SRB.%-2s   %x,C" } },
-	{ { "Dsrb    %s,%x",		"SRB.%-2s   %x,D" } },
+	{ { "Asrb    %x",			"SRB.%-2s   A" } },
+	{ { "Bsrb    %x",			"SRB.%-2s   B" } },
+	{ { "Csrb    %x",			"SRB.%-2s   C" } },
+	{ { "Dsrb    %x",			"SRB.%-2s   D" } },
 
 	{ { "Aslc    %s",			"RLN.%-2s   A" } },
 	{ { "Bslc    %s",			"RLN.%-2s   B" } },
@@ -1356,29 +1356,34 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 				v=saturn_peekop_dis12(pc);
 				c=(pc+v)%0xfffff;
 				pc+=3;
+				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Dis3Call:
 				v=saturn_peekop_dis12(pc);
 				pc+=3;
 				c=(pc+v)%0xfffff;
+				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Dis4:
 				v=saturn_peekop_dis16(pc);
 				c=(pc+v)%0xfffff;
 				pc+=4;
+				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Dis4Call:
 				v=saturn_peekop_dis16(pc);
 				pc+=4;
 				c=(pc+v)%0xfffff;
+				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], c );
 				break;
 			case Abs:
 				v=saturn_peekop_adr(pc);
 				pc+=5;
+				set_ea_info( 0, v, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], v );
 				break;
 			case BranchReturn:
@@ -1387,6 +1392,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set]);
 				} else {
 					c=(pc+v)&0xfffff;
+					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], c);
 				}
 				pc+=2;
@@ -1397,6 +1403,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], A);
 				} else {
 					c=(pc+v)&0xfffff;
+					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], A, c);
 				}
 				pc+=2;
@@ -1407,6 +1414,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], field_2_string(adr));
 				} else {
 					c=(pc+v)&0xfffff;
+					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], field_2_string(adr), c);
 				}
 				pc+=2;
@@ -1418,6 +1426,7 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 					sprintf(dst, mnemonics[level->mnemonic+1].name[set], i);
 				} else {
 					c=(pc+v)&0xfffff;
+					set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 					sprintf(dst, mnemonics[level->mnemonic].name[set], i, c);
 				}
 				pc+=2;
@@ -1426,8 +1435,9 @@ unsigned saturn_dasm(char *dst, unsigned oldpc)
 				i=PEEK_OP(pc++);
 				v=saturn_peekop_dis8(pc);
 				c=(pc+v)&0xfffff;
+				set_ea_info( 0, c, EA_DEFAULT, EA_ABS_PC );
 				sprintf(dst, mnemonics[level->mnemonic].name[set], i, c);
-				pc+=2;
+				pc+=2; // hp48s 13413
 				break;
 			case FieldP:
 				sprintf(dst, mnemonics[level->mnemonic].name[set], P );
