@@ -5549,6 +5549,36 @@ ROM_START( kof2001 )
 	ROM_LOAD16_BYTE( "262-c8.bin", 0x3000001, 0x800000, CRC(59289a6b) SHA1(ddfce7c85b2a144975db5bb14b4b51aaf881880e) ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( cthd2003 ) /* this is a hack of kof2001 much like the various korean hacks / bootlegs of games */
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "5003-p1.bin", 0x000000, 0x100000, CRC(bb7602c1) SHA1(abf329a40f34c88f7325b255e3bc090db1edaca4) )
+	ROM_LOAD16_WORD_SWAP( "5003-p2.bin", 0x100000, 0x400000, CRC(adc1c22b) SHA1(271e0629989257a0d21d280c05df53df259414b1) )
+
+	NEO_SFIX_128K( "5003-s1.bin", CRC(5ba29aab) SHA1(e7ea67268a10243693bff722e6fd2276ca540acf) )
+
+	NEO_BIOS_SOUND_128K( "5003-m1.bin", CRC(1a8c274b) SHA1(5f6f9c533f4a296a18c741ce59a69cf6f5c836b9) )
+
+	/* sound roms are identical to kof2001 */
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "262-v1.bin", 0x000000, 0x400000, CRC(83d49ecf) SHA1(2f2c116e45397652e77fcf5d951fa5f71b639572) )
+	ROM_LOAD( "262-v2.bin", 0x400000, 0x400000, CRC(003f1843) SHA1(bdd58837ad542548bd4053c262f558af88e3b989) )
+	ROM_LOAD( "262-v3.bin", 0x800000, 0x400000, CRC(2ae38dbe) SHA1(4e82b7dd3b899d61907620517a5a27bdaba0725d) )
+	ROM_LOAD( "262-v4.bin", 0xc00000, 0x400000, CRC(26ec4dd9) SHA1(8bd68d95a2d913be41a51f51e48dbe3bff5924fb) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	/* Encrypted */
+	ROM_LOAD16_BYTE( "5003-c1.bin", 0x0000000, 0x800000, CRC(68f54b67) SHA1(e2869709b11ea2846799fe431211c83e928e103e) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "5003-c2.bin", 0x0000001, 0x800000, CRC(2f8849d5) SHA1(7ef74981aa056f5acab4ddabffd3e98b4cb970be) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "5003-c3.bin", 0x1000000, 0x800000, CRC(ac4aff71) SHA1(c983f642e68deaa40fee3e208f2dd55f3bacbdc1) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "5003-c4.bin", 0x1000001, 0x800000, CRC(afef5d66) SHA1(39fe785563fbea54bba88de60dcc62e2458bd74a) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "5003-c5.bin", 0x2000000, 0x800000, CRC(c7c1ae50) SHA1(f54f5be7513a5ce2f01ab107a2b26f6a9ee1f2a9) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "5003-c6.bin", 0x2000001, 0x800000, CRC(613197f9) SHA1(6d1fefa1be81b79e251e55a1352544c0298e4674) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "5003-c7.bin", 0x3000000, 0x800000, CRC(64ddfe0f) SHA1(361f3f4618009bf6419961266eb9ab5002bef53c) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "5003-c8.bin", 0x3000001, 0x800000, CRC(917a1439) SHA1(6f28d1d7c6edee1283f25e632c69204dbebe40af) ) /* Plane 2,3 */
+ROM_END
+
 ROM_START( mslug4 ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "263-p1.bin",  0x000000, 0x100000, CRC(27e4def3) )
@@ -6105,6 +6135,92 @@ DRIVER_INIT( mjneogeo )
 	init_neogeo();
 }
 
+/* descrambling information from razoola */
+static void cthd2003_neogeo_gfx_address_fix_do(int start, int end, int bit3shift, int bit2shift, int bit1shift, int bit0shift)
+{
+	int i,j;
+	int tilesize=128;
+
+	UINT8* rom = (UINT8*)malloc(16*tilesize);	// 16 tiles buffer
+	UINT8* realrom = memory_region(REGION_GFX3) + start*tilesize;
+
+	for (i = 0; i < (end-start)/16; i++) {
+		for (j = 0; j < 16; j++) {
+			int offset = (((j&1)>>0)<<bit0shift)
+				        +(((j&2)>>1)<<bit1shift)
+				        +(((j&4)>>2)<<bit2shift)
+						+(((j&8)>>3)<<bit3shift);
+
+			memcpy(rom+j*tilesize, realrom+offset*tilesize, tilesize);
+		}
+		memcpy(realrom,rom,tilesize*16);
+		realrom+=16*tilesize;
+	}
+	free(rom);
+}
+
+static void cthd2003_neogeo_gfx_address_fix(int start, int end)
+{
+	cthd2003_neogeo_gfx_address_fix_do(start+512*0, end+512*0, 0,3,2,1);
+	cthd2003_neogeo_gfx_address_fix_do(start+512*1, end+512*1, 1,0,3,2);
+	cthd2003_neogeo_gfx_address_fix_do(start+512*2, end+512*2, 2,1,0,3);
+	// skip 3 & 4
+	cthd2003_neogeo_gfx_address_fix_do(start+512*5, end+512*5, 0,1,2,3);
+	cthd2003_neogeo_gfx_address_fix_do(start+512*6, end+512*6, 0,1,2,3);
+	cthd2003_neogeo_gfx_address_fix_do(start+512*7, end+512*7, 0,2,3,1);
+}
+
+static void cthd2003_c(int pow)
+{
+	int i;
+
+	for (i=0; i<=192; i+=8)
+		cthd2003_neogeo_gfx_address_fix(i*512,i*512+512);
+
+	for (i=200; i<=392; i+=8)
+		cthd2003_neogeo_gfx_address_fix(i*512,i*512+512);
+
+	for (i=400; i<=592; i+=8)
+		cthd2003_neogeo_gfx_address_fix(i*512,i*512+512);
+
+	for (i=600; i<=792; i+=8)
+		cthd2003_neogeo_gfx_address_fix(i*512,i*512+512);
+
+	for (i=800; i<=992; i+=8)
+		cthd2003_neogeo_gfx_address_fix(i*512,i*512+512);
+
+	for (i=1000; i<=1016; i+=8)
+		cthd2003_neogeo_gfx_address_fix(i*512,i*512+512);
+}
+
+
+DRIVER_INIT (cthd2003)
+{
+	UINT8 *romdata = memory_region(REGION_GFX1);
+	UINT8*tmp = (UINT8*)malloc(8*128*128);
+
+	memcpy(tmp+8*0*128, romdata+8*0*128, 8*32*128);
+	memcpy(tmp+8*32*128, romdata+8*64*128, 8*32*128);
+	memcpy(tmp+8*64*128, romdata+8*32*128, 8*32*128);
+	memcpy(tmp+8*96*128, romdata+8*96*128, 8*32*128);
+	memcpy(romdata, tmp, 8*128*128);
+
+	romdata = memory_region(REGION_CPU2)+0x10000;
+ 	memcpy(tmp+8*0*128, romdata+8*0*128, 8*32*128);
+	memcpy(tmp+8*32*128, romdata+8*64*128, 8*32*128);
+ 	memcpy(tmp+8*64*128, romdata+8*32*128, 8*32*128);
+	memcpy(tmp+8*96*128, romdata+8*96*128, 8*32*128);
+	memcpy(romdata, tmp, 8*128*128);
+
+ 	free(tmp);
+
+	memcpy(romdata-0x10000,romdata,0x10000);;
+
+	cthd2003_c(0);
+ 	init_neogeo();
+}
+
+
 /******************************************************************************/
 
 static UINT32 cpu1_second_bankaddress;
@@ -6376,6 +6492,7 @@ GAMEB( 2000, bangbedp, bangbead, neogeo, raster, neogeo,  neogeo,   ROT0, "Visco
 
 /* Eolith */
 GAMEB( 2001, kof2001,  neogeo,   neogeo, neogeo, neogeo,  kof2001,  ROT0, "Eolith / SNK", "The King of Fighters 2001" )
+GAMEB( 2001, cthd2003, kof2001,  neogeo, neogeo, neogeo,  cthd2003, ROT0, "bootleg", "Crouching Tiger Hidden Dragon 2003" ) // hack / bootleg of kof2001
 GAMEB( 2002, kof2002,  neogeo,	 neogeo, neogeo, neogeo,  kof2002,  ROT0, "Eolith / Playmore Corporation", "The King of Fighters 2002" )
 
 /* Mega Enterprise */

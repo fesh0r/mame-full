@@ -1315,7 +1315,7 @@ void normi_rn_rn(void)
 {
 	UINT32 r1 = jaguar.r[(jaguar.op >> 5) & 31];
 	UINT32 res = 0;
-	if (r1)
+	if (r1 != 0)
 	{
 		while ((r1 & 0xffc00000) == 0)
 		{

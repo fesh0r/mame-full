@@ -144,6 +144,7 @@
 
 
 #define LOG_BLITS			0
+#define LOG_BAD_BLITS		0
 #define LOG_BLITTER_STATS	0
 #define LOG_BLITTER_WRITE	0
 #define LOG_UNHANDLED_BLITS	0
@@ -484,24 +485,7 @@ void jaguar_set_palette(UINT16 vmode)
 
 static UINT8 *get_jaguar_memory(UINT32 offset)
 {
-	offset &= 0xffffff;
-#ifdef MESS
-	{
-		UINT8 *p = memory_get_read_ptr(1, offset);
-		if (p)
-			return p;
-	}
-#else
-	if (offset < 0x800000)
-		return (UINT8 *)jaguar_shared_ram + offset;
-	else if (offset >= 0xf03000 && offset < 0xf04000)
-		return (UINT8 *)jaguar_gpu_ram + offset - 0xf03000;
-	else if (offset >= 0xf1b000 && offset < 0xf1d000)
-		return (UINT8 *)jaguar_dsp_ram + offset - 0xf1b000;
-#endif
-
-	logerror("get_jaguar_memory(%X)\n", offset);
-	return NULL;
+	return memory_get_read_ptr(1, offset);
 }
 
 
@@ -769,7 +753,6 @@ VIDEO_START( cojag )
 
 	vi_timer = timer_alloc(vi_callback);
 
-	assert(sizeof(*pen_table) == sizeof(UINT32));
 	state_save_register_UINT32("cojag", 0, "pen_table",     pen_table,      65536);
 	state_save_register_UINT32("cojag", 0, "blitter_regs",  blitter_regs,   BLITTER_REGS);
 	state_save_register_UINT16("cojag", 0, "gpu_regs",      gpu_regs,       GPU_REGS);

@@ -26,19 +26,18 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-extern data8_t *redclash_textram;
+extern WRITE_HANDLER( redclash_videoram_w );
+extern WRITE_HANDLER( redclash_gfxbank_w );
+extern WRITE_HANDLER( redclash_flipscreen_w );
 
-PALETTE_INIT( redclash );
-VIDEO_UPDATE( redclash );
+extern WRITE_HANDLER( redclash_star0_w );
+extern WRITE_HANDLER( redclash_star1_w );
+extern WRITE_HANDLER( redclash_star2_w );
+extern WRITE_HANDLER( redclash_star_reset_w );
 
-WRITE_HANDLER( redclash_gfxbank_w );
-WRITE_HANDLER( redclash_flipscreen_w );
-
-WRITE_HANDLER( redclash_star0_w );
-WRITE_HANDLER( redclash_star1_w );
-WRITE_HANDLER( redclash_star2_w );
-WRITE_HANDLER( redclash_star_reset_w );
-
+extern PALETTE_INIT( redclash );
+extern VIDEO_START( redclash );
+extern VIDEO_UPDATE( redclash );
 
 /*
   This game doesn't have VBlank interrupts.
@@ -74,7 +73,7 @@ static MEMORY_WRITE_START( zero_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x3bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x4000, 0x43ff, redclash_videoram_w, &videoram },
 	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
 	{ 0x5800, 0x5800, redclash_star0_w },
 	{ 0x5801, 0x5804, MWA_NOP },	/* to sound board */
@@ -99,7 +98,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 //	{ 0x3000, 0x3000, MWA_NOP },
 //	{ 0x3800, 0x3800, MWA_NOP },
-	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x4000, 0x43ff, redclash_videoram_w, &videoram },
 	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
 	{ 0x5800, 0x5800, redclash_star0_w },
 	{ 0x5801, 0x5801, redclash_gfxbank_w },
@@ -146,15 +145,15 @@ INPUT_PORTS_START( redclash )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x10, 0x10, "High Score" )
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x10, "10000" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0xc0, "3" )
@@ -243,15 +242,15 @@ INPUT_PORTS_START( zerohour )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0xc0, "3" )
@@ -379,6 +378,7 @@ static MACHINE_DRIVER_START( zerohour )
 	MDRV_COLORTABLE_LENGTH(4*24)
 
 	MDRV_PALETTE_INIT(redclash)
+	MDRV_VIDEO_START(redclash)
 	MDRV_VIDEO_UPDATE(redclash)
 
 	/* sound hardware */
@@ -404,6 +404,7 @@ static MACHINE_DRIVER_START( redclash )
 	MDRV_COLORTABLE_LENGTH(4*24)
 
 	MDRV_PALETTE_INIT(redclash)
+	MDRV_VIDEO_START(redclash)
 	MDRV_VIDEO_UPDATE(redclash)
 
 	/* sound hardware */

@@ -914,18 +914,18 @@ TESTDRIVER( smgolfb )
 TESTDRIVER( vsbbaljb )
 
 	/* Nintendo Super System Games */
-TESTDRIVER( nss_ssoc )
+	DRIVER( nss_ssoc )
 	DRIVER( nss_actr )
-TESTDRIVER( nss_con3 )
-TESTDRIVER( nss_adam )
-TESTDRIVER( nss_aten )
-TESTDRIVER( nss_rob3 )
-TESTDRIVER( nss_ncaa )
-TESTDRIVER( nss_skin )
-TESTDRIVER( nss_lwep )
-TESTDRIVER( nss_smw )
-TESTDRIVER( nss_fzer )
-TESTDRIVER( nss_sten )
+	DRIVER( nss_con3 )
+	DRIVER( nss_adam )
+	DRIVER( nss_aten )
+	DRIVER( nss_rob3 )
+	DRIVER( nss_ncaa )
+	DRIVER( nss_skin )
+	DRIVER( nss_lwep )
+	DRIVER( nss_smw )
+	DRIVER( nss_fzer )
+	DRIVER( nss_sten )
 
 	/* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
@@ -1812,6 +1812,7 @@ V-V                           TP-027
 	DRIVER( donpachj )	/* (c) 1995 Atlus/Cave */
 	DRIVER( donpachk )	/* (c) 1995 Atlus/Cave */
 	DRIVER( metmqstr )	/* (c) 1995 Banpresto / Pandorabox */
+	DRIVER( nmaster )	/* (c) 1995 Banpresto / Pandorabox */
 	DRIVER( sailormn )	/* (c) 1995 Banpresto (country is in EEPROM) */
 	DRIVER( sailormo )	/* (c) 1995 Banpresto (country is in EEPROM) */
 	DRIVER( agallet )	/* (c) 1996 Banpresto / Gazelle (country is in EEPROM) */
@@ -1824,6 +1825,7 @@ V-V                           TP-027
 	DRIVER( espradeo )	/* (c) 1998 Atlus/Cave (Japan) */
 	DRIVER( uopoko )	/* (c) 1998 Cave + Jaleco license */
 	DRIVER( guwange )	/* (c) 1999 Atlus/Cave */
+TESTDRIVER( gaia )		/* (c) 1999 Noise Factory */
 
 	/* SemiCom games */
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
@@ -2860,7 +2862,7 @@ TESTDRIVER( pclubjv5 )
 
 	/* Sega MegaPlay */
 	DRIVER( mp_sonic )
-TESTDRIVER( mp_gaxe2 )
+	DRIVER( mp_gaxe2 )
 
 	/* Data East "Burger Time hardware" games */
 	DRIVER( lnc )		/* (c) 1981 */
@@ -3452,30 +3454,6 @@ TESTDRIVER( vsnetscr )	/* GX627 */
 TESTDRIVER( winspike )	/* GX705 */
 
 TESTDRIVER( rungun2 )	/* GX505 */
-
-	/* Konami DJ Main games */
-	DRIVER( bm1stmix )	/* 1997 */
-	DRIVER( bm2ndmix )	/* 1998 */
-	DRIVER( bm2ndmxa )	/* 1998 */
-	DRIVER( bm3rdmix )	/* 1998 */
-	DRIVER( bm3rdmxa )	/* 1998 */
-	DRIVER( bmcompmx )	/* 1999 */
-	DRIVER( hmcompmx )	/* 1999 */
-	DRIVER( bm4thmix )	/* 1999 */
-	DRIVER( bm5thmix )	/* 1999 */
-	DRIVER( bmclubmx )	/* 2000 */
-	DRIVER( bmcompm2 )	/* 2000 */
-	DRIVER( hmcompm2 )	/* 2000 */
-	DRIVER( bmcorerm )	/* 2000 */
-	DRIVER( bm6thmix )	/* 2001 */
-	DRIVER( bm7thmix )	/* 2001 */
-TESTDRIVER( bmfinal )	/* 2002 */
-
-	DRIVER( popn1 )		/* 1998 */
-	DRIVER( popn2 )		/* 1998 */
-	DRIVER( popn3 )		/* 1999 */
-
-	DRIVER( popnstex )	/* 1999 */
 
 	/* Exidy games */
 	DRIVER( carpolo )	/* (c) 1977 */
@@ -4717,6 +4695,7 @@ TESTDRIVER( brickzn3 )
 	DRIVER( drgnmst )	/* (c) 1994 */
 	DRIVER( burglarx )	/* (c) 1997 */
 	DRIVER( zeropnt )	/* (c) 1998 */
+	DRIVER( zeropnta )	/* (c) 1998 */
 	DRIVER( zeropnt2 )	/* (c) 1999 */
 	DRIVER( silkroad )	/* (c) 1999 */
 
@@ -5180,6 +5159,7 @@ TESTDRIVER( ltcasin2 )	/* (c) 1984 Digital Controls Inc */
 	DRIVER( zupapa )	/* 0070 (c) 2001 SNK */
 	DRIVER( sengoku3 )	/* 0261 (c) 2001 SNK */
 	DRIVER( kof2001 )	/* 0262 (c) 2001 Eolith / SNK */
+TESTDRIVER( cthd2003 )	/* bootleg */
 TESTDRIVER( mslug4 )	/* 0263 (c) 2002 Mega Enterprise / Playmore Corporation */
 TESTDRIVER( rotd )		/* 0264 (c) 2002 Evoga / Playmore Corporation */
 TESTDRIVER( kof2002 )	/* 0265 (c) 2002 Eolith / Playmore Corporation */

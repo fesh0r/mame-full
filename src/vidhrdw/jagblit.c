@@ -190,8 +190,16 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 	INT32 adest_xadd, adest_xstep, adest_yadd, adest_ystep;
 	UINT32 adest_xmask, adest_ymask;
 
+	/* don't blit if pointer bad */
 	if (!a1_base_mem || !a2_base_mem)
+	{
+#if LOG_BAD_BLITS
+		logerror("%08X:Blit!\n", activecpu_get_previouspc());
+		logerror("  a1_base  = %08X\n", a1_base);
+		logerror("  a2_base  = %08X\n", a2_base);
+#endif
 		return;
+	}
 
 	/* determine actual xadd/yadd for A1 */
 	a1_yadd <<= 16;

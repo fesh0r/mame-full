@@ -883,6 +883,7 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/mess/tools/imgtool/crt.o      \
 	  $(OBJ)/mess/tools/imgtool/d64.o      \
 	  $(OBJ)/mess/tools/imgtool/fat.o      \
+	  $(OBJ)/mess/tools/imgtool/mac.o      \
 	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 	  $(OBJ)/mess/tools/imgtool/ti85.o     \

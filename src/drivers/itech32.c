@@ -124,7 +124,7 @@ static INTERRUPT_GEN( generate_int1 )
 {
 	/* signal the NMI */
 	itech32_update_interrupts(1, -1, -1);
-	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------\n", cpu_getscanline());
+	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------", cpu_getscanline());
 }
 
 
@@ -313,7 +313,7 @@ static READ32_HANDLER( itech020_prot_result_r )
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	logerror("sound bank = %02x\n", data);
+	logerror("sound bank = %02x", data);
 	cpu_setbank(1, &memory_region(REGION_CPU2)[0x10000 + data * 0x4000]);
 }
 
@@ -330,7 +330,7 @@ static void delayed_sound_data_w(int data)
 	sound_data = data;
 	sound_int_state = 1;
 	cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE);
-	logerror("sound_data_w() = %02x\n", sound_data);
+	logerror("sound_data_w() = %02x", sound_data);
 }
 
 
@@ -350,7 +350,7 @@ static WRITE32_HANDLER( sound_data32_w )
 
 static READ_HANDLER( sound_data_r )
 {
-	logerror("sound_data_r() = %02x\n", sound_data);
+	logerror("sound_data_r() = %02x", sound_data);
 	cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 	sound_int_state = 0;
 	return sound_data;
@@ -372,7 +372,7 @@ static READ_HANDLER( sound_data_buffer_r )
 
 static WRITE_HANDLER( pia_portb_out )
 {
-	logerror("PIA port B write = %02x\n", data);
+	logerror("PIA port B write = %02x", data);
 
 	/* bit 4 controls the ticket dispenser */
 	/* bit 5 controls the coin counter */
@@ -384,7 +384,7 @@ static WRITE_HANDLER( pia_portb_out )
 
 static WRITE_HANDLER( sound_output_w )
 {
-	logerror("sound output write = %02x\n", data);
+	logerror("sound output write = %02x", data);
 
 	coin_counter_w(0, (~data & 0x20) >> 5);
 }
@@ -443,7 +443,7 @@ static WRITE_HANDLER( via6522_w )
 			break;
 
 		default:	/* log everything else */
-			if (FULL_LOGGING) logerror("VIA write(%02x) = %02x\n", offset, data);
+			if (FULL_LOGGING) logerror("VIA write(%02x) = %02x", offset, data);
 			break;
 	}
 
@@ -468,7 +468,7 @@ static READ_HANDLER( via6522_r )
 			break;
 	}
 
-	if (FULL_LOGGING) logerror("VIA read(%02x) = %02x\n", offset, result);
+	if (FULL_LOGGING) logerror("VIA read(%02x) = %02x", offset, result);
 	return result;
 }
 
@@ -855,7 +855,7 @@ INPUT_PORTS_START( timekill )
 	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 INPUT_PORTS_END
@@ -902,7 +902,7 @@ INPUT_PORTS_START( bloodstm )
 	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 
@@ -971,7 +971,7 @@ INPUT_PORTS_START( hardyard )
 	PORT_DIPNAME( 0x0040, 0x0000, "Players" )
 	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPSETTING(      0x0040, "2" )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 
@@ -1021,7 +1021,7 @@ INPUT_PORTS_START( pairs )
 	PORT_DIPNAME( 0x0040, 0x0000, "Modesty" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
 
@@ -1120,7 +1120,7 @@ INPUT_PORTS_START( wcbowln ) /* WCB version 1.66 supports cocktail mode */
 	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
@@ -1196,7 +1196,7 @@ INPUT_PORTS_START( drivedge )
 	PORT_DIPSETTING(      0x0050, "6" )
 	PORT_DIPSETTING(      0x0060, "7" )
 	PORT_DIPSETTING(      0x0070, "8" )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1250,7 +1250,7 @@ INPUT_PORTS_START( sftm )
 	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
@@ -1259,7 +1259,7 @@ INPUT_PORTS_START( sftm )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( shufshot ) /* SuffleShot version 1.39 supports cocktail mode */
+INPUT_PORTS_START( shufshot ) /* ShuffleShot version 1.39 supports cocktail mode */
 	PORT_START	/* 080000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
@@ -1295,7 +1295,7 @@ INPUT_PORTS_START( shufshot ) /* SuffleShot version 1.39 supports cocktail mode 
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
@@ -1318,7 +1318,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( shufbowl )
 	/*
-	Earlier versions of Suffleshot & World Class Bowling share the same input
+	Earlier versions of Shuffleshot & World Class Bowling share the same input
 	port set up. IE: "Freeze Screen" and no support for a cocktail mode
 	*/
 
@@ -1357,7 +1357,7 @@ INPUT_PORTS_START( shufbowl )
 	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 

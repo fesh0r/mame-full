@@ -138,7 +138,7 @@ enum
 											/* multiple users simultaneously. */
 										/* Otherwise, set to 0. */
 	fif_hasNoINITs			= 0x0080,	/* Extensions/Control Panels: if set(?), */
-											/* this file contains no INIT
+											/* this file contains no INIT */
 											/* resource */
 										/* Otherwise, set to 0. */
 	fif_hasBeenInited		= 0x0100,	/* System 6: The Finder has recorded information from
@@ -649,7 +649,7 @@ static int mfs_image_open(mfs_l2_imgref *l2_img)
 */
 static int mfs_find_dir_entry(mfs_l2_imgref *l2_img, const char *fpath /* ... */)
 {
-	Str255 fname;
+	mac_str255 fname;
 
 	if (strchr(fpath, ':'))
 		return IMGTOOLERR_BADFILENAME;
@@ -697,11 +697,13 @@ static int mfs_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 static int mfs_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
 static int mfs_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
 
+#if 0
 static struct OptionTemplate mfs_createopts[] =
 {
 	/*{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},*/
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
+#endif
 
 /*enum
 {
@@ -849,7 +851,7 @@ static int mfs_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	}
 
 	mac_to_c_strncpy(ent->fname, ent->attr_len, cur_dir_entry->name);
-	snprintf(ent->attr, ent->attr_len, "");
+	snprintf(ent->attr, ent->attr_len, "%s", "");
 	ent->filesize = get_UINT32BE(cur_dir_entry->dataPhysicalSize)
 						+ get_UINT32BE(cur_dir_entry->rsrcPhysicalSize);
 
@@ -907,8 +909,6 @@ static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 */
 static int mfs_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
 {
-	mfs_l2_imgref *image = (mfs_l2_imgref *) img;
-
 	return IMGTOOLERR_UNIMPLEMENTED;
 }
 
@@ -917,8 +917,6 @@ static int mfs_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, c
 */
 static int mfs_image_deletefile(IMAGE *img, const char *fname)
 {
-	mfs_l2_imgref *image = (mfs_l2_imgref *) img;
-
 	return IMGTOOLERR_UNIMPLEMENTED;
 }
 

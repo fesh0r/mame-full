@@ -319,5 +319,5 @@ ROM_END
 
 
 
-GAME( 1982, funkybee, 0, funkybee, funkybee, 0, ROT90, "Orca Corporation", "Funky Bee" )
+GAME( 1982, funkybee, 0, funkybee, funkybee, 0, ROT90, "Orca", "Funky Bee" )
 GAME( 1983, skylancr, 0, funkybee, skylancr, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer" )
