@@ -1,3 +1,5 @@
+#ifndef BEEP_H
+#define BEEP_H
 int beep_sh_start(const struct MachineSound *msound);
 void beep_sh_stop(void);
 void beep_sh_update(void);
@@ -9,3 +11,4 @@ struct beep_interface
 {
         int num;
 };
+#endif
