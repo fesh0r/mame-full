@@ -3254,14 +3254,20 @@ Sega Game Gear (1990)
 
 
 The Game Gear is the portable version of the Sega Master System, with slightly enhanced 
-graphics and stereo sound, but fully compatible (i.e. you could play SMS games on the GG
-with the use of a special adaptor). The Game Gear was sold 11 million times world-wide 
-(2 million in Japan, 9 million in the rest of the world). (note taken from www.eidolons-inn.de)
+graphics and stereo sound. The Game Gear would compete in a tough market with the Atari
+Lynx, the NEC Turbo Express and the industry leader Nintendo Gameboy. With an adaptor you
+could play SMS games on the Game Gear. A TV tuner also turned the system into a portable
+television set. Game gear featured many of the Sega Standard games, like Sonic the Hedgehog,
+ Shinobi, Super Monaco GP and Ecco the Dolphin.
 
 
 Features:
 
-CPU:  4 MHz Zilog Z80
+CPU: 4 MHz Zilog Z80 (8-bit)
+
+RAM: 8K
+
+Video RAM: 16K
 
 Colors Palette: 512; 32 max on screen
 
@@ -3276,14 +3282,19 @@ Sound:  6 channel FM, 2 channel noise - Stereo
 Battery life:  6 hours on 6 AA batteries
 
 
-Links:
+To do (see source): 
 
-EIdolons inn - www.eidolons-inn.de
+LCD persistence emulation for GG
+
+SIO interface for Game Gear (needs netplay, I guess)
+
+PSG control for Game Gear (needs custom SN76489 with stereo output for each channel)
 
 
 MESS Emulation State:
 
 ???
+
 
 $end
 
@@ -3335,20 +3346,15 @@ $bio
 Sega Megadrive/Genesis (1988)
 
 
-The Sega Genesis was released in Japan on the 29th of October 1988, and in the USA on the 1st
-of September 1989. At that time, no other console could compete with Sega´s powerful 16-bit 
-system, apart from the PC-Engine / TurboGrafx-16, perhaps. But due to a lack of third-party 
-support - especially with the arrival of the SNES, because many of the major game companies 
-were still bound to Nintendo because of the contracts they made in the NES era - the Genesis 
-never became as successful as Nintendo´s 16-bit console. Nevertheless, about 28.5 million 
-consoles were sold worldwide, compared to about 48 million SNES consoles. Looking at the 
-different regions of the world, the Genesis was most successful in the USA. It was quite strong in 
-Europe, too (especially Great Britain is famous for being the European Sega stronghold), but did
-not succeed very well in Japan, Nintendo's home country. It was definitely no mistake to buy the
-console, as I did in early 1990, shortly after Super Shinobi had been released.  Among the 
-approximetaly 1000 games which were produced during the genesis' lifespan (about 10 years 
-during 1988-1998) are a lot of evergreens which deserve to be played even today. (note taken 
-rom www.eidolons-inn.de)
+The Genesis (called Megadrive in Japan) console featured many great conversions that
+banked on the success of Segas Arcade games. Games like Altered Beast, After Burner,
+Ghouls 'N Ghosts and Sonic the Hedgehog helped make this 16-bit system very popular. 
+Unfortunately third party support was difficult considering many developers were making
+games exclusively for the Nintendo systems. The Genesis was redesigned into a smaller
+and more affordable package three times. There was also a portable version of the 
+Genesis, called the Nomad, which featured a backlit LCD. The Genesis also served as the
+core for the expansion hardware with Sega CD and 32X that added CD support and additional
+features.
 
 
 Features:
@@ -3357,20 +3363,19 @@ Main Processor: Motorola M68000 (16-bit) at 7.67 Mhz
  
 Co-processor: Z80a at 3.58Mhz
 
-Sound Chips: YM2612 and a 4 channel TI PSG76489
+RAM: 64k (Plus 64k Ram for sound)
 
-Ram: 64k (Plus 64k Ram for sound)
+Video RAM: 64k
 
-Max Cart Size: ??
-
-
-Video:
+Max Cart Size: ???
 
 Max resolution: 320 X 224 
 
-Color palette: 512; 64 max on screen
+Color palette: 512 total; 64 max on screen
 
 Max # of sprites: 80; 20 max per scanline
+
+Sound Chips: YM2612 and a 4 channel TI PSG76489
 
 Sound: Stereo FM-based sound with 8-bit audio samples 
 
@@ -3387,11 +3392,6 @@ may behave differently, or lock up if the two types do not match.
 
 'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear
 to be checking for. This may not be 100% accurate, however.
-
-
-Links:
-
-EIdolons inn - www.eidolons-inn.de
 
 
 MESS Emulation State:
@@ -5368,6 +5368,7 @@ at lots of disassemblies!
 Links:
 
 http://genesis8.free.fr/
+
 http://www.ncus.org.uk/
 
 
@@ -6224,11 +6225,11 @@ more accurate speed(memory wait and DMAC overhead)
 
 YM-2608 sound
 
-joystick and mouse
+Joystick and mouse
 
 5'2HD or 8'2D floppy disk drives
 
-font substitution
+Font substitution
 
 Kana-Kanji dictionary ROM
 
@@ -6309,21 +6310,32 @@ and later supported CD-ROMs and portable models with built in TV tuners.
 Features:
 
 Custom 8bit CPU: HuC6280 (7.16MHz)  (1.5 Million Instructions Per Second [MIPS])
+
 Video Processor: HuC6270 - 16 bit
-Color Processor: HuC6260 
-Resolution: 256 x 216 
-Sound Processor: 8 bit PCM stereo / 6-channel stereo 
-Ram: 8 Kbyte (64Kbit) 
+
+Color Processor: HuC6260
+
+Resolution: 256 x 216
+
+Sound Processor: 8 bit PCM stereo / 6-channel stereo
+
+Ram: 8 Kbyte (64Kbit)
+
 Video Ram: 64Kbyte (512 Kbit)
-Cart Size: 256Kbit - 20 Megabit Max. (S.F. 2) Normally 8 Mbits 
-colors Pallet: 512 - (256 for sprites, 256 for the background.) 
+
+Cart Size: 256Kbit - 20 Megabit Max. (S.F. 2) Normally 8 Mbits
+
+colors Pallet: 512 - (256 for sprites, 256 for the background.)
+
 Max # of sprites: 64
+
 Sprite Size: 16 x 16 , 32x64
 
 
 Links:
 
 Universo PCENGINE - upce.netfirms.com/index.html
+
 Turbo Station 16 - pcenginefx.com/TS/
 
 
@@ -6953,7 +6965,6 @@ rate.
 
 Ten other games were released for the CPS Changer, though none have been dumped at present
 (to the best of my knowledge). If/when these are dumped, support will be added for them: 
-
 Captain Commando (1995)
 
 Final Fight  (1994)
@@ -6972,6 +6983,8 @@ Street Fighter II' Champion Edition (1994)
 
 Street Fighter II Turbo (1994, Pack-in)
 
+Street Fighter Zero (19??)
+
 Tenchi O Kurau II (1995)
 
 
@@ -6981,19 +6994,26 @@ $end
 
 $info=sms
 $bio
-Sega Master System (1987)
+Sega Master System (1986)
 
 
-The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega 
-constantly developed new (and good) games, the Master System never beat the NES. The MS was 
-most successful in Europe, especially Great Britain, where most of the games were developed in
-the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the 
-end of 1994. (note taken from www.eidolons-inn.de)
+The Master System (called Mark III in Japan) was Sega's first console to be released in
+North America. It was in direct competition with the 8-bit NES. The Master System was
+especially popular in Europe and South America. SMS featured many popular original 
+games and arcade conversions like Phantasy Star, R-Type, Sonic the Hedgehog, Shinobi. 
+Many SMS games turned into franchise games for Sega and appear on later consoles. 
+SMS supported both game cartridges (128-512K) and smaller cards (<32K), as well as 
+many other accessories like Light Phaser, Sports Pad, Rapid Fire Unit and 3-D Glasses.
+
 
 
 Features:
 
-CPU: Z80 at 4 MHz
+CPU: 3.6 MHz, 8-bit Z80 processor
+
+RAM: 8K
+
+Video RAM: 16K
 
 Custom video controller (VDP) derived from the TI chip TMS9918/9928
 
@@ -7012,14 +7032,20 @@ Sound output: 3 square-wave sound and white noise/periodic noise channel
 Music: Yamaha YM2413 FM sound chip
 
 
-Links:
-
-EIdolons inn - www.eidolons-inn.de
-
-
 MESS Emulation State:
 
 This driver runs just about everything!
+
+
+To do (see source):
+
+TMS9928A support for 'f16ffight.sms'
+
+SMS lightgun support
+
+SMS Pause key - certainly there's an effective way to handle this
+
+SMS 3D glass support
 
 
 $end
@@ -7068,12 +7094,31 @@ Cart Size: 4Mbit - 128 Megabit Max. (Tengay Maikio at 70+ Megabits is the larges
 
 Controller: 8-way direction pad with Select, Start, A, B, X, Y and 2 Flipper buttons labeled R and L
 
-Controller Response: 16ms
 
 
 MESS Emulation State:
 
 This driver is preliminary and most images will not work. Super Mario World (US version) is playable.
+
+
+To do (see source):
+
+Emulate extra chips - superfx, dsp2, sa-1 etc.
+
+Add sound emulation. Currently the SPC700 is emulated, but that's it.
+
+Add horizontal mosaic, hi-res. interlaced etc to video emulation.
+
+Add support for fullgraphic mode(partially done).
+
+Fix support for Mode 7. (In Progress)
+
+Handle interleaved roms (maybe even multi-part roms, but how?)
+
+Add support for running at 3.58Mhz at the appropriate time.
+
+I'm sure there's lots more ...
+
 
 $end
 
@@ -9174,16 +9219,19 @@ $info=wswan
 $bio
 Bandai WonderSwan (1999)
 
-In March of 1999, Bandai released a portable gaming console in Japan that was designed to compete with
-the Neo Geo Pocket and Game Boy Color. The machine was met with rave reviews and has 
+
+In March of 1999, Bandai released a portable gaming console in Japan that was designed to 
+compete with the Neo Geo Pocket and Game Boy Color. The machine was met with rave reviews and has 
 gained a major share of the handheld market. The WS was available in ten case colors, playable both 
 vertically and horizontally, and features a fairly large library of games.
+
 
 In December of 2000, Bandai followed up its WonderSwan with the WonderSwan Color. 
 Designed to continue the fight against Nintendo's Game Boy empire, the WSC is equipped
 with a color display and improved specifications. The WonderSwan Color is backwards compatible 
-with the WonderSwan's black and white library, as well as having games of its own. Remakes of the older Final
-Fantasy games and many other RPGs make the WonderSwan Color a popular system in Japan.
+with the WonderSwan's black and white library, as well as having games of its own. Remakes 
+of the older Final Fantasy games and many other RPGs make the WonderSwan Color a popular 
+system in Japan.
 
 
 WonderSwan Features:
