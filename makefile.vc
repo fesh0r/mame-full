@@ -1,0 +1,356 @@
+#####################################################################
+
+MAME_VERSION = -DMAME_VERSION=37
+BETA_VERSION = -DBETA_VERSION=10
+
+# set this to mame, mess or the destination you want to build
+# TARGET = mame
+TARGET = mess
+# TARGET = neomame
+# TARGET = tiny
+
+# uncomment next line to make a debug version
+DEBUG = 1
+
+# build a version for debugging games
+# MAME_DEBUG = -DMAME_DEBUG
+
+# uncomment next line to use Assembler 68k engine
+# X86_ASM_68K = 1
+
+# if MAME_NET is defined, network support will be compiled in
+# MAME_NET = -DMAME_NET
+
+# if MAME_MMX is defined, MMX will be compiled in
+MAME_MMX = -DMAME_MMX
+
+# use fast (register) calling convention
+USE_FASTCALL = -DFASTCALL
+
+# Define this to enable MIDAS sound
+MIDAS = 1
+
+# uncomment next line to generate help files
+# HELP = 1
+
+# set this the operating system you're building for
+OS = win32
+
+# extension for executables
+EXE = .exe
+
+# CPU core include paths
+VPATH=src $(wildcard src/cpu/*)
+
+# compiler, linker and utilities
+AR = lib
+CC = cl
+LD = link
+RC = rc
+ASM = nasmw
+ASMFLAGS = -f win32
+RM = del
+RMDIR = rd /S /Q
+MD = -md
+
+WINDOWS_PROGRAM = -subsystem:windows
+CONSOLE_PROGRAM = -subsystem:console
+
+ifdef DEBUG
+NAME = $(TARGET)32d
+else
+NAME = $(TARGET)32
+endif
+
+# build the targets in different object dirs, since mess changes
+# some structures and thus they can't be linked against each other.
+# cleantiny isn't needed anymore, because the tiny build has its
+# own object directory too.
+OBJ = $(NAME).obj
+
+EMULATOR = $(NAME)$(EXE)
+
+#####################################################################
+# compiler
+
+DEFS = \
+        -DWIN32 \
+        -D_WINDOWS \
+        -DM_PI=3.1415926534 \
+        -DPI=3.1415926534 \
+        -DINLINE='static __inline' \
+        -Dinline=__inline \
+        -D__inline__=__inline \
+        -DCLIB_DECL=__cdecl \
+        -DDECL_SPEC=__cdecl \
+        -DPNG_SAVE_SUPPORT \
+        -DHAS_CPUS \
+        -DHAS_SOUND \
+        -DLSB_FIRST \
+        -DZLIB_DLL \
+        $(MAME_VERSION) \
+        $(BETA_VERSION) \
+        $(RELEASE_CANDIDATE) \
+        $(MAME_NET) \
+        $(MAME_MMX) \
+        $(MAME_DEBUG) \
+        $(USE_FASTCALL)
+
+ifeq "$(TARGET)" "mess"
+DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
+endif
+
+ifndef DEBUG
+DEFS += -DNDEBUG
+endif
+
+ifdef MIDAS
+DEFS += -DMIDAS
+else
+DEFS += -DNOMIDAS
+endif
+
+INCLUDES = \
+        -I. \
+        -Isrc \
+        -Isrc/Win32 \
+        -Isrc/cpu/m68000 \
+        -I$(OBJ)/cpu/m68000 \
+        -IZLIB
+
+ifeq "$(TARGET)" "mess"
+INCLUDES += \
+        -Imess \
+        -Imess/includes \
+        -Imess/Win32
+endif
+
+ifdef MIDAS
+INCLUDES += -IMIDAS
+endif
+
+CFLAGS = -W3 -nologo -MT $(INCLUDES)
+
+ifdef USE_FASTCALL
+CFLAGS += -Gr
+endif
+
+ifdef DEBUG
+CFLAGS += -Zi -Od
+else
+CFLAGS += -Ox -G5 -Ob2
+endif
+
+#####################################################################
+# Resources
+
+RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
+
+RCFLAGS = -l 0x409 -I./Win32
+
+ifeq "$(TARGET)" "mess"
+RCFLAGS += -DMESS -Imess/Win32
+endif
+
+#####################################################################
+# Linker
+
+LIBS = \
+        kernel32.lib \
+        user32.lib \
+        gdi32.lib \
+        shell32.lib \
+        comctl32.lib \
+        comdlg32.lib \
+        advapi32.lib \
+        winmm.lib \
+        vfw32.lib \
+        dxguid.lib \
+        dinput.lib \
+        ZLIB/zlib.lib
+
+ifdef MAME_NET
+LIBS += wsock32.lib
+endif
+
+ifdef MIDAS
+LIBS   += MIDAS/MIDASDLL.lib
+endif
+
+LDFLAGS = -machine:x86 -nologo
+
+ifdef DEBUG
+LDFLAGS += -debug:full
+else
+LDFLAGS += -release -incremental:no -map
+endif
+
+#####################################################################
+
+OBJDIRS = \
+        $(OBJ) \
+        $(OBJ)/cpu \
+        $(OBJ)/sound \
+        $(OBJ)/drivers \
+        $(OBJ)/machine \
+        $(OBJ)/vidhrdw \
+        $(OBJ)/sndhrdw \
+        $(OBJ)/Win32 \
+        $(OBJ)/Win32/hlp \
+
+ifeq "$(TARGET)" "mess"
+# MESS object directories
+OBJDIRS += \
+        $(OBJ)/mess \
+        $(OBJ)/mess/systems \
+        $(OBJ)/mess/machine \
+        $(OBJ)/mess/vidhrdw \
+        $(OBJ)/mess/sndhrdw \
+        $(OBJ)/mess/tools \
+        $(OBJ)/mess/formats \
+        $(OBJ)/mess/messroms \
+        $(OBJ)/mess/Win32
+endif
+
+#####################################################################
+
+all: maketree $(EMULATOR) extra
+
+# include the various .mak files
+include src/core.mak
+include src/$(TARGET).mak
+include src/rules.mak
+include src/$(OS)/$(OS).mak
+
+ifdef MAME_DEBUG
+DBGDEFS = -DMAME_DEBUG
+else
+DBGDEFS =
+DBGOBJS =
+endif
+
+extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
+
+# combine the various definitions to one
+CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
+
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES) 
+# always recompile the version string
+	$(CC) $(CDEFS) $(CFLAGS) -Fo$(OBJ)/version.o -c src/version.c
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
+ifndef DEBUG
+#	upx $(EMULATOR)
+endif
+
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(OBJ)/Win32/dirent.o -out:$@ $^
+
+mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(OBJ)/Win32/dirent.o -out:$@ $^
+
+dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(OBJ)/Win32/dirent.o -out:$@ $^
+
+messroms$(EXE):	$(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(OBJ)/Win32/dirent.o -out:$@ $^
+
+imgtool$(EXE):	     \
+	$(IMGTOOL_OBJS) \
+	$(OBJ)/mess/tools/stubs.o   \
+	$(OBJ)/mess/config.o	      \
+	$(OBJ)/unzip.o	      \
+	$(OBJ)/mess/utils.o	\
+	$(OBJ)/mess/tools/main.o    \
+	$(OBJ)/mess/tools/imgtool.o \
+	$(OBJ)/mess/tools/imgwave.o \
+	$(OBJ)/mess/tools/cococas.o   \
+	$(OBJ)/mess/tools/vmsx_tap.o   \
+	$(OBJ)/mess/tools/vmsx_gm2.o   \
+	$(OBJ)/mess/formats/fmsx_cas.o  \
+	$(OBJ)/mess/tools/fmsx_cas.o  \
+	$(OBJ)/mess/formats/svi_cas.o  \
+	$(OBJ)/mess/tools/svi_cas.o  \
+	$(OBJ)/mess/formats/cococas.o  \
+	$(OBJ)/mess/tools/msx_dsk.o  \
+	$(OBJ)/mess/tools/rsdos.o   \
+	$(OBJ)/mess/tools/stream.o  \
+	$(OBJ)/mess/tools/t64.o     \
+	$(OBJ)/mess/tools/lynx.o    \
+	$(OBJ)/mess/tools/crt.o     \
+	$(OBJ)/mess/tools/d64.o     \
+	$(OBJ)/mess/tools/fat.o     \
+	$(OBJ)/mess/tools/rom16.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(OBJ)/Win32/dirent.o -out:$@ $^
+
+ifdef PERL
+$(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
+	$(PERL) src/makelist.pl
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+endif
+
+$(OBJ)/%.o: src/%.asm
+	$(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
+
+$(OBJ)/%.o: src/%.c
+	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
+
+$(OBJ)/mess/%.o: mess/%.c
+	@echo [MESS] Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
+
+$(OBJ)/Win32/%.res: src/Win32/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
+
+# compile generated C files for the 68000 emulator
+$(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
+	@echo Compiling $(subst .o,.c,$@)...
+	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $*.c
+
+# additional rule, because m68kcpu.c includes the generated m68kops.h :-/
+$(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
+
+# generate C source files for the 68000 emulator
+$(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
+	@echo M68K make $<...
+	$(CC) $(CDEFS) $(CFLAGS) -Fe$@ -Fo$(OBJ)/cpu/m68000 $<
+	@echo Generating M68K source files...
+	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
+
+# generate asm source files for the 68000 emulator
+$(OBJ)/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -Fe$(OBJ)/cpu/m68000/make68k$(EXE) -Fo$(OBJ)/cpu/m68000 $<
+	@echo Generating $@...
+	$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/comptab.asm
+
+# generated asm files for the 68000 emulator
+$(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
+	@echo Assembling $<...
+	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
+
+$(OBJ)/%.a:
+	@echo Archiving $@...
+	@if exist $@ $(RM) $(subst /,\,$@)
+	$(AR) -out:$@ $^
+
+makedir:
+	@echo make makedir is no longer necessary, just type make
+
+$(sort $(OBJDIRS)):
+	$(MD) $(subst /,\,$@)
+
+maketree: $(sort $(OBJDIRS))
+
+clean:
+	@echo Deleting object tree $(OBJ)...
+	@if exist $(OBJ) $(RMDIR) $(OBJ)
+	@echo Deleting $(EMULATOR)...
+	@if exist $(EMULATOR) $(RM) $(EMULATOR)

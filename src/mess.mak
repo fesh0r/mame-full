@@ -708,6 +708,7 @@ COREOBJS += \
 TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) messroms$(EXE)
 #TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
 
+ifneq "$(OS)" "win32"
 dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
@@ -751,7 +752,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/rom16.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
-
+endif
 
 # text files
 ifeq ($(OS),msdos)
