@@ -26,9 +26,9 @@ TODO :
 	0040-005e: card reader
 	0060-007e: line printer
 	0080-00be: FD800 floppy disc
-	00c0-00ee: 913 VDT
-	0100-013e: 913 VDT #2
-	0140-017e: 913 VDT #3
+	00c0-00ee: 913 VDT, or 911 VDT
+	0100-013e: 913 VDT #2, or 911 VDT
+	0140-017e: 913 VDT #3, or 911 VDT
 	1700-177e (0b00-0b7e, 0f00-0f7e): CI402 serial controller #0 (#1, #2) (for 931/940 VDT)
 		(note that CRU base 1700 is used by the integrated serial controller in newer S300,
 		S300A, 990/10A (and 990/5?) systems)
@@ -159,6 +159,8 @@ static void rset_callback(void)
 
 	vdt911_reset();
 	/* ... */
+
+	/* clear controller panel and smi fault LEDs */
 }
 
 static void lrex_callback(void)
