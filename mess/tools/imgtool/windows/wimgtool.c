@@ -902,6 +902,57 @@ done:
 
 
 
+static imgtoolerr_t get_recursive_directory(imgtool_image *image, const char *path, LPCTSTR local_path)
+{
+	imgtoolerr_t err;
+	imgtool_imageenum *imageenum;
+	imgtool_dirent entry;
+	char subpath[1024];
+	TCHAR local_subpath[MAX_PATH];
+	char path_separator;
+
+	path_separator = img_module(image)->path_separator;
+
+	if (!CreateDirectory(local_path, NULL))
+	{
+		err = IMGTOOLERR_UNEXPECTED;
+		goto done;
+	}
+
+	err = img_beginenum(image, path, &imageenum);
+	if (err)
+		goto done;
+
+	do
+	{
+		err = img_nextenum(imageenum, &entry);
+		if (err)
+			goto done;
+
+		if (!entry.eof)
+		{
+			_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\%s"), local_path, U2T(entry.filename));
+			snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%c%s", path, path_separator, entry.filename);
+			
+			if (entry.directory)
+				err = get_recursive_directory(image, subpath, local_subpath);
+			else
+				err = img_getfile(image, subpath, T2A(local_subpath), NULL);
+			if (err)
+				goto done;
+		}
+	}
+	while(!entry.eof);
+
+done:
+	if (imageenum)
+		img_closeenum(imageenum);
+	return err;
+}
+
+
+
+
 static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, void *param)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
@@ -933,9 +984,18 @@ static imgtoolerr_t menu_extract_proc(HWND window, const imgtool_dirent *entry, 
 	if (!GetSaveFileName(&ofn))
 		goto done;
 
-	err = img_getfile(info->image, filename, ofn.lpstrFile, NULL);
-	if (err)
-		goto done;
+	if (entry->directory)
+	{
+		err = get_recursive_directory(info->image, filename, ofn.lpstrFile);
+		if (err)
+			goto done;
+	}
+	else
+	{
+		err = img_getfile(info->image, filename, ofn.lpstrFile, NULL);
+		if (err)
+			goto done;
+	}
 
 done:
 	if (err)
@@ -1351,7 +1411,7 @@ static void init_menu(HWND window, HMENU menu)
 		foreach_selected_item(window, init_menu_proc, &si);
 	}
 
-	can_read      = features.supports_reading && si.has_files && !si.has_directories;
+	can_read      = features.supports_reading && (si.has_files || si.has_directories);
 	can_write     = features.supports_writing;
 	can_createdir = features.supports_createdir;
 	can_delete    = (si.has_files || si.has_directories)

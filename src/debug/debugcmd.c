@@ -144,7 +144,7 @@ void debug_command_init(void)
 
 	debug_console_register_command("dasm",      0, 3, 5, execute_dasm);
 
-	debug_console_register_command("trace",     0, 2, 3, execute_trace);
+	debug_console_register_command("trace",     0, 1, 3, execute_trace);
 }
 
 
@@ -1318,8 +1318,10 @@ static void execute_trace(int ref, int params, const char *param[])
 	FILE *f = NULL;
 	UINT64 cpunum;
 
+	cpunum = cpu_getactivecpu();
+
 	/* validate parameters */
-	if (!validate_parameter_number(param[1], &cpunum))
+	if (params > 1 && !validate_parameter_number(param[1], &cpunum))
 		return;
 	if (params > 2 && !validate_parameter_command(action = param[2]))
 		return;

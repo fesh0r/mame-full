@@ -63,7 +63,7 @@ BEGIN
     POPUP "&Image"
     BEGIN
         MENUITEM "&Insert File...\tCtrl+I",     ID_IMAGE_INSERT
-        MENUITEM "&Extract File...\tCtrl+E",    ID_IMAGE_EXTRACT
+        MENUITEM "&Extract...\tCtrl+E",         ID_IMAGE_EXTRACT
         MENUITEM "&New Directory...\tCtrl+Y",   ID_IMAGE_CREATEDIR
         MENUITEM "&Delete\tDel",                ID_IMAGE_DELETE
     END
@@ -81,7 +81,7 @@ IDR_FILECONTEXT_MENU MENU
 BEGIN
     POPUP "Context Menu"
     BEGIN
-        MENUITEM "&Extract File...",            ID_IMAGE_EXTRACT
+        MENUITEM "&Extract...",                 ID_IMAGE_EXTRACT
         MENUITEM "&New Directory...",           ID_IMAGE_CREATEDIR
         MENUITEM "&Delete",                     ID_IMAGE_DELETE
     END
