@@ -513,7 +513,7 @@ ROM_START( quasara )
 	ROM_LOAD( "6c_07.bin",    0x2400, 0x0400, CRC(772004eb) SHA1(bfafb6005a1a0cff39b76ec0ad4ea1f438a2f174) )
 	ROM_LOAD( "5c_08.bin",    0x2800, 0x0400, CRC(7a87b6f3) SHA1(213b8ccd7bdd650e19d2746b2d617c1950ba3d2b) )
 	ROM_LOAD( "3c_09.bin",    0x2c00, 0x0400, CRC(ef87c2cb) SHA1(1ba10dd3996c047e595c54a37c1abb44df3b63c6) )
-	ROM_LOAD( "2c_10.bin",    0x3000, 0x0400, CRC(a31c0435) SHA1(48e1c5da455610145310dfe4c6b6e4302b531876) ) // different from quasar set
+	ROM_LOAD( "2c_10a.bin",   0x3000, 0x0400, CRC(a31c0435) SHA1(48e1c5da455610145310dfe4c6b6e4302b531876) ) // different from quasar set
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )
 	ROM_LOAD( "quasar.snd",   0x0000, 0x0800, CRC(9e489768) SHA1(a9f01ef0a6512543bbdfec56037f37a0440b2b94) )
@@ -527,6 +527,6 @@ ROM_START( quasara )
 	ROM_LOAD( "12m_q.bin",    0x0000, 0x0200, CRC(1ab8633d) SHA1(3aed29f2326676a8d8a5de6f6bb923b6510896d8) )
 ROM_END
 
-GAMEX( 1980, quasar,        0, quasar,   quasar,   0,		ROT90, "Zaccaria",                         "Quasar",             GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1980, quasara,  quasar, quasar,   quasar,   0,		ROT90, "Zaccaria",                         "Quasar (Alternate)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, quasar,        0, quasar,   quasar,   0,		ROT90, "Zelco / Zaccaria",                         "Quasar",             GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, quasara,  quasar, quasar,   quasar,   0,		ROT90, "Zelco / Zaccaria",                         "Quasar (Alternate)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 

@@ -2,8 +2,8 @@
 
 Namco 54XX
 
-One from the series of still unidentified 4-bit MCUs. This one is programmed
-to act as a noise generator (mostly for explosions).
+This instance of the Fujitsu MB8852 MCU is programmed to act as a noise
+generator (mostly for explosions).
 
 CMD = command from CPU
 OUTn = sound outputs (3 channels)
@@ -80,7 +80,7 @@ void namcoio_54XX_write(int data)
 			case 0x00:	// nop
 				break;
 
-			case 0x10:
+			case 0x10:	// output sound on pins 4-7 only
 				if (memcmp(config1,"\x40\x00\x02\xdf",4) == 0)
 					// bosco
 					// galaga
@@ -94,7 +94,7 @@ void namcoio_54XX_write(int data)
 					sample_start(0, 2, 0);
 				break;
 
-			case 0x20:
+			case 0x20:	// output sound on pins 8-11 only
 				if (memcmp(config2,"\x40\x40\x01\xff",4) == 0)
 					// xevious
 					sample_start(1, 3, 0);
@@ -117,7 +117,7 @@ void namcoio_54XX_write(int data)
 				fetchmode = 2;
 				break;
 
-			case 0x50:
+			case 0x50:	// output sound on pins 17-20 only
 				if (memcmp(config3,"\x08\x04\x21\x00\xf1",5) == 0)
 					// bosco
 					sample_start(2, 2, 0);

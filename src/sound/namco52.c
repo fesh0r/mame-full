@@ -2,8 +2,7 @@
 
 Namco 52XX
 
-One from the series of still unidentified 4-bit MCUs. This one is programmed
-to act as a sample player.
+This instance of the Fujitsu MB8852 MCU is programmed to act as a sample player.
 It is used by just two games: Bosconian and Pole Position.
 
 A0-A15 = address to read from sample ROMs

@@ -532,11 +532,11 @@ static READ16_HANDLER(ga2_wakeup_protection_r)
 
 static WRITE16_HANDLER(sonic_level_load_protection)
 {
+	unsigned short level;
 //Perform write
 	system32_workram[CLEARED_LEVELS / 2] = (data & ~mem_mask) | (system32_workram[CLEARED_LEVELS / 2] & mem_mask);
 
 //Refresh current level
-		unsigned short level;
 		if (system32_workram[CLEARED_LEVELS / 2] == 0)
 		{
 			level = 0x0007;

@@ -454,7 +454,6 @@ static void general_invalidate(UINT8 inval_flags_mask, int scanline)
 {
 	mame_time delay;
 	mame_time current_delay;
-	double delay_d;
 
 	/* sanity check the scanline */
 	assert(scanline >= 0);
@@ -465,10 +464,7 @@ static void general_invalidate(UINT8 inval_flags_mask, int scanline)
 	if (scanline <= cpu_getscanline())
 		delay = time_zero;
 	else
-	{
-		delay_d = cpu_getscanlinetime(scanline);
-		delay = double_to_mame_time(delay_d);
-	}
+		delay = cpu_getscanlinetime_mt(scanline);
 
 	/* if the timer is not set to wake in that time, set it to wake */
 	current_delay = mame_timer_timeleft(videomap_timer);

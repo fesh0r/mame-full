@@ -1277,7 +1277,7 @@ int cpu_getscanline(void)
  *
  *************************************/
 
-double cpu_getscanlinetime(int scanline)
+mame_time cpu_getscanlinetime_mt(int scanline)
 {
 	mame_time scantime, abstime;
 	
@@ -1292,7 +1292,16 @@ double cpu_getscanlinetime(int scanline)
 		scantime = add_mame_times(scantime, refresh_period);
 
 	/* compute how long from now until that time */
-	return mame_time_to_double(sub_mame_times(scantime, abstime));
+	return sub_mame_times(scantime, abstime);
+}
+
+
+
+
+double cpu_getscanlinetime(int scanline)
+{
+	mame_time t = cpu_getscanlinetime_mt(scanline);
+	return mame_time_to_double(t);
 }
 
 
@@ -1302,6 +1311,13 @@ double cpu_getscanlinetime(int scanline)
  *	Returns time for one scanline
  *
  *************************************/
+
+mame_time cpu_getscanlineperiod_mt(void)
+{
+	return scanline_period;
+}
+
+
 
 double cpu_getscanlineperiod(void)
 {

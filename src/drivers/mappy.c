@@ -23,7 +23,7 @@ They can be divided in three "families":
    There is no information about the custom ICs used by this board. The video
    section is probably more similar to Gaplus than to Supr Pacman: the sprite
    generator might be a 21XX (though Gaplus doesn't use 8x8 sprites), and the
-   00XX and 04XX address generators are probably replaced by the single 20XX
+   00XX and 04XX address generators are probably replaced by the single CUS20
    (which also handles the flip screen flag).
 3) Mappy runs on a revised design of the Super Pacman board, where the 00XX
    custom is replaced by a 17XX, which provides a scrolling tilemap. The larger

@@ -121,8 +121,10 @@ SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 SOUNDS+=NAMCO@
 SOUNDS+=NAMCO_15XX@
+SOUNDS+=NAMCO_CUS30@
 SOUNDS+=NAMCO_52XX@
 SOUNDS+=NAMCO_54XX@
+SOUNDS+=NAMCO_63701X@
 SOUNDS+=NAMCONA@
 SOUNDS+=TMS36XX@
 SOUNDS+=TMS5110@
@@ -608,6 +610,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
 	$(OBJ)/drivers/mogura.o \
+	$(OBJ)/vidhrdw/lethal.o $(OBJ)/drivers/lethal.o \
 	$(OBJ)/machine/am53cf96.o $(OBJ)/drivers/konamigq.o \
 
 $(OBJ)/exidy.a: \
@@ -700,6 +703,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/vidhrdw/atarigt.o $(OBJ)/drivers/atarigt.o \
 	$(OBJ)/vidhrdw/jaguar.o $(OBJ)/sndhrdw/jaguar.o $(OBJ)/drivers/cojag.o \
 	$(OBJ)/sndhrdw/cage.o \
+	$(OBJ)/sndhrdw/ataridis.o \
 
 $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/rockola.o $(OBJ)/sndhrdw/rockola.o $(OBJ)/drivers/rockola.o \

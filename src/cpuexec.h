@@ -242,9 +242,11 @@ int cpu_getcurrentframe(void);
 int cpu_getscanline(void);
 
 /* Returns the amount of time until a given scanline */
+mame_time cpu_getscanlinetime_mt(int scanline);
 double cpu_getscanlinetime(int scanline);
 
 /* Returns the duration of a single scanline */
+mame_time cpu_getscanlineperiod_mt(void);
 double cpu_getscanlineperiod(void);
 
 /* Returns the current horizontal beam position in pixels */

@@ -14,38 +14,63 @@ offs_t gaelco3d_mask_offset;
 offs_t gaelco3d_mask_size;
 
 
-#define MAX_POLYGONS	4096
-#define LOG_POLYGONS	1
-#define ENABLE_ZBUFFER	0
+#define MAX_POLYGONS		4096
+#define MAX_POLYDATA		(MAX_POLYGONS * 21)
 
-#define IS_POLYEND(x)	(((x) ^ ((x) >> 1)) & 0x4000)
+#define BILINEAR_FILTER		1			/* should be 1, but can be set to 0 for speed */
+
+#define DISPLAY_TEXTURE		0
+#define LOG_POLYGONS		0
+#define DISPLAY_STATS		0
+
+#define IS_POLYEND(x)		(((x) ^ ((x) >> 1)) & 0x4000)
 
 
 static struct mame_bitmap *screenbits;
-static struct mame_bitmap *zbufbits;
-static int polygons;
-static UINT32 polydata_buffer[MAX_POLYGONS * 21];
+static struct mame_bitmap *zbuffer;
+static UINT16 *palette;
+static UINT32 *polydata_buffer;
 static UINT32 polydata_count;
 
-/*
-
-d[0] = ($9C66) * ($9C70)
-d[1] = (matrix[1][2] * vector[0]) - (matrix[1][0] * vector[2])
-d[2] = (matrix[1][1] * vector[2]) - (matrix[1][2] * vector[1])
-d[3] = matrix[0][1]
-d[4] = matrix[0][0]
-d[5] = (matrix[2][0] * vector[2]) - (matrix[2][2] * vector[0])
-d[6] = (matrix[2][2] * vector[1]) - (matrix[2][1] * vector[2])
-d[7] = ($9C70) * ((matrix[1][0] * vector[1]) - (matrix[1][1] * vector[0]))
-d[8] = ($9C70) * matrix[0][2]
-d[9] = ($9C70) * ((matrix[2][1] * vector[0]) - (matrix[2][0] * vector[1]))
+static int polygons;
+static int lastscan;
 
 
-  ( m00 m01 m02 ) ( v0 )    ( m00 * v0 + m01 * v1 + m02 * v2 )
-  ( m10 m11 m12 ) ( v1 ) =  ( m10 * v0 + m11 * v1 + m12 * v2 )
-  ( m20 m21 m22 ) ( v2 )    ( m20 * v0 + m21 * v1 + m22 * v2 )
 
-*/
+/*************************************
+ *
+ *	Video init
+ *
+ *************************************/
+
+VIDEO_START( gaelco3d )
+{
+	screenbits = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (!screenbits)
+		return 1;
+	
+	zbuffer = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	if (!zbuffer)
+		return 1;
+	
+	palette = auto_malloc(32768 * sizeof(palette[0]));
+	if (!palette)
+		return 1;
+	
+	polydata_buffer = auto_malloc(MAX_POLYDATA * sizeof(polydata_buffer[0]));
+	if (!polydata_buffer)
+		return 1;
+	
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	TMS32031 floating point conversion
+ *
+ *************************************/
 
 typedef union int_double
 {
@@ -78,25 +103,53 @@ static float dsp_to_float(UINT32 val)
 }
 
 
-static void render_poly(UINT32 *polydata)
+/*************************************
+ *
+ *	Polygon rendering
+ *
+ *************************************/
+
+static int render_poly(UINT32 *polydata)
 {
-	float ooz = dsp_to_float(polydata[8]);
-	float dzdx = dsp_to_float(polydata[4]);
-	float dzdy = -dsp_to_float(polydata[3]);
-	float dudx = dsp_to_float(polydata[6]);
-	float dudy = -dsp_to_float(polydata[5]);
-	float dvdx = dsp_to_float(polydata[2]);
-	float dvdy = -dsp_to_float(polydata[1]);
+	UINT8 *texturedata = memory_region(REGION_USER3);
+
+	/* these three parameters combine via A * x + B * y + C to produce a 1/z value */
+	float ooz_dx = dsp_to_float(polydata[4]) * GAELCO3D_RESOLUTION_DIVIDE;
+	float ooz_dy = dsp_to_float(polydata[3]) * GAELCO3D_RESOLUTION_DIVIDE;
+	float ooz_base = dsp_to_float(polydata[8]);
+
+	/* these three parameters combine via A * x + B * y + C to produce a u/z value */
+	float uoz_dx = dsp_to_float(polydata[6]) * GAELCO3D_RESOLUTION_DIVIDE;
+	float uoz_dy = dsp_to_float(polydata[5]) * GAELCO3D_RESOLUTION_DIVIDE;
+	float uoz_base = dsp_to_float(polydata[9]);
+	
+	/* these three parameters combine via A * x + B * y + C to produce a v/z value */
+	float voz_dx = dsp_to_float(polydata[2]) * GAELCO3D_RESOLUTION_DIVIDE;
+	float voz_dy = dsp_to_float(polydata[1]) * GAELCO3D_RESOLUTION_DIVIDE;
+	float voz_base = dsp_to_float(polydata[7]);
+
+	/* this parameter is used to scale 1/z to a formal Z buffer value */
+	float z0 = dsp_to_float(polydata[0]);
+
+	/* these two parameters are the X,Y origin of the texture data */
 	int xorigin = (INT32)polydata[12] >> 16;
 	int yorigin = (INT32)(polydata[12] << 18) >> 18;
+
 	int color = (polydata[10] & 0x7f) << 8;
 	int midx = Machine->drv->screen_width/2;
 	int midy = Machine->drv->screen_height/2;
-	int i, x0, y0, x1, y1, x2, y2;
+	struct poly_vertex vert[3];
+	struct rectangle clip;
+	int i;
 	
-	if (LOG_POLYGONS)
+	// shut up the compiler
+	(void)xorigin;
+	(void)yorigin;
+	
+	if (LOG_POLYGONS && keyboard_pressed(KEYCODE_LSHIFT))
 	{
-		logerror("poly: %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %08X %08X (%4d,%4d)",
+		int t;
+		printf("poly: %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %08X %08X (%4d,%4d) %08X",
 				(double)dsp_to_float(polydata[0]),
 				(double)dsp_to_float(polydata[1]),
 				(double)dsp_to_float(polydata[2]),
@@ -109,94 +162,303 @@ static void render_poly(UINT32 *polydata)
 				(double)dsp_to_float(polydata[9]),
 				polydata[10],
 				polydata[11],
-				(INT16)(polydata[12] >> 16), (INT16)(polydata[12] << 2) >> 2);
+				(INT16)(polydata[12] >> 16), (INT16)(polydata[12] << 2) >> 2, polydata[12]);
 		
-		logerror(" (%4d,%4d) %08X", (INT16)(polydata[13] >> 16), (INT16)(polydata[13] << 2) >> 2, polydata[14]);
-		for (i = 15; !IS_POLYEND(polydata[i - 2]); i += 2)
-			logerror(" (%4d,%4d) %08X", (INT16)(polydata[i] >> 16), (INT16)(polydata[i] << 2) >> 2, polydata[i+1]);
-		logerror("\n");
+		printf(" (%4d,%4d) %08X %08X", (INT16)(polydata[13] >> 16), (INT16)(polydata[13] << 2) >> 2, polydata[13], polydata[14]);
+		for (t = 15; !IS_POLYEND(polydata[t - 2]); t += 2)
+			printf(" (%4d,%4d) %08X %08X", (INT16)(polydata[t] >> 16), (INT16)(polydata[t] << 2) >> 2, polydata[t], polydata[t+1]);
+		printf("\n");
 	}
 
-	x0 = (INT32)polydata[13] >> 16;
-	y0 = (INT32)(polydata[13] << 18) >> 18;
-	x1 = (INT32)polydata[15] >> 16;
-	y1 = (INT32)(polydata[15] << 18) >> 18;
-	
-	xorigin = midx + xorigin;
-	yorigin = midy - yorigin;
+	/* compute the adjusted clip */
+	clip.min_x = Machine->visible_area.min_x - midx;
+	clip.min_y = Machine->visible_area.min_y - midy;
+	clip.max_x = Machine->visible_area.max_x - midx;
+	clip.max_y = Machine->visible_area.max_y - midy;
 
+	/* extract the first two vertices */	
+	vert[0].x = (((INT32)polydata[13] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
+	vert[0].y = (((INT32)(polydata[13] << 18) >> 18) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
+	vert[1].x = (((INT32)polydata[15] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
+	vert[1].y = (((INT32)(polydata[15] << 18) >> 18) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
+	
+	/* loop over the remaining verticies */
 	for (i = 17; !IS_POLYEND(polydata[i - 2]); i += 2)
 	{
-		x2 = (INT32)polydata[i] >> 16;
-		y2 = (INT32)(polydata[i] << 18) >> 18;
+		offs_t endmask = gaelco3d_mask_offset - 1;
+		const struct poly_scanline_data *scans;
+		UINT32 tex = polydata[11];
+		int x, y;
+
+		/* extract vertex 2 */
+		vert[2].x = (((INT32)polydata[i] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
+		vert[2].y = (((INT32)(polydata[i] << 18) >> 18) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
+		
+		/* compute the scanning parameters */
+		scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &clip);
+		if (scans)
 		{
-			UINT8 *src = memory_region(REGION_USER3);
-			offs_t endmask = gaelco3d_mask_offset - 1;
-			const struct poly_scanline_data *scans;
-			struct poly_vertex vert[3];
-			UINT32 tex = polydata[11];
-			int x, y, minx;
-			
-			vert[0].x = midx + x0;
-			vert[0].y = midy - y0;
-			vert[1].x = midx + x1;
-			vert[1].y = midy - y1;
-			vert[2].x = midx + x2;
-			vert[2].y = midy - y2;
-			scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
-			if (scans)
+			int pixeloffs, zbufval, u, v;
+#if (BILINEAR_FILTER)
+			int paldata, r, g, b, f, tf;
+#endif
+			/* special case: no Z buffering and no perspective correction */
+			if (color != 0x7f00 && z0 < 0 && ooz_dx == 0 && ooz_dy == 0)
 			{
-				minx = x0;
-				if (x1 < minx) minx = x1;
-				if (x2 < minx) minx = x2;
-			
+				float zbase = 1.0f / ooz_base;
+				float uoz_step = uoz_dx * zbase;
+				float voz_step = voz_dx * zbase;
+				zbufval = (int)(-z0 * zbase);
+
+				/* loop over scanlines */
 				for (y = scans->sy; y <= scans->ey; y++)
 				{
 					const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-					UINT16 *dest = screenbits->line[y];
-					float *zbuf = zbufbits->line[y];
-					
+					UINT16 *dest = (UINT16 *)screenbits->line[midy - y] + midx;
+					UINT16 *zbuf = zbuffer->line[midy - y];
+					float uoz = (uoz_dy * y + scan->sx * uoz_dx + uoz_base) * zbase;
+					float voz = (voz_dy * y + scan->sx * voz_dx + voz_base) * zbase;
+				
 					for (x = scan->sx; x <= scan->ex; x++)
 					{
-						float z = 1.0f / (ooz + dzdx * (x - xorigin) + dzdy * (y - yorigin));
-						int u = (int)((dudx * (x - xorigin) + dudy * (y - yorigin)) * z);
-						int v = (int)((dvdx * (x - xorigin) + dvdy * (y - yorigin)) * z);
-						int pixeloffs = (tex + v * 4096 + u) & endmask;
-						if (!ENABLE_ZBUFFER || ooz > zbuf[x])
-							if (pixeloffs >= gaelco3d_mask_size || !src[pixeloffs + gaelco3d_mask_offset])
+#if (!BILINEAR_FILTER)
+						u = (int)(uoz + 0.5); v = (int)(voz + 0.5);
+						pixeloffs = (tex + v * 4096 + u) & endmask;
+						if (pixeloffs >= gaelco3d_mask_size || !texturedata[pixeloffs + gaelco3d_mask_offset])
+						{
+							dest[x] = palette[color | texturedata[pixeloffs]];
+							zbuf[x] = zbufval;
+						}
+#else
+						u = (int)(uoz * 256.0); v = (int)(voz * 256.0);
+						pixeloffs = (tex + (v >> 8) * 4096 + (u >> 8)) & endmask;
+						if (pixeloffs >= gaelco3d_mask_size || !texturedata[pixeloffs + gaelco3d_mask_offset])
+						{
+							paldata = palette[color | texturedata[pixeloffs]];
+							tf = f = (~u & 0xff) * (~v & 0xff);
+							r = (paldata & 0x7c00) * f; g = (paldata & 0x03e0) * f; b = (paldata & 0x001f) * f;
+							
+							paldata = palette[color | texturedata[pixeloffs + 1]];
+							tf += f = (u & 0xff) * (~v & 0xff);
+							r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+							
+							paldata = palette[color | texturedata[pixeloffs + 4096]];
+							tf += f = (~u & 0xff) * (v & 0xff);
+							r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+							
+							paldata = palette[color | texturedata[pixeloffs + 4097]];
+							f = 0x10000 - tf;
+							r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+							
+							dest[x] = ((r >> 16) & 0x7c00) | ((g >> 16) & 0x03e0) | (b >> 16);
+							zbuf[x] = zbufval;
+						}
+#endif
+						/* advance texture params to the next pixel */
+						uoz += uoz_step;
+						voz += voz_step;
+					}
+				}
+			}
+			
+			/* general case: non-alpha blended */
+			else if (color != 0x7f00)
+			{
+				/* loop over scanlines */
+				for (y = scans->sy; y <= scans->ey; y++)
+				{
+					const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
+					UINT16 *dest = (UINT16 *)screenbits->line[midy - y] + midx;
+					UINT16 *zbuf = zbuffer->line[midy - y];
+					float ooz = ooz_dy * y + scan->sx * ooz_dx + ooz_base;
+					float uoz = uoz_dy * y + scan->sx * uoz_dx + uoz_base;
+					float voz = voz_dy * y + scan->sx * voz_dx + voz_base;
+				
+					for (x = scan->sx; x <= scan->ex; x++)
+					{
+						if (ooz > 0)
+						{
+							/* compute Z and check the Z buffer value first */
+							float z = 1.0f / ooz;
+							zbufval = (int)(z0 * z);
+							if (zbufval < zbuf[x] || zbufval < 0)
 							{
-								dest[x] = color | src[pixeloffs];
-								if (ENABLE_ZBUFFER)
-									zbuf[x] = ooz;
+#if (!BILINEAR_FILTER)
+								u = (int)(uoz * z + 0.5); v = (int)(voz * z + 0.5);
+								pixeloffs = (tex + v * 4096 + u) & endmask;
+								if (pixeloffs >= gaelco3d_mask_size || !texturedata[pixeloffs + gaelco3d_mask_offset])
+								{
+									dest[x] = palette[color | texturedata[pixeloffs]];
+									zbuf[x] = (zbufval < 0) ? -zbufval : zbufval;
+								}
+#else
+								u = (int)(uoz * z * 256.0); v = (int)(voz * z * 256.0);
+								pixeloffs = (tex + (v >> 8) * 4096 + (u >> 8)) & endmask;
+								if (pixeloffs >= gaelco3d_mask_size || !texturedata[pixeloffs + gaelco3d_mask_offset])
+								{
+									paldata = palette[color | texturedata[pixeloffs]];
+									tf = f = (~u & 0xff) * (~v & 0xff);
+									r = (paldata & 0x7c00) * f; g = (paldata & 0x03e0) * f; b = (paldata & 0x001f) * f;
+									
+									paldata = palette[color | texturedata[pixeloffs + 1]];
+									tf += f = (u & 0xff) * (~v & 0xff);
+									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+									
+									paldata = palette[color | texturedata[pixeloffs + 4096]];
+									tf += f = (~u & 0xff) * (v & 0xff);
+									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+									
+									paldata = palette[color | texturedata[pixeloffs + 4097]];
+									f = 0x10000 - tf;
+									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+									
+									dest[x] = ((r >> 16) & 0x7c00) | ((g >> 16) & 0x03e0) | (b >> 16);
+									zbuf[x] = (zbufval < 0) ? -zbufval : zbufval;
+								}
+#endif
 							}
+						}
+
+						/* advance texture params to the next pixel */
+						ooz += ooz_dx;
+						uoz += uoz_dx;
+						voz += voz_dx;
+					}
+				}
+			}
+			
+			/* color 0x7f seems to be hard-coded as a 50% alpha blend */
+			else
+			{
+				/* loop over scanlines */
+				for (y = scans->sy; y <= scans->ey; y++)
+				{
+					const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
+					UINT16 *dest = (UINT16 *)screenbits->line[midy - y] + midx;
+					UINT16 *zbuf = zbuffer->line[midy - y];
+					float ooz = ooz_dy * y + scan->sx * ooz_dx + ooz_base;
+					float uoz = uoz_dy * y + scan->sx * uoz_dx + uoz_base;
+					float voz = voz_dy * y + scan->sx * voz_dx + voz_base;
+				
+					for (x = scan->sx; x <= scan->ex; x++)
+					{
+						if (ooz > 0)
+						{
+							/* compute Z and check the Z buffer value first */
+							float z = 1.0f / ooz;
+							zbufval = (int)(z0 * z);
+							if (zbufval < zbuf[x] || zbufval < 0)
+							{
+#if (!BILINEAR_FILTER)
+								u = (int)(uoz * z + 0.5); v = (int)(voz * z + 0.5);
+								pixeloffs = (tex + v * 4096 + u) & endmask;
+								if (pixeloffs >= gaelco3d_mask_size || !texturedata[pixeloffs + gaelco3d_mask_offset])
+								{
+									dest[x] = ((dest[x] >> 1) & 0x3def) + ((palette[color | texturedata[pixeloffs]] >> 1) & 0x3def);
+									zbuf[x] = (zbufval < 0) ? -zbufval : zbufval;
+								}
+#else
+								u = (int)(uoz * z * 256.0); v = (int)(voz * z * 256.0);
+								pixeloffs = (tex + (v >> 8) * 4096 + (u >> 8)) & endmask;
+								if (pixeloffs >= gaelco3d_mask_size || !texturedata[pixeloffs + gaelco3d_mask_offset])
+								{
+									paldata = palette[color | texturedata[pixeloffs]];
+									tf = f = (~u & 0xff) * (~v & 0xff);
+									r = (paldata & 0x7c00) * f; g = (paldata & 0x03e0) * f; b = (paldata & 0x001f) * f;
+									
+									paldata = palette[color | texturedata[pixeloffs + 1]];
+									tf += f = (u & 0xff) * (~v & 0xff);
+									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+									
+									paldata = palette[color | texturedata[pixeloffs + 4096]];
+									tf += f = (~u & 0xff) * (v & 0xff);
+									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+									
+									paldata = palette[color | texturedata[pixeloffs + 4097]];
+									f = 0x10000 - tf;
+									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
+									
+									paldata = ((r >> 17) & 0x7c00) | ((g >> 17) & 0x03e0) | (b >> 17);
+									dest[x] = ((dest[x] >> 1) & 0x3def) + (paldata & 0x3def);
+									zbuf[x] = (zbufval < 0) ? -zbufval : zbufval;
+								}
+#endif
+							}
+						}
+						
+						/* advance texture params to the next pixel */
+						ooz += ooz_dx;
+						uoz += uoz_dx;
+						voz += voz_dx;
 					}
 				}
 			}
 		}
-		x1 = x2;
-		y1 = y2;
+
+		/* copy vertex 2 to vertex 1 -- this hardware draws in fans */
+		vert[1] = vert[2];
 	}
+	
+	polygons++;
+	return i;
 }
 
+
+		
+/*************************************
+ *
+ *	Scene rendering
+ *
+ *************************************/
+
+void gaelco3d_render(void)
+{
+	int i;
+	
+	/* if frameskip is engaged, skip it */
+	if (!osd_skip_this_frame())
+		for (i = 0; i < polydata_count; )
+			i += render_poly(&polydata_buffer[i]);
+
+#if DISPLAY_STATS
+{
+	int scan = cpu_getscanline();
+	usrintf_showmessage("Polys = %4d  Timeleft = %3d", polygons, (lastscan < scan) ? (scan - lastscan) : (scan + (lastscan - Machine->visible_area.max_y)));
+}
+#endif
+
+	polydata_count = 0;
+	polygons = 0;
+	lastscan = -1;
+}
+
+
+
+/*************************************
+ *
+ *	Renderer access
+ *
+ *************************************/
 
 WRITE32_HANDLER( gaelco3d_render_w )
 {
 //logerror("%06X:gaelco3d_render_w(%d,%08X)\n", activecpu_get_pc(), offset, data);
 
 	polydata_buffer[polydata_count++] = data;
-	if (polydata_count >= 15 && (polydata_count & 1) && IS_POLYEND(polydata_buffer[polydata_count - 2]))
-	{
-		if (ENABLE_ZBUFFER && polygons == 0)
-		{
-			float val = -1000000;
-			fillbitmap(zbufbits, *(UINT32 *)&val, NULL);
-		}
-		polygons++;
-		render_poly(polydata_buffer);
-		polydata_count = 0;
-	}
+	if (polydata_count >= MAX_POLYDATA)
+		osd_die("Out of polygon buffer space!\n");
+#if DISPLAY_STATS
+	lastscan = cpu_getscanline();
+#endif
 }
 
+
+
+/*************************************
+ *
+ *	Palette access
+ *
+ *************************************/
 
 INLINE void update_palette_entry(offs_t offset, data16_t data)
 {
@@ -206,7 +468,7 @@ INLINE void update_palette_entry(offs_t offset, data16_t data)
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
-	palette_set_color(offset, r, g, b);
+	palette[offset] = data;
 }
 
 
@@ -225,28 +487,18 @@ WRITE32_HANDLER( gaelco3d_paletteram_020_w )
 }
 
 
-VIDEO_START( gaelco3d )
-{
-	screenbits = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
-	if (!screenbits)
-		return 1;
-	
-	if (ENABLE_ZBUFFER)
-	{
-		zbufbits = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 32);
-		if (!zbufbits)
-			return 1;
-	}
-	
-	return 0;
-}
 
+/*************************************
+ *
+ *	Video update
+ *
+ *************************************/
 
 VIDEO_UPDATE( gaelco3d )
 {
 	int x, y;
 
-	if (keyboard_pressed(KEYCODE_Z))
+	if (DISPLAY_TEXTURE && keyboard_pressed(KEYCODE_Z))
 	{
 		static int xv = 0, yv = 0x1000;
 		UINT8 *base = memory_region(REGION_USER3);
@@ -278,6 +530,5 @@ VIDEO_UPDATE( gaelco3d )
 	else
 		copybitmap(bitmap, screenbits, 0,0, 0,0, cliprect, TRANSPARENCY_NONE, 0);
 
-	polygons = 0;
 	logerror("---update---\n");
 }

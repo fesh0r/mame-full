@@ -222,6 +222,7 @@ static void get_bg_tile_info_r(int tile_index)
 VIDEO_START( madalien )
 {
 	int x, y, data1, data2, bit;
+	const UINT8 *headlight_rom;
 
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x, 
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
@@ -270,7 +271,7 @@ VIDEO_START( madalien )
 	madalien_shift_data = memory_region( REGION_GFX4 );
 
 	/* Generate headlight shape data: */
-	const UINT8 *headlight_rom = memory_region( REGION_GFX3 );
+	headlight_rom = memory_region( REGION_GFX3 );
 	for( x=0; x<64; x++ )
 		for( y=0; y<64; y+=8 )
 		{

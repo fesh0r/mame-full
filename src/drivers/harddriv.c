@@ -68,7 +68,7 @@
 	except that is has space for extra serial ROM data. The "DS III" is
 	an advanced design that contains space for a bunch of complex sound
 	circuitry that was not used on Steel Talons, but was used for the
-	prototype Street Drivin'. The "DS IV" looks to have the same board 
+	prototype Street Drivin'. The "DS IV" looks to have the same board
 	layout as the "DS III", but the sound circuitry is actually populated.
 
 	-----------------------------------------------------------------------
@@ -477,10 +477,7 @@ static ADDRESS_MAP_START( driversnd_dsp_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( driversnd_dsp_data_map, ADDRESS_SPACE_DATA, 16 )
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x000, 0x0ff) AM_RAM
-ADDRESS_MAP_END
+	/* $000 - 08F  TMS32010 Internal Data RAM in Data Address Space */
 
 
 static ADDRESS_MAP_START( driversnd_dsp_io_map, ADDRESS_SPACE_IO, 16 )
@@ -1011,7 +1008,7 @@ static MACHINE_DRIVER_START( ds3 )
 	MDRV_CPU_ADD_TAG("adsp", ADSP2101, 12000000)
 	MDRV_CPU_PROGRAM_MAP(ds3_program_map,0)
 	MDRV_CPU_DATA_MAP(ds3_data_map,0)
-	
+
 	MDRV_INTERLEAVE(1000)
 MACHINE_DRIVER_END
 
@@ -1077,10 +1074,10 @@ static MACHINE_DRIVER_START( driversnd )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(driversnd_68k_map,0)
 
-	MDRV_CPU_ADD_TAG("sounddsp", TMS32010, 20000000)
+	MDRV_CPU_ADD_TAG("sounddsp", TMS32010, 20000000/TMS32010_CLOCK_DIVIDER)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(driversnd_dsp_program_map,0)
-	MDRV_CPU_DATA_MAP(driversnd_dsp_data_map,0)
+	/* Data Map is internal to the CPU */
 	MDRV_CPU_IO_MAP(driversnd_dsp_io_map,0)
 
 	/* sound hardware */

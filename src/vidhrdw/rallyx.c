@@ -386,13 +386,13 @@ WRITE_HANDLER( tactcian_starson_w )
 
 static void plot_star(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int x, int y, int color)
 {
+	int bpen = Machine->pens[0];
+
 	if (y < cliprect->min_y ||
 		y > cliprect->max_y ||
 		x < cliprect->min_x ||
 		x > cliprect->max_x)
 		return;
-
-	int bpen = Machine->pens[0];
 
 	if (flip_screen_x)
 	{

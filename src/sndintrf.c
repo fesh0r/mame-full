@@ -349,6 +349,9 @@ int namco_52xx_clock(const struct MachineSound *msound) { return ((struct namco_
 #if (HAS_NAMCO_54XX)
 int namco_54xx_clock(const struct MachineSound *msound) { return ((struct namco_54xx_interface*)msound->sound_interface)->baseclock; }
 #endif
+#if (HAS_NAMCO_63701X)
+int namco_63701x_clock(const struct MachineSound *msound) { return ((struct namco_63701x_interface*)msound->sound_interface)->baseclock; }
+#endif
 #if (HAS_K051649)
 int K051649_clock(const struct MachineSound *msound) { return ((struct k051649_interface*)msound->sound_interface)->master_clock; }
 #endif
@@ -729,6 +732,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_NAMCO_CUS30)
+    {
+		SOUND_NAMCO_CUS30,
+		"Namco CUS30",
+		0,
+		0,
+		namco_sh_start,
+		namco_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_NAMCO_52XX)
     {
 		SOUND_NAMCO_52XX,
@@ -749,6 +764,18 @@ struct snd_interface sndintf[] =
 		namco_54xx_clock,
 		namco_54xx_sh_start,
 		namco_54xx_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_NAMCO_63701X)
+    {
+		SOUND_NAMCO_63701X,
+		"Namco 63701X",
+		0,
+		namco_63701x_clock,
+		namco_63701x_sh_start,
+		namco_63701x_sh_stop,
 		0,
 		0
 	},

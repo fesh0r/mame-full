@@ -1,8 +1,8 @@
 /***************************************************************************
 
 There is strong evidence that the following Namco custom chips are all
-instances of the same 4-bit MCU, differently programmed. Some use a 42-pin
-DIP package, others just 28-pin.
+instances of the same 4-bit MCU, the Fujitsu MB8851 (42-pin DIP package)
+and MB8852 (28-pin DIP), differently programmed.
 
 chip pins function
 ---- ---- --------
@@ -40,50 +40,45 @@ Libble Rabble           58XX  56XX? 56XX? ----
 Toy Pop                 58XX  56XX  56XX  ----
 
 
-It isn't known what MCU they could be. They appear to be manufactured by
-Fujitsu, so they might be MB8851 or MB8860, but I haven't found data sheets
-nor pinouts for those devices.
-The closest match so far are the Oki MSM6408/MSM6422, but the pinouts dosn't
-match 100%.
+Pinouts:
 
-Tentative pinouts are as follows:
-
-      +------+				      +------+
- EXTAL|1   42|Vcc			 EXTAL|1   28|Vcc
-  XTAL|2   41|P8.3			  XTAL|2   27|P5.3
-/RESET|3   40|P8.2			/RESET|3   26|P5.2
-  /IRQ|4   39|P8.1			  P0.0|4   25|P5.1
-  P0.0|5   38|P8.0			  P0.1|5   24|P5.0
-  P0.1|6   37|P7.3			  P0.2|6   23|/IRQ
-  P0.2|7   36|P7.2			  P0.3|7   22|P4.1
-  P0.3|8   35|P7.1			  P1.0|8   21|P4.0
-  P1.0|9   34|P7.0			  P1.1|9   20|P3.3
-  P1.1|10  33|P6.3			  P1.2|10  19|P3.2
-  P1.2|11  32|P6.2			  P1.3|11  18|P3.1
-  P1.3|12  31|P6.1			  P2.0|12  17|P3.0
-  P2.0|13  30|P6.0			  P2.1|13  16|P2.3
-  P2.1|14  29|P5.3			   GND|14  15|P2.2
-  P2.2|15  28|P5.2			      +------+
-  P2.3|16  27|P5.1
-  P3.0|17  26|P5.0
-  P3.1|18  25|P4.3
-  P3.2|19  24|P4.2
-  P3.3|20  23|P4.1
-   GND|21  22|P4.0
-      +------+
+        MB8851                      MB8852
+       +------+                    +------+
+  EXTAL|1   42|Vcc            EXTAL|1   28|Vcc
+   XTAL|2   41|K3        XTAL /STBY|2   27|K3
+ /RESET|3   40|K2            /RESET|3   26|K2
+   /IRQ|4   39|K1                O0|4   25|K1
+     SO|5   38|K0                O1|5   24|K0
+     SI|6   37|R15 /STBY         O2|6   23|R10 /IRQ
+/SC /TO|7   36|R14               O3|7   22|R9 /TC
+    /TC|8   35|R13               O4|8   21|R8
+     P0|9   34|R12               O5|9   20|R7
+     P1|10  33|R11               O6|10  19|R6
+     P2|11  32|R10               O7|11  18|R5
+     P3|12  31|R9                R0|12  17|R4
+     O0|13  30|R8                R1|13  16|R3
+     O1|14  29|R7               GND|14  15|R2
+     O2|15  28|R6                  +------+
+     O3|16  27|R5
+     O4|17  26|R4
+     O5|18  25|R3
+     O6|19  24|R2
+     O7|20  23|R1
+    GND|21  22|R0
+       +------+
 
 
-      P0 P1 P2 P3 P4 P5
+      O  O  R  R  R  K
 50XX  O  O  I     I  I
 54XX  O  O  I  O     I
 62XX  O  O  IO O     I
 
-      P0 P1 P2 P3 P4 P5 P6 P7 P8
-51XX  IO O  I  I  I  I  I  I  I
-52XX  I  O  O  O  I  I  O  O  I
-53XX     O? I  I  I  I  I  I  I
-56XX  I  O  O  O  I  I  I  IO I
-58XX  I  O  O  O  I  I  I  IO I
+      P  O  O  R  R  R  R  K
+51XX  O  O  O  I  I  I  I  I
+52XX  O  O  O  I  I  O  O  I
+53XX  O? O  O  I  I  I  I  I
+56XX  O  O  O  I  I  I  IO I
+58XX  O  O  O  I  I  I  IO I
 
 
 For the 52XX, see sound/namco52.c
@@ -566,7 +561,7 @@ commands:
 
 void namcoio_51XX_write(int chip,int data)
 {
-	data &= 0x0f;
+	data &= 0x07;
 
 #if VERBOSE
 	logerror("%04x: custom 51XX write %02x\n",activecpu_get_pc(),data);

@@ -119,13 +119,12 @@ static void varia_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 
 	while( source>finish )
 	{
-		source -= 0x04;
-
 		int x,y,xloop,yloop;
 		UINT16 height, width;
 		int tile;
 		int flipy, flipx;
 		int colour;
+		source -= 0x04;
 		x = source[0]&0x3ff;
 		y = source[1]& 0x1ff;
 		flipy = source[2]&0x4000;

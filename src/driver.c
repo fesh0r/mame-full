@@ -1774,10 +1774,9 @@ const struct GameDriver *drivers[] =
 	/* SemiCom games on snowbros like hardware */
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
 	DRIVER( hyperpcb )	/* bootleg */
-	DRIVER( moremorp )
-	DRIVER( 3in1semi )
-	DRIVER( 4in1boot )	/* bootleg? */
-	DRIVER( cookbib2 )
+	DRIVER( cookbib2 )	/* (c) 1996 SemiCom */
+	DRIVER( 3in1semi )	/* (c) 1998 SemiCom */
+	DRIVER( moremorp )	/* (c) 1999 SemiCom + Exit */
 
 	/* More Toaplan Games */
 	DRIVER( tekipaki )	/* TP-020 (c) 1991 Toaplan */
@@ -2311,11 +2310,11 @@ V-V                           TP-027
 	DRIVER( glpracr )	/* Gallop Racer (JAPAN Ver 9.01.12) */
 	DRIVER( sfexp )		/* Street Fighter EX Plus (USA 970311) */
 	DRIVER( sfexpj )	/* Street Fighter EX Plus (JAPAN 970311) */
+
+	/* Capcom ZN2 */
 	DRIVER( rvschool )	/* Rival Schools (ASIA 971117) */
 	DRIVER( jgakuen )	/* Justice Gakuen (JAPAN 971117) */
 	DRIVER( tgmj )		/* Tetris The Grand Master (JAPAN 980710) */
-
-	/* Capcom ZN2 */
 	DRIVER( sfex2 )		/* Street Fighter EX 2 (JAPAN 980312) */
 	DRIVER( plsmaswd )	/* Plasma Sword (USA 980316) */
 	DRIVER( stargld2 )	/* Star Gladiator 2 (JAPAN 980316) */
@@ -2332,6 +2331,8 @@ V-V                           TP-027
 	DRIVER( glprac2j )	/* Gallop Racer 2 (JAPAN) */
 	DRIVER( glprac2l )	/* Gallop Racer 2 Link HW (JAPAN) */
 	DRIVER( doapp )		/* Dead Or Alive ++ (JAPAN) */
+	DRIVER( cbaj )		/* Cool Boaders Arcade Jam */
+	DRIVER( shngmtkb )  /* Shanghai Matekibuyuu */
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
 
 	/* PS Arcade 95 */
@@ -2350,6 +2351,7 @@ V-V                           TP-027
 	DRIVER( sncwgltd )	/* Sonic Wings Limited (JAPAN) */
 
 	/* Taito FX1a */
+	DRIVER( psyfrcex )	/* Psychic Force EX (?) */
 	DRIVER( psyforce )	/* Psychic Force (JAPAN) */
 	DRIVER( sfchamp )	/* Super Football Champ (JAPAN) */
 	DRIVER( mgcldate )	/* Magical Date (JAPAN) */
@@ -3492,6 +3494,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( chqflagj )	/* GX717 (c) 1988 (Japan) */
 	DRIVER( ultraman )	/* GX910 (c) 1991 Banpresto/Bandai */
 	DRIVER( hexion )	/* GX122 (c) 1992 */
+	DRIVER( lethalen )	/* GX191 (c) 1992 */
+	DRIVER( lethalej )	/* GX191 (c) 1992 */
 
 	/* Konami "Nemesis hardware" games */
 	DRIVER( nemesis )	/* GX456 (c) 1985 */
@@ -4875,6 +4879,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( drgnunit )	/* (c) 1989 Athena / Seta + Romstar or Taito license (DSW) */
 	DRIVER( wits )		/* (c) 1989 Athena (Visco license) */
 	DRIVER( thunderl )	/* (c) 1990 Seta + Romstar or Visco license (DSW) */
+	DRIVER( wiggie )	/* (c) 1994 Promat (not genuine seta hardware, but based on thunderl code) */
 	DRIVER( rezon )		/* (c) 1991 Allumer */
 	DRIVER( stg )		/* (c) 1991 Athena / Tecmo */
 	DRIVER( pairlove )	/* (c) 1991 Athena */
@@ -5567,6 +5572,7 @@ Other Sun games
 	DRIVER( goalx3 )	/* 0209 (c) 1995 Visco */
 	/* 0210 Karate Ninja Sho (prototype) 1995 Yumekobo */
 	/* 0211 Oshidashi Zintrick (CD only? not confirmed, MVS might exist) 1996 SNK/ADK */
+	DRIVER( zintrckb )	/* 0211 hack - this is not a genuine MVS proto, its a bootleg made from the CD version */
 	DRIVER( overtop )	/* 0212 (c) 1996 ADK */
 	DRIVER( neodrift )	/* 0213 (c) 1996 Visco */
 	DRIVER( kof96 )		/* 0214 (c) 1996 SNK */

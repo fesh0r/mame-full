@@ -148,12 +148,12 @@ static tms32031_regs tms32031;
 **	MEMORY ACCESSORS
 **#################################################################################################*/
 
-#define ROPCODE(pc)		cpu_readop32((pc) * 4)
+#define ROPCODE(pc)		cpu_readop32((pc) << 2)
 #define OP				tms32031.op
 
-#define RMEM(addr)		program_read_dword_32le(((addr) & 0xffffff) * 4)
-#define WMEM(addr,data)	program_write_dword_32le(((addr) & 0xffffff) * 4, data)
-#define UPDATEPC(addr)	change_pc(((addr) & 0xffffff) * 4)
+#define RMEM(addr)		program_read_dword_32le((addr) << 2)
+#define WMEM(addr,data)	program_write_dword_32le((addr) << 2, data)
+#define UPDATEPC(addr)	change_pc((addr) << 2)
 
 
 
@@ -443,10 +443,8 @@ static int tms32031_execute(int cycles)
 
 	while (tms32031_icount > 0)
 	{
-		if ((IREG(TMR_ST) & RMFLAG) && tms32031.pc == IREG(TMR_RE))
+		if ((IREG(TMR_ST) & RMFLAG) && tms32031.pc == IREG(TMR_RE) + 1)
 		{
-			execute_one();
-
 			if ((INT32)--IREG(TMR_RC) >= 0)
 				tms32031.pc = IREG(TMR_RS);
 			else
