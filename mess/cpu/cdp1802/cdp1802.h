@@ -21,10 +21,10 @@
 #ifndef _CDP1802_H
 #define _CDP1802_H
 
-// missing mark
+/* missing mark */
 
-// processor takes 8 external clocks to do something
-// so specify /8 in mame's  machine structure
+/* processor takes 8 external clocks to do something
+   so specify /8 in mame's  machine structure */
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 
@@ -38,8 +38,8 @@ extern "C" {
 
 
 typedef struct {
-	// called after execution of an instruction with cycles,
-	// return cycles taken by dma hardware
+	/* called after execution of an instruction with cycles,
+	   return cycles taken by dma hardware */
 	void (*dma)(int cycles);
 	void (*out_n)(int data, int n);
 	int (*in_n)(int n);

@@ -81,9 +81,9 @@ extern unsigned sc61860_dasm(char *buffer, unsigned pc);
 READ_HANDLER(sc61860_internal_r);
 WRITE_HANDLER(sc61860_internal_w);
 
-// timer_pulse(1/500.0, 0,sc61860_2ms_tick)
+/* timer_pulse(1/500.0, 0,sc61860_2ms_tick) */
 void sc61860_2ms_tick(int param);
-// this is though for power on/off of the sharps
+/* this is though for power on/off of the sharps */
 UINT8 *sc61860_internal_ram(void);
 
 #ifdef __cplusplus
