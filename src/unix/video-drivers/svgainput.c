@@ -22,7 +22,7 @@ static struct sigaction acquire_sa;
 static struct sigaction oldacquire_sa;
 static void (*release_function)(void) = NULL;
 static void (*acquire_function)(void) = NULL;
-static int keyboard_dirty = 0;
+static int keyboard_sync_lost = 0;
 
 static const char scancode_to_unicode[128][2] = {
 	{ 0,   0   }, /* 0 */
@@ -170,7 +170,7 @@ void acquire_handler(int n)
 	sigaction(release_signal, &release_sa, NULL);
 	sigaction(acquire_signal, &acquire_sa, NULL);
 	keyboard_clearstate();
-	keyboard_dirty = 1;
+	keyboard_sync_lost = 1;
 	if (console_fd >= 0)
 		ioctl(console_fd, KDSETLED, leds);
 	if (acquire_function)
@@ -346,10 +346,10 @@ void svga_input_set_keybleds(int new_leds)
 int sysdep_display_driver_update_keyboard(void)
 {
 	keyboard_update();
-	if (keyboard_dirty)
+	if (keyboard_sync_lost)
 	{
-		keyboard_dirty = 0;
-		return 1;
+		keyboard_sync_lost = 0;
+		return SYSDEP_DISPLAY_KEYBOARD_SYNC_LOST;
 	}
 	return 0;
 }

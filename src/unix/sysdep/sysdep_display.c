@@ -40,7 +40,7 @@ static struct sysdep_display_open_params current_params;
 
 /* make the first call to sysdep_display_update_keyboard return 1 after
    sysdep_display_change_params() has closed and opened the display */
-static int force_keyboard_dirty = 0;
+static int keyboard_sync_lost = 0;
 
 static int sysdep_display_check_params(struct sysdep_display_open_params *params)
 {
@@ -184,7 +184,7 @@ int sysdep_display_change_params(
     {
       sysdep_display_close();
       sysdep_display_set_params(new_params);
-      force_keyboard_dirty = 1;
+      keyboard_sync_lost = 1;
       reopen = 0;
     }
     else /* is this going to fit? */
@@ -225,7 +225,7 @@ int sysdep_display_change_params(
     while (sysdep_display_driver_open(reopen))
     {
       sysdep_display_close();
-      force_keyboard_dirty = 1;
+      keyboard_sync_lost = 1;
       reopen = 0;
       switch(attempt)
       {
@@ -276,10 +276,10 @@ int sysdep_display_update_keyboard(void)
 {
   int i = sysdep_display_driver_update_keyboard();
 
-  if (force_keyboard_dirty)
+  if (keyboard_sync_lost)
   {
-    force_keyboard_dirty = 0;
-    return 1;
+    keyboard_sync_lost = 0;
+    return (i | SYSDEP_DISPLAY_KEYBOARD_SYNC_LOST);
   }
 
   return i;

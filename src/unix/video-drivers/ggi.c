@@ -93,7 +93,7 @@ int sysdep_display_driver_open(int reopen)
   ggi_mode sug_mode, best_mode;
   const ggi_directbuffer *direct_buf = NULL;
   ggi_pixelformat *pixel_format = NULL;
-  int i, score, got_aspect = 0, best_score = 0;
+  int i, score, best_window = 0, best_score = 0;
   unsigned char *video_start;
   static int firsttime = 1;
   
@@ -169,7 +169,7 @@ int sysdep_display_driver_open(int reopen)
       {
         best_score  = score;
         best_mode   = sug_mode;
-        got_aspect  = 0;
+        best_window = 1;
       }
       /* also determine the max size of the display */
       sysdep_display_properties.max_width  = -1;
@@ -199,7 +199,7 @@ int sysdep_display_driver_open(int reopen)
             {
               best_score  = score;
               best_mode   = sug_mode;
-              got_aspect  = 1;
+              best_window = 0;
             }
 
             /* also determine the max size of the display */
@@ -246,7 +246,12 @@ int sysdep_display_driver_open(int reopen)
     mode = best_mode;
   }
 
-  if (got_aspect)
+  if (best_window)
+  {
+    startx = ((mode.visible.x - sysdep_display_params.width *
+      sysdep_display_params.widthscale) / 2) & ~3;
+  }
+  else
   {
     mode_set_aspect_ratio((double)mode.visible.x / mode.visible.y);
     /* mode_set_aspect_ratio may have changed yarbsize */
@@ -255,12 +260,7 @@ int sysdep_display_driver_open(int reopen)
       sysdep_display_params.height*sysdep_display_params.heightscale;
     startx = ((mode.visible.x - scaled_width ) / 2) & ~3;
   }
-  else
-  {
-    startx = ((mode.visible.x - sysdep_display_params.width *
-      sysdep_display_params.widthscale) / 2) & ~3;
-  }
-  starty =  (mode.visible.y - scaled_height) / 2;
+  starty = (mode.visible.y - scaled_height) / 2;
 
   fprintf(stderr,"GGI: using mode %dx%dx%d, starting at %dx%d\n", mode.visible.x, mode.visible.y,
     (GT_DEPTH(mode.graphtype)==24)? GT_SIZE(mode.graphtype):

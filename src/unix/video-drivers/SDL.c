@@ -95,7 +95,7 @@ int sysdep_display_driver_open(int reopen)
   SDL_Rect** vid_modes;
   SDL_PixelFormat pixel_format;
   const SDL_VideoInfo* video_info;
-  int video_flags, score;
+  int video_flags, score, best_window = 0;
   int best_bpp = 0, best_width = 0, best_height = 0, best_score = 0;
   static int firsttime = 1;
   
@@ -220,6 +220,7 @@ int sysdep_display_driver_open(int reopen)
         best_bpp    = pixel_format.BitsPerPixel;
         best_width  = scaled_width;
         best_height = scaled_height;
+        best_window = 1;
       }
       /* also determine the max size of the display */
       sysdep_display_properties.max_width  = -1;
@@ -239,6 +240,7 @@ int sysdep_display_driver_open(int reopen)
           best_bpp    = pixel_format.BitsPerPixel;
           best_width  = vid_modes[j]->w;
           best_height = vid_modes[j]->h;
+          best_window = 0;
         }
         /* also determine the max size of the display */
         if (vid_modes[j]->w > sysdep_display_properties.max_width)
@@ -274,13 +276,20 @@ int sysdep_display_driver_open(int reopen)
     }
     fprintf(stderr, "SDL: Using a mode with a resolution of: %dx%dx%d\n",
       best_width, best_height, best_bpp);
+    if(!best_window)
+    {
+      mode_set_aspect_ratio((double)best_width / best_height);
+      /* mode_set_aspect_ratio may have changed yarbsize */
+      scaled_height = sysdep_display_params.yarbsize?
+        sysdep_display_params.yarbsize:
+        sysdep_display_params.height*sysdep_display_params.heightscale;
+    }
   }
   else if ((video_flags & SDL_FULLSCREEN) !=
            (video_surface->flags & SDL_FULLSCREEN))
   {
     SDL_WM_ToggleFullScreen(video_surface);
   }
-  
   /* fill the sysdep_display_properties struct */
   memset(&sysdep_display_properties.palette_info, 0, sizeof(struct
     sysdep_palette_info));
@@ -470,6 +479,7 @@ int sysdep_display_driver_update_keyboard()
 {
    struct sysdep_display_keyboard_event kevent;
    SDL_Event event;
+   int retval = 0;
 
    if (video_surface) {
       while(SDL_PollEvent(&event)) {
@@ -493,10 +503,7 @@ int sysdep_display_driver_update_keyboard()
 #endif
                break;
             case SDL_QUIT:
-#if 0
-               /* Shoult leave this to application */
-               exit(0);
-#endif
+               retval |= SYSDEP_DISPLAY_QUIT_REQUESTED;
                break;
     	    case SDL_JOYAXISMOTION:   
 	    case SDL_JOYBUTTONUP:
@@ -510,5 +517,5 @@ int sysdep_display_driver_update_keyboard()
          }
       }
    }
-   return 0;
+   return retval;
 }

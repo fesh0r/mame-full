@@ -83,6 +83,10 @@
 #define SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED     0x02
 #define SYSDEP_DISPLAY_VIDMODE_FULLSCREEN_CHANGED 0x04
 
+/* flags for the return value of sysdep_display_update_keyboard */
+#define SYSDEP_DISPLAY_KEYBOARD_SYNC_LOST 0x01
+#define SYSDEP_DISPLAY_QUIT_REQUESTED     0x02
+
 /* from mame's palette.h */
 #ifndef PALETTE_H
 typedef unsigned int pen_t;

@@ -695,6 +695,12 @@ static void updatekeyboard(void)
 {
 	int i, changed = 0;
 
+	i = sysdep_display_update_keyboard();
+	if (i & SYSDEP_DISPLAY_KEYBOARD_SYNC_LOST)
+		xmame_keyboard_clear();
+        if (i & SYSDEP_DISPLAY_QUIT_REQUESTED)
+                trying_to_quit = 1;
+
 	/* see if any keys have changed state */
 	for (i = 0; i < KEY_CODES; i++)
 		if (key[i] != oldkey[i])
@@ -730,16 +736,14 @@ static int is_key_pressed(int keycode)
 	if (keycode >= KEY_CODES)
 		return 0;
 
+	updatekeyboard();
+
 	/* special case: if we're trying to quit, fake up/down/up/down */
 	if (keycode == KEY_ESC && trying_to_quit)
 	{
 		static int dummy_state = 1;
 		return dummy_state ^= 1;
 	}
-
-	if(sysdep_display_update_keyboard())
-		xmame_keyboard_clear();
-	updatekeyboard();
 
 	if (steadykey)
 		return currkey[keycode];
@@ -765,8 +769,6 @@ int osd_readkey_unicode(int flush)
 	if (flush)
 		xmame_keyboard_clear();
 
-	if(sysdep_display_update_keyboard())
-		xmame_keyboard_clear();
 	updatekeyboard();
 
 	if (!kbd_fifo_get(kbd_fifo, &event) && event.press)
@@ -1860,8 +1862,7 @@ static int devices_verify_joytype(struct rc_option *option, const char *arg,
 	if (!option->help)
 	{
 		char *dest = help_buf;
-		int bufsize = 1024;
-		int i, n;
+		int n,bufsize = 1024;
 
 		n = snprintf(dest, bufsize, "Select type of joystick support to use:\n"
 				"0 No joystick");

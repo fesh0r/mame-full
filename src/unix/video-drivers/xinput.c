@@ -67,7 +67,9 @@ static int xinput_current_mouse[2];
 static int xinput_mouse_motion[2];
 static Cursor xinput_normal_cursor;
 static Cursor xinput_invisible_cursor;
-
+static Atom xinput_close_atom;
+static const char *xinput_close_atom_name = "WM_DELETE_WINDOW";
+	
 static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
 static void xinput_set_leds(int leds);
 
@@ -155,6 +157,21 @@ int sysdep_display_driver_update_keyboard (void)
 			   the current update method */
 			switch (E.type)
 			{
+			        /* client messages */
+			        case ClientMessage:
+			          switch(E.xclient.format)
+			          {
+			            case 8:
+			              if(!strcmp(E.xclient.data.b, xinput_close_atom_name))
+			                ret_val |= SYSDEP_DISPLAY_QUIT_REQUESTED;
+                                      break;
+                                    case 16:
+                                    case 32:
+                                      if(E.xclient.data.l[0] == xinput_close_atom)
+			                ret_val |= SYSDEP_DISPLAY_QUIT_REQUESTED;
+                                      break;
+			          }
+			          break;
 				/* display events */
 				case Expose:
 					if ( E.xexpose.count == 0 )
@@ -166,7 +183,7 @@ int sysdep_display_driver_update_keyboard (void)
 					xinput_focus = 1;
 					/* to avoid some meta-keys to get locked when wm iconify xmame, we must
 					   perform a key reset whenever we retrieve keyboard focus */
-					ret_val = 1;
+					ret_val |= SYSDEP_DISPLAY_KEYBOARD_SYNC_LOST;
 					if ((xinput_force_grab || xinput_grab_mouse) &&
 					    !XGrabPointer(display, window, True,
 					      PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
@@ -403,6 +420,10 @@ int xinput_open(int force_grab, int event_mask)
   xinput_force_grab = force_grab;
   x11_exposed  = 1;
   xinput_focus = 1;
+  
+  /* we want to be notified of window closes */
+  xinput_close_atom = XInternAtom(display, xinput_close_atom_name, 0);
+  XSetWMProtocols(display, window, &xinput_close_atom, 1);
   
   /* handle winkey mappings */
   if (xinput_use_winkeys)
