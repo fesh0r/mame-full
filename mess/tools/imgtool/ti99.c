@@ -9,12 +9,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "osdepend.h"
 #include "imgtool.h"
 
-#ifndef INT_MAX
+#include "snprintf.h"
+
+/*#ifndef INT_MAX
 #define INT_MAX 0x7fffffff
-#endif
+#endif*/
 
 /*
 	Disk structure:
@@ -33,13 +36,13 @@ typedef struct ti99_sc0
 	char	name[10];			/* volume name (10 characters, pad with spaces) */
 	UINT8	totsecsMSB;			/* disk length in sectors (big-endian) (usually 360, 720 or 1440) */
 	UINT8	totsecsLSB;
-	UINT8	secspertrack;		/* sectors per track (usually 9 or 18) */
+	UINT8	secspertrack;		/* sectors per track (usually 9 (FM) or 18 (MFM)) */
 	UINT8	id[4];				/* 'DSK ' */
 	UINT8	tracksperside;		/* tracks per side (usually 40) */
 	UINT8	sides;				/* sides (1 or 2) */
 	UINT8	density;			/* 1 (FM) or 2 (MFM) */
 	UINT8	res[36];			/* reserved */
-	UINT8	abm[200];			/* allocation bitmap: 1 for each sector in use (sector 0 is LSBit of byte 0, sector 7 is MSBit of byte 0, sector 8 is LSBit of byte 1, etc.) */
+	UINT8	abm[200];			/* allocation bitmap: a 1 for each sector in use (sector 0 is LSBit of byte 0, sector 7 is MSBit of byte 0, sector 8 is LSBit of byte 1, etc.) */
 } ti99_sc0;
 
 /*
@@ -99,27 +102,38 @@ typedef struct tifile_header
 } tifile_header;
 
 
+/*
+	catalog entry (used for in-memory catalog)
+*/
 typedef struct catalog_entry
 {
 	UINT16 fdr_secnum;
 	char fname[10];
 } catalog_entry;
 
+/*
+	ti99 disk image descriptor
+*/
 typedef struct ti99_image
 {
 	IMAGE base;
-	STREAM *file_handle;
-	ti99_sc0 sec0;				/* copy sector 0 */
+	STREAM *file_handle;		/* imgtool file handle */
+	ti99_sc0 sec0;				/* cached copy of sector 0 */
 	catalog_entry catalog[128];	/* catalog (fdr sector ids from sector 1, and file names from fdrs) */
-	int data_offset;	/* sectors 2 to data_offset (34) are normally reserved for fdrs. */
+	int data_offset;	/* fdr records are preferentially allocated in sectors 2 to data_offset (34)
+						whereas data records are preferentially allocated in sectors starting at data_offset. */
 } ti99_image;
 
+/*
+	ti99 catalog iterator, used when imgtool reads the catalog
+*/
 typedef struct ti99_iterator
 {
 	IMAGEENUM base;
 	ti99_image *image;
-	int index;
+	int index;			/* current index in the disk catalog */
 } ti99_iterator;
+
 
 static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void ti99_image_exit(IMAGE *img);
@@ -180,19 +194,39 @@ IMAGEMODULE(
 	ti99_createopts					/* create options */
 )
 
+/*
+	Convert a C string to a 10-character file name (padded with spaces if necessary)
+*/
 static void str_to_fname(char dst[10], const char *src)
 {
 	int i;
 
 
-	if (src)
-		for (i=0; (i<10) && (src[i]!='\0'); i++)
-			dst[i] = src[i];
+	i = 0;
 
-	for (; i<10; i++)
+	/* copy 10 characters at most */
+	if (src)
+		while ((i<10) && (src[i]!='\0'))
+		{
+			dst[i] = src[i];
+			i++;
+		}
+
+	/* pad with spaces */
+	while (i<10)
+	{
 		dst[i] = ' ';
+		i++;
+	}
 }
 
+/*
+	Read one sector from a disk image
+
+	file_handle: imgtool file handle
+	secnum: logical sector address
+	dest: pointer to 256-byte destination buffer
+*/
 static int read_sector(STREAM *file_handle, int secnum, void *dest)
 {
 	int reply;
@@ -209,6 +243,13 @@ static int read_sector(STREAM *file_handle, int secnum, void *dest)
 	return 0;
 }
 
+/*
+	Write one sector to a disk image
+
+	file_handle: imgtool file handle
+	secnum: logical sector address
+	src: pointer to 256-byte source buffer
+*/
 static int write_sector(STREAM *file_handle, int secnum, void *src)
 {
 	int reply;
@@ -225,6 +266,14 @@ static int write_sector(STREAM *file_handle, int secnum, void *src)
 	return 0;
 }
 
+/*
+	Find the catalog entry and fdr record associated with a file name
+
+	image: ti99_image image record
+	fname: name of the file to search
+	fdr: pointer to buffer where the fdr record should be stored (may be NULL)
+	catalog_index: on output, index of file catalog entry (may be NULL)
+*/
 static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catalog_index)
 {
 	int fdr_secnum;
@@ -253,6 +302,12 @@ static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catal
 	return IMGTOOLERR_FILENOTFOUND;
 }
 
+/*
+	Allocate one sector on disk, for use as a fdr record
+
+	image: ti99_image image record
+	fdr_secnum: on output, logical address of a free sector
+*/
 static int alloc_fdr_sector(ti99_image *image, int *fdr_secnum)
 {
 	int totsecs = (image->sec0.totsecsMSB << 8) | image->sec0.totsecsLSB;
@@ -273,6 +328,13 @@ static int alloc_fdr_sector(ti99_image *image, int *fdr_secnum)
 	return IMGTOOLERR_NOSPACE;
 }
 
+/*
+	Extend a file with nb_alloc_sectors extra sectors
+
+	image: ti99_image image record
+	fdr: file fdr record
+	nb_alloc_sectors: number of sectors to allocate
+*/
 static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sectors)
 {
 	int totsecs = (image->sec0.totsecsMSB << 8) | image->sec0.totsecsLSB;
@@ -312,20 +374,33 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 		{
 			p_last_sec = last_sec;
 			last_sec = (fdr->lnks[lnks_index][2] << 4) | (fdr->lnks[lnks_index][1] >> 4);
-			if (last_sec == (secsused-1))
+			if (last_sec >= (secsused-1))
 				break;
 		}
 		if (lnks_index == 76)
 			/* that sucks */
-			return /*IMGTOOLERR_CORRUPTIMAGE*/IMGTOOLERR_NOSPACE;
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		if (last_sec > (secsused-1))
+		{	/* some extra space has already been allocated */
+			cur_block_len = last_sec - (secsused-1);
+			if (cur_block_len > nb_alloc_sectors)
+				cur_block_len = nb_alloc_sectors;
+
+			secsused += cur_block_len;
+			set_fdr_secsused(fdr, secsused);
+			nb_alloc_sectors -= cur_block_len;
+			if (! nb_alloc_sectors)
+				return 0;	/* done */
+		}
 
 		/* block base */
 		cur_sec = ((fdr->lnks[lnks_index][1] & 0xf) << 8) | fdr->lnks[lnks_index][0];
 		/* point past block end */
-		cur_sec += (secsused-1)-p_last_sec;
+		cur_sec += last_sec-p_last_sec;
 		/* count free sectors after last block */
 		cur_block_len = 0;
-		for (i=cur_sec; (! (image->sec0.abm[i >> 3] & (1 << (i & 7)))) && (cur_block_len <= nb_alloc_sectors) && (i < totsecs); i++)
+		for (i=cur_sec; (! (image->sec0.abm[i >> 3] & (1 << (i & 7)))) && (cur_block_len < nb_alloc_sectors) && (i < totsecs); i++)
 			cur_block_len++;
 		if (cur_block_len)
 		{	/* extend last block */
@@ -343,13 +418,13 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 		lnks_index++;
 		if (lnks_index == 76)
 			/* that sucks */
-			return /*IMGTOOLERR_CORRUPTIMAGE*/IMGTOOLERR_NOSPACE;
+			return IMGTOOLERR_NOSPACE;
 	}
 
 	search_start = image->data_offset;	/* initially, search for free space only in data space */
 	while (nb_alloc_sectors)
 	{
-		/* find smallest data block at least nb_sec in lenght, and largest data block less than nb_sec in lenght */
+		/* find smallest data block at least nb_alloc_sectors in lenght, and largest data block less than nb_alloc_sectors in lenght */
 		first_best_block_len = INT_MAX;
 		second_best_block_len = 0;
 		for (i=search_start; i<totsecs; i++)
@@ -410,7 +485,7 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 			lnks_index++;
 			if (lnks_index == 76)
 				/* that sucks */
-				return /*IMGTOOLERR_CORRUPTIMAGE*/IMGTOOLERR_NOSPACE;
+				return IMGTOOLERR_NOSPACE;
 		}
 		else if (search_start != 0)
 		{	/* we did not find any free sector in the data section of the disk */
@@ -423,8 +498,10 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 	return 0;
 }
 
-
-static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti99_fdr *fdr,*/ /*int *catalog_index*/)
+/*
+	Allocate a new (empty) file
+*/
+static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti99_fdr *fdr,*/)
 {
 	int fdr_secnum;
 	int catalog_index, i;
@@ -463,6 +540,9 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 	return 0;
 }
 
+/*
+	Open a file as a ti99_image.
+*/
 static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	ti99_image *image;
@@ -553,6 +633,9 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	return 0;
 }
 
+/*
+	close a ti99_image
+*/
 static void ti99_image_exit(IMAGE *img)
 {
 	ti99_image *image = (ti99_image *) img;
@@ -561,6 +644,11 @@ static void ti99_image_exit(IMAGE *img)
 	free(image);
 }
 
+/*
+	get basic information on a ti99_image
+
+	Currently returns the volume name
+*/
 static void ti99_image_info(IMAGE *img, char *string, const int len)
 {
 	ti99_image *image = (ti99_image *) img;
@@ -572,6 +660,9 @@ static void ti99_image_info(IMAGE *img, char *string, const int len)
 	snprintf(string, len, "%s", vol_name);
 }
 
+/*
+	Open the disk catalog for enumeration 
+*/
 static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	ti99_image *image = (ti99_image*) img;
@@ -592,6 +683,9 @@ static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
+/*
+	Enumerate disk catalog next entry
+*/
 static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	ti99_iterator *iter = (ti99_iterator*) enumeration;
@@ -641,11 +735,17 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
+/*
+	Free enumerator
+*/
 static void ti99_image_closeenum(IMAGEENUM *enumeration)
 {
 	free(enumeration);
 }
 
+/*
+	Compute free space on disk image (in 256-byte ADUs)
+*/
 static size_t ti99_image_freespace(IMAGE *img)
 {
 	ti99_image *image = (ti99_image*) img;
@@ -663,6 +763,9 @@ static size_t ti99_image_freespace(IMAGE *img)
 	return blocksfree;
 }
 
+/*
+	Extract a file from a ti99_image.  The file is saved in tifile format.
+*/
 static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 {
 	ti99_image *image = (ti99_image*) img;
@@ -707,15 +810,19 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 
 	secsused = get_fdr_secsused(&fdr);
 
-	for (i=0, lnks_index = 0; i<secsused; lnks_index++)
+	i = 0;			/* file logical sector #0 */
+	lnks_index = 0;	/* start of file block table */
+	while (i<secsused)
 	{
 		if (lnks_index == 76)
 			return IMGTOOLERR_CORRUPTIMAGE;
 
+		/* read curent file block table entry */
 		cur_sec = ((fdr.lnks[lnks_index][1] & 0xf) << 8) | fdr.lnks[lnks_index][0];
 		last_sec = (fdr.lnks[lnks_index][2] << 4) | (fdr.lnks[lnks_index][1] >> 4);
 
-		for (; (i<secsused) && (i<=last_sec); i++, cur_sec++)
+		/* copy current file block */
+		while ((i<=last_sec) && (i<secsused))
 		{
 			if (cur_sec >= totsecs)
 				return IMGTOOLERR_CORRUPTIMAGE;
@@ -725,13 +832,22 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 
 			if (stream_write(destf, buf, 256) != 256)
 				return IMGTOOLERR_WRITEERROR;
+
+			i++;
+			cur_sec++;
 		}
+
+		/* next entry in file block table */
+		lnks_index++;
 	}
 
 	return 0;
 }
 
-static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
+/*
+	Add a file to a ti99_image.  The file must be in tifile format.
+*/
+static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
 {
 	ti99_image *image = (ti99_image*) img;
 	int totsecs = (image->sec0.totsecsMSB << 8) | image->sec0.totsecsLSB;
@@ -787,7 +903,9 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 		return reply;
 
 	/* copy data */
-	for (i=0, lnks_index = 0; i<secsused; lnks_index++)
+	i = 0;
+	lnks_index = 0;
+	while (i<secsused)
 	{
 		if (lnks_index == 76)
 			return IMGTOOLERR_CORRUPTIMAGE;
@@ -795,7 +913,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 		cur_sec = ((fdr.lnks[lnks_index][1] & 0xf) << 8) | fdr.lnks[lnks_index][0];
 		last_sec = (fdr.lnks[lnks_index][2] << 4) | (fdr.lnks[lnks_index][1] >> 4);
 
-		for (; (i<secsused) && (i<=last_sec); i++, cur_sec++)
+		while ((i<secsused) && (i<=last_sec))
 		{
 			if (cur_sec >= totsecs)
 				return IMGTOOLERR_CORRUPTIMAGE;
@@ -805,7 +923,12 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 
 			if (write_sector(image->file_handle, cur_sec, buf))
 				return IMGTOOLERR_WRITEERROR;
+
+			i++;
+			cur_sec++;
 		}
+
+		lnks_index++;
 	}
 
 	/* write fdr */
@@ -829,6 +952,9 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 	return 0;
 }
 
+/*
+	Delete a file from a ti99_image.
+*/
 static int ti99_image_deletefile(IMAGE *img, const char *fname)
 {
 	ti99_image *image = (ti99_image*) img;
@@ -851,7 +977,9 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 	/* free data sectors */
 	secsused = get_fdr_secsused(&fdr);
 
-	for (i=0, lnks_index = 0; i<secsused; lnks_index++)
+	i = 0;
+	lnks_index = 0;
+	while (i<secsused)
 	{
 		if (lnks_index == 76)
 			return IMGTOOLERR_CORRUPTIMAGE;
@@ -859,13 +987,18 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 		cur_sec = ((fdr.lnks[lnks_index][1] & 0xf) << 8) | fdr.lnks[lnks_index][0];
 		last_sec = (fdr.lnks[lnks_index][2] << 4) | (fdr.lnks[lnks_index][1] >> 4);
 
-		for (; (i<secsused) && (i<=last_sec); i++, cur_sec++)
+		while ((i<secsused) && (i<=last_sec))
 		{
 			if (cur_sec >= totsecs)
 				return IMGTOOLERR_CORRUPTIMAGE;
 
 			image->sec0.abm[cur_sec >> 3] &= ~ (1 << (cur_sec & 7));
+
+			i++;
+			cur_sec++;
 		}
+
+		lnks_index++;
 	}
 
 	/* free fdr sector */
@@ -893,13 +1026,16 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+/*
+	Create a blank ti99_image.
+*/
+static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
 {
-	const char *volname = options[ti99_createopts_volname].s;
-	int density = options[ti99_createopts_density].i;
-	int sides = options[ti99_createopts_sides].i;
-	int tracksperside = options[ti99_createopts_tracks].i;
-	int secspertrack = options[ti99_createopts_sectors].i;
+	const char *volname = in_options[ti99_createopts_volname].s;
+	int density = in_options[ti99_createopts_density].i;
+	int sides = in_options[ti99_createopts_sides].i;
+	int tracksperside = in_options[ti99_createopts_tracks].i;
+	int secspertrack = in_options[ti99_createopts_sectors].i;
 
 	int totsecs = secspertrack * tracksperside * sides;
 
@@ -925,11 +1061,7 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	/* initialize sector 0 */
 
 	/* set volume name */
-	if (volname)
-		for (i=0; (i<10) && (volname[i]!='\0'); i++)
-			sec0.name[i] = volname[i];
-	for (; i<10; i++)
-		sec0.name[i] = ' ';
+	str_to_fname(sec0.name, volname);
 
 	/* set every header field */
 	sec0.totsecsMSB = totsecs >> 8;
@@ -979,6 +1111,9 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	return 0;
 }
 
+/*
+	Read one sector from a ti99_image.
+*/
 static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 								char **buffer, int *size)
 {
@@ -1004,6 +1139,9 @@ static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector,
 	return 0;
 }
 
+/*
+	Write one sector to a ti99_image.
+*/
 static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 								char *buffer, int size)
 {
@@ -1024,6 +1162,3 @@ static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector,
 
 	return 0;
 }
-
-
-
