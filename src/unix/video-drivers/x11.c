@@ -368,6 +368,45 @@ int x11_init_palette_info(Visual *xvisual)
 	return 0;
 }
 
+/* Create a resizable window with the correct aspect ratio, honor
+   custom_width, custom_height, run_in_root_window and
+   sysdep_display_params.fullscreen, return width and height in width
+   and height. */
+int x11_create_resizable_window(unsigned int *width, unsigned int *height)
+{
+	if (run_in_root_window)
+	{
+	        window  = RootWindowOfScreen (screen);
+	        *width  = screen->width;
+                *height = screen->height;
+                sysdep_display_params.fullscreen = 0;
+                return 0;
+	}
+	
+	if(sysdep_display_params.fullscreen)
+                return x11_create_window(width, height, 3);
+
+        /* determine window size */
+        if (custom_window_width)
+        {
+          mode_clip_aspect(custom_window_width, custom_window_height,
+            width, height);
+        }
+        else
+        {
+          *width  = sysdep_display_params.max_width *
+            sysdep_display_params.widthscale;
+          *height = sysdep_display_params.yarbsize?
+            sysdep_display_params.yarbsize:
+            sysdep_display_params.max_height *
+              sysdep_display_params.heightscale;
+          mode_stretch_aspect(window_width, window_height,
+            width, height);
+        }
+        
+        return x11_create_window(width, height, 1);
+}
+
 /* Create a window, type can be:
    0: Fixed size of width and height
    1: Resizable initial size is width and height, aspect is always

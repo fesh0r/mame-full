@@ -60,35 +60,9 @@ int xil_open_display(void)
         mode_set_aspect_ratio((double)screen->width/screen->height);
 
 	/* create a window */
-	if (run_in_root_window)
-	{
-	        window        = RootWindowOfScreen (screen);
-	        window_width  = screen->width;
-                window_height = screen->height;
-	}
-	else
-	{
-                /* determine window size */
-                if (custom_window_width)
-                {
-                  mode_clip_aspect(custom_window_width, custom_window_height,
-                    &window_width, &window_height);
-                }
-                else
-                {
-                  window_width     = sysdep_display_params.max_width * 
-                    sysdep_display_params.widthscale;
-                  window_height    = sysdep_display_params.yarbsize?
-                    sysdep_display_params.yarbsize:
-                    sysdep_display_params.max_height *
-                      sysdep_display_params.heightscale;
-                  mode_stretch_aspect(window_width, window_height,
-                    &window_width, &window_height);
-                }
-                if (x11_create_window(&window_width, &window_height, 1))
-                       return 1;
-        }
-
+	if (x11_create_resizable_window(&window_width, &window_height))
+          return 1;
+        
 	/* create and setup the images */
         window_image = xil_create_from_window( state, display, window );
         if( use_mt_xil ) {
@@ -122,7 +96,7 @@ int xil_open_display(void)
 		return 1;
 
         /* init the input code */
-	xinput_open(0, ExposureMask);
+	xinput_open(sysdep_display_params.fullscreen, 0);
 
 	return 0;
 }

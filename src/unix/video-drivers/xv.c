@@ -211,7 +211,7 @@ int xv_open_display(void)
 	XGCValues xgcv;
         XvAttribute *attr;
 	int height, width;
-        int i, count, force_grab = 0;
+        int i, count;
         int dest_bpp=0;
 
         /* set the aspect_ratio, do this here since
@@ -219,38 +219,8 @@ int xv_open_display(void)
         mode_set_aspect_ratio((double)screen->width/screen->height);
 
 	/* create a window */
-	if (run_in_root_window)
-	{
-	        window        = RootWindowOfScreen (screen);
-	        window_width  = screen->width;
-                window_height = screen->height;
-	}
-	else if(sysdep_display_params.fullscreen)
-        {
-                if (x11_create_window(&window_width, &window_height, 3))
-                       return 1;
-                force_grab = 1;
-        }
-        else
-        {
-                /* determine window size */
-                if (custom_window_width)
-                {
-                  mode_clip_aspect(custom_window_width, custom_window_height, &window_width, &window_height);
-                }
-                else
-                {
-                  window_width     = sysdep_display_params.max_width *
-                    sysdep_display_params.widthscale;
-                  window_height    = sysdep_display_params.yarbsize?
-                    sysdep_display_params.yarbsize:
-                    sysdep_display_params.max_height *
-                      sysdep_display_params.heightscale;
-                  mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
-                }
-                if (x11_create_window(&window_width, &window_height, 1))
-                       return 1;
-        }
+	if (x11_create_resizable_window(&window_width, &window_height))
+          return 1;
 
         /* Xv does normal scaling for us */
         if(sysdep_display_params.effect==0)
@@ -456,7 +426,7 @@ int xv_open_display(void)
                   if (!hwscale_yv12_rotate_buf0 ||
                       !hwscale_yv12_rotate_buf1)
                   {
-                    fprintf (stderr, "\nError: failed to allocate rotate buffer.\n");
+                    fprintf (stderr, "Error: failed to allocate rotate buffer.\n");
                     return 1;
                   }
           }
@@ -484,12 +454,11 @@ int xv_open_display(void)
 
 	if (xv_update_display_func == NULL)
 	{
-		fprintf(stderr, "\nError: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, dest_bpp);
+		fprintf(stderr, "Error: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, dest_bpp);
 		return 1;
 	}
-	fprintf(stderr, "Ok\n");
 
-	xinput_open(force_grab, 0);
+	xinput_open(sysdep_display_params.fullscreen, 0);
 
 	return effect_open();
 }

@@ -67,6 +67,11 @@ void xinput_check_hotkeys(unsigned int flags);
 
 /* generic helper functions */
 int x11_init_palette_info(Visual *xvisual);
+/* Create a resizable window with the correct aspect ratio, honor
+   custom_width, custom_height, run_in_root_window and
+   sysdep_display_params.fullscreen, return width and height in width
+   and height. */
+int x11_create_resizable_window(unsigned int *width, unsigned int *height);
 /* Create a window, type can be:
    0: Fixed size of width and height
    1: Resizable initial size is width and height, aspect is always
