@@ -891,9 +891,15 @@ void inputx_post_utf8(const char *text)
 	This stuff is here more out of convienience than anything else
 ***************************************************************************/
 
-static int categorize_port_type(UINT32 type)
+/* this function needs to be used with InputPort and InputPortTiny structs,
+ * so we have to put the type and name as separate parameters */
+static int categorize_port_type(UINT32 type, const char *name)
 {
 	int result;
+
+	if ((type & IPF_MASK) == IPF_UNUSED)
+		return INPUT_CATEGORY_INTERNAL;
+
 	switch(type & ~IPF_MASK) {
 	case IPT_JOYSTICK_UP:
 	case IPT_JOYSTICK_DOWN:
@@ -943,6 +949,13 @@ static int categorize_port_type(UINT32 type)
 		result = INPUT_CATEGORY_DIPSWITCH;
 		break;
 
+	case 0:
+		if (name && (name != (const char *) -1))
+			result = INPUT_CATEGORY_MISC;
+		else
+			result = INPUT_CATEGORY_INTERNAL;
+		break;
+
 	default:
 		result = INPUT_CATEGORY_INTERNAL;
 		break;
@@ -956,7 +969,7 @@ int input_categorize_port(const struct InputPort *port)
 {
 	if ((port->type & ~IPF_MASK) == IPT_EXTENSION)
 		port--;
-	return categorize_port_type(port->type);
+	return categorize_port_type(port->type, port->name);
 }
 
 
@@ -991,7 +1004,7 @@ int input_count_players(void)
 	joystick_count = 0;
 	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
 	{
-		if (categorize_port_type(in->type) == INPUT_CATEGORY_CONTROLLER)
+		if (categorize_port_type(in->type, in->name) == INPUT_CATEGORY_CONTROLLER)
 		{
 			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
 				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;

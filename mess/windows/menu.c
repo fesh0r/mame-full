@@ -132,7 +132,10 @@ static void customize_input(const char *title, int cust_type, int player, int ca
 	int i;
 	int this_category, this_player;
 
-	artwork_get_inputscreen_customizations(&png, cust_type, customizations, sizeof(customizations) / sizeof(customizations[0]));
+	/* check to see if there is any custom artwork for this configure dialog,
+	 * and if so, retrieve the info */
+	artwork_get_inputscreen_customizations(&png, cust_type, customizations,
+		sizeof(customizations) / sizeof(customizations[0]));
 
 	dlg = win_dialog_init(title, NULL);
 	if (!dlg)
@@ -152,6 +155,8 @@ static void customize_input(const char *title, int cust_type, int player, int ca
 
 		if ((this_player == player) && (this_category == category))
 		{
+			/* check to see if the custom artwork for this configure dialog
+			 * says anything about this input */
 			pr = NULL;
 			for (i = 0; customizations[i].ipt != IPT_END; i++)
 			{
@@ -166,6 +171,7 @@ static void customize_input(const char *title, int cust_type, int player, int ca
 				}
 			}
 
+			/* add the portselect to the dialog */
 			if (win_dialog_add_portselect(dlg, in, pr))
 				goto done;
 		}
@@ -175,6 +181,7 @@ static void customize_input(const char *title, int cust_type, int player, int ca
 	if (win_dialog_add_standard_buttons(dlg))
 		goto done;
 
+	/* and finally display the dialog */
 	win_dialog_runmodal(dlg);
 
 done:
@@ -202,6 +209,17 @@ static void setjoystick(int joystick_num)
 static void setkeyboard(void)
 {
 	customize_input("Emulated Keyboard", ARTWORK_CUSTTYPE_KEYBOARD, 0, INPUT_CATEGORY_KEYBOARD);
+}
+
+
+
+//============================================================
+//	setmiscinput
+//============================================================
+
+static void setmiscinput(void)
+{
+	customize_input("Miscellaneous Input", ARTWORK_CUSTTYPE_MISC, 0, INPUT_CATEGORY_MISC);
 }
 
 
@@ -926,7 +944,7 @@ static void prepare_menus(void)
 	UINT flags_for_exists;
 	UINT flags_for_writing;
 	mess_image *img;
-	int has_config, has_dipswitch, has_keyboard;
+	int has_config, has_dipswitch, has_keyboard, has_misc;
 
 	if (!win_menu_bar)
 		return;
@@ -934,6 +952,7 @@ static void prepare_menus(void)
 	has_config		= input_has_input_category(INPUT_CATEGORY_CONFIG);
 	has_dipswitch	= input_has_input_category(INPUT_CATEGORY_DIPSWITCH);
 	has_keyboard	= input_has_input_category(INPUT_CATEGORY_KEYBOARD);
+	has_misc		= input_has_input_category(INPUT_CATEGORY_MISC);
 
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
@@ -941,6 +960,7 @@ static void prepare_menus(void)
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		throttle									? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	has_config									? MFS_ENABLED : MFS_GRAYED);
 	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		has_dipswitch								? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_OPTIONS_MISCINPUT,		has_misc									? MFS_ENABLED : MFS_GRAYED);
 #if HAS_TOGGLEFULLSCREEN
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!win_window_mode							? MFS_CHECKED : MFS_ENABLED);
 #endif
@@ -1262,6 +1282,10 @@ static int invoke_command(UINT command)
 
 	case ID_OPTIONS_DIPSWITCHES:
 		setdipswitches();
+		break;
+
+	case ID_OPTIONS_MISCINPUT:
+		setmiscinput();
 		break;
 
 #if HAS_TOGGLEFULLSCREEN

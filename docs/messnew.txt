@@ -22,6 +22,9 @@ New System Drivers Supported (in no particular order):
 
 User Interface Changes:
 -----------------------
+- [Windows] Added a "Miscellaneous Inputs" menu item to the Options menu,
+  allowing the user to configure miscellaneous inputs.  [Nate Woods]
+
 - [Windows GUI] Fixed a small bug on the "Interface Options" dialog  (bug
   #551) [Nate Woods]
 
@@ -41,6 +44,8 @@ Source Changes:
   certain games, and fixed Raiden Trad and Wani Wani World  [Anonymous]
 
 - [VTECH1] Fixed graphics and added printer support.  [Dirk Best]
+
+- [VTECH1] Added natural keyboard support.  [Nate Woods]
 
 
 
