@@ -27,7 +27,68 @@
 
 static void AY3600_poll(int dummy);
 
-static const unsigned char ay3600_key_remap[2][7*8][4] =
+static const unsigned char ay3600_key_remap_2[7*8][4] =
+{
+/*		  norm ctrl shft both */
+		{ 0x7f,0x7f,0x7f,0x7f },	/* UNUSED		*/
+		{ 0x08,0x08,0x08,0x08 },	/* Left 		*/
+		{ 0x09,0x09,0x09,0x09 },	/* UNUSED		*/
+		{ 0x0a,0x0a,0x0a,0x0a },	/* UNUSED 		*/
+		{ 0x0b,0x0b,0x0b,0x0b },	/* UNUSED		*/
+		{ 0x0d,0x0d,0x0d,0x0d },	/* Enter		*/
+		{ 0x15,0x15,0x15,0x15 },	/* Right		*/
+		{ 0x1b,0x1b,0x1b,0x1b },	/* Escape		*/
+		{ 0x20,0x20,0x20,0x20 },	/* Space		*/
+		{ 0x27,0x27,0x22,0x22 },	/* UNUSED		*/
+		{ 0x2c,0x2c,0x3c,0x3c },	/* , <			*/
+		{ 0x3a,0x3a,0x2a,0x2a },	/* : *			*/
+		{ 0x2e,0x2e,0x3e,0x3e },	/* . >			*/
+		{ 0x2f,0x2f,0x3f,0x3f },	/* / ?			*/
+		{ 0x30,0x30,0x30,0x30 },	/* 0			*/
+		{ 0x31,0x31,0x21,0x21 },	/* 1 !			*/
+		{ 0x32,0x32,0x22,0x22 },	/* 2 "			*/
+		{ 0x33,0x33,0x23,0x23 },	/* 3 #			*/
+		{ 0x34,0x34,0x24,0x24 },	/* 4 $			*/
+		{ 0x35,0x35,0x25,0x25 },	/* 5 %			*/
+		{ 0x36,0x36,0x26,0x26 },	/* 6 &			*/
+		{ 0x37,0x37,0x27,0x27 },	/* 7 '			*/
+		{ 0x38,0x38,0x28,0x28 },	/* 8 (			*/
+		{ 0x39,0x39,0x29,0x29 },	/* 9 )			*/
+		{ 0x3b,0x3b,0x2b,0x2b },	/* ; +			*/
+		{ 0x2d,0x2d,0x3d,0x3d },	/* - =			*/
+		{ 0x5b,0x1b,0x7b,0x1b },	/* UNUSED		*/
+		{ 0x5c,0x1c,0x7c,0x1c },	/* UNUSED		*/
+		{ 0x5d,0x1d,0x7d,0x1d },	/* UNUSED		*/
+		{ 0x60,0x60,0x7e,0x7e },	/* UNUSED		*/
+		{ 0x41,0x01,0x41,0x01 },	/* A			*/
+		{ 0x42,0x02,0x42,0x02 },	/* B			*/
+		{ 0x43,0x03,0x43,0x03 },	/* C			*/
+		{ 0x44,0x04,0x44,0x04 },	/* D			*/
+		{ 0x45,0x05,0x45,0x05 },	/* E			*/
+		{ 0x46,0x06,0x46,0x06 },	/* F			*/
+		{ 0x47,0x07,0x47,0x07 },	/* G			*/
+		{ 0x48,0x08,0x48,0x08 },	/* H			*/
+		{ 0x49,0x09,0x49,0x09 },	/* I			*/
+		{ 0x4a,0x0a,0x4a,0x0a },	/* J			*/
+		{ 0x4b,0x0b,0x4b,0x0b },	/* K			*/
+		{ 0x4c,0x0c,0x4c,0x0c },	/* L			*/
+		{ 0x4d,0x0d,0x5d,0x0d },	/* M ]			*/
+		{ 0x4e,0x0e,0x5e,0x1e },	/* N ^			*/
+		{ 0x4f,0x0f,0x4f,0x0f },	/* O			*/
+		{ 0x50,0x10,0x40,0x00 },	/* P @			*/
+		{ 0x51,0x11,0x51,0x11 },	/* Q			*/
+		{ 0x52,0x12,0x52,0x12 },	/* R			*/
+		{ 0x53,0x13,0x53,0x13 },	/* S			*/
+		{ 0x54,0x14,0x54,0x14 },	/* T			*/
+		{ 0x55,0x15,0x55,0x15 },	/* U			*/
+		{ 0x56,0x16,0x56,0x16 },	/* V			*/
+		{ 0x57,0x17,0x57,0x17 },	/* W			*/
+		{ 0x58,0x18,0x58,0x18 },	/* X			*/
+		{ 0x59,0x19,0x59,0x19 },	/* Y			*/
+		{ 0x5a,0x1a,0x5a,0x1a } 	/* Z			*/
+};
+
+static const unsigned char ay3600_key_remap_2e[2][9*8][4] =
 {
 /* caps lock off  norm ctrl shft both */
 	{
@@ -86,7 +147,23 @@ static const unsigned char ay3600_key_remap[2][7*8][4] =
 		{ 0x77,0x17,0x57,0x17 },	/* w W			*/
 		{ 0x78,0x18,0x58,0x18 },	/* x X			*/
 		{ 0x79,0x19,0x59,0x19 },	/* y Y			*/
-		{ 0x7a,0x1a,0x5a,0x1a } 	/* z Z			*/
+		{ 0x7a,0x1a,0x5a,0x1a }, 	/* z Z			*/
+		{ 0x30,0x30,0x30,0x30 },	/* 0 (KP)		*/
+		{ 0x31,0x31,0x31,0x31 },	/* 1 (KP)		*/
+		{ 0x32,0x32,0x32,0x32 },	/* 2 (KP)		*/
+		{ 0x33,0x33,0x33,0x33 },	/* 3 (KP)		*/
+		{ 0x34,0x34,0x34,0x34 },	/* 4 (KP)		*/
+		{ 0x35,0x35,0x35,0x35 },	/* 5 (KP)		*/
+		{ 0x36,0x36,0x36,0x36 },	/* 6 (KP)		*/
+		{ 0x37,0x37,0x37,0x37 },	/* 7 (KP)		*/
+		{ 0x38,0x38,0x38,0x38 },	/* 8 (KP)		*/
+		{ 0x39,0x39,0x39,0x39 },	/* 9 (KP)		*/
+		{ 0x2f,0x2f,0x2f,0x2f },	/* / (KP)		*/
+		{ 0x2a,0x2a,0x2a,0x2a },	/* * (KP)		*/
+		{ 0x2d,0x2d,0x2d,0x2d },	/* - (KP)		*/
+		{ 0x2b,0x2b,0x2b,0x2b },	/* + (KP)		*/
+		{ 0x2e,0x2e,0x2e,0x2e },	/* . (KP)		*/
+		{ 0x0d,0x0d,0x0d,0x0d }		/* Enter (KP)	*/
 	},
 /* caps lock on   norm ctrl shft both */
 	{
@@ -145,11 +222,28 @@ static const unsigned char ay3600_key_remap[2][7*8][4] =
 		{ 0x57,0x17,0x77,0x17 },	/* W w			*/
 		{ 0x58,0x18,0x78,0x18 },	/* X x			*/
 		{ 0x59,0x19,0x79,0x19 },	/* Y y			*/
-		{ 0x5a,0x1a,0x7a,0x1a } 	/* Z z			*/
+		{ 0x5a,0x1a,0x7a,0x1a }, 	/* Z z			*/
+		{ 0x30,0x30,0x30,0x30 },	/* 0 (KP)		*/
+		{ 0x31,0x31,0x31,0x31 },	/* 1 (KP)		*/
+		{ 0x32,0x32,0x32,0x32 },	/* 2 (KP)		*/
+		{ 0x33,0x33,0x33,0x33 },	/* 3 (KP)		*/
+		{ 0x34,0x34,0x34,0x34 },	/* 4 (KP)		*/
+		{ 0x35,0x35,0x35,0x35 },	/* 5 (KP)		*/
+		{ 0x36,0x36,0x36,0x36 },	/* 6 (KP)		*/
+		{ 0x37,0x37,0x37,0x37 },	/* 7 (KP)		*/
+		{ 0x38,0x38,0x38,0x38 },	/* 8 (KP)		*/
+		{ 0x39,0x39,0x39,0x39 },	/* 9 (KP)		*/
+		{ 0x2f,0x2f,0x2f,0x2f },	/* / (KP)		*/
+		{ 0x2a,0x2a,0x2a,0x2a },	/* * (KP)		*/
+		{ 0x2d,0x2d,0x2d,0x2d },	/* - (KP)		*/
+		{ 0x2b,0x2b,0x2b,0x2b },	/* + (KP)		*/
+		{ 0x2e,0x2e,0x2e,0x2e },	/* . (KP)		*/
+		{ 0x0d,0x0d,0x0d,0x0d }		/* Enter (KP)	*/
 	}
 };
 
 static unsigned int *ay3600_keys;
+static int keyboard_type;
 
 static UINT8 keycode;
 static UINT8 keycode_unmodified;
@@ -162,7 +256,7 @@ static UINT8 keystilldown;
 #define A2_KEY_BOTH					3
 #define MAGIC_KEY_REPEAT_NUMBER		80
 
-#define AY3600_KEYS_LENGTH			256
+#define AY3600_KEYS_LENGTH			128
 #define AY3600_KEYS_BASEPORT		0
 
 
@@ -171,9 +265,10 @@ static UINT8 keystilldown;
   AY3600_init
 ***************************************************************************/
 
-int AY3600_init(void)
+int AY3600_init(int type)
 {
 	/* Init the key remapping table */
+ 	keyboard_type = type;
 	ay3600_keys = auto_malloc(AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
 	if (!ay3600_keys)
 		return 1;
@@ -201,7 +296,7 @@ int AY3600_init(void)
 static void AY3600_poll(int dummy)
 {
 	int switchkey;	/* Normal, Shift, Control, or both */
-	int port, bit, data;
+	int port, num_ports, bit, data;
 	int any_key_pressed = 0;   /* Have we pressed a key? True/False */
 	int caps_lock = 0;
 	int curkey;
@@ -209,12 +304,15 @@ static void AY3600_poll(int dummy)
 
 	static int last_key = 0xff; 	/* necessary for special repeat key behaviour */
 	static int last_key_unmodified = 0xff; 	/* necessary for special repeat key behaviour */
-	static unsigned int last_time = 65001;	/* necessary for special repeat key behaviour */
 
 	static unsigned int time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 
 	/* check for these special cases because they affect the emulated key codes */
 
+	/* only repeat keys on a 2/2+ if special REPT key is pressed */
+	if (keyboard_type == AP2_KEYBOARD_2)
+		time_until_repeat = pressed_specialkey(SPECIALKEY_REPT) ? 0 : ~0;
+			
 	/* check caps lock and set LED here */
 	if (pressed_specialkey(SPECIALKEY_CAPSLOCK))
 	{
@@ -248,34 +346,44 @@ static void AY3600_poll(int dummy)
 	}
 
 	/* run through real keys and see what's being pressed */
-	for (port = 0; port < 7; port++)
+	num_ports = keyboard_type == AP2_KEYBOARD_2GS ? 9 : 7;
+
+	for (port = 0; port < num_ports; port++)
 	{
 		data = readinputport(AY3600_KEYS_BASEPORT + port);
 		for (bit = 0; bit < 8; bit++)
 		{
-			curkey = ay3600_key_remap[caps_lock][port*8+bit][switchkey];
-			curkey_unmodified = ay3600_key_remap[caps_lock][port*8+bit][0];
-
+			switch (keyboard_type) {
+			case AP2_KEYBOARD_2:
+				curkey = ay3600_key_remap_2[port*8+bit][switchkey];
+				curkey_unmodified = ay3600_key_remap_2[port*8+bit][0];
+				break;
+			case AP2_KEYBOARD_2GS:
+			case AP2_KEYBOARD_2E:
+			default:
+				curkey = ay3600_key_remap_2e[caps_lock][port*8+bit][switchkey];
+				curkey_unmodified = ay3600_key_remap_2e[caps_lock][port*8+bit][0];
+				break;
+			}
 			if (data & (1 << bit))
 			{
 				any_key_pressed = 1;
 
 				/* prevent overflow */
-				if (ay3600_keys[curkey] < 65000)
-					ay3600_keys[curkey]++;
+				if (ay3600_keys[port*8+bit] < 65000)
+					ay3600_keys[port*8+bit]++;
 
 				/* on every key press, reset the time until repeat and the key to repeat */
-				if ((ay3600_keys[curkey] == 1) && (curkey_unmodified != last_key_unmodified))
+				if ((ay3600_keys[port*8+bit] == 1) && (curkey_unmodified != last_key_unmodified))
 				{
 					time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 					last_key = curkey;
 					last_key_unmodified = curkey_unmodified;
-					last_time = 1;
 				}
 			}
 			else
 			{
-				ay3600_keys[curkey] = 0;
+				ay3600_keys[port*8+bit] = 0;
 			}
 		}
 	}
@@ -286,7 +394,6 @@ static void AY3600_poll(int dummy)
 		time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 		last_key = 0xff;
 		last_key_unmodified = 0xff;
-		last_time = 65001;
 	}
 	else
 	{

@@ -122,6 +122,7 @@ int apple2_get_bgcolor(void);
 /* keyboard wrappers */
 #define pressed_specialkey(key)	(readinputportbytag("keyb_special") & (key))
 #define SPECIALKEY_CAPSLOCK		0x01
+#define SPECIALKEY_REPT			0x01
 #define SPECIALKEY_SHIFT		0x06
 #define SPECIALKEY_CONTROL		0x08
 #define SPECIALKEY_BUTTON0		0x10	/* open apple */
