@@ -72,6 +72,8 @@ int debug_trace_delay = 0;	/* set to 0 to force a screen update */
 
 #define DBG_WINDOWS 5
 
+#define ICOUNT_SPECIAL_REG	255
+
 /* Some convenience macros to address the cpu'th window */
 #define WIN_CMDS(cpu)	(cpu*DBG_WINDOWS+EDIT_CMDS)
 #define WIN_REGS(cpu)	(cpu*DBG_WINDOWS+EDIT_REGS)
@@ -1940,7 +1942,10 @@ static void trace_output( void )
 			if( TRACE.regs[0] )
 			{
 				for( i = 0; i < MAX_REGS && TRACE.regs[i]; i++ )
-					dst += sprintf( dst, "%s ", cpu_dump_reg(TRACE.regs[i]) );
+					if( TRACE.regs[i] == ICOUNT_SPECIAL_REG )
+						dst += sprintf( dst, "%d ", cpu_geticount() );
+					else
+						dst += sprintf( dst, "%s ", cpu_dump_reg(TRACE.regs[i]) );
 			}
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
 			cpu_dasm( dst, pc );
@@ -4886,7 +4891,17 @@ static void cmd_trace_to_file( void )
 	{
 		while( *cmd )
 		{
-			regs[regcnt] = get_register_id( &cmd, &length );
+			if( !my_stricmp( cmd, "ICOUNT" ) )
+			{
+				while( *cmd && !isspace( *cmd ) )
+					cmd++;
+				while( *cmd && isspace( *cmd ) )
+					cmd++;
+				regs[regcnt] = ICOUNT_SPECIAL_REG;
+				length = 1;
+			}
+			else
+				regs[regcnt] = get_register_id( &cmd, &length );
 			if( length ) regcnt++;
 		}
 		regs[regcnt] = 0;
