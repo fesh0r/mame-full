@@ -27,5 +27,4 @@ Paul Robson's stem for DOS at www.classicgaming.com/studio2
 
 Mess Emulation State
 --------------------
-cpu core problem (invaders.bin)
 no support for st2 cartridges
