@@ -192,7 +192,10 @@ WRITE_HANDLER( K051649_frequency_w )
 
 WRITE_HANDLER( K051649_keyonoff_w )
 {
+#ifdef MESS
+	/* should this be in MAME also? */
 	stream_update(stream,0);
+#endif /* MESS */
 	channel_list[0].key=data&1;
 	channel_list[1].key=data&2;
 	channel_list[2].key=data&4;

@@ -39,7 +39,7 @@ int menu_get_value(struct _MENU *menu, int id);
 void menu_set_value(struct _MENU *menu, int id, int value);
 
 // internal
-extern int setupcontrol(struct osd_bitmap *bitmap, int selected);
+extern int setupcontrol(struct mame_bitmap *bitmap, int selected);
 
 void menu_write_config(struct _MENU *menu, void *filehandler);
 void menu_read_config(struct _MENU *menu, void *filehandler);

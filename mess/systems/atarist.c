@@ -270,7 +270,7 @@ void atarist_pixel_update(void)
 //	}
 }
 
-void atarist_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void atarist_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 }
 

@@ -24,3 +24,5 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(sort $(DBGOBJS))
 
 TOOLS = romcmp$(EXE)
+TEXTS = gamelist.txt
+

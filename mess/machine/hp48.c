@@ -479,6 +479,6 @@ void hp48_machine_init(void)
 
 int hp48_frame_int(void)
 {
-//	cpu_set_irq_line(0, M6502_INT_IRQ, PULSE_LINE);
+//	cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
 	return 0;
 }

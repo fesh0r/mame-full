@@ -19,7 +19,7 @@ extern void vdc8563_set_rastering(int on);
 
 extern int vdc8563_vh_start (void);
 void vdc8563_vh_stop(void);
-	void vdc8563_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+	void vdc8563_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern unsigned char vdc8563_palette[16 * 3];
 

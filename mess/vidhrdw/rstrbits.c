@@ -343,7 +343,7 @@ void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16
 	}
 }
 
-static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source *src,
+static void raster_graphics(struct mame_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, struct rasterbits_clip *clip,
 	int scalex, int scaley, int basex, int basey, int firstrow, int lastrow)
 {
@@ -493,7 +493,7 @@ done:
 
 #define COUNTDIRTYCHARS 0
 
-static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
+static void raster_text(struct mame_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, struct rasterbits_clip *clip,
 	int scalex, int scaley, int basex, int basey, int firstrow, int lastrow)
 {
@@ -695,7 +695,7 @@ drawchar:
  * basey is the logical beginning of content
  * ------------------------------------------------------------------------- */
 
-int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct rasterbits_videomode *mode,
+int raster_bits(struct mame_bitmap *bitmap, struct rasterbits_source *src, struct rasterbits_videomode *mode,
 	struct rasterbits_frame *frame, struct rasterbits_clip *clip, int basey)
 {
 	int scalex, scaley;

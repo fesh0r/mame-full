@@ -49,7 +49,7 @@ starfira has one less rom in total than starfire but everything passes as
 
 
 /* In vidhrdw/starfire.c */
-void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void starfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern int starfire_vh_start(void);
 extern void starfire_vh_stop(void);
 extern void starfire_video_update(int scanline, int count);
@@ -422,6 +422,6 @@ static void init_fireone(void)
  *
  *************************************/
 
-GAMEX( 1979, starfire, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire", GAME_NO_SOUND )
+GAMEX( 1979, starfire, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 1)", GAME_NO_SOUND )
 GAMEX( 1979, starfira, starfire, starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 2)", GAME_NO_SOUND )
 GAMEX( 1979, fireone,  0,        starfire, fireone,  fireone,  ROT0, "Exidy", "Fire One", GAME_NO_SOUND )

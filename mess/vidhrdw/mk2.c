@@ -80,7 +80,7 @@ static const char led[]={
     " ddddddddddddddd   hh"
 };
 
-static void mk2_draw_7segment(struct osd_bitmap *bitmap,int value, int x, int y)
+static void mk2_draw_7segment(struct mame_bitmap *bitmap,int value, int x, int y)
 {
 	int i, xi, yi, mask, color;
 
@@ -131,7 +131,7 @@ static const char* single_led=
 " 111"
 ;
 
-static void mk2_draw_led(struct osd_bitmap *bitmap,INT16 color, int x, int y)
+static void mk2_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 {
 	int j, xi=0;
 	for (j=0; single_led[j]; j++) {
@@ -152,7 +152,7 @@ static void mk2_draw_led(struct osd_bitmap *bitmap,INT16 color, int x, int y)
 	}
 }
 
-void mk2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void mk2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int i;
 

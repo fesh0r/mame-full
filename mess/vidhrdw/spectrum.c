@@ -185,7 +185,7 @@ void ts2068_eof_callback(void)
 
 ***************************************************************************/
 
-void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void spectrum_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int count;
         static int last_invert = 0;
@@ -295,7 +295,7 @@ void    spectrum_128_vh_stop(void)
 }
 
 /* Refresh the spectrum 128 screen (code modified from COUPE.C) */
-void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void spectrum_128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
         /* for now do a full-refresh */
         int x, y, b, scrx, scry;
@@ -366,7 +366,7 @@ void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *******************************************************************/
 
 /* Draw a scanline in TS2068/TC2048 hires mode (code modified from COUPE.C) */
-void ts2068_hires_scanline(struct osd_bitmap *bitmap, int y, int borderlines)
+void ts2068_hires_scanline(struct mame_bitmap *bitmap, int y, int borderlines)
 {
 	int x,b,scrx,scry;
 	unsigned short ink,pap;
@@ -411,7 +411,7 @@ void ts2068_hires_scanline(struct osd_bitmap *bitmap, int y, int borderlines)
 }
 
 /* Draw a scanline in TS2068/TC2048 64-column mode */
-void ts2068_64col_scanline(struct osd_bitmap *bitmap, int y, int borderlines, unsigned short inkcolor)
+void ts2068_64col_scanline(struct mame_bitmap *bitmap, int y, int borderlines, unsigned short inkcolor)
 {
 	int x,b,scrx,scry;
         unsigned char *scr1, *scr2;
@@ -445,7 +445,7 @@ void ts2068_64col_scanline(struct osd_bitmap *bitmap, int y, int borderlines, un
 }
 
 /* Draw a scanline in TS2068/TC2048 lores (normal Spectrum) mode */
-void ts2068_lores_scanline(struct osd_bitmap *bitmap, int y, int borderlines, int screen)
+void ts2068_lores_scanline(struct mame_bitmap *bitmap, int y, int borderlines, int screen)
 {
 	int x,b,scrx,scry;
 	unsigned short ink,pap;
@@ -489,7 +489,7 @@ void ts2068_lores_scanline(struct osd_bitmap *bitmap, int y, int borderlines, in
 	}
 }
 
-void ts2068_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void ts2068_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
         /* for now TS2068 will do a full-refresh */
 	int count;
@@ -527,7 +527,7 @@ void ts2068_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
 }
 
-void tc2048_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void tc2048_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
         /* for now TS2068 will do a full-refresh */
 	int count;

@@ -406,7 +406,7 @@ static WRITE_HANDLER ( tube_port_a_w )
 
 			if (r1hp_j) {
 				r4irq=1;
-				cpu_set_irq_line(1, M6502_INT_IRQ, r1irq|r4irq);
+				cpu_set_irq_line(1, M6502_IRQ_LINE, r1irq|r4irq);
 			}
 		} else {
 			logerror("Port A write to R4DATA on full buffer\n");
@@ -585,7 +585,7 @@ static READ_HANDLER ( tube_port_b_r )
 			if (r4irq==1)
 			{
 				r4irq=0;
-				cpu_set_irq_line(1, M6502_INT_IRQ, r1irq|r4irq);
+				cpu_set_irq_line(1, M6502_IRQ_LINE, r1irq|r4irq);
 			}
 		} else {
 			logerror("Port B read from R4DATA on empty buffer\n");

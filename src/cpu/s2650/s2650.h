@@ -18,9 +18,6 @@ enum {
 	S2650_HALT, S2650_IRQ_STATE, S2650_SI, S2650_FO
 };
 
-#define S2650_INT_NONE  0
-#define S2650_INT_IRQ	1
-
 /* fake control port   M/~IO=0 D/~C=0 E/~NE=0 */
 #define S2650_CTRL_PORT 0x100
 
@@ -31,9 +28,7 @@ enum {
 #define S2650_EXT_PORT	0xff
 
 /* Fake Sense Line */
-// return 0x80 for sense pin set
 #define S2650_SENSE_PORT 0x102
-
 
 extern int s2650_ICount;
 
@@ -43,13 +38,8 @@ extern void s2650_exit(void);
 extern int s2650_execute(int cycles);
 extern unsigned s2650_get_context(void *dst);
 extern void s2650_set_context(void *src);
-extern unsigned s2650_get_pc(void);
-extern void s2650_set_pc(unsigned val);
-extern unsigned s2650_get_sp(void);
-extern void s2650_set_sp(unsigned val);
 extern unsigned s2650_get_reg(int regnum);
 extern void s2650_set_reg(int regnum, unsigned val);
-extern void s2650_set_nmi_line(int state);
 extern void s2650_set_irq_line(int irqline, int state);
 extern void s2650_set_irq_callback(int (*callback)(int irqline));
 extern void s2650_state_save(void *file);
@@ -59,18 +49,11 @@ extern unsigned s2650_dasm(char *buffer, unsigned pc);
 
 extern void s2650_set_flag(int state);
 extern int s2650_get_flag(void);
-
-// use this XOR the ports
 extern void s2650_set_sense(int state);
 extern int s2650_get_sense(void);
 
 #ifdef  MAME_DEBUG
 extern int Dasm2650(char *buff, int PC);
 #endif
-
-#ifdef __cplusplus
-}
-#endif
-
 
 #endif

@@ -16,7 +16,7 @@ int cgenie_frame_time;
 
 static CRTC6845 crt;
 static int graphics = 0;
-static struct osd_bitmap *dlybitmap = NULL;
+static struct mame_bitmap *dlybitmap = NULL;
 static UINT8 *cleanbuffer = NULL;
 static UINT8 *colorbuffer = NULL;
 static int update_all = 0;
@@ -36,7 +36,7 @@ int cgenie_vh_start(void)
 	if( generic_vh_start() != 0 )
         return 1;
 
-    dlybitmap = osd_alloc_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
+    dlybitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
 	if( !dlybitmap )
 		return 1;
 
@@ -308,7 +308,7 @@ void cgenie_invalidate_range(int l, int h)
 }
 
 
-static void cgenie_refresh_monitor(struct osd_bitmap * bitmap, int full_refresh)
+static void cgenie_refresh_monitor(struct mame_bitmap * bitmap, int full_refresh)
 {
 	int i, address, offset, cursor, size, code, x, y;
     struct rectangle r;
@@ -402,7 +402,7 @@ static void cgenie_refresh_monitor(struct osd_bitmap * bitmap, int full_refresh)
 	update_all = 0;
 }
 
-static void cgenie_refresh_tv_set(struct osd_bitmap * bitmap, int full_refresh)
+static void cgenie_refresh_tv_set(struct mame_bitmap * bitmap, int full_refresh)
 {
 	int i, address, offset, cursor, size, code, x, y;
     struct rectangle r;
@@ -509,11 +509,11 @@ static void cgenie_refresh_tv_set(struct osd_bitmap * bitmap, int full_refresh)
 }
 
 /***************************************************************************
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void cgenie_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
+void cgenie_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh)
 {
     if( cgenie_tv_mode )
 		cgenie_refresh_tv_set(bitmap,full_refresh);

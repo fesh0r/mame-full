@@ -414,7 +414,7 @@ void vdc8563_time(void)
 	}
 }
 
-void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vdc8563_monotext_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 	struct rectangle rect;
@@ -454,7 +454,7 @@ void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh
 	}
 }
 
-void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vdc8563_text_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
 	struct rectangle rect;
@@ -498,7 +498,7 @@ void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void vdc8563_graphic_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vdc8563_graphic_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j, k;
 	struct rectangle rect;
@@ -531,7 +531,7 @@ void vdc8563_graphic_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void vdc8563_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vdc8563_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int i;
 

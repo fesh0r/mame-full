@@ -46,7 +46,7 @@ extern void ted7360_set_dma (mem_read_handler dma_read,
 
 extern int ted7360_vh_start (void);
 extern void ted7360_vh_stop (void);
-extern void ted7360_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void ted7360_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 extern unsigned char ted7360_palette[16 * 8 * 3];
 
 /* to be inserted in GameDriver-Structure */

@@ -82,7 +82,7 @@ void hp48_vh_stop(void)
 	generic_vh_stop();
 }
 
-static void hp48_draw_special(struct osd_bitmap *bitmap,int x, int y, const char *figure, int color)
+static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const char *figure, int color)
 {
 	int j, xi=0;
 	for (j=0; figure[j]; j++) {
@@ -167,7 +167,7 @@ static const char *orange={
 #define LCD_LINE_OFFSET (hp48_hardware.data[0x25]|(hp48_hardware.data[0x26]<<4)\
 		|(hp48_hardware.data[0x27]<<8))
 
-void hp48_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 	int color[2];

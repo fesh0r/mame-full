@@ -298,7 +298,7 @@ READ_HANDLER ( pc_MDA_r )
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void mda_text_inten(struct osd_bitmap *bitmap)
+static void mda_text_inten(struct mame_bitmap *bitmap)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(mda.crtc)*2;
@@ -345,7 +345,7 @@ static void mda_text_inten(struct osd_bitmap *bitmap)
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void mda_text_blink(struct osd_bitmap *bitmap)
+static void mda_text_blink(struct mame_bitmap *bitmap)
 {
 	int sx, sy;
 	int	offs = crtc6845_get_start(mda.crtc)*2;
@@ -403,7 +403,7 @@ static void mda_text_blink(struct osd_bitmap *bitmap)
   Every bank holds data for every n'th scanline, 8 pixels per byte,
   bit 7 being the leftmost.
 ***************************************************************************/
-static void hercules_gfx(struct osd_bitmap *bitmap)
+static void hercules_gfx(struct mame_bitmap *bitmap)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(mda.crtc)*2;
@@ -459,11 +459,11 @@ static void hercules_gfx(struct osd_bitmap *bitmap)
 }
 
 /***************************************************************************
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
  ***************************************************************************/
-void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pc_mda_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int video_active = 0;
 	static int width=0, height=0;

@@ -50,7 +50,7 @@ extern struct blink_hw blink;
 
 /* temp - change to gfxelement structure */
 
-static void z88_vh_render_8x8(struct osd_bitmap *bitmap, int x, int y, unsigned char *pData)
+static void z88_vh_render_8x8(struct mame_bitmap *bitmap, int x, int y, unsigned char *pData)
 {
         int h,b;
         int pen0, pen1;
@@ -83,7 +83,7 @@ static void z88_vh_render_8x8(struct osd_bitmap *bitmap, int x, int y, unsigned 
         }
 }
 
-static void z88_vh_render_6x8(struct osd_bitmap *bitmap, int x, int y, unsigned char *pData)
+static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, unsigned char *pData)
 {
 	int h,b;
 	int pen0, pen1;
@@ -120,7 +120,7 @@ static void z88_vh_render_6x8(struct osd_bitmap *bitmap, int x, int y, unsigned 
 	}
 }
 
-static void z88_vh_render_line(struct osd_bitmap *bitmap, int x, int y,int pen)
+static void z88_vh_render_line(struct mame_bitmap *bitmap, int x, int y,int pen)
 {
 	plot_pixel(bitmap, x, y+7, pen);
 	plot_pixel(bitmap, x+1, y+7, pen);
@@ -156,11 +156,11 @@ unsigned  char *z88_convert_address(unsigned long offset)
 }
 
 /***************************************************************************
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this fuz88tion,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void z88_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void z88_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     int x,y;
     unsigned char *ptr = z88_convert_address(blink.sbf);

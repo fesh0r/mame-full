@@ -14,7 +14,7 @@ void pc1401_machine_stop(void);
 extern READ_HANDLER(pc1401_lcd_read);
 extern WRITE_HANDLER(pc1401_lcd_write);
 
-void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void pc1401_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 /* in systems/pocketc.c */
 #define KEY_OFF input_port_0_r(0)&0x80

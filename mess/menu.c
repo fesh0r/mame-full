@@ -116,7 +116,7 @@ void menu_set_visibility(MENU *menu, int id, int visible)
 		menu->entries[v].visible=visible;
 }
 
-static int menu_control(MENU *menu, struct osd_bitmap *bitmap, int selected)
+static int menu_control(MENU *menu, struct mame_bitmap *bitmap, int selected)
 {
 	MENU_ENTRY *entries[MAX_ENTRIES+1];
     const char *menu_item[MAX_ENTRIES+1];
@@ -259,7 +259,7 @@ static int menu_control(MENU *menu, struct osd_bitmap *bitmap, int selected)
     return sel + 1;
 }
 
-int setupcontrol(struct osd_bitmap *bitmap, int selected)
+int setupcontrol(struct mame_bitmap *bitmap, int selected)
 {
 	return menu_control(&setup, bitmap, selected);
 }

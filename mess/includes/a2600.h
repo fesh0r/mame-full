@@ -2,7 +2,7 @@
 extern int a2600_vh_start(void);
 extern void a2600_vh_stop(void);
 extern int a2600_scanline_interrupt(void);
-extern void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void a2600_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 /* machine/a2600.c */

@@ -508,42 +508,6 @@ void hd6309_set_context(void *src)
 	UpdateState();
 }
 
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned hd6309_get_pc(void)
-{
-	return PC;
-}
-
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void hd6309_set_pc(unsigned val)
-{
-	PC = val;
-	CHANGE_PC;
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned hd6309_get_sp(void)
-{
-	return S;
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void hd6309_set_sp(unsigned val)
-{
-	S = val;
-}
-
 
 /****************************************************************************/
 /* Return a specific register												*/
@@ -552,7 +516,9 @@ unsigned hd6309_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case HD6309_PC: return PC;
+		case REG_SP:
 		case HD6309_S: return S;
 		case HD6309_CC: return CC;
 		case HD6309_MD: return MD;
@@ -588,7 +554,9 @@ void hd6309_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case HD6309_PC: PC = val; CHANGE_PC; break;
+		case REG_SP:
 		case HD6309_S: S = val; break;
 		case HD6309_CC: CC = val; CHECK_IRQ_LINES(); break;
 		case HD6309_MD: MD = val; UpdateState(); break;
@@ -629,7 +597,7 @@ void hd6309_init(void)
 	state_save_register_UINT8("hd6309", cpu, "DP", &DP, 1);
 	state_save_register_UINT8("hd6309", cpu, "CC", &CC, 1);
 	state_save_register_UINT8("hd6309", cpu, "MD", &MD, 1);
-    state_save_register_func_postload( UpdateState );
+	state_save_register_func_postload( UpdateState );
 	state_save_register_UINT8("hd6309", cpu, "INT", &hd6309.int_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "NMI", &hd6309.nmi_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "IRQ", &hd6309.irq_state[0], 1);
@@ -664,59 +632,58 @@ void hd6309_exit(void)
 
 /* Generate interrupts */
 /****************************************************************************
- * Set NMI line state
- ****************************************************************************/
-void hd6309_set_nmi_line(int state)
-{
-	if (hd6309.nmi_state == state) return;
-	hd6309.nmi_state = state;
-	LOG(("HD6309#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
-	if( state == CLEAR_LINE ) return;
-
-	/* if the stack was not yet initialized */
-	if( !(hd6309.int_state & HD6309_LDS) ) return;
-
-	hd6309.int_state &= ~HD6309_SYNC;
-	/* HJB 990225: state already saved by CWAI? */
-	if( hd6309.int_state & HD6309_CWAI )
-	{
-		hd6309.int_state &= ~HD6309_CWAI;
-		hd6309.extra_cycles += 7;	/* subtract +7 cycles next time */
-	}
-	else
-	{
-		CC |= CC_E; 				/* save entire state */
-		PUSHWORD(pPC);
-		PUSHWORD(pU);
-		PUSHWORD(pY);
-		PUSHWORD(pX);
-		PUSHBYTE(DP);
-		if ( MD & MD_EM )
-		{
-			PUSHBYTE(F);
-			PUSHBYTE(E);
-			hd6309.extra_cycles += 2; /* subtract +2 cycles */
-		}
-
-		PUSHBYTE(B);
-		PUSHBYTE(A);
-		PUSHBYTE(CC);
-		hd6309.extra_cycles += 19;	/* subtract +19 cycles next time */
-	}
-	CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
-	PCD = RM16(0xfffc);
-	CHANGE_PC;
-}
-
-/****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
 void hd6309_set_irq_line(int irqline, int state)
 {
-	LOG(("HD6309#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
-	hd6309.irq_state[irqline] = state;
-	if (state == CLEAR_LINE) return;
-	CHECK_IRQ_LINES();
+	if (irqline == IRQ_LINE_NMI)
+	{
+		if (hd6309.nmi_state == state) return;
+		hd6309.nmi_state = state;
+		LOG(("HD6309#%d set_irq_line (NMI) %d\n", cpu_getactivecpu(), state));
+		if( state == CLEAR_LINE ) return;
+
+		/* if the stack was not yet initialized */
+		if( !(hd6309.int_state & HD6309_LDS) ) return;
+
+		hd6309.int_state &= ~HD6309_SYNC;
+		/* HJB 990225: state already saved by CWAI? */
+		if( hd6309.int_state & HD6309_CWAI )
+		{
+			hd6309.int_state &= ~HD6309_CWAI;
+			hd6309.extra_cycles += 7;	/* subtract +7 cycles next time */
+		}
+		else
+		{
+			CC |= CC_E; 				/* save entire state */
+			PUSHWORD(pPC);
+			PUSHWORD(pU);
+			PUSHWORD(pY);
+			PUSHWORD(pX);
+			PUSHBYTE(DP);
+			if ( MD & MD_EM )
+			{
+				PUSHBYTE(F);
+				PUSHBYTE(E);
+				hd6309.extra_cycles += 2; /* subtract +2 cycles */
+			}
+
+			PUSHBYTE(B);
+			PUSHBYTE(A);
+			PUSHBYTE(CC);
+			hd6309.extra_cycles += 19;	/* subtract +19 cycles next time */
+		}
+		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
+		PCD = RM16(0xfffc);
+		CHANGE_PC;
+	}
+	else if (irqline < 2)
+	{
+		LOG(("HD6309#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+		hd6309.irq_state[irqline] = state;
+		if (state == CLEAR_LINE) return;
+		CHECK_IRQ_LINES();
+	}
 }
 
 /****************************************************************************

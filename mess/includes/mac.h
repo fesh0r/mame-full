@@ -25,7 +25,7 @@ extern UINT8 *mac_ram_ptr;
 /* from vidhrdw/mac.c */
 extern int mac_vh_start(void);
 extern void mac_vh_stop(void);
-extern void mac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void mac_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* from sndhrdw/mac.c */
 extern int mac_sh_start( const struct MachineSound *msound );

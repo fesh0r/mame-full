@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void pdp1_vh_update (struct osd_bitmap *bitmap, int full_refresh);
+void pdp1_vh_update (struct mame_bitmap *bitmap, int full_refresh);
 void pdp1_vh_stop(void);
 int pdp1_vh_start(void);
 

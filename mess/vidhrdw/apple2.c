@@ -14,9 +14,9 @@ unsigned char *apple2_hires1_ram;
 unsigned char *apple2_hires2_ram;
 
 /* temp bitmaps for quicker blitting */
-static struct osd_bitmap *apple2_text[2];
-static struct osd_bitmap *apple2_lores[2];
-static struct osd_bitmap *apple2_hires[2];
+static struct mame_bitmap *apple2_text[2];
+static struct mame_bitmap *apple2_lores[2];
+static struct mame_bitmap *apple2_hires[2];
 
 /* dirty video markers */
 static unsigned char *dirty_text[2];
@@ -98,11 +98,11 @@ void apple2_vh_stop(void)
 	for (i=0; i<2; i++)
 	{
 		if (apple2_text[i]!=0)
-			osd_free_bitmap(apple2_text[i]);
+			bitmap_free(apple2_text[i]);
 		if (apple2_lores[i]!=0)
-			osd_free_bitmap(apple2_lores[i]);
+			bitmap_free(apple2_lores[i]);
 		if (apple2_hires[i]!=0)
-			osd_free_bitmap(apple2_hires[i]);
+			bitmap_free(apple2_hires[i]);
 
 		if (dirty_text[i]!=0)
 			free(dirty_text[i]);
@@ -375,7 +375,7 @@ void apple2_hires2_w(int offset, int data)
 /***************************************************************************
   apple2_vh_screenrefresh
 ***************************************************************************/
-void apple2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void apple2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     struct rectangle mixed_rect;
 	int page;

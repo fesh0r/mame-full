@@ -41,10 +41,10 @@ void coupe_shutdown_machine(void);
 int coupe_vh_start(void);
 void coupe_vh_stop(void);
 void coupe_eof_callback(void);
-void coupe_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void coupe_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
-void drawMode1_line(struct osd_bitmap *,int);
-void drawMode2_line(struct osd_bitmap *,int);
-void drawMode3_line(struct osd_bitmap *,int);
-void drawMode4_line(struct osd_bitmap *,int);
+void drawMode1_line(struct mame_bitmap *,int);
+void drawMode2_line(struct mame_bitmap *,int);
+void drawMode3_line(struct mame_bitmap *,int);
+void drawMode4_line(struct mame_bitmap *,int);
 

@@ -15,40 +15,6 @@ extern unsigned char *sauro_colorram2;
 static int scroll1;
 static int scroll2;
 
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-***************************************************************************/
-void sauro_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3;
-
-
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		color_prom++;
-	}
-}
-
 
 
 WRITE_HANDLER( sauro_scroll1_w )
@@ -69,12 +35,12 @@ WRITE_HANDLER( sauro_scroll2_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sauro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,code,sx,sy,color,flipx;
 

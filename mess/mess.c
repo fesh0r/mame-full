@@ -774,7 +774,7 @@ int messvaliditychecks(void)
 #endif
 
 
-int displayimageinfo(struct osd_bitmap *bitmap, int selected)
+int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 {
 	char buf[2048], *dst = buf;
 	int type, id, sel = selected - 1;

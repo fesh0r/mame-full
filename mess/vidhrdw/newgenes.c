@@ -126,8 +126,8 @@ int current_dma_id = 0;
 unsigned short *Pen;
 unsigned char *scroll_a;
 unsigned char *scroll_b;
-//struct osd_bitmap *bitmap_vram;
-//struct osd_bitmap *bitmap_sprite;
+//struct mame_bitmap *bitmap_vram;
+//struct mame_bitmap *bitmap_sprite;
 
 
 unsigned char *spritelayer;
@@ -148,7 +148,7 @@ char *tile_changed_1, *tile_changed_2;
 
 typedef struct
 {
-	struct osd_bitmap *bitmap;
+	struct mame_bitmap *bitmap;
 	int x;
 	int y;
 	int attribute;
@@ -268,8 +268,8 @@ int genesis_vh_start (void)
    	if ((spritelayer = malloc(512*512)) == 0)
 	{
 		generic_vh_stop();
-   //		osd_free_bitmap(scroll_a);
-   //		osd_free_bitmap(scroll_b);
+   //		bitmap_free(scroll_a);
+   //		bitmap_free(scroll_b);
 		return 1;
 	}
 
@@ -278,9 +278,9 @@ int genesis_vh_start (void)
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-    	osd_free_bitmap(spritelayer);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+    	bitmap_free(spritelayer);
 
 
 	   	return 1;
@@ -289,10 +289,10 @@ int genesis_vh_start (void)
    /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//   	osd_free_bitmap(bitmap_vram);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//   	bitmap_free(bitmap_vram);
 		return 1;
 	}*/
 
@@ -300,22 +300,22 @@ int genesis_vh_start (void)
 	if ((tile_changed_1 = malloc(0x800)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
 		free(spritelayer);
-	//	osd_free_bitmap(bitmap_vram);
-	//	osd_free_bitmap(bitmap_sprite);
+	//	bitmap_free(bitmap_vram);
+	//	bitmap_free(bitmap_sprite);
 		return 1;
 	}
 
 	if ((tile_changed_2 = malloc(0x800)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
 		free(spritelayer);
-	//	osd_free_bitmap(bitmap_vram);
-	//	osd_free_bitmap(bitmap_sprite);
+	//	bitmap_free(bitmap_vram);
+	//	bitmap_free(bitmap_sprite);
 		free(tile_changed_1);
 		return 1;
 	}
@@ -389,11 +389,11 @@ int genesis_vh_start (void)
 void genesis_vh_stop (void)
 {
 	/* Free everything */
- //	osd_free_bitmap(scroll_a);
- //	osd_free_bitmap(scroll_b);
+ //	bitmap_free(scroll_a);
+ //	bitmap_free(scroll_b);
 	free(spritelayer);
- //	osd_free_bitmap(bitmap_vram);
- //	osd_free_bitmap(bitmap_sprite);
+ //	bitmap_free(bitmap_vram);
+ //	bitmap_free(bitmap_sprite);
 	free(tile_changed_1);
 	free(tile_changed_2);
 
@@ -1098,7 +1098,7 @@ inline void genesis_plot_layer_tile(unsigned char *dest, unsigned int attribute,
 
 
 /* Oh lordy, another combinelayers */
-void combinelayers3(struct osd_bitmap *dest, int startline, int endline)
+void combinelayers3(struct mame_bitmap *dest, int startline, int endline)
 {
 	int x;
 	unsigned char y;
@@ -1601,12 +1601,12 @@ void plot_sprites(int priority)
  void genesis_modify_display(int);
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-//void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+//void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 //{
 //
 //genesis_modify_display(0);
@@ -1614,7 +1614,7 @@ void plot_sprites(int priority)
 //copybitmap(bitmap, bitmap2, 0, 0, 0, 0, 0, 0, 0);
 //
 //}
-void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 //void genesis_modify_display(int inter)
 {
 

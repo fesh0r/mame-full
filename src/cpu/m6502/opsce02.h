@@ -205,7 +205,7 @@
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
 #define ASW 													\
-	tmp.d = tmp.w.l << 1; 									\
+	tmp.w.l = tmp.w.l << 1; 									\
 	P = (P & ~F_C) | (tmp.b.h2 & F_C);							\
 	SET_NZ_WORD(tmp);											
 

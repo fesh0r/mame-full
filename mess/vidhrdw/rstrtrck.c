@@ -7,7 +7,7 @@ static UINT8 *vram;
 static int vramwrap;
 static struct rastertrack_vvars vvars;
 static struct rastertrack_hvars hvars;
-static struct osd_bitmap *bitmap;
+static struct mame_bitmap *bitmap;
 static UINT8 *dirtybuffer_position;
 
 #ifdef MAME_DEBUG
@@ -186,7 +186,7 @@ int rastertrack_hblank(void)
 	return ignore_interrupt();
 }
 
-void rastertrack_refresh(struct osd_bitmap *bmap, int full_refresh)
+void rastertrack_refresh(struct mame_bitmap *bmap, int full_refresh)
 {
 	bitmap = bmap;
 

@@ -494,7 +494,7 @@ static int y_begin, y_end;
 
 static UINT16 c16_bitmap[2], bitmapmulti[4], mono[2], monoinversed[2], multi[4], ecmcolor[2], colors[5];
 
-static struct osd_bitmap *ted7360_bitmap;	/* Machine->scrbitmap for speedup */
+static struct mame_bitmap *ted7360_bitmap;	/* Machine->scrbitmap for speedup */
 static int rasterline = 0, lastline = 0;
 static double rastertime;
 static void ted7360_drawlines (int first, int last);
@@ -1305,7 +1305,7 @@ static void ted7360_drawlines (int first, int last)
     }
 }
 
-static void ted7360_draw_text (struct osd_bitmap *bitmap, char *text, int *y)
+static void ted7360_draw_text (struct mame_bitmap *bitmap, char *text, int *y)
 {
 	int x, x0, y1t, width = (Machine->visible_area.max_x -
 							 Machine->visible_area.min_x) / Machine->uifont->width;
@@ -1368,6 +1368,6 @@ int ted7360_raster_interrupt (void)
 	return ignore_interrupt ();
 }
 
-void ted7360_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void ted7360_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 }

@@ -36,9 +36,9 @@ void snes_shutdown_machine(void);
 
 int snes_vh_start(void);
 void snes_vh_stop(void);
-void snes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void snes_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
-void RenderSNESScreenLine(struct osd_bitmap *,int);
+void RenderSNESScreenLine(struct mame_bitmap *,int);
 
 extern unsigned short palIndx[256+1];			// +1 for fixed colour backdrop
 extern unsigned short fixedColour;					// Fixed color encoded into here

@@ -18,4 +18,4 @@ void ssystem3_init_colors (unsigned char *sys_palette,
 
 int ssystem3_vh_start(void);
 void ssystem3_vh_stop(void);
-void ssystem3_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void ssystem3_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);

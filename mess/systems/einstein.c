@@ -1227,7 +1227,7 @@ static struct AY8910interface einstein_ay_interface =
   127*262 = 33274 cycles per frame, vsync len 375 cycles
 */
 
-void einstein_80col_plot_char_line(int x,int y, struct osd_bitmap *bitmap)
+void einstein_80col_plot_char_line(int x,int y, struct mame_bitmap *bitmap)
 {
 	if (Einstein_DE)
 	{
@@ -1270,7 +1270,7 @@ void einstein_80col_plot_char_line(int x,int y, struct osd_bitmap *bitmap)
 
 }
 
-void einstein_80col_refresh(struct osd_bitmap *bitmap, int full_refresh)
+void einstein_80col_refresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
 
@@ -1312,13 +1312,13 @@ void einstein_80col_refresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void einstein2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void einstein2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	TMS9928A_refresh(bitmap,full_refresh);
 	einstein_80col_refresh(bitmap,full_refresh);
 }
 
-void einstein_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void einstein_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	TMS9928A_refresh(bitmap,full_refresh);
 }

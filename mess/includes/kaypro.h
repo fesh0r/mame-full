@@ -25,7 +25,7 @@ extern int kaypro_interrupt(void);
 
 extern int	kaypro_vh_start(void);
 extern void kaypro_vh_stop(void);
-extern void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh);
+extern void kaypro_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh);
 
 extern READ_HANDLER ( kaypro_const_r );
 extern WRITE_HANDLER ( kaypro_const_w );

@@ -1347,7 +1347,7 @@ static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct 
 	internal_m6847_rastertrack_newscreen(vvars, hvars, 38, 192, 0, TRUE, m6847_rastertrack_getvideomode);
 }
 
-void m6847_vh_update(struct osd_bitmap *bitmap, int full_refresh)
+void m6847_vh_update(struct mame_bitmap *bitmap, int full_refresh)
 {
 	rastertrack_refresh(bitmap, full_refresh);
 }

@@ -268,8 +268,8 @@ static DISCRETE_SOUND_START(firetruck_sound_interface)
 	/* Crash circuit is built around a noise        */
 	/* generator built from 2 shift registers that  */
 	/* are clocked by the 2V signal.                */
-	/* 1H = 3MHz and 1V = 32H /2 = 3Mhz/32/2/2      */
-	/*               2V = 3Mhz/32/4 = 23483Hz       */
+	/* 1H = 3MHz and 1V = 32H /2 = 3MHz/32/2/2      */
+	/*               2V = 3MHz/32/4 = 23483Hz       */
 	/* Output is binary weighted with 4 bits of     */
 	/* crash volume.                                */
 	/* Volume is inverted by input register mapping */
@@ -338,14 +338,11 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 	memcpy(game_colortable,colortable,sizeof(colortable));
 }
 
-static struct osd_bitmap *buf;
+static struct mame_bitmap *buf;
 
 int firetruck_vh_init( void )
 {
-	buf = osd_alloc_bitmap(
-			Machine->scrbitmap->width,
-			Machine->scrbitmap->height,
-			Machine->scrbitmap->depth );
+	buf = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
 	if( buf ) return 0;
 
@@ -354,10 +351,10 @@ int firetruck_vh_init( void )
 
 void firetruck_vh_stop( void )
 {
-	osd_free_bitmap( buf );
+	bitmap_free( buf );
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int color		= firetruck_invert_display?3:7; /* invert display */
 	int track_color = Machine->pens[firetruck_invert_display?0:3];
@@ -477,7 +474,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 		TRANSPARENCY_PEN,0 );
 }
 
-static void draw_text( struct osd_bitmap *bitmap )
+static void draw_text( struct mame_bitmap *bitmap )
 {
 	int color = firetruck_invert_display?3:7; /* invert display */
 	int x,y,tile_number;
@@ -501,7 +498,7 @@ static void draw_text( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_background( struct osd_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap )
 {
 	int color = firetruck_invert_display?4:0; /* invert display */
 	int pvpload = videoram[0x1000];
@@ -528,7 +525,7 @@ static void draw_background( struct osd_bitmap *bitmap )
 	}
 }
 
-void firetruck_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void firetruck_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	draw_background( bitmap );
 	draw_text( bitmap );

@@ -168,7 +168,7 @@ READ_HANDLER( llander_IN0_r );
 void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int llander_start(void);
 void llander_stop(void);
-void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static WRITE_HANDLER( astdelux_coin_counter_w )
@@ -600,7 +600,7 @@ static const struct MachineDriver machine_driver_asteroid =
 	256+32768, 0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -637,7 +637,7 @@ static const struct MachineDriver machine_driver_asteroib =
 	256+32768, 0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	dvg_start,
 	dvg_stop,	vector_vh_screenrefresh,
@@ -693,7 +693,7 @@ static const struct MachineDriver machine_driver_astdelux =
 	256+32768, 0,
 	avg_init_palette_astdelux,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -737,7 +737,7 @@ static const struct MachineDriver machine_driver_llander =
 	256+32768, 0,
 	llander_init_colors,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	llander_start,
 	llander_stop,

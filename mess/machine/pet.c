@@ -94,7 +94,7 @@ static void pet_irq (int level)
 		DBG_LOG (3, "mos6502", ("irq %s\n", level ? "start" : "end"));
 		if (superpet)
 			cpu_set_irq_line (1, M6809_IRQ_LINE, level);
-		cpu_set_irq_line (0, M6502_INT_IRQ, level);
+		cpu_set_irq_line (0, M6502_IRQ_LINE, level);
 		old_level = level;
 	}
 }

@@ -393,9 +393,9 @@ WRITE_HANDLER( arabian_videoram_w )
  *
  *************************************/
 
-void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void arabian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
-	UINT32 *colortable = &Machine->remapped_colortable[(arabian_video_control >> 3) << 8];
+	pen_t *colortable = &Machine->remapped_colortable[(arabian_video_control >> 3) << 8];
 	int y;
 
 	/* render the screen from the bitmap */

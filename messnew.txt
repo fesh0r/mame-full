@@ -1,4 +1,4 @@
-0.54
+0.56
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -26,7 +26,7 @@ System Driver Changes:
 Source Changes:
 ---------------
 
-- The core is based on MAME 0.54.  This incorporates all features of the 
+- The core is based on MAME 0.56.  This incorporates all features of the 
   update to this core.  [MAME team] 
 
 - [Windows] The CONSOLE and GUI (the former MESS32) versions of MESS have been

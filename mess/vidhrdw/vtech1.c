@@ -34,7 +34,7 @@
 char vtech1_frame_message[64+1];
 int vtech1_frame_time = 0;
 
-void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void vtech1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     int offs;
 

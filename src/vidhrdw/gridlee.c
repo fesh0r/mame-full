@@ -235,7 +235,7 @@ WRITE_HANDLER( gridlee_palette_select_w )
  *
  *************************************/
 
-void gridlee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void gridlee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 
@@ -253,7 +253,7 @@ logerror("-------------------------------\n");
 	for (y = 0; y < 240; y++)
 		if (scanline_dirty[y])
 		{
-			UINT32 *pens = &Machine->pens[scanline_palette[y] * 32 + 16];
+			pen_t *pens = &Machine->pens[scanline_palette[y] * 32 + 16];
 
 			/* non-flipped: draw directly from the bitmap */
 			if (!gridlee_cocktail_flip)
@@ -290,7 +290,7 @@ logerror("-------------------------------\n");
 		{
 			if (ypos >= 16 && ypos < 240)
 			{
-				UINT32 *pens = &Machine->pens[scanline_palette[ypos] * 32];
+				pen_t *pens = &Machine->pens[scanline_palette[ypos] * 32];
 				int currx = xpos, currxor = 0;
 
 				/* mark this scanline dirty */

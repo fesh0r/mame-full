@@ -465,7 +465,7 @@ void fs_generate_filelist(void)
 /* and mask to get bits */
 #define SEL_BITS_MASK			(~SEL_MASK)
 
-int fileselect(struct osd_bitmap *bitmap, int selected)
+int fileselect(struct mame_bitmap *bitmap, int selected)
 {
 	int sel, total, arrowize;
 	int visible;
@@ -642,7 +642,7 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 	return sel + 1;
 }
 
-int filemanager(struct osd_bitmap *bitmap, int selected)
+int filemanager(struct mame_bitmap *bitmap, int selected)
 {
 	static int previous_sel;
 	const char *name;

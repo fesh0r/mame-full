@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.h,v 1.3 2001/05/25 07:06:16 PeT Exp $
+  $Id: pc8801.h,v 1.4 2001/11/16 05:02:20 npwoods Exp $
 
 ***************************************************************************/
 
@@ -44,7 +44,7 @@ READ_HANDLER(pc8801_vramtest);
 extern unsigned char *pc88sr_textRAM;
 int pc8801_vh_start(void);
 void pc8801_vh_exit(void);
-void pc8801_vh_refresh(struct osd_bitmap *bitmap,int full_refresh);
+void pc8801_vh_refresh(struct mame_bitmap *bitmap,int full_refresh);
 void pc8801_init_palette (unsigned char *sys_palette,
 			  unsigned short *sys_colortable,
 			  const unsigned char *color_prom);

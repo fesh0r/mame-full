@@ -14,7 +14,7 @@ void pc1251_machine_stop(void);
 extern READ_HANDLER(pc1251_lcd_read);
 extern WRITE_HANDLER(pc1251_lcd_write);
 
-void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void pc1251_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 /* in systems/pocketc.c */
 #define PC1251_SWITCH_MODE (input_port_0_r(0)&7)

@@ -35,7 +35,7 @@ WRITE_HANDLER( galaxy_vh_charram_w )
     dirtybuffer[offset]	= 1;
 }
 
-void galaxy_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void galaxy_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 
 	int offs;

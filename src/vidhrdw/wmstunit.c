@@ -47,7 +47,7 @@ static data16_t	wms_control;
 static UINT8	wms_using_34020;
 
 /* palette-related variables */
-static UINT32 *	pen_map;
+static pen_t *	pen_map;
 
 /* videoram-related variables */
 static UINT32 	gfxbank_offset[2];
@@ -659,7 +659,7 @@ static void dma_callback(int is_in_34010_context)
 		TMS_SET_IRQ_LINE(ASSERT_LINE);
 	}
 	else
-		cpu_cause_interrupt(0,TMS34010_INT1);
+		cpu_cause_interrupt(0, 0);
 }
 
 
@@ -897,7 +897,7 @@ void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
  *
  *************************************/
 
-void wms_tunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int v, width, xoffs;
 	UINT32 offset;

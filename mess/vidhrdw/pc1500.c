@@ -188,7 +188,7 @@ static const char
 " 11"
 ;
 
-static void pc1500_draw(struct osd_bitmap *bitmap,const char *figure, int color, int x, int y)
+static void pc1500_draw(struct mame_bitmap *bitmap,const char *figure, int color, int x, int y)
 {
 	INT16 c=Machine->pens[color?1:0];
 	int j, xi=0;
@@ -210,7 +210,7 @@ static void pc1500_draw(struct osd_bitmap *bitmap,const char *figure, int color,
 	}
 }
 
-void pc1500_screenrefresh (struct osd_bitmap *bitmap, int full_refresh, int RIGHT, int DOWN)
+void pc1500_screenrefresh (struct mame_bitmap *bitmap, int full_refresh, int RIGHT, int DOWN)
 {
 	int i, x, y;
 	UINT8 *mem=memory_region(REGION_CPU1)+0x7600;
@@ -261,17 +261,17 @@ void pc1500_screenrefresh (struct osd_bitmap *bitmap, int full_refresh, int RIGH
 	pc1500_draw(bitmap, battery, 1, RIGHT+pc1500_pos[14].x, DOWN+pc1500_pos[14].y);
 }
 
-void pc1500_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pc1500_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	pc1500_screenrefresh(bitmap, full_refresh, 86, 51);
 }
 
-void pc1500a_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pc1500a_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	pc1500_screenrefresh(bitmap, full_refresh, 85, 52);
 }
 
-void trs80pc2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void trs80pc2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	pc1500_screenrefresh(bitmap, full_refresh, 161, 52);
 }

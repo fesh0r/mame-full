@@ -18,7 +18,7 @@ Sprite Priorities in Dommy
 /* from vidhrdw/btime.c */
 void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  btime_vh_start (void);
-void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
+void eggs_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( btime_mirrorvideoram_r );
 WRITE_HANDLER( btime_mirrorvideoram_w );
@@ -80,6 +80,8 @@ static MEMORY_WRITE_START( eggs_writemem )
 	{ 0x3000, 0x7fff, MWA_ROM },
 MEMORY_END
 
+
+
 INPUT_PORTS_START( scregg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -112,7 +114,12 @@ INPUT_PORTS_START( scregg )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
-	PORT_BIT( 0x30, 0x30, IPT_UNKNOWN )     /* almost certainly unused */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
@@ -127,16 +134,16 @@ INPUT_PORTS_START( scregg )
 	PORT_DIPSETTING(    0x02, "50000" )
 	PORT_DIPSETTING(    0x00, "70000"  )
 	PORT_DIPSETTING(    0x06, "Never"  )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Difficulty ) )

@@ -20,7 +20,7 @@ void v9938_exit (void);
 void v9958_init_palette (unsigned char *, unsigned short *,const unsigned char *);
 void v9938_init_palette (unsigned char *, unsigned short *,const unsigned char *);
 int v9938_interrupt (void);
-void v9938_refresh (struct osd_bitmap *, int);
+void v9938_refresh (struct mame_bitmap *, int);
 void v9938_set_sprite_limit (int);
 void v9938_set_resolution (int);
 

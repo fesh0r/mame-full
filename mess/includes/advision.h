@@ -23,5 +23,5 @@ extern void advision_vh_init_palette(unsigned char *game_palette, unsigned short
 extern void advision_vh_stop(void);
 extern void advision_vh_write(int data);
 extern void advision_vh_update(int data);
-extern void advision_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void advision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 

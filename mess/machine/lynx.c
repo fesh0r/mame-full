@@ -850,7 +850,7 @@ static void lynx_timer_signal_irq(LYNX_TIMER *This)
 {
     if ( (This->u.s.cntrl1&0x80) && (This->nr!=4) ) { // irq flag handling later
 	mikey.data[0x81]|=1<<This->nr;
-	cpu_set_irq_line(0, M65SC02_INT_IRQ, ASSERT_LINE);
+	cpu_set_irq_line(0, M65SC02_IRQ_LINE, ASSERT_LINE);
     }
     switch (This->nr) {
     case 0: lynx_timer_count_down(2); lynx_line++; break;
@@ -980,7 +980,7 @@ static void lynx_uart_timer(int param)
 //    mikey.data[0x80]|=0x10;
     if (uart.serctl&0x80) {
 	mikey.data[0x81]|=0x10;
-	cpu_set_irq_line(0, M65SC02_INT_IRQ, ASSERT_LINE);
+	cpu_set_irq_line(0, M65SC02_IRQ_LINE, ASSERT_LINE);
     }
 }
 
@@ -1084,7 +1084,7 @@ WRITE_HANDLER(mikey_write)
 	mikey.data[0x81]&=~data; // clear interrupt source
 	logerror("mikey write %.2x %.2x\n",offset,data);
 	if (!mikey.data[0x81]) {
-	    cpu_set_irq_line(0, M65SC02_INT_IRQ, CLEAR_LINE);	    
+		cpu_set_irq_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
 	}
 	break;
     case 0x87:
@@ -1167,7 +1167,7 @@ extern void lynx_machine_init(void)
     int i;
     lynx_memory_config(0,0);
     
-    cpu_set_irq_line(0, M65SC02_INT_IRQ, CLEAR_LINE);	    
+    cpu_set_irq_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
     
     memset(&suzy, 0, sizeof(suzy));
     memset(&mikey, 0, sizeof(mikey));

@@ -12,7 +12,7 @@ extern WRITE_HANDLER( aquarius_port_ff_w );
 
 extern int aquarius_vh_start (void);
 extern void aquarius_vh_stop (void);
-extern void aquarius_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void aquarius_vh_screenrefresh (struct mame_bitmap *bitmap,
 													int full_refresh);
 
 /* systems/aquarius.c */

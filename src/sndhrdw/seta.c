@@ -1,15 +1,15 @@
 /***************************************************************************
 
-								-= Seta Games =-
+							-= Seta Hardware =-
 
 					driver by	Luca Elia (l.elia@tin.it)
 
 
 X1-010 (Seta Custom Sound Chip):
 
-	16 Voices, Unsigned 16 Bit PCM
+	16 Voices, 8 Bit PCM
 
-Format:
+Registers:
 
 	8 registers per channel (mapped to the lower bytes of 16 words on the 68K)
 
@@ -38,15 +38,31 @@ Hardcoded Values:
 	PCM ROM region:		REGION_SOUND1
 
 ***************************************************************************/
+
 #include "driver.h"
+#include "seta.h"
 
 #define LOG_SOUND 0
 
 #define SETA_NUM_CHANNELS 16
 
+
 /* Variables only used here */
+
 static int firstchannel;
 static int seta_reg[SETA_NUM_CHANNELS][8];
+
+/* Variables used elsewhere */
+
+int seta_samples_bank;
+
+struct CustomSound_interface seta_sound_interface =
+{
+	seta_sh_start,
+	0,
+	0,
+};
+
 
 
 int seta_sh_start(const struct MachineSound *msound)
@@ -161,7 +177,7 @@ logerror("X1-010 REGS: ch %X] %02X %02X %02X %02X - %02X %02X %02X %02X\n",
 
 #if LOG_SOUND
 /* Print some more debug info */
-logerror("PC: %06X - Play 16 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
+logerror("PC: %06X - Play 8 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
 #endif
 
 				/* Left and right speaker's volume can be set indipendently.
@@ -191,12 +207,12 @@ logerror("PC: %06X - Play 16 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),
 				/* Meta Fox does not write the frequency register. Ever */
 				if (frequency == 0)	frequency = 4000;
 
-				mixer_play_sample_16(
-					firstchannel + channel,
-					(short *) (memory_region(REGION_SOUND1) + start),	// start
-					len,												// len
-					frequency,											// frequency
-					0);													// loop
+				mixer_play_sample(
+					firstchannel + channel,							// channel
+					(INT8 *)(memory_region(REGION_SOUND1) + start),	// start
+					len,											// len
+					frequency*2,									// frequency
+					0);												// loop
 			}
 			else
 				mixer_stop_sample(channel + firstchannel);

@@ -13,8 +13,8 @@ extern void uk101_exit_cassette(int id);
 
 extern int uk101_vh_start (void);
 extern void uk101_vh_stop (void);
-extern void uk101_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void uk101_vh_screenrefresh (struct mame_bitmap *bitmap,
 												int full_refresh);
-extern void superbrd_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void superbrd_vh_screenrefresh (struct mame_bitmap *bitmap,
 												int full_refresh);
 

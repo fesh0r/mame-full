@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-int tapecontrol(struct osd_bitmap *bitmap, int selected)
+int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {
 	static int id = 0;
 	char timepos[32];

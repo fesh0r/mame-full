@@ -6,7 +6,7 @@ extern UINT32 lynx_palette[0x10];
 
 int lynx_vh_start(void);
 void lynx_vh_stop(void);
-void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void lynx_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 void lynx_draw_lines(int newline);
 
 
@@ -45,7 +45,7 @@ extern void lynx_runtime_loader_init(void);
 # endif
 #endif
 
-void lynx_audio_debug(struct osd_bitmap *bitmap);
+void lynx_audio_debug(struct mame_bitmap *bitmap);
 void lynx_audio_reset(void);
 void lynx_audio_write(int offset, UINT8 data);
 UINT8 lynx_audio_read(int offset);

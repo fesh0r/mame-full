@@ -619,7 +619,7 @@ static int mapper4_irq (int scanline)
 			if (IRQ_count == 0)
 			{
 				IRQ_count = IRQ_count_latch;
-				ret = M6502_INT_IRQ;
+				ret = M6502_IRQ_LINE;
 			}
 			IRQ_count --;
 		}
@@ -847,7 +847,7 @@ static int mapper5_irq (int scanline)
 	if (scanline == IRQ_count)
 	{
 		if (IRQ_enable)
-			ret = M6502_INT_IRQ;
+			ret = M6502_IRQ_LINE;
 
 		IRQ_status = 0xff;
 	}
@@ -1576,7 +1576,7 @@ static int bandai_irq (int scanline)
 	{
 		if (IRQ_count <= 114)
 		{
-			ret = M6502_INT_IRQ;
+			ret = M6502_IRQ_LINE;
 		}
 		IRQ_count -= 114;
 	}
@@ -1691,23 +1691,23 @@ static int jaleco_irq (int scanline)
 			{
 				if ((IRQ_count & 0x0f) == 0x00)
 					/* rollover every 0x10 */
-					ret = M6502_INT_IRQ;
+					ret = M6502_IRQ_LINE;
 			}
 			else if (IRQ_mode_jaleco & 0x04)
 			{
 				if ((IRQ_count & 0x0ff) == 0x00)
 					/* rollover every 0x100 */
-					ret = M6502_INT_IRQ;
+					ret = M6502_IRQ_LINE;
 			}
 			else if (IRQ_mode_jaleco & 0x02)
 			{
 				if ((IRQ_count & 0x0fff) == 0x000)
 					/* rollover every 0x1000 */
-					ret = M6502_INT_IRQ;
+					ret = M6502_IRQ_LINE;
 			}
 			else if (IRQ_count == 0)
 				/* rollover at 0x10000 */
-				ret = M6502_INT_IRQ;
+				ret = M6502_IRQ_LINE;
 		}
 	}
 	else
@@ -1930,7 +1930,7 @@ static int namcot_irq (int scanline)
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable && (IRQ_count == 0x7fff))
 	{
-		ret = M6502_INT_IRQ;
+		ret = M6502_IRQ_LINE;
 	}
 
 	return ret;
@@ -2011,14 +2011,14 @@ static int fds_irq (int scanline)
 	int ret = M6502_INT_NONE;
 
 	if (IRQ_enable_latch)
-		ret = M6502_INT_IRQ;
+		ret = M6502_IRQ_LINE;
 
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable)
 	{
 		if (IRQ_count <= 114)
 		{
-			ret = M6502_INT_IRQ;
+			ret = M6502_IRQ_LINE;
 			IRQ_enable = 0;
 			nes_fds.status0 |= 0x01;
 		}
@@ -2132,7 +2132,7 @@ static int konami_irq (int scanline)
 	{
 		IRQ_count = IRQ_count_latch;
 		IRQ_enable = IRQ_enable_latch;
-		ret = M6502_INT_IRQ;
+		ret = M6502_IRQ_LINE;
 	}
 
 	return ret;
@@ -2845,7 +2845,7 @@ static int mapper40_irq (int scanline)
 	{
 		if (--IRQ_count == 0)
 		{
-			ret = M6502_INT_IRQ;
+			ret = M6502_IRQ_LINE;
 		}
 	}
 
@@ -3077,7 +3077,7 @@ static int irem_irq (int scanline)
 	if (IRQ_enable)
 	{
 		if (--IRQ_count == 0)
-			ret = M6502_INT_IRQ;
+			ret = M6502_IRQ_LINE;
 	}
 
 	return ret;
@@ -3187,7 +3187,7 @@ static int sunsoft_irq (int scanline)
 	{
 		if (IRQ_count <= 114)
 		{
-			ret = M6502_INT_IRQ;
+			ret = M6502_IRQ_LINE;
 		}
 		IRQ_count -= 114;
 	}

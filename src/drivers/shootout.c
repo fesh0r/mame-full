@@ -37,8 +37,8 @@ WRITE_HANDLER( shootout_videoram_w );
 WRITE_HANDLER( shootout_textram_w );
 
 int shootout_vh_start( void );
-void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void shootout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void shootouj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void shootout_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
@@ -288,7 +288,7 @@ static int shootout_interrupt(void)
 	} else
 		coin = 0;
 
-	return 0;
+	return ignore_interrupt();
 }
 
 static const struct MachineDriver machine_driver_shootout =

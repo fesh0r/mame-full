@@ -10,7 +10,7 @@ WRITE_HANDLER ( astrocade_magic_expand_color_w );
 WRITE_HANDLER ( astrocade_magic_control_w );
 WRITE_HANDLER ( astrocade_magicram_w );
 
-void astrocade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void astrocade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 READ_HANDLER ( astrocade_video_retrace_r );
 WRITE_HANDLER ( astrocade_vertical_blank_w );
 WRITE_HANDLER ( astrocade_interrupt_enable_w );

@@ -9,7 +9,7 @@ void state_add_function(void (*function)(void));
 void state_display_text(const char *text);
 
 // call this at last after updating your frame
-void state_display(struct osd_bitmap *bitmap);
+void state_display(struct mame_bitmap *bitmap);
 
 
 #ifdef __cplusplus

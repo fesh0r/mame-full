@@ -8,35 +8,7 @@ static struct tilemap *background;
 UINT8 *shangkid_videoreg;
 int shangkid_gfx_type;
 
-void shangkid_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
 
-	for( i = 0; i<256; i++ )
-	{
-		int bit0,bit1,bit2,bit3,r,g,b;
-
-		bit0 = (color_prom[0x000+i] >> 0) & 0x01;
-		bit1 = (color_prom[0x000+i] >> 1) & 0x01;
-		bit2 = (color_prom[0x000+i] >> 2) & 0x01;
-		bit3 = (color_prom[0x000+i] >> 3) & 0x01;
-		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		bit0 = (color_prom[0x100+i] >> 0) & 0x01;
-		bit1 = (color_prom[0x100+i] >> 1) & 0x01;
-		bit2 = (color_prom[0x100+i] >> 2) & 0x01;
-		bit3 = (color_prom[0x100+i] >> 3) & 0x01;
-		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		bit0 = (color_prom[0x200+i] >> 0) & 0x01;
-		bit1 = (color_prom[0x200+i] >> 1) & 0x01;
-		bit2 = (color_prom[0x200+i] >> 2) & 0x01;
-		bit3 = (color_prom[0x200+i] >> 3) & 0x01;
-		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		palette_set_color(i,r,g,b);
-	}
-}
 
 static void get_bg_tile_info(int tile_index){
 	int attributes = videoram[tile_index+0x800];
@@ -95,7 +67,7 @@ WRITE_HANDLER( shangkid_videoram_w )
 	}
 }
 
-static void draw_sprite( const UINT8 *source, struct osd_bitmap *bitmap ){
+static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap ){
 	struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx;
 	int transparent_pen;
@@ -189,7 +161,7 @@ static void draw_sprite( const UINT8 *source, struct osd_bitmap *bitmap ){
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	const UINT8 *source, *finish;
 
@@ -201,7 +173,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
+void shangkid_screenrefresh( struct mame_bitmap *bitmap, int fullfresh )
 {
 	int flipscreen = shangkid_videoreg[1]&0x80;
 	tilemap_set_flip( background, flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
@@ -216,7 +188,7 @@ void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
 
 
 
-static void dynamski_draw_background( struct osd_bitmap *bitmap, int pri )
+static void dynamski_draw_background( struct mame_bitmap *bitmap, int pri )
 {
 	int i;
 	int sx,sy;
@@ -271,7 +243,7 @@ static void dynamski_draw_background( struct osd_bitmap *bitmap, int pri )
 	}
 }
 
-static void dynamski_draw_sprites( struct osd_bitmap *bitmap )
+static void dynamski_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int i;
 	int sx,sy;
@@ -303,7 +275,7 @@ static void dynamski_draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void dynamski_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void dynamski_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	dynamski_draw_background( bitmap, 0 );
 	dynamski_draw_sprites( bitmap );

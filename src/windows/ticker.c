@@ -19,13 +19,16 @@
 #define HAS_RDTSC 0
 #endif
 
+
 //============================================================
 //	PROTOTYPES
 //============================================================
 
 static TICKER init_ticker(void);
-static TICKER time_ticker(void);
 static TICKER rdtsc_ticker(void);
+static TICKER time_ticker(void);
+
+
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -147,6 +150,7 @@ static TICKER rdtsc_ticker(void)
 	return 0;
 #endif // HAS_RDTSC
 }
+
 
 
 //============================================================

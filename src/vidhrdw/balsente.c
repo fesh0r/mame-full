@@ -228,7 +228,7 @@ WRITE_HANDLER( balsente_paletteram_w )
  *
  *************************************/
 
-static void draw_one_sprite(struct osd_bitmap *bitmap, UINT8 *sprite)
+static void draw_one_sprite(struct mame_bitmap *bitmap, UINT8 *sprite)
 {
 	int flags = sprite[0];
 	int image = sprite[1] | ((flags & 3) << 8);
@@ -246,7 +246,7 @@ static void draw_one_sprite(struct osd_bitmap *bitmap, UINT8 *sprite)
 	{
 		if (ypos >= 16 && ypos < 240)
 		{
-			UINT32 *pens = &Machine->pens[scanline_palette[y] * 256];
+			pen_t *pens = &Machine->pens[scanline_palette[y] * 256];
 			UINT8 *old = &local_videoram[ypos * 256 + xpos];
 			int currx = xpos;
 
@@ -314,7 +314,7 @@ static void draw_one_sprite(struct osd_bitmap *bitmap, UINT8 *sprite)
  *
  *************************************/
 
-void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void balsente_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int y, i;
 
@@ -326,7 +326,7 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (y = 0; y < 240; y++)
 		if (scanline_dirty[y] || full_refresh)
 		{
-			UINT32 *pens = &Machine->pens[scanline_palette[y] * 256];
+			pen_t *pens = &Machine->pens[scanline_palette[y] * 256];
 			draw_scanline8(bitmap, 0, y, 256, &local_videoram[y * 256], pens, -1);
 			scanline_dirty[y] = 0;
 		}

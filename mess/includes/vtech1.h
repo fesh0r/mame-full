@@ -34,7 +34,7 @@ extern int vtech1_interrupt(void);
 /* from vidhrdw/vtech1.c */
 extern int  vtech1_vh_start(void);
 extern void vtech1_vh_stop(void);
-extern void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void vtech1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 #else
 extern int  vtech1_vh_start(void);
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.7 2001/10/24 03:35:27 npwoods Exp $
+  $Id: pc8801.c,v 1.8 2001/11/16 05:02:58 npwoods Exp $
 
 ***************************************************************************/
 
@@ -70,7 +70,7 @@ static int disp_plane[3];
 
 static char *graph_dirty=NULL;
 static unsigned short *attr_tmp=NULL,*attr_old=NULL,*text_old=NULL;
-static struct osd_bitmap *wbm1,*wbm2;
+static struct mame_bitmap *wbm1,*wbm2;
 
 #define TRAM(x,y) (pc88sr_is_highspeed ? \
 	pc88sr_textRAM[(dmac_addr[2]+(x)+(y)*120)&0xfff] : \
@@ -363,7 +363,7 @@ void pc8801_vh_exit(void){}
 
 #define BLOCK_YSIZE (pc8801_is_24KHz ? 4 : 2)
 
-void pc8801_vh_refresh(struct osd_bitmap *bitmap,int full_refresh)
+void pc8801_vh_refresh(struct mame_bitmap *bitmap,int full_refresh)
 {
   int x,y,attr_new,text_new,i,a,tx,ty,oy,gx,gy,ct,cg;
   static int blink_count;

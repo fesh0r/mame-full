@@ -21,7 +21,7 @@ extern WRITE_HANDLER( jupiter_port_fe_w);
 
 extern int jupiter_vh_start (void);
 extern void jupiter_vh_stop (void);
-extern void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void jupiter_vh_screenrefresh (struct mame_bitmap *bitmap,
 												int full_refresh);
 extern WRITE_HANDLER( jupiter_vh_charram_w );
 extern unsigned char *jupiter_charram;

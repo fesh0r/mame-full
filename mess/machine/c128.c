@@ -844,7 +844,7 @@ void c128_vh_stop (void)
 	vic2_vh_stop();
 }
 
-void c128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void c128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	vdc8563_vh_screenrefresh(bitmap, full_refresh);
 	vic2_vh_screenrefresh(bitmap,full_refresh);

@@ -82,7 +82,7 @@ void hp48_init_colors (unsigned char *sys_palette,
 					   const unsigned char *color_prom);
 int hp48_vh_start(void);
 void hp48_vh_stop(void);
-void hp48_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 WRITE_HANDLER( hp48_write );
 READ_HANDLER( hp48_read );
 

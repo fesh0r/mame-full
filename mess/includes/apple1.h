@@ -12,7 +12,7 @@ extern WRITE_HANDLER( apple1_pia0_dspout );
 
 extern int apple1_vh_start (void);
 extern void apple1_vh_stop (void);
-extern void apple1_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void apple1_vh_screenrefresh (struct mame_bitmap *bitmap,
 														int full_refresh);
 extern void apple1_vh_dsp_w (int data);
 extern void apple1_vh_dsp_clr (void);

@@ -41,4 +41,4 @@ extern WRITE_HANDLER ( mbee_pcg_color_w );
 
 extern int  mbee_vh_start(void);
 extern void mbee_vh_stop(void);
-extern void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void mbee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);

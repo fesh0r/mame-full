@@ -204,7 +204,7 @@ static int ti99_2_vh_start(void)
 #define ti99_2_vh_stop generic_vh_stop
 #define ti99_2_video_w videoram_w
 
-static void ti99_2_vh_refresh(struct osd_bitmap *bitmap, int full_refresh)
+static void ti99_2_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int i, sx, sy;
 

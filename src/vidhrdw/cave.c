@@ -1,6 +1,6 @@
 /***************************************************************************
 
-							  -= Cave Games =-
+							  -= Cave Hardware =-
 
 					driver by	Luca Elia (l.elia@tin.it)
 
@@ -40,8 +40,11 @@ Note:	if MAME_DEBUG is defined, pressing:
 **************************************************************************/
 
 #include "vidhrdw/generic.h"
+#include "cave.h"
 
 /* Variables that driver has access to: */
+
+int cave_spritetype;
 
 data16_t *cave_videoregs;
 
@@ -54,9 +57,9 @@ data16_t *cave_vram_2, *cave_vctrl_2;
 static struct tilemap *tilemap_0, *tilemap_1, *tilemap_2;
 static int             tiledim_0,  tiledim_1,  tiledim_2;
 
-/* Variables defined in driver: */
 
-extern int cave_spritetype;
+
+
 
 #define CAVE_SPRITETYPE_ZBUF		0x01
 #define CAVE_SPRITETYPE_ZOOM		0x02
@@ -73,7 +76,7 @@ struct sprite_cave {
 	const UINT8 *pen_data;	/* points to top left corner of tile data */
 	int line_offset;
 
-	const UINT32 *pal_data;
+	const pen_t *pal_data;
 	int tile_width, tile_height;
 	int total_width, total_height;	/* in screen coordinates */
 	int x, y, xcount0, ycount0;
@@ -106,7 +109,6 @@ static void sprite_draw_cave( int priority );
 static void sprite_draw_cave_zbuf( int priority );
 static void sprite_draw_donpachi( int priority );
 static void sprite_draw_donpachi_zbuf( int priority );
-void cave_vh_stop(void);
 
 
 /***************************************************************************
@@ -293,6 +295,9 @@ int cave_vh_start( int dim0, int dim1, int dim2 )
 	tiledim_1 = dim1;
 	tiledim_2 = dim2;
 
+	cave_layers_offs_x = 0x13;
+	cave_layers_offs_y = -0x12;
+
 	return 0;
 }
 
@@ -366,9 +371,9 @@ static void get_sprite_info_cave(void)
 {
 	const int region				=	REGION_GFX4;
 
-	const UINT32         *base_pal	=	Machine->remapped_colortable + 0;
+	const pen_t          *base_pal	=	Machine->remapped_colortable + 0;
 	const unsigned char  *base_gfx	=	memory_region(region);
-	const unsigned char  *gfx_max	=	base_gfx + memory_region_length(region);
+	int                   code_max	=	memory_region_length(region) / (16*16);
 
 	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * (cave_videoregs[ 4 ] & 1);
 	data16_t      *finish			=	source + ((spriteram_size/2) / 2);
@@ -404,11 +409,12 @@ static void get_sprite_info_cave(void)
 
 		sprite->tile_width		=	( (size >> 8) & 0x1f ) * 16;
 		sprite->tile_height		=	( (size >> 0) & 0x1f ) * 16;
-		sprite->pen_data		=	base_gfx + (16*16) * code;
+
+		if ( !sprite->tile_width || !sprite->tile_height )	continue;
 
 		/* Bound checking */
-		if (((sprite->pen_data + sprite->tile_width * sprite->tile_height - 1) >= gfx_max ) ||
-		    !sprite->tile_width || !sprite->tile_height ){continue;}
+		code					%=	code_max;
+		sprite->pen_data		=	base_gfx + (16*16) * code;
 
 		flipx		=		attr & 0x0008;
 		flipy		=		attr & 0x0004;
@@ -477,9 +483,9 @@ static void get_sprite_info_donpachi(void)
 {
 	const int region				=	REGION_GFX4;
 
-	const UINT32         *base_pal	=	Machine->remapped_colortable + 0;
+	const pen_t          *base_pal	=	Machine->remapped_colortable + 0;
 	const unsigned char  *base_gfx	=	memory_region(region);
-	const unsigned char  *gfx_max	=	base_gfx + memory_region_length(region);
+	int                   code_max	=	memory_region_length(region) / (16*16);
 
 	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * (cave_videoregs[ 4 ] & 1);
 	data16_t      *finish			=	source + ((spriteram_size/2) / 2);
@@ -504,13 +510,15 @@ static void get_sprite_info_donpachi(void)
 
 		sprite->tile_width		=	sprite->total_width		=	( (size >> 8) & 0x1f ) * 16;
 		sprite->tile_height		=	sprite->total_height	=	( (size >> 0) & 0x1f ) * 16;
+
+		/* Bound checking */
+		code					%=	code_max;
 		sprite->pen_data		=	base_gfx + (16*16) * code;
+
 		if (x > 0x1FF)	x -= 0x400;
 		if (y > 0x1FF)	y -= 0x400;
 
-		/* Bound checking */
-		if (((sprite->pen_data + sprite->tile_width * sprite->tile_height - 1) >= gfx_max ) ||
-		    !sprite->tile_width || !sprite->tile_height ||
+		if ( !sprite->tile_width || !sprite->tile_height ||
 			x + sprite->total_width<=0 || x>=max_x || y + sprite->total_height<=0 || y>=max_y )
 		{continue;}
 
@@ -566,7 +574,7 @@ static void sprite_set_clip( const struct rectangle *clip )
 
 static int sprite_init_cave(void)
 {
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
 
 	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
@@ -762,7 +770,7 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -882,7 +890,7 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -1010,7 +1018,7 @@ static void do_blit_16_cave( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -1105,7 +1113,7 @@ static void do_blit_16_cave_zb( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -1218,7 +1226,7 @@ static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -1338,7 +1346,7 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -1466,7 +1474,7 @@ static void do_blit_8_cave( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -1561,7 +1569,7 @@ static void do_blit_8_cave_zb( const struct sprite_cave *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32        *pal_data = sprite->pal_data;
+		const pen_t         *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -1743,11 +1751,11 @@ else
 ***************************************************************************/
 
 INLINE void cave_tilemap_draw(
-	struct osd_bitmap *bitmap,
+	struct mame_bitmap *bitmap,
 	struct tilemap *TILEMAP, data16_t *VRAM, data16_t *VCTRL,
 	UINT32 flags, UINT32 priority, UINT32 priority2 )
 {
-	int sx, sy, flipx, flipy;
+	int sx, sy, flipx, flipy, offs_x, offs_y;
 
 	/* Bail out if ... */
 
@@ -1760,18 +1768,18 @@ INLINE void cave_tilemap_draw(
 	flipy = ( (cave_videoregs[1] & 0x8000) /*== (VCTRL[1] & 0x8000)*/ );
 	tilemap_set_flip(TILEMAP, (flipx ? TILEMAP_FLIPX : 0) | (flipy ? TILEMAP_FLIPY : 0) );
 
-	cave_layers_offs_x = 0x13;
-	cave_layers_offs_y = -0x12;
+	offs_x	=	cave_layers_offs_x;
+	offs_y	=	cave_layers_offs_y;
 
 	/* An additional 8 pixel offset for layers with 8x8 tiles. Plus
 	   Layer 0 is displaced by 1 pixel wrt Layer 1, so is Layer 2 wrt
 	   Layer 1 */
-	if		(TILEMAP == tilemap_0)	cave_layers_offs_x -= ((tiledim_0 == 16) ? 1 : (1+8));
-	else if	(TILEMAP == tilemap_1)	cave_layers_offs_x -= ((tiledim_1 == 16) ? 2 : (2+8));
-	else if	(TILEMAP == tilemap_2)	cave_layers_offs_x -= ((tiledim_2 == 16) ? 3 : (3+8));
+	if		(TILEMAP == tilemap_0)	offs_x -= ((tiledim_0 == 16) ? 1 : (1+8));
+	else if	(TILEMAP == tilemap_1)	offs_x -= ((tiledim_1 == 16) ? 2 : (2+8));
+	else if	(TILEMAP == tilemap_2)	offs_x -= ((tiledim_2 == 16) ? 3 : (3+8));
 
-	sx = VCTRL[0] - cave_videoregs[0] + (flipx ? cave_layers_offs_x : -cave_layers_offs_x);
-	sy = VCTRL[1] - cave_videoregs[1] + (flipy ? cave_layers_offs_y : -cave_layers_offs_y);
+	sx = VCTRL[0] - cave_videoregs[0] + (flipx ? offs_x : -offs_x);
+	sy = VCTRL[1] - cave_videoregs[1] + (flipy ? offs_y : -offs_y);
 
 	if (VCTRL[1] & 0x4000)	// "column" scroll
 	{
@@ -1855,15 +1863,15 @@ INLINE void cave_tilemap_draw(
 	}
 }
 
-void cave_tilemap_0_draw( struct osd_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
+void cave_tilemap_0_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
 {	 cave_tilemap_draw( bitmap, tilemap_0, cave_vram_0, cave_vctrl_0, flags, priority, priority2 );	}
-void cave_tilemap_1_draw( struct osd_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
+void cave_tilemap_1_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
 {	 cave_tilemap_draw( bitmap, tilemap_1, cave_vram_1, cave_vctrl_1, flags, priority, priority2 );	}
-void cave_tilemap_2_draw( struct osd_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
+void cave_tilemap_2_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
 {	 cave_tilemap_draw( bitmap, tilemap_2, cave_vram_2, cave_vctrl_2, flags, priority, priority2 );	}
 
 
-void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cave_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int pri, pri2;
 	int layers_ctrl = -1;

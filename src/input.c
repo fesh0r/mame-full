@@ -799,7 +799,7 @@ int input_ui_pressed(int code)
 		{
 			if (ui_map[code].memory == 0)
 			{
-							ui_map[code].memory = 1;
+         	               ui_map[code].memory = 1;
 			} else
 				pressed = 0;
 		} else

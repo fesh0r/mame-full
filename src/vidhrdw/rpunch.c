@@ -280,7 +280,7 @@ WRITE16_HANDLER( rpunch_ins_w )
  *
  *************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int start, int stop)
+static void draw_sprites(struct mame_bitmap *bitmap, int start, int stop)
 {
 	int offs;
 
@@ -319,9 +319,9 @@ static void draw_sprites(struct osd_bitmap *bitmap, int start, int stop)
  *
  *************************************/
 
-static void draw_bitmap(struct osd_bitmap *bitmap)
+static void draw_bitmap(struct mame_bitmap *bitmap)
 {
-	UINT32 *pens = &Machine->pens[512 + (videoflags & 15) * 16];
+	pen_t *pens = &Machine->pens[512 + (videoflags & 15) * 16];
 	int x, y;
 
 	/* draw any non-transparent scanlines from the VRAM directly */
@@ -353,7 +353,7 @@ static void draw_bitmap(struct osd_bitmap *bitmap)
  *
  *************************************/
 
-void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void rpunch_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int effbins;
 

@@ -224,10 +224,10 @@ int nes_vh_start(void)
 		return 1;
 
 	/* We use an offscreen bitmap that's 4 times as large as the visible one */
-	if ((tmpbitmap = osd_alloc_bitmap(2 * 32*8, 2 * 30*8,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc_depth(2 * 32*8, 2 * 30*8,Machine->scrbitmap->depth)) == 0)
 	{
 		free (videoram);
-		osd_free_bitmap (tmpbitmap);
+		bitmap_free (tmpbitmap);
 		return 1;
 	}
 
@@ -235,7 +235,7 @@ int nes_vh_start(void)
 	if ((spriteram = calloc (SPRITERAM_SIZE,1)) == 0)
 	{
 		free (videoram);
-		osd_free_bitmap (tmpbitmap);
+		bitmap_free (tmpbitmap);
 		return 1;
 	}
 
@@ -248,7 +248,7 @@ int nes_vh_start(void)
 	if ((!dirtybuffer) || (!dirtybuffer2) || (!dirtybuffer3) || (!dirtybuffer4))
 	{
 		free (videoram);
-		osd_free_bitmap (tmpbitmap);
+		bitmap_free (tmpbitmap);
 		free (spriteram);
 		if (dirtybuffer)  free (dirtybuffer);
 		if (dirtybuffer2) free (dirtybuffer2);
@@ -297,7 +297,7 @@ void nes_vh_stop(void)
 	free (dirtybuffer3);
 	free (dirtybuffer4);
 #endif
-	osd_free_bitmap (tmpbitmap);
+	bitmap_free (tmpbitmap);
 
 #ifdef LOG_VIDEO
 	if (videolog) fclose (videolog);
@@ -795,7 +795,7 @@ static void draw_sight(int playerNum, int x_center, int y_center)
 }
 
 /* This routine is called at the start of vblank to refresh the screen */
-void nes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void nes_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 #ifdef BIG_SCREEN
 	int page;

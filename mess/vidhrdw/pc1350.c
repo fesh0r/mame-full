@@ -131,7 +131,7 @@ static int pc1350_addr[4]={ 0, 0x40, 0x1e, 0x5e };
 
 #define DOWN 45
 #define RIGHT 76
-void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pc1350_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j, k;
 	int color[2];

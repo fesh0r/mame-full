@@ -58,11 +58,11 @@ void neogeo_init_machine(void)
 	if (memcard_manager==1)
 	{
 		memcard_manager=0;
-		mem16[0x11b1a >> 1] = 0x500a;
+		mem16[0x11b1a/2] = 0x500a;
 	}
 	else
 	{
-		mem16[0x11b1a >> 1] = 0x1b6a;
+		mem16[0x11b1a/2] = 0x1b6a;
 	}
 
 	time(&ltime);
@@ -84,6 +84,53 @@ void init_neogeo(void)
 	extern struct YM2610interface neogeo_ym2610_interface;
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
 	data8_t *mem08;
+	int tileno,numtiles;
+
+	numtiles = memory_region_length(REGION_GFX2)/128;
+	for (tileno = 0;tileno < numtiles;tileno++)
+	{
+		unsigned char swap[128];
+		UINT8 *gfxdata;
+		int x,y;
+		unsigned int pen;
+
+		gfxdata = &memory_region(REGION_GFX2)[128 * tileno];
+
+		memcpy(swap,gfxdata,128);
+
+		for (y = 0;y < 16;y++)
+		{
+			UINT32 dw;
+
+			dw = 0;
+			for (x = 0;x < 8;x++)
+			{
+				pen  = ((swap[64 + 4*y + 3] >> x) & 1) << 3;
+				pen |= ((swap[64 + 4*y + 1] >> x) & 1) << 2;
+				pen |= ((swap[64 + 4*y + 2] >> x) & 1) << 1;
+				pen |=	(swap[64 + 4*y	  ] >> x) & 1;
+				dw |= pen << 4*x;
+			}
+			*(gfxdata++) = dw>>0;
+			*(gfxdata++) = dw>>8;
+			*(gfxdata++) = dw>>16;
+			*(gfxdata++) = dw>>24;
+
+			dw = 0;
+			for (x = 0;x < 8;x++)
+			{
+				pen  = ((swap[4*y + 3] >> x) & 1) << 3;
+				pen |= ((swap[4*y + 1] >> x) & 1) << 2;
+				pen |= ((swap[4*y + 2] >> x) & 1) << 1;
+				pen |=	(swap[4*y	 ] >> x) & 1;
+				dw |= pen << 4*x;
+			}
+			*(gfxdata++) = dw>>0;
+			*(gfxdata++) = dw>>8;
+			*(gfxdata++) = dw>>16;
+			*(gfxdata++) = dw>>24;
+		}
+	}
 
 	if (memory_region(REGION_SOUND2))
 	{
@@ -107,11 +154,11 @@ void init_neogeo(void)
 	mem16 = (data16_t *)memory_region(REGION_CPU1);
 	if (memory_region_length(REGION_CPU1) > 0x100000)
 	{
-		cpu_setbank(4, &mem16[0x80000]);
+		cpu_setbank(4, &mem16[0x100000/2]);
 	}
 	else
 	{
-		cpu_setbank(4, &mem16[0x00000]);
+		cpu_setbank(4, &mem16[0x000000/2]);
 	}
 
 	/* Set the sound CPU ROM banks */
@@ -129,27 +176,27 @@ void init_neogeo(void)
 
 	mem16 = (data16_t *)memory_region(REGION_USER1);
 
-	if (mem16[0x11b00 >> 1] == 0x4eba)
+	if (mem16[0x11b00/2] == 0x4eba)
 	{
 		/* standard bios */
 		neogeo_has_trackball = 0;
 
 		/* Remove memory check for now */
-		mem16[0x11b00 >> 1] = 0x4e71;
-		mem16[0x11b02 >> 1] = 0x4e71;
-		mem16[0x11b16 >> 1] = 0x4ef9;
-		mem16[0x11b18 >> 1] = 0x00c1;
-		mem16[0x11b1a >> 1] = 0x1b6a;
+		mem16[0x11b00/2] = 0x4e71;
+		mem16[0x11b02/2] = 0x4e71;
+		mem16[0x11b16/2] = 0x4ef9;
+		mem16[0x11b18/2] = 0x00c1;
+		mem16[0x11b1a/2] = 0x1b6a;
 
 		/* Patch bios rom, for Calendar errors */
-		mem16[0x11c14 >> 1] = 0x4e71;
-		mem16[0x11c16 >> 1] = 0x4e71;
-		mem16[0x11c1c >> 1] = 0x4e71;
-		mem16[0x11c1e >> 1] = 0x4e71;
+		mem16[0x11c14/2] = 0x4e71;
+		mem16[0x11c16/2] = 0x4e71;
+		mem16[0x11c1c/2] = 0x4e71;
+		mem16[0x11c1e/2] = 0x4e71;
 
 		/* Rom internal checksum fails for now.. */
-		mem16[0x11c62 >> 1] = 0x4e71;
-		mem16[0x11c64 >> 1] = 0x4e71;
+		mem16[0x11c62/2] = 0x4e71;
+		mem16[0x11c64/2] = 0x4e71;
 	}
 	else
 	{
@@ -160,21 +207,21 @@ void init_neogeo(void)
 		/* it probably has to be moved as well */
 
 		/* Remove memory check for now */
-		mem16[0x10c2a >> 1] = 0x4e71;
-		mem16[0x10c2c >> 1] = 0x4e71;
-		mem16[0x10c40 >> 1] = 0x4ef9;
-		mem16[0x10c42 >> 1] = 0x00c1;
-		mem16[0x10c44 >> 1] = 0x0c94;
+		mem16[0x10c2a/2] = 0x4e71;
+		mem16[0x10c2c/2] = 0x4e71;
+		mem16[0x10c40/2] = 0x4ef9;
+		mem16[0x10c42/2] = 0x00c1;
+		mem16[0x10c44/2] = 0x0c94;
 
 		/* Patch bios rom, for Calendar errors */
-		mem16[0x10d3e >> 1] = 0x4e71;
-		mem16[0x10d40 >> 1] = 0x4e71;
-		mem16[0x10d46 >> 1] = 0x4e71;
-		mem16[0x10d48 >> 1] = 0x4e71;
+		mem16[0x10d3e/2] = 0x4e71;
+		mem16[0x10d40/2] = 0x4e71;
+		mem16[0x10d46/2] = 0x4e71;
+		mem16[0x10d48/2] = 0x4e71;
 
 		/* Rom internal checksum fails for now.. */
-		mem16[0x10d8c >> 1] = 0x4e71;
-		mem16[0x10d8e >> 1] = 0x4e71;
+		mem16[0x10d8c/2] = 0x4e71;
+		mem16[0x10d8e/2] = 0x4e71;
 	}
 
 	/* Install custom memory handlers */
@@ -191,21 +238,21 @@ static READ16_HANDLER( fatfury2_protection_16_r )
 
 	switch (offset)
 	{
-	case 0x55550 >> 1:
-	case 0xffff0 >> 1:
-	case 0x00000 >> 1:
-	case 0xff000 >> 1:
-	case 0x36000 >> 1:
-	case 0x36008 >> 1:
-		return res;
+		case 0x55550/2:
+		case 0xffff0/2:
+		case 0x00000/2:
+		case 0xff000/2:
+		case 0x36000/2:
+		case 0x36008/2:
+			return res;
 
-	case 0x36004 >> 1:
-	case 0x3600c >> 1:
-		return ((res & 0xf0) >> 4) | ((res & 0x0f) << 4);
+		case 0x36004/2:
+		case 0x3600c/2:
+			return ((res & 0xf0) >> 4) | ((res & 0x0f) << 4);
 
-	default:
+		default:
 logerror("unknown protection read at pc %06x, offset %08x\n",cpu_get_pc(),offset<<1);
-		return 0;
+			return 0;
 	}
 }
 
@@ -213,31 +260,31 @@ static WRITE16_HANDLER( fatfury2_protection_16_w )
 {
 	switch (offset)
 	{
-	case 0x55552 >> 1:	 /* data == 0x5555; read back from 55550, ffff0, 00000, ff000 */
-		prot_data = 0xff00ff00;
-		break;
+		case 0x55552/2:	 /* data == 0x5555; read back from 55550, ffff0, 00000, ff000 */
+			prot_data = 0xff00ff00;
+			break;
 
-	case 0x56782 >> 1:	 /* data == 0x1234; read back from 36000 *or* 36004 */
-		prot_data = 0xf05a3601;
-		break;
+		case 0x56782/2:	 /* data == 0x1234; read back from 36000 *or* 36004 */
+			prot_data = 0xf05a3601;
+			break;
 
-	case 0x42812 >> 1:	 /* data == 0x1824; read back from 36008 *or* 3600c */
-		prot_data = 0x81422418;
-		break;
+		case 0x42812/2:	 /* data == 0x1824; read back from 36008 *or* 3600c */
+			prot_data = 0x81422418;
+			break;
 
-	case 0x55550 >> 1:
-	case 0xffff0 >> 1:
-	case 0xff000 >> 1:
-	case 0x36000 >> 1:
-	case 0x36004 >> 1:
-	case 0x36008 >> 1:
-	case 0x3600c >> 1:
-		prot_data <<= 8;
-		break;
+		case 0x55550/2:
+		case 0xffff0/2:
+		case 0xff000/2:
+		case 0x36000/2:
+		case 0x36004/2:
+		case 0x36008/2:
+		case 0x3600c/2:
+			prot_data <<= 8;
+			break;
 
-	default:
+		default:
 logerror("unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_get_pc(),offset,data);
-		break;
+			break;
 	}
 }
 
@@ -245,8 +292,41 @@ static READ16_HANDLER( popbounc_sfix_16_r )
 {
 	if (cpu_get_pc()==0x6b10)
 		return 0;
-	return neogeo_ram16[0x4fbc >> 1];
+	return neogeo_ram16[0x4fbc/2];
 }
+
+
+static WRITE16_HANDLER( kof99_bankswitch_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+		0x000000, 0x100000, 0x200000, 0x300000,
+		0x3cc000, 0x4cc000, 0x3f2000, 0x4f2000,
+		0x407800, 0x507800, 0x40d000, 0x50d000,
+		0x417800, 0x517800, 0x420800, 0x520800,
+		0x424800, 0x524800, 0x429000, 0x529000,
+		0x42e800, 0x52e800, 0x431800, 0x531800,
+		0x54d000, 0x551000, 0x567000, 0x592800,
+		0x588800, 0x581800, 0x599800, 0x594800,
+		0x200000,	/* rest not used? */
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>>14)&1)<<0)+
+		(((data>> 6)&1)<<1)+
+		(((data>> 8)&1)<<2)+
+		(((data>>10)&1)<<3)+
+		(((data>>12)&1)<<4)+
+		(((data>> 5)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
 
 static void neogeo_custom_memory(void)
 {
@@ -254,47 +334,48 @@ static void neogeo_custom_memory(void)
 
 	/* kludges */
 
-	if (!strcmp(Machine->gamedrv->name,"gururin"))
-	{
-		/* Fix a really weird problem. The game clears the video RAM but goes */
-		/* beyond the tile RAM, corrupting the zoom control RAM. After that it */
-		/* initializes the control RAM, but then corrupts it again! */
-		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-		mem16[0x1328 >> 1] = 0x4e71;
-		mem16[0x132a >> 1] = 0x4e71;
-		mem16[0x132c >> 1] = 0x4e71;
-		mem16[0x132e >> 1] = 0x4e71;
-	}
-
 	if (!Machine->sample_rate &&
 			!strcmp(Machine->gamedrv->name,"popbounc"))
 	/* the game hangs after a while without this patch */
 		install_mem_read16_handler(0, 0x104fbc, 0x104fbd, popbounc_sfix_16_r);
 
+	if (!strcmp(Machine->gamedrv->name,"kof99"))
+	{
+		/* Fix for end of game protection which causes freeze. */
+//		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+//		mem16[0x1d8a/2] = 0x67b6;
+
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2ffff0, 0x2ffff1, kof99_bankswitch_w);
+	}
+
 	/* hacks to make the games which do protection checks run in arcade mode */
 	/* we write protect a SRAM location so it cannot be set to 1 */
 	sram_protection_hack = ~0;
-	if (!strcmp(Machine->gamedrv->name,"fatfury3") ||
-			 !strcmp(Machine->gamedrv->name,"samsho3") ||
-			 !strcmp(Machine->gamedrv->name,"samsho4") ||
-			 !strcmp(Machine->gamedrv->name,"aof3") ||
-			 !strcmp(Machine->gamedrv->name,"rbff1") ||
-			 !strcmp(Machine->gamedrv->name,"rbffspec") ||
-			 !strcmp(Machine->gamedrv->name,"kof95") ||
-			 !strcmp(Machine->gamedrv->name,"kof96") ||
-			 !strcmp(Machine->gamedrv->name,"kof97") ||
-			 !strcmp(Machine->gamedrv->name,"kof98") ||
-			 !strcmp(Machine->gamedrv->name,"kof99p") ||
-			 !strcmp(Machine->gamedrv->name,"kizuna") ||
-			 !strcmp(Machine->gamedrv->name,"lastblad") ||
-			 !strcmp(Machine->gamedrv->name,"lastbld2") ||
-			 !strcmp(Machine->gamedrv->name,"rbff2") ||
-			 !strcmp(Machine->gamedrv->name,"mslug2") ||
-			 !strcmp(Machine->gamedrv->name,"garoup"))
-		sram_protection_hack = 0x100 >> 1;
+	if (	!strcmp(Machine->gamedrv->name,"fatfury3") ||
+			!strcmp(Machine->gamedrv->name,"samsho3") ||
+			!strcmp(Machine->gamedrv->name,"samsho4") ||
+			!strcmp(Machine->gamedrv->name,"aof3") ||
+			!strcmp(Machine->gamedrv->name,"rbff1") ||
+			!strcmp(Machine->gamedrv->name,"rbffspec") ||
+			!strcmp(Machine->gamedrv->name,"kof95") ||
+			!strcmp(Machine->gamedrv->name,"kof96") ||
+			!strcmp(Machine->gamedrv->name,"kof97") ||
+			!strcmp(Machine->gamedrv->name,"kof98") ||
+			!strcmp(Machine->gamedrv->name,"kof99") ||
+			!strcmp(Machine->gamedrv->name,"kof99n") ||
+			!strcmp(Machine->gamedrv->name,"kof99p") ||
+			!strcmp(Machine->gamedrv->name,"kof2000") ||
+			!strcmp(Machine->gamedrv->name,"kizuna") ||
+			!strcmp(Machine->gamedrv->name,"lastblad") ||
+			!strcmp(Machine->gamedrv->name,"lastbld2") ||
+			!strcmp(Machine->gamedrv->name,"rbff2") ||
+			!strcmp(Machine->gamedrv->name,"mslug2") ||
+			!strcmp(Machine->gamedrv->name,"garoup"))
+		sram_protection_hack = 0x100/2;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))
-		sram_protection_hack = 0x35a >> 1;
+		sram_protection_hack = 0x35a/2;
 
 	if (!strcmp(Machine->gamedrv->name,"ssideki"))
 	{
@@ -302,7 +383,7 @@ static void neogeo_custom_memory(void)
 		/* the protection routines are at 0x25dcc and involve reading and writing */
 		/* addresses in the 0x2xxxxx range */
 		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-		mem16[0x2240 >> 1] = 0x4e71;
+		mem16[0x2240/2] = 0x4e71;
 	}
 
 	/* Hacks the program rom of Fatal Fury 2, needed either in arcade or console mode */
@@ -315,8 +396,8 @@ static void neogeo_custom_memory(void)
 		/* the routine which trashes memory. Without this, the game goes nuts after */
 		/* the first bonus stage. */
 		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-		mem16[0xb820 >> 1] = 0x4e71;
-		mem16[0xb822 >> 1] = 0x4e71;
+		mem16[0xb820/2] = 0x4e71;
+		mem16[0xb822/2] = 0x4e71;
 
 		/* again, the protection involves reading and writing addresses in the */
 		/* 0x2xxxxx range. There are several checks all around the code. */
@@ -328,7 +409,7 @@ static void neogeo_custom_memory(void)
 	{
 		/* patch the first word, it must be 0x0010 not 0x0000 (initial stack pointer) */
 		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-		mem16[0x0000 >> 1] = 0x0010;
+		mem16[0x0000/2] = 0x0010;
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"mslugx"))
@@ -337,7 +418,7 @@ static void neogeo_custom_memory(void)
 		int i;
 		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
 
-		for (i = 0;i < (0x100000 >> 1) - 4;i++)
+		for (i = 0;i < (0x100000/2) - 4;i++)
 		{
 			if (mem16[i+0] == 0x0243 &&
 				mem16[i+1] == 0x0001 && 	/* andi.w  #$1, D3 */
@@ -348,15 +429,15 @@ static void neogeo_custom_memory(void)
 			}
 		}
 
-		mem16[0x3bdc >> 1] = 0x4e71;
-		mem16[0x3bde >> 1] = 0x4e71;
-		mem16[0x3be0 >> 1] = 0x4e71;
-		mem16[0x3c0c >> 1] = 0x4e71;
-		mem16[0x3c0e >> 1] = 0x4e71;
-		mem16[0x3c10 >> 1] = 0x4e71;
+		mem16[0x3bdc/2] = 0x4e71;
+		mem16[0x3bde/2] = 0x4e71;
+		mem16[0x3be0/2] = 0x4e71;
+		mem16[0x3c0c/2] = 0x4e71;
+		mem16[0x3c0e/2] = 0x4e71;
+		mem16[0x3c10/2] = 0x4e71;
 
-		mem16[0x3c36 >> 1] = 0x4e71;
-		mem16[0x3c38 >> 1] = 0x4e71;
+		mem16[0x3c36/2] = 0x4e71;
+		mem16[0x3c38/2] = 0x4e71;
 	}
 }
 

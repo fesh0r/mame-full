@@ -34,7 +34,7 @@ WRITE_HANDLER (TMS9928A_register_w);
 /*
 ** Call this function to render the screen.
 */
-void TMS9928A_refresh (struct osd_bitmap *, int full_refresh);
+void TMS9928A_refresh (struct mame_bitmap *, int full_refresh);
 
 /*
 ** This next function must be called 50 or 60 times per second,

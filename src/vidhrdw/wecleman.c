@@ -10,7 +10,7 @@ struct sprite {
 	const UINT8 *pen_data;	/* points to top left corner of tile data */
 	int line_offset;
 
-	const UINT32 *pal_data;
+	const pen_t *pal_data;
 	UINT32 pen_usage;
 
 	int x_offset, y_offset;
@@ -205,7 +205,7 @@ static void do_blit_zoom( const struct sprite *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32 *pal_data = sprite->pal_data;
+		const pen_t *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -323,7 +323,7 @@ static void do_blit_zoom16( const struct sprite *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32 *pal_data = sprite->pal_data;
+		const pen_t *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -396,7 +396,7 @@ static void sprite_init( void ){
 	int right = clip->max_x+1;
 	int bottom = clip->max_y+1;
 
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	screen_baseaddr = bitmap->line[0];
 	screen_line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
 
@@ -1075,7 +1075,7 @@ void hotchase_vh_stop(void)
 
 */
 
-void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
+void wecleman_draw_road(struct mame_bitmap *bitmap,int priority)
 {
 	struct rectangle rect = Machine->visible_area;
 	int curr_code, sx,sy;
@@ -1157,7 +1157,7 @@ void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
 
 */
 
-void hotchase_draw_road(struct osd_bitmap *bitmap)
+void hotchase_draw_road(struct mame_bitmap *bitmap)
 {
 	int sy;
 
@@ -1240,7 +1240,7 @@ The factors are in the range 0 (no shrinking) - 3F (half size).
 
 static void get_sprite_info(void)
 {
-	const UINT32         *base_pal	= Machine->remapped_colortable;
+	const pen_t          *base_pal	= Machine->remapped_colortable;
 	const unsigned char  *base_gfx	= memory_region(REGION_GFX1);
 
 	const int gfx_max = memory_region_length(REGION_GFX1);
@@ -1324,9 +1324,9 @@ static void get_sprite_info(void)
 
 */
 #ifdef MAME_DEBUG
-static void browser(struct osd_bitmap *bitmap)
+static void browser(struct mame_bitmap *bitmap)
 {
-	const UINT32         *base_pal	=	Machine->gfx[0]->colortable + 0;
+	const pen_t          *base_pal	=	Machine->gfx[0]->colortable + 0;
 	const unsigned char  *base_gfx	=	memory_region(REGION_GFX1);
 
 	const int gfx_max				=	memory_region_length(REGION_GFX1);
@@ -1434,7 +1434,7 @@ static void browser(struct osd_bitmap *bitmap)
 							WEC Le Mans 24
 ***************************************************************************/
 
-void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wecleman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i, layers_ctrl = -1;
 
@@ -1512,7 +1512,7 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 								Hot Chase
 ***************************************************************************/
 
-void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void hotchase_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layers_ctrl = -1;
 

@@ -934,7 +934,7 @@ WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
  *  VDP1                                                *
  ********************************************************/
 
-static struct osd_bitmap *saturn_bitmap[2];
+static struct mame_bitmap *saturn_bitmap[2];
 int video_w; /* indicates which bitmap is currently displayed and which is drawn */
 
 struct _vdp1_state
@@ -1321,7 +1321,7 @@ void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
 void render_plane(unsigned char *buffer,int pal,int trans)
 
 {
-  struct osd_bitmap *bitmap = saturn_bitmap[video_w];
+  struct mame_bitmap *bitmap = saturn_bitmap[video_w];
   int loopx,loopy;
   int col;
   UINT32 *memt;
@@ -1809,8 +1809,8 @@ void init_saturn(void)
 int saturn_vh_start(void)
 {
   logerror("saturn_vh_start\n");
-  saturn_bitmap[0] = osd_alloc_bitmap(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
-  saturn_bitmap[1] = osd_alloc_bitmap(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+  saturn_bitmap[0] = bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+  saturn_bitmap[1] = bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
 
   if((!saturn_bitmap[0]) || (!saturn_bitmap[1]))
     return 1;
@@ -1825,17 +1825,17 @@ int saturn_vh_start(void)
 void saturn_vh_stop(void)
 {
   if(saturn_bitmap[0])
-    osd_free_bitmap(saturn_bitmap[0]);
+    bitmap_free(saturn_bitmap[0]);
   saturn_bitmap[0] = NULL;
 
   if(saturn_bitmap[1])
-    osd_free_bitmap(saturn_bitmap[1]);
+    bitmap_free(saturn_bitmap[1]);
   saturn_bitmap[1] = NULL;
 
   logerror("saturn_vh_stop\n");
 }
 
-void saturn_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void saturn_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
   //  logerror("saturn_vh_screenrefresh\n");
   if(saturn_bitmap[video_w])

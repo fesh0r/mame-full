@@ -107,7 +107,7 @@ static void poly17_init(void);
 extern UINT8 gridlee_cocktail_flip;
 int gridlee_vh_start(void);
 void gridlee_vh_stop(void);
-void gridlee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void gridlee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void gridlee_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 WRITE_HANDLER( gridlee_cocktail_flip_w );
 WRITE_HANDLER( gridlee_videoram_w );
@@ -446,7 +446,7 @@ static struct MachineDriver machine_driver_gridlee =
 	{
 		{
 			CPU_M6809,
-			5000000/4,                     /* 5Mhz/4 */
+			5000000/4,                     /* 5MHz/4 */
 			readmem_cpu1,writemem_cpu1,0,0,
 			ignore_interrupt,1
 		}

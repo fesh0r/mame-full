@@ -23,7 +23,7 @@ extern void pc_cga_init_video(struct _CRTC6845 *crtc);
 
 extern int	pc_cga_vh_start(void);
 extern void pc_cga_vh_stop(void);
-extern void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void pc_cga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 // call this with 240 times pre second
 extern void pc_cga_timer(void);
@@ -42,7 +42,7 @@ extern int	pc_cga_status_r(void);
 // has a special 640x200 in 16 color mode, 4 banks at 0xb8000
 extern int	pc1512_vh_start(void);
 extern void pc1512_vh_stop(void);
-extern void pc1512_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void pc1512_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern WRITE_HANDLER ( pc1512_w );
 extern READ_HANDLER ( pc1512_r );

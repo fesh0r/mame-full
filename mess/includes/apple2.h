@@ -162,7 +162,7 @@ extern UINT8 *apple2_hires2_ram;
 
 extern int	apple2_vh_start(void);
 extern void apple2_vh_stop(void);
-extern void apple2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void apple2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 extern void apple2_lores_text1_w(int offset, int data);

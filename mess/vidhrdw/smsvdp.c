@@ -110,7 +110,7 @@ int SMSVDP_start (int vdp_type)
 
 void sms_vdp_stop(void)
 {
-    if(tmpbitmap) osd_free_bitmap(tmpbitmap);
+    if(tmpbitmap) bitmap_free(tmpbitmap);
 }
 
 
@@ -294,7 +294,7 @@ WRITE_HANDLER ( sms_vdp_ctrl_w )
 }
 
 
-void sms_refresh_line(struct osd_bitmap *bitmap, int line)
+void sms_refresh_line(struct mame_bitmap *bitmap, int line)
 {
     int i, x, color;
     int charindex, palselect;
@@ -449,7 +449,7 @@ void sms_cache_tiles(void)
 }
 
 
-void sms_vdp_refresh(struct osd_bitmap *bitmap, int full_refresh)
+void sms_vdp_refresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     sms_update_palette();
     copybitmap (bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);

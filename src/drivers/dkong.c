@@ -181,8 +181,8 @@ WRITE_HANDLER( dkong_palettebank_w );
 void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int dkong_vh_start(void);
-void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void radarscp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void dkong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( dkong_sh_w );
 WRITE_HANDLER( dkongjr_sh_death_w );
@@ -380,9 +380,9 @@ WRITE_HANDLER( hunchbkd_data_w )
 
 READ_HANDLER( hunchbkd_port0_r )
 {
-	logerror("port 0 : pc = %4x\n",s2650_get_pc());
+	logerror("port 0 : pc = %4x\n",activecpu_get_pc());
 
-	switch (s2650_get_pc())
+	switch (activecpu_get_pc())
 	{
 		case 0x00e9:  return 0xff;
 		case 0x0114:  return 0xfb;
@@ -398,7 +398,7 @@ READ_HANDLER( hunchbkd_port1_r )
 
 READ_HANDLER( herbiedk_port1_r )
 {
-	switch (s2650_get_pc())
+	switch (activecpu_get_pc())
 	{
         case 0x002b:
 		case 0x09dc:  return 0x0;

@@ -5,7 +5,7 @@ extern int cgenie_floppy_init(int id);
 extern int cgenie_rom_load(int id);
 
 extern int cgenie_vh_start(void);
-extern void cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void cgenie_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern void cgenie_sh_sound_init(const char * gamename);
 extern WRITE_HANDLER ( cgenie_sh_control_port_w );
@@ -96,7 +96,7 @@ extern	int 	cgenie_get_register(int indx);
 extern	void	cgenie_mode_select(int graphics);
 extern	void	cgenie_invalidate_range(int l, int h);
 
-extern	void	cgenie_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh);
+extern	void	cgenie_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh);
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus

@@ -6,7 +6,7 @@
 
 int		saa5050_vh_start (void);
 void	saa5050_vh_stop (void);
-void	saa5050_vh_screenrefresh (struct osd_bitmap *, int);
+void	saa5050_vh_screenrefresh (struct mame_bitmap *, int);
 
 struct	GfxLayout	saa5050_charlayout =
 {

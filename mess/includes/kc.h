@@ -19,13 +19,13 @@ void	kc85_video_set_blink_state(int data);
 
 int kc85_4_vh_start(void);
 void kc85_4_vh_stop(void);
-void kc85_4_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void kc85_4_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void kc85_4_shutdown_machine(void);
 void kc85_4_init_machine(void);
 
 int	kc85_3_vh_start(void);
 void kc85_3_vh_stop(void);
-void kc85_3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void kc85_3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void kc85_3_shutdown_machine(void);
 void kc85_3_init_machine(void);
 

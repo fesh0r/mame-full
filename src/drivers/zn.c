@@ -53,7 +53,7 @@ static void znqs_vh_stop( void )
 {
 }
 
-static void znqs_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+static void znqs_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	int refresh = full_refresh;
 
@@ -604,11 +604,11 @@ void zn_init_palette(unsigned char *palette, unsigned short *colortable,const un
 	}
 }
 
-static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+static void zn_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	UINT16 n_x;
 	UINT16 n_y;
-	UINT32 *pens = Machine->pens;
+	pen_t *pens = Machine->pens;
 
 	if( full_refresh )
 	{

@@ -55,8 +55,8 @@ int vga_vh_start(void);
 
 void vga_vh_stop(void);
 
-void ega_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void vga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void ega_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void vga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 /*
   pega notes (paradise)

@@ -70,7 +70,7 @@ extern void gb_scanline_interrupt_set_mode2(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);
 extern int gb_vh_start(void);
 extern void gb_vh_stop(void);
-extern void gb_vh_screen_refresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void gb_vh_screen_refresh(struct mame_bitmap *bitmap, int full_refresh);
 extern void gb_init_machine(void);
 
 /* from vidhrdw/gb.c */

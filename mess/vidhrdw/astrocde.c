@@ -366,7 +366,7 @@ WRITE_HANDLER ( astrocade_magicram_w )
 	magic_expand_flipflop ^= 1;
 }
 
-void astrocade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void astrocade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* copy the character mapped graphics */
 

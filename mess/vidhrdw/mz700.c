@@ -55,7 +55,7 @@ void mz700_vh_stop(void)
 	generic_vh_stop();
 }
 
-void mz700_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mz700_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     int offs;
 

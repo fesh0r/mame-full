@@ -73,7 +73,7 @@ void superpet_vh_init (void)
 }
 
 //  commodore pet discrete video circuit
-void pet_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pet_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 
@@ -95,7 +95,7 @@ void pet_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 }
 
 //  commodore pet crtc video circuit for 40 columns display (standard crtc6845)
-void pet40_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pet40_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 	int w=crtc6845_get_char_columns(crtc6845);
@@ -122,7 +122,7 @@ void pet40_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 // special hardware to allow crtc programmed for pet 40 column mode! to generate
 // 80 column display!
-void pet80_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pet80_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 	struct rectangle rect;

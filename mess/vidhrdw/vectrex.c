@@ -43,7 +43,7 @@ static struct via6522_interface vectrex_via6522_interface =
 	vectrex_shift_reg_w, vectrex_screen_update
 };
 
-static struct osd_bitmap *tmpbitmap;
+static struct mame_bitmap *tmpbitmap;
 
 static int x_center, y_center, x_max;
 static int x_int, y_int; /* X, Y integrators IC LF347*/
@@ -97,7 +97,7 @@ static void vectrex_screen_update_backup (int param)
 	}
 }
 
-void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
+void vectrex_vh_update (struct mame_bitmap *bitmap, int full_refresh)
 {
 	vectrex_full_refresh = full_refresh;
 
@@ -307,7 +307,7 @@ int vectrex_start (void)
 
 void vectrex_stop(void)
 {
-	if (tmpbitmap) osd_free_bitmap (tmpbitmap);
+	if (tmpbitmap) bitmap_free (tmpbitmap);
 	vector_clear_list();
 	vector_vh_stop();
 	if (backup_timer) timer_remove (backup_timer);
@@ -426,7 +426,7 @@ static WRITE_HANDLER ( v_via_ca2_w )
 
 *****************************************************************/
 
-extern int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
+extern int png_read_artwork(const char *file_name, struct mame_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
 extern READ_HANDLER ( s1_via_pb_r );
 
 static struct via6522_interface spectrum1_via6522_interface =
@@ -554,7 +554,7 @@ int raaspec_start (void)
 	return 0;
 }
 
-void raaspec_vh_update (struct osd_bitmap *bitmap, int full_refresh)
+void raaspec_vh_update (struct mame_bitmap *bitmap, int full_refresh)
 {
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 }

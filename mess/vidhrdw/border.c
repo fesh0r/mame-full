@@ -34,7 +34,7 @@ void set_last_border_color (int NewColor)
         CurrBorderColor = NewColor;
 }
 
-void draw_border(struct osd_bitmap *bitmap,
+void draw_border(struct mame_bitmap *bitmap,
         int full_refresh,               /* Full refresh flag */
         int TopBorderLines,             /* Border lines before actual screen */
         int ScreenLines,                /* Screen height in pixels */

@@ -99,7 +99,7 @@ extern int amiga_vblank_irq( void );
 extern int amiga_fdc_init( int id );
 
 /* from vidhrdw/amiga.c */
-extern void amiga_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
+extern void amiga_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
 extern int amiga_vh_start( void );
 extern void amiga_vh_stop( void );
 extern void amiga_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);

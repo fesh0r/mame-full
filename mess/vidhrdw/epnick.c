@@ -940,7 +940,7 @@ void	Nick_reg_w(int RegIndex, int Data)
   }
 }
 
-void    Nick_DoScreen(struct osd_bitmap *bm)
+void    Nick_DoScreen(struct mame_bitmap *bm)
 {
   int line = 0;
 

@@ -652,7 +652,7 @@ WRITE_HANDLER(arcadia_video_w)
     }
 }
 
-INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
+INLINE void arcadia_draw_char(struct mame_bitmap *bitmap, UINT8 *ch, int color,
 			      int y, int x)
 {
     int k,b;
@@ -697,7 +697,7 @@ INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
     }
 }
 
-INLINE void arcadia_vh_draw_line(struct osd_bitmap *bitmap,
+INLINE void arcadia_vh_draw_line(struct mame_bitmap *bitmap,
 				 int y, UINT8 chars1[16])
 {
     int x, ch, j, h;
@@ -745,7 +745,7 @@ bool arcadia_sprite_collision(int n1, int n2)
     return FALSE;
 }
 
-static void arcadia_draw_sprites(struct osd_bitmap *bitmap)
+static void arcadia_draw_sprites(struct mame_bitmap *bitmap)
 {
     int i, k, x, y;
     UINT8 b;
@@ -860,7 +860,7 @@ READ_HANDLER(arcadia_vsync_r)
     return arcadia_video.line>=216?0x80:0;
 }
 
-void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void arcadia_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 #if arcadia_DEBUG
 {

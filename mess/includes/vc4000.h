@@ -32,7 +32,7 @@ WRITE_HANDLER(vc4000_video_w);
 #define XPOS 48
 extern int vc4000_vh_start(void);
 extern void vc4000_vh_stop(void);
-extern void vc4000_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void vc4000_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 extern struct CustomSound_interface vc4000_sound_interface;
 extern int vc4000_custom_start (const struct MachineSound *driver);

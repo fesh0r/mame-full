@@ -4,11 +4,11 @@
 /* in vidhrdw/intv.c */
 int intv_vh_start(void);
 void intv_vh_stop(void);
-void intv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void intv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 int intvkbd_vh_start(void);
 void intvkbd_vh_stop(void);
-void intvkbd_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void intvkbd_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 /* in machine/intv.c */
 

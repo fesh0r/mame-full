@@ -94,7 +94,7 @@ type1		type0			function
 #include "machine/system16.h"
 
 /*
-static void debug_draw( struct osd_bitmap *bitmap, int x, int y, unsigned int data ){
+static void debug_draw( struct mame_bitmap *bitmap, int x, int y, unsigned int data ){
 	int digit;
 	for( digit=0; digit<4; digit++ ){
 		drawgfx( bitmap, Machine->uifont,
@@ -107,7 +107,7 @@ static void debug_draw( struct osd_bitmap *bitmap, int x, int y, unsigned int da
 	}
 }
 
-static void debug_vreg( struct osd_bitmap *bitmap ){
+static void debug_vreg( struct mame_bitmap *bitmap ){
 	int g = 0x740;
 	int i;
 
@@ -226,9 +226,9 @@ READ16_HANDLER( sys16_tileram_r ){
 */
 
 static void draw_sprite16(
-	struct osd_bitmap *bitmap,
+	struct mame_bitmap *bitmap,
 	const unsigned char *addr, int pitch,
-	const UINT32 *paldata,
+	const pen_t *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
@@ -309,9 +309,9 @@ static void draw_sprite16(
 }
 
 static void draw_sprite8(
-	struct osd_bitmap *bitmap,
+	struct mame_bitmap *bitmap,
 	const unsigned char *addr, int pitch,
-	const UINT32 *paldata,
+	const pen_t *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
@@ -397,9 +397,9 @@ static void draw_sprite8(
 }
 
 static void draw_sprite(
-	struct osd_bitmap *bitmap,
+	struct mame_bitmap *bitmap,
 	const UINT8 *addr, int pitch,
-	const UINT32 *paldata,
+	const pen_t *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
@@ -415,8 +415,8 @@ static void draw_sprite(
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int b3d ){
-	const UINT32 *base_pal = Machine->gfx[0]->colortable;
+static void draw_sprites( struct mame_bitmap *bitmap, int b3d ){
+	const pen_t *base_pal = Machine->gfx[0]->colortable;
 	const unsigned char *base_gfx = memory_region(REGION_GFX2);
 
 	struct sys16_sprite_attributes sprite;
@@ -1265,7 +1265,7 @@ static void sys18_vh_screenrefresh_helper( void ){
 	tilemap_set_enable( foreground2, sys18_fg2_active );
 }
 
-void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void sys16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
 	if (!sys16_refreshenable) return;
 
 	if( sys16_update_proc ) sys16_update_proc();
@@ -1292,7 +1292,7 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	draw_sprites( bitmap,0 );
 }
 
-void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void sys18_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
 	if (!sys16_refreshenable) return;
 	if( sys16_update_proc ) sys16_update_proc();
 	update_page();
@@ -1328,7 +1328,7 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 }
 
 
-static void render_gr(struct osd_bitmap *bitmap,int priority){
+static void render_gr(struct mame_bitmap *bitmap,int priority){
 	/* the road is a 4 color bitmap */
 	int i,j;
 	UINT8 *data = memory_region(REGION_GFX3);
@@ -1344,8 +1344,8 @@ static void render_gr(struct osd_bitmap *bitmap,int priority){
 	int yflip=0, ypos;
 	int dx=1,xoff=0;
 
-	UINT32 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
-	UINT32 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
+	pen_t *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
+	pen_t *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
 
 #if 0
 if( keyboard_pressed( KEYCODE_S ) ){
@@ -1639,7 +1639,7 @@ if( keyboard_pressed( KEYCODE_S ) ){
 	}
 }
 
-void sys16_hangon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void sys16_hangon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
 	if (!sys16_refreshenable) return;
 	if( sys16_update_proc ) sys16_update_proc();
 	update_page();
@@ -1662,7 +1662,7 @@ void sys16_hangon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	draw_sprites( bitmap, 0 );
 }
 
-static void render_grv2(struct osd_bitmap *bitmap,int priority)
+static void render_grv2(struct mame_bitmap *bitmap,int priority)
 {
 	int i,j;
 	UINT8 *data = memory_region(REGION_GFX3);
@@ -1680,8 +1680,8 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 
 	int second_road = sys16_gr_second_road[0];
 
-	UINT32 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
-	UINT32 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
+	pen_t *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
+	pen_t *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
 
 	priority=priority << 11;
 
@@ -2002,7 +2002,7 @@ int sys16_outrun_vh_start( void ){
 	return 0;
 }
 
-void sys16_outrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void sys16_outrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
 	if( sys16_refreshenable ){
 		if( sys16_update_proc ) sys16_update_proc();
 		update_page();
@@ -2113,7 +2113,7 @@ void sys16_aburner_vh_stop( void ){
 	sys16_vh_stop();
 }
 
-static void aburner_draw_road( struct osd_bitmap *bitmap ){
+static void aburner_draw_road( struct mame_bitmap *bitmap ){
 	/*
 		sys16_roadram[0x1000]:
 			0x04: flying (sky/horizon)
@@ -2318,7 +2318,7 @@ static void sys16_aburner_vh_screenrefresh_helper( void ){
 	tilemap_set_scrolly( foreground2, 0, -256+sys16_fg2_scrolly );
 }
 
-void sys16_aburner_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
+void sys16_aburner_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ){
 	sys16_aburner_vh_screenrefresh_helper();
 	update_page();
 

@@ -13,7 +13,7 @@ driver by Nicola Salmoria
 
 int xmen_vh_start(void);
 void xmen_vh_stop(void);
-void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void xmen_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************
@@ -113,7 +113,7 @@ static WRITE16_HANDLER( sound_cmd_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 static WRITE16_HANDLER( xmen_18fa00_w )

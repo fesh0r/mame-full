@@ -23,7 +23,7 @@ void nascom1_vh_stop (void)
 	generic_vh_stop();
 }
 
-void nascom1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void nascom1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 
 int	sy, sx;
@@ -53,7 +53,7 @@ for (sy = 0; sy < 15; sy++) {
 
 }
 
-void nascom2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void nascom2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 
 int	sy, sx;

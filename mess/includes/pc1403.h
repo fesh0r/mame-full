@@ -20,7 +20,7 @@ int pc1403_vh_start(void);
 extern READ_HANDLER(pc1403_lcd_read);
 extern WRITE_HANDLER(pc1403_lcd_write);
 
-void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void pc1403_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 /* in systems/pocketc.c */
 #define KEY_SMALL input_port_1_r(0)&0x40

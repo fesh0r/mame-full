@@ -12,7 +12,7 @@ Asterix
 
 int asterix_vh_start(void);
 void asterix_vh_stop(void);
-void asterix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void asterix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE16_HANDLER( asterix_spritebank_w );
 
 static unsigned char cur_control2;
@@ -122,7 +122,7 @@ static WRITE_HANDLER( sound_arm_nmi_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 // Check the routine at 7f30 in the ead version.

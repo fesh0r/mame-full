@@ -21,45 +21,6 @@ static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
-***************************************************************************/
-
-void vastar_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3,r,g,b;
-
-		/* red component */
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		r =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* green component */
-		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
-		g =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* blue component */
-		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
-		b =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		palette_set_color(i,r,g,b);
-	}
-}
-
-
-/***************************************************************************
-
   Callbacks for the TileMap code
 
 ***************************************************************************/
@@ -172,7 +133,7 @@ READ_HANDLER( vastar_bg2videoram_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -231,7 +192,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vastar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 

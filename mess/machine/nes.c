@@ -507,7 +507,7 @@ int nes_interrupt (void)
 	if ((ret != M6502_INT_NONE))
 	{
     	logerror("--- scanline %d", current_scanline);
-    	if (ret == M6502_INT_IRQ)
+    	if (ret == M6502_IRQ_LINE)
     		logerror(" IRQ\n");
     	else logerror(" NMI\n");
     }

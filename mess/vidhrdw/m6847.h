@@ -45,7 +45,7 @@ void m6847_vh_normalparams(struct m6847_init_params *params);
 
 void m6847_vh_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 int m6847_vh_start(const struct m6847_init_params *params);
-void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh);
+void m6847_vh_update(struct mame_bitmap *bitmap,int full_refresh);
 void m6847_vh_stop(void);
 int m6847_vh_interrupt(void);
 int m6847_is_t1(int version);

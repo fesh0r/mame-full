@@ -5,7 +5,7 @@ typedef void (*STATE_FUNCTION)(void);
 static struct {
 	int count;
 	STATE_FUNCTION functions[10];
-	struct osd_bitmap *bitmap;
+	struct mame_bitmap *bitmap;
 
 	int y;
 	// this is here to generate a full refresh when needed!
@@ -52,7 +52,7 @@ void state_display_text(const char *text)
 }
 
 // call this at last after updating your frame
-void state_display(struct osd_bitmap *bitmap)
+void state_display(struct mame_bitmap *bitmap)
 {
 	int i;
 

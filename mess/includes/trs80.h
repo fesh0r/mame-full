@@ -23,7 +23,7 @@ extern int trs80_floppy_init(int id);
 
 extern int trs80_vh_start(void);
 extern void trs80_vh_stop(void);
-extern void trs80_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void trs80_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern void trs80_sh_sound_init(const char * gamename);
 

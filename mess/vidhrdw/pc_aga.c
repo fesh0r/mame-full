@@ -123,7 +123,7 @@ extern void pc_aga_vh_stop(void)
 	generic_vh_stop();
 }
 
-extern void pc_aga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+extern void pc_aga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	switch (aga.mode) {
 	case AGA_COLOR: pc_cga_vh_screenrefresh(bitmap, full_refresh);break;
@@ -132,7 +132,7 @@ extern void pc_aga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-extern void pc200_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+extern void pc200_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	switch (PC200_MODE) {
 	case PC200_MDA: pc_mda_vh_screenrefresh(bitmap, full_refresh);break;

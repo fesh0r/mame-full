@@ -230,10 +230,10 @@ int odyssey2_line(void)
     line=(line+1)%262;
     switch (line) {
     case 252:
-	cpu_set_irq_line(0, I8048_EXT_INT, ASSERT_LINE); //vsync??
+	cpu_set_irq_line(0, 1, ASSERT_LINE); //vsync??
 	break;
     case 253:
-	cpu_set_irq_line(0, I8048_EXT_INT, CLEAR_LINE); //vsync??
+	cpu_set_irq_line(0, 1, CLEAR_LINE); //vsync??
 	break;
     }
     return 0;
@@ -278,7 +278,7 @@ INLINE void odyssey2_draw_sprite(UINT8 bg[][320], UINT8 code, int x, int y, int 
     }
 }
 
-INLINE void odyssey2_draw_char(struct osd_bitmap *bitmap, UINT8 bg[][320], int x, int y, int ptr, int color)
+INLINE void odyssey2_draw_char(struct mame_bitmap *bitmap, UINT8 bg[][320], int x, int y, int ptr, int color)
 {
     int n, i;
     int offset=ptr|((color&1)<<8);
@@ -305,7 +305,7 @@ INLINE void odyssey2_draw_char(struct osd_bitmap *bitmap, UINT8 bg[][320], int x
 
 ***************************************************************************/
 
-void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void odyssey2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     int i, j, x, y;
     int color;

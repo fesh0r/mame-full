@@ -36,11 +36,11 @@ void pce_vh_stop(void)
 {
     logerror("*** pce_vh_stop\n");
     if(vdc.vram) free (vdc.vram);
-    if(vdc.bmp) osd_free_bitmap(vdc.bmp);
+    if(vdc.bmp) bitmap_free(vdc.bmp);
 }
 
 
-void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pce_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     /* only refresh the visible portion of the display */
     struct rectangle pce_visible_area;

@@ -975,14 +975,6 @@ static int init_cpudata(void)
 			if (!(Machine->drv->cpu[cpunum].cpu_type & CPU_16BIT_PORT))
 				cpudata[cpunum].port.mask = 0xff;
 #endif
-#ifdef MESS
-#if HAS_Z80_MSX
-		/* Z80-MSX port mask kludge */
-		if (cputype == CPU_Z80_MSX)
-			if (!(Machine->drv->cpu[cpunum].cpu_type & CPU_16BIT_PORT))
-				cpudata[cpunum].port.mask = 0xff;
-#endif
-#endif
 	}
 	return 1;
 }
@@ -2288,6 +2280,7 @@ GENERATE_MEM_HANDLERS_16BIT_BE(32)
 
 GENERATE_MEM_HANDLERS_16BIT_LE(16)
 GENERATE_MEM_HANDLERS_16BIT_LE(17)
+GENERATE_MEM_HANDLERS_16BIT_LE(24)
 GENERATE_MEM_HANDLERS_16BIT_LE(29)
 GENERATE_MEM_HANDLERS_16BIT_LE(32)
 
@@ -2315,6 +2308,7 @@ static const struct memory_address_table readmem_to_bits[] =
 
 	{ 16, cpu_readmem16lew },
 	{ 17, cpu_readmem17lew },
+	{ 24, cpu_readmem24lew },
 	{ 29, cpu_readmem29lew },
 	{ 32, cpu_readmem32lew },
 
@@ -2339,6 +2333,7 @@ GENERATE_PORT_HANDLERS_8BIT(16)
 GENERATE_PORT_HANDLERS_16BIT_BE(16)
 
 GENERATE_PORT_HANDLERS_16BIT_LE(16)
+GENERATE_PORT_HANDLERS_16BIT_LE(24)
 
 GENERATE_PORT_HANDLERS_32BIT_BE(16)
 
@@ -2373,11 +2368,11 @@ int mem_address_bits_of_cpu(int cputype)
 
 int port_address_bits_of_cpu(int cputype)
 {
+#if (HAS_V60)
+	return cputype == CPU_V60 ? 24 : 16;
+#else
 	return 16;
-/*
-	// fix me: in the future, we will need to make this work better
-	return (cputype == NEC_V60) ? 24 : 16;
-*/
+#endif
 }
 
 

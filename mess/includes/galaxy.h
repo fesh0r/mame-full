@@ -14,7 +14,7 @@ extern int galaxy_interrupts_enabled;
 
 extern int galaxy_vh_start (void);
 extern void galaxy_vh_stop (void);
-extern void galaxy_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void galaxy_vh_screenrefresh (struct mame_bitmap *bitmap,
 												int full_refresh);
 extern WRITE_HANDLER( galaxy_vh_charram_w );
 extern unsigned char *galaxy_charram;

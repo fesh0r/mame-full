@@ -417,7 +417,7 @@ static void vc1541_via0_irq (int level)
 	vc1541->via0irq = level;
 	DBG_LOG(2, "vc1541 via0 irq",("level %d %d\n",vc1541->via0irq,vc1541->via1irq));
 	cpu_set_irq_line (vc1541->cpunumber,
-					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
+					  M6502_IRQ_LINE, vc1541->via1irq || vc1541->via0irq);
 }
 
 static READ_HANDLER( vc1541_via0_read_portb )
@@ -530,7 +530,7 @@ static void vc1541_via1_irq (int level)
 	vc1541->via1irq = level;
 	DBG_LOG(2, "vc1541 via1 irq",("level %d %d\n",vc1541->via0irq,vc1541->via1irq));
 	cpu_set_irq_line (vc1541->cpunumber,
-					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
+					  M6502_IRQ_LINE, vc1541->via1irq || vc1541->via0irq);
 }
 
 static READ_HANDLER( vc1541_via1_read_porta )
@@ -853,7 +853,7 @@ void vc1541_serial_request_write (int which, int level)
  */
 static void c1551_timer(int param)
 {
-	cpu_set_irq_line(vc1541->cpunumber, M6502_INT_IRQ, PULSE_LINE);
+	cpu_set_irq_line(vc1541->cpunumber, M6502_IRQ_LINE, PULSE_LINE);
 }
 
 /*

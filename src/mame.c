@@ -13,7 +13,7 @@ static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
-static struct osd_bitmap *real_scrbitmap;
+static struct mame_bitmap *real_scrbitmap;
 
 /* Variables to hold the status of various game options */
 struct GameOptions	options;
@@ -482,7 +482,6 @@ int run_game(int game)
 	#endif
 #endif
 
-
 	/* copy some settings into easier-to-handle variables */
 	record	   = options.record;
 	playback   = options.playback;
@@ -787,7 +786,7 @@ static void vh_close(void)
 	}
 	if (Machine->debug_bitmap)
 	{
-		osd_free_bitmap(Machine->debug_bitmap);
+		bitmap_free(Machine->debug_bitmap);
 		Machine->debug_bitmap = NULL;
 	}
 

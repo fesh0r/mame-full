@@ -49,7 +49,7 @@ struct rastertrack_initvars
 void rastertrack_init(struct rastertrack_initvars *initvars);
 void rastertrack_touchvideomode(void);
 int rastertrack_hblank(void);
-void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh);
+void rastertrack_refresh(struct mame_bitmap *bitmap, int full_refresh);
 int rastertrack_scanline(void);
 
 #endif /* RSTRTRCK_H */

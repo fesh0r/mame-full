@@ -198,7 +198,7 @@ of the render colours - these may be different to the current colour palette val
 static unsigned long amstrad_render_colours[17];
 
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
-static struct osd_bitmap	*amstrad_bitmap;
+static struct mame_bitmap	*amstrad_bitmap;
 #endif
 
 /* the mode is re-loaded at each HSYNC */
@@ -258,7 +258,7 @@ static int amstrad_DE=0;
 
 //static unsigned char *amstrad_Video_RAM;
 static UINT16 *amstrad_display;
-//static struct osd_bitmap *amstrad_bitmap;
+//static struct mame_bitmap *amstrad_bitmap;
 
 static int x_screen_pos;
 static int y_screen_pos;
@@ -499,7 +499,7 @@ void amstrad_draw_screen_enabled(void)
 #endif
 void amstrad_draw_screen_enabled(void)
 {
-	struct osd_bitmap *bitmap = amstrad_bitmap;
+	struct mame_bitmap *bitmap = amstrad_bitmap;
 	int x = x_screen_pos;
 	int y = y_screen_pos;
 
@@ -748,45 +748,14 @@ void amstrad_draw_screen_disabled(void)
 #endif
 void amstrad_draw_screen_disabled(void)
 {
-	struct osd_bitmap *bitmap = amstrad_bitmap;
+	struct mame_bitmap *bitmap = amstrad_bitmap;
 	int x = x_screen_pos;
 	int y = y_screen_pos;
 	int border_colour;
 
 	border_colour = amstrad_render_colours[16];	
 	
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
-	plot_pixel(bitmap,x,y,border_colour);
-	x++;
+	plot_box(bitmap,x,y,16,1,border_colour);
 }
 
 
@@ -962,7 +931,7 @@ void amstrad_vh_execute_crtc_cycles(int crtc_execute_cycles)
  * resfresh the amstrad video screen
  ************************************************************************/
 
-void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void amstrad_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 	struct rectangle rect;
@@ -1109,7 +1078,7 @@ int amstrad_vh_start(void)
 	amstrad_rendering = 0;
 	EventList_Initialise(19968);
 #else
-	amstrad_bitmap = osd_alloc_bitmap(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
+	amstrad_bitmap = bitmap_alloc_depth(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
 	amstrad_display = amstrad_bitmap->line[0];
 #endif
 
@@ -1130,7 +1099,7 @@ void amstrad_vh_stop(void)
 #else
 	if (amstrad_bitmap)
 	{
-		osd_free_bitmap(amstrad_bitmap);
+		bitmap_free(amstrad_bitmap);
 		amstrad_bitmap = NULL;
 	}
 #endif

@@ -37,7 +37,7 @@ void zx_ula_bkgnd(int color)
 	{
 		int y, new_x, new_y;
 		struct rectangle r;
-		struct osd_bitmap *bitmap = Machine->scrbitmap;
+		struct mame_bitmap *bitmap = Machine->scrbitmap;
 
 		new_y = cpu_getscanline();
 		new_x = cpu_gethorzbeampos();
@@ -117,7 +117,7 @@ void zx_ula_irq(int param)
 
 int zx_ula_r(int offs, int region)
 {
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	int x, y, chr, data, ireg, rreg, cycles, offs0 = offs, halted = 0;
 	UINT8 *chrgen, *rom = memory_region(REGION_CPU1);
 
@@ -165,7 +165,7 @@ int zx_ula_r(int offs, int region)
 	return rom[offs0];
 }
 
-void zx_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void zx_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* decrement video synchronization counter */
 	if (ula_frame_vsync)

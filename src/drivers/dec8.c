@@ -42,14 +42,14 @@ To do:
 #include "cpu/m6502/m6502.h"
 
 void ghostb_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void shackled_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void cobracom_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void ghostb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void srdarwin_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void gondo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void garyoret_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void lastmiss_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void shackled_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void oscar_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int cobracom_vh_start(void);
 int oscar_vh_start(void);
 int ghostb_vh_start(void);
@@ -1988,7 +1988,7 @@ static int ghostb_interrupt(void)
 
 	if (nmi_enable) return M6809_INT_NMI; /* VBL */
 
-	return 0; /* VBL */
+	return ignore_interrupt();
 }
 
 static int gondo_interrupt(void)
@@ -1996,7 +1996,7 @@ static int gondo_interrupt(void)
 	if (nmi_enable)
 		return M6809_INT_NMI; /* VBL */
 
-	return 0; /* VBL */
+	return ignore_interrupt();
 }
 
 /* Coins generate NMI's */
@@ -2010,7 +2010,7 @@ static int oscar_interrupt(void)
     	cpu_cause_interrupt (0, M6809_INT_NMI);
     }
 
-	return 0;
+	return ignore_interrupt();
 }
 
 /******************************************************************************/

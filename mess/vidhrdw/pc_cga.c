@@ -270,9 +270,9 @@ READ_HANDLER ( pc_CGA_r )
   The character cell size is 16x8
 ***************************************************************************/
 #ifndef GFX_ZOOMING
-static void cga_text_inten(struct osd_bitmap *bitmap)
+static void cga_text_inten(struct mame_bitmap *bitmap)
 #else
-static void cga_text_inten(struct osd_bitmap *bitmap, int width)
+static void cga_text_inten(struct mame_bitmap *bitmap, int width)
 #endif
 {
 	int sx, sy;
@@ -334,9 +334,9 @@ static void cga_text_inten(struct osd_bitmap *bitmap, int width)
   The character cell size is 16x8
 ***************************************************************************/
 #ifndef GFX_ZOOMING
-static void cga_text_blink(struct osd_bitmap *bitmap)
+static void cga_text_blink(struct mame_bitmap *bitmap)
 #else
-static void cga_text_blink(struct osd_bitmap *bitmap, int width)
+static void cga_text_blink(struct mame_bitmap *bitmap, int width)
 #endif
 {
 	int sx, sy;
@@ -410,7 +410,7 @@ static void cga_text_blink(struct osd_bitmap *bitmap, int width)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
   cga fetches 2 byte per crtc6845 access (not modeled here)!
 ***************************************************************************/
-static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
+static void cga_gfx_2bpp(struct mame_bitmap *bitmap)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(cga.crtc)*2;
@@ -457,7 +457,7 @@ static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
-static void cga_gfx_1bpp(struct osd_bitmap *bitmap)
+static void cga_gfx_1bpp(struct mame_bitmap *bitmap)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(cga.crtc)*2;
@@ -493,7 +493,7 @@ static void cga_gfx_1bpp(struct osd_bitmap *bitmap)
 // mapping of the 4 planes into videoram
 // (text data should be readable at videoram+0)
 static const int videoram_offset[4]= { 0xc000, 0x8000, 0x4000, 0 };
-INLINE void pc1512_plot_unit(struct osd_bitmap *bitmap, 
+INLINE void pc1512_plot_unit(struct mame_bitmap *bitmap, 
 							 int x, int y, int offs)
 {
 	int color, values[4];
@@ -519,7 +519,7 @@ INLINE void pc1512_plot_unit(struct osd_bitmap *bitmap,
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
-static void pc1512_gfx_4bpp(struct osd_bitmap *bitmap)
+static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap)
 {
 	int i, sx, sy, sh;
 	int	offs = crtc6845_get_start(cga.crtc);
@@ -570,11 +570,11 @@ extern void pc_cga_timer(void)
 	
 
 /***************************************************************************
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pc_cga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int video_active = 0;
 	static int width=0, height=0;
@@ -712,7 +712,7 @@ extern void pc1512_vh_stop(void)
 	pc_cga_vh_stop();
 }
 
-extern void pc1512_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+extern void pc1512_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	pc_cga_vh_screenrefresh(bitmap, full_refresh);
 }

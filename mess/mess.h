@@ -63,9 +63,9 @@ extern "C" {
 int DECL_SPEC mess_printf(char *fmt, ...);
 
 extern void showmessinfo(void);
-extern int displayimageinfo(struct osd_bitmap *bitmap, int selected);
-extern int filemanager(struct osd_bitmap *bitmap, int selected);
-extern int tapecontrol(struct osd_bitmap *bitmap, int selected);
+extern int displayimageinfo(struct mame_bitmap *bitmap, int selected);
+extern int filemanager(struct mame_bitmap *bitmap, int selected);
+extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1

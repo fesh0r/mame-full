@@ -5,40 +5,6 @@ size_t mexico86_objectram_size;
 static int charbank;
 
 
-void mexico86_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3;
-
-
-		/* red component */
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* green component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* blue component */
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		color_prom++;
-	}
-}
-
-
 
 WRITE_HANDLER( mexico86_bankswitch_w )
 {
@@ -54,7 +20,7 @@ WRITE_HANDLER( mexico86_bankswitch_w )
 
 
 
-void mexico86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void mexico86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy,xc,yc;
@@ -133,7 +99,7 @@ if (offs >= mexico86_objectram_size+0x1c0) continue;
 	}
 }
 
-void kikikai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kikikai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy,xc,yc;

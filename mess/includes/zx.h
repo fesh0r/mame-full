@@ -18,7 +18,7 @@ extern WRITE_HANDLER ( pow3000_io_w );
 
 /* from vidhrdw/zx80.c */
 extern int zx_ula_scanline(void);
-extern void zx_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void zx_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 

@@ -87,7 +87,7 @@ int apple1_interrupt(void)
 		apple1_vh_dsp_clr();
 		pia_reset();
 		m6502_reset(NULL);
-		m6502_set_pc(0xff00);
+		activecpu_set_pc(0xff00);
 	}
 	else if (readinputport(3) & 0x0040)	/* clear screen */
 	{

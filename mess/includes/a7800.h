@@ -1,7 +1,7 @@
 /* vidhrdw/a7800.c */
 extern int a7800_vh_start(void);
 extern void a7800_vh_stop(void);
-extern void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void a7800_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 extern int a7800_interrupt(void);
 extern READ_HANDLER  ( a7800_MARIA_r);
 extern WRITE_HANDLER ( a7800_MARIA_w );

@@ -36,7 +36,7 @@ WRITE_HANDLER(arcadia_video_w);
 #endif
 extern int arcadia_vh_start(void);
 extern void arcadia_vh_stop(void);
-extern void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void arcadia_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 extern struct CustomSound_interface arcadia_sound_interface;
 extern int arcadia_custom_start (const struct MachineSound *driver);

@@ -166,7 +166,7 @@ static int msize0 = 0;
 static int msize1 = 0;
 
 /* bitmap */
-static struct osd_bitmap *stella_bitmap = NULL;
+static struct mame_bitmap *stella_bitmap = NULL;
 
 /* local */
 static unsigned char *a2600_cartridge_rom;
@@ -1351,7 +1351,7 @@ void a2600_init_machine(void)
 	This routine is called at the start of vblank to refresh the screen
 
 ***************************************************************************/
-void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void a2600_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	if (!osd_skip_this_frame())
 		copybitmap(bitmap, stella_bitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);

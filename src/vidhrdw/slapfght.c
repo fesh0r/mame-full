@@ -19,52 +19,6 @@ static struct tilemap *pf1_tilemap,*fix_tilemap;
 
 
 
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-  Slapfight has three 256x4 palette PROMs (one per gun) all colours for all
-  outputs are mapped to the palette directly.
-
-  The palette PROMs are connected to the RGB output this way:
-
-  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
-        -- 470 ohm resistor  -- RED/GREEN/BLUE
-        -- 1  kohm resistor  -- RED/GREEN/BLUE
-  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
-
-*/
-
-void slapfight_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3,r,g,b;
-
-
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
-		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
-		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		palette_set_color(i,r,g,b);
-	}
-}
-
 
 /***************************************************************************
 
@@ -202,7 +156,7 @@ void slapfght_log_vram(void)
   Render the Sprites
 
 ***************************************************************************/
-static void perfrman_draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
+static void perfrman_draw_sprites( struct mame_bitmap *bitmap, int priority_to_display )
 {
 	int offs;
 
@@ -238,13 +192,13 @@ static void perfrman_draw_sprites( struct osd_bitmap *bitmap, int priority_to_di
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void perfrman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_flip( pf1_tilemap, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_scrolly( pf1_tilemap ,0 , 0 );
@@ -267,7 +221,7 @@ void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void slapfight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

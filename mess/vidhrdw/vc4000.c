@@ -229,7 +229,7 @@ static char led[20][12+1]={
     "  dddddddd  "
 };
 
-void vc4000_draw_digit(struct osd_bitmap *bitmap, int x, int y, int d, int line)
+void vc4000_draw_digit(struct mame_bitmap *bitmap, int x, int y, int d, int line)
 {
     static const int digit_to_segment[0x10]={ 
 	0x3f, 6, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 7, 0x7f, 0x6f
@@ -255,7 +255,7 @@ INLINE void vc4000_collision_plot(UINT8 *collision, UINT8 data, UINT8 color, int
     }
 }
 
-void vc4000_sprite_update(struct osd_bitmap *bitmap, UINT8 *collision, SPRITE *This)
+void vc4000_sprite_update(struct mame_bitmap *bitmap, UINT8 *collision, SPRITE *This)
 {
 #ifdef DEBUG
     char message[40];
@@ -498,7 +498,7 @@ int vc4000_video_line(void)
     return 0;
 }
 
-void vc4000_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vc4000_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 #if 0
     char str[0x40];

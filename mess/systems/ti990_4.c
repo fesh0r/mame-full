@@ -123,7 +123,7 @@ static void ti990_4_vh_stop(void)
 {
 }
 
-static void ti990_4_vh_refresh(struct osd_bitmap *bitmap, int full_refresh)
+static void ti990_4_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 
 }

@@ -33,7 +33,7 @@ void gradius3_vh_stop(void);
 READ16_HANDLER( gradius3_gfxrom_r );
 READ16_HANDLER( gradius3_gfxram_r );
 WRITE16_HANDLER( gradius3_gfxram_w );
-void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gradius3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 
@@ -133,7 +133,7 @@ static WRITE16_HANDLER( cpuB_irqenable_w )
 static int cpuA_interrupt(void)
 {
 	if (irqAen) return 2;
-	return 0;
+	return ignore_interrupt();
 }
 
 static int cpuB_interrupt(void)
@@ -146,7 +146,7 @@ static int cpuB_interrupt(void)
 	{
 		if (irqBmask & 1) return 1;
 	}
-	return 0;
+	return ignore_interrupt();
 }
 
 static WRITE16_HANDLER( cpuB_irqtrigger_w )

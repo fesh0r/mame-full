@@ -30,7 +30,7 @@
 #include "formats/orictap.h"
 
 static int enable_logging = 0;
-static int save_done = 0;
+/* static int save_done = 0; */
 
 
 /* timer used to refresh via cb input, which will trigger ints on pulses

@@ -45,7 +45,7 @@ static UINT8	autoerase_enable;
 
 /* palette-related variables */
 static UINT32	palette_mask;
-static UINT32 *	pen_map;
+static pen_t *	pen_map;
 
 /* videoram-related variables */
 static UINT16 *	local_videoram;
@@ -520,7 +520,7 @@ static void dma_callback(int is_in_34010_context)
 		tms34010_set_irq_line(0, ASSERT_LINE);
 	}
 	else
-		cpu_cause_interrupt(0,TMS34010_INT1);
+		cpu_cause_interrupt(0, 0);
 }
 
 
@@ -826,7 +826,7 @@ void wms_zunit_vh_eof(void)
  *
  *************************************/
 
-void wms_yunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void wms_yunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	UINT16 *buffer;
 	int v, width, xoffs;

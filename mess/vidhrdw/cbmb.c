@@ -67,7 +67,7 @@ void cbmb_vh_set_font(int font)
 	cbmb_font=font;
 }
 
-void cbmb_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void cbmb_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 	struct rectangle rect, rect2;

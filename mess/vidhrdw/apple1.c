@@ -108,7 +108,7 @@ void	apple1_vh_dsp_clr (void)
 	}
 }
 
-void	apple1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void	apple1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int offs;
 	int code;

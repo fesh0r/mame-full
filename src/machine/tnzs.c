@@ -36,7 +36,7 @@ static unsigned char mcu_coinsA,mcu_coinsB,mcu_credits;
 
 
 
-READ_HANDLER( arkanoi2_sh_f000_r )
+READ_HANDLER( arknoid2_sh_f000_r )
 {
 	int val;
 
@@ -139,7 +139,7 @@ static void mcu_handle_coins(int coin)
 
 
 
-static READ_HANDLER( mcu_arkanoi2_r )
+static READ_HANDLER( mcu_arknoid2_r )
 {
 	char *mcu_startup = "\x55\xaa\x5a";
 
@@ -201,7 +201,7 @@ logerror("error, unknown mcu command\n");
 	}
 }
 
-static WRITE_HANDLER( mcu_arkanoi2_w )
+static WRITE_HANDLER( mcu_arknoid2_w )
 {
 	if (offset == 0)
 	{
@@ -509,7 +509,7 @@ void init_extrmatn(void)
 	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
 }
 
-void init_arkanoi2(void)
+void init_arknoid2(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -529,6 +529,9 @@ void init_drtoppel(void)
 	/* there's code which falls through from the fixed ROM to bank #0, I have to */
 	/* copy it there otherwise the CPU bank switching support will not catch it. */
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+
+	/* drtoppel writes to the palette RAM area even if it has PROMs! We have to patch it out. */
+	install_mem_write_handler(0, 0xf800, 0xfbff, MWA_NOP);
 }
 
 void init_chukatai(void)
@@ -574,7 +577,7 @@ READ_HANDLER( tnzs_mcu_r )
 	switch (mcu_type)
 	{
 		case MCU_ARKANOID:
-			return mcu_arkanoi2_r(offset);
+			return mcu_arknoid2_r(offset);
 			break;
 		case MCU_CHUKATAI:
 			return mcu_chukatai_r(offset);
@@ -593,7 +596,7 @@ WRITE_HANDLER( tnzs_mcu_w )
 	switch (mcu_type)
 	{
 		case MCU_ARKANOID:
-			mcu_arkanoi2_w(offset,data);
+			mcu_arknoid2_w(offset,data);
 			break;
 		case MCU_CHUKATAI:
 			mcu_chukatai_w(offset,data);

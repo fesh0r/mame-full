@@ -21,7 +21,7 @@
 
 #define READ_MEM(x) cpu_readmem16(x)
 
-static struct osd_bitmap *maria_bitmap;
+static struct mame_bitmap *maria_bitmap;
 
 //static unsigned char *ROM;
 
@@ -78,7 +78,7 @@ int a7800_vh_start(void)
 
 void a7800_vh_stop(void)
 {
-    osd_free_bitmap(maria_bitmap);
+    bitmap_free(maria_bitmap);
 }
 
 /***************************************************************************
@@ -503,7 +503,7 @@ int a7800_interrupt(void)
 
 ***************************************************************************/
 /* This routine is called at the start of vblank to refresh the screen */
-void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void a7800_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
     maria_scanline=0;
     copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

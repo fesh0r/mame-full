@@ -120,7 +120,7 @@ static WRITE_HANDLER( vc20_via0_write_porta )
  */
 static void vc20_via1_irq (int level)
 {
-	cpu_set_irq_line (0, M6502_INT_IRQ, level);
+	cpu_set_irq_line (0, M6502_IRQ_LINE, level);
 }
 
 static READ_HANDLER( vc20_via1_read_porta )

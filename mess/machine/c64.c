@@ -278,10 +278,10 @@ static void c64_irq (int level)
 			if (0&&(cpu_getactivecpu()==0)) {
 				cpu_set_irq_line (0, Z80_IRQ_INT, level);
 			} else {
-				cpu_set_irq_line (1, M6510_INT_IRQ, level);
+				cpu_set_irq_line (1, M6510_IRQ_LINE, level);
 			}
 		} else {
-			cpu_set_irq_line (0, M6510_INT_IRQ, level);
+			cpu_set_irq_line (0, M6510_IRQ_LINE, level);
 		}
 		old_level = level;
 	}

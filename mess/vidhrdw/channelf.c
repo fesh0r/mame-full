@@ -98,7 +98,7 @@ int recalc_palette_offset(int reg1, int reg2)
 	}
 }
 
-void channelf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void channelf_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x,y,offset, palette_offset;
 

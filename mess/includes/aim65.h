@@ -13,7 +13,7 @@ void aim65_init_colors (unsigned char *palette, unsigned short *colortable, cons
 
 int aim65_vh_start(void);
 void aim65_vh_stop(void);
-void aim65_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void aim65_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus

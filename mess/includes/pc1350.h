@@ -14,7 +14,7 @@ extern READ_HANDLER(pc1350_lcd_read);
 extern WRITE_HANDLER(pc1350_lcd_write);
 
 int pc1350_keyboard_line_r(void);
-void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void pc1350_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 /* in systems/pocketc.c */
 #define PC1350_KEY_OFF input_port_0_r(0)&0x80

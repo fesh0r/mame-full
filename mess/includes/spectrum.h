@@ -50,17 +50,17 @@ extern void spectrum_plus3_update_memory(void);
 
 extern int  spectrum_vh_start(void);
 extern void spectrum_vh_stop(void);
-extern void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void spectrum_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 extern void spectrum_eof_callback(void);
 
 extern int spectrum_128_vh_start(void);
 extern void spectrum_128_vh_stop(void);
-extern void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void spectrum_128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern void ts2068_eof_callback(void);
-extern void ts2068_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void ts2068_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
-extern void tc2048_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void tc2048_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern WRITE_HANDLER ( spectrum_characterram_w );
 extern READ_HANDLER  ( spectrum_characterram_r );

@@ -41,7 +41,7 @@ void p2000m_vh_callback (void)
 	}
 }
 
-void p2000m_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void p2000m_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int offs, sx, sy, code, loop;
 

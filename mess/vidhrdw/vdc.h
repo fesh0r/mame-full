@@ -8,7 +8,7 @@ READ_HANDLER ( vce_r );
 WRITE_HANDLER ( vce_w );
 int pce_vh_start(void);
 void pce_vh_stop(void);
-void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void pce_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 /* Screen timing stuff */
 
@@ -76,7 +76,7 @@ typedef struct
     UINT8 vdc_latch;
     pair vdc_data[32];
     int status;
-    struct osd_bitmap *bmp;
+    struct mame_bitmap *bmp;
 }VDC;
 
 
@@ -87,7 +87,7 @@ typedef struct
 extern VDC vdc;
 extern int pce_vh_start(void);
 extern void pce_vh_stop(void);
-extern void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void pce_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( vdc_w );
 extern READ_HANDLER ( vdc_r );
 extern WRITE_HANDLER ( vce_w );

@@ -18,4 +18,4 @@ void mk2_init_colors (unsigned char *sys_palette,
 
 int mk2_vh_start(void);
 void mk2_vh_stop(void);
-void mk2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void mk2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);

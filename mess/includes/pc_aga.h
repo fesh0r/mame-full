@@ -33,7 +33,7 @@ void pc_aga_set_mode(AGA_MODE mode);
 extern void pc_aga_timer(void);
 extern int  pc_aga_vh_start(void);
 extern void pc_aga_vh_stop(void);
-extern void pc_aga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void pc_aga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern WRITE_HANDLER ( pc_aga_videoram_w );
 READ_HANDLER( pc_aga_videoram_r );
@@ -48,5 +48,5 @@ extern READ_HANDLER ( pc_aga_cga_r );
 
 extern WRITE_HANDLER( pc200_cga_w );
 extern READ_HANDLER ( pc200_cga_r );
-extern void pc200_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void pc200_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 

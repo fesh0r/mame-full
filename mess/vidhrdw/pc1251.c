@@ -117,7 +117,7 @@ WRITE_HANDLER(pc1251_lcd_write)
 
 #define DOWN 62
 #define RIGHT 68
-void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void pc1251_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
 	int color[2];

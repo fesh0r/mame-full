@@ -10,7 +10,7 @@ extern int mekd2_interrupt(void);
 extern void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 extern int mekd2_vh_start (void);
 extern void mekd2_vh_stop (void);
-extern void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void mekd2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus

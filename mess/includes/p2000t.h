@@ -18,7 +18,7 @@ extern WRITE_HANDLER( p2000t_port_9494_w );
 extern int p2000m_vh_start (void);
 extern void p2000m_vh_stop (void);
 extern void p2000m_vh_callback (void);
-extern void p2000m_vh_screenrefresh (struct osd_bitmap *bitmap,
+extern void p2000m_vh_screenrefresh (struct mame_bitmap *bitmap,
 													int full_refresh);
 
 /* systems/p2000t.c */

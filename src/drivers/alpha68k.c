@@ -53,16 +53,15 @@ General notes:
 
 int kouyakyu_vh_start(void);
 int alpha68k_vh_start(void);
-void kyros_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void sstingry_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void alpha68k_I_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void alpha68k_I_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void kouyakyu_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void kyros_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void sstingry_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void alpha68k_I_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void kouyakyu_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void kyros_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void alpha68k_II_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 WRITE16_HANDLER( alpha68k_II_video_bank_w );
-void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void alpha68k_V_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void alpha68k_V_sb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void alpha68k_V_video_bank_w(int bank);
 void alpha68k_flipscreen_w(int flip);
 WRITE16_HANDLER( alpha68k_V_video_control_w );
@@ -1454,8 +1453,8 @@ static const struct MachineDriver machine_driver_sstingry =
   	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	sstingry_gfxdecodeinfo,
-	256, 256,
-	alpha68k_I_vh_convert_color_prom,
+	256, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1502,8 +1501,8 @@ static const struct MachineDriver machine_driver_alpha68k_I =
   	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	paddle_gfxdecodeinfo,
-	256, 256,
-	alpha68k_I_vh_convert_color_prom,
+	256, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

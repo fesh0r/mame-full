@@ -121,13 +121,13 @@ int current_dma_vram_dest = 0;
 int current_dma_increment = 0;
 int current_dma_id = 0;
 
-//struct osd_bitmap *scroll_a;
-//struct osd_bitmap *scroll_b;
-//struct osd_bitmap *bitmap_vram;
-//struct osd_bitmap *bitmap_sprite;
-struct osd_bitmap *bitmap2;
+//struct mame_bitmap *scroll_a;
+//struct mame_bitmap *scroll_b;
+//struct mame_bitmap *bitmap_vram;
+//struct mame_bitmap *bitmap_sprite;
+struct mame_bitmap *bitmap2;
 
-struct osd_bitmap *spritelayer;
+struct mame_bitmap *spritelayer;
 
 unsigned short colours[256];
 
@@ -153,7 +153,7 @@ struct GfxElement scroll_element =
 
 typedef struct
 {
-	struct osd_bitmap *bitmap;
+	struct mame_bitmap *bitmap;
 	int x;
 	int y;
 	int attribute;
@@ -203,22 +203,22 @@ int genesis_vh_start (void)
 	if ((scroll_b = osd_create_bitmap(1024,1024)) == 0)
 	{
 		generic_vh_stop();
-		osd_free_bitmap(scroll_a);
+		bitmap_free(scroll_a);
 		return 1;
 	}*/
 
    	if ((spritelayer = bitmap_alloc(2500,2500)) == 0)
 	{
 		generic_vh_stop();
-   //		osd_free_bitmap(scroll_a);
-   //		osd_free_bitmap(scroll_b);
+   //		bitmap_free(scroll_a);
+   //		bitmap_free(scroll_b);
 		return 1;
 	}
 	if ((bitmap2 = bitmap_alloc(320,224)) == 0)
 	{
 		generic_vh_stop();
-   //		osd_free_bitmap(scroll_a);
-   //		osd_free_bitmap(scroll_b);
+   //		bitmap_free(scroll_a);
+   //		bitmap_free(scroll_b);
 		return 1;
 	}
 
@@ -227,9 +227,9 @@ int genesis_vh_start (void)
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-    	osd_free_bitmap(spritelayer);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+    	bitmap_free(spritelayer);
 
 
 	   	return 1;
@@ -238,10 +238,10 @@ int genesis_vh_start (void)
    /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//   	osd_free_bitmap(bitmap_vram);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//   	bitmap_free(bitmap_vram);
 		return 1;
 	}*/
 
@@ -249,22 +249,22 @@ int genesis_vh_start (void)
 	if ((tile_changed_1 = malloc(0x1000)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//	osd_free_bitmap(bitmap_vram);
-	//	osd_free_bitmap(bitmap_sprite);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//	bitmap_free(bitmap_vram);
+	//	bitmap_free(bitmap_sprite);
 		return 1;
 	}
 
 	if ((tile_changed_2 = malloc(0x1000)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//	osd_free_bitmap(bitmap_vram);
-	//	osd_free_bitmap(bitmap_sprite);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//	bitmap_free(bitmap_vram);
+	//	bitmap_free(bitmap_sprite);
 		free(tile_changed_1);
 		return 1;
 	}
@@ -338,11 +338,11 @@ int genesis_vh_start (void)
 void genesis_vh_stop (void)
 {
 	/* Free everything */
- //	osd_free_bitmap(scroll_a);
- //	osd_free_bitmap(scroll_b);
-	osd_free_bitmap(spritelayer);
- //	osd_free_bitmap(bitmap_vram);
- //	osd_free_bitmap(bitmap_sprite);
+ //	bitmap_free(scroll_a);
+ //	bitmap_free(scroll_b);
+	bitmap_free(spritelayer);
+ //	bitmap_free(bitmap_vram);
+ //	bitmap_free(bitmap_sprite);
 	free(tile_changed_1);
 	free(tile_changed_2);
 
@@ -885,7 +885,7 @@ const unsigned int priorities[8] =
 
 /* this function is subject to serious change! */
 
-static void combinelayers(struct osd_bitmap *dest, int startline, int endline)
+static void combinelayers(struct mame_bitmap *dest, int startline, int endline)
 {
 	int x;
 	unsigned char y;
@@ -1143,7 +1143,7 @@ static void combinelayers(struct osd_bitmap *dest, int startline, int endline)
 
 /* fonky tile plotter - ASMable fairly easily */
 
-INLINE void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribute, int sx, int sy)
+INLINE void genesis_plot_tile(struct mame_bitmap *dest, int tilenum, int attribute, int sx, int sy)
 {
 	/* Bugger! If only I could plot 4 pixels at a time... would it be faster on macs if I
 	packed reads into a 32-bit word and wrote that? */
@@ -1384,12 +1384,12 @@ static void plot_sprites(int priority)
  void genesis_modify_display(int);
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 
 genesis_modify_display(0);
@@ -1688,13 +1688,13 @@ int current_dma_vram_dest = 0;
 int current_dma_increment = 0;
 int current_dma_id = 0;
 
-struct osd_bitmap *scroll_a;
-struct osd_bitmap *scroll_b;
-//struct osd_bitmap *bitmap_vram;
-//struct osd_bitmap *bitmap_sprite;
-struct osd_bitmap *bitmap2;
+struct mame_bitmap *scroll_a;
+struct mame_bitmap *scroll_b;
+//struct mame_bitmap *bitmap_vram;
+//struct mame_bitmap *bitmap_sprite;
+struct mame_bitmap *bitmap2;
 
-struct osd_bitmap *spritelayer;
+struct mame_bitmap *spritelayer;
 
 unsigned short colours[256];
 
@@ -1717,7 +1717,7 @@ struct GfxElement scroll_element =
 
 typedef struct
 {
-	struct osd_bitmap *bitmap;
+	struct mame_bitmap *bitmap;
 	int x;
 	int y;
 	int attribute;
@@ -1767,22 +1767,22 @@ int genesis_vh_start (void)
 	if ((scroll_b = osd_create_bitmap(1024,1024)) == 0)
 	{
 		generic_vh_stop();
-		osd_free_bitmap(scroll_a);
+		bitmap_free(scroll_a);
 		return 1;
 	}
 
    	if ((spritelayer = osd_create_bitmap(2500,2500)) == 0)
 	{
 		generic_vh_stop();
-   //		osd_free_bitmap(scroll_a);
-   //		osd_free_bitmap(scroll_b);
+   //		bitmap_free(scroll_a);
+   //		bitmap_free(scroll_b);
 		return 1;
 	}
 	if ((bitmap2 = osd_create_bitmap(320,224)) == 0)
 	{
 		generic_vh_stop();
-   //		osd_free_bitmap(scroll_a);
-   //		osd_free_bitmap(scroll_b);
+   //		bitmap_free(scroll_a);
+   //		bitmap_free(scroll_b);
 		return 1;
 	}
 
@@ -1791,9 +1791,9 @@ int genesis_vh_start (void)
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-    	osd_free_bitmap(spritelayer);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+    	bitmap_free(spritelayer);
 
 
 	   	return 1;
@@ -1802,10 +1802,10 @@ int genesis_vh_start (void)
    /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//   	osd_free_bitmap(bitmap_vram);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//   	bitmap_free(bitmap_vram);
 		return 1;
 	}*/
 
@@ -1813,22 +1813,22 @@ int genesis_vh_start (void)
 	if ((tile_changed_1 = malloc(0x800)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//	osd_free_bitmap(bitmap_vram);
-	//	osd_free_bitmap(bitmap_sprite);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//	bitmap_free(bitmap_vram);
+	//	bitmap_free(bitmap_sprite);
 		return 1;
 	}
 
 	if ((tile_changed_2 = malloc(0x800)) == 0)
 	{
 		generic_vh_stop();
-	//	osd_free_bitmap(scroll_a);
-	//	osd_free_bitmap(scroll_b);
-		osd_free_bitmap(spritelayer);
-	//	osd_free_bitmap(bitmap_vram);
-	//	osd_free_bitmap(bitmap_sprite);
+	//	bitmap_free(scroll_a);
+	//	bitmap_free(scroll_b);
+		bitmap_free(spritelayer);
+	//	bitmap_free(bitmap_vram);
+	//	bitmap_free(bitmap_sprite);
 		free(tile_changed_1);
 		return 1;
 	}
@@ -1902,11 +1902,11 @@ int genesis_vh_start (void)
 void genesis_vh_stop (void)
 {
 	/* Free everything */
- //	osd_free_bitmap(scroll_a);
- //	osd_free_bitmap(scroll_b);
-	osd_free_bitmap(spritelayer);
- //	osd_free_bitmap(bitmap_vram);
- //	osd_free_bitmap(bitmap_sprite);
+ //	bitmap_free(scroll_a);
+ //	bitmap_free(scroll_b);
+	bitmap_free(spritelayer);
+ //	bitmap_free(bitmap_vram);
+ //	bitmap_free(bitmap_sprite);
 	free(tile_changed_1);
 	free(tile_changed_2);
 
@@ -2446,7 +2446,7 @@ const unsigned int priorities[8] =
 
 /* this function is subject to serious change! */
 
-void combinelayers(struct osd_bitmap *dest, int startline, int endline)
+void combinelayers(struct mame_bitmap *dest, int startline, int endline)
 {
 	int x;
 	unsigned char y;
@@ -2701,9 +2701,9 @@ void combinelayers(struct osd_bitmap *dest, int startline, int endline)
 
 }
 
-inline void genesis_plot_distorted_tile(struct osd_bitmap *dest, int tilenum, int attribute, int sx, int sy, short *distort);
+inline void genesis_plot_distorted_tile(struct mame_bitmap *dest, int tilenum, int attribute, int sx, int sy, short *distort);
 
-void combinelayers2(struct osd_bitmap *dest, int startline, int endline)
+void combinelayers2(struct mame_bitmap *dest, int startline, int endline)
 {
 	int pom, sx = 0, sy = 0, ay = 0, by = 0;//, offs;
 	int line = 0;
@@ -2846,7 +2846,7 @@ void combinelayers2(struct osd_bitmap *dest, int startline, int endline)
 
 }
 
-inline void genesis_plot_distorted_tile(struct osd_bitmap *dest, int tilenum, int attribute, int sx, int sy, short *distort)
+inline void genesis_plot_distorted_tile(struct mame_bitmap *dest, int tilenum, int attribute, int sx, int sy, short *distort)
 {
 	/* Bugger! If only I could plot 4 pixels at a time... would it be faster on macs if I
 	packed reads into a 32-bit word and wrote that? */
@@ -2961,7 +2961,7 @@ inline void genesis_plot_distorted_tile(struct osd_bitmap *dest, int tilenum, in
 
 /* fonky tile plotter - ASMable fairly easily */
 
-inline void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribute, int sx, int sy)
+inline void genesis_plot_tile(struct mame_bitmap *dest, int tilenum, int attribute, int sx, int sy)
 {
 	/* Bugger! If only I could plot 4 pixels at a time... would it be faster on macs if I
 	packed reads into a 32-bit word and wrote that? */
@@ -3202,12 +3202,12 @@ void plot_sprites(int priority)
  void genesis_modify_display(int);
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void genesis_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 
 genesis_modify_display(0);

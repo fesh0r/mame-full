@@ -89,7 +89,7 @@ UINT8 vic6560[16];
 
 bool vic6560_pal;
 
-static struct osd_bitmap *vic6560_bitmap;
+static struct mame_bitmap *vic6560_bitmap;
 static int rasterline = 0, lastline = 0;
 static void vic6560_drawlines (int start, int last);
 
@@ -379,7 +379,7 @@ static void vic6560_draw_character_multi (int ybegin, int yend,
 
 
 #ifndef GFX
-INLINE void vic6560_draw_pointer (struct osd_bitmap *bitmap,
+INLINE void vic6560_draw_pointer (struct mame_bitmap *bitmap,
 								  struct rectangle *visible, int xoff, int yoff)
 {
 	/* this is a a static graphical object */
@@ -547,7 +547,7 @@ static void vic6560_drawlines (int first, int last)
 	}
 }
 
-static void vic6560_draw_text (struct osd_bitmap *bitmap, char *text, int *y)
+static void vic6560_draw_text (struct mame_bitmap *bitmap, char *text, int *y)
 {
 	int x, x0, y1v, width = (Machine->visible_area.max_x -
 							 Machine->visible_area.min_x) / Machine->uifont->width;
@@ -624,6 +624,6 @@ int vic656x_raster_interrupt (void)
 	return ignore_interrupt ();
 }
 
-void vic6560_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vic6560_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 }

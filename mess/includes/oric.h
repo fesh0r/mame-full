@@ -7,7 +7,7 @@ READ_HANDLER ( oric_IO_r );
 WRITE_HANDLER ( oric_IO_w );
 
 /* from vidhrdw/oric.c */
-void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void oric_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int oric_vh_start(void);
 void oric_vh_stop(void);
 

@@ -185,7 +185,7 @@ static struct {
 
 	int chargenaddr, videoaddr;
 
-	struct osd_bitmap *bitmap;		   /* Machine->scrbitmap for speedup */
+	struct mame_bitmap *bitmap;		   /* Machine->scrbitmap for speedup */
 	int x_begin, x_end;
 	int y_begin, y_end;
 
@@ -1471,7 +1471,7 @@ int vic2_raster_irq (void)
 	return ignore_interrupt();
 }
 
-void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void vic2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 #if 0
     char text[40];

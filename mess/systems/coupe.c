@@ -48,7 +48,7 @@ MEMORY_END
 
 int coupe_line_interrupt(void)
 {
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	int interrupted=0;	/* This is used to allow me to clear the STAT flag (easiest way I can do it!) */
 
 	HPEN = CURLINE;

@@ -107,7 +107,7 @@ extern void c128_shutdown_machine (void);
 
 extern int c128_vh_start (void);
 extern void c128_vh_stop (void);
-extern void c128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void c128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern void c128_state(void);
 

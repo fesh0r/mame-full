@@ -30,8 +30,8 @@ extern size_t zodiack_bulletsram_size;
 int percuss_hardware;
 
 void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void zodiack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void zodiack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( zodiack_attributes_w );
 WRITE_HANDLER( zodiac_flipscreen_w );
 WRITE_HANDLER( zodiac_control_w );
@@ -191,18 +191,18 @@ INPUT_PORTS_START( dogfight )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BITX(    0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "20k, 50k, then every 50k" )
-	PORT_DIPSETTING(    0x20, "40k, 70k, then every 70k" )
+	PORT_DIPSETTING(    0x00, "20000 50000" )
+	PORT_DIPSETTING(    0x20, "40000 70000" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )

@@ -6,7 +6,7 @@ void pcjr_init_palette(unsigned char *sys_palette, unsigned short *sys_colortabl
 extern void pc_t1t_timer(void);
 extern int	pc_t1t_vh_start(void);
 extern void pc_t1t_vh_stop(void);
-extern void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void pc_t1t_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( pc_t1t_videoram_w );
 extern READ_HANDLER ( pc_t1t_videoram_r );
 extern WRITE_HANDLER ( pc_T1T_w );

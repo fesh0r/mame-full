@@ -44,7 +44,6 @@ static int    scroll_reg = 0;
 static int    stars_scroll=0;
 
 int  s2650_get_flag(void);
-int  s2650_get_pc(void);
 
 unsigned char *dirty_character;
 unsigned char *character_1_ram;
@@ -55,12 +54,12 @@ unsigned char *s2636_1_ram;
 unsigned char *s2636_2_ram;
 unsigned char *s2636_3_ram;
 
-struct osd_bitmap *s2636_1_bitmap;
-struct osd_bitmap *s2636_2_bitmap;
-struct osd_bitmap *s2636_3_bitmap;
-struct osd_bitmap *collision_bitmap;
-struct osd_bitmap *collision_background;
-struct osd_bitmap *scrolled_background;
+struct mame_bitmap *s2636_1_bitmap;
+struct mame_bitmap *s2636_2_bitmap;
+struct mame_bitmap *s2636_3_bitmap;
+struct mame_bitmap *collision_bitmap;
+struct mame_bitmap *collision_background;
+struct mame_bitmap *scrolled_background;
 
 static unsigned char s2636_1_dirty[4];
 static unsigned char s2636_2_dirty[4];
@@ -136,7 +135,7 @@ void cvs_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 WRITE_HANDLER( cvs_video_fx_w )
 {
-	logerror("%4x : Data Port = %2x\n",s2650_get_pc(),data);
+	logerror("%4x : Data Port = %2x\n",activecpu_get_pc(),data);
 
     /* Unimplemented */
 
@@ -490,7 +489,7 @@ int cvs_interrupt(void)
 	return ignore_interrupt();
 }
 
-INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y)
+INLINE void plot_star(struct mame_bitmap *bitmap, int x, int y)
 {
 	if (flip_screen_x)
 	{
@@ -507,7 +506,7 @@ INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y)
 	}
 }
 
-void cvs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cvs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,character;
 	int sx,sy;

@@ -26,7 +26,7 @@ Notes:
 
 int overdriv_vh_start(void);
 void overdriv_vh_stop(void);
-void overdriv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void overdriv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 
@@ -159,7 +159,7 @@ static int cpuA_interrupt(void)
 static int cpuB_interrupt(void)
 {
 	if (K053246_is_IRQ_enabled()) return 4;
-	else return 0;
+	else return ignore_interrupt();
 }
 
 

@@ -49,7 +49,7 @@ static unsigned char *BBC_display_left;
 static unsigned char *BBC_display_right;
 
 // this is a more global variable to store the bitmap variable passed in in the bbc_vh_screenrefresh function
-static struct osd_bitmap *BBC_bitmap;
+static struct mame_bitmap *BBC_bitmap;
 
 // this is the X and Y screen location in emulation pixels of the next pixels to be drawn
 static int y_screen_pos;
@@ -729,7 +729,7 @@ READ_HANDLER (BBC_6845_r)
  * resfresh the BBC video screen
  ************************************************************************/
 
-void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void bbc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
 

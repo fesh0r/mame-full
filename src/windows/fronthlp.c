@@ -498,14 +498,14 @@ int frontend_help (char *gamename)
 			break;
 		}
 		case LIST_MESSDEVICES:
-		{
+			{
 					/* send the gamename and arg to mess.c */
 			list_mess_info(gamename, "-listdevices", listclones);
 			return 0;
 			break;
 		}
 		case LIST_MESSCREATEDIR:
-		{
+			 	{
 					/* send the gamename and arg to mess.c */
 			list_mess_info(gamename, "-createdir", listclones);
 			return 0;

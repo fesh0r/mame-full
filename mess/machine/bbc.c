@@ -126,7 +126,7 @@ WRITE_HANDLER ( memorybp0_w )
 static int vdudriverset(void)
 {
 	int PC;
-	PC=m6502_get_pc(); // this needs to be set to the 6502 program counter
+	PC=cpu_get_pc(); // this needs to be set to the 6502 program counter
 	return (((PC>=0xc000) && (PC<=0xdfff)) || ((pagedRAM) && ((PC>=0xa000) && (PC<=0xafff))));
 }
 
@@ -638,7 +638,7 @@ static void bbc_via_system_irq(int level)
 {
   via_system_irq=level;
 //  logerror("SYSTEM via irq %d %d %d\n",via_system_irq,via_user_irq,level);
-  cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
+  cpu_set_irq_line(0, M6502_IRQ_LINE, via_system_irq|via_user_irq);
 }
 
 
@@ -722,7 +722,7 @@ static void bbc_via_user_irq(int level)
 {
   via_user_irq=level;
 //  logerror("USER via irq %d %d %d\n",via_system_irq,via_user_irq,level);
-  cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
+  cpu_set_irq_line(0, M6502_IRQ_LINE, via_system_irq|via_user_irq);
 }
 
 

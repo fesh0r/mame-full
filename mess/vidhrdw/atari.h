@@ -374,7 +374,7 @@ extern ANTIC antic;
 int atari_vh_init(void);
 int atari_vh_start(void);
 void atari_vh_stop(void);
-void atari_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void atari_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 int a400_interrupt(void);
 int a800_interrupt(void);

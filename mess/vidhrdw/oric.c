@@ -204,7 +204,7 @@ static void oric_vh_update_attribute(int c)
 
 /* render 6-pixels using foreground and background colours specified */
 /* used in hires and text mode */
-static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg, int bg,int data, int invert_flag)
+static void oric_vh_render_6pixels(struct mame_bitmap *bitmap,int x,int y, int fg, int bg,int data, int invert_flag)
 {
 	int i;
 	int pens[2];
@@ -239,7 +239,7 @@ static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg
 /***************************************************************************
   oric_vh_screenrefresh
 ***************************************************************************/
-void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void oric_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	unsigned char *RAM;
 	int byte_offset;

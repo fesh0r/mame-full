@@ -62,4 +62,4 @@ extern WRITE_HANDLER ( microtan_videoram_w );
 extern void microtan_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 extern int microtan_vh_start (void);
 extern void microtan_vh_stop (void);
-extern void microtan_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void microtan_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);

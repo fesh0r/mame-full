@@ -67,7 +67,7 @@ int bbc_vh_startb(void);
 int bbc_vh_startbp(void);
 
 void bbc_vh_stop(void);
-void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void bbc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void bbc_frameclock(void);
 

@@ -62,7 +62,6 @@ Credits (in alphabetical order)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-extern void snk_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 extern void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 extern void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
@@ -70,12 +69,12 @@ extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsign
 extern int snk_vh_start( void );
 extern void snk_vh_stop( void );
 
-extern void tnk3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void ikari_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void tdfever_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void ftsoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void gwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-// extern void psychos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh); /* not needed? */
+extern void tnk3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void ikari_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void tdfever_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void ftsoccer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void gwar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+// extern void psychos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh); /* not needed? */
 
 /*********************************************************************/
 
@@ -1014,7 +1013,7 @@ static const struct MachineDriver machine_driver_gwar =
 	384, 240, { 16, 383,0, 239-16 },
 	gwar_gfxdecodeinfo,
 	1024, 0,
-	snk_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1063,7 +1062,7 @@ static const struct MachineDriver machine_driver_bermudat =
 	384, 240, { 16, 383,0, 239-16 },
 	bermudat_gfxdecodeinfo,
 	1024, 0,
-	snk_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1111,7 +1110,7 @@ static const struct MachineDriver machine_driver_psychos =
 	384, 240, { 0, 383, 0, 239-16 },
 	psychos_gfxdecodeinfo,
 	1024, 0,
-	snk_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1159,7 +1158,7 @@ static const struct MachineDriver machine_driver_chopper1 =
 	384, 240, { 0, 383, 0, 239-16 },
 	psychos_gfxdecodeinfo,
 	1024, 0,
-	snk_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

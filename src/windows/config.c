@@ -375,6 +375,15 @@ int cli_frontend_init (int argc, char **argv)
 		exit(1);
 	}
 
+#ifdef MESS
+	/* mess registers its additional options and callbacks here */
+	if (rc_register(rc, mess_opts))
+	{
+		fprintf (stderr, "error on registering mess options\n");
+		exit(1);
+	}
+#endif
+
 	/* parse the commandline */
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 	{

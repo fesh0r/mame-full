@@ -31,7 +31,7 @@ extern int laser_frame_time;
 
 extern int laser_vh_start(void);
 extern void laser_vh_stop(void);
-extern void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void laser_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( laser_bg_mode_w );
 extern WRITE_HANDLER ( laser_two_color_w );
 

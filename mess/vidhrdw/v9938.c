@@ -70,7 +70,7 @@ static void v9938_cpu_to_vdp (UINT8 V);
 static UINT8 v9938_command_unit_w (UINT8 Op);
 static UINT8 v9938_vdp_to_cpu (void);
 static void v9938_set_mode (void);
-static void v9938_refresh_line (struct osd_bitmap *bmp, int line);
+static void v9938_refresh_line (struct mame_bitmap *bmp, int line);
 
 /***************************************************************************
 
@@ -1066,7 +1066,7 @@ static void v9938_set_mode (void)
 	vdp.mode = i;
 	}
 
-static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
+static void v9938_refresh_8 (struct mame_bitmap *bmp, int line)
 	{
 	int i, double_lines;
 	UINT8 col[256], *ln, *ln2 = NULL;
@@ -1124,7 +1124,7 @@ static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
 		memcpy (ln2, ln, (512 + 32) );
 	}
 
-static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
+static void v9938_refresh_16 (struct mame_bitmap *bmp, int line)
 	{
 	int i, double_lines;
 	UINT8 col[256];
@@ -1183,7 +1183,7 @@ static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
 		memcpy (ln2, ln, (512 + 32) * 2);
 	}
 
-static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
+static void v9938_refresh_line (struct mame_bitmap *bmp, int line)
 	{
 	int ind16, ind256;
 
@@ -1208,7 +1208,7 @@ static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
 		}
 	}
 
-void v9938_refresh (struct osd_bitmap *bmp, int fullrefresh)
+void v9938_refresh (struct mame_bitmap *bmp, int fullrefresh)
 	{
 	/* already been rendered, since we're using scanline stuff */
 	}

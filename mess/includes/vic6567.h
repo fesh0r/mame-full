@@ -47,7 +47,7 @@ extern void vic2_set_rastering(int onoff);
 
 extern int vic2_vh_start (void);
 extern void vic2_vh_stop (void);
-extern void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void vic2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 extern int vic2_raster_irq (void);
 
 extern unsigned char vic2_palette[16 * 3];

@@ -151,7 +151,7 @@ static void svision_timer(int param)
 {
     svision.timer1_shot=TRUE;
     svision.timer1=NULL;
-    cpu_set_irq_line(0, M65C02_INT_IRQ, ASSERT_LINE);
+    cpu_set_irq_line(0, M65C02_IRQ_LINE, ASSERT_LINE);
 }
 
 static READ_HANDLER(svision_r)
@@ -182,7 +182,7 @@ static WRITE_HANDLER(svision_w)
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x60)<<9) );
 	break;
     case 0x23: //delta hero irq routine write
-	cpu_set_irq_line(0, M65C02_INT_IRQ, CLEAR_LINE);
+	cpu_set_irq_line(0, M65C02_IRQ_LINE, CLEAR_LINE);
 	svision.timer1_shot=FALSE;
 	if (svision.timer1)
 	    timer_reset(svision.timer1, TIME_IN_CYCLES(data*256, 0));
@@ -290,7 +290,7 @@ static void svision_init_colors (unsigned char *sys_palette,
 	memcpy(sys_colortable,svision_colortable,sizeof(svision_colortable));
 }
 
-static void svision_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+static void svision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
 	UINT8 *vram=memory_region(REGION_CPU1)+0x4000;

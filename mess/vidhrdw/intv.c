@@ -21,7 +21,7 @@ void intv_vh_stop(void)
 	generic_bitmapped_vh_stop();
 }
 
-static void draw_background(struct osd_bitmap *bitmap, int transparency)
+static void draw_background(struct mame_bitmap *bitmap, int transparency)
 {
 	/* First, draw the background */
 	int offs = 0;
@@ -171,7 +171,7 @@ static void draw_background(struct osd_bitmap *bitmap, int transparency)
 }
 
 /* TBD: need to handle sprites behind foreground? */
-static void draw_sprites(struct osd_bitmap *bitmap, int behind_foreground)
+static void draw_sprites(struct mame_bitmap *bitmap, int behind_foreground)
 {
 	int i;
 	int code;
@@ -271,7 +271,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int behind_foreground)
 	}
 }
 
-static void draw_borders(struct osd_bitmap *bm)
+static void draw_borders(struct mame_bitmap *bm)
 {
 	if (intv_left_edge_inhibit)
 	{
@@ -314,7 +314,7 @@ void stic_screenrefresh()
 	row_delay = intv_row_delay;
 }
 
-void intv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void intv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	copybitmap(bitmap,tmpbitmap,0,0,
 	           col_delay*2,row_delay*2,
@@ -393,7 +393,7 @@ WRITE_HANDLER( intvkbd_tms9927_w )
 	}
 }
 
-void intvkbd_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void intvkbd_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x,y,offs;
 	int current_row;

@@ -19,5 +19,5 @@ extern WRITE_HANDLER ( kim1_mirror_w );
 extern void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 extern int kim1_vh_start (void);
 extern void kim1_vh_stop (void);
-extern void kim1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void kim1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 

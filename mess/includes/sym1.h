@@ -12,7 +12,7 @@ extern UINT8 sym1_led[6];
 extern void sym1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 extern int sym1_vh_start (void);
 extern void sym1_vh_stop (void);
-extern void sym1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern void sym1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus
