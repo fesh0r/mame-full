@@ -2300,11 +2300,32 @@ ROM_START( 2020bb )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX3, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "030-c1.bin", 0x000000, 0x100000, CRC(4f5e19bd) SHA1(ef7975c4b33a7aea4a25a385f604799f054d3200) ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "030-c2.bin", 0x000001, 0x100000, CRC(d6314bf0) SHA1(0920cc580d7997fcb0170dd619af2f305d635577) ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "030-c3.bin", 0x200000, 0x080000, CRC(6a87ae30) SHA1(b2ca080d8233f43cfb2e60d894af65c7b3f8b809) ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "030-c4.bin", 0x200001, 0x080000, CRC(bef75dd0) SHA1(8df572804d36d6b25d94b64e8be17a42babbbe95) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "030-c3.bin", 0x200000, 0x100000, CRC(47fddfee) SHA1(297c505a63448c999a2510c27bf4549102134db8) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "030-c4.bin", 0x200001, 0x100000, CRC(780d1c4e) SHA1(2e2cf9de828e3b48642dd2203637103438c62142) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( 2020bba )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "030-p1.rom", 0x000000, 0x080000, CRC(c59be3dd) SHA1(4fbd462c1c18e85a252c58b04b54fd3b82b46cb0) )
+
+	NEO_SFIX_128K( "030-s1.bin", CRC(7015b8fc) SHA1(8c09bc3e6c62e0f7c9557c1e10c901be325bae7f) )
+
+	NEO_BIOS_SOUND_128K( "030-m1.bin", CRC(4cf466ec) SHA1(6a003b53c7a4af9d7529e2c10f27ffc4e58dcda5) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "030-v1.bin", 0x000000, 0x100000, CRC(d4ca364e) SHA1(b0573744b0ea2ef1e2167a225f0d254883f5af04) )
+	ROM_LOAD( "030-v2.bin", 0x100000, 0x100000, CRC(54994455) SHA1(76eb62b86e8ed51a77f44313d5cc8091b3f58d57) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "030-c1.bin", 0x000000, 0x100000, CRC(4f5e19bd) SHA1(ef7975c4b33a7aea4a25a385f604799f054d3200) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "030-c2.bin", 0x000001, 0x100000, CRC(d6314bf0) SHA1(0920cc580d7997fcb0170dd619af2f305d635577) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "030-c3.bin", 0x200000, 0x100000, CRC(47fddfee) SHA1(297c505a63448c999a2510c27bf4549102134db8) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "030-c4.bin", 0x200001, 0x100000, CRC(780d1c4e) SHA1(2e2cf9de828e3b48642dd2203637103438c62142) ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( 2020bbh )
@@ -2321,11 +2342,11 @@ ROM_START( 2020bbh )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x300000, REGION_GFX3, 0 )
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "030-c1.bin", 0x000000, 0x100000, CRC(4f5e19bd) SHA1(ef7975c4b33a7aea4a25a385f604799f054d3200) ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "030-c2.bin", 0x000001, 0x100000, CRC(d6314bf0) SHA1(0920cc580d7997fcb0170dd619af2f305d635577) ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "030-c3.bin", 0x200000, 0x080000, CRC(6a87ae30) SHA1(b2ca080d8233f43cfb2e60d894af65c7b3f8b809) ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "030-c4.bin", 0x200001, 0x080000, CRC(bef75dd0) SHA1(8df572804d36d6b25d94b64e8be17a42babbbe95) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "030-c3.bin", 0x200000, 0x100000, CRC(47fddfee) SHA1(297c505a63448c999a2510c27bf4549102134db8) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "030-c4.bin", 0x200001, 0x100000, CRC(780d1c4e) SHA1(2e2cf9de828e3b48642dd2203637103438c62142) ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( socbrawl )
@@ -6180,7 +6201,8 @@ GAMEB( 1992, lresort,  neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK",
 GAMEB( 1991, eightman, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "SNK / Pallas", "Eight Man" )
 GAMEB( 1991, legendos, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Legend of Success Joe / Ashitano Joe Densetsu" )
 GAMEB( 1991, 2020bb,   neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK / Pallas", "2020 Super Baseball (set 1)" )
-GAMEB( 1991, 2020bbh,  2020bb,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK / Pallas", "2020 Super Baseball (set 2)" )
+GAMEB( 1991, 2020bba,  2020bb,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK / Pallas", "2020 Super Baseball (set 2)" )
+GAMEB( 1991, 2020bbh,  2020bb,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK / Pallas", "2020 Super Baseball (set 3)" )
 GAMEB( 1991, socbrawl, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Soccer Brawl" )
 GAMEB( 1991, fatfury1, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai" )
 GAMEB( 1991, roboarmy, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Robo Army (set 1)" )

@@ -1,17 +1,18 @@
-/***************************************************************************
+/* Hit Me driver by the EMUL8, led by Dan Boris */
 
-	Ramtek Hit Me hardware
+/*
 
-    driver by the EMUL8, led by Dan Boris
-    driver rewrite by Aaron Giles
+	Hit Me  (c) Ramtek  1976
+---------------------------------------
 
-    Games supported:
-		* Hit Me
-		* Black Jack
-		* Barricade
-		* Brickyard
+	Memory map
 
-***************************************************************************/
+	0000-07ff r    Rom
+	0c00-0eff w    Video Ram
+	1000-13ff r/w  Scratch Ram
+
+
+*/
 
 #include "driver.h"
 
@@ -67,7 +68,7 @@ static VIDEO_START(barricad)
 static VIDEO_UPDATE(hitme)
 {
 	/* the card width resistor comes from an input port, scaled to the range 0-25 kOhms */
-	double width_resist = readinputport(7) * 25000 / 15;
+	double width_resist = readinputport(7) * 25000 / 100;
 	/* this triggers a oneshot for the following length of time */
 	double width_duration = 0.45 * 1000e-12 * width_resist;
 	/* the dot clock runs at the standard horizontal frequency * 320+16 clocks per scanline */
@@ -181,12 +182,10 @@ static WRITE_HANDLER( output_port_0_w )
 		system's equivalent computation, or else we will hang notes.
 	*/
 	data8_t raw_game_speed = readinputport(6);
-	double resistance = raw_game_speed * 25000 / 15;
+	double resistance = raw_game_speed * 25000 / 100;
 	mame_time duration = make_mame_time(0, MAX_SUBSECONDS * 0.45 * 6.8e-6 * resistance * (data+1));
 	timeout_time = add_mame_times(mame_timer_get_time(), duration);
 	
-	/* always update the game speed first */
-	discrete_sound_w(4, raw_game_speed);
 	discrete_sound_w(0, data);
 	discrete_sound_w(1, 1);
 }
@@ -326,22 +325,19 @@ static struct discrete_comp_adder_table desc_hitme_adder =
 #define HITME_GAME_SPEED		NODE_05
 
 /* Nodes - Sounds */
-#define HITME_FINAL_SND			NODE_10
+#define HITME_FINAL_SND			NODE_90
 
 
 static DISCRETE_SOUND_START(hitme_sound_interface)
 
 	/* These are the inputs; PULSE-type inputs are used for oneshot latching signals */
-	DISCRETE_INPUT		(HITME_DOWNCOUNT_VAL	,0x00,0x000f,                  0.0)
-	DISCRETE_INPUT_PULSE(HITME_OUT0 			,0x01,0x000f,                  0.0)
-	DISCRETE_INPUT		(HITME_ENABLE_VAL    	,0x02,0x000f,                  0.0)
-	DISCRETE_INPUT_PULSE(HITME_OUT1				,0x03,0x000f,                  0.0)
+	DISCRETE_INPUT		(HITME_DOWNCOUNT_VAL,0x00,0x000f,0.0)
+	DISCRETE_INPUT_PULSE(HITME_OUT0 		,0x01,0x000f,0.0)
+	DISCRETE_INPUT		(HITME_ENABLE_VAL   ,0x02,0x000f,0.0)
+	DISCRETE_INPUT_PULSE(HITME_OUT1			,0x03,0x000f,0.0)
 
-	/* This represents the resistor at R3, which controls the speed of the sound effects */
-	DISCRETE_INPUT		(HITME_GAME_SPEED    	,0x04,0x000f,                    8)
-	
-	/* Transform the raw input value (0-15) into a resistor value from 0-25 kOhms */
-	DISCRETE_TRANSFORM2(NODE_15,1,HITME_GAME_SPEED,25000.0/15.0,"01*")
+ 	/* This represents the resistor at R3, which controls the speed of the sound effects */
+	DISCRETE_ADJUSTMENT(HITME_GAME_SPEED,1,0.0,25000.0,DISC_LINADJ,6)
 
 	/* The clock for the main downcounter is a "404", or LS123 retriggerable multivibrator.
 	 * It is clocked by IPH2 (8.945MHz/16 = 559kHz), then triggers a pulse which is adjustable
@@ -351,9 +347,9 @@ static DISCRETE_SOUND_START(hitme_sound_interface)
 	 * 1.0/(0.45*R*C). We compute that frequency and use a standard 50% duty cycle square wave.
 	 * This is because the "off time" of the clock is very small (559kHz), and we will miss
 	 * edges if we model it perfectly accurately. */
-	DISCRETE_TRANSFORM3(NODE_16,1,1,0.45*6.8e-6,NODE_15,"012*/")
+	DISCRETE_TRANSFORM3(NODE_16,1,1,0.45*6.8e-6,HITME_GAME_SPEED,"012*/")
 	DISCRETE_SQUAREWAVE(NODE_17,1,NODE_16,1,50,0.5,0)
-	
+
 	/* There are 2 cascaded 4-bit downcounters (2R = low, 2P = high), effectively 
 	 * making an 8-bit downcounter, clocked by the clock from the 404 chip.
 	 * The initial count is latched by writing OUT0. */
@@ -375,7 +371,7 @@ static DISCRETE_SOUND_START(hitme_sound_interface)
 	DISCRETE_CRFILTER(NODE_25,1,NODE_24,1e3,50e-6)
 
 	/* We scale the final output of 3.3 to 16-bit range and output it at full volume */
-	DISCRETE_GAIN(HITME_FINAL_SND,NODE_25,32700/3.3)
+	DISCRETE_GAIN(HITME_FINAL_SND,NODE_25,32000.0/3.3)
 	DISCRETE_OUTPUT(HITME_FINAL_SND,100)
 DISCRETE_SOUND_END
 
@@ -414,12 +410,12 @@ MACHINE_DRIVER_END
 
 
 
-	/*	The Barricade rom is using a resolution of 32x24 which suggests slightly
-   	different hardware from HitMe (40x19) however the screenshot on the arcade
-      flyer is using a 40x19 resolution. So is this a different version of
-      Barricade or is the resolution set by a dip switch?
-
-      */
+/*
+	Note: The Barricade rom is using a resolution of 32x24 which suggests slightly
+	different hardware from HitMe (40x19) however the screenshot on the arcade
+	flyer is using a 40x19 resolution. So is this a different version of
+	Barricade or is the resolution set by a dip switch?
+*/
 
 static MACHINE_DRIVER_START( barricad )
 	MDRV_IMPORT_FROM(hitme)
@@ -431,9 +427,6 @@ static MACHINE_DRIVER_START( barricad )
 
 	MDRV_VIDEO_START(barricad)
 	MDRV_VIDEO_UPDATE(barricad)
-
-	/* sound hardware */
-//	MDRV_SOUND_REMOVE("discrete")
 MACHINE_DRIVER_END
 
 
@@ -513,45 +506,11 @@ INPUT_PORTS_START( hitme )
 
 	/* this is actually a variable resistor */
 	PORT_START
-	PORT_DIPNAME( 0x0f, 0x05, "Game Speed (analog)" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x05, "5" )
-	PORT_DIPSETTING(    0x06, "6" )
-	PORT_DIPSETTING(    0x07, "7" )
-	PORT_DIPSETTING(    0x08, "8" )
-	PORT_DIPSETTING(    0x09, "9" )
-	PORT_DIPSETTING(    0x0a, "10" )
-	PORT_DIPSETTING(    0x0b, "11" )
-	PORT_DIPSETTING(    0x0c, "12" )
-	PORT_DIPSETTING(    0x0d, "13" )
-	PORT_DIPSETTING(    0x0e, "14" )
-	PORT_DIPSETTING(    0x0f, "15" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_ADJUSTER(30, "Game Speed")
 
 	/* this is actually a variable resistor */
 	PORT_START
-	PORT_DIPNAME( 0x0f, 0x08, "Card Width (analog)" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x05, "5" )
-	PORT_DIPSETTING(    0x06, "6" )
-	PORT_DIPSETTING(    0x07, "7" )
-	PORT_DIPSETTING(    0x08, "8" )
-	PORT_DIPSETTING(    0x09, "9" )
-	PORT_DIPSETTING(    0x0a, "10" )
-	PORT_DIPSETTING(    0x0b, "11" )
-	PORT_DIPSETTING(    0x0c, "12" )
-	PORT_DIPSETTING(    0x0d, "13" )
-	PORT_DIPSETTING(    0x0e, "14" )
-	PORT_DIPSETTING(    0x0f, "15" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_ADJUSTER(50, "Card Width")
 INPUT_PORTS_END
 
 
@@ -692,5 +651,5 @@ ROM_END
 
 GAME ( 1976, hitme,    0,        hitme,    hitme,    0, ROT0, "RamTek", "Hit Me" )
 GAME ( 197?, mblkjack, hitme,    hitme,    hitme,    0, ROT0, "Mirco", "Black Jack (Mirco)" )
-GAMEX( 1976, barricad, 0,        barricad, barricad, 0, ROT0, "RamTek", "Barricade", GAME_NO_SOUND  )
-GAMEX( 1976, brickyrd, barricad, barricad, barricad, 0, ROT0, "RamTek", "Brickyard", GAME_NO_SOUND  )
+GAMEX( 1976, barricad, 0,        barricad, barricad, 0, ROT0, "RamTek", "Barricade", GAME_IMPERFECT_SOUND  )
+GAMEX( 1976, brickyrd, barricad, barricad, barricad, 0, ROT0, "RamTek", "Brickyard", GAME_IMPERFECT_SOUND  )
