@@ -197,6 +197,21 @@ void hard_disk_set_interface(struct hard_disk_interface *new_interface)
 
 /*************************************
  *
+ *	Interface save
+ *
+ *************************************/
+
+#ifdef MESS
+void hard_disk_save_interface(struct hard_disk_interface *interface_save)
+{
+	*interface_save = interface;
+}
+#endif
+
+
+
+/*************************************
+ *
  *	Creating a new hard disk
  *
  *************************************/
