@@ -176,3 +176,9 @@ void rastertrack_sync(void)
 	if (current_scanline > 0)
 		do_sync = 1;
 }
+
+int rastertrack_indrawingarea(void)
+{
+	return (current_scanline >= visible_top(the_ri)) && (current_scanline < visible_bottom(the_ri));
+}
+

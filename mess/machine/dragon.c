@@ -686,7 +686,7 @@ static READ_HANDLER ( d_pia0_ca1_r )
 
 static READ_HANDLER ( d_pia0_cb1_r )
 {
-	return rastertrack_scanline() == 262;
+	return m6847_fs_r(0);
 }
 
 static READ_HANDLER ( d_pia1_cb1_r )

@@ -12,6 +12,7 @@
 #include "m6847.h"
 #include "vidhrdw/generic.h"
 #include "includes/rstrbits.h"
+#include "includes/rstrtrck.h"
 
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
@@ -604,6 +605,15 @@ READ_HANDLER( m6847_css_r )		{ return (the_state.modebits & M6847_MODEBIT_CSS) ?
 READ_HANDLER( m6847_gm2_r )		{ return (the_state.modebits & M6847_MODEBIT_GM2) ? 1 : 0; }
 READ_HANDLER( m6847_gm1_r )		{ return (the_state.modebits & M6847_MODEBIT_GM1) ? 1 : 0; }
 READ_HANDLER( m6847_gm0_r )		{ return (the_state.modebits & M6847_MODEBIT_GM0) ? 1 : 0; }
+
+READ_HANDLER( m6847_fs_r )
+{
+	/* HACK HACK */
+	int i;
+	i = (int) (timer_get_time() / TIME_IN_HZ(60) * 128.0);
+	i &= 0x7f;
+	return i < 10;
+}
 
 static void write_modebits(int data, int mask, int causesrefresh)
 {
