@@ -119,6 +119,7 @@ CPUS+=V810@
 CPUS+=M37710@
 CPUS+=PPC403@
 CPUS+=PPC603@
+CPUS+=SE3208@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -194,6 +195,7 @@ SOUNDS+=CDDA@
 SOUNDS+=ICS2115@
 SOUNDS+=ST0016@
 SOUNDS+=C352@
+SOUNDS+=VRENDER0@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -218,7 +220,7 @@ DRVLIBS = \
 	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
 	$(OBJ)/arcadia.a $(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
-	$(OBJ)/hyprston.a $(OBJ)/neogeo.a \
+	$(OBJ)/hyprston.a $(OBJ)/crystal.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o $(OBJ)/machine/mspacman.o \
@@ -407,7 +409,6 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/topspeed.o $(OBJ)/drivers/topspeed.o \
 	$(OBJ)/machine/arkanoid.o $(OBJ)/vidhrdw/arkanoid.o $(OBJ)/drivers/arkanoid.o \
 	$(OBJ)/vidhrdw/superqix.o $(OBJ)/drivers/superqix.o \
-	$(OBJ)/vidhrdw/pbillian.o $(OBJ)/drivers/pbillian.o $(OBJ)/sndhrdw/pbillian.o \
 	$(OBJ)/vidhrdw/exzisus.o $(OBJ)/drivers/exzisus.o \
 	$(OBJ)/drivers/taito_x.o $(OBJ)/machine/cchip.o \
 	$(OBJ)/vidhrdw/minivadr.o $(OBJ)/drivers/minivadr.o \
@@ -1226,6 +1227,9 @@ $(OBJ)/hyprston.a: \
 	$(OBJ)/drivers/vamphalf.o \
 	$(OBJ)/drivers/dgpix.o \
 	$(OBJ)/drivers/eolith.o \
+
+$(OBJ)/crystal.a: \
+	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

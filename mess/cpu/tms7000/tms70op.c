@@ -1990,7 +1990,7 @@ static void jmp( void )
 	tms7000_icount -= 7;
 }
 
-static void jn( void )
+static void j_jn( void )
 {
 	if( pSR & SR_N )
 	{

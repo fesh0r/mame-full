@@ -53,8 +53,6 @@ static int game_paused = 0; /* not zero if the game is paused */
 
 ***************************************************************************/
 
-static struct GfxElement *uirotfont;
-
 /* raw coordinates, relative to the real scrbitmap */
 static struct rectangle uirawbounds;
 static int uirawcharwidth, uirawcharheight;
@@ -386,8 +384,8 @@ struct GfxElement *builduifont(void)
 	/* free any existing fonts */
 	if (Machine->uifont)
 		freegfx(Machine->uifont);
-	if (uirotfont)
-		freegfx(uirotfont);
+	if (Machine->uirotfont)
+		freegfx(Machine->uirotfont);
 
 	/* first decode a straight on version for games */
 	Machine->uifont = font = decodegfx(uifontdata, &layout);
@@ -441,7 +439,7 @@ struct GfxElement *builduifont(void)
 	}
 
 	/* decode rotated font */
-	uirotfont = decodegfx(uifontdata, &layout);
+	Machine->uirotfont = decodegfx(uifontdata, &layout);
 
 	/* set the raw and rotated character width/height */
 	uirawcharwidth = layout.width;
@@ -457,8 +455,8 @@ struct GfxElement *builduifont(void)
 		/* colortable will be set at run time */
 		font->colortable = colortable;
 		font->total_colors = 2;
-		uirotfont->colortable = colortable;
-		uirotfont->total_colors = 2;
+		Machine->uirotfont->colortable = colortable;
+		Machine->uirotfont->total_colors = 2;
 	}
 
 	return font;
@@ -487,7 +485,7 @@ void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
 	ui_rot2raw_rect(&bounds);
 
 	/* now render */
-	drawgfx(dest, uirotfont, ch, color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
+	drawgfx(dest, Machine->uirotfont, ch, color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
 
 	/* mark dirty */
 	ui_markdirty(&bounds);
@@ -703,8 +701,8 @@ void ui_drawbox(struct mame_bitmap *bitmap, int leftx, int topy, int width, int 
 	sect_rect(&bounds, &uirotbounds);
 
 	/* pick colors from the colortable */
-	black = uirotfont->colortable[0];
-	white = uirotfont->colortable[1];
+	black = Machine->uirotfont->colortable[0];
+	white = Machine->uirotfont->colortable[1];
 
 	/* top edge */
 	tbounds = bounds;
@@ -763,8 +761,8 @@ static void drawbar(struct mame_bitmap *bitmap, int leftx, int topy, int width, 
 	sect_rect(&bounds, &uirotbounds);
 
 	/* pick colors from the colortable */
-	black = uirotfont->colortable[0];
-	white = uirotfont->colortable[1];
+	black = Machine->uirotfont->colortable[0];
+	white = Machine->uirotfont->colortable[1];
 
 	/* draw the top default percentage marker */
 	tbounds = bounds;
@@ -1747,7 +1745,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 		indef = get_input_port_list_backup();
 
 		total = 0;
-		
+
 		while (in->type != IPT_END)
 		{
 			if (in->name != 0 && in->type != IPT_UNKNOWN && in->type != IPT_DIPSWITCH_NAME && in->name[0] != 0 && in->group == menugroup)
@@ -1839,7 +1837,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 
 		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,0);
 	}
-	
+
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		sel = (sel + 1) % total;
@@ -1932,7 +1930,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != NULL && 
+		if (input_port_name(in) != NULL &&
 #ifdef MESS
 			(in->category == 0 || input_category_active(in->category)) &&
 #endif /* MESS */
@@ -3243,7 +3241,7 @@ static void setup_menu_init(void)
 
 	if (has_analog())
 		append_menu(UI_analogcontrols, UI_ANALOG);
-  
+
   	/* Joystick calibration possible? */
   	if ((osd_joystick_needs_calibration()) != 0)
 	{
@@ -3721,7 +3719,7 @@ static void onscrd_refresh(struct mame_bitmap *bitmap,int increment,int arg)
 			delta = 10;
 		if (delta < -10)
 			delta = -10;
-			
+
 		newrate = Machine->drv->frames_per_second;
 		if (delta != 0)
 			newrate = (floor(newrate * 1000) / 1000) + delta;
@@ -3768,7 +3766,7 @@ static void onscrd_init(void)
 			onscrd_arg[item] = in - Machine->input_ports;
 			item++;
 		}
-	
+
 	if (options.cheat)
 	{
 		for (ch = 0;ch < cpu_gettotalcpu();ch++)
@@ -4038,7 +4036,7 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 		y += uirotcharheight;
 		len_hash += (y / uirotcharheight) * x;
 	}
-	
+
 	if ((old_len_hash != -1) &&
 	    (old_len_hash != len_hash))
 	{

@@ -153,15 +153,15 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
+CFLAGS = -std=gnu99 -fno-strict-aliasing -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
 	-Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Werror -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
-	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
-	-Werror -Wall -Wno-sign-compare -Wunused \
+	$(ARCH) -O3 -fomit-frame-pointer \
+	-Werror -Wall -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \

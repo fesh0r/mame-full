@@ -1096,7 +1096,7 @@ void vc1541_device_getinfo(struct IODevice *dev)
 	dev->creatable = 0;
 	dev->load = device_load_vc1541;
 	dev->unload = device_unload_vc1541;
-	dev->user1 = (void *) vc1541_config;
+	dev->genf1 = (genf *) vc1541_config;
 }
 
 
@@ -1111,7 +1111,7 @@ void c2031_device_getinfo(struct IODevice *dev)
 void c1551_device_getinfo(struct IODevice *dev)
 {
 	vc1541_device_getinfo(dev);
-	dev->user1 = (void *) c1551_config;
+	dev->genf1 = (genf *) c1551_config;
 }
 
 

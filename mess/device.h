@@ -99,6 +99,8 @@ struct IODevice
 	void *user2;
 	void *user3;
 	void *user4;
+	genf *genf1;
+	genf *genf2;
 };
 
 

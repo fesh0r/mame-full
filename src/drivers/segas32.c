@@ -2005,6 +2005,51 @@ ROM_END
 
 ROM_START( radm )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD16_WORD( "epr13693.21", 0x000000, 0x20000, CRC(3f09a211) SHA1(e0e011d7069745e9bf0395bc1375d0f8b9c46dab) )
+	ROM_RELOAD     (                 0x020000, 0x20000 )
+	ROM_RELOAD     (                 0x040000, 0x20000 )
+	ROM_RELOAD     (                 0x060000, 0x20000 )
+	ROM_RELOAD     (                 0x080000, 0x20000 )
+	ROM_RELOAD     (                 0x0a0000, 0x20000 )
+	ROM_RELOAD     (                 0x0c0000, 0x20000 )
+	ROM_RELOAD     (                 0x0e0000, 0x20000 )
+
+	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_LOAD16_BYTE( "epr13525.bin", 0x000000, 0x80000, CRC(62ad83a0) SHA1(b537176ebca15d91db04d5d7ab36aa967d41288e) )
+	ROM_LOAD16_BYTE( "epr13526.bin", 0x000001, 0x80000, CRC(59ea372a) SHA1(e7a5d59586652c59c23e07e0a99ecc740fb6144d) )
+													
+	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr13527.bin", 0x00000, 0x20000, CRC(a2e3fbbe) SHA1(2787bbef696ab3f2b7855ac991867837d3de54cd) )
+	ROM_RELOAD(               0x100000, 0x020000             )
+	ROM_LOAD( "epr13523.bin", 0x180000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
+	ROM_LOAD( "epr13523.bin", 0x280000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
+	ROM_LOAD( "epr13699.bin", 0x380000, 0x080000, CRC(33fd2913) SHA1(60b664559b4989446b1c7d875432e53a36fe27df) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD32_BYTE( "mpr13519.bin", 0x000000, 0x080000, CRC(bedc9534) SHA1(7b3f7a47b6c0ca6707dc3c1167f3564d43adb32f) )
+	ROM_LOAD32_BYTE( "mpr13520.bin", 0x000002, 0x080000, CRC(3532e91a) SHA1(669c8d27b4b48e1ab9d6d30b0994f5a4e5169118) )
+	ROM_LOAD32_BYTE( "mpr13521.bin", 0x000001, 0x080000, CRC(e9bca903) SHA1(18a73c830b9755262a1c525e3ad5ae084117b64d) )
+	ROM_LOAD32_BYTE( "mpr13522.bin", 0x000003, 0x080000, CRC(25e04648) SHA1(617e794e8f7aa2a435bac917b8968699fe88dafb) )
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr13511.bin", 0x800000, 0x100000, CRC(f8f15b11) SHA1(da6c2b8c3a94c4c263583f046823eaea818aff7c) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13512.bin", 0x800001, 0x100000, CRC(d0be34a6) SHA1(b42a63e30f0f7a94de8a825ca93cf8efdb7a7648) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13513.bin", 0x800002, 0x100000, CRC(feef1982) SHA1(bdf906317079a12c48ef4fca5bef0d437e9bf050) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13514.bin", 0x800003, 0x100000, CRC(d0f9ebd1) SHA1(510ebd3d7a52bcab2debea61591770d1dff172a1) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13515.bin", 0x800004, 0x100000, CRC(77bf2387) SHA1(7215dde5618e238edbe16b3007ede790785fe25f) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13516.bin", 0x800005, 0x100000, CRC(8c4bc62d) SHA1(3206f623ec0b7558413d063404103b183f26b488) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13517.bin", 0x800006, 0x100000, CRC(1d7d84a7) SHA1(954cfccfc7250a5bead2eeba42e655d5ac82955f) , ROM_SKIP(7) )
+	ROMX_LOAD( "mpr13518.bin", 0x800007, 0x100000, CRC(9ea4b15d) SHA1(7dcfd6d42bb945beca8344cf92e7bd53903a824b) , ROM_SKIP(7) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
+	/* populated at runtime */
+
+	ROM_REGION( 0x8000, REGION_USER2, 0 ) /* unused (cabinet motor?) */
+	ROM_LOAD( "epr13686.bin", 0x00000, 0x8000, CRC(317a2857) SHA1(e0788dc7a7d214d9c4d26b24e44c1a0dc9ae477c) ) /* cabinet movement */
+ROM_END
+
+ROM_START( radmu )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
 	ROM_LOAD16_WORD( "epr13690.bin", 0x000000, 0x20000, CRC(21637dec) SHA1(b9921effb10a72f3bdca4d540149c7f46662b716) )
 	ROM_RELOAD     (                 0x020000, 0x20000 )
 	ROM_RELOAD     (                 0x040000, 0x20000 )
@@ -2047,6 +2092,7 @@ ROM_START( radm )
 	ROM_REGION( 0x8000, REGION_USER2, 0 ) /* unused (cabinet motor?) */
 	ROM_LOAD( "epr13686.bin", 0x00000, 0x8000, CRC(317a2857) SHA1(e0788dc7a7d214d9c4d26b24e44c1a0dc9ae477c) ) /* cabinet movement */
 ROM_END
+
 
 /*****************************************
  *****************************************
@@ -2535,6 +2581,7 @@ static struct
 	{ "holo",      NULL                 , NULL                 , EEPROM_SYS32_0    , 4         , 0             , 1 },
 	{ "jpark",     NULL                 , NULL                 , EEPROM_SYS32_0    , 6         , 0             , 0 },
 	{ "radm",      driving_custom_io_r  , driving_custom_io_w  , EEPROM_RADM       , 5         , 0             , 0 },
+	{ "radmu",     driving_custom_io_r  , driving_custom_io_w  , EEPROM_RADM       , 5         , 0             , 0 },
 	{ "radr",      driving_custom_io_r  , driving_custom_io_w  , EEPROM_RADR       , 5         , 1             , 0 },
 	{ "radru",     driving_custom_io_r  , driving_custom_io_w  , EEPROM_RADR       , 5         , 1             , 0 },
 	{ "slpstrm",   driving_custom_io_r  , driving_custom_io_w  , EEPROM_SYS32_0    , 5         , 0             , 0 },
@@ -2691,7 +2738,8 @@ GAMEX(1992, ga2,      0,        segas32,    ga2,     ga2,       ROT0, "Sega"  , 
 GAMEX(1992, ga2j,     ga2,      segas32,    ga2j,    ga2,       ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (Japan / World?)", GAME_IMPERFECT_GRAPHICS ) // there is no for use in Japan warning? (unusual if its a real Japan set)
 GAME( 1992, holo,     0,        segas32,    holo,    segas32,   ROT0, "Sega"  , "Holosseum" )
 GAMEX(1994, jpark,    0,        segas32,    jpark,   jpark,     ROT0, "Sega"  , "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radm,     0,        segas32,    radm,    segas32,   ROT0, "Sega"  , "Rad Mobile (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radm,     0,        segas32,    radm,    segas32,   ROT0, "Sega"  , "Rad Mobile (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radmu,    radm,     segas32,    radm,    segas32,   ROT0, "Sega"  , "Rad Mobile (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, radr,     0,        segas32_hi, radr,    segas32,   ROT0, "Sega"  , "Rad Rally", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, radru,    radr,     segas32_hi, radr,    segas32,   ROT0, "Sega"  , "Rad Rally (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1995, slipstrm, 0,        segas32_hi, f1en,	 segas32,   ROT0, "Capcom", "Slipstream (bad dump?)", GAME_NOT_WORKING )

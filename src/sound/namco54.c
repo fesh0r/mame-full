@@ -104,7 +104,7 @@ static int RNG_p;		/* shift register 'position' in time */
 static int RNG_f_0;		/* shift register 'speed' per one sample at the target frequency at the zero level */
 static int RNG_f_1;		/* shift register 'speed' per one sample at the target frequency at the one level */
 static int RNG_delay;		/* delay between the type A output change and the following type B output change */
-static int outp;		/* work variable (previous noise output state) */
+static int out_prev;		/* work variable (previous noise output state) */
 static int noise_out_A;		/* noise output used in type A */
 static int noise_out_B;		/* noise output used in type B */
 static int noise_B_will_change;	/* in order to implement the delay between the RNG output in type A and the type B */
@@ -256,7 +256,7 @@ void namco_54xx_sh_reset(void)
 	noise_out_A = RNG&1;
 	noise_out_B = 0;
 	noise_B_will_change = 0;
-	outp = 0;
+	out_prev = 0;
 
 //wonder what are the default params after the reset ?
 
@@ -322,12 +322,12 @@ int i;
 		b04 = (RNG>>11)& 1;
 		noise_out_A = RNG&1;
 
-		if ( (outp != noise_out_A) && (noise_out_A == 0) ) /* OK = 0 for type B */
+		if ( (out_prev != noise_out_A) && (noise_out_A == 0) ) /* OK = 0 for type B */
 		{
 			/* matters if it changes odd number of times, even number of changes is equal to no change at all*/
 			noise_B_will_change ^= 1;
 		}
-		outp = noise_out_A;
+		out_prev = noise_out_A;
 
 		RNG = (RNG>>1) | ((b04^b15)<<14);
 

@@ -23,7 +23,7 @@ static void snapquick_processsnapshot(int arg)
 	const char *file_type;
 	
 	si = (struct snapquick_info *) arg;
-	loadproc = (snapquick_loadproc) si->dev->user1;
+	loadproc = (snapquick_loadproc) si->dev->genf1;
 	file_type = image_filetype(si->img);
 	loadproc(si->fp, file_type, si->file_size);
 	image_unload(si->img);
@@ -88,7 +88,7 @@ static void snapquick_device_getinfo(struct IODevice *iodev, int type,
 	iodev->creatable = 0;
 	iodev->load = device_load_snapquick;
 	iodev->unload = device_unload_snapquick;
-	iodev->user1 = (void *) loadproc;
+	iodev->genf1 = (genf *) loadproc;
 	iodev->user2 = (void *) (UINT32) (delay * 65536);
 }
 

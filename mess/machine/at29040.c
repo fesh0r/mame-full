@@ -51,7 +51,7 @@ static struct
 		s_cmd_0 = 0x0,
 		s_cmd_1 = 0x1,
 		s_cmd_2 = 0x2
-	} s_cmd                      : 3;	/* command state */
+	} s_cmd;							/* command state */
 	unsigned int s_enabling_bbl  : 1;	/* set when a boot block lockout command is expecting its parameter */
 	unsigned int s_cmd_0x80_flag : 1;	/* set if 0x80 command has just been executed (some command require this prefix) */
 	enum
@@ -60,7 +60,7 @@ static struct
 		s_pgm_1 = 0x1,
 		s_pgm_2 = 0x2,
 		s_pgm_3 = 0x3
-	} s_pgm                      : 3;	/* programming state */
+	} s_pgm;							/* programming state */
 	unsigned int s_enabling_sdb  : 1;	/* set when a sdp enable command is in progress */
 	unsigned int s_disabling_sdb : 1;	/* set when a sdp disable command is in progress */
 
@@ -69,7 +69,7 @@ static struct
 	UINT8 toggle_bit;
 	UINT8 programming_buffer[SECTOR_SIZE];
 	int programming_last_offset;
-	void *programming_timer;
+	mame_timer *programming_timer;
 } at29c040a[MAX_AT29C040A];
 
 

@@ -4338,6 +4338,19 @@ ROM_START( mt_astrm ) /* Alien Storm. */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
+ROM_START( mt_arrow ) /* Arrow Flash */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr13396h.ic1", 0x000000, 0x080000, CRC(091226e3) SHA1(cb15c6277314f3c4a86b5ae5823f72811d5d269d) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr12368-44.ic2", 0x000000, 0x08000, CRC(e653065d) SHA1(96b014fc4df8eb2188ac94ed0a778d974fe6dcad) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+
 /* MegaPlay Games - Modified Genesis games */
 
 SYSTEM_BIOS_START( megaplay )
@@ -4865,7 +4878,7 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 41 */ GAMEX( 1990, mt_crack, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Crack Down (Mega-Tech)", GAME_NOT_WORKING )
 /* 42 */ // unknown
 /* 43 */ // unknown
-/* 44 */ // unknown
+/* 44 */ GAMEX( 1990, mt_arrow, megatech, megatech, megatech, segac2, ROT0, "Sega",					 "Arrow Flash (Mega-Tech)", GAME_NOT_WORKING )
 /* 45 */ // unknown
 /* 46 */ // unknown
 /* 47 */ GAMEX( 1990, mt_astrm, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Alien Storm (Mega-Tech", GAME_NOT_WORKING )

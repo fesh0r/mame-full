@@ -113,6 +113,7 @@
 #include "mamedbg.h"
 #include "artwork.h"
 #include "state.h"
+#include "unzip.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "palette.h"
@@ -334,6 +335,9 @@ int run_game(int game)
 			/* shutdown the local machine */
 			shutdown_machine();
 		}
+
+		/* clear the zip cache (I don't know what would be the bestplace to do this) */
+		unzip_cache_clear();
 
 		/* stop tracking resources and exit the OSD layer */
 		end_resource_tracking();
@@ -824,6 +828,11 @@ static void vh_close(void)
 	{
 		freegfx(Machine->uifont);
 		Machine->uifont = NULL;
+	}
+	if (Machine->uirotfont)
+	{
+		freegfx(Machine->uirotfont);
+		Machine->uirotfont = NULL;
 	}
 	if (Machine->debugger_font)
 	{

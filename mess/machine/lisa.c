@@ -210,7 +210,7 @@ struct
 		twiggy,			/* twiggy drives (Lisa 1) */
 		sony_lisa2,		/* 3.5'' drive with LisaLite adapter (Lisa 2) */
 		sony_lisa210	/* 3.5'' drive with modified fdc hardware (Lisa 2/10, Mac XL) */
-	} floppy_hardware : 2;
+	} floppy_hardware;
 	unsigned int has_double_sided_floppy : 1;	/* true on lisa 1 and *hacked* lisa 2/10 / Mac XL */
 	unsigned int has_mac_xl_video : 1;	/* modified video for MacXL */
 } lisa_features;

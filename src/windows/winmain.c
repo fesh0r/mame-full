@@ -88,6 +88,7 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
 static int get_code_base_size(UINT32 *base, UINT32 *size);
 static void parse_map_file(void);
+static void free_symbol_map(void);
 
 #if ENABLE_PROFILER
 static void output_symbol_list(FILE *f);
@@ -236,6 +237,17 @@ int main(int argc, char **argv)
 #if ENABLE_PROFILER
 	output_symbol_list(stderr);
 #endif
+	free_symbol_map();
+
+#ifdef MAME_DEBUG
+#ifndef MESS
+	{
+		void check_unfreed_mem(void);
+
+		check_unfreed_mem();
+	}
+#endif
+#endif
 
 	return res;
 }
@@ -271,6 +283,9 @@ int osd_init(void)
 void osd_exit(void)
 {
 	extern void win_shutdown_input(void);
+	extern void free_pathlists(void);
+
+	free_pathlists();
 	win_shutdown_input();
 	osd_set_leds(0);
 
@@ -587,6 +602,22 @@ static void parse_map_file(void)
 	/* fill in the end of each bucket */
 	for (i = 0; i < map_entries; i++)
 		symbol_map[i].end = symbol_map[i+1].start ? (symbol_map[i+1].start - 1) : 0;
+}
+
+
+//============================================================
+//	free_symbol_map
+//============================================================
+
+static void free_symbol_map(void)
+{
+	int i;
+
+	for (i = 0; i <= map_entries; i++)
+	{
+		free(symbol_map[i].name);
+		symbol_map[i].name = NULL;
+	}
 }
 
 
