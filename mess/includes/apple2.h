@@ -45,35 +45,35 @@ int	apple2ee_load_rom(int id);
 
 void apple2_interrupt(void);
 
- READ8_HANDLER ( apple2_c00x_r );
+READ8_HANDLER ( apple2_c00x_r );
 WRITE8_HANDLER ( apple2_c00x_w );
 
- READ8_HANDLER ( apple2_c01x_r );
+READ8_HANDLER ( apple2_c01x_r );
 WRITE8_HANDLER ( apple2_c01x_w );
 
- READ8_HANDLER ( apple2_c02x_r );
+READ8_HANDLER ( apple2_c02x_r );
 WRITE8_HANDLER ( apple2_c02x_w );
 
- READ8_HANDLER ( apple2_c03x_r );
+READ8_HANDLER ( apple2_c03x_r );
 WRITE8_HANDLER ( apple2_c03x_w );
 
- READ8_HANDLER ( apple2_c05x_r );
+READ8_HANDLER ( apple2_c05x_r );
 WRITE8_HANDLER ( apple2_c05x_w );
 
- READ8_HANDLER ( apple2_c06x_r );
+READ8_HANDLER ( apple2_c06x_r );
 
- READ8_HANDLER ( apple2_c07x_r );
+READ8_HANDLER ( apple2_c07x_r );
 WRITE8_HANDLER ( apple2_c07x_w );
 
- READ8_HANDLER ( apple2_c08x_r );
+READ8_HANDLER ( apple2_c08x_r );
 WRITE8_HANDLER ( apple2_c08x_w );
 
- READ8_HANDLER ( apple2_c0xx_slot1_r );
- READ8_HANDLER ( apple2_c0xx_slot2_r );
- READ8_HANDLER ( apple2_c0xx_slot3_r );
- READ8_HANDLER ( apple2_c0xx_slot4_r );
- READ8_HANDLER ( apple2_c0xx_slot5_r );
- READ8_HANDLER ( apple2_c0xx_slot7_r );
+READ8_HANDLER ( apple2_c0xx_slot1_r );
+READ8_HANDLER ( apple2_c0xx_slot2_r );
+READ8_HANDLER ( apple2_c0xx_slot3_r );
+READ8_HANDLER ( apple2_c0xx_slot4_r );
+READ8_HANDLER ( apple2_c0xx_slot5_r );
+READ8_HANDLER ( apple2_c0xx_slot7_r );
 WRITE8_HANDLER ( apple2_c0xx_slot1_w );
 WRITE8_HANDLER ( apple2_c0xx_slot2_w );
 WRITE8_HANDLER ( apple2_c0xx_slot3_w );
@@ -89,18 +89,19 @@ WRITE8_HANDLER ( apple2_slot7_w );
 /*int  apple2_slot1_r(int offset);
 int  apple2_slot2_r(int offset);
 int  apple2_slot3_r(int offset);*/
- READ8_HANDLER ( apple2_slot4_r );
+READ8_HANDLER ( apple2_slot4_r );
 /*int  apple2_slot5_r(int offset);
 int  apple2_slot6_r(int offset);*/
- READ8_HANDLER ( apple2_slot7_r );
+READ8_HANDLER ( apple2_slot7_r );
 
 
 /* machine/ap_disk2.c */
 void apple2_slot6_init(void);
 DEVICE_LOAD ( apple2_floppy );
- READ8_HANDLER ( apple2_c0xx_slot6_r );
+READ8_HANDLER ( apple2_c0xx_slot6_r );
 WRITE8_HANDLER ( apple2_c0xx_slot6_w );
 WRITE8_HANDLER ( apple2_slot6_w );
+void apple2_setvar(UINT32 val, UINT32 mask);
 
 
 /* vidhrdw/apple2.c */
@@ -109,6 +110,10 @@ VIDEO_START( apple2p );
 VIDEO_START( apple2e );
 VIDEO_UPDATE( apple2 );
 void apple2_video_touch(offs_t offset);
+void apple2_set_fgcolor(int color);
+void apple2_set_bgcolor(int color);
+int apple2_get_fgcolor(void);
+int apple2_get_bgcolor(void);
 
 /* keyboard wrappers */
 #define pressed_specialkey(key)	(input_port_8_r(0) & (key))

@@ -123,7 +123,7 @@ static int iwm_statusreg_r(void)
 	int result;
 	int status;
 
-	status = /*iwm_enable2() ? 1 :*/ (iwm_intf.read_status ? iwm_intf.read_status() : 0);
+	status = iwm_enable2() ? 1 : (iwm_intf.read_status ? iwm_intf.read_status() : 0);
 	result = (status ? 0x80 : 0x00) | (((iwm_lines & IWM_MOTOR) ? 1 : 0) << 5) | iwm_mode;
 	return result;
 }
@@ -149,10 +149,11 @@ static data8_t iwm_read_reg(void)
 	{
 	case 0:
 		/* Read data register */
-		/*if (iwm_enable2() || !(iwm_lines & IWM_MOTOR)) {
+		if (iwm_enable2() || !(iwm_lines & IWM_MOTOR))
+		{
 			result = 0xff;
 		}
-		else*/
+		else
 		{
 			/*
 			 * Right now, this function assumes latch mode; which is always used for
@@ -190,7 +191,7 @@ static void iwm_write_reg(data8_t data)
 		{
 			iwm_modereg_w(data);
 		}
-		else /*if (!iwm_enable2())*/
+		else if (!iwm_enable2())
 		{
 			/*
 			 * Right now, this function assumes latch mode; which is always used for

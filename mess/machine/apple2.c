@@ -168,9 +168,11 @@ static const struct apple2_bankmap_entry apple2_bankmap[] =
 	sets the 'a2' var, and adjusts banking accordingly
 ***************************************************************************/
 
-static void apple2_setvar(UINT32 val, UINT32 mask)
+void apple2_setvar(UINT32 val, UINT32 mask)
 {
 	int i;
+	size_t offset;
+	size_t rom_length;
 
 	LOG(("apple2_setvar(): val=0x%06x mask=0x%06x pc=0x%04x\n", val, mask, activecpu_get_pc()));
 
@@ -184,9 +186,15 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 	a2 &= ~mask;
 	a2 |= val;
 
+	/* switching the ROM? */
 	if (mask & VAR_ROMSWITCH)
 	{
-		apple_rom = &memory_region(REGION_CPU1)[(a2 & VAR_ROMSWITCH) ? 0x4000 : 0x0000];
+		rom_length = memory_region_length(REGION_CPU1);
+		if (rom_length >= 0x10000)
+			offset = (rom_length - 1) & ~0x7FFF;
+		else
+			offset = (a2 & VAR_ROMSWITCH) ? 0x4000 : 0x0000;
+		apple_rom = &memory_region(REGION_CPU1)[offset];
 	}
 
 	/* debugging note: if there are any problems, it is worthwhile to set mask

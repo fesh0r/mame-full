@@ -18,7 +18,7 @@ static struct tilemap *lores_tilemap;
 static int text_videobase;
 static int dbltext_videobase;
 static int lores_videobase;
-static int flash;
+static int fgcolor, bgcolor, flash;
 static UINT16 *hires_artifact_map;
 static UINT16 *dhires_artifact_map;
 static UINT8 *lores_tiledata;
@@ -84,20 +84,28 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
 static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory_offset)
 {
 	int character;
-	int color = 0;
+	int current_fgcolor = fgcolor;
+	int current_bgcolor = bgcolor;
+	int i;
 	
 	character = mess_ram[videobase + memory_offset];
 
 	if (effective_a2() & VAR_ALTCHARSET)
+	{
 		character |= 0x200;
+	}
 	else if (flash && (character >= 0x40) && (character <= 0x7f))
-		color = 1;
+	{
+		i = fgcolor;
+		fgcolor = bgcolor;
+		bgcolor = i;
+	}
 
 	SET_TILE_INFO(
-		gfxset,		/* gfx */
-		character,	/* character */
-		color,		/* color */
-		0);			/* flags */
+		gfxset,						/* gfx */
+		character,					/* character */
+		(fgcolor * 16) + bgcolor,	/* color */
+		0);							/* flags */
 }
 
 static void apple2_text_gettileinfo(int memory_offset)
@@ -127,6 +135,36 @@ static void apple2_text_draw(struct mame_bitmap *bitmap, const struct rectangle 
 		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, dbltext_tilemap, page ? 0x800 : 0x400, &dbltext_videobase);
 	else
 		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
+}
+
+void apple2_set_fgcolor(int color)
+{
+	if (color != fgcolor)
+	{
+		tilemap_mark_all_tiles_dirty(text_tilemap);
+		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
+		fgcolor = color;
+	}
+}
+
+void apple2_set_bgcolor(int color)
+{
+	if (color != bgcolor)
+	{
+		tilemap_mark_all_tiles_dirty(text_tilemap);
+		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
+		bgcolor = color;
+	}
+}
+
+int apple2_get_fgcolor(void)
+{
+	return fgcolor;
+}
+
+int apple2_get_bgcolor(void)
+{
+	return bgcolor;
 }
 
 /***************************************************************************
@@ -299,6 +337,9 @@ static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_mo
 		PURPLE,		LTBLUE,		PINK,	WHITE
 	};
 
+	fgcolor = 15;
+	bgcolor = 0;
+	flash = 0;
 	apple2_font = memory_region(REGION_GFX1);
 
 	text_tilemap = tilemap_create(
