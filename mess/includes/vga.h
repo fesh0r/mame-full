@@ -16,8 +16,8 @@
    { 0xc0000, 0xc7fff, MWA_ROM }
 */
 
-extern unsigned char vga_palette[0x100*3];
-extern unsigned char ega_palette[0x40*3];
+extern unsigned char vga_palette[0x100][3];
+extern unsigned char ega_palette[0x40][3];
 
 void vga_init(mem_read_handler read_dipswitch);
 
