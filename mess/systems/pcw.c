@@ -101,7 +101,7 @@
 // pcw/pcw16 beeper
 
 // uncomment for debug log output
-//#define VERBOSE
+#define VERBOSE
 //#define PCW_DUMP_RAM
 
 void pcw_fdc_interrupt(int);
@@ -109,7 +109,7 @@ void pcw_fdc_interrupt(int);
 void *pcw_int_timer = NULL;
 
 // pointer to pcw ram
-unsigned char *pcw_ram;
+unsigned char *pcw_ram = NULL;
 unsigned int roller_ram_addr;
 // flag to indicate if boot-program is enabled/disabled
 static int 	pcw_boot;
@@ -881,8 +881,6 @@ void pcw_init_machine(void)
 
 void pcw_init_memory(int size)
 {
-	pcw_ram = NULL;
-
 	switch (size)
 	{
 		case 256:
@@ -905,26 +903,31 @@ void pcw_init_memory(int size)
 void	init_pcw8256(void)
 {
 	pcw_init_memory(256);
+	pcw_init_machine();
 }
 
 void	init_pcw8512(void)
 {
 	pcw_init_memory(512);
+	pcw_init_machine();
 }
 
 void	init_pcw9256(void)
 {
 	pcw_init_memory(256);
+	pcw_init_machine();
 }
 
 void	init_pcw9512(void)
 {
 	pcw_init_memory(512);
+	pcw_init_machine();
 }
 
 void	init_pcw10(void)
 {
 	pcw_init_memory(512);
+	pcw_init_machine();
 }
 
 
@@ -1169,7 +1172,7 @@ static struct MachineDriver machine_driver_pcw =
 	50, 							   /* frames per second */
 	DEFAULT_REAL_60HZ_VBLANK_DURATION /*DEFAULT_60HZ_VBLANK_DURATION*/,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
-	pcw_init_machine,			   /* init machine */
+	NULL,			   /* init machine */
 	pcw_shutdown_machine,
 	/* video hardware */
 	PCW_SCREEN_WIDTH,			   /* screen width */
@@ -1218,7 +1221,7 @@ static struct MachineDriver machine_driver_pcw9512 =
 	50, 							   /* frames per second */
 	DEFAULT_REAL_60HZ_VBLANK_DURATION /*DEFAULT_60HZ_VBLANK_DURATION*/,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
-	pcw_init_machine,			   /* init machine */
+	NULL,			   /* init machine */
 	pcw_shutdown_machine,
 	/* video hardware */
 	PCW_SCREEN_WIDTH,			   /* screen width */
