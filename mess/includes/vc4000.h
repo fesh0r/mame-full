@@ -14,13 +14,8 @@ extern  READ8_HANDLER(vc4000_video_r);
 extern WRITE8_HANDLER(vc4000_video_w);
 
 
-// space vultures sprites above
-// combat below and invisible
 #define YPOS 8
 #define YBOTTOM_SIZE 40
-// grand slam sprites left and right
-// space vultures left
-// space attack left
 #define XPOS 48
 
 extern VIDEO_START( vc4000 );

@@ -41,24 +41,17 @@ static  READ8_HANDLER(vc4000_key_r)
 }
 
 
-static ADDRESS_MAP_START( vc4000_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x07ff) AM_READ( MRA8_ROM )
-AM_RANGE( 0x1e88, 0x1e8e) AM_READ( vc4000_key_r )
-	AM_RANGE( 0x1f00, 0x1fff) AM_READ( vc4000_video_r )
+static ADDRESS_MAP_START( vc4000_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x17ff) AM_ROM
+	AM_RANGE( 0x1800, 0x1bff) AM_RAM
+	AM_RANGE( 0x1e88, 0x1e8e) AM_READ( vc4000_key_r )
+	AM_RANGE( 0x1f00, 0x1fff) AM_READWRITE( vc4000_video_r, vc4000_video_w )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vc4000_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x07ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0x1f00, 0x1fff) AM_WRITE( vc4000_video_w )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( vc4000_readport , ADDRESS_SPACE_IO, 8)
+static ADDRESS_MAP_START( vc4000_io , ADDRESS_SPACE_IO, 8)
 //{ S2650_CTRL_PORT,S2650_CTRL_PORT, },
 //{ S2650_DATA_PORT,S2650_DATA_PORT, },
-AM_RANGE( S2650_SENSE_PORT,S2650_SENSE_PORT) AM_READ( vc4000_vsync_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( vc4000_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( S2650_SENSE_PORT,S2650_SENSE_PORT) AM_READ( vc4000_vsync_r)
 ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
@@ -143,7 +136,8 @@ static struct GfxLayout vc4000_charlayout =
         1*8
 };
 
-static struct GfxDecodeInfo vc4000_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo vc4000_gfxdecodeinfo[] =
+{
     { REGION_GFX1, 0x0000, &vc4000_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };
@@ -152,7 +146,7 @@ static INTERRUPT_GEN( vc4000 )
 {
 }
 
-static unsigned char vc4000_palette[] =
+static const unsigned char vc4000_palette[] =
 {
 	// background colors
 	0, 0, 0, // black
@@ -167,16 +161,17 @@ static unsigned char vc4000_palette[] =
 	// simplier to add another 8 colors else using colormapping
 	// xor 7, bit 2 not green, bit 1 not blue, bit 0 not red
 	255, 255, 255, // white
-	0, 255, 255, // cyan
 	255, 255, 0, // yellow
-	0, 255, 0, // green
 	255, 0, 255, // magenta
-	0, 0, 255, // blue
 	255, 0, 0, // red
+	0, 255, 255, // cyan
+	0, 255, 0, // green
+	0, 0, 255, // blue
 	0, 0, 0 // black
 };
 
-static unsigned short vc4000_colortable[1][2] = {
+static const unsigned short vc4000_colortable[1][2] =
+{
 	{ 0, 1 },
 };
 
@@ -188,23 +183,18 @@ static PALETTE_INIT( vc4000 )
 
 static MACHINE_DRIVER_START( vc4000 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3000000/3)        /* 3580000/3, 4430000/3 */
-	MDRV_CPU_PROGRAM_MAP(vc4000_readmem,vc4000_writemem)
-	MDRV_CPU_IO_MAP(vc4000_readport,vc4000_writeport)
+	MDRV_CPU_ADD(S2650, 870000)        /* 3550000/4, 3580000/3, 4430000/3 */
+	MDRV_CPU_PROGRAM_MAP(vc4000_mem, 0)
+	MDRV_CPU_IO_MAP(vc4000_io, 0)
 	MDRV_CPU_PERIODIC_INT(vc4000_video_line,312*50)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-    /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#ifndef DEBUG
-	MDRV_SCREEN_SIZE(128+2*XPOS, 208+YPOS+YBOTTOM_SIZE)
-	MDRV_VISIBLE_AREA(0, 2*XPOS+128-1, 0, YPOS+208+YBOTTOM_SIZE-1)
-#else
-	MDRV_SCREEN_SIZE(256+2*XPOS, 260+YPOS+YBOTTOM_SIZE)
-	MDRV_VISIBLE_AREA(0, 2*XPOS+256-1, 0, YPOS+260+YBOTTOM_SIZE-1)
-#endif
+	MDRV_SCREEN_SIZE(226, 312)
+	MDRV_VISIBLE_AREA(0, 192, 0, 251)
 	MDRV_GFXDECODE( vc4000_gfxdecodeinfo )
 	MDRV_PALETTE_LENGTH(sizeof(vc4000_palette) / 3)
 	MDRV_COLORTABLE_LENGTH(sizeof (vc4000_colortable) / sizeof(vc4000_colortable[0][0]))
