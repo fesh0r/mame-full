@@ -69,7 +69,7 @@ Other notes:
 #include "machine/fd1094.h"
 
 void fd1094_machine_init(void);
-void fd1094_driver_init(UINT16 cpunum);
+void fd1094_driver_init(void);
 extern WRITE16_HANDLER( sys18_extrombank_w );
 
 /* vidhrdw/segac2.c */
@@ -1387,7 +1387,7 @@ static DRIVER_INIT( astorm )
 {
 	init_astormbl();
 
-	fd1094_driver_init(0x0146);
+	fd1094_driver_init();
 }
 
 
@@ -1405,14 +1405,14 @@ static DRIVER_INIT( cltchitr )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0176);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( ddcrew )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0186);
+	fd1094_driver_init();
 }
 
 /*****************************************************************************/
@@ -1789,6 +1789,9 @@ ROM_START( astorm )
 	ROM_LOAD16_BYTE( "epr13085.bin", 0x000000, 0x40000, CRC(15f74e2d) SHA1(30d9d099ec18907edd3d20df312565c3bd5a80de) )
 	ROM_LOAD16_BYTE( "epr13084.bin", 0x000001, 0x40000, CRC(9687b38f) SHA1(cdeb5b4f06ad4ad8ca579392c1ec901487b08e76) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0146.key", 0x0000, 0x2000, CRC(5e498077) SHA1(51eee87d7d61662751dfad50c57d3177c51f5466) )
+
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr13073.bin", 0x00000, 0x40000, CRC(df5d0a61) SHA1(79ad71de348f280bad847566c507b7a31f022292) )
 	ROM_LOAD( "epr13074.bin", 0x40000, 0x40000, CRC(787afab8) SHA1(a119042bb2dad54e9733bfba4eaab0ac5fc0f9e7) )
@@ -1893,6 +1896,9 @@ ROM_START( cltchitr )
 	ROM_LOAD16_BYTE( "epr13784.5a", 0x200000, 0x40000, CRC(80c8180d) SHA1(80e72ab7d97714009fd31b3d50176af84b0dcdb7) )
 	ROM_LOAD16_BYTE( "epr13786.7a", 0x200001, 0x40000, CRC(3095dac0) SHA1(20edce74b6f2a82a3865613e601a0e212615d0e4) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0176.key", 0x0000, 0x2000, CRC(d47e6c26) SHA1(2f72368a3248b42ec8939bf30f4a77ecb6f06eda) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, 0 ) /* tiles */
 	/* filled by other sys18_extrombank_w function .. */
 
@@ -1976,6 +1982,9 @@ ROM_START( ddcrew )
 	ROM_LOAD16_BYTE( "14153.6a", 0x000001, 0x40000, CRC(e01fae0c) SHA1(7166f955324f73e94d8ae6d2a5b2f4b497e62933) )
 	ROM_LOAD16_BYTE( "14139.5a", 0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
 	ROM_LOAD16_BYTE( "14141.7a", 0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0186.key", 0x0000, 0x2000, CRC(36da993c) SHA1(e3c455cf22b1e8994e37689af32b70bbb3c1a1e5) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0 ) /* tiles */
 	/* filled by other sys18_extrombank_w function .. */
@@ -2384,9 +2393,11 @@ ROM_START( shdancbl )
 
 	// 12718
 	ROM_LOAD16_BYTE( "ic77", 0x080001, 0x10000, CRC(f93470b7) SHA1(1041afa43aa8d0589d6def9743721cdbda617f78) )
-	ROM_LOAD16_BYTE( "ic78", 0x0A0001, 0x10000, CRC(4d523ea3) SHA1(053c30778017127dddeae0783af463aef17bcc9a) ) // corrupt? (bad sprite when dog attacts in attract mode)
+//	ROM_LOAD16_BYTE( "ic78", 0x0A0001, 0x10000, CRC(4d523ea3) SHA1(053c30778017127dddeae0783af463aef17bcc9a) ) // corrupt? (bad sprite when dog attacts in attract mode)
+	ROM_LOAD16_BYTE( "sdbl.78", 0x0A0001, 0x10000, CRC(e533be5d) SHA1(926d6ba3f7a3ac289b0ae40d7633c70b2819df4d) )
 	ROM_LOAD16_BYTE( "ic95", 0x0C0001, 0x10000, CRC(828b8294) SHA1(f2cdb882fb0709a909e6ef98f0315aceeb8bf283) )
-	ROM_LOAD16_BYTE( "ic94", 0x0E0001, 0x10000, CRC(542b2d1e) SHA1(1ce91aea6c49e6e365a91c30ca3049682c2162da) )
+//	ROM_LOAD16_BYTE( "ic94", 0x0E0001, 0x10000, CRC(542b2d1e) SHA1(1ce91aea6c49e6e365a91c30ca3049682c2162da) )
+	ROM_LOAD16_BYTE( "sdbl.94", 0x0E0001, 0x10000, CRC(e2fa2b41) SHA1(7186107734dac5763dee43addcea7c14fb0d9d74) )
 
 	// 12725
 	ROM_LOAD16_BYTE( "ic62", 0x080000, 0x10000, CRC(50ca8065) SHA1(8c0d6ae34b9da6c376df387e8fc8b1068bcb4dcb) )
@@ -2502,7 +2513,7 @@ ROM_END
 
 /*****************************************************************************/
 
-GAMEX(1990, astorm,   0,        astorm,   astorm,   astorm,   ROT0, "Sega",    "Alien Storm (2 Players set 1, 317-146)", GAME_NOT_WORKING )
+GAMEX(1990, astorm,   0,        astorm,   astorm,   astorm,   ROT0, "Sega",    "Alien Storm (Japan, 2 Players set 1, 317-146)", GAME_NOT_WORKING )
 GAMEX(1990, astorm2p, astorm,   astorm,   astorm,   astorm,   ROT0, "Sega",    "Alien Storm (2 Players set 2, 317-?)", GAME_NOT_WORKING )
 GAME( 1990, astormbl, astorm,   astormbl, astormbl, astormbl, ROT0, "bootleg", "Alien Storm (bootleg)" )
 

@@ -1648,7 +1648,7 @@ static void set_irq_line(int irqline, int state)
 static offs_t e132xs_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return dasm_e132xs( buffer, pc, GET_H );
+	return dasm_e132xs( buffer, pc, GET_H, GET_FP );
 #else
 	sprintf(buffer, "$%08x", READ_OP(pc));
 	return 1;

@@ -53,6 +53,8 @@ static int bitbanger_init(mess_image *img)
 	return INIT_PASS;
 }
 
+
+
 static void bitbanger_analyze(int id, struct bitbanger_info *bi)
 {
 	int i, factor, total_duration;
@@ -93,6 +95,8 @@ static void bitbanger_analyze(int id, struct bitbanger_info *bi)
 		bi->recorded_pulses = 0;
 }
 
+
+
 static void bitbanger_addpulse(int id, struct bitbanger_info *bi, double pulse_width)
 {
 	/* exceeded total countable pulses? */
@@ -107,6 +111,8 @@ static void bitbanger_addpulse(int id, struct bitbanger_info *bi, double pulse_w
 		bitbanger_analyze(id, bi);
 }
 
+
+
 static void bitbanger_overthreshhold(int id)
 {
 	struct bitbanger_info *bi = bitbangers[id];
@@ -115,7 +121,9 @@ static void bitbanger_overthreshhold(int id)
 	bi->recorded_pulses = 0;
 }
 
-static void bitbanger_output(mess_image *img, int value)
+
+
+void bitbanger_output(mess_image *img, int value)
 {
 	int id = image_index_in_device(img);
 	struct bitbanger_info *bi = bitbangers[id];
@@ -151,6 +159,7 @@ static void bitbanger_output(mess_image *img, int value)
 void bitbanger_device_getinfo(struct IODevice *iodev, const struct bitbanger_config *config)
 {
 	iodev->type = IO_BITBANGER;
+	iodev->init = bitbanger_init;
 	iodev->file_extensions = "prn\0";
 	iodev->readable = 1;
 	iodev->writeable = 1;

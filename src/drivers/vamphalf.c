@@ -17,6 +17,7 @@
 static data32_t hyperstone_iram[0x1000];
 static data32_t *tiles, *wram;
 static int flip_bit, flipscreen = 0;
+static int palshift;
 
 static WRITE32_HANDLER( hyperstone_iram_w )
 {
@@ -129,6 +130,15 @@ static ADDRESS_MAP_START( coolmini_io, ADDRESS_SPACE_IO, 32 )
 	AM_RANGE(0x7c0, 0x7c3) AM_READ(eeprom_r)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( suplup_io, ADDRESS_SPACE_IO, 32 )
+	AM_RANGE(0x020, 0x023) AM_WRITE(eeprom_w)
+	AM_RANGE(0x040, 0x043) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x060, 0x063) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x080, 0x083) AM_READWRITE(oki_r, oki_w)
+	AM_RANGE(0x0c0, 0x0c3) AM_WRITE(ym2151_register_w)
+	AM_RANGE(0x0c4, 0x0c7) AM_READWRITE(ym2151_status_r, ym2151_data_w)
+	AM_RANGE(0x100, 0x103) AM_READ(eeprom_r)
+ADDRESS_MAP_END
 
 /*
 Sprite list:
@@ -177,7 +187,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 			if(tiles[offs] & 0x01000000) continue;
 
 			code  = tiles[offs] & 0x0000ffff;
-			color = (tiles[offs+1] & 0x00ff0000) >> 16;
+			color = (tiles[offs+1] >> palshift) &0xff;
 
 			x = tiles[offs+1] & 0x000001ff;
 			y = 256 - ((tiles[offs] & 0x00ff0000) >> 16);
@@ -197,6 +207,18 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 			drawgfx(bitmap,gfx,code,color,fx,fy,x,y,&clip,TRANSPARENCY_PEN,0);
 		}
 	}
+}
+
+VIDEO_START( common )
+{
+	palshift = 16;
+	return 0;
+}
+
+VIDEO_START( suplup )
+{
+	palshift=24; // or is it cpu core bug?
+	return 0;
 }
 
 VIDEO_UPDATE( common )
@@ -310,7 +332,7 @@ static INTERRUPT_GEN( common_interrupts )
 }
 
 static MACHINE_DRIVER_START( common )
-	MDRV_CPU_ADD_TAG("main", E132XS, 100000000)		 /* ?? */
+	MDRV_CPU_ADD_TAG("main", E132XS, 100000000/2)		 /* ?? */
 	MDRV_CPU_PROGRAM_MAP(common_map,0)
 	MDRV_CPU_VBLANK_INT(common_interrupts, 2)
 
@@ -327,6 +349,7 @@ static MACHINE_DRIVER_START( common )
 	MDRV_PALETTE_LENGTH(0x8000)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
+	MDRV_VIDEO_START(common)
 	MDRV_VIDEO_UPDATE(common)
 MACHINE_DRIVER_END
 
@@ -359,6 +382,17 @@ static MACHINE_DRIVER_START( coolmini )
 	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( suplup )
+	MDRV_IMPORT_FROM(common)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP(suplup_io,0)
+
+	MDRV_VIDEO_START(suplup)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+MACHINE_DRIVER_END
 
 /*
 
@@ -506,6 +540,70 @@ ROM_START( coolmini )
 	ROM_LOAD( "cm-vrom1.020", 0x00000, 0x40000, CRC(fcc28081) SHA1(44031df0ee28ca49df12bcb73c83299fac205e21) )
 ROM_END
 
+/*
+
+Super Lup Lup Puzzle
+?, ?
+
+PCB Layout
+----------
+
+F-E1-16-001
+|----------------------------------------------|
+|       M6295       VROM1    N341256           |
+|  YM3016                                      |
+|       YMXXXX    |---------|N341256           |
+|                 |Quicklogi|                  |
+|                 |c        |N341256           |
+|J                |QL2003-  |                  |
+|A        N341256 |XPL84C   |N341256           |
+|M                |---------|                  |
+|M        N341256 |---------|N341256           |
+|A                |Quicklogi|                  |
+|         N341256 |c        |N341256           |
+|                 |QL2003-  |                  |
+|         N341256 |XPL84C   |N341256           |
+|                 |---------|    ROML00  ROMU00|
+|93C46            GM71C18163 N341256           |
+|PAL          E1-16T             ROML01  ROMU01|
+|TEST  ROM1                                    |
+|SERV                                          |
+|RESET ROM2   50MHz                 14.31818MHz|
+|----------------------------------------------|
+Notes:
+      E1-16T clock : 50.000MHz
+      M6295 clock  : 1.7897725MHz (14.31818/8). Sample Rate = 1789772.5 / 132
+      YMXXXX clock : 3.579545MHz (14.31818/4). Chip is either YM2151 or YM3812, actually stamped 'KA51'
+      VSync        : 60Hz
+      N341256      : NKK N341256SJ-15 32K x8 SRAM (SOJ28)
+      GM71C18163   : LG Semi GM71C18163 1M x16 EDO DRAM (SOJ44)
+
+      ROMs:
+           ROML00/01, ROMU00/01 - Macronix MX29F1610MC-12 SOP44 16MBit FlashROM
+           VROM1                - Macronix MX27C2000 2MBit DIP32 EPROM
+           ROM1/2               - ST M27C4001 4MBit DIP32 EPROM
+
+
+
+*/
+
+
+ROM_START( suplup )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "rom2.bin", 0x00000, 0x80000,   CRC(0c176c57) SHA1(f103a1afc528c01cbc18639273ab797fb9afacb1) )
+	ROM_LOAD( "rom1.bin", 0x80000, 0x80000,   CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
+	ROM_LOAD32_WORD( "roml00.bin", 0x000000, 0x200000, CRC(7848e183) SHA1(1db8f0ea8f73f42824423d382b37b4d75fa3e54c) )
+	ROM_LOAD32_WORD( "romu00.bin", 0x000002, 0x200000, CRC(13e3ab7f) SHA1(d5b6b15ca5aef2e2788d2b81e0418062f42bf2f2) )
+	ROM_LOAD32_WORD( "roml01.bin", 0x400000, 0x200000, CRC(15769f55) SHA1(2c13e8da2682ccc7878218aaebe3c3c67d163fd2) )
+	ROM_LOAD32_WORD( "romu01.bin", 0x400002, 0x200000, CRC(6687bc6f) SHA1(cf842dfb2bcdfda0acc0859985bdba91d4a80434) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
+	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
+ROM_END
+
+
 
 static READ32_HANDLER( vamphalf_speedup_r )
 {
@@ -558,6 +656,17 @@ DRIVER_INIT( coolmini )
 	flip_bit = 1;
 }
 
+DRIVER_INIT( suplup )
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff00000, 0xfff7ffff, 0, 0, MRA32_BANK2);
+
+	cpu_setbank(1, memory_region(REGION_USER1));
+	cpu_setbank(2, memory_region(REGION_USER1)+0x80000);
+
+	flip_bit = 1;
+}
+
 GAME( 1999, vamphalf, 0, vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
 GAMEX(2000, misncrft, 0, misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEX(19??, coolmini, 0, coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",                   GAME_NOT_WORKING )
+GAMEX(1999, suplup,   0, suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle",        GAME_NOT_WORKING )

@@ -35,6 +35,468 @@
 
 */
 
+/*
+Information from Guru
+
+Seibu Kaihatsu SPI Hardware Overview
+1995-1998 Seibu Kaihatsu Inc.
+
+This system (known as 'SPI') consists of a main board and a plug-in
+cartridge containing the game software. The games on SPI hardware can
+be swapped by changing the top cartridge and then moving jumper JP072
+to the alternative position. This re-flashes some ROMs for a few minutes
+(accompanied by a techno music track). Afterwards, a message tells you to
+put the jumper back to the original position and reboot the PCB. The new
+game then plays.
+
+There were a few revisions of this hardware, though most are the same with only
+minor changes such as different IC revisions etc.
+
+Games on this system include.....
+Raiden Fighters
+Raiden Fighters 2
+Raiden Fighters Jet
+Senkyu / Battle Balls
+E-Jan High School
+Viper Phase 1
+
+
+Main Board Layout
+-----------------
+Revision 1
+(C)1995 SXX2C-MAIN V2.0
+
+Revision 2
+(C)1998 SXX2C-MAIN V2.1
+|-----------------------------------------------------------------------------|
+|                  CN121       E28F008SA           XC7336(1)        Z80       |
+|                                    E28F008SA                                |
+|                      JP072                                                  |
+|  VOL_L  VOL_R                                                               |
+|                4560      |--------|            LH5496D-50                   |
+|            4560    4560  |YMF271-F|                              XC7336(2)  |
+|                          |        |16.9344MHz  LH5496D-50                   |
+|              YAC513-F    |        |                                         |
+|                          |--------|                                         |
+|            JP121                                           PAL3  TC551001   |
+|                                                                             |
+|--|                                   |-------------------------| TC551001   |
+   |                                   |-------------------------|            |
+|--|       |------|                                                           |
+|          |SIE150|       61256                                               |
+|          |      |                                                           |
+|          |------|       61256               |---------|     TC551664BJ-15   |
+|                                             |SEI400   |                     |
+|                                             |SB07-3460|      *              |
+|J                                            |         |                     |
+|A                                            |         |                     |
+|M                                            |---------|     TC551664BJ-15   |
+|M         JP071                                                              |
+|A                                        PAL1        61256                   |
+|                                                              *              |
+|                                         PAL2        61256                   |
+|                                                                             |
+|                          28.63636MHz |-------------------------|            |
+|                                      |-------------------------|            |
+|--|                                                                          |
+   |      BATT_3V              |---------|        |-------|        PAL4       |
+|--|                           |SEI600   |        |AM386DX| 50MHz             |
+|                              |SB08-1513|        |       |                   |
+|            32.768kHz         |         |        |-------|                   |
+|           DS2404S            |         |                                    |
+|                              |---------|                                    |
+|                                                                             |
+|-----------------------------------------------------------------------------|
+Notes:
+     AM386DX   - Advanced Micro Devices AM386DX/DXL-25 (QFP132), running at 25.000MHz [50/2]
+                   - Replaced with Intel NG80386DX25 on Revision 1 PCB
+     Z80       - Zilog Z84C0008PEC (DIP40), running at 7.15909MHz (28.63636/4)
+     YMF271-F  - Yamaha YMF271-F running at 16.9344MHz
+     E28F008SA - Intel E28F008SA 8MBit FlashROM (TSOP40)
+                   - Replaced with Sharp LH28F008 on Revision 1 PCB
+     XC7336(1) - Xilinx XC7336 CPLD (PLCC44, stamped 'MCTL02')
+     XC7336(2) - Xilinx XC7336 CPLD (PLCC44, stamped 'MCTL03')
+     TC551001  - Toshiba TC551001 128K x8 SRAM (SOP32)
+                   - Replaced with Toshiba TC518128 on Revision 1 PCB
+     61256     - 32K x8 SRAM (DIP28)
+                   - Replaced with Sony CXK5863BP-30 on Revision 1 PCB
+     TC551664  - Toshiba TC551664BJ-15 64K x16 SRAM (SOJ44)
+     LH5496D-50- Sharp LH5496D-50 Asynchronous FIFO (DIP28)
+     DS2404S   - Dallas DS2404S EconoRAM Time Chip (SOIC16)
+     PAL1      - ICT PEEL18CV8 (DIP20, stamped 'SXX005-5')
+     PAL2      - ICT PEEL18CV8 (DIP20, stamped 'SXX011B')
+     PAL3      - Lattice GAL16V8D (DIP20)
+                   - Stamped 'MCTL01' on Revision 1 PCB
+                   - no Seibu markings on Revision 2 PCB
+     PAL4      - Advanced Micro Devices PALCE20V8H (no Seibu markings, DIP24)
+                   - Replaced with ICT PEEL18CV8 (DIP20, stamped 'SXX010B') on Revision 1 PCB
+     3V_BATT   - 3 Volt coin battery CR2032 for use with DS2404S
+     JRC4560   - Japan Radio Co. JRC4560 Op Amp IC (DIP8)
+                   - All 3 IC's replaced with a custom ceramic SIL module stamped 'HB-46A1' on Revision 1 PCB
+     YAC513-M  - Yamaha YAC513-M DAC (SOIC16)
+     JP072     - Jumper used when swapping game board cartridges
+     JP071     - Slide Switch to flip screen
+     JP121     - Jumper to set sound output to mono or stereo
+     CN121     - Output connector for left/right speakers
+     *         - Unpopulated position for Toshiba TC551664BJ-15 64K x16 SRAM
+
+ROM Board Layouts
+-----------------
+
+SXX2C ROM SUB
+-------------------------------------
+|     *                       *     |
+|+BG2-P.U049    5.U048  BG-1D.U0415 |
+|                                   |
+|      *                       *    |
+| BG-1P.U0410  6.U0413  +BG2-D.U0416|
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+| 5816                              |
+|         |------------|            |
+|         |            |     *      |
+|         |            |OBJ-3.U0323 |
+| 5816    |  SEI252    |            |
+|         | SB05-106   |            |
+|         |            |            |
+|         |            |            |
+| 5816    |------------|            |
+|                                   |
+|                *           *      |
+|           OBJ-2.U0324 OBJ-1.U0322 |
+|                                   |
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|                                   |
+| 3.U0210     2.U0212       1.U0211 |
+|                                   |
+|                *                  |
+| 4.U029    PCM-1.U0215     7.U0216 |
+|                                   |
+-------------------------------------
+Notes:
+*     : These ROMs are surface mounted
++     : These ROMs not populated on some games
+5816  : SONY CXD5816SP-12L SRAM (x3)
+SEI252: SEIBU custom stamped 'SEI252 SB05-106' (QFP208)
+
+This board is used by...
+
+Battle Balls/SenKyu      (All Mask ROMs stamped 'F-BALLS')
+                         Filename   ROM Type
+                         ----------------------------------
+                         OBJ-1.322  23C3210 (SOP44 MaskROM)
+                         OBJ-2.324  23C3210 (SOP44 MaskROM)
+                         OBJ-3.323  23C3210 (SOP44 MaskROM)
+                         BG-1D.415  23C1610 (SOP44 MaskROM)
+                         BG-1P.410  538100  (SOP32 MaskROM)
+                         PCM-1.215  538100  (SOP32 MaskROM)
+                         1.211      27C2001 (DIP32 EPROM)
+                         2.212      27C020  (DIP32 EPROM)
+                         3.210      27C020  (DIP32 EPROM)
+                         4.029      27C2001 (DIP32 EPROM)
+                         5.048      27C512  (DIP28 EPROM)
+                         6.413      27C1024 (DIP40 EPROM)
+                         7.216      27C040  (DIP32 EPROM)
+
+E-Jan High School        (All Mask ROMs stamped '       ')    //todo
+                         Filename     ROM Type
+                         ------------------------------------
+                         OBJ-1.U0322  23C3210 (SOP44 MaskROM)
+                         OBJ-2.U0324  23C3210 (SOP44 MaskROM)
+                         OBJ-3.U0323  23C3210 (SOP44 MaskROM)
+                         BG-1D.U0415  23C1610 (SOP44 MaskROM)
+                         BG-2D.U0416  538000  (SOP32 MaskROM)
+                         BG-1P.U0410  538000  (SOP32 MaskROM)
+                         BG-2P.U049   534000  (SOP32 MaskROM)
+                         PCM-1.U0215  538000  (SOP32 MaskROM)
+                         1.U0211      27C2001 (DIP32 EPROM)
+                         2.U0212      27C020  (DIP32 EPROM)
+                         3.U0210      27C020  (DIP32 EPROM)
+                         4.U029       27C2001 (DIP32 EPROM)
+                         5.U048       27C512  (DIP28 EPROM)
+                         6.U0413      27C1024 (DIP40 EPROM)
+                         7.U0216      27C040  (DIP32 EPROM)
+
+Viper Phase 1            (All Mask ROMs stamped 'VIPER')
+(Old and New Versions)   Filename     ROM Type
+                         ------------------------------------
+                         OBJ-1.U0322  23C3210 (SOP44 MaskROM)
+                         OBJ-2.U0324  23C3210 (SOP44 MaskROM)
+                         OBJ-3.U0323  23C3210 (SOP44 MaskROM)
+                         BG-11.U0415  23C1610 (SOP44 MaskROM)
+                         BG21.U0416   538000  (SOP32 MaskROM)
+                         BG-12.U0410  538000  (SOP32 MaskROM)
+                         BG22.U049    534000  (SOP32 MaskROM)
+                         PCM.U0215    538000  (SOP32 MaskROM)
+                         1.U0211      27C040  (DIP32 EPROM)
+                         2.U0212      27C040  (DIP32 EPROM)
+                         3.U0210      27C040  (DIP32 EPROM)
+                         4.U029       27C040  (DIP32 EPROM)
+                         5.U048       27C512  (DIP28 EPROM)
+                         6.U0413      27C1024 (DIP40 EPROM)
+
+
+SXX2C ROM SUB2
+-------------------------------------
+|    *                        *     |
+|BG2-P.U049    7.U048   BG1-D.U0415 |
+|                                   |
+|    *     5.U0423  6.U0424     *   |
+|BG1-P.U0410            BG2-D.U0416 |
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+| 6116                              |
+|         |------------|            |
+|         |            |     *      |
+|         |            |OBJ-3.U0323 |
+| 6116    |  SEI252    |            |
+|         | SB05-106   |            |
+|         |            |            |
+|         |            |            |
+| 6116    |------------|            |
+|                                   |
+|                *           *      |
+|           OBJ-2.U0324 OBJ-1.U0322 |
+|                                   |
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|                                   |
+| 3.U0210     2.U0212       1.U0211 |
+|                                   |
+|                *                  |
+| 4.U029     PCM.U0217      8.U0216 |
+|                                   |
+-------------------------------------
+Notes:
+*     : These ROMs are surface mounted
+6116  : HM6116LK-70 SRAM (x3)
+SEI252: SEIBU custom stamped 'SEI252 SB05-106' (QFP208)
+
+This board is used by...
+Raiden Fighters       (All Mask ROMs stamped 'GUN DOGS')
+                      Filename     ROM Type
+                      ----------------------------------
+                      OBJ-1.U0322  23C3210 (SOP44 MaskROM)
+                      OBJ-2.U0324  23C3210 (SOP44 MaskROM)
+                      OBJ-3.U0323  23C3210 (SOP44 MaskROM)
+                      BG1-D.U0415  23C1610 (SOP44 MaskROM)
+                      BG2-D.U0416  23C1610 (SOP44 MaskROM)
+                      BG1-P.U0410  538100  (SOP32 MaskROM)
+                      BG2-P.U0049  538100  (SOP32 MaskROM)
+                      PCM.U0217    538100  (SOP32 MaskROM)
+                      1.U0211      27C040  (DIP32 EPROM)
+                      2.U0212      27C040  (DIP32 EPROM)
+                      3.U0210      27C040  (DIP32 EPROM)
+                      4.U0029      27C040  (DIP32 EPROM)
+                      5.U0423      27C512  (DIP28 EPROM)
+                      6.U0424      27C512  (DIP28 EPROM)
+                      7.U048       27C512  (DIP28 EPROM)
+                      8.U0216      27C040  (DIP32 EPROM)
+
+
+SXX2C ROM SUB4 (C)1996
+-------------------------------------
+|    *   BG1-P.U0410  *BG2-P.U049   |
+|BG1-D.U0415   *          *FIX.U0425|
+|                                   |
+|    *        7.U048                |
+|BG2-D.U0424                        |
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+| 6216                              |
+|         |------------|            |
+|         |            |     *      |
+| 6216    |            |OBJ-3.U0323 |
+|         |  SEI252    |            |
+|         | SB05-106   |     *      |
+|         |            |OBJ-2.U0324 |
+|         |            |            |
+|         |------------|     *      |
+| 6216                  OBJ-1.U0322 |
+|                                   |
+|                                   |
+|                                   |
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|                              *    |
+| 1.U0211        *        PCM2.U0217|
+|            PRG34.U0219            |
+|                                   |
+| PRG2.U021                         |
+|                                   |
+-------------------------------------
+Notes:
+*     : These ROMs are surface mounted
+6216  : BR6216C-10LL SRAM (x3)
+SEI252: SEIBU custom stamped 'SEI252 SB05-106' (QFP208)
+
+This board is used by...
+Raiden Fighters (Asia)
+                      Filename     ROM Type
+                      ----------------------------------
+                      OBJ-1.U0322  23C3210 (SOP44 MaskROM, stamped 'GUN DOGS')
+                      OBJ-2.U0324  23C3210 (SOP44 MaskROM, stamped 'GUN DOGS')
+                      OBJ-3.U0323  23C3210 (SOP44 MaskROM, stamped 'GUN DOGS')
+                      BG1-D.U0415  23C1610 (SOP44 MaskROM, stamped 'GUN DOGS')
+                      BG2-D.U0424  23C1610 (SOP44 MaskROM, stamped 'GUN DOGS')
+                      BG1-P.U0410  538100  (SOP32 MaskROM, stamped 'GUN DOGS')
+                      BG2-P.U0049  538100  (SOP32 MaskROM, stamped 'GUN DOGS')
+                      FIX.U0425    LH531024(SOP40 MaskROM, stamped 'RAIDEN-F')
+                      PCM2.U0217   23C1610 (SOP44 MaskROM, stamped 'RAIDEN-F')
+                      PRG34.U0219  23C1610 (SOP44 MaskROM, stamped 'RAIDEN-F')
+                      PRG2.U0212   534000  (DIP32 MaskROM, stamped 'RAIDEN-F')
+                      1.U0211      27C040  (DIP32 EPROM)
+                      7.U048       27C512  (DIP28 EPROM)
+
+
+SXX2C ROM SUB8 (C)1997
+-------------------------------------
+|                                   |
+| 7.U0514     6.U0518      5.U0524  |
+|                                   |
+|        *BG-2D.U0536    BG-1D.U0535|
+|BG-2P.U0538    BG-1P.U0537     *   |
+|    *              *               |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|    *                        PAL1  |
+|OBJ-1.U0429 |------------|         |
+|    *       |            |         |
+|OBJ-4.U0430 |            | N341256 |
+|    *       |   RISE10   |         |
+|OBJ-2.U0431 |            | N341256 |
+|    *       |            |         |
+|OBJ-5.U0432 |            |         |
+|    *       |------------|         |
+|OBJ-3.U0434                  PAL2  |
+|    *                              |
+|OBJ-6.U0433                        |
+|                                   |
+|PAL3                               |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|                              *    |
+|                          PCM.U0217|
+|1.U0211   3.U0221   8.U0222        |
+|                                   |
+|     2.U0212   4.U0220             |
+|                                   |
+-------------------------------------
+Notes:
+*      : These ROMs are surface mounted
+N341256: NKK N341256SJ-15 32K x8 SRAM (x2)
+RISE10 : SEIBU custom stamped 'RISE10' (QFP240)
+PAL1   : PALCE 16V8 stamped 'RM83'
+PAL2   : PALCE 16V8 stamped 'RM81'
+PAL3   : PALCE 16V8 stamped 'RM82'
+
+This board is used by...
+
+Raiden Fighters 2     (All Mask ROMs stamped 'RAIDEN-F2')
+                       Filename     ROM Type
+                       --------------------------------------
+                       BG-1D.U0535  MX23C3210 (SOP44 MaskROM)
+                       BG-2D.U0536  MX23C3210 (SOP44 MaskROM)
+                       BG-1P.U0537  MX23C1610 (SOP44 MaskROM)
+                       BG-2P.U0538  MX23C1610 (SOP44 MaskROM)
+                       OBJ-1.U0429  MX23C3210 (TSOP48 MaskROM)
+                       OBJ-2.U0431  MX23C3210 (TSOP48 MaskROM)
+                       OBJ-3.U0434  MX23C3210 (TSOP48 MaskROM)
+                       OBJ-4.U0430  MX23C1610 (TSOP48 MaskROM)
+                       OBJ-5.U0432  MX23C1610 (TSOP48 MaskROM)
+                       OBJ-6.U0433  MX23C1610 (TSOP48 MaskROM)
+                       PCM.U0227    MX23C1610 (SOP44 MaskROM)
+                       1.U0211      27C040    (DIP32 EPROM)
+                       2.U0212      27C040    (DIP32 EPROM)
+                       3.U0221      27C040    (DIP32 EPROM)
+                       4.U0220      27C040    (DIP32 EPROM)
+                       5.U0524      27C512    (DIP28 EPROM)
+                       6.U0518      27C512    (DIP28 EPROM)
+                       7.U0514      27C512    (DIP28 EPROM)
+                       8.U0222      27C040    (DIP32 EPROM)
+
+
+SXX2C ROM SUB10 (C)1998
+-------------------------------------
+|                                   |
+|FIXP.U0514  FIX1.U0518  FIX0.U0524 |
+|                                   |
+|        *BG-2D.U0545    BG-1D.U0543|
+|BG-2P.U0546    BG-1P.U0544     *   |
+|    *              *               |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|    *                              |
+|OBJ-1.U0442 |------------|         |
+|            |            |         |
+|            |            |   61256 |
+|    *       |   RISE11   |         |
+|OBJ-2.U0443 |            |   61256 |
+|            |            |         |
+|            |            |         |
+|    *       |------------|         |
+|OBJ-3.U0444                        |
+|                             PAL1  |
+|                             PAL2  |
+|                                   |
+|                                   |
+|    |-------------------------|    |
+|    |-------------------------|    |
+|                                   |
+|                             *     |
+|PRG2.U0221  PRG0.U0211  PCM-D.U0227|
+|                                   |
+|                                   |
+|PRG3.U0220  PRG1.U0212 SOUND1.U0222|
+|                                   |
+-------------------------------------
+Notes:
+*     : These ROMs are surface mounted
+61256 : 32K x8 SRAM (x2)
+RISE11: SEIBU custom stamped 'RISE11' (QFP240)
+PAL1  : PALCE 16V8 stamped 'SPI ROM 10-2'
+PAL2  : PALCE 16V8 stamped 'SPI ROM 10-1'
+
+This board is used by...
+
+Raiden Fighters Jet    (All Mask ROMs stamped 'RAIDEN-FJET')
+                       Filename     ROM Type
+                       --------------------------------------
+                       FIXP.U0514   27C512    (DIP28 EPROM)
+                       FIX1.U0518   27C512    (DIP28 EPROM)
+                       FIX0.U0524   27C512    (DIP28 EPROM)
+                       BG-2D.U0545  MX23C1610 (SOP44 MaskROM)
+                       BG-1D.U0543  MX23C3210 (SOP44 MaskROM)
+                       BG-1P.U0544  MX23C1610 (SOP44 MaskROM)
+                       BG-2P.U0546  MX23C8000 (SOP32 MaskROM)
+                       OBJ-1.U0442  MX23C6410 (SOP44 MaskROM)
+                       OBJ-2.U0443  MX23C6410 (SOP44 MaskROM)
+                       OBJ-3.U0444  MX23C6410 (SOP44 MaskROM)
+                       PRG0.U0211   MX27C4000 (DIP32 EPROM)
+                       PRG1.U0212   MX27C4000 (DIP32 EPROM)
+                       PRG2.U0221   MX27C4000 (DIP32 EPROM)
+                       PRG3.U0220   MX27C4000 (DIP32 EPROM)
+                       PCM-D.U0227  MX23C1610 (SOP44 MaskROM)
+                       SOUND1.U0222 MX27C4000 (DIP32 EPROM)
+
+*/
+
 #include "driver.h"
 #include "cpuintrf.h"
 #include "vidhrdw/generic.h"
@@ -852,7 +1314,7 @@ READ32_HANDLER ( batlball_speedup_r )
  return spimainram[(0x0018db4-0x800)/4];
 }
 
-READ32_HANDLER ( raidnfgt_speedup_r )
+READ32_HANDLER ( rdft_speedup_r )
 {
  if (activecpu_get_pc()==0x0203f0a) cpu_spinuntil_int(); // idle
  return spimainram[(0x00298d0-0x800)/4];
@@ -889,9 +1351,9 @@ static DRIVER_INIT( spi )
 
 }
 
-static DRIVER_INIT( raidnfgt )
+static DRIVER_INIT( rdft )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00298d0, 0x00298d3, 0, 0, raidnfgt_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00298d0, 0x00298d3, 0, 0, rdft_speedup_r );
 
 	init_spi();
 	old_vidhw = 0;
@@ -977,7 +1439,12 @@ static DRIVER_INIT( rf2_us )
 }
 
 
-
+static DRIVER_INIT( rfjet )
+{
+//	init_rf2(); /* not the same ..
+	old_vidhw = 0;
+	bg_size = 2;
+}
 
 /* SYS386 */
 
@@ -1235,7 +1702,7 @@ ROM_START(viperp1o)
 	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
 ROM_END
 
-ROM_START(raidnfgt)
+ROM_START(rdft)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
 	ROM_LOAD32_BYTE("gd_1.211", 0x000000, 0x80000, CRC(f6b2cbdc) SHA1(040c4ff961c8be388c8279b06b777d528c2acc1b) )
@@ -1265,6 +1732,37 @@ ROM_START(raidnfgt)
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 
+ROM_END
+
+ROM_START(rdftau)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("1.u0211", 0x000000, 0x80000, CRC(6339c60d) SHA1(871d5bc9fc695651ceb6fcfdab32084320fe239d) )
+	ROM_LOAD32_BYTE("2.u0212", 0x000001, 0x80000, CRC(a88bda02) SHA1(27dc720d28f56cf443a4eb0bbaaf4bf3b194056d) )
+	ROM_LOAD32_BYTE("3.u0210", 0x000002, 0x80000, CRC(a73e337e) SHA1(93323875c676f38eca3298fcf4a34911db2d78a8) )
+	ROM_LOAD32_BYTE("4.u029",  0x000003, 0x80000, CRC(8cc628f0) SHA1(7534eae8a1ea461adad483002b3cecf132e0e325) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)	/* text layer roms */
+	ROM_LOAD24_BYTE("gd_5.423", 0x000000, 0x10000, CRC(8f8d4e14) SHA1(06c803975767ae98f40ba7ac5764a5bc8baa3a30) )
+	ROM_LOAD24_BYTE("gd_6.424", 0x000001, 0x10000, CRC(6ac64968) SHA1(ec395205c24c4f864a1f805bb0d4641562d4faa9) )
+	ROM_LOAD24_BYTE("gd_7.48",	0x000002, 0x10000, CRC(4d87e1ea) SHA1(3230e9b643fad773e61ab8ce09c0cd7d4d0558e3) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("gd_bg1-d.415", 0x000000, 0x200000, CRC(6a68054c) SHA1(5cbfc4ac90045f1401c2dda7a51936558c9de07e) )
+	ROM_LOAD24_BYTE("gd_bg1-p.410", 0x000002, 0x100000, CRC(3400794a) SHA1(719808f7442bac612cefd7b7fffcd665e6337ad0) )
+	ROM_LOAD24_WORD("gd_bg2-d.416", 0x300000, 0x200000, CRC(61cd2991) SHA1(bb608e3948bf9ea35b5e1615d2ba6858d029dcbe) )
+	ROM_LOAD24_BYTE("gd_bg2-p.49",  0x300002, 0x100000, CRC(502d5799) SHA1(c3a0e1a4f5a7b35572ae1ff31315da4ed08aa2fe) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("gd_obj-1.322", 0x000000, 0x400000, CRC(59d86c99) SHA1(d3c9241e7b51fe21f8351051b063f91dc69bf905))
+	ROM_LOAD("gd_obj-2.324", 0x400000, 0x400000, CRC(1ceb0b6f) SHA1(97225a9b3e7be18080aa52f6570af2cce8f25c06) )
+	ROM_LOAD("gd_obj-3.323", 0x800000, 0x400000, CRC(36e93234) SHA1(51917a80b7da5c32a9434a1076fc2916d62e6a3e) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
+	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
 
 /*
@@ -1346,6 +1844,38 @@ ROM_START(rf2_eur)
 
 ROM_END
 
+ROM_START(rfjet)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("prg0.u0211", 0x000000, 0x80000, CRC(e5a3b304) SHA1(f7285f9c69c589fcc71082dc0b9225fdccec855f) )
+	ROM_LOAD32_BYTE("prg1.u0212", 0x000001, 0x80000, CRC(395e6da7) SHA1(736f777cb1b6bf5541832b8ea89594738ca6d829) )
+	ROM_LOAD32_BYTE("prg2.u0221", 0x000002, 0x80000, CRC(82f7a57e) SHA1(5300015e25d5f2f82eda3ed54bc105d645518498) )
+	ROM_LOAD32_BYTE("prg3.u0220", 0x000003, 0x80000, CRC(cbdf100d) SHA1(c9efd11103429f7f36c1652cadb5384d925cb767) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
+
+	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
+	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
+
+	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("obj-1.u0442", 0x0000000, 0x800000, CRC(58a59896) SHA1(edeaaa69987bd5d08c47ed9bf47a3901e2dcc892) )
+	ROM_LOAD("obj-2.u0443", 0x0800000, 0x800000, CRC(a121d1e3) SHA1(1851ae81f2ae9d3404aadd9fbc0ed7f9230290b9) )
+	ROM_LOAD("obj-3.u0444", 0x1000000, 0x800000, CRC(bc2c0c63) SHA1(c8d395722f7012c3be366a0fc9b224c537afabae) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
+	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
+ROM_END
+
+
 /*******************************************************************/
 /* SYS386 games */
 
@@ -1391,8 +1921,14 @@ GAMEX( 1995, batlbala,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihats
 GAMEX( 1995, viperp1,	0,	     spi, spi_3button, viperp1,		ROT270,	"Seibu Kaihatsu",	"Viper Phase 1 (New Version)", GAME_NOT_WORKING )
 GAMEX( 1995, viperp1o,  viperp1, spi, spi_3button, viperp1o,	ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
 GAMEX( 1996, ejanhs, 	0,	     spi, spi_ejanhs, ejanhs,		ROT0,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )
-GAMEX( 1996, raidnfgt,	0,	     spi, spi_3button, raidnfgt,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters", GAME_NOT_WORKING )
+GAMEX( 1996, rdft,	    0,	     spi, spi_3button, rdft,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters", GAME_NOT_WORKING )
+GAMEX( 1996, rdftau,	rdft,    spi, spi_3button, rdft,	ROT90,	"Seibu Kaihatsu",	"Raiden Fighters (Australia)", GAME_NOT_WORKING )
+
+
 GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, rf2_eur,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
+
+GAMEX( 1998, rfjet,	0,       spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet", GAME_NOT_WORKING )
+
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 
 /* SXX2F */

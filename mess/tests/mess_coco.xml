@@ -67,4 +67,13 @@
 	<memverify start="0x400" end="0x5FF">0xcf</memverify>
 </test>
 
+<test name="coco_006" driver="coco2b">
+	<!-- This test tests printing -->
+	<wait time="2"/>
+	<imagecreate type="prin"/>
+	<input>?#-2, "FOO";&#13;</input>
+	<wait time="4"/>
+	<imageverify type="prin">"FOO"</imageverify>
+</test>
+
 </tests>

@@ -636,14 +636,12 @@ void dst_logic_dff_step(struct node_description *node)
 
 	if (DST_LOGIC_DFF_ENABLE)
 	{
-//logerror("lc=%d, nc=%d\n",context->lastClk,DST_LOGIC_DFF_CLOCK);
 		if (DST_LOGIC_DFF_RESET)
 			node->output = 0;
 		else if (DST_LOGIC_DFF_SET)
 			node->output = 1;
 		else if (!context->lastClk && DST_LOGIC_DFF_CLOCK)
 {
-logerror("latched\n");
 			node->output = DST_LOGIC_DFF_DATA;
 }
 	}

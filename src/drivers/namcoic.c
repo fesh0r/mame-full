@@ -363,7 +363,7 @@ static void zdrawgfxzoom(
 									{
 										if( pri[x]<=zpos )
 										{
-											if( c==0xfe && shadow_offset )
+											if( color == 0xf && c==0xfe && shadow_offset )
 											{
 												dest[x] |= shadow_offset;
 											}

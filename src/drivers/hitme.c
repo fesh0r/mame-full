@@ -296,13 +296,11 @@ static struct GfxDecodeInfo barricad_gfxdecodeinfo[] =
  *
  *************************************/
 
-const struct discrete_555_astbl_desc desc_hitme_555 =
+const struct discrete_555_desc desc_hitme_555 =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,				// B+ voltage of 555
-	5.0 - 1.7,		// High output voltage of 555 (Usually v555 - 1.7)
-	5.0 * 2.0 /3.0,	// normally 2/3 of v555
-	5.0 / 3.0		// normally 1/3 of v555
+	DEFAULT_555_VALUES
 };
 
 static struct discrete_comp_adder_table desc_hitme_adder =

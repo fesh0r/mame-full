@@ -155,7 +155,7 @@ Notes:
 #include "machine/fd1094.h"
 
 void fd1094_machine_init(void);
-void fd1094_driver_init(UINT16 cpunum);
+void fd1094_driver_init(void);
 
 /***************************************************************************/
 
@@ -1468,6 +1468,36 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
+static ADDRESS_MAP_START( ddux_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0bffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
+	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
+	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
+	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
+	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
+	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
+	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
+	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
+	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ddux_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0bffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x3f0000, 0x3fffff) AM_WRITE(sys16_tilebank_w)
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
+	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
+	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
+	AM_RANGE(0xc46000, 0xc4603f) AM_WRITE(SYS16_MWA16_EXTRAM2) AM_BASE(&sys16_extraram2)
+	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w)
+	AM_RANGE(0xfe0020, 0xfe003f) AM_WRITE(MWA16_NOP) // config regs
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
+ADDRESS_MAP_END
+
+
+
 static ADDRESS_MAP_START( dduxbl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0bffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
@@ -1564,10 +1594,10 @@ static MACHINE_INIT( dduxbl ){
 
 static void ddux_update_proc( void )
 {
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
+	sys16_fg_scrollx = sys16_textram[0xe98/2];
+	sys16_bg_scrollx = sys16_textram[0xe9a/2];
+	sys16_fg_scrolly = sys16_textram[0xe90/2];
+	sys16_bg_scrolly = sys16_textram[0xe92/2];
 
 	set_fg_page( sys16_textram[0xe80/2] );
 	set_bg_page( sys16_textram[0xe82/2] );
@@ -1575,15 +1605,15 @@ static void ddux_update_proc( void )
 
 static MACHINE_INIT( ddux ){
 	static int bank[16] = { //*
+		0,2,3,4,
 		0,0,0,0,
-		0,0,0,4,
-		0,0,0,3,
-		0,2,0,0
+		0,0,0,0,
+		0,0,0,0
 	};
 	sys16_obj_bank = bank;
 
 	sys16_update_proc = ddux_update_proc;
-	sys16_sprxoffset = -0x48;
+	sys16_sprxoffset = -0xb8;
 
 	fd1094_machine_init();
 
@@ -1592,7 +1622,7 @@ static MACHINE_INIT( ddux ){
 static DRIVER_INIT( ddux )
 {
 	machine_init_sys16_onetime();
-	fd1094_driver_init(0x0096);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( dduxbl )
@@ -1640,6 +1670,16 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
+static MACHINE_DRIVER_START( ddux )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(ddux_readmem,ddux_writemem)
+
+	MDRV_MACHINE_INIT(ddux)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( dduxbl )
 
 	/* basic machine hardware */
@@ -1648,16 +1688,6 @@ static MACHINE_DRIVER_START( dduxbl )
 	MDRV_CPU_PROGRAM_MAP(dduxbl_readmem,dduxbl_writemem)
 
 	MDRV_MACHINE_INIT(dduxbl)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( ddux )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(dduxbl_readmem,dduxbl_writemem)
-
-	MDRV_MACHINE_INIT(ddux)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1695,6 +1725,7 @@ static ADDRESS_MAP_START( eswat_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static int eswat_tilebank0;
+static int eswat_tilebank1;
 
 static WRITE16_HANDLER( eswat_tilebank0_w ){
 	if( ACCESSING_LSB ){
@@ -1702,7 +1733,27 @@ static WRITE16_HANDLER( eswat_tilebank0_w ){
 	}
 }
 
+static WRITE16_HANDLER( eswat_tilebank1_w ){
+	if( ACCESSING_LSB ){
+		eswat_tilebank1 = data&0xff;
+	}
+}
+
 static ADDRESS_MAP_START( eswat_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x123406, 0x123407) AM_WRITE(sound_command_w)
+	AM_RANGE(0x3e2000, 0x3e2001) AM_WRITE(eswat_tilebank0_w)
+	AM_RANGE(0x3e2002, 0x3e2003) AM_WRITE(eswat_tilebank1_w)
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
+	AM_RANGE(0x410000, 0x418fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
+	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
+	AM_RANGE(0xc80000, 0xc80001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( eswatbl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x3e2000, 0x3e2001) AM_WRITE(eswat_tilebank0_w)
 	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
@@ -1715,21 +1766,23 @@ static ADDRESS_MAP_START( eswat_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
 ADDRESS_MAP_END
 
+
 /***************************************************************************/
 
 static void eswat_update_proc( void )
 {
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
+	sys16_fg_scrollx = sys16_textram[0xe98/2];
+	sys16_bg_scrollx = sys16_textram[0xe9a/2];
+	sys16_fg_scrolly = sys16_textram[0xe90/2];
+	sys16_bg_scrolly = sys16_textram[0xe92/2];
 
 	set_fg_page( sys16_textram[0xe80/2] );
 	set_bg_page( sys16_textram[0xe82/2] );
 
-	sys16_tile_bank1 = (sys16_textram[0x8030/2])&0xf;
+	sys16_tile_bank1 = eswat_tilebank1;
 	sys16_tile_bank0 = eswat_tilebank0;
 }
+
 
 static void eswatbl_update_proc( void )
 {
@@ -1780,7 +1833,7 @@ static DRIVER_INIT( eswat ){
 	sys16_rowscroll_scroll=0x8000;
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 
-	fd1094_driver_init(0x0130);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( eswatu ){
@@ -1788,8 +1841,9 @@ static DRIVER_INIT( eswatu ){
 	sys16_rowscroll_scroll=0x8000;
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 
-	fd1094_driver_init(0x0129);
+	fd1094_driver_init();
 }
+
 
 static DRIVER_INIT( eswatbl ){
 	machine_init_sys16_onetime();
@@ -1847,7 +1901,7 @@ static MACHINE_DRIVER_START( eswatbl )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(eswat_readmem,eswat_writemem)
+	MDRV_CPU_PROGRAM_MAP(eswat_readmem,eswatbl_writemem)
 
 	MDRV_MACHINE_INIT(eswatbl)
 MACHINE_DRIVER_END
@@ -2130,7 +2184,7 @@ static MACHINE_INIT( fpointbl ){
 static DRIVER_INIT( fpoint ){
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0127A);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( fpointbl ){
@@ -2549,7 +2603,7 @@ static DRIVER_INIT( goldnaxc )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0122);
+	fd1094_driver_init();
 }
 
 /***************************************************************************/
@@ -2811,13 +2865,22 @@ static ADDRESS_MAP_START( mjleague_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
 	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
 
+	/* ?? these are just plain broken, they need 'extraram' but it isn't mapped! */
+//	AM_RANGE(0xc40002, 0xc40003) AM_READ(sys16_coinctrl_r)
+//	AM_RANGE(0xc41000, 0xc41001) AM_READ(mjl_io_service_r)
+//	AM_RANGE(0xc41002, 0xc41003) AM_READ(mjl_io_player1_r)
+//	AM_RANGE(0xc41006, 0xc41007) AM_READ(mjl_io_player2_r)
+//	AM_RANGE(0xc41004, 0xc41005) AM_READ(mjl_io_bat_r)
+//	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
+//	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
+
 	AM_RANGE(0xc40002, 0xc40003) AM_READ(sys16_coinctrl_r)
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(mjl_io_service_r)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(mjl_io_player1_r)
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(mjl_io_player2_r)
-	AM_RANGE(0xc41004, 0xc41005) AM_READ(mjl_io_bat_r)
+	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
+	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
+	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
 	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
 	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
+
 	AM_RANGE(0xc60000, 0xc60001) AM_READ(MRA16_NOP) /* What is this? Watchdog? */
 
 	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
@@ -4034,21 +4097,21 @@ static DRIVER_INIT( tetris )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0093);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( tetrisa )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0092);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( tetrisb )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0091);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( tetrisbl )
@@ -4068,7 +4131,7 @@ static DRIVER_INIT( sonicbom )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0053);
+	fd1094_driver_init();
 }
 
 /***************************************************************************/
@@ -4774,14 +4837,14 @@ static DRIVER_INIT( wb3a )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0089);
+	fd1094_driver_init();
 }
 
 static DRIVER_INIT( wb3b )
 {
 	machine_init_sys16_onetime();
 
-	fd1094_driver_init(0x0085);
+	fd1094_driver_init();
 }
 
 /***************************************************************************/
@@ -5317,7 +5380,7 @@ ROM_START( altbeast )
 ROM_END
 
 ROM_START( jyuohki )
-	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* Custom 68000 code. */
+	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
 	// Custom CPU 317-0065
 	ROM_LOAD16_BYTE( "epr11670.a7", 0x000000, 0x20000, CRC(b748eb07) SHA1(f3663831610bcb358340f14c2c96833dd7591bfb) )
 	ROM_LOAD16_BYTE( "epr11669.a5", 0x000001, 0x20000, CRC(005ecd11) SHA1(c392195955cf727752f03db92414701cc2bf1f4a) )
@@ -5778,6 +5841,7 @@ ROM_END
 */
 
 ROM_START( ddux )
+	// Custom CPU 317-0096
 	ROM_REGION( 0x0c0000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "191.a7", 0x000000, 0x20000, CRC(500e400a) SHA1(c4d23cd09baf3049a8014190d82598d1e3f8ce89) )
 	ROM_LOAD16_BYTE( "190.a5", 0x000001, 0x20000, CRC(2a698308) SHA1(bf6ad7a2bac77d088537d65041a69e6ea2788b14) )
@@ -5785,23 +5849,23 @@ ROM_START( ddux )
 	ROM_LOAD16_BYTE( "915.a8", 0x080000, 0x20000, CRC(d8ed3132) SHA1(a9d5ad8f79fb635cc234a99fad398688a5f15926) )
 	ROM_LOAD16_BYTE( "913.a6", 0x080001, 0x20000, CRC(30c6cb92) SHA1(2e17c74eeb37c9731fc2e365cc0114f7383c0106) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0096.key", 0x0000, 0x2000, CRC(4fed2e85) SHA1(cce2e2f206a5caa8e9797dc0433a1911ab9b62cf) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "mpr11917.a14", 0x00000, 0x10000, CRC(6f772190) SHA1(e68dc78785a1cb0da362efc8c4a088ccc580bd6e) )
 	ROM_LOAD( "mpr11918.a15", 0x10000, 0x10000, CRC(c731db95) SHA1(b3b9cbd772f7bfd35355bcb2a7c0801b61eaf19f) )
 	ROM_LOAD( "mpr11919.a16", 0x20000, 0x10000, CRC(64d5a491) SHA1(686151c9a58f524f786f52c03f086cdaa5728233) )
 
 	ROM_REGION( 0xa0000, REGION_GFX2, 0 ) //* sprites */
-	/* note: roms should be joined together..they were dumped as 2 halves */
-	ROM_LOAD16_BYTE( "mpr11920.b1", 0x00001, 0x010000, CRC(f72127df) SHA1(b58d973ce177917f921287c5bc3a92cbe65f4f58) )
+	ROM_LOAD16_BYTE( "mpr11920.b1", 0x00001, 0x010000, CRC(e5d1e3cd) SHA1(d8c0f40dab00f1b09f6d018597fd45147f9ca3f6) )
+	ROM_CONTINUE(                   0x40001, 0x010000 )
 	ROM_RELOAD( 0x20001, 0x010000 )
-	ROM_LOAD16_BYTE( "mpr11922.b5", 0x00000, 0x010000, CRC(b0079e99) SHA1(9bb4d3fa804a3d05a6e06b45a1280d7064e96ac6) )
+	ROM_LOAD16_BYTE( "mpr11922.b5", 0x00000, 0x010000, CRC(70b0c4dd) SHA1(b67acab0c6a0f5051fc3fcda2476b8834f65b376) )
+	ROM_CONTINUE(                   0x40000, 0x010000 )
 	ROM_RELOAD( 0x20000, 0x010000 )
-	ROM_LOAD16_BYTE( "mpr11920.u", 0x40001, 0x010000, CRC(cfb2af18) SHA1(1ad18f933a7b797f0364d1f4a6c8549351b4c9a6) )
-	ROM_LOAD16_BYTE( "mpr11922.u", 0x40000, 0x010000, CRC(0217369c) SHA1(b6ec2fa1279a27a602d79e1073c54193745ea816) )
-	ROM_LOAD16_BYTE( "mpr11921.b2", 0x60001, 0x010000, CRC(28ce9b15) SHA1(1640df9c8f21893c0647ad2f4210c714a06e6f37) )
-	ROM_LOAD16_BYTE( "mpr11923.b6", 0x60000, 0x010000, CRC(8844f336) SHA1(18c1baaad3bcc658d4a6d03de8c97378b5284e88) )
-	ROM_LOAD16_BYTE( "mpr11921.u", 0x80001, 0x010000, CRC(efe57759) SHA1(69b8969b20ab9480df2735bd2bcd527069196bd7) )
-	ROM_LOAD16_BYTE( "mpr11923.u", 0x80000, 0x010000, CRC(6b64f665) SHA1(df07fcf2bbec6fa78f89b95272762aebd6f3ec0e) )
+	ROM_LOAD16_BYTE( "mpr11921.b2", 0x60001, 0x020000, CRC(61d2358c) SHA1(216fd295ff9d56976f9b1c465a48806be843dd04) )
+	ROM_LOAD16_BYTE( "mpr11923.b6", 0x60000, 0x020000, CRC(c9ffe47d) SHA1(fd6dc3781c6e7d1734a9f4a8e4a9c44cfc091e0a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "916.a10", 0x0000, 0x8000, CRC(7ab541cf) SHA1(feb88022ca1796d020e53e95ad345159bd415530) )
@@ -5844,47 +5908,54 @@ ROM_START( eswat )
 	ROM_LOAD16_BYTE( "epr12659.bin", 0x000000, 0x40000, CRC(c5ab2db9) SHA1(5c7ded9a39e03d1f438cff1574b614295c8ebeef) )
 	ROM_LOAD16_BYTE( "epr12658.bin", 0x000001, 0x40000, CRC(af40bd71) SHA1(3d7422d5c95fd2cbf1ac4916cc8c625a53391eea) )
 
-	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "scr-0.bin", 0x00000, 0x20000, CRC(12f898db) SHA1(f5848a52d75d6204c6b9687fa9146aaec2d56097) )
-	ROM_LOAD( "scr-1.bin", 0x20000, 0x20000, CRC(339746d0) SHA1(084a567d5b747c2fc085c5033f56407d6b46faef) )
-	ROM_LOAD( "scr-2.bin", 0x40000, 0x20000, CRC(33cf7a55) SHA1(405ed634c393f42544c1fe39c9cfd372f08c3fac) )
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0130.key", 0x0000, 0x2000, CRC(6ed4e917) SHA1(1d63a40aca5f782d004336c91308aa09e5295cb0) )
 
-	ROM_REGION( 0xc0000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "obj0-o.bin", 0x000001, 0x20000, CRC(2ff5cb9e) SHA1(2468a928515640e1bdd651aaadcbc918661c3312) )
-	ROM_LOAD16_BYTE( "obj0-e.bin", 0x000000, 0x20000, CRC(10a27526) SHA1(8299d4888d5d7530d864d7e33f264efe66272b44) )
-	ROM_LOAD16_BYTE( "obj1-o.bin", 0x040001, 0x20000, CRC(01b2e832) SHA1(6b7aa350498c54a9fac54fee1e65fcada4284fd6) )
-	ROM_LOAD16_BYTE( "obj1-e.bin", 0x040000, 0x20000, CRC(ba3ba6fd) SHA1(799e9899630d417fc508af22e04c7c2526a88ee1) )
-	ROM_LOAD16_BYTE( "obj2-o.bin", 0x060001, 0x20000, CRC(d12ef57a) SHA1(e0d6d350ce20d84f12df3ab777b9aaa40b906339) )
-	ROM_LOAD16_BYTE( "obj2-e.bin", 0x060000, 0x20000, CRC(54b51ca4) SHA1(2f477885500ac4c0875ae956d574334332e225b6) )
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "mpr12624.b11", 0x00000, 0x40000, CRC(375a5ec4) SHA1(42b9116bdc0e0a5b1dd667ac1856b4c2252829ba) )
+	ROM_LOAD( "mpr12625.b12", 0x40000, 0x40000, CRC(3b8c757e) SHA1(0b66e8446d059a12e47e2a6fe8f0a333245bb95c) )
+	ROM_LOAD( "mpr12626.b13", 0x80000, 0x40000, CRC(3efca25c) SHA1(0d866bf53a16b52719f73081e933f4db27d72ece) )
 
-	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD( "s-prog.bin",  0x00000, 0x08000, CRC(7efecf23) SHA1(2b87af7cfaab5942a3f7b38c987fcba01d3475ab) )
-	ROM_LOAD( "sound-0.bin",0x10000, 0x20000, CRC(f451705e) SHA1(2b3d1b3ffbc6ba2285c4141e6fd3447252a31c8b) )
+	ROM_REGION( 0x180000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "mpr12618.b1", 0x000001, 0x40000, CRC(0d1530bf) SHA1(bb8626cd98761c1c20cee117d00315c85621ba6a) )
+	ROM_LOAD16_BYTE( "mpr12621.b4", 0x000000, 0x40000, CRC(18ff0799) SHA1(5417223378aef16ee2b4f438d1f8f11a23fe7265) )
+	ROM_LOAD16_BYTE( "mpr12619.b2", 0x080001, 0x40000, CRC(32069246) SHA1(4913009bc72bf4f8b171b14fe06457f5784cab15) )
+	ROM_LOAD16_BYTE( "mpr12622.b5", 0x080000, 0x40000, CRC(a3dfe436) SHA1(640ccc552114d403f35d441574d2f3e4f1d4a8f9) )
+	ROM_LOAD16_BYTE( "mpr12620.b3", 0x100001, 0x40000, CRC(f6b096e0) SHA1(695ad1adbdc29f4d614645867e16de038cf92709) )
+	ROM_LOAD16_BYTE( "mpr12623.b6", 0x100000, 0x40000, CRC(6773fef6) SHA1(91e646ea447be02254d060daf255d26afe0cc79e) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12617.a13",  0x00000, 0x08000, CRC(7efecf23) SHA1(2b87af7cfaab5942a3f7b38c987fcba01d3475ab) )
+	ROM_LOAD( "mpr12616.a11", 0x10000, 0x40000, CRC(254347c2) SHA1(bf2d83a69a5be375c7e42e9f7d6e65c1095a354c) )
 ROM_END
 
 ROM_START( eswatu )
 	// Custom CPU 317-0129
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "rom-e.bin", 0x000000, 0x40000, CRC(43ca72aa) SHA1(4c6c536f0ef50570992116b50ca816bbc7d42801) )
-	ROM_LOAD16_BYTE( "rom-o.bin", 0x000001, 0x40000, CRC(5f018967) SHA1(753cd39bdb51126591b5814d54bb57ed1f77cf22) )
+	ROM_LOAD16_BYTE( "epr12657.a2", 0x000000, 0x40000, CRC(43ca72aa) SHA1(4c6c536f0ef50570992116b50ca816bbc7d42801) )
+	ROM_LOAD16_BYTE( "epr12656.a1", 0x000001, 0x40000, CRC(5f018967) SHA1(753cd39bdb51126591b5814d54bb57ed1f77cf22) )
 
-	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "scr-0.bin", 0x00000, 0x20000, CRC(12f898db) SHA1(f5848a52d75d6204c6b9687fa9146aaec2d56097) )
-	ROM_LOAD( "scr-1.bin", 0x20000, 0x20000, CRC(339746d0) SHA1(084a567d5b747c2fc085c5033f56407d6b46faef) )
-	ROM_LOAD( "scr-2.bin", 0x40000, 0x20000, CRC(33cf7a55) SHA1(405ed634c393f42544c1fe39c9cfd372f08c3fac) )
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0129.key", 0x0000, 0x2000, CRC(c62c9aab) SHA1(9c88bf9cbf5e44ffc771a2d642f6c2e3e4c73847) )
 
-	ROM_REGION( 0xc0000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "obj0-o.bin", 0x000001, 0x20000, CRC(2ff5cb9e) SHA1(2468a928515640e1bdd651aaadcbc918661c3312) )
-	ROM_LOAD16_BYTE( "obj0-e.bin", 0x000000, 0x20000, CRC(10a27526) SHA1(8299d4888d5d7530d864d7e33f264efe66272b44) )
-	ROM_LOAD16_BYTE( "obj1-o.bin", 0x040001, 0x20000, CRC(01b2e832) SHA1(6b7aa350498c54a9fac54fee1e65fcada4284fd6) )
-	ROM_LOAD16_BYTE( "obj1-e.bin", 0x040000, 0x20000, CRC(ba3ba6fd) SHA1(799e9899630d417fc508af22e04c7c2526a88ee1) )
-	ROM_LOAD16_BYTE( "obj2-o.bin", 0x060001, 0x20000, CRC(d12ef57a) SHA1(e0d6d350ce20d84f12df3ab777b9aaa40b906339) )
-	ROM_LOAD16_BYTE( "obj2-e.bin", 0x060000, 0x20000, CRC(54b51ca4) SHA1(2f477885500ac4c0875ae956d574334332e225b6) )
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "mpr12624.b11", 0x00000, 0x40000, CRC(375a5ec4) SHA1(42b9116bdc0e0a5b1dd667ac1856b4c2252829ba) )
+	ROM_LOAD( "mpr12625.b12", 0x40000, 0x40000, CRC(3b8c757e) SHA1(0b66e8446d059a12e47e2a6fe8f0a333245bb95c) )
+	ROM_LOAD( "mpr12626.b13", 0x80000, 0x40000, CRC(3efca25c) SHA1(0d866bf53a16b52719f73081e933f4db27d72ece) )
 
-	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD( "s-prog.bin",  0x00000, 0x08000, CRC(7efecf23) SHA1(2b87af7cfaab5942a3f7b38c987fcba01d3475ab) )
-	ROM_LOAD( "sound-0.bin",0x10000, 0x20000, CRC(f451705e) SHA1(2b3d1b3ffbc6ba2285c4141e6fd3447252a31c8b) )
+	ROM_REGION( 0x180000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "mpr12618.b1", 0x000001, 0x40000, CRC(0d1530bf) SHA1(bb8626cd98761c1c20cee117d00315c85621ba6a) )
+	ROM_LOAD16_BYTE( "mpr12621.b4", 0x000000, 0x40000, CRC(18ff0799) SHA1(5417223378aef16ee2b4f438d1f8f11a23fe7265) )
+	ROM_LOAD16_BYTE( "mpr12619.b2", 0x080001, 0x40000, CRC(32069246) SHA1(4913009bc72bf4f8b171b14fe06457f5784cab15) )
+	ROM_LOAD16_BYTE( "mpr12622.b5", 0x080000, 0x40000, CRC(a3dfe436) SHA1(640ccc552114d403f35d441574d2f3e4f1d4a8f9) )
+	ROM_LOAD16_BYTE( "mpr12620.b3", 0x100001, 0x40000, CRC(f6b096e0) SHA1(695ad1adbdc29f4d614645867e16de038cf92709) )
+	ROM_LOAD16_BYTE( "mpr12623.b6", 0x100000, 0x40000, CRC(6773fef6) SHA1(91e646ea447be02254d060daf255d26afe0cc79e) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12617.a13",  0x00000, 0x08000, CRC(7efecf23) SHA1(2b87af7cfaab5942a3f7b38c987fcba01d3475ab) )
+	ROM_LOAD( "mpr12616.a11", 0x10000, 0x40000, CRC(254347c2) SHA1(bf2d83a69a5be375c7e42e9f7d6e65c1095a354c) )
 ROM_END
+
 
 ROM_START( eswatbl )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -5896,21 +5967,21 @@ ROM_START( eswatbl )
 	ROM_LOAD16_BYTE( "eswat_d.rom", 0x040001, 0x08000, CRC(b4751e19) SHA1(57c9687dc864c163d13dbb89057cd42684a199cd) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "ic19.bin", 0x00000, 0x40000, CRC(375a5ec4) SHA1(42b9116bdc0e0a5b1dd667ac1856b4c2252829ba) )
-	ROM_LOAD( "ic20.bin", 0x40000, 0x40000, CRC(3b8c757e) SHA1(0b66e8446d059a12e47e2a6fe8f0a333245bb95c) )
-	ROM_LOAD( "ic21.bin", 0x80000, 0x40000, CRC(3efca25c) SHA1(0d866bf53a16b52719f73081e933f4db27d72ece) )
+	ROM_LOAD( "mpr12624.b11", 0x00000, 0x40000, CRC(375a5ec4) SHA1(42b9116bdc0e0a5b1dd667ac1856b4c2252829ba) ) // ic19
+	ROM_LOAD( "mpr12625.b12", 0x40000, 0x40000, CRC(3b8c757e) SHA1(0b66e8446d059a12e47e2a6fe8f0a333245bb95c) ) // ic20
+	ROM_LOAD( "mpr12626.b13", 0x80000, 0x40000, CRC(3efca25c) SHA1(0d866bf53a16b52719f73081e933f4db27d72ece) ) // ic21
 
 	ROM_REGION( 0x180000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "ic9.bin",  0x000001, 0x040000, CRC(0d1530bf) SHA1(bb8626cd98761c1c20cee117d00315c85621ba6a) )
-	ROM_LOAD16_BYTE( "ic12.bin", 0x000000, 0x040000, CRC(18ff0799) SHA1(5417223378aef16ee2b4f438d1f8f11a23fe7265) )
-	ROM_LOAD16_BYTE( "ic10.bin", 0x080001, 0x040000, CRC(32069246) SHA1(4913009bc72bf4f8b171b14fe06457f5784cab15) )
-	ROM_LOAD16_BYTE( "ic13.bin", 0x080000, 0x040000, CRC(a3dfe436) SHA1(640ccc552114d403f35d441574d2f3e4f1d4a8f9) )
-	ROM_LOAD16_BYTE( "ic11.bin", 0x100001, 0x040000, CRC(f6b096e0) SHA1(695ad1adbdc29f4d614645867e16de038cf92709) )
-	ROM_LOAD16_BYTE( "ic14.bin", 0x100000, 0x040000, CRC(6773fef6) SHA1(91e646ea447be02254d060daf255d26afe0cc79e) )
+	ROM_LOAD16_BYTE( "mpr12618.b1", 0x000001, 0x40000, CRC(0d1530bf) SHA1(bb8626cd98761c1c20cee117d00315c85621ba6a) ) // ic9
+	ROM_LOAD16_BYTE( "mpr12621.b4", 0x000000, 0x40000, CRC(18ff0799) SHA1(5417223378aef16ee2b4f438d1f8f11a23fe7265) ) // ic12
+	ROM_LOAD16_BYTE( "mpr12619.b2", 0x080001, 0x40000, CRC(32069246) SHA1(4913009bc72bf4f8b171b14fe06457f5784cab15) ) // ic10
+	ROM_LOAD16_BYTE( "mpr12622.b5", 0x080000, 0x40000, CRC(a3dfe436) SHA1(640ccc552114d403f35d441574d2f3e4f1d4a8f9) ) // ic13
+	ROM_LOAD16_BYTE( "mpr12620.b3", 0x100001, 0x40000, CRC(f6b096e0) SHA1(695ad1adbdc29f4d614645867e16de038cf92709) ) // ic11
+	ROM_LOAD16_BYTE( "mpr12623.b6", 0x100000, 0x40000, CRC(6773fef6) SHA1(91e646ea447be02254d060daf255d26afe0cc79e) ) // ic14
 
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD( "ic8.bin", 0x0000, 0x8000, CRC(7efecf23) SHA1(2b87af7cfaab5942a3f7b38c987fcba01d3475ab) )
-	ROM_LOAD( "ic6.bin", 0x10000, 0x40000, CRC(254347c2) SHA1(bf2d83a69a5be375c7e42e9f7d6e65c1095a354c) )
+	ROM_LOAD( "epr12617.a13",  0x00000, 0x08000, CRC(7efecf23) SHA1(2b87af7cfaab5942a3f7b38c987fcba01d3475ab) ) // ic8
+	ROM_LOAD( "mpr12616.a11", 0x10000, 0x40000, CRC(254347c2) SHA1(bf2d83a69a5be375c7e42e9f7d6e65c1095a354c) ) // ic6
 ROM_END
 
 // sys16A
@@ -6018,6 +6089,9 @@ ROM_START( fpoint )
 	ROM_LOAD16_BYTE( "epr12591b.a7", 0x000000, 0x10000, CRC(248b3e1b) SHA1(b473c2a057a61896596ac4761e875d72c4f91529) )
 	ROM_LOAD16_BYTE( "epr12590b.a5", 0x000001, 0x10000, CRC(75256e3d) SHA1(87a7d9952f29e49958c135906ac2fd19bdc29b67) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0127a.key", 0x0000, 0x2000, CRC(c1c0e5b7) SHA1(51774c7a6c4379ec543cf872ed1e872b3a55f615) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr12593.a14", 0x00000, 0x10000, CRC(cc0582d8) SHA1(92c7d125a6dcb9c5e6e7bd92a5bf3008385ed487) )
 	ROM_LOAD( "opr12594.a15", 0x10000, 0x10000, CRC(8bfc4815) SHA1(08d28b65e5024c592a9a289b270774ef5c553cbf) )
@@ -6071,7 +6145,7 @@ ROM_START( fpointbj )
 	ROM_LOAD( "82s129.1",  0x0000, 0x0100, CRC(a7c22d96) SHA1(160deae8053b09c09328325246598b3518c7e20b) )
 	ROM_LOAD( "82s123.2",  0x0100, 0x0020, CRC(58bcf8bd) SHA1(e4d3d179b08c0f3424a6bec0f15058fb1b56f8d8) )
 
-	ROM_REGION( 0x800, REGION_USER1, 0 )
+	ROM_REGION( 0x800, REGION_USER2, 0 )
 	ROM_LOAD( "d2716.rom",  0x0000, 0x0800, CRC(d7fd8ac4) SHA1(87e5f1c24350adab129ad79a1f68af402580f8f0) )
 ROM_END
 
@@ -6221,6 +6295,9 @@ ROM_START( goldnaxc )
 	// Custom CPU 317-0122
 	ROM_LOAD16_BYTE( "epr12543.a2", 0x00000, 0x40000, CRC(b0df9ca4) SHA1(240f3c2998f969569d992f796e006f5ea4434e55) )
 	ROM_LOAD16_BYTE( "epr12542.a1", 0x00001, 0x40000, CRC(b7994d3c) SHA1(87570f23826922fca465c69df6b892c59f14e103) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0122.key", 0x0000, 0x2000, CRC(3343274a) SHA1(ed70330cad5313e962db81efb2c226cddd7cee89) )
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12385", 0x00000, 0x20000, CRC(b8a4e7e0) SHA1(9b36f50209d45a835ded53eb045f63c649b02fc9) )
@@ -6824,6 +6901,9 @@ ROM_START( sonicbom )
 	ROM_LOAD16_BYTE( "epr11343.a5",  0x020000, 0x10000, CRC(edfeb7d4) SHA1(0f703e028f9ca9f3c4f5563f3c65ec9b938074a5) )
 	ROM_LOAD16_BYTE( "epr11341.a2",  0x020001, 0x10000, CRC(0338f771) SHA1(a1a2928eb3f9826733bad54bbf17f622d9307285) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0053.key", 0x0000, 0x2000, CRC(4661b85a) SHA1(b000deea54a12cd9c5d27f3caa4737aa7fa0766e) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr11344.b9",  0x00000, 0x10000, CRC(59a9f940) SHA1(b1c13cfa9609a22cbe047ee39681ccf8d0b3cf9c) )
 	ROM_LOAD( "opr11345.b10", 0x10000, 0x10000, CRC(b44c068b) SHA1(05e875dc418aef12fc48d1df44f680249f6952de) )
@@ -6889,6 +6969,9 @@ ROM_START( tetris )
 	ROM_LOAD16_BYTE( "epr12201.rom", 0x000000, 0x8000, CRC(338e9b51) SHA1(f56a1124c963d4ad72a806b26f9aa906aaa37d2b) )
 	ROM_LOAD16_BYTE( "epr12200.rom", 0x000001, 0x8000, CRC(fb058779) SHA1(0045985ea943ebc7e44bd95127c5e5212c2821e8) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0093.key", 0x0000, 0x2000, CRC(1022d623) SHA1(2af332ac3aacb9153dc8b0fbd6985e479253f956) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12202.rom", 0x00000, 0x10000, CRC(2f7da741) SHA1(51a685673b4a57a13818eca65d122230f20bd9a0) )
 	ROM_LOAD( "epr12203.rom", 0x10000, 0x10000, CRC(a6e58ec5) SHA1(5a6c43c989768270e0ab61cfaa5ef86d4607fe20) )
@@ -6909,6 +6992,9 @@ ROM_START( tetrisa )
 	// Custom CPU 317-0092
 	ROM_LOAD16_BYTE( "epr12193.rom", 0x000000, 0x10000, CRC(9ce15ac9) SHA1(0fdbd3ca37e4c0efa7c66415714bfc10637ced6c) )
 	ROM_LOAD16_BYTE( "epr12192.rom", 0x000001, 0x10000, CRC(98d590ca) SHA1(4d18409c0b5734d0adcea5646d13f65b687dd05d) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0092.key", 0x0000, 0x2000, CRC(01e5f4e8) SHA1(ec1bd43cd9dc8253a356187e6f364c20edc66692) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12165.b9",  0x00000, 0x10000, CRC(62640221) SHA1(c311d3847a981d0e1609f9b3d80481565d32d78c) )
@@ -6964,6 +7050,9 @@ ROM_START( tetrisb )
 	// Custom CPU 317-0091
 	ROM_LOAD16_BYTE( "epr12163.a1", 0x000001, 0x08000, CRC(d372d3f3) SHA1(e88fa5e66cc2d3cb9eb6d0f60d81c537e4642500) )
 	ROM_LOAD16_BYTE( "epr12164.a4", 0x000000, 0x08000, CRC(b329cd6f) SHA1(409322f32ee676dc72a3b007e3f8d691ca991e60) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0091.key", 0x0000, 0x2000, CRC(9e37695c) SHA1(e97ba8c0d67c4a0f6b8957cb97427d72e9df8d63) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12165.b9",  0x00000, 0x10000, CRC(62640221) SHA1(c311d3847a981d0e1609f9b3d80481565d32d78c) )
@@ -7172,6 +7261,9 @@ ROM_START( wb3a )
 	ROM_LOAD16_BYTE( "epr12137.a7", 0x000000, 0x20000, CRC(6f81238e) SHA1(b578165c1624f8a112e9eea098fb4551cc38faa1) )
 	ROM_LOAD16_BYTE( "epr12136.a5", 0x000001, 0x20000, CRC(4cf05003) SHA1(bd4c64c327e53143aa94062f91946eda0a7146c2) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0089.key", 0x0000, 0x2000, CRC(b24ca5b4) SHA1(159f652e7987563f967cf186db3c3cafef7a84f2) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12124.a14", 0x00000, 0x10000, CRC(dacefb6f) SHA1(789a5a99ad9419aee9da5397bcea34452ea8b4b3) )
 	ROM_LOAD( "epr12125.a15", 0x10000, 0x10000, CRC(9fc36df7) SHA1(b39ccc687489e9781181197505fc78aa5cf7ea55) )
@@ -7229,11 +7321,14 @@ ROM_END
 
 ROM_START( wb3b )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
-	// Custom CPU 317-0089
+	// Custom CPU 317-0085
 	ROM_LOAD16_BYTE( "epr12098.a1", 0x000001, 0x10000, CRC(d998e5e5) SHA1(a7398b7338a33451a650c2f1d382dad2e5130528) )
 	ROM_LOAD16_BYTE( "epr12100.a6", 0x000000, 0x10000, CRC(f5ca4abc) SHA1(1331db10cf99905fb13c1606a3f4d8bbf3d681b6) )
 	ROM_LOAD16_BYTE( "epr12099.a2", 0x020001, 0x10000, CRC(3e243b45) SHA1(2a079553d1b61aaf18025847570003b79c8d6edf) )
 	ROM_LOAD16_BYTE( "epr12101.a5", 0x020000, 0x10000, CRC(6146492b) SHA1(93515578a6ccf770944fea86d2f3200fa08f5075) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0085.key", 0x0000, 0x2000, CRC(3ba47fc3) SHA1(6054a3a789facbbaa0b75600ccdd56623a2ed441) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12124.b9", 0x00000, 0x10000, CRC(dacefb6f) SHA1(789a5a99ad9419aee9da5397bcea34452ea8b4b3) )
@@ -7655,7 +7750,7 @@ GAMEX(1987, shinobia, shinobi,  shinobl,  shinobi,  shinobi,  ROT0,   "Sega",   
 GAME( 1987, shinobl,  shinobi,  shinobl,  shinobi,  shinobi,  ROT0,   "bootleg", "Shinobi (bootleg)" )
 GAME( 1987, sdi,      0,        sdi,      sdi,      sdi,      ROT0,   "Sega",    "SDI - Strategic Defense Initiative" )
 GAMEX(1987, sdioj,    sdi,      sdi,      sdi,      sdi,      ROT0,   "Sega",    "SDI - Strategic Defense Initiative (Japan)", GAME_NOT_WORKING )
-GAMEX(1988, tetris,   0,        tetris,   tetris,   tetris,   ROT0,   "Sega",    "Tetris (System 16A, 317-0093)", GAME_NOT_WORKING )
+GAMEX(1988, tetris,   0,        tetris,   tetris,   tetris,   ROT0,   "Sega",    "Tetris (Japan, System 16A, 317-0093)", GAME_NOT_WORKING )
 
 /* System16B */
 /*          rom       parent    machine   inp       init */
@@ -7681,10 +7776,10 @@ GAMEX(1989, bayrtbl2, bayroute, bayroute, bayroute, bayrtbl1, ROT0,   "bootleg",
 GAMEX(19??, cotton,   0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Cotton (Japan)", GAME_NOT_WORKING )
 GAMEX(19??, cottona,  cotton,   s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Cotton", GAME_NOT_WORKING )
 GAMEX(19??, dunkshot, 0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Dunk Shot", GAME_NOT_WORKING )
-GAMEX(1989, ddux,   0,          ddux,     dduxbl,   ddux,     ROT0,   "Sega",    "Dynamite Dux (317-0096)", GAME_NOT_WORKING )
+GAME( 1989, ddux,     0,        ddux,     dduxbl,   ddux,     ROT0,   "Sega",    "Dynamite Dux (317-0096)" )
 GAME( 1989, dduxbl,   ddux,     dduxbl,   dduxbl,   dduxbl,   ROT0,   "bootleg", "Dynamite Dux (bootleg)" )
-GAMEX(1989, eswat,    0,        eswat,    eswat,    eswat,    ROT0,   "Sega",    "E-Swat - Cyber Police (World)", GAME_NOT_WORKING )
-GAMEX(1989, eswatu,   eswat,    eswat,    eswat,    eswatu,   ROT0,   "Sega",    "E-Swat - Cyber Police (US)", GAME_NOT_WORKING )
+GAME( 1989, eswat,    0,        eswat,    eswat,    eswat,    ROT0,   "Sega",    "E-Swat - Cyber Police (World, 317-0130)" )
+GAME( 1989, eswatu,   eswat,    eswat,    eswat,    eswatu,   ROT0,   "Sega",    "E-Swat - Cyber Police (US, 317-0129)" )
 GAME( 1989, eswatbl,  eswat,    eswatbl,  eswat,    eswatbl,  ROT0,   "bootleg", "E-Swat - Cyber Police (bootleg)" )
 GAMEX(19??, exctleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Excite League", GAME_NOT_WORKING )
 
@@ -7697,7 +7792,7 @@ GAMEX(1989, goldnaxj, goldnaxe, goldnaxe, goldnaxe, goldnaxe, ROT0,   "Sega",   
 GAMEX(1989, goldnabl, goldnaxe, goldnaxe, goldnaxe, goldnabl, ROT0,   "bootleg", "Golden Axe (bootleg)", GAME_NOT_WORKING )
 GAME( 1989, goldnaxa, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,   "Sega",    "Golden Axe (Version 2)" )
 GAMEX(1989, goldnaxb, goldnaxe, goldnaxa, goldnaxe, goldnaxe, ROT0,   "Sega",    "Golden Axe (Version 2 317-0110)", GAME_NOT_WORKING )
-GAMEX(1989, goldnaxc, goldnaxe, goldnaxc, goldnaxe, goldnaxc, ROT0,   "Sega",    "Golden Axe (Version 2 317-0122)", GAME_NOT_WORKING )
+GAMEX(1989, goldnaxc, goldnaxe, goldnaxc, goldnaxe, goldnaxc, ROT0,   "Sega",    "Golden Axe (Version 2 317-0122)", GAME_NOT_WORKING ) // decrypted but protection issues
 GAME( 1987, hwchamp,  0,        hwchamp,  hwchamp,  hwchamp,  ROT0,   "Sega",    "Heavyweight Champ" )
 GAMEX(19??, mvp,      0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "MVP", GAME_NOT_WORKING )
 GAMEX(1988, passsht,  0,        passsht,  passsht,  passsht,  ROT270, "Sega",    "Passing Shot (2 Players)", GAME_NOT_WORKING )
@@ -7710,16 +7805,16 @@ GAME( 1987, sonicbom, 0,        sonicbom, sonicbom, sonicbom, ROT270, "Sega",   
 /* SDI */
 /* Sukeban Jansi Ryuko */
 GAMEX(19??, suprleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Super League", GAME_NOT_WORKING )
-GAME( 1988, tetrisa,  tetris,   tetris,   tetris,   tetrisa,  ROT0,   "Sega",    "Tetris (System 16B, set 1, 317-0092)" )
-GAME( 1988, tetrisb,  tetris,   tetris,   tetris,   tetrisb,  ROT0,   "Sega",    "Tetris (System 16B, set 2, 317-0091)" )
+GAME( 1988, tetrisa,  tetris,   tetris,   tetris,   tetrisa,  ROT0,   "Sega",    "Tetris (Japan, System 16B, set 1, 317-0092)" )
+GAME( 1988, tetrisb,  tetris,   tetris,   tetris,   tetrisb,  ROT0,   "Sega",    "Tetris (Japan, System 16B, set 2, 317-0091)" )
 GAME( 1988, tetrisbl, tetris,   tetrisbl, tetris,   tetrisbl, ROT0,   "bootleg", "Tetris (bootleg)" )
 GAME( 1987, timscanr, 0,        timscanr, timscanr, timscanr, ROT270, "Sega",    "Time Scanner" )
 GAME (1994, toryumon, 0,        toryumon, toryumon, toryumon, ROT0,   "Sega",    "Toryumon" )
 GAME (1989, tturf,    0,        tturf,    tturf,    tturf,    ROT0,   "Sega / Sunsoft", "Tough Turf (Japan)")
 GAME (1989, tturfu,   tturf,    tturfu,   tturf,    tturf,    ROT0,   "Sega / Sunsoft", "Tough Turf (US)")
 GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND)
-GAME( 1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 1, not encrypted)" ) //*
-GAMEX(1988, wb3a,     wb3,      wb3a,     wb3,      wb3a,     ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 2, 317-0089)", GAME_IMPERFECT_SOUND )
-GAMEX(1988, wb3b,     wb3,      wb3a,     wb3,      wb3b,     ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 3, 317-0085)", GAME_IMPERFECT_SOUND )
+GAME( 1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (World, not encrypted)" ) //*
+GAME( 1988, wb3a,     wb3,      wb3a,     wb3,      wb3a,     ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (World, 317-0089)" )
+GAME( 1988, wb3b,     wb3,      wb3a,     wb3,      wb3b,     ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (Japan, 317-0085)" )
 GAME( 1988, wb3bl,    wb3,      wb3bl,    wb3,      wb3bl,    ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )
 GAME( 1989, wrestwar, 0,        wrestwar, wrestwar, wrestwar, ROT270, "Sega",    "Wrestle War" )

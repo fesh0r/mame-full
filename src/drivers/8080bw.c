@@ -54,8 +54,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 
-extern struct Samplesinterface circus_samples_interface;
-
 
 /* gmissile and m4 need the RAM mirror */
 

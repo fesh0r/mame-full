@@ -5,7 +5,7 @@
 extern void e132xs_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag);
+extern unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag, int private_fp);
 #endif
 
 

@@ -1782,7 +1782,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 
 				if (!use_joystick)
 					return 0;
-				val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
+				val = (INT64)(val - bottom) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
 				if (val < ANALOG_VALUE_MIN) val = ANALOG_VALUE_MIN;
 				if (val > ANALOG_VALUE_MAX) val = ANALOG_VALUE_MAX;
 				return val;

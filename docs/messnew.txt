@@ -8,13 +8,15 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [COCO] Fixed a regression that caused printer output to not work properly.
+  (bug #612) [Nate Woods]
   
 
 
 User Interface Changes:
 -----------------------
-(none)
+- Fixed a bug that prevented keyboard inputs from being customizable in the
+  classic UI.  [Nate Woods]
 
 
 
@@ -26,7 +28,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.88u1.  This incorporates all features of the
+- The core is based on MAME 0.88u2.  This incorporates all features of the
   update to this core.  [MAME team]
 
 

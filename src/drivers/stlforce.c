@@ -51,19 +51,18 @@ lev 7 : 0x7c : 0000 0100 - just rte
                (I can't tell for the moment)
                Release date and manufacturers according to the title screen
 
- 2004.24.10 - Pierpaolo Prazzoli
+ 2004.xx.10 - Pierpaolo Prazzoli
  - fixed bit 4 of IN1. it is vblank and it fixed scroll issue in attract mode
  - fixed sprite glitches with visible flag
  - added rows scroll
  - added eeprom
+ - fixed sound banking
 
 TO DO :
-
-  - sound banking
   - unknown registers
   - clipping issues?
   - priority issues?
-
+  - same sprites buffer used in Mighty Warriors
   - clocks don't match on the games?
 
 */
@@ -74,6 +73,8 @@ TO DO :
 data16_t *stlforce_bg_videoram, *stlforce_mlow_videoram, *stlforce_mhigh_videoram, *stlforce_tx_videoram;
 data16_t *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhigh_scrollram, *stlforce_vidattrram;
 data16_t *stlforce_spriteram;
+data8_t  *default_eeprom;
+extern int stlforce_sprxoffs;
 
 VIDEO_START( stlforce );
 VIDEO_UPDATE( stlforce );
@@ -97,40 +98,32 @@ static WRITE16_HANDLER( eeprom_w )
 	}
 }
 
-static ADDRESS_MAP_START( stlforce_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM) /* rom */
-	AM_RANGE(0x100000, 0x1007ff) AM_READ(MRA16_RAM) /* bg ram */
-	AM_RANGE(0x100800, 0x100fff) AM_READ(MRA16_RAM) /* mlow ram */
-	AM_RANGE(0x101000, 0x1017ff) AM_READ(MRA16_RAM) /* mhigh ram */
-	AM_RANGE(0x101800, 0x1027ff) AM_READ(MRA16_RAM) /* tx ram */
-	AM_RANGE(0x102800, 0x103fff) AM_READ(MRA16_RAM) /* unknown / ram */
-	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM) /* palette */
-	AM_RANGE(0x105000, 0x107fff) AM_READ(MRA16_RAM) /* unknown / ram */
-	AM_RANGE(0x108000, 0x108fff) AM_READ(MRA16_RAM) /* sprite ram? */
-	AM_RANGE(0x109000, 0x11ffff) AM_READ(MRA16_RAM) /* unknown / ram */
+static WRITE16_HANDLER( oki_bank_w )
+{
+	OKIM6295_set_bank_base(0, 0x40000 * ((data>>8) & 3));
+}
+
+static ADDRESS_MAP_START( stlforce_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x100000, 0x1007ff) AM_RAM AM_WRITE(stlforce_bg_videoram_w) AM_BASE(&stlforce_bg_videoram)
+	AM_RANGE(0x100800, 0x100fff) AM_RAM AM_WRITE(stlforce_mlow_videoram_w) AM_BASE(&stlforce_mlow_videoram)
+	AM_RANGE(0x101000, 0x1017ff) AM_RAM AM_WRITE(stlforce_mhigh_videoram_w) AM_BASE(&stlforce_mhigh_videoram)
+	AM_RANGE(0x101800, 0x1027ff) AM_RAM AM_WRITE(stlforce_tx_videoram_w) AM_BASE(&stlforce_tx_videoram)
+	AM_RANGE(0x102800, 0x102fff) AM_RAM /* unknown / ram */
+	AM_RANGE(0x103000, 0x1033ff) AM_RAM AM_BASE(&stlforce_bg_scrollram)
+	AM_RANGE(0x103400, 0x1037ff) AM_RAM AM_BASE(&stlforce_mlow_scrollram)
+	AM_RANGE(0x103800, 0x103bff) AM_RAM AM_BASE(&stlforce_mhigh_scrollram)
+	AM_RANGE(0x103c00, 0x103fff) AM_RAM AM_BASE(&stlforce_vidattrram)
+	AM_RANGE(0x104000, 0x104fff) AM_RAM AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x105000, 0x107fff) AM_RAM /* unknown / ram */
+	AM_RANGE(0x108000, 0x108fff) AM_RAM AM_BASE(&stlforce_spriteram)
+	AM_RANGE(0x109000, 0x11ffff) AM_RAM
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x400002, 0x400003) AM_READ(stlforce_input_port_1_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( stlforce_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(stlforce_bg_videoram_w) AM_BASE(&stlforce_bg_videoram)
-	AM_RANGE(0x100800, 0x100fff) AM_WRITE(stlforce_mlow_videoram_w) AM_BASE(&stlforce_mlow_videoram)
-	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(stlforce_mhigh_videoram_w) AM_BASE(&stlforce_mhigh_videoram)
-	AM_RANGE(0x101800, 0x1027ff) AM_WRITE(stlforce_tx_videoram_w) AM_BASE(&stlforce_tx_videoram)
-	AM_RANGE(0x102800, 0x102fff) AM_WRITE(MWA16_RAM) /* unknown / ram */
-	AM_RANGE(0x103000, 0x1033ff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_bg_scrollram) /* unknown / ram */
-	AM_RANGE(0x103400, 0x1037ff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_mlow_scrollram) /* unknown / ram */
-	AM_RANGE(0x103800, 0x103bff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_mhigh_scrollram) /* unknown / ram */
-	AM_RANGE(0x103c00, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_vidattrram) /* unknown / ram */
-	AM_RANGE(0x104000, 0x104fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x105000, 0x107fff) AM_WRITE(MWA16_RAM) /* unknown / ram */
-	AM_RANGE(0x108000, 0x108fff) AM_WRITE(MWA16_RAM) AM_BASE(&stlforce_spriteram) /* or is this not sprite ram .. */
-	AM_RANGE(0x109000, 0x11ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x400010, 0x400011) AM_WRITE(eeprom_w)
-//	AM_RANGE(0x400012, 0x400013) AM_WRITE(MWA16_NOP)
-//	AM_RANGE(0x40001E, 0x40001F) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x410000, 0x410001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x400012, 0x400013) AM_WRITE(oki_bank_w)
+	AM_RANGE(0x40001e, 0x40001f) AM_WRITENOP // sprites buffer commands
+	AM_RANGE(0x410000, 0x410001) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( stlforce )
@@ -156,7 +149,7 @@ INPUT_PORTS_START( stlforce )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_SERVICE( 0x0008, IP_ACTIVE_LOW )
+	PORT_SERVICE_NO_TOGGLE( 0x0008, IP_ACTIVE_LOW )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SPECIAL ) /* eeprom */
@@ -210,21 +203,33 @@ static struct OKIM6295interface okim6295_interface =
 	1,					/* 1 chip */
 	{ 937500 / 132 },	/* frequency (Hz) */
 	{ REGION_SOUND1 },	/* memory region */
-	{ 47 }
+	{ 100 }
+};
+
+static data8_t stlforce_default_eeprom[128] = {
+	0x7e, 0x01, 0x00, 0x00, 0x01, 0x03, 0x05, 0x01, 0x01, 0x00, 0x4e, 0x20, 0x00, 0x00, 0x4a, 0x4d,
+	0x42, 0x00, 0x02, 0x01, 0x4e, 0x20, 0x00, 0x00, 0x4d, 0x41, 0x43, 0x00, 0x02, 0x01, 0x00, 0x64,
+	0x00, 0x00, 0x41, 0x41, 0x41, 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x41, 0x41, 0x41, 0x00,
+	0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x41, 0x41, 0x41, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
 static data8_t twinbrat_default_eeprom[128] = {
-	0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x04,
+	0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x03,
 	0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1B,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1b,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3D,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6F
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6f
 };
 
-void nvram_handler_twinbrat(mame_file *file,int read_or_write)
+
+void nvram_handler_stlforce(mame_file *file,int read_or_write)
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -237,21 +242,21 @@ void nvram_handler_twinbrat(mame_file *file,int read_or_write)
 		}
 		else
 		{
-			if (!strcmp(Machine->gamedrv->name,"twinbrat")) EEPROM_set_data(twinbrat_default_eeprom,128);
+			EEPROM_set_data(default_eeprom,128);
 		}
 	}
 }
 
 static MACHINE_DRIVER_START( stlforce )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 15000000)
-	MDRV_CPU_PROGRAM_MAP(stlforce_readmem,stlforce_writemem)
+	MDRV_CPU_ADD_TAG("cpu", M68000, 15000000)
+	MDRV_CPU_PROGRAM_MAP(stlforce_map,0)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(twinbrat)
+	MDRV_NVRAM_HANDLER(stlforce)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -268,13 +273,18 @@ static MACHINE_DRIVER_START( stlforce )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( twinbrat )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(stlforce)
+	MDRV_CPU_REPLACE("cpu", M68000, 14745600)
+
+	MDRV_VISIBLE_AREA(1*8, 45*8-1, 1*8, 30*8-1)
+MACHINE_DRIVER_END
+
 ROM_START( stlforce )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "stlforce.105", 0x00000, 0x20000, CRC(3ec804ca) SHA1(4efcf3321b7111644ac3ee0a83ad95d0571a4021) )
 	ROM_LOAD16_BYTE( "stlforce.104", 0x00001, 0x20000, CRC(69b5f429) SHA1(5bd20fad91a22f4d62f85a5190d72dd824ee26a5) )
-
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "stlforce.u1", 0x00000, 0x80000, CRC(0a55edf1) SHA1(091f12e8110c62df22b370a2e710c930ba06e8ca) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF (can probably be cut)
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16 bg tiles & 8x8 tx tiles merged */
 	ROM_LOAD16_BYTE( "stlforce.u27", 0x000001, 0x080000, CRC(c42ef365) SHA1(40e9ee29ea14b3bc2fbfa4e6acb7d680cf72f01a) )
@@ -287,6 +297,10 @@ ROM_START( stlforce )
 	ROM_LOAD( "stlforce.u31", 0x40000, 0x40000, CRC(305a8eb5) SHA1(3a8d26f8bc4ec2e8246d1c59115e21cad876630d) )
 	ROM_LOAD( "stlforce.u32", 0x80000, 0x40000, CRC(760e8601) SHA1(a61f1d8566e09ce811382c6e23f3881e6c438f15) )
 	ROM_LOAD( "stlforce.u33", 0xc0000, 0x40000, CRC(19415cf3) SHA1(31490a1f3321558f82667b63f3963b2ec3fa0c59) )
+
+	/* only one bank */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "stlforce.u1", 0x00000, 0x80000, CRC(0a55edf1) SHA1(091f12e8110c62df22b370a2e710c930ba06e8ca) )
 ROM_END
 
 
@@ -334,9 +348,6 @@ ROM_START( twinbrat )
 	ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x20000, CRC(5e75f568) SHA1(f42d2a73d737e6b01dd049eea2a10fc8c8096d8f) )
 	ROM_LOAD16_BYTE( "3.bin", 0x00001, 0x20000, CRC(0e3fa9b0) SHA1(0148cc616eac84dc16415e1557ec6040d14392d4) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "1.bin", 0x00000, 0x80000, CRC(76296578) SHA1(04eca78abe60b283269464c0d12815579126ac08) )
-
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD16_BYTE( "6.bin", 0x000000, 0x80000, CRC(af10ddfd) SHA1(e5e83044f20d6cbbc1b4ef1812ac57b6dc958a8a) )
 	ROM_LOAD16_BYTE( "7.bin", 0x000001, 0x80000, CRC(3696345a) SHA1(ea38be3586757527b2a1aad2e22b83937f8602da) )
@@ -348,20 +359,35 @@ ROM_START( twinbrat )
 	ROM_LOAD( "10.bin", 0x040000, 0x40000, CRC(7556bee9) SHA1(3fe99c7e9378791b79c43b04f5d0a36404448beb) )
 	ROM_LOAD( "9.bin",  0x080000, 0x40000, CRC(13194d89) SHA1(95c35b6012f98a64630abb40fd55b24ff8a5e031) )
 	ROM_LOAD( "8.bin",  0x0c0000, 0x40000, CRC(79f14528) SHA1(9c07d9a9e59f69a525bbaec05d74eb8d21bb9563) )
-ROM_END
 
-extern int stlforce_sprxoffs;
+	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* Samples */
+	ROM_LOAD( "1.bin", 0x00000, 0x80000, CRC(76296578) SHA1(04eca78abe60b283269464c0d12815579126ac08) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
+ROM_END
 
 DRIVER_INIT(stlforce)
 {
 	stlforce_sprxoffs = 0;
+	default_eeprom = stlforce_default_eeprom;
 }
 
 DRIVER_INIT(twinbrat)
 {
 	stlforce_sprxoffs = 9;
+	default_eeprom = twinbrat_default_eeprom;
 }
 
 
-GAMEX(1994, stlforce, 0, stlforce, stlforce, stlforce, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force", GAME_IMPERFECT_SOUND )
-GAMEX( 1995, twinbrat, 0, stlforce, stlforce, twinbrat, ROT0,  "Elettronica Video-Games S.R.L,", "Twin Brats", GAME_NOT_WORKING )
+GAME( 1994, stlforce, 0, stlforce, stlforce, stlforce, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force" )
+GAME( 1995, twinbrat, 0, twinbrat, stlforce, twinbrat, ROT0, "Elettronica Video-Games S.R.L.", "Twin Brats" )

@@ -208,7 +208,7 @@ struct discrete_module module_list[] =
 	/* from disc_dev.c */
 	/* Component specific modules */
 	{ DSD_555_ASTBL   ,"DSD_555_ASTBL"   ,sizeof(struct dsd_555_astbl_context)   ,dsd_555_astbl_reset   ,dsd_555_astbl_step   },
-	{ DSD_555_MSTBL   ,"DSD_555_MSTBL"   ,0                                      ,NULL                  ,NULL                 },
+	{ DSD_555_MSTBL   ,"DSD_555_MSTBL"   ,sizeof(struct dsd_555_mstbl_context)   ,dsd_555_mstbl_reset   ,dsd_555_mstbl_step   },
 	{ DSD_555_CC      ,"DSD_555_CC"      ,sizeof(struct dsd_555_cc_context)      ,dsd_555_cc_reset      ,dsd_555_cc_step      },
 	{ DSD_566         ,"DSD_566"         ,sizeof(struct dsd_566_context)         ,dsd_566_reset         ,dsd_566_step         },
 

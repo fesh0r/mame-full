@@ -1558,6 +1558,7 @@ const struct GameDriver *drivers[] =
 
 	/* Taito "X"-system games */
 	DRIVER( superman )	/* B61 (c) 1988 Taito Corporation */
+	DRIVER( suprmanj )	/* B61 (c) 1988 Taito Corporation */
 	DRIVER( twinhawk )	/* B87 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( twinhwku )	/* B87 (c) 1989 Taito America Corporation (US) */
 	DRIVER( daisenpu )	/* B87 (c) 1989 Taito Corporation (Japan) */
@@ -3358,6 +3359,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( metlclsh )	/* (c) 1985 Data East */
 	DRIVER( brkthru )	/* (c) 1986 Data East USA (US) */
 	DRIVER( brkthruj )	/* (c) 1986 Data East Corporation (Japan) */
+	DRIVER( forcebrk )	/* (c) 1986 Data East Corporation (Japan) */
 	DRIVER( darwin )	/* (c) 1986 Data East Corporation (Japan) */
 	DRIVER( shootout )	/* (c) 1985 Data East USA (US) */
 	DRIVER( shootouj )	/* (c) 1985 Data East USA (Japan) */
@@ -4907,10 +4909,12 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( viperp1 )
 	DRIVER( viperp1o )
 	DRIVER( ejanhs )
-	DRIVER( raidnfgt )
+	DRIVER( rdft )
+	DRIVER( rdftau )
 	DRIVER( rf2_us )
 	DRIVER( rf2_eur )
 	DRIVER( rf2_2k )
+	DRIVER( rfjet )
 
 	/* Tad games (Tad games run on Seibu hardware) */
 	DRIVER( cabal )		/* (c) 1988 Tad + Fabtek license */
@@ -5540,6 +5544,7 @@ Other Sun games
 	DRIVER( redhawk )	/* (c) 1997 */
 	DRIVER( grdnstrm )	/* (c) 1998 */
 	DRIVER( bubl2000 )	/* (c) 1998 Tuning */
+	DRIVER( hotbubl )	/* (c) Pandora */
 	DRIVER( firehawk )	/* (c) 2001 ESD */
 
 	/* ESD games */
@@ -5749,6 +5754,7 @@ Other Sun games
 	DRIVER( fantland )	/* (c) 198? Electronic Devices Italy */
 	DRIVER( fantlnda )	/* (c) 198? Electronic Devices Italy */
 	DRIVER( galaxygn )	/* (c) 1989 Electronic Devices Italy */
+	DRIVER( borntofi )	/* (c) International Games? */
 	DRIVER( diverboy )	/* (c) 1992 Electronic Devices */
 	DRIVER( twinbrat )
 	DRIVER( ppmast93 )
@@ -5885,6 +5891,7 @@ Other Sun games
 	DRIVER( ltcasino )	/* (c) 1982 Digital Controls Inc */
 	DRIVER( ltcasin2 )	/* (c) 1984 Digital Controls Inc */
 	DRIVER( vamphalf )	/* DanBi */
+	DRIVER( suplup )	/* Omega System */
 	DRIVER( hidnctch )	/* Eolith */
 	DRIVER( landbrk )	/* Eolith */
 	DRIVER( raccoon )	/* Eolith */

@@ -15,7 +15,8 @@ make more configurable (select caches per game?)
 
 #define S16_NUMCACHE 8
 
-static data16_t* fd1094_cpuregion; // the CPU region with encrypted code
+static unsigned char *fd1094_key; // the memory region containing key
+static data16_t *fd1094_cpuregion; // the CPU region with encrypted code
 static UINT32  fd1094_cpuregionsize; // the size of this region in bytes
 
 static data16_t* fd1094_userregion; // a user region where the current decrypted state is put and executed from
@@ -35,7 +36,7 @@ void fd1904_setstate_and_decrypt(int state)
 	cpunum_set_info_int(0, CPUINFO_INT_REGISTER + M68K_PREF_ADDR, 0x0010);	// force a flush of the prefetch cache
 
 	/* set the FD1094 state ready to decrypt.. */
-	state = fd1094_set_state(state);
+	state = fd1094_set_state(fd1094_key,state);
 
 	/* first check the cache, if its cached we don't need to decrypt it, just copy */
 	for (i=0;i<S16_NUMCACHE;i++)
@@ -59,7 +60,7 @@ void fd1904_setstate_and_decrypt(int state)
 	for (addr=0;addr<fd1094_cpuregionsize/2;addr++)
 	{
 		UINT16 dat;
-		dat = fd1094_decode(addr,fd1094_cpuregion[addr]);
+		dat = fd1094_decode(addr,fd1094_cpuregion[addr],fd1094_key,0);
 		fd1094_cacheregion[fd1904_current_cacheposition][addr]=dat;
 	}
 
@@ -104,17 +105,15 @@ void fd1094_kludge_reset_values(void)
 {
 	int i;
 
-	fd1094_set_state(FD1094_STATE_VECTOR);
-
 	for (i = 0;i < 4;i++)
-		fd1094_userregion[i] = fd1094_decode(i,fd1094_cpuregion[i]);
+		fd1094_userregion[i] = fd1094_decode(i,fd1094_cpuregion[i],fd1094_key,1);
 }
 
 
 /* function, to be called from MACHINE_INIT (every reset) */
 void fd1094_machine_init(void)
 {
-	fd1904_setstate_and_decrypt(FD1094_STATE_NORMAL);
+	fd1904_setstate_and_decrypt(FD1094_STATE_RESET);
 	fd1094_kludge_reset_values();
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_CMPILD_CALLBACK, (genf *)fd1094_cmp_callback);
@@ -123,19 +122,18 @@ void fd1094_machine_init(void)
 }
 
 /* startup function, to be called from DRIVER_INIT (once on startup) */
-void fd1094_driver_init(UINT16 cpunum)
+void fd1094_driver_init(void)
 {
 	int i;
 
 	fd1094_cpuregion = (data16_t*)memory_region(REGION_CPU1);
 	fd1094_cpuregionsize = memory_region_length(REGION_CPU1);
+	fd1094_key = memory_region(REGION_USER1);
 
 	for (i=0;i<S16_NUMCACHE;i++)
 	{
 		fd1094_cacheregion[i]=auto_malloc(fd1094_cpuregionsize);
 	}
-
-	fd1094_init(cpunum);
 
 	/* flush the cached state array */
 	for (i=0;i<S16_NUMCACHE;i++)

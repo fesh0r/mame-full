@@ -316,7 +316,7 @@ $(OBJ)/cvs.a: \
 
 $(OBJ)/midway.a: \
 	$(OBJ)/machine/astrocde.o $(OBJ)/vidhrdw/astrocde.o \
-	$(OBJ)/sndhrdw/astrocde.o $(OBJ)/sndhrdw/gorf.o $(OBJ)/drivers/astrocde.o \
+	$(OBJ)/sndhrdw/wow.o $(OBJ)/sndhrdw/gorf.o $(OBJ)/drivers/astrocde.o \
 	$(OBJ)/machine/mcr.o $(OBJ)/sndhrdw/mcr.o \
 	$(OBJ)/vidhrdw/mcr12.o $(OBJ)/vidhrdw/mcr3.o \
 	$(OBJ)/drivers/mcr1.o $(OBJ)/drivers/mcr2.o $(OBJ)/drivers/mcr3.o \
@@ -472,7 +472,7 @@ $(OBJ)/gremlin.a: \
 	$(OBJ)/vidhrdw/blockade.o $(OBJ)/drivers/blockade.o \
 
 $(OBJ)/vicdual.a: \
-	$(OBJ)/vidhrdw/vicdual.o $(OBJ)/drivers/vicdual.o \
+	$(OBJ)/vidhrdw/vicdual.o $(OBJ)/drivers/vicdual.o $(OBJ)/sndhrdw/vicdual.o \
 	$(OBJ)/sndhrdw/carnival.o $(OBJ)/sndhrdw/depthch.o $(OBJ)/sndhrdw/invinco.o $(OBJ)/sndhrdw/pulsar.o \
 
 $(OBJ)/sega.a: \

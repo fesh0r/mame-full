@@ -34,7 +34,8 @@ enum messtest_command_type
 	MESSTEST_COMMAND_IMAGE_LOAD,
 	MESSTEST_COMMAND_IMAGE_PRECREATE,
 	MESSTEST_COMMAND_IMAGE_PRELOAD,
-	MESSTEST_COMMAND_VERIFY_MEMORY
+	MESSTEST_COMMAND_VERIFY_MEMORY,
+	MESSTEST_COMMAND_VERIFY_IMAGE
 };
 
 struct messtest_command
@@ -55,12 +56,14 @@ struct messtest_command
 			offs_t end;
 			const void *verify_data;
 			size_t verify_data_size;
+			iodevice_t device_type;
+			int device_slot;
 		} verify_args;
 		struct
 		{
 			const char *filename;
 			const char *format;
-			int device_type;
+			iodevice_t device_type;
 			int device_slot;
 		} image_args;
 		struct
@@ -590,6 +593,64 @@ static void command_image_verify_memory(void)
 
 
 
+static void command_image_verify_image(void)
+{
+	const UINT8 *verify_data;
+	size_t verify_data_size;
+	size_t offset, offset_start, offset_end;
+	const char *filename;
+	mess_image *image;
+	FILE *f;
+	UINT8 c;
+	char filename_buf[512];
+
+	verify_data = (const UINT8 *) current_command->u.verify_args.verify_data;
+	verify_data_size = current_command->u.verify_args.verify_data_size;
+
+	image = image_from_devtype_and_index(current_command->u.verify_args.device_type, current_command->u.verify_args.device_slot);
+	filename = image_filename(image);
+	if (!filename)
+	{
+		state = STATE_ABORTED;
+		report_message(MSG_FAILURE, "Failed verification: Device Not Loaded");
+		return;
+	}
+
+	/* very dirty hack - we unload the image because we cannot access it
+	 * because the file is locked */
+	strcpy(filename_buf, filename);
+	image_unload(image);
+	filename = filename_buf;
+
+	f = fopen(filename, "r");
+	if (!f)
+	{
+		state = STATE_ABORTED;
+		report_message(MSG_FAILURE, "Failed verification: Cannot open image to verify");
+		return;
+	}
+
+	offset_start = 0;
+	offset_end = verify_data_size - 1;
+
+	for (offset = offset_start; offset <= offset_end; offset++)
+	{
+		fseek(f, offset, SEEK_SET);
+		c = (UINT8) fgetc(f);
+
+		if (c != verify_data[offset])
+		{
+			state = STATE_ABORTED;
+			report_message(MSG_FAILURE, "Failed verification step (%s; 0x%x-0x%x)",
+				filename, offset_start, offset_end);
+			break;
+		}
+	}
+	fclose(f);
+}
+
+
+
 static void command_end(void)
 {
 	/* at the end of our test */
@@ -618,6 +679,7 @@ static struct command_procmap_entry commands[] =
 	{ MESSTEST_COMMAND_IMAGE_LOAD,		command_image_loadcreate },
 	{ MESSTEST_COMMAND_IMAGE_CREATE,	command_image_loadcreate },
 	{ MESSTEST_COMMAND_VERIFY_MEMORY,	command_image_verify_memory },
+	{ MESSTEST_COMMAND_VERIFY_IMAGE,	command_image_verify_image },
 	{ MESSTEST_COMMAND_END,				command_end }
 };
 
@@ -977,7 +1039,36 @@ static void memverify_handler(const char **attributes)
 
 
 
-static void memverify_end_handler(const void *buffer, size_t size)
+static void imageverify_handler(const char **attributes)
+{
+	const char *s;
+	iodevice_t device_type;
+
+	/* <imageverify> - verifies that an image contains specific data */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_VERIFY_IMAGE;
+
+	/* 'type' attribute */
+	s = find_attribute(attributes, "type");
+	if (!s)
+	{
+		error_missingattribute("type");
+		return;
+	}
+
+	device_type = device_typeid(s);
+	if (device_type < 0)
+	{
+		error_baddevicetype(s);
+		return;
+	}
+
+	new_command.u.verify_args.device_type = device_type;
+}
+
+
+
+static void verify_end_handler(const void *buffer, size_t size)
 {
 	void *new_buffer;
 	new_buffer = pool_malloc(&command_pool, size);
@@ -1070,7 +1161,8 @@ const struct messtest_tagdispatch testmess_dispatch[] =
 	{ "screenshot",		DATA_NONE,		screenshot_handler,		command_end_handler },
 	{ "imagecreate",	DATA_NONE,		imagecreate_handler,	command_end_handler },
 	{ "imageload",		DATA_NONE,		imageload_handler,		command_end_handler },
-	{ "memverify",		DATA_BINARY,	memverify_handler,		memverify_end_handler },
+	{ "memverify",		DATA_BINARY,	memverify_handler,		verify_end_handler },
+	{ "imageverify",	DATA_BINARY,	imageverify_handler,	verify_end_handler },
 	{ NULL }
 };
 

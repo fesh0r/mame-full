@@ -152,7 +152,6 @@
  * DISCRETE_MIXER6(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,INFO)
  * DISCRETE_MIXER7(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)
  * DISCRETE_MIXER8(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,INFO)
- * DISCRETE_MIXER(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8,INFO)
  * DISCRETE_OP_AMP_TRIG_VCA(NODE,TRG0,TRG1,TRG2,IN0,IN1,INFO)
  *
  * DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)
@@ -184,6 +183,7 @@
  * DISCRETE_RCFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  *
  * DISCRETE_555_ASTABLE(NODE,RESET,AMPL,R1,R2,C,CTRLV,TYPE)
+ * DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)
  * DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)
  * DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)
  *
@@ -734,17 +734,21 @@
  *
  *     discrete_schmitt_osc_desc = {rIn, rFeedback, c, trshRise, trshFall, vGate, options}
  *
+ *  Note: trshRise, trshFall, vGate can be replaced with one of these common types: 
+ *        DEFAULT_7414_VALUES or DEFAULT_74LS14_VALUES  (the LS makes a difference)
+ *    eg: {rIn, rFeedback, c, DEFAULT_7414_VALUES, options}
+ *
  *  Where:
  *     trshRise is the voltage level that triggers the gate input to go high (vGate) on rise.
  *     trshFall is the voltage level that triggers the gate input to go low (0V) on fall.
  *     vGate    is the ouput high voltage of the gate that gets fedback through rFeedback.
  *
  *  Input Options:
- *     DISC_SCHMITT_OSC_IN_IS_LOGIC
+ *     DISC_SCHMITT_OSC_IN_IS_LOGIC (DEFAULT)
  *     DISC_SCHMITT_OSC_IN_IS_VOLTAGE
  *
  *  Enable Options: (ORed with input options)
- *     DISC_SCHMITT_OSC_ENAB_IS_AND
+ *     DISC_SCHMITT_OSC_ENAB_IS_AND (DEFAULT)
  *     DISC_SCHMITT_OSC_ENAB_IS_NAND
  *     DISC_SCHMITT_OSC_ENAB_IS_OR
  *     DISC_SCHMITT_OSC_ENAB_IS_NOR
@@ -1027,12 +1031,14 @@
  *
  *  Types:
  *
- *     DISC_ONESHOT_FEDGE    0x00 - trigger on falling edge
+ *     DISC_ONESHOT_FEDGE    0x00 - trigger on falling edge (DEFAULT)
  *     DISC_ONESHOT_REDGE    0x01 - trigger on rising edge
- *     DISC_ONESHOT_NORETRIG 0x00 - non-retriggerable
+ *
+ *     DISC_ONESHOT_NORETRIG 0x00 - non-retriggerable (DEFAULT)
  *     DISC_ONESHOT_RETRIG   0x02 - retriggerable
+ *
  *     DISC_OUT_ACTIVE_LOW   0x04 - output active low
- *     DISC_OUT_ACTIVE_HIGH  0x00 - output active high
+ *     DISC_OUT_ACTIVE_HIGH  0x00 - output active high (DEFAULT)
  *
  *  NOTE: A width of 0 seconds will output a pulse of 1 sample.
  *        This is usefull for a guaranteed minimun pulse, regardless
@@ -1862,15 +1868,15 @@
  *
  *  Declaration syntax
  *
- *     DISCRETE_NE555(name of node,
- *                    reset node (or value),
- *                    R1 node (or value) in ohms,
- *                    R2 node (or value) in ohms,
- *                    C node (or value) in farads,
- *                    Control Voltage node (or value),
- *                    address of discrete_555_astbl_desc structure)
+ *     DISCRETE_555_ASTABLE(name of node,
+ *                          reset node (or value),
+ *                          R1 node (or value) in ohms,
+ *                          R2 node (or value) in ohms,
+ *                          C node (or value) in farads,
+ *                          Control Voltage node (or value),
+ *                          address of discrete_555_desc structure)
  *
- *    discrete_555_astbl_desc =
+ *    discrete_555_desc =
  *    {
  *        options,        // bit mapped options
  *        v555,           // B+ voltage of 555
@@ -1879,12 +1885,20 @@
  *        trigger555      // normally 1/3 of v555
  *    }
  *
+ * The last 3 options of discrete_555_desc can use the following defaults
+ * unless otherwise needed.
+ *     DEFAULT_555_V_LOGIC_1, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
+ * or all 3 combined as:
+ *     DEFAULT_555_VALUES
+ *
+ * eg. {DISC_555_OUT_DC | DISC_555_OUT_SQW, 12, DEFAULT_555_VALUES}
+ *
  *  Output Types:
- *     DISC_555_OUT_DC - Output is actual DC.
+ *     DISC_555_OUT_DC - Output is actual DC. (DEFAULT)
  *     DISC_555_OUT_AC - A cheat to make the waveform AC.
  *
  *  Waveform Types: (ORed with output types)
- *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high.
+ *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high. (DEFAULT)
  *     DISC_555_OUT_CAP       - Output is Timing Capacitor 'C' voltage.
  *     DISC_555_OUT_CAP_CLAMP - During a sample period, the high/low
  *                              threshold may be reached, causing the
@@ -1902,7 +1916,62 @@
  *                              This option may be removed soon, as the
  *                              filters help clear things up.
  *
- * EXAMPLES: see Hit Me
+ *  other options - DISCRETE_555_ASTABLE only:
+ *     DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE - diode used to bypass rDischarge
+ *                                              when charging for quicker charge.
+ *
+ * EXAMPLES: see Hit Me, Canyon Bomber, Sky Diver
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_555_MSTABLE - NE555 Chip simulation (monostable mode)
+ *                      - Triggered on falling edge.
+ *
+ *                          v555
+ *                           |
+ *                 .---------+
+ *                 |         |
+ *                 Z         |
+ *               R Z     .---------.
+ *                 |     |  Vcc    |
+ *                 +-----|Discharge|
+ *                 |     |         |
+ *                 |     |   555   |
+ *                 |     |      Out|---> Netlist Node
+ *                 |     |         |
+ *                 +-----|Threshold|
+ *                 |     |         |
+ *                 |     |  Trigger|--------< Trigger
+ *                 |     |       CV|---.
+ *                 |     |  Reset  |   |
+ *                 |     '---------'  --- not
+ *                ---         |       --- needed
+ *              C ---         |        |
+ *                 |          ^       gnd
+ *                gnd       Reset
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_555_MSTABLE(name of node,
+ *                          reset node (or value),
+ *                          Trigger node,
+ *                          R node (or value) in ohms,
+ *                          C node (or value) in farads,
+ *                          address of discrete_555_desc structure)
+ *
+ *  Trigger Types
+ *     DISC_555_TRIGGER_IS_LOGIC   - Input is (0 or !0) logic (DEFAULT)
+ *     DISC_555_TRIGGER_IS_VOLTAGE - Input is actual voltage.
+ *                                   Voltage must drop below
+ *                                   trigger555 to activate.
+ *
+ *  Output Types: (ORed with trigger types)
+ *     See DISCRETE_555_ASTABLE for description.
+ *
+ *  Waveform Types: (ORed with trigger types)
+ *     See DISCRETE_555_ASTABLE for description.
+ *
+ * EXAMPLES: see Frogs
  *
  ***********************************************************************
  *
@@ -1931,7 +2000,7 @@
  *                 |      |                ^
  *                gnd    gnd             Reset
  *
- * Notes: R sets the current and should never be 0 (short).
+ * Notes: R sets the current and should NEVER be 0 (short).
  *        The current follows the voltage I=Vin/R and charges C.
  *        rBias, rDischarge and rGnd should be 0 if not used.
  *        Reset is active low for the module.
@@ -2010,11 +2079,11 @@
  *     discrete_566_desc = {options, vPlus, vNeg}
  *
  *  Output Types:
- *     DISC_566_OUT_DC - Output is actual DC.
+ *     DISC_566_OUT_DC - Output is actual DC. (DEFAULT)
  *     DISC_566_OUT_AC - A cheat to make the waveform AC.
  *
  *  Waveform Types:
- *     DISC_566_OUT_SQUARE   - Pin 3 Square Wave Output
+ *     DISC_566_OUT_SQUARE   - Pin 3 Square Wave Output (DEFAULT)
  *     DISC_566_OUT_TRIANGLE - Pin 4 Triangle Wave Output
  *     DISC_566_OUT_LOGIC    - Internal Flip/Flop Output
  *
@@ -2068,8 +2137,10 @@
  *
  *************************************/
 
-#define DISC_LOGADJ						1.0
-#define DISC_LINADJ						0.0
+#define DEFAULT_TTL_V_LOGIC_1	3.4
+
+#define DISC_LOGADJ				1.0
+#define DISC_LINADJ				0.0
 
 /* DISCRETE_COMP_ADDER types */
 #define DISC_COMP_P_CAPACITOR			0x00
@@ -2175,6 +2246,9 @@ enum
 #define DISC_555_OUT_DC					0x00
 #define DISC_555_OUT_AC					0x01
 
+#define DISC_555_TRIGGER_IS_LOGIC		0x00
+#define DISC_555_TRIGGER_IS_VOLTAGE		0x40
+
 #define DISC_555_OUT_SQW				0x00	/* Squarewave */
 #define DISC_555_OUT_CAP				0x10	/* Cap charge waveform */
 #define DISC_555_OUT_CAP_CLAMP			0x20	/* When outputting the cap voltage, it is forced
@@ -2183,6 +2257,8 @@ enum
 
 #define DISC_555_OUT_MASK				0x30	/* Bits that define output type.
 												 * Used only internally in module. */
+
+#define DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE		0x80
 
 /* 566 output flags */
 #define DISC_566_OUT_DC					0x00
@@ -2310,6 +2386,11 @@ struct discrete_op_amp_osc_info
 	double	vP;		// Op amp B+
 };
 
+
+#define DEFAULT_7414_VALUES 	1.7, 0.9, 3.4
+
+#define DEFAULT_74LS14_VALUES 	1.6, 0.8, 3.4
+
 struct discrete_schmitt_osc_desc
 {
 	double	rIn;
@@ -2415,7 +2496,12 @@ struct discrete_op_amp_filt_info
 };
 
 
-struct discrete_555_astbl_desc
+#define DEFAULT_555_HIGH		-1
+#define DEFAULT_555_THRESHOLD	-1
+#define DEFAULT_555_TRIGGER		-1
+#define DEFAULT_555_VALUES		DEFAULT_555_HIGH, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
+
+struct discrete_555_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555

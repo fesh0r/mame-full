@@ -41,13 +41,11 @@ static UINT8 subroc3d_select;
 /* Nodes - Sounds */
 #define FIRETRUCK_NOISE			NODE_20
 
-const struct discrete_555_astbl_desc turbo_alarm_555 =
+const struct discrete_555_desc turbo_alarm_555 =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,				// B+ voltage of 555
-	5.0 - 1.7,		// High output voltage of 555 (Usually v555 - 1.7)
-	5.0 * 2.0 /3.0,	// normally 2/3 of v555
-	5.0 / 3.0		// normally 1/3 of v555
+	DEFAULT_555_VALUES,
 };
 
 DISCRETE_SOUND_START(turbo_sound_interface)

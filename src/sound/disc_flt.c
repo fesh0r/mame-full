@@ -708,7 +708,7 @@ void dst_rcfilterN_reset(struct node_description *node)
 	node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
-	return dst_filter1_reset(node);
+	dst_filter1_reset(node);
 }
 
 
@@ -732,7 +732,7 @@ void dst_rcdiscN_reset(struct node_description *node)
 	node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
-	return dst_filter1_reset(node);
+	dst_filter1_reset(node);
 }
 
 void dst_rcdiscN_step(struct node_description *node)

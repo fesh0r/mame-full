@@ -46,7 +46,6 @@ static WRITE8_HANDLER( boothill_sh_port3_w );
 static WRITE8_HANDLER( boothill_sh_port5_w );
 
 static WRITE8_HANDLER( clowns_sh_port7_w );
-extern struct Samplesinterface circus_samples_interface;
 
 static WRITE8_HANDLER( seawolf_sh_port5_w );
 
@@ -489,8 +488,6 @@ const struct discrete_mixer_desc polaris_mixer_vr4_desc =
 		{0, CAP_U(1), 0,0,0,0,0,0},
 		0, RES_K(50), CAP_U(.05), CAP_U(1), 0, 40000};
 
-DISCRETE_SOUND_START(polaris_sound_interface)
-
 /* Nodes - Inputs */
 #define POLARIS_MUSIC_DATA		NODE_01
 #define POLARIS_SX0_EN			NODE_02
@@ -518,6 +515,8 @@ DISCRETE_SOUND_START(polaris_sound_interface)
 #define POLARIS_ADJ_VR1			NODE_23
 #define POLARIS_ADJ_VR2			NODE_24
 #define POLARIS_ADJ_VR3			NODE_25
+
+DISCRETE_SOUND_START(polaris_sound_interface)
 
 	/************************************************/
 	/* Polaris sound system: 8 Sound Sources        */

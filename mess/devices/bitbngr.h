@@ -20,5 +20,6 @@ struct bitbanger_config
 
 
 void bitbanger_device_getinfo(struct IODevice *iodev, const struct bitbanger_config *config);
+void bitbanger_output(mess_image *img, int value);
 
 #endif /* BITBNGR_H */
