@@ -176,7 +176,7 @@ int coco3_vh_start(void)
 	p.version = M6847_VERSION_M6847T1;
 	p.artifactdipswitch = COCO_DIP_ARTIFACTING;
 	p.ram = memory_region(REGION_CPU1);
-	p.ramsize = 0x10000;
+	p.ramsize = 0x80000;
 	p.charproc = coco2b_charproc;
 	p.hs_func = coco3_m6847_hs_w;
 	p.fs_func = coco3_m6847_fs_w;

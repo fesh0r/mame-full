@@ -11,7 +11,7 @@ static struct osd_bitmap *bitmap;
 static UINT8 *dirtybuffer_position;
 
 #ifdef MAME_DEBUG
-#define LOG_LINES		0
+#define LOG_LINES		1
 #define LOG_FRAMES		1
 #define LOG_POSITIONS	0
 #else
@@ -142,6 +142,7 @@ int rastertrack_hblank(void)
 			intf->getvideomode(&hvars);
 			frame_state = FRAME_FULLREFRESH;
 		}
+		dirty = 0;
 	}
 
 	if (frame_end) {
