@@ -31,11 +31,11 @@ static char *gamename = NULL;
 #ifndef MESS
 static char *defaultgamename;
 #else
-static int iodevice_type = 0;
 static char crcfilename[BUF_SIZE] = "";
 const char *crcfile = crcfilename;
 static char pcrcfilename[BUF_SIZE] = "";
 const char *pcrcfile = pcrcfilename;
+static const char *mess_opts;
 #endif
 static struct rc_struct *rc;
 
@@ -43,6 +43,7 @@ static int config_handle_arg(char *arg);
 static int config_handle_debug_size(struct rc_option *option, const char *arg,
    int priority);
 void show_usage(void);
+static int add_device(struct rc_option *option, const char *arg, int priority);
 
 /* struct definitions */
 static struct rc_option opts[] = {
@@ -63,45 +64,20 @@ static struct rc_option opts[] = {
      NULL,		0,			0,		NULL,
      NULL },
 #ifdef MESS
-   { "Mess Related",	NULL,			rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "cartridge",	"cart",			rc_set_int,	&iodevice_type,
-     NULL,		IO_CARTSLOT,		0,		NULL,
-     "All following images are seen as cartridges/roms" },
-   { "floppydisk",	"flop",			rc_set_int,	&iodevice_type,
-     NULL,		IO_FLOPPY,		0,		NULL,
-     "All following images are seen as floppies" },
-   { "harddisk",	"hard",			rc_set_int,	&iodevice_type,
-     NULL,		IO_HARDDISK,		0,		NULL,
-     "All following images are seen as hard disks" },
-   { "cylinder",	"cyln",			rc_set_int,	&iodevice_type,
-     NULL,		IO_CYLINDER,		0,		NULL,
-     "All following images are seen as cylinders" },
-   { "cassette",	"cass",			rc_set_int,	&iodevice_type,
-     NULL,		IO_CASSETTE,		0,		NULL,
-     "All following images are seen as cassettes" },
-   { "punchcard",   "pcrd",			rc_set_int,     &iodevice_type,
-     NULL,		IO_PUNCHCARD,		0,		NULL,
-     "All following images are seen as punchcards" },
-   { "punchtape",   "ptap",			rc_set_int,     &iodevice_type,
-     NULL,		IO_PUNCHTAPE,		0,		NULL,
-     "All following images are seen as punchtapes" },
-   { "printer",		"prin",			rc_set_int,	&iodevice_type,
-     NULL,		IO_PRINTER,		0,		NULL,
-     "All following images are seen as printers" },
-   { "serial",		"serl",			rc_set_int,	&iodevice_type,
-     NULL,		IO_SERIAL,		0,		NULL,
-     "All following images are seen as serial ports" },
-   { "parallel",    "parl",			rc_set_int,     &iodevice_type,
-     NULL,		IO_PARALLEL,		0,		NULL,
-     "All following images are seen as parallel ports" },
-   { "snapshot",    "dump",			rc_set_int,     &iodevice_type,
-     NULL,		IO_SNAPSHOT,		0,		NULL,
-     "All following images are seen as snapshots" },
-   { "quickload",   "quik",			rc_set_int,     &iodevice_type,
-     NULL,		IO_QUICKLOAD,		0,		NULL,
-     "All following images are seen as quickload images" },
+	/* FIXME - these option->names should NOT be hardcoded! */
+	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "cartridge", "cart", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to cartridge device" },
+	{ "floppydisk","flop", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to floppy disk device" },
+	{ "harddisk",  "hard", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to hard disk device" },
+	{ "cylinder",  "cyln", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to cylinder device" },
+	{ "cassette",  "cass", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to cassette device" },
+	{ "punchcard", "pcrd", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to punch card device" },
+	{ "punchtape", "ptap", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to punch tape device" },
+	{ "printer",   "prin", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to printer device" },
+	{ "serial",    "serl", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to serial device" },
+	{ "parallel",  "parl", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to parallel device" },
+	{ "snapshot",  "dump", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to snapshot device" },
+	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
 #else
    { "Mame Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
@@ -217,9 +193,9 @@ static int config_handle_arg(char *arg)
          fprintf(stderr, "error: too many image names specified!\n");
          return -1;
       }
-      options.image_files[options.image_count].type = iodevice_type;
-      options.image_files[options.image_count].name = arg;
-      options.image_count++;
+      //options.image_files[options.image_count].type = iodevice_type;
+      //options.image_files[options.image_count].name = arg;
+      //options.image_count++;
    }
 #else
    {
@@ -670,11 +646,33 @@ void show_usage(void)
 }
 
 #ifdef MESS
-/* Function to handle Aliases in the MESS.CFG file */
-char* get_alias(const char *driver_name, char *argv)
+/* add_device() is called when the MESS CLI option has been identified 		*/
+/* This searches throught the devices{} struct array to grab the ID of the 	*/
+/* option, which then registers the device using register_device()			*/
+static int add_device(struct rc_option *option, const char *arg, int priority)
 {
-	/* we don't do aliases, feel free to write support for it if you want
-	   it */
-	return NULL;
+	extern const struct Devices devices[]; /* from mess device.c */
+	int i=0;
+
+	/* First, we need to find the ID of this option - kludge alert!			*/
+	while(devices[i].id != IO_COUNT)
+	{
+		if (!stricmp(option->name, devices[i].name)  		||
+			!stricmp(option->shortname, devices[i].shortname))
+		{
+			/* A match!  we now know the ID of the device */
+			option->priority = priority;
+			return (register_device (devices[i].id, arg));
+		}
+		else
+		{
+			/* No match - keep looking */
+			i++;
+		}
+	}
+
+	/* If we get to here, log the error - This is mostly due to a mismatch in the array */
+	logerror("Command Line Option [-%s] not a valid device - ignoring\n", option->name);
+    return -1;
 }
 #endif
