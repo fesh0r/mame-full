@@ -55,7 +55,7 @@ static cycles_t end_time;
 static int frames_displayed;
 static int frames_to_display;
 
-#if (defined svgafx) || (defined xfx) 
+#if (defined svgafx) || (defined xfx)
 UINT16 *color_values;
 #endif
 
@@ -121,7 +121,8 @@ struct rc_option video_opts[] = {
 	     "4 = rgbscan (2x3 rgb horizontal scanlines)\n"
 	     "5 = scan3 (3x3 deluxe scanlines)\n"
 	     "6 = lq2x (2x low  quality magnification filter)\n"
-	     "7 = hq2x (2x high quality magnification filter)\n" },
+	     "7 = hq2x (2x high quality magnification filter)\n"
+	     "8 = 6tap2x (2x sinc-based 6-tap filter with scanlines\n" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },
@@ -316,8 +317,8 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 		return -1;
 	}
 
-	/* 
-	 * if we're running < 5 minutes, allow us to skip warnings to 
+	/*
+	 * if we're running < 5 minutes, allow us to skip warnings to
 	 * facilitate benchmarking/validation testing
 	 */
 	frames_to_display = ftr;
@@ -460,7 +461,7 @@ void orient_rect(struct rectangle *rect)
 	}
 }
 
-int osd_create_display(const struct osd_create_params *params, 
+int osd_create_display(const struct osd_create_params *params,
 		UINT32 *rgb_components)
 {
 	int r, g, b;
@@ -476,7 +477,7 @@ int osd_create_display(const struct osd_create_params *params,
 
 	if (use_auto_double)
 	{
-		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) 
+		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 		{
 			if (params->orientation & ORIENTATION_SWAP_XY)
@@ -485,7 +486,7 @@ int osd_create_display(const struct osd_create_params *params,
 				normal_heightscale *= 2;
 		}
 
-		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) 
+		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		{
 			if (params->orientation & ORIENTATION_SWAP_XY)
@@ -512,10 +513,10 @@ int osd_create_display(const struct osd_create_params *params,
 	video_depth = (params->depth == 15) ? 16 : params->depth;
 
 	if (!blit_swapxy)
-		aspect_ratio = (double)params->aspect_x 
+		aspect_ratio = (double)params->aspect_x
 			/ (double)params->aspect_y;
 	else
-		aspect_ratio = (double)params->aspect_y 
+		aspect_ratio = (double)params->aspect_y
 			/ (double)params->aspect_x;
 
 	widthscale		= normal_widthscale;
@@ -720,15 +721,15 @@ static void update_visible_area(struct mame_display *display)
 	orient_rect(&normal_visual);
 #endif
 
-	/* 
+	/*
 	 * round to 8, since the new dirty code works with 8x8 blocks,
 	 * and we need to round to sizeof(long) for the long copies anyway
 	 */
 	round_rectangle_to_8(&normal_visual);
 
 	if (!debugger_has_focus)
-		change_display_settings(&normal_visual, normal_palette, 
-				normal_widthscale, normal_heightscale, 
+		change_display_settings(&normal_visual, normal_palette,
+				normal_widthscale, normal_heightscale,
 				normal_use_aspect_ratio, 0);
 
 	set_ui_visarea(display->game_visible_area.min_x,
@@ -786,7 +787,7 @@ static void update_debug_display(struct mame_display *display)
 			g = RGB_GREEN(rgbvalue);
 			b = RGB_BLUE(rgbvalue);
 
-			sysdep_palette_set_pen(debug_palette, 
+			sysdep_palette_set_pen(debug_palette,
 					i, r, g, b);
 		}
 	}
@@ -934,7 +935,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	}
 
 	if (code_pressed(KEYCODE_LCONTROL))
-	{ 
+	{
 		if (code_pressed_memory(KEYCODE_INSERT))
 			frameskipper = 0;
 		if (code_pressed_memory(KEYCODE_HOME))
@@ -1009,8 +1010,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 		change_debugger_focus(display->debug_focus);
 
 	/*
-	 * If the user presses the F5 key, toggle the debugger's 
-	 * focus.  Eventually I'd like to just display both the 
+	 * If the user presses the F5 key, toggle the debugger's
+	 * focus.  Eventually I'd like to just display both the
 	 * debug and regular windows at the same time.
 	 */
 	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
@@ -1092,7 +1093,7 @@ void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
 	sysdep_update_display(srcbitmap);
 }
 
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, 
+struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 		struct rectangle *bounds)
 {
 	struct rectangle newbounds;
@@ -1175,7 +1176,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 
 void osd_pause(int paused)
 {
-	emulation_paused = paused;	
+	emulation_paused = paused;
 }
 
 const char *osd_get_fps_text(const struct performance_info *performance)
@@ -1191,11 +1192,11 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	else
 	{
 		/* display the FPS, frameskip, percent, fps and target fps */
-		dest += sprintf(dest, "%s%s%s%2d%4d%%%4d/%d fps", 
+		dest += sprintf(dest, "%s%s%s%2d%4d%%%4d/%d fps",
 				throttle ? "T " : "",
 				(throttle && sleep_idle) ? "S " : "",
-				autoframeskip ? "auto" : "fskp", frameskip, 
-				(int)(performance->game_speed_percent + 0.5), 
+				autoframeskip ? "auto" : "fskp", frameskip,
+				(int)(performance->game_speed_percent + 0.5),
 				(int)(performance->frames_per_second + 0.5),
 				(int)(Machine->refresh_rate + 0.5));
 	}
@@ -1215,8 +1216,8 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 }
 
 /*
- * We don't want to sleep when idle while the setup menu is 
- * active, since this causes problems with registering 
+ * We don't want to sleep when idle while the setup menu is
+ * active, since this causes problems with registering
  * keypresses.
  */
 int should_sleep_idle()

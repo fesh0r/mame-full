@@ -144,6 +144,7 @@ void effect_init1()
     case EFFECT_HQ2X:
     case EFFECT_LQ2X:
     case EFFECT_SCAN2:
+    case EFFECT_6TAP2X:
       normal_widthscale = 2;
       normal_heightscale = 2;
                         disable_arbscale = 1;
@@ -191,7 +192,7 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
         break;
     }
 
-    printf("Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
+    fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
     effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
     for (i=0; i<dst_width*normal_heightscale*rddepth/8; i++)
       effect_dbbuf[i] = 0;
@@ -214,6 +215,10 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
             effect_rgbscan_direct_func    = effect_rgbscan_16_16_direct;
             effect_scan3_func             = effect_scan3_16_16;
             effect_scan3_direct_func      = effect_scan3_16_16_direct;
+            effect_6tap_clear_func          = effect_6tap_clear;
+            effect_6tap_addline_func        = effect_6tap_addline_16_16;
+            effect_6tap_addline_direct_func = effect_6tap_addline_16_16_direct;
+            effect_6tap_render_func         = effect_6tap_render_16;
             break;
           case 32:
             break;
@@ -229,6 +234,10 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
             effect_rgbstripe_func = effect_rgbstripe_16_24;
             effect_rgbscan_func   = effect_rgbscan_16_24;
             effect_scan3_func     = effect_scan3_16_24;
+            effect_6tap_addline_func        = 0;   /* fixme no routines for 6-tap 24-bit */
+            effect_6tap_addline_direct_func = 0;
+            effect_6tap_render_func         = 0;
+            effect_6tap_clear_func          = 0;
             break;
           case 32:
             break;
@@ -244,6 +253,13 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
             effect_rgbstripe_func = effect_rgbstripe_16_32;
             effect_rgbscan_func   = effect_rgbscan_16_32;
             effect_scan3_func     = effect_scan3_16_32;
+#ifdef EFFECT_MMX_ASM
+            effect_6tap_clear_func          = effect_6tap_clear_asm;
+#else
+            effect_6tap_clear_func          = effect_6tap_clear;
+#endif
+            effect_6tap_addline_func        = effect_6tap_addline_16_32;
+            effect_6tap_render_func         = effect_6tap_render_32;
             break;
           case 32:
             effect_scale2x_direct_func    = effect_scale2x_32_32_direct;
@@ -253,6 +269,13 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
             effect_rgbstripe_direct_func  = effect_rgbstripe_32_32_direct;
             effect_rgbscan_direct_func    = effect_rgbscan_32_32_direct;
             effect_scan3_direct_func      = effect_scan3_32_32_direct;
+#ifdef EFFECT_MMX_ASM
+            effect_6tap_clear_func          = effect_6tap_clear_asm;
+#else
+            effect_6tap_clear_func          = effect_6tap_clear;
+#endif
+            effect_6tap_addline_direct_func = effect_6tap_addline_32_32_direct;
+            effect_6tap_render_func         = effect_6tap_render_32;
             break;
         }
         break;
@@ -267,6 +290,10 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
             effect_rgbstripe_func = effect_rgbstripe_16_YUY2;
             effect_rgbscan_func   = effect_rgbscan_16_YUY2;
             effect_scan3_func     = effect_scan3_16_YUY2;
+            effect_6tap_addline_func        = 0;   /* fixme no routines for 6-tap YUY2 */
+            effect_6tap_addline_direct_func = 0;
+            effect_6tap_render_func         = 0;
+            effect_6tap_clear_func          = 0;
             break;
           case 32:
             effect_scale2x_direct_func    = effect_scale2x_32_YUY2_direct;
@@ -276,6 +303,10 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
             effect_rgbstripe_direct_func  = effect_rgbstripe_32_YUY2_direct;
             effect_rgbscan_direct_func    = effect_rgbscan_32_YUY2_direct;
             effect_scan3_direct_func      = effect_scan3_32_YUY2_direct;
+            effect_6tap_addline_func        = 0;   /* fixme no routines for 6-tap YUY2 */
+            effect_6tap_addline_direct_func = 0;
+            effect_6tap_render_func         = 0;
+            effect_6tap_clear_func          = 0;
             break;
                }
         break;
@@ -294,6 +325,7 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
       break;
     }
 
+  /* fixme: these buffers are never free'd */
     if ((effect == EFFECT_SCALE2X) ||
         (effect == EFFECT_HQ2X)    ||
         (effect == EFFECT_LQ2X)) {
@@ -304,6 +336,18 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
       rotate_dbbuf = calloc(video_width*video_depth/8, sizeof(char));
     }
   }
+
+  /* I need these buffers regardless of whether the display is rotated or not */
+  if (effect == EFFECT_6TAP2X)
+    {
+    rotate_dbbuf = calloc(video_width*4, sizeof(char));
+    rotate_dbbuf0 = calloc(video_width*8, sizeof(char));
+    rotate_dbbuf1 = calloc(video_width*8, sizeof(char));
+    rotate_dbbuf2 = calloc(video_width*8, sizeof(char));
+    rotate_dbbuf3 = calloc(video_width*8, sizeof(char));
+    rotate_dbbuf4 = calloc(video_width*8, sizeof(char));
+    rotate_dbbuf5 = calloc(video_width*8, sizeof(char));
+    }
 }
 
 
@@ -666,10 +710,428 @@ void effect_scale2x_32_32_direct
   }
 }
 
+/**********************************
+ * 6tap2x: 6-tap sinc filter with light scanlines
+ **********************************/
+
+#define Clip(a) (((a) < 0) ? 0 : (((a) > 0xff) ? 0xff : (a)))
+
+void effect_6tap_clear(unsigned count)
+{
+  memset(rotate_dbbuf0, 0, count << 3);
+  memset(rotate_dbbuf1, 0, count << 3);
+  memset(rotate_dbbuf2, 0, count << 3);
+  memset(rotate_dbbuf3, 0, count << 3);
+  memset(rotate_dbbuf4, 0, count << 3);
+  memset(rotate_dbbuf5, 0, count << 3);
+}
+
+#ifndef EFFECT_MMX_ASM
+void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *lookup)
+{
+  UINT16 *u16src = (UINT16 *)src0;
+  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32dest;
+  UINT8 *u8dest;
+  UINT32 i;
+  INT32 pixel;
+
+  /* first, move the existing lines up by one */
+  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
+  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
+  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
+  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
+  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+
+  /* if there's no new line, clear the last one and return */
+  if (!src0)
+    {
+	memset(rotate_dbbuf5, 0, count << 3);
+	return;
+    }
+
+  /* we have a new line, so first do the palette lookup and zoom by 2 */
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  for (i = 0; i < count; i++)
+    {
+    *u32dest++ = u32lookup[*u16src++];
+    u32dest++;
+    }
+
+  /* just replicate the first 2 and last 3 pixels */
+  u32dest[-1] = u32dest[-2];
+  u32dest[-3] = u32dest[-4];
+  u32dest[-5] = u32dest[-6];
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest[1] = u32dest[0];
+  u32dest[3] = u32dest[2];
+
+  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
+  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  for (i = 2; i < count - 3; i++)
+    {
+	/* first, do the blue part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* next, do the green part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* last, do the red part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* clear the last byte */
+	*u8dest++ = 0;
+	u8dest += 4;
+    }
+
+}
+
+void effect_6tap_addline_32_32_direct(const void *src0, unsigned count)
+{
+  UINT32 *u32src = (UINT32 *)src0;
+  UINT32 *u32dest;
+  UINT8 *u8dest;
+  UINT32 i;
+  INT32 pixel;
+
+  /* first, move the existing lines up by one */
+  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
+  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
+  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
+  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
+  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+
+  /* if there's no new line, clear the last one and return */
+  if (!src0)
+    {
+	memset(rotate_dbbuf5, 0, count << 3);
+	return;
+    }
+
+  /* we have a new line, so zoom by 2 */
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  for (i = 0; i < count; i++)
+    {
+    *u32dest++ = *u32src++;
+    u32dest++;
+    }
+
+  /* just replicate the first 2 and last 3 pixels */
+  u32dest[-1] = u32dest[-2];
+  u32dest[-3] = u32dest[-4];
+  u32dest[-5] = u32dest[-6];
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest[1] = u32dest[0];
+  u32dest[3] = u32dest[2];
+
+  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
+  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  for (i = 2; i < count - 3; i++)
+    {
+	/* first, do the blue part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* next, do the green part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* last, do the red part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* clear the last byte */
+	*u8dest++ = 0;
+	u8dest += 4;
+    }
+
+}
+
+void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
+{
+  UINT8 *u8dest = (UINT8 *) dst1;
+  UINT8 *src0 = (UINT8 *) rotate_dbbuf0;
+  UINT8 *src1 = (UINT8 *) rotate_dbbuf1;
+  UINT8 *src2 = (UINT8 *) rotate_dbbuf2;
+  UINT8 *src3 = (UINT8 *) rotate_dbbuf3;
+  UINT8 *src4 = (UINT8 *) rotate_dbbuf4;
+  UINT8 *src5 = (UINT8 *) rotate_dbbuf5;
+  UINT32 i;
+  INT32 pixel;
+
+  /* first we need to just copy the 3rd line into the first destination line */
+  memcpy(dst0, rotate_dbbuf2, count << 3);
+
+  /* then we need to vertically filter for the second line */
+  for (i = 0; i < (count << 1); i++)
+    {
+	/* first, do the blue part */
+	pixel = (((INT32) *src2++ + (INT32) *src3++) << 2) -
+	         ((INT32) *src1++ + (INT32) *src4++);
+	pixel += pixel << 2;
+	pixel += ((INT32) *src0++ + (INT32) *src5++);
+	pixel = (pixel + 0x10) >> 5;
+	pixel = Clip(pixel);
+	*u8dest++ = pixel - (pixel >> 2);
+	/* next, do the green part */
+	pixel = (((INT32) *src2++ + (INT32) *src3++) << 2) -
+	         ((INT32) *src1++ + (INT32) *src4++);
+	pixel += pixel << 2;
+	pixel += ((INT32) *src0++ + (INT32) *src5++);
+	pixel = (pixel + 0x10) >> 5;
+	pixel = Clip(pixel);
+	*u8dest++ = pixel - (pixel >> 2);
+	/* last, do the red part */
+	pixel = (((INT32) *src2++ + (INT32) *src3++) << 2) -
+	         ((INT32) *src1++ + (INT32) *src4++);
+	pixel += pixel << 2;
+	pixel += ((INT32) *src0++ + (INT32) *src5++);
+	pixel = (pixel + 0x10) >> 5;
+	pixel = Clip(pixel);
+	*u8dest++ = pixel - (pixel >> 2);
+	/* clear the last byte */
+	*u8dest++ = 0;
+	src0++; src1++; src2++; src3++; src4++; src5++;
+    }
+
+}
+#endif
+
+void effect_6tap_addline_16_16(const void *src0, unsigned count, const void *lookup)
+{
+  UINT16 *u16src = (UINT16 *) src0;
+  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32dest;
+  UINT8 *u8dest;
+  UINT32 i;
+  INT32 pixel;
+
+  /* first, move the existing lines up by one */
+  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
+  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
+  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
+  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
+  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+
+  /* if there's no new line, clear the last one and return */
+  if (!src0)
+    {
+	memset(rotate_dbbuf5, 0, count << 3);
+	return;
+    }
+
+  /* we have a new line, so first do the palette lookup and zoom by 2 */
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  for (i = 0; i < count; i++)
+    {
+    *u32dest++ = (RMASK16(u32lookup[*u16src]) << 8) |
+                 (GMASK16(u32lookup[*u16src]) << 5) |
+                 (BMASK16(u32lookup[*u16src]) << 3);
+    u16src++;
+    u32dest++;
+    }
+
+  /* just replicate the first 2 and last 3 pixels */
+  u32dest[-1] = u32dest[-2];
+  u32dest[-3] = u32dest[-4];
+  u32dest[-5] = u32dest[-6];
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest[1] = u32dest[0];
+  u32dest[3] = u32dest[2];
+
+  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
+  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  for (i = 2; i < count - 3; i++)
+    {
+	/* first, do the blue part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* next, do the green part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* last, do the red part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* clear the last byte */
+	*u8dest++ = 0;
+	u8dest += 4;
+    }
+}
+
+void effect_6tap_addline_16_16_direct(const void *src0, unsigned count)
+{
+  UINT16 *u16src = (UINT16 *)src0;
+  UINT32 *u32dest;
+  UINT8 *u8dest;
+  UINT32 i;
+  INT32 pixel;
+
+  /* first, move the existing lines up by one */
+  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
+  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
+  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
+  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
+  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+
+  /* if there's no new line, clear the last one and return */
+  if (!src0)
+    {
+	memset(rotate_dbbuf5, 0, count << 3);
+	return;
+    }
+
+  /* we have a new line, so first do the palette lookup and zoom by 2 */
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  for (i = 0; i < count; i++)
+    {
+    *u32dest++ = ((UINT32) RMASK16(*u16src) << 8) |
+                 ((UINT32) GMASK16(*u16src) << 5) |
+                 ((UINT32) BMASK16(*u16src) << 3);
+    u16src++;
+    u32dest++;
+    }
+
+  /* just replicate the first 2 and last 3 pixels */
+  u32dest[-1] = u32dest[-2];
+  u32dest[-3] = u32dest[-4];
+  u32dest[-5] = u32dest[-6];
+  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest[1] = u32dest[0];
+  u32dest[3] = u32dest[2];
+
+  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
+  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  for (i = 2; i < count - 3; i++)
+    {
+	/* first, do the blue part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* next, do the green part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* last, do the red part */
+	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
+	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
+	pixel += pixel << 2;
+	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
+	pixel = (pixel + 0x10) >> 5;
+	*u8dest++ = Clip(pixel);
+	/* clear the last byte */
+	*u8dest++ = 0;
+	u8dest += 4;
+    }
+}
+
+void effect_6tap_render_16(void *dst0, void *dst1, unsigned count)
+{
+  UINT16 *u16dest0 = (UINT16 *) dst0;
+  UINT16 *u16dest1 = (UINT16 *) dst1;
+  UINT8 *src0 = (UINT8 *) rotate_dbbuf0;
+  UINT8 *src1 = (UINT8 *) rotate_dbbuf1;
+  UINT8 *src2 = (UINT8 *) rotate_dbbuf2;
+  UINT8 *src3 = (UINT8 *) rotate_dbbuf3;
+  UINT8 *src4 = (UINT8 *) rotate_dbbuf4;
+  UINT8 *src5 = (UINT8 *) rotate_dbbuf5;
+  UINT32 *src32 = (UINT32 *) rotate_dbbuf2;
+  UINT32 i;
+  INT32 red, green, blue;
+
+  /* first we need to just copy the 3rd line into the first destination line */
+  for (i = 0; i < (count << 1); i++)
+    {
+	*u16dest0++ = (UINT16) ((*src32 & 0xf80000) >> 8) |
+	                       ((*src32 & 0x00fc00) >> 5) |
+	                       ((*src32 & 0x0000f8) >> 3);
+	src32++;
+	}
+
+  /* then we need to vertically filter for the second line */
+  for (i = 0; i < (count << 1); i++)
+    {
+	/* first, do the blue part */
+	blue = (((INT32) *src2++ + (INT32) *src3++) << 2) -
+	        ((INT32) *src1++ + (INT32) *src4++);
+	blue += blue << 2;
+	blue += ((INT32) *src0++ + (INT32) *src5++);
+	blue = (blue + 0x10) >> 5;
+	blue = Clip(blue);
+	blue = blue - (blue >> 2);
+	/* next, do the green part */
+	green = (((INT32) *src2++ + (INT32) *src3++) << 2) -
+	         ((INT32) *src1++ + (INT32) *src4++);
+	green += green << 2;
+	green += ((INT32) *src0++ + (INT32) *src5++);
+	green = (green + 0x10) >> 5;
+	green = Clip(green);
+	green = green - (green >> 2);
+	/* last, do the red part */
+	red = (((INT32) *src2++ + (INT32) *src3++) << 2) -
+	       ((INT32) *src1++ + (INT32) *src4++);
+	red += red << 2;
+	red += ((INT32) *src0++ + (INT32) *src5++);
+	red = (red + 0x10) >> 5;
+	red = Clip(red);
+	red = red - (red >> 2);
+	/* write the 16-bit color pixel */
+	*u16dest1++ = (UINT16) ((red   & 0xf8) << 8) |
+	                       ((green & 0xfc) << 3) |
+	                       ((blue  & 0xf8) >> 3);
+	src0++; src1++; src2++; src3++; src4++; src5++;
+    }
+
+}
 
 /**********************************
  * scan2: light 2x2 scanlines
  **********************************/
+
+#ifdef EFFECT_MMX_ASM
+extern void effect_scan2_16_16(void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
+extern void effect_scan2_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count);
+extern void effect_scan2_16_32(void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
+extern void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count);
+#else
 
 void effect_scan2_16_16 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
@@ -711,28 +1173,6 @@ void effect_scan2_16_16_direct (void *dst0, void *dst1, const void *src, unsigne
   }
 }
 
-
-void effect_scan2_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *u32dst0 = *(u32dst0+1) = u32lookup[*u16src];
-
-    *u32dst1 = *(u32dst1+1) = SHADE32_HALF( u32lookup[*u16src] ) + SHADE32_FOURTH( u32lookup[*u16src] );
-
-    ++u16src;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-
-
 void effect_scan2_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
@@ -753,7 +1193,6 @@ void effect_scan2_16_32 (void *dst0, void *dst1, const void *src, unsigned count
   }
 }
 
-
 void effect_scan2_32_32_direct (void *dst0, void *dst1, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
@@ -767,6 +1206,27 @@ void effect_scan2_32_32_direct (void *dst0, void *dst1, const void *src, unsigne
     *u32dst1 = *(u32dst1+1) = SHADE32_HALF( *u32src ) +  SHADE32_FOURTH( *u32src );
 
     ++u32src;
+    u32dst0 += 2;
+    u32dst1 += 2;
+    --count;
+  }
+}
+#endif
+
+void effect_scan2_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
+{
+  UINT32 *u32dst0 = (UINT32 *)dst0;
+  UINT32 *u32dst1 = (UINT32 *)dst1;
+  UINT16 *u16src = (UINT16 *)src;
+  UINT32 *u32lookup = (UINT32 *)lookup;
+
+  while (count) {
+
+    *u32dst0 = *(u32dst0+1) = u32lookup[*u16src];
+
+    *u32dst1 = *(u32dst1+1) = SHADE32_HALF( u32lookup[*u16src] ) + SHADE32_FOURTH( u32lookup[*u16src] );
+
+    ++u16src;
     u32dst0 += 2;
     u32dst1 += 2;
     --count;
@@ -2045,7 +2505,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2060,7 +2520,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -2072,7 +2532,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2093,7 +2553,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
       {
         *u16dst0     = w[4];
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2128,7 +2588,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2141,7 +2601,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2177,7 +2637,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2189,7 +2649,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2231,12 +2691,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2250,7 +2710,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -2284,7 +2744,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2322,7 +2782,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2343,7 +2803,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
       {
         *u16dst0     = w[4];
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -2365,7 +2825,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2380,7 +2840,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
@@ -2411,13 +2871,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2429,12 +2889,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2468,7 +2928,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2479,12 +2939,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2541,7 +3001,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2554,7 +3014,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2576,12 +3036,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -2592,13 +3052,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2610,13 +3070,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -2630,7 +3090,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2644,12 +3104,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2660,13 +3120,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2679,7 +3139,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
       {
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2699,13 +3159,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2718,12 +3178,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -2734,13 +3194,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2748,25 +3208,25 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
       break;
     case 90 :
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2774,24 +3234,24 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 3))) >> 3;
       break;
     case 91 :
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2803,13 +3263,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2821,13 +3281,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -2835,25 +3295,25 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
       break;
     case 94 :
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -2920,7 +3380,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -2932,7 +3392,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -2954,7 +3414,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -2967,7 +3427,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -2978,12 +3438,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
@@ -2995,7 +3455,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
       {
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3015,13 +3475,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3033,13 +3493,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3054,7 +3514,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3068,7 +3528,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -3079,7 +3539,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3098,12 +3558,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3111,24 +3571,24 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
       break;
     case 122 :
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*6 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3142,7 +3602,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3153,7 +3613,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
       {
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3172,12 +3632,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -3186,17 +3646,17 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
     case 127 :
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[8] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[8] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -3221,7 +3681,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
       {
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3244,7 +3704,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3270,7 +3730,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
       {
         *(u16dst0+1) = w[4];
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3292,7 +3752,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -3323,13 +3783,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3343,7 +3803,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -3374,13 +3834,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -3391,12 +3851,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -3427,13 +3887,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3445,7 +3905,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
       {
         *u16dst0     = w[4];
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3484,7 +3944,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
       {
         *(u16dst0+1) = w[4];
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3503,12 +3963,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[7] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -3573,7 +4033,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
       {
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3596,7 +4056,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3608,13 +4068,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3628,7 +4088,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -3639,13 +4099,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3657,7 +4117,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
       {
         *u16dst0     = w[4];
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -3679,7 +4139,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3693,7 +4153,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3706,7 +4166,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3718,7 +4178,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
       {
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3737,12 +4197,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -3755,31 +4215,31 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
       break;
     case 218 :
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst0     = ((((w[4] & gmask16)*6 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3791,12 +4251,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -3807,13 +4267,13 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
       else
         *u16dst1     = ((((w[4] & gmask16)*6 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 3)) |
                         (((w[4] & pmask16)*6 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 3))) >> 3;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -3824,7 +4284,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
       {
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -3841,17 +4301,17 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
     case 223 :
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[6] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[6] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -3916,7 +4376,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
       {
         *u16dst1     = w[4];
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -3938,7 +4398,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
@@ -3949,12 +4409,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -3966,12 +4426,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -3982,7 +4442,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
       {
         *u16dst1     = w[4];
         *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -4001,12 +4461,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst1+1) = ((((w[4] & gmask16)*3 + (w[5] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
@@ -4018,7 +4478,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
       {
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -4037,12 +4497,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
       else
@@ -4054,7 +4514,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
       {
         *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
@@ -4076,7 +4536,7 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
@@ -4087,12 +4547,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
@@ -4103,12 +4563,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
       *u16dst1     = ((((w[4] & gmask16)*3 + (w[3] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[3] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -4119,12 +4579,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
@@ -4133,17 +4593,17 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
     case 251 :
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[2] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[2] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*2 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 2)) |
@@ -4154,12 +4614,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
@@ -4170,12 +4630,12 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
       *(u16dst0+1) = ((((w[4] & gmask16)*3 + (w[1] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[1] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
@@ -4184,39 +4644,39 @@ void hq2x_16( UINT16 *u16dst0, UINT16 *u16dst1, UINT16 w[9] )
     case 254 :
       *u16dst0     = ((((w[4] & gmask16)*3 + (w[0] & gmask16)) & (gmask16 << 2)) |
                       (((w[4] & pmask16)*3 + (w[0] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*2 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 2))) >> 2;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*2 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 2)) |
                         (((w[4] & pmask16)*2 + (w[1] & pmask16) + (w[5] & pmask16)) & (pmask16 << 2))) >> 2;
       break;
     case 255 :
-      if ( is_distant_16( w[3], w[7] ) ) 
+      if ( is_distant_16( w[3], w[7] ) )
         *u16dst1     = w[4];
       else
         *u16dst1     = ((((w[4] & gmask16)*14 + (w[3] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[3] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[5], w[7] ) ) 
+      if ( is_distant_16( w[5], w[7] ) )
         *(u16dst1+1) = w[4];
       else
         *(u16dst1+1) = ((((w[4] & gmask16)*14 + (w[5] & gmask16) + (w[7] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[5] & pmask16) + (w[7] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[3] ) ) 
+      if ( is_distant_16( w[1], w[3] ) )
         *u16dst0     = w[4];
       else
         *u16dst0     = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[3] & gmask16)) & (gmask16 << 4)) |
                         (((w[4] & pmask16)*14 + (w[1] & pmask16) + (w[3] & pmask16)) & (pmask16 << 4))) >> 4;
-      if ( is_distant_16( w[1], w[5] ) ) 
+      if ( is_distant_16( w[1], w[5] ) )
         *(u16dst0+1) = w[4];
       else
         *(u16dst0+1) = ((((w[4] & gmask16)*14 + (w[1] & gmask16) + (w[5] & gmask16)) & (gmask16 << 4)) |
@@ -4369,7 +4829,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4384,7 +4844,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -4396,7 +4856,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -4417,7 +4877,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4452,7 +4912,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4465,7 +4925,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -4501,7 +4961,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4513,7 +4973,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -4555,12 +5015,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4574,7 +5034,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -4608,7 +5068,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4646,7 +5106,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -4667,7 +5127,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -4689,7 +5149,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4704,7 +5164,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
@@ -4735,13 +5195,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4753,12 +5213,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4792,7 +5252,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4803,12 +5263,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4865,7 +5325,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4878,7 +5338,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -4900,12 +5360,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -4916,13 +5376,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4934,13 +5394,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -4954,7 +5414,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -4968,12 +5428,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -4984,13 +5444,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5003,7 +5463,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5023,13 +5483,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -5042,12 +5502,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5058,13 +5518,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5072,25 +5532,25 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 90 :
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5098,24 +5558,24 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 91 :
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5127,13 +5587,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5145,13 +5605,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5159,25 +5619,25 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 94 :
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -5244,7 +5704,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5256,7 +5716,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5278,7 +5738,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5291,7 +5751,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5302,12 +5762,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
@@ -5319,7 +5779,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5339,13 +5799,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5357,13 +5817,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5378,7 +5838,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5392,7 +5852,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -5403,7 +5863,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5422,12 +5882,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5435,24 +5895,24 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 122 :
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5466,7 +5926,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5477,7 +5937,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5496,12 +5956,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -5510,17 +5970,17 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 127 :
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -5545,7 +6005,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5568,7 +6028,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5594,7 +6054,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
       {
         *(u32dst0+1) = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5616,7 +6076,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -5647,13 +6107,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5667,7 +6127,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -5698,13 +6158,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -5715,12 +6175,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -5751,13 +6211,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5769,7 +6229,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5808,7 +6268,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
       {
         *(u32dst0+1) = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -5827,12 +6287,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -5897,7 +6357,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -5920,7 +6380,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5932,13 +6392,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5952,7 +6412,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -5963,13 +6423,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -5981,7 +6441,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6003,7 +6463,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -6017,7 +6477,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -6030,7 +6490,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -6042,7 +6502,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6061,12 +6521,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -6079,31 +6539,31 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       break;
     case 218 :
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -6115,12 +6575,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -6131,13 +6591,13 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -6148,7 +6608,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6165,17 +6625,17 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 223 :
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -6240,7 +6700,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
       {
         *u32dst1     = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6262,7 +6722,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -6273,12 +6733,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -6290,12 +6750,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -6306,7 +6766,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
       {
         *u32dst1     = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6325,12 +6785,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
@@ -6342,7 +6802,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6361,12 +6821,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -6378,7 +6838,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6400,7 +6860,7 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -6411,12 +6871,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6427,12 +6887,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -6443,12 +6903,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -6457,17 +6917,17 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 251 :
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -6478,12 +6938,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -6494,12 +6954,12 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -6508,39 +6968,39 @@ void hq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 254 :
       *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       break;
     case 255 :
-      if ( is_distant_32( w[3], w[7] ) ) 
+      if ( is_distant_32( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[5], w[7] ) ) 
+      if ( is_distant_32( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[3] ) ) 
+      if ( is_distant_32( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_32( w[1], w[5] ) ) 
+      if ( is_distant_32( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -6686,7 +7146,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -6701,7 +7161,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -6713,7 +7173,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6734,7 +7194,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6769,7 +7229,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -6782,7 +7242,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6818,7 +7278,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6830,7 +7290,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6872,12 +7332,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6891,7 +7351,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -6925,7 +7385,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -6963,7 +7423,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -6984,7 +7444,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7006,7 +7466,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7021,7 +7481,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
@@ -7052,13 +7512,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7070,12 +7530,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7109,7 +7569,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7120,12 +7580,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7182,7 +7642,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7195,7 +7655,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7217,12 +7677,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -7233,13 +7693,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7251,13 +7711,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -7271,7 +7731,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7285,12 +7745,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7301,13 +7761,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7320,7 +7780,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7340,13 +7800,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7359,12 +7819,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7375,13 +7835,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7389,25 +7849,25 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 90 :
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7415,24 +7875,24 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 91 :
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7444,13 +7904,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7462,13 +7922,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7476,25 +7936,25 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 94 :
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7561,7 +8021,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7573,7 +8033,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7595,7 +8055,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7608,7 +8068,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7619,12 +8079,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
@@ -7636,7 +8096,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7656,13 +8116,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7674,13 +8134,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7695,7 +8155,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7709,7 +8169,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7720,7 +8180,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7739,12 +8199,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7752,24 +8212,24 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
       break;
     case 122 :
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*6 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7783,7 +8243,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7794,7 +8254,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
       {
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7813,12 +8273,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7827,17 +8287,17 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 127 :
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[8] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[8] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -7862,7 +8322,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -7885,7 +8345,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7911,7 +8371,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
       {
         *(u32dst0+1) = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -7933,7 +8393,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -7964,13 +8424,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -7984,7 +8444,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -8015,13 +8475,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -8032,12 +8492,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -8068,13 +8528,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8086,7 +8546,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8125,7 +8585,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
       {
         *(u32dst0+1) = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8144,12 +8604,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[7] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -8214,7 +8674,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -8237,7 +8697,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8249,13 +8709,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8269,7 +8729,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -8280,13 +8740,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8298,7 +8758,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
       {
         *u32dst0     = w[4];
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -8320,7 +8780,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8334,7 +8794,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8347,7 +8807,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8359,7 +8819,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -8378,12 +8838,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -8396,31 +8856,31 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
       break;
     case 218 :
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst0     = ((((w[4] & gmask32)*6 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8432,12 +8892,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -8448,13 +8908,13 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
       else
         *u32dst1     = ((((w[4] & gmask32)*6 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 3)) |
                         (((w[4] & pmask32)*6 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 3))) >> 3;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8465,7 +8925,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
       {
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -8482,17 +8942,17 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 223 :
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[6] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[6] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -8557,7 +9017,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
       {
         *u32dst1     = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -8579,7 +9039,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -8590,12 +9050,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8607,12 +9067,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -8623,7 +9083,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
       {
         *u32dst1     = w[4];
         *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -8642,12 +9102,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst1+1) = ((((w[4] & gmask32)*3 + (w[5] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
@@ -8659,7 +9119,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -8678,12 +9138,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
       else
@@ -8695,7 +9155,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
       {
         *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
@@ -8717,7 +9177,7 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -8728,12 +9188,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
@@ -8744,12 +9204,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
       *u32dst1     = ((((w[4] & gmask32)*3 + (w[3] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[3] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |
@@ -8760,12 +9220,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
@@ -8774,17 +9234,17 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 251 :
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[2] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[2] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*2 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 2)) |
@@ -8795,12 +9255,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -8811,12 +9271,12 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
       *(u32dst0+1) = ((((w[4] & gmask32)*3 + (w[1] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[1] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
@@ -8825,39 +9285,39 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
     case 254 :
       *u32dst0     = ((((w[4] & gmask32)*3 + (w[0] & gmask32)) & (gmask32 << 2)) |
                       (((w[4] & pmask32)*3 + (w[0] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*2 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 2))) >> 2;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*2 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 2)) |
                         (((w[4] & pmask32)*2 + (w[1] & pmask32) + (w[5] & pmask32)) & (pmask32 << 2))) >> 2;
       break;
     case 255 :
-      if ( is_distant_YUY2( w[3], w[7] ) ) 
+      if ( is_distant_YUY2( w[3], w[7] ) )
         *u32dst1     = w[4];
       else
         *u32dst1     = ((((w[4] & gmask32)*14 + (w[3] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[3] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[5], w[7] ) ) 
+      if ( is_distant_YUY2( w[5], w[7] ) )
         *(u32dst1+1) = w[4];
       else
         *(u32dst1+1) = ((((w[4] & gmask32)*14 + (w[5] & gmask32) + (w[7] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[5] & pmask32) + (w[7] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[3] ) ) 
+      if ( is_distant_YUY2( w[1], w[3] ) )
         *u32dst0     = w[4];
       else
         *u32dst0     = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[3] & gmask32)) & (gmask32 << 4)) |
                         (((w[4] & pmask32)*14 + (w[1] & pmask32) + (w[3] & pmask32)) & (pmask32 << 4))) >> 4;
-      if ( is_distant_YUY2( w[1], w[5] ) ) 
+      if ( is_distant_YUY2( w[1], w[5] ) )
         *(u32dst0+1) = w[4];
       else
         *(u32dst0+1) = ((((w[4] & gmask32)*14 + (w[1] & gmask32) + (w[5] & gmask32)) & (gmask32 << 4)) |

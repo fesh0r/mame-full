@@ -69,7 +69,7 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
   }
   break;
 
@@ -130,7 +130,7 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
   }
   break;
 
@@ -191,7 +191,7 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
   }
   break;
 
@@ -250,7 +250,7 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
   }
   break;
 
@@ -309,7 +309,7 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
   }
   break;
 
@@ -368,7 +368,117 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
+  }
+  break;
+
+  case EFFECT_6TAP2X:
+    {
+#  ifdef DEST
+     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
+       int y;
+       SRC_PIXEL *line_src;
+       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+       effect_6tap_clear_func(visual_width);
+       /* put in the first three lines */
+#	ifdef INDIRECT
+       rotate_func(rotate_dbbuf, bitmap, visual.min_y);
+       effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
+       rotate_func(rotate_dbbuf, bitmap, visual.min_y+1);
+       effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
+       rotate_func(rotate_dbbuf, bitmap, visual.min_y+2);
+       effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
+#	else
+       rotate_func(rotate_dbbuf, bitmap, visual.min_y);
+       effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
+       rotate_func(rotate_dbbuf, bitmap, visual.min_y+1);
+       effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
+       rotate_func(rotate_dbbuf, bitmap, visual.min_y+2);
+       effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
+#	endif
+
+       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
+
+#	ifdef INDIRECT
+           if (y <= visual.max_y - 3)
+             {
+             rotate_func(rotate_dbbuf, bitmap, y+3);
+             effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
+             }
+		   else
+             {
+             effect_6tap_addline_func(NULL, visual_width, INDIRECT);
+             }
+#	else
+           if (y <= visual.max_y - 3)
+             {
+             rotate_func(rotate_dbbuf, bitmap, y+3);
+             effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
+             }
+		   else
+             {
+             effect_6tap_addline_direct_func(NULL, visual_width);
+             }
+#	endif
+
+#		ifdef DOUBLEBUFFER
+		  effect_6tap_render_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, visual_width);
+		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
+#		else
+		  effect_6tap_render_func(line_dest, line_dest+DEST_WIDTH, visual_width);
+#		endif
+       }
+     } else {
+    int y;
+	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
+	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
+	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
+	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+
+    effect_6tap_clear_func(visual_width);
+#	ifdef INDIRECT
+       effect_6tap_addline_func(line_src, visual_width, INDIRECT);
+       effect_6tap_addline_func(line_src+=src_width, visual_width, INDIRECT);
+       effect_6tap_addline_func(line_src+=src_width, visual_width, INDIRECT);
+#	else
+       effect_6tap_addline_direct_func(line_src, visual_width);
+       effect_6tap_addline_direct_func(line_src+=src_width, visual_width);
+       effect_6tap_addline_direct_func(line_src+=src_width, visual_width);
+#	endif
+
+	for (y = visual.min_y; y <= visual.max_y; y++, line_dest+=DEST_SCALE_Y(DEST_WIDTH)) {
+
+#	ifdef INDIRECT
+           if (y <= visual.max_y - 3)
+             {
+             effect_6tap_addline_func(line_src+=src_width, visual_width, INDIRECT);
+             }
+		   else
+             {
+             effect_6tap_addline_func(NULL, visual_width, INDIRECT);
+             }
+#	else
+           if (y <= visual.max_y - 3)
+             {
+             effect_6tap_addline_direct_func(line_src+=src_width, visual_width);
+             }
+		   else
+             {
+             effect_6tap_addline_direct_func(NULL, visual_width);
+             }
+#	endif
+#		ifdef DOUBLEBUFFER
+		  effect_6tap_render_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, visual_width);
+		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
+#		else
+		  effect_6tap_render_func(line_dest, line_dest+DEST_WIDTH, visual_width);
+#		endif
+	}
+     }
+#  endif
+#  ifdef PUT_IMAGE
+      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
+#  endif
   }
   break;
 
@@ -427,7 +537,7 @@ if (effect) {
 #  endif
 #  ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif      
+#  endif
 	}
       break;
     }
@@ -435,7 +545,7 @@ if (effect) {
 else /* no effect */
 {
 #ifdef DEST
-     if (!blit_hardware_rotation && current_palette != debug_palette 
+     if (!blit_hardware_rotation && current_palette != debug_palette
 		     && (blit_flipx || blit_flipy || blit_swapxy)) {
        int y;
        SRC_PIXEL *line_src;
@@ -454,7 +564,7 @@ else /* no effect */
        SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
        SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
        DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-     
+
        for (;line_src < line_end;
 	    line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height),
 		    line_src+=src_width, y++)

@@ -9,8 +9,8 @@
 
 /* effect type */
 EXTERN_EFFECT int effect;
-enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCAN, EFFECT_SCAN3, EFFECT_LQ2X, EFFECT_HQ2X};
-#define EFFECT_LAST EFFECT_HQ2X
+enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCAN, EFFECT_SCAN3, EFFECT_LQ2X, EFFECT_HQ2X, EFFECT_6TAP2X};
+#define EFFECT_LAST EFFECT_6TAP2X
 
 /* buffer for doublebuffering */
 EXTERN_EFFECT char *effect_dbbuf;
@@ -18,6 +18,10 @@ EXTERN_EFFECT char *rotate_dbbuf;
 EXTERN_EFFECT char *rotate_dbbuf0;
 EXTERN_EFFECT char *rotate_dbbuf1;
 EXTERN_EFFECT char *rotate_dbbuf2;
+/* these are used for the 6-tap filter */
+EXTERN_EFFECT char *rotate_dbbuf3;
+EXTERN_EFFECT char *rotate_dbbuf4;
+EXTERN_EFFECT char *rotate_dbbuf5;
 
 /* from video.c, needed to scale the display according to the requirements of the effect */
 extern int normal_widthscale, normal_heightscale;
@@ -69,6 +73,11 @@ EXTERN_EFFECT void (*effect_rgbscan_direct_func)(void *dst0, void *dst1, void *d
 
 EXTERN_EFFECT void (*effect_scan3_func)(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
 EXTERN_EFFECT void (*effect_scan3_direct_func)(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
+
+EXTERN_EFFECT void (*effect_6tap_clear_func)(unsigned count);
+EXTERN_EFFECT void (*effect_6tap_addline_func)(const void *src0, unsigned count, const void *lookup);
+EXTERN_EFFECT void (*effect_6tap_addline_direct_func)(const void *src0, unsigned count);
+EXTERN_EFFECT void (*effect_6tap_render_func)(void *dst0, void *dst1, unsigned count);
 
 /********************************************/
 
@@ -220,6 +229,26 @@ void effect_scan3_16_32 (void *dst0, void *dst1, void *dst2, const void *src, un
 void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
 void effect_scan3_32_32_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
 void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
+
+/*****************************/
+
+#ifdef EFFECT_MMX_ASM
+/* These are in effect_asm.asm */
+extern void effect_6tap_clear_asm(unsigned count);
+extern void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *lookup);
+extern void effect_6tap_addline_32_32_direct(const void *src0, unsigned count);
+extern void effect_6tap_render_32(void *dst0, void *dst1, unsigned count);
+#else
+void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *lookup);
+void effect_6tap_addline_32_32_direct(const void *src0, unsigned count);
+void effect_6tap_render_32(void *dst0, void *dst1, unsigned count);
+#endif
+
+/* these are only implemented in C */
+void effect_6tap_clear(unsigned count);
+void effect_6tap_addline_16_16(const void *src0, unsigned count, const void *lookup);
+void effect_6tap_addline_16_16_direct(const void *src0, unsigned count);
+void effect_6tap_render_16(void *dst0, void *dst1, unsigned count);
 
 /*****************************/
 
