@@ -214,7 +214,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 		p = malloc (offset * 2);
 		if (!p) return IMGTOOLERR_OUTOFMEMORY;
 
-		while (1)
+		while ( (tappos + 4) <= offset)
 			{
 			tapblock = *((UINT32*)(pmem + pos + tappos));
 			tappos += 4;
