@@ -1041,7 +1041,7 @@ static void pdp1_keyboard(void)
 				cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 0);	/* interrupt it, baby */
 			#endif
 			cpunum_set_reg(0, PDP1_PF1, 1);
-			/*pdp1_typewriter_drawchar(typewriter.tb);*/	/* right??? */
+			pdp1_typewriter_drawchar(typewriter.tb);	/* we want to echo input */
 			break;
 		}
 	}
