@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AMSTRAD/C16/MSX/PC] Fixed a regression in which certain input ports were
+  being ignored.  This was caused by a defect in PORT_INCLUDE.  [Nate Woods]
+
 - [PC1512] Fixed a vblank regression introduced in the 0.85 input port changes
   [Andrew Jenner]
 

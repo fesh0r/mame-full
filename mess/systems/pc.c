@@ -407,7 +407,7 @@ INPUT_PORTS_START( pccga )
 
     PORT_START /* IN20 */
 	PORT_CONFNAME( 0x03, 0x00, "CGA character set")
-	PORT_CONFSETTING(0x00, "Normal")
+	PORT_CONFSETTING(0x00, DEF_STR( Normal ))
     PORT_CONFSETTING(0x01, "Alternative")
 	PORT_CONFNAME( 0x1C, 0x00, "CGA monitor type")
 	PORT_CONFSETTING(0x00, "Colour RGB")

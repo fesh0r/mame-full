@@ -466,7 +466,6 @@ struct InputPort
 
 /* end of table */
 #define INPUT_PORTS_END												\
- 		port = input_port_initialize(param, IPT_END);				\
 	}																\
 
 /* aliasing */

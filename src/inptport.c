@@ -1085,6 +1085,9 @@ struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *p
 	
 	/* construct the ports */
  	construct_ipt(&iip);
+
+	/* append final IPT_END */
+	input_port_initialize(&iip, IPT_END);
  	
 #ifdef MESS
 	/* process MESS specific extensions to the port */
