@@ -12,7 +12,7 @@
 	Raphael Nabet, 2002-2003
 
 	TODO:
-	- finish and test hd support ***finish and test extent FDR extent support***
+	- finish and test hd support ***finish and test sibling FDR support***
 */
 
 #include <limits.h>
@@ -54,7 +54,8 @@
 	bitmap", abbreviated as "abm").  Each bit in the allocation bitmap
 	represents an AU: if a bit is 0, the AU is free; if a bit is 1, the AU is
 	allocated (or possibly bad if the disk manager can track bad sectors).
-	Where on the disk the abm is located depends on the disk format.
+	Where on the disk the abm is located depends on the disk structure (see
+	structure-specific description for details).
 
 	Files are implemented as a succession 256-byte physical records.  To
 	avoid confusion with absolute physical records, these physical records will
@@ -64,13 +65,13 @@
 	Programs do normally not access file physical records directly.  They may
 	call high-level file routines that enable to create either fixed-lenght
 	logical records of any size from 1 through 255, or variable-lenght records
-	of any size from 1 through 254: logical records are grouped by file
+	of any size from 0 through 254: logical records are grouped by file
 	managers into 256-byte physical records.  Some disk managers (HFDC and
 	SCSI) allow programs to create fixed-lenght records larger than 255 bytes,
 	too, but few programs use this possibility.  Additionally, programs may
 	create program files, that do not implement any logical record, and can be
 	seen as a flat byte stream, not unlike files under MSDOS, UNIX and the C
-	standard library.  (Unfortunately, the API for program files is lacks
+	standard library.  (Unfortunately, the API for program files lacks
 	flexibility, and most programs that need to process a flat byte stream
 	will use fixed-size records of 128 bytes.)
 
@@ -151,11 +152,12 @@
 
 
 	All files are associated with a "file descriptor record" ("fdr") that holds
-	file information and points to the data physrecs.  The WIN disk structure
-	also supports extent FDRs, in case a file is so fragmented that all the
-	data pointers cannot fit in one FDR; the DSK disk structure does not
-	implement any such feature, and you may be unable to append data to an
-	existing file if it is too fragmented, even though the disk is not full.
+	file information (name, format, length) and points to the data physrecs.
+	The WIN disk structure also supports sibling FDRs, in case a file is so
+	fragmented that all the data pointers cannot fit in one FDR; the DSK disk
+	structure does not implement any such feature, and you may be unable to
+	append data to an existing file if it is too fragmented, even though the
+	disk is not full.
 
 
 	DSK disk structure:
@@ -177,26 +179,29 @@
 	records (IIRC, these are Myarc's HFDC, SCSI DSR with floppy disk interface,
 	and some upgraded Myarc and Corcomp DD floppy controllers).
 
-	The allocation bitmap is located in the vib.  It is 200-byte-long, and
+	The allocation bitmap is located in the vib.  It is 200 bytes long, and
 	supports 1600 AUs at most.
+
+	Directories are implemented with a "File Descriptor Index Record" (FDIR)
+	for each directory.  The FDIR is array of 0 through 128 words, containing
+	the absolute physrec address of each fdr in the directory, sorted by
+	ascending file name, terminated with a 0.  Note that, while we should be
+	prepared to read images images with 128 entries, I think (not 100% sure)
+	that we should write no more than 127 for compatibility with some existing
+	disk managers.
 
 	Originally, the DSK structure only supported one directory level (i.e. the
 	root directory level).  The FDIR record for the root directory is always
-	located in absolute physrec 1.  However, Myarc extended the DSK structure
+	located in absolute physrec 1.  Moreover, Myarc extended the DSK structure
 	to support up to 3 subdirectories in the root directory (note that there is
 	no support for more subdirs, or for subdirs located in subdirs).  To do so,
 	they used an unused field of the VIB to hold the 10-char name of each
 	directory and the absolute physrec address of the associated FDIR record.
 
-	Sector 0: Volume Information Block (VIB): see below
-	Sector 1: root File Descriptor Index Record (FDIR): array of 0 through 128
-		words, containing the absolute physrec address of the each fdr in the
-		directory, sorted by ascending file name, terminated with a 0.  Note
-		that, while we should be prepared to read images images with 128
-		entries, we should write no more than 127 for compatibility with some
-		existing disk managers.
-	Remaining AUs are used for fdr and data (and subdirectory fdir in the case
-	of hfdc).  There is one FDIR record per directory; the FDIR points to the
+	absphysrec 0: Volume Information Block (VIB): see below
+	absphysrec 1: FDIR for root directory
+	Remaining AUs are used for fdr and data (and subdirectory FDIR if
+	applicable).  There is one FDIR record per directory; the FDIR points to the
 	FDR for each file in the directory.  The FDR (File Descriptor Record)
 	contains the file information (name, format, lenght, pointers to data
 	sectors/AUs, etc).
@@ -215,17 +220,32 @@
 	than 65535 AUs, we need to have several physical records per AU in disks
 	larger than 16 Mbytes.
 
-	Sector 0: Volume Information Block (VIB): see below
-	Sector 1-n: Volume bitmap
-	Remaining physical records are used for ddr, fdir, fdr and data.  Each
-	directory has a DDR (except the root directory, which uses the VIB as a
-	DDR), that points to an FDIR.  The FDIR points to the FDR for each file in
-	the directory, and to the parent DDR as well.  Each file has one FDR (File
-	Descriptor Record) descriptor which provides the file information (name,
-	format, lenght, pointers to data sectors/AUs, etc).  When a file has more
-	than 54 fragments, we create offspring FDRs that hold additional fragments
-	(I cannot really figure out why they chose to duplicate the FDR rather than
-	creating a file extension record, though there must be a reason).
+	Contrary to the DSK disk structure, the WIN disk structure supports
+	hierarchic subdirectories, with a limit of 114 subdirectories and 127 files
+	per directory.  Each directory is associated with both a "Directory
+	Descriptor Record" (DDR) and a "File Descriptor Index Record" (FDIR).  The
+	only exception is the root directory, which uses the VIB instead of a DDR
+	(the VIB includes all the important fields of the DDR).  The DDR contains
+	some directory info (name, number of files and subdirectories directly
+	enclosed in the directory, AU address of the FDIR of the parent directory,
+	etc), the AU address of the associated FDIR, and the AU address of the DDR
+	of up to 114 subdirectories, sorted by ascending directory name.  The WIN
+	FDIR is similar to, yet different from, the DSK FDIR: it contains up to 127
+	(vs. 128) AU address (vs. absphysrec address) of each fdr in the directory,
+	sorted by ascending file name.  Additionally, it includes the AU address of
+	the associated DDR.
+
+	When a file has more than 54 data fragments, the disk manager creates
+	sibling FDRs (called offspring FDRs or sibling FDRs in most documentation)
+	that hold additional fragments.  (I cannot really figure out why they chose
+	to duplicate the FDR rather than creating a file extension record, though
+	there must be a reason.)  Note that sibling FDRs usually fill unused
+	physrec in the AU allocated for the eldest FDR, and a new AU is allocated
+	for new sibling FDRs only when the first AU is full.
+
+	absphysrec 0: Volume Information Block (VIB): see below
+	absphysrec 1-n (where n = 1+SUP(number_of_AUs/2048)): Volume bitmap
+	Remaining AUs are used for ddr, fdir, fdr and data.
 */
 
 /* Since string length is encoded with a byte, the maximum length of a string
@@ -848,11 +868,13 @@ static int read_image_vib_no_geometry(STREAM *file_handle, ti99_img_format img_f
 		if (reply != 256)
 			return IMGTOOLERR_READERROR;
 		return 0;
-		break;
 
 	case if_pc99_fm:
 	case if_pc99_mfm:
 		return parse_pc99_image(file_handle, img_format == if_pc99_fm, 0, dest, NULL, NULL);
+
+	case if_harddisk:
+		/* not implemented */
 		break;
 	}
 
@@ -998,6 +1020,11 @@ INLINE int sector_address_to_image_offset(const ti99_lvl1_imgref *l1_img, const 
 	case if_pc99_mfm:
 		/* pc99 format */
 		offset = l1_img->pc99_data_offset_array[(address->cylinder*l1_img->geometry.sides + address->side)*l1_img->geometry.secspertrack + address->sector];
+		break;
+
+	case if_harddisk:
+		/* not implemented */
+		assert(1);
 		break;
 	}
 
@@ -3047,26 +3074,22 @@ static int set_file_fixrecs(ti99_lvl2_fileref *l2_file, unsigned data)
 	return 0;
 }
 
-static ti99_date_time get_file_creation_date(ti99_lvl2_fileref *l2_file)
+static void get_file_creation_date(ti99_lvl2_fileref *l2_file, ti99_date_time *reply)
 {
-	ti99_date_time reply;
-
 	switch (l2_file->type)
 	{
 	case L2F_DSK:
-		reply = l2_file->u.dsk.fdr.creation;
+		*reply = l2_file->u.dsk.fdr.creation;
 		break;
 
 	case L2F_WIN:
-		reply = l2_file->u.win.curfdr.creation;
+		*reply = l2_file->u.win.curfdr.creation;
 		break;
 
 	case L2F_TIFILES:
-		memset(&reply, 0, sizeof(reply));
+		memset(reply, 0, sizeof(*reply));
 		break;
 	}
-
-	return reply;
 }
 
 static void set_file_creation_date(ti99_lvl2_fileref *l2_file, ti99_date_time data)
@@ -3086,26 +3109,22 @@ static void set_file_creation_date(ti99_lvl2_fileref *l2_file, ti99_date_time da
 	}
 }
 
-static ti99_date_time get_file_update_date(ti99_lvl2_fileref *l2_file)
+static void get_file_update_date(ti99_lvl2_fileref *l2_file, ti99_date_time *reply)
 {
-	ti99_date_time reply;
-
 	switch (l2_file->type)
 	{
 	case L2F_DSK:
-		reply = l2_file->u.dsk.fdr.update;
+		*reply = l2_file->u.dsk.fdr.update;
 		break;
 
 	case L2F_WIN:
-		reply = l2_file->u.win.curfdr.update;
+		*reply = l2_file->u.win.curfdr.update;
 		break;
 
 	case L2F_TIFILES:
-		memset(&reply, 0, sizeof(reply));
+		memset(reply, 0, sizeof(*reply));
 		break;
 	}
-
-	return reply;
 }
 
 static void set_file_update_date(ti99_lvl2_fileref *l2_file, ti99_date_time data)
@@ -3125,19 +3144,16 @@ static void set_file_update_date(ti99_lvl2_fileref *l2_file, ti99_date_time data
 	}
 }
 
-static ti99_date_time current_data_time(void)
+static void current_data_time(ti99_date_time *reply)
 {
 	/* All these functions should be ANSI */
 	time_t cur_time = time(NULL);
 	struct tm expanded_time = *localtime(& cur_time);
-	ti99_date_time reply;
 
-	reply.time_MSB = (expanded_time.tm_hour << 3) | (expanded_time.tm_min >> 3);
-	reply.time_LSB = (expanded_time.tm_min << 5) | (expanded_time.tm_sec >> 1);
-	reply.date_MSB = ((expanded_time.tm_year % 100) << 1) | ((expanded_time.tm_mon+1) >> 3);
-	reply.date_LSB = ((expanded_time.tm_mon+1) << 5) | expanded_time.tm_mday;
-
-	return reply;
+	reply->time_MSB = (expanded_time.tm_hour << 3) | (expanded_time.tm_min >> 3);
+	reply->time_LSB = (expanded_time.tm_min << 5) | (expanded_time.tm_sec >> 1);
+	reply->date_MSB = ((expanded_time.tm_year % 100) << 1) | ((expanded_time.tm_mon+1) >> 3);
+	reply->date_LSB = ((expanded_time.tm_mon+1) << 5) | expanded_time.tm_mday;
 }
 
 #if 0
@@ -3187,7 +3203,7 @@ static int is_eof(ti99_lvl3_fileref *l3_file)
 {
 	int flags = get_file_flags(&l3_file->l2_file);
 	int secsused = get_file_secsused(&l3_file->l2_file);
-	int eof = get_file_eof(&l3_file->l2_file);
+	int fdr_eof = get_file_eof(&l3_file->l2_file);
 
 	if (flags & fdr99_f_var)
 	{
@@ -3197,7 +3213,7 @@ static int is_eof(ti99_lvl3_fileref *l3_file)
 	{
 		return ((l3_file->cur_phys_rec >= secsused)
 				|| ((l3_file->cur_phys_rec == (secsused-1))
-					&& (l3_file->cur_pos_in_phys_rec >= (eof ? eof : 256))));
+					&& (l3_file->cur_pos_in_phys_rec >= (fdr_eof ? fdr_eof : 256))));
 	}
 }
 
@@ -3211,7 +3227,7 @@ static int read_next_record(ti99_lvl3_fileref *l3_file, void *dest, int *out_rec
 	int reclen;
 	int flags = get_file_flags(&l3_file->l2_file);
 	int secsused = get_file_secsused(&l3_file->l2_file);
-	int eof = get_file_eof(&l3_file->l2_file);
+	int fdr_eof = get_file_eof(&l3_file->l2_file);
 
 	if (flags & fdr99_f_program)
 	{
@@ -3257,7 +3273,7 @@ static int read_next_record(ti99_lvl3_fileref *l3_file, void *dest, int *out_rec
 		}
 		if ((l3_file->cur_phys_rec >= secsused)
 				|| ((l3_file->cur_phys_rec == (secsused-1))
-					&& ((l3_file->cur_pos_in_phys_rec + reclen) >= (eof ? eof : 256))))
+					&& ((l3_file->cur_pos_in_phys_rec + reclen) >= (fdr_eof ? fdr_eof : 256))))
 			return IMGTOOLERR_CORRUPTIMAGE;
 		errorcode = read_file_physrec(&l3_file->l2_file, l3_file->cur_phys_rec, physrec_buf);
 		if (errorcode)
@@ -4095,16 +4111,16 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	if (errorcode)
 		return errorcode;
 
-	date_time = get_file_creation_date(&src_file);
+	get_file_creation_date(&src_file, &date_time);
 	/*if ((date_time.time_MSB == 0) || (date_time.time_LSB == 0)
 			|| (date_time.date_MSB == 0) || (date_time.date_LSB == 0))
-		date_time = current_data_time();*/
+		current_data_time(&date_time);*/
 	set_file_creation_date(&dst_file, date_time);
 
-	date_time = get_file_update_date(&src_file);
+	get_file_update_date(&src_file, &date_time);
 	/*if ((date_time.time_MSB == 0) || (date_time.time_LSB == 0)
 			|| (date_time.date_MSB == 0) || (date_time.date_LSB == 0))
-		date_time = current_data_time();*/
+		current_data_time(&date_time);*/
 	set_file_update_date(&dst_file, date_time);
 
 	if (stream_write(destf, & dst_file.u.tifiles.hdr, 128) != 128)
@@ -4235,16 +4251,16 @@ static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, 
 	if (errorcode)
 		return errorcode;
 
-	date_time = get_file_creation_date(&src_file);
+	get_file_creation_date(&src_file, &date_time);
 	/*if ((date_time.time_MSB == 0) || (date_time.time_LSB == 0)
 			|| (date_time.date_MSB == 0) || (date_time.date_LSB == 0))
-		date_time = current_data_time();*/
+		current_data_time(&date_time);*/
 	set_file_creation_date(&dst_file, date_time);
 
-	date_time = get_file_update_date(&src_file);
+	get_file_update_date(&src_file, &date_time);
 	/*if ((date_time.time_MSB == 0) || (date_time.time_LSB == 0)
 			|| (date_time.date_MSB == 0) || (date_time.date_LSB == 0))
-		date_time = current_data_time();*/
+		current_data_time(&date_time);*/
 	set_file_update_date(&dst_file, date_time);
 
 	/* alloc data sectors */
