@@ -461,6 +461,8 @@ static BOOL g_bDoBroadcast   = FALSE;
 #define IsValidListControl(hwnd) ((hwnd) == hwndList)
 #endif /* IsValidListControl */
 
+static BOOL use_gui_romloading = FALSE;
+
 /***************************************************************************
     Global variables
  ***************************************************************************/
@@ -784,6 +786,7 @@ int __declspec(dllexport) WINAPI GuiMain(HINSTANCE    hInstance,
 	MSG 	msg;
 
 	options.gui_host = 1;
+	use_gui_romloading = TRUE;
 
 	if (__argc != 1)
 	{
@@ -5322,10 +5325,22 @@ int osd_display_loading_rom_message(const char* name, int current, int total)
 {
 	int retval;
 
-	if (name != NULL)
-		retval = UpdateLoadProgress(name, current - 1, total);
+	if (use_gui_romloading)
+	{
+		if (name != NULL)
+			retval = UpdateLoadProgress(name, current - 1, total);
+		else
+			retval = UpdateLoadProgress("", total, total);
+	}
 	else
-		retval = UpdateLoadProgress("", total, total);
+	{
+		if (name)
+			fprintf (stdout, "loading %-12s\r", name);
+		else
+			fprintf (stdout, "                    \r");
+		fflush (stdout);
+		retval = 0;
+	}
 	
 	return retval;
 }

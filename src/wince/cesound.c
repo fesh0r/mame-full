@@ -131,27 +131,6 @@ static int CESound_init(void)
 	return 0;  //Sound Init successful
 }
 
-
-static void CESound_exit(void)
-{
-	int i, ticks;
-	
-	waveOutClose(This.m_hWaveOut);
-	
-	ticks = GetTickCount();
-	while (GetTickCount() - ticks < 500)
-	{ 
-		; //Loop to let sound buffers time to finish
-	}
-
-	for (i = 0; i < NUM_WAVEHDRS; i++)
-	{
-		waveOutUnprepareHeader(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
-	}
-	This.m_hWaveOut=NULL;
-}
-
-
 int osd_start_audio_stream(int stereo)
 {
 	int i; // count the WAVEHDRS
@@ -227,8 +206,22 @@ int osd_update_audio_stream(INT16* buffer)
 
 void osd_stop_audio_stream(void)
 {
-	waveOutReset (This.m_hWaveOut);
-	CESound_exit();
+	int i, ticks;
+
+	waveOutReset(This.m_hWaveOut);
+	waveOutClose(This.m_hWaveOut);
+	
+	ticks = GetTickCount();
+	while (GetTickCount() - ticks < 500)
+	{ 
+		; //Loop to let sound buffers time to finish
+	}
+
+	for (i = 0; i < NUM_WAVEHDRS; i++)
+	{
+		waveOutUnprepareHeader(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
+	}
+	This.m_hWaveOut=NULL;
 }
 
 
@@ -241,4 +234,11 @@ void osd_set_mastervolume(int volume)
 int osd_get_mastervolume(void)
 {
     return This.m_nVolume;
+}
+
+void wince_sound_interrupt(void)
+{
+	int i;
+	for (i = 0; i < NUM_WAVEHDRS; i++)
+		waveOutBreakLoop(This.m_hWaveOut);
 }

@@ -24,9 +24,10 @@ Source Changes:
 - The core is based on MAME 0.54.  This incorporates all features of the 
   update to this core.  [MAME team] 
 
-- [Windows] GUI and CONSOLE version built to one executable.
-  [Ben Bruscella, Nate Woods, with a Huge thanks to MAME32 team, especially:
-   Michael Soderstrom, Mike Haaland, Chris Kirmse]
+- [Windows] The CONSOLE and GUI (the former MESS32) versions of MESS have been
+  combined into one distribution.  [Ben Bruscella, Nate Woods, with a Huge
+  thanks to MAME32 team, especially: Michael Soderstrom, Mike Haaland, and
+  Chris Kirmse]
   
 - MESSRoms now recognizes more ROMs. [Krzysztof Strzecha]
 
@@ -35,5 +36,9 @@ Source Changes:
 
 - Removed extension renaming code. [Nate Woods]
 
-- [Windows] Added support for transparent zip paths (e.g. C:\imgs\mule.zip\mule.atr)
-  [Nate Woods]
+- On the images screen before emulation starts, only the base name of an image
+  will be displayed (bug 34). [Nate Woods]
+
+- [Windows] Added support for transparent zip paths
+  (e.g. C:\imgs\mule.zip\mule.atr) [Nate Woods]
+

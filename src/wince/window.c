@@ -34,28 +34,7 @@
 
 #ifdef UNDER_CE
 #include "mamece.h"
-#include "resource.h"
-static HWND wince_menubar;
-
-struct commandmap_entry
-{
-	int menuitem_id;
-	int input_ui;
-	int state;	// 0=unchecked, 1=checked, -1=never checked
-	const int *stateptr;
-};
-
-extern int showfps;
-
-static struct commandmap_entry wince_commandmap[] =
-{
-	{ ID_FILE_PAUSE,			IPT_UI_PAUSE,			-1,	NULL},
-	{ IDOK,						IPT_UI_CANCEL,			-1,	NULL},
-#ifdef MAME_DEBUG
-	{ ID_OPTIONS_SHOWPROFILER,	IPT_UI_SHOW_PROFILER,	0,	NULL},
-#endif
-	{ ID_OPTIONS_SHOWFRAMERATE,	IPT_UI_SHOW_FPS,		0,	&showfps}
-};
+#include "cemenu.h"
 #endif // UNDER_CE
 
 #ifndef WMSZ_LEFT
@@ -512,13 +491,6 @@ int win_init_window(void)
 #ifdef UNDER_CE
 	gx_open_display(win_video_window, &win_color16_rsrc_shift, &win_color16_gsrc_shift, &win_color16_bsrc_shift,
 		&win_color16_rdst_shift, &win_color16_gdst_shift, &win_color16_bdst_shift);
-
-	{
-		int i;
-		for (i = 0; i < sizeof(wince_commandmap) / sizeof(wince_commandmap[0]); i++)
-			if (wince_commandmap[i].state != -1)
-				wince_commandmap[i].state = 0;
-	}
 #endif
 
 	return 0;
@@ -529,7 +501,7 @@ void win_shutdown_window(void)
 	UnregisterClass(TEXT("MAME"), NULL);
 
 #ifdef UNDER_CE
-	wince_menubar = NULL;
+	wince_destroy_menus();
 	gx_close_display();
 #endif
 }
@@ -689,29 +661,7 @@ void win_update_cursor_state(void)
 #ifdef UNDER_CE
 static void update_system_menu(void)
 {
-	SHMENUBARINFO menubar;
-	int use_sip;
-
-	if (wince_menubar)
-		return;
-
-#ifdef MESS
-	use_sip = Machine->gamedrv->flags & GAME_COMPUTER;
-#else
-	use_sip = 0;
-#endif
-
-	memset(&menubar, 0, sizeof(menubar));
-	menubar.cbSize = sizeof(menubar);
-	menubar.hwndParent = win_video_window;
-	menubar.dwFlags = use_sip ? SHCMBF_HIDESIPBUTTON : SHCMBF_HIDESIPBUTTON;
-	menubar.hInstRes = GetModuleHandle(NULL);
-	menubar.nBmpId = 0;
-	menubar.cBmpImages = 0;
-	menubar.nToolBarId = IDM_RUNMENU;
-	
-	SHCreateMenuBar(&menubar);
-	wince_menubar = menubar.hwndMB;
+	wince_create_menus(win_video_window);
 }
 #else
 static void update_system_menu(void)
@@ -804,24 +754,7 @@ static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 #ifdef UNDER_CE
-	if (wince_menubar)
-	{
-/*		int i;
-		for (i = 0; i < sizeof(wince_commandmap) / sizeof(wince_commandmap[0]); i++)
-		{
-			struct commandmap_entry *e = &wince_commandmap[i];
-			if ((e->state != -1) && (e->stateptr))
-			{
-				if (e->state != *(e->stateptr))
-				{
-					HMENU hSubMenu = CommandBar_GetMenu(wince_menubar, 0);
-					e->state = *(e->stateptr);
-					CheckMenuItem(hSubMenu, e->menuitem_id,
-						MF_BYCOMMAND | (e->state ? MF_CHECKED : MF_UNCHECKED));
-				}
-			}
-		}
-*/	}
+	wince_update_menus();
 #endif
 
 	// handle a few messages
@@ -888,17 +821,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 #ifdef UNDER_CE
 		case WM_COMMAND:
-			{
-				int i;
-				for (i = 0; i < sizeof(wince_commandmap) / sizeof(wince_commandmap[0]); i++)
-				{
-					if (wince_commandmap[i].menuitem_id == LOWORD(wparam))
-					{
-						input_ui_post(wince_commandmap[i].input_ui);
-						break;
-					}
-				}
-			}
+			wince_menu_command(LOWORD(wparam));
 			break;
 #endif
 

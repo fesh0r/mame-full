@@ -791,7 +791,7 @@ int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 				const char *info;
 				char *filename;
 
-				filename = device_filename(type, id);
+				filename = (char *) device_filename(type, id);
 
 				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), osd_basename(filename));
 				info = device_longname(type,id);

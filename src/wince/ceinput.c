@@ -64,6 +64,7 @@ UINT8 win_trying_to_quit;
 static char pressed_char;
 static DWORD pressed_char_expire;
 static void *input_map;
+int wince_paused;
 
 /***************************************************************************
     External OSD functions  
@@ -377,11 +378,11 @@ int osd_readkey_unicode(int flush)
 
 void win_poll_input(void)
 {
-	HWND focus = GetFocus();
 }
 
 void win_pause_input(int paused)
 {
+	wince_paused = paused;
 }
 
 int is_mouse_captured(void)

@@ -1290,4 +1290,12 @@ void osd_pause(int paused)
 	// mark the palette dirty, and set a flag to rebuild the brightness table
 	win_mark_palette_dirty();
 	dirty_bright = 1;
+
+#ifdef UNDER_CE
+	if (paused)
+	{
+		extern void wince_sound_interrupt(void);
+		wince_sound_interrupt();
+	}
+#endif
 }

@@ -3,6 +3,7 @@ OSOBJS = \
 		$(OBJ)/wince/crtsuppl.o \
 		$(OBJ)/wince/cesound.o \
 		$(OBJ)/wince/ceinput.o \
+		$(OBJ)/wince/cemenu.o \
 		$(OBJ)/wince/video.o \
 		$(OBJ)/wince/window.o \
 		$(OBJ)/wince/cemain.o \
