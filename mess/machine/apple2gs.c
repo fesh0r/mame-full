@@ -398,6 +398,9 @@ static void adb_do_command(void)
 		case 0x00:	/* ??? */
 			break;
 
+		case 0x03:	/* flush keyboard buffer */
+			break;
+
 		case 0x04:	/* set modes */
 			adb_set_mode(adb_mode | adb_command_bytes[0]);
 			break;
@@ -514,6 +517,10 @@ static void adb_write_datareg(data8_t data)
 					/* do nothing for now */
 					break;
 
+				case 0x03:	/* flush keyboard buffer */
+					adb_command_length = 0;
+					break;
+
 				case 0x04:	/* set modes */
 				case 0x05:	/* clear modes */
 					adb_command_length = 1;
@@ -569,7 +576,6 @@ static void adb_write_datareg(data8_t data)
 					adb_command_length = 2;
 					break;
 
-				case 0x03:	/* flush keyboard buffer */
 				default:
 					osd_die("ADB command 0x%02x unimplemented", data);
 					break;
