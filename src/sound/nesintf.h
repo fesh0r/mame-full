@@ -7,9 +7,9 @@
 
 struct NESinterface {
 	int num;		/* total number of chips in the machine */
-    int baseclock;
+	int basefreq;
 	int volume[MAX_NESPSG];
-    int cpunum[MAX_NESPSG];
+	int cpunum[MAX_NESPSG];
 	mem_write_handler apu_callback_w[MAX_NESPSG];
 	mem_read_handler apu_callback_r[MAX_NESPSG];
 };

@@ -8,14 +8,14 @@
 ** LGPL, as outlined below.
 **
 ** This program is free software; you can redistribute it and/or
-** modify it under the terms of version 2 of the GNU Library General
+** modify it under the terms of version 2 of the GNU Library General 
 ** Public License as published by the Free Software Foundation.
 **
-** This program is distributed in the hope that it will be useful,
+** This program is distributed in the hope that it will be useful, 
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-** Library General Public License for more details.  To obtain a
-** copy of the GNU Library General Public License, write to the Free
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
 ** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **
 ** Any permitted reproduction of these routines, in whole or in part,
@@ -25,228 +25,245 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu.h,v 1.7 2000/09/12 17:56:23 hjb Exp $
+** $Id: nes_apu.h,v 1.8 2000/09/13 03:27:23 hjb Exp $
 */
 
 #ifndef _NES_APU_H_
 #define _NES_APU_H_
 
-#ifndef BOOLEAN
-typedef int BOOLEAN;
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
+#define int8 char
+#define int16 short
+#define int32 int
+#define uint8 unsigned char
+#define uint16 unsigned short
+#define uint32 unsigned int
+#define boolean uint8
+#define	TRUE 1
 #define FALSE 0
-#endif
-
-/* wrapper for non-MAME use (backwards compatibility only) */
-#ifndef PULSE_LINE
-#define PULSE_LINE	1
-#define cpu_set_irq_line(num,line,state) n2a03_irq()
-#define cpunum_readmem(num,address) cpu_readmem16(address)
-#endif
 
 #ifndef INLINE
 #ifdef __GNUC__
-#define  INLINE 	 static inline
+#define  INLINE      static inline
 #elif defined(WIN32)
-#define  INLINE 	 static __inline
+#define  INLINE      static __inline
 #else
-#define  INLINE 	 static
+#define  INLINE      static
 #endif
 #endif
 
-#define  APU_WRA0		0x4000
-#define  APU_WRA1		0x4001
-#define  APU_WRA2		0x4002
-#define  APU_WRA3		0x4003
-#define  APU_WRB0		0x4004
-#define  APU_WRB1		0x4005
-#define  APU_WRB2		0x4006
-#define  APU_WRB3		0x4007
-#define  APU_WRC0		0x4008
-#define  APU_WRC2		0x400A
-#define  APU_WRC3		0x400B
-#define  APU_WRD0		0x400C
-#define  APU_WRD2		0x400E
-#define  APU_WRD3		0x400F
-#define  APU_WRE0		0x4010
-#define  APU_WRE1		0x4011
-#define  APU_WRE2		0x4012
-#define  APU_WRE3		0x4013
+/* detect if this is included from MAME/MESS */
+#ifndef HOLD_LINE
+#define HOLE_LINE 1
+#define cpunum_readmem(cpu,address) cpu_readmem16(address)
+#define cpu_set_irq_line(cpu,line,state) n2a03_irq()
+#endif
 
-#define  APU_SMASK		0x4015
+/* define this for realtime generated noise */
+#define  REALTIME_NOISE
+
+#define  APU_WRA0       0x4000
+#define  APU_WRA1       0x4001
+#define  APU_WRA2       0x4002
+#define  APU_WRA3       0x4003
+#define  APU_WRB0       0x4004
+#define  APU_WRB1       0x4005
+#define  APU_WRB2       0x4006
+#define  APU_WRB3       0x4007
+#define  APU_WRC0       0x4008
+#define  APU_WRC2       0x400A
+#define  APU_WRC3       0x400B
+#define  APU_WRD0       0x400C
+#define  APU_WRD2       0x400E
+#define  APU_WRD3       0x400F
+#define  APU_WRE0       0x4010
+#define  APU_WRE1       0x4011
+#define  APU_WRE2       0x4012
+#define  APU_WRE3       0x4013
+
+#define  APU_SMASK      0x4015
 
 /* length of generated noise */
-#define  APU_NOISE_32K	0x7FFF
-#define  APU_NOISE_93	93
+#define  APU_NOISE_32K  0x7FFF
+#define  APU_NOISE_93   93
 
-#define  APU_BASECLOCK	1789772.7272727272727272
+#define  APU_BASEFREQ   1789772.7272727272727272
+
+/* to/from 16.16 fixed point */
+#define  APU_FIX        16
 
 /* channel structures */
 /* As much data as possible is precalculated,
 ** to keep the sample processing as lean as possible
 */
-
+ 
 typedef struct rectangle_s
 {
-	UINT8 regs[4];
+   uint8 regs[4];
 
-	BOOLEAN enabled;
+   boolean enabled;
+   
+   int32 phaseacc;
+   int32 freq;
+   int32 output_vol;
+   boolean fixed_envelope;
+   boolean holdnote;
+   uint8 volume;
 
-	double accu;
-	double freq;
-	INT32 divisor;
-	INT32 output_vol;
-	BOOLEAN fixed_envelope;
-	BOOLEAN holdnote;
-	UINT8 volume;
+   int32 sweep_phase;
+   int32 sweep_delay;
+   boolean sweep_on;
+   uint8 sweep_shifts;
+   uint8 sweep_length;
+   boolean sweep_inc;
 
-	INT32 sweep_phase;
-	INT32 sweep_delay;
-	BOOLEAN sweep_on;
-	UINT8 sweep_shifts;
-	UINT8 sweep_length;
-	BOOLEAN sweep_inc;
+   /* this may not be necessary in the future */
+   int32 freq_limit;
 
+   /* rectangle 0 uses a complement addition for sweep
+   ** increases, while rectangle 1 uses subtraction
+   */
+   boolean sweep_complement;
 
-	INT32 env_phase;
-	INT32 env_delay;
-	UINT8 env_vol;
+   int32 env_phase;
+   int32 env_delay;
+   uint8 env_vol;
 
-	int vbl_length;
-	UINT8 adder;
-	int duty_flip;
+   int vbl_length;
+   uint8 adder;
+   int duty_flip;
 } rectangle_t;
 
 typedef struct triangle_s
 {
-	UINT8	regs[3];
+   uint8 regs[3];
 
-	BOOLEAN enabled;
+   boolean enabled;
 
-	double	accu;
-	double	freq;
-	INT32	divisor;
-	INT32	output_vol;
+   int32 freq;
+   int32 phaseacc;
+   int32 output_vol;
 
-	UINT8 adder;
+   uint8 adder;
 
-	BOOLEAN holdnote;
+   boolean holdnote;
+   boolean counter_started;
+   /* quasi-hack */
+   int write_latency;
 
-	int 	vbl_length;
-	int 	linear_length;
+   int vbl_length;
+   int linear_length;
 } triangle_t;
 
 
 typedef struct noise_s
 {
-	UINT8 regs[3];
+   uint8 regs[3];
 
-	BOOLEAN enabled;
+   boolean enabled;
 
-	double accu;
-	double freq;
-	INT32 divisor;
-	INT32 output_vol;
+   int32 freq;
+   int32 phaseacc;
+   int32 output_vol;
 
-	INT32 env_phase;
-	INT32 env_delay;
-	UINT8 env_vol;
-	BOOLEAN fixed_envelope;
-	BOOLEAN holdnote;
+   int32 env_phase;
+   int32 env_delay;
+   uint8 env_vol;
+   boolean fixed_envelope;
+   boolean holdnote;
 
-	UINT8 volume;
+   uint8 volume;
 
-	int vbl_length;
+   int vbl_length;
 
-	BOOLEAN short_sample;
-	int cur_pos;
+#ifdef REALTIME_NOISE
+   uint8 xor_tap;
+#else
+   boolean short_sample;
+   int cur_pos;
+#endif /* REALTIME_NOISE */
 } noise_t;
 
 typedef struct dmc_s
 {
-	UINT8 regs[4];
+   uint8 regs[4];
 
-	/* bodge for timestamp queue */
-	BOOLEAN enabled;
+   /* bodge for timestamp queue */
+   boolean enabled;
+   
+   int32 freq;
+   int32 phaseacc;
+   int32 output_vol;
 
-	double accu;
-	double freq;
-	INT32 divisor;
-	INT32 output_vol;
+   uint32 address;
+   uint32 cached_addr;
+   int dma_length;
+   int cached_dmalength;
+   uint8 cur_byte;
 
-	UINT32 address;
-	UINT32 cached_addr;
-	int dmalength;
-	int cached_dmalength;
-	UINT8 cur_byte;
-
-	BOOLEAN looping;
-	BOOLEAN irq_gen;
-	BOOLEAN irq_occurred;
+   boolean looping;
+   boolean irq_gen;
+   boolean irq_occurred;
 
 } dmc_t;
 
 enum
 {
-	APU_FILTER_NONE,
-	APU_FILTER_LOWPASS,
-	APU_FILTER_WEIGHTED
+   APU_FILTER_NONE,
+   APU_FILTER_LOWPASS,
+   APU_FILTER_WEIGHTED
 };
 
 typedef struct
 {
-	UINT32 min_range, max_range;
-	UINT8 (*read_func)(UINT32 address);
+   uint32 min_range, max_range;
+   uint8 (*read_func)(uint32 address);
 } apu_memread;
 
 typedef struct
 {
-	UINT32 min_range, max_range;
-	void (*write_func)(UINT32 address, UINT8 value);
+   uint32 min_range, max_range;
+   void (*write_func)(uint32 address, uint8 value);
 } apu_memwrite;
 
 /* external sound chip stuff */
 typedef struct apuext_s
 {
-	void  (*init)(void);
-	void  (*shutdown)(void);
-	void  (*reset)(void);
-	INT32 (*process)(void);
-	apu_memread *mem_read;
-	apu_memwrite *mem_write;
+   void  (*init)(void);
+   void  (*shutdown)(void);
+   void  (*reset)(void);
+   int32 (*process)(void);
+   apu_memread *mem_read;
+   apu_memwrite *mem_write;
 } apuext_t;
+
 
 typedef struct apu_s
 {
-	rectangle_t rectangle[2];
-	triangle_t triangle;
-	noise_t noise;
-	dmc_t dmc;
-	UINT8 enable_reg;
+   rectangle_t rectangle[2];
+   triangle_t triangle;
+   noise_t noise;
+   dmc_t dmc;
+   uint8 enable_reg;
 
-	int cpunum; 		/* HJB: added the cpu number for DMC reads */
+   void *buffer; /* pointer to output buffer */
+   int num_samples;
 
-    void *buffer; /* pointer to output buffer */
-	int num_samples;
+   boolean mix_enable[6];
+   int filter_type;
 
-	UINT8 mix_enable;	/* HJB: turned into a bit flag */
-	int filter_type;
+   int32 cycle_rate;
 
-	int sample_rate;
-	int sample_bits;
-	int refresh_rate;
+   int sample_rate;
+   int sample_bits;
+   int refresh_rate;
 
-	void (*process)(void *buffer, int num_samples);
+   void (*process)(void *buffer, int num_samples);
 
-	struct apu_s *apu_p;
-	/* external sound chip */
-	apuext_t *ext;
+   /* external sound chip */
+   apuext_t *ext;
+
+   /* CPU number for this chip */
+   int cpunum; 
 } apu_t;
 
 
@@ -255,11 +272,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 /* Function prototypes */
-extern int apu_getcontext(apu_t *dst_apu);
+extern apu_t *apu_getcontext(void);
 extern void apu_setcontext(apu_t *src_apu);
 
-extern apu_t *apu_create(int cpunum, double baseclock, int sample_rate, int refresh_rate, int sample_bits);
-extern void apu_destroy(apu_t *apu);
+extern apu_t *apu_create(int cpunum, double basefreq, int sample_rate, int refresh_rate, int sample_bits);
+extern void apu_destroy(apu_t **apu);
 extern void apu_setparams(int sample_rate, int refresh_rate, int sample_bits);
 
 extern void apu_process(void *buffer, int num_samples);
@@ -267,10 +284,10 @@ extern void apu_reset(void);
 
 extern void apu_setext(apu_t *apu, apuext_t *ext);
 extern void apu_setfilter(int filter_type);
-extern void apu_setchan(int chan, BOOLEAN enabled);
+extern void apu_setchan(int chan, boolean enabled);
 
-extern UINT8 apu_read(UINT32 address);
-extern void apu_write(UINT32 address, UINT8 value);
+extern uint8 apu_read(uint32 address);
+extern void apu_write(uint32 address, uint8 value);
 
 
 #ifdef __cplusplus
@@ -281,51 +298,9 @@ extern void apu_write(UINT32 address, UINT8 value);
 
 /*
 ** $Log: nes_apu.h,v $
-** Revision 1.7  2000/09/12 17:56:23  hjb
-** - Added functions to read/write memory from a specific cpu to cpuintrf.c/h
-**   data_t cpunum_readmem(int cpunum, offs_t offset);
-**   void cpunum_writemem(int cpunum, offs_t offset, data_t data);
-** Changed the nesintf.c/h to support a per chip cpunum which is then used
-** to generate IRQs and to fetch memory with the new function inside DMC.
-** Added the VSNES drivers from Ernesto again.
-**
-** Revision 1.6  2000/09/12 13:23:37  hjb
-** Removed the incorrect handling of triangle linear_length and replaced it
-** with what was in Matthew's submission (shut off a triangle wave after
-** 0 - 0.25 seconds depending on the linear_length value)
-**
-** Revision 1.5  2000/09/12 04:17:51  hjb
-** - Several lookup tables are gone, all is done in-line (simple math)
-** - The code now uses a static struct apu_t (not a pointer to that struct),
-**   so one pointer dereference in the update loops is gone and that makes them
-**   quite a bit faster. I therefore had to change how getcontext/setcontext work:
-**   They now copy the data and do not just set or return a reference.
-** - The driver didn't really use the baseclock from the interface. I added
-**   a 'double baseclock' parameter to apu_create() which is used now.
-** - The 'cycle_rate' is gone. All accumulators are synchronized solely on
-**   the sample_rate - also the accus are double, so low frequencies will work
-**   without error.
-** - The triangle wave "linear length counter" was not decoded or used.
-**   I have no idea if what I'm doing with it is right, but it sounds ok to me
-**   and also seems to make sense. The value (0-0x7f) is used to modify the
-**   attack/decay ramp times of the triangle:
-**     0x00 = attack in one step, decay in 127
-**     0x3f/0x40 = attack/decay are symmetric (well, almost)
-**     0x7f = attack in 127 steps, decay in one
-**   So you shift the waveform from a decaying sawtooth to an attacking sawtooth,
-**   where 0x3f/0x40 is the real triangle waveform in the middle (hope that makes it clear :)
-** - Ahh.. last not least I changed the indentation. It was all with 3 spaces, yuck ;)
-**
-** I don't know if or how Matthew want's to use that all. For dkong3 and punchout
-** it sounds fine IMO. Also SMB3 works good (really nice music theme :).. However
-** there are _some_ NES games that sound strange.. a noise is sometimes there
-** were it should probably be off :-P
-**
-** I also doubt that the oversampling really adjusts the output for the impossibly
-** high frequencies, but it is better than just chopping off inaudible tones.
-**
-** Last not least I think we should by default disable the crude low-pass filter?
-** Also is there confirmation for the the default volume fall-off (APU_VOLUME_DECAY)?
+** Revision 1.8  2000/09/13 03:27:23  hjb
+** Incorporated the interface changes (cpunum for readmem and IRQ generation)
+** in the files which Matthew originally submitted.
 **
 ** Revision 1.4  2000/09/11 13:17:41  ben
 ** Added Matt Conte's new NES sound core - requires a clean (or delete the sound object files ;)
@@ -382,4 +357,3 @@ extern void apu_write(UINT32 address, UINT8 value);
 ** initial revision
 **
 */
-
