@@ -1,5 +1,4 @@
 #include "includes/sblaster.h"
-#include "includes/dma8237.h"
 
 /* operation modes
    0x10 output 8 bit direct
