@@ -13,14 +13,13 @@
 
 #include "includes/svision.h"
 
-static int mixer_channel_left, mixer_channel_right;
+static int mixer_channel;
 
 SVISION_CHANNEL svision_channel[2];
 
 void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
 {
-    stream_update(mixer_channel_left,0);
-    stream_update(mixer_channel_right,0);
+    stream_update(mixer_channel,0);
     logerror("%.6f channel 1 write %d %02x\n", timer_get_time(),offset&3, data);
     channel->reg[offset]=data;
     switch (offset) {
@@ -32,8 +31,7 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
 	    else
 		channel->size=(int)((options.samplerate*channel->reg[0]<<6)/4e6);
 	} else channel->size=0;
-	channel->l_pos=0;
-	channel->r_pos=0;
+	channel->pos=0;
     }
     
 }
@@ -41,27 +39,27 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void svision_update (int param, INT16 *buffer, int length)
+void svision_update (int param, INT16 **buffer, int length)
 {
+    INT16 *left=buffer[0], *right=buffer[1];
     int i, j;
     SVISION_CHANNEL *channel;
     
-    for (i = 0; i < length; i++, buffer++)
+    for (i = 0; i < length; i++, left++, right++)
     {
-	*buffer = 0;
+	*left = 0;
+	*right = 0;
 	for (channel=svision_channel, j=0; j<ARRAY_LENGTH(svision_channel); j++, channel++) {
-	    if (!param) { //left
+	    if (channel->pos<=channel->size/2) {
 		if (channel->reg[2]&0x40) {
-		    if (channel->l_pos<=channel->size/2)
-			*buffer+=(channel->reg[2]&0xf)<<8;
-		    if (++channel->l_pos>=channel->size) channel->l_pos=0;
+		    *left+=(channel->reg[2]&0xf)<<8;
 		}
-	    } else { 
 		if (channel->reg[2]&0x20) {
-		    if (channel->r_pos<=channel->size/2)
-			*buffer+=(channel->reg[2]&0xf)<<8;
-		    if (++channel->r_pos>=channel->size) channel->r_pos=0;
+		    *right+=(channel->reg[2]&0xf)<<8;
 		}
+	    }
+	    if (channel->reg[2]&0x60) {
+		if (++channel->pos>=channel->size) channel->pos=0;
 	    }
 	}
     }
@@ -72,12 +70,14 @@ void svision_update (int param, INT16 *buffer, int length)
 /************************************/
 int svision_custom_start (const struct MachineSound *driver)
 {
-	if (!options.samplerate) return 0;
+    const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_LEFT) };
+    const char *names[2]= { "supervision", "supervision" };
+	
+    if (!options.samplerate) return 0;
 
-	mixer_channel_left = stream_init ("supervision", MIXER(50,MIXER_PAN_LEFT), options.samplerate, 0, svision_update);
-	mixer_channel_right = stream_init ("supervision", MIXER(50,MIXER_PAN_RIGHT), options.samplerate, 1, svision_update);
-
-	return 0;
+    mixer_channel = stream_init_multi(2, names, vol, options.samplerate, 0, svision_update);
+    
+    return 0;
 }
 
 /************************************/
