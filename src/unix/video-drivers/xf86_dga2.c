@@ -124,18 +124,39 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 		else if (xf86ctx.modes[i].depth < bitmap_depth)
 			continue;
 #if 0 /* DEBUG */
-		fprintf(stderr, "XDGA: info: found mode: %dx%d\n",
+		fprintf(stderr, "XDGA: info: (%d) %s\n",
+		   xf86ctx.modes[i].num, xf86ctx.modes[i].name);
+		fprintf(stderr, "          : VRefresh = %f [Hz]\n",
+		   xf86ctx.modes[i].verticalRefresh);
+		/* flags */
+		fprintf(stderr, "          : viewport = %dx%d\n",
 		   xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight);
 		fprintf(stderr, "          : image = %dx%d\n",
 		   xf86ctx.modes[i].imageWidth, xf86ctx.modes[i].imageHeight);
+		if (xf86ctx.modes[i].flags & XDGAPixmap)
+			fprintf(stderr, "          : pixmap = %dx%d\n",
+				xf86ctx.modes[i].pixmapWidth, xf86ctx.modes[i].pixmapHeight);
 		fprintf(stderr, "          : bytes/scanline = %d\n",
 		   xf86ctx.modes[i].bytesPerScanline);
+		fprintf(stderr, "          : byte order = %s\n",
+			xf86ctx.modes[i].byteOrder == MSBFirst ? "MSBFirst" :
+			xf86ctx.modes[i].byteOrder == LSBFirst ? "LSBFirst" :
+			"Unknown");
 		fprintf(stderr, "          : bpp = %d, depth = %d\n",
 			xf86ctx.modes[i].bitsPerPixel, xf86ctx.modes[i].depth);
+		fprintf(stderr, "          : RGBMask = (%lx, %lx, %lx)\n",
+			xf86ctx.modes[i].redMask,
+			xf86ctx.modes[i].greenMask,
+			xf86ctx.modes[i].blueMask);
 		fprintf(stderr, "          : visual class = %s\n",
 			xf86ctx.modes[i].visualClass == TrueColor ? "TrueColor":
 			xf86ctx.modes[i].visualClass == DirectColor ? "DirectColor" :
 			xf86ctx.modes[i].visualClass == PseudoColor ? "PseudoColor" : "Unknown");
+		fprintf(stderr, "          : xViewportStep = %d, yViewportStep = %d\n",
+			xf86ctx.modes[i].xViewportStep, xf86ctx.modes[i].yViewportStep);
+		fprintf(stderr, "          : maxViewportX = %d, maxViewportY = %d\n",
+			xf86ctx.modes[i].maxViewportX, xf86ctx.modes[i].maxViewportY);
+		/* viewportFlags */
 #endif
 		/* ignore modes with a width which is not 64 bit aligned */
 		if(xf86ctx.modes[i].viewportWidth & 7) continue;
