@@ -1639,7 +1639,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 return TreeViewNotify( lpNmHdr );
 #ifdef MESS
             if (lpNmHdr->hwndFrom == hwndSoftware)
-                return MessPickerNotify( hwndSoftware, lpNmHdr, MamePlayGame );
+                return MessPickerNotify( hwndSoftware, lpNmHdr, MamePlayGame, MainItemChangeProc );
 #endif
         }
         break;
@@ -1654,7 +1654,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 break;
 #ifdef MESS
 			case IDC_LIST2:
-                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hwndSoftware, hBitmap);
+                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hwndSoftware, hBitmap, MessIsImageSelected);
                 break;
 #endif
             }

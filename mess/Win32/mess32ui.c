@@ -1,5 +1,10 @@
 #include <assert.h>
 #include <string.h>
+#include <windows.h>
+#include <shellapi.h>
+#include <commctrl.h>
+#include <commdlg.h>
+#include <wingdi.h>
 
 #include "mame32.h"
 #include "mess/mess.h"
@@ -51,14 +56,16 @@ extern void resetdir(void);
 extern void osd_change_directory(const char *);
 static void FillSoftwareList(int nGame);
 static void InitMessPicker(HWND hWnd, BOOL firsttime);
-static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP hBackground);
-static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void));
+static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP hBackground, BOOL (*isitemselected)(int nItem));
+static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void), BOOL (*itemchangeproc)(HWND, NM_LISTVIEW *));
+static BOOL MainItemChangeProc(HWND hWnd, NM_LISTVIEW *pnmv);
 static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
 static void MessRetrievePickerDefaults(HWND hWnd);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
+static BOOL MessIsImageSelected(int imagenum);
 
 #define MAME32HELP "mess32.hlp"
 
@@ -226,42 +233,58 @@ static void MessRemoveImage(int imagenum)
         }
         else {
             free((char *) options.image_files[i].name);
+			options.image_files[i].name = NULL;
         }
     }
     options.image_count = j;
 }
 
-static BOOL MessAddImage(int imagenum)
+static BOOL MessSetImage(int imagenum, int entry)
 {
     char *filename;
     mess_image_type imagetypes[64];
 
-	if (options.image_count >= MAX_IMAGES)
-		return FALSE;		/* Too many images */
     if (!mess_images_index || (imagenum >= mess_images_count))
         return FALSE;		/* Invalid image index */
     filename = strdup(mess_images_index[imagenum]->fullname);
     if (!filename)
         return FALSE;		/* Out of memory */
 
-    MessRemoveImage(imagenum);
-
     SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
 
-    options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes, TRUE);
-    options.image_files[options.image_count].name = filename;
-    mess_image_nums[options.image_count++] = imagenum;
+	if (options.image_files[entry].name)
+		free((void *) options.image_files[entry].name);
+    options.image_files[entry].type = MessDiscoverImageType(filename, imagetypes, TRUE);
+    options.image_files[entry].name = filename;
+
+    mess_image_nums[entry] = imagenum;
 	return TRUE;
 }
 
+static BOOL MessAddImage(int imagenum)
+{
+	if (options.image_count >= MAX_IMAGES)
+		return FALSE;		/* Too many images */
+
+	MessRemoveImage(imagenum);
+
+	if (!MessSetImage(imagenum, options.image_count))
+		return FALSE;
+
+	options.image_count++;
+	return TRUE;
+}
 
 static BOOL MessIsImageSelected(int imagenum)
 {
     int i;
-    for (i = 0; i < options.image_count; i++) {
-        if (imagenum == mess_image_nums[i])
-            return TRUE;
-    }
+
+	if (mess_images_count) {
+		for (i = 0; i < options.image_count; i++) {
+			if (imagenum == mess_image_nums[i])
+				return TRUE;
+		}
+	}
     return FALSE;
 }
 
@@ -486,13 +509,40 @@ static int WhichMessIcon(int nItem)
     return nIcon;
 }
 
-static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void))
+static BOOL MainItemChangeProc(HWND hWnd, NM_LISTVIEW *pnmv)
 {
-    NM_LISTVIEW *pnmv;
-    static int nLastState = -1;
-    static int nLastItem  = -1;
-    int i;
+	int i;
 
+    if ((pnmv->uOldState & LVIS_SELECTED) 
+        && !(pnmv->uNewState & LVIS_SELECTED))
+    {
+        if (pnmv->lParam != -1) {
+            if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
+                /* We are about to clear all images.  We have to go through
+                 * and tell the other items to update */
+                for (i = 0; i < options.image_count; i++) {
+                    int imagenum = mess_image_nums[i];
+                    mess_image_nums[i] = -1;
+                    ListView_Update(hWnd, imagenum);
+                }
+                MessRemoveImage(-1);
+            }
+        }
+        /* leaving item */
+        /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
+    }
+
+    if (!(pnmv->uOldState & LVIS_SELECTED) 
+        && (pnmv->uNewState & LVIS_SELECTED))
+    {
+        /* entering item */
+        MessAddImage(pnmv->lParam);
+    }
+	return TRUE;
+}
+
+static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void), BOOL (*itemchangeproc)(HWND, NM_LISTVIEW *))
+{
     switch (nm->code)
     {
     case NM_RCLICK:
@@ -534,36 +584,7 @@ static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void))
         return TRUE;
 
     case LVN_ITEMCHANGED :
-        pnmv = (NM_LISTVIEW *)nm;
-
-        if ((pnmv->uOldState & LVIS_SELECTED) 
-            && !(pnmv->uNewState & LVIS_SELECTED))
-        {
-            if (pnmv->lParam != -1) {
-                nLastItem = pnmv->lParam;
-
-                if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
-                    /* We are about to clear all images.  We have to go through
-                     * and tell the other items to update */
-                    for (i = 0; i < options.image_count; i++) {
-                        int imagenum = mess_image_nums[i];
-                        mess_image_nums[i] = -1;
-                        ListView_Update(hWnd, imagenum);
-                    }
-                    MessRemoveImage(-1);
-                }
-            }
-            /* leaving item */
-            /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
-        }
-
-        if (!(pnmv->uOldState & LVIS_SELECTED) 
-            && (pnmv->uNewState & LVIS_SELECTED))
-        {
-            /* entering item */
-            MessAddImage(pnmv->lParam);
-        }
-        return TRUE;
+        return itemchangeproc(hWnd, (NM_LISTVIEW *)nm);
     }
     return FALSE;
 }
@@ -820,7 +841,7 @@ static void MessRetrievePickerDefaults(HWND hWnd)
     free(default_software);
 }
 
-static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP hBackground)
+static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP hBackground, BOOL (*isitemselected)(int nItem))
 {
     HDC         hDC = lpDrawItemStruct->hDC;
     RECT        rcItem = lpDrawItemStruct->rcItem;
@@ -889,10 +910,8 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct, HWND hWnd, HBITMAP h
     // This makes NO sense, but doesn't work without it?
     strcpy(szBuff, lvi.pszText);
 
-
-    bSelected = mess_images_count
-        && ((bFocus) || (GetWindowLong(hWnd, GWL_STYLE) & LVS_SHOWSELALWAYS))
-        && MessIsImageSelected(nItem);
+    bSelected = ((bFocus) || (GetWindowLong(hWnd, GWL_STYLE) & LVS_SHOWSELALWAYS))
+        && isitemselected(nItem);
 
 //    bSelected = mess_images_count && (((lvi.state & LVIS_DROPHILITED) || ( (lvi.state & LVIS_SELECTED)
 //      && ((bFocus) || (GetWindowLong(hWnd, GWL_STYLE) & LVS_SHOWSELALWAYS)))));
@@ -1290,14 +1309,32 @@ static void MessCreateDevice(int iDevice)
  * ------------------------------------------------------------------------ */
 
 static BOOL s_bChosen;
+static long s_lSelectedItem;
 
 static void FileManagerItemChosen(void)
 {
 	s_bChosen = TRUE;
 }
 
+static BOOL FileManagerItemChangeProc(HWND hWnd, NM_LISTVIEW *pnmv)
+{
+    if (!(pnmv->uOldState & LVIS_SELECTED) 
+        && (pnmv->uNewState & LVIS_SELECTED))
+    {
+        /* entering item */
+        s_lSelectedItem = pnmv->lParam;
+    }
+	return TRUE;
+}
+
+static BOOL FileManagerIsItemSelected(int nItem)
+{
+	return nItem == s_lSelectedItem;
+}
+
 static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	BOOL bResult;
 	HWND hSoftwarePicker;
 	RECT r;
 
@@ -1319,8 +1356,14 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
         /* Where is this message intended to go */
         {
             LPNMHDR lpNmHdr = (LPNMHDR)lParam;            
-            if (lpNmHdr->hwndFrom == hSoftwarePicker)
-                return MessPickerNotify( hSoftwarePicker, lpNmHdr, FileManagerItemChosen );
+            if (lpNmHdr->hwndFrom == hSoftwarePicker) {
+                bResult = MessPickerNotify( hSoftwarePicker, lpNmHdr, FileManagerItemChosen, FileManagerItemChangeProc );
+				if (s_bChosen) {
+					s_bChosen = FALSE;
+					EndDialog(hDlg, s_lSelectedItem);
+				}
+				return bResult;
+			}
         }
         break;
 
@@ -1329,10 +1372,7 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
             LPDRAWITEMSTRUCT lpDis = (LPDRAWITEMSTRUCT)lParam;
             switch(lpDis->CtlID) {
 			case IDC_LIST2:
-				s_bChosen = FALSE;
-                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hSoftwarePicker, NULL);
-				if (s_bChosen)
-					EndDialog(hDlg, 0);
+                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hSoftwarePicker, NULL, FileManagerIsItemSelected);
                 break;
             }
         }
@@ -1360,21 +1400,30 @@ static BOOL UseNewFileManager(void)
  */
 int osd_select_file(int sel, char *filename)
 {
+	int nSelectedItem;
 	int result;
 
 	if (UseNewFileManager()) {
 		ShowCursor(TRUE);
 
+		s_bChosen = FALSE;
+		s_lSelectedItem = -1;
+
 		if (MAME32App.m_pDisplay->AllowModalDialog)
 			MAME32App.m_pDisplay->AllowModalDialog(TRUE);
 
-		DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
+		nSelectedItem = DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
 
 		if (MAME32App.m_pDisplay->AllowModalDialog)
 			MAME32App.m_pDisplay->AllowModalDialog(FALSE);
 
 		ShowCursor(FALSE);
+
 		result = -1;
+		if ((s_lSelectedItem > -1) && MessSetImage(nSelectedItem, sel))
+			result = 1;
+		else
+			result = -1;
 	}
 	else {
 		result = 0;
