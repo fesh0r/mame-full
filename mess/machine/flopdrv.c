@@ -49,6 +49,8 @@ void	floppy_drives_init(void)
 
 		/* initialise flags */
 		pDrive->flags = FLOPPY_DRIVE_HEAD_AT_TRACK_0;
+		pDrive->index_pulse_callback = NULL;
+		pDrive->index_timer = NULL;
 
 		if (i==0)
 		{
@@ -75,11 +77,57 @@ void	floppy_drives_init(void)
 
 void	floppy_drives_exit(void)
 {
+	int i;
+
 	/* if no floppies, no point cleaning up*/
 	if (device_count(IO_FLOPPY)==0)
 		return;
 
+	for (i=0; i<MAX_DRIVES; i++)
+	{
+		struct floppy_drive *pDrive;
+	
+		pDrive = &drives[i];
+		
+		/* remove timer for index pulse */
+		if (pDrive->index_timer)
+		{
+			timer_remove(pDrive->index_timer);
+			pDrive->index_timer = NULL;
+		}
+	}
+
 	osd_fdc_exit();
+}
+
+/* this callback is executed every 300 times a second to emulate the index
+pulse. What is the length of the index pulse?? */
+static void	floppy_drive_index_callback(int id)
+{
+	/* check it's in range */
+	if ((id>=0) && (id<MAX_DRIVES))
+	{
+		struct floppy_drive *pDrive;
+	
+		pDrive = &drives[id];
+
+		if (pDrive->index_pulse_callback)
+			pDrive->index_pulse_callback(id);
+	}
+}
+
+/* set the callback for the index pulse */
+void	floppy_drive_set_index_pulse_callback(int id, void (*callback)(int id))
+{
+	struct floppy_drive *pDrive;
+	
+	/* check it's in range */
+	if ((id<0) || (id>=MAX_DRIVES))
+		return;
+
+	pDrive = &drives[id];
+
+	pDrive->index_pulse_callback = callback;
 }
 
 /*************************************************************************/
@@ -155,12 +203,73 @@ void	floppy_drive_set_flag_state(int id, int flag, int state)
 
 void	floppy_drive_set_motor_state(int drive, int state)
 {
-	floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON, state);
+	int new_motor_state = 0;
+	int previous_state = 0;
+
+	/* previous state */
+	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON))
+	{
+		previous_state = 1;
+	}
+
+
+	/* calc new state */
+
+	/* drive present? */
+	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_CONNECTED))
+	{
+		/* disk inserted? */
+		if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_DISK_INSERTED))
+		{
+			/* drive present and disc inserted */
+	
+			/* state of motor is same as the programmed state */
+			if (state)
+			{
+				new_motor_state = 1;
+			}
+		}
+	}
+
+	if ((new_motor_state^previous_state)!=0)
+	{
+		/* if timer already setup remove it */
+		if ((drive>=0) && (drive<MAX_DRIVES))
+		{
+			struct floppy_drive *pDrive;
+	
+			pDrive = &drives[drive];
+
+			if (pDrive->index_timer!=NULL)
+			{
+				timer_remove(pDrive->index_timer);
+				pDrive->index_timer = NULL;
+			}
+
+			if (new_motor_state)
+			{
+				/* off->on */
+				/* check it's in range */
+
+				/* setup timer to trigger at 300 times a second = 300rpm */
+				pDrive->index_timer = timer_pulse(TIME_IN_HZ(300), drive, floppy_drive_index_callback);
+			}
+			else
+			{
+				/* on->off */
+			}
+		}
+	}
+
+
+	floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON, new_motor_state);
 
 //	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_REAL_FDD))
 //	{
 //		osd_fdc_motors(drive,state);
 //	}
+
+
 }
 
 /* for pc, drive is always ready, for amstrad,pcw,spectrum it is only ready under
