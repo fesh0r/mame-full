@@ -160,7 +160,7 @@ static void update_psg(void)
 
 
 /* ppi port a read */
-int amstrad_ppi_porta_r( int chip)
+READ_HANDLER ( amstrad_ppi_porta_r )
 {
 	update_psg();
 
@@ -177,7 +177,7 @@ int amstrad_ppi_porta_r( int chip)
 In MESS I have used the dipswitch feature.
  Bit 0 = VSYNC from CRTC */
 
-int amstrad_ppi_portb_r (int chip)
+READ_HANDLER (amstrad_ppi_portb_r)
 {
 	int data;
 
@@ -202,7 +202,7 @@ int amstrad_ppi_portb_r (int chip)
 	return data;
 }
 
-void amstrad_ppi_porta_w (int chip, int data)
+WRITE_HANDLER ( amstrad_ppi_porta_w )
 {
 		ppi_port_outputs[0] = data;
 
@@ -219,7 +219,7 @@ void amstrad_ppi_porta_w (int chip, int data)
 /* previous value */
 static int previous_ppi_portc_w;
 
-void amstrad_ppi_portc_w (int chip, int data)
+WRITE_HANDLER ( amstrad_ppi_portc_w )
 {
 		int changed_data;
 
@@ -252,12 +252,12 @@ void amstrad_ppi_portc_w (int chip, int data)
 static ppi8255_interface amstrad_ppi8255_interface =
 {
 	1,
-	amstrad_ppi_porta_r,
-	amstrad_ppi_portb_r,
-	NULL,
-	amstrad_ppi_porta_w,
-	NULL,
-	amstrad_ppi_portc_w
+	{amstrad_ppi_porta_r},
+	{amstrad_ppi_portb_r},
+	{NULL},
+	{amstrad_ppi_porta_w},
+	{NULL},
+	{amstrad_ppi_portc_w}
 };
 
 /* Amstrad NEC765 interface doesn't use interrupts or DMA! */
@@ -2383,7 +2383,7 @@ void amstrad_init_machine(void)
 	bit 4 is connected to a link on the PCB used to define screen
 	refresh rate. 1 = 50Hz, 0 = 60Hz */
 
-	
+
 	machine_name_and_refresh_rate = readinputport(10);
 	ppi_port_inputs[1] = ((machine_name_and_refresh_rate & 0x07)<<1) | (machine_name_and_refresh_rate & 0x010);
 

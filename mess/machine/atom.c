@@ -97,7 +97,7 @@ struct via6522_interface atom_6522_interface=
 {
 	atom_via_in_a_func,		/* printer status */
 	NULL,
-	NULL,			
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -128,12 +128,12 @@ WRITE_HANDLER(atom_via_w)
 static	ppi8255_interface	atom_8255_int =
 {
 	1,
-	atom_8255_porta_r,
-	atom_8255_portb_r,
-	atom_8255_portc_r,
-	atom_8255_porta_w,
-	atom_8255_portb_w,
-	atom_8255_portc_w,
+	{atom_8255_porta_r},
+	{atom_8255_portb_r},
+	{atom_8255_portc_r},
+	{atom_8255_porta_w},
+	{atom_8255_portb_w},
+	{atom_8255_portc_w},
 };
 
 static int previous_i8271_int_state = 0;
@@ -173,20 +173,20 @@ static void atom_timer_callback(int dummy)
 
 	/* the 2.4khz signal is notted (A), and nand'ed with the 2.4kz enable, resulting
 	in B. The final cassette output is the result of tape output nand'ed with B */
-	
+
 
 	{
 		unsigned char A;
 		unsigned char B;
 		unsigned char result;
-		
+
 		/* 2.4khz signal - notted */
 		A = (~timer_state);
 		/* 2.4khz signal notted, and anded with 2.4khz enable */
 		B = (~(A & (atom_8255_portc>>1))) & 0x01;
 
 		result = (~(B & atom_8255_portc)) & 0x01;
-		
+
 		/* tape output */
 		device_output(IO_CASSETTE, 0, (result & 0x01) ? -32768 : 32767);
 	}
@@ -321,22 +321,22 @@ int atom_init_atm (int id)
 
 			/* calculate data address */
 			data = (unsigned char *)((unsigned long)quickload_data + sizeof(struct atm));
-			
+
 			/* get start address */
 			addr = (
-					(atm_header->atm_start_low & 0x0ff) | 
+					(atm_header->atm_start_low & 0x0ff) |
 					((atm_header->atm_start_high & 0x0ff)<<8)
 					);
 
 			/* get size */
 			size = (
-					(atm_header->atm_size_low & 0x0ff) | 
+					(atm_header->atm_size_low & 0x0ff) |
 					((atm_header->atm_size_high & 0x0ff)<<8)
 					);
 
 			/* get execute address */
 			exec = (
-				(atm_header->atm_exec_low & 0x0ff)	| 
+				(atm_header->atm_exec_low & 0x0ff)	|
 				((atm_header->atm_exec_high & 0x0ff)<<8)
 				);
 
@@ -379,13 +379,13 @@ int atom_floppy_init(int id)
 }
 
 
-int atom_8255_porta_r (int offset)
+READ_HANDLER (atom_8255_porta_r )
 {
 	/* logerror("8255: Read port a\n"); */
 	return (atom_8255_porta);
 }
 
-int atom_8255_portb_r (int offset)
+READ_HANDLER ( atom_8255_portb_r )
 {
 	/* ilogerror("8255: Read port b: %02X %02X\n",
 			readinputport ((atom_8255.atom_8255_porta & 0x0f) + 1),
@@ -394,7 +394,7 @@ int atom_8255_portb_r (int offset)
 											(readinputport (11) & 0xc0));
 }
 
-int atom_8255_portc_r (int offset )
+READ_HANDLER ( atom_8255_portc_r )
 {
 
 /* | */
@@ -432,7 +432,7 @@ int atom_8255_portc_r (int offset )
 
 */
 
-void atom_8255_porta_w (int offset, int data)
+WRITE_HANDLER ( atom_8255_porta_w )
 {
 	if ((data & 0xf0) != (atom_8255_porta & 0xf0))
 	{
@@ -447,13 +447,13 @@ void atom_8255_porta_w (int offset, int data)
 /*	logerror("8255: Write port a, %02x\n", data); */
 }
 
-void atom_8255_portb_w (int offset, int data)
+WRITE_HANDLER ( atom_8255_portb_w )
 {
 	atom_8255_portb = data;
 /*	logerror("8255: Write port b, %02x\n", data); */
 }
 
-void atom_8255_portc_w (int offset, int data)
+WRITE_HANDLER (atom_8255_portc_w)
 {
 	atom_8255_portc = data;
 	speaker_level_w(0, (data & 0x04) >> 2);
