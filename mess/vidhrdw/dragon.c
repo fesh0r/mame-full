@@ -379,7 +379,7 @@ static int coco3_palette_recalc(int force)
 	int i, r, g, b;
 	static int lastflag;
 
-	flag = readinputport(COCO3_DIP_MONITORTYPE) & COCO3_DIP_MONITORTYPE_MASK | ((coco3_gimevhreg[0] & 0x10) << 16);
+	flag = readinputport(COCO3_DIP_MONITORTYPE) & (COCO3_DIP_MONITORTYPE_MASK | ((coco3_gimevhreg[0] & 0x10) << 16));
 	if (force || (flag != lastflag)) {
 		lastflag = flag;
 
@@ -589,7 +589,7 @@ static UINT8 *coco3_textmapper_noattr(UINT8 *mem, int param, int *fg, int *bg, i
 	UINT8 *result;
 	UINT8 *RAM;
 	int b;
-	
+
 	RAM = (UINT8 *) param;
 	b = (*mem) & 0x7f;
 	if (b < 32) {
@@ -618,7 +618,7 @@ static UINT8 *coco3_textmapper_attr(UINT8 *mem, int param, int *fg, int *bg, int
 	if (b & 0x40)
 		a |= RASTERBITS_CHARATTR_UNDERLINE;
 	*attr = a;
-	
+
 	return coco3_textmapper_noattr(mem, param, NULL, NULL, NULL);
 }
 
@@ -736,7 +736,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 					rvm->flags |= RASTERBITS_FLAG_BLINKNOW;
 				if (coco3_blinkstatus)
 					rvm->flags |= RASTERBITS_FLAG_BLINKING;
-				last_blink = coco3_blinkstatus;				
+				last_blink = coco3_blinkstatus;
 			}
 			else {
 				/* Without attributes */
