@@ -6,10 +6,10 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ---------------------- 
-[COCO] Implemented cocodmk_sector_count() and cocodmk_sector_info() in coco_dsk.c to
-        fix bug #378. [tim lindner]
+- [COCO] Implemented cocodmk_sector_count() and cocodmk_sector_info() in
+  coco_dsk.c (bug #378). [tim lindner]
 
 Source Changes:
 ---------------
-[flopdrv.c] Reset pDrive->id_index to zero when head is moved from track to
-    track. [tim lindner]
+- Modified flopdrv.c to reset pDrive->id_index to zero when head is moved
+  from track to track. [tim lindner]

@@ -348,7 +348,7 @@ QUICKLOAD_LOAD(atom)
 /* load floppy */
 DEVICE_LOAD( atom_floppy )
 {
-	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */

@@ -843,7 +843,7 @@ static int cocodmk_format_track(struct InternalBdFormatDriver *drv, bdf_file *bd
 
 
 
-void cocodmk_sector_info(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size)
+static void cocodmk_sector_info(bdf_file *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size)
 {
     int	count;
     struct dmk_header *hdr = (struct dmk_header *) header;
@@ -859,7 +859,7 @@ void cocodmk_sector_info(void *bdf, const void *header, UINT8 track, UINT8 head,
     *sector_size = 128 << dmk_idam_sectorLength(idam);
 }
 
-UINT8 cocodmk_sector_count(void *bdf, const void *header, UINT8 track, UINT8 head)
+static UINT8 cocodmk_sector_count(bdf_file *bdf, const void *header, UINT8 track, UINT8 head)
 {
 	int	offset, i, IDAM_offset, count;
 	UINT8	IDAM_count = 0;

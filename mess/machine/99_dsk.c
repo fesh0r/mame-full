@@ -190,7 +190,7 @@ DEVICE_LOAD( ti99_floppy )
 		}
 	}
 
-	if (done && (device_load_basicdsk_floppy(image, file, open_mode) == INIT_PASS))
+	if (done && (basicdsk_floppy_load(image, file, open_mode) == INIT_PASS))
 	{
 		basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].density < 3));
 
