@@ -283,6 +283,11 @@ int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
 	int err;
 	int i, j;
 	UINT8 b, bit;
+	waveimage *wimg;
+	struct WaveExtra *extra;
+
+	wimg = (waveimage *) img;
+	extra = (struct WaveExtra *) wimg->base.module->extra;
 
 	for (i = 0; i < bufsize; i++) {
 		b = 0;
