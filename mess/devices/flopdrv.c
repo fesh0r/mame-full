@@ -351,7 +351,8 @@ void floppy_drive_seek(mess_image *img, signed int signed_tracks)
 	/* inform disk image of step operation so it can cache information */
 	if (image_exists(img) && pDrive->interface.seek_callback)
 		pDrive->interface.seek_callback(img, pDrive->current_track);
-
+        
+        pDrive->id_index = 0;
 }
 
 
