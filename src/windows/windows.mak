@@ -23,6 +23,7 @@ OSOBJS += \
 	$(OBJ)/mess/windows/messwin.o	\
 	$(OBJ)/mess/windows/configms.o	\
 	$(OBJ)/mess/windows/menu.o		\
+	$(OBJ)/mess/windows/opcntrl.o	\
 	$(OBJ)/mess/windows/dialog.o	\
 	$(OBJ)/mess/windows/tapedlg.o	\
 	$(OBJ)/mess/windows/parallel.o	\

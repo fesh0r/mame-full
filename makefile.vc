@@ -297,7 +297,7 @@ PLATFORM_TOOL_OBJS =				\
 	
 #####################################################################
 
-all: maketree $(EMULATORCLI) $(EMULATORGUI) extra
+all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe imgtool$(EXE) wimgtool$(EXE)
 
 # include the various .mak files
 include src/core.mak
@@ -320,8 +320,6 @@ DBGOBJS =
 endif
 
 DIRENTOBJS = $(OBJ)/mess/ui/dirent.o
-
-extra:	$(TOOLS) $(HELPFILES)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
@@ -389,6 +387,7 @@ wimgtool$(EXE): \
 		$(PLATFORM_TOOL_OBJS)							\
 		$(OBJ)/mess/pile.o								\
 		$(OBJ)/mess/ui/dirent.o							\
+		$(OBJ)/mess/windows/opcntrl.o					\
 		$(OBJ)/mess/windows/strconv.o					\
 		$(OBJ)/mess/tools/imgtool/stubs.o				\
 		$(OBJ)/mess/tools/imgtool/windows/wmain.o		\

@@ -36,12 +36,13 @@ typedef struct
 	char *filename;
 	size_t filename_len;
 	char *attr;
-	int attr_len;
+	size_t attr_len;
 	UINT64 filesize;
 
 	/* flags */
 	unsigned int eof : 1;
 	unsigned int corrupt : 1;
+	unsigned int directory : 1;
 }
 imgtool_dirent;
 

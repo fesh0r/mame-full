@@ -20,6 +20,7 @@
 #include "video.h"
 #include "snprintf.h"
 #include "dialog.h"
+#include "opcntrl.h"
 #include "ui_text.h"
 #include "strconv.h"
 #include "utils.h"
@@ -552,12 +553,9 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 	const struct IODevice *dev;
 	const struct OptionGuide *guide;
 	const char *optspec;
-	char buf1[256];
-	char buf2[256];
-	struct OptionRange ranges[128];
 	struct file_dialog_params *params;
-	int has_option, default_value, default_index, current_index, option_count;
-	int i, j;
+	int has_option;
+	TCHAR buf1[128];
 
 	params = (struct file_dialog_params *) changed_param;
 
@@ -598,48 +596,9 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 			SendMessage(wnd, CB_GETLBTEXT, SendMessage(wnd, CB_GETCURSEL, 0, 0), (LPARAM) buf1);
 			SendMessage(wnd, CB_RESETCONTENT, 0, 0);
 
-			if (has_option)
-			{
-				option_resolution_listranges(optspec, guide->parameter,
-					ranges, sizeof(ranges) / sizeof(ranges[0]));
-				option_resolution_getdefault(optspec, guide->parameter, &default_value);
-
-				option_count = 0;
-				default_index = -1;
-				current_index = -1;
-
-				for (i = 0; ranges[i].min >= 0; i++)
-				{
-					for (j = ranges[i].min; j <= ranges[i].max; j++)
-					{
-						snprintf(buf2, sizeof(buf2) / sizeof(buf2[0]), "%d", j);
-						SendMessage(wnd, CB_ADDSTRING, 0, (LPARAM) buf2);
-						SendMessage(wnd, CB_SETITEMDATA, option_count, j);
-
-						if (j == default_value)
-							default_index = option_count;
-						if (!strcmp(buf1, buf2))
-							current_index = option_count;
-						option_count++;
-					}
-				}
-				
-				// if there is only one option, it is effectively disabled
-				if (option_count <= 1)
-					has_option = FALSE;
-
-				if (current_index >= 0)
-					SendMessage(wnd, CB_SETCURSEL, current_index, 0);
-				else if (default_index >= 0)
-					SendMessage(wnd, CB_SETCURSEL, default_index, 0);
-			}
-			else
-			{
-				// this item is non applicable
-				SendMessage(wnd, CB_ADDSTRING, 0, (LPARAM) TEXT("N/A"));
-				SendMessage(wnd, CB_SETCURSEL, 0, 0);
-			}
-			EnableWindow(wnd, has_option ? TRUE : FALSE);
+			win_prepare_option_control(wnd,
+				has_option ? guide : NULL,
+				has_option ? optspec : NULL);
 		}
 	}
 }

@@ -206,7 +206,8 @@ static imgtoolerr_t internal_test(const struct ImageModule *module)
 {
 	imgtoolerr_t err;
 	int i;
-	int freespace, freespace2, filesize;
+	UINT64 freespace, freespace2;
+	int filesize;
 	void *testbuf;
 	char buf[2048];
 

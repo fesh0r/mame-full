@@ -229,7 +229,7 @@ LIBS += -lz
 ZLIB =
 endif
 
-all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe imgtool.exe
+all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe imgtool$(EXE) wimgtool$(EXE)
 
 # include the various .mak files
 include src/core.mak
@@ -313,6 +313,7 @@ wimgtool$(EXE): \
 		$(IMGTOOL_LIB_OBJS)								\
 		$(PLATFORM_TOOL_OBJS)							\
 		$(OBJ)/mess/pile.o								\
+		$(OBJ)/mess/windows/opcntrl.o					\
 		$(OBJ)/mess/windows/strconv.o					\
 		$(OBJ)/mess/tools/imgtool/stubs.o				\
 		$(OBJ)/mess/tools/imgtool/windows/wmain.o		\

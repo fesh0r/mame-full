@@ -47,14 +47,14 @@ static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_image *img, const char *f
 
 OPTION_GUIDE_START( coco_rsdos_writefile_optionguide )
 	OPTION_ENUM_START(	RSDOS_OPTIONS_FTYPE, "ftype", "File type" )
-		OPTION_ENUM(	0,		"basic",		NULL )
-		OPTION_ENUM(	1,		"data",			NULL )
-		OPTION_ENUM(	2,		"binary",		NULL )
-		OPTION_ENUM(	3,		"assembler",	NULL )
+		OPTION_ENUM(	0,		"basic",		"Basic" )
+		OPTION_ENUM(	1,		"data",			"Data" )
+		OPTION_ENUM(	2,		"binary",		"Binary" )
+		OPTION_ENUM(	3,		"assembler",	"Assembler Source" )
 	OPTION_ENUM_END
 	OPTION_ENUM_START(	RSDOS_OPTIONS_ASCII, "ascii", "Ascii flag" )
-		OPTION_ENUM(	0,		"ascii",		NULL )
-		OPTION_ENUM(	1,		"binary",		NULL )
+		OPTION_ENUM(	0,		"ascii",		"Ascii" )
+		OPTION_ENUM(	1,		"binary",		"Binary" )
 	OPTION_ENUM_END
 OPTION_GUIDE_END
 
