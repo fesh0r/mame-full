@@ -268,12 +268,14 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	}
 	else
 	{
+		// set the file size
 		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
 			TEXT("%d"), entry->filesize);
 	}
 	column_index = 1;
 	ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 
+	// set creation time, if supported
 	if (features.supports_creation_time && (entry->creation_time != 0))
 	{
 		local_time = localtime(&entry->creation_time);
@@ -282,6 +284,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 	}
 
+	// set last modified time, if supported
 	if (features.supports_lastmodified_time && (entry->lastmodified_time != 0))
 	{
 		local_time = localtime(&entry->lastmodified_time);
@@ -290,6 +293,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 	}
 
+	// set attributes and corruption notice
 	if (entry->attr)
 		ListView_SetItemText(info->listview, new_index, column_index++, U2T((char *) entry->attr));
 	if (entry->corrupt)
@@ -443,13 +447,16 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
 
+	col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_FMT;
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Size");
+	col.fmt = LVCFMT_RIGHT;
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
 
 	if (features.supports_creation_time)
 	{
+		col.mask = LVCF_TEXT | LVCF_WIDTH;
 		col.cx = 160;
 		col.pszText = (LPTSTR) TEXT("Creation time");
 		if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
@@ -458,17 +465,20 @@ static imgtoolerr_t full_refresh_image(HWND window)
 
 	if (features.supports_lastmodified_time)
 	{
+		col.mask = LVCF_TEXT | LVCF_WIDTH;
 		col.cx = 160;
 		col.pszText = (LPTSTR) TEXT("Last modified time");
 		if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 			return IMGTOOLERR_OUTOFMEMORY;
 	}
 
+	col.mask = LVCF_TEXT | LVCF_WIDTH;
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Attributes");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
 
+	col.mask = LVCF_TEXT | LVCF_WIDTH;
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Notes");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
@@ -646,13 +656,14 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	err = img_open(module, filename, read_or_write, &image);
 	if ((ERRORCODE(err) == IMGTOOLERR_READONLY) && read_or_write)
 	{
-		/* if we failed when open a read/write image, try again */
+		// if we failed when open a read/write image, try again
 		read_or_write = OSD_FOPEN_READ;
 		err = img_open(module, filename, read_or_write, &image);
 	}
 	if (err)
 		goto done;
 
+	// unload current image
 	if (info->image)
 		img_close(info->image);
 	info->image = image;
@@ -662,6 +673,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 		free(info->current_directory);
 		info->current_directory = NULL;
 	}
+
 
 	// do we support directories?
 	if (features.supports_directories)
@@ -1242,6 +1254,49 @@ static BOOL context_menu(HWND window, LONG x, LONG y)
 
 
 
+static void init_menu(HWND window, HMENU menu)
+{
+	struct wimgtool_info *info;
+	struct imgtool_module_features features;
+	imgtool_dirent ent;
+	unsigned int can_read, can_write, can_createdir, can_delete;
+
+	memset(&features, 0, sizeof(features));
+	memset(&ent, 0, sizeof(ent));
+
+	info = get_wimgtool_info(window);
+
+	if (info->image)
+	{
+		features = img_get_module_features(img_module(info->image));
+
+		if (get_selected_dirent(window, &ent) != IMGTOOLERR_SUCCESS)
+		{
+			// an error occured; most like we are selecting a 'special'
+			// directory (e.g. '..')
+			features.supports_reading = 0;
+			features.supports_deletefile = 0;
+			features.supports_deletedir = 0;
+		}
+	}
+
+	can_read      = features.supports_reading && !ent.directory;
+	can_write     = features.supports_writing;
+	can_createdir = features.supports_createdir;
+	can_delete    = ent.directory ? features.supports_deletedir : features.supports_deletefile;
+
+	EnableMenuItem(menu, ID_IMAGE_INSERT,
+		MF_BYCOMMAND | (can_write ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(menu, ID_IMAGE_EXTRACT,
+		MF_BYCOMMAND | (can_read ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(menu, ID_IMAGE_CREATEDIR,
+		MF_BYCOMMAND | (can_createdir ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(menu, ID_IMAGE_DELETE,
+		MF_BYCOMMAND | (can_delete ? MF_ENABLED : MF_GRAYED));
+}
+
+
+
 static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	struct wimgtool_info *info;
@@ -1250,14 +1305,11 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 	int window_width;
 	int window_height;
 	int status_height;
-	int selected_item;
 	NMHDR *notify;
 	POINT pt;
 	LRESULT lres;
 	HWND target_window;
 	DWORD style;
-	HMENU menu;
-	struct imgtool_module_features features;
 
 	info = get_wimgtool_info(window);
 
@@ -1287,31 +1339,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			break;
 
 		case WM_INITMENU:
-			menu = (HMENU) wparam;
-			if (info->image)
-				features = img_get_module_features(img_module(info->image));
-			else
-				memset(&features, 0, sizeof(features));
-
-			selected_item = get_selected_item(window);
-			if (selected_item < 0)
-			{
-				features.supports_reading = 0;
-				features.supports_deletefile = 0;
-				features.supports_deletedir = 0;
-			}
-
-			/* TODO - At some point, we need to enabled ID_IMAGE_DELETE
-			 * conditionally based on whether the current selection is a
-			 * file or a directory, but for now I'm being lazy */
-			EnableMenuItem(menu, ID_IMAGE_INSERT,
-				MF_BYCOMMAND | (features.supports_writing ? MF_ENABLED : MF_GRAYED));
-			EnableMenuItem(menu, ID_IMAGE_EXTRACT,
-				MF_BYCOMMAND | (features.supports_reading ? MF_ENABLED : MF_GRAYED));
-			EnableMenuItem(menu, ID_IMAGE_CREATEDIR,
-				MF_BYCOMMAND | (features.supports_createdir ? MF_ENABLED : MF_GRAYED));
-			EnableMenuItem(menu, ID_IMAGE_DELETE,
-				MF_BYCOMMAND | (features.supports_deletefile ? MF_ENABLED : MF_GRAYED));
+			init_menu(window, (HMENU) wparam);
 			break;
 
 		case WM_DROPFILES:

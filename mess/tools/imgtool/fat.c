@@ -159,6 +159,7 @@ struct fat_diskinfo
 	UINT32 heads;
 	UINT64 total_sectors;
 	UINT32 total_clusters;
+	UINT32 partition_sector_index;
 	struct mess_hard_disk_file harddisk;
 };
 
@@ -372,10 +373,14 @@ static void fat_get_sector_position(imgtool_image *image, UINT32 sector_index,
 static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 	int offset, void *buffer, size_t buffer_len)
 {
+	const struct fat_diskinfo *disk_info;
 	floperr_t ferr;
 	int head, track, sector;
 	UINT8 data[FAT_SECLEN];
 	size_t len;
+
+	disk_info = fat_get_diskinfo(image);
+	sector_index += disk_info->partition_sector_index;
 
 	if (fat_is_harddisk(image))
 	{
@@ -406,11 +411,15 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 	int offset, const void *buffer, size_t buffer_len)
 {
+	const struct fat_diskinfo *disk_info;
 	floperr_t ferr;
 	int head, track, sector;
 	UINT8 data[FAT_SECLEN];
 	const void *write_data;
 	size_t len;
+
+	disk_info = fat_get_diskinfo(image);
+	sector_index += disk_info->partition_sector_index;
 
 	if (fat_is_harddisk(image))
 	{
@@ -558,6 +567,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	imgtoolerr_t err;
 	struct fat_diskinfo *info;
 	UINT32 fat_bits, total_sectors_l, total_sectors_h, sector_size;
+	UINT64 available_sectors;
 	int i;
 
 	info = fat_get_diskinfo(image);
@@ -582,11 +592,12 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 		if (i >= sizeof(pi.partitions) / sizeof(pi.partitions[0]))
 			return IMGTOOLERR_CORRUPTIMAGE;
 
+		info->partition_sector_index = pi.partitions[i].sector_index;
 		info->heads = pi.heads;
 		info->sectors_per_track = pi.sectors;
 		fat_bits = pi.partitions[i].fat_bits;
 		
-		err = fat_read_sector(image, pi.partitions[i].sector_index, 0, header, sizeof(header));
+		err = fat_read_sector(image, 0, 0, header, sizeof(header));
 		if (err)
 			return err;
 	}
@@ -619,9 +630,10 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	total_sectors_h				= pick_integer(header, 32, 4);
 
 	info->total_sectors = total_sectors_l + (((UINT64) total_sectors_h) << 16);
-	info->total_clusters = info->total_sectors - info->reserved_sectors
+	available_sectors = info->total_sectors - info->reserved_sectors
 		- (info->sectors_per_fat * info->fat_count)
 		- (info->root_entries * FAT_DIRENT_SIZE + FAT_SECLEN - 1) / FAT_SECLEN;
+	info->total_clusters = (available_sectors + info->sectors_per_cluster - 1) / info->sectors_per_cluster;
 	info->cluster_size = FAT_SECLEN * info->sectors_per_cluster;
 
 	if (info->fat_count == 0)
@@ -998,7 +1010,7 @@ static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, U
 		}
 
 		/* skip ahead clusters */
-		while((file->cluster_index + disk_info->cluster_size) <= pos)
+		while((file->cluster_index + disk_info->cluster_size) < pos)
 		{
 			if (!fat_table)
 			{
@@ -1051,6 +1063,7 @@ static UINT32 fat_get_filepos_sector_index(imgtool_image *image, struct fat_file
 
 		sector_index += (disk_info->root_entries * FAT_DIRENT_SIZE + FAT_SECLEN - 1) / FAT_SECLEN;
 		sector_index += (file->cluster - 2) * disk_info->sectors_per_cluster;
+		sector_index += (file->index / FAT_SECLEN) % disk_info->sectors_per_cluster;
 	}
 	return sector_index;
 }
