@@ -166,7 +166,7 @@ int sms_vdp_interrupt(void)
         sms_refresh_line(tmpbitmap, curline);
     }
 
-    return 0; /* Z80_IGNORE_INT */
+    return ignore_interrupt(); /* Z80_IGNORE_INT */
 }
 
 
