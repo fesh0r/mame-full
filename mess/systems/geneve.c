@@ -87,9 +87,8 @@
 	int3-int7: joystick port inputs (fire, left, right, down, up)
 	int8: keyboard interrupt (asserted when key buffer full)
 	int9/p13: unused
-	int10/p12: some input from mouse???  Could be third mouse button, or mouse
-	  present.
-	int11/p11: clock interrupt???
+	int10/p12: third mouse button
+	int11/p11: clock interrupt?
 	int12/p10: INTB from PE-bus
 	int13/p9: (used as output)
 	int14/p8: unused
