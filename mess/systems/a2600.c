@@ -106,6 +106,9 @@
 
 #include "includes/a2600.h"
 
+/* This code is not to be used yet */
+//#define USE_SCANLINE_WSYNC
+
 /* horrid memory mirroring ahead */
 static MEMORY_READ_START( readmem )
 
@@ -761,7 +764,9 @@ static struct TIAinterface tia_interface =
     TIA_DEFAULT_GAIN,
 };
 
-
+#ifdef USE_SCANLINE_WSYNC
+extern int a2600_scanline_int(void);
+#endif
 static struct MachineDriver machine_driver_a2600 =
 {
     /* basic machine hardware */
@@ -770,8 +775,11 @@ static struct MachineDriver machine_driver_a2600 =
             CPU_M6502,
             3584160/3,					/* 1.19Mhz */
             readmem, writemem, 0, 0,
+#ifndef USE_SCANLINE_WSYNC
             0, 0                        /* for screen updates per scanline */
-
+#else
+            a2600_scanline_int, 262     /* for screen updates per scanline */
+#endif
         }
     },
     60, DEFAULT_60HZ_VBLANK_DURATION,
