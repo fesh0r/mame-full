@@ -140,15 +140,19 @@ INPUT_PORTS_START(ti99_4a)
 			PORT_DIPSETTING( 1 << config_usbsm_bit, DEF_STR( On ) )
 
 
-	/* 2 ports for mouse */
+	/* 3 ports for mouse */
 	PORT_START /* Mouse - X AXIS */
 		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* Mouse - Y AXIS */
 		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
+	PORT_START /* Mouse - buttons */
+		PORT_BIT(0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+		PORT_BIT(0x0002, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
 
-	/* 4 ports for keyboard and joystick + mouse buttons */
+
+	/* 4 ports for keyboard and joystick */
 	PORT_START	/* col 0 */
 		PORT_BITX(0x0088, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 		/* The original control key is located on the left, but we accept the
@@ -219,16 +223,12 @@ INPUT_PORTS_START(ti99_4a)
 		PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1/*, "(1LEFT)", IP_KEY_NONE, OSD_JOY_LEFT, 0*/)
 		PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1/*, "(1FIRE)", IP_KEY_NONE, OSD_JOY_FIRE, 0*/)
 			/* col 7: "wired handset 2" (= joystick 2) */
-		//PORT_BITX(0xE000, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
+		PORT_BITX(0xE000, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 		PORT_BIT(0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2/*, "(2UP)", IP_KEY_NONE, OSD_JOY2_UP, 0*/)
 		PORT_BIT(0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2/*, "(2DOWN)", IP_KEY_NONE, OSD_JOY2_DOWN, 0*/)
 		PORT_BIT(0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2/*, "(2RIGHT)", IP_KEY_NONE, OSD_JOY2_RIGHT, 0*/)
 		PORT_BIT(0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2/*, "(2LEFT)", IP_KEY_NONE, OSD_JOY2_LEFT, 0*/)
 		PORT_BIT(0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2/*, "(2FIRE)", IP_KEY_NONE, OSD_JOY2_FIRE, 0*/)
-
-		/* mouse buttons (sorry, but I had to recycle unused input bytes) */
-		PORT_BIT(0x2000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
-		PORT_BIT(0x4000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
 
 
 	PORT_START	/* one more port for Alpha line */
@@ -284,15 +284,19 @@ INPUT_PORTS_START(ti99_4)
 			PORT_DIPSETTING( 1 << config_usbsm_bit, DEF_STR( On ) )
 
 
-	/* 2 ports for mouse */
+	/* 3 ports for mouse */
 	PORT_START /* Mouse - X AXIS */
 		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* Mouse - Y AXIS */
 		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
+	PORT_START /* Mouse - buttons */
+		PORT_BIT(0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+		PORT_BIT(0x0002, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
 
-	/* 4 ports for keyboard and joystick + mouse buttons */
+
+	/* 4 ports for keyboard and joystick */
 	PORT_START	/* col 0 */
 		PORT_KEY2(0x0080, IP_ACTIVE_LOW, "1 !", KEYCODE_1, IP_JOY_NONE,			'1',	'!')
 		PORT_KEY1(0x0040, IP_ACTIVE_LOW, "Q QUIT", KEYCODE_Q, IP_JOY_NONE,		'Q')
@@ -359,11 +363,6 @@ INPUT_PORTS_START(ti99_4)
 		PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2/*, "(2FIRE)", IP_KEY_NONE, OSD_JOY2_FIRE, 0*/)
 				/* col 7: never used (selects IR remote handset instead) */
 		/*PORT_BITX(0xFF00, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)*/
-
-
-		/* mouse buttons (sorry, but I had to recycle unused input bytes) */
-		PORT_BIT(0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
-		PORT_BIT(0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
 
 
 	/* 13 pseudo-ports for IR remote handsets */
