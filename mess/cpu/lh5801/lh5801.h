@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 lh5801.h
- *	 portable cosmac lh5801 emulator interface
+ *	 portable lh5801 emulator interface
  *
  *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
