@@ -14,8 +14,8 @@ System Driver Changes:
 
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
-- [PC] New PIT implementation; Styx and Digger run better now.  Also fixed the
-  PIT frequencies.  [Andrew Jenner]
+- [PC] New PIT8253 implementation; Styx and Digger run better now.  Also fixed
+  the PIT8253 frequencies and mades some PIC8259 fixes.  [Andrew Jenner]
 
 - [TI99,GENEVE] Updated the IDE card emulation with the latest changes to the
   prototype.  The latest prototype is incompatible with earlier prototypes

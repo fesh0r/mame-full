@@ -125,6 +125,7 @@ DRIVER_INIT( ps2m30286 )
 MACHINE_INIT( at )
 {
 	dma8237_reset();
+	pic8259_reset();
 }
 
 
@@ -133,6 +134,7 @@ MACHINE_INIT( at_vga )
 {
 	vga_reset();
 	dma8237_reset();
+	pic8259_reset();
 }
 
 void at_cga_frame_interrupt (void)

@@ -9,7 +9,9 @@
 
 #include "driver.h"
 
+
 int pic8259_init(int count);
+void pic8259_reset(void);
 
 READ8_HANDLER ( pic8259_0_r );
 READ8_HANDLER ( pic8259_1_r );

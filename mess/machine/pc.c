@@ -190,28 +190,33 @@ DRIVER_INIT( pc_vga )
 MACHINE_INIT( pc_mda )
 {
 	dma8237_reset();
+	pic8259_reset();
 }
 
 MACHINE_INIT( pc_cga )
 {
 	dma8237_reset();
+	pic8259_reset();
 }
 
 MACHINE_INIT( pc_t1t )
 {
 	pc_t1t_reset();
 	dma8237_reset();
+	pic8259_reset();
 }
 
 MACHINE_INIT( pc_aga )
 {
 	dma8237_reset();
+	pic8259_reset();
 }
 
 MACHINE_INIT( pc_vga )
 {
 	vga_reset();
 	dma8237_reset();
+	pic8259_reset();
 }
 
 /**************************************************************************

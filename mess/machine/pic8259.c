@@ -56,6 +56,42 @@ static struct pic8259 *pic;
 static void pic8259_timerproc(int which);
 
 
+static int irq_callback(int irqline)
+{
+	/* The only IRQ line the 8259 uses is line 0, so ignore	the	argument */
+
+	/* Todo: what about ACKs on the	other PICs? */
+	int which =	0;
+
+	struct pic8259 *p = &pic[which];
+	UINT8 mask;
+	int irq;
+
+	for (irq = 0; irq < IRQ_COUNT; irq++)
+	{
+		mask = 1 << irq;
+
+		/* is this IRQ pending and enabled? */
+		if ((p->pending & mask) && !(p->enable & mask))
+		{
+			LOG(("pic8259 irq_callback(): PIC #%d acknowledge IRQ #%d\n", which, irq));
+
+			p->pending &= ~mask;
+			p->in_service |= mask;
+
+			return irq + p->base;
+		}
+	}
+	assert(0);
+	return 0;
+}
+
+void pic8259_reset(void)
+{
+	/* MESS	doesn't currently support any machines which have an 8259 and
+	   multiple	CPUs. When it does,	this will need to be changed. */
+	cpu_set_irq_callback(0,	irq_callback);
+}
 
 /* initializer */
 int pic8259_init(int count)
@@ -102,12 +138,8 @@ static void pic8259_timerproc(int which)
 		/* is this IRQ pending and enabled? */
 		if ((p->pending & mask) && !(p->enable & mask))
 		{
-			p->pending &= ~mask;
-			p->in_service |= mask;
-
 			LOG(("pic8259_timerproc(): PIC #%d triggering IRQ #%d\n", which, irq));
 
-			cpunum_set_input_line_vector(0, 0, irq + p->base);
 			cpunum_set_input_line(0, 0, HOLD_LINE);
 			return;
 		}
