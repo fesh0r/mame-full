@@ -153,7 +153,7 @@ static void a2600_main_cb(int param);
 static void a2600_scanline_cb(void);
 static void a2600_Cycle_cb(int param);
 
-static int cpu_current_state;
+/*static int cpu_current_state;*/
 
 static void *HSYNC_timer;
 
