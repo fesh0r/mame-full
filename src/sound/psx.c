@@ -69,8 +69,8 @@ static data32_t m_p_n_blockoffset[ MAX_CHANNEL ];
 static data32_t m_p_n_blockstatus[ MAX_CHANNEL ];
 static data16_t m_p_n_blockbuffer[ MAX_CHANNEL * SAMPLES_PER_BLOCK ];
 
-//FILE *f[ MAX_CHANNEL ];
-// todo: decide on this..
+/* FILE *f[ MAX_CHANNEL ]; */
+/* todo: save these... */
 static int m_p_n_s1[ MAX_CHANNEL ];
 static int m_p_n_s2[ MAX_CHANNEL ];
 static data32_t m_n_loop[ MAX_CHANNEL ];
@@ -86,6 +86,19 @@ INLINE UINT16 psxreadword( UINT32 n_address )
 INLINE void psxwriteword( data32_t n_address, data16_t n_data )
 {
 	*( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) ) = n_data;
+}
+
+static int volume( data16_t n_volume )
+{
+	if( ( n_volume & 0x8000 ) != 0 )
+	{
+		n_volume = ( n_volume & 0x7f ) * 0x80;
+	}
+	else if( ( n_volume & 0x4000 ) != 0 )
+	{
+		n_volume = -( n_volume & 0x3fff );
+	}
+	return n_volume;
 }
 
 static void PSXSPU_update(int num, INT16 **buffer, int length)
@@ -117,14 +130,8 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 
 	for( n_channel = 0; n_channel < MAX_CHANNEL; n_channel++ )
 	{
-		voll = m_p_n_volumeleft[ n_channel ] & 0x3fff;
-		volr = m_p_n_volumeright[ n_channel ] & 0x3fff;
-
-		if( ( m_n_modulationmode & ( 1 << ( ( n_channel + 1 ) % MAX_CHANNEL ) ) ) != 0 )
-		{
-			voll = 0;
-			volr = 0;
-		}
+		voll = volume( m_p_n_volumeleft[ n_channel ] );
+		volr = volume( m_p_n_volumeright[ n_channel ] );
 
 		for( n_sample = 0; n_sample < length; n_sample++ )
 		{
@@ -141,7 +148,7 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 					psx_irq_set( 0x0200 );
 				}
 
-//				fwrite( &m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ], 2, 8, f[ n_channel ] );
+/*				fwrite( &m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ], 2, 8, f[ n_channel ] ); */
 				n_shift =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 0 ) & 0x0f;
 				n_predict = ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 4 ) & 0x0f;
 				n_flags =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 8 ) & 0xff;
@@ -188,10 +195,10 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 				}
 				m_p_n_blockoffset[ n_channel ] %= ( SAMPLES_PER_BLOCK << PITCH_SHIFT );
 			}
-			v = m_p_n_blockbuffer[ ( n_channel * SAMPLES_PER_BLOCK ) + ( m_p_n_blockoffset[ n_channel ] >> PITCH_SHIFT ) ] / 32;
+			v = m_p_n_blockbuffer[ ( n_channel * SAMPLES_PER_BLOCK ) + ( m_p_n_blockoffset[ n_channel ] >> PITCH_SHIFT ) ];
 			m_p_n_blockoffset[ n_channel ] += m_p_n_pitch[ n_channel ];
-			buffer[ 0 ][ n_sample ] += ( v * voll ) / 0xfff;
-			buffer[ 1 ][ n_sample ] += ( v * volr ) / 0xfff;
+			buffer[ 0 ][ n_sample ] += ( v * voll ) / 0x4000;
+			buffer[ 1 ][ n_sample ] += ( v * volr ) / 0x4000;
 		}
 	}
 }
@@ -277,7 +284,7 @@ int PSX_sh_start( const struct MachineSound *msound )
 		{
 			char s[ 1024 ];
 			sprintf( s, "SPU%d", n_channel );
-//			f[ n_channel ] = fopen( s, "wb" );
+/*			f[ n_channel ] = fopen( s, "wb" ); */
 		}
 	}
 
@@ -529,13 +536,6 @@ WRITE32_HANDLER( psx_spu_w )
 		case SPU_REG( 0xd8c ):
 			m_n_voiceoff = 0;
 			COMBINE_DATA( &m_n_voiceoff );
-			for( n_channel = 0; n_channel < 32; n_channel++ )
-			{
-				if( ( m_n_voiceoff & ( 1 << n_channel ) ) != 0 )
-				{
-//					m_p_n_blockstatus[ n_channel ] = 0;
-				}
-			}
 			verboselog( 1, "psx_spu_w() voice off = %08x\n", m_n_voiceoff );
 			break;
 		case SPU_REG( 0xd90 ):
