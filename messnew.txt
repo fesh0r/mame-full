@@ -11,7 +11,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-...
+- Sfz (cps changer) fixed to work with the new MAME code [Ben]
+
 
 Other Changes:
 --------------
