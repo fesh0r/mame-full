@@ -38,25 +38,21 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *commando_foreground_videoram;
-extern unsigned char *commando_foreground_colorram;
-extern unsigned char *commando_background_videoram;
-extern unsigned char *commando_background_colorram;
-extern unsigned char *commando_spriteram;
-extern size_t commando_spriteram_size;
-extern unsigned char *commando_scrollx,*commando_scrolly;
+extern unsigned char *commando_fgvideoram;
+extern unsigned char *commando_bgvideoram;
 
-WRITE_HANDLER( commando_foreground_videoram_w );
-WRITE_HANDLER( commando_foreground_colorram_w );
-WRITE_HANDLER( commando_background_videoram_w );
-WRITE_HANDLER( commando_background_colorram_w );
-WRITE_HANDLER( commando_spriteram_w );
+WRITE_HANDLER( commando_fgvideoram_w );
+WRITE_HANDLER( commando_bgvideoram_w );
+WRITE_HANDLER( commando_scrollx_w );
+WRITE_HANDLER( commando_scrolly_w );
 WRITE_HANDLER( commando_c804_w );
 int commando_vh_start(void);
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void commando_eof_callback(void);
 
 
 
@@ -84,14 +80,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, commando_c804_w },
-	{ 0xc808, 0xc809, MWA_RAM, &commando_scrollx },
-	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrolly },
-	{ 0xd000, 0xd3ff, commando_foreground_videoram_w, &commando_foreground_videoram },
-	{ 0xd400, 0xd7ff, commando_foreground_colorram_w, &commando_foreground_colorram },
-	{ 0xd800, 0xdbff, commando_background_videoram_w, &commando_background_videoram },
-	{ 0xdc00, 0xdfff, commando_background_colorram_w, &commando_background_colorram },
+	{ 0xc808, 0xc809, commando_scrollx_w },
+	{ 0xc80a, 0xc80b, commando_scrolly_w },
+	{ 0xd000, 0xd7ff, commando_fgvideoram_w, &commando_fgvideoram },
+	{ 0xd800, 0xdfff, commando_bgvideoram_w, &commando_bgvideoram },
 	{ 0xe000, 0xfdff, MWA_RAM },
-	{ 0xfe00, 0xff7f, commando_spriteram_w, &commando_spriteram, &commando_spriteram_size },
+	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xff80, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -328,7 +322,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz */
+	1500000,	/* 1.5 MHz ? */
 	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
 	{ 0 },
 	{ 0 },
@@ -350,13 +344,12 @@ static struct MachineDriver machine_driver_commando =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz */
+			3000000,	/* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60, 500,	/* frames per second, vblank duration */
-				/* vblank duration is crucial to get proper sprite/background alignment */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -366,8 +359,8 @@ static struct MachineDriver machine_driver_commando =
 	256,16*4+4*16+16*8,
 	commando_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	commando_eof_callback,
 	commando_vh_start,
 	0,
 	commando_vh_screenrefresh,
