@@ -303,6 +303,8 @@ int	floppy_drive_get_flag_state(int id, int flag)
 
 	flags |= drive_flags & FLOPPY_DRIVE_DISK_INSERTED;
 
+	flags |= drive_flags & FLOPPY_DRIVE_HEAD_AT_TRACK_0;
+
 	/* if disk image is read-only return write protected all the time */
 	if (drive_flags & FLOPPY_DRIVE_DISK_IMAGE_READ_ONLY)
 	{
