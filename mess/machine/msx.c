@@ -1021,7 +1021,6 @@ static void msx_set_slot_0 (int page)
 {
     unsigned char *ROM;
     ROM = memory_region(REGION_CPU1);
-	ROM[0x2d] = 1;
     if (page < (strncmp (Machine->gamedrv->name, "msxkr", 5) ? 2 : 3) )
     {
         cpu_setbank (1 + page * 2, ROM + page * 0x4000);
