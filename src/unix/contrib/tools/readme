@@ -16,7 +16,7 @@ Contents of directory contrib/tools
 	Description:	This file
 
 4)	Name:		romalizer
-	Author:		Christopher Stone <tkmame@ztnet.com>
+	Author:		Christopher Stone <tkmame@retrogames.com>
 	Description:	a rom cleaner/sorting tcl script
 	Notes:		see the contents of the script, or run it with -help
 			for more info
