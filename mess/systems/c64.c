@@ -676,6 +676,21 @@ ROM_START (pet64)
 ROM_END
 
 #if 0
+ROM_START (flash8)
+	ROM_REGION (0x1009400, REGION_CPU1, 0)
+#if 1
+    ROM_LOAD ("flash8", 0x010000, 0x002000, 0x3c4fb703) // basic
+    ROM_CONTINUE( 0x014000, 0x001000) // empty
+    ROM_CONTINUE( 0x014000, 0x001000) // characterset
+    ROM_CONTINUE( 0x012000, 0x002000) // c64 mode kernel
+    ROM_CONTINUE( 0x015000, 0x002000) // kernel
+#else
+	ROM_LOAD ("flash8", 0x012000-0x6000, 0x008000, 0x3c4fb703)
+#endif
+ROM_END
+#endif
+
+#if 0
      /* character rom */
 	 ROM_LOAD ("901225.01", 0x14000, 0x1000, 0xec4272ee)
 	 ROM_LOAD ("charswe.bin", 0x14000, 0x1000, 0xbee9b3fd)
