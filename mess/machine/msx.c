@@ -15,12 +15,12 @@
 #include "driver.h"
 #include "includes/msx.h"
 #include "vidhrdw/generic.h"
-#include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
 #include "includes/tc8521.h"
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
 #include "vidhrdw/tms9928a.h"
+#include "cpu/z80/z80.h"
 #include "vidhrdw/v9938.h"
 #include "formats/fmsx_cas.h"
 #include "printer.h"
@@ -33,12 +33,12 @@ static WRITE_HANDLER ( msx_ppi_port_c_w );
 static READ_HANDLER (msx_ppi_port_b_r );
 static ppi8255_interface msx_ppi8255_interface = {
     1,
-    {NULL},
-    {msx_ppi_port_b_r},
-    {NULL},
-    {msx_ppi_port_a_w},
-    {NULL},
-    {msx_ppi_port_c_w}
+	{NULL}, 
+	{msx_ppi_port_b_r},
+	{NULL},
+	{msx_ppi_port_a_w},
+	{NULL}, 
+	{msx_ppi_port_c_w}
 };
 
 static char PAC_HEADER[] = "PAC2 BACKUP DATA";
@@ -204,7 +204,10 @@ int msx_load_rom (int id)
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
-    strcpy (msx1.cart[id].sramfile, osd_basename (device_filename (IO_CARTSLOT, id) ) );
+	/* the cast to (char*) is there to make sure the argument for 
+	   osd_basename is OK. Note that IMHO osd_basename should take
+	   and return const */
+    strcpy (msx1.cart[id].sramfile, osd_basename ((char*)device_filename (IO_CARTSLOT, id) ) );
     pext = strrchr (msx1.cart[id].sramfile, '.');
     if (pext) *pext = 0;
     /* do some stuff for some types :)) */
@@ -340,6 +343,7 @@ int msx_load_rom (int id)
             memset (pmem + size_aligned + i * 0x100 + 0x1880, 0xff, 0x80);
         }
         msx1.cart[id].mem = pmem;
+        /*msx1.cart[id].banks[0] = 0x1; */
         break;
    case 7: /* ASCII/8kB with SRAM */
         pmem = realloc (msx1.cart[id].mem, size_aligned + 0x2000);
@@ -576,18 +580,19 @@ void init_msx (void)
 
     /* adjust z80 cycles for the M1 wait state */
     z80_table = malloc (0x500);
+
     if (!z80_table)
 		logerror ("Cannot malloc z80 cycle table, using default values\n");
 	else
 		{
         for (i=0;i<5;i++)
 			{
-			old_z80_tables[i] = z80_get_cycle_table (z80_table_num[i]);
+			old_z80_tables[i] = activecpu_get_cycle_table (z80_table_num[i]);
 			for (n=0;n<256;n++)
 				{
 				z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
 				}
-			z80_set_cycle_table (i, z80_table + i*0x100);
+			activecpu_set_cycle_tbl (i, z80_table + i*0x100);
 			}
 		}
     }
@@ -610,7 +615,7 @@ void msx_ch_stop (void)
 	if (z80_table)
 		{
 		for (i=0;i<5;i++)
-			z80_set_cycle_table (i, old_z80_tables[i]);
+			activecpu_set_cycle_tbl (i, old_z80_tables[i]);
 
 		free (z80_table);
 		}
@@ -1118,7 +1123,7 @@ static void msx_set_all_mem_banks (void)
 	memory_set_bankhandler_r (6, 0, MRA_BANK6);
 
     for (i=0;i<4;i++)
-        msx_set_slot[(ppi8255_0_r(0)>>(i*2))&3](i);
+        msx_set_slot[(ppi8255_peek (0,0)>>(i*2))&3](i);
 }
 
 static void msx_cart_write (int cart, int offset, int data);
