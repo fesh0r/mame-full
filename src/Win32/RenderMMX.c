@@ -186,9 +186,7 @@ static void RenderDirtyBitmap(RENDERARGS)
     {
         if (IsDirtyLine(y))
         {
-        
-            INT64 *dirty1 = (INT64 *) ((BYTE *)(dirty_buffer1 + y * dirty_width) + (nSrcStartColumn >> 3));
-            INT64 *dirty2 = (INT64 *) ((BYTE *)(dirty_buffer2 + y * dirty_width) + (nSrcStartColumn >> 3));
+            INT64 *dirty1 = (INT64 *) ((BYTE *)(dirty_buffer + y * dirty_width) + (nSrcStartColumn >> 3));
             INT64 *dirty;
             char sixtyfour[8];
             UINT x = 0;
@@ -198,10 +196,9 @@ static void RenderDirtyBitmap(RENDERARGS)
 
             while (x < nNumColumns)
             {
-                *dirty = mmx_or(*dirty1, *dirty2);
+                *dirty = *dirty1;
 
                 dirty1++;
-                dirty2++;
 
                 if (((int *)sixtyfour)[0])
                 {
@@ -245,7 +242,6 @@ static void RenderDirtyBitmap(RENDERARGS)
 RDBEnd:
         ;
     }
-    __asm emms
 }
 
 #define DO_PIXELS16      \
@@ -276,8 +272,7 @@ static void RenderDirtyBitmap16(RENDERARGS)
     {
         if (IsDirtyLine(y))
         {       
-            INT64 *dirty1 = (INT64 *) (((BYTE*)(dirty_buffer1 + y * dirty_width)) + (nSrcStartColumn >> 3));
-            INT64 *dirty2 = (INT64 *) (((BYTE*)(dirty_buffer2 + y * dirty_width)) + (nSrcStartColumn >> 3));
+            INT64 *dirty1 = (INT64 *) (((BYTE*)(dirty_buffer + y * dirty_width)) + (nSrcStartColumn >> 3));
             INT64 *dirty;
             char sixtyfour[8];
             UINT x  = 0;
@@ -288,9 +283,9 @@ static void RenderDirtyBitmap16(RENDERARGS)
 
             while (x < nNumColumns)
             {
-                *dirty = mmx_or(*dirty1, *dirty2);
+                *dirty = *dirty1;
+
                 dirty1++;
-                dirty2++;
 
                 if (((int *)sixtyfour)[0])
                 {
@@ -341,7 +336,6 @@ static void RenderDirtyBitmap16(RENDERARGS)
 RDBEnd16:
         ;
     }
-    __asm emms
 }
 
 static void RenderDoubleBitmap(RENDERARGS)

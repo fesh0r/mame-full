@@ -70,7 +70,7 @@ static void               GDI_modify_pen(int pen, unsigned char red, unsigned ch
 static void               GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               GDI_mark_dirty(int x1, int y1, int x2, int y2, int ui);
 static void               GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
-static void               GDI_led_w(int led, int on);
+static void               GDI_led_w(int leds_status);
 static void               GDI_set_gamma(float gamma);
 static void               GDI_set_brightness(int brightness);
 static void               GDI_save_snapshot(struct osd_bitmap *bitmap);
@@ -665,9 +665,9 @@ static void GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap
 }
 
 /* control keyboard leds or other indicators */
-static void GDI_led_w(int led, int on)
+static void GDI_led_w(int leds_status)
 {
-    StatusWrite(led, on & 1);
+    StatusWrite(leds_status);
 }
 
 static void GDI_set_gamma(float gamma)

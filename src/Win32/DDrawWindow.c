@@ -153,7 +153,7 @@ static void               DDrawWindow_modify_pen(int pen, unsigned char red, uns
 static void               DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2, int ui);
 static void               DDrawWindow_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
-static void               DDrawWindow_led_w(int led, int on);
+static void               DDrawWindow_led_w(int leds_status);
 static void               DDrawWindow_set_gamma(float gamma);
 static void               DDrawWindow_set_brightness(int brightness);
 static void               DDrawWindow_save_snapshot(struct osd_bitmap *bitmap);
@@ -802,9 +802,9 @@ static void DDrawWindow_update_display(struct osd_bitmap *game_bitmap, struct os
 }
 
 /* control keyboard leds or other indicators */
-static void DDrawWindow_led_w(int led, int on)
+static void DDrawWindow_led_w(int leds_status)
 {
-    StatusWrite(led, on & 1);
+    StatusWrite(leds_status);
 }
 
 static void DDrawWindow_set_gamma(float gamma)

@@ -22,5 +22,6 @@
 extern void LED_init(void);
 extern void LED_exit(void);
 extern void LED_write(int nLED, BOOL bOn);
+extern void LED_StatusWrite(int leds_status);
 
 #endif

@@ -45,10 +45,8 @@
         is dirty
 */
    
-int *dirty_buffer1; 
-int *dirty_buffer2; 
-int *dirty_line1;
-int *dirty_line2;
+int *dirty_buffer; 
+int *dirty_line;
 
 /* screen size, rounded up because we're storing 1 bit per pixel */
 int dirty_width; /* in DWORDs */
@@ -62,8 +60,6 @@ int dirty_height; /* in pixel height */
     Internal variables
  ***************************************************************************/
 
-static int *current_dirty_buffer;
-static int *current_dirty_line;
 static int clip_width;
 static enum DirtyMode dirty_mode;
 
@@ -81,22 +77,14 @@ void InitDirty(int width, int height, enum DirtyMode eDirtyMode)
     if (dirty_mode == USE_DIRTYRECT)
     {
         clip_width = width;
-        dirty_width = (width + 31)/32; /* round up, since one bit per pixel in dirty_buffer */
+        dirty_width  = (width + 31) / 32; /* round up, since one bit per pixel in dirty_buffer */
         dirty_height = height;
     
-        dirty_buffer1 = (int *)malloc(dirty_width*4 * dirty_height);
-        dirty_buffer2 = (int *)malloc(dirty_width*4 * dirty_height);
-    
-        current_dirty_buffer = dirty_buffer1;
-    
-        dirty_line1 = (int *)malloc(dirty_height*sizeof(int));
-        dirty_line2 = (int *)malloc(dirty_height*sizeof(int));
+        dirty_buffer = (int *)malloc(dirty_width * 4 * dirty_height);
+        dirty_line   = (int *)malloc(dirty_height * sizeof(int));
 
-        current_dirty_line = dirty_line1;    
-    
         /* clear the buffers */
-        SwitchDirty();
-        SwitchDirty();
+        ClearDirty();
     }
     else
     {
@@ -108,20 +96,12 @@ void ExitDirty(void)
 {
     if (dirty_mode == USE_DIRTYRECT)
     {
-        free(dirty_buffer1);
-        free(dirty_buffer2);
+        free(dirty_buffer);
     
-        dirty_buffer1 = NULL;
-        dirty_buffer2 = NULL;
+        dirty_buffer = NULL;
     
-        current_dirty_buffer = NULL;
-    
-        free(dirty_line1);
-        free(dirty_line2);
-        dirty_line1 = NULL;
-        dirty_line2 = NULL;
-
-        current_dirty_line = NULL;
+        free(dirty_line);
+        dirty_line = NULL;
     }
 
     dirty_mode = NO_DIRTY;
@@ -135,7 +115,7 @@ void MarkDirty(int x1, int y1, int x2, int y2, int ui)
     if (dirty_mode == USE_DIRTYRECT)
     {
         int i,j;
-        int ones,mask,offset;
+        int ones, mask, offset;
 
         /* clip to display */
     
@@ -159,26 +139,26 @@ void MarkDirty(int x1, int y1, int x2, int y2, int ui)
         if (y2 < 0)
             y2 = 0;
     
-        for (i=y1;i<=y2;i++)
+        for (i = y1; i <= y2; i++)
         {
-            current_dirty_line[i] += x2-x1+1;
+            dirty_line[i] += x2 - x1 + 1;
             j = x1;
             while (j <= x2)
             {
                 offset = j % 32;
             
-                ones = min((32 - offset),x2-j+1);
-                mask = current_dirty_buffer[DIRTYDWORD(j,i)];
+                ones = min((32 - offset), x2 - j + 1);
+                mask = dirty_buffer[DIRTYDWORD(j, i)];
                 if (ones == 32)
                     mask = 0xffffffff;
                 else
                     mask |= ((1 << ones) - 1) << offset;
             
 #ifdef DEBUG
-                if (DIRTYDWORD(j,i) >= dirty_width * dirty_height)
+                if (DIRTYDWORD(j, i) >= dirty_width * dirty_height)
                     printf("death\n");
 #endif
-                current_dirty_buffer[DIRTYDWORD(j,i)] = mask;
+                dirty_buffer[DIRTYDWORD(j, i)] = mask;
                 j += 32 - offset;
             }
         }
@@ -216,11 +196,11 @@ void MarkDirtyPixel(int x, int y)
         if (y < 0)
             y = 0;
     
-        current_dirty_line[y]++;
+        dirty_line[y]++;
         offset = x % 32;
             
         ones = (32 - offset);
-        mask = current_dirty_buffer[DIRTYDWORD(x,y)];
+        mask = dirty_buffer[DIRTYDWORD(x, y)];
         if (ones == 32)
             mask = 0xffffffff;
         else
@@ -230,30 +210,31 @@ void MarkDirtyPixel(int x, int y)
                 if (DIRTYDWORD(x, y) >= dirty_width * dirty_height)
                     printf("death\n");
 #endif
-        current_dirty_buffer[DIRTYDWORD(x, y)] = mask;
+        dirty_buffer[DIRTYDWORD(x, y)] = mask;
     }
 }
 
 
-void SwitchDirty(void)
+void ClearDirty(void)
 {
     if (dirty_mode == NO_DIRTY)
         return;
     
     if (dirty_mode == USE_DIRTYRECT)
-    {
-        if (current_dirty_buffer == dirty_buffer1)
-        {
-            current_dirty_buffer = dirty_buffer2;
-            current_dirty_line = dirty_line2;
-        }
-        else
-        {
-            current_dirty_buffer = dirty_buffer1;
-            current_dirty_line = dirty_line1;
-        }
+    {  
+        memset(dirty_buffer, 0, dirty_width * 4 * dirty_height);
+        memset(dirty_line, 0, 4 * dirty_height);
+    }
+}
+
+void MarkAllDirty(void)
+{
+    if (dirty_mode == NO_DIRTY)
+        return;
     
-        memset(current_dirty_buffer,0,dirty_width*4*dirty_height);
-        memset(current_dirty_line,0,4*dirty_height);
+    if (dirty_mode == USE_DIRTYRECT)
+    {  
+        memset(dirty_buffer, 0xFFFFFFFF, dirty_width * 4 * dirty_height);
+        memset(dirty_line, 0xFFFFFFFF, 4 * dirty_height);
     }
 }

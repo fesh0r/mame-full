@@ -42,6 +42,7 @@
     Internal variables
  ***************************************************************************/
 
+static int  leds_old;
 static BOOL leds[3];
 static HWND hStatus;
 static BOOL bErasePauseText;
@@ -61,6 +62,8 @@ void StatusCreate(void)
     RECT rect;
     INT  widths[2];
     
+    leds_old = 0;
+
     leds[0] = FALSE;
     leds[1] = FALSE;
     leds[2] = FALSE;
@@ -71,12 +74,12 @@ void StatusCreate(void)
     widths[0] = LED_AREA_WIDTH;
     widths[1] = -1;
     
-    SendMessage(hStatus,SB_SETPARTS,2,(LPARAM)widths);
-    SendMessage(hStatus,SB_SETTEXT,0 | SBT_OWNERDRAW,0);
-    SendMessage(hStatus,SB_SETTEXT,1,(LPARAM)"");
+    SendMessage(hStatus, SB_SETPARTS, 2, (LPARAM)widths);
+    SendMessage(hStatus, SB_SETTEXT, 0 | SBT_OWNERDRAW, 0);
+    SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)"");
     
-    hbrLight = CreateSolidBrush(RGB(0xff,0,0));
-    hbrDark = CreateSolidBrush(RGB(0x3f,0,0));
+    hbrLight = CreateSolidBrush(RGB(0xff, 0, 0));
+    hbrDark  = CreateSolidBrush(RGB(0x3f, 0, 0));
     
     prev_update_time = 0;
 
@@ -100,7 +103,7 @@ void StatusWindowSize(UINT state,int cx,int cy)
     if (hStatus == NULL)
         return;
     
-    SendMessage(hStatus,WM_SIZE,(WPARAM)state,MAKELPARAM(cx,cy));
+    SendMessage(hStatus, WM_SIZE, (WPARAM)state, MAKELPARAM(cx, cy));
 }
 
 #define LIGHT_SIZE 10
@@ -110,18 +113,18 @@ void StatusDrawItem(const DRAWITEMSTRUCT *lpdi)
 {
     RECT rect;
     
-    rect.top = 6;
-    rect.left = 6;
-    rect.bottom = rect.top + LIGHT_SIZE;
-    rect.right = rect.left + LIGHT_SIZE;
-    FillRect(lpdi->hDC,&rect,hbrDark);
+    rect.top    = 6;
+    rect.left   = 6;
+    rect.bottom = rect.top  + LIGHT_SIZE;
+    rect.right  = rect.left + LIGHT_SIZE;
+    FillRect(lpdi->hDC, &rect, hbrDark);
     if (leds[0])
     {
         rect.top++;
         rect.left++;
         rect.bottom--;
         rect.right--;
-        FillRect(lpdi->hDC,&rect,hbrLight);
+        FillRect(lpdi->hDC, &rect, hbrLight);
         rect.top--;
         rect.left--;
         rect.bottom++;
@@ -130,14 +133,14 @@ void StatusDrawItem(const DRAWITEMSTRUCT *lpdi)
     
     rect.left += LIGHT_SEPARATION;
     rect.right = rect.left + LIGHT_SIZE;
-    FillRect(lpdi->hDC,&rect,hbrDark);
+    FillRect(lpdi->hDC, &rect, hbrDark);
     if (leds[1])
     {
         rect.top++;
         rect.left++;
         rect.bottom--;
         rect.right--;
-        FillRect(lpdi->hDC,&rect,hbrLight);
+        FillRect(lpdi->hDC, &rect, hbrLight);
         rect.top--;
         rect.left--;
         rect.bottom++;
@@ -146,40 +149,39 @@ void StatusDrawItem(const DRAWITEMSTRUCT *lpdi)
     
     rect.left += LIGHT_SEPARATION;
     rect.right = rect.left + LIGHT_SIZE;
-    FillRect(lpdi->hDC,&rect,hbrDark);
+    FillRect(lpdi->hDC, &rect, hbrDark);
     if (leds[2])
     {
         rect.top++;
         rect.left++;
         rect.bottom--;
         rect.right--;
-        FillRect(lpdi->hDC,&rect,hbrLight);
+        FillRect(lpdi->hDC, &rect, hbrLight);
     }
 }
 
-void StatusWrite(int led,BOOL on)
+void StatusWrite(int leds_status)
 {
     RECT rect;
     
     if (hStatus == NULL)
         return;
     
-    if (led >= 3)
-    {
-        logerror("Writing unsupported led #%i\n", led);
+    if (leds_status == leds_old)
         return;
-    }
-    
-    if (leds[led] == on)
-        return;
-    
-    leds[led] = on;
 
-    rect.left = 0;
-    rect.right = LED_AREA_WIDTH-1;
-    rect.top = 0;
+    leds_old = leds_status;
+    
+    leds[0] = leds_status & 0x1;
+    leds[1] = leds_status & 0x2;
+    leds[2] = leds_status & 0x4;
+
+    rect.left   = 0;
+    rect.right  = LED_AREA_WIDTH - 1;
+    rect.top    = 0;
     rect.bottom = 20;
-    InvalidateRect(hStatus,&rect,FALSE);
+
+    InvalidateRect(hStatus, &rect, FALSE);
 }
 
 void StatusUpdate(void)
@@ -241,9 +243,9 @@ void StatusSetString(char *str)
     if (hStatus == NULL)
         return;
     
-    sprintf(buf,"\t\t%s",str);
+    sprintf(buf, "\t\t%s", str);
     
-    SendMessage(hStatus,SB_SETTEXT,1,(LPARAM)buf);
+    SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)buf);
 }
 
 void StatusDelete(void)

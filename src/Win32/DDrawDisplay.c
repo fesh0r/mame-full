@@ -151,7 +151,7 @@ static void               DDraw_modify_pen(int pen, unsigned char red, unsigned 
 static void               DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               DDraw_mark_dirty(int x1, int y1, int x2, int y2, int ui);
 static void               DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
-static void               DDraw_led_w(int led, int on);
+static void               DDraw_led_w(int leds_status);
 static void               DDraw_set_gamma(float gamma);
 static void               DDraw_set_brightness(int brightness);
 static void               DDraw_save_snapshot(struct osd_bitmap *bitmap);
@@ -986,9 +986,7 @@ static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitm
     {
         This.m_nBlackPen = FindBlackPen();
         ClearSurface(This.m_pDDSPrimary);
-        osd_mark_dirty(0, 0,
-                       Machine->scrbitmap->width  - 1,
-                       Machine->scrbitmap->height - 1, 1);
+        MarkAllDirty();
 
         This.m_bUpdateBackground = FALSE;
     }
@@ -1006,7 +1004,7 @@ static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitm
     {
         while (1)
         {
-            hResult = IDirectDrawSurface_Flip(This.m_pDDSPrimary,NULL,DDFLIP_WAIT);
+            hResult = IDirectDrawSurface_Flip(This.m_pDDSPrimary, NULL, DDFLIP_WAIT);
                 
             if (hResult == DD_OK)
                 break;
@@ -1097,9 +1095,9 @@ static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitm
 }
 
 /* control keyboard leds or other indicators */
-static void DDraw_led_w(int led, int on)
+static void DDraw_led_w(int leds_status)
 {
-    LED_write(led, on & 1);
+    LED_StatusWrite(leds_status);
 }
 
 static void DDraw_set_gamma(float gamma)
@@ -1814,9 +1812,7 @@ static void PanDisplay(void)
 
     if (bMarkDirty == TRUE)
     {
-        osd_mark_dirty(0, 0,
-                       Machine->scrbitmap->width  - 1,
-                       Machine->scrbitmap->height - 1, 1);
+        MarkAllDirty();
 
         set_ui_visarea(This.m_nSkipColumns, This.m_nSkipLines,
                        This.m_nDisplayColumns + This.m_nSkipColumns - 1,

@@ -35,6 +35,7 @@
 #include "Trak.h"
 #include "resource.h"
 #include "M32Util.h"
+#include "dirty.h"
 
 /***************************************************************************
     Function prototypes
@@ -324,9 +325,7 @@ static void OnActivateApp(HWND hWnd, BOOL fActivate, DWORD dwThreadId)
             }
 
             bitmap_dirty = 1;
-            osd_mark_dirty(0, 0,
-                           Machine->scrbitmap->width  - 1,
-                           Machine->scrbitmap->height - 1, 1);
+            MarkAllDirty();
            
             MAME32App.m_pDisplay->update_display(Machine->scrbitmap,
                                                  Machine->debug_bitmap);

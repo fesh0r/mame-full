@@ -376,11 +376,14 @@ void osd_get_pen(int pen, unsigned char* red, unsigned char* green, unsigned cha
     MAME32App.m_pDisplay->get_pen(pen, red, green, blue);
 }
 
-void osd_update_video_and_audio(
-		struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap,int leds_status)
+void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,
+                                struct osd_bitmap *debug_bitmap,
+                                int leds_status)
 {
     MAME32App.m_pSound->update_audio();
     OSDDisplay.update_display(game_bitmap, debug_bitmap);
+
+    MAME32App.m_pDisplay->led_w(leds_status);
 
     MAME32App.HandleAutoPause();
 
@@ -395,11 +398,6 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 {
     MAME32App.m_pDisplay->mark_dirty(x1, y1, x2, y2, ui);
-}
-
-void osd_led_w(int led, int on)
-{
-    MAME32App.m_pDisplay->led_w(led, on);
 }
 
 int osd_skip_this_frame()
@@ -560,11 +558,6 @@ void osd_pause(int paused)
 const struct JoystickInfo *osd_get_joy_list(void)
 {
     return MAME32App.m_pJoystick->get_joy_list();
-}
-
-void osd_poll_joysticks(void)
-{
-    MAME32App.m_pJoystick->poll_joysticks();
 }
 
 int osd_is_joy_pressed(int joycode)

@@ -20,7 +20,7 @@ void StatusCreate(void);
 int  GetStatusHeight(void);
 void StatusWindowSize(UINT state,int cx,int cy);
 void StatusDrawItem(const DRAWITEMSTRUCT *lpdi);
-void StatusWrite(int led,BOOL on);
+void StatusWrite(int leds_status);
 void StatusUpdate(void);
 void StatusUpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, int nFrameskip, int nVecUPS);
 void StatusSetString(char *str);

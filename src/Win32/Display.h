@@ -42,7 +42,7 @@ struct OSDDisplay
     void                (*mark_dirty)(int x1, int y1, int x2, int y2, int ui);
     int                 (*skip_this_frame)(void);
     void                (*update_display)(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
-    void                (*led_w)(int led, int on);
+    void                (*led_w)(int leds_status);
     void                (*set_gamma)(float gamma);
     float               (*get_gamma)(void);
     void                (*set_brightness)(int brightness);
