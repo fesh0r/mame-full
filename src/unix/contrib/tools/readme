@@ -106,4 +106,3 @@ Contents of directory contrib/tools
 			requiring ROMs from other CDs.
 	Usage:		makecd_mame.pl gamedir burndir gameslist
 			See script for more information. 
-
